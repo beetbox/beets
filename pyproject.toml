@@ -263,6 +263,10 @@ select = [
     "TCH", # flake8-type-checking
     "W", # pycodestyle
 ]
+ignore = [
+  "TC006"  # no need to quote 'cast's since we use 'from __future__ import annotations'
+]
+
 [tool.ruff.lint.per-file-ignores]
 "beets/**" = ["PT"]
 "test/test_util.py" = ["E501"]

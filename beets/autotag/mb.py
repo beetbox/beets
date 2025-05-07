@@ -19,9 +19,8 @@ from __future__ import annotations
 import re
 import traceback
 from collections import Counter
-from collections.abc import Iterator, Sequence
 from itertools import product
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urljoin
 
 import musicbrainzngs
@@ -36,6 +35,9 @@ from beets.util.id_extractors import (
     extract_discogs_id_regex,
     spotify_id_regex,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator, Sequence
 
 VARIOUS_ARTISTS_ID = "89ad4ac3-39f7-470e-963a-56509c546377"
 
@@ -178,15 +180,18 @@ def _preferred_alias(aliases: list):
         return matches[0]
 
 
-def _preferred_release_event(release: dict[str, Any]) -> tuple[str, str]:
+def _preferred_release_event(
+    release: dict[str, Any],
+) -> tuple[str | None, str | None]:
     """Given a release, select and return the user's preferred release
     event as a tuple of (country, release_date). Fall back to the
     default release event if a preferred event is not found.
     """
-    countries = config["match"]["preferred"]["countries"].as_str_seq()
-    countries = cast(Sequence, countries)
+    preferred_countries: Sequence[str] = config["match"]["preferred"][
+        "countries"
+    ].as_str_seq()
 
-    for country in countries:
+    for country in preferred_countries:
         for event in release.get("release-event-list", {}):
             try:
                 if country in event["area"]["iso-3166-1-code-list"]:
@@ -194,7 +199,7 @@ def _preferred_release_event(release: dict[str, Any]) -> tuple[str, str]:
             except KeyError:
                 pass
 
-    return (cast(str, release.get("country")), cast(str, release.get("date")))
+    return release.get("country"), release.get("date")
 
 
 def _multi_artist_credit(
@@ -589,7 +594,9 @@ def album_info(release: dict) -> beets.autotag.hooks.AlbumInfo:
     if not release_date:
         # Fall back if release-specific date is not available.
         release_date = release_group_date
-    _set_date_str(info, release_date, False)
+
+    if release_date:
+        _set_date_str(info, release_date, False)
     _set_date_str(info, release_group_date, True)
 
     # Label name.
