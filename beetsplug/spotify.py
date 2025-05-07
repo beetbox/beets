@@ -105,6 +105,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                 "tokenfile": "spotify_token.json",
             }
         )
+        self.config["client_id"].redact = True
         self.config["client_secret"].redact = True
 
         self.tokenfile = self.config["tokenfile"].get(
