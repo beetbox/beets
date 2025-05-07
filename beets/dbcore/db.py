@@ -26,7 +26,7 @@ from abc import ABC
 from collections import defaultdict
 from collections.abc import Generator, Iterable, Iterator, Mapping, Sequence
 from sqlite3 import Connection
-from typing import TYPE_CHECKING, Any, AnyStr, Callable, Generic, TypeVar, cast
+from typing import TYPE_CHECKING, Any, AnyStr, Callable, Generic, TypeVar
 
 from unidecode import unidecode
 
@@ -126,8 +126,8 @@ class FormattedMapping(Mapping[str, str]):
             value = value.decode("utf-8", "ignore")
 
         if self.for_path:
-            sep_repl = cast(str, beets.config["path_sep_replace"].as_str())
-            sep_drive = cast(str, beets.config["drive_sep_replace"].as_str())
+            sep_repl: str = beets.config["path_sep_replace"].as_str()
+            sep_drive: str = beets.config["drive_sep_replace"].as_str()
 
             if re.match(r"^\w:", value):
                 value = re.sub(r"(?<=^\w):", sep_drive, value)

@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import re
 from functools import total_ordering
-from typing import TYPE_CHECKING, Any, Callable, NamedTuple, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Callable, NamedTuple, TypeVar
 
 from jellyfish import levenshtein_distance
 from unidecode import unidecode
@@ -474,7 +474,6 @@ class Distance:
         matched against `value2`.
         """
         if isinstance(value1, re.Pattern):
-            value2 = cast(str, value2)
             return bool(value1.match(value2))
         return value1 == value2
 
