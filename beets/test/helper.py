@@ -35,6 +35,7 @@ import subprocess
 import sys
 import unittest
 from contextlib import contextmanager
+from dataclasses import dataclass
 from enum import Enum
 from functools import cached_property
 from io import StringIO
@@ -48,7 +49,7 @@ from mediafile import Image, MediaFile
 
 import beets
 import beets.plugins
-from beets import autotag, importer, logging, util
+from beets import importer, logging, util
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.importer import ImportSession
 from beets.library import Album, Item, Library
@@ -447,6 +448,11 @@ class PluginMixin(ConfigMixin):
     plugin: ClassVar[str]
     preload_plugin: ClassVar[bool] = True
 
+    original_item_types = dict(Item._types)
+    original_album_types = dict(Album._types)
+    original_item_queries = dict(Item._queries)
+    original_album_queries = dict(Album._queries)
+
     def setup_beets(self):
         super().setup_beets()
         if self.preload_plugin:
@@ -470,13 +476,8 @@ class PluginMixin(ConfigMixin):
 
         # Take a backup of the original _types and _queries to restore
         # when unloading.
-        Item._original_types = dict(Item._types)
-        Album._original_types = dict(Album._types)
         Item._types.update(beets.plugins.types(Item))
         Album._types.update(beets.plugins.types(Album))
-
-        Item._original_queries = dict(Item._queries)
-        Album._original_queries = dict(Album._queries)
         Item._queries.update(beets.plugins.named_queries(Item))
         Album._queries.update(beets.plugins.named_queries(Album))
 
@@ -488,10 +489,10 @@ class PluginMixin(ConfigMixin):
         self.config["plugins"] = []
         beets.plugins._classes = set()
         beets.plugins._instances = {}
-        Item._types = getattr(Item, "_original_types", {})
-        Album._types = getattr(Album, "_original_types", {})
-        Item._queries = getattr(Item, "_original_queries", {})
-        Album._queries = getattr(Album, "_original_queries", {})
+        Item._types = self.original_item_types
+        Album._types = self.original_album_types
+        Item._queries = self.original_item_queries
+        Album._queries = self.original_album_queries
 
     @contextmanager
     def configure_plugin(self, config: Any):
@@ -774,6 +775,7 @@ class TerminalImportMixin(ImportHelper):
         )
 
 
+@dataclass
 class AutotagStub:
     """Stub out MusicBrainz album and track matcher and control what the
     autotagger returns.
@@ -784,47 +786,42 @@ class AutotagStub:
     GOOD = "GOOD"
     BAD = "BAD"
     MISSING = "MISSING"
-    """Generate an album match for all but one track
-    """
+    matching: str
 
     length = 2
-    matching = IDENT
 
     def install(self):
-        self.mb_match_album = autotag.mb.match_album
-        self.mb_match_track = autotag.mb.match_track
-        self.mb_album_for_id = autotag.mb.album_for_id
-        self.mb_track_for_id = autotag.mb.track_for_id
-
-        autotag.mb.match_album = self.match_album
-        autotag.mb.match_track = self.match_track
-        autotag.mb.album_for_id = self.album_for_id
-        autotag.mb.track_for_id = self.track_for_id
+        self.patchers = [
+            patch("beets.plugins.album_for_id", lambda *_: None),
+            patch("beets.plugins.track_for_id", lambda *_: None),
+            patch("beets.plugins.candidates", self.candidates),
+            patch("beets.plugins.item_candidates", self.item_candidates),
+        ]
+        for p in self.patchers:
+            p.start()
 
         return self
 
     def restore(self):
-        autotag.mb.match_album = self.mb_match_album
-        autotag.mb.match_track = self.mb_match_track
-        autotag.mb.album_for_id = self.mb_album_for_id
-        autotag.mb.track_for_id = self.mb_track_for_id
+        for p in self.patchers:
+            p.stop()
 
-    def match_album(self, albumartist, album, tracks, extra_tags):
+    def candidates(self, items, artist, album, va_likely, extra_tags=None):
         if self.matching == self.IDENT:
-            yield self._make_album_match(albumartist, album, tracks)
+            yield self._make_album_match(artist, album, len(items))
 
         elif self.matching == self.GOOD:
             for i in range(self.length):
-                yield self._make_album_match(albumartist, album, tracks, i)
+                yield self._make_album_match(artist, album, len(items), i)
 
         elif self.matching == self.BAD:
             for i in range(self.length):
-                yield self._make_album_match(albumartist, album, tracks, i + 1)
+                yield self._make_album_match(artist, album, len(items), i + 1)
 
         elif self.matching == self.MISSING:
-            yield self._make_album_match(albumartist, album, tracks, missing=1)
+            yield self._make_album_match(artist, album, len(items), missing=1)
 
-    def match_track(self, artist, title):
+    def item_candidates(self, item, artist, title):
         yield TrackInfo(
             title=title.replace("Tag", "Applied"),
             track_id="trackid",
@@ -833,12 +830,6 @@ class AutotagStub:
             length=1,
             index=0,
         )
-
-    def album_for_id(self, mbid):
-        return None
-
-    def track_for_id(self, mbid):
-        return None
 
     def _make_track_match(self, artist, album, number):
         return TrackInfo(
@@ -875,6 +866,15 @@ class AutotagStub:
             data_source="match_source",
             bandcamp_album_id="bc_url",
         )
+
+
+class AutotagImportTestCase(ImportTestCase):
+    matching = AutotagStub.IDENT
+
+    def setUp(self):
+        super().setUp()
+        self.matcher = AutotagStub(self.matching).install()
+        self.addCleanup(self.matcher.restore)
 
 
 class FetchImageHelper:

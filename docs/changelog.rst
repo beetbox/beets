@@ -22,6 +22,13 @@ been dropped.
 
 New features:
 
+* :doc:`plugins/musicbrainz`: The MusicBrainz autotagger has been moved to
+  a separate plugin. The default :ref:`plugins-config` includes `musicbrainz`,
+  but if you've customized your `plugins` list in your configuration, you'll
+  need to explicitly add `musicbrainz` to continue using this functionality.
+  Configuration option `musicbrainz.enabled` has thus been deprecated.
+  :bug:`2686`
+  :bug:`4605`
 * :doc:`plugins/lastgenre`: The new configuration option, ``keep_existing``,
   provides more fine-grained control over how pre-populated genre tags are
   handled. The ``force`` option now behaves in a more conventional manner.
@@ -110,8 +117,8 @@ Other changes:
   :bug:`5539`
 * :doc:`/plugins/smartplaylist`: URL-encode additional item `fields` within generated
   EXTM3U playlists instead of JSON-encoding them.
-* typehints: `./beets/importer.py` file now has improved typehints. 
-* typehints: `./beets/plugins.py` file now includes typehints. 
+* typehints: `./beets/importer.py` file now has improved typehints.
+* typehints: `./beets/plugins.py` file now includes typehints.
 * :doc:`plugins/ftintitle`: Optimize the plugin by avoiding unnecessary writes
   to the database.
 * Database models are now serializable with pickle.
