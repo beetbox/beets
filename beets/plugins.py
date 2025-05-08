@@ -29,7 +29,6 @@ import mediafile
 
 import beets
 from beets import logging
-from beets.util.id_extractors import extract_release_id
 
 if sys.version_info >= (3, 10):
     from typing import ParamSpec
