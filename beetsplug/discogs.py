@@ -38,7 +38,7 @@ import beets.ui
 from beets import config
 from beets.autotag.hooks import AlbumInfo, TrackInfo, string_dist
 from beets.plugins import BeetsPlugin, MetadataSourcePlugin, get_distance
-from beets.util.id_extractors import extract_discogs_id_regex
+from beets.util.id_extractors import extract_release_id
 
 USER_AGENT = f"beets/{beets.__version__} +https://beets.io/"
 API_KEY = "rAzVUQYRaoFjeBjyWuWZ"
@@ -266,7 +266,7 @@ class DiscogsPlugin(BeetsPlugin):
         """
         self._log.debug("Searching for release {0}", album_id)
 
-        discogs_id = extract_discogs_id_regex(album_id)
+        discogs_id = extract_release_id("discogs", album_id)
 
         if not discogs_id:
             return None
@@ -401,7 +401,7 @@ class DiscogsPlugin(BeetsPlugin):
         else:
             genre = base_genre
 
-        discogs_albumid = extract_discogs_id_regex(result.data.get("uri"))
+        discogs_albumid = extract_release_id("discogs", result.data.get("uri"))
 
         # Extract information for the optional AlbumInfo fields that are
         # contained on nested discogs fields.
