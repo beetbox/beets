@@ -27,11 +27,11 @@ import musicbrainzngs
 import beets
 import beets.autotag.hooks
 from beets import config, plugins, util
-from beets.plugins import BeetsPlugin
+from beets.metadata_plugins import MetadataSourcePluginNext
 from beets.util.id_extractors import extract_release_id
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator, Sequence
+    from collections.abc import Iterator
 
     from beets.library import Item
 
@@ -257,11 +257,9 @@ def _preferred_release_event(
     event as a tuple of (country, release_date). Fall back to the
     default release event if a preferred event is not found.
     """
-    preferred_countries: Sequence[str] = config["match"]["preferred"][
-        "countries"
-    ].as_str_seq()
+    countries = config["match"]["preferred"]["countries"].as_str_seq()
 
-    for country in preferred_countries:
+    for country in countries:
         for event in release.get("release-event-list", {}):
             try:
                 if country in event["area"]["iso-3166-1-code-list"]:
@@ -360,14 +358,12 @@ def _merge_pseudo_and_actual_album(
     return merged
 
 
-class MusicBrainzPlugin(BeetsPlugin):
-    data_source = "Musicbrainz"
-
+class MusicBrainzPlugin(MetadataSourcePluginNext):
     def __init__(self):
         """Set up the python-musicbrainz-ngs module according to settings
         from the beets configuration. This should be called at startup.
         """
-        super().__init__()
+        super().__init__(data_source="Musicbrainz")
         self.config.add(
             {
                 "host": "musicbrainz.org",
@@ -677,7 +673,6 @@ class MusicBrainzPlugin(BeetsPlugin):
         if not release_date:
             # Fall back if release-specific date is not available.
             release_date = release_group_date
-
         if release_date:
             _set_date_str(info, release_date, False)
         _set_date_str(info, release_group_date, True)
@@ -737,8 +732,11 @@ class MusicBrainzPlugin(BeetsPlugin):
                     )
 
             for source, url in urls.items():
+                item_source = extract_release_id(source, url)
                 setattr(
-                    info, f"{source}_album_id", extract_release_id(source, url)
+                    info,
+                    f"{source}_album_id",
+                    item_source[0] if item_source else None,
                 )
 
         extra_albumdatas = plugins.send("mb_album_extract", data=release)
@@ -838,12 +836,19 @@ class MusicBrainzPlugin(BeetsPlugin):
         MusicBrainzAPIError.
         """
         self._log.debug("Requesting MusicBrainz release {}", album_id)
-        if not (albumid := extract_release_id("musicbrainz", album_id)):
+        if not (
+            mb_album_id := extract_release_id(
+                self.data_source,
+                album_id,
+            )
+        ):
             self._log.debug("Invalid MBID ({0}).", album_id)
             return None
 
         try:
-            res = musicbrainzngs.get_release_by_id(albumid, RELEASE_INCLUDES)
+            res = musicbrainzngs.get_release_by_id(
+                mb_album_id, RELEASE_INCLUDES
+            )
 
             # resolve linked release relations
             actual_res = None
@@ -856,7 +861,7 @@ class MusicBrainzPlugin(BeetsPlugin):
             return None
         except musicbrainzngs.MusicBrainzError as exc:
             raise MusicBrainzAPIError(
-                exc, "get release by ID", albumid, traceback.format_exc()
+                exc, "get release by ID", mb_album_id, traceback.format_exc()
             )
 
         # release is potentially a pseudo release
@@ -875,17 +880,19 @@ class MusicBrainzPlugin(BeetsPlugin):
         """Fetches a track by its MusicBrainz ID. Returns a TrackInfo object
         or None if no track is found. May raise a MusicBrainzAPIError.
         """
-        if not (trackid := extract_release_id("musicbrainz", track_id)):
+        if not (mb_track_id := extract_release_id(self.data_source, track_id)):
             self._log.debug("Invalid MBID ({0}).", track_id)
             return None
 
         try:
-            res = musicbrainzngs.get_recording_by_id(trackid, TRACK_INCLUDES)
+            res = musicbrainzngs.get_recording_by_id(
+                mb_track_id, TRACK_INCLUDES
+            )
         except musicbrainzngs.ResponseError:
             self._log.debug("Track ID match failed.")
             return None
         except musicbrainzngs.MusicBrainzError as exc:
             raise MusicBrainzAPIError(
-                exc, "get recording by ID", trackid, traceback.format_exc()
+                exc, "get recording by ID", mb_track_id, traceback.format_exc()
             )
         return self.track_info(res["recording"])
