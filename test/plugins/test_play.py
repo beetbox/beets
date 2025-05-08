@@ -97,7 +97,7 @@ class PlayPluginTest(CleanupModulesMixin, PluginTestCase):
         with open(open_mock.call_args[0][0][0], "rb") as f:
             playlist = f.read().decode("utf-8")
         assert (
-            f'{os.path.dirname(self.item.path.decode("utf-8"))}\n' == playlist
+            f"{os.path.dirname(self.item.path.decode('utf-8'))}\n" == playlist
         )
 
     def test_raw(self, open_mock):

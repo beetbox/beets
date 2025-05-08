@@ -559,7 +559,7 @@ def link(path: bytes, dest: bytes, replace: bool = False):
     except NotImplementedError:
         # raised on python >= 3.2 and Windows versions before Vista
         raise FilesystemError(
-            "OS does not support symbolic links." "link",
+            "OS does not support symbolic links.link",
             (path, dest),
             traceback.format_exc(),
         )
@@ -581,14 +581,14 @@ def hardlink(path: bytes, dest: bytes, replace: bool = False):
         os.link(syspath(path), syspath(dest))
     except NotImplementedError:
         raise FilesystemError(
-            "OS does not support hard links." "link",
+            "OS does not support hard links.link",
             (path, dest),
             traceback.format_exc(),
         )
     except OSError as exc:
         if exc.errno == errno.EXDEV:
             raise FilesystemError(
-                "Cannot hard link across devices." "link",
+                "Cannot hard link across devices.link",
                 (path, dest),
                 traceback.format_exc(),
             )

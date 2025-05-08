@@ -56,6 +56,6 @@ class MBSubmitPluginTest(
 
         # Manually build the string for comparing the output.
         tracklist = (
-            "Open files with Picard? " "02. Tag Track 2 - Tag Artist (0:01)"
+            "Open files with Picard? 02. Tag Track 2 - Tag Artist (0:01)"
         )
         assert tracklist in output.getvalue()

@@ -448,6 +448,11 @@ class PluginMixin(ConfigMixin):
     plugin: ClassVar[str]
     preload_plugin: ClassVar[bool] = True
 
+    original_item_types = dict(Item._types)
+    original_album_types = dict(Album._types)
+    original_item_queries = dict(Item._queries)
+    original_album_queries = dict(Album._queries)
+
     def setup_beets(self):
         super().setup_beets()
         if self.preload_plugin:
@@ -471,13 +476,8 @@ class PluginMixin(ConfigMixin):
 
         # Take a backup of the original _types and _queries to restore
         # when unloading.
-        Item._original_types = dict(Item._types)
-        Album._original_types = dict(Album._types)
         Item._types.update(beets.plugins.types(Item))
         Album._types.update(beets.plugins.types(Album))
-
-        Item._original_queries = dict(Item._queries)
-        Album._original_queries = dict(Album._queries)
         Item._queries.update(beets.plugins.named_queries(Item))
         Album._queries.update(beets.plugins.named_queries(Album))
 
@@ -489,10 +489,10 @@ class PluginMixin(ConfigMixin):
         self.config["plugins"] = []
         beets.plugins._classes = set()
         beets.plugins._instances = {}
-        Item._types = getattr(Item, "_original_types", {})
-        Album._types = getattr(Album, "_original_types", {})
-        Item._queries = getattr(Item, "_original_queries", {})
-        Album._queries = getattr(Album, "_original_queries", {})
+        Item._types = self.original_item_types
+        Album._types = self.original_album_types
+        Item._queries = self.original_item_queries
+        Album._queries = self.original_album_queries
 
     @contextmanager
     def configure_plugin(self, config: Any):

@@ -115,7 +115,7 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
                 )[0]
                 if playlists.attrib.get("code", "200") != "200":
                     alt_error = (
-                        "error getting playlists," " but no error message found"
+                        "error getting playlists, but no error message found"
                     )
                     self._log.warn(playlists.attrib.get("message", alt_error))
                     return

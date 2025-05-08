@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import re
 from functools import total_ordering
-from typing import TYPE_CHECKING, Any, NamedTuple, TypeVar, cast
+from typing import TYPE_CHECKING, Any, NamedTuple, TypeVar
 
 from jellyfish import levenshtein_distance
 from unidecode import unidecode
@@ -55,7 +55,7 @@ class AttrDict(dict[str, V]):
         return id(self)
 
 
-class AlbumInfo(AttrDict):
+class AlbumInfo(AttrDict[Any]):
     """Describes a canonical release that may be used to match a release
     in the library. Consists of these data members:
 
@@ -165,7 +165,7 @@ class AlbumInfo(AttrDict):
         return dupe
 
 
-class TrackInfo(AttrDict):
+class TrackInfo(AttrDict[Any]):
     """Describes a canonical track present on a release. Appears as part
     of an AlbumInfo's ``tracks`` list. Consists of these data members:
 
@@ -356,8 +356,8 @@ class Distance:
     for each individual penalty.
     """
 
-    def __init__(self):
-        self._penalties = {}
+    def __init__(self) -> None:
+        self._penalties: dict[str, list[float]] = {}
         self.tracks: dict[TrackInfo, Distance] = {}
 
     @cached_classproperty
@@ -473,7 +473,6 @@ class Distance:
         matched against `value2`.
         """
         if isinstance(value1, re.Pattern):
-            value2 = cast(str, value2)
             return bool(value1.match(value2))
         return value1 == value2
 

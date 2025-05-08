@@ -113,6 +113,7 @@ class SpotifyPlugin(SearchApiMetadataSourcePluginNext):
                 "tokenfile": "spotify_token.json",
             }
         )
+        self.config["client_id"].redact = True
         self.config["client_secret"].redact = True
 
         self.setup()

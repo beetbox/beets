@@ -29,6 +29,7 @@ import mediafile
 
 import beets
 from beets import logging
+from beets.util.id_extractors import extract_release_id
 
 if sys.version_info >= (3, 10):
     from typing import ParamSpec
@@ -43,7 +44,8 @@ if TYPE_CHECKING:
 
     from beets.autotag import AlbumInfo, Distance, TrackInfo
     from beets.dbcore import Query
-    from beets.dbcore.db import FieldQueryType, SQLiteType
+    from beets.dbcore.db import FieldQueryType
+    from beets.dbcore.types import Type
     from beets.importer import ImportSession, ImportTask
     from beets.library import Album, Item, Library
     from beets.ui import Subcommand
@@ -217,7 +219,7 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
 
     def album_distance(
         self,
-        items: list[Item],
+        items: Sequence[Item],
         album_info: AlbumInfo,
         mapping: dict[Item, TrackInfo],
     ) -> Distance:
@@ -410,10 +412,10 @@ def queries() -> dict[str, type[Query]]:
     return out
 
 
-def types(model_cls: type[AnyModel]) -> dict[str, type[SQLiteType]]:
+def types(model_cls: type[AnyModel]) -> dict[str, Type]:
     # Gives us `item_types` and `album_types`
     attr_name = f"{model_cls.__name__.lower()}_types"
-    types: dict[str, type[SQLiteType]] = {}
+    types: dict[str, Type] = {}
     for plugin in find_plugins():
         plugin_types = getattr(plugin, attr_name, {})
         for field in plugin_types:
@@ -450,7 +452,7 @@ def track_distance(item: Item, info: TrackInfo) -> Distance:
 
 
 def album_distance(
-    items: list[Item],
+    items: Sequence[Item],
     album_info: AlbumInfo,
     mapping: dict[Item, TrackInfo],
 ) -> Distance:
