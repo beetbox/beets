@@ -662,24 +662,6 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert t[1].trackdisambig == "SECOND TRACK"
 
 
-class ParseIDTest(BeetsTestCase):
-    def test_parse_id_correct(self):
-        id_string = "28e32c71-1450-463e-92bf-e0a46446fc11"
-        out = musicbrainz._parse_id(id_string)
-        assert out == id_string
-
-    def test_parse_id_non_id_returns_none(self):
-        id_string = "blah blah"
-        out = musicbrainz._parse_id(id_string)
-        assert out is None
-
-    def test_parse_id_url_finds_id(self):
-        id_string = "28e32c71-1450-463e-92bf-e0a46446fc11"
-        id_url = "https://musicbrainz.org/entity/%s" % id_string
-        out = musicbrainz._parse_id(id_url)
-        assert out == id_string
-
-
 class ArtistFlatteningTest(BeetsTestCase):
     def _credit_dict(self, suffix=""):
         return {

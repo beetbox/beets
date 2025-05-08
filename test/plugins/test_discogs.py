@@ -21,7 +21,6 @@ import pytest
 from beets import config
 from beets.test._common import Bag
 from beets.test.helper import BeetsTestCase, capture_log
-from beets.util.id_extractors import extract_discogs_id_regex
 from beetsplug.discogs import DiscogsPlugin
 
 
@@ -368,37 +367,6 @@ class DGAlbumInfoTest(BeetsTestCase):
 
         assert d is None
         assert "Release does not contain the required fields" in logs[0]
-
-    def test_album_for_id(self):
-        """Test parsing for a valid Discogs release_id"""
-        test_patterns = [
-            (
-                "http://www.discogs.com/G%C3%BCnther-Lause-Meru-Ep/release/4354798",
-                4354798,
-            ),
-            (
-                "http://www.discogs.com/release/4354798-G%C3%BCnther-Lause-Meru-Ep",
-                4354798,
-            ),
-            (
-                "http://www.discogs.com/G%C3%BCnther-4354798Lause-Meru-Ep/release/4354798",  # NOQA E501
-                4354798,
-            ),
-            (
-                "http://www.discogs.com/release/4354798-G%C3%BCnther-4354798Lause-Meru-Ep/",  # NOQA E501
-                4354798,
-            ),
-            ("[r4354798]", 4354798),
-            ("r4354798", 4354798),
-            ("4354798", 4354798),
-            ("yet-another-metadata-provider.org/foo/12345", ""),
-            ("005b84a0-ecd6-39f1-b2f6-6eb48756b268", ""),
-        ]
-        for test_pattern, expected in test_patterns:
-            match = extract_discogs_id_regex(test_pattern)
-            if not match:
-                match = ""
-            assert match == expected
 
     def test_default_genre_style_settings(self):
         """Test genre default settings, genres to genre, styles to style"""
