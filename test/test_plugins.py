@@ -30,16 +30,10 @@ from beets.importer import (
     action,
 )
 from beets.library import Item
-from beets.plugins import MetadataSourcePlugin
 from beets.test import helper
 from beets.test.helper import AutotagStub, ImportHelper, TerminalImportMixin
 from beets.test.helper import PluginTestCase as BasePluginTestCase
 from beets.util import displayable_path, syspath
-from beets.util.id_extractors import (
-    beatport_id_regex,
-    deezer_id_regex,
-    spotify_id_regex,
-)
 
 
 class PluginLoaderTestCase(BasePluginTestCase):
@@ -547,61 +541,3 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
         self.mock_input_options.assert_called_once_with(
             opts, default="a", require=ANY
         )
-
-
-class ParseSpotifyIDTest(unittest.TestCase):
-    def test_parse_id_correct(self):
-        id_string = "39WqpoPgZxygo6YQjehLJJ"
-        out = MetadataSourcePlugin._get_id("album", id_string, spotify_id_regex)
-        assert out == id_string
-
-    def test_parse_id_non_id_returns_none(self):
-        id_string = "blah blah"
-        out = MetadataSourcePlugin._get_id("album", id_string, spotify_id_regex)
-        assert out is None
-
-    def test_parse_id_url_finds_id(self):
-        id_string = "39WqpoPgZxygo6YQjehLJJ"
-        id_url = "https://open.spotify.com/album/%s" % id_string
-        out = MetadataSourcePlugin._get_id("album", id_url, spotify_id_regex)
-        assert out == id_string
-
-
-class ParseDeezerIDTest(unittest.TestCase):
-    def test_parse_id_correct(self):
-        id_string = "176356382"
-        out = MetadataSourcePlugin._get_id("album", id_string, deezer_id_regex)
-        assert out == id_string
-
-    def test_parse_id_non_id_returns_none(self):
-        id_string = "blah blah"
-        out = MetadataSourcePlugin._get_id("album", id_string, deezer_id_regex)
-        assert out is None
-
-    def test_parse_id_url_finds_id(self):
-        id_string = "176356382"
-        id_url = "https://www.deezer.com/album/%s" % id_string
-        out = MetadataSourcePlugin._get_id("album", id_url, deezer_id_regex)
-        assert out == id_string
-
-
-class ParseBeatportIDTest(unittest.TestCase):
-    def test_parse_id_correct(self):
-        id_string = "3089651"
-        out = MetadataSourcePlugin._get_id(
-            "album", id_string, beatport_id_regex
-        )
-        assert out == id_string
-
-    def test_parse_id_non_id_returns_none(self):
-        id_string = "blah blah"
-        out = MetadataSourcePlugin._get_id(
-            "album", id_string, beatport_id_regex
-        )
-        assert out is None
-
-    def test_parse_id_url_finds_id(self):
-        id_string = "3089651"
-        id_url = "https://www.beatport.com/release/album-name/%s" % id_string
-        out = MetadataSourcePlugin._get_id("album", id_url, beatport_id_regex)
-        assert out == id_string
