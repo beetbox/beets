@@ -43,7 +43,7 @@ from beets.plugins import BeetsPlugin, MetadataSourcePlugin, get_distance
 from beets.util.id_extractors import extract_release_id
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Callable, Iterable
 
     from beets.library import Item
 
@@ -185,57 +185,30 @@ class DiscogsPlugin(BeetsPlugin):
     ) -> Iterable[AlbumInfo]:
         return self.get_albums(f"{artist} {album}" if va_likely else album)
 
-    def get_track_from_album_by_title(
-        self, album_info, title, dist_threshold=0.3
-    ):
-        def compare_func(track_info):
-            track_title = getattr(track_info, "title", None)
-            dist = string_dist(track_title, title)
-            return track_title and dist < dist_threshold
-
-        return self.get_track_from_album(album_info, compare_func)
-
-    def get_track_from_album(self, album_info, compare_func):
-        """Return the first track of the release where `compare_func` returns
-        true.
-
-        :return: TrackInfo object.
-        :rtype: beets.autotag.hooks.TrackInfo
-        """
-        if not album_info:
+    def get_track_from_album(
+        self, album_info: AlbumInfo, compare: Callable[[TrackInfo], float]
+    ) -> TrackInfo | None:
+        """Return the best matching track of the release."""
+        scores_and_tracks = [(compare(t), t) for t in album_info.tracks]
+        score, track_info = min(scores_and_tracks, key=lambda x: x[0])
+        if score > 0.3:
             return None
 
-        for track_info in album_info.tracks:
-            # check for matching position
-            if not compare_func(track_info):
-                continue
-
-            # attach artist info if not provided
-            if not track_info["artist"]:
-                track_info["artist"] = album_info.artist
-                track_info["artist_id"] = album_info.artist_id
-            # attach album info
-            track_info["album"] = album_info.album
-
-            return track_info
-
-        return None
+        track_info["artist"] = album_info.artist
+        track_info["artist_id"] = album_info.artist_id
+        track_info["album"] = album_info.album
+        return track_info
 
     def item_candidates(
         self, item: Item, artist: str, title: str
     ) -> Iterable[TrackInfo]:
         albums = self.candidates([item], artist, title, False)
 
-        candidates = []
-        for album_cur in albums:
-            self._log.debug("searching within album {0}", album_cur.album)
-            track_result = self.get_track_from_album_by_title(
-                album_cur, item["title"]
-            )
-            if track_result:
-                candidates.append(track_result)
+        def compare_func(track_info: TrackInfo) -> float:
+            return string_dist(track_info.title, title)
 
-        return candidates
+        tracks = (self.get_track_from_album(a, compare_func) for a in albums)
+        return list(filter(None, tracks))
 
     def album_for_id(self, album_id: str) -> AlbumInfo | None:
         """Fetches an album by its Discogs ID and returns an AlbumInfo object
