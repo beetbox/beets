@@ -73,6 +73,7 @@ class DiscogsPlugin(BeetsPlugin):
                 "separator": ", ",
                 "index_tracks": False,
                 "append_style_genre": False,
+                "search_limit": 5,
             }
         )
         self.config["apikey"].redact = True
@@ -257,8 +258,8 @@ class DiscogsPlugin(BeetsPlugin):
             )
             if track_result:
                 candidates.append(track_result)
-        # first 10 results, don't overwhelm with options
-        return candidates[:10]
+
+        return candidates
 
     def album_for_id(self, album_id):
         """Fetches an album by its Discogs ID and returns an AlbumInfo object
@@ -303,8 +304,9 @@ class DiscogsPlugin(BeetsPlugin):
         query = re.sub(r"(?i)\b(CD|disc|vinyl)\s*\d+", "", query)
 
         try:
-            releases = self.discogs_client.search(query, type="release").page(1)
-
+            results = self.discogs_client.search(query, type="release")
+            results.per_page = self.config["search_limit"].as_number()
+            releases = results.page(1)
         except CONNECTION_ERRORS:
             self._log.debug(
                 "Communication error while searching for {0!r}",
@@ -312,9 +314,7 @@ class DiscogsPlugin(BeetsPlugin):
                 exc_info=True,
             )
             return []
-        return [
-            album for album in map(self.get_album_info, releases[:5]) if album
-        ]
+        return map(self.get_album_info, releases)
 
     def get_master_year(self, master_id):
         """Fetches a master release given its Discogs ID and returns its year
