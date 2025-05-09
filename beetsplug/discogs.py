@@ -25,6 +25,7 @@ import re
 import socket
 import time
 import traceback
+from functools import cache
 from string import ascii_lowercase
 from typing import TYPE_CHECKING
 
@@ -275,16 +276,16 @@ class DiscogsPlugin(BeetsPlugin):
             return []
         return map(self.get_album_info, releases)
 
-    def get_master_year(self, master_id):
+    @cache
+    def get_master_year(self, master_id: str) -> int | None:
         """Fetches a master release given its Discogs ID and returns its year
         or None if the master release is not found.
         """
-        self._log.debug("Searching for master release {0}", master_id)
+        self._log.debug("Getting master release {0}", master_id)
         result = Master(self.discogs_client, {"id": master_id})
 
         try:
-            year = result.fetch("year")
-            return year
+            return result.fetch("year")
         except DiscogsAPIError as e:
             if e.status_code != 404:
                 self._log.debug(
