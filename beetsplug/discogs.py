@@ -166,22 +166,7 @@ class DiscogsPlugin(BeetsPlugin):
     def candidates(
         self, items: list[Item], artist: str, album: str, va_likely: bool
     ) -> Iterable[AlbumInfo]:
-        if va_likely:
-            query = album
-        else:
-            query = f"{artist} {album}"
-        try:
-            return self.get_albums(query)
-        except DiscogsAPIError as e:
-            self._log.debug("API Error: {0} (query: {1})", e, query)
-            if e.status_code == 401:
-                self.reset_auth()
-                return self.candidates(items, artist, album, va_likely)
-            else:
-                return []
-        except CONNECTION_ERRORS:
-            self._log.debug("Connection error in album search", exc_info=True)
-            return []
+        return self.get_albums(f"{artist} {album}" if va_likely else album)
 
     def get_track_from_album_by_title(
         self, album_info, title, dist_threshold=0.3
@@ -222,18 +207,8 @@ class DiscogsPlugin(BeetsPlugin):
     def item_candidates(
         self, item: Item, artist: str, title: str
     ) -> Iterable[TrackInfo]:
-        query = f"{artist} {title}"
-        try:
-            albums = self.get_albums(query)
-        except DiscogsAPIError as e:
-            self._log.debug("API Error: {0} (query: {1})", e, query)
-            if e.status_code == 401:
-                self.reset_auth()
-                return self.item_candidates(item, artist, title)
-            else:
-                return []
-        except CONNECTION_ERRORS:
-            self._log.debug("Connection error in track search", exc_info=True)
+        albums = self.candidates([item], artist, title, False)
+
         candidates = []
         for album_cur in albums:
             self._log.debug("searching within album {0}", album_cur.album)
