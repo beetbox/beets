@@ -61,6 +61,22 @@ CONNECTION_ERRORS = (
 )
 
 
+TRACK_INDEX_RE = re.compile(
+    r"""
+    (.*?)   # medium: everything before medium_index.
+    (\d*?)  # medium_index: a number at the end of
+            # `position`, except if followed by a subtrack index.
+            # subtrack_index: can only be matched if medium
+            # or medium_index have been matched, and can be
+    (
+        (?<=\w)\.[\w]+  # a dot followed by a string (A.1, 2.A)
+      | (?<=\d)[A-Z]+   # a string that follows a number (1A, B2a)
+    )?
+    """,
+    re.VERBOSE,
+)
+
+
 class ReleaseFormat(TypedDict):
     name: str
     qty: int
@@ -655,33 +671,21 @@ class DiscogsPlugin(BeetsPlugin):
             medium_index=medium_index,
         )
 
-    def get_track_index(self, position):
+    @staticmethod
+    def get_track_index(
+        position: str,
+    ) -> tuple[str | None, str | None, str | None]:
         """Returns the medium, medium index and subtrack index for a discogs
         track position."""
         # Match the standard Discogs positions (12.2.9), which can have several
         # forms (1, 1-1, A1, A1.1, A1a, ...).
-        match = re.match(
-            r"^(.*?)"  # medium: everything before medium_index.
-            r"(\d*?)"  # medium_index: a number at the end of
-            # `position`, except if followed by a subtrack
-            # index.
-            # subtrack_index: can only be matched if medium
-            # or medium_index have been matched, and can be
-            r"((?<=\w)\.[\w]+"  # - a dot followed by a string (A.1, 2.A)
-            r"|(?<=\d)[A-Z]+"  # - a string that follows a number (1A, B2a)
-            r")?"
-            r"$",
-            position.upper(),
-        )
-
-        if match:
+        medium = index = subindex = None
+        if match := TRACK_INDEX_RE.fullmatch(position.upper()):
             medium, index, subindex = match.groups()
 
             if subindex and subindex.startswith("."):
                 subindex = subindex[1:]
-        else:
-            self._log.debug("Invalid position: {0}", position)
-            medium = index = subindex = None
+
         return medium or None, index or None, subindex or None
 
     def get_track_length(self, duration):
