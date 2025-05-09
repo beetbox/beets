@@ -17,6 +17,8 @@ New features:
   :bug:`4605`
 * :doc:`plugins/web`: Show notifications when a track plays. This uses the
   Media Session API to customize media notifications.
+* :doc:`plugins/discogs`: Add configurable ``search_limit`` option to
+  limit the number of results returned by the Discogs metadata search queries.
 
 Bug fixes:
 
