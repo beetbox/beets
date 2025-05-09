@@ -26,6 +26,7 @@ import socket
 import time
 import traceback
 from string import ascii_lowercase
+from typing import TYPE_CHECKING
 
 import confuse
 from discogs_client import Client, Master, Release
@@ -39,6 +40,11 @@ from beets import config
 from beets.autotag.hooks import AlbumInfo, TrackInfo, string_dist
 from beets.plugins import BeetsPlugin, MetadataSourcePlugin, get_distance
 from beets.util.id_extractors import extract_release_id
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from beets.library import Item
 
 USER_AGENT = f"beets/{beets.__version__} +https://beets.io/"
 API_KEY = "rAzVUQYRaoFjeBjyWuWZ"
@@ -157,16 +163,9 @@ class DiscogsPlugin(BeetsPlugin):
             data_source="Discogs", info=track_info, config=self.config
         )
 
-    def candidates(self, items, artist, album, va_likely):
-        """Returns a list of AlbumInfo objects for discogs search results
-        matching an album and artist (if not various).
-        """
-        if not album and not artist:
-            self._log.debug(
-                "Skipping Discogs query. Files missing album and artist tags."
-            )
-            return []
-
+    def candidates(
+        self, items: list[Item], artist: str, album: str, va_likely: bool
+    ) -> Iterable[AlbumInfo]:
         if va_likely:
             query = album
         else:
@@ -220,24 +219,9 @@ class DiscogsPlugin(BeetsPlugin):
 
         return None
 
-    def item_candidates(self, item, artist, title):
-        """Returns a list of TrackInfo objects for Search API results
-        matching ``title`` and ``artist``.
-        :param item: Singleton item to be matched.
-        :type item: beets.library.Item
-        :param artist: The artist of the track to be matched.
-        :type artist: str
-        :param title: The title of the track to be matched.
-        :type title: str
-        :return: Candidate TrackInfo objects.
-        :rtype: list[beets.autotag.hooks.TrackInfo]
-        """
-        if not artist and not title:
-            self._log.debug(
-                "Skipping Discogs query. File missing artist and title tags."
-            )
-            return []
-
+    def item_candidates(
+        self, item: Item, artist: str, title: str
+    ) -> Iterable[TrackInfo]:
         query = f"{artist} {title}"
         try:
             albums = self.get_albums(query)
@@ -261,7 +245,7 @@ class DiscogsPlugin(BeetsPlugin):
 
         return candidates
 
-    def album_for_id(self, album_id):
+    def album_for_id(self, album_id: str) -> AlbumInfo | None:
         """Fetches an album by its Discogs ID and returns an AlbumInfo object
         or None if the album is not found.
         """
@@ -292,7 +276,7 @@ class DiscogsPlugin(BeetsPlugin):
             return None
         return self.get_album_info(result)
 
-    def get_albums(self, query):
+    def get_albums(self, query: str) -> Iterable[AlbumInfo]:
         """Returns a list of AlbumInfo objects for a discogs search query."""
         # Strip non-word characters from query. Things like "!" and "-" can
         # cause a query to return no results, even if they match the artist or
