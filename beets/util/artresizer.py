@@ -166,6 +166,9 @@ class IMBackend(LocalBackend):
         try:
             util.command_output(cmd)
         except subprocess.CalledProcessError:
+            # Check for resource leak
+            if os.path.exists(path_out): 
+                os.unlink(path_out)
             log.warning(
                 "artresizer: IM convert failed for {0}",
                 displayable_path(path_in),
@@ -423,6 +426,9 @@ class PILBackend(LocalBackend):
             else:
                 return path_out
         except OSError:
+            #Check for Resource Leaks
+            if os.path.exists(path_out):
+                os.unlink(path_out)
             log.error(
                 "PIL cannot create thumbnail for '{0}'",
                 displayable_path(path_in),
