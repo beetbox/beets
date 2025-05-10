@@ -690,7 +690,7 @@ class UpdateTest(BeetsTestCase):
         mf.album = "differentAlbum"
         mf.genre = "differentGenre"
         mf.save()
-        self._update(move=True, fields=["genre"])
+        self._update(move=True, fields=["genres"])
         item = self.lib.items().get()
         assert b"differentAlbum" not in item.path
         assert item.genre == "differentGenre"
