@@ -327,7 +327,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
                         if extm3u:
                             attr = [(k, entry.item[k]) for k in keys]
                             al = [
-                                f" {key}=\"{quote(str(value), safe='/:')}\""
+                                f' {key}="{quote(str(value), safe="/:")}"'
                                 for key, value in attr
                             ]
                             attrs = "".join(al)

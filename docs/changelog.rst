@@ -6,6 +6,17 @@ Changelog goes here! Please add your entry to the bottom of one of the lists bel
 Unreleased
 ----------
 
+New features:
+
+Bug fixes:
+
+For packagers:
+
+Other changes:
+
+2.3.0 (May 07, 2025)
+--------------------
+
 Beets now requires Python 3.9 or later since support for EOL Python 3.8 has
 been dropped.
 
@@ -83,6 +94,7 @@ Bug fixes:
   lyrics.
   :bug:`5583`
 * ImageMagick 7.1.1-44 is now supported.
+* :doc:`plugins/parentwork`: Only output parentwork changes when running in verbose mode.
 
 For packagers:
 

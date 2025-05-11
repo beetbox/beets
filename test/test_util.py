@@ -156,13 +156,8 @@ class PathConversionTest(BeetsTestCase):
         assert path == outpath
 
     def _windows_bytestring_path(self, path):
-        old_gfse = sys.getfilesystemencoding
-        sys.getfilesystemencoding = lambda: "mbcs"
-        try:
-            with _common.platform_windows():
-                return util.bytestring_path(path)
-        finally:
-            sys.getfilesystemencoding = old_gfse
+        with _common.platform_windows():
+            return util.bytestring_path(path)
 
     def test_bytestring_path_windows_encodes_utf8(self):
         path = "caf\xe9"
@@ -175,18 +170,47 @@ class PathConversionTest(BeetsTestCase):
         assert outpath == "C:\\caf\xe9".encode()
 
 
-class PathTruncationTest(BeetsTestCase):
-    def test_truncate_bytestring(self):
-        with _common.platform_posix():
-            p = util.truncate_path(b"abcde/fgh", 4)
-        assert p == b"abcd/fgh"
+class TestPathLegalization:
+    @pytest.fixture(autouse=True)
+    def _patch_max_filename_length(self, monkeypatch):
+        monkeypatch.setattr("beets.util.get_max_filename_length", lambda: 5)
 
-    def test_truncate_unicode(self):
-        with _common.platform_posix():
-            p = util.truncate_path("abcde/fgh", 4)
-        assert p == "abcd/fgh"
+    @pytest.mark.parametrize(
+        "path, expected",
+        [
+            ("abcdeX/fgh", "abcde/fgh"),
+            ("abcde/fXX.ext", "abcde/f.ext"),
+            ("a🎹/a.ext", "a🎹/a.ext"),
+            ("ab🎹/a.ext", "ab/a.ext"),
+        ],
+    )
+    def test_truncate(self, path, expected):
+        path = path.replace("/", os.path.sep)
+        expected = expected.replace("/", os.path.sep)
 
-    def test_truncate_preserves_extension(self):
-        with _common.platform_posix():
-            p = util.truncate_path("abcde/fgh.ext", 5)
-        assert p == "abcde/f.ext"
+        assert util.truncate_path(path) == expected
+
+    _p = pytest.param
+
+    @pytest.mark.parametrize(
+        "replacements, expected_path, expected_truncated",
+        [  # [ repl before truncation, repl after truncation   ]
+            _p([                                                  ], "_abcd",  False, id="default"),
+            _p([(r"abcdX$", "1ST"),                               ], ":1ST",   False, id="1st_valid"),
+            _p([(r"abcdX$", "TOO_LONG"),                          ], ":TOO_",  False, id="1st_truncated"),
+            _p([(r"abcdX$", "1ST"),       (r"1ST$",   "2ND")      ], ":2ND",   False, id="both_valid"),
+            _p([(r"abcdX$", "TOO_LONG"),  (r"TOO_$",  "2ND")      ], ":2ND",   False, id="1st_truncated_2nd_valid"),
+            _p([(r"abcdX$", "1ST"),       (r"1ST$",   "TOO_LONG") ], ":TOO_",  False, id="1st_valid_2nd_truncated"),
+            # if the logic truncates the path twice, it ends up applying the default replacements
+            _p([(r"abcdX$", "TOO_LONG"),  (r"TOO_$",  "TOO_LONG") ], "_TOO_",  True,  id="both_truncated_default_repl_applied"),
+        ]
+    )  # fmt: skip
+    def test_replacements(
+        self, replacements, expected_path, expected_truncated
+    ):
+        replacements = [(re.compile(pat), repl) for pat, repl in replacements]
+
+        assert util.legalize_path(":abcdX", replacements, "") == (
+            expected_path,
+            expected_truncated,
+        )
