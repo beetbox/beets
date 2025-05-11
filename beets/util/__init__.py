@@ -715,7 +715,7 @@ def truncate_path(str_path: str) -> str:
     path = Path(str_path)
     parent_parts = [truncate_str(p, max_length) for p in path.parts[:-1]]
     stem = truncate_str(path.stem, max_length - len(path.suffix))
-    return str(Path(*parent_parts, stem).with_suffix(path.suffix))
+    return str(Path(*parent_parts, stem)) + path.suffix
 
 
 def _legalize_stage(
