@@ -10,6 +10,11 @@ New features:
 
 Bug fixes:
 
+* :doc:`/reference/pathformat`: Fixed a regression where path legalization
+  incorrectly removed parts of user-configured path formats that followed a dot
+  (**.**).
+  :bug:`5771`
+
 For packagers:
 
 Other changes:

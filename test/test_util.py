@@ -171,6 +171,8 @@ class PathConversionTest(BeetsTestCase):
 
 
 class TestPathLegalization:
+    _p = pytest.param
+
     @pytest.fixture(autouse=True)
     def _patch_max_filename_length(self, monkeypatch):
         monkeypatch.setattr("beets.util.get_max_filename_length", lambda: 5)
@@ -178,19 +180,21 @@ class TestPathLegalization:
     @pytest.mark.parametrize(
         "path, expected",
         [
-            ("abcdeX/fgh", "abcde/fgh"),
-            ("abcde/fXX.ext", "abcde/f.ext"),
-            ("a🎹/a.ext", "a🎹/a.ext"),
-            ("ab🎹/a.ext", "ab/a.ext"),
+            _p("abcdeX/fgh", "abcde/fgh", id="truncate-parent-dir"),
+            _p("abcde/fXX.ext", "abcde/f.ext", id="truncate-filename"),
+            # note that 🎹 is 4 bytes long:
+            # >>> "🎹".encode("utf-8")
+            # b'\xf0\x9f\x8e\xb9'
+            _p("a🎹/a.ext", "a🎹/a.ext", id="unicode-fit"),
+            _p("ab🎹/a.ext", "ab/a.ext", id="unicode-truncate-fully-one-byte-over-limit"),
+            _p("f.a.e", "f.a.e", id="persist-dot-in-filename"),  # see #5771
         ],
-    )
+    )  # fmt: skip
     def test_truncate(self, path, expected):
         path = path.replace("/", os.path.sep)
         expected = expected.replace("/", os.path.sep)
 
         assert util.truncate_path(path) == expected
-
-    _p = pytest.param
 
     @pytest.mark.parametrize(
         "replacements, expected_path, expected_truncated",
