@@ -910,7 +910,7 @@ class Album(LibModel):
     _always_dirty = True
     _fields = {
         "id": types.PRIMARY_ID,
-        "artpath": types.PathType(True),
+        "artpath": types.NullPathType(),
         "added": types.DATE,
         "albumartist": types.STRING,
         "albumartist_sort": types.STRING,
