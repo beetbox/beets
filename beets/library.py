@@ -349,6 +349,7 @@ class LibModel(dbcore.Model["Library"]):
 
     # Config key that specifies how an instance should be formatted.
     _format_config_key: str
+    path: bytes
 
     @cached_classproperty
     def writable_media_fields(cls) -> set[str]:
@@ -644,7 +645,7 @@ class Item(LibModel):
     _format_config_key = "format_item"
 
     # Cached album object. Read-only.
-    __album = None
+    __album: Album | None = None
 
     @cached_classproperty
     def _relation(cls) -> type[Album]:
@@ -663,9 +664,9 @@ class Item(LibModel):
         )
 
     @property
-    def filepath(self) -> Path | None:
+    def filepath(self) -> Path:
         """The path to the item's file as pathlib.Path."""
-        return Path(os.fsdecode(self.path)) if self.path else self.path
+        return Path(os.fsdecode(self.path))
 
     @property
     def _cached_album(self):
@@ -1126,7 +1127,7 @@ class Item(LibModel):
             )
 
         lib_path_str, fallback = util.legalize_path(
-            subpath, db.replacements, os.path.splitext(self.path)[1]
+            subpath, db.replacements, self.filepath.suffix
         )
         if fallback:
             # Print an error message if legalization fell back to
