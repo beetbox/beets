@@ -1032,6 +1032,14 @@ def raw_seconds_short(string: str) -> float:
     return float(minutes * 60 + seconds)
 
 
+def human_seconds_short(interval):
+    """Formats a number of seconds as a short human-readable M:SS
+    string.
+    """
+    interval = int(interval)
+    return "%i:%02i" % (interval // 60, interval % 60)
+
+
 def asciify_path(path: str, sep_replace: str) -> str:
     """Decodes all unicode characters in a path into ASCII equivalents.
 

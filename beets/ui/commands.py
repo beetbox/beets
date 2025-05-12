@@ -541,8 +541,8 @@ class ChangeRepresentation:
         cur_length0 = item.length if item.length else 0
         new_length0 = track_info.length if track_info.length else 0
         # format into string
-        cur_length = f"({ui.human_seconds_short(cur_length0)})"
-        new_length = f"({ui.human_seconds_short(new_length0)})"
+        cur_length = f"({util.human_seconds_short(cur_length0)})"
+        new_length = f"({util.human_seconds_short(new_length0)})"
         # colorize
         lhs_length = ui.colorize(highlight_color, cur_length)
         rhs_length = ui.colorize(highlight_color, new_length)
@@ -706,14 +706,14 @@ class AlbumChange(ChangeRepresentation):
         for track_info in self.match.extra_tracks:
             line = f" ! {track_info.title} (#{self.format_index(track_info)})"
             if track_info.length:
-                line += f" ({ui.human_seconds_short(track_info.length)})"
+                line += f" ({util.human_seconds_short(track_info.length)})"
             print_(ui.colorize("text_warning", line))
         if self.match.extra_items:
             print_(f"Unmatched tracks ({len(self.match.extra_items)}):")
         for item in self.match.extra_items:
             line = " ! {} (#{})".format(item.title, self.format_index(item))
             if item.length:
-                line += " ({})".format(ui.human_seconds_short(item.length))
+                line += " ({})".format(util.human_seconds_short(item.length))
             print_(ui.colorize("text_warning", line))
 
 
@@ -795,7 +795,7 @@ def summarize_items(items, singleton):
                 round(int(items[0].samplerate) / 1000, 1), items[0].bitdepth
             )
             summary_parts.append(sample_bits)
-        summary_parts.append(ui.human_seconds_short(total_duration))
+        summary_parts.append(util.human_seconds_short(total_duration))
         summary_parts.append(ui.human_bytes(total_filesize))
 
     return ", ".join(summary_parts)
