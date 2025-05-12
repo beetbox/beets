@@ -153,8 +153,9 @@ make sure any existing genres remain, set ``whitelist: no``).
     force: yes
     keep_existing: yes
 
-If ``force`` is disabled the ``keep_existing`` option is simply ignored (since ``force:
-no`` means `not touching` existing tags anyway).
+.. attention::
+    If ``force`` is disabled the ``keep_existing`` option is simply ignored (since ``force:
+    no`` means `not touching` existing tags anyway).
 
 
 
@@ -172,14 +173,16 @@ configuration file. The available options are:
   Default: ``no`` (disabled).
 - **count**: Number of genres to fetch.
   Default: 1
-- **fallback**: A string if to use a fallback genre when no genre is found.
-  You can use the empty string ``''`` to reset the genre.
+- **fallback**: A string to use as a fallback genre when no genre is found `or`
+  the original genre is not desired to be kept (``keep_existing: no``). You can
+  use the empty string ``''`` to reset the genre.
   Default: None.
-- **force**: By default, lastgenre will fetch new genres for empty tags only.
-  Enable the ``keep_existing`` option to combine existing and new genres. (see
-  `Handling pre-populated tags`_).
+- **force**: By default, lastgenre will fetch new genres for empty tags only,
+  enable this option to always try to fetch new last.fm genres. Enable the
+  ``keep_existing`` option to combine existing and new genres. (see `Handling
+  pre-populated tags`_).
   Default: ``no``.
-- **keep_existing**: This option alters the ``force`` behaviour.
+- **keep_existing**: This option alters the ``force`` behavior.
   If both ``force`` and ``keep_existing`` are enabled, existing genres are
   combined with new ones. Depending on the ``whitelist`` setting, existing and
   new genres are filtered accordingly. To ensure only fresh last.fm genres,
@@ -201,6 +204,12 @@ configuration file. The available options are:
   Default: ``yes``.
 - **title_case**: Convert the new tags to TitleCase before saving.
   Default: ``yes``.
+- **extended_debug**: Add additional debug logging messages that show what
+  last.fm tags were fetched for tracks, albums and artists. This is done before
+  any canonicalization and whitelist filtering is applied. It's useful for
+  tuning the plugin's settings and understanding how it works, but it can be
+  quite verbose.
+  Default: ``no``.
 
 Running Manually
 ----------------

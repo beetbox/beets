@@ -28,7 +28,7 @@ from confuse import ConfigTypeError, Optional
 from beets import art, config, plugins, ui, util
 from beets.library import Item, parse_query_string
 from beets.plugins import BeetsPlugin
-from beets.util import arg_encoding, par_map
+from beets.util import par_map
 from beets.util.artresizer import ArtResizer
 from beets.util.m3u import M3UFile
 
@@ -284,7 +284,7 @@ class ConvertPlugin(BeetsPlugin):
         if not quiet and not pretend:
             self._log.info("Encoding {0}", util.displayable_path(source))
 
-        command = command.decode(arg_encoding(), "surrogateescape")
+        command = os.fsdecode(command)
         source = os.fsdecode(source)
         dest = os.fsdecode(dest)
 
@@ -298,7 +298,7 @@ class ConvertPlugin(BeetsPlugin):
                     "dest": dest,
                 }
             )
-            encode_cmd.append(args[i].encode(util.arg_encoding()))
+            encode_cmd.append(os.fsdecode(args[i]))
 
         if pretend:
             self._log.info("{0}", " ".join(ui.decargs(args)))
@@ -624,13 +624,7 @@ class ConvertPlugin(BeetsPlugin):
             # strings we get from item.destination to bytes.
             items_paths = [
                 os.path.relpath(
-                    util.bytestring_path(
-                        item.destination(
-                            basedir=dest,
-                            path_formats=path_formats,
-                            fragment=False,
-                        )
-                    ),
+                    item.destination(basedir=dest, path_formats=path_formats),
                     pl_dir,
                 )
                 for item in items

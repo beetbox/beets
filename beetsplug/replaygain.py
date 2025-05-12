@@ -28,7 +28,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from multiprocessing.pool import ThreadPool
 from threading import Event, Thread
-from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Callable, TypeVar
 
 from beets import ui
 from beets.plugins import BeetsPlugin
@@ -576,7 +576,7 @@ class CommandBackend(Backend):
             }
         )
 
-        self.command = cast(str, config["command"].as_str())
+        self.command: str = config["command"].as_str()
 
         if self.command:
             # Explicit executable path.
@@ -1225,7 +1225,7 @@ class ReplayGainPlugin(BeetsPlugin):
 
         # FIXME: Consider renaming the configuration option and deprecating the
         # old name 'overwrite'.
-        self.force_on_import = cast(bool, self.config["overwrite"].get(bool))
+        self.force_on_import: bool = self.config["overwrite"].get(bool)
 
         # Remember which backend is used for CLI feedback
         self.backend_name = self.config["backend"].as_str()
@@ -1491,7 +1491,7 @@ class ReplayGainPlugin(BeetsPlugin):
 
     def import_begin(self, session: ImportSession):
         """Handle `import_begin` event -> open pool"""
-        threads = cast(int, self.config["threads"].get(int))
+        threads: int = self.config["threads"].get(int)
 
         if (
             self.config["parallel_on_import"]
@@ -1526,9 +1526,7 @@ class ReplayGainPlugin(BeetsPlugin):
 
             # Bypass self.open_pool() if called with  `--threads 0`
             if opts.threads != 0:
-                threads = opts.threads or cast(
-                    int, self.config["threads"].get(int)
-                )
+                threads: int = opts.threads or self.config["threads"].get(int)
                 self.open_pool(threads)
 
             if opts.album:

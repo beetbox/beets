@@ -27,7 +27,6 @@ from pathlib import PurePosixPath
 
 from xdg import BaseDirectory
 
-from beets import util
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, decargs
 from beets.util import bytestring_path, displayable_path, syspath
@@ -162,7 +161,7 @@ class ThumbnailsPlugin(BeetsPlugin):
                 )
             else:
                 self._log.debug(
-                    "{1}x{1} thumbnail for {0} exists and is " "recent enough",
+                    "{1}x{1} thumbnail for {0} exists and is recent enough",
                     album,
                     size,
                 )
@@ -246,7 +245,7 @@ class GioURI(URIGetter):
         if self.available:
             self.libgio.g_type_init()  # for glib < 2.36
 
-            self.libgio.g_file_get_uri.argtypes = [ctypes.c_char_p]
+            self.libgio.g_file_new_for_path.argtypes = [ctypes.c_char_p]
             self.libgio.g_file_new_for_path.restype = ctypes.c_void_p
 
             self.libgio.g_file_get_uri.argtypes = [ctypes.c_void_p]
@@ -288,6 +287,6 @@ class GioURI(URIGetter):
             self.libgio.g_free(uri_ptr)
 
         try:
-            return uri.decode(util._fsencoding())
+            return os.fsdecode(uri)
         except UnicodeDecodeError:
             raise RuntimeError(f"Could not decode filename from GIO: {uri!r}")

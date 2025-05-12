@@ -1768,7 +1768,7 @@ def _open_library(config):
             )
         )
     log.debug(
-        "library database: {0}\n" "library directory: {1}",
+        "library database: {0}\nlibrary directory: {1}",
         util.displayable_path(lib.path),
         util.displayable_path(lib.directory),
     )

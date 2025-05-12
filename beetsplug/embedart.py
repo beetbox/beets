@@ -66,7 +66,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         if self.config["maxwidth"].get(int) and not ArtResizer.shared.local:
             self.config["maxwidth"] = 0
             self._log.warning(
-                "ImageMagick or PIL not found; " "'maxwidth' option ignored"
+                "ImageMagick or PIL not found; 'maxwidth' option ignored"
             )
         if (
             self.config["compare_threshold"].get(int)

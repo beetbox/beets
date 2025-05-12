@@ -54,7 +54,7 @@ class ThePlugin(BeetsPlugin):
                 else:
                     if not (p.startswith("^") or p.endswith("$")):
                         self._log.warning(
-                            'warning: "{0}" will not ' "match string start/end",
+                            'warning: "{0}" will not match string start/end',
                             p,
                         )
         if self.config["a"]:

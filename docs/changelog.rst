@@ -6,6 +6,22 @@ Changelog goes here! Please add your entry to the bottom of one of the lists bel
 Unreleased
 ----------
 
+New features:
+
+Bug fixes:
+
+* :doc:`/reference/pathformat`: Fixed a regression where path legalization
+  incorrectly removed parts of user-configured path formats that followed a dot
+  (**.**).
+  :bug:`5771`
+
+For packagers:
+
+Other changes:
+
+2.3.0 (May 07, 2025)
+--------------------
+
 Beets now requires Python 3.9 or later since support for EOL Python 3.8 has
 been dropped.
 
@@ -21,9 +37,14 @@ New features:
   when fetching lyrics.
 * :doc:`plugins/lyrics`: Rewrite lyrics translation functionality to use Azure
   AI Translator API and add relevant instructions to the documentation.
+* :doc:`plugins/missing`: Add support for all metadata sources.
+* :doc:`plugins/mbsync`: Add support for all metadata sorces.
 
 Bug fixes:
 
+* :doc:`plugins/thumbnails`: Fix API call to GIO on big endian architectures
+  (like s390x) in thumbnails plugin.
+  :bug:`5708`
 * :doc:`plugins/listenbrainz`: Fix rST formatting for URLs of Listenbrainz API Key documentation and config.yaml.
 * :doc:`plugins/listenbrainz`: Fix ``UnboundLocalError`` in cases where 'mbid' is not defined.
 * :doc:`plugins/fetchart`: Fix fetchart bug where a tempfile could not be deleted due to never being
@@ -78,6 +99,7 @@ Bug fixes:
   lyrics.
   :bug:`5583`
 * ImageMagick 7.1.1-44 is now supported.
+* :doc:`plugins/parentwork`: Only output parentwork changes when running in verbose mode.
 
 For packagers:
 
@@ -91,10 +113,13 @@ Other changes:
   wrong (outdated) commit. Now the tag is created in the same workflow step
   right after committing the version update.
   :bug:`5539`
-* Added some typehints: ImportSession and Pipeline have typehints now. Should
-  improve useability for new developers.
 * :doc:`/plugins/smartplaylist`: URL-encode additional item `fields` within generated
   EXTM3U playlists instead of JSON-encoding them.
+* typehints: `./beets/importer.py` file now has improved typehints. 
+* typehints: `./beets/plugins.py` file now includes typehints. 
+* :doc:`plugins/ftintitle`: Optimize the plugin by avoiding unnecessary writes
+  to the database.
+* Database models are now serializable with pickle.
 
 2.2.0 (December 02, 2024)
 -------------------------

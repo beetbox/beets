@@ -20,10 +20,9 @@ from __future__ import annotations
 
 import datetime
 import re
-from collections.abc import Iterable, Sequence
 from enum import IntEnum
 from functools import cache
-from typing import TYPE_CHECKING, Any, NamedTuple, TypeVar, cast
+from typing import TYPE_CHECKING, Any, NamedTuple, TypeVar
 
 import lap
 import numpy as np
@@ -40,6 +39,8 @@ from beets.autotag import (
 from beets.util import plurality
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
+
     from beets.library import Item
 
 # Artist signals that indicate "various artists". These are used at the
@@ -241,12 +242,14 @@ def distance(
     # Album.
     dist.add_string("album", likelies["album"], album_info.album)
 
+    preferred_config = config["match"]["preferred"]
     # Current or preferred media.
     if album_info.media:
         # Preferred media options.
-        patterns = config["match"]["preferred"]["media"].as_str_seq()
-        patterns = cast(Sequence[str], patterns)
-        options = [re.compile(r"(\d+x)?(%s)" % pat, re.I) for pat in patterns]
+        media_patterns: Sequence[str] = preferred_config["media"].as_str_seq()
+        options = [
+            re.compile(r"(\d+x)?(%s)" % pat, re.I) for pat in media_patterns
+        ]
         if options:
             dist.add_priority("media", album_info.media, options)
         # Current media.
@@ -258,7 +261,7 @@ def distance(
         dist.add_number("mediums", likelies["disctotal"], album_info.mediums)
 
     # Prefer earliest release.
-    if album_info.year and config["match"]["preferred"]["original_year"]:
+    if album_info.year and preferred_config["original_year"]:
         # Assume 1889 (earliest first gramophone discs) if we don't know the
         # original year.
         original = album_info.original_year or 1889
@@ -282,9 +285,8 @@ def distance(
             dist.add("year", 1.0)
 
     # Preferred countries.
-    patterns = config["match"]["preferred"]["countries"].as_str_seq()
-    patterns = cast(Sequence[str], patterns)
-    options = [re.compile(pat, re.I) for pat in patterns]
+    country_patterns: Sequence[str] = preferred_config["countries"].as_str_seq()
+    options = [re.compile(pat, re.I) for pat in country_patterns]
     if album_info.country and options:
         dist.add_priority("country", album_info.country, options)
     # Country.
@@ -447,9 +449,8 @@ def _add_candidate(
         return
 
     # Discard matches without required tags.
-    for req_tag in cast(
-        Sequence[str], config["match"]["required"].as_str_seq()
-    ):
+    required_tags: Sequence[str] = config["match"]["required"].as_str_seq()
+    for req_tag in required_tags:
         if getattr(info, req_tag) is None:
             log.debug("Ignored. Missing required tag: {0}", req_tag)
             return
@@ -462,8 +463,8 @@ def _add_candidate(
 
     # Skip matches with ignored penalties.
     penalties = [key for key, _ in dist]
-    ignored = cast(Sequence[str], config["match"]["ignored"].as_str_seq())
-    for penalty in ignored:
+    ignored_tags: Sequence[str] = config["match"]["ignored"].as_str_seq()
+    for penalty in ignored_tags:
         if penalty in penalties:
             log.debug("Ignored. Penalty: {0}", penalty)
             return
@@ -499,8 +500,8 @@ def tag_album(
     """
     # Get current metadata.
     likelies, consensus = current_metadata(items)
-    cur_artist = cast(str, likelies["artist"])
-    cur_album = cast(str, likelies["album"])
+    cur_artist: str = likelies["artist"]
+    cur_album: str = likelies["album"]
     log.debug("Tagging {0} - {1}", cur_artist, cur_album)
 
     # The output result, keys are the MB album ID.
@@ -510,8 +511,8 @@ def tag_album(
     if search_ids:
         for search_id in search_ids:
             log.debug("Searching for album ID: {0}", search_id)
-            for album_info_for_id in hooks.albums_for_id(search_id):
-                _add_candidate(items, candidates, album_info_for_id)
+            if info := hooks.album_for_id(search_id):
+                _add_candidate(items, candidates, info)
 
     # Use existing metadata or text search.
     else:
@@ -590,11 +591,9 @@ def tag_item(
     if trackids:
         for trackid in trackids:
             log.debug("Searching for track ID: {0}", trackid)
-            for track_info in hooks.tracks_for_id(trackid):
-                dist = track_distance(item, track_info, incl_artist=True)
-                candidates[track_info.track_id] = hooks.TrackMatch(
-                    dist, track_info
-                )
+            if info := hooks.track_for_id(trackid):
+                dist = track_distance(item, info, incl_artist=True)
+                candidates[info.track_id] = hooks.TrackMatch(dist, info)
                 # If this is a good match, then don't keep searching.
                 rec = _recommendation(_sort_candidates(candidates.values()))
                 if (

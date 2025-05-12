@@ -8,7 +8,7 @@ on:
         required: true
 
 env:
-  PYTHON_VERSION: 3.8
+  PYTHON_VERSION: 3.9
   NEW_VERSION: ${{ inputs.version }}
   NEW_TAG: v${{ inputs.version }}
 
@@ -26,7 +26,7 @@ jobs:
           cache: poetry
 
       - name: Install dependencies
-        run: poetry install --only=release
+        run: poetry install --with=release --extras=docs
 
       - name: Bump project version
         run: poe bump "${{ env.NEW_VERSION }}"

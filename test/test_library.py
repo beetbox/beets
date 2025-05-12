@@ -19,10 +19,10 @@ import os.path
 import re
 import shutil
 import stat
-import sys
 import time
 import unicodedata
 import unittest
+from unittest.mock import patch
 
 import pytest
 from mediafile import MediaFile, UnreadableFileError
@@ -34,7 +34,7 @@ from beets.library import Album
 from beets.test import _common
 from beets.test._common import item
 from beets.test.helper import BeetsTestCase, ItemInDBTestCase
-from beets.util import bytestring_path, syspath
+from beets.util import as_string, bytestring_path, syspath
 
 # Shortcut to path normalization.
 np = util.normpath
@@ -411,33 +411,23 @@ class DestinationTest(BeetsTestCase):
     def test_unicode_normalized_nfd_on_mac(self):
         instr = unicodedata.normalize("NFC", "caf\xe9")
         self.lib.path_formats = [("default", instr)]
-        dest = self.i.destination(platform="darwin", fragment=True)
-        assert dest == unicodedata.normalize("NFD", instr)
+        with patch("sys.platform", "darwin"):
+            dest = self.i.destination(relative_to_libdir=True)
+        assert as_string(dest) == unicodedata.normalize("NFD", instr)
 
     def test_unicode_normalized_nfc_on_linux(self):
         instr = unicodedata.normalize("NFD", "caf\xe9")
         self.lib.path_formats = [("default", instr)]
-        dest = self.i.destination(platform="linux", fragment=True)
-        assert dest == unicodedata.normalize("NFC", instr)
-
-    def test_non_mbcs_characters_on_windows(self):
-        oldfunc = sys.getfilesystemencoding
-        sys.getfilesystemencoding = lambda: "mbcs"
-        try:
-            self.i.title = "h\u0259d"
-            self.lib.path_formats = [("default", "$title")]
-            p = self.i.destination()
-            assert b"?" not in p
-            # We use UTF-8 to encode Windows paths now.
-            assert "h\u0259d".encode() in p
-        finally:
-            sys.getfilesystemencoding = oldfunc
+        with patch("sys.platform", "linux"):
+            dest = self.i.destination(relative_to_libdir=True)
+        assert as_string(dest) == unicodedata.normalize("NFC", instr)
 
     def test_unicode_extension_in_fragment(self):
         self.lib.path_formats = [("default", "foo")]
         self.i.path = util.bytestring_path("bar.caf\xe9")
-        dest = self.i.destination(platform="linux", fragment=True)
-        assert dest == "foo.caf\xe9"
+        with patch("sys.platform", "linux"):
+            dest = self.i.destination(relative_to_libdir=True)
+        assert as_string(dest) == "foo.caf\xe9"
 
     def test_asciify_and_replace(self):
         config["asciify_paths"] = True
@@ -462,17 +452,6 @@ class DestinationTest(BeetsTestCase):
         self.i.album = "bar"
         assert self.i.destination() == np("base/ber/foo")
 
-    def test_destination_with_replacements_argument(self):
-        self.lib.directory = b"base"
-        self.lib.replacements = [(re.compile(r"a"), "f")]
-        self.lib.path_formats = [("default", "$album/$title")]
-        self.i.title = "foo"
-        self.i.album = "bar"
-        replacements = [(re.compile(r"a"), "e")]
-        assert self.i.destination(replacements=replacements) == np(
-            "base/ber/foo"
-        )
-
     @unittest.skip("unimplemented: #359")
     def test_destination_with_empty_component(self):
         self.lib.directory = b"base"
@@ -493,37 +472,6 @@ class DestinationTest(BeetsTestCase):
         self.i.album = "one"
         self.i.path = "foo.mp3"
         assert self.i.destination() == np("base/one/_.mp3")
-
-    def test_legalize_path_one_for_one_replacement(self):
-        # Use a replacement that should always replace the last X in any
-        # path component with a Z.
-        self.lib.replacements = [
-            (re.compile(r"X$"), "Z"),
-        ]
-
-        # Construct an item whose untruncated path ends with a Y but whose
-        # truncated version ends with an X.
-        self.i.title = "X" * 300 + "Y"
-
-        # The final path should reflect the replacement.
-        dest = self.i.destination()
-        assert dest[-2:] == b"XZ"
-
-    def test_legalize_path_one_for_many_replacement(self):
-        # Use a replacement that should always replace the last X in any
-        # path component with four Zs.
-        self.lib.replacements = [
-            (re.compile(r"X$"), "ZZZZ"),
-        ]
-
-        # Construct an item whose untruncated path ends with a Y but whose
-        # truncated version ends with an X.
-        self.i.title = "X" * 300 + "Y"
-
-        # The final path should ignore the user replacement and create a path
-        # of the correct length, containing Xs.
-        dest = self.i.destination()
-        assert dest[-2:] == b"XX"
 
     def test_album_field_query(self):
         self.lib.directory = b"one"
@@ -611,8 +559,13 @@ class PathFormattingMixin:
     def _assert_dest(self, dest, i=None):
         if i is None:
             i = self.i
-        with _common.platform_posix():
-            actual = i.destination()
+
+        if os.path.sep != "/":
+            dest = dest.replace(b"/", os.path.sep.encode())
+            dest = b"D:" + dest
+
+        actual = i.destination()
+
         assert actual == dest
 
 

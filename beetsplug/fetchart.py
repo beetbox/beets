@@ -566,6 +566,7 @@ class GoogleImages(RemoteArtSource):
             }
         )
         config["google_key"].redact = True
+        config["google_engine"].redact = True
 
     @classmethod
     def available(cls, log, config):
@@ -686,7 +687,7 @@ class FanartTV(RemoteArtSource):
             # can this actually occur?
             else:
                 self._log.debug(
-                    "fanart.tv: unexpected mb_releasegroupid in " "response!"
+                    "fanart.tv: unexpected mb_releasegroupid in response!"
                 )
 
         matches.sort(key=lambda x: int(x["likes"]), reverse=True)

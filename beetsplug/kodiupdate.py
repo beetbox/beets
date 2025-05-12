@@ -25,7 +25,6 @@ Put something like the following in your config.yaml to configure:
 
 import requests
 
-from beets import config
 from beets.plugins import BeetsPlugin
 
 
@@ -53,14 +52,15 @@ def update_kodi(host, port, user, password):
 
 class KodiUpdate(BeetsPlugin):
     def __init__(self):
-        super().__init__()
+        super().__init__("kodi")
 
         # Adding defaults.
-        config["kodi"].add(
+        self.config.add(
             [{"host": "localhost", "port": 8080, "user": "kodi", "pwd": "kodi"}]
         )
 
-        config["kodi"]["pwd"].redact = True
+        self.config["user"].redact = True
+        self.config["pwd"].redact = True
         self.register_listener("database_change", self.listen_for_db_change)
 
     def listen_for_db_change(self, lib, model):
@@ -71,7 +71,7 @@ class KodiUpdate(BeetsPlugin):
         """When the client exists try to send refresh request to Kodi server."""
         self._log.info("Requesting a Kodi library update...")
 
-        kodi = config["kodi"].get()
+        kodi = self.config.get()
 
         # Backwards compatibility in case not configured as an array
         if not isinstance(kodi, list):

@@ -121,15 +121,15 @@ class Assertions:
 
     def assertIsFile(self, path):
         self.assertExists(path)
-        assert os.path.isfile(
-            syspath(path)
-        ), "path exists, but is not a regular file: {!r}".format(path)
+        assert os.path.isfile(syspath(path)), (
+            "path exists, but is not a regular file: {!r}".format(path)
+        )
 
     def assertIsDir(self, path):
         self.assertExists(path)
-        assert os.path.isdir(
-            syspath(path)
-        ), "path exists, but is not a directory: {!r}".format(path)
+        assert os.path.isdir(syspath(path)), (
+            "path exists, but is not a directory: {!r}".format(path)
+        )
 
     def assert_equal_path(self, a, b):
         """Check that two paths are equal."""

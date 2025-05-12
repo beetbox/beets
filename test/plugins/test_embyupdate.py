@@ -143,7 +143,7 @@ class EmbyUpdateTest(PluginTestCase):
 
         responses.add(
             responses.POST,
-            ("http://localhost:8096" "/Users/AuthenticateByName"),
+            ("http://localhost:8096/Users/AuthenticateByName"),
             body=body,
             status=200,
             content_type="application/json",

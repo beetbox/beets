@@ -557,7 +557,7 @@ class Genius(SearchBackend):
 
     @cached_property
     def headers(self) -> dict[str, str]:
-        return {"Authorization": f'Bearer {self.config["genius_api_key"]}'}
+        return {"Authorization": f"Bearer {self.config['genius_api_key']}"}
 
     def search(self, artist: str, title: str) -> Iterable[SearchResult]:
         search_data: GeniusAPI.Search = self.fetch_json(
@@ -913,17 +913,17 @@ class RestFiles:
 
     def write_artist(self, artist: str, items: Iterable[Item]) -> None:
         parts = [
-            f'{artist}\n{"=" * len(artist)}',
+            f"{artist}\n{'=' * len(artist)}",
             ".. contents::\n   :local:",
         ]
         for album, items in groupby(items, key=lambda i: i.album):
-            parts.append(f'{album}\n{"-" * len(album)}')
+            parts.append(f"{album}\n{'-' * len(album)}")
             parts.extend(
                 part
                 for i in items
                 if (title := f":index:`{i.title.strip()}`")
                 for part in (
-                    f'{title}\n{"~" * len(title)}',
+                    f"{title}\n{'~' * len(title)}",
                     textwrap.indent(i.lyrics, "| "),
                 )
             )
@@ -941,9 +941,9 @@ class RestFiles:
         d = self.directory
         text = f"""
         ReST files generated. to build, use one of:
-          sphinx-build -b html  {d} {d/"html"}
-          sphinx-build -b epub  {d} {d/"epub"}
-          sphinx-build -b latex {d} {d/"latex"} && make -C {d/"latex"} all-pdf
+          sphinx-build -b html  {d} {d / "html"}
+          sphinx-build -b epub  {d} {d / "epub"}
+          sphinx-build -b latex {d} {d / "latex"} && make -C {d / "latex"} all-pdf
         """
         ui.print_(textwrap.dedent(text))
 

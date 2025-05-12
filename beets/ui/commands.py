@@ -1359,13 +1359,8 @@ def import_func(lib, opts, args):
         # what we need. On Python 3, we need to undo the "helpful"
         # conversion to Unicode strings to get the real bytestring
         # filename.
-        paths = [
-            p.encode(util.arg_encoding(), "surrogateescape") for p in paths
-        ]
-        paths_from_logfiles = [
-            p.encode(util.arg_encoding(), "surrogateescape")
-            for p in paths_from_logfiles
-        ]
+        paths = [os.fsencode(p) for p in paths]
+        paths_from_logfiles = [os.fsencode(p) for p in paths_from_logfiles]
 
         # Check the user-specified directories.
         for path in paths:
@@ -1604,9 +1599,7 @@ def list_func(lib, opts, args):
 
 
 list_cmd = ui.Subcommand("list", help="query the library", aliases=("ls",))
-list_cmd.parser.usage += (
-    "\n" "Example: %prog -f '$album: $title' artist:beatles"
-)
+list_cmd.parser.usage += "\nExample: %prog -f '$album: $title' artist:beatles"
 list_cmd.parser.add_all_common_options()
 list_cmd.func = list_func
 default_commands.append(list_cmd)

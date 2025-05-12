@@ -58,8 +58,7 @@ class ImportAddedPlugin(BeetsPlugin):
             or session.config["reflink"]
         ):
             self._log.debug(
-                "In place import detected, recording mtimes from "
-                "source paths"
+                "In place import detected, recording mtimes from source paths"
             )
             items = (
                 [task.item]
@@ -95,7 +94,7 @@ class ImportAddedPlugin(BeetsPlugin):
         mtime = os.stat(util.syspath(source)).st_mtime
         self.item_mtime[destination] = mtime
         self._log.debug(
-            "Recorded mtime {0} for item '{1}' imported from " "'{2}'",
+            "Recorded mtime {0} for item '{1}' imported from '{2}'",
             mtime,
             util.displayable_path(destination),
             util.displayable_path(source),
@@ -130,7 +129,7 @@ class ImportAddedPlugin(BeetsPlugin):
     def update_item_times(self, lib, item):
         if self.reimported_item(item):
             self._log.debug(
-                "Item '{0}' is reimported, skipping import of " "added date.",
+                "Item '{0}' is reimported, skipping import of added date.",
                 util.displayable_path(item.path),
             )
             return
