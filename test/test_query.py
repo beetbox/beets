@@ -904,7 +904,9 @@ class TestPathQuery:
             _p("path:/c/\\\\x", ["with backslash"], id="backslash-escaped"),
         ],
     )
-    def test_explicit(self, lib, q, expected_titles):
+    def test_explicit(self, monkeypatch, lib, q, expected_titles):
+        monkeypatch.setattr("beets.util.case_sensitive", lambda *_: True)
+
         assert {i.title for i in lib.items(q)} == set(expected_titles)
 
     @pytest.mark.skipif(sys.platform == "win32", reason=WIN32_NO_IMPLICIT_PATHS)

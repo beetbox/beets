@@ -283,26 +283,20 @@ class PathQuery(FieldQuery[bytes]):
     and case-sensitive otherwise.
     """
 
-    def __init__(self, field, pattern, fast=True, case_sensitive=None):
+    def __init__(self, field, pattern, fast=True):
         """Create a path query.
 
         `pattern` must be a path, either to a file or a directory.
-
-        `case_sensitive` can be a bool or `None`, indicating that the
-        behavior should depend on the filesystem.
         """
         super().__init__(field, pattern, fast)
 
         path = util.normpath(pattern)
 
-        # By default, the case sensitivity depends on the filesystem
-        # that the query path is located on.
-        if case_sensitive is None:
-            case_sensitive = util.case_sensitive(path)
-        self.case_sensitive = case_sensitive
+        # Case sensitivity depends on the filesystem that the query path is located on.
+        self.case_sensitive = util.case_sensitive(path)
 
         # Use a normalized-case pattern for case-insensitive matches.
-        if not case_sensitive:
+        if not self.case_sensitive:
             # We need to lowercase the entire path, not just the pattern.
             # In particular, on Windows, the drive letter is otherwise not
             # lowercased.
