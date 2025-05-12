@@ -283,9 +283,6 @@ class PathQuery(FieldQuery[bytes]):
     and case-sensitive otherwise.
     """
 
-    # For tests
-    force_implicit_query_detection = False
-
     def __init__(self, field, pattern, fast=True, case_sensitive=None):
         """Create a path query.
 
@@ -335,8 +332,6 @@ class PathQuery(FieldQuery[bytes]):
         ):
             return False
 
-        if cls.force_implicit_query_detection:
-            return True
         return os.path.exists(util.syspath(util.normpath(query_part)))
 
     def match(self, item):
