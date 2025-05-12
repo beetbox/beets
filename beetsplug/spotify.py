@@ -33,7 +33,6 @@ import unidecode
 from beets import ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.dbcore import types
-from beets.library import DateType
 from beets.plugins import BeetsPlugin, MetadataSourcePlugin
 
 DEFAULT_WAITING_TIME = 5
@@ -60,7 +59,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         "spotify_tempo": types.FLOAT,
         "spotify_time_signature": types.INTEGER,
         "spotify_valence": types.FLOAT,
-        "spotify_updated": DateType(),
+        "spotify_updated": types.DATE,
     }
 
     # Base URLs for the Spotify API
