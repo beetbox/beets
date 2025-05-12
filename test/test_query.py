@@ -466,9 +466,9 @@ class PathQueryTest(ItemInDBTestCase, AssertsMixin):
         # Unadorned path queries with path separators in them are considered
         # path queries only when the path in question actually exists. So we
         # mock the existence check to return true.
-        beets.library.PathQuery.force_implicit_query_detection = True
+        beets.dbcore.query.PathQuery.force_implicit_query_detection = True
         yield
-        beets.library.PathQuery.force_implicit_query_detection = False
+        beets.dbcore.query.PathQuery.force_implicit_query_detection = False
 
     def test_path_exact_match(self):
         q = "path:/a/b/c.mp3"
@@ -609,7 +609,7 @@ class PathQueryTest(ItemInDBTestCase, AssertsMixin):
     def test_case_sensitivity(self):
         self.add_album(path=b"/A/B/C2.mp3", title="caps path")
 
-        makeq = partial(beets.library.PathQuery, "path", "/A/B")
+        makeq = partial(beets.dbcore.query.PathQuery, "path", "/A/B")
 
         results = self.lib.items(makeq(case_sensitive=True))
         self.assert_items_matched(results, ["caps path"])
@@ -621,7 +621,7 @@ class PathQueryTest(ItemInDBTestCase, AssertsMixin):
     # both os.sep and os.altsep
     @unittest.skipIf(sys.platform == "win32", "win32")
     def test_path_sep_detection(self):
-        is_path_query = beets.library.PathQuery.is_path_query
+        is_path_query = beets.dbcore.query.PathQuery.is_path_query
 
         with self.force_implicit_query_detection():
             assert is_path_query("/foo/bar")
@@ -641,7 +641,7 @@ class PathQueryTest(ItemInDBTestCase, AssertsMixin):
         Thus, don't use the `force_implicit_query_detection()`
         contextmanager which would disable the existence check.
         """
-        is_path_query = beets.library.PathQuery.is_path_query
+        is_path_query = beets.dbcore.query.PathQuery.is_path_query
 
         path = self.touch(os.path.join(b"foo", b"bar"))
         assert os.path.isabs(util.syspath(path))
@@ -664,7 +664,7 @@ class PathQueryTest(ItemInDBTestCase, AssertsMixin):
         Thus, don't use the `force_implicit_query_detection()`
         contextmanager which would disable the existence check.
         """
-        is_path_query = beets.library.PathQuery.is_path_query
+        is_path_query = beets.dbcore.query.PathQuery.is_path_query
 
         self.touch(os.path.join(b"foo", b"bar"))
 
