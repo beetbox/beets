@@ -22,6 +22,7 @@ import typing
 from abc import ABC
 from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
 
+import beets
 from beets import util
 
 from . import query
@@ -345,7 +346,7 @@ class DateType(Float):
                 return self.null
 
 
-class PathType(Type[bytes, bytes]):
+class BasePathType(Type[bytes, N]):
     """A dbcore type for filesystem paths.
 
     These are represented as `bytes` objects, in keeping with
@@ -356,27 +357,10 @@ class PathType(Type[bytes, bytes]):
     query = query.PathQuery
     model_type = bytes
 
-    def __init__(self, nullable=False):
-        """Create a path type object.
+    def parse(self, string: str) -> bytes:
+        return util.normpath(string)
 
-        `nullable` controls whether the type may be missing, i.e., None.
-        """
-        self.nullable = nullable
-
-    @property
-    def null(self):
-        if self.nullable:
-            return None
-        else:
-            return b""
-
-    def format(self, value):
-        return util.displayable_path(value)
-
-    def parse(self, string):
-        return util.normpath(util.bytestring_path(string))
-
-    def normalize(self, value):
+    def normalize(self, value: Any) -> bytes | N:
         if isinstance(value, str):
             # Paths stored internally as encoded bytes.
             return util.bytestring_path(value)
@@ -391,10 +375,28 @@ class PathType(Type[bytes, bytes]):
     def from_sql(self, sql_value):
         return self.normalize(sql_value)
 
-    def to_sql(self, value):
+    def to_sql(self, value: bytes) -> BLOB_TYPE:
         if isinstance(value, bytes):
             value = BLOB_TYPE(value)
         return value
+
+
+class NullPathType(BasePathType[None]):
+    @property
+    def null(self) -> None:
+        return None
+
+    def format(self, value: bytes | None) -> str:
+        return util.displayable_path(value or b"")
+
+
+class PathType(BasePathType[bytes]):
+    @property
+    def null(self) -> bytes:
+        return b""
+
+    def format(self, value: bytes) -> str:
+        return util.displayable_path(value or b"")
 
 
 class MusicalKey(String):

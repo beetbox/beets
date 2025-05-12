@@ -40,6 +40,8 @@ else:
 # To use the SQLite "blob" type, it doesn't suffice to provide a byte
 # string; SQLite treats that as encoded text. Wrapping it in a
 # `memoryview` tells it that we actually mean non-text data.
+# needs to be defined in here due to circular import.
+# TODO: remove it from this module and define it in dbcore/types.py instead
 BLOB_TYPE = memoryview
 
 
