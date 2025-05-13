@@ -465,6 +465,10 @@ Here are a few of the plugins written by the beets community:
 `dsedivec`_
    Has two plugins: ``edit`` and ``moveall``.
 
+`beets-filetote`_
+   Helps bring non-music extra files, attachments, and artifacts during
+   imports and CLI file manipulation actions.
+
 `beets-follow`_
    Lets you check for new albums from artists you like.
 
@@ -560,6 +564,7 @@ Here are a few of the plugins written by the beets community:
 .. _cmus: http://cmus.sourceforge.net/
 .. _beet-amazon: https://github.com/jmwatte/beet-amazon
 .. _beets-alternatives: https://github.com/geigerzaehler/beets-alternatives
+.. _beets-filetote: https://github.com/gtronset/beets-filetote
 .. _beets-follow: https://github.com/nolsto/beets-follow
 .. _beets-ibroadcast: https://github.com/ctrueden/beets-ibroadcast
 .. _iBroadcast: https://ibroadcast.com/
