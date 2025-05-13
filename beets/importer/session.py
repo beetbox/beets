@@ -18,10 +18,10 @@ import time
 from typing import TYPE_CHECKING, Sequence
 
 from beets import config, dbcore, library, logging, plugins, util
-from beets.importer.tasks import action
+from beets.importer.tasks import Action
 from beets.util import displayable_path, normpath, pipeline, syspath
 
-from .stages import *
+from . import stages as stagefuncs
 from .state import ImportState
 
 if TYPE_CHECKING:
@@ -162,15 +162,15 @@ class ImportSession:
             # Duplicate: log all three choices (skip, keep both, and trump).
             if task.should_remove_duplicates:
                 self.tag_log("duplicate-replace", paths)
-            elif task.choice_flag in (action.ASIS, action.APPLY):
+            elif task.choice_flag in (Action.ASIS, Action.APPLY):
                 self.tag_log("duplicate-keep", paths)
-            elif task.choice_flag is action.SKIP:
+            elif task.choice_flag is Action.SKIP:
                 self.tag_log("duplicate-skip", paths)
         else:
             # Non-duplicate: log "skip" and "asis" choices.
-            if task.choice_flag is action.ASIS:
+            if task.choice_flag is Action.ASIS:
                 self.tag_log("asis", paths)
-            elif task.choice_flag is action.SKIP:
+            elif task.choice_flag is Action.SKIP:
                 self.tag_log("skip", paths)
 
     def should_resume(self, path: PathBytes):
@@ -192,17 +192,17 @@ class ImportSession:
 
         # Set up the pipeline.
         if self.query is None:
-            stages = [read_tasks(self)]
+            stages = [stagefuncs.read_tasks(self)]
         else:
-            stages = [query_tasks(self)]
+            stages = [stagefuncs.query_tasks(self)]
 
         # In pretend mode, just log what would otherwise be imported.
         if self.config["pretend"]:
-            stages += [log_files(self)]
+            stages += [stagefuncs.log_files(self)]
         else:
             if self.config["group_albums"] and not self.config["singletons"]:
                 # Split directory tasks into one task for each album.
-                stages += [group_albums(self)]
+                stages += [stagefuncs.group_albums(self)]
 
             # These stages either talk to the user to get a decision or,
             # in the case of a non-autotagged import, just choose to
@@ -210,17 +210,20 @@ class ImportSession:
             # also add the music to the library database, so later
             # stages need to read and write data from there.
             if self.config["autotag"]:
-                stages += [lookup_candidates(self), user_query(self)]
+                stages += [
+                    stagefuncs.lookup_candidates(self),
+                    stagefuncs.user_query(self),
+                ]
             else:
-                stages += [import_asis(self)]
+                stages += [stagefuncs.import_asis(self)]
 
             # Plugin stages.
             for stage_func in plugins.early_import_stages():
-                stages.append(plugin_stage(self, stage_func))
+                stages.append(stagefuncs.plugin_stage(self, stage_func))
             for stage_func in plugins.import_stages():
-                stages.append(plugin_stage(self, stage_func))
+                stages.append(stagefuncs.plugin_stage(self, stage_func))
 
-            stages += [manipulate_files(self)]
+            stages += [stagefuncs.manipulate_files(self)]
 
         pl = pipeline.Pipeline(stages)
 

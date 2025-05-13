@@ -31,7 +31,7 @@ from beets import autotag, config, dbcore, library, plugins, util
 from .state import ImportState
 
 if TYPE_CHECKING:
-    from .session import ImportSession
+    from .session import ImportSession, PathBytes
 
 # Global logger.
 log = logging.getLogger("beets")
@@ -62,16 +62,24 @@ REIMPORT_FRESH_FIELDS_ITEM = list(REIMPORT_FRESH_FIELDS_ALBUM)
 log = logging.getLogger("beets")
 
 
-action = Enum("action", ["SKIP", "ASIS", "TRACKS", "APPLY", "ALBUMS", "RETAG"])
-# The RETAG action represents "don't apply any match, but do record
-# new metadata". It's not reachable via the standard command prompt but
-# can be used by plugins.
-
-
 class ImportAbortError(Exception):
     """Raised when the user aborts the tagging operation."""
 
     pass
+
+
+class Action(Enum):
+    """Enumeration of possible actions for an import task."""
+
+    SKIP = "SKIP"
+    ASIS = "ASIS"
+    TRACKS = "TRACKS"
+    APPLY = "APPLY"
+    ALBUMS = "ALBUMS"
+    RETAG = "RETAG"
+    # The RETAG action represents "don't apply any match, but do record
+    # new metadata". It's not reachable via the standard command prompt but
+    # can be used by plugins.
 
 
 class BaseImportTask:
@@ -143,7 +151,7 @@ class ImportTask(BaseImportTask):
       system.
     """
 
-    choice_flag: action | None = None
+    choice_flag: Action | None = None
     match: autotag.AlbumMatch | autotag.TrackMatch | None = None
 
     # Keep track of the current task item
@@ -165,7 +173,7 @@ class ImportTask(BaseImportTask):
         self.search_ids = []  # user-supplied candidate IDs.
 
     def set_choice(
-        self, choice: action | autotag.AlbumMatch | autotag.TrackMatch
+        self, choice: Action | autotag.AlbumMatch | autotag.TrackMatch
     ):
         """Given an AlbumMatch or TrackMatch object or an action constant,
         indicates that an action has been selected for this task.
@@ -174,20 +182,20 @@ class ImportTask(BaseImportTask):
         use isinstance to check for them.
         """
         # Not part of the task structure:
-        assert choice != action.APPLY  # Only used internally.
+        assert choice != Action.APPLY  # Only used internally.
 
         if choice in (
-            action.SKIP,
-            action.ASIS,
-            action.TRACKS,
-            action.ALBUMS,
-            action.RETAG,
+            Action.SKIP,
+            Action.ASIS,
+            Action.TRACKS,
+            Action.ALBUMS,
+            Action.RETAG,
         ):
             # TODO: redesign to stricten the type
             self.choice_flag = choice  # type: ignore[assignment]
             self.match = None
         else:
-            self.choice_flag = action.APPLY  # Implicit choice.
+            self.choice_flag = Action.APPLY  # Implicit choice.
             self.match = choice  # type: ignore[assignment]
 
     def save_progress(self):
@@ -205,11 +213,11 @@ class ImportTask(BaseImportTask):
 
     @property
     def apply(self):
-        return self.choice_flag == action.APPLY
+        return self.choice_flag == Action.APPLY
 
     @property
     def skip(self):
-        return self.choice_flag == action.SKIP
+        return self.choice_flag == Action.SKIP
 
     # Convenient data.
 
@@ -219,10 +227,10 @@ class ImportTask(BaseImportTask):
         (in which case the data comes from the files' current metadata)
         or APPLY (in which case the data comes from the choice).
         """
-        if self.choice_flag in (action.ASIS, action.RETAG):
+        if self.choice_flag in (Action.ASIS, Action.RETAG):
             likelies, consensus = autotag.current_metadata(self.items)
             return likelies
-        elif self.choice_flag is action.APPLY and self.match:
+        elif self.choice_flag is Action.APPLY and self.match:
             return self.match.info.copy()
         assert False
 
@@ -232,9 +240,9 @@ class ImportTask(BaseImportTask):
         If the tasks applies an album match the method only returns the
         matched items.
         """
-        if self.choice_flag in (action.ASIS, action.RETAG):
+        if self.choice_flag in (Action.ASIS, Action.RETAG):
             return list(self.items)
-        elif self.choice_flag == action.APPLY and isinstance(
+        elif self.choice_flag == Action.APPLY and isinstance(
             self.match, autotag.AlbumMatch
         ):
             return list(self.match.mapping.keys())
@@ -401,7 +409,7 @@ class ImportTask(BaseImportTask):
         """
         changes = {}
 
-        if self.choice_flag == action.ASIS:
+        if self.choice_flag == Action.ASIS:
             # Taking metadata "as-is". Guess whether this album is VA.
             plur_albumartist, freq = util.plurality(
                 [i.albumartist or i.artist for i in self.items]
@@ -418,7 +426,7 @@ class ImportTask(BaseImportTask):
                 changes["albumartist"] = config["va_name"].as_str()
                 changes["comp"] = True
 
-        elif self.choice_flag in (action.APPLY, action.RETAG):
+        elif self.choice_flag in (Action.APPLY, Action.RETAG):
             # Applying autotagged metadata. Just get AA from the first
             # item.
             if not self.items[0].albumartist:
@@ -473,7 +481,7 @@ class ImportTask(BaseImportTask):
                     # old paths.
                     item.move(operation)
 
-            if write and (self.apply or self.choice_flag == action.RETAG):
+            if write and (self.apply or self.choice_flag == Action.RETAG):
                 item.try_write()
 
         with session.lib.transaction():
@@ -490,7 +498,7 @@ class ImportTask(BaseImportTask):
             self.remove_replaced(lib)
 
             self.album = lib.add_album(self.imported_items())
-            if self.choice_flag == action.APPLY and isinstance(
+            if self.choice_flag == Action.APPLY and isinstance(
                 self.match, autotag.AlbumMatch
             ):
                 # Copy album flexible fields to the DB
@@ -672,10 +680,10 @@ class SingletonImportTask(ImportTask):
         (in which case the data comes from the files' current metadata)
         or APPLY (in which case the data comes from the choice).
         """
-        assert self.choice_flag in (action.ASIS, action.RETAG, action.APPLY)
-        if self.choice_flag in (action.ASIS, action.RETAG):
+        assert self.choice_flag in (Action.ASIS, Action.RETAG, Action.APPLY)
+        if self.choice_flag in (Action.ASIS, Action.RETAG):
             return dict(self.item)
-        elif self.choice_flag is action.APPLY:
+        elif self.choice_flag is Action.APPLY:
             return self.match.info.copy()
 
     def imported_items(self):

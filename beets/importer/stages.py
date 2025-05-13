@@ -22,7 +22,7 @@ from beets import config, plugins
 from beets.util import MoveOperation, displayable_path, pipeline
 
 from .tasks import (
-    action,
+    Action,
     ImportTask,
     ImportTaskFactory,
     SentinelImportTask,
@@ -173,7 +173,7 @@ def user_query(session: ImportSession, task: ImportTask):
     plugins.send("import_task_choice", session=session, task=task)
 
     # As-tracks: transition to singleton workflow.
-    if task.choice_flag is action.TRACKS:
+    if task.choice_flag is Action.TRACKS:
         # Set up a little pipeline for dealing with the singletons.
         def emitter(task):
             for item in task.items:
@@ -186,7 +186,7 @@ def user_query(session: ImportSession, task: ImportTask):
         )
 
     # As albums: group items by albums and create task for each album
-    if task.choice_flag is action.ALBUMS:
+    if task.choice_flag is Action.ALBUMS:
         return _extend_pipeline(
             [task],
             group_albums(session),
@@ -194,7 +194,7 @@ def user_query(session: ImportSession, task: ImportTask):
             user_query(session),
         )
 
-    resolve_duplicates(session, task)
+    _resolve_duplicates(session, task)
 
     if task.should_merge_duplicates:
         # Create a new task for tagging the current items
@@ -216,7 +216,7 @@ def user_query(session: ImportSession, task: ImportTask):
             [merged_task], lookup_candidates(session), user_query(session)
         )
 
-    apply_choice(session, task)
+    _apply_choice(session, task)
     return task
 
 
@@ -231,8 +231,8 @@ def import_asis(session: ImportSession, task: ImportTask):
         return
 
     log.info("{}", displayable_path(task.paths))
-    task.set_choice(action.ASIS)
-    apply_choice(session, task)
+    task.set_choice(Action.ASIS)
+    _apply_choice(session, task)
 
 
 @pipeline.mutator_stage
@@ -312,7 +312,7 @@ def manipulate_files(session: ImportSession, task: ImportTask):
 # Private functions only used in the stages above
 
 
-def apply_choice(session: ImportSession, task: ImportTask):
+def _apply_choice(session: ImportSession, task: ImportTask):
     """Apply the task's choice to the Album or Item it contains and add
     it to the library.
     """
@@ -335,11 +335,11 @@ def apply_choice(session: ImportSession, task: ImportTask):
         task.set_fields(session.lib)
 
 
-def resolve_duplicates(session: ImportSession, task: ImportTask):
+def _resolve_duplicates(session: ImportSession, task: ImportTask):
     """Check if a task conflicts with items or albums already imported
     and ask the session to resolve this.
     """
-    if task.choice_flag in (action.ASIS, action.APPLY, action.RETAG):
+    if task.choice_flag in (Action.ASIS, Action.APPLY, Action.RETAG):
         found_duplicates = task.find_duplicates(session.lib)
         if found_duplicates:
             log.debug(
@@ -360,7 +360,7 @@ def resolve_duplicates(session: ImportSession, task: ImportTask):
 
             if duplicate_action == "s":
                 # Skip new.
-                task.set_choice(action.SKIP)
+                task.set_choice(Action.SKIP)
             elif duplicate_action == "k":
                 # Keep both. Do nothing; leave the choice intact.
                 pass
