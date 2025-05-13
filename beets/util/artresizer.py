@@ -76,10 +76,15 @@ class LocalBackend(ABC):
     @classmethod
     @abstractmethod
     def version(cls) -> Any:
+        """Return the backend version if its dependencies are satisfied or
+        raise `LocalBackendNotAvailableError`.
+        """
         pass
 
     @classmethod
     def available(cls) -> bool:
+        """Return `True` this backend's dependencies are satisfied and it can
+        be used, `False` otherwise."""
         try:
             cls.version()
             return True
@@ -95,10 +100,15 @@ class LocalBackend(ABC):
         quality: int = 0,
         max_filesize: int = 0,
     ) -> bytes:
+        """Resize an image to the given width and return the output path.
+
+        On error, logs a warning and returns `path_in`.
+        """
         pass
 
     @abstractmethod
     def get_size(self, path_in: bytes) -> tuple[int, int] | None:
+        """Return the (width, height) of the image or None if unavailable."""
         pass
 
     @abstractmethod
@@ -107,10 +117,15 @@ class LocalBackend(ABC):
         path_in: bytes,
         path_out: bytes | None = None,
     ) -> bytes:
+        """Remove interlacing from an image and return the output path.
+
+        On error, logs a warning and returns `path_in`.
+        """
         pass
 
     @abstractmethod
     def get_format(self, path_in: bytes) -> str | None:
+        """Return the image format (e.g., 'PNG') or None if undetectable."""
         pass
 
     @abstractmethod
@@ -120,10 +135,15 @@ class LocalBackend(ABC):
         target: bytes,
         deinterlaced: bool,
     ) -> bytes:
+        """Convert an image to a new format and return the new file path.
+
+        On error, logs a warning and returns `source`.
+        """
         pass
 
     @property
     def can_compare(self) -> bool:
+        """Indicate whether image comparison is supported by this backend."""
         return False
 
     def compare(
@@ -132,14 +152,24 @@ class LocalBackend(ABC):
         im2: bytes,
         compare_threshold: float,
     ) -> bool | None:
+        """Compare two images and return `True` if they are similar enough, or
+        `None` if there is an error.
+
+        This must only be called if `self.can_compare()` returns `True`.
+        """
         # It is an error to call this when ArtResizer.can_compare is not True.
         raise NotImplementedError()
 
     @property
     def can_write_metadata(self) -> bool:
+        """Indicate whether writing metadata to images is supported."""
         return False
 
     def write_metadata(self, file: bytes, metadata: Mapping[str, str]) -> None:
+        """Write key-value metadata into the image file.
+
+        This must only be called if `self.can_write_metadata()` returns `True`.
+        """
         # It is an error to call this when ArtResizer.can_write_metadata is not True.
         raise NotImplementedError()
 
