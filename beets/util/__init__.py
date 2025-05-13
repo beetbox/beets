@@ -1046,6 +1046,32 @@ class LazySharedInstance(Generic[T]):
     """A descriptor that provides access to a lazily-created shared instance of
     the containing class, while calling the class constructor to construct a
     new object works as usual.
+
+    ```
+    ID: int = 0
+
+    class Foo:
+        def __init__():
+            global ID
+
+            self.id = ID
+            ID += 1
+
+        def func(self):
+            print(self.id)
+
+        shared: LazySharedInstance[Foo] = LazySharedInstance()
+
+    a0 = Foo()
+    a1 = Foo.shared
+    a2 = Foo()
+    a3 = Foo.shared
+
+    a0.func()  # 0
+    a1.func()  # 1
+    a2.func()  # 2
+    a3.func()  # 1
+    ```
     """
 
     _instance: T | None = None
