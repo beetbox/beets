@@ -1,46 +1,55 @@
+Plugin Development Guide
+========================
+
+Beets plugins are Python modules or packages that extend the core functionality
+of beets. The plugin system is designed to be flexible, allowing developers to
+add virtually any type of features.
+
 .. _writing-plugins:
 
-Writing Plugins
----------------
+Creating a Basic Plugin
+-----------------------
 
 A beets plugin is just a Python module or package inside the ``beetsplug``
-namespace package. (Check out `this article`_ and `this Stack Overflow
-question`_ if you haven't heard about namespace packages.) So, to make one,
-create a directory called ``beetsplug`` and add either your plugin module::
+namespace [#namespace]_ package. To create the basic plugin layout,
+create a directory called ``beetsplug`` and add either your plugin module:
+
+.. code-block:: shell
 
     beetsplug/
-        myawesomeplugin.py
+    └── myawesomeplugin.py
 
-or your plugin subpackage::
+
+or your plugin subpackage
+
+.. code-block:: shell
 
     beetsplug/
-        myawesomeplugin/
-            __init__.py
-            myawesomeplugin.py
+    └── myawesomeplugin/
+        ├── __init__.py
+        └── myawesomeplugin.py
 
 .. attention::
 
-    You do not anymore need to add a ``__init__.py`` file to the ``beetsplug``
+    You do not anymore need to add a  file to the ``beetsplug``
     directory. Python treats your plugin as a namespace package automatically,
     thus we do not depend on ``pkgutil``-based setup in the ``__init__.py``
     file anymore.
 
-The meat of your plugin goes in ``myawesomeplugin.py``. There, you'll have to
-import ``BeetsPlugin`` from ``beets.plugins`` and subclass it, for example
+The meat of your plugin goes in ``myawesomeplugin.py``. Every plugin has to be implemented
+as a subclass of the ``beets.plugins.BeetsPlugin`` abstract base class [#baseclass]_. For example,
+here is the minimal plugin without any functionality:
 
 .. code-block:: python
 
+    # beetsplug/myawesomeplugin.py
     from beets.plugins import BeetsPlugin
 
     class MyAwesomePlugin(BeetsPlugin):
         pass
 
-Once you have your ``BeetsPlugin`` subclass, there's a variety of things your
-plugin can do. (Read on!)
 
-To use your new plugin, package your plugin (see how to do this with `poetry`_
-or `setuptools`_, for example) and install it into your ``beets`` virtual
-environment. Then, add your plugin to beets configuration
+To use your new plugin, you need to package [#packaging]_ your plugin and install it into your ``beets`` (virtual) environment. To enable your plugin, add it it to the beets configuration
 
 .. code-block:: yaml
 
@@ -48,22 +57,27 @@ environment. Then, add your plugin to beets configuration
     plugins:
       - myawesomeplugin
 
-and you're good to go!
+and you're good to go! 
 
 .. _this article: https://realpython.com/python-namespace-package/#setting-up-some-namespace-packages
 .. _this Stack Overflow question: https://stackoverflow.com/a/27586272/9582674
 .. _poetry: https://python-poetry.org/docs/pyproject/#packages
 .. _setuptools: https://setuptools.pypa.io/en/latest/userguide/package_discovery.html#finding-simple-packages
+.. _hatchling: https://hatch.pypa.io/latest/config/build/#build-system
+.. _pep-3119: https://peps.python.org/pep-3119/#rationale
+
 
 .. _add_subcommands:
 
 Add Commands to the CLI
-^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------
 
 Plugins can add new subcommands to the ``beet`` command-line interface. Define
 the plugin class' ``commands()`` method to return a list of ``Subcommand``
 objects. (The ``Subcommand`` class is defined in the ``beets.ui`` module.)
-Here's an example plugin that adds a simple command::
+Here's an example plugin that adds a simple command:
+
+.. code-block:: python
 
     from beets.plugins import BeetsPlugin
     from beets.ui import Subcommand
@@ -107,29 +121,33 @@ and ``--format``. This feature is versatile and extensively documented, try
 .. _plugin_events:
 
 Listen for Events
-^^^^^^^^^^^^^^^^^
+-----------------
 
-Event handlers allow plugins to run code whenever something happens in beets'
-operation. For instance, a plugin could write a log message every time an album
+Event handlers allow plugins to hook into whenever something happens in beets'
+operations. For instance, a plugin could write a log message every time an album
 is successfully autotagged or update MPD's index whenever the database is
 changed.
 
 You can "listen" for events using ``BeetsPlugin.register_listener``. Here's
-an example::
+an example:
+
+.. code-block:: python
 
     from beets.plugins import BeetsPlugin
 
     def loaded():
-        print 'Plugin loaded!'
+        print('Plugin loaded!')
 
     class SomePlugin(BeetsPlugin):
-      def __init__(self):
-        super().__init__()
-        self.register_listener('pluginload', loaded)
+        def __init__(self):
+            super().__init__()
+            self.register_listener('pluginload', loaded)
 
 Note that if you want to access an attribute of your plugin (e.g. ``config`` or
 ``log``) you'll have to define a method and not a function. Here is the usual
-registration process in this case::
+registration process in this case:
+
+.. code-block:: python
 
     from beets.plugins import BeetsPlugin
 
@@ -275,51 +293,21 @@ The events currently available are:
 The included ``mpdupdate`` plugin provides an example use case for event listeners.
 
 Extend the Autotagger
-^^^^^^^^^^^^^^^^^^^^^
+---------------------
 
-Plugins can also enhance the functionality of the autotagger. For a
-comprehensive example, try looking at the ``chroma`` plugin, which is included
-with beets.
+Plugins can also be used to extend the autotagger and allow metadata lookup
+from additional sources. For this your plugin has to extend the ``beets.metadata_plugin.MetadataSourcePlugin`` class and implement all abstract methods.
 
-A plugin can extend three parts of the autotagger's process: the track distance
-function, the album distance function, and the initial MusicBrainz search. The
-distance functions determine how "good" a match is at the track and album
-levels; the initial search controls which candidates are presented to the
-matching algorithm. Plugins implement these extensions by implementing four
-methods on the plugin class:
+On metadata lookup, the autotagger will first call the ``candidates`` (or ``item_candidates``) method of all MetadataSourcePlugins to get a list of available candidates. Than we will rank all candidates by using each plugins ``track_distance`` and ``album_distance`` methods. 
 
-* ``track_distance(self, item, info)``: adds a component to the distance
-  function (i.e., the similarity metric) for individual tracks. ``item`` is the
-  track to be matched (an Item object) and ``info`` is the TrackInfo object
-  that is proposed as a match. Should return a ``(dist, dist_max)`` pair
-  of floats indicating the distance.
+Please have a look at the ``beets.autotag`` and especially the ``beets.metadata_plugin`` modules for more information. 
 
-* ``album_distance(self, items, album_info, mapping)``: like the above, but
-  compares a list of items (representing an album) to an album-level MusicBrainz
-  entry. ``items`` is a list of Item objects; ``album_info`` is an AlbumInfo
-  object; and ``mapping`` is a dictionary that maps Items to their corresponding
-  TrackInfo objects.
+For a comprehensive example, see the ``musicbrainz`` or ``chroma`` plugins, which
+are included with beets.
 
-* ``candidates(self, items, artist, album, va_likely)``: given a list of items
-  comprised by an album to be matched, return a list of ``AlbumInfo`` objects
-  for candidate albums to be compared and matched.
-
-* ``item_candidates(self, item, artist, album)``: given a *singleton* item,
-  return a list of ``TrackInfo`` objects for candidate tracks to be compared and
-  matched.
-
-* ``album_for_id(self, album_id)``: given an ID from user input or an album's
-  tags, return a candidate AlbumInfo object (or None).
-
-* ``track_for_id(self, track_id)``: given an ID from user input or a file's
-  tags, return a candidate TrackInfo object (or None).
-
-When implementing these functions, you may want to use the functions from the
-``beets.autotag`` and ``beets.autotag.mb`` modules, both of which have
-somewhat helpful docstrings.
 
 Read Configuration Options
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------
 
 Plugins can configure themselves using the ``config.yaml`` file. You can read
 configuration values in two ways. The first is to use `self.config` within
@@ -353,7 +341,7 @@ setting each value's `redact` flag, like so::
 
 
 Add Path Format Functions and Fields
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------------
 
 Beets supports *function calls* in its path format syntax (see
 :doc:`/reference/pathformat`). Beets includes a few built-in functions, but
@@ -405,7 +393,7 @@ template fields by adding a function accepting an ``Album`` argument to the
 ``album_template_fields`` dict.
 
 Extend MediaFile
-^^^^^^^^^^^^^^^^
+----------------
 
 `MediaFile`_ is the file tag abstraction layer that beets uses to make
 cross-format metadata manipulation simple. Plugins can add fields to MediaFile
@@ -441,7 +429,7 @@ Here's an example plugin that provides a meaningless new field "foo"::
 .. _plugin-stage:
 
 Add Import Pipeline Stages
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------
 
 Many plugins need to add high-latency operations to the import workflow. For
 example, a plugin that fetches lyrics from the Web would, ideally, not block the
@@ -519,7 +507,7 @@ plugin will be used if we issue a command like ``beet ls @something`` or
 
 
 Flexible Field Types
-^^^^^^^^^^^^^^^^^^^^
+--------------------
 
 If your plugin uses flexible fields to store numbers or other
 non-string values, you can specify the types of those fields. A rating
@@ -559,7 +547,7 @@ Specifying types has several advantages:
 .. _plugin-logging:
 
 Logging
-^^^^^^^
+-------
 
 Each plugin object has a ``_log`` attribute, which is a ``Logger`` from the
 `standard Python logging module`_. The logger is set up to `PEP 3101`_,
@@ -595,7 +583,7 @@ interrupt the importer interface when running automatically.)
 .. _append_prompt_choices:
 
 Append Prompt Choices
-^^^^^^^^^^^^^^^^^^^^^
+---------------------
 
 Plugins can also append choices to the prompt presented to the user during
 an import session.
@@ -651,3 +639,8 @@ Additionally, the callback function can optionally specify the next action to
 be performed by returning a ``importer.action`` value. It may also return a
 ``autotag.Proposal`` value to update the set of current proposals to be
 considered.
+
+
+.. [#namespace] Check out `this article`_ and `this Stack Overflow question`_ if you haven't heard about namespace packages.
+.. [#baseclass] Abstract base classes allow us to define a contract which any plugin must follow. This is a common paradigm in object-oriented programming, and it helps to ensure that plugins are implemented in a consistent way. For more information, see for example `pep-3119`_.
+.. [#packaging] There are a variety of packaging tools available for python, for example you can use `poetry`_, `setuptools`_ or `hatchling`_.
