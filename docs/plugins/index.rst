@@ -568,7 +568,7 @@ Here are a few of the plugins written by the beets community:
 .. _beets-setlister: https://github.com/tomjaspers/beets-setlister
 .. _beets-noimport: https://gitlab.com/tiago.dias/beets-noimport
 .. _whatlastgenre: https://github.com/YetAnotherNerd/whatlastgenre/tree/master/plugin/beets
-.. _beets-usertag: https://github.com/igordertigor/beets-usertag
+.. _beets-usertag: https://github.com/edgars-supe/beets-usertag
 .. _beets-plexsync: https://github.com/arsaboo/beets-plexsync
 .. _beets-jiosaavn: https://github.com/arsaboo/beets-jiosaavn
 .. _beets-youtube: https://github.com/arsaboo/beets-youtube
