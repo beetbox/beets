@@ -467,7 +467,7 @@ Here are a few of the plugins written by the beets community:
 
 `beets-filetote`_
    Helps bring non-music extra files, attachments, and artifacts during
-   imports and CLI file manipulation actions.
+   imports and CLI file manipulation actions (`beets move`, etc.).
 
 `beets-follow`_
    Lets you check for new albums from artists you like.
