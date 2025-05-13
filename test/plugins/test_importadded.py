@@ -59,7 +59,7 @@ class ImportAddedTest(PluginMixin, ImportTestCase):
         self.matcher = AutotagStub().install()
         self.matcher.matching = AutotagStub.IDENT
         self.importer = self.setup_importer()
-        self.importer.add_choice(importer.action.APPLY)
+        self.importer.add_choice(importer.Action.APPLY)
 
     def tearDown(self):
         super().tearDown()
