@@ -31,7 +31,7 @@ from beets import autotag, config, dbcore, library, plugins, util
 from .state import ImportState
 
 if TYPE_CHECKING:
-    from .session import ImportSession, PathBytes
+    from .session import ImportSession
 
 # Global logger.
 log = logging.getLogger("beets")
