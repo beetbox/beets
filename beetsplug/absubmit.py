@@ -157,7 +157,7 @@ only files which would be processed",
         # If file has no MBID, skip it.
         if not mbid:
             self._log.info(
-                "Not analysing {}, missing " "musicbrainz track id.", item
+                "Not analysing {}, missing musicbrainz track id.", item
             )
             return None
 
@@ -220,6 +220,6 @@ only files which would be processed",
             )
         else:
             self._log.debug(
-                "Successfully submitted AcousticBrainz analysis " "for {}.",
+                "Successfully submitted AcousticBrainz analysis for {}.",
                 item,
             )

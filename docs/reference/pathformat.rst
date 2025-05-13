@@ -173,7 +173,7 @@ write a function call. To escape any of these characters (except ``{``, and
 
 * ``${``, which is ambiguous with the variable reference syntax (like
   ``${title}``). To insert a ``{`` alone, it's always sufficient to just type
-  ``{``.
+  ``{``. You do, however need to use ``$`` to escape a closing brace ``$}``.
 * commas are used as argument separators in function calls. Inside of a
   function's argument, use ``$,`` to get a literal ``,`` character. Outside of
   any function argument, escaping is not necessary: ``,`` by itself will

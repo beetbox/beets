@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "beets"
-version = "2.2.0"
+version = "2.3.0"
 description = "music tagger and library organizer"
 authors = ["Adrian Sampson <adrian@radbox.org>"]
 maintainers = ["Serene-Arc"]
@@ -19,6 +19,8 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: Implementation :: CPython",
 ]
 packages = [
@@ -261,6 +263,10 @@ select = [
     "TCH", # flake8-type-checking
     "W", # pycodestyle
 ]
+ignore = [
+  "TC006"  # no need to quote 'cast's since we use 'from __future__ import annotations'
+]
+
 [tool.ruff.lint.per-file-ignores]
 "beets/**" = ["PT"]
 "test/test_util.py" = ["E501"]

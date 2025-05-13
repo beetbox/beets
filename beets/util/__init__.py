@@ -40,6 +40,7 @@ from typing import (
     Any,
     AnyStr,
     Callable,
+    Generic,
     Iterable,
     NamedTuple,
     TypeVar,
@@ -559,7 +560,7 @@ def link(path: bytes, dest: bytes, replace: bool = False):
     except NotImplementedError:
         # raised on python >= 3.2 and Windows versions before Vista
         raise FilesystemError(
-            "OS does not support symbolic links." "link",
+            "OS does not support symbolic links.link",
             (path, dest),
             traceback.format_exc(),
         )
@@ -581,14 +582,14 @@ def hardlink(path: bytes, dest: bytes, replace: bool = False):
         os.link(syspath(path), syspath(dest))
     except NotImplementedError:
         raise FilesystemError(
-            "OS does not support hard links." "link",
+            "OS does not support hard links.link",
             (path, dest),
             traceback.format_exc(),
         )
     except OSError as exc:
         if exc.errno == errno.EXDEV:
             raise FilesystemError(
-                "Cannot hard link across devices." "link",
+                "Cannot hard link across devices.link",
                 (path, dest),
                 traceback.format_exc(),
             )
@@ -715,7 +716,7 @@ def truncate_path(str_path: str) -> str:
     path = Path(str_path)
     parent_parts = [truncate_str(p, max_length) for p in path.parts[:-1]]
     stem = truncate_str(path.stem, max_length - len(path.suffix))
-    return str(Path(*parent_parts, stem).with_suffix(path.suffix))
+    return str(Path(*parent_parts, stem)) + path.suffix
 
 
 def _legalize_stage(
@@ -1039,6 +1040,53 @@ class cached_classproperty:
             self.cache[owner] = self.getter(owner)
 
         return self.cache[owner]
+
+
+class LazySharedInstance(Generic[T]):
+    """A descriptor that provides access to a lazily-created shared instance of
+    the containing class, while calling the class constructor to construct a
+    new object works as usual.
+
+    ```
+    ID: int = 0
+
+    class Foo:
+        def __init__():
+            global ID
+
+            self.id = ID
+            ID += 1
+
+        def func(self):
+            print(self.id)
+
+        shared: LazySharedInstance[Foo] = LazySharedInstance()
+
+    a0 = Foo()
+    a1 = Foo.shared
+    a2 = Foo()
+    a3 = Foo.shared
+
+    a0.func()  # 0
+    a1.func()  # 1
+    a2.func()  # 2
+    a3.func()  # 1
+    ```
+    """
+
+    _instance: T | None = None
+
+    def __get__(self, instance: T | None, owner: type[T]) -> T:
+        if instance is not None:
+            raise RuntimeError(
+                "shared instances must be obtained from the class property, "
+                "not an instance"
+            )
+
+        if self._instance is None:
+            self._instance = owner()
+
+        return self._instance
 
 
 def get_module_tempdir(module: str) -> Path:
