@@ -1042,9 +1042,6 @@ class cached_classproperty:
         return self.cache[owner]
 
 
-T = TypeVar("T")
-
-
 class LazySharedInstance(Generic[T]):
     """A descriptor that provides access to a lazily-created shared instance of
     the containing class, while calling the class constructor to construct a
