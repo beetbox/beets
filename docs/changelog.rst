@@ -6,6 +6,17 @@ Changelog goes here! Please add your entry to the bottom of one of the lists bel
 Unreleased
 ----------
 
+New features:
+
+Bug fixes:
+
+For packagers:
+
+Other changes:
+
+2.3.1 (May 14, 2025)
+--------------------
+
 Bug fixes:
 * :doc:`/reference/pathformat`: Fixed a regression where path legalization
   incorrectly removed parts of user-configured path formats that followed a dot
