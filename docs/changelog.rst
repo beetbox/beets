@@ -8,6 +8,9 @@ Unreleased
 
 New features:
 
+* :doc:`plugins/web`: Show notifications when a track plays. This uses the
+  Media Session API to customize media notifications.
+
 Bug fixes:
 
 For packagers:
