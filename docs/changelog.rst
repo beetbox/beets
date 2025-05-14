@@ -6,18 +6,16 @@ Changelog goes here! Please add your entry to the bottom of one of the lists bel
 Unreleased
 ----------
 
-New features:
-
 Bug fixes:
-
 * :doc:`/reference/pathformat`: Fixed a regression where path legalization
   incorrectly removed parts of user-configured path formats that followed a dot
   (**.**).
   :bug:`5771`
 
 For packagers:
-
-Other changes:
+* Force ``poetry`` version below 2 to avoid it mangling file modification times
+  in ``sdist`` package.
+  :bug:`5770`
 
 2.3.0 (May 07, 2025)
 --------------------
@@ -115,8 +113,8 @@ Other changes:
   :bug:`5539`
 * :doc:`/plugins/smartplaylist`: URL-encode additional item `fields` within generated
   EXTM3U playlists instead of JSON-encoding them.
-* typehints: `./beets/importer.py` file now has improved typehints. 
-* typehints: `./beets/plugins.py` file now includes typehints. 
+* typehints: `./beets/importer.py` file now has improved typehints.
+* typehints: `./beets/plugins.py` file now includes typehints.
 * :doc:`plugins/ftintitle`: Optimize the plugin by avoiding unnecessary writes
   to the database.
 * Database models are now serializable with pickle.
