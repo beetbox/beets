@@ -630,8 +630,7 @@ class ConvertPlugin(BeetsPlugin):
                     # the after-conversion extension.
                     replace_ext(
                         item.destination(
-                            basedir=dest,
-                            path_formats=path_formats
+                            basedir=dest, path_formats=path_formats
                         ),
                         get_format()[1],
                     ),
