@@ -87,6 +87,15 @@ Install `poetry`_ and `poethepoet`_ using `pipx`_::
 
     $ pipx install poetry poethepoet
 
+.. admonition:: Check ``tool.pipx-install`` section in ``pyproject.toml`` to
+   see supported versions
+
+  ::
+
+      [tool.pipx-install]
+      poethepoet = ">=0.26"
+      poetry = "<2"
+
 .. _pipx: https://pipx.pypa.io/stable
 .. _pipx-installation-instructions: https://pipx.pypa.io/stable/installation/
 
