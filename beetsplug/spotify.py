@@ -31,7 +31,6 @@ import unidecode
 from beets import ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.dbcore import types
-from beets.library import DateType
 from beets.plugins import BeetsPlugin, MetadataSourcePlugin
 from beets.util.id_extractors import spotify_id_regex
 
@@ -59,7 +58,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         "spotify_tempo": types.FLOAT,
         "spotify_time_signature": types.INTEGER,
         "spotify_valence": types.FLOAT,
-        "spotify_updated": DateType(),
+        "spotify_updated": types.DATE,
     }
 
     # Base URLs for the Spotify API

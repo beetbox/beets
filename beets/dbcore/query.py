@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 import unicodedata
 from abc import ABC, abstractmethod
@@ -29,12 +30,18 @@ from typing import TYPE_CHECKING, Any, Generic, TypeVar, Union
 from beets import util
 
 if TYPE_CHECKING:
-    from beets.dbcore import Model
-    from beets.dbcore.db import AnyModel
+    from beets.dbcore.db import AnyModel, Model
 
     P = TypeVar("P", default=Any)
 else:
     P = TypeVar("P")
+
+# To use the SQLite "blob" type, it doesn't suffice to provide a byte
+# string; SQLite treats that as encoded text. Wrapping it in a
+# `memoryview` tells it that we actually mean non-text data.
+# needs to be defined in here due to circular import.
+# TODO: remove it from this module and define it in dbcore/types.py instead
+BLOB_TYPE = memoryview
 
 
 class ParsingError(ValueError):
@@ -265,6 +272,79 @@ class SubstringQuery(StringFieldQuery[str]):
     @classmethod
     def string_match(cls, pattern: str, value: str) -> bool:
         return pattern.lower() in value.lower()
+
+
+class PathQuery(FieldQuery[bytes]):
+    """A query that matches all items under a given path.
+
+    Matching can either be case-insensitive or case-sensitive. By
+    default, the behavior depends on the OS: case-insensitive on Windows
+    and case-sensitive otherwise.
+    """
+
+    def __init__(self, field: str, pattern: bytes, fast: bool = True) -> None:
+        """Create a path query.
+
+        `pattern` must be a path, either to a file or a directory.
+        """
+        path = util.normpath(pattern)
+
+        # Case sensitivity depends on the filesystem that the query path is located on.
+        self.case_sensitive = util.case_sensitive(path)
+
+        # Use a normalized-case pattern for case-insensitive matches.
+        if not self.case_sensitive:
+            # We need to lowercase the entire path, not just the pattern.
+            # In particular, on Windows, the drive letter is otherwise not
+            # lowercased.
+            # This also ensures that the `match()` method below and the SQL
+            # from `col_clause()` do the same thing.
+            path = path.lower()
+
+        super().__init__(field, path, fast)
+
+    @staticmethod
+    def is_path_query(query_part: str) -> bool:
+        """Try to guess whether a unicode query part is a path query.
+
+        Condition: separator precedes colon and the file exists.
+        """
+        colon = query_part.find(":")
+        if colon != -1:
+            query_part = query_part[:colon]
+
+        # Test both `sep` and `altsep` (i.e., both slash and backslash on
+        # Windows).
+        if not (
+            os.sep in query_part or (os.altsep and os.altsep in query_part)
+        ):
+            return False
+
+        return os.path.exists(util.syspath(util.normpath(query_part)))
+
+    def match(self, obj: Model) -> bool:
+        path = obj.path if self.case_sensitive else obj.path.lower()
+        return path.startswith(self.pattern)
+
+    def col_clause(self) -> tuple[str, Sequence[SQLiteType]]:
+        if self.case_sensitive:
+            query_part = "({0} = ?) || (substr({0}, 1, ?) = ?)"
+        else:
+            query_part = "(BYTELOWER({0}) = BYTELOWER(?)) || \
+                         (substr(BYTELOWER({0}), 1, ?) = BYTELOWER(?))"
+
+        dir_blob = BLOB_TYPE(os.path.join(self.pattern, b""))
+        return query_part.format(self.field), (
+            BLOB_TYPE(self.pattern),
+            len(dir_blob),
+            dir_blob,
+        )
+
+    def __repr__(self) -> str:
+        return (
+            f"{self.__class__.__name__}({self.field!r}, {self.pattern!r}, "
+            f"fast={self.fast}, case_sensitive={self.case_sensitive})"
+        )
 
 
 class RegexpQuery(StringFieldQuery[Pattern[str]]):
@@ -842,6 +922,24 @@ class DurationQuery(NumericQuery):
                 raise InvalidQueryArgumentValueError(
                     s, "a M:SS string or a float"
                 )
+
+
+class SingletonQuery(FieldQuery[str]):
+    """This query is responsible for the 'singleton' lookup.
+
+    It is based on the FieldQuery and constructs a SQL clause
+    'album_id is NULL' which yields the same result as the previous filter
+    in Python but is more performant since it's done in SQL.
+
+    Using util.str2bool ensures that lookups like singleton:true, singleton:1
+    and singleton:false, singleton:0 are handled consistently.
+    """
+
+    def __new__(cls, field: str, value: str, *args, **kwargs):
+        query = NoneQuery("album_id")
+        if util.str2bool(value):
+            return query
+        return NotQuery(query)
 
 
 # Sorting.
