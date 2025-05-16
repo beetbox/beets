@@ -1,11 +1,27 @@
+MusicBrainz Plugin
+==================
+
+The ``musicbrainz`` plugin extends the autotagger's search capabilities to
+include matches from the `MusicBrainz`_ database.
+
+.. _MusicBrainz: https://musicbrainz.org/
+
+Installation
+------------
+
+To use the ``musicbrainz`` plugin, enable it in your configuration (see
+:ref:`using-plugins`)
+
 .. _musicbrainz-config:
 
-MusicBrainz Options
--------------------
+Configuration
+-------------
 
 You can instruct beets to use `your own MusicBrainz database`_ instead of
 the `main server`_. Use the ``host``, ``https`` and ``ratelimit`` options
-under a ``musicbrainz:`` header, like so::
+under a ``musicbrainz:`` header, like so
+
+.. code-block:: yaml
 
     musicbrainz:
         host: localhost:5000
@@ -56,7 +72,9 @@ extra_tags
 
 By default, beets will use only the artist, album, and track count to query
 MusicBrainz. Additional tags to be queried can be supplied with the
-``extra_tags`` setting. For example::
+``extra_tags`` setting. For example
+
+.. code-block:: yaml
 
     musicbrainz:
         extra_tags: [year, catalognum, country, media, label]
@@ -88,7 +106,9 @@ external_ids
 Set any of the ``external_ids`` options to ``yes`` to enable the MusicBrainz
 importer to look for links to related metadata sources. If such a link is
 available the release ID will be extracted from the URL provided and imported
-to the beets library::
+to the beets library
+
+.. code-block:: yaml
 
     musicbrainz:
         external_ids:
