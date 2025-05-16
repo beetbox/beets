@@ -28,7 +28,7 @@ import musicbrainzngs
 import beets
 import beets.autotag.hooks
 from beets import config, logging, plugins, util
-from beets.plugins import MetadataSourcePlugin
+from beets.plugins import BeetsPlugin, MetadataSourcePlugin
 from beets.util.id_extractors import (
     beatport_id_regex,
     deezer_id_regex,
@@ -373,6 +373,10 @@ def _merge_pseudo_and_actual_album(
     }
     merged.update(from_actual)
     return merged
+
+
+class MusicBrainzPlugin(BeetsPlugin):
+    data_source = "Musicbrainz"
 
 
 def configure():
