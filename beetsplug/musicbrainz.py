@@ -257,9 +257,11 @@ def _preferred_release_event(
     event as a tuple of (country, release_date). Fall back to the
     default release event if a preferred event is not found.
     """
-    countries = config["match"]["preferred"]["countries"].as_str_seq()
+    preferred_countries: Sequence[str] = config["match"]["preferred"][
+        "countries"
+    ].as_str_seq()
 
-    for country in countries:
+    for country in preferred_countries:
         for event in release.get("release-event-list", {}):
             try:
                 if country in event["area"]["iso-3166-1-code-list"]:
@@ -292,6 +294,17 @@ def _set_date_str(
                 if original:
                     key = "original_" + key
                 setattr(info, key, date_num)
+
+
+def _parse_id(s: str) -> str | None:
+    """Search for a MusicBrainz ID in the given string and return it. If
+    no ID can be found, return None.
+    """
+    # Find the first thing that looks like a UUID/MBID.
+    match = re.search("[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}", s)
+    if match is not None:
+        return match.group() if match else None
+    return None
 
 
 def _is_translation(r):
@@ -673,6 +686,7 @@ class MusicBrainzPlugin(MetadataSourcePluginNext):
         if not release_date:
             # Fall back if release-specific date is not available.
             release_date = release_group_date
+
         if release_date:
             _set_date_str(info, release_date, False)
         _set_date_str(info, release_group_date, True)
@@ -731,13 +745,24 @@ class MusicBrainzPlugin(MetadataSourcePluginNext):
                         source.capitalize(),
                     )
 
-            for source, url in urls.items():
-                item_source = extract_release_id(source, url)
-                setattr(
-                    info,
-                    f"{source}_album_id",
-                    item_source[0] if item_source else None,
+            if "discogs" in urls:
+                info.discogs_albumid = extract_discogs_id_regex(urls["discogs"])
+            if "bandcamp" in urls:
+                info.bandcamp_album_id = urls["bandcamp"]
+            if "spotify" in urls:
+                info.spotify_album_id = MetadataSourcePlugin._get_id(
+                    "album", urls["spotify"], spotify_id_regex
                 )
+            if "deezer" in urls:
+                info.deezer_album_id = MetadataSourcePlugin._get_id(
+                    "album", urls["deezer"], deezer_id_regex
+                )
+            if "beatport" in urls:
+                info.beatport_album_id = MetadataSourcePlugin._get_id(
+                    "album", urls["beatport"], beatport_id_regex
+                )
+            if "tidal" in urls:
+                info.tidal_album_id = urls["tidal"].split("/")[-1]
 
         extra_albumdatas = plugins.send("mb_album_extract", data=release)
         for extra_albumdata in extra_albumdatas:
@@ -836,19 +861,12 @@ class MusicBrainzPlugin(MetadataSourcePluginNext):
         MusicBrainzAPIError.
         """
         self._log.debug("Requesting MusicBrainz release {}", album_id)
-        if not (
-            mb_album_id := extract_release_id(
-                self.data_source,
-                album_id,
-            )
-        ):
+        albumid = _parse_id(album_id)
+        if not albumid:
             self._log.debug("Invalid MBID ({0}).", album_id)
             return None
-
         try:
-            res = musicbrainzngs.get_release_by_id(
-                mb_album_id, RELEASE_INCLUDES
-            )
+            res = musicbrainzngs.get_release_by_id(albumid, RELEASE_INCLUDES)
 
             # resolve linked release relations
             actual_res = None
@@ -861,7 +879,7 @@ class MusicBrainzPlugin(MetadataSourcePluginNext):
             return None
         except musicbrainzngs.MusicBrainzError as exc:
             raise MusicBrainzAPIError(
-                exc, "get release by ID", mb_album_id, traceback.format_exc()
+                exc, "get release by ID", albumid, traceback.format_exc()
             )
 
         # release is potentially a pseudo release
@@ -880,19 +898,17 @@ class MusicBrainzPlugin(MetadataSourcePluginNext):
         """Fetches a track by its MusicBrainz ID. Returns a TrackInfo object
         or None if no track is found. May raise a MusicBrainzAPIError.
         """
-        if not (mb_track_id := extract_release_id(self.data_source, track_id)):
+        trackid = _parse_id(track_id)
+        if not trackid:
             self._log.debug("Invalid MBID ({0}).", track_id)
             return None
-
         try:
-            res = musicbrainzngs.get_recording_by_id(
-                mb_track_id, TRACK_INCLUDES
-            )
+            res = musicbrainzngs.get_recording_by_id(trackid, TRACK_INCLUDES)
         except musicbrainzngs.ResponseError:
             self._log.debug("Track ID match failed.")
             return None
         except musicbrainzngs.MusicBrainzError as exc:
             raise MusicBrainzAPIError(
-                exc, "get recording by ID", mb_track_id, traceback.format_exc()
+                exc, "get recording by ID", trackid, traceback.format_exc()
             )
         return self.track_info(res["recording"])

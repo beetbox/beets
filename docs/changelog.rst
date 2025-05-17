@@ -6,6 +6,31 @@ Changelog goes here! Please add your entry to the bottom of one of the lists bel
 Unreleased
 ----------
 
+New features:
+
+Bug fixes:
+
+For packagers:
+
+Other changes:
+
+2.3.1 (May 14, 2025)
+--------------------
+
+Bug fixes:
+* :doc:`/reference/pathformat`: Fixed a regression where path legalization
+  incorrectly removed parts of user-configured path formats that followed a dot
+  (**.**).
+  :bug:`5771`
+
+For packagers:
+* Force ``poetry`` version below 2 to avoid it mangling file modification times
+  in ``sdist`` package.
+  :bug:`5770`
+
+2.3.0 (May 07, 2025)
+--------------------
+
 Beets now requires Python 3.9 or later since support for EOL Python 3.8 has
 been dropped.
 

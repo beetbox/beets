@@ -876,7 +876,6 @@ This feature is currently supported by the :doc:`/plugins/discogs` and the
 
 Default: ``yes``.
 
-
 .. _match-config:
 
 Autotagger Matching Options
