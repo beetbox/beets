@@ -659,9 +659,9 @@ class ImportSessionFixture(ImportSession):
 
     >>> lib = Library(':memory:')
     >>> importer = ImportSessionFixture(lib, paths=['/path/to/import'])
-    >>> importer.add_choice(importer.action.SKIP)
-    >>> importer.add_choice(importer.action.ASIS)
-    >>> importer.default_choice = importer.action.APPLY
+    >>> importer.add_choice(importer.Action.SKIP)
+    >>> importer.add_choice(importer.Action.ASIS)
+    >>> importer.default_choice = importer.Action.APPLY
     >>> importer.run()
 
     This imports ``/path/to/import`` into `lib`. It skips the first
@@ -674,7 +674,7 @@ class ImportSessionFixture(ImportSession):
         self._choices = []
         self._resolutions = []
 
-    default_choice = importer.action.APPLY
+    default_choice = importer.Action.APPLY
 
     def add_choice(self, choice):
         self._choices.append(choice)
@@ -688,7 +688,7 @@ class ImportSessionFixture(ImportSession):
         except IndexError:
             choice = self.default_choice
 
-        if choice == importer.action.APPLY:
+        if choice == importer.Action.APPLY:
             return task.candidates[0]
         elif isinstance(choice, int):
             return task.candidates[choice - 1]
@@ -708,7 +708,7 @@ class ImportSessionFixture(ImportSession):
             res = self.default_resolution
 
         if res == self.Resolution.SKIP:
-            task.set_choice(importer.action.SKIP)
+            task.set_choice(importer.Action.SKIP)
         elif res == self.Resolution.REMOVE:
             task.should_remove_duplicates = True
         elif res == self.Resolution.MERGE:
@@ -721,7 +721,7 @@ class TerminalImportSessionFixture(TerminalImportSession):
         super().__init__(*args, **kwargs)
         self._choices = []
 
-    default_choice = importer.action.APPLY
+    default_choice = importer.Action.APPLY
 
     def add_choice(self, choice):
         self._choices.append(choice)
@@ -743,15 +743,15 @@ class TerminalImportSessionFixture(TerminalImportSession):
         except IndexError:
             choice = self.default_choice
 
-        if choice == importer.action.APPLY:
+        if choice == importer.Action.APPLY:
             self.io.addinput("A")
-        elif choice == importer.action.ASIS:
+        elif choice == importer.Action.ASIS:
             self.io.addinput("U")
-        elif choice == importer.action.ALBUMS:
+        elif choice == importer.Action.ALBUMS:
             self.io.addinput("G")
-        elif choice == importer.action.TRACKS:
+        elif choice == importer.Action.TRACKS:
             self.io.addinput("T")
-        elif choice == importer.action.SKIP:
+        elif choice == importer.Action.SKIP:
             self.io.addinput("S")
         else:
             self.io.addinput("M")

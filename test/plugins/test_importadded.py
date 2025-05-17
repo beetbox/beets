@@ -57,7 +57,7 @@ class ImportAddedTest(PluginMixin, AutotagImportTestCase):
             os.path.getmtime(mfile.path) for mfile in self.import_media
         )
         self.importer = self.setup_importer()
-        self.importer.add_choice(importer.action.APPLY)
+        self.importer.add_choice(importer.Action.APPLY)
 
     def find_media_file(self, item):
         """Find the pre-import MediaFile for an Item"""

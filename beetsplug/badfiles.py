@@ -194,7 +194,7 @@ class BadFiles(BeetsPlugin):
             sel = ui.input_options(["aBort", "skip", "continue"])
 
             if sel == "s":
-                return importer.action.SKIP
+                return importer.Action.SKIP
             elif sel == "c":
                 return None
             elif sel == "b":
