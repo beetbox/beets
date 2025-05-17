@@ -16,11 +16,10 @@
 
 from __future__ import annotations
 
-import re
 import traceback
 from collections import Counter
 from itertools import product
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Sequence
 from urllib.parse import urljoin
 
 import musicbrainzngs
@@ -28,16 +27,11 @@ import musicbrainzngs
 import beets
 import beets.autotag.hooks
 from beets import config, plugins, util
-from beets.plugins import BeetsPlugin, MetadataSourcePlugin
-from beets.util.id_extractors import (
-    beatport_id_regex,
-    deezer_id_regex,
-    extract_discogs_id_regex,
-    spotify_id_regex,
-)
+from beets.metadata_plugins import MetadataSourcePluginNext
+from beets.util.id_extractors import extract_release_id
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator, Sequence
+    from collections.abc import Iterator
 
     from beets.library import Item
 
@@ -302,17 +296,6 @@ def _set_date_str(
                 setattr(info, key, date_num)
 
 
-def _parse_id(s: str) -> str | None:
-    """Search for a MusicBrainz ID in the given string and return it. If
-    no ID can be found, return None.
-    """
-    # Find the first thing that looks like a UUID/MBID.
-    match = re.search("[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}", s)
-    if match is not None:
-        return match.group() if match else None
-    return None
-
-
 def _is_translation(r):
     _trans_key = "transl-tracklisting"
     return r["type"] == _trans_key and r["direction"] == "backward"
@@ -377,14 +360,12 @@ def _merge_pseudo_and_actual_album(
     return merged
 
 
-class MusicBrainzPlugin(BeetsPlugin):
-    data_source = "Musicbrainz"
-
+class MusicBrainzPlugin(MetadataSourcePluginNext):
     def __init__(self):
         """Set up the python-musicbrainz-ngs module according to settings
         from the beets configuration. This should be called at startup.
         """
-        super().__init__()
+        super().__init__(data_source="Musicbrainz")
         self.config.add(
             {
                 "host": "musicbrainz.org",
@@ -753,24 +734,13 @@ class MusicBrainzPlugin(BeetsPlugin):
                         source.capitalize(),
                     )
 
-            if "discogs" in urls:
-                info.discogs_albumid = extract_discogs_id_regex(urls["discogs"])
-            if "bandcamp" in urls:
-                info.bandcamp_album_id = urls["bandcamp"]
-            if "spotify" in urls:
-                info.spotify_album_id = MetadataSourcePlugin._get_id(
-                    "album", urls["spotify"], spotify_id_regex
+            for source, url in urls.items():
+                item_source = extract_release_id(source, url)
+                setattr(
+                    info,
+                    f"{source}_album_id",
+                    item_source[0] if item_source else None,
                 )
-            if "deezer" in urls:
-                info.deezer_album_id = MetadataSourcePlugin._get_id(
-                    "album", urls["deezer"], deezer_id_regex
-                )
-            if "beatport" in urls:
-                info.beatport_album_id = MetadataSourcePlugin._get_id(
-                    "album", urls["beatport"], beatport_id_regex
-                )
-            if "tidal" in urls:
-                info.tidal_album_id = urls["tidal"].split("/")[-1]
 
         extra_albumdatas = plugins.send("mb_album_extract", data=release)
         for extra_albumdata in extra_albumdatas:
@@ -869,12 +839,18 @@ class MusicBrainzPlugin(BeetsPlugin):
         MusicBrainzAPIError.
         """
         self._log.debug("Requesting MusicBrainz release {}", album_id)
-        albumid = _parse_id(album_id)
-        if not albumid:
-            self._log.debug("Invalid MBID ({0}).", album_id)
+        if not (
+            mb_album_id := extract_release_id(
+                self.data_source,
+                album_id,
+            )
+        ):
+            self._log.debug("Invalid MBID ({0}).", mb_album_id)
             return None
         try:
-            res = musicbrainzngs.get_release_by_id(albumid, RELEASE_INCLUDES)
+            res = musicbrainzngs.get_release_by_id(
+                mb_album_id, RELEASE_INCLUDES
+            )
 
             # resolve linked release relations
             actual_res = None
@@ -887,7 +863,7 @@ class MusicBrainzPlugin(BeetsPlugin):
             return None
         except musicbrainzngs.MusicBrainzError as exc:
             raise MusicBrainzAPIError(
-                exc, "get release by ID", albumid, traceback.format_exc()
+                exc, "get release by ID", mb_album_id, traceback.format_exc()
             )
 
         # release is potentially a pseudo release
@@ -906,17 +882,18 @@ class MusicBrainzPlugin(BeetsPlugin):
         """Fetches a track by its MusicBrainz ID. Returns a TrackInfo object
         or None if no track is found. May raise a MusicBrainzAPIError.
         """
-        trackid = _parse_id(track_id)
-        if not trackid:
+        if not (mb_track_id := extract_release_id(self.data_source, track_id)):
             self._log.debug("Invalid MBID ({0}).", track_id)
             return None
         try:
-            res = musicbrainzngs.get_recording_by_id(trackid, TRACK_INCLUDES)
+            res = musicbrainzngs.get_recording_by_id(
+                mb_track_id, TRACK_INCLUDES
+            )
         except musicbrainzngs.ResponseError:
             self._log.debug("Track ID match failed.")
             return None
         except musicbrainzngs.MusicBrainzError as exc:
             raise MusicBrainzAPIError(
-                exc, "get recording by ID", trackid, traceback.format_exc()
+                exc, "get recording by ID", mb_track_id, traceback.format_exc()
             )
         return self.track_info(res["recording"])
