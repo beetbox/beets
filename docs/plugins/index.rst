@@ -13,7 +13,9 @@ Using Plugins
 -------------
 
 To use one of the plugins included with beets (see the rest of this page for a
-list), just use the ``plugins`` option in your :doc:`config.yaml </reference/config>` file, like so::
+list), just use the ``plugins`` option in your :doc:`config.yaml </reference/config>` file:
+
+.. code-block:: sh
 
     plugins: inline convert web
 
@@ -21,7 +23,9 @@ The value for ``plugins`` can be a space-separated list of plugin names or a
 YAML list like ``[foo, bar]``. You can see which plugins are currently enabled
 by typing ``beet version``.
 
-Each plugin has its own set of options that can be defined in a section bearing its name::
+Each plugin has its own set of options that can be defined in a section bearing its name:
+
+.. code-block:: yaml
 
     plugins: inline convert web
 
@@ -30,10 +34,11 @@ Each plugin has its own set of options that can be defined in a section bearing 
 
 Some plugins have special dependencies that you'll need to install. The
 documentation page for each plugin will list them in the setup instructions.
-For some, you can use ``pip``'s "extras" feature to install the dependencies,
-like this::
+For some, you can use ``pip``'s "extras" feature to install the dependencies:
 
-    pip install beets[fetchart,lyrics,lastgenre]
+.. code-block:: sh
+
+    pip install "beets[fetchart,lyrics,lastgenre]"
 
 .. _metadata-source-plugin-configuration:
 
@@ -48,7 +53,9 @@ plugins share the following configuration option:
   Default: ``0.5``.
 
 For example, to equally consider matches from Discogs and MusicBrainz add the
-following to your configuration::
+following to your configuration:
+
+.. code-block:: yaml
 
     plugins: discogs
 
@@ -111,6 +118,7 @@ following to your configuration::
    missing
    mpdstats
    mpdupdate
+   musicbrainz
    parentwork
    permissions
    play
@@ -142,21 +150,26 @@ Autotagger Extensions
    Use acoustic fingerprinting to identify audio files with
    missing or incorrect metadata.
 
-:doc:`discogs <discogs>`
-  Search for releases in the `Discogs`_ database.
-
-:doc:`spotify <spotify>`
-   Search for releases in the `Spotify`_ database.
-
 :doc:`deezer <deezer>`
    Search for releases in the `Deezer`_ database.
+
+:doc:`discogs <discogs>`
+  Search for releases in the `Discogs`_ database.
 
 :doc:`fromfilename <fromfilename>`
    Guess metadata for untagged tracks from their filenames.
 
-.. _Discogs: https://www.discogs.com/
+:doc:`musicbrainz <musicbrainz>`
+   Search for releases in the `MusicBrainz`_ database.
+
+:doc:`spotify <spotify>`
+   Search for releases in the `Spotify`_ database.
+
+
+.. _Deezer: https://www.deezer.com
+.. _Discogs: https://www.discogs.com
+.. _MusicBrainz: https://www.musicbrainz.com
 .. _Spotify: https://www.spotify.com
-.. _Deezer: https://www.deezer.com/
 
 Metadata
 --------
@@ -465,6 +478,10 @@ Here are a few of the plugins written by the beets community:
 `dsedivec`_
    Has two plugins: ``edit`` and ``moveall``.
 
+`beets-filetote`_
+   Helps bring non-music extra files, attachments, and artifacts during
+   imports and CLI file manipulation actions (`beet move`, etc.).
+
 `beets-follow`_
    Lets you check for new albums from artists you like.
 
@@ -560,6 +577,7 @@ Here are a few of the plugins written by the beets community:
 .. _cmus: http://cmus.sourceforge.net/
 .. _beet-amazon: https://github.com/jmwatte/beet-amazon
 .. _beets-alternatives: https://github.com/geigerzaehler/beets-alternatives
+.. _beets-filetote: https://github.com/gtronset/beets-filetote
 .. _beets-follow: https://github.com/nolsto/beets-follow
 .. _beets-ibroadcast: https://github.com/ctrueden/beets-ibroadcast
 .. _iBroadcast: https://ibroadcast.com/

@@ -6,7 +6,8 @@ statefile: state.pickle
 
 # --------------- Plugins ---------------
 
-plugins: []
+plugins: [musicbrainz]
+
 pluginpath: []
 
 # --------------- Import ---------------
@@ -163,22 +164,6 @@ sort_case_insensitive: yes
 overwrite_null:
   album: []
   track: []
-musicbrainz:
-    enabled: yes
-    host: musicbrainz.org
-    https: no
-    ratelimit: 1
-    ratelimit_interval: 1.0
-    searchlimit: 5
-    extra_tags: []
-    genres: no
-    external_ids:
-        discogs: no
-        bandcamp: no
-        spotify: no
-        deezer: no
-        beatport: no
-        tidal: no
 
 match:
     strong_rec_thresh: 0.04

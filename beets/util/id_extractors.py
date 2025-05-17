@@ -15,20 +15,31 @@
 """Helpers around the extraction of album/track ID's from metadata sources."""
 
 import re
+from typing import TypedDict
+
+
+class RegexDict(TypedDict):
+    """A dictionary containing a regex pattern and the number of the
+    match group.
+    """
+
+    pattern: str
+    match_group: int
+
 
 # Spotify IDs consist of 22 alphanumeric characters
 # (zero-left-padded base62 representation of randomly generated UUID4)
-spotify_id_regex = {
+spotify_id_regex: RegexDict = {
     "pattern": r"(^|open\.spotify\.com/{}/)([0-9A-Za-z]{{22}})",
     "match_group": 2,
 }
 
-deezer_id_regex = {
+deezer_id_regex: RegexDict = {
     "pattern": r"(^|deezer\.com/)([a-z]*/)?({}/)?(\d+)",
     "match_group": 4,
 }
 
-beatport_id_regex = {
+beatport_id_regex: RegexDict = {
     "pattern": r"(^|beatport\.com/release/.+/)(\d+)$",
     "match_group": 2,
 }
