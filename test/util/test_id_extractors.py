@@ -1,3 +1,5 @@
+from typing import NamedTuple
+
 import pytest
 
 from beets.util.id_extractors import extract_release_id
@@ -32,3 +34,28 @@ from beets.util.id_extractors import extract_release_id
 )  # fmt: skip
 def test_extract_release_id(source, id_string, expected):
     assert extract_release_id(source, id_string) == expected
+
+
+class SourceWithURL(NamedTuple):
+    source: str
+    url: str
+
+
+source_with_urls = [
+    SourceWithURL("spotify", "https://open.spotify.com/album/39WqpoPgZxygo6YQjehLJJ"),
+    SourceWithURL("deezer", "https://www.deezer.com/album/176356382"),
+    SourceWithURL("beatport", "https://www.beatport.com/release/album-name/3089651"),
+    SourceWithURL("discogs", "http://www.discogs.com/G%C3%BCnther-Lause-Meru-Ep/release/4354798"),
+    SourceWithURL("musicbrainz", "https://musicbrainz.org/entity/28e32c71-1450-463e-92bf-e0a46446fc11"),
+]  # fmt: skip
+
+
+@pytest.mark.parametrize("source", [s.source for s in source_with_urls])
+@pytest.mark.parametrize("source_with_url", source_with_urls)
+def test_match_source_url(source, source_with_url):
+    if source == source_with_url.source:
+        assert extract_release_id(source, source_with_url.url)
+    else:
+        assert not extract_release_id(source, source_with_url.url), (
+            f"Source {source} pattern should not match {source_with_url.source} URL"
+        )
