@@ -347,7 +347,8 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
     def setUp(self):
         super().setUp()
         self.setup_importer()
-        self.matcher = AutotagStub().install()
+        self.matcher = AutotagStub(AutotagStub.IDENT).install()
+        self.addCleanup(self.matcher.restore)
         # keep track of ui.input_option() calls
         self.input_options_patcher = patch(
             "beets.ui.input_options", side_effect=ui.input_options
@@ -357,7 +358,6 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
     def tearDown(self):
         super().tearDown()
         self.input_options_patcher.stop()
-        self.matcher.restore()
 
     def test_plugin_choices_in_ui_input_options_album(self):
         """Test the presence of plugin choices on the prompt (album)."""
