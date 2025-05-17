@@ -24,10 +24,10 @@ from mediafile import MediaFile
 from beets import config, plugins, ui
 from beets.dbcore import types
 from beets.importer import (
+    Action,
     ArchiveImportTask,
     SentinelImportTask,
     SingletonImportTask,
-    action,
 )
 from beets.library import Item
 from beets.plugins import MetadataSourcePlugin
@@ -389,7 +389,7 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
             "aBort",
         ) + ("Foo", "baR")
 
-        self.importer.add_choice(action.SKIP)
+        self.importer.add_choice(Action.SKIP)
         self.importer.run()
         self.mock_input_options.assert_called_once_with(
             opts, default="a", require=ANY
@@ -424,7 +424,7 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
         ) + ("Foo", "baR")
 
         config["import"]["singletons"] = True
-        self.importer.add_choice(action.SKIP)
+        self.importer.add_choice(Action.SKIP)
         self.importer.run()
         self.mock_input_options.assert_called_with(
             opts, default="a", require=ANY
@@ -461,7 +461,7 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
             "enter Id",
             "aBort",
         ) + ("baZ",)
-        self.importer.add_choice(action.SKIP)
+        self.importer.add_choice(Action.SKIP)
         self.importer.run()
         self.mock_input_options.assert_called_once_with(
             opts, default="a", require=ANY
@@ -523,7 +523,7 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
                 return [ui.commands.PromptChoice("f", "Foo", self.foo)]
 
             def foo(self, session, task):
-                return action.SKIP
+                return Action.SKIP
 
         self.register_plugin(DummyPlugin)
         # Default options + extra choices by the plugin ('Foo', 'Bar')

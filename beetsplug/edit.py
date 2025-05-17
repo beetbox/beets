@@ -24,7 +24,7 @@ import yaml
 
 from beets import plugins, ui, util
 from beets.dbcore import types
-from beets.importer import action
+from beets.importer import Action
 from beets.ui.commands import PromptChoice, _do_query
 
 # These "safe" types can avoid the format/parse cycle that most fields go
@@ -380,9 +380,9 @@ class EditPlugin(plugins.BeetsPlugin):
 
         # Save the new data.
         if success:
-            # Return action.RETAG, which makes the importer write the tags
+            # Return Action.RETAG, which makes the importer write the tags
             # to the files if needed without re-applying metadata.
-            return action.RETAG
+            return Action.RETAG
         else:
             # Edit cancelled / no edits made. Revert changes.
             for obj in task.items:

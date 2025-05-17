@@ -811,12 +811,12 @@ def _summary_judgment(rec):
 
     if config["import"]["quiet"]:
         if rec == Recommendation.strong:
-            return importer.action.APPLY
+            return importer.Action.APPLY
         else:
             action = config["import"]["quiet_fallback"].as_choice(
                 {
-                    "skip": importer.action.SKIP,
-                    "asis": importer.action.ASIS,
+                    "skip": importer.Action.SKIP,
+                    "asis": importer.Action.ASIS,
                 }
             )
     elif config["import"]["timid"]:
@@ -824,17 +824,17 @@ def _summary_judgment(rec):
     elif rec == Recommendation.none:
         action = config["import"]["none_rec_action"].as_choice(
             {
-                "skip": importer.action.SKIP,
-                "asis": importer.action.ASIS,
+                "skip": importer.Action.SKIP,
+                "asis": importer.Action.ASIS,
                 "ask": None,
             }
         )
     else:
         return None
 
-    if action == importer.action.SKIP:
+    if action == importer.Action.SKIP:
         print_("Skipping.")
-    elif action == importer.action.ASIS:
+    elif action == importer.Action.ASIS:
         print_("Importing as-is.")
     return action
 
@@ -1064,7 +1064,7 @@ class TerminalImportSession(importer.ImportSession):
 
         # Take immediate action if appropriate.
         action = _summary_judgment(task.rec)
-        if action == importer.action.APPLY:
+        if action == importer.Action.APPLY:
             match = task.candidates[0]
             show_change(task.cur_artist, task.cur_album, match)
             return match
@@ -1074,7 +1074,7 @@ class TerminalImportSession(importer.ImportSession):
         # Loop until we have a choice.
         while True:
             # Ask for a choice from the user. The result of
-            # `choose_candidate` may be an `importer.action`, an
+            # `choose_candidate` may be an `importer.Action`, an
             # `AlbumMatch` object for a specific selection, or a
             # `PromptChoice`.
             choices = self._get_choices(task)
@@ -1089,7 +1089,7 @@ class TerminalImportSession(importer.ImportSession):
             )
 
             # Basic choices that require no more action here.
-            if choice in (importer.action.SKIP, importer.action.ASIS):
+            if choice in (importer.Action.SKIP, importer.Action.ASIS):
                 # Pass selection to main control flow.
                 return choice
 
@@ -1097,7 +1097,7 @@ class TerminalImportSession(importer.ImportSession):
             # function.
             elif choice in choices:
                 post_choice = choice.callback(self, task)
-                if isinstance(post_choice, importer.action):
+                if isinstance(post_choice, importer.Action):
                     return post_choice
                 elif isinstance(post_choice, autotag.Proposal):
                     # Use the new candidates and continue around the loop.
@@ -1121,7 +1121,7 @@ class TerminalImportSession(importer.ImportSession):
 
         # Take immediate action if appropriate.
         action = _summary_judgment(task.rec)
-        if action == importer.action.APPLY:
+        if action == importer.Action.APPLY:
             match = candidates[0]
             show_item_change(task.item, match)
             return match
@@ -1135,12 +1135,12 @@ class TerminalImportSession(importer.ImportSession):
                 candidates, True, rec, item=task.item, choices=choices
             )
 
-            if choice in (importer.action.SKIP, importer.action.ASIS):
+            if choice in (importer.Action.SKIP, importer.Action.ASIS):
                 return choice
 
             elif choice in choices:
                 post_choice = choice.callback(self, task)
-                if isinstance(post_choice, importer.action):
+                if isinstance(post_choice, importer.Action):
                     return post_choice
                 elif isinstance(post_choice, autotag.Proposal):
                     candidates = post_choice.candidates
@@ -1203,7 +1203,7 @@ class TerminalImportSession(importer.ImportSession):
 
         if sel == "s":
             # Skip new.
-            task.set_choice(importer.action.SKIP)
+            task.set_choice(importer.Action.SKIP)
         elif sel == "k":
             # Keep both. Do nothing; leave the choice intact.
             pass
@@ -1239,16 +1239,16 @@ class TerminalImportSession(importer.ImportSession):
         """
         # Standard, built-in choices.
         choices = [
-            PromptChoice("s", "Skip", lambda s, t: importer.action.SKIP),
-            PromptChoice("u", "Use as-is", lambda s, t: importer.action.ASIS),
+            PromptChoice("s", "Skip", lambda s, t: importer.Action.SKIP),
+            PromptChoice("u", "Use as-is", lambda s, t: importer.Action.ASIS),
         ]
         if task.is_album:
             choices += [
                 PromptChoice(
-                    "t", "as Tracks", lambda s, t: importer.action.TRACKS
+                    "t", "as Tracks", lambda s, t: importer.Action.TRACKS
                 ),
                 PromptChoice(
-                    "g", "Group albums", lambda s, t: importer.action.ALBUMS
+                    "g", "Group albums", lambda s, t: importer.Action.ALBUMS
                 ),
             ]
         choices += [
