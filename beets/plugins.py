@@ -37,6 +37,7 @@ import mediafile
 
 import beets
 from beets import logging
+from beets.util.id_extractors import extract_release_id
 
 if sys.version_info >= (3, 10):
     from typing import ParamSpec
@@ -56,7 +57,6 @@ if TYPE_CHECKING:
     from beets.importer import ImportSession, ImportTask
     from beets.library import Album, Item, Library
     from beets.ui import Subcommand
-    from beets.util.id_extractors import RegexDict
 
     # TYPE_CHECKING guard is needed for any derived type
     # which uses an import from `beets.library` and `beets.imported`
@@ -780,11 +780,6 @@ class MetadataSourcePlugin(Generic[R], BeetsPlugin, metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
-    def id_regex(self) -> RegexDict:
-        raise NotImplementedError
-
-    @property
-    @abc.abstractmethod
     def data_source(self) -> str:
         raise NotImplementedError
 
@@ -872,24 +867,9 @@ class MetadataSourcePlugin(Generic[R], BeetsPlugin, metaclass=abc.ABCMeta):
 
         return artist_string, artist_id
 
-    @staticmethod
-    def _get_id(url_type: str, id_: str, id_regex: RegexDict) -> str | None:
-        """Parse an ID from its URL if necessary.
-
-        :param url_type: Type of URL. Either 'album' or 'track'.
-        :param id_: Album/track ID or URL.
-        :param id_regex: A dictionary containing a regular expression
-            extracting an ID from an URL (if it's not an ID already) in
-            'pattern' and the number of the match group in 'match_group'.
-        :return: Album/track ID.
-        """
-        log.debug("Extracting {} ID from '{}'", url_type, id_)
-        match = re.search(id_regex["pattern"].format(url_type), str(id_))
-        if match:
-            id_ = match.group(id_regex["match_group"])
-            if id_:
-                return id_
-        return None
+    def _get_id(self, id_string: str) -> str | None:
+        """Parse release ID from the given ID string."""
+        return extract_release_id(self.data_source.lower(), id_string)
 
     def candidates(
         self,
