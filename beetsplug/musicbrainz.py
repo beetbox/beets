@@ -18,7 +18,8 @@ from __future__ import annotations
 
 import traceback
 from collections import Counter
-from typing import TYPE_CHECKING, Any
+from itertools import product
+from typing import TYPE_CHECKING, Any, Sequence
 from urllib.parse import urljoin
 
 import musicbrainzngs
@@ -724,6 +725,14 @@ class MusicBrainzPlugin(MetadataSourcePluginNext):
         }
         if wanted_sources and (url_rels := release.get("url-relation-list")):
             urls = {}
+
+            for source, url in product(wanted_sources, url_rels):
+                if f"{source}.com" in (target := url["target"]):
+                    urls[source] = target
+                    self._log.debug(
+                        "Found link to {} release via MusicBrainz",
+                        source.capitalize(),
+                    )
 
             for source, url in urls.items():
                 item_source = extract_release_id(source, url)

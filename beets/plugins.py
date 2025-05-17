@@ -48,7 +48,6 @@ if TYPE_CHECKING:
     from beets.importer import ImportSession, ImportTask
     from beets.library import Album, Item, Library
     from beets.ui import Subcommand
-    from beets.util.id_extractors import RegexDict
 
     # TYPE_CHECKING guard is needed for any derived type
     # which uses an import from `beets.library` and `beets.imported`
