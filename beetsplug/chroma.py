@@ -18,13 +18,14 @@ autotagger. Requires the pyacoustid library.
 
 import re
 from collections import defaultdict
-from functools import partial
+from functools import cached_property, partial
 
 import acoustid
 import confuse
 
 from beets import config, plugins, ui, util
-from beets.autotag import hooks
+from beets.autotag.hooks import Distance
+from beetsplug.musicbrainz import MusicBrainzPlugin
 
 API_KEY = "1vOwZtEn"
 SCORE_THRESH = 0.5
@@ -182,11 +183,15 @@ class AcoustidPlugin(plugins.BeetsPlugin):
             self.register_listener("import_task_start", self.fingerprint_task)
         self.register_listener("import_task_apply", apply_acoustid_metadata)
 
+    @cached_property
+    def mb(self) -> MusicBrainzPlugin:
+        return MusicBrainzPlugin()
+
     def fingerprint_task(self, task, session):
         return fingerprint_task(self._log, task, session)
 
     def track_distance(self, item, info):
-        dist = hooks.Distance()
+        dist = Distance()
         if item.path not in _matches or not info.track_id:
             # Match failed or no track ID.
             return dist
@@ -198,7 +203,7 @@ class AcoustidPlugin(plugins.BeetsPlugin):
     def candidates(self, items, artist, album, va_likely, extra_tags=None):
         albums = []
         for relid in prefix(_all_releases(items), MAX_RELEASES):
-            album = hooks.album_for_mbid(relid)
+            album = self.mb.album_for_id(relid)
             if album:
                 albums.append(album)
 
@@ -212,7 +217,7 @@ class AcoustidPlugin(plugins.BeetsPlugin):
         recording_ids, _ = _matches[item.path]
         tracks = []
         for recording_id in prefix(recording_ids, MAX_RECORDINGS):
-            track = hooks.track_for_mbid(recording_id)
+            track = self.mb.track_for_id(recording_id)
             if track:
                 tracks.append(track)
         self._log.debug("acoustid item candidates: {0}", len(tracks))

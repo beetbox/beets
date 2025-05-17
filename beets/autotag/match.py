@@ -335,8 +335,8 @@ def distance(
     return dist
 
 
-def match_by_id(items: Iterable[Item]):
-    """If the items are tagged with a MusicBrainz album ID, returns an
+def match_by_id(items: Iterable[Item]) -> AlbumInfo | None:
+    """If the items are tagged with an external source ID, return an
     AlbumInfo object for the corresponding album. Otherwise, returns
     None.
     """
@@ -356,7 +356,7 @@ def match_by_id(items: Iterable[Item]):
             return None
     # If all album IDs are equal, look up the album.
     log.debug("Searching for discovered album ID: {0}", first)
-    return hooks.album_for_mbid(first)
+    return plugins.album_for_id(first)
 
 
 def _recommendation(
@@ -511,15 +511,14 @@ def tag_album(
     if search_ids:
         for search_id in search_ids:
             log.debug("Searching for album ID: {0}", search_id)
-            if info := hooks.album_for_id(search_id):
+            if info := plugins.album_for_id(search_id):
                 _add_candidate(items, candidates, info)
 
     # Use existing metadata or text search.
     else:
         # Try search based on current ID.
-        id_info = match_by_id(items)
-        if id_info:
-            _add_candidate(items, candidates, id_info)
+        if info := match_by_id(items):
+            _add_candidate(items, candidates, info)
             rec = _recommendation(list(candidates.values()))
             log.debug("Album ID match recommendation is {0}", rec)
             if candidates and not config["import"]["timid"]:
@@ -540,12 +539,6 @@ def tag_album(
             search_artist, search_album = cur_artist, cur_album
         log.debug("Search terms: {0} - {1}", search_artist, search_album)
 
-        extra_tags = None
-        if config["musicbrainz"]["extra_tags"]:
-            tag_list = config["musicbrainz"]["extra_tags"].get()
-            extra_tags = {k: v for (k, v) in likelies.items() if k in tag_list}
-            log.debug("Additional search terms: {0}", extra_tags)
-
         # Is this album likely to be a "various artist" release?
         va_likely = (
             (not consensus["artist"])
@@ -555,8 +548,8 @@ def tag_album(
         log.debug("Album might be VA: {0}", va_likely)
 
         # Get the results from the data sources.
-        for matched_candidate in hooks.album_candidates(
-            items, search_artist, search_album, va_likely, extra_tags
+        for matched_candidate in plugins.candidates(
+            items, search_artist, search_album, va_likely
         ):
             _add_candidate(items, candidates, matched_candidate)
 
@@ -576,22 +569,21 @@ def tag_item(
     """Find metadata for a single track. Return a `Proposal` consisting
     of `TrackMatch` objects.
 
-    `search_artist` and `search_title` may be used
-    to override the current metadata for the purposes of the MusicBrainz
-    title. `search_ids` may be used for restricting the search to a list
-    of metadata backend IDs.
+    `search_artist` and `search_title` may be used to override the item
+    metadata in the search query. `search_ids` may be used for restricting the
+    search to a list of metadata backend IDs.
     """
     # Holds candidates found so far: keys are MBIDs; values are
     # (distance, TrackInfo) pairs.
     candidates = {}
     rec: Recommendation | None = None
 
-    # First, try matching by MusicBrainz ID.
+    # First, try matching by the external source ID.
     trackids = search_ids or [t for t in [item.mb_trackid] if t]
     if trackids:
         for trackid in trackids:
             log.debug("Searching for track ID: {0}", trackid)
-            if info := hooks.track_for_id(trackid):
+            if info := plugins.track_for_id(trackid):
                 dist = track_distance(item, info, incl_artist=True)
                 candidates[info.track_id] = hooks.TrackMatch(dist, info)
                 # If this is a good match, then don't keep searching.
@@ -612,12 +604,14 @@ def tag_item(
             return Proposal([], Recommendation.none)
 
     # Search terms.
-    if not (search_artist and search_title):
-        search_artist, search_title = item.artist, item.title
+    search_artist = search_artist or item.artist
+    search_title = search_title or item.title
     log.debug("Item search terms: {0} - {1}", search_artist, search_title)
 
     # Get and evaluate candidate metadata.
-    for track_info in hooks.item_candidates(item, search_artist, search_title):
+    for track_info in plugins.item_candidates(
+        item, search_artist, search_title
+    ):
         dist = track_distance(item, track_info, incl_artist=True)
         candidates[track_info.track_id] = hooks.TrackMatch(dist, track_info)
 

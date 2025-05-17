@@ -39,6 +39,7 @@ from beets.test import _common
 from beets.test.helper import (
     NEEDS_REFLINK,
     AsIsImporterMixin,
+    AutotagImportTestCase,
     AutotagStub,
     BeetsTestCase,
     ImportTestCase,
@@ -47,53 +48,6 @@ from beets.test.helper import (
     has_program,
 )
 from beets.util import bytestring_path, displayable_path, syspath
-
-
-class ScrubbedImportTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
-    db_on_disk = True
-    plugin = "scrub"
-
-    def test_tags_not_scrubbed(self):
-        config["plugins"] = ["scrub"]
-        config["scrub"]["auto"] = False
-        config["import"]["write"] = True
-        for mediafile in self.import_media:
-            assert mediafile.artist == "Tag Artist"
-            assert mediafile.album == "Tag Album"
-        self.run_asis_importer()
-        for item in self.lib.items():
-            imported_file = os.path.join(item.path)
-            imported_file = MediaFile(imported_file)
-            assert imported_file.artist == "Tag Artist"
-            assert imported_file.album == "Tag Album"
-
-    def test_tags_restored(self):
-        config["plugins"] = ["scrub"]
-        config["scrub"]["auto"] = True
-        config["import"]["write"] = True
-        for mediafile in self.import_media:
-            assert mediafile.artist == "Tag Artist"
-            assert mediafile.album == "Tag Album"
-        self.run_asis_importer()
-        for item in self.lib.items():
-            imported_file = os.path.join(item.path)
-            imported_file = MediaFile(imported_file)
-            assert imported_file.artist == "Tag Artist"
-            assert imported_file.album == "Tag Album"
-
-    def test_tags_not_restored(self):
-        config["plugins"] = ["scrub"]
-        config["scrub"]["auto"] = True
-        config["import"]["write"] = False
-        for mediafile in self.import_media:
-            assert mediafile.artist == "Tag Artist"
-            assert mediafile.album == "Tag Album"
-        self.run_asis_importer()
-        for item in self.lib.items():
-            imported_file = os.path.join(item.path)
-            imported_file = MediaFile(imported_file)
-            assert imported_file.artist is None
-            assert imported_file.album is None
 
 
 @_common.slow_test()
@@ -306,7 +260,7 @@ class ImportPasswordRarTest(ImportZipTest):
         return os.path.join(_common.RSRC, b"password.rar")
 
 
-class ImportSingletonTest(ImportTestCase):
+class ImportSingletonTest(AutotagImportTestCase):
     """Test ``APPLY`` and ``ASIS`` choices for an import session with
     singletons config set to True.
     """
@@ -315,11 +269,6 @@ class ImportSingletonTest(ImportTestCase):
         super().setUp()
         self.prepare_album_for_import(1)
         self.importer = self.setup_singleton_importer()
-        self.matcher = AutotagStub().install()
-
-    def tearDown(self):
-        super().tearDown()
-        self.matcher.restore()
 
     def test_apply_asis_adds_track(self):
         assert self.lib.items().get() is None
@@ -432,19 +381,13 @@ class ImportSingletonTest(ImportTestCase):
             assert item.disc == disc
 
 
-class ImportTest(ImportTestCase):
+class ImportTest(AutotagImportTestCase):
     """Test APPLY, ASIS and SKIP choices."""
 
     def setUp(self):
         super().setUp()
         self.prepare_album_for_import(1)
         self.setup_importer()
-        self.matcher = AutotagStub().install()
-        self.matcher.matching = AutotagStub.IDENT
-
-    def tearDown(self):
-        super().tearDown()
-        self.matcher.restore()
 
     def test_apply_asis_adds_album(self):
         assert self.lib.albums().get() is None
@@ -639,18 +582,13 @@ class ImportTest(ImportTestCase):
                 assert item.disc == disc
 
 
-class ImportTracksTest(ImportTestCase):
+class ImportTracksTest(AutotagImportTestCase):
     """Test TRACKS and APPLY choice."""
 
     def setUp(self):
         super().setUp()
         self.prepare_album_for_import(1)
         self.setup_importer()
-        self.matcher = AutotagStub().install()
-
-    def tearDown(self):
-        super().tearDown()
-        self.matcher.restore()
 
     def test_apply_tracks_adds_singleton_track(self):
         assert self.lib.items().get() is None
@@ -673,18 +611,13 @@ class ImportTracksTest(ImportTestCase):
         self.assert_file_in_lib(b"singletons", b"Applied Track 1.mp3")
 
 
-class ImportCompilationTest(ImportTestCase):
+class ImportCompilationTest(AutotagImportTestCase):
     """Test ASIS import of a folder containing tracks with different artists."""
 
     def setUp(self):
         super().setUp()
         self.prepare_album_for_import(3)
         self.setup_importer()
-        self.matcher = AutotagStub().install()
-
-    def tearDown(self):
-        super().tearDown()
-        self.matcher.restore()
 
     def test_asis_homogenous_sets_albumartist(self):
         self.importer.add_choice(importer.Action.ASIS)
@@ -783,20 +716,15 @@ class ImportCompilationTest(ImportTestCase):
         assert asserted_multi_artists_1
 
 
-class ImportExistingTest(ImportTestCase):
+class ImportExistingTest(AutotagImportTestCase):
     """Test importing files that are already in the library directory."""
 
     def setUp(self):
         super().setUp()
         self.prepare_album_for_import(1)
-        self.matcher = AutotagStub().install()
 
         self.reimporter = self.setup_importer(import_dir=self.libdir)
         self.importer = self.setup_importer()
-
-    def tearDown(self):
-        super().tearDown()
-        self.matcher.restore()
 
     def test_does_not_duplicate_item(self):
         self.importer.run()
@@ -904,22 +832,18 @@ class ImportExistingTest(ImportTestCase):
         self.assertNotExists(self.import_media[0].path)
 
 
-class GroupAlbumsImportTest(ImportTestCase):
+class GroupAlbumsImportTest(AutotagImportTestCase):
+    matching = AutotagStub.NONE
+
     def setUp(self):
         super().setUp()
         self.prepare_album_for_import(3)
-        self.matcher = AutotagStub().install()
-        self.matcher.matching = AutotagStub.NONE
         self.setup_importer()
 
         # Split tracks into two albums and use both as-is
         self.importer.add_choice(importer.Action.ALBUMS)
         self.importer.add_choice(importer.Action.ASIS)
         self.importer.add_choice(importer.Action.ASIS)
-
-    def tearDown(self):
-        super().tearDown()
-        self.matcher.restore()
 
     def test_add_album_for_different_artist_and_different_album(self):
         self.import_media[0].artist = "Artist B"
@@ -976,17 +900,13 @@ class GlobalGroupAlbumsImportTest(GroupAlbumsImportTest):
         config["import"]["group_albums"] = True
 
 
-class ChooseCandidateTest(ImportTestCase):
+class ChooseCandidateTest(AutotagImportTestCase):
+    matching = AutotagStub.BAD
+
     def setUp(self):
         super().setUp()
         self.prepare_album_for_import(1)
         self.setup_importer()
-        self.matcher = AutotagStub().install()
-        self.matcher.matching = AutotagStub.BAD
-
-    def tearDown(self):
-        super().tearDown()
-        self.matcher.restore()
 
     def test_choose_first_candidate(self):
         self.importer.add_choice(1)
@@ -1094,26 +1014,22 @@ class InferAlbumDataTest(BeetsTestCase):
         assert not self.items[0].comp
 
 
-def match_album_mock(*args, **kwargs):
+def album_candidates_mock(*args, **kwargs):
     """Create an AlbumInfo object for testing."""
-    track_info = TrackInfo(
-        title="new title",
-        track_id="trackid",
-        index=0,
-    )
-    album_info = AlbumInfo(
+    yield AlbumInfo(
         artist="artist",
         album="album",
-        tracks=[track_info],
+        tracks=[TrackInfo(title="new title", track_id="trackid", index=0)],
         album_id="albumid",
         artist_id="artistid",
         flex="flex",
     )
-    return iter([album_info])
 
 
-@patch("beets.autotag.mb.match_album", Mock(side_effect=match_album_mock))
-class ImportDuplicateAlbumTest(ImportTestCase):
+@patch("beets.plugins.candidates", Mock(side_effect=album_candidates_mock))
+class ImportDuplicateAlbumTest(PluginMixin, ImportTestCase):
+    plugin = "musicbrainz"
+
     def setUp(self):
         super().setUp()
 
@@ -1219,20 +1135,16 @@ class ImportDuplicateAlbumTest(ImportTestCase):
         return album
 
 
-def match_track_mock(*args, **kwargs):
-    return iter(
-        [
-            TrackInfo(
-                artist="artist",
-                title="title",
-                track_id="new trackid",
-                index=0,
-            )
-        ]
+def item_candidates_mock(*args, **kwargs):
+    yield TrackInfo(
+        artist="artist",
+        title="title",
+        track_id="new trackid",
+        index=0,
     )
 
 
-@patch("beets.autotag.mb.match_track", Mock(side_effect=match_track_mock))
+@patch("beets.plugins.item_candidates", Mock(side_effect=item_candidates_mock))
 class ImportDuplicateSingletonTest(ImportTestCase):
     def setUp(self):
         super().setUp()
@@ -1566,7 +1478,7 @@ class MultiDiscAlbumsInDirTest(BeetsTestCase):
         assert len(items) == 3
 
 
-class ReimportTest(ImportTestCase):
+class ReimportTest(AutotagImportTestCase):
     """Test "re-imports", in which the autotagging machinery is used for
     music that's already in the library.
 
@@ -1574,6 +1486,8 @@ class ReimportTest(ImportTestCase):
     replacing the old data with the new data. We also copy over flexible
     attributes and the added date.
     """
+
+    matching = AutotagStub.GOOD
 
     def setUp(self):
         super().setUp()
@@ -1588,14 +1502,6 @@ class ReimportTest(ImportTestCase):
         item.baz = "qux"
         item.added = 4747.0
         item.store()
-
-        # Set up an import pipeline with a "good" match.
-        self.matcher = AutotagStub().install()
-        self.matcher.matching = AutotagStub.GOOD
-
-    def tearDown(self):
-        super().tearDown()
-        self.matcher.restore()
 
     def _setup_session(self, singletons=False):
         self.setup_importer(import_dir=self.libdir, singletons=singletons)
@@ -1672,26 +1578,21 @@ class ReimportTest(ImportTestCase):
 
     def test_reimported_album_not_preserves_flexattr(self):
         self._setup_session()
-        assert self._album().data_source == "original_source"
+
         self.importer.run()
         assert self._album().data_source == "match_source"
 
 
-class ImportPretendTest(ImportTestCase):
+class ImportPretendTest(AutotagImportTestCase):
     """Test the pretend commandline option"""
 
     def setUp(self):
         super().setUp()
-        self.matcher = AutotagStub().install()
         self.io.install()
 
         self.album_track_path = self.prepare_album_for_import(1)[0]
         self.single_path = self.prepare_track_for_import(2, self.import_path)
         self.album_path = self.album_track_path.parent
-
-    def tearDown(self):
-        super().tearDown()
-        self.matcher.restore()
 
     def __run(self, importer):
         with capture_log() as logs:
@@ -1701,6 +1602,7 @@ class ImportPretendTest(ImportTestCase):
         assert len(self.lib.albums()) == 0
 
         return [line for line in logs if not line.startswith("Sending event:")]
+        assert self._album().data_source == "original_source"
 
     def test_import_singletons_pretend(self):
         assert self.__run(self.setup_singleton_importer(pretend=True)) == [
@@ -1725,112 +1627,64 @@ class ImportPretendTest(ImportTestCase):
         assert self.__run(importer) == [f"No files imported from {empty_path}"]
 
 
-# Helpers for ImportMusicBrainzIdTest.
+def mocked_get_album_by_id(id_):
+    """Return album candidate for the given id.
 
-
-def mocked_get_release_by_id(
-    id_, includes=[], release_status=[], release_type=[]
-):
-    """Mimic musicbrainzngs.get_release_by_id, accepting only a restricted list
-    of MB ids (ID_RELEASE_0, ID_RELEASE_1). The returned dict differs only in
-    the release title and artist name, so that ID_RELEASE_0 is a closer match
-    to the items created by ImportHelper.prepare_album_for_import()."""
+    The two albums differ only in the release title and artist name, so that
+    ID_RELEASE_0 is a closer match to the items created by
+    ImportHelper.prepare_album_for_import().
+    """
     # Map IDs to (release title, artist), so the distances are different.
-    releases = {
-        ImportMusicBrainzIdTest.ID_RELEASE_0: ("VALID_RELEASE_0", "TAG ARTIST"),
-        ImportMusicBrainzIdTest.ID_RELEASE_1: (
-            "VALID_RELEASE_1",
-            "DISTANT_MATCH",
-        ),
-    }
+    album, artist = {
+        ImportIdTest.ID_RELEASE_0: ("VALID_RELEASE_0", "TAG ARTIST"),
+        ImportIdTest.ID_RELEASE_1: ("VALID_RELEASE_1", "DISTANT_MATCH"),
+    }[id_]
 
-    return {
-        "release": {
-            "title": releases[id_][0],
-            "id": id_,
-            "medium-list": [
-                {
-                    "track-list": [
-                        {
-                            "id": "baz",
-                            "recording": {
-                                "title": "foo",
-                                "id": "bar",
-                                "length": 59,
-                            },
-                            "position": 9,
-                            "number": "A2",
-                        }
-                    ],
-                    "position": 5,
-                }
-            ],
-            "artist-credit": [
-                {
-                    "artist": {
-                        "name": releases[id_][1],
-                        "id": "some-id",
-                    },
-                }
-            ],
-            "release-group": {
-                "id": "another-id",
-            },
-            "status": "Official",
-        }
-    }
+    return AlbumInfo(
+        album_id=id_,
+        album=album,
+        artist_id="some-id",
+        artist=artist,
+        albumstatus="Official",
+        tracks=[
+            TrackInfo(
+                track_id="bar",
+                title="foo",
+                artist_id="some-id",
+                artist=artist,
+                length=59,
+                index=9,
+                track_allt="A2",
+            )
+        ],
+    )
 
 
-def mocked_get_recording_by_id(
-    id_, includes=[], release_status=[], release_type=[]
-):
-    """Mimic musicbrainzngs.get_recording_by_id, accepting only a restricted
-    list of MB ids (ID_RECORDING_0, ID_RECORDING_1). The returned dict differs
-    only in the recording title and artist name, so that ID_RECORDING_0 is a
-    closer match to the items created by ImportHelper.prepare_album_for_import().
+def mocked_get_track_by_id(id_):
+    """Return track candidate for the given id.
+
+    The two tracks differ only in the release title and artist name, so that
+    ID_RELEASE_0 is a closer match to the items created by
+    ImportHelper.prepare_album_for_import().
     """
     # Map IDs to (recording title, artist), so the distances are different.
-    releases = {
-        ImportMusicBrainzIdTest.ID_RECORDING_0: (
-            "VALID_RECORDING_0",
-            "TAG ARTIST",
-        ),
-        ImportMusicBrainzIdTest.ID_RECORDING_1: (
-            "VALID_RECORDING_1",
-            "DISTANT_MATCH",
-        ),
-    }
+    title, artist = {
+        ImportIdTest.ID_RECORDING_0: ("VALID_RECORDING_0", "TAG ARTIST"),
+        ImportIdTest.ID_RECORDING_1: ("VALID_RECORDING_1", "DISTANT_MATCH"),
+    }[id_]
 
-    return {
-        "recording": {
-            "title": releases[id_][0],
-            "id": id_,
-            "length": 59,
-            "artist-credit": [
-                {
-                    "artist": {
-                        "name": releases[id_][1],
-                        "id": "some-id",
-                    },
-                }
-            ],
-        }
-    }
+    return TrackInfo(
+        track_id=id_,
+        title=title,
+        artist_id="some-id",
+        artist=artist,
+        length=59,
+    )
 
 
-@patch(
-    "musicbrainzngs.get_recording_by_id",
-    Mock(side_effect=mocked_get_recording_by_id),
-)
-@patch(
-    "musicbrainzngs.get_release_by_id",
-    Mock(side_effect=mocked_get_release_by_id),
-)
-class ImportMusicBrainzIdTest(ImportTestCase):
-    """Test the --musicbrainzid argument."""
-
-    MB_RELEASE_PREFIX = "https://musicbrainz.org/release/"
-    MB_RECORDING_PREFIX = "https://musicbrainz.org/recording/"
+@patch("beets.plugins.track_for_id", Mock(side_effect=mocked_get_track_by_id))
+@patch("beets.plugins.album_for_id", Mock(side_effect=mocked_get_album_by_id))
+class ImportIdTest(ImportTestCase):
     ID_RELEASE_0 = "00000000-0000-0000-0000-000000000000"
     ID_RELEASE_1 = "11111111-1111-1111-1111-111111111111"
     ID_RECORDING_0 = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
@@ -1841,21 +1695,14 @@ class ImportMusicBrainzIdTest(ImportTestCase):
         self.prepare_album_for_import(1)
 
     def test_one_mbid_one_album(self):
-        self.setup_importer(
-            search_ids=[self.MB_RELEASE_PREFIX + self.ID_RELEASE_0]
-        )
+        self.setup_importer(search_ids=[self.ID_RELEASE_0])
 
         self.importer.add_choice(importer.Action.APPLY)
         self.importer.run()
         assert self.lib.albums().get().album == "VALID_RELEASE_0"
 
     def test_several_mbid_one_album(self):
-        self.setup_importer(
-            search_ids=[
-                self.MB_RELEASE_PREFIX + self.ID_RELEASE_0,
-                self.MB_RELEASE_PREFIX + self.ID_RELEASE_1,
-            ]
-        )
+        self.setup_importer(search_ids=[self.ID_RELEASE_0, self.ID_RELEASE_1])
 
         self.importer.add_choice(2)  # Pick the 2nd best match (release 1).
         self.importer.add_choice(importer.Action.APPLY)
@@ -1863,9 +1710,7 @@ class ImportMusicBrainzIdTest(ImportTestCase):
         assert self.lib.albums().get().album == "VALID_RELEASE_1"
 
     def test_one_mbid_one_singleton(self):
-        self.setup_singleton_importer(
-            search_ids=[self.MB_RECORDING_PREFIX + self.ID_RECORDING_0]
-        )
+        self.setup_singleton_importer(search_ids=[self.ID_RECORDING_0])
 
         self.importer.add_choice(importer.Action.APPLY)
         self.importer.run()
@@ -1873,10 +1718,7 @@ class ImportMusicBrainzIdTest(ImportTestCase):
 
     def test_several_mbid_one_singleton(self):
         self.setup_singleton_importer(
-            search_ids=[
-                self.MB_RECORDING_PREFIX + self.ID_RECORDING_0,
-                self.MB_RECORDING_PREFIX + self.ID_RECORDING_1,
-            ]
+            search_ids=[self.ID_RECORDING_0, self.ID_RECORDING_1]
         )
 
         self.importer.add_choice(2)  # Pick the 2nd best match (recording 1).
@@ -1889,11 +1731,7 @@ class ImportMusicBrainzIdTest(ImportTestCase):
         task = importer.ImportTask(
             paths=self.import_dir, toppath="top path", items=[_common.item()]
         )
-        task.search_ids = [
-            self.MB_RELEASE_PREFIX + self.ID_RELEASE_0,
-            self.MB_RELEASE_PREFIX + self.ID_RELEASE_1,
-            "an invalid and discarded id",
-        ]
+        task.search_ids = [self.ID_RELEASE_0, self.ID_RELEASE_1]
 
         task.lookup_candidates()
         assert {"VALID_RELEASE_0", "VALID_RELEASE_1"} == {
@@ -1905,11 +1743,7 @@ class ImportMusicBrainzIdTest(ImportTestCase):
         task = importer.SingletonImportTask(
             toppath="top path", item=_common.item()
         )
-        task.search_ids = [
-            self.MB_RECORDING_PREFIX + self.ID_RECORDING_0,
-            self.MB_RECORDING_PREFIX + self.ID_RECORDING_1,
-            "an invalid and discarded id",
-        ]
+        task.search_ids = [self.ID_RECORDING_0, self.ID_RECORDING_1]
 
         task.lookup_candidates()
         assert {"VALID_RECORDING_0", "VALID_RECORDING_1"} == {

@@ -20,7 +20,7 @@ import os
 import pytest
 
 from beets import importer
-from beets.test.helper import AutotagStub, ImportTestCase, PluginMixin
+from beets.test.helper import AutotagImportTestCase, PluginMixin
 from beets.util import displayable_path, syspath
 from beetsplug.importadded import ImportAddedPlugin
 
@@ -41,7 +41,7 @@ def modify_mtimes(paths, offset=-60000):
         os.utime(syspath(path), (mstat.st_atime, mstat.st_mtime + offset * i))
 
 
-class ImportAddedTest(PluginMixin, ImportTestCase):
+class ImportAddedTest(PluginMixin, AutotagImportTestCase):
     # The minimum mtime of the files to be imported
     plugin = "importadded"
     min_mtime = None
@@ -56,14 +56,8 @@ class ImportAddedTest(PluginMixin, ImportTestCase):
         self.min_mtime = min(
             os.path.getmtime(mfile.path) for mfile in self.import_media
         )
-        self.matcher = AutotagStub().install()
-        self.matcher.matching = AutotagStub.IDENT
         self.importer = self.setup_importer()
         self.importer.add_choice(importer.Action.APPLY)
-
-    def tearDown(self):
-        super().tearDown()
-        self.matcher.restore()
 
     def find_media_file(self, item):
         """Find the pre-import MediaFile for an Item"""

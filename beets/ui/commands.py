@@ -363,7 +363,7 @@ class ChangeRepresentation:
             self.indent_header + f"Match ({dist_string(self.match.distance)}):"
         )
 
-        if self.match.info.get("album"):
+        if isinstance(self.match.info, autotag.hooks.AlbumInfo):
             # Matching an album - print that
             artist_album_str = (
                 f"{self.match.info.artist}" + f" - {self.match.info.album}"
