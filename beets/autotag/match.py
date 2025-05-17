@@ -339,7 +339,7 @@ def match_by_id(items: Iterable[Item]) -> AlbumInfo | None:
     """If the items are tagged with an external source ID, return an
     AlbumInfo object for the corresponding album. Otherwise, returns
     None.
-    """     
+    """
     albumids = (item.mb_albumid for item in items if item.mb_albumid)
 
     # Did any of the items have an MB album ID?
