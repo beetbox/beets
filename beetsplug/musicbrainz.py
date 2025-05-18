@@ -19,7 +19,7 @@ from __future__ import annotations
 import traceback
 from collections import Counter
 from itertools import product
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Sequence
 from urllib.parse import urljoin
 
 import musicbrainzngs
@@ -27,11 +27,11 @@ import musicbrainzngs
 import beets
 import beets.autotag.hooks
 from beets import config, plugins, util
-from beets.plugins import BeetsPlugin
+from beets.metadata_plugins import MetadataSourcePluginNext
 from beets.util.id_extractors import extract_release_id
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator, Sequence
+    from collections.abc import Iterator
 
     from beets.library import Item
 
@@ -360,14 +360,12 @@ def _merge_pseudo_and_actual_album(
     return merged
 
 
-class MusicBrainzPlugin(BeetsPlugin):
-    data_source = "Musicbrainz"
-
+class MusicBrainzPlugin(MetadataSourcePluginNext):
     def __init__(self):
         """Set up the python-musicbrainz-ngs module according to settings
         from the beets configuration. This should be called at startup.
         """
-        super().__init__()
+        super().__init__(data_source="Musicbrainz")
         self.config.add(
             {
                 "host": "musicbrainz.org",
