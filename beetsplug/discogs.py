@@ -31,7 +31,11 @@ from typing import TYPE_CHECKING
 
 import confuse
 from discogs_client import Client, Master, Release
+from discogs_client.exceptions import (
+    AuthorizationError as DiscogsAuthorizationError,
+)
 from discogs_client.exceptions import DiscogsAPIError
+from discogs_client.exceptions import HTTPError as DiscogsHTTPError
 from requests.exceptions import ConnectionError
 from typing_extensions import TypedDict
 
@@ -39,7 +43,10 @@ import beets
 import beets.ui
 from beets import config
 from beets.autotag.hooks import AlbumInfo, TrackInfo, string_dist
-from beets.plugins import BeetsPlugin, MetadataSourcePlugin, get_distance
+from beets.metadata_plugins import (
+    MetadataSourcePluginNext,
+    artists_to_artist_str,
+)
 from beets.util.id_extractors import extract_release_id
 
 if TYPE_CHECKING:
@@ -83,9 +90,9 @@ class ReleaseFormat(TypedDict):
     descriptions: list[str] | None
 
 
-class DiscogsPlugin(BeetsPlugin):
+class DiscogsPlugin(MetadataSourcePluginNext):
     def __init__(self):
-        super().__init__()
+        super().__init__(data_source="Discogs")
         self.config.add(
             {
                 "apikey": API_KEY,
@@ -135,7 +142,7 @@ class DiscogsPlugin(BeetsPlugin):
         os.remove(self._tokenfile())
         self.setup()
 
-    def _tokenfile(self):
+    def _tokenfile(self) -> str:
         """Get the path to the JSON file for storing the OAuth token."""
         return self.config["tokenfile"].get(confuse.Filename(in_app_dir=True))
 
@@ -225,16 +232,24 @@ class DiscogsPlugin(BeetsPlugin):
         # Try to obtain title to verify that we indeed have a valid Release
         try:
             getattr(result, "title")
-        except DiscogsAPIError as e:
+        except DiscogsAuthorizationError as e:
+            self._log.debug(
+                "Authorization Error: {0} (query: {1})",
+                e,
+                result.data["resource_url"],
+            )
+            self.reset_auth()
+            return self.album_for_id(album_id)
+        except DiscogsHTTPError as e:
             if e.status_code != 404:
                 self._log.debug(
                     "API Error: {0} (query: {1})",
                     e,
                     result.data["resource_url"],
                 )
-                if e.status_code == 401:
-                    self.reset_auth()
-                    return self.album_for_id(album_id)
+            if e.status_code == 401:
+                self.reset_auth()
+                return self.album_for_id(album_id)
             return None
         except CONNECTION_ERRORS:
             self._log.debug("Connection error in album lookup", exc_info=True)
@@ -283,16 +298,16 @@ class DiscogsPlugin(BeetsPlugin):
 
         try:
             return result.fetch("year")
-        except DiscogsAPIError as e:
+        except DiscogsHTTPError as e:
             if e.status_code != 404:
                 self._log.debug(
                     "API Error: {0} (query: {1})",
                     e,
                     result.data["resource_url"],
                 )
-                if e.status_code == 401:
-                    self.reset_auth()
-                    return self.get_master_year(master_id)
+            if e.status_code == 401:
+                self.reset_auth()
+                return self.get_master_year(master_id)
             return None
         except CONNECTION_ERRORS:
             self._log.debug(
@@ -312,7 +327,7 @@ class DiscogsPlugin(BeetsPlugin):
 
         return media, albumtype
 
-    def get_album_info(self, result):
+    def get_album_info(self, result) -> None | AlbumInfo:
         """Returns an AlbumInfo object for a discogs Release object."""
         # Explicitly reload the `Release` fields, as they might not be yet
         # present if the result is from a `discogs_client.search()`.
@@ -333,7 +348,7 @@ class DiscogsPlugin(BeetsPlugin):
             self._log.warning("Release does not contain the required fields")
             return None
 
-        artist, artist_id = MetadataSourcePlugin.get_artist(
+        artist, artist_id = artists_to_artist_str(
             [a.data for a in result.artists], join_key="join"
         )
         album = re.sub(r" +", " ", result.title)
@@ -376,7 +391,7 @@ class DiscogsPlugin(BeetsPlugin):
 
         # Additional cleanups (various artists name, catalog number, media).
         if va:
-            artist = config["va_name"].as_str()
+            artist: str = config["va_name"].as_str()
         if catalogno == "none":
             catalogno = None
         # Explicitly set the `media` for the tracks, since it is expected by
@@ -444,8 +459,11 @@ class DiscogsPlugin(BeetsPlugin):
         else:
             return None
 
-    def get_tracks(self, tracklist):
-        """Returns a list of TrackInfo objects for a discogs tracklist."""
+    def get_tracks(self, tracklist) -> list[TrackInfo]:
+        """Returns a list of TrackInfo objects for a discogs tracklist.
+
+        FIXME: This needs a look at and type hinting.
+        """
         try:
             clean_tracklist = self.coalesce_tracks(tracklist)
         except Exception as exc:
@@ -628,7 +646,7 @@ class DiscogsPlugin(BeetsPlugin):
 
         return tracklist
 
-    def get_track_info(self, track, index, divisions):
+    def get_track_info(self, track, index, divisions) -> TrackInfo:
         """Returns a TrackInfo object for a discogs track."""
         title = track["title"]
         if self.config["index_tracks"]:
@@ -637,7 +655,7 @@ class DiscogsPlugin(BeetsPlugin):
                 title = f"{prefix}: {title}"
         track_id = None
         medium, medium_index, _ = self.get_track_index(track["position"])
-        artist, artist_id = MetadataSourcePlugin.get_artist(
+        artist, artist_id = artists_to_artist_str(
             track.get("artists", []), join_key="join"
         )
         length = self.get_track_length(track["duration"])
