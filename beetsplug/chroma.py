@@ -26,7 +26,7 @@ import confuse
 
 from beets import config, plugins, ui, util
 from beets.autotag.hooks import AlbumInfo, Distance
-from beets.metadata_plugins import MetadataSourcePluginNext, TrackInfo
+from beets.metadata_plugins import MetadataSourcePlugin, TrackInfo
 from beetsplug.musicbrainz import MusicBrainzPlugin
 
 API_KEY = "1vOwZtEn"
@@ -170,7 +170,7 @@ def _all_releases(items):
             yield release_id
 
 
-class AcoustidPlugin(MetadataSourcePluginNext, plugins.BeetsPlugin):
+class AcoustidPlugin(MetadataSourcePlugin, plugins.BeetsPlugin):
     def __init__(self):
         super().__init__()
 
