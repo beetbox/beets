@@ -37,7 +37,7 @@ from beets.dbcore import types
 from beets.library import DateType
 from beets.metadata_plugins import (
     IDResponse,
-    SearchApiMetadataSourcePluginNext,
+    SearchApiMetadataSourcePlugin,
     SearchFilter,
     artists_to_artist_str,
 )
@@ -54,7 +54,7 @@ class SpotifyAPIError(Exception):
     pass
 
 
-class SpotifyPlugin(SearchApiMetadataSourcePluginNext):
+class SpotifyPlugin(SearchApiMetadataSourcePlugin):
     item_types = {
         "spotify_track_popularity": types.INTEGER,
         "spotify_acousticness": types.FLOAT,

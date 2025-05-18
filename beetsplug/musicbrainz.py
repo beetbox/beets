@@ -27,7 +27,7 @@ import musicbrainzngs
 import beets
 import beets.autotag.hooks
 from beets import config, plugins, util
-from beets.metadata_plugins import MetadataSourcePluginNext
+from beets.metadata_plugins import MetadataSourcePlugin
 from beets.util.id_extractors import extract_release_id
 
 if TYPE_CHECKING:
@@ -360,7 +360,7 @@ def _merge_pseudo_and_actual_album(
     return merged
 
 
-class MusicBrainzPlugin(MetadataSourcePluginNext):
+class MusicBrainzPlugin(MetadataSourcePlugin):
     def __init__(self):
         """Set up the python-musicbrainz-ngs module according to settings
         from the beets configuration. This should be called at startup.
