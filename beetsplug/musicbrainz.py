@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import traceback
 from collections import Counter
+from functools import cached_property
 from itertools import product
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urljoin
@@ -383,7 +384,7 @@ class MusicBrainzPlugin(BeetsPlugin):
                     "deezer": False,
                     "tidal": False,
                 },
-                "extra_tags": {},
+                "extra_tags": [],
             },
         )
         hostname = self.config["host"].as_str()
@@ -747,6 +748,46 @@ class MusicBrainzPlugin(BeetsPlugin):
 
         return info
 
+    @cached_property
+    def extra_mb_field_by_tag(self) -> dict[str, str]:
+        """Map configured extra tags to their MusicBrainz API field names.
+
+        Process user configuration to determine which additional MusicBrainz
+        fields should be included in search queries.
+        """
+        mb_field_by_tag = {
+            t: FIELDS_TO_MB_KEYS[t]
+            for t in self.config["extra_tags"].as_str_seq()
+            if t in FIELDS_TO_MB_KEYS
+        }
+        if mb_field_by_tag:
+            self._log.debug("Additional search terms: {}", mb_field_by_tag)
+
+        return mb_field_by_tag
+
+    def get_album_criteria(
+        self, items: list[Item], artist: str, album: str, va_likely: bool
+    ) -> dict[str, str]:
+        # Build search criteria.
+        criteria = {"release": album.lower().strip()}
+        if artist is not None:
+            criteria["artist"] = artist.lower().strip()
+        else:
+            # Various Artists search.
+            criteria["arid"] = VARIOUS_ARTISTS_ID
+        if track_count := len(items):
+            criteria["tracks"] = str(track_count)
+
+        for tag, mb_field in self.extra_mb_field_by_tag.items():
+            most_common, _ = util.plurality(i.get(tag) for i in items)
+            value = str(most_common).lower().strip()
+            if tag == "catalognum":
+                value = value.replace(" ", "")
+            if value:
+                criteria[mb_field] = value
+
+        return criteria
+
     def candidates(
         self,
         items: list[Item],
@@ -762,27 +803,7 @@ class MusicBrainzPlugin(BeetsPlugin):
         The query consists of an artist name, an album name, and,
         optionally, a number of tracks on the album and any other extra tags.
         """
-        # Build search criteria.
-        criteria = {"release": album.lower().strip()}
-        if artist is not None:
-            criteria["artist"] = artist.lower().strip()
-        else:
-            # Various Artists search.
-            criteria["arid"] = VARIOUS_ARTISTS_ID
-        if track_count := len(items):
-            criteria["tracks"] = str(track_count)
-
-        if self.config["extra_tags"]:
-            tag_list = self.config["extra_tags"].get()
-            self._log.debug("Additional search terms: {0}", tag_list)
-            for tag, value in tag_list.items():
-                if key := FIELDS_TO_MB_KEYS.get(tag):
-                    value = str(value).lower().strip()
-                    if key == "catno":
-                        value = value.replace(" ", "")
-                    if value:
-                        criteria[key] = value
-
+        criteria = self.get_album_criteria(items, artist, album, va_likely)
         # Abort if we have no search terms.
         if not any(criteria.values()):
             return

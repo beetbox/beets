@@ -8,10 +8,21 @@ Unreleased
 
 New features:
 
+* :doc:`plugins/musicbrainz`: The MusicBrainz autotagger has been moved to
+  a separate plugin. The default :ref:`plugins-config` includes `musicbrainz`,
+  but if you've customized your `plugins` list in your configuration, you'll
+  need to explicitly add `musicbrainz` to continue using this functionality.
+  Configuration option `musicbrainz.enabled` has thus been deprecated.
+  :bug:`2686`
+  :bug:`4605`
 * :doc:`plugins/web`: Show notifications when a track plays. This uses the
   Media Session API to customize media notifications.
 
 Bug fixes:
+
+* :doc:`plugins/musicbrainz`: fix regression where user configured
+  ``extra_tags`` have been read incorrectly.
+  :bug:`5788`
 
 For packagers:
 
@@ -39,13 +50,6 @@ been dropped.
 
 New features:
 
-* :doc:`plugins/musicbrainz`: The MusicBrainz autotagger has been moved to
-  a separate plugin. The default :ref:`plugins-config` includes `musicbrainz`,
-  but if you've customized your `plugins` list in your configuration, you'll
-  need to explicitly add `musicbrainz` to continue using this functionality.
-  Configuration option `musicbrainz.enabled` has thus been deprecated.
-  :bug:`2686`
-  :bug:`4605`
 * :doc:`plugins/lastgenre`: The new configuration option, ``keep_existing``,
   provides more fine-grained control over how pre-populated genre tags are
   handled. The ``force`` option now behaves in a more conventional manner.
