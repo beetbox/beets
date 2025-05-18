@@ -17,6 +17,8 @@
 Spotify playlist construction.
 """
 
+from __future__ import annotations
+
 import base64
 import collections
 import json
@@ -33,7 +35,6 @@ from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.dbcore import types
 from beets.library import DateType
 from beets.plugins import BeetsPlugin, MetadataSourcePlugin
-from beets.util.id_extractors import spotify_id_regex
 
 DEFAULT_WAITING_TIME = 5
 
@@ -70,8 +71,6 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
     album_url = "https://api.spotify.com/v1/albums/"
     track_url = "https://api.spotify.com/v1/tracks/"
     audio_features_url = "https://api.spotify.com/v1/audio-features/"
-
-    id_regex = spotify_id_regex
 
     spotify_audio_features = {
         "acousticness": "spotify_acousticness",
@@ -233,7 +232,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                 self._log.error(f"Request failed. Error: {e}")
                 raise SpotifyAPIError("Request failed.")
 
-    def album_for_id(self, album_id):
+    def album_for_id(self, album_id: str) -> AlbumInfo | None:
         """Fetch an album by its Spotify ID or URL and return an
         AlbumInfo object or None if the album is not found.
 
@@ -242,8 +241,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         :return: AlbumInfo object for album
         :rtype: beets.autotag.hooks.AlbumInfo or None
         """
-        spotify_id = self._get_id("album", album_id, self.id_regex)
-        if spotify_id is None:
+        if not (spotify_id := self._get_id(album_id)):
             return None
 
         album_data = self._handle_response(
@@ -285,7 +283,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             tracks_items.extend(tracks_data["items"])
 
         tracks = []
-        medium_totals = collections.defaultdict(int)
+        medium_totals: dict[int | None, int] = collections.defaultdict(int)
         for i, track_data in enumerate(tracks_items, start=1):
             track = self._get_track(track_data)
             track.index = i
@@ -309,7 +307,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             month=month,
             day=day,
             label=album_data["label"],
-            mediums=max(medium_totals.keys()),
+            mediums=max(filter(None, medium_totals.keys())),
             data_source=self.data_source,
             data_url=album_data["external_urls"]["spotify"],
         )
@@ -359,13 +357,14 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         :return: TrackInfo object for track
         :rtype: beets.autotag.hooks.TrackInfo or None
         """
-        if track_data is None:
-            spotify_id = self._get_id("track", track_id, self.id_regex)
-            if spotify_id is None:
+        if not track_data:
+            if not (spotify_id := self._get_id(track_id)) or not (
+                track_data := self._handle_response(
+                    requests.get, f"{self.track_url}{spotify_id}"
+                )
+            ):
                 return None
-            track_data = self._handle_response(
-                requests.get, self.track_url + spotify_id
-            )
+
         track = self._get_track(track_data)
 
         # Get album's tracks to set `track.index` (position on the entire
