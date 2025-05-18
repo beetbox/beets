@@ -45,10 +45,10 @@ BASE_URL = "https://musicbrainz.org/"
 SKIPPED_TRACKS = ["[data track]"]
 
 FIELDS_TO_MB_KEYS = {
+    "barcode": "barcode",
     "catalognum": "catno",
     "country": "country",
     "label": "label",
-    "barcode": "barcode",
     "media": "format",
     "year": "date",
 }

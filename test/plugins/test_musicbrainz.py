@@ -1081,7 +1081,7 @@ class TestMusicBrainzPlugin(PluginMixin):
         "plugin_config,va_likely,expected_additional_criteria",
         [
             ({}, False, {"artist": "artist"}),
-            ({}, True, {"artist": "artist"}),
+            ({}, True, {"arid": "89ad4ac3-39f7-470e-963a-56509c546377"}),
             (
                 {"extra_tags": ["label", "catalognum"]},
                 False,
