@@ -16,8 +16,11 @@
 
 from unittest import mock
 
+import pytest
+
 from beets import config
-from beets.test.helper import BeetsTestCase
+from beets.library import Item
+from beets.test.helper import BeetsTestCase, PluginMixin
 from beetsplug import musicbrainz
 
 
@@ -1063,3 +1066,42 @@ class MBLibraryTest(MusicBrainzTestCase):
             gp.side_effect = side_effect
             album = self.mb.album_for_id("d2a6f856-b553-40a0-ac54-a321e8e2da02")
             assert album.country is None
+
+
+class TestMusicBrainzPlugin(PluginMixin):
+    plugin = "musicbrainz"
+
+    @pytest.fixture
+    def mb_plugin(self, plugin_config):
+        self.config[self.plugin].set(plugin_config)
+
+        return musicbrainz.MusicBrainzPlugin()
+
+    @pytest.mark.parametrize(
+        "plugin_config,va_likely,expected_additional_criteria",
+        [
+            ({}, False, {"artist": "artist"}),
+            ({}, True, {"artist": "artist"}),
+            (
+                {"extra_tags": ["label", "catalognum"]},
+                False,
+                {"artist": "artist", "label": "abc", "catno": "abc123"},
+            ),
+        ],
+    )
+    def test_get_album_criteria(
+        self, mb_plugin, va_likely, expected_additional_criteria
+    ):
+        items = [
+            Item(catalognum="ABC 123", label="abc"),
+            Item(catalognum="ABC 123", label="abc"),
+            Item(catalognum="ABC 123", label="def"),
+        ]
+
+        assert mb_plugin.get_album_criteria(
+            items, "Artist ", " Album", va_likely
+        ) == {
+            "release": "album",
+            "tracks": str(len(items)),
+            **expected_additional_criteria,
+        }
