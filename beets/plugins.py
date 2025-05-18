@@ -46,7 +46,7 @@ else:
 
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Iterable
 
     from confuse import ConfigView
 
@@ -70,7 +70,7 @@ if TYPE_CHECKING:
     P = ParamSpec("P")
     Ret = TypeVar("Ret", bound=Any)
     Listener = Callable[..., None]
-    IterF = Callable[P, Iterator[Ret]]
+    IterF = Callable[P, Iterable[Ret]]
 
 
 PLUGIN_NAMESPACE = "beetsplug"
@@ -240,7 +240,7 @@ class BeetsPlugin:
 
     def candidates(
         self, items: list[Item], artist: str, album: str, va_likely: bool
-    ) -> Iterator[AlbumInfo]:
+    ) -> Iterable[AlbumInfo]:
         """Return :py:class:`AlbumInfo` candidates that match the given album.
 
         :param items: List of items in the album
@@ -252,7 +252,7 @@ class BeetsPlugin:
 
     def item_candidates(
         self, item: Item, artist: str, title: str
-    ) -> Iterator[TrackInfo]:
+    ) -> Iterable[TrackInfo]:
         """Return :py:class:`TrackInfo` candidates that match the given track.
 
         :param item: Track item
@@ -487,7 +487,7 @@ def notify_info_yielded(event: str) -> Callable[[IterF[P, Ret]], IterF[P, Ret]]:
 
     def decorator(func: IterF[P, Ret]) -> IterF[P, Ret]:
         @wraps(func)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> Iterator[Ret]:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> Iterable[Ret]:
             for v in func(*args, **kwargs):
                 send(event, info=v)
                 yield v
@@ -498,14 +498,14 @@ def notify_info_yielded(event: str) -> Callable[[IterF[P, Ret]], IterF[P, Ret]]:
 
 
 @notify_info_yielded("albuminfo_received")
-def candidates(*args, **kwargs) -> Iterator[AlbumInfo]:
+def candidates(*args, **kwargs) -> Iterable[AlbumInfo]:
     """Return matching album candidates from all plugins."""
     for plugin in find_plugins():
         yield from plugin.candidates(*args, **kwargs)
 
 
 @notify_info_yielded("trackinfo_received")
-def item_candidates(*args, **kwargs) -> Iterator[TrackInfo]:
+def item_candidates(*args, **kwargs) -> Iterable[TrackInfo]:
     """Return matching track candidates from all plugins."""
     for plugin in find_plugins():
         yield from plugin.item_candidates(*args, **kwargs)
@@ -865,7 +865,7 @@ class MetadataSourcePlugin(Generic[R], BeetsPlugin, metaclass=abc.ABCMeta):
 
     def candidates(
         self, items: list[Item], artist: str, album: str, va_likely: bool
-    ) -> Iterator[AlbumInfo]:
+    ) -> Iterable[AlbumInfo]:
         query_filters = {"album": album}
         if not va_likely:
             query_filters["artist"] = artist
@@ -875,7 +875,7 @@ class MetadataSourcePlugin(Generic[R], BeetsPlugin, metaclass=abc.ABCMeta):
 
     def item_candidates(
         self, item: Item, artist: str, title: str
-    ) -> Iterator[TrackInfo]:
+    ) -> Iterable[TrackInfo]:
         for result in self._search_api(
             "track", {"artist": artist}, keywords=title
         ):
