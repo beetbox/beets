@@ -31,7 +31,7 @@ or your plugin subpackage
 
 .. attention::
 
-    You do not anymore need to add a  file to the ``beetsplug``
+    You do not need to add an ``__init__.py`` file to the ``beetsplug``
     directory. Python treats your plugin as a namespace package automatically,
     thus we do not depend on ``pkgutil``-based setup in the ``__init__.py``
     file anymore.
