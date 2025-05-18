@@ -29,18 +29,17 @@ from beets.dbcore import types
 from beets.library import DateType
 from beets.metadata_plugins import (
     IDResponse,
-    SearchApiMetadataSourcePluginNext,
+    SearchApiMetadataSourcePlugin,
     SearchFilter,
     artists_to_artist_str,
 )
-from beets.plugins import BeetsPlugin
 from beets.util.id_extractors import extract_release_id
 
 if TYPE_CHECKING:
     from ._typing import JSONDict
 
 
-class DeezerPlugin(SearchApiMetadataSourcePluginNext, BeetsPlugin):
+class DeezerPlugin(SearchApiMetadataSourcePlugin):
     item_types = {
         "deezer_track_rank": types.INTEGER,
         "deezer_track_id": types.INTEGER,
