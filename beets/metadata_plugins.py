@@ -31,14 +31,14 @@ if TYPE_CHECKING:
     from .autotag.hooks import AlbumInfo, Item, TrackInfo
 
 
-def find_metadata_source_plugins() -> list[MetadataSourcePluginNext]:
+def find_metadata_source_plugins() -> list[MetadataSourcePlugin]:
     """Returns a list of MetadataSourcePluginNew subclass instances from all
     currently loaded beets plugins.
     """
     return [
         plugin
         for plugin in find_plugins()
-        if isinstance(plugin, MetadataSourcePluginNext)
+        if isinstance(plugin, MetadataSourcePlugin)
     ]
 
 
@@ -124,14 +124,12 @@ def _get_distance(
     return dist
 
 
-class MetadataSourcePluginNext(BeetsPlugin, metaclass=abc.ABCMeta):
+class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
     """A plugin that provides metadata from a specific source.
 
     This base class implements a contract for plugins that provide metadata
     from a specific source. The plugin must implement the methods to search for albums
     and tracks, and to retrieve album and track information by ID.
-
-    TODO: Rename once all plugins are migrated to this interface.
     """
 
     data_source: str
@@ -254,8 +252,8 @@ class SearchFilter(TypedDict):
 R = TypeVar("R", bound=IDResponse)
 
 
-class SearchApiMetadataSourcePluginNext(
-    Generic[R], MetadataSourcePluginNext, metaclass=abc.ABCMeta
+class SearchApiMetadataSourcePlugin(
+    Generic[R], MetadataSourcePlugin, metaclass=abc.ABCMeta
 ):
     """Helper class to implement a metadata source plugin with an API.
 

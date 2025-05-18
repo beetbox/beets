@@ -43,10 +43,7 @@ import beets
 import beets.ui
 from beets import config
 from beets.autotag.hooks import AlbumInfo, TrackInfo, string_dist
-from beets.metadata_plugins import (
-    MetadataSourcePluginNext,
-    artists_to_artist_str,
-)
+from beets.metadata_plugins import MetadataSourcePlugin, artists_to_artist_str
 from beets.util.id_extractors import extract_release_id
 
 if TYPE_CHECKING:
@@ -90,7 +87,7 @@ class ReleaseFormat(TypedDict):
     descriptions: list[str] | None
 
 
-class DiscogsPlugin(MetadataSourcePluginNext):
+class DiscogsPlugin(MetadataSourcePlugin):
     def __init__(self):
         super().__init__(data_source="Discogs")
         self.config.add(
