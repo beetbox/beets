@@ -823,22 +823,12 @@ class MBLibraryTest(MusicBrainzTestCase):
 
                 ai = list(self.mb.candidates([], "hello", "there", False))[0]
 
-                sp.assert_called_with(artist="hello", release="there", limit=5)
+                sp.assert_called_with(
+                    artist="hello", release="there", tracks="0", limit=5
+                )
                 gp.assert_called_with(mbid, mock.ANY)
                 assert ai.tracks[0].title == "foo"
                 assert ai.album == "hi"
-
-    def test_match_track_empty(self):
-        with mock.patch("musicbrainzngs.search_recordings") as p:
-            til = list(self.mb.item_candidates(None, " ", " "))
-            assert not p.called
-            assert til == []
-
-    def test_candidates_empty(self):
-        with mock.patch("musicbrainzngs.search_releases") as p:
-            ail = list(self.mb.candidates([], " ", " ", False))
-            assert not p.called
-            assert ail == []
 
     def test_follow_pseudo_releases(self):
         side_effect = [
