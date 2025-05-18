@@ -13,6 +13,7 @@ Bug fixes:
 For packagers:
 
 Other changes:
+* Refactor: Split responsibilities of Plugins into MetaDataPlugins and general Plugins.
 
 2.3.1 (May 14, 2025)
 --------------------
