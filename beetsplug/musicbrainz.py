@@ -768,15 +768,14 @@ class MusicBrainzPlugin(BeetsPlugin):
     def get_album_criteria(
         self, items: list[Item], artist: str, album: str, va_likely: bool
     ) -> dict[str, str]:
-        # Build search criteria.
-        criteria = {"release": album.lower().strip()}
-        if artist is not None:
-            criteria["artist"] = artist.lower().strip()
-        else:
-            # Various Artists search.
-            criteria["arid"] = VARIOUS_ARTISTS_ID
-        if track_count := len(items):
-            criteria["tracks"] = str(track_count)
+        criteria = {
+            "release": album.lower().strip(),
+            "tracks": str(len(items)),
+        } | (
+            {"arid": VARIOUS_ARTISTS_ID}
+            if va_likely
+            else {"artist": artist.lower().strip()}
+        )
 
         for tag, mb_field in self.extra_mb_field_by_tag.items():
             most_common, _ = util.plurality(i.get(tag) for i in items)
@@ -804,9 +803,6 @@ class MusicBrainzPlugin(BeetsPlugin):
         optionally, a number of tracks on the album and any other extra tags.
         """
         criteria = self.get_album_criteria(items, artist, album, va_likely)
-        # Abort if we have no search terms.
-        if not any(criteria.values()):
-            return
 
         try:
             self._log.debug(
@@ -836,9 +832,6 @@ class MusicBrainzPlugin(BeetsPlugin):
             "artist": artist.lower().strip(),
             "recording": title.lower().strip(),
         }
-
-        if not any(criteria.values()):
-            return
 
         try:
             res = musicbrainzngs.search_recordings(
