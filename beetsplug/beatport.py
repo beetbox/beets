@@ -19,7 +19,7 @@ from __future__ import annotations
 import json
 import re
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any, Iterator, Literal, overload
+from typing import TYPE_CHECKING, Any, Iterator, Literal, Sequence, overload
 
 import confuse
 from requests_oauthlib import OAuth1Session
@@ -32,10 +32,7 @@ from requests_oauthlib.oauth1_session import (
 import beets
 import beets.ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
-from beets.metadata_plugins import (
-    MetadataSourcePluginNext,
-    artists_to_artist_str,
-)
+from beets.metadata_plugins import MetadataSourcePlugin, artists_to_artist_str
 from beets.util.id_extractors import extract_release_id
 
 if TYPE_CHECKING:
@@ -322,7 +319,7 @@ class BeatportTrack(BeatportObject):
             self.genre = str(data["genres"][0].get("name"))
 
 
-class BeatportPlugin(MetadataSourcePluginNext):
+class BeatportPlugin(MetadataSourcePlugin):
     _client: BeatportClient | None = None
 
     def __init__(self):
@@ -399,7 +396,7 @@ class BeatportPlugin(MetadataSourcePluginNext):
 
     def candidates(
         self,
-        items: list[Item],
+        items: Sequence[Item],
         artist: str,
         album: str,
         va_likely: bool,
@@ -433,7 +430,7 @@ class BeatportPlugin(MetadataSourcePluginNext):
         """
         self._log.debug("Searching for release {0}", album_id)
 
-        if not (release_id := extract_release_id("discogs", album_id)):
+        if not (release_id := extract_release_id("beatport", album_id)):
             self._log.debug("Not a valid Beatport release ID.")
             return None
 
