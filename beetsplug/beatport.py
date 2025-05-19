@@ -19,7 +19,7 @@ from __future__ import annotations
 import json
 import re
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any, Iterator, Literal, Sequence, overload
+from typing import TYPE_CHECKING, Iterator, Literal, Sequence, overload
 
 import confuse
 from requests_oauthlib import OAuth1Session
@@ -400,7 +400,6 @@ class BeatportPlugin(MetadataSourcePlugin):
         artist: str,
         album: str,
         va_likely: bool,
-        extra_tags: dict[str, Any] | None = None,
     ) -> Iterator[AlbumInfo]:
         if va_likely:
             query = album

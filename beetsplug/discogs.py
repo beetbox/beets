@@ -27,7 +27,7 @@ import time
 import traceback
 from functools import cache
 from string import ascii_lowercase
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Sequence
 
 import confuse
 from discogs_client import Client, Master, Release
@@ -185,7 +185,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
         )
 
     def candidates(
-        self, items: list[Item], artist: str, album: str, va_likely: bool
+        self, items: Sequence[Item], artist: str, album: str, va_likely: bool
     ) -> Iterable[AlbumInfo]:
         return self.get_albums(f"{artist} {album}" if va_likely else album)
 
@@ -283,7 +283,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
                 exc_info=True,
             )
             return []
-        return map(self.get_album_info, releases)
+        return filter(None, map(self.get_album_info, releases))
 
     @cache
     def get_master_year(self, master_id: str) -> int | None:
