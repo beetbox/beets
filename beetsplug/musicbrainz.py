@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import traceback
 from collections import Counter
+from functools import cached_property
 from itertools import product
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urljoin
@@ -32,6 +33,7 @@ from beets.util.id_extractors import extract_release_id
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
+    from typing import Literal
 
     from beets.library import Item
 
@@ -44,10 +46,10 @@ BASE_URL = "https://musicbrainz.org/"
 SKIPPED_TRACKS = ["[data track]"]
 
 FIELDS_TO_MB_KEYS = {
+    "barcode": "barcode",
     "catalognum": "catno",
     "country": "country",
     "label": "label",
-    "barcode": "barcode",
     "media": "format",
     "year": "date",
 }
@@ -383,7 +385,7 @@ class MusicBrainzPlugin(BeetsPlugin):
                     "deezer": False,
                     "tidal": False,
                 },
-                "extra_tags": {},
+                "extra_tags": [],
             },
         )
         hostname = self.config["host"].as_str()
@@ -747,6 +749,67 @@ class MusicBrainzPlugin(BeetsPlugin):
 
         return info
 
+    @cached_property
+    def extra_mb_field_by_tag(self) -> dict[str, str]:
+        """Map configured extra tags to their MusicBrainz API field names.
+
+        Process user configuration to determine which additional MusicBrainz
+        fields should be included in search queries.
+        """
+        mb_field_by_tag = {
+            t: FIELDS_TO_MB_KEYS[t]
+            for t in self.config["extra_tags"].as_str_seq()
+            if t in FIELDS_TO_MB_KEYS
+        }
+        if mb_field_by_tag:
+            self._log.debug("Additional search terms: {}", mb_field_by_tag)
+
+        return mb_field_by_tag
+
+    def get_album_criteria(
+        self, items: list[Item], artist: str, album: str, va_likely: bool
+    ) -> dict[str, str]:
+        criteria = {
+            "release": album,
+            "tracks": str(len(items)),
+        } | ({"arid": VARIOUS_ARTISTS_ID} if va_likely else {"artist": artist})
+
+        for tag, mb_field in self.extra_mb_field_by_tag.items():
+            most_common, _ = util.plurality(i.get(tag) for i in items)
+            value = str(most_common)
+            if tag == "catalognum":
+                value = value.replace(" ", "")
+
+            criteria[mb_field] = value
+
+        return criteria
+
+    def _search_api(
+        self,
+        query_type: Literal["recording", "release"],
+        filters: dict[str, str],
+    ) -> list[JSONDict]:
+        """Perform MusicBrainz API search and return results.
+
+        Execute a search against the MusicBrainz API for recordings or releases
+        using the provided criteria. Handles API errors by converting them into
+        MusicBrainzAPIError exceptions with contextual information.
+        """
+        filters = {
+            k: _v for k, v in filters.items() if (_v := v.lower().strip())
+        }
+        self._log.debug(
+            "Searching for MusicBrainz {}s with: {!r}", query_type, filters
+        )
+        try:
+            method = getattr(musicbrainzngs, f"search_{query_type}s")
+            res = method(limit=self.config["searchlimit"].get(int), **filters)
+        except musicbrainzngs.MusicBrainzError as exc:
+            raise MusicBrainzAPIError(
+                exc, f"{query_type} search", filters, traceback.format_exc()
+            )
+        return res[f"{query_type}-list"]
+
     def candidates(
         self,
         items: list[Item],
@@ -755,80 +818,19 @@ class MusicBrainzPlugin(BeetsPlugin):
         va_likely: bool,
         extra_tags: dict[str, Any] | None = None,
     ) -> Iterator[beets.autotag.hooks.AlbumInfo]:
-        """Searches for a single album ("release" in MusicBrainz parlance)
-        and returns an iterator over AlbumInfo objects. May raise a
-        MusicBrainzAPIError.
+        criteria = self.get_album_criteria(items, artist, album, va_likely)
+        release_ids = (r["id"] for r in self._search_api("release", criteria))
 
-        The query consists of an artist name, an album name, and,
-        optionally, a number of tracks on the album and any other extra tags.
-        """
-        # Build search criteria.
-        criteria = {"release": album.lower().strip()}
-        if artist is not None:
-            criteria["artist"] = artist.lower().strip()
-        else:
-            # Various Artists search.
-            criteria["arid"] = VARIOUS_ARTISTS_ID
-        if track_count := len(items):
-            criteria["tracks"] = str(track_count)
-
-        if self.config["extra_tags"]:
-            tag_list = self.config["extra_tags"].get()
-            self._log.debug("Additional search terms: {0}", tag_list)
-            for tag, value in tag_list.items():
-                if key := FIELDS_TO_MB_KEYS.get(tag):
-                    value = str(value).lower().strip()
-                    if key == "catno":
-                        value = value.replace(" ", "")
-                    if value:
-                        criteria[key] = value
-
-        # Abort if we have no search terms.
-        if not any(criteria.values()):
-            return
-
-        try:
-            self._log.debug(
-                "Searching for MusicBrainz releases with: {!r}", criteria
-            )
-            res = musicbrainzngs.search_releases(
-                limit=self.config["searchlimit"].get(int), **criteria
-            )
-        except musicbrainzngs.MusicBrainzError as exc:
-            raise MusicBrainzAPIError(
-                exc, "release search", criteria, traceback.format_exc()
-            )
-        for release in res["release-list"]:
-            # The search result is missing some data (namely, the tracks),
-            # so we just use the ID and fetch the rest of the information.
-            albuminfo = self.album_for_id(release["id"])
-            if albuminfo is not None:
-                yield albuminfo
+        yield from filter(None, map(self.album_for_id, release_ids))
 
     def item_candidates(
         self, item: Item, artist: str, title: str
     ) -> Iterator[beets.autotag.hooks.TrackInfo]:
-        """Searches for a single track and returns an iterable of TrackInfo
-        objects. May raise a MusicBrainzAPIError.
-        """
-        criteria = {
-            "artist": artist.lower().strip(),
-            "recording": title.lower().strip(),
-        }
+        criteria = {"artist": artist, "recording": title}
 
-        if not any(criteria.values()):
-            return
-
-        try:
-            res = musicbrainzngs.search_recordings(
-                limit=self.config["searchlimit"].get(int), **criteria
-            )
-        except musicbrainzngs.MusicBrainzError as exc:
-            raise MusicBrainzAPIError(
-                exc, "recording search", criteria, traceback.format_exc()
-            )
-        for recording in res["recording-list"]:
-            yield self.track_info(recording)
+        yield from filter(
+            None, map(self.track_info, self._search_api("recording", criteria))
+        )
 
     def album_for_id(
         self, album_id: str
