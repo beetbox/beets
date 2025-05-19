@@ -102,7 +102,7 @@ MusicBrainz. Additional tags to be queried can be supplied with the
 .. code-block:: yaml
 
     musicbrainz:
-        extra_tags: [year, catalognum, country, media, label]
+        extra_tags: [barcode, catalognum, country, label, media, year]
 
 This setting should improve the autotagger results if the metadata with the
 given tags match the metadata returned by MusicBrainz.
