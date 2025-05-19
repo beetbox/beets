@@ -83,6 +83,13 @@ in config.yaml under the ``spotify:`` section:
   track/album/artist fields before sending them to Spotify.  Can be useful for
   changing certain abbreviations, like ft. -> feat.  See the examples below.
   Default: None.
+- **search_query_ascii**: If set to ``yes``, the search query will be converted to
+  ASCII before being sent to Spotify. Converting searches to ASCII can
+  enhance search results, for some but in general it is not recommended. 
+  For instance `artist:deadmau5 album:4×4` will be converted to 
+  `artist:deadmau5 album:4x4` (notice `×!=x`).
+  Default: ``no``.
+
 
 Here's an example::
 
@@ -92,6 +99,7 @@ Here's an example::
         region_filter: US
         show_failures: on
         tiebreak: first
+        search_query_ascii: no
 
         regex: [
             {
