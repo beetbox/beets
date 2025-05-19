@@ -25,6 +25,8 @@ Bug fixes:
   incorrectly removed parts of user-configured path formats that followed a dot
   (**.**).
   :bug:`5771`
+* :doc:`/plugins/convert`: Fix extension substitution inside path of the
+  exported playlist.
 
 For packagers:
 * Force ``poetry`` version below 2 to avoid it mangling file modification times
