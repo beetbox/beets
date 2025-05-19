@@ -26,6 +26,10 @@ Bug fixes:
 
 For packagers:
 
+* Optional ``extra_tags`` parameter has been removed from
+  ``BeetsPlugin.candidates`` method signature since it is never passed in. If
+  you override this method in your plugin, feel free to remove this parameter.
+
 Other changes:
 
 2.3.1 (May 14, 2025)
