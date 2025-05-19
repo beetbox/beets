@@ -37,7 +37,7 @@ else:
 
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Iterable
 
     from confuse import ConfigView
 
@@ -60,7 +60,7 @@ if TYPE_CHECKING:
     P = ParamSpec("P")
     Ret = TypeVar("Ret", bound=Any)
     Listener = Callable[..., None]
-    IterF = Callable[P, Iterator[Ret]]
+    IterF = Callable[P, Iterable[Ret]]
 
 
 PLUGIN_NAMESPACE = "beetsplug"
@@ -391,7 +391,7 @@ def notify_info_yielded(event: str) -> Callable[[IterF[P, Ret]], IterF[P, Ret]]:
 
     def decorator(func: IterF[P, Ret]) -> IterF[P, Ret]:
         @wraps(func)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> Iterator[Ret]:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> Iterable[Ret]:
             for v in func(*args, **kwargs):
                 send(event, info=v)
                 yield v

@@ -13,7 +13,6 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Generic,
-    Iterator,
     Literal,
     Sequence,
     TypedDict,
@@ -25,6 +24,8 @@ from typing_extensions import NotRequired
 from .plugins import BeetsPlugin, find_plugins, notify_info_yielded, send
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from confuse import ConfigView
 
     from .autotag import Distance
@@ -43,7 +44,7 @@ def find_metadata_source_plugins() -> list[MetadataSourcePlugin]:
 
 
 @notify_info_yielded("albuminfo_received")
-def candidates(*args, **kwargs) -> Iterator[AlbumInfo]:
+def candidates(*args, **kwargs) -> Iterable[AlbumInfo]:
     """Return matching album candidates by using all metadata source
     plugins."""
     for plugin in find_metadata_source_plugins():
@@ -51,7 +52,7 @@ def candidates(*args, **kwargs) -> Iterator[AlbumInfo]:
 
 
 @notify_info_yielded("trackinfo_received")
-def item_candidates(*args, **kwargs) -> Iterator[TrackInfo]:
+def item_candidates(*args, **kwargs) -> Iterable[TrackInfo]:
     """Return matching track candidates by using all metadata source
     plugins."""
     for plugin in find_metadata_source_plugins():
@@ -141,7 +142,7 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
 
     # --------------------------------- id lookup -------------------------------- #
 
-    def albums_for_ids(self, ids: Sequence[str]) -> Iterator[AlbumInfo | None]:
+    def albums_for_ids(self, ids: Sequence[str]) -> Iterable[AlbumInfo | None]:
         """Batch lookup of album metadata for a list of album IDs.
 
         Given a list of album identifiers, yields corresponding AlbumInfo
@@ -158,7 +159,7 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
         found."""
         raise NotImplementedError
 
-    def tracks_for_ids(self, ids: Sequence[str]) -> Iterator[TrackInfo | None]:
+    def tracks_for_ids(self, ids: Sequence[str]) -> Iterable[TrackInfo | None]:
         """Batch lookup of track metadata for a list of track IDs.
 
         Given a list of track identifiers, yields corresponding TrackInfo objects.
@@ -186,7 +187,7 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
         album: str,
         va_likely: bool,
         extra_tags: dict[str, Any] | None = None,
-    ) -> Iterator[AlbumInfo]:
+    ) -> Iterable[AlbumInfo]:
         """Return :py:class:`AlbumInfo` candidates that match the given album.
 
         Used in the autotag functionality to search for albums.
@@ -205,7 +206,7 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def item_candidates(
         self, item: Item, artist: str, title: str
-    ) -> Iterator[TrackInfo]:
+    ) -> Iterable[TrackInfo]:
         """Return :py:class:`TrackInfo` candidates that match the given track.
 
         Used in the autotag functionality to search for tracks.
@@ -288,7 +289,7 @@ class SearchApiMetadataSourcePlugin(
         album: str,
         va_likely: bool,
         extra_tags: dict[str, Any] | None = None,
-    ) -> Iterator[AlbumInfo]:
+    ) -> Iterable[AlbumInfo]:
         query_filters: SearchFilter = {"album": album}
         if not va_likely:
             query_filters["artist"] = artist
@@ -303,7 +304,7 @@ class SearchApiMetadataSourcePlugin(
 
     def item_candidates(
         self, item: Item, artist: str, title: str
-    ) -> Iterator[TrackInfo]:
+    ) -> Iterable[TrackInfo]:
         results = self._search_api("track", {"artist": artist}, keywords=title)
         if not results:
             return
