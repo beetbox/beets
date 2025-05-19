@@ -32,7 +32,7 @@ from beets.metadata_plugins import MetadataSourcePlugin
 from beets.util.id_extractors import extract_release_id
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Iterable
 
     from beets.library import Item
 
@@ -764,7 +764,7 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
         return mb_field_by_tag
 
     def get_album_criteria(
-        self, items: list[Item], artist: str, album: str, va_likely: bool
+        self, items: Sequence[Item], artist: str, album: str, va_likely: bool
     ) -> dict[str, str]:
         criteria = {
             "release": album,
@@ -809,12 +809,11 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
 
     def candidates(
         self,
-        items: list[Item],
+        items: Sequence[Item],
         artist: str,
         album: str,
         va_likely: bool,
-        extra_tags: dict[str, Any] | None = None,
-    ) -> Iterator[beets.autotag.hooks.AlbumInfo]:
+    ) -> Iterable[beets.autotag.hooks.AlbumInfo]:
         criteria = self.get_album_criteria(items, artist, album, va_likely)
         release_ids = (r["id"] for r in self._search_api("release", criteria))
 
@@ -822,7 +821,7 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
 
     def item_candidates(
         self, item: Item, artist: str, title: str
-    ) -> Iterator[beets.autotag.hooks.TrackInfo]:
+    ) -> Iterable[beets.autotag.hooks.TrackInfo]:
         criteria = {"artist": artist, "recording": title}
 
         yield from filter(

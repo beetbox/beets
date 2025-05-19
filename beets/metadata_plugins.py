@@ -186,7 +186,6 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
         artist: str,
         album: str,
         va_likely: bool,
-        extra_tags: dict[str, Any] | None = None,
     ) -> Iterable[AlbumInfo]:
         """Return :py:class:`AlbumInfo` candidates that match the given album.
 
@@ -196,10 +195,6 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
         :param artist: Album artist
         :param album: Album name
         :param va_likely: Whether the album is likely to be by various artists
-        :param extra_tags: is a an optional dictionary of extra tags to search.
-            TODO: remove:
-            Currently relevant to :py:class:`MusicBrainzPlugin` autotagger and can be
-            ignored by other plugins
         """
         raise NotImplementedError
 
