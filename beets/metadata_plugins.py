@@ -9,15 +9,7 @@ from __future__ import annotations
 
 import abc
 import re
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Generic,
-    Literal,
-    Sequence,
-    TypedDict,
-    TypeVar,
-)
+from typing import TYPE_CHECKING, Generic, Literal, Sequence, TypedDict, TypeVar
 
 from typing_extensions import NotRequired
 
@@ -283,7 +275,6 @@ class SearchApiMetadataSourcePlugin(
         artist: str,
         album: str,
         va_likely: bool,
-        extra_tags: dict[str, Any] | None = None,
     ) -> Iterable[AlbumInfo]:
         query_filters: SearchFilter = {"album": album}
         if not va_likely:
