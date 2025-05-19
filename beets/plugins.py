@@ -239,12 +239,7 @@ class BeetsPlugin:
         return Distance()
 
     def candidates(
-        self,
-        items: list[Item],
-        artist: str,
-        album: str,
-        va_likely: bool,
-        extra_tags: dict[str, Any] | None = None,
+        self, items: list[Item], artist: str, album: str, va_likely: bool
     ) -> Iterator[AlbumInfo]:
         """Return :py:class:`AlbumInfo` candidates that match the given album.
 
@@ -252,9 +247,6 @@ class BeetsPlugin:
         :param artist: Album artist
         :param album: Album name
         :param va_likely: Whether the album is likely to be by various artists
-        :param extra_tags: is a an optional dictionary of extra tags to search.
-            Only relevant to :py:class:`MusicBrainzPlugin` autotagger and can be
-            ignored by other plugins
         """
         yield from ()
 
@@ -872,12 +864,7 @@ class MetadataSourcePlugin(Generic[R], BeetsPlugin, metaclass=abc.ABCMeta):
         return extract_release_id(self.data_source.lower(), id_string)
 
     def candidates(
-        self,
-        items: list[Item],
-        artist: str,
-        album: str,
-        va_likely: bool,
-        extra_tags: dict[str, Any] | None = None,
+        self, items: list[Item], artist: str, album: str, va_likely: bool
     ) -> Iterator[AlbumInfo]:
         query_filters = {"album": album}
         if not va_likely:
