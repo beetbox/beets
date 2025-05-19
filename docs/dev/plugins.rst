@@ -648,6 +648,6 @@ by the choices on the core importer prompt, and hence should not be used:
 ``a``, ``s``, ``u``, ``t``, ``g``, ``e``, ``i``, ``b``.
 
 Additionally, the callback function can optionally specify the next action to
-be performed by returning a ``importer.action`` value. It may also return a
+be performed by returning a ``importer.Action`` value. It may also return a
 ``autotag.Proposal`` value to update the set of current proposals to be
 considered.

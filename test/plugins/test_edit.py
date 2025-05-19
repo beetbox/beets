@@ -19,9 +19,9 @@ from beets.dbcore.query import TrueQuery
 from beets.library import Item
 from beets.test import _common
 from beets.test.helper import (
+    AutotagImportTestCase,
     AutotagStub,
     BeetsTestCase,
-    ImportTestCase,
     PluginMixin,
     TerminalImportMixin,
     control_stdin,
@@ -316,9 +316,11 @@ class EditCommandTest(EditMixin, BeetsTestCase):
 
 @_common.slow_test()
 class EditDuringImporterTestCase(
-    EditMixin, TerminalImportMixin, ImportTestCase
+    EditMixin, TerminalImportMixin, AutotagImportTestCase
 ):
     """TODO"""
+
+    matching = AutotagStub.GOOD
 
     IGNORED = ["added", "album_id", "id", "mtime", "path"]
 
@@ -327,12 +329,6 @@ class EditDuringImporterTestCase(
         # Create some mediafiles, and store them for comparison.
         self.prepare_album_for_import(1)
         self.items_orig = [Item.from_path(f.path) for f in self.import_media]
-        self.matcher = AutotagStub().install()
-        self.matcher.matching = AutotagStub.GOOD
-
-    def tearDown(self):
-        super().tearDown()
-        self.matcher.restore()
 
 
 @_common.slow_test()

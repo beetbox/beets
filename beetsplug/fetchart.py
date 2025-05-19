@@ -1306,12 +1306,12 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             ):
                 # Album already has art (probably a re-import); skip it.
                 return
-            if task.choice_flag == importer.action.ASIS:
+            if task.choice_flag == importer.Action.ASIS:
                 # For as-is imports, don't search Web sources for art.
                 local = True
             elif task.choice_flag in (
-                importer.action.APPLY,
-                importer.action.RETAG,
+                importer.Action.APPLY,
+                importer.Action.RETAG,
             ):
                 # Search everywhere for art.
                 local = False

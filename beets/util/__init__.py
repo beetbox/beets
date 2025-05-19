@@ -40,6 +40,7 @@ from typing import (
     Any,
     AnyStr,
     Callable,
+    Generic,
     Iterable,
     NamedTuple,
     TypeVar,
@@ -67,6 +68,10 @@ T = TypeVar("T")
 BytesOrStr = Union[str, bytes]
 PathLike = Union[BytesOrStr, Path]
 Replacements: TypeAlias = "Sequence[tuple[Pattern[str], str]]"
+
+# Here for now to allow for a easy replace later on
+# once we can move to a PathLike (mainly used in importer)
+PathBytes = bytes
 
 
 class HumanReadableError(Exception):
@@ -798,7 +803,7 @@ def as_string(value: Any) -> str:
         return str(value)
 
 
-def plurality(objs: Sequence[T]) -> tuple[T, int]:
+def plurality(objs: Iterable[T]) -> tuple[T, int]:
     """Given a sequence of hashble objects, returns the object that
     is most common in the set and the its number of appearance. The
     sequence must contain at least one object.
@@ -1039,6 +1044,53 @@ class cached_classproperty:
             self.cache[owner] = self.getter(owner)
 
         return self.cache[owner]
+
+
+class LazySharedInstance(Generic[T]):
+    """A descriptor that provides access to a lazily-created shared instance of
+    the containing class, while calling the class constructor to construct a
+    new object works as usual.
+
+    ```
+    ID: int = 0
+
+    class Foo:
+        def __init__():
+            global ID
+
+            self.id = ID
+            ID += 1
+
+        def func(self):
+            print(self.id)
+
+        shared: LazySharedInstance[Foo] = LazySharedInstance()
+
+    a0 = Foo()
+    a1 = Foo.shared
+    a2 = Foo()
+    a3 = Foo.shared
+
+    a0.func()  # 0
+    a1.func()  # 1
+    a2.func()  # 2
+    a3.func()  # 1
+    ```
+    """
+
+    _instance: T | None = None
+
+    def __get__(self, instance: T | None, owner: type[T]) -> T:
+        if instance is not None:
+            raise RuntimeError(
+                "shared instances must be obtained from the class property, "
+                "not an instance"
+            )
+
+        if self._instance is None:
+            self._instance = owner()
+
+        return self._instance
 
 
 def get_module_tempdir(module: str) -> Path:

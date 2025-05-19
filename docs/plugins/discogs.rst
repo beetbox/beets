@@ -101,11 +101,20 @@ This option is useful when importing classical music.
 
 Other configurations available under ``discogs:`` are:
 
-- **append_style_genre**: Appends the Discogs style (if found) to the genre tag. This can be useful if you want more granular genres to categorize your music.
-  For example, a release in Discogs might have a genre of "Electronic" and a style of "Techno": enabling this setting would set the genre to be "Electronic, Techno" (assuming default separator of ``", "``) instead of just "Electronic".
+- **append_style_genre**: Appends the Discogs style (if found) to the genre
+  tag. This can be useful if you want more granular genres to categorize your
+  music. For example, a release in Discogs might have a genre of "Electronic"
+  and a style of "Techno": enabling this setting would set the genre to be
+  "Electronic, Techno" (assuming default separator of ``", "``) instead of just
+  "Electronic".
   Default: ``False``
-- **separator**: How to join multiple genre and style values from Discogs into a string.
+- **separator**: How to join multiple genre and style values from Discogs into
+  a string.
   Default: ``", "``
+- **search_limit**: The maximum number of results to return from Discogs. This is
+  useful if you want to limit the number of results returned to speed up
+  searches.
+  Default: ``5``
 
 
 Troubleshooting

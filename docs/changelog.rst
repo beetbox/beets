@@ -8,8 +8,39 @@ Unreleased
 
 New features:
 
+* :doc:`plugins/musicbrainz`: The MusicBrainz autotagger has been moved to
+  a separate plugin. The default :ref:`plugins-config` includes `musicbrainz`,
+  but if you've customized your `plugins` list in your configuration, you'll
+  need to explicitly add `musicbrainz` to continue using this functionality.
+  Configuration option `musicbrainz.enabled` has thus been deprecated.
+  :bug:`2686`
+  :bug:`4605`
+* :doc:`plugins/web`: Show notifications when a track plays. This uses the
+  Media Session API to customize media notifications.
+* :doc:`plugins/discogs`: Add configurable ``search_limit`` option to
+  limit the number of results returned by the Discogs metadata search queries.
+* :doc:`plugins/discogs`: Implement ``track_for_id`` method to allow retrieving
+  singletons by their Discogs ID.
+  :bug:`4661`
+
 Bug fixes:
 
+* :doc:`plugins/musicbrainz`: fix regression where user configured
+  ``extra_tags`` have been read incorrectly.
+  :bug:`5788`
+
+For packagers:
+
+* Optional ``extra_tags`` parameter has been removed from
+  ``BeetsPlugin.candidates`` method signature since it is never passed in. If
+  you override this method in your plugin, feel free to remove this parameter.
+
+Other changes:
+
+2.3.1 (May 14, 2025)
+--------------------
+
+Bug fixes:
 * :doc:`/reference/pathformat`: Fixed a regression where path legalization
   incorrectly removed parts of user-configured path formats that followed a dot
   (**.**).
@@ -21,8 +52,9 @@ Bug fixes:
   :bug:`5699`
 
 For packagers:
-
-Other changes:
+* Force ``poetry`` version below 2 to avoid it mangling file modification times
+  in ``sdist`` package.
+  :bug:`5770`
 
 2.3.0 (May 07, 2025)
 --------------------
@@ -120,8 +152,8 @@ Other changes:
   :bug:`5539`
 * :doc:`/plugins/smartplaylist`: URL-encode additional item `fields` within generated
   EXTM3U playlists instead of JSON-encoding them.
-* typehints: `./beets/importer.py` file now has improved typehints. 
-* typehints: `./beets/plugins.py` file now includes typehints. 
+* typehints: `./beets/importer.py` file now has improved typehints.
+* typehints: `./beets/plugins.py` file now includes typehints.
 * :doc:`plugins/ftintitle`: Optimize the plugin by avoiding unnecessary writes
   to the database.
 * Database models are now serializable with pickle.

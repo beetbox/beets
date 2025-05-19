@@ -15,7 +15,7 @@
 
 """Warns you about things you hate (or even blocks import)."""
 
-from beets.importer import action
+from beets.importer import Action
 from beets.library import Album, Item, parse_query_string
 from beets.plugins import BeetsPlugin
 
@@ -65,11 +65,11 @@ class IHatePlugin(BeetsPlugin):
         skip_queries = self.config["skip"].as_str_seq()
         warn_queries = self.config["warn"].as_str_seq()
 
-        if task.choice_flag == action.APPLY:
+        if task.choice_flag == Action.APPLY:
             if skip_queries or warn_queries:
                 self._log.debug("processing your hate")
                 if self.do_i_hate_this(task, skip_queries):
-                    task.choice_flag = action.SKIP
+                    task.choice_flag = Action.SKIP
                     self._log.info("skipped: {0}", summary(task))
                     return
                 if self.do_i_hate_this(task, warn_queries):

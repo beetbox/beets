@@ -19,7 +19,7 @@ import re
 import confuse
 from mediafile import MediaFile
 
-from beets.importer import action
+from beets.importer import Action
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, decargs, input_yn
 
@@ -105,7 +105,7 @@ class ZeroPlugin(BeetsPlugin):
                 self.fields_to_progs[field] = []
 
     def import_task_choice_event(self, session, task):
-        if task.choice_flag == action.ASIS and not self.warned:
+        if task.choice_flag == Action.ASIS and not self.warned:
             self._log.warning('cannot zero in "as-is" mode')
             self.warned = True
         # TODO request write in as-is mode

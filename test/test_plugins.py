@@ -24,22 +24,16 @@ from mediafile import MediaFile
 from beets import config, plugins, ui
 from beets.dbcore import types
 from beets.importer import (
+    Action,
     ArchiveImportTask,
     SentinelImportTask,
     SingletonImportTask,
-    action,
 )
 from beets.library import Item
-from beets.plugins import MetadataSourcePlugin
 from beets.test import helper
 from beets.test.helper import AutotagStub, ImportHelper, TerminalImportMixin
 from beets.test.helper import PluginTestCase as BasePluginTestCase
 from beets.util import displayable_path, syspath
-from beets.util.id_extractors import (
-    beatport_id_regex,
-    deezer_id_regex,
-    spotify_id_regex,
-)
 
 
 class PluginLoaderTestCase(BasePluginTestCase):
@@ -347,7 +341,8 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
     def setUp(self):
         super().setUp()
         self.setup_importer()
-        self.matcher = AutotagStub().install()
+        self.matcher = AutotagStub(AutotagStub.IDENT).install()
+        self.addCleanup(self.matcher.restore)
         # keep track of ui.input_option() calls
         self.input_options_patcher = patch(
             "beets.ui.input_options", side_effect=ui.input_options
@@ -357,7 +352,6 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
     def tearDown(self):
         super().tearDown()
         self.input_options_patcher.stop()
-        self.matcher.restore()
 
     def test_plugin_choices_in_ui_input_options_album(self):
         """Test the presence of plugin choices on the prompt (album)."""
@@ -389,7 +383,7 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
             "aBort",
         ) + ("Foo", "baR")
 
-        self.importer.add_choice(action.SKIP)
+        self.importer.add_choice(Action.SKIP)
         self.importer.run()
         self.mock_input_options.assert_called_once_with(
             opts, default="a", require=ANY
@@ -424,7 +418,7 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
         ) + ("Foo", "baR")
 
         config["import"]["singletons"] = True
-        self.importer.add_choice(action.SKIP)
+        self.importer.add_choice(Action.SKIP)
         self.importer.run()
         self.mock_input_options.assert_called_with(
             opts, default="a", require=ANY
@@ -461,7 +455,7 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
             "enter Id",
             "aBort",
         ) + ("baZ",)
-        self.importer.add_choice(action.SKIP)
+        self.importer.add_choice(Action.SKIP)
         self.importer.run()
         self.mock_input_options.assert_called_once_with(
             opts, default="a", require=ANY
@@ -523,7 +517,7 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
                 return [ui.commands.PromptChoice("f", "Foo", self.foo)]
 
             def foo(self, session, task):
-                return action.SKIP
+                return Action.SKIP
 
         self.register_plugin(DummyPlugin)
         # Default options + extra choices by the plugin ('Foo', 'Bar')
@@ -547,61 +541,3 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
         self.mock_input_options.assert_called_once_with(
             opts, default="a", require=ANY
         )
-
-
-class ParseSpotifyIDTest(unittest.TestCase):
-    def test_parse_id_correct(self):
-        id_string = "39WqpoPgZxygo6YQjehLJJ"
-        out = MetadataSourcePlugin._get_id("album", id_string, spotify_id_regex)
-        assert out == id_string
-
-    def test_parse_id_non_id_returns_none(self):
-        id_string = "blah blah"
-        out = MetadataSourcePlugin._get_id("album", id_string, spotify_id_regex)
-        assert out is None
-
-    def test_parse_id_url_finds_id(self):
-        id_string = "39WqpoPgZxygo6YQjehLJJ"
-        id_url = "https://open.spotify.com/album/%s" % id_string
-        out = MetadataSourcePlugin._get_id("album", id_url, spotify_id_regex)
-        assert out == id_string
-
-
-class ParseDeezerIDTest(unittest.TestCase):
-    def test_parse_id_correct(self):
-        id_string = "176356382"
-        out = MetadataSourcePlugin._get_id("album", id_string, deezer_id_regex)
-        assert out == id_string
-
-    def test_parse_id_non_id_returns_none(self):
-        id_string = "blah blah"
-        out = MetadataSourcePlugin._get_id("album", id_string, deezer_id_regex)
-        assert out is None
-
-    def test_parse_id_url_finds_id(self):
-        id_string = "176356382"
-        id_url = "https://www.deezer.com/album/%s" % id_string
-        out = MetadataSourcePlugin._get_id("album", id_url, deezer_id_regex)
-        assert out == id_string
-
-
-class ParseBeatportIDTest(unittest.TestCase):
-    def test_parse_id_correct(self):
-        id_string = "3089651"
-        out = MetadataSourcePlugin._get_id(
-            "album", id_string, beatport_id_regex
-        )
-        assert out == id_string
-
-    def test_parse_id_non_id_returns_none(self):
-        id_string = "blah blah"
-        out = MetadataSourcePlugin._get_id(
-            "album", id_string, beatport_id_regex
-        )
-        assert out is None
-
-    def test_parse_id_url_finds_id(self):
-        id_string = "3089651"
-        id_url = "https://www.beatport.com/release/album-name/%s" % id_string
-        out = MetadataSourcePlugin._get_id("album", id_url, beatport_id_regex)
-        assert out == id_string

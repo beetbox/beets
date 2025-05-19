@@ -22,7 +22,6 @@ import re
 import sys
 import traceback
 from collections import defaultdict
-from collections.abc import Iterable
 from functools import wraps
 from typing import (
     TYPE_CHECKING,
@@ -38,6 +37,7 @@ import mediafile
 
 import beets
 from beets import logging
+from beets.util.id_extractors import extract_release_id
 
 if sys.version_info >= (3, 10):
     from typing import ParamSpec
@@ -46,11 +46,14 @@ else:
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from confuse import ConfigView
 
     from beets.autotag import AlbumInfo, Distance, TrackInfo
     from beets.dbcore import Query
-    from beets.dbcore.db import FieldQueryType, SQLiteType
+    from beets.dbcore.db import FieldQueryType
+    from beets.dbcore.types import Type
     from beets.importer import ImportSession, ImportTask
     from beets.library import Album, Item, Library
     from beets.ui import Subcommand
@@ -64,6 +67,11 @@ if TYPE_CHECKING:
 
     AnyModel = TypeVar("AnyModel", Album, Item)
 
+    P = ParamSpec("P")
+    Ret = TypeVar("Ret", bound=Any)
+    Listener = Callable[..., None]
+    IterF = Callable[P, Iterable[Ret]]
+
 
 PLUGIN_NAMESPACE = "beetsplug"
 
@@ -72,11 +80,6 @@ LASTFM_KEY = "2dc3914abf35f0d9c92d97d8f8e42b43"
 
 # Global logger.
 log = logging.getLogger("beets")
-
-
-P = ParamSpec("P")
-Ret = TypeVar("Ret", bound=Any)
-Listener = Callable[..., None]
 
 
 class PluginConflictError(Exception):
@@ -224,7 +227,7 @@ class BeetsPlugin:
 
     def album_distance(
         self,
-        items: list[Item],
+        items: Sequence[Item],
         album_info: AlbumInfo,
         mapping: dict[Item, TrackInfo],
     ) -> Distance:
@@ -236,28 +239,27 @@ class BeetsPlugin:
         return Distance()
 
     def candidates(
-        self,
-        items: list[Item],
-        artist: str,
-        album: str,
-        va_likely: bool,
-        extra_tags: dict[str, Any] | None = None,
-    ) -> Sequence[AlbumInfo]:
-        """Should return a sequence of AlbumInfo objects that match the
-        album whose items are provided.
+        self, items: list[Item], artist: str, album: str, va_likely: bool
+    ) -> Iterable[AlbumInfo]:
+        """Return :py:class:`AlbumInfo` candidates that match the given album.
+
+        :param items: List of items in the album
+        :param artist: Album artist
+        :param album: Album name
+        :param va_likely: Whether the album is likely to be by various artists
         """
-        return ()
+        yield from ()
 
     def item_candidates(
-        self,
-        item: Item,
-        artist: str,
-        title: str,
-    ) -> Sequence[TrackInfo]:
-        """Should return a sequence of TrackInfo objects that match the
-        item provided.
+        self, item: Item, artist: str, title: str
+    ) -> Iterable[TrackInfo]:
+        """Return :py:class:`TrackInfo` candidates that match the given track.
+
+        :param item: Track item
+        :param artist: Track artist
+        :param title: Track title
         """
-        return ()
+        yield from ()
 
     def album_for_id(self, album_id: str) -> AlbumInfo | None:
         """Return an AlbumInfo object or None if no matching release was
@@ -422,10 +424,10 @@ def queries() -> dict[str, type[Query]]:
     return out
 
 
-def types(model_cls: type[AnyModel]) -> dict[str, type[SQLiteType]]:
+def types(model_cls: type[AnyModel]) -> dict[str, Type]:
     # Gives us `item_types` and `album_types`
     attr_name = f"{model_cls.__name__.lower()}_types"
-    types: dict[str, type[SQLiteType]] = {}
+    types: dict[str, Type] = {}
     for plugin in find_plugins():
         plugin_types = getattr(plugin, attr_name, {})
         for field in plugin_types:
@@ -462,7 +464,7 @@ def track_distance(item: Item, info: TrackInfo) -> Distance:
 
 
 def album_distance(
-    items: list[Item],
+    items: Sequence[Item],
     album_info: AlbumInfo,
     mapping: dict[Item, TrackInfo],
 ) -> Distance:
@@ -475,24 +477,38 @@ def album_distance(
     return dist
 
 
-def candidates(
-    items: list[Item],
-    artist: str,
-    album: str,
-    va_likely: bool,
-    extra_tags: dict[str, Any] | None = None,
-) -> Iterable[AlbumInfo]:
-    """Gets MusicBrainz candidates for an album from each plugin."""
-    for plugin in find_plugins():
-        yield from plugin.candidates(
-            items, artist, album, va_likely, extra_tags
-        )
+def notify_info_yielded(event: str) -> Callable[[IterF[P, Ret]], IterF[P, Ret]]:
+    """Makes a generator send the event 'event' every time it yields.
+    This decorator is supposed to decorate a generator, but any function
+    returning an iterable should work.
+    Each yielded value is passed to plugins using the 'info' parameter of
+    'send'.
+    """
+
+    def decorator(func: IterF[P, Ret]) -> IterF[P, Ret]:
+        @wraps(func)
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> Iterable[Ret]:
+            for v in func(*args, **kwargs):
+                send(event, info=v)
+                yield v
+
+        return wrapper
+
+    return decorator
 
 
-def item_candidates(item: Item, artist: str, title: str) -> Iterable[TrackInfo]:
-    """Gets MusicBrainz candidates for an item from the plugins."""
+@notify_info_yielded("albuminfo_received")
+def candidates(*args, **kwargs) -> Iterable[AlbumInfo]:
+    """Return matching album candidates from all plugins."""
     for plugin in find_plugins():
-        yield from plugin.item_candidates(item, artist, title)
+        yield from plugin.candidates(*args, **kwargs)
+
+
+@notify_info_yielded("trackinfo_received")
+def item_candidates(*args, **kwargs) -> Iterable[TrackInfo]:
+    """Return matching track candidates from all plugins."""
+    for plugin in find_plugins():
+        yield from plugin.item_candidates(*args, **kwargs)
 
 
 def album_for_id(_id: str) -> AlbumInfo | None:
@@ -673,7 +689,7 @@ def sanitize_pairs(
     ...     )
     [('foo', 'baz'), ('foo', 'bar'), ('key', 'value'), ('foo', 'foobar')]
     """
-    pairs_all: list[tuple[str, str]] = list(pairs_all)
+    pairs_all = list(pairs_all)
     seen: set[tuple[str, str]] = set()
     others = [x for x in pairs_all if x not in pairs]
     res: list[tuple[str, str]] = []
@@ -693,32 +709,6 @@ def sanitize_pairs(
                 seen.update(new)
                 res.extend(new)
     return res
-
-
-IterF = Callable[P, Iterable[Ret]]
-
-
-def notify_info_yielded(
-    event: str,
-) -> Callable[[IterF[P, Ret]], IterF[P, Ret]]:
-    """Makes a generator send the event 'event' every time it yields.
-    This decorator is supposed to decorate a generator, but any function
-    returning an iterable should work.
-    Each yielded value is passed to plugins using the 'info' parameter of
-    'send'.
-    """
-
-    def decorator(
-        generator: IterF[P, Ret],
-    ) -> IterF[P, Ret]:
-        def decorated(*args: P.args, **kwargs: P.kwargs) -> Iterable[Ret]:
-            for v in generator(*args, **kwargs):
-                send(event, info=v)
-                yield v
-
-        return decorated
-
-    return decorator
 
 
 def get_distance(
@@ -772,15 +762,6 @@ class Response(TypedDict):
     id: str
 
 
-class RegexDict(TypedDict):
-    """A dictionary containing a regex pattern and the number of the
-    match group.
-    """
-
-    pattern: str
-    match_group: int
-
-
 R = TypeVar("R", bound=Response)
 
 
@@ -788,11 +769,6 @@ class MetadataSourcePlugin(Generic[R], BeetsPlugin, metaclass=abc.ABCMeta):
     def __init__(self):
         super().__init__()
         self.config.add({"source_weight": 0.5})
-
-    @property
-    @abc.abstractmethod
-    def id_regex(self) -> RegexDict:
-        raise NotImplementedError
 
     @property
     @abc.abstractmethod
@@ -828,9 +804,7 @@ class MetadataSourcePlugin(Generic[R], BeetsPlugin, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def track_for_id(
-        self, track_id: str | None = None, track_data: R | None = None
-    ) -> TrackInfo | None:
+    def track_for_id(self, track_id: str) -> TrackInfo | None:
         raise NotImplementedError
 
     @staticmethod
@@ -885,70 +859,32 @@ class MetadataSourcePlugin(Generic[R], BeetsPlugin, metaclass=abc.ABCMeta):
 
         return artist_string, artist_id
 
-    @staticmethod
-    def _get_id(url_type: str, id_: str, id_regex: RegexDict) -> str | None:
-        """Parse an ID from its URL if necessary.
-
-        :param url_type: Type of URL. Either 'album' or 'track'.
-        :param id_: Album/track ID or URL.
-        :param id_regex: A dictionary containing a regular expression
-            extracting an ID from an URL (if it's not an ID already) in
-            'pattern' and the number of the match group in 'match_group'.
-        :return: Album/track ID.
-        """
-        log.debug("Extracting {} ID from '{}'", url_type, id_)
-        match = re.search(id_regex["pattern"].format(url_type), str(id_))
-        if match:
-            id_ = match.group(id_regex["match_group"])
-            if id_:
-                return id_
-        return None
+    def _get_id(self, id_string: str) -> str | None:
+        """Parse release ID from the given ID string."""
+        return extract_release_id(self.data_source.lower(), id_string)
 
     def candidates(
-        self,
-        items: list[Item],
-        artist: str,
-        album: str,
-        va_likely: bool,
-        extra_tags: dict[str, Any] | None = None,
-    ) -> Sequence[AlbumInfo]:
-        """Returns a list of AlbumInfo objects for Search API results
-        matching an ``album`` and ``artist`` (if not various).
-
-        :param items: List of items comprised by an album to be matched.
-        :param artist: The artist of the album to be matched.
-        :param album: The name of the album to be matched.
-        :param va_likely: True if the album to be matched likely has
-            Various Artists.
-        """
+        self, items: list[Item], artist: str, album: str, va_likely: bool
+    ) -> Iterable[AlbumInfo]:
         query_filters = {"album": album}
         if not va_likely:
             query_filters["artist"] = artist
-        results = self._search_api(query_type="album", filters=query_filters)
-        albums = [self.album_for_id(album_id=r["id"]) for r in results]
-        return [a for a in albums if a is not None]
+        for result in self._search_api("album", query_filters):
+            if info := self.album_for_id(result["id"]):
+                yield info
 
     def item_candidates(
         self, item: Item, artist: str, title: str
-    ) -> Sequence[TrackInfo]:
-        """Returns a list of TrackInfo objects for Search API results
-        matching ``title`` and ``artist``.
-
-        :param item: Singleton item to be matched.
-        :param artist: The artist of the track to be matched.
-        :param title: The title of the track to be matched.
-        """
-        track_responses = self._search_api(
-            query_type="track", keywords=title, filters={"artist": artist}
-        )
-
-        tracks = [self.track_for_id(track_data=r) for r in track_responses]
-
-        return [t for t in tracks if t is not None]
+    ) -> Iterable[TrackInfo]:
+        for result in self._search_api(
+            "track", {"artist": artist}, keywords=title
+        ):
+            if info := self.track_for_id(result["id"]):
+                yield info
 
     def album_distance(
         self,
-        items: list[Item],
+        items: Sequence[Item],
         album_info: AlbumInfo,
         mapping: dict[Item, TrackInfo],
     ) -> Distance:

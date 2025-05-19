@@ -9,7 +9,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Python tools
-        uses: BrandonLWhite/pipx-install-action@v0.1.1
+        uses: BrandonLWhite/pipx-install-action@v1.0.1
       - uses: actions/setup-python@v5
         with:
           python-version: 3.9
