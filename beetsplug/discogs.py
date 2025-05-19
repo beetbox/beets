@@ -241,6 +241,14 @@ class DiscogsPlugin(BeetsPlugin):
             return None
         return self.get_album_info(result)
 
+    def track_for_id(self, track_id: str) -> TrackInfo | None:
+        if album := self.album_for_id(track_id):
+            for track in album.tracks:
+                if track.track_id == track_id:
+                    return track
+
+        return None
+
     def get_albums(self, query: str) -> Iterable[AlbumInfo]:
         """Returns a list of AlbumInfo objects for a discogs search query."""
         # Strip non-word characters from query. Things like "!" and "-" can
