@@ -361,7 +361,7 @@ class BeatportPlugin(BeetsPlugin):
             data_source=self.data_source, info=track_info, config=self.config
         )
 
-    def candidates(self, items, artist, release, va_likely, extra_tags=None):
+    def candidates(self, items, artist, release, va_likely):
         """Returns a list of AlbumInfo objects for beatport search results
         matching release and artist (if not various).
         """

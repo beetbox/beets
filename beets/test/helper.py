@@ -806,7 +806,7 @@ class AutotagStub:
         for p in self.patchers:
             p.stop()
 
-    def candidates(self, items, artist, album, va_likely, extra_tags=None):
+    def candidates(self, items, artist, album, va_likely):
         if self.matching == self.IDENT:
             yield self._make_album_match(artist, album, len(items))
 

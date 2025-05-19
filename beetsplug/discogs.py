@@ -156,7 +156,7 @@ class DiscogsPlugin(BeetsPlugin):
             data_source="Discogs", info=track_info, config=self.config
         )
 
-    def candidates(self, items, artist, album, va_likely, extra_tags=None):
+    def candidates(self, items, artist, album, va_likely):
         """Returns a list of AlbumInfo objects for discogs search results
         matching an album and artist (if not various).
         """
