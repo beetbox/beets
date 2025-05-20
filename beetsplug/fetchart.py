@@ -262,6 +262,11 @@ class Candidate:
         """Resize the candidate artwork according to the plugin's
         configuration and the specified check.
         """
+        # This must only be called when _validate returned something other than
+        # ImageAction.Bad or ImageAction.EXACT; then path and size are known.
+        assert self.path is not None
+        assert self.size is not None
+
         if check == ImageAction.DOWNSCALE:
             self.path = ArtResizer.shared.resize(
                 plugin.maxwidth,
@@ -270,9 +275,6 @@ class Candidate:
                 max_filesize=plugin.max_filesize,
             )
         elif check == ImageAction.DOWNSIZE:
-            # This must only be called when _validate returned something other
-            # than ImageAction.Bad or ImageAction.EXACT; then the size is known.
-            assert self.size is not None
             # dimensions are correct, so maxwidth is set to maximum dimension
             self.path = ArtResizer.shared.resize(
                 max(self.size),
@@ -424,7 +426,11 @@ class RemoteArtSource(ArtSource):
         """Downloads an image from a URL and checks whether it seems to
         actually be an image.
         """
+        # This must only be called for candidates that were returned by
+        # self.get, which are expected to have a url and no path (because they
+        # haven't been downloaded yet).
         assert candidate.path is None
+        assert candidate.url is not None
 
         if plugin.maxwidth:
             candidate.url = ArtResizer.shared.proxy_url(
