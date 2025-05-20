@@ -22,6 +22,7 @@ from abc import ABC, abstractmethod
 from collections import OrderedDict
 from contextlib import closing
 from enum import Enum
+from functools import cached_property
 from typing import TYPE_CHECKING, AnyStr, ClassVar, Literal, Tuple, Type
 
 import confuse
@@ -368,7 +369,8 @@ class ArtSource(RequestMixin, ABC):
         self._config = config
         self.match_by = match_by or self.VALID_MATCHING_CRITERIA
 
-    def describe(self) -> str:
+    @cached_property
+    def description(self) -> str:
         return f"{self.ID}[{', '.join(self.match_by)}]"
 
     @staticmethod
@@ -487,7 +489,7 @@ class RemoteArtSource(ArtSource):
                     for chunk in data:
                         fh.write(chunk)
                 self._log.debug(
-                    "downloaded art to: {0}", util.displayable_path(filename)
+                    "downloaded art to: {}", util.displayable_path(filename)
                 )
                 candidate.path = util.bytestring_path(filename)
                 return
@@ -533,18 +535,14 @@ class CoverArtArchive(RemoteArtSource):
             try:
                 response = self.request(url)
             except requests.RequestException:
-                self._log.debug(
-                    "{}: error receiving response".format(self.NAME)
-                )
+                self._log.debug("{}: error receiving response", self.NAME)
                 return
 
             try:
                 data = response.json()
             except ValueError:
                 self._log.debug(
-                    "{}: error loading response: {}".format(
-                        self.NAME, response.text
-                    )
+                    "{}: error loading response: {}", self.NAME, response.text
                 )
                 return
 
@@ -624,7 +622,7 @@ class AlbumArtOrg(RemoteArtSource):
         # Get the page from albumart.org.
         try:
             resp = self.request(self.URL, params={"asin": album.asin})
-            self._log.debug("scraped art URL: {0}", resp.url)
+            self._log.debug("scraped art URL: {}", resp.url)
         except requests.RequestException:
             self._log.debug("error scraping art page")
             return
@@ -697,14 +695,12 @@ class GoogleImages(RemoteArtSource):
         try:
             data = response.json()
         except ValueError:
-            self._log.debug(
-                "google: error loading response: {}".format(response.text)
-            )
+            self._log.debug("google: error loading response: {}", response.text)
             return
 
         if "error" in data:
             reason = data["error"]["errors"][0]["reason"]
-            self._log.debug("google fetchart error: {0}", reason)
+            self._log.debug("google fetchart error: {}", reason)
             return
 
         if "items" in data.keys():
@@ -826,13 +822,13 @@ class ITunesStore(RemoteArtSource):
             r = self.request(self.API_URL, params=payload)
             r.raise_for_status()
         except requests.RequestException as e:
-            self._log.debug("iTunes search failed: {0}", e)
+            self._log.debug("iTunes search failed: {}", e)
             return
 
         try:
             candidates = r.json()["results"]
         except ValueError as e:
-            self._log.debug("Could not decode json response: {0}", e)
+            self._log.debug("Could not decode json response: {}", e)
             return
         except KeyError as e:
             self._log.debug(
@@ -1089,7 +1085,7 @@ class FileSystem(LocalArtSource):
             for fn in images:
                 if re.search(cover_pat, os.path.splitext(fn)[0], re.I):
                     self._log.debug(
-                        "using well-named art file {0}",
+                        "using well-named art file {}",
                         util.displayable_path(fn),
                     )
                     yield self._candidate(
@@ -1101,7 +1097,7 @@ class FileSystem(LocalArtSource):
             # Fall back to any image in the folder.
             if remaining and not plugin.cautious:
                 self._log.debug(
-                    "using fallback art file {0}",
+                    "using fallback art file {}",
                     util.displayable_path(remaining[0]),
                 )
                 yield self._candidate(
@@ -1197,9 +1193,7 @@ class LastFM(RemoteArtSource):
                             url=images[size], size=self.SIZES[size]
                         )
         except ValueError:
-            self._log.debug(
-                "lastfm: error loading response: {}".format(response.text)
-            )
+            self._log.debug("lastfm: error loading response: {}", response.text)
             return
 
 
@@ -1235,14 +1229,16 @@ class Spotify(RemoteArtSource):
             response = requests.get(url, timeout=10)
             response.raise_for_status()
         except requests.RequestException as e:
-            self._log.debug("Error: " + str(e))
+            self._log.debug("Error: {!s}", e)
             return
 
         try:
             html = response.text
             soup = BeautifulSoup(html, "html.parser")
         except ValueError:
-            self._log.debug(f"Spotify: error loading response: {response.text}")
+            self._log.debug(
+                "Spotify: error loading response: {}", response.text
+            )
             return
 
         tag = soup.find("meta", attrs={"property": "og:image"})
@@ -1278,14 +1274,14 @@ class CoverArtUrl(RemoteArtSource):
                 image_url = album.cover_art_url
             else:
                 image_url = album.items().get().cover_art_url
-            self._log.debug(f"Cover art URL {image_url} found for {album}")
+            self._log.debug("Cover art URL {} found for {}", image_url, album)
         except (AttributeError, TypeError):
-            self._log.debug(f"Cover art URL not found for {album}")
+            self._log.debug("Cover art URL not found for {}", album)
             return
         if image_url:
             yield self._candidate(url=image_url, match=MetadataMatch.EXACT)
         else:
-            self._log.debug(f"Cover art URL not found for {album}")
+            self._log.debug("Cover art URL not found for {}", album)
             return
 
 
@@ -1527,8 +1523,10 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         for source in self.sources:
             if source.LOC == "local" or not local_only:
                 self._log.debug(
-                    f"trying source {source.describe()}"
-                    f" for album {album.albumartist} - {album.album}"
+                    "trying source {0.description}"
+                    " for album {1.albumartist} - {1.album}",
+                    source,
+                    album,
                 )
                 # URLs might be invalid at this point, or the image may not
                 # fulfill the requirements
