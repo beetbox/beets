@@ -35,6 +35,12 @@ For packagers:
   ``BeetsPlugin.candidates`` method signature since it is never passed in. If
   you override this method in your plugin, feel free to remove this parameter.
 
+For plugin developers:
+
+* The `fetchart` plugins has seen a few changes to function signatures and
+  source registration in the process of introducing typings to the code.
+  Custom art sources might need to be adapted.
+
 Other changes:
 
 2.3.1 (May 14, 2025)
