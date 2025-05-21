@@ -35,8 +35,18 @@ For packagers:
   ``BeetsPlugin.candidates`` method signature since it is never passed in. If
   you override this method in your plugin, feel free to remove this parameter.
 
-For plugin developers:
+For plugin developer/maintainers:
 
+* We split the responsibilities of plugins into two base classes
+    #. :class:`beets.plugins.BeetsPlugin` 
+        is the base class for all plugins, any plugin needs to inherit from this class.
+    #. :class:`beets.metadata_plugin.MetadataSourcePlugin`
+        allows plugins to act like metadata sources. E.g. used by the MusicBrainz plugin. All plugins
+        in the beets repo are opted into this class where applicable. If you are maintaining a plugin
+        that acts like a metadata source, i.e. you expose any of `track_for_id,
+        album_for_id, candidates, item_candidates, album_distance, track_distance` methods,
+        please update your plugin to inherit from the new baseclass, as otherwise it will
+        not be registered as a metadata source and wont be usable going forward.
 * The `fetchart` plugins has seen a few changes to function signatures and
   source registration in the process of introducing typings to the code.
   Custom art sources might need to be adapted.
@@ -47,12 +57,14 @@ Other changes:
 --------------------
 
 Bug fixes:
+
 * :doc:`/reference/pathformat`: Fixed a regression where path legalization
   incorrectly removed parts of user-configured path formats that followed a dot
   (**.**).
   :bug:`5771`
 
 For packagers:
+
 * Force ``poetry`` version below 2 to avoid it mangling file modification times
   in ``sdist`` package.
   :bug:`5770`
