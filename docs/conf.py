@@ -1,18 +1,35 @@
-AUTHOR = "Adrian Sampson"
+# Configuration file for the Sphinx documentation builder.
+#
+# For the full list of built-in configuration values, see the documentation:
+# https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-# General configuration
+# -- Project information -----------------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-extensions = ["sphinx.ext.autodoc", "sphinx.ext.extlinks"]
-
-exclude_patterns = ["_build"]
-source_suffix = {".rst": "restructuredtext"}
-master_doc = "index"
 
 project = "beets"
+AUTHOR = "Adrian Sampson"
 copyright = "2016, Adrian Sampson"
 
+master_doc = "index"
+language = "en"
 version = "2.3"
 release = "2.3.1"
+
+# -- General configuration ---------------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
+
+extensions = [
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.extlinks",
+    "myst_parser",
+]
+autosummary_generate = True
+exclude_patterns = ["_build"]
+templates_path = ["_templates"]
+source_suffix = {".rst": "restructuredtext", ".md": "markdown"}
+
 
 pygments_style = "sphinx"
 
@@ -59,7 +76,11 @@ man_pages = [
     ),
 ]
 
-# Options for pydata theme
+
+# -- Options for HTML output -------------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
+
+
 html_theme = "pydata_sphinx_theme"
 html_theme_options = {"collapse_navigation": True, "logo": {"text": "beets"}}
 html_title = "beets"
