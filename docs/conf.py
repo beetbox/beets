@@ -23,7 +23,6 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.extlinks",
-    "myst_parser",
 ]
 autosummary_generate = True
 exclude_patterns = ["_build"]
