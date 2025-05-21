@@ -86,3 +86,13 @@ html_title = "beets"
 html_logo = "_static/beets_logo_nobg.png"
 html_static_path = ["_static"]
 html_css_files = ["beets.css"]
+
+
+def skip_member(app, what, name, obj, skip, options):
+    if name.startswith("_"):
+        return True
+    return skip
+
+
+def setup(app):
+    app.connect("autodoc-skip-member", skip_member)
