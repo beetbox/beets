@@ -47,6 +47,11 @@ For plugin developer/maintainers:
     album_for_id, candidates, item_candidates, album_distance, track_distance` methods,
     please update your plugin to inherit from the new baseclass, as otherwise it will
     not be registered as a metadata source and wont be usable going forward.
+* The `fetchart` plugins has seen a few changes to function signatures and
+  source registration in the process of introducing typings to the code.
+  Custom art sources might need to be adapted.
+
+Other changes:
 
 2.3.1 (May 14, 2025)
 --------------------
