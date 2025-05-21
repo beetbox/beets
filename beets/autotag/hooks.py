@@ -17,7 +17,8 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any, NamedTuple, TypeVar
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from typing_extensions import Self
 
@@ -232,16 +233,20 @@ class TrackInfo(Info):
 
 
 # Structures that compose all the information for a candidate match.
-
-
-class AlbumMatch(NamedTuple):
+@dataclass
+class Match:
     distance: Distance
+    info: Info
+
+
+@dataclass
+class AlbumMatch(Match):
     info: AlbumInfo
     mapping: dict[Item, TrackInfo]
     extra_items: list[Item]
     extra_tracks: list[TrackInfo]
 
 
-class TrackMatch(NamedTuple):
-    distance: Distance
+@dataclass
+class TrackMatch(Match):
     info: TrackInfo
