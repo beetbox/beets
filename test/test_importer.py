@@ -36,8 +36,8 @@ import pytest
 from mediafile import MediaFile
 
 from beets import config, importer, logging, util
-from beets.autotag import AlbumInfo, AlbumMatch, TrackInfo
 from beets.autotag.distance import Distance
+from beets.autotag.hooks import AlbumInfo, AlbumMatch, TrackInfo
 from beets.importer.tasks import albums_in_dir
 from beets.test import _common
 from beets.test.helper import (
