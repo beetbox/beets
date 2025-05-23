@@ -141,6 +141,8 @@ Bug fixes:
 * :doc:`plugins/lyrics`: Fix plugin crash when ``genius`` backend returns empty
   lyrics.
   :bug:`5583`
+* Handle potential OSError when unlinking temporary files in ArtResizer.
+  :bug:`5615`
 * ImageMagick 7.1.1-44 is now supported.
 * :doc:`plugins/parentwork`: Only output parentwork changes when running in verbose mode.
 
