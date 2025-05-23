@@ -102,6 +102,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                 "client_id": "4e414367a1d14c75a5c5129a627fcab8",
                 "client_secret": "f82bdc09b2254f1a8286815d02fd46dc",
                 "tokenfile": "spotify_token.json",
+                "search_query_ascii": False,
             }
         )
         self.config["client_id"].redact = True
@@ -402,7 +403,8 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         query = " ".join([q for q in query_components if q])
         if not isinstance(query, str):
             query = query.decode("utf8")
-        return unidecode.unidecode(query)
+
+        return query
 
     def _search_api(self, query_type, filters=None, keywords=""):
         """Query the Spotify Search API for the specified ``keywords``,
@@ -422,6 +424,10 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         query = self._construct_search_query(keywords=keywords, filters=filters)
         if not query:
             return None
+
+        if self.config["search_query_ascii"].get():
+            query = unidecode.unidecode(query)
+
         self._log.debug(f"Searching {self.data_source} for '{query}'")
         try:
             response = self._handle_response(
@@ -561,6 +567,10 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                 query = self._construct_search_query(
                     keywords=keywords, filters=query_filters
                 )
+
+                if self.config["search_query_ascii"].get():
+                    query = unidecode.unidecode(query)
+
                 failures.append(query)
                 continue
 

@@ -28,6 +28,12 @@ Bug fixes:
 * :doc:`plugins/musicbrainz`: fix regression where user configured
   ``extra_tags`` have been read incorrectly.
   :bug:`5788`
+* :doc:`/plugins/spotify`: Fix the issue with that every query to spotify was
+  ascii encoded. This resulted in bad matches for queries that contained special
+  e.g. non latin characters as 盗作. If you want to keep the legacy behavior
+  set the config option ``spotify.search_query_ascii: yes``.
+  :bug:`5699`
+
 
 For packagers:
 
