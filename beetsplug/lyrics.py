@@ -39,6 +39,7 @@ from unidecode import unidecode
 import beets
 from beets import plugins, ui
 from beets.autotag.hooks import string_dist
+from beets.util.config import sanitize_choices
 
 if TYPE_CHECKING:
     from logging import Logger
@@ -957,7 +958,7 @@ class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
     def backends(self) -> list[Backend]:
         user_sources = self.config["sources"].get()
 
-        chosen = plugins.sanitize_choices(user_sources, self.BACKEND_BY_NAME)
+        chosen = sanitize_choices(user_sources, self.BACKEND_BY_NAME)
         if "google" in chosen and not self.config["google_API_key"].get():
             self.warn("Disabling Google source: no API key configured.")
             chosen.remove("google")
