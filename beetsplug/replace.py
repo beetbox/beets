@@ -10,7 +10,9 @@ from beets.plugins import BeetsPlugin
 
 class ReplacePlugin(BeetsPlugin):
     def commands(self):
-        cmd = ui.Subcommand("replace", help="replace audio file while keeping tags")
+        cmd = ui.Subcommand(
+            "replace", help="replace audio file while keeping tags"
+        )
         cmd.func = self.run
         return [cmd]
 
@@ -77,7 +79,9 @@ class ReplacePlugin(BeetsPlugin):
             except ValueError:
                 ui.print_("Invalid input. Please type in a number.")
 
-    def confirm_replacement(self, new_file_path: Path, song: Item) -> bool | None:
+    def confirm_replacement(
+        self, new_file_path: Path, song: Item
+    ) -> bool | None:
         """Get user confirmation for the replacement."""
         original_file_path: Path = Path(song.path.decode())
 

@@ -77,7 +77,10 @@ class TestReplace:
         captured = capfd.readouterr()
 
         assert "Invalid input. Please type in a number." in captured.out
-        assert "Invalid choice. Please enter a number between 1 and 3." in captured.out
+        assert (
+            "Invalid choice. Please enter a number between 1 and 3."
+            in captured.out
+        )
         assert selected_song == "Song C"
 
     def test_confirm_replacement_file_not_exist(self):
