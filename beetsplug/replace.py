@@ -9,9 +9,7 @@ from beets.plugins import BeetsPlugin
 
 class ReplacePlugin(BeetsPlugin):
     def commands(self):
-        cmd = ui.Subcommand(
-            "replace", help="replace audio file while keeping tags"
-        )
+        cmd = ui.Subcommand("replace", help="replace audio file while keeping tags")
         cmd.func = self.run
         return [cmd]
 
@@ -41,15 +39,15 @@ class ReplacePlugin(BeetsPlugin):
 
         self.replace_file(new_file_path, song)
 
-    def file_check(self, file):
+    def file_check(self, filepath):
         """Check if the file exists and is supported"""
-        if not file.is_file():
+        if not filepath.is_file():
             raise ui.UserError(
-                f"'{util.displayable_path(file)}' is not a valid file."
+                f"'{util.displayable_path(filepath)}' is not a valid file."
             )
 
         try:
-            mediafile.MediaFile(util.syspath(file))
+            mediafile.MediaFile(util.syspath(filepath))
         except mediafile.FileTypeError as fte:
             raise ui.UserError(fte)
 
