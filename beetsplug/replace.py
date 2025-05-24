@@ -1,10 +1,10 @@
 import shutil
 from pathlib import Path
 
-from beets.library import Library, Item
 import mediafile
 
 from beets import ui, util
+from beets.library import Item, Library
 from beets.plugins import BeetsPlugin
 
 
