@@ -124,7 +124,9 @@ autobpm = ["librosa", "resampy"]
 # badfiles # mp3val and flac
 beatport = ["requests-oauthlib"]
 bpd = ["PyGObject"] # python-gi and GStreamer 1.0+
-chroma = ["pyacoustid", "standard-aifc", "standard-sunau"] # chromaprint or fpcalc
+# chromaprint or fpcalc. standard-aifc and standard-sunau to replace stdlibs removed
+# in python3.13 - see https://peps.python.org/pep-0594/.
+chroma = ["pyacoustid", "standard-aifc", "standard-sunau"]
 # convert # ffmpeg
 docs = ["pydata-sphinx-theme", "sphinx"]
 discogs = ["python3-discogs-client"]
