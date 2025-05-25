@@ -56,6 +56,8 @@ if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
     from logging import Logger
 
+    from beets.library import Item
+
 if sys.version_info >= (3, 10):
     from typing import TypeAlias
 else:
@@ -812,6 +814,44 @@ def plurality(objs: Iterable[T]) -> tuple[T, int]:
     if not c:
         raise ValueError("sequence must be non-empty")
     return c.most_common(1)[0]
+
+
+def get_most_common_tags(
+    items: Sequence[Item],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Extract the likely current metadata for an album given a list of its
+    items. Return two dictionaries:
+     - The most common value for each field.
+     - Whether each field's value was unanimous (values are booleans).
+    """
+    assert items  # Must be nonempty.
+
+    likelies = {}
+    consensus = {}
+    fields = [
+        "artist",
+        "album",
+        "albumartist",
+        "year",
+        "disctotal",
+        "mb_albumid",
+        "label",
+        "barcode",
+        "catalognum",
+        "country",
+        "media",
+        "albumdisambig",
+    ]
+    for field in fields:
+        values = [item[field] for item in items if item]
+        likelies[field], freq = plurality(values)
+        consensus[field] = freq == len(values)
+
+    # If there's an album artist consensus, use this for the artist.
+    if consensus["albumartist"] and likelies["albumartist"]:
+        likelies["artist"] = likelies["albumartist"]
+
+    return likelies, consensus
 
 
 # stdout and stderr as bytes
