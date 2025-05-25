@@ -553,6 +553,9 @@ class ItemFormattedMappingTest(ItemInDBTestCase):
 class PathFormattingMixin:
     """Utilities for testing path formatting."""
 
+    i: beets.library.Item
+    lib: beets.library.Library
+
     def _setf(self, fmt):
         self.lib.path_formats.insert(0, ("default", fmt))
 
@@ -560,9 +563,12 @@ class PathFormattingMixin:
         if i is None:
             i = self.i
 
+        # Handle paths on Windows.
         if os.path.sep != "/":
             dest = dest.replace(b"/", os.path.sep.encode())
-            dest = b"D:" + dest
+
+            systemDrive = os.environ.get("SystemDrive", "C:").encode("utf-8")
+            dest = systemDrive + dest
 
         actual = i.destination()
 
