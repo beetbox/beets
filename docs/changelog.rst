@@ -35,6 +35,8 @@ Bug fixes:
   event to be sent twice, not once.
   :bug:`5560`
 * Fix ``HiddenFileTest`` by using ``bytestring_path()``.
+* tests: Fix tests failing without ``langdetect`` (by making it required).
+  :bug:`5797`
 
 For packagers:
 
