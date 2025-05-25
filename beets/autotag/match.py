@@ -18,36 +18,22 @@ releases and tracks.
 
 from __future__ import annotations
 
-import datetime
-import re
 from enum import IntEnum
-from functools import cache
 from typing import TYPE_CHECKING, Any, NamedTuple, TypeVar
 
 import lap
 import numpy as np
 
 from beets import config, logging, plugins
-from beets.autotag import (
-    AlbumInfo,
-    AlbumMatch,
-    Distance,
-    TrackInfo,
-    TrackMatch,
-    hooks,
-)
+from beets.autotag import AlbumInfo, AlbumMatch, TrackInfo, TrackMatch, hooks
 from beets.util import get_most_common_tags
+
+from .distance import VA_ARTISTS, distance, track_distance
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
     from beets.library import Item
-
-# Artist signals that indicate "various artists". These are used at the
-# album level to determine whether a given release is likely a VA
-# release and also on the track level to to remove the penalty for
-# differing artists.
-VA_ARTISTS = ("", "various artists", "various", "va", "unknown")
 
 # Global logger.
 log = logging.getLogger("beets")
@@ -110,191 +96,6 @@ def assign_items(
     extra_tracks = list(set(tracks) - set(mapping.values()))
     extra_tracks.sort(key=lambda t: (t.index, t.title))
     return mapping, extra_items, extra_tracks
-
-
-def track_index_changed(item: Item, track_info: TrackInfo) -> bool:
-    """Returns True if the item and track info index is different. Tolerates
-    per disc and per release numbering.
-    """
-    return item.track not in (track_info.medium_index, track_info.index)
-
-
-@cache
-def get_track_length_grace() -> float:
-    """Get cached grace period for track length matching."""
-    return config["match"]["track_length_grace"].as_number()
-
-
-@cache
-def get_track_length_max() -> float:
-    """Get cached maximum track length for track length matching."""
-    return config["match"]["track_length_max"].as_number()
-
-
-def track_distance(
-    item: Item,
-    track_info: TrackInfo,
-    incl_artist: bool = False,
-) -> Distance:
-    """Determines the significance of a track metadata change. Returns a
-    Distance object. `incl_artist` indicates that a distance component should
-    be included for the track artist (i.e., for various-artist releases).
-
-    ``track_length_grace`` and ``track_length_max`` configuration options are
-    cached because this function is called many times during the matching
-    process and their access comes with a performance overhead.
-    """
-    dist = hooks.Distance()
-
-    # Length.
-    if info_length := track_info.length:
-        diff = abs(item.length - info_length) - get_track_length_grace()
-        dist.add_ratio("track_length", diff, get_track_length_max())
-
-    # Title.
-    dist.add_string("track_title", item.title, track_info.title)
-
-    # Artist. Only check if there is actually an artist in the track data.
-    if (
-        incl_artist
-        and track_info.artist
-        and item.artist.lower() not in VA_ARTISTS
-    ):
-        dist.add_string("track_artist", item.artist, track_info.artist)
-
-    # Track index.
-    if track_info.index and item.track:
-        dist.add_expr("track_index", track_index_changed(item, track_info))
-
-    # Track ID.
-    if item.mb_trackid:
-        dist.add_expr("track_id", item.mb_trackid != track_info.track_id)
-
-    # Penalize mismatching disc numbers.
-    if track_info.medium and item.disc:
-        dist.add_expr("medium", item.disc != track_info.medium)
-
-    # Plugins.
-    dist.update(plugins.track_distance(item, track_info))
-
-    return dist
-
-
-def distance(
-    items: Sequence[Item],
-    album_info: AlbumInfo,
-    mapping: dict[Item, TrackInfo],
-) -> Distance:
-    """Determines how "significant" an album metadata change would be.
-    Returns a Distance object. `album_info` is an AlbumInfo object
-    reflecting the album to be compared. `items` is a sequence of all
-    Item objects that will be matched (order is not important).
-    `mapping` is a dictionary mapping Items to TrackInfo objects; the
-    keys are a subset of `items` and the values are a subset of
-    `album_info.tracks`.
-    """
-    likelies, _ = get_most_common_tags(items)
-
-    dist = hooks.Distance()
-
-    # Artist, if not various.
-    if not album_info.va:
-        dist.add_string("artist", likelies["artist"], album_info.artist)
-
-    # Album.
-    dist.add_string("album", likelies["album"], album_info.album)
-
-    preferred_config = config["match"]["preferred"]
-    # Current or preferred media.
-    if album_info.media:
-        # Preferred media options.
-        media_patterns: Sequence[str] = preferred_config["media"].as_str_seq()
-        options = [
-            re.compile(r"(\d+x)?(%s)" % pat, re.I) for pat in media_patterns
-        ]
-        if options:
-            dist.add_priority("media", album_info.media, options)
-        # Current media.
-        elif likelies["media"]:
-            dist.add_equality("media", album_info.media, likelies["media"])
-
-    # Mediums.
-    if likelies["disctotal"] and album_info.mediums:
-        dist.add_number("mediums", likelies["disctotal"], album_info.mediums)
-
-    # Prefer earliest release.
-    if album_info.year and preferred_config["original_year"]:
-        # Assume 1889 (earliest first gramophone discs) if we don't know the
-        # original year.
-        original = album_info.original_year or 1889
-        diff = abs(album_info.year - original)
-        diff_max = abs(datetime.date.today().year - original)
-        dist.add_ratio("year", diff, diff_max)
-    # Year.
-    elif likelies["year"] and album_info.year:
-        if likelies["year"] in (album_info.year, album_info.original_year):
-            # No penalty for matching release or original year.
-            dist.add("year", 0.0)
-        elif album_info.original_year:
-            # Prefer matchest closest to the release year.
-            diff = abs(likelies["year"] - album_info.year)
-            diff_max = abs(
-                datetime.date.today().year - album_info.original_year
-            )
-            dist.add_ratio("year", diff, diff_max)
-        else:
-            # Full penalty when there is no original year.
-            dist.add("year", 1.0)
-
-    # Preferred countries.
-    country_patterns: Sequence[str] = preferred_config["countries"].as_str_seq()
-    options = [re.compile(pat, re.I) for pat in country_patterns]
-    if album_info.country and options:
-        dist.add_priority("country", album_info.country, options)
-    # Country.
-    elif likelies["country"] and album_info.country:
-        dist.add_string("country", likelies["country"], album_info.country)
-
-    # Label.
-    if likelies["label"] and album_info.label:
-        dist.add_string("label", likelies["label"], album_info.label)
-
-    # Catalog number.
-    if likelies["catalognum"] and album_info.catalognum:
-        dist.add_string(
-            "catalognum", likelies["catalognum"], album_info.catalognum
-        )
-
-    # Disambiguation.
-    if likelies["albumdisambig"] and album_info.albumdisambig:
-        dist.add_string(
-            "albumdisambig", likelies["albumdisambig"], album_info.albumdisambig
-        )
-
-    # Album ID.
-    if likelies["mb_albumid"]:
-        dist.add_equality(
-            "album_id", likelies["mb_albumid"], album_info.album_id
-        )
-
-    # Tracks.
-    dist.tracks = {}
-    for item, track in mapping.items():
-        dist.tracks[track] = track_distance(item, track, album_info.va)
-        dist.add("tracks", dist.tracks[track].distance)
-
-    # Missing tracks.
-    for _ in range(len(album_info.tracks) - len(mapping)):
-        dist.add("missing_tracks", 1.0)
-
-    # Unmatched tracks.
-    for _ in range(len(items) - len(mapping)):
-        dist.add("unmatched_tracks", 1.0)
-
-    # Plugins.
-    dist.update(plugins.album_distance(items, album_info, mapping))
-
-    return dist
 
 
 def match_by_id(items: Iterable[Item]) -> AlbumInfo | None:

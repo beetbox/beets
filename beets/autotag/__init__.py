@@ -14,22 +14,26 @@
 
 """Facilities for automatically determining files' correct metadata."""
 
-from collections.abc import Mapping, Sequence
-from typing import Union
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Union
 
 from beets import config, logging
-from beets.library import Album, Item, LibModel
 
 # Parts of external interface.
 from beets.util import unique_list
 
-from .hooks import AlbumInfo, AlbumMatch, Distance, TrackInfo, TrackMatch
+from .hooks import AlbumInfo, AlbumMatch, TrackInfo, TrackMatch
 from .match import Proposal, Recommendation, tag_album, tag_item
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping, Sequence
+
+    from beets.library import Album, Item, LibModel
 
 __all__ = [
     "AlbumInfo",
     "AlbumMatch",
-    "Distance",
     "TrackInfo",
     "TrackMatch",
     "Proposal",
