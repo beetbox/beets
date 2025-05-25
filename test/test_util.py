@@ -24,7 +24,10 @@ from unittest.mock import Mock, patch
 import pytest
 
 from beets import util
+from beets.library import Item
 from beets.test import _common
+from beets.test.helper import BeetsTestCase
+from beets.util import plurality
 
 
 class UtilTest(unittest.TestCase):
@@ -217,3 +220,82 @@ class TestPathLegalization:
             expected_path,
             expected_truncated,
         )
+
+
+class PluralityTest(BeetsTestCase):
+    def test_plurality_consensus(self):
+        objs = [1, 1, 1, 1]
+        obj, freq = plurality(objs)
+        assert obj == 1
+        assert freq == 4
+
+    def test_plurality_near_consensus(self):
+        objs = [1, 1, 2, 1]
+        obj, freq = plurality(objs)
+        assert obj == 1
+        assert freq == 3
+
+    def test_plurality_conflict(self):
+        objs = [1, 1, 2, 2, 3]
+        obj, freq = plurality(objs)
+        assert obj in (1, 2)
+        assert freq == 2
+
+    def test_plurality_empty_sequence_raises_error(self):
+        with pytest.raises(ValueError, match="must be non-empty"):
+            plurality([])
+
+    def test_current_metadata_finds_pluralities(self):
+        items = [
+            Item(artist="The Beetles", album="The White Album"),
+            Item(artist="The Beatles", album="The White Album"),
+            Item(artist="The Beatles", album="Teh White Album"),
+        ]
+        likelies, consensus = util.get_most_common_tags(items)
+        assert likelies["artist"] == "The Beatles"
+        assert likelies["album"] == "The White Album"
+        assert not consensus["artist"]
+
+    def test_current_metadata_artist_consensus(self):
+        items = [
+            Item(artist="The Beatles", album="The White Album"),
+            Item(artist="The Beatles", album="The White Album"),
+            Item(artist="The Beatles", album="Teh White Album"),
+        ]
+        likelies, consensus = util.get_most_common_tags(items)
+        assert likelies["artist"] == "The Beatles"
+        assert likelies["album"] == "The White Album"
+        assert consensus["artist"]
+
+    def test_albumartist_consensus(self):
+        items = [
+            Item(artist="tartist1", album="album", albumartist="aartist"),
+            Item(artist="tartist2", album="album", albumartist="aartist"),
+            Item(artist="tartist3", album="album", albumartist="aartist"),
+        ]
+        likelies, consensus = util.get_most_common_tags(items)
+        assert likelies["artist"] == "aartist"
+        assert not consensus["artist"]
+
+    def test_current_metadata_likelies(self):
+        fields = [
+            "artist",
+            "album",
+            "albumartist",
+            "year",
+            "disctotal",
+            "mb_albumid",
+            "label",
+            "barcode",
+            "catalognum",
+            "country",
+            "media",
+            "albumdisambig",
+        ]
+        items = [Item(**{f: f"{f}_{i or 1}" for f in fields}) for i in range(5)]
+        likelies, _ = util.get_most_common_tags(items)
+        for f in fields:
+            if isinstance(likelies[f], int):
+                assert likelies[f] == 0
+            else:
+                assert likelies[f] == f"{f}_1"
