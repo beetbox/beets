@@ -34,7 +34,7 @@ from beets.library import Album
 from beets.test import _common
 from beets.test._common import item
 from beets.test.helper import BeetsTestCase, ItemInDBTestCase
-from beets.util import as_string, bytestring_path, syspath
+from beets.util import as_string, bytestring_path, normpath, syspath
 
 # Shortcut to path normalization.
 np = util.normpath
@@ -567,8 +567,8 @@ class PathFormattingMixin:
         if os.path.sep != "/":
             dest = dest.replace(b"/", os.path.sep.encode())
 
-            systemDrive = os.environ.get("SystemDrive", "C:").encode("utf-8")
-            dest = systemDrive + dest
+            # Paths are normalized based on the CWD.
+            dest = normpath(dest)
 
         actual = i.destination()
 
