@@ -24,13 +24,7 @@ from beets.library import Album, Item, LibModel
 from beets.util import unique_list
 
 from .hooks import AlbumInfo, AlbumMatch, Distance, TrackInfo, TrackMatch
-from .match import (
-    Proposal,
-    Recommendation,
-    current_metadata,
-    tag_album,
-    tag_item,
-)
+from .match import Proposal, Recommendation, tag_album, tag_item
 
 __all__ = [
     "AlbumInfo",
@@ -43,7 +37,6 @@ __all__ = [
     "apply_album_metadata",
     "apply_item_metadata",
     "apply_metadata",
-    "current_metadata",
     "tag_album",
     "tag_item",
 ]

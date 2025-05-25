@@ -36,7 +36,7 @@ from beets.autotag import (
     TrackMatch,
     hooks,
 )
-from beets.util import plurality
+from beets.util import get_most_common_tags
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
@@ -78,44 +78,6 @@ class Proposal(NamedTuple):
 
 
 # Primary matching functionality.
-
-
-def current_metadata(
-    items: Iterable[Item],
-) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Extract the likely current metadata for an album given a list of its
-    items. Return two dictionaries:
-     - The most common value for each field.
-     - Whether each field's value was unanimous (values are booleans).
-    """
-    assert items  # Must be nonempty.
-
-    likelies = {}
-    consensus = {}
-    fields = [
-        "artist",
-        "album",
-        "albumartist",
-        "year",
-        "disctotal",
-        "mb_albumid",
-        "label",
-        "barcode",
-        "catalognum",
-        "country",
-        "media",
-        "albumdisambig",
-    ]
-    for field in fields:
-        values = [item[field] for item in items if item]
-        likelies[field], freq = plurality(values)
-        consensus[field] = freq == len(values)
-
-    # If there's an album artist consensus, use this for the artist.
-    if consensus["albumartist"] and likelies["albumartist"]:
-        likelies["artist"] = likelies["albumartist"]
-
-    return likelies, consensus
 
 
 def assign_items(
@@ -231,7 +193,7 @@ def distance(
     keys are a subset of `items` and the values are a subset of
     `album_info.tracks`.
     """
-    likelies, _ = current_metadata(items)
+    likelies, _ = get_most_common_tags(items)
 
     dist = hooks.Distance()
 
@@ -499,7 +461,7 @@ def tag_album(
     candidates.
     """
     # Get current metadata.
-    likelies, consensus = current_metadata(items)
+    likelies, consensus = get_most_common_tags(items)
     cur_artist: str = likelies["artist"]
     cur_album: str = likelies["album"]
     log.debug("Tagging {0} - {1}", cur_artist, cur_album)
