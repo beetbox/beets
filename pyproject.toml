@@ -84,6 +84,7 @@ sphinx = { version = "*", optional = true }
 beautifulsoup4 = "*"
 codecov = ">=2.1.13"
 flask = "*"
+langdetect = "*"
 mock = "*"
 pylast = "*"
 pytest = "*"
