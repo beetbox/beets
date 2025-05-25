@@ -38,7 +38,7 @@ from unidecode import unidecode
 
 import beets
 from beets import plugins, ui
-from beets.autotag.hooks import string_dist
+from beets.autotag.distance import string_dist
 from beets.util.config import sanitize_choices
 
 if TYPE_CHECKING:
