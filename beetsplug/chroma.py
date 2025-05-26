@@ -25,7 +25,7 @@ import acoustid
 import confuse
 
 from beets import config, plugins, ui, util
-from beets.autotag.hooks import AlbumInfo, Distance
+from beets.autotag.hooks import Distance
 from beets.metadata_plugins import MetadataSourcePlugin, TrackInfo
 from beetsplug.musicbrainz import MusicBrainzPlugin
 
@@ -172,7 +172,7 @@ def _all_releases(items):
 
 class AcoustidPlugin(MetadataSourcePlugin, plugins.BeetsPlugin):
     def __init__(self):
-        super().__init__()
+        super().__init__("acoustid")
 
         self.config.add(
             {
