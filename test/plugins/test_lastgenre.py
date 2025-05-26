@@ -14,17 +14,17 @@
 
 """Tests for the 'lastgenre' plugin."""
 
+import unittest
 from unittest.mock import Mock
 
 import pytest
 
 from beets import config
 from beets.test import _common
-from beets.test.helper import BeetsTestCase
 from beetsplug import lastgenre
 
 
-class LastGenrePluginTest(BeetsTestCase):
+class LastGenrePluginTest(unittest.TestCase):
     def setUp(self):
         super().setUp()
         self.plugin = lastgenre.LastGenrePlugin()

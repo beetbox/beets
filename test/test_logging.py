@@ -3,21 +3,17 @@
 import logging as log
 import sys
 import threading
+import unittest
 from io import StringIO
 
 import beets.logging as blog
 import beetsplug
 from beets import plugins, ui
 from beets.test import _common, helper
-from beets.test.helper import (
-    AsIsImporterMixin,
-    BeetsTestCase,
-    ImportTestCase,
-    PluginMixin,
-)
+from beets.test.helper import AsIsImporterMixin, ImportTestCase, PluginMixin
 
 
-class LoggingTest(BeetsTestCase):
+class LoggingTest(unittest.TestCase):
     def test_logging_management(self):
         l1 = log.getLogger("foo123")
         l2 = blog.getLogger("foo123")
