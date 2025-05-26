@@ -924,7 +924,7 @@ class ChooseCandidateTest(AutotagImportTestCase):
         assert self.lib.albums().get().album == "Applied Album MM"
 
 
-class InferAlbumDataTest(BeetsTestCase):
+class InferAlbumDataTest(unittest.TestCase):
     def setUp(self):
         super().setUp()
 
@@ -1220,7 +1220,7 @@ class ImportDuplicateSingletonTest(ImportTestCase):
         return item
 
 
-class TagLogTest(BeetsTestCase):
+class TagLogTest(unittest.TestCase):
     def test_tag_log_line(self):
         sio = StringIO()
         handler = logging.StreamHandler(sio)
