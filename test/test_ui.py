@@ -1337,7 +1337,7 @@ class ShowChangeTest(BeetsTestCase):
 
 
 @patch("beets.library.Item.try_filesize", Mock(return_value=987))
-class SummarizeItemsTest(BeetsTestCase):
+class SummarizeItemsTest(unittest.TestCase):
     def setUp(self):
         super().setUp()
         item = library.Item()
@@ -1374,7 +1374,7 @@ class SummarizeItemsTest(BeetsTestCase):
         assert summary == "3 items, G 2, F 1, 4kbps, 32:42, 2.9 KiB"
 
 
-class PathFormatTest(BeetsTestCase):
+class PathFormatTest(unittest.TestCase):
     def test_custom_paths_prepend(self):
         default_formats = ui.get_path_formats()
 
@@ -1521,7 +1521,7 @@ class CommonOptionsParserCliTest(BeetsTestCase):
         # assert 'plugins: ' in output
 
 
-class CommonOptionsParserTest(BeetsTestCase):
+class CommonOptionsParserTest(unittest.TestCase):
     def test_album_option(self):
         parser = ui.CommonOptionsParser()
         assert not parser._album_flags
@@ -1614,7 +1614,7 @@ class CommonOptionsParserTest(BeetsTestCase):
         )
 
 
-class EncodingTest(BeetsTestCase):
+class EncodingTest(unittest.TestCase):
     """Tests for the `terminal_encoding` config option and our
     `_in_encoding` and `_out_encoding` utility functions.
     """
