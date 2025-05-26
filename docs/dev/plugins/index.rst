@@ -84,7 +84,7 @@ For more information on writing plugins, feel free to check out
 the following resources:
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
 
     commands
     events

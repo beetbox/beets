@@ -10,7 +10,7 @@ operations. For instance, a plugin could write a log message every time an album
 is successfully autotagged or update MPD's index whenever the database is
 changed.
 
-You can "listen" for events using :py:method:`BeetsPlugin.register_listener`. Here's
+You can "listen" for events using :py:meth:`BeetsPlugin.register_listener`. Here's
 an example:
 
 .. code-block:: python
