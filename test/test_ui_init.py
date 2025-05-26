@@ -16,6 +16,7 @@
 
 import os
 import shutil
+import unittest
 from copy import deepcopy
 from random import random
 
@@ -29,7 +30,7 @@ from beets.test.helper import (
 )
 
 
-class InputMethodsTest(IOMixin, BeetsTestCase):
+class InputMethodsTest(IOMixin, unittest.TestCase):
     def _print_helper(self, s):
         print(s)
 
