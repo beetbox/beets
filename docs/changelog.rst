@@ -28,6 +28,8 @@ Bug fixes:
 * :doc:`plugins/musicbrainz`: fix regression where user configured
   ``extra_tags`` have been read incorrectly.
   :bug:`5788`
+* tests: Fix library tests failing on Windows when run from outside ``D:/``.
+  :bug:`5802`
 
 For packagers:
 
