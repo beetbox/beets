@@ -172,18 +172,6 @@ class DiscogsPlugin(MetadataSourcePlugin):
 
         return token, secret
 
-    def album_distance(self, items, album_info, mapping):
-        """Returns the album distance."""
-        return get_distance(
-            data_source="Discogs", info=album_info, config=self.config
-        )
-
-    def track_distance(self, item, track_info):
-        """Returns the track distance."""
-        return get_distance(
-            data_source="Discogs", info=track_info, config=self.config
-        )
-
     def candidates(
         self, items: Sequence[Item], artist: str, album: str, va_likely: bool
     ) -> Iterable[AlbumInfo]:
