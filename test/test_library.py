@@ -34,7 +34,7 @@ from beets.library import Album
 from beets.test import _common
 from beets.test._common import item
 from beets.test.helper import BeetsTestCase, ItemInDBTestCase
-from beets.util import as_string, bytestring_path, syspath
+from beets.util import as_string, bytestring_path, normpath, syspath
 
 # Shortcut to path normalization.
 np = util.normpath
@@ -553,6 +553,9 @@ class ItemFormattedMappingTest(ItemInDBTestCase):
 class PathFormattingMixin:
     """Utilities for testing path formatting."""
 
+    i: beets.library.Item
+    lib: beets.library.Library
+
     def _setf(self, fmt):
         self.lib.path_formats.insert(0, ("default", fmt))
 
@@ -560,9 +563,12 @@ class PathFormattingMixin:
         if i is None:
             i = self.i
 
+        # Handle paths on Windows.
         if os.path.sep != "/":
             dest = dest.replace(b"/", os.path.sep.encode())
-            dest = b"D:" + dest
+
+            # Paths are normalized based on the CWD.
+            dest = normpath(dest)
 
         actual = i.destination()
 
