@@ -25,7 +25,6 @@ import pytest
 
 from beets import util
 from beets.test import _common
-from beets.test.helper import BeetsTestCase
 
 
 class UtilTest(unittest.TestCase):
@@ -132,7 +131,7 @@ class UtilTest(unittest.TestCase):
         pass
 
 
-class PathConversionTest(BeetsTestCase):
+class PathConversionTest(unittest.TestCase):
     def test_syspath_windows_format(self):
         with _common.platform_windows():
             path = os.path.join("a", "b", "c")

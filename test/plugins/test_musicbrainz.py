@@ -14,6 +14,7 @@
 
 """Tests for MusicBrainz API wrapper."""
 
+import unittest
 from unittest import mock
 
 import pytest
@@ -665,7 +666,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert t[1].trackdisambig == "SECOND TRACK"
 
 
-class ArtistFlatteningTest(BeetsTestCase):
+class ArtistFlatteningTest(unittest.TestCase):
     def _credit_dict(self, suffix=""):
         return {
             "artist": {

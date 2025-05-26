@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import unittest
 from typing import TYPE_CHECKING
 from unittest.mock import patch
 
@@ -1012,7 +1013,7 @@ class ArtForAlbumTest(UseThePlugin):
         self._assert_image_operated(self.IMG_348x348, self.RESIZE_OP, True)
 
 
-class DeprecatedConfigTest(BeetsTestCase):
+class DeprecatedConfigTest(unittest.TestCase):
     """While refactoring the plugin, the remote_priority option was deprecated,
     and a new codepath should translate its effect. Check that it actually does
     so.
@@ -1030,7 +1031,7 @@ class DeprecatedConfigTest(BeetsTestCase):
         assert isinstance(self.plugin.sources[-1], fetchart.FileSystem)
 
 
-class EnforceRatioConfigTest(BeetsTestCase):
+class EnforceRatioConfigTest(unittest.TestCase):
     """Throw some data at the regexes."""
 
     def _load_with_config(self, values, should_raise):

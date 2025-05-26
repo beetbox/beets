@@ -200,7 +200,7 @@ class MoveTest(BeetsTestCase):
         assert self.i.path == util.normpath(self.dest)
 
 
-class HelperTest(BeetsTestCase):
+class HelperTest(unittest.TestCase):
     def test_ancestry_works_on_file(self):
         p = "/a/b/c"
         a = ["/", "/a", "/a/b"]
