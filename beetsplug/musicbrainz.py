@@ -20,7 +20,7 @@ import traceback
 from collections import Counter
 from functools import cached_property
 from itertools import product
-from typing import TYPE_CHECKING, Any, Sequence
+from typing import TYPE_CHECKING, Any, Iterable, Sequence
 from urllib.parse import urljoin
 
 import musicbrainzngs
@@ -32,7 +32,7 @@ from beets.metadata_plugins import MetadataSourcePlugin
 from beets.util.id_extractors import extract_release_id
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator, Sequence
+    from collections.abc import Sequence
     from typing import Literal
 
     from beets.library import Item
