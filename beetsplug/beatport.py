@@ -19,7 +19,14 @@ from __future__ import annotations
 import json
 import re
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Iterator, Literal, Sequence, overload
+from typing import (
+    TYPE_CHECKING,
+    Iterable,
+    Iterator,
+    Literal,
+    Sequence,
+    overload,
+)
 
 import confuse
 from requests_oauthlib import OAuth1Session
