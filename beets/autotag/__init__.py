@@ -19,10 +19,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Union
 
 from beets import config, logging
+from beets.util import get_most_common_tags as current_metadata
 
 # Parts of external interface.
 from beets.util import unique_list
 
+from .distance import Distance
 from .hooks import AlbumInfo, AlbumMatch, TrackInfo, TrackMatch
 from .match import Proposal, Recommendation, tag_album, tag_item
 
@@ -34,13 +36,15 @@ if TYPE_CHECKING:
 __all__ = [
     "AlbumInfo",
     "AlbumMatch",
-    "TrackInfo",
-    "TrackMatch",
+    "Distance",  # for backwards compatibility
     "Proposal",
     "Recommendation",
+    "TrackInfo",
+    "TrackMatch",
     "apply_album_metadata",
     "apply_item_metadata",
     "apply_metadata",
+    "current_metadata",  # for backwards compatibility
     "tag_album",
     "tag_item",
 ]

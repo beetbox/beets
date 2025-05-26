@@ -37,7 +37,6 @@ import mediafile
 
 import beets
 from beets import logging
-from beets.autotag.distance import Distance
 from beets.util.id_extractors import extract_release_id
 
 if TYPE_CHECKING:
@@ -55,6 +54,7 @@ if TYPE_CHECKING:
     from confuse import ConfigView
 
     from beets.autotag import AlbumInfo, TrackInfo
+    from beets.autotag.distance import Distance
     from beets.dbcore import Query
     from beets.dbcore.db import FieldQueryType
     from beets.dbcore.types import Type
@@ -225,6 +225,8 @@ class BeetsPlugin:
         """Should return a Distance object to be added to the
         distance for every track comparison.
         """
+        from beets.autotag.distance import Distance
+
         return Distance()
 
     def album_distance(
@@ -236,6 +238,8 @@ class BeetsPlugin:
         """Should return a Distance object to be added to the
         distance for every album-level comparison.
         """
+        from beets.autotag.distance import Distance
+
         return Distance()
 
     def candidates(
@@ -455,6 +459,8 @@ def track_distance(item: Item, info: TrackInfo) -> Distance:
     """Gets the track distance calculated by all loaded plugins.
     Returns a Distance object.
     """
+    from beets.autotag.distance import Distance
+
     dist = Distance()
     for plugin in find_plugins():
         dist.update(plugin.track_distance(item, info))
@@ -467,6 +473,8 @@ def album_distance(
     mapping: dict[Item, TrackInfo],
 ) -> Distance:
     """Returns the album distance calculated by plugins."""
+    from beets.autotag.distance import Distance
+
     dist = Distance()
     for plugin in find_plugins():
         dist.update(plugin.album_distance(items, album_info, mapping))
@@ -653,6 +661,8 @@ def get_distance(
     """Returns the ``data_source`` weight and the maximum source weight
     for albums or individual tracks.
     """
+    from beets.autotag.distance import Distance
+
     dist = Distance()
     if info.data_source == data_source:
         dist.add("source", config["source_weight"].as_number())
