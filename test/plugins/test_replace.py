@@ -26,7 +26,7 @@ class TestReplace:
         with pytest.raises(ui.UserError):
             replace.file_check(fake_directory)
 
-    def test_path_is_unspported_file(self):
+    def test_path_is_unsupported_file(self):
         fake_file = self.fake_file / "fakefile.txt"
         fake_file.write_text("test", encoding="utf-8")
         with pytest.raises(ui.UserError):
