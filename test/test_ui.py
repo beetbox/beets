@@ -737,7 +737,7 @@ class UpdateTest(IOMixin, BeetsTestCase):
         assert item.lyrics != "new lyrics"
 
 
-class PrintTest(IOMixin, BeetsTestCase):
+class PrintTest(IOMixin, unittest.TestCase):
     def test_print_without_locale(self):
         lang = os.environ.get("LANG")
         if lang:
@@ -1111,7 +1111,7 @@ class ConfigTest(TestPluginTestCase):
         )
 
 
-class ShowModelChangeTest(IOMixin, BeetsTestCase):
+class ShowModelChangeTest(IOMixin, unittest.TestCase):
     def setUp(self):
         super().setUp()
         self.a = _common.item()
@@ -1162,7 +1162,7 @@ class ShowModelChangeTest(IOMixin, BeetsTestCase):
         assert "bar" in out
 
 
-class ShowChangeTest(IOMixin, BeetsTestCase):
+class ShowChangeTest(IOMixin, unittest.TestCase):
     def setUp(self):
         super().setUp()
 
