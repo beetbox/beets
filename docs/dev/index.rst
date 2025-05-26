@@ -12,8 +12,9 @@ See also the documentation for the `MediaFile`_ and `Confuse`_ libraries. These 
 
 .. toctree::
     :maxdepth: 1
+    :caption: Guides
 
-    plugins
+    plugins/index
     library
     importer
     cli
