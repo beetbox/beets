@@ -1084,7 +1084,9 @@ class Item(LibModel):
         (i.e., where the file ought to be).
 
         The path is returned as a bytestring. ``basedir`` can override the
-        library's base directory for the destination.
+        library's base directory for the destination. If ``relative_to_libdir``
+        is true, returns just the fragment of the path underneath the library
+        base directory.
         """
         db = self._check_db()
         basedir = basedir or db.directory
