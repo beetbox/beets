@@ -133,33 +133,11 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
         self.data_source = data_source or self.__class__.__name__
         self.config.add({"source_weight": 0.5})
 
-    def albums_for_ids(self, ids: Sequence[str]) -> Iterable[AlbumInfo | None]:
-        """Batch lookup of album metadata for a list of album IDs.
-
-        Given a list of album identifiers, yields corresponding AlbumInfo
-        objects. Missing albums result in None values in the output iterator.
-        Plugins may implement this for optimized batched lookups instead of
-        single calls to album_for_id.
-        """
-
-        return iter(self.album_for_id(id) for id in ids)
-
     @abc.abstractmethod
     def album_for_id(self, album_id: str) -> AlbumInfo | None:
         """Return :py:class:`AlbumInfo` object or None if no matching release was
         found."""
         raise NotImplementedError
-
-    def tracks_for_ids(self, ids: Sequence[str]) -> Iterable[TrackInfo | None]:
-        """Batch lookup of track metadata for a list of track IDs.
-
-        Given a list of track identifiers, yields corresponding TrackInfo objects.
-        Missing tracks result in None values in the output iterator. Plugins may
-        implement this for optimized batched lookups instead of single calls to
-        track_for_id.
-        """
-
-        return iter(self.track_for_id(id) for id in ids)
 
     @abc.abstractmethod
     def track_for_id(self, track_id: str) -> TrackInfo | None:
@@ -201,7 +179,27 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
         """
         raise NotImplementedError
 
-    # --------------------------------- distances -------------------------------- #
+    def albums_for_ids(self, ids: Sequence[str]) -> Iterable[AlbumInfo | None]:
+        """Batch lookup of album metadata for a list of album IDs.
+
+        Given a list of album identifiers, yields corresponding AlbumInfo
+        objects. Missing albums result in None values in the output iterator.
+        Plugins may implement this for optimized batched lookups instead of
+        single calls to album_for_id.
+        """
+
+        return (self.album_for_id(id) for id in ids)
+
+    def tracks_for_ids(self, ids: Sequence[str]) -> Iterable[TrackInfo | None]:
+        """Batch lookup of track metadata for a list of track IDs.
+
+        Given a list of track identifiers, yields corresponding TrackInfo objects.
+        Missing tracks result in None values in the output iterator. Plugins may
+        implement this for optimized batched lookups instead of single calls to
+        track_for_id.
+        """
+
+        return (self.track_for_id(id) for id in ids)
 
     def album_distance(
         self,
