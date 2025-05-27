@@ -5,7 +5,6 @@ Here are some answers to frequently-asked questions from IRC and elsewhere.
 Got a question that isn't answered here? Try the `discussion board`_, or
 :ref:`filing an issue <bugs>` in the bug tracker.
 
-.. _mailing list: https://groups.google.com/group/beets-users
 .. _discussion board: https://github.com/beetbox/beets/discussions/
 
 .. contents::
@@ -182,7 +181,7 @@ Please follow these guidelines when reporting an issue:
    readable if you put them in a pastebin (e.g.,
    `Gist <https://gist.github.com/>`__ or
    `Hastebin <https://hastebin.com/>`__), especially when communicating
-   over IRC or email.
+   over IRC.
 -  Turn on beets' debug output (using the -v option: for example,
    ``beet -v import ...``) and include that with your bug report. Look
    through this verbose output for any red flags that might point to the
