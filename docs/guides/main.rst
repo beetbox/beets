@@ -29,7 +29,7 @@ follow the instructions on the `pip installation page`_ to get it set up.
 
 .. attention:: Python 3.13 not officially supported yet!
     
-    If you are using Python 3.13, please be aware that it is not yet officially supported yet.
+    If you are using Python 3.13, please be aware that it is not officially supported yet.
     You may encounter issues, and we recommend using Python 3.12 or earlier until support is confirmed.
 
 
