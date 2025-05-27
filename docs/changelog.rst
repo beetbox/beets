@@ -31,6 +31,8 @@ Bug fixes:
   :bug:`5788`
 * tests: Fix library tests failing on Windows when run from outside ``D:/``.
   :bug:`5802`
+* removed old contact info in docs
+  :bug:`5462`
 
 For packagers:
 
