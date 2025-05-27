@@ -9,13 +9,36 @@ collection better.
 Installing
 ----------
 
-You will need Python. Beets works on Python 3.8 or later.
+Beets requires Python 3.9 or later, you will need to install that first. Depending
+on your operating system, you may also be able to install beets from a package
+manager, or you can install it with `pip`_.
 
-- **macOS** 11 (Big Sur) includes Python 3.8 out of the box. You can opt for a
-  more recent Python installing it via Homebrew_ (``brew install python3``).
-  There's also a MacPorts_ port. Run ``port install beets`` or ``port install
-  beets-full`` to include many third-party plugins.
-- On **Debian or Ubuntu**, depending on the version, beets is available as an
+Using pip
+^^^^^^^^^
+
+To use the most recent version of beets, we recommend installing it with
+`pip`_, the Python package manager. If you don't have `pip`_ installed, you can
+follow the instructions on the `pip installation page`_ to get it set up.
+
+.. code-block:: console
+
+    pip install beets
+    # or, to install for the current user only:
+    pip install --user beets
+
+
+.. attention:: Python 3.13 not officially supported yet!
+    
+    If you are using Python 3.13, please be aware that it is not yet officially supported yet.
+    You may encounter issues, and we recommend using Python 3.12 or earlier until support is confirmed.
+
+
+Using a Package Manager
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Depending on your operating system, you may be able to install beets using a package manager. Here are some common options:
+
+* On **Debian or Ubuntu**, depending on the version, beets is available as an
   official package (`Debian details`_, `Ubuntu details`_), so try typing:
   ``apt-get install beets``. But the version in the repositories might lag
   behind, so make sure you read the right version of these docs. If you want the
@@ -55,48 +78,16 @@ You will need Python. Beets works on Python 3.8 or later.
 
 .. _macports: https://www.macports.org
 
-.. _nixos: https://github.com/NixOS/nixpkgs/tree/master/pkgs/tools/audio/beets
-
-.. _openbsd: http://openports.se/audio/beets
-
-.. _slackbuild: https://slackbuilds.org/repository/14.2/multimedia/beets/
-
-.. _ubuntu details: https://launchpad.net/ubuntu/+source/beets
-
-.. _void package: https://github.com/void-linux/void-packages/tree/master/srcpkgs/beets
-
-If you have pip_, just say ``pip install beets`` (or ``pip install --user
-beets`` if you run into permissions problems).
-
-To install without pip, download beets from `its PyPI page`_ and run ``python
-setup.py install`` in the directory therein.
-
-.. _its pypi page: https://pypi.org/project/beets/#files
-
-.. _pip: https://pip.pypa.io
-
-The best way to upgrade beets to a new version is by running ``pip install -U
-beets``. You may want to follow `@b33ts`_ on Twitter to hear about progress on
-new versions.
-
-.. _@b33ts: https://twitter.com/b33ts
-
-Installing by Hand on macOS 10.11 and Higher
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Starting with version 10.11 (El Capitan), macOS has a new security feature
-called `System Integrity Protection`_ (SIP) that prevents you from modifying
-some parts of the system. This means that some ``pip`` commands may fail with a
-permissions error. (You probably *won't* run into this if you've installed
-Python yourself with Homebrew_ or otherwise. You can also try MacPorts_.)
-
-If this happens, you can install beets for the current user only by typing ``pip
-install --user beets``. If you do that, you might want to add
-``~/Library/Python/3.6/bin`` to your ``$PATH``.
-
-.. _homebrew: https://brew.sh
-
-.. _system integrity protection: https://support.apple.com/en-us/HT204899
+.. _DNF package: https://packages.fedoraproject.org/pkgs/beets/
+.. _FreeBSD: http://portsmon.freebsd.org/portoverview.py?category=audio&portname=beets
+.. _AUR: https://aur.archlinux.org/packages/beets-git/
+.. _Debian details: https://tracker.debian.org/pkg/beets
+.. _Ubuntu details: https://launchpad.net/ubuntu/+source/beets
+.. _Arch extra: https://archlinux.org/packages/extra/any/beets/
+.. _Alpine package: https://pkgs.alpinelinux.org/package/edge/community/x86_64/beets
+.. _NixOS: https://github.com/NixOS/nixpkgs/tree/master/pkgs/tools/audio/beets
+.. _pip: https://pip.pypa.io/en/
+.. _pip installation page: https://pip.pypa.io/en/stable/installation/
 
 Installing on Windows
 ~~~~~~~~~~~~~~~~~~~~~
@@ -104,17 +95,18 @@ Installing on Windows
 Installing beets on Windows can be tricky. Following these steps might help you
 get it right:
 
-1. If you don't have it, `install Python`_ (you want at least Python 3.8). The
-   installer should give you the option to "add Python to PATH." Check this box.
-   If you do that, you can skip the next step.
+1. If you don't have it, `install Python`_ (you want at least Python 3.9). The
+   installer should give you the option to "add Python to PATH." Check this
+   box. If you do that, you can skip the next step.
+
 2. If you haven't done so already, set your ``PATH`` environment variable to
-   include Python and its scripts. To do so, open the "Settings" application,
-   then access the "System" screen, then access the "About" tab, and then hit
-   "Advanced system settings" located on the right side of the screen. This
-   should open the "System Properties" screen, then select the "Advanced" tab,
-   then hit the "Environmental Variables..." button, and then look for the PATH
-   variable in the table. Add the following to the end of the variable's value:
-   ``;C:\Python38;C:\Python38\Scripts``. You may need to adjust these paths to
+   include Python and its scripts. To do so, open the "Settings" application, 
+   then access the "System" screen, then access the "About" tab, and then hit 
+   "Advanced system settings" located on the right side of the screen. This 
+   should open the "System Properties" screen, then select the "Advanced" tab, 
+   then hit the "Environmental Variables..." button, and then look for the PATH 
+   variable in the table. Add the following to the end of the variable's value: 
+   ``;C:\Python39;C:\Python39\Scripts``. You may need to adjust these paths to 
    point to your Python installation.
 3. Now install beets by running: ``pip install beets``
 4. You're all set! Type ``beet`` at the command prompt to make sure everything's
@@ -126,9 +118,8 @@ the paths to Python match your system. Then double-click the file add the
 necessary keys to your registry. You can then right-click a directory and choose
 "Import with beets".
 
-Because I don't use Windows myself, I may have missed something. If you have
-trouble or you have more detail to contribute here, please direct it to `the
-mailing list`_.
+If you have trouble or you have more detail to contribute here, please direct it to
+`the discussion board`_.
 
 .. _beets.reg: https://github.com/beetbox/beets/blob/master/extra/beets.reg
 
@@ -348,8 +339,5 @@ blog <https://beets.io/blog/walkthrough.html>`_.
 Please let us know what you think of beets via `the discussion board`_ or
 Mastodon_.
 
-.. _mastodon: https://fosstodon.org/@beets
-
 .. _the discussion board: https://github.com/beetbox/beets/discussions
-
-.. _the mailing list: https://groups.google.com/group/beets-users
+.. _mastodon: https://fosstodon.org/@beets
