@@ -25,8 +25,9 @@ if TYPE_CHECKING:
 
 
 def find_metadata_source_plugins() -> list[MetadataSourcePlugin]:
-    """Returns a list of MetadataSourcePluginNew subclass instances from all
-    currently loaded beets plugins.
+    """Returns a list of MetadataSourcePlugin subclass instances
+
+    Resolved from all currently loaded beets plugins.
     """
     return [
         plugin
@@ -37,16 +38,14 @@ def find_metadata_source_plugins() -> list[MetadataSourcePlugin]:
 
 @notify_info_yielded("albuminfo_received")
 def candidates(*args, **kwargs) -> Iterable[AlbumInfo]:
-    """Return matching album candidates by using all metadata source
-    plugins."""
+    """Return matching album candidates from all metadata source plugins."""
     for plugin in find_metadata_source_plugins():
         yield from plugin.candidates(*args, **kwargs)
 
 
 @notify_info_yielded("trackinfo_received")
 def item_candidates(*args, **kwargs) -> Iterable[TrackInfo]:
-    """Return matching track candidates by using all metadata source
-    plugins."""
+    """Return matching track candidates fromm all metadata source plugins."""
     for plugin in find_metadata_source_plugins():
         yield from plugin.item_candidates(*args, **kwargs)
 
@@ -78,8 +77,10 @@ def track_for_id(_id: str) -> TrackInfo | None:
 
 
 def track_distance(item: Item, info: TrackInfo) -> Distance:
-    """Gets the track distance calculated by all loaded plugins.
-    Returns a Distance object.
+    """Returns the track distance for an item and trackinfo.
+
+    Returns a Distance object is populated by all metadata source plugins
+    that implement the :py:meth:`MetadataSourcePlugin.track_distance` method.
     """
     from beets.autotag.hooks import Distance
 
@@ -132,8 +133,6 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
         self.data_source = data_source or self.__class__.__name__
         self.config.add({"source_weight": 0.5})
 
-    # --------------------------------- id lookup -------------------------------- #
-
     def albums_for_ids(self, ids: Sequence[str]) -> Iterable[AlbumInfo | None]:
         """Batch lookup of album metadata for a list of album IDs.
 
@@ -168,8 +167,6 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
         found.
         """
         raise NotImplementedError
-
-    # ---------------------------------- search ---------------------------------- #
 
     @abc.abstractmethod
     def candidates(
@@ -282,9 +279,9 @@ class SearchApiMetadataSourcePlugin(
 
         results = self._search_api("album", query_filters)
         if not results:
-            return
+            return []
 
-        yield from filter(
+        return filter(
             None, self.albums_for_ids([result["id"] for result in results])
         )
 
@@ -293,15 +290,16 @@ class SearchApiMetadataSourcePlugin(
     ) -> Iterable[TrackInfo]:
         results = self._search_api("track", {"artist": artist}, keywords=title)
         if not results:
-            return
+            return []
 
-        yield from filter(
-            None, self.tracks_for_ids([result["id"] for result in results])
+        return filter(
+            None,
+            self.tracks_for_ids([result["id"] for result in results if result]),
         )
 
 
 def artists_to_artist_str(
-    artists,
+    artists: Iterable[dict],
     id_key: str | int = "id",
     name_key: str | int = "name",
     join_key: str | int | None = None,
