@@ -507,20 +507,13 @@ COLOR_NAMES = [
     "action_default",
     "action",
     # New Colors
-    "text",
     "text_faint",
     "import_path",
     "import_path_items",
     "action_description",
-    "added",
-    "removed",
     "changed",
-    "added_highlight",
-    "removed_highlight",
-    "changed_highlight",
     "text_diff_added",
     "text_diff_removed",
-    "text_diff_changed",
 ]
 COLORS: dict[str, list[str]] | None = None
 

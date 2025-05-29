@@ -465,19 +465,12 @@ your configuration file that looks like this:
             action_default: ['bold', 'cyan']
             action: ['bold', 'cyan']
             # New colors after UI overhaul
-            text: ['normal']
             text_faint: ['faint']
             import_path: ['bold', 'blue']
             import_path_items: ['bold', 'blue']
-            added:   ['green']
-            removed: ['red']
             changed: ['yellow']
-            added_highlight:   ['bold', 'green']
-            removed_highlight: ['bold', 'red']
-            changed_highlight: ['bold', 'yellow']
             text_diff_added:   ['bold', 'red']
             text_diff_removed: ['bold', 'red']
-            text_diff_changed: ['bold', 'red']
             action_description: ['white']
 
 Available colors: black, darkred, darkgreen, brown (darkyellow), darkblue,
