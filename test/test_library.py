@@ -29,11 +29,12 @@ from mediafile import MediaFile, UnreadableFileError
 
 import beets.dbcore.query
 import beets.library
+import beets.logging as blog
 from beets import config, plugins, util
 from beets.library import Album
 from beets.test import _common
 from beets.test._common import item
-from beets.test.helper import BeetsTestCase, ItemInDBTestCase
+from beets.test.helper import BeetsTestCase, ItemInDBTestCase, capture_log
 from beets.util import as_string, bytestring_path, normpath, syspath
 
 # Shortcut to path normalization.
@@ -125,6 +126,25 @@ class AddTest(BeetsTestCase):
             .fetchone()["grouping"]
         )
         assert new_grouping == self.i.grouping
+
+    def test_library_add_one_database_change_event(self):
+        """Test library.add emits only one database_change event."""
+        self.item = _common.item()
+        self.item.path = beets.util.normpath(
+            os.path.join(
+                self.temp_dir,
+                b"a",
+                b"b.mp3",
+            )
+        )
+        self.item.album = "a"
+        self.item.title = "b"
+
+        blog.getLogger("beets").set_global_level(blog.DEBUG)
+        with capture_log() as logs:
+            self.lib.add(self.item)
+
+        assert logs.count("Sending event: database_change") == 1
 
 
 class RemoveTest(ItemInDBTestCase):
