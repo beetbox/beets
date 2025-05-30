@@ -31,6 +31,10 @@ Bug fixes:
   :bug:`5788`
 * tests: Fix library tests failing on Windows when run from outside ``D:/``.
   :bug:`5802`
+* Fix an issue where calling `Library.add` would cause the `database_change`
+  event to be sent twice, not once.
+  :bug:`5560`
+* Fix ``HiddenFileTest`` by using ``bytestring_path()``.
 
 For packagers:
 
