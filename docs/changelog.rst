@@ -22,6 +22,7 @@ New features:
 * :doc:`plugins/discogs`: Implement ``track_for_id`` method to allow retrieving
   singletons by their Discogs ID.
   :bug:`4661`
+* :doc:`plugins/replace`: Add new plugin.
 
 Bug fixes:
 
