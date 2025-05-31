@@ -21,6 +21,7 @@ import shutil
 import subprocess
 import sys
 import unittest
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
@@ -828,9 +829,7 @@ class ConfigTest(TestPluginTestCase):
         del os.environ["BEETSDIR"]
 
         # Also set APPDATA, the Windows equivalent of setting $HOME.
-        appdata_dir = os.fsdecode(
-            os.path.join(self.temp_dir, b"AppData", b"Roaming")
-        )
+        appdata_dir = self.temp_dir_path / "AppData" / "Roaming"
 
         self._orig_cwd = os.getcwd()
         self.test_cmd = self._make_test_cmd()
@@ -838,27 +837,21 @@ class ConfigTest(TestPluginTestCase):
 
         # Default user configuration
         if platform.system() == "Windows":
-            self.user_config_dir = os.fsencode(
-                os.path.join(appdata_dir, "beets")
-            )
+            self.user_config_dir = appdata_dir / "beets"
         else:
-            self.user_config_dir = os.path.join(
-                self.temp_dir, b".config", b"beets"
-            )
-        os.makedirs(syspath(self.user_config_dir))
-        self.user_config_path = os.path.join(
-            self.user_config_dir, b"config.yaml"
-        )
+            self.user_config_dir = self.temp_dir_path / ".config" / "beets"
+        self.user_config_dir.mkdir(parents=True, exist_ok=True)
+        self.user_config_path = self.user_config_dir / "config.yaml"
 
         # Custom BEETSDIR
-        self.beetsdir = os.path.join(self.temp_dir, b"beetsdir")
-        self.cli_config_path = os.path.join(
-            os.fsdecode(self.temp_dir), "config.yaml"
-        )
-        os.makedirs(syspath(self.beetsdir))
+        self.beetsdir = self.temp_dir_path / "beetsdir"
+        self.beetsdir.mkdir(parents=True, exist_ok=True)
+
+        self.env_config_path = str(self.beetsdir / "config.yaml")
+        self.cli_config_path = str(self.temp_dir_path / "config.yaml")
         self.env_patcher = patch(
             "os.environ",
-            {"HOME": os.fsdecode(self.temp_dir), "APPDATA": appdata_dir},
+            {"HOME": str(self.temp_dir_path), "APPDATA": str(appdata_dir)},
         )
         self.env_patcher.start()
 
@@ -957,9 +950,8 @@ class ConfigTest(TestPluginTestCase):
         assert config["anoption"].get() == "cli overwrite"
 
     def test_cli_config_file_overwrites_beetsdir_defaults(self):
-        os.environ["BEETSDIR"] = os.fsdecode(self.beetsdir)
-        env_config_path = os.path.join(self.beetsdir, b"config.yaml")
-        with open(env_config_path, "w") as file:
+        os.environ["BEETSDIR"] = str(self.beetsdir)
+        with open(self.env_config_path, "w") as file:
             file.write("anoption: value")
 
         with open(self.cli_config_path, "w") as file:
@@ -1006,39 +998,25 @@ class ConfigTest(TestPluginTestCase):
             file.write("statefile: state")
 
         self.run_command("--config", self.cli_config_path, "test", lib=None)
-        self.assert_equal_path(
-            util.bytestring_path(config["library"].as_filename()),
-            os.path.join(self.user_config_dir, b"beets.db"),
-        )
-        self.assert_equal_path(
-            util.bytestring_path(config["statefile"].as_filename()),
-            os.path.join(self.user_config_dir, b"state"),
-        )
+        assert config["library"].as_path() == self.user_config_dir / "beets.db"
+        assert config["statefile"].as_path() == self.user_config_dir / "state"
 
     def test_cli_config_paths_resolve_relative_to_beetsdir(self):
-        os.environ["BEETSDIR"] = os.fsdecode(self.beetsdir)
+        os.environ["BEETSDIR"] = str(self.beetsdir)
 
         with open(self.cli_config_path, "w") as file:
             file.write("library: beets.db\n")
             file.write("statefile: state")
 
         self.run_command("--config", self.cli_config_path, "test", lib=None)
-        self.assert_equal_path(
-            util.bytestring_path(config["library"].as_filename()),
-            os.path.join(self.beetsdir, b"beets.db"),
-        )
-        self.assert_equal_path(
-            util.bytestring_path(config["statefile"].as_filename()),
-            os.path.join(self.beetsdir, b"state"),
-        )
+        assert config["library"].as_path() == self.beetsdir / "beets.db"
+        assert config["statefile"].as_path() == self.beetsdir / "state"
 
     def test_command_line_option_relative_to_working_dir(self):
         config.read()
         os.chdir(syspath(self.temp_dir))
         self.run_command("--library", "foo.db", "test", lib=None)
-        self.assert_equal_path(
-            config["library"].as_filename(), os.path.join(os.getcwd(), "foo.db")
-        )
+        assert config["library"].as_path() == Path.cwd() / "foo.db"
 
     def test_cli_config_file_loads_plugin_commands(self):
         with open(self.cli_config_path, "w") as file:
@@ -1050,24 +1028,23 @@ class ConfigTest(TestPluginTestCase):
         self.unload_plugins()
 
     def test_beetsdir_config(self):
-        os.environ["BEETSDIR"] = os.fsdecode(self.beetsdir)
+        os.environ["BEETSDIR"] = str(self.beetsdir)
 
-        env_config_path = os.path.join(self.beetsdir, b"config.yaml")
-        with open(env_config_path, "w") as file:
+        with open(self.env_config_path, "w") as file:
             file.write("anoption: overwrite")
 
         config.read()
         assert config["anoption"].get() == "overwrite"
 
     def test_beetsdir_points_to_file_error(self):
-        beetsdir = os.path.join(self.temp_dir, b"beetsfile")
+        beetsdir = str(self.temp_dir_path / "beetsfile")
         open(beetsdir, "a").close()
-        os.environ["BEETSDIR"] = os.fsdecode(beetsdir)
+        os.environ["BEETSDIR"] = beetsdir
         with pytest.raises(ConfigError):
             self.run_command("test")
 
     def test_beetsdir_config_does_not_load_default_user_config(self):
-        os.environ["BEETSDIR"] = os.fsdecode(self.beetsdir)
+        os.environ["BEETSDIR"] = str(self.beetsdir)
 
         with open(self.user_config_path, "w") as file:
             file.write("anoption: value")
@@ -1076,35 +1053,22 @@ class ConfigTest(TestPluginTestCase):
         assert not config["anoption"].exists()
 
     def test_default_config_paths_resolve_relative_to_beetsdir(self):
-        os.environ["BEETSDIR"] = os.fsdecode(self.beetsdir)
+        os.environ["BEETSDIR"] = str(self.beetsdir)
 
         config.read()
-        self.assert_equal_path(
-            util.bytestring_path(config["library"].as_filename()),
-            os.path.join(self.beetsdir, b"library.db"),
-        )
-        self.assert_equal_path(
-            util.bytestring_path(config["statefile"].as_filename()),
-            os.path.join(self.beetsdir, b"state.pickle"),
-        )
+        assert config["library"].as_path() == self.beetsdir / "library.db"
+        assert config["statefile"].as_path() == self.beetsdir / "state.pickle"
 
     def test_beetsdir_config_paths_resolve_relative_to_beetsdir(self):
-        os.environ["BEETSDIR"] = os.fsdecode(self.beetsdir)
+        os.environ["BEETSDIR"] = str(self.beetsdir)
 
-        env_config_path = os.path.join(self.beetsdir, b"config.yaml")
-        with open(env_config_path, "w") as file:
+        with open(self.env_config_path, "w") as file:
             file.write("library: beets.db\n")
             file.write("statefile: state")
 
         config.read()
-        self.assert_equal_path(
-            util.bytestring_path(config["library"].as_filename()),
-            os.path.join(self.beetsdir, b"beets.db"),
-        )
-        self.assert_equal_path(
-            util.bytestring_path(config["statefile"].as_filename()),
-            os.path.join(self.beetsdir, b"state"),
-        )
+        assert config["library"].as_path() == self.beetsdir / "beets.db"
+        assert config["statefile"].as_path() == self.beetsdir / "state"
 
 
 class ShowModelChangeTest(IOMixin, unittest.TestCase):

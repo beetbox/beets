@@ -131,9 +131,7 @@ class NonAutotaggedImportTest(PathsMixin, AsIsImporterMixin, ImportTestCase):
 
         assert self.track_lib_path.exists()
         assert self.track_lib_path.is_symlink()
-        self.assert_equal_path(
-            self.track_lib_path.resolve(), self.track_import_path
-        )
+        assert self.track_lib_path.resolve() == self.track_import_path
 
     @unittest.skipUnless(_common.HAVE_HARDLINK, "need hardlinks")
     def test_import_hardlink_arrives(self):
@@ -711,9 +709,7 @@ class ImportExistingTest(PathsMixin, AutotagImportTestCase):
     def test_outside_file_is_copied(self):
         config["import"]["copy"] = False
         self.importer.run()
-        self.assert_equal_path(
-            self.lib.items().get().path, self.import_media[0].path
-        )
+        assert self.lib.items().get().filepath == self.track_import_path
 
         self.reimporter = self.setup_importer()
         self.reimporter.add_choice(importer.Action.APPLY)
