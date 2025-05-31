@@ -109,45 +109,6 @@ lyrics_pages = [
         marks=[xfail_on_ci("AZLyrics is blocked by Cloudflare")],
     ),
     LyricsPage.make(
-        "http://www.chartlyrics.com/_LsLsZ7P4EK-F-LD4dJgDQ/Lady+Madonna.aspx",
-        """
-        Lady Madonna,
-        Children at your feet
-        Wonder how you manage to make ends meet.
-
-        Who finds the money
-        When you pay the rent?
-        Did you think that money was heaven-sent?
-
-        Friday night arrives without a suitcase.
-        Sunday morning creeping like a nun.
-        Monday's child has learned to tie his bootlace.
-
-        See how they run.
-
-        Lady Madonna,
-        Baby at your breast
-        Wonders how you manage to feed the rest.
-
-        See how they run.
-
-        Lady Madonna,
-        Lying on the bed.
-        Listen to the music playing in your head.
-
-        Tuesday afternoon is never ending.
-        Wednesday morning papers didn't come.
-        Thursday night your stockings needed mending.
-
-        See how they run.
-
-        Lady Madonna,
-        Children at your feet
-        Wonder how you manage to make ends meet.
-        """,
-        url_title="The Beatles Lady Madonna lyrics",
-    ),
-    LyricsPage.make(
         "https://www.dainuzodziai.lt/m/mergaites-nori-mylet-atlanta/",
         """
         Jos nesuspėja skriet paskui vėją

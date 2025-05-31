@@ -24,6 +24,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 from beets import util
+from beets.library import Item
 from beets.test import _common
 
 
@@ -217,3 +218,41 @@ class TestPathLegalization:
             expected_path,
             expected_truncated,
         )
+
+
+class TestPlurality:
+    @pytest.mark.parametrize(
+        "objs, expected_obj, expected_freq",
+        [
+            pytest.param([1, 1, 1, 1], 1, 4, id="consensus"),
+            pytest.param([1, 1, 2, 1], 1, 3, id="near consensus"),
+            pytest.param([1, 1, 2, 2, 3], 1, 2, id="conflict-first-wins"),
+        ],
+    )
+    def test_plurality(self, objs, expected_obj, expected_freq):
+        assert (expected_obj, expected_freq) == util.plurality(objs)
+
+    def test_empty_sequence_raises_error(self):
+        with pytest.raises(ValueError, match="must be non-empty"):
+            util.plurality([])
+
+    def test_get_most_common_tags(self):
+        items = [
+            Item(albumartist="aartist", label="label 1", album="album"),
+            Item(albumartist="aartist", label="label 2", album="album"),
+            Item(albumartist="aartist", label="label 3", album="another album"),
+        ]
+
+        likelies, consensus = util.get_most_common_tags(items)
+
+        assert likelies["albumartist"] == "aartist"
+        assert likelies["album"] == "album"
+        # albumartist consensus overrides artist
+        assert likelies["artist"] == "aartist"
+        assert likelies["label"] == "label 1"
+        assert likelies["year"] == 0
+
+        assert consensus["year"]
+        assert consensus["albumartist"]
+        assert not consensus["album"]
+        assert not consensus["label"]

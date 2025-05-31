@@ -38,7 +38,8 @@ from typing_extensions import TypedDict
 import beets
 import beets.ui
 from beets import config
-from beets.autotag.hooks import AlbumInfo, TrackInfo, string_dist
+from beets.autotag.distance import string_dist
+from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.plugins import BeetsPlugin, MetadataSourcePlugin, get_distance
 from beets.util.id_extractors import extract_release_id
 
