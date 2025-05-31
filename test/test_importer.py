@@ -23,7 +23,6 @@ import sys
 import unicodedata
 import unittest
 from io import StringIO
-from pathlib import Path
 from tarfile import TarFile
 from tempfile import mkstemp
 from unittest.mock import Mock, patch
@@ -194,7 +193,7 @@ class NonAutotaggedImportTest(AsIsImporterMixin, ImportTestCase):
 
 
 def create_archive(session):
-    (handle, path) = mkstemp(dir=os.fsdecode(session.temp_dir))
+    handle, path = mkstemp(dir=session.temp_dir_path)
     path = bytestring_path(path)
     os.close(handle)
     archive = ZipFile(os.fsdecode(path), mode="w")
@@ -1623,7 +1622,7 @@ class ImportPretendTest(IOMixin, AutotagImportTestCase):
         ]
 
     def test_import_pretend_empty(self):
-        empty_path = Path(os.fsdecode(self.temp_dir)) / "empty"
+        empty_path = self.temp_dir_path / "empty"
         empty_path.mkdir()
 
         importer = self.setup_importer(pretend=True, import_dir=empty_path)
