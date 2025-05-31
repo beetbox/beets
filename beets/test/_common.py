@@ -111,16 +111,6 @@ def import_session(lib=None, loghandler=None, paths=[], query=[], cli=False):
     return cls(lib, loghandler, paths, query)
 
 
-class Assertions:
-    """A mixin with additional unit test assertions."""
-
-    def assert_equal_path(self, a, b):
-        """Check that two paths are equal."""
-        a_bytes, b_bytes = util.normpath(a), util.normpath(b)
-
-        assert a_bytes == b_bytes, f"{a_bytes=} != {b_bytes=}"
-
-
 # Mock I/O.
 
 
