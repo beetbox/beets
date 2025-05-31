@@ -11,14 +11,20 @@ Installing
 
 Beets requires Python 3.9 or later, you will need to install that first. Depending
 on your operating system, you may also be able to install beets from a package
-manager, or you can install it with `pip`_.
+manager, or you can install it with `pipx`_ or `pip`_.
 
 Using pip
 ^^^^^^^^^
 
 To use the most recent version of beets, we recommend installing it with
-`pip`_, the Python package manager. If you don't have `pip`_ installed, you can
-follow the instructions on the `pip installation page`_ to get it set up.
+`pipx`_, the Python package manager. If you don't have `pipx`_ installed, you can
+follow the instructions on the `pipx installation page`_ to get it set up.
+
+.. code-block:: console
+
+    pipx install beets
+
+If you prefer to use `pip`_, you can install beets with the following command:
 
 .. code-block:: console
 
@@ -87,7 +93,8 @@ Depending on your operating system, you may be able to install beets using a pac
 .. _Alpine package: https://pkgs.alpinelinux.org/package/edge/community/x86_64/beets
 .. _NixOS: https://github.com/NixOS/nixpkgs/tree/master/pkgs/tools/audio/beets
 .. _pip: https://pip.pypa.io/en/
-.. _pip installation page: https://pip.pypa.io/en/stable/installation/
+.. _pipx: https://pipx.pypa.io/stable
+.. _pipx installation page: https://pipx.pypa.io/stable/installation/
 
 Installing on Windows
 ~~~~~~~~~~~~~~~~~~~~~
