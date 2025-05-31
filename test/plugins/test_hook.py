@@ -15,7 +15,7 @@
 
 from __future__ import annotations
 
-import os.path
+import os
 import sys
 import unittest
 from contextlib import contextmanager
@@ -74,8 +74,7 @@ class HookCommandTest(HookTestCase):
 
     def setUp(self):
         super().setUp()
-        temp_dir = os.fsdecode(self.temp_dir)
-        self.paths = [os.path.join(temp_dir, e) for e in self.events]
+        self.paths = [str(self.temp_dir_path / e) for e in self.events]
 
     def _test_command(
         self,
