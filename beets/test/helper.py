@@ -186,6 +186,14 @@ class TestHelper(_common.Assertions, ConfigMixin):
 
     db_on_disk: ClassVar[bool] = False
 
+    @cached_property
+    def temp_dir_path(self) -> Path:
+        return Path(self.create_temp_dir())
+
+    @cached_property
+    def temp_dir(self) -> bytes:
+        return util.bytestring_path(self.temp_dir_path)
+
     # TODO automate teardown through hook registration
 
     def setup_beets(self):
@@ -208,8 +216,7 @@ class TestHelper(_common.Assertions, ConfigMixin):
 
         Make sure you call ``teardown_beets()`` afterwards.
         """
-        self.create_temp_dir()
-        temp_dir_str = os.fsdecode(self.temp_dir)
+        temp_dir_str = str(self.temp_dir_path)
         self.env_patcher = patch.dict(
             "os.environ",
             {
@@ -394,16 +401,12 @@ class TestHelper(_common.Assertions, ConfigMixin):
 
     # Safe file operations
 
-    def create_temp_dir(self, **kwargs):
-        """Create a temporary directory and assign it into
-        `self.temp_dir`. Call `remove_temp_dir` later to delete it.
-        """
-        temp_dir = mkdtemp(**kwargs)
-        self.temp_dir = util.bytestring_path(temp_dir)
+    def create_temp_dir(self, **kwargs) -> str:
+        return mkdtemp(**kwargs)
 
     def remove_temp_dir(self):
         """Delete the temporary directory created by `create_temp_dir`."""
-        shutil.rmtree(syspath(self.temp_dir))
+        shutil.rmtree(self.temp_dir_path)
 
     def touch(self, path, dir=None, content=""):
         """Create a file at `path` with given content.
@@ -541,7 +544,7 @@ class ImportHelper(TestHelper):
 
     @cached_property
     def import_path(self) -> Path:
-        import_path = Path(os.fsdecode(self.temp_dir)) / "import"
+        import_path = self.temp_dir_path / "import"
         import_path.mkdir(exist_ok=True)
         return import_path
 
