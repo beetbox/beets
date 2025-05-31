@@ -177,7 +177,7 @@ class IOMixin:
         self.io.restore()
 
 
-class TestHelper(_common.Assertions, ConfigMixin):
+class TestHelper(ConfigMixin):
     """Helper mixin for high-level cli and plugin tests.
 
     This mixin provides methods to isolate beets' global state provide
