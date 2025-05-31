@@ -880,7 +880,7 @@ class TestPathQuery:
 
     @pytest.fixture(scope="class")
     def lib(self, helper):
-        helper.add_item(path=b"/a/b/c.mp3", title="path item")
+        helper.add_item(path=b"/aaa/bb/c.mp3", title="path item")
         helper.add_item(path=b"/x/y/z.mp3", title="another item")
         helper.add_item(path=b"/c/_/title.mp3", title="with underscore")
         helper.add_item(path=b"/c/%/title.mp3", title="with percent")
@@ -892,12 +892,13 @@ class TestPathQuery:
     @pytest.mark.parametrize(
         "q, expected_titles",
         [
-            _p("path:/a/b/c.mp3", ["path item"], id="exact-match"),
-            _p("path:/a", ["path item"], id="parent-dir-no-slash"),
-            _p("path:/a/", ["path item"], id="parent-dir-with-slash"),
+            _p("path:/aaa/bb/c.mp3", ["path item"], id="exact-match"),
+            _p("path:/aaa", ["path item"], id="parent-dir-no-slash"),
+            _p("path:/aaa/", ["path item"], id="parent-dir-with-slash"),
+            _p("path:/aa", [], id="no-match-does-not-match-parent-dir"),
             _p("path:/xyzzy/", [], id="no-match"),
             _p("path:/b/", [], id="fragment-no-match"),
-            _p("path:/x/../a/b", ["path item"], id="non-normalized"),
+            _p("path:/x/../aaa/bb", ["path item"], id="non-normalized"),
             _p("path::c\\.mp3$", ["path item"], id="regex"),
             _p("path:/c/_", ["with underscore"], id="underscore-escaped"),
             _p("path:/c/%", ["with percent"], id="percent-escaped"),
@@ -913,8 +914,8 @@ class TestPathQuery:
     @pytest.mark.parametrize(
         "q, expected_titles",
         [
-            _p("/a/b", ["path item"], id="slashed-query"),
-            _p("/a/b , /a/b", ["path item"], id="path-in-or-query"),
+            _p("/aaa/bb", ["path item"], id="slashed-query"),
+            _p("/aaa/bb , /aaa", ["path item"], id="path-in-or-query"),
             _p("c.mp3", [], id="no-slash-no-match"),
             _p("title:/a/b", [], id="slash-with-explicit-field-no-match"),
         ],
