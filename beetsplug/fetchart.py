@@ -32,6 +32,7 @@ from mediafile import image_mime_type
 from beets import config, importer, plugins, ui, util
 from beets.util import bytestring_path, get_temp_filename, sorted_walk, syspath
 from beets.util.artresizer import ArtResizer
+from beets.util.config import sanitize_pairs
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
@@ -1396,7 +1397,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             if s_cls.available(self._log, self.config)
             for c in s_cls.VALID_MATCHING_CRITERIA
         ]
-        sources = plugins.sanitize_pairs(
+        sources = sanitize_pairs(
             self.config["sources"].as_pairs(default_value="*"),
             available_sources,
         )
