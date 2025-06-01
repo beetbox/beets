@@ -19,6 +19,7 @@ from __future__ import annotations
 import os
 import shutil
 import unittest
+from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import patch
 
@@ -804,12 +805,10 @@ class ArtImporterTest(UseThePlugin):
         self.plugin.fetch_art(self.session, self.task)
         self.plugin.assign_art(self.session, self.task)
 
-        artpath = self.lib.albums()[0].artpath
+        artpath = self.lib.albums()[0].art_filepath
         if should_exist:
-            assert artpath == os.path.join(
-                os.path.dirname(self.i.path), b"cover.jpg"
-            )
-            self.assertExists(artpath)
+            assert artpath == self.i.filepath.parent / "cover.jpg"
+            assert artpath.exists()
         else:
             assert artpath is None
         return artpath
@@ -861,7 +860,7 @@ class ArtImporterTest(UseThePlugin):
         self.plugin.batch_fetch_art(
             self.lib, self.lib.albums(), force=False, quiet=False
         )
-        self.assertExists(self.album.artpath)
+        assert self.album.art_filepath.exists()
 
 
 class ArtForAlbumTest(UseThePlugin):
