@@ -923,10 +923,11 @@ class ConfigTest(TestPluginTestCase):
         assert template.original == "y"
         assert self.test_cmd.lib.path_formats[1:] == default_formats
 
-    @unittest.skipIf(sys.platform == "win32", "win32")  # Fails on Windows
+    # FIXME: workaround on windows, asks to create the file
+    @unittest.skipIf(sys.platform == "win32", "win32")
     def test_nonexistant_db(self):
         with self.write_config_file() as config:
-            config.write("library: xxx/yyy/not/a/real/path")
+            config.write("library: /xxx/yyy/not/a/real/path")
 
         with pytest.raises(ui.UserError):
             self.run_command("test", lib=None)
@@ -1012,7 +1013,10 @@ class ConfigTest(TestPluginTestCase):
     #                      '--config', cli_overwrite_config_path, 'test')
     #        assert config['anoption'].get() == 'cli overwrite'
 
-    # FIXME: fails on windows
+    # FIXME: fails on windows as folder is created in current folder rather than
+    # the tmp dir for testing.
+    # AssertionError: a_bytes=b'E:\\Git\\my-beets\\~\\AppData\\Roaming\\beets\\beets.db'
+    # != b_bytes=b'C:\\Users\\username\\AppData\\Local\\Temp\\tmpfnjucufd\\AppData\\Roaming\\beets\\beets.db'
     @unittest.skipIf(sys.platform == "win32", "win32")
     def test_cli_config_paths_resolve_relative_to_user_dir(self):
         with open(self.cli_config_path, "w") as file:
