@@ -478,8 +478,6 @@ class PathQueryTest(ItemInDBTestCase, AssertsMixin):
         results = self.lib.albums(q)
         self.assert_albums_matched(results, ["path album"])
 
-    # FIXME: fails on windows
-    @unittest.skipIf(sys.platform == "win32", "win32")
     def test_parent_directory_no_slash(self):
         q = "path:/a"
         results = self.lib.items(q)
@@ -488,8 +486,6 @@ class PathQueryTest(ItemInDBTestCase, AssertsMixin):
         results = self.lib.albums(q)
         self.assert_albums_matched(results, ["path album"])
 
-    # FIXME: fails on windows
-    @unittest.skipIf(sys.platform == "win32", "win32")
     def test_parent_directory_with_slash(self):
         q = "path:/a/"
         results = self.lib.items(q)
@@ -522,7 +518,6 @@ class PathQueryTest(ItemInDBTestCase, AssertsMixin):
         results = self.lib.albums(q)
         self.assert_albums_matched(results, ["path album"])
 
-    @unittest.skipIf(sys.platform == "win32", WIN32_NO_IMPLICIT_PATHS)
     def test_slashed_query_matches_path(self):
         with self.force_implicit_query_detection():
             q = "/a/b"
@@ -532,7 +527,6 @@ class PathQueryTest(ItemInDBTestCase, AssertsMixin):
             results = self.lib.albums(q)
             self.assert_albums_matched(results, ["path album"])
 
-    @unittest.skipIf(sys.platform == "win32", WIN32_NO_IMPLICIT_PATHS)
     def test_path_query_in_or_query(self):
         with self.force_implicit_query_detection():
             q = "/a/b , /a/b"
@@ -617,9 +611,6 @@ class PathQueryTest(ItemInDBTestCase, AssertsMixin):
         results = self.lib.items(makeq(case_sensitive=False))
         self.assert_items_matched(results, ["path item", "caps path"])
 
-    # FIXME: Also create a variant of this test for windows, which tests
-    # both os.sep and os.altsep
-    @unittest.skipIf(sys.platform == "win32", "win32")
     def test_path_sep_detection(self):
         is_path_query = beets.library.PathQuery.is_path_query
 
@@ -633,6 +624,8 @@ class PathQueryTest(ItemInDBTestCase, AssertsMixin):
             assert not is_path_query("foo:/bar")
 
     # FIXME: shouldn't this also work on windows?
+    # this fails as Path: b'C:\\Users\\user\\AppData\\Local\\Temp\\tmpz9ju2h0t\\foo\\bar'
+    # Syspath: \\?\C:\Users\user\AppData\Local\Temp\tmpz9ju2h0t\foo\bar
     @unittest.skipIf(sys.platform == "win32", WIN32_NO_IMPLICIT_PATHS)
     def test_detect_absolute_path(self):
         """Test detection of implicit path queries based on whether or

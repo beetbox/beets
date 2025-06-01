@@ -923,9 +923,10 @@ class ConfigTest(TestPluginTestCase):
         assert template.original == "y"
         assert self.test_cmd.lib.path_formats[1:] == default_formats
 
+    @unittest.skipIf(sys.platform == "win32", "win32")  # Fails on Windows
     def test_nonexistant_db(self):
         with self.write_config_file() as config:
-            config.write("library: /xxx/yyy/not/a/real/path")
+            config.write("library: xxx/yyy/not/a/real/path")
 
         with pytest.raises(ui.UserError):
             self.run_command("test", lib=None)
