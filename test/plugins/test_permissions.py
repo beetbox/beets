@@ -8,10 +8,8 @@ from beets.test._common import touch
 from beets.test.helper import (
     AsIsImporterMixin,
     ImportTestCase,
-    is_path_on_ntfs,
-    is_wsl,
-    is_wsl_and_ntfs,
     PluginMixin,
+    is_wsl_and_ntfs,
 )
 from beets.util import displayable_path
 from beetsplug.permissions import (

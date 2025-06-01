@@ -951,7 +951,6 @@ def is_path_on_ntfs(path):
     Determine if the given path is on an NTFS filesystem in WSL.
     """
     path = os.path.abspath(path)
-    mount_point = None
     fs_type = None
     max_len = 0
 
@@ -963,7 +962,6 @@ def is_path_on_ntfs(path):
                     mount = parts[1]
                     fstype = parts[2]
                     if path.startswith(mount) and len(mount) > max_len:
-                        mount_point = mount
                         fs_type = fstype
                         max_len = len(mount)
     except Exception as e:

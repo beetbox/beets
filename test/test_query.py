@@ -624,7 +624,8 @@ class PathQueryTest(ItemInDBTestCase, AssertsMixin):
             assert not is_path_query("foo:/bar")
 
     # FIXME: shouldn't this also work on windows?
-    # this fails as Path: b'C:\\Users\\user\\AppData\\Local\\Temp\\tmpz9ju2h0t\\foo\\bar'
+    # this fails as
+    # Path: b'C:\\Users\\user\\AppData\\Local\\Temp\\tmpz9ju2h0t\\foo\\bar'
     # Syspath: \\?\C:\Users\user\AppData\Local\Temp\tmpz9ju2h0t\foo\bar
     @unittest.skipIf(sys.platform == "win32", WIN32_NO_IMPLICIT_PATHS)
     def test_detect_absolute_path(self):

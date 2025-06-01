@@ -1016,7 +1016,7 @@ class ConfigTest(TestPluginTestCase):
     # FIXME: fails on windows as folder is created in current folder rather than
     # the tmp dir for testing.
     # AssertionError: a_bytes=b'E:\\Git\\my-beets\\~\\AppData\\Roaming\\beets\\beets.db'
-    # != b_bytes=b'C:\\Users\\username\\AppData\\Local\\Temp\\tmpfnjucufd\\AppData\\Roaming\\beets\\beets.db'
+    # != b_bytes=b'C:\\Users\\username\\AppData\\Local\\Temp\\tmpfnjucufd\\AppData\\Roaming\\beets\\beets.db'  # noqa: E501
     @unittest.skipIf(sys.platform == "win32", "win32")
     def test_cli_config_paths_resolve_relative_to_user_dir(self):
         with open(self.cli_config_path, "w") as file:

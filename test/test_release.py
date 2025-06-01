@@ -3,9 +3,9 @@
 import os
 import shutil
 import sys
+import unittest
 
 import pytest
-import unittest
 
 release = pytest.importorskip("extra.release")
 
