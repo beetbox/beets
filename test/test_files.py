@@ -19,6 +19,7 @@ import shutil
 import stat
 import unittest
 from os.path import join
+from pathlib import Path
 
 import pytest
 
@@ -314,9 +315,10 @@ class ArtFileTest(BeetsTestCase):
         # Make an album.
         self.ai = self.lib.add_album((self.i,))
         # Make an art file too.
-        self.art = self.lib.get_album(self.i).art_destination("something.jpg")
-        touch(self.art)
-        self.ai.artpath = self.art
+        art_bytes = self.lib.get_album(self.i).art_destination("something.jpg")
+        self.art = Path(os.fsdecode(art_bytes))
+        self.art.touch()
+        self.ai.artpath = art_bytes
         self.ai.store()
         # Alternate destination dir.
         self.otherdir = os.path.join(self.temp_dir, b"testotherdir")
@@ -345,10 +347,10 @@ class ArtFileTest(BeetsTestCase):
         self.i.load()
 
         # Art should be in new directory.
-        self.assertNotExists(self.art)
-        newart = self.lib.get_album(self.i).artpath
-        self.assertExists(newart)
-        assert b"testotherdir" in newart
+        assert not self.art.exists()
+        newart = self.lib.get_album(self.i).art_filepath
+        assert newart.exists()
+        assert "testotherdir" in str(newart)
 
     def test_setart_copies_image(self):
         util.remove(self.art)
@@ -363,7 +365,7 @@ class ArtFileTest(BeetsTestCase):
 
         assert ai.artpath is None
         ai.set_art(newart)
-        self.assertExists(ai.artpath)
+        assert ai.art_filepath.exists()
 
     def test_setart_to_existing_art_works(self):
         util.remove(self.art)
@@ -380,7 +382,7 @@ class ArtFileTest(BeetsTestCase):
 
         # Set the art again.
         ai.set_art(ai.artpath)
-        self.assertExists(ai.artpath)
+        assert ai.art_filepath.exists()
 
     def test_setart_to_existing_but_unset_art_works(self):
         newart = os.path.join(self.libdir, b"newart.jpg")
@@ -397,7 +399,7 @@ class ArtFileTest(BeetsTestCase):
 
         # Set the art again.
         ai.set_art(artdest)
-        self.assertExists(ai.artpath)
+        assert ai.art_filepath.exists()
 
     def test_setart_to_conflicting_file_gets_new_path(self):
         newart = os.path.join(self.libdir, b"newart.jpg")
@@ -442,34 +444,34 @@ class ArtFileTest(BeetsTestCase):
             os.chmod(syspath(ai.artpath), 0o777)
 
     def test_move_last_file_moves_albumart(self):
-        oldartpath = self.lib.albums()[0].artpath
-        self.assertExists(oldartpath)
+        oldartpath = self.lib.albums()[0].art_filepath
+        assert oldartpath.exists()
 
         self.ai.album = "different_album"
         self.ai.store()
         self.ai.items()[0].move()
 
-        artpath = self.lib.albums()[0].artpath
-        assert b"different_album" in artpath
-        self.assertExists(artpath)
-        self.assertNotExists(oldartpath)
+        artpath = self.lib.albums()[0].art_filepath
+        assert "different_album" in str(artpath)
+        assert artpath.exists()
+        assert not oldartpath.exists()
 
     def test_move_not_last_file_does_not_move_albumart(self):
         i2 = item()
         i2.albumid = self.ai.id
         self.lib.add(i2)
 
-        oldartpath = self.lib.albums()[0].artpath
-        self.assertExists(oldartpath)
+        oldartpath = self.lib.albums()[0].art_filepath
+        assert oldartpath.exists()
 
         self.i.album = "different_album"
         self.i.album_id = None  # detach from album
         self.i.move()
 
-        artpath = self.lib.albums()[0].artpath
-        assert b"different_album" not in artpath
+        artpath = self.lib.albums()[0].art_filepath
+        assert "different_album" not in str(artpath)
         assert artpath == oldartpath
-        self.assertExists(oldartpath)
+        assert oldartpath.exists()
 
 
 class RemoveTest(BeetsTestCase):
