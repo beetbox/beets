@@ -45,6 +45,11 @@ class LibModel(dbcore.Model["Library"]):
     def writable_media_fields(cls) -> set[str]:
         return set(MediaFile.fields()) & cls._fields.keys()
 
+    @property
+    def filepath(self) -> Path:
+        """The path to the entity as pathlib.Path."""
+        return Path(os.fsdecode(self.path))
+
     def _template_funcs(self):
         funcs = DefaultTemplateFunctions(self, self._db).functions()
         funcs.update(plugins.template_funcs())
@@ -207,6 +212,8 @@ class Album(LibModel):
     Reflects the library's "albums" table, including album art.
     """
 
+    artpath: bytes
+
     _table = "albums"
     _flex_table = "album_attributes"
     _always_dirty = True
@@ -330,6 +337,11 @@ class Album(LibModel):
             f"LEFT JOIN {cls._relation._table} "
             f"ON {cls._table}.id = {cls._relation._table}.album_id"
         )
+
+    @property
+    def art_filepath(self) -> Path | None:
+        """The path to album's cover picture as pathlib.Path."""
+        return Path(os.fsdecode(self.artpath)) if self.artpath else None
 
     @classmethod
     def _getters(cls):
@@ -747,11 +759,6 @@ class Item(LibModel):
             f"LEFT JOIN {cls._relation._table} "
             f"ON {cls._table}.album_id = {cls._relation._table}.id"
         )
-
-    @property
-    def filepath(self) -> Path:
-        """The path to the item's file as pathlib.Path."""
-        return Path(os.fsdecode(self.path))
 
     @property
     def _cached_album(self):

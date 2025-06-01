@@ -203,23 +203,21 @@ class EmbedartCliTest(IOMixin, PluginMixin, FetchImageHelper, BeetsTestCase):
         resource_path = os.path.join(_common.RSRC, b"image.mp3")
         album = self.add_album_fixture()
         trackpath = album.items()[0].path
-        albumpath = album.path
         shutil.copy(syspath(resource_path), syspath(trackpath))
 
         self.run_command("extractart", "-n", "extracted")
 
-        self.assertExists(os.path.join(albumpath, b"extracted.png"))
+        self.assertExists(album.filepath / "extracted.png")
 
     def test_extracted_extension(self):
         resource_path = os.path.join(_common.RSRC, b"image-jpeg.mp3")
         album = self.add_album_fixture()
         trackpath = album.items()[0].path
-        albumpath = album.path
         shutil.copy(syspath(resource_path), syspath(trackpath))
 
         self.run_command("extractart", "-n", "extracted")
 
-        self.assertExists(os.path.join(albumpath, b"extracted.jpg"))
+        self.assertExists(album.filepath / "extracted.jpg")
 
     def test_clear_art_with_yes_input(self):
         self._setup_data()
