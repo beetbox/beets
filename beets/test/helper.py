@@ -184,6 +184,8 @@ class TestHelper(_common.Assertions, ConfigMixin):
     fixtures.
     """
 
+    resource_path = Path(os.fsdecode(_common.RSRC)) / "full.mp3"
+
     db_on_disk: ClassVar[bool] = False
 
     @cached_property
@@ -193,6 +195,16 @@ class TestHelper(_common.Assertions, ConfigMixin):
     @cached_property
     def temp_dir(self) -> bytes:
         return util.bytestring_path(self.temp_dir_path)
+
+    @cached_property
+    def lib_path(self) -> Path:
+        lib_path = self.temp_dir_path / "libdir"
+        lib_path.mkdir(exist_ok=True)
+        return lib_path
+
+    @cached_property
+    def libdir(self) -> bytes:
+        return bytestring_path(self.lib_path)
 
     # TODO automate teardown through hook registration
 
@@ -226,9 +238,7 @@ class TestHelper(_common.Assertions, ConfigMixin):
         )
         self.env_patcher.start()
 
-        self.libdir = os.path.join(self.temp_dir, b"libdir")
-        os.mkdir(syspath(self.libdir))
-        self.config["directory"] = os.fsdecode(self.libdir)
+        self.config["directory"] = str(self.lib_path)
 
         if self.db_on_disk:
             dbpath = util.bytestring_path(self.config["library"].as_filename())
@@ -527,7 +537,6 @@ class ImportHelper(TestHelper):
     autotagging library and several assertions for the library.
     """
 
-    resource_path = syspath(os.path.join(_common.RSRC, b"full.mp3"))
     default_import_config = {
         "autotag": True,
         "copy": True,
@@ -612,7 +621,7 @@ class ImportHelper(TestHelper):
         ]
 
     def prepare_albums_for_import(self, count: int = 1) -> None:
-        album_dirs = Path(os.fsdecode(self.import_dir)).glob("album_*")
+        album_dirs = self.import_path.glob("album_*")
         base_idx = int(str(max(album_dirs, default="0")).split("_")[-1]) + 1
 
         for album_id in range(base_idx, count + base_idx):
@@ -640,13 +649,13 @@ class ImportHelper(TestHelper):
         """Join the ``segments`` and assert that this path exists in the
         library directory.
         """
-        self.assertExists(os.path.join(self.libdir, *segments))
+        assert self.lib_path.joinpath(*segments).exists()
 
     def assert_file_not_in_lib(self, *segments):
         """Join the ``segments`` and assert that this path does not
         exist in the library directory.
         """
-        self.assertNotExists(os.path.join(self.libdir, *segments))
+        assert not self.lib_path.joinpath(*segments).exists()
 
     def assert_lib_dir_empty(self):
         assert not os.listdir(syspath(self.libdir))

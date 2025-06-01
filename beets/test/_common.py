@@ -18,6 +18,7 @@ import os
 import sys
 import unittest
 from contextlib import contextmanager
+from pathlib import Path
 
 import beets
 import beets.library
@@ -114,23 +115,15 @@ def import_session(lib=None, loghandler=None, paths=[], query=[], cli=False):
 class Assertions:
     """A mixin with additional unit test assertions."""
 
-    def assertExists(self, path):
-        assert os.path.exists(syspath(path)), f"file does not exist: {path!r}"
-
-    def assertNotExists(self, path):
-        assert not os.path.exists(syspath(path)), f"file exists: {path!r}"
-
     def assertIsFile(self, path):
-        self.assertExists(path)
-        assert os.path.isfile(syspath(path)), (
-            "path exists, but is not a regular file: {!r}".format(path)
-        )
+        path = Path(os.fsdecode(path))
+        assert path.exists()
+        assert path.is_file()
 
     def assertIsDir(self, path):
-        self.assertExists(path)
-        assert os.path.isdir(syspath(path)), (
-            "path exists, but is not a directory: {!r}".format(path)
-        )
+        path = Path(os.fsdecode(path))
+        assert path.exists()
+        assert path.is_dir()
 
     def assert_equal_path(self, a, b):
         """Check that two paths are equal."""
