@@ -18,6 +18,7 @@ import os.path
 import re
 import sys
 import unittest
+from pathlib import Path
 
 import pytest
 from mediafile import MediaFile
@@ -190,8 +191,9 @@ class ConvertCliTest(ConvertTestCase, ConvertCommand):
     def test_reject_confirmation(self):
         with control_stdin("n"):
             self.run_convert()
-        converted = os.path.join(self.convert_dest, b"converted.mp3")
-        self.assertNotExists(converted)
+        assert not (
+            Path(os.fsdecode(self.convert_dest)) / "converted.mp3"
+        ).exists()
 
     def test_convert_keep_new(self):
         assert os.path.splitext(self.item.path)[1] == b".ogg"
@@ -231,8 +233,9 @@ class ConvertCliTest(ConvertTestCase, ConvertCommand):
 
     def test_pretend(self):
         self.run_convert("--pretend")
-        converted = os.path.join(self.convert_dest, b"converted.mp3")
-        self.assertNotExists(converted)
+        assert not (
+            Path(os.fsdecode(self.convert_dest)) / "converted.mp3"
+        ).exists()
 
     def test_empty_query(self):
         with capture_log("beets.convert") as logs:
