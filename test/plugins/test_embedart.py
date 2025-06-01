@@ -13,6 +13,7 @@
 # included in all copies or substantial portions of the Software.
 
 
+import os
 import os.path
 import shutil
 import tempfile
@@ -207,7 +208,7 @@ class EmbedartCliTest(IOMixin, PluginMixin, FetchImageHelper, BeetsTestCase):
 
         self.run_command("extractart", "-n", "extracted")
 
-        self.assertExists(album.filepath / "extracted.png")
+        assert (album.filepath / "extracted.png").exists()
 
     def test_extracted_extension(self):
         resource_path = os.path.join(_common.RSRC, b"image-jpeg.mp3")
@@ -217,7 +218,7 @@ class EmbedartCliTest(IOMixin, PluginMixin, FetchImageHelper, BeetsTestCase):
 
         self.run_command("extractart", "-n", "extracted")
 
-        self.assertExists(album.filepath / "extracted.jpg")
+        assert (album.filepath / "extracted.jpg").exists()
 
     def test_clear_art_with_yes_input(self):
         self._setup_data()
