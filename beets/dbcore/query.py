@@ -85,6 +85,7 @@ class Query(ABC):
         """Return a set with field names that this query operates on."""
         return set()
 
+    @abstractmethod
     def clause(self) -> tuple[str | None, Sequence[Any]]:
         """Generate an SQLite expression implementing the query.
 
@@ -95,14 +96,12 @@ class Query(ABC):
         The default implementation returns None, falling back to a slow query
         using `match()`.
         """
-        return None, ()
 
     @abstractmethod
     def match(self, obj: Model):
         """Check whether this query matches a given Model. Can be used to
         perform queries on arbitrary sets of Model.
         """
-        ...
 
     def __and__(self, other: Query) -> AndQuery:
         return AndQuery([self, other])
@@ -152,7 +151,7 @@ class FieldQuery(Query, Generic[P]):
         self.fast = fast
 
     def col_clause(self) -> tuple[str, Sequence[SQLiteType]]:
-        return self.field, ()
+        raise NotImplementedError
 
     def clause(self) -> tuple[str | None, Sequence[SQLiteType]]:
         if self.fast:
@@ -164,7 +163,7 @@ class FieldQuery(Query, Generic[P]):
     @classmethod
     def value_match(cls, pattern: P, value: Any):
         """Determine whether the value matches the pattern."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def match(self, obj: Model) -> bool:
         return self.value_match(self.pattern, obj.get(self.field_name))
@@ -234,7 +233,7 @@ class StringFieldQuery(FieldQuery[P]):
         """Determine whether the value matches the pattern. Both
         arguments are strings. Subclasses implement this method.
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class StringQuery(StringFieldQuery[str]):
