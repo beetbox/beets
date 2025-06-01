@@ -601,12 +601,12 @@ class UpdateTest(IOMixin, BeetsTestCase):
         assert not self.lib.albums()
 
     def test_delete_removes_album_art(self):
-        artpath = self.album.artpath
-        self.assertExists(artpath)
+        art_filepath = self.album.art_filepath
+        assert art_filepath.exists()
         util.remove(self.i.path)
         util.remove(self.i2.path)
         self._update()
-        self.assertNotExists(artpath)
+        assert not art_filepath.exists()
 
     def test_modified_metadata_detected(self):
         mf = MediaFile(syspath(self.i.path))

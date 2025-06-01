@@ -23,6 +23,7 @@ import sys
 import unicodedata
 import unittest
 from io import StringIO
+from pathlib import Path
 from tarfile import TarFile
 from tempfile import mkstemp
 from unittest.mock import Mock, patch
@@ -1566,14 +1567,14 @@ class ReimportTest(AutotagImportTestCase):
         replaced_album = self._album()
         replaced_album.set_art(art_source)
         replaced_album.store()
-        old_artpath = replaced_album.artpath
+        old_artpath = replaced_album.art_filepath
         self.importer.run()
         new_album = self._album()
         new_artpath = new_album.art_destination(art_source)
         assert new_album.artpath == new_artpath
-        self.assertExists(new_artpath)
+        assert new_album.art_filepath.exists()
         if new_artpath != old_artpath:
-            self.assertNotExists(old_artpath)
+            assert not old_artpath.exists()
 
     def test_reimported_album_has_new_flexattr(self):
         self._setup_session()
