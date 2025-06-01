@@ -645,18 +645,6 @@ class ImportHelper(TestHelper):
     def setup_singleton_importer(self, **kwargs) -> ImportSession:
         return self.setup_importer(singletons=True, **kwargs)
 
-    def assert_file_in_lib(self, *segments):
-        """Join the ``segments`` and assert that this path exists in the
-        library directory.
-        """
-        assert self.lib_path.joinpath(*segments).exists()
-
-    def assert_file_not_in_lib(self, *segments):
-        """Join the ``segments`` and assert that this path does not
-        exist in the library directory.
-        """
-        assert not self.lib_path.joinpath(*segments).exists()
-
 
 class AsIsImporterMixin:
     def setUp(self):
