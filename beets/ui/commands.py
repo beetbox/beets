@@ -2122,12 +2122,20 @@ default_commands.append(modify_cmd)
 
 
 def move_items(
-    lib, dest, query, copy, album, pretend, confirm=False, export=False
+    lib,
+    dest_path: util.PathLike,
+    query,
+    copy,
+    album,
+    pretend,
+    confirm=False,
+    export=False,
 ):
     """Moves or copies items to a new base directory, given by dest. If
     dest is None, then the library's base directory is used, making the
     command "consolidate" files.
     """
+    dest = os.fsencode(dest_path) if dest_path else dest_path
     items, albums = _do_query(lib, query, album, False)
     objs = albums if album else items
     num_objs = len(objs)

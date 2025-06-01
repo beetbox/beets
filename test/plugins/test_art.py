@@ -245,13 +245,13 @@ class FetchImageTest(FetchImageTestCase):
         self.mock_response(self.URL, "image/png")
         self.source.fetch_image(self.candidate, self.settings)
         assert os.path.splitext(self.candidate.path)[1] == b".png"
-        self.assertExists(self.candidate.path)
+        assert Path(os.fsdecode(self.candidate.path)).exists()
 
     def test_does_not_rely_on_server_content_type(self):
         self.mock_response(self.URL, "image/jpeg", "image/png")
         self.source.fetch_image(self.candidate, self.settings)
         assert os.path.splitext(self.candidate.path)[1] == b".png"
-        self.assertExists(self.candidate.path)
+        assert Path(os.fsdecode(self.candidate.path)).exists()
 
 
 class FSArtTest(UseThePlugin):
@@ -749,8 +749,8 @@ class ArtImporterTest(UseThePlugin):
         super().setUp()
 
         # Mock the album art fetcher to always return our test file.
-        self.art_file = os.path.join(self.temp_dir, b"tmpcover.jpg")
-        _common.touch(self.art_file)
+        self.art_file = self.temp_dir_path / "tmpcover.jpg"
+        self.art_file.touch()
         self.old_afa = self.plugin.art_for_album
         self.afa_response = fetchart.Candidate(
             logger,
@@ -827,20 +827,20 @@ class ArtImporterTest(UseThePlugin):
 
     def test_leave_original_file_in_place(self):
         self._fetch_art(True)
-        self.assertExists(self.art_file)
+        assert self.art_file.exists()
 
     def test_delete_original_file(self):
         prev_move = config["import"]["move"].get()
         try:
             config["import"]["move"] = True
             self._fetch_art(True)
-            self.assertNotExists(self.art_file)
+            assert not self.art_file.exists()
         finally:
             config["import"]["move"] = prev_move
 
     def test_do_not_delete_original_if_already_in_place(self):
         artdest = os.path.join(os.path.dirname(self.i.path), b"cover.jpg")
-        shutil.copyfile(syspath(self.art_file), syspath(artdest))
+        shutil.copyfile(self.art_file, syspath(artdest))
         self.afa_response = fetchart.Candidate(
             logger,
             source_name="test",
@@ -899,7 +899,7 @@ class ArtForAlbumTest(UseThePlugin):
         super().tearDown()
 
     def assertImageIsValidArt(self, image_file, should_exist):
-        self.assertExists(image_file)
+        assert Path(os.fsdecode(image_file)).exists()
         self.image_file = image_file
 
         candidate = self.plugin.art_for_album(self.album, [""], True)
@@ -907,7 +907,7 @@ class ArtForAlbumTest(UseThePlugin):
         if should_exist:
             assert candidate is not None
             assert candidate.path == self.image_file
-            self.assertExists(candidate.path)
+            assert Path(os.fsdecode(candidate.path)).exists()
         else:
             assert candidate is None
 
