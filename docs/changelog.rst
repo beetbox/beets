@@ -24,7 +24,7 @@ New features:
   :bug:`4661`
 * :doc:`plugins/replace`: Add new plugin.
 * :doc: Tests that fail on windows now are skipped instead of failing.
-  Tests under WSL on NTFS are now skipped as well.
+  Permissions tests under WSL on NTFS are now skipped as well.
 
 Bug fixes:
 
