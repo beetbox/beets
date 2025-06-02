@@ -367,7 +367,7 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
         """Set up the python-musicbrainz-ngs module according to settings
         from the beets configuration. This should be called at startup.
         """
-        super().__init__(data_source="Musicbrainz")
+        super().__init__()
         self.config.add(
             {
                 "host": "musicbrainz.org",
@@ -419,7 +419,7 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
             medium=medium,
             medium_index=medium_index,
             medium_total=medium_total,
-            data_source="MusicBrainz",
+            data_source=self.data_source,
             data_url=track_url(recording["id"]),
         )
 
@@ -630,7 +630,7 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
             artists_sort=artists_sort_names,
             artist_credit=artist_credit_name,
             artists_credit=artists_credit_names,
-            data_source="MusicBrainz",
+            data_source=self.data_source,
             data_url=album_url(release["id"]),
             barcode=release.get("barcode"),
         )

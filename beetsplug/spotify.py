@@ -97,7 +97,7 @@ class SpotifyPlugin(SearchApiMetadataSourcePlugin):
     }
 
     def __init__(self):
-        super().__init__(data_source="Spotify")
+        super().__init__()
         self.config.add(
             {
                 "mode": "list",

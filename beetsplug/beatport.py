@@ -330,7 +330,7 @@ class BeatportPlugin(MetadataSourcePlugin):
     _client: BeatportClient | None = None
 
     def __init__(self):
-        super().__init__(data_source="Beatport")
+        super().__init__()
         self.config.add(
             {
                 "apikey": "57713c3906af6f5def151b33601389176b37b429",
