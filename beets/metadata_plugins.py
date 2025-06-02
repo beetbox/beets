@@ -9,11 +9,11 @@ from __future__ import annotations
 
 import abc
 import re
+from functools import cached_property
 from typing import TYPE_CHECKING, Generic, Literal, Sequence, TypedDict, TypeVar
 
 from typing_extensions import NotRequired
 
-from beets.util import cached_classproperty
 from beets.util.id_extractors import extract_release_id
 
 from .plugins import BeetsPlugin, find_plugins, notify_info_yielded, send
@@ -220,13 +220,13 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
             data_source=self.data_source, info=info, config=self.config
         )
 
-    @cached_classproperty
-    def data_source(cls) -> str:
+    @cached_property
+    def data_source(self) -> str:
         """The data source name for this plugin.
 
         This is inferred from the plugin name.
         """
-        return cls.__name__.replace("Plugin", "")
+        return self.__class__.__name__.replace("Plugin", "")
 
     def extract_release_id(self, url: str) -> str | None:
         """Extract an ID from a URL for this metadata source plugin.
@@ -234,7 +234,7 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
         Uses the plugin's data source name to determine the ID format and
         extracts the ID from a given URL.
         """
-        return extract_release_id(self.__class__.data_source, url)
+        return extract_release_id(self.data_source, url)
 
 
 class IDResponse(TypedDict):
