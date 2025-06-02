@@ -182,8 +182,8 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
     def albums_for_ids(self, ids: Sequence[str]) -> Iterable[AlbumInfo | None]:
         """Batch lookup of album metadata for a list of album IDs.
 
-        Given a list of album identifiers, yields corresponding AlbumInfo
-        objects. Missing albums result in None values in the output iterator.
+        Given a list of album identifiers, yields corresponding AlbumInfo objects.
+        Missing albums result in None values in the output iterator.
         Plugins may implement this for optimized batched lookups instead of
         single calls to album_for_id.
         """
@@ -194,9 +194,9 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
         """Batch lookup of track metadata for a list of track IDs.
 
         Given a list of track identifiers, yields corresponding TrackInfo objects.
-        Missing tracks result in None values in the output iterator. Plugins may
-        implement this for optimized batched lookups instead of single calls to
-        track_for_id.
+        Missing tracks result in None values in the output iterator.
+        Plugins may implement this for optimized batched lookups instead of
+        single calls to track_for_id.
         """
 
         return (self.track_for_id(id) for id in ids)
