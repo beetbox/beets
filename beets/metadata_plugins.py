@@ -13,6 +13,9 @@ from typing import TYPE_CHECKING, Generic, Literal, Sequence, TypedDict, TypeVar
 
 from typing_extensions import NotRequired
 
+from beets.util import cached_classproperty
+from beets.util.id_extractors import extract_release_id
+
 from .plugins import BeetsPlugin, find_plugins, notify_info_yielded, send
 
 if TYPE_CHECKING:
@@ -82,7 +85,7 @@ def track_distance(item: Item, info: TrackInfo) -> Distance:
     Returns a Distance object is populated by all metadata source plugins
     that implement the :py:meth:`MetadataSourcePlugin.track_distance` method.
     """
-    from beets.autotag.hooks import Distance
+    from beets.autotag.distance import Distance
 
     dist = Distance()
     for plugin in find_metadata_source_plugins():
@@ -96,7 +99,7 @@ def album_distance(
     mapping: dict[Item, TrackInfo],
 ) -> Distance:
     """Returns the album distance calculated by plugins."""
-    from beets.autotag.hooks import Distance
+    from beets.autotag.distance import Distance
 
     dist = Distance()
     for plugin in find_metadata_source_plugins():
@@ -110,7 +113,7 @@ def _get_distance(
     """Returns the ``data_source`` weight and the maximum source weight
     for albums or individual tracks.
     """
-    from beets.autotag.hooks import Distance
+    from beets.autotag.distance import Distance
 
     dist = Distance()
     if info.data_source == data_source:
@@ -126,11 +129,8 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
     and tracks, and to retrieve album and track information by ID.
     """
 
-    data_source: str
-
-    def __init__(self, data_source: str, *args, **kwargs) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.data_source = data_source or self.__class__.__name__
         self.config.add({"source_weight": 0.5})
 
     @abc.abstractmethod
@@ -219,6 +219,22 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
         return _get_distance(
             data_source=self.data_source, info=info, config=self.config
         )
+
+    @cached_classproperty
+    def data_source(cls) -> str:
+        """The data source name for this plugin.
+
+        This is inferred from the plugin name.
+        """
+        return cls.__name__.replace("Plugin", "")
+
+    def extract_release_id(self, url: str) -> str | None:
+        """Extract an ID from a URL for this metadata source plugin.
+
+        Uses the plugin's data source name to determine the ID format and
+        extracts the ID from a given URL.
+        """
+        return extract_release_id(self.__class__.data_source, url)
 
 
 class IDResponse(TypedDict):
