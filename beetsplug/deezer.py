@@ -143,14 +143,9 @@ class DeezerPlugin(MetadataSourcePlugin[Response], BeetsPlugin):
         )
 
     def track_for_id(self, track_id: str) -> None | TrackInfo:
-        """Fetch a track by its Deezer ID or URL and return a
-        TrackInfo object or None if the track is not found.
+        """Fetch a track by its Deezer ID or URL.
 
-        :param track_id: (Optional) Deezer ID or URL for the track. Either
-            ``track_id`` or ``track_data`` must be provided.
-        :param track_data: (Optional) Simplified track object dict. May be
-            provided instead of ``track_id`` to avoid unnecessary API calls.
-        :return: TrackInfo object for track
+        Returns a TrackInfo object or None if the track is not found.
         """
         if not (deezer_id := self._get_id(track_id)):
             self._log.debug("Invalid Deezer track_id: {}", track_id)
