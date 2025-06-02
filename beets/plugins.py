@@ -28,6 +28,7 @@ from typing import (
     Any,
     Callable,
     Generic,
+    Literal,
     Sequence,
     TypedDict,
     TypeVar,
@@ -737,7 +738,7 @@ class MetadataSourcePlugin(Generic[R], BeetsPlugin, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def _search_api(
         self,
-        query_type: str,
+        query_type: Literal["album", "track"],
         filters: dict[str, str] | None,
         keywords: str = "",
     ) -> Sequence[R]:
