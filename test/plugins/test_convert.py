@@ -109,6 +109,7 @@ class ImportConvertTest(AsIsImporterMixin, ImportHelper, ConvertTestCase):
         self.assertFileTag(item.path, "convert")
 
     # FIXME: fails on windows
+    # This fails as pytest does not seem to copy the input file track_1.mp3?
     @unittest.skipIf(sys.platform == "win32", "win32")
     def test_import_original_on_convert_error(self):
         # `false` exits with non-zero code
