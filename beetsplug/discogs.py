@@ -40,7 +40,7 @@ import beets.ui
 from beets import config
 from beets.autotag.distance import string_dist
 from beets.autotag.hooks import AlbumInfo, TrackInfo
-from beets.plugins import BeetsPlugin, MetadataSourcePlugin, get_distance
+from beets.metadata_plugins import MetadataSourcePlugin, artists_to_artist_str
 from beets.util.id_extractors import extract_release_id
 
 if TYPE_CHECKING:
@@ -84,7 +84,7 @@ class ReleaseFormat(TypedDict):
     descriptions: list[str] | None
 
 
-class DiscogsPlugin(BeetsPlugin):
+class DiscogsPlugin(MetadataSourcePlugin):
     def __init__(self):
         super().__init__()
         self.config.add(
@@ -322,7 +322,7 @@ class DiscogsPlugin(BeetsPlugin):
             self._log.warning("Release does not contain the required fields")
             return None
 
-        artist, artist_id = MetadataSourcePlugin.get_artist(
+        artist, artist_id = artists_to_artist_str(
             [a.data for a in result.artists], join_key="join"
         )
         album = re.sub(r" +", " ", result.title)
@@ -407,7 +407,7 @@ class DiscogsPlugin(BeetsPlugin):
             genre=genre,
             media=media,
             original_year=original_year,
-            data_source="Discogs",
+            data_source=self.data_source,
             data_url=data_url,
             discogs_albumid=discogs_albumid,
             discogs_labelid=labelid,
@@ -626,7 +626,7 @@ class DiscogsPlugin(BeetsPlugin):
                 title = f"{prefix}: {title}"
         track_id = None
         medium, medium_index, _ = self.get_track_index(track["position"])
-        artist, artist_id = MetadataSourcePlugin.get_artist(
+        artist, artist_id = artists_to_artist_str(
             track.get("artists", []), join_key="join"
         )
         length = self.get_track_length(track["duration"])
