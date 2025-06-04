@@ -23,7 +23,7 @@ import string
 import sys
 import time
 import unicodedata
-from functools import cached_property
+from functools import cache, cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -1289,6 +1289,7 @@ class Album(LibModel):
         getters["albumtotal"] = Album._albumtotal
         return getters
 
+    @cache
     def items(self):
         """Return an iterable over the items associated with this
         album.
@@ -1546,6 +1547,7 @@ class Album(LibModel):
 # Query construction helpers.
 
 
+@cache
 def parse_query_parts(parts, model_cls):
     """Given a beets query string as a list of components, return the
     `Query` and `Sort` they represent.
@@ -1587,7 +1589,7 @@ def parse_query_string(s, model_cls):
         parts = shlex.split(s)
     except ValueError as exc:
         raise dbcore.InvalidQueryError(s, exc)
-    return parse_query_parts(parts, model_cls)
+    return parse_query_parts(tuple(parts), model_cls)
 
 
 # The Library: interface to the database.
@@ -1657,6 +1659,7 @@ class Library(dbcore.Database):
 
     # Querying.
 
+    @cache
     def _fetch(self, model_cls, query, sort=None):
         """Parse a query and fetch.
 
@@ -1669,7 +1672,7 @@ class Library(dbcore.Database):
             if isinstance(query, str):
                 query, parsed_sort = parse_query_string(query, model_cls)
             elif isinstance(query, (list, tuple)):
-                query, parsed_sort = parse_query_parts(query, model_cls)
+                query, parsed_sort = parse_query_parts(tuple(query), model_cls)
         except dbcore.query.InvalidQueryArgumentValueError as exc:
             raise dbcore.InvalidQueryError(query, exc)
 
@@ -1696,11 +1699,19 @@ class Library(dbcore.Database):
 
     def albums(self, query=None, sort=None) -> Results[Album]:
         """Get :class:`Album` objects matching the query."""
-        return self._fetch(Album, query, sort or self.get_default_album_sort())
+        return self._fetch(
+            Album,
+            tuple(query) if isinstance(query, list) else query,
+            sort or self.get_default_album_sort(),
+        )
 
     def items(self, query=None, sort=None) -> Results[Item]:
         """Get :class:`Item` objects matching the query."""
-        return self._fetch(Item, query, sort or self.get_default_item_sort())
+        return self._fetch(
+            Item,
+            tuple(query) if isinstance(query, list) else query,
+            sort or self.get_default_item_sort(),
+        )
 
     # Convenience accessors.
 
