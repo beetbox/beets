@@ -137,7 +137,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
 
         headers = {
             "Authorization": "Basic {}".format(
-                base64.b64encode(":".join([c_id, c_secret]).encode()).decode()
+                base64.b64encode(f"{c_id}:{c_secret}".encode()).decode()
             )
         }
         response = requests.post(
@@ -166,8 +166,8 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         method: Literal["get", "post", "put", "delete"],
         url: str,
         params: Any = None,
-        retry_count=0,
-        max_retries=3,
+        retry_count: int = 0,
+        max_retries: int = 3,
     ) -> JSONDict:
         """Send a request, reauthenticating if necessary.
 
@@ -394,7 +394,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
     ) -> str:
         """Construct a query string with the specified filters and keywords to
         be provided to the Spotify Search API
-        (https://developer.spotify.com/documentation/web-api/reference/search/search/#writing-a-query---guidelines).
+        (https://developer.spotify.com/documentation/web-api/reference/search).
 
         :param filters: (Optional) Field filters to apply.
         :param keywords: (Optional) Query keywords to use.
@@ -413,7 +413,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         self,
         query_type: Literal["album", "track"],
         filters: dict[str, str],
-        keywords="",
+        keywords: str = "",
     ) -> Sequence[Response]:
         """Query the Spotify Search API for the specified ``keywords``,
         applying the provided ``filters``.
