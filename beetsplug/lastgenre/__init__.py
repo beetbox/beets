@@ -24,6 +24,7 @@ https://gist.github.com/1241307
 
 import codecs
 import os
+import re
 import traceback
 from collections import defaultdict
 from typing import Union
@@ -313,6 +314,40 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """
         if genre and (not self.whitelist or genre.lower() in self.whitelist):
             return True
+        return False
+
+    def _is_forbidden(self, genre: str, artist: str) -> bool:
+        """Return True if the genre is forbidden for the artist.
+
+        Supports a special '*' key in the blacklist for
+        global forbidden genres.
+
+        Example blacklist file format:
+            Artist Name:
+                pop
+                rock
+            *:
+                spoken word
+        """
+        if not self.blacklist:
+            return False
+
+        genre = genre.lower()
+
+        # Check global forbidden patterns
+        if "*" in self.blacklist:
+            for pattern in self.blacklist["*"]:
+                if re.search(pattern, genre):
+                    return True
+
+        # Check artist-specific forbidden patterns
+        if artist:
+            artist = artist.lower()
+            if artist in self.blacklist:
+                for pattern in self.blacklist[artist]:
+                    if re.search(pattern, genre):
+                        return True
+
         return False
 
     # Cached last.fm entity lookups.
