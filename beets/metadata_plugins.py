@@ -207,6 +207,7 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
         album_info: AlbumInfo,
         mapping: dict[Item, TrackInfo],
     ) -> Distance:
+        """Calculate the distance for an album based on its items and album info."""
         return _get_distance(
             data_source=self.data_source, info=album_info, config=self.config
         )
@@ -216,6 +217,7 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
         item: Item,
         info: TrackInfo,
     ) -> Distance:
+        """Calculate the distance for a track based on its item and track info."""
         return _get_distance(
             data_source=self.data_source, info=info, config=self.config
         )
