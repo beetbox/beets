@@ -141,7 +141,7 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def track_for_id(self, track_id: str) -> TrackInfo | None:
-        """Return a :py:class:`AlbumInfo` object or None if no matching release was
+        """Return a :py:class:`TrackInfo` object or None if no matching release was
         found.
         """
         raise NotImplementedError
