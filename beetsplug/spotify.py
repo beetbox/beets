@@ -25,7 +25,7 @@ import json
 import re
 import time
 import webbrowser
-from typing import TYPE_CHECKING, Any, Literal, Sequence, overload
+from typing import TYPE_CHECKING, Any, Literal, Sequence, Union, overload
 
 import confuse
 import requests
@@ -80,7 +80,7 @@ class SpotifyAPIError(Exception):
 
 class SpotifyPlugin(
     SearchApiMetadataSourcePlugin[
-        SpotifySearchResponseAlbums | SpotifySearchResponseTracks
+        Union[SpotifySearchResponseAlbums, SpotifySearchResponseTracks]
     ]
 ):
     item_types = {
