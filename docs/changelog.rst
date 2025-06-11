@@ -37,6 +37,8 @@ Bug fixes:
 * Fix ``HiddenFileTest`` by using ``bytestring_path()``.
 * tests: Fix tests failing without ``langdetect`` (by making it required).
   :bug:`5797`
+* removed old contact info in docs
+  :bug:`5462`
 
 For packagers:
 
