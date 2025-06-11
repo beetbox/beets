@@ -267,7 +267,7 @@ class SearchApiMetadataSourcePlugin(
     def _search_api(
         self,
         query_type: Literal["album", "track"],
-        filters: SearchFilter | None = None,
+        filters: SearchFilter,
         keywords: str = "",
     ) -> Sequence[R] | None:
         """Perform a search on the API.
