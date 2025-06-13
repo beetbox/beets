@@ -771,6 +771,7 @@ class MusicBrainzPlugin(BeetsPlugin):
     ) -> dict[str, str]:
         criteria = {
             "release": album,
+            "alias": album,
             "tracks": str(len(items)),
         } | ({"arid": VARIOUS_ARTISTS_ID} if va_likely else {"artist": artist})
 
@@ -826,7 +827,7 @@ class MusicBrainzPlugin(BeetsPlugin):
     def item_candidates(
         self, item: Item, artist: str, title: str
     ) -> Iterator[beets.autotag.hooks.TrackInfo]:
-        criteria = {"artist": artist, "recording": title}
+        criteria = {"artist": artist, "recording": title, "alias": title}
 
         yield from filter(
             None, map(self.track_info, self._search_api("recording", criteria))
