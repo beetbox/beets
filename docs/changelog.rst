@@ -37,6 +37,8 @@ Bug fixes:
 * Fix ``HiddenFileTest`` by using ``bytestring_path()``.
 * tests: Fix tests failing without ``langdetect`` (by making it required).
   :bug:`5797`
+* :doc:`plugins/musicbrainz`: Fix the MusicBrainz search not taking into
+  account the album/recording aliases
 
 For packagers:
 
