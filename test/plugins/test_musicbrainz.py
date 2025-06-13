@@ -1025,6 +1025,7 @@ class TestMusicBrainzPlugin(PluginMixin):
 
         assert mb.get_album_criteria(items, "Artist ", " Album", va_likely) == {
             "release": " Album",
+            "alias": " Album",
             "tracks": str(len(items)),
             **expected_additional_criteria,
         }
