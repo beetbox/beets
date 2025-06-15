@@ -21,57 +21,48 @@ import pytest
 from beets.library import Item
 from beets.test.helper import PluginTestCase
 from beetsplug import parentwork
+from beetsplug._mb_interface import SharedMbInterface
 
 work = {
-    "work": {
-        "id": "1",
-        "title": "work",
-        "work-relation-list": [
-            {"type": "parts", "direction": "backward", "work": {"id": "2"}}
-        ],
-        "artist-relation-list": [
-            {
-                "type": "composer",
-                "artist": {
-                    "name": "random composer",
-                    "sort-name": "composer, random",
-                },
-            }
-        ],
-    }
+    "id": "1",
+    "title": "work",
+    "relations": [
+        {"type": "parts", "direction": "backward", "work": {"id": "2"}},
+        {
+            "type": "composer",
+            "artist": {
+                "name": "random composer",
+                "sort-name": "composer, random",
+            },
+        },
+    ],
 }
 dp_work = {
-    "work": {
-        "id": "2",
-        "title": "directparentwork",
-        "work-relation-list": [
-            {"type": "parts", "direction": "backward", "work": {"id": "3"}}
-        ],
-        "artist-relation-list": [
-            {
-                "type": "composer",
-                "artist": {
-                    "name": "random composer",
-                    "sort-name": "composer, random",
-                },
-            }
-        ],
-    }
+    "id": "2",
+    "title": "directparentwork",
+    "relations": [
+        {"type": "parts", "direction": "backward", "work": {"id": "3"}},
+        {
+            "type": "composer",
+            "artist": {
+                "name": "random composer",
+                "sort-name": "composer, random",
+            },
+        },
+    ],
 }
 p_work = {
-    "work": {
-        "id": "3",
-        "title": "parentwork",
-        "artist-relation-list": [
-            {
-                "type": "composer",
-                "artist": {
-                    "name": "random composer",
-                    "sort-name": "composer, random",
-                },
-            }
-        ],
-    }
+    "id": "3",
+    "title": "parentwork",
+    "relations": [
+        {
+            "type": "composer",
+            "artist": {
+                "name": "random composer",
+                "sort-name": "composer, random",
+            },
+        }
+    ],
 }
 
 
@@ -87,6 +78,11 @@ def mock_workid_response(mbid, includes):
 @pytest.mark.integration_test
 class ParentWorkIntegrationTest(PluginTestCase):
     plugin = "parentwork"
+
+    def setUp(self):
+        """Set up configuration"""
+        super().setUp()
+        self.mb_interface = SharedMbInterface().get()
 
     # test how it works with real musicbrainz data
     def test_normal_case_real(self):
@@ -141,11 +137,11 @@ class ParentWorkIntegrationTest(PluginTestCase):
         mb_workid = "2e4a3668-458d-3b2a-8be2-0b08e0d8243a"
         assert (
             "f04b42df-7251-4d86-a5ee-67cfa49580d1"
-            == parentwork.direct_parent_id(mb_workid)[0]
+            == parentwork.direct_parent_id(self.mb_interface, mb_workid)[0]
         )
         assert (
             "45afb3b2-18ac-4187-bc72-beb1b1c194ba"
-            == parentwork.work_parent_id(mb_workid)[0]
+            == parentwork.work_parent_id(self.mb_interface, mb_workid)[0]
         )
 
 
@@ -156,8 +152,10 @@ class ParentWorkTest(PluginTestCase):
         """Set up configuration"""
         super().setUp()
         self.patcher = patch(
-            "musicbrainzngs.get_work_by_id", side_effect=mock_workid_response
+            "beetsplug._mb_interface.MbInterface.get_work_by_id",
+            side_effect=mock_workid_response,
         )
+        self.mb_interface = SharedMbInterface().get()
         self.patcher.start()
 
     def tearDown(self):
@@ -206,5 +204,5 @@ class ParentWorkTest(PluginTestCase):
         assert item["mb_parentworkid"] == "XXX"
 
     def test_direct_parent_work(self):
-        assert "2" == parentwork.direct_parent_id("1")[0]
-        assert "3" == parentwork.work_parent_id("1")[0]
+        assert "2" == parentwork.direct_parent_id(self.mb_interface, "1")[0]
+        assert "3" == parentwork.work_parent_id(self.mb_interface, "1")[0]
