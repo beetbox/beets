@@ -219,6 +219,40 @@ class MbInterface:
             )
         )
 
+    def browse_release_groups(
+        self,
+        lookup_entity_type: Literal["artist", "collection", "release"],
+        mbid: str,
+        includes: Optional[list[str]] = None,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+    ) -> "JSONDict":
+        """Browse release-groups linked to an entity
+
+        :param lookup_entity_type: The type of entity whose release-groups are to be
+            browsed
+        :param mbid: The MusicBrainz ID of the entity
+        :param includes: List of parameters to request more information to be included
+            about the release-groups
+        :param limit: The number of release-groups that should be returned
+        :param offset: Offset used for paging through more than one page of results
+        :return: The JSON-decoded response as an object
+        :raises mbzerror.MbzRequestError: if the request did not succeed
+        """
+        if includes is None:
+            includes = []
+
+        return MbInterface._parse_and_clean_json(
+            self._browse(
+                lookup_entity_type,
+                mbid,
+                "release-group",
+                includes,
+                limit=limit,
+                offset=offset,
+            )
+        )
+
     def get_release_by_id(
         self,
         mbid: str,
