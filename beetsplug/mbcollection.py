@@ -15,11 +15,13 @@
 
 import re
 
-import musicbrainzngs
+from mbzero import mbzerror
 
-from beets import config, ui
+from beets import ui
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
+
+from ._mb_interface import MbInterface, SharedMbInterface
 
 SUBMISSION_CHUNK_SIZE = 200
 FETCH_CHUNK_SIZE = 100
@@ -30,31 +32,26 @@ def mb_call(func, *args, **kwargs):
     """Call a MusicBrainz API function and catch exceptions."""
     try:
         return func(*args, **kwargs)
-    except musicbrainzngs.AuthenticationError:
+    except mbzerror.MbzUnauthorizedError:
         raise ui.UserError("authentication with MusicBrainz failed")
-    except (musicbrainzngs.ResponseError, musicbrainzngs.NetworkError) as exc:
+    except mbzerror.MbzWebServiceError as exc:
         raise ui.UserError(f"MusicBrainz API error: {exc}")
-    except musicbrainzngs.UsageError:
-        raise ui.UserError("MusicBrainz credentials missing")
 
 
-def submit_albums(collection_id, release_ids):
+def submit_albums(
+    mb_interface: MbInterface, collection_id: str, release_ids: list[str]
+):
     """Add all of the release IDs to the indicated collection. Multiple
     requests are made if there are many release IDs to submit.
     """
     for i in range(0, len(release_ids), SUBMISSION_CHUNK_SIZE):
         chunk = release_ids[i : i + SUBMISSION_CHUNK_SIZE]
-        mb_call(musicbrainzngs.add_releases_to_collection, collection_id, chunk)
+        mb_call(mb_interface.add_releases_to_collection, collection_id, chunk)
 
 
 class MusicBrainzCollectionPlugin(BeetsPlugin):
     def __init__(self):
         super().__init__()
-        config["musicbrainz"]["pass"].redact = True
-        musicbrainzngs.auth(
-            config["musicbrainz"]["user"].as_str(),
-            config["musicbrainz"]["pass"].as_str(),
-        )
         self.config.add(
             {
                 "auto": False,
@@ -62,18 +59,21 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
                 "remove": False,
             }
         )
+        self.mb_interface = (
+            SharedMbInterface().require_auth_for_plugin(self.name).get()
+        )
         if self.config["auto"]:
             self.import_stages = [self.imported]
 
     def _get_collection(self):
-        collections = mb_call(musicbrainzngs.get_collections)
-        if not collections["collection-list"]:
+        collections = mb_call(self.mb_interface.get_user_collections)
+        if not collections["collections"]:
             raise ui.UserError("no collections exist for user")
 
-        # Get all release collection IDs, avoiding event collections
+        # Get all collection IDs, avoiding event collections
         collection_ids = [
             x["id"]
-            for x in collections["collection-list"]
+            for x in collections["collections"]
             if x["entity-type"] == "release"
         ]
         if not collection_ids:
@@ -92,12 +92,13 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
     def _get_albums_in_collection(self, id):
         def _fetch(offset):
             res = mb_call(
-                musicbrainzngs.get_releases_in_collection,
+                self.mb_interface.browse_release,
+                "collection",
                 id,
                 limit=FETCH_CHUNK_SIZE,
                 offset=offset,
-            )["collection"]
-            return [x["id"] for x in res["release-list"]], res["release-count"]
+            )
+            return [x["id"] for x in res["releases"]], res["release-count"]
 
         offset = 0
         albums_in_collection, release_count = _fetch(offset)
@@ -120,14 +121,14 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
         mbupdate.func = self.update_collection
         return [mbupdate]
 
-    def remove_missing(self, collection_id, lib_albums):
+    def remove_missing(self, collection_id: str, lib_albums):
         lib_ids = {x.mb_albumid for x in lib_albums}
         albums_in_collection = self._get_albums_in_collection(collection_id)
         remove_me = list(set(albums_in_collection) - lib_ids)
         for i in range(0, len(remove_me), FETCH_CHUNK_SIZE):
             chunk = remove_me[i : i + FETCH_CHUNK_SIZE]
             mb_call(
-                musicbrainzngs.remove_releases_from_collection,
+                self.mb_interface.remove_releases_from_collection,
                 collection_id,
                 chunk,
             )
@@ -158,7 +159,7 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
 
         # Submit to MusicBrainz.
         self._log.info("Updating MusicBrainz collection {}...", collection_id)
-        submit_albums(collection_id, album_ids)
+        submit_albums(self.mb_interface, collection_id, album_ids)
         if remove_missing:
             self.remove_missing(collection_id, lib.albums())
         self._log.info("...MusicBrainz collection updated.")

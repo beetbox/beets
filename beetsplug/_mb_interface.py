@@ -2,9 +2,11 @@ import json
 import re
 from typing import TYPE_CHECKING, Literal, Optional, Union
 
+from mbzero import mbzauth
 from mbzero import mbzrequest as mbzr
 
 import beets
+from beets.ui import UserError
 from beets.util.rate_limiter import RateLimiter
 
 if TYPE_CHECKING:
@@ -14,11 +16,18 @@ if TYPE_CHECKING:
 class MbInterface:
     """An interface for sending requests using MusicBrainz API"""
 
-    def __init__(self, hostname: str, https: bool, rate_limiter: RateLimiter):
+    def __init__(
+        self,
+        hostname: str,
+        https: bool,
+        rate_limiter: RateLimiter,
+        auth: Optional[mbzauth.MbzCredentials] = None,
+    ):
         self.hostname = hostname
         self.https = https
         self.rate_limiter = rate_limiter
         self.useragent = f"beets/{beets.__version__} (https://beets.io/)"
+        self.auth = auth
 
     def _lookup(
         self,
@@ -110,7 +119,11 @@ class MbInterface:
     def _send(
         self,
         mbr: Union[
-            mbzr.MbzRequestLookup, mbzr.MbzRequestSearch, mbzr.MbzRequestBrowse
+            mbzr.MbzRequestLookup,
+            mbzr.MbzRequestSearch,
+            mbzr.MbzRequestBrowse,
+            mbzr.MbzAddToCollection,
+            mbzr.MbzRemoveFromCollection,
         ],
         limit: Optional[int] = None,
         offset: Optional[int] = None,
@@ -131,7 +144,7 @@ class MbInterface:
             opts["limit"] = limit
         if offset is not None:
             opts["offset"] = offset
-        return mbr.send(opts=opts)
+        return mbr.send(opts=opts, credentials=self.auth)
 
     def _make_query(self, fields: Optional[dict[str, str]] = None) -> str:
         """Make a Lucene Query string from a dict of fields
@@ -213,6 +226,40 @@ class MbInterface:
                 lookup_entity_type,
                 mbid,
                 "recording",
+                includes,
+                limit=limit,
+                offset=offset,
+            )
+        )
+
+    def browse_release(
+        self,
+        lookup_entity_type: Literal["artist", "collection", "release"],
+        mbid: str,
+        includes: Optional[list[str]] = None,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+    ) -> "JSONDict":
+        """Browse releases linked to an entity
+
+        :param lookup_entity_type: The type of entity whose releases are to be
+            browsed
+        :param mbid: The MusicBrainz ID of the entity
+        :param includes: List of parameters to request more information to be included
+            about the releases
+        :param limit: The number of releases that should be returned
+        :param offset: Offset used for paging through more than one page of results
+        :return: The JSON-decoded response as an object
+        :raises mbzerror.MbzRequestError: if the request did not succeed
+        """
+        if includes is None:
+            includes = []
+
+        return MbInterface._parse_and_clean_json(
+            self._browse(
+                lookup_entity_type,
+                mbid,
+                "release",
                 includes,
                 limit=limit,
                 offset=offset,
@@ -325,6 +372,21 @@ class MbInterface:
             )
         )
 
+    def get_user_collections(self) -> "JSONDict":
+        """Get the collections of the authenticated user
+
+        :return: The JSON-decoded response as an object
+        :raises MbInterfaceError: if the request did not succeed
+        """
+
+        assert self.auth is not None, (
+            "get_user_collections requires an authenticated user"
+        )
+
+        return MbInterface._parse_and_clean_json(
+            self._lookup("collection", "", includes=[])
+        )
+
     def search_releases(
         self,
         limit: Optional[int] = None,
@@ -371,6 +433,56 @@ class MbInterface:
             )
         )
 
+    def add_releases_to_collection(
+        self,
+        collection_mbid: str,
+        releases_mbid: list[str],
+    ) -> "JSONDict":
+        """Add releases to a collection
+
+        :param collection_mbid: The MusicBrainz ID of the collection
+        :param releases_mbid: The MusicBrainz IDs of the releases to add to the
+            collection
+        :return: The JSON-decoded response as an object
+        :raises mbzerror.MbzWebServiceError: if the request did not succeed
+        """
+        with self.rate_limiter:
+            return MbInterface._parse_and_clean_json(
+                self._send(
+                    mbzr.MbzAddToCollection(
+                        self.useragent,
+                        collection_mbid,
+                        "release",
+                        releases_mbid,
+                    )
+                )
+            )
+
+    def remove_releases_from_collection(
+        self,
+        collection_mbid: str,
+        releases_mbid: list[str],
+    ) -> "JSONDict":
+        """Remove releases from a collection
+
+        :param collection_mbid: The MusicBrainz ID of the collection
+        :param releases_mbid: The MusicBrainz IDs of the releases to remove from the
+            collection
+        :return: The JSON-decoded response as an object
+        :raises mbzerror.MbzWebServiceError: if the request did not succeed
+        """
+        with self.rate_limiter:
+            return MbInterface._parse_and_clean_json(
+                self._send(
+                    mbzr.MbzRemoveFromCollection(
+                        self.useragent,
+                        collection_mbid,
+                        "release",
+                        releases_mbid,
+                    )
+                )
+            )
+
 
 class SharedMbInterface:
     """Singleton holding a shared MbInterface.
@@ -394,12 +506,22 @@ class SharedMbInterface:
                 "ratelimit_interval": 1,
             }
         )
+        mb_config["pass"].redact = True
 
         hostname = mb_config["host"].as_str()
         https = mb_config["https"].get(bool)
         # Force https usage for default MusicBrainz server
         if hostname == "musicbrainz.org":
             https = True
+
+        # Set the auth if the config is set
+        if mb_config["user"].exists() and mb_config["pass"].exists():
+            auth = mbzauth.MbzCredentials()
+            auth.auth_set(
+                mb_config["user"].as_str(), mb_config["pass"].as_str()
+            )
+        else:
+            auth = None
 
         self.mb_interface = MbInterface(
             hostname,
@@ -408,7 +530,20 @@ class SharedMbInterface:
                 reqs_per_interval=mb_config["ratelimit"].get(int),
                 interval_sec=mb_config["ratelimit_interval"].as_number(),
             ),
+            auth,
         )
+
+    def require_auth_for_plugin(self, plugin_name: str) -> "SharedMbInterface":
+        """Raise an error if the authentication has not been configured
+
+        :param plugin_name: Name of the plugin that requires authentication to work
+        """
+        if self.mb_interface.auth is None:
+            raise UserError(
+                f"MusicBrainz authentication is required for plugin {plugin_name}: "
+                "musicbrainz.user and musicbrainz.pass need to be set in configuration"
+            )
+        return self
 
     def get(self) -> MbInterface:
         return self.mb_interface
