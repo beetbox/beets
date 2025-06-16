@@ -424,9 +424,9 @@ def types(model_cls: type[AnyModel]) -> dict[str, Type]:
         for field in plugin_types:
             if field in types and plugin_types[field] != types[field]:
                 raise PluginConflictError(
-                    "Plugin {} defines flexible field {} "
+                    f"Plugin {plugin.name} defines flexible field {field} "
                     "which has already been defined with "
-                    "another type.".format(plugin.name, field)
+                    "another type."
                 )
         types.update(plugin_types)
     return types

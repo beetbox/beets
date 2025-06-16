@@ -846,10 +846,7 @@ class Item(LibModel):
         # can even deadlock due to the database lock.
         return "{}({})".format(
             type(self).__name__,
-            ", ".join(
-                "{}={!r}".format(k, self[k])
-                for k in self.keys(with_album=False)
-            ),
+            ", ".join(f"{k}={self[k]!r}" for k in self.keys(with_album=False)),
         )
 
     def keys(self, computed=False, with_album=True):

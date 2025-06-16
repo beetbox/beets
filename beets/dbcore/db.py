@@ -409,9 +409,9 @@ class Model(ABC, Generic[D]):
         exception is raised otherwise.
         """
         if not self._db:
-            raise ValueError("{} has no database".format(type(self).__name__))
+            raise ValueError(f"{type(self).__name__} has no database")
         if need_id and not self.id:
-            raise ValueError("{} has no id".format(type(self).__name__))
+            raise ValueError(f"{type(self).__name__} has no id")
 
         return self._db
 
@@ -607,9 +607,9 @@ class Model(ABC, Generic[D]):
                     self._dirty.remove(key)
                     value = self._type(key).to_sql(value)
                     tx.mutate(
-                        "INSERT INTO {} "
+                        f"INSERT INTO {self._flex_table} "
                         "(entity_id, key, value) "
-                        "VALUES (?, ?, ?);".format(self._flex_table),
+                        "VALUES (?, ?, ?);",
                         (self.id, key, value),
                     )
 
@@ -1183,8 +1183,8 @@ class Database:
             for name, typ in fields.items():
                 if name in current_fields:
                     continue
-                setup_sql += "ALTER TABLE {} ADD COLUMN {} {};\n".format(
-                    table, name, typ.sql
+                setup_sql += (
+                    f"ALTER TABLE {table} ADD COLUMN {name} {typ.sql};\n"
                 )
 
         with self.transaction() as tx:
@@ -1196,16 +1196,16 @@ class Database:
         """
         with self.transaction() as tx:
             tx.script(
-                """
-                CREATE TABLE IF NOT EXISTS {0} (
+                f"""
+                CREATE TABLE IF NOT EXISTS {flex_table} (
                     id INTEGER PRIMARY KEY,
                     entity_id INTEGER,
                     key TEXT,
                     value TEXT,
                     UNIQUE(entity_id, key) ON CONFLICT REPLACE);
-                CREATE INDEX IF NOT EXISTS {0}_by_entity
-                    ON {0} (entity_id);
-                """.format(flex_table)
+                CREATE INDEX IF NOT EXISTS {flex_table}_by_entity
+                    ON {flex_table} (entity_id);
+                """
             )
 
     # Querying.

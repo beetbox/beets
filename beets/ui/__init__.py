@@ -726,7 +726,7 @@ def get_replacements():
             replacements.append((re.compile(pattern), repl))
         except re.error:
             raise UserError(
-                "malformed regular expression in replace: {}".format(pattern)
+                f"malformed regular expression in replace: {pattern}"
             )
     return replacements
 
@@ -1204,7 +1204,7 @@ def show_path_changes(path_changes):
         # Print every change over two lines
         for source, dest in zip(sources, destinations):
             color_source, color_dest = colordiff(source, dest)
-            print_("{0} \n  -> {1}".format(color_source, color_dest))
+            print_(f"{color_source} \n  -> {color_dest}")
     else:
         # Print every change on a single line, and add a header
         title_pad = max_width - len("Source ") + len(" -> ")
@@ -1245,9 +1245,7 @@ def _store_dict(option, opt_str, value, parser):
             raise ValueError
     except ValueError:
         raise UserError(
-            "supplied argument `{}' is not of the form `key=value'".format(
-                value
-            )
+            f"supplied argument `{value}' is not of the form `key=value'"
         )
 
     option_values[key] = value
@@ -1426,8 +1424,8 @@ class Subcommand:
     @root_parser.setter
     def root_parser(self, root_parser):
         self._root_parser = root_parser
-        self.parser.prog = "{} {}".format(
-            as_string(root_parser.get_prog_name()), self.name
+        self.parser.prog = (
+            f"{as_string(root_parser.get_prog_name())} {self.name}"
         )
 
 
@@ -1637,10 +1635,8 @@ def _ensure_db_directory_exists(path):
     newpath = os.path.dirname(path)
     if not os.path.isdir(newpath):
         if input_yn(
-            "The database directory {} does not \
-                       exist. Create it (Y/n)?".format(
-                util.displayable_path(newpath)
-            )
+            f"The database directory {util.displayable_path(newpath)} does not \
+                       exist. Create it (Y/n)?"
         ):
             os.makedirs(newpath)
 
@@ -1660,9 +1656,7 @@ def _open_library(config: confuse.LazyConfig) -> library.Library:
     except (sqlite3.OperationalError, sqlite3.DatabaseError) as db_error:
         log.debug("{}", traceback.format_exc())
         raise UserError(
-            "database file {} cannot not be opened: {}".format(
-                util.displayable_path(dbpath), db_error
-            )
+            f"database file {util.displayable_path(dbpath)} cannot not be opened: {db_error}"
         )
     log.debug(
         "library database: {0}\nlibrary directory: {1}",

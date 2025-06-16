@@ -266,9 +266,7 @@ class GioURI(URIGetter):
         g_file_ptr = self.libgio.g_file_new_for_path(path)
         if not g_file_ptr:
             raise RuntimeError(
-                "No gfile pointer received for {}".format(
-                    displayable_path(path)
-                )
+                f"No gfile pointer received for {displayable_path(path)}"
             )
 
         try:

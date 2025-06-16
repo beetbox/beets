@@ -138,10 +138,9 @@ class SmartPlaylistPlugin(BeetsPlugin):
                 if name in args
             }
             if not playlists:
+                unmatched = [name for name, _, _ in self._unmatched_playlists]
                 raise ui.UserError(
-                    "No playlist matching any of {} found".format(
-                        [name for name, _, _ in self._unmatched_playlists]
-                    )
+                    f"No playlist matching any of {unmatched} found"
                 )
 
             self._matched_playlists = playlists
@@ -331,8 +330,9 @@ class SmartPlaylistPlugin(BeetsPlugin):
                                 for key, value in attr
                             ]
                             attrs = "".join(al)
-                            comment = "#EXTINF:{}{},{} - {}\n".format(
-                                int(item.length), attrs, item.artist, item.title
+                            comment = (
+                                f"#EXTINF:{int(item.length)}{attrs},"
+                                f"{item.artist} - {item.title}\n"
                             )
                         f.write(comment.encode("utf-8") + entry.uri + b"\n")
             # Send an event when playlists were updated.
