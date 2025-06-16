@@ -212,14 +212,10 @@ class BeatportClient:
         try:
             response = self.api.get(self._make_url(endpoint), params=kwargs)
         except Exception as e:
-            raise BeatportAPIError(
-                "Error connecting to Beatport API: {}".format(e)
-            )
+            raise BeatportAPIError(f"Error connecting to Beatport API: {e}")
         if not response:
             raise BeatportAPIError(
-                "Error {0.status_code} for '{0.request.path_url}".format(
-                    response
-                )
+                f"Error {response.status_code} for '{response.request.path_url}"
             )
         return response.json()["results"]
 
@@ -280,10 +276,9 @@ class BeatportRelease(BeatportObject):
             )
 
     def __str__(self) -> str:
-        return "<BeatportRelease: {} - {} ({})>".format(
-            self.artists_str(),
-            self.name,
-            self.catalog_number,
+        return (
+            "<BeatportRelease: "
+            f"{self.artists_str()} - {self.name} ({self.catalog_number})>"
         )
 
 

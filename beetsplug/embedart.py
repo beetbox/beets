@@ -110,9 +110,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 imagepath = normpath(opts.file)
                 if not os.path.isfile(syspath(imagepath)):
                     raise ui.UserError(
-                        "image file {} not found".format(
-                            displayable_path(imagepath)
-                        )
+                        f"image file {displayable_path(imagepath)} not found"
                     )
 
                 items = lib.items(args)
@@ -137,7 +135,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                     response = requests.get(opts.url, timeout=5)
                     response.raise_for_status()
                 except requests.exceptions.RequestException as e:
-                    self._log.error("{}".format(e))
+                    self._log.error(f"{e}")
                     return
                 extension = guess_extension(response.headers["Content-Type"])
                 if extension is None:
@@ -149,7 +147,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                     with open(tempimg, "wb") as f:
                         f.write(response.content)
                 except Exception as e:
-                    self._log.error("Unable to save image: {}".format(e))
+                    self._log.error(f"Unable to save image: {e}")
                     return
                 items = lib.items(args)
                 # Confirm with user.

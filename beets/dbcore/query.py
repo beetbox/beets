@@ -475,7 +475,7 @@ class NumericQuery(FieldQuery[str]):
         else:
             if self.rangemin is not None and self.rangemax is not None:
                 return (
-                    "{0} >= ? AND {0} <= ?".format(self.field),
+                    f"{self.field} >= ? AND {self.field} <= ?",
                     (self.rangemin, self.rangemax),
                 )
             elif self.rangemin is not None:
@@ -800,9 +800,7 @@ class DateInterval:
 
     def __init__(self, start: datetime | None, end: datetime | None):
         if start is not None and end is not None and not start < end:
-            raise ValueError(
-                "start date {} is not before end date {}".format(start, end)
-            )
+            raise ValueError(f"start date {start} is not before end date {end}")
         self.start = start
         self.end = end
 
@@ -1074,9 +1072,9 @@ class FixedFieldSort(FieldSort):
         if self.case_insensitive:
             field = (
                 "(CASE "
-                "WHEN TYPEOF({0})='text' THEN LOWER({0}) "
-                "WHEN TYPEOF({0})='blob' THEN LOWER({0}) "
-                "ELSE {0} END)".format(self.field)
+                f"WHEN TYPEOF({self.field})='text' THEN LOWER({self.field}) "
+                f"WHEN TYPEOF({self.field})='blob' THEN LOWER({self.field}) "
+                f"ELSE {self.field} END)"
             )
         else:
             field = self.field

@@ -219,7 +219,7 @@ class ScaledInt(Integer):
         self.suffix = suffix
 
     def format(self, value: int) -> str:
-        return "{}{}".format((value or 0) // self.unit, self.suffix)
+        return f"{(value or 0) // self.unit}{self.suffix}"
 
 
 class Id(NullInteger):

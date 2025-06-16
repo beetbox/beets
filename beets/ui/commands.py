@@ -112,15 +112,11 @@ def _parse_logfiles(logfiles):
             yield from _paths_from_logfile(syspath(normpath(logfile)))
         except ValueError as err:
             raise ui.UserError(
-                "malformed logfile {}: {}".format(
-                    util.displayable_path(logfile), str(err)
-                )
+                f"malformed logfile {util.displayable_path(logfile)}: {str(err)}"
             ) from err
         except OSError as err:
             raise ui.UserError(
-                "unreadable logfile {}: {}".format(
-                    util.displayable_path(logfile), str(err)
-                )
+                f"unreadable logfile {util.displayable_path(logfile)}: {str(err)}"
             ) from err
 
 
@@ -213,10 +209,10 @@ def get_singleton_disambig_fields(info: hooks.TrackInfo) -> Sequence[str]:
     out = []
     chosen_fields = config["match"]["singleton_disambig_fields"].as_str_seq()
     calculated_values = {
-        "index": "Index {}".format(str(info.index)),
-        "track_alt": "Track {}".format(info.track_alt),
+        "index": f"Index {str(info.index)}",
+        "track_alt": f"Track {info.track_alt}",
         "album": (
-            "[{}]".format(info.album)
+            f"[{info.album}]"
             if (
                 config["import"]["singleton_album_disambig"].get()
                 and info.get("album")
@@ -242,7 +238,7 @@ def get_album_disambig_fields(info: hooks.AlbumInfo) -> Sequence[str]:
     chosen_fields = config["match"]["album_disambig_fields"].as_str_seq()
     calculated_values = {
         "media": (
-            "{}x{}".format(info.mediums, info.media)
+            f"{info.mediums}x{info.media}"
             if (info.mediums and info.mediums > 1)
             else info.media
         ),
@@ -277,7 +273,7 @@ def dist_string(dist):
     """Formats a distance (a float) as a colorized similarity percentage
     string.
     """
-    string = "{:.1f}%".format(((1 - dist) * 100))
+    string = f"{(1 - dist) * 100:.1f}%"
     return dist_colorize(string, dist)
 
 
@@ -697,11 +693,7 @@ class AlbumChange(ChangeRepresentation):
         # Missing and unmatched tracks.
         if self.match.extra_tracks:
             print_(
-                "Missing tracks ({0}/{1} - {2:.1%}):".format(
-                    len(self.match.extra_tracks),
-                    len(self.match.info.tracks),
-                    len(self.match.extra_tracks) / len(self.match.info.tracks),
-                )
+                f"Missing tracks ({len(self.match.extra_tracks)}/{len(self.match.info.tracks)} - {len(self.match.extra_tracks) / len(self.match.info.tracks):.1%}):"
             )
         for track_info in self.match.extra_tracks:
             line = f" ! {track_info.title} (#{self.format_index(track_info)})"
@@ -711,9 +703,9 @@ class AlbumChange(ChangeRepresentation):
         if self.match.extra_items:
             print_(f"Unmatched tracks ({len(self.match.extra_items)}):")
         for item in self.match.extra_items:
-            line = " ! {} (#{})".format(item.title, self.format_index(item))
+            line = f" ! {item.title} (#{self.format_index(item)})"
             if item.length:
-                line += " ({})".format(human_seconds_short(item.length))
+                line += f" ({human_seconds_short(item.length)})"
             print_(ui.colorize("text_warning", line))
 
 
@@ -769,7 +761,7 @@ def summarize_items(items, singleton):
     """
     summary_parts = []
     if not singleton:
-        summary_parts.append("{} items".format(len(items)))
+        summary_parts.append(f"{len(items)} items")
 
     format_counts = {}
     for item in items:
@@ -789,11 +781,9 @@ def summarize_items(items, singleton):
         average_bitrate = sum([item.bitrate for item in items]) / len(items)
         total_duration = sum([item.length for item in items])
         total_filesize = sum([item.filesize for item in items])
-        summary_parts.append("{}kbps".format(int(average_bitrate / 1000)))
+        summary_parts.append(f"{int(average_bitrate / 1000)}kbps")
         if items[0].format == "FLAC":
-            sample_bits = "{}kHz/{} bit".format(
-                round(int(items[0].samplerate) / 1000, 1), items[0].bitdepth
-            )
+            sample_bits = f"{round(int(items[0].samplerate) / 1000, 1)}kHz/{items[0].bitdepth} bit"
             summary_parts.append(sample_bits)
         summary_parts.append(human_seconds_short(total_duration))
         summary_parts.append(human_bytes(total_filesize))
@@ -885,7 +875,7 @@ def choose_candidate(
         if singleton:
             print_("No matching recordings found.")
         else:
-            print_("No matching release found for {} tracks.".format(itemcount))
+            print_(f"No matching release found for {itemcount} tracks.")
             print_(
                 "For help, see: "
                 "https://beets.readthedocs.org/en/latest/faq.html#nomatch"
@@ -920,14 +910,11 @@ def choose_candidate(
             print_(ui.indent(2) + "Candidates:")
             for i, match in enumerate(candidates):
                 # Index, metadata, and distance.
-                index0 = "{0}.".format(i + 1)
+                index0 = f"{i + 1}."
                 index = dist_colorize(index0, match.distance)
-                dist = "({:.1f}%)".format((1 - match.distance) * 100)
+                dist = f"({(1 - match.distance) * 100:.1f}%)"
                 distance = dist_colorize(dist, match.distance)
-                metadata = "{0} - {1}".format(
-                    match.info.artist,
-                    match.info.title if singleton else match.info.album,
-                )
+                metadata = f"{match.info.artist} - {match.info.title if singleton else match.info.album}"
                 if i == 0:
                     metadata = dist_colorize(metadata, match.distance)
                 else:
@@ -1043,7 +1030,7 @@ class TerminalImportSession(importer.ImportSession):
 
         path_str0 = displayable_path(task.paths, "\n")
         path_str = ui.colorize("import_path", path_str0)
-        items_str0 = "({} items)".format(len(task.items))
+        items_str0 = f"({len(task.items)} items)"
         items_str = ui.colorize("import_path_items", items_str0)
         print_(" ".join([path_str, items_str]))
 
@@ -1217,8 +1204,8 @@ class TerminalImportSession(importer.ImportSession):
 
     def should_resume(self, path):
         return ui.input_yn(
-            "Import of the directory:\n{}\n"
-            "was interrupted. Resume (Y/n)?".format(displayable_path(path))
+            f"Import of the directory:\n{displayable_path(path)}\n"
+            "was interrupted. Resume (Y/n)?"
         )
 
     def _get_choices(self, task):
@@ -1362,9 +1349,7 @@ def import_func(lib, opts, args: list[str]):
         for path in byte_paths:
             if not os.path.exists(syspath(normpath(path))):
                 raise ui.UserError(
-                    "no such file or directory: {}".format(
-                        displayable_path(path)
-                    )
+                    f"no such file or directory: {displayable_path(path)}"
                 )
 
         # Check the directories from the logfiles, but don't throw an error in
@@ -1374,9 +1359,7 @@ def import_func(lib, opts, args: list[str]):
         for path in paths_from_logfiles:
             if not os.path.exists(syspath(normpath(path))):
                 log.warning(
-                    "No such file or directory: {}".format(
-                        displayable_path(path)
-                    )
+                    f"No such file or directory: {displayable_path(path)}"
                 )
                 continue
 
@@ -2213,9 +2196,7 @@ def move_func(lib, opts, args):
     if dest is not None:
         dest = normpath(dest)
         if not os.path.isdir(syspath(dest)):
-            raise ui.UserError(
-                "no such directory: {}".format(displayable_path(dest))
-            )
+            raise ui.UserError(f"no such directory: {displayable_path(dest)}")
 
     move_items(
         lib,
