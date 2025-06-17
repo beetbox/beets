@@ -19,7 +19,7 @@ import shlex
 
 from beets.library import Album, Item
 from beets.plugins import BeetsPlugin
-from beets.ui import Subcommand, UserError, decargs, print_
+from beets.ui import Subcommand, UserError, print_
 from beets.util import (
     MoveOperation,
     bytestring_path,
@@ -163,11 +163,11 @@ class DuplicatesPlugin(BeetsPlugin):
             if album:
                 if not keys:
                     keys = ["mb_albumid"]
-                items = lib.albums(decargs(args))
+                items = lib.albums(args)
             else:
                 if not keys:
                     keys = ["mb_trackid", "mb_albumid"]
-                items = lib.items(decargs(args))
+                items = lib.items(args)
 
             # If there's nothing to do, return early. The code below assumes
             # `items` to be non-empty.

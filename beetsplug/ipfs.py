@@ -74,7 +74,7 @@ class IPFSPlugin(BeetsPlugin):
 
         def func(lib, opts, args):
             if opts.add:
-                for album in lib.albums(ui.decargs(args)):
+                for album in lib.albums(args):
                     if len(album.items()) == 0:
                         self._log.info(
                             "{0} does not contain items, aborting", album
@@ -84,19 +84,19 @@ class IPFSPlugin(BeetsPlugin):
                     album.store()
 
             if opts.get:
-                self.ipfs_get(lib, ui.decargs(args))
+                self.ipfs_get(lib, args)
 
             if opts.publish:
                 self.ipfs_publish(lib)
 
             if opts._import:
-                self.ipfs_import(lib, ui.decargs(args))
+                self.ipfs_import(lib, args)
 
             if opts._list:
-                self.ipfs_list(lib, ui.decargs(args))
+                self.ipfs_list(lib, args)
 
             if opts.play:
-                self.ipfs_play(lib, opts, ui.decargs(args))
+                self.ipfs_play(lib, opts, args)
 
         cmd.func = func
         return [cmd]

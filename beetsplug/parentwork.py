@@ -88,7 +88,7 @@ class ParentWorkPlugin(BeetsPlugin):
             force_parent = self.config["force"].get(bool)
             write = ui.should_write()
 
-            for item in lib.items(ui.decargs(args)):
+            for item in lib.items(args):
                 changed = self.find_work(item, force_parent, verbose=True)
                 if changed:
                     item.store()

@@ -204,7 +204,7 @@ class BadFiles(BeetsPlugin):
 
     def command(self, lib, opts, args):
         # Get items from arguments
-        items = lib.items(ui.decargs(args))
+        items = lib.items(args)
         self.verbose = opts.verbose
 
         def check_and_print(item):

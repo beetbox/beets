@@ -28,7 +28,7 @@ from pathlib import PurePosixPath
 from xdg import BaseDirectory
 
 from beets.plugins import BeetsPlugin
-from beets.ui import Subcommand, decargs
+from beets.ui import Subcommand
 from beets.util import bytestring_path, displayable_path, syspath
 from beets.util.artresizer import ArtResizer
 
@@ -78,7 +78,7 @@ class ThumbnailsPlugin(BeetsPlugin):
     def process_query(self, lib, opts, args):
         self.config.set_args(opts)
         if self._check_local_ok():
-            for album in lib.albums(decargs(args)):
+            for album in lib.albums(args):
                 self.process_album(album)
 
     def _check_local_ok(self):

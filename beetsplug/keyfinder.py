@@ -43,7 +43,7 @@ class KeyFinderPlugin(BeetsPlugin):
         return [cmd]
 
     def command(self, lib, opts, args):
-        self.find_key(lib.items(ui.decargs(args)), write=ui.should_write())
+        self.find_key(lib.items(args), write=ui.should_write())
 
     def imported(self, session, task):
         self.find_key(task.imported_items())
