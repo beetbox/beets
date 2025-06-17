@@ -453,7 +453,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         def queries(lib, opts, args):
             success = self._parse_opts(opts)
             if success:
-                results = self._match_library_tracks(lib, ui.decargs(args))
+                results = self._match_library_tracks(lib, args)
                 self._output_match_results(results)
 
         spotify_cmd = ui.Subcommand(
@@ -491,7 +491,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         )
 
         def func(lib, opts, args):
-            items = lib.items(ui.decargs(args))
+            items = lib.items(args)
             self._fetch_info(items, ui.should_write(), opts.force_refetch)
 
         sync_cmd.func = func

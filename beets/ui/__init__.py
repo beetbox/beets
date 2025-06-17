@@ -104,13 +104,6 @@ def _stream_encoding(stream, default="utf-8"):
     return stream.encoding or default
 
 
-def decargs(arglist):
-    """Given a list of command-line argument bytestrings, attempts to
-    decode them to Unicode strings when running under Python 2.
-    """
-    return arglist
-
-
 def print_(*strings, **kwargs):
     """Like print, but rather than raising an error when a character
     is not in the terminal's encoding's character set, just silently
@@ -1311,7 +1304,7 @@ class CommonOptionsParser(optparse.OptionParser):
         if fmt:
             value = fmt
         elif value:
-            (value,) = decargs([value])
+            (value,) = [value]
         else:
             value = ""
 

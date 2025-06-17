@@ -22,7 +22,7 @@ import requests
 
 from beets import art, config, ui
 from beets.plugins import BeetsPlugin
-from beets.ui import decargs, print_
+from beets.ui import print_
 from beets.util import bytestring_path, displayable_path, normpath, syspath
 from beets.util.artresizer import ArtResizer
 
@@ -115,7 +115,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                         )
                     )
 
-                items = lib.items(decargs(args))
+                items = lib.items(args)
 
                 # Confirm with user.
                 if not opts.yes and not _confirm(items, not opts.file):
@@ -151,7 +151,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 except Exception as e:
                     self._log.error("Unable to save image: {}".format(e))
                     return
-                items = lib.items(decargs(args))
+                items = lib.items(args)
                 # Confirm with user.
                 if not opts.yes and not _confirm(items, not opts.url):
                     os.remove(tempimg)
@@ -169,7 +169,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                     )
                 os.remove(tempimg)
             else:
-                albums = lib.albums(decargs(args))
+                albums = lib.albums(args)
                 # Confirm with user.
                 if not opts.yes and not _confirm(albums, not opts.file):
                     return
@@ -212,7 +212,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         def extract_func(lib, opts, args):
             if opts.outpath:
                 art.extract_first(
-                    self._log, normpath(opts.outpath), lib.items(decargs(args))
+                    self._log, normpath(opts.outpath), lib.items(args)
                 )
             else:
                 filename = bytestring_path(
@@ -223,7 +223,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                         "Only specify a name rather than a path for -n"
                     )
                     return
-                for album in lib.albums(decargs(args)):
+                for album in lib.albums(args):
                     artpath = normpath(os.path.join(album.path, filename))
                     artpath = art.extract_first(
                         self._log, artpath, album.items()
@@ -244,11 +244,11 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         )
 
         def clear_func(lib, opts, args):
-            items = lib.items(decargs(args))
+            items = lib.items(args)
             # Confirm with user.
             if not opts.yes and not _confirm(items, False):
                 return
-            art.clear(self._log, lib, decargs(args))
+            art.clear(self._log, lib, args)
 
         clear_cmd.func = clear_func
 

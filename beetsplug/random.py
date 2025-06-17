@@ -16,13 +16,13 @@
 
 from beets.plugins import BeetsPlugin
 from beets.random import random_objs
-from beets.ui import Subcommand, decargs, print_
+from beets.ui import Subcommand, print_
 
 
 def random_func(lib, opts, args):
     """Select some random items or albums and print the results."""
     # Fetch all the objects matching the query into a list.
-    query = decargs(args)
+    query = args
     if opts.album:
         objs = list(lib.albums(query))
     else:

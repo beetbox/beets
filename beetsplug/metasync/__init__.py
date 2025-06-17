@@ -97,7 +97,7 @@ class MetaSyncPlugin(BeetsPlugin):
     def func(self, lib, opts, args):
         """Command handler for the metasync function."""
         pretend = opts.pretend
-        query = ui.decargs(args)
+        query = args
 
         sources = []
         for source in opts.sources:
