@@ -1150,7 +1150,7 @@ def show_model_changes(new, old=None, fields=None, always=False):
             continue
 
         changes.append(
-            "  {}: {}".format(field, colorize("text_highlight", new_fmt[field]))
+            f"  {field}: {colorize('text_highlight', new_fmt[field])}"
         )
 
     # Print changes.
@@ -1196,17 +1196,11 @@ def show_path_changes(path_changes):
         # Print every change on a single line, and add a header
         title_pad = max_width - len("Source ") + len(" -> ")
 
-        print_("Source {0} Destination".format(" " * title_pad))
+        print_(f"Source {' ' * title_pad} Destination")
         for source, dest in zip(sources, destinations):
             pad = max_width - len(source)
             color_source, color_dest = colordiff(source, dest)
-            print_(
-                "{0} {1} -> {2}".format(
-                    color_source,
-                    " " * pad,
-                    color_dest,
-                )
-            )
+            print_(f"{color_source} {' ' * pad} -> {color_dest}")
 
 
 # Helper functions for option parsing.
@@ -1665,8 +1659,8 @@ def _ensure_db_directory_exists(path):
     newpath = os.path.dirname(path)
     if not os.path.isdir(newpath):
         if input_yn(
-            f"The database directory {util.displayable_path(newpath)} does not \
-                       exist. Create it (Y/n)?"
+            f"The database directory {util.displayable_path(newpath)} does not"
+            " exist. Create it (Y/n)?"
         ):
             os.makedirs(newpath)
 
@@ -1686,7 +1680,8 @@ def _open_library(config):
     except (sqlite3.OperationalError, sqlite3.DatabaseError) as db_error:
         log.debug("{}", traceback.format_exc())
         raise UserError(
-            f"database file {util.displayable_path(dbpath)} cannot not be opened: {db_error}"
+            f"database file {util.displayable_path(dbpath)} cannot not be"
+            f" opened: {db_error}"
         )
     log.debug(
         "library database: {0}\nlibrary directory: {1}",
