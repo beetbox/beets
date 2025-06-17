@@ -1530,7 +1530,7 @@ class ReplayGainPlugin(BeetsPlugin):
                 self.open_pool(threads)
 
             if opts.album:
-                albums = lib.albums(ui.decargs(args))
+                albums = lib.albums(args)
                 self._log.info(
                     "Analyzing {} albums ~ {} backend...".format(
                         len(albums), self.backend_name
@@ -1539,7 +1539,7 @@ class ReplayGainPlugin(BeetsPlugin):
                 for album in albums:
                     self.handle_album(album, write, force)
             else:
-                items = lib.items(ui.decargs(args))
+                items = lib.items(args)
                 self._log.info(
                     "Analyzing {} tracks ~ {} backend...".format(
                         len(items), self.backend_name

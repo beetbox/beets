@@ -28,7 +28,6 @@ import beets
 from beets import autotag, config, importer, library, logging, plugins, ui, util
 from beets.autotag import Recommendation, hooks
 from beets.ui import (
-    decargs,
     input_,
     print_,
     print_column_layout,
@@ -1343,7 +1342,7 @@ def import_func(lib, opts, args):
         config["import"]["move"] = False
 
     if opts.library:
-        query = decargs(args)
+        query = args
         paths = []
     else:
         query = None
@@ -1596,7 +1595,7 @@ def list_items(lib, query, album, fmt=""):
 
 
 def list_func(lib, opts, args):
-    list_items(lib, decargs(args), opts.album)
+    list_items(lib, args, opts.album)
 
 
 list_cmd = ui.Subcommand("list", help="query the library", aliases=("ls",))
@@ -1739,7 +1738,7 @@ def update_func(lib, opts, args):
             return
     update_items(
         lib,
-        decargs(args),
+        args,
         opts.album,
         ui.should_move(opts.move),
         opts.pretend,
@@ -1861,7 +1860,7 @@ def remove_items(lib, query, album, delete, force):
 
 
 def remove_func(lib, opts, args):
-    remove_items(lib, decargs(args), opts.album, opts.delete, opts.force)
+    remove_items(lib, args, opts.album, opts.delete, opts.force)
 
 
 remove_cmd = ui.Subcommand(
@@ -1931,7 +1930,7 @@ Album artists: {}""".format(
 
 
 def stats_func(lib, opts, args):
-    show_stats(lib, decargs(args), opts.exact)
+    show_stats(lib, args, opts.exact)
 
 
 stats_cmd = ui.Subcommand(
@@ -2059,7 +2058,7 @@ def modify_parse_args(args):
 
 
 def modify_func(lib, opts, args):
-    query, mods, dels = modify_parse_args(decargs(args))
+    query, mods, dels = modify_parse_args(args)
     if not mods and not dels:
         raise ui.UserError("no modifications specified")
     modify_items(
@@ -2217,7 +2216,7 @@ def move_func(lib, opts, args):
     move_items(
         lib,
         dest,
-        decargs(args),
+        args,
         opts.copy,
         opts.album,
         opts.pretend,
@@ -2298,7 +2297,7 @@ def write_items(lib, query, pretend, force):
 
 
 def write_func(lib, opts, args):
-    write_items(lib, decargs(args), opts.pretend, opts.force)
+    write_items(lib, args, opts.pretend, opts.force)
 
 
 write_cmd = ui.Subcommand("write", help="write tag information to files")

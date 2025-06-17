@@ -470,7 +470,7 @@ class WebPlugin(BeetsPlugin):
         )
 
         def func(lib, opts, args):
-            args = ui.decargs(args)
+            args = args
             if args:
                 self.config["host"] = args.pop(0)
             if args:

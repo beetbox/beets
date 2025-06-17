@@ -233,7 +233,7 @@ class AcoustidPlugin(plugins.BeetsPlugin):
                 apikey = config["acoustid"]["apikey"].as_str()
             except confuse.NotFoundError:
                 raise ui.UserError("no Acoustid user API key provided")
-            submit_items(self._log, apikey, lib.items(ui.decargs(args)))
+            submit_items(self._log, apikey, lib.items(args))
 
         submit_cmd.func = submit_cmd_func
 
@@ -242,7 +242,7 @@ class AcoustidPlugin(plugins.BeetsPlugin):
         )
 
         def fingerprint_cmd_func(lib, opts, args):
-            for item in lib.items(ui.decargs(args)):
+            for item in lib.items(args):
                 fingerprint_item(self._log, item, write=ui.should_write())
 
         fingerprint_cmd.func = fingerprint_cmd_func

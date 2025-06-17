@@ -65,7 +65,7 @@ class BPSyncPlugin(BeetsPlugin):
         move = ui.should_move(opts.move)
         pretend = opts.pretend
         write = ui.should_write(opts.write)
-        query = ui.decargs(args)
+        query = args
 
         self.singletons(lib, query, move, pretend, write)
         self.albums(lib, query, move, pretend, write)

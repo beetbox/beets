@@ -25,7 +25,7 @@ from itertools import islice
 
 from beets.dbcore import FieldQuery
 from beets.plugins import BeetsPlugin
-from beets.ui import Subcommand, decargs, print_
+from beets.ui import Subcommand, print_
 
 
 def lslimit(lib, opts, args):
@@ -36,7 +36,7 @@ def lslimit(lib, opts, args):
     if (opts.head or opts.tail or 0) < 0:
         raise ValueError("Limit value must be non-negative")
 
-    query = decargs(args)
+    query = args
     if opts.album:
         objs = lib.albums(query)
     else:
