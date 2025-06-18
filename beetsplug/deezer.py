@@ -232,7 +232,16 @@ class DeezerPlugin(MetadataSourcePlugin[Response], BeetsPlugin):
 
     def _search_api(
         self,
-        query_type: Literal["album", "track"],
+        query_type: Literal[
+            "album",
+            "track",
+            "artist",
+            "history",
+            "playlist",
+            "podcast",
+            "radio",
+            "user",
+        ],
         filters: dict[str, str],
         keywords="",
     ) -> Sequence[Response]:
@@ -240,8 +249,6 @@ class DeezerPlugin(MetadataSourcePlugin[Response], BeetsPlugin):
         the provided ``filters``.
 
         :param query_type: The Deezer Search API method to use.
-            Valid types are: 'album', 'artist', 'history', 'playlist',
-            'podcast', 'radio', 'track', 'user', and 'track'.
         :param keywords: (Optional) Query keywords to use.
         :return: JSON data for the class:`Response <Response>` object or None
             if no search results are returned.
