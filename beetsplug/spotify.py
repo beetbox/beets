@@ -389,9 +389,8 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         track.medium_total = medium_total
         return track
 
-    @staticmethod
     def _construct_search_query(
-        filters: dict[str, str], keywords: str = ""
+        self, filters: dict[str, str], keywords: str = ""
     ) -> str:
         """Construct a query string with the specified filters and keywords to
         be provided to the Spotify Search API
@@ -408,6 +407,9 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         query = " ".join([q for q in query_components if q])
         if not isinstance(query, str):
             query = query.decode("utf8")
+
+        if self.config["search_query_ascii"].get():
+            query = unidecode.unidecode(query)
 
         return query
 
@@ -426,9 +428,6 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         :param keywords: (Optional) Query keywords to use.
         """
         query = self._construct_search_query(keywords=keywords, filters=filters)
-
-        if self.config["search_query_ascii"].get():
-            query = unidecode.unidecode(query)
 
         self._log.debug(f"Searching {self.data_source} for '{query}'")
         try:
@@ -566,9 +565,6 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                 query = self._construct_search_query(
                     keywords=keywords, filters=query_filters
                 )
-
-                if self.config["search_query_ascii"].get():
-                    query = unidecode.unidecode(query)
 
                 failures.append(query)
                 continue
