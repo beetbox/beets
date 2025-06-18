@@ -77,6 +77,7 @@ class PlayPluginTest(CleanupModulesMixin, PluginTestCase):
         self.run_and_assert(open_mock, ["title:aNiceTitle"], "echo other")
 
     # FIXME: fails on windows
+    # more joys of Windows not having a root start unless you only have 1 drive
     @unittest.skipIf(sys.platform == "win32", "win32")
     def test_relative_to(self, open_mock):
         self.config["play"]["command"] = "echo"
