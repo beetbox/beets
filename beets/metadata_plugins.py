@@ -282,7 +282,7 @@ class SearchApiMetadataSourcePlugin(
         query_type: Literal["album", "track"],
         filters: SearchFilter,
         keywords: str = "",
-    ) -> Sequence[R] | None:
+    ) -> Sequence[R]:
         """Perform a search on the API.
 
         :param query_type: The type of query to perform.
