@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import abc
 import re
-from functools import cached_property, wraps
+from functools import cached_property
 from typing import TYPE_CHECKING, Generic, Literal, Sequence, TypedDict, TypeVar
 
 from typing_extensions import NotRequired
