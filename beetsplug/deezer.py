@@ -41,9 +41,11 @@ class DeezerPlugin(MetadataSourcePlugin[Response], BeetsPlugin):
         "deezer_track_id": types.INTEGER,
         "deezer_updated": types.DATE,
     }
-
-    def __init__(self):
-        super().__init__()
+    # Base URLs for the Deezer API
+    # Documentation: https://developers.deezer.com/api/
+    search_url = "https://api.deezer.com/search/"
+    album_url = "https://api.deezer.com/album/"
+    track_url = "https://api.deezer.com/track/"
 
     def commands(self):
         """Add beet UI commands to interact with Deezer."""
@@ -206,13 +208,6 @@ class DeezerPlugin(MetadataSourcePlugin[Response], BeetsPlugin):
             data_url=track_data["link"],
             deezer_updated=time.time(),
         )
-
-    # ------------------------------- Data fetching ------------------------------ #
-    # Base URLs for the Deezer API
-    # Documentation: https://developers.deezer.com/api/
-    search_url = "https://api.deezer.com/search/"
-    album_url = "https://api.deezer.com/album/"
-    track_url = "https://api.deezer.com/track/"
 
     @staticmethod
     def _construct_search_query(
