@@ -18,6 +18,11 @@ from __future__ import annotations
 
 import re
 
+from beets import logging
+
+log = logging.getLogger("beets")
+
+
 PATTERN_BY_SOURCE = {
     "spotify": re.compile(r"(?:^|open\.spotify\.com/[^/]+/)([0-9A-Za-z]{22})"),
     "deezer": re.compile(r"(?:^|deezer\.com/)(?:[a-z]*/)?(?:[^/]+/)?(\d+)"),
@@ -43,6 +48,21 @@ PATTERN_BY_SOURCE = {
 
 
 def extract_release_id(source: str, id_: str) -> str | None:
-    if m := PATTERN_BY_SOURCE[source].search(str(id_)):
+    """Extract the release ID from a given source and ID.
+
+    Normally, the `id_` is a url string which contains the ID of the
+    release. This function extracts the ID from the URL based on the
+    `source` provided.
+    """
+    try:
+        source_pattern = PATTERN_BY_SOURCE[source.lower()]
+    except KeyError:
+        log.debug(
+            f"Unknown source '{source}' for ID extraction. Returning id/url as-is."
+        )
+        return id_
+
+    if m := source_pattern.search(str(id_)):
         return m[1]
+
     return None
