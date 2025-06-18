@@ -39,7 +39,7 @@ from requests_oauthlib.oauth1_session import (
 import beets
 import beets.ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
-from beets.metadata_plugins import MetadataSourcePlugin, artists_to_artist_str
+from beets.metadata_plugins import MetadataSourcePlugin
 from beets.util.id_extractors import extract_release_id
 
 if TYPE_CHECKING:
@@ -535,7 +535,7 @@ class BeatportPlugin(MetadataSourcePlugin):
         """Returns an artist string (all artists) and an artist_id (the main
         artist) for a list of Beatport release or track artists.
         """
-        return artists_to_artist_str(artists=artists, id_key=0, name_key=1)
+        return self.get_artist_str(artists=artists, id_key=0, name_key=1)
 
     def _get_tracks(self, query):
         """Returns a list of TrackInfo objects for a Beatport query."""
