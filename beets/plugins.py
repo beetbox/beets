@@ -739,7 +739,7 @@ class MetadataSourcePlugin(Generic[R], BeetsPlugin, metaclass=abc.ABCMeta):
     def _search_api(
         self,
         query_type: Literal["album", "track"],
-        filters: dict[str, str] | None,
+        filters: dict[str, str],
         keywords: str = "",
     ) -> Sequence[R]:
         raise NotImplementedError
