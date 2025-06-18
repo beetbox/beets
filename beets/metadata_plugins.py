@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import abc
 import re
-from functools import cached_property
+from functools import cached_property, wraps
 from typing import TYPE_CHECKING, Generic, Literal, Sequence, TypedDict, TypeVar
 
 from typing_extensions import NotRequired
@@ -238,6 +238,17 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
         """
         return extract_release_id(self.data_source, url)
 
+    @staticmethod
+    def get_artist_str(
+        artists: Iterable[dict],
+        id_key: str | int = "id",
+        name_key: str | int = "name",
+        join_key: str | int | None = None,
+    ) -> tuple[str, str | None]:
+        return artists_to_artist_str(
+            artists, id_key=id_key, name_key=name_key, join_key=join_key
+        )
+
 
 class IDResponse(TypedDict):
     """Response from the API containing an ID."""
@@ -364,3 +375,6 @@ def artists_to_artist_str(
         artist_string += name
 
     return artist_string, artist_id
+
+
+MetadataSourcePlugin.get_artist_str.__doc__ = artists_to_artist_str.__doc__
