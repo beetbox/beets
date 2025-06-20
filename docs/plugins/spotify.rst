@@ -85,7 +85,7 @@ in config.yaml under the ``spotify:`` section:
   Default: None.
 - **search_query_ascii**: If set to ``yes``, the search query will be converted to
   ASCII before being sent to Spotify. Converting searches to ASCII can
-  enhance search results, for some but in general it is not recommended. 
+  enhance search results in some cases, but in general, it is not recommended. 
   For instance `artist:deadmau5 album:4×4` will be converted to 
   `artist:deadmau5 album:4x4` (notice `×!=x`).
   Default: ``no``.
