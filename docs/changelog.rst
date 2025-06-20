@@ -39,6 +39,9 @@ Bug fixes:
   :bug:`5797`
 * :doc:`plugins/musicbrainz`: Fix the MusicBrainz search not taking into
   account the album/recording aliases
+* :doc:`reference/cli`: Fix 'from_scratch' option for singleton imports: delete
+  all (old) metadata when new metadata is applied.
+  :bug:`3706`
 
 For packagers:
 
