@@ -315,6 +315,17 @@ class ImportSingletonTest(AutotagImportTestCase):
         self.importer.run()
         self.assert_file_in_lib(b"singletons", b"Applied Track 1.mp3")
 
+    def test_apply_from_scratch_removes_other_metadata(self):
+        config["import"]["from_scratch"] = True
+
+        for mediafile in self.import_media:
+            mediafile.comments = "Tag Comment"
+            mediafile.save()
+
+        self.importer.add_choice(importer.Action.APPLY)
+        self.importer.run()
+        assert self.lib.items().get().comments == ""
+
     def test_skip_does_not_add_first_track(self):
         self.importer.add_choice(importer.Action.SKIP)
         self.importer.run()
