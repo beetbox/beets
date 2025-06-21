@@ -23,6 +23,10 @@ New features:
   singletons by their Discogs ID.
   :bug:`4661`
 * :doc:`plugins/replace`: Add new plugin.
+* :doc:`plugins/mpdstats`: Add new configuration option, 
+  ``maximum_remaining_seconds_for_track_to_be_considered_played``, to allow
+  configuring the maximum number of seconds remaining on a track for it to be
+  counted as played instead of skipped.
 
 Bug fixes:
 
