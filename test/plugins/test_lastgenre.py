@@ -18,7 +18,6 @@ from unittest.mock import Mock
 
 import pytest
 
-from beets import config
 from beets.test import _common
 from beets.test.helper import BeetsTestCase
 from beetsplug import lastgenre
@@ -32,12 +31,12 @@ class LastGenrePluginTest(BeetsTestCase):
     def _setup_config(
         self, whitelist=False, canonical=False, count=1, prefer_specific=False
     ):
-        config["lastgenre"]["canonical"] = canonical
-        config["lastgenre"]["count"] = count
-        config["lastgenre"]["prefer_specific"] = prefer_specific
+        self.config["lastgenre"]["canonical"] = canonical
+        self.config["lastgenre"]["count"] = count
+        self.config["lastgenre"]["prefer_specific"] = prefer_specific
         if isinstance(whitelist, (bool, (str,))):
             # Filename, default, or disabled.
-            config["lastgenre"]["whitelist"] = whitelist
+            self.config["lastgenre"]["whitelist"] = whitelist
         self.plugin.setup()
         if not isinstance(whitelist, (bool, (str,))):
             # Explicit list of genres.
@@ -463,11 +462,10 @@ def test_get_genre(config_values, item_genre, mock_genres, expected_result):
     lastgenre.LastGenrePlugin.fetch_album_genre = mock_fetch_album_genre
     lastgenre.LastGenrePlugin.fetch_artist_genre = mock_fetch_artist_genre
 
-    # Configure
-    config["lastgenre"] = config_values
-
     # Initialize plugin instance and item
     plugin = lastgenre.LastGenrePlugin()
+    # Configure
+    plugin.config.set(config_values)
     item = _common.item()
     item.genre = item_genre
 

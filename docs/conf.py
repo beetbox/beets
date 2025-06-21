@@ -1,18 +1,34 @@
-AUTHOR = "Adrian Sampson"
+# Configuration file for the Sphinx documentation builder.
+#
+# For the full list of built-in configuration values, see the documentation:
+# https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-# General configuration
+# -- Project information -----------------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-extensions = ["sphinx.ext.autodoc", "sphinx.ext.extlinks"]
-
-exclude_patterns = ["_build"]
-source_suffix = {".rst": "restructuredtext"}
-master_doc = "index"
 
 project = "beets"
+AUTHOR = "Adrian Sampson"
 copyright = "2016, Adrian Sampson"
 
+master_doc = "index"
+language = "en"
 version = "2.3"
 release = "2.3.1"
+
+# -- General configuration ---------------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
+
+extensions = [
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.extlinks",
+]
+autosummary_generate = True
+exclude_patterns = ["_build"]
+templates_path = ["_templates"]
+source_suffix = {".rst": "restructuredtext", ".md": "markdown"}
+
 
 pygments_style = "sphinx"
 
@@ -59,10 +75,24 @@ man_pages = [
     ),
 ]
 
-# Options for pydata theme
+
+# -- Options for HTML output -------------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
+
+
 html_theme = "pydata_sphinx_theme"
 html_theme_options = {"collapse_navigation": True, "logo": {"text": "beets"}}
 html_title = "beets"
 html_logo = "_static/beets_logo_nobg.png"
 html_static_path = ["_static"]
 html_css_files = ["beets.css"]
+
+
+def skip_member(app, what, name, obj, skip, options):
+    if name.startswith("_"):
+        return True
+    return skip
+
+
+def setup(app):
+    app.connect("autodoc-skip-member", skip_member)

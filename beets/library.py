@@ -369,8 +369,9 @@ class LibModel(dbcore.Model["Library"]):
         plugins.send("database_change", lib=self._db, model=self)
 
     def add(self, lib=None):
+        # super().add() calls self.store(), which sends `database_change`,
+        # so don't do it here
         super().add(lib)
-        plugins.send("database_change", lib=self._db, model=self)
 
     def __format__(self, spec):
         if not spec:
@@ -1084,7 +1085,9 @@ class Item(LibModel):
         (i.e., where the file ought to be).
 
         The path is returned as a bytestring. ``basedir`` can override the
-        library's base directory for the destination.
+        library's base directory for the destination. If ``relative_to_libdir``
+        is true, returns just the fragment of the path underneath the library
+        base directory.
         """
         db = self._check_db()
         basedir = basedir or db.directory
@@ -1179,6 +1182,7 @@ class Album(LibModel):
         "comp": types.BOOLEAN,
         "mb_albumid": types.STRING,
         "mb_albumartistid": types.STRING,
+        "mb_albumartistids": types.MULTI_VALUE_DSV,
         "albumtype": types.STRING,
         "albumtypes": types.SEMICOLON_SPACE_DSV,
         "label": types.STRING,
@@ -1235,6 +1239,7 @@ class Album(LibModel):
         "comp",
         "mb_albumid",
         "mb_albumartistid",
+        "mb_albumartistids",
         "albumtype",
         "albumtypes",
         "label",

@@ -1,3 +1,11 @@
+Plugin Development Guide
+========================
+
+Beets plugins are Python modules or packages that extend the core functionality
+of beets. The plugin system is designed to be flexible, allowing developers to
+add virtually any type of features.
+
+
 .. _writing-plugins:
 
 Writing Plugins
@@ -413,9 +421,8 @@ to extend the kinds of metadata that they can easily manage.
 
 The ``MediaFile`` class uses ``MediaField`` descriptors to provide
 access to file tags. If you have created a descriptor you can add it through
-your plugins ``add_media_field()`` method.
+your plugins :py:meth:`beets.plugins.BeetsPlugin.add_media_field()`` method.
 
-.. automethod:: beets.plugins.BeetsPlugin.add_media_field
 .. _MediaFile: https://mediafile.readthedocs.io/en/latest/
 
 

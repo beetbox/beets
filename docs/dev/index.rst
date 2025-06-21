@@ -10,8 +10,18 @@ and write metadata tags in media files.
 .. _MediaFile: https://mediafile.readthedocs.io/en/latest/
 
 .. toctree::
+    :maxdepth: 1
 
     plugins
     library
     importer
     cli
+
+
+.. toctree::
+    :maxdepth: 1
+    :caption: API Reference
+
+    ../api/plugins
+    ../api/database
+

@@ -15,7 +15,6 @@
 
 import itertools
 import os
-import unittest
 from unittest.mock import ANY, Mock, patch
 
 import pytest
@@ -213,15 +212,6 @@ class EventsTest(PluginImportTestCase):
             f"Singleton: {displayable_path(self.import_media[0].path)}",
             f"Singleton: {displayable_path(self.import_media[1].path)}",
         ]
-
-
-class HelpersTest(unittest.TestCase):
-    def test_sanitize_choices(self):
-        assert plugins.sanitize_choices(["A", "Z"], ("A", "B")) == ["A"]
-        assert plugins.sanitize_choices(["A", "A"], ("A")) == ["A"]
-        assert plugins.sanitize_choices(
-            ["D", "*", "A"], ("A", "B", "C", "D")
-        ) == ["D", "B", "C", "A"]
 
 
 class ListenersTest(PluginLoaderTestCase):

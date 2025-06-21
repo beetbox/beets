@@ -228,7 +228,7 @@ class ImportTask(BaseImportTask):
         or APPLY (in which case the data comes from the choice).
         """
         if self.choice_flag in (Action.ASIS, Action.RETAG):
-            likelies, consensus = autotag.current_metadata(self.items)
+            likelies, consensus = util.get_most_common_tags(self.items)
             return likelies
         elif self.choice_flag is Action.APPLY and self.match:
             return self.match.info.copy()

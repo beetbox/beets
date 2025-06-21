@@ -154,7 +154,7 @@ Code Contribution Ideas
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 -  We maintain a set of `issues marked as
-   “bite-sized” <https://github.com/beetbox/beets/labels/bitesize>`__.
+   “good first issue” <https://github.com/beetbox/beets/labels/good%20first%20issue>`__.
    These are issues that would serve as a good introduction to the
    codebase. Claim one and start exploring!
 -  Like testing? Our `test

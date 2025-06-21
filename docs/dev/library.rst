@@ -20,30 +20,18 @@ invocation of beets usually has only one :class:`Library`. It's powered by
 abstraction, something like a very minimal `ORM`_. The library is also
 responsible for handling queries to retrieve stored objects.
 
-.. autoclass:: Library(path, directory[, path_formats[, replacements]])
+Overview 
+''''''''
 
-    .. automethod:: __init__
+You can add new items or albums to the library via the
+:py:meth:`Library.add` and :py:meth:`Library.add_album` methods.
 
-    You can add new items or albums to the library:
+You may also query the library for items and albums using the
+:py:meth:`Library.items`, :py:meth:`Library.albums`, :py:meth:`Library.get_item` and :py:meth:`Library.get_album` methods.
 
-    .. automethod:: add
-
-    .. automethod:: add_album
-
-    And there are methods for querying the database:
-
-    .. automethod:: items
-
-    .. automethod:: albums
-
-    .. automethod:: get_item
-
-    .. automethod:: get_album
-
-    Any modifications must go through a :class:`Transaction` which you get can
-    using this method:
-
-    .. automethod:: transaction
+Any modifications to the library must go through a
+:class:`Transaction` object, which you can get using the
+:py:meth:`Library.transaction` context manager.
 
 .. _SQLite: https://sqlite.org/index.html
 .. _ORM: https://en.wikipedia.org/wiki/Object-relational_mapping
@@ -54,7 +42,7 @@ Model Classes
 
 The two model entities in beets libraries, :class:`Item` and :class:`Album`,
 share a base class, :class:`LibModel`, that provides common functionality. That
-class itself specialises :class:`dbcore.Model` which provides an ORM-like
+class itself specialises :class:`beets.dbcore.Model` which provides an ORM-like
 abstraction.
 
 To get or change the metadata of a model (an item or album), either access its
@@ -68,42 +56,25 @@ Model base
 Models use dirty-flags to track when the object's metadata goes out of
 sync with the database. The dirty dictionary maps field names to booleans
 indicating whether the field has been written since the object was last
-synchronized (via load or store) with the database.
+synchronized (via load or store) with the database. This logic is implemented
+in the model base class :class:`LibModel` and is inherited by both
+:class:`Item` and :class:`Album`.
 
-.. autoclass:: LibModel
+We provide CRUD-like methods for interacting with the database:
 
-    .. automethod:: all_keys
+* :py:meth:`LibModel.store`
+* :py:meth:`LibModel.load`
+* :py:meth:`LibModel.remove` 
+* :py:meth:`LibModel.add`
 
-    .. automethod:: __init__
+The base class :class:`beets.dbcore.Model` has a ``dict``-like interface, so
+normal the normal mapping API is supported:
 
-    .. autoattribute:: _types
+* :py:meth:`LibModel.keys`
+* :py:meth:`LibModel.update`
+* :py:meth:`LibModel.items`
+* :py:meth:`LibModel.get`
 
-    .. autoattribute:: _fields
-
-    There are CRUD-like methods for interacting with the database:
-
-    .. automethod:: store
-
-    .. automethod:: load
-
-    .. automethod:: remove
-
-    .. automethod:: add
-
-    The base class :class:`dbcore.Model` has a ``dict``-like interface, so
-    normal the normal mapping API is supported:
-
-    .. automethod:: keys
-
-    .. automethod:: update
-
-    .. automethod:: items
-
-    .. note::
-       The :py:meth:`Album.items` method is not inherited from
-       :py:meth:`LibModel.items` for historical reasons.
-
-    .. automethod:: get
 
 Item
 ''''
@@ -155,38 +126,6 @@ This leads to the following implementation policy:
   * On every modification to DB metadata (``item.field = ...``), the DB mtime
     is reset to zero.
 
-
-.. autoclass:: Item
-
-    .. automethod:: __init__
-
-    .. automethod:: from_path
-
-    .. automethod:: get_album
-
-    .. automethod:: destination
-
-    .. automethod:: current_mtime
-
-    The methods ``read()`` and ``write()`` are complementary: one reads a
-    file's tags and updates the item's metadata fields accordingly while the
-    other takes the item's fields and writes them to the file's tags.
-
-    .. automethod:: read
-
-    .. automethod:: write
-
-    .. automethod:: try_write
-
-    .. automethod:: try_sync
-
-    The :class:`Item` class supplements the normal model interface so that they
-    interacting with the filesystem as well:
-
-    .. automethod:: move
-
-    .. automethod:: remove
-
 Album
 '''''
 
@@ -205,35 +144,10 @@ For those fields that are both item-level and album-level (e.g., ``year`` or
 use an SQLite table called ``albums``, in which each column is an album
 metadata field.
 
-.. autoclass:: Album
 
-    .. automethod:: __init__
-
-    .. automethod:: item_dir
-
-    .. automethod:: items
-
-    Albums extend the normal model interface to also forward changes to their
-    items:
-
-    .. autoattribute:: item_keys
-
-    .. automethod:: store
-
-    .. automethod:: try_sync
-
-    .. automethod:: move
-
-    .. automethod:: remove
-
-    Albums also manage album art, image files that are associated with each
-    album:
-
-    .. automethod:: set_art
-
-    .. automethod:: move_art
-
-    .. automethod:: art_destination
+.. note::
+    The :py:meth:`Album.items` method is not inherited from
+    :py:meth:`LibModel.items` for historical reasons.
 
 Transactions
 ''''''''''''
@@ -241,23 +155,29 @@ Transactions
 The :class:`Library` class provides the basic methods necessary to access and
 manipulate its contents. To perform more complicated operations atomically, or
 to interact directly with the underlying SQLite database, you must use a
-*transaction* (see this `blog post`_ for motivation). For example::
+*transaction* (see this `blog post`_ for motivation). For example
+
+.. code-block:: python
 
     lib = Library()
     with lib.transaction() as tx:
         items = lib.items(query)
         lib.add_album(list(items))
 
-.. _blog post: https://beets.io/blog/sqlite-nightmare.html
-
 .. currentmodule:: beets.dbcore.db
 
-.. autoclass:: Transaction
-    :members:
+The :class:`Transaction` class is a context manager that provides a
+transactional interface to the underlying SQLite database. It is
+responsible for managing the transaction's lifecycle, including
+beginning, committing, and rolling back the transaction if
+an error occurs.
 
+.. _blog post: https://beets.io/blog/sqlite-nightmare.html
 
 Queries
 -------
+
+.. currentmodule:: beets.dbcore.query
 
 To access albums and items in a library, we use :doc:`/reference/query`.
 In beets, the :class:`Query` abstract base class represents a criterion that
