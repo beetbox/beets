@@ -25,7 +25,6 @@ import unidecode
 from beets import ui
 from beets.autotag import AlbumInfo, TrackInfo
 from beets.dbcore import types
-from beets.library import DateType
 from beets.plugins import BeetsPlugin, MetadataSourcePlugin
 
 
@@ -35,7 +34,7 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
     item_types = {
         "deezer_track_rank": types.INTEGER,
         "deezer_track_id": types.INTEGER,
-        "deezer_updated": DateType(),
+        "deezer_updated": types.DATE,
     }
 
     # Base URLs for the Deezer API

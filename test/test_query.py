@@ -14,26 +14,23 @@
 
 """Various tests for querying the library database."""
 
-import os
 import sys
 import unittest
-from contextlib import contextmanager
-from functools import partial
+from pathlib import Path
 
 import pytest
 from mock import patch
 
-import beets.library
-from beets import dbcore, util
+from beets import dbcore
 from beets.dbcore import types
 from beets.dbcore.query import (
     InvalidQueryArgumentValueError,
     NoneQuery,
     ParsingError,
+    PathQuery,
 )
 from beets.test import _common
-from beets.test.helper import BeetsTestCase, ItemInDBTestCase
-from beets.util import syspath
+from beets.test.helper import BeetsTestCase, TestHelper
 
 # Because the absolute path begins with something like C:, we
 # can't disambiguate it from an ordinary query.
@@ -440,244 +437,6 @@ class MatchTest(unittest.TestCase):
         assert q1 != q3
         assert q1 != q4
         assert q3 != q4
-
-
-class PathQueryTest(ItemInDBTestCase, AssertsMixin):
-    def setUp(self):
-        super().setUp()
-
-        # This is the item we'll try to match.
-        self.i.path = util.normpath("/a/b/c.mp3")
-        self.i.title = "path item"
-        self.i.album = "path album"
-        self.i.store()
-        self.lib.add_album([self.i])
-
-        # A second item for testing exclusion.
-        i2 = _common.item()
-        i2.path = util.normpath("/x/y/z.mp3")
-        i2.title = "another item"
-        i2.album = "another album"
-        self.lib.add(i2)
-        self.lib.add_album([i2])
-
-    @contextmanager
-    def force_implicit_query_detection(self):
-        # Unadorned path queries with path separators in them are considered
-        # path queries only when the path in question actually exists. So we
-        # mock the existence check to return true.
-        beets.library.PathQuery.force_implicit_query_detection = True
-        yield
-        beets.library.PathQuery.force_implicit_query_detection = False
-
-    def test_path_exact_match(self):
-        q = "path:/a/b/c.mp3"
-        results = self.lib.items(q)
-        self.assert_items_matched(results, ["path item"])
-
-        results = self.lib.albums(q)
-        self.assert_albums_matched(results, ["path album"])
-
-    # FIXME: fails on windows
-    @unittest.skipIf(sys.platform == "win32", "win32")
-    def test_parent_directory_no_slash(self):
-        q = "path:/a"
-        results = self.lib.items(q)
-        self.assert_items_matched(results, ["path item"])
-
-        results = self.lib.albums(q)
-        self.assert_albums_matched(results, ["path album"])
-
-    # FIXME: fails on windows
-    @unittest.skipIf(sys.platform == "win32", "win32")
-    def test_parent_directory_with_slash(self):
-        q = "path:/a/"
-        results = self.lib.items(q)
-        self.assert_items_matched(results, ["path item"])
-
-        results = self.lib.albums(q)
-        self.assert_albums_matched(results, ["path album"])
-
-    def test_no_match(self):
-        q = "path:/xyzzy/"
-        results = self.lib.items(q)
-        self.assert_items_matched(results, [])
-
-        results = self.lib.albums(q)
-        self.assert_albums_matched(results, [])
-
-    def test_fragment_no_match(self):
-        q = "path:/b/"
-        results = self.lib.items(q)
-        self.assert_items_matched(results, [])
-
-        results = self.lib.albums(q)
-        self.assert_albums_matched(results, [])
-
-    def test_nonnorm_path(self):
-        q = "path:/x/../a/b"
-        results = self.lib.items(q)
-        self.assert_items_matched(results, ["path item"])
-
-        results = self.lib.albums(q)
-        self.assert_albums_matched(results, ["path album"])
-
-    @unittest.skipIf(sys.platform == "win32", WIN32_NO_IMPLICIT_PATHS)
-    def test_slashed_query_matches_path(self):
-        with self.force_implicit_query_detection():
-            q = "/a/b"
-            results = self.lib.items(q)
-            self.assert_items_matched(results, ["path item"])
-
-            results = self.lib.albums(q)
-            self.assert_albums_matched(results, ["path album"])
-
-    @unittest.skipIf(sys.platform == "win32", WIN32_NO_IMPLICIT_PATHS)
-    def test_path_query_in_or_query(self):
-        with self.force_implicit_query_detection():
-            q = "/a/b , /a/b"
-            results = self.lib.items(q)
-            self.assert_items_matched(results, ["path item"])
-
-    def test_non_slashed_does_not_match_path(self):
-        with self.force_implicit_query_detection():
-            q = "c.mp3"
-            results = self.lib.items(q)
-            self.assert_items_matched(results, [])
-
-            results = self.lib.albums(q)
-            self.assert_albums_matched(results, [])
-
-    def test_slashes_in_explicit_field_does_not_match_path(self):
-        with self.force_implicit_query_detection():
-            q = "title:/a/b"
-            results = self.lib.items(q)
-            self.assert_items_matched(results, [])
-
-    def test_path_item_regex(self):
-        q = "path::c\\.mp3$"
-        results = self.lib.items(q)
-        self.assert_items_matched(results, ["path item"])
-
-        results = self.lib.albums(q)
-        self.assert_albums_matched(results, ["path album"])
-
-    def test_path_album_regex(self):
-        q = "path::b"
-        results = self.lib.albums(q)
-        self.assert_albums_matched(results, ["path album"])
-
-    def test_escape_underscore(self):
-        self.add_album(
-            path=b"/a/_/title.mp3",
-            title="with underscore",
-            album="album with underscore",
-        )
-        q = "path:/a/_"
-        results = self.lib.items(q)
-        self.assert_items_matched(results, ["with underscore"])
-
-        results = self.lib.albums(q)
-        self.assert_albums_matched(results, ["album with underscore"])
-
-    def test_escape_percent(self):
-        self.add_album(
-            path=b"/a/%/title.mp3",
-            title="with percent",
-            album="album with percent",
-        )
-        q = "path:/a/%"
-        results = self.lib.items(q)
-        self.assert_items_matched(results, ["with percent"])
-
-        results = self.lib.albums(q)
-        self.assert_albums_matched(results, ["album with percent"])
-
-    def test_escape_backslash(self):
-        self.add_album(
-            path=rb"/a/\x/title.mp3",
-            title="with backslash",
-            album="album with backslash",
-        )
-        q = "path:/a/\\\\x"
-        results = self.lib.items(q)
-        self.assert_items_matched(results, ["with backslash"])
-
-        results = self.lib.albums(q)
-        self.assert_albums_matched(results, ["album with backslash"])
-
-    def test_case_sensitivity(self):
-        self.add_album(path=b"/A/B/C2.mp3", title="caps path")
-
-        makeq = partial(beets.library.PathQuery, "path", "/A/B")
-
-        results = self.lib.items(makeq(case_sensitive=True))
-        self.assert_items_matched(results, ["caps path"])
-
-        results = self.lib.items(makeq(case_sensitive=False))
-        self.assert_items_matched(results, ["path item", "caps path"])
-
-    # FIXME: Also create a variant of this test for windows, which tests
-    # both os.sep and os.altsep
-    @unittest.skipIf(sys.platform == "win32", "win32")
-    def test_path_sep_detection(self):
-        is_path_query = beets.library.PathQuery.is_path_query
-
-        with self.force_implicit_query_detection():
-            assert is_path_query("/foo/bar")
-            assert is_path_query("foo/bar")
-            assert is_path_query("foo/")
-            assert not is_path_query("foo")
-            assert is_path_query("foo/:bar")
-            assert not is_path_query("foo:bar/")
-            assert not is_path_query("foo:/bar")
-
-    # FIXME: shouldn't this also work on windows?
-    @unittest.skipIf(sys.platform == "win32", WIN32_NO_IMPLICIT_PATHS)
-    def test_detect_absolute_path(self):
-        """Test detection of implicit path queries based on whether or
-        not the path actually exists, when using an absolute path query.
-
-        Thus, don't use the `force_implicit_query_detection()`
-        contextmanager which would disable the existence check.
-        """
-        is_path_query = beets.library.PathQuery.is_path_query
-
-        path = self.touch(os.path.join(b"foo", b"bar"))
-        assert os.path.isabs(util.syspath(path))
-        path_str = path.decode("utf-8")
-
-        # The file itself.
-        assert is_path_query(path_str)
-
-        # The parent directory.
-        parent = os.path.dirname(path_str)
-        assert is_path_query(parent)
-
-        # Some non-existent path.
-        assert not is_path_query(f"{path_str}baz")
-
-    def test_detect_relative_path(self):
-        """Test detection of implicit path queries based on whether or
-        not the path actually exists, when using a relative path query.
-
-        Thus, don't use the `force_implicit_query_detection()`
-        contextmanager which would disable the existence check.
-        """
-        is_path_query = beets.library.PathQuery.is_path_query
-
-        self.touch(os.path.join(b"foo", b"bar"))
-
-        # Temporarily change directory so relative paths work.
-        cur_dir = os.getcwd()
-        try:
-            os.chdir(syspath(self.temp_dir))
-            assert is_path_query("foo/")
-            assert is_path_query("foo/bar")
-            assert is_path_query("foo/bar:tagada")
-            assert not is_path_query("bar")
-        finally:
-            os.chdir(cur_dir)
 
 
 class IntQueryTest(BeetsTestCase):
@@ -1104,3 +863,107 @@ class RelatedQueriesTest(BeetsTestCase, AssertsMixin):
         q = "artpath::A Album1"
         results = self.lib.items(q)
         self.assert_items_matched(results, ["Album1 Item1", "Album1 Item2"])
+
+
+@pytest.fixture(scope="class")
+def helper():
+    helper = TestHelper()
+    helper.setup_beets()
+
+    yield helper
+
+    helper.teardown_beets()
+
+
+class TestPathQuery:
+    _p = pytest.param
+
+    @pytest.fixture(scope="class")
+    def lib(self, helper):
+        helper.add_item(path=b"/aaa/bb/c.mp3", title="path item")
+        helper.add_item(path=b"/x/y/z.mp3", title="another item")
+        helper.add_item(path=b"/c/_/title.mp3", title="with underscore")
+        helper.add_item(path=b"/c/%/title.mp3", title="with percent")
+        helper.add_item(path=rb"/c/\x/title.mp3", title="with backslash")
+        helper.add_item(path=b"/A/B/C2.mp3", title="caps path")
+
+        return helper.lib
+
+    @pytest.mark.parametrize(
+        "q, expected_titles",
+        [
+            _p("path:/aaa/bb/c.mp3", ["path item"], id="exact-match"),
+            _p("path:/aaa", ["path item"], id="parent-dir-no-slash"),
+            _p("path:/aaa/", ["path item"], id="parent-dir-with-slash"),
+            _p("path:/aa", [], id="no-match-does-not-match-parent-dir"),
+            _p("path:/xyzzy/", [], id="no-match"),
+            _p("path:/b/", [], id="fragment-no-match"),
+            _p("path:/x/../aaa/bb", ["path item"], id="non-normalized"),
+            _p("path::c\\.mp3$", ["path item"], id="regex"),
+            _p("path:/c/_", ["with underscore"], id="underscore-escaped"),
+            _p("path:/c/%", ["with percent"], id="percent-escaped"),
+            _p("path:/c/\\\\x", ["with backslash"], id="backslash-escaped"),
+        ],
+    )
+    def test_explicit(self, monkeypatch, lib, q, expected_titles):
+        monkeypatch.setattr("beets.util.case_sensitive", lambda *_: True)
+
+        assert {i.title for i in lib.items(q)} == set(expected_titles)
+
+    @pytest.mark.skipif(sys.platform == "win32", reason=WIN32_NO_IMPLICIT_PATHS)
+    @pytest.mark.parametrize(
+        "q, expected_titles",
+        [
+            _p("/aaa/bb", ["path item"], id="slashed-query"),
+            _p("/aaa/bb , /aaa", ["path item"], id="path-in-or-query"),
+            _p("c.mp3", [], id="no-slash-no-match"),
+            _p("title:/a/b", [], id="slash-with-explicit-field-no-match"),
+        ],
+    )
+    def test_implicit(self, monkeypatch, lib, q, expected_titles):
+        monkeypatch.setattr(
+            "beets.dbcore.query.PathQuery.is_path_query", lambda path: True
+        )
+
+        assert {i.title for i in lib.items(q)} == set(expected_titles)
+
+    @pytest.mark.parametrize(
+        "case_sensitive, expected_titles",
+        [
+            _p(True, [], id="non-caps-dont-match-caps"),
+            _p(False, ["caps path"], id="non-caps-match-caps"),
+        ],
+    )
+    def test_case_sensitivity(
+        self, lib, monkeypatch, case_sensitive, expected_titles
+    ):
+        q = "path:/a/b/c2.mp3"
+        monkeypatch.setattr(
+            "beets.util.case_sensitive", lambda *_: case_sensitive
+        )
+
+        assert {i.title for i in lib.items(q)} == set(expected_titles)
+
+    # FIXME: Also create a variant of this test for windows, which tests
+    # both os.sep and os.altsep
+    @pytest.mark.skipif(sys.platform == "win32", reason=WIN32_NO_IMPLICIT_PATHS)
+    @pytest.mark.parametrize(
+        "q, is_path_query",
+        [
+            ("/foo/bar", True),
+            ("foo/bar", True),
+            ("foo/", True),
+            ("foo", False),
+            ("foo/:bar", True),
+            ("foo:bar/", False),
+            ("foo:/bar", False),
+        ],
+    )
+    def test_path_sep_detection(self, monkeypatch, tmp_path, q, is_path_query):
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "foo").mkdir()
+        (tmp_path / "foo" / "bar").touch()
+        if Path(q).is_absolute():
+            q = str(tmp_path / q[1:])
+
+        assert PathQuery.is_path_query(q) == is_path_query
