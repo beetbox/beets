@@ -21,7 +21,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Python tools
-        uses: BrandonLWhite/pipx-install-action@v1.0.3
+        # BrandonLWhite/pipx-install-action@v1.0.3 fails on Windows, thus we're using an alternative action here
+        uses: threeal/pipx-install-action@v1.0.0
+        with:
+          packages: poethepoet>=0.26 poetry<2
       - name: Setup Python with poetry caching
         # poetry cache requires poetry to already be installed, weirdly
         uses: actions/setup-python@v5
