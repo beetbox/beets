@@ -60,19 +60,6 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
 
         return [deezer_update_cmd]
 
-    def fetch_data(self, url):
-        try:
-            response = requests.get(url, timeout=10)
-            response.raise_for_status()
-            data = response.json()
-        except requests.exceptions.RequestException as e:
-            self._log.error("Error fetching data from {}\n Error: {}", url, e)
-            return None
-        if "error" in data:
-            self._log.debug("Deezer API error: {}", data["error"]["message"])
-            return None
-        return data
-
     def album_for_id(self, album_id: str) -> AlbumInfo | None:
         """Fetch an album by its Deezer ID or URL."""
         if not (deezer_id := self._get_id(album_id)):
@@ -156,34 +143,6 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
             cover_art_url=album_data.get("cover_xl"),
         )
 
-    def _get_track(self, track_data):
-        """Convert a Deezer track object dict to a TrackInfo object.
-
-        :param track_data: Deezer Track object dict
-        :type track_data: dict
-        :return: TrackInfo object for track
-        :rtype: beets.autotag.hooks.TrackInfo
-        """
-        artist, artist_id = self.get_artist(
-            track_data.get("contributors", [track_data["artist"]])
-        )
-        return TrackInfo(
-            title=track_data["title"],
-            track_id=track_data["id"],
-            deezer_track_id=track_data["id"],
-            isrc=track_data.get("isrc"),
-            artist=artist,
-            artist_id=artist_id,
-            length=track_data["duration"],
-            index=track_data.get("track_position"),
-            medium=track_data.get("disk_number"),
-            deezer_track_rank=track_data.get("rank"),
-            medium_index=track_data.get("track_position"),
-            data_source=self.data_source,
-            data_url=track_data["link"],
-            deezer_updated=time.time(),
-        )
-
     def track_for_id(self, track_id=None, track_data=None):
         """Fetch a track by its Deezer ID or URL and return a
         TrackInfo object or None if the track is not found.
@@ -228,6 +187,34 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
                     track.index = i
         track.medium_total = medium_total
         return track
+
+    def _get_track(self, track_data: JSONDict) -> TrackInfo:
+        """Convert a Deezer track object dict to a TrackInfo object.
+
+        :param track_data: Deezer Track object dict
+        :type track_data: dict
+        :return: TrackInfo object for track
+        :rtype: beets.autotag.hooks.TrackInfo
+        """
+        artist, artist_id = self.get_artist(
+            track_data.get("contributors", [track_data["artist"]])
+        )
+        return TrackInfo(
+            title=track_data["title"],
+            track_id=track_data["id"],
+            deezer_track_id=track_data["id"],
+            isrc=track_data.get("isrc"),
+            artist=artist,
+            artist_id=artist_id,
+            length=track_data["duration"],
+            index=track_data.get("track_position"),
+            medium=track_data.get("disk_number"),
+            deezer_track_rank=track_data.get("rank"),
+            medium_index=track_data.get("track_position"),
+            data_source=self.data_source,
+            data_url=track_data["link"],
+            deezer_updated=time.time(),
+        )
 
     @staticmethod
     def _construct_search_query(filters=None, keywords=""):
@@ -320,3 +307,16 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
             item.deezer_updated = time.time()
             if write:
                 item.try_write()
+
+    def fetch_data(self, url: str):
+        try:
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+            data = response.json()
+        except requests.exceptions.RequestException as e:
+            self._log.error("Error fetching data from {}\n Error: {}", url, e)
+            return None
+        if "error" in data:
+            self._log.debug("Deezer API error: {}", data["error"]["message"])
+            return None
+        return data
