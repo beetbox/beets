@@ -295,7 +295,7 @@ class SpotifyPlugin(
         if album_data["name"] == "":
             self._log.debug("Album removed from Spotify: {}", album_id)
             return None
-        artist, artist_id = self.get_artist_str(album_data["artists"])
+        artist, artist_id = self.get_artist(album_data["artists"])
 
         date_parts = [
             int(part) for part in album_data["release_date"].split("-")
@@ -362,7 +362,7 @@ class SpotifyPlugin(
             (https://developer.spotify.com/documentation/web-api/reference/object-model/#track-object-simplified)
         :return: TrackInfo object for track
         """
-        artist, artist_id = self.get_artist_str(track_data["artists"])
+        artist, artist_id = self.get_artist(track_data["artists"])
 
         # Get album information for spotify tracks
         try:

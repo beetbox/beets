@@ -239,15 +239,55 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
         return extract_release_id(self.data_source, url)
 
     @staticmethod
-    def get_artist_str(
-        artists: Iterable[dict],
+    def get_artist(
+        artists: Iterable[dict[str | int, str]],
         id_key: str | int = "id",
         name_key: str | int = "name",
         join_key: str | int | None = None,
     ) -> tuple[str, str | None]:
-        return artists_to_artist_str(
-            artists, id_key=id_key, name_key=name_key, join_key=join_key
-        )
+        """Returns an artist string (all artists) and an artist_id (the main
+        artist) for a list of artist object dicts.
+
+        For each artist, this function moves articles (such as 'a', 'an',
+        and 'the') to the front and strips trailing disambiguation numbers. It
+        returns a tuple containing the comma-separated string of all
+        normalized artists and the ``id`` of the main/first artist.
+        Alternatively a keyword can be used to combine artists together into a
+        single string by passing the join_key argument.
+
+        :param artists: Iterable of artist dicts or lists returned by API.
+        :param id_key: Key or index corresponding to the value of ``id`` for
+            the main/first artist. Defaults to 'id'.
+        :param name_key: Key or index corresponding to values of names
+            to concatenate for the artist string (containing all artists).
+            Defaults to 'name'.
+        :param join_key: Key or index corresponding to a field containing a
+            keyword to use for combining artists into a single string, for
+            example "Feat.", "Vs.", "And" or similar. The default is None
+            which keeps the default behaviour (comma-separated).
+        :return: Normalized artist string.
+        """
+        artist_id = None
+        artist_string = ""
+        artists = list(artists)  # In case a generator was passed.
+        total = len(artists)
+        for idx, artist in enumerate(artists):
+            if not artist_id:
+                artist_id = artist[id_key]
+            name = artist[name_key]
+            # Strip disambiguation number.
+            name = re.sub(r" \(\d+\)$", "", name)
+            # Move articles to the front.
+            name = re.sub(r"^(.*?), (a|an|the)$", r"\2 \1", name, flags=re.I)
+            # Use a join keyword if requested and available.
+            if idx < (total - 1):  # Skip joining on last.
+                if join_key and artist.get(join_key, None):
+                    name += f" {artist[join_key]} "
+                else:
+                    name += ", "
+            artist_string += name
+
+        return artist_string, artist_id
 
 
 class IDResponse(TypedDict):
@@ -323,58 +363,3 @@ class SearchApiMetadataSourcePlugin(
             None,
             self.tracks_for_ids([result["id"] for result in results if result]),
         )
-
-
-def artists_to_artist_str(
-    artists: Iterable[dict],
-    id_key: str | int = "id",
-    name_key: str | int = "name",
-    join_key: str | int | None = None,
-) -> tuple[str, str | None]:
-    """Returns an artist string (all artists) and an artist_id (the main
-    artist) for a list of artist object dicts.
-
-    For each artist, this function moves articles (such as 'a', 'an',
-    and 'the') to the front and strips trailing disambiguation numbers. It
-    returns a tuple containing the comma-separated string of all
-    normalized artists and the ``id`` of the main/first artist.
-    Alternatively a keyword can be used to combine artists together into a
-    single string by passing the join_key argument.
-
-    :param artists: Iterable of artist dicts or lists returned by API.
-    :type artists: list[dict] or list[list]
-    :param id_key: Key or index corresponding to the value of ``id`` for
-        the main/first artist. Defaults to 'id'.
-    :param name_key: Key or index corresponding to values of names
-        to concatenate for the artist string (containing all artists).
-        Defaults to 'name'.
-    :param join_key: Key or index corresponding to a field containing a
-        keyword to use for combining artists into a single string, for
-        example "Feat.", "Vs.", "And" or similar. The default is None
-        which keeps the default behaviour (comma-separated).
-    :return: Normalized artist string.
-    """
-    artist_id = None
-    artist_string = ""
-    artists = list(artists)  # In case a generator was passed.
-    total = len(artists)
-    for idx, artist in enumerate(artists):
-        if not artist_id:
-            artist_id = artist[id_key]
-        name = artist[name_key]
-        # Strip disambiguation number.
-        name = re.sub(r" \(\d+\)$", "", name)
-        # Move articles to the front.
-        name = re.sub(r"^(.*?), (a|an|the)$", r"\2 \1", name, flags=re.I)
-        # Use a join keyword if requested and available.
-        if idx < (total - 1):  # Skip joining on last.
-            if join_key and artist.get(join_key, None):
-                name += f" {artist[join_key]} "
-            else:
-                name += ", "
-        artist_string += name
-
-    return artist_string, artist_id
-
-
-MetadataSourcePlugin.get_artist_str.__doc__ = artists_to_artist_str.__doc__

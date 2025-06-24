@@ -81,7 +81,7 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin):
 
         contributors = album_data.get("contributors")
         if contributors is not None:
-            artist, artist_id = self.get_artist_str(contributors)
+            artist, artist_id = self.get_artist(contributors)
         else:
             artist, artist_id = None, None
 
@@ -139,7 +139,7 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin):
             album_id=deezer_album_id,
             deezer_album_id=deezer_album_id,
             artist=artist,
-            artist_credit=self.get_artist_str([album_data["artist"]])[0],
+            artist_credit=self.get_artist([album_data["artist"]])[0],
             artist_id=artist_id,
             tracks=tracks,
             albumtype=album_data["record_type"],
@@ -211,7 +211,7 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin):
 
         :param track_data: Deezer Track object dict
         """
-        artist, artist_id = self.get_artist_str(
+        artist, artist_id = self.get_artist(
             track_data.get("contributors", [track_data["artist"]])
         )
         return TrackInfo(

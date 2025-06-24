@@ -322,7 +322,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
             self._log.warning("Release does not contain the required fields")
             return None
 
-        artist, artist_id = self.get_artist_str(
+        artist, artist_id = self.get_artist(
             [a.data for a in result.artists], join_key="join"
         )
         album = re.sub(r" +", " ", result.title)
@@ -626,7 +626,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
                 title = f"{prefix}: {title}"
         track_id = None
         medium, medium_index, _ = self.get_track_index(track["position"])
-        artist, artist_id = self.get_artist_str(
+        artist, artist_id = self.get_artist(
             track.get("artists", []), join_key="join"
         )
         length = self.get_track_length(track["duration"])
