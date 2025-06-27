@@ -20,6 +20,7 @@ from unittest.mock import ANY, Mock, patch
 import pytest
 from mediafile import MediaFile
 
+import beetsplug
 from beets import config, plugins, ui
 from beets.dbcore import types
 from beets.importer import (
@@ -29,8 +30,13 @@ from beets.importer import (
     SingletonImportTask,
 )
 from beets.library import Item
-from beets.test import helper
-from beets.test.helper import AutotagStub, ImportHelper, TerminalImportMixin
+from beets.test import _common, helper
+from beets.test.helper import (
+    AutotagStub,
+    ImportHelper,
+    TerminalImportMixin,
+    capture_log,
+)
 from beets.test.helper import PluginTestCase as BasePluginTestCase
 from beets.util import displayable_path, syspath
 
@@ -49,10 +55,32 @@ class PluginLoaderTestCase(BasePluginTestCase):
     def setUp(self):
         super().setUp()
         self._prev_plugin_instances = plugins._instances.copy()
+        self._prev_beetsplug_path = beetsplug.__path__
+        beetsplug.__path__ = [_common.PLUGINPATH] + list(beetsplug.__path__)
 
     def tearDown(self):
         plugins._instances = self._prev_plugin_instances
+        beetsplug.__path__ = self._prev_beetsplug_path
         super().tearDown()
+
+
+class PluginLoaderTest(PluginLoaderTestCase):
+    """Test the various error cases of plugin loading."""
+
+    def test_not_found(self):
+        with capture_log("beets") as logs:
+            plugins.load_plugins(["foo"])
+        assert "not found" in logs[0]
+
+    def test_broken(self):
+        with capture_log("beets") as logs:
+            plugins.load_plugins(["broken"])
+        assert "error loading plugin" in logs[0]
+
+    def test_module_not_found_confusion(self):
+        with capture_log("beets") as logs:
+            plugins.load_plugins(["broken_import"])
+        assert "error loading plugin" in logs[0]
 
 
 class PluginImportTestCase(ImportHelper, PluginLoaderTestCase):

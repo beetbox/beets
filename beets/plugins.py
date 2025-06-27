@@ -355,15 +355,21 @@ def load_plugins(names: Sequence[str] = ()) -> None:
     package in sys.path; the module indicated should contain the
     BeetsPlugin subclasses desired.
     """
-    classes = set()
-
     for name in names:
+        name_full = f"{PLUGIN_NAMESPACE}.{name}"
         try:
-            mod = import_module(f".{name}", package=PLUGIN_NAMESPACE)
-        except ModuleNotFoundError:
-            log.warning("** plugin {} not found", name)
+            mod = import_module(name_full)
+        except ModuleNotFoundError as exc:
+            if exc.name == name_full:
+                log.warning("** plugin {} not found", name)
+            else:
+                log.warning(
+                    "** error loading plugin {}:\n{}",
+                    name,
+                    traceback.format_exc(),
+                )
             continue
-        except ImportError:
+        except Exception:
             log.warning(
                 "** error loading plugin {}:\n{}",
                 name,
@@ -372,21 +378,20 @@ def load_plugins(names: Sequence[str] = ()) -> None:
             continue
 
         for _name, cls in inspect.getmembers(mod, inspect.isclass):
-            if (
-                issubclass(cls, BeetsPlugin)
-                and cls != BeetsPlugin
-                and cls != MetadataSourcePlugin
-                and cls not in _instances
-            ):
-                classes.add(cls)
-
-    for cls in classes:
-        _register_plugin(cls)
+            if issubclass(cls, BeetsPlugin) and cls not in {
+                BeetsPlugin,
+                MetadataSourcePlugin,
+            }:
+                _register_plugin(cls)
 
 
 def _register_plugin(cls: type[BeetsPlugin]) -> None:
     if cls in _instances:
-        return
+        log.debug(
+            "repeated initialization of plugin class {}.{}",
+            cls.__module__,
+            cls.__qualname__,
+        )
 
     try:
         _instances[cls] = cls()
