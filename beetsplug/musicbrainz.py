@@ -371,7 +371,9 @@ class MusicBrainzPlugin(
             info.isrc = ";".join(recording["isrcs"])
 
         lyricists = []
-        composer = []
+        lyricists_ids = []
+        composers = []
+        composers_ids = []
         composer_sort = []
         for work_relation in recording.get("work-relations", ()):
             if work_relation["type"] != "performance":
@@ -388,25 +390,32 @@ class MusicBrainzPlugin(
                     type = artist_relation["type"]
                     if type == "lyricist":
                         lyricists.append(artist_relation["artist"]["name"])
+                        lyricists_ids.append(artist_relation["artist"]["id"])
                     elif type == "composer":
-                        composer.append(artist_relation["artist"]["name"])
+                        composers.append(artist_relation["artist"]["name"])
+                        composers_ids.append(artist_relation["artist"]["id"])
                         composer_sort.append(
                             artist_relation["artist"]["sort-name"]
                         )
         if lyricists:
             info.lyricists = lyricists
-        if composer:
-            info.composers = composer
+            info.lyricists_ids = lyricists_ids
+        if composers:
+            info.composers = composers
+            info.composers_ids = composers_ids
             info.composer_sort = ", ".join(composer_sort)
 
         arrangers = []
+        arrangers_ids = []
         for artist_relation in recording.get("artist-relations", ()):
             if "type" in artist_relation:
                 type = artist_relation["type"]
                 if type == "arranger":
                     arrangers.append(artist_relation["artist"]["name"])
+                    arrangers_ids.append(artist_relation["artist"]["id"])
         if arrangers:
             info.arrangers = arrangers
+            info.arrangers_ids = arrangers_ids
 
         # Supplementary fields provided by plugins
         extra_trackdatas = plugins.send("mb_track_extract", data=recording)
