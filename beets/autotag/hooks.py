@@ -187,14 +187,20 @@ class TrackInfo(Info):
         self,
         *,
         arranger: str | None = None,
+        arrangers: list[str] | None = None,
+        arrangers_ids: list[str] | None = None,
         bpm: str | None = None,
         composer: str | None = None,
         composer_sort: str | None = None,
+        composers: list[str] | None = None,
+        composers_ids: list[str] | None = None,
         disctitle: str | None = None,
         index: int | None = None,
         initial_key: str | None = None,
         length: float | None = None,
         lyricist: str | None = None,
+        lyricists: list[str] | None = None,
+        lyricists_ids: list[str] | None = None,
         mb_workid: str | None = None,
         medium: int | None = None,
         medium_index: int | None = None,
@@ -208,14 +214,20 @@ class TrackInfo(Info):
         **kwargs,
     ) -> None:
         self.arranger = arranger
+        self.arrangers = arrangers or []
+        self.arrangers_ids = arrangers_ids or []
         self.bpm = bpm
         self.composer = composer
         self.composer_sort = composer_sort
+        self.composers = composers or []
+        self.composers_ids = composers_ids or []
         self.disctitle = disctitle
         self.index = index
         self.initial_key = initial_key
         self.length = length
         self.lyricist = lyricist
+        self.lyricists = lyricists or []
+        self.lyricists_ids = lyricists_ids or []
         self.mb_workid = mb_workid
         self.medium = medium
         self.medium_index = medium_index
