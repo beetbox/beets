@@ -58,10 +58,27 @@ only to custom servers. The official MusicBrainz server always uses HTTPS.
 (Default: no.) The server must have search indices enabled (see `Building search
 indexes`_).
 
-The ``ratelimit`` option, an integer, controls the number of Web service
-requests per second (default: 1). **Do not change the rate limit setting** if
-you're using the main MusicBrainz server---on this public server, you're
+The ``ratelimit`` and ``ratelimit_interval`` options, respectively an integer
+and a decimal number, control the number of Web service requests per interval of
+time (default: 1 request per second). **Do not change the rate limit setting**
+if you're using the main MusicBrainz server---on this public server, you're
 limited_ to one request per second.
+
+.. _musicbrainz-shared-options:
+
+Shared options
+~~~~~~~~~~~~~~
+
+As other plugins may send requests to the MusicBrainz API, the following
+``musicbrainz`` options will also modify the other plugins' connection to
+MusicBrainz, even if the ``musicbrainz`` plugin is disabled:
+
+- ``host``
+- ``https``
+- ``ratelimit``
+- ``ratelimit_interval``
+- ``user``
+- ``pass``
 
 .. _building search indexes: https://musicbrainz.org/doc/Development/Search_server_setup
 
