@@ -26,6 +26,9 @@ intructions here_) and username:
         token: TOKEN
         username: LISTENBRAINZ_USERNAME
 
+Other ``musicbrainz`` options may be set to modify the connection to MusicBrainz
+(see :ref:`musicbrainz-shared-options`).
+
 Usage
 -----
 

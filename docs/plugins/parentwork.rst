@@ -54,3 +54,6 @@ file. The available options are:
 - **auto**: If enabled, automatically fetches works at import. It takes quite
   some time, because beets is restricted to one MusicBrainz query per second.
   Default: ``no``
+
+Other ``musicbrainz`` options may be set to modify the connection to MusicBrainz
+(see :ref:`musicbrainz-shared-options`).
