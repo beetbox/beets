@@ -690,6 +690,8 @@ class SingletonImportTask(ImportTask):
         return [self.item]
 
     def apply_metadata(self):
+        if config["import"]["from_scratch"]:
+            self.item.clear()
         autotag.apply_item_metadata(self.item, self.match.info)
 
     def _emit_imported(self, lib):
