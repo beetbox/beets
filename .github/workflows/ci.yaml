@@ -21,7 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Python tools
-        uses: BrandonLWhite/pipx-install-action@v1.0.1
+        uses: BrandonLWhite/pipx-install-action@v1.0.3
       - name: Setup Python with poetry caching
         # poetry cache requires poetry to already be installed, weirdly
         uses: actions/setup-python@v5
