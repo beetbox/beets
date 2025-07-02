@@ -233,7 +233,7 @@ class DuplicatesPlugin(BeetsPlugin):
             item.store()
         if delete:
             item.remove(delete=True)
-        if remove:
+        elif remove:
             item.remove(delete=False)
         if tag:
             try:
