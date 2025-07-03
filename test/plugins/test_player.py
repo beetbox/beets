@@ -36,6 +36,11 @@ from beets.test.helper import PluginTestCase
 from beets.util import bluelet
 from beetsplug import bpd
 
+# Skip the tests on Windows as they require a socket server.
+pytestmark = pytest.mark.skipif(
+    sys.platform.startswith("win"), reason="Skip on Windows"
+)
+
 gstplayer = importlib.util.module_from_spec(
     importlib.util.find_spec("beetsplug.bpd.gstplayer")
 )

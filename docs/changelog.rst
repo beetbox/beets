@@ -23,6 +23,8 @@ New features:
   singletons by their Discogs ID.
   :bug:`4661`
 * :doc:`plugins/replace`: Add new plugin.
+* tests: Tests that fail on windows now are skipped instead of failing.
+  Permissions tests under WSL on NTFS are now skipped as well.
 
 Bug fixes:
 
