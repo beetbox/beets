@@ -23,6 +23,8 @@ New features:
   singletons by their Discogs ID.
   :bug:`4661`
 * :doc:`plugins/replace`: Add new plugin.
+* :doc:`plugins/playlist`: Support files with the `.m3u8` extension.
+  :bug:`5829`
 
 Bug fixes:
 
