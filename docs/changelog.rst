@@ -26,6 +26,8 @@ New features:
 * :doc:`plugins/duplicates`: Add ``--remove`` option, allowing to remove from
   the library without deleting media files.
   :bug:`5832`
+* :doc:`plugins/playlist`: Support files with the `.m3u8` extension.
+  :bug:`5829`
 
 Bug fixes:
 
