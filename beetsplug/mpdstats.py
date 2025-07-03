@@ -142,7 +142,9 @@ class MPDStats:
 
         self.do_rating = mpd_config["rating"].get(bool)
         self.rating_mix = mpd_config["rating_mix"].get(float)
-        self.time_threshold = 10.0  # TODO: maybe add config option?
+        self.time_threshold = mpd_config[
+            "maximum_remaining_seconds_for_track_to_be_considered_played"
+        ].get(float)
 
         self.now_playing = None
         self.mpd = MPDClientWrapper(log)
@@ -272,7 +274,7 @@ class MPDStats:
                 # after natural song start.
                 diff = abs(time.time() - self.now_playing["started"])
 
-                if diff <= self.time_threshold:
+                if diff <= 10.0:
                     return
 
                 if self.now_playing["path"] == path and played == 0:
@@ -336,6 +338,7 @@ class MPDStatsPlugin(plugins.BeetsPlugin):
                 "host": os.environ.get("MPD_HOST", "localhost"),
                 "port": int(os.environ.get("MPD_PORT", 6600)),
                 "password": "",
+                "maximum_remaining_seconds_for_track_to_be_considered_played": 10,
             }
         )
         mpd_config["password"].redact = True
