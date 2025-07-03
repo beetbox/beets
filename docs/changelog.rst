@@ -56,6 +56,10 @@ For plugin developers:
 * The `fetchart` plugins has seen a few changes to function signatures and
   source registration in the process of introducing typings to the code.
   Custom art sources might need to be adapted.
+* Flexible fields, which can be used by plugins to store additional metadata,
+  now also support list values. Previously, beets would throw an error while
+  storing the data in the SQL database due to missing type conversion.
+  :bug:`5698`
 
 Other changes:
 
