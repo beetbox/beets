@@ -46,21 +46,38 @@ class AutoBPMPlugin(BeetsPlugin):
         cmd = Subcommand(
             "autobpm", help="detect and add bpm from audio using Librosa"
         )
+        cmd.parser.add_option(
+            "-f",
+            "--force",
+            dest="overwrite",
+            action="store_true",
+            default=False,
+            help="Overwrite existing bpm values",
+        )
         cmd.func = self.command
         return [cmd]
 
-    def command(self, lib: Library, _, args: list[str]) -> None:
-        self.calculate_bpm(list(lib.items(args)), write=should_write())
+    def command(self, lib: Library, opts, args: list[str]) -> None:
+        overwrite = (
+            opts.overwrite
+            if hasattr(opts, "overwrite")
+            else self.config["overwrite"].get(bool)
+        )
+        self.calculate_bpm(
+            list(lib.items(args)), write=should_write(), overwrite=overwrite
+        )
 
     def imported(self, _, task: ImportTask) -> None:
         self.calculate_bpm(task.imported_items())
 
-    def calculate_bpm(self, items: list[Item], write: bool = False) -> None:
+    def calculate_bpm(
+        self, items: list[Item], write: bool = False, overwrite: bool = False
+    ) -> None:
         for item in items:
             path = item.filepath
             if bpm := item.bpm:
                 self._log.info("BPM for {} already exists: {}", path, bpm)
-                if not self.config["overwrite"]:
+                if not overwrite:
                     continue
 
             try:
