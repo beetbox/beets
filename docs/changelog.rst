@@ -23,6 +23,8 @@ New features:
   singletons by their Discogs ID.
   :bug:`4661`
 * :doc:`plugins/replace`: Add new plugin.
+* :doc:`plugins/mbcollection`: When getting the user collections, only consider
+  collections of releases, and ignore collections of other entity types.
 
 Bug fixes:
 
