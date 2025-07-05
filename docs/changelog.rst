@@ -23,6 +23,9 @@ New features:
   singletons by their Discogs ID.
   :bug:`4661`
 * :doc:`plugins/replace`: Add new plugin.
+* :doc:`plugins/duplicates`: Add ``--remove`` option, allowing to remove from
+  the library without deleting media files.
+  :bug:`5832`
 
 Bug fixes:
 
