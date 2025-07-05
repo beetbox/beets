@@ -24,6 +24,7 @@ from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
 
 import beets
 from beets import util
+from beets.util.units import human_seconds_short, raw_seconds_short
 
 from . import query
 
@@ -437,14 +438,14 @@ class DurationType(Float):
 
     def format(self, value):
         if not beets.config["format_raw_length"].get(bool):
-            return util.human_seconds_short(value or 0.0)
+            return human_seconds_short(value or 0.0)
         else:
             return value
 
     def parse(self, string):
         try:
             # Try to format back hh:ss to seconds.
-            return util.raw_seconds_short(string)
+            return raw_seconds_short(string)
         except ValueError:
             # Fall back to a plain float.
             try:
