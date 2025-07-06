@@ -34,6 +34,7 @@ duplicates themselves via command-line switches ::
   -o DEST, --copy=DEST  copy items to dest
   -p, --path            print paths for matched items or albums
   -t TAG, --tag=TAG     tag matched items with 'k=v' attribute
+  -r, --remove          remove items from library
 
 Configuration
 -------------
@@ -57,7 +58,7 @@ file. The available options mirror the command-line options:
   ``$albumartist - $album - $title: $count`` (for tracks) or ``$albumartist -
   $album: $count`` (for albums).
   Default: ``no``.
-- **delete**: Removes matched items from the library and from the disk.
+- **delete**: Remove matched items from the library and from the disk.
   Default: ``no``
 - **format**: A specific format with which to print every track
   or album. This uses the same template syntax as beets'
@@ -92,6 +93,8 @@ file. The available options mirror the command-line options:
   set. If you would like to consider the lower bitrates as duplicates,
   for example, set ``tiebreak: items: [bitrate]``.
   Default: ``{}``.
+- **remove**: Remove matched items from the library, but not from the disk.
+  Default: ``no``.
 
 Examples
 --------
