@@ -16,7 +16,6 @@
 
 import os
 import sys
-import unittest
 from unittest.mock import ANY, patch
 
 import pytest

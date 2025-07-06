@@ -17,7 +17,6 @@ import fnmatch
 import os.path
 import re
 import sys
-import unittest
 
 import pytest
 from mediafile import MediaFile
