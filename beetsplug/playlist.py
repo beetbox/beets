@@ -18,8 +18,7 @@ import tempfile
 from collections.abc import Sequence
 
 import beets
-from beets.dbcore.query import InQuery
-from beets.library import BLOB_TYPE
+from beets.dbcore.query import BLOB_TYPE, InQuery
 from beets.util import path_as_posix
 
 

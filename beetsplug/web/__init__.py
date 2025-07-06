@@ -25,6 +25,7 @@ from werkzeug.routing import BaseConverter, PathConverter
 
 import beets.library
 from beets import ui, util
+from beets.dbcore.query import PathQuery
 from beets.plugins import BeetsPlugin
 
 # Utilities.
@@ -342,7 +343,7 @@ def item_query(queries):
 
 @app.route("/item/path/<everything:path>")
 def item_at_path(path):
-    query = beets.library.PathQuery("path", path.encode("utf-8"))
+    query = PathQuery("path", path.encode("utf-8"))
     item = g.lib.items(query).get()
     if item:
         return flask.jsonify(_rep(item))
