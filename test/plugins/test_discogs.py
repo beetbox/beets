@@ -171,27 +171,6 @@ class DGAlbumInfoTest(BeetsTestCase):
         assert t[3].index == 4
         assert t[3].medium_total == 1
 
-    def test_parse_position(self):
-        """Test the conversion of discogs `position` to medium, medium_index
-        and subtrack_index."""
-        # List of tuples (discogs_position, (medium, medium_index, subindex)
-        positions = [
-            ("1", (None, "1", None)),
-            ("A12", ("A", "12", None)),
-            ("12-34", ("12-", "34", None)),
-            ("CD1-1", ("CD1-", "1", None)),
-            ("1.12", (None, "1", "12")),
-            ("12.a", (None, "12", "A")),
-            ("12.34", (None, "12", "34")),
-            ("1ab", (None, "1", "AB")),
-            # Non-standard
-            ("IV", ("IV", None, None)),
-        ]
-
-        d = DiscogsPlugin()
-        for position, expected in positions:
-            assert d.get_track_index(position) == expected
-
     def test_parse_tracklist_without_sides(self):
         """Test standard Discogs position 12.2.9#1: "without sides"."""
         release = self._make_release_from_positions(["1", "2", "3"])
@@ -417,3 +396,22 @@ def test_get_media_and_albumtype(formats, expected_media, expected_albumtype):
     result = DiscogsPlugin.get_media_and_albumtype(formats)
 
     assert result == (expected_media, expected_albumtype)
+
+
+@pytest.mark.parametrize(
+    "position, medium, index, subindex",
+    [
+        ("1", None, "1", None),
+        ("A12", "A", "12", None),
+        ("12-34", "12-", "34", None),
+        ("CD1-1", "CD1-", "1", None),
+        ("1.12", None, "1", "12"),
+        ("12.a", None, "12", "A"),
+        ("12.34", None, "12", "34"),
+        ("1ab", None, "1", "AB"),
+        # Non-standard
+        ("IV", "IV", None, None),
+    ],
+)
+def test_get_track_index(position, medium, index, subindex):
+    assert DiscogsPlugin.get_track_index(position) == (medium, index, subindex)

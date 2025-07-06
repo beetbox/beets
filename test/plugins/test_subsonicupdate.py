@@ -1,11 +1,11 @@
 """Tests for the 'subsonic' plugin."""
 
+import unittest
 from urllib.parse import parse_qs, urlparse
 
 import responses
 
 from beets import config
-from beets.test.helper import BeetsTestCase
 from beetsplug import subsonicupdate
 
 
@@ -24,7 +24,7 @@ def _params(url):
     return parse_qs(urlparse(url).query)
 
 
-class SubsonicPluginTest(BeetsTestCase):
+class SubsonicPluginTest(unittest.TestCase):
     """Test class for subsonicupdate."""
 
     @responses.activate

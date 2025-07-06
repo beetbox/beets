@@ -129,6 +129,11 @@ class NonAutotaggedImportTest(AsIsImporterMixin, ImportTestCase):
         self.run_asis_importer(delete=True)
         self.assertNotExists(os.path.join(self.import_dir, b"album"))
 
+    def test_album_mb_albumartistids(self):
+        self.run_asis_importer()
+        album = self.lib.albums()[0]
+        assert album.mb_albumartistids == album.items()[0].mb_albumartistids
+
     @unittest.skipUnless(_common.HAVE_SYMLINK, "need symlinks")
     def test_import_link_arrives(self):
         self.run_asis_importer(link=True)
@@ -919,7 +924,7 @@ class ChooseCandidateTest(AutotagImportTestCase):
         assert self.lib.albums().get().album == "Applied Album MM"
 
 
-class InferAlbumDataTest(BeetsTestCase):
+class InferAlbumDataTest(unittest.TestCase):
     def setUp(self):
         super().setUp()
 
@@ -1215,7 +1220,7 @@ class ImportDuplicateSingletonTest(ImportTestCase):
         return item
 
 
-class TagLogTest(BeetsTestCase):
+class TagLogTest(unittest.TestCase):
     def test_tag_log_line(self):
         sio = StringIO()
         handler = logging.StreamHandler(sio)

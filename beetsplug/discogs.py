@@ -25,7 +25,9 @@ import re
 import socket
 import time
 import traceback
+from functools import cache
 from string import ascii_lowercase
+from typing import TYPE_CHECKING
 
 import confuse
 from discogs_client import Client, Master, Release
@@ -36,9 +38,15 @@ from typing_extensions import TypedDict
 import beets
 import beets.ui
 from beets import config
-from beets.autotag.hooks import AlbumInfo, TrackInfo, string_dist
+from beets.autotag.distance import string_dist
+from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.plugins import BeetsPlugin, MetadataSourcePlugin, get_distance
 from beets.util.id_extractors import extract_release_id
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable
+
+    from beets.library import Item
 
 USER_AGENT = f"beets/{beets.__version__} +https://beets.io/"
 API_KEY = "rAzVUQYRaoFjeBjyWuWZ"
@@ -51,6 +59,22 @@ CONNECTION_ERRORS = (
     http.client.HTTPException,
     ValueError,  # JSON decoding raises a ValueError.
     DiscogsAPIError,
+)
+
+
+TRACK_INDEX_RE = re.compile(
+    r"""
+    (.*?)   # medium: everything before medium_index.
+    (\d*?)  # medium_index: a number at the end of
+            # `position`, except if followed by a subtrack index.
+            # subtrack_index: can only be matched if medium
+            # or medium_index have been matched, and can be
+    (
+        (?<=\w)\.[\w]+  # a dot followed by a string (A.1, 2.A)
+      | (?<=\d)[A-Z]+   # a string that follows a number (1A, B2a)
+    )?
+    """,
+    re.VERBOSE,
 )
 
 
@@ -73,6 +97,7 @@ class DiscogsPlugin(BeetsPlugin):
                 "separator": ", ",
                 "index_tracks": False,
                 "append_style_genre": False,
+                "search_limit": 5,
             }
         )
         self.config["apikey"].redact = True
@@ -156,111 +181,37 @@ class DiscogsPlugin(BeetsPlugin):
             data_source="Discogs", info=track_info, config=self.config
         )
 
-    def candidates(self, items, artist, album, va_likely, extra_tags=None):
-        """Returns a list of AlbumInfo objects for discogs search results
-        matching an album and artist (if not various).
-        """
-        if not album and not artist:
-            self._log.debug(
-                "Skipping Discogs query. Files missing album and artist tags."
-            )
-            return []
+    def candidates(
+        self, items: list[Item], artist: str, album: str, va_likely: bool
+    ) -> Iterable[AlbumInfo]:
+        return self.get_albums(f"{artist} {album}" if va_likely else album)
 
-        if va_likely:
-            query = album
-        else:
-            query = f"{artist} {album}"
-        try:
-            return self.get_albums(query)
-        except DiscogsAPIError as e:
-            self._log.debug("API Error: {0} (query: {1})", e, query)
-            if e.status_code == 401:
-                self.reset_auth()
-                return self.candidates(items, artist, album, va_likely)
-            else:
-                return []
-        except CONNECTION_ERRORS:
-            self._log.debug("Connection error in album search", exc_info=True)
-            return []
-
-    def get_track_from_album_by_title(
-        self, album_info, title, dist_threshold=0.3
-    ):
-        def compare_func(track_info):
-            track_title = getattr(track_info, "title", None)
-            dist = string_dist(track_title, title)
-            return track_title and dist < dist_threshold
-
-        return self.get_track_from_album(album_info, compare_func)
-
-    def get_track_from_album(self, album_info, compare_func):
-        """Return the first track of the release where `compare_func` returns
-        true.
-
-        :return: TrackInfo object.
-        :rtype: beets.autotag.hooks.TrackInfo
-        """
-        if not album_info:
+    def get_track_from_album(
+        self, album_info: AlbumInfo, compare: Callable[[TrackInfo], float]
+    ) -> TrackInfo | None:
+        """Return the best matching track of the release."""
+        scores_and_tracks = [(compare(t), t) for t in album_info.tracks]
+        score, track_info = min(scores_and_tracks, key=lambda x: x[0])
+        if score > 0.3:
             return None
 
-        for track_info in album_info.tracks:
-            # check for matching position
-            if not compare_func(track_info):
-                continue
+        track_info["artist"] = album_info.artist
+        track_info["artist_id"] = album_info.artist_id
+        track_info["album"] = album_info.album
+        return track_info
 
-            # attach artist info if not provided
-            if not track_info["artist"]:
-                track_info["artist"] = album_info.artist
-                track_info["artist_id"] = album_info.artist_id
-            # attach album info
-            track_info["album"] = album_info.album
+    def item_candidates(
+        self, item: Item, artist: str, title: str
+    ) -> Iterable[TrackInfo]:
+        albums = self.candidates([item], artist, title, False)
 
-            return track_info
+        def compare_func(track_info: TrackInfo) -> float:
+            return string_dist(track_info.title, title)
 
-        return None
+        tracks = (self.get_track_from_album(a, compare_func) for a in albums)
+        return list(filter(None, tracks))
 
-    def item_candidates(self, item, artist, title):
-        """Returns a list of TrackInfo objects for Search API results
-        matching ``title`` and ``artist``.
-        :param item: Singleton item to be matched.
-        :type item: beets.library.Item
-        :param artist: The artist of the track to be matched.
-        :type artist: str
-        :param title: The title of the track to be matched.
-        :type title: str
-        :return: Candidate TrackInfo objects.
-        :rtype: list[beets.autotag.hooks.TrackInfo]
-        """
-        if not artist and not title:
-            self._log.debug(
-                "Skipping Discogs query. File missing artist and title tags."
-            )
-            return []
-
-        query = f"{artist} {title}"
-        try:
-            albums = self.get_albums(query)
-        except DiscogsAPIError as e:
-            self._log.debug("API Error: {0} (query: {1})", e, query)
-            if e.status_code == 401:
-                self.reset_auth()
-                return self.item_candidates(item, artist, title)
-            else:
-                return []
-        except CONNECTION_ERRORS:
-            self._log.debug("Connection error in track search", exc_info=True)
-        candidates = []
-        for album_cur in albums:
-            self._log.debug("searching within album {0}", album_cur.album)
-            track_result = self.get_track_from_album_by_title(
-                album_cur, item["title"]
-            )
-            if track_result:
-                candidates.append(track_result)
-        # first 10 results, don't overwhelm with options
-        return candidates[:10]
-
-    def album_for_id(self, album_id):
+    def album_for_id(self, album_id: str) -> AlbumInfo | None:
         """Fetches an album by its Discogs ID and returns an AlbumInfo object
         or None if the album is not found.
         """
@@ -291,7 +242,15 @@ class DiscogsPlugin(BeetsPlugin):
             return None
         return self.get_album_info(result)
 
-    def get_albums(self, query):
+    def track_for_id(self, track_id: str) -> TrackInfo | None:
+        if album := self.album_for_id(track_id):
+            for track in album.tracks:
+                if track.track_id == track_id:
+                    return track
+
+        return None
+
+    def get_albums(self, query: str) -> Iterable[AlbumInfo]:
         """Returns a list of AlbumInfo objects for a discogs search query."""
         # Strip non-word characters from query. Things like "!" and "-" can
         # cause a query to return no results, even if they match the artist or
@@ -303,8 +262,9 @@ class DiscogsPlugin(BeetsPlugin):
         query = re.sub(r"(?i)\b(CD|disc|vinyl)\s*\d+", "", query)
 
         try:
-            releases = self.discogs_client.search(query, type="release").page(1)
-
+            results = self.discogs_client.search(query, type="release")
+            results.per_page = self.config["search_limit"].as_number()
+            releases = results.page(1)
         except CONNECTION_ERRORS:
             self._log.debug(
                 "Communication error while searching for {0!r}",
@@ -312,20 +272,18 @@ class DiscogsPlugin(BeetsPlugin):
                 exc_info=True,
             )
             return []
-        return [
-            album for album in map(self.get_album_info, releases[:5]) if album
-        ]
+        return map(self.get_album_info, releases)
 
-    def get_master_year(self, master_id):
+    @cache
+    def get_master_year(self, master_id: str) -> int | None:
         """Fetches a master release given its Discogs ID and returns its year
         or None if the master release is not found.
         """
-        self._log.debug("Searching for master release {0}", master_id)
+        self._log.debug("Getting master release {0}", master_id)
         result = Master(self.discogs_client, {"id": master_id})
 
         try:
-            year = result.fetch("year")
-            return year
+            return result.fetch("year")
         except DiscogsAPIError as e:
             if e.status_code != 404:
                 self._log.debug(
@@ -695,33 +653,21 @@ class DiscogsPlugin(BeetsPlugin):
             medium_index=medium_index,
         )
 
-    def get_track_index(self, position):
+    @staticmethod
+    def get_track_index(
+        position: str,
+    ) -> tuple[str | None, str | None, str | None]:
         """Returns the medium, medium index and subtrack index for a discogs
         track position."""
         # Match the standard Discogs positions (12.2.9), which can have several
         # forms (1, 1-1, A1, A1.1, A1a, ...).
-        match = re.match(
-            r"^(.*?)"  # medium: everything before medium_index.
-            r"(\d*?)"  # medium_index: a number at the end of
-            # `position`, except if followed by a subtrack
-            # index.
-            # subtrack_index: can only be matched if medium
-            # or medium_index have been matched, and can be
-            r"((?<=\w)\.[\w]+"  # - a dot followed by a string (A.1, 2.A)
-            r"|(?<=\d)[A-Z]+"  # - a string that follows a number (1A, B2a)
-            r")?"
-            r"$",
-            position.upper(),
-        )
-
-        if match:
+        medium = index = subindex = None
+        if match := TRACK_INDEX_RE.fullmatch(position.upper()):
             medium, index, subindex = match.groups()
 
             if subindex and subindex.startswith("."):
                 subindex = subindex[1:]
-        else:
-            self._log.debug("Invalid position: {0}", position)
-            medium = index = subindex = None
+
         return medium or None, index or None, subindex or None
 
     def get_track_length(self, duration):

@@ -14,10 +14,16 @@
 
 """Fetches album art."""
 
+from __future__ import annotations
+
 import os
 import re
+from abc import ABC, abstractmethod
 from collections import OrderedDict
 from contextlib import closing
+from enum import Enum
+from functools import cached_property
+from typing import TYPE_CHECKING, AnyStr, ClassVar, Literal, Tuple, Type
 
 import confuse
 import requests
@@ -26,9 +32,17 @@ from mediafile import image_mime_type
 from beets import config, importer, plugins, ui, util
 from beets.util import bytestring_path, get_temp_filename, sorted_walk, syspath
 from beets.util.artresizer import ArtResizer
+from beets.util.config import sanitize_pairs
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Iterator, Sequence
+    from logging import Logger
+
+    from beets.importer import ImportSession, ImportTask
+    from beets.library import Album, Library
 
 try:
-    from bs4 import BeautifulSoup
+    from bs4 import BeautifulSoup, Tag
 
     HAS_BEAUTIFUL_SOUP = True
 except ImportError:
@@ -39,33 +53,54 @@ CONTENT_TYPES = {"image/jpeg": [b"jpg", b"jpeg"], "image/png": [b"png"]}
 IMAGE_EXTENSIONS = [ext for exts in CONTENT_TYPES.values() for ext in exts]
 
 
+class ImageAction(Enum):
+    """Indicates whether an image is useable or requires post-processing."""
+
+    BAD = 0
+    EXACT = 1
+    DOWNSCALE = 2
+    DOWNSIZE = 3
+    DEINTERLACE = 4
+    REFORMAT = 5
+
+
+class MetadataMatch(Enum):
+    """Indicates whether a `Candidate` matches the search criteria exactly."""
+
+    EXACT = 0
+    FALLBACK = 1
+
+
+SourceLocation = Literal["local", "remote"]
+
+
 class Candidate:
     """Holds information about a matching artwork, deals with validation of
     dimension restrictions and resizing.
     """
 
-    CANDIDATE_BAD = 0
-    CANDIDATE_EXACT = 1
-    CANDIDATE_DOWNSCALE = 2
-    CANDIDATE_DOWNSIZE = 3
-    CANDIDATE_DEINTERLACE = 4
-    CANDIDATE_REFORMAT = 5
-
-    MATCH_EXACT = 0
-    MATCH_FALLBACK = 1
-
     def __init__(
-        self, log, path=None, url=None, source="", match=None, size=None
+        self,
+        log: Logger,
+        source_name: str,
+        path: None | bytes = None,
+        url: None | str = None,
+        match: None | MetadataMatch = None,
+        size: None | Tuple[int, int] = None,
     ):
         self._log = log
         self.path = path
         self.url = url
-        self.source = source
-        self.check = None
+        self.source_name = source_name
+        self._check: None | ImageAction = None
         self.match = match
         self.size = size
 
-    def _validate(self, plugin, skip_check_for=None):
+    def _validate(
+        self,
+        plugin: FetchArtPlugin,
+        skip_check_for: None | list[ImageAction] = None,
+    ) -> ImageAction:
         """Determine whether the candidate artwork is valid based on
         its dimensions (width and ratio).
 
@@ -74,21 +109,16 @@ class Candidate:
         validated for a particular operation without changing
         plugin configuration.
 
-        Return `CANDIDATE_BAD` if the file is unusable.
-        Return `CANDIDATE_EXACT` if the file is usable as-is.
-        Return `CANDIDATE_DOWNSCALE` if the file must be rescaled.
-        Return `CANDIDATE_DOWNSIZE` if the file must be resized, and possibly
+        Return `ImageAction.BAD` if the file is unusable.
+        Return `ImageAction.EXACT` if the file is usable as-is.
+        Return `ImageAction.DOWNSCALE` if the file must be rescaled.
+        Return `ImageAction.DOWNSIZE` if the file must be resized, and possibly
             also rescaled.
-        Return `CANDIDATE_DEINTERLACE` if the file must be deinterlaced.
-        Return `CANDIDATE_REFORMAT` if the file has to be converted.
+        Return `ImageAction.DEINTERLACE` if the file must be deinterlaced.
+        Return `ImageAction.REFORMAT` if the file has to be converted.
         """
         if not self.path:
-            return self.CANDIDATE_BAD
-
-        if skip_check_for is None:
-            skip_check_for = []
-        if isinstance(skip_check_for, int):
-            skip_check_for = [skip_check_for]
+            return ImageAction.BAD
 
         if not (
             plugin.enforce_ratio
@@ -98,7 +128,7 @@ class Candidate:
             or plugin.deinterlace
             or plugin.cover_format
         ):
-            return self.CANDIDATE_EXACT
+            return ImageAction.EXACT
 
         # get_size returns None if no local imaging backend is available
         if not self.size:
@@ -113,7 +143,7 @@ class Candidate:
                 "`enforce_ratio` and `max_filesize` "
                 "may be violated."
             )
-            return self.CANDIDATE_EXACT
+            return ImageAction.EXACT
 
         short_edge = min(self.size)
         long_edge = max(self.size)
@@ -123,7 +153,7 @@ class Candidate:
             self._log.debug(
                 "image too small ({} < {})", self.size[0], plugin.minwidth
             )
-            return self.CANDIDATE_BAD
+            return ImageAction.BAD
 
         # Check aspect ratio.
         edge_diff = long_edge - short_edge
@@ -137,7 +167,7 @@ class Candidate:
                         short_edge,
                         plugin.margin_px,
                     )
-                    return self.CANDIDATE_BAD
+                    return ImageAction.BAD
             elif plugin.margin_percent:
                 margin_px = plugin.margin_percent * long_edge
                 if edge_diff > margin_px:
@@ -148,13 +178,13 @@ class Candidate:
                         short_edge,
                         margin_px,
                     )
-                    return self.CANDIDATE_BAD
+                    return ImageAction.BAD
             elif edge_diff:
                 # also reached for margin_px == 0 and margin_percent == 0.0
                 self._log.debug(
                     "image is not square ({} != {})", self.size[0], self.size[1]
                 )
-                return self.CANDIDATE_BAD
+                return ImageAction.BAD
 
         # Check maximum dimension.
         downscale = False
@@ -188,23 +218,29 @@ class Candidate:
                     plugin.cover_format,
                 )
 
-        if downscale and (self.CANDIDATE_DOWNSCALE not in skip_check_for):
-            return self.CANDIDATE_DOWNSCALE
-        if reformat and (self.CANDIDATE_REFORMAT not in skip_check_for):
-            return self.CANDIDATE_REFORMAT
+        skip_check_for = skip_check_for or []
+
+        if downscale and (ImageAction.DOWNSCALE not in skip_check_for):
+            return ImageAction.DOWNSCALE
+        if reformat and (ImageAction.REFORMAT not in skip_check_for):
+            return ImageAction.REFORMAT
         if plugin.deinterlace and (
-            self.CANDIDATE_DEINTERLACE not in skip_check_for
+            ImageAction.DEINTERLACE not in skip_check_for
         ):
-            return self.CANDIDATE_DEINTERLACE
-        if downsize and (self.CANDIDATE_DOWNSIZE not in skip_check_for):
-            return self.CANDIDATE_DOWNSIZE
-        return self.CANDIDATE_EXACT
+            return ImageAction.DEINTERLACE
+        if downsize and (ImageAction.DOWNSIZE not in skip_check_for):
+            return ImageAction.DOWNSIZE
+        return ImageAction.EXACT
 
-    def validate(self, plugin, skip_check_for=None):
-        self.check = self._validate(plugin, skip_check_for)
-        return self.check
+    def validate(
+        self,
+        plugin: FetchArtPlugin,
+        skip_check_for: None | list[ImageAction] = None,
+    ) -> ImageAction:
+        self._check = self._validate(plugin, skip_check_for)
+        return self._check
 
-    def resize(self, plugin):
+    def resize(self, plugin: FetchArtPlugin) -> None:
         """Resize the candidate artwork according to the plugin's
         configuration until it is valid or no further resizing is
         possible.
@@ -214,25 +250,32 @@ class Candidate:
         checks_performed = []
 
         # we don't want to resize the image if it's valid or bad
-        while current_check not in [self.CANDIDATE_BAD, self.CANDIDATE_EXACT]:
+        while current_check not in [ImageAction.BAD, ImageAction.EXACT]:
             self._resize(plugin, current_check)
             checks_performed.append(current_check)
             current_check = self.validate(
                 plugin, skip_check_for=checks_performed
             )
 
-    def _resize(self, plugin, check=None):
+    def _resize(
+        self, plugin: FetchArtPlugin, check: None | ImageAction = None
+    ) -> None:
         """Resize the candidate artwork according to the plugin's
         configuration and the specified check.
         """
-        if check == self.CANDIDATE_DOWNSCALE:
+        # This must only be called when _validate returned something other than
+        # ImageAction.Bad or ImageAction.EXACT; then path and size are known.
+        assert self.path is not None
+        assert self.size is not None
+
+        if check == ImageAction.DOWNSCALE:
             self.path = ArtResizer.shared.resize(
                 plugin.maxwidth,
                 self.path,
                 quality=plugin.quality,
                 max_filesize=plugin.max_filesize,
             )
-        elif check == self.CANDIDATE_DOWNSIZE:
+        elif check == ImageAction.DOWNSIZE:
             # dimensions are correct, so maxwidth is set to maximum dimension
             self.path = ArtResizer.shared.resize(
                 max(self.size),
@@ -240,9 +283,9 @@ class Candidate:
                 quality=plugin.quality,
                 max_filesize=plugin.max_filesize,
             )
-        elif check == self.CANDIDATE_DEINTERLACE:
+        elif check == ImageAction.DEINTERLACE:
             self.path = ArtResizer.shared.deinterlace(self.path)
-        elif check == self.CANDIDATE_REFORMAT:
+        elif check == ImageAction.REFORMAT:
             self.path = ArtResizer.shared.reformat(
                 self.path,
                 plugin.cover_format,
@@ -250,7 +293,7 @@ class Candidate:
             )
 
 
-def _logged_get(log, *args, **kwargs):
+def _logged_get(log: Logger, *args, **kwargs) -> requests.Response:
     """Like `requests.get`, but logs the effective URL to the specified
     `log` at the `DEBUG` level.
 
@@ -295,7 +338,9 @@ class RequestMixin:
     must be named `self._log`.
     """
 
-    def request(self, *args, **kwargs):
+    _log: Logger
+
+    def request(self, *args, **kwargs) -> requests.Response:
         """Like `requests.get`, but uses the logger `self._log`.
 
         See also `_logged_get`.
@@ -306,55 +351,88 @@ class RequestMixin:
 # ART SOURCES ################################################################
 
 
-class ArtSource(RequestMixin):
-    VALID_MATCHING_CRITERIA = ["default"]
+class ArtSource(RequestMixin, ABC):
+    # Specify whether this source fetches local or remote images
+    LOC: ClassVar[SourceLocation]
+    # A list of methods to match metadata, sorted by descending accuracy
+    VALID_MATCHING_CRITERIA: list[str] = ["default"]
+    # A human-readable name for the art source
+    NAME: ClassVar[str]
+    # The key to select the art source in the config. This value will also be
+    # stored in the database.
+    ID: ClassVar[str]
 
-    def __init__(self, log, config, match_by=None):
+    def __init__(
+        self,
+        log: Logger,
+        config: confuse.ConfigView,
+        match_by: None | list[str] = None,
+    ) -> None:
         self._log = log
         self._config = config
         self.match_by = match_by or self.VALID_MATCHING_CRITERIA
 
+    @cached_property
+    def description(self) -> str:
+        return f"{self.ID}[{', '.join(self.match_by)}]"
+
     @staticmethod
-    def add_default_config(config):
+    def add_default_config(config: confuse.ConfigView) -> None:
         pass
 
     @classmethod
-    def available(cls, log, config):
+    def available(cls, log: Logger, config: confuse.ConfigView) -> bool:
         """Return whether or not all dependencies are met and the art source is
         in fact usable.
         """
         return True
 
-    def get(self, album, plugin, paths):
-        raise NotImplementedError()
+    @abstractmethod
+    def get(
+        self,
+        album: Album,
+        plugin: FetchArtPlugin,
+        paths: None | Sequence[bytes],
+    ) -> Iterator[Candidate]:
+        pass
 
-    def _candidate(self, **kwargs):
-        return Candidate(source=self, log=self._log, **kwargs)
+    def _candidate(self, **kwargs) -> Candidate:
+        return Candidate(source_name=self.ID, log=self._log, **kwargs)
 
-    def fetch_image(self, candidate, plugin):
-        raise NotImplementedError()
+    @abstractmethod
+    def fetch_image(self, candidate: Candidate, plugin: FetchArtPlugin) -> None:
+        """Fetch the image to a temporary file if it is not already available
+        as a local file.
 
-    def cleanup(self, candidate):
+        After calling this, `Candidate.path` is set to the image path if
+        successful, or to `None` otherwise.
+        """
+        pass
+
+    def cleanup(self, candidate: Candidate) -> None:
         pass
 
 
 class LocalArtSource(ArtSource):
-    IS_LOCAL = True
-    LOC_STR = "local"
+    LOC = "local"
 
-    def fetch_image(self, candidate, plugin):
+    def fetch_image(self, candidate: Candidate, plugin: FetchArtPlugin) -> None:
         pass
 
 
 class RemoteArtSource(ArtSource):
-    IS_LOCAL = False
-    LOC_STR = "remote"
+    LOC = "remote"
 
-    def fetch_image(self, candidate, plugin):
+    def fetch_image(self, candidate: Candidate, plugin: FetchArtPlugin) -> None:
         """Downloads an image from a URL and checks whether it seems to
-        actually be an image. If so, returns a path to the downloaded image.
-        Otherwise, returns None.
+        actually be an image.
         """
+        # This must only be called for candidates that were returned by
+        # self.get, which are expected to have a url and no path (because they
+        # haven't been downloaded yet).
+        assert candidate.path is None
+        assert candidate.url is not None
+
         if plugin.maxwidth:
             candidate.url = ArtResizer.shared.proxy_url(
                 plugin.maxwidth, candidate.url
@@ -418,7 +496,7 @@ class RemoteArtSource(ArtSource):
                     for chunk in data:
                         fh.write(chunk)
                 self._log.debug(
-                    "downloaded art to: {0}", util.displayable_path(filename)
+                    "downloaded art to: {}", util.displayable_path(filename)
                 )
                 candidate.path = util.bytestring_path(filename)
                 return
@@ -429,7 +507,7 @@ class RemoteArtSource(ArtSource):
             self._log.debug("error fetching art: {}", exc)
             return
 
-    def cleanup(self, candidate):
+    def cleanup(self, candidate: Candidate) -> None:
         if candidate.path:
             try:
                 util.remove(path=candidate.path)
@@ -439,34 +517,39 @@ class RemoteArtSource(ArtSource):
 
 class CoverArtArchive(RemoteArtSource):
     NAME = "Cover Art Archive"
+    ID = "coverart"
     VALID_MATCHING_CRITERIA = ["release", "releasegroup"]
     VALID_THUMBNAIL_SIZES = [250, 500, 1200]
 
     URL = "https://coverartarchive.org/release/{mbid}"
     GROUP_URL = "https://coverartarchive.org/release-group/{mbid}"
 
-    def get(self, album, plugin, paths):
+    def get(
+        self,
+        album: Album,
+        plugin: FetchArtPlugin,
+        paths: None | Sequence[bytes],
+    ) -> Iterator[Candidate]:
         """Return the Cover Art Archive and Cover Art Archive release
         group URLs using album MusicBrainz release ID and release group
         ID.
         """
 
-        def get_image_urls(url, preferred_width=None):
+        def get_image_urls(
+            url: str,
+            preferred_width: None | str = None,
+        ) -> Iterator[str]:
             try:
                 response = self.request(url)
             except requests.RequestException:
-                self._log.debug(
-                    "{}: error receiving response".format(self.NAME)
-                )
+                self._log.debug("{}: error receiving response", self.NAME)
                 return
 
             try:
                 data = response.json()
             except ValueError:
                 self._log.debug(
-                    "{}: error loading response: {}".format(
-                        self.NAME, response.text
-                    )
+                    "{}: error loading response: {}", self.NAME, response.text
                 )
                 return
 
@@ -500,41 +583,53 @@ class CoverArtArchive(RemoteArtSource):
 
         if "release" in self.match_by and album.mb_albumid:
             for url in get_image_urls(release_url, preferred_width):
-                yield self._candidate(url=url, match=Candidate.MATCH_EXACT)
+                yield self._candidate(url=url, match=MetadataMatch.EXACT)
 
         if "releasegroup" in self.match_by and album.mb_releasegroupid:
             for url in get_image_urls(release_group_url, preferred_width):
-                yield self._candidate(url=url, match=Candidate.MATCH_FALLBACK)
+                yield self._candidate(url=url, match=MetadataMatch.FALLBACK)
 
 
 class Amazon(RemoteArtSource):
     NAME = "Amazon"
+    ID = "amazon"
     URL = "https://images.amazon.com/images/P/%s.%02i.LZZZZZZZ.jpg"
     INDICES = (1, 2)
 
-    def get(self, album, plugin, paths):
+    def get(
+        self,
+        album: Album,
+        plugin: FetchArtPlugin,
+        paths: None | Sequence[bytes],
+    ) -> Iterator[Candidate]:
         """Generate URLs using Amazon ID (ASIN) string."""
         if album.asin:
             for index in self.INDICES:
                 yield self._candidate(
                     url=self.URL % (album.asin, index),
-                    match=Candidate.MATCH_EXACT,
+                    match=MetadataMatch.EXACT,
                 )
 
 
 class AlbumArtOrg(RemoteArtSource):
     NAME = "AlbumArt.org scraper"
+    ID = "albumart"
     URL = "https://www.albumart.org/index_detail.php"
     PAT = r'href\s*=\s*"([^>"]*)"[^>]*title\s*=\s*"View larger image"'
 
-    def get(self, album, plugin, paths):
+    def get(
+        self,
+        album: Album,
+        plugin: FetchArtPlugin,
+        paths: None | Sequence[bytes],
+    ):
         """Return art URL from AlbumArt.org using album ASIN."""
         if not album.asin:
             return
         # Get the page from albumart.org.
         try:
             resp = self.request(self.URL, params={"asin": album.asin})
-            self._log.debug("scraped art URL: {0}", resp.url)
+            self._log.debug("scraped art URL: {}", resp.url)
         except requests.RequestException:
             self._log.debug("error scraping art page")
             return
@@ -543,13 +638,14 @@ class AlbumArtOrg(RemoteArtSource):
         m = re.search(self.PAT, resp.text)
         if m:
             image_url = m.group(1)
-            yield self._candidate(url=image_url, match=Candidate.MATCH_EXACT)
+            yield self._candidate(url=image_url, match=MetadataMatch.EXACT)
         else:
             self._log.debug("no image found on page")
 
 
 class GoogleImages(RemoteArtSource):
     NAME = "Google Images"
+    ID = "google"
     URL = "https://www.googleapis.com/customsearch/v1"
 
     def __init__(self, *args, **kwargs):
@@ -558,7 +654,7 @@ class GoogleImages(RemoteArtSource):
         self.cx = (self._config["google_engine"].get(),)
 
     @staticmethod
-    def add_default_config(config):
+    def add_default_config(config: confuse.ConfigView):
         config.add(
             {
                 "google_key": None,
@@ -569,13 +665,18 @@ class GoogleImages(RemoteArtSource):
         config["google_engine"].redact = True
 
     @classmethod
-    def available(cls, log, config):
+    def available(cls, log: Logger, config: confuse.ConfigView) -> bool:
         has_key = bool(config["google_key"].get())
         if not has_key:
             log.debug("google: Disabling art source due to missing key")
         return has_key
 
-    def get(self, album, plugin, paths):
+    def get(
+        self,
+        album: Album,
+        plugin: FetchArtPlugin,
+        paths: None | Sequence[bytes],
+    ) -> Iterator[Candidate]:
         """Return art URL from google custom search engine
         given an album title and interpreter.
         """
@@ -601,20 +702,18 @@ class GoogleImages(RemoteArtSource):
         try:
             data = response.json()
         except ValueError:
-            self._log.debug(
-                "google: error loading response: {}".format(response.text)
-            )
+            self._log.debug("google: error loading response: {}", response.text)
             return
 
         if "error" in data:
             reason = data["error"]["errors"][0]["reason"]
-            self._log.debug("google fetchart error: {0}", reason)
+            self._log.debug("google fetchart error: {}", reason)
             return
 
         if "items" in data.keys():
             for item in data["items"]:
                 yield self._candidate(
-                    url=item["link"], match=Candidate.MATCH_EXACT
+                    url=item["link"], match=MetadataMatch.EXACT
                 )
 
 
@@ -622,6 +721,7 @@ class FanartTV(RemoteArtSource):
     """Art from fanart.tv requested using their API"""
 
     NAME = "fanart.tv"
+    ID = "fanarttv"
     API_URL = "https://webservice.fanart.tv/v3/"
     API_ALBUMS = API_URL + "music/albums/"
     PROJECT_KEY = "61a7d0ab4e67162b7a0c7c35915cd48e"
@@ -631,7 +731,7 @@ class FanartTV(RemoteArtSource):
         self.client_key = self._config["fanarttv_key"].get()
 
     @staticmethod
-    def add_default_config(config):
+    def add_default_config(config: confuse.ConfigView):
         config.add(
             {
                 "fanarttv_key": None,
@@ -639,7 +739,12 @@ class FanartTV(RemoteArtSource):
         )
         config["fanarttv_key"].redact = True
 
-    def get(self, album, plugin, paths):
+    def get(
+        self,
+        album: Album,
+        plugin: FetchArtPlugin,
+        paths: None | Sequence[bytes],
+    ) -> Iterator[Candidate]:
         if not album.mb_releasegroupid:
             return
 
@@ -695,15 +800,21 @@ class FanartTV(RemoteArtSource):
             # fanart.tv has a strict size requirement for album art to be
             # uploaded
             yield self._candidate(
-                url=item["url"], match=Candidate.MATCH_EXACT, size=(1000, 1000)
+                url=item["url"], match=MetadataMatch.EXACT, size=(1000, 1000)
             )
 
 
 class ITunesStore(RemoteArtSource):
     NAME = "iTunes Store"
+    ID = "itunes"
     API_URL = "https://itunes.apple.com/search"
 
-    def get(self, album, plugin, paths):
+    def get(
+        self,
+        album: Album,
+        plugin: FetchArtPlugin,
+        paths: None | Sequence[bytes],
+    ) -> Iterator[Candidate]:
         """Return art URL from iTunes Store given an album title."""
         if not (album.albumartist and album.album):
             return
@@ -718,13 +829,13 @@ class ITunesStore(RemoteArtSource):
             r = self.request(self.API_URL, params=payload)
             r.raise_for_status()
         except requests.RequestException as e:
-            self._log.debug("iTunes search failed: {0}", e)
+            self._log.debug("iTunes search failed: {}", e)
             return
 
         try:
             candidates = r.json()["results"]
         except ValueError as e:
-            self._log.debug("Could not decode json response: {0}", e)
+            self._log.debug("Could not decode json response: {}", e)
             return
         except KeyError as e:
             self._log.debug(
@@ -752,7 +863,7 @@ class ITunesStore(RemoteArtSource):
                     art_url = c["artworkUrl100"]
                     art_url = art_url.replace("100x100bb", image_suffix)
                     yield self._candidate(
-                        url=art_url, match=Candidate.MATCH_EXACT
+                        url=art_url, match=MetadataMatch.EXACT
                     )
             except KeyError as e:
                 self._log.debug(
@@ -767,7 +878,7 @@ class ITunesStore(RemoteArtSource):
                 "100x100bb", image_suffix
             )
             yield self._candidate(
-                url=fallback_art_url, match=Candidate.MATCH_FALLBACK
+                url=fallback_art_url, match=MetadataMatch.FALLBACK
             )
         except KeyError as e:
             self._log.debug(
@@ -779,6 +890,7 @@ class ITunesStore(RemoteArtSource):
 
 class Wikipedia(RemoteArtSource):
     NAME = "Wikipedia (queried through DBpedia)"
+    ID = "wikipedia"
     DBPEDIA_URL = "https://dbpedia.org/sparql"
     WIKIPEDIA_URL = "https://en.wikipedia.org/w/api.php"
     SPARQL_QUERY = """PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -803,7 +915,12 @@ class Wikipedia(RemoteArtSource):
                   }}
                  Limit 1"""
 
-    def get(self, album, plugin, paths):
+    def get(
+        self,
+        album: Album,
+        plugin: FetchArtPlugin,
+        paths: None | Sequence[bytes],
+    ) -> Iterator[Candidate]:
         if not (album.albumartist and album.album):
             return
 
@@ -913,9 +1030,7 @@ class Wikipedia(RemoteArtSource):
             results = data["query"]["pages"]
             for _, result in results.items():
                 image_url = result["imageinfo"][0]["url"]
-                yield self._candidate(
-                    url=image_url, match=Candidate.MATCH_EXACT
-                )
+                yield self._candidate(url=image_url, match=MetadataMatch.EXACT)
         except (ValueError, KeyError, IndexError):
             self._log.debug("wikipedia: error scraping imageinfo")
             return
@@ -923,9 +1038,12 @@ class Wikipedia(RemoteArtSource):
 
 class FileSystem(LocalArtSource):
     NAME = "Filesystem"
+    ID = "filesystem"
 
     @staticmethod
-    def filename_priority(filename, cover_names):
+    def filename_priority(
+        filename: AnyStr, cover_names: Sequence[AnyStr]
+    ) -> list[int]:
         """Sort order for image names.
 
         Return indexes of cover names found in the image filename. This
@@ -934,7 +1052,12 @@ class FileSystem(LocalArtSource):
         """
         return [idx for (idx, x) in enumerate(cover_names) if x in filename]
 
-    def get(self, album, plugin, paths):
+    def get(
+        self,
+        album: Album,
+        plugin: FetchArtPlugin,
+        paths: None | Sequence[bytes],
+    ) -> Iterator[Candidate]:
         """Look for album art files in the specified directories."""
         if not paths:
             return
@@ -969,11 +1092,11 @@ class FileSystem(LocalArtSource):
             for fn in images:
                 if re.search(cover_pat, os.path.splitext(fn)[0], re.I):
                     self._log.debug(
-                        "using well-named art file {0}",
+                        "using well-named art file {}",
                         util.displayable_path(fn),
                     )
                     yield self._candidate(
-                        path=os.path.join(path, fn), match=Candidate.MATCH_EXACT
+                        path=os.path.join(path, fn), match=MetadataMatch.EXACT
                     )
                 else:
                     remaining.append(fn)
@@ -981,17 +1104,18 @@ class FileSystem(LocalArtSource):
             # Fall back to any image in the folder.
             if remaining and not plugin.cautious:
                 self._log.debug(
-                    "using fallback art file {0}",
+                    "using fallback art file {}",
                     util.displayable_path(remaining[0]),
                 )
                 yield self._candidate(
                     path=os.path.join(path, remaining[0]),
-                    match=Candidate.MATCH_FALLBACK,
+                    match=MetadataMatch.FALLBACK,
                 )
 
 
 class LastFM(RemoteArtSource):
     NAME = "Last.fm"
+    ID = "lastfm"
 
     # Sizes in priority order.
     SIZES = OrderedDict(
@@ -1006,12 +1130,12 @@ class LastFM(RemoteArtSource):
 
     API_URL = "https://ws.audioscrobbler.com/2.0"
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.key = (self._config["lastfm_key"].get(),)
 
     @staticmethod
-    def add_default_config(config):
+    def add_default_config(config: confuse.ConfigView) -> None:
         config.add(
             {
                 "lastfm_key": None,
@@ -1020,13 +1144,18 @@ class LastFM(RemoteArtSource):
         config["lastfm_key"].redact = True
 
     @classmethod
-    def available(cls, log, config):
+    def available(cls, log: Logger, config: confuse.ConfigView) -> bool:
         has_key = bool(config["lastfm_key"].get())
         if not has_key:
             log.debug("lastfm: Disabling art source due to missing key")
         return has_key
 
-    def get(self, album, plugin, paths):
+    def get(
+        self,
+        album: Album,
+        plugin: FetchArtPlugin,
+        paths: None | Sequence[bytes],
+    ) -> Iterator[Candidate]:
         if not album.mb_albumid:
             return
 
@@ -1071,19 +1200,18 @@ class LastFM(RemoteArtSource):
                             url=images[size], size=self.SIZES[size]
                         )
         except ValueError:
-            self._log.debug(
-                "lastfm: error loading response: {}".format(response.text)
-            )
+            self._log.debug("lastfm: error loading response: {}", response.text)
             return
 
 
 class Spotify(RemoteArtSource):
     NAME = "Spotify"
+    ID = "spotify"
 
     SPOTIFY_ALBUM_URL = "https://open.spotify.com/album/"
 
     @classmethod
-    def available(cls, log, config):
+    def available(cls, log: Logger, config: confuse.ConfigView) -> bool:
         if not HAS_BEAUTIFUL_SOUP:
             log.debug(
                 "To use Spotify as an album art source, "
@@ -1092,30 +1220,43 @@ class Spotify(RemoteArtSource):
             )
         return HAS_BEAUTIFUL_SOUP
 
-    def get(self, album, plugin, paths):
+    def get(
+        self,
+        album: Album,
+        plugin: FetchArtPlugin,
+        paths: None | Sequence[bytes],
+    ) -> Iterator[Candidate]:
         try:
             url = self.SPOTIFY_ALBUM_URL + album.items().get().spotify_album_id
         except AttributeError:
             self._log.debug("Fetchart: no Spotify album ID found")
             return
+
         try:
             response = requests.get(url, timeout=10)
             response.raise_for_status()
         except requests.RequestException as e:
-            self._log.debug("Error: " + str(e))
+            self._log.debug("Error: {!s}", e)
             return
+
         try:
             html = response.text
             soup = BeautifulSoup(html, "html.parser")
-            image_url = soup.find("meta", attrs={"property": "og:image"})[
-                "content"
-            ]
-            yield self._candidate(url=image_url, match=Candidate.MATCH_EXACT)
         except ValueError:
             self._log.debug(
-                "Spotify: error loading response: {}".format(response.text)
+                "Spotify: error loading response: {}", response.text
             )
             return
+
+        tag = soup.find("meta", attrs={"property": "og:image"})
+        if tag is None or not isinstance(tag, Tag):
+            self._log.debug(
+                "Spotify: Unexpected response, og:image tag missing"
+            )
+            return
+
+        image_url = tag["content"]
+        yield self._candidate(url=image_url, match=MetadataMatch.EXACT)
 
 
 class CoverArtUrl(RemoteArtSource):
@@ -1125,8 +1266,14 @@ class CoverArtUrl(RemoteArtSource):
     # use that URL to fetch the image.
 
     NAME = "Cover Art URL"
+    ID = "cover_art_url"
 
-    def get(self, album, plugin, paths):
+    def get(
+        self,
+        album: Album,
+        plugin: FetchArtPlugin,
+        paths: None | Sequence[bytes],
+    ) -> Iterator[Candidate]:
         image_url = None
         try:
             # look for cover_art_url on album or first track
@@ -1134,49 +1281,32 @@ class CoverArtUrl(RemoteArtSource):
                 image_url = album.cover_art_url
             else:
                 image_url = album.items().get().cover_art_url
-            self._log.debug(f"Cover art URL {image_url} found for {album}")
+            self._log.debug("Cover art URL {} found for {}", image_url, album)
         except (AttributeError, TypeError):
-            self._log.debug(f"Cover art URL not found for {album}")
+            self._log.debug("Cover art URL not found for {}", album)
             return
         if image_url:
-            yield self._candidate(url=image_url, match=Candidate.MATCH_EXACT)
+            yield self._candidate(url=image_url, match=MetadataMatch.EXACT)
         else:
-            self._log.debug(f"Cover art URL not found for {album}")
+            self._log.debug("Cover art URL not found for {}", album)
             return
 
 
-# Try each source in turn.
-
-# Note that SOURCES_ALL is redundant (and presently unused). However, we keep
-# it around nn order not break plugins that "register" (a.k.a. monkey-patch)
-# their own fetchart sources.
-SOURCES_ALL = [
-    "filesystem",
-    "coverart",
-    "itunes",
-    "amazon",
-    "albumart",
-    "wikipedia",
-    "google",
-    "fanarttv",
-    "lastfm",
-    "spotify",
-]
-
-ART_SOURCES = {
-    "filesystem": FileSystem,
-    "coverart": CoverArtArchive,
-    "itunes": ITunesStore,
-    "albumart": AlbumArtOrg,
-    "amazon": Amazon,
-    "wikipedia": Wikipedia,
-    "google": GoogleImages,
-    "fanarttv": FanartTV,
-    "lastfm": LastFM,
-    "spotify": Spotify,
-    "cover_art_url": CoverArtUrl,
+# All art sources. The order they will be tried in is specified by the config.
+ART_SOURCES: set[Type[ArtSource]] = {
+    FileSystem,
+    CoverArtArchive,
+    ITunesStore,
+    AlbumArtOrg,
+    Amazon,
+    Wikipedia,
+    GoogleImages,
+    FanartTV,
+    LastFM,
+    Spotify,
+    CoverArtUrl,
 }
-SOURCE_NAMES = {v: k for k, v in ART_SOURCES.items()}
+
 
 # PLUGIN LOGIC ###############################################################
 
@@ -1185,12 +1315,12 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
     PAT_PX = r"(0|[1-9][0-9]*)px"
     PAT_PERCENT = r"(100(\.00?)?|[1-9]?[0-9](\.[0-9]{1,2})?)%"
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         # Holds candidates corresponding to downloaded images between
         # fetching them and placing them in the filesystem.
-        self.art_candidates = {}
+        self.art_candidates: dict[ImportTask, Candidate] = {}
 
         self.config.add(
             {
@@ -1216,7 +1346,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                 "cover_format": None,
             }
         )
-        for source in ART_SOURCES.values():
+        for source in ART_SOURCES:
             source.add_default_config(self.config)
 
         self.minwidth = self.config["minwidth"].get(int)
@@ -1237,7 +1367,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         self.margin_px = None
         self.margin_percent = None
         self.deinterlace = self.config["deinterlace"].get(bool)
-        if type(self.enforce_ratio) is str:
+        if isinstance(self.enforce_ratio, str):
             if self.enforce_ratio[-1] == "%":
                 self.margin_percent = float(self.enforce_ratio[:-1]) / 100
             elif self.enforce_ratio[-2:] == "px":
@@ -1262,12 +1392,12 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             self.register_listener("import_task_files", self.assign_art)
 
         available_sources = [
-            (s_name, c)
-            for (s_name, s_cls) in ART_SOURCES.items()
+            (s_cls.ID, c)
+            for s_cls in ART_SOURCES
             if s_cls.available(self._log, self.config)
             for c in s_cls.VALID_MATCHING_CRITERIA
         ]
-        sources = plugins.sanitize_pairs(
+        sources = sanitize_pairs(
             self.config["sources"].as_pairs(default_value="*"),
             available_sources,
         )
@@ -1288,17 +1418,21 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                         others.append((s, c))
                 sources = others + fs
 
+        sources_by_name = {s_cls.ID: s_cls for s_cls in ART_SOURCES}
+
         self.sources = [
-            ART_SOURCES[s](self._log, self.config, match_by=[c])
+            sources_by_name[s](self._log, self.config, match_by=[c])
             for s, c in sources
         ]
 
     @staticmethod
-    def _is_source_file_removal_enabled():
-        return config["import"]["delete"] or config["import"]["move"]
+    def _is_source_file_removal_enabled() -> bool:
+        return config["import"]["delete"].get(bool) or config["import"][
+            "move"
+        ].get(bool)
 
     # Asynchronous; after music is added to the library.
-    def fetch_art(self, session, task):
+    def fetch_art(self, session: ImportSession, task: ImportTask) -> None:
         """Find art for the album being imported."""
         if task.is_album:  # Only fetch art for full albums.
             if task.album.artpath and os.path.isfile(
@@ -1324,22 +1458,24 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             if candidate:
                 self.art_candidates[task] = candidate
 
-    def _set_art(self, album, candidate, delete=False):
+    def _set_art(
+        self, album: Album, candidate: Candidate, delete: bool = False
+    ) -> None:
         album.set_art(candidate.path, delete)
         if self.store_source:
             # store the source of the chosen artwork in a flexible field
             self._log.debug(
                 "Storing art_source for {0.albumartist} - {0.album}", album
             )
-            album.art_source = SOURCE_NAMES[type(candidate.source)]
+            album.art_source = candidate.source_name
         album.store()
 
     # Synchronous; after music files are put in place.
-    def assign_art(self, session, task):
+    def assign_art(self, session: ImportSession, task: ImportTask):
         """Place the discovered art in the filesystem."""
         if task in self.art_candidates:
             candidate = self.art_candidates.pop(task)
-            removal_enabled = FetchArtPlugin._is_source_file_removal_enabled()
+            removal_enabled = self._is_source_file_removal_enabled()
 
             self._set_art(task.album, candidate, not removal_enabled)
 
@@ -1347,7 +1483,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                 task.prune(candidate.path)
 
     # Manual album art fetching.
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         cmd = ui.Subcommand("fetchart", help="download album art")
         cmd.parser.add_option(
             "-f",
@@ -1366,7 +1502,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             help="quiet mode: do not output albums that already have artwork",
         )
 
-        def func(lib, opts, args):
+        def func(lib: Library, opts, args) -> None:
             self.batch_fetch_art(
                 lib, lib.albums(ui.decargs(args)), opts.force, opts.quiet
             )
@@ -1376,7 +1512,12 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
 
     # Utilities converted from functions to methods on logging overhaul
 
-    def art_for_album(self, album, paths, local_only=False):
+    def art_for_album(
+        self,
+        album: Album,
+        paths: None | Sequence[bytes],
+        local_only: bool = False,
+    ) -> None | Candidate:
         """Given an Album object, returns a path to downloaded art for the
         album (or None if no art is found). If `maxwidth`, then images are
         resized to this maximum pixel size. If `quality` then resized images
@@ -1387,22 +1528,24 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         out = None
 
         for source in self.sources:
-            if source.IS_LOCAL or not local_only:
+            if source.LOC == "local" or not local_only:
                 self._log.debug(
-                    "trying source {0} for album {1.albumartist} - {1.album}",
-                    SOURCE_NAMES[type(source)],
+                    "trying source {0.description}"
+                    " for album {1.albumartist} - {1.album}",
+                    source,
                     album,
                 )
                 # URLs might be invalid at this point, or the image may not
                 # fulfill the requirements
                 for candidate in source.get(album, self, paths):
                     source.fetch_image(candidate, self)
-                    if candidate.validate(self):
+                    if candidate.validate(self) != ImageAction.BAD:
                         out = candidate
+                        assert out.path is not None  # help mypy
                         self._log.debug(
-                            "using {0.LOC_STR} image {1}".format(
-                                source, util.displayable_path(out.path)
-                            )
+                            "using {0.LOC} image {1}",
+                            source,
+                            util.displayable_path(out.path),
                         )
                         break
                     # Remove temporary files for invalid candidates.
@@ -1415,7 +1558,13 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
 
         return out
 
-    def batch_fetch_art(self, lib, albums, force, quiet):
+    def batch_fetch_art(
+        self,
+        lib: Library,
+        albums: Iterable[Album],
+        force: bool,
+        quiet: bool,
+    ) -> None:
         """Fetch album art for each of the albums. This implements the manual
         fetchart CLI command.
         """

@@ -24,7 +24,7 @@ import acoustid
 import confuse
 
 from beets import config, plugins, ui, util
-from beets.autotag.hooks import Distance
+from beets.autotag.distance import Distance
 from beetsplug.musicbrainz import MusicBrainzPlugin
 
 API_KEY = "1vOwZtEn"
@@ -200,7 +200,7 @@ class AcoustidPlugin(plugins.BeetsPlugin):
         dist.add_expr("track_id", info.track_id not in recording_ids)
         return dist
 
-    def candidates(self, items, artist, album, va_likely, extra_tags=None):
+    def candidates(self, items, artist, album, va_likely):
         albums = []
         for relid in prefix(_all_releases(items), MAX_RELEASES):
             album = self.mb.album_for_id(relid)

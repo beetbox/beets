@@ -1,11 +1,12 @@
 """Tests for the 'the' plugin"""
 
+import unittest
+
 from beets import config
-from beets.test.helper import BeetsTestCase
 from beetsplug.the import FORMAT, PATTERN_A, PATTERN_THE, ThePlugin
 
 
-class ThePluginTest(BeetsTestCase):
+class ThePluginTest(unittest.TestCase):
     def test_unthe_with_default_patterns(self):
         assert ThePlugin().unthe("", PATTERN_THE) == ""
         assert (
