@@ -51,7 +51,7 @@ from dataclasses import dataclass
 from secrets import token_bytes
 from typing import Callable, Dict, List, Optional
 
-import waitress
+import waitress.server
 from flask import Flask, render_template, request
 from jwt import InvalidTokenError
 from werkzeug.exceptions import BadRequest
@@ -350,7 +350,7 @@ class MBSubmitPlugin(BeetsPlugin):
                 port = s.getsockname()[1]
 
         try:
-            self._server = waitress.create_server(
+            self._server = waitress.server.create_server(
                 self.flask_app,
                 host=self.create_release_server_hostname,
                 port=port,

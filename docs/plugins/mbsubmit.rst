@@ -23,7 +23,7 @@ To create new releases on MusicBrainz with this plugin you need to install the
 
 .. code-block:: console
 
-   $ pip install "beets[mbsubmit]"
+   $ poetry install beets --extras mbsubmit
 
 .. _PyJWT: https://pyjwt.readthedocs.io/en/stable/
 
