@@ -43,6 +43,7 @@ from beets.util import (
     normpath,
     syspath,
 )
+from beets.util.units import human_bytes, human_seconds, human_seconds_short
 
 from . import _store_dict
 
@@ -541,8 +542,8 @@ class ChangeRepresentation:
         cur_length0 = item.length if item.length else 0
         new_length0 = track_info.length if track_info.length else 0
         # format into string
-        cur_length = f"({ui.human_seconds_short(cur_length0)})"
-        new_length = f"({ui.human_seconds_short(new_length0)})"
+        cur_length = f"({human_seconds_short(cur_length0)})"
+        new_length = f"({human_seconds_short(new_length0)})"
         # colorize
         lhs_length = ui.colorize(highlight_color, cur_length)
         rhs_length = ui.colorize(highlight_color, new_length)
@@ -706,14 +707,14 @@ class AlbumChange(ChangeRepresentation):
         for track_info in self.match.extra_tracks:
             line = f" ! {track_info.title} (#{self.format_index(track_info)})"
             if track_info.length:
-                line += f" ({ui.human_seconds_short(track_info.length)})"
+                line += f" ({human_seconds_short(track_info.length)})"
             print_(ui.colorize("text_warning", line))
         if self.match.extra_items:
             print_(f"Unmatched tracks ({len(self.match.extra_items)}):")
         for item in self.match.extra_items:
             line = " ! {} (#{})".format(item.title, self.format_index(item))
             if item.length:
-                line += " ({})".format(ui.human_seconds_short(item.length))
+                line += " ({})".format(human_seconds_short(item.length))
             print_(ui.colorize("text_warning", line))
 
 
@@ -795,8 +796,8 @@ def summarize_items(items, singleton):
                 round(int(items[0].samplerate) / 1000, 1), items[0].bitdepth
             )
             summary_parts.append(sample_bits)
-        summary_parts.append(ui.human_seconds_short(total_duration))
-        summary_parts.append(ui.human_bytes(total_filesize))
+        summary_parts.append(human_seconds_short(total_duration))
+        summary_parts.append(human_bytes(total_filesize))
 
     return ", ".join(summary_parts)
 
@@ -1906,7 +1907,7 @@ def show_stats(lib, query, exact):
         if item.album_id:
             albums.add(item.album_id)
 
-    size_str = "" + ui.human_bytes(total_size)
+    size_str = "" + human_bytes(total_size)
     if exact:
         size_str += f" ({total_size} bytes)"
 
@@ -1918,7 +1919,7 @@ Artists: {}
 Albums: {}
 Album artists: {}""".format(
             total_items,
-            ui.human_seconds(total_time),
+            human_seconds(total_time),
             f" ({total_time:.2f} seconds)" if exact else "",
             "Total size" if exact else "Approximate total size",
             size_str,
