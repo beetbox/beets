@@ -1019,19 +1019,6 @@ def case_sensitive(path: bytes) -> bool:
         return not os.path.samefile(lower_sys, upper_sys)
 
 
-def raw_seconds_short(string: str) -> float:
-    """Formats a human-readable M:SS string as a float (number of seconds).
-
-    Raises ValueError if the conversion cannot take place due to `string` not
-    being in the right format.
-    """
-    match = re.match(r"^(\d+):([0-5]\d)$", string)
-    if not match:
-        raise ValueError("String not in M:SS format")
-    minutes, seconds = map(int, match.groups())
-    return float(minutes * 60 + seconds)
-
-
 def asciify_path(path: str, sep_replace: str) -> str:
     """Decodes all unicode characters in a path into ASCII equivalents.
 

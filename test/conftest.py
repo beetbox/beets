@@ -1,6 +1,9 @@
+import inspect
 import os
 
 import pytest
+
+from beets.dbcore.query import Query
 
 
 def skip_marked_items(items: list[pytest.Item], marker_name: str, reason: str):
@@ -21,3 +24,20 @@ def pytest_collection_modifyitems(
         skip_marked_items(
             items, "on_lyrics_update", "No change in lyrics source code"
         )
+
+
+def pytest_make_parametrize_id(config, val, argname):
+    """Generate readable test identifiers for pytest parametrized tests.
+
+    Provides custom string representations for:
+    - Query classes/instances: use class name
+    - Lambda functions: show abbreviated source
+    - Other values: use standard repr()
+    """
+    if inspect.isclass(val) and issubclass(val, Query):
+        return val.__name__
+
+    if inspect.isfunction(val) and val.__name__ == "<lambda>":
+        return inspect.getsource(val).split("lambda")[-1][:30]
+
+    return repr(val)
