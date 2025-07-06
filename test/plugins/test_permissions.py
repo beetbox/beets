@@ -5,7 +5,12 @@ import platform
 from unittest.mock import Mock, patch
 
 from beets.test._common import touch
-from beets.test.helper import AsIsImporterMixin, ImportTestCase, PluginMixin
+from beets.test.helper import (
+    AsIsImporterMixin,
+    ImportTestCase,
+    PluginMixin,
+    is_wsl_and_ntfs,
+)
 from beets.util import displayable_path
 from beetsplug.permissions import (
     check_permissions,
@@ -36,6 +41,8 @@ class PermissionsPluginTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
     def do_thing(self, expect_success):
         if platform.system() == "Windows":
             self.skipTest("permissions not available on Windows")
+        if is_wsl_and_ntfs(os.getcwd()):  # WSL on NTFS does not support chmod
+            self.skipTest("permissons not available NTFS under WSL")
 
         def get_stat(v):
             return (

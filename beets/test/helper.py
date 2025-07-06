@@ -934,3 +934,46 @@ class CleanupModulesMixin:
         """Remove files created by the plugin."""
         for module in cls.modules:
             clean_module_tempdir(module)
+
+
+# Added to try and support testing in WSL on NTFS filesystems
+def is_wsl():
+    try:
+        with open("/proc/version", "r") as f:
+            version_info = f.read()
+        return "Microsoft" in version_info or "WSL" in version_info
+    except FileNotFoundError:
+        return False
+
+
+def is_path_on_ntfs(path):
+    """
+    Determine if the given path is on an NTFS filesystem in WSL.
+    """
+    path = os.path.abspath(path)
+    fs_type = None
+    max_len = 0
+
+    try:
+        with open("/proc/mounts", "r") as mounts:
+            for line in mounts:
+                parts = line.split()
+                if len(parts) >= 3:
+                    mount = parts[1]
+                    fstype = parts[2]
+                    if path.startswith(mount) and len(mount) > max_len:
+                        fs_type = fstype
+                        max_len = len(mount)
+    except Exception as e:
+        print(f"Error reading /proc/mounts: {e}")
+        return False
+
+    # If we finished the loop and fs_type is still None, no match was found.
+    if fs_type is None:
+        return False
+
+    return fs_type.lower() == "9p" or fs_type.lower() == "drvfs"
+
+
+def is_wsl_and_ntfs(path):
+    return is_wsl() and is_path_on_ntfs(path)
