@@ -12,8 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Allows inline path template customization code in the config file.
-"""
+"""Allows inline path template customization code in the config file."""
 
 import itertools
 import traceback
@@ -29,7 +28,7 @@ class InlineError(Exception):
 
     def __init__(self, code, exc):
         super().__init__(
-            ("error in inline path field code:\n" "%s\n%s: %s")
+            ("error in inline path field code:\n%s\n%s: %s")
             % (code, type(exc).__name__, str(exc))
         )
 
@@ -88,7 +87,7 @@ class InlinePlugin(BeetsPlugin):
                 func = _compile_func(python_code)
             except SyntaxError:
                 self._log.error(
-                    "syntax error in inline field definition:\n" "{0}",
+                    "syntax error in inline field definition:\n{0}",
                     traceback.format_exc(),
                 )
                 return

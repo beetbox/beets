@@ -12,8 +12,8 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Converts tracks or albums to external directory
-"""
+"""Converts tracks or albums to external directory"""
+
 import logging
 import os
 import shlex
@@ -22,12 +22,13 @@ import tempfile
 import threading
 from string import Template
 
+import mediafile
 from confuse import ConfigTypeError, Optional
 
 from beets import art, config, plugins, ui, util
 from beets.library import Item, parse_query_string
 from beets.plugins import BeetsPlugin
-from beets.util import arg_encoding, par_map
+from beets.util import par_map
 from beets.util.artresizer import ArtResizer
 from beets.util.m3u import M3UFile
 
@@ -85,18 +86,23 @@ def get_format(fmt=None):
     return (command.encode("utf-8"), extension.encode("utf-8"))
 
 
+def in_no_convert(item: Item) -> bool:
+    no_convert_query = config["convert"]["no_convert"].as_str()
+
+    if no_convert_query:
+        query, _ = parse_query_string(no_convert_query, Item)
+        return query.match(item)
+    else:
+        return False
+
+
 def should_transcode(item, fmt):
     """Determine whether the item should be transcoded as part of
     conversion (i.e., its bitrate is high or it has the wrong format).
     """
-    no_convert_queries = config["convert"]["no_convert"].as_str_seq()
-    if no_convert_queries:
-        for query_string in no_convert_queries:
-            query, _ = parse_query_string(query_string, Item)
-            if query.match(item):
-                return False
-    if config["convert"]["never_convert_lossy_files"] and not (
-        item.format.lower() in LOSSLESS_FORMATS
+    if in_no_convert(item) or (
+        config["convert"]["never_convert_lossy_files"]
+        and item.format.lower() not in LOSSLESS_FORMATS
     ):
         return False
     maxbr = config["convert"]["max_bitrate"].get(Optional(int))
@@ -278,7 +284,7 @@ class ConvertPlugin(BeetsPlugin):
         if not quiet and not pretend:
             self._log.info("Encoding {0}", util.displayable_path(source))
 
-        command = command.decode(arg_encoding(), "surrogateescape")
+        command = os.fsdecode(command)
         source = os.fsdecode(source)
         dest = os.fsdecode(dest)
 
@@ -292,7 +298,7 @@ class ConvertPlugin(BeetsPlugin):
                     "dest": dest,
                 }
             )
-            encode_cmd.append(args[i].encode(util.arg_encoding()))
+            encode_cmd.append(os.fsdecode(args[i]))
 
         if pretend:
             self._log.info("{0}", " ".join(ui.decargs(args)))
@@ -345,6 +351,15 @@ class ConvertPlugin(BeetsPlugin):
         while True:
             item = yield (item, original, converted)
             dest = item.destination(basedir=dest_dir, path_formats=path_formats)
+
+            # Ensure that desired item is readable before processing it. Needed
+            # to avoid any side-effect of the conversion (linking, keep_new,
+            # refresh) if we already know that it will fail.
+            try:
+                mediafile.MediaFile(util.syspath(item.path))
+            except mediafile.UnreadableFileError as exc:
+                self._log.error("Could not open file to convert: {0}", exc)
+                continue
 
             # When keeping the new file in the library, we first move the
             # current (pristine) file to the destination. We'll then copy it
@@ -609,13 +624,7 @@ class ConvertPlugin(BeetsPlugin):
             # strings we get from item.destination to bytes.
             items_paths = [
                 os.path.relpath(
-                    util.bytestring_path(
-                        item.destination(
-                            basedir=dest,
-                            path_formats=path_formats,
-                            fragment=False,
-                        )
-                    ),
+                    item.destination(basedir=dest, path_formats=path_formats),
                     pl_dir,
                 )
                 for item in items

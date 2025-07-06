@@ -12,15 +12,14 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-""" Clears tag fields in media files."""
-
+"""Clears tag fields in media files."""
 
 import re
 
 import confuse
 from mediafile import MediaFile
 
-from beets.importer import action
+from beets.importer import Action
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, decargs, input_yn
 
@@ -94,7 +93,7 @@ class ZeroPlugin(BeetsPlugin):
             self._log.error("invalid field: {0}", field)
         elif field in ("id", "path", "album_id"):
             self._log.warning(
-                "field '{0}' ignored, zeroing " "it would be dangerous", field
+                "field '{0}' ignored, zeroing it would be dangerous", field
             )
         else:
             try:
@@ -106,7 +105,7 @@ class ZeroPlugin(BeetsPlugin):
                 self.fields_to_progs[field] = []
 
     def import_task_choice_event(self, session, task):
-        if task.choice_flag == action.ASIS and not self.warned:
+        if task.choice_flag == Action.ASIS and not self.warned:
             self._log.warning('cannot zero in "as-is" mode')
             self.warned = True
         # TODO request write in as-is mode

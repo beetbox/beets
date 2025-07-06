@@ -12,8 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""List duplicate tracks or albums.
-"""
+"""List duplicate tracks or albums."""
 
 import os
 import shlex
@@ -54,6 +53,7 @@ class DuplicatesPlugin(BeetsPlugin):
                 "tiebreak": {},
                 "strict": False,
                 "tag": "",
+                "remove": False,
             }
         )
 
@@ -132,6 +132,13 @@ class DuplicatesPlugin(BeetsPlugin):
             action="store",
             help="tag matched items with 'k=v' attribute",
         )
+        self._command.parser.add_option(
+            "-r",
+            "--remove",
+            dest="remove",
+            action="store_true",
+            help="remove items from library",
+        )
         self._command.parser.add_all_common_options()
 
     def commands(self):
@@ -142,6 +149,7 @@ class DuplicatesPlugin(BeetsPlugin):
             copy = bytestring_path(self.config["copy"].as_str())
             count = self.config["count"].get(bool)
             delete = self.config["delete"].get(bool)
+            remove = self.config["remove"].get(bool)
             fmt = self.config["format"].get(str)
             full = self.config["full"].get(bool)
             keys = self.config["keys"].as_str_seq()
@@ -197,6 +205,7 @@ class DuplicatesPlugin(BeetsPlugin):
                             copy=copy,
                             move=move,
                             delete=delete,
+                            remove=remove,
                             tag=tag,
                             fmt=fmt.format(obj_count),
                         )
@@ -205,7 +214,14 @@ class DuplicatesPlugin(BeetsPlugin):
         return [self._command]
 
     def _process_item(
-        self, item, copy=False, move=False, delete=False, tag=False, fmt=""
+        self,
+        item,
+        copy=False,
+        move=False,
+        delete=False,
+        tag=False,
+        fmt="",
+        remove=False,
     ):
         """Process Item `item`."""
         print_(format(item, fmt))
@@ -217,6 +233,8 @@ class DuplicatesPlugin(BeetsPlugin):
             item.store()
         if delete:
             item.remove(delete=True)
+        elif remove:
+            item.remove(delete=False)
         if tag:
             try:
                 k, v = tag.split("=")
@@ -237,7 +255,7 @@ class DuplicatesPlugin(BeetsPlugin):
         checksum = getattr(item, key, False)
         if not checksum:
             self._log.debug(
-                "key {0} on item {1} not cached:" "computing checksum",
+                "key {0} on item {1} not cached:computing checksum",
                 key,
                 displayable_path(item.path),
             )
@@ -256,7 +274,7 @@ class DuplicatesPlugin(BeetsPlugin):
                 )
         else:
             self._log.debug(
-                "key {0} on item {1} cached:" "not computing checksum",
+                "key {0} on item {1} cached:not computing checksum",
                 key,
                 displayable_path(item.path),
             )
@@ -276,13 +294,13 @@ class DuplicatesPlugin(BeetsPlugin):
             values = [v for v in values if v not in (None, "")]
             if strict and len(values) < len(keys):
                 self._log.debug(
-                    "some keys {0} on item {1} are null or empty:" " skipping",
+                    "some keys {0} on item {1} are null or empty: skipping",
                     keys,
                     displayable_path(obj.path),
                 )
             elif not strict and not len(values):
                 self._log.debug(
-                    "all keys {0} on item {1} are null or empty:" " skipping",
+                    "all keys {0} on item {1} are null or empty: skipping",
                     keys,
                     displayable_path(obj.path),
                 )
@@ -304,7 +322,9 @@ class DuplicatesPlugin(BeetsPlugin):
         kind = "items" if all(isinstance(o, Item) for o in objs) else "albums"
 
         if tiebreak and kind in tiebreak.keys():
-            key = lambda x: tuple(getattr(x, k) for k in tiebreak[kind])
+
+            def key(x):
+                return tuple(getattr(x, k) for k in tiebreak[kind])
         else:
             if kind == "items":
 
@@ -317,9 +337,13 @@ class DuplicatesPlugin(BeetsPlugin):
                     )
 
                 fields = Item.all_keys()
-                key = lambda x: sum(1 for f in fields if truthy(getattr(x, f)))
+
+                def key(x):
+                    return sum(1 for f in fields if truthy(getattr(x, f)))
             else:
-                key = lambda x: len(x.items())
+
+                def key(x):
+                    return len(x.items())
 
         return sorted(objs, key=key, reverse=True)
 

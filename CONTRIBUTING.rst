@@ -87,6 +87,15 @@ Install `poetry`_ and `poethepoet`_ using `pipx`_::
 
     $ pipx install poetry poethepoet
 
+.. admonition:: Check ``tool.pipx-install`` section in ``pyproject.toml`` to
+   see supported versions
+
+  ::
+
+      [tool.pipx-install]
+      poethepoet = ">=0.26"
+      poetry = "<2"
+
 .. _pipx: https://pipx.pypa.io/stable
 .. _pipx-installation-instructions: https://pipx.pypa.io/stable/installation/
 
@@ -118,10 +127,10 @@ command. Instead, you can activate the virtual environment in your shell with::
 
     $ poetry shell
 
-You should see ``(beets-py38)`` prefix in your shell prompt. Now you can run
+You should see ``(beets-py3.9)`` prefix in your shell prompt. Now you can run
 commands directly, for example::
 
-    $ (beets-py38) pytest
+    $ (beets-py3.9) pytest
 
 Additionally, `poethepoet`_ task runner assists us with the most common
 operations. Formatting, linting, testing are defined as ``poe`` tasks in
@@ -145,7 +154,7 @@ Code Contribution Ideas
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 -  We maintain a set of `issues marked as
-   “bite-sized” <https://github.com/beetbox/beets/labels/bitesize>`__.
+   “good first issue” <https://github.com/beetbox/beets/labels/good%20first%20issue>`__.
    These are issues that would serve as a good introduction to the
    codebase. Claim one and start exploring!
 -  Like testing? Our `test
@@ -237,7 +246,7 @@ There are a few coding conventions we use in beets:
    .. code-block:: python
 
        with g.lib.transaction() as tx:
-             rows = tx.query('SELECT DISTINCT "{0}" FROM "{1}" ORDER BY "{2}"'
+             rows = tx.query("SELECT DISTINCT '{0}' FROM '{1}' ORDER BY '{2}'"
                              .format(field, model._table, sort_field))
 
    To fetch Item objects from the database, use lib.items(…) and supply
@@ -248,15 +257,10 @@ There are a few coding conventions we use in beets:
    .. code-block:: python
 
        with lib.transaction() as tx:
-           rows = tx.query('SELECT …')
+           rows = tx.query("SELECT …")
 
    Transaction objects help control concurrent access to the database
    and assist in debugging conflicting accesses.
--  Always use the `future
-   imports <http://docs.python.org/library/__future__.html>`__
-   ``print_function``, ``division``, and ``absolute_import``, but *not*
-   ``unicode_literals``. These help keep your code modern and will help
-   in the eventual move to Python 3.
 -  ``str.format()`` should be used instead of the ``%`` operator
 -  Never ``print`` informational messages; use the
    `logging <http://docs.python.org/library/logging.html>`__ module
@@ -274,14 +278,13 @@ There are a few coding conventions we use in beets:
 Style
 -----
 
-We follow `black`_ formatting and `google's docstring format`_.
+We use `ruff`_ to format and lint the codebase.
 
-Use ``poe check-format`` and ``poe lint`` to check your code for style and
+Run ``poe check-format`` and ``poe lint`` to check your code for style and
 linting errors. Running ``poe format`` will automatically format your code
 according to the specifications required by the project.
 
-.. _black: https://black.readthedocs.io/en/stable/
-.. _google's docstring format: https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings
+.. _ruff: https://docs.astral.sh/ruff/
 
 Handling Paths
 --------------
@@ -345,10 +348,10 @@ environment variable ``SKIP_SLOW_TESTS``, for example::
 Coverage
 ^^^^^^^^
 
-Coverage is measured automatically when running the tests. If you find it takes
-a while to calculate, disable it::
+The ``test`` command does not include coverage as it slows down testing. In
+order to measure it, use the ``test-with-coverage`` task
 
-    $ poe test --no-cov
+    $ poe test-with-coverage [pytest options]
 
 You are welcome to explore coverage by opening the HTML report in
 ``.reports/html/index.html``.
@@ -379,28 +382,24 @@ Writing Tests
 Writing tests is done by adding or modifying files in folder `test`_.
 Take a look at
 `https://github.com/beetbox/beets/blob/master/test/test_template.py#L224`_
-to get a basic view on how tests are written. We currently allow writing
-tests with either `unittest`_ or `pytest`_.
+to get a basic view on how tests are written. Since we are currently migrating
+the tests from `unittest`_ to `pytest`_, new tests should be written using
+`pytest`_. Contributions migrating existing tests are welcome!
 
-Any tests that involve sending out network traffic e.g. an external API
-call, should be skipped normally and run under our weekly `integration
-test`_ suite. These tests can be useful in detecting external changes
-that would affect ``beets``. In order to do this, simply add the
-following snippet before the applicable test case:
+External API requests under test should be mocked with `requests-mock`_,
+However, we still want to know whether external APIs are up and that they
+return expected responses, therefore we test them weekly with our `integration
+test`_ suite.
+
+In order to add such a test, mark your test with the ``integration_test`` marker
 
 .. code-block:: python
 
-    @unittest.skipUnless(
-        os.environ.get('INTEGRATION_TEST', '0') == '1',
-        'integration testing not enabled')
+  @pytest.mark.integration_test
+  def test_external_api_call():
+      ...
 
-If you do this, it is also advised to create a similar test that 'mocks'
-the network call and can be run under normal circumstances by our CI and
-others. See `unittest.mock`_ for more info.
-
--  **AVOID** using the ``start()`` and ``stop()`` methods of
-   ``mock.patch``, as they require manual cleanup. Use the annotation or
-   context manager forms instead.
+This way, the test will be run only in the integration test suite.
 
 .. _Codecov: https://codecov.io/github/beetbox/beets
 .. _pytest-random: https://github.com/klrmn/pytest-random
@@ -410,6 +409,6 @@ others. See `unittest.mock`_ for more info.
 .. _`https://github.com/beetbox/beets/blob/master/test/test_template.py#L224`: https://github.com/beetbox/beets/blob/master/test/test_template.py#L224
 .. _unittest: https://docs.python.org/3/library/unittest.html
 .. _integration test: https://github.com/beetbox/beets/actions?query=workflow%3A%22integration+tests%22
-.. _unittest.mock: https://docs.python.org/3/library/unittest.mock.html
+.. _requests-mock: https://requests-mock.readthedocs.io/en/latest/response.html
 .. _documentation: https://beets.readthedocs.io/en/stable/
 .. _vim: https://www.vim.org/

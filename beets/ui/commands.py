@@ -16,13 +16,13 @@
 interface.
 """
 
-
 import os
 import re
-from collections import Counter, namedtuple
+from collections import Counter
+from collections.abc import Sequence
 from itertools import chain
 from platform import python_version
-from typing import Sequence
+from typing import Any, NamedTuple
 
 import beets
 from beets import autotag, config, importer, library, logging, plugins, ui, util
@@ -47,7 +47,6 @@ from beets.util import (
 from . import _store_dict
 
 VARIOUS_ARTISTS = "Various Artists"
-PromptChoice = namedtuple("PromptChoice", ["short", "long", "callback"])
 
 # Global logger.
 log = logging.getLogger("beets")
@@ -364,7 +363,7 @@ class ChangeRepresentation:
             self.indent_header + f"Match ({dist_string(self.match.distance)}):"
         )
 
-        if self.match.info.get("album"):
+        if isinstance(self.match.info, autotag.hooks.AlbumInfo):
             # Matching an album - print that
             artist_album_str = (
                 f"{self.match.info.artist}" + f" - {self.match.info.album}"
@@ -664,8 +663,8 @@ class AlbumChange(ChangeRepresentation):
         suggests for them.
         """
         # Tracks.
-        # match is an AlbumMatch named tuple, mapping is a dict
-        # Sort the pairs by the track_info index (at index 1 of the namedtuple)
+        # match is an AlbumMatch NamedTuple, mapping is a dict
+        # Sort the pairs by the track_info index (at index 1 of the NamedTuple)
         pairs = list(self.match.mapping.items())
         pairs.sort(key=lambda item_and_track_info: item_and_track_info[1].index)
         # Build up LHS and RHS for track difference display. The `lines` list
@@ -812,12 +811,12 @@ def _summary_judgment(rec):
 
     if config["import"]["quiet"]:
         if rec == Recommendation.strong:
-            return importer.action.APPLY
+            return importer.Action.APPLY
         else:
             action = config["import"]["quiet_fallback"].as_choice(
                 {
-                    "skip": importer.action.SKIP,
-                    "asis": importer.action.ASIS,
+                    "skip": importer.Action.SKIP,
+                    "asis": importer.Action.ASIS,
                 }
             )
     elif config["import"]["timid"]:
@@ -825,19 +824,25 @@ def _summary_judgment(rec):
     elif rec == Recommendation.none:
         action = config["import"]["none_rec_action"].as_choice(
             {
-                "skip": importer.action.SKIP,
-                "asis": importer.action.ASIS,
+                "skip": importer.Action.SKIP,
+                "asis": importer.Action.ASIS,
                 "ask": None,
             }
         )
     else:
         return None
 
-    if action == importer.action.SKIP:
+    if action == importer.Action.SKIP:
         print_("Skipping.")
-    elif action == importer.action.ASIS:
+    elif action == importer.Action.ASIS:
         print_("Importing as-is.")
     return action
+
+
+class PromptChoice(NamedTuple):
+    short: str
+    long: str
+    callback: Any
 
 
 def choose_candidate(
@@ -1022,7 +1027,7 @@ def manual_id(session, task):
 
 def abort_action(session, task):
     """A prompt choice callback that aborts the importer."""
-    raise importer.ImportAbort()
+    raise importer.ImportAbortError()
 
 
 class TerminalImportSession(importer.ImportSession):
@@ -1052,14 +1057,14 @@ class TerminalImportSession(importer.ImportSession):
         if len(actions) == 1:
             return actions[0]
         elif len(actions) > 1:
-            raise plugins.PluginConflictException(
+            raise plugins.PluginConflictError(
                 "Only one handler for `import_task_before_choice` may return "
                 "an action."
             )
 
         # Take immediate action if appropriate.
         action = _summary_judgment(task.rec)
-        if action == importer.action.APPLY:
+        if action == importer.Action.APPLY:
             match = task.candidates[0]
             show_change(task.cur_artist, task.cur_album, match)
             return match
@@ -1069,7 +1074,7 @@ class TerminalImportSession(importer.ImportSession):
         # Loop until we have a choice.
         while True:
             # Ask for a choice from the user. The result of
-            # `choose_candidate` may be an `importer.action`, an
+            # `choose_candidate` may be an `importer.Action`, an
             # `AlbumMatch` object for a specific selection, or a
             # `PromptChoice`.
             choices = self._get_choices(task)
@@ -1084,7 +1089,7 @@ class TerminalImportSession(importer.ImportSession):
             )
 
             # Basic choices that require no more action here.
-            if choice in (importer.action.SKIP, importer.action.ASIS):
+            if choice in (importer.Action.SKIP, importer.Action.ASIS):
                 # Pass selection to main control flow.
                 return choice
 
@@ -1092,7 +1097,7 @@ class TerminalImportSession(importer.ImportSession):
             # function.
             elif choice in choices:
                 post_choice = choice.callback(self, task)
-                if isinstance(post_choice, importer.action):
+                if isinstance(post_choice, importer.Action):
                     return post_choice
                 elif isinstance(post_choice, autotag.Proposal):
                     # Use the new candidates and continue around the loop.
@@ -1116,7 +1121,7 @@ class TerminalImportSession(importer.ImportSession):
 
         # Take immediate action if appropriate.
         action = _summary_judgment(task.rec)
-        if action == importer.action.APPLY:
+        if action == importer.Action.APPLY:
             match = candidates[0]
             show_item_change(task.item, match)
             return match
@@ -1130,12 +1135,12 @@ class TerminalImportSession(importer.ImportSession):
                 candidates, True, rec, item=task.item, choices=choices
             )
 
-            if choice in (importer.action.SKIP, importer.action.ASIS):
+            if choice in (importer.Action.SKIP, importer.Action.ASIS):
                 return choice
 
             elif choice in choices:
                 post_choice = choice.callback(self, task)
-                if isinstance(post_choice, importer.action):
+                if isinstance(post_choice, importer.Action):
                     return post_choice
                 elif isinstance(post_choice, autotag.Proposal):
                     candidates = post_choice.candidates
@@ -1198,7 +1203,7 @@ class TerminalImportSession(importer.ImportSession):
 
         if sel == "s":
             # Skip new.
-            task.set_choice(importer.action.SKIP)
+            task.set_choice(importer.Action.SKIP)
         elif sel == "k":
             # Keep both. Do nothing; leave the choice intact.
             pass
@@ -1234,16 +1239,16 @@ class TerminalImportSession(importer.ImportSession):
         """
         # Standard, built-in choices.
         choices = [
-            PromptChoice("s", "Skip", lambda s, t: importer.action.SKIP),
-            PromptChoice("u", "Use as-is", lambda s, t: importer.action.ASIS),
+            PromptChoice("s", "Skip", lambda s, t: importer.Action.SKIP),
+            PromptChoice("u", "Use as-is", lambda s, t: importer.Action.ASIS),
         ]
         if task.is_album:
             choices += [
                 PromptChoice(
-                    "t", "as Tracks", lambda s, t: importer.action.TRACKS
+                    "t", "as Tracks", lambda s, t: importer.Action.TRACKS
                 ),
                 PromptChoice(
-                    "g", "Group albums", lambda s, t: importer.action.ALBUMS
+                    "g", "Group albums", lambda s, t: importer.Action.ALBUMS
                 ),
             ]
         choices += [
@@ -1312,8 +1317,7 @@ def import_files(lib, paths, query):
             loghandler = logging.FileHandler(logpath, encoding="utf-8")
         except OSError:
             raise ui.UserError(
-                "could not open log file for writing: "
-                "{}".format(displayable_path(logpath))
+                f"Could not open log file for writing: {displayable_path(logpath)}"
             )
     else:
         loghandler = None
@@ -1355,13 +1359,8 @@ def import_func(lib, opts, args):
         # what we need. On Python 3, we need to undo the "helpful"
         # conversion to Unicode strings to get the real bytestring
         # filename.
-        paths = [
-            p.encode(util.arg_encoding(), "surrogateescape") for p in paths
-        ]
-        paths_from_logfiles = [
-            p.encode(util.arg_encoding(), "surrogateescape")
-            for p in paths_from_logfiles
-        ]
+        paths = [os.fsencode(p) for p in paths]
+        paths_from_logfiles = [os.fsencode(p) for p in paths_from_logfiles]
 
         # Check the user-specified directories.
         for path in paths:
@@ -1600,9 +1599,7 @@ def list_func(lib, opts, args):
 
 
 list_cmd = ui.Subcommand("list", help="query the library", aliases=("ls",))
-list_cmd.parser.usage += (
-    "\n" "Example: %prog -f '$album: $title' artist:beatles"
-)
+list_cmd.parser.usage += "\nExample: %prog -f '$album: $title' artist:beatles"
 list_cmd.parser.add_all_common_options()
 list_cmd.func = list_func
 default_commands.append(list_cmd)

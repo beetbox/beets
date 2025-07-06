@@ -17,6 +17,7 @@ interface. To invoke the CLI, just call beets.ui.main(). The actual
 CLI commands are implemented in the ui.commands module.
 """
 
+from __future__ import annotations
 
 import errno
 import optparse
@@ -28,16 +29,18 @@ import sys
 import textwrap
 import traceback
 from difflib import SequenceMatcher
-from typing import Any, Callable, List
+from typing import TYPE_CHECKING, Any, Callable
 
 import confuse
 
 from beets import config, library, logging, plugins, util
-from beets.autotag import mb
 from beets.dbcore import db
 from beets.dbcore import query as db_query
 from beets.util import as_string
 from beets.util.functemplate import template
+
+if TYPE_CHECKING:
+    from types import ModuleType
 
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
 if sys.platform == "win32":
@@ -318,7 +321,7 @@ def input_options(
 
         # Wrap the query text.
         # Start prompt with U+279C: Heavy Round-Tipped Rightwards Arrow
-        prompt = colorize("action", "\u279C ")
+        prompt = colorize("action", "\u279c ")
         line_length = 0
         for i, (part, length) in enumerate(
             zip(prompt_parts, prompt_part_lengths)
@@ -387,7 +390,7 @@ def input_yn(prompt, require=False):
     "yes" unless `require` is `True`, in which case there is no default.
     """
     # Start prompt with U+279C: Heavy Round-Tipped Rightwards Arrow
-    yesno = colorize("action", "\u279C ") + colorize(
+    yesno = colorize("action", "\u279c ") + colorize(
         "action_description", "Enter Y or N:"
     )
     sel = input_options(("y", "n"), require, prompt, yesno)
@@ -571,7 +574,7 @@ COLOR_NAMES = [
     "text_diff_removed",
     "text_diff_changed",
 ]
-COLORS = None
+COLORS: dict[str, list[str]] | None = None
 
 
 def _colorize(color, text):
@@ -1451,7 +1454,7 @@ class Subcommand:
     invoked by a SubcommandOptionParser.
     """
 
-    func: Callable[[library.Library, optparse.Values, List[str]], Any]
+    func: Callable[[library.Library, optparse.Values, list[str]], Any]
 
     def __init__(self, name, parser=None, help="", aliases=(), hide=False):
         """Creates a new subcommand. name is the primary way to invoke
@@ -1497,9 +1500,7 @@ class SubcommandsOptionParser(CommonOptionsParser):
         """
         # A more helpful default usage.
         if "usage" not in kwargs:
-            kwargs[
-                "usage"
-            ] = """
+            kwargs["usage"] = """
   %prog COMMAND [ARGS...]
   %prog help COMMAND"""
         kwargs["add_help_option"] = False
@@ -1626,7 +1627,9 @@ optparse.Option.ALWAYS_TYPED_ACTIONS += ("callback",)
 # The main entry point and bootstrapping.
 
 
-def _load_plugins(options, config):
+def _load_plugins(
+    options: optparse.Values, config: confuse.LazyConfig
+) -> ModuleType:
     """Load the plugins specified on the command line or in the configuration."""
     paths = config["pluginpath"].as_str_seq(split=False)
     paths = [util.normpath(p) for p in paths]
@@ -1651,6 +1654,11 @@ def _load_plugins(options, config):
         )
     else:
         plugin_list = config["plugins"].as_str_seq()
+        # TODO: Remove in v2.4 or v3
+        if "musicbrainz" in config and config["musicbrainz"].get().get(
+            "enabled"
+        ):
+            plugin_list.append("musicbrainz")
 
     # Exclude any plugins that were specified on the command line
     if options.exclude is not None:
@@ -1667,9 +1675,6 @@ def _setup(options, lib=None):
 
     Returns a list of subcommands, a list of plugins, and a library instance.
     """
-    # Configure the MusicBrainz API.
-    mb.configure()
-
     config = _configure(options)
 
     plugins = _load_plugins(options, config)
@@ -1771,7 +1776,7 @@ def _open_library(config):
             )
         )
     log.debug(
-        "library database: {0}\n" "library directory: {1}",
+        "library database: {0}\nlibrary directory: {1}",
         util.displayable_path(lib.path),
         util.displayable_path(lib.directory),
     )
@@ -1861,13 +1866,21 @@ def main(args=None):
     """Run the main command-line interface for beets. Includes top-level
     exception handlers that print friendly error messages.
     """
+    if "AppData\\Local\\Microsoft\\WindowsApps" in sys.exec_prefix:
+        log.error(
+            "error: beets is unable to use the Microsoft Store version of "
+            "Python. Please install Python from https://python.org.\n"
+            "error: More details can be found here "
+            "https://beets.readthedocs.io/en/stable/guides/main.html"
+        )
+        sys.exit(1)
     try:
         _raw_main(args)
     except UserError as exc:
         message = exc.args[0] if exc.args else None
         log.error("error: {0}", message)
         sys.exit(1)
-    except util.HumanReadableException as exc:
+    except util.HumanReadableError as exc:
         exc.log(log)
         sys.exit(1)
     except library.FileOperationError as exc:

@@ -18,10 +18,9 @@ import jwt
 
 from beets.test._common import item
 from beets.test.helper import (
-    AutotagStub,
-    ImportHelper,
-    TerminalImportSessionSetup,
-    TestHelper,
+    AutotagImportTestCase,
+    PluginMixin,
+    TerminalImportMixin,
     capture_stdout,
     control_stdin,
 )
@@ -29,24 +28,17 @@ from beetsplug.mbsubmit import CreateReleaseTask, MBSubmitPlugin
 
 
 class MBSubmitPluginTest(
-    TerminalImportSessionSetup, unittest.TestCase, ImportHelper, TestHelper
+    PluginMixin, TerminalImportMixin, AutotagImportTestCase
 ):
-    def setUp(self):
-        self.setup_beets()
-        self.load_plugins("mbsubmit")
-        self._create_import_dir(2)
-        self._setup_import_session()
-        self.matcher = AutotagStub().install()
+    plugin = "mbsubmit"
 
-    def tearDown(self):
-        self.unload_plugins()
-        self.teardown_beets()
-        self.matcher.restore()
+    def setUp(self):
+        super().setUp()
+        self.prepare_album_for_import(2)
+        self.setup_importer()
 
     def test_print_tracks_output(self):
         """Test the output of the "print tracks" choice."""
-        self.matcher.matching = AutotagStub.BAD
-
         with capture_stdout() as output:
             with control_stdin("\n".join(["p", "s"])):
                 # Print tracks; Skip
@@ -55,15 +47,13 @@ class MBSubmitPluginTest(
         # Manually build the string for comparing the output.
         tracklist = (
             "Create release on musicbrainz? "
-            "01. Tag Title 1 - Tag Artist (0:01)\n"
-            "02. Tag Title 2 - Tag Artist (0:01)"
+            "01. Tag Track 1 - Tag Artist (0:01)\n"
+            "02. Tag Track 2 - Tag Artist (0:01)"
         )
-        self.assertIn(tracklist, output.getvalue())
+        assert tracklist in output.getvalue()
 
     def test_print_tracks_output_as_tracks(self):
         """Test the output of the "print tracks" choice, as singletons."""
-        self.matcher.matching = AutotagStub.BAD
-
         with capture_stdout() as output:
             with control_stdin("\n".join(["t", "s", "p", "s"])):
                 # as Tracks; Skip; Print tracks; Skip
@@ -71,9 +61,9 @@ class MBSubmitPluginTest(
 
         # Manually build the string for comparing the output.
         tracklist = (
-            "Open files with Picard? " "02. Tag Title 2 - Tag Artist (0:01)"
+            "Open files with Picard? 02. Tag Track 2 - Tag Artist (0:01)"
         )
-        self.assertIn(tracklist, output.getvalue())
+        assert tracklist in output.getvalue()
 
     @patch.object(MBSubmitPlugin, "_wait_for_condition", autospec=True)
     def test_create_release(self, wait_for_condition_mock):

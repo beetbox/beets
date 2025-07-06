@@ -12,10 +12,27 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""A namespace package for beets plugins."""
+"""Provides the basic, interface-agnostic workflow for importing and
+autotagging music files.
+"""
 
+from .session import ImportAbortError, ImportSession
+from .tasks import (
+    Action,
+    ArchiveImportTask,
+    ImportTask,
+    SentinelImportTask,
+    SingletonImportTask,
+)
 
-# Make this a namespace package.
-from pkgutil import extend_path
+# Note: Stages are not exposed to the public API
 
-__path__ = extend_path(__path__, __name__)
+__all__ = [
+    "ImportSession",
+    "ImportAbortError",
+    "Action",
+    "ImportTask",
+    "ArchiveImportTask",
+    "SentinelImportTask",
+    "SingletonImportTask",
+]

@@ -1,11 +1,11 @@
 """Updates the Emby Library whenever the beets library is changed.
 
-    emby:
-        host: localhost
-        port: 8096
-        username: user
-        apikey: apikey
-        password: password
+emby:
+    host: localhost
+    port: 8096
+    username: user
+    apikey: apikey
+    password: password
 """
 
 import hashlib
@@ -13,7 +13,6 @@ from urllib.parse import parse_qs, urlencode, urljoin, urlsplit, urlunsplit
 
 import requests
 
-from beets import config
 from beets.plugins import BeetsPlugin
 
 
@@ -143,17 +142,23 @@ def get_user(host, port, username):
 
 class EmbyUpdate(BeetsPlugin):
     def __init__(self):
-        super().__init__()
+        super().__init__("emby")
 
         # Adding defaults.
-        config["emby"].add(
+        self.config.add(
             {
                 "host": "http://localhost",
                 "port": 8096,
-                "apikey": None,
+                "username": None,
                 "password": None,
+                "userid": None,
+                "apikey": None,
             }
         )
+        self.config["username"].redact = True
+        self.config["password"].redact = True
+        self.config["userid"].redact = True
+        self.config["apikey"].redact = True
 
         self.register_listener("database_change", self.listen_for_db_change)
 
@@ -165,12 +170,12 @@ class EmbyUpdate(BeetsPlugin):
         """When the client exists try to send refresh request to Emby."""
         self._log.info("Updating Emby library...")
 
-        host = config["emby"]["host"].get()
-        port = config["emby"]["port"].get()
-        username = config["emby"]["username"].get()
-        password = config["emby"]["password"].get()
-        userid = config["emby"]["userid"].get()
-        token = config["emby"]["apikey"].get()
+        host = self.config["host"].get()
+        port = self.config["port"].get()
+        username = self.config["username"].get()
+        password = self.config["password"].get()
+        userid = self.config["userid"].get()
+        token = self.config["apikey"].get()
 
         # Check if at least a apikey or password is given.
         if not any([password, token]):

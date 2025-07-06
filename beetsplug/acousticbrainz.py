@@ -12,8 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Fetch various AcousticBrainz metadata using MBID.
-"""
+"""Fetch various AcousticBrainz metadata using MBID."""
 
 from collections import defaultdict
 
@@ -287,7 +286,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
                     yield v, subdata[k]
             else:
                 self._log.warning(
-                    "Acousticbrainz did not provide info " "about {}", k
+                    "Acousticbrainz did not provide info about {}", k
                 )
                 self._log.debug(
                     "Data {} could not be mapped to scheme {} "

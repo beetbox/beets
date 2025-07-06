@@ -11,9 +11,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Adds support for ipfs. Requires go-ipfs and a running ipfs daemon
-"""
-
+"""Adds support for ipfs. Requires go-ipfs and a running ipfs daemon"""
 
 import os
 import shutil
@@ -22,7 +20,6 @@ import tempfile
 
 from beets import config, library, ui, util
 from beets.plugins import BeetsPlugin
-from beets.util import syspath
 
 
 class IPFSPlugin(BeetsPlugin):
@@ -195,7 +192,7 @@ class IPFSPlugin(BeetsPlugin):
         # This uses a relative path, hence we cannot use util.syspath(_hash,
         # prefix=True). However, that should be fine since the hash will not
         # exceed MAX_PATH.
-        shutil.rmtree(syspath(_hash, prefix=False))
+        shutil.rmtree(util.syspath(_hash, prefix=False))
 
     def ipfs_publish(self, lib):
         with tempfile.NamedTemporaryFile() as tmp:
@@ -301,9 +298,7 @@ class IPFSPlugin(BeetsPlugin):
                     break
             except AttributeError:
                 pass
-            item_path = os.path.basename(item.path).decode(
-                util._fsencoding(), "ignore"
-            )
+            item_path = os.fsdecode(os.path.basename(item.path))
             # Clear current path from item
             item.path = f"/ipfs/{album.ipfs}/{item_path}"
 

@@ -18,7 +18,6 @@
 
 """Provides a bare-ASCII matching query."""
 
-
 from unidecode import unidecode
 
 from beets import ui
@@ -76,7 +75,7 @@ class BareascPlugin(BeetsPlugin):
             "bareasc", help="unidecode version of beet list command"
         )
         cmd.parser.usage += (
-            "\n" "Example: %prog -f '$album: $title' artist:beatles"
+            "\nExample: %prog -f '$album: $title' artist:beatles"
         )
         cmd.parser.add_all_common_options()
         cmd.func = self.unidecode_list
