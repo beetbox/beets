@@ -108,8 +108,10 @@ class ImportConvertTest(AsIsImporterMixin, ImportHelper, ConvertTestCase):
         item = self.lib.items().get()
         self.assertFileTag(item.path, "convert")
 
-    # FIXME: fails on windows
-    @unittest.skipIf(sys.platform == "win32", "win32")
+    @pytest.mark.skipif(
+        sys.platform == "win32",
+        reason="Windows does not have 'true/false' commands",
+    )
     def test_import_original_on_convert_error(self):
         # `false` exits with non-zero code
         self.config["convert"]["command"] = "false"
