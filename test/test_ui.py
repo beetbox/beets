@@ -1011,8 +1011,13 @@ class ConfigTest(TestPluginTestCase):
     #                      '--config', cli_overwrite_config_path, 'test')
     #        assert config['anoption'].get() == 'cli overwrite'
 
-    # FIXME: fails on windows
-    @unittest.skipIf(sys.platform == "win32", "win32")
+    # FIXME: fails on Windows as library.db is created in %TEMP% dir rather than
+    # the current dir. This may be based on the assumption of "~" exapnding to the
+    # home dir for the user in a command prompt.
+    @pytest.mark.skipif(
+        sys.platform == "win32",
+        reason="Fails as library.db is created in tmp dir.",
+    )
     def test_cli_config_paths_resolve_relative_to_user_dir(self):
         with open(self.cli_config_path, "w") as file:
             file.write("library: beets.db\n")
