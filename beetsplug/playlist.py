@@ -15,14 +15,15 @@
 import os
 import tempfile
 from collections.abc import Sequence
+from pathlib import Path
 
 import beets
 from beets.dbcore.query import BLOB_TYPE, InQuery
 from beets.util import path_as_posix
 
 
-def is_m3u_file(path):
-    return os.path.splitext(path)[1].lower() in {".m3u", ".m3u8"}
+def is_m3u_file(path: str) -> bool:
+    return Path(path).suffix.lower() in {".m3u", ".m3u8"}
 
 
 class PlaylistQuery(InQuery[bytes]):
