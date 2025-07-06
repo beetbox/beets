@@ -76,8 +76,13 @@ class PlayPluginTest(CleanupModulesMixin, PluginTestCase):
 
         self.run_and_assert(open_mock, ["title:aNiceTitle"], "echo other")
 
-    # FIXME: fails on windows
-    @unittest.skipIf(sys.platform == "win32", "win32")
+    # FIXME: fails on Windows
+    # path = b'C:\\Users\\User\\AppData\\Local\\Temp\\tmpe5akhmvo\\libdir\\the
+    # \xc3\xa4rtist\\a nice \xc3\xa4lbum\\01 aNiceTitle.mp3', start = b'/something'
+    # E   ValueError: path is on mount b'C:', start on mount b'E:'
+    @pytest.mark.skipif(
+        sys.platform == "win32", reason="Beets source folder may not be on C:\\"
+    )
     def test_relative_to(self, open_mock):
         self.config["play"]["command"] = "echo"
         self.config["play"]["relative_to"] = "/something"
