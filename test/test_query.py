@@ -373,7 +373,7 @@ class GetTest(DummyDataTestCase):
             dbcore.query.RegexpQuery("year", "199(")
 
 
-class MatchTest(BeetsTestCase):
+class MatchTest(unittest.TestCase):
     def setUp(self):
         super().setUp()
         self.item = _common.item()
@@ -811,7 +811,7 @@ class NoneQueryTest(BeetsTestCase, AssertsMixin):
         self.assertInResult(item, matched)
 
 
-class NotQueryMatchTest(BeetsTestCase):
+class NotQueryMatchTest(unittest.TestCase):
     """Test `query.NotQuery` matching against a single item, using the same
     cases and assertions as on `MatchTest`, plus assertion on the negated
     queries (ie. assert q -> assert not NotQuery(q)).

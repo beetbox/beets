@@ -39,6 +39,9 @@ import beets
 from beets import logging
 from beets.util.id_extractors import extract_release_id
 
+if TYPE_CHECKING:
+    from beets.event_types import EventType
+
 if sys.version_info >= (3, 10):
     from typing import ParamSpec
 else:
@@ -46,11 +49,12 @@ else:
 
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Iterable
 
     from confuse import ConfigView
 
-    from beets.autotag import AlbumInfo, Distance, TrackInfo
+    from beets.autotag import AlbumInfo, TrackInfo
+    from beets.autotag.distance import Distance
     from beets.dbcore import Query
     from beets.dbcore.db import FieldQueryType
     from beets.dbcore.types import Type
@@ -70,7 +74,7 @@ if TYPE_CHECKING:
     P = ParamSpec("P")
     Ret = TypeVar("Ret", bound=Any)
     Listener = Callable[..., None]
-    IterF = Callable[P, Iterator[Ret]]
+    IterF = Callable[P, Iterable[Ret]]
 
 
 PLUGIN_NAMESPACE = "beetsplug"
@@ -221,7 +225,7 @@ class BeetsPlugin:
         """Should return a Distance object to be added to the
         distance for every track comparison.
         """
-        from beets.autotag.hooks import Distance
+        from beets.autotag.distance import Distance
 
         return Distance()
 
@@ -234,33 +238,25 @@ class BeetsPlugin:
         """Should return a Distance object to be added to the
         distance for every album-level comparison.
         """
-        from beets.autotag.hooks import Distance
+        from beets.autotag.distance import Distance
 
         return Distance()
 
     def candidates(
-        self,
-        items: list[Item],
-        artist: str,
-        album: str,
-        va_likely: bool,
-        extra_tags: dict[str, Any] | None = None,
-    ) -> Iterator[AlbumInfo]:
+        self, items: list[Item], artist: str, album: str, va_likely: bool
+    ) -> Iterable[AlbumInfo]:
         """Return :py:class:`AlbumInfo` candidates that match the given album.
 
         :param items: List of items in the album
         :param artist: Album artist
         :param album: Album name
         :param va_likely: Whether the album is likely to be by various artists
-        :param extra_tags: is a an optional dictionary of extra tags to search.
-            Only relevant to :py:class:`MusicBrainzPlugin` autotagger and can be
-            ignored by other plugins
         """
         yield from ()
 
     def item_candidates(
         self, item: Item, artist: str, title: str
-    ) -> Iterator[TrackInfo]:
+    ) -> Iterable[TrackInfo]:
         """Return :py:class:`TrackInfo` candidates that match the given track.
 
         :param item: Track item
@@ -300,7 +296,7 @@ class BeetsPlugin:
     _raw_listeners: dict[str, list[Listener]] | None = None
     listeners: dict[str, list[Listener]] | None = None
 
-    def register_listener(self, event: str, func: Listener) -> None:
+    def register_listener(self, event: "EventType", func: Listener):
         """Add a function as a listener for the specified event."""
         wrapped_func = self._set_log_level_and_params(logging.WARNING, func)
 
@@ -463,7 +459,7 @@ def track_distance(item: Item, info: TrackInfo) -> Distance:
     """Gets the track distance calculated by all loaded plugins.
     Returns a Distance object.
     """
-    from beets.autotag.hooks import Distance
+    from beets.autotag.distance import Distance
 
     dist = Distance()
     for plugin in find_plugins():
@@ -477,7 +473,7 @@ def album_distance(
     mapping: dict[Item, TrackInfo],
 ) -> Distance:
     """Returns the album distance calculated by plugins."""
-    from beets.autotag.hooks import Distance
+    from beets.autotag.distance import Distance
 
     dist = Distance()
     for plugin in find_plugins():
@@ -495,7 +491,7 @@ def notify_info_yielded(event: str) -> Callable[[IterF[P, Ret]], IterF[P, Ret]]:
 
     def decorator(func: IterF[P, Ret]) -> IterF[P, Ret]:
         @wraps(func)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> Iterator[Ret]:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> Iterable[Ret]:
             for v in func(*args, **kwargs):
                 send(event, info=v)
                 yield v
@@ -506,14 +502,14 @@ def notify_info_yielded(event: str) -> Callable[[IterF[P, Ret]], IterF[P, Ret]]:
 
 
 @notify_info_yielded("albuminfo_received")
-def candidates(*args, **kwargs) -> Iterator[AlbumInfo]:
+def candidates(*args, **kwargs) -> Iterable[AlbumInfo]:
     """Return matching album candidates from all plugins."""
     for plugin in find_plugins():
         yield from plugin.candidates(*args, **kwargs)
 
 
 @notify_info_yielded("trackinfo_received")
-def item_candidates(*args, **kwargs) -> Iterator[TrackInfo]:
+def item_candidates(*args, **kwargs) -> Iterable[TrackInfo]:
     """Return matching track candidates from all plugins."""
     for plugin in find_plugins():
         yield from plugin.item_candidates(*args, **kwargs)
@@ -659,73 +655,13 @@ def feat_tokens(for_artist: bool = True) -> str:
     )
 
 
-def sanitize_choices(
-    choices: Sequence[str], choices_all: Sequence[str]
-) -> list[str]:
-    """Clean up a stringlist configuration attribute: keep only choices
-    elements present in choices_all, remove duplicate elements, expand '*'
-    wildcard while keeping original stringlist order.
-    """
-    seen: set[str] = set()
-    others = [x for x in choices_all if x not in choices]
-    res: list[str] = []
-    for s in choices:
-        if s not in seen:
-            if s in list(choices_all):
-                res.append(s)
-            elif s == "*":
-                res.extend(others)
-        seen.add(s)
-    return res
-
-
-def sanitize_pairs(
-    pairs: Sequence[tuple[str, str]], pairs_all: Sequence[tuple[str, str]]
-) -> list[tuple[str, str]]:
-    """Clean up a single-element mapping configuration attribute as returned
-    by Confuse's `Pairs` template: keep only two-element tuples present in
-    pairs_all, remove duplicate elements, expand ('str', '*') and ('*', '*')
-    wildcards while keeping the original order. Note that ('*', '*') and
-    ('*', 'whatever') have the same effect.
-
-    For example,
-
-    >>> sanitize_pairs(
-    ...     [('foo', 'baz bar'), ('key', '*'), ('*', '*')],
-    ...     [('foo', 'bar'), ('foo', 'baz'), ('foo', 'foobar'),
-    ...      ('key', 'value')]
-    ...     )
-    [('foo', 'baz'), ('foo', 'bar'), ('key', 'value'), ('foo', 'foobar')]
-    """
-    pairs_all = list(pairs_all)
-    seen: set[tuple[str, str]] = set()
-    others = [x for x in pairs_all if x not in pairs]
-    res: list[tuple[str, str]] = []
-    for k, values in pairs:
-        for v in values.split():
-            x = (k, v)
-            if x in pairs_all:
-                if x not in seen:
-                    seen.add(x)
-                    res.append(x)
-            elif k == "*":
-                new = [o for o in others if o not in seen]
-                seen.update(new)
-                res.extend(new)
-            elif v == "*":
-                new = [o for o in others if o not in seen and o[0] == k]
-                seen.update(new)
-                res.extend(new)
-    return res
-
-
 def get_distance(
     config: ConfigView, data_source: str, info: AlbumInfo | TrackInfo
 ) -> Distance:
     """Returns the ``data_source`` weight and the maximum source weight
     for albums or individual tracks.
     """
-    from beets.autotag.hooks import Distance
+    from beets.autotag.distance import Distance
 
     dist = Distance()
     if info.data_source == data_source:
@@ -872,13 +808,8 @@ class MetadataSourcePlugin(Generic[R], BeetsPlugin, metaclass=abc.ABCMeta):
         return extract_release_id(self.data_source.lower(), id_string)
 
     def candidates(
-        self,
-        items: list[Item],
-        artist: str,
-        album: str,
-        va_likely: bool,
-        extra_tags: dict[str, Any] | None = None,
-    ) -> Iterator[AlbumInfo]:
+        self, items: list[Item], artist: str, album: str, va_likely: bool
+    ) -> Iterable[AlbumInfo]:
         query_filters = {"album": album}
         if not va_likely:
             query_filters["artist"] = artist
@@ -888,7 +819,7 @@ class MetadataSourcePlugin(Generic[R], BeetsPlugin, metaclass=abc.ABCMeta):
 
     def item_candidates(
         self, item: Item, artist: str, title: str
-    ) -> Iterator[TrackInfo]:
+    ) -> Iterable[TrackInfo]:
         for result in self._search_api(
             "track", {"artist": artist}, keywords=title
         ):
