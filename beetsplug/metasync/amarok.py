@@ -20,7 +20,6 @@ from time import mktime
 from xml.sax.saxutils import quoteattr
 
 from beets.dbcore import types
-from beets.library import DateType
 from beets.util import displayable_path
 from beetsplug.metasync import MetaSource
 
@@ -41,8 +40,8 @@ class Amarok(MetaSource):
         "amarok_score": types.FLOAT,
         "amarok_uid": types.STRING,
         "amarok_playcount": types.INTEGER,
-        "amarok_firstplayed": DateType(),
-        "amarok_lastplayed": DateType(),
+        "amarok_firstplayed": types.DATE,
+        "amarok_lastplayed": types.DATE,
     }
 
     query_xml = '<query version="1.0"> \
