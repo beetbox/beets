@@ -214,9 +214,9 @@ class IMBackend(LocalBackend):
         else:
             return cls._version
 
-    convert_cmd: list[str | bytes]
-    identify_cmd: list[str | bytes]
-    compare_cmd: list[str | bytes]
+    convert_cmd: list[str]
+    identify_cmd: list[str]
+    compare_cmd: list[str]
 
     def __init__(self) -> None:
         """Initialize a wrapper around ImageMagick for local image operations.
@@ -265,7 +265,7 @@ class IMBackend(LocalBackend):
         # with regards to the height.
         # ImageMagick already seems to default to no interlace, but we include
         # it here for the sake of explicitness.
-        cmd: list[str | bytes] = self.convert_cmd + [
+        cmd: list[str] = self.convert_cmd + [
             syspath(path_in, prefix=False),
             "-resize",
             f"{maxwidth}x>",
@@ -295,7 +295,7 @@ class IMBackend(LocalBackend):
         return path_out
 
     def get_size(self, path_in: bytes) -> tuple[int, int] | None:
-        cmd: list[str | bytes] = self.identify_cmd + [
+        cmd: list[str] = self.identify_cmd + [
             "-format",
             "%w %h",
             syspath(path_in, prefix=False),
@@ -480,10 +480,11 @@ class IMBackend(LocalBackend):
         return True
 
     def write_metadata(self, file: bytes, metadata: Mapping[str, str]) -> None:
-        assignments = list(
-            chain.from_iterable(("-set", k, v) for k, v in metadata.items())
+        assignments = chain.from_iterable(
+            ("-set", k, v) for k, v in metadata.items()
         )
-        command = self.convert_cmd + [file, *assignments, file]
+        str_file = os.fsdecode(file)
+        command = self.convert_cmd + [str_file, *assignments, str_file]
 
         util.command_output(command)
 

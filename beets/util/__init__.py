@@ -28,6 +28,7 @@ import sys
 import tempfile
 import traceback
 from collections import Counter
+from collections.abc import Sequence
 from contextlib import suppress
 from enum import Enum
 from functools import cache
@@ -41,7 +42,6 @@ from typing import (
     AnyStr,
     Callable,
     Generic,
-    Iterable,
     NamedTuple,
     TypeVar,
     Union,
@@ -53,23 +53,17 @@ import beets
 from beets.util import hidden
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator, Sequence
+    from collections.abc import Iterable, Iterator
     from logging import Logger
 
     from beets.library import Item
-
-if sys.version_info >= (3, 10):
-    from typing import TypeAlias
-else:
-    from typing_extensions import TypeAlias
 
 
 MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = "\\\\?\\"
 T = TypeVar("T")
-BytesOrStr = Union[str, bytes]
-PathLike = Union[BytesOrStr, Path]
-Replacements: TypeAlias = "Sequence[tuple[Pattern[str], str]]"
+PathLike = Union[str, bytes, Path]
+Replacements = Sequence[tuple[Pattern[str], str]]
 
 # Here for now to allow for a easy replace later on
 # once we can move to a PathLike (mainly used in importer)
@@ -860,7 +854,9 @@ class CommandOutput(NamedTuple):
     stderr: bytes
 
 
-def command_output(cmd: list[BytesOrStr], shell: bool = False) -> CommandOutput:
+def command_output(
+    cmd: list[str] | list[bytes], shell: bool = False
+) -> CommandOutput:
     """Runs the command and returns its output after it has exited.
 
     Returns a CommandOutput. The attributes ``stdout`` and ``stderr`` contain
@@ -878,8 +874,6 @@ def command_output(cmd: list[BytesOrStr], shell: bool = False) -> CommandOutput:
     This replaces `subprocess.check_output` which can have problems if lots of
     output is sent to stderr.
     """
-    converted_cmd = [os.fsdecode(a) for a in cmd]
-
     devnull = subprocess.DEVNULL
 
     proc = subprocess.Popen(
@@ -894,7 +888,7 @@ def command_output(cmd: list[BytesOrStr], shell: bool = False) -> CommandOutput:
     if proc.returncode:
         raise subprocess.CalledProcessError(
             returncode=proc.returncode,
-            cmd=" ".join(converted_cmd),
+            cmd=" ".join(map(os.fsdecode, cmd)),
             output=stdout + stderr,
         )
     return CommandOutput(stdout, stderr)
