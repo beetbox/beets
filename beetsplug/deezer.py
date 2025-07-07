@@ -26,10 +26,10 @@ import unidecode
 from beets import ui
 from beets.autotag import AlbumInfo, TrackInfo
 from beets.dbcore import types
-from beets.library import DateType, Item, Library
 from beets.plugins import BeetsPlugin, MetadataSourcePlugin, Response
 
 if TYPE_CHECKING:
+    from beets.library import Item, Library
     from beetsplug._typing import JSONDict
 
 
