@@ -44,8 +44,6 @@ if TYPE_CHECKING:
 
     from confuse import ConfigView
 
-    from beets.autotag import AlbumInfo, TrackInfo
-    from beets.autotag.distance import Distance
     from beets.dbcore import Query
     from beets.dbcore.db import FieldQueryType
     from beets.dbcore.types import Type
@@ -299,7 +297,7 @@ def load_plugins(names: Sequence[str] = ()) -> None:
             else:
                 for obj in getattr(namespace, name).__dict__.values():
                     if (
-                        isinstance(obj, type)
+                        inspect.isclass(obj)
                         and issubclass(obj, BeetsPlugin)
                         and obj != BeetsPlugin
                         and not inspect.isabstract(obj)
@@ -518,8 +516,6 @@ def feat_tokens(for_artist: bool = True) -> str:
     return r"(?<=[\s(\[])(?:{})(?=\s)".format(
         "|".join(re.escape(x) for x in feat_words)
     )
-
-
 
 
 def apply_item_changes(
