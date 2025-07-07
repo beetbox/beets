@@ -28,6 +28,8 @@ New features:
   :bug:`5832`
 * :doc:`plugins/playlist`: Support files with the `.m3u8` extension.
   :bug:`5829`
+* :doc:`plugins/mbcollection`: When getting the user collections, only consider
+  collections of releases, and ignore collections of other entity types.
 
 Bug fixes:
 
