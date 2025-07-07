@@ -9,51 +9,46 @@ from __future__ import annotations
 
 import abc
 import re
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Generic,
-    Iterator,
-    Literal,
-    Sequence,
-    TypedDict,
-    TypeVar,
-)
+from typing import TYPE_CHECKING, Generic, Literal, Sequence, TypedDict, TypeVar
 
 from typing_extensions import NotRequired
+
+from beets.util import cached_classproperty
+from beets.util.id_extractors import extract_release_id
 
 from .plugins import BeetsPlugin, find_plugins, notify_info_yielded, send
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from confuse import ConfigView
 
     from .autotag import Distance
     from .autotag.hooks import AlbumInfo, Item, TrackInfo
 
 
-def find_metadata_source_plugins() -> list[MetadataSourcePluginNext]:
-    """Returns a list of MetadataSourcePluginNew subclass instances from all
-    currently loaded beets plugins.
+def find_metadata_source_plugins() -> list[MetadataSourcePlugin]:
+    """Returns a list of MetadataSourcePlugin subclass instances
+
+    Resolved from all currently loaded beets plugins.
     """
     return [
         plugin
         for plugin in find_plugins()
-        if isinstance(plugin, MetadataSourcePluginNext)
+        if isinstance(plugin, MetadataSourcePlugin)
     ]
 
 
 @notify_info_yielded("albuminfo_received")
-def candidates(*args, **kwargs) -> Iterator[AlbumInfo]:
-    """Return matching album candidates by using all metadata source
-    plugins."""
+def candidates(*args, **kwargs) -> Iterable[AlbumInfo]:
+    """Return matching album candidates from all metadata source plugins."""
     for plugin in find_metadata_source_plugins():
         yield from plugin.candidates(*args, **kwargs)
 
 
 @notify_info_yielded("trackinfo_received")
-def item_candidates(*args, **kwargs) -> Iterator[TrackInfo]:
-    """Return matching track candidates by using all metadata source
-    plugins."""
+def item_candidates(*args, **kwargs) -> Iterable[TrackInfo]:
+    """Return matching track candidates fromm all metadata source plugins."""
     for plugin in find_metadata_source_plugins():
         yield from plugin.item_candidates(*args, **kwargs)
 
@@ -85,10 +80,12 @@ def track_for_id(_id: str) -> TrackInfo | None:
 
 
 def track_distance(item: Item, info: TrackInfo) -> Distance:
-    """Gets the track distance calculated by all loaded plugins.
-    Returns a Distance object.
+    """Returns the track distance for an item and trackinfo.
+
+    Returns a Distance object is populated by all metadata source plugins
+    that implement the :py:meth:`MetadataSourcePlugin.track_distance` method.
     """
-    from beets.autotag.hooks import Distance
+    from beets.autotag.distance import Distance
 
     dist = Distance()
     for plugin in find_metadata_source_plugins():
@@ -102,7 +99,7 @@ def album_distance(
     mapping: dict[Item, TrackInfo],
 ) -> Distance:
     """Returns the album distance calculated by plugins."""
-    from beets.autotag.hooks import Distance
+    from beets.autotag.distance import Distance
 
     dist = Distance()
     for plugin in find_metadata_source_plugins():
@@ -116,7 +113,7 @@ def _get_distance(
     """Returns the ``data_source`` weight and the maximum source weight
     for albums or individual tracks.
     """
-    from beets.autotag.hooks import Distance
+    from beets.autotag.distance import Distance
 
     dist = Distance()
     if info.data_source == data_source:
@@ -124,35 +121,17 @@ def _get_distance(
     return dist
 
 
-class MetadataSourcePluginNext(BeetsPlugin, metaclass=abc.ABCMeta):
+class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
     """A plugin that provides metadata from a specific source.
 
     This base class implements a contract for plugins that provide metadata
     from a specific source. The plugin must implement the methods to search for albums
     and tracks, and to retrieve album and track information by ID.
-
-    TODO: Rename once all plugins are migrated to this interface.
     """
 
-    data_source: str
-
-    def __init__(self, data_source: str, *args, **kwargs) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.data_source = data_source or self.__class__.__name__
         self.config.add({"source_weight": 0.5})
-
-    # --------------------------------- id lookup -------------------------------- #
-
-    def albums_for_ids(self, ids: Sequence[str]) -> Iterator[AlbumInfo | None]:
-        """Batch lookup of album metadata for a list of album IDs.
-
-        Given a list of album identifiers, yields corresponding AlbumInfo
-        objects. Missing albums result in None values in the output iterator.
-        Plugins may implement this for optimized batched lookups instead of
-        single calls to album_for_id.
-        """
-
-        return iter(self.album_for_id(id) for id in ids)
 
     @abc.abstractmethod
     def album_for_id(self, album_id: str) -> AlbumInfo | None:
@@ -160,20 +139,9 @@ class MetadataSourcePluginNext(BeetsPlugin, metaclass=abc.ABCMeta):
         found."""
         raise NotImplementedError
 
-    def tracks_for_ids(self, ids: Sequence[str]) -> Iterator[TrackInfo | None]:
-        """Batch lookup of track metadata for a list of track IDs.
-
-        Given a list of track identifiers, yields corresponding TrackInfo objects.
-        Missing tracks result in None values in the output iterator. Plugins may
-        implement this for optimized batched lookups instead of single calls to
-        track_for_id.
-        """
-
-        return iter(self.track_for_id(id) for id in ids)
-
     @abc.abstractmethod
     def track_for_id(self, track_id: str) -> TrackInfo | None:
-        """Return a :py:class:`AlbumInfo` object or None if no matching release was
+        """Return a :py:class:`TrackInfo` object or None if no matching release was
         found.
         """
         raise NotImplementedError
@@ -187,8 +155,7 @@ class MetadataSourcePluginNext(BeetsPlugin, metaclass=abc.ABCMeta):
         artist: str,
         album: str,
         va_likely: bool,
-        extra_tags: dict[str, Any] | None = None,
-    ) -> Iterator[AlbumInfo]:
+    ) -> Iterable[AlbumInfo]:
         """Return :py:class:`AlbumInfo` candidates that match the given album.
 
         Used in the autotag functionality to search for albums.
@@ -197,17 +164,13 @@ class MetadataSourcePluginNext(BeetsPlugin, metaclass=abc.ABCMeta):
         :param artist: Album artist
         :param album: Album name
         :param va_likely: Whether the album is likely to be by various artists
-        :param extra_tags: is a an optional dictionary of extra tags to search.
-            TODO: remove:
-            Currently relevant to :py:class:`MusicBrainzPlugin` autotagger and can be
-            ignored by other plugins
         """
         raise NotImplementedError
 
     @abc.abstractmethod
     def item_candidates(
         self, item: Item, artist: str, title: str
-    ) -> Iterator[TrackInfo]:
+    ) -> Iterable[TrackInfo]:
         """Return :py:class:`TrackInfo` candidates that match the given track.
 
         Used in the autotag functionality to search for tracks.
@@ -218,7 +181,27 @@ class MetadataSourcePluginNext(BeetsPlugin, metaclass=abc.ABCMeta):
         """
         raise NotImplementedError
 
-    # --------------------------------- distances -------------------------------- #
+    def albums_for_ids(self, ids: Sequence[str]) -> Iterable[AlbumInfo | None]:
+        """Batch lookup of album metadata for a list of album IDs.
+
+        Given a list of album identifiers, yields corresponding AlbumInfo objects.
+        Missing albums result in None values in the output iterator.
+        Plugins may implement this for optimized batched lookups instead of
+        single calls to album_for_id.
+        """
+
+        return (self.album_for_id(id) for id in ids)
+
+    def tracks_for_ids(self, ids: Sequence[str]) -> Iterable[TrackInfo | None]:
+        """Batch lookup of track metadata for a list of track IDs.
+
+        Given a list of track identifiers, yields corresponding TrackInfo objects.
+        Missing tracks result in None values in the output iterator.
+        Plugins may implement this for optimized batched lookups instead of
+        single calls to track_for_id.
+        """
+
+        return (self.track_for_id(id) for id in ids)
 
     def album_distance(
         self,
@@ -226,6 +209,7 @@ class MetadataSourcePluginNext(BeetsPlugin, metaclass=abc.ABCMeta):
         album_info: AlbumInfo,
         mapping: dict[Item, TrackInfo],
     ) -> Distance:
+        """Calculate the distance for an album based on its items and album info."""
         return _get_distance(
             data_source=self.data_source, info=album_info, config=self.config
         )
@@ -235,9 +219,77 @@ class MetadataSourcePluginNext(BeetsPlugin, metaclass=abc.ABCMeta):
         item: Item,
         info: TrackInfo,
     ) -> Distance:
+        """Calculate the distance for a track based on its item and track info."""
         return _get_distance(
             data_source=self.data_source, info=info, config=self.config
         )
+
+    @cached_classproperty
+    def data_source(cls) -> str:
+        """The data source name for this plugin.
+
+        This is inferred from the plugin name.
+        """
+        return cls.__name__.replace("Plugin", "")  # type: ignore[attr-defined]
+
+    def extract_release_id(self, url: str) -> str | None:
+        """Extract an ID from a URL for this metadata source plugin.
+
+        Uses the plugin's data source name to determine the ID format and
+        extracts the ID from a given URL.
+        """
+        return extract_release_id(self.data_source, url)
+
+    @staticmethod
+    def get_artist(
+        artists: Iterable[dict[str | int, str]],
+        id_key: str | int = "id",
+        name_key: str | int = "name",
+        join_key: str | int | None = None,
+    ) -> tuple[str, str | None]:
+        """Returns an artist string (all artists) and an artist_id (the main
+        artist) for a list of artist object dicts.
+
+        For each artist, this function moves articles (such as 'a', 'an',
+        and 'the') to the front and strips trailing disambiguation numbers. It
+        returns a tuple containing the comma-separated string of all
+        normalized artists and the ``id`` of the main/first artist.
+        Alternatively a keyword can be used to combine artists together into a
+        single string by passing the join_key argument.
+
+        :param artists: Iterable of artist dicts or lists returned by API.
+        :param id_key: Key or index corresponding to the value of ``id`` for
+            the main/first artist. Defaults to 'id'.
+        :param name_key: Key or index corresponding to values of names
+            to concatenate for the artist string (containing all artists).
+            Defaults to 'name'.
+        :param join_key: Key or index corresponding to a field containing a
+            keyword to use for combining artists into a single string, for
+            example "Feat.", "Vs.", "And" or similar. The default is None
+            which keeps the default behaviour (comma-separated).
+        :return: Normalized artist string.
+        """
+        artist_id = None
+        artist_string = ""
+        artists = list(artists)  # In case a generator was passed.
+        total = len(artists)
+        for idx, artist in enumerate(artists):
+            if not artist_id:
+                artist_id = artist[id_key]
+            name = artist[name_key]
+            # Strip disambiguation number.
+            name = re.sub(r" \(\d+\)$", "", name)
+            # Move articles to the front.
+            name = re.sub(r"^(.*?), (a|an|the)$", r"\2 \1", name, flags=re.I)
+            # Use a join keyword if requested and available.
+            if idx < (total - 1):  # Skip joining on last.
+                if join_key and artist.get(join_key, None):
+                    name += f" {artist[join_key]} "
+                else:
+                    name += ", "
+            artist_string += name
+
+        return artist_string, artist_id
 
 
 class IDResponse(TypedDict):
@@ -254,8 +306,8 @@ class SearchFilter(TypedDict):
 R = TypeVar("R", bound=IDResponse)
 
 
-class SearchApiMetadataSourcePluginNext(
-    Generic[R], MetadataSourcePluginNext, metaclass=abc.ABCMeta
+class SearchApiMetadataSourcePlugin(
+    Generic[R], MetadataSourcePlugin, metaclass=abc.ABCMeta
 ):
     """Helper class to implement a metadata source plugin with an API.
 
@@ -270,9 +322,9 @@ class SearchApiMetadataSourcePluginNext(
     def _search_api(
         self,
         query_type: Literal["album", "track"],
-        filters: SearchFilter | None = None,
+        filters: SearchFilter,
         keywords: str = "",
-    ) -> Sequence[R] | None:
+    ) -> Sequence[R]:
         """Perform a search on the API.
 
         :param query_type: The type of query to perform.
@@ -289,79 +341,27 @@ class SearchApiMetadataSourcePluginNext(
         artist: str,
         album: str,
         va_likely: bool,
-        extra_tags: dict[str, Any] | None = None,
-    ) -> Iterator[AlbumInfo]:
+    ) -> Iterable[AlbumInfo]:
         query_filters: SearchFilter = {"album": album}
         if not va_likely:
             query_filters["artist"] = artist
 
         results = self._search_api("album", query_filters)
         if not results:
-            return
+            return []
 
-        yield from filter(
+        return filter(
             None, self.albums_for_ids([result["id"] for result in results])
         )
 
     def item_candidates(
         self, item: Item, artist: str, title: str
-    ) -> Iterator[TrackInfo]:
+    ) -> Iterable[TrackInfo]:
         results = self._search_api("track", {"artist": artist}, keywords=title)
         if not results:
-            return
+            return []
 
-        yield from filter(
-            None, self.tracks_for_ids([result["id"] for result in results])
+        return filter(
+            None,
+            self.tracks_for_ids([result["id"] for result in results if result]),
         )
-
-
-def artists_to_artist_str(
-    artists,
-    id_key: str | int = "id",
-    name_key: str | int = "name",
-    join_key: str | int | None = None,
-) -> tuple[str, str | None]:
-    """Returns an artist string (all artists) and an artist_id (the main
-    artist) for a list of artist object dicts.
-
-    For each artist, this function moves articles (such as 'a', 'an',
-    and 'the') to the front and strips trailing disambiguation numbers. It
-    returns a tuple containing the comma-separated string of all
-    normalized artists and the ``id`` of the main/first artist.
-    Alternatively a keyword can be used to combine artists together into a
-    single string by passing the join_key argument.
-
-    :param artists: Iterable of artist dicts or lists returned by API.
-    :type artists: list[dict] or list[list]
-    :param id_key: Key or index corresponding to the value of ``id`` for
-        the main/first artist. Defaults to 'id'.
-    :param name_key: Key or index corresponding to values of names
-        to concatenate for the artist string (containing all artists).
-        Defaults to 'name'.
-    :param join_key: Key or index corresponding to a field containing a
-        keyword to use for combining artists into a single string, for
-        example "Feat.", "Vs.", "And" or similar. The default is None
-        which keeps the default behaviour (comma-separated).
-    :return: Normalized artist string.
-    """
-    artist_id = None
-    artist_string = ""
-    artists = list(artists)  # In case a generator was passed.
-    total = len(artists)
-    for idx, artist in enumerate(artists):
-        if not artist_id:
-            artist_id = artist[id_key]
-        name = artist[name_key]
-        # Strip disambiguation number.
-        name = re.sub(r" \(\d+\)$", "", name)
-        # Move articles to the front.
-        name = re.sub(r"^(.*?), (a|an|the)$", r"\2 \1", name, flags=re.I)
-        # Use a join keyword if requested and available.
-        if idx < (total - 1):  # Skip joining on last.
-            if join_key and artist.get(join_key, None):
-                name += f" {artist[join_key]} "
-            else:
-                name += ", "
-        artist_string += name
-
-    return artist_string, artist_id
