@@ -15,6 +15,9 @@ New features:
   Configuration option `musicbrainz.enabled` has thus been deprecated.
   :bug:`2686`
   :bug:`4605`
+* :doc:`plugins/musicbrainz`: The MusicBrainz autotagger now also
+  imports composers, lyricists, and arrangers, as well as their MBIDs
+  as multi-valued tags (``composers``, ``lyricists``, ``mb_composerids``, …).
 * :doc:`plugins/web`: Show notifications when a track plays. This uses the
   Media Session API to customize media notifications.
 * :doc:`plugins/discogs`: Add configurable ``search_limit`` option to
