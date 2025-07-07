@@ -26,7 +26,8 @@ from typing import TYPE_CHECKING, Callable, Iterable, Sequence
 
 import mediafile
 
-from beets import autotag, config, dbcore, library, plugins, util
+from beets import autotag, config, library, plugins, util
+from beets.dbcore.query import PathQuery
 
 from .state import ImportState
 
@@ -520,9 +521,7 @@ class ImportTask(BaseImportTask):
         )
         replaced_album_ids = set()
         for item in self.imported_items():
-            dup_items = list(
-                lib.items(query=dbcore.query.BytesQuery("path", item.path))
-            )
+            dup_items = list(lib.items(query=PathQuery("path", item.path)))
             self.replaced_items[item] = dup_items
             for dup_item in dup_items:
                 if (
