@@ -28,6 +28,7 @@ from typing import (
     Any,
     Callable,
     Generic,
+    Literal,
     Sequence,
     TypedDict,
     TypeVar,
@@ -737,8 +738,8 @@ class MetadataSourcePlugin(Generic[R], BeetsPlugin, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def _search_api(
         self,
-        query_type: str,
-        filters: dict[str, str] | None,
+        query_type: Literal["album", "track"],
+        filters: dict[str, str],
         keywords: str = "",
     ) -> Sequence[R]:
         raise NotImplementedError
