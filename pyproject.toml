@@ -76,6 +76,8 @@ requests = { version = "*", optional = true }
 resampy = { version = ">=0.4.3", optional = true }
 requests-oauthlib = { version = ">=0.6.1", optional = true }
 soco = { version = "*", optional = true }
+pyjwt = { version = "*", optional = true }
+waitress = { version = "*", optional = true }
 
 pydata-sphinx-theme = { version = "*", optional = true }
 sphinx = { version = "*", optional = true }
@@ -98,6 +100,8 @@ rarfile = "*"
 requests-mock = ">=1.12.1"
 requests_oauthlib = "*"
 responses = ">=0.3.0"
+pyjwt = "*"
+waitress = "*"
 
 [tool.poetry.group.lint.dependencies]
 ruff = ">=0.6.4"
@@ -139,6 +143,7 @@ kodiupdate = ["requests"]
 lastgenre = ["pylast"]
 lastimport = ["pylast"]
 lyrics = ["beautifulsoup4", "langdetect", "requests"]
+mbsubmit = ["pyjwt", "flask", "waitress"]
 metasync = ["dbus-python"]
 mpdstats = ["python-mpd2"]
 plexupdate = ["requests"]

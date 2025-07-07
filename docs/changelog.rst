@@ -29,6 +29,11 @@ New features:
 * :doc:`plugins/playlist`: Support files with the `.m3u8` extension.
   :bug:`5829`
 
+New features:
+
+* :doc:`plugins/mbsubmit`: Add new prompt choice "Create release on musicbrainz", automating
+  the process as much as possible.
+
 Bug fixes:
 
 * :doc:`plugins/musicbrainz`: fix regression where user configured
