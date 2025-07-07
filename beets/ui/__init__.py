@@ -104,23 +104,15 @@ def _stream_encoding(stream, default="utf-8"):
     return stream.encoding or default
 
 
-def print_(*strings, **kwargs):
+def print_(*strings: str, end: str = "\n") -> None:
     """Like print, but rather than raising an error when a character
     is not in the terminal's encoding's character set, just silently
     replaces it.
 
-    The arguments must be Unicode strings: `unicode` on Python 2; `str` on
-    Python 3.
-
     The `end` keyword argument behaves similarly to the built-in `print`
     (it defaults to a newline).
     """
-    if not strings:
-        strings = [""]
-    assert isinstance(strings[0], str)
-
-    txt = " ".join(strings)
-    txt += kwargs.get("end", "\n")
+    txt = " ".join(strings or ("",)) + end
 
     # Encode the string and write it to stdout.
     # On Python 3, sys.stdout expects text strings and uses the
