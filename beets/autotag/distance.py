@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any
 from jellyfish import levenshtein_distance
 from unidecode import unidecode
 
-from beets import config, plugins
+from beets import config, metadata_plugins
 from beets.util import as_string, cached_classproperty, get_most_common_tags
 
 if TYPE_CHECKING:
@@ -409,7 +409,7 @@ def track_distance(
         dist.add_expr("medium", item.disc != track_info.medium)
 
     # Plugins.
-    dist.update(plugins.track_distance(item, track_info))
+    dist.update(metadata_plugins.track_distance(item, track_info))
 
     return dist
 
@@ -526,6 +526,6 @@ def distance(
         dist.add("unmatched_tracks", 1.0)
 
     # Plugins.
-    dist.update(plugins.album_distance(items, album_info, mapping))
+    dist.update(metadata_plugins.album_distance(items, album_info, mapping))
 
     return dist
