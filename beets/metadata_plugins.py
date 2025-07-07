@@ -9,14 +9,18 @@ from __future__ import annotations
 
 import abc
 import re
+import sys
 from typing import TYPE_CHECKING, Generic, Literal, Sequence, TypedDict, TypeVar
-
-from typing_extensions import NotRequired
 
 from beets.util import cached_classproperty
 from beets.util.id_extractors import extract_release_id
 
 from .plugins import BeetsPlugin, find_plugins, notify_info_yielded, send
+
+if sys.version_info >= (3, 11):
+    from typing import NotRequired
+else:
+    from typing_extensions import NotRequired
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
