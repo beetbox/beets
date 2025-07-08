@@ -690,9 +690,7 @@ class Period:
         ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"),  # second
     )
     relative_units = {"y": 365, "m": 30, "w": 7, "d": 1}
-    relative_re = (
-        "(?P<sign>[+|-]?)(?P<quantity>[0-9]+)" + "(?P<timespan>[y|m|w|d])"
-    )
+    relative_re = "(?P<sign>[+|-]?)(?P<quantity>[0-9]+)(?P<timespan>[y|m|w|d])"
 
     def __init__(self, date: datetime, precision: str):
         """Create a period with the given date (a `datetime` object) and

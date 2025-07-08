@@ -839,10 +839,8 @@ class AutotagStub:
         )
 
     def _make_album_match(self, artist, album, tracks, distance=0, missing=0):
-        if distance:
-            id = " " + "M" * distance
-        else:
-            id = ""
+        id = f" {'M' * distance}" if distance else ""
+
         if artist is None:
             artist = "Various Artists"
         else:

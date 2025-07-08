@@ -671,8 +671,8 @@ class SpotifyPlugin(
                 self._log.info(
                     f"Attempting to open {self.data_source} with playlist"
                 )
-                spotify_url = "spotify:trackset:Playlist:" + ",".join(
-                    spotify_ids
+                spotify_url = (
+                    f"spotify:trackset:Playlist:{','.join(spotify_ids)}"
                 )
                 webbrowser.open(spotify_url)
             else:
