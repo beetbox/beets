@@ -1329,7 +1329,7 @@ class Server(BaseServer):
             "albums: " + str(albums),
             "songs: " + str(songs),
             "uptime: " + str(int(time.time() - self.startup_time)),
-            "playtime: " + "0",  # Missing.
+            "playtime: 0",  # Missing.
             "db_playtime: " + str(int(totaltime)),
             "db_update: " + str(int(self.updated_time)),
         )

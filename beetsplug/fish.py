@@ -127,15 +127,9 @@ class FishPlugin(BeetsPlugin):
         totstring += get_cmds_list([name[0] for name in cmd_names_help])
         totstring += "" if nobasicfields else get_standard_fields(fields)
         totstring += get_extravalues(lib, extravalues) if extravalues else ""
-        totstring += (
-            "\n" + "# ====== setup basic beet completion =====" + "\n" * 2
-        )
+        totstring += "\n# ====== setup basic beet completion =====\n\n"
         totstring += get_basic_beet_options()
-        totstring += (
-            "\n"
-            + "# ====== setup field completion for subcommands ====="
-            + "\n"
-        )
+        totstring += "\n# ====== setup field completion for subcommands =====\n"
         totstring += get_subcommands(cmd_names_help, nobasicfields, extravalues)
         # Set up completion for all the command options
         totstring += get_all_commands(beetcmds)
@@ -153,17 +147,13 @@ def _escape(name):
 
 def get_cmds_list(cmds_names):
     # Make a list of all Beets core & plugin commands
-    substr = ""
-    substr += "set CMDS " + " ".join(cmds_names) + ("\n" * 2)
-    return substr
+    return f"set CMDS {' '.join(cmds_names)}\n\n"
 
 
 def get_standard_fields(fields):
     # Make a list of album/track fields and append with ':'
     fields = (field + ":" for field in fields)
-    substr = ""
-    substr += "set FIELDS " + " ".join(fields) + ("\n" * 2)
-    return substr
+    return f"set FIELDS {' '.join(fields)}\n\n"
 
 
 def get_extravalues(lib, extravalues):
@@ -223,16 +213,16 @@ def get_subcommands(cmd_name_and_help, nobasicfields, extravalues):
     for cmdname, cmdhelp in cmd_name_and_help:
         cmdname = _escape(cmdname)
 
-        word += "\n" + f"# ------ fieldsetups for {cmdname} -------" + "\n"
+        word += "\n" + f"# ------ fieldsetups for {cmdname} -------\n"
         word += BL_NEED2.format(
-            ("-a " + cmdname), ("-f " + "-d " + wrap(clean_whitespace(cmdhelp)))
+            ("-a " + cmdname), ("-f -d " + wrap(clean_whitespace(cmdhelp)))
         )
 
         if nobasicfields is False:
             word += BL_USE3.format(
                 cmdname,
                 ("-a " + wrap("$FIELDS")),
-                ("-f " + "-d " + wrap("fieldname")),
+                ("-f -d " + wrap("fieldname")),
             )
 
         if extravalues:
@@ -242,7 +232,7 @@ def get_subcommands(cmd_name_and_help, nobasicfields, extravalues):
                     " ".join(
                         BL_EXTRA3.format(
                             (cmdname + " " + f + ":"),
-                            ("-f " + "-A " + "-a " + setvar),
+                            ("-f -A -a " + setvar),
                             ("-d " + wrap(f)),
                         ).split()
                     )
@@ -260,8 +250,7 @@ def get_all_commands(beetcmds):
         for name in names:
             name = _escape(name)
 
-            word += "\n"
-            word += ("\n" * 2) + f"# ====== completions for {name} =====" + "\n"
+            word += f"\n\n\n# ====== completions for {name} =====\n"
 
             for option in cmd.parser._get_all_options()[1:]:
                 cmd_l = (
@@ -306,7 +295,7 @@ def get_all_commands(beetcmds):
             word = word + " ".join(
                 BL_USE3.format(
                     name,
-                    ("-s " + "h " + "-l " + "help" + " -f "),
+                    ("-s h -l help -f "),
                     ("-d " + wrap("print help") + "\n"),
                 ).split()
             )

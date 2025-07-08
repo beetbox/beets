@@ -136,7 +136,7 @@ def _print_keys(query):
 def fields_func(lib, opts, args):
     def _print_rows(names):
         names.sort()
-        print_("  " + "\n  ".join(names))
+        print_(f"  {'\n  '.join(names)}")
 
     print_("Item fields:")
     _print_rows(library.Item.all_keys())
