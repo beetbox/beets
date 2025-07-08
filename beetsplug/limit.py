@@ -36,11 +36,10 @@ def lslimit(lib, opts, args):
     if (opts.head or opts.tail or 0) < 0:
         raise ValueError("Limit value must be non-negative")
 
-    query = args
     if opts.album:
-        objs = lib.albums(query)
+        objs = lib.albums(args)
     else:
-        objs = lib.items(query)
+        objs = lib.items(args)
 
     if opts.head is not None:
         objs = islice(objs, opts.head)
