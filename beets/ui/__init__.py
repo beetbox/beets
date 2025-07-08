@@ -269,7 +269,7 @@ def input_options(
             )
         ):
             # The first option is the default; mark it.
-            show_letter = "[%s]" % found_letter.upper()
+            show_letter = f"[{found_letter.upper()}]"
             is_default = True
         else:
             show_letter = found_letter.upper()
@@ -308,9 +308,9 @@ def input_options(
             if isinstance(default, int):
                 default_name = str(default)
                 default_name = colorize("action_default", default_name)
-                tmpl = "# selection (default %s)"
-                prompt_parts.append(tmpl % default_name)
-                prompt_part_lengths.append(len(tmpl % str(default)))
+                tmpl = "# selection (default {})"
+                prompt_parts.append(tmpl.format(default_name))
+                prompt_part_lengths.append(len(tmpl) - 2 + len(str(default)))
             else:
                 prompt_parts.append("# selection")
                 prompt_part_lengths.append(len(prompt_parts[-1]))
@@ -349,7 +349,7 @@ def input_options(
     if not fallback_prompt:
         fallback_prompt = "Enter one of "
         if numrange:
-            fallback_prompt += "%i-%i, " % numrange
+            fallback_prompt += "{}-{}, ".format(*numrange)
         fallback_prompt += ", ".join(display_letters) + ":"
 
     resp = input_(prompt)
@@ -406,7 +406,7 @@ def input_select_objects(prompt, objs, rep, prompt_all=None):
     objects individually.
     """
     choice = input_options(
-        ("y", "n", "s"), False, "%s? (Yes/no/select)" % (prompt_all or prompt)
+        ("y", "n", "s"), False, f"{prompt_all or prompt}? (Yes/no/select)"
     )
     print()  # Blank line.
 
@@ -420,7 +420,7 @@ def input_select_objects(prompt, objs, rep, prompt_all=None):
             answer = input_options(
                 ("y", "n", "q"),
                 True,
-                "%s? (yes/no/quit)" % prompt,
+                f"{prompt}? (yes/no/quit)",
                 "Enter Y or N:",
             )
             if answer == "y":
@@ -534,7 +534,7 @@ def _colorize(color, text):
     # over all "ANSI codes" in `color`.
     escape = ""
     for code in color:
-        escape = escape + COLOR_ESCAPE + "%im" % ANSI_CODES[code]
+        escape = escape + COLOR_ESCAPE + f"{ANSI_CODES[code]}m"
     return escape + text + RESET_COLOR
 
 
@@ -1475,7 +1475,7 @@ class SubcommandsOptionParser(CommonOptionsParser):
         for subcommand in subcommands:
             name = subcommand.name
             if subcommand.aliases:
-                name += " (%s)" % ", ".join(subcommand.aliases)
+                name += f" ({', '.join(subcommand.aliases)})"
             disp_names.append(name)
 
             # Set the help position based on the max width.
@@ -1488,26 +1488,18 @@ class SubcommandsOptionParser(CommonOptionsParser):
             # Lifted directly from optparse.py.
             name_width = help_position - formatter.current_indent - 2
             if len(name) > name_width:
-                name = "%*s%s\n" % (formatter.current_indent, "", name)
+                name = f"{' ' * formatter.current_indent}{name}\n"
                 indent_first = help_position
             else:
-                name = "%*s%-*s  " % (
-                    formatter.current_indent,
-                    "",
-                    name_width,
-                    name,
-                )
+                name = f"{' ' * formatter.current_indent}{name:<{name_width}}\n"
                 indent_first = 0
             result.append(name)
             help_width = formatter.width - help_position
             help_lines = textwrap.wrap(subcommand.help, help_width)
             help_line = help_lines[0] if help_lines else ""
-            result.append("%*s%s\n" % (indent_first, "", help_line))
+            result.append(f"{' ' * indent_first}{help_line}\n")
             result.extend(
-                [
-                    "%*s%s\n" % (help_position, "", line)
-                    for line in help_lines[1:]
-                ]
+                [f"{' ' * help_position}{line}\n" for line in help_lines[1:]]
             )
         formatter.dedent()
 

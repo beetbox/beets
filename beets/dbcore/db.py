@@ -1158,7 +1158,7 @@ class Database:
         """
         # Get current schema.
         with self.transaction() as tx:
-            rows = tx.query("PRAGMA table_info(%s)" % table)
+            rows = tx.query(f"PRAGMA table_info({table})")
         current_fields = {row[1] for row in rows}
 
         field_names = set(fields.keys())

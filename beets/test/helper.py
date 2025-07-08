@@ -831,8 +831,8 @@ class AutotagStub:
 
     def _make_track_match(self, artist, album, number):
         return TrackInfo(
-            title="Applied Track %d" % number,
-            track_id="match %d" % number,
+            title=f"Applied Track {number}",
+            track_id=f"match {number}",
             artist=artist,
             length=1,
             index=0,

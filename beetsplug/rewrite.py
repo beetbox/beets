@@ -57,7 +57,7 @@ class RewritePlugin(BeetsPlugin):
                 raise ui.UserError("invalid rewrite specification")
             if fieldname not in library.Item._fields:
                 raise ui.UserError(
-                    "invalid field name (%s) in rewriter" % fieldname
+                    f"invalid field name ({fieldname}) in rewriter"
                 )
             self._log.debug("adding template field {0}", key)
             pattern = re.compile(pattern.lower())
