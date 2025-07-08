@@ -52,7 +52,7 @@ except ImportError as e:
 PROTOCOL_VERSION = "0.16.0"
 BUFSIZE = 1024
 
-HELLO = "OK MPD %s" % PROTOCOL_VERSION
+HELLO = f"OK MPD {PROTOCOL_VERSION}"
 CLIST_BEGIN = "command_list_begin"
 CLIST_VERBOSE_BEGIN = "command_list_ok_begin"
 CLIST_END = "command_list_end"
@@ -1219,7 +1219,7 @@ class Server(BaseServer):
                 if dirpath.startswith("/"):
                     # Strip leading slash (libmpc rejects this).
                     dirpath = dirpath[1:]
-                yield "directory: %s" % dirpath
+                yield f"directory: {dirpath}"
 
     def _listall(self, basepath, node, info=False):
         """Helper function for recursive listing. If info, show

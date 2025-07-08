@@ -77,7 +77,7 @@ def json_generator(items, root, expand=False):
                    representation
     :returns:     generator that yields strings
     """
-    yield '{"%s":[' % root
+    yield f'{{"{root}":['
     first = True
     for item in items:
         if first:

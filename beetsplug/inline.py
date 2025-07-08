@@ -28,8 +28,7 @@ class InlineError(Exception):
 
     def __init__(self, code, exc):
         super().__init__(
-            ("error in inline path field code:\n%s\n%s: %s")
-            % (code, type(exc).__name__, str(exc))
+            f"error in inline path field code:\n{code}\n{type(exc).__name__}: {exc}"
         )
 
 
