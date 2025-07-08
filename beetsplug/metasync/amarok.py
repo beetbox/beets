@@ -46,7 +46,7 @@ class Amarok(MetaSource):
 
     query_xml = '<query version="1.0"> \
                     <filters> \
-                        <and><include field="filename" value=%s /></and> \
+                        <and><include field="filename" value={} /></and> \
                     </filters> \
                 </query>'
 
@@ -68,7 +68,7 @@ class Amarok(MetaSource):
         # of the result set. So query for the filename and then try to match
         # the correct item from the results we get back
         results = self.collection.Query(
-            self.query_xml % quoteattr(basename(path))
+            self.query_xml.format(quoteattr(basename(path)))
         )
         for result in results:
             if result["xesam:url"] != path:

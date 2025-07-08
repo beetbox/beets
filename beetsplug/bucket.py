@@ -41,7 +41,7 @@ def span_from_str(span_str):
     def normalize_year(d, yearfrom):
         """Convert string to a 4 digits year"""
         if yearfrom < 100:
-            raise BucketError("%d must be expressed on 4 digits" % yearfrom)
+            raise BucketError(f"{yearfrom} must be expressed on 4 digits")
 
         # if two digits only, pick closest year that ends by these two
         # digits starting from yearfrom
@@ -55,14 +55,13 @@ def span_from_str(span_str):
     years = [int(x) for x in re.findall(r"\d+", span_str)]
     if not years:
         raise ui.UserError(
-            "invalid range defined for year bucket '%s': no year found"
-            % span_str
+            f"invalid range defined for year bucket {span_str!r}: no year found"
         )
     try:
         years = [normalize_year(x, years[0]) for x in years]
     except BucketError as exc:
         raise ui.UserError(
-            "invalid range defined for year bucket '%s': %s" % (span_str, exc)
+            f"invalid range defined for year bucket {span_str!r}: {exc}"
         )
 
     res = {"from": years[0], "str": span_str}
@@ -166,7 +165,7 @@ def build_alpha_spans(alpha_spans_str, alpha_regexs):
             else:
                 raise ui.UserError(
                     "invalid range defined for alpha bucket "
-                    "'%s': no alphanumeric character found" % elem
+                    f"'{elem}': no alphanumeric character found"
                 )
             spans.append(
                 re.compile(

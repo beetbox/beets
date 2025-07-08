@@ -99,7 +99,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
             for recording in tracks:
                 i += 1
                 track = {
-                    "id": "RELEASE TRACK ID %d" % i,
+                    "id": f"RELEASE TRACK ID {i}",
                     "recording": recording,
                     "position": i,
                     "number": "A1",
@@ -140,7 +140,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
             for recording in data_tracks:
                 i += 1
                 data_track = {
-                    "id": "RELEASE TRACK ID %d" % i,
+                    "id": f"RELEASE TRACK ID {i}",
                     "recording": recording,
                     "position": i,
                     "number": "A1",
