@@ -1293,14 +1293,9 @@ class CommonOptionsParser(optparse.OptionParser):
             setattr(parser.values, option.dest, True)
 
         # Use the explicitly specified format, or the string from the option.
-        if fmt:
-            value = fmt
-        elif value:
-            (value,) = [value]
-        else:
-            value = ""
-
+        value = fmt or value or ""
         parser.values.format = value
+
         if target:
             config[target._format_config_key].set(value)
         else:
