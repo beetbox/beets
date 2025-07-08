@@ -482,7 +482,7 @@ class Album(LibModel):
         """
         item = self.items().get()
         if not item:
-            raise ValueError("empty album for album id %d" % self.id)
+            raise ValueError(f"empty album for album id {self.id}")
         return os.path.dirname(item.path)
 
     def _albumtotal(self):

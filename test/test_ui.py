@@ -1020,7 +1020,7 @@ class ConfigTest(TestPluginTestCase):
 
     def test_cli_config_file_loads_plugin_commands(self):
         with open(self.cli_config_path, "w") as file:
-            file.write("pluginpath: %s\n" % _common.PLUGINPATH)
+            file.write(f"pluginpath: {_common.PLUGINPATH}\n")
             file.write("plugins: test")
 
         self.run_command("--config", self.cli_config_path, "plugin", lib=None)

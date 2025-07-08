@@ -593,7 +593,7 @@ class CoverArtArchive(RemoteArtSource):
 class Amazon(RemoteArtSource):
     NAME = "Amazon"
     ID = "amazon"
-    URL = "https://images.amazon.com/images/P/%s.%02i.LZZZZZZZ.jpg"
+    URL = "https://images.amazon.com/images/P/{}.{:02d}.LZZZZZZZ.jpg"
     INDICES = (1, 2)
 
     def get(
@@ -606,7 +606,7 @@ class Amazon(RemoteArtSource):
         if album.asin:
             for index in self.INDICES:
                 yield self._candidate(
-                    url=self.URL % (album.asin, index),
+                    url=self.URL.format(album.asin, index),
                     match=MetadataMatch.EXACT,
                 )
 

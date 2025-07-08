@@ -111,7 +111,7 @@ class MPDUpdatePlugin(BeetsPlugin):
             return
 
         if password:
-            s.send(b'password "%s"\n' % password.encode("utf8"))
+            s.send(f'password "{password}"\n'.encode())
             resp = s.readline()
             if b"OK" not in resp:
                 self._log.warning("Authentication failed: {0!r}", resp)

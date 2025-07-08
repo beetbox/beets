@@ -136,7 +136,7 @@ class Symbol:
         self.original = original
 
     def __repr__(self):
-        return "Symbol(%s)" % repr(self.ident)
+        return f"Symbol({self.ident!r})"
 
     def evaluate(self, env):
         """Evaluate the symbol in the environment, returning a Unicode
@@ -178,7 +178,7 @@ class Call:
             except Exception as exc:
                 # Function raised exception! Maybe inlining the name of
                 # the exception will help debug.
-                return "<%s>" % str(exc)
+                return f"<{exc}>"
             return str(out)
         else:
             return self.original
@@ -224,7 +224,7 @@ class Expression:
         self.parts = parts
 
     def __repr__(self):
-        return "Expression(%s)" % (repr(self.parts))
+        return f"Expression({self.parts!r})"
 
     def evaluate(self, env):
         """Evaluate the entire expression in the environment, returning
@@ -296,9 +296,6 @@ class Parser:
         GROUP_CLOSE,
         ESCAPE_CHAR,
     )
-    special_char_re = re.compile(
-        r"[%s]|\Z" % "".join(re.escape(c) for c in special_chars)
-    )
     escapable_chars = (SYMBOL_DELIM, FUNC_DELIM, GROUP_CLOSE, ARG_SEP)
     terminator_chars = (GROUP_CLOSE,)
 
@@ -310,24 +307,18 @@ class Parser:
         """
         # Append comma (ARG_SEP) to the list of special characters only when
         # parsing function arguments.
-        extra_special_chars = ()
-        special_char_re = self.special_char_re
-        if self.in_argument:
-            extra_special_chars = (ARG_SEP,)
-            special_char_re = re.compile(
-                r"[%s]|\Z"
-                % "".join(
-                    re.escape(c)
-                    for c in self.special_chars + extra_special_chars
-                )
-            )
+        extra_special_chars = (ARG_SEP,) if self.in_argument else ()
+        special_chars = (*self.special_chars, *extra_special_chars)
+        special_char_re = re.compile(
+            rf"[{''.join(map(re.escape, special_chars))}]|\Z"
+        )
 
         text_parts = []
 
         while self.pos < len(self.string):
             char = self.string[self.pos]
 
-            if char not in self.special_chars + extra_special_chars:
+            if char not in special_chars:
                 # A non-special character. Skip to the next special
                 # character, treating the interstice as literal text.
                 next_pos = (

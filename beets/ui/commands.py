@@ -144,13 +144,13 @@ def fields_func(lib, opts, args):
 
     with lib.transaction() as tx:
         # The SQL uses the DISTINCT to get unique values from the query
-        unique_fields = "SELECT DISTINCT key FROM (%s)"
+        unique_fields = "SELECT DISTINCT key FROM ({})"
 
         print_("Item flexible attributes:")
-        _print_keys(tx.query(unique_fields % library.Item._flex_table))
+        _print_keys(tx.query(unique_fields.format(library.Item._flex_table)))
 
         print_("Album flexible attributes:")
-        _print_keys(tx.query(unique_fields % library.Album._flex_table))
+        _print_keys(tx.query(unique_fields.format(library.Album._flex_table)))
 
 
 fields_cmd = ui.Subcommand(
@@ -1926,7 +1926,7 @@ default_commands.append(stats_cmd)
 
 
 def show_version(lib, opts, args):
-    print_("beets version %s" % beets.__version__)
+    print_(f"beets version {beets.__version__}")
     print_(f"Python version {python_version()}")
     # Show plugins.
     names = sorted(p.name for p in plugins.find_plugins())
@@ -1990,7 +1990,7 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm, inherit):
             extra = ""
 
         changed = ui.input_select_objects(
-            "Really modify%s" % extra,
+            f"Really modify{extra}",
             changed,
             lambda o: print_and_modify(o, mods, dels),
         )
@@ -2168,7 +2168,7 @@ def move_items(
     else:
         if confirm:
             objs = ui.input_select_objects(
-                "Really %s" % act,
+                f"Really {act}",
                 objs,
                 lambda o: show_path_changes(
                     [(o.path, o.destination(basedir=dest))]
@@ -2461,22 +2461,18 @@ def completion_script(commands):
     yield "_beet() {\n"
 
     # Command names
-    yield "  local commands='%s'\n" % " ".join(command_names)
+    yield f"  local commands={' '.join(command_names)!r}\n"
     yield "\n"
 
     # Command aliases
-    yield "  local aliases='%s'\n" % " ".join(aliases.keys())
+    yield f"  local aliases={' '.join(aliases.keys())!r}\n"
     for alias, cmd in aliases.items():
         yield f"  local alias__{alias.replace('-', '_')}={cmd}\n"
     yield "\n"
 
     # Fields
-    yield "  fields='%s'\n" % " ".join(
-        set(
-            list(library.Item._fields.keys())
-            + list(library.Album._fields.keys())
-        )
-    )
+    fields = library.Item._fields.keys() | library.Album._fields.keys()
+    yield f"  fields={' '.join(fields)!r}\n"
 
     # Command options
     for cmd, opts in options.items():
