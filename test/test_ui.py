@@ -1261,7 +1261,6 @@ class ShowChangeTest(IOMixin, unittest.TestCase):
             msg = self._show_change(
                 cur_artist=long_name, cur_album="another album"
             )
-            # _common.log.info("Message:{}".format(msg))
             assert "artist: another artist" in msg
             assert "  -> the artist" in msg
             assert "another album -> the album" not in msg
