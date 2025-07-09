@@ -72,8 +72,8 @@ For plugin developers:
     #. :class:`beets.metadata_plugin.MetadataSourcePlugin`
         allows plugins to act like metadata sources. E.g. used by the MusicBrainz plugin. All plugins
         in the beets repo are opted into this class where applicable. If you are maintaining a plugin
-        that acts like a metadata source, i.e. you expose any of `track_for_id,
-        album_for_id, candidates, item_candidates, album_distance, track_distance` methods,
+        that acts like a metadata source, i.e. you expose any of ``track_for_id``,
+        ``album_for_id``, ``candidates``, ``item_candidates``, ``album_distance``, ``track_distance`` methods,
         please update your plugin to inherit from the new baseclass, as otherwise it will
         not be registered as a metadata source and wont be usable going forward.
         
