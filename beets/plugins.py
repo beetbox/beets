@@ -23,6 +23,7 @@ import sys
 import traceback
 from collections import defaultdict
 from functools import wraps
+from types import GenericAlias
 from typing import TYPE_CHECKING, Any, Callable, Sequence, TypeVar
 
 import mediafile
@@ -298,6 +299,7 @@ def load_plugins(names: Sequence[str] = ()) -> None:
                 for obj in getattr(namespace, name).__dict__.values():
                     if (
                         inspect.isclass(obj)
+                        and not isinstance(obj, GenericAlias)
                         and issubclass(obj, BeetsPlugin)
                         and obj != BeetsPlugin
                         and not inspect.isabstract(obj)
