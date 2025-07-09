@@ -299,7 +299,9 @@ def load_plugins(names: Sequence[str] = ()) -> None:
                 for obj in getattr(namespace, name).__dict__.values():
                     if (
                         inspect.isclass(obj)
-                        and not isinstance(obj, GenericAlias)
+                        and not isinstance(
+                            obj, GenericAlias
+                        )  # seems to be needed for python <= 3.9 only
                         and issubclass(obj, BeetsPlugin)
                         and obj != BeetsPlugin
                         and not inspect.isabstract(obj)

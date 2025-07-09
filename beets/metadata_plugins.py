@@ -8,8 +8,10 @@ implemented as plugins.
 from __future__ import annotations
 
 import abc
+import inspect
 import re
 import sys
+import warnings
 from typing import TYPE_CHECKING, Generic, Literal, Sequence, TypedDict, TypeVar
 
 from beets.util import cached_classproperty
@@ -36,11 +38,24 @@ def find_metadata_source_plugins() -> list[MetadataSourcePlugin]:
 
     Resolved from all currently loaded beets plugins.
     """
-    return [
-        plugin
-        for plugin in find_plugins()
-        if isinstance(plugin, MetadataSourcePlugin)
-    ]
+
+    all_plugins = find_plugins()
+    metadata_plugins = []
+    for plugin in all_plugins:
+        if isinstance(plugin, MetadataSourcePlugin):
+            metadata_plugins.append(plugin)
+        elif hasattr(plugin, "data_source"):
+            # TODO: Remove this in the future major release, v3.0.0
+            warnings.warn(
+                f"{plugin.__class__.__name__} is used as a legacy metadata source. "
+                "It should extend MetadataSourcePlugin instead of BeetsPlugin. "
+                "Support for this will be removed in the v3.0.0 release!",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            metadata_plugins.append(plugin)
+
+    return metadata_plugins
 
 
 @notify_info_yielded("albuminfo_received")
@@ -369,3 +384,13 @@ class SearchApiMetadataSourcePlugin(
             None,
             self.tracks_for_ids([result["id"] for result in results if result]),
         )
+
+
+# Dynamically copy methods to BeetsPlugin for legacy support
+# TODO: Remove this in the future major release, v3.0.0
+
+for name, method in inspect.getmembers(
+    MetadataSourcePlugin, predicate=inspect.isfunction
+):
+    if not hasattr(BeetsPlugin, name):
+        setattr(BeetsPlugin, name, method)
