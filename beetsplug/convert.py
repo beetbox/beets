@@ -301,7 +301,7 @@ class ConvertPlugin(BeetsPlugin):
             encode_cmd.append(os.fsdecode(args[i]))
 
         if pretend:
-            self._log.info("{0}", " ".join(ui.decargs(args)))
+            self._log.info("{0}", " ".join(args))
             return
 
         try:
@@ -323,9 +323,7 @@ class ConvertPlugin(BeetsPlugin):
             raise
         except OSError as exc:
             raise ui.UserError(
-                "convert: couldn't invoke '{}': {}".format(
-                    " ".join(ui.decargs(args)), exc
-                )
+                "convert: couldn't invoke '{}': {}".format(" ".join(args), exc)
             )
 
         if not quiet and not pretend:
@@ -579,13 +577,13 @@ class ConvertPlugin(BeetsPlugin):
         ) = self._get_opts_and_config(opts)
 
         if opts.album:
-            albums = lib.albums(ui.decargs(args))
+            albums = lib.albums(args)
             items = [i for a in albums for i in a.items()]
             if not pretend:
                 for a in albums:
                     ui.print_(format(a, ""))
         else:
-            items = list(lib.items(ui.decargs(args)))
+            items = list(lib.items(args))
             if not pretend:
                 for i in items:
                     ui.print_(format(i, ""))

@@ -54,7 +54,7 @@ class DeezerPlugin(MetadataSourcePlugin[Response], BeetsPlugin):
         )
 
         def func(lib: Library, opts, args):
-            items = lib.items(ui.decargs(args))
+            items = lib.items(args)
             self.deezerupdate(list(items), ui.should_write())
 
         deezer_update_cmd.func = func
