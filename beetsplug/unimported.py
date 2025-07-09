@@ -29,7 +29,34 @@ __author__ = "https://github.com/MrNuggelz"
 class Unimported(BeetsPlugin):
     def __init__(self):
         super().__init__()
-        self.config.add({"ignore_extensions": [], "ignore_subdirectories": []})
+        self.config.add(
+            {
+                "ignore_extensions": [],
+                "ignore_subdirectories": [],
+                "ignore_as_globs": False,
+            }
+        )
+
+    def walk(self, lib):
+        ignore_subdirs = self.config["ignore_subdirectories"].as_str_seq()
+        if self.config["ignore_as_globs"].get(bool):
+            # The way beets ignore elements in the library, using globbing,
+            #   whatever the depth
+            for root, _, files in util.sorted_walk(
+                lib.directory, ignore=ignore_subdirs
+            ):
+                yield (root, files)
+        else:
+            # the reverse-compatible search, with ignore_subdirectories as
+            #   a direct child of the library root
+            ignore_dirs = [
+                os.path.join(lib.directory, x.encode()) for x in ignore_subdirs
+            ]
+            for root, _, files in os.walk(lib.directory):
+                # do not traverse if root is a child of an ignored directory
+                if any(root.startswith(ignored) for ignored in ignore_dirs):
+                    continue
+                yield (root, files)
 
     def commands(self):
         def print_unimported(lib, opts, args):
@@ -37,15 +64,8 @@ class Unimported(BeetsPlugin):
                 ("." + x).encode()
                 for x in self.config["ignore_extensions"].as_str_seq()
             ]
-            ignore_dirs = [
-                os.path.join(lib.directory, x.encode())
-                for x in self.config["ignore_subdirectories"].as_str_seq()
-            ]
             in_folder = set()
-            for root, _, files in os.walk(lib.directory):
-                # do not traverse if root is a child of an ignored directory
-                if any(root.startswith(ignored) for ignored in ignore_dirs):
-                    continue
+            for root, files in self.walk(lib):
                 for file in files:
                     # ignore files with ignored extensions
                     if any(file.endswith(ext) for ext in ignore_exts):
