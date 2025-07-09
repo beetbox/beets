@@ -52,7 +52,7 @@ jobs:
       - if: ${{ env.IS_MAIN_PYTHON != 'true' }}
         name: Test without coverage
         run: |
-          poetry install --extras=autobpm --extras=lyrics
+          poetry install --extras=autobpm --extras=lyrics --extras=embedart
           poe test
 
       - if: ${{ env.IS_MAIN_PYTHON == 'true' }}

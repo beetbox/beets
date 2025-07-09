@@ -13,6 +13,7 @@
 # included in all copies or substantial portions of the Software.
 
 
+import os
 import os.path
 import shutil
 import tempfile
@@ -24,7 +25,12 @@ from mediafile import MediaFile
 
 from beets import art, config, logging, ui
 from beets.test import _common
-from beets.test.helper import BeetsTestCase, FetchImageHelper, PluginMixin
+from beets.test.helper import (
+    BeetsTestCase,
+    FetchImageHelper,
+    IOMixin,
+    PluginMixin,
+)
 from beets.util import bytestring_path, displayable_path, syspath
 from beets.util.artresizer import ArtResizer
 from test.test_art_resize import DummyIMBackend
@@ -68,16 +74,12 @@ def require_artresizer_compare(test):
     return wrapper
 
 
-class EmbedartCliTest(PluginMixin, FetchImageHelper, BeetsTestCase):
+class EmbedartCliTest(IOMixin, PluginMixin, FetchImageHelper, BeetsTestCase):
     plugin = "embedart"
     small_artpath = os.path.join(_common.RSRC, b"image-2x3.jpg")
     abbey_artpath = os.path.join(_common.RSRC, b"abbey.jpg")
     abbey_similarpath = os.path.join(_common.RSRC, b"abbey-similar.jpg")
     abbey_differentpath = os.path.join(_common.RSRC, b"abbey-different.jpg")
-
-    def setUp(self):
-        super().setUp()  # Converter is threaded
-        self.io.install()
 
     def _setup_data(self, artpath=None):
         if not artpath:
@@ -202,23 +204,21 @@ class EmbedartCliTest(PluginMixin, FetchImageHelper, BeetsTestCase):
         resource_path = os.path.join(_common.RSRC, b"image.mp3")
         album = self.add_album_fixture()
         trackpath = album.items()[0].path
-        albumpath = album.path
         shutil.copy(syspath(resource_path), syspath(trackpath))
 
         self.run_command("extractart", "-n", "extracted")
 
-        self.assertExists(os.path.join(albumpath, b"extracted.png"))
+        assert (album.filepath / "extracted.png").exists()
 
     def test_extracted_extension(self):
         resource_path = os.path.join(_common.RSRC, b"image-jpeg.mp3")
         album = self.add_album_fixture()
         trackpath = album.items()[0].path
-        albumpath = album.path
         shutil.copy(syspath(resource_path), syspath(trackpath))
 
         self.run_command("extractart", "-n", "extracted")
 
-        self.assertExists(os.path.join(albumpath, b"extracted.jpg"))
+        assert (album.filepath / "extracted.jpg").exists()
 
     def test_clear_art_with_yes_input(self):
         self._setup_data()
