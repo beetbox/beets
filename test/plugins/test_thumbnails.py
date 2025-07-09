@@ -232,8 +232,7 @@ class ThumbnailsTest(BeetsTestCase):
         )
 
     @patch("beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok", Mock())
-    @patch("beetsplug.thumbnails.decargs")
-    def test_invokations(self, mock_decargs):
+    def test_invokations(self):
         plugin = ThumbnailsPlugin()
         plugin.process_album = Mock()
         album = Mock()
@@ -243,7 +242,6 @@ class ThumbnailsTest(BeetsTestCase):
         album2 = Mock()
         lib.albums.return_value = [album, album2]
         plugin.process_query(lib, Mock(), None)
-        lib.albums.assert_called_once_with(mock_decargs.return_value)
         plugin.process_album.assert_has_calls(
             [call(album), call(album2)], any_order=True
         )

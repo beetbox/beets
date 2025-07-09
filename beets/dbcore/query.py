@@ -411,39 +411,6 @@ class BooleanQuery(MatchQuery[int]):
         super().__init__(field_name, pattern_int, fast)
 
 
-class BytesQuery(FieldQuery[bytes]):
-    """Match a raw bytes field (i.e., a path). This is a necessary hack
-    to work around the `sqlite3` module's desire to treat `bytes` and
-    `unicode` equivalently in Python 2. Always use this query instead of
-    `MatchQuery` when matching on BLOB values.
-    """
-
-    def __init__(self, field_name: str, pattern: bytes | str | memoryview):
-        # Use a buffer/memoryview representation of the pattern for SQLite
-        # matching. This instructs SQLite to treat the blob as binary
-        # rather than encoded Unicode.
-        if isinstance(pattern, (str, bytes)):
-            if isinstance(pattern, str):
-                bytes_pattern = pattern.encode("utf-8")
-            else:
-                bytes_pattern = pattern
-            self.buf_pattern = memoryview(bytes_pattern)
-        elif isinstance(pattern, memoryview):
-            self.buf_pattern = pattern
-            bytes_pattern = bytes(pattern)
-        else:
-            raise ValueError("pattern must be bytes, str, or memoryview")
-
-        super().__init__(field_name, bytes_pattern)
-
-    def col_clause(self) -> tuple[str, Sequence[SQLiteType]]:
-        return self.field + " = ?", [self.buf_pattern]
-
-    @classmethod
-    def value_match(cls, pattern: bytes, value: Any) -> bool:
-        return pattern == value
-
-
 class NumericQuery(FieldQuery[str]):
     """Matches numeric fields. A syntax using Ruby-style range ellipses
     (``..``) lets users specify one- or two-sided ranges. For example,

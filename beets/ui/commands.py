@@ -28,7 +28,6 @@ import beets
 from beets import autotag, config, importer, library, logging, plugins, ui, util
 from beets.autotag import Recommendation, hooks
 from beets.ui import (
-    decargs,
     input_,
     print_,
     print_column_layout,
@@ -1303,7 +1302,7 @@ class TerminalImportSession(importer.ImportSession):
 # The import command.
 
 
-def import_files(lib, paths, query):
+def import_files(lib, paths: list[bytes], query):
     """Import the files in the given list of paths or matching the
     query.
     """
@@ -1334,7 +1333,7 @@ def import_files(lib, paths, query):
     plugins.send("import", lib=lib, paths=paths)
 
 
-def import_func(lib, opts, args):
+def import_func(lib, opts, args: list[str]):
     config["import"].set_args(opts)
 
     # Special case: --copy flag suppresses import_move (which would
@@ -1343,7 +1342,7 @@ def import_func(lib, opts, args):
         config["import"]["move"] = False
 
     if opts.library:
-        query = decargs(args)
+        query = args
         paths = []
     else:
         query = None
@@ -1356,15 +1355,11 @@ def import_func(lib, opts, args):
         if not paths and not paths_from_logfiles:
             raise ui.UserError("no path specified")
 
-        # On Python 2, we used to get filenames as raw bytes, which is
-        # what we need. On Python 3, we need to undo the "helpful"
-        # conversion to Unicode strings to get the real bytestring
-        # filename.
-        paths = [os.fsencode(p) for p in paths]
+        byte_paths = [os.fsencode(p) for p in paths]
         paths_from_logfiles = [os.fsencode(p) for p in paths_from_logfiles]
 
         # Check the user-specified directories.
-        for path in paths:
+        for path in byte_paths:
             if not os.path.exists(syspath(normpath(path))):
                 raise ui.UserError(
                     "no such file or directory: {}".format(
@@ -1385,14 +1380,14 @@ def import_func(lib, opts, args):
                 )
                 continue
 
-            paths.append(path)
+            byte_paths.append(path)
 
         # If all paths were read from a logfile, and none of them exist, throw
         # an error
         if not paths:
             raise ui.UserError("none of the paths are importable")
 
-    import_files(lib, paths, query)
+    import_files(lib, byte_paths, query)
 
 
 import_cmd = ui.Subcommand(
@@ -1596,7 +1591,7 @@ def list_items(lib, query, album, fmt=""):
 
 
 def list_func(lib, opts, args):
-    list_items(lib, decargs(args), opts.album)
+    list_items(lib, args, opts.album)
 
 
 list_cmd = ui.Subcommand("list", help="query the library", aliases=("ls",))
@@ -1739,7 +1734,7 @@ def update_func(lib, opts, args):
             return
     update_items(
         lib,
-        decargs(args),
+        args,
         opts.album,
         ui.should_move(opts.move),
         opts.pretend,
@@ -1861,7 +1856,7 @@ def remove_items(lib, query, album, delete, force):
 
 
 def remove_func(lib, opts, args):
-    remove_items(lib, decargs(args), opts.album, opts.delete, opts.force)
+    remove_items(lib, args, opts.album, opts.delete, opts.force)
 
 
 remove_cmd = ui.Subcommand(
@@ -1931,7 +1926,7 @@ Album artists: {}""".format(
 
 
 def stats_func(lib, opts, args):
-    show_stats(lib, decargs(args), opts.exact)
+    show_stats(lib, args, opts.exact)
 
 
 stats_cmd = ui.Subcommand(
@@ -2059,7 +2054,7 @@ def modify_parse_args(args):
 
 
 def modify_func(lib, opts, args):
-    query, mods, dels = modify_parse_args(decargs(args))
+    query, mods, dels = modify_parse_args(args)
     if not mods and not dels:
         raise ui.UserError("no modifications specified")
     modify_items(
@@ -2217,7 +2212,7 @@ def move_func(lib, opts, args):
     move_items(
         lib,
         dest,
-        decargs(args),
+        args,
         opts.copy,
         opts.album,
         opts.pretend,
@@ -2298,7 +2293,7 @@ def write_items(lib, query, pretend, force):
 
 
 def write_func(lib, opts, args):
-    write_items(lib, decargs(args), opts.pretend, opts.force)
+    write_items(lib, args, opts.pretend, opts.force)
 
 
 write_cmd = ui.Subcommand("write", help="write tag information to files")
