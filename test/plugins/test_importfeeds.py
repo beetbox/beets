@@ -12,8 +12,8 @@ class ImportfeedsTestTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
         self.importfeeds = ImportFeedsPlugin()
-        self.feeds_dir = os.path.join(os.fsdecode(self.temp_dir), "importfeeds")
-        config["importfeeds"]["dir"] = self.feeds_dir
+        self.feeds_dir = self.temp_dir_path / "importfeeds"
+        config["importfeeds"]["dir"] = str(self.feeds_dir)
 
     def test_multi_format_album_playlist(self):
         config["importfeeds"]["formats"] = "m3u_multi"
@@ -24,10 +24,8 @@ class ImportfeedsTestTest(BeetsTestCase):
         self.lib.add(item)
 
         self.importfeeds.album_imported(self.lib, album)
-        playlist_path = os.path.join(
-            self.feeds_dir, os.listdir(self.feeds_dir)[0]
-        )
-        assert playlist_path.endswith("album_name.m3u")
+        playlist_path = self.feeds_dir / next(self.feeds_dir.iterdir())
+        assert str(playlist_path).endswith("album_name.m3u")
         with open(playlist_path) as playlist:
             assert item_path in playlist.read()
 
@@ -43,9 +41,7 @@ class ImportfeedsTestTest(BeetsTestCase):
         self.lib.add(item)
 
         self.importfeeds.album_imported(self.lib, album)
-        playlist = os.path.join(
-            self.feeds_dir, config["importfeeds"]["m3u_name"].get()
-        )
+        playlist = self.feeds_dir / config["importfeeds"]["m3u_name"].get()
         playlist_subdir = os.path.dirname(playlist)
         assert os.path.isdir(playlist_subdir)
         assert os.path.isfile(playlist)
@@ -62,7 +58,7 @@ class ImportfeedsTestTest(BeetsTestCase):
         self.importfeeds.import_begin(self)
         self.importfeeds.album_imported(self.lib, album)
         date = datetime.datetime.now().strftime("%Y%m%d_%Hh%M")
-        playlist = os.path.join(self.feeds_dir, f"imports_{date}.m3u")
+        playlist = self.feeds_dir / f"imports_{date}.m3u"
         assert os.path.isfile(playlist)
         with open(playlist) as playlist_contents:
             assert item_path in playlist_contents.read()

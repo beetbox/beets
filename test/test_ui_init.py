@@ -16,19 +16,16 @@
 
 import os
 import shutil
+import unittest
 from copy import deepcopy
 from random import random
 
 from beets import config, ui
 from beets.test import _common
-from beets.test.helper import BeetsTestCase, control_stdin
+from beets.test.helper import BeetsTestCase, IOMixin, control_stdin
 
 
-class InputMethodsTest(BeetsTestCase):
-    def setUp(self):
-        super().setUp()
-        self.io.install()
-
+class InputMethodsTest(IOMixin, unittest.TestCase):
     def _print_helper(self, s):
         print(s)
 

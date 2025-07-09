@@ -194,7 +194,7 @@ class DestinationTest(BeetsTestCase):
 
     def create_temp_dir(self, **kwargs):
         kwargs["prefix"] = "."
-        super().create_temp_dir(**kwargs)
+        return super().create_temp_dir(**kwargs)
 
     def setUp(self):
         super().setUp()
