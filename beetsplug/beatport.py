@@ -431,7 +431,7 @@ class BeatportPlugin(MetadataSourcePlugin):
         """
         self._log.debug("Searching for release {0}", album_id)
 
-        if not (release_id := self.extract_release_id(album_id)):
+        if not (release_id := self._extract_id(album_id)):
             self._log.debug("Not a valid Beatport release ID.")
             return None
 

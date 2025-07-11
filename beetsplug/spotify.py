@@ -290,7 +290,7 @@ class SpotifyPlugin(
         :return: AlbumInfo object for album
         :rtype: beets.autotag.hooks.AlbumInfo or None
         """
-        if not (spotify_id := self.extract_release_id(album_id)):
+        if not (spotify_id := self._extract_id(album_id)):
             return None
 
         album_data = self._handle_response("get", self.album_url + spotify_id)
@@ -393,7 +393,7 @@ class SpotifyPlugin(
         Returns a TrackInfo object or None if the track is not found.
         """
 
-        if not (spotify_id := self.extract_release_id(track_id)):
+        if not (spotify_id := self._extract_id(track_id)):
             self._log.debug("Invalid Spotify ID: {}", track_id)
             return None
 
