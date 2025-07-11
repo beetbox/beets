@@ -26,16 +26,19 @@ import unidecode
 from beets import ui
 from beets.autotag import AlbumInfo, TrackInfo
 from beets.dbcore import types
-from beets.plugins import BeetsPlugin, MetadataSourcePlugin, Response
+from beets.metadata_plugins import (
+    IDResponse,
+    SearchApiMetadataSourcePlugin,
+    SearchFilter,
+)
 
 if TYPE_CHECKING:
     from beets.library import Item, Library
-    from beetsplug._typing import JSONDict
+
+    from ._typing import JSONDict
 
 
-class DeezerPlugin(MetadataSourcePlugin[Response], BeetsPlugin):
-    data_source = "Deezer"
-
+class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
     item_types = {
         "deezer_track_rank": types.INTEGER,
         "deezer_track_id": types.INTEGER,
@@ -63,7 +66,7 @@ class DeezerPlugin(MetadataSourcePlugin[Response], BeetsPlugin):
 
     def album_for_id(self, album_id: str) -> AlbumInfo | None:
         """Fetch an album by its Deezer ID or URL."""
-        if not (deezer_id := self._get_id(album_id)):
+        if not (deezer_id := self._extract_id(album_id)):
             return None
 
         album_url = f"{self.album_url}{deezer_id}"
@@ -145,11 +148,14 @@ class DeezerPlugin(MetadataSourcePlugin[Response], BeetsPlugin):
         )
 
     def track_for_id(self, track_id: str) -> None | TrackInfo:
-        """Fetch a track by its Deezer ID or URL.
+        """Fetch a track by its Deezer ID or URL and return a
+        TrackInfo object or None if the track is not found.
 
-        Returns a TrackInfo object or None if the track is not found.
+        :param track_id: (Optional) Deezer ID or URL for the track. Either
+            ``track_id`` or ``track_data`` must be provided.
+
         """
-        if not (deezer_id := self._get_id(track_id)):
+        if not (deezer_id := self._extract_id(track_id)):
             self._log.debug("Invalid Deezer track_id: {}", track_id)
             return None
 
@@ -162,11 +168,13 @@ class DeezerPlugin(MetadataSourcePlugin[Response], BeetsPlugin):
         # Get album's tracks to set `track.index` (position on the entire
         # release) and `track.medium_total` (total number of tracks on
         # the track's disc).
-        album_tracks_obj = self.fetch_data(
-            self.album_url + str(track_data["album"]["id"]) + "/tracks"
-        )
-        if album_tracks_obj is None:
+        if not (
+            album_tracks_obj := self.fetch_data(
+                self.album_url + str(track_data["album"]["id"]) + "/tracks"
+            )
+        ):
             return None
+
         try:
             album_tracks_data = album_tracks_obj["data"]
         except KeyError:
@@ -187,7 +195,6 @@ class DeezerPlugin(MetadataSourcePlugin[Response], BeetsPlugin):
         """Convert a Deezer track object dict to a TrackInfo object.
 
         :param track_data: Deezer Track object dict
-        :return: TrackInfo object for track
         """
         artist, artist_id = self.get_artist(
             track_data.get("contributors", [track_data["artist"]])
@@ -211,7 +218,7 @@ class DeezerPlugin(MetadataSourcePlugin[Response], BeetsPlugin):
 
     @staticmethod
     def _construct_search_query(
-        filters: dict[str, str], keywords: str = ""
+        filters: SearchFilter, keywords: str = ""
     ) -> str:
         """Construct a query string with the specified filters and keywords to
         be provided to the Deezer Search API
@@ -242,14 +249,14 @@ class DeezerPlugin(MetadataSourcePlugin[Response], BeetsPlugin):
             "radio",
             "user",
         ],
-        filters: dict[str, str],
+        filters: SearchFilter,
         keywords="",
-    ) -> Sequence[Response]:
+    ) -> Sequence[IDResponse]:
         """Query the Deezer Search API for the specified ``keywords``, applying
         the provided ``filters``.
 
-        :param query_type: The Deezer Search API method to use.
-        :param keywords: (Optional) Query keywords to use.
+        :param filters: Field filters to apply.
+        :param keywords: Query keywords to use.
         :return: JSON data for the class:`Response <Response>` object or None
             if no search results are returned.
         """
@@ -269,7 +276,7 @@ class DeezerPlugin(MetadataSourcePlugin[Response], BeetsPlugin):
                 e,
             )
             return ()
-        response_data = response.json().get("data", [])
+        response_data: Sequence[IDResponse] = response.json().get("data", [])
         self._log.debug(
             "Found {} result(s) from {} for '{}'",
             len(response_data),

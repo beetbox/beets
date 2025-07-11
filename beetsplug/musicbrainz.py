@@ -20,7 +20,7 @@ import traceback
 from collections import Counter
 from functools import cached_property
 from itertools import product
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Iterable, Sequence
 from urllib.parse import urljoin
 
 import musicbrainzngs
@@ -28,11 +28,10 @@ import musicbrainzngs
 import beets
 import beets.autotag.hooks
 from beets import config, plugins, util
-from beets.plugins import BeetsPlugin
+from beets.metadata_plugins import MetadataSourcePlugin
 from beets.util.id_extractors import extract_release_id
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator, Sequence
     from typing import Literal
 
     from beets.library import Item
@@ -362,9 +361,7 @@ def _merge_pseudo_and_actual_album(
     return merged
 
 
-class MusicBrainzPlugin(BeetsPlugin):
-    data_source = "Musicbrainz"
-
+class MusicBrainzPlugin(MetadataSourcePlugin):
     def __init__(self):
         """Set up the python-musicbrainz-ngs module according to settings
         from the beets configuration. This should be called at startup.
@@ -421,7 +418,7 @@ class MusicBrainzPlugin(BeetsPlugin):
             medium=medium,
             medium_index=medium_index,
             medium_total=medium_total,
-            data_source="MusicBrainz",
+            data_source=self.data_source,
             data_url=track_url(recording["id"]),
         )
 
@@ -632,7 +629,7 @@ class MusicBrainzPlugin(BeetsPlugin):
             artists_sort=artists_sort_names,
             artist_credit=artist_credit_name,
             artists_credit=artists_credit_names,
-            data_source="MusicBrainz",
+            data_source=self.data_source,
             data_url=album_url(release["id"]),
             barcode=release.get("barcode"),
         )
@@ -767,7 +764,7 @@ class MusicBrainzPlugin(BeetsPlugin):
         return mb_field_by_tag
 
     def get_album_criteria(
-        self, items: list[Item], artist: str, album: str, va_likely: bool
+        self, items: Sequence[Item], artist: str, album: str, va_likely: bool
     ) -> dict[str, str]:
         criteria = {
             "release": album,
@@ -813,12 +810,11 @@ class MusicBrainzPlugin(BeetsPlugin):
 
     def candidates(
         self,
-        items: list[Item],
+        items: Sequence[Item],
         artist: str,
         album: str,
         va_likely: bool,
-        extra_tags: dict[str, Any] | None = None,
-    ) -> Iterator[beets.autotag.hooks.AlbumInfo]:
+    ) -> Iterable[beets.autotag.hooks.AlbumInfo]:
         criteria = self.get_album_criteria(items, artist, album, va_likely)
         release_ids = (r["id"] for r in self._search_api("release", criteria))
 
@@ -826,7 +822,7 @@ class MusicBrainzPlugin(BeetsPlugin):
 
     def item_candidates(
         self, item: Item, artist: str, title: str
-    ) -> Iterator[beets.autotag.hooks.TrackInfo]:
+    ) -> Iterable[beets.autotag.hooks.TrackInfo]:
         criteria = {"artist": artist, "recording": title, "alias": title}
 
         yield from filter(
@@ -841,7 +837,7 @@ class MusicBrainzPlugin(BeetsPlugin):
         MusicBrainzAPIError.
         """
         self._log.debug("Requesting MusicBrainz release {}", album_id)
-        if not (albumid := extract_release_id("musicbrainz", album_id)):
+        if not (albumid := self._extract_id(album_id)):
             self._log.debug("Invalid MBID ({0}).", album_id)
             return None
 
@@ -878,7 +874,7 @@ class MusicBrainzPlugin(BeetsPlugin):
         """Fetches a track by its MusicBrainz ID. Returns a TrackInfo object
         or None if no track is found. May raise a MusicBrainzAPIError.
         """
-        if not (trackid := extract_release_id("musicbrainz", track_id)):
+        if not (trackid := self._extract_id(track_id)):
             self._log.debug("Invalid MBID ({0}).", track_id)
             return None
 

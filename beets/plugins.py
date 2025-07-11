@@ -23,22 +23,13 @@ import sys
 import traceback
 from collections import defaultdict
 from functools import wraps
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Generic,
-    Literal,
-    Sequence,
-    TypedDict,
-    TypeVar,
-)
+from types import GenericAlias
+from typing import TYPE_CHECKING, Any, Callable, Sequence, TypeVar
 
 import mediafile
 
 import beets
 from beets import logging
-from beets.util.id_extractors import extract_release_id
 
 if TYPE_CHECKING:
     from beets.event_types import EventType
@@ -54,8 +45,6 @@ if TYPE_CHECKING:
 
     from confuse import ConfigView
 
-    from beets.autotag import AlbumInfo, TrackInfo
-    from beets.autotag.distance import Distance
     from beets.dbcore import Query
     from beets.dbcore.db import FieldQueryType
     from beets.dbcore.types import Type
@@ -115,7 +104,7 @@ class PluginLogFilter(logging.Filter):
 # Managing the plugins themselves.
 
 
-class BeetsPlugin:
+class BeetsPlugin(metaclass=abc.ABCMeta):
     """The base class for all beets plugins. Plugins provide
     functionality by defining a subclass of BeetsPlugin and overriding
     the abstract methods defined here.
@@ -218,66 +207,6 @@ class BeetsPlugin:
         """Return a dict mapping prefixes to Query subclasses."""
         return {}
 
-    def track_distance(
-        self,
-        item: Item,
-        info: TrackInfo,
-    ) -> Distance:
-        """Should return a Distance object to be added to the
-        distance for every track comparison.
-        """
-        from beets.autotag.distance import Distance
-
-        return Distance()
-
-    def album_distance(
-        self,
-        items: Sequence[Item],
-        album_info: AlbumInfo,
-        mapping: dict[Item, TrackInfo],
-    ) -> Distance:
-        """Should return a Distance object to be added to the
-        distance for every album-level comparison.
-        """
-        from beets.autotag.distance import Distance
-
-        return Distance()
-
-    def candidates(
-        self, items: list[Item], artist: str, album: str, va_likely: bool
-    ) -> Iterable[AlbumInfo]:
-        """Return :py:class:`AlbumInfo` candidates that match the given album.
-
-        :param items: List of items in the album
-        :param artist: Album artist
-        :param album: Album name
-        :param va_likely: Whether the album is likely to be by various artists
-        """
-        yield from ()
-
-    def item_candidates(
-        self, item: Item, artist: str, title: str
-    ) -> Iterable[TrackInfo]:
-        """Return :py:class:`TrackInfo` candidates that match the given track.
-
-        :param item: Track item
-        :param artist: Track artist
-        :param title: Track title
-        """
-        yield from ()
-
-    def album_for_id(self, album_id: str) -> AlbumInfo | None:
-        """Return an AlbumInfo object or None if no matching release was
-        found.
-        """
-        return None
-
-    def track_for_id(self, track_id: str) -> TrackInfo | None:
-        """Return a TrackInfo object or None if no matching release was
-        found.
-        """
-        return None
-
     def add_media_field(
         self, name: str, descriptor: mediafile.MediaField
     ) -> None:
@@ -369,10 +298,13 @@ def load_plugins(names: Sequence[str] = ()) -> None:
             else:
                 for obj in getattr(namespace, name).__dict__.values():
                     if (
-                        isinstance(obj, type)
+                        inspect.isclass(obj)
+                        and not isinstance(
+                            obj, GenericAlias
+                        )  # seems to be needed for python <= 3.9 only
                         and issubclass(obj, BeetsPlugin)
                         and obj != BeetsPlugin
-                        and obj != MetadataSourcePlugin
+                        and not inspect.isabstract(obj)
                         and obj not in _classes
                     ):
                         _classes.add(obj)
@@ -456,32 +388,6 @@ def named_queries(model_cls: type[AnyModel]) -> dict[str, FieldQueryType]:
     return queries
 
 
-def track_distance(item: Item, info: TrackInfo) -> Distance:
-    """Gets the track distance calculated by all loaded plugins.
-    Returns a Distance object.
-    """
-    from beets.autotag.distance import Distance
-
-    dist = Distance()
-    for plugin in find_plugins():
-        dist.update(plugin.track_distance(item, info))
-    return dist
-
-
-def album_distance(
-    items: Sequence[Item],
-    album_info: AlbumInfo,
-    mapping: dict[Item, TrackInfo],
-) -> Distance:
-    """Returns the album distance calculated by plugins."""
-    from beets.autotag.distance import Distance
-
-    dist = Distance()
-    for plugin in find_plugins():
-        dist.update(plugin.album_distance(items, album_info, mapping))
-    return dist
-
-
 def notify_info_yielded(event: str) -> Callable[[IterF[P, Ret]], IterF[P, Ret]]:
     """Makes a generator send the event 'event' every time it yields.
     This decorator is supposed to decorate a generator, but any function
@@ -500,46 +406,6 @@ def notify_info_yielded(event: str) -> Callable[[IterF[P, Ret]], IterF[P, Ret]]:
         return wrapper
 
     return decorator
-
-
-@notify_info_yielded("albuminfo_received")
-def candidates(*args, **kwargs) -> Iterable[AlbumInfo]:
-    """Return matching album candidates from all plugins."""
-    for plugin in find_plugins():
-        yield from plugin.candidates(*args, **kwargs)
-
-
-@notify_info_yielded("trackinfo_received")
-def item_candidates(*args, **kwargs) -> Iterable[TrackInfo]:
-    """Return matching track candidates from all plugins."""
-    for plugin in find_plugins():
-        yield from plugin.item_candidates(*args, **kwargs)
-
-
-def album_for_id(_id: str) -> AlbumInfo | None:
-    """Get AlbumInfo object for the given ID string.
-
-    A single ID can yield just a single album, so we return the first match.
-    """
-    for plugin in find_plugins():
-        if info := plugin.album_for_id(_id):
-            send("albuminfo_received", info=info)
-            return info
-
-    return None
-
-
-def track_for_id(_id: str) -> TrackInfo | None:
-    """Get TrackInfo object for the given ID string.
-
-    A single ID can yield just a single track, so we return the first match.
-    """
-    for plugin in find_plugins():
-        if info := plugin.track_for_id(_id):
-            send("trackinfo_received", info=info)
-            return info
-
-    return None
 
 
 def template_funcs() -> TFuncMap[str]:
@@ -656,20 +522,6 @@ def feat_tokens(for_artist: bool = True) -> str:
     )
 
 
-def get_distance(
-    config: ConfigView, data_source: str, info: AlbumInfo | TrackInfo
-) -> Distance:
-    """Returns the ``data_source`` weight and the maximum source weight
-    for albums or individual tracks.
-    """
-    from beets.autotag.distance import Distance
-
-    dist = Distance()
-    if info.data_source == data_source:
-        dist.add("source", config["source_weight"].as_number())
-    return dist
-
-
 def apply_item_changes(
     lib: Library, item: Item, move: bool, pretend: bool, write: bool
 ) -> None:
@@ -695,149 +547,3 @@ def apply_item_changes(
         item.try_write()
 
     item.store()
-
-
-class Response(TypedDict):
-    """A dictionary with the response of a plugin API call.
-
-    May be extended by plugins to include additional information, but `id`
-    is required.
-    """
-
-    id: str
-
-
-R = TypeVar("R", bound=Response)
-
-
-class MetadataSourcePlugin(Generic[R], BeetsPlugin, metaclass=abc.ABCMeta):
-    def __init__(self):
-        super().__init__()
-        self.config.add({"source_weight": 0.5})
-
-    @property
-    @abc.abstractmethod
-    def data_source(self) -> str:
-        raise NotImplementedError
-
-    @property
-    @abc.abstractmethod
-    def search_url(self) -> str:
-        raise NotImplementedError
-
-    @property
-    @abc.abstractmethod
-    def album_url(self) -> str:
-        raise NotImplementedError
-
-    @property
-    @abc.abstractmethod
-    def track_url(self) -> str:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def _search_api(
-        self,
-        query_type: Literal["album", "track"],
-        filters: dict[str, str],
-        keywords: str = "",
-    ) -> Sequence[R]:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def album_for_id(self, album_id: str) -> AlbumInfo | None:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def track_for_id(self, track_id: str) -> TrackInfo | None:
-        raise NotImplementedError
-
-    @staticmethod
-    def get_artist(
-        artists,
-        id_key: str | int = "id",
-        name_key: str | int = "name",
-        join_key: str | int | None = None,
-    ) -> tuple[str, str | None]:
-        """Returns an artist string (all artists) and an artist_id (the main
-        artist) for a list of artist object dicts.
-
-        For each artist, this function moves articles (such as 'a', 'an',
-        and 'the') to the front and strips trailing disambiguation numbers. It
-        returns a tuple containing the comma-separated string of all
-        normalized artists and the ``id`` of the main/first artist.
-        Alternatively a keyword can be used to combine artists together into a
-        single string by passing the join_key argument.
-
-        :param artists: Iterable of artist dicts or lists returned by API.
-        :type artists: list[dict] or list[list]
-        :param id_key: Key or index corresponding to the value of ``id`` for
-            the main/first artist. Defaults to 'id'.
-        :param name_key: Key or index corresponding to values of names
-            to concatenate for the artist string (containing all artists).
-            Defaults to 'name'.
-        :param join_key: Key or index corresponding to a field containing a
-            keyword to use for combining artists into a single string, for
-            example "Feat.", "Vs.", "And" or similar. The default is None
-            which keeps the default behaviour (comma-separated).
-        :return: Normalized artist string.
-        """
-        artist_id = None
-        artist_string = ""
-        artists = list(artists)  # In case a generator was passed.
-        total = len(artists)
-        for idx, artist in enumerate(artists):
-            if not artist_id:
-                artist_id = artist[id_key]
-            name = artist[name_key]
-            # Strip disambiguation number.
-            name = re.sub(r" \(\d+\)$", "", name)
-            # Move articles to the front.
-            name = re.sub(r"^(.*?), (a|an|the)$", r"\2 \1", name, flags=re.I)
-            # Use a join keyword if requested and available.
-            if idx < (total - 1):  # Skip joining on last.
-                if join_key and artist.get(join_key, None):
-                    name += f" {artist[join_key]} "
-                else:
-                    name += ", "
-            artist_string += name
-
-        return artist_string, artist_id
-
-    def _get_id(self, id_string: str) -> str | None:
-        """Parse release ID from the given ID string."""
-        return extract_release_id(self.data_source.lower(), id_string)
-
-    def candidates(
-        self, items: list[Item], artist: str, album: str, va_likely: bool
-    ) -> Iterable[AlbumInfo]:
-        query_filters = {"album": album}
-        if not va_likely:
-            query_filters["artist"] = artist
-        for result in self._search_api("album", query_filters):
-            if info := self.album_for_id(result["id"]):
-                yield info
-
-    def item_candidates(
-        self, item: Item, artist: str, title: str
-    ) -> Iterable[TrackInfo]:
-        for result in self._search_api(
-            "track", {"artist": artist}, keywords=title
-        ):
-            if info := self.track_for_id(result["id"]):
-                yield info
-
-    def album_distance(
-        self,
-        items: Sequence[Item],
-        album_info: AlbumInfo,
-        mapping: dict[Item, TrackInfo],
-    ) -> Distance:
-        return get_distance(
-            data_source=self.data_source, info=album_info, config=self.config
-        )
-
-    def track_distance(self, item: Item, info: TrackInfo) -> Distance:
-        return get_distance(
-            data_source=self.data_source, info=info, config=self.config
-        )

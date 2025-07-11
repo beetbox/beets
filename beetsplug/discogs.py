@@ -27,7 +27,7 @@ import time
 import traceback
 from functools import cache
 from string import ascii_lowercase
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Sequence
 
 import confuse
 from discogs_client import Client, Master, Release
@@ -40,8 +40,7 @@ import beets.ui
 from beets import config
 from beets.autotag.distance import string_dist
 from beets.autotag.hooks import AlbumInfo, TrackInfo
-from beets.plugins import BeetsPlugin, MetadataSourcePlugin, get_distance
-from beets.util.id_extractors import extract_release_id
+from beets.metadata_plugins import MetadataSourcePlugin
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
@@ -84,7 +83,7 @@ class ReleaseFormat(TypedDict):
     descriptions: list[str] | None
 
 
-class DiscogsPlugin(BeetsPlugin):
+class DiscogsPlugin(MetadataSourcePlugin):
     def __init__(self):
         super().__init__()
         self.config.add(
@@ -169,20 +168,8 @@ class DiscogsPlugin(BeetsPlugin):
 
         return token, secret
 
-    def album_distance(self, items, album_info, mapping):
-        """Returns the album distance."""
-        return get_distance(
-            data_source="Discogs", info=album_info, config=self.config
-        )
-
-    def track_distance(self, item, track_info):
-        """Returns the track distance."""
-        return get_distance(
-            data_source="Discogs", info=track_info, config=self.config
-        )
-
     def candidates(
-        self, items: list[Item], artist: str, album: str, va_likely: bool
+        self, items: Sequence[Item], artist: str, album: str, va_likely: bool
     ) -> Iterable[AlbumInfo]:
         return self.get_albums(f"{artist} {album}" if va_likely else album)
 
@@ -217,7 +204,7 @@ class DiscogsPlugin(BeetsPlugin):
         """
         self._log.debug("Searching for release {0}", album_id)
 
-        discogs_id = extract_release_id("discogs", album_id)
+        discogs_id = self._extract_id(album_id)
 
         if not discogs_id:
             return None
@@ -272,7 +259,7 @@ class DiscogsPlugin(BeetsPlugin):
                 exc_info=True,
             )
             return []
-        return map(self.get_album_info, releases)
+        return filter(None, map(self.get_album_info, releases))
 
     @cache
     def get_master_year(self, master_id: str) -> int | None:
@@ -334,7 +321,7 @@ class DiscogsPlugin(BeetsPlugin):
             self._log.warning("Release does not contain the required fields")
             return None
 
-        artist, artist_id = MetadataSourcePlugin.get_artist(
+        artist, artist_id = self.get_artist(
             [a.data for a in result.artists], join_key="join"
         )
         album = re.sub(r" +", " ", result.title)
@@ -359,7 +346,7 @@ class DiscogsPlugin(BeetsPlugin):
         else:
             genre = base_genre
 
-        discogs_albumid = extract_release_id("discogs", result.data.get("uri"))
+        discogs_albumid = self._extract_id(result.data.get("uri"))
 
         # Extract information for the optional AlbumInfo fields that are
         # contained on nested discogs fields.
@@ -419,7 +406,7 @@ class DiscogsPlugin(BeetsPlugin):
             genre=genre,
             media=media,
             original_year=original_year,
-            data_source="Discogs",
+            data_source=self.data_source,
             data_url=data_url,
             discogs_albumid=discogs_albumid,
             discogs_labelid=labelid,
@@ -638,7 +625,7 @@ class DiscogsPlugin(BeetsPlugin):
                 title = f"{prefix}: {title}"
         track_id = None
         medium, medium_index, _ = self.get_track_index(track["position"])
-        artist, artist_id = MetadataSourcePlugin.get_artist(
+        artist, artist_id = self.get_artist(
             track.get("artists", []), join_key="join"
         )
         length = self.get_track_length(track["duration"])
