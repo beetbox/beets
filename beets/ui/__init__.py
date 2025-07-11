@@ -1103,8 +1103,8 @@ def _field_diff(field, old, old_fmt, new, new_fmt):
     if isinstance(oldval, str):
         oldstr, newstr = colordiff(oldval, newstr)
     else:
-        oldstr = colorize("text_error", oldstr)
-        newstr = colorize("text_error", newstr)
+        oldstr = colorize("text_diff_removed", oldstr)
+        newstr = colorize("text_diff_added", newstr)
 
     return f"{oldstr} -> {newstr}"
 

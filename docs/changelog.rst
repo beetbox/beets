@@ -135,6 +135,10 @@ Other changes:
   file. :bug:`5979`
 - :doc:`plugins/lastgenre`: Updated and streamlined the genre whitelist and
   canonicalization tree :bug:`5977`
+- UI: Update default ``text_diff_added`` color from **bold red** to **bold
+  green.**
+- UI: Use ``text_diff_added`` and ``text_diff_removed`` colors in **all** diff
+  comparisons.
 
 2.3.1 (May 14, 2025)
 --------------------
