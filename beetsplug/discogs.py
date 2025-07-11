@@ -204,7 +204,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
         """
         self._log.debug("Searching for release {0}", album_id)
 
-        discogs_id = self.extract_release_id(album_id)
+        discogs_id = self._extract_id(album_id)
 
         if not discogs_id:
             return None
@@ -346,7 +346,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
         else:
             genre = base_genre
 
-        discogs_albumid = self.extract_release_id(result.data.get("uri"))
+        discogs_albumid = self._extract_id(result.data.get("uri"))
 
         # Extract information for the optional AlbumInfo fields that are
         # contained on nested discogs fields.
