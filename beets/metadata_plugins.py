@@ -251,13 +251,30 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
         """
         return cls.__name__.replace("Plugin", "")  # type: ignore[attr-defined]
 
-    def extract_release_id(self, url: str) -> str | None:
+    def _extract_id(self, url: str) -> str | None:
         """Extract an ID from a URL for this metadata source plugin.
 
         Uses the plugin's data source name to determine the ID format and
         extracts the ID from a given URL.
         """
         return extract_release_id(self.data_source, url)
+
+    def _get_id(self, url: str) -> str | None:
+        """Extract an ID from a URL for this metadata source plugin.
+
+        Uses the plugin's data source name to determine the ID format and
+        extracts the ID from a given URL.
+
+        # TODO: Remove this in the future major release, v3.0.0
+        """
+        warnings.warn(
+            "Support for this method is deprecated and will be removed in the future. "
+            "Use _extract_id instead. "
+            "Support for this will be removed in the v3.0.0 release!",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self._extract_id(url)
 
     @staticmethod
     def get_artist(

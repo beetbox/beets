@@ -66,7 +66,7 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
 
     def album_for_id(self, album_id: str) -> AlbumInfo | None:
         """Fetch an album by its Deezer ID or URL."""
-        if not (deezer_id := self.extract_release_id(album_id)):
+        if not (deezer_id := self._extract_id(album_id)):
             return None
 
         album_url = f"{self.album_url}{deezer_id}"
@@ -155,7 +155,7 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
             ``track_id`` or ``track_data`` must be provided.
 
         """
-        if not (deezer_id := self.extract_release_id(track_id)):
+        if not (deezer_id := self._extract_id(track_id)):
             self._log.debug("Invalid Deezer track_id: {}", track_id)
             return None
 
