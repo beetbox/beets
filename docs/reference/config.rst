@@ -469,7 +469,7 @@ your configuration file that looks like this:
             import_path: ['bold', 'blue']
             import_path_items: ['bold', 'blue']
             changed: ['yellow']
-            text_diff_added:   ['bold', 'red']
+            text_diff_added: ['bold', 'green']
             text_diff_removed: ['bold', 'red']
             action_description: ['white']
 
