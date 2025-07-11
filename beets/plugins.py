@@ -23,6 +23,7 @@ import sys
 import traceback
 from collections import defaultdict
 from functools import wraps
+from importlib import import_module
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -50,7 +51,7 @@ else:
 
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Iterator
 
     from confuse import ConfigView
 
@@ -346,7 +347,7 @@ class BeetsPlugin:
         return helper
 
 
-_classes: set[type[BeetsPlugin]] = set()
+_instances: dict[type[BeetsPlugin], BeetsPlugin] = {}
 
 
 def load_plugins(names: Sequence[str] = ()) -> None:
@@ -356,56 +357,59 @@ def load_plugins(names: Sequence[str] = ()) -> None:
     BeetsPlugin subclasses desired.
     """
     for name in names:
-        modname = f"{PLUGIN_NAMESPACE}.{name}"
+        name_full = f"{PLUGIN_NAMESPACE}.{name}"
         try:
-            try:
-                namespace = __import__(modname, None, None)
-            except ImportError as exc:
-                # Again, this is hacky:
-                if exc.args[0].endswith(" " + name):
-                    log.warning("** plugin {0} not found", name)
-                else:
-                    raise
+            mod = import_module(name_full)
+        except ModuleNotFoundError as exc:
+            if exc.name == name_full:
+                log.warning("** plugin {} not found", name)
             else:
-                for obj in getattr(namespace, name).__dict__.values():
-                    if (
-                        isinstance(obj, type)
-                        and issubclass(obj, BeetsPlugin)
-                        and obj != BeetsPlugin
-                        and obj != MetadataSourcePlugin
-                        and obj not in _classes
-                    ):
-                        _classes.add(obj)
-
+                log.warning(
+                    "** error loading plugin {}:\n{}",
+                    name,
+                    traceback.format_exc(),
+                )
+            continue
         except Exception:
             log.warning(
                 "** error loading plugin {}:\n{}",
                 name,
                 traceback.format_exc(),
             )
+            continue
+
+        for _name, cls in inspect.getmembers(mod, inspect.isclass):
+            if issubclass(cls, BeetsPlugin) and cls not in {
+                BeetsPlugin,
+                MetadataSourcePlugin,
+            }:
+                _register_plugin(cls)
 
 
-_instances: dict[type[BeetsPlugin], BeetsPlugin] = {}
+def _register_plugin(cls: type[BeetsPlugin]) -> None:
+    if cls in _instances:
+        log.debug(
+            "repeated initialization of plugin class {}.{}",
+            cls.__module__,
+            cls.__qualname__,
+        )
+
+    try:
+        _instances[cls] = cls()
+    except Exception:
+        log.error(
+            "failed to initialize plugin class {}.{}",
+            cls.__module__,
+            cls.__qualname__,
+        )
+        raise
 
 
-def find_plugins() -> list[BeetsPlugin]:
-    """Returns a list of BeetsPlugin subclass instances from all
-    currently loaded beets plugins. Loads the default plugin set
-    first.
+def find_plugins() -> Iterator[BeetsPlugin]:
+    """Returns an iterator of BeetsPlugin subclass instances from all
+    currently loaded beets plugins.
     """
-    if _instances:
-        # After the first call, use cached instances for performance reasons.
-        # See https://github.com/beetbox/beets/pull/3810
-        return list(_instances.values())
-
-    load_plugins()
-    plugins = []
-    for cls in _classes:
-        # Only instantiate each plugin class once.
-        if cls not in _instances:
-            _instances[cls] = cls()
-        plugins.append(_instances[cls])
-    return plugins
+    yield from _instances.values()
 
 
 # Communication with plugins.
