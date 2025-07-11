@@ -1,14 +1,17 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="the music geek’s media organizer">
+        <meta name="keywords"
+              content="beets, media, music, library, metadata, player, tagger, grep, transcoder, organizer">
         <title>beets</title>
-
         <link rel="stylesheet"
-        href="{{ url_for('static', filename='beets.css') }}" type="text/css">
-
+              href="{{ url_for('static', filename='beets.css') }}"
+              type="text/css">
         <script src="{{ url_for('static', filename='jquery.js') }}"></script>
-        <script src="{{ url_for('static', filename='underscore.js') }}">
-        </script>
+        <script src="{{ url_for('static', filename='underscore.js') }}"></script>
         <script src="{{ url_for('static', filename='backbone.js') }}"></script>
         <script src="{{ url_for('static', filename='beets.js') }}"></script>
     </head>
@@ -17,18 +20,14 @@
             <h1>beets</h1>
             <div id="player">
                 <audio></audio>
-
                 <button class="disabled">&#9654;</button>
                 <button class="play">&#9654;</button>
                 <button class="pause" style="letter-spacing: 1px;">&#10073;&#10073;</button>
-
                 <span class="times">
-                    <span class="currentTime">
-                    </span>
+                    <span class="currentTime"></span>
                 </span>
             </div>
         </div>
-
         <div id="entities">
             <form id="queryForm">
                 <input type="search" id="query" placeholder="Query">
@@ -36,15 +35,14 @@
             <ul id="results">
             </ul>
         </div>
-
-        <div id="main-detail">
-        </div>
-
-        <div id="extra-detail">
-        </div>
-
+        <div id="main-detail"></div>
+        <div id="extra-detail"></div>
         <!-- Templates. -->
         <script type="text/template" id="item-entry-template">
+            <% if (artist) { %><%= artist %><% } %>
+            <% if (artist && album) { %> &ndash; <% } %>
+            <% if (album) { %><%= album %><% } %>
+            <% if ((artist || album) && title) { %> &ndash; <% } %>
             <%= title %>
             <span class="playing">&#9654;</span>
         </script>
