@@ -251,7 +251,7 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
         """
         return cls.__name__.replace("Plugin", "")  # type: ignore[attr-defined]
 
-    def extract_release_id(self, url: str) -> str | None:
+    def _extract_id(self, url: str) -> str | None:
         """Extract an ID from a URL for this metadata source plugin.
 
         Uses the plugin's data source name to determine the ID format and
