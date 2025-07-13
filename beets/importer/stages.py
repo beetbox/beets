@@ -70,6 +70,7 @@ def query_tasks(session: ImportSession):
     Instead of finding files from the filesystem, a query is used to
     match items from the library.
     """
+    task: ImportTask
     if session.config["singletons"]:
         # Search for items.
         for item in session.lib.items(session.query):

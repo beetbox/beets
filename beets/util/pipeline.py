@@ -48,6 +48,8 @@ POISON = "__PIPELINE_POISON__"
 
 DEFAULT_QUEUE_SIZE = 16
 
+Tq = TypeVar("Tq")
+
 
 def _invalidate_queue(q, val=None, sync=True):
     """Breaks a Queue such that it never blocks, always has size 1,
@@ -91,7 +93,7 @@ def _invalidate_queue(q, val=None, sync=True):
             q.mutex.release()
 
 
-class CountedQueue(queue.Queue):
+class CountedQueue(queue.Queue[Tq]):
     """A queue that keeps track of the number of threads that are
     still feeding into it. The queue is poisoned when all threads are
     finished with the queue.
