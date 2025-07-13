@@ -28,6 +28,7 @@ from re import Pattern
 from typing import TYPE_CHECKING, Any, Generic, TypeVar, Union
 
 from beets import util
+from beets.util.units import raw_seconds_short
 
 if TYPE_CHECKING:
     from beets.dbcore.db import AnyModel, Model
@@ -892,7 +893,7 @@ class DurationQuery(NumericQuery):
         if not s:
             return None
         try:
-            return util.raw_seconds_short(s)
+            return raw_seconds_short(s)
         except ValueError:
             try:
                 return float(s)
