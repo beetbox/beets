@@ -105,7 +105,6 @@ jobs:
 
       - name: Type check code
         uses: liskin/gh-problem-matcher-wrap@v3
-        continue-on-error: true
         with:
           linters: mypy
           run: poe check-types --show-column-numbers --no-error-summary ${{ needs.changed-files.outputs.changed_python_files }}
