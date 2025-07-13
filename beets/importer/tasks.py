@@ -32,6 +32,8 @@ from beets.dbcore.query import PathQuery
 from .state import ImportState
 
 if TYPE_CHECKING:
+    from beets.autotag.match import Recommendation
+
     from .session import ImportSession
 
 # Global logger.
@@ -159,6 +161,7 @@ class ImportTask(BaseImportTask):
     cur_album: str | None = None
     cur_artist: str | None = None
     candidates: Sequence[autotag.AlbumMatch | autotag.TrackMatch] = []
+    rec: Recommendation | None = None
 
     def __init__(
         self,
@@ -167,11 +170,9 @@ class ImportTask(BaseImportTask):
         items: Iterable[library.Item] | None,
     ):
         super().__init__(toppath, paths, items)
-        self.rec = None
         self.should_remove_duplicates = False
         self.should_merge_duplicates = False
         self.is_album = True
-        self.search_ids = []  # user-supplied candidate IDs.
 
     def set_choice(
         self, choice: Action | autotag.AlbumMatch | autotag.TrackMatch
@@ -356,18 +357,15 @@ class ImportTask(BaseImportTask):
             tasks = [t for inner in tasks for t in inner]
         return tasks
 
-    def lookup_candidates(self):
-        """Retrieve and store candidates for this album. User-specified
-        candidate IDs are stored in self.search_ids: if present, the
-        initial lookup is restricted to only those IDs.
+    def lookup_candidates(self, search_ids: list[str]) -> None:
+        """Retrieve and store candidates for this album.
+
+        If User-specified ``search_ids`` list is not empty, the lookup is
+        restricted to only those IDs.
         """
-        artist, album, prop = autotag.tag_album(
-            self.items, search_ids=self.search_ids
+        self.cur_artist, self.cur_album, (self.candidates, self.rec) = (
+            autotag.tag_album(self.items, search_ids=search_ids)
         )
-        self.cur_artist = artist
-        self.cur_album = album
-        self.candidates = prop.candidates
-        self.rec = prop.recommendation
 
     def find_duplicates(self, lib: library.Library):
         """Return a list of albums from `lib` with the same artist and
@@ -695,10 +693,10 @@ class SingletonImportTask(ImportTask):
         for item in self.imported_items():
             plugins.send("item_imported", lib=lib, item=item)
 
-    def lookup_candidates(self):
-        prop = autotag.tag_item(self.item, search_ids=self.search_ids)
-        self.candidates = prop.candidates
-        self.rec = prop.recommendation
+    def lookup_candidates(self, search_ids: list[str]) -> None:
+        self.candidates, self.rec = autotag.tag_item(
+            self.item, search_ids=search_ids
+        )
 
     def find_duplicates(self, lib):
         """Return a list of items from `lib` that have the same artist
