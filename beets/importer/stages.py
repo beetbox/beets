@@ -143,9 +143,7 @@ def lookup_candidates(session: ImportSession, task: ImportTask):
 
     # Restrict the initial lookup to IDs specified by the user via the -m
     # option. Currently all the IDs are passed onto the tasks directly.
-    task.search_ids = session.config["search_ids"].as_str_seq()
-
-    task.lookup_candidates()
+    task.lookup_candidates(session.config["search_ids"].as_str_seq())
 
 
 @pipeline.stage
