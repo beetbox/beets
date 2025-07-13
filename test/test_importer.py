@@ -1627,9 +1627,9 @@ class ImportIdTest(ImportTestCase):
         task = importer.ImportTask(
             paths=self.import_dir, toppath="top path", items=[_common.item()]
         )
-        task.search_ids = [self.ID_RELEASE_0, self.ID_RELEASE_1]
 
-        task.lookup_candidates()
+        task.lookup_candidates([self.ID_RELEASE_0, self.ID_RELEASE_1])
+
         assert {"VALID_RELEASE_0", "VALID_RELEASE_1"} == {
             c.info.album for c in task.candidates
         }
@@ -1639,9 +1639,9 @@ class ImportIdTest(ImportTestCase):
         task = importer.SingletonImportTask(
             toppath="top path", item=_common.item()
         )
-        task.search_ids = [self.ID_RECORDING_0, self.ID_RECORDING_1]
 
-        task.lookup_candidates()
+        task.lookup_candidates([self.ID_RECORDING_0, self.ID_RECORDING_1])
+
         assert {"VALID_RECORDING_0", "VALID_RECORDING_1"} == {
             c.info.title for c in task.candidates
         }
