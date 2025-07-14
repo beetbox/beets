@@ -40,7 +40,7 @@ def find_metadata_source_plugins() -> list[MetadataSourcePlugin]:
     """
 
     all_plugins = find_plugins()
-    metadata_plugins = []
+    metadata_plugins: list[MetadataSourcePlugin | BeetsPlugin] = []
     for plugin in all_plugins:
         if isinstance(plugin, MetadataSourcePlugin):
             metadata_plugins.append(plugin)
@@ -55,7 +55,8 @@ def find_metadata_source_plugins() -> list[MetadataSourcePlugin]:
             )
             metadata_plugins.append(plugin)
 
-    return metadata_plugins
+    # typeignore: BeetsPlugin is not a MetadataSourcePlugin (legacy support)
+    return metadata_plugins  # type: ignore[return-value]
 
 
 @notify_info_yielded("albuminfo_received")
