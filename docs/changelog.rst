@@ -13,6 +13,8 @@ been dropped.
 New features:
 
 - :doc:`plugins/ftintitle`: Added argument for custom feat. words in ftintitle.
+- :doc:`plugins/musicbrainz`: Allow selecting tags or genres to populate the
+  genres tag.
 - :doc:`plugins/ftintitle`: Added argument to skip the processing of artist and
   album artist are the same in ftintitle.
 - :doc:`plugins/play`: Added `$playlist` marker to precisely edit the playlist
