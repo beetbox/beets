@@ -124,7 +124,7 @@ aura = ["flask", "flask-cors", "Pillow"]
 autobpm = ["librosa", "resampy"]
 # badfiles # mp3val and flac
 beatport = ["requests-oauthlib"]
-bpd = ["PyGObject"] # python-gi and GStreamer 1.0+
+bpd = ["PyGObject"] # gobject-introspection, gstreamer1.0-plugins-base, python3-gst-1.0
 chroma = ["pyacoustid"] # chromaprint or fpcalc
 # convert # ffmpeg
 docs = ["pydata-sphinx-theme", "sphinx"]
