@@ -913,7 +913,9 @@ def album_candidates_mock(*args, **kwargs):
     )
 
 
-@patch("beets.plugins.candidates", Mock(side_effect=album_candidates_mock))
+@patch(
+    "beets.metadata_plugins.candidates", Mock(side_effect=album_candidates_mock)
+)
 class ImportDuplicateAlbumTest(PluginMixin, ImportTestCase):
     plugin = "musicbrainz"
 
@@ -1031,7 +1033,10 @@ def item_candidates_mock(*args, **kwargs):
     )
 
 
-@patch("beets.plugins.item_candidates", Mock(side_effect=item_candidates_mock))
+@patch(
+    "beets.metadata_plugins.item_candidates",
+    Mock(side_effect=item_candidates_mock),
+)
 class ImportDuplicateSingletonTest(ImportTestCase):
     def setUp(self):
         super().setUp()
@@ -1567,8 +1572,14 @@ def mocked_get_track_by_id(id_):
     )
 
 
-@patch("beets.plugins.track_for_id", Mock(side_effect=mocked_get_track_by_id))
-@patch("beets.plugins.album_for_id", Mock(side_effect=mocked_get_album_by_id))
+@patch(
+    "beets.metadata_plugins.track_for_id",
+    Mock(side_effect=mocked_get_track_by_id),
+)
+@patch(
+    "beets.metadata_plugins.album_for_id",
+    Mock(side_effect=mocked_get_album_by_id),
+)
 class ImportIdTest(ImportTestCase):
     ID_RELEASE_0 = "00000000-0000-0000-0000-000000000000"
     ID_RELEASE_1 = "11111111-1111-1111-1111-111111111111"
