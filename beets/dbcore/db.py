@@ -299,10 +299,12 @@ class Model(ABC, Generic[D]):
     are subclasses of `Sort`.
     """
 
-    _queries: dict[str, FieldQueryType] = {}
-    """Named queries that use a field-like `name:value` syntax but which
-    do not relate to any specific field.
-    """
+    @cached_classproperty
+    def _queries(cls) -> dict[str, FieldQueryType]:
+        """Named queries that use a field-like `name:value` syntax but which
+        do not relate to any specific field.
+        """
+        return {}
 
     _always_dirty = False
     """By default, fields only become "dirty" when their value actually

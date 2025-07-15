@@ -52,7 +52,7 @@ import beets.plugins
 from beets import importer, logging, util
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.importer import ImportSession
-from beets.library import Album, Item, Library
+from beets.library import Item, Library
 from beets.test import _common
 from beets.ui.commands import TerminalImportSession
 from beets.util import (
@@ -472,9 +472,6 @@ class PluginMixin(ConfigMixin):
     plugin: ClassVar[str]
     preload_plugin: ClassVar[bool] = True
 
-    original_item_queries = dict(Item._queries)
-    original_album_queries = dict(Album._queries)
-
     def setup_beets(self):
         super().setup_beets()
         if self.preload_plugin:
@@ -498,10 +495,6 @@ class PluginMixin(ConfigMixin):
         beets.plugins.send("pluginload")
         beets.plugins.find_plugins()
 
-        # Take a backup of the original _queries to restore when unloading.
-        Item._queries.update(beets.plugins.named_queries(Item))
-        Album._queries.update(beets.plugins.named_queries(Album))
-
     def unload_plugins(self) -> None:
         """Unload all plugins and remove them from the configuration."""
         # FIXME this should eventually be handled by a plugin manager
@@ -510,8 +503,6 @@ class PluginMixin(ConfigMixin):
         self.config["plugins"] = []
         beets.plugins._classes = set()
         beets.plugins._instances = {}
-        Item._queries = self.original_item_queries
-        Album._queries = self.original_album_queries
 
     @contextmanager
     def configure_plugin(self, config: Any):
