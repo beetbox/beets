@@ -12,6 +12,7 @@ See also the documentation for the `MediaFile`_ and `Confuse`_ libraries. These 
 
 .. toctree::
     :maxdepth: 1
+    :titlesonly:
 
     plugins/index
     library

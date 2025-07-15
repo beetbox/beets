@@ -85,6 +85,7 @@ the following resources:
 
 .. toctree::
     :maxdepth: 2
+    :includehidden:
 
     commands
     events
