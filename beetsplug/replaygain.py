@@ -62,7 +62,7 @@ class FatalGstreamerPluginReplayGainError(FatalReplayGainError):
     loading the required plugins."""
 
 
-def call(args: list[Any], log: Logger, **kwargs: Any):
+def call(args: list[str], log: Logger, **kwargs: Any):
     """Execute the command and return its output or raise a
     ReplayGainError on failure.
     """
@@ -73,11 +73,6 @@ def call(args: list[Any], log: Logger, **kwargs: Any):
         raise ReplayGainError(
             "{} exited with status {}".format(args[0], e.returncode)
         )
-    except UnicodeEncodeError:
-        # Due to a bug in Python 2's subprocess on Windows, Unicode
-        # filenames can fail to encode on that platform. See:
-        # https://github.com/google-code-export/beets/issues/499
-        raise ReplayGainError("argument encoding failed")
 
 
 def db_to_lufs(db: float) -> float:
@@ -403,20 +398,18 @@ class FfmpegBackend(Backend):
 
     def _construct_cmd(
         self, item: Item, peak_method: PeakMethod | None
-    ) -> list[str | bytes]:
+    ) -> list[str]:
         """Construct the shell command to analyse items."""
         return [
             self._ffmpeg_path,
             "-nostats",
             "-hide_banner",
             "-i",
-            item.path,
+            str(item.filepath),
             "-map",
             "a:0",
             "-filter",
-            "ebur128=peak={}".format(
-                "none" if peak_method is None else peak_method.name
-            ),
+            f"ebur128=peak={'none' if peak_method is None else peak_method.name}",
             "-f",
             "null",
             "-",
@@ -660,7 +653,7 @@ class CommandBackend(Backend):
         # tag-writing; this turns the mp3gain/aacgain tool into a gain
         # calculator rather than a tag manipulator because we take care
         # of changing tags ourselves.
-        cmd: list[bytes | str] = [self.command, "-o", "-s", "s"]
+        cmd: list[str] = [self.command, "-o", "-s", "s"]
         if self.noclip:
             # Adjust to avoid clipping.
             cmd = cmd + ["-k"]
@@ -1039,7 +1032,7 @@ class AudioToolsBackend(Backend):
                 os.fsdecode(syspath(item.path))
             )
         except OSError:
-            raise ReplayGainError(f"File {item.path} was not found")
+            raise ReplayGainError(f"File {item.filepath} was not found")
         except self._mod_audiotools.UnsupportedFile:
             raise ReplayGainError(f"Unsupported file type {item.format}")
 
@@ -1530,7 +1523,7 @@ class ReplayGainPlugin(BeetsPlugin):
                 self.open_pool(threads)
 
             if opts.album:
-                albums = lib.albums(ui.decargs(args))
+                albums = lib.albums(args)
                 self._log.info(
                     "Analyzing {} albums ~ {} backend...".format(
                         len(albums), self.backend_name
@@ -1539,7 +1532,7 @@ class ReplayGainPlugin(BeetsPlugin):
                 for album in albums:
                     self.handle_album(album, write, force)
             else:
-                items = lib.items(ui.decargs(args))
+                items = lib.items(args)
                 self._log.info(
                     "Analyzing {} tracks ~ {} backend...".format(
                         len(items), self.backend_name

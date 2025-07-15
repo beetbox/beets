@@ -308,18 +308,8 @@ def all_items():
 def item_file(item_id):
     item = g.lib.get_item(item_id)
 
-    # On Windows under Python 2, Flask wants a Unicode path. On Python 3, it
-    # *always* wants a Unicode path.
-    if os.name == "nt":
-        item_path = util.syspath(item.path)
-    else:
-        item_path = os.fsdecode(item.path)
-
+    item_path = util.syspath(item.path)
     base_filename = os.path.basename(item_path)
-    if isinstance(base_filename, bytes):
-        unicode_base_filename = util.displayable_path(base_filename)
-    else:
-        unicode_base_filename = base_filename
 
     try:
         # Imitate http.server behaviour
@@ -327,7 +317,7 @@ def item_file(item_id):
     except UnicodeError:
         safe_filename = unidecode(base_filename)
     else:
-        safe_filename = unicode_base_filename
+        safe_filename = base_filename
 
     response = flask.send_file(
         item_path, as_attachment=True, download_name=safe_filename
@@ -470,7 +460,7 @@ class WebPlugin(BeetsPlugin):
         )
 
         def func(lib, opts, args):
-            args = ui.decargs(args)
+            args = args
             if args:
                 self.config["host"] = args.pop(0)
             if args:

@@ -86,7 +86,7 @@ class MBSubmitPlugin(BeetsPlugin):
         )
 
         def func(lib, opts, args):
-            items = lib.items(ui.decargs(args))
+            items = lib.items(args)
             self._mbsubmit(items)
 
         mbsubmit_cmd.func = func

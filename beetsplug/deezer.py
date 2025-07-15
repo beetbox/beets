@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import collections
 import time
+from typing import TYPE_CHECKING, Literal, Sequence
 
 import requests
 import unidecode
@@ -25,10 +26,14 @@ import unidecode
 from beets import ui
 from beets.autotag import AlbumInfo, TrackInfo
 from beets.dbcore import types
-from beets.plugins import BeetsPlugin, MetadataSourcePlugin
+from beets.plugins import BeetsPlugin, MetadataSourcePlugin, Response
+
+if TYPE_CHECKING:
+    from beets.library import Item, Library
+    from beetsplug._typing import JSONDict
 
 
-class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
+class DeezerPlugin(MetadataSourcePlugin[Response], BeetsPlugin):
     data_source = "Deezer"
 
     item_types = {
@@ -36,15 +41,11 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
         "deezer_track_id": types.INTEGER,
         "deezer_updated": types.DATE,
     }
-
     # Base URLs for the Deezer API
     # Documentation: https://developers.deezer.com/api/
     search_url = "https://api.deezer.com/search/"
     album_url = "https://api.deezer.com/album/"
     track_url = "https://api.deezer.com/track/"
-
-    def __init__(self):
-        super().__init__()
 
     def commands(self):
         """Add beet UI commands to interact with Deezer."""
@@ -52,26 +53,13 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
             "deezerupdate", help=f"Update {self.data_source} rank"
         )
 
-        def func(lib, opts, args):
-            items = lib.items(ui.decargs(args))
-            self.deezerupdate(items, ui.should_write())
+        def func(lib: Library, opts, args):
+            items = lib.items(args)
+            self.deezerupdate(list(items), ui.should_write())
 
         deezer_update_cmd.func = func
 
         return [deezer_update_cmd]
-
-    def fetch_data(self, url):
-        try:
-            response = requests.get(url, timeout=10)
-            response.raise_for_status()
-            data = response.json()
-        except requests.exceptions.RequestException as e:
-            self._log.error("Error fetching data from {}\n Error: {}", url, e)
-            return None
-        if "error" in data:
-            self._log.debug("Deezer API error: {}", data["error"]["message"])
-            return None
-        return data
 
     def album_for_id(self, album_id: str) -> AlbumInfo | None:
         """Fetch an album by its Deezer ID or URL."""
@@ -156,52 +144,18 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
             cover_art_url=album_data.get("cover_xl"),
         )
 
-    def _get_track(self, track_data):
-        """Convert a Deezer track object dict to a TrackInfo object.
+    def track_for_id(self, track_id: str) -> None | TrackInfo:
+        """Fetch a track by its Deezer ID or URL.
 
-        :param track_data: Deezer Track object dict
-        :type track_data: dict
-        :return: TrackInfo object for track
-        :rtype: beets.autotag.hooks.TrackInfo
+        Returns a TrackInfo object or None if the track is not found.
         """
-        artist, artist_id = self.get_artist(
-            track_data.get("contributors", [track_data["artist"]])
-        )
-        return TrackInfo(
-            title=track_data["title"],
-            track_id=track_data["id"],
-            deezer_track_id=track_data["id"],
-            isrc=track_data.get("isrc"),
-            artist=artist,
-            artist_id=artist_id,
-            length=track_data["duration"],
-            index=track_data.get("track_position"),
-            medium=track_data.get("disk_number"),
-            deezer_track_rank=track_data.get("rank"),
-            medium_index=track_data.get("track_position"),
-            data_source=self.data_source,
-            data_url=track_data["link"],
-            deezer_updated=time.time(),
-        )
+        if not (deezer_id := self._get_id(track_id)):
+            self._log.debug("Invalid Deezer track_id: {}", track_id)
+            return None
 
-    def track_for_id(self, track_id=None, track_data=None):
-        """Fetch a track by its Deezer ID or URL and return a
-        TrackInfo object or None if the track is not found.
-
-        :param track_id: (Optional) Deezer ID or URL for the track. Either
-            ``track_id`` or ``track_data`` must be provided.
-        :type track_id: str
-        :param track_data: (Optional) Simplified track object dict. May be
-            provided instead of ``track_id`` to avoid unnecessary API calls.
-        :type track_data: dict
-        :return: TrackInfo object for track
-        :rtype: beets.autotag.hooks.TrackInfo or None
-        """
-        if track_data is None:
-            if not (deezer_id := self._get_id(track_id)) or not (
-                track_data := self.fetch_data(f"{self.track_url}{deezer_id}")
-            ):
-                return None
+        if not (track_data := self.fetch_data(f"{self.track_url}{deezer_id}")):
+            self._log.debug("Track not found: {}", track_id)
+            return None
 
         track = self._get_track(track_data)
 
@@ -229,18 +183,43 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
         track.medium_total = medium_total
         return track
 
+    def _get_track(self, track_data: JSONDict) -> TrackInfo:
+        """Convert a Deezer track object dict to a TrackInfo object.
+
+        :param track_data: Deezer Track object dict
+        :return: TrackInfo object for track
+        """
+        artist, artist_id = self.get_artist(
+            track_data.get("contributors", [track_data["artist"]])
+        )
+        return TrackInfo(
+            title=track_data["title"],
+            track_id=track_data["id"],
+            deezer_track_id=track_data["id"],
+            isrc=track_data.get("isrc"),
+            artist=artist,
+            artist_id=artist_id,
+            length=track_data["duration"],
+            index=track_data.get("track_position"),
+            medium=track_data.get("disk_number"),
+            deezer_track_rank=track_data.get("rank"),
+            medium_index=track_data.get("track_position"),
+            data_source=self.data_source,
+            data_url=track_data["link"],
+            deezer_updated=time.time(),
+        )
+
     @staticmethod
-    def _construct_search_query(filters=None, keywords=""):
+    def _construct_search_query(
+        filters: dict[str, str], keywords: str = ""
+    ) -> str:
         """Construct a query string with the specified filters and keywords to
         be provided to the Deezer Search API
         (https://developers.deezer.com/api/search).
 
-        :param filters: (Optional) Field filters to apply.
-        :type filters: dict
+        :param filters: Field filters to apply.
         :param keywords: (Optional) Query keywords to use.
-        :type keywords: str
         :return: Query string to be provided to the Search API.
-        :rtype: str
         """
         query_components = [
             keywords,
@@ -251,25 +230,30 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
             query = query.decode("utf8")
         return unidecode.unidecode(query)
 
-    def _search_api(self, query_type, filters=None, keywords=""):
+    def _search_api(
+        self,
+        query_type: Literal[
+            "album",
+            "track",
+            "artist",
+            "history",
+            "playlist",
+            "podcast",
+            "radio",
+            "user",
+        ],
+        filters: dict[str, str],
+        keywords="",
+    ) -> Sequence[Response]:
         """Query the Deezer Search API for the specified ``keywords``, applying
         the provided ``filters``.
 
-        :param query_type: The Deezer Search API method to use. Valid types
-            are: 'album', 'artist', 'history', 'playlist', 'podcast',
-            'radio', 'track', 'user', and 'track'.
-        :type query_type: str
-        :param filters: (Optional) Field filters to apply.
-        :type filters: dict
+        :param query_type: The Deezer Search API method to use.
         :param keywords: (Optional) Query keywords to use.
-        :type keywords: str
         :return: JSON data for the class:`Response <Response>` object or None
             if no search results are returned.
-        :rtype: dict or None
         """
         query = self._construct_search_query(keywords=keywords, filters=filters)
-        if not query:
-            return None
         self._log.debug(f"Searching {self.data_source} for '{query}'")
         try:
             response = requests.get(
@@ -284,7 +268,7 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
                 self.data_source,
                 e,
             )
-            return None
+            return ()
         response_data = response.json().get("data", [])
         self._log.debug(
             "Found {} result(s) from {} for '{}'",
@@ -294,7 +278,7 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
         )
         return response_data
 
-    def deezerupdate(self, items, write):
+    def deezerupdate(self, items: Sequence[Item], write: bool):
         """Obtain rank information from Deezer."""
         for index, item in enumerate(items, start=1):
             self._log.info(
@@ -320,3 +304,16 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
             item.deezer_updated = time.time()
             if write:
                 item.try_write()
+
+    def fetch_data(self, url: str):
+        try:
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+            data = response.json()
+        except requests.exceptions.RequestException as e:
+            self._log.error("Error fetching data from {}\n Error: {}", url, e)
+            return None
+        if "error" in data:
+            self._log.debug("Deezer API error: {}", data["error"]["message"])
+            return None
+        return data
