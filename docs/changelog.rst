@@ -6,8 +6,6 @@ Changelog goes here! Please add your entry to the bottom of one of the lists bel
 Unreleased
 ----------
 
-* :doc:`plugins/web`: Display artist and album as part of the search results.
-
 New features:
 
 * :doc:`plugins/musicbrainz`: The MusicBrainz autotagger has been moved to
@@ -30,6 +28,7 @@ New features:
   :bug:`5832`
 * :doc:`plugins/playlist`: Support files with the `.m3u8` extension.
   :bug:`5829`
+* :doc:`plugins/web`: Display artist and album as part of the search results.
 
 Bug fixes:
 
