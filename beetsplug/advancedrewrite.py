@@ -58,7 +58,9 @@ class AdvancedRewritePlugin(BeetsPlugin):
     def __init__(self):
         """Parse configuration and register template fields for rewriting."""
         super().__init__()
+        self.register_listener("pluginload", self.loaded)
 
+    def loaded(self):
         template = confuse.Sequence(
             confuse.OneOf(
                 [

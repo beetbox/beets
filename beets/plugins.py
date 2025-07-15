@@ -362,7 +362,7 @@ def queries() -> dict[str, type[Query]]:
 
 
 def types(model_cls: type[AnyModel]) -> dict[str, Type]:
-    # Gives us `item_types` and `album_types`
+    """Return mapping between flex field names and types for the given model."""
     attr_name = f"{model_cls.__name__.lower()}_types"
     types: dict[str, Type] = {}
     for plugin in find_plugins():
