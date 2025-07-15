@@ -25,7 +25,7 @@ from beets import config, plugins
 from beets.dbcore import types
 from beets.library import Album, Item, Library
 from beets.plugins import BeetsPlugin
-from beets.ui import Subcommand, decargs, print_
+from beets.ui import Subcommand, print_
 
 MB_ARTIST_QUERY = r"mb_albumartistid::^\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$"
 
@@ -135,7 +135,7 @@ class MissingPlugin(BeetsPlugin):
             albms = self.config["album"].get()
 
             helper = self._missing_albums if albms else self._missing_tracks
-            helper(lib, decargs(args))
+            helper(lib, args)
 
         self._command.func = _miss
         return [self._command]

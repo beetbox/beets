@@ -1503,9 +1503,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         )
 
         def func(lib: Library, opts, args) -> None:
-            self.batch_fetch_art(
-                lib, lib.albums(ui.decargs(args)), opts.force, opts.quiet
-            )
+            self.batch_fetch_art(lib, lib.albums(args), opts.force, opts.quiet)
 
         cmd.func = func
         return [cmd]

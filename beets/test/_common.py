@@ -111,34 +111,6 @@ def import_session(lib=None, loghandler=None, paths=[], query=[], cli=False):
     return cls(lib, loghandler, paths, query)
 
 
-class Assertions:
-    """A mixin with additional unit test assertions."""
-
-    def assertExists(self, path):
-        assert os.path.exists(syspath(path)), f"file does not exist: {path!r}"
-
-    def assertNotExists(self, path):
-        assert not os.path.exists(syspath(path)), f"file exists: {path!r}"
-
-    def assertIsFile(self, path):
-        self.assertExists(path)
-        assert os.path.isfile(syspath(path)), (
-            "path exists, but is not a regular file: {!r}".format(path)
-        )
-
-    def assertIsDir(self, path):
-        self.assertExists(path)
-        assert os.path.isdir(syspath(path)), (
-            "path exists, but is not a directory: {!r}".format(path)
-        )
-
-    def assert_equal_path(self, a, b):
-        """Check that two paths are equal."""
-        a_bytes, b_bytes = util.normpath(a), util.normpath(b)
-
-        assert a_bytes == b_bytes, f"{a_bytes=} != {b_bytes=}"
-
-
 # Mock I/O.
 
 

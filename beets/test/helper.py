@@ -163,14 +163,48 @@ NEEDS_REFLINK = unittest.skipUnless(
 )
 
 
-class TestHelper(_common.Assertions, ConfigMixin):
+class IOMixin:
+    @cached_property
+    def io(self) -> _common.DummyIO:
+        return _common.DummyIO()
+
+    def setUp(self):
+        super().setUp()
+        self.io.install()
+
+    def tearDown(self):
+        super().tearDown()
+        self.io.restore()
+
+
+class TestHelper(ConfigMixin):
     """Helper mixin for high-level cli and plugin tests.
 
     This mixin provides methods to isolate beets' global state provide
     fixtures.
     """
 
+    resource_path = Path(os.fsdecode(_common.RSRC)) / "full.mp3"
+
     db_on_disk: ClassVar[bool] = False
+
+    @cached_property
+    def temp_dir_path(self) -> Path:
+        return Path(self.create_temp_dir())
+
+    @cached_property
+    def temp_dir(self) -> bytes:
+        return util.bytestring_path(self.temp_dir_path)
+
+    @cached_property
+    def lib_path(self) -> Path:
+        lib_path = self.temp_dir_path / "libdir"
+        lib_path.mkdir(exist_ok=True)
+        return lib_path
+
+    @cached_property
+    def libdir(self) -> bytes:
+        return bytestring_path(self.lib_path)
 
     # TODO automate teardown through hook registration
 
@@ -194,8 +228,7 @@ class TestHelper(_common.Assertions, ConfigMixin):
 
         Make sure you call ``teardown_beets()`` afterwards.
         """
-        self.create_temp_dir()
-        temp_dir_str = os.fsdecode(self.temp_dir)
+        temp_dir_str = str(self.temp_dir_path)
         self.env_patcher = patch.dict(
             "os.environ",
             {
@@ -205,9 +238,7 @@ class TestHelper(_common.Assertions, ConfigMixin):
         )
         self.env_patcher.start()
 
-        self.libdir = os.path.join(self.temp_dir, b"libdir")
-        os.mkdir(syspath(self.libdir))
-        self.config["directory"] = os.fsdecode(self.libdir)
+        self.config["directory"] = str(self.lib_path)
 
         if self.db_on_disk:
             dbpath = util.bytestring_path(self.config["library"].as_filename())
@@ -215,12 +246,8 @@ class TestHelper(_common.Assertions, ConfigMixin):
             dbpath = ":memory:"
         self.lib = Library(dbpath, self.libdir)
 
-        # Initialize, but don't install, a DummyIO.
-        self.io = _common.DummyIO()
-
     def teardown_beets(self):
         self.env_patcher.stop()
-        self.io.restore()
         self.lib._close()
         self.remove_temp_dir()
 
@@ -384,16 +411,12 @@ class TestHelper(_common.Assertions, ConfigMixin):
 
     # Safe file operations
 
-    def create_temp_dir(self, **kwargs):
-        """Create a temporary directory and assign it into
-        `self.temp_dir`. Call `remove_temp_dir` later to delete it.
-        """
-        temp_dir = mkdtemp(**kwargs)
-        self.temp_dir = util.bytestring_path(temp_dir)
+    def create_temp_dir(self, **kwargs) -> str:
+        return mkdtemp(**kwargs)
 
     def remove_temp_dir(self):
         """Delete the temporary directory created by `create_temp_dir`."""
-        shutil.rmtree(syspath(self.temp_dir))
+        shutil.rmtree(self.temp_dir_path)
 
     def touch(self, path, dir=None, content=""):
         """Create a file at `path` with given content.
@@ -514,7 +537,6 @@ class ImportHelper(TestHelper):
     autotagging library and several assertions for the library.
     """
 
-    resource_path = syspath(os.path.join(_common.RSRC, b"full.mp3"))
     default_import_config = {
         "autotag": True,
         "copy": True,
@@ -531,7 +553,7 @@ class ImportHelper(TestHelper):
 
     @cached_property
     def import_path(self) -> Path:
-        import_path = Path(os.fsdecode(self.temp_dir)) / "import"
+        import_path = self.temp_dir_path / "import"
         import_path.mkdir(exist_ok=True)
         return import_path
 
@@ -599,7 +621,7 @@ class ImportHelper(TestHelper):
         ]
 
     def prepare_albums_for_import(self, count: int = 1) -> None:
-        album_dirs = Path(os.fsdecode(self.import_dir)).glob("album_*")
+        album_dirs = self.import_path.glob("album_*")
         base_idx = int(str(max(album_dirs, default="0")).split("_")[-1]) + 1
 
         for album_id in range(base_idx, count + base_idx):
@@ -622,21 +644,6 @@ class ImportHelper(TestHelper):
 
     def setup_singleton_importer(self, **kwargs) -> ImportSession:
         return self.setup_importer(singletons=True, **kwargs)
-
-    def assert_file_in_lib(self, *segments):
-        """Join the ``segments`` and assert that this path exists in the
-        library directory.
-        """
-        self.assertExists(os.path.join(self.libdir, *segments))
-
-    def assert_file_not_in_lib(self, *segments):
-        """Join the ``segments`` and assert that this path does not
-        exist in the library directory.
-        """
-        self.assertNotExists(os.path.join(self.libdir, *segments))
-
-    def assert_lib_dir_empty(self):
-        assert not os.listdir(syspath(self.libdir))
 
 
 class AsIsImporterMixin:
@@ -759,7 +766,7 @@ class TerminalImportSessionFixture(TerminalImportSession):
             self._add_choice_input()
 
 
-class TerminalImportMixin(ImportHelper):
+class TerminalImportMixin(IOMixin, ImportHelper):
     """Provides_a terminal importer for the import session."""
 
     io: _common.DummyIO

@@ -311,7 +311,7 @@ class BPDTestHelper(PluginTestCase):
         """
         # Create a config file:
         config = {
-            "pluginpath": [os.fsdecode(self.temp_dir)],
+            "pluginpath": [str(self.temp_dir_path)],
             "plugins": "bpd",
             # use port 0 to let the OS choose a free port
             "bpd": {"host": host, "port": 0, "control_port": 0},
@@ -320,7 +320,7 @@ class BPDTestHelper(PluginTestCase):
             config["bpd"]["password"] = password
         config_file = tempfile.NamedTemporaryFile(
             mode="wb",
-            dir=os.fsdecode(self.temp_dir),
+            dir=str(self.temp_dir_path),
             suffix=".yaml",
             delete=False,
         )

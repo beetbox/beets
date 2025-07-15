@@ -70,10 +70,14 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
         if not collections["collection-list"]:
             raise ui.UserError("no collections exist for user")
 
-        # Get all collection IDs, avoiding event collections
-        collection_ids = [x["id"] for x in collections["collection-list"]]
+        # Get all release collection IDs, avoiding event collections
+        collection_ids = [
+            x["id"]
+            for x in collections["collection-list"]
+            if x["entity-type"] == "release"
+        ]
         if not collection_ids:
-            raise ui.UserError("No collection found.")
+            raise ui.UserError("No release collection found.")
 
         # Check that the collection exists so we can present a nice error
         collection = self.config["collection"].as_str()

@@ -107,7 +107,7 @@ class PlayPlugin(BeetsPlugin):
         # Perform search by album and add folders rather than tracks to
         # playlist.
         if opts.album:
-            selection = lib.albums(ui.decargs(args))
+            selection = lib.albums(args)
             paths = []
 
             sort = lib.get_default_album_sort()
@@ -120,7 +120,7 @@ class PlayPlugin(BeetsPlugin):
 
         # Perform item query and add tracks to playlist.
         else:
-            selection = lib.items(ui.decargs(args))
+            selection = lib.items(args)
             paths = [item.path for item in selection]
             item_type = "track"
 
