@@ -289,9 +289,10 @@ class Model(ABC, Generic[D]):
     terms.
     """
 
-    _types: dict[str, types.Type] = {}
-    """Optional Types for non-fixed (i.e., flexible and computed) fields.
-    """
+    @cached_classproperty
+    def _types(cls) -> dict[str, types.Type]:
+        """Optional types for non-fixed (flexible and computed) fields."""
+        return {}
 
     _sorts: dict[str, type[FieldSort]] = {}
     """Optional named sort criteria. The keys are strings and the values
