@@ -22,13 +22,13 @@ jobs:
       - uses: actions/checkout@v4
       - name: Get changed docs files
         id: changed-doc-files
-        uses: tj-actions/changed-files@v44
+        uses: tj-actions/changed-files@v46
         with:
           files: |
             docs/**
       - name: Get changed python files
         id: raw-changed-python-files
-        uses: tj-actions/changed-files@v44
+        uses: tj-actions/changed-files@v46
         with:
           files: |
             **.py
