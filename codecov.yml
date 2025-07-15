@@ -1,5 +1,6 @@
-# Don't post a comment on pull requests.
-comment: off
+comment:
+  layout: "condensed_header, condensed_files"
+  require_changes: true
 
 # Sets non-blocking status checks
 # https://docs.codecov.com/docs/commit-status#informational
@@ -11,7 +12,7 @@ coverage:
     patch:
       default:
         informational: true
-    changes: no
+    changes: false
 
 github_checks:
   annotations: false
