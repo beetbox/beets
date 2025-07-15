@@ -89,6 +89,7 @@ RELEASE_INCLUDES = list(
         "isrcs",
         "url-rels",
         "release-rels",
+        "genres",
         "tags",
     }
     & set(musicbrainzngs.VALID_INCLUDES["release"])
@@ -403,6 +404,17 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
             self.config["ratelimit_interval"].as_number(),
             self.config["ratelimit"].get(int),
         )
+        genres_config = config["musicbrainz"]["genres"]
+        if genres_config:
+            genres_config = genres_config.get(str)
+            if genres_config == "genres":
+                self.genre_or_tag = "genre"
+            elif genres_config == "tags":
+                self.genre_or_tag = "tag"
+            else:
+                self.genre_or_tag = "genre"
+        else:
+            self.genre_or_tag = False
 
     def track_info(
         self,
@@ -713,10 +725,10 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
             else:
                 info.media = "Media"
 
-        if self.config["genres"]:
+        if self.genre_or_tag:
             sources = [
-                release["release-group"].get("tag-list", []),
-                release.get("tag-list", []),
+                release["release-group"].get(self.genre_or_tag + "-list", []),
+                release.get(self.genre_or_tag + "-list", []),
             ]
             genres: Counter[str] = Counter()
             for source in sources:
