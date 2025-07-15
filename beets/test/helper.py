@@ -799,10 +799,12 @@ class AutotagStub:
 
     def install(self):
         self.patchers = [
-            patch("beets.plugins.album_for_id", lambda *_: None),
-            patch("beets.plugins.track_for_id", lambda *_: None),
-            patch("beets.plugins.candidates", self.candidates),
-            patch("beets.plugins.item_candidates", self.item_candidates),
+            patch("beets.metadata_plugins.album_for_id", lambda *_: None),
+            patch("beets.metadata_plugins.track_for_id", lambda *_: None),
+            patch("beets.metadata_plugins.candidates", self.candidates),
+            patch(
+                "beets.metadata_plugins.item_candidates", self.item_candidates
+            ),
         ]
         for p in self.patchers:
             p.start()
