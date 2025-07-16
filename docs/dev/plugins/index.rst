@@ -77,8 +77,8 @@ and you're good to go!
 .. _pep-3119: https://peps.python.org/pep-3119/#rationale
 
 
-Further Reading
----------------
+More information
+----------------
 
 For more information on writing plugins, feel free to check out 
 the following resources:
