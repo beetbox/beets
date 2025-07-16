@@ -289,19 +289,22 @@ class Model(ABC, Generic[D]):
     terms.
     """
 
-    _types: dict[str, types.Type] = {}
-    """Optional Types for non-fixed (i.e., flexible and computed) fields.
-    """
+    @cached_classproperty
+    def _types(cls) -> dict[str, types.Type]:
+        """Optional types for non-fixed (flexible and computed) fields."""
+        return {}
 
     _sorts: dict[str, type[FieldSort]] = {}
     """Optional named sort criteria. The keys are strings and the values
     are subclasses of `Sort`.
     """
 
-    _queries: dict[str, FieldQueryType] = {}
-    """Named queries that use a field-like `name:value` syntax but which
-    do not relate to any specific field.
-    """
+    @cached_classproperty
+    def _queries(cls) -> dict[str, FieldQueryType]:
+        """Named queries that use a field-like `name:value` syntax but which
+        do not relate to any specific field.
+        """
+        return {}
 
     _always_dirty = False
     """By default, fields only become "dirty" when their value actually
