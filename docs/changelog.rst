@@ -86,6 +86,7 @@ Other changes:
   case is shown on separate lines.
 * Refactored library.py file by splitting it into multiple modules within the 
   beets/library directory.
+* Loosened `typing_extensions`` dependency in pyproject.toml to apply to every python version.
 
 2.3.1 (May 14, 2025)
 --------------------
