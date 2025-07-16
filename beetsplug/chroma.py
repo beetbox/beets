@@ -26,7 +26,8 @@ import confuse
 
 from beets import config, ui, util
 from beets.autotag.distance import Distance
-from beets.metadata_plugins import MetadataSourcePlugin, TrackInfo
+from beets.autotag.hooks import TrackInfo
+from beets.metadata_plugins import MetadataSourcePlugin
 from beetsplug.musicbrainz import MusicBrainzPlugin
 
 API_KEY = "1vOwZtEn"
@@ -172,6 +173,7 @@ def _all_releases(items):
 
 class AcoustidPlugin(MetadataSourcePlugin):
     def __init__(self):
+        super().__init__()
         self.config.add(
             {
                 "auto": True,
