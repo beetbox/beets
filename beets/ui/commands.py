@@ -1343,7 +1343,7 @@ def import_func(lib, opts, args: list[str]):
 
     if opts.library:
         query = args
-        paths = []
+        byte_paths = []
     else:
         query = None
         paths = args
