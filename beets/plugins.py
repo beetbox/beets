@@ -362,7 +362,7 @@ def queries() -> dict[str, type[Query]]:
 
 
 def types(model_cls: type[AnyModel]) -> dict[str, Type]:
-    # Gives us `item_types` and `album_types`
+    """Return mapping between flex field names and types for the given model."""
     attr_name = f"{model_cls.__name__.lower()}_types"
     types: dict[str, Type] = {}
     for plugin in find_plugins():
@@ -379,13 +379,13 @@ def types(model_cls: type[AnyModel]) -> dict[str, Type]:
 
 
 def named_queries(model_cls: type[AnyModel]) -> dict[str, FieldQueryType]:
-    # Gather `item_queries` and `album_queries` from the plugins.
+    """Return mapping between field names and queries for the given model."""
     attr_name = f"{model_cls.__name__.lower()}_queries"
-    queries: dict[str, FieldQueryType] = {}
-    for plugin in find_plugins():
-        plugin_queries = getattr(plugin, attr_name, {})
-        queries.update(plugin_queries)
-    return queries
+    return {
+        field: query
+        for plugin in find_plugins()
+        for field, query in getattr(plugin, attr_name, {}).items()
+    }
 
 
 def notify_info_yielded(event: str) -> Callable[[IterF[P, Ret]], IterF[P, Ret]]:

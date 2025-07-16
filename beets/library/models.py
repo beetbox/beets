@@ -42,6 +42,18 @@ class LibModel(dbcore.Model["Library"]):
     path: bytes
 
     @cached_classproperty
+    def _types(cls) -> dict[str, types.Type]:
+        """Return the types of the fields in this model."""
+        return {
+            **plugins.types(cls),  # type: ignore[arg-type]
+            "data_source": types.STRING,
+        }
+
+    @cached_classproperty
+    def _queries(cls) -> dict[str, FieldQueryType]:
+        return plugins.named_queries(cls)  # type: ignore[arg-type]
+
+    @cached_classproperty
     def writable_media_fields(cls) -> set[str]:
         return set(MediaFile.fields()) & cls._fields.keys()
 
@@ -265,10 +277,9 @@ class Album(LibModel):
 
     _search_fields = ("album", "albumartist", "genre")
 
-    _types = {
-        "path": types.PathType(),
-        "data_source": types.STRING,
-    }
+    @cached_classproperty
+    def _types(cls) -> dict[str, types.Type]:
+        return {**super()._types, "path": types.PathType()}
 
     _sorts = {
         "albumartist": dbcore.query.SmartArtistSort,
@@ -715,10 +726,6 @@ class Item(LibModel):
         "genre",
     )
 
-    _types = {
-        "data_source": types.STRING,
-    }
-
     # Set of item fields that are backed by `MediaFile` fields.
     # Any kind of field (fixed, flexible, and computed) may be a media
     # field. Only these fields are read from disk in `read` and written in
@@ -737,7 +744,9 @@ class Item(LibModel):
 
     _sorts = {"artist": dbcore.query.SmartArtistSort}
 
-    _queries = {"singleton": dbcore.query.SingletonQuery}
+    @cached_classproperty
+    def _queries(cls) -> dict[str, FieldQueryType]:
+        return {**super()._queries, "singleton": dbcore.query.SingletonQuery}
 
     _format_config_key = "format_item"
 
