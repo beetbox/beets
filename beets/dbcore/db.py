@@ -50,7 +50,7 @@ if TYPE_CHECKING:
 
     from .query import SQLiteType
 
-    D = TypeVar("D", bound="Database", default=Any)
+D = TypeVar("D", bound="Database", default=Any)
 
 FlexAttrs = dict[str, str]
 
