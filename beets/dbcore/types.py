@@ -292,7 +292,7 @@ class DelimitedString(BaseString[list[str], list[str]]):
     containing delimiter-separated values.
     """
 
-    model_type = list
+    model_type = list[str]
 
     def __init__(self, delimiter: str):
         self.delimiter = delimiter
