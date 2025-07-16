@@ -36,7 +36,12 @@ from beets.importer import (
 )
 from beets.library import Item
 from beets.test import helper
-from beets.test.helper import AutotagStub, ImportHelper, TerminalImportMixin
+from beets.test.helper import (
+    AutotagStub,
+    ImportHelper,
+    PluginMixin,
+    TerminalImportMixin,
+)
 from beets.test.helper import PluginTestCase as BasePluginTestCase
 from beets.util import displayable_path, syspath
 
@@ -550,17 +555,14 @@ def get_available_plugins():
     return [name for name in plugin_names if name != "_typing"]
 
 
-class TestImportAllPlugins:
+class TestImportAllPlugins(PluginMixin):
     @pytest.mark.parametrize("plugin_name", get_available_plugins())
     def test_import_plugin(self, caplog, plugin_name):  #
         """Test that a plugin is importable without an error using the
         load_plugins function."""
 
-        # Try to load all plugins
-        from beets.plugins import load_plugins
-
         caplog.set_level(logging.WARNING)
-        load_plugins([plugin_name])
+        self.load_plugins(plugin_name)
 
         # Check for warnings, is a bit hacky but we can make full use of the beets
         # load_plugins code that way
@@ -575,12 +577,13 @@ class TestImportAllPlugins:
                     continue
             records.append(record)
 
+        self.unload_plugins()
+        self.unimport_plugins()
+
         assert len(records) == 0, (
             f"Plugin '{plugin_name}' has issues during import. ",
             records,
         )
-
-        self.unimport_plugins()
 
     def _is_spec_available(self, spec_name):
         """Check if a module is available by its name."""
