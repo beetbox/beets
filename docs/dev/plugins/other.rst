@@ -69,7 +69,10 @@ Beets supports *function calls* in its path format syntax (see
 plugins can register new functions by adding them to the ``template_funcs``
 dictionary.
 
-Here's an example::
+Here's an example:
+
+
+.. code-block:: python
 
     class MyPlugin(BeetsPlugin):
         def __init__(self):
@@ -80,7 +83,7 @@ Here's an example::
         if text:
             return text[0].upper()
         else:
-            return u''
+            return ''
 
 This plugin provides a function ``%initial`` to path templates where
 ``%initial{$artist}`` expands to the artist's initial (its capitalized first
@@ -89,7 +92,9 @@ character).
 Plugins can also add template *fields*, which are computed values referenced
 as ``$name`` in templates. To add a new field, add a function that takes an
 ``Item`` object to the ``template_fields`` dictionary on the plugin object.
-Here's an example that adds a ``$disc_and_track`` field::
+Here's an example that adds a ``$disc_and_track`` field:
+
+.. code-block:: python
 
     class MyPlugin(BeetsPlugin):
         def __init__(self):
@@ -102,9 +107,9 @@ Here's an example that adds a ``$disc_and_track`` field::
         number.
         """
         if item.disctotal > 1:
-            return u'%02i.%02i' % (item.disc, item.track)
+            return '%02i.%02i' % (item.disc, item.track)
         else:
-            return u'%02i' % (item.track)
+            return '%02i' % (item.track)
 
 With this plugin enabled, templates can reference ``$disc_and_track`` as they
 can any standard metadata field.
@@ -126,8 +131,10 @@ your plugins :py:meth:`beets.plugins.BeetsPlugin.add_media_field()`` method.
 
 .. _MediaFile: https://mediafile.readthedocs.io/en/latest/
 
+Here's an example plugin that provides a meaningless new field "foo":
 
-Here's an example plugin that provides a meaningless new field "foo"::
+
+.. code-block:: python
 
     class FooPlugin(BeetsPlugin):
         def __init__(self):
@@ -165,18 +172,26 @@ and each task is processed by only one stage at a time.
 Plugins provide stages as functions that take two arguments: ``config`` and
 ``task``, which are ``ImportSession`` and ``ImportTask`` objects (both defined in
 ``beets.importer``). Add such a function to the plugin's ``import_stages`` field
-to register it::
+to register it:
+
+.. code-block:: python
 
     from beets.plugins import BeetsPlugin
+    from beets.importer import ImportSession, ImportTask
+
     class ExamplePlugin(BeetsPlugin):
+
         def __init__(self):
             super().__init__()
             self.import_stages = [self.stage]
-        def stage(self, session, task):
+
+        def stage(self, session: ImportSession, task: ImportTask):
             print('Importing something!')
 
 It is also possible to request your function to run early in the pipeline by
-adding the function to the plugin's ``early_import_stages`` field instead::
+adding the function to the plugin's ``early_import_stages`` field instead:
+
+.. code-block:: python
 
     self.early_import_stages = [self.stage]
 
@@ -209,7 +224,9 @@ inheriting from that class and override the ``value_match`` class method.
 (Remember the ``@classmethod`` decorator!) The following example plugin
 declares a query using the ``@`` prefix to delimit exact string matches. The
 plugin will be used if we issue a command like ``beet ls @something`` or
-``beet ls artist:@something``::
+``beet ls artist:@something``:
+
+.. code-block:: python
 
     from beets.plugins import BeetsPlugin
     from beets.dbcore import FieldQuery
@@ -232,7 +249,9 @@ Flexible Field Types
 If your plugin uses flexible fields to store numbers or other
 non-string values, you can specify the types of those fields. A rating
 plugin, for example, might want to declare that the ``rating`` field
-should have an integer type::
+should have an integer type:
+
+.. code-block:: python
 
     from beets.plugins import BeetsPlugin
     from beets.dbcore import types
@@ -273,7 +292,7 @@ Each plugin object has a ``_log`` attribute, which is a ``Logger`` from the
 `standard Python logging module`_. The logger is set up to `PEP 3101`_,
 str.format-style string formatting. So you can write logging calls like this::
 
-    self._log.debug(u'Processing {0.title} by {0.artist}', item)
+    self._log.debug('Processing {0.title} by {0.artist}', item)
 
 .. _PEP 3101: https://www.python.org/dev/peps/pep-3101/
 .. _standard Python logging module: https://docs.python.org/2/library/logging.html
@@ -310,7 +329,9 @@ an import session.
 
 To do so, add a listener for the ``before_choose_candidate`` event, and return
 a list of ``PromptChoices`` that represent the additional choices that your
-plugin shall expose to the user::
+plugin shall expose to the user:
+
+.. code-block:: python
 
     from beets.plugins import BeetsPlugin
     from beets.ui.commands import PromptChoice
@@ -331,15 +352,21 @@ plugin shall expose to the user::
         def bar(self, session, task):
             print('User has chosen "Do bar"!')
 
-The previous example modifies the standard prompt::
+The previous example modifies the standard prompt:
+
+.. code-block:: shell
 
     # selection (default 1), Skip, Use as-is, as Tracks, Group albums,
     Enter search, enter Id, aBort?
 
-by appending two additional options (``Print foo`` and ``Do bar``)::
 
+by appending two additional options (``Print foo`` and ``Do bar``):
+
+.. code-block:: shell
+    
     # selection (default 1), Skip, Use as-is, as Tracks, Group albums,
     Enter search, enter Id, aBort, Print foo, Do bar?
+
 
 If the user selects a choice, the ``callback`` attribute of the corresponding
 ``PromptChoice`` will be called. It is the responsibility of the plugin to
