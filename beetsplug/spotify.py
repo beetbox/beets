@@ -162,7 +162,7 @@ class SpotifyPlugin(
         """Get the path to the JSON file for storing the OAuth token."""
         return self.config["tokenfile"].get(confuse.Filename(in_app_dir=True))
 
-    def _authenticate(self):
+    def _authenticate(self) -> None:
         """Request an access token via the Client Credentials Flow:
         https://developer.spotify.com/documentation/general/guides/authorization-guide/#client-credentials-flow
         """
