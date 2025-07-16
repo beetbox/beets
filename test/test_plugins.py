@@ -551,16 +551,13 @@ class TestImportAllPlugins:
         for _, module_name, _ in pkgutil.iter_modules(namespace_pkg.__path__):
             plugin_names.append(module_name)
 
-        # Some plugins may need additional dependencies to be installed,
-        # so we skip them if they are not available.
-
         # Try to load all plugins
         from beets.plugins import load_plugins
 
         caplog.set_level(logging.WARNING)
         load_plugins(plugin_names)
 
-        # Check for warnings, is a bit hacky but we can fully use the beets
+        # Check for warnings, is a bit hacky but we can make full use of the beets
         # load_plugins code that way
         records = []
         pattern = r"ModuleNotFoundError: No module named '(.*?)'"
@@ -579,10 +576,11 @@ class TestImportAllPlugins:
         )
 
     def _is_spec_available(self, spec_name):
-        """Check if a specific plugin is available.
+        """Check if a module is available by its name.
 
-        Only works in non-GitHub CI environments as we assume that
-        all dependencies are installed in the pipeline.
+        In GitHub CI environments, this method always returns True,
+        assuming all dependencies are installed in the pipeline.
+        In other environments, it checks for the availability.
         """
         github_ci = os.environ.get("GITHUB_ACTIONS") == "true"
         if github_ci:
