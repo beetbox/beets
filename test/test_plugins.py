@@ -561,8 +561,11 @@ class TestImportAllPlugins(PluginMixin):
         """Test that a plugin is importable without an error using the
         load_plugins function."""
 
+        from beets.plugins import load_plugins
+
         caplog.set_level(logging.WARNING)
-        self.load_plugins(plugin_name)
+        caplog.clear()
+        load_plugins(plugin_name)
 
         # Check for warnings, is a bit hacky but we can make full use of the beets
         # load_plugins code that way
