@@ -20,6 +20,7 @@ import logging
 import os
 import pkgutil
 import re
+import sys
 from unittest.mock import ANY, Mock, patch
 
 import pytest
@@ -579,6 +580,19 @@ class TestImportAllPlugins:
             records,
         )
 
+        self.unimport_plugins()
+
     def _is_spec_available(self, spec_name):
         """Check if a module is available by its name."""
         return importlib.util.find_spec(spec_name) is not None
+
+    def unimport_plugins(self):
+        """Unimport all plugins to avoid conflicts in other tests."""
+
+        to_del = []
+        for mod in sys.modules.keys():
+            if mod.startswith("beetsplug."):
+                to_del.append(mod)
+
+        for mod in to_del:
+            del sys.modules[mod]
