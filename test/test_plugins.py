@@ -13,8 +13,13 @@
 # included in all copies or substantial portions of the Software.
 
 
+import importlib
+import importlib.util
 import itertools
+import logging
 import os
+import pkgutil
+import re
 from unittest.mock import ANY, Mock, patch
 
 import pytest
@@ -531,3 +536,56 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
         self.mock_input_options.assert_called_once_with(
             opts, default="a", require=ANY
         )
+
+
+class TestImportAllPlugins:
+    def test_import_all_plugins(self, caplog):
+        """Test that all plugins can be imported without errors.
+
+        Basically we just import all modules in the beetsplug namespace.
+        """
+
+        # Get all available plugins in the beetsplug namespace
+        namespace_pkg = importlib.import_module("beetsplug")
+        plugin_names = []
+        for _, module_name, _ in pkgutil.iter_modules(namespace_pkg.__path__):
+            plugin_names.append(module_name)
+
+        # Some plugins may need additional dependencies to be installed,
+        # so we skip them if they are not available.
+
+        # Try to load all plugins
+        from beets.plugins import load_plugins
+
+        caplog.set_level(logging.WARNING)
+        load_plugins(plugin_names)
+
+        # Check for warnings, is a bit hacky but we can fully use the beets
+        # load_plugins code that way
+        records = []
+        pattern = r"ModuleNotFoundError: No module named '(.*?)'"
+        for record in caplog.records:
+            match = re.search(pattern, str(record))
+            if match:
+                module_name = match.group(1)
+                if not self._is_spec_available(module_name):
+                    # If the module is not found, we skip it
+                    continue
+            records.append(record)
+
+        assert len(records) == 0, (
+            "Some plugins could not be imported: "
+            + ", ".join([str(record) for record in records])
+        )
+
+    def _is_spec_available(self, spec_name):
+        """Check if a specific plugin is available.
+
+        Only works in non-GitHub CI environments as we assume that
+        all dependencies are installed in the pipeline.
+        """
+        github_ci = os.environ.get("GITHUB_ACTIONS") == "true"
+        if github_ci:
+            return True
+        else:
+            return importlib.util.find_spec(spec_name) is not None
