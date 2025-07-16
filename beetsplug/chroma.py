@@ -25,8 +25,8 @@ import acoustid
 import confuse
 
 from beets import config, ui, util
-from beets.autotag.distance import Distance
-from beets.metadata_plugins import MetadataSourcePlugin, TrackInfo
+from beets.autotag import Distance, TrackInfo
+from beets.metadata_plugins import MetadataSourcePlugin
 from beetsplug.musicbrainz import MusicBrainzPlugin
 
 API_KEY = "1vOwZtEn"
