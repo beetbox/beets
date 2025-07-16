@@ -172,6 +172,7 @@ def _all_releases(items):
 
 class AcoustidPlugin(MetadataSourcePlugin):
     def __init__(self):
+        super().__init__()
         self.config.add(
             {
                 "auto": True,
