@@ -538,24 +538,28 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
         )
 
 
+def get_available_plugins():
+    """Get all available plugins in the beetsplug namespace."""
+    namespace_pkg = importlib.import_module("beetsplug")
+    plugin_names: list[str] = []
+    for _, module_name, _ in pkgutil.iter_modules(namespace_pkg.__path__):
+        plugin_names.append(module_name)
+
+    # skip _typing
+    return [name for name in plugin_names if name != "_typing"]
+
+
 class TestImportAllPlugins:
-    def test_import_all_plugins(self, caplog):
-        """Test that all plugins can be imported without errors.
-
-        Basically we just import all modules in the beetsplug namespace.
-        """
-
-        # Get all available plugins in the beetsplug namespace
-        namespace_pkg = importlib.import_module("beetsplug")
-        plugin_names = []
-        for _, module_name, _ in pkgutil.iter_modules(namespace_pkg.__path__):
-            plugin_names.append(module_name)
+    @pytest.mark.parametrize("plugin_name", get_available_plugins())
+    def test_import_plugin(self, caplog, plugin_name):  #
+        """Test that a plugin is importable without an error using the
+        load_plugins function."""
 
         # Try to load all plugins
         from beets.plugins import load_plugins
 
         caplog.set_level(logging.WARNING)
-        load_plugins(plugin_names)
+        load_plugins([plugin_name])
 
         # Check for warnings, is a bit hacky but we can make full use of the beets
         # load_plugins code that way
@@ -571,19 +575,10 @@ class TestImportAllPlugins:
             records.append(record)
 
         assert len(records) == 0, (
-            "Some plugins could not be imported: "
-            + ", ".join([str(record) for record in records])
+            f"Plugin '{plugin_name}' has issues during import. ",
+            records,
         )
 
     def _is_spec_available(self, spec_name):
-        """Check if a module is available by its name.
-
-        In GitHub CI environments, this method always returns True,
-        assuming all dependencies are installed in the pipeline.
-        In other environments, it checks for the availability.
-        """
-        github_ci = os.environ.get("GITHUB_ACTIONS") == "true"
-        if github_ci:
-            return True
-        else:
-            return importlib.util.find_spec(spec_name) is not None
+        """Check if a module is available by its name."""
+        return importlib.util.find_spec(spec_name) is not None
