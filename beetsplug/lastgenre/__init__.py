@@ -401,7 +401,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 label = "album"
 
         if not new_genres and "artist" in self.sources:
-            new_genres = None
+            new_genres = []
             if isinstance(obj, library.Item):
                 new_genres = self.fetch_artist_genre(obj)
                 label = "artist"

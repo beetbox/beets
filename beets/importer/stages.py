@@ -70,6 +70,7 @@ def query_tasks(session: ImportSession):
     Instead of finding files from the filesystem, a query is used to
     match items from the library.
     """
+    task: ImportTask
     if session.config["singletons"]:
         # Search for items.
         for item in session.lib.items(session.query):
@@ -143,9 +144,7 @@ def lookup_candidates(session: ImportSession, task: ImportTask):
 
     # Restrict the initial lookup to IDs specified by the user via the -m
     # option. Currently all the IDs are passed onto the tasks directly.
-    task.search_ids = session.config["search_ids"].as_str_seq()
-
-    task.lookup_candidates()
+    task.lookup_candidates(session.config["search_ids"].as_str_seq())
 
 
 @pipeline.stage
