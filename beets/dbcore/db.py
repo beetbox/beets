@@ -26,8 +26,9 @@ from abc import ABC
 from collections import defaultdict
 from collections.abc import Generator, Iterable, Iterator, Mapping, Sequence
 from sqlite3 import Connection
-from typing import TYPE_CHECKING, Any, AnyStr, Callable, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, AnyStr, Callable, Generic
 
+from typing_extensions import TypeVar  # default value support
 from unidecode import unidecode
 
 import beets
@@ -50,9 +51,6 @@ if TYPE_CHECKING:
     from .query import SQLiteType
 
     D = TypeVar("D", bound="Database", default=Any)
-else:
-    D = TypeVar("D", bound="Database")
-
 
 FlexAttrs = dict[str, str]
 

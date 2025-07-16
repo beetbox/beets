@@ -19,7 +19,6 @@ from __future__ import annotations
 import abc
 import inspect
 import re
-import sys
 import traceback
 from collections import defaultdict
 from functools import wraps
@@ -27,17 +26,13 @@ from types import GenericAlias
 from typing import TYPE_CHECKING, Any, Callable, Sequence, TypeVar
 
 import mediafile
+from typing_extensions import ParamSpec
 
 import beets
 from beets import logging
 
 if TYPE_CHECKING:
     from beets.event_types import EventType
-
-if sys.version_info >= (3, 10):
-    from typing import ParamSpec
-else:
-    from typing_extensions import ParamSpec
 
 
 if TYPE_CHECKING:
