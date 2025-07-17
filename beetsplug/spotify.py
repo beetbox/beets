@@ -29,7 +29,6 @@ from typing import TYPE_CHECKING, Any, Literal, Sequence, Union
 
 import confuse
 import requests
-import unidecode
 
 from beets import ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
@@ -139,7 +138,6 @@ class SpotifyPlugin(
                 "client_id": "4e414367a1d14c75a5c5129a627fcab8",
                 "client_secret": "f82bdc09b2254f1a8286815d02fd46dc",
                 "tokenfile": "spotify_token.json",
-                "search_query_ascii": False,
             }
         )
         self.config["client_id"].redact = True
@@ -421,31 +419,6 @@ class SpotifyPlugin(
                     track.index = i
         track.medium_total = medium_total
         return track
-
-    def _construct_search_query(
-        self, filters: SearchFilter, keywords: str = ""
-    ) -> str:
-        """Construct a query string with the specified filters and keywords to
-        be provided to the Spotify Search API
-        (https://developer.spotify.com/documentation/web-api/reference/search).
-
-        :param filters: (Optional) Field filters to apply.
-        :param keywords: (Optional) Query keywords to use.
-        :return: Query string to be provided to the Search API.
-        """
-
-        query_components = [
-            keywords,
-            " ".join(f"{k}:{v}" for k, v in filters.items()),
-        ]
-        query = " ".join([q for q in query_components if q])
-        if not isinstance(query, str):
-            query = query.decode("utf8")
-
-        if self.config["search_query_ascii"].get():
-            query = unidecode.unidecode(query)
-
-        return query
 
     def _search_api(
         self,
