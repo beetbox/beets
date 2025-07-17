@@ -23,7 +23,7 @@ class MbsyncCliTest(PluginTestCase):
     plugin = "mbsync"
 
     @patch(
-        "beets.plugins.album_for_id",
+        "beets.metadata_plugins.album_for_id",
         Mock(
             side_effect=lambda *_: AlbumInfo(
                 album_id="album id",
@@ -33,7 +33,7 @@ class MbsyncCliTest(PluginTestCase):
         ),
     )
     @patch(
-        "beets.plugins.track_for_id",
+        "beets.metadata_plugins.track_for_id",
         Mock(
             side_effect=lambda *_: TrackInfo(
                 track_id="singleton id", title="new title"

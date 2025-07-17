@@ -1161,7 +1161,9 @@ class ExceptionWatcher(Thread):
     Once an exception occurs, raise it and execute a callback.
     """
 
-    def __init__(self, queue: queue.Queue, callback: Callable[[], None]):
+    def __init__(
+        self, queue: queue.Queue[Exception], callback: Callable[[], None]
+    ):
         self._queue = queue
         self._callback = callback
         self._stopevent = Event()
@@ -1197,7 +1199,9 @@ BACKENDS: dict[str, type[Backend]] = {b.NAME: b for b in BACKEND_CLASSES}
 class ReplayGainPlugin(BeetsPlugin):
     """Provides ReplayGain analysis."""
 
-    def __init__(self):
+    pool: ThreadPool | None = None
+
+    def __init__(self) -> None:
         super().__init__()
 
         # default backend is 'command' for backward-compatibility.
@@ -1260,9 +1264,6 @@ class ReplayGainPlugin(BeetsPlugin):
             )
         except (ReplayGainError, FatalReplayGainError) as e:
             raise ui.UserError(f"replaygain initialization failed: {e}")
-
-        # Start threadpool lazily.
-        self.pool = None
 
     def should_use_r128(self, item: Item) -> bool:
         """Checks the plugin setting to decide whether the calculation
@@ -1420,7 +1421,7 @@ class ReplayGainPlugin(BeetsPlugin):
         """Open a `ThreadPool` instance in `self.pool`"""
         if self.pool is None and self.backend_instance.do_parallel:
             self.pool = ThreadPool(threads)
-            self.exc_queue: queue.Queue = queue.Queue()
+            self.exc_queue: queue.Queue[Exception] = queue.Queue()
 
             signal.signal(signal.SIGINT, self._interrupt)
 

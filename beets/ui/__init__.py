@@ -1609,17 +1609,6 @@ def _setup(options, lib=None):
 
     plugins = _load_plugins(options, config)
 
-    # Add types and queries defined by plugins.
-    plugin_types_album = plugins.types(library.Album)
-    library.Album._types.update(plugin_types_album)
-    item_types = plugin_types_album.copy()
-    item_types.update(library.Item._types)
-    item_types.update(plugins.types(library.Item))
-    library.Item._types = item_types
-
-    library.Item._queries.update(plugins.named_queries(library.Item))
-    library.Album._queries.update(plugins.named_queries(library.Album))
-
     plugins.send("pluginload")
 
     # Get the default subcommands.
