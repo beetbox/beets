@@ -21,7 +21,6 @@ import time
 from typing import TYPE_CHECKING, Literal, Sequence
 
 import requests
-import unidecode
 
 from beets import ui
 from beets.autotag import AlbumInfo, TrackInfo
@@ -215,27 +214,6 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
             data_url=track_data["link"],
             deezer_updated=time.time(),
         )
-
-    @staticmethod
-    def _construct_search_query(
-        filters: SearchFilter, keywords: str = ""
-    ) -> str:
-        """Construct a query string with the specified filters and keywords to
-        be provided to the Deezer Search API
-        (https://developers.deezer.com/api/search).
-
-        :param filters: Field filters to apply.
-        :param keywords: (Optional) Query keywords to use.
-        :return: Query string to be provided to the Search API.
-        """
-        query_components = [
-            keywords,
-            " ".join(f'{k}:"{v}"' for k, v in filters.items()),
-        ]
-        query = " ".join([q for q in query_components if q])
-        if not isinstance(query, str):
-            query = query.decode("utf8")
-        return unidecode.unidecode(query)
 
     def _search_api(
         self,
