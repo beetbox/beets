@@ -19,12 +19,15 @@ autotagger. Requires the pyacoustid library.
 import re
 from collections import defaultdict
 from functools import cached_property, partial
+from typing import Iterable
 
 import acoustid
 import confuse
 
-from beets import config, plugins, ui, util
+from beets import config, ui, util
 from beets.autotag.distance import Distance
+from beets.autotag.hooks import TrackInfo
+from beets.metadata_plugins import MetadataSourcePlugin
 from beetsplug.musicbrainz import MusicBrainzPlugin
 
 API_KEY = "1vOwZtEn"
@@ -168,10 +171,9 @@ def _all_releases(items):
             yield release_id
 
 
-class AcoustidPlugin(plugins.BeetsPlugin):
+class AcoustidPlugin(MetadataSourcePlugin):
     def __init__(self):
         super().__init__()
-
         self.config.add(
             {
                 "auto": True,
@@ -210,7 +212,7 @@ class AcoustidPlugin(plugins.BeetsPlugin):
         self._log.debug("acoustid album candidates: {0}", len(albums))
         return albums
 
-    def item_candidates(self, item, artist, title):
+    def item_candidates(self, item, artist, title) -> Iterable[TrackInfo]:
         if item.path not in _matches:
             return []
 
@@ -222,6 +224,14 @@ class AcoustidPlugin(plugins.BeetsPlugin):
                 tracks.append(track)
         self._log.debug("acoustid item candidates: {0}", len(tracks))
         return tracks
+
+    def album_for_id(self, *args, **kwargs):
+        # Lookup by fingerprint ID does not make too much sense.
+        return None
+
+    def track_for_id(self, *args, **kwargs):
+        # Lookup by fingerprint ID does not make too much sense.
+        return None
 
     def commands(self):
         submit_cmd = ui.Subcommand(
