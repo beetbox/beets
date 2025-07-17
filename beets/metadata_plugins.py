@@ -14,6 +14,7 @@ import warnings
 from typing import TYPE_CHECKING, Generic, Literal, Sequence, TypedDict, TypeVar
 
 from typing_extensions import NotRequired
+import unidecode
 
 from beets.util import cached_classproperty
 from beets.util.id_extractors import extract_release_id
@@ -334,6 +335,14 @@ class SearchApiMetadataSourcePlugin(
     of identifiers for the requested type (album or track).
     """
 
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.config.add(
+            {
+                "search_query_ascii": False,
+            }
+        )
+
     @abc.abstractmethod
     def _search_api(
         self,
@@ -381,6 +390,34 @@ class SearchApiMetadataSourcePlugin(
             None,
             self.tracks_for_ids([result["id"] for result in results if result]),
         )
+
+    def _construct_search_query(
+        self, filters: SearchFilter, keywords: str = ""
+    ) -> str:
+        """Construct a query string with the specified filters and keywords to
+        be provided to the Spotify (or similar) Search API.
+
+        At the moment, this is used to construct a query string for:
+        - Spotify (https://developer.spotify.com/documentation/web-api/reference/search).
+        - Deezer (https://developers.deezer.com/api/search).
+
+        :param filters: Field filters to apply.
+        :param keywords: Query keywords to use.
+        :return: Query string to be provided to the Search API.
+        """
+
+        query_components = [
+            keywords,
+            " ".join(f'{k}:"{v}"' for k, v in filters.items()),
+        ]
+        query = " ".join([q for q in query_components if q])
+        if not isinstance(query, str):
+            query = query.decode("utf8")
+
+        if self.config["search_query_ascii"].get():
+            query = unidecode.unidecode(query)
+
+        return query
 
 
 # Dynamically copy methods to BeetsPlugin for legacy support
