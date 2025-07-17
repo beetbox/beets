@@ -87,7 +87,7 @@ Other changes:
 * Refactored library.py file by splitting it into multiple modules within the 
   beets/library directory.
 * Plugin docs slightly reorganized: added a new `all_plugins` page that lists all
-  plugins in alphabetical order, by default plugins are now categorized
+  plugins in alphabetical order. By default, plugins are now categorized by functionality.
 
 2.3.1 (May 14, 2025)
 --------------------
