@@ -228,17 +228,19 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
             "user",
         ],
         filters: SearchFilter,
-        keywords="",
+        query_string: str = "",
     ) -> Sequence[IDResponse]:
-        """Query the Deezer Search API for the specified ``keywords``, applying
+        """Query the Deezer Search API for the specified ``query_string``, applying
         the provided ``filters``.
 
         :param filters: Field filters to apply.
-        :param keywords: Query keywords to use.
+        :param query_string: Additional query to include in the search.
         :return: JSON data for the class:`Response <Response>` object or None
             if no search results are returned.
         """
-        query = self._construct_search_query(keywords=keywords, filters=filters)
+        query = self._construct_search_query(
+            query_string=query_string, filters=filters
+        )
         self._log.debug(f"Searching {self.data_source} for '{query}'")
         try:
             response = requests.get(
