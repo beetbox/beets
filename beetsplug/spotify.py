@@ -424,17 +424,19 @@ class SpotifyPlugin(
         self,
         query_type: Literal["album", "track"],
         filters: SearchFilter,
-        keywords: str = "",
+        query_string: str = "",
     ) -> Sequence[SearchResponseAlbums | SearchResponseTracks]:
-        """Query the Spotify Search API for the specified ``keywords``,
+        """Query the Spotify Search API for the specified ``query_string``,
         applying the provided ``filters``.
 
         :param query_type: Item type to search across. Valid types are:
             'album', 'artist', 'playlist', and 'track'.
-        :param filters: (Optional) Field filters to apply.
-        :param keywords: (Optional) Query keywords to use.
+        :param filters: Field filters to apply.
+        :param query_string: Additional query to include in the search.
         """
-        query = self._construct_search_query(keywords=keywords, filters=filters)
+        query = self._construct_search_query(
+            filters=filters, query_string=query_string
+        )
 
         self._log.debug(f"Searching {self.data_source} for '{query}'")
         try:
@@ -561,16 +563,18 @@ class SpotifyPlugin(
             # Custom values can be passed in the config (just in case)
             artist = item[self.config["artist_field"].get()]
             album = item[self.config["album_field"].get()]
-            keywords = item[self.config["track_field"].get()]
+            query_string = item[self.config["track_field"].get()]
 
             # Query the Web API for each track, look for the items' JSON data
             query_filters: SearchFilter = {"artist": artist, "album": album}
             response_data_tracks = self._search_api(
-                query_type="track", keywords=keywords, filters=query_filters
+                query_type="track",
+                query_string=query_string,
+                filters=query_filters,
             )
             if not response_data_tracks:
                 query = self._construct_search_query(
-                    keywords=keywords, filters=query_filters
+                    query_string=query_string, filters=query_filters
                 )
 
                 failures.append(query)
