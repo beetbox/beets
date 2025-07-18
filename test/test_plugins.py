@@ -547,28 +547,42 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
 def get_available_plugins():
     """Get all available plugins in the beetsplug namespace."""
     namespace_pkg = importlib.import_module("beetsplug")
-    plugin_names: list[str] = []
-    for _, module_name, _ in pkgutil.iter_modules(namespace_pkg.__path__):
-        plugin_names.append(module_name)
 
-    # skip _typing
-    return [name for name in plugin_names if name != "_typing"]
+    return [
+        m.name
+        for m in pkgutil.iter_modules(namespace_pkg.__path__)
+        if not m.name.startswith("_")
+    ]
 
 
 class TestImportAllPlugins(PluginMixin):
+    def unimport_plugins(self):
+        """Unimport plugins before each test to avoid conflicts."""
+        self.unload_plugins()
+        for mod in list(sys.modules):
+            if mod.startswith("beetsplug."):
+                del sys.modules[mod]
+
+    @pytest.fixture(autouse=True)
+    def cleanup(self):
+        """Ensure plugins are unimported before and after each test."""
+        self.unimport_plugins()
+        yield
+        self.unimport_plugins()
+
     @pytest.mark.parametrize("plugin_name", get_available_plugins())
     def test_import_plugin(self, caplog, plugin_name):  #
         """Test that a plugin is importable without an error using the
         load_plugins function."""
 
-        from beets.plugins import load_plugins
-
         caplog.set_level(logging.WARNING)
         caplog.clear()
-        load_plugins(plugin_name)
+        plugins.load_plugins(plugin_name)
 
         # Check for warnings, is a bit hacky but we can make full use of the beets
         # load_plugins code that way
+        # We skip ModuleNotFoundError to allow local pytest runs to pass if plugin
+        # dependencies are not installed e.g. librosa for autobpm
         records = []
         pattern = r"ModuleNotFoundError: No module named '(.*?)'"
         for record in caplog.records:
@@ -580,9 +594,6 @@ class TestImportAllPlugins(PluginMixin):
                     continue
             records.append(record)
 
-        self.unload_plugins()
-        self.unimport_plugins()
-
         assert len(records) == 0, (
             f"Plugin '{plugin_name}' has issues during import. ",
             records,
@@ -591,14 +602,3 @@ class TestImportAllPlugins(PluginMixin):
     def _is_spec_available(self, spec_name):
         """Check if a module is available by its name."""
         return importlib.util.find_spec(spec_name) is not None
-
-    def unimport_plugins(self):
-        """Unimport all plugins to avoid conflicts in other tests."""
-
-        to_del = []
-        for mod in sys.modules.keys():
-            if mod.startswith("beetsplug."):
-                to_del.append(mod)
-
-        for mod in to_del:
-            del sys.modules[mod]
