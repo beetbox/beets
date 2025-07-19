@@ -38,53 +38,18 @@ from beets.test.helper import (
     AutotagStub,
     ImportHelper,
     PluginMixin,
+    PluginTestCase,
     TerminalImportMixin,
 )
-from beets.test.helper import PluginTestCase as BasePluginTestCase
 from beets.util import displayable_path, syspath
 
 
-class PluginLoaderTestCase(BasePluginTestCase):
-    def setup_plugin_loader(self):
-        # FIXME the mocking code is horrific, but this is the lowest and
-        # earliest level of the plugin mechanism we can hook into.
-        self._plugin_loader_patch = patch("beets.plugins.load_plugins")
-        self._plugin_classes = set()
-        load_plugins = self._plugin_loader_patch.start()
-
-        def myload(names=()):
-            plugins._classes.update(self._plugin_classes)
-
-        load_plugins.side_effect = myload
-
-    def teardown_plugin_loader(self):
-        self._plugin_loader_patch.stop()
-
-    def register_plugin(self, plugin_class):
-        self._plugin_classes.add(plugin_class)
-
-    def setUp(self):
-        self.setup_plugin_loader()
-        super().setUp()
-
-    def tearDown(self):
-        self.teardown_plugin_loader()
-        super().tearDown()
-
-
-class PluginImportTestCase(ImportHelper, PluginLoaderTestCase):
-    def setUp(self):
-        super().setUp()
-        self.prepare_album_for_import(2)
-
-
-class ItemTypesTest(PluginLoaderTestCase):
+class ItemTypesTest(PluginTestCase):
     def test_flex_field_type(self):
         class RatingPlugin(plugins.BeetsPlugin):
             item_types = {"rating": types.Float()}
 
         self.register_plugin(RatingPlugin)
-        self.config["plugins"] = "rating"
 
         item = Item(path="apath", artist="aaa")
         item.add(self.lib)
@@ -104,7 +69,7 @@ class ItemTypesTest(PluginLoaderTestCase):
         assert "aaa" not in out
 
 
-class ItemWriteTest(PluginLoaderTestCase):
+class ItemWriteTest(PluginTestCase):
     def setUp(self):
         super().setUp()
 
@@ -131,33 +96,34 @@ class ItemWriteTest(PluginLoaderTestCase):
         self.event_listener_plugin.register_listener(event, func)
 
 
-class ItemTypeConflictTest(PluginLoaderTestCase):
-    def test_mismatch(self):
-        class EventListenerPlugin(plugins.BeetsPlugin):
-            item_types = {"duplicate": types.INTEGER}
+class ItemTypeConflictTest(PluginTestCase):
+    class EventListenerPlugin(plugins.BeetsPlugin):
+        item_types = {"duplicate": types.INTEGER}
 
+    def setUp(self):
+        super().setUp()
+        self.register_plugin(self.EventListenerPlugin)
+
+    def test_mismatch(self):
         class AdventListenerPlugin(plugins.BeetsPlugin):
             item_types = {"duplicate": types.FLOAT}
 
-        self.event_listener_plugin = EventListenerPlugin
-        self.advent_listener_plugin = AdventListenerPlugin
-        self.register_plugin(EventListenerPlugin)
         self.register_plugin(AdventListenerPlugin)
         with pytest.raises(plugins.PluginConflictError):
             plugins.types(Item)
 
     def test_match(self):
-        class EventListenerPlugin(plugins.BeetsPlugin):
-            item_types = {"duplicate": types.INTEGER}
-
         class AdventListenerPlugin(plugins.BeetsPlugin):
             item_types = {"duplicate": types.INTEGER}
 
-        self.event_listener_plugin = EventListenerPlugin
-        self.advent_listener_plugin = AdventListenerPlugin
-        self.register_plugin(EventListenerPlugin)
         self.register_plugin(AdventListenerPlugin)
-        assert plugins.types(Item) is not None
+        assert plugins.types(Item)
+
+
+class PluginImportTestCase(ImportHelper, PluginTestCase):
+    def setUp(self):
+        super().setUp()
+        self.prepare_album_for_import(2)
 
 
 class EventsTest(PluginImportTestCase):
@@ -223,7 +189,7 @@ class EventsTest(PluginImportTestCase):
         ]
 
 
-class ListenersTest(PluginLoaderTestCase):
+class ListenersTest(PluginTestCase):
     def test_register(self):
         class DummyPlugin(plugins.BeetsPlugin):
             def __init__(self):
@@ -574,11 +540,8 @@ class TestImportAllPlugins(PluginMixin):
 
         caplog.set_level(logging.WARNING)
         caplog.clear()
-        plugins.load_plugins([plugin_name])
+        plugins.load_plugins(include={plugin_name})
 
-        # Check for warnings, is a bit hacky but we can make full use of the beets
-        # load_plugins code that way
-        assert len(caplog.records) == 0, (
-            f"Plugin '{plugin_name}' has issues during import. ",
-            caplog.records,
+        assert "PluginImportError" not in caplog.text, (
+            f"Plugin '{plugin_name}' has issues during import."
         )

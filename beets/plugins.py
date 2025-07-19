@@ -19,9 +19,10 @@ from __future__ import annotations
 import abc
 import inspect
 import re
-import traceback
+import sys
 from collections import defaultdict
 from functools import wraps
+from pathlib import Path
 from types import GenericAlias
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
@@ -74,6 +75,17 @@ class PluginConflictError(Exception):
 
     For example two plugins may define different types for flexible fields.
     """
+
+
+class PluginImportError(ImportError):
+    """Indicates that a plugin could not be imported.
+
+    This is a subclass of ImportError so that it can be caught separately
+    from other errors.
+    """
+
+    def __init__(self, name: str):
+        super().__init__(f"Could not import plugin {name}")
 
 
 class PluginLogFilter(logging.Filter):
@@ -263,69 +275,90 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         return helper
 
 
-_classes: set[type[BeetsPlugin]] = set()
+def get_plugin_names(
+    include: set[str] | None = None, exclude: set[str] | None = None
+) -> set[str]:
+    """Discover and return the set of plugin names to be loaded.
 
-
-def load_plugins(names: Sequence[str] = ()) -> None:
-    """Imports the modules for a sequence of plugin names. Each name
-    must be the name of a Python module under the "beetsplug" namespace
-    package in sys.path; the module indicated should contain the
-    BeetsPlugin subclasses desired.
+    Configures the plugin search paths and resolves the final set of plugins
+    based on configuration settings, inclusion filters, and exclusion rules.
+    Automatically includes the musicbrainz plugin when enabled in configuration.
     """
-    for name in names:
-        modname = f"{PLUGIN_NAMESPACE}.{name}"
+    paths = [
+        str(Path(p).expanduser().absolute())
+        for p in beets.config["pluginpath"].as_str_seq(split=False)
+    ]
+    log.debug("plugin paths: {}", paths)
+
+    # Extend the `beetsplug` package to include the plugin paths.
+    import beetsplug
+
+    beetsplug.__path__ = paths + list(beetsplug.__path__)
+
+    # For backwards compatibility, also support plugin paths that
+    # *contain* a `beetsplug` package.
+    sys.path += paths
+    plugins = include or set(beets.config["plugins"].as_str_seq())
+    # TODO: Remove in v3.0.0
+    if "musicbrainz" in beets.config and beets.config["musicbrainz"].get().get(
+        "enabled"
+    ):
+        plugins.add("musicbrainz")
+
+    return plugins - (exclude or set())
+
+
+def _get_plugin(name: str) -> BeetsPlugin | None:
+    """Dynamically load and instantiate a plugin class by name.
+
+    Attempts to import the plugin module, locate the appropriate plugin class
+    within it, and return an instance. Handles import failures gracefully and
+    logs warnings for missing plugins or loading errors.
+    """
+    try:
         try:
-            try:
-                namespace = __import__(modname, None, None)
-            except ImportError as exc:
-                # Again, this is hacky:
-                if exc.args[0].endswith(" " + name):
-                    log.warning("** plugin {0} not found", name)
-                else:
-                    raise
-            else:
-                for obj in getattr(namespace, name).__dict__.values():
-                    if (
-                        inspect.isclass(obj)
-                        and not isinstance(
-                            obj, GenericAlias
-                        )  # seems to be needed for python <= 3.9 only
-                        and issubclass(obj, BeetsPlugin)
-                        and obj != BeetsPlugin
-                        and not inspect.isabstract(obj)
-                        and obj not in _classes
-                    ):
-                        _classes.add(obj)
+            namespace = __import__(f"{PLUGIN_NAMESPACE}.{name}", None, None)
+        except Exception as exc:
+            raise PluginImportError(name) from exc
 
-        except Exception:
-            log.warning(
-                "** error loading plugin {}:\n{}",
-                name,
-                traceback.format_exc(),
-            )
+        for obj in getattr(namespace, name).__dict__.values():
+            if (
+                inspect.isclass(obj)
+                and not isinstance(
+                    obj, GenericAlias
+                )  # seems to be needed for python <= 3.9 only
+                and issubclass(obj, BeetsPlugin)
+                and obj != BeetsPlugin
+                and not inspect.isabstract(obj)
+            ):
+                return obj()
+
+    except Exception:
+        log.warning("** error loading plugin {}", name, exc_info=True)
+
+    return None
 
 
-_instances: dict[type[BeetsPlugin], BeetsPlugin] = {}
+_instances: list[BeetsPlugin] = []
 
 
-def find_plugins() -> list[BeetsPlugin]:
-    """Returns a list of BeetsPlugin subclass instances from all
-    currently loaded beets plugins. Loads the default plugin set
-    first.
+def load_plugins(*args, **kwargs) -> None:
+    """Initialize the plugin system by loading all configured plugins.
+
+    Performs one-time plugin discovery and instantiation, storing loaded plugin
+    instances globally. Emits a pluginload event after successful initialization
+    to notify other components.
     """
-    if _instances:
-        # After the first call, use cached instances for performance reasons.
-        # See https://github.com/beetbox/beets/pull/3810
-        return list(_instances.values())
+    if not _instances:
+        names = get_plugin_names(*args, **kwargs)
+        log.info("Loading plugins: {}", ", ".join(sorted(names)))
+        _instances.extend(filter(None, map(_get_plugin, names)))
 
-    load_plugins()
-    plugins = []
-    for cls in _classes:
-        # Only instantiate each plugin class once.
-        if cls not in _instances:
-            _instances[cls] = cls()
-        plugins.append(_instances[cls])
-    return plugins
+        send("pluginload")
+
+
+def find_plugins() -> Iterable[BeetsPlugin]:
+    return _instances
 
 
 # Communication with plugins.
