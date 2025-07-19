@@ -234,15 +234,7 @@ class ListenersTest(PluginLoaderTestCase):
         d.register_listener("cli_exit", d2.dummy)
         assert DummyPlugin._raw_listeners["cli_exit"] == [d.dummy, d2.dummy]
 
-    @patch("beets.plugins.find_plugins")
-    @patch("inspect.getfullargspec")
-    def test_events_called(self, mock_gfa, mock_find_plugins):
-        mock_gfa.return_value = Mock(
-            args=(),
-            varargs="args",
-            varkw="kwargs",
-        )
-
+    def test_events_called(self):
         class DummyPlugin(plugins.BeetsPlugin):
             def __init__(self):
                 super().__init__()
@@ -252,7 +244,6 @@ class ListenersTest(PluginLoaderTestCase):
                 self.register_listener("event_bar", self.bar)
 
         d = DummyPlugin()
-        mock_find_plugins.return_value = (d,)
 
         plugins.send("event")
         d.foo.assert_has_calls([])
@@ -262,8 +253,7 @@ class ListenersTest(PluginLoaderTestCase):
         d.foo.assert_called_once_with(var="tagada")
         d.bar.assert_has_calls([])
 
-    @patch("beets.plugins.find_plugins")
-    def test_listener_params(self, mock_find_plugins):
+    def test_listener_params(self):
         class DummyPlugin(plugins.BeetsPlugin):
             def __init__(self):
                 super().__init__()
@@ -307,8 +297,7 @@ class ListenersTest(PluginLoaderTestCase):
             def dummy9(self, **kwargs):
                 assert kwargs == {"foo": 5}
 
-        d = DummyPlugin()
-        mock_find_plugins.return_value = (d,)
+        DummyPlugin()
 
         plugins.send("event1", foo=5)
         plugins.send("event2", foo=5)
