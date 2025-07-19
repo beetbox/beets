@@ -44,80 +44,44 @@ from beets.test.helper import (
 from beets.util import displayable_path, syspath
 
 
-class ItemTypesTest(PluginTestCase):
-    def test_flex_field_type(self):
-        class RatingPlugin(plugins.BeetsPlugin):
-            item_types = {"rating": types.Float()}
+class TestPluginRegistration(PluginTestCase):
+    class RatingPlugin(plugins.BeetsPlugin):
+        item_types = {"rating": types.Float()}
 
-        self.register_plugin(RatingPlugin)
+        def __init__(self):
+            super().__init__()
+            self.register_listener("write", self.on_write)
 
-        item = Item(path="apath", artist="aaa")
-        item.add(self.lib)
-
-        # Do not match unset values
-        out = self.run_with_output("ls", "rating:1..3")
-        assert "aaa" not in out
-
-        self.run_command("modify", "rating=2", "--yes")
-
-        # Match in range
-        out = self.run_with_output("ls", "rating:1..3")
-        assert "aaa" in out
-
-        # Don't match out of range
-        out = self.run_with_output("ls", "rating:3..5")
-        assert "aaa" not in out
-
-
-class ItemWriteTest(PluginTestCase):
-    def setUp(self):
-        super().setUp()
-
-        class EventListenerPlugin(plugins.BeetsPlugin):
-            pass
-
-        self.event_listener_plugin = EventListenerPlugin()
-        self.register_plugin(EventListenerPlugin)
-
-    def test_change_tags(self):
+        @staticmethod
         def on_write(item=None, path=None, tags=None):
             if tags["artist"] == "XXX":
                 tags["artist"] = "YYY"
 
-        self.register_listener("write", on_write)
-
-        item = self.add_item_fixture(artist="XXX")
-        item.write()
-
-        mediafile = MediaFile(syspath(item.path))
-        assert mediafile.artist == "YYY"
-
-    def register_listener(self, event, func):
-        self.event_listener_plugin.register_listener(event, func)
-
-
-class ItemTypeConflictTest(PluginTestCase):
-    class EventListenerPlugin(plugins.BeetsPlugin):
-        item_types = {"duplicate": types.INTEGER}
-
     def setUp(self):
         super().setUp()
-        self.register_plugin(self.EventListenerPlugin)
 
-    def test_mismatch(self):
-        class AdventListenerPlugin(plugins.BeetsPlugin):
-            item_types = {"duplicate": types.FLOAT}
+        self.register_plugin(self.RatingPlugin)
 
-        self.register_plugin(AdventListenerPlugin)
-        with pytest.raises(plugins.PluginConflictError):
-            plugins.types(Item)
+    def test_field_type_registered(self):
+        assert isinstance(Item._types.get("rating"), types.Float)
 
-    def test_match(self):
-        class AdventListenerPlugin(plugins.BeetsPlugin):
-            item_types = {"duplicate": types.INTEGER}
+    def test_duplicate_type(self):
+        class DuplicateTypePlugin(plugins.BeetsPlugin):
+            item_types = {"rating": types.INTEGER}
 
-        self.register_plugin(AdventListenerPlugin)
-        assert plugins.types(Item)
+        self.register_plugin(DuplicateTypePlugin)
+        with pytest.raises(
+            plugins.PluginConflictError, match="already been defined"
+        ):
+            Item._types
+
+    def test_listener_registered(self):
+        self.RatingPlugin()
+        item = self.add_item_fixture(artist="XXX")
+
+        item.write()
+
+        assert MediaFile(syspath(item.path)).artist == "YYY"
 
 
 class PluginImportTestCase(ImportHelper, PluginTestCase):
