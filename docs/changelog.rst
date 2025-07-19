@@ -92,10 +92,11 @@ For plugin developers:
 
   Old imports are now deprecated and will be removed in version ``3.0.0``.
 * ``beets.ui.decargs`` is deprecated and will be removed in version ``3.0.0``.
-* Beets is now pep 561 compliant, which means that it provides type hints
+* Beets is now PEP 561 compliant, which means that it provides type hints
   for all public APIs. This allows IDEs to provide better autocompletion and
   type checking for downstream users of the beets API.
-
+* ``plugins.find_plugins`` function does not anymore load plugins. You need to
+  explicitly call ``plugins.load_plugins()`` to load them.
 
 Other changes:
 
