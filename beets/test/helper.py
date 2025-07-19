@@ -498,8 +498,8 @@ class PluginMixin(ConfigMixin):
     def unload_plugins(self) -> None:
         """Unload all plugins and remove them from the configuration."""
         # FIXME this should eventually be handled by a plugin manager
-        for plugin_class in beets.plugins._instances:
-            plugin_class.listeners = None
+        beets.plugins.BeetsPlugin.listeners.clear()
+        beets.plugins.BeetsPlugin._raw_listeners.clear()
         self.config["plugins"] = []
         beets.plugins._classes = set()
         beets.plugins._instances = {}

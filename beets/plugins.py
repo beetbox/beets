@@ -23,7 +23,7 @@ import traceback
 from collections import defaultdict
 from functools import wraps
 from types import GenericAlias
-from typing import TYPE_CHECKING, Any, Callable, Sequence, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
 import mediafile
 from typing_extensions import ParamSpec
@@ -32,17 +32,14 @@ import beets
 from beets import logging
 
 if TYPE_CHECKING:
-    from beets.event_types import EventType
-
-
-if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Callable, Iterable, Sequence
 
     from confuse import ConfigView
 
     from beets.dbcore import Query
     from beets.dbcore.db import FieldQueryType
     from beets.dbcore.types import Type
+    from beets.event_types import EventType
     from beets.importer import ImportSession, ImportTask
     from beets.library import Album, Item, Library
     from beets.ui import Subcommand
@@ -58,7 +55,7 @@ if TYPE_CHECKING:
 
     P = ParamSpec("P")
     Ret = TypeVar("Ret", bound=Any)
-    Listener = Callable[..., None]
+    Listener = Callable[..., Any]
     IterF = Callable[P, Iterable[Ret]]
 
 
@@ -104,6 +101,14 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
     functionality by defining a subclass of BeetsPlugin and overriding
     the abstract methods defined here.
     """
+
+    _raw_listeners: ClassVar[dict[EventType, list[Listener]]] = defaultdict(
+        list
+    )
+    listeners: ClassVar[dict[EventType, list[Listener]]] = defaultdict(list)
+    template_funcs: TFuncMap[str] | None = None
+    template_fields: TFuncMap[Item] | None = None
+    album_template_fields: TFuncMap[Album] | None = None
 
     name: str
     config: ConfigView
@@ -218,25 +223,13 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         mediafile.MediaFile.add_field(name, descriptor)
         library.Item._media_fields.add(name)
 
-    _raw_listeners: dict[str, list[Listener]] | None = None
-    listeners: dict[str, list[Listener]] | None = None
-
-    def register_listener(self, event: "EventType", func: Listener):
+    def register_listener(self, event: EventType, func: Listener) -> None:
         """Add a function as a listener for the specified event."""
-        wrapped_func = self._set_log_level_and_params(logging.WARNING, func)
-
-        cls = self.__class__
-
-        if cls.listeners is None or cls._raw_listeners is None:
-            cls._raw_listeners = defaultdict(list)
-            cls.listeners = defaultdict(list)
-        if func not in cls._raw_listeners[event]:
-            cls._raw_listeners[event].append(func)
-            cls.listeners[event].append(wrapped_func)
-
-    template_funcs: TFuncMap[str] | None = None
-    template_fields: TFuncMap[Item] | None = None
-    album_template_fields: TFuncMap[Album] | None = None
+        if func not in self._raw_listeners[event]:
+            self._raw_listeners[event].append(func)
+            self.listeners[event].append(
+                self._set_log_level_and_params(logging.WARNING, func)
+            )
 
     @classmethod
     def template_func(cls, name: str) -> Callable[[TFunc[str]], TFunc[str]]:
@@ -383,7 +376,9 @@ def named_queries(model_cls: type[AnyModel]) -> dict[str, FieldQueryType]:
     }
 
 
-def notify_info_yielded(event: str) -> Callable[[IterF[P, Ret]], IterF[P, Ret]]:
+def notify_info_yielded(
+    event: EventType,
+) -> Callable[[IterF[P, Ret]], IterF[P, Ret]]:
     """Makes a generator send the event 'event' every time it yields.
     This decorator is supposed to decorate a generator, but any function
     returning an iterable should work.
@@ -474,19 +469,7 @@ def album_field_getters() -> TFuncMap[Album]:
 # Event dispatch.
 
 
-def event_handlers() -> dict[str, list[Listener]]:
-    """Find all event handlers from plugins as a dictionary mapping
-    event names to sequences of callables.
-    """
-    all_handlers: dict[str, list[Listener]] = defaultdict(list)
-    for plugin in find_plugins():
-        if plugin.listeners:
-            for event, handlers in plugin.listeners.items():
-                all_handlers[event] += handlers
-    return all_handlers
-
-
-def send(event: str, **arguments: Any) -> list[Any]:
+def send(event: EventType, **arguments: Any) -> list[Any]:
     """Send an event to all assigned event listeners.
 
     `event` is the name of  the event to send, all other named arguments
@@ -495,12 +478,11 @@ def send(event: str, **arguments: Any) -> list[Any]:
     Return a list of non-None values returned from the handlers.
     """
     log.debug("Sending event: {0}", event)
-    results: list[Any] = []
-    for handler in event_handlers()[event]:
-        result = handler(**arguments)
-        if result is not None:
-            results.append(result)
-    return results
+    return [
+        r
+        for handler in BeetsPlugin.listeners[event]
+        if (r := handler(**arguments)) is not None
+    ]
 
 
 def feat_tokens(for_artist: bool = True) -> str:
