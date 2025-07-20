@@ -14,6 +14,7 @@
 
 """Adds pseudo-releases from MusicBrainz as candidates during import."""
 
+import itertools
 from typing import Iterable, Sequence
 
 from typing_extensions import override
@@ -32,7 +33,7 @@ from beetsplug._typing import JSONDict
 class MusicBrainzPseudoReleasePlugin(MetadataSourcePlugin):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.config.add({"scripts": []})
+        self.config.add({"scripts": [], "include_official_releases": False})
         self._scripts = self.config["scripts"].as_str_seq()
         self._mb = mbplugin.MusicBrainzPlugin()
         self._pseudo_release_ids: dict[str, list[str]] = {}
@@ -132,23 +133,9 @@ class MusicBrainzPseudoReleasePlugin(MetadataSourcePlugin):
             pseudo_release_ids = []
 
         if official_release_id is not None:
-            pseudo_releases: list[AlbumInfo] = []
-            for pri in pseudo_release_ids:
-                if match := self._mb.album_for_id(pri):
-                    pseudo_album_info = PseudoAlbumInfo(
-                        pseudo_release=match,
-                        official_release=self._intercepted_candidates[
-                            official_release_id
-                        ],
-                        data_source=self.data_source,
-                    )
-                    self._log.debug(
-                        "Using {0} release for distance calculations for album {1}",
-                        pseudo_album_info.determine_best_ref(items),
-                        pri,
-                    )
-                    pseudo_releases.append(pseudo_album_info)
-
+            pseudo_releases = self._get_pseudo_releases(
+                items, official_release_id, pseudo_release_ids
+            )
             del self._pseudo_release_ids[official_release_id]
             del self._intercepted_candidates[official_release_id]
             return pseudo_releases
@@ -166,6 +153,50 @@ class MusicBrainzPseudoReleasePlugin(MetadataSourcePlugin):
             self._mb.candidates(items, artist, album, va_likely)
         )
 
+        recursion = self._mb_plugin_simulation_matched(
+            items, official_candidates
+        )
+
+        if not self.config.get().get("include_official_releases"):
+            official_candidates = []
+
+        if recursion:
+            return itertools.chain(
+                self.candidates(items, artist, album, va_likely),
+                iter(official_candidates),
+            )
+        else:
+            return iter(official_candidates)
+
+    def _get_pseudo_releases(
+        self,
+        items: Sequence[Item],
+        official_release_id: str,
+        pseudo_release_ids: list[str],
+    ) -> list[AlbumInfo]:
+        pseudo_releases: list[AlbumInfo] = []
+        for pri in pseudo_release_ids:
+            if match := self._mb.album_for_id(pri):
+                pseudo_album_info = PseudoAlbumInfo(
+                    pseudo_release=match,
+                    official_release=self._intercepted_candidates[
+                        official_release_id
+                    ],
+                    data_source=self.data_source,
+                )
+                self._log.debug(
+                    "Using {0} release for distance calculations for album {1}",
+                    pseudo_album_info.determine_best_ref(items),
+                    pri,
+                )
+                pseudo_releases.append(pseudo_album_info)
+        return pseudo_releases
+
+    def _mb_plugin_simulation_matched(
+        self,
+        items: Sequence[Item],
+        official_candidates: list[AlbumInfo],
+    ) -> bool:
         recursion = False
         for official_candidate in official_candidates:
             if official_candidate.album_id in self._pseudo_release_ids:
@@ -178,12 +209,7 @@ class MusicBrainzPseudoReleasePlugin(MetadataSourcePlugin):
                     items, intercepted.tracks
                 )
                 recursion = True
-
-        # TODO include official candidates?
-        if recursion:
-            return self.candidates(items, artist, album, va_likely)
-        else:
-            return []
+        return recursion
 
     @override
     def album_distance(
