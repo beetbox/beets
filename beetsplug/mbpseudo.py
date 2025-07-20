@@ -35,11 +35,15 @@ _STATUS_PSEUDO = "Pseudo-Release"
 class MusicBrainzPseudoReleasePlugin(MetadataSourcePlugin):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+
         self.config.add({"scripts": [], "include_official_releases": False})
+
         self._scripts = self.config["scripts"].as_str_seq()
         self._mb = mbplugin.MusicBrainzPlugin()
+
         self._pseudo_release_ids: dict[str, list[str]] = {}
         self._intercepted_candidates: dict[str, AlbumInfo] = {}
+        self._mb_plugin_loaded_before = True
 
         self.register_listener("pluginload", self._on_plugins_loaded)
         self.register_listener("mb_album_extract", self._intercept_mb_releases)
@@ -59,6 +63,7 @@ class MusicBrainzPseudoReleasePlugin(MetadataSourcePlugin):
                 self_index = i
 
         if mb_index and self_index < mb_index:
+            self._mb_plugin_loaded_before = False
             self._log.warning(
                 "The mbpseudo plugin was loaded before the musicbrainz plugin"
                 ", this will result in redundant network calls"
@@ -172,9 +177,12 @@ class MusicBrainzPseudoReleasePlugin(MetadataSourcePlugin):
             del self._intercepted_candidates[official_release_id]
             return pseudo_releases
 
-        if any(
-            isinstance(plugin, mbplugin.MusicBrainzPlugin)
-            for plugin in find_plugins()
+        if (
+            any(
+                isinstance(plugin, mbplugin.MusicBrainzPlugin)
+                for plugin in find_plugins()
+            )
+            and self._mb_plugin_loaded_before
         ):
             self._log.debug(
                 "No releases found after main MusicBrainz plugin executed"
