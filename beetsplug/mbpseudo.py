@@ -29,7 +29,10 @@ from beets.metadata_plugins import MetadataSourcePlugin
 from beets.plugins import find_plugins
 from beetsplug._typing import JSONDict
 
+_STATUS_PSEUDO = "Pseudo-Release"
 
+
+# TODO listen for import start and warn if MB plugin found but not before us
 class MusicBrainzPseudoReleasePlugin(MetadataSourcePlugin):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -47,9 +50,10 @@ class MusicBrainzPseudoReleasePlugin(MetadataSourcePlugin):
         self._log.debug("Desired scripts: {0}", self._scripts)
 
     def _intercept_mb_releases(self, data: JSONDict):
-        album_id = data["id"] if ("id" in data) else None
+        album_id = data["id"] if "id" in data else None
         if (
-            not isinstance(album_id, str)
+            self._has_desired_script(data)
+            or not isinstance(album_id, str)
             or album_id in self._pseudo_release_ids
         ):
             return None
@@ -68,6 +72,14 @@ class MusicBrainzPseudoReleasePlugin(MetadataSourcePlugin):
 
         return None
 
+    def _has_desired_script(self, release: JSONDict) -> bool:
+        if len(self._scripts) == 0:
+            return False
+        elif script := release.get("text-representation", {}).get("script"):
+            return script in self._scripts
+        else:
+            return False
+
     def _wanted_pseudo_release_id(
         self,
         relation: JSONDict,
@@ -81,11 +93,7 @@ class MusicBrainzPseudoReleasePlugin(MetadataSourcePlugin):
             return None
 
         release = relation["release"]
-        script = release.get("text-representation", {}).get(
-            "script", self._scripts[0]
-        )
-
-        if "id" in release and script in self._scripts:
+        if "id" in release and self._has_desired_script(release):
             return release["id"]
         else:
             return None
@@ -101,7 +109,7 @@ class MusicBrainzPseudoReleasePlugin(MetadataSourcePlugin):
             )
             self._intercepted_candidates[info.album_id] = info.copy()
 
-        elif info.get("albumstatus", "") == "Pseudo-Release":
+        elif info.get("albumstatus", "") == _STATUS_PSEUDO:
             self._purge_intercepted_pseudo_releases(info)
 
     def candidates(
@@ -175,7 +183,7 @@ class MusicBrainzPseudoReleasePlugin(MetadataSourcePlugin):
             items, official_candidates
         )
 
-        if not self.config.get().get("include_official_releases"):
+        if recursion and not self.config.get().get("include_official_releases"):
             official_candidates = []
 
         self._log.debug(
@@ -233,7 +241,7 @@ class MusicBrainzPseudoReleasePlugin(MetadataSourcePlugin):
                 )
                 matched = True
 
-            if official_candidate.get("albumstatus", "") == "Pseudo-Release":
+            if official_candidate.get("albumstatus", "") == _STATUS_PSEUDO:
                 self._purge_intercepted_pseudo_releases(official_candidate)
 
         return matched
