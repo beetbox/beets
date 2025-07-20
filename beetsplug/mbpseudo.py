@@ -32,7 +32,6 @@ from beetsplug._typing import JSONDict
 _STATUS_PSEUDO = "Pseudo-Release"
 
 
-# TODO listen for import start and warn if MB plugin found but not before us
 class MusicBrainzPseudoReleasePlugin(MetadataSourcePlugin):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -42,12 +41,28 @@ class MusicBrainzPseudoReleasePlugin(MetadataSourcePlugin):
         self._pseudo_release_ids: dict[str, list[str]] = {}
         self._intercepted_candidates: dict[str, AlbumInfo] = {}
 
+        self.register_listener("pluginload", self._on_plugins_loaded)
         self.register_listener("mb_album_extract", self._intercept_mb_releases)
         self.register_listener(
             "albuminfo_received", self._intercept_mb_candidates
         )
 
         self._log.debug("Desired scripts: {0}", self._scripts)
+
+    def _on_plugins_loaded(self):
+        mb_index = None
+        self_index = -1
+        for i, plugin in enumerate(find_plugins()):
+            if isinstance(plugin, mbplugin.MusicBrainzPlugin):
+                mb_index = i
+            elif isinstance(plugin, MusicBrainzPseudoReleasePlugin):
+                self_index = i
+
+        if mb_index and self_index < mb_index:
+            self._log.warning(
+                "The mbpseudo plugin was loaded before the musicbrainz plugin"
+                ", this will result in redundant network calls"
+            )
 
     def _intercept_mb_releases(self, data: JSONDict):
         album_id = data["id"] if "id" in data else None
@@ -119,6 +134,12 @@ class MusicBrainzPseudoReleasePlugin(MetadataSourcePlugin):
         album: str,
         va_likely: bool,
     ) -> Iterable[AlbumInfo]:
+        """Even though a candidate might have extra and/or missing tracks, the set of paths from the items that
+        were actually matched (which are stored in the corresponding ``mapping``) must be a subset of the set of
+        paths from the input items. This helps us figure out which intercepted candidate might be relevant for
+        the items we get in this call even if other candidates have been concurrently intercepted as well.
+        """
+
         if len(self._scripts) == 0:
             return []
 
@@ -205,8 +226,8 @@ class MusicBrainzPseudoReleasePlugin(MetadataSourcePlugin):
         pseudo_release_ids: list[str],
     ) -> list[AlbumInfo]:
         pseudo_releases: list[AlbumInfo] = []
-        for pri in pseudo_release_ids:
-            if match := self._mb.album_for_id(pri):
+        for pr_id in pseudo_release_ids:
+            if match := self._mb.album_for_id(pr_id):
                 pseudo_album_info = PseudoAlbumInfo(
                     pseudo_release=match,
                     official_release=self._intercepted_candidates[
@@ -217,7 +238,7 @@ class MusicBrainzPseudoReleasePlugin(MetadataSourcePlugin):
                 self._log.debug(
                     "Using {0} release for distance calculations for album {1}",
                     pseudo_album_info.determine_best_ref(items),
-                    pri,
+                    pr_id,
                 )
                 pseudo_releases.append(pseudo_album_info)
         return pseudo_releases
@@ -227,6 +248,23 @@ class MusicBrainzPseudoReleasePlugin(MetadataSourcePlugin):
         items: Sequence[Item],
         official_candidates: list[AlbumInfo],
     ) -> bool:
+        """Simulate how we would have been called if the MusicBrainz plugin had actually executed.
+
+        At this point we already called ``self._mb.candidates()``,
+        which emits the ``mb_album_extract`` events,
+        so now we simulate:
+
+        1. Intercepting the ``AlbumInfo`` candidate that would have come in the ``albuminfo_received`` event.
+        2. Intercepting the distance calculation of the aforementioned candidate to store its mapping.
+
+        If the official candidate is already a pseudo-release, we clean up internal state.
+        This is needed because the MusicBrainz plugin emits official releases even if
+        it receives a pseudo-release as input, so the chain would actually be:
+        pseudo-release input -> official release with pseudo emitted -> intercepted -> pseudo-release resolved (again)
+
+        To avoid resolving again in the last step, we remove the pseudo-release's id.
+        """
+
         matched = False
         for official_candidate in official_candidates:
             if official_candidate.album_id in self._pseudo_release_ids:
@@ -267,6 +305,23 @@ class MusicBrainzPseudoReleasePlugin(MetadataSourcePlugin):
         album_info: AlbumInfo,
         mapping: dict[Item, TrackInfo],
     ) -> Distance:
+        """We use this function more like a listener for the extra details we are injecting.
+
+        For instances of ``PseudoAlbumInfo`` whose corresponding ``mapping`` is _not_ an
+        instance of ``ImmutableMapping``, we know at this point that all penalties from the
+        normal auto-tagging flow have been applied, so we can switch to the metadata from
+        the pseudo-release for the final proposal.
+
+        Other instances of ``AlbumInfo`` must come from other plugins, so we just check if
+        we intercepted them as candidates with pseudo-releases and store their ``mapping``.
+        This is needed because the real listeners we use never expose information from the
+        input ``Item``s, so we intercept that here.
+
+        The paths from the items are used to figure out which pseudo-releases should be
+        provided for them, which is specially important for concurrent stage execution
+        where we might have intercepted releases from different import tasks when we run.
+        """
+
         if isinstance(album_info, PseudoAlbumInfo):
             if not isinstance(mapping, ImmutableMapping):
                 self._log.debug(
@@ -299,6 +354,18 @@ class MusicBrainzPseudoReleasePlugin(MetadataSourcePlugin):
 
 
 class PseudoAlbumInfo(AlbumInfo):
+    """This is a not-so-ugly hack.
+
+    We want the pseudo-release to result in a distance that is lower or equal to that of the official release,
+    otherwise it won't qualify as a good candidate. However, if the input is in a script that's different from
+    the pseudo-release (and we want to translate/transliterate it in the library), it will receive unwanted penalties.
+
+    This class is essentially a view of the ``AlbumInfo`` of both official and pseudo-releases,
+    where it's possible to change the details that are exposed to other parts of the auto-tagger,
+    enabling a "fair" distance calculation based on the current input's script but still preferring
+    the translation/transliteration in the final proposal.
+    """
+
     def __init__(
         self,
         pseudo_release: AlbumInfo,
