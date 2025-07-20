@@ -120,7 +120,8 @@ genres
 Use MusicBrainz genre tags to populate (and replace if it's already set) the
 ``genre`` tag.  This will make it a list of all the genres tagged for the
 release and the release-group on MusicBrainz, separated by "; " and sorted by
-the total number of votes.
+the total number of votes.  Specify "genres" to use just musicbrainz genres and
+"tags" to use all user-supplied musicbrainz tags.
 Default: ``no``
 
 .. _musicbrainz.external_ids:

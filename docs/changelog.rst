@@ -33,6 +33,7 @@ New features:
 * :doc:`plugins/mpdstats`: Add new configuration option,
   ``played_ratio_threshold``, to allow configuring the percentage the song must
   be played for it to be counted as played instead of skipped.
+* :doc:`plugins/musicbrainz`: Allow selecting tags or genres to populate the genres tag.
 
 Bug fixes:
 
