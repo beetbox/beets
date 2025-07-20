@@ -44,7 +44,8 @@ class PluginLoaderTestCase(BasePluginTestCase):
         load_plugins = self._plugin_loader_patch.start()
 
         def myload(names=()):
-            plugins._classes.update(self._plugin_classes)
+            for plugin in self._plugin_classes:
+                plugins._instances[plugin] = plugin()
 
         load_plugins.side_effect = myload
 
