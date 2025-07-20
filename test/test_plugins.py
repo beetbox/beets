@@ -13,8 +13,14 @@
 # included in all copies or substantial portions of the Software.
 
 
+import importlib
+import importlib.util
 import itertools
+import logging
 import os
+import pkgutil
+import re
+import sys
 from unittest.mock import ANY, Mock, patch
 
 import pytest
@@ -30,7 +36,12 @@ from beets.importer import (
 )
 from beets.library import Item
 from beets.test import helper
-from beets.test.helper import AutotagStub, ImportHelper, TerminalImportMixin
+from beets.test.helper import (
+    AutotagStub,
+    ImportHelper,
+    PluginMixin,
+    TerminalImportMixin,
+)
 from beets.test.helper import PluginTestCase as BasePluginTestCase
 from beets.util import displayable_path, syspath
 
@@ -531,3 +542,63 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
         self.mock_input_options.assert_called_once_with(
             opts, default="a", require=ANY
         )
+
+
+def get_available_plugins():
+    """Get all available plugins in the beetsplug namespace."""
+    namespace_pkg = importlib.import_module("beetsplug")
+
+    return [
+        m.name
+        for m in pkgutil.iter_modules(namespace_pkg.__path__)
+        if not m.name.startswith("_")
+    ]
+
+
+class TestImportAllPlugins(PluginMixin):
+    def unimport_plugins(self):
+        """Unimport plugins before each test to avoid conflicts."""
+        self.unload_plugins()
+        for mod in list(sys.modules):
+            if mod.startswith("beetsplug."):
+                del sys.modules[mod]
+
+    @pytest.fixture(autouse=True)
+    def cleanup(self):
+        """Ensure plugins are unimported before and after each test."""
+        self.unimport_plugins()
+        yield
+        self.unimport_plugins()
+
+    @pytest.mark.parametrize("plugin_name", get_available_plugins())
+    def test_import_plugin(self, caplog, plugin_name):  #
+        """Test that a plugin is importable without an error using the
+        load_plugins function."""
+
+        caplog.set_level(logging.WARNING)
+        caplog.clear()
+        plugins.load_plugins(plugin_name)
+
+        # Check for warnings, is a bit hacky but we can make full use of the beets
+        # load_plugins code that way
+        # We skip ModuleNotFoundError to allow local pytest runs to pass if plugin
+        # dependencies are not installed e.g. librosa for autobpm
+        records = []
+        pattern = r"ModuleNotFoundError: No module named '(.*?)'"
+        for record in caplog.records:
+            match = re.search(pattern, str(record))
+            if match:
+                module_name = match.group(1)
+                if not self._is_spec_available(module_name):
+                    # If the module is not found, we skip it
+                    continue
+            records.append(record)
+
+        assert len(records) == 0, (
+            f"Plugin '{plugin_name}' has issues during import. ",
+            records,
+        )
+
+    def _is_spec_available(self, spec_name):
+        """Check if a module is available by its name."""
+        return importlib.util.find_spec(spec_name) is not None
