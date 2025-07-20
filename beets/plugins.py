@@ -275,7 +275,7 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         return helper
 
 
-_classes: set[type[BeetsPlugin]] = set()
+_instances: dict[type[BeetsPlugin], BeetsPlugin] = {}
 
 
 def load_plugins(names: Sequence[str] = ()) -> None:
@@ -305,9 +305,12 @@ def load_plugins(names: Sequence[str] = ()) -> None:
                         and issubclass(obj, BeetsPlugin)
                         and obj != BeetsPlugin
                         and not inspect.isabstract(obj)
-                        and obj not in _classes
+                        and obj not in _instances
                     ):
-                        _classes.add(obj)
+                        log.debug(
+                            "** loading plugin {0} from {1}", obj.__name__, name
+                        )
+                        _instances[obj] = obj()
 
         except Exception:
             log.warning(
@@ -317,27 +320,18 @@ def load_plugins(names: Sequence[str] = ()) -> None:
             )
 
 
-_instances: dict[type[BeetsPlugin], BeetsPlugin] = {}
-
-
 def find_plugins() -> list[BeetsPlugin]:
     """Returns a list of BeetsPlugin subclass instances from all
     currently loaded beets plugins. Loads the default plugin set
     first.
     """
-    if _instances:
-        # After the first call, use cached instances for performance reasons.
-        # See https://github.com/beetbox/beets/pull/3810
-        return list(_instances.values())
 
-    load_plugins()
-    plugins = []
-    for cls in _classes:
-        # Only instantiate each plugin class once.
-        if cls not in _instances:
-            _instances[cls] = cls()
-        plugins.append(_instances[cls])
-    return plugins
+    # After the first call, use cached instances for performance reasons.
+    # See https://github.com/beetbox/beets/pull/3810
+    if not _instances:
+        load_plugins(beets.config["plugins"].as_str_seq())
+
+    return list(_instances.values())
 
 
 # Communication with plugins.

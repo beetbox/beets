@@ -501,7 +501,6 @@ class PluginMixin(ConfigMixin):
         for plugin_class in beets.plugins._instances:
             plugin_class.listeners = None
         self.config["plugins"] = []
-        beets.plugins._classes = set()
         beets.plugins._instances = {}
 
     @contextmanager
