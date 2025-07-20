@@ -871,10 +871,33 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
 
         # should be None unless we're dealing with a pseudo release
         if actual_res is not None:
-            actual_release = self.album_info(actual_res["release"])
+            actual_release = self._get_actual_release(res, actual_res)
             return _merge_pseudo_and_actual_album(release, actual_release)
         else:
             return release
+
+    def _get_actual_release(
+        self,
+        res: JSONDict,
+        actual_res: JSONDict,
+    ) -> beets.autotag.hooks.AlbumInfo:
+        medium_list = res["release"]["medium-list"]
+        for medium in medium_list:
+            for track in medium.get("track-list", []):
+                if "recording" not in track:
+                    continue
+
+                recording_overrides = {
+                    k: v
+                    for k, v in track.items()
+                    if (k != "id" and k != "recording")
+                }
+                track["recording"].update(recording_overrides)
+
+        actual_res = actual_res["release"]
+        actual_res["medium-list"] = medium_list
+        actual_release = self.album_info(actual_res)
+        return actual_release
 
     def track_for_id(
         self, track_id: str
