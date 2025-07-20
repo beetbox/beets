@@ -63,89 +63,47 @@ following to your configuration:
        source_weight: 0.0
 
 
+.. _autotagger_extensions:
+
+
+Available Plugins
+-----------------
+
+We have organized the plugins into several categories to help you find what
+you need. The categories are as follows:
+
+.. contents::
+   :local:
+   :depth: 2
+   :backlinks: none
+
+
+If you prefer to browse the plugins by their names, you can make use of the
+:doc:`all_plugins <all_plugins>` page, which lists all plugins in alphabetical order.
+
+
 .. toctree::
    :hidden:
 
-   absubmit
-   acousticbrainz
-   advancedrewrite
-   albumtypes
-   aura
-   autobpm
-   badfiles
-   bareasc
-   beatport
-   bpd
-   bpm
-   bpsync
-   bucket
-   chroma
-   convert
-   deezer
-   discogs
-   duplicates
-   edit
-   embedart
-   embyupdate
-   export
-   fetchart
-   filefilter
-   fish
-   freedesktop
-   fromfilename
-   ftintitle
-   fuzzy
-   gmusic
-   hook
-   ihate
-   importadded
-   importfeeds
-   info
-   inline
-   ipfs
-   keyfinder
-   kodiupdate
-   lastgenre
-   lastimport
-   limit
-   listenbrainz
-   loadext
-   lyrics
-   mbcollection
-   mbsubmit
-   mbsync
-   metasync
-   missing
-   mpdstats
-   mpdupdate
-   musicbrainz
-   parentwork
-   permissions
-   play
-   playlist
-   plexupdate
-   random
-   replace
-   replaygain
-   rewrite
-   scrub
-   smartplaylist
-   sonosupdate
-   spotify
-   subsonicplaylist
-   subsonicupdate
-   substitute
-   the
-   thumbnails
-   types
-   unimported
-   web
-   zero
+   all_plugins
 
-.. _autotagger_extensions:
+
 
 Autotagger Extensions
----------------------
+^^^^^^^^^^^^^^^^^^^^^
+
+.. toctree::
+   :hidden:
+   :caption: Autotagger Extensions
+   :maxdepth: 1
+
+   chroma
+   deezer
+   discogs
+   fromfilename
+   musicbrainz
+   spotify
+
 
 :doc:`chroma <chroma>`
    Use acoustic fingerprinting to identify audio files with
@@ -173,7 +131,31 @@ Autotagger Extensions
 .. _Spotify: https://www.spotify.com
 
 Metadata
---------
+^^^^^^^^
+
+.. toctree::
+   :hidden:
+   :caption: Metadata
+   :maxdepth: 1
+   
+   absubmit
+   acousticbrainz
+   advancedrewrite
+   albumtypes
+   autobpm
+   bpsync
+   bpm
+   edit
+   embedart
+   fetchart
+   ftintitle
+   keyfinder
+   lastgenre
+   lyrics
+   metasync
+   replaygain
+   scrub
+   zero
 
 :doc:`absubmit <absubmit>`
    Analyse audio with the `streaming_extractor_music`_ program and submit the metadata to an AcousticBrainz server
@@ -247,7 +229,19 @@ Metadata
 .. _streaming_extractor_music: https://acousticbrainz.org/download
 
 Path Formats
-------------
+^^^^^^^^^^^^
+
+.. toctree::
+   :hidden:
+   :caption: Path Formats
+   :maxdepth: 1
+
+   albumtypes
+   advancedrewrite
+   inline
+   rewrite
+   substitute
+   the
 
 :doc:`albumtypes <albumtypes>`
    Format album type in path formats.
@@ -275,7 +269,21 @@ Path Formats
    end).
 
 Interoperability
-----------------
+^^^^^^^^^^^^^^^^
+
+.. toctree::
+   :hidden:
+   :caption: Interoperability
+   :maxdepth: 1
+
+   aura
+   embyupdate
+   kodiupdate
+   mpdupdate
+   plexupdate
+   sonosupdate
+   subsonicupdate
+   thumbnails
 
 :doc:`aura <aura>`
    A server implementation of the `AURA`_ specification.
@@ -337,7 +345,28 @@ Interoperability
 .. _Subsonic: http://www.subsonic.org/
 
 Miscellaneous
--------------
+^^^^^^^^^^^^^
+
+.. toctree::
+   :hidden:
+   :caption: Miscellaneous
+   :maxdepth: 1
+
+   bpd
+   convert
+   duplicates
+   filefilter
+   fuzzy
+   hook
+   ihate
+   info
+   loadext
+   mbcollection
+   mbsubmit
+   missing
+   random
+   types
+   web
 
 :doc:`bareasc <bareasc>`
    Search albums and tracks with bare ASCII string matching.
@@ -403,10 +432,47 @@ Miscellaneous
 .. _MPD clients: https://mpd.wikia.com/wiki/Clients
 .. _mstream: https://github.com/IrosTheBeggar/mStream
 
+
+The following plugins are not categorized yet. If you have a strong
+opinion about where they should go, please open a `PR or issue  <https://github.com/beetbox/beets>`_.
+
+
+.. toctree::
+    :caption: Uncategorized Plugins
+    :maxdepth: 1
+
+    badfiles.rst
+    bareasc.rst
+    beatport.rst
+    bucket.rst
+    export.rst
+    fish.rst
+    freedesktop.rst
+    gmusic.rst
+    importadded.rst
+    importfeeds.rst
+    ipfs.rst
+    lastimport.rst
+    limit.rst
+    listenbrainz.rst
+    mbsync.rst
+    mpdstats.rst
+    parentwork.rst
+    permissions.rst
+    play.rst
+    playlist.rst
+    replace.rst
+    smartplaylist.rst
+    subsonicplaylist.rst
+    unimported.rst
+
+
+
+
 .. _other-plugins:
 
 Other Plugins
--------------
+^^^^^^^^^^^^^
 
 In addition to the plugins that come with beets, there are several plugins
 that are maintained by the beets community. To use an external plugin, there
@@ -562,6 +628,9 @@ Here are a few of the plugins written by the beets community:
 `beets-youtube`_
    Adds YouTube Music as a tagger data source.
 
+.. 
+    other_links
+
 .. _beets-barcode: https://github.com/8h2a/beets-barcode
 .. _beetcamp: https://github.com/snejus/beetcamp
 .. _beetstream: https://github.com/BinaryBrain/Beetstream
@@ -609,3 +678,7 @@ Here are a few of the plugins written by the beets community:
 .. _beets-webm3u: https://github.com/mgoltzsche/beets-webm3u
 .. _beets-webrouter: https://github.com/mgoltzsche/beets-webrouter
 .. _beets-autogenre: https://github.com/mgoltzsche/beets-autogenre
+
+
+
+
