@@ -37,7 +37,7 @@ jobs:
 
       - name: Get changed lyrics files
         id: lyrics-update
-        uses: tj-actions/changed-files@v45
+        uses: tj-actions/changed-files@v46
         with:
           files: |
             beetsplug/lyrics.py
