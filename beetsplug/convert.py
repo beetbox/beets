@@ -152,6 +152,7 @@ class ConvertPlugin(BeetsPlugin):
                 "album_art_maxwidth": 0,
                 "delete_originals": False,
                 "playlist": None,
+                "refresh": False,
             }
         )
         self.early_import_stages = [self.auto_convert, self.auto_convert_keep]
@@ -173,6 +174,13 @@ class ConvertPlugin(BeetsPlugin):
             type="int",
             help="change the number of threads, \
                               defaults to maximum available processors",
+        )
+        cmd.parser.add_option(
+            "-r",
+            "--refresh",
+            action="store_true",
+            dest="refresh",
+            help="reconvert if original file is newer than converted file",
         )
         cmd.parser.add_option(
             "-k",
@@ -251,11 +259,13 @@ class ConvertPlugin(BeetsPlugin):
                 hardlink,
                 link,
                 playlist,
+                refresh,
             ) = self._get_opts_and_config(empty_opts)
 
             items = task.imported_items()
             self._parallel_convert(
                 dest,
+                refresh,
                 False,
                 path_formats,
                 fmt,
@@ -334,6 +344,7 @@ class ConvertPlugin(BeetsPlugin):
     def convert_item(
         self,
         dest_dir,
+        refresh,
         keep_new,
         path_formats,
         fmt,
@@ -380,12 +391,24 @@ class ConvertPlugin(BeetsPlugin):
                 with _fs_lock:
                     util.mkdirall(dest)
 
-            if os.path.exists(util.syspath(dest)):
-                self._log.info(
-                    "Skipping {0} (target file exists)",
-                    util.displayable_path(item.path),
-                )
-                continue
+            if os.path.exists(dest):
+                # Delete existing destination files when original files have
+                # been modified since the last convert run.
+                if refresh and os.path.getmtime(original) > os.path.getmtime(
+                    dest
+                ):
+                    self._log.info(
+                        "Removing {0} (original file modified)",
+                        util.displayable_path(dest),
+                    )
+                    if not pretend:
+                        util.remove(dest)
+                else:
+                    self._log.info(
+                        "Skipping {0} (target file exists)",
+                        util.displayable_path(item.path),
+                    )
+                    continue
 
             if keep_new:
                 if pretend:
@@ -574,6 +597,7 @@ class ConvertPlugin(BeetsPlugin):
             hardlink,
             link,
             playlist,
+            refresh,
         ) = self._get_opts_and_config(opts)
 
         if opts.album:
@@ -602,6 +626,7 @@ class ConvertPlugin(BeetsPlugin):
 
         self._parallel_convert(
             dest,
+            refresh,
             opts.keep_new,
             path_formats,
             fmt,
@@ -733,6 +758,11 @@ class ConvertPlugin(BeetsPlugin):
             hardlink = self.config["hardlink"].get(bool)
             link = self.config["link"].get(bool)
 
+        if opts.refresh is not None:
+            refresh = opts.refresh
+        else:
+            refresh = self.config["refresh"].get(bool)
+
         return (
             dest,
             threads,
@@ -742,11 +772,13 @@ class ConvertPlugin(BeetsPlugin):
             hardlink,
             link,
             playlist,
+            refresh,
         )
 
     def _parallel_convert(
         self,
         dest,
+        refresh,
         keep_new,
         path_formats,
         fmt,
@@ -761,7 +793,14 @@ class ConvertPlugin(BeetsPlugin):
         """
         convert = [
             self.convert_item(
-                dest, keep_new, path_formats, fmt, pretend, link, hardlink
+                dest,
+                refresh,
+                keep_new,
+                path_formats,
+                fmt,
+                pretend,
+                link,
+                hardlink,
             )
             for _ in range(threads)
         ]
