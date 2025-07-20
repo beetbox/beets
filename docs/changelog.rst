@@ -76,7 +76,11 @@ For plugin developers:
         ``album_for_id``, ``candidates``, ``item_candidates``, ``album_distance``, ``track_distance`` methods,
         please update your plugin to inherit from the new baseclass, as otherwise your plugin will
         stop working with the next major release.
-        
+* Flexible fields, which can be used by plugins to store additional metadata,
+  now also support list values. Previously, beets would throw an error while
+  storing the data in the SQL database due to missing type conversion.
+  :bug:`5698`
+
 Other changes:
 
 * Refactor: Split responsibilities of Plugins into MetaDataPlugins and general Plugins.
