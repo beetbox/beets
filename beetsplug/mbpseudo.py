@@ -101,6 +101,9 @@ class MusicBrainzPseudoReleasePlugin(MetadataSourcePlugin):
             )
             self._intercepted_candidates[info.album_id] = info.copy()
 
+        elif info.get("albumstatus", "") == "Pseudo-Release":
+            self._purge_intercepted_pseudo_releases(info)
+
     def candidates(
         self,
         items: Sequence[Item],
@@ -144,14 +147,29 @@ class MusicBrainzPseudoReleasePlugin(MetadataSourcePlugin):
             isinstance(plugin, mbplugin.MusicBrainzPlugin)
             for plugin in find_plugins()
         ):
-            self._log.debug("No releases found by main MusicBrainz plugin")
+            self._log.debug(
+                "No releases found after main MusicBrainz plugin executed"
+            )
             return []
 
         # musicbrainz plugin isn't enabled
         self._log.debug("Searching for official releases")
-        official_candidates = list(
-            self._mb.candidates(items, artist, album, va_likely)
-        )
+
+        try:
+            existing_album_id = next(
+                item.mb_albumid for item in items if item.mb_albumid
+            )
+            existing_album_info = self._mb.album_for_id(existing_album_id)
+            if not isinstance(existing_album_info, AlbumInfo):
+                official_candidates = list(
+                    self._mb.candidates(items, artist, album, va_likely)
+                )
+            else:
+                official_candidates = [existing_album_info]
+        except StopIteration:
+            official_candidates = list(
+                self._mb.candidates(items, artist, album, va_likely)
+            )
 
         recursion = self._mb_plugin_simulation_matched(
             items, official_candidates
@@ -160,7 +178,11 @@ class MusicBrainzPseudoReleasePlugin(MetadataSourcePlugin):
         if not self.config.get().get("include_official_releases"):
             official_candidates = []
 
+        self._log.debug(
+            "Emitting {0} official match(es)", len(official_candidates)
+        )
         if recursion:
+            self._log.debug("Matches found after search")
             return itertools.chain(
                 self.candidates(items, artist, album, va_likely),
                 iter(official_candidates),
@@ -197,10 +219,11 @@ class MusicBrainzPseudoReleasePlugin(MetadataSourcePlugin):
         items: Sequence[Item],
         official_candidates: list[AlbumInfo],
     ) -> bool:
-        recursion = False
+        matched = False
         for official_candidate in official_candidates:
             if official_candidate.album_id in self._pseudo_release_ids:
                 self._intercept_mb_candidates(official_candidate)
+
             if official_candidate.album_id in self._intercepted_candidates:
                 intercepted = self._intercepted_candidates[
                     official_candidate.album_id
@@ -208,8 +231,26 @@ class MusicBrainzPseudoReleasePlugin(MetadataSourcePlugin):
                 intercepted.mapping, _, _ = assign_items(
                     items, intercepted.tracks
                 )
-                recursion = True
-        return recursion
+                matched = True
+
+            if official_candidate.get("albumstatus", "") == "Pseudo-Release":
+                self._purge_intercepted_pseudo_releases(official_candidate)
+
+        return matched
+
+    def _purge_intercepted_pseudo_releases(self, official_candidate: AlbumInfo):
+        rm_keys = [
+            album_id
+            for album_id, pseudo_album_ids in self._pseudo_release_ids.items()
+            if official_candidate.album_id in pseudo_album_ids
+        ]
+        if rm_keys:
+            self._log.debug(
+                "No need to resolve {0}, removing",
+                rm_keys,
+            )
+            for k in rm_keys:
+                del self._pseudo_release_ids[k]
 
     @override
     def album_distance(
