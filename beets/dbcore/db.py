@@ -50,7 +50,7 @@ if TYPE_CHECKING:
 
     from .query import SQLiteType
 
-D = TypeVar("D", bound="Database", default=Any)
+    D = TypeVar("D", bound="Database", default=Any)
 
 FlexAttrs = dict[str, str]
 
@@ -243,7 +243,7 @@ class LazyConvertDict:
 # Abstract base for model classes.
 
 
-class Model(ABC, Generic[D]):
+class Model(ABC, Generic["D"]):
     """An abstract object representing an object in the database. Model
     objects act like dictionaries (i.e., they allow subscript access like
     ``obj['field']``). The same field set is available via attribute
