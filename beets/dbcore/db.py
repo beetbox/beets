@@ -26,8 +26,9 @@ from abc import ABC
 from collections import defaultdict
 from collections.abc import Generator, Iterable, Iterator, Mapping, Sequence
 from sqlite3 import Connection
-from typing import TYPE_CHECKING, Any, AnyStr, Callable, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, AnyStr, Callable, Generic
 
+from typing_extensions import TypeVar  # default value support
 from unidecode import unidecode
 
 import beets
@@ -50,9 +51,6 @@ if TYPE_CHECKING:
     from .query import SQLiteType
 
     D = TypeVar("D", bound="Database", default=Any)
-else:
-    D = TypeVar("D", bound="Database")
-
 
 FlexAttrs = dict[str, str]
 
@@ -245,7 +243,7 @@ class LazyConvertDict:
 # Abstract base for model classes.
 
 
-class Model(ABC, Generic[D]):
+class Model(ABC, Generic["D"]):
     """An abstract object representing an object in the database. Model
     objects act like dictionaries (i.e., they allow subscript access like
     ``obj['field']``). The same field set is available via attribute
