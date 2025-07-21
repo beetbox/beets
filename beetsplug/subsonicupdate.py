@@ -101,7 +101,7 @@ class SubsonicUpdate(BeetsPlugin):
                 context_path = ""
             url = f"http://{host}:{port}{context_path}"
 
-        return url + f"/rest/{endpoint}"
+        return f"{url}/rest/{endpoint}"
 
     def start_scan(self):
         user = self.config["user"].as_str()

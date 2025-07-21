@@ -97,7 +97,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
                     "with an HTTP scheme"
                 )
             elif self.base_url[-1] != "/":
-                self.base_url = self.base_url + "/"
+                self.base_url = f"{self.base_url}/"
 
         if self.config["auto"]:
             self.register_listener("import_task_files", self.import_task_files)

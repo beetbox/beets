@@ -291,7 +291,7 @@ def load_plugins(names: Sequence[str] = ()) -> None:
                 namespace = __import__(modname, None, None)
             except ImportError as exc:
                 # Again, this is hacky:
-                if exc.args[0].endswith(" " + name):
+                if exc.args[0].endswith(f" {name}"):
                     log.warning("** plugin {0} not found", name)
                 else:
                     raise
