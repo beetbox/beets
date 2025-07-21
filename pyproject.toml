@@ -276,6 +276,7 @@ select = [
     "F", # pyflakes
     # "B", # flake8-bugbear
     "I", # isort
+    "ISC", # flake8-implicit-str-concat
     "N", # pep8-naming
     "PT", # flake8-pytest-style
     # "RUF", # ruff

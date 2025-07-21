@@ -132,7 +132,7 @@ class SpotifyPluginTest(PluginTestCase):
 
         responses.add(
             responses.GET,
-            spotify.SpotifyPlugin.track_url + "6NPVjNh8Jhru9xOmyQigds",
+            f"{spotify.SpotifyPlugin.track_url}6NPVjNh8Jhru9xOmyQigds",
             body=response_body,
             status=200,
             content_type="application/json",
@@ -145,7 +145,7 @@ class SpotifyPluginTest(PluginTestCase):
 
         responses.add(
             responses.GET,
-            spotify.SpotifyPlugin.album_url + "5l3zEmMrOhOzG8d8s83GOL",
+            f"{spotify.SpotifyPlugin.album_url}5l3zEmMrOhOzG8d8s83GOL",
             body=response_body,
             status=200,
             content_type="application/json",

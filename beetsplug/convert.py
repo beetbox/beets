@@ -649,7 +649,7 @@ class ConvertPlugin(BeetsPlugin):
             tmpdir = self.config["tmpdir"].get()
             if tmpdir:
                 tmpdir = os.fsdecode(util.bytestring_path(tmpdir))
-            fd, dest = tempfile.mkstemp(os.fsdecode(b"." + ext), dir=tmpdir)
+            fd, dest = tempfile.mkstemp(f".{os.fsdecode(ext)}", dir=tmpdir)
             os.close(fd)
             dest = util.bytestring_path(dest)
             _temp_files.append(dest)  # Delete the transcode later.

@@ -49,7 +49,7 @@ class PlayPluginTest(CleanupModulesMixin, PluginTestCase):
 
         open_mock.assert_called_once_with(ANY, expected_cmd)
         expected_playlist = expected_playlist or self.item.path.decode("utf-8")
-        exp_playlist = expected_playlist + "\n"
+        exp_playlist = f"{expected_playlist}\n"
         with open(open_mock.call_args[0][0][0], "rb") as playlist:
             assert exp_playlist == playlist.read().decode("utf-8")
 

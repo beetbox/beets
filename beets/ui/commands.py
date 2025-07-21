@@ -359,18 +359,18 @@ class ChangeRepresentation:
 
         # 'Match' line and similarity.
         print_(
-            self.indent_header + f"Match ({dist_string(self.match.distance)}):"
+            f"{self.indent_header}Match ({dist_string(self.match.distance)}):"
         )
 
         if isinstance(self.match.info, autotag.hooks.AlbumInfo):
             # Matching an album - print that
             artist_album_str = (
-                f"{self.match.info.artist}" + f" - {self.match.info.album}"
+                f"{self.match.info.artist} - {self.match.info.album}"
             )
         else:
             # Matching a single track
             artist_album_str = (
-                f"{self.match.info.artist}" + f" - {self.match.info.title}"
+                f"{self.match.info.artist} - {self.match.info.title}"
             )
         print_(
             self.indent_header
@@ -396,6 +396,7 @@ class ChangeRepresentation:
         """Print out the details of the match, including changes in album name
         and artist name.
         """
+        changed_prefix = ui.colorize("changed", "\u2260")
         # Artist.
         artist_l, artist_r = self.cur_artist or "", self.match.info.artist
         if artist_r == VARIOUS_ARTISTS:
@@ -405,7 +406,7 @@ class ChangeRepresentation:
             artist_l, artist_r = ui.colordiff(artist_l, artist_r)
             # Prefix with U+2260: Not Equal To
             left = {
-                "prefix": ui.colorize("changed", "\u2260") + " Artist: ",
+                "prefix": f"{changed_prefix} Artist: ",
                 "contents": artist_l,
                 "suffix": "",
             }
@@ -413,7 +414,7 @@ class ChangeRepresentation:
             self.print_layout(self.indent_detail, left, right)
 
         else:
-            print_(self.indent_detail + "*", "Artist:", artist_r)
+            print_(f"{self.indent_detail}*", "Artist:", artist_r)
 
         if self.cur_album:
             # Album
@@ -425,14 +426,14 @@ class ChangeRepresentation:
                 album_l, album_r = ui.colordiff(album_l, album_r)
                 # Prefix with U+2260: Not Equal To
                 left = {
-                    "prefix": ui.colorize("changed", "\u2260") + " Album: ",
+                    "prefix": f"{changed_prefix} Album: ",
                     "contents": album_l,
                     "suffix": "",
                 }
                 right = {"prefix": "", "contents": album_r, "suffix": ""}
                 self.print_layout(self.indent_detail, left, right)
             else:
-                print_(self.indent_detail + "*", "Album:", album_r)
+                print_(f"{self.indent_detail}*", "Album:", album_r)
         elif self.cur_title:
             # Title - for singletons
             title_l, title_r = self.cur_title or "", self.match.info.title
@@ -440,14 +441,14 @@ class ChangeRepresentation:
                 title_l, title_r = ui.colordiff(title_l, title_r)
                 # Prefix with U+2260: Not Equal To
                 left = {
-                    "prefix": ui.colorize("changed", "\u2260") + " Title: ",
+                    "prefix": f"{changed_prefix} Title: ",
                     "contents": title_l,
                     "suffix": "",
                 }
                 right = {"prefix": "", "contents": title_r, "suffix": ""}
                 self.print_layout(self.indent_detail, left, right)
             else:
-                print_(self.indent_detail + "*", "Title:", title_r)
+                print_(f"{self.indent_detail}*", "Title:", title_r)
 
     def make_medium_info_line(self, track_info):
         """Construct a line with the current medium's info."""
@@ -571,9 +572,9 @@ class ChangeRepresentation:
 
         prefix = ui.colorize("changed", "\u2260 ") if changed else "* "
         lhs = {
-            "prefix": prefix + lhs_track + " ",
+            "prefix": f"{prefix}{lhs_track} ",
             "contents": lhs_title,
-            "suffix": " " + lhs_length,
+            "suffix": f" {lhs_length}",
         }
         rhs = {"prefix": "", "contents": "", "suffix": ""}
         if not changed:
@@ -582,9 +583,9 @@ class ChangeRepresentation:
         else:
             # Construct a dictionary for the "changed to" side
             rhs = {
-                "prefix": rhs_track + " ",
+                "prefix": f"{rhs_track} ",
                 "contents": rhs_title,
-                "suffix": " " + rhs_length,
+                "suffix": f" {rhs_length}",
             }
             return (lhs, rhs)
 
@@ -910,7 +911,7 @@ def choose_candidate(
                 f' {item.title if singleton else cur_album}".'
             )
 
-            print_(ui.indent(2) + "Candidates:")
+            print_("  Candidates:")
             for i, match in enumerate(candidates):
                 # Index, metadata, and distance.
                 index0 = f"{i + 1}."
@@ -926,17 +927,17 @@ def choose_candidate(
                 else:
                     metadata = ui.colorize("text_highlight_minor", metadata)
                 line1 = [index, distance, metadata]
-                print_(ui.indent(2) + " ".join(line1))
+                print_(f"  {' '.join(line1)}")
 
                 # Penalties.
                 penalties = penalty_string(match.distance, 3)
                 if penalties:
-                    print_(ui.indent(13) + penalties)
+                    print_(f"{' ' * 13}{penalties}")
 
                 # Disambiguation
                 disambig = disambig_string(match.info)
                 if disambig:
-                    print_(ui.indent(13) + disambig)
+                    print_(f"{' ' * 13}{disambig}")
 
             # Ask the user for a choice.
             sel = ui.input_options(choice_opts, numrange=(1, len(candidates)))
@@ -1895,7 +1896,7 @@ def show_stats(lib, query, exact):
         if item.album_id:
             albums.add(item.album_id)
 
-    size_str = "" + human_bytes(total_size)
+    size_str = human_bytes(total_size)
     if exact:
         size_str += f" ({total_size} bytes)"
 

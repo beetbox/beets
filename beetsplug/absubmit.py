@@ -97,8 +97,8 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
                     "with an HTTP scheme"
                 )
             elif base_url[-1] != "/":
-                base_url = base_url + "/"
-            self.url = base_url + "{mbid}/low-level"
+                base_url = f"{base_url}/"
+            self.url = f"{base_url}{{mbid}}/low-level"
 
     def commands(self):
         cmd = ui.Subcommand(

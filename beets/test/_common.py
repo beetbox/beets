@@ -153,7 +153,7 @@ class DummyIn:
         self.out = out
 
     def add(self, s):
-        self.buf.append(s + "\n")
+        self.buf.append(f"{s}\n")
 
     def close(self):
         pass

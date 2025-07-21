@@ -472,7 +472,7 @@ class SpotifyPlugin(
         except APIError as e:
             self._log.debug("Spotify API error: {}", e)
             return ()
-        response_data = response.get(query_type + "s", {}).get("items", [])
+        response_data = response.get(f"{query_type}s", {}).get("items", [])
         self._log.debug(
             "Found {} result(s) from {} for '{}'",
             len(response_data),

@@ -433,7 +433,7 @@ def syspath(path: PathLike, prefix: bool = True) -> str:
     if prefix and not str_path.startswith(WINDOWS_MAGIC_PREFIX):
         if str_path.startswith("\\\\"):
             # UNC path. Final path should look like \\?\UNC\...
-            str_path = "UNC" + str_path[1:]
+            str_path = f"UNC{str_path[1:]}"
         str_path = WINDOWS_MAGIC_PREFIX + str_path
 
     return str_path
@@ -506,8 +506,8 @@ def move(path: bytes, dest: bytes, replace: bool = False):
         basename = os.path.basename(bytestring_path(dest))
         dirname = os.path.dirname(bytestring_path(dest))
         tmp = tempfile.NamedTemporaryFile(
-            suffix=syspath(b".beets", prefix=False),
-            prefix=syspath(b"." + basename + b".", prefix=False),
+            suffix=".beets",
+            prefix=f".{os.fsdecode(basename)}.",
             dir=syspath(dirname),
             delete=False,
         )

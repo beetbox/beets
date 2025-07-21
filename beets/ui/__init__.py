@@ -338,7 +338,7 @@ def input_options(
 
             if line_length != 0:
                 # Not the beginning of the line; need a space.
-                part = " " + part
+                part = f" {part}"
                 length += 1
 
             prompt += part
@@ -350,7 +350,7 @@ def input_options(
         fallback_prompt = "Enter one of "
         if numrange:
             fallback_prompt += "{}-{}, ".format(*numrange)
-        fallback_prompt += ", ".join(display_letters) + ":"
+        fallback_prompt += f"{', '.join(display_letters)}:"
 
     resp = input_(prompt)
     while True:
@@ -494,7 +494,7 @@ ANSI_CODES = {
     "bg_cyan": 46,
     "bg_white": 47,
 }
-RESET_COLOR = COLOR_ESCAPE + "39;49;00m"
+RESET_COLOR = f"{COLOR_ESCAPE}39;49;00m"
 
 # These abstract COLOR_NAMES are lazily mapped on to the actual color in COLORS
 # as they are defined in the configuration files, see function: colorize
@@ -534,7 +534,7 @@ def _colorize(color, text):
     # over all "ANSI codes" in `color`.
     escape = ""
     for code in color:
-        escape = escape + COLOR_ESCAPE + f"{ANSI_CODES[code]}m"
+        escape = f"{escape}{COLOR_ESCAPE}{ANSI_CODES[code]}m"
     return escape + text + RESET_COLOR
 
 
@@ -1505,7 +1505,7 @@ class SubcommandsOptionParser(CommonOptionsParser):
 
         # Concatenate the original help message with the subcommand
         # list.
-        return out + "".join(result)
+        return f"{out}{''.join(result)}"
 
     def _subcommand_for_name(self, name):
         """Return the subcommand in self.subcommands matching the
