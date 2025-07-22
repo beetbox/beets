@@ -261,7 +261,7 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
             if no search results are returned.
         """
         query = self._construct_search_query(keywords=keywords, filters=filters)
-        self._log.debug(f"Searching {self.data_source} for '{query}'")
+        self._log.debug("Searching {.data_source} for '{}'", self, query)
         try:
             response = requests.get(
                 f"{self.search_url}{query_type}",

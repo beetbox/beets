@@ -1108,8 +1108,8 @@ class Server(BaseServer):
         self.lib = library
         self.player = gstplayer.GstPlayer(self.play_finished)
         self.cmd_update(None)
-        log.info(f"Server ready and listening on {host}:{port}")
-        log.debug(f"Listening for control signals on {host}:{ctrl_port}")
+        log.info("Server ready and listening on {}:{}", host, port)
+        log.debug("Listening for control signals on {}:{}", host, ctrl_port)
 
     def run(self):
         self.player.run()
