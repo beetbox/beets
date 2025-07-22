@@ -97,7 +97,7 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
                 f"Invalid `release_date` returned by {self.data_source} API: "
                 f"{release_date!r}"
             )
-        tracks_obj = self.fetch_data(self.album_url + deezer_id + "/tracks")
+        tracks_obj = self.fetch_data(f"{self.album_url}{deezer_id}/tracks")
         if tracks_obj is None:
             return None
         try:
@@ -170,7 +170,7 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         # the track's disc).
         if not (
             album_tracks_obj := self.fetch_data(
-                self.album_url + str(track_data["album"]["id"]) + "/tracks"
+                f"{self.album_url}{track_data['album']['id']}/tracks"
             )
         ):
             return None
@@ -261,10 +261,10 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
             if no search results are returned.
         """
         query = self._construct_search_query(keywords=keywords, filters=filters)
-        self._log.debug(f"Searching {self.data_source} for '{query}'")
+        self._log.debug("Searching {.data_source} for '{}'", self, query)
         try:
             response = requests.get(
-                self.search_url + query_type,
+                f"{self.search_url}{query_type}",
                 params={"q": query},
                 timeout=10,
             )

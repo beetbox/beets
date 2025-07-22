@@ -104,7 +104,7 @@ class ThumbnailsPlugin(BeetsPlugin):
                 f"Thumbnails: ArtResizer backend {ArtResizer.shared.method}"
                 f" unexpectedly cannot write image metadata."
             )
-        self._log.debug(f"using {ArtResizer.shared.method} to write metadata")
+        self._log.debug("using {.shared.method} to write metadata", ArtResizer)
 
         uri_getter = GioURI()
         if not uri_getter.available:
@@ -202,7 +202,7 @@ class ThumbnailsPlugin(BeetsPlugin):
         artfile = os.path.split(album.artpath)[1]
         with open(syspath(outfilename), "w") as f:
             f.write("[Desktop Entry]\n")
-            f.write("Icon=./{}".format(artfile.decode("utf-8")))
+            f.write(f"Icon=./{artfile.decode('utf-8')}")
             f.close()
         self._log.debug("Wrote file {0}", displayable_path(outfilename))
 
@@ -230,8 +230,7 @@ def copy_c_string(c_string):
     # This is a pretty dumb way to get a string copy, but it seems to
     # work. A more surefire way would be to allocate a ctypes buffer and copy
     # the data with `memcpy` or somesuch.
-    s = ctypes.cast(c_string, ctypes.c_char_p).value
-    return b"" + s
+    return ctypes.cast(c_string, ctypes.c_char_p).value
 
 
 class GioURI(URIGetter):
@@ -266,9 +265,7 @@ class GioURI(URIGetter):
         g_file_ptr = self.libgio.g_file_new_for_path(path)
         if not g_file_ptr:
             raise RuntimeError(
-                "No gfile pointer received for {}".format(
-                    displayable_path(path)
-                )
+                f"No gfile pointer received for {displayable_path(path)}"
             )
 
         try:

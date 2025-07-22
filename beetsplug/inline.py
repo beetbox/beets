@@ -28,8 +28,7 @@ class InlineError(Exception):
 
     def __init__(self, code, exc):
         super().__init__(
-            ("error in inline path field code:\n%s\n%s: %s")
-            % (code, type(exc).__name__, str(exc))
+            f"error in inline path field code:\n{code}\n{type(exc).__name__}: {exc}"
         )
 
 
@@ -37,7 +36,8 @@ def _compile_func(body):
     """Given Python code for a function body, return a compiled
     callable that invokes that code.
     """
-    body = "def {}():\n    {}".format(FUNC_NAME, body.replace("\n", "\n    "))
+    body = body.replace("\n", "\n    ")
+    body = f"def {FUNC_NAME}():\n    {body}"
     code = compile(body, "inline", "exec")
     env = {}
     eval(code, env)

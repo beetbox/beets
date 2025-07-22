@@ -101,7 +101,7 @@ class SubsonicUpdate(BeetsPlugin):
                 context_path = ""
             url = f"http://{host}:{port}{context_path}"
 
-        return url + f"/rest/{endpoint}"
+        return f"{url}/rest/{endpoint}"
 
     def start_scan(self):
         user = self.config["user"].as_str()
@@ -145,14 +145,15 @@ class SubsonicUpdate(BeetsPlugin):
                 and json["subsonic-response"]["status"] == "ok"
             ):
                 count = json["subsonic-response"]["scanStatus"]["count"]
-                self._log.info(f"Updating Subsonic; scanning {count} tracks")
+                self._log.info("Updating Subsonic; scanning {} tracks", count)
             elif (
                 response.status_code == 200
                 and json["subsonic-response"]["status"] == "failed"
             ):
-                error_message = json["subsonic-response"]["error"]["message"]
-                self._log.error(f"Error: {error_message}")
+                self._log.error(
+                    "Error: {[subsonic-response][error][message]}", json
+                )
             else:
                 self._log.error("Error: {0}", json)
         except Exception as error:
-            self._log.error(f"Error: {error}")
+            self._log.error("Error: {}", error)

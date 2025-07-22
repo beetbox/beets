@@ -64,9 +64,7 @@ def get_format(fmt=None):
         command = format_info["command"]
         extension = format_info.get("extension", fmt)
     except KeyError:
-        raise ui.UserError(
-            'convert: format {} needs the "command" field'.format(fmt)
-        )
+        raise ui.UserError(f'convert: format {fmt} needs the "command" field')
     except ConfigTypeError:
         command = config["convert"]["formats"][fmt].get(str)
         extension = fmt
@@ -77,8 +75,8 @@ def get_format(fmt=None):
         command = config["convert"]["command"].as_str()
     elif "opts" in keys:
         # Undocumented option for backwards compatibility with < 1.3.1.
-        command = "ffmpeg -i $source -y {} $dest".format(
-            config["convert"]["opts"].as_str()
+        command = (
+            f"ffmpeg -i $source -y {config['convert']['opts'].as_str()} $dest"
         )
     if "extension" in keys:
         extension = config["convert"]["extension"].as_str()
@@ -125,18 +123,25 @@ class ConvertPlugin(BeetsPlugin):
                 "id3v23": "inherit",
                 "formats": {
                     "aac": {
-                        "command": "ffmpeg -i $source -y -vn -acodec aac "
-                        "-aq 1 $dest",
+                        "command": (
+                            "ffmpeg -i $source -y -vn -acodec aac -aq 1 $dest"
+                        ),
                         "extension": "m4a",
                     },
                     "alac": {
-                        "command": "ffmpeg -i $source -y -vn -acodec alac $dest",
+                        "command": (
+                            "ffmpeg -i $source -y -vn -acodec alac $dest"
+                        ),
                         "extension": "m4a",
                     },
                     "flac": "ffmpeg -i $source -y -vn -acodec flac $dest",
                     "mp3": "ffmpeg -i $source -y -vn -aq 2 $dest",
-                    "opus": "ffmpeg -i $source -y -vn -acodec libopus -ab 96k $dest",
-                    "ogg": "ffmpeg -i $source -y -vn -acodec libvorbis -aq 3 $dest",
+                    "opus": (
+                        "ffmpeg -i $source -y -vn -acodec libopus -ab 96k $dest"
+                    ),
+                    "ogg": (
+                        "ffmpeg -i $source -y -vn -acodec libvorbis -aq 3 $dest"
+                    ),
                     "wma": "ffmpeg -i $source -y -vn -acodec wmav2 -vn $dest",
                 },
                 "max_bitrate": None,
@@ -171,16 +176,17 @@ class ConvertPlugin(BeetsPlugin):
             "--threads",
             action="store",
             type="int",
-            help="change the number of threads, \
-                              defaults to maximum available processors",
+            help=(
+                "change the number of threads, defaults to maximum available"
+                " processors"
+            ),
         )
         cmd.parser.add_option(
             "-k",
             "--keep-new",
             action="store_true",
             dest="keep_new",
-            help="keep only the converted \
-                              and move the old files",
+            help="keep only the converted and move the old files",
         )
         cmd.parser.add_option(
             "-d", "--dest", action="store", help="set the destination directory"
@@ -204,16 +210,16 @@ class ConvertPlugin(BeetsPlugin):
             "--link",
             action="store_true",
             dest="link",
-            help="symlink files that do not \
-                              need transcoding.",
+            help="symlink files that do not need transcoding.",
         )
         cmd.parser.add_option(
             "-H",
             "--hardlink",
             action="store_true",
             dest="hardlink",
-            help="hardlink files that do not \
-                              need transcoding. Overrides --link.",
+            help=(
+                "hardlink files that do not need transcoding. Overrides --link."
+            ),
         )
         cmd.parser.add_option(
             "-m",
@@ -323,7 +329,7 @@ class ConvertPlugin(BeetsPlugin):
             raise
         except OSError as exc:
             raise ui.UserError(
-                "convert: couldn't invoke '{}': {}".format(" ".join(args), exc)
+                f"convert: couldn't invoke {' '.join(args)!r}: {exc}"
             )
 
         if not quiet and not pretend:
@@ -644,7 +650,7 @@ class ConvertPlugin(BeetsPlugin):
             tmpdir = self.config["tmpdir"].get()
             if tmpdir:
                 tmpdir = os.fsdecode(util.bytestring_path(tmpdir))
-            fd, dest = tempfile.mkstemp(os.fsdecode(b"." + ext), dir=tmpdir)
+            fd, dest = tempfile.mkstemp(f".{os.fsdecode(ext)}", dir=tmpdir)
             os.close(fd)
             dest = util.bytestring_path(dest)
             _temp_files.append(dest)  # Delete the transcode later.

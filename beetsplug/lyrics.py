@@ -154,7 +154,7 @@ def search_pairs(item):
         # examples include (live), (remix), and (acoustic).
         r"(.+?)\s+[(].*[)]$",
         # Remove any featuring artists from the title
-        r"(.*?) {}".format(plugins.feat_tokens(for_artist=False)),
+        rf"(.*?) {plugins.feat_tokens(for_artist=False)}",
         # Remove part of title after colon ':' for songs with subtitles
         r"(.+?)\s*:.*",
     ]
@@ -582,7 +582,7 @@ class Tekstowo(SearchBackend):
     """Fetch lyrics from Tekstowo.pl."""
 
     BASE_URL = "https://www.tekstowo.pl"
-    SEARCH_URL = BASE_URL + "/szukaj,{}.html"
+    SEARCH_URL = f"{BASE_URL}/szukaj,{{}}.html"
 
     def build_url(self, artist, title):
         artistitle = f"{artist.title()} {title.title()}"
