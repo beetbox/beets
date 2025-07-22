@@ -136,7 +136,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                     response = requests.get(opts.url, timeout=5)
                     response.raise_for_status()
                 except requests.exceptions.RequestException as e:
-                    self._log.error(f"{e}")
+                    self._log.error("{}", e)
                     return
                 extension = guess_extension(response.headers["Content-Type"])
                 if extension is None:
@@ -148,7 +148,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                     with open(tempimg, "wb") as f:
                         f.write(response.content)
                 except Exception as e:
-                    self._log.error(f"Unable to save image: {e}")
+                    self._log.error("Unable to save image: {}", e)
                     return
                 items = lib.items(args)
                 # Confirm with user.

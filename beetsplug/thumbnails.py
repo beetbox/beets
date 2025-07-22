@@ -104,7 +104,7 @@ class ThumbnailsPlugin(BeetsPlugin):
                 f"Thumbnails: ArtResizer backend {ArtResizer.shared.method}"
                 f" unexpectedly cannot write image metadata."
             )
-        self._log.debug(f"using {ArtResizer.shared.method} to write metadata")
+        self._log.debug("using {.shared.method} to write metadata", ArtResizer)
 
         uri_getter = GioURI()
         if not uri_getter.available:
