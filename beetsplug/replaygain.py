@@ -380,10 +380,7 @@ class FfmpegBackend(Backend):
         album_gain = target_level_lufs - album_gain
 
         self._log.debug(
-            "{}: gain {} LU, peak {}",
-            task.album,
-            album_gain,
-            album_peak,
+            "{}: gain {} LU, peak {}", task.album, album_gain, album_peak
         )
 
         task.album_gain = Gain(album_gain, album_peak)
@@ -426,7 +423,7 @@ class FfmpegBackend(Backend):
         target_level_lufs = db_to_lufs(target_level)
 
         # call ffmpeg
-        self._log.debug(f"analyzing {item}")
+        self._log.debug("analyzing {}", item)
         cmd = self._construct_cmd(item, peak_method)
         self._log.debug("executing {}", " ".join(map(displayable_path, cmd)))
         output = call(cmd, self._log).stderr.splitlines()
@@ -496,10 +493,10 @@ class FfmpegBackend(Backend):
                 if self._parse_float(b"M: " + line[1]) >= gating_threshold:
                     n_blocks += 1
             self._log.debug(
-                f"{item}: {n_blocks} blocks over {gating_threshold} LUFS"
+                "{}: {} blocks over {} LUFS", item, n_blocks, gating_threshold
             )
 
-        self._log.debug(f"{item}: gain {gain} LU, peak {peak}")
+        self._log.debug("{}: gain {} LU, peak {}", item, gain, peak)
 
         return Gain(gain, peak), n_blocks
 

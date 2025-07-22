@@ -76,7 +76,7 @@ class Itunes(MetaSource):
         library_path = config["itunes"]["library"].as_filename()
 
         try:
-            self._log.debug(f"loading iTunes library from {library_path}")
+            self._log.debug("loading iTunes library from {}", library_path)
             with create_temporary_copy(library_path) as library_copy:
                 with open(library_copy, "rb") as library_copy_f:
                     raw_library = plistlib.load(library_copy_f)
@@ -104,7 +104,7 @@ class Itunes(MetaSource):
         result = self.collection.get(util.bytestring_path(item.path).lower())
 
         if not result:
-            self._log.warning(f"no iTunes match found for {item}")
+            self._log.warning("no iTunes match found for {}", item)
             return
 
         item.itunes_rating = result.get("Rating")

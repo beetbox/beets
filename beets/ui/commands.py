@@ -1365,7 +1365,7 @@ def import_func(lib, opts, args: list[str]):
         for path in paths_from_logfiles:
             if not os.path.exists(syspath(normpath(path))):
                 log.warning(
-                    f"No such file or directory: {displayable_path(path)}"
+                    "No such file or directory: {}", displayable_path(path)
                 )
                 continue
 

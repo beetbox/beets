@@ -228,16 +228,16 @@ class SpotifyPlugin(
             self._log.error("ReadTimeout.")
             raise APIError("Request timed out.")
         except requests.exceptions.ConnectionError as e:
-            self._log.error(f"Network error: {e}")
+            self._log.error("Network error: {}", e)
             raise APIError("Network error.")
         except requests.exceptions.RequestException as e:
             if e.response is None:
-                self._log.error(f"Request failed: {e}")
+                self._log.error("Request failed: {}", e)
                 raise APIError("Request failed.")
             if e.response.status_code == 401:
                 self._log.debug(
-                    f"{self.data_source} access token has expired. "
-                    "Reauthenticating."
+                    "{.data_source} access token has expired. Reauthenticating.",
+                    self,
                 )
                 self._authenticate()
                 return self._handle_response(
@@ -256,7 +256,7 @@ class SpotifyPlugin(
                     "Retry-After", DEFAULT_WAITING_TIME
                 )
                 self._log.debug(
-                    f"Too many API requests. Retrying after {seconds} seconds."
+                    "Too many API requests. Retrying after {} seconds.", seconds
                 )
                 time.sleep(int(seconds) + 1)
                 return self._handle_response(
@@ -277,7 +277,7 @@ class SpotifyPlugin(
                     f"URL:\n{url}\nparams:\n{params}"
                 )
             else:
-                self._log.error(f"Request failed. Error: {e}")
+                self._log.error("Request failed. Error: {}", e)
                 raise APIError("Request failed.")
 
     def album_for_id(self, album_id: str) -> AlbumInfo | None:
@@ -439,7 +439,7 @@ class SpotifyPlugin(
             filters=filters, query_string=query_string
         )
 
-        self._log.debug(f"Searching {self.data_source} for '{query}'")
+        self._log.debug("Searching {.data_source} for '{}'", self, query)
         try:
             response = self._handle_response(
                 "get",
@@ -648,7 +648,7 @@ class SpotifyPlugin(
             spotify_ids = [track_data["id"] for track_data in results]
             if self.config["mode"].get() == "open":
                 self._log.info(
-                    f"Attempting to open {self.data_source} with playlist"
+                    "Attempting to open {.data_source} with playlist", self
                 )
                 spotify_url = (
                     f"spotify:trackset:Playlist:{','.join(spotify_ids)}"
@@ -659,7 +659,7 @@ class SpotifyPlugin(
                     print(f"{self.open_track_url}{spotify_id}")
         else:
             self._log.warning(
-                f"No {self.data_source} tracks found from beets query"
+                "No {.data_source} tracks found from beets query", self
             )
 
     def _fetch_info(self, items, write, force):

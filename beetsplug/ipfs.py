@@ -232,7 +232,7 @@ class IPFSPlugin(BeetsPlugin):
             try:
                 util.command_output(cmd)
             except (OSError, subprocess.CalledProcessError):
-                self._log.error(f"Could not import {_hash}")
+                self._log.error("Could not import {}", _hash)
                 return False
 
         # add all albums from remotes into a combined library

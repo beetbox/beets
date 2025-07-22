@@ -696,7 +696,7 @@ class ArtResizer:
         for backend_cls in BACKEND_CLASSES:
             try:
                 self.local_method = backend_cls()
-                log.debug(f"artresizer: method is {self.local_method.NAME}")
+                log.debug("artresizer: method is {.local_method.NAME}", self)
                 break
             except LocalBackendNotAvailableError:
                 continue

@@ -123,7 +123,7 @@ class PlaylistPlugin(beets.plugins.BeetsPlugin):
 
     def cli_exit(self, lib):
         for playlist in self.find_playlists():
-            self._log.info(f"Updating playlist: {playlist}")
+            self._log.info("Updating playlist: {}", playlist)
             base_dir = beets.util.bytestring_path(
                 self.relative_to
                 if self.relative_to
