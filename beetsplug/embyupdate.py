@@ -184,7 +184,7 @@ class EmbyUpdate(BeetsPlugin):
             # Get user information from the Emby API.
             user = get_user(host, port, username)
             if not user:
-                self._log.warning(f"User {username} could not be found.")
+                self._log.warning("User {} could not be found.", username)
                 return
             userid = user[0]["Id"]
 

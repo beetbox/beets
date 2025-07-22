@@ -277,7 +277,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         genre = self._genre_cache[key]
         if self.config["extended_debug"]:
-            self._log.debug(f"last.fm (unfiltered) {entity} tags: {genre}")
+            self._log.debug("last.fm (unfiltered) {} tags: {}", entity, genre)
         return genre
 
     def fetch_album_genre(self, obj):
@@ -327,8 +327,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         self, old: list[str], new: list[str]
     ) -> list[str]:
         """Combine old and new genres and process via _resolve_genres."""
-        self._log.debug(f"raw last.fm tags: {new}")
-        self._log.debug(f"existing genres taken into account: {old}")
+        self._log.debug("raw last.fm tags: {}", new)
+        self._log.debug("existing genres taken into account: {}", old)
         combined = old + new
         return self._resolve_genres(combined)
 
@@ -583,9 +583,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             item = task.item
             item.genre, src = self._get_genre(item)
             self._log.debug(
-                'genre for track "{0.title}" ({1}): {0.genre}',
-                item,
-                src,
+                'genre for track "{0.title}" ({1}): {0.genre}', item, src
             )
             item.store()
 
