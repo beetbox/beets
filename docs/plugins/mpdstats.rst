@@ -58,6 +58,9 @@ configuration file. The available options are:
   Default: ``yes``.
 - **rating_mix**: Tune the way rating is calculated (see below).
   Default: 0.75.
+- **played_ratio_threshold**: If a song was played for less than this percentage
+  of its duration it will be considered a skip.
+  Default: 0.85
 
 A Word on Ratings
 -----------------
