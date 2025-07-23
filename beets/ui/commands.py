@@ -28,7 +28,6 @@ import beets
 from beets import autotag, config, importer, library, logging, plugins, ui, util
 from beets.autotag import Recommendation, hooks
 from beets.ui import (
-    decargs,
     input_,
     print_,
     print_column_layout,
@@ -43,6 +42,7 @@ from beets.util import (
     normpath,
     syspath,
 )
+from beets.util.units import human_bytes, human_seconds, human_seconds_short
 
 from . import _store_dict
 
@@ -541,8 +541,8 @@ class ChangeRepresentation:
         cur_length0 = item.length if item.length else 0
         new_length0 = track_info.length if track_info.length else 0
         # format into string
-        cur_length = f"({ui.human_seconds_short(cur_length0)})"
-        new_length = f"({ui.human_seconds_short(new_length0)})"
+        cur_length = f"({human_seconds_short(cur_length0)})"
+        new_length = f"({human_seconds_short(new_length0)})"
         # colorize
         lhs_length = ui.colorize(highlight_color, cur_length)
         rhs_length = ui.colorize(highlight_color, new_length)
@@ -706,14 +706,14 @@ class AlbumChange(ChangeRepresentation):
         for track_info in self.match.extra_tracks:
             line = f" ! {track_info.title} (#{self.format_index(track_info)})"
             if track_info.length:
-                line += f" ({ui.human_seconds_short(track_info.length)})"
+                line += f" ({human_seconds_short(track_info.length)})"
             print_(ui.colorize("text_warning", line))
         if self.match.extra_items:
             print_(f"Unmatched tracks ({len(self.match.extra_items)}):")
         for item in self.match.extra_items:
             line = " ! {} (#{})".format(item.title, self.format_index(item))
             if item.length:
-                line += " ({})".format(ui.human_seconds_short(item.length))
+                line += " ({})".format(human_seconds_short(item.length))
             print_(ui.colorize("text_warning", line))
 
 
@@ -795,8 +795,8 @@ def summarize_items(items, singleton):
                 round(int(items[0].samplerate) / 1000, 1), items[0].bitdepth
             )
             summary_parts.append(sample_bits)
-        summary_parts.append(ui.human_seconds_short(total_duration))
-        summary_parts.append(ui.human_bytes(total_filesize))
+        summary_parts.append(human_seconds_short(total_duration))
+        summary_parts.append(human_bytes(total_filesize))
 
     return ", ".join(summary_parts)
 
@@ -1302,7 +1302,7 @@ class TerminalImportSession(importer.ImportSession):
 # The import command.
 
 
-def import_files(lib, paths, query):
+def import_files(lib, paths: list[bytes], query):
     """Import the files in the given list of paths or matching the
     query.
     """
@@ -1333,7 +1333,7 @@ def import_files(lib, paths, query):
     plugins.send("import", lib=lib, paths=paths)
 
 
-def import_func(lib, opts, args):
+def import_func(lib, opts, args: list[str]):
     config["import"].set_args(opts)
 
     # Special case: --copy flag suppresses import_move (which would
@@ -1342,8 +1342,8 @@ def import_func(lib, opts, args):
         config["import"]["move"] = False
 
     if opts.library:
-        query = decargs(args)
-        paths = []
+        query = args
+        byte_paths = []
     else:
         query = None
         paths = args
@@ -1355,15 +1355,11 @@ def import_func(lib, opts, args):
         if not paths and not paths_from_logfiles:
             raise ui.UserError("no path specified")
 
-        # On Python 2, we used to get filenames as raw bytes, which is
-        # what we need. On Python 3, we need to undo the "helpful"
-        # conversion to Unicode strings to get the real bytestring
-        # filename.
-        paths = [os.fsencode(p) for p in paths]
+        byte_paths = [os.fsencode(p) for p in paths]
         paths_from_logfiles = [os.fsencode(p) for p in paths_from_logfiles]
 
         # Check the user-specified directories.
-        for path in paths:
+        for path in byte_paths:
             if not os.path.exists(syspath(normpath(path))):
                 raise ui.UserError(
                     "no such file or directory: {}".format(
@@ -1384,14 +1380,14 @@ def import_func(lib, opts, args):
                 )
                 continue
 
-            paths.append(path)
+            byte_paths.append(path)
 
         # If all paths were read from a logfile, and none of them exist, throw
         # an error
         if not paths:
             raise ui.UserError("none of the paths are importable")
 
-    import_files(lib, paths, query)
+    import_files(lib, byte_paths, query)
 
 
 import_cmd = ui.Subcommand(
@@ -1595,7 +1591,7 @@ def list_items(lib, query, album, fmt=""):
 
 
 def list_func(lib, opts, args):
-    list_items(lib, decargs(args), opts.album)
+    list_items(lib, args, opts.album)
 
 
 list_cmd = ui.Subcommand("list", help="query the library", aliases=("ls",))
@@ -1738,7 +1734,7 @@ def update_func(lib, opts, args):
             return
     update_items(
         lib,
-        decargs(args),
+        args,
         opts.album,
         ui.should_move(opts.move),
         opts.pretend,
@@ -1860,7 +1856,7 @@ def remove_items(lib, query, album, delete, force):
 
 
 def remove_func(lib, opts, args):
-    remove_items(lib, decargs(args), opts.album, opts.delete, opts.force)
+    remove_items(lib, args, opts.album, opts.delete, opts.force)
 
 
 remove_cmd = ui.Subcommand(
@@ -1906,7 +1902,7 @@ def show_stats(lib, query, exact):
         if item.album_id:
             albums.add(item.album_id)
 
-    size_str = "" + ui.human_bytes(total_size)
+    size_str = "" + human_bytes(total_size)
     if exact:
         size_str += f" ({total_size} bytes)"
 
@@ -1918,7 +1914,7 @@ Artists: {}
 Albums: {}
 Album artists: {}""".format(
             total_items,
-            ui.human_seconds(total_time),
+            human_seconds(total_time),
             f" ({total_time:.2f} seconds)" if exact else "",
             "Total size" if exact else "Approximate total size",
             size_str,
@@ -1930,7 +1926,7 @@ Album artists: {}""".format(
 
 
 def stats_func(lib, opts, args):
-    show_stats(lib, decargs(args), opts.exact)
+    show_stats(lib, args, opts.exact)
 
 
 stats_cmd = ui.Subcommand(
@@ -2058,7 +2054,7 @@ def modify_parse_args(args):
 
 
 def modify_func(lib, opts, args):
-    query, mods, dels = modify_parse_args(decargs(args))
+    query, mods, dels = modify_parse_args(args)
     if not mods and not dels:
         raise ui.UserError("no modifications specified")
     modify_items(
@@ -2126,12 +2122,20 @@ default_commands.append(modify_cmd)
 
 
 def move_items(
-    lib, dest, query, copy, album, pretend, confirm=False, export=False
+    lib,
+    dest_path: util.PathLike,
+    query,
+    copy,
+    album,
+    pretend,
+    confirm=False,
+    export=False,
 ):
     """Moves or copies items to a new base directory, given by dest. If
     dest is None, then the library's base directory is used, making the
     command "consolidate" files.
     """
+    dest = os.fsencode(dest_path) if dest_path else dest_path
     items, albums = _do_query(lib, query, album, False)
     objs = albums if album else items
     num_objs = len(objs)
@@ -2216,7 +2220,7 @@ def move_func(lib, opts, args):
     move_items(
         lib,
         dest,
-        decargs(args),
+        args,
         opts.copy,
         opts.album,
         opts.pretend,
@@ -2297,7 +2301,7 @@ def write_items(lib, query, pretend, force):
 
 
 def write_func(lib, opts, args):
-    write_items(lib, decargs(args), opts.pretend, opts.force)
+    write_items(lib, args, opts.pretend, opts.force)
 
 
 write_cmd = ui.Subcommand("write", help="write tag information to files")

@@ -16,19 +16,20 @@
 
 from __future__ import annotations
 
+import re
+import time
 import typing
 from abc import ABC
 from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
 
-from beets.util import str2bool
+import beets
+from beets import util
+from beets.util.units import human_seconds_short, raw_seconds_short
 
-from .query import (
-    BooleanQuery,
-    FieldQueryType,
-    NumericQuery,
-    SQLiteType,
-    SubstringQuery,
-)
+from . import query
+
+SQLiteType = query.SQLiteType
+BLOB_TYPE = query.BLOB_TYPE
 
 
 class ModelType(typing.Protocol):
@@ -61,7 +62,7 @@ class Type(ABC, Generic[T, N]):
     """The SQLite column type for the value.
     """
 
-    query: FieldQueryType = SubstringQuery
+    query: query.FieldQueryType = query.SubstringQuery
     """The `Query` subclass to be used when querying the field.
     """
 
@@ -160,7 +161,7 @@ class BaseInteger(Type[int, N]):
     """A basic integer type."""
 
     sql = "INTEGER"
-    query = NumericQuery
+    query = query.NumericQuery
     model_type = int
 
     def normalize(self, value: Any) -> int | N:
@@ -241,7 +242,7 @@ class BaseFloat(Type[float, N]):
     """
 
     sql = "REAL"
-    query: FieldQueryType = NumericQuery
+    query: query.FieldQueryType = query.NumericQuery
     model_type = float
 
     def __init__(self, digits: int = 1):
@@ -271,7 +272,7 @@ class BaseString(Type[T, N]):
     """A Unicode string type."""
 
     sql = "TEXT"
-    query = SubstringQuery
+    query = query.SubstringQuery
 
     def normalize(self, value: Any) -> T | N:
         if value is None:
@@ -291,7 +292,7 @@ class DelimitedString(BaseString[list[str], list[str]]):
     containing delimiter-separated values.
     """
 
-    model_type = list
+    model_type = list[str]
 
     def __init__(self, delimiter: str):
         self.delimiter = delimiter
@@ -312,14 +313,145 @@ class Boolean(Type):
     """A boolean type."""
 
     sql = "INTEGER"
-    query = BooleanQuery
+    query = query.BooleanQuery
     model_type = bool
 
     def format(self, value: bool) -> str:
         return str(bool(value))
 
     def parse(self, string: str) -> bool:
-        return str2bool(string)
+        return util.str2bool(string)
+
+
+class DateType(Float):
+    # TODO representation should be `datetime` object
+    # TODO distinguish between date and time types
+    query = query.DateQuery
+
+    def format(self, value):
+        return time.strftime(
+            beets.config["time_format"].as_str(), time.localtime(value or 0)
+        )
+
+    def parse(self, string):
+        try:
+            # Try a formatted date string.
+            return time.mktime(
+                time.strptime(string, beets.config["time_format"].as_str())
+            )
+        except ValueError:
+            # Fall back to a plain timestamp number.
+            try:
+                return float(string)
+            except ValueError:
+                return self.null
+
+
+class BasePathType(Type[bytes, N]):
+    """A dbcore type for filesystem paths.
+
+    These are represented as `bytes` objects, in keeping with
+    the Unix filesystem abstraction.
+    """
+
+    sql = "BLOB"
+    query = query.PathQuery
+    model_type = bytes
+
+    def parse(self, string: str) -> bytes:
+        return util.normpath(string)
+
+    def normalize(self, value: Any) -> bytes | N:
+        if isinstance(value, str):
+            # Paths stored internally as encoded bytes.
+            return util.bytestring_path(value)
+
+        elif isinstance(value, BLOB_TYPE):
+            # We unwrap buffers to bytes.
+            return bytes(value)
+
+        else:
+            return value
+
+    def from_sql(self, sql_value):
+        return self.normalize(sql_value)
+
+    def to_sql(self, value: bytes) -> BLOB_TYPE:
+        if isinstance(value, bytes):
+            value = BLOB_TYPE(value)
+        return value
+
+
+class NullPathType(BasePathType[None]):
+    @property
+    def null(self) -> None:
+        return None
+
+    def format(self, value: bytes | None) -> str:
+        return util.displayable_path(value or b"")
+
+
+class PathType(BasePathType[bytes]):
+    @property
+    def null(self) -> bytes:
+        return b""
+
+    def format(self, value: bytes) -> str:
+        return util.displayable_path(value or b"")
+
+
+class MusicalKey(String):
+    """String representing the musical key of a song.
+
+    The standard format is C, Cm, C#, C#m, etc.
+    """
+
+    ENHARMONIC = {
+        r"db": "c#",
+        r"eb": "d#",
+        r"gb": "f#",
+        r"ab": "g#",
+        r"bb": "a#",
+    }
+
+    null = None
+
+    def parse(self, key):
+        key = key.lower()
+        for flat, sharp in self.ENHARMONIC.items():
+            key = re.sub(flat, sharp, key)
+        key = re.sub(r"[\W\s]+minor", "m", key)
+        key = re.sub(r"[\W\s]+major", "", key)
+        return key.capitalize()
+
+    def normalize(self, key):
+        if key is None:
+            return None
+        else:
+            return self.parse(key)
+
+
+class DurationType(Float):
+    """Human-friendly (M:SS) representation of a time interval."""
+
+    query = query.DurationQuery
+
+    def format(self, value):
+        if not beets.config["format_raw_length"].get(bool):
+            return human_seconds_short(value or 0.0)
+        else:
+            return value
+
+    def parse(self, string):
+        try:
+            # Try to format back hh:ss to seconds.
+            return raw_seconds_short(string)
+        except ValueError:
+            # Fall back to a plain float.
+            try:
+                return float(string)
+            except ValueError:
+                return self.null
 
 
 # Shared instances of common types.
@@ -331,6 +463,7 @@ FLOAT = Float()
 NULL_FLOAT = NullFloat()
 STRING = String()
 BOOLEAN = Boolean()
+DATE = DateType()
 SEMICOLON_SPACE_DSV = DelimitedString(delimiter="; ")
 
 # Will set the proper null char in mediafile

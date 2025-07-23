@@ -21,11 +21,11 @@ from collections.abc import Iterator
 import musicbrainzngs
 from musicbrainzngs.musicbrainz import MusicBrainzError
 
-from beets import config, plugins
+from beets import config, metadata_plugins
 from beets.dbcore import types
 from beets.library import Album, Item, Library
 from beets.plugins import BeetsPlugin
-from beets.ui import Subcommand, decargs, print_
+from beets.ui import Subcommand, print_
 
 MB_ARTIST_QUERY = r"mb_albumartistid::^\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$"
 
@@ -135,7 +135,7 @@ class MissingPlugin(BeetsPlugin):
             albms = self.config["album"].get()
 
             helper = self._missing_albums if albms else self._missing_tracks
-            helper(lib, decargs(args))
+            helper(lib, args)
 
         self._command.func = _miss
         return [self._command]
@@ -222,7 +222,7 @@ class MissingPlugin(BeetsPlugin):
         item_mbids = {x.mb_trackid for x in album.items()}
         # fetch missing items
         # TODO: Implement caching that without breaking other stuff
-        if album_info := plugins.album_for_id(album.mb_albumid):
+        if album_info := metadata_plugins.album_for_id(album.mb_albumid):
             for track_info in album_info.tracks:
                 if track_info.track_id not in item_mbids:
                     self._log.debug(

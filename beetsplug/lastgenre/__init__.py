@@ -401,7 +401,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 label = "album"
 
         if not new_genres and "artist" in self.sources:
-            new_genres = None
+            new_genres = []
             if isinstance(obj, library.Item):
                 new_genres = self.fetch_artist_genre(obj)
                 label = "artist"
@@ -521,7 +521,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
             if opts.album:
                 # Fetch genres for whole albums
-                for album in lib.albums(ui.decargs(args)):
+                for album in lib.albums(args):
                     album.genre, src = self._get_genre(album)
                     self._log.info(
                         'genre for album "{0.album}" ({1}): {0.genre}',
@@ -550,7 +550,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             else:
                 # Just query singletons, i.e. items that are not part of
                 # an album
-                for item in lib.items(ui.decargs(args)):
+                for item in lib.items(args):
                     item.genre, src = self._get_genre(item)
                     item.store()
                     self._log.info(

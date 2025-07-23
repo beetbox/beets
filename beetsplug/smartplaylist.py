@@ -127,7 +127,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
     def update_cmd(self, lib, opts, args):
         self.build_queries()
         if args:
-            args = set(ui.decargs(args))
+            args = set(args)
             for a in list(args):
                 if not a.endswith(".m3u"):
                     args.add(f"{a}.m3u")

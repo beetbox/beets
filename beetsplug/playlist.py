@@ -12,15 +12,18 @@
 # included in all copies or substantial portions of the Software.
 
 
-import fnmatch
 import os
 import tempfile
 from collections.abc import Sequence
+from pathlib import Path
 
 import beets
-from beets.dbcore.query import InQuery
-from beets.library import BLOB_TYPE
+from beets.dbcore.query import BLOB_TYPE, InQuery
 from beets.util import path_as_posix
+
+
+def is_m3u_file(path: str) -> bool:
+    return Path(path).suffix.lower() in {".m3u", ".m3u8"}
 
 
 class PlaylistQuery(InQuery[bytes]):
@@ -46,7 +49,7 @@ class PlaylistQuery(InQuery[bytes]):
 
         paths = []
         for playlist_path in playlist_paths:
-            if not fnmatch.fnmatch(playlist_path, "*.[mM]3[uU]"):
+            if not is_m3u_file(playlist_path):
                 # This is not am M3U playlist, skip this candidate
                 continue
 
@@ -149,7 +152,7 @@ class PlaylistPlugin(beets.plugins.BeetsPlugin):
             return
 
         for filename in dir_contents:
-            if fnmatch.fnmatch(filename, "*.[mM]3[uU]"):
+            if is_m3u_file(filename):
                 yield os.path.join(self.playlist_dir, filename)
 
     def update_playlist(self, filename, base_dir):

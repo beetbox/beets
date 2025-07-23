@@ -31,9 +31,9 @@ group in the output, discarding the rest of the string.
 
 This would handle all the below cases in a single rule:
 
-    Bob Dylan and The Band -> Bob Dylan
-    Neil Young & Crazy Horse -> Neil Young
-    James Yorkston, Nina Persson & The Second Hand Orchestra -> James Yorkston
+    | Bob Dylan and The Band -> Bob Dylan
+    | Neil Young & Crazy Horse -> Neil Young
+    | James Yorkston, Nina Persson & The Second Hand Orchestra -> James Yorkston
 
 
 To apply the substitution, you have to call the function ``%substitute{}`` in the paths section. For example:

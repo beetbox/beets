@@ -137,7 +137,7 @@ only files which would be processed",
             )
         else:
             # Get items from arguments
-            items = lib.items(ui.decargs(args))
+            items = lib.items(args)
             self.opts = opts
             util.par_map(self.analyze_submit, items)
 

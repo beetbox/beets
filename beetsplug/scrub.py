@@ -58,7 +58,7 @@ class ScrubPlugin(BeetsPlugin):
     def commands(self):
         def scrub_func(lib, opts, args):
             # Walk through matching files and remove tags.
-            for item in lib.items(ui.decargs(args)):
+            for item in lib.items(args):
                 self._log.info(
                     "scrubbing: {0}", util.displayable_path(item.path)
                 )

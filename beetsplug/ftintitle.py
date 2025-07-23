@@ -118,7 +118,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             keep_in_artist_field = self.config["keep_in_artist"].get(bool)
             write = ui.should_write()
 
-            for item in lib.items(ui.decargs(args)):
+            for item in lib.items(args):
                 if self.ft_in_title(item, drop_feat, keep_in_artist_field):
                     item.store()
                     if write:

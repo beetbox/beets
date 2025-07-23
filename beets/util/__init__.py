@@ -28,6 +28,7 @@ import sys
 import tempfile
 import traceback
 from collections import Counter
+from collections.abc import Sequence
 from contextlib import suppress
 from enum import Enum
 from functools import cache
@@ -40,8 +41,8 @@ from typing import (
     Any,
     AnyStr,
     Callable,
+    ClassVar,
     Generic,
-    Iterable,
     NamedTuple,
     TypeVar,
     Union,
@@ -53,23 +54,18 @@ import beets
 from beets.util import hidden
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator, Sequence
+    from collections.abc import Iterable, Iterator
     from logging import Logger
 
     from beets.library import Item
-
-if sys.version_info >= (3, 10):
-    from typing import TypeAlias
-else:
-    from typing_extensions import TypeAlias
 
 
 MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = "\\\\?\\"
 T = TypeVar("T")
-BytesOrStr = Union[str, bytes]
-PathLike = Union[BytesOrStr, Path]
-Replacements: TypeAlias = "Sequence[tuple[Pattern[str], str]]"
+PathLike = Union[str, bytes, Path]
+StrPath = Union[str, Path]
+Replacements = Sequence[tuple[Pattern[str], str]]
 
 # Here for now to allow for a easy replace later on
 # once we can move to a PathLike (mainly used in importer)
@@ -860,7 +856,9 @@ class CommandOutput(NamedTuple):
     stderr: bytes
 
 
-def command_output(cmd: list[BytesOrStr], shell: bool = False) -> CommandOutput:
+def command_output(
+    cmd: list[str] | list[bytes], shell: bool = False
+) -> CommandOutput:
     """Runs the command and returns its output after it has exited.
 
     Returns a CommandOutput. The attributes ``stdout`` and ``stderr`` contain
@@ -878,8 +876,6 @@ def command_output(cmd: list[BytesOrStr], shell: bool = False) -> CommandOutput:
     This replaces `subprocess.check_output` which can have problems if lots of
     output is sent to stderr.
     """
-    converted_cmd = [os.fsdecode(a) for a in cmd]
-
     devnull = subprocess.DEVNULL
 
     proc = subprocess.Popen(
@@ -894,7 +890,7 @@ def command_output(cmd: list[BytesOrStr], shell: bool = False) -> CommandOutput:
     if proc.returncode:
         raise subprocess.CalledProcessError(
             returncode=proc.returncode,
-            cmd=" ".join(converted_cmd),
+            cmd=" ".join(map(os.fsdecode, cmd)),
             output=stdout + stderr,
         )
     return CommandOutput(stdout, stderr)
@@ -1019,19 +1015,6 @@ def case_sensitive(path: bytes) -> bool:
         return not os.path.samefile(lower_sys, upper_sys)
 
 
-def raw_seconds_short(string: str) -> float:
-    """Formats a human-readable M:SS string as a float (number of seconds).
-
-    Raises ValueError if the conversion cannot take place due to `string` not
-    being in the right format.
-    """
-    match = re.match(r"^(\d+):([0-5]\d)$", string)
-    if not match:
-        raise ValueError("String not in M:SS format")
-    minutes, seconds = map(int, match.groups())
-    return float(minutes * 60 + seconds)
-
-
 def asciify_path(path: str, sep_replace: str) -> str:
     """Decodes all unicode characters in a path into ASCII equivalents.
 
@@ -1070,20 +1053,46 @@ def par_map(transform: Callable[[T], Any], items: Sequence[T]) -> None:
 
 
 class cached_classproperty:
-    """A decorator implementing a read-only property that is *lazy* in
-    the sense that the getter is only invoked once. Subsequent accesses
-    through *any* instance use the cached result.
+    """Descriptor implementing cached class properties.
+
+    Provides class-level dynamic property behavior where the getter function is
+    called once per class and the result is cached for subsequent access. Unlike
+    instance properties, this operates on the class rather than instances.
     """
 
-    def __init__(self, getter):
+    cache: ClassVar[dict[tuple[Any, str], Any]] = {}
+
+    name: str
+
+    # Ideally, we would like to use `Callable[[type[T]], Any]` here,
+    # however, `mypy` is unable to see this as a **class** property, and thinks
+    # that this callable receives an **instance** of the object, failing the
+    # type check, for example:
+    # >>> class Album:
+    # >>>     @cached_classproperty
+    # >>>     def foo(cls):
+    # >>>         reveal_type(cls)  # mypy: revealed type is "Album"
+    # >>>         return cls.bar
+    #
+    #   Argument 1 to "cached_classproperty" has incompatible type
+    #   "Callable[[Album], ...]"; expected "Callable[[type[Album]], ...]"
+    #
+    # Therefore, we just use `Any` here, which is not ideal, but works.
+    def __init__(self, getter: Callable[[Any], Any]) -> None:
+        """Initialize the descriptor with the property getter function."""
         self.getter = getter
-        self.cache = {}
 
-    def __get__(self, instance, owner):
-        if owner not in self.cache:
-            self.cache[owner] = self.getter(owner)
+    def __set_name__(self, owner: Any, name: str) -> None:
+        """Capture the attribute name this descriptor is assigned to."""
+        self.name = name
 
-        return self.cache[owner]
+    def __get__(self, instance: Any, owner: type[Any]) -> Any:
+        """Compute and cache if needed, and return the property value."""
+        key = owner, self.name
+        if key not in self.cache:
+            self.cache[key] = self.getter(owner)
+
+        return self.cache[key]
 
 
 class LazySharedInstance(Generic[T]):

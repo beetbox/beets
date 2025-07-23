@@ -180,8 +180,7 @@ class EditPlugin(plugins.BeetsPlugin):
     def _edit_command(self, lib, opts, args):
         """The CLI command function for the `beet edit` command."""
         # Get the objects to edit.
-        query = ui.decargs(args)
-        items, albums = _do_query(lib, query, opts.album, False)
+        items, albums = _do_query(lib, args, opts.album, False)
         objs = albums if opts.album else items
         if not objs:
             ui.print_("Nothing to edit.")
