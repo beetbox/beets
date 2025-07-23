@@ -15,10 +15,10 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
 import librosa
+import numpy as np
 
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, should_write
@@ -76,7 +76,10 @@ class AutoBPMPlugin(BeetsPlugin):
                 self._log.error("Failed to measure BPM for {}: {}", path, exc)
                 continue
 
-            bpm = round(tempo[0] if isinstance(tempo, Iterable) else tempo)
+            bpm = round(
+                float(tempo[0] if isinstance(tempo, np.ndarray) else tempo)
+            )
+
             item["bpm"] = bpm
             self._log.info("Computed BPM for {}: {}", path, bpm)
 

@@ -19,7 +19,7 @@ import shlex
 
 from beets.library import Album, Item
 from beets.plugins import BeetsPlugin
-from beets.ui import Subcommand, UserError, decargs, print_
+from beets.ui import Subcommand, UserError, print_
 from beets.util import (
     MoveOperation,
     bytestring_path,
@@ -53,6 +53,7 @@ class DuplicatesPlugin(BeetsPlugin):
                 "tiebreak": {},
                 "strict": False,
                 "tag": "",
+                "remove": False,
             }
         )
 
@@ -131,6 +132,13 @@ class DuplicatesPlugin(BeetsPlugin):
             action="store",
             help="tag matched items with 'k=v' attribute",
         )
+        self._command.parser.add_option(
+            "-r",
+            "--remove",
+            dest="remove",
+            action="store_true",
+            help="remove items from library",
+        )
         self._command.parser.add_all_common_options()
 
     def commands(self):
@@ -141,6 +149,7 @@ class DuplicatesPlugin(BeetsPlugin):
             copy = bytestring_path(self.config["copy"].as_str())
             count = self.config["count"].get(bool)
             delete = self.config["delete"].get(bool)
+            remove = self.config["remove"].get(bool)
             fmt = self.config["format"].get(str)
             full = self.config["full"].get(bool)
             keys = self.config["keys"].as_str_seq()
@@ -154,11 +163,11 @@ class DuplicatesPlugin(BeetsPlugin):
             if album:
                 if not keys:
                     keys = ["mb_albumid"]
-                items = lib.albums(decargs(args))
+                items = lib.albums(args)
             else:
                 if not keys:
                     keys = ["mb_trackid", "mb_albumid"]
-                items = lib.items(decargs(args))
+                items = lib.items(args)
 
             # If there's nothing to do, return early. The code below assumes
             # `items` to be non-empty.
@@ -196,6 +205,7 @@ class DuplicatesPlugin(BeetsPlugin):
                             copy=copy,
                             move=move,
                             delete=delete,
+                            remove=remove,
                             tag=tag,
                             fmt=fmt.format(obj_count),
                         )
@@ -204,7 +214,14 @@ class DuplicatesPlugin(BeetsPlugin):
         return [self._command]
 
     def _process_item(
-        self, item, copy=False, move=False, delete=False, tag=False, fmt=""
+        self,
+        item,
+        copy=False,
+        move=False,
+        delete=False,
+        tag=False,
+        fmt="",
+        remove=False,
     ):
         """Process Item `item`."""
         print_(format(item, fmt))
@@ -216,6 +233,8 @@ class DuplicatesPlugin(BeetsPlugin):
             item.store()
         if delete:
             item.remove(delete=True)
+        elif remove:
+            item.remove(delete=False)
         if tag:
             try:
                 k, v = tag.split("=")

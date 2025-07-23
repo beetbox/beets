@@ -72,12 +72,10 @@ class PlaylistTestCase(PluginTestCase):
         self.lib.add(i3)
         self.lib.add_album([i3])
 
-        self.playlist_dir = os.path.join(
-            os.fsdecode(self.temp_dir), "playlists"
-        )
-        os.makedirs(self.playlist_dir)
+        self.playlist_dir = self.temp_dir_path / "playlists"
+        self.playlist_dir.mkdir(parents=True, exist_ok=True)
         self.config["directory"] = self.music_dir
-        self.config["playlist"]["playlist_dir"] = self.playlist_dir
+        self.config["playlist"]["playlist_dir"] = str(self.playlist_dir)
 
         self.setup_test()
         self.load_plugins()
@@ -222,7 +220,7 @@ class PlaylistTestRelativeToPls(PlaylistQueryTest, PlaylistTestCase):
             )
 
         self.config["playlist"]["relative_to"] = "playlist"
-        self.config["playlist"]["playlist_dir"] = self.playlist_dir
+        self.config["playlist"]["playlist_dir"] = str(self.playlist_dir)
 
 
 class PlaylistUpdateTest:

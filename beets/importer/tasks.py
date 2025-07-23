@@ -22,15 +22,18 @@ import time
 from collections import defaultdict
 from enum import Enum
 from tempfile import mkdtemp
-from typing import TYPE_CHECKING, Callable, Iterable, Sequence
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Sequence
 
 import mediafile
 
-from beets import autotag, config, dbcore, library, plugins, util
+from beets import autotag, config, library, plugins, util
+from beets.dbcore.query import PathQuery
 
 from .state import ImportState
 
 if TYPE_CHECKING:
+    from beets.autotag.match import Recommendation
+
     from .session import ImportSession
 
 # Global logger.
@@ -158,6 +161,7 @@ class ImportTask(BaseImportTask):
     cur_album: str | None = None
     cur_artist: str | None = None
     candidates: Sequence[autotag.AlbumMatch | autotag.TrackMatch] = []
+    rec: Recommendation | None = None
 
     def __init__(
         self,
@@ -166,11 +170,9 @@ class ImportTask(BaseImportTask):
         items: Iterable[library.Item] | None,
     ):
         super().__init__(toppath, paths, items)
-        self.rec = None
         self.should_remove_duplicates = False
         self.should_merge_duplicates = False
         self.is_album = True
-        self.search_ids = []  # user-supplied candidate IDs.
 
     def set_choice(
         self, choice: Action | autotag.AlbumMatch | autotag.TrackMatch
@@ -355,20 +357,17 @@ class ImportTask(BaseImportTask):
             tasks = [t for inner in tasks for t in inner]
         return tasks
 
-    def lookup_candidates(self):
-        """Retrieve and store candidates for this album. User-specified
-        candidate IDs are stored in self.search_ids: if present, the
-        initial lookup is restricted to only those IDs.
-        """
-        artist, album, prop = autotag.tag_album(
-            self.items, search_ids=self.search_ids
-        )
-        self.cur_artist = artist
-        self.cur_album = album
-        self.candidates = prop.candidates
-        self.rec = prop.recommendation
+    def lookup_candidates(self, search_ids: list[str]) -> None:
+        """Retrieve and store candidates for this album.
 
-    def find_duplicates(self, lib: library.Library):
+        If User-specified ``search_ids`` list is not empty, the lookup is
+        restricted to only those IDs.
+        """
+        self.cur_artist, self.cur_album, (self.candidates, self.rec) = (
+            autotag.tag_album(self.items, search_ids=search_ids)
+        )
+
+    def find_duplicates(self, lib: library.Library) -> list[library.Album]:
         """Return a list of albums from `lib` with the same artist and
         album name as the task.
         """
@@ -520,9 +519,7 @@ class ImportTask(BaseImportTask):
         )
         replaced_album_ids = set()
         for item in self.imported_items():
-            dup_items = list(
-                lib.items(query=dbcore.query.BytesQuery("path", item.path))
-            )
+            dup_items = list(lib.items(query=PathQuery("path", item.path)))
             self.replaced_items[item] = dup_items
             for dup_item in dup_items:
                 if (
@@ -696,12 +693,12 @@ class SingletonImportTask(ImportTask):
         for item in self.imported_items():
             plugins.send("item_imported", lib=lib, item=item)
 
-    def lookup_candidates(self):
-        prop = autotag.tag_item(self.item, search_ids=self.search_ids)
-        self.candidates = prop.candidates
-        self.rec = prop.recommendation
+    def lookup_candidates(self, search_ids: list[str]) -> None:
+        self.candidates, self.rec = autotag.tag_item(
+            self.item, search_ids=search_ids
+        )
 
-    def find_duplicates(self, lib):
+    def find_duplicates(self, lib: library.Library) -> list[library.Item]:  # type: ignore[override] # Need splitting Singleton and Album tasks into separate classes
         """Return a list of items from `lib` that have the same artist
         and title as the task.
         """
@@ -803,6 +800,11 @@ class SentinelImportTask(ImportTask):
         pass
 
 
+ArchiveHandler = tuple[
+    Callable[[util.StrPath], bool], Callable[[util.StrPath], Any]
+]
+
+
 class ArchiveImportTask(SentinelImportTask):
     """An import task that represents the processing of an archive.
 
@@ -828,13 +830,13 @@ class ArchiveImportTask(SentinelImportTask):
         if not os.path.isfile(path):
             return False
 
-        for path_test, _ in cls.handlers():
+        for path_test, _ in cls.handlers:
             if path_test(os.fsdecode(path)):
                 return True
         return False
 
-    @classmethod
-    def handlers(cls):
+    @util.cached_classproperty
+    def handlers(cls) -> list[ArchiveHandler]:
         """Returns a list of archive handlers.
 
         Each handler is a `(path_test, ArchiveClass)` tuple. `path_test`
@@ -842,28 +844,27 @@ class ArchiveImportTask(SentinelImportTask):
         handled by `ArchiveClass`. `ArchiveClass` is a class that
         implements the same interface as `tarfile.TarFile`.
         """
-        if not hasattr(cls, "_handlers"):
-            cls._handlers: list[tuple[Callable, ...]] = []
-            from zipfile import ZipFile, is_zipfile
+        _handlers: list[ArchiveHandler] = []
+        from zipfile import ZipFile, is_zipfile
 
-            cls._handlers.append((is_zipfile, ZipFile))
-            import tarfile
+        _handlers.append((is_zipfile, ZipFile))
+        import tarfile
 
-            cls._handlers.append((tarfile.is_tarfile, tarfile.open))
-            try:
-                from rarfile import RarFile, is_rarfile
-            except ImportError:
-                pass
-            else:
-                cls._handlers.append((is_rarfile, RarFile))
-            try:
-                from py7zr import SevenZipFile, is_7zfile
-            except ImportError:
-                pass
-            else:
-                cls._handlers.append((is_7zfile, SevenZipFile))
+        _handlers.append((tarfile.is_tarfile, tarfile.open))
+        try:
+            from rarfile import RarFile, is_rarfile
+        except ImportError:
+            pass
+        else:
+            _handlers.append((is_rarfile, RarFile))
+        try:
+            from py7zr import SevenZipFile, is_7zfile
+        except ImportError:
+            pass
+        else:
+            _handlers.append((is_7zfile, SevenZipFile))
 
-        return cls._handlers
+        return _handlers
 
     def cleanup(self, copy=False, delete=False, move=False):
         """Removes the temporary directory the archive was extracted to."""
@@ -880,7 +881,7 @@ class ArchiveImportTask(SentinelImportTask):
         """
         assert self.toppath is not None, "toppath must be set"
 
-        for path_test, handler_class in self.handlers():
+        for path_test, handler_class in self.handlers:
             if path_test(os.fsdecode(self.toppath)):
                 break
         else:
@@ -926,7 +927,7 @@ class ImportTaskFactory:
         self.imported = 0  # "Real" tasks created.
         self.is_archive = ArchiveImportTask.is_archive(util.syspath(toppath))
 
-    def tasks(self):
+    def tasks(self) -> Iterable[ImportTask]:
         """Yield all import tasks for music found in the user-specified
         path `self.toppath`. Any necessary sentinel tasks are also
         produced.
@@ -1115,7 +1116,10 @@ def albums_in_dir(path: util.PathBytes):
     a list of Items that is probably an album. Specifically, any folder
     containing any media files is an album.
     """
-    collapse_pat = collapse_paths = collapse_items = None
+    collapse_paths: list[util.PathBytes] = []
+    collapse_items: list[util.PathBytes] = []
+    collapse_pat = None
+
     ignore: list[str] = config["ignore"].as_str_seq()
     ignore_hidden: bool = config["ignore_hidden"].get(bool)
 
@@ -1140,7 +1144,7 @@ def albums_in_dir(path: util.PathBytes):
                 # proceed to process the current one.
                 if collapse_items:
                     yield collapse_paths, collapse_items
-                collapse_pat = collapse_paths = collapse_items = None
+                collapse_pat, collapse_paths, collapse_items = None, [], []
 
         # Check whether this directory looks like the *first* directory
         # in a multi-disc sequence. There are two indicators: the file
