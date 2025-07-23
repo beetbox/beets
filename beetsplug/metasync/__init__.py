@@ -97,7 +97,6 @@ class MetaSyncPlugin(BeetsPlugin):
     def func(self, lib, opts, args):
         """Command handler for the metasync function."""
         pretend = opts.pretend
-        query = ui.decargs(args)
 
         sources = []
         for source in opts.sources:
@@ -106,7 +105,7 @@ class MetaSyncPlugin(BeetsPlugin):
         sources = sources or self.config["source"].as_str_seq()
 
         meta_source_instances = {}
-        items = lib.items(query)
+        items = lib.items(args)
 
         # Avoid needlessly instantiating meta sources (can be expensive)
         if not items:

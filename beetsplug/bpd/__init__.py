@@ -30,13 +30,24 @@ from typing import TYPE_CHECKING
 
 import beets
 import beets.ui
-from beets import dbcore, vfs
+from beets import dbcore, logging, vfs
 from beets.library import Item
 from beets.plugins import BeetsPlugin
 from beets.util import as_string, bluelet
 
 if TYPE_CHECKING:
     from beets.dbcore.query import Query
+
+log = logging.getLogger(__name__)
+
+
+try:
+    from . import gstplayer
+except ImportError as e:
+    raise ImportError(
+        "Gstreamer Python bindings not found."
+        ' Install "gstreamer1.0" and "python-gi" or similar package to use BPD.'
+    ) from e
 
 PROTOCOL_VERSION = "0.16.0"
 BUFSIZE = 1024
@@ -92,11 +103,6 @@ SUBSYSTEMS = [
     "message",
     "partition",
 ]
-
-
-# Gstreamer import error.
-class NoGstreamerError(Exception):
-    pass
 
 
 # Error-handling, exceptions, parameter parsing.
@@ -1099,14 +1105,6 @@ class Server(BaseServer):
     """
 
     def __init__(self, library, host, port, password, ctrl_port, log):
-        try:
-            from beetsplug.bpd import gstplayer
-        except ImportError as e:
-            # This is a little hacky, but it's the best I know for now.
-            if e.args[0].endswith(" gst"):
-                raise NoGstreamerError()
-            else:
-                raise
         log.info("Starting server...")
         super().__init__(host, port, password, ctrl_port, log)
         self.lib = library
@@ -1616,16 +1614,9 @@ class BPDPlugin(BeetsPlugin):
 
     def start_bpd(self, lib, host, port, password, volume, ctrl_port):
         """Starts a BPD server."""
-        try:
-            server = Server(lib, host, port, password, ctrl_port, self._log)
-            server.cmd_setvol(None, volume)
-            server.run()
-        except NoGstreamerError:
-            self._log.error("Gstreamer Python bindings not found.")
-            self._log.error(
-                'Install "gstreamer1.0" and "python-gi"'
-                "or similar package to use BPD."
-            )
+        server = Server(lib, host, port, password, ctrl_port, self._log)
+        server.cmd_setvol(None, volume)
+        server.run()
 
     def commands(self):
         cmd = beets.ui.Subcommand(

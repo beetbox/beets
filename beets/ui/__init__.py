@@ -104,30 +104,15 @@ def _stream_encoding(stream, default="utf-8"):
     return stream.encoding or default
 
 
-def decargs(arglist):
-    """Given a list of command-line argument bytestrings, attempts to
-    decode them to Unicode strings when running under Python 2.
-    """
-    return arglist
-
-
-def print_(*strings, **kwargs):
+def print_(*strings: str, end: str = "\n") -> None:
     """Like print, but rather than raising an error when a character
     is not in the terminal's encoding's character set, just silently
     replaces it.
 
-    The arguments must be Unicode strings: `unicode` on Python 2; `str` on
-    Python 3.
-
     The `end` keyword argument behaves similarly to the built-in `print`
     (it defaults to a newline).
     """
-    if not strings:
-        strings = [""]
-    assert isinstance(strings[0], str)
-
-    txt = " ".join(strings)
-    txt += kwargs.get("end", "\n")
+    txt = " ".join(strings or ("",)) + end
 
     # Encode the string and write it to stdout.
     # On Python 3, sys.stdout expects text strings and uses the
@@ -433,56 +418,6 @@ def input_select_objects(prompt, objs, rep, prompt_all=None):
 
     else:  # No.
         return []
-
-
-# Human output formatting.
-
-
-def human_bytes(size):
-    """Formats size, a number of bytes, in a human-readable way."""
-    powers = ["", "K", "M", "G", "T", "P", "E", "Z", "Y", "H"]
-    unit = "B"
-    for power in powers:
-        if size < 1024:
-            return f"{size:3.1f} {power}{unit}"
-        size /= 1024.0
-        unit = "iB"
-    return "big"
-
-
-def human_seconds(interval):
-    """Formats interval, a number of seconds, as a human-readable time
-    interval using English words.
-    """
-    units = [
-        (1, "second"),
-        (60, "minute"),
-        (60, "hour"),
-        (24, "day"),
-        (7, "week"),
-        (52, "year"),
-        (10, "decade"),
-    ]
-    for i in range(len(units) - 1):
-        increment, suffix = units[i]
-        next_increment, _ = units[i + 1]
-        interval /= float(increment)
-        if interval < next_increment:
-            break
-    else:
-        # Last unit.
-        increment, suffix = units[-1]
-        interval /= float(increment)
-
-    return f"{interval:3.1f} {suffix}s"
-
-
-def human_seconds_short(interval):
-    """Formats a number of seconds as a short human-readable M:SS
-    string.
-    """
-    interval = int(interval)
-    return "%i:%02i" % (interval // 60, interval % 60)
 
 
 # Colorization.
@@ -1358,14 +1293,9 @@ class CommonOptionsParser(optparse.OptionParser):
             setattr(parser.values, option.dest, True)
 
         # Use the explicitly specified format, or the string from the option.
-        if fmt:
-            value = fmt
-        elif value:
-            (value,) = decargs([value])
-        else:
-            value = ""
-
+        value = fmt or value or ""
         parser.values.format = value
+
         if target:
             config[target._format_config_key].set(value)
         else:
@@ -1678,17 +1608,6 @@ def _setup(options, lib=None):
     config = _configure(options)
 
     plugins = _load_plugins(options, config)
-
-    # Add types and queries defined by plugins.
-    plugin_types_album = plugins.types(library.Album)
-    library.Album._types.update(plugin_types_album)
-    item_types = plugin_types_album.copy()
-    item_types.update(library.Item._types)
-    item_types.update(plugins.types(library.Item))
-    library.Item._types = item_types
-
-    library.Item._queries.update(plugins.named_queries(library.Item))
-    library.Album._queries.update(plugins.named_queries(library.Album))
 
     plugins.send("pluginload")
 

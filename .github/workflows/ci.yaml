@@ -21,7 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Python tools
-        uses: BrandonLWhite/pipx-install-action@v1.0.1
+        uses: BrandonLWhite/pipx-install-action@v1.0.3
       - name: Setup Python with poetry caching
         # poetry cache requires poetry to already be installed, weirdly
         uses: actions/setup-python@v5
@@ -33,11 +33,11 @@ jobs:
         if: matrix.platform == 'ubuntu-latest'
         run: |
           sudo apt update
-          sudo apt install ffmpeg gobject-introspection libcairo2-dev libgirepository-2.0-dev pandoc imagemagick
+          sudo apt install --yes --no-install-recommends ffmpeg gobject-introspection gstreamer1.0-plugins-base python3-gst-1.0 libcairo2-dev libgirepository-2.0-dev pandoc imagemagick
 
       - name: Get changed lyrics files
         id: lyrics-update
-        uses: tj-actions/changed-files@v45
+        uses: tj-actions/changed-files@v46
         with:
           files: |
             beetsplug/lyrics.py
@@ -52,7 +52,7 @@ jobs:
       - if: ${{ env.IS_MAIN_PYTHON != 'true' }}
         name: Test without coverage
         run: |
-          poetry install --extras=autobpm --extras=lyrics
+          poetry install --extras=autobpm --extras=lyrics --extras=embedart
           poe test
 
       - if: ${{ env.IS_MAIN_PYTHON == 'true' }}

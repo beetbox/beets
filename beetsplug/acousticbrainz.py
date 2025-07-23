@@ -116,7 +116,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
         )
 
         def func(lib, opts, args):
-            items = lib.items(ui.decargs(args))
+            items = lib.items(args)
             self._fetch_info(
                 items,
                 ui.should_write(),

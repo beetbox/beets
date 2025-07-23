@@ -62,7 +62,7 @@ class FatalGstreamerPluginReplayGainError(FatalReplayGainError):
     loading the required plugins."""
 
 
-def call(args: list[Any], log: Logger, **kwargs: Any):
+def call(args: list[str], log: Logger, **kwargs: Any):
     """Execute the command and return its output or raise a
     ReplayGainError on failure.
     """
@@ -73,11 +73,6 @@ def call(args: list[Any], log: Logger, **kwargs: Any):
         raise ReplayGainError(
             "{} exited with status {}".format(args[0], e.returncode)
         )
-    except UnicodeEncodeError:
-        # Due to a bug in Python 2's subprocess on Windows, Unicode
-        # filenames can fail to encode on that platform. See:
-        # https://github.com/google-code-export/beets/issues/499
-        raise ReplayGainError("argument encoding failed")
 
 
 def db_to_lufs(db: float) -> float:
@@ -403,20 +398,18 @@ class FfmpegBackend(Backend):
 
     def _construct_cmd(
         self, item: Item, peak_method: PeakMethod | None
-    ) -> list[str | bytes]:
+    ) -> list[str]:
         """Construct the shell command to analyse items."""
         return [
             self._ffmpeg_path,
             "-nostats",
             "-hide_banner",
             "-i",
-            item.path,
+            str(item.filepath),
             "-map",
             "a:0",
             "-filter",
-            "ebur128=peak={}".format(
-                "none" if peak_method is None else peak_method.name
-            ),
+            f"ebur128=peak={'none' if peak_method is None else peak_method.name}",
             "-f",
             "null",
             "-",
@@ -660,7 +653,7 @@ class CommandBackend(Backend):
         # tag-writing; this turns the mp3gain/aacgain tool into a gain
         # calculator rather than a tag manipulator because we take care
         # of changing tags ourselves.
-        cmd: list[bytes | str] = [self.command, "-o", "-s", "s"]
+        cmd: list[str] = [self.command, "-o", "-s", "s"]
         if self.noclip:
             # Adjust to avoid clipping.
             cmd = cmd + ["-k"]
@@ -1039,7 +1032,7 @@ class AudioToolsBackend(Backend):
                 os.fsdecode(syspath(item.path))
             )
         except OSError:
-            raise ReplayGainError(f"File {item.path} was not found")
+            raise ReplayGainError(f"File {item.filepath} was not found")
         except self._mod_audiotools.UnsupportedFile:
             raise ReplayGainError(f"Unsupported file type {item.format}")
 
@@ -1168,7 +1161,9 @@ class ExceptionWatcher(Thread):
     Once an exception occurs, raise it and execute a callback.
     """
 
-    def __init__(self, queue: queue.Queue, callback: Callable[[], None]):
+    def __init__(
+        self, queue: queue.Queue[Exception], callback: Callable[[], None]
+    ):
         self._queue = queue
         self._callback = callback
         self._stopevent = Event()
@@ -1204,7 +1199,9 @@ BACKENDS: dict[str, type[Backend]] = {b.NAME: b for b in BACKEND_CLASSES}
 class ReplayGainPlugin(BeetsPlugin):
     """Provides ReplayGain analysis."""
 
-    def __init__(self):
+    pool: ThreadPool | None = None
+
+    def __init__(self) -> None:
         super().__init__()
 
         # default backend is 'command' for backward-compatibility.
@@ -1267,9 +1264,6 @@ class ReplayGainPlugin(BeetsPlugin):
             )
         except (ReplayGainError, FatalReplayGainError) as e:
             raise ui.UserError(f"replaygain initialization failed: {e}")
-
-        # Start threadpool lazily.
-        self.pool = None
 
     def should_use_r128(self, item: Item) -> bool:
         """Checks the plugin setting to decide whether the calculation
@@ -1427,7 +1421,7 @@ class ReplayGainPlugin(BeetsPlugin):
         """Open a `ThreadPool` instance in `self.pool`"""
         if self.pool is None and self.backend_instance.do_parallel:
             self.pool = ThreadPool(threads)
-            self.exc_queue: queue.Queue = queue.Queue()
+            self.exc_queue: queue.Queue[Exception] = queue.Queue()
 
             signal.signal(signal.SIGINT, self._interrupt)
 
@@ -1530,7 +1524,7 @@ class ReplayGainPlugin(BeetsPlugin):
                 self.open_pool(threads)
 
             if opts.album:
-                albums = lib.albums(ui.decargs(args))
+                albums = lib.albums(args)
                 self._log.info(
                     "Analyzing {} albums ~ {} backend...".format(
                         len(albums), self.backend_name
@@ -1539,7 +1533,7 @@ class ReplayGainPlugin(BeetsPlugin):
                 for album in albums:
                     self.handle_album(album, write, force)
             else:
-                items = lib.items(ui.decargs(args))
+                items = lib.items(args)
                 self._log.info(
                     "Analyzing {} tracks ~ {} backend...".format(
                         len(items), self.backend_name
