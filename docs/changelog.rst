@@ -76,13 +76,15 @@ For plugin developers:
         ``album_for_id``, ``candidates``, ``item_candidates``, ``album_distance``, ``track_distance`` methods,
         please update your plugin to inherit from the new baseclass, as otherwise your plugin will
         stop working with the next major release.
-* Several definitions have been moved away from ``beets.library`` module:
-  * ``BLOB_TYPE`` constant, ``PathQuery`` and ``SingletonQuery`` queries have moved
-    to ``beets.dbcore.queries`` module
-  * ``DateType``, ``DurationType``, ``PathType`` types and ``MusicalKey`` class have
-    moved to ``beets.dbcore.types`` module.
-  Old imports are now deprecated and will be removed in version ``3.0.0``.
-
+* Several definitions have been moved:
+    * ``BLOB_TYPE`` constant, ``PathQuery`` and ``SingletonQuery`` queries have
+      moved from ``beets.library`` to ``beets.dbcore.query`` module
+    * ``DateType``, ``DurationType``, ``PathType`` types and ``MusicalKey``
+      class have moved from ``beets.library`` to ``beets.dbcore.types`` module.
+    * ``Distance`` has moved from ``beets.autotag`` to
+      ``beets.autotag.distance`` module.
+    * ``beets.autotag.current_metadata`` has been renamed to
+      ``beets.util.get_most_common_tags``.
 
 Other changes:
 
