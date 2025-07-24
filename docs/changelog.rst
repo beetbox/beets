@@ -86,6 +86,10 @@ For plugin developers:
     * ``beets.autotag.current_metadata`` has been renamed to
       ``beets.util.get_most_common_tags``.
 
+  Old imports are now deprecated and will be removed in version ``3.0.0``.
+* ``beets.ui.decargs`` is deprecated and will be removed in version ``3.0.0``.
+
+
 Other changes:
 
 * Refactor: Split responsibilities of Plugins into MetaDataPlugins and general Plugins.
