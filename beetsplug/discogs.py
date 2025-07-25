@@ -20,18 +20,20 @@ from __future__ import annotations
 
 import http.client
 import json
+import logging
 import os
 import re
 import socket
 import time
 import traceback
 from functools import cache
+from json import JSONDecodeError
 from string import ascii_lowercase
 from typing import TYPE_CHECKING, Sequence
 
 import confuse
 from discogs_client import Client, Master, Release
-from discogs_client.exceptions import DiscogsAPIError
+from discogs_client.exceptions import DiscogsAPIError, HTTPError
 from requests.exceptions import ConnectionError
 from typing_extensions import TypedDict
 
@@ -47,6 +49,9 @@ if TYPE_CHECKING:
 
     from beets.library import Item
 
+# Global logger.
+log = logging.getLogger("beets")
+
 USER_AGENT = f"beets/{beets.__version__} +https://beets.io/"
 API_KEY = "rAzVUQYRaoFjeBjyWuWZ"
 API_SECRET = "plxtUTqoCzwxZpqdPysCwGuBSmZNdZVy"
@@ -56,7 +61,9 @@ CONNECTION_ERRORS = (
     ConnectionError,
     socket.error,
     http.client.HTTPException,
+    HTTPError,
     ValueError,  # JSON decoding raises a ValueError.
+    JSONDecodeError,  # Except sometimes it raises a `JSONDecodeError`
     DiscogsAPIError,
 )
 
@@ -305,7 +312,15 @@ class DiscogsPlugin(MetadataSourcePlugin):
         # Explicitly reload the `Release` fields, as they might not be yet
         # present if the result is from a `discogs_client.search()`.
         if not result.data.get("artists"):
-            result.refresh()
+            try:
+                result.refresh()
+            except CONNECTION_ERRORS:
+                self._log.debug(
+                    "Connection error in release lookup: {0}",
+                    result,
+                    exc_info=True,
+                )
+                return None
 
         # Sanity check for required fields. The list of required fields is
         # defined at Guideline 1.3.1.a, but in practice some releases might be
