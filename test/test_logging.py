@@ -265,7 +265,7 @@ class ConcurrentEventsTest(AsIsImporterMixin, ImportTestCase):
             assert "import" in line
             assert "album" in line
 
-        blog.getLogger("beets").set_global_level(blog.DEBUG)
+        blog.getLogger("beets").set_global_level(blog.TRACE)
         with helper.capture_log() as logs:
             self.run_asis_importer()
         assert "Sending event: database_change" in logs

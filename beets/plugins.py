@@ -30,6 +30,7 @@ import mediafile
 
 import beets
 from beets import logging
+from beets.logging import TRACE
 
 if TYPE_CHECKING:
     from beets.event_types import EventType
@@ -499,7 +500,7 @@ def send(event: str, **arguments: Any) -> list[Any]:
 
     Return a list of non-None values returned from the handlers.
     """
-    log.debug("Sending event: {0}", event)
+    log.log(TRACE, "Sending event: {0}", event)
     results: list[Any] = []
     for handler in event_handlers()[event]:
         result = handler(**arguments)
