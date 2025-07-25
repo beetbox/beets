@@ -55,6 +55,8 @@ Bug fixes:
   e.g. non latin characters as 盗作. If you want to keep the legacy behavior
   set the config option ``spotify.search_query_ascii: yes``.
   :bug:`5699`
+* :doc:`plugins/discogs`: Beets will no longer crash if a release has been
+  deleted, and returns a 404.
 
 For packagers:
 
