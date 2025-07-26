@@ -78,7 +78,7 @@ Here's an example plugin that adds a simple command::
 
     my_super_command = Subcommand('super', help='do something super')
     def say_hi(lib, opts, args):
-        print "Hello everybody! I'm a plugin!"
+        print("Hello everybody! I'm a plugin!")
     my_super_command.func = say_hi
 
     class SuperPlug(BeetsPlugin):
