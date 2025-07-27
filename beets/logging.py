@@ -33,12 +33,14 @@ from logging import (
     Logger,
     NullHandler,
     StreamHandler,
+    addLevelName,
 )
 
 __all__ = [
     "DEBUG",
     "INFO",
     "NOTSET",
+    "TRACE",
     "WARNING",
     "FileHandler",
     "Filter",
@@ -48,6 +50,10 @@ __all__ = [
     "StreamHandler",
     "getLogger",
 ]
+
+TRACE = 5
+
+addLevelName(TRACE, "TRACE")
 
 
 def logsafe(val):

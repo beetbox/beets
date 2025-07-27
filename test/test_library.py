@@ -139,7 +139,7 @@ class AddTest(BeetsTestCase):
         self.item.album = "a"
         self.item.title = "b"
 
-        blog.getLogger("beets").set_global_level(blog.DEBUG)
+        blog.getLogger("beets").set_global_level(blog.TRACE)
         with capture_log() as logs:
             self.lib.add(self.item)
 

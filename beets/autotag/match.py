@@ -26,6 +26,7 @@ import numpy as np
 
 from beets import config, logging, metadata_plugins
 from beets.autotag import AlbumInfo, AlbumMatch, TrackInfo, TrackMatch, hooks
+from beets.logging import TRACE
 from beets.util import get_most_common_tags
 
 from .distance import VA_ARTISTS, distance, track_distance
@@ -76,12 +77,12 @@ def assign_items(
     objects. These "extra" objects occur when there is an unequal number
     of objects of the two types.
     """
-    log.debug("Computing track assignment...")
+    log.log(TRACE, "Computing track assignment...")
     # Construct the cost matrix.
     costs = [[float(track_distance(i, t)) for t in tracks] for i in items]
     # Assign items to tracks
     _, _, assigned_item_idxs = lap.lapjv(np.array(costs), extend_cost=True)
-    log.debug("...done.")
+    log.log(TRACE, "...done.")
 
     # Each item in `assigned_item_idxs` list corresponds to a track in the
     # `tracks` list. Each value is either an index into the assigned item in

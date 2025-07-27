@@ -20,6 +20,7 @@ from unittest.mock import ANY, Mock, patch
 import pytest
 from mediafile import MediaFile
 
+import beets.logging as blog
 from beets import config, plugins, ui
 from beets.dbcore import types
 from beets.importer import (
@@ -158,6 +159,7 @@ class EventsTest(PluginImportTestCase):
     def test_import_task_created(self):
         self.importer = self.setup_importer(pretend=True)
 
+        blog.getLogger("beets").set_global_level(blog.TRACE)
         with helper.capture_log() as logs:
             self.importer.run()
 
@@ -200,6 +202,7 @@ class EventsTest(PluginImportTestCase):
 
         self.importer = self.setup_importer(pretend=True)
 
+        blog.getLogger("beets").set_global_level(blog.TRACE)
         with helper.capture_log() as logs:
             self.importer.run()
 
