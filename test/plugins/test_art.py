@@ -58,8 +58,21 @@ class Settings:
             setattr(self, k, v)
 
 
+class DummyLocalArtSource(fetchart.LocalArtSource):
+    NAME = "Dummy Local Art Source"
+    ID = "test"
+
+    def get(
+        self,
+        album: Album,
+        plugin: fetchart.FetchArtPlugin,
+        paths: None | Sequence[bytes],
+    ) -> Iterator[fetchart.Candidate]:
+        return iter(())
+
+
 class DummyRemoteArtSource(fetchart.RemoteArtSource):
-    NAME = "Dummy Art Source"
+    NAME = "Dummy Remote Art Source"
     ID = "dummy"
 
     def get(
@@ -227,9 +240,7 @@ class FetchImageTest(FetchImageTestCase):
         self.dpath = os.path.join(self.temp_dir, b"arttest")
         self.source = DummyRemoteArtSource(logger, self.plugin.config)
         self.settings = Settings(maxwidth=0)
-        self.candidate = fetchart.Candidate(
-            logger, self.source.ID, url=self.URL
-        )
+        self.candidate = fetchart.Candidate(logger, self.source, url=self.URL)
 
     def test_invalid_type_returns_none(self):
         self.mock_response(self.URL, "image/watercolour")
@@ -749,12 +760,13 @@ class ArtImporterTest(UseThePlugin):
         super().setUp()
 
         # Mock the album art fetcher to always return our test file.
+        self.source = DummyLocalArtSource(logger, self.plugin.config)
         self.art_file = self.temp_dir_path / "tmpcover.jpg"
         self.art_file.touch()
         self.old_afa = self.plugin.art_for_album
         self.afa_response = fetchart.Candidate(
             logger,
-            source_name="test",
+            source=self.source,
             path=self.art_file,
         )
 
@@ -839,11 +851,12 @@ class ArtImporterTest(UseThePlugin):
             config["import"]["move"] = prev_move
 
     def test_do_not_delete_original_if_already_in_place(self):
+        self.source = DummyLocalArtSource(logger, self.plugin.config)
         artdest = os.path.join(os.path.dirname(self.i.path), b"cover.jpg")
         shutil.copyfile(self.art_file, syspath(artdest))
         self.afa_response = fetchart.Candidate(
             logger,
-            source_name="test",
+            source=self.source,
             path=artdest,
         )
         self._fetch_art(True)
@@ -883,7 +896,7 @@ class AlbumArtOperationTestCase(UseThePlugin):
         def fs_source_get(_self, album, settings, paths):
             if paths:
                 yield fetchart.Candidate(
-                    logger, source_name=_self.ID, path=cls.IMAGE_PATH
+                    logger, source=_self, path=cls.IMAGE_PATH
                 )
 
         patch("beetsplug.fetchart.FileSystem.get", fs_source_get).start()

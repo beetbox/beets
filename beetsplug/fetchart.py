@@ -82,7 +82,7 @@ class Candidate:
     def __init__(
         self,
         log: Logger,
-        source_name: str,
+        source: "ArtSource",
         path: None | bytes = None,
         url: None | str = None,
         match: None | MetadataMatch = None,
@@ -91,10 +91,17 @@ class Candidate:
         self._log = log
         self.path = path
         self.url = url
-        self.source_name = source_name
+        self.source: "ArtSource" = source
         self._check: None | ImageAction = None
         self.match = match
         self.size = size
+
+    @property
+    def source_name(self) -> str:
+        return self.source.ID
+
+    def cleanup(self) -> None:
+        self.source.cleanup(self)
 
     def _validate(
         self,
@@ -127,6 +134,7 @@ class Candidate:
             or plugin.max_filesize
             or plugin.deinterlace
             or plugin.cover_format
+            or plugin.match != "first"
         ):
             return ImageAction.EXACT
 
@@ -397,7 +405,7 @@ class ArtSource(RequestMixin, ABC):
         pass
 
     def _candidate(self, **kwargs) -> Candidate:
-        return Candidate(source_name=self.ID, log=self._log, **kwargs)
+        return Candidate(source=self, log=self._log, **kwargs)
 
     @abstractmethod
     def fetch_image(self, candidate: Candidate, plugin: FetchArtPlugin) -> None:
@@ -1344,11 +1352,15 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                 "high_resolution": False,
                 "deinterlace": False,
                 "cover_format": None,
+                "match": "first",
             }
         )
         for source in ART_SOURCES:
             source.add_default_config(self.config)
 
+        self.match = self.config["match"].as_choice(
+            ("first", "max_resolution")
+        )
         self.minwidth = self.config["minwidth"].get(int)
         self.maxwidth = self.config["maxwidth"].get(int)
         self.max_filesize = self.config["max_filesize"].get(int)
@@ -1523,7 +1535,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         local image files from the filesystem are returned; no network
         requests are made.
         """
-        out = None
+        candidates: list[Candidate] = []
 
         for source in self.sources:
             if source.LOC == "local" or not local_only:
@@ -1533,25 +1545,27 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                     source,
                     album,
                 )
-                # URLs might be invalid at this point, or the image may not
-                # fulfill the requirements
-                for candidate in source.get(album, self, paths):
-                    source.fetch_image(candidate, self)
-                    if candidate.validate(self) != ImageAction.BAD:
-                        out = candidate
-                        assert out.path is not None  # help mypy
-                        self._log.debug(
-                            "using {0.LOC} image {1}",
-                            source,
-                            util.displayable_path(out.path),
-                        )
-                        break
-                    # Remove temporary files for invalid candidates.
-                    source.cleanup(candidate)
-                if out:
-                    break
 
-        if out:
+                candidate = self.fetch_from_source(source, album, paths)
+                if candidate:
+                    candidates.append(candidate)
+                    if self.match == "first":
+                        break
+
+        out: None | Candidate = None
+        if candidates:
+            out = max(candidates, key=lambda x: x.size or (0, 0))
+            self._log.debug(
+                "using {0.LOC} image {1}",
+                out.source,
+                util.displayable_path(out.path),
+            )
+
+            # cleanup candidates that were not selected
+            for candidate in candidates:
+                if candidate is not out:
+                    candidate.cleanup()
+
             out.resize(self)
 
         return out
@@ -1590,3 +1604,17 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                 else:
                     message = ui.colorize("text_error", "no art found")
                 self._log.info("{0}: {1}", album, message)
+
+    def fetch_from_source(
+        self,
+        source: ArtSource,
+        album: Album,
+        paths: None | Sequence[bytes],
+    ) -> None | Candidate:
+        for candidate in source.get(album, self, paths):
+            source.fetch_image(candidate, self)
+            if candidate.validate(self) != ImageAction.BAD:
+                assert candidate.path is not None  # help mypy
+                return candidate
+            candidate.cleanup()
+        return None

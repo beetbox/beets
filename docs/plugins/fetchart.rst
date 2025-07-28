@@ -30,6 +30,10 @@ file. The available options are:
 
 - **auto**: Enable automatic album art fetching during import.
   Default: ``yes``.
+- **match**: The algorithm used to select artwork from the configured source.
+  Default: ``first`` (return the first valid image found). Values: ``first``,
+  ``best_resolution`` (select first valid image found from each source and
+  return the image with the highest resolution).
 - **cautious**: Pick only trusted album art by ignoring filenames that do not
   contain one of the keywords in ``cover_names``.
   Default: ``no``.
