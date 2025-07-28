@@ -47,6 +47,9 @@ if TYPE_CHECKING:
 
     from beets.library import Item
 
+# Global logger.
+log = logging.getLogger(__name__)
+
 USER_AGENT = f"beets/{beets.__version__} +https://beets.io/"
 API_KEY = "rAzVUQYRaoFjeBjyWuWZ"
 API_SECRET = "plxtUTqoCzwxZpqdPysCwGuBSmZNdZVy"

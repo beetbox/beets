@@ -35,7 +35,7 @@ if TYPE_CHECKING:
     from .session import ImportSession
 
 # Global logger.
-log = logging.getLogger("beets")
+log = logging.getLogger(__name__)
 
 # ---------------------------- Producer functions ---------------------------- #
 # Functions that are called first i.e. they generate import tasks

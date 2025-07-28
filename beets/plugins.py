@@ -99,7 +99,7 @@ EventType = Literal[
     "write",
 ]
 # Global logger.
-log = logging.getLogger("beets")
+log = logging.getLogger(__name__)
 
 
 class PluginConflictError(Exception):

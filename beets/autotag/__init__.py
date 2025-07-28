@@ -67,7 +67,7 @@ __all__ = [
 ]
 
 # Global logger.
-log = logging.getLogger("beets")
+log = logging.getLogger(__name__)
 
 # Metadata fields that are already hardcoded, or where the tag name changes.
 SPECIAL_FIELDS = {

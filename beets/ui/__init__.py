@@ -1543,6 +1543,8 @@ def _configure(options):
         overlay_path = None
     config.set_args(options)
 
+    beet_logger = logging.getLogger("beets")
+
     # Configure the logger.
     if config["verbose"].get(int):
         log.setLevel(logging.DEBUG)

@@ -37,7 +37,7 @@ if TYPE_CHECKING:
     from .session import ImportSession
 
 # Global logger.
-log = logging.getLogger("beets")
+log = logging.getLogger(__name__)
 
 
 SINGLE_ARTIST_THRESH = 0.25
@@ -63,7 +63,7 @@ REIMPORT_FRESH_FIELDS_ITEM = [
 REIMPORT_FRESH_FIELDS_ALBUM = [*REIMPORT_FRESH_FIELDS_ITEM, "media"]
 
 # Global logger.
-log = logging.getLogger("beets")
+log = logging.getLogger(__name__)
 
 
 class ImportAbortError(Exception):

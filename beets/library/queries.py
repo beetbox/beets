@@ -5,7 +5,7 @@ import shlex
 import beets
 from beets import dbcore, logging, plugins
 
-log = logging.getLogger("beets")
+log = logging.getLogger(__name__)
 
 
 # Special path format key.

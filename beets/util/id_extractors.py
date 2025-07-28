@@ -20,7 +20,7 @@ import re
 
 from beets import logging
 
-log = logging.getLogger("beets")
+log = logging.getLogger(__name__)
 
 
 PATTERN_BY_SOURCE = {

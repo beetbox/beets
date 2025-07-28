@@ -51,7 +51,7 @@ from . import _store_dict
 VARIOUS_ARTISTS = "Various Artists"
 
 # Global logger.
-log = logging.getLogger("beets")
+log = logging.getLogger(__name__)
 
 # The list of default subcommands. This is populated with Subcommand
 # objects that can be fed to a SubcommandsOptionParser.

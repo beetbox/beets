@@ -206,7 +206,7 @@ class ConvertCliTest(ConvertTestCase, ConvertCommand):
         assert not self.converted_mp3.exists()
 
     def test_empty_query(self):
-        with capture_log("beets.convert") as logs:
+        with capture_log("beets.plugins.convert") as logs:
             self.run_convert("An impossible query")
         assert logs[0] == "convert: Empty query result."
 
