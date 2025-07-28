@@ -29,10 +29,12 @@ from logging import (
     WARNING,
     FileHandler,
     Filter,
+    Formatter,
     Handler,
     Logger,
     NullHandler,
     StreamHandler,
+    _levelToName,
 )
 
 __all__ = [
@@ -42,12 +44,26 @@ __all__ = [
     "WARNING",
     "FileHandler",
     "Filter",
+    "Formatter",
     "Handler",
     "Logger",
     "NullHandler",
     "StreamHandler",
     "getLogger",
+    "getLevelNamesMapping",
 ]
+
+
+def getLevelNamesMapping() -> dict[str, int]:  # noqa: N802  # Hey, I didn't name it!
+    """Returns a mapping from level names to their corresponding logging
+    levels. For example, the string “CRITICAL” maps to CRITICAL. The returned
+    mapping is copied from an internal mapping on each call to this function.
+
+    Polyfill for `logging.getLevelNamesMapping`, which was only added in Python
+    3.11.
+    """
+
+    return {name: level for (level, name) in _levelToName.items()}
 
 
 def logsafe(val):
