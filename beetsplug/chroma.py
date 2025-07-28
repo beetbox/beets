@@ -98,7 +98,9 @@ def acoustid_match(log, path):
     fp = fp.decode()
     _fingerprints[path] = fp
     try:
-        res = acoustid.lookup(API_KEY, fp, duration, meta="recordings releases")
+        res = acoustid.lookup(
+            API_KEY, fp, duration, meta="recordings releases", timeout=10
+        )
     except acoustid.AcoustidError as exc:
         log.debug(
             "fingerprint matching {0} failed: {1}",
@@ -292,7 +294,7 @@ def submit_items(log, userkey, items, chunksize=64):
         """Submit the current accumulated fingerprint data."""
         log.info("submitting {0} fingerprints", len(data))
         try:
-            acoustid.submit(API_KEY, userkey, data)
+            acoustid.submit(API_KEY, userkey, data, timeout=10)
         except acoustid.AcoustidError as exc:
             log.warning("acoustid submission error: {0}", exc)
         del data[:]
