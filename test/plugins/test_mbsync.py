@@ -78,7 +78,7 @@ class MbsyncCliTest(PluginTestCase):
         ]:
             self.lib.add(item)
 
-        with capture_log("beets.mbsync") as logs:
+        with capture_log("beets.plugins.mbsync") as logs:
             self.run_command("mbsync", "-f", "'%if{$album,$album,$title}'")
 
         assert "mbsync: Skipping album with no mb_albumid: 'no id'" in logs

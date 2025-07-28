@@ -1653,11 +1653,13 @@ def _configure(options):
         overlay_path = None
     config.set_args(options)
 
+    beet_logger = logging.getLogger("beets")
+
     # Configure the logger.
     if config["verbose"].get(int):
-        log.set_global_level(logging.DEBUG)
+        beet_logger.set_global_level(logging.DEBUG)
     else:
-        log.set_global_level(logging.INFO)
+        beet_logger.set_global_level(logging.INFO)
 
     if overlay_path:
         log.debug(

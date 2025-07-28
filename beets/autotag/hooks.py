@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
     from .distance import Distance
 
-log = logging.getLogger("beets")
+log = logging.getLogger(__name__)
 
 V = TypeVar("V")
 
