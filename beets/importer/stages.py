@@ -15,10 +15,9 @@
 from __future__ import annotations
 
 import itertools
-import logging
 from typing import TYPE_CHECKING, Callable
 
-from beets import config, plugins
+from beets import config, logging, plugins
 from beets.util import MoveOperation, displayable_path, pipeline
 
 from .tasks import (
