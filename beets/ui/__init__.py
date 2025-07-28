@@ -33,6 +33,7 @@ from difflib import SequenceMatcher
 from functools import cache
 from itertools import chain
 from typing import Any, Callable, Literal
+from typing import TYPE_CHECKING, Any, Callable, OrderedDict, cast
 
 import confuse
 
@@ -1543,13 +1544,7 @@ def _configure(options):
         overlay_path = None
     config.set_args(options)
 
-    beet_logger = logging.getLogger("beets")
-
-    # Configure the logger.
-    if config["verbose"].get(int):
-        log.setLevel(logging.DEBUG)
-    else:
-        log.setLevel(logging.INFO)
+    _configure_logging()
 
     if overlay_path:
         log.debug(
@@ -1567,6 +1562,72 @@ def _configure(options):
 
     log.debug("data directory: {}", util.displayable_path(config.config_dir()))
     return config
+
+
+def _configure_logging():
+    """Configure logging levels and handlers."""
+
+    if config["verbose"].get(int):
+        level = logging.DEBUG
+    else:
+        level = logging.INFO
+
+    root_logger = logging.getLogger()
+    beet_logger = logging.getLogger("beets")
+
+    root_logger.setLevel(level)
+    beet_logger.setLevel(level)
+
+    log_format = config["logging"]["format"].get(
+        confuse.String(default="{message}")
+    )
+    date_format = config["logging"]["date_format"].get(
+        confuse.String(default="%Y-%m-%d %H:%M:%S")
+    )
+
+    # Remove the `StreamHandler` we added earlier so we can make a new one with
+    # the user's format.
+    for logger in [log, beet_logger, root_logger]:
+        stream_handlers = [
+            handler
+            for handler in logger.handlers
+            if isinstance(handler, logging.StreamHandler)
+        ]
+        for handler in stream_handlers:
+            logger.removeHandler(handler)
+
+        handler = logging.StreamHandler()
+        handler.setFormatter(
+            logging.Formatter(
+                fmt=cast(str, log_format),
+                datefmt=cast(str, date_format),
+                style="{",
+                validate=True,
+            )
+        )
+        logger.addHandler(handler)
+
+    level_names_mapping = logging.getLevelNamesMapping()
+    log_levels = config["logging"]["levels"].get(
+        confuse.MappingValues(
+            confuse.OneOf(
+                allowed=[
+                    confuse.Integer(),
+                    confuse.OneOf(allowed=level_names_mapping.keys()),
+                ]
+            )
+        )
+    )
+
+    if log_levels:
+        for name, level in cast(OrderedDict, log_levels).items():
+            name = None if name == "root" else name
+            logger = logging.getLogger(name)
+            if isinstance(level, str):
+                level = level_names_mapping[level]
+            logger.setLevel(level)
+            if hasattr(logger, "set_global_level"):
+                logger.set_global_level(level)
 
 
 def _ensure_db_directory_exists(path):

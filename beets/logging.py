@@ -30,11 +30,13 @@ from logging import (
     WARNING,
     FileHandler,
     Filter,
+    Formatter,
     Handler,
     Logger,
     NullHandler,
     RootLogger,
     StreamHandler,
+    _levelToName,
 )
 from typing import TYPE_CHECKING, Any, Mapping, TypeVar, Union, overload
 
@@ -45,11 +47,13 @@ __all__ = [
     "WARNING",
     "FileHandler",
     "Filter",
+    "Formatter",
     "Handler",
     "Logger",
     "NullHandler",
     "StreamHandler",
     "getLogger",
+    "getLevelNamesMapping",
 ]
 
 if TYPE_CHECKING:
@@ -63,6 +67,18 @@ if TYPE_CHECKING:
     ]
     _ExcInfoType = Union[None, bool, _SysExcInfoType, BaseException]
     _ArgsType = Union[tuple[object, ...], Mapping[str, object]]
+
+
+def getLevelNamesMapping() -> dict[str, int]:  # noqa: N802  # Hey, I didn't name it!
+    """Returns a mapping from level names to their corresponding logging
+    levels. For example, the string “CRITICAL” maps to CRITICAL. The returned
+    mapping is copied from an internal mapping on each call to this function.
+
+    Polyfill for `logging.getLevelNamesMapping`, which was only added in Python
+    3.11.
+    """
+
+    return {name: level for (level, name) in _levelToName.items()}
 
 
 def _logsafe(val: T) -> str | T:
