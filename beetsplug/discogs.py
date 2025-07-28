@@ -37,7 +37,7 @@ from typing_extensions import NotRequired, TypedDict
 
 import beets
 import beets.ui
-from beets import config
+from beets import config, logging
 from beets.autotag.distance import string_dist
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.metadata_plugins import MetadataSourcePlugin
