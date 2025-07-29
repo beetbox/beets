@@ -1766,7 +1766,7 @@ def _raw_main(args, lib=None):
     ):
         from beets.ui.commands import config_edit
 
-        return config_edit()
+        return config_edit(options)
 
     test_lib = bool(lib)
     subcommands, plugins, lib = _setup(options, lib)
