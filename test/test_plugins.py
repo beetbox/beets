@@ -19,7 +19,6 @@ import itertools
 import logging
 import os
 import pkgutil
-import re
 import sys
 from unittest.mock import ANY, Mock, patch
 
@@ -582,7 +581,7 @@ class TestImportAllPlugins(PluginMixin):
 
         caplog.set_level(logging.WARNING)
         caplog.clear()
-        plugins.load_plugins(plugin_name)
+        plugins.load_plugins([plugin_name])
 
         # Check for warnings, is a bit hacky but we can make full use of the beets
         # load_plugins code that way
