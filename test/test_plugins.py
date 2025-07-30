@@ -590,7 +590,3 @@ class TestImportAllPlugins(PluginMixin):
             f"Plugin '{plugin_name}' has issues during import. ",
             caplog.records,
         )
-
-    def _is_spec_available(self, spec_name):
-        """Check if a module is available by its name."""
-        return importlib.util.find_spec(spec_name) is not None
