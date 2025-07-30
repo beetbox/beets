@@ -33,7 +33,7 @@ New features:
 * :doc:`plugins/mpdstats`: Add new configuration option,
   ``played_ratio_threshold``, to allow configuring the percentage the song must
   be played for it to be counted as played instead of skipped.
-* :doc:`plugins/fanart`: Add new configuration option, ``match``, that alters
+* :doc:`plugins/fetchart`: Add new configuration option, ``match``, that alters
   the way album art is selected from the configured ``sources``.
 
 Bug fixes:

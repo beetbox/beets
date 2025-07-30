@@ -1358,9 +1358,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         for source in ART_SOURCES:
             source.add_default_config(self.config)
 
-        self.match = self.config["match"].as_choice(
-            ("first", "max_resolution")
-        )
+        self.match = self.config["match"].as_choice(("first", "max_resolution"))
         self.minwidth = self.config["minwidth"].get(int)
         self.maxwidth = self.config["maxwidth"].get(int)
         self.max_filesize = self.config["max_filesize"].get(int)
