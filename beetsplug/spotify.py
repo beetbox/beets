@@ -25,7 +25,7 @@ import json
 import re
 import time
 import webbrowser
-from typing import TYPE_CHECKING, Any, Literal, Sequence, Union
+from typing import TYPE_CHECKING, Any, Literal, Sequence, Tuple, Union
 
 import confuse
 import requests
@@ -287,9 +287,13 @@ class SpotifyPlugin(
         if not (spotify_id := self._extract_id(album_id)):
             return None
 
-        album_data = self._handle_response(
-            "get", f"{self.album_url}{spotify_id}"
-        )
+        try:
+            album_data = self._handle_response(
+                "get", f"{self.album_url}{spotify_id}"
+            )
+        except APIError:
+            return None
+
         if album_data["name"] == "":
             self._log.debug("Album removed from Spotify: {}", album_id)
             return None
@@ -318,7 +322,10 @@ class SpotifyPlugin(
         tracks_data = album_data["tracks"]
         tracks_items = tracks_data["items"]
         while tracks_data["next"]:
-            tracks_data = self._handle_response("get", tracks_data["next"])
+            try:
+                tracks_data = self._handle_response("get", tracks_data["next"])
+            except APIError:
+                return None
             tracks_items.extend(tracks_data["items"])
 
         tracks = []
@@ -391,22 +398,29 @@ class SpotifyPlugin(
             self._log.debug("Invalid Spotify ID: {}", track_id)
             return None
 
-        if not (
-            track_data := self._handle_response(
-                "get", f"{self.track_url}{spotify_id}"
-            )
-        ):
-            self._log.debug("Track not found: {}", track_id)
+        try:
+            if not (
+                track_data := self._handle_response(
+                    "get", f"{self.track_url}{spotify_id}"
+                )
+            ):
+                self._log.debug("Track not found: {}", track_id)
+                return None
+        except APIError:
             return None
 
         track = self._get_track(track_data)
 
-        # Get album's tracks to set `track.index` (position on the entire
-        # release) and `track.medium_total` (total number of tracks on
-        # the track's disc).
-        album_data = self._handle_response(
-            "get", f"{self.album_url}{track_data['album']['id']}"
-        )
+        try:
+            # Get album's tracks to set `track.index` (position on the entire
+            # release) and `track.medium_total` (total number of tracks on
+            # the track's disc).
+            album_data = self._handle_response(
+                "get", f"{self.album_url}{track_data['album']['id']}"
+            )
+        except APIError:
+            return None
+
         medium_total = 0
         for i, track_data in enumerate(album_data["tracks"]["items"], start=1):
             if track_data["disc_number"] == track.medium:
@@ -686,7 +700,10 @@ class SpotifyPlugin(
                 self._log.debug("No track_id present for: {}", item)
                 continue
 
-            popularity, isrc, ean, upc = self.track_info(spotify_track_id)
+            maybe_track_info = self.track_info(spotify_track_id)
+            if maybe_track_info is None:
+                continue
+            popularity, isrc, ean, upc = maybe_track_info
             item["spotify_track_popularity"] = popularity
             item["isrc"] = isrc
             item["ean"] = ean
@@ -703,9 +720,17 @@ class SpotifyPlugin(
             if write:
                 item.try_write()
 
-    def track_info(self, track_id: str):
+    def track_info(
+        self, track_id: str
+    ) -> Tuple[Any | None, Any | None, Any | None, Any | None] | None:
         """Fetch a track's popularity and external IDs using its Spotify ID."""
-        track_data = self._handle_response("get", f"{self.track_url}{track_id}")
+        try:
+            track_data = self._handle_response(
+                "get", f"{self.track_url}{track_id}"
+            )
+        except APIError:
+            return None
+
         external_ids = track_data.get("external_ids", {})
         popularity = track_data.get("popularity")
         self._log.debug(
