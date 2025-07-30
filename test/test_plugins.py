@@ -570,6 +570,11 @@ class TestImportAllPlugins(PluginMixin):
         yield
         self.unimport_plugins()
 
+    @pytest.mark.skipif(
+        os.environ.get("GITHUB_ACTIONS") != "true",
+        reason="Requires all dependencies to be installed, "
+        + "which we can't guarantee in the local environment.",
+    )
     @pytest.mark.parametrize("plugin_name", get_available_plugins())
     def test_import_plugin(self, caplog, plugin_name):  #
         """Test that a plugin is importable without an error using the
@@ -581,22 +586,9 @@ class TestImportAllPlugins(PluginMixin):
 
         # Check for warnings, is a bit hacky but we can make full use of the beets
         # load_plugins code that way
-        # We skip ModuleNotFoundError to allow local pytest runs to pass if plugin
-        # dependencies are not installed e.g. librosa for autobpm
-        records = []
-        pattern = r"ModuleNotFoundError: No module named '(.*?)'"
-        for record in caplog.records:
-            match = re.search(pattern, str(record))
-            if match:
-                module_name = match.group(1)
-                if not self._is_spec_available(module_name):
-                    # If the module is not found, we skip it
-                    continue
-            records.append(record)
-
-        assert len(records) == 0, (
+        assert len(caplog.records) == 0, (
             f"Plugin '{plugin_name}' has issues during import. ",
-            records,
+            caplog.records,
         )
 
     def _is_spec_available(self, spec_name):
