@@ -57,6 +57,8 @@ Bug fixes:
   :bug:`5699`
 * :doc:`plugins/discogs`: Beets will no longer crash if a release has been
   deleted, and returns a 404.
+* :doc:`plugins/fromfilename`: Beets will no longer crash if a track's title
+  field is missing.
 
 For packagers:
 
