@@ -1553,6 +1553,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         out: None | Candidate = None
         if candidates:
             out = max(candidates, key=lambda x: x.size or (0, 0))
+            assert out.path is not None  # help mypy
             self._log.debug(
                 "using {0.LOC} image {1}",
                 out.source,
@@ -1612,7 +1613,6 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         for candidate in source.get(album, self, paths):
             source.fetch_image(candidate, self)
             if candidate.validate(self) != ImageAction.BAD:
-                assert candidate.path is not None  # help mypy
                 return candidate
             candidate.cleanup()
         return None
