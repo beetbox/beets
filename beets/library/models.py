@@ -1143,7 +1143,6 @@ class Item(LibModel):
         If `store` is `False` however, the item won't be stored and it will
         have to be manually stored after invoking this method.
         """
-        self._check_db()
         dest = self.destination(basedir=basedir)
 
         # Create necessary ancestry for the move.
@@ -1183,9 +1182,8 @@ class Item(LibModel):
         is true, returns just the fragment of the path underneath the library
         base directory.
         """
-        db = self._check_db()
-        basedir = basedir or db.directory
-        path_formats = path_formats or db.path_formats
+        basedir = basedir or self.db.directory
+        path_formats = path_formats or self.db.path_formats
 
         # Use a path format based on a query, falling back on the
         # default.
@@ -1224,7 +1222,7 @@ class Item(LibModel):
             )
 
         lib_path_str, fallback = util.legalize_path(
-            subpath, db.replacements, self.filepath.suffix
+            subpath, self.db.replacements, self.filepath.suffix
         )
         if fallback:
             # Print an error message if legalization fell back to
