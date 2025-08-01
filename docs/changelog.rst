@@ -9,9 +9,11 @@ below!
 Unreleased
 ----------
 
-..
-    New features
-    ~~~~~~~~~~~~
+New features
+~~~~~~~~~~~~
+
+- :doc:`plugins/missingfiles`: Added new ``missingfiles`` plugin to scan your
+  library for missing files and album art.
 
 Bug fixes
 ~~~~~~~~~
