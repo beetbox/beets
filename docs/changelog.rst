@@ -46,6 +46,8 @@ New features:
   allows customizing the keywords. Setting ``bracket_keywords`` to an empty list
   matches any bracket content regardless of keywords.
 - :doc:`plugins/discogs`: Added support for multi value fields. :bug:`6068`
+- :doc:`plugins/detectmissing`: Added new ``detectmissing`` plugin to scan your
+  library for missing files and album art.
 
 Bug fixes:
 
