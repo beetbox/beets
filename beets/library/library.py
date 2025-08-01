@@ -131,7 +131,7 @@ class Library(dbcore.Database):
 
         Return `None` if no match is found.
         """
-        return self._get(Item, id)
+        return self.from_id(Item, id)
 
     def get_album(self, item_or_id):
         """Given an album ID or an item associated with an album, return
@@ -145,4 +145,4 @@ class Library(dbcore.Database):
             album_id = item_or_id.album_id
         if album_id is None:
             return None
-        return self._get(Album, album_id)
+        return self.from_id(Album, album_id)

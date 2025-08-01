@@ -310,7 +310,7 @@ class ModelTest(unittest.TestCase):
     def test_retrieve_by_id(self):
         model = ModelFixture1()
         model.add(self.db)
-        other_model = self.db._get(ModelFixture1, model.id)
+        other_model = self.db.from_id(ModelFixture1, model.id)
         assert model.id == other_model.id
 
     def test_store_and_retrieve_flexattr(self):
@@ -319,7 +319,7 @@ class ModelTest(unittest.TestCase):
         model.foo = "bar"
         model.store()
 
-        other_model = self.db._get(ModelFixture1, model.id)
+        other_model = self.db.from_id(ModelFixture1, model.id)
         assert other_model.foo == "bar"
 
     def test_delete_flexattr(self):
@@ -342,11 +342,11 @@ class ModelTest(unittest.TestCase):
         model.foo = "bar"
         model.store()
 
-        model = self.db._get(ModelFixture1, model.id)
+        model = self.db.from_id(ModelFixture1, model.id)
         del model["foo"]
         model.store()
 
-        model = self.db._get(ModelFixture1, model.id)
+        model = self.db.from_id(ModelFixture1, model.id)
         assert "foo" not in model
 
     def test_delete_non_existent_attribute(self):
@@ -387,7 +387,7 @@ class ModelTest(unittest.TestCase):
         model1["flex_field"] = True
         model1.add(self.db)
 
-        model2 = self.db._get(ModelFixture1, model1.id)
+        model2 = self.db.from_id(ModelFixture1, model1.id)
         assert "flex_field" in model2
 
         del model1["flex_field"]

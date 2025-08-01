@@ -652,7 +652,7 @@ class Model(ABC, Generic[D]):
         if not self._dirty and self.db.revision == self._revision:
             # Exit early
             return
-        stored_obj = self.db._get(type(self), self.id)
+        stored_obj = self.db.from_id(type(self), self.id)
         assert stored_obj is not None, f"object {self.id} not in DB"
         self._values_fixed = LazyConvertDict(self)
         self._values_flex = LazyConvertDict(self)
@@ -1306,7 +1306,7 @@ class Database:
             sort if sort.is_slow() else None,  # Slow sort component.
         )
 
-    def _get(
+    def from_id(
         self,
         model_cls: type[AnyModel],
         id,
