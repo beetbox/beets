@@ -34,6 +34,7 @@ from collections.abc import (
     Mapping,
     Sequence,
 )
+from functools import cached_property
 from sqlite3 import Connection, sqlite_version_info
 from typing import TYPE_CHECKING, Any, AnyStr, Generic
 
@@ -360,6 +361,14 @@ class Model(ABC, Generic[D]):
         """Fields in the related table."""
         return cls._relation._fields.keys() - cls.shared_db_fields
 
+    @cached_property
+    def db(self) -> D:
+        """Get the database associated with this object.
+
+        This validates that the database is attached and the object has an id.
+        """
+        return self._check_db()
+
     @classmethod
     def _getters(cls: type[Model]):
         """Return a mapping from field names to getter functions."""
@@ -599,7 +608,6 @@ class Model(ABC, Generic[D]):
         """
         if fields is None:
             fields = self._fields
-        db = self._check_db()
 
         # Build assignments for query.
         assignments = []
@@ -611,7 +619,7 @@ class Model(ABC, Generic[D]):
                 value = self._type(key).to_sql(self[key])
                 subvars.append(value)
 
-        with db.transaction() as tx:
+        with self.db.transaction() as tx:
             # Main table update.
             if assignments:
                 query = f"UPDATE {self._table} SET {','.join(assignments)} WHERE id=?"
@@ -645,11 +653,10 @@ class Model(ABC, Generic[D]):
         If check_revision is true, the database is only queried loaded when a
         transaction has been committed since the item was last loaded.
         """
-        db = self._check_db()
-        if not self._dirty and db.revision == self._revision:
+        if not self._dirty and self.db.revision == self._revision:
             # Exit early
             return
-        stored_obj = db._get(type(self), self.id)
+        stored_obj = self.db._get(type(self), self.id)
         assert stored_obj is not None, f"object {self.id} not in DB"
         self._values_fixed = LazyConvertDict(self)
         self._values_flex = LazyConvertDict(self)
@@ -658,8 +665,7 @@ class Model(ABC, Generic[D]):
 
     def remove(self):
         """Remove the object's associated rows from the database."""
-        db = self._check_db()
-        with db.transaction() as tx:
+        with self.db.transaction() as tx:
             tx.mutate(f"DELETE FROM {self._table} WHERE id=?", (self.id,))
             tx.mutate(
                 f"DELETE FROM {self._flex_table} WHERE entity_id=?", (self.id,)
@@ -675,7 +681,7 @@ class Model(ABC, Generic[D]):
         """
         if db:
             self._db = db
-        db = self._check_db(False)
+        db = self._check_db(need_id=False)
 
         with db.transaction() as tx:
             new_id = tx.mutate(f"INSERT INTO {self._table} DEFAULT VALUES")
@@ -740,9 +746,9 @@ class Model(ABC, Generic[D]):
         Remove the database connection as sqlite connections are not
         picklable.
         """
-        state = self.__dict__.copy()
-        state["_db"] = None
-        return state
+        return {
+            k: v for k, v in self.__dict__.items() if k not in {"_db", "db"}
+        }
 
 
 # Database controller and supporting interfaces.
