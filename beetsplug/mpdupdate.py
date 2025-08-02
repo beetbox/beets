@@ -102,7 +102,7 @@ class MPDUpdatePlugin(BeetsPlugin):
         try:
             s = BufferedSocket(host, port)
         except OSError as e:
-            self._log.warning("MPD connection failed: {0}", str(e.strerror))
+            self._log.warning("MPD connection failed: {}", str(e.strerror))
             return
 
         resp = s.readline()

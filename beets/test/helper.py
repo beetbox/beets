@@ -267,7 +267,7 @@ class TestHelper(ConfigMixin):
         The item is attached to the database from `self.lib`.
         """
         values_ = {
-            "title": "t\u00eftle {0}",
+            "title": "t\u00eftle {}",
             "artist": "the \u00e4rtist",
             "album": "the \u00e4lbum",
             "track": 1,

@@ -234,7 +234,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
         for playlist in self._unmatched_playlists:
             n, (q, _), (a_q, _) = playlist
             if self.matches(model, q, a_q):
-                self._log.debug("{0} will be updated because of {1}", n, model)
+                self._log.debug("{} will be updated because of {}", n, model)
                 self._matched_playlists.add(playlist)
                 self.register_listener("cli_exit", self.update_playlists)
 
@@ -243,12 +243,12 @@ class SmartPlaylistPlugin(BeetsPlugin):
     def update_playlists(self, lib, pretend=False):
         if pretend:
             self._log.info(
-                "Showing query results for {0} smart playlists...",
+                "Showing query results for {} smart playlists...",
                 len(self._matched_playlists),
             )
         else:
             self._log.info(
-                "Updating {0} smart playlists...", len(self._matched_playlists)
+                "Updating {} smart playlists...", len(self._matched_playlists)
             )
 
         playlist_dir = self.config["playlist_dir"].as_filename()
@@ -267,7 +267,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
             if pretend:
                 self._log.info("Results for playlist {}:", name)
             else:
-                self._log.info("Creating playlist {0}", name)
+                self._log.info("Creating playlist {}", name)
             items = []
 
             if query:
@@ -340,13 +340,11 @@ class SmartPlaylistPlugin(BeetsPlugin):
 
         if pretend:
             self._log.info(
-                "Displayed results for {0} playlists",
+                "Displayed results for {} playlists",
                 len(self._matched_playlists),
             )
         else:
-            self._log.info(
-                "{0} playlists updated", len(self._matched_playlists)
-            )
+            self._log.info("{} playlists updated", len(self._matched_playlists))
 
 
 class PlaylistItem:

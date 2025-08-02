@@ -51,8 +51,8 @@ class MPDClientWrapper:
         if not self.strip_path.endswith("/"):
             self.strip_path += "/"
 
-        self._log.debug("music_directory: {0}", self.music_directory)
-        self._log.debug("strip_path: {0}", self.strip_path)
+        self._log.debug("music_directory: {}", self.music_directory)
+        self._log.debug("strip_path: {}", self.strip_path)
 
         self.client = mpd.MPDClient()
 
@@ -64,7 +64,7 @@ class MPDClientWrapper:
         if host[0] in ["/", "~"]:
             host = os.path.expanduser(host)
 
-        self._log.info("connecting to {0}:{1}", host, port)
+        self._log.info("connecting to {}:{}", host, port)
         try:
             self.client.connect(host, port)
         except OSError as e:
@@ -89,7 +89,7 @@ class MPDClientWrapper:
         try:
             return getattr(self.client, command)()
         except (OSError, mpd.ConnectionError) as err:
-            self._log.error("{0}", err)
+            self._log.error("{}", err)
 
         if retries <= 0:
             # if we exited without breaking, we couldn't reconnect in time :(
@@ -123,7 +123,7 @@ class MPDClientWrapper:
                 result = os.path.join(self.music_directory, file)
             else:
                 result = entry["file"]
-        self._log.debug("returning: {0}", result)
+        self._log.debug("returning: {}", result)
         return result, entry.get("id")
 
     def status(self):
@@ -169,7 +169,7 @@ class MPDStats:
         if item:
             return item
         else:
-            self._log.info("item not found: {0}", displayable_path(path))
+            self._log.info("item not found: {}", displayable_path(path))
 
     def update_item(self, item, attribute, value=None, increment=None):
         """Update the beets item. Set attribute to value or increment the value
@@ -188,7 +188,7 @@ class MPDStats:
             item.store()
 
             self._log.debug(
-                "updated: {0} = {1} [{2}]",
+                "updated: {} = {} [{}]",
                 attribute,
                 item[attribute],
                 displayable_path(item.path),
@@ -234,12 +234,12 @@ class MPDStats:
     def handle_played(self, song):
         """Updates the play count of a song."""
         self.update_item(song["beets_item"], "play_count", increment=1)
-        self._log.info("played {0}", displayable_path(song["path"]))
+        self._log.info("played {}", displayable_path(song["path"]))
 
     def handle_skipped(self, song):
         """Updates the skip count of a song."""
         self.update_item(song["beets_item"], "skip_count", increment=1)
-        self._log.info("skipped {0}", displayable_path(song["path"]))
+        self._log.info("skipped {}", displayable_path(song["path"]))
 
     def on_stop(self, status):
         self._log.info("stop")
@@ -278,11 +278,11 @@ class MPDStats:
                     self.handle_song_change(self.now_playing)
 
         if is_url(path):
-            self._log.info("playing stream {0}", displayable_path(path))
+            self._log.info("playing stream {}", displayable_path(path))
             self.now_playing = None
             return
 
-        self._log.info("playing {0}", displayable_path(path))
+        self._log.info("playing {}", displayable_path(path))
 
         self.now_playing = {
             "started": time.time(),
@@ -312,7 +312,7 @@ class MPDStats:
                 if handler:
                     handler(status)
                 else:
-                    self._log.debug('unhandled status "{0}"', status)
+                    self._log.debug('unhandled status "{}"', status)
 
             events = self.mpd.events()
 

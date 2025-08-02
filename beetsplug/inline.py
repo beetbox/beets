@@ -60,14 +60,14 @@ class InlinePlugin(BeetsPlugin):
         for key, view in itertools.chain(
             config["item_fields"].items(), config["pathfields"].items()
         ):
-            self._log.debug("adding item field {0}", key)
+            self._log.debug("adding item field {}", key)
             func = self.compile_inline(view.as_str(), False)
             if func is not None:
                 self.template_fields[key] = func
 
         # Album fields.
         for key, view in config["album_fields"].items():
-            self._log.debug("adding album field {0}", key)
+            self._log.debug("adding album field {}", key)
             func = self.compile_inline(view.as_str(), True)
             if func is not None:
                 self.album_template_fields[key] = func
@@ -87,7 +87,7 @@ class InlinePlugin(BeetsPlugin):
                 func = _compile_func(python_code)
             except SyntaxError:
                 self._log.error(
-                    "syntax error in inline field definition:\n{0}",
+                    "syntax error in inline field definition:\n{}",
                     traceback.format_exc(),
                 )
                 return

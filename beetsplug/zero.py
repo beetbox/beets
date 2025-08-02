@@ -90,10 +90,10 @@ class ZeroPlugin(BeetsPlugin):
         Do some sanity checks then compile the regexes.
         """
         if field not in MediaFile.fields():
-            self._log.error("invalid field: {0}", field)
+            self._log.error("invalid field: {}", field)
         elif field in ("id", "path", "album_id"):
             self._log.warning(
-                "field '{0}' ignored, zeroing it would be dangerous", field
+                "field '{}' ignored, zeroing it would be dangerous", field
             )
         else:
             try:
@@ -137,7 +137,7 @@ class ZeroPlugin(BeetsPlugin):
 
             if match:
                 fields_set = True
-                self._log.debug("{0}: {1} -> None", field, value)
+                self._log.debug("{}: {} -> None", field, value)
                 tags[field] = None
                 if self.config["update_database"]:
                     item[field] = None
