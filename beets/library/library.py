@@ -146,7 +146,7 @@ class Library(dbcore.Database):
         if parsed_sort and not isinstance(parsed_sort, NullSort):
             sort = parsed_sort
 
-        return super()._fetch(model_cls, query, sort)
+        return super().get_results(model_cls, query, sort)
 
     @staticmethod
     def get_default_album_sort():

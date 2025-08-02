@@ -1373,7 +1373,7 @@ class Database:
 
     # Querying.
 
-    def _fetch(
+    def get_results(
         self,
         model_cls: type[AnyModel],
         query: Query | None = None,
@@ -1433,7 +1433,7 @@ class Database:
 
     def _get(self, model_cls: type[AnyModel], id_: int) -> AnyModel | None:
         """Get a Model object by its id or None if the id does not exist."""
-        return self._fetch(model_cls, MatchQuery("id", id_)).get()
+        return self.get_results(model_cls, MatchQuery("id", id_)).get()
 
 
 class Index(NamedTuple):
