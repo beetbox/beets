@@ -644,7 +644,7 @@ class Google(SearchBackend):
         re.IGNORECASE | re.VERBOSE,
     )
     #: Split cleaned up URL title into artist and title parts.
-    URL_TITLE_PARTS_RE = re.compile(r" +(?:[ :|-]+|par|by) +")
+    URL_TITLE_PARTS_RE = re.compile(r" +(?:[ :|-]+|par|by) +|, ")
 
     SOURCE_DIST_FACTOR = {"www.azlyrics.com": 0.5, "www.songlyrics.com": 0.6}
 
@@ -702,8 +702,8 @@ class Google(SearchBackend):
                 result_artist, result_title = "", parts[0]
         else:
             # sort parts by their similarity to the artist
-            parts.sort(key=lambda p: cls.get_part_dist(artist, title, p))
-            result_artist, result_title = parts[0], " ".join(parts[1:])
+            result_artist = min(parts, key=lambda p: string_dist(artist, p))
+            result_title = min(parts, key=lambda p: string_dist(title, p))
 
         return SearchResult(result_artist, result_title, item["link"])
 
