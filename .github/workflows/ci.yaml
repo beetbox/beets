@@ -4,6 +4,12 @@ on:
   push:
     branches:
       - master
+
+concurrency:
+  # Cancel previous workflow run when a new commit is pushed to a feature branch
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 env:
   PY_COLORS: 1
 
