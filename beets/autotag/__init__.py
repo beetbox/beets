@@ -16,15 +16,16 @@
 
 from __future__ import annotations
 
+import warnings
+from importlib import import_module
 from typing import TYPE_CHECKING, Union
 
 from beets import config, logging
-from beets.util import get_most_common_tags as current_metadata
 
 # Parts of external interface.
 from beets.util import unique_list
 
-from .distance import Distance
+from ..util import deprecate_imports
 from .hooks import AlbumInfo, AlbumMatch, TrackInfo, TrackMatch
 from .match import Proposal, Recommendation, tag_album, tag_item
 
@@ -33,10 +34,27 @@ if TYPE_CHECKING:
 
     from beets.library import Album, Item, LibModel
 
+
+def __getattr__(name: str):
+    if name == "current_metadata":
+        warnings.warn(
+            (
+                f"'beets.autotag.{name}' is deprecated and will be removed in"
+                " 3.0.0. Use 'beets.util.get_most_common_tags' instead."
+            ),
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return import_module("beets.util").get_most_common_tags
+
+    return deprecate_imports(
+        __name__, {"Distance": "beets.autotag.distance"}, name, "3.0.0"
+    )
+
+
 __all__ = [
     "AlbumInfo",
     "AlbumMatch",
-    "Distance",  # for backwards compatibility
     "Proposal",
     "Recommendation",
     "TrackInfo",
@@ -44,7 +62,6 @@ __all__ = [
     "apply_album_metadata",
     "apply_item_metadata",
     "apply_metadata",
-    "current_metadata",  # for backwards compatibility
     "tag_album",
     "tag_item",
 ]
