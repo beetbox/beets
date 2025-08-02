@@ -226,7 +226,7 @@ class MissingPlugin(BeetsPlugin):
             for track_info in album_info.tracks:
                 if track_info.track_id not in item_mbids:
                     self._log.debug(
-                        "track {0} in album {1}",
+                        "track {} in album {}",
                         track_info.track_id,
                         album_info.album_id,
                     )

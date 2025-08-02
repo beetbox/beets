@@ -288,7 +288,7 @@ class ConvertPlugin(BeetsPlugin):
         quiet = self.config["quiet"].get(bool)
 
         if not quiet and not pretend:
-            self._log.info("Encoding {0}", util.displayable_path(source))
+            self._log.info("Encoding {}", util.displayable_path(source))
 
         command = os.fsdecode(command)
         source = os.fsdecode(source)
@@ -307,7 +307,7 @@ class ConvertPlugin(BeetsPlugin):
             encode_cmd.append(os.fsdecode(args[i]))
 
         if pretend:
-            self._log.info("{0}", " ".join(args))
+            self._log.info("{}", " ".join(args))
             return
 
         try:
@@ -315,11 +315,11 @@ class ConvertPlugin(BeetsPlugin):
         except subprocess.CalledProcessError as exc:
             # Something went wrong (probably Ctrl+C), remove temporary files
             self._log.info(
-                "Encoding {0} failed. Cleaning up...",
+                "Encoding {} failed. Cleaning up...",
                 util.displayable_path(source),
             )
             self._log.debug(
-                "Command {0} exited with status {1}: {2}",
+                "Command {} exited with status {}: {}",
                 args,
                 exc.returncode,
                 exc.output,
@@ -334,7 +334,7 @@ class ConvertPlugin(BeetsPlugin):
 
         if not quiet and not pretend:
             self._log.info(
-                "Finished encoding {0}", util.displayable_path(source)
+                "Finished encoding {}", util.displayable_path(source)
             )
 
     def convert_item(
@@ -362,7 +362,7 @@ class ConvertPlugin(BeetsPlugin):
             try:
                 mediafile.MediaFile(util.syspath(item.path))
             except mediafile.UnreadableFileError as exc:
-                self._log.error("Could not open file to convert: {0}", exc)
+                self._log.error("Could not open file to convert: {}", exc)
                 continue
 
             # When keeping the new file in the library, we first move the
@@ -388,7 +388,7 @@ class ConvertPlugin(BeetsPlugin):
 
             if os.path.exists(util.syspath(dest)):
                 self._log.info(
-                    "Skipping {0} (target file exists)",
+                    "Skipping {} (target file exists)",
                     util.displayable_path(item.path),
                 )
                 continue
@@ -396,13 +396,13 @@ class ConvertPlugin(BeetsPlugin):
             if keep_new:
                 if pretend:
                     self._log.info(
-                        "mv {0} {1}",
+                        "mv {} {}",
                         util.displayable_path(item.path),
                         util.displayable_path(original),
                     )
                 else:
                     self._log.info(
-                        "Moving to {0}", util.displayable_path(original)
+                        "Moving to {}", util.displayable_path(original)
                     )
                     util.move(item.path, original)
 
@@ -418,10 +418,10 @@ class ConvertPlugin(BeetsPlugin):
                     msg = "ln" if hardlink else ("ln -s" if link else "cp")
 
                     self._log.info(
-                        "{2} {0} {1}",
+                        "{} {} {}",
+                        msg,
                         util.displayable_path(original),
                         util.displayable_path(converted),
-                        msg,
                     )
                 else:
                     # No transcoding necessary.
@@ -432,7 +432,7 @@ class ConvertPlugin(BeetsPlugin):
                     )
 
                     self._log.info(
-                        "{1} {0}", util.displayable_path(item.path), msg
+                        "{} {}", msg, util.displayable_path(item.path)
                     )
 
                     if hardlink:
@@ -523,7 +523,7 @@ class ConvertPlugin(BeetsPlugin):
 
         if os.path.exists(util.syspath(dest)):
             self._log.info(
-                "Skipping {0} (target file exists)",
+                "Skipping {} (target file exists)",
                 util.displayable_path(album.artpath),
             )
             return
@@ -534,7 +534,7 @@ class ConvertPlugin(BeetsPlugin):
         # Either copy or resize (while copying) the image.
         if maxwidth is not None:
             self._log.info(
-                "Resizing cover art from {0} to {1}",
+                "Resizing cover art from {} to {}",
                 util.displayable_path(album.artpath),
                 util.displayable_path(dest),
             )
@@ -545,10 +545,10 @@ class ConvertPlugin(BeetsPlugin):
                 msg = "ln" if hardlink else ("ln -s" if link else "cp")
 
                 self._log.info(
-                    "{2} {0} {1}",
+                    "{} {} {}",
+                    msg,
                     util.displayable_path(album.artpath),
                     util.displayable_path(dest),
-                    msg,
                 )
             else:
                 msg = (
@@ -558,10 +558,10 @@ class ConvertPlugin(BeetsPlugin):
                 )
 
                 self._log.info(
-                    "{2} cover art from {0} to {1}",
+                    "{} cover art from {} to {}",
+                    msg,
                     util.displayable_path(album.artpath),
                     util.displayable_path(dest),
-                    msg,
                 )
                 if hardlink:
                     util.hardlink(album.artpath, dest)
@@ -622,7 +622,7 @@ class ConvertPlugin(BeetsPlugin):
             # Playlist paths are understood as relative to the dest directory.
             pl_normpath = util.normpath(playlist)
             pl_dir = os.path.dirname(pl_normpath)
-            self._log.info("Creating playlist file {0}", pl_normpath)
+            self._log.info("Creating playlist file {}", pl_normpath)
             # Generates a list of paths to media files, ensures the paths are
             # relative to the playlist's location and translates the unicode
             # strings we get from item.destination to bytes.
@@ -672,7 +672,7 @@ class ConvertPlugin(BeetsPlugin):
             if self.config["delete_originals"]:
                 self._log.log(
                     logging.DEBUG if self.config["quiet"] else logging.INFO,
-                    "Removing original file {0}",
+                    "Removing original file {}",
                     source_path,
                 )
                 util.remove(source_path, False)

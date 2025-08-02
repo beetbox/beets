@@ -87,7 +87,7 @@ class ImportState:
             # unpickling, including ImportError. We use a catch-all
             # exception to avoid enumerating them all (the docs don't even have a
             # full list!).
-            log.debug("state file could not be read: {0}", exc)
+            log.debug("state file could not be read: {}", exc)
 
     def _save(self):
         try:
@@ -100,7 +100,7 @@ class ImportState:
                     f,
                 )
         except OSError as exc:
-            log.error("state file could not be written: {0}", exc)
+            log.error("state file could not be written: {}", exc)
 
     # -------------------------------- Tagprogress ------------------------------- #
 

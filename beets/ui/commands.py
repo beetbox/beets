@@ -1148,7 +1148,7 @@ class TerminalImportSession(importer.ImportSession):
         that's already in the library.
         """
         log.warning(
-            "This {0} is already in the library!",
+            "This {} is already in the library!",
             ("album" if task.is_album else "item"),
         )
 
@@ -1280,8 +1280,8 @@ class TerminalImportSession(importer.ImportSession):
                 dup_choices = [c for c in all_choices if c.short == short]
                 for c in dup_choices[1:]:
                     log.warning(
-                        "Prompt choice '{0}' removed due to conflict "
-                        "with '{1}' (short letter: '{2}')",
+                        "Prompt choice '{}' removed due to conflict "
+                        "with '{}' (short letter: '{}')",
                         c.long,
                         dup_choices[0].long,
                         c.short,
@@ -1639,7 +1639,7 @@ def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
             # Did the item change since last checked?
             if item.current_mtime() <= item.mtime:
                 log.debug(
-                    "skipping {0} because mtime is up to date ({1})",
+                    "skipping {} because mtime is up to date ({})",
                     displayable_path(item.path),
                     item.mtime,
                 )
@@ -1650,7 +1650,7 @@ def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
                 item.read()
             except library.ReadError as exc:
                 log.error(
-                    "error reading {0}: {1}", displayable_path(item.path), exc
+                    "error reading {}: {}", displayable_path(item.path), exc
                 )
                 continue
 
@@ -1692,7 +1692,7 @@ def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
                 continue
             album = lib.get_album(album_id)
             if not album:  # Empty albums have already been removed.
-                log.debug("emptied album {0}", album_id)
+                log.debug("emptied album {}", album_id)
                 continue
             first_item = album.items().get()
 
@@ -1703,7 +1703,7 @@ def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
 
             # Move album art (and any inconsistent items).
             if move and lib.directory in ancestry(first_item.path):
-                log.debug("moving album {0}", album_id)
+                log.debug("moving album {}", album_id)
 
                 # Manually moving and storing the album.
                 items = list(album.items())
@@ -2141,7 +2141,7 @@ def move_items(
     act = "copy" if copy else "move"
     entity = "album" if album else "item"
     log.info(
-        "{0} {1} {2}{3}{4}.",
+        "{} {} {}{}{}.",
         action,
         len(objs),
         entity,
@@ -2175,7 +2175,7 @@ def move_items(
             )
 
         for obj in objs:
-            log.debug("moving: {0}", util.displayable_path(obj.path))
+            log.debug("moving: {}", util.displayable_path(obj.path))
 
             if export:
                 # Copy without affecting the database.
@@ -2258,16 +2258,14 @@ def write_items(lib, query, pretend, force):
     for item in items:
         # Item deleted?
         if not os.path.exists(syspath(item.path)):
-            log.info("missing file: {0}", util.displayable_path(item.path))
+            log.info("missing file: {}", util.displayable_path(item.path))
             continue
 
         # Get an Item object reflecting the "clean" (on-disk) state.
         try:
             clean_item = library.Item.from_path(item.path)
         except library.ReadError as exc:
-            log.error(
-                "error reading {0}: {1}", displayable_path(item.path), exc
-            )
+            log.error("error reading {}: {}", displayable_path(item.path), exc)
             continue
 
         # Check for and display changes.

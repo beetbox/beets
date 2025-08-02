@@ -196,7 +196,7 @@ class EmbyUpdate(BeetsPlugin):
             # Get authentication token.
             token = get_token(host, port, headers, auth_data)
             if not token:
-                self._log.warning("Could not get token for user {0}", username)
+                self._log.warning("Could not get token for user {}", username)
                 return
 
         # Recreate headers with a token.

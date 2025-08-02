@@ -107,8 +107,8 @@ class SubsonicUpdate(BeetsPlugin):
         user = self.config["user"].as_str()
         auth = self.config["auth"].as_str()
         url = self.__format_url("startScan")
-        self._log.debug("URL is {0}", url)
-        self._log.debug("auth type is {0}", self.config["auth"])
+        self._log.debug("URL is {}", url)
+        self._log.debug("auth type is {}", self.config["auth"])
 
         if auth == "token":
             salt, token = self.__create_token()
@@ -153,6 +153,6 @@ class SubsonicUpdate(BeetsPlugin):
                 error_message = json["subsonic-response"]["error"]["message"]
                 self._log.error(f"Error: {error_message}")
             else:
-                self._log.error("Error: {0}", json)
+                self._log.error("Error: {}", json)
         except Exception as error:
             self._log.error(f"Error: {error}")

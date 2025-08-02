@@ -109,16 +109,16 @@ class ThumbnailsPlugin(BeetsPlugin):
         uri_getter = GioURI()
         if not uri_getter.available:
             uri_getter = PathlibURI()
-        self._log.debug("using {0.name} to compute URIs", uri_getter)
+        self._log.debug("using {.name} to compute URIs", uri_getter)
         self.get_uri = uri_getter.uri
 
         return True
 
     def process_album(self, album):
         """Produce thumbnails for the album folder."""
-        self._log.debug("generating thumbnail for {0}", album)
+        self._log.debug("generating thumbnail for {}", album)
         if not album.artpath:
-            self._log.info("album {0} has no art", album)
+            self._log.info("album {} has no art", album)
             return
 
         if self.config["dolphin"]:
@@ -127,7 +127,7 @@ class ThumbnailsPlugin(BeetsPlugin):
         size = ArtResizer.shared.get_size(album.artpath)
         if not size:
             self._log.warning(
-                "problem getting the picture size for {0}", album.artpath
+                "problem getting the picture size for {}", album.artpath
             )
             return
 
@@ -137,9 +137,9 @@ class ThumbnailsPlugin(BeetsPlugin):
         wrote &= self.make_cover_thumbnail(album, 128, NORMAL_DIR)
 
         if wrote:
-            self._log.info("wrote thumbnail for {0}", album)
+            self._log.info("wrote thumbnail for {}", album)
         else:
-            self._log.info("nothing to do for {0}", album)
+            self._log.info("nothing to do for {}", album)
 
     def make_cover_thumbnail(self, album, size, target_dir):
         """Make a thumbnail of given size for `album` and put it in
@@ -154,16 +154,16 @@ class ThumbnailsPlugin(BeetsPlugin):
         ):
             if self.config["force"]:
                 self._log.debug(
-                    "found a suitable {1}x{1} thumbnail for {0}, "
+                    "found a suitable {0}x{0} thumbnail for {1}, "
                     "forcing regeneration",
-                    album,
                     size,
+                    album,
                 )
             else:
                 self._log.debug(
-                    "{1}x{1} thumbnail for {0} exists and is recent enough",
-                    album,
+                    "{0}x{0} thumbnail for {1} exists and is recent enough",
                     size,
+                    album,
                 )
                 return False
         resized = ArtResizer.shared.resize(size, album.artpath, target)
@@ -192,7 +192,7 @@ class ThumbnailsPlugin(BeetsPlugin):
             ArtResizer.shared.write_metadata(image_path, metadata)
         except Exception:
             self._log.exception(
-                "could not write metadata to {0}", displayable_path(image_path)
+                "could not write metadata to {}", displayable_path(image_path)
             )
 
     def make_dolphin_cover_thumbnail(self, album):
@@ -204,7 +204,7 @@ class ThumbnailsPlugin(BeetsPlugin):
             f.write("[Desktop Entry]\n")
             f.write(f"Icon=./{artfile.decode('utf-8')}")
             f.close()
-        self._log.debug("Wrote file {0}", displayable_path(outfilename))
+        self._log.debug("Wrote file {}", displayable_path(outfilename))
 
 
 class URIGetter:

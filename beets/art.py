@@ -39,7 +39,7 @@ def get_art(log, item):
         mf = mediafile.MediaFile(syspath(item.path))
     except mediafile.UnreadableFileError as exc:
         log.warning(
-            "Could not extract art from {0}: {1}",
+            "Could not extract art from {}: {}",
             displayable_path(item.path),
             exc,
         )
@@ -83,10 +83,10 @@ def embed_item(
 
     # Get the `Image` object from the file.
     try:
-        log.debug("embedding {0}", displayable_path(imagepath))
+        log.debug("embedding {}", displayable_path(imagepath))
         image = mediafile_image(imagepath, maxwidth)
     except OSError as exc:
-        log.warning("could not read image file: {0}", exc)
+        log.warning("could not read image file: {}", exc)
         return
 
     # Make sure the image kind is safe (some formats only support PNG
@@ -110,11 +110,11 @@ def embed_album(
     """Embed album art into all of the album's items."""
     imagepath = album.artpath
     if not imagepath:
-        log.info("No album art present for {0}", album)
+        log.info("No album art present for {}", album)
         return
     if not os.path.isfile(syspath(imagepath)):
         log.info(
-            "Album art not found at {0} for {1}",
+            "Album art not found at {} for {}",
             displayable_path(imagepath),
             album,
         )
@@ -122,7 +122,7 @@ def embed_album(
     if maxwidth:
         imagepath = resize_image(log, imagepath, maxwidth, quality)
 
-    log.info("Embedding album art into {0}", album)
+    log.info("Embedding album art into {}", album)
 
     for item in album.items():
         embed_item(
@@ -143,7 +143,7 @@ def resize_image(log, imagepath, maxwidth, quality):
     specified quality level.
     """
     log.debug(
-        "Resizing album art to {0} pixels wide and encoding at quality level {1}",
+        "Resizing album art to {} pixels wide and encoding at quality level {}",
         maxwidth,
         quality,
     )
@@ -183,18 +183,18 @@ def extract(log, outpath, item):
     art = get_art(log, item)
     outpath = bytestring_path(outpath)
     if not art:
-        log.info("No album art present in {0}, skipping.", item)
+        log.info("No album art present in {}, skipping.", item)
         return
 
     # Add an extension to the filename.
     ext = mediafile.image_extension(art)
     if not ext:
-        log.warning("Unknown image type in {0}.", displayable_path(item.path))
+        log.warning("Unknown image type in {}.", displayable_path(item.path))
         return
     outpath += bytestring_path(f".{ext}")
 
     log.info(
-        "Extracting album art from: {0} to: {1}",
+        "Extracting album art from: {} to: {}",
         item,
         displayable_path(outpath),
     )
@@ -212,7 +212,7 @@ def extract_first(log, outpath, items):
 
 def clear(log, lib, query):
     items = lib.items(query)
-    log.info("Clearing album art from {0} items", len(items))
+    log.info("Clearing album art from {} items", len(items))
     for item in items:
-        log.debug("Clearing art for {0}", item)
+        log.debug("Clearing art for {}", item)
         item.try_write(tags={"images": None})

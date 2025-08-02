@@ -48,8 +48,8 @@ class ListenBrainzPlugin(BeetsPlugin):
             found_total += found
             unknown_total += unknown
         log.info("... done!")
-        log.info("{0} unknown play-counts", unknown_total)
-        log.info("{0} play-counts imported", found_total)
+        log.info("{} unknown play-counts", unknown_total)
+        log.info("{} play-counts imported", found_total)
 
     def _make_request(self, url, params=None):
         """Makes a request to the ListenBrainz API."""

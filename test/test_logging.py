@@ -42,7 +42,7 @@ class LoggingTest(unittest.TestCase):
         logger.addHandler(handler)
         logger.propagate = False
 
-        logger.warning("foo {0} {bar}", "oof", bar="baz")
+        logger.warning("foo {} {bar}", "oof", bar="baz")
         handler.flush()
         assert stream.getvalue(), "foo oof baz"
 
