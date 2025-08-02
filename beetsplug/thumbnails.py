@@ -154,16 +154,16 @@ class ThumbnailsPlugin(BeetsPlugin):
         ):
             if self.config["force"]:
                 self._log.debug(
-                    "found a suitable {1}x{1} thumbnail for {0}, "
+                    "found a suitable {0}x{0} thumbnail for {1}, "
                     "forcing regeneration",
-                    album,
                     size,
+                    album,
                 )
             else:
                 self._log.debug(
-                    "{1}x{1} thumbnail for {0} exists and is recent enough",
-                    album,
+                    "{0}x{0} thumbnail for {1} exists and is recent enough",
                     size,
+                    album,
                 )
                 return False
         resized = ArtResizer.shared.resize(size, album.artpath, target)

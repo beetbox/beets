@@ -1120,7 +1120,7 @@ class AudioToolsBackend(Backend):
             )
             track_gains.append(Gain(gain=rg_track_gain, peak=rg_track_peak))
             self._log.debug(
-                "ReplayGain for track {}: {1:.2f}, {2:.2f}",
+                "ReplayGain for track {}: {.2f}, {.2f}",
                 item,
                 rg_track_gain,
                 rg_track_peak,
@@ -1133,7 +1133,7 @@ class AudioToolsBackend(Backend):
             rg_album_gain, task.target_level
         )
         self._log.debug(
-            "ReplayGain for album {}: {1:.2f}, {2:.2f}",
+            "ReplayGain for album {}: {.2f}, {.2f}",
             task.items[0].album,
             rg_album_gain,
             rg_album_peak,

@@ -417,10 +417,10 @@ class ConvertPlugin(BeetsPlugin):
                     msg = "ln" if hardlink else ("ln -s" if link else "cp")
 
                     self._log.info(
-                        "{2} {0} {1}",
+                        "{} {} {}",
+                        msg,
                         util.displayable_path(original),
                         util.displayable_path(converted),
-                        msg,
                     )
                 else:
                     # No transcoding necessary.
@@ -431,7 +431,7 @@ class ConvertPlugin(BeetsPlugin):
                     )
 
                     self._log.info(
-                        "{1} {0}", util.displayable_path(item.path), msg
+                        "{} {}", msg, util.displayable_path(item.path)
                     )
 
                     if hardlink:
@@ -544,10 +544,10 @@ class ConvertPlugin(BeetsPlugin):
                 msg = "ln" if hardlink else ("ln -s" if link else "cp")
 
                 self._log.info(
-                    "{2} {0} {1}",
+                    "{} {} {}",
+                    msg,
                     util.displayable_path(album.artpath),
                     util.displayable_path(dest),
-                    msg,
                 )
             else:
                 msg = (
@@ -557,10 +557,10 @@ class ConvertPlugin(BeetsPlugin):
                 )
 
                 self._log.info(
-                    "{2} cover art from {0} to {1}",
+                    "{} cover art from {} to {}",
+                    msg,
                     util.displayable_path(album.artpath),
                     util.displayable_path(dest),
-                    msg,
                 )
                 if hardlink:
                     util.hardlink(album.artpath, dest)

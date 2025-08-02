@@ -285,10 +285,10 @@ class ImportTask(BaseImportTask):
         for field, view in config["import"]["set_fields"].items():
             value = str(view.get())
             log.debug(
-                "Set field {1}={2} for {0}",
-                util.displayable_path(self.paths),
+                "Set field {}={} for {}",
                 field,
                 value,
+                util.displayable_path(self.paths),
             )
             self.album.set_parse(field, format(self.album, value))
             for item in items:
@@ -747,10 +747,10 @@ class SingletonImportTask(ImportTask):
         for field, view in config["import"]["set_fields"].items():
             value = str(view.get())
             log.debug(
-                "Set field {1}={2} for {0}",
-                util.displayable_path(self.paths),
+                "Set field {}={} for {}",
                 field,
                 value,
+                util.displayable_path(self.paths),
             )
             self.item.set_parse(field, format(self.item, value))
         self.item.store()
