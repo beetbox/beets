@@ -42,16 +42,17 @@ Subsequent runs will not require re-authorization.
 Authentication via Personal Access Token
 ````````````````````````````````````````
 
-As an alternative to OAuth, you can get a token from Discogs and add it to
-your configuration.
-To get a personal access token (called a "user token" in the `python3-discogs-client`_
-documentation):
+As an alternative to OAuth, you can get a token from Discogs and add it to your
+configuration. To get a personal access token (called a "user token" in the
+`python3-discogs-client`_ documentation):
 
 #. login to `Discogs`_;
-#. visit the `Developer settings page <https://www.discogs.com/settings/developers>`_;
+#. visit the `Developer settings page
+   <https://www.discogs.com/settings/developers>`_;
 #. press the *Generate new token* button;
 #. copy the generated token;
-#. place it in your configuration in the ``discogs`` section as the ``user_token`` option:
+#. place it in your configuration in the ``discogs`` section as the
+   ``user_token`` option:
 
    .. code-block:: yaml
 
@@ -62,13 +63,13 @@ documentation):
 Configuration
 -------------
 
-This plugin can be configured like other metadata source plugins as described in :ref:`metadata-source-plugin-configuration`.
+This plugin can be configured like other metadata source plugins as described in
+:ref:`metadata-source-plugin-configuration`.
 
 There is one additional option in the ``discogs:`` section, ``index_tracks``.
-Index tracks (see the `Discogs guidelines
-<https://support.discogs.com/hc/en-us/articles/360005055373-Database-Guidelines-12-Tracklisting#Index_Tracks_And_Headings>`_),
-along with headers, mark divisions between distinct works on the same release
-or within works. When ``index_tracks`` is enabled:
+Index tracks (see the `Discogs guidelines`_) along with headers, mark divisions
+between distinct works on the same release or within works. When
+``index_tracks`` is enabled:
 
 .. code-block:: yaml
 
@@ -78,10 +79,7 @@ or within works. When ``index_tracks`` is enabled:
 beets will incorporate the names of the divisions containing each track into
 the imported track's title.
 
-For example, importing
-`this album
-<https://www.discogs.com/Handel-Sutherland-Kirkby-Kwella-Nelson-Watkinson-Bowman-Rolfe-Johnson-Elliott-Partridge-Thomas-The-A/release/2026070>`_
-would result in track names like:
+For example, importing `divisions album`_ would result in track names like:
 
 .. code-block:: text
 
@@ -111,11 +109,13 @@ Other configurations available under ``discogs:`` are:
 - **separator**: How to join multiple genre and style values from Discogs into
   a string.
   Default: ``", "``
-- **search_limit**: The maximum number of results to return from Discogs. This is
-  useful if you want to limit the number of results returned to speed up
+- **search_limit**: The maximum number of results to return from Discogs. This
+  is useful if you want to limit the number of results returned to speed up
   searches.
   Default: ``5``
 
+.. _Divisions album: https://www.discogs.com/Handel-Sutherland-Kirkby-Kwella-Nelson-Watkinson-Bowman-Rolfe-Johnson-Elliott-Partridge-Thomas-The-A/release/2026070
+.. _Discogs guidelines: https://support.discogs.com/hc/en-us/articles/360005055373-Database-Guidelines-12-Tracklisting#Index_Tracks_And_Headings
 
 Troubleshooting
 ---------------
@@ -132,6 +132,7 @@ Here are two things you can try:
   your request if your clock is too out of sync.
 
 Matching tracks by Discogs ID is not yet supported. The ``--group-albums``
-option in album import mode provides an alternative to singleton mode for autotagging tracks that are not in album-related folders.
+option in album import mode provides an alternative to singleton mode for
+autotagging tracks that are not in album-related folders.
 
 .. _python3-discogs-client: https://github.com/joalla/discogs_client

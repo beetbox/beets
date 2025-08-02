@@ -51,15 +51,16 @@ under a ``musicbrainz:`` header, like so
         ratelimit: 100
 
 The ``host`` key, of course, controls the Web server hostname (and port,
-optionally) that will be contacted by beets (default: musicbrainz.org).
-The ``https`` key makes the client use HTTPS instead of HTTP. This setting applies
-only to custom servers. The official MusicBrainz server always uses HTTPS. (Default: no.)
-The server must have search indices enabled (see `Building search indexes`_).
+optionally) that will be contacted by beets (default: musicbrainz.org). The
+``https`` key makes the client use HTTPS instead of HTTP. This setting applies
+only to custom servers. The official MusicBrainz server always uses HTTPS.
+(Default: no.) The server must have search indices enabled (see `Building search
+indexes`_).
 
-The ``ratelimit`` option, an integer, controls the number of Web service requests
-per second (default: 1). **Do not change the rate limit setting** if you're
-using the main MusicBrainz server---on this public server, you're `limited`_
-to one request per second.
+The ``ratelimit`` option, an integer, controls the number of Web service
+requests per second (default: 1). **Do not change the rate limit setting** if
+you're using the main MusicBrainz server---on this public server, you're
+`limited`_ to one request per second.
 
 .. _your own MusicBrainz database: https://musicbrainz.org/doc/MusicBrainz_Server/Setup
 .. _main server: https://musicbrainz.org/
@@ -72,11 +73,11 @@ enabled
 ~~~~~~~
 
 .. deprecated:: 2.3
-  Add `musicbrainz` to the `plugins` list instead.
+  Add ``musicbrainz`` to the ``plugins`` list instead.
 
-This option allows you to disable using MusicBrainz as a metadata source. This applies
-if you use plugins that fetch data from alternative sources and should make the import
-process quicker.
+This option allows you to disable using MusicBrainz as a metadata source. This
+applies if you use plugins that fetch data from alternative sources and should
+make the import process quicker.
 
 Default: ``yes``.
 

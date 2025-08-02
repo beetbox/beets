@@ -63,7 +63,7 @@ file. The available options are:
   still be considered valid. This can be done either in pixels
   (``enforce_ratio: 10px``) or as a percentage of the longer edge
   (``enforce_ratio: 0.5%``). Default: ``no``.
-- **sources**: List of sources to search for images. An asterisk `*` expands
+- **sources**: List of sources to search for images. An asterisk ``*`` expands
   to all available sources.
   Default: ``filesystem coverart itunes amazon albumart``, i.e., everything but
   ``wikipedia``, ``google``, ``fanarttv`` and ``lastfm``. Enable those sources
@@ -143,8 +143,8 @@ be processed; otherwise, the command processes every album in your library.
 Display Only Missing Album Art
 ------------------------------
 
-Use the ``fetchart`` command with the ``-q`` switch in order to display only missing
-art::
+Use the ``fetchart`` command with the ``-q`` switch in order to display only
+missing art::
 
     $ beet fetchart [-q] [query]
 
@@ -157,12 +157,13 @@ fetched, or for which artwork could not be found will be printed.
 Image Resizing
 --------------
 
-Beets can resize images using `Pillow`_, `ImageMagick`_, or a server-side resizing
-proxy. If either Pillow or ImageMagick is installed, beets will use those;
-otherwise, it falls back to the resizing proxy. If the resizing proxy is used,
-no resizing is performed for album art found on the filesystem---only downloaded
-art is resized. Server-side resizing can also be slower than local resizing, so
-consider installing one of the two backends for better performance.
+Beets can resize images using `Pillow`_, `ImageMagick`_, or a server-side
+resizing proxy. If either Pillow or ImageMagick is installed, beets will use
+those; otherwise, it falls back to the resizing proxy. If the resizing proxy is
+used, no resizing is performed for album art found on the filesystem---only
+downloaded art is resized. Server-side resizing can also be slower than local
+resizing, so consider installing one of the two backends for better
+performance.
 
 When using ImageMagick, beets looks for the ``convert`` executable in your path.
 On some versions of Windows, the program can be shadowed by a system-provided
@@ -258,7 +259,8 @@ the list of sources in your configuration.
 Spotify
 '''''''
 
-Spotify backend is enabled by default and will update album art if a valid Spotify album id is found.
+Spotify backend is enabled by default and will update album art if a valid
+Spotify album id is found.
 
 .. _pip: https://pip.pypa.io
 .. _BeautifulSoup: https://www.crummy.com/software/BeautifulSoup/bs4/doc/
@@ -266,10 +268,10 @@ Spotify backend is enabled by default and will update album art if a valid Spoti
 Cover Art URL
 '''''''''''''
 
-The `fetchart` plugin can also use a flexible attribute field ``cover_art_url``
-where you can manually specify the image URL to be used as cover art. Any custom
-plugin can use this field to provide the cover art and ``fetchart`` will use it
-as a source.
+The ``fetchart`` plugin can also use a flexible attribute field
+``cover_art_url`` where you can manually specify the image URL to be used as
+cover art. Any custom plugin can use this field to provide the cover art and
+``fetchart`` will use it as a source.
 
 .. _cover-art-archive-maxwidth:
 
@@ -277,8 +279,8 @@ Cover Art Archive Pre-sized Thumbnails
 --------------------------------------
 
 The CAA provides pre-sized thumbnails of width 250, 500, and 1200 pixels. If you
-set the `maxwidth` option to one of these values, the corresponding image will
-be downloaded, saving `beets` the need to scale down the image. It can also
+set the ``maxwidth`` option to one of these values, the corresponding image will
+be downloaded, saving ``beets`` the need to scale down the image. It can also
 speed up the downloading process, as some cover arts can sometimes be very
 large.
 

@@ -22,7 +22,8 @@ that using an ``emby`` section in your ``config.yaml``
         username: user
         apikey: apikey
 
-With that all in place, you'll see beets send the "update" command to your Emby server every time you change your beets library.
+With that all in place, you'll see beets send the "update" command to your Emby
+server every time you change your beets library.
 
 .. _Emby: https://emby.media/
 
@@ -31,11 +32,13 @@ Configuration
 
 The available options under the ``emby:`` section are:
 
-- **host**: The Emby server host. You also can include ``http://`` or ``https://``.
+- **host**: The Emby server host. You also can include ``http://`` or
+  ``https://``.
   Default: ``localhost``
 - **port**: The Emby server port.
   Default: 8096
-- **username**: A username of an Emby user that is allowed to refresh the library.
+- **username**: A username of an Emby user that is allowed to refresh the
+  library.
 - **userid**: A user ID of an Emby user that is allowed to refresh the library.
   (This is only necessary for private users i.e. when the user is hidden from
   login screens)

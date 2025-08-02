@@ -181,8 +181,8 @@ shell).
 Numeric Range Queries
 ---------------------
 
-For numeric fields, such as year, bitrate, and track, you can query using one-
-or two-sided intervals. That is, you can find music that falls within a
+For numeric fields, such as year, bitrate, and track, you can query using
+one-or two-sided intervals. That is, you can find music that falls within a
 *range* of values. To use ranges, write a query that has two dots (``..``) at
 the beginning, middle, or end of a string of numbers. Dots in the beginning
 let you specify a maximum (e.g., ``..7``); dots at the end mean a minimum
@@ -343,7 +343,7 @@ filesystem.
 Sort Order
 ----------
 
-Queries can specify a sort order. Use the name of the `field` you want to sort
+Queries can specify a sort order. Use the name of the ``field`` you want to sort
 on, followed by a ``+`` or ``-`` sign to indicate ascending or descending
 sort. For example, this command::
 

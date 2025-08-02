@@ -1,9 +1,9 @@
 Key Finder Plugin
 =================
 
-The `keyfinder` plugin uses either the `KeyFinder`_ or `keyfinder-cli`_
+The ``keyfinder`` plugin uses either the `KeyFinder`_ or `keyfinder-cli`_
 program to  detect the musical key of a track from its audio data and store
-it in the `initial_key` field of your database.  It does so
+it in the ``initial_key`` field of your database.  It does so
 automatically when importing music or through the ``beet keyfinder
 [QUERY]`` command.
 
@@ -28,7 +28,7 @@ configuration file. The available options are:
   If using `keyfinder-cli`_, the binary must be named ``keyfinder-cli``.
   Default: ``KeyFinder`` (i.e., search for the program in your ``$PATH``)..
 - **overwrite**: Calculate a key even for files that already have an
-  `initial_key` value.
+  ``initial_key`` value.
   Default: ``no``.
 
 .. _KeyFinder: http://www.ibrahimshaath.co.uk/keyfinder/

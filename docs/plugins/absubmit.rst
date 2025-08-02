@@ -25,7 +25,7 @@ Then, install ``beets`` with ``absubmit`` extra
 
     pip install "beets[absubmit]"
 
-Lastly, enable the plugin in your configuration (see :ref:`using-plugins`). 
+Lastly, enable the plugin in your configuration (see :ref:`using-plugins`).
 
 
 Submitting Data

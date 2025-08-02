@@ -16,7 +16,8 @@ Why Use This Plugin?
 --------------------
 
 * You're a Beets user and Spotify user already.
-* You have playlists or albums you'd like to make available in Spotify from Beets without having to search for each artist/album/track.
+* You have playlists or albums you'd like to make available in Spotify from
+  Beets without having to search for each artist/album/track.
 * You want to check which tracks in your library are available on Spotify.
 * You want to autotag music with metadata from the Spotify API.
 * You want to obtain track popularity and audio features (e.g., danceability)
@@ -53,7 +54,8 @@ prompt during import::
 Configuration
 -------------
 
-This plugin can be configured like other metadata source plugins as described in :ref:`metadata-source-plugin-configuration`. In addition, the following
+This plugin can be configured like other metadata source plugins as described in
+:ref:`metadata-source-plugin-configuration`. In addition, the following
 configuration options are provided.
 
 The default options should work as-is, but there are some options you can put
@@ -83,11 +85,11 @@ in config.yaml under the ``spotify:`` section:
   track/album/artist fields before sending them to Spotify.  Can be useful for
   changing certain abbreviations, like ft. -> feat.  See the examples below.
   Default: None.
-- **search_query_ascii**: If set to ``yes``, the search query will be converted to
-  ASCII before being sent to Spotify. Converting searches to ASCII can
-  enhance search results in some cases, but in general, it is not recommended. 
-  For instance `artist:deadmau5 album:4×4` will be converted to 
-  `artist:deadmau5 album:4x4` (notice `×!=x`).
+- **search_query_ascii**: If set to ``yes``, the search query will be converted
+  to ASCII before being sent to Spotify. Converting searches to ASCII can
+  enhance search results in some cases, but in general, it is not recommended.
+  For instance ``artist:deadmau5 album:4×4`` will be converted to
+  ``artist:deadmau5 album:4x4`` (notice ``×!=x``).
   Default: ``no``.
 
 

@@ -53,7 +53,8 @@ With path formats configured like::
         comp: Various Artists/$album [$year]$atypes/...
 
 
-The default plugin configuration generates paths that look like this, for example::
+The default plugin configuration generates paths that look like this, for
+example::
 
     Aphex Twin/[1993][EP][Remix] On Remixes
     Pink Floyd/[1995][Live] p·u·l·s·e

@@ -65,9 +65,9 @@ Directories passed to the import command can contain either a single
 album or many, in which case the leaf directories will be considered
 albums (the latter case is true of typical Artist/Album organizations
 and many people's "downloads" folders). The path can also be a single
-song or an archive. Beets supports `zip` and `tar` archives out of the
-box. To extract `rar` files, install the `rarfile`_ package and the
-`unrar` command. To extract `7z` files, install the `py7zr`_ package.
+song or an archive. Beets supports ``zip`` and ``tar`` archives out of the
+box. To extract ``rar`` files, install the `rarfile`_ package and the
+``unrar`` command. To extract ``7z`` files, install the `py7zr`_ package.
 
 Optional command flags:
 
@@ -95,7 +95,7 @@ Optional command flags:
   normal autotagger mode would ask for confirmation, the quiet mode
   performs a fallback action that can be configured using the
   ``quiet_fallback`` configuration or ``--quiet-fallback`` CLI option.
-  By default it pessimistically ``skip``s the file.
+  By default it pessimistically skips the file.
   Alternatively, it can be used as is, by configuring ``asis``.
 
 * Speaking of resuming interrupted imports, the tagger will prompt you if it
@@ -116,7 +116,7 @@ Optional command flags:
   ``incremental`` configuration option.
 
 * If you don't want to record skipped files during an *incremental* import, use
-  the ``--incremental-skip-later`` flag which corresponds to the 
+  the ``--incremental-skip-later`` flag which corresponds to the
   ``incremental_skip_later`` configuration option.
   Setting the flag prevents beets from persisting skip decisions during a
   non-interactive import so that a user can make a decision regarding
@@ -157,9 +157,10 @@ Optional command flags:
   searching for other candidates by using the ``--search-id SEARCH_ID`` option.
   Multiple IDs can be specified by simply repeating the option several times.
 
-* You can supply ``--set field=value`` to assign `field` to `value` on import.
-  Values support the same template syntax as beets'
-  :doc:`path formats <pathformat>`.
+* You can supply ``--set field=value`` to assign ``field`` to ``value`` on
+  import. Values support the same template syntax as beets' :doc:`path formats
+  <pathformat>`.
+
   These assignments will merge with (and possibly override) the
   :ref:`set_fields` configuration dictionary. You can use the option multiple
   times on the command line, like so::
@@ -246,21 +247,22 @@ remove
 Remove music from your library.
 
 This command uses the same :doc:`query <query>` syntax as the ``list`` command.
-By default, it just removes entries from the library database; it doesn't
-touch the files on disk. To actually delete the files, use the ``-d`` flag.
-When the ``-a`` flag is given, the command operates on albums instead of
-individual tracks.
+By default, it just removes entries from the library database; it doesn't touch
+the files on disk. To actually delete the files, use the ``-d`` flag. When the
+``-a`` flag is given, the command operates on albums instead of individual
+tracks.
 
-When you run the ``remove`` command, it prints a list of all
-affected items in the library and asks for your permission before removing
-them. You can then choose to abort (type `n`), confirm (`y`), or interactively
-choose some of the items (`s`). In the latter case, the command will prompt you
-for every matching item or album and invite you to type `y` to remove the
-item/album, `n` to keep it or `q` to exit and only remove the items/albums
-selected up to this point.
+When you run the ``remove`` command, it prints a list of all affected items in
+the library and asks for your permission before removing them. You can then
+choose to abort (type ``n``), confirm (``y``), or interactively choose some of
+the items (``s``). In the latter case, the command will prompt you for every
+matching item or album and invite you to type ``y`` to remove the item/album,
+``n`` to keep it or ``q`` to exit and only remove the items/albums selected up
+to this point.
+
 This option lets you choose precisely which tracks/albums to remove without
-spending too much time to carefully craft a query.
-If you do not want to be prompted at all, use the ``-f`` option.
+spending too much time to carefully craft a query. If you do not want to be
+prompted at all, use the ``-f`` option.
 
 .. _modify-cmd:
 
@@ -299,18 +301,17 @@ prevent this behavior, use ``-I``/``--noinherit``.
 Items will automatically be moved around when necessary if they're in your
 library directory, but you can disable that with  ``-M``. Tags will be written
 to the files according to the settings you have for imports, but these can be
-overridden with ``-w`` (write tags, the default) and ``-W`` (don't write
-tags).
+overridden with ``-w`` (write tags, the default) and ``-W`` (don't write tags).
 
-When you run the ``modify`` command, it prints a list of all
-affected items in the library and asks for your permission before making any
-changes. You can then choose to abort the change (type `n`), confirm
-(`y`), or interactively choose some of the items (`s`). In the latter case,
-the command will prompt you for every matching item or album and invite you to
-type `y` to apply the changes, `n` to discard them or `q` to exit and apply
-the selected changes. This option lets you choose precisely which data to
-change without spending too much time to carefully craft a query. To skip the
-prompts entirely, use the ``-y`` option.
+When you run the ``modify`` command, it prints a list of all affected items in
+the library and asks for your permission before making any changes. You can
+then choose to abort the change (type ``n``), confirm (``y``), or interactively
+choose some of the items (``s``). In the latter case, the command will prompt
+you for every matching item or album and invite you to type ``y`` to apply the
+changes, ``n`` to discard them or ``q`` to exit and apply the selected changes.
+This option lets you choose precisely which data to change without spending too
+much time to carefully craft a query. To skip the prompts entirely, use the
+``-y`` option.
 
 .. _move-cmd:
 
@@ -357,10 +358,10 @@ This will show you all the proposed changes but won't actually change anything
 on disk.
 
 By default, all the changed metadata will be populated back to the database.
-If you only want certain fields to be written, specify them with the ```-F```
+If you only want certain fields to be written, specify them with the ``-F``
 flags (which can be used multiple times). Alternatively, specify fields to *not*
-write with ```-e``` flags (which can be used multiple times). For the list of 
-supported fields, please see ```beet fields```.
+write with ``-e`` flags (which can be used multiple times). For the list of
+supported fields, please see ``beet fields``.
 
 When an updated track is part of an album, the album-level fields of *all*
 tracks from the album are also updated. (Specifically, the command copies
@@ -382,19 +383,20 @@ write
 
 Write metadata from the database into files' tags.
 
-When you make changes to the metadata stored in beets' library database
-(during import or with the :ref:`modify-cmd` command, for example), you often
-have the option of storing changes only in the database, leaving your files
-untouched. The ``write`` command lets you later change your mind and write the
-contents of the database into the files. By default, this writes the changes only if there is a difference between the database and the tags in the file.
+When you make changes to the metadata stored in beets' library database (during
+import or with the :ref:`modify-cmd` command, for example), you often have the
+option of storing changes only in the database, leaving your files untouched.
+The ``write`` command lets you later change your mind and write the contents of
+the database into the files. By default, this writes the changes only if there
+is a difference between the database and the tags in the file.
 
 You can think of this command as the opposite of :ref:`update-cmd`.
 
 The ``-p`` option previews metadata changes without actually applying them.
 
-The ``-f`` option forces a write to the file, even if the file tags match the database. This is useful for making sure that enabled plugins that run on write (e.g., the Scrub and Zero plugins) are run on the file.
-
-
+The ``-f`` option forces a write to the file, even if the file tags match the
+database. This is useful for making sure that enabled plugins that run on write
+(e.g., the Scrub and Zero plugins) are run on the file.
 
 .. _stats-cmd:
 
@@ -469,12 +471,12 @@ import ...``.
   in this config file will override the corresponding settings in your base
   configuration.
 * ``-p plugins``: specify a comma-separated list of plugins to enable. If
-  specified, the plugin list in your configuration is ignored. The long form
-  of this argument also allows specifying no plugins, effectively disabling
-  all plugins: ``--plugins=``.
+  specified, the plugin list in your configuration is ignored. The long form of
+  this argument also allows specifying no plugins, effectively disabling all
+  plugins: ``--plugins=``.
 * ``-P plugins``: specify a comma-separated list of plugins to disable in a
-  specific beets run. This will overwrite ``-p`` if used with it. To disable all plugins, use
-  ``--plugins=`` instead.
+  specific beets run. This will overwrite ``-p`` if used with it. To disable
+  all plugins, use ``--plugins=`` instead.
 
 Beets also uses the ``BEETSDIR`` environment variable to look for
 configuration and data.
@@ -522,7 +524,7 @@ zsh
 ```
 
 If you use zsh, take a look at the included `completion script`_. The script
-should be placed in a directory that is part of your ``fpath``, and `not`
+should be placed in a directory that is part of your ``fpath``, and ``not``
 sourced in your ``.zshrc``. Running ``echo $fpath`` will give you a list of
 valid directories.
 

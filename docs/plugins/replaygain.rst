@@ -28,7 +28,8 @@ GStreamer
 
 To use `GStreamer`_ for ReplayGain analysis, you will of course need to
 install GStreamer and plugins for compatibility with your audio files.
-You will need at least GStreamer 1.0 and `PyGObject 3.x`_ (a.k.a. ``python-gi``).
+You will need at least GStreamer 1.0 and `PyGObject 3.x`_ (a.k.a.
+``python-gi``).
 
 .. _PyGObject 3.x: https://pygobject.readthedocs.io/en/latest/
 .. _GStreamer: https://gstreamer.freedesktop.org/
@@ -108,17 +109,16 @@ configuration file. The available options are:
 
 - **auto**: Enable ReplayGain analysis during import.
   Default: ``yes``.
-- **threads**: The number of parallel threads to run the analysis in. Overridden
-  by ``--threads`` at the command line.
+- **threads**: The number of parallel threads to run the analysis in.
+  Overridden by ``--threads`` at the command line.
   Default: # of logical CPU cores
-- **parallel_on_import**: Whether to enable parallel analysis during import.
-  As of now this ReplayGain data is not written to files properly, so this option
-  is disabled by default.
-  If you wish to enable it, remember to run ``beet write`` after importing to
-  actually write to the imported files.
+- **parallel_on_import**: Whether to enable parallel analysis during import. As
+  of now this ReplayGain data is not written to files properly, so this option
+  is disabled by default. If you wish to enable it, remember to run ``beet
+  write`` after importing to actually write to the imported files.
   Default: ``no``
-- **backend**: The analysis backend; either ``gstreamer``, ``command``, ``audiotools``
-  or ``ffmpeg``.
+- **backend**: The analysis backend; either ``gstreamer``, ``command``,
+  ``audiotools`` or ``ffmpeg``.
   Default: ``command``.
 - **overwrite**: On import, re-analyze files that already have ReplayGain tags.
   Note that, for historical reasons, the name of this option is somewhat
@@ -136,7 +136,8 @@ configuration file. The available options are:
   integer values instead of the common ``REPLAYGAIN_`` tags with floating point
   values. Requires the "ffmpeg" backend.
   Default: ``Opus``.
-- **per_disc**: Calculate album ReplayGain on disc level instead of album level.
+- **per_disc**: Calculate album ReplayGain on disc level instead of album
+  level.
   Default: ``no``
 
 These options only work with the "command" backend:
@@ -171,7 +172,8 @@ whether ReplayGain tags are written into the music files, or stored in the
 beets database only (the default is to use :ref:`the importer's configuration
 <config-import-write>`).
 
-To execute with a different number of threads, call ``beet replaygain --threads N``::
+To execute with a different number of threads, call ``beet replaygain --threads
+N``::
 
     $ beet replaygain --threads N [-Waf] [QUERY]
 

@@ -20,9 +20,9 @@ which looks like this::
 With that all in place, you'll see beets send the "update" command to your MPD
 server every time you change your beets library.
 
-If you want to communicate with MPD over a Unix domain socket instead over
-TCP, just give the path to the socket in the filesystem for the ``host``
-setting. (Any ``host`` value starting with a slash or a tilde is interpreted as a domain
+If you want to communicate with MPD over a Unix domain socket instead over TCP,
+just give the path to the socket in the filesystem for the ``host`` setting.
+(Any ``host`` value starting with a slash or a tilde is interpreted as a domain
 socket.)
 
 Configuration
@@ -31,7 +31,8 @@ Configuration
 The available options under the ``mpd:`` section are:
 
 - **host**: The MPD server name.
-  Default: The ``$MPD_HOST`` environment variable if set, falling back to ``localhost`` otherwise.
+  Default: The ``$MPD_HOST`` environment variable if set, falling back to
+  ``localhost`` otherwise.
 - **port**: The MPD server port.
   Default: The ``$MPD_PORT`` environment variable if set, falling back to 6600
   otherwise.

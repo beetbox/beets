@@ -8,8 +8,9 @@ as `JSON`_, `CSV`_, or `XML`_.
 .. _CSV: https://fileinfo.com/extension/csv
 .. _XML: https://fileinfo.com/extension/xml
 
-Enable the ``export`` plugin (see :ref:`using-plugins` for help). Then, type ``beet export`` followed by a :doc:`query </reference/query>` to get the data from
-your library. For example, run this::
+Enable the ``export`` plugin (see :ref:`using-plugins` for help). Then, type
+``beet export`` followed by a :doc:`query </reference/query>` to get the data
+from your library. For example, run this::
 
     $ beet export beatles
 
@@ -39,10 +40,10 @@ The ``export`` command has these command-line options:
 
 * ``--output`` or ``-o``: Path for an output file. If not informed, will print
   the data in the console.
-
 * ``--append``: Appends the data to the file instead of writing.
-
-* ``--format`` or ``-f``: Specifies the format the data will be exported as. If not informed, JSON will be used by default. The format options include csv, json, `jsonlines <https://jsonlines.org/>`_ and xml.
+* ``--format`` or ``-f``: Specifies the format the data will be exported as. If
+  not informed, JSON will be used by default. The format options include csv,
+  json, `jsonlines <https://jsonlines.org/>`_ and xml.
 
 Configuration
 -------------
@@ -61,8 +62,9 @@ Those options match the options from the `Python json module`_.
 Similarly, these options are available for the CSV format under the ``csv``
 key:
 
-- **delimiter**: Used as the separating character between fields. The default value is a comma (,).
-- **dialect**: The kind of CSV file to produce. The default is `excel`.
+- **delimiter**: Used as the separating character between fields. The default
+  value is a comma (,).
+- **dialect**: The kind of CSV file to produce. The default is ``excel``.
 
 These options match the options from the `Python csv module`_.
 

@@ -38,7 +38,8 @@ To use the ``kodiupdate`` plugin, first enable it in your configuration (see
 
 You'll also need to enable JSON-RPC in Kodi.
 
-In Kodi's interface, navigate to System/Settings/Network/Services and choose "Allow control of Kodi via HTTP."
+In Kodi's interface, navigate to System/Settings/Network/Services and choose
+"Allow control of Kodi via HTTP."
 
 With that all in place, you'll see beets send the "update" command to your Kodi
 host every time you change your beets library.

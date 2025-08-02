@@ -9,9 +9,9 @@ habits from `MPD`_.  It collects the following information about tracks:
 * ``last_played``:  UNIX timestamp when you last played this track.
 * ``rating``: A rating based on ``play_count`` and ``skip_count``.
 
-To gather these statistics it runs as an MPD client and watches the current state
-of MPD. This means that ``mpdstats`` needs to be running continuously for it to
-work.
+To gather these statistics it runs as an MPD client and watches the current
+state of MPD. This means that ``mpdstats`` needs to be running continuously for
+it to work.
 
 .. _MPD: https://www.musicpd.org/
 
@@ -50,16 +50,16 @@ configuration file. The available options are:
 - **music_directory**: If your MPD library is at a different location from the
   beets library (e.g., because one is mounted on a NFS share), specify the path
   here.
-- **strip_path**: If your MPD library contains local path, specify the part to remove
-  here. Combining this with **music_directory** you can mangle MPD path to match the 
-  beets library one.
+- **strip_path**: If your MPD library contains local path, specify the part to
+  remove here. Combining this with **music_directory** you can mangle MPD path
+  to match the beets library one.
   Default: The beets library directory.
 - **rating**: Enable rating updates.
   Default: ``yes``.
 - **rating_mix**: Tune the way rating is calculated (see below).
   Default: 0.75.
-- **played_ratio_threshold**: If a song was played for less than this percentage
-  of its duration it will be considered a skip.
+- **played_ratio_threshold**: If a song was played for less than this
+  percentage of its duration it will be considered a skip.
   Default: 0.85
 
 A Word on Ratings

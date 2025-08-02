@@ -49,5 +49,5 @@ specifics may vary from system to system):
     $ wget https://sqlite.org/2019/sqlite-src-3280000.zip
     $ unzip sqlite-src-3280000.zip
     $ cd sqlite-src-3280000/ext/icu
-    $ gcc -shared -fPIC icu.c `icu-config --ldflags` -o libicu.so
+    $ gcc -shared -fPIC icu.c $(icu-config --ldflags) -o libicu.so
     $ cp libicu.so ~/.config/beets

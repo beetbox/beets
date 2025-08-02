@@ -10,7 +10,8 @@ As an alternative the `beets-xtractor`_ plugin can be used.
 .. _AcousticBrainz: https://acousticbrainz.org/
 .. _beets-xtractor: https://github.com/adamjakab/BeetsPluginXtractor
 
-Enable the ``acousticbrainz`` plugin in your configuration (see :ref:`using-plugins`) and run it by typing::
+Enable the ``acousticbrainz`` plugin in your configuration (see
+:ref:`using-plugins`) and run it by typing::
 
     $ beet acousticbrainz [-f] [QUERY]
 
