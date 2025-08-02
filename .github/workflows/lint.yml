@@ -131,8 +131,10 @@ jobs:
       - name: Install dependencies
         run: poetry install --extras=docs
 
-      - name: Add Sphinx problem matcher
-        run: echo "::add-matcher::.github/sphinx-problem-matcher.json"
+      - name: Add Sphinx problem matchers
+        run: |
+          echo "::add-matcher::.github/problem-matchers/sphinx-build.json"
+          echo "::add-matcher::.github/problem-matchers/sphinx-lint.json"
 
       - name: Lint docs
         run: poe lint-docs
