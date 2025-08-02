@@ -535,6 +535,7 @@ lyrics_pages = [
         Wonder how you manage to make ends meet.
         """,
         url_title="The Beatles - Lady Madonna",
+        marks=[xfail_on_ci("Sweetslyrics also fails with 403 FORBIDDEN in CI")],
     ),
     LyricsPage.make(
         "https://www.tekstowo.pl/piosenka,the_beatles,lady_madonna.html",
