@@ -129,8 +129,8 @@ jobs:
       - name: Add Sphinx problem matcher
         run: echo "::add-matcher::.github/sphinx-problem-matcher.json"
 
+      - name: Lint docs
+        run: poe lint-docs
+
       - name: Build docs
-        run: |-
-          poe docs |& tee /tmp/output
-          # fail the job if there are issues
-          grep -q " WARNING:" /tmp/output && exit 1 || exit 0
+        run: poe docs -e 'SPHINXOPTS=--fail-on-warning --keep-going'
