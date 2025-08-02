@@ -30,10 +30,10 @@ The definition of a range is somewhat loose, and multiple formats are allowed:
   alphanumeric characters in the string you provide. For example, ``ABCD``,
   ``A-D``, ``A->D``, and ``[AD]`` are all equivalent.
 - For year ranges: digits characters are extracted and the two extreme years
-  define the range. For example, ``1975-77``, ``1975,76,77`` and ``1975-1977`` are
-  equivalent. If no upper bound is given, the range is extended to current year
-  (unless a later range is defined). For example, ``1975`` encompasses all years
-  from 1975 until now.
+  define the range. For example, ``1975-77``, ``1975,76,77`` and ``1975-1977``
+  are equivalent. If no upper bound is given, the range is extended to current
+  year (unless a later range is defined). For example, ``1975`` encompasses all
+  years from 1975 until now.
 
 The ``%bucket`` template function guesses whether to use alpha- or year-style
 buckets depending on the text it receives. It can guess wrong if, for example,
@@ -52,7 +52,7 @@ The available options are:
   fields.
   Default: none.
 - **bucket_alpha_regex**: A ``range: regex`` mapping (one per line) where
-  ``range`` is one of the `bucket_alpha` ranges and ``value`` is  a regex that
+  ``range`` is one of the ``bucket_alpha`` ranges and ``value`` is  a regex that
   overrides original range definition.
   Default: none.
 - **bucket_year**: Ranges to use for all substitutions occurring on the
@@ -72,6 +72,6 @@ Here's an example::
          bucket_alpha_regex:
            'A - D': ^[0-9a-dA-D…äÄ]
 
-This configuration creates five-year ranges for any input year.
-The `A - D` bucket now matches also all artists starting with ä or Ä and 0 to 9
-and … (ellipsis). The other alpha buckets work as ranges.
+This configuration creates five-year ranges for any input year. The ``A - D``
+bucket now matches also all artists starting with ä or Ä and 0 to 9 and …
+(ellipsis). The other alpha buckets work as ranges.

@@ -75,11 +75,11 @@ Filenames are relative to the directory containing ``config.yaml``.
 pluginpath
 ~~~~~~~~~~
 
-Directories to search for plugins.  Each Python file or directory in a plugin
+Directories to search for plugins. Each Python file or directory in a plugin
 path represents a plugin and should define a subclass of :class:`BeetsPlugin`.
-A plugin can then be loaded by adding the filename to the `plugins` configuration.
-The plugin path can either be a single string or a list of strings---so, if you
-have multiple paths, format them as a YAML list like so::
+A plugin can then be loaded by adding the filename to the ``plugins``
+configuration. The plugin path can either be a single string or a list of
+strings---so, if you have multiple paths, format them as a YAML list like so::
 
     pluginpath:
         - /path/one
@@ -186,8 +186,8 @@ take place before applying the :ref:`replace` configuration and are roughly
 equivalent to wrapping all your path templates in the ``%asciify{}``
 :ref:`template function <template-functions>`.
 
-This uses the `unidecode module`_ which is language agnostic, so some 
-characters may be transliterated from a different language than expected. 
+This uses the `unidecode module`_ which is language agnostic, so some
+characters may be transliterated from a different language than expected.
 For example, Japanese kanji will usually use their Chinese readings.
 
 Default: ``no``.
@@ -228,7 +228,7 @@ command and other commands that need to print out items. Defaults to
 ``$artist - $album - $title``. The ``-f`` command-line option overrides
 this setting.
 
-It used to be named `list_format_item`.
+It used to be named ``list_format_item``.
 
 .. _list_format_album:
 .. _format_album:
@@ -240,7 +240,7 @@ Format to use when listing *albums* with :ref:`list-cmd` and other
 commands. Defaults to ``$albumartist - $album``. The ``-f`` command-line
 option overrides this setting.
 
-It used to be named `list_format_album`.
+It used to be named ``list_format_album``.
 
 .. _sort_item:
 
@@ -283,11 +283,12 @@ That is, if this option is turned on, then ``year`` will always equal
 overwrite_null
 ~~~~~~~~~~~~~~
 
-This confusingly-named option indicates which fields have meaningful `null` values.  If
-an album or track field is in the corresponding list, then an existing value for this
-field in an item in the database can be overwritten with `null`.  By default, however,
-`null` is interpreted as information about the field being unavailable, so it would not
-overwrite existing values.  For example::
+This confusingly-named option indicates which fields have meaningful ``null``
+values. If an album or track field is in the corresponding list, then an
+existing value for this field in an item in the database can be overwritten with
+``null``. By default, however, ``null`` is interpreted as information about the
+field being unavailable, so it would not overwrite existing values. For
+example::
 
     overwrite_null:
         album: ["albumid"]
@@ -382,7 +383,7 @@ clutter
 
 When beets imports all the files in a directory, it tries to remove the
 directory if it's empty. A directory is considered empty if it only contains
-files whose names match the glob patterns in `clutter`, which should be a list
+files whose names match the glob patterns in ``clutter``, which should be a list
 of strings. The default list consists of "Thumbs.DB" and ".DS_Store".
 
 The importer only removes recursively searched subdirectories---the top-level
@@ -434,9 +435,9 @@ support ANSI colors.
 
 .. note::
 
-    The `color` option was previously a top-level configuration. This is
+    The ``color`` option was previously a top-level configuration. This is
     still respected, but a deprecation message will be shown until your
-    top-level `color` configuration has been nested under `ui`.
+    top-level ``color`` configuration has been nested under ``ui``.
 
 .. _colors:
 
@@ -728,8 +729,8 @@ languages
 A list of locale names to search for preferred aliases. For example, setting
 this to ``en`` uses the transliterated artist name "Pyotr Ilyich Tchaikovsky"
 instead of the Cyrillic script for the composer's name when tagging from
-MusicBrainz. You can use a space-separated list of language abbreviations, like 
-``en jp es``, to specify a preference order. Defaults to an empty list, meaning 
+MusicBrainz. You can use a space-separated list of language abbreviations, like
+``en jp es``, to specify a preference order. Defaults to an empty list, meaning
 that no language is preferred.
 
 .. _ignored_alias_types:
@@ -739,7 +740,7 @@ ignored_alias_types
 
 A list of alias types to be ignored when importing new items.
 
-See the `MusicBrainz Documentation` for more information on aliases.
+See the ``MusicBrainz Documentation`` for more information on aliases.
 
 .._MusicBrainz Documentation: https://musicbrainz.org/doc/Aliases
 
@@ -801,11 +802,11 @@ Default::
 duplicate_action
 ~~~~~~~~~~~~~~~~
 
-Either ``skip``, ``keep``, ``remove``, ``merge`` or ``ask``. 
-Controls how duplicates are treated in import task. 
-"skip" means that new item(album or track) will be skipped; 
+Either ``skip``, ``keep``, ``remove``, ``merge`` or ``ask``.
+Controls how duplicates are treated in import task.
+"skip" means that new item(album or track) will be skipped;
 "keep" means keep both old and new items; "remove" means remove old
-item; "merge" means merge into one album; "ask" means the user 
+item; "merge" means merge into one album; "ask" means the user
 should be prompted for the action each time. The default is ``ask``.
 
 .. _duplicate_verbose_prompt:
@@ -991,7 +992,11 @@ the penalty name to the ``ignored`` setting::
 
 The available penalties are the same as those for the :ref:`max_rec` setting.
 
-For example, setting ``ignored: missing_tracks`` will skip any album matches where your audio files are missing some of the tracks. The importer will not attempt to display these matches. It does not ignore the fact that the album is missing tracks, which would allow these matches to apply more easily. To do that, you'll want to adjust the penalty for missing tracks.
+For example, setting ``ignored: missing_tracks`` will skip any album matches
+where your audio files are missing some of the tracks. The importer will not
+attempt to display these matches. It does not ignore the fact that the album is
+missing tracks, which would allow these matches to apply more easily. To do
+that, you'll want to adjust the penalty for missing tracks.
 
 .. _required:
 
@@ -1061,8 +1066,8 @@ defaults look like this::
         singleton: Non-Album/$artist/$title
         comp: Compilations/$album%aunique{}/$track $title
 
-Note the use of ``$albumartist`` instead of ``$artist``; this ensures that albums
-will be well-organized. For more about these format strings, see
+Note the use of ``$albumartist`` instead of ``$artist``; this ensures that
+albums will be well-organized. For more about these format strings, see
 :doc:`pathformat`. The ``aunique{}`` function ensures that identically-named
 albums are placed in different directories; see :ref:`aunique` for details.
 

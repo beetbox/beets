@@ -38,6 +38,7 @@ also search for an id like so::
 Configuration
 -------------
 
-This plugin can be configured like other metadata source plugins as described in :ref:`metadata-source-plugin-configuration`.
+This plugin can be configured like other metadata source plugins as described in
+:ref:`metadata-source-plugin-configuration`.
 
 .. _Beatport: https://www.beatport.com/

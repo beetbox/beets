@@ -23,7 +23,7 @@ If you're willing to pay the performance cost for fingerprinting, read on!
 Installing Dependencies
 -----------------------
 
-To get fingerprinting working, you'll need to install three things: 
+To get fingerprinting working, you'll need to install three things:
 
 1. `pyacoustid`_ Python library (version 0.6 or later). You can install it by
    installing ``beets`` with ``chroma`` extra

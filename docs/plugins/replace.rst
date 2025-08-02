@@ -13,5 +13,5 @@ and then type::
 The plugin will show you a list of files for you to pick from, and then
 ask for confirmation.
 
-Consider using the `replaygain` command from the
+Consider using the ``replaygain`` command from the
 :doc:`/plugins/replaygain` plugin, if you usually use it during imports.

@@ -33,8 +33,8 @@ Interactive Usage
 -----------------
 
 The ``play`` plugin can also be invoked during an import. If enabled, the plugin
-adds a ``plaY`` option to the prompt, so pressing ``y`` will execute the configured
-command and play the items currently being imported.
+adds a ``plaY`` option to the prompt, so pressing ``y`` will execute the
+configured command and play the items currently being imported.
 
 Once the configured command exits, you will be returned to the import
 decision prompt.  If your player is configured to run in the background (in a
@@ -99,7 +99,7 @@ indicates that you need to insert extra arguments before specifying the
 playlist.
 
 The ``--yes`` (or ``-y``) flag to the ``play`` command will skip the warning
-message if you choose to play more items than the **warning_threshold** 
+message if you choose to play more items than the **warning_threshold**
 value usually allows.
 
 Note on the Leakage of the Generated Playlists
@@ -108,10 +108,10 @@ Note on the Leakage of the Generated Playlists
 Because the command that will open the generated ``.m3u`` files can be
 arbitrarily configured by the user, beets won't try to delete those files. For
 this reason, using this plugin will leave one or several playlist(s) in the
-directory selected to create temporary files (Most likely ``/tmp/`` on Unix-like
-systems. See `tempfile.tempdir`_ in the Python docs.). Leaking those playlists until
-they are externally wiped could be an issue for privacy or storage reasons. If
-this is the case for you, you might want to use the ``raw`` config option
-described above.
+directory selected to create temporary files (Most likely ``/tmp/`` on
+Unix-like systems. See `tempfile.tempdir`_ in the Python docs.). Leaking those
+playlists until they are externally wiped could be an issue for privacy or
+storage reasons. If this is the case for you, you might want to use the ``raw``
+config option described above.
 
 .. _tempfile.tempdir: https://docs.python.org/2/library/tempfile.html#tempfile.tempdir

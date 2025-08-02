@@ -55,14 +55,16 @@ configuration file. The available options are:
   Default: 8337.
 - **cors**: The CORS allowed origin (see :ref:`web-cors`, below).
   Default: CORS is disabled.
-- **cors_supports_credentials**: Support credentials when using CORS (see :ref:`web-cors`, below).
+- **cors_supports_credentials**: Support credentials when using CORS (see
+  :ref:`web-cors`, below).
   Default: CORS_SUPPORTS_CREDENTIALS is disabled.
 - **reverse_proxy**: If true, enable reverse proxy support (see
   :ref:`reverse-proxy`, below).
   Default: false.
 - **include_paths**: If true, includes paths in item objects.
   Default: false.
-- **readonly**: If true, DELETE and PATCH operations are not allowed. Only GET is permitted.
+- **readonly**: If true, DELETE and PATCH operations are not allowed. Only GET
+  is permitted.
   Default: true.
 
 Implementation
@@ -184,16 +186,16 @@ code.
 ``DELETE /item/6``
 ++++++++++++++++++
 
-Removes the item with id *6* from the beets library. If the *?delete* query string is included,
-the matching file will be deleted from disk.
+Removes the item with id *6* from the beets library. If the *?delete* query
+string is included, the matching file will be deleted from disk.
 
 Only allowed if ``readonly`` configuration option is set to ``no``.
 
 ``PATCH /item/6``
 ++++++++++++++++++
 
-Updates the item with id *6* and write the changes to the music file. The body should be a JSON object
-containing the changes to the object.
+Updates the item with id *6* and write the changes to the music file. The body
+should be a JSON object containing the changes to the object.
 
 Returns the updated JSON representation. ::
 
@@ -210,11 +212,11 @@ Only allowed if ``readonly`` configuration option is set to ``no``.
 
 Response with a list of tracks with the ids *6*, *12* and *13*.  The format of
 the response is the same as for `GET /item/`_. It is *not guaranteed* that the
-response includes all the items requested. If a track is not found it is silently
-dropped from the response.
+response includes all the items requested. If a track is not found it is
+silently dropped from the response.
 
-This endpoint also supports *DELETE* and *PATCH* methods as above, to operate on all
-items of the list.
+This endpoint also supports *DELETE* and *PATCH* methods as above, to operate on
+all items of the list.
 
 ``GET /item/path/...``
 ++++++++++++++++++++++
@@ -244,8 +246,8 @@ Path elements are joined as parts of a query. For example,
 To specify literal path separators in a query, use a backslash instead of a
 slash.
 
-This endpoint also supports *DELETE* and *PATCH* methods as above, to operate on all
-items returned by the query.
+This endpoint also supports *DELETE* and *PATCH* methods as above, to operate on
+all items returned by the query.
 
 ``GET /item/6/file``
 ++++++++++++++++++++
@@ -281,7 +283,8 @@ or ``/album/5,7``. In addition we can request the cover art of an album with
 ``GET /album/5/art``.
 You can also add the '?expand' flag to get the individual items of an album.
 
-``DELETE`` is only allowed if ``readonly`` configuration option is set to ``no``.
+``DELETE`` is only allowed if ``readonly`` configuration option is set to
+``no``.
 
 ``GET /stats``
 ++++++++++++++

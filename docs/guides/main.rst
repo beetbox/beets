@@ -21,17 +21,14 @@ Beets works on Python 3.8 or later.
 * On **Debian or Ubuntu**, depending on the version, beets is available as an
   official package (`Debian details`_, `Ubuntu details`_), so try typing:
   ``apt-get install beets``. But the version in the repositories might lag
-  behind, so make sure you read the right version of these docs. If you want
-  the latest version, you can get everything you need to install with pip
-  as described below by running:
-  ``apt-get install python-dev python-pip``
-
-* On **Arch Linux**, `beets is in [extra] <Arch extra_>`_, so just run ``pacman -S
-  beets``. (There's also a bleeding-edge `dev package <AUR_>`_ in the AUR, which will
-  probably set your computer on fire.)
-
-* On **Alpine Linux**, `beets is in the community repository <Alpine package_>`_
-  and can be installed with ``apk add beets``.
+  behind, so make sure you read the right version of these docs. If you want the
+  latest version, you can get everything you need to install with pip as
+  described below by running: ``apt-get install python-dev python-pip``
+* On **Arch Linux**, `beets is in [extra] <Arch extra_>`_, so just run ``pacman
+  -S beets``. (There's also a bleeding-edge `dev package <AUR_>`_ in the AUR,
+  which will probably set your computer on fire.)
+* On **Alpine Linux**, `beets is in the community repository <Alpine
+  package_>`_ and can be installed with ``apk add beets``.
 
 * For **Gentoo Linux**, beets is in Portage as ``media-sound/beets``. Just run
   ``emerge beets`` to install. There are several USE flags available for
@@ -39,15 +36,18 @@ Beets works on Python 3.8 or later.
 
 * On **FreeBSD**, there's a `beets port <FreeBSD_>`_ at ``audio/beets``.
 
-* On **OpenBSD**, there's a `beets port <OpenBSD_>`_ can be installed with ``pkg_add beets``.
+* On **OpenBSD**, there's a `beets port <OpenBSD_>`_ can be installed with
+  ``pkg_add beets``.
 
 * For **Slackware**, there's a `SlackBuild`_ available.
 
-* On **Fedora** 22 or later, there's a `DNF package`_ you can install with ``sudo dnf install beets beets-plugins beets-doc``.
+* On **Fedora** 22 or later, there's a `DNF package`_ you can install with
+  ``sudo dnf install beets beets-plugins beets-doc``.
 
 * On **Solus**, run ``eopkg install beets``.
 
-* On **NixOS**, there's a `package <NixOS_>`_ you can install with ``nix-env -i beets``.
+* On **NixOS**, there's a `package <NixOS_>`_ you can install with ``nix-env -i
+  beets``.
 
 .. _DNF package: https://packages.fedoraproject.org/pkgs/beets/
 .. _SlackBuild: https://slackbuilds.org/repository/14.2/multimedia/beets/
@@ -103,13 +103,13 @@ get it right:
    box. If you do that, you can skip the next step.
 
 2. If you haven't done so already, set your ``PATH`` environment variable to
-   include Python and its scripts. To do so, open the "Settings" application, 
-   then access the "System" screen, then access the "About" tab, and then hit 
-   "Advanced system settings" located on the right side of the screen. This 
-   should open the "System Properties" screen, then select the "Advanced" tab, 
-   then hit the "Environmental Variables..." button, and then look for the PATH 
-   variable in the table. Add the following to the end of the variable's value: 
-   ``;C:\Python38;C:\Python38\Scripts``. You may need to adjust these paths to 
+   include Python and its scripts. To do so, open the "Settings" application,
+   then access the "System" screen, then access the "About" tab, and then hit
+   "Advanced system settings" located on the right side of the screen. This
+   should open the "System Properties" screen, then select the "Advanced" tab,
+   then hit the "Environmental Variables..." button, and then look for the PATH
+   variable in the table. Add the following to the end of the variable's value:
+   ``;C:\Python38;C:\Python38\Scripts``. You may need to adjust these paths to
    point to your Python installation.
 
 3. Now install beets by running: ``pip install beets``
@@ -277,19 +277,21 @@ put the field before the term, separated by a : character. So ``album:bird``
 only looks for ``bird`` in the "album" field of your songs. (Need to know more?
 :doc:`/reference/query/` will answer all your questions.)
 
-The ``beet list`` command also has an ``-a`` option, which searches for albums instead of songs::
+The ``beet list`` command also has an ``-a`` option, which searches for albums
+instead of songs::
 
     $ beet ls -a forever
     Bon Iver - For Emma, Forever Ago
     Freezepop - Freezepop Forever
 
-There's also an ``-f`` option (for *format*) that lets you specify what gets displayed in the results of a search::
+There's also an ``-f`` option (for *format*) that lets you specify what gets
+displayed in the results of a search::
 
     $ beet ls -a forever -f "[$format] $album ($year) - $artist - $title"
     [MP3] For Emma, Forever Ago (2009) - Bon Iver - Flume
     [AAC] Freezepop Forever (2011) - Freezepop - Harebrained Scheme
 
-In the format option, field references like `$format` and `$year` are filled
+In the format option, field references like ``$format`` and ``$year`` are filled
 in with data from each result. You can see a full list of available fields by
 running ``beet fields``.
 

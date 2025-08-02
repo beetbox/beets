@@ -268,9 +268,10 @@ files, but can get confused when files don't have any metadata (or have wildly
 incorrect metadata). In this case, you need *acoustic fingerprinting*, a
 technology that identifies songs from the audio itself. With fingerprinting,
 beets can autotag files that have very bad or missing tags. The :doc:`"chroma"
-plugin </plugins/chroma>`, distributed with beets, uses the `Chromaprint`_ open-source fingerprinting technology, but it's disabled by default. That's because
-it's sort of tricky to install. See the :doc:`/plugins/chroma` page for a guide
-to getting it set up.
+plugin </plugins/chroma>`, distributed with beets, uses the `Chromaprint`_
+open-source fingerprinting technology, but it's disabled by default. That's
+because it's sort of tricky to install. See the :doc:`/plugins/chroma` page for
+a guide to getting it set up.
 
 Before you jump into acoustic fingerprinting with both feet, though, give beets
 a try without it. You may be surprised at how well metadata-based matching

@@ -40,7 +40,9 @@ probably don't want that! So use ``$albumartist``.
 .. _Stop Making Sense:
     https://musicbrainz.org/release/798dcaab-0f1a-4f02-a9cb-61d5b0ddfd36.html
 
-As a convenience, however, beets allows ``$albumartist`` to fall back to the value for ``$artist`` and vice-versa if one tag is present but the other is not.
+As a convenience, however, beets allows ``$albumartist`` to fall back to the
+value for ``$artist`` and vice-versa if one tag is present but the other is
+not.
 
 
 .. _template-functions:
@@ -60,13 +62,14 @@ These functions are built in to beets:
 
 * ``%lower{text}``: Convert ``text`` to lowercase.
 * ``%upper{text}``: Convert ``text`` to UPPERCASE.
-* ``%capitalize{text}``: Make the first letter of ``text`` UPPERCASE and the rest lowercase.
+* ``%capitalize{text}``: Make the first letter of ``text`` UPPERCASE and the
+  rest lowercase.
 * ``%title{text}``: Convert ``text`` to Title Case.
 * ``%left{text,n}``: Return the first ``n`` characters of ``text``.
-* ``%right{text,n}``: Return the last ``n`` characters of  ``text``.
+* ``%right{text,n}``: Return the last ``n`` characters of ``text``.
 * ``%if{condition,text}`` or ``%if{condition,truetext,falsetext}``: If
-  ``condition`` is nonempty (or nonzero, if it's a number), then returns
-  the second argument. Otherwise, returns the third argument if specified (or
+  ``condition`` is nonempty (or nonzero, if it's a number), then returns the
+  second argument. Otherwise, returns the third argument if specified (or
   nothing if ``falsetext`` is left off).
 * ``%asciify{text}``: Convert non-ASCII characters to their ASCII equivalents.
   For example, "café" becomes "cafe". Uses the mapping provided by the
@@ -137,8 +140,9 @@ disambiguation if, for example, you include the year by default in
 path formats.
 
 The default characters used as brackets are ``[]``. To change this, provide a
-third argument to the ``%aunique`` function consisting of two characters: the left
-and right brackets. Or, to turn off bracketing entirely, leave argument blank.
+third argument to the ``%aunique`` function consisting of two characters: the
+left and right brackets. Or, to turn off bracketing entirely, leave argument
+blank.
 
 One caveat: When you import an album that is named identically to one already in
 your library, the *first* album—the one already in your library— will not
@@ -157,9 +161,9 @@ It is also possible to have singleton tracks with the same name and the same
 artist. Beets provides the ``%sunique{}`` template to avoid giving these
 tracks the same file path.
 
-It has the same arguments as the :ref:`%aunique <aunique>` template, but the default
-values are different. The default identifiers are ``artist title`` and the
-default disambiguators are ``year trackdisambig``.
+It has the same arguments as the :ref:`%aunique <aunique>` template, but the
+default values are different. The default identifiers are ``artist title`` and
+the default disambiguators are ``year trackdisambig``.
 
 Syntax Details
 --------------

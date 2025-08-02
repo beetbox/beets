@@ -12,7 +12,8 @@ Configuration
 
 To configure the plugin, make an ``permissions:`` section in your configuration
 file. The ``file`` config value therein uses **octal modes** to specify the
-desired permissions. The default flags for files are octal 644 and 755 for directories.
+desired permissions. The default flags for files are octal 644 and 755 for
+directories.
 
 Here's an example::
 

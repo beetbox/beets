@@ -161,12 +161,11 @@ it's helpful to run on the "bleeding edge". To run the latest source:
          git clone https://github.com/beetbox/beets.git
          poetry install
 
-      This approach lets you decide where the
-      source is stored, with any changes immediately reflected in your
-      environment.
+      This approach lets you decide where the source is stored, with any
+      changes immediately reflected in your environment.
 
-More details about the beets source are available on the :doc:`developer documentation </dev/index>`
-pages.
+More details about the beets source are available on the :doc:`developer
+documentation </dev/index>` pages.
 
 
 .. _bugs:
@@ -240,7 +239,8 @@ move all your files.
 If you've already moved your music *outside* of beets, you have a few options:
 
 - Move the music back (with an ordinary ``mv``) and then use the above steps.
-- Delete your database and re-create it from the new paths using ``beet import -AWC``.
+- Delete your database and re-create it from the new paths using ``beet import
+  -AWC``.
 - Resort to manually modifying the SQLite database (not recommended).
 
 

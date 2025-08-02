@@ -41,13 +41,13 @@ commands and option flags.
 
 If you want generated completions to also contain album/track field *values* for
 the items in your library, you can use the ``-e`` or ``--extravalues`` option.
-For example: ``beet fish -e genre`` or ``beet fish -e genre -e albumartist``
-In the latter case, subsequently typing ``beet list genre: <TAB>`` will display
-a list of all the genres in your library and ``beet list albumartist: <TAB>``
-will show a list of the album artists in your library. Keep in mind that all of
-these values will be put into the generated completions file, so use this option
-with care when specified fields contain a large number of values. Libraries with,
-for example, very large numbers of genres/artists may result in higher memory
+For example: ``beet fish -e genre`` or ``beet fish -e genre -e albumartist`` In
+the latter case, subsequently typing ``beet list genre: <TAB>`` will display a
+list of all the genres in your library and ``beet list albumartist: <TAB>`` will
+show a list of the album artists in your library. Keep in mind that all of these
+values will be put into the generated completions file, so use this option with
+care when specified fields contain a large number of values. Libraries with, for
+example, very large numbers of genres/artists may result in higher memory
 utilization, completion latency, et cetera. This option is not meant to replace
 database queries altogether.
 

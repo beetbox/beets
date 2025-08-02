@@ -10,9 +10,9 @@ Firstly, install ``beets`` with ``plexupdate`` extra
 
     pip install "beets[plexupdate]"
 
-Then, enable ``plexupdate`` plugin it in your configuration (see :ref:`using-plugins`).
-Optionally, configure the specifics of your Plex server. You can do this using
-a ``plex:`` section in your ``config.yaml``:
+Then, enable ``plexupdate`` plugin it in your configuration (see
+:ref:`using-plugins`). Optionally, configure the specifics of your Plex server.
+You can do this using a ``plex:`` section in your ``config.yaml``:
 
 .. code-block:: yaml
 
@@ -21,7 +21,8 @@ a ``plex:`` section in your ``config.yaml``:
        port: 32400
        token: "TOKEN"
 
-The ``token`` key is optional: you'll need to use it when in a Plex Home (see Plex's own `documentation about tokens`_).
+The ``token`` key is optional: you'll need to use it when in a Plex Home (see
+Plex's own `documentation about tokens`_).
 
 With that all in place, you'll see beets send the "update" command to your Plex
 server every time you change your beets library.
@@ -44,5 +45,6 @@ The available options under the ``plex:`` section are:
   Default: ``Music``
 - **secure**: Use secure connections to the Plex server.
   Default: ``False``
-- **ignore_cert_errors**: Ignore TLS certificate errors when using secure connections.
+- **ignore_cert_errors**: Ignore TLS certificate errors when using secure
+  connections.
   Default: ``False``

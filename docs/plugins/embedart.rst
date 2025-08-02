@@ -90,15 +90,16 @@ Manually Embedding and Extracting Art
 The ``embedart`` plugin provides a couple of commands for manually managing
 embedded album art:
 
-* ``beet embedart [-f IMAGE] QUERY``: embed images in every track of the
-  albums matching the query. If the ``-f`` (``--file``) option is given, then
-  use a specific image file from the filesystem; otherwise, each album embeds
-  its own currently associated album art. The command prompts for confirmation
-  before making the change unless you specify the ``-y`` (``--yes``) option.
-
-* ``beet embedart [-u IMAGE_URL] QUERY``: embed image specified in the URL
-  into every track of the albums matching the query. The ``-u`` (``--url``) option can be used to specify the URL of the image to be used. The command prompts for confirmation before making the change unless you specify the ``-y`` (``--yes``) option.
-
+* ``beet embedart [-f IMAGE] QUERY``: embed images in every track of the albums
+  matching the query. If the ``-f`` (``--file``) option is given, then use a
+  specific image file from the filesystem; otherwise, each album embeds its own
+  currently associated album art. The command prompts for confirmation before
+  making the change unless you specify the ``-y`` (``--yes``) option.
+* ``beet embedart [-u IMAGE_URL] QUERY``: embed image specified in the URL into
+  every track of the albums matching the query. The ``-u`` (``--url``) option
+  can be used to specify the URL of the image to be used. The command prompts
+  for confirmation before making the change unless you specify the ``-y``
+  (``--yes``) option.
 * ``beet extractart [-a] [-n FILE] QUERY``: extracts the images for all albums
   matching the query. The images are placed inside the album folder. You can
   specify the destination file name using the ``-n`` option, but leave off the

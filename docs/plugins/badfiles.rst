@@ -26,7 +26,7 @@ Custom commands will be run once for each file of the specified type, with the
 path to the file as the last argument. Commands must return a status code
 greater than zero for a file to be considered corrupt.
 
-You can run the checkers when importing files by using the `check_on_import`
+You can run the checkers when importing files by using the ``check_on_import``
 option. When on, checkers will be run against every imported file and warnings
 and errors will be presented when selecting a tagging option.
 

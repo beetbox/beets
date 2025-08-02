@@ -20,14 +20,15 @@ invocation of beets usually has only one :class:`Library`. It's powered by
 abstraction, something like a very minimal `ORM`_. The library is also
 responsible for handling queries to retrieve stored objects.
 
-Overview 
+Overview
 ''''''''
 
 You can add new items or albums to the library via the
 :py:meth:`Library.add` and :py:meth:`Library.add_album` methods.
 
 You may also query the library for items and albums using the
-:py:meth:`Library.items`, :py:meth:`Library.albums`, :py:meth:`Library.get_item` and :py:meth:`Library.get_album` methods.
+:py:meth:`Library.items`, :py:meth:`Library.albums`, :py:meth:`Library.get_item`
+and :py:meth:`Library.get_album` methods.
 
 Any modifications to the library must go through a
 :class:`Transaction` object, which you can get using the
@@ -64,7 +65,7 @@ We provide CRUD-like methods for interacting with the database:
 
 * :py:meth:`LibModel.store`
 * :py:meth:`LibModel.load`
-* :py:meth:`LibModel.remove` 
+* :py:meth:`LibModel.remove`
 * :py:meth:`LibModel.add`
 
 The base class :class:`beets.dbcore.Model` has a ``dict``-like interface, so

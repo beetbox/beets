@@ -1,9 +1,8 @@
 LastGenre Plugin
 ================
 
-
-The ``lastgenre`` plugin fetches *tags* from `Last.fm`_ and assigns them as genres
-to your albums and items.
+The ``lastgenre`` plugin fetches *tags* from `Last.fm`_ and assigns them as
+genres to your albums and items.
 
 .. _Last.fm: https://last.fm/
 
@@ -39,8 +38,8 @@ Canonicalization
 
 The plugin can also *canonicalize* genres, meaning that more obscure genres can
 be turned into coarser-grained ones that are present in the whitelist. This
-works using a `tree of nested genre names`_, represented using `YAML`_, where the
-leaves of the tree represent the most specific genres.
+works using a `tree of nested genre names`_, represented using `YAML`_, where
+the leaves of the tree represent the most specific genres.
 
 The most common way to use this would be with a custom whitelist containing only
 a desired subset of genres. Consider for a example this minimal whitelist::
@@ -154,8 +153,8 @@ make sure any existing genres remain, set ``whitelist: no``).
     keep_existing: yes
 
 .. attention::
-    If ``force`` is disabled the ``keep_existing`` option is simply ignored (since ``force:
-    no`` means `not touching` existing tags anyway).
+    If ``force`` is disabled the ``keep_existing`` option is simply ignored
+    (since ``force: no`` means ``not touching`` existing tags anyway).
 
 
 
@@ -173,9 +172,9 @@ configuration file. The available options are:
   Default: ``no`` (disabled).
 - **count**: Number of genres to fetch.
   Default: 1
-- **fallback**: A string to use as a fallback genre when no genre is found `or`
-  the original genre is not desired to be kept (``keep_existing: no``). You can
-  use the empty string ``''`` to reset the genre.
+- **fallback**: A string to use as a fallback genre when no genre is found
+  ``or`` the original genre is not desired to be kept (``keep_existing: no``).
+  You can use the empty string ``''`` to reset the genre.
   Default: None.
 - **force**: By default, lastgenre will fetch new genres for empty tags only,
   enable this option to always try to fetch new last.fm genres. Enable the
@@ -214,9 +213,9 @@ configuration file. The available options are:
 Running Manually
 ----------------
 
-In addition to running automatically on import, the plugin can also be run manually
-from the command line. Use the command ``beet lastgenre [QUERY]`` to fetch
-genres for albums or items matching a certain query.
+In addition to running automatically on import, the plugin can also be run
+manually from the command line. Use the command ``beet lastgenre [QUERY]`` to
+fetch genres for albums or items matching a certain query.
 
 By default, ``beet lastgenre`` matches albums. To match
 individual tracks or singletons, use the ``-A`` switch:

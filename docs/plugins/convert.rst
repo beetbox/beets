@@ -84,7 +84,7 @@ file. The available options are:
   defined in your config file.
   Default: ``no``.
 
-  .. note:: You probably want to use only one of the `auto` and `auto_keep`
+  .. note:: You probably want to use only one of the ``auto`` and ``auto_keep``
      options, not both. Enabling both will convert your files twice on import,
      which you probably don't want.
 
@@ -108,8 +108,10 @@ file. The available options are:
   a lower bitrate---that depends on the encoder and its configuration.
   Default: none.
 - **no_convert**: Does not transcode items matching the query string provided
-  (see :doc:`/reference/query`). For example, to not convert AAC or WMA formats, you can use ``format:AAC, format:WMA`` or
-  ``path::\.(m4a|wma)$``. If you only want to transcode WMA format, you can use a negative query, e.g., ``^path::\.(wma)$``, to not convert any other format except WMA.
+  (see :doc:`/reference/query`). For example, to not convert AAC or WMA
+  formats, you can use ``format:AAC, format:WMA`` or ``path::\.(m4a|wma)$``. If
+  you only want to transcode WMA format, you can use a negative query, e.g.,
+  ``^path::\.(wma)$``, to not convert any other format except WMA.
 - **never_convert_lossy_files**: Cross-conversions between lossy codecs---such
   as mp3, ogg vorbis, etc.---makes little sense as they will decrease quality
   even further. If set to ``yes``, lossy files are always copied.
@@ -127,18 +129,20 @@ file. The available options are:
   to their destination. This option creates symbolic links instead. Note that
   options such as ``embed`` that modify the output files after the transcoding
   step will cause the original files to be modified as well if ``link`` is
-  enabled. For this reason, album-art embedding is disabled
-  for files that are linked.
+  enabled. For this reason, album-art embedding is disabled for files that are
+  linked.
   Default: ``false``.
-- **hardlink**: This options works similar to ``link``, but it creates
-  hard links instead of symlinks.
-  This option overrides ``link``. Only works when converting to a directory
-  on the same filesystem as the library.
+- **hardlink**: This options works similar to ``link``, but it creates hard
+  links instead of symlinks. This option overrides ``link``. Only works when
+  converting to a directory on the same filesystem as the library.
   Default: ``false``.
-- **delete_originals**: Transcoded files will be copied or moved to their destination, depending on the import configuration. By default, the original files are not modified by the plugin. This option deletes the original files after the transcoding step has completed.
+- **delete_originals**: Transcoded files will be copied or moved to their
+  destination, depending on the import configuration. By default, the original
+  files are not modified by the plugin. This option deletes the original files
+  after the transcoding step has completed.
   Default: ``false``.
 - **playlist**: The name of a playlist file that should be written on each run
-  of the plugin. A relative file path (e.g `playlists/mylist.m3u8`) is allowed
+  of the plugin. A relative file path (e.g ``playlists/mylist.m3u8``) is allowed
   as well. The final destination of the playlist file will always be relative
   to the destination path (``dest``, ``--dest``, ``-d``). This configuration is
   overridden by the ``-m`` (``--playlist``) command line option.
@@ -173,7 +177,7 @@ and select a command with the ``--format`` command-line option or the
             wav: ffmpeg -i $source -y -acodec pcm_s16le $dest
 
 In this example ``beet convert`` will use the *speex* command by
-default. To convert the audio to `wav`, run ``beet convert -f wav``.
+default. To convert the audio to ``wav``, run ``beet convert -f wav``.
 This will also use the format key (``wav``) as the file extension.
 
 Each entry in the ``formats`` map consists of a key (the name of the
@@ -185,7 +189,7 @@ command to use to transcode audio. The tokens ``$source`` and ``$dest`` in the
 command are replaced with the paths to the existing and new file.
 
 The plugin in comes with default commands for the most common audio
-formats: `mp3`, `alac`, `flac`, `aac`, `opus`, `ogg`, `wma`. For
+formats: ``mp3``, ``alac``, ``flac``, ``aac``, ``opus``, ``ogg``, ``wma``. For
 details have a look at the output of ``beet config -d``.
 
 For a one-command-fits-all solution use the ``convert.command`` and

@@ -44,7 +44,8 @@ choice is demonstrated::
     [U]se as-is, as Tracks, Group albums, Skip, Enter search, enter Id, aBort,
     Print tracks?
 
-You can also run ``beet mbsubmit QUERY`` to print the track information for any album::
+You can also run ``beet mbsubmit QUERY`` to print the track information for any
+album::
 
     $ beet mbsubmit album:"An Obscure Album"
     01. An Obscure Track - An Obscure Artist (3:37)

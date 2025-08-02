@@ -13,7 +13,8 @@ Using Plugins
 -------------
 
 To use one of the plugins included with beets (see the rest of this page for a
-list), just use the ``plugins`` option in your :doc:`config.yaml </reference/config>` file:
+list), just use the ``plugins`` option in your :doc:`config.yaml
+</reference/config>` file:
 
 .. code-block:: sh
 
@@ -23,7 +24,8 @@ The value for ``plugins`` can be a space-separated list of plugin names or a
 YAML list like ``[foo, bar]``. You can see which plugins are currently enabled
 by typing ``beet version``.
 
-Each plugin has its own set of options that can be defined in a section bearing its name:
+Each plugin has its own set of options that can be defined in a section bearing
+its name:
 
 .. code-block:: yaml
 
@@ -176,7 +178,8 @@ Metadata
 --------
 
 :doc:`absubmit <absubmit>`
-   Analyse audio with the `streaming_extractor_music`_ program and submit the metadata to an AcousticBrainz server
+   Analyse audio with the `streaming_extractor_music`_ program and submit the
+   metadata to an AcousticBrainz server
 
 :doc:`acousticbrainz <acousticbrainz>`
    Fetch various AcousticBrainz metadata
@@ -209,7 +212,7 @@ Metadata
 
 :doc:`importadded <importadded>`
    Use file modification times for guessing the value for
-   the `added` field in the database.
+   the ``added`` field in the database.
 
 :doc:`lastgenre <lastgenre>`
    Fetch genres based on Last.fm tags.
@@ -415,9 +418,8 @@ are two options for installation:
 * Make sure it's in the Python path (known as ``sys.path`` to developers). This
   just means the plugin has to be installed on your system (e.g., with a
   ``setup.py`` script or a command like ``pip`` or ``easy_install``).
-
-* Set the ``pluginpath`` config variable to point to the directory containing the
-  plugin. (See :doc:`/reference/config`.)
+* Set the ``pluginpath`` config variable to point to the directory containing
+  the plugin. (See :doc:`/reference/config`.)
 
 Once the plugin is installed, enable it by placing its name on the ``plugins``
 line in your config file.
@@ -449,7 +451,8 @@ Here are a few of the plugins written by the beets community:
    search for their metadata.
 
 `beetcamp`_
-   Enables **bandcamp.com** autotagger with a fairly extensive amount of metadata.
+   Enables **bandcamp.com** autotagger with a fairly extensive amount of
+   metadata.
 
 `beetstream`_
    Server implementation of the `Subsonic API`_ specification, serving the
@@ -481,7 +484,7 @@ Here are a few of the plugins written by the beets community:
 
 `beets-filetote`_
    Helps bring non-music extra files, attachments, and artifacts during
-   imports and CLI file manipulation actions (`beet move`, etc.).
+   imports and CLI file manipulation actions (``beet move``, etc.).
 
 `beets-follow`_
    Lets you check for new albums from artists you like.
@@ -507,13 +510,15 @@ Here are a few of the plugins written by the beets community:
    Adds JioSaavn.com as a tagger data source.
 
 `beets-more`_
-   Finds versions of indexed releases with more tracks, like deluxe and anniversary editions.
+   Finds versions of indexed releases with more tracks, like deluxe and
+   anniversary editions.
 
 `beets-mosaic`_
    Generates a montage of a mosaic from cover art.
 
 `beets-mpd-utils`_
-    Plugins to interface with `MPD`_. Comes with ``mpd_tracker`` (track play/skip counts from MPD) and  ``mpd_dj`` (auto-add songs to your queue.)
+    Plugins to interface with `MPD`_. Comes with ``mpd_tracker`` (track
+    play/skip counts from MPD) and  ``mpd_dj`` (auto-add songs to your queue.)
 
 `beets-noimport`_
    Adds and removes directories from the incremental import skip list.
@@ -523,7 +528,9 @@ Here are a few of the plugins written by the beets community:
    to improve autotagger results.
 
 `beets-plexsync`_
-   Allows you to sync your Plex library with your beets library, create smart playlists in Plex, and import online playlists (from services like Spotify) into Plex.
+   Allows you to sync your Plex library with your beets library, create smart
+   playlists in Plex, and import online playlists (from services like Spotify)
+   into Plex.
 
 `beets-setlister`_
    Generate playlists from the setlists of a given artist.

@@ -22,6 +22,10 @@ prompt during import::
 Configuration
 -------------
 
-This plugin can be configured like other metadata source plugins as described in :ref:`metadata-source-plugin-configuration`.
+This plugin can be configured like other metadata source plugins as described in
+:ref:`metadata-source-plugin-configuration`.
 
-The ``deezer`` plugin provides an additional command ``deezerupdate`` to update the ``rank`` information from Deezer. The ``rank`` (ranges from 0 to 1M) is a global indicator of a song's popularity on Deezer that is updated daily based on streams. The higher the ``rank``, the more popular the track is.
+The ``deezer`` plugin provides an additional command ``deezerupdate`` to update
+the ``rank`` information from Deezer. The ``rank`` (ranges from 0 to 1M) is a
+global indicator of a song's popularity on Deezer that is updated daily based on
+streams. The higher the ``rank``, the more popular the track is.
