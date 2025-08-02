@@ -1,13 +1,30 @@
 {
   "problemMatcher": [
     {
-      "owner": "sphinx",
+      "owner": "sphinx-build",
       "pattern": [
         {
-          "regexp": "^([^:]+):(\\d+): (WARNING: )?(.+)$",
+          "regexp": "^([^:]+):\\s(.+)$",
+          "file": 1,
+          "message": 2
+        },
+        {
+          "regexp": "^([^:]+):(\\d+):\\s(.+)$",
           "file": 1,
           "line": 2,
-          "message": 4
+          "message": 3
+        }
+      ]
+    },
+    {
+      "owner": "sphinx-lint",
+      "pattern": [
+        {
+          "regexp": "^([^:]+):(\\d+):\\s+(.*)\\s\\(([a-z-]+)\\)$",
+          "file": 1,
+          "line": 2,
+          "message": 3,
+          "code": 4
         }
       ]
     }

@@ -101,6 +101,7 @@ responses = ">=0.3.0"
 
 [tool.poetry.group.lint.dependencies]
 ruff = ">=0.6.4"
+sphinx-lint = ">=1.0.0"
 
 [tool.poetry.group.typing.dependencies]
 mypy = "*"
@@ -127,7 +128,7 @@ beatport = ["requests-oauthlib"]
 bpd = ["PyGObject"] # gobject-introspection, gstreamer1.0-plugins-base, python3-gst-1.0
 chroma = ["pyacoustid"] # chromaprint or fpcalc
 # convert # ffmpeg
-docs = ["pydata-sphinx-theme", "sphinx"]
+docs = ["pydata-sphinx-theme", "sphinx", "sphinx-lint"]
 discogs = ["python3-discogs-client"]
 embedart = ["Pillow"] # ImageMagick
 embyupdate = ["requests"]
@@ -204,6 +205,10 @@ cmd = "ruff format"
 help = "Check the code for linting issues. Accepts ruff options."
 cmd = "ruff check"
 
+[tool.poe.tasks.lint-docs]
+help = "Lint the documentation"
+shell = "sphinx-lint --enable all $(git ls-files '*.rst')"
+
 [tool.poe.tasks.update-dependencies]
 help = "Update dependencies to their latest versions."
 cmd = "poetry update -vv"
@@ -265,7 +270,7 @@ select = [
     "W", # pycodestyle
 ]
 ignore = [
-  "TC006"  # no need to quote 'cast's since we use 'from __future__ import annotations'
+    "TC006", # no need to quote 'cast's since we use 'from __future__ import annotations'
 ]
 
 [tool.ruff.lint.per-file-ignores]
