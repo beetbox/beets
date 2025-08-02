@@ -572,7 +572,7 @@ def colorize(color_name, text):
         # instead of the abstract color name ('text_error')
         color = COLORS.get(color_name)
         if not color:
-            log.debug("Invalid color_name: {0}", color_name)
+            log.debug("Invalid color_name: {}", color_name)
             color = color_name
         return _colorize(color, text)
     else:
@@ -1587,19 +1587,19 @@ def _configure(options):
 
     if overlay_path:
         log.debug(
-            "overlaying configuration: {0}", util.displayable_path(overlay_path)
+            "overlaying configuration: {}", util.displayable_path(overlay_path)
         )
 
     config_path = config.user_config_path()
     if os.path.isfile(config_path):
-        log.debug("user configuration: {0}", util.displayable_path(config_path))
+        log.debug("user configuration: {}", util.displayable_path(config_path))
     else:
         log.debug(
-            "no user configuration found at {0}",
+            "no user configuration found at {}",
             util.displayable_path(config_path),
         )
 
-    log.debug("data directory: {0}", util.displayable_path(config.config_dir()))
+    log.debug("data directory: {}", util.displayable_path(config.config_dir()))
     return config
 
 
@@ -1634,7 +1634,7 @@ def _open_library(config: confuse.LazyConfig) -> library.Library:
             f" opened: {db_error}"
         )
     log.debug(
-        "library database: {0}\nlibrary directory: {1}",
+        "library database: {}\nlibrary directory: {}",
         util.displayable_path(lib.path),
         util.displayable_path(lib.directory),
     )
@@ -1751,7 +1751,7 @@ def main(args=None):
         _raw_main(args)
     except UserError as exc:
         message = exc.args[0] if exc.args else None
-        log.error("error: {0}", message)
+        log.error("error: {}", message)
         sys.exit(1)
     except util.HumanReadableError as exc:
         exc.log(log)
@@ -1763,10 +1763,10 @@ def main(args=None):
         log.error("{}", exc)
         sys.exit(1)
     except confuse.ConfigError as exc:
-        log.error("configuration error: {0}", exc)
+        log.error("configuration error: {}", exc)
         sys.exit(1)
     except db_query.InvalidQueryError as exc:
-        log.error("invalid query: {0}", exc)
+        log.error("invalid query: {}", exc)
         sys.exit(1)
     except OSError as exc:
         if exc.errno == errno.EPIPE:
@@ -1779,7 +1779,7 @@ def main(args=None):
         log.debug("{}", traceback.format_exc())
     except db.DBAccessError as exc:
         log.error(
-            "database access error: {0}\n"
+            "database access error: {}\n"
             "the library file might have a permissions problem",
             exc,
         )

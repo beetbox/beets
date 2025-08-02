@@ -145,7 +145,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
         try:
             _, _, url = auth_client.get_authorize_url()
         except CONNECTION_ERRORS as e:
-            self._log.debug("connection error: {0}", e)
+            self._log.debug("connection error: {}", e)
             raise beets.ui.UserError("communication with Discogs failed")
 
         beets.ui.print_("To authenticate with Discogs, visit:")
@@ -158,11 +158,11 @@ class DiscogsPlugin(MetadataSourcePlugin):
         except DiscogsAPIError:
             raise beets.ui.UserError("Discogs authorization failed")
         except CONNECTION_ERRORS as e:
-            self._log.debug("connection error: {0}", e)
+            self._log.debug("connection error: {}", e)
             raise beets.ui.UserError("Discogs token request failed")
 
         # Save the token for later use.
-        self._log.debug("Discogs token {0}, secret {1}", token, secret)
+        self._log.debug("Discogs token {}, secret {}", token, secret)
         with open(self._tokenfile(), "w") as f:
             json.dump({"token": token, "secret": secret}, f)
 
@@ -202,7 +202,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
         """Fetches an album by its Discogs ID and returns an AlbumInfo object
         or None if the album is not found.
         """
-        self._log.debug("Searching for release {0}", album_id)
+        self._log.debug("Searching for release {}", album_id)
 
         discogs_id = self._extract_id(album_id)
 
@@ -216,7 +216,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
         except DiscogsAPIError as e:
             if e.status_code != 404:
                 self._log.debug(
-                    "API Error: {0} (query: {1})",
+                    "API Error: {} (query: {})",
                     e,
                     result.data["resource_url"],
                 )
@@ -266,7 +266,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
         """Fetches a master release given its Discogs ID and returns its year
         or None if the master release is not found.
         """
-        self._log.debug("Getting master release {0}", master_id)
+        self._log.debug("Getting master release {}", master_id)
         result = Master(self.discogs_client, {"id": master_id})
 
         try:
@@ -274,7 +274,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
         except DiscogsAPIError as e:
             if e.status_code != 404:
                 self._log.debug(
-                    "API Error: {0} (query: {1})",
+                    "API Error: {} (query: {})",
                     e,
                     result.data["resource_url"],
                 )

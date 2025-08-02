@@ -366,7 +366,7 @@ class BeatportPlugin(MetadataSourcePlugin):
         try:
             url = auth_client.get_authorize_url()
         except AUTH_ERRORS as e:
-            self._log.debug("authentication error: {0}", e)
+            self._log.debug("authentication error: {}", e)
             raise beets.ui.UserError("communication with Beatport failed")
 
         beets.ui.print_("To authenticate with Beatport, visit:")
@@ -377,11 +377,11 @@ class BeatportPlugin(MetadataSourcePlugin):
         try:
             token, secret = auth_client.get_access_token(data)
         except AUTH_ERRORS as e:
-            self._log.debug("authentication error: {0}", e)
+            self._log.debug("authentication error: {}", e)
             raise beets.ui.UserError("Beatport token request failed")
 
         # Save the token for later use.
-        self._log.debug("Beatport token {0}, secret {1}", token, secret)
+        self._log.debug("Beatport token {}, secret {}", token, secret)
         with open(self._tokenfile(), "w") as f:
             json.dump({"token": token, "secret": secret}, f)
 
@@ -405,7 +405,7 @@ class BeatportPlugin(MetadataSourcePlugin):
         try:
             yield from self._get_releases(query)
         except BeatportAPIError as e:
-            self._log.debug("API Error: {0} (query: {1})", e, query)
+            self._log.debug("API Error: {} (query: {})", e, query)
             return
 
     def item_candidates(
@@ -415,14 +415,14 @@ class BeatportPlugin(MetadataSourcePlugin):
         try:
             return self._get_tracks(query)
         except BeatportAPIError as e:
-            self._log.debug("API Error: {0} (query: {1})", e, query)
+            self._log.debug("API Error: {} (query: {})", e, query)
             return []
 
     def album_for_id(self, album_id: str):
         """Fetches a release by its Beatport ID and returns an AlbumInfo object
         or None if the query is not a valid ID or release is not found.
         """
-        self._log.debug("Searching for release {0}", album_id)
+        self._log.debug("Searching for release {}", album_id)
 
         if not (release_id := self._extract_id(album_id)):
             self._log.debug("Not a valid Beatport release ID.")
@@ -437,7 +437,7 @@ class BeatportPlugin(MetadataSourcePlugin):
         """Fetches a track by its Beatport ID and returns a TrackInfo object
         or None if the track is not a valid Beatport ID or track is not found.
         """
-        self._log.debug("Searching for track {0}", track_id)
+        self._log.debug("Searching for track {}", track_id)
         # TODO: move to extractor
         match = re.search(r"(^|beatport\.com/track/.+/)(\d+)$", track_id)
         if not match:

@@ -141,7 +141,7 @@ class RgTask:
         item.rg_track_peak = track_gain.peak
         item.store()
         self._log.debug(
-            "applied track gain {0} LU, peak {1} of FS",
+            "applied track gain {} LU, peak {} of FS",
             item.rg_track_gain,
             item.rg_track_peak,
         )
@@ -155,7 +155,7 @@ class RgTask:
         item.rg_album_peak = album_gain.peak
         item.store()
         self._log.debug(
-            "applied album gain {0} LU, peak {1} of FS",
+            "applied album gain {} LU, peak {} of FS",
             item.rg_album_gain,
             item.rg_album_peak,
         )
@@ -175,7 +175,7 @@ class RgTask:
         self._store_track_gain(item, self.track_gains[0])
         if write:
             item.try_write()
-        self._log.debug("done analyzing {0}", item)
+        self._log.debug("done analyzing {}", item)
 
     def _store_album(self, write: bool):
         """Store track/album gains for all tracks of the task in the database."""
@@ -196,7 +196,7 @@ class RgTask:
             self._store_album_gain(item, self.album_gain)
             if write:
                 item.try_write()
-            self._log.debug("done analyzing {0}", item)
+            self._log.debug("done analyzing {}", item)
 
     def store(self, write: bool):
         """Store computed gains for the items of this task in the database."""
@@ -230,7 +230,7 @@ class R128Task(RgTask):
     def _store_track_gain(self, item: Item, track_gain: Gain):
         item.r128_track_gain = track_gain.gain
         item.store()
-        self._log.debug("applied r128 track gain {0} LU", item.r128_track_gain)
+        self._log.debug("applied r128 track gain {} LU", item.r128_track_gain)
 
     def _store_album_gain(self, item: Item, album_gain: Gain):
         """
@@ -239,7 +239,7 @@ class R128Task(RgTask):
         """
         item.r128_album_gain = album_gain.gain
         item.store()
-        self._log.debug("applied r128 album gain {0} LU", item.r128_album_gain)
+        self._log.debug("applied r128 album gain {} LU", item.r128_album_gain)
 
 
 AnyRgTask = TypeVar("AnyRgTask", bound=RgTask)
@@ -428,7 +428,7 @@ class FfmpegBackend(Backend):
         # call ffmpeg
         self._log.debug(f"analyzing {item}")
         cmd = self._construct_cmd(item, peak_method)
-        self._log.debug("executing {0}", " ".join(map(displayable_path, cmd)))
+        self._log.debug("executing {}", " ".join(map(displayable_path, cmd)))
         output = call(cmd, self._log).stderr.splitlines()
 
         # parse output
@@ -654,8 +654,8 @@ class CommandBackend(Backend):
         cmd = cmd + ["-d", str(int(target_level - 89))]
         cmd = cmd + [syspath(i.path) for i in items]
 
-        self._log.debug("analyzing {0} files", len(items))
-        self._log.debug("executing {0}", " ".join(map(displayable_path, cmd)))
+        self._log.debug("analyzing {} files", len(items))
+        self._log.debug("executing {}", " ".join(map(displayable_path, cmd)))
         output = call(cmd, self._log).stdout
         self._log.debug("analysis finished")
         return self.parse_tool_output(
@@ -671,7 +671,7 @@ class CommandBackend(Backend):
         for line in text.split(b"\n")[1 : num_lines + 1]:
             parts = line.split(b"\t")
             if len(parts) != 6 or parts[0] == b"File":
-                self._log.debug("bad tool output: {0}", text)
+                self._log.debug("bad tool output: {}", text)
                 raise ReplayGainError("mp3gain failed")
 
             # _file = parts[0]
@@ -1096,7 +1096,7 @@ class AudioToolsBackend(Backend):
         )
 
         self._log.debug(
-            "ReplayGain for track {0} - {1}: {2:.2f}, {3:.2f}",
+            "ReplayGain for track {} - {}: {2:.2f}, {3:.2f}",
             item.artist,
             item.title,
             rg_track_gain,
@@ -1123,7 +1123,7 @@ class AudioToolsBackend(Backend):
             )
             track_gains.append(Gain(gain=rg_track_gain, peak=rg_track_peak))
             self._log.debug(
-                "ReplayGain for track {0}: {1:.2f}, {2:.2f}",
+                "ReplayGain for track {}: {.2f}, {.2f}",
                 item,
                 rg_track_gain,
                 rg_track_peak,
@@ -1136,7 +1136,7 @@ class AudioToolsBackend(Backend):
             rg_album_gain, task.target_level
         )
         self._log.debug(
-            "ReplayGain for album {0}: {1:.2f}, {2:.2f}",
+            "ReplayGain for album {}: {.2f}, {.2f}",
             task.items[0].album,
             rg_album_gain,
             rg_album_peak,
@@ -1336,19 +1336,19 @@ class ReplayGainPlugin(BeetsPlugin):
         items, nothing is done.
         """
         if not force and not self.album_requires_gain(album):
-            self._log.info("Skipping album {0}", album)
+            self._log.info("Skipping album {}", album)
             return
 
         items_iter = iter(album.items())
         use_r128 = self.should_use_r128(next(items_iter))
         if any(use_r128 != self.should_use_r128(i) for i in items_iter):
             self._log.error(
-                "Cannot calculate gain for album {0} (incompatible formats)",
+                "Cannot calculate gain for album {} (incompatible formats)",
                 album,
             )
             return
 
-        self._log.info("analyzing {0}", album)
+        self._log.info("analyzing {}", album)
 
         discs: dict[int, list[Item]] = {}
         if self.config["per_disc"].get(bool):
@@ -1372,7 +1372,7 @@ class ReplayGainPlugin(BeetsPlugin):
                     callback=store_cb,
                 )
             except ReplayGainError as e:
-                self._log.info("ReplayGain error: {0}", e)
+                self._log.info("ReplayGain error: {}", e)
             except FatalReplayGainError as e:
                 raise ui.UserError(f"Fatal replay gain error: {e}")
 
@@ -1384,7 +1384,7 @@ class ReplayGainPlugin(BeetsPlugin):
         in the item, nothing is done.
         """
         if not force and not self.track_requires_gain(item):
-            self._log.info("Skipping track {0}", item)
+            self._log.info("Skipping track {}", item)
             return
 
         use_r128 = self.should_use_r128(item)
@@ -1401,7 +1401,7 @@ class ReplayGainPlugin(BeetsPlugin):
                 callback=store_cb,
             )
         except ReplayGainError as e:
-            self._log.info("ReplayGain error: {0}", e)
+            self._log.info("ReplayGain error: {}", e)
         except FatalReplayGainError as e:
             raise ui.UserError(f"Fatal replay gain error: {e}")
 

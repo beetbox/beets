@@ -139,7 +139,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # Read the tree
         if c14n_filename:
-            self._log.debug("Loading canonicalization tree {0}", c14n_filename)
+            self._log.debug("Loading canonicalization tree {}", c14n_filename)
             c14n_filename = normpath(c14n_filename)
             with codecs.open(c14n_filename, "r", encoding="utf-8") as f:
                 genres_tree = yaml.safe_load(f)
@@ -607,12 +607,12 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         try:
             res = obj.get_top_tags()
         except PYLAST_EXCEPTIONS as exc:
-            self._log.debug("last.fm error: {0}", exc)
+            self._log.debug("last.fm error: {}", exc)
             return []
         except Exception as exc:
             # Isolate bugs in pylast.
             self._log.debug("{}", traceback.format_exc())
-            self._log.error("error in pylast library: {0}", exc)
+            self._log.error("error in pylast library: {}", exc)
             return []
 
         # Filter by weight (optionally).

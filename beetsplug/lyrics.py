@@ -1090,7 +1090,7 @@ class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
             return
 
         if lyrics := self.find_lyrics(item):
-            self.info("🟢 Found lyrics: {0}", item)
+            self.info("🟢 Found lyrics: {}", item)
             if translator := self.translator:
                 lyrics = translator.translate(lyrics, item.lyrics)
         else:

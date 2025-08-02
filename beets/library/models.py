@@ -425,7 +425,7 @@ class Album(LibModel):
 
         new_art = util.unique_path(new_art)
         log.debug(
-            "moving album art {0} to {1}",
+            "moving album art {} to {}",
             util.displayable_path(old_art),
             util.displayable_path(new_art),
         )
@@ -992,7 +992,7 @@ class Item(LibModel):
             self.write(*args, **kwargs)
             return True
         except FileOperationError as exc:
-            log.error("{0}", exc)
+            log.error("{}", exc)
             return False
 
     def try_sync(self, write, move, with_album=True):
@@ -1013,7 +1013,7 @@ class Item(LibModel):
             # Check whether this file is inside the library directory.
             if self._db and self._db.directory in util.ancestry(self.path):
                 log.debug(
-                    "moving {0} to synchronize path",
+                    "moving {} to synchronize path",
                     util.displayable_path(self.path),
                 )
                 self.move(with_album=with_album)
@@ -1087,7 +1087,7 @@ class Item(LibModel):
         try:
             return os.path.getsize(syspath(self.path))
         except (OSError, Exception) as exc:
-            log.warning("could not get filesize: {0}", exc)
+            log.warning("could not get filesize: {}", exc)
             return 0
 
     # Model methods.

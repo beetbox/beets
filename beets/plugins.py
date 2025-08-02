@@ -543,7 +543,7 @@ def send(event: EventType, **arguments: Any) -> list[Any]:
 
     Return a list of non-None values returned from the handlers.
     """
-    log.debug("Sending event: {0}", event)
+    log.debug("Sending event: {}", event)
     return [
         r
         for handler in BeetsPlugin.listeners[event]

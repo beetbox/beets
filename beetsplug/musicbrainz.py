@@ -836,7 +836,7 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
         """
         self._log.debug("Requesting MusicBrainz release {}", album_id)
         if not (albumid := self._extract_id(album_id)):
-            self._log.debug("Invalid MBID ({0}).", album_id)
+            self._log.debug("Invalid MBID ({}).", album_id)
             return None
 
         try:
@@ -873,7 +873,7 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
         or None if no track is found. May raise a MusicBrainzAPIError.
         """
         if not (trackid := self._extract_id(track_id)):
-            self._log.debug("Invalid MBID ({0}).", track_id)
+            self._log.debug("Invalid MBID ({}).", track_id)
             return None
 
         try:

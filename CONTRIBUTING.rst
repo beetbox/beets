@@ -261,7 +261,7 @@ There are a few coding conventions we use in beets:
 
   - The loggers use `str.format
     <http://docs.python.org/library/stdtypes.html#str.format>`__-style logging
-    instead of ``%``-style, so you can type ``log.debug("{0}", obj)`` to do your
+    instead of ``%``-style, so you can type ``log.debug("{}", obj)`` to do your
     formatting.
 
 - Exception handlers must use ``except A as B:`` instead of ``except A, B:``.

@@ -516,7 +516,7 @@ class SpotifyPlugin(
 
         if self.config["mode"].get() not in ["list", "open"]:
             self._log.warning(
-                "{0} is not a valid mode", self.config["mode"].get()
+                "{} is not a valid mode", self.config["mode"].get()
             )
             return False
 
