@@ -28,6 +28,7 @@ import struct
 import sys
 import textwrap
 import traceback
+import warnings
 from difflib import SequenceMatcher
 from typing import TYPE_CHECKING, Any, Callable
 
@@ -102,6 +103,21 @@ def _stream_encoding(stream, default="utf-8"):
     # Python's guessed output stream encoding, or UTF-8 as a fallback
     # (e.g., when piped to a file).
     return stream.encoding or default
+
+
+def decargs(arglist):
+    """Given a list of command-line argument bytestrings, attempts to
+    decode them to Unicode strings when running under Python 2.
+
+    .. deprecated:: 2.4.0
+       This function will be removed in 3.0.0.
+    """
+    warnings.warn(
+        "decargs() is deprecated and will be removed in version 3.0.0.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return arglist
 
 
 def print_(*strings: str, end: str = "\n") -> None:
