@@ -20,8 +20,8 @@ from typing import Any, Iterable, Sequence
 from typing_extensions import override
 
 import beetsplug.musicbrainz as mbplugin  # avoid implicit loading of main plugin
-from beets.autotag import AlbumInfo, Distance
-from beets.autotag.distance import distance
+from beets.autotag import AlbumInfo
+from beets.autotag.distance import Distance, distance
 from beets.autotag.hooks import TrackInfo
 from beets.autotag.match import assign_items
 from beets.library import Item
