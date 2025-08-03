@@ -111,9 +111,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             self.import_stages = [self.imported]
 
         self._genre_cache = {}
+        self.whitelist = self._load_whitelist()
+        self.c14n_branches, self.canonicalize = self._load_c14n_tree()
 
-        # Read the whitelist file if enabled.
-        self.whitelist = set()
+    def _load_whitelist(self) -> set[str]:
+        whitelist = set()
         wl_filename = self.config["whitelist"].get()
         if wl_filename in (True, ""):  # Indicates the default whitelist.
             wl_filename = WHITELIST
@@ -123,27 +125,27 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 for line in f:
                     line = line.decode("utf-8").strip().lower()
                     if line and not line.startswith("#"):
-                        self.whitelist.add(line)
+                        whitelist.add(line)
+        return whitelist
 
-        # Read the genres tree for canonicalization if enabled.
-        self.c14n_branches = []
+    def _load_c14n_tree(self) -> tuple[list[list[str]], bool]:
+        c14n_branches = []
         c14n_filename = self.config["canonical"].get()
-        self.canonicalize = c14n_filename is not False
-
+        canonicalize = c14n_filename is not False
         # Default tree
         if c14n_filename in (True, ""):
             c14n_filename = C14N_TREE
-        elif not self.canonicalize and self.config["prefer_specific"].get():
+        elif not canonicalize and self.config["prefer_specific"].get():
             # prefer_specific requires a tree, load default tree
             c14n_filename = C14N_TREE
-
         # Read the tree
         if c14n_filename:
             self._log.debug("Loading canonicalization tree {}", c14n_filename)
             c14n_filename = normpath(c14n_filename)
             with codecs.open(c14n_filename, "r", encoding="utf-8") as f:
                 genres_tree = yaml.safe_load(f)
-            flatten_tree(genres_tree, [], self.c14n_branches)
+            flatten_tree(genres_tree, [], c14n_branches)
+        return c14n_branches, canonicalize
 
     @property
     def sources(self) -> tuple[str, ...]:
