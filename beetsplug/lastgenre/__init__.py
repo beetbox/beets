@@ -204,7 +204,12 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     )
         if self.config["extended_debug"]:
             self._log.debug("Blacklist: {}", blacklist)
-        return blacklist
+
+        # Compile regex patterns
+        compiled_blacklist = defaultdict(list)
+        for artist, patterns in blacklist.items():
+            compiled_blacklist[artist] = [re.compile(pattern) for pattern in patterns]
+        return compiled_blacklist
 
     @property
     def sources(self) -> tuple[str, ...]:
@@ -337,7 +342,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # Check global forbidden patterns
         if "*" in self.blacklist:
             for pattern in self.blacklist["*"]:
-                if re.search(pattern, genre):
+                if pattern.search(genre):
                     return True
 
         # Check artist-specific forbidden patterns
@@ -345,7 +350,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             artist = artist.lower()
             if artist in self.blacklist:
                 for pattern in self.blacklist[artist]:
-                    if re.search(pattern, genre):
+                    if pattern.search(genre):
                         return True
 
         return False
