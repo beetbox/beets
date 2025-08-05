@@ -641,6 +641,8 @@ def test_blacklist_patterns(blacklist_dict, artist, genre, expected_forbidden):
         ),
         # Case insensitive artist names
         ("METALLICA:\n    METAL", {"metallica": ["metal"]}),
+        # Invalid regex pattern that gets escaped
+        ("artist:\n    [invalid(regex", {"artist": ["\\[invalid\\(regex"]}),
         # Empty file
         ("", {}),
     ],
