@@ -184,14 +184,14 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 line = line.decode("utf-8").lower()
                 if not line.strip() or line.lstrip().startswith("#"):
                     continue
-                if not line.startswith(' '):
+                if not line.startswith(" "):
                     # Section header
-                    if not line.rstrip().endswith(':'):
+                    if not line.rstrip().endswith(":"):
                         raise UserError(
                             f"Malformed blacklist section header "
                             f"at line {lineno}: {line}"
                         )
-                    section = line.rstrip(':\r\n')
+                    section = line.rstrip(":\r\n")
                 else:
                     # Pattern line: must be indented (at least one space)
                     if section is None:
@@ -199,9 +199,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                             f"Blacklist regex pattern line before any section header "
                             f"at line {lineno}: {line}"
                         )
-                    blacklist[section].append(
-                        line.strip()
-                    )
+                    blacklist[section].append(line.strip())
         if self.config["extended_debug"]:
             self._log.debug("Blacklist: {}", blacklist)
 
@@ -216,7 +214,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 except re.error:
                     # If it fails, escape it and treat as literal string
                     escaped_pattern = re.escape(pattern)
-                    compiled_patterns.append(re.compile(escaped_pattern, re.IGNORECASE))
+                    compiled_patterns.append(
+                        re.compile(escaped_pattern, re.IGNORECASE)
+                    )
             compiled_blacklist[artist] = compiled_patterns
         return compiled_blacklist
 
