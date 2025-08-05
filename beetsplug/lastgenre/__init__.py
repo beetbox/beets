@@ -160,12 +160,19 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         - Subsequent lines are indented (at least one space, typically 4 spaces) and
           contain a regex pattern to match a genre.
 
-        Eg.:
-          artist name 1:
-              genre pattern 1
-              genre pattern 2
-          artist name 2:
-              genre pattern 3
+
+        Supports a special '*' key in the blacklist for
+        global forbidden genres.
+
+        Example blacklist file format:
+            Artist Name:
+                pop
+                rock
+            Another Artist Name:
+                jazz
+            *:
+                spoken word
+                comedy
 
         Raises:
             UserError: if the file format is invalid.
@@ -331,17 +338,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         return False
 
     def _is_forbidden(self, genre: str, artist: str) -> bool:
-        """Return True if the genre is forbidden for the artist.
+        """Return True if the genre is on the blacklist for the artist.
 
-        Supports a special '*' key in the blacklist for
-        global forbidden genres.
-
-        Example blacklist file format:
-            Artist Name:
-                pop
-                rock
-            *:
-                spoken word
+        See `_load_blacklist` docstring for the blacklist file format.
         """
         if not self.blacklist:
             return False
