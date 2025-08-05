@@ -213,9 +213,18 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # Compile regex patterns
         compiled_blacklist = defaultdict(list)
         for artist, patterns in blacklist.items():
-            compiled_blacklist[artist] = [
-                re.compile(pattern) for pattern in patterns
-            ]
+            compiled_patterns = []
+            for pattern in patterns:
+                try:
+                    # Try to compile as regex first
+                    compiled_patterns.append(re.compile(pattern, re.IGNORECASE))
+                except re.error:
+                    # If it fails, escape it and treat as literal string
+                    escaped_pattern = re.escape(pattern)
+                    compiled_patterns.append(
+                        re.compile(escaped_pattern, re.IGNORECASE)
+                    )
+            compiled_blacklist[artist] = compiled_patterns
         return compiled_blacklist
 
     @property
