@@ -580,6 +580,24 @@ def test_get_genre(config_values, item_genre, mock_genres, expected_result):
             "metal",
             True,
         ),
+        # Complex regex pattern with multiple features (raw string)
+        (
+            {
+                "fracture": [
+                    r"^(heavy|black|power|death)?\s?(metal|rock)$|\w+-metal\d*$"
+                ]
+            },
+            "Fracture",
+            "power metal",
+            True,
+        ),
+        # Complex regex pattern with multiple features (regular string)
+        (
+            {"amon tobin": ["d(rum)?[ n/]*b(ass)?"]},
+            "Amon Tobin",
+            "dnb",
+            True,
+        ),
         # Empty blacklist
         ({}, "Any Artist", "any genre", False),
     ],
