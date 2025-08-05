@@ -14,7 +14,9 @@
 
 """Tests for the 'lastgenre' plugin."""
 
+import os
 import re
+import tempfile
 from collections import defaultdict
 from unittest.mock import Mock
 
@@ -22,6 +24,7 @@ import pytest
 
 from beets.test import _common
 from beets.test.helper import BeetsTestCase
+from beets.ui import UserError
 from beetsplug import lastgenre
 
 
@@ -554,21 +557,16 @@ def test_get_genre(config_values, item_genre, mock_genres, expected_result):
         # Global blacklist - simple word
         ({"*": ["spoken word"]}, "Any Artist", "spoken word", True),
         ({"*": ["spoken word"]}, "Any Artist", "jazz", False),
-
         # Global blacklist - regex pattern
         ({"*": [".*electronic.*"]}, "Any Artist", "ambient electronic", True),
         ({"*": [".*electronic.*"]}, "Any Artist", "jazz", False),
-
         # Artist-specific blacklist
         ({"metallica": ["metal"]}, "Metallica", "metal", True),
         ({"metallica": ["metal"]}, "Iron Maiden", "metal", False),
-
         # Case insensitive matching
         ({"metallica": ["metal"]}, "METALLICA", "METAL", True),
-
         # Artist-specific blacklist - exact match
         ({"metallica": ["^Heavy Metal$"]}, "Metallica", "classic metal", False),
-
         # Combined global and artist-specific
         (
             {"*": ["spoken word"], "metallica": ["metal"]},
@@ -604,3 +602,86 @@ def test_blacklist_patterns(blacklist_dict, artist, genre, expected_forbidden):
     # Test the _is_forbidden method
     result = plugin._is_forbidden(genre, artist)
     assert result == expected_forbidden
+
+
+@pytest.mark.parametrize(
+    "file_content, expected_blacklist",
+    [
+        # Basic artist with pattern
+        ("metallica:\n    metal", {"metallica": ["metal"]}),
+        # Global blacklist
+        ("*:\n    spoken word", {"*": ["spoken word"]}),
+        # Multiple patterns per artist
+        (
+            "metallica:\n    metal\n    .*rock.*",
+            {"metallica": ["metal", ".*rock.*"]},
+        ),
+        # Comments and empty lines ignored
+        (
+            "# comment\n*:\n    spoken word\n\nmetallica:\n    metal",
+            {"*": ["spoken word"], "metallica": ["metal"]},
+        ),
+        # Case insensitive artist names
+        ("METALLICA:\n    METAL", {"metallica": ["metal"]}),
+        # Empty file
+        ("", {}),
+    ],
+)
+def test_blacklist_file_format(file_content, expected_blacklist):
+    """Test blacklist file format parsing."""
+
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".txt", delete=False, encoding="utf-8"
+    ) as f:
+        f.write(file_content)
+        blacklist_file = f.name
+
+    try:
+        plugin = lastgenre.LastGenrePlugin()
+        plugin.config["blacklist"] = blacklist_file
+        blacklist_result = plugin._load_blacklist()
+
+        # Convert compiled regex patterns back to strings for comparison
+        string_blacklist = {}
+        for artist, compiled_patterns in blacklist_result.items():
+            string_blacklist[artist] = [
+                pattern.pattern for pattern in compiled_patterns
+            ]
+
+        assert string_blacklist == expected_blacklist
+
+    finally:
+        os.unlink(blacklist_file)
+
+
+@pytest.mark.parametrize(
+    "invalid_content, expected_error_message",
+    [
+        # Missing colon
+        ("metallica\n    metal", "Malformed blacklist section header"),
+        # Pattern before section
+        ("    metal\nmetallica:\n    heavy metal", "before any section header"),
+        # Unindented pattern
+        ("metallica:\nmetal", "Malformed blacklist section header"),
+    ],
+)
+def test_blacklist_file_format_errors(invalid_content, expected_error_message):
+    """Test blacklist file format error handling."""
+
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".txt", delete=False, encoding="utf-8"
+    ) as f:
+        f.write(invalid_content)
+        blacklist_file = f.name
+
+    try:
+        plugin = lastgenre.LastGenrePlugin()
+        plugin.config["blacklist"] = blacklist_file
+
+        with pytest.raises(UserError) as exc_info:
+            plugin._load_blacklist()
+
+        assert expected_error_message in str(exc_info.value)
+
+    finally:
+        os.unlink(blacklist_file)
