@@ -14,6 +14,8 @@
 
 """Tests for the 'lastgenre' plugin."""
 
+import re
+from collections import defaultdict
 from unittest.mock import Mock
 
 import pytest
@@ -544,3 +546,61 @@ def test_get_genre(config_values, item_genre, mock_genres, expected_result):
     # Run
     res = plugin._get_genre(item)
     assert res == expected_result
+
+
+@pytest.mark.parametrize(
+    "blacklist_dict, artist, genre, expected_forbidden",
+    [
+        # Global blacklist - simple word
+        ({"*": ["spoken word"]}, "Any Artist", "spoken word", True),
+        ({"*": ["spoken word"]}, "Any Artist", "jazz", False),
+
+        # Global blacklist - regex pattern
+        ({"*": [".*electronic.*"]}, "Any Artist", "ambient electronic", True),
+        ({"*": [".*electronic.*"]}, "Any Artist", "jazz", False),
+
+        # Artist-specific blacklist
+        ({"metallica": ["metal"]}, "Metallica", "metal", True),
+        ({"metallica": ["metal"]}, "Iron Maiden", "metal", False),
+
+        # Case insensitive matching
+        ({"metallica": ["metal"]}, "METALLICA", "METAL", True),
+
+        # Artist-specific blacklist - exact match
+        ({"metallica": ["^Heavy Metal$"]}, "Metallica", "classic metal", False),
+
+        # Combined global and artist-specific
+        (
+            {"*": ["spoken word"], "metallica": ["metal"]},
+            "Metallica",
+            "spoken word",
+            True,
+        ),
+        (
+            {"*": ["spoken word"], "metallica": ["metal"]},
+            "Metallica",
+            "metal",
+            True,
+        ),
+        # Empty blacklist
+        ({}, "Any Artist", "any genre", False),
+    ],
+)
+def test_blacklist_patterns(blacklist_dict, artist, genre, expected_forbidden):
+    """Test blacklist pattern matching logic directly."""
+
+    # Initialize plugin
+    plugin = lastgenre.LastGenrePlugin()
+
+    # Set up compiled blacklist directly (skipping file parsing)
+    compiled_blacklist = defaultdict(list)
+    for artist_name, patterns in blacklist_dict.items():
+        compiled_blacklist[artist_name.lower()] = [
+            re.compile(pattern) for pattern in patterns
+        ]
+
+    plugin.blacklist = compiled_blacklist
+
+    # Test the _is_forbidden method
+    result = plugin._is_forbidden(genre, artist)
+    assert result == expected_forbidden
