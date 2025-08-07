@@ -59,9 +59,7 @@ class ScrubPlugin(BeetsPlugin):
         def scrub_func(lib, opts, args):
             # Walk through matching files and remove tags.
             for item in lib.items(args):
-                self._log.info(
-                    "scrubbing: {}", util.displayable_path(item.path)
-                )
+                self._log.info("scrubbing: {}", item.filepath)
                 self._scrub_item(item, opts.write)
 
         scrub_cmd = ui.Subcommand("scrub", help="clean audio tags")
@@ -149,7 +147,5 @@ class ScrubPlugin(BeetsPlugin):
     def import_task_files(self, session, task):
         """Automatically scrub imported files."""
         for item in task.imported_items():
-            self._log.debug(
-                "auto-scrubbing {}", util.displayable_path(item.path)
-            )
+            self._log.debug("auto-scrubbing {}", item.filepath)
             self._scrub_item(item, ui.should_write())

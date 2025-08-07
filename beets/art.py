@@ -38,11 +38,7 @@ def get_art(log, item):
     try:
         mf = mediafile.MediaFile(syspath(item.path))
     except mediafile.UnreadableFileError as exc:
-        log.warning(
-            "Could not extract art from {}: {}",
-            displayable_path(item.path),
-            exc,
-        )
+        log.warning("Could not extract art from {}: {}", item.filepath, exc)
         return
 
     return mf.art
@@ -189,7 +185,7 @@ def extract(log, outpath, item):
     # Add an extension to the filename.
     ext = mediafile.image_extension(art)
     if not ext:
-        log.warning("Unknown image type in {}.", displayable_path(item.path))
+        log.warning("Unknown image type in {}.", item.filepath)
         return
     outpath += bytestring_path(f".{ext}")
 

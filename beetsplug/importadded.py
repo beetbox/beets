@@ -105,7 +105,7 @@ class ImportAddedPlugin(BeetsPlugin):
             self._log.debug(
                 "Album '{}' is reimported, skipping import of "
                 "added dates for the album and its items.",
-                util.displayable_path(album.path),
+                album.filepath,
             )
             return
 
@@ -130,7 +130,7 @@ class ImportAddedPlugin(BeetsPlugin):
         if self.reimported_item(item):
             self._log.debug(
                 "Item '{}' is reimported, skipping import of added date.",
-                util.displayable_path(item.path),
+                item.filepath,
             )
             return
         mtime = self.item_mtime.pop(item.path, None)
@@ -140,7 +140,7 @@ class ImportAddedPlugin(BeetsPlugin):
                 self.write_item_mtime(item, mtime)
             self._log.debug(
                 "Import of item '{}', selected item.added={}",
-                util.displayable_path(item.path),
+                item.filepath,
                 item.added,
             )
             item.store()
@@ -154,6 +154,6 @@ class ImportAddedPlugin(BeetsPlugin):
                 self.write_item_mtime(item, item.added)
             self._log.debug(
                 "Write of item '{}', selected item.added={}",
-                util.displayable_path(item.path),
+                item.filepath,
                 item.added,
             )

@@ -1541,9 +1541,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                         out = candidate
                         assert out.path is not None  # help mypy
                         self._log.debug(
-                            "using {.LOC} image {}",
-                            source,
-                            util.displayable_path(out.path),
+                            "using {.LOC} image {}", source, out.path
                         )
                         break
                     # Remove temporary files for invalid candidates.

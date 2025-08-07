@@ -1640,7 +1640,7 @@ def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
             if item.current_mtime() <= item.mtime:
                 log.debug(
                     "skipping {} because mtime is up to date ({})",
-                    displayable_path(item.path),
+                    item.filepath,
                     item.mtime,
                 )
                 continue
@@ -1649,9 +1649,7 @@ def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
             try:
                 item.read()
             except library.ReadError as exc:
-                log.error(
-                    "error reading {}: {}", displayable_path(item.path), exc
-                )
+                log.error("error reading {}: {}", item.filepath, exc)
                 continue
 
             # Special-case album artist when it matches track artist. (Hacky
@@ -2175,7 +2173,7 @@ def move_items(
             )
 
         for obj in objs:
-            log.debug("moving: {}", util.displayable_path(obj.path))
+            log.debug("moving: {}", obj.filepath)
 
             if export:
                 # Copy without affecting the database.
@@ -2258,14 +2256,14 @@ def write_items(lib, query, pretend, force):
     for item in items:
         # Item deleted?
         if not os.path.exists(syspath(item.path)):
-            log.info("missing file: {}", util.displayable_path(item.path))
+            log.info("missing file: {}", item.filepath)
             continue
 
         # Get an Item object reflecting the "clean" (on-disk) state.
         try:
             clean_item = library.Item.from_path(item.path)
         except library.ReadError as exc:
-            log.error("error reading {}: {}", displayable_path(item.path), exc)
+            log.error("error reading {}: {}", item.filepath, exc)
             continue
 
         # Check for and display changes.
