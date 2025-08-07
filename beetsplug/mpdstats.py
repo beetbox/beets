@@ -191,7 +191,7 @@ class MPDStats:
                 "updated: {} = {} [{}]",
                 attribute,
                 item[attribute],
-                displayable_path(item.path),
+                item.filepath,
             )
 
     def update_rating(self, item, skipped):

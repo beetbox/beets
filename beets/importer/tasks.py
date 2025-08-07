@@ -271,9 +271,7 @@ class ImportTask(BaseImportTask):
         for item in duplicate_items:
             item.remove()
             if lib.directory in util.ancestry(item.path):
-                log.debug(
-                    "deleting duplicate {}", util.displayable_path(item.path)
-                )
+                log.debug("deleting duplicate {}", item.filepath)
                 util.remove(item.path)
                 util.prune_dirs(os.path.dirname(item.path), lib.directory)
 
@@ -559,7 +557,7 @@ class ImportTask(BaseImportTask):
                     noun,
                     new_obj.id,
                     overwritten_fields,
-                    util.displayable_path(new_obj.path),
+                    new_obj.filepath,
                 )
                 for key in overwritten_fields:
                     del existing_fields[key]
@@ -581,14 +579,14 @@ class ImportTask(BaseImportTask):
                     "Reimported album {}. Preserving attribute ['added']. "
                     "Path: {}",
                     self.album.id,
-                    util.displayable_path(self.album.path),
+                    self.album.filepath,
                 )
                 log.debug(
                     "Reimported album {}. Preserving flexible attributes {}. "
                     "Path: {}",
                     self.album.id,
                     list(album_fields.keys()),
-                    util.displayable_path(self.album.path),
+                    self.album.filepath,
                 )
 
         for item in self.imported_items():
@@ -600,7 +598,7 @@ class ImportTask(BaseImportTask):
                         "Reimported item {}. Preserving attribute ['added']. "
                         "Path: {}",
                         item.id,
-                        util.displayable_path(item.path),
+                        item.filepath,
                     )
                 item_fields = _reduce_and_log(
                     item, dup_item._values_flex, REIMPORT_FRESH_FIELDS_ITEM
@@ -611,7 +609,7 @@ class ImportTask(BaseImportTask):
                     "Path: {}",
                     item.id,
                     list(item_fields.keys()),
-                    util.displayable_path(item.path),
+                    item.filepath,
                 )
                 item.store()
 
@@ -621,11 +619,7 @@ class ImportTask(BaseImportTask):
         """
         for item in self.imported_items():
             for dup_item in self.replaced_items[item]:
-                log.debug(
-                    "Replacing item {}: {}",
-                    dup_item.id,
-                    util.displayable_path(item.path),
-                )
+                log.debug("Replacing item {}: {}", dup_item.id, item.filepath)
                 dup_item.remove()
         log.debug(
             "{} of {} items replaced",

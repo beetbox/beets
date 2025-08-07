@@ -84,9 +84,7 @@ class KeyFinderPlugin(BeetsPlugin):
 
             item["initial_key"] = key
             self._log.info(
-                "added computed initial key {} for {}",
-                key,
-                util.displayable_path(item.path),
+                "added computed initial key {} for {}", key, item.filepath
             )
 
             if write:
