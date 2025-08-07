@@ -579,6 +579,11 @@ class TestImportAllPlugins(PluginMixin):
         """Test that a plugin is importable without an error using the
         load_plugins function."""
 
+        # skip gstreamer plugins on windows
+        gstreamer_plugins = ["bpd", "replaygain"]
+        if sys.platform == "win32" and plugin_name in gstreamer_plugins:
+            pytest.xfail("GStreamer is not available on Windows: {plugin_name}")
+
         caplog.set_level(logging.WARNING)
         caplog.clear()
         plugins.load_plugins([plugin_name])
