@@ -44,11 +44,12 @@ class Amarok(MetaSource):
         "amarok_lastplayed": types.DATE,
     }
 
-    query_xml = '<query version="1.0"> \
-                    <filters> \
-                        <and><include field="filename" value={} /></and> \
-                    </filters> \
-                </query>'
+    query_xml = """
+        <query version="1.0">
+            <filters>
+                <and><include field="filename" value={} /></and>
+            </filters>
+        </query>"""
 
     def __init__(self, config, log):
         super().__init__(config, log)

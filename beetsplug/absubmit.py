@@ -118,8 +118,10 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
             dest="pretend_fetch",
             action="store_true",
             default=False,
-            help="pretend to perform action, but show \
-only files which would be processed",
+            help=(
+                "pretend to perform action, but show only files which would be"
+                " processed"
+            ),
         )
         cmd.func = self.command
         return [cmd]

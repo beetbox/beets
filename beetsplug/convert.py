@@ -176,16 +176,17 @@ class ConvertPlugin(BeetsPlugin):
             "--threads",
             action="store",
             type="int",
-            help="change the number of threads, \
-                              defaults to maximum available processors",
+            help=(
+                "change the number of threads, defaults to maximum available"
+                " processors"
+            ),
         )
         cmd.parser.add_option(
             "-k",
             "--keep-new",
             action="store_true",
             dest="keep_new",
-            help="keep only the converted \
-                              and move the old files",
+            help="keep only the converted and move the old files",
         )
         cmd.parser.add_option(
             "-d", "--dest", action="store", help="set the destination directory"
@@ -209,16 +210,16 @@ class ConvertPlugin(BeetsPlugin):
             "--link",
             action="store_true",
             dest="link",
-            help="symlink files that do not \
-                              need transcoding.",
+            help="symlink files that do not need transcoding.",
         )
         cmd.parser.add_option(
             "-H",
             "--hardlink",
             action="store_true",
             dest="hardlink",
-            help="hardlink files that do not \
-                              need transcoding. Overrides --link.",
+            help=(
+                "hardlink files that do not need transcoding. Overrides --link."
+            ),
         )
         cmd.parser.add_option(
             "-m",
