@@ -91,9 +91,6 @@ class PluginImportTestCase(ImportHelper, PluginTestCase):
 
 
 class EventsTest(PluginImportTestCase):
-    def setUp(self):
-        super().setUp()
-
     def test_import_task_created(self):
         self.importer = self.setup_importer(pretend=True)
 
@@ -472,10 +469,22 @@ def get_available_plugins():
     ]
 
 
-class TestImportAllPlugins(PluginMixin):
-    def unimport_plugins(self):
+class TestImportPlugin(PluginMixin):
+    @pytest.fixture(params=get_available_plugins())
+    def plugin_name(self, request):
+        """Fixture to provide the name of each available plugin."""
+        name = request.param
+
+        # skip gstreamer plugins on windows
+        gstreamer_plugins = {"bpd", "replaygain"}
+        if sys.platform == "win32" and name in gstreamer_plugins:
+            pytest.skip(f"GStreamer is not available on Windows: {name}")
+
+        return name
+
+    def unload_plugins(self):
         """Unimport plugins before each test to avoid conflicts."""
-        self.unload_plugins()
+        super().unload_plugins()
         for mod in list(sys.modules):
             if mod.startswith("beetsplug."):
                 del sys.modules[mod]
@@ -483,28 +492,21 @@ class TestImportAllPlugins(PluginMixin):
     @pytest.fixture(autouse=True)
     def cleanup(self):
         """Ensure plugins are unimported before and after each test."""
-        self.unimport_plugins()
+        self.unload_plugins()
         yield
-        self.unimport_plugins()
+        self.unload_plugins()
 
     @pytest.mark.skipif(
         os.environ.get("GITHUB_ACTIONS") != "true",
-        reason="Requires all dependencies to be installed, "
-        + "which we can't guarantee in the local environment.",
+        reason=(
+            "Requires all dependencies to be installed, which we can't"
+            " guarantee in the local environment."
+        ),
     )
-    @pytest.mark.parametrize("plugin_name", get_available_plugins())
-    def test_import_plugin(self, caplog, plugin_name):  #
-        """Test that a plugin is importable without an error using the
-        load_plugins function."""
-
-        # skip gstreamer plugins on windows
-        gstreamer_plugins = ["bpd", "replaygain"]
-        if sys.platform == "win32" and plugin_name in gstreamer_plugins:
-            pytest.xfail("GStreamer is not available on Windows: {plugin_name}")
-
+    def test_import_plugin(self, caplog, plugin_name):
+        """Test that a plugin is importable without an error."""
         caplog.set_level(logging.WARNING)
-        caplog.clear()
-        plugins.load_plugins(include={plugin_name})
+        self.load_plugins(plugin_name)
 
         assert "PluginImportError" not in caplog.text, (
             f"Plugin '{plugin_name}' has issues during import."
