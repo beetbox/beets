@@ -242,12 +242,12 @@ There are a few coding conventions we use in beets:
 
   To fetch Item objects from the database, use lib.items(…) and supply a query
   as an argument. Resist the urge to write raw SQL for your query. If you must
-  use lower-level queries into the database, do this:
+  use lower-level queries into the database, do this, for example:
 
   .. code-block:: python
 
       with lib.transaction() as tx:
-          rows = tx.query("SELECT …")
+          rows = tx.query("SELECT path FROM items WHERE album_id = ?", (album_id,))
 
   Transaction objects help control concurrent access to the database and assist
   in debugging conflicting accesses.
