@@ -126,7 +126,7 @@ class HumanReadableError(Exception):
         """
         if self.tb:
             logger.debug(self.tb)
-        logger.error("{}: {}", self.error_kind, self.args[0])
+        logger.error("{.error_kind}: {}", self, self.args[0])
 
 
 class FilesystemError(HumanReadableError):
@@ -221,11 +221,12 @@ def sorted_walk(
     # Get all the directories and files at this level.
     try:
         contents = os.listdir(syspath(bytes_path))
-    except OSError as exc:
+    except OSError:
         if logger:
             logger.warning(
-                f"could not list directory {displayable_path(bytes_path)}:"
-                f" {exc.strerror}"
+                "could not list directory {}",
+                displayable_path(bytes_path),
+                exc_info=True,
             )
         return
     dirs = []

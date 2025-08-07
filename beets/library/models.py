@@ -1012,7 +1012,7 @@ class Item(LibModel):
         if move:
             # Check whether this file is inside the library directory.
             if self._db and self._db.directory in util.ancestry(self.path):
-                log.debug("moving {} to synchronize path", self.filepath)
+                log.debug("moving {.filepath} to synchronize path", self)
                 self.move(with_album=with_album)
         self.store()
 

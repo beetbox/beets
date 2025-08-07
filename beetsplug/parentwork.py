@@ -179,9 +179,9 @@ class ParentWorkPlugin(BeetsPlugin):
 
         if not item.mb_workid:
             self._log.info(
-                "No work for {}, add one at https://musicbrainz.org/recording/{}",
+                "No work for {}, add one at https://musicbrainz.org/recording/{.mb_trackid}",
                 item,
-                item.mb_trackid,
+                item,
             )
             return
 

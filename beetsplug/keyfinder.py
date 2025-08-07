@@ -73,7 +73,7 @@ class KeyFinderPlugin(BeetsPlugin):
             except IndexError:
                 # Sometimes keyfinder-cli returns 0 but with no key, usually
                 # when the file is silent or corrupt, so we log and skip.
-                self._log.error("no key returned for path: {}", item.path)
+                self._log.error("no key returned for path: {.path}", item)
                 continue
 
             try:
@@ -84,7 +84,7 @@ class KeyFinderPlugin(BeetsPlugin):
 
             item["initial_key"] = key
             self._log.info(
-                "added computed initial key {} for {}", key, item.filepath
+                "added computed initial key {} for {.filepath}", key, item
             )
 
             if write:

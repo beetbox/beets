@@ -127,12 +127,12 @@ class BadFiles(BeetsPlugin):
         except CheckerCommandError as e:
             if e.errno == errno.ENOENT:
                 self._log.error(
-                    "command not found: {} when validating file: {}",
-                    e.checker,
-                    e.path,
+                    "command not found: {.checker} when validating file: {.path}",
+                    e,
+                    e,
                 )
             else:
-                self._log.error("error invoking {}: {}", e.checker, e.msg)
+                self._log.error("error invoking {.checker}: {.msg}", e, e)
             return []
 
         error_lines = []

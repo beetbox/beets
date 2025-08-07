@@ -1282,11 +1282,11 @@ class TerminalImportSession(importer.ImportSession):
                 dup_choices = [c for c in all_choices if c.short == short]
                 for c in dup_choices[1:]:
                     log.warning(
-                        "Prompt choice '{}' removed due to conflict "
-                        "with '{}' (short letter: '{}')",
-                        c.long,
-                        dup_choices[0].long,
-                        c.short,
+                        "Prompt choice '{.long}' removed due to conflict "
+                        "with '{.long}' (short letter: '{.short}')",
+                        c,
+                        dup_choices[0],
+                        c,
                     )
                     extra_choices.remove(c)
 
@@ -1641,9 +1641,9 @@ def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
             # Did the item change since last checked?
             if item.current_mtime() <= item.mtime:
                 log.debug(
-                    "skipping {} because mtime is up to date ({})",
-                    item.filepath,
-                    item.mtime,
+                    "skipping {.filepath} because mtime is up to date ({.mtime})",
+                    item,
+                    item,
                 )
                 continue
 
@@ -1651,7 +1651,7 @@ def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
             try:
                 item.read()
             except library.ReadError as exc:
-                log.error("error reading {}: {}", item.filepath, exc)
+                log.error("error reading {.filepath}: {}", item, exc)
                 continue
 
             # Special-case album artist when it matches track artist. (Hacky
@@ -1884,7 +1884,7 @@ def show_stats(lib, query, exact):
             try:
                 total_size += os.path.getsize(syspath(item.path))
             except OSError as exc:
-                log.info("could not get size of {}: {}", item.path, exc)
+                log.info("could not get size of {.path}: {}", item, exc)
         else:
             total_size += int(item.length * item.bitrate / 8)
         total_time += item.length
@@ -2175,7 +2175,7 @@ def move_items(
             )
 
         for obj in objs:
-            log.debug("moving: {}", obj.filepath)
+            log.debug("moving: {.filepath}", obj)
 
             if export:
                 # Copy without affecting the database.
@@ -2258,14 +2258,14 @@ def write_items(lib, query, pretend, force):
     for item in items:
         # Item deleted?
         if not os.path.exists(syspath(item.path)):
-            log.info("missing file: {}", item.filepath)
+            log.info("missing file: {.filepath}", item)
             continue
 
         # Get an Item object reflecting the "clean" (on-disk) state.
         try:
             clean_item = library.Item.from_path(item.path)
         except library.ReadError as exc:
-            log.error("error reading {}: {}", item.filepath, exc)
+            log.error("error reading {.filepath}: {}", item, exc)
             continue
 
         # Check for and display changes.
