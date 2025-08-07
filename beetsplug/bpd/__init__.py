@@ -1138,7 +1138,7 @@ class Server(BaseServer):
             pass
 
         for tagtype, field in self.tagtype_map.items():
-            info_lines.append(f"{tagtype}: {str(getattr(item, field))}")
+            info_lines.append(f"{tagtype}: {getattr(item, field)}")
 
         return info_lines
 
@@ -1297,15 +1297,12 @@ class Server(BaseServer):
 
             yield (
                 f"bitrate: {item.bitrate / 1000}",
-                (
-                    "audio:"
-                    f" {str(item.samplerate)}:{str(item.bitdepth)}:{str(item.channels)}"
-                ),
+                f"audio: {item.samplerate}:{item.bitdepth}:{item.channels}",
             )
 
             (pos, total) = self.player.time()
             yield (
-                f"time: {str(int(pos))}:{str(int(total))}",
+                f"time: {int(pos)}:{int(total)}",
                 f"elapsed: {pos:.3f}",
                 f"duration: {total:.3f}",
             )

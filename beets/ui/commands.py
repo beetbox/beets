@@ -113,13 +113,11 @@ def _parse_logfiles(logfiles):
             yield from _paths_from_logfile(syspath(normpath(logfile)))
         except ValueError as err:
             raise ui.UserError(
-                f"malformed logfile {util.displayable_path(logfile)}:"
-                f" {str(err)}"
+                f"malformed logfile {util.displayable_path(logfile)}: {err}"
             ) from err
         except OSError as err:
             raise ui.UserError(
-                f"unreadable logfile {util.displayable_path(logfile)}:"
-                f" {str(err)}"
+                f"unreadable logfile {util.displayable_path(logfile)}: {err}"
             ) from err
 
 
@@ -212,7 +210,7 @@ def get_singleton_disambig_fields(info: hooks.TrackInfo) -> Sequence[str]:
     out = []
     chosen_fields = config["match"]["singleton_disambig_fields"].as_str_seq()
     calculated_values = {
-        "index": f"Index {str(info.index)}",
+        "index": f"Index {info.index}",
         "track_alt": f"Track {info.track_alt}",
         "album": (
             f"[{info.album}]"
