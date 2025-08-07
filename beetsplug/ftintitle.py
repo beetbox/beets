@@ -153,7 +153,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
                 "artist: {.artist} (Not changing due to keep_in_artist)", item
             )
         else:
-            self._log.info("artist: {.artist} -> {.albumartist}", item, item)
+            self._log.info("artist: {0.artist} -> {0.albumartist}", item)
             item.artist = item.albumartist
 
         if item.artist_sort:

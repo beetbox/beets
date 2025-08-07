@@ -119,9 +119,8 @@ class ImportAddedPlugin(BeetsPlugin):
                     item.store()
         album.added = min(album_mtimes)
         self._log.debug(
-            "Import of album '{.album}', selected album.added={.added} "
+            "Import of album '{0.album}', selected album.added={0.added} "
             "from item file mtimes.",
-            album,
             album,
         )
         album.store()
@@ -139,8 +138,7 @@ class ImportAddedPlugin(BeetsPlugin):
             if self.config["preserve_mtimes"].get(bool):
                 self.write_item_mtime(item, mtime)
             self._log.debug(
-                "Import of item '{.filepath}', selected item.added={.added}",
-                item,
+                "Import of item '{0.filepath}', selected item.added={0.added}",
                 item,
             )
             item.store()
@@ -153,7 +151,6 @@ class ImportAddedPlugin(BeetsPlugin):
             if self.config["preserve_write_mtimes"].get(bool):
                 self.write_item_mtime(item, item.added)
             self._log.debug(
-                "Write of item '{.filepath}', selected item.added={.added}",
-                item,
+                "Write of item '{0.filepath}', selected item.added={0.added}",
                 item,
             )

@@ -141,8 +141,7 @@ class RgTask:
         item.rg_track_peak = track_gain.peak
         item.store()
         self._log.debug(
-            "applied track gain {.rg_track_gain} LU, peak {.rg_track_peak} of FS",
-            item,
+            "applied track gain {0.rg_track_gain} LU, peak {0.rg_track_peak} of FS",
             item,
         )
 
@@ -155,8 +154,7 @@ class RgTask:
         item.rg_album_peak = album_gain.peak
         item.store()
         self._log.debug(
-            "applied album gain {.rg_album_gain} LU, peak {.rg_album_peak} of FS",
-            item,
+            "applied album gain {0.rg_album_gain} LU, peak {0.rg_album_peak} of FS",
             item,
         )
 
@@ -1093,8 +1091,7 @@ class AudioToolsBackend(Backend):
         )
 
         self._log.debug(
-            "ReplayGain for track {.artist} - {.title}: {2:.2f}, {3:.2f}",
-            item,
+            "ReplayGain for track {0.artist} - {0.title}: {1:.2f}, {2:.2f}",
             item,
             rg_track_gain,
             rg_track_peak,

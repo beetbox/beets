@@ -190,9 +190,7 @@ class SpotifyPlugin(
         self.access_token = response.json()["access_token"]
 
         # Save the token for later use.
-        self._log.debug(
-            "{.data_source} access token: {.access_token}", self, self
-        )
+        self._log.debug("{0.data_source} access token: {0.access_token}", self)
         with open(self._tokenfile(), "w") as f:
             json.dump({"access_token": self.access_token}, f)
 

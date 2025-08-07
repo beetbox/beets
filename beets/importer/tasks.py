@@ -552,12 +552,11 @@ class ImportTask(BaseImportTask):
             ]
             if overwritten_fields:
                 log.debug(
-                    "Reimported {} {.id}. Not preserving flexible attributes {}. "
-                    "Path: {.filepath}",
+                    "Reimported {0} {1.id}. Not preserving flexible attributes {2}. "
+                    "Path: {1.filepath}",
                     noun,
                     new_obj,
                     overwritten_fields,
-                    new_obj,
                 )
                 for key in overwritten_fields:
                     del existing_fields[key]
@@ -576,17 +575,15 @@ class ImportTask(BaseImportTask):
                 self.album.artpath = replaced_album.artpath
                 self.album.store()
                 log.debug(
-                    "Reimported album {.album.id}. Preserving attribute ['added']. "
-                    "Path: {.album.filepath}",
-                    self,
+                    "Reimported album {0.album.id}. Preserving attribute ['added']. "
+                    "Path: {0.album.filepath}",
                     self,
                 )
                 log.debug(
-                    "Reimported album {.album.id}. Preserving flexible attributes {}. "
-                    "Path: {.album.filepath}",
+                    "Reimported album {0.album.id}. Preserving flexible"
+                    " attributes {1}. Path: {0.album.filepath}",
                     self,
                     list(album_fields.keys()),
-                    self,
                 )
 
         for item in self.imported_items():
@@ -595,9 +592,8 @@ class ImportTask(BaseImportTask):
                 if dup_item.added and dup_item.added != item.added:
                     item.added = dup_item.added
                     log.debug(
-                        "Reimported item {.id}. Preserving attribute ['added']. "
-                        "Path: {.filepath}",
-                        item,
+                        "Reimported item {0.id}. Preserving attribute ['added']. "
+                        "Path: {0.filepath}",
                         item,
                     )
                 item_fields = _reduce_and_log(
@@ -605,11 +601,10 @@ class ImportTask(BaseImportTask):
                 )
                 item.update(item_fields)
                 log.debug(
-                    "Reimported item {.id}. Preserving flexible attributes {}. "
-                    "Path: {.filepath}",
+                    "Reimported item {0.id}. Preserving flexible attributes {1}. "
+                    "Path: {0.filepath}",
                     item,
                     list(item_fields.keys()),
-                    item,
                 )
                 item.store()
 

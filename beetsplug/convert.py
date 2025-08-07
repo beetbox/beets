@@ -319,9 +319,8 @@ class ConvertPlugin(BeetsPlugin):
                 util.displayable_path(source),
             )
             self._log.debug(
-                "Command {} exited with status {.returncode}: {.output}",
+                "Command {0} exited with status {1.returncode}: {1.output}",
                 args,
-                exc,
                 exc,
             )
             util.remove(dest)

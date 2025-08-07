@@ -1282,11 +1282,10 @@ class TerminalImportSession(importer.ImportSession):
                 dup_choices = [c for c in all_choices if c.short == short]
                 for c in dup_choices[1:]:
                     log.warning(
-                        "Prompt choice '{.long}' removed due to conflict "
-                        "with '{.long}' (short letter: '{.short}')",
+                        "Prompt choice '{0.long}' removed due to conflict "
+                        "with '{1[0].long}' (short letter: '{0.short}')",
                         c,
-                        dup_choices[0],
-                        c,
+                        dup_choices,
                     )
                     extra_choices.remove(c)
 
@@ -1641,8 +1640,7 @@ def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
             # Did the item change since last checked?
             if item.current_mtime() <= item.mtime:
                 log.debug(
-                    "skipping {.filepath} because mtime is up to date ({.mtime})",
-                    item,
+                    "skipping {0.filepath} because mtime is up to date ({0.mtime})",
                     item,
                 )
                 continue

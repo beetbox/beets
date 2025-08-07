@@ -508,8 +508,8 @@ class SearchBackend(SoupMixin, Backend):
             # log out the candidate that did not make it but was close.
             # This may show a matching candidate with some noise in the name
             self.debug(
-                "({.artist}, {.title}) does not match ({}, {}) but dist was close: {:.2f}",
-                result,
+                "({0.artist}, {0.title}) does not match ({1}, {2}) but dist"
+                " was close: {3:.2f}",
                 result,
                 target_artist,
                 target_title,

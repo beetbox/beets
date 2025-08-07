@@ -139,9 +139,7 @@ class BPSyncPlugin(BeetsPlugin):
             albuminfo = self.beatport_plugin.album_for_id(album.mb_albumid)
             if not albuminfo:
                 self._log.info(
-                    "Release ID {.mb_albumid} not found for album {}",
-                    album,
-                    album,
+                    "Release ID {0.mb_albumid} not found for album {0}", album
                 )
                 continue
 
