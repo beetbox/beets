@@ -31,6 +31,7 @@ from typing_extensions import ParamSpec
 
 import beets
 from beets import logging
+from beets.util import unique_list
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Sequence
@@ -275,9 +276,7 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         return helper
 
 
-def get_plugin_names(
-    include: set[str] | None = None, exclude: set[str] | None = None
-) -> set[str]:
+def get_plugin_names() -> list[str]:
     """Discover and return the set of plugin names to be loaded.
 
     Configures the plugin search paths and resolves the final set of plugins
@@ -298,14 +297,18 @@ def get_plugin_names(
     # For backwards compatibility, also support plugin paths that
     # *contain* a `beetsplug` package.
     sys.path += paths
-    plugins = include or set(beets.config["plugins"].as_str_seq())
+    plugins = unique_list(beets.config["plugins"].as_str_seq())
     # TODO: Remove in v3.0.0
-    if "musicbrainz" in beets.config and beets.config["musicbrainz"].get().get(
-        "enabled"
+    if (
+        "musicbrainz" not in plugins
+        and "musicbrainz" in beets.config
+        and beets.config["musicbrainz"].get().get("enabled")
     ):
-        plugins.add("musicbrainz")
+        plugins.append("musicbrainz")
 
-    return plugins - (exclude or set())
+    beets.config.add({"disabled_plugins": []})
+    disabled_plugins = set(beets.config["disabled_plugins"].as_str_seq())
+    return [p for p in plugins if p not in disabled_plugins]
 
 
 def _get_plugin(name: str) -> BeetsPlugin | None:
@@ -342,7 +345,7 @@ def _get_plugin(name: str) -> BeetsPlugin | None:
 _instances: list[BeetsPlugin] = []
 
 
-def load_plugins(*args, **kwargs) -> None:
+def load_plugins() -> None:
     """Initialize the plugin system by loading all configured plugins.
 
     Performs one-time plugin discovery and instantiation, storing loaded plugin
@@ -350,7 +353,7 @@ def load_plugins(*args, **kwargs) -> None:
     to notify other components.
     """
     if not _instances:
-        names = get_plugin_names(*args, **kwargs)
+        names = get_plugin_names()
         log.info("Loading plugins: {}", ", ".join(sorted(names)))
         _instances.extend(filter(None, map(_get_plugin, names)))
 

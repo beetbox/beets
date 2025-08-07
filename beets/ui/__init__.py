@@ -1579,13 +1579,7 @@ def _setup(
     """
     config = _configure(options)
 
-    def _parse_list(option: str | None) -> set[str]:
-        return set((option or "").split(",")) - {""}
-
-    plugins.load_plugins(
-        include=_parse_list(options.plugins),
-        exclude=_parse_list(options.exclude),
-    )
+    plugins.load_plugins()
 
     # Get the default subcommands.
     from beets.ui.commands import default_commands
@@ -1704,16 +1698,31 @@ def _raw_main(args: list[str], lib=None) -> None:
     parser.add_option(
         "-c", "--config", dest="config", help="path to configuration file"
     )
+
+    def parse_csl_callback(
+        option: optparse.Option, _, value: str, parser: SubcommandsOptionParser
+    ):
+        """Parse a comma-separated list of values."""
+        setattr(
+            parser.values,
+            option.dest,  # type: ignore[arg-type]
+            list(filter(None, value.split(","))),
+        )
+
     parser.add_option(
         "-p",
         "--plugins",
         dest="plugins",
+        action="callback",
+        callback=parse_csl_callback,
         help="a comma-separated list of plugins to load",
     )
     parser.add_option(
         "-P",
         "--disable-plugins",
-        dest="exclude",
+        dest="disabled_plugins",
+        action="callback",
+        callback=parse_csl_callback,
         help="a comma-separated list of plugins to disable",
     )
     parser.add_option(

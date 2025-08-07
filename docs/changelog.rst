@@ -97,6 +97,9 @@ For plugin developers:
   type checking for downstream users of the beets API.
 * ``plugins.find_plugins`` function does not anymore load plugins. You need to
   explicitly call ``plugins.load_plugins()`` to load them.
+* ``plugins.load_plugins`` function does not anymore accept the list of plugins
+  to load. Instead, it loads all plugins that are configured by
+  :ref:`plugins-config` configuration.
 
 Other changes:
 
