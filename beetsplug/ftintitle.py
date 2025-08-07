@@ -20,7 +20,6 @@ import re
 from typing import TYPE_CHECKING
 
 from beets import plugins, ui
-from beets.util import displayable_path
 
 if TYPE_CHECKING:
     from beets.importer import ImportSession, ImportTask
@@ -195,7 +194,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         if not featured:
             return False
 
-        self._log.info("{}", displayable_path(item.path))
+        self._log.info("{}", item.filepath)
 
         # Attempt to find the featured artist.
         feat_part = find_feat_part(artist, albumartist)

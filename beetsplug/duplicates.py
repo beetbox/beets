@@ -256,7 +256,7 @@ class DuplicatesPlugin(BeetsPlugin):
             self._log.debug(
                 "key {} on item {} not cached:computing checksum",
                 key,
-                displayable_path(item.path),
+                item.filepath,
             )
             try:
                 checksum = command_output(args).stdout
@@ -266,16 +266,12 @@ class DuplicatesPlugin(BeetsPlugin):
                     "computed checksum for {} using {}", item.title, key
                 )
             except subprocess.CalledProcessError as e:
-                self._log.debug(
-                    "failed to checksum {}: {}",
-                    displayable_path(item.path),
-                    e,
-                )
+                self._log.debug("failed to checksum {}: {}", item.filepath, e)
         else:
             self._log.debug(
                 "key {} on item {} cached:not computing checksum",
                 key,
-                displayable_path(item.path),
+                item.filepath,
             )
         return key, checksum
 
@@ -295,13 +291,13 @@ class DuplicatesPlugin(BeetsPlugin):
                 self._log.debug(
                     "some keys {} on item {} are null or empty: skipping",
                     keys,
-                    displayable_path(obj.path),
+                    obj.filepath,
                 )
             elif not strict and not len(values):
                 self._log.debug(
                     "all keys {} on item {} are null or empty: skipping",
                     keys,
-                    displayable_path(obj.path),
+                    obj.filepath,
                 )
             else:
                 key = tuple(values)
@@ -363,7 +359,7 @@ class DuplicatesPlugin(BeetsPlugin):
                             "or empty: setting from item {}",
                             f,
                             displayable_path(objs[0].path),
-                            displayable_path(o.path),
+                            o.filepath,
                         )
                         setattr(objs[0], f, value)
                         objs[0].store()
@@ -387,7 +383,7 @@ class DuplicatesPlugin(BeetsPlugin):
                         " merging from {} into {}",
                         missing,
                         objs[0],
-                        displayable_path(o.path),
+                        o.filepath,
                         displayable_path(missing.destination()),
                     )
                     missing.move(operation=MoveOperation.COPY)
