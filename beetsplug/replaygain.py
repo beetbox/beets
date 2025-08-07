@@ -1542,8 +1542,10 @@ class ReplayGainPlugin(BeetsPlugin):
             "--threads",
             dest="threads",
             type=int,
-            help="change the number of threads, \
-            defaults to maximum available processors",
+            help=(
+                "change the number of threads, defaults to maximum available"
+                " processors"
+            ),
         )
         cmd.parser.add_option(
             "-f",
