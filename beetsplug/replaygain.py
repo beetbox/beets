@@ -514,7 +514,7 @@ class FfmpegBackend(Backend):
             if output[i].startswith(search):
                 return i
         raise ReplayGainError(
-            f"ffmpeg output: missing {repr(search)} after line {start_line}"
+            f"ffmpeg output: missing {search!r} after line {start_line}"
         )
 
     def _parse_float(self, line: bytes) -> float:
