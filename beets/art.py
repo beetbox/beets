@@ -143,8 +143,7 @@ def resize_image(log, imagepath, maxwidth, quality):
     specified quality level.
     """
     log.debug(
-        "Resizing album art to {0} pixels wide and encoding at quality \
-              level {1}",
+        "Resizing album art to {0} pixels wide and encoding at quality level {1}",
         maxwidth,
         quality,
     )

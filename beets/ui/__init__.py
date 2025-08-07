@@ -1609,8 +1609,8 @@ def _ensure_db_directory_exists(path):
     newpath = os.path.dirname(path)
     if not os.path.isdir(newpath):
         if input_yn(
-            f"The database directory {util.displayable_path(newpath)} does not \
-                       exist. Create it (Y/n)?"
+            f"The database directory {util.displayable_path(newpath)} does not"
+            " exist. Create it (Y/n)?"
         ):
             os.makedirs(newpath)
 
