@@ -33,6 +33,9 @@ Beets works on Python 3.8 or later.
 * On **Alpine Linux**, `beets is in the community repository <Alpine package_>`_
   and can be installed with ``apk add beets``.
 
+* On **Void Linux**, `beets is in the official repository <Void package_>`_
+  and can be installed with ``xbps-install -S beets``.
+
 * For **Gentoo Linux**, beets is in Portage as ``media-sound/beets``. Just run
   ``emerge beets`` to install. There are several USE flags available for
   optional plugin dependencies.
@@ -58,6 +61,7 @@ Beets works on Python 3.8 or later.
 .. _OpenBSD: http://openports.se/audio/beets
 .. _Arch extra: https://archlinux.org/packages/extra/any/beets/
 .. _Alpine package: https://pkgs.alpinelinux.org/package/edge/community/x86_64/beets
+.. _Void package: https://github.com/void-linux/void-packages/tree/master/srcpkgs/beets
 .. _NixOS: https://github.com/NixOS/nixpkgs/tree/master/pkgs/tools/audio/beets
 .. _MacPorts: https://www.macports.org
 
