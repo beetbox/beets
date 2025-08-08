@@ -88,7 +88,7 @@ Install poetry_ and poethepoet_ using pipx_:
 
 .. admonition:: Check ``tool.pipx-install`` section in ``pyproject.toml`` to see supported versions
 
-    ::
+    .. code-block:: toml
 
         [tool.pipx-install]
         poethepoet = ">=0.26"
@@ -272,13 +272,14 @@ There are a few coding conventions we use in beets:
 Style
 ~~~~~
 
-We use ruff_ to format and lint the codebase.
+We use `ruff <https://docs.astral.sh/ruff/>`__ to format and lint the codebase.
 
 Run ``poe check-format`` and ``poe lint`` to check your code for style and
 linting errors. Running ``poe format`` will automatically format your code
 according to the specifications required by the project.
 
-.. _ruff: https://docs.astral.sh/ruff/
+Similarly, run ``poe format-docs`` and ``poe lint-docs`` to ensure consistent
+documentation formatting and check for any issues.
 
 Handling Paths
 ~~~~~~~~~~~~~~
