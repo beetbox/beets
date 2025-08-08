@@ -100,6 +100,7 @@ requests_oauthlib = "*"
 responses = ">=0.3.0"
 
 [tool.poetry.group.lint.dependencies]
+docstrfmt = ">=1.10.0"
 ruff = ">=0.6.4"
 sphinx-lint = ">=1.0.0"
 
@@ -201,6 +202,10 @@ cmd = "make -C docs html"
 help = "Format the codebase"
 cmd = "ruff format"
 
+[tool.poe.tasks.format-docs]
+help = "Format the documentation"
+cmd = "docstrfmt"
+
 [tool.poe.tasks.lint]
 help = "Check the code for linting issues. Accepts ruff options."
 cmd = "ruff check"
@@ -249,6 +254,15 @@ for file in test/**/*.py; do
 done
 """
 interpreter = "zsh"
+
+[tool.docstrfmt]
+line-length = 80
+extend-exclude = [
+    "docs/_templates/**/*",
+    "docs/api/**/*",
+    "README_kr.rst",
+]
+files = ["docs", "*.rst"]
 
 [tool.ruff]
 target-version = "py39"
