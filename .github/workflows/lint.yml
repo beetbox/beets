@@ -136,6 +136,9 @@ jobs:
           echo "::add-matcher::.github/problem-matchers/sphinx-build.json"
           echo "::add-matcher::.github/problem-matchers/sphinx-lint.json"
 
+      - name: Check docs formatting
+        run: poe format-docs --check
+
       - name: Lint docs
         run: poe lint-docs
 
