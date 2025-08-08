@@ -63,6 +63,7 @@ For packagers:
 * Optional ``extra_tags`` parameter has been removed from
   ``BeetsPlugin.candidates`` method signature since it is never passed in. If
   you override this method in your plugin, feel free to remove this parameter.
+* Loosened `typing_extensions`` dependency in pyproject.toml to apply to every python version.
 
 For plugin developers:
 
@@ -91,7 +92,6 @@ For plugin developers:
 
   Old imports are now deprecated and will be removed in version ``3.0.0``.
 * ``beets.ui.decargs`` is deprecated and will be removed in version ``3.0.0``.
-
 
 Other changes:
 
