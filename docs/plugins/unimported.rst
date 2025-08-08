@@ -11,7 +11,9 @@ To use the ``unimported`` plugin, enable it in your configuration (see
 :ref:`using-plugins`). Then use it by invoking the ``beet unimported`` command.
 The command will list all files in the library folder which are not imported.
 You can exclude file extensions or entire subdirectories using the configuration
-file::
+file:
+
+::
 
     unimported:
         ignore_extensions: jpg png

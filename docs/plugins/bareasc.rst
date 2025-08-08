@@ -8,8 +8,10 @@ accented characters in the title or artist, particularly if you are not
 confident you have the accents correct. It is also not unknown for the accents
 to not be correct in the database entry or wrong in the CD information.
 
-First, enable the plugin named ``bareasc`` (see :ref:`using-plugins`).
-You'll then be able to use the ``#`` prefix to use bare-ASCII matching::
+First, enable the plugin named ``bareasc`` (see :ref:`using-plugins`). You'll
+then be able to use the ``#`` prefix to use bare-ASCII matching:
+
+::
 
     $ beet ls '#dvorak'
     István Kertész - REQUIEM - Dvořàk: Requiem, op.89 - Confutatis maledictis
@@ -24,7 +26,9 @@ being printed. This allows you to easily check what the library data looks like
 in bare ASCII, which can be useful if you are trying to work out why a query is
 not matching.
 
-Using the same example track as above::
+Using the same example track as above:
+
+::
 
     $ beet bareasc 'Dvořàk'
     Istvan Kertesz - REQUIEM - Dvorak: Requiem, op.89 - Confutatis maledictis
@@ -56,16 +60,16 @@ the output from the ``list`` command.
 Configuration
 -------------
 
-To configure the plugin, make a ``bareasc:`` section in your configuration
-file. The only available option is:
+To configure the plugin, make a ``bareasc:`` section in your configuration file.
+The only available option is:
 
-- **prefix**: The character used to designate bare-ASCII queries.
-  Default: ``#``, which may need to be escaped in some shells.
+- **prefix**: The character used to designate bare-ASCII queries. Default:
+  ``#``, which may need to be escaped in some shells.
 
 Credits
 -------
 
-The hard work in this plugin is done in Sean Burke's
-`Unidecode <https://pypi.org/project/Unidecode/>`__ library.
-Thanks are due to Sean and to all the people who created the Python
-version and the beets extensible query architecture.
+The hard work in this plugin is done in Sean Burke's `Unidecode
+<https://pypi.org/project/Unidecode/>`__ library. Thanks are due to Sean and to
+all the people who created the Python version and the beets extensible query
+architecture.
