@@ -107,7 +107,7 @@ jobs:
         uses: liskin/gh-problem-matcher-wrap@v3
         with:
           linters: mypy
-          run: poe check-types --show-column-numbers --no-error-summary ${{ needs.changed-files.outputs.changed_python_files }}
+          run: poe check-types --show-column-numbers --no-error-summary .
 
   docs:
     if: needs.changed-files.outputs.any_docs_changed == 'true'
