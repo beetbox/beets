@@ -124,6 +124,7 @@ Other changes:
   unavailable, enabling ``importorskip`` usage in pytest setup.
 - Finally removed gmusic plugin and all related code/docs as the Google Play
   Music service was shut down in 2020.
+* Moved `beets/random.py` into `beetsplug/random.py` to cleanup core module.
 
 2.5.1 (October 14, 2025)
 ------------------------
