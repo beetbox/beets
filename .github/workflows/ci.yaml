@@ -52,7 +52,7 @@ jobs:
       - if: ${{ env.IS_MAIN_PYTHON != 'true' }}
         name: Test without coverage
         run: |
-          poetry install --extras=autobpm --extras=lyrics --extras=embedart
+          poetry install --extras=autobpm --extras=lyrics --extras=replaygain --extras=reflink --extras=fetchart --extras=chroma --extras=sonosupdate
           poe test
 
       - if: ${{ env.IS_MAIN_PYTHON == 'true' }}
@@ -60,7 +60,7 @@ jobs:
         env:
           LYRICS_UPDATED: ${{ steps.lyrics-update.outputs.any_changed }}
         run: |
-          poetry install --extras=autobpm --extras=lyrics --extras=docs --extras=replaygain --extras=reflink --extras=fetchart
+          poetry install --extras=autobpm --extras=lyrics --extras=docs --extras=replaygain --extras=reflink --extras=fetchart --extras=chroma --extras=sonosupdate
           poe docs
           poe test-with-coverage
 
