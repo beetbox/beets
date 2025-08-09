@@ -15,7 +15,7 @@
 """Adds pseudo-releases from MusicBrainz as candidates during import."""
 
 import itertools
-from typing import Any, Iterable, Sequence
+from typing import Any, Iterable, Optional, Sequence
 
 from typing_extensions import override
 
@@ -101,7 +101,7 @@ class MusicBrainzPseudoReleasePlugin(MetadataSourcePlugin):
     def _wanted_pseudo_release_id(
         self,
         relation: JSONDict,
-    ) -> str | None:
+    ) -> Optional[str]:
         if (
             len(self._scripts) == 0
             or relation.get("type", "") != "transl-tracklisting"
@@ -355,10 +355,10 @@ class MusicBrainzPseudoReleasePlugin(MetadataSourcePlugin):
 
         return super().album_distance(items, album_info, mapping)
 
-    def album_for_id(self, album_id: str) -> AlbumInfo | None:
+    def album_for_id(self, album_id: str) -> Optional[AlbumInfo]:
         pass
 
-    def track_for_id(self, track_id: str) -> TrackInfo | None:
+    def track_for_id(self, track_id: str) -> Optional[TrackInfo]:
         pass
 
     def item_candidates(
