@@ -146,6 +146,7 @@ Other changes:
 - Finally removed gmusic plugin and all related code/docs as the Google Play
   Music service was shut down in 2020.
 - Updated color documentation with ``bright_*`` and ``bg_bright_*`` entries.
+- Moved `beets/random.py` into `beetsplug/random.py` to cleanup core module.
 
 2.5.1 (October 14, 2025)
 ------------------------
