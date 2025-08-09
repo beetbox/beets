@@ -1545,9 +1545,9 @@ def _configure(options):
 
     # Configure the logger.
     if config["verbose"].get(int):
-        log.set_global_level(logging.DEBUG)
+        log.setLevel(logging.DEBUG)
     else:
-        log.set_global_level(logging.INFO)
+        log.setLevel(logging.INFO)
 
     if overlay_path:
         log.debug(

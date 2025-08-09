@@ -22,7 +22,6 @@ calls (`debug`, `info`, etc).
 
 from __future__ import annotations
 
-import threading
 from copy import copy
 from logging import (
     DEBUG,
@@ -141,35 +140,7 @@ class StrFormatLogger(Logger):
         )
 
 
-class ThreadLocalLevelLogger(Logger):
-    """A version of `Logger` whose level is thread-local instead of shared."""
-
-    def __init__(self, name, level=NOTSET):
-        self._thread_level = threading.local()
-        self.default_level = NOTSET
-        super().__init__(name, level)
-
-    @property
-    def level(self):
-        try:
-            return self._thread_level.level
-        except AttributeError:
-            self._thread_level.level = self.default_level
-            return self.level
-
-    @level.setter
-    def level(self, value):
-        self._thread_level.level = value
-
-    def set_global_level(self, level):
-        """Set the level on the current thread + the default value for all
-        threads.
-        """
-        self.default_level = level
-        self.setLevel(level)
-
-
-class BeetsLogger(ThreadLocalLevelLogger, StrFormatLogger):
+class BeetsLogger(StrFormatLogger):
     pass
 
 
