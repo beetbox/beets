@@ -13,8 +13,12 @@
 # included in all copies or substantial portions of the Software.
 
 
+import importlib
 import itertools
+import logging
 import os
+import pkgutil
+import sys
 from unittest.mock import ANY, Mock, patch
 
 import pytest
@@ -30,7 +34,12 @@ from beets.importer import (
 )
 from beets.library import Item
 from beets.test import helper
-from beets.test.helper import AutotagStub, ImportHelper, TerminalImportMixin
+from beets.test.helper import (
+    AutotagStub,
+    ImportHelper,
+    PluginMixin,
+    TerminalImportMixin,
+)
 from beets.test.helper import PluginTestCase as BasePluginTestCase
 from beets.util import displayable_path, syspath
 
@@ -530,4 +539,57 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
         # input_options should be called once, as foo() returns SKIP
         self.mock_input_options.assert_called_once_with(
             opts, default="a", require=ANY
+        )
+
+
+def get_available_plugins():
+    """Get all available plugins in the beetsplug namespace."""
+    namespace_pkg = importlib.import_module("beetsplug")
+
+    return [
+        m.name
+        for m in pkgutil.iter_modules(namespace_pkg.__path__)
+        if not m.name.startswith("_")
+    ]
+
+
+class TestImportAllPlugins(PluginMixin):
+    def unimport_plugins(self):
+        """Unimport plugins before each test to avoid conflicts."""
+        self.unload_plugins()
+        for mod in list(sys.modules):
+            if mod.startswith("beetsplug."):
+                del sys.modules[mod]
+
+    @pytest.fixture(autouse=True)
+    def cleanup(self):
+        """Ensure plugins are unimported before and after each test."""
+        self.unimport_plugins()
+        yield
+        self.unimport_plugins()
+
+    @pytest.mark.skipif(
+        os.environ.get("GITHUB_ACTIONS") != "true",
+        reason="Requires all dependencies to be installed, "
+        + "which we can't guarantee in the local environment.",
+    )
+    @pytest.mark.parametrize("plugin_name", get_available_plugins())
+    def test_import_plugin(self, caplog, plugin_name):  #
+        """Test that a plugin is importable without an error using the
+        load_plugins function."""
+
+        # skip gstreamer plugins on windows
+        gstreamer_plugins = ["bpd", "replaygain"]
+        if sys.platform == "win32" and plugin_name in gstreamer_plugins:
+            pytest.xfail("GStreamer is not available on Windows: {plugin_name}")
+
+        caplog.set_level(logging.WARNING)
+        caplog.clear()
+        plugins.load_plugins([plugin_name])
+
+        # Check for warnings, is a bit hacky but we can make full use of the beets
+        # load_plugins code that way
+        assert len(caplog.records) == 0, (
+            f"Plugin '{plugin_name}' has issues during import. ",
+            caplog.records,
         )
