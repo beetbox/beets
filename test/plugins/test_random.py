@@ -20,8 +20,8 @@ from random import Random
 
 import pytest
 
-from beets import random
 from beets.test.helper import TestHelper
+from beetsplug import random
 
 
 class RandomTest(TestHelper, unittest.TestCase):
@@ -77,3 +77,74 @@ class RandomTest(TestHelper, unittest.TestCase):
         assert 0 == pytest.approx(median1, abs=1)
         assert len(self.items) // 2 == pytest.approx(median2, abs=1)
         assert stdev2 > stdev1
+
+    def test_equal_permutation_empty_input(self):
+        """Test _equal_chance_permutation with empty input."""
+        result = list(random._equal_chance_permutation([], "artist"))
+        assert result == []
+
+    def test_equal_permutation_single_item(self):
+        """Test _equal_chance_permutation with single item."""
+        result = list(random._equal_chance_permutation([self.item1], "artist"))
+        assert result == [self.item1]
+
+    def test_equal_permutation_single_artist(self):
+        """Test _equal_chance_permutation with items from one artist."""
+        items = [self.create_item(artist=self.artist1) for _ in range(5)]
+        result = list(random._equal_chance_permutation(items, "artist"))
+        assert set(result) == set(items)
+        assert len(result) == len(items)
+
+    def test_random_objs_count(self):
+        """Test random_objs with count-based selection."""
+        result = random.random_objs(
+            self.items, number=3, random_gen=self.random_gen
+        )
+        assert len(result) == 3
+        assert all(item in self.items for item in result)
+
+    def test_random_objs_time(self):
+        """Test random_objs with time-based selection."""
+        # Total length is 30 + 60 + 8*45 = 450 seconds
+        # Requesting 120 seconds should return 2-3 items
+        result = random.random_objs(
+            self.items,
+            time=2,
+            random_gen=self.random_gen,  # 2 minutes = 120 sec
+        )
+        total_time = sum(item.length for item in result)
+        assert total_time <= 120
+        # Check we got at least some items
+        assert len(result) > 0
+
+    def test_random_objs_equal_chance(self):
+        """Test random_objs with equal_chance=True."""
+
+        # With equal_chance, artist1 should appear more often in results
+        def experiment():
+            """Run the random_objs function multiple times and collect results."""
+            results = []
+            for _ in range(5000):
+                result = random.random_objs(
+                    [self.item1, self.item2],
+                    number=1,
+                    equal_chance=True,
+                    random_gen=self.random_gen,
+                )
+                results.append(result[0].artist)
+
+            # Return ratio
+            return results.count(self.artist1), results.count(self.artist2)
+
+        count_artist1, count_artist2 = experiment()
+        assert 1 - count_artist1 / count_artist2 < 0.1  # 10% deviation
+
+    def test_random_objs_empty_input(self):
+        """Test random_objs with empty input."""
+        result = random.random_objs([], number=3)
+        assert result == []
+
+    def test_random_objs_zero_number(self):
+        """Test random_objs with number=0."""
+        result = random.random_objs(self.items, number=0)
+        assert result == []

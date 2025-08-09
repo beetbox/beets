@@ -14,10 +14,14 @@
 
 """Get a random song or album from the library."""
 
-import random
-from itertools import groupby
-from operator import attrgetter
+from __future__ import annotations
 
+import random
+from itertools import groupby, islice
+from operator import attrgetter
+from typing import Iterable, Sequence, TypeVar
+
+from beets.library import Album, Item
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, print_
 
@@ -69,15 +73,19 @@ class Random(BeetsPlugin):
         return [random_cmd]
 
 
-def _length(obj, album):
+def _length(obj: Item | Album) -> float:
     """Get the duration of an item or album."""
-    if album:
+    if isinstance(obj, Album):
         return sum(i.length for i in obj.items())
     else:
         return obj.length
 
 
-def _equal_chance_permutation(objs, field="albumartist", random_gen=None):
+def _equal_chance_permutation(
+    objs: Sequence[Item | Album],
+    field: str = "albumartist",
+    random_gen: random.Random | None = None,
+) -> Iterable[Item | Album]:
     """Generate (lazily) a permutation of the objects where every group
     with equal values for `field` have an equal chance of appearing in
     any given position.
@@ -86,7 +94,7 @@ def _equal_chance_permutation(objs, field="albumartist", random_gen=None):
 
     # Group the objects by artist so we can sample from them.
     key = attrgetter(field)
-    objs.sort(key=key)
+    objs = sorted(objs, key=key)
     objs_by_artists = {}
     for artist, v in groupby(objs, key):
         objs_by_artists[artist] = list(v)
@@ -106,28 +114,31 @@ def _equal_chance_permutation(objs, field="albumartist", random_gen=None):
             del objs_by_artists[artist]
 
 
-def _take(iter, num):
+T = TypeVar("T")
+
+
+def _take(
+    iter: Iterable[T],
+    num: int,
+) -> list[T]:
     """Return a list containing the first `num` values in `iter` (or
     fewer, if the iterable ends early).
     """
-    out = []
-    for val in iter:
-        out.append(val)
-        num -= 1
-        if num <= 0:
-            break
-    return out
+    return list(islice(iter, num))
 
 
-def _take_time(iter, secs, album):
+def _take_time(
+    iter: Iterable[Item | Album],
+    secs: float,
+) -> list[Item | Album]:
     """Return a list containing the first values in `iter`, which should
     be Item or Album objects, that add up to the given amount of time in
     seconds.
     """
-    out = []
+    out: list[Item | Album] = []
     total_time = 0.0
     for obj in iter:
-        length = _length(obj, album)
+        length = _length(obj)
         if total_time + length <= secs:
             out.append(obj)
             total_time += length
@@ -135,7 +146,11 @@ def _take_time(iter, secs, album):
 
 
 def random_objs(
-    objs, album, number=1, time=None, equal_chance=False, random_gen=None
+    objs: Sequence[Item | Album],
+    number=1,
+    time: float | None = None,
+    equal_chance: bool = False,
+    random_gen: random.Random | None = None,
 ):
     """Get a random subset of the provided `objs`.
 
@@ -152,11 +167,11 @@ def random_objs(
     if equal_chance:
         perm = _equal_chance_permutation(objs)
     else:
-        perm = objs
-        rand.shuffle(perm)  # N.B. This shuffles the original list.
+        perm = list(objs)
+        rand.shuffle(perm)
 
     # Select objects by time our count.
     if time:
-        return _take_time(perm, time * 60, album)
+        return _take_time(perm, time * 60)
     else:
         return _take(perm, number)
