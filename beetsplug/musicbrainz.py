@@ -474,7 +474,9 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
                     )
 
                     artist = alias if alias else artist_relation["artist"]["name"]
-                    artist_sort = (alias if alias else artist_relation["artist"]["sort-name"])
+                    artist_sort = (
+                            alias if alias else artist_relation["artist"]["sort-name"]
+                            )
 
                     relation_type = artist_relation["type"]
                     if relation_type == "lyricist":
@@ -482,6 +484,12 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
                     elif relation_type == "composer":
                         composer.append(artist)
                         composer_sort.append(artist_sort)
+
+        if lyricist:
+            info.lyricist = ", ".join(lyricist)
+        if composer:
+            info.composer = ", ".join(composer)
+            info.composer_sort = ", ".join(composer_sort)
 
         arranger = []
         for artist_relation in recording.get("artist-relation-list", ()):
