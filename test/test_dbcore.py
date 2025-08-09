@@ -89,7 +89,6 @@ class ModelFixture1(LibModel):
 
 class DatabaseFixture1(dbcore.Database):
     _models = (ModelFixture1,)
-    pass
 
 
 class ModelFixture2(ModelFixture1):
@@ -102,7 +101,6 @@ class ModelFixture2(ModelFixture1):
 
 class DatabaseFixture2(dbcore.Database):
     _models = (ModelFixture2,)
-    pass
 
 
 class ModelFixture3(ModelFixture1):
@@ -116,7 +114,6 @@ class ModelFixture3(ModelFixture1):
 
 class DatabaseFixture3(dbcore.Database):
     _models = (ModelFixture3,)
-    pass
 
 
 class ModelFixture4(ModelFixture1):
@@ -131,7 +128,6 @@ class ModelFixture4(ModelFixture1):
 
 class DatabaseFixture4(dbcore.Database):
     _models = (ModelFixture4,)
-    pass
 
 
 class AnotherModelFixture(ModelFixture1):
@@ -153,12 +149,10 @@ class ModelFixture5(ModelFixture1):
 
 class DatabaseFixture5(dbcore.Database):
     _models = (ModelFixture5,)
-    pass
 
 
 class DatabaseFixtureTwoModels(dbcore.Database):
     _models = (ModelFixture2, AnotherModelFixture)
-    pass
 
 
 class ModelFixtureWithGetters(dbcore.Model):
