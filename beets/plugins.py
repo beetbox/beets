@@ -24,7 +24,7 @@ from collections import defaultdict
 from functools import wraps
 from pathlib import Path
 from types import GenericAlias
-from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeVar
 
 import mediafile
 from typing_extensions import ParamSpec
@@ -41,7 +41,6 @@ if TYPE_CHECKING:
     from beets.dbcore import Query
     from beets.dbcore.db import FieldQueryType
     from beets.dbcore.types import Type
-    from beets.event_types import EventType
     from beets.importer import ImportSession, ImportTask
     from beets.library import Album, Item, Library
     from beets.ui import Subcommand
@@ -66,6 +65,37 @@ PLUGIN_NAMESPACE = "beetsplug"
 # Plugins using the Last.fm API can share the same API key.
 LASTFM_KEY = "2dc3914abf35f0d9c92d97d8f8e42b43"
 
+EventType = Literal[
+    "after_write",
+    "album_imported",
+    "album_removed",
+    "albuminfo_received",
+    "before_choose_candidate",
+    "before_item_moved",
+    "cli_exit",
+    "database_change",
+    "import",
+    "import_begin",
+    "import_task_apply",
+    "import_task_before_choice",
+    "import_task_choice",
+    "import_task_created",
+    "import_task_files",
+    "import_task_start",
+    "item_copied",
+    "item_hardlinked",
+    "item_imported",
+    "item_linked",
+    "item_moved",
+    "item_reflinked",
+    "item_removed",
+    "library_opened",
+    "mb_album_extract",
+    "mb_track_extract",
+    "pluginload",
+    "trackinfo_received",
+    "write",
+]
 # Global logger.
 log = logging.getLogger("beets")
 
