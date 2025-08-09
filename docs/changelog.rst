@@ -8,6 +8,8 @@ Unreleased
 
 New features:
 
+* :doc:`beetsplug/musicbrainz`: MusicBrainz autotagger now checks for artist aliases
+  for composers as well as artists.
 * :doc:`plugins/musicbrainz`: The MusicBrainz autotagger has been moved to
   a separate plugin. The default :ref:`plugins-config` includes `musicbrainz`,
   but if you've customized your `plugins` list in your configuration, you'll
