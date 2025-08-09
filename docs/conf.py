@@ -6,6 +6,7 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+from docs.pluginlist import PluginListDirective
 
 project = "beets"
 AUTHOR = "Adrian Sampson"
@@ -96,3 +97,4 @@ def skip_member(app, what, name, obj, skip, options):
 
 def setup(app):
     app.connect("autodoc-skip-member", skip_member)
+    app.add_directive("pluginlist", PluginListDirective)
