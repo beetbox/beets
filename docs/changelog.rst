@@ -102,6 +102,7 @@ Other changes:
   case is shown on separate lines.
 * Refactored library.py file by splitting it into multiple modules within the
   beets/library directory.
+* :doc:`/guides/main`: Add instructions to install beets on Void Linux.
 
 2.3.1 (May 14, 2025)
 --------------------
