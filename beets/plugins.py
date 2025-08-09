@@ -68,7 +68,7 @@ PLUGIN_NAMESPACE = "beetsplug"
 LASTFM_KEY = "2dc3914abf35f0d9c92d97d8f8e42b43"
 
 # Global logger.
-log = logging.getLogger("beets")
+log = logging.getLogger(__name__)
 
 
 class PluginConflictError(Exception):

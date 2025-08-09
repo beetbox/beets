@@ -39,7 +39,7 @@ from beets.util import (
 
 PROXY_URL = "https://images.weserv.nl/"
 
-log = logging.getLogger("beets")
+log = logging.getLogger(__name__)
 
 
 def resize_url(url: str, maxwidth: int, quality: int = 0) -> str:
