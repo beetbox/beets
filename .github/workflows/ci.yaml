@@ -64,6 +64,12 @@ jobs:
           poe docs
           poe test-with-coverage
 
+      - if: ${{ !cancelled() }}
+        name: Upload test results to Codecov
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
       - if: ${{ env.IS_MAIN_PYTHON == 'true' }}
         name: Store the coverage report
         uses: actions/upload-artifact@v4
@@ -86,7 +92,7 @@ jobs:
           name: coverage-report
 
       - name: Upload code coverage
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           files: ./coverage.xml
           use_oidc: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork) }}
