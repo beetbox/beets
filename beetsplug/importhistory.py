@@ -11,7 +11,7 @@ from beets import library
 from beets.plugins import BeetsPlugin
 from beets.ui import colorize as colorize_text
 from beets.ui import input_options
-from beets.util import syspath, displayable_path
+from beets.util import displayable_path, syspath
 
 
 class ImportHistPlugin(BeetsPlugin):
@@ -108,7 +108,7 @@ class ImportHistPlugin(BeetsPlugin):
         if resp == "d":
             self._log.info(
                 "Deleting the item's source file: {}",
-                displayable_path(item.source_path)
+                displayable_path(item.source_path),
             )
             os.remove(syspath(item.source_path))
         elif resp == "r":
@@ -127,8 +127,7 @@ class ImportHistPlugin(BeetsPlugin):
             for searched_item in item._db.items(source_dir_query):
                 print(
                     colorize_text(
-                        "text_warning",
-                        displayable_path(searched_item["path"])
+                        "text_warning", displayable_path(searched_item["path"])
                     )
                 )
             print("Would you like to continue?")
@@ -139,7 +138,7 @@ class ImportHistPlugin(BeetsPlugin):
             if continue_resp == "y":
                 self._log.info(
                     "Deleting the item's source directory: {}",
-                    displayable_path(source_dir)
+                    displayable_path(source_dir),
                 )
                 rmtree(source_dir)
             elif continue_resp == "n":
