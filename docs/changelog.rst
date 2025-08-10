@@ -34,6 +34,8 @@ New features:
   ``played_ratio_threshold``, to allow configuring the percentage the song must
   be played for it to be counted as played instead of skipped.
 * :doc:`plugins/web`: Display artist and album as part of the search results.
+* :doc:`plugins/fetchart`: Add new configuration option, ``match``, that alters
+  the way album art is selected from the configured ``sources``.
 
 Bug fixes:
 
