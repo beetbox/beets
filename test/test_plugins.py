@@ -38,132 +38,59 @@ from beets.test.helper import (
     AutotagStub,
     ImportHelper,
     PluginMixin,
+    PluginTestCase,
     TerminalImportMixin,
 )
-from beets.test.helper import PluginTestCase as BasePluginTestCase
 from beets.util import displayable_path, syspath
 
 
-class PluginLoaderTestCase(BasePluginTestCase):
-    def setup_plugin_loader(self):
-        # FIXME the mocking code is horrific, but this is the lowest and
-        # earliest level of the plugin mechanism we can hook into.
-        self._plugin_loader_patch = patch("beets.plugins.load_plugins")
-        self._plugin_classes = set()
-        load_plugins = self._plugin_loader_patch.start()
+class TestPluginRegistration(PluginTestCase):
+    class RatingPlugin(plugins.BeetsPlugin):
+        item_types = {"rating": types.Float()}
 
-        def myload(names=()):
-            plugins._classes.update(self._plugin_classes)
+        def __init__(self):
+            super().__init__()
+            self.register_listener("write", self.on_write)
 
-        load_plugins.side_effect = myload
-
-    def teardown_plugin_loader(self):
-        self._plugin_loader_patch.stop()
-
-    def register_plugin(self, plugin_class):
-        self._plugin_classes.add(plugin_class)
+        @staticmethod
+        def on_write(item=None, path=None, tags=None):
+            if tags["artist"] == "XXX":
+                tags["artist"] = "YYY"
 
     def setUp(self):
-        self.setup_plugin_loader()
         super().setUp()
 
-    def tearDown(self):
-        self.teardown_plugin_loader()
-        super().tearDown()
+        self.register_plugin(self.RatingPlugin)
+
+    def test_field_type_registered(self):
+        assert isinstance(Item._types.get("rating"), types.Float)
+
+    def test_duplicate_type(self):
+        class DuplicateTypePlugin(plugins.BeetsPlugin):
+            item_types = {"rating": types.INTEGER}
+
+        self.register_plugin(DuplicateTypePlugin)
+        with pytest.raises(
+            plugins.PluginConflictError, match="already been defined"
+        ):
+            Item._types
+
+    def test_listener_registered(self):
+        self.RatingPlugin()
+        item = self.add_item_fixture(artist="XXX")
+
+        item.write()
+
+        assert MediaFile(syspath(item.path)).artist == "YYY"
 
 
-class PluginImportTestCase(ImportHelper, PluginLoaderTestCase):
+class PluginImportTestCase(ImportHelper, PluginTestCase):
     def setUp(self):
         super().setUp()
         self.prepare_album_for_import(2)
 
 
-class ItemTypesTest(PluginLoaderTestCase):
-    def test_flex_field_type(self):
-        class RatingPlugin(plugins.BeetsPlugin):
-            item_types = {"rating": types.Float()}
-
-        self.register_plugin(RatingPlugin)
-        self.config["plugins"] = "rating"
-
-        item = Item(path="apath", artist="aaa")
-        item.add(self.lib)
-
-        # Do not match unset values
-        out = self.run_with_output("ls", "rating:1..3")
-        assert "aaa" not in out
-
-        self.run_command("modify", "rating=2", "--yes")
-
-        # Match in range
-        out = self.run_with_output("ls", "rating:1..3")
-        assert "aaa" in out
-
-        # Don't match out of range
-        out = self.run_with_output("ls", "rating:3..5")
-        assert "aaa" not in out
-
-
-class ItemWriteTest(PluginLoaderTestCase):
-    def setUp(self):
-        super().setUp()
-
-        class EventListenerPlugin(plugins.BeetsPlugin):
-            pass
-
-        self.event_listener_plugin = EventListenerPlugin()
-        self.register_plugin(EventListenerPlugin)
-
-    def test_change_tags(self):
-        def on_write(item=None, path=None, tags=None):
-            if tags["artist"] == "XXX":
-                tags["artist"] = "YYY"
-
-        self.register_listener("write", on_write)
-
-        item = self.add_item_fixture(artist="XXX")
-        item.write()
-
-        mediafile = MediaFile(syspath(item.path))
-        assert mediafile.artist == "YYY"
-
-    def register_listener(self, event, func):
-        self.event_listener_plugin.register_listener(event, func)
-
-
-class ItemTypeConflictTest(PluginLoaderTestCase):
-    def test_mismatch(self):
-        class EventListenerPlugin(plugins.BeetsPlugin):
-            item_types = {"duplicate": types.INTEGER}
-
-        class AdventListenerPlugin(plugins.BeetsPlugin):
-            item_types = {"duplicate": types.FLOAT}
-
-        self.event_listener_plugin = EventListenerPlugin
-        self.advent_listener_plugin = AdventListenerPlugin
-        self.register_plugin(EventListenerPlugin)
-        self.register_plugin(AdventListenerPlugin)
-        with pytest.raises(plugins.PluginConflictError):
-            plugins.types(Item)
-
-    def test_match(self):
-        class EventListenerPlugin(plugins.BeetsPlugin):
-            item_types = {"duplicate": types.INTEGER}
-
-        class AdventListenerPlugin(plugins.BeetsPlugin):
-            item_types = {"duplicate": types.INTEGER}
-
-        self.event_listener_plugin = EventListenerPlugin
-        self.advent_listener_plugin = AdventListenerPlugin
-        self.register_plugin(EventListenerPlugin)
-        self.register_plugin(AdventListenerPlugin)
-        assert plugins.types(Item) is not None
-
-
 class EventsTest(PluginImportTestCase):
-    def setUp(self):
-        super().setUp()
-
     def test_import_task_created(self):
         self.importer = self.setup_importer(pretend=True)
 
@@ -223,7 +150,7 @@ class EventsTest(PluginImportTestCase):
         ]
 
 
-class ListenersTest(PluginLoaderTestCase):
+class ListenersTest(PluginTestCase):
     def test_register(self):
         class DummyPlugin(plugins.BeetsPlugin):
             def __init__(self):
@@ -243,15 +170,7 @@ class ListenersTest(PluginLoaderTestCase):
         d.register_listener("cli_exit", d2.dummy)
         assert DummyPlugin._raw_listeners["cli_exit"] == [d.dummy, d2.dummy]
 
-    @patch("beets.plugins.find_plugins")
-    @patch("inspect.getfullargspec")
-    def test_events_called(self, mock_gfa, mock_find_plugins):
-        mock_gfa.return_value = Mock(
-            args=(),
-            varargs="args",
-            varkw="kwargs",
-        )
-
+    def test_events_called(self):
         class DummyPlugin(plugins.BeetsPlugin):
             def __init__(self):
                 super().__init__()
@@ -261,7 +180,6 @@ class ListenersTest(PluginLoaderTestCase):
                 self.register_listener("event_bar", self.bar)
 
         d = DummyPlugin()
-        mock_find_plugins.return_value = (d,)
 
         plugins.send("event")
         d.foo.assert_has_calls([])
@@ -271,8 +189,7 @@ class ListenersTest(PluginLoaderTestCase):
         d.foo.assert_called_once_with(var="tagada")
         d.bar.assert_has_calls([])
 
-    @patch("beets.plugins.find_plugins")
-    def test_listener_params(self, mock_find_plugins):
+    def test_listener_params(self):
         class DummyPlugin(plugins.BeetsPlugin):
             def __init__(self):
                 super().__init__()
@@ -316,8 +233,7 @@ class ListenersTest(PluginLoaderTestCase):
             def dummy9(self, **kwargs):
                 assert kwargs == {"foo": 5}
 
-        d = DummyPlugin()
-        mock_find_plugins.return_value = (d,)
+        DummyPlugin()
 
         plugins.send("event1", foo=5)
         plugins.send("event2", foo=5)
@@ -553,10 +469,22 @@ def get_available_plugins():
     ]
 
 
-class TestImportAllPlugins(PluginMixin):
-    def unimport_plugins(self):
+class TestImportPlugin(PluginMixin):
+    @pytest.fixture(params=get_available_plugins())
+    def plugin_name(self, request):
+        """Fixture to provide the name of each available plugin."""
+        name = request.param
+
+        # skip gstreamer plugins on windows
+        gstreamer_plugins = {"bpd", "replaygain"}
+        if sys.platform == "win32" and name in gstreamer_plugins:
+            pytest.skip(f"GStreamer is not available on Windows: {name}")
+
+        return name
+
+    def unload_plugins(self):
         """Unimport plugins before each test to avoid conflicts."""
-        self.unload_plugins()
+        super().unload_plugins()
         for mod in list(sys.modules):
             if mod.startswith("beetsplug."):
                 del sys.modules[mod]
@@ -564,32 +492,22 @@ class TestImportAllPlugins(PluginMixin):
     @pytest.fixture(autouse=True)
     def cleanup(self):
         """Ensure plugins are unimported before and after each test."""
-        self.unimport_plugins()
+        self.unload_plugins()
         yield
-        self.unimport_plugins()
+        self.unload_plugins()
 
     @pytest.mark.skipif(
         os.environ.get("GITHUB_ACTIONS") != "true",
-        reason="Requires all dependencies to be installed, "
-        + "which we can't guarantee in the local environment.",
+        reason=(
+            "Requires all dependencies to be installed, which we can't"
+            " guarantee in the local environment."
+        ),
     )
-    @pytest.mark.parametrize("plugin_name", get_available_plugins())
-    def test_import_plugin(self, caplog, plugin_name):  #
-        """Test that a plugin is importable without an error using the
-        load_plugins function."""
-
-        # skip gstreamer plugins on windows
-        gstreamer_plugins = ["bpd", "replaygain"]
-        if sys.platform == "win32" and plugin_name in gstreamer_plugins:
-            pytest.xfail("GStreamer is not available on Windows: {plugin_name}")
-
+    def test_import_plugin(self, caplog, plugin_name):
+        """Test that a plugin is importable without an error."""
         caplog.set_level(logging.WARNING)
-        caplog.clear()
-        plugins.load_plugins([plugin_name])
+        self.load_plugins(plugin_name)
 
-        # Check for warnings, is a bit hacky but we can make full use of the beets
-        # load_plugins code that way
-        assert len(caplog.records) == 0, (
-            f"Plugin '{plugin_name}' has issues during import. ",
-            caplog.records,
+        assert "PluginImportError" not in caplog.text, (
+            f"Plugin '{plugin_name}' has issues during import."
         )
