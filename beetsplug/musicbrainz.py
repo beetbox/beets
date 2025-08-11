@@ -363,6 +363,10 @@ def _merge_pseudo_and_actual_album(
 
 
 class MusicBrainzPlugin(MetadataSourcePlugin):
+    @cached_property
+    def genres_field(self) -> str | None:
+        return f"{config['musicbrainz']['genres_tag'].get()}-list"
+
     def __init__(self):
         """Set up the python-musicbrainz-ngs module according to settings
         from the beets configuration. This should be called at startup.
@@ -375,6 +379,7 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
                 "ratelimit": 1,
                 "ratelimit_interval": 1,
                 "genres": False,
+                "genres_tag": "genre",
                 "external_ids": {
                     "discogs": False,
                     "bandcamp": False,
@@ -404,17 +409,6 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
             self.config["ratelimit_interval"].as_number(),
             self.config["ratelimit"].get(int),
         )
-        genres_config = config["musicbrainz"]["genres"]
-        if genres_config:
-            genres_config = genres_config.get(str)
-            if genres_config == "genres":
-                self.genre_or_tag = "genre"
-            elif genres_config == "tags":
-                self.genre_or_tag = "tag"
-            else:
-                self.genre_or_tag = "genre"
-        else:
-            self.genre_or_tag = False
 
     def track_info(
         self,
@@ -725,10 +719,10 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
             else:
                 info.media = "Media"
 
-        if self.genre_or_tag:
+        if self.config["genres"]:
             sources = [
-                release["release-group"].get(self.genre_or_tag + "-list", []),
-                release.get(self.genre_or_tag + "-list", []),
+                release["release-group"].get(self.genres_field, []),
+                release.get(self.genres_field, []),
             ]
             genres: Counter[str] = Counter()
             for source in sources:
