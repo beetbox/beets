@@ -142,12 +142,16 @@ class FilesystemError(HumanReadableError):
     def get_message(self):
         # Use a nicer English phrasing for some specific verbs.
         if self.verb in ("move", "copy", "rename"):
-            clause = f"while {self._gerund()} {displayable_path(self.paths[0])} to {displayable_path(self.paths[1])}"
+            clause = (
+                f"while {self._gerund()} {displayable_path(self.paths[0])} to"
+                f" {displayable_path(self.paths[1])}"
+            )
         elif self.verb in ("delete", "write", "create", "read"):
             clause = f"while {self._gerund()} {displayable_path(self.paths[0])}"
         else:
-            clause = "during {} of paths {}".format(
-                self.verb, ", ".join(displayable_path(p) for p in self.paths)
+            clause = (
+                f"during {self.verb} of paths"
+                f" {', '.join(displayable_path(p) for p in self.paths)}"
             )
 
         return f"{self._reasonstr()} {clause}"
@@ -220,7 +224,8 @@ def sorted_walk(
     except OSError as exc:
         if logger:
             logger.warning(
-                f"could not list directory {displayable_path(bytes_path)}: {exc.strerror}"
+                f"could not list directory {displayable_path(bytes_path)}:"
+                f" {exc.strerror}"
             )
         return
     dirs = []

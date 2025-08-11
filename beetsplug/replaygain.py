@@ -168,7 +168,8 @@ class RgTask:
             # `track_gains` without throwing FatalReplayGainError
             #  => raise non-fatal exception & continue
             raise ReplayGainError(
-                f"ReplayGain backend `{self.backend_name}` failed for track {item}"
+                f"ReplayGain backend `{self.backend_name}` failed for track"
+                f" {item}"
             )
 
         self._store_track_gain(item, self.track_gains[0])
@@ -1219,10 +1220,8 @@ class ReplayGainPlugin(BeetsPlugin):
 
         if self.backend_name not in BACKENDS:
             raise ui.UserError(
-                "Selected ReplayGain backend {} is not supported. "
-                "Please select one of: {}".format(
-                    self.backend_name, ", ".join(BACKENDS.keys())
-                )
+                f"Selected ReplayGain backend {self.backend_name} is not"
+                f" supported. Please select one of: {', '.join(BACKENDS)}"
             )
 
         # FIXME: Consider renaming the configuration option to 'peak_method'
@@ -1230,10 +1229,9 @@ class ReplayGainPlugin(BeetsPlugin):
         peak_method = self.config["peak"].as_str()
         if peak_method not in PeakMethod.__members__:
             raise ui.UserError(
-                "Selected ReplayGain peak method {} is not supported. "
-                "Please select one of: {}".format(
-                    peak_method, ", ".join(PeakMethod.__members__)
-                )
+                f"Selected ReplayGain peak method {peak_method} is not"
+                " supported. Please select one of:"
+                f" {', '.join(PeakMethod.__members__)}"
             )
         # This only applies to plain old rg tags, r128 doesn't store peak
         # values.
@@ -1516,14 +1514,16 @@ class ReplayGainPlugin(BeetsPlugin):
             if opts.album:
                 albums = lib.albums(args)
                 self._log.info(
-                    f"Analyzing {len(albums)} albums ~ {self.backend_name} backend..."
+                    f"Analyzing {len(albums)} albums ~"
+                    f" {self.backend_name} backend..."
                 )
                 for album in albums:
                     self.handle_album(album, write, force)
             else:
                 items = lib.items(args)
                 self._log.info(
-                    f"Analyzing {len(items)} tracks ~ {self.backend_name} backend..."
+                    f"Analyzing {len(items)} tracks ~"
+                    f" {self.backend_name} backend..."
                 )
                 for item in items:
                     self.handle_track(item, write, force)
@@ -1551,8 +1551,10 @@ class ReplayGainPlugin(BeetsPlugin):
             dest="force",
             action="store_true",
             default=False,
-            help="analyze all files, including those that "
-            "already have ReplayGain metadata",
+            help=(
+                "analyze all files, including those that already have"
+                " ReplayGain metadata"
+            ),
         )
         cmd.parser.add_option(
             "-w",

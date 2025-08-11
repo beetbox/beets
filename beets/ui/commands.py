@@ -112,11 +112,13 @@ def _parse_logfiles(logfiles):
             yield from _paths_from_logfile(syspath(normpath(logfile)))
         except ValueError as err:
             raise ui.UserError(
-                f"malformed logfile {util.displayable_path(logfile)}: {str(err)}"
+                f"malformed logfile {util.displayable_path(logfile)}:"
+                f" {str(err)}"
             ) from err
         except OSError as err:
             raise ui.UserError(
-                f"unreadable logfile {util.displayable_path(logfile)}: {str(err)}"
+                f"unreadable logfile {util.displayable_path(logfile)}:"
+                f" {str(err)}"
             ) from err
 
 
@@ -291,7 +293,7 @@ def penalty_string(distance, limit=None):
         if limit and len(penalties) > limit:
             penalties = penalties[:limit] + ["..."]
         # Prefix penalty string with U+2260: Not Equal To
-        penalty_string = "\u2260 {}".format(", ".join(penalties))
+        penalty_string = f"\u2260 {', '.join(penalties)}"
         return ui.colorize("changed", penalty_string)
 
 
@@ -693,7 +695,9 @@ class AlbumChange(ChangeRepresentation):
         # Missing and unmatched tracks.
         if self.match.extra_tracks:
             print_(
-                f"Missing tracks ({len(self.match.extra_tracks)}/{len(self.match.info.tracks)} - {len(self.match.extra_tracks) / len(self.match.info.tracks):.1%}):"
+                "Missing tracks"
+                f" ({len(self.match.extra_tracks)}/{len(self.match.info.tracks)} -"
+                f" {len(self.match.extra_tracks) / len(self.match.info.tracks):.1%}):"
             )
         for track_info in self.match.extra_tracks:
             line = f" ! {track_info.title} (#{self.format_index(track_info)})"
@@ -783,7 +787,10 @@ def summarize_items(items, singleton):
         total_filesize = sum([item.filesize for item in items])
         summary_parts.append(f"{int(average_bitrate / 1000)}kbps")
         if items[0].format == "FLAC":
-            sample_bits = f"{round(int(items[0].samplerate) / 1000, 1)}kHz/{items[0].bitdepth} bit"
+            sample_bits = (
+                f"{round(int(items[0].samplerate) / 1000, 1)}kHz"
+                f"/{items[0].bitdepth} bit"
+            )
             summary_parts.append(sample_bits)
         summary_parts.append(human_seconds_short(total_duration))
         summary_parts.append(human_bytes(total_filesize))
@@ -900,11 +907,9 @@ def choose_candidate(
             # Display list of candidates.
             print_("")
             print_(
-                'Finding tags for {} "{} - {}".'.format(
-                    "track" if singleton else "album",
-                    item.artist if singleton else cur_artist,
-                    item.title if singleton else cur_album,
-                )
+                f"Finding tags for {'track' if singleton else 'album'}"
+                f'"{item.artist if singleton else cur_artist} -'
+                f' {item.title if singleton else cur_album}".'
             )
 
             print_(ui.indent(2) + "Candidates:")
@@ -914,7 +919,10 @@ def choose_candidate(
                 index = dist_colorize(index0, match.distance)
                 dist = f"({(1 - match.distance) * 100:.1f}%)"
                 distance = dist_colorize(dist, match.distance)
-                metadata = f"{match.info.artist} - {match.info.title if singleton else match.info.album}"
+                metadata = (
+                    f"{match.info.artist} -"
+                    f" {match.info.title if singleton else match.info.album}"
+                )
                 if i == 0:
                     metadata = dist_colorize(metadata, match.distance)
                 else:
@@ -1002,7 +1010,7 @@ def manual_id(session, task):
 
     Input an ID, either for an album ("release") or a track ("recording").
     """
-    prompt = "Enter {} ID:".format("release" if task.is_album else "recording")
+    prompt = f"Enter {'release' if task.is_album else 'recording'} ID:"
     search_id = input_(prompt).strip()
 
     if task.is_album:
@@ -1304,7 +1312,8 @@ def import_files(lib, paths: list[bytes], query):
             loghandler = logging.FileHandler(logpath, encoding="utf-8")
         except OSError:
             raise ui.UserError(
-                f"Could not open log file for writing: {displayable_path(logpath)}"
+                "Could not open log file for writing:"
+                f" {displayable_path(logpath)}"
             )
     else:
         loghandler = None
@@ -1791,7 +1800,7 @@ def remove_items(lib, query, album, delete, force):
     if not force:
         # Prepare confirmation with user.
         album_str = (
-            " in {} album{}".format(len(albums), "s" if len(albums) > 1 else "")
+            f" in {len(albums)} album{'s' if len(albums) > 1 else ''}"
             if album
             else ""
         )
@@ -1799,14 +1808,17 @@ def remove_items(lib, query, album, delete, force):
         if delete:
             fmt = "$path - $title"
             prompt = "Really DELETE"
-            prompt_all = "Really DELETE {} file{}{}".format(
-                len(items), "s" if len(items) > 1 else "", album_str
+            prompt_all = (
+                "Really DELETE"
+                f" {len(items)} file{'s' if len(items) > 1 else ''}{album_str}"
             )
         else:
             fmt = ""
             prompt = "Really remove from the library?"
-            prompt_all = "Really remove {} item{}{} from the library?".format(
-                len(items), "s" if len(items) > 1 else "", album_str
+            prompt_all = (
+                "Really remove"
+                f" {len(items)} item{'s' if len(items) > 1 else ''}{album_str}"
+                " from the library?"
             )
 
         # Helpers for printing affected items
@@ -1889,23 +1901,13 @@ def show_stats(lib, query, exact):
     if exact:
         size_str += f" ({total_size} bytes)"
 
-    print_(
-        """Tracks: {}
-Total time: {}{}
-{}: {}
-Artists: {}
-Albums: {}
-Album artists: {}""".format(
-            total_items,
-            human_seconds(total_time),
-            f" ({total_time:.2f} seconds)" if exact else "",
-            "Total size" if exact else "Approximate total size",
-            size_str,
-            len(artists),
-            len(albums),
-            len(album_artists),
-        ),
-    )
+    print_(f"""Tracks: {total_items}
+Total time: {human_seconds(total_time)}
+{f" ({total_time:.2f} seconds)" if exact else ""}
+{"Total size" if exact else "Approximate total size"}: {size_str}
+Artists: {len(artists)}
+Albums: {len(albums)}
+Album artists: {len(album_artists)}""")
 
 
 def stats_func(lib, opts, args):
@@ -1960,7 +1962,7 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm, inherit):
 
     # Apply changes *temporarily*, preview them, and collect modified
     # objects.
-    print_("Modifying {} {}s.".format(len(objs), "album" if album else "item"))
+    print_(f"Modifying {len(objs)} {'album' if album else 'item'}s.")
     changed = []
     templates = {
         key: functemplate.template(value) for key, value in mods.items()
@@ -2467,7 +2469,7 @@ def completion_script(commands):
     # Command aliases
     yield "  local aliases='%s'\n" % " ".join(aliases.keys())
     for alias, cmd in aliases.items():
-        yield "  local alias__{}={}\n".format(alias.replace("-", "_"), cmd)
+        yield f"  local alias__{alias.replace('-', '_')}={cmd}\n"
     yield "\n"
 
     # Fields
@@ -2483,8 +2485,9 @@ def completion_script(commands):
         for option_type, option_list in opts.items():
             if option_list:
                 option_list = " ".join(option_list)
-                yield "  local {}__{}='{}'\n".format(
-                    option_type, cmd.replace("-", "_"), option_list
+                yield (
+                    "  local"
+                    f" {option_type}__{cmd.replace('-', '_')}='{option_list}'\n"
                 )
 
     yield "  _beet_dispatch\n"

@@ -552,7 +552,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
             idx, medium_idx, sub_idx = self.get_track_index(
                 subtracks[0]["position"]
             )
-            position = "{}{}".format(idx or "", medium_idx or "")
+            position = f"{idx or ''}{medium_idx or ''}"
 
             if tracklist and not tracklist[-1]["position"]:
                 # Assume the previous index track contains the track title.
@@ -574,8 +574,8 @@ class DiscogsPlugin(MetadataSourcePlugin):
                     # option is set
                     if self.config["index_tracks"]:
                         for subtrack in subtracks:
-                            subtrack["title"] = "{}: {}".format(
-                                index_track["title"], subtrack["title"]
+                            subtrack["title"] = (
+                                f"{index_track['title']}: {subtrack['title']}"
                             )
                     tracklist.extend(subtracks)
             else:

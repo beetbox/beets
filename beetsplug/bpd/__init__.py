@@ -759,7 +759,7 @@ class Connection:
         """Create a new connection for the accepted socket `client`."""
         self.server = server
         self.sock = sock
-        self.address = "{}:{}".format(*sock.sock.getpeername())
+        self.address = ":".join(map(str, sock.sock.getpeername()))
 
     def debug(self, message, kind=" "):
         """Log a debug message about this connection."""
@@ -899,9 +899,7 @@ class MPDConnection(Connection):
                     return
                 except BPDIdleError as e:
                     self.idle_subscriptions = e.subsystems
-                    self.debug(
-                        "awaiting: {}".format(" ".join(e.subsystems)), kind="z"
-                    )
+                    self.debug(f"awaiting: {' '.join(e.subsystems)}", kind="z")
                 yield bluelet.call(self.server.dispatch_events())
 
 
@@ -1299,7 +1297,10 @@ class Server(BaseServer):
 
             yield (
                 "bitrate: " + str(item.bitrate / 1000),
-                f"audio: {str(item.samplerate)}:{str(item.bitdepth)}:{str(item.channels)}",
+                (
+                    "audio:"
+                    f" {str(item.samplerate)}:{str(item.bitdepth)}:{str(item.channels)}"
+                ),
             )
 
             (pos, total) = self.player.time()

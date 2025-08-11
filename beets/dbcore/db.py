@@ -390,9 +390,9 @@ class Model(ABC, Generic[D]):
         return obj
 
     def __repr__(self) -> str:
-        return "{}({})".format(
-            type(self).__name__,
-            ", ".join(f"{k}={v!r}" for k, v in dict(self).items()),
+        return (
+            f"{type(self).__name__}"
+            f"({', '.join(f'{k}={v!r}' for k, v in dict(self).items())})"
         )
 
     def clear_dirty(self):
@@ -595,9 +595,7 @@ class Model(ABC, Generic[D]):
         with db.transaction() as tx:
             # Main table update.
             if assignments:
-                query = "UPDATE {} SET {} WHERE id=?".format(
-                    self._table, ",".join(assignments)
-                )
+                query = f"UPDATE {self._table} SET {','.join(assignments)} WHERE id=?"
                 subvars.append(self.id)
                 tx.mutate(query, subvars)
 
@@ -1173,9 +1171,7 @@ class Database:
             columns = []
             for name, typ in fields.items():
                 columns.append(f"{name} {typ.sql}")
-            setup_sql = "CREATE TABLE {} ({});\n".format(
-                table, ", ".join(columns)
-            )
+            setup_sql = f"CREATE TABLE {table} ({', '.join(columns)});\n"
 
         else:
             # Table exists does not match the field set.
@@ -1195,8 +1191,7 @@ class Database:
         for the given entity (if they don't exist).
         """
         with self.transaction() as tx:
-            tx.script(
-                f"""
+            tx.script(f"""
                 CREATE TABLE IF NOT EXISTS {flex_table} (
                     id INTEGER PRIMARY KEY,
                     entity_id INTEGER,
@@ -1205,8 +1200,7 @@ class Database:
                     UNIQUE(entity_id, key) ON CONFLICT REPLACE);
                 CREATE INDEX IF NOT EXISTS {flex_table}_by_entity
                     ON {flex_table} (entity_id);
-                """
-            )
+                """)
 
     # Querying.
 

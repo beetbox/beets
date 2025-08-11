@@ -170,8 +170,9 @@ class SpotifyPlugin(
         c_secret: str = self.config["client_secret"].as_str()
 
         headers = {
-            "Authorization": "Basic {}".format(
-                base64.b64encode(f"{c_id}:{c_secret}".encode()).decode()
+            "Authorization": (
+                "Basic"
+                f" {base64.b64encode(f'{c_id}:{c_secret}'.encode()).decode()}"
             )
         }
         response = requests.post(
@@ -238,7 +239,7 @@ class SpotifyPlugin(
             if e.response.status_code == 401:
                 self._log.debug(
                     f"{self.data_source} access token has expired. "
-                    f"Reauthenticating."
+                    "Reauthenticating."
                 )
                 self._authenticate()
                 return self._handle_response(
@@ -495,8 +496,10 @@ class SpotifyPlugin(
             "-m",
             "--mode",
             action="store",
-            help=f'"open" to open {self.data_source} with playlist, '
-            '"list" to print (default)',
+            help=(
+                f'"open" to open {self.data_source} with playlist, '
+                '"list" to print (default)'
+            ),
         )
         spotify_cmd.parser.add_option(
             "-f",

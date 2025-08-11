@@ -775,9 +775,8 @@ def audio_file(track_id):
         return AURADocument.error(
             "404 Not Found",
             "No audio file for the requested track.",
-            (
-                f"There is no audio file for track {track_id} at the expected location"
-            ),
+            f"There is no audio file for track {track_id} at the expected"
+            " location",
         )
 
     file_mimetype = guess_type(path)[0]
@@ -785,10 +784,8 @@ def audio_file(track_id):
         return AURADocument.error(
             "500 Internal Server Error",
             "Requested audio file has an unknown mimetype.",
-            (
-                "The audio file for track {} has an unknown mimetype. "
-                "Its file extension is {}."
-            ).format(track_id, path.split(".")[-1]),
+            f"The audio file for track {track_id} has an unknown mimetype. "
+            f"Its file extension is {path.split('.')[-1]}.",
         )
 
     # Check that the Accept header contains the file's mimetype
@@ -800,10 +797,8 @@ def audio_file(track_id):
         return AURADocument.error(
             "406 Not Acceptable",
             "Unsupported MIME type or bitrate parameter in Accept header.",
-            (
-                f"The audio file for track {track_id} is only available as {file_mimetype} and "
-                "bitrate parameters are not supported."
-            ),
+            f"The audio file for track {track_id} is only available as"
+            f" {file_mimetype} and bitrate parameters are not supported.",
         )
 
     return send_file(
