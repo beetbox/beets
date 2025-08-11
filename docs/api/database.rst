@@ -1,20 +1,18 @@
 Database
---------
+========
 
 .. currentmodule:: beets.library
 
-
 Library
-'''''''
+-------
 
 .. autosummary::
     :toctree: generated/
 
     Library
 
-
 Models
-''''''
+------
 
 .. autosummary::
     :toctree: generated/
@@ -23,9 +21,8 @@ Models
     Album
     Item
 
-
 Transactions
-''''''''''''
+------------
 
 .. currentmodule:: beets.dbcore.db
 
@@ -35,7 +32,7 @@ Transactions
     Transaction
 
 Queries
-'''''''
+-------
 
 .. currentmodule:: beets.dbcore.query
 
