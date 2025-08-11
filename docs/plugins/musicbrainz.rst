@@ -30,6 +30,7 @@ Default
         searchlimit: 5
         extra_tags: []
         genres: no
+        genres_tag: genre
         external_ids:
             discogs: no
             bandcamp: no
@@ -123,6 +124,16 @@ Use MusicBrainz genre tags to populate (and replace if it's already set) the
 ``genre`` tag. This will make it a list of all the genres tagged for the release
 and the release-group on MusicBrainz, separated by "; " and sorted by the total
 number of votes. Default: ``no``
+
+.. _genres_tag:
+
+genres_tag
+++++++++++
+
+Either ``genres`` or ``tags``.  Specify ``genres`` to use just musicbrainz genres
+and ``tags`` to use all user-supplied musicbrainz tags.
+
+Default: ``genres``
 
 .. _musicbrainz.external_ids:
 
