@@ -1,7 +1,7 @@
 ImportHistory Plugin
 ====================
 
-The ``importhistory`` plugin adds a `source_path` field to every item imported
+The ``importhistory`` plugin adds a ``source_path`` field to every item imported
 to the library which stores the original media files' paths. Using this plugin
 makes most sense when the general importing workflow is to use ``beet import
 --copy``.
@@ -12,11 +12,11 @@ files as well whenever items are removed from the Beets library.
 To use the ``importhistory`` plugin, enable it in your configuration (see
 :ref:`using-plugins`).
 
-`source_path` Usage
--------------------
+``source_path`` Usage
+---------------------
 
-The first use case of the `source_path` field is in the following scenario: You
-imported all of the directories in your current `$PWD`:
+The first use case of the ``source_path`` field is in the following scenario:
+You imported all of the directories in your current ``$PWD``:
 
 ::
 
@@ -40,7 +40,7 @@ You can of course pipe this command to other standard UNIX utilities:
       sort -u
 
 The above will print only the directories you successfully finished importing
-with `beet import --flat --copy */`.
+with ``beet import --flat --copy */``.
 
 Removal Suggestion Usage
 ------------------------
@@ -53,7 +53,7 @@ you imported an album using:
     beet import --copy --flat ~/Desktop/interesting-album-to-check/
 
 Then you listened to that album and decided it wasn't good and you want to
-delete it from your library, and from your `~/Desktop`, so you run:
+delete it from your library, and from your ``~/Desktop``, so you run:
 
 ::
 
