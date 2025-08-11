@@ -16,17 +16,23 @@ To use the ``importhistory`` plugin, enable it in your configuration (see
 -------------------
 
 The first use case of the `source_path` field is in the following scenario: You
-imported all of the directories in your current `$PWD`::
+imported all of the directories in your current `$PWD`:
+
+::
 
     beet import --flat --copy */
 
 Then, something went wrong, and you need to rerun this command. But, you don't
 want to tell beets to read again the already successfully imported directories
-again. So, you can view which files were successfully imported, using::
+again. So, you can view which files were successfully imported, using:
+
+::
 
     beet ls source_path:$PWD --format='$source_path'
 
-You can of course pipe this command to other standard UNIX utilities::
+You can of course pipe this command to other standard UNIX utilities:
+
+::
 
     # The following prints the directories without the l
     beet ls source_path:$PWD --format='$source_path' | \
@@ -40,16 +46,22 @@ Removal Suggestion Usage
 ------------------------
 
 A second use case of the plugin is described in the following scenario: Imagine
-you imported an album using::
+you imported an album using:
+
+::
 
     beet import --copy --flat ~/Desktop/interesting-album-to-check/
 
 Then you listened to that album and decided it wasn't good and you want to
-delete it from your library, and from your `~/Desktop`, so you run::
+delete it from your library, and from your `~/Desktop`, so you run:
+
+::
 
     beet remove --delete source_path:$HOME/Desktop/interesting-album-to-check
 
-After you'll approve the deletion, this plugin will ask you::
+After you'll approve the deletion, this plugin will ask you:
+
+::
 
     The item:
     <music-library>/Interesting Album/01 Interesting Song.flac
@@ -60,8 +72,8 @@ After you'll approve the deletion, this plugin will ask you::
     do Nothing,
     do nothing and Stop suggesting to delete items from this album?
 
-Thus the plugin helps you delete the files from the beets library and from
-their source as one.
+Thus the plugin helps you delete the files from the beets library and from their
+source as one.
 
 Configuration
 -------------
@@ -72,5 +84,4 @@ configuration file. There is one option available:
 - **suggest_removal**: By default ``importhistory`` suggests to remove the
   original directories / files from which the items were imported whenever
   library items (and files) are removed. To disable these prompts set this
-  option to ``no``.
-  Default: ``yes``.
+  option to ``no``. Default: ``yes``.
