@@ -7,7 +7,7 @@ you've removed the album from the library.
 import os
 from shutil import rmtree
 
-from beets import library
+from beets.dbcore.query import PathQuery
 from beets.plugins import BeetsPlugin
 from beets.ui import colorize as colorize_text
 from beets.ui import input_options
@@ -116,7 +116,7 @@ class ImportHistPlugin(BeetsPlugin):
                 "Searching for other items with a source_path attr containing: {}",
                 source_dir,
             )
-            source_dir_query = library.PathQuery(
+            source_dir_query = PathQuery(
                 "source_path",
                 source_dir,
                 # The "source_path" attribute may not be present in all
