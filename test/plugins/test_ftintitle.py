@@ -56,21 +56,21 @@ class FtInTitlePluginFunctional(PluginTestCase):
         assert item["title"] == "Song 1"
 
     def test_functional_custom_format(self):
-        self._ft_set_config("feat. {0}")
+        self._ft_set_config("feat. {}")
         item = self._ft_add_item("/", "Alice ft Bob", "Song 1", "Alice")
         self.run_command("ftintitle")
         item.load()
         assert item["artist"] == "Alice"
         assert item["title"] == "Song 1 feat. Bob"
 
-        self._ft_set_config("featuring {0}")
+        self._ft_set_config("featuring {}")
         item = self._ft_add_item("/", "Alice feat. Bob", "Song 1", "Alice")
         self.run_command("ftintitle")
         item.load()
         assert item["artist"] == "Alice"
         assert item["title"] == "Song 1 featuring Bob"
 
-        self._ft_set_config("with {0}")
+        self._ft_set_config("with {}")
         item = self._ft_add_item("/", "Alice feat Bob", "Song 1", "Alice")
         self.run_command("ftintitle")
         item.load()
@@ -78,7 +78,7 @@ class FtInTitlePluginFunctional(PluginTestCase):
         assert item["title"] == "Song 1 with Bob"
 
     def test_functional_keep_in_artist(self):
-        self._ft_set_config("feat. {0}", keep_in_artist=True)
+        self._ft_set_config("feat. {}", keep_in_artist=True)
         item = self._ft_add_item("/", "Alice ft Bob", "Song 1", "Alice")
         self.run_command("ftintitle")
         item.load()

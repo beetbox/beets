@@ -170,8 +170,9 @@ class SpotifyPlugin(
         c_secret: str = self.config["client_secret"].as_str()
 
         headers = {
-            "Authorization": "Basic {}".format(
-                base64.b64encode(f"{c_id}:{c_secret}".encode()).decode()
+            "Authorization": (
+                "Basic"
+                f" {base64.b64encode(f'{c_id}:{c_secret}'.encode()).decode()}"
             )
         }
         response = requests.post(
@@ -184,14 +185,12 @@ class SpotifyPlugin(
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
             raise ui.UserError(
-                "Spotify authorization failed: {}\n{}".format(e, response.text)
+                f"Spotify authorization failed: {e}\n{response.text}"
             )
         self.access_token = response.json()["access_token"]
 
         # Save the token for later use.
-        self._log.debug(
-            "{} access token: {}", self.data_source, self.access_token
-        )
+        self._log.debug("{0.data_source} access token: {0.access_token}", self)
         with open(self._tokenfile(), "w") as f:
             json.dump({"access_token": self.access_token}, f)
 
@@ -229,16 +228,16 @@ class SpotifyPlugin(
             self._log.error("ReadTimeout.")
             raise APIError("Request timed out.")
         except requests.exceptions.ConnectionError as e:
-            self._log.error(f"Network error: {e}")
+            self._log.error("Network error: {}", e)
             raise APIError("Network error.")
         except requests.exceptions.RequestException as e:
             if e.response is None:
-                self._log.error(f"Request failed: {e}")
+                self._log.error("Request failed: {}", e)
                 raise APIError("Request failed.")
             if e.response.status_code == 401:
                 self._log.debug(
-                    f"{self.data_source} access token has expired. "
-                    f"Reauthenticating."
+                    "{.data_source} access token has expired. Reauthenticating.",
+                    self,
                 )
                 self._authenticate()
                 return self._handle_response(
@@ -257,7 +256,7 @@ class SpotifyPlugin(
                     "Retry-After", DEFAULT_WAITING_TIME
                 )
                 self._log.debug(
-                    f"Too many API requests. Retrying after {seconds} seconds."
+                    "Too many API requests. Retrying after {} seconds.", seconds
                 )
                 time.sleep(int(seconds) + 1)
                 return self._handle_response(
@@ -278,7 +277,7 @@ class SpotifyPlugin(
                     f"URL:\n{url}\nparams:\n{params}"
                 )
             else:
-                self._log.error(f"Request failed. Error: {e}")
+                self._log.error("Request failed. Error: {}", e)
                 raise APIError("Request failed.")
 
     def album_for_id(self, album_id: str) -> AlbumInfo | None:
@@ -316,9 +315,7 @@ class SpotifyPlugin(
         else:
             raise ui.UserError(
                 "Invalid `release_date_precision` returned "
-                "by {} API: '{}'".format(
-                    self.data_source, release_date_precision
-                )
+                f"by {self.data_source} API: '{release_date_precision}'"
             )
 
         tracks_data = album_data["tracks"]
@@ -463,7 +460,7 @@ class SpotifyPlugin(
         """
         query = self._construct_search_query(keywords=keywords, filters=filters)
 
-        self._log.debug(f"Searching {self.data_source} for '{query}'")
+        self._log.debug("Searching {.data_source} for '{}'", self, query)
         try:
             response = self._handle_response(
                 "get",
@@ -473,11 +470,11 @@ class SpotifyPlugin(
         except APIError as e:
             self._log.debug("Spotify API error: {}", e)
             return ()
-        response_data = response.get(query_type + "s", {}).get("items", [])
+        response_data = response.get(f"{query_type}s", {}).get("items", [])
         self._log.debug(
-            "Found {} result(s) from {} for '{}'",
+            "Found {} result(s) from {.data_source} for '{}'",
             len(response_data),
-            self.data_source,
+            self,
             query,
         )
         return response_data
@@ -497,17 +494,17 @@ class SpotifyPlugin(
             "-m",
             "--mode",
             action="store",
-            help='"open" to open {} with playlist, '
-            '"list" to print (default)'.format(self.data_source),
+            help=(
+                f'"open" to open {self.data_source} with playlist, '
+                '"list" to print (default)'
+            ),
         )
         spotify_cmd.parser.add_option(
             "-f",
             "--show-failures",
             action="store_true",
             dest="show_failures",
-            help="list tracks that did not match a {} ID".format(
-                self.data_source
-            ),
+            help=f"list tracks that did not match a {self.data_source} ID",
         )
         spotify_cmd.func = queries
 
@@ -540,7 +537,7 @@ class SpotifyPlugin(
 
         if self.config["mode"].get() not in ["list", "open"]:
             self._log.warning(
-                "{0} is not a valid mode", self.config["mode"].get()
+                "{} is not a valid mode", self.config["mode"].get()
             )
             return False
 
@@ -563,8 +560,8 @@ class SpotifyPlugin(
 
         if not items:
             self._log.debug(
-                "Your beets query returned no items, skipping {}.",
-                self.data_source,
+                "Your beets query returned no items, skipping {.data_source}.",
+                self,
             )
             return
 
@@ -617,8 +614,8 @@ class SpotifyPlugin(
                 or self.config["tiebreak"].get() == "first"
             ):
                 self._log.debug(
-                    "{} track(s) found, count: {}",
-                    self.data_source,
+                    "{.data_source} track(s) found, count: {}",
+                    self,
                     len(response_data_tracks),
                 )
                 chosen_result = response_data_tracks[0]
@@ -641,19 +638,19 @@ class SpotifyPlugin(
         if failure_count > 0:
             if self.config["show_failures"].get():
                 self._log.info(
-                    "{} track(s) did not match a {} ID:",
+                    "{} track(s) did not match a {.data_source} ID:",
                     failure_count,
-                    self.data_source,
+                    self,
                 )
                 for track in failures:
                     self._log.info("track: {}", track)
                 self._log.info("")
             else:
                 self._log.warning(
-                    "{} track(s) did not match a {} ID:\n"
+                    "{} track(s) did not match a {.data_source} ID:\n"
                     "use --show-failures to display",
                     failure_count,
-                    self.data_source,
+                    self,
                 )
 
         return results
@@ -670,12 +667,10 @@ class SpotifyPlugin(
             spotify_ids = [track_data["id"] for track_data in results]
             if self.config["mode"].get() == "open":
                 self._log.info(
-                    "Attempting to open {} with playlist".format(
-                        self.data_source
-                    )
+                    "Attempting to open {.data_source} with playlist", self
                 )
-                spotify_url = "spotify:trackset:Playlist:" + ",".join(
-                    spotify_ids
+                spotify_url = (
+                    f"spotify:trackset:Playlist:{','.join(spotify_ids)}"
                 )
                 webbrowser.open(spotify_url)
             else:
@@ -683,7 +678,7 @@ class SpotifyPlugin(
                     print(self.open_track_url + spotify_id)
         else:
             self._log.warning(
-                f"No {self.data_source} tracks found from beets query"
+                "No {.data_source} tracks found from beets query", self
             )
 
     def _fetch_info(self, items, write, force):

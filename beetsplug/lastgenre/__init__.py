@@ -143,7 +143,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # Read the tree
         if c14n_filename:
-            self._log.debug("Loading canonicalization tree {0}", c14n_filename)
+            self._log.debug("Loading canonicalization tree {}", c14n_filename)
             c14n_filename = normpath(c14n_filename)
             with codecs.open(c14n_filename, "r", encoding="utf-8") as f:
                 genres_tree = yaml.safe_load(f)
@@ -290,7 +290,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         genre = self._genre_cache[key]
         if self.config["extended_debug"]:
-            self._log.debug(f"last.fm (unfiltered) {entity} tags: {genre}")
+            self._log.debug("last.fm (unfiltered) {} tags: {}", entity, genre)
         return genre
 
     def fetch_album_genre(self, obj):
@@ -346,8 +346,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         self, old: list[str], new: list[str]
     ) -> list[str]:
         """Combine old and new genres and process via _resolve_genres."""
-        self._log.debug(f"valid last.fm tags: {new}")
-        self._log.debug(f"existing genres taken into account: {old}")
+        self._log.debug("valid last.fm tags: {}", new)
+        self._log.debug("existing genres taken into account: {}", old)
         combined = old + new
         return self._resolve_genres(combined)
 
@@ -589,9 +589,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             item = task.item
             item.genre, src = self._get_genre(item)
             self._log.debug(
-                'genre for track "{0.title}" ({1}): {0.genre}',
-                item,
-                src,
+                'genre for track "{0.title}" ({1}): {0.genre}', item, src
             )
             item.store()
 
@@ -613,12 +611,12 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         try:
             res = obj.get_top_tags()
         except PYLAST_EXCEPTIONS as exc:
-            self._log.debug("last.fm error: {0}", exc)
+            self._log.debug("last.fm error: {}", exc)
             return []
         except Exception as exc:
             # Isolate bugs in pylast.
             self._log.debug("{}", traceback.format_exc())
-            self._log.error("error in pylast library: {0}", exc)
+            self._log.error("error in pylast library: {}", exc)
             return []
 
         # Filter by weight (optionally).

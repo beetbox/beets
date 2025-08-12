@@ -96,10 +96,10 @@ class KodiUpdate(BeetsPlugin):
                     continue
 
                 self._log.info(
-                    "Kodi update triggered for {0}:{1}",
+                    "Kodi update triggered for {}:{}",
                     instance["host"],
                     instance["port"],
                 )
             except requests.exceptions.RequestException as e:
-                self._log.warning("Kodi update failed: {0}", str(e))
+                self._log.warning("Kodi update failed: {}", str(e))
                 continue
