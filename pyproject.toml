@@ -212,7 +212,7 @@ cmd = "ruff check"
 
 [tool.poe.tasks.lint-docs]
 help = "Lint the documentation"
-shell = "sphinx-lint --enable all $(git ls-files '*.rst')"
+shell = "sphinx-lint --enable all --disable default-role $(git ls-files '*.rst')"
 
 [tool.poe.tasks.update-dependencies]
 help = "Update dependencies to their latest versions."
