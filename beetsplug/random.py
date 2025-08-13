@@ -5,7 +5,7 @@ from __future__ import annotations
 import random
 from itertools import groupby, islice
 from operator import attrgetter
-from typing import TYPE_CHECKING, Any, Iterable, Sequence, TypeVar
+from typing import TYPE_CHECKING, Any, Iterable, Sequence, Union
 
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, print_
@@ -13,9 +13,9 @@ from beets.ui import Subcommand, print_
 if TYPE_CHECKING:
     import optparse
 
-    from beets.library import LibModel, Library
+    from beets.library import Album, Item, Library
 
-    T = TypeVar("T", bound=LibModel)
+    T = Union[Item, Album]
 
 
 def random_func(lib: Library, opts: optparse.Values, args: list[str]):
@@ -87,7 +87,9 @@ def _equal_chance_permutation(
         except AttributeError:
             return NOT_FOUND_SENTINEL
 
-    groups: dict[Any, list[T]] = {
+    sorted(objs, key=get_attr)
+
+    groups: dict[str | object, list[T]] = {
         NOT_FOUND_SENTINEL: [],
     }
     for k, values in groupby(objs, key=get_attr):
