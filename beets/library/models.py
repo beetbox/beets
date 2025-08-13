@@ -616,7 +616,7 @@ class Album(LibModel):
         for item in self.items():
             item.try_sync(write, move)
 
-    @property
+    @cached_property
     def length(self) -> float:
         """Return the total length of all items in this album in seconds."""
         return sum(item.length for item in self.items())
