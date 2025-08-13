@@ -52,6 +52,8 @@ Bug fixes:
   the config option ``spotify.search_query_ascii: yes``. :bug:`5699`
 - :doc:`plugins/discogs`: Beets will no longer crash if a release has been
   deleted, and returns a 404.
+* :doc:`plugins/chroma`: AcoustID lookup HTTP requests will now time out after
+  10 seconds, rather than hanging the entire import process.
 
 For packagers:
 
