@@ -26,7 +26,7 @@ from abc import ABC
 from collections import defaultdict
 from collections.abc import Generator, Iterable, Iterator, Mapping, Sequence
 from sqlite3 import Connection
-from typing import TYPE_CHECKING, Any, AnyStr, Callable, Generic
+from typing import TYPE_CHECKING, Any, AnyStr, Callable, Generic, NamedTuple
 
 from typing_extensions import TypeVar  # default value support
 from unidecode import unidecode
@@ -285,6 +285,11 @@ class Model(ABC, Generic[D]):
     _search_fields: Sequence[str] = ()
     """The fields that should be queried by default by unqualified query
     terms.
+    """
+
+    _indices: Sequence[Index] = ()
+    """A sequence of `Index` objects that describe the indices to be
+    created for this table.
     """
 
     @cached_classproperty
@@ -1033,6 +1038,7 @@ class Database:
         for model_cls in self._models:
             self._make_table(model_cls._table, model_cls._fields)
             self._make_attribute_table(model_cls._flex_table)
+            self._migrate_indices(model_cls._table, model_cls._indices)
 
     # Primitive access control: connections and transactions.
 
@@ -1207,6 +1213,25 @@ class Database:
                 """.format(flex_table)
             )
 
+    def _migrate_indices(
+        self,
+        table: str,
+        indices: Sequence[Index],
+    ):
+        """Create or replace indices for the given table.
+
+        If the indices already exists and are up to date (i.e., the
+        index name and columns match), nothing is done. Otherwise, the
+        indices are created or replaced.
+        """
+        with self.transaction() as tx:
+            current = {
+                Index.from_db(tx, r[1])
+                for r in tx.query(f"PRAGMA index_list({table})")
+            }
+            for index in set(indices) - current:
+                index.recreate(tx, table)
+
     # Querying.
 
     def _fetch(
@@ -1276,3 +1301,38 @@ class Database:
         exist.
         """
         return self._fetch(model_cls, MatchQuery("id", id)).get()
+
+
+class Index(NamedTuple):
+    """A helper class to represent the index
+    information in the database schema.
+    """
+
+    name: str
+    columns: tuple[str, ...]
+
+    def recreate(self, tx: Transaction, table: str) -> None:
+        """Recreate the index in the database.
+
+        This is useful when the index has been changed and needs to be
+        updated.
+        """
+        tx.script(f"""
+            DROP INDEX IF EXISTS {self.name};
+            CREATE INDEX {self.name} ON {table} ({", ".join(self.columns)})
+        """)
+
+    @classmethod
+    def from_db(cls, tx: Transaction, name: str) -> Index:
+        """Create an Index object from the database if it exists.
+
+        The name has to exists in the database! Otherwise, an
+        Error will be raised.
+        """
+        rows = tx.query(f"PRAGMA index_info({name})")
+        columns = tuple(row[2] for row in rows)
+        return cls(name, columns)
+
+    def __hash__(self) -> int:
+        """Unique hash for the index based on its name and columns."""
+        return hash((self.name, tuple(self.columns)))
