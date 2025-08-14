@@ -6,7 +6,7 @@ import os
 import re
 import unicodedata
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
+from collections.abc import MutableMapping, Sequence
 from datetime import datetime, timedelta
 from functools import cached_property, reduce
 from operator import mul, or_
@@ -114,7 +114,7 @@ class Query(ABC):
 
 SQLiteType = str | bytes | float | int | memoryview | None
 AnySQLiteType = TypeVar("AnySQLiteType", bound=SQLiteType)
-FieldQueryType = type["FieldQuery"]
+QueryByField = MutableMapping[str, type["FieldQuery"]]
 
 
 class FieldQuery(Query, Generic[P]):
