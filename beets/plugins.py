@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
     from confuse import Subview
 
-    from beets.dbcore.db import FieldQueryType
+    from beets.dbcore.query import QueryByField
     from beets.dbcore.types import Type
     from beets.importer import ImportSession, ImportTask
     from beets.library import Album, Item, Library
@@ -305,7 +305,7 @@ class BeetsPlugin(metaclass=BeetsPluginMeta):
 
         return wrapper
 
-    def queries(self) -> dict[str, FieldQueryType]:
+    def queries(self) -> QueryByField:
         """Return a dict mapping prefixes to Query subclasses."""
         return {}
 
@@ -475,7 +475,7 @@ def commands() -> list[Subcommand]:
     return out
 
 
-def queries() -> dict[str, FieldQueryType]:
+def queries() -> QueryByField:
     """Return configured query prefixes from all plugins."""
     return {
         p: q for plugin in find_plugins() for p, q in plugin.queries().items()
@@ -499,7 +499,7 @@ def types(model_cls: type[AnyModel]) -> dict[str, Type]:
     return types
 
 
-def named_queries(model_cls: type[AnyModel]) -> dict[str, FieldQueryType]:
+def named_queries(model_cls: type[AnyModel]) -> QueryByField:
     """Return mapping between field names and queries for the given model."""
     attr_name = f"{model_cls.__name__.lower()}_queries"
     return {
