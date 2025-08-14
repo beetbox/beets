@@ -38,7 +38,7 @@ class ModelFixture1(LibModel):
         return {"some_float_field": types.FLOAT}
 
     @cached_classproperty
-    def _queries(cls) -> dict[str, query.FieldQueryType]:
+    def _queries(cls) -> dict[str, type[query.FieldQuery]]:
         return {"year": query.NumericQuery}
 
     @classmethod

@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
     from typing import Literal
 
-    from beets.dbcore.query import FieldQueryType, Query
+    from beets.dbcore.query import FieldQuery, Query
     from beets.library import Library
     from beets.logging import BeetsLogger as Logger
     from beetsplug._utils.vfs import Node
@@ -1496,7 +1496,7 @@ class Server(BaseServer):
 
     def _metadata_query(
         self,
-        query_type: FieldQueryType,
+        query_type: type[FieldQuery],
         kv: tuple[str, ...],
         allow_any_query: bool = False,
     ) -> dbcore.query.AndQuery | dbcore.query.TrueQuery:

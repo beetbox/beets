@@ -51,7 +51,7 @@ class QueryTerm:
     pattern: str
 
     @cached_classproperty
-    def query_by_prefix(cls) -> dict[str, query.FieldQueryType]:
+    def query_by_prefix(cls) -> query.QueryByField:
         """Map operator prefixes to their corresponding query class types."""
         return {
             ":": query.RegexpQuery,
@@ -96,7 +96,9 @@ class QueryTerm:
 
         raise query.InvalidQueryError(part, "Unrecognised query format")
 
-    def get_query_cls(self, model_cls: type[LibModel]) -> query.FieldQueryType:
+    def get_query_cls(
+        self, model_cls: type[LibModel]
+    ) -> type[query.FieldQuery]:
         """Determine the most appropriate query class for filtering this field.
 
         Resolves query type by checking prefix-specific queries first, then

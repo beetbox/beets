@@ -42,7 +42,7 @@ if TYPE_CHECKING:
     )
 
     from beets.dbcore import Results, types
-    from beets.dbcore.query import FieldQuery, FieldQueryType
+    from beets.dbcore.query import FieldQuery, QueryByField
     from beets.dbcore.sort import FieldSort, Sort
     from beets.util.functemplate import FieldTFuncs
     from beets.util.pathformats import PathFormat
@@ -77,7 +77,7 @@ class LibModel(dbcore.Model["Library"]):
         }
 
     @cached_classproperty
-    def _queries(cls) -> dict[str, FieldQueryType]:
+    def _queries(cls) -> QueryByField:
         return plugins.named_queries(cls)  # type: ignore[arg-type]
 
     @cached_classproperty
@@ -156,7 +156,7 @@ class LibModel(dbcore.Model["Library"]):
 
     @classmethod
     def field_query(
-        cls, field: str, pattern: str, query_cls: FieldQueryType
+        cls, field: str, pattern: str, query_cls: type[FieldQuery]
     ) -> FieldQuery:
         """Get a `FieldQuery` for the given field on this model."""
         field = maybe_replace_legacy_field(field, cls is Album)
@@ -183,7 +183,7 @@ class LibModel(dbcore.Model["Library"]):
 
     @classmethod
     def any_field_query(
-        cls, pattern: str, query_cls: FieldQueryType
+        cls, pattern: str, query_cls: type[FieldQuery]
     ) -> dbcore.OrQuery:
         return dbcore.OrQuery(
             [cls.field_query(f, pattern, query_cls) for f in cls._search_fields]
@@ -191,7 +191,7 @@ class LibModel(dbcore.Model["Library"]):
 
     @classmethod
     def any_writable_media_field_query(
-        cls, pattern: str, query_cls: FieldQueryType
+        cls, pattern: str, query_cls: type[FieldQuery]
     ) -> dbcore.OrQuery:
         fields = cls.writable_media_fields
         return dbcore.OrQuery(
@@ -782,7 +782,7 @@ class Item(LibModel):
     }
 
     @cached_classproperty
-    def _queries(cls) -> dict[str, FieldQueryType]:
+    def _queries(cls) -> QueryByField:
         return {**super()._queries, "singleton": dbcore.query.SingletonQuery}
 
     _format_config_key = "format_item"
