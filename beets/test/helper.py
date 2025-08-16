@@ -481,6 +481,11 @@ class PluginMixin(ConfigMixin):
         super().teardown_beets()
         self.unload_plugins()
 
+    def register_plugin(
+        self, plugin_class: type[beets.plugins.BeetsPlugin]
+    ) -> None:
+        beets.plugins._instances.append(plugin_class())
+
     def load_plugins(self, *plugins: str) -> None:
         """Load and initialize plugins by names.
 
@@ -491,18 +496,15 @@ class PluginMixin(ConfigMixin):
         plugins = (self.plugin,) if hasattr(self, "plugin") else plugins
         self.config["plugins"] = plugins
         cached_classproperty.cache.clear()
-        beets.plugins.load_plugins(plugins)
-        beets.plugins.send("pluginload")
-        beets.plugins.find_plugins()
+        beets.plugins.load_plugins()
 
     def unload_plugins(self) -> None:
         """Unload all plugins and remove them from the configuration."""
         # FIXME this should eventually be handled by a plugin manager
-        for plugin_class in beets.plugins._instances:
-            plugin_class.listeners = None
+        beets.plugins.BeetsPlugin.listeners.clear()
+        beets.plugins.BeetsPlugin._raw_listeners.clear()
         self.config["plugins"] = []
-        beets.plugins._classes = set()
-        beets.plugins._instances = {}
+        beets.plugins._instances.clear()
 
     @contextmanager
     def configure_plugin(self, config: Any):

@@ -10,8 +10,8 @@ tracks in your library like "Tellin' Me Things" by the artist "Blakroc feat.
 RZA". If you prefer to tag this as "Tellin' Me Things feat. RZA" by "Blakroc",
 then this plugin is for you.
 
-To use the ``ftintitle`` plugin, enable it in your configuration
-(see :ref:`using-plugins`).
+To use the ``ftintitle`` plugin, enable it in your configuration (see
+:ref:`using-plugins`).
 
 Configuration
 -------------
@@ -19,23 +19,22 @@ Configuration
 To configure the plugin, make a ``ftintitle:`` section in your configuration
 file. The available options are:
 
-- **auto**: Enable metadata rewriting during import.
-  Default: ``yes``.
-- **drop**: Remove featured artists entirely instead of adding them to the
-  title field.
-  Default: ``no``.
-- **format**: Defines the format for the featuring X  part of the new title field.
-  In this format the ``{0}`` is used to define where the featured artists are placed.
-  Default: ``feat. {0}``
-- **keep_in_artist**: Keep the featuring X part in the artist field. This can
-  be useful if you still want to be able to search for features in the artist
-  field.
-  Default: ``no``.
+- **auto**: Enable metadata rewriting during import. Default: ``yes``.
+- **drop**: Remove featured artists entirely instead of adding them to the title
+  field. Default: ``no``.
+- **format**: Defines the format for the featuring X part of the new title
+  field. In this format the ``{0}`` is used to define where the featured artists
+  are placed. Default: ``feat. {0}``
+- **keep_in_artist**: Keep the featuring X part in the artist field. This can be
+  useful if you still want to be able to search for features in the artist
+  field. Default: ``no``.
 
 Running Manually
 ----------------
 
-From the command line, type::
+From the command line, type:
+
+::
 
     $ beet ftintitle [QUERY]
 
@@ -45,4 +44,4 @@ your entire collection.
 Use the ``-d`` flag to remove featured artists (equivalent of the ``drop``
 config option).
 
-.. _MusicBrainz style: https://musicbrainz.org/doc/Style
+.. _musicbrainz style: https://musicbrainz.org/doc/Style

@@ -305,7 +305,14 @@ class DiscogsPlugin(MetadataSourcePlugin):
         # Explicitly reload the `Release` fields, as they might not be yet
         # present if the result is from a `discogs_client.search()`.
         if not result.data.get("artists"):
-            result.refresh()
+            try:
+                result.refresh()
+            except CONNECTION_ERRORS:
+                self._log.debug(
+                    "Connection error in release lookup: {0}",
+                    result,
+                )
+                return None
 
         # Sanity check for required fields. The list of required fields is
         # defined at Guideline 1.3.1.a, but in practice some releases might be
