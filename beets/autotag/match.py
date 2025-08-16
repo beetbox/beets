@@ -197,8 +197,16 @@ def _add_candidate(
     checking the track count, ordering the items, checking for
     duplicates, and calculating the distance.
     """
+    if config["artist_credit"]:
+        info_artist = info.artist_credit or info.artist
+    else:
+        info_artist = info.artist
+
     log.debug(
-        "Candidate: {0} - {1} ({2})", info.artist, info.album, info.album_id
+        "Candidate: {0} - {1} ({2})",
+        info_artist,
+        info.album,
+        info.album_id,
     )
 
     # Discard albums with zero tracks.

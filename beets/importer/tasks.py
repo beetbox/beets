@@ -372,11 +372,15 @@ class ImportTask(BaseImportTask):
         album name as the task.
         """
         info = self.chosen_info()
-        info["albumartist"] = info["artist"]
 
         if info["artist"] is None:
             # As-is import with no artist. Skip check.
             return []
+
+        if config["artist_credit"]:
+            info["albumartist"] = info["artist_credit"] or info["artist"]
+        else:
+            info["albumartist"] = info["artist"]
 
         # Construct a query to find duplicates with this metadata. We
         # use a temporary Album object to generate any computed fields.
@@ -703,6 +707,9 @@ class SingletonImportTask(ImportTask):
         and title as the task.
         """
         info = self.chosen_info()
+
+        if config["artist_credit"]:
+            info["artist"] = info["artist_credit"] or info["artist"]
 
         # Query for existing items using the same metadata. We use a
         # temporary `Item` object to generate any computed fields.
