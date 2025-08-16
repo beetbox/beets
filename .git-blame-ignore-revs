@@ -53,3 +53,7 @@ c490ac5810b70f3cf5fd8649669838e8fdb19f4d
 1a045c91668c771686f4c871c84f1680af2e944b
 # Library restructure (split library.py into multiple modules)
 0ad4e19d4f870db757373f44d12ff3be2441363a
+# Docs: fix linting issues
+769dcdc88a1263638ae25944ba6b2be3e8933666
+# Reformat all docs using docstrfmt
+ab5acaabb3cd24c482adb7fa4800c89fd6a2f08d

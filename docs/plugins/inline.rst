@@ -2,20 +2,21 @@ Inline Plugin
 =============
 
 The ``inline`` plugin lets you use Python to customize your path formats. Using
-it, you can define template fields in your beets configuration file and refer
-to them from your template strings in the ``paths:`` section (see
+it, you can define template fields in your beets configuration file and refer to
+them from your template strings in the ``paths:`` section (see
 :doc:`/reference/config/`).
 
-To use the ``inline`` plugin, enable it in your configuration
-(see :ref:`using-plugins`).
-Then, make a ``item_fields:`` block in your config file. Under this key, every line defines a
-new template field; the key is the name of the field (you'll use the name to
-refer to the field in your templates) and the value is a Python expression or
-function body. The Python code has all of a track's fields in scope, so you can
-refer to any normal attributes (such as ``artist`` or ``title``) as Python
-variables.
+To use the ``inline`` plugin, enable it in your configuration (see
+:ref:`using-plugins`). Then, make a ``item_fields:`` block in your config file.
+Under this key, every line defines a new template field; the key is the name of
+the field (you'll use the name to refer to the field in your templates) and the
+value is a Python expression or function body. The Python code has all of a
+track's fields in scope, so you can refer to any normal attributes (such as
+``artist`` or ``title``) as Python variables.
 
-Here are a couple of examples of expressions::
+Here are a couple of examples of expressions:
+
+::
 
     item_fields:
         initial: albumartist[0].upper() + u'.'
@@ -26,18 +27,21 @@ Note that YAML syntax allows newlines in values if the subsequent lines are
 indented.
 
 These examples define ``$initial`` and ``$disc_and_track`` fields that can be
-referenced in path templates like so::
+referenced in path templates like so:
+
+::
 
     paths:
         default: $initial/$artist/$album%aunique{}/$disc_and_track $title
-
 
 Block Definitions
 -----------------
 
 If you need to use statements like ``import``, you can write a Python function
-body instead of a single expression. In this case, you'll need to ``return``
-a result for the value of the path field, like so::
+body instead of a single expression. In this case, you'll need to ``return`` a
+result for the value of the path field, like so:
+
+::
 
     item_fields:
         filename: |
@@ -48,17 +52,18 @@ a result for the value of the path field, like so::
 You might want to use the YAML syntax for "block literals," in which a leading
 ``|`` character indicates a multi-line block of text.
 
-
 Album Fields
 ------------
 
 The above examples define fields for *item* templates, but you can also define
-fields for *album* templates. Use the ``album_fields`` configuration section.
-In this context, all existing album fields are available as variables along
-with ``items``, which is a list of items in the album.
+fields for *album* templates. Use the ``album_fields`` configuration section. In
+this context, all existing album fields are available as variables along with
+``items``, which is a list of items in the album.
 
 This example defines a ``$bitrate`` field for albums as the average of the
-tracks' fields::
+tracks' fields:
+
+::
 
     album_fields:
         bitrate: |

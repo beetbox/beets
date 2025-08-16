@@ -1,5 +1,5 @@
 comment:
-  layout: "condensed_header, condensed_files"
+  layout: "header, diff, files"
   require_changes: true
 
 # Sets non-blocking status checks
@@ -13,6 +13,3 @@ coverage:
       default:
         informational: true
     changes: false
-
-github_checks:
-  annotations: false

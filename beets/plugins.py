@@ -20,28 +20,21 @@ import abc
 import inspect
 import re
 import sys
-import traceback
 from collections import defaultdict
 from functools import wraps
+from pathlib import Path
 from types import GenericAlias
-from typing import TYPE_CHECKING, Any, Callable, Sequence, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeVar
 
 import mediafile
+from typing_extensions import ParamSpec
 
 import beets
 from beets import logging
+from beets.util import unique_list
 
 if TYPE_CHECKING:
-    from beets.event_types import EventType
-
-if sys.version_info >= (3, 10):
-    from typing import ParamSpec
-else:
-    from typing_extensions import ParamSpec
-
-
-if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Callable, Iterable, Sequence
 
     from confuse import ConfigView
 
@@ -63,7 +56,7 @@ if TYPE_CHECKING:
 
     P = ParamSpec("P")
     Ret = TypeVar("Ret", bound=Any)
-    Listener = Callable[..., None]
+    Listener = Callable[..., Any]
     IterF = Callable[P, Iterable[Ret]]
 
 
@@ -72,6 +65,37 @@ PLUGIN_NAMESPACE = "beetsplug"
 # Plugins using the Last.fm API can share the same API key.
 LASTFM_KEY = "2dc3914abf35f0d9c92d97d8f8e42b43"
 
+EventType = Literal[
+    "after_write",
+    "album_imported",
+    "album_removed",
+    "albuminfo_received",
+    "before_choose_candidate",
+    "before_item_moved",
+    "cli_exit",
+    "database_change",
+    "import",
+    "import_begin",
+    "import_task_apply",
+    "import_task_before_choice",
+    "import_task_choice",
+    "import_task_created",
+    "import_task_files",
+    "import_task_start",
+    "item_copied",
+    "item_hardlinked",
+    "item_imported",
+    "item_linked",
+    "item_moved",
+    "item_reflinked",
+    "item_removed",
+    "library_opened",
+    "mb_album_extract",
+    "mb_track_extract",
+    "pluginload",
+    "trackinfo_received",
+    "write",
+]
 # Global logger.
 log = logging.getLogger("beets")
 
@@ -82,6 +106,17 @@ class PluginConflictError(Exception):
 
     For example two plugins may define different types for flexible fields.
     """
+
+
+class PluginImportError(ImportError):
+    """Indicates that a plugin could not be imported.
+
+    This is a subclass of ImportError so that it can be caught separately
+    from other errors.
+    """
+
+    def __init__(self, name: str):
+        super().__init__(f"Could not import plugin {name}")
 
 
 class PluginLogFilter(logging.Filter):
@@ -109,6 +144,14 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
     functionality by defining a subclass of BeetsPlugin and overriding
     the abstract methods defined here.
     """
+
+    _raw_listeners: ClassVar[dict[EventType, list[Listener]]] = defaultdict(
+        list
+    )
+    listeners: ClassVar[dict[EventType, list[Listener]]] = defaultdict(list)
+    template_funcs: TFuncMap[str] | None = None
+    template_fields: TFuncMap[Item] | None = None
+    album_template_fields: TFuncMap[Album] | None = None
 
     name: str
     config: ConfigView
@@ -223,25 +266,13 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         mediafile.MediaFile.add_field(name, descriptor)
         library.Item._media_fields.add(name)
 
-    _raw_listeners: dict[str, list[Listener]] | None = None
-    listeners: dict[str, list[Listener]] | None = None
-
-    def register_listener(self, event: "EventType", func: Listener):
+    def register_listener(self, event: EventType, func: Listener) -> None:
         """Add a function as a listener for the specified event."""
-        wrapped_func = self._set_log_level_and_params(logging.WARNING, func)
-
-        cls = self.__class__
-
-        if cls.listeners is None or cls._raw_listeners is None:
-            cls._raw_listeners = defaultdict(list)
-            cls.listeners = defaultdict(list)
-        if func not in cls._raw_listeners[event]:
-            cls._raw_listeners[event].append(func)
-            cls.listeners[event].append(wrapped_func)
-
-    template_funcs: TFuncMap[str] | None = None
-    template_fields: TFuncMap[Item] | None = None
-    album_template_fields: TFuncMap[Album] | None = None
+        if func not in self._raw_listeners[event]:
+            self._raw_listeners[event].append(func)
+            self.listeners[event].append(
+                self._set_log_level_and_params(logging.WARNING, func)
+            )
 
     @classmethod
     def template_func(cls, name: str) -> Callable[[TFunc[str]], TFunc[str]]:
@@ -275,69 +306,92 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         return helper
 
 
-_classes: set[type[BeetsPlugin]] = set()
+def get_plugin_names() -> list[str]:
+    """Discover and return the set of plugin names to be loaded.
 
-
-def load_plugins(names: Sequence[str] = ()) -> None:
-    """Imports the modules for a sequence of plugin names. Each name
-    must be the name of a Python module under the "beetsplug" namespace
-    package in sys.path; the module indicated should contain the
-    BeetsPlugin subclasses desired.
+    Configures the plugin search paths and resolves the final set of plugins
+    based on configuration settings, inclusion filters, and exclusion rules.
+    Automatically includes the musicbrainz plugin when enabled in configuration.
     """
-    for name in names:
-        modname = f"{PLUGIN_NAMESPACE}.{name}"
+    paths = [
+        str(Path(p).expanduser().absolute())
+        for p in beets.config["pluginpath"].as_str_seq(split=False)
+    ]
+    log.debug("plugin paths: {}", paths)
+
+    # Extend the `beetsplug` package to include the plugin paths.
+    import beetsplug
+
+    beetsplug.__path__ = paths + list(beetsplug.__path__)
+
+    # For backwards compatibility, also support plugin paths that
+    # *contain* a `beetsplug` package.
+    sys.path += paths
+    plugins = unique_list(beets.config["plugins"].as_str_seq())
+    # TODO: Remove in v3.0.0
+    if (
+        "musicbrainz" not in plugins
+        and "musicbrainz" in beets.config
+        and beets.config["musicbrainz"].get().get("enabled")
+    ):
+        plugins.append("musicbrainz")
+
+    beets.config.add({"disabled_plugins": []})
+    disabled_plugins = set(beets.config["disabled_plugins"].as_str_seq())
+    return [p for p in plugins if p not in disabled_plugins]
+
+
+def _get_plugin(name: str) -> BeetsPlugin | None:
+    """Dynamically load and instantiate a plugin class by name.
+
+    Attempts to import the plugin module, locate the appropriate plugin class
+    within it, and return an instance. Handles import failures gracefully and
+    logs warnings for missing plugins or loading errors.
+    """
+    try:
         try:
-            try:
-                namespace = __import__(modname, None, None)
-            except ImportError as exc:
-                # Again, this is hacky:
-                if exc.args[0].endswith(" " + name):
-                    log.warning("** plugin {0} not found", name)
-                else:
-                    raise
-            else:
-                for obj in getattr(namespace, name).__dict__.values():
-                    if (
-                        inspect.isclass(obj)
-                        and not isinstance(
-                            obj, GenericAlias
-                        )  # seems to be needed for python <= 3.9 only
-                        and issubclass(obj, BeetsPlugin)
-                        and obj != BeetsPlugin
-                        and not inspect.isabstract(obj)
-                        and obj not in _classes
-                    ):
-                        _classes.add(obj)
+            namespace = __import__(f"{PLUGIN_NAMESPACE}.{name}", None, None)
+        except Exception as exc:
+            raise PluginImportError(name) from exc
 
-        except Exception:
-            log.warning(
-                "** error loading plugin {}:\n{}",
-                name,
-                traceback.format_exc(),
-            )
+        for obj in getattr(namespace, name).__dict__.values():
+            if (
+                inspect.isclass(obj)
+                and not isinstance(
+                    obj, GenericAlias
+                )  # seems to be needed for python <= 3.9 only
+                and issubclass(obj, BeetsPlugin)
+                and obj != BeetsPlugin
+                and not inspect.isabstract(obj)
+            ):
+                return obj()
+
+    except Exception:
+        log.warning("** error loading plugin {}", name, exc_info=True)
+
+    return None
 
 
-_instances: dict[type[BeetsPlugin], BeetsPlugin] = {}
+_instances: list[BeetsPlugin] = []
 
 
-def find_plugins() -> list[BeetsPlugin]:
-    """Returns a list of BeetsPlugin subclass instances from all
-    currently loaded beets plugins. Loads the default plugin set
-    first.
+def load_plugins() -> None:
+    """Initialize the plugin system by loading all configured plugins.
+
+    Performs one-time plugin discovery and instantiation, storing loaded plugin
+    instances globally. Emits a pluginload event after successful initialization
+    to notify other components.
     """
-    if _instances:
-        # After the first call, use cached instances for performance reasons.
-        # See https://github.com/beetbox/beets/pull/3810
-        return list(_instances.values())
+    if not _instances:
+        names = get_plugin_names()
+        log.info("Loading plugins: {}", ", ".join(sorted(names)))
+        _instances.extend(filter(None, map(_get_plugin, names)))
 
-    load_plugins()
-    plugins = []
-    for cls in _classes:
-        # Only instantiate each plugin class once.
-        if cls not in _instances:
-            _instances[cls] = cls()
-        plugins.append(_instances[cls])
-    return plugins
+        send("pluginload")
+
+
+def find_plugins() -> Iterable[BeetsPlugin]:
+    return _instances
 
 
 # Communication with plugins.
@@ -388,7 +442,9 @@ def named_queries(model_cls: type[AnyModel]) -> dict[str, FieldQueryType]:
     }
 
 
-def notify_info_yielded(event: str) -> Callable[[IterF[P, Ret]], IterF[P, Ret]]:
+def notify_info_yielded(
+    event: EventType,
+) -> Callable[[IterF[P, Ret]], IterF[P, Ret]]:
     """Makes a generator send the event 'event' every time it yields.
     This decorator is supposed to decorate a generator, but any function
     returning an iterable should work.
@@ -479,19 +535,7 @@ def album_field_getters() -> TFuncMap[Album]:
 # Event dispatch.
 
 
-def event_handlers() -> dict[str, list[Listener]]:
-    """Find all event handlers from plugins as a dictionary mapping
-    event names to sequences of callables.
-    """
-    all_handlers: dict[str, list[Listener]] = defaultdict(list)
-    for plugin in find_plugins():
-        if plugin.listeners:
-            for event, handlers in plugin.listeners.items():
-                all_handlers[event] += handlers
-    return all_handlers
-
-
-def send(event: str, **arguments: Any) -> list[Any]:
+def send(event: EventType, **arguments: Any) -> list[Any]:
     """Send an event to all assigned event listeners.
 
     `event` is the name of  the event to send, all other named arguments
@@ -500,12 +544,11 @@ def send(event: str, **arguments: Any) -> list[Any]:
     Return a list of non-None values returned from the handlers.
     """
     log.debug("Sending event: {0}", event)
-    results: list[Any] = []
-    for handler in event_handlers()[event]:
-        result = handler(**arguments)
-        if result is not None:
-            results.append(result)
-    return results
+    return [
+        r
+        for handler in BeetsPlugin.listeners[event]
+        if (r := handler(**arguments)) is not None
+    ]
 
 
 def feat_tokens(for_artist: bool = True) -> str:
