@@ -15,12 +15,12 @@
 """Test the beets.random utilities associated with the random plugin."""
 
 import math
-from random import Random
+import random
 
 import pytest
 
 from beets.test.helper import TestHelper
-from beetsplug import random
+from beetsplug.random import _equal_chance_permutation, random_objs
 
 
 @pytest.fixture(scope="class")
@@ -31,6 +31,11 @@ def helper():
     yield helper
 
     helper.teardown_beets()
+
+
+@pytest.fixture(scope="module", autouse=True)
+def seed_random():
+    random.seed(12345)
 
 
 class TestEqualChancePermutation:
@@ -47,8 +52,6 @@ class TestEqualChancePermutation:
         self.items = [self.item1, self.item2]
         for _ in range(8):
             self.items.append(helper.create_item(artist=self.artist2))
-        self.random_gen = Random()
-        self.random_gen.seed(12345)
 
     def _stats(self, data):
         mean = sum(data) / len(data)
@@ -74,9 +77,7 @@ class TestEqualChancePermutation:
             positions = []
             for _ in range(500):
                 shuffled = list(
-                    random._equal_chance_permutation(
-                        self.items, field=field, random_gen=self.random_gen
-                    )
+                    _equal_chance_permutation(self.items, field=field)
                 )
                 positions.append(shuffled.index(self.item1))
             # Print a histogram (useful for debugging).
@@ -111,7 +112,7 @@ class TestEqualChancePermutation:
     ):
         """Test _equal_chance_permutation with empty input."""
         result = list(
-            random._equal_chance_permutation(
+            _equal_chance_permutation(
                 [helper.create_item(**i) for i in input_items], field
             )
         )
@@ -136,19 +137,16 @@ class TestRandomObjs:
             helper.create_item(artist=self.artist2, length=240),  # 4 minutes
             helper.create_item(artist=self.artist2, length=300),  # 5 minutes
         ]
-        self.random_gen = random.Random()
 
     def test_random_selection_by_count(self):
         """Test selecting a specific number of items."""
-        selected = list(random.random_objs(self.items, number=2))
+        selected = list(random_objs(self.items, number=2))
         assert len(selected) == 2
         assert all(item in self.items for item in selected)
 
     def test_random_selection_by_time(self):
         """Test selecting items constrained by total time (minutes)."""
-        selected = list(
-            random.random_objs(self.items, time_minutes=6)
-        )  # 6 minutes
+        selected = list(random_objs(self.items, time_minutes=6))  # 6 minutes
         total_time = (
             sum(item.length for item in selected) / 60
         )  # Convert to minutes
@@ -162,9 +160,7 @@ class TestRandomObjs:
                 helper.create_item(artist=self.artist1, length=180)
             )
 
-        selected = list(
-            random.random_objs(self.items, number=10, equal_chance=True)
-        )
+        selected = list(random_objs(self.items, number=10, equal_chance=True))
         artist_counts = {}
         for item in selected:
             artist_counts[item.artist] = artist_counts.get(item.artist, 0) + 1
@@ -174,11 +170,11 @@ class TestRandomObjs:
 
     def test_empty_input_list(self):
         """Test behavior with an empty input list."""
-        selected = list(random.random_objs([], number=1))
+        selected = list(random_objs([], number=1))
         assert len(selected) == 0
 
     def test_no_constraints_returns_all(self):
         """Test that no constraints return all items in random order."""
-        selected = list(random.random_objs(self.items, 3))
+        selected = list(random_objs(self.items, 3))
         assert len(selected) == len(self.items)
         assert set(selected) == set(self.items)

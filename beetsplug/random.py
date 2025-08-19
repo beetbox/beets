@@ -70,14 +70,11 @@ NOT_FOUND_SENTINEL = object()
 def _equal_chance_permutation(
     objs: Sequence[T],
     field: str = "albumartist",
-    random_gen: random.Random | None = None,
 ) -> Iterable[T]:
     """Generate (lazily) a permutation of the objects where every group
     with equal values for `field` have an equal chance of appearing in
     any given position.
     """
-    rand: random.Random = random_gen or random.Random()
-
     # Group the objects by artist so we can sample from them.
     key = attrgetter(field)
 
@@ -95,12 +92,12 @@ def _equal_chance_permutation(
     for k, values in groupby(objs, key=get_attr):
         groups[k] = list(values)
         # shuffle in category
-        rand.shuffle(groups[k])
+        random.shuffle(groups[k])
 
     # Remove items without the field value.
     del groups[NOT_FOUND_SENTINEL]
     while groups:
-        group = rand.choice(list(groups.keys()))
+        group = random.choice(list(groups.keys()))
         yield groups[group].pop()
         if not groups[group]:
             del groups[group]
@@ -127,7 +124,6 @@ def random_objs(
     number: int = 1,
     time_minutes: float | None = None,
     equal_chance: bool = False,
-    random_gen: random.Random | None = None,
 ) -> Iterable[T]:
     """Get a random subset of items, optionally constrained by time or count.
 
@@ -140,16 +136,14 @@ def random_objs(
       selected, regardless of how many tracks they have.
     - random_gen: An optional random generator to use for shuffling.
     """
-    rand: random.Random = random_gen or random.Random()
-
     # Permute the objects either in a straightforward way or an
     # artist-balanced way.
     perm: Iterable[T]
     if equal_chance:
-        perm = _equal_chance_permutation(objs, random_gen=rand)
+        perm = _equal_chance_permutation(objs)
     else:
         perm = list(objs)
-        rand.shuffle(perm)
+        random.shuffle(perm)
 
     # Select objects by time our count.
     if time_minutes:
