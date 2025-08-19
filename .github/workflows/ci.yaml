@@ -4,6 +4,12 @@ on:
   push:
     branches:
       - master
+
+concurrency:
+  # Cancel previous workflow run when a new commit is pushed to a feature branch
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 env:
   PY_COLORS: 1
 
@@ -37,7 +43,7 @@ jobs:
 
       - name: Get changed lyrics files
         id: lyrics-update
-        uses: tj-actions/changed-files@v45
+        uses: tj-actions/changed-files@v46
         with:
           files: |
             beetsplug/lyrics.py
@@ -52,7 +58,7 @@ jobs:
       - if: ${{ env.IS_MAIN_PYTHON != 'true' }}
         name: Test without coverage
         run: |
-          poetry install --extras=autobpm --extras=lyrics --extras=embedart
+          poetry install --without=lint --extras=autobpm --extras=lyrics --extras=replaygain --extras=reflink --extras=fetchart --extras=chroma --extras=sonosupdate
           poe test
 
       - if: ${{ env.IS_MAIN_PYTHON == 'true' }}
@@ -60,9 +66,15 @@ jobs:
         env:
           LYRICS_UPDATED: ${{ steps.lyrics-update.outputs.any_changed }}
         run: |
-          poetry install --extras=autobpm --extras=lyrics --extras=docs --extras=replaygain --extras=reflink --extras=fetchart
+          poetry install --extras=autobpm --extras=lyrics --extras=docs --extras=replaygain --extras=reflink --extras=fetchart --extras=chroma --extras=sonosupdate
           poe docs
           poe test-with-coverage
+
+      - if: ${{ !cancelled() }}
+        name: Upload test results to Codecov
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
 
       - if: ${{ env.IS_MAIN_PYTHON == 'true' }}
         name: Store the coverage report
@@ -86,7 +98,7 @@ jobs:
           name: coverage-report
 
       - name: Upload code coverage
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           files: ./coverage.xml
           use_oidc: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork) }}
