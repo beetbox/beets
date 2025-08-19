@@ -101,6 +101,10 @@ For plugin developers:
 - ``plugins.load_plugins`` function does not anymore accept the list of plugins
   to load. Instead, it loads all plugins that are configured by
   :ref:`plugins-config` configuration.
+- Flexible fields, which can be used by plugins to store additional metadata,
+  now also support list values. Previously, beets would throw an error while
+  storing the data in the SQL database due to missing type conversion.
+  :bug:`5698`
 
 Other changes:
 
