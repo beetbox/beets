@@ -30,7 +30,9 @@ import textwrap
 import traceback
 import warnings
 from difflib import SequenceMatcher
-from typing import Any, Callable
+from functools import cache
+from itertools import chain
+from typing import Any, Callable, Literal
 
 import confuse
 
@@ -463,7 +465,7 @@ LEGACY_COLORS = {
     "white": ["bold", "white"],
 }
 # All ANSI Colors.
-ANSI_CODES = {
+CODE_BY_COLOR = {
     # Styles.
     "normal": 0,
     "bold": 1,
@@ -496,9 +498,7 @@ ANSI_CODES = {
 }
 RESET_COLOR = f"{COLOR_ESCAPE}39;49;00m"
 
-# These abstract COLOR_NAMES are lazily mapped on to the actual color in COLORS
-# as they are defined in the configuration files, see function: colorize
-COLOR_NAMES = [
+ColorName = Literal[
     "text_success",
     "text_warning",
     "text_error",
@@ -515,61 +515,46 @@ COLOR_NAMES = [
     "text_diff_added",
     "text_diff_removed",
 ]
-COLORS: dict[str, list[str]] | None = None
 
 
-def _colorize(color, text):
-    """Returns a string that prints the given text in the given color
-    in a terminal that is ANSI color-aware. The color must be a list of strings
-    from ANSI_CODES.
+@cache
+def get_color_config() -> dict[ColorName, str]:
+    """Parse and validate color configuration, converting names to ANSI codes.
+
+    Processes the UI color configuration, handling both new list format and
+    legacy single-color format. Validates all color names against known codes
+    and raises an error for any invalid entries.
     """
-    # Construct escape sequence to be put before the text by iterating
-    # over all "ANSI codes" in `color`.
-    escape = ""
-    for code in color:
-        escape = f"{escape}{COLOR_ESCAPE}{ANSI_CODES[code]}m"
-    return f"{escape}{text}{RESET_COLOR}"
+    colors_by_color_name: dict[ColorName, list[str]] = {
+        k: (v if isinstance(v, list) else LEGACY_COLORS.get(v, [v]))
+        for k, v in config["ui"]["colors"].flatten().items()
+    }
+
+    if invalid_colors := (
+        set(chain.from_iterable(colors_by_color_name.values()))
+        - CODE_BY_COLOR.keys()
+    ):
+        raise UserError(
+            f"Invalid color(s) in configuration: {', '.join(invalid_colors)}"
+        )
+
+    return {
+        n: ";".join(str(CODE_BY_COLOR[c]) for c in colors)
+        for n, colors in colors_by_color_name.items()
+    }
 
 
-def colorize(color_name, text):
-    """Colorize text if colored output is enabled. (Like _colorize but
-    conditional.)
+def colorize(color_name: ColorName, text: str) -> str:
+    """Apply ANSI color formatting to text based on configuration settings.
+
+    Returns colored text when color output is enabled and NO_COLOR environment
+    variable is not set, otherwise returns plain text unchanged.
     """
     if config["ui"]["color"] and "NO_COLOR" not in os.environ:
-        global COLORS
-        if not COLORS:
-            # Read all color configurations and set global variable COLORS.
-            COLORS = dict()
-            for name in COLOR_NAMES:
-                # Convert legacy color definitions (strings) into the new
-                # list-based color definitions. Do this by trying to read the
-                # color definition from the configuration as unicode - if this
-                # is successful, the color definition is a legacy definition
-                # and has to be converted.
-                try:
-                    color_def = config["ui"]["colors"][name].get(str)
-                except (confuse.ConfigTypeError, NameError):
-                    # Normal color definition (type: list of unicode).
-                    color_def = config["ui"]["colors"][name].get(list)
-                else:
-                    # Legacy color definition (type: unicode). Convert.
-                    if color_def in LEGACY_COLORS:
-                        color_def = LEGACY_COLORS[color_def]
-                    else:
-                        raise UserError("no such color %s", color_def)
-                for code in color_def:
-                    if code not in ANSI_CODES.keys():
-                        raise ValueError("no such ANSI code %s", code)
-                COLORS[name] = color_def
-        # In case a 3rd party plugin is still passing the actual color ('red')
-        # instead of the abstract color name ('text_error')
-        color = COLORS.get(color_name)
-        if not color:
-            log.debug("Invalid color_name: {}", color_name)
-            color = color_name
-        return _colorize(color, text)
-    else:
-        return text
+        color_code = get_color_config()[color_name]
+        return f"{COLOR_ESCAPE}{color_code}m{text}{RESET_COLOR}"
+
+    return text
 
 
 def uncolorize(colored_text):
