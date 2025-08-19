@@ -52,7 +52,7 @@ musicbrainzngs = ">=0.4"
 numpy = ">=1.24.4"
 platformdirs = ">=3.5.0"
 pyyaml = "*"
-typing_extensions = { version = "*", python = "<=3.10" }
+typing_extensions = "*"
 unidecode = ">=1.3.6"
 
 beautifulsoup4 = { version = "*", optional = true }
@@ -100,7 +100,9 @@ requests_oauthlib = "*"
 responses = ">=0.3.0"
 
 [tool.poetry.group.lint.dependencies]
+docstrfmt = ">=1.10.0"
 ruff = ">=0.6.4"
+sphinx-lint = ">=1.0.0"
 
 [tool.poetry.group.typing.dependencies]
 mypy = "*"
@@ -127,7 +129,7 @@ beatport = ["requests-oauthlib"]
 bpd = ["PyGObject"] # gobject-introspection, gstreamer1.0-plugins-base, python3-gst-1.0
 chroma = ["pyacoustid"] # chromaprint or fpcalc
 # convert # ffmpeg
-docs = ["pydata-sphinx-theme", "sphinx"]
+docs = ["pydata-sphinx-theme", "sphinx", "sphinx-lint"]
 discogs = ["python3-discogs-client"]
 embedart = ["Pillow"] # ImageMagick
 embyupdate = ["requests"]
@@ -200,9 +202,17 @@ cmd = "make -C docs html"
 help = "Format the codebase"
 cmd = "ruff format"
 
+[tool.poe.tasks.format-docs]
+help = "Format the documentation"
+cmd = "docstrfmt"
+
 [tool.poe.tasks.lint]
 help = "Check the code for linting issues. Accepts ruff options."
 cmd = "ruff check"
+
+[tool.poe.tasks.lint-docs]
+help = "Lint the documentation"
+shell = "sphinx-lint --enable all $(git ls-files '*.rst')"
 
 [tool.poe.tasks.update-dependencies]
 help = "Update dependencies to their latest versions."
@@ -245,6 +255,15 @@ done
 """
 interpreter = "zsh"
 
+[tool.docstrfmt]
+line-length = 80
+extend-exclude = [
+    "docs/_templates/**/*",
+    "docs/api/**/*",
+    "README_kr.rst",
+]
+files = ["docs", "*.rst"]
+
 [tool.ruff]
 target-version = "py39"
 line-length = 80
@@ -265,7 +284,7 @@ select = [
     "W", # pycodestyle
 ]
 ignore = [
-  "TC006"  # no need to quote 'cast's since we use 'from __future__ import annotations'
+    "TC006", # no need to quote 'cast's since we use 'from __future__ import annotations'
 ]
 
 [tool.ruff.lint.per-file-ignores]

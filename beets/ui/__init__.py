@@ -28,8 +28,9 @@ import struct
 import sys
 import textwrap
 import traceback
+import warnings
 from difflib import SequenceMatcher
-from typing import TYPE_CHECKING, Any, Callable
+from typing import Any, Callable
 
 import confuse
 
@@ -38,9 +39,6 @@ from beets.dbcore import db
 from beets.dbcore import query as db_query
 from beets.util import as_string
 from beets.util.functemplate import template
-
-if TYPE_CHECKING:
-    from types import ModuleType
 
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
 if sys.platform == "win32":
@@ -102,6 +100,21 @@ def _stream_encoding(stream, default="utf-8"):
     # Python's guessed output stream encoding, or UTF-8 as a fallback
     # (e.g., when piped to a file).
     return stream.encoding or default
+
+
+def decargs(arglist):
+    """Given a list of command-line argument bytestrings, attempts to
+    decode them to Unicode strings when running under Python 2.
+
+    .. deprecated:: 2.4.0
+       This function will be removed in 3.0.0.
+    """
+    warnings.warn(
+        "decargs() is deprecated and will be removed in version 3.0.0.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return arglist
 
 
 def print_(*strings: str, end: str = "\n") -> None:
@@ -1557,59 +1570,16 @@ optparse.Option.ALWAYS_TYPED_ACTIONS += ("callback",)
 # The main entry point and bootstrapping.
 
 
-def _load_plugins(
-    options: optparse.Values, config: confuse.LazyConfig
-) -> ModuleType:
-    """Load the plugins specified on the command line or in the configuration."""
-    paths = config["pluginpath"].as_str_seq(split=False)
-    paths = [util.normpath(p) for p in paths]
-    log.debug("plugin paths: {0}", util.displayable_path(paths))
-
-    # On Python 3, the search paths need to be unicode.
-    paths = [os.fsdecode(p) for p in paths]
-
-    # Extend the `beetsplug` package to include the plugin paths.
-    import beetsplug
-
-    beetsplug.__path__ = paths + list(beetsplug.__path__)
-
-    # For backwards compatibility, also support plugin paths that
-    # *contain* a `beetsplug` package.
-    sys.path += paths
-
-    # If we were given any plugins on the command line, use those.
-    if options.plugins is not None:
-        plugin_list = (
-            options.plugins.split(",") if len(options.plugins) > 0 else []
-        )
-    else:
-        plugin_list = config["plugins"].as_str_seq()
-        # TODO: Remove in v2.4 or v3
-        if "musicbrainz" in config and config["musicbrainz"].get().get(
-            "enabled"
-        ):
-            plugin_list.append("musicbrainz")
-
-    # Exclude any plugins that were specified on the command line
-    if options.exclude is not None:
-        plugin_list = [
-            p for p in plugin_list if p not in options.exclude.split(",")
-        ]
-
-    plugins.load_plugins(plugin_list)
-    return plugins
-
-
-def _setup(options, lib=None):
+def _setup(
+    options: optparse.Values, lib: library.Library | None
+) -> tuple[list[Subcommand], library.Library]:
     """Prepare and global state and updates it with command line options.
 
     Returns a list of subcommands, a list of plugins, and a library instance.
     """
     config = _configure(options)
 
-    plugins = _load_plugins(options, config)
-
-    plugins.send("pluginload")
+    plugins.load_plugins()
 
     # Get the default subcommands.
     from beets.ui.commands import default_commands
@@ -1621,7 +1591,7 @@ def _setup(options, lib=None):
         lib = _open_library(config)
         plugins.send("library_opened", lib=lib)
 
-    return subcommands, plugins, lib
+    return subcommands, lib
 
 
 def _configure(options):
@@ -1675,7 +1645,7 @@ def _ensure_db_directory_exists(path):
             os.makedirs(newpath)
 
 
-def _open_library(config):
+def _open_library(config: confuse.LazyConfig) -> library.Library:
     """Create a new library instance from the configuration."""
     dbpath = util.bytestring_path(config["library"].as_filename())
     _ensure_db_directory_exists(dbpath)
@@ -1702,7 +1672,7 @@ def _open_library(config):
     return lib
 
 
-def _raw_main(args, lib=None):
+def _raw_main(args: list[str], lib=None) -> None:
     """A helper function for `main` without top-level exception
     handling.
     """
@@ -1728,16 +1698,31 @@ def _raw_main(args, lib=None):
     parser.add_option(
         "-c", "--config", dest="config", help="path to configuration file"
     )
+
+    def parse_csl_callback(
+        option: optparse.Option, _, value: str, parser: SubcommandsOptionParser
+    ):
+        """Parse a comma-separated list of values."""
+        setattr(
+            parser.values,
+            option.dest,  # type: ignore[arg-type]
+            list(filter(None, value.split(","))),
+        )
+
     parser.add_option(
         "-p",
         "--plugins",
         dest="plugins",
+        action="callback",
+        callback=parse_csl_callback,
         help="a comma-separated list of plugins to load",
     )
     parser.add_option(
         "-P",
         "--disable-plugins",
-        dest="exclude",
+        dest="disabled_plugins",
+        action="callback",
+        callback=parse_csl_callback,
         help="a comma-separated list of plugins to disable",
     )
     parser.add_option(
@@ -1769,7 +1754,7 @@ def _raw_main(args, lib=None):
         return config_edit()
 
     test_lib = bool(lib)
-    subcommands, plugins, lib = _setup(options, lib)
+    subcommands, lib = _setup(options, lib)
     parser.add_subcommand(*subcommands)
 
     subcommand, suboptions, subargs = parser.parse_subcommand(subargs)
