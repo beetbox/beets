@@ -537,6 +537,7 @@ def test_get_genre(config_values, item_genre, mock_genres, expected_result):
     plugin = lastgenre.LastGenrePlugin()
     # Configure
     plugin.config.set(config_values)
+    plugin.setup()  # Loads default whitelist and canonicalization tree
     item = _common.item()
     item.genre = item_genre
 
