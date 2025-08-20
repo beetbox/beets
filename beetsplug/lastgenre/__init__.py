@@ -357,9 +357,22 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         applied, while "artist, any" means only new last.fm genres are included
         and the whitelist feature was disabled.
         """
+
+        def _try_resolve_stage(stage_label: str, keep_genres, new_genres):
+            """Try to resolve genres for a given stage and log the result."""
+            resolved_genres = self._combine_resolve_and_log(
+                keep_genres, new_genres
+            )
+            if resolved_genres:
+                suffix = "whitelist" if self.whitelist else "any"
+                label = stage_label + f", {suffix}"
+                if keep_genres:
+                    label = f"keep + {label}"
+                return self._format_and_stringify(resolved_genres), label
+            return None
+
         keep_genres = []
         new_genres = []
-        label = ""
         genres = self._get_existing_genres(obj)
 
         if genres and not self.config["force"]:
@@ -379,40 +392,26 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # album artist, or most popular track genre.
         if isinstance(obj, library.Item) and "track" in self.sources:
             if new_genres := self.fetch_track_genre(obj):
-                label = "track"
-                resolved_genres = self._combine_resolve_and_log(
-                    keep_genres, new_genres
-                )
-                if resolved_genres:
-                    suffix = "whitelist" if self.whitelist else "any"
-                    label += f", {suffix}"
-                    if keep_genres:
-                        label = f"keep + {label}"
-                    return self._format_and_stringify(resolved_genres), label
-                new_genres = []
+                if result := _try_resolve_stage(
+                    "track", keep_genres, new_genres
+                ):
+                    return result
 
         if "album" in self.sources:
             if new_genres := self.fetch_album_genre(obj):
-                label = "album"
-                resolved_genres = self._combine_resolve_and_log(
-                    keep_genres, new_genres
-                )
-                if resolved_genres:
-                    suffix = "whitelist" if self.whitelist else "any"
-                    label += f", {suffix}"
-                    if keep_genres:
-                        label = f"keep + {label}"
-                    return self._format_and_stringify(resolved_genres), label
-                new_genres = []
+                if result := _try_resolve_stage(
+                    "album", keep_genres, new_genres
+                ):
+                    return result
 
         if "artist" in self.sources:
             new_genres = []
             if isinstance(obj, library.Item):
                 new_genres = self.fetch_artist_genre(obj)
-                label = "artist"
+                stage_label = "artist"
             elif obj.albumartist != config["va_name"].as_str():
                 new_genres = self.fetch_album_artist_genre(obj)
-                label = "album artist"
+                stage_label = "album artist"
             else:
                 # For "Various Artists", pick the most popular track genre.
                 item_genres = []
@@ -427,7 +426,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 if item_genres:
                     most_popular, rank = plurality(item_genres)
                     new_genres = [most_popular]
-                    label = "most popular track"
+                    stage_label = "most popular track"
                     self._log.debug(
                         'Most popular track genre "{}" ({}) for VA album.',
                         most_popular,
@@ -435,16 +434,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     )
 
             if new_genres:
-                resolved_genres = self._combine_resolve_and_log(
-                    keep_genres, new_genres
-                )
-                if resolved_genres:
-                    suffix = "whitelist" if self.whitelist else "any"
-                    label += f", {suffix}"
-                    if keep_genres:
-                        label = f"keep + {label}"
-                    return self._format_and_stringify(resolved_genres), label
-                new_genres = []
+                if result := _try_resolve_stage(
+                    stage_label, keep_genres, new_genres
+                ):
+                    return result
 
         # Nothing found, leave original if configured and valid.
         if obj.genre and self.config["keep_existing"]:
