@@ -138,7 +138,7 @@ Other changes:
 - UI: Update default ``text_diff_added`` color from **bold red** to **bold
   green.**
 - UI: Use ``text_diff_added`` and ``text_diff_removed`` colors in **all** diff
-  comparisons.
+  comparisons, including case differences.
 
 2.3.1 (May 14, 2025)
 --------------------
