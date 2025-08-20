@@ -147,8 +147,9 @@ Add new last.fm genres when **empty**. Any present tags stay **untouched**.
 **Setup 3**
 
 **Combine** genres in present tags with new ones (be aware of that with an
-enabled ``whitelist`` setting, of course some genres might get cleaned up. To
-make sure any existing genres remain, set ``whitelist: no``).
+enabled ``whitelist`` setting, of course some genres might get cleaned up -
+existing genres take precedence over new ones though. To make sure any existing
+genres remain, set ``whitelist: no``).
 
 .. code-block:: yaml
 
