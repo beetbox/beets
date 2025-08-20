@@ -440,7 +440,7 @@ def input_select_objects(prompt, objs, rep, prompt_all=None):
 # ANSI terminal colorization code heavily inspired by pygments:
 # https://bitbucket.org/birkenfeld/pygments-main/src/default/pygments/console.py
 # (pygments is by Tim Hatch, Armin Ronacher, et al.)
-COLOR_ESCAPE = "\x1b["
+COLOR_ESCAPE = "\x1b"
 LEGACY_COLORS = {
     "black": ["black"],
     "darkred": ["red"],
@@ -496,8 +496,16 @@ CODE_BY_COLOR = {
     "bg_cyan": 46,
     "bg_white": 47,
 }
-RESET_COLOR = f"{COLOR_ESCAPE}39;49;00m"
-
+RESET_COLOR = f"{COLOR_ESCAPE}[39;49;00m"
+# Precompile common ANSI-escape regex patterns
+ANSI_CODE_REGEX = re.compile(rf"({COLOR_ESCAPE}\[[;0-9]*m)")
+ESC_TEXT_REGEX = re.compile(
+    rf"""(?P<pretext>[^{COLOR_ESCAPE}]*)
+         (?P<esc>(?:{ANSI_CODE_REGEX.pattern})+)
+         (?P<text>[^{COLOR_ESCAPE}]+)(?P<reset>{re.escape(RESET_COLOR)})
+         (?P<posttext>[^{COLOR_ESCAPE}]*)""",
+    re.VERBOSE,
+)
 ColorName = Literal[
     "text_success",
     "text_warning",
@@ -552,7 +560,7 @@ def colorize(color_name: ColorName, text: str) -> str:
     """
     if config["ui"]["color"] and "NO_COLOR" not in os.environ:
         color_code = get_color_config()[color_name]
-        return f"{COLOR_ESCAPE}{color_code}m{text}{RESET_COLOR}"
+        return f"{COLOR_ESCAPE}[{color_code}m{text}{RESET_COLOR}"
 
     return text
 
@@ -567,26 +575,22 @@ def uncolorize(colored_text):
     #     [;\d]*   - matches a sequence consisting of one or more digits or
     #                semicola
     #     [A-Za-z] - matches a letter
-    ansi_code_regex = re.compile(r"\x1b\[[;\d]*[A-Za-z]", re.VERBOSE)
-    # Strip ANSI codes from `colored_text` using the regular expression.
-    text = ansi_code_regex.sub("", colored_text)
-    return text
+    return ANSI_CODE_REGEX.sub("", colored_text)
 
 
 def color_split(colored_text, index):
-    ansi_code_regex = re.compile(r"(\x1b\[[;\d]*[A-Za-z])", re.VERBOSE)
     length = 0
     pre_split = ""
     post_split = ""
     found_color_code = None
     found_split = False
-    for part in ansi_code_regex.split(colored_text):
+    for part in ANSI_CODE_REGEX.split(colored_text):
         # Count how many real letters we have passed
         length += color_len(part)
         if found_split:
             post_split += part
         else:
-            if ansi_code_regex.match(part):
+            if ANSI_CODE_REGEX.match(part):
                 # This is a color code
                 if part == RESET_COLOR:
                     found_color_code = None
@@ -729,19 +733,13 @@ def split_into_lines(string, width_tuple):
     """
     first_width, middle_width, last_width = width_tuple
     words = []
-    esc_text = re.compile(
-        r"""(?P<pretext>[^\x1b]*)
-                            (?P<esc>(?:\x1b\[[;\d]*[A-Za-z])+)
-                            (?P<text>[^\x1b]+)(?P<reset>\x1b\[39;49;00m)
-                            (?P<posttext>[^\x1b]*)""",
-        re.VERBOSE,
-    )
+
     if uncolorize(string) == string:
         # No colors in string
         words = string.split()
     else:
         # Use a regex to find escapes and the text within them.
-        for m in esc_text.finditer(string):
+        for m in ESC_TEXT_REGEX.finditer(string):
             # m contains four groups:
             # pretext - any text before escape sequence
             # esc - intitial escape sequence
