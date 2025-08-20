@@ -91,7 +91,7 @@ class StripFeatPlugin(plugins.BeetsPlugin):
 
     def strip_feat(
         self, item: Item, delimiter: str, strip_from_album_artist: bool
-    ) -> None:
+    ) -> bool:
         artist = item.artist.strip()
 
         if not artist_contains_feat_token(artist):
