@@ -620,7 +620,7 @@ def color_len(colored_text):
     return len(uncolorize(colored_text))
 
 
-def _colordiff(a, b):
+def _colordiff(a: Any, b: Any) -> tuple[str, str]:
     """Given two values, return the same pair of strings except with
     their differences highlighted in the specified color. Strings are
     highlighted intelligently to show differences; other values are
@@ -642,35 +642,21 @@ def _colordiff(a, b):
                 colorize("text_diff_added", str(b)),
             )
 
-    a_out = []
-    b_out = []
+    before = ""
+    after = ""
 
     matcher = SequenceMatcher(lambda x: False, a, b)
     for op, a_start, a_end, b_start, b_end in matcher.get_opcodes():
-        if op == "equal":
-            # In both strings.
-            a_out.append(a[a_start:a_end])
-            b_out.append(b[b_start:b_end])
-        elif op == "insert":
-            # Right only.
-            b_out.append(colorize("text_diff_added", b[b_start:b_end]))
-        elif op == "delete":
-            # Left only.
-            a_out.append(colorize("text_diff_removed", a[a_start:a_end]))
-        elif op == "replace":
-            # Right and left differ. Colorise with second highlight if
-            # it's just a case change.
-            if a[a_start:a_end].lower() != b[b_start:b_end].lower():
-                a_color = "text_diff_removed"
-                b_color = "text_diff_added"
-            else:
-                a_color = b_color = "text_highlight_minor"
-            a_out.append(colorize(a_color, a[a_start:a_end]))
-            b_out.append(colorize(b_color, b[b_start:b_end]))
-        else:
-            assert False
+        before_part, after_part = a[a_start:a_end], b[b_start:b_end]
+        if op in {"delete", "replace"}:
+            before_part = colorize("text_diff_removed", before_part)
+        if op in {"insert", "replace"}:
+            after_part = colorize("text_diff_added", after_part)
 
-    return "".join(a_out), "".join(b_out)
+        before += before_part
+        after += after_part
+
+    return before, after
 
 
 def colordiff(a, b):
