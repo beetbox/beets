@@ -132,6 +132,7 @@ following to your configuration:
     smartplaylist
     sonosupdate
     spotify
+    stripfeat
     subsonicplaylist
     subsonicupdate
     substitute
@@ -239,6 +240,9 @@ Metadata
 
 :doc:`scrub <scrub>`
     Clean extraneous metadata from music files.
+
+:doc:`stripfeat`
+    Replace featured artists token with delimiter.
 
 :doc:`zero <zero>`
     Nullify fields by pattern or unconditionally.
