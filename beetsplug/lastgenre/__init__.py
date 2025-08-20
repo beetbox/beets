@@ -380,12 +380,32 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if isinstance(obj, library.Item) and "track" in self.sources:
             if new_genres := self.fetch_track_genre(obj):
                 label = "track"
+                resolved_genres = self._combine_resolve_and_log(
+                    keep_genres, new_genres
+                )
+                if resolved_genres:
+                    suffix = "whitelist" if self.whitelist else "any"
+                    label += f", {suffix}"
+                    if keep_genres:
+                        label = f"keep + {label}"
+                    return self._format_and_stringify(resolved_genres), label
+                new_genres = []
 
-        if not new_genres and "album" in self.sources:
+        if "album" in self.sources:
             if new_genres := self.fetch_album_genre(obj):
                 label = "album"
+                resolved_genres = self._combine_resolve_and_log(
+                    keep_genres, new_genres
+                )
+                if resolved_genres:
+                    suffix = "whitelist" if self.whitelist else "any"
+                    label += f", {suffix}"
+                    if keep_genres:
+                        label = f"keep + {label}"
+                    return self._format_and_stringify(resolved_genres), label
+                new_genres = []
 
-        if not new_genres and "artist" in self.sources:
+        if "artist" in self.sources:
             new_genres = []
             if isinstance(obj, library.Item):
                 new_genres = self.fetch_artist_genre(obj)
@@ -414,17 +434,17 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                         rank,
                     )
 
-        # Return with a combined or freshly fetched genre list.
-        if new_genres:
-            resolved_genres = self._combine_resolve_and_log(
-                keep_genres, new_genres
-            )
-            if resolved_genres:
-                suffix = "whitelist" if self.whitelist else "any"
-                label += f", {suffix}"
-                if keep_genres:
-                    label = f"keep + {label}"
-                return self._format_and_stringify(resolved_genres), label
+            if new_genres:
+                resolved_genres = self._combine_resolve_and_log(
+                    keep_genres, new_genres
+                )
+                if resolved_genres:
+                    suffix = "whitelist" if self.whitelist else "any"
+                    label += f", {suffix}"
+                    if keep_genres:
+                        label = f"keep + {label}"
+                    return self._format_and_stringify(resolved_genres), label
+                new_genres = []
 
         # Nothing found, leave original if configured and valid.
         if obj.genre and self.config["keep_existing"]:
