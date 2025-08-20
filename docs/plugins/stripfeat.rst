@@ -17,8 +17,8 @@ file. The available options are:
 - **auto**: Enable metadata rewriting during import. Default: ``yes``.
 - **delimiter**: Defines the delimiter you want to replace the "featured artist"
       token with. Default: ``;``.
-- **strip_from_album_artist**: Also replace "featured artist" token in the ``albumartist``
-      field. Default: ``no``.
+- **strip_from_album_artist**: Also replace "featured artist" token in the
+      ``albumartist`` field. Default: ``no``.
 
 Running Manually
 ----------------
