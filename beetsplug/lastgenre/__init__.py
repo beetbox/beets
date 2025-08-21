@@ -42,10 +42,6 @@ PYLAST_EXCEPTIONS = (
     pylast.NetworkError,
 )
 
-REPLACE = {
-    "\u2010": "-",
-}
-
 
 # Canonicalization tree processing.
 
