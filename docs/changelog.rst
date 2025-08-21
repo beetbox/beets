@@ -52,6 +52,9 @@ Bug fixes:
   the config option ``spotify.search_query_ascii: yes``. :bug:`5699`
 - :doc:`plugins/discogs`: Beets will no longer crash if a release has been
   deleted, and returns a 404.
+- :doc:`plugins/lastgenre`: Fix the issue introduced in Beets 2.3.0 where
+  non-whitelisted last.fm genres were not canonicalized to parent genres.
+  :bug:`5930`
 
 For packagers:
 
