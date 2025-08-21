@@ -1,4 +1,7 @@
 import time
+from tkinter import N
+
+import pytest
 
 import beets
 from beets.dbcore import types
@@ -56,3 +59,34 @@ def test_durationtype():
     beets.config["format_raw_length"] = True
     assert 61.23 == t.format(61.23)
     assert 3601.23 == t.format(3601.23)
+
+
+@pytest.mark.parametrize(
+    "type, type_params",
+    [
+        (types.DEFAULT, (str, type(None))),
+        # ints
+        (types.Integer(), (int, int)),
+        (types.NullInteger(), (int, type(None))),
+        (types.PaddedInt(2), (int, int)),
+        (types.NullPaddedInt(3), (int, type(None))),
+        (types.ScaledInt(2, "foo"), (int, int)),
+        (types.Id(), (int, type(None))),
+        # floats
+        (types.Float(), (float, float)),
+        (types.NullFloat(), (float, type(None))),
+        (types.DateType(), (float, float)),
+        (types.DurationType(), (float, float)),
+        # Strings
+        (types.String(), (str, str)),
+        (types.DelimitedString(","), (list[str], list[str])),
+        (types.MusicalKey(), (str, type(None))),
+        # Other
+        (types.Boolean(), (bool, bool)),
+        # Paths
+        (types.PathType(), (bytes, bytes)),
+        (types.NullPathType(), (bytes, type(None))),
+    ],
+)
+def test_get_type_parameters(type: types.Type, type_params):
+    assert type_params == types.get_type_parameters(type)

@@ -18,9 +18,19 @@ from __future__ import annotations
 
 import re
 import time
+from types import GenericAlias
 import typing
 from abc import ABC
-from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Generic,
+    TypeVar,
+    cast,
+    get_args,
+    get_origin,
+    get_type_hints,
+)
 
 import beets
 from beets import util
@@ -452,6 +462,58 @@ class DurationType(Float):
                 return float(string)
             except ValueError:
                 return self.null
+
+
+def get_type_parameters(instance: Type) -> tuple[type, type]:
+    """
+    Extract T and N types from a Type instance.
+
+    Returns:
+        Tuple of (T_type, N_type) or (object, object) if cannot determine
+    """
+    n_type: type
+    t_type: type
+    try:
+        # Get T type from model_type attribute or default to object
+        t_type = getattr(instance, "model_type", object)
+
+        if hasattr(t_type, "__origin__") and get_origin(t_type) is not None:
+            # This is already a generic type, keep it as-is
+            pass
+        else:
+            # For non-generic types, ensure we have the actual type
+            t_type = type(t_type) if not isinstance(t_type, type) else t_type
+
+        # Get N type from null attribute with proper handling
+        if hasattr(instance, "null"):
+            null_value = instance.null
+            if null_value is None:
+                n_type = type(None)
+            else:
+                n_type = type(null_value)
+                # For generic types in null values, try to infer from class definition
+                if isinstance(null_value, list) and hasattr(
+                    instance.__class__, "__orig_bases__"
+                ):
+                    # Try to extract the generic type from class inheritance
+                    for base in getattr(
+                        instance.__class__, "__orig_bases__", []
+                    ):
+                        if get_origin(base) is not None:
+                            base_args = get_args(base)
+                            if len(base_args) >= 2 and base_args[1] is not Any:
+                                n_type = base_args[1]
+                                break
+        else:
+            # Default N type is the same as T for non-nullable types
+            n_type = t_type
+
+        return t_type, n_type
+    except (AttributeError, TypeError):
+        pass
+
+    # Final fallback: return object types
+    return object, object
 
 
 # Shared instances of common types.
