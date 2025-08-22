@@ -52,6 +52,10 @@ Bug fixes:
   the config option ``spotify.search_query_ascii: yes``. :bug:`5699`
 - :doc:`plugins/discogs`: Beets will no longer crash if a release has been
   deleted, and returns a 404.
+- :doc:`/plugins/deezer`: Fix the issue with that every query to deezer was
+  ascii encoded. This resulted in bad matches for queries that contained special
+  e.g. non latin characters as 盗作. If you want to keep the legacy behavior set
+  the config option ``deezer.search_query_ascii: yes``. :bug:`5860`
 
 For packagers:
 
