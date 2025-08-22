@@ -26,8 +26,8 @@ You will need Python. Beets works on Python 3.8 or later.
   which will probably set your computer on fire.)
 - On **Alpine Linux**, `beets is in the community repository <alpine package_>`_
   and can be installed with ``apk add beets``.
-- On **Void Linux**, `beets is in the official repository <void package_>`_
-  and can be installed with ``xbps-install -S beets``.
+- On **Void Linux**, `beets is in the official repository <void package_>`_ and
+  can be installed with ``xbps-install -S beets``.
 - For **Gentoo Linux**, beets is in Portage as ``media-sound/beets``. Just run
   ``emerge beets`` to install. There are several USE flags available for
   optional plugin dependencies.
@@ -55,8 +55,6 @@ You will need Python. Beets works on Python 3.8 or later.
 
 .. _macports: https://www.macports.org
 
-.. _void package: https://github.com/void-linux/void-packages/tree/master/srcpkgs/beets
-
 .. _nixos: https://github.com/NixOS/nixpkgs/tree/master/pkgs/tools/audio/beets
 
 .. _openbsd: http://openports.se/audio/beets
@@ -64,6 +62,8 @@ You will need Python. Beets works on Python 3.8 or later.
 .. _slackbuild: https://slackbuilds.org/repository/14.2/multimedia/beets/
 
 .. _ubuntu details: https://launchpad.net/ubuntu/+source/beets
+
+.. _void package: https://github.com/void-linux/void-packages/tree/master/srcpkgs/beets
 
 If you have pip_, just say ``pip install beets`` (or ``pip install --user
 beets`` if you run into permissions problems).
