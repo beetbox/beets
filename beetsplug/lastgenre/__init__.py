@@ -386,6 +386,18 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         genre = self._genre_cache[key]
         if self.config["extended_debug"]:
             self._log.debug(f"last.fm (unfiltered) {entity} tags: {genre}")
+
+        # Filter forbidden genres
+        if genre and len(args) >= 1:
+            artist = args[0]  # First arg is always artist for our use cases
+            filtered_genre = [
+                g for g in genre if not self._is_forbidden(g, artist)
+            ]
+            if filtered_genre != genre and self.config["extended_debug"]:
+                log_filtered = set(genre) - set(filtered_genre)
+                self._log.debug("blacklisted: {}", log_filtered)
+            genre = filtered_genre
+
         return genre
 
     def fetch_album_genre(self, obj):
