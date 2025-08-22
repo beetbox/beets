@@ -29,6 +29,7 @@ def random_func(lib: Library, opts: optparse.Values, args: list[str]):
         number=opts.number,
         time_minutes=opts.time,
         equal_chance=opts.equal_chance,
+        equal_chance_field=opts.field,
     ):
         print_(format(obj))
 
@@ -54,6 +55,13 @@ random_cmd.parser.add_option(
     action="store",
     type="float",
     help="total length in minutes of objects to choose",
+)
+random_cmd.parser.add_option(
+    "-f",
+    "--field",
+    action="store",
+    type="string",
+    help="field to use for equal chance sampling (default: albumartist)",
 )
 random_cmd.parser.add_all_common_options()
 random_cmd.func = random_func
@@ -124,6 +132,7 @@ def random_objs(
     number: int = 1,
     time_minutes: float | None = None,
     equal_chance: bool = False,
+    equal_chance_field: str = "albumartist",
 ) -> Iterable[T]:
     """Get a random subset of items, optionally constrained by time or count.
 
@@ -140,7 +149,7 @@ def random_objs(
     # artist-balanced way.
     perm: Iterable[T]
     if equal_chance:
-        perm = _equal_chance_permutation(objs)
+        perm = _equal_chance_permutation(objs, field=equal_chance_field)
     else:
         perm = list(objs)
         random.shuffle(perm)
