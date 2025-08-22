@@ -397,15 +397,16 @@ class SearchApiMetadataSourcePlugin(
         self, filters: SearchFilter, query_string: str
     ) -> str:
         """Construct a query string with the specified filters and keywords to
-        be provided to the Spotify (or similar) Search API.
+        be provided to the spotify (or similar) search API.
 
-        At the moment, this is used to construct a query string for:
-        - Spotify (https://developer.spotify.com/documentation/web-api/reference/search).
-        - Deezer (https://developers.deezer.com/api/search).
+        The returned format was initially designed for spotify's search API but
+        we found is also useful with other APIs that support similar query structures.
+        see `spotify <https://developer.spotify.com/documentation/web-api/reference/search>`_
+        and `deezer <https://developers.deezer.com/api/search>`_.
 
         :param filters: Field filters to apply.
         :param query_string: Query keywords to use.
-        :return: Query string to be provided to the Search API.
+        :return: Query string to be provided to the search API.
         """
 
         components = [query_string, *(f'{k}:"{v}"' for k, v in filters.items())]
