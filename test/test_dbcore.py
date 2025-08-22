@@ -23,6 +23,7 @@ from tempfile import mkstemp
 import pytest
 
 from beets import dbcore
+from beets.dbcore.db import Index
 from beets.library import LibModel
 from beets.test import _common
 from beets.util import cached_classproperty
@@ -58,6 +59,7 @@ class ModelFixture1(LibModel):
     _sorts = {
         "some_sort": SortFixture,
     }
+    _indices = (Index("field_one_index", ("field_one",)),)
 
     @cached_classproperty
     def _types(cls):
@@ -133,6 +135,7 @@ class AnotherModelFixture(ModelFixture1):
         "id": dbcore.types.PRIMARY_ID,
         "foo": dbcore.types.INTEGER,
     }
+    _indices = (Index("another_foo_index", ("foo",)),)
 
 
 class ModelFixture5(ModelFixture1):
@@ -784,3 +787,48 @@ class ResultsIteratorTest(unittest.TestCase):
             self.db._fetch(ModelFixture1, dbcore.query.FalseQuery()).get()
             is None
         )
+
+
+class TestIndex:
+    @pytest.fixture(autouse=True)
+    def db(self):
+        """Set up an in-memory SQLite database."""
+        db = DatabaseFixture1(":memory:")
+        yield db
+        db._connection().close()
+
+    @pytest.fixture
+    def sample_index(self):
+        """Fixture for a sample Index object."""
+        return Index(name="sample_index", columns=("field_one",))
+
+    def test_index_creation(self, db, sample_index):
+        """Test creating an index and checking its existence."""
+        with db.transaction() as tx:
+            sample_index.recreate(tx, "test")
+            indexes = (
+                db._connection().execute("PRAGMA index_list(test)").fetchall()
+            )
+        assert any(sample_index.name in index for index in indexes)
+
+    def test_from_db(self, db, sample_index):
+        """Test retrieving an index from the database."""
+        with db.transaction() as tx:
+            sample_index.recreate(tx, "test")
+            retrieved = Index.from_db(tx, sample_index.name)
+            assert retrieved == sample_index
+
+    def test_index_hashing_and_set_behavior(self, sample_index):
+        """Test the hashing and set behavior of the Index class."""
+        index_set = {sample_index}
+        similar_index = Index(name="sample_index", columns=("field_one",))
+
+        assert similar_index in index_set  # Should recognize similar attributes
+
+        different_index = Index(name="other_index", columns=("other_field",))
+        index_set.add(different_index)
+
+        assert len(index_set) == 2  # Should recognize distinct index
+
+        index_set.discard(sample_index)
+        assert similar_index not in index_set  # Should remove similar index
