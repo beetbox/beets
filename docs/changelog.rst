@@ -59,9 +59,8 @@ Bug fixes:
   10 seconds, rather than hanging the entire import process.
 - :doc:`/plugins/deezer`: Fix the issue with that every query to deezer was
   ascii encoded. This resulted in bad matches for queries that contained special
-  e.g. non latin characters as 盗作. If you want to keep the legacy behavior
-  set the config option ``deezer.search_query_ascii: yes``.
-  :bug:`5860`
+  e.g. non latin characters as 盗作. If you want to keep the legacy behavior set
+  the config option ``deezer.search_query_ascii: yes``. :bug:`5860`
 
 For packagers:
 
