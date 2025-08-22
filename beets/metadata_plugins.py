@@ -13,8 +13,8 @@ import re
 import warnings
 from typing import TYPE_CHECKING, Generic, Literal, Sequence, TypedDict, TypeVar
 
-from typing_extensions import NotRequired
 import unidecode
+from typing_extensions import NotRequired
 
 from beets.util import cached_classproperty
 from beets.util.id_extractors import extract_release_id
