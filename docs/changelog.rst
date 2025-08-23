@@ -118,6 +118,7 @@ Other changes:
 - Refactored library.py file by splitting it into multiple modules within the
   beets/library directory.
 - Added a test to check that all plugins can be imported without errors.
+- :doc:`/guides/main`: Add instructions to install beets on Void Linux.
 
 2.3.1 (May 14, 2025)
 --------------------
