@@ -26,14 +26,16 @@ if TYPE_CHECKING:
     from beets.library import Item
 
 
-def split_on_feat(artist: str) -> tuple[str, str | None]:
+def split_on_feat(
+    artist: str, for_artist: bool = True
+) -> tuple[str, str | None]:
     """Given an artist string, split the "main" artist from any artist
     on the right-hand side of a string like "feat". Return the main
     artist, which is always a string, and the featuring artist, which
     may be a string or None if none is present.
     """
     # split on the first "feat".
-    regex = re.compile(plugins.feat_tokens(), re.IGNORECASE)
+    regex = re.compile(plugins.feat_tokens(for_artist), re.IGNORECASE)
     parts = tuple(s.strip() for s in regex.split(artist, 1))
     if len(parts) == 1:
         return parts[0], None
@@ -53,32 +55,35 @@ def contains_feat(title: str) -> bool:
     )
 
 
-def find_feat_part(artist: str, albumartist: str) -> str | None:
+def find_feat_part(artist: str, albumartist: str | None) -> str | None:
     """Attempt to find featured artists in the item's artist fields and
     return the results. Returns None if no featured artist found.
     """
-    # Look for the album artist in the artist field. If it's not
-    # present, give up.
-    albumartist_split = artist.split(albumartist, 1)
-    if len(albumartist_split) <= 1:
-        return None
+    # Handle a wider variety of extraction cases if the album artist is
+    # contained within the track artist.
+    if albumartist and albumartist in artist:
+        albumartist_split = artist.split(albumartist, 1)
 
-    # If the last element of the split (the right-hand side of the
-    # album artist) is nonempty, then it probably contains the
-    # featured artist.
-    elif albumartist_split[1] != "":
-        # Extract the featured artist from the right-hand side.
-        _, feat_part = split_on_feat(albumartist_split[1])
-        return feat_part
+        # If the last element of the split (the right-hand side of the
+        # album artist) is nonempty, then it probably contains the
+        # featured artist.
+        if albumartist_split[1] != "":
+            # Extract the featured artist from the right-hand side.
+            _, feat_part = split_on_feat(albumartist_split[1])
+            return feat_part
 
-    # Otherwise, if there's nothing on the right-hand side, look for a
-    # featuring artist on the left-hand side.
-    else:
-        lhs, rhs = split_on_feat(albumartist_split[0])
-        if lhs:
-            return lhs
+        # Otherwise, if there's nothing on the right-hand side,
+        # look for a featuring artist on the left-hand side.
+        else:
+            lhs, _ = split_on_feat(albumartist_split[0])
+            if lhs:
+                return lhs
 
-    return None
+    # Fall back to conservative handling of the track artist without relying
+    # on albumartist, which covers compilations using a 'Various Artists'
+    # albumartist and album tracks by a guest artist featuring a third artist.
+    _, feat_part = split_on_feat(artist, False)
+    return feat_part
 
 
 class FtInTitlePlugin(plugins.BeetsPlugin):
@@ -153,8 +158,9 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
                 "artist: {.artist} (Not changing due to keep_in_artist)", item
             )
         else:
-            self._log.info("artist: {0.artist} -> {0.albumartist}", item)
-            item.artist = item.albumartist
+            track_artist, _ = split_on_feat(item.artist)
+            self._log.info("artist: {0.artist} -> {1}", item, track_artist)
+            item.artist = track_artist
 
         if item.artist_sort:
             # Just strip the featured artist from the sort name.
@@ -187,7 +193,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         # Check whether there is a featured artist on this track and the
         # artist field does not exactly match the album artist field. In
         # that case, we attempt to move the featured artist to the title.
-        if not albumartist or albumartist == artist:
+        if albumartist and artist == albumartist:
             return False
 
         _, featured = split_on_feat(artist)

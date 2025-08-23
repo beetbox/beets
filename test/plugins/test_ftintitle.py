@@ -40,6 +40,43 @@ class FtInTitlePluginFunctional(PluginTestCase):
         self.config["ftintitle"]["auto"] = auto
         self.config["ftintitle"]["keep_in_artist"] = keep_in_artist
 
+    def test_functional_no_featured_artist(self):
+        item = self._ft_add_item("/", "Alice", "Song 1", "Alice")
+        self.run_command("ftintitle")
+        item.load()
+        assert item["artist"] == "Alice"
+        assert item["title"] == "Song 1"
+
+    def test_functional_no_albumartist(self):
+        self._ft_set_config("feat {0}")
+        item = self._ft_add_item("/", "Alice ft. Bob", "Song 1", None)
+        self.run_command("ftintitle")
+        item.load()
+        assert item["artist"] == "Alice"
+        assert item["title"] == "Song 1 feat Bob"
+
+    def test_functional_no_albumartist_no_feature(self):
+        item = self._ft_add_item("/", "Alice", "Song 1", None)
+        self.run_command("ftintitle")
+        item.load()
+        assert item["artist"] == "Alice"
+        assert item["title"] == "Song 1"
+
+    def test_functional_guest_artist(self):
+        self._ft_set_config("featuring {0}")
+        item = self._ft_add_item("/", "Alice ft Bob", "Song 1", "George")
+        self.run_command("ftintitle")
+        item.load()
+        assert item["artist"] == "Alice"
+        assert item["title"] == "Song 1 featuring Bob"
+
+    def test_functional_guest_artist_no_feature(self):
+        item = self._ft_add_item("/", "Alice", "Song 1", "George")
+        self.run_command("ftintitle")
+        item.load()
+        assert item["artist"] == "Alice"
+        assert item["title"] == "Song 1"
+
     def test_functional_drop(self):
         item = self._ft_add_item("/", "Alice ft Bob", "Song 1", "Alice")
         self.run_command("ftintitle", "-d")
@@ -47,12 +84,25 @@ class FtInTitlePluginFunctional(PluginTestCase):
         assert item["artist"] == "Alice"
         assert item["title"] == "Song 1"
 
-    def test_functional_not_found(self):
+    def test_functional_drop_no_featured_artist(self):
+        item = self._ft_add_item("/", "Alice", "Song 1", "Alice")
+        self.run_command("ftintitle", "-d")
+        item.load()
+        assert item["artist"] == "Alice"
+        assert item["title"] == "Song 1"
+
+    def test_functional_drop_guest_artist(self):
         item = self._ft_add_item("/", "Alice ft Bob", "Song 1", "George")
         self.run_command("ftintitle", "-d")
         item.load()
-        # item should be unchanged
-        assert item["artist"] == "Alice ft Bob"
+        assert item["artist"] == "Alice"
+        assert item["title"] == "Song 1"
+
+    def test_functional_drop_guest_artist_no_feature(self):
+        item = self._ft_add_item("/", "Alice", "Song 1", "George")
+        self.run_command("ftintitle", "-d")
+        item.load()
+        assert item["artist"] == "Alice"
         assert item["title"] == "Song 1"
 
     def test_functional_custom_format(self):
@@ -147,7 +197,7 @@ class FtInTitlePluginTest(unittest.TestCase):
             {
                 "artist": "Alice ft. Carol",
                 "album_artist": "Bob",
-                "feat_part": None,
+                "feat_part": "Carol",
             },
         ]
 
@@ -155,7 +205,7 @@ class FtInTitlePluginTest(unittest.TestCase):
             feat_part = ftintitle.find_feat_part(
                 test_case["artist"], test_case["album_artist"]
             )
-            assert feat_part == test_case["feat_part"]
+            assert feat_part == test_case["feat_part"], f"failed: {test_case}"
 
     def test_split_on_feat(self):
         parts = ftintitle.split_on_feat("Alice ft. Bob")
