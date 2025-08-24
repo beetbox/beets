@@ -323,7 +323,7 @@ update
 
 ::
 
-    beet update [-F] FIELD [-e] EXCLUDE_FIELD [-aM] QUERY
+    beet update [-F] FIELD [-e] EXCLUDE_FIELD [-aMp] QUERY
 
 Update the library (and, by default, move files) to reflect out-of-band metadata
 changes and file deletions.
