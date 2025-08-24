@@ -1,22 +1,27 @@
 .. _add_subcommands:
 
 Add Commands to the CLI
-~~~~~~~~~~~~~~~~~~~~~~~
+=======================
 
 Plugins can add new subcommands to the ``beet`` command-line interface. Define
 the plugin class' ``commands()`` method to return a list of ``Subcommand``
 objects. (The ``Subcommand`` class is defined in the ``beets.ui`` module.)
 Here's an example plugin that adds a simple command:
 
-::
+.. code-block:: python
 
     from beets.plugins import BeetsPlugin
     from beets.ui import Subcommand
 
-    my_super_command = Subcommand('super', help='do something super')
+    my_super_command = Subcommand("super", help="do something super")
+
+
     def say_hi(lib, opts, args):
         print("Hello everybody! I'm a plugin!")
+
+
     my_super_command.func = say_hi
+
 
     class SuperPlug(BeetsPlugin):
         def commands(self):
@@ -47,4 +52,3 @@ use it like you would a normal ``OptionParser`` in an independent script. Note
 that it offers several methods to add common options: ``--album``, ``--path``
 and ``--format``. This feature is versatile and extensively documented, try
 ``pydoc beets.ui.CommonOptionsParser`` for more information.
-
