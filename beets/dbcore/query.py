@@ -291,10 +291,7 @@ class PathQuery(FieldQuery[bytes]):
         It can be either a string or bytes.
         """
         # Ensure pattern is converted to bytes
-        if isinstance(pattern, str):
-            path = util.normpath(pattern)
-        else:
-            path = util.normpath(pattern)
+        path = util.normpath(pattern)
 
         # Case sensitivity depends on the filesystem that the query path is located on.
         self.case_sensitive = util.case_sensitive(path)
