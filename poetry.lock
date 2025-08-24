@@ -696,28 +696,28 @@ files = [
 
 [[package]]
 name = "docstrfmt"
-version = "1.10.0"
+version = "1.11.0"
 description = "docstrfmt: A formatter for Sphinx flavored reStructuredText."
 optional = false
-python-versions = "<4,>=3.8"
+python-versions = ">=3.9"
 files = [
-    {file = "docstrfmt-1.10.0-py3-none-any.whl", hash = "sha256:a34ef6f3d8ab3233a7d0b3d1c2f3c66f8acbb3917df5ed2f3e34c1629ac29cef"},
-    {file = "docstrfmt-1.10.0.tar.gz", hash = "sha256:9da96e71552937f4b49ae2d6ab1c118ffa8ad6968082e6b8fd978b01d1bc0066"},
+    {file = "docstrfmt-1.11.0-py3-none-any.whl", hash = "sha256:3d56bdd6e083091a8c5d7db098684f281de84667f4b7d4cc806092a63efc4844"},
+    {file = "docstrfmt-1.11.0.tar.gz", hash = "sha256:37500c8086770294f265187c375c5c35a91a334d2c0b4f764aeace069d4ed501"},
 ]
 
 [package.dependencies]
-black = "==24.*"
-click = "==8.*"
-docutils = "==0.20.*"
-libcst = "==1.*"
-platformdirs = "==4.*"
-sphinx = ">=7,<9"
-tabulate = "==0.9.*"
-toml = "==0.10.*"
+black = ">=24"
+click = ">=8"
+docutils = ">=0.20"
+libcst = ">=1"
+platformdirs = ">=4"
+sphinx = ">=7"
+tabulate = ">=0.9"
+toml = {version = ">=0.10", markers = "python_version < \"3.11\""}
 
 [package.extras]
 ci = ["coveralls"]
-d = ["aiohttp (==3.*)"]
+d = ["aiohttp (>=3)"]
 dev = ["docstrfmt[lint]", "docstrfmt[test]", "packaging"]
 lint = ["pre-commit", "ruff (>=0.0.292)"]
 test = ["pytest", "pytest-aiohttp"]
@@ -3617,4 +3617,4 @@ web = ["flask", "flask-cors"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "daa6c3c2b5bee3180f74f4186bb29ee1ad825870b5b9f6c2b743fcaa61b34c8c"
+content-hash = "b68f663437ec41a92319456277243438a5c5f5c5f3dca113df1d7cac1b78703a"
