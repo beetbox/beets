@@ -1,52 +1,41 @@
+Further Reading
+===============
 
+.. contents:: Table of Contents
+    :local:
+    :depth: 2
 
-Extend the Autotagger
-~~~~~~~~~~~~~~~~~~~~~
+Extending the Autotagger
+------------------------
 
-Plugins can also enhance the functionality of the autotagger. For a
-comprehensive example, try looking at the ``chroma`` plugin, which is included
-with beets.
+.. currentmodule:: beets.metadata_plugins
 
-A plugin can extend three parts of the autotagger's process: the track distance
-function, the album distance function, and the initial MusicBrainz search. The
-distance functions determine how "good" a match is at the track and album
-levels; the initial search controls which candidates are presented to the
-matching algorithm. Plugins implement these extensions by implementing four
-methods on the plugin class:
+Plugins can also be used to extend the autotagger functions i.e. the metadata
+lookup from external sources. For this your plugin has to extend the
+:py:class:`MetadataSourcePlugin` base class and implement all abstract methods.
 
-- ``track_distance(self, item, info)``: adds a component to the distance
-  function (i.e., the similarity metric) for individual tracks. ``item`` is the
-  track to be matched (an Item object) and ``info`` is the TrackInfo object that
-  is proposed as a match. Should return a ``(dist, dist_max)`` pair of floats
-  indicating the distance.
-- ``album_distance(self, items, album_info, mapping)``: like the above, but
-  compares a list of items (representing an album) to an album-level MusicBrainz
-  entry. ``items`` is a list of Item objects; ``album_info`` is an AlbumInfo
-  object; and ``mapping`` is a dictionary that maps Items to their corresponding
-  TrackInfo objects.
-- ``candidates(self, items, artist, album, va_likely)``: given a list of items
-  comprised by an album to be matched, return a list of ``AlbumInfo`` objects
-  for candidate albums to be compared and matched.
-- ``item_candidates(self, item, artist, album)``: given a *singleton* item,
-  return a list of ``TrackInfo`` objects for candidate tracks to be compared and
-  matched.
-- ``album_for_id(self, album_id)``: given an ID from user input or an album's
-  tags, return a candidate AlbumInfo object (or None).
-- ``track_for_id(self, track_id)``: given an ID from user input or a file's
-  tags, return a candidate TrackInfo object (or None).
+On metadata lookup, the autotagger will try to find matching candidates from all
+enabled metadata source plugins. To do this, we will call the
+:py:meth:`MetadataSourcePlugin.candidates` (or
+:py:meth:`MetadataSourcePlugin.item_candidates`) with all available (local)
+metadata. The list of retrieved candidates will be ranked by their
+:py:meth:`MetadataSourcePlugin.album_distance` (or
+:py:meth:`MetadataSourcePlugin.track_distance`) and be presented to the user for
+selection (or automatically selected if the threshold is met).
 
-When implementing these functions, you may want to use the functions from the
-``beets.autotag`` and ``beets.autotag.mb`` modules, both of which have somewhat
-helpful docstrings.
+Please have a look at the ``beets.autotag`` and especially the
+``beets.metadata_plugin`` modules for more information. Additionally, for a
+comprehensive example, see the ``musicbrainz`` or ``chroma`` plugins, which are
+included with beets.
 
 Read Configuration Options
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------
 
 Plugins can configure themselves using the ``config.yaml`` file. You can read
-configuration values in two ways. The first is to use ``self.config`` within
-your plugin class. This gives you a view onto the configuration values in a
-section with the same name as your plugin's module. For example, if your plugin
-is in ``greatplugin.py``, then ``self.config`` will refer to options under the
+configuration values in two ways. The first is to use `self.config` within your
+plugin class. This gives you a view onto the configuration values in a section
+with the same name as your plugin's module. For example, if your plugin is in
+``greatplugin.py``, then `self.config` will refer to options under the
 ``greatplugin:`` section of the config file.
 
 For example, if you have a configuration value called "foo", then users can put
@@ -58,26 +47,26 @@ this in their ``config.yaml``:
         foo: bar
 
 To access this value, say ``self.config['foo'].get()`` at any point in your
-plugin's code. The ``self.config`` object is a *view* as defined by the Confuse_
+plugin's code. The `self.config` object is a *view* as defined by the Confuse_
 library.
 
 .. _confuse: https://confuse.readthedocs.io/en/latest/
 
 If you want to access configuration values *outside* of your plugin's section,
-import the ``config`` object from the ``beets`` module. That is, just put ``from
+import the `config` object from the `beets` module. That is, just put ``from
 beets import config`` at the top of your plugin and access values from there.
 
 If your plugin provides configuration values for sensitive data (e.g.,
 passwords, API keys, ...), you should add these to the config so they can be
 redacted automatically when users dump their config. This can be done by setting
-each value's ``redact`` flag, like so:
+each value's `redact` flag, like so:
 
 ::
 
     self.config['password'].redact = True
 
 Add Path Format Functions and Fields
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------------
 
 Beets supports *function calls* in its path format syntax (see
 :doc:`/reference/pathformat`). Beets includes a few built-in functions, but
@@ -86,18 +75,19 @@ dictionary.
 
 Here's an example:
 
-::
+.. code-block:: python
 
     class MyPlugin(BeetsPlugin):
         def __init__(self):
             super().__init__()
-            self.template_funcs['initial'] = _tmpl_initial
+            self.template_funcs["initial"] = _tmpl_initial
+
 
     def _tmpl_initial(text: str) -> str:
         if text:
             return text[0].upper()
         else:
-            return u''
+            return ""
 
 This plugin provides a function ``%initial`` to path templates where
 ``%initial{$artist}`` expands to the artist's initial (its capitalized first
@@ -108,12 +98,13 @@ Plugins can also add template *fields*, which are computed values referenced as
 ``Item`` object to the ``template_fields`` dictionary on the plugin object.
 Here's an example that adds a ``$disc_and_track`` field:
 
-::
+.. code-block:: python
 
     class MyPlugin(BeetsPlugin):
         def __init__(self):
             super().__init__()
-            self.template_fields['disc_and_track'] = _tmpl_disc_and_track
+            self.template_fields["disc_and_track"] = _tmpl_disc_and_track
+
 
     def _tmpl_disc_and_track(item: Item) -> str:
         """Expand to the disc number and track number if this is a
@@ -133,7 +124,7 @@ template fields by adding a function accepting an ``Album`` argument to the
 ``album_template_fields`` dict.
 
 Extend MediaFile
-~~~~~~~~~~~~~~~~
+----------------
 
 MediaFile_ is the file tag abstraction layer that beets uses to make
 cross-format metadata manipulation simple. Plugins can add fields to MediaFile
@@ -141,34 +132,34 @@ to extend the kinds of metadata that they can easily manage.
 
 The ``MediaFile`` class uses ``MediaField`` descriptors to provide access to
 file tags. If you have created a descriptor you can add it through your plugins
-:py:meth:`beets.plugins.BeetsPlugin.add_media_field()` method.
+:py:meth:`beets.plugins.BeetsPlugin.add_media_field()`` method.
 
 .. _mediafile: https://mediafile.readthedocs.io/en/latest/
 
 Here's an example plugin that provides a meaningless new field "foo":
 
-::
+.. code-block:: python
 
     class FooPlugin(BeetsPlugin):
         def __init__(self):
             field = mediafile.MediaField(
-                mediafile.MP3DescStorageStyle(u'foo'),
-                mediafile.StorageStyle(u'foo')
+                mediafile.MP3DescStorageStyle("foo"), mediafile.StorageStyle("foo")
             )
-            self.add_media_field('foo', field)
+            self.add_media_field("foo", field)
+
 
     FooPlugin()
-    item = Item.from_path('/path/to/foo/tag.mp3')
-    assert item['foo'] == 'spam'
+    item = Item.from_path("/path/to/foo/tag.mp3")
+    assert item["foo"] == "spam"
 
-    item['foo'] == 'ham'
+    item["foo"] == "ham"
     item.write()
     # The "foo" tag of the file is now "ham"
 
 .. _plugin-stage:
 
 Add Import Pipeline Stages
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------
 
 Many plugins need to add high-latency operations to the import workflow. For
 example, a plugin that fetches lyrics from the Web would, ideally, not block the
@@ -186,20 +177,25 @@ Plugins provide stages as functions that take two arguments: ``config`` and
 in ``beets.importer``). Add such a function to the plugin's ``import_stages``
 field to register it:
 
-::
+.. code-block:: python
 
     from beets.plugins import BeetsPlugin
+    from beets.importer import ImportSession, ImportTask
+
+
     class ExamplePlugin(BeetsPlugin):
+
         def __init__(self):
             super().__init__()
             self.import_stages = [self.stage]
-        def stage(self, session, task):
-            print('Importing something!')
+
+        def stage(self, session: ImportSession, task: ImportTask):
+            print("Importing something!")
 
 It is also possible to request your function to run early in the pipeline by
 adding the function to the plugin's ``early_import_stages`` field instead:
 
-::
+.. code-block:: python
 
     self.early_import_stages = [self.stage]
 
@@ -233,46 +229,47 @@ from that class and override the ``value_match`` class method. (Remember the
 the ``@`` prefix to delimit exact string matches. The plugin will be used if we
 issue a command like ``beet ls @something`` or ``beet ls artist:@something``:
 
-::
+.. code-block:: python
 
     from beets.plugins import BeetsPlugin
     from beets.dbcore import FieldQuery
+
 
     class ExactMatchQuery(FieldQuery):
         @classmethod
         def value_match(self, pattern, val):
             return pattern == val
 
+
     class ExactMatchPlugin(BeetsPlugin):
         def queries(self):
-            return {
-                '@': ExactMatchQuery
-            }
+            return {"@": ExactMatchQuery}
 
 Flexible Field Types
-~~~~~~~~~~~~~~~~~~~~
+--------------------
 
 If your plugin uses flexible fields to store numbers or other non-string values,
 you can specify the types of those fields. A rating plugin, for example, might
 want to declare that the ``rating`` field should have an integer type:
 
-::
+.. code-block:: python
 
     from beets.plugins import BeetsPlugin
     from beets.dbcore import types
 
+
     class RatingPlugin(BeetsPlugin):
-        item_types = {'rating': types.INTEGER}
+        item_types = {"rating": types.INTEGER}
 
         @property
         def album_types(self):
-            return {'rating': types.INTEGER}
+            return {"rating": types.INTEGER}
 
-A plugin may define two attributes: ``item_types`` and ``album_types``. Each of
+A plugin may define two attributes: `item_types` and `album_types`. Each of
 those attributes is a dictionary mapping a flexible field name to a type
-instance. You can find the built-in types in the ``beets.dbcore.types`` and
-``beets.library`` modules or implement your own type by inheriting from the
-``Type`` class.
+instance. You can find the built-in types in the `beets.dbcore.types` and
+`beets.library` modules or implement your own type by inheriting from the `Type`
+class.
 
 Specifying types has several advantages:
 
@@ -287,7 +284,7 @@ Specifying types has several advantages:
 .. _plugin-logging:
 
 Logging
-~~~~~~~
+-------
 
 Each plugin object has a ``_log`` attribute, which is a ``Logger`` from the
 `standard Python logging module`_. The logger is set up to `PEP 3101`_,
@@ -295,7 +292,7 @@ str.format-style string formatting. So you can write logging calls like this:
 
 ::
 
-    self._log.debug(u'Processing {0.title} by {0.artist}', item)
+    self._log.debug('Processing {0.title} by {0.artist}', item)
 
 .. _pep 3101: https://www.python.org/dev/peps/pep-3101/
 
@@ -326,7 +323,7 @@ the importer interface when running automatically.)
 .. _append_prompt_choices:
 
 Append Prompt Choices
-~~~~~~~~~~~~~~~~~~~~~
+---------------------
 
 Plugins can also append choices to the prompt presented to the user during an
 import session.
@@ -335,20 +332,24 @@ To do so, add a listener for the ``before_choose_candidate`` event, and return a
 list of ``PromptChoices`` that represent the additional choices that your plugin
 shall expose to the user:
 
-::
+.. code-block:: python
 
     from beets.plugins import BeetsPlugin
     from beets.ui.commands import PromptChoice
 
+
     class ExamplePlugin(BeetsPlugin):
         def __init__(self):
             super().__init__()
-            self.register_listener('before_choose_candidate',
-                                   self.before_choose_candidate_event)
+            self.register_listener(
+                "before_choose_candidate", self.before_choose_candidate_event
+            )
 
         def before_choose_candidate_event(self, session, task):
-            return [PromptChoice('p', 'Print foo', self.foo),
-                    PromptChoice('d', 'Do bar', self.bar)]
+            return [
+                PromptChoice("p", "Print foo", self.foo),
+                PromptChoice("d", "Do bar", self.bar),
+            ]
 
         def foo(self, session, task):
             print('User has chosen "Print foo"!')
@@ -358,14 +359,14 @@ shall expose to the user:
 
 The previous example modifies the standard prompt:
 
-::
+.. code-block:: shell
 
     # selection (default 1), Skip, Use as-is, as Tracks, Group albums,
     Enter search, enter Id, aBort?
 
 by appending two additional options (``Print foo`` and ``Do bar``):
 
-::
+.. code-block:: shell
 
     # selection (default 1), Skip, Use as-is, as Tracks, Group albums,
     Enter search, enter Id, aBort, Print foo, Do bar?
