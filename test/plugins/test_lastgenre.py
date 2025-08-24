@@ -441,6 +441,77 @@ class LastGenrePluginTest(BeetsTestCase):
             },
             ("Jazz", "keep + artist, whitelist"),
         ),
+        # 13 - canonicalization transforms non-whitelisted genres to canonical forms
+        #
+        # "Acid Techno" is not in the default whitelist, thus gets resolved "up" in the
+        # tree to "Techno" and "Electronic".
+        (
+            {
+                "force": True,
+                "keep_existing": False,
+                "source": "album",
+                "whitelist": True,
+                "canonical": True,
+                "prefer_specific": False,
+                "count": 10,
+            },
+            "",
+            {
+                "album": ["acid techno"],
+            },
+            ("Techno, Electronic", "album, whitelist"),
+        ),
+        # 14 - canonicalization transforms whitelisted genres to canonical forms and
+        # includes originals
+        #
+        # "Detroit Techno" is in the default whitelist, thus it stays and and also gets
+        # resolved "up" in the tree to "Techno" and "Electronic". The same happens for
+        # newly fetched genre "Acid House".
+        (
+            {
+                "force": True,
+                "keep_existing": True,
+                "source": "album",
+                "whitelist": True,
+                "canonical": True,
+                "prefer_specific": False,
+                "count": 10,
+                "extended_debug": True,
+            },
+            "detroit techno",
+            {
+                "album": ["acid house"],
+            },
+            (
+                "Detroit Techno, Techno, Electronic, Acid House, House",
+                "keep + album, whitelist",
+            ),
+        ),
+        # 15 - canonicalization transforms non-whitelisted original genres to canonical
+        # forms and deduplication works.
+        #
+        # "Cosmic Disco" is not in the default whitelist, thus gets resolved "up" in the
+        # tree to "Disco" and "Electronic". New genre "Detroit Techno" resolves to
+        # "Techno". Both resolve to "Electronic" which gets deduplicated.
+        (
+            {
+                "force": True,
+                "keep_existing": True,
+                "source": "album",
+                "whitelist": True,
+                "canonical": True,
+                "prefer_specific": False,
+                "count": 10,
+            },
+            "Cosmic Disco",
+            {
+                "album": ["Detroit Techno"],
+            },
+            (
+                "Disco, Electronic, Detroit Techno, Techno",
+                "keep + album, whitelist",
+            ),
+        ),
     ],
 )
 def test_get_genre(config_values, item_genre, mock_genres, expected_result):
@@ -466,6 +537,7 @@ def test_get_genre(config_values, item_genre, mock_genres, expected_result):
     plugin = lastgenre.LastGenrePlugin()
     # Configure
     plugin.config.set(config_values)
+    plugin.setup()  # Loads default whitelist and canonicalization tree
     item = _common.item()
     item.genre = item_genre
 
