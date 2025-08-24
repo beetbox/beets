@@ -9,6 +9,8 @@ For instance you can create plugins that add new commands to the command-line
 interface, listen for events in the beets lifecycle or extend the autotagger
 with new metadata sources. .. _writing-plugins:
 
+.. _writing-plugins:
+
 Basic Plugin Setup
 ------------------
 
