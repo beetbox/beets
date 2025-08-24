@@ -282,12 +282,19 @@ class PathQuery(FieldQuery[bytes]):
     and case-sensitive otherwise.
     """
 
-    def __init__(self, field: str, pattern: bytes, fast: bool = True) -> None:
+    def __init__(
+        self, field: str, pattern: bytes | str, fast: bool = True
+    ) -> None:
         """Create a path query.
 
         `pattern` must be a path, either to a file or a directory.
+        It can be either a string or bytes.
         """
-        path = util.normpath(pattern)
+        # Ensure pattern is converted to bytes
+        if isinstance(pattern, str):
+            path = util.normpath(pattern)
+        else:
+            path = util.normpath(pattern)
 
         # Case sensitivity depends on the filesystem that the query path is located on.
         self.case_sensitive = util.case_sensitive(path)

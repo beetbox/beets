@@ -35,6 +35,10 @@ New features:
 
 Bug fixes:
 
+- Fix ``PathQuery`` to properly handle string patterns from command line
+  arguments. This fixes an issue where path-based commands like ``beet remove``
+  would fail with "No matching items found" even when the path existed in the
+  database. The query now correctly accepts both string and bytes patterns.
 - :doc:`plugins/musicbrainz`: fix regression where user configured
   ``extra_tags`` have been read incorrectly. :bug:`5788`
 - tests: Fix library tests failing on Windows when run from outside ``D:/``.
