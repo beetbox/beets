@@ -98,6 +98,8 @@ config.yaml under the ``spotify:`` section:
   enhance search results in some cases, but in general, it is not recommended.
   For instance ``artist:deadmau5 album:4×4`` will be converted to
   ``artist:deadmau5 album:4x4`` (notice ``×!=x``). Default: ``no``.
+- **search_limit**: The maximum number of results to return from Spotify for
+  each search query. Default: ``5``.
 
 Here's an example:
 
