@@ -32,7 +32,7 @@ to nullify and the conditions for nullifying them:
 - To conditionally filter a field, use ``field: [regexp, regexp]`` to specify
   regular expressions.
 - Set ``zero_disc_number_if_single_disc`` to True to zero the disc number
-  field only if the album contains a disctotal count and is a single disc
+  field only if the album contains a disctotal count and is a single disc.
 - By default this plugin only affects files' tags; the beets database is left
   unchanged. To update the tags in the database, set the ``update_database``
   option to true.
