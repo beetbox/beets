@@ -27,7 +27,11 @@ Configuration
 -------------
 
 This plugin can be configured like other metadata source plugins as described in
-:ref:`metadata-source-plugin-configuration`.
+:ref:`metadata-source-plugin-configuration`. In addition, the following
+configuration options are provided.
+
+- **search_limit**: The maximum number of results to return from Deezer for each
+  search query. Default: ``5``.
 
 The ``deezer`` plugin provides an additional command ``deezerupdate`` to update
 the ``rank`` information from Deezer. The ``rank`` (ranges from 0 to 1M) is a
