@@ -20,6 +20,7 @@ import os
 import re
 from collections import Counter
 from collections.abc import Sequence
+from functools import cached_property
 from itertools import chain
 from platform import python_version
 from typing import Any, NamedTuple
@@ -306,6 +307,10 @@ class ChangeRepresentation:
     TrackMatch object, accordingly.
     """
 
+    @cached_property
+    def changed_prefix(self) -> str:
+        return ui.colorize("changed", "\u2260")
+
     cur_artist = None
     # cur_album set if album, cur_title set if singleton
     cur_album = None
@@ -404,9 +409,8 @@ class ChangeRepresentation:
             artist_l, artist_r = "", ""
         if artist_l != artist_r:
             artist_l, artist_r = ui.colordiff(artist_l, artist_r)
-            # Prefix with U+2260: Not Equal To
             left = {
-                "prefix": ui.colorize("changed", "\u2260") + " Artist: ",
+                "prefix": f"{self.changed_prefix} Artist: ",
                 "contents": artist_l,
                 "suffix": "",
             }
@@ -424,9 +428,8 @@ class ChangeRepresentation:
                 and self.match.info.album != VARIOUS_ARTISTS
             ):
                 album_l, album_r = ui.colordiff(album_l, album_r)
-                # Prefix with U+2260: Not Equal To
                 left = {
-                    "prefix": ui.colorize("changed", "\u2260") + " Album: ",
+                    "prefix": f"{self.changed_prefix} Album: ",
                     "contents": album_l,
                     "suffix": "",
                 }
@@ -439,9 +442,8 @@ class ChangeRepresentation:
             title_l, title_r = self.cur_title or "", self.match.info.title
             if self.cur_title != self.match.info.title:
                 title_l, title_r = ui.colordiff(title_l, title_r)
-                # Prefix with U+2260: Not Equal To
                 left = {
-                    "prefix": ui.colorize("changed", "\u2260") + " Title: ",
+                    "prefix": f"{self.changed_prefix} Title: ",
                     "contents": title_l,
                     "suffix": "",
                 }
@@ -573,9 +575,8 @@ class ChangeRepresentation:
         # the case, thus the 'info' dictionary is unneeded.
         # penalties = penalty_string(self.match.distance.tracks[track_info])
 
-        prefix = ui.colorize("changed", "\u2260 ") if changed else "* "
         lhs = {
-            "prefix": prefix + lhs_track + " ",
+            "prefix": f"{self.changed_prefix if changed else '*'} {lhs_track} ",
             "contents": lhs_title,
             "suffix": " " + lhs_length,
         }

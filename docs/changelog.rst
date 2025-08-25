@@ -121,6 +121,10 @@ Other changes:
   beets/library directory.
 - Added a test to check that all plugins can be imported without errors.
 - :doc:`/guides/main`: Add instructions to install beets on Void Linux.
+- UI: Update default ``text_diff_added`` color from **bold red** to **bold
+  green.**
+- UI: Use ``text_diff_added`` and ``text_diff_removed`` colors in **all** diff
+  comparisons, including case differences.
 
 2.3.1 (May 14, 2025)
 --------------------
