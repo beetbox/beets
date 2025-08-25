@@ -126,7 +126,7 @@ class ZeroPlugin(BeetsPlugin):
 
         if 'disc' in tags and self.config["zero_disc_number_if_single_disc"].get(bool):
             if item.disctotal == 1:
-                self._log.debug("{0}: {1} -> None", 'disc', item['disc'])
+                self._log.debug("disc: {.disc} -> None", item)
                 tags['disc'] = None
 
         if not self.fields_to_progs:
