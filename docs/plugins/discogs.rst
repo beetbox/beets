@@ -76,7 +76,7 @@ between distinct works on the same release or within works. When
         index_tracks: yes
 
 beets will incorporate the names of the divisions containing each track into the
-imported track's title.
+imported track's title. Default: ``no``.
 
 For example, importing `divisions album`_ would result in track names like:
 
