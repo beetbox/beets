@@ -27,7 +27,7 @@ Default
         https: no
         ratelimit: 1
         ratelimit_interval: 1.0
-        searchlimit: 5
+        search_limit: 5
         extra_tags: []
         genres: no
         external_ids:
@@ -82,15 +82,20 @@ make the import process quicker.
 
 Default: ``yes``.
 
-.. _searchlimit:
+.. _search_limit:
 
-searchlimit
-+++++++++++
+search_limit
+++++++++++++
 
 The number of matches returned when sending search queries to the MusicBrainz
 server.
 
 Default: ``5``.
+
+searchlimit
++++++++++++
+
+.. deprecated:: 2.4 Use `search_limit`_.
 
 .. _extra_tags:
 

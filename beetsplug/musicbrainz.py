@@ -18,12 +18,14 @@ from __future__ import annotations
 
 import traceback
 from collections import Counter
+from contextlib import suppress
 from functools import cached_property
 from itertools import product
 from typing import TYPE_CHECKING, Any, Iterable, Sequence
 from urllib.parse import urljoin
 
 import musicbrainzngs
+from confuse.exceptions import NotFoundError
 
 import beets
 import beets.autotag.hooks
@@ -371,7 +373,7 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
                 "https": False,
                 "ratelimit": 1,
                 "ratelimit_interval": 1,
-                "searchlimit": 5,
+                "search_limit": 5,
                 "genres": False,
                 "external_ids": {
                     "discogs": False,
@@ -383,6 +385,15 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
                 "extra_tags": [],
             },
         )
+        # TODO: Remove in 3.0.0
+        with suppress(NotFoundError):
+            self.config["search_limit"] = self.config["match"][
+                "searchlimit"
+            ].get()
+            self._log.warning(
+                "'musicbrainz.searchlimit' option is deprecated and will be "
+                "removed in 3.0.0. Use 'musicbrainz.search_limit' instead."
+            )
         hostname = self.config["host"].as_str()
         https = self.config["https"].get(bool)
         # Only call set_hostname when a custom server is configured. Since
@@ -799,7 +810,7 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
         )
         try:
             method = getattr(musicbrainzngs, f"search_{query_type}s")
-            res = method(limit=self.config["searchlimit"].get(int), **filters)
+            res = method(limit=self.config["search_limit"].get(int), **filters)
         except musicbrainzngs.MusicBrainzError as exc:
             raise MusicBrainzAPIError(
                 exc, f"{query_type} search", filters, traceback.format_exc()
