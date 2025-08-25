@@ -18,9 +18,9 @@ import errno
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import tempfile
-from distutils.spawn import find_executable
 
 import requests
 
@@ -84,7 +84,7 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
 
             # Get the executable location on the system, which we need
             # to calculate the SHA-1 hash.
-            self.extractor = find_executable(self.extractor)
+            self.extractor = shutil.which(self.extractor)
 
         # Calculate extractor hash.
         self.extractor_sha = hashlib.sha1()

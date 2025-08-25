@@ -7,35 +7,39 @@ the plugin can strip useless comments like "ripped by MyGreatRipper."
 
 The plugin can work in one of two modes:
 
-* ``fields``: A blacklist, where you choose the tags you want to remove (used by default).
-* ``keep_fields``: A whitelist, where you instead specify the tags you want to keep.
+- ``fields``: A blacklist, where you choose the tags you want to remove (used by
+  default).
+- ``keep_fields``: A whitelist, where you instead specify the tags you want to
+  keep.
 
-To use the ``zero`` plugin, enable the plugin in your configuration
-(see :ref:`using-plugins`).
+To use the ``zero`` plugin, enable the plugin in your configuration (see
+:ref:`using-plugins`).
 
 Configuration
 -------------
 
-Make a ``zero:`` section in your configuration file. You can specify the
-fields to nullify and the conditions for nullifying them:
+Make a ``zero:`` section in your configuration file. You can specify the fields
+to nullify and the conditions for nullifying them:
 
-* Set ``auto`` to ``yes`` to null fields automatically on import.
-  Default: ``yes``.
-* Set ``fields`` to a whitespace-separated list of fields to remove. You can
-  get the list of all available fields by running ``beet fields``. In
-  addition, the ``images`` field allows you to remove any images
-  embedded in the media file.
-* Set ``keep_fields`` to *invert* the logic of the plugin. Only these fields
-  will be kept; other fields will be removed. Remember to set only
-  ``fields`` or ``keep_fields``---not both!
-* To conditionally filter a field, use ``field: [regexp, regexp]`` to specify
+- Set ``auto`` to ``yes`` to null fields automatically on import. Default:
+  ``yes``.
+- Set ``fields`` to a whitespace-separated list of fields to remove. You can get
+  the list of all available fields by running ``beet fields``. In addition, the
+  ``images`` field allows you to remove any images embedded in the media file.
+- Set ``keep_fields`` to *invert* the logic of the plugin. Only these fields
+  will be kept; other fields will be removed. Remember to set only ``fields`` or
+  ``keep_fields``---not both!
+- To conditionally filter a field, use ``field: [regexp, regexp]`` to specify
   regular expressions.
-* Set ``zero_disc_number_if_single_disc`` to True to zero the disc number
+- Set ``zero_disc_number_if_single_disc`` to True to zero the disc number
   field only if the album contains a disctotal count and is a single disc
-* By default this plugin only affects files' tags; the beets database is left
-  unchanged. To update the tags in the database, set the ``update_database`` option to true.
+- By default this plugin only affects files' tags; the beets database is left
+  unchanged. To update the tags in the database, set the ``update_database``
+  option to true.
 
-For example::
+For example:
+
+::
 
     zero:
         fields: month day genre genres comments
@@ -58,9 +62,11 @@ in your library.
 Preserving Album Art
 --------------------
 
-If you use the ``keep_fields`` option, the plugin will remove embedded album
-art from files' tags unless you tell it not to. To keep the album art, include
-the special field ``images`` in the list. For example::
+If you use the ``keep_fields`` option, the plugin will remove embedded album art
+from files' tags unless you tell it not to. To keep the album art, include the
+special field ``images`` in the list. For example:
+
+::
 
     zero:
         keep_fields: title artist album year track genre genres images

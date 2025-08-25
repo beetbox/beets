@@ -42,10 +42,6 @@ PYLAST_EXCEPTIONS = (
     pylast.NetworkError,
 )
 
-REPLACE = {
-    "\u2010": "-",
-}
-
 
 # Canonicalization tree processing.
 
@@ -184,31 +180,28 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         return [p[1] for p in depth_tag_pairs]
 
     def _resolve_genres(self, tags: list[str]) -> list[str]:
-        """Filter, deduplicate, sort, canonicalize provided genres list.
+        """Canonicalize, sort and filter a list of genres.
 
         - Returns an empty list if the input tags list is empty.
         - If canonicalization is enabled, it extends the list by incorporating
           parent genres from the canonicalization tree. When a whitelist is set,
           only parent tags that pass a validity check (_is_valid) are included;
-          otherwise, it adds the oldest ancestor.
-        - During canonicalization, it stops adding parent tags if the count of
-          tags reaches the configured limit (count).
+          otherwise, it adds the oldest ancestor. Adding parent tags is stopped
+          when the count of tags reaches the configured limit (count).
         - The tags list is then deduplicated to ensure only unique genres are
           retained.
-        - Optionally, if the 'prefer_specific' configuration is enabled, the
-          list is sorted by the specificity (depth in the canonicalization tree)
-          of the genres.
-        - The method then filters the tag list, ensuring that only valid
-          genres (those that pass the _is_valid method) are kept. If a
-          whitelist is set, only genres in the whitelist are considered valid
-          (which may even result in no genres at all being retained).
-        - Finally, the filtered list of genres, limited to
-          the configured count is returned.
+        - If the 'prefer_specific' configuration is enabled, the list is sorted
+          by the specificity (depth in the canonicalization tree) of the genres.
+        - Finally applies whitelist filtering to ensure that only valid
+          genres are kept. (This may result in no genres at all being retained).
+        - Returns the filtered list of genres, limited to the configured count.
         """
         if not tags:
             return []
 
         count = self.config["count"].get(int)
+
+        # Canonicalization (if enabled)
         if self.canonicalize:
             # Extend the list to consider tags parents in the c14n tree
             tags_all = []
@@ -242,8 +235,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # c14n only adds allowed genres but we may have had forbidden genres in
         # the original tags list
-        valid_tags = self._filter_valid_genres(tags)
-        return valid_tags[: self.config["count"].get(int)]
+        valid_tags = [t for t in tags if self._is_valid(t)]
+        return valid_tags[:count]
 
     def fetch_genre(self, lastfm_obj):
         """Return the genre for a pylast entity or None if no suitable genre
@@ -251,12 +244,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """
         min_weight = self.config["min_weight"].get(int)
         return self._tags_for(lastfm_obj, min_weight)
-
-    def _filter_valid_genres(self, genres: list[str]) -> list[str]:
-        """Filter list of genres, only keep valid."""
-        if not genres:
-            return []
-        return [x for x in genres if self._is_valid(x)]
 
     def _is_valid(self, genre: str) -> bool:
         """Check if the genre is valid.
@@ -281,7 +268,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """
         # Shortcut if we're missing metadata.
         if any(not s for s in args):
-            return None
+            return []
 
         key = f"{entity}.{'-'.join(str(a) for a in args)}"
         if key not in self._genre_cache:
@@ -294,29 +281,23 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         return genre
 
     def fetch_album_genre(self, obj):
-        """Return the album genre for this Item or Album."""
-        return self._filter_valid_genres(
-            self._last_lookup(
-                "album", LASTFM.get_album, obj.albumartist, obj.album
-            )
+        """Return raw album genres from Last.fm for this Item or Album."""
+        return self._last_lookup(
+            "album", LASTFM.get_album, obj.albumartist, obj.album
         )
 
     def fetch_album_artist_genre(self, obj):
-        """Return the album artist genre for this Item or Album."""
-        return self._filter_valid_genres(
-            self._last_lookup("artist", LASTFM.get_artist, obj.albumartist)
-        )
+        """Return raw album artist genres from Last.fm for this Item or Album."""
+        return self._last_lookup("artist", LASTFM.get_artist, obj.albumartist)
 
     def fetch_artist_genre(self, item):
-        """Returns the track artist genre for this Item."""
-        return self._filter_valid_genres(
-            self._last_lookup("artist", LASTFM.get_artist, item.artist)
-        )
+        """Returns raw track artist genres from Last.fm for this Item."""
+        return self._last_lookup("artist", LASTFM.get_artist, item.artist)
 
     def fetch_track_genre(self, obj):
-        """Returns the track genre for this Item."""
-        return self._filter_valid_genres(
-            self._last_lookup("track", LASTFM.get_track, obj.artist, obj.title)
+        """Returns raw track genres from Last.fm for this Item."""
+        return self._last_lookup(
+            "track", LASTFM.get_track, obj.artist, obj.title
         )
 
     # Main processing: _get_genre() and helpers.
@@ -346,7 +327,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         self, old: list[str], new: list[str]
     ) -> list[str]:
         """Combine old and new genres and process via _resolve_genres."""
-        self._log.debug(f"valid last.fm tags: {new}")
+        self._log.debug(f"raw last.fm tags: {new}")
         self._log.debug(f"existing genres taken into account: {old}")
         combined = old + new
         return self._resolve_genres(combined)
@@ -372,9 +353,22 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         applied, while "artist, any" means only new last.fm genres are included
         and the whitelist feature was disabled.
         """
+
+        def _try_resolve_stage(stage_label: str, keep_genres, new_genres):
+            """Try to resolve genres for a given stage and log the result."""
+            resolved_genres = self._combine_resolve_and_log(
+                keep_genres, new_genres
+            )
+            if resolved_genres:
+                suffix = "whitelist" if self.whitelist else "any"
+                label = stage_label + f", {suffix}"
+                if keep_genres:
+                    label = f"keep + {label}"
+                return self._format_and_stringify(resolved_genres), label
+            return None
+
         keep_genres = []
         new_genres = []
-        label = ""
         genres = self._get_existing_genres(obj)
 
         if genres and not self.config["force"]:
@@ -394,20 +388,26 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # album artist, or most popular track genre.
         if isinstance(obj, library.Item) and "track" in self.sources:
             if new_genres := self.fetch_track_genre(obj):
-                label = "track"
+                if result := _try_resolve_stage(
+                    "track", keep_genres, new_genres
+                ):
+                    return result
 
-        if not new_genres and "album" in self.sources:
+        if "album" in self.sources:
             if new_genres := self.fetch_album_genre(obj):
-                label = "album"
+                if result := _try_resolve_stage(
+                    "album", keep_genres, new_genres
+                ):
+                    return result
 
-        if not new_genres and "artist" in self.sources:
+        if "artist" in self.sources:
             new_genres = []
             if isinstance(obj, library.Item):
                 new_genres = self.fetch_artist_genre(obj)
-                label = "artist"
+                stage_label = "artist"
             elif obj.albumartist != config["va_name"].as_str():
                 new_genres = self.fetch_album_artist_genre(obj)
-                label = "album artist"
+                stage_label = "album artist"
             else:
                 # For "Various Artists", pick the most popular track genre.
                 item_genres = []
@@ -422,24 +422,18 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 if item_genres:
                     most_popular, rank = plurality(item_genres)
                     new_genres = [most_popular]
-                    label = "most popular track"
+                    stage_label = "most popular track"
                     self._log.debug(
                         'Most popular track genre "{}" ({}) for VA album.',
                         most_popular,
                         rank,
                     )
 
-        # Return with a combined or freshly fetched genre list.
-        if new_genres:
-            resolved_genres = self._combine_resolve_and_log(
-                keep_genres, new_genres
-            )
-            if resolved_genres:
-                suffix = "whitelist" if self.whitelist else "any"
-                label += f", {suffix}"
-                if keep_genres:
-                    label = f"keep + {label}"
-                return self._format_and_stringify(resolved_genres), label
+            if new_genres:
+                if result := _try_resolve_stage(
+                    stage_label, keep_genres, new_genres
+                ):
+                    return result
 
         # Nothing found, leave original if configured and valid.
         if obj.genre and self.config["keep_existing"]:

@@ -26,8 +26,9 @@ from abc import ABC
 from collections import defaultdict
 from collections.abc import Generator, Iterable, Iterator, Mapping, Sequence
 from sqlite3 import Connection
-from typing import TYPE_CHECKING, Any, AnyStr, Callable, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, AnyStr, Callable, Generic
 
+from typing_extensions import TypeVar  # default value support
 from unidecode import unidecode
 
 import beets
@@ -49,10 +50,7 @@ if TYPE_CHECKING:
 
     from .query import SQLiteType
 
-    D = TypeVar("D", bound="Database", default=Any)
-else:
-    D = TypeVar("D", bound="Database")
-
+D = TypeVar("D", bound="Database", default=Any)
 
 FlexAttrs = dict[str, str]
 
@@ -607,6 +605,7 @@ class Model(ABC, Generic[D]):
             for key, value in self._values_flex.items():
                 if key in self._dirty:
                     self._dirty.remove(key)
+                    value = self._type(key).to_sql(value)
                     tx.mutate(
                         "INSERT INTO {} "
                         "(entity_id, key, value) "
