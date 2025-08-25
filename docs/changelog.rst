@@ -32,9 +32,8 @@ New features:
   ``played_ratio_threshold``, to allow configuring the percentage the song must
   be played for it to be counted as played instead of skipped.
 - :doc:`plugins/web`: Display artist and album as part of the search results.
-- :doc:`plugins/zero`: Add new configuration option,
-  ``zero_disc_number_if_single_disc``, to allow zeroing the disc number on
-  write for single-disc albums. Defaults to False.
+- :doc:`plugins/zero`: Add new configurable ``zero_disc_number_if_single_disc``
+  to allow zeroing the disc number on write for single-disc albums.
 
 Bug fixes:
 
