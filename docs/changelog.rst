@@ -55,6 +55,8 @@ Bug fixes:
 - :doc:`plugins/lastgenre`: Fix the issue introduced in Beets 2.3.0 where
   non-whitelisted last.fm genres were not canonicalized to parent genres.
   :bug:`5930`
+- :doc:`plugins/chroma`: AcoustID lookup HTTP requests will now time out after
+  10 seconds, rather than hanging the entire import process.
 
 For packagers:
 
