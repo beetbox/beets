@@ -384,7 +384,7 @@ def load_plugins() -> None:
     """
     if not _instances:
         names = get_plugin_names()
-        log.info("Loading plugins: {}", ", ".join(sorted(names)))
+        log.debug("Loading plugins: {}", ", ".join(sorted(names)))
         _instances.extend(filter(None, map(_get_plugin, names)))
 
         send("pluginload")

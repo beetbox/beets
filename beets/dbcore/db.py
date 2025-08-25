@@ -605,6 +605,7 @@ class Model(ABC, Generic[D]):
             for key, value in self._values_flex.items():
                 if key in self._dirty:
                     self._dirty.remove(key)
+                    value = self._type(key).to_sql(value)
                     tx.mutate(
                         "INSERT INTO {} "
                         "(entity_id, key, value) "
