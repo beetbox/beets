@@ -138,6 +138,7 @@ class SpotifyPlugin(
                 "client_id": "4e414367a1d14c75a5c5129a627fcab8",
                 "client_secret": "f82bdc09b2254f1a8286815d02fd46dc",
                 "tokenfile": "spotify_token.json",
+                "search_limit": 5,
             }
         )
         self.config["client_id"].redact = True
@@ -454,7 +455,7 @@ class SpotifyPlugin(
             self,
             query,
         )
-        return response_data
+        return response_data[: self.config["search_limit"].get()]
 
     def commands(self) -> list[ui.Subcommand]:
         # autotagger import command
