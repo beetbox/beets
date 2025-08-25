@@ -202,16 +202,16 @@ def get_basic_beet_options():
         BL_NEED2.format("-l format-item", "-f -d 'print with custom format'")
         + BL_NEED2.format("-l format-album", "-f -d 'print with custom format'")
         + BL_NEED2.format(
-            "-s  l  -l library", "-f -r -d 'library database file to use'"
+            "-s  l  -l library", "-F -r -d 'library database file to use'"
         )
         + BL_NEED2.format(
-            "-s  d  -l directory", "-f -r -d 'destination music directory'"
+            "-s  d  -l directory", "-F -r -d 'destination music directory'"
         )
         + BL_NEED2.format(
             "-s  v  -l verbose", "-f -d 'print debugging information'"
         )
         + BL_NEED2.format(
-            "-s  c  -l config", "-f -r -d 'path to configuration file'"
+            "-s  c  -l config", "-F -r -d 'path to configuration file'"
         )
         + BL_NEED2.format(
             "-s  h  -l help", "-f -d 'print this help message and exit'"
@@ -239,7 +239,7 @@ def get_subcommands(cmd_name_and_help, nobasicfields, extravalues):
             word += BL_USE3.format(
                 cmdname,
                 ("-a " + wrap("$FIELDS")),
-                ("-f " + "-d " + wrap("fieldname")),
+                ("-d " + wrap("fieldname")),
             )
 
         if extravalues:
@@ -301,13 +301,7 @@ def get_all_commands(beetcmds):
                     " ".join(
                         BL_USE3.format(
                             name,
-                            (
-                                cmd_need_arg
-                                + cmd_s
-                                + cmd_l
-                                + " -f "
-                                + cmd_arglist
-                            ),
+                            (cmd_need_arg + cmd_s + cmd_l + cmd_arglist),
                             cmd_helpstr,
                         ).split()
                     )
@@ -317,7 +311,7 @@ def get_all_commands(beetcmds):
             word = word + " ".join(
                 BL_USE3.format(
                     name,
-                    ("-s " + "h " + "-l " + "help" + " -f "),
+                    ("-s " + "h " + "-l " + "help"),
                     ("-d " + wrap("print help") + "\n"),
                 ).split()
             )
