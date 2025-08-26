@@ -150,7 +150,7 @@ class DuplicatesPlugin(BeetsPlugin):
             count = self.config["count"].get(bool)
             delete = self.config["delete"].get(bool)
             remove = self.config["remove"].get(bool)
-            fmt = self.config["format"].get(str)
+            fmt_tmpl = self.config["format"].get(str)
             full = self.config["full"].get(bool)
             keys = self.config["keys"].as_str_seq()
             merge = self.config["merge"].get(bool)
@@ -175,15 +175,14 @@ class DuplicatesPlugin(BeetsPlugin):
                 return
 
             if path:
-                fmt = "$path"
+                fmt_tmpl = "$path"
 
             # Default format string for count mode.
-            if count and not fmt:
+            if count and not fmt_tmpl:
                 if album:
-                    fmt = "$albumartist - $album"
+                    fmt_tmpl = "$albumartist - $album"
                 else:
-                    fmt = "$albumartist - $album - $title"
-                fmt += ": {0}"
+                    fmt_tmpl = "$albumartist - $album - $title"
 
             if checksum:
                 for i in items:
@@ -207,7 +206,7 @@ class DuplicatesPlugin(BeetsPlugin):
                             delete=delete,
                             remove=remove,
                             tag=tag,
-                            fmt=fmt.format(obj_count),
+                            fmt=f"{fmt_tmpl}: {obj_count}",
                         )
 
         self._command.func = _dup
@@ -255,28 +254,24 @@ class DuplicatesPlugin(BeetsPlugin):
         checksum = getattr(item, key, False)
         if not checksum:
             self._log.debug(
-                "key {0} on item {1} not cached:computing checksum",
+                "key {} on item {.filepath} not cached:computing checksum",
                 key,
-                displayable_path(item.path),
+                item,
             )
             try:
                 checksum = command_output(args).stdout
                 setattr(item, key, checksum)
                 item.store()
                 self._log.debug(
-                    "computed checksum for {0} using {1}", item.title, key
+                    "computed checksum for {.title} using {}", item, key
                 )
             except subprocess.CalledProcessError as e:
-                self._log.debug(
-                    "failed to checksum {0}: {1}",
-                    displayable_path(item.path),
-                    e,
-                )
+                self._log.debug("failed to checksum {.filepath}: {}", item, e)
         else:
             self._log.debug(
-                "key {0} on item {1} cached:not computing checksum",
+                "key {} on item {.filepath} cached:not computing checksum",
                 key,
-                displayable_path(item.path),
+                item,
             )
         return key, checksum
 
@@ -294,15 +289,15 @@ class DuplicatesPlugin(BeetsPlugin):
             values = [v for v in values if v not in (None, "")]
             if strict and len(values) < len(keys):
                 self._log.debug(
-                    "some keys {0} on item {1} are null or empty: skipping",
+                    "some keys {} on item {.filepath} are null or empty: skipping",
                     keys,
-                    displayable_path(obj.path),
+                    obj,
                 )
             elif not strict and not len(values):
                 self._log.debug(
-                    "all keys {0} on item {1} are null or empty: skipping",
+                    "all keys {} on item {.filepath} are null or empty: skipping",
                     keys,
-                    displayable_path(obj.path),
+                    obj,
                 )
             else:
                 key = tuple(values)
@@ -360,11 +355,11 @@ class DuplicatesPlugin(BeetsPlugin):
                     value = getattr(o, f, None)
                     if value:
                         self._log.debug(
-                            "key {0} on item {1} is null "
-                            "or empty: setting from item {2}",
+                            "key {} on item {} is null "
+                            "or empty: setting from item {.filepath}",
                             f,
                             displayable_path(objs[0].path),
-                            displayable_path(o.path),
+                            o,
                         )
                         setattr(objs[0], f, value)
                         objs[0].store()
@@ -384,11 +379,11 @@ class DuplicatesPlugin(BeetsPlugin):
                     missing.album_id = objs[0].id
                     missing.add(i._db)
                     self._log.debug(
-                        "item {0} missing from album {1}:"
-                        " merging from {2} into {3}",
+                        "item {} missing from album {}:"
+                        " merging from {.filepath} into {}",
                         missing,
                         objs[0],
-                        displayable_path(o.path),
+                        o,
                         displayable_path(missing.destination()),
                     )
                     missing.move(operation=MoveOperation.COPY)

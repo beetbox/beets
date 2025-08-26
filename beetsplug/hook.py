@@ -62,7 +62,7 @@ class HookPlugin(BeetsPlugin):
     def create_and_register_hook(self, event, command):
         def hook_function(**kwargs):
             if command is None or len(command) == 0:
-                self._log.error('invalid command "{0}"', command)
+                self._log.error('invalid command "{}"', command)
                 return
 
             # For backwards compatibility, use a string formatter that decodes
@@ -74,7 +74,7 @@ class HookPlugin(BeetsPlugin):
             ]
 
             self._log.debug(
-                'running command "{0}" for event {1}',
+                'running command "{}" for event {}',
                 " ".join(command_pieces),
                 event,
             )
@@ -83,9 +83,9 @@ class HookPlugin(BeetsPlugin):
                 subprocess.check_call(command_pieces)
             except subprocess.CalledProcessError as exc:
                 self._log.error(
-                    "hook for {0} exited with status {1}", event, exc.returncode
+                    "hook for {} exited with status {.returncode}", event, exc
                 )
             except OSError as exc:
-                self._log.error("hook for {0} failed: {1}", event, exc)
+                self._log.error("hook for {} failed: {}", event, exc)
 
         self.register_listener(event, hook_function)

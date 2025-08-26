@@ -44,6 +44,6 @@ class TypesPlugin(BeetsPlugin):
                 mytypes[key] = types.DATE
             else:
                 raise ConfigValueError(
-                    "unknown type '{}' for the '{}' field".format(value, key)
+                    f"unknown type '{value}' for the '{key}' field"
                 )
         return mytypes

@@ -82,7 +82,7 @@ class DGAlbumInfoTest(BeetsTestCase):
         """Return a Bag that mimics a discogs_client.Release with a
         tracklist where tracks have the specified `positions`."""
         tracks = [
-            self._make_track("TITLE%s" % i, position)
+            self._make_track(f"TITLE{i}", position)
             for (i, position) in enumerate(positions, start=1)
         ]
         return self._make_release(tracks)
