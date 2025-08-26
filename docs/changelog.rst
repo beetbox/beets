@@ -127,6 +127,8 @@ Other changes:
   beets/library directory.
 - Added a test to check that all plugins can be imported without errors.
 - :doc:`/guides/main`: Add instructions to install beets on Void Linux.
+- When installing ``beets`` via git or locally the version string now reflects
+  the current git branch and commit hash. :bug:`4448`
 
 2.3.1 (May 14, 2025)
 --------------------

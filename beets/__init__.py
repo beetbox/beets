@@ -13,12 +13,33 @@
 # included in all copies or substantial portions of the Software.
 
 
+import subprocess
+from pathlib import Path
 from sys import stderr
 
 import confuse
 
 __version__ = "2.3.1"
 __author__ = "Adrian Sampson <adrian@radbox.org>"
+
+
+def _git_suffix():
+    try:
+        repo_root = Path(__file__).resolve().parent.parent
+        commit = (
+            subprocess.check_output(
+                ["git", "-C", str(repo_root), "rev-parse", "--short", "HEAD"],
+                stderr=subprocess.DEVNULL,
+            )
+            .decode()
+            .strip()
+        )
+        return f"+git.{commit}"
+    except Exception:
+        return ""
+
+
+__version__ = __version__ + _git_suffix()
 
 
 class IncludeLazyConfig(confuse.LazyConfig):
