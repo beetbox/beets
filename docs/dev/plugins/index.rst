@@ -7,9 +7,9 @@ add virtually any type of features to beets.
 
 For instance you can create plugins that add new commands to the command-line
 interface, listen for events in the beets lifecycle or extend the autotagger
-with new metadata sources. .. _writing-plugins:
+with new metadata sources.
 
-.. _writing-plugins:
+.. _basic-plugin-setup:
 
 Basic Plugin Setup
 ------------------
