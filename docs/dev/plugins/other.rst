@@ -109,7 +109,7 @@ to extend the kinds of metadata that they can easily manage.
 
 The ``MediaFile`` class uses ``MediaField`` descriptors to provide access to
 file tags. If you have created a descriptor you can add it through your plugins
-:py:meth:`beets.plugins.BeetsPlugin.add_media_field()`` method.
+:py:meth:`beets.plugins.BeetsPlugin.add_media_field` method.
 
 .. _mediafile: https://mediafile.readthedocs.io/en/latest/
 
@@ -156,8 +156,8 @@ field to register it:
 
 .. code-block:: python
 
-    from beets.plugins import BeetsPlugin
     from beets.importer import ImportSession, ImportTask
+    from beets.plugins import BeetsPlugin
 
 
     class ExamplePlugin(BeetsPlugin):
@@ -242,11 +242,11 @@ want to declare that the ``rating`` field should have an integer type:
         def album_types(self):
             return {"rating": types.INTEGER}
 
-A plugin may define two attributes: `item_types` and `album_types`. Each of
+A plugin may define two attributes: ``item_types`` and ``album_types``. Each of
 those attributes is a dictionary mapping a flexible field name to a type
-instance. You can find the built-in types in the `beets.dbcore.types` and
-`beets.library` modules or implement your own type by inheriting from the `Type`
-class.
+instance. You can find the built-in types in the ``beets.dbcore.types`` and
+``beets.library`` modules or implement your own type by inheriting from the
+``Type`` class.
 
 Specifying types has several advantages:
 
@@ -267,9 +267,9 @@ Each plugin object has a ``_log`` attribute, which is a ``Logger`` from the
 `standard Python logging module`_. The logger is set up to `PEP 3101`_,
 str.format-style string formatting. So you can write logging calls like this:
 
-::
+.. code-block:: python
 
-    self._log.debug('Processing {0.title} by {0.artist}', item)
+    self._log.debug("Processing {0.title} by {0.artist}", item)
 
 .. _pep 3101: https://www.python.org/dev/peps/pep-3101/
 
