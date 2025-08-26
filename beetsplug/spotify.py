@@ -29,7 +29,6 @@ from typing import TYPE_CHECKING, Any, Literal, Sequence, Union
 
 import confuse
 import requests
-import unidecode
 
 from beets import ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
@@ -139,7 +138,6 @@ class SpotifyPlugin(
                 "client_id": "4e414367a1d14c75a5c5129a627fcab8",
                 "client_secret": "f82bdc09b2254f1a8286815d02fd46dc",
                 "tokenfile": "spotify_token.json",
-                "search_query_ascii": False,
             }
         )
         self.config["client_id"].redact = True
@@ -422,46 +420,23 @@ class SpotifyPlugin(
         track.medium_total = medium_total
         return track
 
-    def _construct_search_query(
-        self, filters: SearchFilter, keywords: str = ""
-    ) -> str:
-        """Construct a query string with the specified filters and keywords to
-        be provided to the Spotify Search API
-        (https://developer.spotify.com/documentation/web-api/reference/search).
-
-        :param filters: (Optional) Field filters to apply.
-        :param keywords: (Optional) Query keywords to use.
-        :return: Query string to be provided to the Search API.
-        """
-
-        query_components = [
-            keywords,
-            " ".join(f"{k}:{v}" for k, v in filters.items()),
-        ]
-        query = " ".join([q for q in query_components if q])
-        if not isinstance(query, str):
-            query = query.decode("utf8")
-
-        if self.config["search_query_ascii"].get():
-            query = unidecode.unidecode(query)
-
-        return query
-
     def _search_api(
         self,
         query_type: Literal["album", "track"],
         filters: SearchFilter,
-        keywords: str = "",
+        query_string: str = "",
     ) -> Sequence[SearchResponseAlbums | SearchResponseTracks]:
-        """Query the Spotify Search API for the specified ``keywords``,
+        """Query the Spotify Search API for the specified ``query_string``,
         applying the provided ``filters``.
 
         :param query_type: Item type to search across. Valid types are:
             'album', 'artist', 'playlist', and 'track'.
-        :param filters: (Optional) Field filters to apply.
-        :param keywords: (Optional) Query keywords to use.
+        :param filters: Field filters to apply.
+        :param query_string: Additional query to include in the search.
         """
-        query = self._construct_search_query(keywords=keywords, filters=filters)
+        query = self._construct_search_query(
+            filters=filters, query_string=query_string
+        )
 
         self._log.debug(f"Searching {self.data_source} for '{query}'")
         try:
@@ -588,16 +563,18 @@ class SpotifyPlugin(
             # Custom values can be passed in the config (just in case)
             artist = item[self.config["artist_field"].get()]
             album = item[self.config["album_field"].get()]
-            keywords = item[self.config["track_field"].get()]
+            query_string = item[self.config["track_field"].get()]
 
             # Query the Web API for each track, look for the items' JSON data
             query_filters: SearchFilter = {"artist": artist, "album": album}
             response_data_tracks = self._search_api(
-                query_type="track", keywords=keywords, filters=query_filters
+                query_type="track",
+                query_string=query_string,
+                filters=query_filters,
             )
             if not response_data_tracks:
                 query = self._construct_search_query(
-                    keywords=keywords, filters=query_filters
+                    query_string=query_string, filters=query_filters
                 )
 
                 failures.append(query)
