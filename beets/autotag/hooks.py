@@ -98,63 +98,64 @@ class AlbumInfo(Info):
     def __init__(
         self,
         tracks: list[TrackInfo],
+        *,
         album_id: str | None = None,
-        asin: str | None = None,
+        albumdisambig: str | None = None,
+        albumstatus: str | None = None,
         albumtype: str | None = None,
         albumtypes: list[str] | None = None,
+        asin: str | None = None,
+        barcode: str | None = None,
+        catalognum: str | None = None,
+        country: str | None = None,
+        day: int | None = None,
+        discogs_albumid: str | None = None,
+        discogs_artistid: str | None = None,
+        discogs_labelid: str | None = None,
+        label: str | None = None,
+        language: str | None = None,
+        mediums: int | None = None,
+        month: int | None = None,
+        original_day: int | None = None,
+        original_month: int | None = None,
+        original_year: int | None = None,
+        release_group_title: str | None = None,
+        releasegroup_id: str | None = None,
+        releasegroupdisambig: str | None = None,
+        script: str | None = None,
+        style: str | None = None,
         va: bool = False,
         year: int | None = None,
-        month: int | None = None,
-        day: int | None = None,
-        label: str | None = None,
-        barcode: str | None = None,
-        mediums: int | None = None,
-        releasegroup_id: str | None = None,
-        release_group_title: str | None = None,
-        catalognum: str | None = None,
-        script: str | None = None,
-        language: str | None = None,
-        country: str | None = None,
-        style: str | None = None,
-        albumstatus: str | None = None,
-        albumdisambig: str | None = None,
-        releasegroupdisambig: str | None = None,
-        original_year: int | None = None,
-        original_month: int | None = None,
-        original_day: int | None = None,
-        discogs_albumid: str | None = None,
-        discogs_labelid: str | None = None,
-        discogs_artistid: str | None = None,
         **kwargs,
     ) -> None:
-        self.album_id = album_id
         self.tracks = tracks
-        self.asin = asin
+        self.album_id = album_id
+        self.albumdisambig = albumdisambig
+        self.albumstatus = albumstatus
         self.albumtype = albumtype
         self.albumtypes = albumtypes or []
+        self.asin = asin
+        self.barcode = barcode
+        self.catalognum = catalognum
+        self.country = country
+        self.day = day
+        self.discogs_albumid = discogs_albumid
+        self.discogs_artistid = discogs_artistid
+        self.discogs_labelid = discogs_labelid
+        self.label = label
+        self.language = language
+        self.mediums = mediums
+        self.month = month
+        self.original_day = original_day
+        self.original_month = original_month
+        self.original_year = original_year
+        self.release_group_title = release_group_title
+        self.releasegroup_id = releasegroup_id
+        self.releasegroupdisambig = releasegroupdisambig
+        self.script = script
+        self.style = style
         self.va = va
         self.year = year
-        self.month = month
-        self.day = day
-        self.label = label
-        self.barcode = barcode
-        self.mediums = mediums
-        self.releasegroup_id = releasegroup_id
-        self.release_group_title = release_group_title
-        self.catalognum = catalognum
-        self.script = script
-        self.language = language
-        self.country = country
-        self.style = style
-        self.albumstatus = albumstatus
-        self.albumdisambig = albumdisambig
-        self.releasegroupdisambig = releasegroupdisambig
-        self.original_year = original_year
-        self.original_month = original_month
-        self.original_day = original_day
-        self.discogs_albumid = discogs_albumid
-        self.discogs_labelid = discogs_labelid
-        self.discogs_artistid = discogs_artistid
         super().__init__(**kwargs)
 
 
@@ -168,46 +169,47 @@ class TrackInfo(Info):
 
     def __init__(
         self,
-        title: str | None = None,
-        track_id: str | None = None,
-        release_track_id: str | None = None,
-        length: float | None = None,
+        *,
+        arranger: str | None = None,
+        bpm: str | None = None,
+        composer: str | None = None,
+        composer_sort: str | None = None,
+        disctitle: str | None = None,
         index: int | None = None,
+        initial_key: str | None = None,
+        length: float | None = None,
+        lyricist: str | None = None,
+        mb_workid: str | None = None,
         medium: int | None = None,
         medium_index: int | None = None,
         medium_total: int | None = None,
-        disctitle: str | None = None,
-        lyricist: str | None = None,
-        composer: str | None = None,
-        composer_sort: str | None = None,
-        arranger: str | None = None,
+        release_track_id: str | None = None,
+        title: str | None = None,
         track_alt: str | None = None,
+        track_id: str | None = None,
         work: str | None = None,
-        mb_workid: str | None = None,
         work_disambig: str | None = None,
-        bpm: str | None = None,
-        initial_key: str | None = None,
         **kwargs,
     ) -> None:
-        self.title = title
-        self.track_id = track_id
-        self.release_track_id = release_track_id
-        self.length = length
+        self.arranger = arranger
+        self.bpm = bpm
+        self.composer = composer
+        self.composer_sort = composer_sort
+        self.disctitle = disctitle
         self.index = index
+        self.initial_key = initial_key
+        self.length = length
+        self.lyricist = lyricist
+        self.mb_workid = mb_workid
         self.medium = medium
         self.medium_index = medium_index
         self.medium_total = medium_total
-        self.disctitle = disctitle
-        self.lyricist = lyricist
-        self.composer = composer
-        self.composer_sort = composer_sort
-        self.arranger = arranger
+        self.release_track_id = release_track_id
+        self.title = title
         self.track_alt = track_alt
+        self.track_id = track_id
         self.work = work
-        self.mb_workid = mb_workid
         self.work_disambig = work_disambig
-        self.bpm = bpm
-        self.initial_key = initial_key
         super().__init__(**kwargs)
 
 
