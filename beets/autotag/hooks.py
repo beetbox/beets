@@ -16,7 +16,10 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
 from typing import TYPE_CHECKING, Any, NamedTuple, TypeVar
+
+from typing_extensions import Self
 
 from beets import logging
 
@@ -36,6 +39,9 @@ class AttrDict(dict[str, V]):
     is equivalent to `d['field']`.
     """
 
+    def copy(self) -> Self:
+        return deepcopy(self)
+
     def __getattr__(self, attr: str) -> V:
         if attr in self:
             return self[attr]
@@ -49,7 +55,11 @@ class AttrDict(dict[str, V]):
         return id(self)
 
 
-class AlbumInfo(AttrDict[Any]):
+class Info(AttrDict[Any]):
+    pass
+
+
+class AlbumInfo(Info):
     """Describes a canonical release that may be used to match a release
     in the library. Consists of these data members:
 
@@ -152,14 +162,8 @@ class AlbumInfo(AttrDict[Any]):
         self.discogs_artistid = discogs_artistid
         self.update(kwargs)
 
-    def copy(self) -> AlbumInfo:
-        dupe = AlbumInfo([])
-        dupe.update(self)
-        dupe.tracks = [track.copy() for track in self.tracks]
-        return dupe
 
-
-class TrackInfo(AttrDict[Any]):
+class TrackInfo(Info):
     """Describes a canonical track present on a release. Appears as part
     of an AlbumInfo's ``tracks`` list. Consists of these data members:
 
@@ -241,11 +245,6 @@ class TrackInfo(AttrDict[Any]):
         self.genre = genre
         self.album = album
         self.update(kwargs)
-
-    def copy(self) -> TrackInfo:
-        dupe = TrackInfo()
-        dupe.update(self)
-        return dupe
 
 
 # Structures that compose all the information for a candidate match.
