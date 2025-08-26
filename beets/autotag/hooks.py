@@ -21,14 +21,10 @@ from typing import TYPE_CHECKING, Any, NamedTuple, TypeVar
 
 from typing_extensions import Self
 
-from beets import logging
-
 if TYPE_CHECKING:
     from beets.library import Item
 
     from .distance import Distance
-
-log = logging.getLogger("beets")
 
 V = TypeVar("V")
 
@@ -45,13 +41,15 @@ class AttrDict(dict[str, V]):
     def __getattr__(self, attr: str) -> V:
         if attr in self:
             return self[attr]
-        else:
-            raise AttributeError
 
-    def __setattr__(self, key: str, value: V):
+        raise AttributeError(
+            f"'{self.__class__.__name__}' object has no attribute '{attr}'"
+        )
+
+    def __setattr__(self, key: str, value: V) -> None:
         self.__setitem__(key, value)
 
-    def __hash__(self):
+    def __hash__(self) -> int:  # type: ignore[override]
         return id(self)
 
 
@@ -103,7 +101,6 @@ class AlbumInfo(Info):
     The others are optional and may be None.
     """
 
-    # TYPING: are all of these correct? I've assumed optional strings
     def __init__(
         self,
         tracks: list[TrackInfo],
@@ -135,7 +132,7 @@ class AlbumInfo(Info):
         discogs_labelid: str | None = None,
         discogs_artistid: str | None = None,
         **kwargs,
-    ):
+    ) -> None:
         self.album_id = album_id
         self.tracks = tracks
         self.asin = asin
@@ -179,7 +176,6 @@ class TrackInfo(Info):
     are all 1-based.
     """
 
-    # TYPING: are all of these correct? I've assumed optional strings
     def __init__(
         self,
         title: str | None = None,
@@ -202,7 +198,7 @@ class TrackInfo(Info):
         bpm: str | None = None,
         initial_key: str | None = None,
         **kwargs,
-    ):
+    ) -> None:
         self.title = title
         self.track_id = track_id
         self.release_track_id = release_track_id
