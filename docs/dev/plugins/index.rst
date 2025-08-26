@@ -15,8 +15,8 @@ Basic Plugin Setup
 ------------------
 
 A beets plugin is just a Python module or package inside the ``beetsplug``
-namespace [namespace]_ package. To create the basic plugin layout, create a
-directory called ``beetsplug`` and add either your plugin module:
+namespace [1]_ package. To create the basic plugin layout, create a directory
+called ``beetsplug`` and add either your plugin module:
 
 .. code-block:: shell
 
@@ -40,8 +40,8 @@ or your plugin subpackage
     anymore.
 
 The meat of your plugin goes in ``myawesomeplugin.py``. Every plugin has to
-extend the :class:`beets.plugins.BeetsPlugin` abstract base class [baseclass]_ .
-For instance, a minimal plugin without any functionality would look like this:
+extend the :class:`beets.plugins.BeetsPlugin` abstract base class [2]_ . For
+instance, a minimal plugin without any functionality would look like this:
 
 .. code-block:: python
 
@@ -52,9 +52,9 @@ For instance, a minimal plugin without any functionality would look like this:
     class MyAwesomePlugin(BeetsPlugin):
         pass
 
-To use your new plugin, you need to package [packaging]_ your plugin and install
-it into your ``beets`` (virtual) environment. To enable your plugin, add it it
-to the beets configuration
+To use your new plugin, you need to package [3]_ your plugin and install it into
+your ``beets`` (virtual) environment. To enable your plugin, add it it to the
+beets configuration
 
 .. code-block:: yaml
 
@@ -64,16 +64,16 @@ to the beets configuration
 
 and you're good to go!
 
-.. [namespace] Check out `this article`_ and `this Stack Overflow question`_ if
-    you haven't heard about namespace packages.
+.. [1] Check out `this article`_ and `this Stack Overflow question`_ if you
+    haven't heard about namespace packages.
 
-.. [baseclass] Abstract base classes allow us to define a contract which any
-    plugin must follow. This is a common paradigm in object-oriented
-    programming, and it helps to ensure that plugins are implemented in a
-    consistent way. For more information, see for example pep-3119_.
+.. [2] Abstract base classes allow us to define a contract which any plugin must
+    follow. This is a common paradigm in object-oriented programming, and it
+    helps to ensure that plugins are implemented in a consistent way. For more
+    information, see for example pep-3119_.
 
-.. [packaging] There are a variety of packaging tools available for python, for
-    example you can use poetry_, setuptools_ or hatchling_.
+.. [3] There are a variety of packaging tools available for python, for example
+    you can use poetry_, setuptools_ or hatchling_.
 
 .. _hatchling: https://hatch.pypa.io/latest/config/build/#build-system
 
