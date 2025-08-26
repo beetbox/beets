@@ -31,9 +31,7 @@ V = TypeVar("V")
 
 # Classes used to represent candidate options.
 class AttrDict(dict[str, V]):
-    """A dictionary that supports attribute ("dot") access, so `d.field`
-    is equivalent to `d['field']`.
-    """
+    """Mapping enabling attribute-style access to stored metadata values."""
 
     def copy(self) -> Self:
         return deepcopy(self)
@@ -54,6 +52,8 @@ class AttrDict(dict[str, V]):
 
 
 class Info(AttrDict[Any]):
+    """Container for metadata about a musical entity."""
+
     def __init__(
         self,
         album: str | None = None,
@@ -88,17 +88,11 @@ class Info(AttrDict[Any]):
 
 
 class AlbumInfo(Info):
-    """Describes a canonical release that may be used to match a release
-    in the library. Consists of these data members:
+    """Metadata snapshot representing a single album candidate.
 
-    - ``album``: the release title
-    - ``album_id``: MusicBrainz ID; UUID fragment only
-    - ``artist``: name of the release's primary artist
-    - ``artist_id``
-    - ``tracks``: list of TrackInfo objects making up the release
-
-    ``mediums`` along with the fields up through ``tracks`` are required.
-    The others are optional and may be None.
+    Aggregates track entries and album-wide context gathered from an external
+    provider. Used during matching to evaluate similarity against a group of
+    user items, and later to drive tagging decisions once selected.
     """
 
     def __init__(
@@ -165,15 +159,11 @@ class AlbumInfo(Info):
 
 
 class TrackInfo(Info):
-    """Describes a canonical track present on a release. Appears as part
-    of an AlbumInfo's ``tracks`` list. Consists of these data members:
+    """Metadata snapshot for a single track candidate.
 
-    - ``title``: name of the track
-    - ``track_id``: MusicBrainz ID; UUID fragment only
-
-    Only ``title`` and ``track_id`` are required. The rest of the fields
-    may be None. The indices ``index``, ``medium``, and ``medium_index``
-    are all 1-based.
+    Captures identifying details and creative credits used to compare against
+    a user's item. Instances often originate within an AlbumInfo but may also
+    stand alone for singleton matching.
     """
 
     def __init__(
