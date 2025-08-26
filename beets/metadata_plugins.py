@@ -11,11 +11,21 @@ import abc
 import inspect
 import re
 import warnings
-from typing import TYPE_CHECKING, Generic, Literal, Sequence, TypedDict, TypeVar
+from typing import (
+    TYPE_CHECKING,
+    Callable,
+    Generic,
+    Iterator,
+    Literal,
+    Sequence,
+    TypedDict,
+    TypeVar,
+)
 
 import unidecode
-from typing_extensions import NotRequired
+from typing_extensions import NotRequired, ParamSpec
 
+from beets import logging
 from beets.util import cached_classproperty
 from beets.util.id_extractors import extract_release_id
 
@@ -26,8 +36,13 @@ if TYPE_CHECKING:
 
     from confuse import ConfigView
 
-    from .autotag import Distance
-    from .autotag.hooks import AlbumInfo, Item, TrackInfo
+    from .autotag.hooks import AlbumInfo, Distance, Item, TrackInfo
+
+    P = ParamSpec("P")
+    R = TypeVar("R")
+
+# Global logger.
+log = logging.getLogger("beets")
 
 
 def find_metadata_source_plugins() -> list[MetadataSourcePlugin]:
@@ -57,17 +72,17 @@ def find_metadata_source_plugins() -> list[MetadataSourcePlugin]:
 
 
 @notify_info_yielded("albuminfo_received")
-def candidates(*args, **kwargs) -> Iterable[AlbumInfo]:
+def candidates(*args, **kwargs) -> Iterator[AlbumInfo]:
     """Return matching album candidates from all metadata source plugins."""
     for plugin in find_metadata_source_plugins():
-        yield from plugin.candidates(*args, **kwargs)
+        yield from _safe_yield_from(plugin.candidates, *args, **kwargs)
 
 
 @notify_info_yielded("trackinfo_received")
 def item_candidates(*args, **kwargs) -> Iterable[TrackInfo]:
-    """Return matching track candidates fromm all metadata source plugins."""
+    """Return matching track candidates from all metadata source plugins."""
     for plugin in find_metadata_source_plugins():
-        yield from plugin.item_candidates(*args, **kwargs)
+        yield from _safe_yield_from(plugin.item_candidates, *args, **kwargs)
 
 
 def album_for_id(_id: str) -> AlbumInfo | None:
@@ -76,7 +91,7 @@ def album_for_id(_id: str) -> AlbumInfo | None:
     A single ID can yield just a single album, so we return the first match.
     """
     for plugin in find_metadata_source_plugins():
-        if info := plugin.album_for_id(album_id=_id):
+        if info := _safe_call(plugin.album_for_id, _id):
             send("albuminfo_received", info=info)
             return info
 
@@ -89,7 +104,7 @@ def track_for_id(_id: str) -> TrackInfo | None:
     A single ID can yield just a single track, so we return the first match.
     """
     for plugin in find_metadata_source_plugins():
-        if info := plugin.track_for_id(_id):
+        if info := _safe_call(plugin.track_for_id, _id):
             send("trackinfo_received", info=info)
             return info
 
@@ -106,7 +121,8 @@ def track_distance(item: Item, info: TrackInfo) -> Distance:
 
     dist = Distance()
     for plugin in find_metadata_source_plugins():
-        dist.update(plugin.track_distance(item, info))
+        if distance := _safe_call(plugin.track_distance, item, info):
+            dist.update(distance)
     return dist
 
 
@@ -120,8 +136,40 @@ def album_distance(
 
     dist = Distance()
     for plugin in find_metadata_source_plugins():
-        dist.update(plugin.album_distance(items, album_info, mapping))
+        if distance := _safe_call(
+            plugin.album_distance, items, album_info, mapping
+        ):
+            dist.update(distance)
     return dist
+
+
+def _safe_call(
+    func: Callable[P, R], *arg: P.args, **kwargs: P.kwargs
+) -> R | None:
+    """Helper function to safely call plugin functions.
+
+    Wraps the function call in a try/except block and logs any exceptions
+    that occur.
+    """
+
+    try:
+        return func(*arg, **kwargs)
+    except Exception as e:
+        log.error(f"Error in metadata source plugin {func.__name__}: {e}")
+        log.debug("Exception details:", exc_info=True)
+
+    return None
+
+
+def _safe_yield_from(
+    func: Callable[P, Iterable[R]], *arg: P.args, **kwargs: P.kwargs
+) -> Iterable[R]:
+    """Helper function to safely yield from plugin functions."""
+    try:
+        yield from func(*arg, **kwargs)
+    except Exception as e:
+        log.error(f"Error in metadata source plugin {func.__name__}: {e}")
+        log.debug("Exception details:", exc_info=True)
 
 
 def _get_distance(
@@ -320,11 +368,11 @@ class SearchFilter(TypedDict):
     album: NotRequired[str]
 
 
-R = TypeVar("R", bound=IDResponse)
+Res = TypeVar("Res", bound=IDResponse)
 
 
 class SearchApiMetadataSourcePlugin(
-    Generic[R], MetadataSourcePlugin, metaclass=abc.ABCMeta
+    Generic[Res], MetadataSourcePlugin, metaclass=abc.ABCMeta
 ):
     """Helper class to implement a metadata source plugin with an API.
 
@@ -349,7 +397,7 @@ class SearchApiMetadataSourcePlugin(
         query_type: Literal["album", "track"],
         filters: SearchFilter,
         query_string: str = "",
-    ) -> Sequence[R]:
+    ) -> Sequence[Res]:
         """Perform a search on the API.
 
         :param query_type: The type of query to perform.
