@@ -5,7 +5,7 @@ from __future__ import annotations
 import random
 from itertools import groupby, islice
 from operator import attrgetter
-from typing import TYPE_CHECKING, Any, Iterable, Sequence, Union
+from typing import TYPE_CHECKING, Any, Iterable
 
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, print_
@@ -13,9 +13,7 @@ from beets.ui import Subcommand, print_
 if TYPE_CHECKING:
     import optparse
 
-    from beets.library import Album, Item, Library
-
-    T = Union[Item, Album]
+    from beets.library import LibModel, Library
 
 
 def random_func(lib: Library, opts: optparse.Values, args: list[str]):
@@ -25,7 +23,7 @@ def random_func(lib: Library, opts: optparse.Values, args: list[str]):
 
     # Print a random subset.
     for obj in random_objs(
-        objs=list(objs),
+        objs=objs,
         number=opts.number,
         time_minutes=opts.time,
         equal_chance=opts.equal_chance,
@@ -76,9 +74,8 @@ NOT_FOUND_SENTINEL = object()
 
 
 def _equal_chance_permutation(
-    objs: Sequence[T],
-    field: str = "albumartist",
-) -> Iterable[T]:
+    objs: Iterable[LibModel], field: str = "albumartist"
+) -> Iterable[LibModel]:
     """Generate (lazily) a permutation of the objects where every group
     with equal values for `field` have an equal chance of appearing in
     any given position.
@@ -86,7 +83,7 @@ def _equal_chance_permutation(
     # Group the objects by artist so we can sample from them.
     key = attrgetter(field)
 
-    def get_attr(obj: T) -> Any:
+    def get_attr(obj: LibModel) -> Any:
         try:
             return key(obj)
         except AttributeError:
@@ -94,7 +91,7 @@ def _equal_chance_permutation(
 
     sorted(objs, key=get_attr)
 
-    groups: dict[str | object, list[T]] = {
+    groups: dict[str | object, list[LibModel]] = {
         NOT_FOUND_SENTINEL: [],
     }
     for k, values in groupby(objs, key=get_attr):
@@ -112,9 +109,9 @@ def _equal_chance_permutation(
 
 
 def _take_time(
-    iter: Iterable[T],
+    iter: Iterable[LibModel],
     secs: float,
-) -> Iterable[T]:
+) -> Iterable[LibModel]:
     """Return a list containing the first values in `iter`, which should
     be Item or Album objects, that add up to the given amount of time in
     seconds.
@@ -128,12 +125,12 @@ def _take_time(
 
 
 def random_objs(
-    objs: Sequence[T],
+    objs: Iterable[LibModel],
     number: int = 1,
     time_minutes: float | None = None,
     equal_chance: bool = False,
     equal_chance_field: str = "albumartist",
-) -> Iterable[T]:
+) -> Iterable[LibModel]:
     """Get a random subset of items, optionally constrained by time or count.
 
     Args:
@@ -147,7 +144,7 @@ def random_objs(
     """
     # Permute the objects either in a straightforward way or an
     # artist-balanced way.
-    perm: Iterable[T]
+    perm: Iterable[LibModel]
     if equal_chance:
         perm = _equal_chance_permutation(objs, field=equal_chance_field)
     else:
