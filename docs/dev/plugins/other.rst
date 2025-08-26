@@ -5,29 +5,6 @@ Further Reading
     :local:
     :depth: 2
 
-Extending the Autotagger
-------------------------
-
-.. currentmodule:: beets.metadata_plugins
-
-Plugins can also be used to extend the autotagger functions i.e. the metadata
-lookup from external sources. For this your plugin has to extend the
-:py:class:`MetadataSourcePlugin` base class and implement all abstract methods.
-
-On metadata lookup, the autotagger will try to find matching candidates from all
-enabled metadata source plugins. To do this, we will call the
-:py:meth:`MetadataSourcePlugin.candidates` (or
-:py:meth:`MetadataSourcePlugin.item_candidates`) with all available (local)
-metadata. The list of retrieved candidates will be ranked by their
-:py:meth:`MetadataSourcePlugin.album_distance` (or
-:py:meth:`MetadataSourcePlugin.track_distance`) and be presented to the user for
-selection (or automatically selected if the threshold is met).
-
-Please have a look at the ``beets.autotag`` and especially the
-``beets.metadata_plugin`` modules for more information. Additionally, for a
-comprehensive example, see the ``musicbrainz`` or ``chroma`` plugins, which are
-included with beets.
-
 Read Configuration Options
 --------------------------
 

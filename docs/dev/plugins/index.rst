@@ -99,4 +99,5 @@ resources:
 
     commands
     events
+    autotagger
     other
