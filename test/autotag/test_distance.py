@@ -147,11 +147,15 @@ class TestDistance:
 
 class TestTrackDistance:
     @pytest.fixture(scope="class")
+    def config(self):
+        return ConfigMixin().config
+
+    @pytest.fixture(scope="class")
     def info(self):
         return TrackInfo(title="title", artist="artist")
 
     @pytest.mark.parametrize(
-        "title, artist, expected_penalty",
+        "title, artist, penalized",
         [
             _p("title", "artist", False, id="identical"),
             _p("title", "Various Artists", False, id="tolerate-va"),
@@ -159,16 +163,42 @@ class TestTrackDistance:
             _p("different title", "artist", True, id="different-title"),
         ],
     )
-    def test_track_distance(self, info, title, artist, expected_penalty):
+    def test_track_distance(self, info, title, artist, penalized):
         item = Item(artist=artist, title=title)
 
-        assert (
-            bool(track_distance(item, info, incl_artist=True))
-            == expected_penalty
-        )
+        assert bool(track_distance(item, info, incl_artist=True)) is penalized
+
+    @pytest.mark.parametrize(
+        "info_artist_credit, artist_credit_preferred, penalized",
+        [
+            _p("artist", True, False, id="identical"),
+            _p("artist", False, False, id="identical-irrelevant"),
+            _p("artist-credit", True, True, id="mismatch"),
+            _p("artist-credit", False, False, id="mismatch-irrelevant"),
+            _p(None, True, False, id="none"),
+            _p(None, False, False, id="none-irrelevant"),
+        ],
+    )
+    def test_track_distance_with_credit(
+        self,
+        config,
+        info,
+        info_artist_credit,
+        artist_credit_preferred,
+        penalized,
+    ):
+        config["artist_credit"] = artist_credit_preferred
+        info.artist_credit = info_artist_credit
+        item = Item(artist=info.artist, title=info.title)
+
+        assert bool(track_distance(item, info, incl_artist=True)) is penalized
 
 
 class TestAlbumDistance:
+    @pytest.fixture(scope="class")
+    def config(self):
+        return ConfigMixin().config
+
     @pytest.fixture(scope="class")
     def items(self):
         return [
@@ -221,12 +251,45 @@ class TestAlbumDistance:
 
         assert 0 < float(get_dist(info)) < 0.2
 
-    @pytest.mark.parametrize("va", [True, False])
-    def test_albumartist(self, get_dist, info, va):
-        info.artist = "another artist"
-        info.va = va
+    @pytest.mark.parametrize(
+        "info_artist, info_va, penalized",
+        [
+            _p("artist", False, False, id="identical"),
+            _p("artist", True, False, id="identical-va-irrelevant"),
+            _p("another artist", False, True, id="mismatch"),
+            _p("another artist", True, False, id="mismatch-va-tolerated"),
+        ],
+    )
+    def test_albumartist(self, get_dist, info, info_artist, info_va, penalized):
+        info.artist = info_artist
+        info.va = info_va
 
-        assert bool(get_dist(info)) is not va
+        assert (get_dist(info) > 0) is penalized
+
+    @pytest.mark.parametrize(
+        "info_artist_credit, artist_credit_preferred, penalized",
+        [
+            _p("artist", True, False, id="identical"),
+            _p("artist", False, False, id="identical-irrelevant"),
+            _p("artist-credit", True, True, id="mismatch"),
+            _p("artist-credit", False, False, id="mismatch-tolerated"),
+            _p(None, True, False, id="none"),
+            _p(None, False, False, id="none-irrelevant"),
+        ],
+    )
+    def test_albumartist_with_credit(
+        self,
+        config,
+        get_dist,
+        info,
+        info_artist_credit,
+        artist_credit_preferred,
+        penalized,
+    ):
+        config["artist_credit"] = artist_credit_preferred
+        info.artist_credit = info_artist_credit
+
+        assert (get_dist(info) > 0) is penalized
 
     def test_comp_no_track_artists(self, get_dist, info):
         # Some VA releases don't have track artists (incomplete metadata).

@@ -389,12 +389,17 @@ def track_distance(
     dist.add_string("track_title", item.title, track_info.title)
 
     # Artist. Only check if there is actually an artist in the track data.
+    if config["artist_credit"]:
+        track_info_artist = track_info.artist_credit or track_info.artist
+    else:
+        track_info_artist = track_info.artist
+
     if (
         incl_artist
-        and track_info.artist
+        and track_info_artist
         and item.artist.lower() not in VA_ARTISTS
     ):
-        dist.add_string("track_artist", item.artist, track_info.artist)
+        dist.add_string("track_artist", item.artist, track_info_artist)
 
     # Track index.
     if track_info.index and item.track:
@@ -433,7 +438,12 @@ def distance(
 
     # Artist, if not various.
     if not album_info.va:
-        dist.add_string("artist", likelies["artist"], album_info.artist)
+        if config["artist_credit"]:
+            album_info_artist = album_info.artist_credit or album_info.artist
+        else:
+            album_info_artist = album_info.artist
+
+        dist.add_string("artist", likelies["artist"], album_info_artist)
 
     # Album.
     dist.add_string("album", likelies["album"], album_info.album)

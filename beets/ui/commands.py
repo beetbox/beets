@@ -363,15 +363,22 @@ class ChangeRepresentation:
             self.indent_header + f"Match ({dist_string(self.match.distance)}):"
         )
 
+        if config["artist_credit"]:
+            match_info_artist = (
+                self.match.info.artist_credit or self.match.info.artist
+            )
+        else:
+            match_info_artist = self.match.info.artist
+
         if isinstance(self.match.info, autotag.hooks.AlbumInfo):
             # Matching an album - print that
             artist_album_str = (
-                f"{self.match.info.artist}" + f" - {self.match.info.album}"
+                f"{match_info_artist}" + f" - {self.match.info.album}"
             )
         else:
             # Matching a single track
             artist_album_str = (
-                f"{self.match.info.artist}" + f" - {self.match.info.title}"
+                f"{match_info_artist}" + f" - {self.match.info.title}"
             )
         print_(
             self.indent_header
@@ -398,7 +405,13 @@ class ChangeRepresentation:
         and artist name.
         """
         # Artist.
-        artist_l, artist_r = self.cur_artist or "", self.match.info.artist
+        artist_l = self.cur_artist or ""
+
+        if config["artist_credit"]:
+            artist_r = self.match.info.artist_credit or self.match.info.artist
+        else:
+            artist_r = self.match.info.artist
+
         if artist_r == VARIOUS_ARTISTS:
             # Hide artists for VA releases.
             artist_l, artist_r = "", ""
