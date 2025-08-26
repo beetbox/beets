@@ -21,7 +21,6 @@ import time
 from typing import TYPE_CHECKING, Literal, Sequence
 
 import requests
-import unidecode
 
 from beets import ui
 from beets.autotag import AlbumInfo, TrackInfo
@@ -216,27 +215,6 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
             deezer_updated=time.time(),
         )
 
-    @staticmethod
-    def _construct_search_query(
-        filters: SearchFilter, keywords: str = ""
-    ) -> str:
-        """Construct a query string with the specified filters and keywords to
-        be provided to the Deezer Search API
-        (https://developers.deezer.com/api/search).
-
-        :param filters: Field filters to apply.
-        :param keywords: (Optional) Query keywords to use.
-        :return: Query string to be provided to the Search API.
-        """
-        query_components = [
-            keywords,
-            " ".join(f'{k}:"{v}"' for k, v in filters.items()),
-        ]
-        query = " ".join([q for q in query_components if q])
-        if not isinstance(query, str):
-            query = query.decode("utf8")
-        return unidecode.unidecode(query)
-
     def _search_api(
         self,
         query_type: Literal[
@@ -250,17 +228,19 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
             "user",
         ],
         filters: SearchFilter,
-        keywords="",
+        query_string: str = "",
     ) -> Sequence[IDResponse]:
-        """Query the Deezer Search API for the specified ``keywords``, applying
+        """Query the Deezer Search API for the specified ``query_string``, applying
         the provided ``filters``.
 
         :param filters: Field filters to apply.
-        :param keywords: Query keywords to use.
+        :param query_string: Additional query to include in the search.
         :return: JSON data for the class:`Response <Response>` object or None
             if no search results are returned.
         """
-        query = self._construct_search_query(keywords=keywords, filters=filters)
+        query = self._construct_search_query(
+            query_string=query_string, filters=filters
+        )
         self._log.debug(f"Searching {self.data_source} for '{query}'")
         try:
             response = requests.get(
