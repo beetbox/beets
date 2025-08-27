@@ -100,7 +100,7 @@ requests_oauthlib = "*"
 responses = ">=0.3.0"
 
 [tool.poetry.group.lint.dependencies]
-docstrfmt = ">=1.11.0"
+docstrfmt = ">=1.11.1"
 ruff = ">=0.6.4"
 sphinx-lint = ">=1.0.0"
 

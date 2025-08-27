@@ -1,3 +1,5 @@
+.. _using-the-auto-tagger:
+
 Using the Auto-Tagger
 =====================
 
