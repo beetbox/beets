@@ -289,4 +289,4 @@ constructs include:
 The :doc:`/plugins/inline` lets you define template fields in your beets
 configuration file using Python snippets. And for more advanced processing, you
 can go all-in and write a dedicated plugin to register your own fields and
-functions (see :ref:`writing-plugins`).
+functions (see :ref:`basic-plugin-setup`).
