@@ -13,7 +13,7 @@ configuration files, respectively.
 .. _mediafile: https://mediafile.readthedocs.io/en/latest/
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
     :titlesonly:
 
     plugins/index

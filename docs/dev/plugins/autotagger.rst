@@ -47,15 +47,18 @@ Here`s a minimal example:
 
         def album_for_id(self, album_id: str): ...
 
-How Metadata Lookup Works
--------------------------
+Each metadata source plugin automatically gets a unique identifier. You can
+access this identifier using the :py:meth:`~MetadataSourcePlugin.data_source`
+class property to tell plugins apart.
+
+Metadata lookup
+---------------
 
 When beets runs the autotagger, it queries **all enabled metadata source
 plugins** for potential matches:
 
 - For **albums**, it calls :py:meth:`~MetadataSourcePlugin.candidates`.
-- For **individual items**, it calls
-  :py:meth:`~MetadataSourcePlugin.item_candidates`.
+- For **singletons**, it calls :py:meth:`~MetadataSourcePlugin.item_candidates`.
 
 The results are combined and scored. By default, candidate ranking is handled
 automatically by the beets core, but you can customize weighting by overriding:
@@ -66,20 +69,19 @@ automatically by the beets core, but you can customize weighting by overriding:
 This is optional, if not overridden, both methods return a constant distance of
 `0.5`.
 
-Implementing ID-based Lookups
------------------------------
+ID-based lookups
+----------------
 
 Your plugin must also define:
 
 - :py:meth:`~MetadataSourcePlugin.album_for_id` — fetch album metadata by ID.
 - :py:meth:`~MetadataSourcePlugin.track_for_id` — fetch track metadata by ID.
 
-These methods should return `None` if your source doesn`t support ID lookups.
 IDs are expected to be strings. If your source uses specific formats, consider
 contributing an extractor regex to the core module:
 :py:mod:`beets.util.id_extractors`.
 
-Best Practices
+Best practices
 --------------
 
 Beets already ships with several metadata source plugins. Studying these
@@ -90,7 +92,7 @@ starting points include:
 - `deezer`
 - `discogs`
 
-Migration Guidance
+Migration guidance
 ------------------
 
 Older metadata plugins that extend :py:class:`beets.plugins.BeetsPlugin` should
@@ -101,3 +103,5 @@ in **beets v3.0.0**.
 
     - :py:mod:`beets.autotag`
     - :py:mod:`beets.metadata_plugins`
+    - :ref:`autotagger_extensions`
+    - :ref:`using-the-auto-tagger`

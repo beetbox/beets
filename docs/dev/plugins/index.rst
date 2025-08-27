@@ -94,7 +94,7 @@ For more information on writing plugins, feel free to check out the following
 resources:
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 3
     :includehidden:
 
     commands
