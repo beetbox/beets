@@ -132,7 +132,7 @@ class PlaylistTestRelativeToLib(PlaylistQueryTest, PlaylistTestCase):
                 [
                     os.path.join("a", "b", "c.mp3") + "\n",
                     os.path.join("d", "e", "f.mp3") + "\n",
-                    "nonexisting.mp3" + "\n",
+                    "nonexisting.mp3\n",
                 ]
             )
 
@@ -155,7 +155,7 @@ class PlaylistTestRelativeToDir(PlaylistQueryTest, PlaylistTestCase):
                 [
                     os.path.join("a", "b", "c.mp3") + "\n",
                     os.path.join("d", "e", "f.mp3") + "\n",
-                    "nonexisting.mp3" + "\n",
+                    "nonexisting.mp3\n",
                 ]
             )
 
@@ -214,7 +214,7 @@ class PlaylistUpdateTest:
                 [
                     os.path.join("a", "b", "c.mp3") + "\n",
                     os.path.join("d", "e", "f.mp3") + "\n",
-                    "nonexisting.mp3" + "\n",
+                    "nonexisting.mp3\n",
                 ]
             )
 

@@ -307,7 +307,7 @@ class MPDStats:
             if "player" in events:
                 status = self.mpd.status()
 
-                handler = getattr(self, "on_" + status["state"], None)
+                handler = getattr(self, f"on_{status['state']}", None)
 
                 if handler:
                     handler(status)

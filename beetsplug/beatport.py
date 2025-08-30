@@ -110,7 +110,7 @@ class BeatportClient:
         :returns:           OAuth resource owner key and secret as unicode
         """
         self.api.parse_authorization_response(
-            "https://beets.io/auth?" + auth_data
+            f"https://beets.io/auth?{auth_data}"
         )
         access_data = self.api.fetch_access_token(
             self._make_url("/identity/1/oauth/access-token")
@@ -200,8 +200,8 @@ class BeatportClient:
     def _make_url(self, endpoint: str) -> str:
         """Get complete URL for a given API endpoint."""
         if not endpoint.startswith("/"):
-            endpoint = "/" + endpoint
-        return self._api_base + endpoint
+            endpoint = f"/{endpoint}"
+        return f"{self._api_base}{endpoint}"
 
     def _get(self, endpoint: str, **kwargs) -> list[JSONDict]:
         """Perform a GET request on a given API endpoint.

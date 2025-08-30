@@ -190,7 +190,7 @@ class MatchQuery(FieldQuery[AnySQLiteType]):
     """A query that looks for exact matches in an Model field."""
 
     def col_clause(self) -> tuple[str, Sequence[SQLiteType]]:
-        return self.field + " = ?", [self.pattern]
+        return f"{self.field} = ?", [self.pattern]
 
     @classmethod
     def value_match(cls, pattern: AnySQLiteType, value: Any) -> bool:
@@ -204,7 +204,7 @@ class NoneQuery(FieldQuery[None]):
         super().__init__(field, None, fast)
 
     def col_clause(self) -> tuple[str, Sequence[SQLiteType]]:
-        return self.field + " IS NULL", ()
+        return f"{self.field} IS NULL", ()
 
     def match(self, obj: Model) -> bool:
         return obj.get(self.field_name) is None
@@ -246,7 +246,7 @@ class StringQuery(StringFieldQuery[str]):
             .replace("%", "\\%")
             .replace("_", "\\_")
         )
-        clause = self.field + " like ? escape '\\'"
+        clause = f"{self.field} like ? escape '\\'"
         subvals = [search]
         return clause, subvals
 
@@ -264,8 +264,8 @@ class SubstringQuery(StringFieldQuery[str]):
             .replace("%", "\\%")
             .replace("_", "\\_")
         )
-        search = "%" + pattern + "%"
-        clause = self.field + " like ? escape '\\'"
+        search = f"%{pattern}%"
+        clause = f"{self.field} like ? escape '\\'"
         subvals = [search]
         return clause, subvals
 
@@ -471,7 +471,7 @@ class NumericQuery(FieldQuery[str]):
 
     def col_clause(self) -> tuple[str, Sequence[SQLiteType]]:
         if self.point is not None:
-            return self.field + "=?", (self.point,)
+            return f"{self.field}=?", (self.point,)
         else:
             if self.rangemin is not None and self.rangemax is not None:
                 return (
@@ -549,9 +549,9 @@ class CollectionQuery(Query):
             if not subq_clause:
                 # Fall back to slow query.
                 return None, ()
-            clause_parts.append("(" + subq_clause + ")")
+            clause_parts.append(f"({subq_clause})")
             subvals += subq_subvals
-        clause = (" " + joiner + " ").join(clause_parts)
+        clause = f" {joiner} ".join(clause_parts)
         return clause, subvals
 
     def __repr__(self) -> str:
@@ -690,9 +690,7 @@ class Period:
         ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"),  # second
     )
     relative_units = {"y": 365, "m": 30, "w": 7, "d": 1}
-    relative_re = (
-        "(?P<sign>[+|-]?)(?P<quantity>[0-9]+)" + "(?P<timespan>[y|m|w|d])"
-    )
+    relative_re = "(?P<sign>[+|-]?)(?P<quantity>[0-9]+)(?P<timespan>[y|m|w|d])"
 
     def __init__(self, date: datetime, precision: str):
         """Create a period with the given date (a `datetime` object) and

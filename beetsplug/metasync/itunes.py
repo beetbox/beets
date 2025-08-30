@@ -81,7 +81,7 @@ class Itunes(MetaSource):
                 with open(library_copy, "rb") as library_copy_f:
                     raw_library = plistlib.load(library_copy_f)
         except OSError as e:
-            raise ConfigValueError("invalid iTunes library: " + e.strerror)
+            raise ConfigValueError(f"invalid iTunes library: {e.strerror}")
         except Exception:
             # It's likely the user configured their '.itl' library (<> xml)
             if os.path.splitext(library_path)[1].lower() != ".xml":
@@ -91,7 +91,7 @@ class Itunes(MetaSource):
                 )
             else:
                 hint = ""
-            raise ConfigValueError("invalid iTunes library" + hint)
+            raise ConfigValueError(f"invalid iTunes library{hint}")
 
         # Make the iTunes library queryable using the path
         self.collection = {

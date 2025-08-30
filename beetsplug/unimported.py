@@ -34,7 +34,7 @@ class Unimported(BeetsPlugin):
     def commands(self):
         def print_unimported(lib, opts, args):
             ignore_exts = [
-                ("." + x).encode()
+                f".{x}".encode()
                 for x in self.config["ignore_extensions"].as_str_seq()
             ]
             ignore_dirs = [

@@ -292,7 +292,9 @@ class SpotifyPlugin(
         if not (spotify_id := self._extract_id(album_id)):
             return None
 
-        album_data = self._handle_response("get", self.album_url + spotify_id)
+        album_data = self._handle_response(
+            "get", f"{self.album_url}{spotify_id}"
+        )
         if album_data["name"] == "":
             self._log.debug("Album removed from Spotify: {}", album_id)
             return None
@@ -408,7 +410,7 @@ class SpotifyPlugin(
         # release) and `track.medium_total` (total number of tracks on
         # the track's disc).
         album_data = self._handle_response(
-            "get", self.album_url + track_data["album"]["id"]
+            "get", f"{self.album_url}{track_data['album']['id']}"
         )
         medium_total = 0
         for i, track_data in enumerate(album_data["tracks"]["items"], start=1):
@@ -447,7 +449,7 @@ class SpotifyPlugin(
         except APIError as e:
             self._log.debug("Spotify API error: {}", e)
             return ()
-        response_data = response.get(query_type + "s", {}).get("items", [])
+        response_data = response.get(f"{query_type}s", {}).get("items", [])
         self._log.debug(
             "Found {} result(s) from {} for '{}'",
             len(response_data),
@@ -648,13 +650,13 @@ class SpotifyPlugin(
                 self._log.info(
                     f"Attempting to open {self.data_source} with playlist"
                 )
-                spotify_url = "spotify:trackset:Playlist:" + ",".join(
-                    spotify_ids
+                spotify_url = (
+                    f"spotify:trackset:Playlist:{','.join(spotify_ids)}"
                 )
                 webbrowser.open(spotify_url)
             else:
                 for spotify_id in spotify_ids:
-                    print(self.open_track_url + spotify_id)
+                    print(f"{self.open_track_url}{spotify_id}")
         else:
             self._log.warning(
                 f"No {self.data_source} tracks found from beets query"
@@ -702,7 +704,7 @@ class SpotifyPlugin(
 
     def track_info(self, track_id: str):
         """Fetch a track's popularity and external IDs using its Spotify ID."""
-        track_data = self._handle_response("get", self.track_url + track_id)
+        track_data = self._handle_response("get", f"{self.track_url}{track_id}")
         external_ids = track_data.get("external_ids", {})
         popularity = track_data.get("popularity")
         self._log.debug(
@@ -721,7 +723,7 @@ class SpotifyPlugin(
         """Fetch track audio features by its Spotify ID."""
         try:
             return self._handle_response(
-                "get", self.audio_features_url + track_id
+                "get", f"{self.audio_features_url}{track_id}"
             )
         except APIError as e:
             self._log.debug("Spotify API error: {}", e)

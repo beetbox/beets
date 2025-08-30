@@ -670,17 +670,17 @@ class ArtistFlatteningTest(unittest.TestCase):
     def _credit_dict(self, suffix=""):
         return {
             "artist": {
-                "name": "NAME" + suffix,
-                "sort-name": "SORT" + suffix,
+                "name": f"NAME{suffix}",
+                "sort-name": f"SORT{suffix}",
             },
-            "name": "CREDIT" + suffix,
+            "name": f"CREDIT{suffix}",
         }
 
     def _add_alias(self, credit_dict, suffix="", locale="", primary=False):
         alias = {
-            "alias": "ALIAS" + suffix,
+            "alias": f"ALIAS{suffix}",
             "locale": locale,
-            "sort-name": "ALIASSORT" + suffix,
+            "sort-name": f"ALIASSORT{suffix}",
         }
         if primary:
             alias["primary"] = "primary"

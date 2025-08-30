@@ -361,7 +361,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             )
             if resolved_genres:
                 suffix = "whitelist" if self.whitelist else "any"
-                label = stage_label + f", {suffix}"
+                label = f"{stage_label}, {suffix}"
                 if keep_genres:
                     label = f"keep + {label}"
                 return self._format_and_stringify(resolved_genres), label

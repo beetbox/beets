@@ -70,7 +70,7 @@ class CustomUser(pylast.User):
         tuple with the total number of pages of results. Includes an MBID, if
         found.
         """
-        doc = self._request(self.ws_prefix + "." + method, cacheable, params)
+        doc = self._request(f"{self.ws_prefix}.{method}", cacheable, params)
 
         toptracks_node = doc.getElementsByTagName("toptracks")[0]
         total_pages = int(toptracks_node.getAttribute("totalPages"))

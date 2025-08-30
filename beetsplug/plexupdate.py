@@ -66,7 +66,7 @@ def update_plex(host, port, token, library_name, secure, ignore_cert_errors):
 def append_token(url, token):
     """Appends the Plex Home token to the api call if required."""
     if token:
-        url += "?" + urlencode({"X-Plex-Token": token})
+        url += f"?{urlencode({'X-Plex-Token': token})}"
     return url
 
 

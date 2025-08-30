@@ -152,7 +152,7 @@ class Symbol:
     def translate(self):
         """Compile the variable lookup."""
         ident = self.ident
-        expr = ex_rvalue(VARIABLE_PREFIX + ident)
+        expr = ex_rvalue(f"{VARIABLE_PREFIX}{ident}")
         return [expr], {ident}, set()
 
 
@@ -211,7 +211,7 @@ class Call:
                 )
             )
 
-        subexpr_call = ex_call(FUNCTION_PREFIX + self.ident, arg_exprs)
+        subexpr_call = ex_call(f"{FUNCTION_PREFIX}{self.ident}", arg_exprs)
         return [subexpr_call], varnames, funcnames
 
 
@@ -555,9 +555,9 @@ class Template:
 
         argnames = []
         for varname in varnames:
-            argnames.append(VARIABLE_PREFIX + varname)
+            argnames.append(f"{VARIABLE_PREFIX}{varname}")
         for funcname in funcnames:
-            argnames.append(FUNCTION_PREFIX + funcname)
+            argnames.append(f"{FUNCTION_PREFIX}{funcname}")
 
         func = compile_func(
             argnames,
@@ -567,9 +567,9 @@ class Template:
         def wrapper_func(values={}, functions={}):
             args = {}
             for varname in varnames:
-                args[VARIABLE_PREFIX + varname] = values[varname]
+                args[f"{VARIABLE_PREFIX}{varname}"] = values[varname]
             for funcname in funcnames:
-                args[FUNCTION_PREFIX + funcname] = functions[funcname]
+                args[f"{FUNCTION_PREFIX}{funcname}"] = functions[funcname]
             parts = func(**args)
             return "".join(parts)
 
