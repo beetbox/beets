@@ -142,7 +142,7 @@ class PlaylistPlugin(beets.plugins.BeetsPlugin):
             dir_contents = os.listdir(playlist_dir)
         except OSError:
             self._log.warning(
-                "Unable to open playlist directory {}", self.playlist_dir
+                "Unable to open playlist directory {.playlist_dir}", self
             )
             return
 

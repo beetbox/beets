@@ -508,9 +508,9 @@ class SearchBackend(SoupMixin, Backend):
             # log out the candidate that did not make it but was close.
             # This may show a matching candidate with some noise in the name
             self.debug(
-                "({}, {}) does not match ({}, {}) but dist was close: {:.2f}",
-                result.artist,
-                result.title,
+                "({0.artist}, {0.title}) does not match ({1}, {2}) but dist"
+                " was close: {3:.2f}",
+                result,
                 target_artist,
                 target_title,
                 max_dist,
@@ -838,15 +838,16 @@ class Translator(RequestHandler):
         lyrics_language = langdetect.detect(new_lyrics).upper()
         if lyrics_language == self.to_language:
             self.info(
-                "🔵 Lyrics are already in the target language {}",
-                self.to_language,
+                "🔵 Lyrics are already in the target language {.to_language}",
+                self,
             )
             return new_lyrics
 
         if self.from_languages and lyrics_language not in self.from_languages:
             self.info(
-                "🔵 Configuration {} does not permit translating from {}",
-                self.from_languages,
+                "🔵 Configuration {.from_languages} does not permit translating"
+                " from {}",
+                self,
                 lyrics_language,
             )
             return new_lyrics
@@ -854,7 +855,7 @@ class Translator(RequestHandler):
         lyrics, *url = new_lyrics.split("\n\nSource: ")
         with self.handle_request():
             translated_lines = self.append_translations(lyrics.splitlines())
-            self.info("🟢 Translated lyrics to {}", self.to_language)
+            self.info("🟢 Translated lyrics to {.to_language}", self)
             return "\n\nSource: ".join(["\n".join(translated_lines), *url])
 
 

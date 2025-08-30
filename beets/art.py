@@ -38,7 +38,7 @@ def get_art(log, item):
     try:
         mf = mediafile.MediaFile(syspath(item.path))
     except mediafile.UnreadableFileError as exc:
-        log.warning("Could not extract art from {}: {}", item.filepath, exc)
+        log.warning("Could not extract art from {.filepath}: {}", item, exc)
         return
 
     return mf.art
@@ -88,7 +88,7 @@ def embed_item(
     # Make sure the image kind is safe (some formats only support PNG
     # and JPEG).
     if image.mime_type not in ("image/jpeg", "image/png"):
-        log.info("not embedding image of unsupported type: {}", image.mime_type)
+        log.info("not embedding image of unsupported type: {.mime_type}", image)
         return
 
     item.try_write(path=itempath, tags={"images": [image]}, id3v23=id3v23)
@@ -185,7 +185,7 @@ def extract(log, outpath, item):
     # Add an extension to the filename.
     ext = mediafile.image_extension(art)
     if not ext:
-        log.warning("Unknown image type in {}.", item.filepath)
+        log.warning("Unknown image type in {.filepath}.", item)
         return
     outpath += bytestring_path(f".{ext}")
 

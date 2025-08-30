@@ -82,10 +82,7 @@ def query_tasks(session: ImportSession):
         # Search for albums.
         for album in session.lib.albums(session.query):
             log.debug(
-                "yielding album {}: {} - {}",
-                album.id,
-                album.albumartist,
-                album.album,
+                "yielding album {0.id}: {0.albumartist} - {0.album}", album
             )
             items = list(album.items())
             _freshen_items(items)

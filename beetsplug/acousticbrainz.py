@@ -153,7 +153,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
             try:
                 data.update(res.json())
             except ValueError:
-                self._log.debug("Invalid Response: {}", res.text)
+                self._log.debug("Invalid Response: {.text}", res)
                 return {}
 
         return data

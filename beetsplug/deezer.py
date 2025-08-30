@@ -251,16 +251,16 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
             self._log.error(
-                "Error fetching data from {} API\n Error: {}",
-                self.data_source,
+                "Error fetching data from {.data_source} API\n Error: {}",
+                self,
                 e,
             )
             return ()
         response_data: Sequence[IDResponse] = response.json().get("data", [])
         self._log.debug(
-            "Found {} result(s) from {} for '{}'",
+            "Found {} result(s) from {.data_source} for '{}'",
             len(response_data),
-            self.data_source,
+            self,
             query,
         )
         return response_data

@@ -268,10 +268,9 @@ def process_tracks(lib, tracks, log):
             count = int(song.get("play_count", 0))
             new_count = int(tracks[num].get("playcount", 1))
             log.debug(
-                "match: {} - {} ({}) updating: play_count {} => {}",
-                song.artist,
-                song.title,
-                song.album,
+                "match: {0.artist} - {0.title} ({0.album}) updating:"
+                " play_count {1} => {2}",
+                song,
                 count,
                 new_count,
             )

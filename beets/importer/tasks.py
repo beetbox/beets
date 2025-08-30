@@ -271,7 +271,7 @@ class ImportTask(BaseImportTask):
         for item in duplicate_items:
             item.remove()
             if lib.directory in util.ancestry(item.path):
-                log.debug("deleting duplicate {}", item.filepath)
+                log.debug("deleting duplicate {.filepath}", item)
                 util.remove(item.path)
                 util.prune_dirs(os.path.dirname(item.path), lib.directory)
 
@@ -552,12 +552,11 @@ class ImportTask(BaseImportTask):
             ]
             if overwritten_fields:
                 log.debug(
-                    "Reimported {} {}. Not preserving flexible attributes {}. "
-                    "Path: {}",
+                    "Reimported {0} {1.id}. Not preserving flexible attributes {2}. "
+                    "Path: {1.filepath}",
                     noun,
-                    new_obj.id,
+                    new_obj,
                     overwritten_fields,
-                    new_obj.filepath,
                 )
                 for key in overwritten_fields:
                     del existing_fields[key]
@@ -576,17 +575,15 @@ class ImportTask(BaseImportTask):
                 self.album.artpath = replaced_album.artpath
                 self.album.store()
                 log.debug(
-                    "Reimported album {}. Preserving attribute ['added']. "
-                    "Path: {}",
-                    self.album.id,
-                    self.album.filepath,
+                    "Reimported album {0.album.id}. Preserving attribute ['added']. "
+                    "Path: {0.album.filepath}",
+                    self,
                 )
                 log.debug(
-                    "Reimported album {}. Preserving flexible attributes {}. "
-                    "Path: {}",
-                    self.album.id,
+                    "Reimported album {0.album.id}. Preserving flexible"
+                    " attributes {1}. Path: {0.album.filepath}",
+                    self,
                     list(album_fields.keys()),
-                    self.album.filepath,
                 )
 
         for item in self.imported_items():
@@ -595,21 +592,19 @@ class ImportTask(BaseImportTask):
                 if dup_item.added and dup_item.added != item.added:
                     item.added = dup_item.added
                     log.debug(
-                        "Reimported item {}. Preserving attribute ['added']. "
-                        "Path: {}",
-                        item.id,
-                        item.filepath,
+                        "Reimported item {0.id}. Preserving attribute ['added']. "
+                        "Path: {0.filepath}",
+                        item,
                     )
                 item_fields = _reduce_and_log(
                     item, dup_item._values_flex, REIMPORT_FRESH_FIELDS_ITEM
                 )
                 item.update(item_fields)
                 log.debug(
-                    "Reimported item {}. Preserving flexible attributes {}. "
-                    "Path: {}",
-                    item.id,
+                    "Reimported item {0.id}. Preserving flexible attributes {1}. "
+                    "Path: {0.filepath}",
+                    item,
                     list(item_fields.keys()),
-                    item.filepath,
                 )
                 item.store()
 
@@ -619,7 +614,7 @@ class ImportTask(BaseImportTask):
         """
         for item in self.imported_items():
             for dup_item in self.replaced_items[item]:
-                log.debug("Replacing item {}: {}", dup_item.id, item.filepath)
+                log.debug("Replacing item {.id}: {.filepath}", dup_item, item)
                 dup_item.remove()
         log.debug(
             "{} of {} items replaced",
@@ -1067,7 +1062,7 @@ class ImportTaskFactory:
 
         # Now read albums from the extracted directory.
         self.toppath = archive_task.toppath
-        log.debug("Archive extracted to: {}", self.toppath)
+        log.debug("Archive extracted to: {.toppath}", self)
         return archive_task
 
     def read_item(self, path: util.PathBytes):

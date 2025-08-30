@@ -127,7 +127,7 @@ class ThumbnailsPlugin(BeetsPlugin):
         size = ArtResizer.shared.get_size(album.artpath)
         if not size:
             self._log.warning(
-                "problem getting the picture size for {}", album.artpath
+                "problem getting the picture size for {.artpath}", album
             )
             return
 

@@ -319,10 +319,9 @@ class ConvertPlugin(BeetsPlugin):
                 util.displayable_path(source),
             )
             self._log.debug(
-                "Command {} exited with status {}: {}",
+                "Command {0} exited with status {1.returncode}: {1.output}",
                 args,
-                exc.returncode,
-                exc.output,
+                exc,
             )
             util.remove(dest)
             util.prune_dirs(os.path.dirname(dest))
@@ -388,15 +387,15 @@ class ConvertPlugin(BeetsPlugin):
 
             if os.path.exists(util.syspath(dest)):
                 self._log.info(
-                    "Skipping {} (target file exists)", item.filepath
+                    "Skipping {.filepath} (target file exists)", item
                 )
                 continue
 
             if keep_new:
                 if pretend:
                     self._log.info(
-                        "mv {} {}",
-                        item.filepath,
+                        "mv {.filepath} {}",
+                        item,
                         util.displayable_path(original),
                     )
                 else:
@@ -430,7 +429,7 @@ class ConvertPlugin(BeetsPlugin):
                         else ("Linking" if link else "Copying")
                     )
 
-                    self._log.info("{} {}", msg, item.filepath)
+                    self._log.info("{} {.filepath}", msg, item)
 
                     if hardlink:
                         util.hardlink(original, converted)
@@ -461,7 +460,7 @@ class ConvertPlugin(BeetsPlugin):
                 if album and album.artpath:
                     maxwidth = self._get_art_resize(album.artpath)
                     self._log.debug(
-                        "embedding album art from {}", album.art_filepath
+                        "embedding album art from {.art_filepath}", album
                     )
                     art.embed_item(
                         self._log,
@@ -519,7 +518,7 @@ class ConvertPlugin(BeetsPlugin):
 
         if os.path.exists(util.syspath(dest)):
             self._log.info(
-                "Skipping {} (target file exists)", album.art_filepath
+                "Skipping {.art_filepath} (target file exists)", album
             )
             return
 
@@ -529,8 +528,8 @@ class ConvertPlugin(BeetsPlugin):
         # Either copy or resize (while copying) the image.
         if maxwidth is not None:
             self._log.info(
-                "Resizing cover art from {} to {}",
-                album.art_filepath,
+                "Resizing cover art from {.art_filepath} to {}",
+                album,
                 util.displayable_path(dest),
             )
             if not pretend:
@@ -540,9 +539,9 @@ class ConvertPlugin(BeetsPlugin):
                 msg = "ln" if hardlink else ("ln -s" if link else "cp")
 
                 self._log.info(
-                    "{} {} {}",
+                    "{} {.art_filepath} {}",
                     msg,
-                    album.art_filepath,
+                    album,
                     util.displayable_path(dest),
                 )
             else:
@@ -553,9 +552,9 @@ class ConvertPlugin(BeetsPlugin):
                 )
 
                 self._log.info(
-                    "{} cover art from {} to {}",
+                    "{} cover art from {.art_filepath} to {}",
                     msg,
-                    album.art_filepath,
+                    album,
                     util.displayable_path(dest),
                 )
                 if hardlink:

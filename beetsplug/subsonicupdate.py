@@ -108,7 +108,7 @@ class SubsonicUpdate(BeetsPlugin):
         auth = self.config["auth"].as_str()
         url = self.__format_url("startScan")
         self._log.debug("URL is {}", url)
-        self._log.debug("auth type is {}", self.config["auth"])
+        self._log.debug("auth type is {.config[auth]}", self)
 
         if auth == "token":
             salt, token = self.__create_token()

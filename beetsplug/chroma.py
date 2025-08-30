@@ -343,20 +343,20 @@ def fingerprint_item(log, item, write=False):
     """
     # Get a fingerprint and length for this track.
     if not item.length:
-        log.info("{}: no duration available", item.filepath)
+        log.info("{.filepath}: no duration available", item)
     elif item.acoustid_fingerprint:
         if write:
-            log.info("{}: fingerprint exists, skipping", item.filepath)
+            log.info("{.filepath}: fingerprint exists, skipping", item)
         else:
-            log.info("{}: using existing fingerprint", item.filepath)
+            log.info("{.filepath}: using existing fingerprint", item)
         return item.acoustid_fingerprint
     else:
-        log.info("{}: fingerprinting", item.filepath)
+        log.info("{.filepath}: fingerprinting", item)
         try:
             _, fp = acoustid.fingerprint_file(util.syspath(item.path))
             item.acoustid_fingerprint = fp.decode()
             if write:
-                log.info("{}: writing fingerprint", item.filepath)
+                log.info("{.filepath}: writing fingerprint", item)
                 item.try_write()
             if item._db:
                 item.store()

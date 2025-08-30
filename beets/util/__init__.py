@@ -126,7 +126,7 @@ class HumanReadableError(Exception):
         """
         if self.tb:
             logger.debug(self.tb)
-        logger.error("{}: {}", self.error_kind, self.args[0])
+        logger.error("{0.error_kind}: {0.args[0]}", self)
 
 
 class FilesystemError(HumanReadableError):
