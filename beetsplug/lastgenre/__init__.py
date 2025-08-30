@@ -389,7 +389,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # Filter forbidden genres
         if genre and len(args) >= 1:
-            artist = args[0]  # First arg is always artist for our use cases
+            # For all current lastfm API calls, the first argument is always the artist:
+            # - get_album(artist, album)
+            # - get_artist(artist)
+            # - get_track(artist, title)
+            artist = args[0]
             filtered_genre = [
                 g for g in genre if not self._is_forbidden(g, artist)
             ]
