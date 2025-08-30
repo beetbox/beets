@@ -42,8 +42,8 @@ class LimitPluginTest(PluginTestCase):
 
         # a subset of tests has only `num_limit` results, identified by a
         # range filter on the track number
-        self.track_head_range = "track:.." + str(self.num_limit)
-        self.track_tail_range = "track:" + str(self.num_limit + 1) + ".."
+        self.track_head_range = f"track:..{self.num_limit}"
+        self.track_tail_range = f"track:{self.num_limit + 1}{'..'}"
 
     def test_no_limit(self):
         """Returns all when there is no limit or filter."""
@@ -82,13 +82,13 @@ class LimitPluginTest(PluginTestCase):
     def test_prefix_when_correctly_ordered(self):
         """Returns the expected number with the query prefix and filter when
         the prefix portion (correctly) appears last."""
-        correct_order = self.track_tail_range + " " + self.num_limit_prefix
+        correct_order = f"{self.track_tail_range} {self.num_limit_prefix}"
         result = self.lib.items(correct_order)
         assert len(result) == self.num_limit
 
     def test_prefix_when_incorrectly_ordred(self):
         """Returns no results with the query prefix and filter when the prefix
         portion (incorrectly) appears first."""
-        incorrect_order = self.num_limit_prefix + " " + self.track_tail_range
+        incorrect_order = f"{self.num_limit_prefix} {self.track_tail_range}"
         result = self.lib.items(incorrect_order)
         assert len(result) == 0

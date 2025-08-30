@@ -130,9 +130,9 @@ class PluginLogFilter(logging.Filter):
     def filter(self, record):
         if hasattr(record.msg, "msg") and isinstance(record.msg.msg, str):
             # A _LogMessage from our hacked-up Logging replacement.
-            record.msg.msg = self.prefix + record.msg.msg
+            record.msg.msg = f"{self.prefix}{record.msg.msg}"
         elif isinstance(record.msg, str):
-            record.msg = self.prefix + record.msg
+            record.msg = f"{self.prefix}{record.msg}"
         return True
 
 
@@ -424,9 +424,9 @@ def types(model_cls: type[AnyModel]) -> dict[str, Type]:
         for field in plugin_types:
             if field in types and plugin_types[field] != types[field]:
                 raise PluginConflictError(
-                    "Plugin {} defines flexible field {} "
+                    f"Plugin {plugin.name} defines flexible field {field} "
                     "which has already been defined with "
-                    "another type.".format(plugin.name, field)
+                    "another type."
                 )
         types.update(plugin_types)
     return types
@@ -543,7 +543,7 @@ def send(event: EventType, **arguments: Any) -> list[Any]:
 
     Return a list of non-None values returned from the handlers.
     """
-    log.debug("Sending event: {0}", event)
+    log.debug("Sending event: {}", event)
     return [
         r
         for handler in BeetsPlugin.listeners[event]
@@ -560,8 +560,8 @@ def feat_tokens(for_artist: bool = True) -> str:
     feat_words = ["ft", "featuring", "feat", "feat.", "ft."]
     if for_artist:
         feat_words += ["with", "vs", "and", "con", "&"]
-    return r"(?<=[\s(\[])(?:{})(?=\s)".format(
-        "|".join(re.escape(x) for x in feat_words)
+    return (
+        rf"(?<=[\s(\[])(?:{'|'.join(re.escape(x) for x in feat_words)})(?=\s)"
     )
 
 

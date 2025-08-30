@@ -77,7 +77,7 @@ def json_generator(items, root, expand=False):
                    representation
     :returns:     generator that yields strings
     """
-    yield '{"%s":[' % root
+    yield f'{{"{root}":['
     first = True
     for item in items:
         if first:
@@ -232,9 +232,7 @@ def _get_unique_table_field_values(model, field, sort_field):
         raise KeyError
     with g.lib.transaction() as tx:
         rows = tx.query(
-            "SELECT DISTINCT '{}' FROM '{}' ORDER BY '{}'".format(
-                field, model._table, sort_field
-            )
+            f"SELECT DISTINCT '{field}' FROM '{model._table}' ORDER BY '{sort_field}'"
         )
     return [row[0] for row in rows]
 
@@ -476,7 +474,7 @@ class WebPlugin(BeetsPlugin):
             # Enable CORS if required.
             if self.config["cors"]:
                 self._log.info(
-                    "Enabling CORS with origin: {0}", self.config["cors"]
+                    "Enabling CORS with origin: {}", self.config["cors"]
                 )
                 from flask_cors import CORS
 

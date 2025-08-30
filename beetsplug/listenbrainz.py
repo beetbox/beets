@@ -42,14 +42,14 @@ class ListenBrainzPlugin(BeetsPlugin):
         unknown_total = 0
         ls = self.get_listens()
         tracks = self.get_tracks_from_listens(ls)
-        log.info(f"Found {len(ls)} listens")
+        log.info("Found {} listens", len(ls))
         if tracks:
             found, unknown = process_tracks(lib, tracks, log)
             found_total += found
             unknown_total += unknown
         log.info("... done!")
-        log.info("{0} unknown play-counts", unknown_total)
-        log.info("{0} play-counts imported", found_total)
+        log.info("{} unknown play-counts", unknown_total)
+        log.info("{} play-counts imported", found_total)
 
     def _make_request(self, url, params=None):
         """Makes a request to the ListenBrainz API."""
@@ -63,7 +63,7 @@ class ListenBrainzPlugin(BeetsPlugin):
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
-            self._log.debug(f"Invalid Search Error: {e}")
+            self._log.debug("Invalid Search Error: {}", e)
             return None
 
     def get_listens(self, min_ts=None, max_ts=None, count=None):
@@ -156,7 +156,7 @@ class ListenBrainzPlugin(BeetsPlugin):
             playlist_info = playlist.get("playlist")
             if playlist_info.get("creator") == "listenbrainz":
                 title = playlist_info.get("title")
-                self._log.debug(f"Playlist title: {title}")
+                self._log.debug("Playlist title: {}", title)
                 playlist_type = (
                     "Exploration" if "Exploration" in title else "Jams"
                 )
@@ -179,9 +179,7 @@ class ListenBrainzPlugin(BeetsPlugin):
             listenbrainz_playlists, key=lambda x: x["date"], reverse=True
         )
         for playlist in listenbrainz_playlists:
-            self._log.debug(
-                f"Playlist: {playlist['type']} - {playlist['date']}"
-            )
+            self._log.debug("Playlist: {0[type]} - {0[date]}", playlist)
         return listenbrainz_playlists
 
     def get_playlist(self, identifier):

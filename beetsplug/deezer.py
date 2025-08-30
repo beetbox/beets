@@ -96,7 +96,7 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
                 f"Invalid `release_date` returned by {self.data_source} API: "
                 f"{release_date!r}"
             )
-        tracks_obj = self.fetch_data(self.album_url + deezer_id + "/tracks")
+        tracks_obj = self.fetch_data(f"{self.album_url}{deezer_id}/tracks")
         if tracks_obj is None:
             return None
         try:
@@ -169,7 +169,7 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         # the track's disc).
         if not (
             album_tracks_obj := self.fetch_data(
-                self.album_url + str(track_data["album"]["id"]) + "/tracks"
+                f"{self.album_url}{track_data['album']['id']}/tracks"
             )
         ):
             return None
@@ -241,26 +241,26 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         query = self._construct_search_query(
             query_string=query_string, filters=filters
         )
-        self._log.debug(f"Searching {self.data_source} for '{query}'")
+        self._log.debug("Searching {.data_source} for '{}'", self, query)
         try:
             response = requests.get(
-                self.search_url + query_type,
+                f"{self.search_url}{query_type}",
                 params={"q": query},
                 timeout=10,
             )
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
             self._log.error(
-                "Error fetching data from {} API\n Error: {}",
-                self.data_source,
+                "Error fetching data from {.data_source} API\n Error: {}",
+                self,
                 e,
             )
             return ()
         response_data: Sequence[IDResponse] = response.json().get("data", [])
         self._log.debug(
-            "Found {} result(s) from {} for '{}'",
+            "Found {} result(s) from {.data_source} for '{}'",
             len(response_data),
-            self.data_source,
+            self,
             query,
         )
         return response_data

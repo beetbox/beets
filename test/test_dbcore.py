@@ -256,7 +256,7 @@ class TransactionTest(unittest.TestCase):
     def test_query_no_increase_revision(self):
         old_rev = self.db.revision
         with self.db.transaction() as tx:
-            tx.query("PRAGMA table_info(%s)" % ModelFixture1._table)
+            tx.query(f"PRAGMA table_info({ModelFixture1._table})")
         assert self.db.revision == old_rev
 
 

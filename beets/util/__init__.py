@@ -112,7 +112,7 @@ class HumanReadableError(Exception):
         elif hasattr(self.reason, "strerror"):  # i.e., EnvironmentError
             return self.reason.strerror
         else:
-            return '"{}"'.format(str(self.reason))
+            return f'"{self.reason}"'
 
     def get_message(self):
         """Create the human-readable description of the error, sans
@@ -126,7 +126,7 @@ class HumanReadableError(Exception):
         """
         if self.tb:
             logger.debug(self.tb)
-        logger.error("{0}: {1}", self.error_kind, self.args[0])
+        logger.error("{0.error_kind}: {0.args[0]}", self)
 
 
 class FilesystemError(HumanReadableError):
@@ -142,18 +142,16 @@ class FilesystemError(HumanReadableError):
     def get_message(self):
         # Use a nicer English phrasing for some specific verbs.
         if self.verb in ("move", "copy", "rename"):
-            clause = "while {} {} to {}".format(
-                self._gerund(),
-                displayable_path(self.paths[0]),
-                displayable_path(self.paths[1]),
+            clause = (
+                f"while {self._gerund()} {displayable_path(self.paths[0])} to"
+                f" {displayable_path(self.paths[1])}"
             )
         elif self.verb in ("delete", "write", "create", "read"):
-            clause = "while {} {}".format(
-                self._gerund(), displayable_path(self.paths[0])
-            )
+            clause = f"while {self._gerund()} {displayable_path(self.paths[0])}"
         else:
-            clause = "during {} of paths {}".format(
-                self.verb, ", ".join(displayable_path(p) for p in self.paths)
+            clause = (
+                f"during {self.verb} of paths"
+                f" {', '.join(displayable_path(p) for p in self.paths)}"
             )
 
         return f"{self._reasonstr()} {clause}"
@@ -223,12 +221,12 @@ def sorted_walk(
     # Get all the directories and files at this level.
     try:
         contents = os.listdir(syspath(bytes_path))
-    except OSError as exc:
+    except OSError:
         if logger:
             logger.warning(
-                "could not list directory {}: {}".format(
-                    displayable_path(bytes_path), exc.strerror
-                )
+                "could not list directory {}",
+                displayable_path(bytes_path),
+                exc_info=True,
             )
         return
     dirs = []
@@ -436,8 +434,8 @@ def syspath(path: PathLike, prefix: bool = True) -> str:
     if prefix and not str_path.startswith(WINDOWS_MAGIC_PREFIX):
         if str_path.startswith("\\\\"):
             # UNC path. Final path should look like \\?\UNC\...
-            str_path = "UNC" + str_path[1:]
-        str_path = WINDOWS_MAGIC_PREFIX + str_path
+            str_path = f"UNC{str_path[1:]}"
+        str_path = f"{WINDOWS_MAGIC_PREFIX}{str_path}"
 
     return str_path
 
@@ -509,8 +507,8 @@ def move(path: bytes, dest: bytes, replace: bool = False):
         basename = os.path.basename(bytestring_path(dest))
         dirname = os.path.dirname(bytestring_path(dest))
         tmp = tempfile.NamedTemporaryFile(
-            suffix=syspath(b".beets", prefix=False),
-            prefix=syspath(b"." + basename + b".", prefix=False),
+            suffix=".beets",
+            prefix=f".{os.fsdecode(basename)}.",
             dir=syspath(dirname),
             delete=False,
         )
@@ -719,7 +717,7 @@ def truncate_path(str_path: str) -> str:
     path = Path(str_path)
     parent_parts = [truncate_str(p, max_length) for p in path.parts[:-1]]
     stem = truncate_str(path.stem, max_length - len(path.suffix))
-    return str(Path(*parent_parts, stem)) + path.suffix
+    return f"{Path(*parent_parts, stem)}{path.suffix}"
 
 
 def _legalize_stage(
