@@ -9,6 +9,7 @@
     - cape jazz
     - chimurenga
     - coupé-décalé
+    - egyptian
     - fuji music
     - genge
     - highlife
@@ -35,6 +36,7 @@
     - sega
     - seggae
     - semba
+    - shangaan electro
     - soukous
     - taarab
     - zouglou
@@ -133,6 +135,7 @@
     - chutney
     - chutney soca
     - compas
+    - folklore argentino
     - mambo
     - merengue
     - méringue
@@ -185,6 +188,7 @@
     - humor
     - parody music
     - stand-up
+    - kabarett
 - country:
     - alternative country:
         - cowpunk
@@ -287,12 +291,16 @@
         - jump-up
         - liquid funk
         - neurofunk
-        - oldschool jungle:
+        - jungle:
             - darkside jungle
             - ragga jungle
+            - oldschool jungle
+            - uk hardcore
         - raggacore
         - sambass
         - techstep
+        - leftfield
+        - halftime
     - electro:
         - crunk
         - electro backbeat
@@ -336,6 +344,7 @@
         - skweee
         - sound art
         - synthcore
+        - experimental
     - eurodance:
         - bubblegum dance
         - italo dance
@@ -354,7 +363,6 @@
         - makina
         - speedcore
         - terrorcore
-        - uk hardcore
     - hi-nrg:
         - eurobeat
         - hard nrg
@@ -400,6 +408,8 @@
             - power electronics
             - power noise
         - witch house
+    - juke:
+        - footwork
     - post-disco:
         - boogie
         - dance-pop
@@ -414,6 +424,7 @@
     - techno:
         - acid techno
         - detroit techno
+        - dub techno
         - free tekno
         - ghettotech
         - minimal
@@ -481,6 +492,7 @@
     - freestyle rap
     - g-funk
     - gangsta rap
+    - glitch hop
     - golden age hip hop
     - hip hop soul
     - hip pop
@@ -521,11 +533,14 @@
     - west coast hip hop:
         - chicano rap
         - jerkin'
+    - austrian hip hop
+    - german hip hop
 - jazz:
     - asian american jazz
     - avant-garde jazz
     - bebop
     - boogie-woogie
+    - brass band
     - british dance band
     - chamber jazz
     - continental jazz
@@ -568,14 +583,13 @@
     - vocal jazz
     - west coast gypsy jazz
     - west coast jazz
-- other:
-    - worldbeat
+- kids music:
+    - kinderlieder
 - pop:
     - adult contemporary
     - arab pop
     - baroque pop
     - bubblegum pop
-    - chanson
     - christian pop
     - classical crossover
     - europop:
@@ -640,6 +654,7 @@
     - beat music
     - chinese rock
     - christian rock
+    - classic rock
     - dark cabaret
     - desert rock
     - experimental rock
@@ -720,6 +735,7 @@
         - art punk
         - christian punk
         - deathrock
+        - deutschpunk
         - folk punk:
             - celtic punk
             - gypsy punk
@@ -762,5 +778,18 @@
     - dancehall
     - ska:
         - 2 tone
-        - dub
         - rocksteady
+    - dub
+- soundtrack:
+- singer-songwriter:
+    - cantautorato
+    - cantautor
+    - cantautora
+    - chanson
+    - canción de autor
+    - nueva canción
+- world:
+    - world dub
+    - world fusion
+    - worldbeat
+
