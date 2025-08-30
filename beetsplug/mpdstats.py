@@ -51,8 +51,8 @@ class MPDClientWrapper:
         if not self.strip_path.endswith("/"):
             self.strip_path += "/"
 
-        self._log.debug("music_directory: {}", self.music_directory)
-        self._log.debug("strip_path: {}", self.strip_path)
+        self._log.debug("music_directory: {.music_directory}", self)
+        self._log.debug("strip_path: {.strip_path}", self)
 
         self.client = mpd.MPDClient()
 
@@ -188,10 +188,10 @@ class MPDStats:
             item.store()
 
             self._log.debug(
-                "updated: {} = {} [{}]",
+                "updated: {} = {} [{.filepath}]",
                 attribute,
                 item[attribute],
-                item.filepath,
+                item,
             )
 
     def update_rating(self, item, skipped):

@@ -103,9 +103,9 @@ class ImportAddedPlugin(BeetsPlugin):
     def update_album_times(self, lib, album):
         if self.reimported_album(album):
             self._log.debug(
-                "Album '{}' is reimported, skipping import of "
+                "Album '{.filepath}' is reimported, skipping import of "
                 "added dates for the album and its items.",
-                album.filepath,
+                album,
             )
             return
 
@@ -119,18 +119,17 @@ class ImportAddedPlugin(BeetsPlugin):
                     item.store()
         album.added = min(album_mtimes)
         self._log.debug(
-            "Import of album '{}', selected album.added={} "
+            "Import of album '{0.album}', selected album.added={0.added} "
             "from item file mtimes.",
-            album.album,
-            album.added,
+            album,
         )
         album.store()
 
     def update_item_times(self, lib, item):
         if self.reimported_item(item):
             self._log.debug(
-                "Item '{}' is reimported, skipping import of added date.",
-                item.filepath,
+                "Item '{.filepath}' is reimported, skipping import of added date.",
+                item,
             )
             return
         mtime = self.item_mtime.pop(item.path, None)
@@ -139,9 +138,8 @@ class ImportAddedPlugin(BeetsPlugin):
             if self.config["preserve_mtimes"].get(bool):
                 self.write_item_mtime(item, mtime)
             self._log.debug(
-                "Import of item '{}', selected item.added={}",
-                item.filepath,
-                item.added,
+                "Import of item '{0.filepath}', selected item.added={0.added}",
+                item,
             )
             item.store()
 
@@ -153,7 +151,6 @@ class ImportAddedPlugin(BeetsPlugin):
             if self.config["preserve_write_mtimes"].get(bool):
                 self.write_item_mtime(item, item.added)
             self._log.debug(
-                "Write of item '{}', selected item.added={}",
-                item.filepath,
-                item.added,
+                "Write of item '{0.filepath}', selected item.added={0.added}",
+                item,
             )

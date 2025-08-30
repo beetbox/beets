@@ -188,9 +188,7 @@ class SpotifyPlugin(
         self.access_token = response.json()["access_token"]
 
         # Save the token for later use.
-        self._log.debug(
-            "{} access token: {}", self.data_source, self.access_token
-        )
+        self._log.debug("{0.data_source} access token: {0.access_token}", self)
         with open(self._tokenfile(), "w") as f:
             json.dump({"access_token": self.access_token}, f)
 
@@ -451,9 +449,9 @@ class SpotifyPlugin(
             return ()
         response_data = response.get(f"{query_type}s", {}).get("items", [])
         self._log.debug(
-            "Found {} result(s) from {} for '{}'",
+            "Found {} result(s) from {.data_source} for '{}'",
             len(response_data),
-            self.data_source,
+            self,
             query,
         )
         return response_data
@@ -539,8 +537,8 @@ class SpotifyPlugin(
 
         if not items:
             self._log.debug(
-                "Your beets query returned no items, skipping {}.",
-                self.data_source,
+                "Your beets query returned no items, skipping {.data_source}.",
+                self,
             )
             return
 
@@ -595,8 +593,8 @@ class SpotifyPlugin(
                 or self.config["tiebreak"].get() == "first"
             ):
                 self._log.debug(
-                    "{} track(s) found, count: {}",
-                    self.data_source,
+                    "{.data_source} track(s) found, count: {}",
+                    self,
                     len(response_data_tracks),
                 )
                 chosen_result = response_data_tracks[0]
@@ -619,19 +617,19 @@ class SpotifyPlugin(
         if failure_count > 0:
             if self.config["show_failures"].get():
                 self._log.info(
-                    "{} track(s) did not match a {} ID:",
+                    "{} track(s) did not match a {.data_source} ID:",
                     failure_count,
-                    self.data_source,
+                    self,
                 )
                 for track in failures:
                     self._log.info("track: {}", track)
                 self._log.info("")
             else:
                 self._log.warning(
-                    "{} track(s) did not match a {} ID:\n"
+                    "{} track(s) did not match a {.data_source} ID:\n"
                     "use --show-failures to display",
                     failure_count,
-                    self.data_source,
+                    self,
                 )
 
         return results

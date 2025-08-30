@@ -180,7 +180,7 @@ class IPFSPlugin(BeetsPlugin):
             util.command_output(cmd)
         except (OSError, subprocess.CalledProcessError) as err:
             self._log.error(
-                "Failed to get {} from ipfs.\n{}", _hash, err.output
+                "Failed to get {} from ipfs.\n{.output}", _hash, err
             )
             return False
 

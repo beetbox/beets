@@ -83,7 +83,7 @@ class HookPlugin(BeetsPlugin):
                 subprocess.check_call(command_pieces)
             except subprocess.CalledProcessError as exc:
                 self._log.error(
-                    "hook for {} exited with status {}", event, exc.returncode
+                    "hook for {} exited with status {.returncode}", event, exc
                 )
             except OSError as exc:
                 self._log.error("hook for {} failed: {}", event, exc)

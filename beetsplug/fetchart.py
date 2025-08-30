@@ -133,7 +133,7 @@ class Candidate:
         # get_size returns None if no local imaging backend is available
         if not self.size:
             self.size = ArtResizer.shared.get_size(self.path)
-        self._log.debug("image size: {}", self.size)
+        self._log.debug("image size: {.size}", self)
 
         if not self.size:
             self._log.warning(
@@ -151,7 +151,7 @@ class Candidate:
         # Check minimum dimension.
         if plugin.minwidth and self.size[0] < plugin.minwidth:
             self._log.debug(
-                "image too small ({} < {})", self.size[0], plugin.minwidth
+                "image too small ({} < {.minwidth})", self.size[0], plugin
             )
             return ImageAction.BAD
 
@@ -162,10 +162,10 @@ class Candidate:
                 if edge_diff > plugin.margin_px:
                     self._log.debug(
                         "image is not close enough to being "
-                        "square, ({} - {} > {})",
+                        "square, ({} - {} > {.margin_px})",
                         long_edge,
                         short_edge,
-                        plugin.margin_px,
+                        plugin,
                     )
                     return ImageAction.BAD
             elif plugin.margin_percent:
@@ -190,7 +190,7 @@ class Candidate:
         downscale = False
         if plugin.maxwidth and self.size[0] > plugin.maxwidth:
             self._log.debug(
-                "image needs rescaling ({} > {})", self.size[0], plugin.maxwidth
+                "image needs rescaling ({} > {.maxwidth})", self.size[0], plugin
             )
             downscale = True
 
@@ -200,9 +200,9 @@ class Candidate:
             filesize = os.stat(syspath(self.path)).st_size
             if filesize > plugin.max_filesize:
                 self._log.debug(
-                    "image needs resizing ({}B > {}B)",
+                    "image needs resizing ({}B > {.max_filesize}B)",
                     filesize,
-                    plugin.max_filesize,
+                    plugin,
                 )
                 downsize = True
 
@@ -213,9 +213,9 @@ class Candidate:
             reformat = fmt != plugin.cover_format
             if reformat:
                 self._log.debug(
-                    "image needs reformatting: {} -> {}",
+                    "image needs reformatting: {} -> {.cover_format}",
                     fmt,
-                    plugin.cover_format,
+                    plugin,
                 )
 
         skip_check_for = skip_check_for or []
@@ -329,7 +329,7 @@ def _logged_get(log: Logger, *args, **kwargs) -> requests.Response:
             prepped.url, {}, None, None, None
         )
         send_kwargs.update(settings)
-        log.debug("{}: {}", message, prepped.url)
+        log.debug("{}: {.url}", message, prepped)
         return s.send(prepped, **send_kwargs)
 
 
@@ -542,14 +542,14 @@ class CoverArtArchive(RemoteArtSource):
             try:
                 response = self.request(url)
             except requests.RequestException:
-                self._log.debug("{}: error receiving response", self.NAME)
+                self._log.debug("{.NAME}: error receiving response", self)
                 return
 
             try:
                 data = response.json()
             except ValueError:
                 self._log.debug(
-                    "{}: error loading response: {}", self.NAME, response.text
+                    "{.NAME}: error loading response: {.text}", self, response
                 )
                 return
 
@@ -629,7 +629,7 @@ class AlbumArtOrg(RemoteArtSource):
         # Get the page from albumart.org.
         try:
             resp = self.request(self.URL, params={"asin": album.asin})
-            self._log.debug("scraped art URL: {}", resp.url)
+            self._log.debug("scraped art URL: {.url}", resp)
         except requests.RequestException:
             self._log.debug("error scraping art page")
             return
@@ -702,7 +702,7 @@ class GoogleImages(RemoteArtSource):
         try:
             data = response.json()
         except ValueError:
-            self._log.debug("google: error loading response: {}", response.text)
+            self._log.debug("google: error loading response: {.text}", response)
             return
 
         if "error" in data:
@@ -764,7 +764,7 @@ class FanartTV(RemoteArtSource):
             data = response.json()
         except ValueError:
             self._log.debug(
-                "fanart.tv: error loading response: {}", response.text
+                "fanart.tv: error loading response: {.text}", response
             )
             return
 
@@ -953,8 +953,8 @@ class Wikipedia(RemoteArtSource):
                 self._log.debug("wikipedia: album not found on dbpedia")
         except (ValueError, KeyError, IndexError):
             self._log.debug(
-                "wikipedia: error scraping dbpedia response: {}",
-                dbpedia_response.text,
+                "wikipedia: error scraping dbpedia response: {.text}",
+                dbpedia_response,
             )
 
         # Ensure we have a filename before attempting to query wikipedia
@@ -1179,7 +1179,7 @@ class LastFM(RemoteArtSource):
             if "error" in data:
                 if data["error"] == 6:
                     self._log.debug(
-                        "lastfm: no results for {}", album.mb_albumid
+                        "lastfm: no results for {.mb_albumid}", album
                     )
                 else:
                     self._log.error(
@@ -1200,7 +1200,7 @@ class LastFM(RemoteArtSource):
                             url=images[size], size=self.SIZES[size]
                         )
         except ValueError:
-            self._log.debug("lastfm: error loading response: {}", response.text)
+            self._log.debug("lastfm: error loading response: {.text}", response)
             return
 
 
@@ -1244,7 +1244,7 @@ class Spotify(RemoteArtSource):
             soup = BeautifulSoup(html, "html.parser")
         except ValueError:
             self._log.debug(
-                "Spotify: error loading response: {}", response.text
+                "Spotify: error loading response: {.text}", response
             )
             return
 
@@ -1541,7 +1541,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                         out = candidate
                         assert out.path is not None  # help mypy
                         self._log.debug(
-                            "using {.LOC} image {}", source, out.path
+                            "using {.LOC} image {.path}", source, out
                         )
                         break
                     # Remove temporary files for invalid candidates.

@@ -306,9 +306,9 @@ class IMBackend(LocalBackend):
         except subprocess.CalledProcessError as exc:
             log.warning("ImageMagick size query failed")
             log.debug(
-                "`convert` exited with (status {}) when "
+                "`convert` exited with (status {.returncode}) when "
                 "getting size with command {}:\n{}",
-                exc.returncode,
+                exc,
                 cmd,
                 exc.output.strip(),
             )
@@ -441,8 +441,8 @@ class IMBackend(LocalBackend):
         convert_proc.wait()
         if convert_proc.returncode:
             log.debug(
-                "ImageMagick convert failed with status {}: {!r}",
-                convert_proc.returncode,
+                "ImageMagick convert failed with status {.returncode}: {!r}",
+                convert_proc,
                 convert_stderr,
             )
             return None

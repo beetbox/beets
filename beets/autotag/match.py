@@ -197,7 +197,7 @@ def _add_candidate(
     checking the track count, ordering the items, checking for
     duplicates, and calculating the distance.
     """
-    log.debug("Candidate: {} - {} ({})", info.artist, info.album, info.album_id)
+    log.debug("Candidate: {0.artist} - {0.album} ({0.album_id})", info)
 
     # Discard albums with zero tracks.
     if not info.tracks:

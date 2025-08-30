@@ -763,7 +763,7 @@ class Connection:
 
     def debug(self, message, kind=" "):
         """Log a debug message about this connection."""
-        self.server._log.debug("{}[{}]: {}", kind, self.address, message)
+        self.server._log.debug("{}[{.address}]: {}", kind, self, message)
 
     def run(self):
         pass
@@ -911,7 +911,7 @@ class ControlConnection(Connection):
         super().__init__(server, sock)
 
     def debug(self, message, kind=" "):
-        self.server._log.debug("CTRL {}[{}]: {}", kind, self.address, message)
+        self.server._log.debug("CTRL {}[{.address}]: {}", kind, self, message)
 
     def run(self):
         """Listen for control commands and delegate to `ctrl_*` methods."""
