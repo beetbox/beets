@@ -252,7 +252,8 @@ There are a few coding conventions we use in beets:
   Transaction objects help control concurrent access to the database and assist
   in debugging conflicting accesses.
 
-- ``str.format()`` should be used instead of the ``%`` operator
+- f-strings should be used instead of the ``%`` operator and ``str.format()``
+  calls.
 - Never ``print`` informational messages; use the `logging
   <http://docs.python.org/library/logging.html>`__ module instead. In
   particular, we have our own logging shim, so you’ll see ``from beets import

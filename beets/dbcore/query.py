@@ -848,8 +848,6 @@ class DateQuery(FieldQuery[str]):
         date = datetime.fromtimestamp(timestamp)
         return self.interval.contains(date)
 
-    _clause_tmpl = "{0} {1} ?"
-
     def col_clause(self) -> tuple[str, Sequence[SQLiteType]]:
         clause_parts = []
         subvals = []
@@ -857,11 +855,11 @@ class DateQuery(FieldQuery[str]):
         # Convert the `datetime` objects to an integer number of seconds since
         # the (local) Unix epoch using `datetime.timestamp()`.
         if self.interval.start:
-            clause_parts.append(self._clause_tmpl.format(self.field, ">="))
+            clause_parts.append(f"{self.field} >= ?")
             subvals.append(int(self.interval.start.timestamp()))
 
         if self.interval.end:
-            clause_parts.append(self._clause_tmpl.format(self.field, "<"))
+            clause_parts.append(f"{self.field} < ?")
             subvals.append(int(self.interval.end.timestamp()))
 
         if clause_parts:

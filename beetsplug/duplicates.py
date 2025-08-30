@@ -150,7 +150,7 @@ class DuplicatesPlugin(BeetsPlugin):
             count = self.config["count"].get(bool)
             delete = self.config["delete"].get(bool)
             remove = self.config["remove"].get(bool)
-            fmt = self.config["format"].get(str)
+            fmt_tmpl = self.config["format"].get(str)
             full = self.config["full"].get(bool)
             keys = self.config["keys"].as_str_seq()
             merge = self.config["merge"].get(bool)
@@ -175,15 +175,14 @@ class DuplicatesPlugin(BeetsPlugin):
                 return
 
             if path:
-                fmt = "$path"
+                fmt_tmpl = "$path"
 
             # Default format string for count mode.
-            if count and not fmt:
+            if count and not fmt_tmpl:
                 if album:
-                    fmt = "$albumartist - $album"
+                    fmt_tmpl = "$albumartist - $album"
                 else:
-                    fmt = "$albumartist - $album - $title"
-                fmt += ": {0}"
+                    fmt_tmpl = "$albumartist - $album - $title"
 
             if checksum:
                 for i in items:
@@ -207,7 +206,7 @@ class DuplicatesPlugin(BeetsPlugin):
                             delete=delete,
                             remove=remove,
                             tag=tag,
-                            fmt=fmt.format(obj_count),
+                            fmt=f"{fmt_tmpl}: {obj_count}",
                         )
 
         self._command.func = _dup
