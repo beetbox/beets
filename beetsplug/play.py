@@ -154,7 +154,7 @@ class PlayPlugin(BeetsPlugin):
                 return f"{command_str} {args}"
         else:
             # Don't include the marker in the command.
-            return command_str.replace(" " + ARGS_MARKER, "")
+            return command_str.replace(f" {ARGS_MARKER}", "")
 
     def _playlist_or_paths(self, paths):
         """Return either the raw paths of items or a playlist of the items."""

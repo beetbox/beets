@@ -236,10 +236,10 @@ class AURADocument:
             # Not the last page so work out links.next url
             if not self.args:
                 # No existing arguments, so current page is 0
-                next_url = request.url + "?page=1"
+                next_url = f"{request.url}?page=1"
             elif not self.args.get("page", None):
                 # No existing page argument, so add one to the end
-                next_url = request.url + "&page=1"
+                next_url = f"{request.url}&page=1"
             else:
                 # Increment page token by 1
                 next_url = request.url.replace(
@@ -697,7 +697,7 @@ class ImageDocument(AURADocument):
         relationships = {}
         # Split id into [parent_type, parent_id, filename]
         id_split = image_id.split("-")
-        relationships[id_split[0] + "s"] = {
+        relationships[f"{id_split[0]}s"] = {
             "data": [{"type": id_split[0], "id": id_split[1]}]
         }
 

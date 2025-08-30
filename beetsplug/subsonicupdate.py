@@ -74,7 +74,7 @@ class SubsonicUpdate(BeetsPlugin):
         # Pick the random sequence and salt the password
         r = string.ascii_letters + string.digits
         salt = "".join([random.choice(r) for _ in range(6)])
-        salted_password = password + salt
+        salted_password = f"{password}{salt}"
         token = hashlib.md5(salted_password.encode("utf-8")).hexdigest()
 
         # Put together the payload of the request to the server and the URL
@@ -101,7 +101,7 @@ class SubsonicUpdate(BeetsPlugin):
                 context_path = ""
             url = f"http://{host}:{port}{context_path}"
 
-        return url + f"/rest/{endpoint}"
+        return f"{url}/rest/{endpoint}"
 
     def start_scan(self):
         user = self.config["user"].as_str()

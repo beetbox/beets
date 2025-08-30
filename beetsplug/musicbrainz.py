@@ -201,7 +201,7 @@ def _multi_artist_credit(
 
 
 def track_url(trackid: str) -> str:
-    return urljoin(BASE_URL, "recording/" + trackid)
+    return urljoin(BASE_URL, f"recording/{trackid}")
 
 
 def _flatten_artist_credit(credit: list[JSONDict]) -> tuple[str, str, str]:
@@ -246,7 +246,7 @@ def _get_related_artist_names(relations, relation_type):
 
 
 def album_url(albumid: str) -> str:
-    return urljoin(BASE_URL, "release/" + albumid)
+    return urljoin(BASE_URL, f"release/{albumid}")
 
 
 def _preferred_release_event(
@@ -291,7 +291,7 @@ def _set_date_str(
                     continue
 
                 if original:
-                    key = "original_" + key
+                    key = f"original_{key}"
                 setattr(info, key, date_num)
 
 

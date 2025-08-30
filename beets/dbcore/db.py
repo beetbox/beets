@@ -588,7 +588,7 @@ class Model(ABC, Generic[D]):
         for key in fields:
             if key != "id" and key in self._dirty:
                 self._dirty.remove(key)
-                assignments.append(key + "=?")
+                assignments.append(f"{key}=?")
                 value = self._type(key).to_sql(self[key])
                 subvars.append(value)
 

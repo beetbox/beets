@@ -433,8 +433,8 @@ def syspath(path: PathLike, prefix: bool = True) -> str:
     if prefix and not str_path.startswith(WINDOWS_MAGIC_PREFIX):
         if str_path.startswith("\\\\"):
             # UNC path. Final path should look like \\?\UNC\...
-            str_path = "UNC" + str_path[1:]
-        str_path = WINDOWS_MAGIC_PREFIX + str_path
+            str_path = f"UNC{str_path[1:]}"
+        str_path = f"{WINDOWS_MAGIC_PREFIX}{str_path}"
 
     return str_path
 
@@ -506,8 +506,8 @@ def move(path: bytes, dest: bytes, replace: bool = False):
         basename = os.path.basename(bytestring_path(dest))
         dirname = os.path.dirname(bytestring_path(dest))
         tmp = tempfile.NamedTemporaryFile(
-            suffix=syspath(b".beets", prefix=False),
-            prefix=syspath(b"." + basename + b".", prefix=False),
+            suffix=".beets",
+            prefix=f".{os.fsdecode(basename)}.",
             dir=syspath(dirname),
             delete=False,
         )
@@ -716,7 +716,7 @@ def truncate_path(str_path: str) -> str:
     path = Path(str_path)
     parent_parts = [truncate_str(p, max_length) for p in path.parts[:-1]]
     stem = truncate_str(path.stem, max_length - len(path.suffix))
-    return str(Path(*parent_parts, stem)) + path.suffix
+    return f"{Path(*parent_parts, stem)}{path.suffix}"
 
 
 def _legalize_stage(

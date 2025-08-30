@@ -130,9 +130,9 @@ class PluginLogFilter(logging.Filter):
     def filter(self, record):
         if hasattr(record.msg, "msg") and isinstance(record.msg.msg, str):
             # A _LogMessage from our hacked-up Logging replacement.
-            record.msg.msg = self.prefix + record.msg.msg
+            record.msg.msg = f"{self.prefix}{record.msg.msg}"
         elif isinstance(record.msg, str):
-            record.msg = self.prefix + record.msg
+            record.msg = f"{self.prefix}{record.msg}"
         return True
 
 

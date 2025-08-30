@@ -682,7 +682,7 @@ class GoogleImages(RemoteArtSource):
         """
         if not (album.albumartist and album.album):
             return
-        search_string = (album.albumartist + "," + album.album).encode("utf-8")
+        search_string = f"{album.albumartist},{album.album}".encode("utf-8")
 
         try:
             response = self.request(
@@ -723,7 +723,7 @@ class FanartTV(RemoteArtSource):
     NAME = "fanart.tv"
     ID = "fanarttv"
     API_URL = "https://webservice.fanart.tv/v3/"
-    API_ALBUMS = API_URL + "music/albums/"
+    API_ALBUMS = f"{API_URL}music/albums/"
     PROJECT_KEY = "61a7d0ab4e67162b7a0c7c35915cd48e"
 
     def __init__(self, *args, **kwargs):
@@ -750,7 +750,7 @@ class FanartTV(RemoteArtSource):
 
         try:
             response = self.request(
-                self.API_ALBUMS + album.mb_releasegroupid,
+                f"{self.API_ALBUMS}{album.mb_releasegroupid}",
                 headers={
                     "api-key": self.PROJECT_KEY,
                     "client-key": self.client_key,
@@ -820,7 +820,7 @@ class ITunesStore(RemoteArtSource):
             return
 
         payload = {
-            "term": album.albumartist + " " + album.album,
+            "term": f"{album.albumartist} {album.album}",
             "entity": "album",
             "media": "music",
             "limit": 200,
@@ -947,7 +947,7 @@ class Wikipedia(RemoteArtSource):
             data = dbpedia_response.json()
             results = data["results"]["bindings"]
             if results:
-                cover_filename = "File:" + results[0]["coverFilename"]["value"]
+                cover_filename = f"File:{results[0]['coverFilename']['value']}"
                 page_id = results[0]["pageId"]["value"]
             else:
                 self._log.debug("wikipedia: album not found on dbpedia")
@@ -996,7 +996,7 @@ class Wikipedia(RemoteArtSource):
                 results = data["query"]["pages"][page_id]["images"]
                 for result in results:
                     if re.match(
-                        re.escape(lpart) + r".*?\." + re.escape(rpart),
+                        rf"{re.escape(lpart)}.*?\.{re.escape(rpart)}",
                         result["title"],
                     ):
                         cover_filename = result["title"]
@@ -1227,7 +1227,7 @@ class Spotify(RemoteArtSource):
         paths: None | Sequence[bytes],
     ) -> Iterator[Candidate]:
         try:
-            url = self.SPOTIFY_ALBUM_URL + album.items().get().spotify_album_id
+            url = f"{self.SPOTIFY_ALBUM_URL}{album.items().get().spotify_album_id}"
         except AttributeError:
             self._log.debug("Fetchart: no Spotify album ID found")
             return

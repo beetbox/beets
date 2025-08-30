@@ -1257,7 +1257,7 @@ class ShowChangeTest(IOMixin, unittest.TestCase):
         with patch("beets.ui.commands.ui.term_width", return_value=30):
             # Test newline layout
             config["ui"]["import"]["layout"] = "newline"
-            long_name = "another artist with a" + (" very" * 10) + " long name"
+            long_name = f"another artist with a{' very' * 10} long name"
             msg = self._show_change(
                 cur_artist=long_name, cur_album="another album"
             )
@@ -1270,7 +1270,7 @@ class ShowChangeTest(IOMixin, unittest.TestCase):
         with patch("beets.ui.commands.ui.term_width", return_value=54):
             # Test Column layout
             config["ui"]["import"]["layout"] = "column"
-            long_title = "a track with a" + (" very" * 10) + " long name"
+            long_title = f"a track with a{' very' * 10} long name"
             self.items[0].title = long_title
             msg = self._show_change()
             assert "(#1) a track (1:00) -> (#1) the title (0:00)" in msg
@@ -1279,7 +1279,7 @@ class ShowChangeTest(IOMixin, unittest.TestCase):
         # Patch ui.term_width to force wrapping
         with patch("beets.ui.commands.ui.term_width", return_value=30):
             config["ui"]["import"]["layout"] = "newline"
-            long_title = "a track with a" + (" very" * 10) + " long name"
+            long_title = f"a track with a{' very' * 10} long name"
             self.items[0].title = long_title
             msg = self._show_change()
             assert "(#1) a track with" in msg

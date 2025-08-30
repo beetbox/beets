@@ -385,7 +385,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
                 track.artist_id = artist_id
             # Discogs does not have track IDs. Invent our own IDs as proposed
             # in #2336.
-            track.track_id = str(album_id) + "-" + track.track_alt
+            track.track_id = f"{album_id}-{track.track_alt}"
             track.data_url = data_url
             track.data_source = "Discogs"
 

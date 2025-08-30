@@ -180,5 +180,5 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
             for track in tracks:
                 if track not in output:
                     output[track] = ";"
-                output[track] += name + ";"
+                output[track] += f"{name};"
         return output

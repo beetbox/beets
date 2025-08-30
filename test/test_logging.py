@@ -58,9 +58,9 @@ class LoggingLevelTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
                 self.register_listener("dummy_event", self.listener)
 
             def log_all(self, name):
-                self._log.debug("debug " + name)
-                self._log.info("info " + name)
-                self._log.warning("warning " + name)
+                self._log.debug(f"debug {name}")
+                self._log.info(f"info {name}")
+                self._log.warning(f"warning {name}")
 
             def commands(self):
                 cmd = ui.Subcommand("dummy")
@@ -172,9 +172,9 @@ class ConcurrentEventsTest(AsIsImporterMixin, ImportTestCase):
             self.t1_step = self.t2_step = 0
 
         def log_all(self, name):
-            self._log.debug("debug " + name)
-            self._log.info("info " + name)
-            self._log.warning("warning " + name)
+            self._log.debug(f"debug {name}")
+            self._log.info(f"info {name}")
+            self._log.warning(f"warning {name}")
 
         def listener1(self):
             try:
