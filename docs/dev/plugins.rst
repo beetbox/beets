@@ -384,9 +384,9 @@ Here's an example that adds a ``$disc_and_track`` field:
         number.
         """
         if item.disctotal > 1:
-            return u'%02i.%02i' % (item.disc, item.track)
+            return f"{item.disc:02d}.{item.track:02d}"
         else:
-            return u'%02i' % (item.track)
+            return f"{item.track:02d}"
 
 With this plugin enabled, templates can reference ``$disc_and_track`` as they
 can any standard metadata field.

@@ -238,25 +238,22 @@ There are a few coding conventions we use in beets:
   .. code-block:: python
 
       with g.lib.transaction() as tx:
-          rows = tx.query(
-              "SELECT DISTINCT '{0}' FROM '{1}' ORDER BY '{2}'".format(
-                  field, model._table, sort_field
-              )
-          )
+          rows = tx.query("SELECT DISTINCT {field} FROM {model._table} ORDER BY {sort_field}")
 
   To fetch Item objects from the database, use lib.items(…) and supply a query
   as an argument. Resist the urge to write raw SQL for your query. If you must
-  use lower-level queries into the database, do this:
+  use lower-level queries into the database, do this, for example:
 
   .. code-block:: python
 
       with lib.transaction() as tx:
-          rows = tx.query("SELECT …")
+          rows = tx.query("SELECT path FROM items WHERE album_id = ?", (album_id,))
 
   Transaction objects help control concurrent access to the database and assist
   in debugging conflicting accesses.
 
-- ``str.format()`` should be used instead of the ``%`` operator
+- f-strings should be used instead of the ``%`` operator and ``str.format()``
+  calls.
 - Never ``print`` informational messages; use the `logging
   <http://docs.python.org/library/logging.html>`__ module instead. In
   particular, we have our own logging shim, so you’ll see ``from beets import
@@ -264,7 +261,7 @@ There are a few coding conventions we use in beets:
 
   - The loggers use `str.format
     <http://docs.python.org/library/stdtypes.html#str.format>`__-style logging
-    instead of ``%``-style, so you can type ``log.debug("{0}", obj)`` to do your
+    instead of ``%``-style, so you can type ``log.debug("{}", obj)`` to do your
     formatting.
 
 - Exception handlers must use ``except A as B:`` instead of ``except A, B:``.

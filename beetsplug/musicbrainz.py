@@ -68,9 +68,7 @@ class MusicBrainzAPIError(util.HumanReadableError):
         super().__init__(reason, verb, tb)
 
     def get_message(self):
-        return "{} in {} with query {}".format(
-            self._reasonstr(), self.verb, repr(self.query)
-        )
+        return f"{self._reasonstr()} in {self.verb} with query {self.query!r}"
 
 
 RELEASE_INCLUDES = list(
@@ -203,7 +201,7 @@ def _multi_artist_credit(
 
 
 def track_url(trackid: str) -> str:
-    return urljoin(BASE_URL, "recording/" + trackid)
+    return urljoin(BASE_URL, f"recording/{trackid}")
 
 
 def _flatten_artist_credit(credit: list[JSONDict]) -> tuple[str, str, str]:
@@ -248,7 +246,7 @@ def _get_related_artist_names(relations, relation_type):
 
 
 def album_url(albumid: str) -> str:
-    return urljoin(BASE_URL, "release/" + albumid)
+    return urljoin(BASE_URL, f"release/{albumid}")
 
 
 def _preferred_release_event(
@@ -293,7 +291,7 @@ def _set_date_str(
                     continue
 
                 if original:
-                    key = "original_" + key
+                    key = f"original_{key}"
                 setattr(info, key, date_num)
 
 
@@ -838,7 +836,7 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
         """
         self._log.debug("Requesting MusicBrainz release {}", album_id)
         if not (albumid := self._extract_id(album_id)):
-            self._log.debug("Invalid MBID ({0}).", album_id)
+            self._log.debug("Invalid MBID ({}).", album_id)
             return None
 
         try:
@@ -875,7 +873,7 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
         or None if no track is found. May raise a MusicBrainzAPIError.
         """
         if not (trackid := self._extract_id(track_id)):
-            self._log.debug("Invalid MBID ({0}).", track_id)
+            self._log.debug("Invalid MBID ({}).", track_id)
             return None
 
         try:

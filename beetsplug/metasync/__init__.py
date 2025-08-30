@@ -49,7 +49,7 @@ def load_meta_sources():
     meta_sources = {}
 
     for module_path, class_name in SOURCES.items():
-        module = import_module(METASYNC_MODULE + "." + module_path)
+        module = import_module(f"{METASYNC_MODULE}.{module_path}")
         meta_sources[class_name.lower()] = getattr(module, class_name)
 
     return meta_sources
@@ -117,13 +117,13 @@ class MetaSyncPlugin(BeetsPlugin):
             try:
                 cls = META_SOURCES[player]
             except KeyError:
-                self._log.error("Unknown metadata source '{}'".format(player))
+                self._log.error("Unknown metadata source '{}'", player)
 
             try:
                 meta_source_instances[player] = cls(self.config, self._log)
             except (ImportError, ConfigValueError) as e:
                 self._log.error(
-                    f"Failed to instantiate metadata source {player!r}: {e}"
+                    "Failed to instantiate metadata source {!r}: {}", player, e
                 )
 
         # Avoid needlessly iterating over items

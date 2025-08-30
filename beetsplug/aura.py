@@ -236,14 +236,14 @@ class AURADocument:
             # Not the last page so work out links.next url
             if not self.args:
                 # No existing arguments, so current page is 0
-                next_url = request.url + "?page=1"
+                next_url = f"{request.url}?page=1"
             elif not self.args.get("page", None):
                 # No existing page argument, so add one to the end
-                next_url = request.url + "&page=1"
+                next_url = f"{request.url}&page=1"
             else:
                 # Increment page token by 1
                 next_url = request.url.replace(
-                    f"page={page}", "page={}".format(page + 1)
+                    f"page={page}", f"page={page + 1}"
                 )
         # Get only the items in the page range
         data = [
@@ -427,9 +427,7 @@ class TrackDocument(AURADocument):
             return self.error(
                 "404 Not Found",
                 "No track with the requested id.",
-                "There is no track with an id of {} in the library.".format(
-                    track_id
-                ),
+                f"There is no track with an id of {track_id} in the library.",
             )
         return self.single_resource_document(
             self.get_resource_object(self.lib, track)
@@ -513,9 +511,7 @@ class AlbumDocument(AURADocument):
             return self.error(
                 "404 Not Found",
                 "No album with the requested id.",
-                "There is no album with an id of {} in the library.".format(
-                    album_id
-                ),
+                f"There is no album with an id of {album_id} in the library.",
             )
         return self.single_resource_document(
             self.get_resource_object(self.lib, album)
@@ -600,9 +596,7 @@ class ArtistDocument(AURADocument):
             return self.error(
                 "404 Not Found",
                 "No artist with the requested id.",
-                "There is no artist with an id of {} in the library.".format(
-                    artist_id
-                ),
+                f"There is no artist with an id of {artist_id} in the library.",
             )
         return self.single_resource_document(artist_resource)
 
@@ -703,7 +697,7 @@ class ImageDocument(AURADocument):
         relationships = {}
         # Split id into [parent_type, parent_id, filename]
         id_split = image_id.split("-")
-        relationships[id_split[0] + "s"] = {
+        relationships[f"{id_split[0]}s"] = {
             "data": [{"type": id_split[0], "id": id_split[1]}]
         }
 
@@ -727,9 +721,7 @@ class ImageDocument(AURADocument):
             return self.error(
                 "404 Not Found",
                 "No image with the requested id.",
-                "There is no image with an id of {} in the library.".format(
-                    image_id
-                ),
+                f"There is no image with an id of {image_id} in the library.",
             )
         return self.single_resource_document(image_resource)
 
@@ -775,9 +767,7 @@ def audio_file(track_id):
         return AURADocument.error(
             "404 Not Found",
             "No track with the requested id.",
-            "There is no track with an id of {} in the library.".format(
-                track_id
-            ),
+            f"There is no track with an id of {track_id} in the library.",
         )
 
     path = os.fsdecode(track.path)
@@ -785,9 +775,8 @@ def audio_file(track_id):
         return AURADocument.error(
             "404 Not Found",
             "No audio file for the requested track.",
-            (
-                "There is no audio file for track {} at the expected location"
-            ).format(track_id),
+            f"There is no audio file for track {track_id} at the expected"
+            " location",
         )
 
     file_mimetype = guess_type(path)[0]
@@ -795,10 +784,8 @@ def audio_file(track_id):
         return AURADocument.error(
             "500 Internal Server Error",
             "Requested audio file has an unknown mimetype.",
-            (
-                "The audio file for track {} has an unknown mimetype. "
-                "Its file extension is {}."
-            ).format(track_id, path.split(".")[-1]),
+            f"The audio file for track {track_id} has an unknown mimetype. "
+            f"Its file extension is {path.split('.')[-1]}.",
         )
 
     # Check that the Accept header contains the file's mimetype
@@ -810,10 +797,8 @@ def audio_file(track_id):
         return AURADocument.error(
             "406 Not Acceptable",
             "Unsupported MIME type or bitrate parameter in Accept header.",
-            (
-                "The audio file for track {} is only available as {} and "
-                "bitrate parameters are not supported."
-            ).format(track_id, file_mimetype),
+            f"The audio file for track {track_id} is only available as"
+            f" {file_mimetype} and bitrate parameters are not supported.",
         )
 
     return send_file(
@@ -896,9 +881,7 @@ def image_file(image_id):
         return AURADocument.error(
             "404 Not Found",
             "No image with the requested id.",
-            "There is no image with an id of {} in the library".format(
-                image_id
-            ),
+            f"There is no image with an id of {image_id} in the library",
         )
     return send_file(img_path)
 

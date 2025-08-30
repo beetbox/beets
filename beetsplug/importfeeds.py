@@ -50,7 +50,7 @@ def _build_m3u_filename(basename):
     path = normpath(
         os.path.join(
             config["importfeeds"]["dir"].as_filename(),
-            date + "_" + basename + ".m3u",
+            f"{date}_{basename}.m3u",
         )
     )
     return path
@@ -136,7 +136,7 @@ class ImportFeedsPlugin(BeetsPlugin):
         if "echo" in formats:
             self._log.info("Location of imported music:")
             for path in paths:
-                self._log.info("  {0}", path)
+                self._log.info("  {}", path)
 
     def album_imported(self, lib, album):
         self._record_items(lib, album.album, album.items())

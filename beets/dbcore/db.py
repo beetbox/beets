@@ -390,9 +390,9 @@ class Model(ABC, Generic[D]):
         return obj
 
     def __repr__(self) -> str:
-        return "{}({})".format(
-            type(self).__name__,
-            ", ".join(f"{k}={v!r}" for k, v in dict(self).items()),
+        return (
+            f"{type(self).__name__}"
+            f"({', '.join(f'{k}={v!r}' for k, v in dict(self).items())})"
         )
 
     def clear_dirty(self):
@@ -409,9 +409,9 @@ class Model(ABC, Generic[D]):
         exception is raised otherwise.
         """
         if not self._db:
-            raise ValueError("{} has no database".format(type(self).__name__))
+            raise ValueError(f"{type(self).__name__} has no database")
         if need_id and not self.id:
-            raise ValueError("{} has no id".format(type(self).__name__))
+            raise ValueError(f"{type(self).__name__} has no id")
 
         return self._db
 
@@ -588,16 +588,14 @@ class Model(ABC, Generic[D]):
         for key in fields:
             if key != "id" and key in self._dirty:
                 self._dirty.remove(key)
-                assignments.append(key + "=?")
+                assignments.append(f"{key}=?")
                 value = self._type(key).to_sql(self[key])
                 subvars.append(value)
 
         with db.transaction() as tx:
             # Main table update.
             if assignments:
-                query = "UPDATE {} SET {} WHERE id=?".format(
-                    self._table, ",".join(assignments)
-                )
+                query = f"UPDATE {self._table} SET {','.join(assignments)} WHERE id=?"
                 subvars.append(self.id)
                 tx.mutate(query, subvars)
 
@@ -607,9 +605,9 @@ class Model(ABC, Generic[D]):
                     self._dirty.remove(key)
                     value = self._type(key).to_sql(value)
                     tx.mutate(
-                        "INSERT INTO {} "
+                        f"INSERT INTO {self._flex_table} "
                         "(entity_id, key, value) "
-                        "VALUES (?, ?, ?);".format(self._flex_table),
+                        "VALUES (?, ?, ?);",
                         (self.id, key, value),
                     )
 
@@ -1160,7 +1158,7 @@ class Database:
         """
         # Get current schema.
         with self.transaction() as tx:
-            rows = tx.query("PRAGMA table_info(%s)" % table)
+            rows = tx.query(f"PRAGMA table_info({table})")
         current_fields = {row[1] for row in rows}
 
         field_names = set(fields.keys())
@@ -1173,9 +1171,7 @@ class Database:
             columns = []
             for name, typ in fields.items():
                 columns.append(f"{name} {typ.sql}")
-            setup_sql = "CREATE TABLE {} ({});\n".format(
-                table, ", ".join(columns)
-            )
+            setup_sql = f"CREATE TABLE {table} ({', '.join(columns)});\n"
 
         else:
             # Table exists does not match the field set.
@@ -1183,8 +1179,8 @@ class Database:
             for name, typ in fields.items():
                 if name in current_fields:
                     continue
-                setup_sql += "ALTER TABLE {} ADD COLUMN {} {};\n".format(
-                    table, name, typ.sql
+                setup_sql += (
+                    f"ALTER TABLE {table} ADD COLUMN {name} {typ.sql};\n"
                 )
 
         with self.transaction() as tx:
@@ -1195,18 +1191,16 @@ class Database:
         for the given entity (if they don't exist).
         """
         with self.transaction() as tx:
-            tx.script(
-                """
-                CREATE TABLE IF NOT EXISTS {0} (
+            tx.script(f"""
+                CREATE TABLE IF NOT EXISTS {flex_table} (
                     id INTEGER PRIMARY KEY,
                     entity_id INTEGER,
                     key TEXT,
                     value TEXT,
                     UNIQUE(entity_id, key) ON CONFLICT REPLACE);
-                CREATE INDEX IF NOT EXISTS {0}_by_entity
-                    ON {0} (entity_id);
-                """.format(flex_table)
-            )
+                CREATE INDEX IF NOT EXISTS {flex_table}_by_entity
+                    ON {flex_table} (entity_id);
+                """)
 
     # Querying.
 

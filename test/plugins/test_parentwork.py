@@ -93,8 +93,7 @@ class ParentWorkIntegrationTest(PluginTestCase):
         item = Item(
             path="/file",
             mb_workid="e27bda6e-531e-36d3-9cd7-b8ebc18e8c53",
-            parentwork_workid_current="e27bda6e-531e-36d3-9cd7-\
-                    b8ebc18e8c53",
+            parentwork_workid_current="e27bda6e-531e-36d3-9cd7-b8ebc18e8c53",
         )
         item.add(self.lib)
 
@@ -109,8 +108,7 @@ class ParentWorkIntegrationTest(PluginTestCase):
             path="/file",
             mb_workid="e27bda6e-531e-36d3-9cd7-b8ebc18e8c53",
             mb_parentworkid="XXX",
-            parentwork_workid_current="e27bda6e-531e-36d3-9cd7-\
-                    b8ebc18e8c53",
+            parentwork_workid_current="e27bda6e-531e-36d3-9cd7-b8ebc18e8c53",
             parentwork="whatever",
         )
         item.add(self.lib)
@@ -124,11 +122,9 @@ class ParentWorkIntegrationTest(PluginTestCase):
         self.config["parentwork"]["force"] = False
         item = Item(
             path="/file",
-            mb_workid="e27bda6e-531e-36d3-9cd7-\
-                    b8ebc18e8c53",
+            mb_workid="e27bda6e-531e-36d3-9cd7-b8ebc18e8c53",
             mb_parentworkid="XXX",
-            parentwork_workid_current="e27bda6e-531e-36d3-9cd7-\
-                    b8ebc18e8c53",
+            parentwork_workid_current="e27bda6e-531e-36d3-9cd7-b8ebc18e8c53",
             parentwork="whatever",
         )
         item.add(self.lib)

@@ -18,6 +18,7 @@ interface.
 
 import os
 import re
+import textwrap
 from collections import Counter
 from collections.abc import Sequence
 from itertools import chain
@@ -112,15 +113,11 @@ def _parse_logfiles(logfiles):
             yield from _paths_from_logfile(syspath(normpath(logfile)))
         except ValueError as err:
             raise ui.UserError(
-                "malformed logfile {}: {}".format(
-                    util.displayable_path(logfile), str(err)
-                )
+                f"malformed logfile {util.displayable_path(logfile)}: {err}"
             ) from err
         except OSError as err:
             raise ui.UserError(
-                "unreadable logfile {}: {}".format(
-                    util.displayable_path(logfile), str(err)
-                )
+                f"unreadable logfile {util.displayable_path(logfile)}: {err}"
             ) from err
 
 
@@ -132,13 +129,13 @@ def _print_keys(query):
     returned row, with indentation of 2 spaces.
     """
     for row in query:
-        print_(" " * 2 + row["key"])
+        print_(f"  {row['key']}")
 
 
 def fields_func(lib, opts, args):
     def _print_rows(names):
         names.sort()
-        print_("  " + "\n  ".join(names))
+        print_(textwrap.indent("\n".join(names), "  "))
 
     print_("Item fields:")
     _print_rows(library.Item.all_keys())
@@ -148,13 +145,13 @@ def fields_func(lib, opts, args):
 
     with lib.transaction() as tx:
         # The SQL uses the DISTINCT to get unique values from the query
-        unique_fields = "SELECT DISTINCT key FROM (%s)"
+        unique_fields = "SELECT DISTINCT key FROM ({})"
 
         print_("Item flexible attributes:")
-        _print_keys(tx.query(unique_fields % library.Item._flex_table))
+        _print_keys(tx.query(unique_fields.format(library.Item._flex_table)))
 
         print_("Album flexible attributes:")
-        _print_keys(tx.query(unique_fields % library.Album._flex_table))
+        _print_keys(tx.query(unique_fields.format(library.Album._flex_table)))
 
 
 fields_cmd = ui.Subcommand(
@@ -213,10 +210,10 @@ def get_singleton_disambig_fields(info: hooks.TrackInfo) -> Sequence[str]:
     out = []
     chosen_fields = config["match"]["singleton_disambig_fields"].as_str_seq()
     calculated_values = {
-        "index": "Index {}".format(str(info.index)),
-        "track_alt": "Track {}".format(info.track_alt),
+        "index": f"Index {info.index}",
+        "track_alt": f"Track {info.track_alt}",
         "album": (
-            "[{}]".format(info.album)
+            f"[{info.album}]"
             if (
                 config["import"]["singleton_album_disambig"].get()
                 and info.get("album")
@@ -242,7 +239,7 @@ def get_album_disambig_fields(info: hooks.AlbumInfo) -> Sequence[str]:
     chosen_fields = config["match"]["album_disambig_fields"].as_str_seq()
     calculated_values = {
         "media": (
-            "{}x{}".format(info.mediums, info.media)
+            f"{info.mediums}x{info.media}"
             if (info.mediums and info.mediums > 1)
             else info.media
         ),
@@ -277,7 +274,7 @@ def dist_string(dist):
     """Formats a distance (a float) as a colorized similarity percentage
     string.
     """
-    string = "{:.1f}%".format(((1 - dist) * 100))
+    string = f"{(1 - dist) * 100:.1f}%"
     return dist_colorize(string, dist)
 
 
@@ -295,7 +292,7 @@ def penalty_string(distance, limit=None):
         if limit and len(penalties) > limit:
             penalties = penalties[:limit] + ["..."]
         # Prefix penalty string with U+2260: Not Equal To
-        penalty_string = "\u2260 {}".format(", ".join(penalties))
+        penalty_string = f"\u2260 {', '.join(penalties)}"
         return ui.colorize("changed", penalty_string)
 
 
@@ -360,18 +357,18 @@ class ChangeRepresentation:
 
         # 'Match' line and similarity.
         print_(
-            self.indent_header + f"Match ({dist_string(self.match.distance)}):"
+            f"{self.indent_header}Match ({dist_string(self.match.distance)}):"
         )
 
         if isinstance(self.match.info, autotag.hooks.AlbumInfo):
             # Matching an album - print that
             artist_album_str = (
-                f"{self.match.info.artist}" + f" - {self.match.info.album}"
+                f"{self.match.info.artist} - {self.match.info.album}"
             )
         else:
             # Matching a single track
             artist_album_str = (
-                f"{self.match.info.artist}" + f" - {self.match.info.title}"
+                f"{self.match.info.artist} - {self.match.info.title}"
             )
         print_(
             self.indent_header
@@ -381,22 +378,23 @@ class ChangeRepresentation:
         # Penalties.
         penalties = penalty_string(self.match.distance)
         if penalties:
-            print_(self.indent_header + penalties)
+            print_(f"{self.indent_header}{penalties}")
 
         # Disambiguation.
         disambig = disambig_string(self.match.info)
         if disambig:
-            print_(self.indent_header + disambig)
+            print_(f"{self.indent_header}{disambig}")
 
         # Data URL.
         if self.match.info.data_url:
             url = ui.colorize("text_faint", f"{self.match.info.data_url}")
-            print_(self.indent_header + url)
+            print_(f"{self.indent_header}{url}")
 
     def show_match_details(self):
         """Print out the details of the match, including changes in album name
         and artist name.
         """
+        changed_prefix = ui.colorize("changed", "\u2260")
         # Artist.
         artist_l, artist_r = self.cur_artist or "", self.match.info.artist
         if artist_r == VARIOUS_ARTISTS:
@@ -406,7 +404,7 @@ class ChangeRepresentation:
             artist_l, artist_r = ui.colordiff(artist_l, artist_r)
             # Prefix with U+2260: Not Equal To
             left = {
-                "prefix": ui.colorize("changed", "\u2260") + " Artist: ",
+                "prefix": f"{changed_prefix} Artist: ",
                 "contents": artist_l,
                 "suffix": "",
             }
@@ -414,7 +412,7 @@ class ChangeRepresentation:
             self.print_layout(self.indent_detail, left, right)
 
         else:
-            print_(self.indent_detail + "*", "Artist:", artist_r)
+            print_(f"{self.indent_detail}*", "Artist:", artist_r)
 
         if self.cur_album:
             # Album
@@ -426,14 +424,14 @@ class ChangeRepresentation:
                 album_l, album_r = ui.colordiff(album_l, album_r)
                 # Prefix with U+2260: Not Equal To
                 left = {
-                    "prefix": ui.colorize("changed", "\u2260") + " Album: ",
+                    "prefix": f"{changed_prefix} Album: ",
                     "contents": album_l,
                     "suffix": "",
                 }
                 right = {"prefix": "", "contents": album_r, "suffix": ""}
                 self.print_layout(self.indent_detail, left, right)
             else:
-                print_(self.indent_detail + "*", "Album:", album_r)
+                print_(f"{self.indent_detail}*", "Album:", album_r)
         elif self.cur_title:
             # Title - for singletons
             title_l, title_r = self.cur_title or "", self.match.info.title
@@ -441,14 +439,14 @@ class ChangeRepresentation:
                 title_l, title_r = ui.colordiff(title_l, title_r)
                 # Prefix with U+2260: Not Equal To
                 left = {
-                    "prefix": ui.colorize("changed", "\u2260") + " Title: ",
+                    "prefix": f"{changed_prefix} Title: ",
                     "contents": title_l,
                     "suffix": "",
                 }
                 right = {"prefix": "", "contents": title_r, "suffix": ""}
                 self.print_layout(self.indent_detail, left, right)
             else:
-                print_(self.indent_detail + "*", "Title:", title_r)
+                print_(f"{self.indent_detail}*", "Title:", title_r)
 
     def make_medium_info_line(self, track_info):
         """Construct a line with the current medium's info."""
@@ -490,7 +488,6 @@ class ChangeRepresentation:
         """Format colored track indices."""
         cur_track = self.format_index(item)
         new_track = self.format_index(track_info)
-        templ = "(#{})"
         changed = False
         # Choose color based on change.
         if cur_track != new_track:
@@ -502,10 +499,8 @@ class ChangeRepresentation:
         else:
             highlight_color = "text_faint"
 
-        cur_track = templ.format(cur_track)
-        new_track = templ.format(new_track)
-        lhs_track = ui.colorize(highlight_color, cur_track)
-        rhs_track = ui.colorize(highlight_color, new_track)
+        lhs_track = ui.colorize(highlight_color, f"(#{cur_track})")
+        rhs_track = ui.colorize(highlight_color, f"(#{new_track})")
         return lhs_track, rhs_track, changed
 
     @staticmethod
@@ -575,9 +570,9 @@ class ChangeRepresentation:
 
         prefix = ui.colorize("changed", "\u2260 ") if changed else "* "
         lhs = {
-            "prefix": prefix + lhs_track + " ",
+            "prefix": f"{prefix}{lhs_track} ",
             "contents": lhs_title,
-            "suffix": " " + lhs_length,
+            "suffix": f" {lhs_length}",
         }
         rhs = {"prefix": "", "contents": "", "suffix": ""}
         if not changed:
@@ -586,9 +581,9 @@ class ChangeRepresentation:
         else:
             # Construct a dictionary for the "changed to" side
             rhs = {
-                "prefix": rhs_track + " ",
+                "prefix": f"{rhs_track} ",
                 "contents": rhs_title,
-                "suffix": " " + rhs_length,
+                "suffix": f" {rhs_length}",
             }
             return (lhs, rhs)
 
@@ -681,7 +676,7 @@ class AlbumChange(ChangeRepresentation):
                     # Print tracks from previous medium
                     self.print_tracklist(lines)
                     lines = []
-                    print_(self.indent_detail + header)
+                    print_(f"{self.indent_detail}{header}")
                 # Save new medium details for future comparison.
                 medium, disctitle = track_info.medium, track_info.disctitle
 
@@ -697,11 +692,9 @@ class AlbumChange(ChangeRepresentation):
         # Missing and unmatched tracks.
         if self.match.extra_tracks:
             print_(
-                "Missing tracks ({0}/{1} - {2:.1%}):".format(
-                    len(self.match.extra_tracks),
-                    len(self.match.info.tracks),
-                    len(self.match.extra_tracks) / len(self.match.info.tracks),
-                )
+                "Missing tracks"
+                f" ({len(self.match.extra_tracks)}/{len(self.match.info.tracks)} -"
+                f" {len(self.match.extra_tracks) / len(self.match.info.tracks):.1%}):"
             )
         for track_info in self.match.extra_tracks:
             line = f" ! {track_info.title} (#{self.format_index(track_info)})"
@@ -711,9 +704,9 @@ class AlbumChange(ChangeRepresentation):
         if self.match.extra_items:
             print_(f"Unmatched tracks ({len(self.match.extra_items)}):")
         for item in self.match.extra_items:
-            line = " ! {} (#{})".format(item.title, self.format_index(item))
+            line = f" ! {item.title} (#{self.format_index(item)})"
             if item.length:
-                line += " ({})".format(human_seconds_short(item.length))
+                line += f" ({human_seconds_short(item.length)})"
             print_(ui.colorize("text_warning", line))
 
 
@@ -769,7 +762,7 @@ def summarize_items(items, singleton):
     """
     summary_parts = []
     if not singleton:
-        summary_parts.append("{} items".format(len(items)))
+        summary_parts.append(f"{len(items)} items")
 
     format_counts = {}
     for item in items:
@@ -789,10 +782,11 @@ def summarize_items(items, singleton):
         average_bitrate = sum([item.bitrate for item in items]) / len(items)
         total_duration = sum([item.length for item in items])
         total_filesize = sum([item.filesize for item in items])
-        summary_parts.append("{}kbps".format(int(average_bitrate / 1000)))
+        summary_parts.append(f"{int(average_bitrate / 1000)}kbps")
         if items[0].format == "FLAC":
-            sample_bits = "{}kHz/{} bit".format(
-                round(int(items[0].samplerate) / 1000, 1), items[0].bitdepth
+            sample_bits = (
+                f"{round(int(items[0].samplerate) / 1000, 1)}kHz"
+                f"/{items[0].bitdepth} bit"
             )
             summary_parts.append(sample_bits)
         summary_parts.append(human_seconds_short(total_duration))
@@ -885,7 +879,7 @@ def choose_candidate(
         if singleton:
             print_("No matching recordings found.")
         else:
-            print_("No matching release found for {} tracks.".format(itemcount))
+            print_(f"No matching release found for {itemcount} tracks.")
             print_(
                 "For help, see: "
                 "https://beets.readthedocs.org/en/latest/faq.html#nomatch"
@@ -910,40 +904,38 @@ def choose_candidate(
             # Display list of candidates.
             print_("")
             print_(
-                'Finding tags for {} "{} - {}".'.format(
-                    "track" if singleton else "album",
-                    item.artist if singleton else cur_artist,
-                    item.title if singleton else cur_album,
-                )
+                f"Finding tags for {'track' if singleton else 'album'}"
+                f'"{item.artist if singleton else cur_artist} -'
+                f' {item.title if singleton else cur_album}".'
             )
 
-            print_(ui.indent(2) + "Candidates:")
+            print_("  Candidates:")
             for i, match in enumerate(candidates):
                 # Index, metadata, and distance.
-                index0 = "{0}.".format(i + 1)
+                index0 = f"{i + 1}."
                 index = dist_colorize(index0, match.distance)
-                dist = "({:.1f}%)".format((1 - match.distance) * 100)
+                dist = f"({(1 - match.distance) * 100:.1f}%)"
                 distance = dist_colorize(dist, match.distance)
-                metadata = "{0} - {1}".format(
-                    match.info.artist,
-                    match.info.title if singleton else match.info.album,
+                metadata = (
+                    f"{match.info.artist} -"
+                    f" {match.info.title if singleton else match.info.album}"
                 )
                 if i == 0:
                     metadata = dist_colorize(metadata, match.distance)
                 else:
                     metadata = ui.colorize("text_highlight_minor", metadata)
                 line1 = [index, distance, metadata]
-                print_(ui.indent(2) + " ".join(line1))
+                print_(f"  {' '.join(line1)}")
 
                 # Penalties.
                 penalties = penalty_string(match.distance, 3)
                 if penalties:
-                    print_(ui.indent(13) + penalties)
+                    print_(f"{' ' * 13}{penalties}")
 
                 # Disambiguation
                 disambig = disambig_string(match.info)
                 if disambig:
-                    print_(ui.indent(13) + disambig)
+                    print_(f"{' ' * 13}{disambig}")
 
             # Ask the user for a choice.
             sel = ui.input_options(choice_opts, numrange=(1, len(candidates)))
@@ -1015,7 +1007,7 @@ def manual_id(session, task):
 
     Input an ID, either for an album ("release") or a track ("recording").
     """
-    prompt = "Enter {} ID:".format("release" if task.is_album else "recording")
+    prompt = f"Enter {'release' if task.is_album else 'recording'} ID:"
     search_id = input_(prompt).strip()
 
     if task.is_album:
@@ -1043,7 +1035,7 @@ class TerminalImportSession(importer.ImportSession):
 
         path_str0 = displayable_path(task.paths, "\n")
         path_str = ui.colorize("import_path", path_str0)
-        items_str0 = "({} items)".format(len(task.items))
+        items_str0 = f"({len(task.items)} items)"
         items_str = ui.colorize("import_path_items", items_str0)
         print_(" ".join([path_str, items_str]))
 
@@ -1156,7 +1148,7 @@ class TerminalImportSession(importer.ImportSession):
         that's already in the library.
         """
         log.warning(
-            "This {0} is already in the library!",
+            "This {} is already in the library!",
             ("album" if task.is_album else "item"),
         )
 
@@ -1217,8 +1209,8 @@ class TerminalImportSession(importer.ImportSession):
 
     def should_resume(self, path):
         return ui.input_yn(
-            "Import of the directory:\n{}\n"
-            "was interrupted. Resume (Y/n)?".format(displayable_path(path))
+            f"Import of the directory:\n{displayable_path(path)}\n"
+            "was interrupted. Resume (Y/n)?"
         )
 
     def _get_choices(self, task):
@@ -1288,11 +1280,10 @@ class TerminalImportSession(importer.ImportSession):
                 dup_choices = [c for c in all_choices if c.short == short]
                 for c in dup_choices[1:]:
                     log.warning(
-                        "Prompt choice '{0}' removed due to conflict "
-                        "with '{1}' (short letter: '{2}')",
-                        c.long,
-                        dup_choices[0].long,
-                        c.short,
+                        "Prompt choice '{0.long}' removed due to conflict "
+                        "with '{1[0].long}' (short letter: '{0.short}')",
+                        c,
+                        dup_choices,
                     )
                     extra_choices.remove(c)
 
@@ -1317,7 +1308,8 @@ def import_files(lib, paths: list[bytes], query):
             loghandler = logging.FileHandler(logpath, encoding="utf-8")
         except OSError:
             raise ui.UserError(
-                f"Could not open log file for writing: {displayable_path(logpath)}"
+                "Could not open log file for writing:"
+                f" {displayable_path(logpath)}"
             )
     else:
         loghandler = None
@@ -1362,9 +1354,7 @@ def import_func(lib, opts, args: list[str]):
         for path in byte_paths:
             if not os.path.exists(syspath(normpath(path))):
                 raise ui.UserError(
-                    "no such file or directory: {}".format(
-                        displayable_path(path)
-                    )
+                    f"no such file or directory: {displayable_path(path)}"
                 )
 
         # Check the directories from the logfiles, but don't throw an error in
@@ -1374,9 +1364,7 @@ def import_func(lib, opts, args: list[str]):
         for path in paths_from_logfiles:
             if not os.path.exists(syspath(normpath(path))):
                 log.warning(
-                    "No such file or directory: {}".format(
-                        displayable_path(path)
-                    )
+                    "No such file or directory: {}", displayable_path(path)
                 )
                 continue
 
@@ -1650,9 +1638,8 @@ def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
             # Did the item change since last checked?
             if item.current_mtime() <= item.mtime:
                 log.debug(
-                    "skipping {0} because mtime is up to date ({1})",
-                    displayable_path(item.path),
-                    item.mtime,
+                    "skipping {0.filepath} because mtime is up to date ({0.mtime})",
+                    item,
                 )
                 continue
 
@@ -1660,9 +1647,7 @@ def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
             try:
                 item.read()
             except library.ReadError as exc:
-                log.error(
-                    "error reading {0}: {1}", displayable_path(item.path), exc
-                )
+                log.error("error reading {.filepath}: {}", item, exc)
                 continue
 
             # Special-case album artist when it matches track artist. (Hacky
@@ -1703,7 +1688,7 @@ def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
                 continue
             album = lib.get_album(album_id)
             if not album:  # Empty albums have already been removed.
-                log.debug("emptied album {0}", album_id)
+                log.debug("emptied album {}", album_id)
                 continue
             first_item = album.items().get()
 
@@ -1714,7 +1699,7 @@ def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
 
             # Move album art (and any inconsistent items).
             if move and lib.directory in ancestry(first_item.path):
-                log.debug("moving album {0}", album_id)
+                log.debug("moving album {}", album_id)
 
                 # Manually moving and storing the album.
                 items = list(album.items())
@@ -1808,7 +1793,7 @@ def remove_items(lib, query, album, delete, force):
     if not force:
         # Prepare confirmation with user.
         album_str = (
-            " in {} album{}".format(len(albums), "s" if len(albums) > 1 else "")
+            f" in {len(albums)} album{'s' if len(albums) > 1 else ''}"
             if album
             else ""
         )
@@ -1816,14 +1801,17 @@ def remove_items(lib, query, album, delete, force):
         if delete:
             fmt = "$path - $title"
             prompt = "Really DELETE"
-            prompt_all = "Really DELETE {} file{}{}".format(
-                len(items), "s" if len(items) > 1 else "", album_str
+            prompt_all = (
+                "Really DELETE"
+                f" {len(items)} file{'s' if len(items) > 1 else ''}{album_str}"
             )
         else:
             fmt = ""
             prompt = "Really remove from the library?"
-            prompt_all = "Really remove {} item{}{} from the library?".format(
-                len(items), "s" if len(items) > 1 else "", album_str
+            prompt_all = (
+                "Really remove"
+                f" {len(items)} item{'s' if len(items) > 1 else ''}{album_str}"
+                " from the library?"
             )
 
         # Helpers for printing affected items
@@ -1892,7 +1880,7 @@ def show_stats(lib, query, exact):
             try:
                 total_size += os.path.getsize(syspath(item.path))
             except OSError as exc:
-                log.info("could not get size of {}: {}", item.path, exc)
+                log.info("could not get size of {.path}: {}", item, exc)
         else:
             total_size += int(item.length * item.bitrate / 8)
         total_time += item.length
@@ -1902,27 +1890,17 @@ def show_stats(lib, query, exact):
         if item.album_id:
             albums.add(item.album_id)
 
-    size_str = "" + human_bytes(total_size)
+    size_str = human_bytes(total_size)
     if exact:
         size_str += f" ({total_size} bytes)"
 
-    print_(
-        """Tracks: {}
-Total time: {}{}
-{}: {}
-Artists: {}
-Albums: {}
-Album artists: {}""".format(
-            total_items,
-            human_seconds(total_time),
-            f" ({total_time:.2f} seconds)" if exact else "",
-            "Total size" if exact else "Approximate total size",
-            size_str,
-            len(artists),
-            len(albums),
-            len(album_artists),
-        ),
-    )
+    print_(f"""Tracks: {total_items}
+Total time: {human_seconds(total_time)}
+{f" ({total_time:.2f} seconds)" if exact else ""}
+{"Total size" if exact else "Approximate total size"}: {size_str}
+Artists: {len(artists)}
+Albums: {len(albums)}
+Album artists: {len(album_artists)}""")
 
 
 def stats_func(lib, opts, args):
@@ -1943,7 +1921,7 @@ default_commands.append(stats_cmd)
 
 
 def show_version(lib, opts, args):
-    print_("beets version %s" % beets.__version__)
+    print_(f"beets version {beets.__version__}")
     print_(f"Python version {python_version()}")
     # Show plugins.
     names = sorted(p.name for p in plugins.find_plugins())
@@ -1977,7 +1955,7 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm, inherit):
 
     # Apply changes *temporarily*, preview them, and collect modified
     # objects.
-    print_("Modifying {} {}s.".format(len(objs), "album" if album else "item"))
+    print_(f"Modifying {len(objs)} {'album' if album else 'item'}s.")
     changed = []
     templates = {
         key: functemplate.template(value) for key, value in mods.items()
@@ -2007,7 +1985,7 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm, inherit):
             extra = ""
 
         changed = ui.input_select_objects(
-            "Really modify%s" % extra,
+            f"Really modify{extra}",
             changed,
             lambda o: print_and_modify(o, mods, dels),
         )
@@ -2159,7 +2137,7 @@ def move_items(
     act = "copy" if copy else "move"
     entity = "album" if album else "item"
     log.info(
-        "{0} {1} {2}{3}{4}.",
+        "{} {} {}{}{}.",
         action,
         len(objs),
         entity,
@@ -2185,7 +2163,7 @@ def move_items(
     else:
         if confirm:
             objs = ui.input_select_objects(
-                "Really %s" % act,
+                f"Really {act}",
                 objs,
                 lambda o: show_path_changes(
                     [(o.path, o.destination(basedir=dest))]
@@ -2193,7 +2171,7 @@ def move_items(
             )
 
         for obj in objs:
-            log.debug("moving: {0}", util.displayable_path(obj.path))
+            log.debug("moving: {.filepath}", obj)
 
             if export:
                 # Copy without affecting the database.
@@ -2213,9 +2191,7 @@ def move_func(lib, opts, args):
     if dest is not None:
         dest = normpath(dest)
         if not os.path.isdir(syspath(dest)):
-            raise ui.UserError(
-                "no such directory: {}".format(displayable_path(dest))
-            )
+            raise ui.UserError(f"no such directory: {displayable_path(dest)}")
 
     move_items(
         lib,
@@ -2278,16 +2254,14 @@ def write_items(lib, query, pretend, force):
     for item in items:
         # Item deleted?
         if not os.path.exists(syspath(item.path)):
-            log.info("missing file: {0}", util.displayable_path(item.path))
+            log.info("missing file: {.filepath}", item)
             continue
 
         # Get an Item object reflecting the "clean" (on-disk) state.
         try:
             clean_item = library.Item.from_path(item.path)
         except library.ReadError as exc:
-            log.error(
-                "error reading {0}: {1}", displayable_path(item.path), exc
-            )
+            log.error("error reading {.filepath}: {}", item, exc)
             continue
 
         # Check for and display changes.
@@ -2480,30 +2454,27 @@ def completion_script(commands):
     yield "_beet() {\n"
 
     # Command names
-    yield "  local commands='%s'\n" % " ".join(command_names)
+    yield f"  local commands={' '.join(command_names)!r}\n"
     yield "\n"
 
     # Command aliases
-    yield "  local aliases='%s'\n" % " ".join(aliases.keys())
+    yield f"  local aliases={' '.join(aliases.keys())!r}\n"
     for alias, cmd in aliases.items():
-        yield "  local alias__{}={}\n".format(alias.replace("-", "_"), cmd)
+        yield f"  local alias__{alias.replace('-', '_')}={cmd}\n"
     yield "\n"
 
     # Fields
-    yield "  fields='%s'\n" % " ".join(
-        set(
-            list(library.Item._fields.keys())
-            + list(library.Album._fields.keys())
-        )
-    )
+    fields = library.Item._fields.keys() | library.Album._fields.keys()
+    yield f"  fields={' '.join(fields)!r}\n"
 
     # Command options
     for cmd, opts in options.items():
         for option_type, option_list in opts.items():
             if option_list:
                 option_list = " ".join(option_list)
-                yield "  local {}__{}='{}'\n".format(
-                    option_type, cmd.replace("-", "_"), option_list
+                yield (
+                    "  local"
+                    f" {option_type}__{cmd.replace('-', '_')}='{option_list}'\n"
                 )
 
     yield "  _beet_dispatch\n"
