@@ -486,7 +486,6 @@ class ChangeRepresentation:
         """Format colored track indices."""
         cur_track = self.format_index(item)
         new_track = self.format_index(track_info)
-        templ = "(#{})"
         changed = False
         # Choose color based on change.
         if cur_track != new_track:
@@ -498,10 +497,8 @@ class ChangeRepresentation:
         else:
             highlight_color = "text_faint"
 
-        cur_track = templ.format(cur_track)
-        new_track = templ.format(new_track)
-        lhs_track = ui.colorize(highlight_color, cur_track)
-        rhs_track = ui.colorize(highlight_color, new_track)
+        lhs_track = ui.colorize(highlight_color, f"(#{cur_track})")
+        rhs_track = ui.colorize(highlight_color, f"(#{new_track})")
         return lhs_track, rhs_track, changed
 
     @staticmethod
