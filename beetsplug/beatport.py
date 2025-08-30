@@ -212,14 +212,10 @@ class BeatportClient:
         try:
             response = self.api.get(self._make_url(endpoint), params=kwargs)
         except Exception as e:
-            raise BeatportAPIError(
-                "Error connecting to Beatport API: {}".format(e)
-            )
+            raise BeatportAPIError(f"Error connecting to Beatport API: {e}")
         if not response:
             raise BeatportAPIError(
-                "Error {0.status_code} for '{0.request.path_url}".format(
-                    response
-                )
+                f"Error {response.status_code} for '{response.request.path_url}"
             )
         return response.json()["results"]
 
@@ -275,15 +271,14 @@ class BeatportRelease(BeatportObject):
         self.genre = data.get("genre")
 
         if "slug" in data:
-            self.url = "https://beatport.com/release/{}/{}".format(
-                data["slug"], data["id"]
+            self.url = (
+                f"https://beatport.com/release/{data['slug']}/{data['id']}"
             )
 
     def __str__(self) -> str:
-        return "<BeatportRelease: {} - {} ({})>".format(
-            self.artists_str(),
-            self.name,
-            self.catalog_number,
+        return (
+            "<BeatportRelease: "
+            f"{self.artists_str()} - {self.name} ({self.catalog_number})>"
         )
 
 
@@ -311,9 +306,7 @@ class BeatportTrack(BeatportObject):
             except ValueError:
                 pass
         if "slug" in data:
-            self.url = "https://beatport.com/track/{}/{}".format(
-                data["slug"], data["id"]
-            )
+            self.url = f"https://beatport.com/track/{data['slug']}/{data['id']}"
         self.track_number = data.get("trackNumber")
         self.bpm = data.get("bpm")
         self.initial_key = str((data.get("key") or {}).get("shortName"))

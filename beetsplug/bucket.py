@@ -55,8 +55,8 @@ def span_from_str(span_str):
     years = [int(x) for x in re.findall(r"\d+", span_str)]
     if not years:
         raise ui.UserError(
-            "invalid range defined for year bucket '%s': no "
-            "year found" % span_str
+            "invalid range defined for year bucket '%s': no year found"
+            % span_str
         )
     try:
         years = [normalize_year(x, years[0]) for x in years]
@@ -125,11 +125,8 @@ def str2fmt(s):
         "fromnchars": len(m.group("fromyear")),
         "tonchars": len(m.group("toyear")),
     }
-    res["fmt"] = "{}%s{}{}{}".format(
-        m.group("bef"),
-        m.group("sep"),
-        "%s" if res["tonchars"] else "",
-        m.group("after"),
+    res["fmt"] = (
+        f"{m['bef']}%s{m['sep']}{'%s' if res['tonchars'] else ''}{m['after']}"
     )
     return res
 

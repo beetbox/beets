@@ -89,8 +89,9 @@ class FishPlugin(BeetsPlugin):
             "-o",
             "--output",
             default="~/.config/fish/completions/beet.fish",
-            help="where to save the script. default: "
-            "~/.config/fish/completions",
+            help=(
+                "where to save the script. default: ~/.config/fish/completions"
+            ),
         )
         return [cmd]
 
@@ -127,16 +128,12 @@ class FishPlugin(BeetsPlugin):
         totstring += "" if nobasicfields else get_standard_fields(fields)
         totstring += get_extravalues(lib, extravalues) if extravalues else ""
         totstring += (
-            "\n"
-            + "# ====== {} =====".format("setup basic beet completion")
-            + "\n" * 2
+            "\n" + "# ====== setup basic beet completion =====" + "\n" * 2
         )
         totstring += get_basic_beet_options()
         totstring += (
             "\n"
-            + "# ====== {} =====".format(
-                "setup field completion for subcommands"
-            )
+            + "# ====== setup field completion for subcommands ====="
             + "\n"
         )
         totstring += get_subcommands(cmd_names_help, nobasicfields, extravalues)
@@ -226,11 +223,7 @@ def get_subcommands(cmd_name_and_help, nobasicfields, extravalues):
     for cmdname, cmdhelp in cmd_name_and_help:
         cmdname = _escape(cmdname)
 
-        word += (
-            "\n"
-            + "# ------ {} -------".format("fieldsetups for  " + cmdname)
-            + "\n"
-        )
+        word += "\n" + f"# ------ fieldsetups for {cmdname} -------" + "\n"
         word += BL_NEED2.format(
             ("-a " + cmdname), ("-f " + "-d " + wrap(clean_whitespace(cmdhelp)))
         )
@@ -268,11 +261,7 @@ def get_all_commands(beetcmds):
             name = _escape(name)
 
             word += "\n"
-            word += (
-                ("\n" * 2)
-                + "# ====== {} =====".format("completions for  " + name)
-                + "\n"
-            )
+            word += ("\n" * 2) + f"# ====== completions for {name} =====" + "\n"
 
             for option in cmd.parser._get_all_options()[1:]:
                 cmd_l = (
@@ -332,7 +321,7 @@ def clean_whitespace(word):
 def wrap(word):
     # Need " or ' around strings but watch out if they're in the string
     sptoken = '"'
-    if ('"') in word and ("'") in word:
+    if '"' in word and ("'") in word:
         word.replace('"', sptoken)
         return '"' + word + '"'
 

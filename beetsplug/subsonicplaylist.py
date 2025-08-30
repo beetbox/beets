@@ -168,9 +168,7 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
         params["v"] = "1.12.0"
         params["c"] = "beets"
         resp = requests.get(
-            "{}/rest/{}?{}".format(
-                self.config["base_url"].get(), endpoint, urlencode(params)
-            ),
+            f"{self.config['base_url'].get()}/rest/{endpoint}?{urlencode(params)}",
             timeout=10,
         )
         return resp

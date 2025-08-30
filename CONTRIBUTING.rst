@@ -238,11 +238,7 @@ There are a few coding conventions we use in beets:
   .. code-block:: python
 
       with g.lib.transaction() as tx:
-          rows = tx.query(
-              "SELECT DISTINCT '{0}' FROM '{1}' ORDER BY '{2}'".format(
-                  field, model._table, sort_field
-              )
-          )
+          rows = tx.query("SELECT DISTINCT {field} FROM {model._table} ORDER BY {sort_field}")
 
   To fetch Item objects from the database, use lib.items(…) and supply a query
   as an argument. Resist the urge to write raw SQL for your query. If you must
