@@ -114,7 +114,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         self.whitelist = self._load_whitelist()
         self.c14n_branches, self.canonicalize = self._load_c14n_tree()
 
-    def _load_whitelist(self) -> set[str]:
+    def _load_whitelist(self) -> set[bytes]:
         whitelist = set()
         wl_filename = self.config["whitelist"].get()
         if wl_filename in (True, ""):  # Indicates the default whitelist.
