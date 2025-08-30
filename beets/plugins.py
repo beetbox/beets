@@ -424,9 +424,9 @@ def types(model_cls: type[AnyModel]) -> dict[str, Type]:
         for field in plugin_types:
             if field in types and plugin_types[field] != types[field]:
                 raise PluginConflictError(
-                    "Plugin {} defines flexible field {} "
+                    f"Plugin {plugin.name} defines flexible field {field} "
                     "which has already been defined with "
-                    "another type.".format(plugin.name, field)
+                    "another type."
                 )
         types.update(plugin_types)
     return types
@@ -560,8 +560,8 @@ def feat_tokens(for_artist: bool = True) -> str:
     feat_words = ["ft", "featuring", "feat", "feat.", "ft."]
     if for_artist:
         feat_words += ["with", "vs", "and", "con", "&"]
-    return r"(?<=[\s(\[])(?:{})(?=\s)".format(
-        "|".join(re.escape(x) for x in feat_words)
+    return (
+        rf"(?<=[\s(\[])(?:{'|'.join(re.escape(x) for x in feat_words)})(?=\s)"
     )
 
 

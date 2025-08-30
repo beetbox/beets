@@ -79,9 +79,9 @@ def string_dist(str1: str | None, str2: str | None) -> float:
     # "something, the".
     for word in SD_END_WORDS:
         if str1.endswith(", %s" % word):
-            str1 = "{} {}".format(word, str1[: -len(word) - 2])
+            str1 = f"{word} {str1[: -len(word) - 2]}"
         if str2.endswith(", %s" % word):
-            str2 = "{} {}".format(word, str2[: -len(word) - 2])
+            str2 = f"{word} {str2[: -len(word) - 2]}"
 
     # Perform a couple of basic normalizing substitutions.
     for pat, repl in SD_REPLACE:
@@ -230,7 +230,7 @@ class Distance:
         """Adds all the distance penalties from `dist`."""
         if not isinstance(dist, Distance):
             raise ValueError(
-                "`dist` must be a Distance object, not {}".format(type(dist))
+                f"`dist` must be a Distance object, not {type(dist)}"
             )
         for key, penalties in dist._penalties.items():
             self._penalties.setdefault(key, []).extend(penalties)

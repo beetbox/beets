@@ -165,9 +165,7 @@ class Call:
         self.original = original
 
     def __repr__(self):
-        return "Call({}, {}, {})".format(
-            repr(self.ident), repr(self.args), repr(self.original)
-        )
+        return f"Call({self.ident!r}, {self.args!r}, {self.original!r})"
 
     def evaluate(self, env):
         """Evaluate the function call in the environment, returning a

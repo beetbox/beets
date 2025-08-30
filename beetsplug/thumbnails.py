@@ -202,7 +202,7 @@ class ThumbnailsPlugin(BeetsPlugin):
         artfile = os.path.split(album.artpath)[1]
         with open(syspath(outfilename), "w") as f:
             f.write("[Desktop Entry]\n")
-            f.write("Icon=./{}".format(artfile.decode("utf-8")))
+            f.write(f"Icon=./{artfile.decode('utf-8')}")
             f.close()
         self._log.debug("Wrote file {0}", displayable_path(outfilename))
 
@@ -266,9 +266,7 @@ class GioURI(URIGetter):
         g_file_ptr = self.libgio.g_file_new_for_path(path)
         if not g_file_ptr:
             raise RuntimeError(
-                "No gfile pointer received for {}".format(
-                    displayable_path(path)
-                )
+                f"No gfile pointer received for {displayable_path(path)}"
             )
 
         try:

@@ -70,9 +70,7 @@ def call(args: list[str], log: Logger, **kwargs: Any):
         return command_output(args, **kwargs)
     except subprocess.CalledProcessError as e:
         log.debug(e.output.decode("utf8", "ignore"))
-        raise ReplayGainError(
-            "{} exited with status {}".format(args[0], e.returncode)
-        )
+        raise ReplayGainError(f"{args[0]} exited with status {e.returncode}")
 
 
 def db_to_lufs(db: float) -> float:
@@ -170,9 +168,8 @@ class RgTask:
             # `track_gains` without throwing FatalReplayGainError
             #  => raise non-fatal exception & continue
             raise ReplayGainError(
-                "ReplayGain backend `{}` failed for track {}".format(
-                    self.backend_name, item
-                )
+                f"ReplayGain backend `{self.backend_name}` failed for track"
+                f" {item}"
             )
 
         self._store_track_gain(item, self.track_gains[0])
@@ -191,10 +188,8 @@ class RgTask:
             # `album_gain` without throwing FatalReplayGainError
             #  => raise non-fatal exception & continue
             raise ReplayGainError(
-                "ReplayGain backend `{}` failed "
-                "for some tracks in album {}".format(
-                    self.backend_name, self.album
-                )
+                f"ReplayGain backend `{self.backend_name}` failed "
+                f"for some tracks in album {self.album}"
             )
         for item, track_gain in zip(self.items, self.track_gains):
             self._store_track_gain(item, track_gain)
@@ -501,12 +496,10 @@ class FfmpegBackend(Backend):
                 if self._parse_float(b"M: " + line[1]) >= gating_threshold:
                     n_blocks += 1
             self._log.debug(
-                "{}: {} blocks over {} LUFS".format(
-                    item, n_blocks, gating_threshold
-                )
+                f"{item}: {n_blocks} blocks over {gating_threshold} LUFS"
             )
 
-        self._log.debug("{}: gain {} LU, peak {}".format(item, gain, peak))
+        self._log.debug(f"{item}: gain {gain} LU, peak {peak}")
 
         return Gain(gain, peak), n_blocks
 
@@ -526,9 +519,7 @@ class FfmpegBackend(Backend):
             if output[i].startswith(search):
                 return i
         raise ReplayGainError(
-            "ffmpeg output: missing {} after line {}".format(
-                repr(search), start_line
-            )
+            f"ffmpeg output: missing {search!r} after line {start_line}"
         )
 
     def _parse_float(self, line: bytes) -> float:
@@ -575,7 +566,7 @@ class CommandBackend(Backend):
             # Explicit executable path.
             if not os.path.isfile(self.command):
                 raise FatalReplayGainError(
-                    "replaygain command does not exist: {}".format(self.command)
+                    f"replaygain command does not exist: {self.command}"
                 )
         else:
             # Check whether the program is in $PATH.
@@ -1229,10 +1220,8 @@ class ReplayGainPlugin(BeetsPlugin):
 
         if self.backend_name not in BACKENDS:
             raise ui.UserError(
-                "Selected ReplayGain backend {} is not supported. "
-                "Please select one of: {}".format(
-                    self.backend_name, ", ".join(BACKENDS.keys())
-                )
+                f"Selected ReplayGain backend {self.backend_name} is not"
+                f" supported. Please select one of: {', '.join(BACKENDS)}"
             )
 
         # FIXME: Consider renaming the configuration option to 'peak_method'
@@ -1240,10 +1229,9 @@ class ReplayGainPlugin(BeetsPlugin):
         peak_method = self.config["peak"].as_str()
         if peak_method not in PeakMethod.__members__:
             raise ui.UserError(
-                "Selected ReplayGain peak method {} is not supported. "
-                "Please select one of: {}".format(
-                    peak_method, ", ".join(PeakMethod.__members__)
-                )
+                f"Selected ReplayGain peak method {peak_method} is not"
+                " supported. Please select one of:"
+                f" {', '.join(PeakMethod.__members__)}"
             )
         # This only applies to plain old rg tags, r128 doesn't store peak
         # values.
@@ -1526,18 +1514,16 @@ class ReplayGainPlugin(BeetsPlugin):
             if opts.album:
                 albums = lib.albums(args)
                 self._log.info(
-                    "Analyzing {} albums ~ {} backend...".format(
-                        len(albums), self.backend_name
-                    )
+                    f"Analyzing {len(albums)} albums ~"
+                    f" {self.backend_name} backend..."
                 )
                 for album in albums:
                     self.handle_album(album, write, force)
             else:
                 items = lib.items(args)
                 self._log.info(
-                    "Analyzing {} tracks ~ {} backend...".format(
-                        len(items), self.backend_name
-                    )
+                    f"Analyzing {len(items)} tracks ~"
+                    f" {self.backend_name} backend..."
                 )
                 for item in items:
                     self.handle_track(item, write, force)
@@ -1565,8 +1551,10 @@ class ReplayGainPlugin(BeetsPlugin):
             dest="force",
             action="store_true",
             default=False,
-            help="analyze all files, including those that "
-            "already have ReplayGain metadata",
+            help=(
+                "analyze all files, including those that already have"
+                " ReplayGain metadata"
+            ),
         )
         cmd.parser.add_option(
             "-w",
