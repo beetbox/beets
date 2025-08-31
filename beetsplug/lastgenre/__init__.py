@@ -140,9 +140,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             c14n_filename = C14N_TREE
         # Read the tree
         if c14n_filename:
-            self._log.debug("Loading canonicalization tree {}", c14n_filename)
-            c14n_filename = normpath(c14n_filename)
-            with codecs.open(c14n_filename, "r", encoding="utf-8") as f:
+            self._log.debug("Loading canonicalization tree {0}", c14n_filename)
+            with codecs.open(
+                str(normpath(c14n_filename)), "r", encoding="utf-8"
+            ) as f:
                 genres_tree = yaml.safe_load(f)
             flatten_tree(genres_tree, [], c14n_branches)
         return c14n_branches, canonicalize
