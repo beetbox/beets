@@ -74,7 +74,7 @@ class SubsonicUpdate(BeetsPlugin):
         # Pick the random sequence and salt the password
         r = string.ascii_letters + string.digits
         salt = "".join([random.choice(r) for _ in range(6)])
-        salted_password = password + salt
+        salted_password = f"{password}{salt}"
         token = hashlib.md5(salted_password.encode("utf-8")).hexdigest()
 
         # Put together the payload of the request to the server and the URL
@@ -101,14 +101,14 @@ class SubsonicUpdate(BeetsPlugin):
                 context_path = ""
             url = f"http://{host}:{port}{context_path}"
 
-        return url + f"/rest/{endpoint}"
+        return f"{url}/rest/{endpoint}"
 
     def start_scan(self):
         user = self.config["user"].as_str()
         auth = self.config["auth"].as_str()
         url = self.__format_url("startScan")
-        self._log.debug("URL is {0}", url)
-        self._log.debug("auth type is {0}", self.config["auth"])
+        self._log.debug("URL is {}", url)
+        self._log.debug("auth type is {.config[auth]}", self)
 
         if auth == "token":
             salt, token = self.__create_token()
@@ -145,14 +145,15 @@ class SubsonicUpdate(BeetsPlugin):
                 and json["subsonic-response"]["status"] == "ok"
             ):
                 count = json["subsonic-response"]["scanStatus"]["count"]
-                self._log.info(f"Updating Subsonic; scanning {count} tracks")
+                self._log.info("Updating Subsonic; scanning {} tracks", count)
             elif (
                 response.status_code == 200
                 and json["subsonic-response"]["status"] == "failed"
             ):
-                error_message = json["subsonic-response"]["error"]["message"]
-                self._log.error(f"Error: {error_message}")
+                self._log.error(
+                    "Error: {[subsonic-response][error][message]}", json
+                )
             else:
-                self._log.error("Error: {0}", json)
+                self._log.error("Error: {}", json)
         except Exception as error:
-            self._log.error(f"Error: {error}")
+            self._log.error("Error: {}", error)

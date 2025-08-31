@@ -89,11 +89,11 @@ class CAAHelper:
     MBID_RELASE = "rid"
     MBID_GROUP = "rgid"
 
-    RELEASE_URL = "coverartarchive.org/release/{}".format(MBID_RELASE)
-    GROUP_URL = "coverartarchive.org/release-group/{}".format(MBID_GROUP)
+    RELEASE_URL = f"coverartarchive.org/release/{MBID_RELASE}"
+    GROUP_URL = f"coverartarchive.org/release-group/{MBID_GROUP}"
 
-    RELEASE_URL = "https://" + RELEASE_URL
-    GROUP_URL = "https://" + GROUP_URL
+    RELEASE_URL = f"https://{RELEASE_URL}"
+    GROUP_URL = f"https://{GROUP_URL}"
 
     RESPONSE_RELEASE = """{
     "images": [
@@ -305,10 +305,8 @@ class FSArtTest(UseThePlugin):
 class CombinedTest(FetchImageTestCase, CAAHelper):
     ASIN = "xxxx"
     MBID = "releaseid"
-    AMAZON_URL = "https://images.amazon.com/images/P/{}.01.LZZZZZZZ.jpg".format(
-        ASIN
-    )
-    AAO_URL = "https://www.albumart.org/index_detail.php?asin={}".format(ASIN)
+    AMAZON_URL = f"https://images.amazon.com/images/P/{ASIN}.01.LZZZZZZZ.jpg"
+    AAO_URL = f"https://www.albumart.org/index_detail.php?asin={ASIN}"
 
     def setUp(self):
         super().setUp()
@@ -708,7 +706,7 @@ class FanartTVTest(UseThePlugin):
     def test_fanarttv_finds_image(self):
         album = _common.Bag(mb_releasegroupid="thereleasegroupid")
         self.mock_response(
-            fetchart.FanartTV.API_ALBUMS + "thereleasegroupid",
+            f"{fetchart.FanartTV.API_ALBUMS}thereleasegroupid",
             self.RESPONSE_MULTIPLE,
         )
         candidate = next(self.source.get(album, self.settings, []))
@@ -717,7 +715,7 @@ class FanartTVTest(UseThePlugin):
     def test_fanarttv_returns_no_result_when_error_received(self):
         album = _common.Bag(mb_releasegroupid="thereleasegroupid")
         self.mock_response(
-            fetchart.FanartTV.API_ALBUMS + "thereleasegroupid",
+            f"{fetchart.FanartTV.API_ALBUMS}thereleasegroupid",
             self.RESPONSE_ERROR,
         )
         with pytest.raises(StopIteration):
@@ -726,7 +724,7 @@ class FanartTVTest(UseThePlugin):
     def test_fanarttv_returns_no_result_with_malformed_response(self):
         album = _common.Bag(mb_releasegroupid="thereleasegroupid")
         self.mock_response(
-            fetchart.FanartTV.API_ALBUMS + "thereleasegroupid",
+            f"{fetchart.FanartTV.API_ALBUMS}thereleasegroupid",
             self.RESPONSE_MALFORMED,
         )
         with pytest.raises(StopIteration):
@@ -736,7 +734,7 @@ class FanartTVTest(UseThePlugin):
         # The source used to fail when there were images present, but no cover
         album = _common.Bag(mb_releasegroupid="thereleasegroupid")
         self.mock_response(
-            fetchart.FanartTV.API_ALBUMS + "thereleasegroupid",
+            f"{fetchart.FanartTV.API_ALBUMS}thereleasegroupid",
             self.RESPONSE_NO_ART,
         )
         with pytest.raises(StopIteration):

@@ -52,6 +52,15 @@ Bug fixes:
   the config option ``spotify.search_query_ascii: yes``. :bug:`5699`
 - :doc:`plugins/discogs`: Beets will no longer crash if a release has been
   deleted, and returns a 404.
+- :doc:`plugins/lastgenre`: Fix the issue introduced in Beets 2.3.0 where
+  non-whitelisted last.fm genres were not canonicalized to parent genres.
+  :bug:`5930`
+- :doc:`plugins/chroma`: AcoustID lookup HTTP requests will now time out after
+  10 seconds, rather than hanging the entire import process.
+- :doc:`/plugins/deezer`: Fix the issue with that every query to deezer was
+  ascii encoded. This resulted in bad matches for queries that contained special
+  e.g. non latin characters as 盗作. If you want to keep the legacy behavior set
+  the config option ``deezer.search_query_ascii: yes``. :bug:`5860`
 
 For packagers:
 
