@@ -190,12 +190,21 @@ def apply_item_metadata(item: Item, track_info: TrackInfo):
     item.artist_credit = track_info.artist_credit
     item.artists_credit = track_info.artists_credit
     item.title = track_info.title
+    item.lyricists = track_info.lyricists
+    item.composers = track_info.composers
+    item.arrangers = track_info.arrangers
     item.mb_trackid = track_info.track_id
     item.mb_releasetrackid = track_info.release_track_id
     if track_info.artist_id:
         item.mb_artistid = track_info.artist_id
     if track_info.artists_ids:
         item.mb_artistids = track_info.artists_ids
+    if track_info.lyricists_ids:
+        item.mb_lyricistids = track_info.lyricists_ids
+    if track_info.composers_ids:
+        item.mb_composerids = track_info.composers_ids
+    if track_info.arrangers_ids:
+        item.mb_arrangerids = track_info.arrangers_ids
 
     _apply_metadata(track_info, item)
     correct_list_fields(item)
