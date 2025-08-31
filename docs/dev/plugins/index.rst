@@ -100,4 +100,4 @@ resources:
     commands
     events
     autotagger
-    other
+    other/index
