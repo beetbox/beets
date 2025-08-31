@@ -81,7 +81,12 @@ man_pages = [
 
 
 html_theme = "pydata_sphinx_theme"
-html_theme_options = {"collapse_navigation": True, "logo": {"text": "beets"}}
+html_theme_options = {
+    "collapse_navigation": False,
+    "logo": {"text": "beets"},
+    "show_nav_level": 3,  # How many levels in left sidebar to show automatically
+    "navigation_depth": 4,  # How many levels of navigation to expand
+}
 html_title = "beets"
 html_logo = "_static/beets_logo_nobg.png"
 html_static_path = ["_static"]
