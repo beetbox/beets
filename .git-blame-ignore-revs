@@ -59,6 +59,8 @@ c490ac5810b70f3cf5fd8649669838e8fdb19f4d
 ab5acaabb3cd24c482adb7fa4800c89fd6a2f08d
 # Moved dev docs
 2504595532abd7584143007ede087ee4abc00916
+# Moved plugin docs Further Reading chapter
+c8cb3813e38fe1381509c39e415c3a5fe0deb808
 # Replace format calls with f-strings
 4a361bd501e85de12c91c2474c423559ca672852
 # Replace percent formatting
