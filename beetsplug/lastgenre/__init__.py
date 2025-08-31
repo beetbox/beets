@@ -114,7 +114,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         self.whitelist = self._load_whitelist()
         self.c14n_branches, self.canonicalize = self._load_c14n_tree()
 
-    def _load_whitelist(self) -> set[bytes]:
+    def _load_whitelist(self) -> set[str]:
         whitelist = set()
         wl_filename = self.config["whitelist"].get()
         if wl_filename in (True, ""):  # Indicates the default whitelist.
@@ -122,14 +122,14 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if wl_filename:
             wl_filename = normpath(wl_filename)
             with open(wl_filename, "rb") as f:
-                for line in f:
-                    line = line.decode("utf-8").strip().lower()
+                for raw_line in f:
+                    line = raw_line.decode("utf-8").strip().lower()
                     if line and not line.startswith("#"):
                         whitelist.add(line)
         return whitelist
 
     def _load_c14n_tree(self) -> tuple[list[list[str]], bool]:
-        c14n_branches = []
+        c14n_branches: list[list[str]] = []
         c14n_filename = self.config["canonical"].get()
         canonicalize = c14n_filename is not False
         # Default tree
