@@ -32,7 +32,7 @@ import yaml
 
 from beets import config, library, plugins, ui
 from beets.library import Album, Item
-from beets.util import normpath, plurality, unique_list
+from beets.util import normpath, plurality, syspath, unique_list
 
 LASTFM = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
 
@@ -142,7 +142,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if c14n_filename:
             self._log.debug("Loading canonicalization tree {0}", c14n_filename)
             with codecs.open(
-                str(normpath(c14n_filename)), "r", encoding="utf-8"
+                syspath(normpath(c14n_filename)), "r", encoding="utf-8"
             ) as f:
                 genres_tree = yaml.safe_load(f)
             flatten_tree(genres_tree, [], c14n_branches)
