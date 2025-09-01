@@ -81,7 +81,8 @@ class ImportFeedsPlugin(BeetsPlugin):
         relative_to = self.config["relative_to"].get()
         if relative_to:
             self.config["relative_to"] = normpath(relative_to)
-        # Note: get_feeds_dir() will be called later if relative_to is not set
+        else:
+            self.config["relative_to"] = self.get_feeds_dir()
 
         self.m3u_session = None
 
