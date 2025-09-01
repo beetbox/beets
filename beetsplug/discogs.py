@@ -96,7 +96,6 @@ class DiscogsPlugin(MetadataSourcePlugin):
                 "separator": ", ",
                 "index_tracks": False,
                 "append_style_genre": False,
-                "search_limit": 5,
             }
         )
         self.config["apikey"].redact = True

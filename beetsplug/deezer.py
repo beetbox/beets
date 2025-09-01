@@ -51,7 +51,6 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
 
     def __init__(self) -> None:
         super().__init__()
-        self.config.add({"search_limit": 5})
 
     def commands(self):
         """Add beet UI commands to interact with Deezer."""

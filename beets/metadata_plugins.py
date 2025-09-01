@@ -148,7 +148,12 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.config.add({"source_weight": 0.5})
+        self.config.add(
+            {
+                "search_limit": 5,
+                "source_weight": 0.5,
+            }
+        )
 
     @abc.abstractmethod
     def album_for_id(self, album_id: str) -> AlbumInfo | None:
