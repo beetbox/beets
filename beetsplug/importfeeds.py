@@ -81,12 +81,21 @@ class ImportFeedsPlugin(BeetsPlugin):
         relative_to = self.config["relative_to"].get()
         if relative_to:
             self.config["relative_to"] = normpath(relative_to)
-        else:
-            self.config["relative_to"] = self.get_feeds_dir()
+        # Note: get_feeds_dir() will be called later if relative_to is not set
+
+        self.m3u_session = None
 
         self.register_listener("album_imported", self.album_imported)
         self.register_listener("item_imported", self.item_imported)
         self.register_listener("import_begin", self.import_begin)
+
+    @property
+    def formats(self):
+        """Get formats list, handling confuse exceptions gracefully."""
+        try:
+            return self.config["formats"].as_str_seq()
+        except Exception:
+            return []
 
     def get_feeds_dir(self):
         feeds_dir = self.config["dir"].get()
@@ -97,7 +106,7 @@ class ImportFeedsPlugin(BeetsPlugin):
     def _record_items(self, lib, basename, items):
         """Records relative paths to the given items for each feed format"""
         feedsdir = bytestring_path(self.get_feeds_dir())
-        formats = self.config["formats"].as_str_seq()
+        formats = self.formats
         relative_to = self.config["relative_to"].get() or self.get_feeds_dir()
         relative_to = bytestring_path(relative_to)
 
@@ -145,8 +154,7 @@ class ImportFeedsPlugin(BeetsPlugin):
         self._record_items(lib, item.title, [item])
 
     def import_begin(self, session):
-        formats = self.config["formats"].as_str_seq()
-        if "m3u_session" in formats:
+        if "m3u_session" in self.formats:
             self.m3u_session = _build_m3u_session_filename(
                 self.config["m3u_name"].as_str()
             )
