@@ -249,7 +249,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
 
         try:
             results = self.discogs_client.search(query, type="release")
-            results.per_page = self.config["search_limit"].as_number()
+            results.per_page = self.config["search_limit"].get()
             releases = results.page(1)
         except CONNECTION_ERRORS:
             self._log.debug(

@@ -809,7 +809,7 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
         )
         try:
             method = getattr(musicbrainzngs, f"search_{query_type}s")
-            res = method(limit=self.config["search_limit"].get(int), **filters)
+            res = method(limit=self.config["search_limit"].get(), **filters)
         except musicbrainzngs.MusicBrainzError as exc:
             raise MusicBrainzAPIError(
                 exc, f"{query_type} search", filters, traceback.format_exc()
