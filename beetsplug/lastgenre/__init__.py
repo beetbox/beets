@@ -22,7 +22,6 @@ The scraper script used is available here:
 https://gist.github.com/1241307
 """
 
-import codecs
 import os
 import traceback
 from typing import Union
@@ -141,7 +140,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # Read the tree
         if c14n_filename:
             self._log.debug("Loading canonicalization tree {0}", c14n_filename)
-            with codecs.open(
+            with open(
                 syspath(normpath(c14n_filename)), "r", encoding="utf-8"
             ) as f:
                 genres_tree = yaml.safe_load(f)
