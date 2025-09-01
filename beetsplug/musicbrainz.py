@@ -373,7 +373,6 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
                 "https": False,
                 "ratelimit": 1,
                 "ratelimit_interval": 1,
-                "search_limit": 5,
                 "genres": False,
                 "external_ids": {
                     "discogs": False,
