@@ -248,7 +248,10 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         try:
             response = requests.get(
                 f"{self.search_url}{query_type}",
-                params={"q": query},
+                params={
+                    "q": query,
+                    "limit": self.config["search_limit"].get(),
+                },
                 timeout=10,
             )
             response.raise_for_status()
@@ -266,7 +269,7 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
             self,
             query,
         )
-        return response_data[: self.config["search_limit"].get()]
+        return response_data
 
     def deezerupdate(self, items: Sequence[Item], write: bool):
         """Obtain rank information from Deezer."""

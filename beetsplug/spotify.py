@@ -442,7 +442,11 @@ class SpotifyPlugin(
             response = self._handle_response(
                 "get",
                 self.search_url,
-                params={"q": query, "type": query_type},
+                params={
+                    "q": query,
+                    "type": query_type,
+                    "limit": self.config["search_limit"].get(),
+                },
             )
         except APIError as e:
             self._log.debug("Spotify API error: {}", e)
@@ -454,7 +458,7 @@ class SpotifyPlugin(
             self,
             query,
         )
-        return response_data[: self.config["search_limit"].get()]
+        return response_data
 
     def commands(self) -> list[ui.Subcommand]:
         # autotagger import command
