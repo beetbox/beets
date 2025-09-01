@@ -39,6 +39,17 @@ class ImportHistTest(PluginMixin, AutotagImportTestCase):
     def setUp(self):
         preserve_plugin_listeners()
         super().setUp()
+
+        # Set up configuration for importfeeds plugin to prevent config errors
+        # since PluginMixin loads all plugins including importfeeds
+        self.config["importfeeds"] = {
+            "formats": [],
+            "dir": str(self.temp_dir),
+            "m3u_name": "imported.m3u",
+            "relative_to": None,
+            "absolute_path": False,
+        }
+
         self.prepare_album_for_import(2)
         self.importer = self.setup_importer()
         self.importer.add_choice(importer.Action.APPLY)
@@ -54,7 +65,17 @@ class ImportHistTest(PluginMixin, AutotagImportTestCase):
     def test_do_nothing(self):
         with self.configure_plugin({"suggest_removal": True}):
             self.importer.run()
-            item_to_remove = self.lib.albums().get().items()[0]
+            album = self.lib.albums().get()
+            assert album is not None, "No album was imported"
+            items = album.items()
+            assert len(items) > 0, "No items were imported"
+            item_to_remove = items[0]
+            assert hasattr(item_to_remove, "source_path"), (
+                "Item missing source_path attribute"
+            )
+            assert os.path.exists(syspath(item_to_remove.path)), (
+                "Item file does not exist"
+            )
             with control_stdin("N"):
                 self.run_command(
                     "remove",
@@ -65,7 +86,13 @@ class ImportHistTest(PluginMixin, AutotagImportTestCase):
     def test_remove_single(self):
         with self.configure_plugin({"suggest_removal": True}):
             self.importer.run()
-            items_to_remove = self.lib.albums().get().items()
+            album = self.lib.albums().get()
+            assert album is not None, "No album was imported"
+            items_to_remove = album.items()
+            assert len(items_to_remove) > 0, "No items were imported"
+            assert hasattr(items_to_remove[0], "source_path"), (
+                "Item missing source_path attribute"
+            )
             with control_stdin("y\nD"):
                 self.run_command(
                     "remove",
@@ -76,7 +103,10 @@ class ImportHistTest(PluginMixin, AutotagImportTestCase):
     def test_remove_all_from_single(self):
         with self.configure_plugin({"suggest_removal": True}):
             self.importer.run()
-            items_to_remove = self.lib.albums().get().items()
+            album = self.lib.albums().get()
+            assert album is not None, "No album was imported"
+            items_to_remove = album.items()
+            assert len(items_to_remove) > 0, "No items were imported"
             with control_stdin("y\nR\ny"):
                 self.run_command(
                     "remove",
@@ -88,7 +118,10 @@ class ImportHistTest(PluginMixin, AutotagImportTestCase):
     def test_stop_suggesting(self):
         with self.configure_plugin({"suggest_removal": True}):
             self.importer.run()
-            items_to_remove = self.lib.albums().get().items()
+            album = self.lib.albums().get()
+            assert album is not None, "No album was imported"
+            items_to_remove = album.items()
+            assert len(items_to_remove) > 0, "No items were imported"
             with control_stdin("y\nS"):
                 self.run_command(
                     "remove",
