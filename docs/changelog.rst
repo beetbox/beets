@@ -131,6 +131,8 @@ Other changes:
   beets/library directory.
 - Added a test to check that all plugins can be imported without errors.
 - :doc:`/guides/main`: Add instructions to install beets on Void Linux.
+- :doc:`plugins/lastgenre`: Refactor loading whitelist and canonicalization
+  file. :bug:`5979`
 
 2.3.1 (May 14, 2025)
 --------------------
