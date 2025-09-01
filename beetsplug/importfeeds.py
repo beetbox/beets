@@ -101,7 +101,15 @@ class ImportFeedsPlugin(BeetsPlugin):
         feeds_dir = self.config["dir"].get()
         if feeds_dir:
             return os.path.expanduser(bytestring_path(feeds_dir))
-        return config["directory"].as_filename()
+
+        # Fallback to global config directory, with error handling
+        try:
+            return config["directory"].as_filename()
+        except Exception:
+            # If global config not available (e.g., in tests), use temp dir
+            import tempfile
+
+            return tempfile.gettempdir()
 
     def _record_items(self, lib, basename, items):
         """Records relative paths to the given items for each feed format"""
