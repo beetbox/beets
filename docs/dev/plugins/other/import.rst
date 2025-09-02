@@ -1,7 +1,7 @@
 .. _plugin-stage:
 
 Add Import Pipeline Stages
---------------------------
+==========================
 
 Many plugins need to add high-latency operations to the import workflow. For
 example, a plugin that fetches lyrics from the Web would, ideally, not block the
@@ -44,7 +44,7 @@ adding the function to the plugin's ``early_import_stages`` field instead:
 .. _extend-query:
 
 Extend the Query Syntax
-~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------
 
 You can add new kinds of queries to beets' :doc:`query syntax
 </reference/query>`. There are two ways to add custom queries: using a prefix

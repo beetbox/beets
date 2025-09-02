@@ -1,7 +1,7 @@
 .. _plugin-logging:
 
 Logging
--------
+=======
 
 Each plugin object has a ``_log`` attribute, which is a ``Logger`` from the
 `standard Python logging module`_. The logger is set up to `PEP 3101`_,

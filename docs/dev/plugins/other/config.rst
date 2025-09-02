@@ -1,5 +1,5 @@
 Read Configuration Options
---------------------------
+==========================
 
 Plugins can configure themselves using the ``config.yaml`` file. You can read
 configuration values in two ways. The first is to use `self.config` within your
