@@ -1,7 +1,7 @@
 .. _append_prompt_choices:
 
 Append Prompt Choices
----------------------
+=====================
 
 Plugins can also append choices to the prompt presented to the user during an
 import session.

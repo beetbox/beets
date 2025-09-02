@@ -1,5 +1,5 @@
 Add Path Format Functions and Fields
-------------------------------------
+====================================
 
 Beets supports *function calls* in its path format syntax (see
 :doc:`/reference/pathformat`). Beets includes a few built-in functions, but

@@ -1,5 +1,5 @@
 Extend MediaFile
-----------------
+================
 
 MediaFile_ is the file tag abstraction layer that beets uses to make
 cross-format metadata manipulation simple. Plugins can add fields to MediaFile

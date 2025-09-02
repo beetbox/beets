@@ -1,5 +1,5 @@
 Flexible Field Types
---------------------
+====================
 
 If your plugin uses flexible fields to store numbers or other non-string values,
 you can specify the types of those fields. A rating plugin, for example, might
