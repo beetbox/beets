@@ -59,7 +59,6 @@ beautifulsoup4 = { version = "*", optional = true }
 dbus-python = { version = "*", optional = true }
 flask = { version = "*", optional = true }
 flask-cors = { version = "*", optional = true }
-langdetect = { version = "*", optional = true }
 librosa = { version = "^0.10.2.post1", optional = true }
 mutagen = { version = ">=1.33", optional = true }
 Pillow = { version = "*", optional = true }
@@ -79,6 +78,7 @@ soco = { version = "*", optional = true }
 
 pydata-sphinx-theme = { version = "*", optional = true }
 sphinx = { version = "*", optional = true }
+langdetect = "^1.0.9"
 
 [tool.poetry.group.test.dependencies]
 beautifulsoup4 = "*"
@@ -86,6 +86,7 @@ codecov = ">=2.1.13"
 flask = "*"
 langdetect = "*"
 mock = "*"
+Pillow = "*"
 pylast = "*"
 pytest = "*"
 pytest-cov = "*"
@@ -150,6 +151,7 @@ replaygain = [
 ] # python-gi and GStreamer 1.0+ or mp3gain/aacgain or Python Audio Tools or ffmpeg
 scrub = ["mutagen"]
 sonosupdate = ["soco"]
+tests = ["Pillow"]
 thumbnails = ["Pillow", "pyxdg"]
 web = ["flask", "flask-cors"]
 
