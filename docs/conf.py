@@ -95,7 +95,7 @@ html_theme = "pydata_sphinx_theme"
 html_theme_options = {
     "collapse_navigation": False,
     "logo": {"text": "beets"},
-    "show_nav_level": 3,  # How many levels in left sidebar to show automatically
+    "show_nav_level": 2,  # How many levels in left sidebar to show automatically
     "navigation_depth": 4,  # How many levels of navigation to expand
 }
 html_title = "beets"
