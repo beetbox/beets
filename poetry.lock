@@ -696,28 +696,29 @@ files = [
 
 [[package]]
 name = "docstrfmt"
-version = "1.10.0"
+version = "1.11.1"
 description = "docstrfmt: A formatter for Sphinx flavored reStructuredText."
 optional = false
-python-versions = "<4,>=3.8"
+python-versions = ">=3.9"
 files = [
-    {file = "docstrfmt-1.10.0-py3-none-any.whl", hash = "sha256:a34ef6f3d8ab3233a7d0b3d1c2f3c66f8acbb3917df5ed2f3e34c1629ac29cef"},
-    {file = "docstrfmt-1.10.0.tar.gz", hash = "sha256:9da96e71552937f4b49ae2d6ab1c118ffa8ad6968082e6b8fd978b01d1bc0066"},
+    {file = "docstrfmt-1.11.1-py3-none-any.whl", hash = "sha256:6782d8663321c3a7c40be08a36fbcb1ea9e46d1efba85411ba807d97f384871a"},
+    {file = "docstrfmt-1.11.1.tar.gz", hash = "sha256:d41e19d6c5d524cc7f8ff6cbfecb8762d77e696b9fe4f5057269051fb966fc80"},
 ]
 
 [package.dependencies]
-black = "==24.*"
-click = "==8.*"
-docutils = "==0.20.*"
-libcst = "==1.*"
-platformdirs = "==4.*"
-sphinx = ">=7,<9"
-tabulate = "==0.9.*"
-toml = "==0.10.*"
+black = ">=24"
+click = ">=8"
+docutils = ">=0.20"
+libcst = ">=1"
+platformdirs = ">=4"
+roman = "*"
+sphinx = ">=7"
+tabulate = ">=0.9"
+toml = {version = ">=0.10", markers = "python_version < \"3.11\""}
 
 [package.extras]
 ci = ["coveralls"]
-d = ["aiohttp (==3.*)"]
+d = ["aiohttp (>=3)"]
 dev = ["docstrfmt[lint]", "docstrfmt[test]", "packaging"]
 lint = ["pre-commit", "ruff (>=0.0.292)"]
 test = ["pytest", "pytest-aiohttp"]
@@ -2922,6 +2923,17 @@ urllib3 = ">=1.25.10,<3.0"
 tests = ["coverage (>=6.0.0)", "flake8", "mypy", "pytest (>=7.0.0)", "pytest-asyncio", "pytest-cov", "pytest-httpserver", "tomli", "tomli-w", "types-PyYAML", "types-requests"]
 
 [[package]]
+name = "roman"
+version = "5.1"
+description = "Integer to Roman numerals converter"
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "roman-5.1-py3-none-any.whl", hash = "sha256:bf595d8a9bc4a8e8b1dfa23e1d4def0251b03b494786df6b8c3d3f1635ce285a"},
+    {file = "roman-5.1.tar.gz", hash = "sha256:3a86572e9bc9183e771769601189e5fa32f1620ffeceebb9eca836affb409986"},
+]
+
+[[package]]
 name = "ruff"
 version = "0.12.3"
 description = "An extremely fast Python linter and code formatter, written in Rust."
@@ -3617,4 +3629,4 @@ web = ["flask", "flask-cors"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "daa6c3c2b5bee3180f74f4186bb29ee1ad825870b5b9f6c2b743fcaa61b34c8c"
+content-hash = "faea27878ce1ca3f1335fd83e027b289351c51c73550bda72bf501a9c82166f7"
