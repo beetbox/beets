@@ -442,7 +442,11 @@ class SpotifyPlugin(
             response = self._handle_response(
                 "get",
                 self.search_url,
-                params={"q": query, "type": query_type},
+                params={
+                    "q": query,
+                    "type": query_type,
+                    "limit": self.config["search_limit"].get(),
+                },
             )
         except APIError as e:
             self._log.debug("Spotify API error: {}", e)

@@ -49,6 +49,9 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
     album_url = "https://api.deezer.com/album/"
     track_url = "https://api.deezer.com/track/"
 
+    def __init__(self) -> None:
+        super().__init__()
+
     def commands(self):
         """Add beet UI commands to interact with Deezer."""
         deezer_update_cmd = ui.Subcommand(
@@ -245,7 +248,10 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         try:
             response = requests.get(
                 f"{self.search_url}{query_type}",
-                params={"q": query},
+                params={
+                    "q": query,
+                    "limit": self.config["search_limit"].get(),
+                },
                 timeout=10,
             )
             response.raise_for_status()
