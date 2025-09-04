@@ -4178,7 +4178,7 @@ fetching cover art for your music, enable this plugin after upgrading to beets
   "database is locked"). This release synchronizes access to the database to
   avoid internal SQLite contention, which should avoid this error.
 - Plugins can now add parallel stages to the import pipeline. See
-  :ref:`writing-plugins`.
+  :ref:`basic-plugin-setup`.
 - Beets now prints out an error when you use an unrecognized field name in a
   query: for example, when running ``beet ls -a artist:foo`` (because ``artist``
   is an item-level field).
@@ -4361,7 +4361,7 @@ to come in the next couple of releases.
   addition to replacing them) if the special string ``<strip>`` is specified as
   the replacement.
 - New plugin API: plugins can now add fields to the MediaFile tag abstraction
-  layer. See :ref:`writing-plugins`.
+  layer. See :ref:`basic-plugin-setup`.
 - A reasonable error message is now shown when the import log file cannot be
   opened.
 - The import log file is now flushed and closed properly so that it can be used
@@ -4405,7 +4405,7 @@ filenames that would otherwise conflict. Three new plugins (``inline``,
   naming rules: for example, ``%upper{%left{$artist,1}}`` will insert the
   capitalized first letter of the track's artist. For more details, see
   :doc:`/reference/pathformat`. If you're interested in adding your own template
-  functions via a plugin, see :ref:`writing-plugins`.
+  functions via a plugin, see :ref:`basic-plugin-setup`.
 - Plugins can also now define new path *fields* in addition to functions.
 - The new :doc:`/plugins/inline` lets you **use Python expressions to customize
   path formats** by defining new fields in the config file.
