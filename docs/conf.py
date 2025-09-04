@@ -75,6 +75,17 @@ man_pages = [
     ),
 ]
 
+# Global substitutions that can be used anywhere in the documentation.
+rst_epilog = """
+.. |Album| replace:: :class:`~beets.library.models.Album`
+.. |AlbumInfo| replace:: :class:`beets.autotag.hooks.AlbumInfo`
+.. |ImportSession| replace:: :class:`~beets.importer.session.ImportSession`
+.. |ImportTask| replace:: :class:`~beets.importer.tasks.ImportTask`
+.. |Item| replace:: :class:`~beets.library.models.Item`
+.. |Library| replace:: :class:`~beets.library.library.Library`
+.. |Model| replace:: :class:`~beets.dbcore.db.Model`
+.. |TrackInfo| replace:: :class:`beets.autotag.hooks.TrackInfo`
+"""
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
