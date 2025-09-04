@@ -196,7 +196,8 @@ cmd = "mypy"
 
 [tool.poe.tasks.docs]
 help = "Build documentation"
-cmd = "make -C docs clean html"
+args = [{ name = "COMMANDS", positional = true, multiple = true, default = "html" }]
+cmd = "make -C docs $COMMANDS"
 
 [tool.poe.tasks.format]
 help = "Format the codebase"
