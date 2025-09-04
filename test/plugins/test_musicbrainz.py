@@ -990,7 +990,7 @@ class TestMusicBrainzPlugin(PluginMixin):
     plugin = "musicbrainz"
 
     mbid = "d2a6f856-b553-40a0-ac54-a321e8e2da99"
-    RECORDING = {"title": "foo", "id": "bar", "length": 42}
+    RECORDING = {"title": "foo", "id": mbid, "length": 42}
 
     @pytest.fixture
     def plugin_config(self):
@@ -1034,6 +1034,10 @@ class TestMusicBrainzPlugin(PluginMixin):
         monkeypatch.setattr(
             "musicbrainzngs.search_recordings",
             lambda *_, **__: {"recording-list": [self.RECORDING]},
+        )
+        monkeypatch.setattr(
+            "musicbrainzngs.get_recording_by_id",
+            lambda *_, **__: {"recording": self.RECORDING},
         )
 
         candidates = list(mb.item_candidates(Item(), "hello", "there"))
