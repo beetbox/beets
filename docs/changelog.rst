@@ -32,6 +32,8 @@ New features:
   ``played_ratio_threshold``, to allow configuring the percentage the song must
   be played for it to be counted as played instead of skipped.
 - :doc:`plugins/web`: Display artist and album as part of the search results.
+- :doc:`plugins/spotify` :doc:`plugins/deezer`: Add new configuration option
+  ``search_limit`` to limit the number of results returned by search queries.
 
 Bug fixes:
 
@@ -2552,7 +2554,7 @@ Major new features and bigger changes:
   analysis tool. Thanks to :user:`jmwatte`. :bug:`1343`
 - A new ``filesize`` field on items indicates the number of bytes in the file.
   :bug:`1291`
-- A new :ref:`searchlimit` configuration option allows you to specify how many
+- A new :ref:`search_limit` configuration option allows you to specify how many
   search results you wish to see when looking up releases at MusicBrainz during
   import. :bug:`1245`
 - The importer now records the data source for a match in a new flexible
