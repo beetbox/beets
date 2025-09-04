@@ -88,9 +88,9 @@ Beets already ships with several metadata source plugins. Studying these
 implementations can help you follow conventions and avoid pitfalls. Good
 starting points include:
 
-- `spotify`
-- `deezer`
-- `discogs`
+- ``spotify``
+- ``deezer``
+- ``discogs``
 
 Migration guidance
 ------------------
