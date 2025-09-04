@@ -139,7 +139,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             c14n_filename = C14N_TREE
         # Read the tree
         if c14n_filename:
-            self._log.debug("Loading canonicalization tree {0}", c14n_filename)
+            self._log.debug("Loading canonicalization tree {}", c14n_filename)
             with open(
                 syspath(normpath(c14n_filename)), "r", encoding="utf-8"
             ) as f:
