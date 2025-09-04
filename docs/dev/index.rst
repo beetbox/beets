@@ -13,17 +13,11 @@ configuration files, respectively.
 .. _mediafile: https://mediafile.readthedocs.io/en/latest/
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 3
     :titlesonly:
 
     plugins/index
     library
     importer
     cli
-
-.. toctree::
-    :maxdepth: 1
-    :caption: API Reference
-
-    ../api/plugins
-    ../api/database
+    ../api/index
