@@ -49,7 +49,7 @@ class PlayPluginTest(CleanupModulesMixin, PluginTestCase):
 
         open_mock.assert_called_once_with(ANY, expected_cmd)
         expected_playlist = expected_playlist or self.item.path.decode("utf-8")
-        exp_playlist = expected_playlist + "\n"
+        exp_playlist = f"{expected_playlist}\n"
         with open(open_mock.call_args[0][0][0], "rb") as playlist:
             assert exp_playlist == playlist.read().decode("utf-8")
 
@@ -96,9 +96,7 @@ class PlayPluginTest(CleanupModulesMixin, PluginTestCase):
         open_mock.assert_called_once_with(ANY, open_anything())
         with open(open_mock.call_args[0][0][0], "rb") as f:
             playlist = f.read().decode("utf-8")
-        assert (
-            f'{os.path.dirname(self.item.path.decode("utf-8"))}\n' == playlist
-        )
+        assert f"{self.item.filepath.parent}\n" == playlist
 
     def test_raw(self, open_mock):
         self.config["play"]["raw"] = True
@@ -125,9 +123,7 @@ class PlayPluginTest(CleanupModulesMixin, PluginTestCase):
         self.config["play"]["warning_threshold"] = 1
         self.other_item = self.add_item(title="another NiceTitle")
 
-        expected_playlist = "{}\n{}".format(
-            self.item.path.decode("utf-8"), self.other_item.path.decode("utf-8")
-        )
+        expected_playlist = f"{self.item.filepath}\n{self.other_item.filepath}"
 
         with control_stdin("a"):
             self.run_and_assert(

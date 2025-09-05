@@ -21,7 +21,6 @@ import pytest
 from beets import config
 from beets.test._common import Bag
 from beets.test.helper import BeetsTestCase, capture_log
-from beets.util.id_extractors import extract_discogs_id_regex
 from beetsplug.discogs import DiscogsPlugin
 
 
@@ -83,7 +82,7 @@ class DGAlbumInfoTest(BeetsTestCase):
         """Return a Bag that mimics a discogs_client.Release with a
         tracklist where tracks have the specified `positions`."""
         tracks = [
-            self._make_track("TITLE%s" % i, position)
+            self._make_track(f"TITLE{i}", position)
             for (i, position) in enumerate(positions, start=1)
         ]
         return self._make_release(tracks)
@@ -171,27 +170,6 @@ class DGAlbumInfoTest(BeetsTestCase):
         assert t[3].medium_index == 1
         assert t[3].index == 4
         assert t[3].medium_total == 1
-
-    def test_parse_position(self):
-        """Test the conversion of discogs `position` to medium, medium_index
-        and subtrack_index."""
-        # List of tuples (discogs_position, (medium, medium_index, subindex)
-        positions = [
-            ("1", (None, "1", None)),
-            ("A12", ("A", "12", None)),
-            ("12-34", ("12-", "34", None)),
-            ("CD1-1", ("CD1-", "1", None)),
-            ("1.12", (None, "1", "12")),
-            ("12.a", (None, "12", "A")),
-            ("12.34", (None, "12", "34")),
-            ("1ab", (None, "1", "AB")),
-            # Non-standard
-            ("IV", ("IV", None, None)),
-        ]
-
-        d = DiscogsPlugin()
-        for position, expected in positions:
-            assert d.get_track_index(position) == expected
 
     def test_parse_tracklist_without_sides(self):
         """Test standard Discogs position 12.2.9#1: "without sides"."""
@@ -369,37 +347,6 @@ class DGAlbumInfoTest(BeetsTestCase):
         assert d is None
         assert "Release does not contain the required fields" in logs[0]
 
-    def test_album_for_id(self):
-        """Test parsing for a valid Discogs release_id"""
-        test_patterns = [
-            (
-                "http://www.discogs.com/G%C3%BCnther-Lause-Meru-Ep/release/4354798",
-                4354798,
-            ),
-            (
-                "http://www.discogs.com/release/4354798-G%C3%BCnther-Lause-Meru-Ep",
-                4354798,
-            ),
-            (
-                "http://www.discogs.com/G%C3%BCnther-4354798Lause-Meru-Ep/release/4354798",  # NOQA E501
-                4354798,
-            ),
-            (
-                "http://www.discogs.com/release/4354798-G%C3%BCnther-4354798Lause-Meru-Ep/",  # NOQA E501
-                4354798,
-            ),
-            ("[r4354798]", 4354798),
-            ("r4354798", 4354798),
-            ("4354798", 4354798),
-            ("yet-another-metadata-provider.org/foo/12345", ""),
-            ("005b84a0-ecd6-39f1-b2f6-6eb48756b268", ""),
-        ]
-        for test_pattern, expected in test_patterns:
-            match = extract_discogs_id_regex(test_pattern)
-            if not match:
-                match = ""
-            assert match == expected
-
     def test_default_genre_style_settings(self):
         """Test genre default settings, genres to genre, styles to style"""
         release = self._make_release_from_positions(["1", "2"])
@@ -449,3 +396,22 @@ def test_get_media_and_albumtype(formats, expected_media, expected_albumtype):
     result = DiscogsPlugin.get_media_and_albumtype(formats)
 
     assert result == (expected_media, expected_albumtype)
+
+
+@pytest.mark.parametrize(
+    "position, medium, index, subindex",
+    [
+        ("1", None, "1", None),
+        ("A12", "A", "12", None),
+        ("12-34", "12-", "34", None),
+        ("CD1-1", "CD1-", "1", None),
+        ("1.12", None, "1", "12"),
+        ("12.a", None, "12", "A"),
+        ("12.34", None, "12", "34"),
+        ("1ab", None, "1", "AB"),
+        # Non-standard
+        ("IV", "IV", None, None),
+    ],
+)
+def test_get_track_index(position, medium, index, subindex):
+    assert DiscogsPlugin.get_track_index(position) == (medium, index, subindex)

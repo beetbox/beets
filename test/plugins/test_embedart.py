@@ -13,6 +13,7 @@
 # included in all copies or substantial portions of the Software.
 
 
+import os
 import os.path
 import shutil
 import tempfile
@@ -24,7 +25,12 @@ from mediafile import MediaFile
 
 from beets import art, config, logging, ui
 from beets.test import _common
-from beets.test.helper import BeetsTestCase, FetchImageHelper, PluginMixin
+from beets.test.helper import (
+    BeetsTestCase,
+    FetchImageHelper,
+    IOMixin,
+    PluginMixin,
+)
 from beets.util import bytestring_path, displayable_path, syspath
 from beets.util.artresizer import ArtResizer
 from test.test_art_resize import DummyIMBackend
@@ -34,23 +40,46 @@ def require_artresizer_compare(test):
     def wrapper(*args, **kwargs):
         if not ArtResizer.shared.can_compare:
             raise unittest.SkipTest("compare not available")
-        else:
-            return test(*args, **kwargs)
+
+        # PHASH computation in ImageMagick changed at some point in an
+        # undocumented way. Check at a low level that comparisons of our
+        # fixtures give the expected results. Only then, plugin logic tests
+        # below are meaningful.
+        # cf. https://github.com/ImageMagick/ImageMagick/discussions/5191
+        # It would be better to investigate what exactly change in IM and
+        # handle that in ArtResizer.IMBackend.{can_compare,compare}.
+        # Skipping the tests as below is a quick fix to CI, but users may
+        # still see unexpected behaviour.
+        abbey_artpath = os.path.join(_common.RSRC, b"abbey.jpg")
+        abbey_similarpath = os.path.join(_common.RSRC, b"abbey-similar.jpg")
+        abbey_differentpath = os.path.join(_common.RSRC, b"abbey-different.jpg")
+        compare_threshold = 20
+
+        similar_compares_ok = ArtResizer.shared.compare(
+            abbey_artpath,
+            abbey_similarpath,
+            compare_threshold,
+        )
+        different_compares_ok = ArtResizer.shared.compare(
+            abbey_artpath,
+            abbey_differentpath,
+            compare_threshold,
+        )
+        if not similar_compares_ok or different_compares_ok:
+            raise unittest.SkipTest("IM version with broken compare")
+
+        return test(*args, **kwargs)
 
     wrapper.__name__ = test.__name__
     return wrapper
 
 
-class EmbedartCliTest(PluginMixin, FetchImageHelper, BeetsTestCase):
+class EmbedartCliTest(IOMixin, PluginMixin, FetchImageHelper, BeetsTestCase):
     plugin = "embedart"
     small_artpath = os.path.join(_common.RSRC, b"image-2x3.jpg")
     abbey_artpath = os.path.join(_common.RSRC, b"abbey.jpg")
     abbey_similarpath = os.path.join(_common.RSRC, b"abbey-similar.jpg")
     abbey_differentpath = os.path.join(_common.RSRC, b"abbey-different.jpg")
-
-    def setUp(self):
-        super().setUp()  # Converter is threaded
-        self.io.install()
 
     def _setup_data(self, artpath=None):
         if not artpath:
@@ -115,9 +144,7 @@ class EmbedartCliTest(PluginMixin, FetchImageHelper, BeetsTestCase):
         if os.path.isfile(syspath(tmp_path)):
             os.remove(syspath(tmp_path))
             self.fail(
-                "Artwork file {} was not deleted".format(
-                    displayable_path(tmp_path)
-                )
+                f"Artwork file {displayable_path(tmp_path)} was not deleted"
             )
 
     def test_art_file_missing(self):
@@ -153,9 +180,9 @@ class EmbedartCliTest(PluginMixin, FetchImageHelper, BeetsTestCase):
         self.run_command("embedart", "-y", "-f", self.abbey_differentpath)
         mediafile = MediaFile(syspath(item.path))
 
-        assert (
-            mediafile.images[0].data == self.image_data
-        ), f"Image written is not {displayable_path(self.abbey_artpath)}"
+        assert mediafile.images[0].data == self.image_data, (
+            f"Image written is not {displayable_path(self.abbey_artpath)}"
+        )
 
     @require_artresizer_compare
     def test_accept_similar_art(self):
@@ -167,31 +194,29 @@ class EmbedartCliTest(PluginMixin, FetchImageHelper, BeetsTestCase):
         self.run_command("embedart", "-y", "-f", self.abbey_similarpath)
         mediafile = MediaFile(syspath(item.path))
 
-        assert (
-            mediafile.images[0].data == self.image_data
-        ), f"Image written is not {displayable_path(self.abbey_similarpath)}"
+        assert mediafile.images[0].data == self.image_data, (
+            f"Image written is not {displayable_path(self.abbey_similarpath)}"
+        )
 
     def test_non_ascii_album_path(self):
         resource_path = os.path.join(_common.RSRC, b"image.mp3")
         album = self.add_album_fixture()
         trackpath = album.items()[0].path
-        albumpath = album.path
         shutil.copy(syspath(resource_path), syspath(trackpath))
 
         self.run_command("extractart", "-n", "extracted")
 
-        self.assertExists(os.path.join(albumpath, b"extracted.png"))
+        assert (album.filepath / "extracted.png").exists()
 
     def test_extracted_extension(self):
         resource_path = os.path.join(_common.RSRC, b"image-jpeg.mp3")
         album = self.add_album_fixture()
         trackpath = album.items()[0].path
-        albumpath = album.path
         shutil.copy(syspath(resource_path), syspath(trackpath))
 
         self.run_command("extractart", "-n", "extracted")
 
-        self.assertExists(os.path.join(albumpath, b"extracted.jpg"))
+        assert (album.filepath / "extracted.jpg").exists()
 
     def test_clear_art_with_yes_input(self):
         self._setup_data()

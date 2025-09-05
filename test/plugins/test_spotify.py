@@ -7,7 +7,7 @@ import responses
 
 from beets.library import Item
 from beets.test import _common
-from beets.test.helper import BeetsTestCase
+from beets.test.helper import PluginTestCase
 from beetsplug import spotify
 
 
@@ -23,10 +23,11 @@ def _params(url):
     return parse_qs(urlparse(url).query)
 
 
-class SpotifyPluginTest(BeetsTestCase):
+class SpotifyPluginTest(PluginTestCase):
+    plugin = "spotify"
+
     @responses.activate
     def setUp(self):
-        super().setUp()
         responses.add(
             responses.POST,
             spotify.SpotifyPlugin.oauth_token_url,
@@ -39,6 +40,7 @@ class SpotifyPluginTest(BeetsTestCase):
                 "scope": "",
             },
         )
+        super().setUp()
         self.spotify = spotify.SpotifyPlugin()
         opts = ArgumentsMock("list", False)
         self.spotify._parse_opts(opts)
@@ -80,8 +82,8 @@ class SpotifyPluginTest(BeetsTestCase):
         params = _params(responses.calls[0].request.url)
         query = params["q"][0]
         assert "duifhjslkef" in query
-        assert "artist:ujydfsuihse" in query
-        assert "album:lkajsdflakjsd" in query
+        assert 'artist:"ujydfsuihse"' in query
+        assert 'album:"lkajsdflakjsd"' in query
         assert params["type"] == ["track"]
 
     @responses.activate
@@ -115,8 +117,8 @@ class SpotifyPluginTest(BeetsTestCase):
         params = _params(responses.calls[0].request.url)
         query = params["q"][0]
         assert "Happy" in query
-        assert "artist:Pharrell Williams" in query
-        assert "album:Despicable Me 2" in query
+        assert 'artist:"Pharrell Williams"' in query
+        assert 'album:"Despicable Me 2"' in query
         assert params["type"] == ["track"]
 
     @responses.activate
@@ -130,7 +132,7 @@ class SpotifyPluginTest(BeetsTestCase):
 
         responses.add(
             responses.GET,
-            spotify.SpotifyPlugin.track_url + "6NPVjNh8Jhru9xOmyQigds",
+            f"{spotify.SpotifyPlugin.track_url}6NPVjNh8Jhru9xOmyQigds",
             body=response_body,
             status=200,
             content_type="application/json",
@@ -143,7 +145,7 @@ class SpotifyPluginTest(BeetsTestCase):
 
         responses.add(
             responses.GET,
-            spotify.SpotifyPlugin.album_url + "5l3zEmMrOhOzG8d8s83GOL",
+            f"{spotify.SpotifyPlugin.album_url}5l3zEmMrOhOzG8d8s83GOL",
             body=response_body,
             status=200,
             content_type="application/json",
@@ -176,3 +178,74 @@ class SpotifyPluginTest(BeetsTestCase):
         results = self.spotify._match_library_tracks(self.lib, "Happy")
         assert 1 == len(results)
         assert "6NPVjNh8Jhru9xOmyQigds" == results[0]["id"]
+
+    @responses.activate
+    def test_japanese_track(self):
+        """Ensure non-ASCII characters remain unchanged in search queries"""
+
+        # Path to the mock JSON file for the Japanese track
+        json_file = os.path.join(
+            _common.RSRC, b"spotify", b"japanese_track_request.json"
+        )
+
+        # Load the mock JSON response
+        with open(json_file, "rb") as f:
+            response_body = f.read()
+
+        # Mock Spotify Search API response
+        responses.add(
+            responses.GET,
+            spotify.SpotifyPlugin.search_url,
+            body=response_body,
+            status=200,
+            content_type="application/json",
+        )
+
+        # Create a mock item with Japanese metadata
+        item = Item(
+            mb_trackid="56789",
+            album="盗作",
+            albumartist="ヨルシカ",
+            title="思想犯",
+            length=10,
+        )
+        item.add(self.lib)
+
+        # Search without ascii encoding
+
+        with self.configure_plugin(
+            {
+                "search_query_ascii": False,
+            }
+        ):
+            assert self.spotify.config["search_query_ascii"].get() is False
+            # Call the method to match library tracks
+            results = self.spotify._match_library_tracks(self.lib, item.title)
+
+            # Assertions to verify results
+            assert results is not None
+            assert 1 == len(results)
+            assert results[0]["name"] == item.title
+            assert results[0]["artists"][0]["name"] == item.albumartist
+            assert results[0]["album"]["name"] == item.album
+
+            # Verify search query parameters
+            params = _params(responses.calls[0].request.url)
+            query = params["q"][0]
+            assert item.title in query
+            assert f'artist:"{item.albumartist}"' in query
+            assert f'album:"{item.album}"' in query
+            assert not query.isascii()
+
+        # Is not found in the library if ascii encoding is enabled
+        with self.configure_plugin(
+            {
+                "search_query_ascii": True,
+            }
+        ):
+            assert self.spotify.config["search_query_ascii"].get() is True
+            results = self.spotify._match_library_tracks(self.lib, item.title)
+            params = _params(responses.calls[1].request.url)
+            query = params["q"][0]
+
+            assert query.isascii()

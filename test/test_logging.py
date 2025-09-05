@@ -3,21 +3,17 @@
 import logging as log
 import sys
 import threading
+import unittest
 from io import StringIO
 
 import beets.logging as blog
 import beetsplug
 from beets import plugins, ui
 from beets.test import _common, helper
-from beets.test.helper import (
-    AsIsImporterMixin,
-    BeetsTestCase,
-    ImportTestCase,
-    PluginMixin,
-)
+from beets.test.helper import AsIsImporterMixin, ImportTestCase, PluginMixin
 
 
-class LoggingTest(BeetsTestCase):
+class LoggingTest(unittest.TestCase):
     def test_logging_management(self):
         l1 = log.getLogger("foo123")
         l2 = blog.getLogger("foo123")
@@ -46,7 +42,7 @@ class LoggingTest(BeetsTestCase):
         logger.addHandler(handler)
         logger.propagate = False
 
-        logger.warning("foo {0} {bar}", "oof", bar="baz")
+        logger.warning("foo {} {bar}", "oof", bar="baz")
         handler.flush()
         assert stream.getvalue(), "foo oof baz"
 
@@ -62,9 +58,9 @@ class LoggingLevelTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
                 self.register_listener("dummy_event", self.listener)
 
             def log_all(self, name):
-                self._log.debug("debug " + name)
-                self._log.info("info " + name)
-                self._log.warning("warning " + name)
+                self._log.debug("debug {}", name)
+                self._log.info("info {}", name)
+                self._log.warning("warning {}", name)
 
             def commands(self):
                 cmd = ui.Subcommand("dummy")
@@ -176,9 +172,9 @@ class ConcurrentEventsTest(AsIsImporterMixin, ImportTestCase):
             self.t1_step = self.t2_step = 0
 
         def log_all(self, name):
-            self._log.debug("debug " + name)
-            self._log.info("info " + name)
-            self._log.warning("warning " + name)
+            self._log.debug("debug {}", name)
+            self._log.info("info {}", name)
+            self._log.warning("warning {}", name)
 
         def listener1(self):
             try:

@@ -25,6 +25,7 @@ import pytest
 from beets import dbcore
 from beets.library import LibModel
 from beets.test import _common
+from beets.util import cached_classproperty
 
 # Fixture: concrete database and model classes. For migration tests, we
 # have multiple models with different numbers of fields.
@@ -53,15 +54,22 @@ class ModelFixture1(LibModel):
         "field_one": dbcore.types.INTEGER,
         "field_two": dbcore.types.STRING,
     }
-    _types = {
-        "some_float_field": dbcore.types.FLOAT,
-    }
+
     _sorts = {
         "some_sort": SortFixture,
     }
-    _queries = {
-        "some_query": QueryFixture,
-    }
+
+    @cached_classproperty
+    def _types(cls):
+        return {
+            "some_float_field": dbcore.types.FLOAT,
+        }
+
+    @cached_classproperty
+    def _queries(cls):
+        return {
+            "some_query": QueryFixture,
+        }
 
     @classmethod
     def _getters(cls):
@@ -248,7 +256,7 @@ class TransactionTest(unittest.TestCase):
     def test_query_no_increase_revision(self):
         old_rev = self.db.revision
         with self.db.transaction() as tx:
-            tx.query("PRAGMA table_info(%s)" % ModelFixture1._table)
+            tx.query(f"PRAGMA table_info({ModelFixture1._table})")
         assert self.db.revision == old_rev
 
 

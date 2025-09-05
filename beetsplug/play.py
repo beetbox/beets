@@ -48,7 +48,7 @@ def play(
     """
     # Print number of tracks or albums to be played, log command to be run.
     item_type += "s" if len(selection) > 1 else ""
-    ui.print_("Playing {} {}.".format(len(selection), item_type))
+    ui.print_(f"Playing {len(selection)} {item_type}.")
     log.debug("executing command: {} {!r}", command_str, open_args)
 
     try:
@@ -112,7 +112,7 @@ class PlayPlugin(BeetsPlugin):
         # Perform search by album and add folders rather than tracks to
         # playlist.
         if opts.album:
-            selection = lib.albums(ui.decargs(args))
+            selection = lib.albums(args)
             paths = []
 
             sort = lib.get_default_album_sort()
@@ -125,7 +125,7 @@ class PlayPlugin(BeetsPlugin):
 
         # Perform item query and add tracks to playlist.
         else:
-            selection = lib.items(ui.decargs(args))
+            selection = lib.items(args)
             paths = [item.path for item in selection]
             item_type = "track"
 
@@ -171,7 +171,7 @@ class PlayPlugin(BeetsPlugin):
                 return f"{command_str} {args}"
         else:
             # Don't include the marker in the command.
-            return command_str.replace(" " + ARGS_MARKER, "")
+            return command_str.replace(f" {ARGS_MARKER}", "")
 
     def _playlist_or_paths(self, paths):
         """Return either the raw paths of items or a playlist of the items."""
@@ -196,9 +196,7 @@ class PlayPlugin(BeetsPlugin):
             ui.print_(
                 ui.colorize(
                     "text_warning",
-                    "You are about to queue {} {}.".format(
-                        len(selection), item_type
-                    ),
+                    f"You are about to queue {len(selection)} {item_type}.",
                 )
             )
 

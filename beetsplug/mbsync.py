@@ -16,8 +16,7 @@
 
 from collections import defaultdict
 
-from beets import autotag, library, ui, util
-from beets.autotag import hooks
+from beets import autotag, library, metadata_plugins, ui, util
 from beets.plugins import BeetsPlugin, apply_item_changes
 
 
@@ -64,10 +63,9 @@ class MBSyncPlugin(BeetsPlugin):
         move = ui.should_move(opts.move)
         pretend = opts.pretend
         write = ui.should_write(opts.write)
-        query = ui.decargs(args)
 
-        self.singletons(lib, query, move, pretend, write)
-        self.albums(lib, query, move, pretend, write)
+        self.singletons(lib, args, move, pretend, write)
+        self.albums(lib, args, move, pretend, write)
 
     def singletons(self, lib, query, move, pretend, write):
         """Retrieve and apply info from the autotagger for items matched by
@@ -80,7 +78,9 @@ class MBSyncPlugin(BeetsPlugin):
                 )
                 continue
 
-            if not (track_info := hooks.track_for_id(item.mb_trackid)):
+            if not (
+                track_info := metadata_plugins.track_for_id(item.mb_trackid)
+            ):
                 self._log.info(
                     "Recording ID not found: {0.mb_trackid} for track {0}", item
                 )
@@ -101,7 +101,9 @@ class MBSyncPlugin(BeetsPlugin):
                 self._log.info("Skipping album with no mb_albumid: {}", album)
                 continue
 
-            if not (album_info := hooks.album_for_id(album.mb_albumid)):
+            if not (
+                album_info := metadata_plugins.album_for_id(album.mb_albumid)
+            ):
                 self._log.info(
                     "Release ID {0.mb_albumid} not found for album {0}", album
                 )

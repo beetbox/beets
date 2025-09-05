@@ -13,9 +13,12 @@
 # included in all copies or substantial portions of the Software.
 
 
+import importlib
 import itertools
+import logging
 import os
-import unittest
+import pkgutil
+import sys
 from unittest.mock import ANY, Mock, patch
 
 import pytest
@@ -24,144 +27,82 @@ from mediafile import MediaFile
 from beets import config, plugins, ui
 from beets.dbcore import types
 from beets.importer import (
+    Action,
     ArchiveImportTask,
     SentinelImportTask,
     SingletonImportTask,
-    action,
 )
 from beets.library import Item
-from beets.plugins import MetadataSourcePlugin
 from beets.test import helper
-from beets.test.helper import AutotagStub, ImportHelper, TerminalImportMixin
-from beets.test.helper import PluginTestCase as BasePluginTestCase
-from beets.util import displayable_path, syspath
-from beets.util.id_extractors import (
-    beatport_id_regex,
-    deezer_id_regex,
-    spotify_id_regex,
+from beets.test.helper import (
+    AutotagStub,
+    ImportHelper,
+    PluginMixin,
+    PluginTestCase,
+    TerminalImportMixin,
 )
+from beets.util import displayable_path, syspath
 
 
-class PluginLoaderTestCase(BasePluginTestCase):
-    def setup_plugin_loader(self):
-        # FIXME the mocking code is horrific, but this is the lowest and
-        # earliest level of the plugin mechanism we can hook into.
-        self._plugin_loader_patch = patch("beets.plugins.load_plugins")
-        self._plugin_classes = set()
-        load_plugins = self._plugin_loader_patch.start()
+class TestPluginRegistration(PluginTestCase):
+    class RatingPlugin(plugins.BeetsPlugin):
+        item_types = {
+            "rating": types.Float(),
+            "multi_value": types.MULTI_VALUE_DSV,
+        }
 
-        def myload(names=()):
-            plugins._classes.update(self._plugin_classes)
+        def __init__(self):
+            super().__init__()
+            self.register_listener("write", self.on_write)
 
-        load_plugins.side_effect = myload
-
-    def teardown_plugin_loader(self):
-        self._plugin_loader_patch.stop()
-
-    def register_plugin(self, plugin_class):
-        self._plugin_classes.add(plugin_class)
+        @staticmethod
+        def on_write(item=None, path=None, tags=None):
+            if tags["artist"] == "XXX":
+                tags["artist"] = "YYY"
 
     def setUp(self):
-        self.setup_plugin_loader()
         super().setUp()
 
-    def tearDown(self):
-        self.teardown_plugin_loader()
-        super().tearDown()
+        self.register_plugin(self.RatingPlugin)
+
+    def test_field_type_registered(self):
+        assert isinstance(Item._types.get("rating"), types.Float)
+
+    def test_duplicate_type(self):
+        class DuplicateTypePlugin(plugins.BeetsPlugin):
+            item_types = {"rating": types.INTEGER}
+
+        self.register_plugin(DuplicateTypePlugin)
+        with pytest.raises(
+            plugins.PluginConflictError, match="already been defined"
+        ):
+            Item._types
+
+    def test_listener_registered(self):
+        self.RatingPlugin()
+        item = self.add_item_fixture(artist="XXX")
+
+        item.write()
+
+        assert MediaFile(syspath(item.path)).artist == "YYY"
+
+    def test_multi_value_flex_field_type(self):
+        item = Item(path="apath", artist="aaa")
+        item.multi_value = ["one", "two", "three"]
+        item.add(self.lib)
+
+        out = self.run_with_output("ls", "-f", "$multi_value")
+        delimiter = types.MULTI_VALUE_DSV.delimiter
+        assert out == f"one{delimiter}two{delimiter}three\n"
 
 
-class PluginImportTestCase(ImportHelper, PluginLoaderTestCase):
+class PluginImportTestCase(ImportHelper, PluginTestCase):
     def setUp(self):
         super().setUp()
         self.prepare_album_for_import(2)
 
 
-class ItemTypesTest(PluginLoaderTestCase):
-    def test_flex_field_type(self):
-        class RatingPlugin(plugins.BeetsPlugin):
-            item_types = {"rating": types.Float()}
-
-        self.register_plugin(RatingPlugin)
-        self.config["plugins"] = "rating"
-
-        item = Item(path="apath", artist="aaa")
-        item.add(self.lib)
-
-        # Do not match unset values
-        out = self.run_with_output("ls", "rating:1..3")
-        assert "aaa" not in out
-
-        self.run_command("modify", "rating=2", "--yes")
-
-        # Match in range
-        out = self.run_with_output("ls", "rating:1..3")
-        assert "aaa" in out
-
-        # Don't match out of range
-        out = self.run_with_output("ls", "rating:3..5")
-        assert "aaa" not in out
-
-
-class ItemWriteTest(PluginLoaderTestCase):
-    def setUp(self):
-        super().setUp()
-
-        class EventListenerPlugin(plugins.BeetsPlugin):
-            pass
-
-        self.event_listener_plugin = EventListenerPlugin()
-        self.register_plugin(EventListenerPlugin)
-
-    def test_change_tags(self):
-        def on_write(item=None, path=None, tags=None):
-            if tags["artist"] == "XXX":
-                tags["artist"] = "YYY"
-
-        self.register_listener("write", on_write)
-
-        item = self.add_item_fixture(artist="XXX")
-        item.write()
-
-        mediafile = MediaFile(syspath(item.path))
-        assert mediafile.artist == "YYY"
-
-    def register_listener(self, event, func):
-        self.event_listener_plugin.register_listener(event, func)
-
-
-class ItemTypeConflictTest(PluginLoaderTestCase):
-    def test_mismatch(self):
-        class EventListenerPlugin(plugins.BeetsPlugin):
-            item_types = {"duplicate": types.INTEGER}
-
-        class AdventListenerPlugin(plugins.BeetsPlugin):
-            item_types = {"duplicate": types.FLOAT}
-
-        self.event_listener_plugin = EventListenerPlugin
-        self.advent_listener_plugin = AdventListenerPlugin
-        self.register_plugin(EventListenerPlugin)
-        self.register_plugin(AdventListenerPlugin)
-        with pytest.raises(plugins.PluginConflictError):
-            plugins.types(Item)
-
-    def test_match(self):
-        class EventListenerPlugin(plugins.BeetsPlugin):
-            item_types = {"duplicate": types.INTEGER}
-
-        class AdventListenerPlugin(plugins.BeetsPlugin):
-            item_types = {"duplicate": types.INTEGER}
-
-        self.event_listener_plugin = EventListenerPlugin
-        self.advent_listener_plugin = AdventListenerPlugin
-        self.register_plugin(EventListenerPlugin)
-        self.register_plugin(AdventListenerPlugin)
-        assert plugins.types(Item) is not None
-
-
 class EventsTest(PluginImportTestCase):
-    def setUp(self):
-        super().setUp()
-
     def test_import_task_created(self):
         self.importer = self.setup_importer(pretend=True)
 
@@ -174,7 +115,7 @@ class EventsTest(PluginImportTestCase):
 
         logs = [line for line in logs if not line.startswith("Sending event:")]
         assert logs == [
-            f'Album: {displayable_path(os.path.join(self.import_dir, b"album"))}',
+            f"Album: {displayable_path(os.path.join(self.import_dir, b'album'))}",
             f"  {displayable_path(self.import_media[0].path)}",
             f"  {displayable_path(self.import_media[1].path)}",
         ]
@@ -221,16 +162,7 @@ class EventsTest(PluginImportTestCase):
         ]
 
 
-class HelpersTest(unittest.TestCase):
-    def test_sanitize_choices(self):
-        assert plugins.sanitize_choices(["A", "Z"], ("A", "B")) == ["A"]
-        assert plugins.sanitize_choices(["A", "A"], ("A")) == ["A"]
-        assert plugins.sanitize_choices(
-            ["D", "*", "A"], ("A", "B", "C", "D")
-        ) == ["D", "B", "C", "A"]
-
-
-class ListenersTest(PluginLoaderTestCase):
+class ListenersTest(PluginTestCase):
     def test_register(self):
         class DummyPlugin(plugins.BeetsPlugin):
             def __init__(self):
@@ -250,15 +182,7 @@ class ListenersTest(PluginLoaderTestCase):
         d.register_listener("cli_exit", d2.dummy)
         assert DummyPlugin._raw_listeners["cli_exit"] == [d.dummy, d2.dummy]
 
-    @patch("beets.plugins.find_plugins")
-    @patch("inspect.getfullargspec")
-    def test_events_called(self, mock_gfa, mock_find_plugins):
-        mock_gfa.return_value = Mock(
-            args=(),
-            varargs="args",
-            varkw="kwargs",
-        )
-
+    def test_events_called(self):
         class DummyPlugin(plugins.BeetsPlugin):
             def __init__(self):
                 super().__init__()
@@ -268,7 +192,6 @@ class ListenersTest(PluginLoaderTestCase):
                 self.register_listener("event_bar", self.bar)
 
         d = DummyPlugin()
-        mock_find_plugins.return_value = (d,)
 
         plugins.send("event")
         d.foo.assert_has_calls([])
@@ -278,8 +201,7 @@ class ListenersTest(PluginLoaderTestCase):
         d.foo.assert_called_once_with(var="tagada")
         d.bar.assert_has_calls([])
 
-    @patch("beets.plugins.find_plugins")
-    def test_listener_params(self, mock_find_plugins):
+    def test_listener_params(self):
         class DummyPlugin(plugins.BeetsPlugin):
             def __init__(self):
                 super().__init__()
@@ -323,8 +245,7 @@ class ListenersTest(PluginLoaderTestCase):
             def dummy9(self, **kwargs):
                 assert kwargs == {"foo": 5}
 
-        d = DummyPlugin()
-        mock_find_plugins.return_value = (d,)
+        DummyPlugin()
 
         plugins.send("event1", foo=5)
         plugins.send("event2", foo=5)
@@ -347,7 +268,8 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
     def setUp(self):
         super().setUp()
         self.setup_importer()
-        self.matcher = AutotagStub().install()
+        self.matcher = AutotagStub(AutotagStub.IDENT).install()
+        self.addCleanup(self.matcher.restore)
         # keep track of ui.input_option() calls
         self.input_options_patcher = patch(
             "beets.ui.input_options", side_effect=ui.input_options
@@ -357,7 +279,6 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
     def tearDown(self):
         super().tearDown()
         self.input_options_patcher.stop()
-        self.matcher.restore()
 
     def test_plugin_choices_in_ui_input_options_album(self):
         """Test the presence of plugin choices on the prompt (album)."""
@@ -389,7 +310,7 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
             "aBort",
         ) + ("Foo", "baR")
 
-        self.importer.add_choice(action.SKIP)
+        self.importer.add_choice(Action.SKIP)
         self.importer.run()
         self.mock_input_options.assert_called_once_with(
             opts, default="a", require=ANY
@@ -424,7 +345,7 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
         ) + ("Foo", "baR")
 
         config["import"]["singletons"] = True
-        self.importer.add_choice(action.SKIP)
+        self.importer.add_choice(Action.SKIP)
         self.importer.run()
         self.mock_input_options.assert_called_with(
             opts, default="a", require=ANY
@@ -461,7 +382,7 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
             "enter Id",
             "aBort",
         ) + ("baZ",)
-        self.importer.add_choice(action.SKIP)
+        self.importer.add_choice(Action.SKIP)
         self.importer.run()
         self.mock_input_options.assert_called_once_with(
             opts, default="a", require=ANY
@@ -523,7 +444,7 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
                 return [ui.commands.PromptChoice("f", "Foo", self.foo)]
 
             def foo(self, session, task):
-                return action.SKIP
+                return Action.SKIP
 
         self.register_plugin(DummyPlugin)
         # Default options + extra choices by the plugin ('Foo', 'Bar')
@@ -549,59 +470,56 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
         )
 
 
-class ParseSpotifyIDTest(unittest.TestCase):
-    def test_parse_id_correct(self):
-        id_string = "39WqpoPgZxygo6YQjehLJJ"
-        out = MetadataSourcePlugin._get_id("album", id_string, spotify_id_regex)
-        assert out == id_string
+def get_available_plugins():
+    """Get all available plugins in the beetsplug namespace."""
+    namespace_pkg = importlib.import_module("beetsplug")
 
-    def test_parse_id_non_id_returns_none(self):
-        id_string = "blah blah"
-        out = MetadataSourcePlugin._get_id("album", id_string, spotify_id_regex)
-        assert out is None
-
-    def test_parse_id_url_finds_id(self):
-        id_string = "39WqpoPgZxygo6YQjehLJJ"
-        id_url = "https://open.spotify.com/album/%s" % id_string
-        out = MetadataSourcePlugin._get_id("album", id_url, spotify_id_regex)
-        assert out == id_string
+    return [
+        m.name
+        for m in pkgutil.iter_modules(namespace_pkg.__path__)
+        if not m.name.startswith("_")
+    ]
 
 
-class ParseDeezerIDTest(unittest.TestCase):
-    def test_parse_id_correct(self):
-        id_string = "176356382"
-        out = MetadataSourcePlugin._get_id("album", id_string, deezer_id_regex)
-        assert out == id_string
+class TestImportPlugin(PluginMixin):
+    @pytest.fixture(params=get_available_plugins())
+    def plugin_name(self, request):
+        """Fixture to provide the name of each available plugin."""
+        name = request.param
 
-    def test_parse_id_non_id_returns_none(self):
-        id_string = "blah blah"
-        out = MetadataSourcePlugin._get_id("album", id_string, deezer_id_regex)
-        assert out is None
+        # skip gstreamer plugins on windows
+        gstreamer_plugins = {"bpd", "replaygain"}
+        if sys.platform == "win32" and name in gstreamer_plugins:
+            pytest.skip(f"GStreamer is not available on Windows: {name}")
 
-    def test_parse_id_url_finds_id(self):
-        id_string = "176356382"
-        id_url = "https://www.deezer.com/album/%s" % id_string
-        out = MetadataSourcePlugin._get_id("album", id_url, deezer_id_regex)
-        assert out == id_string
+        return name
 
+    def unload_plugins(self):
+        """Unimport plugins before each test to avoid conflicts."""
+        super().unload_plugins()
+        for mod in list(sys.modules):
+            if mod.startswith("beetsplug."):
+                del sys.modules[mod]
 
-class ParseBeatportIDTest(unittest.TestCase):
-    def test_parse_id_correct(self):
-        id_string = "3089651"
-        out = MetadataSourcePlugin._get_id(
-            "album", id_string, beatport_id_regex
+    @pytest.fixture(autouse=True)
+    def cleanup(self):
+        """Ensure plugins are unimported before and after each test."""
+        self.unload_plugins()
+        yield
+        self.unload_plugins()
+
+    @pytest.mark.skipif(
+        os.environ.get("GITHUB_ACTIONS") != "true",
+        reason=(
+            "Requires all dependencies to be installed, which we can't"
+            " guarantee in the local environment."
+        ),
+    )
+    def test_import_plugin(self, caplog, plugin_name):
+        """Test that a plugin is importable without an error."""
+        caplog.set_level(logging.WARNING)
+        self.load_plugins(plugin_name)
+
+        assert "PluginImportError" not in caplog.text, (
+            f"Plugin '{plugin_name}' has issues during import."
         )
-        assert out == id_string
-
-    def test_parse_id_non_id_returns_none(self):
-        id_string = "blah blah"
-        out = MetadataSourcePlugin._get_id(
-            "album", id_string, beatport_id_regex
-        )
-        assert out is None
-
-    def test_parse_id_url_finds_id(self):
-        id_string = "3089651"
-        id_url = "https://www.beatport.com/release/album-name/%s" % id_string
-        out = MetadataSourcePlugin._get_id("album", id_url, beatport_id_regex)
-        assert out == id_string

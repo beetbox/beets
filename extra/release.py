@@ -105,10 +105,6 @@ def create_rst_replacements() -> list[Replacement]:
         r.split("/")[-1] for r in refs if r.startswith("plugins/")
     )
     return [
-        # Fix nested bullet points indent: use 2 spaces consistently
-        (r"(?<=\n) {3,4}(?=\*)", "  "),
-        # Fix nested text indent: use 4 spaces consistently
-        (r"(?<=\n) {5,6}(?=[\w:`])", "    "),
         # Replace Sphinx :ref: and :doc: directives by documentation URLs
         #   :ref:`/plugins/autobpm` -> [AutoBPM Plugin](DOCS/plugins/autobpm.html)
         (
@@ -124,9 +120,6 @@ def create_rst_replacements() -> list[Replacement]:
         # Convert plugin references to documentation URLs
         #   `fetchart` plugin -> [fetchart](DOCS/plugins/fetchart.html)
         (rf"`+({plugins})`+", lambda m: make_ref_link(f"plugins/{m[1]}")),
-        # Add additional backticks around existing backticked text to ensure it
-        # is rendered as inline code in Markdown
-        (r"(?<=[\s])(`[^`]+`)(?!_)", r"`\1`"),
         # Convert bug references to GitHub issue links
         (r":bug:`(\d+)`", r":bug: (#\1)"),
         # Convert user references to GitHub @mentions
@@ -135,13 +128,12 @@ def create_rst_replacements() -> list[Replacement]:
 
 
 MD_REPLACEMENTS: list[Replacement] = [
-    (r"<span[^>]+>([^<]+)</span>", r"_\1"),  # remove a couple of wild span refs
     (r"^(\w[^\n]{,80}):(?=\n\n[^ ])", r"### \1"),  # format section headers
     (r"^(\w[^\n]{81,}):(?=\n\n[^ ])", r"**\1**"),  # and bolden too long ones
     (r"### [^\n]+\n+(?=### )", ""),  # remove empty sections
 ]
 order_bullet_points = partial(
-    re.compile("(\n- .*?(?=\n(?! *- )|$))", flags=re.DOTALL).sub,
+    re.compile(r"(\n- .*?(?=\n(?! *(-|\d\.) )|$))", flags=re.DOTALL).sub,
     lambda m: "\n- ".join(sorted(m.group().split("\n- "))),
 )
 
@@ -170,7 +162,7 @@ For packagers:
 Other changes:
 
 {new_header}
-{'-' * len(new_header)}
+{"-" * len(new_header)}
 """,
         text,
     )
