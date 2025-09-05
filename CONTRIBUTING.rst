@@ -180,8 +180,7 @@ Your First Contribution
 If this is your first time contributing to an open source project, welcome! If
 you are confused at all about how to contribute or what to contribute, take a
 look at `this great tutorial <http://makeapullrequest.com/>`__, or stop by our
-`discussion board <https://github.com/beetbox/beets/discussions/>`__ if you have
-any questions.
+`discussion board`_ if you have any questions.
 
 We maintain a list of issues we reserved for those new to open source labeled
 `first timers only`_. Since the goal of these issues is to get users comfortable
@@ -215,6 +214,15 @@ will ship in no time.
 
 Remember, code contributions have four parts: the code, the tests, the
 documentation, and the changelog entry. Thank you for contributing!
+
+.. admonition:: Ownership
+
+    If you are the owner of a plugin, please consider reviewing pull requests
+    that affect your plugin. If you are not the owner of a plugin, please
+    consider becoming one! You can do so by adding an entry to
+    ``.github/CODEOWNERS``. This way, you will automatically receive a review
+    request for pull requests that adjust the code that you own. If you have any
+    questions, please ask on our `discussion board`_.
 
 The Code
 --------
@@ -393,6 +401,8 @@ In order to add such a test, mark your test with the ``integration_test`` marker
 This way, the test will be run only in the integration test suite.
 
 .. _codecov: https://codecov.io/github/beetbox/beets
+
+.. _discussion board: https://github.com/beetbox/beets/discussions
 
 .. _documentation: https://beets.readthedocs.io/en/stable/
 
