@@ -32,7 +32,7 @@ import yaml
 
 from beets import config, library, plugins, ui
 from beets.library import Album, Item
-from beets.util import normpath, plurality, syspath, unique_list
+from beets.util import plurality, unique_list
 
 LASTFM = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
 
@@ -120,12 +120,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if wl_filename in (True, ""):  # Indicates the default whitelist.
             wl_filename = WHITELIST
         if wl_filename:
-            wl_filename = normpath(wl_filename)
-            with open(wl_filename, "rb") as f:
-                for raw_line in f:
-                    line = raw_line.decode("utf-8").strip().lower()
-                    if line and not line.startswith("#"):
-                        whitelist.add(line)
+            text = Path(wl_filename).read_text(encoding="utf-8")
+            for line in text.splitlines():
+                if (line := line.strip().lower()) and not line.startswith("#"):
+                    whitelist.add(line)
+
         return whitelist
 
     def _load_c14n_tree(self) -> tuple[list[list[str]], bool]:
