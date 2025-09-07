@@ -117,7 +117,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
     def _load_whitelist(self) -> set[str]:
         """Load the whitelist from a text file.
 
-        Default whitelist is used if config is True or empty string.
+        Default whitelist is used if config is True, empty string or set to "nothing".
         """
         whitelist = set()
         wl_filename = self.config["whitelist"].get()
@@ -135,8 +135,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
     def _load_c14n_tree(self) -> tuple[list[list[str]], bool]:
         """Load the canonicalization tree from a YAML file.
 
-        Default tree is used if config is True or empty string, or if
-        prefer_specific is enabled.
+        Default tree is used if config is True, empty string, set to "nothing"
+        or if prefer_specific is enabled.
         """
         c14n_branches: list[list[str]] = []
         c14n_filename = self.config["canonical"].get()
