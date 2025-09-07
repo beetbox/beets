@@ -24,6 +24,7 @@ https://gist.github.com/1241307
 
 import os
 import traceback
+from pathlib import Path
 from typing import Union
 
 import pylast
@@ -140,9 +141,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # Read the tree
         if c14n_filename:
             self._log.debug("Loading canonicalization tree {}", c14n_filename)
-            with open(
-                syspath(normpath(c14n_filename)), "r", encoding="utf-8"
-            ) as f:
+            with Path(c14n_filename).open(encoding="utf-8") as f:
                 genres_tree = yaml.safe_load(f)
             flatten_tree(genres_tree, [], c14n_branches)
         return c14n_branches, canonicalize
