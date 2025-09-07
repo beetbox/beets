@@ -132,10 +132,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         c14n_filename = self.config["canonical"].get()
         canonicalize = c14n_filename is not False
         # Default tree
-        if c14n_filename in (True, ""):
-            c14n_filename = C14N_TREE
-        elif not canonicalize and self.config["prefer_specific"].get():
+        if c14n_filename in (True, "") or (
             # prefer_specific requires a tree, load default tree
+            not canonicalize and self.config["prefer_specific"].get()
+        ):
             c14n_filename = C14N_TREE
         # Read the tree
         if c14n_filename:
