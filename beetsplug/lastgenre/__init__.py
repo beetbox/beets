@@ -121,7 +121,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """
         whitelist = set()
         wl_filename = self.config["whitelist"].get()
-        if wl_filename in (True, ""):  # Indicates the default whitelist.
+        if wl_filename in (True, "", None):  # Indicates the default whitelist.
             wl_filename = WHITELIST
         if wl_filename:
             text = Path(wl_filename).expanduser().read_text(encoding="utf-8")
@@ -141,7 +141,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         c14n_filename = self.config["canonical"].get()
         canonicalize = c14n_filename is not False
         # Default tree
-        if c14n_filename in (True, "") or (
+        if c14n_filename in (True, "", None) or (
             # prefer_specific requires a tree, load default tree
             not canonicalize and self.config["prefer_specific"].get()
         ):
