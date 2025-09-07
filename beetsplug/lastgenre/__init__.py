@@ -124,6 +124,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if wl_filename in (True, "", None):  # Indicates the default whitelist.
             wl_filename = WHITELIST
         if wl_filename:
+            self._log.debug("Loading whitelist {}", wl_filename)
             text = Path(wl_filename).expanduser().read_text(encoding="utf-8")
             for line in text.splitlines():
                 if (line := line.strip().lower()) and not line.startswith("#"):
