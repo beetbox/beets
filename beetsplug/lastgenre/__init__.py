@@ -120,7 +120,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if wl_filename in (True, ""):  # Indicates the default whitelist.
             wl_filename = WHITELIST
         if wl_filename:
-            text = Path(wl_filename).read_text(encoding="utf-8")
+            text = Path(wl_filename).expanduser().read_text(encoding="utf-8")
             for line in text.splitlines():
                 if (line := line.strip().lower()) and not line.startswith("#"):
                     whitelist.add(line)
@@ -140,7 +140,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # Read the tree
         if c14n_filename:
             self._log.debug("Loading canonicalization tree {}", c14n_filename)
-            with Path(c14n_filename).open(encoding="utf-8") as f:
+            with Path(c14n_filename).expanduser().open(encoding="utf-8") as f:
                 genres_tree = yaml.safe_load(f)
             flatten_tree(genres_tree, [], c14n_branches)
         return c14n_branches, canonicalize
