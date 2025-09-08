@@ -165,36 +165,29 @@ documentation </dev/index>` pages.
 …report a bug in beets?
 -----------------------
 
-We use the `issue tracker`_ on GitHub where you can `open a new ticket`_.
-Please follow these guidelines when reporting an issue:
+We use the `issue tracker`_ on GitHub where you can `open a new ticket`_. Please
+follow these guidelines when reporting an issue:
 
--  Most importantly: if beets is crashing, please `include the
-   traceback <https://imgur.com/jacoj>`__. Tracebacks can be more
-   readable if you put them in a pastebin (e.g.,
-   `Gist <https://gist.github.com/>`__ or
-   `Hastebin <https://hastebin.com/>`__), especially when communicating
-   over IRC.
--  Turn on beets' debug output (using the -v option: for example,
-   ``beet -v import ...``) and include that with your bug report. Look
-   through this verbose output for any red flags that might point to the
-   problem.
--  If you can, try installing the latest beets source code to see if the
-   bug is fixed in an unreleased version. You can also look at the
-   :doc:`latest changelog entries </changelog>`
-   for descriptions of the problem you're seeing.
--  Try to narrow your problem down to something specific. Is a
-   particular plugin causing the problem? (You can disable plugins to
-   see whether the problem goes away.) Is a some music file or a single
-   album leading to the crash? (Try importing individual albums to
-   determine which one is causing the problem.) Is some entry in your
-   configuration file causing it? Et cetera.
--  If you do narrow the problem down to a particular audio file or
-   album, include it with your bug report so the developers can run
-   tests.
+- Most importantly: if beets is crashing, please `include the traceback
+  <https://imgur.com/jacoj>`__. Tracebacks can be more readable if you put them
+  in a pastebin (e.g., `Gist <https://gist.github.com/>`__ or `Hastebin
+  <https://hastebin.com/>`__), especially when communicating over IRC.
+- Turn on beets' debug output (using the -v option: for example, ``beet -v
+  import ...``) and include that with your bug report. Look through this verbose
+  output for any red flags that might point to the problem.
+- If you can, try installing the latest beets source code to see if the bug is
+  fixed in an unreleased version. You can also look at the :doc:`latest
+  changelog entries </changelog>` for descriptions of the problem you're seeing.
+- Try to narrow your problem down to something specific. Is a particular plugin
+  causing the problem? (You can disable plugins to see whether the problem goes
+  away.) Is a some music file or a single album leading to the crash? (Try
+  importing individual albums to determine which one is causing the problem.) Is
+  some entry in your configuration file causing it? Et cetera.
+- If you do narrow the problem down to a particular audio file or album, include
+  it with your bug report so the developers can run tests.
 
-If you've never reported a bug before, Mozilla has some well-written
-`general guidelines for good bug
-reports`_.
+If you've never reported a bug before, Mozilla has some well-written `general
+guidelines for good bug reports`_.
 
 .. _find-config:
 

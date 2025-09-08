@@ -13,10 +13,11 @@ Then you can get a more detailed look at beets' features in the
 be interested in exploring the :doc:`plugins </plugins/index>`.
 
 If you still need help, you can drop by the ``#beets`` IRC channel on
-Libera.Chat, drop by `the discussion board`_ or `file a bug`_ in the issue tracker.
-Please let us know where you think this documentation can be improved.
+Libera.Chat, drop by `the discussion board`_ or `file a bug`_ in the issue
+tracker. Please let us know where you think this documentation can be improved.
 
 .. _beets: https://beets.io/
+
 .. _file a bug: https://github.com/beetbox/beets/issues
 
 .. _the discussion board: https://github.com/beetbox/beets/discussions/
