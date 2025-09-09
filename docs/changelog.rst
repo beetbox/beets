@@ -34,6 +34,7 @@ New features:
 - :doc:`plugins/web`: Display artist and album as part of the search results.
 - :doc:`plugins/spotify` :doc:`plugins/deezer`: Add new configuration option
   ``search_limit`` to limit the number of results returned by search queries.
+- :doc:`plugins/musicbrainz`: Allow selecting tags or genres to populate the genres tag.
 
 Bug fixes:
 
