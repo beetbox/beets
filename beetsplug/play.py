@@ -136,7 +136,7 @@ class PlayPlugin(BeetsPlugin):
             ui.print_(ui.colorize("text_warning", f"No {item_type} to play."))
             return
 
-        open_args = [p.decode('utf-8') for p in self._playlist_or_paths(paths)]
+        open_args = [p.decode("utf-8") for p in self._playlist_or_paths(paths)]
         command_str = self._command_str(opts.args)
 
         if PLS_MARKER in command_str:

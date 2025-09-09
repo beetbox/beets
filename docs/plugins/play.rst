@@ -109,7 +109,9 @@ playlist.
 
 The above example, however, does not work with current ``mpv`` because the
 ``--playlist`` argument wants a different syntax. To satisfy this, the optional
-``$playlist`` can be used to meet that::
+``$playlist`` can be used to meet that:
+
+::
 
     play:
         command: mpv $args --playlist=$playlist
