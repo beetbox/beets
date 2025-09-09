@@ -22,8 +22,6 @@ tracker. Please let us know where you think this documentation can be improved.
 
 .. _the discussion board: https://github.com/beetbox/beets/discussions/
 
-.. _the mailing list: https://groups.google.com/group/beets-users
-
 Contents
 --------
 

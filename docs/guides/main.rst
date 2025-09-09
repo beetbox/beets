@@ -13,16 +13,19 @@ Beets requires Python 3.9 or later, you will need to install that first.
 Depending on your operating system, you may also be able to install beets from a
 package manager, or you can install it with pipx_ or pip_.
 
-Using pip(x)
-~~~~~~~~~~~~
+Using ``pipx``
+~~~~~~~~~~~~~~
 
-To use the most recent version of beets, we recommend installing it with pipx_,
-the Python package manager. If you don't have pipx_ installed, you can follow
-the instructions on the `pipx installation page`_ to get it set up.
+To use the most recent version of beets, we recommend installing it with pipx_.
+If you don't have pipx_ installed, you can follow the instructions on the `pipx
+installation page`_ to get it set up.
 
 .. code-block:: console
 
     pipx install beets
+
+Using ``pip``
+~~~~~~~~~~~~~
 
 If you prefer to use pip_, you can install beets with the following command:
 
@@ -31,14 +34,6 @@ If you prefer to use pip_, you can install beets with the following command:
     pip install beets
     # or, to install for the current user only:
     pip install --user beets
-
-.. attention::
-
-    Python 3.13 is not officially supported yet!
-
-    If you are using Python 3.13, please be aware that it is not officially
-    supported yet. You may encounter issues, and we recommend using Python 3.12
-    or earlier until support is confirmed.
 
 .. _pip: https://pip.pypa.io/en/
 
@@ -59,6 +54,9 @@ package manager. Here are some common options:
     Release cycles for package managers vary, and they may not always have the
     most recent version of beets. If you want the latest features and fixes,
     consider using pipx_ or pip_ as described above.
+
+    Additionally, installing external beets plugins may be surprisingly
+    difficult when using a package manager.
 
 - On **Debian or Ubuntu**, depending on the version, beets is available as an
   official package (`Debian details`_, `Ubuntu details`_), so try typing:
@@ -84,6 +82,8 @@ package manager. Here are some common options:
 - On **Solus**, run ``eopkg install beets``.
 - On **NixOS**, there's a `package <nixos_>`_ you can install with ``nix-env -i
   beets``.
+- Using **MacPorts**, run ``port install beets`` or ``port install beets-full``
+  to include many third-party plugins.
 
 .. _alpine package: https://pkgs.alpinelinux.org/package/edge/community/x86_64/beets
 
