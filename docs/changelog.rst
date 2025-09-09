@@ -63,6 +63,8 @@ Bug fixes:
   ascii encoded. This resulted in bad matches for queries that contained special
   e.g. non latin characters as 盗作. If you want to keep the legacy behavior set
   the config option ``deezer.search_query_ascii: yes``. :bug:`5860`
+- Fixed regression with :doc:`/plugins/listenbrainz` where the plugin could not
+  be loaded :bug:`5975`
 
 For packagers:
 
