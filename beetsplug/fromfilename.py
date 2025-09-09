@@ -121,7 +121,7 @@ def apply_matches(d, log):
     # Apply the title and track.
     for item in d:
         if bad_title(item.title):
-            item.title = str(d[item][title_field])
+            item.title = str(d[item].get(title_field, ""))
             log.info("Title replaced with: {.title}", item)
 
         if "track" in d[item] and item.track == 0:
