@@ -105,6 +105,19 @@ package manager. Here are some common options:
 
 .. _void package: https://github.com/void-linux/void-packages/tree/master/srcpkgs/beets
 
+Installing by Hand on macOS 10.11 and Higher
+++++++++++++++++++++++++++++++++++++++++++++
+
+Starting with version 10.11 (El Capitan), macOS has a new security feature
+called System Integrity Protection (SIP) that prevents you from modifying some
+parts of the system. This means that some pip commands may fail with a
+permissions error. (You probably won't run into this if you've installed Python
+yourself with Homebrew or otherwise. You can also try MacPorts.)
+
+If this happens, you can install beets for the current user only by typing pip
+install --user beets. If you do that, you might want to add
+~/Library/Python/3.6/bin to your $PATH.
+
 Installing on Windows
 +++++++++++++++++++++
 
