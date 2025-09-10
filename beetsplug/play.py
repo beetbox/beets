@@ -136,13 +136,14 @@ class PlayPlugin(BeetsPlugin):
             ui.print_(ui.colorize("text_warning", f"No {item_type} to play."))
             return
 
-        open_args = [p.decode("utf-8") for p in self._playlist_or_paths(paths)]
+        open_args = self._playlist_or_paths(paths)
+        open_args_str = [p.decode("utf-8") for p in self._playlist_or_paths(paths)]
         command_str = self._command_str(opts.args)
 
         if PLS_MARKER in command_str:
             if not config["play"]["raw"]:
                 command_str = command_str.replace(
-                    PLS_MARKER, "".join(open_args)
+                    PLS_MARKER, "".join(open_args_str)
                 )
                 self._log.debug(
                     "command altered by PLS_MARKER to: {}", command_str
