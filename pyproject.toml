@@ -121,21 +121,17 @@ tomli = ">=2.0.1"
 
 [tool.poetry.extras]
 # inline comments note required external / non-python dependencies
-absubmit = [
-    "requests",
-] # extractor binary from https://acousticbrainz.org/download
+absubmit = ["requests"] # extractor binary from https://acousticbrainz.org/download
 aura = ["flask", "flask-cors", "Pillow"]
 autobpm = ["librosa", "resampy"]
 # badfiles # mp3val and flac
 beatport = ["requests-oauthlib"]
-bpd = [
-    "PyGObject",
-] # gobject-introspection, gstreamer1.0-plugins-base, python3-gst-1.0
+bpd = ["PyGObject"] # gobject-introspection, gstreamer1.0-plugins-base, python3-gst-1.0
 chroma = ["pyacoustid"] # chromaprint or fpcalc
 # convert # ffmpeg
 docs = ["pydata-sphinx-theme", "sphinx", "sphinx-lint"]
 discogs = ["python3-discogs-client"]
-embedart = ["Pillow"]                                             # ImageMagick
+embedart = ["Pillow"] # ImageMagick
 embyupdate = ["requests"]
 fetchart = ["beautifulsoup4", "langdetect", "Pillow", "requests"]
 import = ["py7zr", "rarfile"]
@@ -164,6 +160,10 @@ beet = "beets.ui:main"
 [tool.poetry-dynamic-versioning]
 enable = true
 vcs = "git"
+format = "{base}.dev{distance}+{commit}"
+
+[tool.poetry-dynamic-versioning.files."beets/_version.py"]
+persistent-substitution = true
 
 [build-system]
 requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]

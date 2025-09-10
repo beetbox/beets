@@ -17,6 +17,9 @@ from sys import stderr
 
 import confuse
 
+# Version management using poetry-dynamic-versioning
+from ._version import __version__, __version_tuple__
+
 from .util import deprecate_imports
 
 __version__ = "2.4.0"
@@ -54,3 +57,6 @@ class IncludeLazyConfig(confuse.LazyConfig):
 
 
 config = IncludeLazyConfig("beets", __name__)
+
+
+__all__ = ["__version__", "__version_tuple__", "config"]
