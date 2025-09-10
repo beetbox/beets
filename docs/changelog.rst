@@ -65,6 +65,7 @@ Bug fixes:
   the config option ``deezer.search_query_ascii: yes``. :bug:`5860`
 - Fixed regression with :doc:`/plugins/listenbrainz` where the plugin could not
   be loaded :bug:`5975`
+- Removed old contact info in docs :bug:`5462`
 
 For packagers:
 
