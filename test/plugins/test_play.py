@@ -106,7 +106,9 @@ class PlayPluginTest(CleanupModulesMixin, PluginTestCase):
         open_mock.assert_called_once_with([self.item.path], "echo")
 
     def test_pls_marker(self, open_mock):
-        self.config["play"]["command"] = "echo --some params --playlist=$playlist --some-more params"
+        self.config["play"]["command"] = (
+            "echo --some params --playlist=$playlist --some-more params"
+        )
 
         self.run_command("play", "nice")
 
