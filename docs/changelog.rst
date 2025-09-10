@@ -133,6 +133,8 @@ Other changes:
 - :doc:`/guides/main`: Add instructions to install beets on Void Linux.
 - :doc:`plugins/lastgenre`: Refactor loading whitelist and canonicalization
   file. :bug:`5979`
+- When installing ``beets`` via git or locally the version string now reflects
+  the current git branch and commit hash. :bug:`4448`
 
 2.3.1 (May 14, 2025)
 --------------------

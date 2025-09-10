@@ -17,7 +17,9 @@ from sys import stderr
 
 import confuse
 
-__version__ = "2.3.1"
+# Version management using poetry-dynamic-versioning
+from ._version import __version__, __version_tuple__
+
 __author__ = "Adrian Sampson <adrian@radbox.org>"
 
 
@@ -39,3 +41,6 @@ class IncludeLazyConfig(confuse.LazyConfig):
 
 
 config = IncludeLazyConfig("beets", __name__)
+
+
+__all__ = ["__version__", "__version_tuple__", "config"]
