@@ -13,8 +13,6 @@
 # included in all copies or substantial portions of the Software.
 
 
-import subprocess
-from pathlib import Path
 from sys import stderr
 
 import confuse
@@ -37,23 +35,6 @@ def __getattr__(name: str):
         version="3.0.0",
     )
 
-def _git_suffix():
-    try:
-        repo_root = Path(__file__).resolve().parent.parent
-        commit = (
-            subprocess.check_output(
-                ["git", "-C", str(repo_root), "rev-parse", "--short", "HEAD"],
-                stderr=subprocess.DEVNULL,
-            )
-            .decode()
-            .strip()
-        )
-        return f"+git.{commit}"
-    except Exception:
-        return ""
-
-
-__version__ = __version__ + _git_suffix()
 
 class IncludeLazyConfig(confuse.LazyConfig):
     """A version of Confuse's LazyConfig that also merges in data from
