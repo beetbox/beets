@@ -65,6 +65,8 @@ Bug fixes:
   the config option ``deezer.search_query_ascii: yes``. :bug:`5860`
 - Fixed regression with :doc:`/plugins/listenbrainz` where the plugin could not
   be loaded :bug:`5975`
+- Errors in metadata plugins during candidates lookup will now be logged but
+  won't crash beets anymore. :bug:`5903`, :bug:`4789`
 
 For packagers:
 
