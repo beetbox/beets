@@ -30,7 +30,9 @@ import textwrap
 import traceback
 import warnings
 from difflib import SequenceMatcher
-from typing import Any, Callable
+from functools import cache
+from itertools import chain
+from typing import Any, Callable, Literal
 
 import confuse
 
@@ -438,7 +440,7 @@ def input_select_objects(prompt, objs, rep, prompt_all=None):
 # ANSI terminal colorization code heavily inspired by pygments:
 # https://bitbucket.org/birkenfeld/pygments-main/src/default/pygments/console.py
 # (pygments is by Tim Hatch, Armin Ronacher, et al.)
-COLOR_ESCAPE = "\x1b["
+COLOR_ESCAPE = "\x1b"
 LEGACY_COLORS = {
     "black": ["black"],
     "darkred": ["red"],
@@ -463,7 +465,7 @@ LEGACY_COLORS = {
     "white": ["bold", "white"],
 }
 # All ANSI Colors.
-ANSI_CODES = {
+CODE_BY_COLOR = {
     # Styles.
     "normal": 0,
     "bold": 1,
@@ -494,11 +496,17 @@ ANSI_CODES = {
     "bg_cyan": 46,
     "bg_white": 47,
 }
-RESET_COLOR = f"{COLOR_ESCAPE}39;49;00m"
-
-# These abstract COLOR_NAMES are lazily mapped on to the actual color in COLORS
-# as they are defined in the configuration files, see function: colorize
-COLOR_NAMES = [
+RESET_COLOR = f"{COLOR_ESCAPE}[39;49;00m"
+# Precompile common ANSI-escape regex patterns
+ANSI_CODE_REGEX = re.compile(rf"({COLOR_ESCAPE}\[[;0-9]*m)")
+ESC_TEXT_REGEX = re.compile(
+    rf"""(?P<pretext>[^{COLOR_ESCAPE}]*)
+         (?P<esc>(?:{ANSI_CODE_REGEX.pattern})+)
+         (?P<text>[^{COLOR_ESCAPE}]+)(?P<reset>{re.escape(RESET_COLOR)})
+         (?P<posttext>[^{COLOR_ESCAPE}]*)""",
+    re.VERBOSE,
+)
+ColorName = Literal[
     "text_success",
     "text_warning",
     "text_error",
@@ -507,76 +515,54 @@ COLOR_NAMES = [
     "action_default",
     "action",
     # New Colors
-    "text",
     "text_faint",
     "import_path",
     "import_path_items",
     "action_description",
-    "added",
-    "removed",
     "changed",
-    "added_highlight",
-    "removed_highlight",
-    "changed_highlight",
     "text_diff_added",
     "text_diff_removed",
-    "text_diff_changed",
 ]
-COLORS: dict[str, list[str]] | None = None
 
 
-def _colorize(color, text):
-    """Returns a string that prints the given text in the given color
-    in a terminal that is ANSI color-aware. The color must be a list of strings
-    from ANSI_CODES.
+@cache
+def get_color_config() -> dict[ColorName, str]:
+    """Parse and validate color configuration, converting names to ANSI codes.
+
+    Processes the UI color configuration, handling both new list format and
+    legacy single-color format. Validates all color names against known codes
+    and raises an error for any invalid entries.
     """
-    # Construct escape sequence to be put before the text by iterating
-    # over all "ANSI codes" in `color`.
-    escape = ""
-    for code in color:
-        escape = f"{escape}{COLOR_ESCAPE}{ANSI_CODES[code]}m"
-    return f"{escape}{text}{RESET_COLOR}"
+    colors_by_color_name: dict[ColorName, list[str]] = {
+        k: (v if isinstance(v, list) else LEGACY_COLORS.get(v, [v]))
+        for k, v in config["ui"]["colors"].flatten().items()
+    }
+
+    if invalid_colors := (
+        set(chain.from_iterable(colors_by_color_name.values()))
+        - CODE_BY_COLOR.keys()
+    ):
+        raise UserError(
+            f"Invalid color(s) in configuration: {', '.join(invalid_colors)}"
+        )
+
+    return {
+        n: ";".join(str(CODE_BY_COLOR[c]) for c in colors)
+        for n, colors in colors_by_color_name.items()
+    }
 
 
-def colorize(color_name, text):
-    """Colorize text if colored output is enabled. (Like _colorize but
-    conditional.)
+def colorize(color_name: ColorName, text: str) -> str:
+    """Apply ANSI color formatting to text based on configuration settings.
+
+    Returns colored text when color output is enabled and NO_COLOR environment
+    variable is not set, otherwise returns plain text unchanged.
     """
     if config["ui"]["color"] and "NO_COLOR" not in os.environ:
-        global COLORS
-        if not COLORS:
-            # Read all color configurations and set global variable COLORS.
-            COLORS = dict()
-            for name in COLOR_NAMES:
-                # Convert legacy color definitions (strings) into the new
-                # list-based color definitions. Do this by trying to read the
-                # color definition from the configuration as unicode - if this
-                # is successful, the color definition is a legacy definition
-                # and has to be converted.
-                try:
-                    color_def = config["ui"]["colors"][name].get(str)
-                except (confuse.ConfigTypeError, NameError):
-                    # Normal color definition (type: list of unicode).
-                    color_def = config["ui"]["colors"][name].get(list)
-                else:
-                    # Legacy color definition (type: unicode). Convert.
-                    if color_def in LEGACY_COLORS:
-                        color_def = LEGACY_COLORS[color_def]
-                    else:
-                        raise UserError("no such color %s", color_def)
-                for code in color_def:
-                    if code not in ANSI_CODES.keys():
-                        raise ValueError("no such ANSI code %s", code)
-                COLORS[name] = color_def
-        # In case a 3rd party plugin is still passing the actual color ('red')
-        # instead of the abstract color name ('text_error')
-        color = COLORS.get(color_name)
-        if not color:
-            log.debug("Invalid color_name: {}", color_name)
-            color = color_name
-        return _colorize(color, text)
-    else:
-        return text
+        color_code = get_color_config()[color_name]
+        return f"{COLOR_ESCAPE}[{color_code}m{text}{RESET_COLOR}"
+
+    return text
 
 
 def uncolorize(colored_text):
@@ -589,26 +575,22 @@ def uncolorize(colored_text):
     #     [;\d]*   - matches a sequence consisting of one or more digits or
     #                semicola
     #     [A-Za-z] - matches a letter
-    ansi_code_regex = re.compile(r"\x1b\[[;\d]*[A-Za-z]", re.VERBOSE)
-    # Strip ANSI codes from `colored_text` using the regular expression.
-    text = ansi_code_regex.sub("", colored_text)
-    return text
+    return ANSI_CODE_REGEX.sub("", colored_text)
 
 
 def color_split(colored_text, index):
-    ansi_code_regex = re.compile(r"(\x1b\[[;\d]*[A-Za-z])", re.VERBOSE)
     length = 0
     pre_split = ""
     post_split = ""
     found_color_code = None
     found_split = False
-    for part in ansi_code_regex.split(colored_text):
+    for part in ANSI_CODE_REGEX.split(colored_text):
         # Count how many real letters we have passed
         length += color_len(part)
         if found_split:
             post_split += part
         else:
-            if ansi_code_regex.match(part):
+            if ANSI_CODE_REGEX.match(part):
                 # This is a color code
                 if part == RESET_COLOR:
                     found_color_code = None
@@ -642,7 +624,7 @@ def color_len(colored_text):
     return len(uncolorize(colored_text))
 
 
-def _colordiff(a, b):
+def _colordiff(a: Any, b: Any) -> tuple[str, str]:
     """Given two values, return the same pair of strings except with
     their differences highlighted in the specified color. Strings are
     highlighted intelligently to show differences; other values are
@@ -664,35 +646,21 @@ def _colordiff(a, b):
                 colorize("text_diff_added", str(b)),
             )
 
-    a_out = []
-    b_out = []
+    before = ""
+    after = ""
 
     matcher = SequenceMatcher(lambda x: False, a, b)
     for op, a_start, a_end, b_start, b_end in matcher.get_opcodes():
-        if op == "equal":
-            # In both strings.
-            a_out.append(a[a_start:a_end])
-            b_out.append(b[b_start:b_end])
-        elif op == "insert":
-            # Right only.
-            b_out.append(colorize("text_diff_added", b[b_start:b_end]))
-        elif op == "delete":
-            # Left only.
-            a_out.append(colorize("text_diff_removed", a[a_start:a_end]))
-        elif op == "replace":
-            # Right and left differ. Colorise with second highlight if
-            # it's just a case change.
-            if a[a_start:a_end].lower() != b[b_start:b_end].lower():
-                a_color = "text_diff_removed"
-                b_color = "text_diff_added"
-            else:
-                a_color = b_color = "text_highlight_minor"
-            a_out.append(colorize(a_color, a[a_start:a_end]))
-            b_out.append(colorize(b_color, b[b_start:b_end]))
-        else:
-            assert False
+        before_part, after_part = a[a_start:a_end], b[b_start:b_end]
+        if op in {"delete", "replace"}:
+            before_part = colorize("text_diff_removed", before_part)
+        if op in {"insert", "replace"}:
+            after_part = colorize("text_diff_added", after_part)
 
-    return "".join(a_out), "".join(b_out)
+        before += before_part
+        after += after_part
+
+    return before, after
 
 
 def colordiff(a, b):
@@ -765,19 +733,13 @@ def split_into_lines(string, width_tuple):
     """
     first_width, middle_width, last_width = width_tuple
     words = []
-    esc_text = re.compile(
-        r"""(?P<pretext>[^\x1b]*)
-                            (?P<esc>(?:\x1b\[[;\d]*[A-Za-z])+)
-                            (?P<text>[^\x1b]+)(?P<reset>\x1b\[39;49;00m)
-                            (?P<posttext>[^\x1b]*)""",
-        re.VERBOSE,
-    )
+
     if uncolorize(string) == string:
         # No colors in string
         words = string.split()
     else:
         # Use a regex to find escapes and the text within them.
-        for m in esc_text.finditer(string):
+        for m in ESC_TEXT_REGEX.finditer(string):
             # m contains four groups:
             # pretext - any text before escape sequence
             # esc - intitial escape sequence
@@ -1110,8 +1072,8 @@ def _field_diff(field, old, old_fmt, new, new_fmt):
     if isinstance(oldval, str):
         oldstr, newstr = colordiff(oldval, newstr)
     else:
-        oldstr = colorize("text_error", oldstr)
-        newstr = colorize("text_error", newstr)
+        oldstr = colorize("text_diff_removed", oldstr)
+        newstr = colorize("text_diff_added", newstr)
 
     return f"{oldstr} -> {newstr}"
 
