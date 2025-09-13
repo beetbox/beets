@@ -234,7 +234,7 @@ class ImportTask(BaseImportTask):
             return likelies
         elif self.choice_flag is Action.APPLY and self.match:
             return self.match.info.copy()
-        assert False
+        raise ValueError("Invalid choice flag; this should never happen.")
 
     def imported_items(self):
         """Return a list of Items that should be added to the library.
@@ -249,7 +249,7 @@ class ImportTask(BaseImportTask):
         ):
             return list(self.match.mapping.keys())
         else:
-            assert False
+            raise ValueError("Invalid choice flag; this should never happen.")
 
     def apply_metadata(self):
         """Copy metadata from match info to the items."""
@@ -355,7 +355,7 @@ class ImportTask(BaseImportTask):
             tasks = [t for inner in tasks for t in inner]
         return tasks
 
-    def lookup_candidates(self, search_ids: list[str]) -> None:
+    def lookup_candidates(self, session: ImportSession, search_ids: list[str]) -> None:
         """Retrieve and store candidates for this album.
 
         If User-specified ``search_ids`` list is not empty, the lookup is
@@ -682,7 +682,7 @@ class SingletonImportTask(ImportTask):
         for item in self.imported_items():
             plugins.send("item_imported", lib=lib, item=item)
 
-    def lookup_candidates(self, search_ids: list[str]) -> None:
+    def lookup_candidates(self, session: ImportSession, search_ids: list[str]) -> None:
         self.candidates, self.rec = autotag.tag_item(
             self.item, search_ids=search_ids
         )
