@@ -133,6 +133,8 @@ Other changes:
 - :doc:`/guides/main`: Add instructions to install beets on Void Linux.
 - :doc:`plugins/lastgenre`: Refactor loading whitelist and canonicalization
   file. :bug:`5979`
+- :doc:`plugins/lastgenre`: Updated and streamlined the genre whitelist and
+  canonicalization tree :bug:`5977`
 
 2.3.1 (May 14, 2025)
 --------------------
