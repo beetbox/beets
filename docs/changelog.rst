@@ -9,6 +9,17 @@ Unreleased
 
 New features:
 
+Bug fixes:
+
+For packagers:
+
+Other changes:
+
+2.4.0 (September 13, 2025)
+--------------------------
+
+New features:
+
 - :doc:`plugins/musicbrainz`: The MusicBrainz autotagger has been moved to a
   separate plugin. The default :ref:`plugins-config` includes ``musicbrainz``,
   but if you've customized your ``plugins`` list in your configuration, you'll
