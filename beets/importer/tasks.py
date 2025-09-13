@@ -316,8 +316,6 @@ class ImportTask(BaseImportTask):
         if not self.skip:
             self._emit_imported(session.lib)
 
-        session.task_finalized()
-
     def cleanup(self, copy=False, delete=False, move=False):
         """Remove and prune imported paths."""
         # Do not delete any files or prune directories when skipping.
@@ -355,7 +353,6 @@ class ImportTask(BaseImportTask):
         else:
             # The plugins gave us a list of lists of tasks. Flatten it.
             tasks = [t for inner in tasks for t in inner]
-        session.tasks_created(tasks)
         return tasks
 
     def lookup_candidates(self, session: ImportSession, search_ids: list[str]) -> None:
@@ -367,7 +364,6 @@ class ImportTask(BaseImportTask):
         self.cur_artist, self.cur_album, (self.candidates, self.rec) = (
             autotag.tag_album(self.items, search_ids=search_ids)
         )
-        session.task_candidates_found()
 
     def find_duplicates(self, lib: library.Library) -> list[library.Album]:
         """Return a list of albums from `lib` with the same artist and
@@ -631,7 +627,6 @@ class ImportTask(BaseImportTask):
         choice = session.choose_match(self)
         self.set_choice(choice)
         session.log_choice(self)
-        session.task_match_chosen()
 
     def reload(self):
         """Reload albums and items from the database."""
@@ -691,7 +686,6 @@ class SingletonImportTask(ImportTask):
         self.candidates, self.rec = autotag.tag_item(
             self.item, search_ids=search_ids
         )
-        session.task_candidates_found()
 
     def find_duplicates(self, lib: library.Library) -> list[library.Item]:  # type: ignore[override] # Need splitting Singleton and Album tasks into separate classes
         """Return a list of items from `lib` that have the same artist
