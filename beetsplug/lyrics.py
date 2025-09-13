@@ -31,6 +31,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Iterable, Iterator, NamedTuple
 from urllib.parse import quote, quote_plus, urlencode, urlparse
 
+import json
 import langdetect
 import requests
 from bs4 import BeautifulSoup
@@ -57,6 +58,13 @@ if TYPE_CHECKING:
 
 USER_AGENT = f"beets/{beets.__version__}"
 INSTRUMENTAL_LYRICS = "[Instrumental]"
+
+# ``requests`` only added ``JSONDecodeError`` in more recent versions.
+# Fall back to the standard library's version if the attribute is missing
+# to support older ``requests`` releases.
+JSONDecodeError = getattr(
+    requests.exceptions, "JSONDecodeError", json.JSONDecodeError
+)
 
 
 class NotFoundError(requests.exceptions.HTTPError):
@@ -237,7 +245,7 @@ class RequestHandler:
     def handle_request(self) -> Iterator[None]:
         try:
             yield
-        except requests.JSONDecodeError:
+        except JSONDecodeError:
             self.warn("Could not decode response JSON data")
         except requests.RequestException as exc:
             self.warn("Request error: {}", exc)
