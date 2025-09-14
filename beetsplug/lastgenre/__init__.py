@@ -462,6 +462,12 @@ class LastGenrePlugin(plugins.BeetsPlugin):
     def commands(self):
         lastgenre_cmd = ui.Subcommand("lastgenre", help="fetch genres")
         lastgenre_cmd.parser.add_option(
+            "-p",
+            "--pretend",
+            action="store_true",
+            help="show actions but do nothing",
+        )
+        lastgenre_cmd.parser.add_option(
             "-f",
             "--force",
             dest="force",
@@ -521,45 +527,57 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         def lastgenre_func(lib, opts, args):
             write = ui.should_write()
+            pretend = getattr(opts, "pretend", False)
             self.config.set_args(opts)
 
             if opts.album:
                 # Fetch genres for whole albums
                 for album in lib.albums(args):
-                    album.genre, src = self._get_genre(album)
+                    album_genre, src = self._get_genre(album)
                     self._log.info(
-                        'genre for album "{0.album}" ({1}): {0.genre}',
+                        'genre for album "{0.album}" ({1}): {}',
                         album,
                         src,
+                        album_genre,
                     )
-                    if "track" in self.sources:
-                        album.store(inherit=False)
-                    else:
-                        album.store()
+                    if not pretend:
+                        album.genre = album_genre
+                        if "track" in self.sources:
+                            album.store(inherit=False)
+                        else:
+                            album.store()
 
                     for item in album.items():
                         # If we're using track-level sources, also look up each
                         # track on the album.
                         if "track" in self.sources:
-                            item.genre, src = self._get_genre(item)
-                            item.store()
+                            item_genre, src = self._get_genre(item)
                             self._log.info(
-                                'genre for track "{0.title}" ({1}): {0.genre}',
+                                'genre for track "{0.title}" ({1}): {}',
                                 item,
                                 src,
+                                item_genre,
                             )
+                            if not pretend:
+                                item.genre = item_genre
+                                item.store()
 
-                        if write:
+                        if write and not pretend:
                             item.try_write()
             else:
                 # Just query singletons, i.e. items that are not part of
                 # an album
                 for item in lib.items(args):
-                    item.genre, src = self._get_genre(item)
-                    item.store()
+                    item_genre, src = self._get_genre(item)
                     self._log.info(
-                        "genre for track {0.title} ({1}): {0.genre}", item, src
+                        'genre for track "{0.title}" ({1}): {}',
+                        item,
+                        src,
+                        item_genre,
                     )
+                    if not pretend:
+                        item.genre = item_genre
+                        item.store()
 
         lastgenre_cmd.func = lastgenre_func
         return [lastgenre_cmd]
