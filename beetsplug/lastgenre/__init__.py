@@ -578,6 +578,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     if not pretend:
                         item.genre = item_genre
                         item.store()
+                    if write and not pretend:
+                        item.try_write()
 
         lastgenre_cmd.func = lastgenre_func
         return [lastgenre_cmd]
