@@ -9,7 +9,7 @@ Unreleased
 
 New features:
 * :doc:`plugins/zero`: Add new configuration option,
-  ``zero_disc_number_if_single_disc``, to allow zeroing the disc number on
+  ``zero_disc_if_single_disc``, to allow zeroing the disc number on
   write for single-disc albums. Defaults to False.
 
 Bug fixes:
