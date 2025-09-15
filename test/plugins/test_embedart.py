@@ -23,7 +23,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from mediafile import MediaFile
 
-from beets import art, config, logging, ui
+from beets import config, logging, ui
 from beets.test import _common
 from beets.test.helper import (
     BeetsTestCase,
@@ -33,6 +33,7 @@ from beets.test.helper import (
 )
 from beets.util import bytestring_path, displayable_path, syspath
 from beets.util.artresizer import ArtResizer
+from beetsplug._utils import art
 from test.test_art_resize import DummyIMBackend
 
 
