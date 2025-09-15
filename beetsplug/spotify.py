@@ -569,7 +569,13 @@ class SpotifyPlugin(
             query_string = item[self.config["track_field"].get()]
 
             # Query the Web API for each track, look for the items' JSON data
-            query_filters: SearchFilter = {"artist": artist, "album": album}
+
+            query_filters: SearchFilter = {}
+            if artist:
+                query_filters["artist"] = artist
+            if album:
+                query_filters["album"] = album
+
             response_data_tracks = self._search_api(
                 query_type="track",
                 query_string=query_string,
