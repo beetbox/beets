@@ -284,7 +284,7 @@ class DummyArtResizer(ArtResizer):
 
 
 @patch("beets.util.artresizer.subprocess")
-@patch("beets.art.extract")
+@patch("beetsplug._utils.art.extract")
 class ArtSimilarityTest(unittest.TestCase):
     def setUp(self):
         self.item = _common.item()
