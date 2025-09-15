@@ -35,9 +35,8 @@ def _confirm(objs, album):
     to items).
     """
     noun = "album" if album else "file"
-    prompt = (
-        "Modify artwork for"
-        f" {len(objs)} {noun}{'s' if len(objs) > 1 else ''} (Y/n)?"
+    prompt = "Modify artwork for {} {}{} (Y/n)?".format(
+        len(objs), noun, "s" if len(objs) > 1 else ""
     )
 
     # Show all the items or albums.
@@ -111,7 +110,9 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 imagepath = normpath(opts.file)
                 if not os.path.isfile(syspath(imagepath)):
                     raise ui.UserError(
-                        f"image file {displayable_path(imagepath)} not found"
+                        "image file {} not found".format(
+                            displayable_path(imagepath)
+                        )
                     )
 
                 items = lib.items(args)
@@ -136,7 +137,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                     response = requests.get(opts.url, timeout=5)
                     response.raise_for_status()
                 except requests.exceptions.RequestException as e:
-                    self._log.error("{}", e)
+                    self._log.error("{}".format(e))
                     return
                 extension = guess_extension(response.headers["Content-Type"])
                 if extension is None:
@@ -148,7 +149,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                     with open(tempimg, "wb") as f:
                         f.write(response.content)
                 except Exception as e:
-                    self._log.error("Unable to save image: {}", e)
+                    self._log.error("Unable to save image: {}".format(e))
                     return
                 items = lib.items(args)
                 # Confirm with user.
@@ -273,7 +274,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         """
         if self.config["remove_art_file"] and album.artpath:
             if os.path.isfile(syspath(album.artpath)):
-                self._log.debug("Removing album art file for {}", album)
+                self._log.debug("Removing album art file for {0}", album)
                 os.remove(syspath(album.artpath))
                 album.artpath = None
                 album.store()

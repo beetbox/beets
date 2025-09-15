@@ -38,7 +38,9 @@ def api_url(host, port, endpoint):
         hostname_list.insert(0, "http://")
         hostname = "".join(hostname_list)
 
-    joined = urljoin(f"{hostname}:{port}", endpoint)
+    joined = urljoin(
+        "{hostname}:{port}".format(hostname=hostname, port=port), endpoint
+    )
 
     scheme, netloc, path, query_string, fragment = urlsplit(joined)
     query_params = parse_qs(query_string)
@@ -79,12 +81,12 @@ def create_headers(user_id, token=None):
     headers = {}
 
     authorization = (
-        f'MediaBrowser UserId="{user_id}", '
+        'MediaBrowser UserId="{user_id}", '
         'Client="other", '
         'Device="beets", '
         'DeviceId="beets", '
         'Version="0.0.0"'
-    )
+    ).format(user_id=user_id)
 
     headers["x-emby-authorization"] = authorization
 
@@ -184,7 +186,7 @@ class EmbyUpdate(BeetsPlugin):
             # Get user information from the Emby API.
             user = get_user(host, port, username)
             if not user:
-                self._log.warning("User {} could not be found.", username)
+                self._log.warning(f"User {username} could not be found.")
                 return
             userid = user[0]["Id"]
 
@@ -196,7 +198,7 @@ class EmbyUpdate(BeetsPlugin):
             # Get authentication token.
             token = get_token(host, port, headers, auth_data)
             if not token:
-                self._log.warning("Could not get token for user {}", username)
+                self._log.warning("Could not get token for user {0}", username)
                 return
 
         # Recreate headers with a token.

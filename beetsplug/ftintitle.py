@@ -20,6 +20,7 @@ import re
 from typing import TYPE_CHECKING
 
 from beets import plugins, ui
+from beets.util import displayable_path
 
 if TYPE_CHECKING:
     from beets.importer import ImportSession, ImportTask
@@ -89,7 +90,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             {
                 "auto": True,
                 "drop": False,
-                "format": "feat. {}",
+                "format": "feat. {0}",
                 "keep_in_artist": False,
             }
         )
@@ -150,10 +151,10 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         # In case the artist is kept, do not update the artist fields.
         if keep_in_artist_field:
             self._log.info(
-                "artist: {.artist} (Not changing due to keep_in_artist)", item
+                "artist: {0} (Not changing due to keep_in_artist)", item.artist
             )
         else:
-            self._log.info("artist: {0.artist} -> {0.albumartist}", item)
+            self._log.info("artist: {0} -> {1}", item.artist, item.albumartist)
             item.artist = item.albumartist
 
         if item.artist_sort:
@@ -166,7 +167,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             feat_format = self.config["format"].as_str()
             new_format = feat_format.format(feat_part)
             new_title = f"{item.title} {new_format}"
-            self._log.info("title: {.title} -> {}", item, new_title)
+            self._log.info("title: {0} -> {1}", item.title, new_title)
             item.title = new_title
 
     def ft_in_title(
@@ -194,7 +195,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         if not featured:
             return False
 
-        self._log.info("{.filepath}", item)
+        self._log.info("{}", displayable_path(item.path))
 
         # Attempt to find the featured artist.
         feat_part = find_feat_part(artist, albumartist)

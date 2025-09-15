@@ -70,7 +70,7 @@ class CustomUser(pylast.User):
         tuple with the total number of pages of results. Includes an MBID, if
         found.
         """
-        doc = self._request(f"{self.ws_prefix}.{method}", cacheable, params)
+        doc = self._request(self.ws_prefix + "." + method, cacheable, params)
 
         toptracks_node = doc.getElementsByTagName("toptracks")[0]
         total_pages = int(toptracks_node.getAttribute("totalPages"))
@@ -120,7 +120,7 @@ def import_lastfm(lib, log):
     if not user:
         raise ui.UserError("You must specify a user name for lastimport")
 
-    log.info("Fetching last.fm library for @{}", user)
+    log.info("Fetching last.fm library for @{0}", user)
 
     page_total = 1
     page_current = 0
@@ -130,7 +130,7 @@ def import_lastfm(lib, log):
     # Iterate through a yet to be known page total count
     while page_current < page_total:
         log.info(
-            "Querying page #{}{}...",
+            "Querying page #{0}{1}...",
             page_current + 1,
             f"/{page_total}" if page_total > 1 else "",
         )
@@ -147,27 +147,27 @@ def import_lastfm(lib, log):
                 unknown_total += unknown
                 break
             else:
-                log.error("ERROR: unable to read page #{}", page_current + 1)
+                log.error("ERROR: unable to read page #{0}", page_current + 1)
                 if retry < retry_limit:
                     log.info(
-                        "Retrying page #{}... ({}/{} retry)",
+                        "Retrying page #{0}... ({1}/{2} retry)",
                         page_current + 1,
                         retry + 1,
                         retry_limit,
                     )
                 else:
                     log.error(
-                        "FAIL: unable to fetch page #{}, ",
-                        "tried {} times",
+                        "FAIL: unable to fetch page #{0}, ",
+                        "tried {1} times",
                         page_current,
                         retry + 1,
                     )
         page_current += 1
 
     log.info("... done!")
-    log.info("finished processing {} song pages", page_total)
-    log.info("{} unknown play-counts", unknown_total)
-    log.info("{} play-counts imported", found_total)
+    log.info("finished processing {0} song pages", page_total)
+    log.info("{0} unknown play-counts", unknown_total)
+    log.info("{0} play-counts imported", found_total)
 
 
 def fetch_tracks(user, page, limit):
@@ -201,7 +201,7 @@ def process_tracks(lib, tracks, log):
     total = len(tracks)
     total_found = 0
     total_fails = 0
-    log.info("Received {} tracks in this page, processing...", total)
+    log.info("Received {0} tracks in this page, processing...", total)
 
     for num in range(0, total):
         song = None
@@ -220,7 +220,7 @@ def process_tracks(lib, tracks, log):
                 else None
             )
 
-        log.debug("query: {} - {} ({})", artist, title, album)
+        log.debug("query: {0} - {1} ({2})", artist, title, album)
 
         # First try to query by musicbrainz's trackid
         if trackid:
@@ -231,7 +231,7 @@ def process_tracks(lib, tracks, log):
         # If not, try just album/title
         if song is None:
             log.debug(
-                "no album match, trying by album/title: {} - {}", album, title
+                "no album match, trying by album/title: {0} - {1}", album, title
             )
             query = dbcore.AndQuery(
                 [
@@ -268,9 +268,10 @@ def process_tracks(lib, tracks, log):
             count = int(song.get("play_count", 0))
             new_count = int(tracks[num].get("playcount", 1))
             log.debug(
-                "match: {0.artist} - {0.title} ({0.album}) updating:"
-                " play_count {1} => {2}",
-                song,
+                "match: {0} - {1} ({2}) updating: play_count {3} => {4}",
+                song.artist,
+                song.title,
+                song.album,
                 count,
                 new_count,
             )
@@ -279,11 +280,11 @@ def process_tracks(lib, tracks, log):
             total_found += 1
         else:
             total_fails += 1
-            log.info("  - No match: {} - {} ({})", artist, title, album)
+            log.info("  - No match: {0} - {1} ({2})", artist, title, album)
 
     if total_fails > 0:
         log.info(
-            "Acquired {}/{} play-counts ({} unknown)",
+            "Acquired {0}/{1} play-counts ({2} unknown)",
             total_found,
             total,
             total_fails,

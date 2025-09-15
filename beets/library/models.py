@@ -425,7 +425,7 @@ class Album(LibModel):
 
         new_art = util.unique_path(new_art)
         log.debug(
-            "moving album art {} to {}",
+            "moving album art {0} to {1}",
             util.displayable_path(old_art),
             util.displayable_path(new_art),
         )
@@ -482,7 +482,7 @@ class Album(LibModel):
         """
         item = self.items().get()
         if not item:
-            raise ValueError(f"empty album for album id {self.id}")
+            raise ValueError("empty album for album id %d" % self.id)
         return os.path.dirname(item.path)
 
     def _albumtotal(self):
@@ -844,9 +844,12 @@ class Item(LibModel):
         # This must not use `with_album=True`, because that might access
         # the database. When debugging, that is not guaranteed to succeed, and
         # can even deadlock due to the database lock.
-        return (
-            f"{type(self).__name__}"
-            f"({', '.join(f'{k}={self[k]!r}' for k in self.keys(with_album=False))})"
+        return "{}({})".format(
+            type(self).__name__,
+            ", ".join(
+                "{}={!r}".format(k, self[k])
+                for k in self.keys(with_album=False)
+            ),
         )
 
     def keys(self, computed=False, with_album=True):
@@ -992,7 +995,7 @@ class Item(LibModel):
             self.write(*args, **kwargs)
             return True
         except FileOperationError as exc:
-            log.error("{}", exc)
+            log.error("{0}", exc)
             return False
 
     def try_sync(self, write, move, with_album=True):
@@ -1012,7 +1015,10 @@ class Item(LibModel):
         if move:
             # Check whether this file is inside the library directory.
             if self._db and self._db.directory in util.ancestry(self.path):
-                log.debug("moving {.filepath} to synchronize path", self)
+                log.debug(
+                    "moving {0} to synchronize path",
+                    util.displayable_path(self.path),
+                )
                 self.move(with_album=with_album)
         self.store()
 
@@ -1084,7 +1090,7 @@ class Item(LibModel):
         try:
             return os.path.getsize(syspath(self.path))
         except (OSError, Exception) as exc:
-            log.warning("could not get filesize: {}", exc)
+            log.warning("could not get filesize: {0}", exc)
             return 0
 
     # Model methods.

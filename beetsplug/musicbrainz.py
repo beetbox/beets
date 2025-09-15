@@ -18,14 +18,12 @@ from __future__ import annotations
 
 import traceback
 from collections import Counter
-from contextlib import suppress
 from functools import cached_property
 from itertools import product
 from typing import TYPE_CHECKING, Any, Iterable, Sequence
 from urllib.parse import urljoin
 
 import musicbrainzngs
-from confuse.exceptions import NotFoundError
 
 import beets
 import beets.autotag.hooks
@@ -70,7 +68,9 @@ class MusicBrainzAPIError(util.HumanReadableError):
         super().__init__(reason, verb, tb)
 
     def get_message(self):
-        return f"{self._reasonstr()} in {self.verb} with query {self.query!r}"
+        return "{} in {} with query {}".format(
+            self._reasonstr(), self.verb, repr(self.query)
+        )
 
 
 RELEASE_INCLUDES = list(
@@ -203,7 +203,7 @@ def _multi_artist_credit(
 
 
 def track_url(trackid: str) -> str:
-    return urljoin(BASE_URL, f"recording/{trackid}")
+    return urljoin(BASE_URL, "recording/" + trackid)
 
 
 def _flatten_artist_credit(credit: list[JSONDict]) -> tuple[str, str, str]:
@@ -248,7 +248,7 @@ def _get_related_artist_names(relations, relation_type):
 
 
 def album_url(albumid: str) -> str:
-    return urljoin(BASE_URL, f"release/{albumid}")
+    return urljoin(BASE_URL, "release/" + albumid)
 
 
 def _preferred_release_event(
@@ -293,7 +293,7 @@ def _set_date_str(
                     continue
 
                 if original:
-                    key = f"original_{key}"
+                    key = "original_" + key
                 setattr(info, key, date_num)
 
 
@@ -373,6 +373,7 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
                 "https": False,
                 "ratelimit": 1,
                 "ratelimit_interval": 1,
+                "searchlimit": 5,
                 "genres": False,
                 "external_ids": {
                     "discogs": False,
@@ -384,15 +385,6 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
                 "extra_tags": [],
             },
         )
-        # TODO: Remove in 3.0.0
-        with suppress(NotFoundError):
-            self.config["search_limit"] = self.config["match"][
-                "searchlimit"
-            ].get()
-            self._log.warning(
-                "'musicbrainz.searchlimit' option is deprecated and will be "
-                "removed in 3.0.0. Use 'musicbrainz.search_limit' instead."
-            )
         hostname = self.config["host"].as_str()
         https = self.config["https"].get(bool)
         # Only call set_hostname when a custom server is configured. Since
@@ -809,7 +801,7 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
         )
         try:
             method = getattr(musicbrainzngs, f"search_{query_type}s")
-            res = method(limit=self.config["search_limit"].get(), **filters)
+            res = method(limit=self.config["searchlimit"].get(int), **filters)
         except musicbrainzngs.MusicBrainzError as exc:
             raise MusicBrainzAPIError(
                 exc, f"{query_type} search", filters, traceback.format_exc()
@@ -846,7 +838,7 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
         """
         self._log.debug("Requesting MusicBrainz release {}", album_id)
         if not (albumid := self._extract_id(album_id)):
-            self._log.debug("Invalid MBID ({}).", album_id)
+            self._log.debug("Invalid MBID ({0}).", album_id)
             return None
 
         try:
@@ -883,7 +875,7 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
         or None if no track is found. May raise a MusicBrainzAPIError.
         """
         if not (trackid := self._extract_id(track_id)):
-            self._log.debug("Invalid MBID ({}).", track_id)
+            self._log.debug("Invalid MBID ({0}).", track_id)
             return None
 
         try:

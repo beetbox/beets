@@ -78,10 +78,10 @@ def string_dist(str1: str | None, str2: str | None) -> float:
     # example, "the something" should be considered equal to
     # "something, the".
     for word in SD_END_WORDS:
-        if str1.endswith(f", {word}"):
-            str1 = f"{word} {str1[: -len(word) - 2]}"
-        if str2.endswith(f", {word}"):
-            str2 = f"{word} {str2[: -len(word) - 2]}"
+        if str1.endswith(", %s" % word):
+            str1 = "{} {}".format(word, str1[: -len(word) - 2])
+        if str2.endswith(", %s" % word):
+            str2 = "{} {}".format(word, str2[: -len(word) - 2])
 
     # Perform a couple of basic normalizing substitutions.
     for pat, repl in SD_REPLACE:
@@ -230,7 +230,7 @@ class Distance:
         """Adds all the distance penalties from `dist`."""
         if not isinstance(dist, Distance):
             raise ValueError(
-                f"`dist` must be a Distance object, not {type(dist)}"
+                "`dist` must be a Distance object, not {}".format(type(dist))
             )
         for key, penalties in dist._penalties.items():
             self._penalties.setdefault(key, []).extend(penalties)
@@ -444,7 +444,7 @@ def distance(
         # Preferred media options.
         media_patterns: Sequence[str] = preferred_config["media"].as_str_seq()
         options = [
-            re.compile(rf"(\d+x)?({pat})", re.I) for pat in media_patterns
+            re.compile(r"(\d+x)?(%s)" % pat, re.I) for pat in media_patterns
         ]
         if options:
             dist.add_priority("media", album_info.media, options)

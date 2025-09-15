@@ -190,7 +190,7 @@ class MatchQuery(FieldQuery[AnySQLiteType]):
     """A query that looks for exact matches in an Model field."""
 
     def col_clause(self) -> tuple[str, Sequence[SQLiteType]]:
-        return f"{self.field} = ?", [self.pattern]
+        return self.field + " = ?", [self.pattern]
 
     @classmethod
     def value_match(cls, pattern: AnySQLiteType, value: Any) -> bool:
@@ -204,7 +204,7 @@ class NoneQuery(FieldQuery[None]):
         super().__init__(field, None, fast)
 
     def col_clause(self) -> tuple[str, Sequence[SQLiteType]]:
-        return f"{self.field} IS NULL", ()
+        return self.field + " IS NULL", ()
 
     def match(self, obj: Model) -> bool:
         return obj.get(self.field_name) is None
@@ -246,7 +246,7 @@ class StringQuery(StringFieldQuery[str]):
             .replace("%", "\\%")
             .replace("_", "\\_")
         )
-        clause = f"{self.field} like ? escape '\\'"
+        clause = self.field + " like ? escape '\\'"
         subvals = [search]
         return clause, subvals
 
@@ -264,8 +264,8 @@ class SubstringQuery(StringFieldQuery[str]):
             .replace("%", "\\%")
             .replace("_", "\\_")
         )
-        search = f"%{pattern}%"
-        clause = f"{self.field} like ? escape '\\'"
+        search = "%" + pattern + "%"
+        clause = self.field + " like ? escape '\\'"
         subvals = [search]
         return clause, subvals
 
@@ -471,11 +471,11 @@ class NumericQuery(FieldQuery[str]):
 
     def col_clause(self) -> tuple[str, Sequence[SQLiteType]]:
         if self.point is not None:
-            return f"{self.field}=?", (self.point,)
+            return self.field + "=?", (self.point,)
         else:
             if self.rangemin is not None and self.rangemax is not None:
                 return (
-                    f"{self.field} >= ? AND {self.field} <= ?",
+                    "{0} >= ? AND {0} <= ?".format(self.field),
                     (self.rangemin, self.rangemax),
                 )
             elif self.rangemin is not None:
@@ -549,9 +549,9 @@ class CollectionQuery(Query):
             if not subq_clause:
                 # Fall back to slow query.
                 return None, ()
-            clause_parts.append(f"({subq_clause})")
+            clause_parts.append("(" + subq_clause + ")")
             subvals += subq_subvals
-        clause = f" {joiner} ".join(clause_parts)
+        clause = (" " + joiner + " ").join(clause_parts)
         return clause, subvals
 
     def __repr__(self) -> str:
@@ -690,7 +690,9 @@ class Period:
         ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"),  # second
     )
     relative_units = {"y": 365, "m": 30, "w": 7, "d": 1}
-    relative_re = "(?P<sign>[+|-]?)(?P<quantity>[0-9]+)(?P<timespan>[y|m|w|d])"
+    relative_re = (
+        "(?P<sign>[+|-]?)(?P<quantity>[0-9]+)" + "(?P<timespan>[y|m|w|d])"
+    )
 
     def __init__(self, date: datetime, precision: str):
         """Create a period with the given date (a `datetime` object) and
@@ -798,7 +800,9 @@ class DateInterval:
 
     def __init__(self, start: datetime | None, end: datetime | None):
         if start is not None and end is not None and not start < end:
-            raise ValueError(f"start date {start} is not before end date {end}")
+            raise ValueError(
+                "start date {} is not before end date {}".format(start, end)
+            )
         self.start = start
         self.end = end
 
@@ -846,6 +850,8 @@ class DateQuery(FieldQuery[str]):
         date = datetime.fromtimestamp(timestamp)
         return self.interval.contains(date)
 
+    _clause_tmpl = "{0} {1} ?"
+
     def col_clause(self) -> tuple[str, Sequence[SQLiteType]]:
         clause_parts = []
         subvals = []
@@ -853,11 +859,11 @@ class DateQuery(FieldQuery[str]):
         # Convert the `datetime` objects to an integer number of seconds since
         # the (local) Unix epoch using `datetime.timestamp()`.
         if self.interval.start:
-            clause_parts.append(f"{self.field} >= ?")
+            clause_parts.append(self._clause_tmpl.format(self.field, ">="))
             subvals.append(int(self.interval.start.timestamp()))
 
         if self.interval.end:
-            clause_parts.append(f"{self.field} < ?")
+            clause_parts.append(self._clause_tmpl.format(self.field, "<"))
             subvals.append(int(self.interval.end.timestamp()))
 
         if clause_parts:
@@ -1068,9 +1074,9 @@ class FixedFieldSort(FieldSort):
         if self.case_insensitive:
             field = (
                 "(CASE "
-                f"WHEN TYPEOF({self.field})='text' THEN LOWER({self.field}) "
-                f"WHEN TYPEOF({self.field})='blob' THEN LOWER({self.field}) "
-                f"ELSE {self.field} END)"
+                "WHEN TYPEOF({0})='text' THEN LOWER({0}) "
+                "WHEN TYPEOF({0})='blob' THEN LOWER({0}) "
+                "ELSE {0} END)".format(self.field)
             )
         else:
             field = self.field

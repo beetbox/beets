@@ -41,7 +41,7 @@ def span_from_str(span_str):
     def normalize_year(d, yearfrom):
         """Convert string to a 4 digits year"""
         if yearfrom < 100:
-            raise BucketError(f"{yearfrom} must be expressed on 4 digits")
+            raise BucketError("%d must be expressed on 4 digits" % yearfrom)
 
         # if two digits only, pick closest year that ends by these two
         # digits starting from yearfrom
@@ -55,13 +55,14 @@ def span_from_str(span_str):
     years = [int(x) for x in re.findall(r"\d+", span_str)]
     if not years:
         raise ui.UserError(
-            f"invalid range defined for year bucket {span_str!r}: no year found"
+            "invalid range defined for year bucket '%s': no "
+            "year found" % span_str
         )
     try:
         years = [normalize_year(x, years[0]) for x in years]
     except BucketError as exc:
         raise ui.UserError(
-            f"invalid range defined for year bucket {span_str!r}: {exc}"
+            "invalid range defined for year bucket '%s': %s" % (span_str, exc)
         )
 
     res = {"from": years[0], "str": span_str}
@@ -124,19 +125,22 @@ def str2fmt(s):
         "fromnchars": len(m.group("fromyear")),
         "tonchars": len(m.group("toyear")),
     }
-    res["fmt"] = (
-        f"{m['bef']}{{}}{m['sep']}{'{}' if res['tonchars'] else ''}{m['after']}"
+    res["fmt"] = "{}%s{}{}{}".format(
+        m.group("bef"),
+        m.group("sep"),
+        "%s" if res["tonchars"] else "",
+        m.group("after"),
     )
     return res
 
 
 def format_span(fmt, yearfrom, yearto, fromnchars, tonchars):
     """Return a span string representation."""
-    args = [str(yearfrom)[-fromnchars:]]
+    args = str(yearfrom)[-fromnchars:]
     if tonchars:
-        args.append(str(yearto)[-tonchars:])
+        args = (str(yearfrom)[-fromnchars:], str(yearto)[-tonchars:])
 
-    return fmt.format(*args)
+    return fmt % args
 
 
 def extract_modes(spans):
@@ -165,12 +169,14 @@ def build_alpha_spans(alpha_spans_str, alpha_regexs):
             else:
                 raise ui.UserError(
                     "invalid range defined for alpha bucket "
-                    f"'{elem}': no alphanumeric character found"
+                    "'%s': no alphanumeric character found" % elem
                 )
             spans.append(
                 re.compile(
-                    rf"^[{ASCII_DIGITS[begin_index : end_index + 1]}]",
-                    re.IGNORECASE,
+                    "^["
+                    + ASCII_DIGITS[begin_index : end_index + 1]
+                    + ASCII_DIGITS[begin_index : end_index + 1].upper()
+                    + "]"
                 )
             )
     return spans

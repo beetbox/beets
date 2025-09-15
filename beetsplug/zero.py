@@ -41,6 +41,7 @@ class ZeroPlugin(BeetsPlugin):
                 "fields": [],
                 "keep_fields": [],
                 "update_database": False,
+                "zero_disc_if_single_disc": False,
             }
         )
 
@@ -90,10 +91,10 @@ class ZeroPlugin(BeetsPlugin):
         Do some sanity checks then compile the regexes.
         """
         if field not in MediaFile.fields():
-            self._log.error("invalid field: {}", field)
+            self._log.error("invalid field: {0}", field)
         elif field in ("id", "path", "album_id"):
             self._log.warning(
-                "field '{}' ignored, zeroing it would be dangerous", field
+                "field '{0}' ignored, zeroing it would be dangerous", field
             )
         else:
             try:
@@ -123,8 +124,15 @@ class ZeroPlugin(BeetsPlugin):
         """
         fields_set = False
 
+        if "disc" in tags and self.config[
+            "zero_disc_if_single_disc"
+        ].get(bool):
+            if item.disctotal == 1:
+                self._log.debug("disc: {.disc} -> None", item)
+                tags["disc"] = None
+
         if not self.fields_to_progs:
-            self._log.warning("no fields, nothing to do")
+            self._log.warning("no fields list to remove")
             return False
 
         for field, progs in self.fields_to_progs.items():
@@ -137,7 +145,7 @@ class ZeroPlugin(BeetsPlugin):
 
             if match:
                 fields_set = True
-                self._log.debug("{}: {} -> None", field, value)
+                self._log.debug("{0}: {1} -> None", field, value)
                 tags[field] = None
                 if self.config["update_database"]:
                     item[field] = None

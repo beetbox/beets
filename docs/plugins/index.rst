@@ -5,7 +5,7 @@ Plugins extend beets' core functionality. They add new commands, fetch
 additional data during import, provide new metadata sources, and much more. If
 beets by itself doesn't do what you want it to, you may just need to enable a
 plugin---or, if you want to do something new, :doc:`writing a plugin
-</dev/plugins/index>` is easy if you know a little Python.
+</dev/plugins>` is easy if you know a little Python.
 
 .. _using-plugins:
 

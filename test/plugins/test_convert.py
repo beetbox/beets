@@ -49,12 +49,14 @@ class ConvertMixin:
         """
         if re.search("[^a-zA-Z0-9]", tag):
             raise ValueError(
-                f"tag '{tag}' must only contain letters and digits"
+                "tag '{}' must only contain letters and digits".format(tag)
             )
 
         # A Python script that copies the file and appends a tag.
         stub = os.path.join(_common.RSRC, b"convert_stub.py").decode("utf-8")
-        return f"{shell_quote(sys.executable)} {shell_quote(stub)} $source $dest {tag}"
+        return "{} {} $source $dest {}".format(
+            shell_quote(sys.executable), shell_quote(stub), tag
+        )
 
     def file_endswith(self, path: Path, tag: str):
         """Check the path is a file and if its content ends with `tag`."""

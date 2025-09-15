@@ -77,7 +77,7 @@ class MPDStatsTest(PluginTestCase):
         except KeyboardInterrupt:
             pass
 
-        log.debug.assert_has_calls([call('unhandled status "{}"', ANY)])
+        log.debug.assert_has_calls([call('unhandled status "{0}"', ANY)])
         log.info.assert_has_calls(
-            [call("pause"), call("playing {}", ANY), call("stop")]
+            [call("pause"), call("playing {0}", ANY), call("stop")]
         )

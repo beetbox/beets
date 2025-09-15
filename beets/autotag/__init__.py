@@ -261,7 +261,7 @@ def apply_metadata(album_info: AlbumInfo, mapping: Mapping[Item, TrackInfo]):
                 continue
 
             for suffix in "year", "month", "day":
-                key = f"{prefix}{suffix}"
+                key = prefix + suffix
                 value = getattr(album_info, key) or 0
 
                 # If we don't even have a year, apply nothing.

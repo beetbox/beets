@@ -94,7 +94,7 @@ class ImportAddedPlugin(BeetsPlugin):
         mtime = os.stat(util.syspath(source)).st_mtime
         self.item_mtime[destination] = mtime
         self._log.debug(
-            "Recorded mtime {} for item '{}' imported from '{}'",
+            "Recorded mtime {0} for item '{1}' imported from '{2}'",
             mtime,
             util.displayable_path(destination),
             util.displayable_path(source),
@@ -103,9 +103,9 @@ class ImportAddedPlugin(BeetsPlugin):
     def update_album_times(self, lib, album):
         if self.reimported_album(album):
             self._log.debug(
-                "Album '{.filepath}' is reimported, skipping import of "
+                "Album '{0}' is reimported, skipping import of "
                 "added dates for the album and its items.",
-                album,
+                util.displayable_path(album.path),
             )
             return
 
@@ -119,17 +119,18 @@ class ImportAddedPlugin(BeetsPlugin):
                     item.store()
         album.added = min(album_mtimes)
         self._log.debug(
-            "Import of album '{0.album}', selected album.added={0.added} "
+            "Import of album '{0}', selected album.added={1} "
             "from item file mtimes.",
-            album,
+            album.album,
+            album.added,
         )
         album.store()
 
     def update_item_times(self, lib, item):
         if self.reimported_item(item):
             self._log.debug(
-                "Item '{.filepath}' is reimported, skipping import of added date.",
-                item,
+                "Item '{0}' is reimported, skipping import of added date.",
+                util.displayable_path(item.path),
             )
             return
         mtime = self.item_mtime.pop(item.path, None)
@@ -138,8 +139,9 @@ class ImportAddedPlugin(BeetsPlugin):
             if self.config["preserve_mtimes"].get(bool):
                 self.write_item_mtime(item, mtime)
             self._log.debug(
-                "Import of item '{0.filepath}', selected item.added={0.added}",
-                item,
+                "Import of item '{0}', selected item.added={1}",
+                util.displayable_path(item.path),
+                item.added,
             )
             item.store()
 
@@ -151,6 +153,7 @@ class ImportAddedPlugin(BeetsPlugin):
             if self.config["preserve_write_mtimes"].get(bool):
                 self.write_item_mtime(item, item.added)
             self._log.debug(
-                "Write of item '{0.filepath}', selected item.added={0.added}",
-                item,
+                "Write of item '{0}', selected item.added={1}",
+                util.displayable_path(item.path),
+                item.added,
             )

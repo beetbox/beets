@@ -17,7 +17,7 @@ from sys import stderr
 
 import confuse
 
-__version__ = "2.4.0"
+__version__ = "2.3.1"
 __author__ = "Adrian Sampson <adrian@radbox.org>"
 
 
@@ -35,7 +35,7 @@ class IncludeLazyConfig(confuse.LazyConfig):
         except confuse.NotFoundError:
             pass
         except confuse.ConfigReadError as err:
-            stderr.write(f"configuration `import` failed: {err.reason}")
+            stderr.write("configuration `import` failed: {}".format(err.reason))
 
 
 config = IncludeLazyConfig("beets", __name__)

@@ -54,7 +54,7 @@ def resize_url(url: str, maxwidth: int, quality: int = 0) -> str:
     if quality > 0:
         params["q"] = quality
 
-    return f"{PROXY_URL}?{urlencode(params)}"
+    return "{}?{}".format(PROXY_URL, urlencode(params))
 
 
 class LocalBackendNotAvailableError(Exception):
@@ -255,7 +255,7 @@ class IMBackend(LocalBackend):
             path_out = get_temp_filename(__name__, "resize_IM_", path_in)
 
         log.debug(
-            "artresizer: ImageMagick resizing {} to {}",
+            "artresizer: ImageMagick resizing {0} to {1}",
             displayable_path(path_in),
             displayable_path(path_out),
         )
@@ -287,7 +287,7 @@ class IMBackend(LocalBackend):
             util.command_output(cmd)
         except subprocess.CalledProcessError:
             log.warning(
-                "artresizer: IM convert failed for {}",
+                "artresizer: IM convert failed for {0}",
                 displayable_path(path_in),
             )
             return path_in
@@ -306,9 +306,9 @@ class IMBackend(LocalBackend):
         except subprocess.CalledProcessError as exc:
             log.warning("ImageMagick size query failed")
             log.debug(
-                "`convert` exited with (status {.returncode}) when "
+                "`convert` exited with (status {}) when "
                 "getting size with command {}:\n{}",
-                exc,
+                exc.returncode,
                 cmd,
                 exc.output.strip(),
             )
@@ -441,8 +441,8 @@ class IMBackend(LocalBackend):
         convert_proc.wait()
         if convert_proc.returncode:
             log.debug(
-                "ImageMagick convert failed with status {.returncode}: {!r}",
-                convert_proc,
+                "ImageMagick convert failed with status {}: {!r}",
+                convert_proc.returncode,
                 convert_stderr,
             )
             return None
@@ -452,7 +452,7 @@ class IMBackend(LocalBackend):
         if compare_proc.returncode:
             if compare_proc.returncode != 1:
                 log.debug(
-                    "ImageMagick compare failed: {}, {}",
+                    "ImageMagick compare failed: {0}, {1}",
                     displayable_path(im2),
                     displayable_path(im1),
                 )
@@ -472,7 +472,7 @@ class IMBackend(LocalBackend):
             log.debug("IM output is not a number: {0!r}", out_str)
             return None
 
-        log.debug("ImageMagick compare score: {}", phash_diff)
+        log.debug("ImageMagick compare score: {0}", phash_diff)
         return phash_diff <= compare_threshold
 
     @property
@@ -523,7 +523,7 @@ class PILBackend(LocalBackend):
         from PIL import Image
 
         log.debug(
-            "artresizer: PIL resizing {} to {}",
+            "artresizer: PIL resizing {0} to {1}",
             displayable_path(path_in),
             displayable_path(path_out),
         )
@@ -552,7 +552,7 @@ class PILBackend(LocalBackend):
                 for i in range(5):
                     # 5 attempts is an arbitrary choice
                     filesize = os.stat(syspath(path_out)).st_size
-                    log.debug("PIL Pass {} : Output size: {}B", i, filesize)
+                    log.debug("PIL Pass {0} : Output size: {1}B", i, filesize)
                     if filesize <= max_filesize:
                         return path_out
                     # The relationship between filesize & quality will be
@@ -569,7 +569,7 @@ class PILBackend(LocalBackend):
                         progressive=False,
                     )
                 log.warning(
-                    "PIL Failed to resize file to below {}B", max_filesize
+                    "PIL Failed to resize file to below {0}B", max_filesize
                 )
                 return path_out
 
@@ -577,7 +577,7 @@ class PILBackend(LocalBackend):
                 return path_out
         except OSError:
             log.error(
-                "PIL cannot create thumbnail for '{}'",
+                "PIL cannot create thumbnail for '{0}'",
                 displayable_path(path_in),
             )
             return path_in
@@ -696,7 +696,7 @@ class ArtResizer:
         for backend_cls in BACKEND_CLASSES:
             try:
                 self.local_method = backend_cls()
-                log.debug("artresizer: method is {.local_method.NAME}", self)
+                log.debug(f"artresizer: method is {self.local_method.NAME}")
                 break
             except LocalBackendNotAvailableError:
                 continue

@@ -104,21 +104,21 @@ class ThumbnailsPlugin(BeetsPlugin):
                 f"Thumbnails: ArtResizer backend {ArtResizer.shared.method}"
                 f" unexpectedly cannot write image metadata."
             )
-        self._log.debug("using {.shared.method} to write metadata", ArtResizer)
+        self._log.debug(f"using {ArtResizer.shared.method} to write metadata")
 
         uri_getter = GioURI()
         if not uri_getter.available:
             uri_getter = PathlibURI()
-        self._log.debug("using {.name} to compute URIs", uri_getter)
+        self._log.debug("using {0.name} to compute URIs", uri_getter)
         self.get_uri = uri_getter.uri
 
         return True
 
     def process_album(self, album):
         """Produce thumbnails for the album folder."""
-        self._log.debug("generating thumbnail for {}", album)
+        self._log.debug("generating thumbnail for {0}", album)
         if not album.artpath:
-            self._log.info("album {} has no art", album)
+            self._log.info("album {0} has no art", album)
             return
 
         if self.config["dolphin"]:
@@ -127,7 +127,7 @@ class ThumbnailsPlugin(BeetsPlugin):
         size = ArtResizer.shared.get_size(album.artpath)
         if not size:
             self._log.warning(
-                "problem getting the picture size for {.artpath}", album
+                "problem getting the picture size for {0}", album.artpath
             )
             return
 
@@ -137,9 +137,9 @@ class ThumbnailsPlugin(BeetsPlugin):
         wrote &= self.make_cover_thumbnail(album, 128, NORMAL_DIR)
 
         if wrote:
-            self._log.info("wrote thumbnail for {}", album)
+            self._log.info("wrote thumbnail for {0}", album)
         else:
-            self._log.info("nothing to do for {}", album)
+            self._log.info("nothing to do for {0}", album)
 
     def make_cover_thumbnail(self, album, size, target_dir):
         """Make a thumbnail of given size for `album` and put it in
@@ -154,16 +154,16 @@ class ThumbnailsPlugin(BeetsPlugin):
         ):
             if self.config["force"]:
                 self._log.debug(
-                    "found a suitable {0}x{0} thumbnail for {1}, "
+                    "found a suitable {1}x{1} thumbnail for {0}, "
                     "forcing regeneration",
-                    size,
                     album,
+                    size,
                 )
             else:
                 self._log.debug(
-                    "{0}x{0} thumbnail for {1} exists and is recent enough",
-                    size,
+                    "{1}x{1} thumbnail for {0} exists and is recent enough",
                     album,
+                    size,
                 )
                 return False
         resized = ArtResizer.shared.resize(size, album.artpath, target)
@@ -192,7 +192,7 @@ class ThumbnailsPlugin(BeetsPlugin):
             ArtResizer.shared.write_metadata(image_path, metadata)
         except Exception:
             self._log.exception(
-                "could not write metadata to {}", displayable_path(image_path)
+                "could not write metadata to {0}", displayable_path(image_path)
             )
 
     def make_dolphin_cover_thumbnail(self, album):
@@ -202,9 +202,9 @@ class ThumbnailsPlugin(BeetsPlugin):
         artfile = os.path.split(album.artpath)[1]
         with open(syspath(outfilename), "w") as f:
             f.write("[Desktop Entry]\n")
-            f.write(f"Icon=./{artfile.decode('utf-8')}")
+            f.write("Icon=./{}".format(artfile.decode("utf-8")))
             f.close()
-        self._log.debug("Wrote file {}", displayable_path(outfilename))
+        self._log.debug("Wrote file {0}", displayable_path(outfilename))
 
 
 class URIGetter:
@@ -230,7 +230,8 @@ def copy_c_string(c_string):
     # This is a pretty dumb way to get a string copy, but it seems to
     # work. A more surefire way would be to allocate a ctypes buffer and copy
     # the data with `memcpy` or somesuch.
-    return ctypes.cast(c_string, ctypes.c_char_p).value
+    s = ctypes.cast(c_string, ctypes.c_char_p).value
+    return b"" + s
 
 
 class GioURI(URIGetter):
@@ -265,7 +266,9 @@ class GioURI(URIGetter):
         g_file_ptr = self.libgio.g_file_new_for_path(path)
         if not g_file_ptr:
             raise RuntimeError(
-                f"No gfile pointer received for {displayable_path(path)}"
+                "No gfile pointer received for {}".format(
+                    displayable_path(path)
+                )
             )
 
         try:

@@ -144,7 +144,9 @@ class EmbedartCliTest(IOMixin, PluginMixin, FetchImageHelper, BeetsTestCase):
         if os.path.isfile(syspath(tmp_path)):
             os.remove(syspath(tmp_path))
             self.fail(
-                f"Artwork file {displayable_path(tmp_path)} was not deleted"
+                "Artwork file {} was not deleted".format(
+                    displayable_path(tmp_path)
+                )
             )
 
     def test_art_file_missing(self):

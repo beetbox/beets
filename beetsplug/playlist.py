@@ -123,7 +123,7 @@ class PlaylistPlugin(beets.plugins.BeetsPlugin):
 
     def cli_exit(self, lib):
         for playlist in self.find_playlists():
-            self._log.info("Updating playlist: {}", playlist)
+            self._log.info(f"Updating playlist: {playlist}")
             base_dir = beets.util.bytestring_path(
                 self.relative_to
                 if self.relative_to
@@ -133,16 +133,21 @@ class PlaylistPlugin(beets.plugins.BeetsPlugin):
             try:
                 self.update_playlist(playlist, base_dir)
             except beets.util.FilesystemError:
-                self._log.error("Failed to update playlist: {}", playlist)
+                self._log.error(
+                    "Failed to update playlist: {}".format(
+                        beets.util.displayable_path(playlist)
+                    )
+                )
 
     def find_playlists(self):
         """Find M3U playlists in the playlist directory."""
-        playlist_dir = beets.util.syspath(self.playlist_dir)
         try:
-            dir_contents = os.listdir(playlist_dir)
+            dir_contents = os.listdir(beets.util.syspath(self.playlist_dir))
         except OSError:
             self._log.warning(
-                "Unable to open playlist directory {.playlist_dir}", self
+                "Unable to open playlist directory {}".format(
+                    beets.util.displayable_path(self.playlist_dir)
+                )
             )
             return
 
@@ -190,10 +195,9 @@ class PlaylistPlugin(beets.plugins.BeetsPlugin):
 
         if changes or deletions:
             self._log.info(
-                "Updated playlist {} ({} changes, {} deletions)",
-                filename,
-                changes,
-                deletions,
+                "Updated playlist {} ({} changes, {} deletions)".format(
+                    filename, changes, deletions
+                )
             )
             beets.util.copy(new_playlist, filename, replace=True)
         beets.util.remove(new_playlist)

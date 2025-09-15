@@ -117,6 +117,7 @@ def print_data(data, item=None, fmt=None):
         return
 
     maxwidth = max(len(key) for key in formatted)
+    lineformat = f"{{0:>{maxwidth}}}: {{1}}"
 
     if path:
         ui.print_(displayable_path(path))
@@ -125,7 +126,7 @@ def print_data(data, item=None, fmt=None):
         value = formatted[field]
         if isinstance(value, list):
             value = "; ".join(value)
-        ui.print_(f"{field:>{maxwidth}}: {value}")
+        ui.print_(lineformat.format(field, value))
 
 
 def print_data_keys(data, item=None):
@@ -138,11 +139,12 @@ def print_data_keys(data, item=None):
     if len(formatted) == 0:
         return
 
+    line_format = "{0}{{0}}".format(" " * 4)
     if path:
         ui.print_(displayable_path(path))
 
     for field in sorted(formatted):
-        ui.print_(f"    {field}")
+        ui.print_(line_format.format(field))
 
 
 class InfoPlugin(BeetsPlugin):
@@ -219,7 +221,7 @@ class InfoPlugin(BeetsPlugin):
             try:
                 data, item = data_emitter(included_keys or "*")
             except (mediafile.UnreadableFileError, OSError) as ex:
-                self._log.error("cannot read file: {}", ex)
+                self._log.error("cannot read file: {0}", ex)
                 continue
 
             if opts.summarize:

@@ -19,7 +19,7 @@ def human_seconds_short(interval):
     string.
     """
     interval = int(interval)
-    return f"{interval // 60}:{interval % 60:02d}"
+    return "%i:%02i" % (interval // 60, interval % 60)
 
 
 def human_bytes(size):

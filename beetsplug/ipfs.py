@@ -77,7 +77,7 @@ class IPFSPlugin(BeetsPlugin):
                 for album in lib.albums(args):
                     if len(album.items()) == 0:
                         self._log.info(
-                            "{} does not contain items, aborting", album
+                            "{0} does not contain items, aborting", album
                         )
 
                     self.ipfs_add(album)
@@ -122,13 +122,13 @@ class IPFSPlugin(BeetsPlugin):
             return False
         try:
             if album.ipfs:
-                self._log.debug("{} already added", album_dir)
+                self._log.debug("{0} already added", album_dir)
                 # Already added to ipfs
                 return False
         except AttributeError:
             pass
 
-        self._log.info("Adding {} to ipfs", album_dir)
+        self._log.info("Adding {0} to ipfs", album_dir)
 
         if self.config["nocopy"]:
             cmd = "ipfs add --nocopy -q -r".split()
@@ -138,7 +138,7 @@ class IPFSPlugin(BeetsPlugin):
         try:
             output = util.command_output(cmd).stdout.split()
         except (OSError, subprocess.CalledProcessError) as exc:
-            self._log.error("Failed to add {}, error: {}", album_dir, exc)
+            self._log.error("Failed to add {0}, error: {1}", album_dir, exc)
             return False
         length = len(output)
 
@@ -146,12 +146,12 @@ class IPFSPlugin(BeetsPlugin):
             line = line.strip()
             if linenr == length - 1:
                 # last printed line is the album hash
-                self._log.info("album: {}", line)
+                self._log.info("album: {0}", line)
                 album.ipfs = line
             else:
                 try:
                     item = album.items()[linenr]
-                    self._log.info("item: {}", line)
+                    self._log.info("item: {0}", line)
                     item.ipfs = line
                     item.store()
                 except IndexError:
@@ -180,11 +180,11 @@ class IPFSPlugin(BeetsPlugin):
             util.command_output(cmd)
         except (OSError, subprocess.CalledProcessError) as err:
             self._log.error(
-                "Failed to get {} from ipfs.\n{.output}", _hash, err
+                "Failed to get {0} from ipfs.\n{1}", _hash, err.output
             )
             return False
 
-        self._log.info("Getting {} from ipfs", _hash)
+        self._log.info("Getting {0} from ipfs", _hash)
         imp = ui.commands.TerminalImportSession(
             lib, loghandler=None, query=None, paths=[_hash]
         )
@@ -208,7 +208,7 @@ class IPFSPlugin(BeetsPlugin):
                 msg = f"Failed to publish library. Error: {err}"
                 self._log.error(msg)
                 return False
-            self._log.info("hash of library: {}", output)
+            self._log.info("hash of library: {0}", output)
 
     def ipfs_import(self, lib, args):
         _hash = args[0]
@@ -232,7 +232,7 @@ class IPFSPlugin(BeetsPlugin):
             try:
                 util.command_output(cmd)
             except (OSError, subprocess.CalledProcessError):
-                self._log.error("Could not import {}", _hash)
+                self._log.error(f"Could not import {_hash}")
                 return False
 
         # add all albums from remotes into a combined library
@@ -306,7 +306,7 @@ class IPFSPlugin(BeetsPlugin):
             items.append(item)
         if len(items) < 1:
             return False
-        self._log.info("Adding '{}' to temporary library", album)
+        self._log.info("Adding '{0}' to temporary library", album)
         new_album = tmplib.add_album(items)
         new_album.ipfs = album.ipfs
         new_album.store(inherit=False)

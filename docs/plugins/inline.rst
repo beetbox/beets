@@ -20,7 +20,8 @@ Here are a couple of examples of expressions:
 
     item_fields:
         initial: albumartist[0].upper() + u'.'
-        disc_and_track: f"{disc:02d}.{track:02d}" if disctotal > 1 else f"{track:02d}"
+        disc_and_track: u'%02i.%02i' % (disc, track) if
+                        disctotal > 1 else u'%02i' % (track)
 
 Note that YAML syntax allows newlines in values if the subsequent lines are
 indented.

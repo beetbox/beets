@@ -130,9 +130,9 @@ class PluginLogFilter(logging.Filter):
     def filter(self, record):
         if hasattr(record.msg, "msg") and isinstance(record.msg.msg, str):
             # A _LogMessage from our hacked-up Logging replacement.
-            record.msg.msg = f"{self.prefix}{record.msg.msg}"
+            record.msg.msg = self.prefix + record.msg.msg
         elif isinstance(record.msg, str):
-            record.msg = f"{self.prefix}{record.msg}"
+            record.msg = self.prefix + record.msg
         return True
 
 
@@ -157,21 +157,6 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
     config: ConfigView
     early_import_stages: list[ImportStageFunc]
     import_stages: list[ImportStageFunc]
-
-    def __init_subclass__(cls) -> None:
-        # Dynamically copy methods to BeetsPlugin for legacy support
-        # TODO: Remove this in the future major release, v3.0.0
-        if inspect.isabstract(cls):
-            return
-
-        from beets.metadata_plugins import MetadataSourcePlugin
-
-        abstractmethods = MetadataSourcePlugin.__abstractmethods__
-        for name, method in inspect.getmembers(
-            MetadataSourcePlugin, predicate=inspect.isfunction
-        ):
-            if name not in abstractmethods and not hasattr(cls, name):
-                setattr(cls, name, method)
 
     def __init__(self, name: str | None = None):
         """Perform one-time plugin setup."""
@@ -439,9 +424,9 @@ def types(model_cls: type[AnyModel]) -> dict[str, Type]:
         for field in plugin_types:
             if field in types and plugin_types[field] != types[field]:
                 raise PluginConflictError(
-                    f"Plugin {plugin.name} defines flexible field {field} "
+                    "Plugin {} defines flexible field {} "
                     "which has already been defined with "
-                    "another type."
+                    "another type.".format(plugin.name, field)
                 )
         types.update(plugin_types)
     return types
@@ -558,7 +543,7 @@ def send(event: EventType, **arguments: Any) -> list[Any]:
 
     Return a list of non-None values returned from the handlers.
     """
-    log.debug("Sending event: {}", event)
+    log.debug("Sending event: {0}", event)
     return [
         r
         for handler in BeetsPlugin.listeners[event]
@@ -575,8 +560,8 @@ def feat_tokens(for_artist: bool = True) -> str:
     feat_words = ["ft", "featuring", "feat", "feat.", "ft."]
     if for_artist:
         feat_words += ["with", "vs", "and", "con", "&"]
-    return (
-        rf"(?<=[\s(\[])(?:{'|'.join(re.escape(x) for x in feat_words)})(?=\s)"
+    return r"(?<=[\s(\[])(?:{})(?=\s)".format(
+        "|".join(re.escape(x) for x in feat_words)
     )
 
 

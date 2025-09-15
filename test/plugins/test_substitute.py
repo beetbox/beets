@@ -55,10 +55,8 @@ class SubstitutePluginTest(PluginTestCase):
             [
                 ("King Creosote & Jon Hopkins", "King Creosote"),
                 (
-                    (
-                        "Michael Hurley, The Holy Modal Rounders, Jeffrey"
-                        " Frederick & The Clamtones"
-                    ),
+                    "Michael Hurley, The Holy Modal Rounders, Jeffrey Frederick & "
+                    + "The Clamtones",
                     "Michael Hurley",
                 ),
                 ("James Yorkston and the Athletes", "James Yorkston"),

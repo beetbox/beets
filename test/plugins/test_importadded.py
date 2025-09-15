@@ -65,7 +65,7 @@ class ImportAddedTest(PluginMixin, AutotagImportTestCase):
             if m.title.replace("Tag", "Applied") == item.title:
                 return m
         raise AssertionError(
-            f"No MediaFile found for Item {displayable_path(item.path)}"
+            "No MediaFile found for Item " + displayable_path(item.path)
         )
 
     def test_import_album_with_added_dates(self):
@@ -117,7 +117,7 @@ class ImportAddedTest(PluginMixin, AutotagImportTestCase):
         for item_path, added_after in items_added_after.items():
             assert items_added_before[item_path] == pytest.approx(
                 added_after, rel=1e-4
-            ), f"reimport modified Item.added for {displayable_path(item_path)}"
+            ), "reimport modified Item.added for " + displayable_path(item_path)
 
     def test_import_singletons_with_added_dates(self):
         self.config["import"]["singletons"] = True
@@ -157,4 +157,4 @@ class ImportAddedTest(PluginMixin, AutotagImportTestCase):
         for item_path, added_after in items_added_after.items():
             assert items_added_before[item_path] == pytest.approx(
                 added_after, rel=1e-4
-            ), f"reimport modified Item.added for {displayable_path(item_path)}"
+            ), "reimport modified Item.added for " + displayable_path(item_path)

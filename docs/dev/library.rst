@@ -7,18 +7,18 @@ This page describes the internal API of beets' core database features. It
 doesn't exhaustively document the API, but is aimed at giving an overview of the
 architecture to orient anyone who wants to dive into the code.
 
-The |Library| object is the central repository for data in beets. It represents
-a database containing songs, which are |Item| instances, and groups of items,
-which are |Album| instances.
+The :class:`Library` object is the central repository for data in beets. It
+represents a database containing songs, which are :class:`Item` instances, and
+groups of items, which are :class:`Album` instances.
 
 The Library Class
 -----------------
 
-The |Library| is typically instantiated as a singleton. A single invocation of
-beets usually has only one |Library|. It's powered by :class:`dbcore.Database`
-under the hood, which handles the SQLite_ abstraction, something like a very
-minimal ORM_. The library is also responsible for handling queries to retrieve
-stored objects.
+The :class:`Library` is typically instantiated as a singleton. A single
+invocation of beets usually has only one :class:`Library`. It's powered by
+:class:`dbcore.Database` under the hood, which handles the SQLite_ abstraction,
+something like a very minimal ORM_. The library is also responsible for handling
+queries to retrieve stored objects.
 
 Overview
 ~~~~~~~~
@@ -40,9 +40,10 @@ which you can get using the :py:meth:`Library.transaction` context manager.
 Model Classes
 -------------
 
-The two model entities in beets libraries, |Item| and |Album|, share a base
-class, :class:`LibModel`, that provides common functionality. That class itself
-specialises :class:`beets.dbcore.Model` which provides an ORM-like abstraction.
+The two model entities in beets libraries, :class:`Item` and :class:`Album`,
+share a base class, :class:`LibModel`, that provides common functionality. That
+class itself specialises :class:`beets.dbcore.Model` which provides an ORM-like
+abstraction.
 
 To get or change the metadata of a model (an item or album), either access its
 attributes (e.g., ``print(album.year)`` or ``album.year = 2012``) or use the
@@ -55,7 +56,8 @@ Models use dirty-flags to track when the object's metadata goes out of sync with
 the database. The dirty dictionary maps field names to booleans indicating
 whether the field has been written since the object was last synchronized (via
 load or store) with the database. This logic is implemented in the model base
-class :class:`LibModel` and is inherited by both |Item| and |Album|.
+class :class:`LibModel` and is inherited by both :class:`Item` and
+:class:`Album`.
 
 We provide CRUD-like methods for interacting with the database:
 
@@ -75,10 +77,10 @@ normal the normal mapping API is supported:
 Item
 ~~~~
 
-Each |Item| object represents a song or track. (We use the more generic term
-item because, one day, beets might support non-music media.) An item can either
-be purely abstract, in which case it's just a bag of metadata fields, or it can
-have an associated file (indicated by ``item.path``).
+Each :class:`Item` object represents a song or track. (We use the more generic
+term item because, one day, beets might support non-music media.) An item can
+either be purely abstract, in which case it's just a bag of metadata fields, or
+it can have an associated file (indicated by ``item.path``).
 
 In terms of the underlying SQLite database, items are backed by a single table
 called items with one column per metadata fields. The metadata fields currently
@@ -95,12 +97,12 @@ become out of sync with on-disk metadata, mainly to speed up the
 :ref:`update-cmd` (which needs to check whether the database is in sync with the
 filesystem). This feature turns out to be sort of complicated.
 
-For any |Item|, there are two mtimes: the on-disk mtime (maintained by the OS)
-and the database mtime (maintained by beets). Correspondingly, there is on-disk
-metadata (ID3 tags, for example) and DB metadata. The goal with the mtime is to
-ensure that the on-disk and DB mtimes match when the on-disk and DB metadata are
-in sync; this lets beets do a quick mtime check and avoid rereading files in
-some circumstances.
+For any :class:`Item`, there are two mtimes: the on-disk mtime (maintained by
+the OS) and the database mtime (maintained by beets). Correspondingly, there is
+on-disk metadata (ID3 tags, for example) and DB metadata. The goal with the
+mtime is to ensure that the on-disk and DB mtimes match when the on-disk and DB
+metadata are in sync; this lets beets do a quick mtime check and avoid rereading
+files in some circumstances.
 
 Specifically, beets attempts to maintain the following invariant:
 
@@ -124,14 +126,14 @@ This leads to the following implementation policy:
 Album
 ~~~~~
 
-An |Album| is a collection of Items in the database. Every item in the database
-has either zero or one associated albums (accessible via ``item.album_id``). An
-item that has no associated album is called a singleton. Changing fields on an
-album (e.g. ``album.year = 2012``) updates the album itself and also changes the
-same field in all associated items.
+An :class:`Album` is a collection of Items in the database. Every item in the
+database has either zero or one associated albums (accessible via
+``item.album_id``). An item that has no associated album is called a singleton.
+Changing fields on an album (e.g. ``album.year = 2012``) updates the album
+itself and also changes the same field in all associated items.
 
-An |Album| object keeps track of album-level metadata, which is (mostly) a
-subset of the track-level metadata. The album-level metadata fields are listed
+An :class:`Album` object keeps track of album-level metadata, which is (mostly)
+a subset of the track-level metadata. The album-level metadata fields are listed
 in ``Album._fields``. For those fields that are both item-level and album-level
 (e.g., ``year`` or ``albumartist``), every item in an album should share the
 same value. Albums use an SQLite table called ``albums``, in which each column
@@ -145,7 +147,7 @@ is an album metadata field.
 Transactions
 ~~~~~~~~~~~~
 
-The |Library| class provides the basic methods necessary to access and
+The :class:`Library` class provides the basic methods necessary to access and
 manipulate its contents. To perform more complicated operations atomically, or
 to interact directly with the underlying SQLite database, you must use a
 *transaction* (see this `blog post`_ for motivation). For example
@@ -179,8 +181,8 @@ matching items/albums.
 
 The ``clause()`` method should return an SQLite ``WHERE`` clause that matches
 appropriate albums/items. This allows for efficient batch queries.
-Correspondingly, the ``match(item)`` method should take an |Item| object and
-return a boolean, indicating whether or not a specific item matches the
+Correspondingly, the ``match(item)`` method should take an :class:`Item` object
+and return a boolean, indicating whether or not a specific item matches the
 criterion. This alternate implementation allows clients to determine whether
 items that have already been fetched from the database match the query.
 
@@ -192,4 +194,4 @@ together, matching only albums/items that match all constituent queries.
 
 Beets has a human-writable plain-text query syntax that can be parsed into
 :class:`Query` objects. Calling ``AndQuery.from_strings`` parses a list of query
-parts into a query object that can then be used with |Library| objects.
+parts into a query object that can then be used with :class:`Library` objects.

@@ -194,7 +194,7 @@ class BasePaddedInt(BaseInteger[N]):
         self.digits = digits
 
     def format(self, value: int | N) -> str:
-        return f"{value or 0:0{self.digits}d}"
+        return "{0:0{1}d}".format(value or 0, self.digits)
 
 
 class PaddedInt(BasePaddedInt[int]):
@@ -219,7 +219,7 @@ class ScaledInt(Integer):
         self.suffix = suffix
 
     def format(self, value: int) -> str:
-        return f"{(value or 0) // self.unit}{self.suffix}"
+        return "{}{}".format((value or 0) // self.unit, self.suffix)
 
 
 class Id(NullInteger):
@@ -249,7 +249,7 @@ class BaseFloat(Type[float, N]):
         self.digits = digits
 
     def format(self, value: float | N) -> str:
-        return f"{value or 0:.{self.digits}f}"
+        return "{0:.{1}f}".format(value or 0, self.digits)
 
 
 class Float(BaseFloat[float]):
