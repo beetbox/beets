@@ -25,12 +25,13 @@ from string import Template
 import mediafile
 from confuse import ConfigTypeError, Optional
 
-from beets import art, config, plugins, ui, util
+from beets import config, plugins, ui, util
 from beets.library import Item, parse_query_string
 from beets.plugins import BeetsPlugin
 from beets.util import par_map
 from beets.util.artresizer import ArtResizer
 from beets.util.m3u import M3UFile
+from beetsplug._utils import art
 
 _fs_lock = threading.Lock()
 _temp_files = []  # Keep track of temporary transcoded files for deletion.
