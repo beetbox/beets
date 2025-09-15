@@ -8,11 +8,11 @@ implemented as plugins.
 from __future__ import annotations
 
 import abc
+import inspect
 import re
 import warnings
 from typing import TYPE_CHECKING, Generic, Literal, Sequence, TypedDict, TypeVar
 
-import unidecode
 from typing_extensions import NotRequired
 
 from beets.util import cached_classproperty
@@ -147,12 +147,7 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.config.add(
-            {
-                "search_limit": 5,
-                "source_weight": 0.5,
-            }
-        )
+        self.config.add({"source_weight": 0.5})
 
     @abc.abstractmethod
     def album_for_id(self, album_id: str) -> AlbumInfo | None:
@@ -339,26 +334,18 @@ class SearchApiMetadataSourcePlugin(
     of identifiers for the requested type (album or track).
     """
 
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self.config.add(
-            {
-                "search_query_ascii": False,
-            }
-        )
-
     @abc.abstractmethod
     def _search_api(
         self,
         query_type: Literal["album", "track"],
         filters: SearchFilter,
-        query_string: str = "",
+        keywords: str = "",
     ) -> Sequence[R]:
         """Perform a search on the API.
 
         :param query_type: The type of query to perform.
         :param filters: A dictionary of filters to apply to the search.
-        :param query_string: Additional query to include in the search.
+        :param keywords: Additional keywords to include in the search.
 
         Should return a list of identifiers for the requested type (album or track).
         """
@@ -386,9 +373,7 @@ class SearchApiMetadataSourcePlugin(
     def item_candidates(
         self, item: Item, artist: str, title: str
     ) -> Iterable[TrackInfo]:
-        results = self._search_api(
-            "track", {"artist": artist}, query_string=title
-        )
+        results = self._search_api("track", {"artist": artist}, keywords=title)
         if not results:
             return []
 
@@ -397,26 +382,12 @@ class SearchApiMetadataSourcePlugin(
             self.tracks_for_ids([result["id"] for result in results if result]),
         )
 
-    def _construct_search_query(
-        self, filters: SearchFilter, query_string: str
-    ) -> str:
-        """Construct a query string with the specified filters and keywords to
-        be provided to the spotify (or similar) search API.
 
-        The returned format was initially designed for spotify's search API but
-        we found is also useful with other APIs that support similar query structures.
-        see `spotify <https://developer.spotify.com/documentation/web-api/reference/search>`_
-        and `deezer <https://developers.deezer.com/api/search>`_.
+# Dynamically copy methods to BeetsPlugin for legacy support
+# TODO: Remove this in the future major release, v3.0.0
 
-        :param filters: Field filters to apply.
-        :param query_string: Query keywords to use.
-        :return: Query string to be provided to the search API.
-        """
-
-        components = [query_string, *(f'{k}:"{v}"' for k, v in filters.items())]
-        query = " ".join(filter(None, components))
-
-        if self.config["search_query_ascii"].get():
-            query = unidecode.unidecode(query)
-
-        return query
+for name, method in inspect.getmembers(
+    MetadataSourcePlugin, predicate=inspect.isfunction
+):
+    if not hasattr(BeetsPlugin, name):
+        setattr(BeetsPlugin, name, method)

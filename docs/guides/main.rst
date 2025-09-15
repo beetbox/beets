@@ -203,8 +203,9 @@ beets to behave many other ways:
 
   to disable renaming and tag-writing.
 
-There are other configuration options you can set here, including the directory
-and file naming scheme. See :doc:`/reference/config` for a full reference.
+There are approximately six million other configuration options you can set
+here, including the directory and file naming scheme. See
+:doc:`/reference/config` for a full reference.
 
 .. _yaml: https://yaml.org/
 

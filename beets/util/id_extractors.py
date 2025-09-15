@@ -58,8 +58,7 @@ def extract_release_id(source: str, id_: str) -> str | None:
         source_pattern = PATTERN_BY_SOURCE[source.lower()]
     except KeyError:
         log.debug(
-            "Unknown source '{}' for ID extraction. Returning id/url as-is.",
-            source,
+            f"Unknown source '{source}' for ID extraction. Returning id/url as-is."
         )
         return id_
 

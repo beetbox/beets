@@ -168,7 +168,9 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
         params["v"] = "1.12.0"
         params["c"] = "beets"
         resp = requests.get(
-            f"{self.config['base_url'].get()}/rest/{endpoint}?{urlencode(params)}",
+            "{}/rest/{}?{}".format(
+                self.config["base_url"].get(), endpoint, urlencode(params)
+            ),
             timeout=10,
         )
         return resp
@@ -180,5 +182,5 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
             for track in tracks:
                 if track not in output:
                     output[track] = ";"
-                output[track] += f"{name};"
+                output[track] += name + ";"
         return output

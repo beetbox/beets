@@ -160,14 +160,10 @@ calypso jazz
 calypso-style baila
 campursari
 canatronic
-canción de autor
 candombe
 canon
 canrock
 cantata
-cantautorato
-cantautor
-cantautora
 cante chico
 cante jondo
 canterbury scene
@@ -375,7 +371,6 @@ desert rock
 desi
 detroit blues
 detroit techno
-dub techno
 dhamar
 dhimotiká
 dhrupad
@@ -689,7 +684,7 @@ indo rock
 indonesian pop
 indoyíftika
 industrial death metal
-industrial hip hop
+industrial hip-hop
 industrial metal
 industrial music
 industrial musical
@@ -1074,10 +1069,10 @@ nortec
 norteño
 northern soul
 nota
+nu breaks
 nu jazz
 nu metal
 nu soul
-nu skool breaks
 nueva canción
 nyatiti
 néo kýma

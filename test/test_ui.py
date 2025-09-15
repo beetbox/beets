@@ -1020,7 +1020,7 @@ class ConfigTest(TestPluginTestCase):
 
     def test_cli_config_file_loads_plugin_commands(self):
         with open(self.cli_config_path, "w") as file:
-            file.write(f"pluginpath: {_common.PLUGINPATH}\n")
+            file.write("pluginpath: %s\n" % _common.PLUGINPATH)
             file.write("plugins: test")
 
         self.run_command("--config", self.cli_config_path, "plugin", lib=None)
@@ -1257,10 +1257,11 @@ class ShowChangeTest(IOMixin, unittest.TestCase):
         with patch("beets.ui.commands.ui.term_width", return_value=30):
             # Test newline layout
             config["ui"]["import"]["layout"] = "newline"
-            long_name = f"another artist with a{' very' * 10} long name"
+            long_name = "another artist with a" + (" very" * 10) + " long name"
             msg = self._show_change(
                 cur_artist=long_name, cur_album="another album"
             )
+            # _common.log.info("Message:{}".format(msg))
             assert "artist: another artist" in msg
             assert "  -> the artist" in msg
             assert "another album -> the album" not in msg
@@ -1270,7 +1271,7 @@ class ShowChangeTest(IOMixin, unittest.TestCase):
         with patch("beets.ui.commands.ui.term_width", return_value=54):
             # Test Column layout
             config["ui"]["import"]["layout"] = "column"
-            long_title = f"a track with a{' very' * 10} long name"
+            long_title = "a track with a" + (" very" * 10) + " long name"
             self.items[0].title = long_title
             msg = self._show_change()
             assert "(#1) a track (1:00) -> (#1) the title (0:00)" in msg
@@ -1279,7 +1280,7 @@ class ShowChangeTest(IOMixin, unittest.TestCase):
         # Patch ui.term_width to force wrapping
         with patch("beets.ui.commands.ui.term_width", return_value=30):
             config["ui"]["import"]["layout"] = "newline"
-            long_title = f"a track with a{' very' * 10} long name"
+            long_title = "a track with a" + (" very" * 10) + " long name"
             self.items[0].title = long_title
             msg = self._show_change()
             assert "(#1) a track with" in msg

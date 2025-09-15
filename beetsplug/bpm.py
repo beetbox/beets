@@ -73,12 +73,12 @@ class BPMPlugin(BeetsPlugin):
 
         item = items[0]
         if item["bpm"]:
-            self._log.info("Found bpm {}", item["bpm"])
+            self._log.info("Found bpm {0}", item["bpm"])
             if not overwrite:
                 return
 
         self._log.info(
-            "Press Enter {} times to the rhythm or Ctrl-D to exit",
+            "Press Enter {0} times to the rhythm or Ctrl-D to exit",
             self.config["max_strokes"].get(int),
         )
         new_bpm = bpm(self.config["max_strokes"].get(int))
@@ -86,4 +86,4 @@ class BPMPlugin(BeetsPlugin):
         if write:
             item.try_write()
         item.store()
-        self._log.info("Added new bpm {}", item["bpm"])
+        self._log.info("Added new bpm {0}", item["bpm"])

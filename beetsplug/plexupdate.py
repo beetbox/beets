@@ -22,7 +22,9 @@ def get_music_section(
 ):
     """Getting the section key for the music library in Plex."""
     api_endpoint = append_token("library/sections", token)
-    url = urljoin(f"{get_protocol(secure)}://{host}:{port}", api_endpoint)
+    url = urljoin(
+        "{}://{}:{}".format(get_protocol(secure), host, port), api_endpoint
+    )
 
     # Sends request.
     r = requests.get(
@@ -52,7 +54,9 @@ def update_plex(host, port, token, library_name, secure, ignore_cert_errors):
     )
     api_endpoint = f"library/sections/{section_key}/refresh"
     api_endpoint = append_token(api_endpoint, token)
-    url = urljoin(f"{get_protocol(secure)}://{host}:{port}", api_endpoint)
+    url = urljoin(
+        "{}://{}:{}".format(get_protocol(secure), host, port), api_endpoint
+    )
 
     # Sends request and returns requests object.
     r = requests.get(
@@ -66,7 +70,7 @@ def update_plex(host, port, token, library_name, secure, ignore_cert_errors):
 def append_token(url, token):
     """Appends the Plex Home token to the api call if required."""
     if token:
-        url += f"?{urlencode({'X-Plex-Token': token})}"
+        url += "?" + urlencode({"X-Plex-Token": token})
     return url
 
 

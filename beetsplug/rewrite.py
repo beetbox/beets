@@ -57,9 +57,9 @@ class RewritePlugin(BeetsPlugin):
                 raise ui.UserError("invalid rewrite specification")
             if fieldname not in library.Item._fields:
                 raise ui.UserError(
-                    f"invalid field name ({fieldname}) in rewriter"
+                    "invalid field name (%s) in rewriter" % fieldname
                 )
-            self._log.debug("adding template field {}", key)
+            self._log.debug("adding template field {0}", key)
             pattern = re.compile(pattern.lower())
             rules[fieldname].append((pattern, value))
             if fieldname == "artist":

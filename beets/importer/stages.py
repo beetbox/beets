@@ -58,11 +58,11 @@ def read_tasks(session: ImportSession):
         skipped += task_factory.skipped
 
         if not task_factory.imported:
-            log.warning("No files imported from {}", displayable_path(toppath))
+            log.warning("No files imported from {0}", displayable_path(toppath))
 
     # Show skipped directories (due to incremental/resume).
     if skipped:
-        log.info("Skipped {} paths.", skipped)
+        log.info("Skipped {0} paths.", skipped)
 
 
 def query_tasks(session: ImportSession):
@@ -82,7 +82,10 @@ def query_tasks(session: ImportSession):
         # Search for albums.
         for album in session.lib.albums(session.query):
             log.debug(
-                "yielding album {0.id}: {0.albumartist} - {0.album}", album
+                "yielding album {0}: {1} - {2}",
+                album.id,
+                album.albumartist,
+                album.album,
             )
             items = list(album.items())
             _freshen_items(items)
@@ -137,7 +140,7 @@ def lookup_candidates(session: ImportSession, task: ImportTask):
         return
 
     plugins.send("import_task_start", session=session, task=task)
-    log.debug("Looking up: {}", displayable_path(task.paths))
+    log.debug("Looking up: {0}", displayable_path(task.paths))
 
     # Restrict the initial lookup to IDs specified by the user via the -m
     # option. Currently all the IDs are passed onto the tasks directly.
@@ -256,11 +259,11 @@ def plugin_stage(
 def log_files(session: ImportSession, task: ImportTask):
     """A coroutine (pipeline stage) to log each file to be imported."""
     if isinstance(task, SingletonImportTask):
-        log.info("Singleton: {}", displayable_path(task.item["path"]))
+        log.info("Singleton: {0}", displayable_path(task.item["path"]))
     elif task.items:
-        log.info("Album: {}", displayable_path(task.paths[0]))
+        log.info("Album: {0}", displayable_path(task.paths[0]))
         for item in task.items:
-            log.info("  {}", displayable_path(item["path"]))
+            log.info("  {0}", displayable_path(item["path"]))
 
 
 # --------------------------------- Consumer --------------------------------- #
@@ -338,7 +341,9 @@ def _resolve_duplicates(session: ImportSession, task: ImportTask):
     if task.choice_flag in (Action.ASIS, Action.APPLY, Action.RETAG):
         found_duplicates = task.find_duplicates(session.lib)
         if found_duplicates:
-            log.debug("found duplicates: {}", [o.id for o in found_duplicates])
+            log.debug(
+                "found duplicates: {}".format([o.id for o in found_duplicates])
+            )
 
             # Get the default action to follow from config.
             duplicate_action = config["import"]["duplicate_action"].as_choice(
@@ -350,7 +355,7 @@ def _resolve_duplicates(session: ImportSession, task: ImportTask):
                     "ask": "a",
                 }
             )
-            log.debug("default action for duplicates: {}", duplicate_action)
+            log.debug("default action for duplicates: {0}", duplicate_action)
 
             if duplicate_action == "s":
                 # Skip new.

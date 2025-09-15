@@ -37,7 +37,7 @@ class IPFSPluginTest(PluginTestCase):
             try:
                 if check_item.get("ipfs", with_album=False):
                     ipfs_item = os.fsdecode(os.path.basename(want_item.path))
-                    want_path = f"/ipfs/{test_album.ipfs}/{ipfs_item}"
+                    want_path = "/ipfs/{}/{}".format(test_album.ipfs, ipfs_item)
                     want_path = bytestring_path(want_path)
                     assert check_item.path == want_path
                     assert (

@@ -21,6 +21,7 @@ import time
 from typing import TYPE_CHECKING, Literal, Sequence
 
 import requests
+import unidecode
 
 from beets import ui
 from beets.autotag import AlbumInfo, TrackInfo
@@ -48,9 +49,6 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
     search_url = "https://api.deezer.com/search/"
     album_url = "https://api.deezer.com/album/"
     track_url = "https://api.deezer.com/track/"
-
-    def __init__(self) -> None:
-        super().__init__()
 
     def commands(self):
         """Add beet UI commands to interact with Deezer."""
@@ -99,7 +97,7 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
                 f"Invalid `release_date` returned by {self.data_source} API: "
                 f"{release_date!r}"
             )
-        tracks_obj = self.fetch_data(f"{self.album_url}{deezer_id}/tracks")
+        tracks_obj = self.fetch_data(self.album_url + deezer_id + "/tracks")
         if tracks_obj is None:
             return None
         try:
@@ -172,7 +170,7 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         # the track's disc).
         if not (
             album_tracks_obj := self.fetch_data(
-                f"{self.album_url}{track_data['album']['id']}/tracks"
+                self.album_url + str(track_data["album"]["id"]) + "/tracks"
             )
         ):
             return None
@@ -218,6 +216,27 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
             deezer_updated=time.time(),
         )
 
+    @staticmethod
+    def _construct_search_query(
+        filters: SearchFilter, keywords: str = ""
+    ) -> str:
+        """Construct a query string with the specified filters and keywords to
+        be provided to the Deezer Search API
+        (https://developers.deezer.com/api/search).
+
+        :param filters: Field filters to apply.
+        :param keywords: (Optional) Query keywords to use.
+        :return: Query string to be provided to the Search API.
+        """
+        query_components = [
+            keywords,
+            " ".join(f'{k}:"{v}"' for k, v in filters.items()),
+        ]
+        query = " ".join([q for q in query_components if q])
+        if not isinstance(query, str):
+            query = query.decode("utf8")
+        return unidecode.unidecode(query)
+
     def _search_api(
         self,
         query_type: Literal[
@@ -231,42 +250,37 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
             "user",
         ],
         filters: SearchFilter,
-        query_string: str = "",
+        keywords="",
     ) -> Sequence[IDResponse]:
-        """Query the Deezer Search API for the specified ``query_string``, applying
+        """Query the Deezer Search API for the specified ``keywords``, applying
         the provided ``filters``.
 
         :param filters: Field filters to apply.
-        :param query_string: Additional query to include in the search.
+        :param keywords: Query keywords to use.
         :return: JSON data for the class:`Response <Response>` object or None
             if no search results are returned.
         """
-        query = self._construct_search_query(
-            query_string=query_string, filters=filters
-        )
-        self._log.debug("Searching {.data_source} for '{}'", self, query)
+        query = self._construct_search_query(keywords=keywords, filters=filters)
+        self._log.debug(f"Searching {self.data_source} for '{query}'")
         try:
             response = requests.get(
-                f"{self.search_url}{query_type}",
-                params={
-                    "q": query,
-                    "limit": self.config["search_limit"].get(),
-                },
+                self.search_url + query_type,
+                params={"q": query},
                 timeout=10,
             )
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
             self._log.error(
-                "Error fetching data from {.data_source} API\n Error: {}",
-                self,
+                "Error fetching data from {} API\n Error: {}",
+                self.data_source,
                 e,
             )
             return ()
         response_data: Sequence[IDResponse] = response.json().get("data", [])
         self._log.debug(
-            "Found {} result(s) from {.data_source} for '{}'",
+            "Found {} result(s) from {} for '{}'",
             len(response_data),
-            self,
+            self.data_source,
             query,
         )
         return response_data

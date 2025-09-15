@@ -110,7 +110,9 @@ class BadFiles(BeetsPlugin):
         self._log.debug("checking path: {}", dpath)
         if not os.path.exists(item.path):
             ui.print_(
-                f"{ui.colorize('text_error', dpath)}: file does not exist"
+                "{}: file does not exist".format(
+                    ui.colorize("text_error", dpath)
+                )
             )
 
         # Run the checker against the file if one is found
@@ -127,32 +129,37 @@ class BadFiles(BeetsPlugin):
         except CheckerCommandError as e:
             if e.errno == errno.ENOENT:
                 self._log.error(
-                    "command not found: {0.checker} when validating file: {0.path}",
-                    e,
+                    "command not found: {} when validating file: {}",
+                    e.checker,
+                    e.path,
                 )
             else:
-                self._log.error("error invoking {0.checker}: {0.msg}", e)
+                self._log.error("error invoking {}: {}", e.checker, e.msg)
             return []
 
         error_lines = []
 
         if status > 0:
             error_lines.append(
-                f"{ui.colorize('text_error', dpath)}: checker exited with"
-                f" status {status}"
+                "{}: checker exited with status {}".format(
+                    ui.colorize("text_error", dpath), status
+                )
             )
             for line in output:
                 error_lines.append(f"  {line}")
 
         elif errors > 0:
             error_lines.append(
-                f"{ui.colorize('text_warning', dpath)}: checker found"
-                f" {status} errors or warnings"
+                "{}: checker found {} errors or warnings".format(
+                    ui.colorize("text_warning", dpath), errors
+                )
             )
             for line in output:
                 error_lines.append(f"  {line}")
         elif self.verbose:
-            error_lines.append(f"{ui.colorize('text_success', dpath)}: ok")
+            error_lines.append(
+                "{}: ok".format(ui.colorize("text_success", dpath))
+            )
 
         return error_lines
 
@@ -173,8 +180,9 @@ class BadFiles(BeetsPlugin):
     def on_import_task_before_choice(self, task, session):
         if hasattr(task, "_badfiles_checks_failed"):
             ui.print_(
-                f"{ui.colorize('text_warning', 'BAD')} one or more files failed"
-                " checks:"
+                "{} one or more files failed checks:".format(
+                    ui.colorize("text_warning", "BAD")
+                )
             )
             for error in task._badfiles_checks_failed:
                 for error_line in error:

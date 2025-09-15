@@ -44,12 +44,11 @@ class Amarok(MetaSource):
         "amarok_lastplayed": types.DATE,
     }
 
-    query_xml = """
-        <query version="1.0">
-            <filters>
-                <and><include field="filename" value={} /></and>
-            </filters>
-        </query>"""
+    query_xml = '<query version="1.0"> \
+                    <filters> \
+                        <and><include field="filename" value=%s /></and> \
+                    </filters> \
+                </query>'
 
     def __init__(self, config, log):
         super().__init__(config, log)
@@ -69,7 +68,7 @@ class Amarok(MetaSource):
         # of the result set. So query for the filename and then try to match
         # the correct item from the results we get back
         results = self.collection.Query(
-            self.query_xml.format(quoteattr(basename(path)))
+            self.query_xml % quoteattr(basename(path))
         )
         for result in results:
             if result["xesam:url"] != path:

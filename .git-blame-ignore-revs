@@ -57,17 +57,3 @@ c490ac5810b70f3cf5fd8649669838e8fdb19f4d
 769dcdc88a1263638ae25944ba6b2be3e8933666
 # Reformat all docs using docstrfmt
 ab5acaabb3cd24c482adb7fa4800c89fd6a2f08d
-# Replace format calls with f-strings
-4a361bd501e85de12c91c2474c423559ca672852
-# Replace percent formatting
-9352a79e4108bd67f7e40b1e944c01e0a7353272
-# Replace string concatenation (' + ')
-1c16b2b3087e9c3635d68d41c9541c4319d0bdbe
-# Do not use backslashes to deal with long strings
-2fccf64efe82851861e195b521b14680b480a42a
-# Do not use explicit indices for logging args when not needed
-d93ddf8dd43e4f9ed072a03829e287c78d2570a2
-# Moved dev docs
-07549ed896d9649562d40b75cd30702e6fa6e975
-# Moved plugin docs Further Reading chapter
-33f1a5d0bef8ca08be79ee7a0d02a018d502680d

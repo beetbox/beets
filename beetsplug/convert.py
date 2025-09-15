@@ -64,7 +64,9 @@ def get_format(fmt=None):
         command = format_info["command"]
         extension = format_info.get("extension", fmt)
     except KeyError:
-        raise ui.UserError(f'convert: format {fmt} needs the "command" field')
+        raise ui.UserError(
+            'convert: format {} needs the "command" field'.format(fmt)
+        )
     except ConfigTypeError:
         command = config["convert"]["formats"][fmt].get(str)
         extension = fmt
@@ -75,8 +77,8 @@ def get_format(fmt=None):
         command = config["convert"]["command"].as_str()
     elif "opts" in keys:
         # Undocumented option for backwards compatibility with < 1.3.1.
-        command = (
-            f"ffmpeg -i $source -y {config['convert']['opts'].as_str()} $dest"
+        command = "ffmpeg -i $source -y {} $dest".format(
+            config["convert"]["opts"].as_str()
         )
     if "extension" in keys:
         extension = config["convert"]["extension"].as_str()
@@ -123,25 +125,18 @@ class ConvertPlugin(BeetsPlugin):
                 "id3v23": "inherit",
                 "formats": {
                     "aac": {
-                        "command": (
-                            "ffmpeg -i $source -y -vn -acodec aac -aq 1 $dest"
-                        ),
+                        "command": "ffmpeg -i $source -y -vn -acodec aac "
+                        "-aq 1 $dest",
                         "extension": "m4a",
                     },
                     "alac": {
-                        "command": (
-                            "ffmpeg -i $source -y -vn -acodec alac $dest"
-                        ),
+                        "command": "ffmpeg -i $source -y -vn -acodec alac $dest",
                         "extension": "m4a",
                     },
                     "flac": "ffmpeg -i $source -y -vn -acodec flac $dest",
                     "mp3": "ffmpeg -i $source -y -vn -aq 2 $dest",
-                    "opus": (
-                        "ffmpeg -i $source -y -vn -acodec libopus -ab 96k $dest"
-                    ),
-                    "ogg": (
-                        "ffmpeg -i $source -y -vn -acodec libvorbis -aq 3 $dest"
-                    ),
+                    "opus": "ffmpeg -i $source -y -vn -acodec libopus -ab 96k $dest",
+                    "ogg": "ffmpeg -i $source -y -vn -acodec libvorbis -aq 3 $dest",
                     "wma": "ffmpeg -i $source -y -vn -acodec wmav2 -vn $dest",
                 },
                 "max_bitrate": None,
@@ -176,17 +171,16 @@ class ConvertPlugin(BeetsPlugin):
             "--threads",
             action="store",
             type="int",
-            help=(
-                "change the number of threads, defaults to maximum available"
-                " processors"
-            ),
+            help="change the number of threads, \
+                              defaults to maximum available processors",
         )
         cmd.parser.add_option(
             "-k",
             "--keep-new",
             action="store_true",
             dest="keep_new",
-            help="keep only the converted and move the old files",
+            help="keep only the converted \
+                              and move the old files",
         )
         cmd.parser.add_option(
             "-d", "--dest", action="store", help="set the destination directory"
@@ -210,16 +204,16 @@ class ConvertPlugin(BeetsPlugin):
             "--link",
             action="store_true",
             dest="link",
-            help="symlink files that do not need transcoding.",
+            help="symlink files that do not \
+                              need transcoding.",
         )
         cmd.parser.add_option(
             "-H",
             "--hardlink",
             action="store_true",
             dest="hardlink",
-            help=(
-                "hardlink files that do not need transcoding. Overrides --link."
-            ),
+            help="hardlink files that do not \
+                              need transcoding. Overrides --link.",
         )
         cmd.parser.add_option(
             "-m",
@@ -288,7 +282,7 @@ class ConvertPlugin(BeetsPlugin):
         quiet = self.config["quiet"].get(bool)
 
         if not quiet and not pretend:
-            self._log.info("Encoding {}", util.displayable_path(source))
+            self._log.info("Encoding {0}", util.displayable_path(source))
 
         command = os.fsdecode(command)
         source = os.fsdecode(source)
@@ -307,7 +301,7 @@ class ConvertPlugin(BeetsPlugin):
             encode_cmd.append(os.fsdecode(args[i]))
 
         if pretend:
-            self._log.info("{}", " ".join(args))
+            self._log.info("{0}", " ".join(args))
             return
 
         try:
@@ -315,25 +309,26 @@ class ConvertPlugin(BeetsPlugin):
         except subprocess.CalledProcessError as exc:
             # Something went wrong (probably Ctrl+C), remove temporary files
             self._log.info(
-                "Encoding {} failed. Cleaning up...",
+                "Encoding {0} failed. Cleaning up...",
                 util.displayable_path(source),
             )
             self._log.debug(
-                "Command {0} exited with status {1.returncode}: {1.output}",
+                "Command {0} exited with status {1}: {2}",
                 args,
-                exc,
+                exc.returncode,
+                exc.output,
             )
             util.remove(dest)
             util.prune_dirs(os.path.dirname(dest))
             raise
         except OSError as exc:
             raise ui.UserError(
-                f"convert: couldn't invoke {' '.join(args)!r}: {exc}"
+                "convert: couldn't invoke '{}': {}".format(" ".join(args), exc)
             )
 
         if not quiet and not pretend:
             self._log.info(
-                "Finished encoding {}", util.displayable_path(source)
+                "Finished encoding {0}", util.displayable_path(source)
             )
 
     def convert_item(
@@ -361,7 +356,7 @@ class ConvertPlugin(BeetsPlugin):
             try:
                 mediafile.MediaFile(util.syspath(item.path))
             except mediafile.UnreadableFileError as exc:
-                self._log.error("Could not open file to convert: {}", exc)
+                self._log.error("Could not open file to convert: {0}", exc)
                 continue
 
             # When keeping the new file in the library, we first move the
@@ -387,20 +382,21 @@ class ConvertPlugin(BeetsPlugin):
 
             if os.path.exists(util.syspath(dest)):
                 self._log.info(
-                    "Skipping {.filepath} (target file exists)", item
+                    "Skipping {0} (target file exists)",
+                    util.displayable_path(item.path),
                 )
                 continue
 
             if keep_new:
                 if pretend:
                     self._log.info(
-                        "mv {.filepath} {}",
-                        item,
+                        "mv {0} {1}",
+                        util.displayable_path(item.path),
                         util.displayable_path(original),
                     )
                 else:
                     self._log.info(
-                        "Moving to {}", util.displayable_path(original)
+                        "Moving to {0}", util.displayable_path(original)
                     )
                     util.move(item.path, original)
 
@@ -416,10 +412,10 @@ class ConvertPlugin(BeetsPlugin):
                     msg = "ln" if hardlink else ("ln -s" if link else "cp")
 
                     self._log.info(
-                        "{} {} {}",
-                        msg,
+                        "{2} {0} {1}",
                         util.displayable_path(original),
                         util.displayable_path(converted),
+                        msg,
                     )
                 else:
                     # No transcoding necessary.
@@ -429,7 +425,9 @@ class ConvertPlugin(BeetsPlugin):
                         else ("Linking" if link else "Copying")
                     )
 
-                    self._log.info("{} {.filepath}", msg, item)
+                    self._log.info(
+                        "{1} {0}", util.displayable_path(item.path), msg
+                    )
 
                     if hardlink:
                         util.hardlink(original, converted)
@@ -460,7 +458,8 @@ class ConvertPlugin(BeetsPlugin):
                 if album and album.artpath:
                     maxwidth = self._get_art_resize(album.artpath)
                     self._log.debug(
-                        "embedding album art from {.art_filepath}", album
+                        "embedding album art from {}",
+                        util.displayable_path(album.artpath),
                     )
                     art.embed_item(
                         self._log,
@@ -518,7 +517,8 @@ class ConvertPlugin(BeetsPlugin):
 
         if os.path.exists(util.syspath(dest)):
             self._log.info(
-                "Skipping {.art_filepath} (target file exists)", album
+                "Skipping {0} (target file exists)",
+                util.displayable_path(album.artpath),
             )
             return
 
@@ -528,8 +528,8 @@ class ConvertPlugin(BeetsPlugin):
         # Either copy or resize (while copying) the image.
         if maxwidth is not None:
             self._log.info(
-                "Resizing cover art from {.art_filepath} to {}",
-                album,
+                "Resizing cover art from {0} to {1}",
+                util.displayable_path(album.artpath),
                 util.displayable_path(dest),
             )
             if not pretend:
@@ -539,10 +539,10 @@ class ConvertPlugin(BeetsPlugin):
                 msg = "ln" if hardlink else ("ln -s" if link else "cp")
 
                 self._log.info(
-                    "{} {.art_filepath} {}",
-                    msg,
-                    album,
+                    "{2} {0} {1}",
+                    util.displayable_path(album.artpath),
                     util.displayable_path(dest),
+                    msg,
                 )
             else:
                 msg = (
@@ -552,10 +552,10 @@ class ConvertPlugin(BeetsPlugin):
                 )
 
                 self._log.info(
-                    "{} cover art from {.art_filepath} to {}",
-                    msg,
-                    album,
+                    "{2} cover art from {0} to {1}",
+                    util.displayable_path(album.artpath),
                     util.displayable_path(dest),
+                    msg,
                 )
                 if hardlink:
                     util.hardlink(album.artpath, dest)
@@ -616,7 +616,7 @@ class ConvertPlugin(BeetsPlugin):
             # Playlist paths are understood as relative to the dest directory.
             pl_normpath = util.normpath(playlist)
             pl_dir = os.path.dirname(pl_normpath)
-            self._log.info("Creating playlist file {}", pl_normpath)
+            self._log.info("Creating playlist file {0}", pl_normpath)
             # Generates a list of paths to media files, ensures the paths are
             # relative to the playlist's location and translates the unicode
             # strings we get from item.destination to bytes.
@@ -644,7 +644,7 @@ class ConvertPlugin(BeetsPlugin):
             tmpdir = self.config["tmpdir"].get()
             if tmpdir:
                 tmpdir = os.fsdecode(util.bytestring_path(tmpdir))
-            fd, dest = tempfile.mkstemp(f".{os.fsdecode(ext)}", dir=tmpdir)
+            fd, dest = tempfile.mkstemp(os.fsdecode(b"." + ext), dir=tmpdir)
             os.close(fd)
             dest = util.bytestring_path(dest)
             _temp_files.append(dest)  # Delete the transcode later.
@@ -666,7 +666,7 @@ class ConvertPlugin(BeetsPlugin):
             if self.config["delete_originals"]:
                 self._log.log(
                     logging.DEBUG if self.config["quiet"] else logging.INFO,
-                    "Removing original file {}",
+                    "Removing original file {0}",
                     source_path,
                 )
                 util.remove(source_path, False)

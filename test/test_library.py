@@ -1033,7 +1033,7 @@ class ArtDestinationTest(BeetsTestCase):
 
     def test_art_filename_respects_setting(self):
         art = self.ai.art_destination("something.jpg")
-        new_art = bytestring_path(f"{os.path.sep}artimage.jpg")
+        new_art = bytestring_path("%sartimage.jpg" % os.path.sep)
         assert new_art in art
 
     def test_art_path_in_item_dir(self):
