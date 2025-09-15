@@ -11,6 +11,11 @@ New features:
 
 Bug fixes:
 
+- :doc:`plugins/spotify` Fixed an issue where track matching and lookups could
+  return incorrect or misleading results when using the Spotify plugin. The
+  problem occurred primarily when no album was provided or when the album field
+  was an empty string. :bug:`5189`
+
 For packagers:
 
 Other changes:

@@ -371,7 +371,9 @@ class SearchApiMetadataSourcePlugin(
         album: str,
         va_likely: bool,
     ) -> Iterable[AlbumInfo]:
-        query_filters: SearchFilter = {"album": album}
+        query_filters: SearchFilter = {}
+        if album:
+            query_filters["album"] = album
         if not va_likely:
             query_filters["artist"] = artist
 
