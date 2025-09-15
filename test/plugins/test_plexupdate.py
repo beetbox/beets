@@ -29,7 +29,7 @@ class PlexUpdateTest(PluginTestCase):
             "</Directory>"
             '<Directory allowSync="0" art="/:/resources/artist-fanart.jpg" '
             'filters="1" refreshing="0" thumb="/:/resources/artist.png" '
-            'key="2" type="artist" title="' + escaped_section_name + '" '
+            f'key="2" type="artist" title="{escaped_section_name}" '
             'composite="/library/sections/2/composite/1416929243" '
             'agent="com.plexapp.agents.lastfm" scanner="Plex Music Scanner" '
             'language="en" uuid="90897c95-b3bd-4778-a9c8-1f43cb78f047" '

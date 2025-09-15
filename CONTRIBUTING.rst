@@ -180,8 +180,7 @@ Your First Contribution
 If this is your first time contributing to an open source project, welcome! If
 you are confused at all about how to contribute or what to contribute, take a
 look at `this great tutorial <http://makeapullrequest.com/>`__, or stop by our
-`discussion board <https://github.com/beetbox/beets/discussions/>`__ if you have
-any questions.
+`discussion board`_ if you have any questions.
 
 We maintain a list of issues we reserved for those new to open source labeled
 `first timers only`_. Since the goal of these issues is to get users comfortable
@@ -216,6 +215,15 @@ will ship in no time.
 Remember, code contributions have four parts: the code, the tests, the
 documentation, and the changelog entry. Thank you for contributing!
 
+.. admonition:: Ownership
+
+    If you are the owner of a plugin, please consider reviewing pull requests
+    that affect your plugin. If you are not the owner of a plugin, please
+    consider becoming one! You can do so by adding an entry to
+    ``.github/CODEOWNERS``. This way, you will automatically receive a review
+    request for pull requests that adjust the code that you own. If you have any
+    questions, please ask on our `discussion board`_.
+
 The Code
 --------
 
@@ -238,25 +246,22 @@ There are a few coding conventions we use in beets:
   .. code-block:: python
 
       with g.lib.transaction() as tx:
-          rows = tx.query(
-              "SELECT DISTINCT '{0}' FROM '{1}' ORDER BY '{2}'".format(
-                  field, model._table, sort_field
-              )
-          )
+          rows = tx.query("SELECT DISTINCT {field} FROM {model._table} ORDER BY {sort_field}")
 
   To fetch Item objects from the database, use lib.items(…) and supply a query
   as an argument. Resist the urge to write raw SQL for your query. If you must
-  use lower-level queries into the database, do this:
+  use lower-level queries into the database, do this, for example:
 
   .. code-block:: python
 
       with lib.transaction() as tx:
-          rows = tx.query("SELECT …")
+          rows = tx.query("SELECT path FROM items WHERE album_id = ?", (album_id,))
 
   Transaction objects help control concurrent access to the database and assist
   in debugging conflicting accesses.
 
-- ``str.format()`` should be used instead of the ``%`` operator
+- f-strings should be used instead of the ``%`` operator and ``str.format()``
+  calls.
 - Never ``print`` informational messages; use the `logging
   <http://docs.python.org/library/logging.html>`__ module instead. In
   particular, we have our own logging shim, so you’ll see ``from beets import
@@ -264,7 +269,7 @@ There are a few coding conventions we use in beets:
 
   - The loggers use `str.format
     <http://docs.python.org/library/stdtypes.html#str.format>`__-style logging
-    instead of ``%``-style, so you can type ``log.debug("{0}", obj)`` to do your
+    instead of ``%``-style, so you can type ``log.debug("{}", obj)`` to do your
     formatting.
 
 - Exception handlers must use ``except A as B:`` instead of ``except A, B:``.
@@ -396,6 +401,8 @@ In order to add such a test, mark your test with the ``integration_test`` marker
 This way, the test will be run only in the integration test suite.
 
 .. _codecov: https://codecov.io/github/beetbox/beets
+
+.. _discussion board: https://github.com/beetbox/beets/discussions
 
 .. _documentation: https://beets.readthedocs.io/en/stable/
 

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "beets"
-version = "2.3.1"
+version = "2.4.0"
 description = "music tagger and library organizer"
 authors = ["Adrian Sampson <adrian@radbox.org>"]
 maintainers = ["Serene-Arc"]
@@ -100,7 +100,7 @@ requests_oauthlib = "*"
 responses = ">=0.3.0"
 
 [tool.poetry.group.lint.dependencies]
-docstrfmt = ">=1.10.0"
+docstrfmt = ">=1.11.1"
 ruff = ">=0.6.4"
 sphinx-lint = ">=1.0.0"
 
@@ -196,7 +196,8 @@ cmd = "mypy"
 
 [tool.poe.tasks.docs]
 help = "Build documentation"
-cmd = "make -C docs html"
+args = [{ name = "COMMANDS", positional = true, multiple = true, default = "html" }]
+cmd = "make -C docs $COMMANDS"
 
 [tool.poe.tasks.format]
 help = "Format the codebase"
@@ -212,7 +213,7 @@ cmd = "ruff check"
 
 [tool.poe.tasks.lint-docs]
 help = "Lint the documentation"
-shell = "sphinx-lint --enable all $(git ls-files '*.rst')"
+shell = "sphinx-lint --enable all --disable default-role $(git ls-files '*.rst')"
 
 [tool.poe.tasks.update-dependencies]
 help = "Update dependencies to their latest versions."
@@ -275,11 +276,15 @@ select = [
     "E", # pycodestyle
     "F", # pyflakes
     # "B", # flake8-bugbear
+    "G", # flake8-logging-format
     "I", # isort
+    "ISC", # flake8-implicit-str-concat
     "N", # pep8-naming
     "PT", # flake8-pytest-style
     # "RUF", # ruff
     # "UP", # pyupgrade
+    "UP031", # do not use percent formatting
+    "UP032", # use f-string instead of format call
     "TCH", # flake8-type-checking
     "W", # pycodestyle
 ]

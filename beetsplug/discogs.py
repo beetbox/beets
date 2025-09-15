@@ -96,7 +96,6 @@ class DiscogsPlugin(MetadataSourcePlugin):
                 "separator": ", ",
                 "index_tracks": False,
                 "append_style_genre": False,
-                "search_limit": 5,
             }
         )
         self.config["apikey"].redact = True
@@ -145,7 +144,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
         try:
             _, _, url = auth_client.get_authorize_url()
         except CONNECTION_ERRORS as e:
-            self._log.debug("connection error: {0}", e)
+            self._log.debug("connection error: {}", e)
             raise beets.ui.UserError("communication with Discogs failed")
 
         beets.ui.print_("To authenticate with Discogs, visit:")
@@ -158,11 +157,11 @@ class DiscogsPlugin(MetadataSourcePlugin):
         except DiscogsAPIError:
             raise beets.ui.UserError("Discogs authorization failed")
         except CONNECTION_ERRORS as e:
-            self._log.debug("connection error: {0}", e)
+            self._log.debug("connection error: {}", e)
             raise beets.ui.UserError("Discogs token request failed")
 
         # Save the token for later use.
-        self._log.debug("Discogs token {0}, secret {1}", token, secret)
+        self._log.debug("Discogs token {}, secret {}", token, secret)
         with open(self._tokenfile(), "w") as f:
             json.dump({"token": token, "secret": secret}, f)
 
@@ -202,7 +201,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
         """Fetches an album by its Discogs ID and returns an AlbumInfo object
         or None if the album is not found.
         """
-        self._log.debug("Searching for release {0}", album_id)
+        self._log.debug("Searching for release {}", album_id)
 
         discogs_id = self._extract_id(album_id)
 
@@ -216,7 +215,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
         except DiscogsAPIError as e:
             if e.status_code != 404:
                 self._log.debug(
-                    "API Error: {0} (query: {1})",
+                    "API Error: {} (query: {})",
                     e,
                     result.data["resource_url"],
                 )
@@ -250,7 +249,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
 
         try:
             results = self.discogs_client.search(query, type="release")
-            results.per_page = self.config["search_limit"].as_number()
+            results.per_page = self.config["search_limit"].get()
             releases = results.page(1)
         except CONNECTION_ERRORS:
             self._log.debug(
@@ -266,7 +265,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
         """Fetches a master release given its Discogs ID and returns its year
         or None if the master release is not found.
         """
-        self._log.debug("Getting master release {0}", master_id)
+        self._log.debug("Getting master release {}", master_id)
         result = Master(self.discogs_client, {"id": master_id})
 
         try:
@@ -274,7 +273,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
         except DiscogsAPIError as e:
             if e.status_code != 404:
                 self._log.debug(
-                    "API Error: {0} (query: {1})",
+                    "API Error: {} (query: {})",
                     e,
                     result.data["resource_url"],
                 )
@@ -385,7 +384,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
                 track.artist_id = artist_id
             # Discogs does not have track IDs. Invent our own IDs as proposed
             # in #2336.
-            track.track_id = str(album_id) + "-" + track.track_alt
+            track.track_id = f"{album_id}-{track.track_alt}"
             track.data_url = data_url
             track.data_source = "Discogs"
 
@@ -552,7 +551,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
             idx, medium_idx, sub_idx = self.get_track_index(
                 subtracks[0]["position"]
             )
-            position = "{}{}".format(idx or "", medium_idx or "")
+            position = f"{idx or ''}{medium_idx or ''}"
 
             if tracklist and not tracklist[-1]["position"]:
                 # Assume the previous index track contains the track title.
@@ -574,8 +573,8 @@ class DiscogsPlugin(MetadataSourcePlugin):
                     # option is set
                     if self.config["index_tracks"]:
                         for subtrack in subtracks:
-                            subtrack["title"] = "{}: {}".format(
-                                index_track["title"], subtrack["title"]
+                            subtrack["title"] = (
+                                f"{index_track['title']}: {subtrack['title']}"
                             )
                     tracklist.extend(subtracks)
             else:

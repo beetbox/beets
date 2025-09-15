@@ -9,6 +9,17 @@ Unreleased
 
 New features:
 
+Bug fixes:
+
+For packagers:
+
+Other changes:
+
+2.4.0 (September 13, 2025)
+--------------------------
+
+New features:
+
 - :doc:`plugins/musicbrainz`: The MusicBrainz autotagger has been moved to a
   separate plugin. The default :ref:`plugins-config` includes ``musicbrainz``,
   but if you've customized your ``plugins`` list in your configuration, you'll
@@ -32,6 +43,8 @@ New features:
   ``played_ratio_threshold``, to allow configuring the percentage the song must
   be played for it to be counted as played instead of skipped.
 - :doc:`plugins/web`: Display artist and album as part of the search results.
+- :doc:`plugins/spotify` :doc:`plugins/deezer`: Add new configuration option
+  ``search_limit`` to limit the number of results returned by search queries.
 - :doc:`plugins/zero`: Add new configurable ``zero_disc_number_if_single_disc``
   to allow zeroing the disc number on write for single-disc albums.
 
@@ -57,6 +70,14 @@ Bug fixes:
 - :doc:`plugins/lastgenre`: Fix the issue introduced in Beets 2.3.0 where
   non-whitelisted last.fm genres were not canonicalized to parent genres.
   :bug:`5930`
+- :doc:`plugins/chroma`: AcoustID lookup HTTP requests will now time out after
+  10 seconds, rather than hanging the entire import process.
+- :doc:`/plugins/deezer`: Fix the issue with that every query to deezer was
+  ascii encoded. This resulted in bad matches for queries that contained special
+  e.g. non latin characters as 盗作. If you want to keep the legacy behavior set
+  the config option ``deezer.search_query_ascii: yes``. :bug:`5860`
+- Fixed regression with :doc:`/plugins/listenbrainz` where the plugin could not
+  be loaded :bug:`5975`
 
 For packagers:
 
@@ -123,6 +144,14 @@ Other changes:
   beets/library directory.
 - Added a test to check that all plugins can be imported without errors.
 - :doc:`/guides/main`: Add instructions to install beets on Void Linux.
+- :doc:`plugins/lastgenre`: Refactor loading whitelist and canonicalization
+  file. :bug:`5979`
+- :doc:`plugins/lastgenre`: Updated and streamlined the genre whitelist and
+  canonicalization tree :bug:`5977`
+- UI: Update default ``text_diff_added`` color from **bold red** to **bold
+  green.**
+- UI: Use ``text_diff_added`` and ``text_diff_removed`` colors in **all** diff
+  comparisons, including case differences.
 
 2.3.1 (May 14, 2025)
 --------------------
@@ -2548,7 +2577,7 @@ Major new features and bigger changes:
   analysis tool. Thanks to :user:`jmwatte`. :bug:`1343`
 - A new ``filesize`` field on items indicates the number of bytes in the file.
   :bug:`1291`
-- A new :ref:`searchlimit` configuration option allows you to specify how many
+- A new :ref:`search_limit` configuration option allows you to specify how many
   search results you wish to see when looking up releases at MusicBrainz during
   import. :bug:`1245`
 - The importer now records the data source for a match in a new flexible
@@ -4172,7 +4201,7 @@ fetching cover art for your music, enable this plugin after upgrading to beets
   "database is locked"). This release synchronizes access to the database to
   avoid internal SQLite contention, which should avoid this error.
 - Plugins can now add parallel stages to the import pipeline. See
-  :ref:`writing-plugins`.
+  :ref:`basic-plugin-setup`.
 - Beets now prints out an error when you use an unrecognized field name in a
   query: for example, when running ``beet ls -a artist:foo`` (because ``artist``
   is an item-level field).
@@ -4355,7 +4384,7 @@ to come in the next couple of releases.
   addition to replacing them) if the special string ``<strip>`` is specified as
   the replacement.
 - New plugin API: plugins can now add fields to the MediaFile tag abstraction
-  layer. See :ref:`writing-plugins`.
+  layer. See :ref:`basic-plugin-setup`.
 - A reasonable error message is now shown when the import log file cannot be
   opened.
 - The import log file is now flushed and closed properly so that it can be used
@@ -4399,7 +4428,7 @@ filenames that would otherwise conflict. Three new plugins (``inline``,
   naming rules: for example, ``%upper{%left{$artist,1}}`` will insert the
   capitalized first letter of the track's artist. For more details, see
   :doc:`/reference/pathformat`. If you're interested in adding your own template
-  functions via a plugin, see :ref:`writing-plugins`.
+  functions via a plugin, see :ref:`basic-plugin-setup`.
 - Plugins can also now define new path *fields* in addition to functions.
 - The new :doc:`/plugins/inline` lets you **use Python expressions to customize
   path formats** by defining new fields in the config file.

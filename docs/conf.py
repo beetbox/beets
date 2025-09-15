@@ -13,8 +13,8 @@ copyright = "2016, Adrian Sampson"
 
 master_doc = "index"
 language = "en"
-version = "2.3"
-release = "2.3.1"
+version = "2.4"
+release = "2.4.0"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -75,13 +75,29 @@ man_pages = [
     ),
 ]
 
+# Global substitutions that can be used anywhere in the documentation.
+rst_epilog = """
+.. |Album| replace:: :class:`~beets.library.models.Album`
+.. |AlbumInfo| replace:: :class:`beets.autotag.hooks.AlbumInfo`
+.. |ImportSession| replace:: :class:`~beets.importer.session.ImportSession`
+.. |ImportTask| replace:: :class:`~beets.importer.tasks.ImportTask`
+.. |Item| replace:: :class:`~beets.library.models.Item`
+.. |Library| replace:: :class:`~beets.library.library.Library`
+.. |Model| replace:: :class:`~beets.dbcore.db.Model`
+.. |TrackInfo| replace:: :class:`beets.autotag.hooks.TrackInfo`
+"""
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 
 html_theme = "pydata_sphinx_theme"
-html_theme_options = {"collapse_navigation": True, "logo": {"text": "beets"}}
+html_theme_options = {
+    "collapse_navigation": False,
+    "logo": {"text": "beets"},
+    "show_nav_level": 2,  # How many levels in left sidebar to show automatically
+    "navigation_depth": 4,  # How many levels of navigation to expand
+}
 html_title = "beets"
 html_logo = "_static/beets_logo_nobg.png"
 html_static_path = ["_static"]
