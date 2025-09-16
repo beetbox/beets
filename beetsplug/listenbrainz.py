@@ -13,7 +13,6 @@ from beetsplug.lastimport import process_tracks
 class ListenBrainzPlugin(BeetsPlugin):
     """A Beets plugin for interacting with ListenBrainz."""
 
-    data_source = "ListenBrainz"
     ROOT = "http://api.listenbrainz.org/1/"
 
     def __init__(self):
@@ -27,7 +26,7 @@ class ListenBrainzPlugin(BeetsPlugin):
     def commands(self):
         """Add beet UI commands to interact with ListenBrainz."""
         lbupdate_cmd = ui.Subcommand(
-            "lbimport", help=f"Import {self.data_source} history"
+            "lbimport", help="Import ListenBrainz history"
         )
 
         def func(lib, opts, args):

@@ -158,6 +158,21 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
     early_import_stages: list[ImportStageFunc]
     import_stages: list[ImportStageFunc]
 
+    def __init_subclass__(cls) -> None:
+        # Dynamically copy methods to BeetsPlugin for legacy support
+        # TODO: Remove this in the future major release, v3.0.0
+        if inspect.isabstract(cls):
+            return
+
+        from beets.metadata_plugins import MetadataSourcePlugin
+
+        abstractmethods = MetadataSourcePlugin.__abstractmethods__
+        for name, method in inspect.getmembers(
+            MetadataSourcePlugin, predicate=inspect.isfunction
+        ):
+            if name not in abstractmethods and not hasattr(cls, name):
+                setattr(cls, name, method)
+
     def __init__(self, name: str | None = None):
         """Perform one-time plugin setup."""
 

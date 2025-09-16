@@ -8,7 +8,6 @@ implemented as plugins.
 from __future__ import annotations
 
 import abc
-import inspect
 import re
 import warnings
 from typing import TYPE_CHECKING, Generic, Literal, Sequence, TypedDict, TypeVar
@@ -148,7 +147,12 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.config.add({"source_weight": 0.5})
+        self.config.add(
+            {
+                "search_limit": 5,
+                "source_weight": 0.5,
+            }
+        )
 
     @abc.abstractmethod
     def album_for_id(self, album_id: str) -> AlbumInfo | None:
@@ -416,13 +420,3 @@ class SearchApiMetadataSourcePlugin(
             query = unidecode.unidecode(query)
 
         return query
-
-
-# Dynamically copy methods to BeetsPlugin for legacy support
-# TODO: Remove this in the future major release, v3.0.0
-
-for name, method in inspect.getmembers(
-    MetadataSourcePlugin, predicate=inspect.isfunction
-):
-    if not hasattr(BeetsPlugin, name):
-        setattr(BeetsPlugin, name, method)

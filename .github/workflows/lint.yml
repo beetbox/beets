@@ -143,4 +143,4 @@ jobs:
         run: poe lint-docs
 
       - name: Build docs
-        run: poe docs -e 'SPHINXOPTS=--fail-on-warning --keep-going'
+        run: poe docs -- -e 'SPHINXOPTS=--fail-on-warning --keep-going'
