@@ -11,8 +11,8 @@ New features:
 
 Bug fixes:
 
-- :doc:`/plugins/fromfilename`: Fix :bug:`5218` and improve the code
-  (refactor regexps, allow for more cases, add some logging)
+- :doc:`/plugins/fromfilename`: Fix :bug:`5218` and improve the code (refactor
+  regexps, allow for more cases, add some logging)
 
 For packagers:
 
