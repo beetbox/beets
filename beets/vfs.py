@@ -16,17 +16,25 @@
 libraries.
 """
 
-from typing import Any, NamedTuple
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, NamedTuple
 
 from beets import util
 
+if TYPE_CHECKING:
+    from beets.library import Library
+
 
 class Node(NamedTuple):
-    files: dict[str, Any]
-    dirs: dict[str, Any]
+    files: dict[str, str]
+    # Maps filenames to Item ids.
+
+    dirs: dict[str, Node]
+    # Maps directory names to child nodes.
 
 
-def _insert(node, path, itemid):
+def _insert(node: Node, path: list[str], itemid: str):
     """Insert an item into a virtual filesystem node."""
     if len(path) == 1:
         # Last component. Insert file.
@@ -40,7 +48,7 @@ def _insert(node, path, itemid):
         _insert(node.dirs[dirname], rest, itemid)
 
 
-def libtree(lib):
+def libtree(lib: Library) -> Node:
     """Generates a filesystem-like directory tree for the files
     contained in `lib`. Filesystem nodes are (files, dirs) named
     tuples in which both components are dictionaries. The first
