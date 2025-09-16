@@ -132,7 +132,6 @@ class ZeroPlugin(BeetsPlugin):
 
         if not self.fields_to_progs:
             self._log.warning("no fields list to remove")
-            return fields_set
 
         for field, progs in self.fields_to_progs.items():
             if field in tags:
