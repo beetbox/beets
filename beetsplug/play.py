@@ -12,18 +12,17 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Send the results of a query to the configured music player as a playlist.
-"""
+"""Send the results of a query to the configured music player as a playlist."""
 
 import shlex
 import subprocess
 from os.path import relpath
-from tempfile import NamedTemporaryFile
 
 from beets import config, ui, util
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 from beets.ui.commands import PromptChoice
+from beets.util import get_temp_filename
 
 # Indicate where arguments should be inserted into the command string.
 # If this is missing, they're placed at the end.
@@ -44,7 +43,7 @@ def play(
     """
     # Print number of tracks or albums to be played, log command to be run.
     item_type += "s" if len(selection) > 1 else ""
-    ui.print_("Playing {} {}.".format(len(selection), item_type))
+    ui.print_(f"Playing {len(selection)} {item_type}.")
     log.debug("executing command: {} {!r}", command_str, open_args)
 
     try:
@@ -108,7 +107,7 @@ class PlayPlugin(BeetsPlugin):
         # Perform search by album and add folders rather than tracks to
         # playlist.
         if opts.album:
-            selection = lib.albums(ui.decargs(args))
+            selection = lib.albums(args)
             paths = []
 
             sort = lib.get_default_album_sort()
@@ -121,7 +120,7 @@ class PlayPlugin(BeetsPlugin):
 
         # Perform item query and add tracks to playlist.
         else:
-            selection = lib.items(ui.decargs(args))
+            selection = lib.items(args)
             paths = [item.path for item in selection]
             item_type = "track"
 
@@ -155,7 +154,7 @@ class PlayPlugin(BeetsPlugin):
                 return f"{command_str} {args}"
         else:
             # Don't include the marker in the command.
-            return command_str.replace(" " + ARGS_MARKER, "")
+            return command_str.replace(f" {ARGS_MARKER}", "")
 
     def _playlist_or_paths(self, paths):
         """Return either the raw paths of items or a playlist of the items."""
@@ -180,9 +179,7 @@ class PlayPlugin(BeetsPlugin):
             ui.print_(
                 ui.colorize(
                     "text_warning",
-                    "You are about to queue {} {}.".format(
-                        len(selection), item_type
-                    ),
+                    f"You are about to queue {len(selection)} {item_type}.",
                 )
             )
 
@@ -194,15 +191,15 @@ class PlayPlugin(BeetsPlugin):
     def _create_tmp_playlist(self, paths_list):
         """Create a temporary .m3u file. Return the filename."""
         utf8_bom = config["play"]["bom"].get(bool)
-        m3u = NamedTemporaryFile("wb", suffix=".m3u", delete=False)
+        filename = get_temp_filename(__name__, suffix=".m3u")
+        with open(filename, "wb") as m3u:
+            if utf8_bom:
+                m3u.write(b"\xef\xbb\xbf")
 
-        if utf8_bom:
-            m3u.write(b"\xEF\xBB\xBF")
+            for item in paths_list:
+                m3u.write(item + b"\n")
 
-        for item in paths_list:
-            m3u.write(item + b"\n")
-        m3u.close()
-        return m3u.name
+        return filename
 
     def before_choose_candidate_listener(self, session, task):
         """Append a "Play" choice to the interactive importer prompt."""

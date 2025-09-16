@@ -14,7 +14,6 @@
 
 """Determine BPM by pressing a key to the rhythm."""
 
-
 import time
 
 from beets import ui
@@ -58,15 +57,14 @@ class BPMPlugin(BeetsPlugin):
     def commands(self):
         cmd = ui.Subcommand(
             "bpm",
-            help="determine bpm of a song by pressing " "a key to the rhythm",
+            help="determine bpm of a song by pressing a key to the rhythm",
         )
         cmd.func = self.command
         return [cmd]
 
     def command(self, lib, opts, args):
-        items = lib.items(ui.decargs(args))
         write = ui.should_write()
-        self.get_bpm(items, write)
+        self.get_bpm(lib.items(args), write)
 
     def get_bpm(self, items, write=False):
         overwrite = self.config["overwrite"].get(bool)
@@ -75,12 +73,12 @@ class BPMPlugin(BeetsPlugin):
 
         item = items[0]
         if item["bpm"]:
-            self._log.info("Found bpm {0}", item["bpm"])
+            self._log.info("Found bpm {}", item["bpm"])
             if not overwrite:
                 return
 
         self._log.info(
-            "Press Enter {0} times to the rhythm or Ctrl-D " "to exit",
+            "Press Enter {} times to the rhythm or Ctrl-D to exit",
             self.config["max_strokes"].get(int),
         )
         new_bpm = bpm(self.config["max_strokes"].get(int))
@@ -88,4 +86,4 @@ class BPMPlugin(BeetsPlugin):
         if write:
             item.try_write()
         item.store()
-        self._log.info("Added new bpm {0}", item["bpm"])
+        self._log.info("Added new bpm {}", item["bpm"])

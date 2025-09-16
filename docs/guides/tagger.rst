@@ -1,3 +1,5 @@
+.. _using-the-auto-tagger:
+
 Using the Auto-Tagger
 =====================
 
@@ -39,7 +41,7 @@ directory and it imports the files into your library, tagging them as it goes
 beets currently makes about the music you import. In time, we'd like to remove
 all of these limitations.
 
-* Your music should be organized by album into directories. That is, the tagger
+- Your music should be organized by album into directories. That is, the tagger
   assumes that each album is in a single directory. These directories can be
   arbitrarily deep (like ``music/2010/hiphop/seattle/freshespresso/glamour``),
   but any directory with music files in it is interpreted as a separate album.
@@ -48,35 +50,35 @@ all of these limitations.
 
   First, directories that look like separate parts of a *multi-disc album* are
   tagged together as a single release. If two adjacent albums have a common
-  prefix, followed by "disc," "disk," or "CD" and then a number, they are
-  tagged together.
+  prefix, followed by "disc," "disk," or "CD" and then a number, they are tagged
+  together.
 
   Second, if you have jumbled directories containing more than one album, you
-  can ask beets to split them apart for you based on their metadata. Use
-  either the ``--group-albums`` command-line flag or the *G* interactive
-  option described below.
+  can ask beets to split them apart for you based on their metadata. Use either
+  the ``--group-albums`` command-line flag or the *G* interactive option
+  described below.
 
-* The music may have bad tags, but it's not completely untagged. This is
-  because beets by default infers tags based on existing metadata. But this is
-  not a hard and fast rule---there are a few ways to tag metadata-poor music:
+- The music may have bad tags, but it's not completely untagged. This is because
+  beets by default infers tags based on existing metadata. But this is not a
+  hard and fast rule---there are a few ways to tag metadata-poor music:
 
-    * You can use the *E* or *I* options described below to search in
-      MusicBrainz for a specific album or song.
-    * The :doc:`Acoustid plugin </plugins/chroma>` extends the autotagger to
-      use acoustic fingerprinting to find information for arbitrary audio.
-      Install that plugin if you're willing to spend a little more CPU power
-      to get tags for unidentified albums. (But be aware that it does slow
-      down the process.)
-    * The :doc:`FromFilename plugin </plugins/fromfilename>` adds the ability
-      to guess tags from the filenames. Use this plugin if your tracks have
-      useful names (like "03 Call Me Maybe.mp3") but their tags don't reflect
-      that.
+      - You can use the *E* or *I* options described below to search in
+        MusicBrainz for a specific album or song.
+      - The :doc:`Acoustid plugin </plugins/chroma>` extends the autotagger to
+        use acoustic fingerprinting to find information for arbitrary audio.
+        Install that plugin if you're willing to spend a little more CPU power
+        to get tags for unidentified albums. (But be aware that it does slow
+        down the process.)
+      - The :doc:`FromFilename plugin </plugins/fromfilename>` adds the ability
+        to guess tags from the filenames. Use this plugin if your tracks have
+        useful names (like "03 Call Me Maybe.mp3") but their tags don't reflect
+        that.
 
-* Currently, MP3, AAC, FLAC, ALAC, Ogg Vorbis, Monkey's Audio, WavPack,
-  Musepack, Windows Media, Opus, and AIFF files are supported. (Do you use
-  some other format? Please `file a feature request`_!)
+- Currently, MP3, AAC, FLAC, ALAC, Ogg Vorbis, Monkey's Audio, WavPack,
+  Musepack, Windows Media, Opus, and AIFF files are supported. (Do you use some
+  other format? Please `file a feature request`_!)
 
-.. _file a feature request: https://github.com/beetbox/beets/issues/new
+.. _file a feature request: https://github.com/beetbox/beets/issues/new?template=feature-request.md
 
 Now that that's out of the way, let's tag some music.
 
@@ -88,44 +90,35 @@ Options
 To import music, just say ``beet import MUSICDIR``. There are, of course, a few
 command-line options you should know:
 
-* ``beet import -A``: don't try to autotag anything; just import files (this
+- ``beet import -A``: don't try to autotag anything; just import files (this
   goes much faster than with autotagging enabled)
-
-* ``beet import -W``: when autotagging, don't write new tags to the files
+- ``beet import -W``: when autotagging, don't write new tags to the files
   themselves (just keep the new metadata in beets' database)
-
-* ``beet import -C``: don't copy imported files to your music directory; leave
+- ``beet import -C``: don't copy imported files to your music directory; leave
   them where they are
-
-* ``beet import -m``: move imported files to your music directory (overrides
-  the ``-c`` option)
-
-* ``beet import -l LOGFILE``: write a message to ``LOGFILE`` every time you skip
+- ``beet import -m``: move imported files to your music directory (overrides the
+  ``-c`` option)
+- ``beet import -l LOGFILE``: write a message to ``LOGFILE`` every time you skip
   an album or choose to take its tags "as-is" (see below) or the album is
   skipped as a duplicate; this lets you come back later and reexamine albums
   that weren't tagged successfully. Run ``beet import --from-logfile=LOGFILE``
   rerun the importer on such paths from the logfile.
-
-* ``beet import -q``: quiet mode. Never prompt for input and, instead,
+- ``beet import -q``: quiet mode. Never prompt for input and, instead,
   conservatively skip any albums that need your opinion. The ``-ql`` combination
   is recommended.
-
-* ``beet import -t``: timid mode, which is sort of the opposite of "quiet." The
+- ``beet import -t``: timid mode, which is sort of the opposite of "quiet." The
   importer will ask your permission for everything it does, confirming even very
   good matches with a prompt.
-
-* ``beet import -p``: automatically resume an interrupted import. The importer
+- ``beet import -p``: automatically resume an interrupted import. The importer
   keeps track of imports that don't finish completely (either due to a crash or
   because you stop them halfway through) and, by default, prompts you to decide
   whether to resume them. The ``-p`` flag automatically says "yes" to this
   question. Relatedly, ``-P`` flag automatically says "no."
-
-* ``beet import -s``: run in *singleton* mode, tagging individual tracks instead
-  of whole albums at a time. See the "as Tracks" choice below.  This means you
+- ``beet import -s``: run in *singleton* mode, tagging individual tracks instead
+  of whole albums at a time. See the "as Tracks" choice below. This means you
   can use ``beet import -AC`` to quickly add a bunch of files to your library
   without doing anything to them.
-
-* ``beet import -g``: assume there are multiple albums contained in each
+- ``beet import -g``: assume there are multiple albums contained in each
   directory. The tracks contained a directory are grouped by album artist and
   album name and you will be asked to import each of these groups separately.
   See the "Group albums" choice below.
@@ -133,7 +126,9 @@ command-line options you should know:
 Similarity
 ----------
 
-So you import an album into your beets library. It goes like this::
+So you import an album into your beets library. It goes like this:
+
+::
 
     $ beet imp witchinghour
     Tagging:
@@ -160,7 +155,9 @@ better at making the call than a computer. So it occasionally asks for help.
 Choices
 -------
 
-When beets needs your input about a match, it says something like this::
+When beets needs your input about a match, it says something like this:
+
+::
 
     Tagging:
         Beirut - Lon Gisland
@@ -172,36 +169,28 @@ When beets asks you this question, it wants you to enter one of the capital
 letters: A, M, S, U, T, G, E, I or B. That is, you can choose one of the
 following:
 
-* *A*: Apply the suggested changes shown and move on.
-
-* *M*: Show more options. (See the Candidates section, below.)
-
-* *S*: Skip this album entirely and move on to the next one.
-
-* *U*: Import the album without changing any tags. This is a good option for
+- *A*: Apply the suggested changes shown and move on.
+- *M*: Show more options. (See the Candidates section, below.)
+- *S*: Skip this album entirely and move on to the next one.
+- *U*: Import the album without changing any tags. This is a good option for
   albums that aren't in the MusicBrainz database, like your friend's operatic
   faux-goth solo record that's only on two CD-Rs in the universe.
-
-* *T*: Import the directory as *singleton* tracks, not as an album. Choose this
+- *T*: Import the directory as *singleton* tracks, not as an album. Choose this
   if the tracks don't form a real release---you just have one or more loner
   tracks that aren't a full album. This will temporarily flip the tagger into
   *singleton* mode, which attempts to match each track individually.
-
-* *G*: Group tracks in this directory by *album artist* and *album* and import
+- *G*: Group tracks in this directory by *album artist* and *album* and import
   groups as albums. If the album artist for a track is not set then the artist
   is used to group that track. For each group importing proceeds as for
   directories. This is helpful if a directory contains multiple albums.
-
-* *E*: Enter an artist and album to use as a search in the database. Use this
+- *E*: Enter an artist and album to use as a search in the database. Use this
   option if beets hasn't found any good options because the album is mistagged
   or untagged.
-
-* *I*: Enter a metadata backend ID to use as search in the database. Use this
+- *I*: Enter a metadata backend ID to use as search in the database. Use this
   option to specify a backend entity (for example, a MusicBrainz release or
   recording) directly, by pasting its ID or the full URL. You can also specify
   several IDs by separating them by a space.
-
-* *B*: Cancel this import task altogether. No further albums will be tagged;
+- *B*: Cancel this import task altogether. No further albums will be tagged;
   beets shuts down immediately. The next time you attempt to import the same
   directory, though, beets will ask you if you want to resume tagging where you
   left off.
@@ -214,7 +203,9 @@ Candidates
 
 If you choose the M option, or if beets isn't very confident about any of the
 choices it found, it will present you with a list of choices (called
-candidates), like so::
+candidates), like so:
+
+::
 
     Finding tags for "Panther - Panther".
     Candidates:
@@ -224,9 +215,9 @@ candidates), like so::
 
 Here, you have many of the same options as before, but you can also enter a
 number to choose one of the options that beets has found. Don't worry about
-guessing---beets will show you the proposed changes and ask you to confirm
-them, just like the earlier example. As the prompt suggests, you can just hit
-return to select the first candidate.
+guessing---beets will show you the proposed changes and ask you to confirm them,
+just like the earlier example. As the prompt suggests, you can just hit return
+to select the first candidate.
 
 .. _guide-duplicates:
 
@@ -234,7 +225,9 @@ Duplicates
 ----------
 
 If beets finds an album or item in your library that seems to be the same as the
-one you're importing, you may see a prompt like this::
+one you're importing, you may see a prompt like this:
+
+::
 
     This album is already in the library!
     [S]kip new, Keep all, Remove old, Merge all?
@@ -242,19 +235,17 @@ one you're importing, you may see a prompt like this::
 Beets wants to keep you safe from duplicates, which can be a real pain, so you
 have four choices in this situation. You can skip importing the new music,
 choosing to keep the stuff you already have in your library; you can keep both
-the old and the new music; you can remove the existing music and choose the
-new stuff; or you can merge all the new and old tracks into a single album.
-If you choose that "remove" option, any duplicates will be
-removed from your library database---and, if the corresponding files are located
-inside of your beets library directory, the files themselves will be deleted as
-well.
+the old and the new music; you can remove the existing music and choose the new
+stuff; or you can merge all the new and old tracks into a single album. If you
+choose that "remove" option, any duplicates will be removed from your library
+database---and, if the corresponding files are located inside of your beets
+library directory, the files themselves will be deleted as well.
 
 If you choose "merge", beets will try re-importing the existing and new tracks
-as one bundle together.
-This is particularly helpful when you have an album that's missing some tracks
-and then want to import the remaining songs.
-The importer will ask you the same questions as it would if you were importing
-all tracks at once.
+as one bundle together. This is particularly helpful when you have an album
+that's missing some tracks and then want to import the remaining songs. The
+importer will ask you the same questions as it would if you were importing all
+tracks at once.
 
 If you choose to keep two identically-named albums, beets can avoid storing both
 in the same directory. See :ref:`aunique` for details.
@@ -267,15 +258,16 @@ files, but can get confused when files don't have any metadata (or have wildly
 incorrect metadata). In this case, you need *acoustic fingerprinting*, a
 technology that identifies songs from the audio itself. With fingerprinting,
 beets can autotag files that have very bad or missing tags. The :doc:`"chroma"
-plugin </plugins/chroma>`, distributed with beets, uses the `Chromaprint`_ open-source fingerprinting technology, but it's disabled by default. That's because
-it's sort of tricky to install. See the :doc:`/plugins/chroma` page for a guide
-to getting it set up.
+plugin </plugins/chroma>`, distributed with beets, uses the Chromaprint_
+open-source fingerprinting technology, but it's disabled by default. That's
+because it's sort of tricky to install. See the :doc:`/plugins/chroma` page for
+a guide to getting it set up.
 
 Before you jump into acoustic fingerprinting with both feet, though, give beets
 a try without it. You may be surprised at how well metadata-based matching
 works.
 
-.. _Chromaprint: https://acoustid.org/chromaprint
+.. _chromaprint: https://acoustid.org/chromaprint
 
 Album Art, Lyrics, Genres and Such
 ----------------------------------
@@ -291,11 +283,11 @@ Missing Albums?
 ---------------
 
 If you're having trouble tagging a particular album with beets, check to make
-sure the album is present in `the MusicBrainz database`_.  You can search on
+sure the album is present in `the MusicBrainz database`_. You can search on
 their site to make sure it's cataloged there. If not, anyone can edit
 MusicBrainz---so consider adding the data yourself.
 
-.. _the MusicBrainz database: https://musicbrainz.org/
+.. _the musicbrainz database: https://musicbrainz.org/
 
 If you think beets is ignoring an album that's listed in MusicBrainz, please
 `file a bug report`_.
@@ -305,8 +297,9 @@ If you think beets is ignoring an album that's listed in MusicBrainz, please
 I Hope That Makes Sense
 -----------------------
 
-If we haven't made the process clear, please post on `the discussion
-board`_ and we'll try to improve this guide.
+If we haven't made the process clear, please post on `the discussion board`_ and
+we'll try to improve this guide.
+
+.. _the discussion board: https://github.com/beetbox/beets/discussions/
 
 .. _the mailing list: https://groups.google.com/group/beets-users
-.. _the discussion board: https://github.com/beetbox/beets/discussions/

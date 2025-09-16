@@ -16,11 +16,14 @@
 libraries.
 """
 
-from collections import namedtuple
+from typing import Any, NamedTuple
 
 from beets import util
 
-Node = namedtuple("Node", ["files", "dirs"])
+
+class Node(NamedTuple):
+    files: dict[str, Any]
+    dirs: dict[str, Any]
 
 
 def _insert(node, path, itemid):
@@ -46,7 +49,7 @@ def libtree(lib):
     """
     root = Node({}, {})
     for item in lib.items():
-        dest = item.destination(fragment=True)
-        parts = util.components(dest)
+        dest = item.destination(relative_to_libdir=True)
+        parts = util.components(util.as_string(dest))
         _insert(root, parts, item.id)
     return root

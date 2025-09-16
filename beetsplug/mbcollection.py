@@ -70,18 +70,20 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
         if not collections["collection-list"]:
             raise ui.UserError("no collections exist for user")
 
-        # Get all collection IDs, avoiding event collections
-        collection_ids = [x["id"] for x in collections["collection-list"]]
+        # Get all release collection IDs, avoiding event collections
+        collection_ids = [
+            x["id"]
+            for x in collections["collection-list"]
+            if x["entity-type"] == "release"
+        ]
         if not collection_ids:
-            raise ui.UserError("No collection found.")
+            raise ui.UserError("No release collection found.")
 
         # Check that the collection exists so we can present a nice error
         collection = self.config["collection"].as_str()
         if collection:
             if collection not in collection_ids:
-                raise ui.UserError(
-                    "invalid collection ID: {}".format(collection)
-                )
+                raise ui.UserError(f"invalid collection ID: {collection}")
             return collection
 
         # No specified collection. Just return the first collection ID
@@ -152,10 +154,10 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
                 if re.match(UUID_REGEX, aid):
                     album_ids.append(aid)
                 else:
-                    self._log.info("skipping invalid MBID: {0}", aid)
+                    self._log.info("skipping invalid MBID: {}", aid)
 
         # Submit to MusicBrainz.
-        self._log.info("Updating MusicBrainz collection {0}...", collection_id)
+        self._log.info("Updating MusicBrainz collection {}...", collection_id)
         submit_albums(collection_id, album_ids)
         if remove_missing:
             self.remove_missing(collection_id, lib.albums())

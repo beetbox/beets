@@ -12,22 +12,20 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Get a random song or album from the library.
-"""
+"""Get a random song or album from the library."""
 
 from beets.plugins import BeetsPlugin
 from beets.random import random_objs
-from beets.ui import Subcommand, decargs, print_
+from beets.ui import Subcommand, print_
 
 
 def random_func(lib, opts, args):
     """Select some random items or albums and print the results."""
     # Fetch all the objects matching the query into a list.
-    query = decargs(args)
     if opts.album:
-        objs = list(lib.albums(query))
+        objs = list(lib.albums(args))
     else:
-        objs = list(lib.items(query))
+        objs = list(lib.items(args))
 
     # Print a random subset.
     objs = random_objs(

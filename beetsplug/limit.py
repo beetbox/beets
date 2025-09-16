@@ -25,7 +25,7 @@ from itertools import islice
 
 from beets.dbcore import FieldQuery
 from beets.plugins import BeetsPlugin
-from beets.ui import Subcommand, decargs, print_
+from beets.ui import Subcommand, print_
 
 
 def lslimit(lib, opts, args):
@@ -36,11 +36,10 @@ def lslimit(lib, opts, args):
     if (opts.head or opts.tail or 0) < 0:
         raise ValueError("Limit value must be non-negative")
 
-    query = decargs(args)
     if opts.album:
-        objs = lib.albums(query)
+        objs = lib.albums(args)
     else:
-        objs = lib.items(query)
+        objs = lib.items(args)
 
     if opts.head is not None:
         objs = islice(objs, opts.head)
@@ -78,6 +77,11 @@ class LimitPlugin(BeetsPlugin):
 
             n = 0
             N = None
+
+            def __init__(self, *args, **kwargs) -> None:
+                """Force the query to be slow so that 'value_match' is called."""
+                super().__init__(*args, **kwargs)
+                self.fast = False
 
             @classmethod
             def value_match(cls, pattern, value):

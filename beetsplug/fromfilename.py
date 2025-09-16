@@ -111,7 +111,7 @@ def apply_matches(d, log):
         for item in d:
             if not item.artist:
                 item.artist = artist
-                log.info("Artist replaced with: {}".format(item.artist))
+                log.info("Artist replaced with: {.artist}", item)
     # otherwise, if the pattern contains "title", use that for title_field
     elif "title" in keys:
         title_field = "title"
@@ -122,11 +122,11 @@ def apply_matches(d, log):
     for item in d:
         if title_field and bad_title(item.title):
             item.title = str(d[item][title_field])
-            log.info("Title replaced with: {}".format(item.title))
+            log.info("Title replaced with: {.title}", item)
 
         if "track" in d[item] and item.track == 0:
             item.track = int(d[item]["track"])
-            log.info("Track replaced with: {}".format(item.track))
+            log.info("Track replaced with: {.track}", item)
 
 
 # Plugin structure and hook into import process.

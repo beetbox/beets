@@ -1,11 +1,11 @@
 """Updates the Emby Library whenever the beets library is changed.
 
-    emby:
-        host: localhost
-        port: 8096
-        username: user
-        apikey: apikey
-        password: password
+emby:
+    host: localhost
+    port: 8096
+    username: user
+    apikey: apikey
+    password: password
 """
 
 import hashlib
@@ -13,7 +13,6 @@ from urllib.parse import parse_qs, urlencode, urljoin, urlsplit, urlunsplit
 
 import requests
 
-from beets import config
 from beets.plugins import BeetsPlugin
 
 
@@ -39,9 +38,7 @@ def api_url(host, port, endpoint):
         hostname_list.insert(0, "http://")
         hostname = "".join(hostname_list)
 
-    joined = urljoin(
-        "{hostname}:{port}".format(hostname=hostname, port=port), endpoint
-    )
+    joined = urljoin(f"{hostname}:{port}", endpoint)
 
     scheme, netloc, path, query_string, fragment = urlsplit(joined)
     query_params = parse_qs(query_string)
@@ -82,12 +79,12 @@ def create_headers(user_id, token=None):
     headers = {}
 
     authorization = (
-        'MediaBrowser UserId="{user_id}", '
+        f'MediaBrowser UserId="{user_id}", '
         'Client="other", '
         'Device="beets", '
         'DeviceId="beets", '
         'Version="0.0.0"'
-    ).format(user_id=user_id)
+    )
 
     headers["x-emby-authorization"] = authorization
 
@@ -143,17 +140,23 @@ def get_user(host, port, username):
 
 class EmbyUpdate(BeetsPlugin):
     def __init__(self):
-        super().__init__()
+        super().__init__("emby")
 
         # Adding defaults.
-        config["emby"].add(
+        self.config.add(
             {
                 "host": "http://localhost",
                 "port": 8096,
-                "apikey": None,
+                "username": None,
                 "password": None,
+                "userid": None,
+                "apikey": None,
             }
         )
+        self.config["username"].redact = True
+        self.config["password"].redact = True
+        self.config["userid"].redact = True
+        self.config["apikey"].redact = True
 
         self.register_listener("database_change", self.listen_for_db_change)
 
@@ -165,12 +168,12 @@ class EmbyUpdate(BeetsPlugin):
         """When the client exists try to send refresh request to Emby."""
         self._log.info("Updating Emby library...")
 
-        host = config["emby"]["host"].get()
-        port = config["emby"]["port"].get()
-        username = config["emby"]["username"].get()
-        password = config["emby"]["password"].get()
-        userid = config["emby"]["userid"].get()
-        token = config["emby"]["apikey"].get()
+        host = self.config["host"].get()
+        port = self.config["port"].get()
+        username = self.config["username"].get()
+        password = self.config["password"].get()
+        userid = self.config["userid"].get()
+        token = self.config["apikey"].get()
 
         # Check if at least a apikey or password is given.
         if not any([password, token]):
@@ -181,7 +184,7 @@ class EmbyUpdate(BeetsPlugin):
             # Get user information from the Emby API.
             user = get_user(host, port, username)
             if not user:
-                self._log.warning(f"User {username} could not be found.")
+                self._log.warning("User {} could not be found.", username)
                 return
             userid = user[0]["Id"]
 
@@ -193,7 +196,7 @@ class EmbyUpdate(BeetsPlugin):
             # Get authentication token.
             token = get_token(host, port, headers, auth_data)
             if not token:
-                self._log.warning("Could not get token for user {0}", username)
+                self._log.warning("Could not get token for user {}", username)
                 return
 
         # Recreate headers with a token.

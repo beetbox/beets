@@ -14,9 +14,7 @@
 
 """Moves patterns in path formats (suitable for moving articles)."""
 
-
 import re
-from typing import List
 
 from beets.plugins import BeetsPlugin
 
@@ -25,11 +23,11 @@ __version__ = "1.1"
 
 PATTERN_THE = "^the\\s"
 PATTERN_A = "^[a][n]?\\s"
-FORMAT = "{0}, {1}"
+FORMAT = "{}, {}"
 
 
 class ThePlugin(BeetsPlugin):
-    patterns: List[str] = []
+    patterns: list[str] = []
 
     def __init__(self):
         super().__init__()
@@ -40,7 +38,7 @@ class ThePlugin(BeetsPlugin):
             {
                 "the": True,
                 "a": True,
-                "format": "{0}, {1}",
+                "format": "{}, {}",
                 "strip": False,
                 "patterns": [],
             }
@@ -52,11 +50,11 @@ class ThePlugin(BeetsPlugin):
                 try:
                     re.compile(p)
                 except re.error:
-                    self._log.error("invalid pattern: {0}", p)
+                    self._log.error("invalid pattern: {}", p)
                 else:
                     if not (p.startswith("^") or p.endswith("$")):
                         self._log.warning(
-                            'warning: "{0}" will not ' "match string start/end",
+                            'warning: "{}" will not match string start/end',
                             p,
                         )
         if self.config["a"]:
@@ -96,7 +94,7 @@ class ThePlugin(BeetsPlugin):
             for p in self.patterns:
                 r = self.unthe(text, p)
                 if r != text:
-                    self._log.debug('"{0}" -> "{1}"', text, r)
+                    self._log.debug('"{}" -> "{}"', text, r)
                     break
             return r
         else:

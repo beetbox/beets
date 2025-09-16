@@ -25,6 +25,7 @@ from werkzeug.routing import BaseConverter, PathConverter
 
 import beets.library
 from beets import ui, util
+from beets.dbcore.query import PathQuery
 from beets.plugins import BeetsPlugin
 
 # Utilities.
@@ -76,7 +77,7 @@ def json_generator(items, root, expand=False):
                    representation
     :returns:     generator that yields strings
     """
-    yield '{"%s":[' % root
+    yield f'{{"{root}":['
     first = True
     for item in items:
         if first:
@@ -231,9 +232,7 @@ def _get_unique_table_field_values(model, field, sort_field):
         raise KeyError
     with g.lib.transaction() as tx:
         rows = tx.query(
-            'SELECT DISTINCT "{}" FROM "{}" ORDER BY "{}"'.format(
-                field, model._table, sort_field
-            )
+            f"SELECT DISTINCT '{field}' FROM '{model._table}' ORDER BY '{sort_field}'"
         )
     return [row[0] for row in rows]
 
@@ -307,23 +306,8 @@ def all_items():
 def item_file(item_id):
     item = g.lib.get_item(item_id)
 
-    # On Windows under Python 2, Flask wants a Unicode path. On Python 3, it
-    # *always* wants a Unicode path.
-    if os.name == "nt":
-        item_path = util.syspath(item.path)
-    else:
-        item_path = util.py3_path(item.path)
-
+    item_path = util.syspath(item.path)
     base_filename = os.path.basename(item_path)
-    # FIXME: Arguably, this should just use `displayable_path`: The latter
-    # tries `_fsencoding()` first, but then falls back to `utf-8`, too.
-    if isinstance(base_filename, bytes):
-        try:
-            unicode_base_filename = base_filename.decode("utf-8")
-        except UnicodeError:
-            unicode_base_filename = util.displayable_path(base_filename)
-    else:
-        unicode_base_filename = base_filename
 
     try:
         # Imitate http.server behaviour
@@ -331,7 +315,7 @@ def item_file(item_id):
     except UnicodeError:
         safe_filename = unidecode(base_filename)
     else:
-        safe_filename = unicode_base_filename
+        safe_filename = base_filename
 
     response = flask.send_file(
         item_path, as_attachment=True, download_name=safe_filename
@@ -347,7 +331,7 @@ def item_query(queries):
 
 @app.route("/item/path/<everything:path>")
 def item_at_path(path):
-    query = beets.library.PathQuery("path", path.encode("utf-8"))
+    query = PathQuery("path", path.encode("utf-8"))
     item = g.lib.items(query).get()
     if item:
         return flask.jsonify(_rep(item))
@@ -474,7 +458,7 @@ class WebPlugin(BeetsPlugin):
         )
 
         def func(lib, opts, args):
-            args = ui.decargs(args)
+            args = args
             if args:
                 self.config["host"] = args.pop(0)
             if args:
@@ -490,7 +474,7 @@ class WebPlugin(BeetsPlugin):
             # Enable CORS if required.
             if self.config["cors"]:
                 self._log.info(
-                    "Enabling CORS with origin: {0}", self.config["cors"]
+                    "Enabling CORS with origin: {}", self.config["cors"]
                 )
                 from flask_cors import CORS
 

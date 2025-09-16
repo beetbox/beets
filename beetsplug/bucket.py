@@ -12,9 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Provides the %bucket{} function for path formatting.
-"""
-
+"""Provides the %bucket{} function for path formatting."""
 
 import re
 import string
@@ -43,7 +41,7 @@ def span_from_str(span_str):
     def normalize_year(d, yearfrom):
         """Convert string to a 4 digits year"""
         if yearfrom < 100:
-            raise BucketError("%d must be expressed on 4 digits" % yearfrom)
+            raise BucketError(f"{yearfrom} must be expressed on 4 digits")
 
         # if two digits only, pick closest year that ends by these two
         # digits starting from yearfrom
@@ -57,14 +55,13 @@ def span_from_str(span_str):
     years = [int(x) for x in re.findall(r"\d+", span_str)]
     if not years:
         raise ui.UserError(
-            "invalid range defined for year bucket '%s': no "
-            "year found" % span_str
+            f"invalid range defined for year bucket {span_str!r}: no year found"
         )
     try:
         years = [normalize_year(x, years[0]) for x in years]
     except BucketError as exc:
         raise ui.UserError(
-            "invalid range defined for year bucket '%s': %s" % (span_str, exc)
+            f"invalid range defined for year bucket {span_str!r}: {exc}"
         )
 
     res = {"from": years[0], "str": span_str}
@@ -127,22 +124,19 @@ def str2fmt(s):
         "fromnchars": len(m.group("fromyear")),
         "tonchars": len(m.group("toyear")),
     }
-    res["fmt"] = "{}%s{}{}{}".format(
-        m.group("bef"),
-        m.group("sep"),
-        "%s" if res["tonchars"] else "",
-        m.group("after"),
+    res["fmt"] = (
+        f"{m['bef']}{{}}{m['sep']}{'{}' if res['tonchars'] else ''}{m['after']}"
     )
     return res
 
 
 def format_span(fmt, yearfrom, yearto, fromnchars, tonchars):
     """Return a span string representation."""
-    args = str(yearfrom)[-fromnchars:]
+    args = [str(yearfrom)[-fromnchars:]]
     if tonchars:
-        args = (str(yearfrom)[-fromnchars:], str(yearto)[-tonchars:])
+        args.append(str(yearto)[-tonchars:])
 
-    return fmt % args
+    return fmt.format(*args)
 
 
 def extract_modes(spans):
@@ -171,14 +165,12 @@ def build_alpha_spans(alpha_spans_str, alpha_regexs):
             else:
                 raise ui.UserError(
                     "invalid range defined for alpha bucket "
-                    "'%s': no alphanumeric character found" % elem
+                    f"'{elem}': no alphanumeric character found"
                 )
             spans.append(
                 re.compile(
-                    "^["
-                    + ASCII_DIGITS[begin_index : end_index + 1]
-                    + ASCII_DIGITS[begin_index : end_index + 1].upper()
-                    + "]"
+                    rf"^[{ASCII_DIGITS[begin_index : end_index + 1]}]",
+                    re.IGNORECASE,
                 )
             )
     return spans

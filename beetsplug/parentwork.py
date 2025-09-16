@@ -16,7 +16,6 @@
 and work composition date
 """
 
-
 import musicbrainzngs
 
 from beets import ui
@@ -89,8 +88,8 @@ class ParentWorkPlugin(BeetsPlugin):
             force_parent = self.config["force"].get(bool)
             write = ui.should_write()
 
-            for item in lib.items(ui.decargs(args)):
-                changed = self.find_work(item, force_parent)
+            for item in lib.items(args):
+                changed = self.find_work(item, force_parent, verbose=True)
                 if changed:
                     item.store()
                     if write:
@@ -117,7 +116,7 @@ class ParentWorkPlugin(BeetsPlugin):
         force_parent = self.config["force"].get(bool)
 
         for item in task.imported_items():
-            self.find_work(item, force_parent)
+            self.find_work(item, force_parent, verbose=False)
             item.store()
 
     def get_info(self, item, work_info):
@@ -166,7 +165,7 @@ class ParentWorkPlugin(BeetsPlugin):
 
         return parentwork_info
 
-    def find_work(self, item, force):
+    def find_work(self, item, force, verbose):
         """Finds the parent work of a recording and populates the tags
         accordingly.
 
@@ -180,10 +179,8 @@ class ParentWorkPlugin(BeetsPlugin):
 
         if not item.mb_workid:
             self._log.info(
-                "No work for {}, \
-add one at https://musicbrainz.org/recording/{}",
+                "No work for {0}, add one at https://musicbrainz.org/recording/{0.mb_trackid}",
                 item,
-                item.mb_trackid,
             )
             return
 
@@ -222,16 +219,17 @@ add one at https://musicbrainz.org/recording/{}",
 
         if work_date:
             item["work_date"] = work_date
-        return ui.show_model_changes(
-            item,
-            fields=[
-                "parentwork",
-                "parentwork_disambig",
-                "mb_parentworkid",
-                "parent_composer",
-                "parent_composer_sort",
-                "work_date",
-                "parentwork_workid_current",
-                "parentwork_date",
-            ],
-        )
+        if verbose:
+            return ui.show_model_changes(
+                item,
+                fields=[
+                    "parentwork",
+                    "parentwork_disambig",
+                    "mb_parentworkid",
+                    "parent_composer",
+                    "parent_composer_sort",
+                    "work_date",
+                    "parentwork_workid_current",
+                    "parentwork_date",
+                ],
+            )

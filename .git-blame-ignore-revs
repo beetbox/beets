@@ -1,0 +1,73 @@
+# 2014
+# flake8-cleanliness in missing
+e21c04e9125a28ae0452374acf03d93315eb4381
+
+# 2016
+# Removed unicode_literals from library, logging and mediafile
+43572f50b0eb3522239d94149d91223e67d9a009
+# Removed unicode_literals from plugins
+53d2c8d9db87be4d4750ad879bf46176537be73f
+# reformat flake8 errors
+1db46dfeb6607c164afb247d8da82443677795c1
+
+# 2021
+# pyupgrade root
+e26276658052947e9464d9726b703335304c7c13
+# pyupgrade beets  dir
+6d1316f463cb7c9390f85bf35b220e250a35004a
+# pyupgrade autotag dir
+f8b8938fd8bbe91898d0982552bc75d35703d3ef
+# pyupgrade dbcore dir
+d288f872903c79a7ee7c5a7c9cc690809441196e
+# pyupgrade ui directory
+432fa557258d9ff01e23ed750f9a86a96239599e
+# pyupgrade util dir
+af102c3e2f1c7a49e99839e2825906fe01780eec
+# fix unused import and flake8
+910354a6c617ed5aa643cff666205b43e1557373
+# pyupgrade beetsplug and tests
+1ec87a3bdd737abe46c6e614051bf9e314db4619
+
+# 2022
+# Reformat flake8 config comments
+abc3dfbf429b179fac25bd1dff72d577cd4d04c7
+
+# 2023
+# Apply formatting tools to all files
+a6e5201ff3fad4c69bf24d17bace2ef744b9f51b
+
+# 2024
+# Reformat the codebase
+85a17ee5039628a6f3cdcb7a03d7d1bd530fbe89
+# Fix lint issues
+f36bc497c8c8f89004f3f6879908d3f0b25123e1
+# Remove some lint exclusions and fix the issues
+5f78d1b82b2292d5ce0c99623ba0ec444b80d24c
+
+# 2025
+# Fix formatting
+c490ac5810b70f3cf5fd8649669838e8fdb19f4d
+# Importer restructure
+9147577b2b19f43ca827e9650261a86fb0450cef
+# Copy paste query, types from library to dbcore
+1a045c91668c771686f4c871c84f1680af2e944b
+# Library restructure (split library.py into multiple modules)
+0ad4e19d4f870db757373f44d12ff3be2441363a
+# Docs: fix linting issues
+769dcdc88a1263638ae25944ba6b2be3e8933666
+# Reformat all docs using docstrfmt
+ab5acaabb3cd24c482adb7fa4800c89fd6a2f08d
+# Replace format calls with f-strings
+4a361bd501e85de12c91c2474c423559ca672852
+# Replace percent formatting
+9352a79e4108bd67f7e40b1e944c01e0a7353272
+# Replace string concatenation (' + ')
+1c16b2b3087e9c3635d68d41c9541c4319d0bdbe
+# Do not use backslashes to deal with long strings
+2fccf64efe82851861e195b521b14680b480a42a
+# Do not use explicit indices for logging args when not needed
+d93ddf8dd43e4f9ed072a03829e287c78d2570a2
+# Moved dev docs
+07549ed896d9649562d40b75cd30702e6fa6e975
+# Moved plugin docs Further Reading chapter
+33f1a5d0bef8ca08be79ee7a0d02a018d502680d

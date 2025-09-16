@@ -12,9 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Load SQLite extensions.
-"""
-
+"""Load SQLite extensions."""
 
 import sqlite3
 
@@ -27,7 +25,7 @@ class LoadExtPlugin(BeetsPlugin):
         super().__init__()
 
         if not Database.supports_extensions:
-            self._log.warn(
+            self._log.warning(
                 "loadext is enabled but the current SQLite "
                 "installation does not support extensions"
             )
