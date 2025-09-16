@@ -14,9 +14,9 @@
 
 """Tests for the virtual filesystem builder.."""
 
-from beets import vfs
 from beets.test import _common
 from beets.test.helper import BeetsTestCase
+from beetsplug._utils import vfs
 
 
 class VFSTest(BeetsTestCase):
