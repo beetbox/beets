@@ -25,8 +25,10 @@ from beets.util import displayable_path
 # Filename field extraction patterns.
 PATTERNS = [
     # Useful patterns.
-    (r"^(?P<track>\d+)\.?\s*-\s*(?P<artist>.+?)\s*-\s*(?P<title>.+?)"
-     r"(\s*-\s*(?P<tag>.*))?$"),
+    (
+        r"^(?P<track>\d+)\.?\s*-\s*(?P<artist>.+?)\s*-\s*(?P<title>.+?)"
+        r"(\s*-\s*(?P<tag>.*))?$"
+    ),
     r"^(?P<artist>.+?)\s*-\s*(?P<title>.+?)(\s*-\s*(?P<tag>.*))?$",
     r"^(?P<track>\d+)\.?[\s\-_]+(?P<title>.+)$",
     r"^(?P<title>.+) by (?P<artist>.+)$",
@@ -160,7 +162,7 @@ class FromFilenamePlugin(plugins.BeetsPlugin):
 
             # Look for useful information in the filenames.
             for pattern in PATTERNS:
-                self._log.debug("Trying pattern: {}".format(pattern))
+                self._log.debug(f"Trying pattern: {pattern}")
                 d = all_matches(names, pattern)
                 if d:
                     apply_matches(d, self._log)
