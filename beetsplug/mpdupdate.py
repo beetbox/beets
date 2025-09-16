@@ -101,8 +101,8 @@ class MPDUpdatePlugin(BeetsPlugin):
 
         try:
             s = BufferedSocket(host, port)
-        except OSError as e:
-            self._log.warning("MPD connection failed: {0}", str(e.strerror))
+        except OSError:
+            self._log.warning("MPD connection failed", exc_info=True)
             return
 
         resp = s.readline()
@@ -111,7 +111,7 @@ class MPDUpdatePlugin(BeetsPlugin):
             return
 
         if password:
-            s.send(b'password "%s"\n' % password.encode("utf8"))
+            s.send(f'password "{password}"\n'.encode())
             resp = s.readline()
             if b"OK" not in resp:
                 self._log.warning("Authentication failed: {0!r}", resp)

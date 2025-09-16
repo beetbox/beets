@@ -12,15 +12,24 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Representation of type information for DBCore model fields.
-"""
+"""Representation of type information for DBCore model fields."""
+
+from __future__ import annotations
+
+import re
+import time
 import typing
 from abc import ABC
-from typing import Any, Generic, List, TypeVar, Union, cast
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
 
-from beets.util import str2bool
+import beets
+from beets import util
+from beets.util.units import human_seconds_short, raw_seconds_short
 
-from .query import BooleanQuery, FieldQuery, NumericQuery, SubstringQuery
+from . import query
+
+SQLiteType = query.SQLiteType
+BLOB_TYPE = query.BLOB_TYPE
 
 
 class ModelType(typing.Protocol):
@@ -35,8 +44,12 @@ class ModelType(typing.Protocol):
 # Generic type variables, used for the value type T and null type N (if
 # nullable, else T and N are set to the same type for the concrete subclasses
 # of Type).
-N = TypeVar("N")
-T = TypeVar("T", bound=ModelType)
+if TYPE_CHECKING:
+    N = TypeVar("N", default=Any)
+    T = TypeVar("T", bound=ModelType, default=Any)
+else:
+    N = TypeVar("N")
+    T = TypeVar("T", bound=ModelType)
 
 
 class Type(ABC, Generic[T, N]):
@@ -49,11 +62,11 @@ class Type(ABC, Generic[T, N]):
     """The SQLite column type for the value.
     """
 
-    query: typing.Type[FieldQuery] = SubstringQuery
+    query: query.FieldQueryType = query.SubstringQuery
     """The `Query` subclass to be used when querying the field.
     """
 
-    model_type: typing.Type[T]
+    model_type: type[T]
     """The Python type that is used to represent the value in the model.
 
     The model is guaranteed to return a value of this type if the field
@@ -69,7 +82,7 @@ class Type(ABC, Generic[T, N]):
         # have a field null_type similar to `model_type` and use that here.
         return cast(N, self.model_type())
 
-    def format(self, value: Union[N, T]) -> str:
+    def format(self, value: N | T) -> str:
         """Given a value of this type, produce a Unicode string
         representing the value. This is used in template evaluation.
         """
@@ -83,7 +96,7 @@ class Type(ABC, Generic[T, N]):
         else:
             return str(value)
 
-    def parse(self, string: str) -> Union[T, N]:
+    def parse(self, string: str) -> T | N:
         """Parse a (possibly human-written) string and return the
         indicated value of this type.
         """
@@ -92,7 +105,7 @@ class Type(ABC, Generic[T, N]):
         except ValueError:
             return self.null
 
-    def normalize(self, value: Any) -> Union[T, N]:
+    def normalize(self, value: Any) -> T | N:
         """Given a value that will be assigned into a field of this
         type, normalize the value to have the appropriate type. This
         base implementation only reinterprets `None`.
@@ -105,10 +118,7 @@ class Type(ABC, Generic[T, N]):
             # `self.model_type(value)`
             return cast(T, value)
 
-    def from_sql(
-        self,
-        sql_value: Union[None, int, float, str, bytes],
-    ) -> Union[T, N]:
+    def from_sql(self, sql_value: SQLiteType) -> T | N:
         """Receives the value stored in the SQL backend and return the
         value to be stored in the model.
 
@@ -129,7 +139,7 @@ class Type(ABC, Generic[T, N]):
         else:
             return self.normalize(sql_value)
 
-    def to_sql(self, model_value: Any) -> Union[None, int, float, str, bytes]:
+    def to_sql(self, model_value: Any) -> SQLiteType:
         """Convert a value as stored in the model object to a value used
         by the database adapter.
         """
@@ -151,10 +161,10 @@ class BaseInteger(Type[int, N]):
     """A basic integer type."""
 
     sql = "INTEGER"
-    query = NumericQuery
+    query = query.NumericQuery
     model_type = int
 
-    def normalize(self, value: Any) -> Union[int, N]:
+    def normalize(self, value: Any) -> int | N:
         try:
             return self.model_type(round(float(value)))
         except ValueError:
@@ -183,8 +193,8 @@ class BasePaddedInt(BaseInteger[N]):
     def __init__(self, digits: int):
         self.digits = digits
 
-    def format(self, value: Union[int, N]) -> str:
-        return "{0:0{1}d}".format(value or 0, self.digits)
+    def format(self, value: int | N) -> str:
+        return f"{value or 0:0{self.digits}d}"
 
 
 class PaddedInt(BasePaddedInt[int]):
@@ -209,7 +219,7 @@ class ScaledInt(Integer):
         self.suffix = suffix
 
     def format(self, value: int) -> str:
-        return "{}{}".format((value or 0) // self.unit, self.suffix)
+        return f"{(value or 0) // self.unit}{self.suffix}"
 
 
 class Id(NullInteger):
@@ -232,14 +242,14 @@ class BaseFloat(Type[float, N]):
     """
 
     sql = "REAL"
-    query: typing.Type[FieldQuery[Any]] = NumericQuery
+    query: query.FieldQueryType = query.NumericQuery
     model_type = float
 
     def __init__(self, digits: int = 1):
         self.digits = digits
 
-    def format(self, value: Union[float, N]) -> str:
-        return "{0:.{1}f}".format(value or 0, self.digits)
+    def format(self, value: float | N) -> str:
+        return f"{value or 0:.{self.digits}f}"
 
 
 class Float(BaseFloat[float]):
@@ -262,9 +272,9 @@ class BaseString(Type[T, N]):
     """A Unicode string type."""
 
     sql = "TEXT"
-    query = SubstringQuery
+    query = query.SubstringQuery
 
-    def normalize(self, value: Any) -> Union[T, N]:
+    def normalize(self, value: Any) -> T | N:
         if value is None:
             return self.null
         else:
@@ -277,17 +287,17 @@ class String(BaseString[str, Any]):
     model_type = str
 
 
-class DelimitedString(BaseString[List[str], List[str]]):
+class DelimitedString(BaseString[list[str], list[str]]):
     """A list of Unicode strings, represented in-database by a single string
     containing delimiter-separated values.
     """
 
-    model_type = list
+    model_type = list[str]
 
     def __init__(self, delimiter: str):
         self.delimiter = delimiter
 
-    def format(self, value: List[str]):
+    def format(self, value: list[str]):
         return self.delimiter.join(value)
 
     def parse(self, string: str):
@@ -295,7 +305,7 @@ class DelimitedString(BaseString[List[str], List[str]]):
             return []
         return string.split(self.delimiter)
 
-    def to_sql(self, model_value: List[str]):
+    def to_sql(self, model_value: list[str]):
         return self.delimiter.join(model_value)
 
 
@@ -303,14 +313,145 @@ class Boolean(Type):
     """A boolean type."""
 
     sql = "INTEGER"
-    query = BooleanQuery
+    query = query.BooleanQuery
     model_type = bool
 
     def format(self, value: bool) -> str:
         return str(bool(value))
 
     def parse(self, string: str) -> bool:
-        return str2bool(string)
+        return util.str2bool(string)
+
+
+class DateType(Float):
+    # TODO representation should be `datetime` object
+    # TODO distinguish between date and time types
+    query = query.DateQuery
+
+    def format(self, value):
+        return time.strftime(
+            beets.config["time_format"].as_str(), time.localtime(value or 0)
+        )
+
+    def parse(self, string):
+        try:
+            # Try a formatted date string.
+            return time.mktime(
+                time.strptime(string, beets.config["time_format"].as_str())
+            )
+        except ValueError:
+            # Fall back to a plain timestamp number.
+            try:
+                return float(string)
+            except ValueError:
+                return self.null
+
+
+class BasePathType(Type[bytes, N]):
+    """A dbcore type for filesystem paths.
+
+    These are represented as `bytes` objects, in keeping with
+    the Unix filesystem abstraction.
+    """
+
+    sql = "BLOB"
+    query = query.PathQuery
+    model_type = bytes
+
+    def parse(self, string: str) -> bytes:
+        return util.normpath(string)
+
+    def normalize(self, value: Any) -> bytes | N:
+        if isinstance(value, str):
+            # Paths stored internally as encoded bytes.
+            return util.bytestring_path(value)
+
+        elif isinstance(value, BLOB_TYPE):
+            # We unwrap buffers to bytes.
+            return bytes(value)
+
+        else:
+            return value
+
+    def from_sql(self, sql_value):
+        return self.normalize(sql_value)
+
+    def to_sql(self, value: bytes) -> BLOB_TYPE:
+        if isinstance(value, bytes):
+            value = BLOB_TYPE(value)
+        return value
+
+
+class NullPathType(BasePathType[None]):
+    @property
+    def null(self) -> None:
+        return None
+
+    def format(self, value: bytes | None) -> str:
+        return util.displayable_path(value or b"")
+
+
+class PathType(BasePathType[bytes]):
+    @property
+    def null(self) -> bytes:
+        return b""
+
+    def format(self, value: bytes) -> str:
+        return util.displayable_path(value or b"")
+
+
+class MusicalKey(String):
+    """String representing the musical key of a song.
+
+    The standard format is C, Cm, C#, C#m, etc.
+    """
+
+    ENHARMONIC = {
+        r"db": "c#",
+        r"eb": "d#",
+        r"gb": "f#",
+        r"ab": "g#",
+        r"bb": "a#",
+    }
+
+    null = None
+
+    def parse(self, key):
+        key = key.lower()
+        for flat, sharp in self.ENHARMONIC.items():
+            key = re.sub(flat, sharp, key)
+        key = re.sub(r"[\W\s]+minor", "m", key)
+        key = re.sub(r"[\W\s]+major", "", key)
+        return key.capitalize()
+
+    def normalize(self, key):
+        if key is None:
+            return None
+        else:
+            return self.parse(key)
+
+
+class DurationType(Float):
+    """Human-friendly (M:SS) representation of a time interval."""
+
+    query = query.DurationQuery
+
+    def format(self, value):
+        if not beets.config["format_raw_length"].get(bool):
+            return human_seconds_short(value or 0.0)
+        else:
+            return value
+
+    def parse(self, string):
+        try:
+            # Try to format back hh:ss to seconds.
+            return raw_seconds_short(string)
+        except ValueError:
+            # Fall back to a plain float.
+            try:
+                return float(string)
+            except ValueError:
+                return self.null
 
 
 # Shared instances of common types.
@@ -322,6 +463,7 @@ FLOAT = Float()
 NULL_FLOAT = NullFloat()
 STRING = String()
 BOOLEAN = Boolean()
+DATE = DateType()
 SEMICOLON_SPACE_DSV = DelimitedString(delimiter="; ")
 
 # Will set the proper null char in mediafile

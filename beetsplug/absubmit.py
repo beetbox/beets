@@ -12,17 +12,15 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Calculate acoustic information and submit to AcousticBrainz.
-"""
-
+"""Calculate acoustic information and submit to AcousticBrainz."""
 
 import errno
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import tempfile
-from distutils.spawn import find_executable
 
 import requests
 
@@ -44,9 +42,7 @@ def call(args):
     try:
         return util.command_output(args).stdout
     except subprocess.CalledProcessError as e:
-        raise ABSubmitError(
-            "{} exited with status {}".format(args[0], e.returncode)
-        )
+        raise ABSubmitError(f"{args[0]} exited with status {e.returncode}")
 
 
 class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
@@ -65,9 +61,7 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
             # Explicit path to extractor
             if not os.path.isfile(self.extractor):
                 raise ui.UserError(
-                    "Extractor command does not exist: {0}.".format(
-                        self.extractor
-                    )
+                    f"Extractor command does not exist: {self.extractor}."
                 )
         else:
             # Implicit path to extractor, search for it in path
@@ -86,7 +80,7 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
 
             # Get the executable location on the system, which we need
             # to calculate the SHA-1 hash.
-            self.extractor = find_executable(self.extractor)
+            self.extractor = shutil.which(self.extractor)
 
         # Calculate extractor hash.
         self.extractor_sha = hashlib.sha1()
@@ -103,8 +97,8 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
                     "with an HTTP scheme"
                 )
             elif base_url[-1] != "/":
-                base_url = base_url + "/"
-            self.url = base_url + "{mbid}/low-level"
+                base_url = f"{base_url}/"
+            self.url = f"{base_url}{{mbid}}/low-level"
 
     def commands(self):
         cmd = ui.Subcommand(
@@ -124,8 +118,10 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
             dest="pretend_fetch",
             action="store_true",
             default=False,
-            help="pretend to perform action, but show \
-only files which would be processed",
+            help=(
+                "pretend to perform action, but show only files which would be"
+                " processed"
+            ),
         )
         cmd.func = self.command
         return [cmd]
@@ -139,7 +135,7 @@ only files which would be processed",
             )
         else:
             # Get items from arguments
-            items = lib.items(ui.decargs(args))
+            items = lib.items(args)
             self.opts = opts
             util.par_map(self.analyze_submit, items)
 
@@ -159,7 +155,7 @@ only files which would be processed",
         # If file has no MBID, skip it.
         if not mbid:
             self._log.info(
-                "Not analysing {}, missing " "musicbrainz track id.", item
+                "Not analysing {}, missing musicbrainz track id.", item
             )
             return None
 
@@ -187,9 +183,9 @@ only files which would be processed",
             with open(filename) as tmp_file:
                 analysis = json.load(tmp_file)
             # Add the hash to the output.
-            analysis["metadata"]["version"][
-                "essentia_build_sha"
-            ] = self.extractor_sha
+            analysis["metadata"]["version"]["essentia_build_sha"] = (
+                self.extractor_sha
+            )
             return analysis
         finally:
             try:
@@ -222,6 +218,6 @@ only files which would be processed",
             )
         else:
             self._log.debug(
-                "Successfully submitted AcousticBrainz analysis " "for {}.",
+                "Successfully submitted AcousticBrainz analysis for {}.",
                 item,
             )

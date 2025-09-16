@@ -14,13 +14,13 @@
 
 """Tests for image resizing based on filesize."""
 
-
 import os
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 from beets.test import _common
-from beets.test.helper import TestHelper
+from beets.test.helper import BeetsTestCase, CleanupModulesMixin
 from beets.util import command_output, syspath
 from beets.util.artresizer import IMBackend, PILBackend
 
@@ -48,19 +48,13 @@ class DummyPILBackend(PILBackend):
         pass
 
 
-class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
+class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
     """Unittest test case for Art Resizer to a specific filesize."""
+
+    modules = (IMBackend.__module__,)
 
     IMG_225x225 = os.path.join(_common.RSRC, b"abbey.jpg")
     IMG_225x225_SIZE = os.stat(syspath(IMG_225x225)).st_size
-
-    def setUp(self):
-        """Called before each test, setting up beets."""
-        self.setup_beets()
-
-    def tearDown(self):
-        """Called after each test, unloading all plugins."""
-        self.teardown_beets()
 
     def _test_img_resize(self, backend):
         """Test resizing based on file size, given a resize_func."""
@@ -72,7 +66,7 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
             max_filesize=0,
         )
         # check valid path returned - max_filesize hasn't broken resize command
-        self.assertExists(im_95_qual)
+        assert Path(os.fsdecode(im_95_qual)).exists()
 
         # Attempt a lower filesize with same quality
         im_a = backend.resize(
@@ -81,10 +75,11 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
             quality=95,
             max_filesize=0.9 * os.stat(syspath(im_95_qual)).st_size,
         )
-        self.assertExists(im_a)
+        assert Path(os.fsdecode(im_a)).exists()
         # target size was achieved
-        self.assertLess(
-            os.stat(syspath(im_a)).st_size, os.stat(syspath(im_95_qual)).st_size
+        assert (
+            os.stat(syspath(im_a)).st_size
+            < os.stat(syspath(im_95_qual)).st_size
         )
 
         # Attempt with lower initial quality
@@ -94,7 +89,7 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
             quality=75,
             max_filesize=0,
         )
-        self.assertExists(im_75_qual)
+        assert Path(os.fsdecode(im_75_qual)).exists()
 
         im_b = backend.resize(
             225,
@@ -102,10 +97,11 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
             quality=95,
             max_filesize=0.9 * os.stat(syspath(im_75_qual)).st_size,
         )
-        self.assertExists(im_b)
+        assert Path(os.fsdecode(im_b)).exists()
         # Check high (initial) quality still gives a smaller filesize
-        self.assertLess(
-            os.stat(syspath(im_b)).st_size, os.stat(syspath(im_75_qual)).st_size
+        assert (
+            os.stat(syspath(im_b)).st_size
+            < os.stat(syspath(im_75_qual)).st_size
         )
 
     @unittest.skipUnless(PILBackend.available(), "PIL not available")
@@ -129,7 +125,7 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
         from PIL import Image
 
         with Image.open(path) as img:
-            self.assertNotIn("progression", img.info)
+            assert "progression" not in img.info
 
     @unittest.skipUnless(IMBackend.available(), "ImageMagick not available")
     def test_im_file_deinterlace(self):
@@ -146,7 +142,7 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
             syspath(path, prefix=False),
         ]
         out = command_output(cmd).stdout
-        self.assertEqual(out, b"None")
+        assert out == b"None"
 
     @patch("beets.util.artresizer.util")
     def test_write_metadata_im(self, mock_util):
@@ -154,18 +150,5 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
         metadata = {"a": "A", "b": "B"}
         im = DummyIMBackend()
         im.write_metadata("foo", metadata)
-        try:
-            command = im.convert_cmd + "foo -set a A -set b B foo".split()
-            mock_util.command_output.assert_called_once_with(command)
-        except AssertionError:
-            command = im.convert_cmd + "foo -set b B -set a A foo".split()
-            mock_util.command_output.assert_called_once_with(command)
-
-
-def suite():
-    """Run this suite of tests."""
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")
+        command = [*im.convert_cmd, *"foo -set a A -set b B foo".split()]
+        mock_util.command_output.assert_called_once_with(command)

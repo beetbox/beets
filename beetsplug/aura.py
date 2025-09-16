@@ -14,13 +14,12 @@
 
 """An AURA server using Flask."""
 
-
-import os.path
+import os
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass
 from mimetypes import guess_type
-from os.path import getsize, isfile
-from typing import ClassVar, Mapping, Type
+from typing import ClassVar
 
 from flask import (
     Blueprint,
@@ -46,7 +45,6 @@ from beets.dbcore.query import (
 from beets.library import Album, Item, LibModel, Library
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, _open_library
-from beets.util import py3_path
 
 # Constants
 
@@ -125,7 +123,7 @@ ARTIST_ATTR_MAP = {
 class AURADocument:
     """Base class for building AURA documents."""
 
-    model_cls: ClassVar[Type[LibModel]]
+    model_cls: ClassVar[type[LibModel]]
 
     lib: Library
     args: Mapping[str, str]
@@ -151,7 +149,7 @@ class AURADocument:
         return make_response(document, status)
 
     @classmethod
-    def get_attribute_converter(cls, beets_attr: str) -> Type[SQLiteType]:
+    def get_attribute_converter(cls, beets_attr: str) -> type[SQLiteType]:
         """Work out what data type an attribute should be for beets.
 
         Args:
@@ -183,7 +181,9 @@ class AURADocument:
                 value = converter(value)
                 # Add exact match query to list
                 # Use a slow query so it works with all fields
-                queries.append(MatchQuery(beets_attr, value, fast=False))
+                queries.append(
+                    self.model_cls.field_query(beets_attr, value, MatchQuery)
+                )
         # NOTE: AURA doesn't officially support multiple queries
         return AndQuery(queries)
 
@@ -236,14 +236,14 @@ class AURADocument:
             # Not the last page so work out links.next url
             if not self.args:
                 # No existing arguments, so current page is 0
-                next_url = request.url + "?page=1"
+                next_url = f"{request.url}?page=1"
             elif not self.args.get("page", None):
                 # No existing page argument, so add one to the end
-                next_url = request.url + "&page=1"
+                next_url = f"{request.url}&page=1"
             else:
                 # Increment page token by 1
                 next_url = request.url.replace(
-                    f"page={page}", "page={}".format(page + 1)
+                    f"page={page}", f"page={page + 1}"
                 )
         # Get only the items in the page range
         data = [
@@ -315,13 +315,12 @@ class AURADocument:
             sort = self.translate_sorts(sort_arg)
             # For each sort field add a query which ensures all results
             # have a non-empty, non-zero value for that field.
-            for s in sort.sorts:
-                query.subqueries.append(
-                    NotQuery(
-                        # Match empty fields (^$) or zero fields, (^0$)
-                        RegexpQuery(s.field, "(^$|^0$)", fast=False)
-                    )
+            query.subqueries.extend(
+                NotQuery(
+                    self.model_cls.field_query(s.field, "(^$|^0$)", RegexpQuery)
                 )
+                for s in sort.sorts
+            )
         else:
             sort = None
         # Get information from the library
@@ -372,7 +371,7 @@ class TrackDocument(AURADocument):
         return self.lib.items(query, sort)
 
     @classmethod
-    def get_attribute_converter(cls, beets_attr: str) -> Type[SQLiteType]:
+    def get_attribute_converter(cls, beets_attr: str) -> type[SQLiteType]:
         """Work out what data type an attribute should be for beets.
 
         Args:
@@ -428,9 +427,7 @@ class TrackDocument(AURADocument):
             return self.error(
                 "404 Not Found",
                 "No track with the requested id.",
-                "There is no track with an id of {} in the library.".format(
-                    track_id
-                ),
+                f"There is no track with an id of {track_id} in the library.",
             )
         return self.single_resource_document(
             self.get_resource_object(self.lib, track)
@@ -482,7 +479,7 @@ class AlbumDocument(AURADocument):
         }
         # Add images relationship if album has associated images
         if album.artpath:
-            path = py3_path(album.artpath)
+            path = os.fsdecode(album.artpath)
             filename = path.split("/")[-1]
             image_id = f"album-{album.id}-{filename}"
             relationships["images"] = {
@@ -514,9 +511,7 @@ class AlbumDocument(AURADocument):
             return self.error(
                 "404 Not Found",
                 "No album with the requested id.",
-                "There is no album with an id of {} in the library.".format(
-                    album_id
-                ),
+                f"There is no album with an id of {album_id} in the library.",
             )
         return self.single_resource_document(
             self.get_resource_object(self.lib, album)
@@ -601,9 +596,7 @@ class ArtistDocument(AURADocument):
             return self.error(
                 "404 Not Found",
                 "No artist with the requested id.",
-                "There is no artist with an id of {} in the library.".format(
-                    artist_id
-                ),
+                f"There is no artist with an id of {artist_id} in the library.",
             )
         return self.single_resource_document(artist_resource)
 
@@ -660,7 +653,7 @@ class ImageDocument(AURADocument):
             # Cut the filename off of artpath
             # This is in preparation for supporting images in the same
             # directory that are not tracked by beets.
-            artpath = py3_path(album.artpath)
+            artpath = os.fsdecode(album.artpath)
             dir_path = "/".join(artpath.split("/")[:-1])
         else:
             # Images for other resource types are not supported
@@ -668,7 +661,7 @@ class ImageDocument(AURADocument):
 
         img_path = os.path.join(dir_path, img_filename)
         # Check the image actually exists
-        if isfile(img_path):
+        if os.path.isfile(img_path):
             return img_path
         else:
             return None
@@ -690,7 +683,7 @@ class ImageDocument(AURADocument):
         attributes = {
             "role": "cover",
             "mimetype": guess_type(image_path)[0],
-            "size": getsize(image_path),
+            "size": os.path.getsize(image_path),
         }
         try:
             from PIL import Image
@@ -704,7 +697,7 @@ class ImageDocument(AURADocument):
         relationships = {}
         # Split id into [parent_type, parent_id, filename]
         id_split = image_id.split("-")
-        relationships[id_split[0] + "s"] = {
+        relationships[f"{id_split[0]}s"] = {
             "data": [{"type": id_split[0], "id": id_split[1]}]
         }
 
@@ -728,9 +721,7 @@ class ImageDocument(AURADocument):
             return self.error(
                 "404 Not Found",
                 "No image with the requested id.",
-                "There is no image with an id of {} in the library.".format(
-                    image_id
-                ),
+                f"There is no image with an id of {image_id} in the library.",
             )
         return self.single_resource_document(image_resource)
 
@@ -776,19 +767,16 @@ def audio_file(track_id):
         return AURADocument.error(
             "404 Not Found",
             "No track with the requested id.",
-            "There is no track with an id of {} in the library.".format(
-                track_id
-            ),
+            f"There is no track with an id of {track_id} in the library.",
         )
 
-    path = py3_path(track.path)
-    if not isfile(path):
+    path = os.fsdecode(track.path)
+    if not os.path.isfile(path):
         return AURADocument.error(
             "404 Not Found",
             "No audio file for the requested track.",
-            (
-                "There is no audio file for track {} at the expected location"
-            ).format(track_id),
+            f"There is no audio file for track {track_id} at the expected"
+            " location",
         )
 
     file_mimetype = guess_type(path)[0]
@@ -796,10 +784,8 @@ def audio_file(track_id):
         return AURADocument.error(
             "500 Internal Server Error",
             "Requested audio file has an unknown mimetype.",
-            (
-                "The audio file for track {} has an unknown mimetype. "
-                "Its file extension is {}."
-            ).format(track_id, path.split(".")[-1]),
+            f"The audio file for track {track_id} has an unknown mimetype. "
+            f"Its file extension is {path.split('.')[-1]}.",
         )
 
     # Check that the Accept header contains the file's mimetype
@@ -811,10 +797,8 @@ def audio_file(track_id):
         return AURADocument.error(
             "406 Not Acceptable",
             "Unsupported MIME type or bitrate parameter in Accept header.",
-            (
-                "The audio file for track {} is only available as {} and "
-                "bitrate parameters are not supported."
-            ).format(track_id, file_mimetype),
+            f"The audio file for track {track_id} is only available as"
+            f" {file_mimetype} and bitrate parameters are not supported.",
         )
 
     return send_file(
@@ -897,9 +881,7 @@ def image_file(image_id):
         return AURADocument.error(
             "404 Not Found",
             "No image with the requested id.",
-            "There is no image with an id of {} in the library".format(
-                image_id
-            ),
+            f"There is no image with an id of {image_id} in the library",
         )
     return send_file(img_path)
 

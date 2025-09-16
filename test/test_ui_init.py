@@ -12,8 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Test module for file ui/__init__.py
-"""
+"""Test module for file ui/__init__.py"""
 
 import os
 import shutil
@@ -23,14 +22,10 @@ from random import random
 
 from beets import config, ui
 from beets.test import _common
-from beets.test.helper import control_stdin
+from beets.test.helper import BeetsTestCase, IOMixin, control_stdin
 
 
-class InputMethodsTest(_common.TestCase):
-    def setUp(self):
-        super().setUp()
-        self.io.install()
-
+class InputMethodsTest(IOMixin, unittest.TestCase):
     def _print_helper(self, s):
         print(s)
 
@@ -45,14 +40,14 @@ class InputMethodsTest(_common.TestCase):
         items = ui.input_select_objects(
             "Prompt", full_items, self._print_helper
         )
-        self.assertEqual(items, [])
+        assert items == []
 
         # Test yes
         self.io.addinput("y")
         items = ui.input_select_objects(
             "Prompt", full_items, self._print_helper
         )
-        self.assertEqual(items, full_items)
+        assert items == full_items
 
         # Test selective 1
         self.io.addinput("s")
@@ -64,7 +59,7 @@ class InputMethodsTest(_common.TestCase):
         items = ui.input_select_objects(
             "Prompt", full_items, self._print_helper
         )
-        self.assertEqual(items, ["2", "4"])
+        assert items == ["2", "4"]
 
         # Test selective 2
         self.io.addinput("s")
@@ -76,7 +71,7 @@ class InputMethodsTest(_common.TestCase):
         items = ui.input_select_objects(
             "Prompt", full_items, lambda s: self._print_helper2(s, "Prefix")
         )
-        self.assertEqual(items, ["1", "2", "4"])
+        assert items == ["1", "2", "4"]
 
         # Test selective 3
         self.io.addinput("s")
@@ -87,51 +82,12 @@ class InputMethodsTest(_common.TestCase):
         items = ui.input_select_objects(
             "Prompt", full_items, self._print_helper
         )
-        self.assertEqual(items, ["1", "3"])
+        assert items == ["1", "3"]
 
 
-class InitTest(_common.LibTestCase):
-    def setUp(self):
-        super().setUp()
-
-    def test_human_bytes(self):
-        tests = [
-            (0, "0.0 B"),
-            (30, "30.0 B"),
-            (pow(2, 10), "1.0 KiB"),
-            (pow(2, 20), "1.0 MiB"),
-            (pow(2, 30), "1.0 GiB"),
-            (pow(2, 40), "1.0 TiB"),
-            (pow(2, 50), "1.0 PiB"),
-            (pow(2, 60), "1.0 EiB"),
-            (pow(2, 70), "1.0 ZiB"),
-            (pow(2, 80), "1.0 YiB"),
-            (pow(2, 90), "1.0 HiB"),
-            (pow(2, 100), "big"),
-        ]
-        for i, h in tests:
-            self.assertEqual(h, ui.human_bytes(i))
-
-    def test_human_seconds(self):
-        tests = [
-            (0, "0.0 seconds"),
-            (30, "30.0 seconds"),
-            (60, "1.0 minutes"),
-            (90, "1.5 minutes"),
-            (125, "2.1 minutes"),
-            (3600, "1.0 hours"),
-            (86400, "1.0 days"),
-            (604800, "1.0 weeks"),
-            (31449600, "1.0 years"),
-            (314496000, "1.0 decades"),
-        ]
-        for i, h in tests:
-            self.assertEqual(h, ui.human_seconds(i))
-
-
-class ParentalDirCreation(_common.TestCase):
+class ParentalDirCreation(BeetsTestCase):
     def test_create_yes(self):
-        non_exist_path = _common.util.py3_path(
+        non_exist_path = _common.os.fsdecode(
             os.path.join(self.temp_dir, b"nonexist", str(random()).encode())
         )
         # Deepcopy instead of recovering because exceptions might
@@ -143,10 +99,10 @@ class ParentalDirCreation(_common.TestCase):
         lib._close()
 
     def test_create_no(self):
-        non_exist_path_parent = _common.util.py3_path(
+        non_exist_path_parent = _common.os.fsdecode(
             os.path.join(self.temp_dir, b"nonexist")
         )
-        non_exist_path = _common.util.py3_path(
+        non_exist_path = _common.os.fsdecode(
             os.path.join(non_exist_path_parent.encode(), str(random()).encode())
         )
         test_config = deepcopy(config)
@@ -163,11 +119,3 @@ class ParentalDirCreation(_common.TestCase):
                 if lib:
                     lib._close()
                 raise OSError("Parent directories should not be created.")
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

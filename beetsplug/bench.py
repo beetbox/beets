@@ -12,9 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Some simple performance benchmarks for beets.
-"""
-
+"""Some simple performance benchmarks for beets."""
 
 import cProfile
 import timeit
@@ -127,7 +125,7 @@ class BenchmarkPlugin(BeetsPlugin):
             "-i", "--id", default=None, help="album ID to match against"
         )
         match_bench_cmd.func = lambda lib, opts, args: match_benchmark(
-            lib, opts.profile, ui.decargs(args), opts.id
+            lib, opts.profile, args, opts.id
         )
 
         return [aunique_bench_cmd, match_bench_cmd]

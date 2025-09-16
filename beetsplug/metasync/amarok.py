@@ -12,9 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Synchronize information from amarok's library via dbus
-"""
-
+"""Synchronize information from amarok's library via dbus"""
 
 from datetime import datetime
 from os.path import basename
@@ -22,7 +20,6 @@ from time import mktime
 from xml.sax.saxutils import quoteattr
 
 from beets.dbcore import types
-from beets.library import DateType
 from beets.util import displayable_path
 from beetsplug.metasync import MetaSource
 
@@ -43,15 +40,16 @@ class Amarok(MetaSource):
         "amarok_score": types.FLOAT,
         "amarok_uid": types.STRING,
         "amarok_playcount": types.INTEGER,
-        "amarok_firstplayed": DateType(),
-        "amarok_lastplayed": DateType(),
+        "amarok_firstplayed": types.DATE,
+        "amarok_lastplayed": types.DATE,
     }
 
-    query_xml = '<query version="1.0"> \
-                    <filters> \
-                        <and><include field="filename" value=%s /></and> \
-                    </filters> \
-                </query>'
+    query_xml = """
+        <query version="1.0">
+            <filters>
+                <and><include field="filename" value={} /></and>
+            </filters>
+        </query>"""
 
     def __init__(self, config, log):
         super().__init__(config, log)
@@ -71,7 +69,7 @@ class Amarok(MetaSource):
         # of the result set. So query for the filename and then try to match
         # the correct item from the results we get back
         results = self.collection.Query(
-            self.query_xml % quoteattr(basename(path))
+            self.query_xml.format(quoteattr(basename(path)))
         )
         for result in results:
             if result["xesam:url"] != path:

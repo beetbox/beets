@@ -6,7 +6,8 @@ statefile: state.pickle
 
 # --------------- Plugins ---------------
 
-plugins: []
+plugins: [musicbrainz]
+
 pluginpath: []
 
 # --------------- Import ---------------
@@ -126,19 +127,12 @@ ui:
         action_default: ['bold', 'cyan']
         action: ['bold', 'cyan']
         # New Colors
-        text: ['normal']
         text_faint: ['faint']
         import_path: ['bold', 'blue']
         import_path_items: ['bold', 'blue']
-        added:   ['green']
-        removed: ['red']
         changed: ['yellow']
-        added_highlight:   ['bold', 'green']
-        removed_highlight: ['bold', 'red']
-        changed_highlight: ['bold', 'yellow']
-        text_diff_added:   ['bold', 'red']
+        text_diff_added: ['bold', 'green']
         text_diff_removed: ['bold', 'red']
-        text_diff_changed: ['bold', 'red']
         action_description: ['white']
     import:
         indentation:
@@ -163,22 +157,6 @@ sort_case_insensitive: yes
 overwrite_null:
   album: []
   track: []
-musicbrainz:
-    enabled: yes
-    host: musicbrainz.org
-    https: no
-    ratelimit: 1
-    ratelimit_interval: 1.0
-    searchlimit: 5
-    extra_tags: []
-    genres: no
-    external_ids:
-        discogs: no
-        bandcamp: no
-        spotify: no
-        deezer: no
-        beatport: no
-        tidal: no
 
 match:
     strong_rec_thresh: 0.04
@@ -207,6 +185,7 @@ match:
         track_index: 1.0
         track_length: 2.0
         track_id: 5.0
+        medium: 1.0
     preferred:
         countries: []
         media: []

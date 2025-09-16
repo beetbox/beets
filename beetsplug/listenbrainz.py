@@ -13,7 +13,6 @@ from beetsplug.lastimport import process_tracks
 class ListenBrainzPlugin(BeetsPlugin):
     """A Beets plugin for interacting with ListenBrainz."""
 
-    data_source = "ListenBrainz"
     ROOT = "http://api.listenbrainz.org/1/"
 
     def __init__(self):
@@ -27,7 +26,7 @@ class ListenBrainzPlugin(BeetsPlugin):
     def commands(self):
         """Add beet UI commands to interact with ListenBrainz."""
         lbupdate_cmd = ui.Subcommand(
-            "lbimport", help=f"Import {self.data_source} history"
+            "lbimport", help="Import ListenBrainz history"
         )
 
         def func(lib, opts, args):
@@ -42,14 +41,14 @@ class ListenBrainzPlugin(BeetsPlugin):
         unknown_total = 0
         ls = self.get_listens()
         tracks = self.get_tracks_from_listens(ls)
-        log.info(f"Found {len(ls)} listens")
+        log.info("Found {} listens", len(ls))
         if tracks:
             found, unknown = process_tracks(lib, tracks, log)
             found_total += found
             unknown_total += unknown
         log.info("... done!")
-        log.info("{0} unknown play-counts", unknown_total)
-        log.info("{0} play-counts imported", found_total)
+        log.info("{} unknown play-counts", unknown_total)
+        log.info("{} play-counts imported", found_total)
 
     def _make_request(self, url, params=None):
         """Makes a request to the ListenBrainz API."""
@@ -63,7 +62,7 @@ class ListenBrainzPlugin(BeetsPlugin):
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
-            self._log.debug(f"Invalid Search Error: {e}")
+            self._log.debug("Invalid Search Error: {}", e)
             return None
 
     def get_listens(self, min_ts=None, max_ts=None, count=None):
@@ -110,7 +109,7 @@ class ListenBrainzPlugin(BeetsPlugin):
             if track["track_metadata"].get("release_name") is None:
                 continue
             mbid_mapping = track["track_metadata"].get("mbid_mapping", {})
-            # print(json.dumps(track, indent=4, sort_keys=True))
+            mbid = None
             if mbid_mapping.get("recording_mbid") is None:
                 # search for the track using title and release
                 mbid = self.get_mb_recording_id(track)
@@ -148,9 +147,6 @@ class ListenBrainzPlugin(BeetsPlugin):
         return self._make_request(url)
 
     def get_listenbrainz_playlists(self):
-        """Returns a list of playlists created by ListenBrainz."""
-        import re
-
         resp = self.get_playlists_createdfor(self.username)
         playlists = resp.get("playlists")
         listenbrainz_playlists = []
@@ -159,35 +155,30 @@ class ListenBrainzPlugin(BeetsPlugin):
             playlist_info = playlist.get("playlist")
             if playlist_info.get("creator") == "listenbrainz":
                 title = playlist_info.get("title")
-                match = re.search(
-                    r"(Missed Recordings of \d{4}|Discoveries of \d{4})", title
+                self._log.debug("Playlist title: {}", title)
+                playlist_type = (
+                    "Exploration" if "Exploration" in title else "Jams"
                 )
-                if "Exploration" in title:
-                    playlist_type = "Exploration"
-                elif "Jams" in title:
-                    playlist_type = "Jams"
-                elif match:
-                    playlist_type = match.group(1)
-                else:
-                    playlist_type = None
-                if "week of " in title:
+                if "week of" in title:
                     date_str = title.split("week of ")[1].split(" ")[0]
                     date = datetime.datetime.strptime(
                         date_str, "%Y-%m-%d"
                     ).date()
                 else:
-                    date = None
+                    continue
                 identifier = playlist_info.get("identifier")
                 id = identifier.split("/")[-1]
-                if playlist_type in ["Jams", "Exploration"]:
-                    listenbrainz_playlists.append(
-                        {
-                            "type": playlist_type,
-                            "date": date,
-                            "identifier": id,
-                            "title": title,
-                        }
-                    )
+                listenbrainz_playlists.append(
+                    {"type": playlist_type, "date": date, "identifier": id}
+                )
+        listenbrainz_playlists = sorted(
+            listenbrainz_playlists, key=lambda x: x["type"]
+        )
+        listenbrainz_playlists = sorted(
+            listenbrainz_playlists, key=lambda x: x["date"], reverse=True
+        )
+        for playlist in listenbrainz_playlists:
+            self._log.debug("Playlist: {0[type]} - {0[date]}", playlist)
         return listenbrainz_playlists
 
     def get_playlist(self, identifier):
@@ -199,17 +190,20 @@ class ListenBrainzPlugin(BeetsPlugin):
         """This function returns a list of tracks in the playlist."""
         tracks = []
         for track in playlist.get("playlist").get("track"):
+            identifier = track.get("identifier")
+            if isinstance(identifier, list):
+                identifier = identifier[0]
+
             tracks.append(
                 {
-                    "artist": track.get("creator"),
-                    "identifier": track.get("identifier").split("/")[-1],
+                    "artist": track.get("creator", "Unknown artist"),
+                    "identifier": identifier.split("/")[-1],
                     "title": track.get("title"),
                 }
             )
         return self.get_track_info(tracks)
 
     def get_track_info(self, tracks):
-        """Returns a list of track info."""
         track_info = []
         for track in tracks:
             identifier = track.get("identifier")
@@ -242,25 +236,37 @@ class ListenBrainzPlugin(BeetsPlugin):
             )
         return track_info
 
-    def get_weekly_playlist(self, index):
-        """Returns a list of weekly playlists based on the index."""
+    def get_weekly_playlist(self, playlist_type, most_recent=True):
+        # Fetch all playlists
         playlists = self.get_listenbrainz_playlists()
-        playlist = self.get_playlist(playlists[index].get("identifier"))
-        self._log.info(f"Getting {playlist.get('playlist').get('title')}")
+        # Filter playlists by type
+        filtered_playlists = [
+            p for p in playlists if p["type"] == playlist_type
+        ]
+        # Sort playlists by date in descending order
+        sorted_playlists = sorted(
+            filtered_playlists, key=lambda x: x["date"], reverse=True
+        )
+        # Select the most recent or older playlist based on the most_recent flag
+        selected_playlist = (
+            sorted_playlists[0] if most_recent else sorted_playlists[1]
+        )
+        self._log.debug(
+            f"Selected playlist: {selected_playlist['type']} "
+            f"- {selected_playlist['date']}"
+        )
+        # Fetch and return tracks from the selected playlist
+        playlist = self.get_playlist(selected_playlist.get("identifier"))
         return self.get_tracks_from_playlist(playlist)
 
     def get_weekly_exploration(self):
-        """Returns a list of weekly exploration."""
-        return self.get_weekly_playlist(0)
+        return self.get_weekly_playlist("Exploration", most_recent=True)
 
     def get_weekly_jams(self):
-        """Returns a list of weekly jams."""
-        return self.get_weekly_playlist(1)
+        return self.get_weekly_playlist("Jams", most_recent=True)
 
     def get_last_weekly_exploration(self):
-        """Returns a list of weekly exploration."""
-        return self.get_weekly_playlist(3)
+        return self.get_weekly_playlist("Exploration", most_recent=False)
 
     def get_last_weekly_jams(self):
-        """Returns a list of weekly jams."""
-        return self.get_weekly_playlist(3)
+        return self.get_weekly_playlist("Jams", most_recent=False)

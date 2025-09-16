@@ -16,7 +16,6 @@
 music player.
 """
 
-
 import _thread
 import copy
 import os
@@ -130,7 +129,7 @@ class GstPlayer:
         self.player.set_state(Gst.State.NULL)
         if isinstance(path, str):
             path = path.encode("utf-8")
-        uri = "file://" + urllib.parse.quote(path)
+        uri = f"file://{urllib.parse.quote(path)}"
         self.player.set_property("uri", uri)
         self.player.set_state(Gst.State.PLAYING)
         self.playing = True
