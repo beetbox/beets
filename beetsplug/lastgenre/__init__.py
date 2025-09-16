@@ -582,15 +582,20 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                         if "track" in self.sources:
                             item_genre, label = self._get_genre(item)
 
-                            if not item_genre:
+                            # Fallback to album genre if required
+                            if not item_genre and album.genre:
+                                item_genre = album.genre
+                                label = "inherit from album"
+
+                            if item.genre:
+                                self._apply_item_genre(item, label, item_genre)
+                                if write:
+                                    item.try_write()
+                            else:
                                 self._log.info(
                                     'No genre found for track "{0.title}"',
                                     item,
                                 )
-                            else:
-                                self._apply_item_genre(item, label, item.genre)
-                                if write:
-                                    item.try_write()
 
             else:
                 # Just query single tracks or singletons
@@ -614,6 +619,12 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             if "track" in self.sources:
                 for item in album.items():
                     item_genre, label = self._get_genre(item)
+
+                    # Fallback to album genre if required
+                    if not item_genre and album.genre:
+                        item_genre = album.genre
+                        label = "inherit from album"
+
                     self._apply_item_genre(item, label, item_genre)
 
         else:
