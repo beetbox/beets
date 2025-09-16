@@ -15,6 +15,9 @@ For packagers:
 
 Other changes:
 
+- When installing ``beets`` via git or locally the version string now reflects
+  the current git branch and commit hash. :bug:`4448`
+
 2.4.0 (September 13, 2025)
 --------------------------
 
