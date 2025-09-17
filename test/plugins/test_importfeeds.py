@@ -2,11 +2,11 @@ import datetime
 import os
 
 from beets.library import Album, Item
-from beets.test.helper import PluginTestCase
+from beets.test.helper import PluginTest
 from beetsplug.importfeeds import ImportFeedsPlugin
 
 
-class ImportFeedsTest(PluginTestCase):
+class ImportFeedsTest(PluginTest):
     plugin = "importfeeds"
 
     def setUp(self):

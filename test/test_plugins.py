@@ -35,14 +35,13 @@ from beets.test.helper import (
     ImportHelper,
     IOMixin,
     PluginMixin,
-    PluginTestCase,
-    PluginTestCasePytest,
+    PluginTest,
     TerminalImportMixin,
 )
 from beets.util import PromptChoice, syspath
 
 
-class TestPluginRegistration(PluginTestCasePytest):
+class TestPluginRegistration(PluginTest):
     """Ensure that we can dynamically add a plugin without creating
     actual files on disk.
 
@@ -104,7 +103,7 @@ class TestPluginRegistration(PluginTestCasePytest):
             Album._types
 
 
-class TestPluginListeners(PluginTestCasePytest, ImportHelper):
+class TestPluginListeners(PluginTest, ImportHelper):
     """Test that plugin listeners are registered and called correctly."""
 
     class DummyPlugin(plugins.BeetsPlugin):
