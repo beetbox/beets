@@ -587,7 +587,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                                 item_genre = album.genre
                                 label = "inherit from album"
 
-                            if item.genre:
+                            if item_genre:
                                 self._apply_item_genre(item, label, item_genre)
                                 if write:
                                     item.try_write()
