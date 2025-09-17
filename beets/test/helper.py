@@ -551,7 +551,7 @@ class PluginMixin(TestHelper):
     def teardown_beets(self):
         super().teardown_beets()
         self.unload_plugins()
-        self.unregister_plugin(self.plugin)
+        self.unregister_plugin(name=self.plugin)
 
     @staticmethod
     def register_plugin(
@@ -599,12 +599,6 @@ class PluginMixin(TestHelper):
             if hasattr(parent_pkg, name):
                 delattr(parent_pkg, name)
 
-    def unregister_all_plugins(self) -> None:
-        # Remove plugin modules from sys.modules
-        for mod in list(sys.modules):
-            if mod.startswith("beetsplug."):
-                del sys.modules[mod]
-
     def load_plugins(self, *plugins: str) -> None:
         """Load and initialize plugins by names.
 
@@ -644,17 +638,26 @@ class PluginMixin(TestHelper):
         raise ValueError(f"No plugin found with name {name}")
 
     @contextmanager
-    def plugins(self, *plugins: tuple[str, type[beets.plugins.BeetsPlugin]]):
+    def plugins(
+        self, *plugins: tuple[str, type[beets.plugins.BeetsPlugin]] | str
+    ):
         """Context manager to register and load multiple plugins."""
         self.unload_plugins()
-        for name, plugin_type in plugins:
-            self.register_plugin(plugin_type, name)
-        self.load_plugins(*(name for name, _ in plugins))
+
+        names = []
+        for plug in plugins:
+            if isinstance(plug, str):
+                names.append(plug)
+            else:
+                names.append(plug[0])
+                self.register_plugin(plug[1], plug[0])
+        self.load_plugins(*names)
 
         yield
 
         self.unload_plugins()
-        self.unregister_all_plugins()
+        for name in names:
+            self.unregister_plugin(name)
 
     @contextmanager
     def configure_plugin(self, config: Any):

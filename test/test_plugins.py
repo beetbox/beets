@@ -506,11 +506,10 @@ class TestImportPlugin(PluginMixin):
     def test_import_plugin(self, caplog, plugin_name):
         """Test that a plugin is importable without an error."""
         caplog.set_level(logging.WARNING)
-        self.load_plugins(plugin_name)
-
-        assert "PluginImportError" not in caplog.text, (
-            f"Plugin '{plugin_name}' has issues during import."
-        )
+        with self.plugins(plugin_name):
+            assert "PluginImportError" not in caplog.text, (
+                f"Plugin '{plugin_name}' has issues during import."
+            )
 
     def test_import_error(self, caplog):
         """Test that an invalid plugin raises PluginImportError."""
