@@ -47,10 +47,11 @@ The available options are:
 Formatting
 ~~~~~~~~~~
 
-- This plugin uses global formatting options from the main configuration; see :ref:`format_item` and :ref:`format_album`:
-
+- This plugin uses global formatting options from the main configuration; see
+  :ref:`format_item` and :ref:`format_album`:
 - :ref:`format_item`: Used when listing missing tracks (default item format).
-- :ref:`format_album`: Used when showing counts (``-c``) or missing albums (``-a``).
+- :ref:`format_album`: Used when showing counts (``-c``) or missing albums
+  (``-a``).
 
 Here's an example
 
