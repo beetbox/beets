@@ -289,7 +289,7 @@ MusicBrainz---so consider adding the data yourself.
 
 .. _the musicbrainz database: https://musicbrainz.org/
 
-If you recieve a "No matching release found" message from the Auto-Tagger for an album you know is present in MusicBrainz, check that musicbrainz is in the plugin list. Until version `v2.4.0`_ the default metadate source for the Auto-Tagger, the :doc:`musicbrainz plugin </plugins/musicbrainz>`, had to be manually disabled. At present, if the plugin list is changed, musicbrainz needs to be added to the plugin list in order to continue contributing results to Auto-Tagger. 
+If you receive a "No matching release found" message from the Auto-Tagger for an album you know is present in MusicBrainz, check that musicbrainz is in the plugin list. Until version `v2.4.0`_ the default metadata source for the Auto-Tagger, the :doc:`musicbrainz plugin </plugins/musicbrainz>`, had to be manually disabled. At present, if the plugin list is changed, musicbrainz needs to be added to the plugin list in order to continue contributing results to Auto-Tagger. 
 
 If you think beets is ignoring an album that's listed in MusicBrainz, please
 `file a bug report`_.
