@@ -19,7 +19,7 @@ from unittest.mock import patch
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.importer import ImportSession, ImportTask
 from beets.library import Item
-from beets.test.helper import PluginTestCase
+from beets.test.helper import PluginTest
 from beetsplug.titlecase import TitlecasePlugin
 
 titlecase_fields_testcases = [
@@ -55,7 +55,7 @@ titlecase_fields_testcases = [
 ]
 
 
-class TestTitlecasePlugin(PluginTestCase):
+class TestTitlecasePlugin(PluginTest):
     plugin = "titlecase"
     preload_plugin = False
 
