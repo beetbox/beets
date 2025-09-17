@@ -240,6 +240,7 @@ There are a number of possibilities:
   <https://musicbrainz.org/>`__. You can search on their site to make sure it's
   cataloged there. (If not, anyone can edit MusicBrainz---so consider adding the
   data yourself.)
+- If you are using plugins, make sure that musicbrainz is in the plugin list.
 - If the album in question is a multi-disc release, see the relevant FAQ answer
   above.
 - The music files' metadata might be insufficient. Try using the "enter search"
