@@ -535,7 +535,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 for album in lib.albums(args):
                     album_genre, src = self._get_genre(album)
                     self._log.info(
-                        'genre for album "{0.album}" ({1}): {}',
+                        'genre for album "{.album}" ({}): {}',
                         album,
                         src,
                         album_genre,
