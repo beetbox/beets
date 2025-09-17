@@ -12,261 +12,255 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+from __future__ import annotations
 
 import importlib
-import itertools
 import logging
 import os
 import pkgutil
 import sys
-from unittest.mock import ANY, Mock, patch
+from typing import Any
+from unittest.mock import ANY, patch
 
 import pytest
 from mediafile import MediaFile
 
 from beets import config, plugins, ui
 from beets.dbcore import types
-from beets.importer import (
-    Action,
-    ArchiveImportTask,
-    SentinelImportTask,
-    SingletonImportTask,
-)
-from beets.library import Item
+from beets.importer import Action
+from beets.library import Album, Item
 from beets.test import helper
 from beets.test.helper import (
     AutotagStub,
     ImportHelper,
     PluginMixin,
     PluginTestCase,
+    PluginTestCasePytest,
     TerminalImportMixin,
 )
-from beets.util import PromptChoice, displayable_path, syspath
+from beets.util import PromptChoice, syspath
 
 
-class TestPluginRegistration(PluginTestCase):
-    class RatingPlugin(plugins.BeetsPlugin):
+class TestPluginRegistration(PluginTestCasePytest):
+    """Ensure that we can dynamically add a plugin without creating
+    actual files on disk.
+
+    This is a meta test that ensures that our dynamic registration
+    mechanism works as intended.
+
+    TODO: Add a test for template functions, template fields and album template fields
+    """
+
+    class DummyPlugin(plugins.BeetsPlugin):
         item_types = {
-            "rating": types.Float(),
-            "multi_value": types.MULTI_VALUE_DSV,
+            "foo": types.Float(),
+            "bar": types.MULTI_VALUE_DSV,
+        }
+        album_types = {
+            "baz": types.INTEGER,
         }
 
-        def __init__(self):
-            super().__init__()
-            self.register_listener("write", self.on_write)
+    plugin = "dummy"
+    plugin_type = DummyPlugin
 
-        @staticmethod
-        def on_write(item=None, path=None, tags=None):
-            if tags["artist"] == "XXX":
-                tags["artist"] = "YYY"
-
-    def setUp(self):
-        super().setUp()
-
-        self.register_plugin(self.RatingPlugin)
+    def test_get_plugin(self):
+        """Test that get_plugin returns the correct plugin class."""
+        plugin = plugins._get_plugin(self.plugin)
+        assert plugin is not None
+        assert isinstance(plugin, self.DummyPlugin)
 
     def test_field_type_registered(self):
-        assert isinstance(Item._types.get("rating"), types.Float)
-
-    def test_duplicate_type(self):
-        class DuplicateTypePlugin(plugins.BeetsPlugin):
-            item_types = {"rating": types.INTEGER}
-
-        self.register_plugin(DuplicateTypePlugin)
-        with pytest.raises(
-            plugins.PluginConflictError, match="already been defined"
-        ):
-            Item._types
-
-    def test_listener_registered(self):
-        self.RatingPlugin()
-        item = self.add_item_fixture(artist="XXX")
-
-        item.write()
-
-        assert MediaFile(syspath(item.path)).artist == "YYY"
+        """Test that the field types are registered on the Item class."""
+        assert isinstance(Item._types.get("foo"), types.Float)
+        assert Item._types.get("bar") is types.MULTI_VALUE_DSV
+        assert Album._types.get("baz") is types.INTEGER
 
     def test_multi_value_flex_field_type(self):
         item = Item(path="apath", artist="aaa")
-        item.multi_value = ["one", "two", "three"]
+        item.bar = ["one", "two", "three"]
         item.add(self.lib)
 
-        out = self.run_with_output("ls", "-f", "$multi_value")
+        out = self.run_with_output("ls", "-f", "$bar")
         delimiter = types.MULTI_VALUE_DSV.delimiter
         assert out == f"one{delimiter}two{delimiter}three\n"
 
+    def test_duplicate_field_typ(self):
+        """Test that if another plugin tries to register the same type,
+        a PluginConflictError is raised.
+        """
 
-class PluginImportTestCase(ImportHelper, PluginTestCase):
+        class DuplicateDummyPlugin(plugins.BeetsPlugin):
+            album_types = {"baz": types.Float()}
+
+        with (
+            self.plugins(
+                ("dummy", self.DummyPlugin), ("duplicate", DuplicateDummyPlugin)
+            ),
+            pytest.raises(
+                plugins.PluginConflictError, match="already been defined"
+            ),
+        ):
+            Album._types
+
+
+class TestPluginListeners(PluginTestCasePytest, ImportHelper):
+    """Test that plugin listeners are registered and called correctly."""
+
+    class DummyPlugin(plugins.BeetsPlugin):
+        records: list[Any]
+
+        def __init__(self):
+            super().__init__()
+            self.records = []
+            self.register_listener("cli_exit", self.on_cli_exit)
+            self.register_listener("write", self.on_write)
+            self.register_listener(
+                "import_task_created", self.on_import_task_created
+            )
+
+        def on_cli_exit(self, **kwargs):
+            self.records.append(("cli_exit", kwargs))
+
+        def on_write(
+            self, item=None, path=None, tags: dict[Any, Any] | None = None
+        ):
+            self.records.append(("write", item, path, tags))
+            if tags and tags["artist"] == "XXX":
+                tags["artist"] = "YYY"
+
+        def on_import_task_created(self, **kwargs):
+            self.records.append(("import_task_created", kwargs))
+
+    plugin_type = DummyPlugin
+    plugin = "dummy"
+
+    @pytest.fixture(autouse=True)
+    def clear_records(self):
+        plug = self.get_plugin_instance()
+        assert isinstance(plug, self.DummyPlugin)
+        plug.records.clear()
+
+    def get_records(self):
+        plug = self.get_plugin_instance()
+        assert isinstance(plug, self.DummyPlugin)
+        return plug.records
+
+    @pytest.mark.parametrize(
+        "event",
+        [
+            "cli_exit",
+            "write",
+            "import_task_created",
+        ],
+    )
+    def test_listener_events(self, event):
+        """Generic test for all events triggered via `plugins.send`."""
+        plugins.send(event)
+        records = self.get_records()
+        assert len(records) == 1
+        assert records[0][0] == event
+
+    def test_on_write(self):
+        # Additionally test that tags are modified correctly.
+        item = self.add_item_fixture(artist="XXX")
+        item.write()
+        assert MediaFile(syspath(item.path)).artist == "YYY"
+
+    def test_on_import_task_created(self, caplog):
+        """Test that the import_task_created event is triggered
+        when an import task is created."""
+
+        # Fixme: unittest ImportHelper in pytest setup
+        self.import_media = []
+        self.prepare_album_for_import(2)
+
+        self.importer = self.setup_importer(pretend=True)
+        self.importer.run()
+
+        assert self.get_records()[0][0] == "import_task_created"
+
+
+class TestPluginListenersParams(PluginMixin):
+    """Test that plugin listeners are called with correct parameters.
+
+    Also check that invalid parameters raise TypeErrors.
+    """
+
+    def dummy1(self, foo):
+        assert foo == 5
+
+    def dummy2(self, foo=None):
+        assert foo == 5
+
+    def dummy3(self):
+        # argument cut off
+        pass
+
+    def dummy4(self, bar=None):
+        # argument cut off
+        pass
+
+    def dummy5(self, bar):
+        assert not True
+
+    # more complex examples
+
+    def dummy6(self, foo, bar=None):
+        assert foo == 5
+        assert bar is None
+
+    def dummy7(self, foo, **kwargs):
+        assert foo == 5
+        assert kwargs == {}
+
+    def dummy8(self, foo, bar, **kwargs):
+        assert not True
+
+    def dummy9(self, **kwargs):
+        assert kwargs == {"foo": 5}
+
+    @pytest.mark.parametrize(
+        "func, raises",
+        [
+            ("dummy1", False),
+            ("dummy2", False),
+            ("dummy3", False),
+            ("dummy4", False),
+            ("dummy5", True),
+            ("dummy6", False),
+            ("dummy7", False),
+            ("dummy8", True),
+            ("dummy9", False),
+        ],
+    )
+    def test_listener_params(self, func, raises):
+        func_obj = getattr(self, func)
+
+        class DummyPlugin(plugins.BeetsPlugin):
+            def __init__(self):
+                super().__init__()
+                self.register_listener("exit_cli", func_obj)
+
+        with self.plugins(("dummy", DummyPlugin)):
+            if raises:
+                with pytest.raises(TypeError):
+                    plugins.send("exit_cli", foo=5)
+            else:
+                plugins.send("exit_cli", foo=5)
+
+
+class PromptChoicesTest(TerminalImportMixin, ImportHelper, PluginMixin):
+    @pytest.fixture(autouse=True)
+    def setup_teardown(self):
+        # FIXME: Run old unittest setup/teardown methods
+        self.setUp()
+        yield
+        self.tearDown()
+
     def setUp(self):
         super().setUp()
         self.prepare_album_for_import(2)
 
-
-class EventsTest(PluginImportTestCase):
-    def test_import_task_created(self):
-        self.importer = self.setup_importer(pretend=True)
-
-        with helper.capture_log() as logs:
-            self.importer.run()
-
-        # Exactly one event should have been imported (for the album).
-        # Sentinels do not get emitted.
-        assert logs.count("Sending event: import_task_created") == 1
-
-        logs = [line for line in logs if not line.startswith("Sending event:")]
-        assert logs == [
-            f"Album: {displayable_path(os.path.join(self.import_dir, b'album'))}",
-            f"  {displayable_path(self.import_media[0].path)}",
-            f"  {displayable_path(self.import_media[1].path)}",
-        ]
-
-    def test_import_task_created_with_plugin(self):
-        class ToSingletonPlugin(plugins.BeetsPlugin):
-            def __init__(self):
-                super().__init__()
-
-                self.register_listener(
-                    "import_task_created", self.import_task_created_event
-                )
-
-            def import_task_created_event(self, session, task):
-                if (
-                    isinstance(task, SingletonImportTask)
-                    or isinstance(task, SentinelImportTask)
-                    or isinstance(task, ArchiveImportTask)
-                ):
-                    return task
-
-                new_tasks = []
-                for item in task.items:
-                    new_tasks.append(SingletonImportTask(task.toppath, item))
-
-                return new_tasks
-
-        to_singleton_plugin = ToSingletonPlugin
-        self.register_plugin(to_singleton_plugin)
-
-        self.importer = self.setup_importer(pretend=True)
-
-        with helper.capture_log() as logs:
-            self.importer.run()
-
-        # Exactly one event should have been imported (for the album).
-        # Sentinels do not get emitted.
-        assert logs.count("Sending event: import_task_created") == 1
-
-        logs = [line for line in logs if not line.startswith("Sending event:")]
-        assert logs == [
-            f"Singleton: {displayable_path(self.import_media[0].path)}",
-            f"Singleton: {displayable_path(self.import_media[1].path)}",
-        ]
-
-
-class ListenersTest(PluginTestCase):
-    def test_register(self):
-        class DummyPlugin(plugins.BeetsPlugin):
-            def __init__(self):
-                super().__init__()
-                self.register_listener("cli_exit", self.dummy)
-                self.register_listener("cli_exit", self.dummy)
-
-            def dummy(self):
-                pass
-
-        d = DummyPlugin()
-        assert DummyPlugin._raw_listeners["cli_exit"] == [d.dummy]
-
-        d2 = DummyPlugin()
-        assert DummyPlugin._raw_listeners["cli_exit"] == [d.dummy, d2.dummy]
-
-        d.register_listener("cli_exit", d2.dummy)
-        assert DummyPlugin._raw_listeners["cli_exit"] == [d.dummy, d2.dummy]
-
-    def test_events_called(self):
-        class DummyPlugin(plugins.BeetsPlugin):
-            def __init__(self):
-                super().__init__()
-                self.foo = Mock(__name__="foo")
-                self.register_listener("event_foo", self.foo)
-                self.bar = Mock(__name__="bar")
-                self.register_listener("event_bar", self.bar)
-
-        d = DummyPlugin()
-
-        plugins.send("event")
-        d.foo.assert_has_calls([])
-        d.bar.assert_has_calls([])
-
-        plugins.send("event_foo", var="tagada")
-        d.foo.assert_called_once_with(var="tagada")
-        d.bar.assert_has_calls([])
-
-    def test_listener_params(self):
-        class DummyPlugin(plugins.BeetsPlugin):
-            def __init__(self):
-                super().__init__()
-                for i in itertools.count(1):
-                    try:
-                        meth = getattr(self, f"dummy{i}")
-                    except AttributeError:
-                        break
-                    self.register_listener(f"event{i}", meth)
-
-            def dummy1(self, foo):
-                assert foo == 5
-
-            def dummy2(self, foo=None):
-                assert foo == 5
-
-            def dummy3(self):
-                # argument cut off
-                pass
-
-            def dummy4(self, bar=None):
-                # argument cut off
-                pass
-
-            def dummy5(self, bar):
-                assert not True
-
-            # more complex examples
-
-            def dummy6(self, foo, bar=None):
-                assert foo == 5
-                assert bar is None
-
-            def dummy7(self, foo, **kwargs):
-                assert foo == 5
-                assert kwargs == {}
-
-            def dummy8(self, foo, bar, **kwargs):
-                assert not True
-
-            def dummy9(self, **kwargs):
-                assert kwargs == {"foo": 5}
-
-        DummyPlugin()
-
-        plugins.send("event1", foo=5)
-        plugins.send("event2", foo=5)
-        plugins.send("event3", foo=5)
-        plugins.send("event4", foo=5)
-
-        with pytest.raises(TypeError):
-            plugins.send("event5", foo=5)
-
-        plugins.send("event6", foo=5)
-        plugins.send("event7", foo=5)
-
-        with pytest.raises(TypeError):
-            plugins.send("event8", foo=5)
-
-        plugins.send("event9", foo=5)
-
-
-class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
-    def setUp(self):
-        super().setUp()
         self.setup_importer()
         self.matcher = AutotagStub(AutotagStub.IDENT).install()
         self.addCleanup(self.matcher.restore)
@@ -296,25 +290,25 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
                     PromptChoice("r", "baR", None),
                 ]
 
-        self.register_plugin(DummyPlugin)
-        # Default options + extra choices by the plugin ('Foo', 'Bar')
-        opts = (
-            "Apply",
-            "More candidates",
-            "Skip",
-            "Use as-is",
-            "as Tracks",
-            "Group albums",
-            "Enter search",
-            "enter Id",
-            "aBort",
-        ) + ("Foo", "baR")
+        with self.plugins(("dummy", DummyPlugin)):
+            # Default options + extra choices by the plugin ('Foo', 'Bar')
+            opts = (
+                "Apply",
+                "More candidates",
+                "Skip",
+                "Use as-is",
+                "as Tracks",
+                "Group albums",
+                "Enter search",
+                "enter Id",
+                "aBort",
+            ) + ("Foo", "baR")
 
-        self.importer.add_choice(Action.SKIP)
-        self.importer.run()
-        self.mock_input_options.assert_called_once_with(
-            opts, default="a", require=ANY
-        )
+            self.importer.add_choice(Action.SKIP)
+            self.importer.run()
+            self.mock_input_options.assert_called_once_with(
+                opts, default="a", require=ANY
+            )
 
     def test_plugin_choices_in_ui_input_options_singleton(self):
         """Test the presence of plugin choices on the prompt (singleton)."""
@@ -332,24 +326,24 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
                     PromptChoice("r", "baR", None),
                 ]
 
-        self.register_plugin(DummyPlugin)
-        # Default options + extra choices by the plugin ('Foo', 'Bar')
-        opts = (
-            "Apply",
-            "More candidates",
-            "Skip",
-            "Use as-is",
-            "Enter search",
-            "enter Id",
-            "aBort",
-        ) + ("Foo", "baR")
+        with self.plugins(("dummy", DummyPlugin)):
+            # Default options + extra choices by the plugin ('Foo', 'Bar')
+            opts = (
+                "Apply",
+                "More candidates",
+                "Skip",
+                "Use as-is",
+                "Enter search",
+                "enter Id",
+                "aBort",
+            ) + ("Foo", "baR")
 
-        config["import"]["singletons"] = True
-        self.importer.add_choice(Action.SKIP)
-        self.importer.run()
-        self.mock_input_options.assert_called_with(
-            opts, default="a", require=ANY
-        )
+            config["import"]["singletons"] = True
+            self.importer.add_choice(Action.SKIP)
+            self.importer.run()
+            self.mock_input_options.assert_called_with(
+                opts, default="a", require=ANY
+            )
 
     def test_choices_conflicts(self):
         """Test the short letter conflict solving."""
@@ -369,24 +363,24 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
                     PromptChoice("z", "Zoo", None),
                 ]  # dupe
 
-        self.register_plugin(DummyPlugin)
-        # Default options + not dupe extra choices by the plugin ('baZ')
-        opts = (
-            "Apply",
-            "More candidates",
-            "Skip",
-            "Use as-is",
-            "as Tracks",
-            "Group albums",
-            "Enter search",
-            "enter Id",
-            "aBort",
-        ) + ("baZ",)
-        self.importer.add_choice(Action.SKIP)
-        self.importer.run()
-        self.mock_input_options.assert_called_once_with(
-            opts, default="a", require=ANY
-        )
+        with self.plugins(("dummy", DummyPlugin)):
+            # Default options + not dupe extra choices by the plugin ('baZ')
+            opts = (
+                "Apply",
+                "More candidates",
+                "Skip",
+                "Use as-is",
+                "as Tracks",
+                "Group albums",
+                "Enter search",
+                "enter Id",
+                "aBort",
+            ) + ("baZ",)
+            self.importer.add_choice(Action.SKIP)
+            self.importer.run()
+            self.mock_input_options.assert_called_once_with(
+                opts, default="a", require=ANY
+            )
 
     def test_plugin_callback(self):
         """Test that plugin callbacks are being called upon user choice."""
@@ -404,31 +398,31 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
             def foo(self, session, task):
                 pass
 
-        self.register_plugin(DummyPlugin)
-        # Default options + extra choices by the plugin ('Foo', 'Bar')
-        opts = (
-            "Apply",
-            "More candidates",
-            "Skip",
-            "Use as-is",
-            "as Tracks",
-            "Group albums",
-            "Enter search",
-            "enter Id",
-            "aBort",
-        ) + ("Foo",)
+        with self.plugins(("dummy", DummyPlugin)):
+            # Default options + extra choices by the plugin ('Foo', 'Bar')
+            opts = (
+                "Apply",
+                "More candidates",
+                "Skip",
+                "Use as-is",
+                "as Tracks",
+                "Group albums",
+                "Enter search",
+                "enter Id",
+                "aBort",
+            ) + ("Foo",)
 
-        # DummyPlugin.foo() should be called once
-        with patch.object(DummyPlugin, "foo", autospec=True) as mock_foo:
-            with helper.control_stdin("\n".join(["f", "s"])):
-                self.importer.run()
-            assert mock_foo.call_count == 1
+            # DummyPlugin.foo() should be called once
+            with patch.object(DummyPlugin, "foo", autospec=True) as mock_foo:
+                with helper.control_stdin("\n".join(["f", "s"])):
+                    self.importer.run()
+                assert mock_foo.call_count == 1
 
-        # input_options should be called twice, as foo() returns None
-        assert self.mock_input_options.call_count == 2
-        self.mock_input_options.assert_called_with(
-            opts, default="a", require=ANY
-        )
+            # input_options should be called twice, as foo() returns None
+            assert self.mock_input_options.call_count == 2
+            self.mock_input_options.assert_called_with(
+                opts, default="a", require=ANY
+            )
 
     def test_plugin_callback_return(self):
         """Test that plugin callbacks that return a value exit the loop."""
@@ -446,28 +440,28 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
             def foo(self, session, task):
                 return Action.SKIP
 
-        self.register_plugin(DummyPlugin)
-        # Default options + extra choices by the plugin ('Foo', 'Bar')
-        opts = (
-            "Apply",
-            "More candidates",
-            "Skip",
-            "Use as-is",
-            "as Tracks",
-            "Group albums",
-            "Enter search",
-            "enter Id",
-            "aBort",
-        ) + ("Foo",)
+        with self.plugins(("dummy", DummyPlugin)):
+            # Default options + extra choices by the plugin ('Foo', 'Bar')
+            opts = (
+                "Apply",
+                "More candidates",
+                "Skip",
+                "Use as-is",
+                "as Tracks",
+                "Group albums",
+                "Enter search",
+                "enter Id",
+                "aBort",
+            ) + ("Foo",)
 
-        # DummyPlugin.foo() should be called once
-        with helper.control_stdin("f\n"):
-            self.importer.run()
+            # DummyPlugin.foo() should be called once
+            with helper.control_stdin("f\n"):
+                self.importer.run()
 
-        # input_options should be called once, as foo() returns SKIP
-        self.mock_input_options.assert_called_once_with(
-            opts, default="a", require=ANY
-        )
+            # input_options should be called once, as foo() returns SKIP
+            self.mock_input_options.assert_called_once_with(
+                opts, default="a", require=ANY
+            )
 
 
 def get_available_plugins():
@@ -482,6 +476,8 @@ def get_available_plugins():
 
 
 class TestImportPlugin(PluginMixin):
+    """Test that all available plugins can be imported without error."""
+
     @pytest.fixture(params=get_available_plugins())
     def plugin_name(self, request):
         """Fixture to provide the name of each available plugin."""
@@ -493,13 +489,6 @@ class TestImportPlugin(PluginMixin):
             pytest.skip(f"GStreamer is not available on Windows: {name}")
 
         return name
-
-    def unload_plugins(self):
-        """Unimport plugins before each test to avoid conflicts."""
-        super().unload_plugins()
-        for mod in list(sys.modules):
-            if mod.startswith("beetsplug."):
-                del sys.modules[mod]
 
     @pytest.fixture(autouse=True)
     def cleanup(self):
@@ -523,6 +512,11 @@ class TestImportPlugin(PluginMixin):
         assert "PluginImportError" not in caplog.text, (
             f"Plugin '{plugin_name}' has issues during import."
         )
+
+    def test_import_error(self, caplog):
+        """Test that an invalid plugin raises PluginImportError."""
+        self.load_plugins("this_does_not_exist")
+        assert "PluginImportError" in caplog.text
 
 
 class TestDeprecationCopy:

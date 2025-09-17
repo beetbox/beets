@@ -28,11 +28,14 @@ information or mock the environment.
 
 from __future__ import annotations
 
+import importlib
 import os
 import os.path
+import pkgutil
 import shutil
 import subprocess
 import sys
+import types
 import unittest
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -44,6 +47,7 @@ from tempfile import gettempdir, mkdtemp, mkstemp
 from typing import Any, ClassVar
 from unittest.mock import patch
 
+import pytest
 import responses
 from mediafile import Image, MediaFile
 
@@ -53,6 +57,7 @@ from beets import importer, logging, util
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.importer import ImportSession
 from beets.library import Item, Library
+from beets.plugins import PLUGIN_NAMESPACE
 from beets.test import _common
 from beets.ui.commands.import_.session import TerminalImportSession
 from beets.util import (
@@ -467,11 +472,78 @@ class ItemInDBTestCase(BeetsTestCase):
         self.i = _common.item(self.lib)
 
 
-class PluginMixin(ConfigMixin):
-    plugin: ClassVar[str]
+class PluginMixin(TestHelper):
+    """A mixin that handles plugin loading, unloading and registration.
+
+    Usage:
+    ------
+    Subclass this mixin and define a setup fixture
+    or call load/unload manually.
+
+    .. code-block:: python
+
+        class MyPluginTest(PluginMixin):
+            plugin = 'myplugin'
+
+            # Using fixtures:
+            @pytest.fixture(autouse=True)
+            def setup(self):
+                self.setup_beets()
+                yield
+                self.teardown_beets()
+
+            def test_something(self):
+                ...
+
+    This will load the plugin named `myplugin` before each test and unload it
+    afterwards. This requires a `myplugin.py` file in the `beetsplug` namespace.
+
+    If you need to register a plugin class directly, set the `plugin_type` class
+    variable to the plugin class type you want to register.
+
+    .. code-block:: python
+
+        class MyPluginTest(PluginMixin):
+            plugin = 'myplugin'
+            plugin_type = MyPluginClass
+
+            @pytest.fixture(autouse=True)
+            def setup(self):
+                self.setup_beets()
+                yield
+                self.teardown_beets()
+
+            def test_something(self):
+                ...
+
+    This will register `MyPluginClass` as `myplugin` in the `beetsplug`
+    namespace before loading it. This is useful if you want to test core plugin
+    functions.
+
+    You can also manually call `register_plugin()`, `load_plugins()` and
+    `unload_plugins()` in your test methods if you need more control.
+
+    .. code-block:: python
+
+        class MyPluginTest(PluginMixin):
+            plugin = 'myplugin'
+            plugin_type = MyPluginClass
+
+            def test_something(self):
+                self.register_plugin(self.plugin_type, self.plugin)
+                self.load_plugins(self.plugin)
+                ...
+                self.unload_plugins()
+    """
+
+    plugin: ClassVar[str | None] = None
+    plugin_type: ClassVar[type[beets.plugins.BeetsPlugin] | None] = None
     preload_plugin: ClassVar[bool] = True
 
     def setup_beets(self):
+        """Setup beets and register/load the plugin if specified."""
+        if self.plugin_type is not None:
+            self.register_plugin(self.plugin_type, self.plugin)
         super().setup_beets()
         if self.preload_plugin:
             self.load_plugins()
@@ -479,11 +551,59 @@ class PluginMixin(ConfigMixin):
     def teardown_beets(self):
         super().teardown_beets()
         self.unload_plugins()
+        self.unregister_plugin(self.plugin)
 
+    @staticmethod
     def register_plugin(
-        self, plugin_class: type[beets.plugins.BeetsPlugin]
+        plugin_class: type[beets.plugins.BeetsPlugin],
+        name: str | None = None,
     ) -> None:
-        beets.plugins._instances.append(plugin_class())
+        """Register a plugin class in the `beetsplug` namespace.
+
+        It does not have to exist as a file and is dynamically created.
+        """
+        name = name or plugin_class.__name__.lower().replace("plugin", "")
+        full_namespace = f"{PLUGIN_NAMESPACE}.{name}"
+
+        # Create the beetsplug (PLUGIN_NAMESPACE) module if it does not exist
+        if PLUGIN_NAMESPACE not in sys.modules:
+            beetsplug_pkg = types.ModuleType(PLUGIN_NAMESPACE)
+            beetsplug_pkg.__path__ = []
+            sys.modules[PLUGIN_NAMESPACE] = beetsplug_pkg
+
+        # Create the plugin module
+        if full_namespace in sys.modules:
+            raise ValueError(f"Plugin {name} already registered")
+        module = types.ModuleType(full_namespace)
+        module.__file__ = f"<{full_namespace}>"
+        module.__package__ = PLUGIN_NAMESPACE
+        setattr(module, plugin_class.__name__, plugin_class)
+
+        # Register in sys.modules and as attribute of parent package
+        # needed to allow finding the plugin through importlib
+        sys.modules[full_namespace] = module
+        setattr(sys.modules[PLUGIN_NAMESPACE], name, module)
+
+    @staticmethod
+    def unregister_plugin(name: str | None = None) -> None:
+        """Unregister a plugin class in the `beetsplug` namespace."""
+        if not name:
+            return
+
+        full_namespace = f"{PLUGIN_NAMESPACE}.{name}"
+        if full_namespace in sys.modules:
+            del sys.modules[full_namespace]
+
+        if PLUGIN_NAMESPACE in sys.modules:
+            parent_pkg = sys.modules[PLUGIN_NAMESPACE]
+            if hasattr(parent_pkg, name):
+                delattr(parent_pkg, name)
+
+    def unregister_all_plugins(self) -> None:
+        # Remove plugin modules from sys.modules
+        for mod in list(sys.modules):
+            if mod.startswith("beetsplug."):
+                del sys.modules[mod]
 
     def load_plugins(self, *plugins: str) -> None:
         """Load and initialize plugins by names.
@@ -492,8 +612,12 @@ class PluginMixin(ConfigMixin):
         sure you call ``unload_plugins()`` afterwards.
         """
         # FIXME this should eventually be handled by a plugin manager
-        plugins = (self.plugin,) if hasattr(self, "plugin") else plugins
-        self.config["plugins"] = plugins
+        if plugins:
+            self.config["plugins"] = plugins
+        elif self.plugin:
+            self.config["plugins"] = (self.plugin,)
+        else:
+            self.config["plugins"] = tuple()
         beets.plugins.load_plugins()
 
     def unload_plugins(self) -> None:
@@ -501,20 +625,77 @@ class PluginMixin(ConfigMixin):
         # FIXME this should eventually be handled by a plugin manager
         beets.plugins.BeetsPlugin.listeners.clear()
         beets.plugins.BeetsPlugin._raw_listeners.clear()
+        beets.plugins.BeetsPlugin.template_funcs.clear()
+        beets.plugins.BeetsPlugin.template_fields.clear()
+        beets.plugins.BeetsPlugin.album_template_fields.clear()
         self.config["plugins"] = []
         beets.plugins._instances.clear()
 
+    def get_plugin_instance(
+        self, name: str | None = None
+    ) -> beets.plugins.BeetsPlugin:
+        """Get the plugin instance for a registered and loaded plugin."""
+        name = name or self.plugin
+        for plugin in beets.plugins._instances:
+            if plugin.name == name or (
+                self.plugin_type and isinstance(plugin, self.plugin_type)
+            ):
+                return plugin
+        raise ValueError(f"No plugin found with name {name}")
+
     @contextmanager
-    def configure_plugin(self, config: Any):
-        self.config[self.plugin].set(config)
-        self.load_plugins(self.plugin)
+    def plugins(self, *plugins: tuple[str, type[beets.plugins.BeetsPlugin]]):
+        """Context manager to register and load multiple plugins."""
+        self.unload_plugins()
+        for name, plugin_type in plugins:
+            self.register_plugin(plugin_type, name)
+        self.load_plugins(*(name for name, _ in plugins))
 
         yield
 
         self.unload_plugins()
+        self.unregister_all_plugins()
+
+    @contextmanager
+    def configure_plugin(self, config: Any):
+        self.config[self.plugin].set(config)
+        if self.plugin_type is not None:
+            self.register_plugin(self.plugin_type, self.plugin)
+        if self.plugin:
+            self.load_plugins(self.plugin)
+
+        yield
+
+        self.unload_plugins()
+        if self.plugin_type is not None:
+            self.unregister_plugin(
+                self.plugin
+                or self.plugin_type.__name__.lower().replace("plugin", "")
+            )
+
+
+def get_available_plugins():
+    """Get all available plugins in the beetsplug namespace."""
+    namespace_pkg = importlib.import_module("beetsplug")
+
+    return [
+        m.name
+        for m in pkgutil.iter_modules(namespace_pkg.__path__)
+        if not m.name.startswith("_")
+    ]
+
+
+class PluginTestCasePytest(PluginMixin, TestHelper):
+    @pytest.fixture(autouse=True)
+    def _setup_teardown(self):
+        self.setup_beets()
+        yield
+        self.teardown_beets()
 
 
 class PluginTestCase(PluginMixin, BeetsTestCase):
+    """DEPRECATED: Use PluginTestCasePytest instead for new code!"""
+
     pass
 
 
