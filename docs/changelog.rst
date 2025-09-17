@@ -17,8 +17,8 @@ Other changes:
 
 - :doc:`plugins/index`: Clarify that musicbrainz must be mentioned if plugin
   list modified :bug:`6020`
-- :doc:`/faq`: Add check for musicbrainz plugin if auto-tagger can't find
-  a match :bug:`6020`
+- :doc:`/faq`: Add check for musicbrainz plugin if auto-tagger can't find a
+  match :bug:`6020`
 - :doc:`guides/tagger`: Section on no matching release found, related to
   possibly disabled musicbrainz plugin :bug:`6020`
 
