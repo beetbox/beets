@@ -58,7 +58,7 @@ following to your configuration:
 
 .. code-block:: yaml
 
-    plugins: discogs
+    plugins: musicbrainz discogs
 
     discogs:
        source_weight: 0.0
