@@ -605,34 +605,21 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """Event hook called when an import task finishes."""
         if task.is_album:
             album = task.album
-            album.genre, src = self._get_genre(album)
-            self._log.debug(
-                'genre for album "{0.album}" ({1}): {0.genre}', album, src
-            )
+            album_genre, label = self._get_genre(album)
+            self._apply_album_genre(album, label, album_genre)
 
-            # If we're using track-level sources, store the album genre only,
-            # then also look up individual track genres.
+            # If we're using track-level sources, store the album genre only (this
+            # happened in _apply_album_genre already), then also look up individual
+            # track genres.
             if "track" in self.sources:
-                album.store(inherit=False)
                 for item in album.items():
-                    item.genre, src = self._get_genre(item)
-                    self._log.debug(
-                        'genre for track "{0.title}" ({1}): {0.genre}',
-                        item,
-                        src,
-                    )
-                    item.store()
-            # Store the album genre and inherit to tracks.
-            else:
-                album.store()
+                    item_genre, label = self._get_genre(item)
+                    self._apply_item_genre(item, label, item_genre)
 
         else:
             item = task.item
-            item.genre, src = self._get_genre(item)
-            self._log.debug(
-                'genre for track "{0.title}" ({1}): {0.genre}', item, src
-            )
-            item.store()
+            item_genre, label = self._get_genre(item)
+            self._apply_item_genre(item, label, item_genre)
 
     def _tags_for(self, obj, min_weight=None):
         """Core genre identification routine.
