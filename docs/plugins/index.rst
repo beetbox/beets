@@ -18,7 +18,7 @@ list), just use the ``plugins`` option in your :doc:`config.yaml
 
 .. code-block:: sh
 
-    plugins: inline convert web
+    plugins: musicbrainz inline convert web
 
 The value for ``plugins`` can be a space-separated list of plugin names or a
 YAML list like ``[foo, bar]``. You can see which plugins are currently enabled
@@ -29,7 +29,7 @@ its name:
 
 .. code-block:: yaml
 
-    plugins: inline convert web
+    plugins: musicbrainz inline convert web
 
     convert:
         auto: true
