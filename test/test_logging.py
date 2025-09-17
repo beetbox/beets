@@ -3,10 +3,9 @@
 import logging as log
 import sys
 import threading
-import unittest
-from io import StringIO
 from types import ModuleType
-from unittest.mock import patch
+
+import pytest
 
 import beets.logging as blog
 from beets import plugins, ui
@@ -14,8 +13,10 @@ from beets.test import _common, helper
 from beets.test.helper import AsIsImporterMixin, ImportTestCase, PluginMixin
 
 
-class LoggingTest(unittest.TestCase):
-    def test_logging_management(self):
+class TestStrFormatLogger:
+    """Tests for the custom str-formatting logger."""
+
+    def test_logger_creation(self):
         l1 = log.getLogger("foo123")
         l2 = blog.getLogger("foo123")
         assert l1 == l2
@@ -35,17 +36,33 @@ class LoggingTest(unittest.TestCase):
         l6 = blog.getLogger()
         assert l1 != l6
 
-    def test_str_format_logging(self):
-        logger = blog.getLogger("baz123")
-        stream = StringIO()
-        handler = log.StreamHandler(stream)
+    @pytest.mark.parametrize(
+        "level", [log.DEBUG, log.INFO, log.WARNING, log.ERROR]
+    )
+    @pytest.mark.parametrize(
+        "msg, args, kwargs, expected",
+        [
+            ("foo {} bar {}", ("oof", "baz"), {}, "foo oof bar baz"),
+            (
+                "foo {bar} baz {foo}",
+                (),
+                {"foo": "oof", "bar": "baz"},
+                "foo baz baz oof",
+            ),
+            ("no args", (), {}, "no args"),
+            ("foo {} bar {baz}", ("oof",), {"baz": "baz"}, "foo oof bar baz"),
+        ],
+    )
+    def test_str_format_logging(
+        self, level, msg, args, kwargs, expected, caplog
+    ):
+        logger = blog.getLogger("test_logger")
+        logger.setLevel(level)
 
-        logger.addHandler(handler)
-        logger.propagate = False
+        with caplog.at_level(level, logger="test_logger"):
+            logger.log(level, msg, *args, **kwargs)
 
-        logger.warning("foo {} {bar}", "oof", bar="baz")
-        handler.flush()
-        assert stream.getvalue(), "foo oof baz"
+        assert str(caplog.records[0].msg) == expected
 
 
 class DummyModule(ModuleType):
