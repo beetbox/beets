@@ -15,6 +15,9 @@ Bug fixes:
   return incorrect or misleading results when using the Spotify plugin. The
   problem occurred primarily when no album was provided or when the album field
   was an empty string. :bug:`5189`
+- :doc:`plugins/spotify` Removed old and undocumented config options
+  `artist_field`, `album_field` and `track` that were causing issues with track
+  matching. :bug:`5189`
 
 For packagers:
 
