@@ -39,21 +39,26 @@ Configuration
 To configure the plugin, make a ``missing:`` section in your configuration file.
 The available options are:
 
-- **count**: Print a count of missing tracks per album, with ``format``
-  defaulting to ``$albumartist - $album: $missing``. Default: ``no``.
-- **format**: A specific format with which to print every track. This uses the
-  same template syntax as beets' :doc:`path formats </reference/pathformat>`.
-  The usage is inspired by, and therefore similar to, the :ref:`list <list-cmd>`
-  command. Default: :ref:`format_item`.
+- **count**: Print a count of missing tracks per album, with the global
+  ``format_album`` used for formatting. Default: ``no``.
 - **total**: Print a single count of missing tracks in all albums. Default:
   ``no``.
+
+Formatting
+~~~~~~~~~~
+
+- This plugin uses global formatting options from the main configuration; see :ref:`format_item` and :ref:`format_album`:
+
+- :ref:`format_item`: Used when listing missing tracks (default item format).
+- :ref:`format_album`: Used when showing counts (``-c``) or missing albums (``-a``).
 
 Here's an example
 
 ::
 
+    format_album: $albumartist - $album
+    format_item: $artist - $album - $title
     missing:
-        format: $albumartist - $album - $title
         count: no
         total: no
 
