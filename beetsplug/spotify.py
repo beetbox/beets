@@ -130,9 +130,6 @@ class SpotifyPlugin(
                 "mode": "list",
                 "tiebreak": "popularity",
                 "show_failures": False,
-                "artist_field": "albumartist",
-                "album_field": "album",
-                "track_field": "title",
                 "region_filter": None,
                 "regex": [],
                 "client_id": "4e414367a1d14c75a5c5129a627fcab8",
@@ -563,13 +560,11 @@ class SpotifyPlugin(
                     regex["search"], regex["replace"], value
                 )
 
-            # Custom values can be passed in the config (just in case)
-            artist = item[self.config["artist_field"].get()]
-            album = item[self.config["album_field"].get()]
-            query_string = item[self.config["track_field"].get()]
+            artist = item["artist"] or item["albumartist"]
+            album = item["album"]
+            query_string = item["title"]
 
             # Query the Web API for each track, look for the items' JSON data
-
             query_filters: SearchFilter = {}
             if artist:
                 query_filters["artist"] = artist
