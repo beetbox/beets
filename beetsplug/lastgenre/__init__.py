@@ -553,7 +553,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                         if "track" in self.sources:
                             item_genre, src = self._get_genre(item)
                             self._log.info(
-                                'genre for track "{0.title}" ({1}): {}',
+                                'genre for track "{.title}" ({}): {}',
                                 item,
                                 src,
                                 item_genre,
