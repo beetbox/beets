@@ -14,7 +14,7 @@ To use the ``autobpm`` plugin, first enable it in your configuration (see
 
 .. code-block:: bash
 
-    pip install "beets[autobpm]"
+    pipx install "beets[autobpm]"
 
 Configuration
 -------------

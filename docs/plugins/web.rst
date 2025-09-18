@@ -20,7 +20,7 @@ To use the ``web`` plugin, first enable it in your configuration (see
 
 .. code-block:: bash
 
-    pip install "beets[web]"
+    pipx install "beets[web]"
 
 Run the Server
 --------------

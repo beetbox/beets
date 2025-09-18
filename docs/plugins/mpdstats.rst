@@ -23,7 +23,7 @@ This plugin requires the python-mpd2 library in order to talk to the MPD server.
 To use the ``mpdstats`` plugin, first enable it in your configuration (see
 :ref:`using-plugins`). Then, install ``beets`` with ``mpdstats`` extra
 
-    pip install "beets[mpdstats]"
+    pipx install "beets[mpdstats]"
 
 Usage
 -----

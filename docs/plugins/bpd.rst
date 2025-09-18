@@ -33,7 +33,7 @@ extra which installs Python bindings for ``GStreamer``:
 
 .. code-block:: console
 
-    pip install "beets[bpd]"
+    pipx install "beets[bpd]"
 
 .. _gstreamer: https://gstreamer.freedesktop.org/download
 

@@ -19,7 +19,7 @@ Firstly, enable ``lyrics`` plugin in your configuration (see
 
 .. code-block:: bash
 
-    pip install "beets[lyrics]"
+    pipx install "beets[lyrics]"
 
 Fetch Lyrics During Import
 --------------------------
