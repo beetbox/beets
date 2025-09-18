@@ -236,7 +236,9 @@ Why does beets…
 
 There are a number of possibilities:
 
-- First, make sure the album is in `the MusicBrainz database
+- First, make sure you have at least one autotagger extension/plugin enabled.
+  See :ref:`autotagger_extensions` for a list of valid plugins.
+- Check that the album is in `the MusicBrainz database
   <https://musicbrainz.org/>`__. You can search on their site to make sure it's
   cataloged there. (If not, anyone can edit MusicBrainz---so consider adding the
   data yourself.)
