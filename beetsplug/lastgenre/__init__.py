@@ -534,8 +534,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 # Fetch genres for whole albums
                 for album in lib.albums(args):
                     album_genre, src = self._get_genre(album)
+                    prefix = "Pretend: " if pretend else ""
                     self._log.info(
-                        'genre for album "{.album}" ({}): {}',
+                        '{}genre for album "{.album}" ({}): {}',
+                        prefix,
                         album,
                         src,
                         album_genre,
@@ -553,7 +555,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                         if "track" in self.sources:
                             item_genre, src = self._get_genre(item)
                             self._log.info(
-                                'genre for track "{.title}" ({}): {}',
+                                '{}genre for track "{.title}" ({}): {}',
+                                prefix,
                                 item,
                                 src,
                                 item_genre,
@@ -569,8 +572,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 # an album
                 for item in lib.items(args):
                     item_genre, src = self._get_genre(item)
+                    prefix = "Pretend: " if pretend else ""
                     self._log.info(
-                        'genre for track "{0.title}" ({1}): {}',
+                        '{}genre for track "{0.title}" ({1}): {}',
+                        prefix,
                         item,
                         src,
                         item_genre,
