@@ -83,6 +83,8 @@ Bug fixes:
   the config option ``deezer.search_query_ascii: yes``. :bug:`5860`
 - Fixed regression with :doc:`/plugins/listenbrainz` where the plugin could not
   be loaded :bug:`5975`
+- :doc:`/plugins/fromfilename`: Beets will no longer crash if a track's title
+  field is missing.
 
 For packagers:
 
