@@ -19,10 +19,10 @@ import re  # used to test csv format
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element
 
-from beets.test.helper import PluginTestCase
+from beets.test.helper import PluginUnitTestCase
 
 
-class ExportPluginTest(PluginTestCase):
+class ExportPluginTest(PluginUnitTestCase):
     plugin = "export"
 
     def setUp(self):

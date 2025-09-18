@@ -34,7 +34,7 @@ from beets.test import _common
 from beets.test.helper import (
     BeetsTestCase,
     IOMixin,
-    PluginTestCase,
+    PluginUnitTestCase,
     capture_stdout,
     control_stdin,
     has_program,
@@ -812,7 +812,7 @@ class ImportTest(BeetsTestCase):
 
 
 @_common.slow_test()
-class TestPluginTestCase(PluginTestCase):
+class TestPluginTestCase(PluginUnitTestCase):
     plugin = "test"
 
     def setUp(self):

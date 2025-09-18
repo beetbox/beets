@@ -21,14 +21,18 @@ from unittest.mock import ANY, patch
 
 import pytest
 
-from beets.test.helper import CleanupModulesMixin, PluginTestCase, control_stdin
+from beets.test.helper import (
+    CleanupModulesMixin,
+    PluginUnitTestCase,
+    control_stdin,
+)
 from beets.ui import UserError
 from beets.util import open_anything
 from beetsplug.play import PlayPlugin
 
 
 @patch("beetsplug.play.util.interactive_open")
-class PlayPluginTest(CleanupModulesMixin, PluginTestCase):
+class PlayPluginTest(CleanupModulesMixin, PluginUnitTestCase):
     modules = (PlayPlugin.__module__,)
     plugin = "play"
 

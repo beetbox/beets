@@ -4,10 +4,10 @@
 """Tests for the 'bareasc' plugin."""
 
 from beets import logging
-from beets.test.helper import PluginTestCase, capture_stdout
+from beets.test.helper import PluginUnitTestCase, capture_stdout
 
 
-class BareascPluginTest(PluginTestCase):
+class BareascPluginTest(PluginUnitTestCase):
     """Test bare ASCII query matching."""
 
     plugin = "bareasc"

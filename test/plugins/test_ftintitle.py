@@ -16,11 +16,11 @@
 
 import unittest
 
-from beets.test.helper import PluginTestCase
+from beets.test.helper import PluginUnitTestCase
 from beetsplug import ftintitle
 
 
-class FtInTitlePluginFunctional(PluginTestCase):
+class FtInTitlePluginFunctional(PluginUnitTestCase):
     plugin = "ftintitle"
 
     def _ft_add_item(self, path, artist, title, aartist):

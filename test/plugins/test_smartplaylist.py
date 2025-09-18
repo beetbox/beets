@@ -25,7 +25,7 @@ from beets import config
 from beets.dbcore import OrQuery
 from beets.dbcore.query import FixedFieldSort, MultipleSort, NullSort
 from beets.library import Album, Item, parse_query_string
-from beets.test.helper import BeetsTestCase, PluginTestCase
+from beets.test.helper import BeetsTestCase, PluginUnitTestCase
 from beets.ui import UserError
 from beets.util import CHAR_REPLACE, syspath
 from beetsplug.smartplaylist import SmartPlaylistPlugin
@@ -328,7 +328,7 @@ class SmartPlaylistTest(BeetsTestCase):
         assert content == b"http://beets:8337/item/3/file\n"
 
 
-class SmartPlaylistCLITest(PluginTestCase):
+class SmartPlaylistCLITest(PluginUnitTestCase):
     plugin = "smartplaylist"
 
     def setUp(self):
