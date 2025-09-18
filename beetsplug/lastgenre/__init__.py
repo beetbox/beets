@@ -23,7 +23,9 @@ https://gist.github.com/1241307
 """
 
 import os
+import re
 import traceback
+from collections import defaultdict
 from pathlib import Path
 from typing import Union
 
@@ -32,6 +34,7 @@ import yaml
 
 from beets import config, library, plugins, ui
 from beets.library import Album, Item
+from beets.ui import UserError
 from beets.util import plurality, unique_list
 
 LASTFM = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
@@ -101,6 +104,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 "prefer_specific": False,
                 "title_case": True,
                 "extended_debug": False,
+                "blacklist": False,
             }
         )
         self.setup()
@@ -113,6 +117,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         self._genre_cache = {}
         self.whitelist = self._load_whitelist()
         self.c14n_branches, self.canonicalize = self._load_c14n_tree()
+        self.blacklist = self._load_blacklist()
 
     def _load_whitelist(self) -> set[str]:
         """Load the whitelist from a text file.
@@ -155,6 +160,78 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             flatten_tree(genres_tree, [], c14n_branches)
         return c14n_branches, canonicalize
 
+    def _load_blacklist(self):
+        """Load the blacklist from a configured file path.
+
+        For maximum compatibility with regex patterns, a custom format is used:
+        - Each section starts with an artist name, followed by a colon.
+        - Subsequent lines are indented (at least one space, typically 4 spaces) and
+          contain a regex pattern to match a genre.
+
+
+        Supports a special '*' key in the blacklist for
+        global forbidden genres.
+
+        Example blacklist file format:
+            Artist Name:
+                .*rock.*
+                .*metal.*
+            Another Artist Name:
+                ^jazz$
+            *:
+                spoken word
+                comedy
+
+        Raises:
+            UserError: if the file format is invalid.
+        """
+        blacklist = defaultdict(list)
+        if not (bl_filename := self.config["blacklist"].get()):
+            return blacklist
+
+        self._log.debug("Loading blacklist file {0}", bl_filename)
+        section = None
+        with Path(bl_filename).expanduser().open(encoding="utf-8") as f:
+            for lineno, line in enumerate(f, 1):
+                line = line.lower()
+                if not line.strip() or line.lstrip().startswith("#"):
+                    continue
+                if not line.startswith(" "):
+                    # Section header
+                    if not line.rstrip().endswith(":"):
+                        raise UserError(
+                            f"Malformed blacklist section header "
+                            f"at line {lineno}: {line}"
+                        )
+                    section = line.rstrip(":\r\n")
+                else:
+                    # Pattern line: must be indented (at least one space)
+                    if section is None:
+                        raise UserError(
+                            f"Blacklist regex pattern line before any section header "
+                            f"at line {lineno}: {line}"
+                        )
+                    blacklist[section].append(line.strip())
+        if self.config["extended_debug"]:
+            self._log.debug("Blacklist: {}", blacklist)
+
+        # Compile regex patterns
+        compiled_blacklist = defaultdict(list)
+        for artist, patterns in blacklist.items():
+            compiled_patterns = []
+            for pattern in patterns:
+                try:
+                    # Try to compile as regex first
+                    compiled_patterns.append(re.compile(pattern, re.IGNORECASE))
+                except re.error:
+                    # If it fails, escape it and treat as literal string
+                    escaped_pattern = re.escape(pattern)
+                    compiled_patterns.append(
+                        re.compile(escaped_pattern, re.IGNORECASE)
+                    )
+            compiled_blacklist[artist] = compiled_patterns
+        return compiled_blacklist
+
     @property
     def sources(self) -> tuple[str, ...]:
         """A tuple of allowed genre sources. May contain 'track',
@@ -189,7 +266,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         depth_tag_pairs.sort(reverse=True)
         return [p[1] for p in depth_tag_pairs]
 
-    def _resolve_genres(self, tags: list[str]) -> list[str]:
+    def _resolve_genres(self, tags: list[str], artist: str = None) -> list[str]:
         """Canonicalize, sort and filter a list of genres.
 
         - Returns an empty list if the input tags list is empty.
@@ -245,7 +322,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # c14n only adds allowed genres but we may have had forbidden genres in
         # the original tags list
-        valid_tags = [t for t in tags if self._is_valid(t)]
+        valid_tags = [
+            t
+            for t in tags
+            if self._is_valid(t) and not self._is_forbidden(t, artist=artist)
+        ]
         return valid_tags[:count]
 
     def fetch_genre(self, lastfm_obj):
@@ -263,6 +344,32 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """
         if genre and (not self.whitelist or genre.lower() in self.whitelist):
             return True
+        return False
+
+    def _is_forbidden(self, genre: str, artist: str) -> bool:
+        """Return True if the genre is on the blacklist for the artist.
+
+        See `_load_blacklist` docstring for the blacklist file format.
+        """
+        if not self.blacklist:
+            return False
+
+        genre = genre.lower()
+
+        # Check global forbidden patterns
+        if "*" in self.blacklist:
+            for pattern in self.blacklist["*"]:
+                if pattern.search(genre):
+                    return True
+
+        # Check artist-specific forbidden patterns
+        if artist:
+            artist = artist.lower()
+            if artist in self.blacklist:
+                for pattern in self.blacklist[artist]:
+                    if pattern.search(genre):
+                        return True
+
         return False
 
     # Cached last.fm entity lookups.
@@ -288,6 +395,22 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         genre = self._genre_cache[key]
         if self.config["extended_debug"]:
             self._log.debug("last.fm (unfiltered) {} tags: {}", entity, genre)
+
+        # Filter forbidden genres
+        if genre and len(args) >= 1:
+            # For all current lastfm API calls, the first argument is always the artist:
+            # - get_album(artist, album)
+            # - get_artist(artist)
+            # - get_track(artist, title)
+            artist = args[0]
+            filtered_genre = [
+                g for g in genre if not self._is_forbidden(g, artist)
+            ]
+            if filtered_genre != genre and self.config["extended_debug"]:
+                log_filtered = set(genre) - set(filtered_genre)
+                self._log.debug("blacklisted: {}", log_filtered)
+            genre = filtered_genre
+
         return genre
 
     def fetch_album_genre(self, obj):
@@ -334,13 +457,13 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         return [g for g in item_genre if g]
 
     def _combine_resolve_and_log(
-        self, old: list[str], new: list[str]
+        self, old: list[str], new: list[str], artist: str = None
     ) -> list[str]:
         """Combine old and new genres and process via _resolve_genres."""
         self._log.debug("raw last.fm tags: {}", new)
         self._log.debug("existing genres taken into account: {}", old)
         combined = old + new
-        return self._resolve_genres(combined)
+        return self._resolve_genres(combined, artist=artist)
 
     def _get_genre(
         self, obj: Union[Album, Item]
@@ -366,8 +489,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         def _try_resolve_stage(stage_label: str, keep_genres, new_genres):
             """Try to resolve genres for a given stage and log the result."""
+            artist = getattr(obj, 'albumartist', None) or getattr(obj, 'artist', None)
             resolved_genres = self._combine_resolve_and_log(
-                keep_genres, new_genres
+                keep_genres, new_genres, artist=artist
             )
             if resolved_genres:
                 suffix = "whitelist" if self.whitelist else "any"
