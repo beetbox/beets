@@ -40,8 +40,6 @@ from logging import (
 )
 from typing import TYPE_CHECKING, Any, Mapping, TypeVar, overload
 
-from typing_extensions import ParamSpec
-
 __all__ = [
     "DEBUG",
     "INFO",
@@ -58,9 +56,6 @@ __all__ = [
 
 if TYPE_CHECKING:
     T = TypeVar("T")
-
-
-P = ParamSpec("P")
 
 
 def _logsafe(val: T) -> str | T:
