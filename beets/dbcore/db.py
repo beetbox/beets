@@ -17,15 +17,17 @@
 from __future__ import annotations
 
 import contextlib
+import functools
 import os
 import re
 import sqlite3
+import sys
 import threading
 import time
 from abc import ABC
 from collections import defaultdict
 from collections.abc import Generator, Iterable, Iterator, Mapping, Sequence
-from sqlite3 import Connection
+from sqlite3 import Connection, sqlite_version_info
 from typing import TYPE_CHECKING, Any, AnyStr, Callable, Generic
 
 from typing_extensions import TypeVar  # default value support
@@ -62,6 +64,16 @@ class DBAccessError(Exception):
     example, the database file is deleted or otherwise disappears. There
     is probably no way to recover from this error.
     """
+
+
+class DBCustomFunctionError(Exception):
+    """A sqlite function registered by beets failed."""
+
+    def __init__(self):
+        super().__init__(
+            "beets defined SQLite function failed; "
+            "see the other errors above for details"
+        )
 
 
 class FormattedMapping(Mapping[str, str]):
@@ -947,6 +959,12 @@ class Transaction:
             self._mutated = False
             self.db._db_lock.release()
 
+        if (
+            isinstance(exc_value, sqlite3.OperationalError)
+            and exc_value.args[0] == "user-defined function raised exception"
+        ):
+            raise DBCustomFunctionError()
+
     def query(
         self, statement: str, subvals: Sequence[SQLiteType] = ()
     ) -> list[sqlite3.Row]:
@@ -1006,6 +1024,13 @@ class Database:
             raise RuntimeError(
                 "sqlite3 must be compiled with multi-threading support"
             )
+
+        # Print tracebacks for exceptions in user defined functions
+        # See also `self.add_functions` and `DBCustomFunctionError`.
+        #
+        # `if`: use feature detection because PyPy doesn't support this.
+        if hasattr(sqlite3, "enable_callback_tracebacks"):
+            sqlite3.enable_callback_tracebacks(True)
 
         self.path = path
         self.timeout = timeout
@@ -1102,9 +1127,16 @@ class Database:
 
             return bytestring
 
-        conn.create_function("regexp", 2, regexp)
-        conn.create_function("unidecode", 1, unidecode)
-        conn.create_function("bytelower", 1, bytelower)
+        create_function = conn.create_function
+        if sys.version_info >= (3, 8) and sqlite_version_info >= (3, 8, 3):
+            # Let sqlite make extra optimizations
+            create_function = functools.partial(
+                conn.create_function, deterministic=True
+            )
+
+        create_function("regexp", 2, regexp)
+        create_function("unidecode", 1, unidecode)
+        create_function("bytelower", 1, bytelower)
 
     def _close(self):
         """Close the all connections to the underlying SQLite database
