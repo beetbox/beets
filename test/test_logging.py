@@ -62,6 +62,7 @@ class TestStrFormatLogger:
         with caplog.at_level(level, logger="test_logger"):
             logger.log(level, msg, *args, **kwargs)
 
+        assert caplog.records, "No log records were captured"
         assert str(caplog.records[0].msg) == expected
 
 
