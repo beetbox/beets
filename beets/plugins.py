@@ -389,12 +389,10 @@ def _get_plugin(name: str) -> BeetsPlugin | None:
         if not plugin_classes:
             return None
         if len(plugin_classes) > 1:
-            log.debug(
-                "To fix this, export only one plugin class using __all__."
-            )
             raise PluginImportError(
                 f"'{name}': multiple plugin classes found: "
-                f"{[c.__name__ for c in plugin_classes]}"
+                f"{[c.__name__ for c in plugin_classes]}.\n"
+                f"You may fix this by exporting only one plugin class using __all__."
             )
 
         return plugin_classes[0]()
