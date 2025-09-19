@@ -51,6 +51,12 @@ Other changes:
 - :class:`beets.metadata_plugin.MetadataSourcePlugin`: Remove discogs specific
   disambiguation stripping.
 
+For developers and plugin authors:
+
+- Typing improvements in ``beets/logging.py``: ``getLogger`` now returns
+  ``BeetsLogger`` when called with a name, or ``RootLogger`` when called without
+  a name.
+
 2.4.0 (September 13, 2025)
 --------------------------
 
