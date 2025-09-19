@@ -21,6 +21,7 @@ Other changes:
   match :bug:`6020`
 - :doc:`guides/tagger`: Section on no matching release found, related to
   possibly disabled musicbrainz plugin :bug:`6020`
+- Removed old mailing list contact info in docs :bug:`5462`
 
 2.4.0 (September 13, 2025)
 --------------------------
