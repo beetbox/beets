@@ -298,8 +298,6 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
             if not artist_id:
                 artist_id = artist[id_key]
             name = artist[name_key]
-            # Strip disambiguation number.
-            name = re.sub(r" \(\d+\)$", "", name)
             # Move articles to the front.
             name = re.sub(r"^(.*?), (a|an|the)$", r"\2 \1", name, flags=re.I)
             # Use a join keyword if requested and available.

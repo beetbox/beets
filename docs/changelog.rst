@@ -22,7 +22,7 @@ Bug fixes:
 For packagers:
 
 Other changes:
-
+- :class:`beets.metadata_plugin.MetadataSourcePlugin`: Remove discogs specific disambiguation stripping 
 - :doc:`plugins/index`: Clarify that musicbrainz must be mentioned if plugin
   list modified :bug:`6020`
 - :doc:`/faq`: Add check for musicbrainz plugin if auto-tagger can't find a
