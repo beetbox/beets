@@ -14,8 +14,8 @@
 
 """Tests for the 'ftintitle' plugin."""
 
-from typing import Dict, Optional
-from _pytest.fixtures import SubRequest
+from typing import Dict, Generator, Optional, Tuple, Union
+
 import pytest
 
 from beets.library.models import Item
@@ -28,15 +28,17 @@ class FtInTitlePluginFunctional(PluginTestCase):
 
 
 @pytest.fixture
-def env(request: SubRequest) -> FtInTitlePluginFunctional:
+def env() -> Generator[FtInTitlePluginFunctional, None, None]:
     case = FtInTitlePluginFunctional(methodName="runTest")
     case.setUp()
-    request.addfinalizer(case.tearDown)
-    return case
+    try:
+        yield case
+    finally:
+        case.tearDown()
 
 
 def set_config(
-    env: FtInTitlePluginFunctional, cfg: Optional[Dict[str, str | bool]]
+    env: FtInTitlePluginFunctional, cfg: Optional[Dict[str, Union[str, bool]]]
 ) -> None:
     cfg = {} if cfg is None else cfg
     defaults = {
@@ -53,7 +55,7 @@ def add_item(
     path: str,
     artist: str,
     title: str,
-    albumartist: str,
+    albumartist: Optional[str],
 ) -> Item:
     return env.add_item(
         path=path,
@@ -65,7 +67,7 @@ def add_item(
 
 
 @pytest.mark.parametrize(
-    "cfg, cmd_args, input, expected",
+    "cfg, cmd_args, given, expected",
     [
         pytest.param(
             None,
@@ -172,15 +174,15 @@ def add_item(
 )
 def test_ftintitle_functional(
     env: FtInTitlePluginFunctional,
-    cfg: Optional[Dict[str, str | bool]],
-    cmd_args: tuple[str, ...],
-    input: tuple[str, str, str],
-    expected: tuple[str, str],
+    cfg: Optional[Dict[str, Union[str, bool]]],
+    cmd_args: Tuple[str, ...],
+    given: Tuple[str, str, Optional[str]],
+    expected: Tuple[str, str],
 ) -> None:
     set_config(env, cfg)
     ftintitle.FtInTitlePlugin()
 
-    artist, title, albumartist = input
+    artist, title, albumartist = given
     item = add_item(env, "/", artist, title, albumartist)
 
     env.run_command(*cmd_args)
@@ -215,7 +217,7 @@ def test_find_feat_part(
 
 
 @pytest.mark.parametrize(
-    "input,expected",
+    "given,expected",
     [
         ("Alice ft. Bob", ("Alice", "Bob")),
         ("Alice feat Bob", ("Alice", "Bob")),
@@ -228,14 +230,14 @@ def test_find_feat_part(
     ],
 )
 def test_split_on_feat(
-    input: str,
-    expected: tuple[str, Optional[str]],
+    given: str,
+    expected: Tuple[str, Optional[str]],
 ) -> None:
-    assert ftintitle.split_on_feat(input) == expected
+    assert ftintitle.split_on_feat(given) == expected
 
 
 @pytest.mark.parametrize(
-    "input,expected",
+    "given,expected",
     [
         ("Alice ft. Bob", True),
         ("Alice feat. Bob", True),
@@ -252,5 +254,5 @@ def test_split_on_feat(
         ("Come With Me", False),
     ],
 )
-def test_contains_feat(input: str, expected: bool) -> None:
-    assert ftintitle.contains_feat(input) is expected
+def test_contains_feat(given: str, expected: bool) -> None:
+    assert ftintitle.contains_feat(given) is expected
