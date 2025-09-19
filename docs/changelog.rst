@@ -18,6 +18,13 @@ For packagers:
 
 Other changes:
 
+- :doc:`plugins/index`: Clarify that musicbrainz must be mentioned if plugin
+  list modified :bug:`6020`
+- :doc:`/faq`: Add check for musicbrainz plugin if auto-tagger can't find a
+  match :bug:`6020`
+- :doc:`guides/tagger`: Section on no matching release found, related to
+  possibly disabled musicbrainz plugin :bug:`6020`
+
 2.4.0 (September 13, 2025)
 --------------------------
 
@@ -79,6 +86,8 @@ Bug fixes:
   the config option ``deezer.search_query_ascii: yes``. :bug:`5860`
 - Fixed regression with :doc:`/plugins/listenbrainz` where the plugin could not
   be loaded :bug:`5975`
+- :doc:`/plugins/fromfilename`: Beets will no longer crash if a track's title
+  field is missing.
 
 For packagers:
 
