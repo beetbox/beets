@@ -20,6 +20,7 @@ import abc
 import inspect
 import re
 import sys
+import warnings
 from collections import defaultdict
 from functools import wraps
 from importlib import import_module
@@ -370,23 +371,45 @@ def _get_plugin(name: str) -> BeetsPlugin | None:
         except Exception as exc:
             raise PluginImportError(name) from exc
 
-        for obj in namespace.__dict__.values():
-            if (
-                inspect.isclass(obj)
-                and not isinstance(
-                    obj, GenericAlias
-                )  # seems to be needed for python <= 3.9 only
-                and issubclass(obj, BeetsPlugin)
-                and obj != BeetsPlugin
-                and not inspect.isabstract(obj)
-                # Only consider this plugin's module or submodules to avoid
-                # conflicts when plugins import other BeetsPlugin classes
-                and (
-                    obj.__module__ == namespace.__name__
-                    or obj.__module__.startswith(f"{namespace.__name__}.")
-                )
-            ):
-                return obj()
+        # we prefer __all__ here if it is defined
+        # this follow common module export rules
+        exports = getattr(namespace, "__all__", namespace.__dict__)
+        members = [getattr(namespace, key) for key in exports]
+
+        # Determine all classes that extend `BeetsPlugin`
+        plugin_classes = list(
+            filter(
+                lambda obj: (
+                    inspect.isclass(obj)
+                    and not isinstance(
+                        obj, GenericAlias
+                    )  # seems to be needed for python <= 3.9 only
+                    and issubclass(obj, BeetsPlugin)
+                    and obj != BeetsPlugin
+                    and not inspect.isabstract(obj)
+                    # Only consider this plugin's module or submodules to avoid
+                    # conflicts when plugins import other BeetsPlugin classes
+                    and (
+                        obj.__module__ == namespace.__name__
+                        or obj.__module__.startswith(f"{namespace.__name__}.")
+                    )
+                ),
+                members,
+            )
+        )
+
+        if len(plugin_classes) > 1:
+            warnings.warn(
+                f"Plugin {name} defines multiple plugin classes; "
+                f"using the first one found ({plugin_classes[0].__name__})."
+                f"This will become an error in beets 3.0.0. Consider exporting "
+                f"the desired plugin class explicitly using `__all__`.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
+        if len(plugin_classes) == 1:
+            return plugin_classes[0]()
 
     except Exception:
         log.warning("** error loading plugin {}", name, exc_info=True)
