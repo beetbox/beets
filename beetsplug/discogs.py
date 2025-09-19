@@ -76,6 +76,8 @@ TRACK_INDEX_RE = re.compile(
     re.VERBOSE,
 )
 
+DISAMBIGUATION_RE = re.compile(r" \(\d+\)$")
+
 
 class ReleaseFormat(TypedDict):
     name: str
@@ -96,6 +98,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
                 "separator": ", ",
                 "index_tracks": False,
                 "append_style_genre": False,
+                "strip_disambiguation": True,
             }
         )
         self.config["apikey"].redact = True
@@ -373,6 +376,12 @@ class DiscogsPlugin(MetadataSourcePlugin):
             artist = config["va_name"].as_str()
         if catalogno == "none":
             catalogno = None
+
+        # Remove Discogs specific artist disambiguation 'Artist (2)' or 'Label (3)'
+        if self.config["strip_disambiguation"]:
+            artist = DISAMBIGUATION_RE.sub("", artist)
+            if label is not None:
+                label = DISAMBIGUATION_RE.sub("", label)
         # Explicitly set the `media` for the tracks, since it is expected by
         # `autotag.apply_metadata`, and set `medium_total`.
         for track in tracks:
