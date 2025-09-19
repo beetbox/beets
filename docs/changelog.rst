@@ -22,6 +22,12 @@ Other changes:
 - :doc:`guides/tagger`: Section on no matching release found, related to
   possibly disabled musicbrainz plugin :bug:`6020`
 
+For developers and plugin authors:
+
+- Typing improvements in ``beets/logging.py``: ``getLogger`` now returns
+  ``BeetsLogger`` when called with a name, or ``RootLogger`` when called without
+  a name.
+
 2.4.0 (September 13, 2025)
 --------------------------
 

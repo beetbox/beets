@@ -35,9 +35,10 @@ from logging import (
     Handler,
     Logger,
     NullHandler,
+    RootLogger,
     StreamHandler,
 )
-from typing import TYPE_CHECKING, Any, Mapping, TypeVar
+from typing import TYPE_CHECKING, Any, Mapping, TypeVar, overload
 
 from typing_extensions import ParamSpec
 
@@ -173,9 +174,12 @@ my_manager = copy(Logger.manager)
 my_manager.loggerClass = BeetsLogger
 
 
-# Override the `getLogger` to use our machinery.
-def getLogger(name=None):  # noqa
+@overload
+def getLogger(name: str) -> BeetsLogger: ...
+@overload
+def getLogger(name: None = ...) -> RootLogger: ...
+def getLogger(name=None) -> BeetsLogger | RootLogger:  # noqa: N802
     if name:
-        return my_manager.getLogger(name)
+        return my_manager.getLogger(name)  # type: ignore[return-value]
     else:
         return Logger.root
