@@ -377,26 +377,25 @@ def _get_plugin(name: str) -> BeetsPlugin | None:
         members = [getattr(namespace, key) for key in exports]
 
         # Determine all classes that extend `BeetsPlugin`
-        plugin_classes = list(
-            filter(
-                lambda obj: (
-                    inspect.isclass(obj)
-                    and not isinstance(
-                        obj, GenericAlias
-                    )  # seems to be needed for python <= 3.9 only
-                    and issubclass(obj, BeetsPlugin)
-                    and obj != BeetsPlugin
-                    and not inspect.isabstract(obj)
-                    # Only consider this plugin's module or submodules to avoid
-                    # conflicts when plugins import other BeetsPlugin classes
-                    and (
-                        obj.__module__ == namespace.__name__
-                        or obj.__module__.startswith(f"{namespace.__name__}.")
-                    )
-                ),
-                members,
+        plugin_classes = [
+            obj
+            for obj in members
+            if (
+                inspect.isclass(obj)
+                and not isinstance(
+                    obj, GenericAlias
+                )  # seems to be needed for python <= 3.9 only
+                and issubclass(obj, BeetsPlugin)
+                and obj != BeetsPlugin
+                and not inspect.isabstract(obj)
+                # Only consider this plugin's module or submodules to avoid
+                # conflicts when plugins import other BeetsPlugin classes
+                and (
+                    obj.__module__ == namespace.__name__
+                    or obj.__module__.startswith(f"{namespace.__name__}.")
+                )
             )
-        )
+        ]
 
         if len(plugin_classes) > 1:
             warnings.warn(
