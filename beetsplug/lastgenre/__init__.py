@@ -155,6 +155,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             flatten_tree(genres_tree, [], c14n_branches)
         return c14n_branches, canonicalize
 
+    def _ext_debug(self, msg, *args, **kwargs):
+        """Log debug message only when extended_debug is enabled."""
+        if self.config["extended_debug"]:
+            self._log.debug(msg, *args, **kwargs)
+
     @property
     def sources(self) -> tuple[str, ...]:
         """A tuple of allowed genre sources. May contain 'track',
@@ -286,8 +291,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             self._genre_cache[key] = self.fetch_genre(method(*args))
 
         genre = self._genre_cache[key]
-        if self.config["extended_debug"]:
-            self._log.debug("last.fm (unfiltered) {} tags: {}", entity, genre)
+        self._ext_debug("last.fm (unfiltered) {} tags: {}", entity, genre)
         return genre
 
     def fetch_album_genre(self, obj):
