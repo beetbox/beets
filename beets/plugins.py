@@ -372,20 +372,19 @@ def _get_plugin(name: str) -> BeetsPlugin | None:
         module = getattr(namespace, name)
         exports = getattr(module, "__all__", module.__dict__)
         members = {key: getattr(module, key) for key in exports}
-        plugin_classes = list(
-            filter(
-                lambda obj: (
-                    inspect.isclass(obj)
-                    and not isinstance(
-                        obj, GenericAlias
-                    )  # seems to be needed for python <= 3.9 only
-                    and issubclass(obj, BeetsPlugin)
-                    and obj != BeetsPlugin
-                    and not inspect.isabstract(obj)
-                ),
-                members.values(),
+        plugin_classes = [
+            obj
+            for obj in members.values()
+            if (
+                inspect.isclass(obj)
+                and not isinstance(
+                    obj, GenericAlias
+                )  # seems to be needed for python <= 3.9 only
+                and issubclass(obj, BeetsPlugin)
+                and obj != BeetsPlugin
+                and not inspect.isabstract(obj)
             )
-        )
+        ]
 
         if not plugin_classes:
             return None
