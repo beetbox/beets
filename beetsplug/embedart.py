@@ -20,11 +20,12 @@ from mimetypes import guess_extension
 
 import requests
 
-from beets import art, config, ui
+from beets import config, ui
 from beets.plugins import BeetsPlugin
 from beets.ui import print_
 from beets.util import bytestring_path, displayable_path, normpath, syspath
 from beets.util.artresizer import ArtResizer
+from beetsplug._utils import art
 
 
 def _confirm(objs, album):
