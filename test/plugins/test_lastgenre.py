@@ -137,7 +137,7 @@ class LastGenrePluginTest(BeetsTestCase):
             albumartist="Pretend Artist",
             artist="Pretend Artist",
             title="Pretend Track",
-            genre="",
+            genre="Original Genre",
         )
         album = self.lib.add_album([item])
 
@@ -151,7 +151,9 @@ class LastGenrePluginTest(BeetsTestCase):
                 return_value=("Mock Genre", "mock stage"),
             ) as mock_get_genre:
                 with patch.object(self.plugin._log, "info") as log_info:
-                    command.func(self.lib, opts, args)
+                    # Mock try_write to verify it's never called in pretend mode
+                    with patch.object(item, "try_write") as mock_try_write:
+                        command.func(self.lib, opts, args)
 
         mock_get_genre.assert_called_once()
 
@@ -159,12 +161,12 @@ class LastGenrePluginTest(BeetsTestCase):
             call.args[1] == "Pretend: " for call in log_info.call_args_list
         )
 
-        stored_album = self.lib.get_album(album.id)
-        assert stored_album.genre == ""
+        # Verify that try_write was never called (file operations skipped)
+        mock_try_write.assert_not_called()
 
-        items = list(stored_album.items())
-        assert items
-        assert items[0].genre == ""
+        stored_album = self.lib.get_album(album.id)
+        assert stored_album.genre == "Original Genre"
+        assert stored_album.items()[0].genre == "Original Genre"
 
     def test_no_duplicate(self):
         """Remove duplicated genres."""
