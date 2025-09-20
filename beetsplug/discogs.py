@@ -630,7 +630,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
 
         return tracklist
 
-    def strip_disambiguation(self, text) -> str:
+    def strip_disambiguation(self, text: str) -> str:
         """Removes discogs specific disambiguations from a string.
         Turns 'Label Name (5)' to 'Label Name' or 'Artist (1) & Another Artist (2)'
         to 'Artist & Another Artist'. Does nothing if strip_disambiguation is False."""
