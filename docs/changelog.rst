@@ -9,6 +9,9 @@ Unreleased
 
 New features:
 
+- :doc:`plugins/lastgenre`: Add a ``--pretend`` option to preview genre changes
+  without storing or writing them.
+
 Bug fixes:
 
 - :doc:`plugins/spotify` Fixed an issue where track matching and lookups could

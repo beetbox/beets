@@ -124,7 +124,7 @@ tags** and will only **fetch new genres for empty tags**. When ``force`` is
 ``yes`` the setting of the ``whitelist`` option (as documented in Usage_)
 applies to any existing or newly fetched genres.
 
-The follwing configurations are possible:
+The following configurations are possible:
 
 **Setup 1** (default)
 
@@ -212,6 +212,10 @@ fetch genres for albums or items matching a certain query.
 
 By default, ``beet lastgenre`` matches albums. To match individual tracks or
 singletons, use the ``-A`` switch: ``beet lastgenre -A [QUERY]``.
+
+To preview the changes that would be made without applying them, use the ``-p``
+or ``--pretend`` flag. This shows which genres would be set but does not write
+or store any changes.
 
 To disable automatic genre fetching on import, set the ``auto`` config option to
 false.
