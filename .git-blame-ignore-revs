@@ -71,3 +71,5 @@ d93ddf8dd43e4f9ed072a03829e287c78d2570a2
 07549ed896d9649562d40b75cd30702e6fa6e975
 # Moved plugin docs Further Reading chapter
 33f1a5d0bef8ca08be79ee7a0d02a018d502680d
+# Moved art.py utility module from beets into beetsplug
+28aee0fde463f1e18dfdba1994e2bdb80833722f
