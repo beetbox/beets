@@ -18,6 +18,12 @@ Bug fixes:
 - :doc:`plugins/spotify` Removed old and undocumented config options
   `artist_field`, `album_field` and `track` that were causing issues with track
   matching. :bug:`5189`
+- :doc:`plugins/discogs` Added config option `strip_disambiguation` to allow
+  choice of removing discogs numeric disambiguation :bug:`5366`
+- :doc:`plugins/discogs` Fixed inconsistency in stripping disambiguation from
+  artists but not labels. :bug:`5366`
+- :doc:`plugins/discogs` Wrote test coverage for removing disambiguation.
+  :bug:`5366`
 
 For packagers:
 
@@ -29,6 +35,8 @@ Other changes:
   match :bug:`6020`
 - :doc:`guides/tagger`: Section on no matching release found, related to
   possibly disabled musicbrainz plugin :bug:`6020`
+- :class:`beets.metadata_plugin.MetadataSourcePlugin`: Remove discogs specific
+  disambiguation stripping
 
 2.4.0 (September 13, 2025)
 --------------------------
