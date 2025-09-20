@@ -33,6 +33,12 @@ Other changes:
   it is not used in the core beets codebase. It can now be found in
   ``beetsplug._utils``.
 
+For developers and plugin authors:
+
+- Typing improvements in ``beets/logging.py``: ``getLogger`` now returns
+  ``BeetsLogger`` when called with a name, or ``RootLogger`` when called without
+  a name.
+
 2.4.0 (September 13, 2025)
 --------------------------
 
