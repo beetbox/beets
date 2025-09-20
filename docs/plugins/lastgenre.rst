@@ -14,7 +14,7 @@ To use the ``lastgenre`` plugin, first enable it in your configuration (see
 
 .. code-block:: bash
 
-    pip install "beets[lastgenre]"
+    pipx install "beets[lastgenre]"
 
 Usage
 -----

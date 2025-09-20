@@ -38,7 +38,7 @@ bindings for Python
 
 .. code-block:: bash
 
-    pip install "beets[replaygain]"
+    pipx install "beets[replaygain]"
 
 Lastly, enable the ``replaygain`` plugin in your configuration (see
 :ref:`using-plugins`) and specify the GStreamer backend by adding this to your

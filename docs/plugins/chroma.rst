@@ -31,7 +31,7 @@ To get fingerprinting working, you'll need to install three things:
 
 .. code-block:: bash
 
-    pip install "beets[chroma]"
+    pipx install "beets[chroma]"
 
 2. the Chromaprint_ library_ or |command-line-tool|_
 3. an |audio-decoder|_

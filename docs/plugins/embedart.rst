@@ -15,7 +15,7 @@ To use the ``embedart`` plugin, first enable it in your configuration (see
 
 .. code-block:: bash
 
-    pip install "beets[embedart]"
+    pipx install "beets[embedart]"
 
 You'll also want to enable the :doc:`/plugins/fetchart` to obtain the images to
 be embedded. Art will be embedded after each album has its cover art set.

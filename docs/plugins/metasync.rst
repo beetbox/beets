@@ -22,7 +22,7 @@ install ``beets`` with ``metasync`` extra
 
 .. code-block:: bash
 
-    pip install "beets[metasync]"
+    pipx install "beets[metasync]"
 
 .. _dbus-python: https://dbus.freedesktop.org/releases/dbus-python/
 
