@@ -249,6 +249,54 @@ class ZeroPluginTest(PluginTestCase):
 
         assert "id" not in z.fields_to_progs
 
+    def test_omit_single_disc_with_tags_single(self):
+        item = self.add_item_fixture(
+            disctotal=1, disc=1, comments="test comment"
+        )
+        item.write()
+        with self.configure_plugin(
+            {"omit_single_disc": True, "fields": ["comments"]}
+        ):
+            item.write()
+
+        mf = MediaFile(syspath(item.path))
+        assert mf.comments is None
+        assert mf.disc == 0
+
+    def test_omit_single_disc_with_tags_multi(self):
+        item = self.add_item_fixture(
+            disctotal=4, disc=1, comments="test comment"
+        )
+        item.write()
+        with self.configure_plugin(
+            {"omit_single_disc": True, "fields": ["comments"]}
+        ):
+            item.write()
+
+        mf = MediaFile(syspath(item.path))
+        assert mf.comments is None
+        assert mf.disc == 1
+
+    def test_omit_single_disc_only_change_single(self):
+        item = self.add_item_fixture(disctotal=1, disc=1)
+        item.write()
+
+        with self.configure_plugin({"omit_single_disc": True}):
+            item.write()
+
+        mf = MediaFile(syspath(item.path))
+        assert mf.disc == 0
+
+    def test_omit_single_disc_only_change_multi(self):
+        item = self.add_item_fixture(disctotal=4, disc=1)
+        item.write()
+
+        with self.configure_plugin({"omit_single_disc": True}):
+            item.write()
+
+        mf = MediaFile(syspath(item.path))
+        assert mf.disc == 1
+
     def test_empty_query_n_response_no_changes(self):
         item = self.add_item_fixture(
             year=2016, day=13, month=3, comments="test comment"
