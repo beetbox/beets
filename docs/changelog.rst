@@ -35,7 +35,10 @@ Other changes:
   match :bug:`6020`
 - :doc:`guides/tagger`: Section on no matching release found, related to
   possibly disabled musicbrainz plugin :bug:`6020`
-- :class:`beets.metadata_plugin.MetadataSourcePlugin`: Remove discogs specific
+- Moved ``art.py`` utility module from ``beets`` into ``beetsplug`` namespace as
+  it is not used in the core beets codebase. It can now be found in
+  ``beetsplug._utils``.
+  - :class:`beets.metadata_plugin.MetadataSourcePlugin`: Remove discogs specific
   disambiguation stripping
 
 2.4.0 (September 13, 2025)
