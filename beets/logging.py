@@ -22,7 +22,6 @@ calls (`debug`, `info`, etc).
 
 from __future__ import annotations
 
-import logging
 import threading
 from copy import copy
 from logging import (
@@ -40,6 +39,8 @@ from logging import (
 )
 from typing import TYPE_CHECKING, Any, Mapping, TypeVar, overload
 
+from typing_extensions import TypeAlias
+
 __all__ = [
     "DEBUG",
     "INFO",
@@ -56,6 +57,15 @@ __all__ = [
 
 if TYPE_CHECKING:
     T = TypeVar("T")
+    from types import TracebackType
+
+    # see https://github.com/python/typeshed/blob/main/stdlib/logging/__init__.pyi
+    _SysExcInfoType: TypeAlias = (
+        tuple[type[BaseException], BaseException, TracebackType | None]
+        | tuple[None, None, None]
+    )
+    _ExcInfoType: TypeAlias = None | bool | _SysExcInfoType | BaseException
+    _ArgsType: TypeAlias = tuple[object, ...] | Mapping[str, object]
 
 
 def _logsafe(val: T) -> str | T:
@@ -94,7 +104,7 @@ class StrFormatLogger(Logger):
         def __init__(
             self,
             msg: str,
-            args: logging._ArgsType,
+            args: _ArgsType,
             kwargs: dict[str, Any],
         ):
             self.msg = msg
@@ -110,8 +120,8 @@ class StrFormatLogger(Logger):
         self,
         level: int,
         msg: object,
-        args: logging._ArgsType = (),
-        exc_info: logging._ExcInfoType = None,
+        args: _ArgsType,
+        exc_info: _ExcInfoType = None,
         extra: Mapping[str, Any] | None = None,
         stack_info: bool = False,
         stacklevel: int = 1,
