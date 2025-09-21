@@ -37,9 +37,7 @@ from logging import (
     RootLogger,
     StreamHandler,
 )
-from typing import TYPE_CHECKING, Any, Mapping, TypeVar, overload
-
-from typing_extensions import TypeAlias
+from typing import TYPE_CHECKING, Any, Mapping, TypeVar, Union, overload
 
 __all__ = [
     "DEBUG",
@@ -60,12 +58,12 @@ if TYPE_CHECKING:
     from types import TracebackType
 
     # see https://github.com/python/typeshed/blob/main/stdlib/logging/__init__.pyi
-    _SysExcInfoType: TypeAlias = (
-        tuple[type[BaseException], BaseException, TracebackType | None]
-        | tuple[None, None, None]
-    )
-    _ExcInfoType: TypeAlias = None | bool | _SysExcInfoType | BaseException
-    _ArgsType: TypeAlias = tuple[object, ...] | Mapping[str, object]
+    _SysExcInfoType = Union[
+        tuple[type[BaseException], BaseException, Union[TracebackType, None]],
+        tuple[None, None, None],
+    ]
+    _ExcInfoType = Union[None, bool, _SysExcInfoType, BaseException]
+    _ArgsType = Union[tuple[object, ...], Mapping[str, object]]
 
 
 def _logsafe(val: T) -> str | T:
