@@ -14,7 +14,7 @@
 
 """Tests for the 'lastgenre' plugin."""
 
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -130,6 +130,43 @@ class LastGenrePluginTest(BeetsTestCase):
             "post-rock",
             "math rock",
         ]
+
+    def test_pretend_option_skips_library_updates(self):
+        item = self.create_item(
+            album="Pretend Album",
+            albumartist="Pretend Artist",
+            artist="Pretend Artist",
+            title="Pretend Track",
+            genre="Original Genre",
+        )
+        album = self.lib.add_album([item])
+
+        command = self.plugin.commands()[0]
+        opts, args = command.parser.parse_args(["--pretend"])
+
+        with patch.object(lastgenre.ui, "should_write", return_value=True):
+            with patch.object(
+                self.plugin,
+                "_get_genre",
+                return_value=("Mock Genre", "mock stage"),
+            ) as mock_get_genre:
+                with patch.object(self.plugin._log, "info") as log_info:
+                    # Mock try_write to verify it's never called in pretend mode
+                    with patch.object(item, "try_write") as mock_try_write:
+                        command.func(self.lib, opts, args)
+
+        mock_get_genre.assert_called_once()
+
+        assert any(
+            call.args[1] == "Pretend: " for call in log_info.call_args_list
+        )
+
+        # Verify that try_write was never called (file operations skipped)
+        mock_try_write.assert_not_called()
+
+        stored_album = self.lib.get_album(album.id)
+        assert stored_album.genre == "Original Genre"
+        assert stored_album.items()[0].genre == "Original Genre"
 
     def test_no_duplicate(self):
         """Remove duplicated genres."""
