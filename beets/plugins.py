@@ -369,7 +369,12 @@ def _get_plugin(name: str) -> BeetsPlugin | None:
         except Exception as exc:
             raise PluginImportError(name) from exc
 
-        for obj in getattr(namespace, name).__dict__.values():
+        module = getattr(namespace, name)
+        exports = getattr(module, "__all__", module.__dict__)
+        members = {key: getattr(module, key) for key in exports}
+        plugin_classes = [
+            obj
+            for obj in members.values()
             if (
                 inspect.isclass(obj)
                 and not isinstance(
@@ -378,9 +383,19 @@ def _get_plugin(name: str) -> BeetsPlugin | None:
                 and issubclass(obj, BeetsPlugin)
                 and obj != BeetsPlugin
                 and not inspect.isabstract(obj)
-            ):
-                return obj()
+            )
+        ]
 
+        if not plugin_classes:
+            return None
+        if len(plugin_classes) > 1:
+            raise PluginImportError(
+                f"'{name}': multiple plugin classes found: "
+                f"{[c.__name__ for c in plugin_classes]}.\n"
+                f"You may fix this by exporting only one plugin class using __all__."
+            )
+
+        return plugin_classes[0]()
     except Exception:
         log.warning("** error loading plugin {}", name, exc_info=True)
 

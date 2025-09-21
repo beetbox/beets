@@ -21,6 +21,9 @@ Bug fixes:
 - :doc:`plugins/spotify` Removed old and undocumented config options
   `artist_field`, `album_field` and `track` that were causing issues with track
   matching. :bug:`5189`
+- Fixed an issue where :doc:`plugins/chroma` and :doc:`plugins/bpsync` could not
+  be loaded due to exporting multiple BeetPlugin classes :bug:`6033`
+  :bug:`6023`.
 
 For packagers:
 
