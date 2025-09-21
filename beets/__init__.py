@@ -39,3 +39,10 @@ class IncludeLazyConfig(confuse.LazyConfig):
 
 
 config = IncludeLazyConfig("beets", __name__)
+
+
+# For backwards compatibility
+# TODO: Remove in v3.0.0
+from beetsplug._utils import art, vfs  # noqa: E402
+
+__all__ = ["art", "vfs"]
