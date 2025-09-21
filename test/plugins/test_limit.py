@@ -13,10 +13,10 @@
 
 """Tests for the 'limit' plugin."""
 
-from beets.test.helper import PluginTestCase
+from beets.test.helper import PluginUnitTestCase
 
 
-class LimitPluginTest(PluginTestCase):
+class LimitPluginTest(PluginUnitTestCase):
     """Unit tests for LimitPlugin
 
     Note: query prefix tests do not work correctly with `run_with_output`.

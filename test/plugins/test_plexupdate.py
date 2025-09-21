@@ -1,10 +1,10 @@
 import responses
 
-from beets.test.helper import PluginTestCase
+from beets.test.helper import PluginUnitTestCase
 from beetsplug.plexupdate import get_music_section, update_plex
 
 
-class PlexUpdateTest(PluginTestCase):
+class PlexUpdateTest(PluginUnitTestCase):
     plugin = "plexupdate"
 
     def add_response_get_music_section(self, section_name="Music"):

@@ -19,7 +19,7 @@ from unittest.mock import patch
 import pytest
 
 from beets.library import Item
-from beets.test.helper import PluginTestCase
+from beets.test.helper import PluginUnitTestCase
 from beetsplug import parentwork
 
 work = {
@@ -85,7 +85,7 @@ def mock_workid_response(mbid, includes):
 
 
 @pytest.mark.integration_test
-class ParentWorkIntegrationTest(PluginTestCase):
+class ParentWorkIntegrationTest(PluginUnitTestCase):
     plugin = "parentwork"
 
     # test how it works with real musicbrainz data
@@ -149,7 +149,7 @@ class ParentWorkIntegrationTest(PluginTestCase):
         )
 
 
-class ParentWorkTest(PluginTestCase):
+class ParentWorkTest(PluginUnitTestCase):
     plugin = "parentwork"
 
     def setUp(self):

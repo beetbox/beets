@@ -1,10 +1,10 @@
 import responses
 
-from beets.test.helper import PluginTestCase
+from beets.test.helper import PluginUnitTestCase
 from beetsplug import embyupdate
 
 
-class EmbyUpdateTest(PluginTestCase):
+class EmbyUpdateTest(PluginUnitTestCase):
     plugin = "embyupdate"
 
     def setUp(self):

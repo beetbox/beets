@@ -14,11 +14,11 @@
 
 """Test the substitute plugin regex functionality."""
 
-from beets.test.helper import PluginTestCase
+from beets.test.helper import PluginUnitTestCase
 from beetsplug.substitute import Substitute
 
 
-class SubstitutePluginTest(PluginTestCase):
+class SubstitutePluginTest(PluginUnitTestCase):
     plugin = "substitute"
     preload_plugin = False
 

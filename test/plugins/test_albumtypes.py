@@ -16,12 +16,12 @@
 
 from collections.abc import Sequence
 
-from beets.test.helper import PluginTestCase
+from beets.test.helper import PluginUnitTestCase
 from beetsplug.albumtypes import AlbumTypesPlugin
 from beetsplug.musicbrainz import VARIOUS_ARTISTS_ID
 
 
-class AlbumTypesPluginTest(PluginTestCase):
+class AlbumTypesPluginTest(PluginUnitTestCase):
     """Tests for albumtypes plugin."""
 
     plugin = "albumtypes"

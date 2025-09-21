@@ -18,10 +18,10 @@ from shlex import quote
 
 import beets
 from beets.test import _common
-from beets.test.helper import PluginTestCase
+from beets.test.helper import PluginUnitTestCase
 
 
-class PlaylistTestCase(PluginTestCase):
+class PlaylistTestCase(PluginUnitTestCase):
     plugin = "playlist"
     preload_plugin = False
 

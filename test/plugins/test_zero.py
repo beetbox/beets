@@ -3,12 +3,12 @@
 from mediafile import MediaFile
 
 from beets.library import Item
-from beets.test.helper import PluginTestCase, control_stdin
+from beets.test.helper import PluginUnitTestCase, control_stdin
 from beets.util import syspath
 from beetsplug.zero import ZeroPlugin
 
 
-class ZeroPluginTest(PluginTestCase):
+class ZeroPluginTest(PluginUnitTestCase):
     plugin = "zero"
     preload_plugin = False
 

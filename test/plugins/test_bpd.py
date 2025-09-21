@@ -28,7 +28,7 @@ import confuse
 import pytest
 import yaml
 
-from beets.test.helper import PluginTestCase
+from beets.test.helper import PluginUnitTestCase
 from beets.util import bluelet
 
 bpd = pytest.importorskip("beetsplug.bpd")
@@ -238,7 +238,7 @@ def start_server(args, assigned_port, listener_patch):
     beets.ui.main(args)
 
 
-class BPDTestHelper(PluginTestCase):
+class BPDTestHelper(PluginUnitTestCase):
     db_on_disk = True
     plugin = "bpd"
 

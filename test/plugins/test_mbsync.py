@@ -16,10 +16,10 @@ from unittest.mock import Mock, patch
 
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.library import Item
-from beets.test.helper import PluginTestCase, capture_log
+from beets.test.helper import PluginUnitTestCase, capture_log
 
 
-class MbsyncCliTest(PluginTestCase):
+class MbsyncCliTest(PluginUnitTestCase):
     plugin = "mbsync"
 
     @patch(

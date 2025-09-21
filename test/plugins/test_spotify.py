@@ -7,7 +7,7 @@ import responses
 
 from beets.library import Item
 from beets.test import _common
-from beets.test.helper import PluginTestCase
+from beets.test.helper import PluginUnitTestCase
 from beetsplug import spotify
 
 
@@ -23,7 +23,7 @@ def _params(url):
     return parse_qs(urlparse(url).query)
 
 
-class SpotifyPluginTest(PluginTestCase):
+class SpotifyPluginTest(PluginUnitTestCase):
     plugin = "spotify"
 
     @responses.activate

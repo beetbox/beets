@@ -29,7 +29,7 @@ from beets.test import _common
 from beets.test.helper import (
     AsIsImporterMixin,
     ImportHelper,
-    PluginTestCase,
+    PluginUnitTestCase,
     capture_log,
     control_stdin,
 )
@@ -63,7 +63,7 @@ class ConvertMixin:
         return path.read_bytes().endswith(tag.encode("utf-8"))
 
 
-class ConvertTestCase(ConvertMixin, PluginTestCase):
+class ConvertTestCase(ConvertMixin, PluginUnitTestCase):
     db_on_disk = True
     plugin = "convert"
 
