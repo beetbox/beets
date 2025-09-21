@@ -158,7 +158,8 @@ class LastGenrePluginTest(BeetsTestCase):
         mock_get_genre.assert_called_once()
 
         assert any(
-            call.args[1] == "Pretend: " for call in log_info.call_args_list
+            call.args[0].startswith("Pretend:")
+            for call in log_info.call_args_list
         )
 
         # Verify that try_write was never called (file operations skipped)
