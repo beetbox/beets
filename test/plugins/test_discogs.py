@@ -374,38 +374,26 @@ class DGAlbumInfoTest(BeetsTestCase):
         assert d.genre == "GENRE1, GENRE2"
         assert d.style is None
 
-    def test_strip_disambiguation_label_artist(self):
-        """Test removing discogs disambiguation from artist and label"""
+    def test_strip_disambiguation(self):
+        """Test removing disambiguation from all disambiguated fields."""
         data = {
             "id": 123,
             "uri": "https://www.discogs.com/release/123456-something",
-            "tracklist": [self._make_track("A", "1", "01:01")],
-            "artists": [{"name": "ARTIST NAME (2)", "id": 321, "join": ""}],
-            "title": "TITLE",
-            "labels": [
+            "tracklist": [
                 {
-                    "name": "LABEL NAME (5)",
-                    "catno": "CATALOG NUMBER",
+                    "title": "track",
+                    "position": "A",
+                    "type_": "track",
+                    "duration": "5:44",
+                    "artists": [
+                        {"name": "TEST ARTIST (5)", "tracks": "", "id": 11146}
+                    ],
                 }
             ],
-        }
-        release = Bag(
-            data=data,
-            title=data["title"],
-            artists=[Bag(data=d) for d in data["artists"]],
-        )
-        d = DiscogsPlugin().get_album_info(release)
-        assert d.artist == "ARTIST NAME"
-        assert d.label == "LABEL NAME"
-
-    def test_strip_disambiguation_off_label_artist(self):
-        """Test not removing discogs disambiguation from artist and label"""
-        config["discogs"]["strip_disambiguation"] = False
-        data = {
-            "id": 123,
-            "uri": "https://www.discogs.com/release/123456-something",
-            "tracklist": [self._make_track("a", "1", "01:01")],
-            "artists": [{"name": "ARTIST NAME (2)", "id": 321, "join": ""}],
+            "artists": [
+                {"name": "ARTIST NAME (2)", "id": 321, "join": "&"},
+                {"name": "OTHER ARTIST (5)", "id": 321, "join": ""},
+            ],
             "title": "title",
             "labels": [
                 {
@@ -420,30 +408,13 @@ class DGAlbumInfoTest(BeetsTestCase):
             artists=[Bag(data=d) for d in data["artists"]],
         )
         d = DiscogsPlugin().get_album_info(release)
-        assert d.artist == "ARTIST NAME (2)"
-        assert d.label == "LABEL NAME (5)"
-
-    def test_strip_disambiguation_multiple_artists(self):
-        """Test removing disambiguation if there are multiple artists on the release"""
-        data = {
-            "id": 123,
-            "uri": "https://www.discogs.com/release/123456-something",
-            "tracklist": [self._make_track("a", "1", "01:01")],
-            "artists": [
-                {"name": "ARTIST NAME (2)", "id": 321, "join": "&"},
-                {"name": "OTHER ARTIST (5)", "id": 321, "join": ""},
-            ],
-            "title": "title",
-        }
-        release = Bag(
-            data=data,
-            title=data["title"],
-            artists=[Bag(data=d) for d in data["artists"]],
-        )
-        d = DiscogsPlugin().get_album_info(release)
         assert d.artist == "ARTIST NAME & OTHER ARTIST"
+        assert d.tracks[0].artist == "TEST ARTIST"
+        assert d.label == "LABEL NAME"
 
-    def test_strip_disambiguation_artist_tracks(self):
+    def test_strip_disambiguation_false(self):
+        """Test disabling disambiguation removal from all disambiguated fields."""
+        config["discogs"]["strip_disambiguation"] = False
         data = {
             "id": 123,
             "uri": "https://www.discogs.com/release/123456-something",
@@ -454,16 +425,21 @@ class DGAlbumInfoTest(BeetsTestCase):
                     "type_": "track",
                     "duration": "5:44",
                     "artists": [
-                        {
-                            "name": "TEST ARTIST (5)",
-                            "tracks": "",
-                            "id": 11146,
-                        }
+                        {"name": "TEST ARTIST (5)", "tracks": "", "id": 11146}
                     ],
                 }
             ],
-            "artists": [{"name": "OTHER ARTIST (5)", "id": 321, "join": ""}],
+            "artists": [
+                {"name": "ARTIST NAME (2)", "id": 321, "join": "&"},
+                {"name": "OTHER ARTIST (5)", "id": 321, "join": ""},
+            ],
             "title": "title",
+            "labels": [
+                {
+                    "name": "LABEL NAME (5)",
+                    "catno": "catalog number",
+                }
+            ],
         }
         release = Bag(
             data=data,
@@ -471,8 +447,9 @@ class DGAlbumInfoTest(BeetsTestCase):
             artists=[Bag(data=d) for d in data["artists"]],
         )
         d = DiscogsPlugin().get_album_info(release)
-        assert d.tracks[0].artist == "TEST ARTIST"
-        assert d.artist == "OTHER ARTIST"
+        assert d.artist == "ARTIST NAME (2) & OTHER ARTIST (5)"
+        assert d.tracks[0].artist == "TEST ARTIST (5)"
+        assert d.label == "LABEL NAME (5)"
 
 
 @pytest.mark.parametrize(
