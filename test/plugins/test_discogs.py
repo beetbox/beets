@@ -56,8 +56,9 @@ class DGAlbumInfoTest(BeetsTestCase):
                     "qty": 1,
                 }
             ],
-            "styles": ["STYLE1", "STYLE2"],
-            "genres": ["GENRE1", "GENRE2"],
+            # genres and styles are reversed in Discogs
+            "genres": ["STYLE1", "STYLE2"],
+            "styles": ["GENRE1", "GENRE2"],
             "labels": [
                 {
                     "name": "LABEL NAME",
@@ -363,8 +364,8 @@ class DGAlbumInfoTest(BeetsTestCase):
         release = self._make_release_from_positions(["1", "2"])
 
         d = DiscogsPlugin().get_album_info(release)
-        assert d.genres == ["GENRE1", "GENRE2"]
         assert d.style == "STYLE1, STYLE2"
+        assert d.genres == ["GENRE1", "GENRE2"]
 
     def test_append_style_to_genre(self):
         """Test appending style to genre if config enabled"""
@@ -372,18 +373,18 @@ class DGAlbumInfoTest(BeetsTestCase):
         release = self._make_release_from_positions(["1", "2"])
 
         d = DiscogsPlugin().get_album_info(release)
-        assert d.genres == ["GENRE1", "GENRE2", "STYLE1", "STYLE2"]
         assert d.style == "STYLE1, STYLE2"
+        assert d.genres == ["GENRE1", "GENRE2", "STYLE1", "STYLE2"]
 
-    def test_append_style_to_genre_no_style(self):
+    def test_append_style_to_genre_no_styles(self):
         """Test nothing appended to genre if style is empty"""
         config["discogs"]["append_style_genre"] = True
         release = self._make_release_from_positions(["1", "2"])
-        release.data["styles"] = []
+        release.data["genres"] = []
 
         d = DiscogsPlugin().get_album_info(release)
-        assert d.genres == ["GENRE1", "GENRE2"]
         assert d.style is None
+        assert d.genres == ["GENRE1", "GENRE2"]
 
     def test_strip_disambiguation(self):
         """Test removing disambiguation from all disambiguated fields."""
