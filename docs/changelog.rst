@@ -11,6 +11,8 @@ New features:
 
 - :doc:`plugins/lastgenre`: Add a ``--pretend`` option to preview genre changes
   without storing or writing them.
+- :doc:`plugins/discogs`: New config option `strip_disambiguation` to toggle
+  stripping discogs numeric disambiguation on artist and label fields.
 
 Bug fixes:
 
@@ -21,12 +23,8 @@ Bug fixes:
 - :doc:`plugins/spotify` Removed old and undocumented config options
   `artist_field`, `album_field` and `track` that were causing issues with track
   matching. :bug:`5189`
-- :doc:`plugins/discogs` Added config option `strip_disambiguation` to allow
-  choice of removing discogs numeric disambiguation :bug:`5366`
 - :doc:`plugins/discogs` Fixed inconsistency in stripping disambiguation from
   artists but not labels. :bug:`5366`
-- :doc:`plugins/discogs` Wrote test coverage for removing disambiguation.
-  :bug:`5366`
 
 For packagers:
 
@@ -40,8 +38,9 @@ Other changes:
   possibly disabled musicbrainz plugin :bug:`6020`
 - Moved ``art.py`` utility module from ``beets`` into ``beetsplug`` namespace as
   it is not used in the core beets codebase. It can now be found in
-  ``beetsplug._utils``. - :class:`beets.metadata_plugin.MetadataSourcePlugin`:
-  Remove discogs specific disambiguation stripping
+  ``beetsplug._utils``.
+- :class:`beets.metadata_plugin.MetadataSourcePlugin`: Remove discogs specific
+  disambiguation stripping.
 
 2.4.0 (September 13, 2025)
 --------------------------
