@@ -14,8 +14,11 @@
 
 """Tests for the 'ftintitle' plugin."""
 
-import unittest
+from typing import Dict, Generator, Optional, Tuple, Union
 
+import pytest
+
+from beets.library.models import Item
 from beets.test.helper import PluginTestCase
 from beetsplug import ftintitle
 
@@ -23,169 +26,233 @@ from beetsplug import ftintitle
 class FtInTitlePluginFunctional(PluginTestCase):
     plugin = "ftintitle"
 
-    def _ft_add_item(self, path, artist, title, aartist):
-        return self.add_item(
-            path=path,
-            artist=artist,
-            artist_sort=artist,
-            title=title,
-            albumartist=aartist,
-        )
 
-    def _ft_set_config(
-        self, ftformat, drop=False, auto=True, keep_in_artist=False
-    ):
-        self.config["ftintitle"]["format"] = ftformat
-        self.config["ftintitle"]["drop"] = drop
-        self.config["ftintitle"]["auto"] = auto
-        self.config["ftintitle"]["keep_in_artist"] = keep_in_artist
-
-    def test_functional_drop(self):
-        item = self._ft_add_item("/", "Alice ft Bob", "Song 1", "Alice")
-        self.run_command("ftintitle", "-d")
-        item.load()
-        assert item["artist"] == "Alice"
-        assert item["title"] == "Song 1"
-
-    def test_functional_not_found(self):
-        item = self._ft_add_item("/", "Alice ft Bob", "Song 1", "George")
-        self.run_command("ftintitle", "-d")
-        item.load()
-        # item should be unchanged
-        assert item["artist"] == "Alice ft Bob"
-        assert item["title"] == "Song 1"
-
-    def test_functional_custom_format(self):
-        self._ft_set_config("feat. {}")
-        item = self._ft_add_item("/", "Alice ft Bob", "Song 1", "Alice")
-        self.run_command("ftintitle")
-        item.load()
-        assert item["artist"] == "Alice"
-        assert item["title"] == "Song 1 feat. Bob"
-
-        self._ft_set_config("featuring {}")
-        item = self._ft_add_item("/", "Alice feat. Bob", "Song 1", "Alice")
-        self.run_command("ftintitle")
-        item.load()
-        assert item["artist"] == "Alice"
-        assert item["title"] == "Song 1 featuring Bob"
-
-        self._ft_set_config("with {}")
-        item = self._ft_add_item("/", "Alice feat Bob", "Song 1", "Alice")
-        self.run_command("ftintitle")
-        item.load()
-        assert item["artist"] == "Alice"
-        assert item["title"] == "Song 1 with Bob"
-
-    def test_functional_keep_in_artist(self):
-        self._ft_set_config("feat. {}", keep_in_artist=True)
-        item = self._ft_add_item("/", "Alice ft Bob", "Song 1", "Alice")
-        self.run_command("ftintitle")
-        item.load()
-        assert item["artist"] == "Alice ft Bob"
-        assert item["title"] == "Song 1 feat. Bob"
-
-        item = self._ft_add_item("/", "Alice ft Bob", "Song 1", "Alice")
-        self.run_command("ftintitle", "-d")
-        item.load()
-        assert item["artist"] == "Alice ft Bob"
-        assert item["title"] == "Song 1"
+@pytest.fixture
+def env() -> Generator[FtInTitlePluginFunctional, None, None]:
+    case = FtInTitlePluginFunctional(methodName="runTest")
+    case.setUp()
+    try:
+        yield case
+    finally:
+        case.tearDown()
 
 
-class FtInTitlePluginTest(unittest.TestCase):
-    def setUp(self):
-        """Set up configuration"""
-        ftintitle.FtInTitlePlugin()
+def set_config(
+    env: FtInTitlePluginFunctional, cfg: Optional[Dict[str, Union[str, bool]]]
+) -> None:
+    cfg = {} if cfg is None else cfg
+    defaults = {
+        "drop": False,
+        "auto": True,
+        "keep_in_artist": False,
+    }
+    env.config["ftintitle"].set(defaults)
+    env.config["ftintitle"].set(cfg)
 
-    def test_find_feat_part(self):
-        test_cases = [
-            {
-                "artist": "Alice ft. Bob",
-                "album_artist": "Alice",
-                "feat_part": "Bob",
-            },
-            {
-                "artist": "Alice feat Bob",
-                "album_artist": "Alice",
-                "feat_part": "Bob",
-            },
-            {
-                "artist": "Alice featuring Bob",
-                "album_artist": "Alice",
-                "feat_part": "Bob",
-            },
-            {
-                "artist": "Alice & Bob",
-                "album_artist": "Alice",
-                "feat_part": "Bob",
-            },
-            {
-                "artist": "Alice and Bob",
-                "album_artist": "Alice",
-                "feat_part": "Bob",
-            },
-            {
-                "artist": "Alice With Bob",
-                "album_artist": "Alice",
-                "feat_part": "Bob",
-            },
-            {
-                "artist": "Alice defeat Bob",
-                "album_artist": "Alice",
-                "feat_part": None,
-            },
-            {
-                "artist": "Alice & Bob",
-                "album_artist": "Bob",
-                "feat_part": "Alice",
-            },
-            {
-                "artist": "Alice ft. Bob",
-                "album_artist": "Bob",
-                "feat_part": "Alice",
-            },
-            {
-                "artist": "Alice ft. Carol",
-                "album_artist": "Bob",
-                "feat_part": None,
-            },
-        ]
 
-        for test_case in test_cases:
-            feat_part = ftintitle.find_feat_part(
-                test_case["artist"], test_case["album_artist"]
-            )
-            assert feat_part == test_case["feat_part"]
+def add_item(
+    env: FtInTitlePluginFunctional,
+    path: str,
+    artist: str,
+    title: str,
+    albumartist: Optional[str],
+) -> Item:
+    return env.add_item(
+        path=path,
+        artist=artist,
+        artist_sort=artist,
+        title=title,
+        albumartist=albumartist,
+    )
 
-    def test_split_on_feat(self):
-        parts = ftintitle.split_on_feat("Alice ft. Bob")
-        assert parts == ("Alice", "Bob")
-        parts = ftintitle.split_on_feat("Alice feat Bob")
-        assert parts == ("Alice", "Bob")
-        parts = ftintitle.split_on_feat("Alice feat. Bob")
-        assert parts == ("Alice", "Bob")
-        parts = ftintitle.split_on_feat("Alice featuring Bob")
-        assert parts == ("Alice", "Bob")
-        parts = ftintitle.split_on_feat("Alice & Bob")
-        assert parts == ("Alice", "Bob")
-        parts = ftintitle.split_on_feat("Alice and Bob")
-        assert parts == ("Alice", "Bob")
-        parts = ftintitle.split_on_feat("Alice With Bob")
-        assert parts == ("Alice", "Bob")
-        parts = ftintitle.split_on_feat("Alice defeat Bob")
-        assert parts == ("Alice defeat Bob", None)
 
-    def test_contains_feat(self):
-        assert ftintitle.contains_feat("Alice ft. Bob")
-        assert ftintitle.contains_feat("Alice feat. Bob")
-        assert ftintitle.contains_feat("Alice feat Bob")
-        assert ftintitle.contains_feat("Alice featuring Bob")
-        assert ftintitle.contains_feat("Alice (ft. Bob)")
-        assert ftintitle.contains_feat("Alice (feat. Bob)")
-        assert ftintitle.contains_feat("Alice [ft. Bob]")
-        assert ftintitle.contains_feat("Alice [feat. Bob]")
-        assert not ftintitle.contains_feat("Alice defeat Bob")
-        assert not ftintitle.contains_feat("Aliceft.Bob")
-        assert not ftintitle.contains_feat("Alice (defeat Bob)")
-        assert not ftintitle.contains_feat("Live and Let Go")
-        assert not ftintitle.contains_feat("Come With Me")
+@pytest.mark.parametrize(
+    "cfg, cmd_args, given, expected",
+    [
+        pytest.param(
+            None,
+            ("ftintitle",),
+            ("Alice", "Song 1", "Alice"),
+            ("Alice", "Song 1"),
+            id="no-featured-artist",
+        ),
+        pytest.param(
+            {"format": "feat {0}"},
+            ("ftintitle",),
+            ("Alice ft. Bob", "Song 1", None),
+            ("Alice", "Song 1 feat Bob"),
+            id="no-albumartist-custom-format",
+        ),
+        pytest.param(
+            None,
+            ("ftintitle",),
+            ("Alice", "Song 1", None),
+            ("Alice", "Song 1"),
+            id="no-albumartist-no-feature",
+        ),
+        pytest.param(
+            {"format": "featuring {0}"},
+            ("ftintitle",),
+            ("Alice ft Bob", "Song 1", "George"),
+            ("Alice", "Song 1 featuring Bob"),
+            id="guest-artist-custom-format",
+        ),
+        pytest.param(
+            None,
+            ("ftintitle",),
+            ("Alice", "Song 1", "George"),
+            ("Alice", "Song 1"),
+            id="guest-artist-no-feature",
+        ),
+        # ---- drop (-d) variants ----
+        pytest.param(
+            None,
+            ("ftintitle", "-d"),
+            ("Alice ft Bob", "Song 1", "Alice"),
+            ("Alice", "Song 1"),
+            id="drop-self-ft",
+        ),
+        pytest.param(
+            None,
+            ("ftintitle", "-d"),
+            ("Alice", "Song 1", "Alice"),
+            ("Alice", "Song 1"),
+            id="drop-self-no-ft",
+        ),
+        pytest.param(
+            None,
+            ("ftintitle", "-d"),
+            ("Alice ft Bob", "Song 1", "George"),
+            ("Alice", "Song 1"),
+            id="drop-guest-ft",
+        ),
+        pytest.param(
+            None,
+            ("ftintitle", "-d"),
+            ("Alice", "Song 1", "George"),
+            ("Alice", "Song 1"),
+            id="drop-guest-no-ft",
+        ),
+        # ---- custom format variants ----
+        pytest.param(
+            {"format": "feat. {}"},
+            ("ftintitle",),
+            ("Alice ft Bob", "Song 1", "Alice"),
+            ("Alice", "Song 1 feat. Bob"),
+            id="custom-format-feat-dot",
+        ),
+        pytest.param(
+            {"format": "featuring {}"},
+            ("ftintitle",),
+            ("Alice feat. Bob", "Song 1", "Alice"),
+            ("Alice", "Song 1 featuring Bob"),
+            id="custom-format-featuring",
+        ),
+        pytest.param(
+            {"format": "with {}"},
+            ("ftintitle",),
+            ("Alice feat Bob", "Song 1", "Alice"),
+            ("Alice", "Song 1 with Bob"),
+            id="custom-format-with",
+        ),
+        # ---- keep_in_artist variants ----
+        pytest.param(
+            {"format": "feat. {}", "keep_in_artist": True},
+            ("ftintitle",),
+            ("Alice ft Bob", "Song 1", "Alice"),
+            ("Alice ft Bob", "Song 1 feat. Bob"),
+            id="keep-in-artist-add-to-title",
+        ),
+        pytest.param(
+            {"format": "feat. {}", "keep_in_artist": True},
+            ("ftintitle", "-d"),
+            ("Alice ft Bob", "Song 1", "Alice"),
+            ("Alice ft Bob", "Song 1"),
+            id="keep-in-artist-drop-from-title",
+        ),
+    ],
+)
+def test_ftintitle_functional(
+    env: FtInTitlePluginFunctional,
+    cfg: Optional[Dict[str, Union[str, bool]]],
+    cmd_args: Tuple[str, ...],
+    given: Tuple[str, str, Optional[str]],
+    expected: Tuple[str, str],
+) -> None:
+    set_config(env, cfg)
+    ftintitle.FtInTitlePlugin()
+
+    artist, title, albumartist = given
+    item = add_item(env, "/", artist, title, albumartist)
+
+    env.run_command(*cmd_args)
+    item.load()
+
+    expected_artist, expected_title = expected
+    assert item["artist"] == expected_artist
+    assert item["title"] == expected_title
+
+
+@pytest.mark.parametrize(
+    "artist,albumartist,expected",
+    [
+        ("Alice ft. Bob", "Alice", "Bob"),
+        ("Alice feat Bob", "Alice", "Bob"),
+        ("Alice featuring Bob", "Alice", "Bob"),
+        ("Alice & Bob", "Alice", "Bob"),
+        ("Alice and Bob", "Alice", "Bob"),
+        ("Alice With Bob", "Alice", "Bob"),
+        ("Alice defeat Bob", "Alice", None),
+        ("Alice & Bob", "Bob", "Alice"),
+        ("Alice ft. Bob", "Bob", "Alice"),
+        ("Alice ft. Carol", "Bob", "Carol"),
+    ],
+)
+def test_find_feat_part(
+    artist: str,
+    albumartist: str,
+    expected: Optional[str],
+) -> None:
+    assert ftintitle.find_feat_part(artist, albumartist) == expected
+
+
+@pytest.mark.parametrize(
+    "given,expected",
+    [
+        ("Alice ft. Bob", ("Alice", "Bob")),
+        ("Alice feat Bob", ("Alice", "Bob")),
+        ("Alice feat. Bob", ("Alice", "Bob")),
+        ("Alice featuring Bob", ("Alice", "Bob")),
+        ("Alice & Bob", ("Alice", "Bob")),
+        ("Alice and Bob", ("Alice", "Bob")),
+        ("Alice With Bob", ("Alice", "Bob")),
+        ("Alice defeat Bob", ("Alice defeat Bob", None)),
+    ],
+)
+def test_split_on_feat(
+    given: str,
+    expected: Tuple[str, Optional[str]],
+) -> None:
+    assert ftintitle.split_on_feat(given) == expected
+
+
+@pytest.mark.parametrize(
+    "given,expected",
+    [
+        ("Alice ft. Bob", True),
+        ("Alice feat. Bob", True),
+        ("Alice feat Bob", True),
+        ("Alice featuring Bob", True),
+        ("Alice (ft. Bob)", True),
+        ("Alice (feat. Bob)", True),
+        ("Alice [ft. Bob]", True),
+        ("Alice [feat. Bob]", True),
+        ("Alice defeat Bob", False),
+        ("Aliceft.Bob", False),
+        ("Alice (defeat Bob)", False),
+        ("Live and Let Go", False),
+        ("Come With Me", False),
+    ],
+)
+def test_contains_feat(given: str, expected: bool) -> None:
+    assert ftintitle.contains_feat(given) is expected
