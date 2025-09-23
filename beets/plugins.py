@@ -22,6 +22,7 @@ import re
 import sys
 from collections import defaultdict
 from functools import wraps
+from importlib import import_module
 from pathlib import Path
 from types import GenericAlias
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeVar
@@ -365,11 +366,11 @@ def _get_plugin(name: str) -> BeetsPlugin | None:
     """
     try:
         try:
-            namespace = __import__(f"{PLUGIN_NAMESPACE}.{name}", None, None)
+            namespace = import_module(f"{PLUGIN_NAMESPACE}.{name}")
         except Exception as exc:
             raise PluginImportError(name) from exc
 
-        for obj in getattr(namespace, name).__dict__.values():
+        for obj in namespace.__dict__.values():
             if (
                 inspect.isclass(obj)
                 and not isinstance(
@@ -378,6 +379,12 @@ def _get_plugin(name: str) -> BeetsPlugin | None:
                 and issubclass(obj, BeetsPlugin)
                 and obj != BeetsPlugin
                 and not inspect.isabstract(obj)
+                # Only consider this plugin's module or submodules to avoid
+                # conflicts when plugins import other BeetsPlugin classes
+                and (
+                    obj.__module__ == namespace.__name__
+                    or obj.__module__.startswith(f"{namespace.__name__}.")
+                )
             ):
                 return obj()
 
