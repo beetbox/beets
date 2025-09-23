@@ -386,10 +386,6 @@ class DiscogsPlugin(MetadataSourcePlugin):
         for track in tracks:
             track.media = media
             track.medium_total = mediums.count(track.medium)
-            if not track.artist:  # get_track_info often fails to find artist
-                track.artist = artist
-            if not track.artist_id:
-                track.artist_id = artist_id
             # Discogs does not have track IDs. Invent our own IDs as proposed
             # in #2336.
             track.track_id = f"{album_id}-{track.track_alt}"
@@ -471,8 +467,9 @@ class DiscogsPlugin(MetadataSourcePlugin):
                     # divisions.
                     divisions += next_divisions
                     del next_divisions[:]
-                track_info = self.get_track_info(track, index, divisions, 
-                        album_artist, album_artist_id)
+                track_info = self.get_track_info(
+                    track, index, divisions, album_artist, album_artist_id
+                )
                 track_info.track_alt = track["position"]
                 tracks.append(track_info)
             else:
@@ -639,7 +636,9 @@ class DiscogsPlugin(MetadataSourcePlugin):
             return text
         return DISAMBIGUATION_RE.sub("", text)
 
-    def get_track_info(self, track, index, divisions, album_artist, album_artist_id):
+    def get_track_info(
+        self, track, index, divisions, album_artist, album_artist_id
+    ):
         """Returns a TrackInfo object for a discogs track."""
         title = track["title"]
         if self.config["index_tracks"]:
@@ -660,7 +659,10 @@ class DiscogsPlugin(MetadataSourcePlugin):
         # Add featured artists
         extraartists = track.get("extraartists", [])
         featured = [
-            artist["name"] for artist in extraartists if artist["role"].find("Featuring") != -1]
+            artist["name"]
+            for artist in extraartists
+            if artist["role"].find("Featuring") != -1
+        ]
         if featured:
             artist = f"{artist} feat. {', '.join(featured)}"
         return TrackInfo(
