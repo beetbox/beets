@@ -477,16 +477,19 @@ class DGAlbumInfoTest(BeetsTestCase):
             "role": "Featuring",
             }]
     }, 
-    "ARTIST feat. PERFORMER & MUSICIAN"
+    "ARTIST feat. PERFORMER, MUSICIAN"
     ),
     ({
         "type_": "track",
         "title": "track",
         "position": "1",
         "duration": "5:00",
-        "artist": "NEW ARTIST",
+        "artists": [{
+            "name": "NEW ARTIST", 
+            "tracks": "", 
+            "id": 11146}],
         "extraartists": [{
-            "name": "SOLIST",
+            "name": "SOLOIST",
             "role": "Featuring",
             }, {
             "name": "PERFORMER",
@@ -499,14 +502,14 @@ class DGAlbumInfoTest(BeetsTestCase):
             "role": "Featuring",
             }]
     }, 
-    "NEW ARTIST feat. SOLIST, PERFORMER & MUSICIAN"
+    "NEW ARTIST feat. SOLOIST, PERFORMER, MUSICIAN"
     )])
 @patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
 def test_parse_featured_artists(track, expected_artist):
     """ Tests the plugins ability to parse a featured artist.
     Initial check with one featured artist, two featured artists, 
     and three. Ignores artists that are not listed as featured."""
-    t = DiscogsPlugin().get_track_info(track, 1, 1)
+    t = DiscogsPlugin().get_track_info(track, 1, 1, "ARTIST", 2)
     assert t.artist == expected_artist
 
 @pytest.mark.parametrize(
