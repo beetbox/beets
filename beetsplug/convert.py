@@ -122,6 +122,7 @@ class ConvertPlugin(BeetsPlugin):
                 "threads": os.cpu_count(),
                 "format": "mp3",
                 "id3v23": "inherit",
+                "write_metadata": True,
                 "formats": {
                     "aac": {
                         "command": (
@@ -446,8 +447,9 @@ class ConvertPlugin(BeetsPlugin):
             if id3v23 == "inherit":
                 id3v23 = None
 
-            # Write tags from the database to the converted file.
-            item.try_write(path=converted, id3v23=id3v23)
+            # Write tags from the database to the file if requested
+            if self.config["write_metadata"].get(bool):
+                item.try_write(path=converted, id3v23=id3v23)
 
             if keep_new:
                 # If we're keeping the transcoded file, read it again (after
