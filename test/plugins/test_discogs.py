@@ -451,66 +451,82 @@ class DGAlbumInfoTest(BeetsTestCase):
         assert d.tracks[0].artist == "TEST ARTIST (5)"
         assert d.label == "LABEL NAME (5)"
 
-@pytest.mark.parametrize("track, expected_artist",
-    [({
-        "type_": "track",
-        "title": "track",
-        "position": "1",
-        "duration": "5:00",
-        "extraartists": [{
-            "name": "MUSICIAN",
-            "role": "Featuring",
-            }]
-    }, 
-    "ARTIST feat. MUSICIAN"
-    ),
-    ({
-        "type_": "track",
-        "title": "track",
-        "position": "1",
-        "duration": "5:00",
-        "extraartists": [{
-            "name": "PERFORMER",
-            "role": "Other Role, Featuring",
-            }, {
-            "name": "MUSICIAN",
-            "role": "Featuring",
-            }]
-    }, 
-    "ARTIST feat. PERFORMER, MUSICIAN"
-    ),
-    ({
-        "type_": "track",
-        "title": "track",
-        "position": "1",
-        "duration": "5:00",
-        "artists": [{
-            "name": "NEW ARTIST", 
-            "tracks": "", 
-            "id": 11146}],
-        "extraartists": [{
-            "name": "SOLOIST",
-            "role": "Featuring",
-            }, {
-            "name": "PERFORMER",
-            "role": "Other Role, Featuring",
-            }, {
-            "name": "RANDOM",
-            "role": "Written-By",
-            }, {
-            "name": "MUSICIAN",
-            "role": "Featuring",
-            }]
-    }, 
-    "NEW ARTIST feat. SOLOIST, PERFORMER, MUSICIAN"
-    )])
+
+@pytest.mark.parametrize(
+    "track, expected_artist",
+    [
+        (
+            {
+                "type_": "track",
+                "title": "track",
+                "position": "1",
+                "duration": "5:00",
+                "extraartists": [
+                    {
+                        "name": "MUSICIAN",
+                        "role": "Featuring",
+                    }
+                ],
+            },
+            "ARTIST feat. MUSICIAN",
+        ),
+        (
+            {
+                "type_": "track",
+                "title": "track",
+                "position": "1",
+                "duration": "5:00",
+                "extraartists": [
+                    {
+                        "name": "PERFORMER",
+                        "role": "Other Role, Featuring",
+                    },
+                    {
+                        "name": "MUSICIAN",
+                        "role": "Featuring",
+                    },
+                ],
+            },
+            "ARTIST feat. PERFORMER, MUSICIAN",
+        ),
+        (
+            {
+                "type_": "track",
+                "title": "track",
+                "position": "1",
+                "duration": "5:00",
+                "artists": [{"name": "NEW ARTIST", "tracks": "", "id": 11146}],
+                "extraartists": [
+                    {
+                        "name": "SOLOIST",
+                        "role": "Featuring",
+                    },
+                    {
+                        "name": "PERFORMER",
+                        "role": "Other Role, Featuring",
+                    },
+                    {
+                        "name": "RANDOM",
+                        "role": "Written-By",
+                    },
+                    {
+                        "name": "MUSICIAN",
+                        "role": "Featuring",
+                    },
+                ],
+            },
+            "NEW ARTIST feat. SOLOIST, PERFORMER, MUSICIAN",
+        ),
+    ],
+)
 @patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
 def test_parse_featured_artists(track, expected_artist):
-    """ Tests the plugins ability to parse a featured artist.
-    Initial check with one featured artist, two featured artists, 
+    """Tests the plugins ability to parse a featured artist.
+    Initial check with one featured artist, two featured artists,
     and three. Ignores artists that are not listed as featured."""
     t = DiscogsPlugin().get_track_info(track, 1, 1, "ARTIST", 2)
     assert t.artist == expected_artist
+
 
 @pytest.mark.parametrize(
     "formats, expected_media, expected_albumtype",
