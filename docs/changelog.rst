@@ -25,6 +25,8 @@ Bug fixes:
   matching. :bug:`5189`
 - :doc:`plugins/discogs` Fixed inconsistency in stripping disambiguation from
   artists but not labels. :bug:`5366`
+- :doc:`plugins/discogs` Fixed issue with ignoring featured artists in the
+  extraartists field.
 
 For packagers:
 
