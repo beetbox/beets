@@ -652,6 +652,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
         )
         artist = self.strip_disambiguation(artist)
         length = self.get_track_length(track["duration"])
+        featured = map(lambda artist: artist["name"] if artist["role"].find("Featuring") else "", track.get("extraartists", []))
         return TrackInfo(
             title=title,
             track_id=track_id,
