@@ -654,17 +654,17 @@ class DiscogsPlugin(MetadataSourcePlugin):
         if not artist:
             artist = album_artist
             artist_id = album_artist_id
-        artist = self.strip_disambiguation(artist)
         length = self.get_track_length(track["duration"])
         # Add featured artists
         extraartists = track.get("extraartists", [])
         featured = [
             artist["name"]
             for artist in extraartists
-            if artist["role"].find("Featuring") != -1
+            if "Featuring" in artist["role"]
         ]
         if featured:
             artist = f"{artist} feat. {', '.join(featured)}"
+        artist = self.strip_disambiguation(artist)
         return TrackInfo(
             title=title,
             track_id=track_id,

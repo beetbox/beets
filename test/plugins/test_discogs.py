@@ -450,6 +450,7 @@ class DGAlbumInfoTest(BeetsTestCase):
         assert d.artist == "ARTIST NAME (2) & OTHER ARTIST (5)"
         assert d.tracks[0].artist == "TEST ARTIST (5)"
         assert d.label == "LABEL NAME (5)"
+        config["discogs"]["strip_disambiguation"] = True
 
 
 @pytest.mark.parametrize(
@@ -461,48 +462,17 @@ class DGAlbumInfoTest(BeetsTestCase):
                 "title": "track",
                 "position": "1",
                 "duration": "5:00",
-                "extraartists": [
-                    {
-                        "name": "MUSICIAN",
-                        "role": "Featuring",
-                    }
+                "artists": [
+                    {"name": "NEW ARTIST", "tracks": "", "id": 11146},
+                    {"name": "VOCALIST", "tracks": "", "id": 344, "join": "&"},
                 ],
-            },
-            "ARTIST feat. MUSICIAN",
-        ),
-        (
-            {
-                "type_": "track",
-                "title": "track",
-                "position": "1",
-                "duration": "5:00",
-                "extraartists": [
-                    {
-                        "name": "PERFORMER",
-                        "role": "Other Role, Featuring",
-                    },
-                    {
-                        "name": "MUSICIAN",
-                        "role": "Featuring",
-                    },
-                ],
-            },
-            "ARTIST feat. PERFORMER, MUSICIAN",
-        ),
-        (
-            {
-                "type_": "track",
-                "title": "track",
-                "position": "1",
-                "duration": "5:00",
-                "artists": [{"name": "NEW ARTIST", "tracks": "", "id": 11146}],
                 "extraartists": [
                     {
                         "name": "SOLOIST",
                         "role": "Featuring",
                     },
                     {
-                        "name": "PERFORMER",
+                        "name": "PERFORMER (1)",
                         "role": "Other Role, Featuring",
                     },
                     {
@@ -511,11 +481,11 @@ class DGAlbumInfoTest(BeetsTestCase):
                     },
                     {
                         "name": "MUSICIAN",
-                        "role": "Featuring",
+                        "role": "Featuring [Uncredited]",
                     },
                 ],
             },
-            "NEW ARTIST feat. SOLOIST, PERFORMER, MUSICIAN",
+            "NEW ARTIST, VOCALIST feat. SOLOIST, PERFORMER, MUSICIAN",
         ),
     ],
 )
