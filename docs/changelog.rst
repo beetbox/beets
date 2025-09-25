@@ -11,7 +11,8 @@ New features:
 
 - :doc:`plugins/lastgenre`: Add a ``--pretend`` option to preview genre changes
   without storing or writing them.
-- :doc:`plugins/convert`: Add a config option to disable writing metadata to converted files.
+- :doc:`plugins/convert`: Add a config option to disable writing metadata to
+  converted files.
 - :doc:`plugins/discogs`: New config option `strip_disambiguation` to toggle
   stripping discogs numeric disambiguation on artist and label fields.
 
