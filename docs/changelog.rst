@@ -43,6 +43,8 @@ Other changes:
   ``beetsplug._utils``.
 - :class:`beets.metadata_plugin.MetadataSourcePlugin`: Remove discogs specific
   disambiguation stripping.
+- :doc:`plugins/lastgenre`: Refactor code and test around genre applying and
+  pretend mode :bug:`#6021`
 
 2.4.0 (September 13, 2025)
 --------------------------
