@@ -402,6 +402,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
             album=album,
             album_id=album_id,
             artist=artist,
+            artist_credit=artist,
             artist_id=artist_id,
             tracks=tracks,
             albumtype=albumtype,
@@ -668,6 +669,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
         return TrackInfo(
             title=title,
             track_id=track_id,
+            artist_credit=artist,
             artist=artist,
             artist_id=artist_id,
             length=length,
