@@ -521,102 +521,108 @@ def test_get_media_and_albumtype(formats, expected_media, expected_albumtype):
     assert result == (expected_media, expected_albumtype)
 
 @patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
-class DGTestAnv(BeetsTestCase):
-    @pytest.mark.parametrize(
-            "config_input, expected_output",
-            [
-                ({
-                    "track_artist": False,
-                    "album_artist": False,
-                    "artist_credit": False
-                },
-                {
-                    "album_artist": "ARTIST NAME & SOLOIST"
-                    "album_artist_credit": "ARTIST NAME & SOLOIST"
-                    "track_arist": "ARTIST Feat. PERFORMER",
-                    "track_artist_credit": "ARTIST Feat. PERFORMER"
-                }),
-                ({
-                    "album_artist": False,
-                    "track_artist": True,
-                    "artist_credit": False
-                },
-                {
-                    "album_artist": "ARTIST NAME & SOLOIST"
-                    "album_artist_credit": "ARTIST NAME & SOLOIST"
-                    "track_artist": "ARTY Feat. FORMER",
-                    "track_artist_credit": "ARTIST Feat. PERFORMER"
-                }),
-                ({
-                    "album_artist": True,
-                    "track_artist": False,
-                    "artist_credit": False
-                },
-                {
-                    "album_artist": "ARTY & SOLO"
-                    "album_artist_credit": "ARTIST NAME & SOLOIST"
-                    "track_arist": "ARTIST Feat. PERFORMER",
-                    "track_artist_credit": "ARTIST Feat. PERFORMER"
-                }),
-                ({
-                    "album_artist": True,
-                    "track_artist": False,
-                    "artist_credit": False
-                },
-                {
-                    "album_artist": "ARTY & SOLO"
-                    "album_artist_credit": "ARTIST & SOLOIST"
-                    "track_arist": "ARTIST Feat. PERFORMER",
-                    "track_artist_credit": "ARTIST Feat. PERFORMER"
-                })
-                ({
-                    "album_artist": False,
-                    "track_artist": False,
-                    "artist_credit": True
-                },
-                {
-                    "album_artist": "ARTIST & SOLOIST"
-                    "album_artist_credit": "ARTY & SOLO"
-                    "track_arist": "ARTIST Feat. PERFORMER",
-                    "track_artist_credit": "ARTY Feat. FORMER"
-                })
-    ])
-    def test_use_anv(self, config_input, expected_output):
-        config["discogs"]["album_artist_anv"] = config_input["album_artist"]
-        config["discogs"]["track_artist_anv"] = config_input["track_artist"]
-        config["discogs"]["artist_credit_anv"] = config_input["artist_credit"]
-        release = {
-            "id": 123,
-            "uri": "https://www.discogs.com/release/123456-something",
-            "tracklist": [
-                {
-                    "title": "track",
-                    "position": "A",
-                    "type_": "track",
-                    "duration": "5:44",
-                    "artists": [
-                        {"name": "ARTIST", "tracks": "", "anv": "ARTY", "id": 11146}
-                    ],
-                    "extraartists": [
-                        {"name": "PERFORMER", "role": "Featuring", "tracks": "", "anv": "FORMER", "id": 787}
-                    ],
-                }
-            ],
-            "artists": [
-                {"name": "ARTIST NAME", "anv": "ARTY", "id": 321, "join": "&"},
-                {"name": "SOLOIST", "anv": "SOLO", "id": 445, "join": ""},
-            ],
-            "title": "title",
-            }
-        d = DiscogsPlugin().get_album_info(release)
-        assert d.artist == expected_output["album_artist"]
-        assert d.artist_credit == expected_output["album_artist_credit"]
-        assert d.tracks[0].artist == expected_output["track_artist"]
-        assert d.tracks[0].artist_credit == expected_output["track_artist_credit"]
-        config["discogs"]["album_artist_anv"] = False
-        config["discogs"]["track_artist_anv"] = False
-        config["discogs"]["artist_credit_anv"] = False
-
+@pytest.mark.parametrize(
+        "config_input, expected_output",
+        [
+            ({
+                "track_artist": False,
+                "album_artist": False,
+                "artist_credit": False
+            },
+            {
+                "album_artist": "ARTIST NAME & SOLOIST",
+                "album_artist_credit": "ARTIST NAME & SOLOIST",
+                "track_artist": "ARTIST feat. PERFORMER",
+                "track_artist_credit": "ARTIST feat. PERFORMER"
+            }),
+            ({
+                "album_artist": False,
+                "track_artist": True,
+                "artist_credit": False
+            },
+            {
+                "album_artist": "ARTIST NAME & SOLOIST",
+                "album_artist_credit": "ARTIST NAME & SOLOIST",
+                "track_artist": "ARTY feat. FORMER",
+                "track_artist_credit": "ARTIST feat. PERFORMER"
+            }),
+            ({
+                "album_artist": True,
+                "track_artist": False,
+                "artist_credit": False
+            },
+            {
+                "album_artist": "ARTY & SOLO",
+                "album_artist_credit": "ARTIST NAME & SOLOIST",
+                "track_artist": "ARTIST feat. PERFORMER",
+                "track_artist_credit": "ARTIST feat. PERFORMER"
+            }),
+            ({
+                "album_artist": True,
+                "track_artist": False,
+                "artist_credit": False
+            },
+            {
+                "album_artist": "ARTY & SOLO",
+                "album_artist_credit": "ARTIST NAME & SOLOIST",
+                "track_artist": "ARTIST feat. PERFORMER",
+                "track_artist_credit": "ARTIST Feat. PERFORMER"
+            }),
+            ({
+                "album_artist": False,
+                "track_artist": False,
+                "artist_credit": True
+            },
+            {
+                "album_artist": "ARTIST NAME & SOLOIST",
+                "album_artist_credit": "ARTY & SOLO",
+                "track_artist": "ARTIST feat. PERFORMER",
+                "track_artist_credit": "ARTY Feat. FORMER"
+            })
+            
+])
+def test_use_anv(config_input, expected_output):
+    d = DiscogsPlugin()
+    d.config["album_artist_anv"] = config_input["album_artist"]
+    d.config["track_artist_anv"] = config_input["track_artist"]
+    d.config["artist_credit_anv"] = config_input["artist_credit"]
+    data = {
+        "id": 123,
+        "uri": "https://www.discogs.com/release/123456-something",
+        "tracklist": [{
+                "title": "track",
+                "position": "A",
+                "type_": "track",
+                "duration": "5:44",
+                "artists": [{
+                    "name": "ARTIST",
+                    "tracks": "", 
+                    "anv": "ARTY", 
+                    "id": 11146
+                }],
+                "extraartists": [{
+                    "name": "PERFORMER", 
+                    "role": "Featuring",
+                    "anv": "FORMER", 
+                    "id": 787
+                }],
+        }],
+        "artists": [
+            {"name": "ARTIST NAME", "anv": "ARTY", "id": 321, "join": "&"},
+            {"name": "SOLOIST", "anv": "SOLO", "id": 445, "join": ""},
+        ],
+        "title": "title",
+        }
+    release = Bag(
+        data=data,
+        title=data["title"],
+        artists=[Bag(data=d) for d in data["artists"]],
+    )
+    r = d.get_album_info(release)
+    assert r.artist == expected_output["album_artist"]
+    assert r.artist_credit == expected_output["album_artist_credit"]
+    assert r.tracks[0].artist == expected_output["track_artist"]
+    assert r.tracks[0].artist_credit == expected_output["track_artist_credit"]
 
 @pytest.mark.parametrize(
     "position, medium, index, subindex",
