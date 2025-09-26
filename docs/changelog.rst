@@ -15,6 +15,10 @@ New features:
   converted files.
 - :doc:`plugins/discogs`: New config option `strip_disambiguation` to toggle
   stripping discogs numeric disambiguation on artist and label fields.
+- :doc:`plugins/other/progressbars`: Added progress bars to commands for several
+  plugins, showing how many albums or songs have been changed (blue) and how
+  many were unchanged (white). The progress bar includes how much time has
+  passed and an estimate of how much time is left. :bug:`5711`
 
 Bug fixes:
 

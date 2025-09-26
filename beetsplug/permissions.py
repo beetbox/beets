@@ -9,7 +9,7 @@ like the following in your config.yaml to configure:
 import os
 import stat
 
-from beets import config
+from beets import config, ui
 from beets.plugins import BeetsPlugin
 from beets.util import ancestry, displayable_path, syspath
 
@@ -31,10 +31,13 @@ def check_permissions(path, permission):
     return oct(stat.S_IMODE(os.stat(syspath(path)).st_mode)) == oct(permission)
 
 
-def assert_permissions(path, permission, log):
+def assert_permissions(path, permission, log) -> bool:
     """Check whether the file's permissions are as expected, otherwise,
     log a warning message. Return a boolean indicating the match, like
     `check_permissions`.
+
+    Returns:
+        True if the permissions are as expected, False otherwise.
     """
     if not check_permissions(path, permission):
         log.warning("could not set permissions on {}", displayable_path(path))
@@ -43,6 +46,8 @@ def assert_permissions(path, permission, log):
             permission,
             os.stat(syspath(path)).st_mode & 0o777,
         )
+        return False
+    return True
 
 
 def dirs_in_library(library, item):
@@ -96,7 +101,10 @@ class Permissions(BeetsPlugin):
         file_perm = convert_perm(file_perm)
         dir_perm = convert_perm(dir_perm)
 
-        for path in files:
+        # Change permissions for the files.
+        for path in ui.iprogress_bar(
+            files, desc="Setting permissions", unit="files"
+        ):
             # Changing permissions on the destination file.
             self._log.debug(
                 "setting file permissions on {}",
@@ -109,7 +117,9 @@ class Permissions(BeetsPlugin):
             assert_permissions(path, file_perm, self._log)
 
         # Change permissions for the directories.
-        for path in dirs:
+        for path in ui.iprogress_bar(
+            dirs, desc="Setting permissions", unit="directories"
+        ):
             # Changing permissions on the destination directory.
             self._log.debug(
                 "setting directory permissions on {}",

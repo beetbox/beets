@@ -532,7 +532,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
             if opts.album:
                 # Fetch genres for whole albums
-                for album in lib.albums(args):
+                for album in ui.iprogress_bar(
+                    lib.albums(args),
+                    desc="Fetching genres",
+                    unit="albums",
+                ):
                     album_genre, src = self._get_genre(album)
                     prefix = "Pretend: " if pretend else ""
                     self._log.info(
@@ -570,7 +574,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             else:
                 # Just query singletons, i.e. items that are not part of
                 # an album
-                for item in lib.items(args):
+                for item in ui.iprogress_bar(
+                    lib.items(args),
+                    desc="Fetching genres",
+                    unit="tracks",
+                ):
                     item_genre, src = self._get_genre(item)
                     prefix = "Pretend: " if pretend else ""
                     self._log.info(

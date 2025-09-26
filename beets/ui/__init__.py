@@ -28,13 +28,26 @@ import struct
 import sys
 import textwrap
 import traceback
+import typing
 import warnings
 from difflib import SequenceMatcher
 from functools import cache
 from itertools import chain
-from typing import Any, Callable, Literal
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Generator,
+    Iterable,
+    Literal,
+    Sized,
+    TypeVar,
+    Union,
+)
 
 import confuse
+import enlighten
+from typing_extensions import Protocol
 
 from beets import config, library, logging, plugins, util
 from beets.dbcore import db
@@ -42,8 +55,14 @@ from beets.dbcore import query as db_query
 from beets.util import as_string
 from beets.util.functemplate import template
 
+if TYPE_CHECKING:
+    from beets.db import Album as Album
+    from beets.db import Item as Item
+
+is_windows = sys.platform == "win32"
+
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
-if sys.platform == "win32":
+if is_windows:
     try:
         import colorama
     except ImportError:
@@ -1323,6 +1342,80 @@ class CommonOptionsParser(optparse.OptionParser):
         self.add_album_option()
         self.add_path_option()
         self.add_format_option()
+
+
+T = TypeVar("T", covariant=True)
+U = TypeVar("U")
+
+
+class SizedIterable(Protocol[T], Sized, Iterable[T]):
+    pass
+
+
+def iprogress_bar(
+    sequence: Union[Iterable[U], SizedIterable[U]], **kwargs
+) -> Generator[U, None, None]:
+    """Construct and manage an `enlighten.Counter` progress bar while iterating.
+
+    Example usage:
+    ```
+    for album in ui.iprogress_bar(
+        lib.albums(), desc="Updating albums", unit="albums"):
+        do_something_to(album)
+    ```
+
+    If the progress bar is iterating over an Album or an Item, then it will detect
+    whether or not the item has been modified, and will color-code the progress bar
+    with white and blue to indicate total progress and the portion of items that have
+    been modified.
+
+    Args:
+        sequence: An `Iterable` sequence to iterate over. If provided, and the
+            sequence can return its length, then the length will be used as the
+            total for the counter. The counter will be updated for each item
+            in the sequence.
+        kwargs: Additional keyword arguments to pass to the `enlighten.Counter`
+            constructor.
+
+    Yields:
+        The items from the sequence.
+    """
+    if sequence is None:
+        log.error("sequence must not be None")
+        return
+
+    # If the total was not directly set, and the iterable is sized, then use its size as
+    # the progress bar's total.
+    if "total" not in kwargs:
+        if hasattr(sequence, "__len__"):
+            sized_seq = typing.cast(SizedIterable[U], sequence)
+            kwargs["total"] = len(sized_seq)
+
+    # Disabled in windows environments and when not attached to a TTY. See method docs
+    # for details.
+    with enlighten.Manager(
+        enabled=not is_windows
+        and (hasattr(sys.stdout, "isatty") and sys.stdout.isatty())
+    ) as manager:
+        with manager.counter(**kwargs) as counter:
+            change_counter = counter.add_subcounter("blue")
+
+            for item in sequence:
+                revision = None
+                if hasattr(item, "_revision"):
+                    revision = item._revision
+
+                # Yield the item, allowing it to be modified, or not.
+                yield item
+
+                if (
+                    revision
+                    and hasattr(item, "_revision")
+                    and item._revision != revision
+                ):
+                    change_counter.update()
+                else:
+                    counter.update()
 
 
 # Subcommand parsing infrastructure.

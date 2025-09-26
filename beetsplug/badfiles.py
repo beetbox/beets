@@ -14,18 +14,20 @@
 
 """Use command-line tools to check for audio file corruption."""
 
+import concurrent.futures
 import errno
 import os
 import shlex
 import sys
 from subprocess import STDOUT, CalledProcessError, check_output, list2cmdline
+from typing import Callable, Optional, Union
 
 import confuse
 
-from beets import importer, ui
+from beets import importer, library, ui
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
-from beets.util import displayable_path, par_map
+from beets.util import displayable_path
 
 
 class CheckerCommandError(Exception):
@@ -45,6 +47,13 @@ class CheckerCommandError(Exception):
         self.msg = str(oserror)
 
 
+# CheckResult is a tuple of 1. status code, 2. how many errors there were, and 3.
+# a list of error output messages.
+CheckResult = tuple[int, int, list[str]]
+
+CheckMethod = Callable[[str], CheckResult]
+
+
 class BadFiles(BeetsPlugin):
     def __init__(self):
         super().__init__()
@@ -55,12 +64,12 @@ class BadFiles(BeetsPlugin):
             "import_task_before_choice", self.on_import_task_before_choice
         )
 
-    def run_command(self, cmd):
+    def run_command(self, cmd: list[str]) -> CheckResult:
         self._log.debug(
             "running command: {}", displayable_path(list2cmdline(cmd))
         )
         try:
-            output = check_output(cmd, stderr=STDOUT)
+            output: bytes = check_output(cmd, stderr=STDOUT)
             errors = 0
             status = 0
         except CalledProcessError as e:
@@ -69,20 +78,20 @@ class BadFiles(BeetsPlugin):
             status = e.returncode
         except OSError as e:
             raise CheckerCommandError(cmd, e)
-        output = output.decode(sys.getdefaultencoding(), "replace")
-        return status, errors, [line for line in output.split("\n") if line]
+        output_dec = output.decode(sys.getdefaultencoding(), "replace")
+        return status, errors, [line for line in output_dec.split("\n") if line]
 
-    def check_mp3val(self, path):
+    def check_mp3val(self, path: str) -> CheckResult:
         status, errors, output = self.run_command(["mp3val", path])
         if status == 0:
             output = [line for line in output if line.startswith("WARNING:")]
             errors = len(output)
         return status, errors, output
 
-    def check_flac(self, path):
+    def check_flac(self, path: str) -> CheckResult:
         return self.run_command(["flac", "-wst", path])
 
-    def check_custom(self, command):
+    def check_custom(self, command: str) -> Callable[[str], CheckResult]:
         def checker(path):
             cmd = shlex.split(command)
             cmd.append(path)
@@ -90,7 +99,7 @@ class BadFiles(BeetsPlugin):
 
         return checker
 
-    def get_checker(self, ext):
+    def get_checker(self, ext: str) -> Optional[CheckMethod]:
         ext = ext.lower()
         try:
             command = self.config["commands"].get(dict).get(ext)
@@ -102,8 +111,9 @@ class BadFiles(BeetsPlugin):
             return self.check_mp3val
         if ext == "flac":
             return self.check_flac
+        return None
 
-    def check_item(self, item):
+    def check_item(self, item: library.Item) -> tuple[bool, list[str]]:
         # First, check whether the path exists. If not, the user
         # should probably run `beet update` to cleanup your library.
         dpath = displayable_path(item.path)
@@ -118,8 +128,8 @@ class BadFiles(BeetsPlugin):
         checker = self.get_checker(ext)
         if not checker:
             self._log.error("no checker specified in the config for {}", ext)
-            return []
-        path = item.path
+            return False, []
+        path: Union[bytes, str] = item.path
         if not isinstance(path, str):
             path = item.path.decode(sys.getfilesystemencoding())
         try:
@@ -132,11 +142,13 @@ class BadFiles(BeetsPlugin):
                 )
             else:
                 self._log.error("error invoking {0.checker}: {0.msg}", e)
-            return []
+            return False, []
 
+        success = True
         error_lines = []
 
         if status > 0:
+            success = False
             error_lines.append(
                 f"{ui.colorize('text_error', dpath)}: checker exited with"
                 f" status {status}"
@@ -145,6 +157,7 @@ class BadFiles(BeetsPlugin):
                 error_lines.append(f"  {line}")
 
         elif errors > 0:
+            success = False
             error_lines.append(
                 f"{ui.colorize('text_warning', dpath)}: checker found"
                 f" {status} errors or warnings"
@@ -154,23 +167,24 @@ class BadFiles(BeetsPlugin):
         elif self.verbose:
             error_lines.append(f"{ui.colorize('text_success', dpath)}: ok")
 
-        return error_lines
+        return success, error_lines
 
-    def on_import_task_start(self, task, session):
+    def on_import_task_start(self, task, session) -> None:
         if not self.config["check_on_import"].get(False):
             return
 
         checks_failed = []
 
         for item in task.items:
-            error_lines = self.check_item(item)
-            if error_lines:
-                checks_failed.append(error_lines)
+            _, error_lines = self.check_item(item)
+            checks_failed.append(error_lines)
 
         if checks_failed:
             task._badfiles_checks_failed = checks_failed
 
-    def on_import_task_before_choice(self, task, session):
+    def on_import_task_before_choice(
+        self, task, session
+    ) -> Optional[importer.Action]:
         if hasattr(task, "_badfiles_checks_failed"):
             ui.print_(
                 f"{ui.colorize('text_warning', 'BAD')} one or more files failed"
@@ -194,16 +208,27 @@ class BadFiles(BeetsPlugin):
             else:
                 raise Exception(f"Unexpected selection: {sel}")
 
-    def command(self, lib, opts, args):
+        return None
+
+    def command(self, lib, opts, args) -> None:
         # Get items from arguments
         items = lib.items(args)
         self.verbose = opts.verbose
 
         def check_and_print(item):
-            for error_line in self.check_item(item):
-                ui.print_(error_line)
+            success, error_lines = self.check_item(item)
+            if not success:
+                for line in error_lines:
+                    ui.print_(line)
 
-        par_map(check_and_print, items)
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            for _ in ui.iprogress_bar(
+                executor.map(check_and_print, items),
+                desc="Checking",
+                unit="item",
+                total=len(items),
+            ):
+                pass
 
     def commands(self):
         bad_command = Subcommand(
