@@ -112,6 +112,14 @@ Other configurations available under ``discogs:`` are:
 - **strip_disambiguation**: Discogs uses strings like ``"(4)"`` to mark distinct
   artists and labels with the same name. If you'd like to use the discogs
   disambiguation in your tags, you can disable it. Default: ``True``
+- **featured_string**: Configure the string used for noting featured artists.
+  Useful if you prefer ``Featuring`` or ``ft.``. Default: ``Feat.``
+- **artist_credit_anv**: Whether the Artist Name Variation (ANV) should be
+  applied to the artist credit tag. Default: ``True``
+- **track_artist_anv**: Same as ``artist_credit_anv`` for a track's artist
+  field. Default: ``False``
+- **album_artist_anv**: As previous, but for the album artist. Default:
+  ``False``
 
 .. _discogs guidelines: https://support.discogs.com/hc/en-us/articles/360005055373-Database-Guidelines-12-Tracklisting#Index_Tracks_And_Headings
 
