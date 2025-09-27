@@ -306,7 +306,9 @@ class DiscogsPlugin(MetadataSourcePlugin):
 
         return media, albumtype
 
-    def get_artist(self, artists, use_anv=False) -> tuple[str, str | None]:
+    def get_artist(
+        self, artists: Iterable[dict[str | int, str]], use_anv: bool = False
+    ) -> tuple[str, str | None]:
         """Iterates through a discogs result, fetching data
         if the artist anv is to be used, maps that to the name.
         Calls the parent class get_artist method."""
@@ -404,7 +406,9 @@ class DiscogsPlugin(MetadataSourcePlugin):
         # Additional cleanups
         # (various artists name, catalog number, media, disambiguation).
         if va:
-            album_artist, artist_credit = config["va_name"].as_str()
+            va_name = config["va_name"].as_str()
+            album_artist = va_name
+            artist_credit = va_name
         if catalogno == "none":
             catalogno = None
         # Explicitly set the `media` for the tracks, since it is expected by
