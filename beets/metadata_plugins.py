@@ -412,7 +412,7 @@ class SearchApiMetadataSourcePlugin(
         :return: Query string to be provided to the search API.
         """
 
-        components = [query_string, *(f'{k}:"{v}"' for k, v in filters.items())]
+        components = [query_string, *(f"{k}:'{v}'" for k, v in filters.items())]
         query = " ".join(filter(None, components))
 
         if self.config["search_query_ascii"].get():
