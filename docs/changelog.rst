@@ -27,6 +27,8 @@ Bug fixes:
   matching. :bug:`5189`
 - :doc:`plugins/discogs` Fixed inconsistency in stripping disambiguation from
   artists but not labels. :bug:`5366`
+- :doc:`plugins/spotify` Fixed an issue where candidate lookup would not find
+  matches due to query escaping (single vs double quotes).
 
 For packagers:
 
