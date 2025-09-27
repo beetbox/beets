@@ -349,19 +349,17 @@ class DiscogsPlugin(MetadataSourcePlugin):
 
         artist_data = [a.data for a in result.artists]
         album_artist, album_artist_id = self.get_artist(artist_data,
-                self.config["album_artist_anv"]
-        )
+                self.config["album_artist_anv"])
         artist_credit, _ = self.get_artist(artist_data,
-                self.config["artist_credit_anv"]
-        )
+                self.config["artist_credit_anv"])
         album = re.sub(r" +", " ", result.title)
         album_id = result.data["id"]
         # Use `.data` to access the tracklist directly instead of the
         # convenient `.tracklist` property, which will strip out useful artist
         # information and leave us with skeleton `Artist` objects that will
         # each make an API call just to get the same data back.
-        tracks = self.get_tracks(result.data["tracklist"], (album_artist, album_artist_id,
-            artist_credit))
+        tracks = self.get_tracks(result.data["tracklist"], 
+                (album_artist, album_artist_id, artist_credit))
 
         # Extract information for the optional AlbumInfo fields, if possible.
         va = result.data["artists"][0].get("name", "").lower() == "various"
@@ -672,7 +670,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
         medium, medium_index, _ = self.get_track_index(track["position"])
 
         artist = album_artist
-        artist_credit = album_artist
+        artist_credit = artist_credit
         artist_id = album_artist_id
 
         # If artists are found on the track, we will use those instead
