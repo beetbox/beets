@@ -98,6 +98,7 @@ rarfile = "*"
 requests-mock = ">=1.12.1"
 requests_oauthlib = "*"
 responses = ">=0.3.0"
+pytest-mock = "^3.15.1"
 
 [tool.poetry.group.lint.dependencies]
 docstrfmt = ">=1.11.1"
