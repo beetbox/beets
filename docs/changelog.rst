@@ -15,6 +15,7 @@ New features:
   converted files.
 - :doc:`plugins/discogs`: New config option `strip_disambiguation` to toggle
   stripping discogs numeric disambiguation on artist and label fields.
+- :doc:`plugins/discogs` Added support for featured artists.
 
 Bug fixes:
 
@@ -27,6 +28,8 @@ Bug fixes:
   matching. :bug:`5189`
 - :doc:`plugins/discogs` Fixed inconsistency in stripping disambiguation from
   artists but not labels. :bug:`5366`
+- :doc:`plugins/discogs` Fixed issue with ignoring featured artists in the
+  extraartists field.
 - :doc:`plugins/spotify` Fixed an issue where candidate lookup would not find
   matches due to query escaping (single vs double quotes).
 
