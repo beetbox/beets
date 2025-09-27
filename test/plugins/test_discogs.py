@@ -453,11 +453,12 @@ class DGAlbumInfoTest(BeetsTestCase):
         config["discogs"]["strip_disambiguation"] = True
 
     def test_use_anv(self):
+        """ Test using artist name variations. """
         test_cases = [
             ({
-                "track_artist": False,
-                "album_artist": False,
-                "artist_credit": False
+                "track_artist_anv": False,
+                "album_artist_anv": False,
+                "artist_credit_anv": False
             },
             {
                 "album_artist": "ARTIST NAME & SOLOIST",
@@ -466,9 +467,9 @@ class DGAlbumInfoTest(BeetsTestCase):
                 "track_artist_credit": "ARTIST Feat. PERFORMER"
             }),
             ({
-                "track_artist": True,
-                "album_artist": False,
-                "artist_credit": False
+                "track_artist_anv": True,
+                "album_artist_anv": False,
+                "artist_credit_anv": False
             },
             {
                 "album_artist": "ARTIST NAME & SOLOIST",
@@ -510,10 +511,10 @@ class DGAlbumInfoTest(BeetsTestCase):
         )
         for test_case in test_cases: 
             config_input, expected_output = test_case
+            config["discogs"]["album_artist_anv"] = config_input["album_artist_anv"]
+            config["discogs"]["track_artist_anv"] = config_input["track_artist_anv"]
+            config["discogs"]["artist_credit_anv"] = config_input["artist_credit_anv"]
             r = DiscogsPlugin().get_album_info(release)
-            config["album_artist_anv"] = config_input["album_artist"]
-            config["track_artist_anv"] = config_input["track_artist"]
-            config["artist_credit_anv"] = config_input["artist_credit"]
             assert r.artist == expected_output["album_artist"]
             assert r.artist_credit == expected_output["album_artist_credit"]
             assert r.tracks[0].artist == expected_output["track_artist"]
