@@ -19,7 +19,7 @@ To use the ``discogs`` plugin, first enable it in your configuration (see
 
 .. code-block:: bash
 
-    pip install "beets[discogs]"
+    pipx install "beets[discogs]"
 
 You will also need to register for a Discogs_ account, and provide
 authentication credentials via a personal access token or an OAuth2

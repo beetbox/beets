@@ -36,7 +36,7 @@ To use the ``kodiupdate`` plugin, first enable it in your configuration (see
 
 .. code-block:: bash
 
-    pip install "beets[kodiupdate]"
+    pipx install "beets[kodiupdate]"
 
 You'll also need to enable JSON-RPC in Kodi.
 

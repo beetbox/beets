@@ -16,7 +16,7 @@ with ``scrub`` extra
 
 .. code-block:: bash
 
-    pip install "beets[scrub]"
+    pipx install "beets[scrub]"
 
 When importing new files (with ``import.write`` turned on) or modifying files'
 tags with the ``beet modify`` command, beets will first strip all types of tags

@@ -63,28 +63,25 @@ Programming
 Development Tools
 +++++++++++++++++
 
-In order to develop beets, you will need a few tools installed:
+In order to develop beets, you will need a few tools installed on your system:
 
 - poetry_ for packaging, virtual environment and dependency management
 - poethepoet_ to run tasks, such as linting, formatting, testing
+- pre-commit_ to automatically run formatting tasks before each commit.
 
-Python community recommends using pipx_ to install stand-alone command-line
-applications such as above. pipx_ installs each application in an isolated
-virtual environment, where its dependencies will not interfere with your system
-and other CLI tools.
+You can install these tools using your distribution's package management system,
+but if you want to use the latest available releases, the Python community
+recommends using pipx_ to install stand-alone command-line applications such as
+above. pipx_ installs each application in an isolated virtual environment, where
+its dependencies will not interfere with your system and other CLI tools.
 
-If you do not have pipx_ installed in your system, follow `pipx installation
-instructions <https://pipx.pypa.io/stable/installation/>`__ or
-
-.. code-block:: sh
-
-    $ python3 -m pip install --user pipx
-
-Install poetry_ and poethepoet_ using pipx_:
+If you do not have pipx_ installed in your system, follow the `pipx installation
+instructions <https://pipx.pypa.io/stable/installation/>`__, then install
+poetry_, poethepoet_ and pre-commit_ using pipx_:
 
 ::
 
-    $ pipx install poetry poethepoet
+    $ pipx install poetry poethepoet pre-commit
 
 .. admonition:: Check ``tool.pipx-install`` section in ``pyproject.toml`` to see supported versions
 
@@ -122,16 +119,26 @@ command. Instead, you can activate the virtual environment in your shell with:
 
 ::
 
+    $ eval $(poetry env activate)
+
+(this will work for Bash/Zsh/Csh; for other shells, see the `poetry
+documentation`_)
+
+Another way to activate the environment is by using the `shell poetry plugin
+<https://github.com/python-poetry/poetry-plugin-shell>`__ and running:
+
+::
+
     $ poetry shell
 
-You should see ``(beets-py3.9)`` prefix in your shell prompt. Now you can run
-commands directly, for example:
+You should now see the ``(beets-py3.9)`` prefix in your shell prompt. Now you
+can run commands directly, for example:
 
 ::
 
     $ (beets-py3.9) pytest
 
-Additionally, poethepoet_ task runner assists us with the most common
+Additionally, the poethepoet_ task runner assists us with the most common
 operations. Formatting, linting, testing are defined as ``poe`` tasks in
 pyproject.toml_. Run:
 
@@ -150,6 +157,15 @@ to see all available tasks. They can be used like this, for example
     $ poe test --lf             # re-run failing tests (note the additional pytest option)
     $ poe check-types --pretty  # check types with an extra option for mypy
 
+Finally, pre-commit_ helps us to automatically run some poe tasks before each
+commit, for example to fix formatting issues in code and documentation files.
+You just have to activate pre-commit in your git working copy by running
+``pre-commit install`` (the beets source tree already contains a configuration
+file for pre-commit). You can learn more about pre-commit `here
+<https://pre-commit.com/>`_.
+
+.. _poetry documentation: https://python-poetry.org/docs/managing-environments/#activating-the-environment
+
 Code Contribution Ideas
 +++++++++++++++++++++++
 
@@ -161,12 +177,12 @@ Code Contribution Ideas
   is somewhat low. You can help out by finding low-coverage modules or checking
   out other `testing-related issues
   <https://github.com/beetbox/beets/labels/testing>`__.
-- There are several ways to improve the tests in general (see :ref:`testing` and
-  some places to think about performance optimization (see `Optimization
+- There are several ways to improve the tests in general (see :ref:`testing`)
+  and some places to think about performance optimization (see `Optimization
   <https://github.com/beetbox/beets/wiki/Optimization>`__).
 - Not all of our code is up to our coding conventions. In particular, the
   `library API documentation
-  <https://beets.readthedocs.io/en/stable/dev/library.html>`__ are currently
+  <https://beets.readthedocs.io/en/stable/dev/library.html>`__ is currently
   quite sparse. You can help by adding to the docstrings in the code and to the
   documentation pages themselves. beets follows `PEP-257
   <https://www.python.org/dev/peps/pep-0257/>`__ for docstrings and in some
@@ -179,8 +195,8 @@ Your First Contribution
 
 If this is your first time contributing to an open source project, welcome! If
 you are confused at all about how to contribute or what to contribute, take a
-look at `this great tutorial <http://makeapullrequest.com/>`__, or stop by our
-`discussion board`_ if you have any questions.
+look at `this great tutorial`_ or stop by our `discussion board`_ if you have
+any questions.
 
 We maintain a list of issues we reserved for those new to open source labeled
 `first timers only`_. Since the goal of these issues is to get users comfortable
@@ -189,6 +205,8 @@ questions.
 
 .. _first timers only: https://github.com/beetbox/beets/issues?q=is%3Aopen+is%3Aissue+label%3A%22first+timers+only%22
 
+.. _this great tutorial: https://egghead.io/courses/how-to-contribute-to-an-open-source-project-on-github
+
 How to Submit Your Work
 -----------------------
 
@@ -196,19 +214,18 @@ Do you have a great bug fix, new feature, or documentation expansion you’d lik
 to contribute? Follow these steps to create a GitHub pull request and your code
 will ship in no time.
 
-1. Fork the beets repository and clone it (see above) to create a workspace.
-2. Install pre-commit, following the instructions `here
-   <https://pre-commit.com/>`_.
-3. Make your changes.
-4. Add tests. If you’ve fixed a bug, write a test to ensure that you’ve actually
+1. Fork the beets repository, clone it and install the development tools
+   following the instructions above.
+2. Make your changes.
+3. Add tests. If you’ve fixed a bug, write a test to ensure that you’ve actually
    fixed it. If there’s a new feature or plugin, please contribute tests that
    show that your code does what it says.
-5. Add documentation. If you’ve added a new command flag, for example, find the
+4. Add documentation. If you’ve added a new command flag, for example, find the
    appropriate page under ``docs/`` where it needs to be listed.
-6. Add a changelog entry to ``docs/changelog.rst`` near the top of the document.
-7. Run the tests and style checker, see :ref:`testing`.
-8. Push to your fork and open a pull request! We’ll be in touch shortly.
-9. If you add commits to a pull request, please add a comment or re-request a
+5. Add a changelog entry to ``docs/changelog.rst`` near the top of the document.
+6. Run the tests and style checker, see :ref:`testing`.
+7. Push to your fork and open a pull request! We’ll be in touch shortly.
+8. If you add commits to a pull request, please add a comment or re-request a
    review after you push them since GitHub doesn’t automatically notify us when
    commits are added.
 
@@ -292,15 +309,15 @@ Handling Paths
 A great deal of convention deals with the handling of **paths**. Paths are
 stored internally—in the database, for instance—as byte strings (i.e., ``bytes``
 instead of ``str`` in Python 3). This is because POSIX operating systems’ path
-names are only reliably usable as byte strings—operating systems typically
+names are only reliably usable as byte strings; operating systems typically
 recommend but do not require that filenames use a given encoding, so violations
 of any reported encoding are inevitable. On Windows, the strings are always
 encoded with UTF-8; on Unix, the encoding is controlled by the filesystem. Here
 are some guidelines to follow:
 
 - If you have a Unicode path or you’re not sure whether something is Unicode or
-  not, pass it through ``bytestring_path`` function in the ``beets.util`` module
-  to convert it to bytes.
+  not, pass it through the ``bytestring_path`` function in the ``beets.util``
+  module to convert it to bytes.
 - Pass every path name through the ``syspath`` function (also in ``beets.util``)
   before sending it to any *operating system* file operation (``open``, for
   example). This is necessary to use long filenames (which, maddeningly, must be
@@ -314,17 +331,25 @@ are some guidelines to follow:
 Editor Settings
 ~~~~~~~~~~~~~~~
 
-Personally, I work on beets with vim_. Here are some ``.vimrc`` lines that might
-help with PEP 8-compliant Python coding:
+Personally, I work on beets with vim_. To get a nice python working environment
+in vim, be sure to include the following lines in your ``.vimrc``:
 
 ::
 
-    filetype indent on
-    autocmd FileType python setlocal shiftwidth=4 tabstop=4 softtabstop=4 expandtab shiftround autoindent
+    syntax on
+    filetype plugin indent on
 
-Consider installing `this alternative Python indentation plugin
-<https://github.com/mitsuhiko/vim-python-combined>`__. I also like `neomake
-<https://github.com/neomake/neomake>`__ with its flake8 checker.
+This will turn on syntax highlighting and load the standard vim filetype plugin
+for python files (with proper settings for indentation etc).
+
+Here's a few vim plugins that you might find useful to improve your vim python
+experience:
+
+- `neomake <https://github.com/neomake/neomake>`__, with its flake8 checker.
+- `vim-flake8 <https://github.com/nvie/vim-flake8>`__, another interface to
+  flake8.
+- `VOoM outliner <https://www.vim.org/scripts/script.php?script_id=2657>`__, can
+  help to navigate big python files.
 
 .. _testing:
 
@@ -415,6 +440,8 @@ This way, the test will be run only in the integration test suite.
 .. _poethepoet: https://poethepoet.natn.io/index.html
 
 .. _poetry: https://python-poetry.org/docs/
+
+.. _pre-commit: https://pre-commit.com/
 
 .. _pyproject.toml: https://github.com/beetbox/beets/tree/master/pyproject.toml
 

@@ -9,7 +9,7 @@ install ``beets`` with ``embyupdate`` extra
 
 .. code-block:: bash
 
-    pip install "beets[embyupdate]"
+    pipx install "beets[embyupdate]"
 
 Then, you'll want to configure the specifics of your Emby server. You can do
 that using an ``emby`` section in your ``config.yaml``
