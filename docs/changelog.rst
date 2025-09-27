@@ -16,6 +16,15 @@ New features:
 - :doc:`plugins/discogs`: New config option `strip_disambiguation` to toggle
   stripping discogs numeric disambiguation on artist and label fields.
 - :doc:`plugins/discogs` Added support for featured artists.
+- :doc:`plugins/discogs` New configuration option `featured_label` to change the
+  default string used to join featured artists. The default string is `Feat.`
+- :doc:`plugins/discogs` Added support for `artist_credit` in Discogs tags
+- :doc:`plugins/discogs` Added support for Discogs artist name variations.
+  Three new boolean configuration options specify where the variations are written, 
+  if at all. `album_artist_anv` writes variations to the album artist tag.
+  `track_artist_anv` writes to a tracks artist field. `artist_credit_anv` writes
+  to the `artist_credit` field on both albums and tracks.
+  
 
 Bug fixes:
 
