@@ -15,16 +15,14 @@ New features:
   converted files.
 - :doc:`plugins/discogs`: New config option `strip_disambiguation` to toggle
   stripping discogs numeric disambiguation on artist and label fields.
-- :doc:`plugins/discogs` Added support for featured artists.
-- :doc:`plugins/discogs` New configuration option `featured_label` to change the
-  default string used to join featured artists. The default string is `Feat.`
-- :doc:`plugins/discogs` Added support for `artist_credit` in Discogs tags
-- :doc:`plugins/discogs` Added support for Discogs artist name variations.
-  Three new boolean configuration options specify where the variations are written, 
-  if at all. `album_artist_anv` writes variations to the album artist tag.
-  `track_artist_anv` writes to a tracks artist field. `artist_credit_anv` writes
-  to the `artist_credit` field on both albums and tracks.
-  
+- :doc:`plugins/discogs` Added support for featured artists. :bug:`6038`
+- :doc:`plugins/discogs` New configuration option `featured_string` to change
+  the default string used to join featured artists. The default string is
+  `Feat.`.
+- :doc:`plugins/discogs` Support for `artist_credit` in Discogs tags.
+  :bug:`3354`
+- :doc:`plugins/discogs` Support for name variations and config options to
+  specify where the variations are written. :bug:`3354`
 
 Bug fixes:
 
@@ -35,12 +33,10 @@ Bug fixes:
 - :doc:`plugins/spotify` Removed old and undocumented config options
   `artist_field`, `album_field` and `track` that were causing issues with track
   matching. :bug:`5189`
-- :doc:`plugins/discogs` Fixed inconsistency in stripping disambiguation from
-  artists but not labels. :bug:`5366`
-- :doc:`plugins/discogs` Fixed issue with ignoring featured artists in the
-  extraartists field.
 - :doc:`plugins/spotify` Fixed an issue where candidate lookup would not find
   matches due to query escaping (single vs double quotes).
+- :doc:`plugins/discogs` Fixed inconsistency in stripping disambiguation from
+  artists but not labels. :bug:`5366`
 
 For packagers:
 
