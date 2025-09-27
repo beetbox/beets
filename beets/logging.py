@@ -20,6 +20,8 @@ use {}-style formatting and can interpolate keywords arguments to the logging
 calls (`debug`, `info`, etc).
 """
 
+from __future__ import annotations
+
 import threading
 from copy import copy
 from logging import (
@@ -32,8 +34,10 @@ from logging import (
     Handler,
     Logger,
     NullHandler,
+    RootLogger,
     StreamHandler,
 )
+from typing import TYPE_CHECKING, Any, Mapping, TypeVar, Union, overload
 
 __all__ = [
     "DEBUG",
@@ -49,8 +53,20 @@ __all__ = [
     "getLogger",
 ]
 
+if TYPE_CHECKING:
+    T = TypeVar("T")
+    from types import TracebackType
 
-def logsafe(val):
+    # see https://github.com/python/typeshed/blob/main/stdlib/logging/__init__.pyi
+    _SysExcInfoType = Union[
+        tuple[type[BaseException], BaseException, Union[TracebackType, None]],
+        tuple[None, None, None],
+    ]
+    _ExcInfoType = Union[None, bool, _SysExcInfoType, BaseException]
+    _ArgsType = Union[tuple[object, ...], Mapping[str, object]]
+
+
+def _logsafe(val: T) -> str | T:
     """Coerce `bytes` to `str` to avoid crashes solely due to logging.
 
     This is particularly relevant for bytestring paths. Much of our code
@@ -83,40 +99,45 @@ class StrFormatLogger(Logger):
     """
 
     class _LogMessage:
-        def __init__(self, msg, args, kwargs):
+        def __init__(
+            self,
+            msg: str,
+            args: _ArgsType,
+            kwargs: dict[str, Any],
+        ):
             self.msg = msg
             self.args = args
             self.kwargs = kwargs
 
         def __str__(self):
-            args = [logsafe(a) for a in self.args]
-            kwargs = {k: logsafe(v) for (k, v) in self.kwargs.items()}
+            args = [_logsafe(a) for a in self.args]
+            kwargs = {k: _logsafe(v) for (k, v) in self.kwargs.items()}
             return self.msg.format(*args, **kwargs)
 
     def _log(
         self,
-        level,
-        msg,
-        args,
-        exc_info=None,
-        extra=None,
-        stack_info=False,
+        level: int,
+        msg: object,
+        args: _ArgsType,
+        exc_info: _ExcInfoType = None,
+        extra: Mapping[str, Any] | None = None,
+        stack_info: bool = False,
+        stacklevel: int = 1,
         **kwargs,
     ):
         """Log msg.format(*args, **kwargs)"""
-        m = self._LogMessage(msg, args, kwargs)
 
-        stacklevel = kwargs.pop("stacklevel", 1)
-        stacklevel = {"stacklevel": stacklevel}
+        if isinstance(msg, str):
+            msg = self._LogMessage(msg, args, kwargs)
 
         return super()._log(
             level,
-            m,
+            msg,
             (),
             exc_info=exc_info,
             extra=extra,
             stack_info=stack_info,
-            **stacklevel,
+            stacklevel=stacklevel,
         )
 
 
@@ -156,9 +177,12 @@ my_manager = copy(Logger.manager)
 my_manager.loggerClass = BeetsLogger
 
 
-# Override the `getLogger` to use our machinery.
-def getLogger(name=None):  # noqa
+@overload
+def getLogger(name: str) -> BeetsLogger: ...
+@overload
+def getLogger(name: None = ...) -> RootLogger: ...
+def getLogger(name=None) -> BeetsLogger | RootLogger:  # noqa: N802
     if name:
-        return my_manager.getLogger(name)
+        return my_manager.getLogger(name)  # type: ignore[return-value]
     else:
         return Logger.root
