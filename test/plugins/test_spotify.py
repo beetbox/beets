@@ -82,8 +82,8 @@ class SpotifyPluginTest(PluginTestCase):
         params = _params(responses.calls[0].request.url)
         query = params["q"][0]
         assert "duifhjslkef" in query
-        assert 'artist:"ujydfsuihse"' in query
-        assert 'album:"lkajsdflakjsd"' in query
+        assert "artist:'ujydfsuihse'" in query
+        assert "album:'lkajsdflakjsd'" in query
         assert params["type"] == ["track"]
 
     @responses.activate
@@ -117,8 +117,8 @@ class SpotifyPluginTest(PluginTestCase):
         params = _params(responses.calls[0].request.url)
         query = params["q"][0]
         assert "Happy" in query
-        assert 'artist:"Pharrell Williams"' in query
-        assert 'album:"Despicable Me 2"' in query
+        assert "artist:'Pharrell Williams'" in query
+        assert "album:'Despicable Me 2'" in query
         assert params["type"] == ["track"]
 
     @responses.activate
@@ -233,8 +233,8 @@ class SpotifyPluginTest(PluginTestCase):
             params = _params(responses.calls[0].request.url)
             query = params["q"][0]
             assert item.title in query
-            assert f'artist:"{item.albumartist}"' in query
-            assert f'album:"{item.album}"' in query
+            assert f"artist:'{item.albumartist}'" in query
+            assert f"album:'{item.album}'" in query
             assert not query.isascii()
 
         # Is not found in the library if ascii encoding is enabled
