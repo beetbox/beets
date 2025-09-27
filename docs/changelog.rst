@@ -39,6 +39,8 @@ Bug fixes:
   artists but not labels. :bug:`5366`
 - :doc:`plugins/discogs` Fixed issue with ignoring featured artists in the
   extraartists field.
+- :doc:`plugins/spotify` Fixed an issue where candidate lookup would not find
+  matches due to query escaping (single vs double quotes).
 
 For packagers:
 
