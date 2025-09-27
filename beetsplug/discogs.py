@@ -306,19 +306,19 @@ class DiscogsPlugin(MetadataSourcePlugin):
 
         return media, albumtype
 
-    def get_artist(
+    def get_artist_with_anv(
         self, artists: Iterable[dict[str | int, str]], use_anv: bool = False
     ) -> tuple[str, str | None]:
         """Iterates through a discogs result, fetching data
         if the artist anv is to be used, maps that to the name.
         Calls the parent class get_artist method."""
-        artist_data = []
-        for artist in artists:
-            a = artist.copy()
+        artist_list = []
+        for artist_data in artists:
+            a = artist_data.copy()
             if use_anv and (anv := a.get("anv", "")):
                 a["name"] = anv
-            artist_data.append(a)
-        artist, artist_id = super().get_artist(artist_data, join_key="join")
+            artist_list.append(a)
+        artist, artist_id = self.get_artist(artist_list, join_key="join")
         return self.strip_disambiguation(artist), artist_id
 
     def get_album_info(self, result):
@@ -350,8 +350,10 @@ class DiscogsPlugin(MetadataSourcePlugin):
             return None
 
         artist_data = [a.data for a in result.artists]
-        album_artist, album_artist_id = self.get_artist(artist_data)
-        album_artist_anv, _ = self.get_artist(artist_data, use_anv=True)
+        album_artist, album_artist_id = self.get_artist_with_anv(artist_data)
+        album_artist_anv, _ = self.get_artist_with_anv(
+            artist_data, use_anv=True
+        )
         artist_credit = album_artist_anv
 
         album = re.sub(r" +", " ", result.title)
@@ -687,10 +689,10 @@ class DiscogsPlugin(MetadataSourcePlugin):
 
         # If artists are found on the track, we will use those instead
         if artists := track.get("artists", []):
-            artist, artist_id = self.get_artist(
+            artist, artist_id = self.get_artist_with_anv(
                 artists, self.config["track_artist_anv"]
             )
-            artist_credit, _ = self.get_artist(
+            artist_credit, _ = self.get_artist_with_anv(
                 artists, self.config["artist_credit_anv"]
             )
         length = self.get_track_length(track["duration"])
@@ -702,10 +704,10 @@ class DiscogsPlugin(MetadataSourcePlugin):
                 for artist in extraartists
                 if "Featuring" in artist["role"]
             ]
-            featured, _ = self.get_artist(
+            featured, _ = self.get_artist_with_anv(
                 featured_list, self.config["track_artist_anv"]
             )
-            featured_credit, _ = self.get_artist(
+            featured_credit, _ = self.get_artist_with_anv(
                 featured_list, self.config["artist_credit_anv"]
             )
             if featured:
