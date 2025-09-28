@@ -1047,15 +1047,13 @@ class TestMusicBrainzPlugin(PluginMixin):
 
         assert mb.get_album_criteria(items, "Artist ", " Album", va_likely) == {
             "release": " Album",
-            "alias": " Album",
-            "tracks": str(len(items)),
             **expected_additional_criteria,
         }
 
     def test_item_candidates(self, monkeypatch, mb):
         monkeypatch.setattr(
-            "musicbrainzngs.search_recordings",
-            lambda *_, **__: {"recording-list": [self.RECORDING]},
+            "beetsplug.musicbrainz.MusicBrainzAPI._get",
+            lambda *_, **__: {"recordings": [self.RECORDING]},
         )
 
         candidates = list(mb.item_candidates(Item(), "hello", "there"))
@@ -1065,8 +1063,8 @@ class TestMusicBrainzPlugin(PluginMixin):
 
     def test_candidates(self, monkeypatch, mb):
         monkeypatch.setattr(
-            "musicbrainzngs.search_releases",
-            lambda *_, **__: {"release-list": [{"id": self.mbid}]},
+            "beetsplug.musicbrainz.MusicBrainzAPI._get",
+            lambda *_, **__: {"releases": [{"id": self.mbid}]},
         )
         monkeypatch.setattr(
             "beetsplug.musicbrainz.MusicBrainzAPI.get_release",

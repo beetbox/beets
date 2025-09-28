@@ -833,17 +833,20 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
     def get_album_criteria(
         self, items: Sequence[Item], artist: str, album: str, va_likely: bool
     ) -> dict[str, str]:
-        criteria = {
-            "release": album,
-            "alias": album,
-            "tracks": str(len(items)),
-        } | ({"arid": VARIOUS_ARTISTS_ID} if va_likely else {"artist": artist})
+        criteria = {"release": album} | (
+            {"arid": VARIOUS_ARTISTS_ID} if va_likely else {"artist": artist}
+        )
 
         for tag, mb_field in self.extra_mb_field_by_tag.items():
-            most_common, _ = util.plurality(i.get(tag) for i in items)
-            value = str(most_common)
-            if tag == "catalognum":
-                value = value.replace(" ", "")
+            if tag == "tracks":
+                value = str(len(items))
+            elif tag == "alias":
+                value = album
+            else:
+                most_common, _ = util.plurality(i.get(tag) for i in items)
+                value = str(most_common)
+                if tag == "catalognum":
+                    value = value.replace(" ", "")
 
             criteria[mb_field] = value
 
@@ -860,20 +863,23 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
         using the provided criteria. Handles API errors by converting them into
         MusicBrainzAPIError exceptions with contextual information.
         """
-        filters = {
-            k: _v for k, v in filters.items() if (_v := v.lower().strip())
-        }
+        query = " AND ".join(
+            f'{k}:"{_v}"'
+            for k, v in filters.items()
+            if (_v := v.lower().strip())
+        )
         self._log.debug(
-            "Searching for MusicBrainz {}s with: {!r}", query_type, filters
+            "Searching for MusicBrainz {}s with: {!r}", query_type, query
         )
         try:
-            method = getattr(musicbrainzngs, f"search_{query_type}s")
-            res = method(limit=self.config["search_limit"].get(), **filters)
+            res = self.api._get(
+                query_type, query=query, limit=self.config["search_limit"].get()
+            )
         except musicbrainzngs.MusicBrainzError as exc:
             raise MusicBrainzAPIError(
                 exc, f"{query_type} search", filters, traceback.format_exc()
             )
-        return res[f"{query_type}-list"]
+        return res[f"{query_type}s"]
 
     def candidates(
         self,
