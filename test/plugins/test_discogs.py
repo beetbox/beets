@@ -454,38 +454,30 @@ class DGAlbumInfoTest(BeetsTestCase):
 
 
 @pytest.mark.parametrize(
-    "config_input,expected_output",
+    "track_artist_anv,track_artist",
+    [(False, "ARTIST Feat. PERFORMER"), (True, "VARIATION Feat. VARIATION")],
+)
+@pytest.mark.parametrize(
+    "album_artist_anv,album_artist",
+    [(False, "ARTIST & SOLOIST"), (True, "VARIATION & VARIATION")],
+)
+@pytest.mark.parametrize(
+    "artist_credit_anv,track_artist_credit,album_artist_credit",
     [
-        (
-            {
-                "track_artist_anv": False,
-                "album_artist_anv": False,
-                "artist_credit_anv": False,
-            },
-            {
-                "track_artist": "ARTIST Feat. PERFORMER",
-                "track_artist_credit": "ARTIST Feat. PERFORMER",
-                "album_artist": "ARTIST & SOLOIST",
-                "album_artist_credit": "ARTIST & SOLOIST",
-            },
-        ),
-        (
-            {
-                "track_artist_anv": True,
-                "album_artist_anv": True,
-                "artist_credit_anv": True,
-            },
-            {
-                "track_artist": "VARIATION Feat. VARIATION",
-                "track_artist_credit": "VARIATION Feat. VARIATION",
-                "album_artist": "VARIATION & VARIATION",
-                "album_artist_credit": "VARIATION & VARIATION",
-            },
-        ),
+        (False, "ARTIST Feat. PERFORMER", "ARTIST & SOLOIST"),
+        (True, "VARIATION Feat. VARIATION", "VARIATION & VARIATION"),
     ],
 )
 @patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
-def test_anv(config_input, expected_output):
+def test_anv(
+    track_artist_anv,
+    track_artist,
+    album_artist_anv,
+    album_artist,
+    artist_credit_anv,
+    track_artist_credit,
+    album_artist_credit,
+):
     """Test using artist name variations."""
     data = {
         "id": 123,
@@ -525,14 +517,14 @@ def test_anv(config_input, expected_output):
         title=data["title"],
         artists=[Bag(data=d) for d in data["artists"]],
     )
-    config["discogs"]["album_artist_anv"] = config_input["album_artist_anv"]
-    config["discogs"]["track_artist_anv"] = config_input["track_artist_anv"]
-    config["discogs"]["artist_credit_anv"] = config_input["artist_credit_anv"]
+    config["discogs"]["album_artist_anv"] = album_artist_anv
+    config["discogs"]["track_artist_anv"] = track_artist_anv
+    config["discogs"]["artist_credit_anv"] = artist_credit_anv
     r = DiscogsPlugin().get_album_info(release)
-    assert r.artist == expected_output["album_artist"]
-    assert r.artist_credit == expected_output["album_artist_credit"]
-    assert r.tracks[0].artist == expected_output["track_artist"]
-    assert r.tracks[0].artist_credit == expected_output["track_artist_credit"]
+    assert r.artist == album_artist
+    assert r.artist_credit == album_artist_credit
+    assert r.tracks[0].artist == track_artist
+    assert r.tracks[0].artist_credit == track_artist_credit
 
 
 @patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
