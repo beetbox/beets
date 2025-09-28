@@ -19,6 +19,7 @@ from __future__ import annotations
 import traceback
 from collections import Counter
 from contextlib import suppress
+from dataclasses import dataclass
 from functools import cached_property
 from itertools import product
 from typing import TYPE_CHECKING, Any, Iterable, Sequence
@@ -118,16 +119,18 @@ BROWSE_CHUNKSIZE = 100
 BROWSE_MAXTRACKS = 500
 
 
+@dataclass
 class MusicBrainzAPI:
-    api_url = "https://musicbrainz.org/ws/2"
+    api_host: str
+    rate_limit: float
 
     @cached_property
     def session(self) -> LimiterTimeoutSession:
-        return LimiterTimeoutSession(per_second=1)
+        return LimiterTimeoutSession(per_second=self.rate_limit)
 
     def _get(self, entity: str, **kwargs) -> JSONDict:
         return self.session.get(
-            f"{self.api_url}/{entity}", params={**kwargs, "fmt": "json"}
+            f"{self.api_host}/ws/2/{entity}", params={**kwargs, "fmt": "json"}
         ).json()
 
     def get_release(self, id_: str) -> JSONDict:
@@ -361,7 +364,17 @@ def _merge_pseudo_and_actual_album(
 class MusicBrainzPlugin(MetadataSourcePlugin):
     @cached_property
     def api(self) -> MusicBrainzAPI:
-        return MusicBrainzAPI()
+        hostname = self.config["host"].as_str()
+        if hostname == "musicbrainz.org":
+            hostname, rate_limit = "https://musicbrainz.org", 1.0
+        else:
+            https = self.config["https"].get(bool)
+            hostname = f"http{'s' if https else ''}://{hostname}"
+            rate_limit = (
+                self.config["ratelimit"].get(int)
+                / self.config["ratelimit_interval"].as_number()
+            )
+        return MusicBrainzAPI(hostname, rate_limit)
 
     def __init__(self):
         """Set up the python-musicbrainz-ngs module according to settings
@@ -394,16 +407,6 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
                 "'musicbrainz.searchlimit' option is deprecated and will be "
                 "removed in 3.0.0. Use 'musicbrainz.search_limit' instead."
             )
-        hostname = self.config["host"].as_str()
-        https = self.config["https"].get(bool)
-        # Only call set_hostname when a custom server is configured. Since
-        # musicbrainz-ngs connects to musicbrainz.org with HTTPS by default
-        if hostname != "musicbrainz.org":
-            musicbrainzngs.set_hostname(hostname, https)
-        musicbrainzngs.set_rate_limit(
-            self.config["ratelimit_interval"].as_number(),
-            self.config["ratelimit"].get(int),
-        )
 
     def track_info(
         self,
