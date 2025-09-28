@@ -17,7 +17,6 @@
 from __future__ import annotations
 
 import operator
-import traceback
 from collections import Counter
 from contextlib import suppress
 from dataclasses import dataclass
@@ -26,7 +25,6 @@ from itertools import groupby, product
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urljoin
 
-import musicbrainzngs
 from confuse.exceptions import NotFoundError
 from requests_ratelimiter import LimiterMixin
 
@@ -65,24 +63,6 @@ FIELDS_TO_MB_KEYS = {
 
 class LimiterTimeoutSession(LimiterMixin, TimeoutSession):
     pass
-
-
-musicbrainzngs.set_useragent("beets", beets.__version__, "https://beets.io/")
-
-
-class MusicBrainzAPIError(util.HumanReadableError):
-    """An error while talking to MusicBrainz. The `query` field is the
-    parameter to the action and may have any type.
-    """
-
-    def __init__(self, reason, verb, query, tb=None):
-        self.query = query
-        if isinstance(reason, musicbrainzngs.WebServiceError):
-            reason = "MusicBrainz not reachable"
-        super().__init__(reason, verb, tb)
-
-    def get_message(self):
-        return f"{self._reasonstr()} in {self.verb} with query {self.query!r}"
 
 
 RELEASE_INCLUDES = [
@@ -872,15 +852,9 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
         self._log.debug(
             "Searching for MusicBrainz {}s with: {!r}", query_type, query
         )
-        try:
-            res = self.api._get(
-                query_type, query=query, limit=self.config["search_limit"].get()
-            )
-        except musicbrainzngs.MusicBrainzError as exc:
-            raise MusicBrainzAPIError(
-                exc, f"{query_type} search", filters, traceback.format_exc()
-            )
-        return res[f"{query_type}s"]
+        return self.api._get(
+            query_type, query=query, limit=self.config["search_limit"].get()
+        )[f"{query_type}s"]
 
     def candidates(
         self,
@@ -918,29 +892,20 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
             self._log.debug("Invalid MBID ({}).", album_id)
             return None
 
-        try:
-            res = self.api.get_release(albumid)
+        res = self.api.get_release(albumid)
 
-            # resolve linked release relations
-            actual_res = None
+        # resolve linked release relations
+        actual_res = None
 
-            if res.get("status") == "Pseudo-Release" and (
-                relations := res.get("release-relations")
-            ):
-                for rel in relations:
-                    if (
-                        rel["type"] == "transl-tracklisting"
-                        and rel["direction"] == "backward"
-                    ):
-                        actual_res = self.api.get_release(rel["target"])
-
-        except musicbrainzngs.ResponseError:
-            self._log.debug("Album ID match failed.")
-            return None
-        except musicbrainzngs.MusicBrainzError as exc:
-            raise MusicBrainzAPIError(
-                exc, "get release by ID", albumid, traceback.format_exc()
-            )
+        if res.get("status") == "Pseudo-Release" and (
+            relations := res.get("release-relations")
+        ):
+            for rel in relations:
+                if (
+                    rel["type"] == "transl-tracklisting"
+                    and rel["direction"] == "backward"
+                ):
+                    actual_res = self.api.get_release(rel["target"])
 
         # release is potentially a pseudo release
         release = self.album_info(res)
@@ -962,13 +927,7 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
             self._log.debug("Invalid MBID ({}).", track_id)
             return None
 
-        try:
-            res = self.api.get_recording(trackid)
-        except (HTTPNotFoundError, musicbrainzngs.ResponseError):
-            self._log.debug("Track ID match failed.")
-            return None
-        except musicbrainzngs.MusicBrainzError as exc:
-            raise MusicBrainzAPIError(
-                exc, "get recording by ID", trackid, traceback.format_exc()
-            )
-        return self.track_info(res)
+        with suppress(HTTPNotFoundError):
+            return self.track_info(self.api.get_recording(trackid))
+
+        return None
