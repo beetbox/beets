@@ -6,7 +6,7 @@ import requests
 from beets import __version__
 
 
-class NotFoundError(requests.exceptions.HTTPError):
+class HTTPNotFoundError(requests.exceptions.HTTPError):
     pass
 
 
@@ -29,7 +29,7 @@ class TimeoutSession(requests.Session):
         kwargs.setdefault("timeout", 10)
         r = super().request(*args, **kwargs)
         if r.status_code == HTTPStatus.NOT_FOUND:
-            raise NotFoundError("HTTP Error: Not Found", response=r)
+            raise HTTPNotFoundError("HTTP Error: Not Found", response=r)
         if 300 <= r.status_code < 400:
             raise CaptchaError("Captcha is required", response=r)
 

@@ -39,7 +39,7 @@ from beets import plugins, ui
 from beets.autotag.distance import string_dist
 from beets.util.config import sanitize_choices
 
-from ._utils.requests import TimeoutSession
+from ._utils.requests import CaptchaError, HTTPNotFoundError, TimeoutSession
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
@@ -327,7 +327,7 @@ class LRCLib(Backend):
 
         yield self.fetch_json(self.SEARCH_URL, params=base_params)
 
-        with suppress(NotFoundError):
+        with suppress(HTTPNotFoundError):
             yield [self.fetch_json(self.GET_URL, params=get_params)]
 
     @classmethod

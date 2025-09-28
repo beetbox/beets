@@ -16,11 +16,12 @@
 
 from __future__ import annotations
 
+import operator
 import traceback
 from collections import Counter
 from contextlib import suppress
-from functools import cached_property
-from itertools import product
+from functools import cached_property, singledispatchmethod
+from itertools import groupby, product
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urljoin
 
@@ -35,7 +36,7 @@ from beets.metadata_plugins import MetadataSourcePlugin
 from beets.util.deprecation import deprecate_for_user
 from beets.util.id_extractors import extract_release_id
 
-from ._utils.requests import TimeoutSession
+from ._utils.requests import HTTPNotFoundError, TimeoutSession
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
@@ -83,27 +84,24 @@ class MusicBrainzAPIError(util.HumanReadableError):
         return f"{self._reasonstr()} in {self.verb} with query {self.query!r}"
 
 
-RELEASE_INCLUDES = list(
-    {
-        "artists",
-        "media",
-        "recordings",
-        "release-groups",
-        "labels",
-        "artist-credits",
-        "aliases",
-        "recording-level-rels",
-        "work-rels",
-        "work-level-rels",
-        "artist-rels",
-        "isrcs",
-        "url-rels",
-        "release-rels",
-        "genres",
-        "tags",
-    }
-    & set(musicbrainzngs.VALID_INCLUDES["release"])
-)
+RELEASE_INCLUDES = [
+    "artists",
+    "media",
+    "recordings",
+    "release-groups",
+    "labels",
+    "artist-credits",
+    "aliases",
+    "recording-level-rels",
+    "work-rels",
+    "work-level-rels",
+    "artist-rels",
+    "isrcs",
+    "url-rels",
+    "release-rels",
+    "genres",
+    "tags",
+]
 
 TRACK_INCLUDES = list(
     {
@@ -130,7 +128,7 @@ BROWSE_MAXTRACKS = 500
 
 
 class MusicBrainzAPI:
-    api_url = "https://musicbrainz.org/ws/2/"
+    api_url = "https://musicbrainz.org/ws/2"
 
     @cached_property
     def session(self) -> LimiterTimeoutSession:
@@ -140,6 +138,54 @@ class MusicBrainzAPI:
         return self.session.get(
             f"{self.api_url}/{entity}", params={**kwargs, "fmt": "json"}
         ).json()
+
+    def get_release(self, id_: str) -> JSONDict:
+        return self._group_relations(
+            self._get(f"release/{id_}", inc=" ".join(RELEASE_INCLUDES))
+        )
+
+    @singledispatchmethod
+    @classmethod
+    def _group_relations(cls, data: Any) -> Any:
+        """Normalize MusicBrainz 'relations' into type-keyed fields recursively.
+
+        This helper rewrites payloads that use a generic 'relations' list into
+        a structure that is easier to consume downstream. When a mapping
+        contains 'relations', those entries are regrouped by their 'target-type'
+        and stored under keys like '<target-type>-relations'. The original
+        'relations' key is removed to avoid ambiguous access patterns.
+
+        The transformation is applied recursively so that nested objects and
+        sequences are normalized consistently, while non-container values are
+        left unchanged.
+        """
+        return data
+
+    @_group_relations.register(list)
+    @classmethod
+    def _(cls, data: list[Any]) -> list[Any]:
+        return [cls._group_relations(i) for i in data]
+
+    @_group_relations.register(dict)
+    @classmethod
+    def _(cls, data: JSONDict) -> JSONDict:
+        for k, v in list(data.items()):
+            if k == "relations":
+                get_target_type = operator.methodcaller("get", "target-type")
+                for target_type, group in groupby(
+                    sorted(v, key=get_target_type), get_target_type
+                ):
+                    relations = [
+                        {k: v for k, v in item.items() if k != "target-type"}
+                        for item in group
+                    ]
+                    data[f"{target_type}-relations"] = cls._group_relations(
+                        relations
+                    )
+                data.pop("relations")
+            else:
+                data[k] = cls._group_relations(v)
+        return data
 
 
 def _preferred_alias(
@@ -169,7 +215,7 @@ def _preferred_alias(
         for alias in valid_aliases:
             if (
                 alias["locale"] == locale
-                and "primary" in alias
+                and alias.get("primary")
                 and alias.get("type", "").lower() not in ignored_alias_types
             ):
                 matches.append(alias)
@@ -194,36 +240,33 @@ def _multi_artist_credit(
     artist_sort_parts = []
     artist_credit_parts = []
     for el in credit:
-        if isinstance(el, str):
-            # Join phrase.
-            if include_join_phrase:
-                artist_parts.append(el)
-                artist_credit_parts.append(el)
-                artist_sort_parts.append(el)
+        alias = _preferred_alias(el["artist"].get("aliases", ()))
 
+        # An artist.
+        if alias:
+            cur_artist_name = alias["name"]
         else:
-            alias = _preferred_alias(el["artist"].get("alias-list", ()))
+            cur_artist_name = el["artist"]["name"]
+        artist_parts.append(cur_artist_name)
 
-            # An artist.
-            if alias:
-                cur_artist_name = alias["alias"]
-            else:
-                cur_artist_name = el["artist"]["name"]
-            artist_parts.append(cur_artist_name)
+        # Artist sort name.
+        if alias:
+            artist_sort_parts.append(alias["sort-name"])
+        elif "sort-name" in el["artist"]:
+            artist_sort_parts.append(el["artist"]["sort-name"])
+        else:
+            artist_sort_parts.append(cur_artist_name)
 
-            # Artist sort name.
-            if alias:
-                artist_sort_parts.append(alias["sort-name"])
-            elif "sort-name" in el["artist"]:
-                artist_sort_parts.append(el["artist"]["sort-name"])
-            else:
-                artist_sort_parts.append(cur_artist_name)
+        # Artist credit.
+        if "name" in el:
+            artist_credit_parts.append(el["name"])
+        else:
+            artist_credit_parts.append(cur_artist_name)
 
-            # Artist credit.
-            if "name" in el:
-                artist_credit_parts.append(el["name"])
-            else:
-                artist_credit_parts.append(cur_artist_name)
+        if include_join_phrase and (joinphrase := el.get("joinphrase")):
+            artist_parts.append(joinphrase)
+            artist_sort_parts.append(joinphrase)
+            artist_credit_parts.append(joinphrase)
 
     return (
         artist_parts,
@@ -293,9 +336,9 @@ def _preferred_release_event(
     ].as_str_seq()
 
     for country in preferred_countries:
-        for event in release.get("release-event-list", {}):
+        for event in release.get("release-events", {}):
             try:
-                if country in event["area"]["iso-3166-1-code-list"]:
+                if country in event["area"]["iso-3166-1-codes"]:
                     return country, event["date"]
             except KeyError:
                 pass
@@ -370,7 +413,11 @@ def _merge_pseudo_and_actual_album(
 class MusicBrainzPlugin(MetadataSourcePlugin):
     @cached_property
     def genres_field(self) -> str:
-        return f"{self.config['genres_tag'].as_choice(['genre', 'tag'])}-list"
+        return f"{self.config['genres_tag'].as_choice(['genre', 'tag'])}s"
+
+    @cached_property
+    def api(self) -> MusicBrainzAPI:
+        return MusicBrainzAPI()
 
     def __init__(self):
         """Set up the python-musicbrainz-ngs module according to settings
@@ -461,9 +508,9 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
             info.artists_ids = _artist_ids(recording["artist-credit"])
             info.artist_id = info.artists_ids[0]
 
-        if recording.get("artist-relation-list"):
+        if recording.get("artist-relations"):
             info.remixer = _get_related_artist_names(
-                recording["artist-relation-list"], relation_type="remixer"
+                recording["artist-relations"], relation_type="remixer"
             )
 
         if recording.get("length"):
@@ -477,7 +524,7 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
         lyricist = []
         composer = []
         composer_sort = []
-        for work_relation in recording.get("work-relation-list", ()):
+        for work_relation in recording.get("work-relations", ()):
             if work_relation["type"] != "performance":
                 continue
             info.work = work_relation["work"]["title"]
@@ -486,7 +533,7 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
                 info.work_disambig = work_relation["work"]["disambiguation"]
 
             for artist_relation in work_relation["work"].get(
-                "artist-relation-list", ()
+                "artist-relations", ()
             ):
                 if "type" in artist_relation:
                     type = artist_relation["type"]
@@ -504,7 +551,7 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
             info.composer_sort = ", ".join(composer_sort)
 
         arranger = []
-        for artist_relation in recording.get("artist-relation-list", ()):
+        for artist_relation in recording.get("artist-relations", ()):
             if "type" in artist_relation:
                 type = artist_relation["type"]
                 if type == "arranger":
@@ -536,9 +583,9 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
             release["artist-credit"], include_join_phrase=False
         )
 
-        ntracks = sum(len(m["track-list"]) for m in release["medium-list"])
+        ntracks = sum(len(m["tracks"]) for m in release["media"])
 
-        # The MusicBrainz API omits 'artist-relation-list' and 'work-relation-list'
+        # The MusicBrainz API omits 'relations'
         # when the release has more than 500 tracks. So we use browse_recordings
         # on chunks of tracks to recover the same information in this case.
         if ntracks > BROWSE_MAXTRACKS:
@@ -555,27 +602,27 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
                     )["recording-list"]
                 )
             track_map = {r["id"]: r for r in recording_list}
-            for medium in release["medium-list"]:
-                for recording in medium["track-list"]:
+            for medium in release["media"]:
+                for recording in medium["tracks"]:
                     recording_info = track_map[recording["recording"]["id"]]
                     recording["recording"] = recording_info
 
         # Basic info.
         track_infos = []
         index = 0
-        for medium in release["medium-list"]:
+        for medium in release["media"]:
             disctitle = medium.get("title")
             format = medium.get("format")
 
             if format in config["match"]["ignored_media"].as_str_seq():
                 continue
 
-            all_tracks = medium["track-list"]
+            all_tracks = medium["tracks"]
             if (
-                "data-track-list" in medium
+                "data-tracks" in medium
                 and not config["match"]["ignore_data_tracks"]
             ):
-                all_tracks += medium["data-track-list"]
+                all_tracks += medium["data-tracks"]
             track_count = len(all_tracks)
 
             if "pregap" in medium:
@@ -590,7 +637,7 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
 
                 if (
                     "video" in track["recording"]
-                    and track["recording"]["video"] == "true"
+                    and track["recording"]["video"]
                     and config["match"]["ignore_video_tracks"]
                 ):
                     continue
@@ -644,7 +691,7 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
             artists=artists_names,
             artists_ids=album_artist_ids,
             tracks=track_infos,
-            mediums=len(release["medium-list"]),
+            mediums=len(release["media"]),
             artist_sort=artist_sort_name,
             artists_sort=artists_sort_names,
             artist_credit=artist_credit_name,
@@ -684,9 +731,9 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
             rel_primarytype = release["release-group"]["primary-type"]
             if rel_primarytype:
                 albumtypes.append(rel_primarytype.lower())
-        if "secondary-type-list" in release["release-group"]:
-            if release["release-group"]["secondary-type-list"]:
-                for sec_type in release["release-group"]["secondary-type-list"]:
+        if "secondary-types" in release["release-group"]:
+            if release["release-group"]["secondary-types"]:
+                for sec_type in release["release-group"]["secondary-types"]:
                     albumtypes.append(sec_type.lower())
         info.albumtypes = albumtypes
 
@@ -702,8 +749,8 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
         _set_date_str(info, release_group_date, True)
 
         # Label name.
-        if release.get("label-info-list"):
-            label_info = release["label-info-list"][0]
+        if release.get("label-info"):
+            label_info = release["label-info"][0]
             if label_info.get("label"):
                 label = label_info["label"]["name"]
                 if label != "[no label]":
@@ -717,10 +764,10 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
             info.language = rep.get("language")
 
         # Media (format).
-        if release["medium-list"]:
+        if release["media"]:
             # If all media are the same, use that medium name
-            if len({m.get("format") for m in release["medium-list"]}) == 1:
-                info.media = release["medium-list"][0].get("format")
+            if len({m.get("format") for m in release["media"]}) == 1:
+                info.media = release["media"][0].get("format")
             # Otherwise, let's just call it "Media"
             else:
                 info.media = "Media"
@@ -744,11 +791,11 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
         wanted_sources = {
             site for site, wanted in external_ids.items() if wanted
         }
-        if wanted_sources and (url_rels := release.get("url-relation-list")):
+        if wanted_sources and (url_rels := release.get("url-relations")):
             urls = {}
 
             for source, url in product(wanted_sources, url_rels):
-                if f"{source}.com" in (target := url["target"]):
+                if f"{source}.com" in (target := url["url"]["resource"]):
                     urls[source] = target
                     self._log.debug(
                         "Found link to {} release via MusicBrainz",
@@ -838,7 +885,10 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
         criteria = self.get_album_criteria(items, artist, album, va_likely)
         release_ids = (r["id"] for r in self._search_api("release", criteria))
 
-        yield from filter(None, map(self.album_for_id, release_ids))
+        for id_ in release_ids:
+            with suppress(HTTPNotFoundError):
+                if album_info := self.album_for_id(id_):
+                    yield album_info
 
     def item_candidates(
         self, item: Item, artist: str, title: str
@@ -862,22 +912,20 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
             return None
 
         try:
-            res = musicbrainzngs.get_release_by_id(albumid, RELEASE_INCLUDES)
+            res = self.api.get_release(albumid)
 
             # resolve linked release relations
             actual_res = None
 
             if res.get("status") == "Pseudo-Release" and (
-                relations := res["release"].get("release-relation-list")
+                relations := res.get("release-relations")
             ):
                 for rel in relations:
                     if (
                         rel["type"] == "transl-tracklisting"
                         and rel["direction"] == "backward"
                     ):
-                        actual_res = musicbrainzngs.get_release_by_id(
-                            rel["target"], RELEASE_INCLUDES
-                        )
+                        actual_res = self.api.get_release(rel["target"])
 
         except musicbrainzngs.ResponseError:
             self._log.debug("Album ID match failed.")
@@ -888,11 +936,11 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
             )
 
         # release is potentially a pseudo release
-        release = self.album_info(res["release"])
+        release = self.album_info(res)
 
         # should be None unless we're dealing with a pseudo release
         if actual_res is not None:
-            actual_release = self.album_info(actual_res["release"])
+            actual_release = self.album_info(actual_res)
             return _merge_pseudo_and_actual_album(release, actual_release)
         else:
             return release
