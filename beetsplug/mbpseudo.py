@@ -17,7 +17,6 @@
 from __future__ import annotations
 
 import itertools
-import traceback
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any
 
@@ -31,7 +30,6 @@ from beets.autotag.match import assign_items
 from beets.plugins import find_plugins
 from beets.util.id_extractors import extract_release_id
 from beetsplug.musicbrainz import (
-    MusicBrainzAPIError,
     MusicBrainzPlugin,
     _merge_pseudo_and_actual_album,
     _preferred_alias,
@@ -143,29 +141,21 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
         if (ids := self._intercept_mb_release(release)) and (
             album_id := self._extract_id(ids[0])
         ):
-            try:
-                raw_pseudo_release = self.api.get_release(album_id)
-                pseudo_release = super().album_info(raw_pseudo_release)
+            raw_pseudo_release = self.api.get_release(album_id)
+            pseudo_release = super().album_info(raw_pseudo_release)
 
-                if self.config["custom_tags_only"].get(bool):
-                    self._replace_artist_with_alias(
-                        raw_pseudo_release, pseudo_release
-                    )
-                    self._add_custom_tags(official_release, pseudo_release)
-                    return official_release
-                else:
-                    return PseudoAlbumInfo(
-                        pseudo_release=_merge_pseudo_and_actual_album(
-                            pseudo_release, official_release
-                        ),
-                        official_release=official_release,
-                    )
-            except musicbrainzngs.MusicBrainzError as exc:
-                raise MusicBrainzAPIError(
-                    exc,
-                    "get pseudo-release by ID",
-                    album_id,
-                    traceback.format_exc(),
+            if self.config["custom_tags_only"].get(bool):
+                self._replace_artist_with_alias(
+                    raw_pseudo_release, pseudo_release
+                )
+                self._add_custom_tags(official_release, pseudo_release)
+                return official_release
+            else:
+                return PseudoAlbumInfo(
+                    pseudo_release=_merge_pseudo_and_actual_album(
+                        pseudo_release, official_release
+                    ),
+                    official_release=official_release,
                 )
         else:
             return official_release
