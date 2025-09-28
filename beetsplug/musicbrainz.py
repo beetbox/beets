@@ -26,6 +26,7 @@ from urllib.parse import urljoin
 
 import musicbrainzngs
 from confuse.exceptions import NotFoundError
+from requests_ratelimiter import LimiterMixin
 
 import beets
 import beets.autotag.hooks
@@ -33,6 +34,8 @@ from beets import config, plugins, util
 from beets.metadata_plugins import MetadataSourcePlugin
 from beets.util.deprecation import deprecate_for_user
 from beets.util.id_extractors import extract_release_id
+
+from ._utils.requests import TimeoutSession
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
@@ -56,6 +59,11 @@ FIELDS_TO_MB_KEYS = {
     "media": "format",
     "year": "date",
 }
+
+
+class LimiterTimeoutSession(LimiterMixin, TimeoutSession):
+    pass
+
 
 musicbrainzngs.set_useragent("beets", beets.__version__, "https://beets.io/")
 
@@ -121,12 +129,24 @@ BROWSE_CHUNKSIZE = 100
 BROWSE_MAXTRACKS = 500
 
 
+class MusicBrainzAPI:
+    api_url = "https://musicbrainz.org/ws/2/"
+
+    @cached_property
+    def session(self) -> LimiterTimeoutSession:
+        return LimiterTimeoutSession(per_second=1)
+
+    def _get(self, entity: str, **kwargs) -> JSONDict:
+        return self.session.get(
+            f"{self.api_url}/{entity}", params={**kwargs, "fmt": "json"}
+        ).json()
+
+
 def _preferred_alias(
     aliases: list[JSONDict], languages: list[str] | None = None
 ) -> JSONDict | None:
     """Given a list of alias structures for an artist credit, select
     and return the user's preferred alias or None if no matching
-    alias is found.
     """
     if not aliases:
         return None

@@ -55,6 +55,7 @@ numpy = [
 ]
 platformdirs = ">=3.5.0"
 pyyaml = "*"
+requests-ratelimiter = ">=0.7.0"
 typing_extensions = "*"
 unidecode = ">=1.3.6"
 
