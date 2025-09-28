@@ -327,30 +327,6 @@ def _set_date_str(
                 setattr(info, key, date_num)
 
 
-def _is_translation(r):
-    _trans_key = "transl-tracklisting"
-    return r["type"] == _trans_key and r["direction"] == "backward"
-
-
-def _find_actual_release_from_pseudo_release(
-    pseudo_rel: JSONDict,
-) -> JSONDict | None:
-    try:
-        relations = pseudo_rel["release"]["release-relation-list"]
-    except KeyError:
-        return None
-
-    # currently we only support trans(liter)ation's
-    translations = [r for r in relations if _is_translation(r)]
-
-    if not translations:
-        return None
-
-    actual_id = translations[0]["target"]
-
-    return musicbrainzngs.get_release_by_id(actual_id, RELEASE_INCLUDES)
-
-
 def _merge_pseudo_and_actual_album(
     pseudo: beets.autotag.hooks.AlbumInfo, actual: beets.autotag.hooks.AlbumInfo
 ) -> beets.autotag.hooks.AlbumInfo:
@@ -891,8 +867,17 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
             # resolve linked release relations
             actual_res = None
 
-            if res["release"].get("status") == "Pseudo-Release":
-                actual_res = _find_actual_release_from_pseudo_release(res)
+            if res.get("status") == "Pseudo-Release" and (
+                relations := res["release"].get("release-relation-list")
+            ):
+                for rel in relations:
+                    if (
+                        rel["type"] == "transl-tracklisting"
+                        and rel["direction"] == "backward"
+                    ):
+                        actual_res = musicbrainzngs.get_release_by_id(
+                            rel["target"], RELEASE_INCLUDES
+                        )
 
         except musicbrainzngs.ResponseError:
             self._log.debug("Album ID match failed.")
