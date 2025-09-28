@@ -26,12 +26,15 @@ from urllib.parse import urljoin
 
 import musicbrainzngs
 from confuse.exceptions import NotFoundError
+from requests_ratelimiter import LimiterMixin
 
 import beets
 import beets.autotag.hooks
 from beets import config, plugins, util
 from beets.metadata_plugins import MetadataSourcePlugin
 from beets.util.id_extractors import extract_release_id
+
+from ._utils.requests import TimeoutSession
 
 if TYPE_CHECKING:
     from typing import Literal
@@ -54,6 +57,11 @@ FIELDS_TO_MB_KEYS = {
     "media": "format",
     "year": "date",
 }
+
+
+class LimiterTimeoutSession(LimiterMixin, TimeoutSession):
+    pass
+
 
 musicbrainzngs.set_useragent("beets", beets.__version__, "https://beets.io/")
 
@@ -116,6 +124,19 @@ if "work-level-rels" in musicbrainzngs.VALID_BROWSE_INCLUDES["recording"]:
     BROWSE_INCLUDES.append("work-level-rels")
 BROWSE_CHUNKSIZE = 100
 BROWSE_MAXTRACKS = 500
+
+
+class MusicBrainzAPI:
+    api_url = "https://musicbrainz.org/ws/2/"
+
+    @cached_property
+    def session(self) -> LimiterTimeoutSession:
+        return LimiterTimeoutSession(per_second=1)
+
+    def _get(self, entity: str, **kwargs) -> JSONDict:
+        return self.session.get(
+            f"{self.api_url}/{entity}", params={**kwargs, "fmt": "json"}
+        ).json()
 
 
 def _preferred_alias(aliases: list[JSONDict]):
