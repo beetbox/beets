@@ -99,16 +99,13 @@ RELEASE_INCLUDES = [
     "tags",
 ]
 
-TRACK_INCLUDES = list(
-    {
-        "artists",
-        "aliases",
-        "isrcs",
-        "work-level-rels",
-        "artist-rels",
-    }
-    & set(musicbrainzngs.VALID_INCLUDES["recording"])
-)
+TRACK_INCLUDES = [
+    "artists",
+    "aliases",
+    "isrcs",
+    "work-level-rels",
+    "artist-rels",
+]
 
 BROWSE_INCLUDES = [
     "artist-credits",
@@ -137,6 +134,9 @@ class MusicBrainzAPI:
 
     def get_release(self, id_: str) -> JSONDict:
         return self._get(f"release/{id_}", inc=" ".join(RELEASE_INCLUDES))
+
+    def get_recording(self, id_: str) -> JSONDict:
+        return self._get(f"recording/{id_}", inc=" ".join(TRACK_INCLUDES))
 
 
 def _preferred_alias(aliases: list[JSONDict]):
@@ -457,8 +457,8 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
 
         info.trackdisambig = recording.get("disambiguation")
 
-        if recording.get("isrc-list"):
-            info.isrc = ";".join(recording["isrc-list"])
+        if recording.get("isrcs"):
+            info.isrc = ";".join(recording["isrcs"])
 
         lyricist = []
         composer = []
@@ -894,12 +894,12 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
             return None
 
         try:
-            res = musicbrainzngs.get_recording_by_id(trackid, TRACK_INCLUDES)
-        except musicbrainzngs.ResponseError:
+            res = self.api.get_recording(trackid)
+        except (HTTPNotFoundError, musicbrainzngs.ResponseError):
             self._log.debug("Track ID match failed.")
             return None
         except musicbrainzngs.MusicBrainzError as exc:
             raise MusicBrainzAPIError(
                 exc, "get recording by ID", trackid, traceback.format_exc()
             )
-        return self.track_info(res["recording"])
+        return self.track_info(res)
