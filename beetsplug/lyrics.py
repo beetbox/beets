@@ -16,7 +16,6 @@
 
 from __future__ import annotations
 
-import atexit
 import itertools
 import math
 import re
@@ -25,7 +24,6 @@ from contextlib import contextmanager, suppress
 from dataclasses import dataclass
 from functools import cached_property, partial, total_ordering
 from html import unescape
-from http import HTTPStatus
 from itertools import groupby
 from pathlib import Path
 from typing import TYPE_CHECKING, NamedTuple
@@ -40,6 +38,8 @@ import beets
 from beets import plugins, ui
 from beets.autotag.distance import string_dist
 from beets.util.config import sanitize_choices
+
+from ._utils.requests import TimeoutSession
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
@@ -56,41 +56,10 @@ if TYPE_CHECKING:
         TranslatorAPI,
     )
 
-USER_AGENT = f"beets/{beets.__version__}"
 INSTRUMENTAL_LYRICS = "[Instrumental]"
 
 
-class NotFoundError(requests.exceptions.HTTPError):
-    pass
-
-
-class CaptchaError(requests.exceptions.HTTPError):
-    pass
-
-
-class TimeoutSession(requests.Session):
-    def request(self, *args, **kwargs):
-        """Wrap the request method to raise an exception on HTTP errors."""
-        kwargs.setdefault("timeout", 10)
-        r = super().request(*args, **kwargs)
-        if r.status_code == HTTPStatus.NOT_FOUND:
-            raise NotFoundError("HTTP Error: Not Found", response=r)
-        if 300 <= r.status_code < 400:
-            raise CaptchaError("Captcha is required", response=r)
-
-        r.raise_for_status()
-
-        return r
-
-
 r_session = TimeoutSession()
-r_session.headers.update({"User-Agent": USER_AGENT})
-
-
-@atexit.register
-def close_session():
-    """Close the requests session on shut down."""
-    r_session.close()
 
 
 # Utilities.
