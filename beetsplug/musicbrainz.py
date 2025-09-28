@@ -118,8 +118,6 @@ BROWSE_INCLUDES = [
     "recording-rels",
     "release-rels",
 ]
-if "work-level-rels" in musicbrainzngs.VALID_BROWSE_INCLUDES["recording"]:
-    BROWSE_INCLUDES.append("work-level-rels")
 BROWSE_CHUNKSIZE = 100
 BROWSE_MAXTRACKS = 500
 
@@ -143,6 +141,11 @@ class MusicBrainzAPI:
 
     def get_recording(self, id_: str) -> JSONDict:
         return self._get(f"recording/{id_}", inc=" ".join(TRACK_INCLUDES))
+
+    def browse_recordings(self, **kwargs) -> list[JSONDict]:
+        kwargs.setdefault("limit", BROWSE_CHUNKSIZE)
+        kwargs.setdefault("inc", BROWSE_INCLUDES)
+        return self._get("recording", **kwargs)["recordings"]
 
     @singledispatchmethod
     @classmethod
@@ -594,12 +597,7 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
             for i in range(0, ntracks, BROWSE_CHUNKSIZE):
                 self._log.debug("Retrieving tracks starting at {}", i)
                 recording_list.extend(
-                    musicbrainzngs.browse_recordings(
-                        release=release["id"],
-                        limit=BROWSE_CHUNKSIZE,
-                        includes=BROWSE_INCLUDES,
-                        offset=i,
-                    )["recording-list"]
+                    self.api.browse_recordings(release=release["id"], offset=i)
                 )
             track_map = {r["id"]: r for r in recording_list}
             for medium in release["media"]:
