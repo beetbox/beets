@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import os
+from shlex import quote as shell_quote
 from typing import TYPE_CHECKING, Any, TypeAlias
 from urllib.parse import quote
 from urllib.request import pathname2url
@@ -160,8 +161,10 @@ class SmartPlaylistPlugin(BeetsPlugin):
             }
             if not playlists:
                 unmatched = [name for name, _, _ in self._unmatched_playlists]
+                unmatched.sort()
+                quoted_names = " ".join(shell_quote(name) for name in unmatched)
                 raise ui.UserError(
-                    f"No playlist matching any of {unmatched} found"
+                    f"No playlist matching any of {quoted_names} found"
                 )
 
             self._matched_playlists = playlists
