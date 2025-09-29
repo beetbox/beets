@@ -32,6 +32,8 @@ Bug fixes:
   extraartists field.
 - :doc:`plugins/spotify` Fixed an issue where candidate lookup would not find
   matches due to query escaping (single vs double quotes).
+- :doc:`plugins/chroma` :doc:`plugins/bpsync` Fix plugin loading issue caused by
+  an import of another :class:`beets.plugins.BeetsPlugin` class. :bug:`6033`
 
 For packagers:
 
