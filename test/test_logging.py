@@ -5,9 +5,10 @@ import sys
 import threading
 import unittest
 from io import StringIO
+from types import ModuleType
+from unittest.mock import patch
 
 import beets.logging as blog
-import beetsplug
 from beets import plugins, ui
 from beets.test import _common, helper
 from beets.test.helper import AsIsImporterMixin, ImportTestCase, PluginMixin
@@ -47,36 +48,46 @@ class LoggingTest(unittest.TestCase):
         assert stream.getvalue(), "foo oof baz"
 
 
+class DummyModule(ModuleType):
+    class DummyPlugin(plugins.BeetsPlugin):
+        def __init__(self):
+            plugins.BeetsPlugin.__init__(self, "dummy")
+            self.import_stages = [self.import_stage]
+            self.register_listener("dummy_event", self.listener)
+
+        def log_all(self, name):
+            self._log.debug("debug {}", name)
+            self._log.info("info {}", name)
+            self._log.warning("warning {}", name)
+
+        def commands(self):
+            cmd = ui.Subcommand("dummy")
+            cmd.func = lambda _, __, ___: self.log_all("cmd")
+            return (cmd,)
+
+        def import_stage(self, session, task):
+            self.log_all("import_stage")
+
+        def listener(self):
+            self.log_all("listener")
+
+    def __init__(self, *_, **__):
+        module_name = "beetsplug.dummy"
+        super().__init__(module_name)
+        self.DummyPlugin.__module__ = module_name
+        self.DummyPlugin = self.DummyPlugin
+
+
 class LoggingLevelTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
     plugin = "dummy"
 
-    class DummyModule:
-        class DummyPlugin(plugins.BeetsPlugin):
-            def __init__(self):
-                plugins.BeetsPlugin.__init__(self, "dummy")
-                self.import_stages = [self.import_stage]
-                self.register_listener("dummy_event", self.listener)
+    @classmethod
+    def setUpClass(cls):
+        patcher = patch.dict(sys.modules, {"beetsplug.dummy": DummyModule()})
+        patcher.start()
+        cls.addClassCleanup(patcher.stop)
 
-            def log_all(self, name):
-                self._log.debug("debug {}", name)
-                self._log.info("info {}", name)
-                self._log.warning("warning {}", name)
-
-            def commands(self):
-                cmd = ui.Subcommand("dummy")
-                cmd.func = lambda _, __, ___: self.log_all("cmd")
-                return (cmd,)
-
-            def import_stage(self, session, task):
-                self.log_all("import_stage")
-
-            def listener(self):
-                self.log_all("listener")
-
-    def setUp(self):
-        sys.modules["beetsplug.dummy"] = self.DummyModule
-        beetsplug.dummy = self.DummyModule
-        super().setUp()
+        super().setUpClass()
 
     def test_command_level0(self):
         self.config["verbose"] = 0
