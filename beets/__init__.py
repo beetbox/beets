@@ -19,10 +19,8 @@ import confuse
 
 # Version management using poetry-dynamic-versioning
 from ._version import __version__, __version_tuple__
-
 from .util import deprecate_imports
 
-__version__ = "2.4.0"
 __author__ = "Adrian Sampson <adrian@radbox.org>"
 
 
