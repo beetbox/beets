@@ -97,6 +97,8 @@ The available options are:
 - **embed**: Embed album art in converted items. Default: ``yes``.
 - **id3v23**: Can be used to override the global ``id3v23`` option. Default:
   ``inherit``.
+- **write_metadata**: Can be used to disable writing metadata to converted
+  files. Default: ``true``.
 - **max_bitrate**: By default, the plugin does not transcode files that are
   already in the destination format. This option instead also transcodes files
   with high bitrates, even if they are already in the same format as the output.

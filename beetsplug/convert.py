@@ -25,12 +25,13 @@ from string import Template
 import mediafile
 from confuse import ConfigTypeError, Optional
 
-from beets import art, config, plugins, ui, util
+from beets import config, plugins, ui, util
 from beets.library import Item, parse_query_string
 from beets.plugins import BeetsPlugin
 from beets.util import par_map
 from beets.util.artresizer import ArtResizer
 from beets.util.m3u import M3UFile
+from beetsplug._utils import art
 
 _fs_lock = threading.Lock()
 _temp_files = []  # Keep track of temporary transcoded files for deletion.
@@ -121,6 +122,7 @@ class ConvertPlugin(BeetsPlugin):
                 "threads": os.cpu_count(),
                 "format": "mp3",
                 "id3v23": "inherit",
+                "write_metadata": True,
                 "formats": {
                     "aac": {
                         "command": (
@@ -445,8 +447,9 @@ class ConvertPlugin(BeetsPlugin):
             if id3v23 == "inherit":
                 id3v23 = None
 
-            # Write tags from the database to the converted file.
-            item.try_write(path=converted, id3v23=id3v23)
+            # Write tags from the database to the file if requested
+            if self.config["write_metadata"].get(bool):
+                item.try_write(path=converted, id3v23=id3v23)
 
             if keep_new:
                 # If we're keeping the transcoded file, read it again (after
