@@ -76,6 +76,8 @@ TRACK_INDEX_RE = re.compile(
     re.VERBOSE,
 )
 
+DISAMBIGUATION_RE = re.compile(r" \(\d+\)")
+
 
 class ReleaseFormat(TypedDict):
     name: str
@@ -96,6 +98,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
                 "separator": ", ",
                 "index_tracks": False,
                 "append_style_genre": False,
+                "strip_disambiguation": True,
             }
         )
         self.config["apikey"].redact = True
@@ -336,7 +339,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
         # convenient `.tracklist` property, which will strip out useful artist
         # information and leave us with skeleton `Artist` objects that will
         # each make an API call just to get the same data back.
-        tracks = self.get_tracks(result.data["tracklist"])
+        tracks = self.get_tracks(result.data["tracklist"], artist, artist_id)
 
         # Extract information for the optional AlbumInfo fields, if possible.
         va = result.data["artists"][0].get("name", "").lower() == "various"
@@ -362,15 +365,20 @@ class DiscogsPlugin(MetadataSourcePlugin):
 
         label = catalogno = labelid = None
         if result.data.get("labels"):
-            label = result.data["labels"][0].get("name")
+            label = self.strip_disambiguation(
+                result.data["labels"][0].get("name")
+            )
             catalogno = result.data["labels"][0].get("catno")
             labelid = result.data["labels"][0].get("id")
 
         cover_art_url = self.select_cover_art(result)
 
-        # Additional cleanups (various artists name, catalog number, media).
+        # Additional cleanups
+        # (various artists name, catalog number, media, disambiguation).
         if va:
             artist = config["va_name"].as_str()
+        else:
+            artist = self.strip_disambiguation(artist)
         if catalogno == "none":
             catalogno = None
         # Explicitly set the `media` for the tracks, since it is expected by
@@ -378,10 +386,6 @@ class DiscogsPlugin(MetadataSourcePlugin):
         for track in tracks:
             track.media = media
             track.medium_total = mediums.count(track.medium)
-            if not track.artist:  # get_track_info often fails to find artist
-                track.artist = artist
-            if not track.artist_id:
-                track.artist_id = artist_id
             # Discogs does not have track IDs. Invent our own IDs as proposed
             # in #2336.
             track.track_id = f"{album_id}-{track.track_alt}"
@@ -438,7 +442,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
         else:
             return None
 
-    def get_tracks(self, tracklist):
+    def get_tracks(self, tracklist, album_artist, album_artist_id):
         """Returns a list of TrackInfo objects for a discogs tracklist."""
         try:
             clean_tracklist = self.coalesce_tracks(tracklist)
@@ -463,7 +467,9 @@ class DiscogsPlugin(MetadataSourcePlugin):
                     # divisions.
                     divisions += next_divisions
                     del next_divisions[:]
-                track_info = self.get_track_info(track, index, divisions)
+                track_info = self.get_track_info(
+                    track, index, divisions, album_artist, album_artist_id
+                )
                 track_info.track_alt = track["position"]
                 tracks.append(track_info)
             else:
@@ -622,7 +628,17 @@ class DiscogsPlugin(MetadataSourcePlugin):
 
         return tracklist
 
-    def get_track_info(self, track, index, divisions):
+    def strip_disambiguation(self, text: str) -> str:
+        """Removes discogs specific disambiguations from a string.
+        Turns 'Label Name (5)' to 'Label Name' or 'Artist (1) & Another Artist (2)'
+        to 'Artist & Another Artist'. Does nothing if strip_disambiguation is False."""
+        if not self.config["strip_disambiguation"]:
+            return text
+        return DISAMBIGUATION_RE.sub("", text)
+
+    def get_track_info(
+        self, track, index, divisions, album_artist, album_artist_id
+    ):
         """Returns a TrackInfo object for a discogs track."""
         title = track["title"]
         if self.config["index_tracks"]:
@@ -634,7 +650,21 @@ class DiscogsPlugin(MetadataSourcePlugin):
         artist, artist_id = self.get_artist(
             track.get("artists", []), join_key="join"
         )
+        # If no artist and artist is returned, set to match album artist
+        if not artist:
+            artist = album_artist
+            artist_id = album_artist_id
         length = self.get_track_length(track["duration"])
+        # Add featured artists
+        extraartists = track.get("extraartists", [])
+        featured = [
+            artist["name"]
+            for artist in extraartists
+            if "Featuring" in artist["role"]
+        ]
+        if featured:
+            artist = f"{artist} feat. {', '.join(featured)}"
+        artist = self.strip_disambiguation(artist)
         return TrackInfo(
             title=title,
             track_id=track_id,

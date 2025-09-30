@@ -374,6 +374,129 @@ class DGAlbumInfoTest(BeetsTestCase):
         assert d.genre == "GENRE1, GENRE2"
         assert d.style is None
 
+    def test_strip_disambiguation(self):
+        """Test removing disambiguation from all disambiguated fields."""
+        data = {
+            "id": 123,
+            "uri": "https://www.discogs.com/release/123456-something",
+            "tracklist": [
+                {
+                    "title": "track",
+                    "position": "A",
+                    "type_": "track",
+                    "duration": "5:44",
+                    "artists": [
+                        {"name": "TEST ARTIST (5)", "tracks": "", "id": 11146}
+                    ],
+                }
+            ],
+            "artists": [
+                {"name": "ARTIST NAME (2)", "id": 321, "join": "&"},
+                {"name": "OTHER ARTIST (5)", "id": 321, "join": ""},
+            ],
+            "title": "title",
+            "labels": [
+                {
+                    "name": "LABEL NAME (5)",
+                    "catno": "catalog number",
+                }
+            ],
+        }
+        release = Bag(
+            data=data,
+            title=data["title"],
+            artists=[Bag(data=d) for d in data["artists"]],
+        )
+        d = DiscogsPlugin().get_album_info(release)
+        assert d.artist == "ARTIST NAME & OTHER ARTIST"
+        assert d.tracks[0].artist == "TEST ARTIST"
+        assert d.label == "LABEL NAME"
+
+    def test_strip_disambiguation_false(self):
+        """Test disabling disambiguation removal from all disambiguated fields."""
+        config["discogs"]["strip_disambiguation"] = False
+        data = {
+            "id": 123,
+            "uri": "https://www.discogs.com/release/123456-something",
+            "tracklist": [
+                {
+                    "title": "track",
+                    "position": "A",
+                    "type_": "track",
+                    "duration": "5:44",
+                    "artists": [
+                        {"name": "TEST ARTIST (5)", "tracks": "", "id": 11146}
+                    ],
+                }
+            ],
+            "artists": [
+                {"name": "ARTIST NAME (2)", "id": 321, "join": "&"},
+                {"name": "OTHER ARTIST (5)", "id": 321, "join": ""},
+            ],
+            "title": "title",
+            "labels": [
+                {
+                    "name": "LABEL NAME (5)",
+                    "catno": "catalog number",
+                }
+            ],
+        }
+        release = Bag(
+            data=data,
+            title=data["title"],
+            artists=[Bag(data=d) for d in data["artists"]],
+        )
+        d = DiscogsPlugin().get_album_info(release)
+        assert d.artist == "ARTIST NAME (2) & OTHER ARTIST (5)"
+        assert d.tracks[0].artist == "TEST ARTIST (5)"
+        assert d.label == "LABEL NAME (5)"
+        config["discogs"]["strip_disambiguation"] = True
+
+
+@pytest.mark.parametrize(
+    "track, expected_artist",
+    [
+        (
+            {
+                "type_": "track",
+                "title": "track",
+                "position": "1",
+                "duration": "5:00",
+                "artists": [
+                    {"name": "NEW ARTIST", "tracks": "", "id": 11146},
+                    {"name": "VOCALIST", "tracks": "", "id": 344, "join": "&"},
+                ],
+                "extraartists": [
+                    {
+                        "name": "SOLOIST",
+                        "role": "Featuring",
+                    },
+                    {
+                        "name": "PERFORMER (1)",
+                        "role": "Other Role, Featuring",
+                    },
+                    {
+                        "name": "RANDOM",
+                        "role": "Written-By",
+                    },
+                    {
+                        "name": "MUSICIAN",
+                        "role": "Featuring [Uncredited]",
+                    },
+                ],
+            },
+            "NEW ARTIST, VOCALIST feat. SOLOIST, PERFORMER, MUSICIAN",
+        ),
+    ],
+)
+@patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
+def test_parse_featured_artists(track, expected_artist):
+    """Tests the plugins ability to parse a featured artist.
+    Initial check with one featured artist, two featured artists,
+    and three. Ignores artists that are not listed as featured."""
+    t = DiscogsPlugin().get_track_info(track, 1, 1, "ARTIST", 2)
+    assert t.artist == expected_artist
+
 
 @pytest.mark.parametrize(
     "formats, expected_media, expected_albumtype",

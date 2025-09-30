@@ -109,6 +109,9 @@ Other configurations available under ``discogs:`` are:
 - **search_limit**: The maximum number of results to return from Discogs. This
   is useful if you want to limit the number of results returned to speed up
   searches. Default: ``5``
+- **strip_disambiguation**: Discogs uses strings like ``"(4)"`` to mark distinct
+  artists and labels with the same name. If you'd like to use the discogs
+  disambiguation in your tags, you can disable it. Default: ``True``
 
 .. _discogs guidelines: https://support.discogs.com/hc/en-us/articles/360005055373-Database-Guidelines-12-Tracklisting#Index_Tracks_And_Headings
 

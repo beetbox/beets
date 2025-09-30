@@ -271,10 +271,9 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
         """Returns an artist string (all artists) and an artist_id (the main
         artist) for a list of artist object dicts.
 
-        For each artist, this function moves articles (such as 'a', 'an',
-        and 'the') to the front and strips trailing disambiguation numbers. It
-        returns a tuple containing the comma-separated string of all
-        normalized artists and the ``id`` of the main/first artist.
+        For each artist, this function moves articles (such as 'a', 'an', and 'the')
+        to the front. It returns a tuple containing the comma-separated string
+        of all normalized artists and the ``id`` of the main/first artist.
         Alternatively a keyword can be used to combine artists together into a
         single string by passing the join_key argument.
 
@@ -298,8 +297,6 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
             if not artist_id:
                 artist_id = artist[id_key]
             name = artist[name_key]
-            # Strip disambiguation number.
-            name = re.sub(r" \(\d+\)$", "", name)
             # Move articles to the front.
             name = re.sub(r"^(.*?), (a|an|the)$", r"\2 \1", name, flags=re.I)
             # Use a join keyword if requested and available.
@@ -371,7 +368,9 @@ class SearchApiMetadataSourcePlugin(
         album: str,
         va_likely: bool,
     ) -> Iterable[AlbumInfo]:
-        query_filters: SearchFilter = {"album": album}
+        query_filters: SearchFilter = {}
+        if album:
+            query_filters["album"] = album
         if not va_likely:
             query_filters["artist"] = artist
 
@@ -413,7 +412,7 @@ class SearchApiMetadataSourcePlugin(
         :return: Query string to be provided to the search API.
         """
 
-        components = [query_string, *(f'{k}:"{v}"' for k, v in filters.items())]
+        components = [query_string, *(f"{k}:'{v}'" for k, v in filters.items())]
         query = " ".join(filter(None, components))
 
         if self.config["search_query_ascii"].get():
