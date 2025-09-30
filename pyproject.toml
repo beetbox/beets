@@ -119,6 +119,11 @@ click = ">=8.1.7"
 packaging = ">=24.0"
 tomli = ">=2.0.1"
 
+
+[tool.poetry.group.docs.dependencies]
+sphinx-design = "^0.6.1"
+sphinx-copybutton = "^0.5.2"
+
 [tool.poetry.extras]
 # inline comments note required external / non-python dependencies
 absubmit = ["requests"] # extractor binary from https://acousticbrainz.org/download
@@ -129,7 +134,7 @@ beatport = ["requests-oauthlib"]
 bpd = ["PyGObject"] # gobject-introspection, gstreamer1.0-plugins-base, python3-gst-1.0
 chroma = ["pyacoustid"] # chromaprint or fpcalc
 # convert # ffmpeg
-docs = ["pydata-sphinx-theme", "sphinx", "sphinx-lint"]
+docs = ["pydata-sphinx-theme", "sphinx", "sphinx-lint", "sphinx-design", "sphinx-copybutton"]
 discogs = ["python3-discogs-client"]
 embedart = ["Pillow"] # ImageMagick
 embyupdate = ["requests"]
