@@ -12,8 +12,8 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""If the title is empty, try to extract track and title from the
-filename.
+"""If the title is empty, try to extract it from the filename
+(possibly also extract track and artist)
 """
 
 import os
@@ -30,7 +30,7 @@ PATTERNS = [
         r"(\s*-\s*(?P<tag>.*))?$"
     ),
     r"^(?P<artist>.+?)\s*-\s*(?P<title>.+?)(\s*-\s*(?P<tag>.*))?$",
-    r"^(?P<track>\d+)\.?[\s\-_]+(?P<title>.+)$",
+    r"^(?P<track>\d+)\.?[\s_-]+(?P<title>.+)$",
     r"^(?P<title>.+) by (?P<artist>.+)$",
     r"^(?P<track>\d+).*$",
     r"^(?P<title>.+)$",
