@@ -17,8 +17,23 @@ from sys import stderr
 
 import confuse
 
+from .util import deprecate_imports
+
 __version__ = "2.4.0"
 __author__ = "Adrian Sampson <adrian@radbox.org>"
+
+
+def __getattr__(name: str):
+    """Handle deprecated imports."""
+    return deprecate_imports(
+        old_module=__name__,
+        new_module_by_name={
+            "art": "beetsplug._utils",
+            "vfs": "beetsplug._utils",
+        },
+        name=name,
+        version="3.0.0",
+    )
 
 
 class IncludeLazyConfig(confuse.LazyConfig):
@@ -39,10 +54,3 @@ class IncludeLazyConfig(confuse.LazyConfig):
 
 
 config = IncludeLazyConfig("beets", __name__)
-
-
-# For backwards compatibility
-# TODO: Remove in v3.0.0
-from beetsplug._utils import art, vfs  # noqa: E402
-
-__all__ = ["art", "vfs"]
