@@ -399,15 +399,15 @@ def _get_plugin(name: str) -> BeetsPlugin | None:
 
         if len(plugin_classes) > 1:
             warnings.warn(
-                f"Plugin {name} defines multiple plugin classes; "
-                f"using the first one found ({plugin_classes[0].__name__})."
+                f"Plugin '{name}' defines multiple plugin classes; "
+                f"using the first one found ({plugin_classes[0].__name__}). "
                 f"This will become an error in beets 3.0.0. Consider exporting "
                 f"the desired plugin class explicitly using `__all__`.",
                 DeprecationWarning,
                 stacklevel=2,
             )
 
-        if len(plugin_classes) == 1:
+        if len(plugin_classes) != 0:
             return plugin_classes[0]()
 
     except Exception:
