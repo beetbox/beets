@@ -27,14 +27,14 @@ if TYPE_CHECKING:
 
 
 class Node(NamedTuple):
-    files: dict[str, str]
+    files: dict[str, int]
     # Maps filenames to Item ids.
 
     dirs: dict[str, Node]
     # Maps directory names to child nodes.
 
 
-def _insert(node: Node, path: list[str], itemid: str):
+def _insert(node: Node, path: list[str], itemid: int):
     """Insert an item into a virtual filesystem node."""
     if len(path) == 1:
         # Last component. Insert file.
