@@ -36,10 +36,10 @@ from beets.util.config import sanitize_pairs
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
-    from logging import Logger
 
     from beets.importer import ImportSession, ImportTask
     from beets.library import Album, Library
+    from beets.logging import BeetsLogger as Logger
 
 try:
     from bs4 import BeautifulSoup, Tag
