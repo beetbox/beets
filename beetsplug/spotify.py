@@ -694,14 +694,13 @@ class SpotifyPlugin(
             audio_features = self.track_audio_features(spotify_track_id)
             if audio_features is None:
                 self._log.info("No audio features found for: {}", item)
-                continue
-            for feature in audio_features.keys():
-                if feature in self.spotify_audio_features.keys():
-                    item[self.spotify_audio_features[feature]] = audio_features[
-                        feature
-                    ]
+            else:
+                for feature, value in audio_features.items():
+                    if feature in self.spotify_audio_features:
+                        item[self.spotify_audio_features[feature]] = value
             item["spotify_updated"] = time.time()
             item.store()
+            self._log.debug("Stored spotify_track_popularity={} for {} (item id {})", item.get("spotify_track_popularity"), item.get("title"), item.id)
             if write:
                 item.try_write()
 
