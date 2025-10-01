@@ -42,10 +42,9 @@ from beets.autotag.distance import string_dist
 from beets.util.config import sanitize_choices
 
 if TYPE_CHECKING:
-    from logging import Logger
-
     from beets.importer import ImportTask
     from beets.library import Item, Library
+    from beets.logging import BeetsLogger as Logger
 
     from ._typing import (
         GeniusAPI,
@@ -186,7 +185,7 @@ def slug(text: str) -> str:
 
 
 class RequestHandler:
-    _log: beets.logging.Logger
+    _log: Logger
 
     def debug(self, message: str, *args) -> None:
         """Log a debug message with the class name."""
