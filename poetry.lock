@@ -3220,7 +3220,7 @@ test = ["cython (>=3.0)", "defusedxml (>=0.7.1)", "pytest (>=8.0)", "setuptools 
 name = "sphinx-copybutton"
 version = "0.5.2"
 description = "Add a copy button to each of your code cells."
-optional = false
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "sphinx-copybutton-0.5.2.tar.gz", hash = "sha256:4cf17c82fb9646d1bc9ca92ac280813a3b605d8c421225fd9913154103ee1fbd"},
@@ -3238,7 +3238,7 @@ rtd = ["ipython", "myst-nb", "sphinx", "sphinx-book-theme", "sphinx-examples"]
 name = "sphinx-design"
 version = "0.6.1"
 description = "A sphinx extension for designing beautiful, view size responsive web components."
-optional = false
+optional = true
 python-versions = ">=3.9"
 files = [
     {file = "sphinx_design-0.6.1-py3-none-any.whl", hash = "sha256:b11f37db1a802a183d61b159d9a202314d4d2fe29c163437001324fe2f19549c"},
@@ -3650,7 +3650,7 @@ beatport = ["requests-oauthlib"]
 bpd = ["PyGObject"]
 chroma = ["pyacoustid"]
 discogs = ["python3-discogs-client"]
-docs = ["pydata-sphinx-theme", "sphinx"]
+docs = ["pydata-sphinx-theme", "sphinx", "sphinx-copybutton", "sphinx-design"]
 embedart = ["Pillow"]
 embyupdate = ["requests"]
 fetchart = ["Pillow", "beautifulsoup4", "langdetect", "requests"]
@@ -3672,4 +3672,4 @@ web = ["flask", "flask-cors"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "caa669bfb1ff913d528553de4bc4f420279e6bc9b119d39c4db616041576266d"
+content-hash = "1db39186aca430ef6f1fd9e51b9dcc3ed91880a458bc21b22d950ed8589fdf5a"
