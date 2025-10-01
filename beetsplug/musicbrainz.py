@@ -364,7 +364,7 @@ def _merge_pseudo_and_actual_album(
 
 class MusicBrainzPlugin(MetadataSourcePlugin):
     @cached_property
-    def genres_field(self) -> str | None:
+    def genres_field(self) -> str:
         return f"{config['musicbrainz']['genres_tag'].get()}-list"
 
     def __init__(self):

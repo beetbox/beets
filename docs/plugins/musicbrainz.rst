@@ -135,8 +135,8 @@ number of votes. Default: ``no``
 genres_tag
 ++++++++++
 
-Either ``genres`` or ``tags``.  Specify ``genres`` to use just musicbrainz genres
-and ``tags`` to use all user-supplied musicbrainz tags.
+Either ``genres`` or ``tags``. Specify ``genres`` to use just musicbrainz genres and
+``tags`` to use all user-supplied musicbrainz tags.
 
 Default: ``genres``
 
