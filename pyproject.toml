@@ -79,6 +79,8 @@ soco = { version = "*", optional = true }
 
 pydata-sphinx-theme = { version = "*", optional = true }
 sphinx = { version = "*", optional = true }
+sphinx-design = { version = "^0.6.1", optional = true }
+sphinx-copybutton = { version = "^0.5.2", optional = true }
 
 [tool.poetry.group.test.dependencies]
 beautifulsoup4 = "*"
@@ -118,11 +120,6 @@ types-urllib3 = "*"
 click = ">=8.1.7"
 packaging = ">=24.0"
 tomli = ">=2.0.1"
-
-
-[tool.poetry.group.docs.dependencies]
-sphinx-design = "^0.6.1"
-sphinx-copybutton = "^0.5.2"
 
 [tool.poetry.extras]
 # inline comments note required external / non-python dependencies
