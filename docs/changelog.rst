@@ -19,9 +19,8 @@ New features:
 
 Bug fixes:
 
-- :doc:`plugins/spotify` Ensure ``spotifysync`` keeps popularity, ISRC,
-  and related fields current even when audio features requests fail.
-  :bug:`6061`
+- :doc:`plugins/spotify` Ensure ``spotifysync`` keeps popularity, ISRC, and
+  related fields current even when audio features requests fail. :bug:`6061`
 - :doc:`plugins/spotify` Fixed an issue where track matching and lookups could
   return incorrect or misleading results when using the Spotify plugin. The
   problem occurred primarily when no album was provided or when the album field
