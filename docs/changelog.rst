@@ -19,6 +19,8 @@ New features:
 
 Bug fixes:
 
+- :doc:`/plugins/fromfilename`: Fix :bug:`5218`, improve the code (refactor
+  regexps, allow for more cases, add some logging), add tests.
 - :doc:`plugins/spotify` Fixed an issue where track matching and lookups could
   return incorrect or misleading results when using the Spotify plugin. The
   problem occurred primarily when no album was provided or when the album field
