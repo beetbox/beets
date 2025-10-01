@@ -700,7 +700,6 @@ class SpotifyPlugin(
                         item[self.spotify_audio_features[feature]] = value
             item["spotify_updated"] = time.time()
             item.store()
-            self._log.debug("Stored spotify_track_popularity={} for {} (item id {})", item.get("spotify_track_popularity"), item.get("title"), item.id)
             if write:
                 item.try_write()
 
