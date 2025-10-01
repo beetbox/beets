@@ -96,6 +96,11 @@ whereas with ``index_tracks`` disabled you'd get:
 
 This option is useful when importing classical music.
 
+### Handling Artist Name Variations (ANVs)
+
+An ANV is an alternate way that an artist may be credited on a release. If the
+band name changes or is misspelled on different releases. The artist name ac
+
 Other configurations available under ``discogs:`` are:
 
 - **append_style_genre**: Appends the Discogs style (if found) to the genre tag.
@@ -114,12 +119,20 @@ Other configurations available under ``discogs:`` are:
   disambiguation in your tags, you can disable it. Default: ``True``
 - **featured_string**: Configure the string used for noting featured artists.
   Useful if you prefer ``Featuring`` or ``ft.``. Default: ``Feat.``
-- **artist_credit_anv**: Whether the Artist Name Variation (ANV) should be
-  applied to the artist credit tag. Default: ``True``
-- **track_artist_anv**: Same as ``artist_credit_anv`` for a track's artist
-  field. Default: ``False``
-- **album_artist_anv**: As previous, but for the album artist. Default:
-  ``False``
+- **artist_credit_anv**, **track_artist_anv**, **album_artist_anv**: These
+  configuration option are dedicated to handling Arist Name Variations (ANVs).
+  Sometimes a release credits artists differently compared to the majority of
+  their work. For example, "Basement Jaxx" may be credited as "Tha Jaxx" or "The
+  Basement Jaxx". By default, the Discogs plugin stores ANVs in the
+  ``artist_credit`` field. You can select any combination of these three to
+  control where beets writes and stores the variation credit.
+
+      - **artist_credit_anv**: Write ANV to the ``artist_credit`` field.
+        Default: ``True``
+      - **track_artist_anv**: Write ANV to the ``artist`` field. Default:
+        ``False``
+      - **album_artist_anv**: Write ANV to the ``album_artist`` field. Default:
+        ``False``
 
 .. _discogs guidelines: https://support.discogs.com/hc/en-us/articles/360005055373-Database-Guidelines-12-Tracklisting#Index_Tracks_And_Headings
 
