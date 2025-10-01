@@ -53,6 +53,8 @@ Other changes:
   ``beetsplug._utils``.
 - :class:`beets.metadata_plugin.MetadataSourcePlugin`: Remove discogs specific
   disambiguation stripping.
+- When installing ``beets`` via git or locally the version string now reflects
+  the current git branch and commit hash. :bug:`4448`
 
 For developers and plugin authors:
 
