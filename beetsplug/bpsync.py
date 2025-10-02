@@ -179,6 +179,3 @@ class BPSyncPlugin(BeetsPlugin):
                 if move and lib.directory in util.ancestry(items[0].path):
                     self._log.debug("moving album {}", album)
                     album.move()
-
-
-__all__ = ["BPSyncPlugin"]

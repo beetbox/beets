@@ -363,6 +363,3 @@ def fingerprint_item(log, item, write=False):
             return item.acoustid_fingerprint
         except acoustid.FingerprintGenerationError as exc:
             log.info("fingerprint generation failed: {}", exc)
-
-
-__all__ = ["AcoustidPlugin"]
