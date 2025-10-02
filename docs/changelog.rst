@@ -37,8 +37,6 @@ Bug fixes:
 - :doc:`plugins/chroma` :doc:`plugins/bpsync` Fix plugin loading issue caused by
   an import of another :class:`beets.plugins.BeetsPlugin` class. :bug:`6033`
 
-For packagers:
-
 Other changes:
 
 - :doc:`plugins/index`: Clarify that musicbrainz must be mentioned if plugin
@@ -57,6 +55,8 @@ Other changes:
   disambiguation stripping.
 - When installing ``beets`` via git or locally the version string now reflects
   the current git branch and commit hash. :bug:`4448`
+- Removed old mailing list contact info in docs :bug:`5462`
+- :doc:`guides/main`: Modernized getting started guide
 
 For developers and plugin authors:
 
