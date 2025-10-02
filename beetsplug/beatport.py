@@ -409,9 +409,17 @@ class BeatportPlugin(MetadataSourcePlugin):
             return
 
     def item_candidates(
-        self, item: Item, artist: str, title: str
+        self, item: Item, artist: str | None, title: str | None
     ) -> Iterable[TrackInfo]:
-        query = f"{artist} {title}"
+        query = ""
+        if artist is not None:
+            query += artist
+        if title is not None:
+            query += f" {title}"
+        query = query.strip()
+        if not query:
+            return []
+
         try:
             return self._get_tracks(query)
         except BeatportAPIError as e:

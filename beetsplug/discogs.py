@@ -171,9 +171,26 @@ class DiscogsPlugin(MetadataSourcePlugin):
         return token, secret
 
     def candidates(
-        self, items: Sequence[Item], artist: str, album: str, va_likely: bool
+        self,
+        items: Sequence[Item],
+        artist: str | None,
+        album: str | None,
+        va_likely: bool,
     ) -> Iterable[AlbumInfo]:
-        return self.get_albums(f"{artist} {album}" if va_likely else album)
+        query = ""
+        if artist is not None:
+            query += artist
+        if album is not None:
+            query += f" {album}"
+
+        if va_likely:
+            query = album or ""
+
+        query = query.strip()
+        if not query:
+            return []
+
+        return self.get_albums(query)
 
     def get_track_from_album(
         self, album_info: AlbumInfo, compare: Callable[[TrackInfo], float]
@@ -190,7 +207,10 @@ class DiscogsPlugin(MetadataSourcePlugin):
         return track_info
 
     def item_candidates(
-        self, item: Item, artist: str, title: str
+        self,
+        item: Item,
+        artist: str | None,
+        title: str | None,
     ) -> Iterable[TrackInfo]:
         albums = self.candidates([item], artist, title, False)
 

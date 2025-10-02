@@ -834,8 +834,8 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
     def item_candidates(
         self,
         item: Item,
-        artist: str | None = None,
-        title: str | None = None,
+        artist: str | None,
+        title: str | None,
     ) -> Iterable[beets.autotag.hooks.TrackInfo]:
         criteria: dict[str, str] = {}
         if artist is not None:

@@ -198,15 +198,18 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def item_candidates(
-        self, item: Item, artist: str, title: str
+        self,
+        item: Item,
+        artist: str | None,
+        title: str | None,
     ) -> Iterable[TrackInfo]:
         """Return :py:class:`TrackInfo` candidates that match the given track.
 
         Used in the autotag functionality to search for tracks.
 
         :param item: Track item
-        :param artist: Track artist, pre-processed from the item
-        :param title: Track title, pre-processed from the item
+        :param artist: Track artist, preprocessed from the item (if available)
+        :param title: Track title, preprocessed from the item (if available)
         """
         raise NotImplementedError
 
@@ -391,12 +394,21 @@ class SearchApiMetadataSourcePlugin(
         )
 
     def item_candidates(
-        self, item: Item, artist: str, title: str
+        self,
+        item: Item,
+        artist: str | None,
+        title: str | None,
     ) -> Iterable[TrackInfo]:
-        results = self._search_api(
-            "track", {"artist": artist}, query_string=title
-        )
-        if not results:
+        filters: SearchFilter = {}
+        if artist is not None:
+            filters["artist"] = artist
+
+        if title is None:
+            return []
+
+        if not (
+            results := self._search_api("track", filters, query_string=title)
+        ):
             return []
 
         return filter(
