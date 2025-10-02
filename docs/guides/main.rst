@@ -19,8 +19,8 @@ You will need Python. Beets works on Python 3.8 or later.
   official package (`Debian details`_, `Ubuntu details`_), so try typing:
   ``apt-get install beets``. But the version in the repositories might lag
   behind, so make sure you read the right version of these docs. If you want the
-  latest version, you can get everything you need to install with pip as
-  described below by running: ``apt-get install python-dev python-pip``
+  latest version, you can get everything you need to install with pipx as
+  described below by running: ``apt-get install pipx``
 - On **Arch Linux**, `beets is in [extra] <arch extra_>`_, so just run ``pacman
   -S beets``. (There's also a bleeding-edge `dev package <aur_>`_ in the AUR,
   which will probably set your computer on fire.)
@@ -65,19 +65,16 @@ You will need Python. Beets works on Python 3.8 or later.
 
 .. _void package: https://github.com/void-linux/void-packages/tree/master/srcpkgs/beets
 
-If you have pip_, just say ``pip install beets`` (or ``pip install --user
-beets`` if you run into permissions problems).
+If your distribution doesn't still ship the latest regular release of beets, you
+can install it via pipx_ in a dedicated python virtual environment, which won't
+interfere with other python packages provided by your distribution. Just
+`install pipx <https://pipx.pypa.io/stable/installation/>`__ and run ``pipx
+install beets``.
 
-To install without pip, download beets from `its PyPI page`_ and run ``python
-setup.py install`` in the directory therein.
+.. _pipx: https://pipx.pypa.io/stable
 
-.. _its pypi page: https://pypi.org/project/beets/#files
-
-.. _pip: https://pip.pypa.io
-
-The best way to upgrade beets to a new version is by running ``pip install -U
-beets``. You may want to follow `@b33ts`_ on Twitter to hear about progress on
-new versions.
+To upgrade beets to a new version, just run ``pipx upgrade beets``. You may want
+to follow `@b33ts`_ on Twitter to hear about progress on new versions.
 
 .. _@b33ts: https://twitter.com/b33ts
 

@@ -16,7 +16,7 @@ To use the ``lastimport`` plugin, first enable it in your configuration (see
 
 .. code-block:: bash
 
-    pip install "beets[lastimport]"
+    pipx install "beets[lastimport]"
 
 Next, add your Last.fm username to your beets configuration file:
 

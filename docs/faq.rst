@@ -112,7 +112,13 @@ together different versions of the same album. Use *release* IDs here.
 …upgrade to the latest version of beets?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Run a command like this:
+If you installed beets with pipx_, just run:
+
+::
+
+    pipx upgrade beets
+
+If you installed beets with pip_, just run:
 
 ::
 
@@ -133,29 +139,25 @@ specific version, you can specify with using ``==`` like so:
 Beets sees regular releases (about every six weeks or so), but sometimes it's
 helpful to run on the "bleeding edge". To run the latest source:
 
-1. Uninstall beets. If you installed using ``pip``, you can just run ``pip
-   uninstall beets``.
+1. Uninstall beets using the tools in your distribution, or, if you installed
+   using ``pip``, just run ``pip uninstall beets``. If you used ``pipx``, just
+   run ``pipx uninstall beets``.
+
 2. Install from source. Choose one of these methods:
 
-   - Directly from GitHub using ``python -m pip install
-     git+https://github.com/beetbox/beets.git`` command. Depending on your
-     system, you may need to use ``pip3`` and ``python3`` instead of ``pip`` and
-     ``python`` respectively.
-   - Use ``pip`` to install the latest snapshot tarball. Type: ``pip install
-     https://github.com/beetbox/beets/tarball/master``
-   - Use ``pip`` to install an "editable" version of beets based on an automatic
-     source checkout. For example, run ``pip install -e
-     git+https://github.com/beetbox/beets#egg=beets`` to clone beets and install
-     it, allowing you to modify the source in-place to try out changes.
-   - Clone source code and install it in editable mode
+   - Use ``pipx`` to install directly from GitHub.
+     Run: ``pipx install git+https://github.com/beetbox/beets.git``.
 
-     .. code-block:: shell
+   - Use ``pipx`` to install the latest snapshot tarball. Run:
+     ``pipx install https://github.com/beetbox/beets/tarball/master``
 
-         git clone https://github.com/beetbox/beets.git
-         poetry install
+If you'd like to make local changes to your beets installation, you can install
+an "editable" version, using the ``-e`` option of pipx, for example:
+``pipx install -e git+https://github.com/beetbox/beets.git``.
 
-     This approach lets you decide where the source is stored, with any changes
-     immediately reflected in your environment.
+If you'd also like to contribute to the development of beets, the best way to
+install the source code is detailed in the :doc:`contributing </contributing>`
+page.
 
 More details about the beets source are available on the :doc:`developer
 documentation </dev/index>` pages.
@@ -368,5 +370,7 @@ try `this Super User answer`_.
 .. _open a new ticket: https://github.com/beetbox/beets/issues/new?template=bug-report.md
 
 .. _pip: https://pip.pypa.io/en/stable/
+
+.. _pipx: https://pipx.pypa.io/en/stable/
 
 .. _this super user answer: https://superuser.com/a/284361/4569
