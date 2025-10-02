@@ -29,7 +29,11 @@ from confuse.exceptions import NotFoundError
 
 import beets
 import beets.autotag.hooks
-from beets import config, importer, plugins, util
+from beets import config, plugins, util
+from beets.importer.tasks import (
+    REIMPORT_FRESH_FIELDS_ALBUM,
+    REIMPORT_FRESH_FIELDS_ITEM,
+)
 from beets.metadata_plugins import MetadataSourcePlugin
 from beets.util.id_extractors import extract_release_id
 
@@ -68,11 +72,11 @@ _MB_REIMPORT_FRESH_FIELDS_ITEM = [
 def _extend_reimport_fresh_fields() -> None:
     """Ensure MusicBrainz fields stored as flex attrs refresh on reimport."""
     for field in _MB_REIMPORT_FRESH_FIELDS_ALBUM:
-        if field not in importer.REIMPORT_FRESH_FIELDS_ALBUM:
-            importer.REIMPORT_FRESH_FIELDS_ALBUM.append(field)
+        if field not in REIMPORT_FRESH_FIELDS_ALBUM:
+            REIMPORT_FRESH_FIELDS_ALBUM.append(field)
     for field in _MB_REIMPORT_FRESH_FIELDS_ITEM:
-        if field not in importer.REIMPORT_FRESH_FIELDS_ITEM:
-            importer.REIMPORT_FRESH_FIELDS_ITEM.append(field)
+        if field not in REIMPORT_FRESH_FIELDS_ITEM:
+            REIMPORT_FRESH_FIELDS_ITEM.append(field)
 
 
 musicbrainzngs.set_useragent("beets", beets.__version__, "https://beets.io/")
