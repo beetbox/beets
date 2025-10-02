@@ -29,7 +29,7 @@ from confuse.exceptions import NotFoundError
 
 import beets
 import beets.autotag.hooks
-from beets import config, plugins, util
+from beets import config, importer, plugins, util
 from beets.metadata_plugins import MetadataSourcePlugin
 from beets.util.id_extractors import extract_release_id
 
@@ -54,6 +54,26 @@ FIELDS_TO_MB_KEYS = {
     "media": "format",
     "year": "date",
 }
+
+_MB_REIMPORT_FRESH_FIELDS_ALBUM = [
+    "media",
+    "releasegroup_id",
+    "data_url",
+]
+_MB_REIMPORT_FRESH_FIELDS_ITEM = [
+    "data_url",
+]
+
+
+def _extend_reimport_fresh_fields() -> None:
+    """Ensure MusicBrainz fields stored as flex attrs refresh on reimport."""
+    for field in _MB_REIMPORT_FRESH_FIELDS_ALBUM:
+        if field not in importer.REIMPORT_FRESH_FIELDS_ALBUM:
+            importer.REIMPORT_FRESH_FIELDS_ALBUM.append(field)
+    for field in _MB_REIMPORT_FRESH_FIELDS_ITEM:
+        if field not in importer.REIMPORT_FRESH_FIELDS_ITEM:
+            importer.REIMPORT_FRESH_FIELDS_ITEM.append(field)
+
 
 musicbrainzngs.set_useragent("beets", beets.__version__, "https://beets.io/")
 
@@ -367,6 +387,7 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
         from the beets configuration. This should be called at startup.
         """
         super().__init__()
+        _extend_reimport_fresh_fields()
         self.config.add(
             {
                 "host": "musicbrainz.org",
