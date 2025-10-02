@@ -801,6 +801,9 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
         using the provided criteria. Handles API errors by converting them into
         MusicBrainzAPIError exceptions with contextual information.
         """
+        if not filters:
+            return []
+
         filters = {
             k: _v for k, v in filters.items() if (_v := v.lower().strip())
         }
@@ -829,9 +832,17 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
         yield from filter(None, map(self.album_for_id, release_ids))
 
     def item_candidates(
-        self, item: Item, artist: str, title: str
+        self,
+        item: Item,
+        artist: str | None = None,
+        title: str | None = None,
     ) -> Iterable[beets.autotag.hooks.TrackInfo]:
-        criteria = {"artist": artist, "recording": title, "alias": title}
+        criteria: dict[str, str] = {}
+        if artist is not None:
+            criteria["artist"] = artist
+        if title is not None:
+            criteria["recording"] = title
+            criteria["alias"] = title
 
         yield from filter(
             None, map(self.track_info, self._search_api("recording", criteria))
