@@ -107,9 +107,8 @@ string, use ``$args`` to indicate where to insert them. For example:
 indicates that you need to insert extra arguments before specifying the
 playlist.
 
-The above example, however, does not work with current ``mpv`` because the
-``--playlist`` argument wants a different syntax. To satisfy this, the optional
-``$playlist`` can be used to meet that:
+Some players require a different syntax. For example, with ``mpv`` the optional
+``$playlist`` variable can be used to match the syntax of the ``--playlist`` option:
 
 ::
 
