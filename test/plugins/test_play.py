@@ -116,7 +116,7 @@ class PlayPluginTest(CleanupModulesMixin, PluginTestCase):
 
         commandstr = open_mock.call_args_list[0][0][1]
         assert commandstr.startswith("echo --some params --playlist=")
-        assert commandstr.endswith("--some-more params")
+        assert commandstr.endswith(" --some-more params")
 
     def test_not_found(self, open_mock):
         self.run_command("play", "not found")
