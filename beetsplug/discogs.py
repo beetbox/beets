@@ -100,9 +100,11 @@ class DiscogsPlugin(MetadataSourcePlugin):
                 "featured_string": "Feat.",
                 "append_style_genre": False,
                 "strip_disambiguation": True,
-                "album_artist_anv": False,
-                "track_artist_anv": False,
-                "artist_credit_anv": True,
+                "anv": {
+                    "artist_credit": True,
+                    "artist": False,
+                    "album_artist": False,
+                    },
             }
         )
         self.config["apikey"].redact = True
@@ -368,9 +370,9 @@ class DiscogsPlugin(MetadataSourcePlugin):
         )
 
         # Assign ANV to the proper fields for tagging
-        if not self.config["artist_credit_anv"]:
+        if not self.config["anv"]["artist_credit"]:
             artist_credit = album_artist
-        if self.config["album_artist_anv"]:
+        if self.config["anv"]["album_artist"]:
             album_artist = album_artist_anv
 
         # Extract information for the optional AlbumInfo fields, if possible.
@@ -674,9 +676,9 @@ class DiscogsPlugin(MetadataSourcePlugin):
 
         artist, artist_anv, artist_id = album_artist_data
         artist_credit = artist_anv
-        if not self.config["artist_credit_anv"]:
+        if not self.config["anv"]["artist_credit"]:
             artist_credit = artist
-        if self.config["track_artist_anv"]:
+        if self.config["anv"]["artist"]:
             artist = artist_anv
 
         title = track["title"]
@@ -690,10 +692,10 @@ class DiscogsPlugin(MetadataSourcePlugin):
         # If artists are found on the track, we will use those instead
         if artists := track.get("artists", []):
             artist, artist_id = self.get_artist_with_anv(
-                artists, self.config["track_artist_anv"]
+                artists, self.config["anv"]["artist"]
             )
             artist_credit, _ = self.get_artist_with_anv(
-                artists, self.config["artist_credit_anv"]
+                artists, self.config["anv"]["artist_credit"]
             )
         length = self.get_track_length(track["duration"])
 
@@ -705,10 +707,10 @@ class DiscogsPlugin(MetadataSourcePlugin):
                 if "Featuring" in artist["role"]
             ]
             featured, _ = self.get_artist_with_anv(
-                featured_list, self.config["track_artist_anv"]
+                featured_list, self.config["anv"]["artist"]
             )
             featured_credit, _ = self.get_artist_with_anv(
-                featured_list, self.config["artist_credit_anv"]
+                featured_list, self.config["anv"]["artist_credit"]
             )
             if featured:
                 artist += f" {self.config['featured_string']} {featured}"

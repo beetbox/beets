@@ -517,9 +517,9 @@ def test_anv(
         title=data["title"],
         artists=[Bag(data=d) for d in data["artists"]],
     )
-    config["discogs"]["album_artist_anv"] = album_artist_anv
-    config["discogs"]["track_artist_anv"] = track_artist_anv
-    config["discogs"]["artist_credit_anv"] = artist_credit_anv
+    config["discogs"]["anv"]["album_artist"] = album_artist_anv
+    config["discogs"]["anv"]["artist"] = track_artist_anv
+    config["discogs"]["anv"]["artist_credit"] = artist_credit_anv
     r = DiscogsPlugin().get_album_info(release)
     assert r.artist == album_artist
     assert r.artist_credit == album_artist_credit
@@ -553,9 +553,9 @@ def test_anv_album_artist():
         title=data["title"],
         artists=[Bag(data=d) for d in data["artists"]],
     )
-    config["discogs"]["album_artist_anv"] = False
-    config["discogs"]["track_artist_anv"] = True
-    config["discogs"]["artist_credit_anv"] = False
+    config["discogs"]["anv"]["album_artist"] = False
+    config["discogs"]["anv"]["artist"] = True
+    config["discogs"]["anv"]["artist_credit"] = False
     r = DiscogsPlugin().get_album_info(release)
     assert r.artist == "ARTIST"
     assert r.artist_credit == "ARTIST"
