@@ -1030,16 +1030,33 @@ class TestMusicBrainzPlugin(PluginMixin):
             **expected_additional_criteria,
         }
 
-    def test_item_candidates(self, monkeypatch, mb):
+    @pytest.mark.parametrize(
+        "artist, title, expected_count",
+        [
+            ("Artist", "Title", 1),
+            (None, "Title", 1),
+            ("Artist", None, 1),
+            (None, None, 0),
+        ],
+    )
+    def test_item_candidates(
+        self,
+        monkeypatch,
+        mb,
+        artist,
+        title,
+        expected_count,
+    ):
         monkeypatch.setattr(
             "musicbrainzngs.search_recordings",
             lambda *_, **__: {"recording-list": [self.RECORDING]},
         )
 
-        candidates = list(mb.item_candidates(Item(), "hello", "there"))
+        candidates = list(mb.item_candidates(Item(), artist, title))
 
-        assert len(candidates) == 1
-        assert candidates[0].track_id == self.RECORDING["id"]
+        assert len(candidates) == expected_count
+        if expected_count == 1:
+            assert candidates[0].track_id == self.RECORDING["id"]
 
     def test_candidates(self, monkeypatch, mb):
         monkeypatch.setattr(
