@@ -904,7 +904,7 @@ def choose_candidate(
             # Display list of candidates.
             print_("")
             print_(
-                f"Finding tags for {'track' if singleton else 'album'}"
+                f"Finding tags for {'track' if singleton else 'album'} "
                 f'"{item.artist if singleton else cur_artist} -'
                 f' {item.title if singleton else cur_album}".'
             )
