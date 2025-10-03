@@ -17,8 +17,24 @@ from sys import stderr
 
 import confuse
 
-__version__ = "2.4.0"
+# Version management using poetry-dynamic-versioning
+from ._version import __version__, __version_tuple__
+from .util import deprecate_imports
+
 __author__ = "Adrian Sampson <adrian@radbox.org>"
+
+
+def __getattr__(name: str):
+    """Handle deprecated imports."""
+    return deprecate_imports(
+        old_module=__name__,
+        new_module_by_name={
+            "art": "beetsplug._utils",
+            "vfs": "beetsplug._utils",
+        },
+        name=name,
+        version="3.0.0",
+    )
 
 
 class IncludeLazyConfig(confuse.LazyConfig):
@@ -39,3 +55,6 @@ class IncludeLazyConfig(confuse.LazyConfig):
 
 
 config = IncludeLazyConfig("beets", __name__)
+
+
+__all__ = ["__version__", "__version_tuple__", "config"]

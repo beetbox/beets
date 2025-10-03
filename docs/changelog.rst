@@ -26,6 +26,8 @@ New features:
 
 Bug fixes:
 
+- :doc:`plugins/spotify` Ensure ``spotifysync`` keeps popularity, ISRC, and
+  related fields current even when audio features requests fail. :bug:`6061`
 - :doc:`plugins/spotify` Fixed an issue where track matching and lookups could
   return incorrect or misleading results when using the Spotify plugin. The
   problem occurred primarily when no album was provided or when the album field
@@ -53,8 +55,13 @@ Other changes:
 - Moved ``art.py`` utility module from ``beets`` into ``beetsplug`` namespace as
   it is not used in the core beets codebase. It can now be found in
   ``beetsplug._utils``.
+- Moved ``vfs.py`` utility module from ``beets`` into ``beetsplug`` namespace as
+  it is not used in the core beets codebase. It can now be found in
+  ``beetsplug._utils``.
 - :class:`beets.metadata_plugin.MetadataSourcePlugin`: Remove discogs specific
   disambiguation stripping.
+- When installing ``beets`` via git or locally the version string now reflects
+  the current git branch and commit hash. :bug:`4448`
 
 For developers and plugin authors:
 

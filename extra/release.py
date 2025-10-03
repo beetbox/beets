@@ -174,12 +174,6 @@ FILENAME_AND_UPDATE_TEXT: list[tuple[Path, UpdateVersionCallable]] = [
         PYPROJECT,
         lambda text, new: re.sub(r"(?<=\nversion = )[^\n]+", f'"{new}"', text),
     ),
-    (
-        BASE / "beets" / "__init__.py",
-        lambda text, new: re.sub(
-            r"(?<=__version__ = )[^\n]+", f'"{new}"', text
-        ),
-    ),
     (CHANGELOG, update_changelog),
     (BASE / "docs" / "conf.py", update_docs_config),
 ]
