@@ -30,10 +30,11 @@ from typing import TYPE_CHECKING
 
 import beets
 import beets.ui
-from beets import dbcore, logging, vfs
+from beets import dbcore, logging
 from beets.library import Item
 from beets.plugins import BeetsPlugin
 from beets.util import as_string, bluelet
+from beetsplug._utils import vfs
 
 if TYPE_CHECKING:
     from beets.dbcore.query import Query
