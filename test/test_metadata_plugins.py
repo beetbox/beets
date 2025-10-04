@@ -52,8 +52,8 @@ class TestMetadataSourceDistance(BeetsTestCase):
         # Should have no penalty when sources match
         assert dist.distance == 0.0
 
-    def test_different_source_has_penalty(self):
-        """Test that different data source adds penalty."""
+    def test_different_source_has_penalty_single_plugin(self):
+        """Test that different data source adds penalty when only one plugin is loaded."""
         # Create an AlbumInfo with a specific data source
         album_info = AlbumInfo(
             album="Test Album",
@@ -67,12 +67,20 @@ class TestMetadataSourceDistance(BeetsTestCase):
         plugin_config = config["musicbrainz"]
         plugin_config["source_weight"] = 0.5
 
-        # Calculate distance when sources don't match
-        dist = _get_distance(plugin_config, "MusicBrainz", album_info)
+        # Mock single plugin scenario
+        from unittest.mock import patch
+        from beets.plugins import BeetsPlugin
+        
+        with patch('beets.metadata_plugins.find_metadata_source_plugins') as mock_find:
+            # Simulate exactly one plugin loaded
+            mock_find.return_value = [BeetsPlugin()]
+            
+            # Calculate distance when sources don't match
+            dist = _get_distance(plugin_config, "MusicBrainz", album_info)
 
-        # Should have a penalty when sources don't match
-        assert dist.distance > 0.0
-        assert dist["source"] > 0.0
+            # Should have a penalty when sources don't match (single plugin)
+            assert dist.distance > 0.0
+            assert dist["source"] > 0.0
 
     def test_track_matching_source_has_no_penalty(self):
         """Test that matching data source does not add penalty for tracks."""
@@ -93,8 +101,8 @@ class TestMetadataSourceDistance(BeetsTestCase):
         # Should have no penalty when sources match
         assert dist.distance == 0.0
 
-    def test_track_different_source_has_penalty(self):
-        """Test that different data source adds penalty for tracks."""
+    def test_track_different_source_has_penalty_single_plugin(self):
+        """Test that different data source adds penalty for tracks when only one plugin is loaded."""
         # Create a TrackInfo with a specific data source
         track_info = TrackInfo(
             title="Test Track",
@@ -106,12 +114,20 @@ class TestMetadataSourceDistance(BeetsTestCase):
         plugin_config = config["musicbrainz"]
         plugin_config["source_weight"] = 0.5
 
-        # Calculate distance when sources don't match
-        dist = _get_distance(plugin_config, "MusicBrainz", track_info)
+        # Mock single plugin scenario
+        from unittest.mock import patch
+        from beets.plugins import BeetsPlugin
+        
+        with patch('beets.metadata_plugins.find_metadata_source_plugins') as mock_find:
+            # Simulate exactly one plugin loaded
+            mock_find.return_value = [BeetsPlugin()]
+            
+            # Calculate distance when sources don't match
+            dist = _get_distance(plugin_config, "MusicBrainz", track_info)
 
-        # Should have a penalty when sources don't match
-        assert dist.distance > 0.0
-        assert dist["source"] > 0.0
+            # Should have a penalty when sources don't match (single plugin)
+            assert dist.distance > 0.0
+            assert dist["source"] > 0.0
 
 
 class TestMultipleMetadataSourcePlugins(BeetsTestCase):
@@ -120,6 +136,34 @@ class TestMultipleMetadataSourcePlugins(BeetsTestCase):
     def setUp(self):
         super().setUp()
         config["match"]["distance_weights"]["source"] = 0.5
+    
+    def test_no_penalty_with_multiple_plugins(self):
+        """Test that NO source penalty is applied when multiple plugins are loaded."""
+        # Create an AlbumInfo with a specific data source
+        album_info = AlbumInfo(
+            album="Test Album",
+            album_id="test-id",
+            artist="Test Artist",
+            tracks=[],
+        )
+        album_info.data_source = "Discogs"
+        
+        plugin_config = config["musicbrainz"]
+        plugin_config["source_weight"] = 0.5
+        
+        # Mock multiple plugin scenario
+        from unittest.mock import patch
+        from beets.plugins import BeetsPlugin
+        
+        with patch('beets.metadata_plugins.find_metadata_source_plugins') as mock_find:
+            # Simulate two plugins loaded
+            mock_find.return_value = [BeetsPlugin(), BeetsPlugin()]
+            
+            # Calculate distance when sources don't match
+            dist = _get_distance(plugin_config, "MusicBrainz", album_info)
+            
+            # Should have NO penalty when multiple plugins are loaded
+            assert dist.distance == 0.0
         
     def test_album_distance_single_matching_plugin(self):
         """Test that a single matching plugin adds no penalty."""
@@ -199,9 +243,17 @@ class TestMultipleMetadataSourcePlugins(BeetsTestCase):
         
         mapping = {items[0]: album_info.tracks[0]}
         
-        # When the album is from Discogs but we're using the MusicBrainz plugin
-        dist = _get_distance(plugin_config, "MusicBrainz", album_info)
+        # Mock single plugin scenario
+        from unittest.mock import patch
+        from beets.plugins import BeetsPlugin
         
-        # The distance should be > 0 (source penalty applied)
-        assert dist.distance > 0.0
-        assert dist["source"] > 0.0
+        with patch('beets.metadata_plugins.find_metadata_source_plugins') as mock_find:
+            # Simulate exactly one plugin loaded
+            mock_find.return_value = [BeetsPlugin()]
+            
+            # When the album is from Discogs but we're using the MusicBrainz plugin
+            dist = _get_distance(plugin_config, "MusicBrainz", album_info)
+            
+            # The distance should be > 0 (source penalty applied with single plugin)
+            assert dist.distance > 0.0
+            assert dist["source"] > 0.0

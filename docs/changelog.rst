@@ -20,8 +20,10 @@ New features:
 Bug fixes:
 
 - Fix metadata source distance calculation that was causing albums to match at
-  ~87% instead of 100% in version 2.4.0. The ``source`` penalty was incorrectly
-  applied when data sources matched instead of when they differed. :bug:`6074`
+  ~87% instead of 100% in version 2.4.0. The ``source`` penalty is now only
+  applied when a single metadata source plugin is active. With multiple plugins
+  loaded, source penalties are not applied to avoid confusing results where all
+  sources appear incorrect. :bug:`6074`
 - :doc:`plugins/spotify` Ensure ``spotifysync`` keeps popularity, ISRC, and
   related fields current even when audio features requests fail. :bug:`6061`
 - :doc:`plugins/spotify` Fixed an issue where track matching and lookups could

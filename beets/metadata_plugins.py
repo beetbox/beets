@@ -132,7 +132,11 @@ def _get_distance(
     from beets.autotag.distance import Distance
 
     dist = Distance()
-    if info.data_source != data_source:
+    # Only add source penalty if there's exactly one metadata source plugin loaded
+    # and it doesn't match the album's source. When multiple plugins are active,
+    # source penalties create confusing results where all sources appear "wrong".
+    plugins = find_metadata_source_plugins()
+    if len(plugins) == 1 and info.data_source != data_source:
         dist.add("source", config["source_weight"].as_number())
     return dist
 
