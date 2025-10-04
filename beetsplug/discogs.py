@@ -350,15 +350,17 @@ class DiscogsPlugin(MetadataSourcePlugin):
         """Iterates through a discogs result, fetching data
         if the artist anv is to be used, maps that to the name.
         Calls the parent class get_artist method."""
-        artist_list = []
+        artist_list: list[dict[str | int, str]] = []
         for artist_data in artists:
-            a = artist_data.copy()
-            if use_anv and (anv := a.get("anv", "")):
+            a: dict[str | int, str] = {
+                "name": artist_data["name"],
+                "id": artist_data["id"],
+                "join": artist_data.get("join", ""),
+            }
+            if use_anv and (anv := artist_data.get("anv", "")):
                 a["name"] = anv
             artist_list.append(a)
-        artist, artist_id = self.get_artist(
-            cast(list[dict[str | int, str]], artist_list), join_key="join"
-        )
+        artist, artist_id = self.get_artist(artist_list, join_key="join")
         return self.strip_disambiguation(artist), artist_id
 
     def get_album_info(self, result: Release) -> AlbumInfo | None:
