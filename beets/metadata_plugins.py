@@ -132,7 +132,7 @@ def _get_distance(
     from beets.autotag.distance import Distance
 
     dist = Distance()
-    if info.data_source == data_source:
+    if info.data_source != data_source:
         dist.add("source", config["source_weight"].as_number())
     return dist
 
