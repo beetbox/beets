@@ -3,5 +3,5 @@
 # Placeholders are replaced during substitution.
 # Run `git update-index --assume-unchanged beets/_version.py`
 # to ignore local changes to this file.
-__version__ = "0.0.0"
-__version_tuple__ = (0, 0, 0)
+__version__ = "0.0.0.dev2+fa2b317"
+__version_tuple__ = (0, 0, 0, "dev2", "fa2b317")
