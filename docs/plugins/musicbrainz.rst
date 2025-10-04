@@ -52,16 +52,12 @@ You can instruct beets to use `your own MusicBrainz database
         ratelimit: 100
 
 The ``host`` key, of course, controls the Web server hostname (and port,
-optionally) that will be contacted by beets (default: musicbrainz.org). The
-``https`` key makes the client use HTTPS instead of HTTP. This setting applies
-only to custom servers. The official MusicBrainz server always uses HTTPS.
-(Default: no.) The server must have search indices enabled (see `Building search
-indexes`_).
+optionally) that will be contacted by beets. The ``https`` key makes the client
+use HTTPS instead of HTTP. The server must have search indices enabled (see
+`Building search indexes`_). The ``ratelimit`` option, an integer, controls the
+number of Web service requests per second.
 
-The ``ratelimit`` option, an integer, controls the number of Web service
-requests per second (default: 1). **Do not change the rate limit setting** if
-you're using the main MusicBrainz server---on this public server, you're
-limited_ to one request per second.
+If you use the public MusicBrainz server, these settings will be ignored.
 
 .. _building search indexes: https://musicbrainz.org/doc/Development/Search_server_setup
 
