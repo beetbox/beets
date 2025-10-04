@@ -67,10 +67,9 @@ class ImportHistTest(PluginMixin, AutotagImportTestCase):
             self.importer.run()
             item_to_remove = self.lib.albums().get().items()[0]
             with control_stdin("N"):
-                # Use path query syntax to find the item
                 self.run_command(
                     "remove",
-                    f"path:{syspath(item_to_remove.path)}",
+                    syspath(item_to_remove.path),
                 )
         assert os.path.exists(item_to_remove.source_path)
 
@@ -81,7 +80,7 @@ class ImportHistTest(PluginMixin, AutotagImportTestCase):
             with control_stdin("y\nD"):
                 self.run_command(
                     "remove",
-                    f"path:{syspath(items_to_remove[0].path)}",
+                    syspath(items_to_remove[0].path),
                 )
         assert not os.path.exists(items_to_remove[0].source_path)
 
@@ -92,7 +91,7 @@ class ImportHistTest(PluginMixin, AutotagImportTestCase):
             with control_stdin("y\nR\ny"):
                 self.run_command(
                     "remove",
-                    f"path:{syspath(items_to_remove[0].path)}",
+                    syspath(items_to_remove[0].path),
                 )
         for item in items_to_remove:
             assert not os.path.exists(item.source_path)
@@ -102,11 +101,9 @@ class ImportHistTest(PluginMixin, AutotagImportTestCase):
             self.importer.run()
             items_to_remove = self.lib.albums().get().items()
             with control_stdin("y\nS"):
-                # Use path query for directory
-                dir_path = os.path.dirname(syspath(items_to_remove[0].path))
                 self.run_command(
                     "remove",
-                    f"path:{dir_path}",
+                    os.path.dirname(syspath(items_to_remove[0].path)),
                 )
         for item in items_to_remove:
             assert os.path.exists(item.source_path)
