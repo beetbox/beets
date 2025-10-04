@@ -39,17 +39,6 @@ class ImportHistTest(PluginMixin, AutotagImportTestCase):
     def setUp(self):
         preserve_plugin_listeners()
         super().setUp()
-
-        # Set up configuration for importfeeds plugin to prevent config errors
-        # since PluginMixin loads all plugins including importfeeds
-        self.config["importfeeds"] = {
-            "formats": [],
-            "dir": str(self.temp_dir),
-            "m3u_name": "imported.m3u",
-            "relative_to": None,
-            "absolute_path": False,
-        }
-
         self.prepare_album_for_import(2)
         self.importer = self.setup_importer()
         self.importer.add_choice(importer.Action.APPLY)
