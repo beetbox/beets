@@ -33,7 +33,7 @@ import confuse
 from discogs_client import Client, Master, Release
 from discogs_client.exceptions import DiscogsAPIError
 from requests.exceptions import ConnectionError
-from typing_extensions import TypedDict, NotRequired
+from typing_extensions import NotRequired, TypedDict
 
 import beets
 import beets.ui
@@ -84,6 +84,7 @@ class ReleaseFormat(TypedDict):
     qty: int
     descriptions: list[str] | None
 
+
 class Artist(TypedDict):
     name: str
     anv: str
@@ -93,6 +94,7 @@ class Artist(TypedDict):
     id: str
     resource_url: str
 
+
 class Track(TypedDict):
     position: str
     type_: str
@@ -101,8 +103,23 @@ class Track(TypedDict):
     artists: list[Artist]
     extraartists: NotRequired[list[Artist]]
 
-class TrackWithSubtrack(Track):
-    sub_tracks: NotRequired[list[Track]]
+
+class TrackWithSubtracks(Track):
+    sub_tracks: list[TrackWithSubtracks]
+
+
+class IntermediateTrackInfo(TrackInfo):
+    """Allows work with string mediums from
+    get_track_info"""
+
+    def __init__(
+        self,
+        medium_str: str | None,
+        **kwargs,
+    ) -> None:
+        self.medium_str = medium_str
+        super().__init__(**kwargs)
+
 
 class DiscogsPlugin(MetadataSourcePlugin):
     def __init__(self):
@@ -131,7 +148,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
         self.config["user_token"].redact = True
         self.setup()
 
-    def setup(self, session=None):
+    def setup(self, session=None) -> None:
         """Create the `discogs_client` field. Authenticate if necessary."""
         c_key = self.config["apikey"].as_str()
         c_secret = self.config["apisecret"].as_str()
@@ -157,12 +174,12 @@ class DiscogsPlugin(MetadataSourcePlugin):
 
         self.discogs_client = Client(USER_AGENT, c_key, c_secret, token, secret)
 
-    def reset_auth(self):
+    def reset_auth(self) -> None:
         """Delete token file & redo the auth steps."""
         os.remove(self._tokenfile())
         self.setup()
 
-    def _tokenfile(self):
+    def _tokenfile(self) -> str:
         """Get the path to the JSON file for storing the OAuth token."""
         return self.config["tokenfile"].get(confuse.Filename(in_app_dir=True))
 
@@ -339,7 +356,9 @@ class DiscogsPlugin(MetadataSourcePlugin):
             if use_anv and (anv := a.get("anv", "")):
                 a["name"] = anv
             artist_list.append(a)
-        artist, artist_id = self.get_artist(cast(Iterable[dict[str | int, str]], artist_list), join_key="join")
+        artist, artist_id = self.get_artist(
+            cast(list[dict[str | int, str]], artist_list), join_key="join"
+        )
         return self.strip_disambiguation(artist), artist_id
 
     def get_album_info(self, result: Release) -> AlbumInfo | None:
@@ -496,25 +515,15 @@ class DiscogsPlugin(MetadataSourcePlugin):
         else:
             return None
 
-    def get_tracks(
+    def _process_clean_tracklist(
         self,
-        tracklist: list[Track],
+        clean_tracklist: list[Track],
         album_artist_data: tuple[str, str, str | None],
-    ) -> list[TrackInfo]:
-        """Returns a list of TrackInfo objects for a discogs tracklist."""
-        try:
-            clean_tracklist = self.coalesce_tracks(tracklist)
-        except Exception as exc:
-            # FIXME: this is an extra precaution for making sure there are no
-            # side effects after #2222. It should be removed after further
-            # testing.
-            self._log.debug("{}", traceback.format_exc())
-            self._log.error("uncaught exception in coalesce_tracks: {}", exc)
-            clean_tracklist = tracklist
-        tracks = []
+    ) -> tuple[list[TrackInfo], dict[int, str], int, list[str], list[str]]:
+        # Distinct works and intra-work divisions, as defined by index tracks.
+        tracks: list[TrackInfo] = []
         index_tracks = {}
         index = 0
-        # Distinct works and intra-work divisions, as defined by index tracks.
         divisions: list[str] = []
         next_divisions: list[str] = []
         for track in clean_tracklist:
@@ -540,7 +549,29 @@ class DiscogsPlugin(MetadataSourcePlugin):
                 except IndexError:
                     pass
                 index_tracks[index + 1] = track["title"]
+        return tracks, index_tracks, index, divisions, next_divisions
 
+    def get_tracks(
+        self,
+        tracklist: list[Track],
+        album_artist_data: tuple[str, str, str | None],
+    ) -> list[TrackInfo]:
+        """Returns a list of TrackInfo objects for a discogs tracklist."""
+        try:
+            clean_tracklist: list[Track] = self.coalesce_tracks(
+                cast(list[TrackWithSubtracks], tracklist)
+            )
+        except Exception as exc:
+            # FIXME: this is an extra precaution for making sure there are no
+            # side effects after #2222. It should be removed after further
+            # testing.
+            self._log.debug("{}", traceback.format_exc())
+            self._log.error("uncaught exception in coalesce_tracks: {}", exc)
+            clean_tracklist = tracklist
+        processed = self._process_clean_tracklist(
+            clean_tracklist, album_artist_data
+        )
+        tracks, index_tracks, index, divisions, next_divisions = processed
         # Fix up medium and medium_index for each track. Discogs position is
         # unreliable, but tracks are in order.
         medium = None
@@ -549,8 +580,8 @@ class DiscogsPlugin(MetadataSourcePlugin):
 
         # If a medium has two sides (ie. vinyl or cassette), each pair of
         # consecutive sides should belong to the same medium.
-        if all([track.medium is not None for track in tracks]):
-            m = sorted({track.medium.lower() for track in tracks})
+        if all([track.medium_str is not None for track in tracks]):
+            m = sorted({track.medium_str.lower() for track in tracks})
             # If all track.medium are single consecutive letters, assume it is
             # a 2-sided medium.
             if "".join(m) in ascii_lowercase:
@@ -564,17 +595,17 @@ class DiscogsPlugin(MetadataSourcePlugin):
             # side_count is the number of mediums or medium sides (in the case
             # of two-sided mediums) that were seen before.
             medium_is_index = (
-                track.medium
+                track.medium_str
                 and not track.medium_index
                 and (
-                    len(track.medium) != 1
+                    len(track.medium_str) != 1
                     or
                     # Not within standard incremental medium values (A, B, C, ...).
-                    ord(track.medium) - 64 != side_count + 1
+                    ord(track.medium_str) - 64 != side_count + 1
                 )
             )
 
-            if not medium_is_index and medium != track.medium:
+            if not medium_is_index and medium != track.medium_str:
                 side_count += 1
                 if sides_per_medium == 2:
                     if side_count % sides_per_medium:
@@ -585,7 +616,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
                     # Medium changed. Reset index_count.
                     medium_count += 1
                     index_count = 0
-                medium = track.medium
+                medium = track.medium_str
 
             index_count += 1
             medium_count = 1 if medium_count == 0 else medium_count
@@ -601,17 +632,20 @@ class DiscogsPlugin(MetadataSourcePlugin):
                     disctitle = None
             track.disctitle = disctitle
 
-        return tracks
+        return cast(list[TrackInfo], tracks)
 
     def coalesce_tracks(
-        self, raw_tracklist
-    ):
+        self, raw_tracklist: list[TrackWithSubtracks]
+    ) -> list[Track]:
         """Pre-process a tracklist, merging subtracks into a single track. The
         title for the merged track is the one from the previous index track,
         if present; otherwise it is a combination of the subtracks titles.
         """
 
-        def add_merged_subtracks(tracklist, subtracks):
+        def add_merged_subtracks(
+            tracklist: list[TrackWithSubtracks],
+            subtracks: list[TrackWithSubtracks],
+        ) -> None:
             """Modify `tracklist` in place, merging a list of `subtracks` into
             a single track into `tracklist`."""
             # Calculate position based on first subtrack, without subindex.
@@ -651,8 +685,8 @@ class DiscogsPlugin(MetadataSourcePlugin):
                 tracklist.append(track)
 
         # Pre-process the tracklist, trying to identify subtracks.
-        subtracks = []
-        tracklist = []
+        subtracks: list[TrackWithSubtracks] = []
+        tracklist: list[TrackWithSubtracks] = []
         prev_subindex = ""
         for track in raw_tracklist:
             # Regular subtrack (track with subindex).
@@ -687,7 +721,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
         if subtracks:
             add_merged_subtracks(tracklist, subtracks)
 
-        return tracklist
+        return cast(list[Track], tracklist)
 
     def strip_disambiguation(self, text: str) -> str:
         """Removes discogs specific disambiguations from a string.
@@ -703,7 +737,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
         index: int,
         divisions: list[str],
         album_artist_data: tuple[str, str, str | None],
-    ) -> TrackInfo:
+    ) -> IntermediateTrackInfo:
         """Returns a TrackInfo object for a discogs track."""
 
         artist, artist_anv, artist_id = album_artist_data
@@ -749,7 +783,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
                 artist_credit += (
                     f" {self.config['featured_string']} {featured_credit}"
                 )
-        return TrackInfo(
+        return IntermediateTrackInfo(
             title=title,
             track_id=track_id,
             artist_credit=artist_credit,
@@ -757,7 +791,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
             artist_id=artist_id,
             length=length,
             index=index,
-            medium=medium,
+            medium_str=medium,
             medium_index=medium_index,
         )
 
