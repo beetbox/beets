@@ -16,6 +16,7 @@ New features:
 - :doc:`plugins/discogs`: New config option `strip_disambiguation` to toggle
   stripping discogs numeric disambiguation on artist and label fields.
 - :doc:`plugins/discogs` Added support for featured artists.
+- Add support for importing and writing a subtitle (ID3 tag `TIT3`) field
 
 Bug fixes:
 
