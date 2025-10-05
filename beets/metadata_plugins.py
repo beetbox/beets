@@ -63,10 +63,18 @@ def candidates(*args, **kwargs) -> Iterable[AlbumInfo]:
 
 
 @notify_info_yielded("trackinfo_received")
-def item_candidates(*args, **kwargs) -> Iterable[TrackInfo]:
-    """Return matching track candidates fromm all metadata source plugins."""
+def item_candidates(
+    item: Item,
+    search_title: str | None = None,
+    search_artist: str | None = None,
+) -> Iterable[TrackInfo]:
+    """Return matching track candidates from all metadata source plugins."""
     for plugin in find_metadata_source_plugins():
-        yield from plugin.item_candidates(*args, **kwargs)
+        yield from plugin.item_candidates(
+            item=item,
+            title=search_title,
+            artist=search_artist,
+        )
 
 
 def album_for_id(_id: str) -> AlbumInfo | None:
@@ -190,15 +198,18 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def item_candidates(
-        self, item: Item, artist: str, title: str
+        self,
+        item: Item,
+        artist: str | None,
+        title: str | None,
     ) -> Iterable[TrackInfo]:
         """Return :py:class:`TrackInfo` candidates that match the given track.
 
         Used in the autotag functionality to search for tracks.
 
         :param item: Track item
-        :param artist: Track artist
-        :param title: Track title
+        :param artist: Track artist, preprocessed from the item (if available)
+        :param title: Track title, preprocessed from the item (if available)
         """
         raise NotImplementedError
 
@@ -383,12 +394,21 @@ class SearchApiMetadataSourcePlugin(
         )
 
     def item_candidates(
-        self, item: Item, artist: str, title: str
+        self,
+        item: Item,
+        artist: str | None,
+        title: str | None,
     ) -> Iterable[TrackInfo]:
-        results = self._search_api(
-            "track", {"artist": artist}, query_string=title
-        )
-        if not results:
+        filters: SearchFilter = {}
+        if artist is not None:
+            filters["artist"] = artist
+
+        if title is None:
+            return []
+
+        if not (
+            results := self._search_api("track", filters, query_string=title)
+        ):
             return []
 
         return filter(

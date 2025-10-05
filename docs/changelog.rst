@@ -41,6 +41,8 @@ Bug fixes:
   artists but not labels. :bug:`5366`
 - :doc:`plugins/chroma` :doc:`plugins/bpsync` Fix plugin loading issue caused by
   an import of another :class:`beets.plugins.BeetsPlugin` class. :bug:`6033`
+- Fix an issue where no metadata in a file would crash the import process when
+  using musicbrainz. :bug:`6060`
 
 For packagers:
 

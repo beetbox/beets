@@ -322,7 +322,7 @@ def tag_album(
 
 
 def tag_item(
-    item,
+    item: Item,
     search_artist: str | None = None,
     search_title: str | None = None,
     search_ids: list[str] | None = None,
@@ -366,8 +366,14 @@ def tag_item(
 
     # Search terms.
     search_artist = search_artist or item.artist
-    search_title = search_title or item.title
+    search_title = search_title or item.title or item.filepath.stem
     log.debug("Item search terms: {} - {}", search_artist, search_title)
+
+    # Replace empty string with None
+    if isinstance(search_artist, str) and search_artist.strip() == "":
+        search_artist = None
+    if isinstance(search_title, str) and search_title.strip() == "":
+        search_title = None
 
     # Get and evaluate candidate metadata.
     for track_info in metadata_plugins.item_candidates(
