@@ -133,7 +133,9 @@ def _get_distance(
 
     dist = Distance()
     if info.data_source == data_source:
-        dist.add("source", config["data_source_mismatch_penalty"].as_number())
+        dist.add(
+            "data_source", config["data_source_mismatch_penalty"].as_number()
+        )
     return dist
 
 

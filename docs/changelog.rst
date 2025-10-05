@@ -66,6 +66,9 @@ Other changes:
   disambiguation stripping.
 - When installing ``beets`` via git or locally the version string now reflects
   the current git branch and commit hash. :bug:`4448`
+- :ref:`match-config`: ``match.distance_weights.source`` configuration has been
+  renamed to ``match.distance_weights.data_source`` for consistency with the
+  name of the field it refers to.
 
 For developers and plugin authors:
 

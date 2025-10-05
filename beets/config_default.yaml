@@ -166,7 +166,7 @@ match:
         missing_tracks: medium
         unmatched_tracks: medium
     distance_weights:
-        source: 2.0
+        data_source: 2.0
         artist: 3.0
         album: 3.0
         media: 1.0
