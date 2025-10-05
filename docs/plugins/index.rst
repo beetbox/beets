@@ -51,7 +51,7 @@ Some plugins provide sources for metadata in addition to MusicBrainz. These
 plugins share the following configuration option:
 
 - **data_source_mismatch_penalty**: Penalty applied to matches during import.
-  Set to 0.0 to disable. Default: ``0.5``.
+  Set to 0.0 to disable. Default: ``0.0``.
 
 For example, to equally consider matches from Discogs and MusicBrainz add the
 following to your configuration:

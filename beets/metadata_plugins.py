@@ -152,7 +152,7 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
         self.config.add(
             {
                 "search_limit": 5,
-                "data_source_mismatch_penalty": 0.5,
+                "data_source_mismatch_penalty": 0.0,
             }
         )
 
