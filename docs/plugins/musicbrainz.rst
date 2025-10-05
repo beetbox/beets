@@ -17,17 +17,21 @@ To use the ``musicbrainz`` plugin, enable it in your configuration (see
 Configuration
 -------------
 
+This plugin can be configured like other metadata source plugins as described in
+:ref:`metadata-source-plugin-configuration`.
+
 Default
 ~~~~~~~
 
 .. code-block:: yaml
 
     musicbrainz:
+        data_source_mismatch_penalty: 0.0
+        search_limit: 5
         host: musicbrainz.org
         https: no
         ratelimit: 1
         ratelimit_interval: 1.0
-        search_limit: 5
         extra_tags: []
         genres: no
         external_ids:
