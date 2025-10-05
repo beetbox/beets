@@ -935,7 +935,7 @@ can be one of ``none``, ``low``, ``medium`` or ``strong``. When the maximum
 recommendation is ``strong``, no "downgrading" occurs. The available penalty
 names here are:
 
-- source
+- data_source
 - artist
 - album
 - media

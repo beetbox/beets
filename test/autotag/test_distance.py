@@ -22,7 +22,7 @@ class TestDistance:
 
     @pytest.fixture
     def dist(self, config):
-        config["match"]["distance_weights"]["source"] = 2.0
+        config["match"]["distance_weights"]["data_source"] = 2.0
         config["match"]["distance_weights"]["album"] = 4.0
         config["match"]["distance_weights"]["medium"] = 2.0
 
@@ -103,7 +103,7 @@ class TestDistance:
         assert dist["media"] == 1 / 6
 
     def test_operators(self, dist):
-        dist.add("source", 0.0)
+        dist.add("data_source", 0.0)
         dist.add("album", 0.5)
         dist.add("medium", 0.25)
         dist.add("medium", 0.75)
