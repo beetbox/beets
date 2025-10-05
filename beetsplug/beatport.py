@@ -328,7 +328,6 @@ class BeatportPlugin(MetadataSourcePlugin):
                 "apikey": "57713c3906af6f5def151b33601389176b37b429",
                 "apisecret": "b3fe08c93c80aefd749fe871a16cd2bb32e2b954",
                 "tokenfile": "beatport_token.json",
-                "source_weight": 0.5,
             }
         )
         self.config["apikey"].redact = True
