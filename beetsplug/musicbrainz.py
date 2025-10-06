@@ -323,7 +323,7 @@ def _find_actual_release_from_pseudo_release(
 
 def _merge_pseudo_and_actual_album(
     pseudo: beets.autotag.hooks.AlbumInfo, actual: beets.autotag.hooks.AlbumInfo
-) -> beets.autotag.hooks.AlbumInfo | None:
+) -> beets.autotag.hooks.AlbumInfo:
     """
     Merges a pseudo release with its actual release.
 
