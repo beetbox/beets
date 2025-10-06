@@ -15,12 +15,20 @@ New features:
   converted files.
 - :doc:`plugins/discogs`: New config option `strip_disambiguation` to toggle
   stripping discogs numeric disambiguation on artist and label fields.
-- :doc:`plugins/discogs` Added support for featured artists.
+- :doc:`plugins/discogs` Added support for featured artists. :bug:`6038`
+- :doc:`plugins/discogs` New configuration option `featured_string` to change
+  the default string used to join featured artists. The default string is
+  `Feat.`.
+- :doc:`plugins/discogs` Support for `artist_credit` in Discogs tags.
+  :bug:`3354`
+- :doc:`plugins/discogs` Support for name variations and config options to
+  specify where the variations are written. :bug:`3354`
 
 Bug fixes:
 
-- :doc:`/plugins/fromfilename`: Fix :bug:`5218`, improve the code (refactor
-  regexps, allow for more cases, add some logging), add tests.
+
+- :doc:`plugins/spotify` Ensure ``spotifysync`` keeps popularity, ISRC, and
+  related fields current even when audio features requests fail. :bug:`6061`
 - :doc:`plugins/spotify` Fixed an issue where track matching and lookups could
   return incorrect or misleading results when using the Spotify plugin. The
   problem occurred primarily when no album was provided or when the album field
@@ -28,14 +36,14 @@ Bug fixes:
 - :doc:`plugins/spotify` Removed old and undocumented config options
   `artist_field`, `album_field` and `track` that were causing issues with track
   matching. :bug:`5189`
-- :doc:`plugins/discogs` Fixed inconsistency in stripping disambiguation from
-  artists but not labels. :bug:`5366`
-- :doc:`plugins/discogs` Fixed issue with ignoring featured artists in the
-  extraartists field.
 - :doc:`plugins/spotify` Fixed an issue where candidate lookup would not find
   matches due to query escaping (single vs double quotes).
+- :doc:`plugins/discogs` Fixed inconsistency in stripping disambiguation from
+  artists but not labels. :bug:`5366`
 - :doc:`plugins/chroma` :doc:`plugins/bpsync` Fix plugin loading issue caused by
   an import of another :class:`beets.plugins.BeetsPlugin` class. :bug:`6033`
+- :doc:`/plugins/fromfilename`: Fix :bug:`5218`, improve the code (refactor
+  regexps, allow for more cases, add some logging), add tests.
 
 For packagers:
 
@@ -50,8 +58,13 @@ Other changes:
 - Moved ``art.py`` utility module from ``beets`` into ``beetsplug`` namespace as
   it is not used in the core beets codebase. It can now be found in
   ``beetsplug._utils``.
+- Moved ``vfs.py`` utility module from ``beets`` into ``beetsplug`` namespace as
+  it is not used in the core beets codebase. It can now be found in
+  ``beetsplug._utils``.
 - :class:`beets.metadata_plugin.MetadataSourcePlugin`: Remove discogs specific
   disambiguation stripping.
+- When installing ``beets`` via git or locally the version string now reflects
+  the current git branch and commit hash. :bug:`4448`
 
 For developers and plugin authors:
 

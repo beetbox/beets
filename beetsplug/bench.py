@@ -17,10 +17,11 @@
 import cProfile
 import timeit
 
-from beets import importer, library, plugins, ui, vfs
+from beets import importer, library, plugins, ui
 from beets.autotag import match
 from beets.plugins import BeetsPlugin
 from beets.util.functemplate import Template
+from beetsplug._utils import vfs
 
 
 def aunique_benchmark(lib, prof):
