@@ -836,9 +836,10 @@ def get_most_common_tags(
         "country",
         "media",
         "albumdisambig",
+        "data_source",
     ]
     for field in fields:
-        values = [item[field] for item in items if item]
+        values = [item.get(field) for item in items if item]
         likelies[field], freq = plurality(values)
         consensus[field] = freq == len(values)
 

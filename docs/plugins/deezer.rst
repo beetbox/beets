@@ -35,7 +35,7 @@ Default
 .. code-block:: yaml
 
     deezer:
-        data_source_mismatch_penalty: 0.0
+        data_source_mismatch_penalty: 0.5
         search_limit: 5
         search_query_ascii: no
 

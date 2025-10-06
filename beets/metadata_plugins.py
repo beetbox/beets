@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import abc
 import re
-from functools import cache
+from functools import cache, cached_property
 from typing import TYPE_CHECKING, Generic, Literal, Sequence, TypedDict, TypeVar
 
 import unidecode
@@ -23,9 +23,6 @@ from .plugins import BeetsPlugin, find_plugins, notify_info_yielded, send
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from confuse import ConfigView
-
-    from .autotag import Distance
     from .autotag.hooks import AlbumInfo, Item, TrackInfo
 
 
@@ -76,48 +73,17 @@ def track_for_id(_id: str) -> TrackInfo | None:
     return None
 
 
-def track_distance(item: Item, info: TrackInfo) -> Distance:
-    """Returns the track distance for an item and trackinfo.
-
-    Returns a Distance object is populated by all metadata source plugins
-    that implement the :py:meth:`MetadataSourcePlugin.track_distance` method.
-    """
-    from beets.autotag.distance import Distance
-
-    dist = Distance()
-    for plugin in find_metadata_source_plugins():
-        dist.update(plugin.track_distance(item, info))
-    return dist
-
-
-def album_distance(
-    items: Sequence[Item],
-    album_info: AlbumInfo,
-    mapping: dict[Item, TrackInfo],
-) -> Distance:
-    """Returns the album distance calculated by plugins."""
-    from beets.autotag.distance import Distance
-
-    dist = Distance()
-    for plugin in find_metadata_source_plugins():
-        dist.update(plugin.album_distance(items, album_info, mapping))
-    return dist
-
-
-def _get_distance(
-    config: ConfigView, data_source: str, info: AlbumInfo | TrackInfo
-) -> Distance:
-    """Returns the ``data_source`` weight and the maximum source weight
-    for albums or individual tracks.
-    """
-    from beets.autotag.distance import Distance
-
-    dist = Distance()
-    if info.data_source == data_source:
-        dist.add(
-            "data_source", config["data_source_mismatch_penalty"].as_number()
-        )
-    return dist
+@cache
+def get_penalty(data_source: str | None) -> float:
+    """Get the penalty value for the given data source."""
+    return next(
+        (
+            p.data_source_mismatch_penalty
+            for p in find_metadata_source_plugins()
+            if p.data_source == data_source
+        ),
+        MetadataSourcePlugin.DEFAULT_DATA_SOURCE_MISMATCH_PENALTY,
+    )
 
 
 class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
@@ -128,12 +94,26 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
     and tracks, and to retrieve album and track information by ID.
     """
 
+    DEFAULT_DATA_SOURCE_MISMATCH_PENALTY = 0.5
+
+    @cached_classproperty
+    def data_source(cls) -> str:
+        """The data source name for this plugin.
+
+        This is inferred from the plugin name.
+        """
+        return cls.__name__.replace("Plugin", "")  # type: ignore[attr-defined]
+
+    @cached_property
+    def data_source_mismatch_penalty(self) -> float:
+        return self.config["data_source_mismatch_penalty"].as_number()
+
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.config.add(
             {
                 "search_limit": 5,
-                "data_source_mismatch_penalty": 0.0,
+                "data_source_mismatch_penalty": self.DEFAULT_DATA_SOURCE_MISMATCH_PENALTY,  # noqa: E501
             }
         )
 
@@ -206,35 +186,6 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
         """
 
         return (self.track_for_id(id) for id in ids)
-
-    def album_distance(
-        self,
-        items: Sequence[Item],
-        album_info: AlbumInfo,
-        mapping: dict[Item, TrackInfo],
-    ) -> Distance:
-        """Calculate the distance for an album based on its items and album info."""
-        return _get_distance(
-            data_source=self.data_source, info=album_info, config=self.config
-        )
-
-    def track_distance(
-        self,
-        item: Item,
-        info: TrackInfo,
-    ) -> Distance:
-        """Calculate the distance for a track based on its item and track info."""
-        return _get_distance(
-            data_source=self.data_source, info=info, config=self.config
-        )
-
-    @cached_classproperty
-    def data_source(cls) -> str:
-        """The data source name for this plugin.
-
-        This is inferred from the plugin name.
-        """
-        return cls.__name__.replace("Plugin", "")  # type: ignore[attr-defined]
 
     def _extract_id(self, url: str) -> str | None:
         """Extract an ID from a URL for this metadata source plugin.
