@@ -26,7 +26,6 @@ New features:
 
 Bug fixes:
 
-
 - :doc:`plugins/spotify` Ensure ``spotifysync`` keeps popularity, ISRC, and
   related fields current even when audio features requests fail. :bug:`6061`
 - :doc:`plugins/spotify` Fixed an issue where track matching and lookups could
