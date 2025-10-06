@@ -27,8 +27,6 @@ class TestDistance:
         config["match"]["distance_weights"]["album"] = 4.0
         config["match"]["distance_weights"]["medium"] = 2.0
 
-        Distance.__dict__["_weights"].cache = {}
-
         return Distance()
 
     def test_add(self, dist):
