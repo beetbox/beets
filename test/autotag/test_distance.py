@@ -17,16 +17,15 @@ _p = pytest.param
 
 
 class TestDistance:
-    @pytest.fixture(scope="class")
-    def config(self):
-        return ConfigMixin().config
-
-    @pytest.fixture
-    def dist(self, config):
+    @pytest.fixture(autouse=True, scope="class")
+    def setup_config(self):
+        config = ConfigMixin().config
         config["match"]["distance_weights"]["data_source"] = 2.0
         config["match"]["distance_weights"]["album"] = 4.0
         config["match"]["distance_weights"]["medium"] = 2.0
 
+    @pytest.fixture
+    def dist(self):
         return Distance()
 
     def test_add(self, dist):
@@ -161,10 +160,8 @@ class TestTrackDistance:
     def test_track_distance(self, info, title, artist, expected_penalty):
         item = Item(artist=artist, title=title)
 
-        assert (
-            bool(track_distance(item, info, incl_artist=True))
-            == expected_penalty
-        )
+        dist = track_distance(item, info, incl_artist=True)
+        assert bool(dist) == expected_penalty, dist._penalties
 
 
 class TestAlbumDistance:

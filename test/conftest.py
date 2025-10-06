@@ -3,6 +3,7 @@ import os
 
 import pytest
 
+from beets.autotag.distance import Distance
 from beets.dbcore.query import Query
 from beets.util import cached_classproperty
 
@@ -42,6 +43,11 @@ def pytest_make_parametrize_id(config, val, argname):
         return inspect.getsource(val).split("lambda")[-1][:30]
 
     return repr(val)
+
+
+def pytest_assertrepr_compare(op, left, right):
+    if isinstance(left, Distance) or isinstance(right, Distance):
+        return [f"Comparing Distance: {float(left)} {op} {float(right)}"]
 
 
 @pytest.fixture(autouse=True)
