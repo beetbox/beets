@@ -409,7 +409,10 @@ def track_distance(
         dist.add_expr("medium", item.disc != track_info.medium)
 
     # Plugins.
-    dist.update(metadata_plugins.track_distance(item, track_info))
+    if (original := item.get("data_source")) and (
+        actual := track_info.data_source
+    ) != original:
+        dist.add("data_source", metadata_plugins.get_penalty(actual))
 
     return dist
 
@@ -526,6 +529,9 @@ def distance(
         dist.add("unmatched_tracks", 1.0)
 
     # Plugins.
-    dist.update(metadata_plugins.album_distance(items, album_info, mapping))
-
+    if (
+        likelies["data_source"]
+        and (data_source := album_info.data_source) != likelies["data_source"]
+    ):
+        dist.add("data_source", metadata_plugins.get_penalty(data_source))
     return dist

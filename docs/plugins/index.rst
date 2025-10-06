@@ -51,7 +51,7 @@ We provide several :ref:`autotagger_extensions` that fetch metadata from online
 databases. They share the following configuration options:
 
 - **data_source_mismatch_penalty**: Penalty applied to matches during import.
-  Default: ``0.0`` (no penalty).
+  Any decimal number between 0 and 1. Default: ``0.5``.
 
   Penalize this data source to prioritize others. For example, to prefer Discogs
   over MusicBrainz:
@@ -64,7 +64,7 @@ databases. They share the following configuration options:
          data_source_mismatch_penalty: 2.0
 
   By default, all sources are equally preferred with each having
-  ``data_source_mismatch_penalty`` set to ``0.0``.
+  ``data_source_mismatch_penalty`` set to ``0.5``.
 
 - **search_limit**: Maximum number of search results to consider. Default:
   ``5``.

@@ -26,7 +26,7 @@ Default
 .. code-block:: yaml
 
     musicbrainz:
-        data_source_mismatch_penalty: 0.0
+        data_source_mismatch_penalty: 0.5
         search_limit: 5
         host: musicbrainz.org
         https: no

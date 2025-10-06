@@ -71,7 +71,7 @@ Default
 .. code-block:: yaml
 
     discogs:
-        data_source_mismatch_penalty: 0.0
+        data_source_mismatch_penalty: 0.5
         search_limit: 5
         apikey: REDACTED
         apisecret: REDACTED

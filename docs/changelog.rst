@@ -45,6 +45,10 @@ Bug fixes:
   an import of another :class:`beets.plugins.BeetsPlugin` class. :bug:`6033`
 - :doc:`/plugins/fromfilename`: Fix :bug:`5218`, improve the code (refactor
   regexps, allow for more cases, add some logging), add tests.
+- Metadata source plugins: Fixed data source penalty calculation that was
+  incorrectly applied during import matching. The ``source_weight``
+  configuration option has been renamed to ``data_source_mismatch_penalty`` to
+  better reflect its purpose. :bug:`6066`
 
 For packagers:
 
@@ -75,6 +79,13 @@ For developers and plugin authors:
 - Typing improvements in ``beets/logging.py``: ``getLogger`` now returns
   ``BeetsLogger`` when called with a name, or ``RootLogger`` when called without
   a name.
+- The ``track_distance()`` and ``album_distance()`` methods have been removed
+  from ``MetadataSourcePlugin``. Distance calculation for data source mismatches
+  is now handled automatically by the core matching logic. This change
+  simplifies the plugin architecture and fixes incorrect penalty calculations.
+  :bug:`6066`
+- Metadata source plugins are now registered globally when instantiated, which
+  makes their handling slightly more efficient.
 
 2.4.0 (September 13, 2025)
 --------------------------
