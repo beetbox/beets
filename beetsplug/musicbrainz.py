@@ -66,6 +66,7 @@ _MB_REIMPORT_FRESH_FIELDS_ALBUM = [
 ]
 _MB_REIMPORT_FRESH_FIELDS_ITEM = [
     "data_url",
+    "releasegroup_id",
 ]
 
 
