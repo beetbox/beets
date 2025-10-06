@@ -21,11 +21,14 @@ from beets.test.helper import BeetsTestCase
 from beetsplug.titlecase import TitlecasePlugin
 
 @pytest.mark.parametrize("given, expected",
-    [("PENDULUM", "Pendulum"),
+     [("a", "A"),
+     ("PENDULUM", "Pendulum"),
      ("Aaron-carl", "Aaron-Carl"),
      ("LTJ bukem", "LTJ Bukem"),
-     ("Freaky chakra Vs. Single Cell Orchestra",
-     "Freaky Chakra vs. Single Cell Orchestra")
+     ("Freaky chakra Vs. Single Cell orchestra",
+     "Freaky Chakra vs. Single Cell Orchestra"),
+     ("(original mix)", "(Original Mix)"),
+     ("ALL CAPS TITLE", "All Caps Title")
      ])
 def test_basic_titlecase(given, expected):
     """ Assert that general behavior is as expected. """
@@ -51,5 +54,9 @@ class TitlecasePluginTest(BeetsTestCase):
         assert TitlecasePlugin().titlecase(
                 "A simple Trial") == "A Simple Trial"
 
-    
+    def test_ui_command(self):
+        assert 1 == 3
+   
+    def test_imported(self):
+        assert 1 == 3
 
