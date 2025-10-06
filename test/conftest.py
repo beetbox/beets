@@ -4,6 +4,7 @@ import os
 import pytest
 
 from beets.dbcore.query import Query
+from beets.util import cached_classproperty
 
 
 def skip_marked_items(items: list[pytest.Item], marker_name: str, reason: str):
@@ -41,3 +42,8 @@ def pytest_make_parametrize_id(config, val, argname):
         return inspect.getsource(val).split("lambda")[-1][:30]
 
     return repr(val)
+
+
+@pytest.fixture(autouse=True)
+def clear_cached_classproperty():
+    cached_classproperty.cache.clear()
