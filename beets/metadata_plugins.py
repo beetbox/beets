@@ -133,7 +133,7 @@ def _get_distance(
 
     dist = Distance()
     if info.data_source == data_source:
-        dist.add("source", config["source_weight"].as_number())
+        dist.add("source", config["data_source_mismatch_penalty"].as_number())
     return dist
 
 
@@ -150,7 +150,7 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
         self.config.add(
             {
                 "search_limit": 5,
-                "source_weight": 0.5,
+                "data_source_mismatch_penalty": 0.5,
             }
         )
 

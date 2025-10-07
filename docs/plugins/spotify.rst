@@ -106,7 +106,7 @@ Here's an example:
 ::
 
     spotify:
-        source_weight: 0.7
+        data_source_mismatch_penalty: 0.7
         mode: open
         region_filter: US
         show_failures: on
