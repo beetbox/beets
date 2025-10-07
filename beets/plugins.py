@@ -20,6 +20,7 @@ import abc
 import inspect
 import re
 import sys
+import warnings
 from collections import defaultdict
 from functools import wraps
 from importlib import import_module
@@ -160,19 +161,46 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
     import_stages: list[ImportStageFunc]
 
     def __init_subclass__(cls) -> None:
-        # Dynamically copy methods to BeetsPlugin for legacy support
-        # TODO: Remove this in the future major release, v3.0.0
+        """Enable legacy metadata‐source plugins to work with the new interface.
+
+        When a plugin subclass of BeetsPlugin defines a `data_source` attribute
+        but does not inherit from MetadataSourcePlugin, this hook:
+
+        1. Skips abstract classes.
+        2. Warns that the class should extend MetadataSourcePlugin (deprecation).
+        3. Copies any nonabstract methods from MetadataSourcePlugin onto the
+           subclass to provide the full plugin API.
+
+        This compatibility layer will be removed in the v3.0.0 release.
+        """
+        # TODO: Remove in v3.0.0
         if inspect.isabstract(cls):
             return
 
         from beets.metadata_plugins import MetadataSourcePlugin
 
-        abstractmethods = MetadataSourcePlugin.__abstractmethods__
-        for name, method in inspect.getmembers(
-            MetadataSourcePlugin, predicate=inspect.isfunction
+        if issubclass(cls, MetadataSourcePlugin) or not hasattr(
+            cls, "data_source"
         ):
-            if name not in abstractmethods and not hasattr(cls, name):
-                setattr(cls, name, method)
+            return
+
+        warnings.warn(
+            f"{cls.__name__} is used as a legacy metadata source. "
+            "It should extend MetadataSourcePlugin instead of BeetsPlugin. "
+            "Support for this will be removed in the v3.0.0 release!",
+            DeprecationWarning,
+            stacklevel=3,
+        )
+
+        for name, method in inspect.getmembers(
+            MetadataSourcePlugin,
+            predicate=lambda f: (
+                inspect.isfunction(f)
+                and f.__name__ not in MetadataSourcePlugin.__abstractmethods__
+                and not hasattr(cls, f.__name__)
+            ),
+        ):
+            setattr(cls, name, method)
 
     def __init__(self, name: str | None = None):
         """Perform one-time plugin setup."""

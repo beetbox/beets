@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import abc
 import re
-import warnings
+from functools import cache
 from typing import TYPE_CHECKING, Generic, Literal, Sequence, TypedDict, TypeVar
 
 import unidecode
@@ -29,30 +29,11 @@ if TYPE_CHECKING:
     from .autotag.hooks import AlbumInfo, Item, TrackInfo
 
 
+@cache
 def find_metadata_source_plugins() -> list[MetadataSourcePlugin]:
-    """Returns a list of MetadataSourcePlugin subclass instances
-
-    Resolved from all currently loaded beets plugins.
-    """
-
-    all_plugins = find_plugins()
-    metadata_plugins: list[MetadataSourcePlugin | BeetsPlugin] = []
-    for plugin in all_plugins:
-        if isinstance(plugin, MetadataSourcePlugin):
-            metadata_plugins.append(plugin)
-        elif hasattr(plugin, "data_source"):
-            # TODO: Remove this in the future major release, v3.0.0
-            warnings.warn(
-                f"{plugin.__class__.__name__} is used as a legacy metadata source. "
-                "It should extend MetadataSourcePlugin instead of BeetsPlugin. "
-                "Support for this will be removed in the v3.0.0 release!",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            metadata_plugins.append(plugin)
-
-    # typeignore: BeetsPlugin is not a MetadataSourcePlugin (legacy support)
-    return metadata_plugins  # type: ignore[return-value]
+    """Return a list of all loaded metadata source plugins."""
+    # TODO: Make this an isinstance(MetadataSourcePlugin, ...) check in v3.0.0
+    return [p for p in find_plugins() if hasattr(p, "data_source")]  # type: ignore[misc]
 
 
 @notify_info_yielded("albuminfo_received")
