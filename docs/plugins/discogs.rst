@@ -112,6 +112,22 @@ Other configurations available under ``discogs:`` are:
 - **strip_disambiguation**: Discogs uses strings like ``"(4)"`` to mark distinct
   artists and labels with the same name. If you'd like to use the discogs
   disambiguation in your tags, you can disable it. Default: ``True``
+- **featured_string**: Configure the string used for noting featured artists.
+  Useful if you prefer ``Featuring`` or ``ft.``. Default: ``Feat.``
+- **anv**: These configuration option are dedicated to handling Artist Name
+  Variations (ANVs). Sometimes a release credits artists differently compared to
+  the majority of their work. For example, "Basement Jaxx" may be credited as
+  "Tha Jaxx" or "The Basement Jaxx".You can select any combination of these
+  config options to control where beets writes and stores the variation credit.
+  The default, shown below, writes variations to the artist_credit field.
+
+.. code-block:: yaml
+
+    discogs:
+        anv:
+           artist_credit: True
+           artist: False
+           album_artist: False
 
 .. _discogs guidelines: https://support.discogs.com/hc/en-us/articles/360005055373-Database-Guidelines-12-Tracklisting#Index_Tracks_And_Headings
 

@@ -15,7 +15,14 @@ New features:
   converted files.
 - :doc:`plugins/discogs`: New config option `strip_disambiguation` to toggle
   stripping discogs numeric disambiguation on artist and label fields.
-- :doc:`plugins/discogs` Added support for featured artists.
+- :doc:`plugins/discogs` Added support for featured artists. :bug:`6038`
+- :doc:`plugins/discogs` New configuration option `featured_string` to change
+  the default string used to join featured artists. The default string is
+  `Feat.`.
+- :doc:`plugins/discogs` Support for `artist_credit` in Discogs tags.
+  :bug:`3354`
+- :doc:`plugins/discogs` Support for name variations and config options to
+  specify where the variations are written. :bug:`3354`
 
 Bug fixes:
 
@@ -30,12 +37,10 @@ Bug fixes:
 - :doc:`plugins/spotify` Removed old and undocumented config options
   `artist_field`, `album_field` and `track` that were causing issues with track
   matching. :bug:`5189`
-- :doc:`plugins/discogs` Fixed inconsistency in stripping disambiguation from
-  artists but not labels. :bug:`5366`
-- :doc:`plugins/discogs` Fixed issue with ignoring featured artists in the
-  extraartists field.
 - :doc:`plugins/spotify` Fixed an issue where candidate lookup would not find
   matches due to query escaping (single vs double quotes).
+- :doc:`plugins/discogs` Fixed inconsistency in stripping disambiguation from
+  artists but not labels. :bug:`5366`
 - :doc:`plugins/chroma` :doc:`plugins/bpsync` Fix plugin loading issue caused by
   an import of another :class:`beets.plugins.BeetsPlugin` class. :bug:`6033`
 
