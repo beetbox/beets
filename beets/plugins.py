@@ -225,6 +225,37 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         if not any(isinstance(f, PluginLogFilter) for f in self._log.filters):
             self._log.addFilter(PluginLogFilter(self))
 
+        # In order to verify the config we need to make sure the plugin is fully
+        # configured (plugins usually add the default configuration *after*
+        # calling super().__init__()).
+        self.register_listener("pluginload", self.verify_config)
+
+    def verify_config(self, *_, **__) -> None:
+        """Verify plugin configuration.
+
+        If deprecated 'source_weight' option is explicitly set by the user, they
+        will see a warning in the logs. Otherwise, this must be configured by
+        a third party plugin, thus we raise a deprecation warning which won't be
+        shown to user but will be visible to plugin developers.
+        """
+        # TODO: Remove in v3.0.0
+        if (
+            not hasattr(self, "data_source")
+            or "source_weight" not in self.config
+        ):
+            return
+
+        message = (
+            "'source_weight' configuration option is deprecated and will be"
+            " removed in v3.0.0. Use 'data_source_mismatch_penalty' instead"
+        )
+        for source in self.config.root().sources:
+            if "source_weight" in (source.get(self.name) or {}):
+                if source.filename:  # user config
+                    self._log.warning(message)
+                else:  # 3rd-party plugin config
+                    warnings.warn(message, DeprecationWarning, stacklevel=0)
+
     def commands(self) -> Sequence[Subcommand]:
         """Should return a list of beets.ui.Subcommand objects for
         commands that should be added to beets' CLI.

@@ -13,6 +13,7 @@ from functools import cache, cached_property
 from typing import TYPE_CHECKING, Generic, Literal, Sequence, TypedDict, TypeVar
 
 import unidecode
+from confuse import NotFoundError
 from typing_extensions import NotRequired
 
 from beets.util import cached_classproperty
@@ -106,7 +107,10 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
 
     @cached_property
     def data_source_mismatch_penalty(self) -> float:
-        return self.config["data_source_mismatch_penalty"].as_number()
+        try:
+            return self.config["source_weight"].as_number()
+        except NotFoundError:
+            return self.config["data_source_mismatch_penalty"].as_number()
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)

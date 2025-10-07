@@ -50,6 +50,8 @@ Using Metadata Source Plugins
 We provide several :ref:`autotagger_extensions` that fetch metadata from online
 databases. They share the following configuration options:
 
+.. _data_source_mismatch_penalty:
+
 - **data_source_mismatch_penalty**: Penalty applied to matches during import.
   Any decimal number between 0 and 1. Default: ``0.5``.
 
@@ -65,6 +67,10 @@ databases. They share the following configuration options:
 
   By default, all sources are equally preferred with each having
   ``data_source_mismatch_penalty`` set to ``0.5``.
+
+- **source_weight**
+
+  .. deprecated:: 2.5 Use `data_source_mismatch_penalty`_ instead.
 
 - **search_limit**: Maximum number of search results to consider. Default:
   ``5``.
