@@ -58,8 +58,13 @@ REIMPORT_FRESH_FIELDS_ALBUM = [
     "deezer_album_id",
     "beatport_album_id",
     "tidal_album_id",
+    "media",
+    "releasegroup_id",
+    "data_url",
 ]
-REIMPORT_FRESH_FIELDS_ITEM = list(REIMPORT_FRESH_FIELDS_ALBUM)
+REIMPORT_FRESH_FIELDS_ITEM = [
+    field for field in REIMPORT_FRESH_FIELDS_ALBUM if field != "media"
+]
 
 # Global logger.
 log = logging.getLogger("beets")
