@@ -58,7 +58,6 @@ REIMPORT_FRESH_FIELDS_ITEM = [
     "deezer_album_id",
     "beatport_album_id",
     "tidal_album_id",
-    "releasegroup_id",
     "data_url",
 ]
 REIMPORT_FRESH_FIELDS_ALBUM = [*REIMPORT_FRESH_FIELDS_ITEM, "media"]
