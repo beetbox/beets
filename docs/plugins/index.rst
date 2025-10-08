@@ -52,21 +52,61 @@ databases. They share the following configuration options:
 
 .. _data_source_mismatch_penalty:
 
-- **data_source_mismatch_penalty**: Penalty applied to matches during import.
-  Any decimal number between 0 and 1. Default: ``0.5``.
+- **data_source_mismatch_penalty**: Penalty applied when the data source of a
+  match candidate differs from the original source of your existing tracks. Any
+  decimal number between 0.0 and 1.0. Default: ``0.5``.
 
-  Penalize this data source to prioritize others. For example, to prefer Discogs
-  over MusicBrainz:
+  This setting controls how much to penalize matches from different metadata
+  sources during import. The penalty is applied when beets detects that a match
+  candidate comes from a different data source than what appears to be the
+  original source of your music collection.
+
+  .. important::
+
+      This setting only applies to reimports, not to first-time imports, since
+      ``data_source`` is unknown for new files.
+
+  **Example configurations:**
 
   .. code-block:: yaml
 
+      # Prefer MusicBrainz over Discogs when sources don't match
       plugins: musicbrainz discogs
 
       musicbrainz:
-         data_source_mismatch_penalty: 2.0
+          data_source_mismatch_penalty: 0.3  # Lower penalty = preferred
+      discogs:
+          data_source_mismatch_penalty: 0.8  # Higher penalty = less preferred
 
-  By default, all sources are equally preferred with each having
-  ``data_source_mismatch_penalty`` set to ``0.5``.
+  .. code-block:: yaml
+
+      # Do not penalise candidates from Discogs at all
+      plugins: musicbrainz discogs
+
+      musicbrainz:
+          data_source_mismatch_penalty: 0.5
+      discogs:
+          data_source_mismatch_penalty: 0.0
+
+  .. code-block:: yaml
+
+      # Disable cross-source penalties entirely
+      plugins: musicbrainz discogs
+
+      musicbrainz:
+          data_source_mismatch_penalty: 0.0
+      discogs:
+          data_source_mismatch_penalty: 0.0
+
+  .. tip::
+
+      The last configuration is equivalent to setting:
+
+      .. code-block:: yaml
+
+          match:
+              distance_weights:
+                  data_source: 0.0  # Disable data source matching
 
 - **source_weight**
 
