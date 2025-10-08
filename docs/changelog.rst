@@ -43,6 +43,8 @@ Bug fixes:
   artists but not labels. :bug:`5366`
 - :doc:`plugins/chroma` :doc:`plugins/bpsync` Fix plugin loading issue caused by
   an import of another :class:`beets.plugins.BeetsPlugin` class. :bug:`6033`
+- :doc:`/plugins/fromfilename`: Fix :bug:`5218`, improve the code (refactor
+  regexps, allow for more cases, add some logging), add tests.
 
 For packagers:
 
