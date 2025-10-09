@@ -330,7 +330,7 @@ class TestDataSourceDistance:
             _p("Original", "Other", 0.5, 1.0, MISMATCH, id="mismatch"),
             _p("Original", "unknown", 0.5, 1.0, MISMATCH, id="mismatch-unknown"),  # noqa: E501
             _p("Original", None, 0.5, 1.0, MISMATCH, id="mismatch-no-info"),
-            _p(None, "Other", 0.5, 1.0, MATCH, id="match-no-original"),
+            _p(None, "Other", 0.5, 1.0, MISMATCH, id="mismatch-no-original"),
             _p("unknown", "unknown", 0.5, 1.0, MATCH, id="match-unknown"),
             _p("Original", "Other", 1.0, 1.0, 0.25, id="mismatch-max-penalty"),
             _p("Original", "Other", 0.5, 5.0, 0.3125, id="mismatch-high-weight"),  # noqa: E501
