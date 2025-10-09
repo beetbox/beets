@@ -19,6 +19,7 @@ import logging
 import os
 import pkgutil
 import sys
+from types import ModuleType
 from unittest.mock import ANY, Mock, patch
 
 import pytest
@@ -523,3 +524,40 @@ class TestImportPlugin(PluginMixin):
         assert "PluginImportError" not in caplog.text, (
             f"Plugin '{plugin_name}' has issues during import."
         )
+
+
+class MultiPluginModule(ModuleType):
+    class DummyPlugin1(plugins.BeetsPlugin):
+        pass
+
+    class DummyPlugin2(plugins.BeetsPlugin):
+        pass
+
+    def __init__(self, *_, **__):
+        module_name = "beetsplug.multi_export"
+        super().__init__(module_name)
+        self.DummyPlugin1.__module__ = module_name
+        self.DummyPlugin1 = self.DummyPlugin1
+        self.DummyPlugin2 = self.DummyPlugin2
+        self.DummyPlugin2.__module__ = module_name
+
+
+class TestMultiPluginExport(PluginMixin):
+    """Test that exporting multiple plugins from a single namespace
+    raises a warning.
+
+    TODO: Change to raises an error on migration to 3.0.0
+    """
+
+    plugin = "multi_export"
+
+    @pytest.fixture(autouse=True, scope="class")
+    def setup(self):
+        with patch.dict(
+            sys.modules, {"beetsplug.multi_export": MultiPluginModule()}
+        ):
+            yield
+
+    def test_multi_plugin_export(self):
+        with pytest.deprecated_call():
+            self.load_plugins("multi_export")

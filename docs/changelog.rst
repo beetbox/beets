@@ -72,6 +72,10 @@ For developers and plugin authors:
 - Typing improvements in ``beets/logging.py``: ``getLogger`` now returns
   ``BeetsLogger`` when called with a name, or ``RootLogger`` when called without
   a name.
+- Deprecation: Exporting multiple plugins from a single plugin namespace is no
+  longer supported. This was never an intended use case, though it could occur
+  unintentionally. The system now raises a warning when this happens and
+  provides guidance on how to resolve it.
 
 2.4.0 (September 13, 2025)
 --------------------------
