@@ -51,15 +51,16 @@ SINGLE_ARTIST_THRESH = 0.25
 # def extend_reimport_fresh_fields_item():
 #     importer.REIMPORT_FRESH_FIELDS_ITEM.extend(['tidal_track_popularity']
 # )
-REIMPORT_FRESH_FIELDS_ALBUM = [
+REIMPORT_FRESH_FIELDS_ITEM = [
     "data_source",
     "bandcamp_album_id",
     "spotify_album_id",
     "deezer_album_id",
     "beatport_album_id",
     "tidal_album_id",
+    "data_url",
 ]
-REIMPORT_FRESH_FIELDS_ITEM = list(REIMPORT_FRESH_FIELDS_ALBUM)
+REIMPORT_FRESH_FIELDS_ALBUM = [*REIMPORT_FRESH_FIELDS_ITEM, "media"]
 
 # Global logger.
 log = logging.getLogger("beets")
