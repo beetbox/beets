@@ -61,11 +61,6 @@ databases. They share the following configuration options:
   candidate comes from a different data source than what appears to be the
   original source of your music collection.
 
-  .. important::
-
-      This setting only applies to reimports, not to first-time imports, since
-      ``data_source`` is unknown for new files.
-
   **Example configurations:**
 
   .. code-block:: yaml
