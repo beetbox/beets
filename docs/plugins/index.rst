@@ -47,21 +47,68 @@ some, you can use ``pip``'s "extras" feature to install the dependencies:
 Using Metadata Source Plugins
 -----------------------------
 
-Some plugins provide sources for metadata in addition to MusicBrainz. These
-plugins share the following configuration option:
+We provide several :ref:`autotagger_extensions` that fetch metadata from online
+databases. They share the following configuration options:
 
-- **source_weight**: Penalty applied to matches during import. Set to 0.0 to
-  disable. Default: ``0.5``.
+.. _data_source_mismatch_penalty:
 
-For example, to equally consider matches from Discogs and MusicBrainz add the
-following to your configuration:
+- **data_source_mismatch_penalty**: Penalty applied when the data source of a
+  match candidate differs from the original source of your existing tracks. Any
+  decimal number between 0.0 and 1.0. Default: ``0.5``.
 
-.. code-block:: yaml
+  This setting controls how much to penalize matches from different metadata
+  sources during import. The penalty is applied when beets detects that a match
+  candidate comes from a different data source than what appears to be the
+  original source of your music collection.
 
-    plugins: musicbrainz discogs
+  **Example configurations:**
 
-    discogs:
-       source_weight: 0.0
+  .. code-block:: yaml
+
+      # Prefer MusicBrainz over Discogs when sources don't match
+      plugins: musicbrainz discogs
+
+      musicbrainz:
+          data_source_mismatch_penalty: 0.3  # Lower penalty = preferred
+      discogs:
+          data_source_mismatch_penalty: 0.8  # Higher penalty = less preferred
+
+  .. code-block:: yaml
+
+      # Do not penalise candidates from Discogs at all
+      plugins: musicbrainz discogs
+
+      musicbrainz:
+          data_source_mismatch_penalty: 0.5
+      discogs:
+          data_source_mismatch_penalty: 0.0
+
+  .. code-block:: yaml
+
+      # Disable cross-source penalties entirely
+      plugins: musicbrainz discogs
+
+      musicbrainz:
+          data_source_mismatch_penalty: 0.0
+      discogs:
+          data_source_mismatch_penalty: 0.0
+
+  .. tip::
+
+      The last configuration is equivalent to setting:
+
+      .. code-block:: yaml
+
+          match:
+              distance_weights:
+                  data_source: 0.0  # Disable data source matching
+
+- **source_weight**
+
+  .. deprecated:: 2.5 Use `data_source_mismatch_penalty`_ instead.
+
+- **search_limit**: Maximum number of search results to consider. Default:
+  ``5``.
 
 .. toctree::
     :hidden:
