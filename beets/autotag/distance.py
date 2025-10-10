@@ -345,6 +345,12 @@ class Distance:
         dist = string_dist(str1, str2)
         self.add(key, dist)
 
+    def add_data_source(self, before: str | None, after: str | None) -> None:
+        if before != after and (
+            before or len(metadata_plugins.find_metadata_source_plugins()) > 1
+        ):
+            self.add("data_source", metadata_plugins.get_penalty(after))
+
 
 @cache
 def get_track_length_grace() -> float:
@@ -408,8 +414,7 @@ def track_distance(
     if track_info.medium and item.disc:
         dist.add_expr("medium", item.disc != track_info.medium)
 
-    # Plugins.
-    dist.update(metadata_plugins.track_distance(item, track_info))
+    dist.add_data_source(item.get("data_source"), track_info.data_source)
 
     return dist
 
@@ -525,7 +530,6 @@ def distance(
     for _ in range(len(items) - len(mapping)):
         dist.add("unmatched_tracks", 1.0)
 
-    # Plugins.
-    dist.update(metadata_plugins.album_distance(items, album_info, mapping))
+    dist.add_data_source(likelies["data_source"], album_info.data_source)
 
     return dist

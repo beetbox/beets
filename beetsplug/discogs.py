@@ -129,7 +129,6 @@ class DiscogsPlugin(MetadataSourcePlugin):
                 "apikey": API_KEY,
                 "apisecret": API_SECRET,
                 "tokenfile": "discogs_token.json",
-                "source_weight": 0.5,
                 "user_token": "",
                 "separator": ", ",
                 "index_tracks": False,

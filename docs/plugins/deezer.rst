@@ -27,14 +27,17 @@ Configuration
 -------------
 
 This plugin can be configured like other metadata source plugins as described in
-:ref:`metadata-source-plugin-configuration`. In addition, the following
-configuration options are provided.
+:ref:`metadata-source-plugin-configuration`.
 
-- **search_limit**: The maximum number of results to return from Deezer for each
-  search query. Default: ``5``.
+Default
+~~~~~~~
 
-The default options should work as-is, but there are some options you can put in
-config.yaml under the ``deezer:`` section:
+.. code-block:: yaml
+
+    deezer:
+        data_source_mismatch_penalty: 0.5
+        search_limit: 5
+        search_query_ascii: no
 
 - **search_query_ascii**: If set to ``yes``, the search query will be converted
   to ASCII before being sent to Deezer. Converting searches to ASCII can enhance

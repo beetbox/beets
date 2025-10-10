@@ -65,38 +65,45 @@ Configuration
 This plugin can be configured like other metadata source plugins as described in
 :ref:`metadata-source-plugin-configuration`.
 
-There is one additional option in the ``discogs:`` section, ``index_tracks``.
-Index tracks (see the `Discogs guidelines`_) along with headers, mark divisions
-between distinct works on the same release or within works. When
-``index_tracks`` is enabled:
+Default
+~~~~~~~
 
 .. code-block:: yaml
 
     discogs:
-        index_tracks: yes
+        data_source_mismatch_penalty: 0.5
+        search_limit: 5
+        apikey: REDACTED
+        apisecret: REDACTED
+        tokenfile: discogs_token.json
+        user_token: REDACTED
+        index_tracks: no
+        append_style_genre: no
+        separator: ', '
+        strip_disambiguation: yes
 
-beets will incorporate the names of the divisions containing each track into the
-imported track's title. Default: ``no``.
+- **index_tracks**: Index tracks (see the `Discogs guidelines`_) along with
+  headers, mark divisions between distinct works on the same release or within
+  works. When enabled, beets will incorporate the names of the divisions
+  containing each track into the imported track's title. Default: ``no``.
 
-For example, importing `divisions album`_ would result in track names like:
+  For example, importing `divisions album`_ would result in track names like:
 
-.. code-block:: text
+  .. code-block:: text
 
-    Messiah, Part I: No.1: Sinfony
-    Messiah, Part II: No.22: Chorus- Behold The Lamb Of God
-    Athalia, Act I, Scene I: Sinfonia
+      Messiah, Part I: No.1: Sinfony
+      Messiah, Part II: No.22: Chorus- Behold The Lamb Of God
+      Athalia, Act I, Scene I: Sinfonia
 
-whereas with ``index_tracks`` disabled you'd get:
+  whereas with ``index_tracks`` disabled you'd get:
 
-.. code-block:: text
+  .. code-block:: text
 
-    No.1: Sinfony
-    No.22: Chorus- Behold The Lamb Of God
-    Sinfonia
+      No.1: Sinfony
+      No.22: Chorus- Behold The Lamb Of God
+      Sinfonia
 
-This option is useful when importing classical music.
-
-Other configurations available under ``discogs:`` are:
+  This option is useful when importing classical music.
 
 - **append_style_genre**: Appends the Discogs style (if found) to the genre tag.
   This can be useful if you want more granular genres to categorize your music.
@@ -106,9 +113,6 @@ Other configurations available under ``discogs:`` are:
   "Electronic". Default: ``False``
 - **separator**: How to join multiple genre and style values from Discogs into a
   string. Default: ``", "``
-- **search_limit**: The maximum number of results to return from Discogs. This
-  is useful if you want to limit the number of results returned to speed up
-  searches. Default: ``5``
 - **strip_disambiguation**: Discogs uses strings like ``"(4)"`` to mark distinct
   artists and labels with the same name. If you'd like to use the discogs
   disambiguation in your tags, you can disable it. Default: ``True``
