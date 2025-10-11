@@ -108,7 +108,8 @@ indicates that you need to insert extra arguments before specifying the
 playlist.
 
 Some players require a different syntax. For example, with ``mpv`` the optional
-``$playlist`` variable can be used to match the syntax of the ``--playlist`` option:
+``$playlist`` variable can be used to match the syntax of the ``--playlist``
+option:
 
 ::
 
