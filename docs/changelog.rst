@@ -15,8 +15,11 @@ For packagers:
 
 Other changes:
 
-- Removed old mailing list contact info in docs :bug:`5462`
-- :doc:`guides/main`: Modernized getting started guide using tabs and dropdown menue. Installtion instructions are now more condensed and there is a subpage for additional instructions. 
+- Removed outdated mailing list contact information from the documentation
+  (:bug:`5462`).
+- :doc:`guides/main`: Modernized the *Getting Started* guide with tabbed
+  sections and dropdown menus. Installation instructions have been streamlined,
+  and a new subpage now provides additional setup details.
 
 2.5.0 (October 11, 2025)
 ------------------------
