@@ -31,11 +31,6 @@ ARGS_MARKER = "$args"
 # Indicate where the playlist file (with absolute path) should be inserted into
 # the command string. If this is missing, its placed at the end, but before
 # arguments.
-PLS_MARKER = "$playlist"
-
-# Indicate where the playlist file (with absolute path) should be inserted into
-# the command string. If this is missing, its placed at the end, but before
-# arguments.
 PLS_MARKER = '$playlist'
 
 
