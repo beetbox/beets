@@ -34,7 +34,8 @@ New features:
   :bug:`3354`
 - :doc:`plugins/discogs` Support for name variations and config options to
   specify where the variations are written. :bug:`3354`
-* :doc: `/plugins/play`: Added `$playlist` marker to precisely edit the playlist filepath into the command calling the player program.
+- :doc: `/plugins/play`: Added `$playlist` marker to precisely edit the playlist
+      filepath into the command calling the player program.
 
 Bug fixes:
 
