@@ -9,6 +9,17 @@ Unreleased
 
 New features:
 
+Bug fixes:
+
+For packagers:
+
+Other changes:
+
+2.5.0 (October 11, 2025)
+------------------------
+
+New features:
+
 - :doc:`plugins/lastgenre`: Add a ``--pretend`` option to preview genre changes
   without storing or writing them.
 - :doc:`plugins/convert`: Add a config option to disable writing metadata to
