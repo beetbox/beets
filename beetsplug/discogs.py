@@ -132,9 +132,9 @@ class DiscogsPlugin(MetadataSourcePlugin):
                 "user_token": "",
                 "separator": ", ",
                 "index_tracks": False,
-                "featured_string": "Feat.",
                 "append_style_genre": False,
                 "strip_disambiguation": True,
+                "featured_string": "Feat.",
                 "anv": {
                     "artist_credit": True,
                     "artist": False,
