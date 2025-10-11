@@ -3474,6 +3474,17 @@ files = [
 types-html5lib = "*"
 
 [[package]]
+name = "types-docutils"
+version = "0.22.2.20251006"
+description = "Typing stubs for docutils"
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "types_docutils-0.22.2.20251006-py3-none-any.whl", hash = "sha256:1e61afdeb4fab4ae802034deea3e853ced5c9b5e1d156179000cb68c85daf384"},
+    {file = "types_docutils-0.22.2.20251006.tar.gz", hash = "sha256:c36c0459106eda39e908e9147bcff9dbd88535975cde399433c428a517b9e3b2"},
+]
+
+[[package]]
 name = "types-flask-cors"
 version = "6.0.0.20250520"
 description = "Typing stubs for Flask-Cors"
@@ -3650,7 +3661,7 @@ beatport = ["requests-oauthlib"]
 bpd = ["PyGObject"]
 chroma = ["pyacoustid"]
 discogs = ["python3-discogs-client"]
-docs = ["pydata-sphinx-theme", "sphinx", "sphinx-copybutton", "sphinx-design"]
+docs = ["docutils", "pydata-sphinx-theme", "sphinx", "sphinx-copybutton", "sphinx-design"]
 embedart = ["Pillow"]
 embyupdate = ["requests"]
 fetchart = ["Pillow", "beautifulsoup4", "langdetect", "requests"]
@@ -3672,4 +3683,4 @@ web = ["flask", "flask-cors"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "1db39186aca430ef6f1fd9e51b9dcc3ed91880a458bc21b22d950ed8589fdf5a"
+content-hash = "aedfeb1ac78ae0120855c6a7d6f35963c63cc50a8750142c95dd07ffd213683f"
