@@ -23,12 +23,15 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.extlinks",
+    "sphinx.ext.viewcode",
+    "sphinx_design",
+    "sphinx_copybutton",
 ]
+
 autosummary_generate = True
 exclude_patterns = ["_build"]
 templates_path = ["_templates"]
 source_suffix = {".rst": "restructuredtext", ".md": "markdown"}
-
 
 pygments_style = "sphinx"
 

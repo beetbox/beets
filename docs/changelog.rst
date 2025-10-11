@@ -15,6 +15,12 @@ For packagers:
 
 Other changes:
 
+- Removed outdated mailing list contact information from the documentation
+  (:bug:`5462`).
+- :doc:`guides/main`: Modernized the *Getting Started* guide with tabbed
+  sections and dropdown menus. Installation instructions have been streamlined,
+  and a new subpage now provides additional setup details.
+
 2.5.0 (October 11, 2025)
 ------------------------
 
@@ -60,8 +66,6 @@ Bug fixes:
   incorrectly applied during import matching. The ``source_weight``
   configuration option has been renamed to ``data_source_mismatch_penalty`` to
   better reflect its purpose. :bug:`6066`
-
-For packagers:
 
 Other changes:
 
