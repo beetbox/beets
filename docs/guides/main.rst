@@ -31,8 +31,8 @@ command:
 Basic Configuration
 -------------------
 
-Before using beets, you'll need a configuration file. This YAML_ file tells
-beets where to store your music and how to organize it.
+Before using beets, you'll need a configuration file. This YAML file tells beets
+where to store your music and how to organize it.
 
 While beets is highly configurable, you only need a few basic settings to get
 started.
@@ -121,7 +121,7 @@ To validate that you've set up your configuration and it is valid YAML, you can
 type ``beet version`` to see a list of enabled plugins or ``beet config`` to get
 a complete listing of your current configuration.
 
-.. dropdown:: Full configuration file
+.. dropdown:: Minimal configuration
 
     Here's a sample configuration file that includes the settings mentioned above:
 
@@ -189,9 +189,9 @@ There are two good ways to bring your *existing* library into beets database.
 
         .. code-block:: console
 
-            beet import -A /my/huge/mp3/library
+            beet import --noautotag /my/huge/mp3/library
 
-        The ``-A`` flag skips autotagging and uses your files' current metadata.
+        The ``--noautotag`` / ``-A``  flag skips autotagging and uses your files' current metadata.
 
 .. admonition:: More Import Options
 
