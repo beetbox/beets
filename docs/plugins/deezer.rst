@@ -35,15 +35,23 @@ Default
 .. code-block:: yaml
 
     deezer:
+        search_query_ascii: no
         data_source_mismatch_penalty: 0.5
         search_limit: 5
-        search_query_ascii: no
 
-- **search_query_ascii**: If set to ``yes``, the search query will be converted
-  to ASCII before being sent to Deezer. Converting searches to ASCII can enhance
-  search results in some cases, but in general, it is not recommended. For
-  instance ``artist:deadmau5 album:4×4`` will be converted to ``artist:deadmau5
-  album:4x4`` (notice ``×!=x``). Default: ``no``.
+.. conf:: search_query_ascii
+    :default: no
+
+    If enabled, the search query will be converted to ASCII before being sent to
+    Deezer. Converting searches to ASCII can enhance search results in some cases,
+    but in general, it is not recommended. For instance, ``artist:deadmau5
+    album:4×4`` will be converted to ``artist:deadmau5 album:4x4`` (notice
+    ``×!=x``).
+
+.. include:: ./shared_metadata_source_config.rst
+
+Commands
+--------
 
 The ``deezer`` plugin provides an additional command ``deezerupdate`` to update
 the ``rank`` information from Deezer. The ``rank`` (ranges from 0 to 1M) is a
