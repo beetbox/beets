@@ -11,7 +11,7 @@ install ``beets`` with ``thumbnails`` and ``fetchart`` extras
 
 .. code-block:: bash
 
-    pip install "beets[fetchart,thumbnails]"
+    pipx install "beets[fetchart,thumbnails]"
 
 ``thumbnails`` need to resize the covers, and therefore requires either
 ImageMagick_ or Pillow_.

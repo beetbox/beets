@@ -16,7 +16,7 @@ To use the ``beatport`` plugin, first enable it in your configuration (see
 
 .. code-block:: bash
 
-    pip install "beets[beatport]"
+    pipx install "beets[beatport]"
 
 You will also need to register for a Beatport_ account. The first time you run
 the :ref:`import-cmd` command after enabling the plugin, it will ask you to

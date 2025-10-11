@@ -34,13 +34,36 @@ its name:
     convert:
         auto: true
 
-Some plugins have special dependencies that you'll need to install. The
-documentation page for each plugin will list them in the setup instructions. For
-some, you can use ``pip``'s "extras" feature to install the dependencies:
+Some plugins have special dependencies that you'll need to install. For some,
+you can just use ``pipx``'s "extras" feature to install the dependencies while
+installing beets.
+
+For example, this will install beets and all the python packages required by the
+fetchart, lyrics, and lastgenre "extras" (plugins):
 
 .. code-block:: sh
 
-    pip install "beets[fetchart,lyrics,lastgenre]"
+    pipx install "beets[fetchart,lyrics,lastgenre]"
+
+If you have already installed beets, you can install the extra dependencies in
+one of the following ways:
+
+- If you installed beets via ``pipx``, just run: ``pipx install -f
+  "beets[fetchart,lyrics,lastgenre]"`` Or, if you already know which python
+  packages are needed by the extra/plugin, you can install them running: ``pipx
+  inject beets package1 package2 package3``
+- If you installed beets via ``pip``, just run ``pip install
+  "beets[fetchart,lyrics,lastgenre]"``
+- If you installed beets via your distribution's package manager, you should
+  identify and install the python packages needed by each "extra" feature. You
+  can learn about that in the documentation page for each plugin, in your
+  distribution's package management system (sometimes they are listed as
+  optional/suggested dependencies for the beets package), or in the
+  ``pyproject.toml`` file in the beets sources.
+
+Some plugins need further components to be installed and/or more configuration
+changes, we recommend reading the documentation page for each plugin for
+detailed setup instructions.
 
 .. _metadata-source-plugin-configuration:
 

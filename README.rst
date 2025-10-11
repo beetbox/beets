@@ -90,14 +90,18 @@ simple if you know a little Python.
 Install
 -------
 
-You can install beets by typing ``pip install beets`` or directly from Github
-(see details here_). Beets has also been packaged in the `software
-repositories`_ of several distributions. Check out the `Getting Started`_ guide
-for more information.
+Beets has been packaged in the `software repositories`_ of several
+distributions, or is also installable via pipx_. Check out the `Getting
+Started`_ guide for more information.
+
+If you want to install the very latest source code from Github, see the
+instructions here_.
 
 .. _getting started: https://beets.readthedocs.org/page/guides/main.html
 
 .. _here: https://beets.readthedocs.io/en/latest/faq.html#run-the-latest-source-version-of-beets
+
+.. _pipx: https://pipx.pypa.io/stable
 
 .. _software repositories: https://repology.org/project/beets/versions
 

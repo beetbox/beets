@@ -9,7 +9,7 @@ To use the ``fetchart`` plugin, first enable it in your configuration (see
 
 .. code-block:: bash
 
-    pip install "beets[fetchart]"
+    pipx install "beets[fetchart]"
 
 Fetching Album Art During Import
 --------------------------------

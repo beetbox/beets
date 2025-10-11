@@ -16,7 +16,7 @@ Install
 To use the ``aura`` plugin, first enable it in your configuration (see
 :ref:`using-plugins`). Then, install ``beets`` with ``aura`` extra
 
-    pip install "beets[aura]"
+    pipx install "beets[aura]"
 
 Usage
 -----

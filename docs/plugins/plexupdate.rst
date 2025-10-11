@@ -8,7 +8,7 @@ Firstly, install ``beets`` with ``plexupdate`` extra
 
 .. code-block:: console
 
-    pip install "beets[plexupdate]"
+    pipx install "beets[plexupdate]"
 
 Then, enable ``plexupdate`` plugin it in your configuration (see
 :ref:`using-plugins`). Optionally, configure the specifics of your Plex server.
