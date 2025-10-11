@@ -405,8 +405,8 @@ We'd love to hear about your experience with beets!
         - Get help from other users
 
     .. grid-item-card:: :octicon:`git-pull-request` Developer Resources
-        :link: https://github.com/beetbox/beets
-        :link-type: url
+        :link: /dev/index
+        :link-type: doc
 
         - Contribute code
         - Report issues
