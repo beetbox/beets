@@ -633,14 +633,16 @@ def send(event: EventType, **arguments: Any) -> list[Any]:
 
 
 def feat_tokens(
-    for_artist: bool = True, custom_feat_words: list[str] = []
+    for_artist: bool = True, custom_feat_words: list[str] | None = None
 ) -> str:
     """Return a regular expression that matches phrases like "featuring"
     that separate a main artist or a song title from secondary artists.
     The `for_artist` option determines whether the regex should be
     suitable for matching artist fields (the default) or title fields.
     """
-    feat_words = ["ft", "featuring", "feat", "feat.", "ft."] + custom_feat_words
+    feat_words = ["ft", "featuring", "feat", "feat.", "ft."]
+    if isinstance(custom_feat_words, list):
+        feat_words += custom_feat_words
     if for_artist:
         feat_words += ["with", "vs", "and", "con", "&"]
     return (

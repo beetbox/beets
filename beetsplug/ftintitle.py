@@ -27,7 +27,9 @@ if TYPE_CHECKING:
 
 
 def split_on_feat(
-    artist: str, for_artist: bool = True, custom_feat_words: list[str] = []
+    artist: str,
+    for_artist: bool = True,
+    custom_feat_words: list[str] | None = None,
 ) -> tuple[str, str | None]:
     """Given an artist string, split the "main" artist from any artist
     on the right-hand side of a string like "feat". Return the main
@@ -46,7 +48,9 @@ def split_on_feat(
         return parts
 
 
-def contains_feat(title: str, custom_feat_words: list[str] = []) -> bool:
+def contains_feat(
+    title: str, custom_feat_words: list[str] | None = None
+) -> bool:
     """Determine whether the title contains a "featured" marker."""
     return bool(
         re.search(
@@ -60,7 +64,9 @@ def contains_feat(title: str, custom_feat_words: list[str] = []) -> bool:
 
 
 def find_feat_part(
-    artist: str, albumartist: str | None, custom_feat_words: list[str] = []
+    artist: str,
+    albumartist: str | None,
+    custom_feat_words: list[str] | None = None,
 ) -> str | None:
     """Attempt to find featured artists in the item's artist fields and
     return the results. Returns None if no featured artist found.
