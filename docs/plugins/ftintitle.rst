@@ -28,8 +28,8 @@ file. The available options are:
 - **keep_in_artist**: Keep the featuring X part in the artist field. This can be
   useful if you still want to be able to search for features in the artist
   field. Default: ``no``.
-- **custom_feat_word**: Add custom words to the feat list; any words you add will
-  also be treated as "feat" tokens. Default: ``[]``.
+- **custom_words**: List of additional words that will be treated as a marker for
+  artist features. Default: ``[]``.
 
 Running Manually
 ----------------
