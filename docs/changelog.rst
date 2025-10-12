@@ -8,6 +8,7 @@ Unreleased
 ----------
 
 New features:
+
 - Added argument for custom feat. words in ftintitle.
 
 Bug fixes:
