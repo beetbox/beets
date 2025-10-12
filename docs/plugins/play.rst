@@ -123,4 +123,4 @@ until they are externally wiped could be an issue for privacy or storage
 reasons. If this is the case for you, you might want to use the ``raw`` config
 option described above.
 
-.. _tempfile.tempdir: https://docs.python.org/2/library/tempfile.html#tempfile.tempdir
+.. _tempfile.tempdir: https://docs.python.org/3/library/tempfile.html#tempfile.tempdir
