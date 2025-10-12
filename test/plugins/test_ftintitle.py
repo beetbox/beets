@@ -46,7 +46,7 @@ def set_config(
         "drop": False,
         "auto": True,
         "keep_in_artist": False,
-        "custom_feat_words": [],
+        "custom_words": [],
     }
     env.config["ftintitle"].set(defaults)
     env.config["ftintitle"].set(cfg)
@@ -172,9 +172,9 @@ def add_item(
             ("Alice ft Bob", "Song 1"),
             id="keep-in-artist-drop-from-title",
         ),
-        # ---- custom_feat_words variants ----
+        # ---- custom_words variants ----
         pytest.param(
-            {"format": "featuring {}", "custom_feat_words": ["med"]},
+            {"format": "featuring {}", "custom_words": ["med"]},
             ("ftintitle",),
             ("Alice med Bob", "Song 1", "Alice"),
             ("Alice", "Song 1 featuring Bob"),
@@ -184,7 +184,7 @@ def add_item(
             {
                 "format": "featuring {}",
                 "keep_in_artist": True,
-                "custom_feat_words": ["med"],
+                "custom_words": ["med"],
             },
             ("ftintitle",),
             ("Alice med Bob", "Song 1", "Alice"),
@@ -195,7 +195,7 @@ def add_item(
             {
                 "format": "featuring {}",
                 "keep_in_artist": True,
-                "custom_feat_words": ["med"],
+                "custom_words": ["med"],
             },
             (
                 "ftintitle",
@@ -294,7 +294,7 @@ def test_contains_feat(given: str, expected: bool) -> None:
 
 
 @pytest.mark.parametrize(
-    "given,custom_feat_words,expected",
+    "given,custom_words,expected",
     [
         ("Alice ft. Bob", [], True),
         ("Alice feat. Bob", [], True),
@@ -317,9 +317,9 @@ def test_contains_feat(given: str, expected: bool) -> None:
         ("Alice med Carol", [], False),
     ],
 )
-def test_custom_feat_words(
-    given: str, custom_feat_words: Optional[list[str]], expected: bool
+def test_custom_words(
+    given: str, custom_words: Optional[list[str]], expected: bool
 ) -> None:
-    if custom_feat_words is None:
-        custom_feat_words = []
-    assert ftintitle.contains_feat(given, custom_feat_words) is expected
+    if custom_words is None:
+        custom_words = []
+    assert ftintitle.contains_feat(given, custom_words) is expected
