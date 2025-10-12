@@ -9,6 +9,11 @@ Unreleased
 
 New features:
 
+- Added progress bars to commands for several plugins, showing how many albums
+  or songs have been changed (blue) and how many were unchanged (white). The
+  progress bar includes how much time has passed and an estimate of how much
+  time is left. :bug:`5711`
+
 Bug fixes:
 
 For packagers:
@@ -20,6 +25,12 @@ Other changes:
 - :doc:`guides/main`: Modernized the *Getting Started* guide with tabbed
   sections and dropdown menus. Installation instructions have been streamlined,
   and a new subpage now provides additional setup details.
+
+For developers and plugin authors:
+
+- :doc:`dev/plugins/other/progressbars`: Added progress bar helper function -
+  `ui.iprogress_bar`, which can be used by plugin authors to consistently show
+  progress in the terminal for long-running operations. :bug:`5711`
 
 2.5.0 (October 11, 2025)
 ------------------------

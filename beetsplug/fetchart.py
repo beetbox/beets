@@ -35,7 +35,7 @@ from beets.util.artresizer import ArtResizer
 from beets.util.config import sanitize_pairs
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Iterator, Sequence
+    from collections.abc import Iterator, Sequence
 
     from beets.importer import ImportSession, ImportTask
     from beets.library import Album, Library
@@ -1557,14 +1557,19 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
     def batch_fetch_art(
         self,
         lib: Library,
-        albums: Iterable[Album],
+        albums: ui.SizedIterable[Album],
         force: bool,
         quiet: bool,
     ) -> None:
         """Fetch album art for each of the albums. This implements the manual
         fetchart CLI command.
         """
-        for album in albums:
+
+        for album in ui.iprogress_bar(
+            albums,
+            desc="Fetching album art",
+            unit="albums",
+        ):
             if (
                 album.artpath
                 and not force

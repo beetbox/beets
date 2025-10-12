@@ -121,7 +121,11 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 if not opts.yes and not _confirm(items, not opts.file):
                     return
 
-                for item in items:
+                for item in ui.iprogress_bar(
+                    items,
+                    desc="Embedding artwork",
+                    unit="items",
+                ):
                     art.embed_item(
                         self._log,
                         item,
@@ -156,7 +160,11 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 if not opts.yes and not _confirm(items, not opts.url):
                     os.remove(tempimg)
                     return
-                for item in items:
+                for item in ui.iprogress_bar(
+                    items,
+                    desc="Embedding artwork",
+                    unit="items",
+                ):
                     art.embed_item(
                         self._log,
                         item,
@@ -173,7 +181,11 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 # Confirm with user.
                 if not opts.yes and not _confirm(albums, not opts.file):
                     return
-                for album in albums:
+                for album in ui.iprogress_bar(
+                    albums,
+                    desc="Embedding artwork",
+                    unit="albums",
+                ):
                     art.embed_album(
                         self._log,
                         album,
