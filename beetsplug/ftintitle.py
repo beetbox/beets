@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 def split_on_feat(
     artist: str,
     for_artist: bool = True,
-    custom_feat_words: list[str] | None = None,
+    custom_words: list[str] | None = None,
 ) -> tuple[str, str | None]:
     """Given an artist string, split the "main" artist from any artist
     on the right-hand side of a string like "feat". Return the main
@@ -38,7 +38,7 @@ def split_on_feat(
     """
     # split on the first "feat".
     regex = re.compile(
-        plugins.feat_tokens(for_artist, custom_feat_words), re.IGNORECASE
+        plugins.feat_tokens(for_artist, custom_words), re.IGNORECASE
     )
     parts = tuple(s.strip() for s in regex.split(artist, 1))
     if len(parts) == 1:
@@ -48,15 +48,11 @@ def split_on_feat(
         return parts
 
 
-def contains_feat(
-    title: str, custom_feat_words: list[str] | None = None
-) -> bool:
+def contains_feat(title: str, custom_words: list[str] | None = None) -> bool:
     """Determine whether the title contains a "featured" marker."""
     return bool(
         re.search(
-            plugins.feat_tokens(
-                for_artist=False, custom_feat_words=custom_feat_words
-            ),
+            plugins.feat_tokens(for_artist=False, custom_words=custom_words),
             title,
             flags=re.IGNORECASE,
         )
@@ -66,7 +62,7 @@ def contains_feat(
 def find_feat_part(
     artist: str,
     albumartist: str | None,
-    custom_feat_words: list[str] | None = None,
+    custom_words: list[str] | None = None,
 ) -> str | None:
     """Attempt to find featured artists in the item's artist fields and
     return the results. Returns None if no featured artist found.
@@ -82,7 +78,7 @@ def find_feat_part(
         if albumartist_split[1] != "":
             # Extract the featured artist from the right-hand side.
             _, feat_part = split_on_feat(
-                albumartist_split[1], custom_feat_words=custom_feat_words
+                albumartist_split[1], custom_words=custom_words
             )
             return feat_part
 
@@ -90,7 +86,7 @@ def find_feat_part(
         # look for a featuring artist on the left-hand side.
         else:
             lhs, _ = split_on_feat(
-                albumartist_split[0], custom_feat_words=custom_feat_words
+                albumartist_split[0], custom_words=custom_words
             )
             if lhs:
                 return lhs
@@ -98,7 +94,7 @@ def find_feat_part(
     # Fall back to conservative handling of the track artist without relying
     # on albumartist, which covers compilations using a 'Various Artists'
     # albumartist and album tracks by a guest artist featuring a third artist.
-    _, feat_part = split_on_feat(artist, False, custom_feat_words)
+    _, feat_part = split_on_feat(artist, False, custom_words)
     return feat_part
 
 
@@ -112,7 +108,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
                 "drop": False,
                 "format": "feat. {}",
                 "keep_in_artist": False,
-                "custom_feat_words": [],
+                "custom_words": [],
             }
         )
 
@@ -137,12 +133,12 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             self.config.set_args(opts)
             drop_feat = self.config["drop"].get(bool)
             keep_in_artist_field = self.config["keep_in_artist"].get(bool)
-            custom_feat_words = self.config["custom_feat_words"].get(list)
+            custom_words = self.config["custom_words"].get(list)
             write = ui.should_write()
 
             for item in lib.items(args):
                 if self.ft_in_title(
-                    item, drop_feat, keep_in_artist_field, custom_feat_words
+                    item, drop_feat, keep_in_artist_field, custom_words
                 ):
                     item.store()
                     if write:
@@ -155,11 +151,11 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         """Import hook for moving featuring artist automatically."""
         drop_feat = self.config["drop"].get(bool)
         keep_in_artist_field = self.config["keep_in_artist"].get(bool)
-        custom_feat_words = self.config["custom_feat_words"].get(list)
+        custom_words = self.config["custom_words"].get(list)
 
         for item in task.imported_items():
             if self.ft_in_title(
-                item, drop_feat, keep_in_artist_field, custom_feat_words
+                item, drop_feat, keep_in_artist_field, custom_words
             ):
                 item.store()
 
@@ -169,7 +165,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         feat_part: str,
         drop_feat: bool,
         keep_in_artist_field: bool,
-        custom_feat_words: list[str],
+        custom_words: list[str],
     ) -> None:
         """Choose how to add new artists to the title and set the new
         metadata. Also, print out messages about any changes that are made.
@@ -183,7 +179,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             )
         else:
             track_artist, _ = split_on_feat(
-                item.artist, custom_feat_words=custom_feat_words
+                item.artist, custom_words=custom_words
             )
             self._log.info("artist: {0.artist} -> {1}", item, track_artist)
             item.artist = track_artist
@@ -191,12 +187,12 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         if item.artist_sort:
             # Just strip the featured artist from the sort name.
             item.artist_sort, _ = split_on_feat(
-                item.artist_sort, custom_feat_words=custom_feat_words
+                item.artist_sort, custom_words=custom_words
             )
 
         # Only update the title if it does not already contain a featured
         # artist and if we do not drop featuring information.
-        if not drop_feat and not contains_feat(item.title, custom_feat_words):
+        if not drop_feat and not contains_feat(item.title, custom_words):
             feat_format = self.config["format"].as_str()
             new_format = feat_format.format(feat_part)
             new_title = f"{item.title} {new_format}"
@@ -208,7 +204,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         item: Item,
         drop_feat: bool,
         keep_in_artist_field: bool,
-        custom_feat_words: list[str],
+        custom_words: list[str],
     ) -> bool:
         """Look for featured artists in the item's artist fields and move
         them to the title.
@@ -225,14 +221,14 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         if albumartist and artist == albumartist:
             return False
 
-        _, featured = split_on_feat(artist, custom_feat_words=custom_feat_words)
+        _, featured = split_on_feat(artist, custom_words=custom_words)
         if not featured:
             return False
 
         self._log.info("{.filepath}", item)
 
         # Attempt to find the featured artist.
-        feat_part = find_feat_part(artist, albumartist, custom_feat_words)
+        feat_part = find_feat_part(artist, albumartist, custom_words)
 
         if not feat_part:
             self._log.info("no featuring artists found")
@@ -240,6 +236,6 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
 
         # If we have a featuring artist, move it to the title.
         self.update_metadata(
-            item, feat_part, drop_feat, keep_in_artist_field, custom_feat_words
+            item, feat_part, drop_feat, keep_in_artist_field, custom_words
         )
         return True
