@@ -38,13 +38,15 @@ def env() -> Generator[FtInTitlePluginFunctional, None, None]:
 
 
 def set_config(
-    env: FtInTitlePluginFunctional, cfg: Optional[Dict[str, Union[str, bool]]]
+    env: FtInTitlePluginFunctional,
+    cfg: Optional[Dict[str, Union[str, bool, list[str]]]],
 ) -> None:
     cfg = {} if cfg is None else cfg
     defaults = {
         "drop": False,
         "auto": True,
         "keep_in_artist": False,
+        "custom_feat_words": [],
     }
     env.config["ftintitle"].set(defaults)
     env.config["ftintitle"].set(cfg)
@@ -170,11 +172,44 @@ def add_item(
             ("Alice ft Bob", "Song 1"),
             id="keep-in-artist-drop-from-title",
         ),
+        # ---- custom_feat_words variants ----
+        pytest.param(
+            {"format": "featuring {}", "custom_feat_words": ["med"]},
+            ("ftintitle",),
+            ("Alice med Bob", "Song 1", "Alice"),
+            ("Alice", "Song 1 featuring Bob"),
+            id="custom-feat-words",
+        ),
+        pytest.param(
+            {
+                "format": "featuring {}",
+                "keep_in_artist": True,
+                "custom_feat_words": ["med"],
+            },
+            ("ftintitle",),
+            ("Alice med Bob", "Song 1", "Alice"),
+            ("Alice med Bob", "Song 1 featuring Bob"),
+            id="custom-feat-words-keep-in-artists",
+        ),
+        pytest.param(
+            {
+                "format": "featuring {}",
+                "keep_in_artist": True,
+                "custom_feat_words": ["med"],
+            },
+            (
+                "ftintitle",
+                "-d",
+            ),
+            ("Alice med Bob", "Song 1", "Alice"),
+            ("Alice med Bob", "Song 1"),
+            id="custom-feat-words-keep-in-artists-drop-from-title",
+        ),
     ],
 )
 def test_ftintitle_functional(
     env: FtInTitlePluginFunctional,
-    cfg: Optional[Dict[str, Union[str, bool]]],
+    cfg: Optional[Dict[str, Union[str, bool, list[str]]]],
     cmd_args: Tuple[str, ...],
     given: Tuple[str, str, Optional[str]],
     expected: Tuple[str, str],
@@ -256,3 +291,35 @@ def test_split_on_feat(
 )
 def test_contains_feat(given: str, expected: bool) -> None:
     assert ftintitle.contains_feat(given) is expected
+
+
+@pytest.mark.parametrize(
+    "given,custom_feat_words,expected",
+    [
+        ("Alice ft. Bob", [], True),
+        ("Alice feat. Bob", [], True),
+        ("Alice feat Bob", [], True),
+        ("Alice featuring Bob", [], True),
+        ("Alice (ft. Bob)", [], True),
+        ("Alice (feat. Bob)", [], True),
+        ("Alice [ft. Bob]", [], True),
+        ("Alice [feat. Bob]", [], True),
+        ("Alice defeat Bob", [], False),
+        ("Aliceft.Bob", [], False),
+        ("Alice (defeat Bob)", [], False),
+        ("Live and Let Go", [], False),
+        ("Come With Me", [], False),
+        ("Alice x Bob", ["x"], True),
+        ("Alice x Bob", ["X"], True),
+        ("Alice och Xavier", ["x"], False),
+        ("Alice ft. Xavier", ["x"], True),
+        ("Alice med Carol", ["med"], True),
+        ("Alice med Carol", [], False),
+    ],
+)
+def test_custom_feat_words(
+    given: str, custom_feat_words: Optional[list[str]], expected: bool
+) -> None:
+    if custom_feat_words is None:
+        custom_feat_words = []
+    assert ftintitle.contains_feat(given, custom_feat_words) is expected
