@@ -170,10 +170,6 @@ Other changes:
 
 UpdateVersionCallable = Callable[[str, Version], str]
 FILENAME_AND_UPDATE_TEXT: list[tuple[Path, UpdateVersionCallable]] = [
-    (
-        PYPROJECT,
-        lambda text, new: re.sub(r"(?<=\nversion = )[^\n]+", f'"{new}"', text),
-    ),
     (CHANGELOG, update_changelog),
     (BASE / "docs" / "conf.py", update_docs_config),
 ]

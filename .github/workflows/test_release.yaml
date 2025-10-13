@@ -1,0 +1,43 @@
+name: Make a Beets Release artifacts
+
+on:
+    workflow_dispatch:
+        inputs:
+            version:
+                description: 'Version of the new release, just as a number with no prepended "v"'
+                required: true
+
+env:
+    PYTHON_VERSION: 3.9
+    NEW_VERSION: ${{ inputs.version }}
+    NEW_TAG: v${{ inputs.version }}
+
+jobs:
+    increment-version:
+        name: Bump version, commit and create tag
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+            - name: Install Python tools
+              uses: BrandonLWhite/pipx-install-action@v1.0.3
+            - uses: actions/setup-python@v5
+              with:
+                  python-version: ${{ env.PYTHON_VERSION }}
+                  cache: poetry
+
+            - name: Install dependencies
+              run: poetry install --with=release --extras=docs
+
+            - name: Bump project version
+              run: poe bump "${{ env.NEW_VERSION }}"
+
+            - name: Build a binary wheel and a source tarball
+              run: poe build
+
+            - name: Store the distribution packages
+              uses: actions/upload-artifact@v4
+              with:
+                  name: python-package-distributions-test
+                  path: dist/

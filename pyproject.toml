@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "beets"
-version = "2.5.0"
+version = "0.0.0"
 description = "music tagger and library organizer"
 authors = ["Adrian Sampson <adrian@radbox.org>"]
 maintainers = ["Serene-Arc"]
@@ -35,6 +35,7 @@ include = [ # extra files to include in the sdist
     { path = "test/rsrc/**/*", format = "sdist" },
 ]
 exclude = ["docs/_build", "docs/modd.conf", "docs/**/*.css"]
+
 
 [tool.poetry.urls]
 Changelog = "https://github.com/beetbox/beets/blob/master/docs/changelog.rst"
@@ -173,7 +174,7 @@ build-backend = "poetry_dynamic_versioning.backend"
 
 [tool.pipx-install]
 poethepoet = ">=0.26"
-poetry = ">=1.8,<2"
+poetry = { version = ">=1.8,<2", inject = {"poetry-dynamic-versioning[plugin]" = ">=1.9.1" }}
 
 [tool.poe.tasks.build]
 help = "Build the package"
