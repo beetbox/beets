@@ -18,6 +18,8 @@ New features:
       to receive extra verbose logging around last.fm results and how they are
       resolved. The ``extended_debug`` config setting and ``--debug`` option
       have been removed.
+- :doc:`plugins/mbpseudo`: Add a new `mbpseudo` plugin to proactively receive
+      MusicBrainz pseudo-releases as recommendations during import.
 - Added support for Python 3.13.
 
 Bug fixes:
@@ -27,6 +29,12 @@ Bug fixes:
   audio-features endpoint, the plugin logs a warning once and skips audio
   features for all remaining tracks in the session, avoiding unnecessary API
   calls and rate limit exhaustion.
+
+For plugin developers:
+
+- A new plugin event, ``album_matched``, is sent when an album that is being
+  imported has been matched to its metadata and the corresponding distance has
+  been calculated.
 
 For packagers:
 
