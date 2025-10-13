@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 
+import traceback
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Iterable, Sequence
 
@@ -23,12 +24,13 @@ import musicbrainzngs
 from typing_extensions import override
 
 from beets.autotag.distance import Distance, distance
-from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.autotag.hooks import AlbumInfo
 from beets.autotag.match import assign_items
 from beets.plugins import find_plugins
 from beets.util.id_extractors import extract_release_id
 from beetsplug.musicbrainz import (
     RELEASE_INCLUDES,
+    MusicBrainzAPIError,
     MusicBrainzPlugin,
     _merge_pseudo_and_actual_album,
 )
@@ -50,6 +52,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
         self._log.debug("Desired scripts: {0}", self._scripts)
 
         self.register_listener("pluginload", self._on_plugins_loaded)
+        self.register_listener("album_matched", self._adjust_final_album_match)
 
     # noinspection PyMethodMayBeStatic
     def _on_plugins_loaded(self):
@@ -77,14 +80,15 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
                 items, artist, album, va_likely
             ):
                 if isinstance(album_info, PseudoAlbumInfo):
-                    yield album_info.get_official_release()
                     self._log.debug(
                         "Using {0} release for distance calculations for album {1}",
                         album_info.determine_best_ref(items),
                         album_info.album_id,
                     )
-
-                yield album_info
+                    yield album_info  # first yield pseudo to give it priority
+                    yield album_info.get_official_release()
+                else:
+                    yield album_info
 
     @override
     def album_info(self, release: JSONDict) -> AlbumInfo:
@@ -95,17 +99,27 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
             return official_release
         elif pseudo_release_ids := self._intercept_mb_release(release):
             album_id = self._extract_id(pseudo_release_ids[0])
-            raw_pseudo_release = musicbrainzngs.get_release_by_id(
-                album_id, RELEASE_INCLUDES
-            )
-            pseudo_release = super().album_info(raw_pseudo_release["release"])
-            return PseudoAlbumInfo(
-                pseudo_release=_merge_pseudo_and_actual_album(
-                    pseudo_release, official_release
-                ),
-                official_release=official_release,
-                data_source=self.data_source,
-            )
+            try:
+                raw_pseudo_release = musicbrainzngs.get_release_by_id(
+                    album_id, RELEASE_INCLUDES
+                )
+                pseudo_release = super().album_info(
+                    raw_pseudo_release["release"]
+                )
+                return PseudoAlbumInfo(
+                    pseudo_release=_merge_pseudo_and_actual_album(
+                        pseudo_release, official_release
+                    ),
+                    official_release=official_release,
+                    data_source="MusicBrainz",
+                )
+            except musicbrainzngs.MusicBrainzError as exc:
+                raise MusicBrainzAPIError(
+                    exc,
+                    "get pseudo-release by ID",
+                    album_id,
+                    traceback.format_exc(),
+                )
         else:
             return official_release
 
@@ -153,33 +167,19 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
         else:
             return None
 
-    @override
-    def album_distance(
-        self,
-        items: Sequence[Item],
-        album_info: AlbumInfo,
-        mapping: dict[Item, TrackInfo],
-    ) -> Distance:
-        """We use this function more like a listener for the extra details we are
-        injecting.
-
-        For instances of ``PseudoAlbumInfo`` whose corresponding ``mapping`` is _not_ an
-        instance of ``ImmutableMapping``, we know at this point that all penalties from
-        the normal auto-tagging flow have been applied, so we can switch to the metadata
-        from the pseudo-release for the final proposal.
-        """
-
+    def _adjust_final_album_match(self, match: AlbumMatch):
+        album_info = match.info
         if isinstance(album_info, PseudoAlbumInfo):
-            if not isinstance(mapping, ImmutableMapping):
-                self._log.debug(
-                    "Switching {0} to pseudo-release source for final proposal",
-                    album_info.album_id,
-                )
-                album_info.use_pseudo_as_ref()
-                new_mappings, _, _ = assign_items(items, album_info.tracks)
-                mapping.update(new_mappings)
-
-        return super().album_distance(items, album_info, mapping)
+            mapping = match.mapping
+            self._log.debug(
+                "Switching {0} to pseudo-release source for final proposal",
+                album_info.album_id,
+            )
+            album_info.use_pseudo_as_ref()
+            new_mappings, _, _ = assign_items(
+                list(mapping.keys()), album_info.tracks
+            )
+            mapping.update(new_mappings)
 
     @override
     def _extract_id(self, url: str) -> str | None:
@@ -218,11 +218,16 @@ class PseudoAlbumInfo(AlbumInfo):
         return self.__dict__["_official_release"]
 
     def determine_best_ref(self, items: Sequence[Item]) -> str:
+        ds = self.data_source
+        self.data_source = None
+
         self.use_pseudo_as_ref()
         pseudo_dist = self._compute_distance(items)
 
         self.use_official_as_ref()
         official_dist = self._compute_distance(items)
+
+        self.data_source = ds
 
         if official_dist < pseudo_dist:
             self.use_official_as_ref()
@@ -233,7 +238,7 @@ class PseudoAlbumInfo(AlbumInfo):
 
     def _compute_distance(self, items: Sequence[Item]) -> Distance:
         mapping, _, _ = assign_items(items, self.tracks)
-        return distance(items, self, ImmutableMapping(mapping))
+        return distance(items, self, mapping)
 
     def use_pseudo_as_ref(self):
         self.__dict__["_pseudo_source"] = True
@@ -258,8 +263,3 @@ class PseudoAlbumInfo(AlbumInfo):
             result[k] = deepcopy(v, memo)
 
         return result
-
-
-class ImmutableMapping(dict[Item, TrackInfo]):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
