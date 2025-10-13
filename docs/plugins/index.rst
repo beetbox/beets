@@ -159,6 +159,7 @@ databases. They share the following configuration options:
     loadext
     lyrics
     mbcollection
+    mbpseudo
     mbsubmit
     mbsync
     metasync
@@ -209,6 +210,9 @@ Autotagger Extensions
 
 :doc:`musicbrainz <musicbrainz>`
     Search for releases in the MusicBrainz_ database.
+
+:doc:`mbpseudo <mbpseudo>`
+    Search for releases and pseudo-releases in the MusicBrainz_ database.
 
 :doc:`spotify <spotify>`
     Search for releases in the Spotify_ database.

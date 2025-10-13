@@ -10,8 +10,16 @@ Unreleased
 New features:
 
 - :doc:`plugins/ftintitle`: Added argument for custom feat. words in ftintitle.
+- :doc:`plugins/mbpseudo`: Add a new `mbpseudo` plugin to proactively receive
+  MusicBrainz pseudo-releases as recommendations during import.
 
 Bug fixes:
+
+For plugin developers:
+
+- A new plugin event, ``album_matched``, is sent when an album that is being
+  imported has been matched to its metadata and the corresponding distance has
+  been calculated.
 
 For packagers:
 
