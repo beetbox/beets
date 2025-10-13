@@ -34,6 +34,7 @@ from beets.metadata_plugins import MetadataSourcePlugin
 from beets.util.id_extractors import extract_release_id
 
 from ._utils.requests import HTTPNotFoundError, TimeoutSession
+from .lyrics import RequestHandler
 
 if TYPE_CHECKING:
     from typing import Literal
@@ -56,10 +57,6 @@ FIELDS_TO_MB_KEYS = {
     "media": "format",
     "year": "date",
 }
-
-
-class LimiterTimeoutSession(LimiterMixin, TimeoutSession):
-    pass
 
 
 RELEASE_INCLUDES = [
@@ -99,30 +96,36 @@ BROWSE_CHUNKSIZE = 100
 BROWSE_MAXTRACKS = 500
 
 
+class LimiterTimeoutSession(LimiterMixin, TimeoutSession):
+    pass
+
+
 @dataclass
-class MusicBrainzAPI:
+class MusicBrainzAPI(RequestHandler):
+    session_type = LimiterTimeoutSession
+
     api_host: str
     rate_limit: float
 
     @cached_property
     def session(self) -> LimiterTimeoutSession:
-        return LimiterTimeoutSession(per_second=self.rate_limit)
+        return self.session_type(per_second=self.rate_limit)
 
-    def _get(self, entity: str, **kwargs) -> JSONDict:
-        return self.session.get(
+    def get_entity(self, entity: str, **kwargs) -> JSONDict:
+        return self.fetch_json(
             f"{self.api_host}/ws/2/{entity}", params={**kwargs, "fmt": "json"}
-        ).json()
+        )
 
     def get_release(self, id_: str) -> JSONDict:
-        return self._get(f"release/{id_}", inc=" ".join(RELEASE_INCLUDES))
+        return self.get_entity(f"release/{id_}", inc=" ".join(RELEASE_INCLUDES))
 
     def get_recording(self, id_: str) -> JSONDict:
-        return self._get(f"recording/{id_}", inc=" ".join(TRACK_INCLUDES))
+        return self.get_entity(f"recording/{id_}", inc=" ".join(TRACK_INCLUDES))
 
     def browse_recordings(self, **kwargs) -> list[JSONDict]:
         kwargs.setdefault("limit", BROWSE_CHUNKSIZE)
         kwargs.setdefault("inc", BROWSE_INCLUDES)
-        return self._get("recording", **kwargs)["recordings"]
+        return self.get_entity("recording", **kwargs)["recordings"]
 
 
 def _preferred_alias(aliases: list[JSONDict]):
@@ -149,7 +152,7 @@ def _preferred_alias(aliases: list[JSONDict]):
             if (
                 alias["locale"] == locale
                 and alias.get("primary")
-                and alias.get("type", "").lower() not in ignored_alias_types
+                and (alias.get("type") or "").lower() not in ignored_alias_types
             ):
                 matches.append(alias)
 
@@ -790,7 +793,7 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
         self._log.debug(
             "Searching for MusicBrainz {}s with: {!r}", query_type, query
         )
-        return self.api._get(
+        return self.api.get_entity(
             query_type, query=query, limit=self.config["search_limit"].get()
         )[f"{query_type}s"]
 

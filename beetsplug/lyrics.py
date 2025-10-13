@@ -26,7 +26,7 @@ from functools import cached_property, partial, total_ordering
 from html import unescape
 from itertools import groupby
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterable, Iterator, NamedTuple
+from typing import TYPE_CHECKING, NamedTuple
 from urllib.parse import quote, quote_plus, urlencode, urlparse
 
 import langdetect
@@ -34,14 +34,17 @@ import requests
 from bs4 import BeautifulSoup
 from unidecode import unidecode
 
-import beets
 from beets import plugins, ui
 from beets.autotag.distance import string_dist
 from beets.util.config import sanitize_choices
 
-from ._utils.requests import CaptchaError, HTTPNotFoundError, TimeoutSession
+from ._utils.requests import HTTPNotFoundError, RequestHandler
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable, Iterator
+
+    import confuse
+
     from beets.importer import ImportTask
     from beets.library import Item, Library
     from beets.logging import BeetsLogger as Logger
@@ -57,7 +60,9 @@ if TYPE_CHECKING:
 INSTRUMENTAL_LYRICS = "[Instrumental]"
 
 
-r_session = TimeoutSession()
+class CaptchaError(requests.exceptions.HTTPError):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__("Captcha is required", *args, **kwargs)
 
 
 # Utilities.
@@ -153,8 +158,17 @@ def slug(text: str) -> str:
     return re.sub(r"\W+", "-", unidecode(text).lower().strip()).strip("-")
 
 
-class RequestHandler:
+class LyricsRequestHandler(RequestHandler):
     _log: Logger
+
+    def status_to_error(self, code: int) -> type[requests.HTTPError] | None:
+        if err := super().status_to_error(code):
+            return err
+
+        if 300 <= code < 400:
+            return CaptchaError
+
+        return None
 
     def debug(self, message: str, *args) -> None:
         """Log a debug message with the class name."""
@@ -185,7 +199,7 @@ class RequestHandler:
         """
         url = self.format_url(url, params)
         self.debug("Fetching HTML from {}", url)
-        r = r_session.get(url, **kwargs)
+        r = self.request("get", url, **kwargs)
         r.encoding = None
         return r.text
 
@@ -193,13 +207,13 @@ class RequestHandler:
         """Return JSON data from the given URL."""
         url = self.format_url(url, params)
         self.debug("Fetching JSON from {}", url)
-        return r_session.get(url, **kwargs).json()
+        return super().fetch_json(url, **kwargs)
 
     def post_json(self, url: str, params: JSONDict | None = None, **kwargs):
         """Send POST request and return JSON response."""
         url = self.format_url(url, params)
         self.debug("Posting JSON to {}", url)
-        return r_session.post(url, **kwargs).json()
+        return self.request("post", url, **kwargs).json()
 
     @contextmanager
     def handle_request(self) -> Iterator[None]:
@@ -218,8 +232,10 @@ class BackendClass(type):
         return cls.__name__.lower()
 
 
-class Backend(RequestHandler, metaclass=BackendClass):
-    def __init__(self, config, log):
+class Backend(LyricsRequestHandler, metaclass=BackendClass):
+    config: confuse.Subview
+
+    def __init__(self, config: confuse.Subview, log: Logger) -> None:
         self._log = log
         self.config = config
 
@@ -710,7 +726,7 @@ class Google(SearchBackend):
 
 
 @dataclass
-class Translator(RequestHandler):
+class Translator(LyricsRequestHandler):
     TRANSLATE_URL = "https://api.cognitive.microsofttranslator.com/translate"
     LINE_PARTS_RE = re.compile(r"^(\[\d\d:\d\d.\d\d\]|) *(.*)$")
     SEPARATOR = " | "
@@ -918,7 +934,7 @@ class RestFiles:
         ui.print_(textwrap.dedent(text))
 
 
-class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
+class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
     BACKEND_BY_NAME = {
         b.name: b for b in [LRCLib, Google, Genius, Tekstowo, MusiXmatch]
     }
