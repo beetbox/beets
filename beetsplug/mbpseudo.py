@@ -14,8 +14,10 @@
 
 """Adds pseudo-releases from MusicBrainz as candidates during import."""
 
+from __future__ import annotations
+
 from copy import deepcopy
-from typing import Any, Iterable, Optional, Sequence
+from typing import TYPE_CHECKING, Any, Iterable, Sequence
 
 import musicbrainzngs
 from typing_extensions import override
@@ -23,15 +25,18 @@ from typing_extensions import override
 from beets.autotag.distance import Distance, distance
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.autotag.match import assign_items
-from beets.library import Item
 from beets.plugins import find_plugins
 from beets.util.id_extractors import extract_release_id
-from beetsplug._typing import JSONDict
 from beetsplug.musicbrainz import (
     RELEASE_INCLUDES,
     MusicBrainzPlugin,
     _merge_pseudo_and_actual_album,
 )
+
+if TYPE_CHECKING:
+    from beets.autotag import AlbumMatch
+    from beets.library import Item
+    from beetsplug._typing import JSONDict
 
 _STATUS_PSEUDO = "Pseudo-Release"
 
@@ -128,7 +133,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
         self,
         album_id: str,
         relation: JSONDict,
-    ) -> Optional[str]:
+    ) -> str | None:
         if (
             len(self._scripts) == 0
             or relation.get("type", "") != "transl-tracklisting"
@@ -177,7 +182,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
         return super().album_distance(items, album_info, mapping)
 
     @override
-    def _extract_id(self, url: str) -> Optional[str]:
+    def _extract_id(self, url: str) -> str | None:
         return extract_release_id("MusicBrainz", url)
 
 
