@@ -1,4 +1,4 @@
-name: Make a Beets Release artifacts
+name: Create a beets release artifact (testing only)
 
 on:
     workflow_dispatch:
@@ -21,7 +21,7 @@ jobs:
               with:
                   fetch-depth: 0
             - name: Install Python tools
-              uses: BrandonLWhite/pipx-install-action@v1.0.3
+              uses: BrandonLWhite/pipx-install-action@1b697df89b675eb31d19417e53b4c066d21650d7 # v1.1.0
             - uses: actions/setup-python@v5
               with:
                   python-version: ${{ env.PYTHON_VERSION }}
