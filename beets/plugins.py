@@ -228,9 +228,9 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         # In order to verify the config we need to make sure the plugin is fully
         # configured (plugins usually add the default configuration *after*
         # calling super().__init__()).
-        self.register_listener("pluginload", self.verify_config)
+        self.register_listener("pluginload", self._verify_config)
 
-    def verify_config(self, *_, **__) -> None:
+    def _verify_config(self, *_, **__) -> None:
         """Verify plugin configuration.
 
         If deprecated 'source_weight' option is explicitly set by the user, they
@@ -422,6 +422,12 @@ def _get_plugin(name: str) -> BeetsPlugin | None:
     Attempts to import the plugin module, locate the appropriate plugin class
     within it, and return an instance. Handles import failures gracefully and
     logs warnings for missing plugins or loading errors.
+
+    Note we load the *last* plugin class found in the plugin namespace. This
+    allows plugins to define helper classes that inherit from BeetsPlugin
+    without those being loaded as the main plugin class.
+
+    Returns None if the plugin could not be loaded for any reason.
     """
     try:
         try:
@@ -429,7 +435,7 @@ def _get_plugin(name: str) -> BeetsPlugin | None:
         except Exception as exc:
             raise PluginImportError(name) from exc
 
-        for obj in namespace.__dict__.values():
+        for obj in reversed(namespace.__dict__.values()):
             if (
                 inspect.isclass(obj)
                 and not isinstance(

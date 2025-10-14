@@ -40,8 +40,8 @@ or your plugin subpackage
     anymore.
 
 The meat of your plugin goes in ``myawesomeplugin.py``. Every plugin has to
-extend the :class:`beets.plugins.BeetsPlugin` abstract base class [2]_ . For
-instance, a minimal plugin without any functionality would look like this:
+extend the |BeetsPlugin| abstract base class [2]_ . For instance, a minimal
+plugin without any functionality would look like this:
 
 .. code-block:: python
 
@@ -51,6 +51,12 @@ instance, a minimal plugin without any functionality would look like this:
 
     class MyAwesomePlugin(BeetsPlugin):
         pass
+
+.. attention::
+
+    If your plugin is composed of intermediate |BeetsPlugin| subclasses, make
+    sure that your plugin is defined *last* in the namespace. We only load the
+    last subclass of |BeetsPlugin| we find in your plugin namespace.
 
 To use your new plugin, you need to package [3]_ your plugin and install it into
 your ``beets`` (virtual) environment. To enable your plugin, add it it to the
