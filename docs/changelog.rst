@@ -9,7 +9,7 @@ Unreleased
 
 New features:
 
-- :doc:`plugins/fitintitle`: Added argument for custom feat. words in ftintitle.
+- :doc:`plugins/ftintitle`: Added argument for custom feat. words in ftintitle.
 
 Bug fixes:
 
