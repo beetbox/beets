@@ -82,6 +82,7 @@ man_pages = [
 rst_epilog = """
 .. |Album| replace:: :class:`~beets.library.models.Album`
 .. |AlbumInfo| replace:: :class:`beets.autotag.hooks.AlbumInfo`
+.. |BeetsPlugin| replace:: :class:`beets.plugins.BeetsPlugin`
 .. |ImportSession| replace:: :class:`~beets.importer.session.ImportSession`
 .. |ImportTask| replace:: :class:`~beets.importer.tasks.ImportTask`
 .. |Item| replace:: :class:`~beets.library.models.Item`
