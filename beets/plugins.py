@@ -228,9 +228,9 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         # In order to verify the config we need to make sure the plugin is fully
         # configured (plugins usually add the default configuration *after*
         # calling super().__init__()).
-        self.register_listener("pluginload", self.verify_config)
+        self.register_listener("pluginload", self._verify_config)
 
-    def verify_config(self, *_, **__) -> None:
+    def _verify_config(self, *_, **__) -> None:
         """Verify plugin configuration.
 
         If deprecated 'source_weight' option is explicitly set by the user, they
