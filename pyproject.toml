@@ -158,18 +158,9 @@ web = ["flask", "flask-cors"]
 [tool.poetry.scripts]
 beet = "beets.ui:main"
 
-
-[tool.poetry-dynamic-versioning]
-enable = true
-vcs = "git"
-format = "{base}.dev{distance}+{commit}"
-
-[tool.poetry-dynamic-versioning.files."beets/_version.py"]
-persistent-substitution = true
-
 [build-system]
-requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
-build-backend = "poetry_dynamic_versioning.backend"
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
 
 [tool.pipx-install]
 poethepoet = ">=0.26"

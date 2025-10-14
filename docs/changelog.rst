@@ -22,6 +22,9 @@ For packagers:
 
 - Fixed issue with legacy metadata plugins not copying properties from the base
   class.
+- Reverted the following: When installing ``beets`` via git or locally the
+  version string now reflects the current git branch and commit hash.
+  :bug:`6089`
 
 Other changes:
 
