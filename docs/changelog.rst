@@ -9,6 +9,10 @@ Unreleased
 
 New features:
 
+- :doc:`plugins/zero`: Add new configuration option, ``omit_single_disc``, to
+  allow zeroing the disc number on write for single-disc albums. Defaults to
+  False.
+
 Bug fixes:
 
 For packagers:
