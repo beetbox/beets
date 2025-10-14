@@ -1,4 +1,6 @@
 name: Create a beets release artifact (testing only)
+permissions:
+    contents: write
 
 on:
     workflow_dispatch:
