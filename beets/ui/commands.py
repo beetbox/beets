@@ -2170,20 +2170,23 @@ def move_items(
                 ),
             )
 
-        for obj in objs:
+        for obj in ui.iprogress_bar(objs, desc=action, unit=entity):
             log.debug("moving: {.filepath}", obj)
 
-            if export:
-                # Copy without affecting the database.
-                obj.move(
-                    operation=MoveOperation.COPY, basedir=dest, store=False
-                )
-            else:
-                # Ordinary move/copy: store the new path.
-                if copy:
-                    obj.move(operation=MoveOperation.COPY, basedir=dest)
+            try:
+                if export:
+                    # Copy without affecting the database.
+                    obj.move(
+                        operation=MoveOperation.COPY, basedir=dest, store=False
+                    )
                 else:
-                    obj.move(operation=MoveOperation.MOVE, basedir=dest)
+                    # Ordinary move/copy: store the new path.
+                    if copy:
+                        obj.move(operation=MoveOperation.COPY, basedir=dest)
+                    else:
+                        obj.move(operation=MoveOperation.MOVE, basedir=dest)
+            except FileNotFoundError as e:
+                log.error("Failed to {} '{}': {}", act, obj, e)
 
 
 def move_func(lib, opts, args):
