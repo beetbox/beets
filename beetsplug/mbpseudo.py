@@ -47,6 +47,8 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
     def __init__(self) -> None:
         super().__init__()
 
+        self._release_getter = musicbrainzngs.get_release_by_id
+
         self.config.add({"scripts": []})
         self._scripts = self.config["scripts"].as_str_seq()
         self._log.debug("Desired scripts: {0}", self._scripts)
@@ -100,7 +102,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
         elif pseudo_release_ids := self._intercept_mb_release(release):
             album_id = self._extract_id(pseudo_release_ids[0])
             try:
-                raw_pseudo_release = musicbrainzngs.get_release_by_id(
+                raw_pseudo_release = self._release_getter(
                     album_id, RELEASE_INCLUDES
                 )
                 pseudo_release = super().album_info(
