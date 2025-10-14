@@ -17,6 +17,9 @@ Bug fixes:
 
 For packagers:
 
+- Fixed dynamic versioning install not disabled for source distribution builds.
+  :bug:`6089`
+
 Other changes:
 
 - Removed outdated mailing list contact information from the documentation

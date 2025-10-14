@@ -158,7 +158,6 @@ web = ["flask", "flask-cors"]
 [tool.poetry.scripts]
 beet = "beets.ui:main"
 
-
 [tool.poetry-dynamic-versioning]
 enable = true
 vcs = "git"
@@ -173,7 +172,7 @@ build-backend = "poetry_dynamic_versioning.backend"
 
 [tool.pipx-install]
 poethepoet = ">=0.26"
-poetry = ">=1.8,<2"
+poetry = { version = ">=1.8,<2", inject = {"poetry-dynamic-versioning[plugin]" = ">=1.9.1" }}
 
 [tool.poe.tasks.build]
 help = "Build the package"
