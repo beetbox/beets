@@ -22,6 +22,8 @@ For packagers:
 
 - Fixed dynamic versioning install not disabled for source distribution builds.
   :bug:`6089`
+- Fixed issue with legacy metadata plugins not copying properties from the base
+  class.
 
 Other changes:
 
