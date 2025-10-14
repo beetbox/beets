@@ -498,6 +498,27 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         obj.genre = genre
         obj.store()
 
+    def _process_item(self, item: Item, write: bool = False):
+        genre, label = self._get_genre(item)
+
+        if genre:
+            self._apply_item_genre(item, label, genre)
+            if write and not self.config["pretend"]:
+                item.try_write()
+        else:
+            self._log.info('No genre found for track "{.title}"', item)
+
+    def _process_album(self, album: Album, write: bool = False):
+        album_genre, label = self._get_genre(album)
+        self._apply_album_genre(album, label, album_genre)
+
+        # If we're using track-level sources, store the album genre only (this
+        # happened in _apply_album_genre already), then also look up individual
+        # track genres.
+        if "track" in self.sources:
+            for item in album.items():
+                self._process_item(item, write=write)
+
     def commands(self):
         lastgenre_cmd = ui.Subcommand("lastgenre", help="fetch genres")
         lastgenre_cmd.parser.add_option(
@@ -573,30 +594,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             if opts.album:
                 # Fetch genres for whole albums
                 for album in lib.albums(args):
-                    album_genre, label = self._get_genre(album)
-                    self._apply_album_genre(album, label, album_genre)
-
-                    for item in album.items():
-                        # If we're using track-level sources, also look up each
-                        # track on the album.
-                        if "track" in self.sources:
-                            item_genre, label = self._get_genre(item)
-
-                            if not item_genre:
-                                self._log.info(
-                                    'No genre found for track "{0.title}"',
-                                    item,
-                                )
-                            else:
-                                self._apply_item_genre(item, label, item_genre)
-                                if write:
-                                    item.try_write()
-
+                    self._process_album(album, write=write)
             else:
                 # Just query single tracks or singletons
                 for item in lib.items(args):
-                    singleton_genre, label = self._get_genre(item)
-                    self._apply_item_genre(item, label, singleton_genre)
+                    self._process_item(item, write=write)
 
         lastgenre_cmd.func = lastgenre_func
         return [lastgenre_cmd]
@@ -604,22 +606,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
     def imported(self, session, task):
         """Event hook called when an import task finishes."""
         if task.is_album:
-            album = task.album
-            album_genre, label = self._get_genre(album)
-            self._apply_album_genre(album, label, album_genre)
-
-            # If we're using track-level sources, store the album genre only (this
-            # happened in _apply_album_genre already), then also look up individual
-            # track genres.
-            if "track" in self.sources:
-                for item in album.items():
-                    item_genre, label = self._get_genre(item)
-                    self._apply_item_genre(item, label, item_genre)
-
+            self._process_album(task.album)
         else:
-            item = task.item
-            item_genre, label = self._get_genre(item)
-            self._apply_item_genre(item, label, item_genre)
+            self._process_item(task.item)
 
     def _tags_for(self, obj, min_weight=None):
         """Core genre identification routine.
