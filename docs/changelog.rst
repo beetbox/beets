@@ -15,6 +15,9 @@ New features:
 
 Bug fixes:
 
+- |BeetsPlugin|: load the last plugin class defined in the plugin namespace.
+  :bug:`6093`
+
 For packagers:
 
 - Fixed dynamic versioning install not disabled for source distribution builds.
@@ -23,7 +26,7 @@ For packagers:
 Other changes:
 
 - Removed outdated mailing list contact information from the documentation
-  (:bug:`5462`).
+  :bug:`5462`.
 - :doc:`guides/main`: Modernized the *Getting Started* guide with tabbed
   sections and dropdown menus. Installation instructions have been streamlined,
   and a new subpage now provides additional setup details.
