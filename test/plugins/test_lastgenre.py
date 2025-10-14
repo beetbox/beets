@@ -14,16 +14,18 @@
 
 """Tests for the 'lastgenre' plugin."""
 
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 
 from beets.test import _common
-from beets.test.helper import BeetsTestCase
+from beets.test.helper import PluginTestCase
 from beetsplug import lastgenre
 
 
-class LastGenrePluginTest(BeetsTestCase):
+class LastGenrePluginTest(PluginTestCase):
+    plugin = "lastgenre"
+
     def setUp(self):
         super().setUp()
         self.plugin = lastgenre.LastGenrePlugin()
@@ -131,6 +133,36 @@ class LastGenrePluginTest(BeetsTestCase):
             "math rock",
         ]
 
+    @patch("beets.ui.should_write", Mock(return_value=True))
+    @patch(
+        "beetsplug.lastgenre.LastGenrePlugin._get_genre",
+        Mock(return_value=("Mock Genre", "mock stage")),
+    )
+    def test_pretend_option_skips_library_updates(self):
+        item = self.create_item(
+            album="Pretend Album",
+            albumartist="Pretend Artist",
+            artist="Pretend Artist",
+            title="Pretend Track",
+            genre="Original Genre",
+        )
+        album = self.lib.add_album([item])
+
+        def unexpected_store(*_, **__):
+            raise AssertionError("Unexpected store call")
+
+        # Verify that try_write was never called (file operations skipped)
+        with (
+            patch("beetsplug.lastgenre.Item.store", unexpected_store),
+            self.assertLogs() as logs,
+        ):
+            self.run_command("lastgenre", "--pretend")
+
+        assert "Mock Genre" in str(logs.output)
+        album.load()
+        assert album.genre == "Original Genre"
+        assert album.items()[0].genre == "Original Genre"
+
     def test_no_duplicate(self):
         """Remove duplicated genres."""
         self._setup_config(count=99)
@@ -170,52 +202,6 @@ class LastGenrePluginTest(BeetsTestCase):
         tags = ("electronic", "ambient", "chillout")
         res = self.plugin._sort_by_depth(tags)
         assert res == ["ambient", "electronic"]
-
-
-def test_pretend_option_skips_library_updates(mocker):
-    """Test that pretend mode logs actions but skips library updates."""
-
-    # Setup
-    test_case = BeetsTestCase()
-    test_case.setUp()
-    plugin = lastgenre.LastGenrePlugin()
-    item = test_case.create_item(
-        album="Album",
-        albumartist="Artist",
-        artist="Artist",
-        title="Track",
-        genre="Original Genre",
-    )
-    album = test_case.lib.add_album([item])
-    command = plugin.commands()[0]
-    opts, args = command.parser.parse_args(["--pretend"])
-
-    # Mocks
-    mocker.patch.object(lastgenre.ui, "should_write", return_value=True)
-    mock_get_genre = mocker.patch.object(
-        plugin, "_get_genre", return_value=("New Genre", "log label")
-    )
-    mock_log = mocker.patch.object(plugin._log, "info")
-    mock_write = mocker.patch.object(item, "try_write")
-
-    # Run lastgenre
-    command.func(test_case.lib, opts, args)
-    mock_get_genre.assert_called_once()
-
-    # Test logging
-    assert any(
-        call.args[0].startswith("Pretend:") for call in mock_log.call_args_list
-    )
-
-    # Test file operations should be skipped
-    mock_write.assert_not_called()
-
-    # Test database should remain unchanged
-    stored_album = test_case.lib.get_album(album.id)
-    assert stored_album.genre == "Original Genre"
-    assert stored_album.items()[0].genre == "Original Genre"
-
-    test_case.tearDown()
 
 
 @pytest.mark.parametrize(
