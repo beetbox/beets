@@ -192,20 +192,29 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
             stacklevel=3,
         )
 
-        abstracts = MetadataSourcePlugin.__abstractmethods__
-
-        for name, method in inspect.getmembers(MetadataSourcePlugin):
-            # Skip if already defined in the subclass
-            if hasattr(cls, name) or name in abstracts:
-                continue
-
-            # Copy functions, methods, and properties
-            if (
-                inspect.isfunction(method)
-                or inspect.ismethod(method)
-                or isinstance(method, cached_property)
-            ):
-                setattr(cls, name, method)
+        for name, method in inspect.getmembers(
+            MetadataSourcePlugin,
+            predicate=lambda f: (
+                (
+                    isinstance(f, cached_property)
+                    and f.attrname is not None
+                    and not hasattr(BeetsPlugin, f.attrname)
+                )
+                or (
+                    isinstance(f, property)
+                    and f.fget is not None
+                    and f.fget.__name__ is not None
+                    and not hasattr(BeetsPlugin, f.fget.__name__)
+                )
+                or (
+                    inspect.isfunction(f)
+                    and f.__name__
+                    not in MetadataSourcePlugin.__abstractmethods__
+                    and not hasattr(BeetsPlugin, f.__name__)
+                )
+            ),
+        ):
+            setattr(cls, name, method)
 
     def __init__(self, name: str | None = None):
         """Perform one-time plugin setup."""
