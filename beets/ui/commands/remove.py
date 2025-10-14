@@ -63,7 +63,7 @@ def remove_items(lib, query, album, delete, force):
 
     # Remove (and possibly delete) items.
     with lib.transaction():
-        for obj in objs:
+        for obj in ui.iprogress_bar(objs, desc="Removing", unit="item"):
             obj.remove(delete)
 
 
