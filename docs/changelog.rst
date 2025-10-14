@@ -9,6 +9,17 @@ Unreleased
 
 New features:
 
+Bug fixes:
+
+For packagers:
+
+Other changes:
+
+2.5.1 (October 14, 2025)
+------------------------
+
+New features:
+
 - :doc:`plugins/zero`: Add new configuration option, ``omit_single_disc``, to
   allow zeroing the disc number on write for single-disc albums. Defaults to
   False.
