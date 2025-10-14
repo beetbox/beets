@@ -1625,7 +1625,7 @@ def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
 
         # Walk through the items and pick up their changes.
         affected_albums = set()
-        for item in items:
+        for item in ui.iprogress_bar(items, desc="Updating", unit="item"):
             # Item deleted?
             if not item.path or not os.path.exists(syspath(item.path)):
                 ui.print_(format(item))
@@ -1683,7 +1683,7 @@ def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
             return
 
         # Modify affected albums to reflect changes in their items.
-        for album_id in affected_albums:
+        for album_id in ui.iprogress_bar(affected_albums, "Updating", unit="album"):
             if album_id is None:  # Singletons.
                 continue
             album = lib.get_album(album_id)
@@ -1839,7 +1839,7 @@ def remove_items(lib, query, album, delete, force):
 
     # Remove (and possibly delete) items.
     with lib.transaction():
-        for obj in objs:
+        for obj in ui.iprogress_bar(objs, desc="Removing", unit="item"):
             obj.remove(delete)
 
 
@@ -1992,7 +1992,7 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm, inherit):
 
     # Apply changes to database and files
     with lib.transaction():
-        for obj in changed:
+        for obj in ui.iprogress_bar(changed, desc="Modifying", unit="item"):
             obj.try_sync(write, move, inherit)
 
 
@@ -2125,7 +2125,7 @@ def move_items(
     def isalbummoved(album):
         return any(isitemmoved(i) for i in album.items())
 
-    objs = [o for o in objs if (isalbummoved if album else isitemmoved)(o)]
+    objs = [o for o in ui.iprogress_bar(objs, desc="Preparing", unit="item") if (isalbummoved if album else isitemmoved)(o)]
     num_unmoved = num_objs - len(objs)
     # Report unmoved files that match the query.
     unmoved_msg = ""
@@ -2254,7 +2254,7 @@ def write_items(lib, query, pretend, force):
     """
     items, albums = _do_query(lib, query, False, False)
 
-    for item in items:
+    for item in ui.iprogress_bar(items, desc="Writing", unit="item"):
         # Item deleted?
         if not os.path.exists(syspath(item.path)):
             log.info("missing file: {.filepath}", item)
