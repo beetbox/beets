@@ -3,6 +3,8 @@ import pathlib
 
 import pytest
 
+from beets.autotag import AlbumMatch
+from beets.autotag.distance import Distance
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.library import Item
 from beets.test.helper import PluginMixin
@@ -14,48 +16,50 @@ from beetsplug.mbpseudo import (
 )
 
 
+@pytest.fixture(scope="module")
+def official_release_info() -> AlbumInfo:
+    return AlbumInfo(
+        tracks=[TrackInfo(title="百花繚乱")],
+        album_id="official",
+        album="百花繚乱",
+    )
+
+
+@pytest.fixture(scope="module")
+def pseudo_release_info() -> AlbumInfo:
+    return AlbumInfo(
+        tracks=[TrackInfo(title="In Bloom")],
+        album_id="pseudo",
+        album="In Bloom",
+    )
+
+
 class TestPseudoAlbumInfo:
-    @pytest.fixture
-    def official_release(self) -> AlbumInfo:
-        return AlbumInfo(
-            tracks=[TrackInfo(title="百花繚乱")],
-            album_id="official",
-            album="百花繚乱",
-        )
-
-    @pytest.fixture
-    def pseudo_release(self) -> AlbumInfo:
-        return AlbumInfo(
-            tracks=[TrackInfo(title="In Bloom")],
-            album_id="pseudo",
-            album="In Bloom",
-        )
-
     def test_album_id_always_from_pseudo(
-        self, official_release: AlbumInfo, pseudo_release: AlbumInfo
+        self, official_release_info: AlbumInfo, pseudo_release_info: AlbumInfo
     ):
-        info = PseudoAlbumInfo(pseudo_release, official_release)
+        info = PseudoAlbumInfo(pseudo_release_info, official_release_info)
         info.use_official_as_ref()
         assert info.album_id == "pseudo"
 
     def test_get_attr_from_pseudo(
-        self, official_release: AlbumInfo, pseudo_release: AlbumInfo
+        self, official_release_info: AlbumInfo, pseudo_release_info: AlbumInfo
     ):
-        info = PseudoAlbumInfo(pseudo_release, official_release)
+        info = PseudoAlbumInfo(pseudo_release_info, official_release_info)
         assert info.album == "In Bloom"
 
     def test_get_attr_from_official(
-        self, official_release: AlbumInfo, pseudo_release: AlbumInfo
+        self, official_release_info: AlbumInfo, pseudo_release_info: AlbumInfo
     ):
-        info = PseudoAlbumInfo(pseudo_release, official_release)
+        info = PseudoAlbumInfo(pseudo_release_info, official_release_info)
         info.use_official_as_ref()
         assert info.album == info.get_official_release().album
 
     def test_determine_best_ref(
-        self, official_release: AlbumInfo, pseudo_release: AlbumInfo
+        self, official_release_info: AlbumInfo, pseudo_release_info: AlbumInfo
     ):
         info = PseudoAlbumInfo(
-            pseudo_release, official_release, data_source="test"
+            pseudo_release_info, official_release_info, data_source="test"
         )
         item = Item()
         item["title"] = "百花繚乱"
@@ -126,7 +130,7 @@ class TestMBPseudoPlugin(PluginMixin):
     ):
         album_info = mbpseudo_plugin.album_info(pseudo_release["release"])
         assert not isinstance(album_info, PseudoAlbumInfo)
-        assert album_info.data_source == "MusicBrainz"
+        assert album_info.data_source == "MusicBrainzPseudoRelease"
         assert album_info.albumstatus == _STATUS_PSEUDO
 
     @pytest.mark.parametrize(
@@ -147,7 +151,7 @@ class TestMBPseudoPlugin(PluginMixin):
 
         album_info = mbpseudo_plugin.album_info(official_release["release"])
         assert not isinstance(album_info, PseudoAlbumInfo)
-        assert album_info.data_source == "MusicBrainz"
+        assert album_info.data_source == "MusicBrainzPseudoRelease"
 
     def test_interception_skip_when_script_doesnt_match(
         self,
@@ -160,7 +164,7 @@ class TestMBPseudoPlugin(PluginMixin):
 
         album_info = mbpseudo_plugin.album_info(official_release["release"])
         assert not isinstance(album_info, PseudoAlbumInfo)
-        assert album_info.data_source == "MusicBrainz"
+        assert album_info.data_source == "MusicBrainzPseudoRelease"
 
     def test_interception(
         self,
@@ -173,4 +177,49 @@ class TestMBPseudoPlugin(PluginMixin):
         )
         album_info = mbpseudo_plugin.album_info(official_release["release"])
         assert isinstance(album_info, PseudoAlbumInfo)
-        assert album_info.data_source == "MusicBrainz"
+        assert album_info.data_source == "MusicBrainzPseudoRelease"
+
+    def test_final_adjustment_skip(
+        self,
+        mbpseudo_plugin: MusicBrainzPseudoReleasePlugin,
+    ):
+        match = AlbumMatch(
+            distance=Distance(),
+            info=AlbumInfo(tracks=[], data_source="mb"),
+            mapping={},
+            extra_items=[],
+            extra_tracks=[],
+        )
+
+        mbpseudo_plugin._adjust_final_album_match(match)
+        assert match.info.data_source == "mb"
+
+    def test_final_adjustment(
+        self,
+        mbpseudo_plugin: MusicBrainzPseudoReleasePlugin,
+        official_release_info: AlbumInfo,
+        pseudo_release_info: AlbumInfo,
+    ):
+        pseudo_album_info = PseudoAlbumInfo(
+            pseudo_release=pseudo_release_info,
+            official_release=official_release_info,
+            data_source=mbpseudo_plugin.data_source,
+        )
+        pseudo_album_info.use_official_as_ref()
+
+        item = Item()
+        item["title"] = "百花繚乱"
+
+        match = AlbumMatch(
+            distance=Distance(),
+            info=pseudo_album_info,
+            mapping={item: pseudo_album_info.tracks[0]},
+            extra_items=[],
+            extra_tracks=[],
+        )
+
+        mbpseudo_plugin._adjust_final_album_match(match)
+
+        assert match.info.data_source == "MusicBrainz"
+        assert match.info.album_id == "pseudo"
+        assert match.info.album == "In Bloom"

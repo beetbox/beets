@@ -19,7 +19,7 @@ pseudo-releases with desired scripts.
 Configuration
 -------------
 
-Since this plugin first searches for official releases from MusicBrainz, most
+Since this plugin first searches for official releases from MusicBrainz, all
 options from the `musicbrainz` plugin's :ref:`musicbrainz-config` are supported,
 but they must be specified under `mbpseudo` in the configuration file.
 Additionally, the configuration expects an array of scripts that are desired for
@@ -36,8 +36,8 @@ like this:
 
 Note that the `search_limit` configuration applies to the initial search for
 official releases, and that the `data_source` in the database will be
-"MusicBrainz". Because of this, the only configuration that must remain under
-`musicbrainz` is `data_source_mismatch_penalty` (see also
+"MusicBrainz". Nevertheless, `data_source_mismatch_penalty` must also be
+specified under `mbpseudo` (see also
 :ref:`metadata-source-plugin-configuration`). An example with multiple data
 sources may look like this:
 
@@ -46,11 +46,9 @@ sources may look like this:
     plugins: mbpseudo deezer
 
     mbpseudo:
+        data_source_mismatch_penalty: 0
         scripts:
         - Latn
 
-    musicbrainz:
-        data_source_mismatch_penalty: 0
-
     deezer:
-        data_source_mismatch_penalty: 0.5
+        data_source_mismatch_penalty: 0.2

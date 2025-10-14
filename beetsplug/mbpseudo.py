@@ -95,7 +95,6 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
     @override
     def album_info(self, release: JSONDict) -> AlbumInfo:
         official_release = super().album_info(release)
-        official_release.data_source = "MusicBrainz"
 
         if release.get("status") == _STATUS_PSEUDO:
             return official_release
@@ -113,7 +112,6 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
                         pseudo_release, official_release
                     ),
                     official_release=official_release,
-                    data_source="MusicBrainz",
                 )
             except musicbrainzngs.MusicBrainzError as exc:
                 raise MusicBrainzAPIError(
@@ -172,16 +170,19 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
     def _adjust_final_album_match(self, match: AlbumMatch):
         album_info = match.info
         if isinstance(album_info, PseudoAlbumInfo):
-            mapping = match.mapping
             self._log.debug(
                 "Switching {0} to pseudo-release source for final proposal",
                 album_info.album_id,
             )
             album_info.use_pseudo_as_ref()
+            mapping = match.mapping
             new_mappings, _, _ = assign_items(
                 list(mapping.keys()), album_info.tracks
             )
             mapping.update(new_mappings)
+
+        if album_info.data_source == self.data_source:
+            album_info.data_source = "MusicBrainz"
 
     @override
     def _extract_id(self, url: str) -> str | None:
@@ -220,16 +221,11 @@ class PseudoAlbumInfo(AlbumInfo):
         return self.__dict__["_official_release"]
 
     def determine_best_ref(self, items: Sequence[Item]) -> str:
-        ds = self.data_source
-        self.data_source = None
-
         self.use_pseudo_as_ref()
         pseudo_dist = self._compute_distance(items)
 
         self.use_official_as_ref()
         official_dist = self._compute_distance(items)
-
-        self.data_source = ds
 
         if official_dist < pseudo_dist:
             self.use_official_as_ref()
