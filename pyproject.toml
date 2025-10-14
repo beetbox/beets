@@ -36,7 +36,6 @@ include = [ # extra files to include in the sdist
 ]
 exclude = ["docs/_build", "docs/modd.conf", "docs/**/*.css"]
 
-
 [tool.poetry.urls]
 Changelog = "https://github.com/beetbox/beets/blob/master/docs/changelog.rst"
 "Bug Tracker" = "https://github.com/beetbox/beets/issues"
@@ -158,7 +157,6 @@ web = ["flask", "flask-cors"]
 
 [tool.poetry.scripts]
 beet = "beets.ui:main"
-
 
 [tool.poetry-dynamic-versioning]
 enable = true
