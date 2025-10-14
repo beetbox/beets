@@ -192,24 +192,21 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
             stacklevel=3,
         )
 
+        method: property | cached_property[Any] | Callable[..., Any]
         for name, method in inspect.getmembers(
             MetadataSourcePlugin,
-            predicate=lambda f: (
+            predicate=lambda f: (  # type: ignore[arg-type]
                 (
-                    isinstance(f, cached_property)
-                    and f.attrname is not None
-                    and not hasattr(BeetsPlugin, f.attrname)
-                )
-                or (
-                    isinstance(f, property)
-                    and f.fget is not None
-                    and f.fget.__name__ is not None
-                    and not hasattr(BeetsPlugin, f.fget.__name__)
+                    isinstance(f, (property, cached_property))
+                    and not hasattr(
+                        BeetsPlugin,
+                        getattr(f, "attrname", None) or f.fget.__name__,  # type: ignore[union-attr]
+                    )
                 )
                 or (
                     inspect.isfunction(f)
                     and f.__name__
-                    not in MetadataSourcePlugin.__abstractmethods__
+                    and not getattr(f, "__isabstractmethod__", False)
                     and not hasattr(BeetsPlugin, f.__name__)
                 )
             ),
