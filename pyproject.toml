@@ -77,10 +77,11 @@ resampy = { version = ">=0.4.3", optional = true }
 requests-oauthlib = { version = ">=0.6.1", optional = true }
 soco = { version = "*", optional = true }
 
+docutils = { version = ">=0.20.1", optional = true }
 pydata-sphinx-theme = { version = "*", optional = true }
 sphinx = { version = "*", optional = true }
-sphinx-design = { version = "^0.6.1", optional = true }
-sphinx-copybutton = { version = "^0.5.2", optional = true }
+sphinx-design = { version = ">=0.6.1", optional = true }
+sphinx-copybutton = { version = ">=0.5.2", optional = true }
 
 [tool.poetry.group.test.dependencies]
 beautifulsoup4 = "*"
@@ -109,6 +110,7 @@ sphinx-lint = ">=1.0.0"
 [tool.poetry.group.typing.dependencies]
 mypy = "*"
 types-beautifulsoup4 = "*"
+types-docutils = ">=0.22.2.20251006"
 types-mock = "*"
 types-Flask-Cors = "*"
 types-Pillow = "*"
@@ -131,7 +133,14 @@ beatport = ["requests-oauthlib"]
 bpd = ["PyGObject"] # gobject-introspection, gstreamer1.0-plugins-base, python3-gst-1.0
 chroma = ["pyacoustid"] # chromaprint or fpcalc
 # convert # ffmpeg
-docs = ["pydata-sphinx-theme", "sphinx", "sphinx-lint", "sphinx-design", "sphinx-copybutton"]
+docs = [
+    "docutils",
+    "pydata-sphinx-theme",
+    "sphinx",
+    "sphinx-lint",
+    "sphinx-design",
+    "sphinx-copybutton",
+]
 discogs = ["python3-discogs-client"]
 embedart = ["Pillow"] # ImageMagick
 embyupdate = ["requests"]

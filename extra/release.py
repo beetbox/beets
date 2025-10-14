@@ -108,7 +108,7 @@ def create_rst_replacements() -> list[Replacement]:
         # Replace Sphinx :ref: and :doc: directives by documentation URLs
         #   :ref:`/plugins/autobpm` -> [AutoBPM Plugin](DOCS/plugins/autobpm.html)
         (
-            r":(?:ref|doc):`+(?:([^`<]+)<)?/?([\w./_-]+)>?`+",
+            r":(?:ref|doc|conf):`+(?:([^`<]+)<)?/?([\w.:/_-]+)>?`+",
             lambda m: make_ref_link(m[2], m[1]),
         ),
         # Convert command references to documentation URLs
