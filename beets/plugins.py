@@ -22,7 +22,7 @@ import re
 import sys
 import warnings
 from collections import defaultdict
-from functools import wraps
+from functools import cached_property, wraps
 from importlib import import_module
 from pathlib import Path
 from types import GenericAlias
@@ -192,12 +192,23 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
             stacklevel=3,
         )
 
+        method: property | cached_property[Any] | Callable[..., Any]
         for name, method in inspect.getmembers(
             MetadataSourcePlugin,
-            predicate=lambda f: (
-                inspect.isfunction(f)
-                and f.__name__ not in MetadataSourcePlugin.__abstractmethods__
-                and not hasattr(cls, f.__name__)
+            predicate=lambda f: (  # type: ignore[arg-type]
+                (
+                    isinstance(f, (property, cached_property))
+                    and not hasattr(
+                        BeetsPlugin,
+                        getattr(f, "attrname", None) or f.fget.__name__,  # type: ignore[union-attr]
+                    )
+                )
+                or (
+                    inspect.isfunction(f)
+                    and f.__name__
+                    and not getattr(f, "__isabstractmethod__", False)
+                    and not hasattr(BeetsPlugin, f.__name__)
+                )
             ),
         ):
             setattr(cls, name, method)

@@ -11,6 +11,7 @@ from beets.autotag.distance import (
 )
 from beets.library import Item
 from beets.metadata_plugins import MetadataSourcePlugin, get_penalty
+from beets.plugins import BeetsPlugin
 from beets.test.helper import ConfigMixin
 
 _p = pytest.param
@@ -310,8 +311,13 @@ class TestDataSourceDistance:
             def candidates(self, *args, **kwargs): ...
             def item_candidates(self, *args, **kwargs): ...
 
-        class OriginalPlugin(TestMetadataSourcePlugin):
-            pass
+        # We use BeetsPlugin here to check if our compatibility layer
+        # for pre 2.4.0 MetadataPlugins is working as expected
+        # TODO: Replace BeetsPlugin with TestMetadataSourcePlugin in v3.0.0
+        with pytest.deprecated_call():
+
+            class OriginalPlugin(BeetsPlugin):
+                data_source = "Original"
 
         class OtherPlugin(TestMetadataSourcePlugin):
             @property
@@ -332,6 +338,7 @@ class TestDataSourceDistance:
         [
             _p("Original", "Original", 0.5, 1.0, True, MATCH, id="match"),
             _p("Original", "Other", 0.5, 1.0, True, MISMATCH, id="mismatch"),
+            _p("Other", "Original", 0.5, 1.0, True, MISMATCH, id="mismatch"),
             _p("Original", "unknown", 0.5, 1.0, True, MISMATCH, id="mismatch-unknown"),  # noqa: E501
             _p("Original", None, 0.5, 1.0, True, MISMATCH, id="mismatch-no-info"),  # noqa: E501
             _p(None, "Other", 0.5, 1.0, True, MISMATCH, id="mismatch-no-original-multiple-sources"),  # noqa: E501
