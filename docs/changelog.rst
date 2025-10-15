@@ -15,6 +15,10 @@ Bug fixes:
 
 For packagers:
 
+- The `beets.mediafile` has now been finally removed. The deprecation warning
+  was first introduced in version 1.6.0. We think it is time to let go of some
+  old baggage.
+
 Other changes:
 
 2.5.1 (October 14, 2025)
