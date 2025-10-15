@@ -19,11 +19,13 @@ from unittest.mock import Mock, patch
 import pytest
 
 from beets.test import _common
-from beets.test.helper import BeetsTestCase
+from beets.test.helper import PluginTestCase
 from beetsplug import lastgenre
 
 
-class LastGenrePluginTest(BeetsTestCase):
+class LastGenrePluginTest(PluginTestCase):
+    plugin = "lastgenre"
+
     def setUp(self):
         super().setUp()
         self.plugin = lastgenre.LastGenrePlugin()
@@ -131,6 +133,11 @@ class LastGenrePluginTest(BeetsTestCase):
             "math rock",
         ]
 
+    @patch("beets.ui.should_write", Mock(return_value=True))
+    @patch(
+        "beetsplug.lastgenre.LastGenrePlugin._get_genre",
+        Mock(return_value=("Mock Genre", "mock stage")),
+    )
     def test_pretend_option_skips_library_updates(self):
         item = self.create_item(
             album="Pretend Album",
@@ -141,32 +148,17 @@ class LastGenrePluginTest(BeetsTestCase):
         )
         album = self.lib.add_album([item])
 
-        command = self.plugin.commands()[0]
-        opts, args = command.parser.parse_args(["--pretend"])
-
-        with patch.object(lastgenre.ui, "should_write", return_value=True):
-            with patch.object(
-                self.plugin,
-                "_get_genre",
-                return_value=("Mock Genre", "mock stage"),
-            ) as mock_get_genre:
-                with patch.object(self.plugin._log, "info") as log_info:
-                    # Mock try_write to verify it's never called in pretend mode
-                    with patch.object(item, "try_write") as mock_try_write:
-                        command.func(self.lib, opts, args)
-
-        mock_get_genre.assert_called_once()
-
-        assert any(
-            call.args[1] == "Pretend: " for call in log_info.call_args_list
-        )
+        def unexpected_store(*_, **__):
+            raise AssertionError("Unexpected store call")
 
         # Verify that try_write was never called (file operations skipped)
-        mock_try_write.assert_not_called()
+        with patch("beetsplug.lastgenre.Item.store", unexpected_store):
+            output = self.run_with_output("lastgenre", "--pretend")
 
-        stored_album = self.lib.get_album(album.id)
-        assert stored_album.genre == "Original Genre"
-        assert stored_album.items()[0].genre == "Original Genre"
+        assert "Mock Genre" in output
+        album.load()
+        assert album.genre == "Original Genre"
+        assert album.items()[0].genre == "Original Genre"
 
     def test_no_duplicate(self):
         """Remove duplicated genres."""
