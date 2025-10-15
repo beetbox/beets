@@ -170,8 +170,11 @@ Bug fixes:
 - Fix ``HiddenFileTest`` by using ``bytestring_path()``.
 - tests: Fix tests failing without ``langdetect`` (by making it required).
   :bug:`5797`
-- :doc:`plugins/musicbrainz`: Fix the MusicBrainz search not taking into account
-  the album/recording aliases
+- :doc:`plugins/musicbrainz`: Fix the MusicBrainz search not taking into
+  account the album/recording aliases
+- :doc:`reference/cli`: Fix 'from_scratch' option for singleton imports: delete
+  all (old) metadata when new metadata is applied.
+  :bug:`3706`
 - :doc:`/plugins/spotify`: Fix the issue with that every query to spotify was
   ascii encoded. This resulted in bad matches for queries that contained special
   e.g. non latin characters as 盗作. If you want to keep the legacy behavior set
