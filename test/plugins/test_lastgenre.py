@@ -152,13 +152,10 @@ class LastGenrePluginTest(PluginTestCase):
             raise AssertionError("Unexpected store call")
 
         # Verify that try_write was never called (file operations skipped)
-        with (
-            patch("beetsplug.lastgenre.Item.store", unexpected_store),
-            self.assertLogs() as logs,
-        ):
-            self.run_command("lastgenre", "--pretend")
+        with patch("beetsplug.lastgenre.Item.store", unexpected_store):
+            output = self.run_with_output("lastgenre", "--pretend")
 
-        assert "Mock Genre" in str(logs.output)
+        assert "Mock Genre" in output
         album.load()
         assert album.genre == "Original Genre"
         assert album.items()[0].genre == "Original Genre"
