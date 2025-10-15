@@ -22,11 +22,13 @@ The scraper script used is available here:
 https://gist.github.com/1241307
 """
 
+from __future__ import annotations
+
 import os
 import traceback
-from functools import wraps
+from functools import singledispatchmethod
 from pathlib import Path
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
 import pylast
 import yaml
@@ -34,6 +36,9 @@ import yaml
 from beets import config, library, plugins, ui
 from beets.library import Album, Item
 from beets.util import plurality, unique_list
+
+if TYPE_CHECKING:
+    from beets.library import LibModel
 
 LASTFM = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
 
@@ -75,28 +80,6 @@ def find_parents(candidate, branches):
         except ValueError:
             continue
     return [candidate]
-
-
-def log_and_pretend(apply_func):
-    """Decorator that logs genre assignments and conditionally applies changes
-    based on pretend mode."""
-
-    @wraps(apply_func)
-    def wrapper(self, obj, label, genre):
-        obj_type = type(obj).__name__.lower()
-        attr_name = "album" if obj_type == "album" else "title"
-        msg = (
-            f'genre for {obj_type} "{getattr(obj, attr_name)}" '
-            f"({label}): {genre}"
-        )
-        if self.config["pretend"]:
-            self._log.info(f"Pretend: {msg}")
-            return None
-
-        self._log.info(msg)
-        return apply_func(self, obj, label, genre)
-
-    return wrapper
 
 
 # Main plugin logic.
@@ -345,7 +328,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         return self.config["separator"].as_str().join(formatted)
 
-    def _get_existing_genres(self, obj: Union[Album, Item]) -> list[str]:
+    def _get_existing_genres(self, obj: LibModel) -> list[str]:
         """Return a list of genres for this Item or Album. Empty string genres
         are removed."""
         separator = self.config["separator"].get()
@@ -366,9 +349,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         combined = old + new
         return self._resolve_genres(combined)
 
-    def _get_genre(
-        self, obj: Union[Album, Item]
-    ) -> tuple[Union[str, None], ...]:
+    def _get_genre(self, obj: LibModel) -> tuple[Union[str, None], ...]:
         """Get the final genre string for an Album or Item object.
 
         `self.sources` specifies allowed genre sources. Starting with the first
@@ -483,41 +464,36 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
     # Beets plugin hooks and CLI.
 
-    @log_and_pretend
-    def _apply_album_genre(self, obj, label, genre):
-        """Apply genre to an Album object, with logging and pretend mode support."""
-        obj.genre = genre
+    def _fetch_and_log_genre(self, obj: LibModel) -> None:
+        """Fetch genre and log it."""
+        self._log.info(str(obj))
+        obj.genre, label = self._get_genre(obj)
+        self._log.info("Resolved ({}): {}", label, obj.genre)
+
+    @singledispatchmethod
+    def _process(self, obj: LibModel, write: bool) -> None:
+        """Process an object, dispatching to the appropriate method."""
+        raise NotImplementedError
+
+    @_process.register
+    def _process_track(self, obj: Item, write: bool) -> None:
+        """Process a single track/item."""
+        self._fetch_and_log_genre(obj)
+        if not self.config["pretend"]:
+            obj.try_sync(write=write, move=False)
+
+    @_process.register
+    def _process_album(self, obj: Album, write: bool) -> None:
+        """Process an entire album."""
+        self._fetch_and_log_genre(obj)
         if "track" in self.sources:
-            obj.store(inherit=False)
-        else:
-            obj.store()
+            for item in obj.items():
+                self._process(item, write)
 
-    @log_and_pretend
-    def _apply_item_genre(self, obj, label, genre):
-        """Apply genre to an Item object, with logging and pretend mode support."""
-        obj.genre = genre
-        obj.store()
-
-    def _process_item(self, item: Item, write: bool = False):
-        genre, label = self._get_genre(item)
-
-        if genre:
-            self._apply_item_genre(item, label, genre)
-            if write and not self.config["pretend"]:
-                item.try_write()
-        else:
-            self._log.info('No genre found for track "{.title}"', item)
-
-    def _process_album(self, album: Album, write: bool = False):
-        album_genre, label = self._get_genre(album)
-        self._apply_album_genre(album, label, album_genre)
-
-        # If we're using track-level sources, store the album genre only (this
-        # happened in _apply_album_genre already), then also look up individual
-        # track genres.
-        if "track" in self.sources:
-            for item in album.items():
-                self._process_item(item, write=write)
+        if not self.config["pretend"]:
+            obj.try_sync(
+                write=write, move=False, inherit="track" not in self.sources
+            )
 
     def commands(self):
         lastgenre_cmd = ui.Subcommand("lastgenre", help="fetch genres")
@@ -586,29 +562,17 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         lastgenre_cmd.parser.set_defaults(album=True)
 
         def lastgenre_func(lib, opts, args):
-            write = ui.should_write()
             self.config.set_args(opts)
-            if opts.pretend:
-                self.config["force"].set(True)
 
-            if opts.album:
-                # Fetch genres for whole albums
-                for album in lib.albums(args):
-                    self._process_album(album, write=write)
-            else:
-                # Just query single tracks or singletons
-                for item in lib.items(args):
-                    self._process_item(item, write=write)
+            method = lib.albums if opts.album else lib.items
+            for obj in method(args):
+                self._process(obj, write=ui.should_write())
 
         lastgenre_cmd.func = lastgenre_func
         return [lastgenre_cmd]
 
     def imported(self, session, task):
-        """Event hook called when an import task finishes."""
-        if task.is_album:
-            self._process_album(task.album)
-        else:
-            self._process_item(task.item)
+        self._process(task.album if task.is_album else task.item, write=False)
 
     def _tags_for(self, obj, min_weight=None):
         """Core genre identification routine.
