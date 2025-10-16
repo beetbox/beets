@@ -8,6 +8,11 @@ Unreleased
 ----------
 
 New features:
+* :doc:`plugins/smartplaylist`: Add new configuration option ``dest_regen`` to
+  regenerate items' path in the generated playlist instead of using the ones of
+  the library. This is useful when items have been imported in don't copy-move
+  (`-C -M`) mode in the library but are later passed through the `convert`
+  plugin which will regenerate new paths according to the Beets path format.
 
 - :doc:`plugins/ftintitle`: Added argument for custom feat. words in ftintitle.
 
