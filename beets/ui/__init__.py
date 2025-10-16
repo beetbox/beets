@@ -1078,7 +1078,9 @@ def _field_diff(field, old, old_fmt, new, new_fmt):
     return f"{oldstr} -> {newstr}"
 
 
-def show_model_changes(new, old=None, fields=None, always=False):
+def show_model_changes(
+    new, old=None, fields=None, always=False, print_obj: bool = True
+):
     """Given a Model object, print a list of changes from its pristine
     version stored in the database. Return a boolean indicating whether
     any changes were found.
@@ -1117,7 +1119,7 @@ def show_model_changes(new, old=None, fields=None, always=False):
         )
 
     # Print changes.
-    if changes or always:
+    if print_obj and (changes or always):
         print_(format(old))
     if changes:
         print_("\n".join(changes))

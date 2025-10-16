@@ -9,11 +9,43 @@ Unreleased
 
 New features:
 
+- :doc:`plugins/ftintitle`: Added argument for custom feat. words in ftintitle.
+
 Bug fixes:
 
 For packagers:
 
 Other changes:
+
+2.5.1 (October 14, 2025)
+------------------------
+
+New features:
+
+- :doc:`plugins/zero`: Add new configuration option, ``omit_single_disc``, to
+  allow zeroing the disc number on write for single-disc albums. Defaults to
+  False.
+
+Bug fixes:
+
+- |BeetsPlugin|: load the last plugin class defined in the plugin namespace.
+  :bug:`6093`
+
+For packagers:
+
+- Fixed issue with legacy metadata plugins not copying properties from the base
+  class.
+- Reverted the following: When installing ``beets`` via git or locally the
+  version string now reflects the current git branch and commit hash.
+  :bug:`6089`
+
+Other changes:
+
+- Removed outdated mailing list contact information from the documentation
+  :bug:`5462`.
+- :doc:`guides/main`: Modernized the *Getting Started* guide with tabbed
+  sections and dropdown menus. Installation instructions have been streamlined,
+  and a new subpage now provides additional setup details.
 
 2.5.0 (October 11, 2025)
 ------------------------
@@ -55,15 +87,13 @@ Bug fixes:
 - :doc:`plugins/discogs` Fixed inconsistency in stripping disambiguation from
   artists but not labels. :bug:`5366`
 - :doc:`plugins/chroma` :doc:`plugins/bpsync` Fix plugin loading issue caused by
-  an import of another :class:`beets.plugins.BeetsPlugin` class. :bug:`6033`
+  an import of another |BeetsPlugin| class. :bug:`6033`
 - :doc:`/plugins/fromfilename`: Fix :bug:`5218`, improve the code (refactor
   regexps, allow for more cases, add some logging), add tests.
 - Metadata source plugins: Fixed data source penalty calculation that was
   incorrectly applied during import matching. The ``source_weight``
   configuration option has been renamed to ``data_source_mismatch_penalty`` to
   better reflect its purpose. :bug:`6066`
-
-For packagers:
 
 Other changes:
 
@@ -179,8 +209,8 @@ For plugin developers:
   art sources might need to be adapted.
 - We split the responsibilities of plugins into two base classes
 
-  1. :class:`beets.plugins.BeetsPlugin` is the base class for all plugins, any
-     plugin needs to inherit from this class.
+  1. |BeetsPlugin| is the base class for all plugins, any plugin needs to
+     inherit from this class.
   2. :class:`beets.metadata_plugin.MetadataSourcePlugin` allows plugins to act
      like metadata sources. E.g. used by the MusicBrainz plugin. All plugins in
      the beets repo are opted into this class where applicable. If you are
@@ -5063,7 +5093,7 @@ BPD). To "upgrade" an old database, you can use the included ``albumify`` plugin
   list of plugin names) and ``pluginpath`` (a colon-separated list of
   directories to search beyond ``sys.path``). Plugins are just Python modules
   under the ``beetsplug`` namespace package containing subclasses of
-  ``beets.plugins.BeetsPlugin``. See `the beetsplug directory`_ for examples or
+  |BeetsPlugin|. See `the beetsplug directory`_ for examples or
   :doc:`/plugins/index` for instructions.
 - As a consequence of adding album art, the database was significantly
   refactored to keep track of some information at an album (rather than item)

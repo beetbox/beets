@@ -22,7 +22,7 @@ import re
 import sys
 import warnings
 from collections import defaultdict
-from functools import wraps
+from functools import cached_property, wraps
 from importlib import import_module
 from pathlib import Path
 from types import GenericAlias
@@ -192,12 +192,23 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
             stacklevel=3,
         )
 
+        method: property | cached_property[Any] | Callable[..., Any]
         for name, method in inspect.getmembers(
             MetadataSourcePlugin,
-            predicate=lambda f: (
-                inspect.isfunction(f)
-                and f.__name__ not in MetadataSourcePlugin.__abstractmethods__
-                and not hasattr(cls, f.__name__)
+            predicate=lambda f: (  # type: ignore[arg-type]
+                (
+                    isinstance(f, (property, cached_property))
+                    and not hasattr(
+                        BeetsPlugin,
+                        getattr(f, "attrname", None) or f.fget.__name__,  # type: ignore[union-attr]
+                    )
+                )
+                or (
+                    inspect.isfunction(f)
+                    and f.__name__
+                    and not getattr(f, "__isabstractmethod__", False)
+                    and not hasattr(BeetsPlugin, f.__name__)
+                )
             ),
         ):
             setattr(cls, name, method)
@@ -228,9 +239,9 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         # In order to verify the config we need to make sure the plugin is fully
         # configured (plugins usually add the default configuration *after*
         # calling super().__init__()).
-        self.register_listener("pluginload", self.verify_config)
+        self.register_listener("pluginload", self._verify_config)
 
-    def verify_config(self, *_, **__) -> None:
+    def _verify_config(self, *_, **__) -> None:
         """Verify plugin configuration.
 
         If deprecated 'source_weight' option is explicitly set by the user, they
@@ -422,6 +433,12 @@ def _get_plugin(name: str) -> BeetsPlugin | None:
     Attempts to import the plugin module, locate the appropriate plugin class
     within it, and return an instance. Handles import failures gracefully and
     logs warnings for missing plugins or loading errors.
+
+    Note we load the *last* plugin class found in the plugin namespace. This
+    allows plugins to define helper classes that inherit from BeetsPlugin
+    without those being loaded as the main plugin class.
+
+    Returns None if the plugin could not be loaded for any reason.
     """
     try:
         try:
@@ -429,7 +446,7 @@ def _get_plugin(name: str) -> BeetsPlugin | None:
         except Exception as exc:
             raise PluginImportError(name) from exc
 
-        for obj in namespace.__dict__.values():
+        for obj in reversed(namespace.__dict__.values()):
             if (
                 inspect.isclass(obj)
                 and not isinstance(
@@ -632,13 +649,17 @@ def send(event: EventType, **arguments: Any) -> list[Any]:
     ]
 
 
-def feat_tokens(for_artist: bool = True) -> str:
+def feat_tokens(
+    for_artist: bool = True, custom_words: list[str] | None = None
+) -> str:
     """Return a regular expression that matches phrases like "featuring"
     that separate a main artist or a song title from secondary artists.
     The `for_artist` option determines whether the regex should be
     suitable for matching artist fields (the default) or title fields.
     """
     feat_words = ["ft", "featuring", "feat", "feat.", "ft."]
+    if isinstance(custom_words, list):
+        feat_words += custom_words
     if for_artist:
         feat_words += ["with", "vs", "and", "con", "&"]
     return (
