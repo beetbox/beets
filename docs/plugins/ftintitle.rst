@@ -28,6 +28,8 @@ file. The available options are:
 - **keep_in_artist**: Keep the featuring X part in the artist field. This can be
   useful if you still want to be able to search for features in the artist
   field. Default: ``no``.
+- **skip_if_artist_and_album_artists_is_the_same**: If the artist and the album
+  artist is the same, skip the ftintitle processing. Default: ``yes``.
 - **custom_words**: List of additional words that will be treated as a marker
   for artist features. Default: ``[]``.
 
