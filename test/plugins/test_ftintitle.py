@@ -239,6 +239,7 @@ def add_item(
         pytest.param(
             {
                 "format": "feat. {}",
+                "skip_if_artist_and_album_artists_is_the_same": False,
             },
             ("ftintitle",),
             ("Alice feat. Bob", "Song 1", "Alice feat. Bob"),
