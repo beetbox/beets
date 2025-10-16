@@ -205,6 +205,46 @@ def add_item(
             ("Alice med Bob", "Song 1"),
             id="custom-feat-words-keep-in-artists-drop-from-title",
         ),
+        # ---- skip_if_artist_and_album_artists_is_the_same variants ----
+        pytest.param(
+            {
+                "format": "feat. {}",
+                "skip_if_artist_and_album_artists_is_the_same": True,
+            },
+            ("ftintitle",),
+            ("Alice feat. Bob", "Song 1", "Alice"),
+            ("Alice", "Song 1 feat. Bob"),
+            id="skip-if-artist-and-album-artists-is-the-same-different-match",
+        ),
+        pytest.param(
+            {
+                "format": "feat. {}",
+                "skip_if_artist_and_album_artists_is_the_same": False,
+            },
+            ("ftintitle",),
+            ("Alice feat. Bob", "Song 1", "Alice"),
+            ("Alice", "Song 1 feat. Bob"),
+            id="skip-if-artist-and-album-artists-is-the-same-different-match-b",
+        ),
+        pytest.param(
+            {
+                "format": "feat. {}",
+                "skip_if_artist_and_album_artists_is_the_same": True,
+            },
+            ("ftintitle",),
+            ("Alice feat. Bob", "Song 1", "Alice feat. Bob"),
+            ("Alice feat. Bob", "Song 1"),
+            id="skip-if-artist-and-album-artists-is-the-same-matching-match",
+        ),
+        pytest.param(
+            {
+                "format": "feat. {}",
+            },
+            ("ftintitle",),
+            ("Alice feat. Bob", "Song 1", "Alice feat. Bob"),
+            ("Alice", "Song 1 feat. Bob"),
+            id="skip-if-artist-and-album-artists-is-the-same-matching-match-b",
+        ),
     ],
 )
 def test_ftintitle_functional(
