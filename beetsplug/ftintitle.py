@@ -108,6 +108,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
                 "drop": False,
                 "format": "feat. {}",
                 "keep_in_artist": False,
+                "skip_if_artist_and_album_artists_is_the_same": True,
                 "custom_words": [],
             }
         )
@@ -133,12 +134,19 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             self.config.set_args(opts)
             drop_feat = self.config["drop"].get(bool)
             keep_in_artist_field = self.config["keep_in_artist"].get(bool)
+            skip_if_artist_and_album_artists_is_the_same = self.config[
+                "skip_if_artist_and_album_artists_is_the_same"
+            ].get(bool)
             custom_words = self.config["custom_words"].get(list)
             write = ui.should_write()
 
             for item in lib.items(args):
                 if self.ft_in_title(
-                    item, drop_feat, keep_in_artist_field, custom_words
+                    item,
+                    drop_feat,
+                    keep_in_artist_field,
+                    skip_if_artist_and_album_artists_is_the_same,
+                    custom_words,
                 ):
                     item.store()
                     if write:
@@ -151,11 +159,18 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         """Import hook for moving featuring artist automatically."""
         drop_feat = self.config["drop"].get(bool)
         keep_in_artist_field = self.config["keep_in_artist"].get(bool)
+        skip_if_artist_and_album_artists_is_the_same = self.config[
+            "skip_if_artist_and_album_artists_is_the_same"
+        ].get(bool)
         custom_words = self.config["custom_words"].get(list)
 
         for item in task.imported_items():
             if self.ft_in_title(
-                item, drop_feat, keep_in_artist_field, custom_words
+                item,
+                drop_feat,
+                keep_in_artist_field,
+                skip_if_artist_and_album_artists_is_the_same,
+                custom_words,
             ):
                 item.store()
 
@@ -204,6 +219,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         item: Item,
         drop_feat: bool,
         keep_in_artist_field: bool,
+        skip_if_artist_and_album_artists_is_the_same: bool,
         custom_words: list[str],
     ) -> bool:
         """Look for featured artists in the item's artist fields and move
@@ -218,7 +234,11 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         # Check whether there is a featured artist on this track and the
         # artist field does not exactly match the album artist field. In
         # that case, we attempt to move the featured artist to the title.
-        if albumartist and artist == albumartist:
+        if (
+            skip_if_artist_and_album_artists_is_the_same
+            and albumartist
+            and artist == albumartist
+        ):
             return False
 
         _, featured = split_on_feat(artist, custom_words=custom_words)
