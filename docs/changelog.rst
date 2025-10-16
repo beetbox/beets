@@ -10,6 +10,8 @@ Unreleased
 New features:
 
 - :doc:`plugins/ftintitle`: Added argument for custom feat. words in ftintitle.
+- :doc: `/plugins/play`: Added `$playlist` marker to precisely edit the playlist
+      filepath into the command calling the player program.
 
 Bug fixes:
 
