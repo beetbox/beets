@@ -16,7 +16,6 @@
 
 from __future__ import annotations
 
-import atexit
 import itertools
 import math
 import re
@@ -25,10 +24,9 @@ from contextlib import contextmanager, suppress
 from dataclasses import dataclass
 from functools import cached_property, partial, total_ordering
 from html import unescape
-from http import HTTPStatus
 from itertools import groupby
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterable, Iterator, NamedTuple
+from typing import TYPE_CHECKING, NamedTuple
 from urllib.parse import quote, quote_plus, urlencode, urlparse
 
 import langdetect
@@ -36,12 +34,17 @@ import requests
 from bs4 import BeautifulSoup
 from unidecode import unidecode
 
-import beets
 from beets import plugins, ui
 from beets.autotag.distance import string_dist
 from beets.util.config import sanitize_choices
 
+from ._utils.requests import HTTPNotFoundError, RequestHandler
+
 if TYPE_CHECKING:
+    from collections.abc import Iterable, Iterator
+
+    import confuse
+
     from beets.importer import ImportTask
     from beets.library import Item, Library
     from beets.logging import BeetsLogger as Logger
@@ -54,41 +57,12 @@ if TYPE_CHECKING:
         TranslatorAPI,
     )
 
-USER_AGENT = f"beets/{beets.__version__}"
 INSTRUMENTAL_LYRICS = "[Instrumental]"
 
 
-class NotFoundError(requests.exceptions.HTTPError):
-    pass
-
-
 class CaptchaError(requests.exceptions.HTTPError):
-    pass
-
-
-class TimeoutSession(requests.Session):
-    def request(self, *args, **kwargs):
-        """Wrap the request method to raise an exception on HTTP errors."""
-        kwargs.setdefault("timeout", 10)
-        r = super().request(*args, **kwargs)
-        if r.status_code == HTTPStatus.NOT_FOUND:
-            raise NotFoundError("HTTP Error: Not Found", response=r)
-        if 300 <= r.status_code < 400:
-            raise CaptchaError("Captcha is required", response=r)
-
-        r.raise_for_status()
-
-        return r
-
-
-r_session = TimeoutSession()
-r_session.headers.update({"User-Agent": USER_AGENT})
-
-
-@atexit.register
-def close_session():
-    """Close the requests session on shut down."""
-    r_session.close()
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__("Captcha is required", *args, **kwargs)
 
 
 # Utilities.
@@ -184,8 +158,17 @@ def slug(text: str) -> str:
     return re.sub(r"\W+", "-", unidecode(text).lower().strip()).strip("-")
 
 
-class RequestHandler:
+class LyricsRequestHandler(RequestHandler):
     _log: Logger
+
+    def status_to_error(self, code: int) -> type[requests.HTTPError] | None:
+        if err := super().status_to_error(code):
+            return err
+
+        if 300 <= code < 400:
+            return CaptchaError
+
+        return None
 
     def debug(self, message: str, *args) -> None:
         """Log a debug message with the class name."""
@@ -216,7 +199,7 @@ class RequestHandler:
         """
         url = self.format_url(url, params)
         self.debug("Fetching HTML from {}", url)
-        r = r_session.get(url, **kwargs)
+        r = self.request("get", url, **kwargs)
         r.encoding = None
         return r.text
 
@@ -224,13 +207,13 @@ class RequestHandler:
         """Return JSON data from the given URL."""
         url = self.format_url(url, params)
         self.debug("Fetching JSON from {}", url)
-        return r_session.get(url, **kwargs).json()
+        return super().fetch_json(url, **kwargs)
 
     def post_json(self, url: str, params: JSONDict | None = None, **kwargs):
         """Send POST request and return JSON response."""
         url = self.format_url(url, params)
         self.debug("Posting JSON to {}", url)
-        return r_session.post(url, **kwargs).json()
+        return self.request("post", url, **kwargs).json()
 
     @contextmanager
     def handle_request(self) -> Iterator[None]:
@@ -249,8 +232,10 @@ class BackendClass(type):
         return cls.__name__.lower()
 
 
-class Backend(RequestHandler, metaclass=BackendClass):
-    def __init__(self, config, log):
+class Backend(LyricsRequestHandler, metaclass=BackendClass):
+    config: confuse.Subview
+
+    def __init__(self, config: confuse.Subview, log: Logger) -> None:
         self._log = log
         self.config = config
 
@@ -356,7 +341,7 @@ class LRCLib(Backend):
 
         yield self.fetch_json(self.SEARCH_URL, params=base_params)
 
-        with suppress(NotFoundError):
+        with suppress(HTTPNotFoundError):
             yield [self.fetch_json(self.GET_URL, params=get_params)]
 
     @classmethod
@@ -741,7 +726,7 @@ class Google(SearchBackend):
 
 
 @dataclass
-class Translator(RequestHandler):
+class Translator(LyricsRequestHandler):
     TRANSLATE_URL = "https://api.cognitive.microsofttranslator.com/translate"
     LINE_PARTS_RE = re.compile(r"^(\[\d\d:\d\d.\d\d\]|) *(.*)$")
     SEPARATOR = " | "
@@ -949,7 +934,7 @@ class RestFiles:
         ui.print_(textwrap.dedent(text))
 
 
-class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
+class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
     BACKEND_BY_NAME = {
         b.name: b for b in [LRCLib, Google, Genius, Tekstowo, MusiXmatch]
     }
