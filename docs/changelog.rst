@@ -11,7 +11,7 @@ New features:
 
 - :doc:`plugins/ftintitle`: Added argument for custom feat. words in ftintitle.
 - :doc:`plugins/ftintitle`: Added argument to skip the processing of artist and
-  album artist is the same in ftintitle.
+  album artist are the same in ftintitle.
 
 Bug fixes:
 
