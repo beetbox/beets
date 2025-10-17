@@ -80,6 +80,8 @@ Bug fixes:
 
 - |BeetsPlugin|: load the last plugin class defined in the plugin namespace.
   :bug:`6093`
+- Fixed convert plugin not taking into account the new format when determining
+  the target path. :bug:`1360`
 
 For packagers:
 
