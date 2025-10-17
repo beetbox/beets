@@ -355,6 +355,7 @@ class ConvertPlugin(BeetsPlugin):
         item, original, converted = None, None, None
         while True:
             item = yield (item, original, converted)
+            item.format = fmt.upper()
             dest = item.destination(basedir=dest_dir, path_formats=path_formats)
 
             # Ensure that desired item is readable before processing it. Needed
