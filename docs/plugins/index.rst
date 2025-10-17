@@ -146,6 +146,7 @@ databases. They share the following configuration options:
     hook
     ihate
     importadded
+    importhistory
     importfeeds
     info
     inline
