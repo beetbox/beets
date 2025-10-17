@@ -100,7 +100,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 "separator": ", ",
                 "prefer_specific": False,
                 "title_case": True,
-                "extended_debug": False,
             }
         )
         self.setup()
@@ -156,8 +155,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         return c14n_branches, canonicalize
 
     def _ext_debug(self, msg, *args, **kwargs):
-        """Log debug message only when extended_debug is enabled."""
-        if self.config["extended_debug"]:
+        """Log extended plugin tuning message only when verbosity level high enough."""
+        if config["verbose"].as_number() >= 3:
             self._log.debug(msg, *args, **kwargs)
 
     @property
@@ -519,13 +518,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             action="store_true",
             dest="album",
             help="match albums instead of items (default)",
-        )
-        lastgenre_cmd.parser.add_option(
-            "-d",
-            "--debug",
-            action="store_true",
-            dest="extended_debug",
-            help="extended last.fm debug logging",
         )
         lastgenre_cmd.parser.set_defaults(album=True)
 
