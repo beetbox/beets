@@ -1182,7 +1182,11 @@ class Item(LibModel):
     # Templating.
 
     def destination(
-        self, relative_to_libdir=False, basedir=None, path_formats=None
+        self,
+        relative_to_libdir=False,
+        basedir=None,
+        path_formats=None,
+        extension: str | None = None,
     ) -> bytes:
         """Return the path in the library directory designated for the item
         (i.e., where the file ought to be).
@@ -1232,7 +1236,7 @@ class Item(LibModel):
             )
 
         lib_path_str, fallback = util.legalize_path(
-            subpath, self.db.replacements, self.filepath.suffix
+            subpath, self.db.replacements, extension or self.filepath.suffix
         )
         if fallback:
             # Print an error message if legalization fell back to
