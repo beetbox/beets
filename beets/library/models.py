@@ -1221,6 +1221,7 @@ class Item(LibModel):
         relative_to_libdir: bool = False,
         basedir: bytes | None = None,
         path_formats: list[PathFormat] | None = None,
+        extension: str | None = None,
     ) -> bytes:
         """Return the path in the library directory designated for the item
         (i.e., where the file ought to be).
@@ -1255,7 +1256,7 @@ class Item(LibModel):
             subpath = util.asciify_path(subpath)
 
         lib_path_str, fallback = util.legalize_path(
-            subpath, self.db.replacements, self.filepath.suffix
+            subpath, self.db.replacements, extension or self.filepath.suffix
         )
         if fallback:
             # Print an error message if legalization fell back to
