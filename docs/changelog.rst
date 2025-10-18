@@ -13,6 +13,10 @@ New features:
 
 Bug fixes:
 
+- Fixed cache invalidation bug in ``Library.add_album()`` where the
+  ``_memotable`` cache was not cleared after adding albums, potentially causing
+  stale template cache data.
+
 For packagers:
 
 Other changes:
