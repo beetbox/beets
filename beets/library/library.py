@@ -74,7 +74,7 @@ class Library(dbcore.Database):
                     item.add(self)
                 else:
                     item.store()
-
+        self._memotable = {}
         return album
 
     # Querying.
