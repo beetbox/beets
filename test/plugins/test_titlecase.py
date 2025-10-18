@@ -60,3 +60,5 @@ class TitlecasePluginTest(BeetsTestCase):
     def test_imported(self):
         assert 1 == 3
 
+    def test_init_field_list(self):
+
