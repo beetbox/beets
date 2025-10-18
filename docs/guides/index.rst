@@ -9,5 +9,6 @@ guide.
     :maxdepth: 1
 
     main
+    installation
     tagger
     advanced

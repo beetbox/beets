@@ -77,10 +77,10 @@ pluginpath
 ~~~~~~~~~~
 
 Directories to search for plugins. Each Python file or directory in a plugin
-path represents a plugin and should define a subclass of :class:`BeetsPlugin`. A
-plugin can then be loaded by adding the filename to the ``plugins``
-configuration. The plugin path can either be a single string or a list of
-strings---so, if you have multiple paths, format them as a YAML list like so:
+path represents a plugin and should define a subclass of |BeetsPlugin|. A plugin
+can then be loaded by adding the plugin name to the ``plugins`` configuration.
+The plugin path can either be a single string or a list of strings---so, if you
+have multiple paths, format them as a YAML list like so:
 
 ::
 
@@ -935,7 +935,7 @@ can be one of ``none``, ``low``, ``medium`` or ``strong``. When the maximum
 recommendation is ``strong``, no "downgrading" occurs. The available penalty
 names here are:
 
-- source
+- data_source
 - artist
 - album
 - media

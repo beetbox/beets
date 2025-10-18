@@ -95,9 +95,9 @@ starting points include:
 Migration guidance
 ------------------
 
-Older metadata plugins that extend :py:class:`beets.plugins.BeetsPlugin` should
-be migrated to :py:class:`MetadataSourcePlugin`. Legacy support will be removed
-in **beets v3.0.0**.
+Older metadata plugins that extend |BeetsPlugin| should be migrated to
+:py:class:`MetadataSourcePlugin`. Legacy support will be removed in **beets
+v3.0.0**.
 
 .. seealso::
 

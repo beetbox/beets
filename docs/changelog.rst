@@ -9,16 +9,68 @@ Unreleased
 
 New features:
 
+- :doc:`plugins/ftintitle`: Added argument for custom feat. words in ftintitle.
+
+Bug fixes:
+
+For packagers:
+
+Other changes:
+
+2.5.1 (October 14, 2025)
+------------------------
+
+New features:
+
+- :doc:`plugins/zero`: Add new configuration option, ``omit_single_disc``, to
+  allow zeroing the disc number on write for single-disc albums. Defaults to
+  False.
+
+Bug fixes:
+
+- |BeetsPlugin|: load the last plugin class defined in the plugin namespace.
+  :bug:`6093`
+
+For packagers:
+
+- Fixed issue with legacy metadata plugins not copying properties from the base
+  class.
+- Reverted the following: When installing ``beets`` via git or locally the
+  version string now reflects the current git branch and commit hash.
+  :bug:`6089`
+
+Other changes:
+
+- Removed outdated mailing list contact information from the documentation
+  :bug:`5462`.
+- :doc:`guides/main`: Modernized the *Getting Started* guide with tabbed
+  sections and dropdown menus. Installation instructions have been streamlined,
+  and a new subpage now provides additional setup details.
+
+2.5.0 (October 11, 2025)
+------------------------
+
+New features:
+
 - :doc:`plugins/lastgenre`: Add a ``--pretend`` option to preview genre changes
   without storing or writing them.
 - :doc:`plugins/convert`: Add a config option to disable writing metadata to
   converted files.
 - :doc:`plugins/discogs`: New config option `strip_disambiguation` to toggle
   stripping discogs numeric disambiguation on artist and label fields.
-- :doc:`plugins/discogs` Added support for featured artists.
+- :doc:`plugins/discogs` Added support for featured artists. :bug:`6038`
+- :doc:`plugins/discogs` New configuration option `featured_string` to change
+  the default string used to join featured artists. The default string is
+  `Feat.`.
+- :doc:`plugins/discogs` Support for `artist_credit` in Discogs tags.
+  :bug:`3354`
+- :doc:`plugins/discogs` Support for name variations and config options to
+  specify where the variations are written. :bug:`3354`
 
 Bug fixes:
 
+- :doc:`plugins/musicbrainz` Refresh flexible MusicBrainz metadata on reimport
+  so format changes are applied. :bug:`6036`
 - :doc:`plugins/spotify` Ensure ``spotifysync`` keeps popularity, ISRC, and
   related fields current even when audio features requests fail. :bug:`6061`
 - :doc:`plugins/spotify` Fixed an issue where track matching and lookups could
@@ -28,16 +80,18 @@ Bug fixes:
 - :doc:`plugins/spotify` Removed old and undocumented config options
   `artist_field`, `album_field` and `track` that were causing issues with track
   matching. :bug:`5189`
-- :doc:`plugins/discogs` Fixed inconsistency in stripping disambiguation from
-  artists but not labels. :bug:`5366`
-- :doc:`plugins/discogs` Fixed issue with ignoring featured artists in the
-  extraartists field.
 - :doc:`plugins/spotify` Fixed an issue where candidate lookup would not find
   matches due to query escaping (single vs double quotes).
+- :doc:`plugins/discogs` Fixed inconsistency in stripping disambiguation from
+  artists but not labels. :bug:`5366`
 - :doc:`plugins/chroma` :doc:`plugins/bpsync` Fix plugin loading issue caused by
-  an import of another :class:`beets.plugins.BeetsPlugin` class. :bug:`6033`
-
-For packagers:
+  an import of another |BeetsPlugin| class. :bug:`6033`
+- :doc:`/plugins/fromfilename`: Fix :bug:`5218`, improve the code (refactor
+  regexps, allow for more cases, add some logging), add tests.
+- Metadata source plugins: Fixed data source penalty calculation that was
+  incorrectly applied during import matching. The ``source_weight``
+  configuration option has been renamed to ``data_source_mismatch_penalty`` to
+  better reflect its purpose. :bug:`6066`
 
 Other changes:
 
@@ -57,12 +111,22 @@ Other changes:
   disambiguation stripping.
 - When installing ``beets`` via git or locally the version string now reflects
   the current git branch and commit hash. :bug:`4448`
+- :ref:`match-config`: ``match.distance_weights.source`` configuration has been
+  renamed to ``match.distance_weights.data_source`` for consistency with the
+  name of the field it refers to.
 
 For developers and plugin authors:
 
 - Typing improvements in ``beets/logging.py``: ``getLogger`` now returns
   ``BeetsLogger`` when called with a name, or ``RootLogger`` when called without
   a name.
+- The ``track_distance()`` and ``album_distance()`` methods have been removed
+  from ``MetadataSourcePlugin``. Distance calculation for data source mismatches
+  is now handled automatically by the core matching logic. This change
+  simplifies the plugin architecture and fixes incorrect penalty calculations.
+  :bug:`6066`
+- Metadata source plugins are now registered globally when instantiated, which
+  makes their handling slightly more efficient.
 
 2.4.0 (September 13, 2025)
 --------------------------
@@ -143,8 +207,8 @@ For plugin developers:
   art sources might need to be adapted.
 - We split the responsibilities of plugins into two base classes
 
-  1. :class:`beets.plugins.BeetsPlugin` is the base class for all plugins, any
-     plugin needs to inherit from this class.
+  1. |BeetsPlugin| is the base class for all plugins, any plugin needs to
+     inherit from this class.
   2. :class:`beets.metadata_plugin.MetadataSourcePlugin` allows plugins to act
      like metadata sources. E.g. used by the MusicBrainz plugin. All plugins in
      the beets repo are opted into this class where applicable. If you are
@@ -5027,7 +5091,7 @@ BPD). To "upgrade" an old database, you can use the included ``albumify`` plugin
   list of plugin names) and ``pluginpath`` (a colon-separated list of
   directories to search beyond ``sys.path``). Plugins are just Python modules
   under the ``beetsplug`` namespace package containing subclasses of
-  ``beets.plugins.BeetsPlugin``. See `the beetsplug directory`_ for examples or
+  |BeetsPlugin|. See `the beetsplug directory`_ for examples or
   :doc:`/plugins/index` for instructions.
 - As a consequence of adding album art, the database was significantly
   refactored to keep track of some information at an album (rather than item)

@@ -58,7 +58,6 @@ from beets.ui.commands import TerminalImportSession
 from beets.util import (
     MoveOperation,
     bytestring_path,
-    cached_classproperty,
     clean_module_tempdir,
     syspath,
 )
@@ -495,7 +494,6 @@ class PluginMixin(ConfigMixin):
         # FIXME this should eventually be handled by a plugin manager
         plugins = (self.plugin,) if hasattr(self, "plugin") else plugins
         self.config["plugins"] = plugins
-        cached_classproperty.cache.clear()
         beets.plugins.load_plugins()
 
     def unload_plugins(self) -> None:

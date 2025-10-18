@@ -3219,6 +3219,49 @@ lint = ["flake8 (>=6.0)", "importlib-metadata (>=6.0)", "mypy (==1.10.1)", "pyte
 test = ["cython (>=3.0)", "defusedxml (>=0.7.1)", "pytest (>=8.0)", "setuptools (>=70.0)", "typing_extensions (>=4.9)"]
 
 [[package]]
+name = "sphinx-copybutton"
+version = "0.5.2"
+description = "Add a copy button to each of your code cells."
+optional = true
+python-versions = ">=3.7"
+files = [
+    {file = "sphinx-copybutton-0.5.2.tar.gz", hash = "sha256:4cf17c82fb9646d1bc9ca92ac280813a3b605d8c421225fd9913154103ee1fbd"},
+    {file = "sphinx_copybutton-0.5.2-py3-none-any.whl", hash = "sha256:fb543fd386d917746c9a2c50360c7905b605726b9355cd26e9974857afeae06e"},
+]
+
+[package.dependencies]
+sphinx = ">=1.8"
+
+[package.extras]
+code-style = ["pre-commit (==2.12.1)"]
+rtd = ["ipython", "myst-nb", "sphinx", "sphinx-book-theme", "sphinx-examples"]
+
+[[package]]
+name = "sphinx-design"
+version = "0.6.1"
+description = "A sphinx extension for designing beautiful, view size responsive web components."
+optional = true
+python-versions = ">=3.9"
+files = [
+    {file = "sphinx_design-0.6.1-py3-none-any.whl", hash = "sha256:b11f37db1a802a183d61b159d9a202314d4d2fe29c163437001324fe2f19549c"},
+    {file = "sphinx_design-0.6.1.tar.gz", hash = "sha256:b44eea3719386d04d765c1a8257caca2b3e6f8421d7b3a5e742c0fd45f84e632"},
+]
+
+[package.dependencies]
+sphinx = ">=6,<9"
+
+[package.extras]
+code-style = ["pre-commit (>=3,<4)"]
+rtd = ["myst-parser (>=2,<4)"]
+testing = ["defusedxml", "myst-parser (>=2,<4)", "pytest (>=8.3,<9.0)", "pytest-cov", "pytest-regressions"]
+testing-no-myst = ["defusedxml", "pytest (>=8.3,<9.0)", "pytest-cov", "pytest-regressions"]
+theme-furo = ["furo (>=2024.7.18,<2024.8.0)"]
+theme-im = ["sphinx-immaterial (>=0.12.2,<0.13.0)"]
+theme-pydata = ["pydata-sphinx-theme (>=0.15.2,<0.16.0)"]
+theme-rtd = ["sphinx-rtd-theme (>=2.0,<3.0)"]
+theme-sbt = ["sphinx-book-theme (>=1.1,<2.0)"]
+
+[[package]]
 name = "sphinx-lint"
 version = "1.0.0"
 description = "Check for stylistic and formal issues in .rst and .py files included in the documentation."
@@ -3622,7 +3665,7 @@ beatport = ["requests-oauthlib"]
 bpd = ["PyGObject"]
 chroma = ["pyacoustid"]
 discogs = ["python3-discogs-client"]
-docs = ["pydata-sphinx-theme", "sphinx"]
+docs = ["pydata-sphinx-theme", "sphinx", "sphinx-copybutton", "sphinx-design"]
 embedart = ["Pillow"]
 embyupdate = ["requests"]
 fetchart = ["Pillow", "beautifulsoup4", "langdetect", "requests"]
@@ -3645,4 +3688,4 @@ web = ["flask", "flask-cors"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "c5a6a4710beb5bf1e4bbd97f2a590ee020a567aea2341aad5f846eda13ebb94e"
+content-hash = "1db39186aca430ef6f1fd9e51b9dcc3ed91880a458bc21b22d950ed8589fdf5a"
