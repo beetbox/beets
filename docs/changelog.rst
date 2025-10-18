@@ -13,12 +13,7 @@ New features:
 
 Bug fixes:
 
-- Fixed cache invalidation bug in ``Library.add_album()`` where the 
-  ``_memotable`` cache was not cleared after adding albums, potentially 
-  causing stale template cache data.
-  ``_memotable`` cache was not cleared after adding albums, unlike the 
-  ``Library.add()`` method. This could lead to stale template cache data when 
-  adding albums with multiple items.
+- Fixed cache invalidation bug in `Library.add_album()` where the `_memotable` cache was not cleared after adding albums, unlike the `Library.add()` method, potentially causing stale template cache data when adding albums with multiple items.
 
 For packagers:
 
