@@ -3413,7 +3413,7 @@ files = [
 name = "titlecase"
 version = "2.4.1"
 description = "Python Port of John Gruber's titlecase.pl"
-optional = true
+optional = false
 python-versions = ">=3.7"
 files = [
     {file = "titlecase-2.4.1.tar.gz", hash = "sha256:7d83a277ccbbda11a2944e78a63e5ccaf3d32f828c594312e4862f9a07f635f5"},
@@ -3688,4 +3688,4 @@ web = ["flask", "flask-cors"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "1db39186aca430ef6f1fd9e51b9dcc3ed91880a458bc21b22d950ed8589fdf5a"
+content-hash = "fab72aa11a8622829c1f4b5d6d76ab87632f1649a04602bba26202a16a02d482"

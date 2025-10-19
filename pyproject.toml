@@ -76,8 +76,7 @@ requests = { version = "*", optional = true }
 resampy = { version = ">=0.4.3", optional = true }
 requests-oauthlib = { version = ">=0.6.1", optional = true }
 soco = { version = "*", optional = true }
-titlecase = { version = ">=2.4.1", optional = true }
-
+titlecase = "^2.4.1"
 pydata-sphinx-theme = { version = "*", optional = true }
 sphinx = { version = "*", optional = true }
 sphinx-design = { version = "^0.6.1", optional = true }

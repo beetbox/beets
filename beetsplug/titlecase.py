@@ -20,10 +20,8 @@ from beets.dbcore import types
 from beets import ui
 from titlecase import titlecase
 from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from beets.importer import ImportSession, ImportTask
-    from beets.library import Item
+from beets.library import Item
+from beets.importer import ImportSession, ImportTask
 
 __author__ = "henryoberholtzer@gmail.com"
 __version__ = "1.0"
@@ -58,6 +56,7 @@ class TitlecasePlugin(BeetsPlugin):
 
         self.config.add(
             {
+                "auto": True,
                 "preserve": [],
                 "small_first_last": True,
                 "titlecase_metadata": True,
@@ -66,6 +65,7 @@ class TitlecasePlugin(BeetsPlugin):
             }
         )
         """ 
+        auto - automatically apply to new imports
         preserve - provide a list of words/acronyms with specific case requirements
         small_first_last - if small characters should be title cased at beginning
         titlecase_metadata - if metadata fields should have title case applied
@@ -98,6 +98,8 @@ class TitlecasePlugin(BeetsPlugin):
             self.preserve[word.upper()] = word
         self.__init_field_list__() 
 
+        self.import_stages = [self.imported]
+
     def __init_field_list__(self) -> None:
         """ Creates the set for fields to process in tagging.
         If we have include_fields from config, the shared fields will be used.
@@ -106,17 +108,16 @@ class TitlecasePlugin(BeetsPlugin):
         Last, the EXCLUDED_INFO_FIELDS are removed to prevent unitentional modification.
         """
         initial_field_list = set([
-            k for k, v in Item()._fields.items() if 
-            isinstance(v, types.STRING) or 
-            isinstance(v, types.SEMICOLONS_SPACE_DSV) or
-            isinstance(v, types.MULTI_VALUE_DSV)
-            )
+                k for k, v in Item()._fields.items() if 
+                isinstance(v, types.String) or 
+                isinstance(v, types.DelimitedString)
+            ])
         if (incl := self.config["include_fields"].as_str_seq()):
             initial_field_list = initial_field_list.intersection(set(incl))
         if (excl := self.config["exclude_fields"].as_str_seq()):
             initial_field_list -= set(excl)
         initial_field_list -= set(EXCLUDED_INFO_FIELDS)
-        self.fields_to_process = basic_fields_list
+        self.fields_to_process = initial_field_list
 
     def __preserved__(self, word, **kwargs) -> str | None:
         """ Callback function for words to preserve case of."""
