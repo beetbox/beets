@@ -94,3 +94,6 @@ ENV/
 
 # pyright
 pyrightconfig.json
+
+# Pyrefly
+pyrefly.toml
