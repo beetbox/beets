@@ -73,6 +73,7 @@ New features:
   :bug:`3354`
 - :doc:`plugins/discogs` Support for name variations and config options to
   specify where the variations are written. :bug:`3354`
+- :doc:`plugins/web` Support for `nexttrack` keyboard press
 
 Bug fixes:
 
