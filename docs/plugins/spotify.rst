@@ -65,66 +65,84 @@ Configuration
 -------------
 
 This plugin can be configured like other metadata source plugins as described in
-:ref:`metadata-source-plugin-configuration`. In addition, the following
-configuration options are provided.
+:ref:`metadata-source-plugin-configuration`.
 
-The default options should work as-is, but there are some options you can put in
-config.yaml under the ``spotify:`` section:
+Default
+~~~~~~~
 
-- **mode**: One of the following:
-
-      - ``list``: Print out the playlist as a list of links. This list can then
-        be pasted in to a new or existing Spotify playlist.
-      - ``open``: This mode actually sends a link to your default browser with
-        instructions to open Spotify with the playlist you created. Until this
-        has been tested on all platforms, it will remain optional.
-
-  Default: ``list``.
-
-- **region_filter**: A two-character country abbreviation, to limit results to
-  that market. Default: None.
-- **show_failures**: List each lookup that does not return a Spotify ID (and
-  therefore cannot be added to a playlist). Default: ``no``.
-- **tiebreak**: How to choose the track if there is more than one identical
-  result. For example, there might be multiple releases of the same album. The
-  options are ``popularity`` and ``first`` (to just choose the first match
-  returned). Default: ``popularity``.
-- **regex**: An array of regex transformations to perform on the
-  track/album/artist fields before sending them to Spotify. Can be useful for
-  changing certain abbreviations, like ft. -> feat. See the examples below.
-  Default: None.
-- **search_query_ascii**: If set to ``yes``, the search query will be converted
-  to ASCII before being sent to Spotify. Converting searches to ASCII can
-  enhance search results in some cases, but in general, it is not recommended.
-  For instance ``artist:deadmau5 album:4×4`` will be converted to
-  ``artist:deadmau5 album:4x4`` (notice ``×!=x``). Default: ``no``.
-- **search_limit**: The maximum number of results to return from Spotify for
-  each search query. Default: ``5``.
-
-Here's an example:
-
-::
+.. code-block:: yaml
 
     spotify:
-        source_weight: 0.7
-        mode: open
-        region_filter: US
-        show_failures: on
-        tiebreak: first
+        mode: list
+        region_filter:
+        show_failures: no
+        tiebreak: popularity
+        regex: []
         search_query_ascii: no
+        client_id: REDACTED
+        client_secret: REDACTED
+        tokenfile: spotify_token.json
+        data_source_mismatch_penalty: 0.5
+        search_limit: 5
 
-        regex: [
-            {
-                field: "albumartist", # Field in the item object to regex.
-                search: "Something", # String to look for.
-                replace: "Replaced" # Replacement value.
-            },
-            {
-                field: "title",
-                search: "Something Else",
-                replace: "AlsoReplaced"
-            }
-        ]
+.. conf:: mode
+    :default: list
+
+    Controls how the playlist is output:
+
+    - ``list``: Print out the playlist as a list of links. This list can then
+      be pasted in to a new or existing Spotify playlist.
+    - ``open``: This mode actually sends a link to your default browser with
+      instructions to open Spotify with the playlist you created. Until this
+      has been tested on all platforms, it will remain optional.
+
+.. conf:: region_filter
+    :default:
+
+    A two-character country abbreviation, to limit results to that market.
+
+.. conf:: show_failures
+    :default: no
+
+    List each lookup that does not return a Spotify ID (and therefore cannot be
+    added to a playlist).
+
+.. conf:: tiebreak
+    :default: popularity
+
+    How to choose the candidate if there is more than one identical result. For
+    example, there might be multiple releases of the same album.
+
+    - ``popularity``: pick the more popular candidate
+    - ``first``: pick the first candidate
+
+.. conf:: regex
+    :default: []
+
+    An array of regex transformations to perform on the track/album/artist fields
+    before sending them to Spotify. Can be useful for changing certain
+    abbreviations, like ft. -> feat. For example:
+
+    .. code-block:: yaml
+
+        regex:
+          - field: albumartist
+            search: Something
+            replace: Replaced
+          - field: title
+            search: Something Else
+            replace: AlsoReplaced
+
+.. conf:: search_query_ascii
+    :default: no
+
+    If enabled, the search query will be converted to ASCII before being sent to
+    Spotify. Converting searches to ASCII can enhance search results in some
+    cases, but in general, it is not recommended. For instance,
+    ``artist:deadmau5 album:4×4`` will be converted to ``artist:deadmau5
+    album:4x4`` (notice ``×!=x``).
+
+.. include:: ./shared_metadata_source_config.rst
 
 Obtaining Track Popularity and Audio Features from Spotify
 ----------------------------------------------------------

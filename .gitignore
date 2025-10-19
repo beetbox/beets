@@ -95,5 +95,5 @@ ENV/
 # pyright
 pyrightconfig.json
 
-# Versioning
-beets/_version.py
+# Pyrefly
+pyrefly.toml

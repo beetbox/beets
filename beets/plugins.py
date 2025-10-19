@@ -20,8 +20,9 @@ import abc
 import inspect
 import re
 import sys
+import warnings
 from collections import defaultdict
-from functools import wraps
+from functools import cached_property, wraps
 from importlib import import_module
 from pathlib import Path
 from types import GenericAlias
@@ -160,19 +161,57 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
     import_stages: list[ImportStageFunc]
 
     def __init_subclass__(cls) -> None:
-        # Dynamically copy methods to BeetsPlugin for legacy support
-        # TODO: Remove this in the future major release, v3.0.0
+        """Enable legacy metadata‐source plugins to work with the new interface.
+
+        When a plugin subclass of BeetsPlugin defines a `data_source` attribute
+        but does not inherit from MetadataSourcePlugin, this hook:
+
+        1. Skips abstract classes.
+        2. Warns that the class should extend MetadataSourcePlugin (deprecation).
+        3. Copies any nonabstract methods from MetadataSourcePlugin onto the
+           subclass to provide the full plugin API.
+
+        This compatibility layer will be removed in the v3.0.0 release.
+        """
+        # TODO: Remove in v3.0.0
         if inspect.isabstract(cls):
             return
 
         from beets.metadata_plugins import MetadataSourcePlugin
 
-        abstractmethods = MetadataSourcePlugin.__abstractmethods__
-        for name, method in inspect.getmembers(
-            MetadataSourcePlugin, predicate=inspect.isfunction
+        if issubclass(cls, MetadataSourcePlugin) or not hasattr(
+            cls, "data_source"
         ):
-            if name not in abstractmethods and not hasattr(cls, name):
-                setattr(cls, name, method)
+            return
+
+        warnings.warn(
+            f"{cls.__name__} is used as a legacy metadata source. "
+            "It should extend MetadataSourcePlugin instead of BeetsPlugin. "
+            "Support for this will be removed in the v3.0.0 release!",
+            DeprecationWarning,
+            stacklevel=3,
+        )
+
+        method: property | cached_property[Any] | Callable[..., Any]
+        for name, method in inspect.getmembers(
+            MetadataSourcePlugin,
+            predicate=lambda f: (  # type: ignore[arg-type]
+                (
+                    isinstance(f, (property, cached_property))
+                    and not hasattr(
+                        BeetsPlugin,
+                        getattr(f, "attrname", None) or f.fget.__name__,  # type: ignore[union-attr]
+                    )
+                )
+                or (
+                    inspect.isfunction(f)
+                    and f.__name__
+                    and not getattr(f, "__isabstractmethod__", False)
+                    and not hasattr(BeetsPlugin, f.__name__)
+                )
+            ),
+        ):
+            setattr(cls, name, method)
 
     def __init__(self, name: str | None = None):
         """Perform one-time plugin setup."""
@@ -196,6 +235,37 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         self._log.setLevel(logging.NOTSET)  # Use `beets` logger level.
         if not any(isinstance(f, PluginLogFilter) for f in self._log.filters):
             self._log.addFilter(PluginLogFilter(self))
+
+        # In order to verify the config we need to make sure the plugin is fully
+        # configured (plugins usually add the default configuration *after*
+        # calling super().__init__()).
+        self.register_listener("pluginload", self._verify_config)
+
+    def _verify_config(self, *_, **__) -> None:
+        """Verify plugin configuration.
+
+        If deprecated 'source_weight' option is explicitly set by the user, they
+        will see a warning in the logs. Otherwise, this must be configured by
+        a third party plugin, thus we raise a deprecation warning which won't be
+        shown to user but will be visible to plugin developers.
+        """
+        # TODO: Remove in v3.0.0
+        if (
+            not hasattr(self, "data_source")
+            or "source_weight" not in self.config
+        ):
+            return
+
+        message = (
+            "'source_weight' configuration option is deprecated and will be"
+            " removed in v3.0.0. Use 'data_source_mismatch_penalty' instead"
+        )
+        for source in self.config.root().sources:
+            if "source_weight" in (source.get(self.name) or {}):
+                if source.filename:  # user config
+                    self._log.warning(message)
+                else:  # 3rd-party plugin config
+                    warnings.warn(message, DeprecationWarning, stacklevel=0)
 
     def commands(self) -> Sequence[Subcommand]:
         """Should return a list of beets.ui.Subcommand objects for
@@ -363,6 +433,12 @@ def _get_plugin(name: str) -> BeetsPlugin | None:
     Attempts to import the plugin module, locate the appropriate plugin class
     within it, and return an instance. Handles import failures gracefully and
     logs warnings for missing plugins or loading errors.
+
+    Note we load the *last* plugin class found in the plugin namespace. This
+    allows plugins to define helper classes that inherit from BeetsPlugin
+    without those being loaded as the main plugin class.
+
+    Returns None if the plugin could not be loaded for any reason.
     """
     try:
         try:
@@ -370,7 +446,7 @@ def _get_plugin(name: str) -> BeetsPlugin | None:
         except Exception as exc:
             raise PluginImportError(name) from exc
 
-        for obj in namespace.__dict__.values():
+        for obj in reversed(namespace.__dict__.values()):
             if (
                 inspect.isclass(obj)
                 and not isinstance(
@@ -573,13 +649,17 @@ def send(event: EventType, **arguments: Any) -> list[Any]:
     ]
 
 
-def feat_tokens(for_artist: bool = True) -> str:
+def feat_tokens(
+    for_artist: bool = True, custom_words: list[str] | None = None
+) -> str:
     """Return a regular expression that matches phrases like "featuring"
     that separate a main artist or a song title from secondary artists.
     The `for_artist` option determines whether the regex should be
     suitable for matching artist fields (the default) or title fields.
     """
     feat_words = ["ft", "featuring", "feat", "feat.", "ft."]
+    if isinstance(custom_words, list):
+        feat_words += custom_words
     if for_artist:
         feat_words += ["with", "vs", "and", "con", "&"]
     return (
