@@ -376,7 +376,7 @@ terminal_encoding
 ~~~~~~~~~~~~~~~~~
 
 The text encoding, as `known to Python
-<https://docs.python.org/2/library/codecs.html#standard-encodings>`__, to use
+<https://docs.python.org/3/library/codecs.html#standard-encodings>`__, to use
 for messages printed to the standard output. It's also used to read messages
 from the standard input. By default, this is determined automatically from the
 locale environment variables.
