@@ -46,6 +46,10 @@ Other changes:
 - :doc:`guides/main`: Modernized the *Getting Started* guide with tabbed
   sections and dropdown menus. Installation instructions have been streamlined,
   and a new subpage now provides additional setup details.
+- Documentation: introduced a new role ``conf`` for documenting configuration
+  options. This role provides consistent formatting and creates references
+  automatically. Applied it to :doc:`plugins/deezer`, :doc:`plugins/discogs`,
+  :doc:`plugins/musicbrainz` and :doc:`plugins/spotify` plugins documentation.
 
 2.5.0 (October 11, 2025)
 ------------------------
