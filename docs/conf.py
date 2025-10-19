@@ -6,6 +6,11 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+import sys
+from pathlib import Path
+
+# Add custom extensions directory to path
+sys.path.insert(0, str(Path(__file__).parent / "extensions"))
 
 project = "beets"
 AUTHOR = "Adrian Sampson"
@@ -13,8 +18,8 @@ copyright = "2016, Adrian Sampson"
 
 master_doc = "index"
 language = "en"
-version = "2.4"
-release = "2.4.0"
+version = "2.5"
+release = "2.5.1"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -23,12 +28,16 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.extlinks",
+    "sphinx.ext.viewcode",
+    "sphinx_design",
+    "sphinx_copybutton",
+    "conf",
 ]
+
 autosummary_generate = True
 exclude_patterns = ["_build"]
 templates_path = ["_templates"]
 source_suffix = {".rst": "restructuredtext", ".md": "markdown"}
-
 
 pygments_style = "sphinx"
 
@@ -79,6 +88,7 @@ man_pages = [
 rst_epilog = """
 .. |Album| replace:: :class:`~beets.library.models.Album`
 .. |AlbumInfo| replace:: :class:`beets.autotag.hooks.AlbumInfo`
+.. |BeetsPlugin| replace:: :class:`beets.plugins.BeetsPlugin`
 .. |ImportSession| replace:: :class:`~beets.importer.session.ImportSession`
 .. |ImportTask| replace:: :class:`~beets.importer.tasks.ImportTask`
 .. |Item| replace:: :class:`~beets.library.models.Item`

@@ -47,21 +47,10 @@ some, you can use ``pip``'s "extras" feature to install the dependencies:
 Using Metadata Source Plugins
 -----------------------------
 
-Some plugins provide sources for metadata in addition to MusicBrainz. These
-plugins share the following configuration option:
+We provide several :ref:`autotagger_extensions` that fetch metadata from online
+databases. They share the following configuration options:
 
-- **source_weight**: Penalty applied to matches during import. Set to 0.0 to
-  disable. Default: ``0.5``.
-
-For example, to equally consider matches from Discogs and MusicBrainz add the
-following to your configuration:
-
-.. code-block:: yaml
-
-    plugins: musicbrainz discogs
-
-    discogs:
-       source_weight: 0.0
+.. include:: ./shared_metadata_source_config.rst
 
 .. toctree::
     :hidden:

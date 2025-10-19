@@ -27,20 +27,31 @@ Configuration
 -------------
 
 This plugin can be configured like other metadata source plugins as described in
-:ref:`metadata-source-plugin-configuration`. In addition, the following
-configuration options are provided.
+:ref:`metadata-source-plugin-configuration`.
 
-- **search_limit**: The maximum number of results to return from Deezer for each
-  search query. Default: ``5``.
+Default
+~~~~~~~
 
-The default options should work as-is, but there are some options you can put in
-config.yaml under the ``deezer:`` section:
+.. code-block:: yaml
 
-- **search_query_ascii**: If set to ``yes``, the search query will be converted
-  to ASCII before being sent to Deezer. Converting searches to ASCII can enhance
-  search results in some cases, but in general, it is not recommended. For
-  instance ``artist:deadmau5 album:4×4`` will be converted to ``artist:deadmau5
-  album:4x4`` (notice ``×!=x``). Default: ``no``.
+    deezer:
+        search_query_ascii: no
+        data_source_mismatch_penalty: 0.5
+        search_limit: 5
+
+.. conf:: search_query_ascii
+    :default: no
+
+    If enabled, the search query will be converted to ASCII before being sent to
+    Deezer. Converting searches to ASCII can enhance search results in some cases,
+    but in general, it is not recommended. For instance, ``artist:deadmau5
+    album:4×4`` will be converted to ``artist:deadmau5 album:4x4`` (notice
+    ``×!=x``).
+
+.. include:: ./shared_metadata_source_config.rst
+
+Commands
+--------
 
 The ``deezer`` plugin provides an additional command ``deezerupdate`` to update
 the ``rank`` information from Deezer. The ``rank`` (ranges from 0 to 1M) is a

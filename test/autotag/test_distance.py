@@ -10,24 +10,23 @@ from beets.autotag.distance import (
     track_distance,
 )
 from beets.library import Item
+from beets.metadata_plugins import MetadataSourcePlugin, get_penalty
+from beets.plugins import BeetsPlugin
 from beets.test.helper import ConfigMixin
 
 _p = pytest.param
 
 
 class TestDistance:
-    @pytest.fixture(scope="class")
-    def config(self):
-        return ConfigMixin().config
-
-    @pytest.fixture
-    def dist(self, config):
-        config["match"]["distance_weights"]["source"] = 2.0
+    @pytest.fixture(autouse=True, scope="class")
+    def setup_config(self):
+        config = ConfigMixin().config
+        config["match"]["distance_weights"]["data_source"] = 2.0
         config["match"]["distance_weights"]["album"] = 4.0
         config["match"]["distance_weights"]["medium"] = 2.0
 
-        Distance.__dict__["_weights"].cache = {}
-
+    @pytest.fixture
+    def dist(self):
         return Distance()
 
     def test_add(self, dist):
@@ -103,7 +102,7 @@ class TestDistance:
         assert dist["media"] == 1 / 6
 
     def test_operators(self, dist):
-        dist.add("source", 0.0)
+        dist.add("data_source", 0.0)
         dist.add("album", 0.5)
         dist.add("medium", 0.25)
         dist.add("medium", 0.75)
@@ -162,10 +161,8 @@ class TestTrackDistance:
     def test_track_distance(self, info, title, artist, expected_penalty):
         item = Item(artist=artist, title=title)
 
-        assert (
-            bool(track_distance(item, info, incl_artist=True))
-            == expected_penalty
-        )
+        dist = track_distance(item, info, incl_artist=True)
+        assert bool(dist) == expected_penalty, dist._penalties
 
 
 class TestAlbumDistance:
@@ -297,3 +294,66 @@ class TestStringDistance:
         string_dist("The ", "")
         string_dist("(EP)", "(EP)")
         string_dist(", An", "")
+
+
+class TestDataSourceDistance:
+    MATCH = 0.0
+    MISMATCH = 0.125
+
+    @pytest.fixture(autouse=True)
+    def setup(self, monkeypatch, penalty, weight, multiple_data_sources):
+        monkeypatch.setitem(Distance._weights, "data_source", weight)
+        get_penalty.cache_clear()
+
+        class TestMetadataSourcePlugin(MetadataSourcePlugin):
+            def album_for_id(self, *args, **kwargs): ...
+            def track_for_id(self, *args, **kwargs): ...
+            def candidates(self, *args, **kwargs): ...
+            def item_candidates(self, *args, **kwargs): ...
+
+        # We use BeetsPlugin here to check if our compatibility layer
+        # for pre 2.4.0 MetadataPlugins is working as expected
+        # TODO: Replace BeetsPlugin with TestMetadataSourcePlugin in v3.0.0
+        with pytest.deprecated_call():
+
+            class OriginalPlugin(BeetsPlugin):
+                data_source = "Original"
+
+        class OtherPlugin(TestMetadataSourcePlugin):
+            @property
+            def data_source_mismatch_penalty(self):
+                return penalty
+
+        monkeypatch.setattr(
+            "beets.metadata_plugins.find_metadata_source_plugins",
+            lambda: (
+                [OriginalPlugin(), OtherPlugin()]
+                if multiple_data_sources
+                else [OtherPlugin()]
+            ),
+        )
+
+    @pytest.mark.parametrize(
+        "item,info,penalty,weight,multiple_data_sources,expected_distance",
+        [
+            _p("Original", "Original", 0.5, 1.0, True, MATCH, id="match"),
+            _p("Original", "Other", 0.5, 1.0, True, MISMATCH, id="mismatch"),
+            _p("Other", "Original", 0.5, 1.0, True, MISMATCH, id="mismatch"),
+            _p("Original", "unknown", 0.5, 1.0, True, MISMATCH, id="mismatch-unknown"),  # noqa: E501
+            _p("Original", None, 0.5, 1.0, True, MISMATCH, id="mismatch-no-info"),  # noqa: E501
+            _p(None, "Other", 0.5, 1.0, True, MISMATCH, id="mismatch-no-original-multiple-sources"),  # noqa: E501
+            _p(None, "Other", 0.5, 1.0, False, MATCH, id="match-no-original-but-single-source"),  # noqa: E501
+            _p("unknown", "unknown", 0.5, 1.0, True, MATCH, id="match-unknown"),
+            _p("Original", "Other", 1.0, 1.0, True, 0.25, id="mismatch-max-penalty"),  # noqa: E501
+            _p("Original", "Other", 0.5, 5.0, True, 0.3125, id="mismatch-high-weight"),  # noqa: E501
+            _p("Original", "Other", 0.0, 1.0, True, MATCH, id="match-no-penalty"),  # noqa: E501
+            _p("Original", "Other", 0.5, 0.0, True, MATCH, id="match-no-weight"),  # noqa: E501
+        ],
+    )  # fmt: skip
+    def test_distance(self, item, info, expected_distance):
+        item = Item(data_source=item)
+        info = TrackInfo(data_source=info, title="")
+
+        dist = track_distance(item, info)
+
+        assert dist.distance == expected_distance
