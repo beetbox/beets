@@ -47,6 +47,7 @@ from typing import (
     NamedTuple,
     TypeVar,
     Union,
+    cast,
 )
 
 from unidecode import unidecode
@@ -1052,7 +1053,7 @@ def par_map(transform: Callable[[T], Any], items: Sequence[T]) -> None:
     pool.join()
 
 
-class cached_classproperty:
+class cached_classproperty(Generic[T]):
     """Descriptor implementing cached class properties.
 
     Provides class-level dynamic property behavior where the getter function is
@@ -1060,9 +1061,9 @@ class cached_classproperty:
     instance properties, this operates on the class rather than instances.
     """
 
-    cache: ClassVar[dict[tuple[Any, str], Any]] = {}
+    cache: ClassVar[dict[tuple[type[object], str], object]] = {}
 
-    name: str
+    name: str = ""
 
     # Ideally, we would like to use `Callable[[type[T]], Any]` here,
     # however, `mypy` is unable to see this as a **class** property, and thinks
@@ -1078,21 +1079,21 @@ class cached_classproperty:
     #   "Callable[[Album], ...]"; expected "Callable[[type[Album]], ...]"
     #
     # Therefore, we just use `Any` here, which is not ideal, but works.
-    def __init__(self, getter: Callable[[Any], Any]) -> None:
+    def __init__(self, getter: Callable[..., T]) -> None:
         """Initialize the descriptor with the property getter function."""
-        self.getter = getter
+        self.getter: Callable[..., T] = getter
 
-    def __set_name__(self, owner: Any, name: str) -> None:
+    def __set_name__(self, owner: object, name: str) -> None:
         """Capture the attribute name this descriptor is assigned to."""
         self.name = name
 
-    def __get__(self, instance: Any, owner: type[Any]) -> Any:
+    def __get__(self, instance: object, owner: type[object]) -> T:
         """Compute and cache if needed, and return the property value."""
-        key = owner, self.name
+        key: tuple[type[object], str] = owner, self.name
         if key not in self.cache:
             self.cache[key] = self.getter(owner)
 
-        return self.cache[key]
+        return cast(T, self.cache[key])
 
 
 class LazySharedInstance(Generic[T]):
