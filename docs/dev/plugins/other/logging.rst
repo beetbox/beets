@@ -13,7 +13,7 @@ str.format-style string formatting. So you can write logging calls like this:
 
 .. _pep 3101: https://www.python.org/dev/peps/pep-3101/
 
-.. _standard python logging module: https://docs.python.org/2/library/logging.html
+.. _standard python logging module: https://docs.python.org/3/library/logging.html
 
 When beets is in verbose mode, plugin messages are prefixed with the plugin name
 to make them easier to see.
