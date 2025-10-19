@@ -965,6 +965,8 @@ class Transaction:
         ):
             raise DBCustomFunctionError()
 
+        return None
+
     def query(
         self, statement: str, subvals: Sequence[SQLiteType] = ()
     ) -> list[sqlite3.Row]:
