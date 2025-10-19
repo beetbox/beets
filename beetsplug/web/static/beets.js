@@ -241,6 +241,11 @@ var AppView = Backbone.View.extend({
             'pause': _.bind(this.audioPause, this),
             'ended': _.bind(this.audioEnded, this)
         });
+	if ("mediaSession" in navigator) {
+	    navigator.mediaSession.setActionHandler("nexttrack", () => {
+	        this.playNext();
+	    });
+	}
     },
     showItems: function(items) {
         this.shownItems = items;
@@ -306,7 +311,9 @@ var AppView = Backbone.View.extend({
     },
     audioEnded: function() {
         this.playingItem.entryView.setPlaying(false);
-
+        this.playNext();
+    },
+    playNext: function(){
         // Try to play the next track.
         var idx = this.shownItems.indexOf(this.playingItem);
         if (idx == -1) {
