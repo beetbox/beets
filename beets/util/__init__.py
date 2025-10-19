@@ -50,6 +50,7 @@ from typing import (
     TypeVar,
     Union,
     cast,
+    overload,
 )
 
 from unidecode import unidecode
@@ -1109,6 +1110,18 @@ class cached_classproperty(Generic[T]):
             value: T = self.getter(owner)
             class_cache[self.name] = value
             return value
+
+    @classmethod
+    @overload
+    def clear_cache(cls, owner: type[object], name: str) -> None: ...
+
+    @classmethod
+    @overload
+    def clear_cache(cls, owner: type[object], name: None = None) -> None: ...
+
+    @classmethod
+    @overload
+    def clear_cache(cls, owner: None = None, name: None = None) -> None: ...
 
     @classmethod
     def clear_cache(
