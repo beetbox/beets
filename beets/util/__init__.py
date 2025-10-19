@@ -1115,14 +1115,22 @@ class cached_classproperty(Generic[T]):
         cls, owner: type[object] | None = None, name: str | None = None
     ) -> None:
         """Clear cache for specific class/property or entire cache."""
-        if owner is None:
-            cls._cache.clear()
-        elif name is None:
-            keys_to_remove = [k for k in cls._cache.keys() if k[0] == owner]
-            for key in keys_to_remove:
-                del cls._cache[key]
-        else:
-            _ = cls._cache.pop(owner, None)
+        with cls._lock:
+            try:
+                if owner is None:
+                    # Remove entire class cache
+                    cls._cache.clear()
+                elif name is None:
+                    del cls._cache[owner]
+                else:
+                    # Remove specific property from class cache
+                    class_cache: dict[str, object] = cls._cache[owner]
+                    del class_cache[name]
+                    # Clean up empty class cache to avoid memory leaks
+                    if not class_cache:
+                        del cls._cache[owner]
+            except KeyError:
+                ...
 
 
 class LazySharedInstance(Generic[T]):
