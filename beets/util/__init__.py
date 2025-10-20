@@ -50,7 +50,6 @@ from typing import (
     TypeVar,
     Union,
     cast,
-    overload,
 )
 
 from unidecode import unidecode
@@ -1101,38 +1100,10 @@ class cached_classproperty(Generic[T]):
             return value
 
     @classmethod
-    @overload
-    def clear_cache(cls, owner: type[object], name: str) -> None: ...
-
-    @classmethod
-    @overload
-    def clear_cache(cls, owner: type[object], name: None = None) -> None: ...
-
-    @classmethod
-    @overload
-    def clear_cache(cls, owner: None = None, name: None = None) -> None: ...
-
-    @classmethod
-    def clear_cache(
-        cls, owner: type[object] | None = None, name: str | None = None
-    ) -> None:
-        """Clear cache for specific class/property or entire cache."""
+    def clear_cache(cls) -> None:
+        """Safely clear cache"""
         with cls._lock:
-            try:
-                if owner is None:
-                    # Remove entire class cache
-                    cls._cache.clear()
-                elif name is None:
-                    del cls._cache[owner]
-                else:
-                    # Remove specific property from class cache
-                    class_cache: dict[str, object] = cls._cache[owner]
-                    del class_cache[name]
-                    # Clean up empty class cache to avoid memory leaks
-                    if not class_cache:
-                        del cls._cache[owner]
-            except KeyError:
-                ...
+            cls._cache.clear()
 
 
 class LazySharedInstance(Generic[T]):
