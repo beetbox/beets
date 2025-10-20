@@ -940,10 +940,10 @@ class Transaction:
 
     def __exit__(
         self,
-        exc_type: type[Exception],
-        exc_value: Exception,
-        traceback: TracebackType,
-    ):
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> bool | None:
         """Complete a transaction. This must be the most recently
         entered but not yet exited transaction. If it is the last active
         transaction, the database updates are committed.
@@ -964,6 +964,8 @@ class Transaction:
             and exc_value.args[0] == "user-defined function raised exception"
         ):
             raise DBCustomFunctionError()
+
+        return None
 
     def query(
         self, statement: str, subvals: Sequence[SQLiteType] = ()

@@ -70,7 +70,7 @@ These options match the options from the `Python csv module`_.
 
 .. _python csv module: https://docs.python.org/3/library/csv.html#csv-fmt-params
 
-.. _python json module: https://docs.python.org/2/library/json.html#basic-usage
+.. _python json module: https://docs.python.org/3/library/json.html#basic-usage
 
 The default options look like this:
 

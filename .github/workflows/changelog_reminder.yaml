@@ -10,7 +10,7 @@ jobs:
   check_changes:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Get all updated Python files
         id: changed-python-files
