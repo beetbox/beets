@@ -29,6 +29,9 @@ Other changes:
 - The documentation chapter :doc:`dev/paths` has been moved to the "For
   Developers" section and revised to reflect current best practices (pathlib
   usage).
+- Standardized ``search_*`` parameter handling in autotag matchers. Manual album and
+  singleton searches now behave consistently: when the prompt does not specify a
+  search query, the system defaults to using the corresponding metadata value.
 
 2.5.1 (October 14, 2025)
 ------------------------
