@@ -1087,18 +1087,7 @@ class cached_classproperty(Generic[T]):
                 + "the descriptor is used outside of a class definition."
             )
 
-        # First check without lock for performance
-        class_cache: dict[str, object] | None = self._cache.get(owner)
-        if class_cache is not None:
-            try:
-                # We know this is safe because we only put T values in the cache
-                return cast(T, class_cache[self.name])
-            except KeyError:
-                ...
-
-        # Compute and cache with lock
         with self._lock:
-            # Double-check inside lock
             class_cache = self._cache.setdefault(owner, {})
 
             try:
