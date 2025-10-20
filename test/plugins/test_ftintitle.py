@@ -205,11 +205,11 @@ def add_item(
             ("Alice med Bob", "Song 1"),
             id="custom-feat-words-keep-in-artists-drop-from-title",
         ),
-        # ---- skip_if_artist_and_album_artists_is_the_same variants ----
+        # ---- preserve_album_artist variants ----
         pytest.param(
             {
                 "format": "feat. {}",
-                "skip_if_artist_and_album_artists_is_the_same": True,
+                "preserve_album_artist": True,
             },
             ("ftintitle",),
             ("Alice feat. Bob", "Song 1", "Alice"),
@@ -219,7 +219,7 @@ def add_item(
         pytest.param(
             {
                 "format": "feat. {}",
-                "skip_if_artist_and_album_artists_is_the_same": False,
+                "preserve_album_artist": False,
             },
             ("ftintitle",),
             ("Alice feat. Bob", "Song 1", "Alice"),
@@ -229,7 +229,7 @@ def add_item(
         pytest.param(
             {
                 "format": "feat. {}",
-                "skip_if_artist_and_album_artists_is_the_same": True,
+                "preserve_album_artist": True,
             },
             ("ftintitle",),
             ("Alice feat. Bob", "Song 1", "Alice feat. Bob"),
@@ -239,7 +239,7 @@ def add_item(
         pytest.param(
             {
                 "format": "feat. {}",
-                "skip_if_artist_and_album_artists_is_the_same": False,
+                "preserve_album_artist": False,
             },
             ("ftintitle",),
             ("Alice feat. Bob", "Song 1", "Alice feat. Bob"),
