@@ -5,13 +5,13 @@ you've removed the album from the library.
 """
 
 import os
+from pathlib import Path
 from shutil import rmtree
 
 from beets.dbcore.query import PathQuery
 from beets.plugins import BeetsPlugin
 from beets.ui import colorize as colorize_text
 from beets.ui import input_options
-from beets.util import displayable_path, syspath
 
 
 class ImportHistPlugin(BeetsPlugin):
@@ -69,20 +69,20 @@ class ImportHistPlugin(BeetsPlugin):
             return
         if item.mb_albumid in self.stop_suggestions_for_albums:
             return
-        if not os.path.isfile(syspath(item.source_path)):
+        srcpath = Path(os.fsdecode(item.source_path))
+        if not srcpath.is_file():
             self._log.warning(
-                "Item with source_path that doesn't exist: {}",
-                displayable_path(item.source_path),
+                "Item with source_path that is not a regular file: {}",
+                srcpath,
             )
             return
-        source_dir = os.path.dirname(syspath(item.source_path))
         if not (
-            os.access(syspath(item.source_path), os.W_OK)
-            and os.access(source_dir, os.W_OK | os.X_OK)
+            os.access(srcpath, os.W_OK)
+            and os.access(srcpath.parent, os.W_OK | os.X_OK)
         ):
             self._log.warning(
                 "Item with source_path not deletable: {}",
-                displayable_path(item.source_path),
+                srcpath,
             )
             return
         # We ask the user whether they'd like to delete the item's source
@@ -92,7 +92,8 @@ class ImportHistPlugin(BeetsPlugin):
             "What would you like to do?".format(
                 path=colorize_text("text_warning", item.filepath),
                 source=colorize_text(
-                    "text_warning", displayable_path(item.source_path)
+                    "text_warning",
+                    srcpath,
                 ),
             )
         )
@@ -108,17 +109,17 @@ class ImportHistPlugin(BeetsPlugin):
         if resp == "d":
             self._log.info(
                 "Deleting the item's source file: {}",
-                displayable_path(item.source_path),
+                srcpath,
             )
-            os.remove(syspath(item.source_path))
+            srcpath.unlink()
         elif resp == "r":
             self._log.info(
                 "Searching for other items with a source_path attr containing: {}",
-                source_dir,
+                srcpath.parent,
             )
             source_dir_query = PathQuery(
                 "source_path",
-                source_dir,
+                srcpath.parent,
                 # The "source_path" attribute may not be present in all
                 # items of the library, so we avoid errors with this:
                 fast=False,
@@ -134,18 +135,18 @@ class ImportHistPlugin(BeetsPlugin):
             if continue_resp == "y":
                 self._log.info(
                     "Deleting the item's source directory: {}",
-                    displayable_path(source_dir),
+                    srcpath.parent,
                 )
-                rmtree(source_dir)
+                rmtree(srcpath.parent)
             elif continue_resp == "n":
                 self._log.info("doing nothing - aborting hook function")
                 return
             elif continue_resp == "f":
                 self._log.info(
                     "removing just the item's original source: {}",
-                    displayable_path(item.source_path),
+                    srcpath,
                 )
-                os.remove(item.source_path)
+                srcpath.unlink()
         elif resp == "s":
             self.stop_suggestions_for_albums.add(item.mb_albumid)
         else:
