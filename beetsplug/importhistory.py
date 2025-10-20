@@ -64,7 +64,7 @@ class ImportHistPlugin(BeetsPlugin):
             self._log.warning(
                 "Item without source_path (probably imported before plugin "
                 "usage): {}",
-                displayable_path(item.path),
+                item.filepath,
             )
             return
         if item.mb_albumid in self.stop_suggestions_for_albums:
@@ -90,7 +90,7 @@ class ImportHistPlugin(BeetsPlugin):
         print(
             "The item:\n{path}\nis originated from:\n{source}\n"
             "What would you like to do?".format(
-                path=colorize_text("text_warning", displayable_path(item.path)),
+                path=colorize_text("text_warning", item.filepath),
                 source=colorize_text(
                     "text_warning", displayable_path(item.source_path)
                 ),
@@ -125,11 +125,7 @@ class ImportHistPlugin(BeetsPlugin):
             )
             print("Doing so will delete the following items' sources as well:")
             for searched_item in item._db.items(source_dir_query):
-                print(
-                    colorize_text(
-                        "text_warning", displayable_path(searched_item["path"])
-                    )
-                )
+                print(colorize_text("text_warning", searched_item.filepath))
             print("Would you like to continue?")
             continue_resp = input_options(
                 ["Yes", "delete None", "delete just the File"],
