@@ -15,13 +15,18 @@ New features:
 
 Bug fixes:
 
+- :doc:`plugins/discogs`, :doc:`plugins/beatport`, :doc:`plugins/spotify`,
+  :doc:`plugins/musicbrainz`: Fix an issue where no metadata in a file would
+  crash the import process :bug:`6060`
+
 For packagers:
 
 Other changes:
 
-- Standardized ``search_*`` parameter handling in autotag matchers. Manual album and
-  singleton searches now behave consistently: when the prompt does not specify a
-  search query, the system defaults to using the corresponding metadata value.
+- Standardized ``search_*`` parameter handling in autotag matchers. Manual album
+  and singleton searches now behave consistently: when the prompt does not
+  specify a search query, the system defaults to using the corresponding
+  metadata value.
 
 2.5.1 (October 14, 2025)
 ------------------------
