@@ -34,15 +34,16 @@ import requests
 from bs4 import BeautifulSoup
 from unidecode import unidecode
 
-import beets
 from beets import plugins, ui
 from beets.autotag.distance import string_dist
 from beets.util.config import sanitize_choices
 
-from ._utils.requests import CaptchaError, HTTPNotFoundError, TimeoutSession
+from ._utils.requests import HTTPNotFoundError, RequestHandler
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
+
+    import confuse
 
     from beets.importer import ImportTask
     from beets.library import Item, Library
@@ -59,7 +60,9 @@ if TYPE_CHECKING:
 INSTRUMENTAL_LYRICS = "[Instrumental]"
 
 
-r_session = TimeoutSession()
+class CaptchaError(requests.exceptions.HTTPError):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__("Captcha is required", *args, **kwargs)
 
 
 # Utilities.
@@ -155,8 +158,17 @@ def slug(text: str) -> str:
     return re.sub(r"\W+", "-", unidecode(text).lower().strip()).strip("-")
 
 
-class RequestHandler:
+class LyricsRequestHandler(RequestHandler):
     _log: Logger
+
+    def status_to_error(self, code: int) -> type[requests.HTTPError] | None:
+        if err := super().status_to_error(code):
+            return err
+
+        if 300 <= code < 400:
+            return CaptchaError
+
+        return None
 
     def debug(self, message: str, *args) -> None:
         """Log a debug message with the class name."""
@@ -177,7 +189,7 @@ class RequestHandler:
 
         return f"{url}?{urlencode(params)}"
 
-    def fetch_text(
+    def get_text(
         self, url: str, params: JSONDict | None = None, **kwargs
     ) -> str:
         """Return text / HTML data from the given URL.
@@ -187,21 +199,21 @@ class RequestHandler:
         """
         url = self.format_url(url, params)
         self.debug("Fetching HTML from {}", url)
-        r = r_session.get(url, **kwargs)
+        r = self.get(url, **kwargs)
         r.encoding = None
         return r.text
 
-    def fetch_json(self, url: str, params: JSONDict | None = None, **kwargs):
+    def get_json(self, url: str, params: JSONDict | None = None, **kwargs):
         """Return JSON data from the given URL."""
         url = self.format_url(url, params)
         self.debug("Fetching JSON from {}", url)
-        return r_session.get(url, **kwargs).json()
+        return super().get_json(url, **kwargs)
 
     def post_json(self, url: str, params: JSONDict | None = None, **kwargs):
         """Send POST request and return JSON response."""
         url = self.format_url(url, params)
         self.debug("Posting JSON to {}", url)
-        return r_session.post(url, **kwargs).json()
+        return self.request("post", url, **kwargs).json()
 
     @contextmanager
     def handle_request(self) -> Iterator[None]:
@@ -220,8 +232,10 @@ class BackendClass(type):
         return cls.__name__.lower()
 
 
-class Backend(RequestHandler, metaclass=BackendClass):
-    def __init__(self, config, log):
+class Backend(LyricsRequestHandler, metaclass=BackendClass):
+    config: confuse.Subview
+
+    def __init__(self, config: confuse.Subview, log: Logger) -> None:
         self._log = log
         self.config = config
 
@@ -325,10 +339,10 @@ class LRCLib(Backend):
         if album:
             get_params["album_name"] = album
 
-        yield self.fetch_json(self.SEARCH_URL, params=base_params)
+        yield self.get_json(self.SEARCH_URL, params=base_params)
 
         with suppress(HTTPNotFoundError):
-            yield [self.fetch_json(self.GET_URL, params=get_params)]
+            yield [self.get_json(self.GET_URL, params=get_params)]
 
     @classmethod
     def pick_best_match(cls, lyrics: Iterable[LRCLyrics]) -> LRCLyrics | None:
@@ -376,7 +390,7 @@ class MusiXmatch(Backend):
     def fetch(self, artist: str, title: str, *_) -> tuple[str, str] | None:
         url = self.build_url(artist, title)
 
-        html = self.fetch_text(url)
+        html = self.get_text(url)
         if "We detected that your IP is blocked" in html:
             self.warn("Failed: Blocked IP address")
             return None
@@ -501,7 +515,7 @@ class SearchBackend(SoupMixin, Backend):
     def fetch(self, artist: str, title: str, *_) -> tuple[str, str] | None:
         """Fetch lyrics for the given artist and title."""
         for result in self.get_results(artist, title):
-            if (html := self.fetch_text(result.url)) and (
+            if (html := self.get_text(result.url)) and (
                 lyrics := self.scrape(html)
             ):
                 return lyrics, result.url
@@ -531,7 +545,7 @@ class Genius(SearchBackend):
         return {"Authorization": f"Bearer {self.config['genius_api_key']}"}
 
     def search(self, artist: str, title: str) -> Iterable[SearchResult]:
-        search_data: GeniusAPI.Search = self.fetch_json(
+        search_data: GeniusAPI.Search = self.get_json(
             self.SEARCH_URL,
             params={"q": f"{artist} {title}"},
             headers=self.headers,
@@ -560,7 +574,7 @@ class Tekstowo(SearchBackend):
         return self.SEARCH_URL.format(quote_plus(unidecode(artistitle)))
 
     def search(self, artist: str, title: str) -> Iterable[SearchResult]:
-        if html := self.fetch_text(self.build_url(title, artist)):
+        if html := self.get_text(self.build_url(title, artist)):
             soup = self.get_soup(html)
             for tag in soup.select("div[class=flex-group] > a[title*=' - ']"):
                 artist, title = str(tag["title"]).split(" - ", 1)
@@ -626,12 +640,12 @@ class Google(SearchBackend):
         html = Html.remove_ads(super().pre_process_html(html))
         return Html.remove_formatting(Html.merge_paragraphs(html))
 
-    def fetch_text(self, *args, **kwargs) -> str:
+    def get_text(self, *args, **kwargs) -> str:
         """Handle an error so that we can continue with the next URL."""
         kwargs.setdefault("allow_redirects", False)
         with self.handle_request():
             try:
-                return super().fetch_text(*args, **kwargs)
+                return super().get_text(*args, **kwargs)
             except CaptchaError:
                 self.ignored_domains.add(urlparse(args[0]).netloc)
                 raise
@@ -687,7 +701,7 @@ class Google(SearchBackend):
             "excludeTerms": ", ".join(self.EXCLUDE_PAGES),
         }
 
-        data: GoogleCustomSearchAPI.Response = self.fetch_json(
+        data: GoogleCustomSearchAPI.Response = self.get_json(
             self.SEARCH_URL, params=params
         )
         for item in data.get("items", []):
@@ -712,7 +726,7 @@ class Google(SearchBackend):
 
 
 @dataclass
-class Translator(RequestHandler):
+class Translator(LyricsRequestHandler):
     TRANSLATE_URL = "https://api.cognitive.microsofttranslator.com/translate"
     LINE_PARTS_RE = re.compile(r"^(\[\d\d:\d\d.\d\d\]|) *(.*)$")
     SEPARATOR = " | "
@@ -922,7 +936,7 @@ class RestFiles:
         ui.print_(textwrap.dedent(text))
 
 
-class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
+class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
     BACKEND_BY_NAME = {
         b.name: b for b in [LRCLib, Google, Genius, Tekstowo, MusiXmatch]
     }
