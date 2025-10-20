@@ -1052,7 +1052,7 @@ class TestMusicBrainzPlugin(PluginMixin):
 
     def test_item_candidates(self, monkeypatch, mb):
         monkeypatch.setattr(
-            "beetsplug.musicbrainz.MusicBrainzAPI._get",
+            "beetsplug.musicbrainz.MusicBrainzAPI.get_json",
             lambda *_, **__: {"recordings": [self.RECORDING]},
         )
 
@@ -1063,7 +1063,7 @@ class TestMusicBrainzPlugin(PluginMixin):
 
     def test_candidates(self, monkeypatch, mb):
         monkeypatch.setattr(
-            "beetsplug.musicbrainz.MusicBrainzAPI._get",
+            "beetsplug.musicbrainz.MusicBrainzAPI.get_json",
             lambda *_, **__: {"releases": [{"id": self.mbid}]},
         )
         monkeypatch.setattr(
