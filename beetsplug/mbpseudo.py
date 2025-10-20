@@ -20,6 +20,7 @@ import traceback
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Iterable, Sequence
 
+import mediafile
 import musicbrainzngs
 from typing_extensions import override
 
@@ -49,9 +50,48 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
 
         self._release_getter = musicbrainzngs.get_release_by_id
 
-        self.config.add({"scripts": []})
+        self.config.add(
+            {
+                "scripts": [],
+                "custom_tags_only": False,
+                "album_custom_tags": {
+                    "album_transl": "album",
+                    "album_artist_transl": "artist",
+                },
+                "track_custom_tags": {
+                    "title_transl": "title",
+                    "artist_transl": "artist",
+                },
+            }
+        )
+
         self._scripts = self.config["scripts"].as_str_seq()
         self._log.debug("Desired scripts: {0}", self._scripts)
+
+        album_custom_tags = self.config["album_custom_tags"].get().keys()
+        track_custom_tags = self.config["track_custom_tags"].get().keys()
+        self._log.debug(
+            "Custom tags for albums and tracks: {0} + {1}",
+            album_custom_tags,
+            track_custom_tags,
+        )
+        for custom_tag in album_custom_tags | track_custom_tags:
+            if not isinstance(custom_tag, str):
+                continue
+
+            media_field = mediafile.MediaField(
+                mediafile.MP3DescStorageStyle(custom_tag),
+                mediafile.MP4StorageStyle(
+                    f"----:com.apple.iTunes:{custom_tag}"
+                ),
+                mediafile.StorageStyle(custom_tag),
+                mediafile.ASFStorageStyle(custom_tag),
+            )
+            try:
+                self.add_media_field(custom_tag, media_field)
+            except ValueError:
+                # ignore errors due to duplicates
+                pass
 
         self.register_listener("pluginload", self._on_plugins_loaded)
         self.register_listener("album_matched", self._adjust_final_album_match)
@@ -107,12 +147,17 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
                 pseudo_release = super().album_info(
                     raw_pseudo_release["release"]
                 )
-                return PseudoAlbumInfo(
-                    pseudo_release=_merge_pseudo_and_actual_album(
-                        pseudo_release, official_release
-                    ),
-                    official_release=official_release,
-                )
+
+                if self.config["custom_tags_only"].get(bool):
+                    self._add_custom_tags(official_release, pseudo_release)
+                    return official_release
+                else:
+                    return PseudoAlbumInfo(
+                        pseudo_release=_merge_pseudo_and_actual_album(
+                            pseudo_release, official_release
+                        ),
+                        official_release=official_release,
+                    )
             except musicbrainzngs.MusicBrainzError as exc:
                 raise MusicBrainzAPIError(
                     exc,
@@ -166,6 +211,23 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
             return release["id"]
         else:
             return None
+
+    def _add_custom_tags(
+        self,
+        official_release: AlbumInfo,
+        pseudo_release: AlbumInfo,
+    ):
+        for tag_key, pseudo_key in (
+            self.config["album_custom_tags"].get().items()
+        ):
+            official_release[tag_key] = pseudo_release[pseudo_key]
+
+        track_custom_tags = self.config["track_custom_tags"].get().items()
+        for track, pseudo_track in zip(
+            official_release.tracks, pseudo_release.tracks
+        ):
+            for tag_key, pseudo_key in track_custom_tags:
+                track[tag_key] = pseudo_track[pseudo_key]
 
     def _adjust_final_album_match(self, match: AlbumMatch):
         album_info = match.info
