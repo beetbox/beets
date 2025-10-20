@@ -35,17 +35,35 @@ def find_metadata_source_plugins() -> list[MetadataSourcePlugin]:
 
 
 @notify_info_yielded("albuminfo_received")
-def candidates(*args, **kwargs) -> Iterable[AlbumInfo]:
+def candidates(
+    items: Sequence[Item],
+    artist: str,
+    album: str,
+    va_likely: bool,
+) -> Iterable[AlbumInfo]:
     """Return matching album candidates from all metadata source plugins."""
     for plugin in find_metadata_source_plugins():
-        yield from plugin.candidates(*args, **kwargs)
+        yield from plugin.candidates(
+            items=items,
+            artist=artist,
+            album=album,
+            va_likely=va_likely,
+        )
 
 
 @notify_info_yielded("trackinfo_received")
-def item_candidates(*args, **kwargs) -> Iterable[TrackInfo]:
-    """Return matching track candidates fromm all metadata source plugins."""
+def item_candidates(
+    item: Item,
+    artist: str,
+    title: str,
+) -> Iterable[TrackInfo]:
+    """Return matching track candidates from all metadata source plugins."""
     for plugin in find_metadata_source_plugins():
-        yield from plugin.item_candidates(*args, **kwargs)
+        yield from plugin.item_candidates(
+            item=item,
+            artist=artist,
+            title=title,
+        )
 
 
 def album_for_id(_id: str) -> AlbumInfo | None:
@@ -157,15 +175,22 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def item_candidates(
-        self, item: Item, artist: str, title: str
+        self,
+        item: Item,
+        artist: str,
+        title: str,
     ) -> Iterable[TrackInfo]:
         """Return :py:class:`TrackInfo` candidates that match the given track.
 
         Used in the autotag functionality to search for tracks.
 
         :param item: Track item
-        :param artist: Track artist
-        :param title: Track title
+        :param artist: Track artist, either a search manually provided or
+            preprocessed from the item. If no metadata is available an empty string
+            is passed.
+        :param title: Track title, either a search manually provided or
+            preprocessed from the item. If no metadata is available an empty string
+            is passed.
         """
         raise NotImplementedError
 
