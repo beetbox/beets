@@ -1917,25 +1917,6 @@ stats_cmd.func = stats_func
 default_commands.append(stats_cmd)
 
 
-# version: Show current beets version.
-
-
-def show_version(lib, opts, args):
-    print_(f"beets version {beets.__version__}")
-    print_(f"Python version {python_version()}")
-    # Show plugins.
-    names = sorted(p.name for p in plugins.find_plugins())
-    if names:
-        print_("plugins:", ", ".join(names))
-    else:
-        print_("no plugins loaded")
-
-
-version_cmd = ui.Subcommand("version", help="output version information")
-version_cmd.func = show_version
-default_commands.append(version_cmd)
-
-
 # modify: Declaratively change metadata.
 
 
