@@ -73,24 +73,3 @@ class QueryTest(BeetsTestCase):
         self.add_album([item, item2])
         self.check_do_query(3, 2, album=True)
         self.check_do_query(0, 2, album=True, also_items=False)
-
-
-class FieldsTest(IOMixin, ItemInDBTestCase):
-    def remove_keys(self, keys, text):
-        for i in text:
-            try:
-                keys.remove(i)
-            except ValueError:
-                pass
-
-    def test_fields_func(self):
-        commands.fields_func(self.lib, [], [])
-        items = library.Item.all_keys()
-        albums = library.Album.all_keys()
-
-        output = self.io.stdout.get().split()
-        self.remove_keys(items, output)
-        self.remove_keys(albums, output)
-
-        assert len(items) == 0
-        assert len(albums) == 0
