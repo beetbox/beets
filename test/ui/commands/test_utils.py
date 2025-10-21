@@ -1,19 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
-"""Test module for file ui/commands.py"""
-
 import os
 import shutil
 
@@ -21,8 +5,8 @@ import pytest
 
 from beets import library, ui
 from beets.test import _common
-from beets.test.helper import BeetsTestCase, IOMixin, ItemInDBTestCase
-from beets.ui import commands
+from beets.test.helper import BeetsTestCase
+from beets.ui.commands._utils import do_query
 from beets.util import syspath
 
 
@@ -44,17 +28,17 @@ class QueryTest(BeetsTestCase):
     def check_do_query(
         self, num_items, num_albums, q=(), album=False, also_items=True
     ):
-        items, albums = commands._do_query(self.lib, q, album, also_items)
+        items, albums = do_query(self.lib, q, album, also_items)
         assert len(items) == num_items
         assert len(albums) == num_albums
 
     def test_query_empty(self):
         with pytest.raises(ui.UserError):
-            commands._do_query(self.lib, (), False)
+            do_query(self.lib, (), False)
 
     def test_query_empty_album(self):
         with pytest.raises(ui.UserError):
-            commands._do_query(self.lib, (), True)
+            do_query(self.lib, (), True)
 
     def test_query_item(self):
         self.add_item()
