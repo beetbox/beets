@@ -6,7 +6,6 @@ from beets import autotag, config, importer, logging, plugins, ui
 from beets.autotag import Recommendation
 from beets.util import displayable_path
 from beets.util.units import human_bytes, human_seconds_short
-from beetsplug.bareasc import print_
 
 from .display import (
     disambig_string,
@@ -415,8 +414,8 @@ def choose_candidate(
         if singleton:
             ui.print_("No matching recordings found.")
         else:
-            print_(f"No matching release found for {itemcount} tracks.")
-            print_(
+            ui.print_(f"No matching release found for {itemcount} tracks.")
+            ui.print_(
                 "For help, see: "
                 "https://beets.readthedocs.org/en/latest/faq.html#nomatch"
             )
@@ -461,17 +460,17 @@ def choose_candidate(
                 else:
                     metadata = ui.colorize("text_highlight_minor", metadata)
                 line1 = [index, distance, metadata]
-                print_(f"  {' '.join(line1)}")
+                ui.print_(f"  {' '.join(line1)}")
 
                 # Penalties.
                 penalties = penalty_string(match.distance, 3)
                 if penalties:
-                    print_(f"{' ' * 13}{penalties}")
+                    ui.print_(f"{' ' * 13}{penalties}")
 
                 # Disambiguation
                 disambig = disambig_string(match.info)
                 if disambig:
-                    print_(f"{' ' * 13}{disambig}")
+                    ui.print_(f"{' ' * 13}{disambig}")
 
             # Ask the user for a choice.
             sel = ui.input_options(choice_opts, numrange=(1, len(candidates)))
