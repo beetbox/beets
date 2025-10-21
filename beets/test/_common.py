@@ -108,7 +108,7 @@ def item(lib=None, **kwargs):
 # Dummy import session.
 def import_session(lib=None, loghandler=None, paths=[], query=[], cli=False):
     cls = (
-        commands._import.session.TerminalImportSession
+        commands.import_.session.TerminalImportSession
         if cli
         else importer.ImportSession
     )
