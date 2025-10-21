@@ -6,6 +6,7 @@ from beets import config, logging, plugins, ui
 from beets.util import displayable_path, normpath, syspath
 
 from .._utils import parse_logfiles
+from .session import TerminalImportSession
 
 # Global logger.
 log = logging.getLogger("beets")

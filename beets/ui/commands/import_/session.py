@@ -8,6 +8,14 @@ from beets.util import displayable_path
 from beets.util.units import human_bytes, human_seconds_short
 from beetsplug.bareasc import print_
 
+from .display import (
+    disambig_string,
+    dist_colorize,
+    penalty_string,
+    show_change,
+    show_item_change,
+)
+
 # Global logger.
 log = logging.getLogger("beets")
 
