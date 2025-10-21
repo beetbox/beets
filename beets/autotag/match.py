@@ -259,7 +259,7 @@ def tag_album(
     items,
     search_artist: str | None = None,
     search_album: str | None = None,
-    search_ids: list[str] = [],
+    search_ids: list[str] | None = None,
 ) -> tuple[str, str, Proposal]:
     """Return a tuple of the current artist name, the current album
     name, and a `Proposal` containing `AlbumMatch` candidates.
