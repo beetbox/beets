@@ -21,8 +21,9 @@ For packagers:
 
 Other changes:
 
-- Refactored the ``beets/ui/commands.py`` monolithic file (2000+ lines) into multiple modules within
-  the ``beets/ui/commands`` directory for better maintainability. 
+- Refactored the ``beets/ui/commands.py`` monolithic file (2000+ lines) into
+  multiple modules within the ``beets/ui/commands`` directory for better
+  maintainability.
 
 2.5.1 (October 14, 2025)
 ------------------------
