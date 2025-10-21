@@ -205,6 +205,47 @@ def add_item(
             ("Alice med Bob", "Song 1"),
             id="custom-feat-words-keep-in-artists-drop-from-title",
         ),
+        # ---- preserve_album_artist variants ----
+        pytest.param(
+            {
+                "format": "feat. {}",
+                "preserve_album_artist": True,
+            },
+            ("ftintitle",),
+            ("Alice feat. Bob", "Song 1", "Alice"),
+            ("Alice", "Song 1 feat. Bob"),
+            id="skip-if-artist-and-album-artists-is-the-same-different-match",
+        ),
+        pytest.param(
+            {
+                "format": "feat. {}",
+                "preserve_album_artist": False,
+            },
+            ("ftintitle",),
+            ("Alice feat. Bob", "Song 1", "Alice"),
+            ("Alice", "Song 1 feat. Bob"),
+            id="skip-if-artist-and-album-artists-is-the-same-different-match-b",
+        ),
+        pytest.param(
+            {
+                "format": "feat. {}",
+                "preserve_album_artist": True,
+            },
+            ("ftintitle",),
+            ("Alice feat. Bob", "Song 1", "Alice feat. Bob"),
+            ("Alice feat. Bob", "Song 1"),
+            id="skip-if-artist-and-album-artists-is-the-same-matching-match",
+        ),
+        pytest.param(
+            {
+                "format": "feat. {}",
+                "preserve_album_artist": False,
+            },
+            ("ftintitle",),
+            ("Alice feat. Bob", "Song 1", "Alice feat. Bob"),
+            ("Alice", "Song 1 feat. Bob"),
+            id="skip-if-artist-and-album-artists-is-the-same-matching-match-b",
+        ),
     ],
 )
 def test_ftintitle_functional(
