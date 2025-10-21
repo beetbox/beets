@@ -1,10 +1,9 @@
 import unittest
 
-from beets.test.helper import BeetsTestCase, control_stdin
-from beets.ui.commands.modify import modify_parse_args
-
 from mediafile import MediaFile
 
+from beets.test.helper import BeetsTestCase, control_stdin
+from beets.ui.commands.modify import modify_parse_args
 from beets.util import syspath
 
 

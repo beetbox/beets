@@ -16,25 +16,17 @@
 
 import os
 import platform
-import re
-import subprocess
 import sys
 import unittest
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 from confuse import ConfigError
 
-from beets import autotag, config, library, plugins, ui, util
-from beets.autotag.match import distance
+from beets import config, plugins, ui
 from beets.test import _common
-from beets.test.helper import (
-    BeetsTestCase,
-    IOMixin,
-    PluginTestCase,
-    has_program,
-)
+from beets.test.helper import BeetsTestCase, IOMixin, PluginTestCase
 from beets.ui import commands
 from beets.util import syspath
 
