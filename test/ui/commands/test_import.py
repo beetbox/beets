@@ -1,17 +1,18 @@
 import os
 import re
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 
-from beets import autotag, config, ui
+from beets import autotag, config, library, ui
 from beets.autotag.match import distance
 from beets.test import _common
 from beets.test.helper import BeetsTestCase, IOMixin
 from beets.ui.commands._utils import paths_from_logfile
 from beets.ui.commands.import_ import import_files
 from beets.ui.commands.import_.display import show_change
+from beets.ui.commands.import_.session import summarize_items
 
 
 class ImportTest(BeetsTestCase):
@@ -222,3 +223,41 @@ class ShowChangeTest(IOMixin, unittest.TestCase):
             msg = self._show_change()
             assert "(#1) a track with" in msg
             assert "     -> (#1) the title (0:00)" in msg
+
+
+@patch("beets.library.Item.try_filesize", Mock(return_value=987))
+class SummarizeItemsTest(unittest.TestCase):
+    def setUp(self):
+        super().setUp()
+        item = library.Item()
+        item.bitrate = 4321
+        item.length = 10 * 60 + 54
+        item.format = "F"
+        self.item = item
+
+    def test_summarize_item(self):
+        summary = summarize_items([], True)
+        assert summary == ""
+
+        summary = summarize_items([self.item], True)
+        assert summary == "F, 4kbps, 10:54, 987.0 B"
+
+    def test_summarize_items(self):
+        summary = summarize_items([], False)
+        assert summary == "0 items"
+
+        summary = summarize_items([self.item], False)
+        assert summary == "1 items, F, 4kbps, 10:54, 987.0 B"
+
+        # make a copy of self.item
+        i2 = self.item.copy()
+
+        summary = summarize_items([self.item, i2], False)
+        assert summary == "2 items, F, 4kbps, 21:48, 1.9 KiB"
+
+        i2.format = "G"
+        summary = summarize_items([self.item, i2], False)
+        assert summary == "2 items, F 1, G 1, 4kbps, 21:48, 1.9 KiB"
+
+        summary = summarize_items([self.item, i2, i2], False)
+        assert summary == "3 items, G 2, F 1, 4kbps, 32:42, 2.9 KiB"
