@@ -66,9 +66,11 @@ Other changes:
 - Refactored the ``beets/ui/commands.py`` monolithic file (2000+ lines) into
   multiple modules within the ``beets/ui/commands`` directory for better
   maintainability.
-- Standardized ``search_*`` parameter handling in autotag matchers. Manual album and
-  singleton searches now behave consistently: when the prompt does not specify a
-  search query, the system defaults to using the corresponding metadata value.
+- Standardized ``search_*`` parameter handling in autotag matchers. Manual album
+  and singleton searches now behave consistently: when a user does not specify a
+  search query in the prompt, the system defaults to using the corresponding
+  value from the metadata. This was already the case for albums but not for
+  singletons.
 
 2.5.1 (October 14, 2025)
 ------------------------
