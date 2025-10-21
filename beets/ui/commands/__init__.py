@@ -16,9 +16,9 @@
 interface.
 """
 
-from beets import plugins
+from beets.util import deprecate_imports
 
-from .completion import register_print_completion
+from .completion import completion_cmd
 from .config import config_cmd
 from .fields import fields_cmd
 from .help import HelpCommand
@@ -47,12 +47,8 @@ default_commands = [
     move_cmd,
     write_cmd,
     config_cmd,
-    *plugins.commands(),
+    completion_cmd,
 ]
 
-
-# Register the completion command last as it needs all
-# other commands to be present.
-register_print_completion(default_commands)
 
 __all__ = ["default_commands"]

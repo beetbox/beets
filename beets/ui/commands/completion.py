@@ -10,24 +10,24 @@ from beets.util import syspath
 log = logging.getLogger("beets")
 
 
-def register_print_completion(default_commands: list[ui.Subcommand]):
-    def print_completion(*args):
-        for line in completion_script(default_commands + plugins.commands()):
-            ui.print_(line, end="")
-        if not any(os.path.isfile(syspath(p)) for p in BASH_COMPLETION_PATHS):
-            log.warning(
-                "Warning: Unable to find the bash-completion package. "
-                "Command line completion might not work."
-            )
+def print_completion(*args):
+    from beets.ui.commands import default_commands
 
-    completion_cmd = ui.Subcommand(
-        "completion",
-        help="print shell script that provides command line completion",
-    )
-    completion_cmd.func = print_completion
-    completion_cmd.hide = True
+    for line in completion_script(default_commands + plugins.commands()):
+        ui.print_(line, end="")
+    if not any(os.path.isfile(syspath(p)) for p in BASH_COMPLETION_PATHS):
+        log.warning(
+            "Warning: Unable to find the bash-completion package. "
+            "Command line completion might not work."
+        )
 
-    default_commands.append(completion_cmd)
+
+completion_cmd = ui.Subcommand(
+    "completion",
+    help="print shell script that provides command line completion",
+)
+completion_cmd.func = print_completion
+completion_cmd.hide = True
 
 
 BASH_COMPLETION_PATHS = [
@@ -47,7 +47,9 @@ def completion_script(commands):
     ``commands`` is alist of ``ui.Subcommand`` instances to generate
     completion data for.
     """
-    base_script = os.path.join(os.path.dirname(__file__), "completion_base.sh")
+    base_script = os.path.join(
+        os.path.dirname(__file__), "../completion_base.sh"
+    )
     with open(base_script) as base_script:
         yield base_script.read()
 
