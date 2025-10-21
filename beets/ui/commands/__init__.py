@@ -16,48 +16,43 @@
 interface.
 """
 
-import os
-import re
-import textwrap
-from collections import Counter
-from collections.abc import Sequence
-from functools import cached_property
-from itertools import chain
-from platform import python_version
-from typing import Any, NamedTuple
+from beets import plugins
 
-import beets
-from beets import autotag, config, importer, library, logging, plugins, ui, util
-from beets.autotag import Recommendation, hooks
-from beets.ui import (
-    input_,
-    print_,
-    print_column_layout,
-    print_newline_layout,
-    show_path_changes,
-)
-from beets.util import (
-    MoveOperation,
-    ancestry,
-    displayable_path,
-    functemplate,
-    normpath,
-    syspath,
-)
-from beets.util.units import human_bytes, human_seconds, human_seconds_short
-
-from . import _store_dict
-
-VARIOUS_ARTISTS = "Various Artists"
-
-# Global logger.
-log = logging.getLogger("beets")
+from .completion import register_print_completion
+from .config import config_cmd
+from .fields import fields_cmd
+from .help import HelpCommand
+from .import_ import import_cmd
+from .list import list_cmd
+from .modify import modify_cmd
+from .move import move_cmd
+from .remove import remove_cmd
+from .stats import stats_cmd
+from .update import update_cmd
+from .version import version_cmd
+from .write import write_cmd
 
 # The list of default subcommands. This is populated with Subcommand
 # objects that can be fed to a SubcommandsOptionParser.
-default_commands = []
+default_commands = [
+    fields_cmd,
+    HelpCommand(),
+    import_cmd,
+    list_cmd,
+    update_cmd,
+    remove_cmd,
+    stats_cmd,
+    version_cmd,
+    modify_cmd,
+    move_cmd,
+    write_cmd,
+    config_cmd,
+    *plugins.commands(),
+]
 
 
-# import: Autotagger and importer.
+# Register the completion command last as it needs all
+# other commands to be present.
+register_print_completion(default_commands)
 
-# Importer utilities and support.
+__all__ = ["default_commands"]
