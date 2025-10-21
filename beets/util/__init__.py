@@ -67,6 +67,8 @@ if TYPE_CHECKING:
 MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = "\\\\?\\"
 T = TypeVar("T")
+T_co = TypeVar("T_co", covariant=True)
+_R_co = TypeVar("_R_co", covariant=True)
 PathLike = Union[str, bytes, Path]
 StrPath = Union[str, Path]
 Replacements = Sequence[tuple[Pattern[str], str]]
@@ -1055,7 +1057,7 @@ def par_map(transform: Callable[[T], Any], items: Sequence[T]) -> None:
     pool.join()
 
 
-class cached_classproperty(Generic[T]):
+class cached_classproperty(Generic[T_co, T]):
     """Descriptor implementing cached class properties.
 
     Provides class-level dynamic property behavior where the getter function is
@@ -1069,15 +1071,16 @@ class cached_classproperty(Generic[T]):
     _lock: ClassVar[threading.RLock] = threading.RLock()
     name: str | None = None
 
-    def __init__(self, getter: Callable[..., T]) -> None:
+    def __init__(self, f: Callable[[T_co], T]) -> None:
         """Initialize the descriptor with the property getter function."""
-        self.getter: Callable[..., T] = getter
 
-    def __set_name__(self, owner: object, name: str) -> None:
+        self.f: Callable[[T_co], T] = f
+
+    def __set_name__(self, owner: type[object], name: str) -> None:
         """Capture the attribute name this descriptor is assigned to."""
         self.name = name
 
-    def __get__(self, instance: object, owner: type[object]) -> T:
+    def __get__(self, instance: object | None, owner: type[object], /) -> T:
         """Compute and cache if needed, and return the property value."""
         if self.name is None:
             raise RuntimeError(
@@ -1087,7 +1090,7 @@ class cached_classproperty(Generic[T]):
             )
 
         with self._lock:
-            class_cache = self._cache.setdefault(owner, {})
+            class_cache: dict[str, object] = self._cache.setdefault(owner, {})
 
             try:
                 return cast(T, class_cache[self.name])
@@ -1095,7 +1098,7 @@ class cached_classproperty(Generic[T]):
                 ...
 
             # Compute and cache new value
-            value: T = self.getter(owner)
+            value: T = self.f(cast(T_co, owner))
             class_cache[self.name] = value
             return value
 
