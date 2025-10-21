@@ -236,19 +236,6 @@ def _add_candidate(
     )
 
 
-def _parse_search_terms_with_fallbacks(
-    *pairs: tuple[str | None, str],
-) -> tuple[str, ...]:
-    """Given pairs of (search term, fallback), return a tuple of
-    search terms. If **all** search terms are non-empty, return them. Otherwise,
-    return the fallback terms.
-    """
-    if all(term for term, _ in pairs):
-        return tuple(term or default for term, default in pairs)
-    else:
-        return tuple(default for _, default in pairs)
-
-
 def tag_album(
     items,
     search_artist: str | None = None,
@@ -307,24 +294,23 @@ def tag_album(
                         Proposal(list(candidates.values()), rec),
                     )
 
-        # Manually provided search terms or fallbacks.
-        _search_artist, _search_album = _parse_search_terms_with_fallbacks(
-            (search_artist, cur_artist),
-            (search_album, cur_album),
-        )
-        log.debug("Search terms: {} - {}", _search_artist, _search_album)
+        # Search terms.
+        if not (search_artist and search_album):
+            # No explicit search terms -- use current metadata.
+            search_artist, search_album = cur_artist, cur_album
+        log.debug("Search terms: {} - {}", search_artist, search_album)
 
         # Is this album likely to be a "various artist" release?
         va_likely = (
             (not consensus["artist"])
-            or (_search_artist.lower() in VA_ARTISTS)
+            or (search_artist.lower() in VA_ARTISTS)
             or any(item.comp for item in items)
         )
         log.debug("Album might be VA: {}", va_likely)
 
         # Get the results from the data sources.
         for matched_candidate in metadata_plugins.candidates(
-            items, _search_artist, _search_album, va_likely
+            items, search_artist, search_album, va_likely
         ):
             _add_candidate(items, candidates, matched_candidate)
 
@@ -336,7 +322,7 @@ def tag_album(
 
 
 def tag_item(
-    item: Item,
+    item,
     search_artist: str | None = None,
     search_title: str | None = None,
     search_ids: list[str] | None = None,
@@ -378,18 +364,14 @@ def tag_item(
         else:
             return Proposal([], Recommendation.none)
 
-    # Manually provided search terms or fallbacks.
-    _search_artist, _search_title = _parse_search_terms_with_fallbacks(
-        (search_artist, item.artist),
-        (search_title, item.title),
-    )
-    log.debug("Item search terms: {} - {}", _search_artist, _search_title)
+    # Search terms.
+    search_artist = search_artist or item.artist
+    search_title = search_title or item.title
+    log.debug("Item search terms: {} - {}", search_artist, search_title)
 
     # Get and evaluate candidate metadata.
     for track_info in metadata_plugins.item_candidates(
-        item,
-        _search_artist,
-        _search_title,
+        item, search_artist, search_title
     ):
         dist = track_distance(item, track_info, incl_artist=True)
         candidates[track_info.track_id] = hooks.TrackMatch(dist, track_info)
