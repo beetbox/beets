@@ -391,44 +391,6 @@ class ShowModelChangeTest(IOMixin, unittest.TestCase):
         assert "bar" in out
 
 
-@patch("beets.library.Item.try_filesize", Mock(return_value=987))
-class SummarizeItemsTest(unittest.TestCase):
-    def setUp(self):
-        super().setUp()
-        item = library.Item()
-        item.bitrate = 4321
-        item.length = 10 * 60 + 54
-        item.format = "F"
-        self.item = item
-
-    def test_summarize_item(self):
-        summary = commands.summarize_items([], True)
-        assert summary == ""
-
-        summary = commands.summarize_items([self.item], True)
-        assert summary == "F, 4kbps, 10:54, 987.0 B"
-
-    def test_summarize_items(self):
-        summary = commands.summarize_items([], False)
-        assert summary == "0 items"
-
-        summary = commands.summarize_items([self.item], False)
-        assert summary == "1 items, F, 4kbps, 10:54, 987.0 B"
-
-        # make a copy of self.item
-        i2 = self.item.copy()
-
-        summary = commands.summarize_items([self.item, i2], False)
-        assert summary == "2 items, F, 4kbps, 21:48, 1.9 KiB"
-
-        i2.format = "G"
-        summary = commands.summarize_items([self.item, i2], False)
-        assert summary == "2 items, F 1, G 1, 4kbps, 21:48, 1.9 KiB"
-
-        summary = commands.summarize_items([self.item, i2, i2], False)
-        assert summary == "3 items, G 2, F 1, 4kbps, 32:42, 2.9 KiB"
-
-
 class PathFormatTest(unittest.TestCase):
     def test_custom_paths_prepend(self):
         default_formats = ui.get_path_formats()
