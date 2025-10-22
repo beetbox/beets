@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 
+import itertools
 import traceback
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Iterable, Sequence
@@ -24,6 +25,7 @@ import mediafile
 import musicbrainzngs
 from typing_extensions import override
 
+from beets import config
 from beets.autotag.distance import Distance, distance
 from beets.autotag.hooks import AlbumInfo
 from beets.autotag.match import assign_items
@@ -34,6 +36,7 @@ from beetsplug.musicbrainz import (
     MusicBrainzAPIError,
     MusicBrainzPlugin,
     _merge_pseudo_and_actual_album,
+    _preferred_alias,
 )
 
 if TYPE_CHECKING:
@@ -143,12 +146,13 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
             try:
                 raw_pseudo_release = self._release_getter(
                     album_id, RELEASE_INCLUDES
-                )
-                pseudo_release = super().album_info(
-                    raw_pseudo_release["release"]
-                )
+                )["release"]
+                pseudo_release = super().album_info(raw_pseudo_release)
 
                 if self.config["custom_tags_only"].get(bool):
+                    self._replace_artist_with_alias(
+                        raw_pseudo_release, pseudo_release
+                    )
                     self._add_custom_tags(official_release, pseudo_release)
                     return official_release
                 else:
@@ -211,6 +215,41 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
             return release["id"]
         else:
             return None
+
+    def _replace_artist_with_alias(
+        self,
+        raw_pseudo_release: JSONDict,
+        pseudo_release: AlbumInfo,
+    ):
+        """Use the pseudo-release's language to search for artist
+        alias if the user hasn't configured import languages."""
+
+        if len(config["import"]["languages"].as_str_seq()) > 0:
+            return
+
+        lang = raw_pseudo_release.get("text-representation", {}).get("language")
+        artist_credits = raw_pseudo_release.get("release-group", {}).get(
+            "artist-credit", []
+        )
+        aliases = [
+            artist_credit.get("artist", {}).get("alias-list", [])
+            for artist_credit in artist_credits
+        ]
+
+        if lang and len(lang) >= 2 and len(aliases) > 0:
+            locale = lang[0:2]
+            aliases_flattened = list(itertools.chain.from_iterable(aliases))
+            self._log.debug(
+                "Using locale '{0}' to search aliases {1}",
+                locale,
+                aliases_flattened,
+            )
+            if alias_dict := _preferred_alias(aliases_flattened, [locale]):
+                if alias := alias_dict.get("alias"):
+                    self._log.debug("Got alias '{0}'", alias)
+                    pseudo_release.artist = alias
+                    for track in pseudo_release.tracks:
+                        track.artist = alias
 
     def _add_custom_tags(
         self,
