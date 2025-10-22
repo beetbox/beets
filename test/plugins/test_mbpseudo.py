@@ -3,6 +3,7 @@ import pathlib
 
 import pytest
 
+from beets import config
 from beets.autotag import AlbumMatch
 from beets.autotag.distance import Distance
 from beets.autotag.hooks import AlbumInfo, TrackInfo
@@ -230,7 +231,6 @@ class TestMBPseudoPluginCustomTagsOnly(PluginMixin):
 
     @pytest.fixture(scope="class")
     def mbpseudo_plugin(self) -> MusicBrainzPseudoReleasePlugin:
-        self.config["import"]["languages"] = ["en", "jp"]
         self.config[self.plugin]["scripts"] = ["Latn"]
         self.config[self.plugin]["custom_tags_only"] = True
         return MusicBrainzPseudoReleasePlugin()
@@ -255,6 +255,25 @@ class TestMBPseudoPluginCustomTagsOnly(PluginMixin):
         official_release: JSONDict,
         pseudo_release: JSONDict,
     ):
+        config["import"]["languages"] = []
+        mbpseudo_plugin._release_getter = (
+            lambda album_id, includes: pseudo_release
+        )
+        album_info = mbpseudo_plugin.album_info(official_release["release"])
+        assert not isinstance(album_info, PseudoAlbumInfo)
+        assert album_info.data_source == "MusicBrainzPseudoRelease"
+        assert album_info["album_transl"] == "In Bloom"
+        assert album_info["album_artist_transl"] == "Lilas Ikuta"
+        assert album_info.tracks[0]["title_transl"] == "In Bloom"
+        assert album_info.tracks[0]["artist_transl"] == "Lilas Ikuta"
+
+    def test_custom_tags_with_import_languages(
+        self,
+        mbpseudo_plugin: MusicBrainzPseudoReleasePlugin,
+        official_release: JSONDict,
+        pseudo_release: JSONDict,
+    ):
+        config["import"]["languages"] = ["en", "jp"]
         mbpseudo_plugin._release_getter = (
             lambda album_id, includes: pseudo_release
         )
