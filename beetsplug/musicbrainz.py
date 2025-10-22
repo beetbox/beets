@@ -118,13 +118,15 @@ BROWSE_CHUNKSIZE = 100
 BROWSE_MAXTRACKS = 500
 
 
-def _preferred_alias(aliases: list[JSONDict]):
-    """Given an list of alias structures for an artist credit, select
-    and return the user's preferred alias alias or None if no matching
+def _preferred_alias(
+    aliases: list[JSONDict], languages: list[str] | None = None
+) -> JSONDict | None:
+    """Given a list of alias structures for an artist credit, select
+    and return the user's preferred alias or None if no matching
     alias is found.
     """
     if not aliases:
-        return
+        return None
 
     # Only consider aliases that have locales set.
     valid_aliases = [a for a in aliases if "locale" in a]
@@ -134,7 +136,10 @@ def _preferred_alias(aliases: list[JSONDict]):
     ignored_alias_types = [a.lower() for a in ignored_alias_types]
 
     # Search configured locales in order.
-    for locale in config["import"]["languages"].as_str_seq():
+    if languages is None:
+        languages = config["import"]["languages"].as_str_seq()
+
+    for locale in languages:
         # Find matching primary aliases for this locale that are not
         # being ignored
         matches = []
@@ -151,6 +156,8 @@ def _preferred_alias(aliases: list[JSONDict]):
             continue
 
         return matches[0]
+
+    return None
 
 
 def _multi_artist_credit(
