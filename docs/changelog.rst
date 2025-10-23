@@ -14,6 +14,10 @@ New features:
   album artist are the same in ftintitle.
 - :doc:`plugins/play`: Added `$playlist` marker to precisely edit the playlist
       filepath into the command calling the player program.
+- :doc:`plugins/lastgenre`: For tuning plugin settings ``-vvv`` can be passed
+      to receive extra verbose logging around last.fm results and how they are
+      resolved. The ``extended_debug`` config setting and ``--debug`` option
+      have been removed.
 
 Bug fixes:
 
