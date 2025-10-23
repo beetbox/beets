@@ -1,24 +1,58 @@
 Handling Paths
 ==============
 
-A great deal of convention deals with the handling of **paths**. Paths are
-stored internally—in the database, for instance—as byte strings (i.e., ``bytes``
-instead of ``str`` in Python 3). This is because POSIX operating systems’ path
-names are only reliably usable as byte strings—operating systems typically
-recommend but do not require that filenames use a given encoding, so violations
-of any reported encoding are inevitable. On Windows, the strings are always
-encoded with UTF-8; on Unix, the encoding is controlled by the filesystem. Here
-are some guidelines to follow:
+Historically, this chapter recommended the utilities ``syspath()``,
+``normpath()``, ``bytestring_path()``, and ``displayable_path()`` for handling
+file paths in Beets. These ensured consistent behavior across Linux, macOS, and
+Windows before Python’s ``pathlib`` offered a unified and reliable API.
 
-- If you have a Unicode path or you’re not sure whether something is Unicode or
-  not, pass it through ``bytestring_path`` function in the ``beets.util`` module
-  to convert it to bytes.
-- Pass every path name through the ``syspath`` function (also in ``beets.util``)
-  before sending it to any *operating system* file operation (``open``, for
-  example). This is necessary to use long filenames (which, maddeningly, must be
-  Unicode) on Windows. This allows us to consistently store bytes in the
-  database but use the native encoding rule on both POSIX and Windows.
-- Similarly, the ``displayable_path`` utility function converts bytestring paths
-  to a Unicode string for displaying to the user. Every time you want to print
-  out a string to the terminal or log it with the ``logging`` module, feed it
-  through this function.
+- ``syspath()`` worked around Windows Unicode and long-path issues by converting
+  to a system-safe string (adding the ``\\?\`` prefix where needed). Modern
+  Python (≥3.6) handles this automatically through its wide-character APIs.
+- ``normpath()`` normalized slashes and removed ``./`` or ``..`` parts but did
+  not expand ``~``. It was used mainly for paths from user input or config
+  files.
+- ``bytestring_path()`` converted paths to ``bytes`` for storage in the
+  database. Paths in the database are still stored as bytes today, though there
+  are plans to eventually store ``pathlib.Path`` objects directly.
+- ``displayable_path()`` converted byte paths to Unicode for display or logging.
+
+These utilities remain safe to use when maintaining older code, but new code and
+refactors should prefer ``pathlib.Path``:
+
+- Use the ``.filepath`` property on ``Item`` and ``Album`` to access paths as
+  ``pathlib.Path``. This replaces ``displayable_path(item.path)``.
+- Normalize or expand paths using ``Path(...).expanduser().resolve()``, which
+  correctly expands ``~`` and resolves symlinks.
+- Cross-platform details like path separators, Unicode handling, and long-path
+  support are handled automatically by ``pathlib``.
+
+Examples
+--------
+
+Old style
+
+.. code-block:: python
+
+    displayable_path(item.path)
+    normpath("~/Music/../Artist")
+    syspath(path)
+
+New style
+
+.. code-block:: python
+
+    item.filepath
+    Path("~/Music/../Artist").expanduser().resolve()
+    Path(path)
+
+When storing paths in the database
+
+.. code-block:: python
+
+    path_bytes = bytestring_path(item.filepath)
+
+In short, the old utilities were necessary for cross-platform safety in early
+Beets versions, but ``pathlib.Path`` now provides these guarantees natively and
+should be used for all new code. ``bytestring_path()`` is still used only for
+database storage.
