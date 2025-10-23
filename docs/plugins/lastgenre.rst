@@ -197,11 +197,6 @@ file. The available options are:
   internal whitelist, or ``no`` to consider all genres valid. Default: ``yes``.
 - **title_case**: Convert the new tags to TitleCase before saving. Default:
   ``yes``.
-- **extended_debug**: Add additional debug logging messages that show what
-  last.fm tags were fetched for tracks, albums and artists. This is done before
-  any canonicalization and whitelist filtering is applied. It's useful for
-  tuning the plugin's settings and understanding how it works, but it can be
-  quite verbose. Default: ``no``.
 
 Running Manually
 ----------------
@@ -219,3 +214,13 @@ or store any changes.
 
 To disable automatic genre fetching on import, set the ``auto`` config option to
 false.
+
+Tuning Logs
+-----------
+
+To enable tuning logs, run ``beet -vvv lastgenre ...`` or ``beet -vvv import
+...``. This enables additional messages at the ``DEBUG`` log level, showing for
+example what data was received from last.fm at each stage of genre fetching
+(artist, album, and track levels) before any canonicalization or whitelist
+filtering is applied. Tuning logs are useful for adjusting the plugin’s settings
+and understanding its behavior, though they can be quite verbose.
