@@ -17,7 +17,7 @@ from sys import stderr
 
 import confuse
 
-from .util import deprecate_imports
+from .util.deprecation import deprecate_imports
 
 __version__ = "2.5.1"
 __author__ = "Adrian Sampson <adrian@radbox.org>"

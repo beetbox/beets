@@ -24,8 +24,8 @@ from beets import config, logging
 
 # Parts of external interface.
 from beets.util import unique_list
+from beets.util.deprecation import deprecate_imports
 
-from ..util import deprecate_imports
 from .hooks import AlbumInfo, AlbumMatch, TrackInfo, TrackMatch
 from .match import Proposal, Recommendation, tag_album, tag_item
 
