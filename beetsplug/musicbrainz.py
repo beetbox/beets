@@ -38,11 +38,11 @@ if TYPE_CHECKING:
     from typing import Literal
 
     from beets.library import Item
-    from beets.util import HumanReadabaleErrorArgs
+    from beets.util import HumanReadableErrorArgs
 
     from ._typing import JSONDict
 
-    class MusicBrainzAPIErrorArgs(HumanReadabaleErrorArgs):
+    class MusicBrainzAPIErrorArgs(HumanReadableErrorArgs):
         query: dict[str, str] | str
 
 

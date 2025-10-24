@@ -25,7 +25,7 @@ from typing_extensions import Final, Unpack, override
 from unidecode import unidecode
 
 from beets.config import config
-from beets.util.exceptions import HumanReadabaleErrorArgs, HumanReadableError
+from beets.util.exceptions import HumanReadableError, HumanReadableErrorArgs
 from beets.util.hidden import is_hidden
 
 if TYPE_CHECKING:
@@ -38,7 +38,7 @@ if TYPE_CHECKING:
 PathLike: TypeAlias = "str | bytes | Path"
 
 
-class FilesystemErrorArgs(HumanReadabaleErrorArgs):
+class FilesystemErrorArgs(HumanReadableErrorArgs):
     paths: Sequence[bytes | str]
 
 

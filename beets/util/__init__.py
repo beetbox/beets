@@ -29,7 +29,7 @@ from typing import (
     cast,
 )
 
-from beets.util.exceptions import HumanReadabaleErrorArgs, HumanReadableError
+from beets.util.exceptions import HumanReadableError, HumanReadableErrorArgs
 from beets.util.io import (
     CHAR_REPLACE,
     PATH_SEP,
@@ -86,7 +86,7 @@ __all__: list[str] = [
     "PATH_SEP",
     "CommandOutput",
     "FilesystemError",
-    "HumanReadabaleErrorArgs",
+    "HumanReadableErrorArgs",
     "HumanReadableError",
     "MoveOperation",
     "PathBytes",

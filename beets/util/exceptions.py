@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from logging import Logger
 
 
-class HumanReadabaleErrorArgs(TypedDict):
+class HumanReadableErrorArgs(TypedDict):
     reason: BaseException | bytes | str
     verb: str
     tb: NotRequired[str | None]
@@ -30,7 +30,7 @@ class HumanReadableError(Exception):
 
     error_kind: str = "Error"  # Human-readable description of error type.
 
-    def __init__(self, **kwargs: Unpack[HumanReadabaleErrorArgs]) -> None:
+    def __init__(self, **kwargs: Unpack[HumanReadableErrorArgs]) -> None:
         self.reason: BaseException | bytes | str = kwargs["reason"]
         self.verb: str = kwargs["verb"]
         self.tb: str | None = kwargs.get("tb")
