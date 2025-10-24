@@ -1,4 +1,4 @@
-from beets.util import deprecate_imports
+from beets.util.deprecation import deprecate_imports
 
 from .exceptions import FileOperationError, ReadError, WriteError
 from .library import Library
