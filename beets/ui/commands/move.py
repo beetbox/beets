@@ -2,7 +2,9 @@
 
 import os
 
-from beets import logging, ui, util
+from beets import logging, util
+from beets.ui._common import UserError
+from beets.ui.core import Subcommand, input_select_objects, show_path_changes
 
 from ._utils import do_query
 
@@ -60,7 +62,7 @@ def move_items(
 
     if pretend:
         if album:
-            ui.show_path_changes(
+            show_path_changes(
                 [
                     (item.path, item.destination(basedir=dest))
                     for obj in objs
@@ -68,15 +70,15 @@ def move_items(
                 ]
             )
         else:
-            ui.show_path_changes(
+            show_path_changes(
                 [(obj.path, obj.destination(basedir=dest)) for obj in objs]
             )
     else:
         if confirm:
-            objs = ui.input_select_objects(
+            objs = input_select_objects(
                 f"Really {act}",
                 objs,
-                lambda o: ui.show_path_changes(
+                lambda o: show_path_changes(
                     [(o.path, o.destination(basedir=dest))]
                 ),
             )
@@ -102,9 +104,7 @@ def move_func(lib, opts, args):
     if dest is not None:
         dest = util.normpath(dest)
         if not os.path.isdir(util.syspath(dest)):
-            raise ui.UserError(
-                f"no such directory: {util.displayable_path(dest)}"
-            )
+            raise UserError(f"no such directory: {util.displayable_path(dest)}")
 
     move_items(
         lib,
@@ -118,7 +118,7 @@ def move_func(lib, opts, args):
     )
 
 
-move_cmd = ui.Subcommand("move", help="move or copy items", aliases=("mv",))
+move_cmd = Subcommand("move", help="move or copy items", aliases=("mv",))
 move_cmd.parser.add_option(
     "-d", "--dest", metavar="DIR", dest="dest", help="destination directory"
 )

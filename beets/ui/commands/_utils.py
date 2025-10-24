@@ -1,9 +1,17 @@
 """Utility functions for beets UI commands."""
 
-import os
+from __future__ import annotations
 
-from beets import ui
-from beets.util import displayable_path, normpath, syspath
+import os
+from typing import TYPE_CHECKING
+
+from beets.ui._common import UserError
+from beets.util import PathLike, displayable_path, normpath, syspath
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Iterator
+
+    from _typeshed import FileDescriptorOrPath
 
 
 def do_query(lib, query, album, also_items=True):
@@ -25,19 +33,24 @@ def do_query(lib, query, album, also_items=True):
         items = list(lib.items(query))
 
     if album and not albums:
-        raise ui.UserError("No matching albums found.")
+        raise UserError("No matching albums found.")
     elif not album and not items:
-        raise ui.UserError("No matching items found.")
+        raise UserError("No matching items found.")
 
     return items, albums
 
 
-def paths_from_logfile(path):
+def paths_from_logfile(path: FileDescriptorOrPath) -> Iterator[str]:
     """Parse the logfile and yield skipped paths to pass to the `import`
     command.
     """
     with open(path, encoding="utf-8") as fp:
+        i: int
+        line: str
         for i, line in enumerate(fp, start=1):
+            verb: str
+            sep: str
+            paths: str
             verb, sep, paths = line.rstrip("\n").partition(" ")
             if not sep:
                 raise ValueError(f"line {i} is invalid")
@@ -52,16 +65,17 @@ def paths_from_logfile(path):
             yield os.path.commonpath(paths.split("; "))
 
 
-def parse_logfiles(logfiles):
+def parse_logfiles(logfiles: Iterable[PathLike]) -> Iterator[str]:
     """Parse all `logfiles` and yield paths from it."""
+    logfile: PathLike
     for logfile in logfiles:
         try:
             yield from paths_from_logfile(syspath(normpath(logfile)))
         except ValueError as err:
-            raise ui.UserError(
+            raise UserError(
                 f"malformed logfile {displayable_path(logfile)}: {err}"
             ) from err
         except OSError as err:
-            raise ui.UserError(
+            raise UserError(
                 f"unreadable logfile {displayable_path(logfile)}: {err}"
             ) from err

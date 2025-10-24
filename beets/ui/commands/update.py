@@ -2,7 +2,15 @@
 
 import os
 
-from beets import library, logging, ui
+from beets import library, logging
+from beets.ui.colors import colorize
+from beets.ui.core import (
+    Subcommand,
+    input_yn,
+    print_,
+    should_move,
+    show_model_changes,
+)
 from beets.util import ancestry, syspath
 
 from ._utils import do_query
@@ -47,8 +55,8 @@ def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
         for item in items:
             # Item deleted?
             if not item.path or not os.path.exists(syspath(item.path)):
-                ui.print_(format(item))
-                ui.print_(ui.colorize("text_error", "  deleted"))
+                print_(format(item))
+                print_(colorize("text_error", "  deleted"))
                 if not pretend:
                     item.remove(True)
                 affected_albums.add(item.album_id)
@@ -79,7 +87,7 @@ def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
                     item._dirty.discard("albumartist")
 
             # Check for and display changes.
-            changed = ui.show_model_changes(item, fields=item_fields)
+            changed = show_model_changes(item, fields=item_fields)
 
             # Save changes.
             if not pretend:
@@ -132,22 +140,22 @@ def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
 def update_func(lib, opts, args):
     # Verify that the library folder exists to prevent accidental wipes.
     if not os.path.isdir(syspath(lib.directory)):
-        ui.print_("Library path is unavailable or does not exist.")
-        ui.print_(lib.directory)
-        if not ui.input_yn("Are you sure you want to continue (y/n)?", True):
+        print_("Library path is unavailable or does not exist.")
+        print_(lib.directory)
+        if not input_yn("Are you sure you want to continue (y/n)?", True):
             return
     update_items(
         lib,
         args,
         opts.album,
-        ui.should_move(opts.move),
+        should_move(opts.move),
         opts.pretend,
         opts.fields,
         opts.exclude_fields,
     )
 
 
-update_cmd = ui.Subcommand(
+update_cmd = Subcommand(
     "update",
     help="update the library",
     aliases=(

@@ -1,6 +1,15 @@
 """The `modify` command: change metadata fields."""
 
-from beets import library, ui
+from beets import library
+from beets.ui._common import UserError
+from beets.ui.core import (
+    Subcommand,
+    input_select_objects,
+    print_,
+    should_move,
+    should_write,
+    show_model_changes,
+)
 from beets.util import functemplate
 
 from ._utils import do_query
@@ -22,7 +31,7 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm, inherit):
 
     # Apply changes *temporarily*, preview them, and collect modified
     # objects.
-    ui.print_(f"Modifying {len(objs)} {'album' if album else 'item'}s.")
+    print_(f"Modifying {len(objs)} {'album' if album else 'item'}s.")
     changed = []
     templates = {
         key: functemplate.template(value) for key, value in mods.items()
@@ -37,7 +46,7 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm, inherit):
 
     # Still something to do?
     if not changed:
-        ui.print_("No changes to make.")
+        print_("No changes to make.")
         return
 
     # Confirm action.
@@ -51,7 +60,7 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm, inherit):
         else:
             extra = ""
 
-        changed = ui.input_select_objects(
+        changed = input_select_objects(
             f"Really modify{extra}",
             changed,
             lambda o: print_and_modify(o, mods, dels),
@@ -76,7 +85,7 @@ def print_and_modify(obj, mods, dels):
             del obj[field]
         except KeyError:
             pass
-    return ui.show_model_changes(obj)
+    return show_model_changes(obj)
 
 
 def modify_parse_args(args):
@@ -101,21 +110,21 @@ def modify_parse_args(args):
 def modify_func(lib, opts, args):
     query, mods, dels = modify_parse_args(args)
     if not mods and not dels:
-        raise ui.UserError("no modifications specified")
+        raise UserError("no modifications specified")
     modify_items(
         lib,
         mods,
         dels,
         query,
-        ui.should_write(opts.write),
-        ui.should_move(opts.move),
+        should_write(opts.write),
+        should_move(opts.move),
         opts.album,
         not opts.yes,
         opts.inherit,
     )
 
 
-modify_cmd = ui.Subcommand(
+modify_cmd = Subcommand(
     "modify", help="change metadata fields", aliases=("mod",)
 )
 modify_cmd.parser.add_option(

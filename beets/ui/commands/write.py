@@ -2,7 +2,8 @@
 
 import os
 
-from beets import library, logging, ui
+from beets import library, logging
+from beets.ui.core import Subcommand, show_model_changes
 from beets.util import syspath
 
 from ._utils import do_query
@@ -31,7 +32,7 @@ def write_items(lib, query, pretend, force):
             continue
 
         # Check for and display changes.
-        changed = ui.show_model_changes(
+        changed = show_model_changes(
             item, clean_item, library.Item._media_tag_fields, force
         )
         if (changed or force) and not pretend:
@@ -44,7 +45,7 @@ def write_func(lib, opts, args):
     write_items(lib, args, opts.pretend, opts.force)
 
 
-write_cmd = ui.Subcommand("write", help="write tag information to files")
+write_cmd = Subcommand("write", help="write tag information to files")
 write_cmd.parser.add_option(
     "-p",
     "--pretend",

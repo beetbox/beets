@@ -2,8 +2,16 @@ import os
 from collections.abc import Sequence
 from functools import cached_property
 
-from beets import autotag, config, logging, ui
+from beets import autotag, config, logging
 from beets.autotag import hooks
+from beets.ui.colors import colordiff, colorize, uncolorize
+from beets.ui.core import (
+    indent,
+    print_,
+    print_column_layout,
+    print_newline_layout,
+    term_width,
+)
 from beets.util import displayable_path
 from beets.util.units import human_seconds_short
 
@@ -22,7 +30,7 @@ class ChangeRepresentation:
 
     @cached_property
     def changed_prefix(self) -> str:
-        return ui.colorize("changed", "\u2260")
+        return colorize("changed", "\u2260")
 
     cur_artist = None
     # cur_album set if album, cur_title set if singleton
@@ -37,19 +45,19 @@ class ChangeRepresentation:
         match_header_indent_width = config["ui"]["import"]["indentation"][
             "match_header"
         ].as_number()
-        self.indent_header = ui.indent(match_header_indent_width)
+        self.indent_header = indent(match_header_indent_width)
 
         # Read match detail indentation width from config.
         match_detail_indent_width = config["ui"]["import"]["indentation"][
             "match_details"
         ].as_number()
-        self.indent_detail = ui.indent(match_detail_indent_width)
+        self.indent_detail = indent(match_detail_indent_width)
 
         # Read match tracklist indentation width from config
         match_tracklist_indent_width = config["ui"]["import"]["indentation"][
             "match_tracklist"
         ].as_number()
-        self.indent_tracklist = ui.indent(match_tracklist_indent_width)
+        self.indent_tracklist = indent(match_tracklist_indent_width)
         self.layout = config["ui"]["import"]["layout"].as_choice(
             {
                 "column": 0,
@@ -62,11 +70,11 @@ class ChangeRepresentation:
     ):
         if not max_width:
             # If no max_width provided, use terminal width
-            max_width = ui.term_width()
+            max_width = term_width()
         if self.layout == 0:
-            ui.print_column_layout(indent, left, right, separator, max_width)
+            print_column_layout(indent, left, right, separator, max_width)
         else:
-            ui.print_newline_layout(indent, left, right, separator, max_width)
+            print_newline_layout(indent, left, right, separator, max_width)
 
     def show_match_header(self):
         """Print out a 'header' identifying the suggested match (album name,
@@ -74,10 +82,10 @@ class ChangeRepresentation:
         the user accept the match.
         """
         # Print newline at beginning of change block.
-        ui.print_("")
+        print_("")
 
         # 'Match' line and similarity.
-        ui.print_(
+        print_(
             f"{self.indent_header}Match ({dist_string(self.match.distance)}):"
         )
 
@@ -91,7 +99,7 @@ class ChangeRepresentation:
             artist_album_str = (
                 f"{self.match.info.artist} - {self.match.info.title}"
             )
-        ui.print_(
+        print_(
             self.indent_header
             + dist_colorize(artist_album_str, self.match.distance)
         )
@@ -99,17 +107,17 @@ class ChangeRepresentation:
         # Penalties.
         penalties = penalty_string(self.match.distance)
         if penalties:
-            ui.print_(f"{self.indent_header}{penalties}")
+            print_(f"{self.indent_header}{penalties}")
 
         # Disambiguation.
         disambig = disambig_string(self.match.info)
         if disambig:
-            ui.print_(f"{self.indent_header}{disambig}")
+            print_(f"{self.indent_header}{disambig}")
 
         # Data URL.
         if self.match.info.data_url:
-            url = ui.colorize("text_faint", f"{self.match.info.data_url}")
-            ui.print_(f"{self.indent_header}{url}")
+            url = colorize("text_faint", f"{self.match.info.data_url}")
+            print_(f"{self.indent_header}{url}")
 
     def show_match_details(self):
         """Print out the details of the match, including changes in album name
@@ -121,7 +129,7 @@ class ChangeRepresentation:
             # Hide artists for VA releases.
             artist_l, artist_r = "", ""
         if artist_l != artist_r:
-            artist_l, artist_r = ui.colordiff(artist_l, artist_r)
+            artist_l, artist_r = colordiff(artist_l, artist_r)
             left = {
                 "prefix": f"{self.changed_prefix} Artist: ",
                 "contents": artist_l,
@@ -131,7 +139,7 @@ class ChangeRepresentation:
             self.print_layout(self.indent_detail, left, right)
 
         else:
-            ui.print_(f"{self.indent_detail}*", "Artist:", artist_r)
+            print_(f"{self.indent_detail}*", "Artist:", artist_r)
 
         if self.cur_album:
             # Album
@@ -140,7 +148,7 @@ class ChangeRepresentation:
                 self.cur_album != self.match.info.album
                 and self.match.info.album != VARIOUS_ARTISTS
             ):
-                album_l, album_r = ui.colordiff(album_l, album_r)
+                album_l, album_r = colordiff(album_l, album_r)
                 left = {
                     "prefix": f"{self.changed_prefix} Album: ",
                     "contents": album_l,
@@ -149,12 +157,12 @@ class ChangeRepresentation:
                 right = {"prefix": "", "contents": album_r, "suffix": ""}
                 self.print_layout(self.indent_detail, left, right)
             else:
-                ui.print_(f"{self.indent_detail}*", "Album:", album_r)
+                print_(f"{self.indent_detail}*", "Album:", album_r)
         elif self.cur_title:
             # Title - for singletons
             title_l, title_r = self.cur_title or "", self.match.info.title
             if self.cur_title != self.match.info.title:
-                title_l, title_r = ui.colordiff(title_l, title_r)
+                title_l, title_r = colordiff(title_l, title_r)
                 left = {
                     "prefix": f"{self.changed_prefix} Title: ",
                     "contents": title_l,
@@ -163,7 +171,7 @@ class ChangeRepresentation:
                 right = {"prefix": "", "contents": title_r, "suffix": ""}
                 self.print_layout(self.indent_detail, left, right)
             else:
-                ui.print_(f"{self.indent_detail}*", "Title:", title_r)
+                print_(f"{self.indent_detail}*", "Title:", title_r)
 
     def make_medium_info_line(self, track_info):
         """Construct a line with the current medium's info."""
@@ -216,8 +224,8 @@ class ChangeRepresentation:
         else:
             highlight_color = "text_faint"
 
-        lhs_track = ui.colorize(highlight_color, f"(#{cur_track})")
-        rhs_track = ui.colorize(highlight_color, f"(#{new_track})")
+        lhs_track = colorize(highlight_color, f"(#{cur_track})")
+        rhs_track = colorize(highlight_color, f"(#{new_track})")
         return lhs_track, rhs_track, changed
 
     @staticmethod
@@ -231,7 +239,7 @@ class ChangeRepresentation:
         else:
             # If there is a title, highlight differences.
             cur_title = item.title.strip()
-            cur_col, new_col = ui.colordiff(cur_title, new_title)
+            cur_col, new_col = colordiff(cur_title, new_title)
             return cur_col, new_col, cur_title != new_title
 
     @staticmethod
@@ -256,8 +264,8 @@ class ChangeRepresentation:
         cur_length = f"({human_seconds_short(cur_length0)})"
         new_length = f"({human_seconds_short(new_length0)})"
         # colorize
-        lhs_length = ui.colorize(highlight_color, cur_length)
-        rhs_length = ui.colorize(highlight_color, new_length)
+        lhs_length = colorize(highlight_color, cur_length)
+        rhs_length = colorize(highlight_color, new_length)
 
         return lhs_length, rhs_length, changed
 
@@ -315,7 +323,7 @@ class ChangeRepresentation:
             """Return the width of left or right in uncolorized characters."""
             try:
                 return len(
-                    ui.uncolorize(
+                    uncolorize(
                         " ".join(
                             [side["prefix"], side["contents"], side["suffix"]]
                         )
@@ -327,7 +335,7 @@ class ChangeRepresentation:
 
         # Check how to fit content into terminal window
         indent_width = len(self.indent_tracklist)
-        terminal_width = ui.term_width()
+        terminal_width = term_width()
         joiner_width = len("".join(["* ", " -> "]))
         col_width = (terminal_width - indent_width - joiner_width) // 2
         max_width_l = max(get_width(line_tuple[0]) for line_tuple in lines)
@@ -392,7 +400,7 @@ class AlbumChange(ChangeRepresentation):
                     # Print tracks from previous medium
                     self.print_tracklist(lines)
                     lines = []
-                    ui.print_(f"{self.indent_detail}{header}")
+                    print_(f"{self.indent_detail}{header}")
                 # Save new medium details for future comparison.
                 medium, disctitle = track_info.medium, track_info.disctitle
 
@@ -407,7 +415,7 @@ class AlbumChange(ChangeRepresentation):
 
         # Missing and unmatched tracks.
         if self.match.extra_tracks:
-            ui.print_(
+            print_(
                 "Missing tracks"
                 f" ({len(self.match.extra_tracks)}/{len(self.match.info.tracks)} -"
                 f" {len(self.match.extra_tracks) / len(self.match.info.tracks):.1%}):"
@@ -416,14 +424,14 @@ class AlbumChange(ChangeRepresentation):
             line = f" ! {track_info.title} (#{self.format_index(track_info)})"
             if track_info.length:
                 line += f" ({human_seconds_short(track_info.length)})"
-            ui.print_(ui.colorize("text_warning", line))
+            print_(colorize("text_warning", line))
         if self.match.extra_items:
-            ui.print_(f"Unmatched tracks ({len(self.match.extra_items)}):")
+            print_(f"Unmatched tracks ({len(self.match.extra_items)}):")
         for item in self.match.extra_items:
             line = f" ! {item.title} (#{self.format_index(item)})"
             if item.length:
                 line += f" ({human_seconds_short(item.length)})"
-            ui.print_(ui.colorize("text_warning", line))
+            print_(colorize("text_warning", line))
 
 
 class TrackChange(ChangeRepresentation):
@@ -539,11 +547,11 @@ def dist_colorize(string, dist):
     a distance.
     """
     if dist <= config["match"]["strong_rec_thresh"].as_number():
-        string = ui.colorize("text_success", string)
+        string = colorize("text_success", string)
     elif dist <= config["match"]["medium_rec_thresh"].as_number():
-        string = ui.colorize("text_warning", string)
+        string = colorize("text_warning", string)
     else:
-        string = ui.colorize("text_error", string)
+        string = colorize("text_error", string)
     return string
 
 
@@ -570,4 +578,4 @@ def penalty_string(distance, limit=None):
             penalties = penalties[:limit] + ["..."]
         # Prefix penalty string with U+2260: Not Equal To
         penalty_string = f"\u2260 {', '.join(penalties)}"
-        return ui.colorize("changed", penalty_string)
+        return colorize("changed", penalty_string)

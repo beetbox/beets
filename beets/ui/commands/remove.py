@@ -1,6 +1,6 @@
 """The `remove` command: remove items from the library (and optionally delete files)."""
 
-from beets import ui
+from beets.ui.core import Subcommand, input_select_objects, print_
 
 from ._utils import do_query
 
@@ -40,10 +40,10 @@ def remove_items(lib, query, album, delete, force):
 
         # Helpers for printing affected items
         def fmt_track(t):
-            ui.print_(format(t, fmt))
+            print_(format(t, fmt))
 
         def fmt_album(a):
-            ui.print_()
+            print_()
             for i in a.items():
                 fmt_track(i)
 
@@ -54,7 +54,7 @@ def remove_items(lib, query, album, delete, force):
             fmt_obj(o)
 
         # Confirm with user.
-        objs = ui.input_select_objects(
+        objs = input_select_objects(
             prompt, objs, fmt_obj, prompt_all=prompt_all
         )
 
@@ -71,7 +71,7 @@ def remove_func(lib, opts, args):
     remove_items(lib, args, opts.album, opts.delete, opts.force)
 
 
-remove_cmd = ui.Subcommand(
+remove_cmd = Subcommand(
     "remove", help="remove matching items from the library", aliases=("rm",)
 )
 remove_cmd.parser.add_option(

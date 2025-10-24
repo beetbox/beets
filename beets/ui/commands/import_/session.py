@@ -2,8 +2,10 @@ from collections import Counter
 from itertools import chain
 from typing import Any, NamedTuple
 
-from beets import autotag, config, importer, logging, plugins, ui
+from beets import autotag, config, importer, logging, plugins
 from beets.autotag import Recommendation
+from beets.ui.colors import colorize
+from beets.ui.core import input_, input_options, input_yn, print_
 from beets.util import displayable_path
 from beets.util.units import human_bytes, human_seconds_short
 
@@ -28,13 +30,13 @@ class TerminalImportSession(importer.ImportSession):
         AlbumMatch object, ASIS, or SKIP.
         """
         # Show what we're tagging.
-        ui.print_()
+        print_()
 
         path_str0 = displayable_path(task.paths, "\n")
-        path_str = ui.colorize("import_path", path_str0)
+        path_str = colorize("import_path", path_str0)
         items_str0 = f"({len(task.items)} items)"
-        items_str = ui.colorize("import_path_items", items_str0)
-        ui.print_(" ".join([path_str, items_str]))
+        items_str = colorize("import_path_items", items_str0)
+        print_(" ".join([path_str, items_str]))
 
         # Let plugins display info or prompt the user before we go through the
         # process of selecting candidate.
@@ -104,8 +106,8 @@ class TerminalImportSession(importer.ImportSession):
         """Ask the user for a choice about tagging a single item. Returns
         either an action constant or a TrackMatch object.
         """
-        ui.print_()
-        ui.print_(displayable_path(task.item.path))
+        print_()
+        print_(displayable_path(task.item.path))
         candidates, rec = task.candidates, task.rec
 
         # Take immediate action if appropriate.
@@ -157,7 +159,7 @@ class TerminalImportSession(importer.ImportSession):
             # Print some detail about the existing and new items so the
             # user can make an informed decision.
             for duplicate in found_duplicates:
-                ui.print_(
+                print_(
                     "Old: "
                     + summarize_items(
                         (
@@ -175,7 +177,7 @@ class TerminalImportSession(importer.ImportSession):
                     else:
                         print(f"  {duplicate}")
 
-            ui.print_(
+            print_(
                 "New: "
                 + summarize_items(
                     task.imported_items(),
@@ -186,7 +188,7 @@ class TerminalImportSession(importer.ImportSession):
                 for item in task.imported_items():
                     print(f"  {item}")
 
-            sel = ui.input_options(
+            sel = input_options(
                 ("Skip new", "Keep all", "Remove old", "Merge all")
             )
 
@@ -205,7 +207,7 @@ class TerminalImportSession(importer.ImportSession):
             assert False
 
     def should_resume(self, path):
-        return ui.input_yn(
+        return input_yn(
             f"Import of the directory:\n{displayable_path(path)}\n"
             "was interrupted. Resume (Y/n)?"
         )
@@ -362,9 +364,9 @@ def _summary_judgment(rec):
         return None
 
     if action == importer.Action.SKIP:
-        ui.print_("Skipping.")
+        print_("Skipping.")
     elif action == importer.Action.ASIS:
-        ui.print_("Importing as-is.")
+        print_("Importing as-is.")
     return action
 
 
@@ -412,14 +414,14 @@ def choose_candidate(
     # Zero candidates.
     if not candidates:
         if singleton:
-            ui.print_("No matching recordings found.")
+            print_("No matching recordings found.")
         else:
-            ui.print_(f"No matching release found for {itemcount} tracks.")
-            ui.print_(
+            print_(f"No matching release found for {itemcount} tracks.")
+            print_(
                 "For help, see: "
                 "https://beets.readthedocs.org/en/latest/faq.html#nomatch"
             )
-        sel = ui.input_options(choice_opts)
+        sel = input_options(choice_opts)
         if sel in choice_actions:
             return choice_actions[sel]
         else:
@@ -437,14 +439,14 @@ def choose_candidate(
 
         if not bypass_candidates:
             # Display list of candidates.
-            ui.print_("")
-            ui.print_(
+            print_("")
+            print_(
                 f"Finding tags for {'track' if singleton else 'album'} "
                 f'"{item.artist if singleton else cur_artist} -'
                 f' {item.title if singleton else cur_album}".'
             )
 
-            ui.print_("  Candidates:")
+            print_("  Candidates:")
             for i, match in enumerate(candidates):
                 # Index, metadata, and distance.
                 index0 = f"{i + 1}."
@@ -458,22 +460,22 @@ def choose_candidate(
                 if i == 0:
                     metadata = dist_colorize(metadata, match.distance)
                 else:
-                    metadata = ui.colorize("text_highlight_minor", metadata)
+                    metadata = colorize("text_highlight_minor", metadata)
                 line1 = [index, distance, metadata]
-                ui.print_(f"  {' '.join(line1)}")
+                print_(f"  {' '.join(line1)}")
 
                 # Penalties.
                 penalties = penalty_string(match.distance, 3)
                 if penalties:
-                    ui.print_(f"{' ' * 13}{penalties}")
+                    print_(f"{' ' * 13}{penalties}")
 
                 # Disambiguation
                 disambig = disambig_string(match.info)
                 if disambig:
-                    ui.print_(f"{' ' * 13}{disambig}")
+                    print_(f"{' ' * 13}{disambig}")
 
             # Ask the user for a choice.
-            sel = ui.input_options(choice_opts, numrange=(1, len(candidates)))
+            sel = input_options(choice_opts, numrange=(1, len(candidates)))
             if sel == "m":
                 pass
             elif sel in choice_actions:
@@ -509,8 +511,8 @@ def choose_candidate(
             require = True
         # Bell ring when user interaction is needed.
         if config["import"]["bell"]:
-            ui.print_("\a", end="")
-        sel = ui.input_options(
+            print_("\a", end="")
+        sel = input_options(
             ("Apply", "More candidates") + choice_opts,
             require=require,
             default=default,
@@ -527,8 +529,8 @@ def manual_search(session, task):
     Input either an artist and album (for full albums) or artist and
     track name (for singletons) for manual search.
     """
-    artist = ui.input_("Artist:").strip()
-    name = ui.input_("Album:" if task.is_album else "Track:").strip()
+    artist = input_("Artist:").strip()
+    name = input_("Album:" if task.is_album else "Track:").strip()
 
     if task.is_album:
         _, _, prop = autotag.tag_album(task.items, artist, name)
@@ -543,7 +545,7 @@ def manual_id(session, task):
     Input an ID, either for an album ("release") or a track ("recording").
     """
     prompt = f"Enter {'release' if task.is_album else 'recording'} ID:"
-    search_id = ui.input_(prompt).strip()
+    search_id = input_(prompt).strip()
 
     if task.is_album:
         _, _, prop = autotag.tag_album(task.items, search_ids=search_id.split())
