@@ -16,6 +16,7 @@
 
 import os
 import shlex
+import subprocess
 
 from beets.library import Album, Item
 from beets.plugins import BeetsPlugin
@@ -25,7 +26,6 @@ from beets.util import (
     bytestring_path,
     command_output,
     displayable_path,
-    subprocess,
 )
 
 PLUGIN = "duplicates"

@@ -97,7 +97,7 @@ class UtilTest(unittest.TestCase):
             p = util.sanitize_path("foo//bar", [(re.compile(r"^$"), "_")])
         assert p == "foo/_/bar"
 
-    @patch("beets.util.subprocess.Popen")
+    @patch("beets.util.io.subprocess.Popen")
     def test_command_output(self, mock_popen):
         def popen_fail(*args, **kwargs):
             m = Mock(returncode=1)
@@ -175,7 +175,7 @@ class TestPathLegalization:
 
     @pytest.fixture(autouse=True)
     def _patch_max_filename_length(self, monkeypatch):
-        monkeypatch.setattr("beets.util.get_max_filename_length", lambda: 5)
+        monkeypatch.setattr("beets.util.io.get_max_filename_length", lambda: 5)
 
     @pytest.mark.parametrize(
         "path, expected",

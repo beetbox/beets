@@ -26,7 +26,7 @@ import numpy as np
 
 from beets import config, logging, metadata_plugins
 from beets.autotag import AlbumInfo, AlbumMatch, TrackInfo, TrackMatch, hooks
-from beets.util import get_most_common_tags
+from beets.util.misc import get_most_common_tags
 
 from .distance import VA_ARTISTS, distance, track_distance
 

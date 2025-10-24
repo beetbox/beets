@@ -102,7 +102,7 @@ class ConfigCommandTest(BeetsTestCase):
         execlp.assert_called_once_with("myvisual", "myvisual", self.config_path)
 
     def test_edit_config_with_automatic_open(self):
-        with patch("beets.util.open_anything") as open:
+        with patch("beets.util.io.open_anything") as open:
             open.return_value = "please_open"
             with patch("os.execlp") as execlp:
                 self.run_command("config", "-e")

@@ -26,6 +26,7 @@ from urllib.parse import urljoin
 
 import musicbrainzngs
 from confuse.exceptions import NotFoundError
+from typing_extensions import Unpack
 
 import beets
 import beets.autotag.hooks
@@ -37,8 +38,13 @@ if TYPE_CHECKING:
     from typing import Literal
 
     from beets.library import Item
+    from beets.util import HumanReadabaleErrorArgs
 
     from ._typing import JSONDict
+
+    class MusicBrainzAPIErrorArgs(HumanReadabaleErrorArgs):
+        query: dict[str, str] | str
+
 
 VARIOUS_ARTISTS_ID = "89ad4ac3-39f7-470e-963a-56509c546377"
 
@@ -63,11 +69,13 @@ class MusicBrainzAPIError(util.HumanReadableError):
     parameter to the action and may have any type.
     """
 
-    def __init__(self, reason, verb, query, tb=None):
-        self.query = query
-        if isinstance(reason, musicbrainzngs.WebServiceError):
-            reason = "MusicBrainz not reachable"
-        super().__init__(reason, verb, tb)
+    def __init__(self, **kwargs: Unpack[MusicBrainzAPIErrorArgs]) -> None:
+        self.query = kwargs["query"]
+        if isinstance(kwargs["reason"], musicbrainzngs.WebServiceError):
+            kwargs["reason"] = "MusicBrainz not reachable"
+        super().__init__(
+            reason=kwargs["reason"], verb=kwargs["verb"], tb=kwargs.get("tb")
+        )
 
     def get_message(self):
         return f"{self._reasonstr()} in {self.verb} with query {self.query!r}"
@@ -812,7 +820,10 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
             res = method(limit=self.config["search_limit"].get(), **filters)
         except musicbrainzngs.MusicBrainzError as exc:
             raise MusicBrainzAPIError(
-                exc, f"{query_type} search", filters, traceback.format_exc()
+                reason=exc,
+                verb=f"{query_type} search",
+                query=filters,
+                tb=traceback.format_exc(),
             )
         return res[f"{query_type}-list"]
 
@@ -863,7 +874,10 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
             return None
         except musicbrainzngs.MusicBrainzError as exc:
             raise MusicBrainzAPIError(
-                exc, "get release by ID", albumid, traceback.format_exc()
+                reason=exc,
+                verb="get release by ID",
+                query=albumid,
+                tb=traceback.format_exc(),
             )
 
         # release is potentially a pseudo release
@@ -893,6 +907,9 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
             return None
         except musicbrainzngs.MusicBrainzError as exc:
             raise MusicBrainzAPIError(
-                exc, "get recording by ID", trackid, traceback.format_exc()
+                reason=exc,
+                verb="get recording by ID",
+                query=trackid,
+                tb=traceback.format_exc(),
             )
         return self.track_info(res["recording"])
