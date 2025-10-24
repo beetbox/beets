@@ -2,7 +2,7 @@
 
 import os
 
-from beets import ui
+from beets.ui._common import UserError
 from beets.util import displayable_path, normpath, syspath
 
 
@@ -25,9 +25,9 @@ def do_query(lib, query, album, also_items=True):
         items = list(lib.items(query))
 
     if album and not albums:
-        raise ui.UserError("No matching albums found.")
+        raise UserError("No matching albums found.")
     elif not album and not items:
-        raise ui.UserError("No matching items found.")
+        raise UserError("No matching items found.")
 
     return items, albums
 
@@ -58,10 +58,10 @@ def parse_logfiles(logfiles):
         try:
             yield from paths_from_logfile(syspath(normpath(logfile)))
         except ValueError as err:
-            raise ui.UserError(
+            raise UserError(
                 f"malformed logfile {displayable_path(logfile)}: {err}"
             ) from err
         except OSError as err:
-            raise ui.UserError(
+            raise UserError(
                 f"unreadable logfile {displayable_path(logfile)}: {err}"
             ) from err

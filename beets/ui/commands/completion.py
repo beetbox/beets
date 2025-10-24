@@ -3,7 +3,8 @@
 import os
 import re
 
-from beets import library, logging, plugins, ui
+from beets import library, logging, plugins
+from beets.ui.core import Subcommand, print_
 from beets.util import syspath
 
 # Global logger.
@@ -14,7 +15,7 @@ def print_completion(*args):
     from beets.ui.commands import default_commands
 
     for line in completion_script(default_commands + plugins.commands()):
-        ui.print_(line, end="")
+        print_(line, end="")
     if not any(os.path.isfile(syspath(p)) for p in BASH_COMPLETION_PATHS):
         log.warning(
             "Warning: Unable to find the bash-completion package. "
@@ -22,7 +23,7 @@ def print_completion(*args):
         )
 
 
-completion_cmd = ui.Subcommand(
+completion_cmd = Subcommand(
     "completion",
     help="print shell script that provides command line completion",
 )
