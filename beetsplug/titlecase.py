@@ -125,9 +125,8 @@ class TitlecasePlugin(BeetsPlugin):
         self.__get_config_file__()
         if self.config["auto"]:
             self.register_listener(
-                    "import_task_before_choice",
-                    self.on_import_task_before_choice
-                    )
+                "import_task_before_choice", self.on_import_task_before_choice
+            )
         # Register template function
 
     def __get_config_file__(self):
@@ -219,9 +218,11 @@ class TitlecasePlugin(BeetsPlugin):
             callback=self.__preserved__,
         )
 
-    def on_import_task_before_choice(self, task: ImportTask, session: ImportSession) -> None:
+    def on_import_task_before_choice(
+        self, task: ImportTask, session: ImportSession
+    ) -> None:
         """Maps imported to on_import_task_before_choice"""
-        return imported(session, task)
+        self.imported(session, task)
 
     def imported(self, session: ImportSession, task: ImportTask) -> None:
         """Import hook for titlecasing on import."""
