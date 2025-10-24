@@ -3,65 +3,63 @@ ImportHistory Plugin
 
 The ``importhistory`` plugin adds a ``source_path`` field to every item imported
 to the library which stores the original media files' paths. Using this plugin
-makes most sense when the general importing workflow is to use ``beet import
---copy``.
+makes most sense when the general importing workflow is using ``beet import
+--copy``. Additionally the plugin interactively suggests deletion of original
+source files whenever items are removed from the Beets library.
 
-Another feature of the plugin is suggesting to delete those original source
-files as well whenever items are removed from the Beets library.
+To enable it, add ``importhistory`` to the list of plugins in your configuration
+(see :ref:`using-plugins`).
 
-To use the ``importhistory`` plugin, enable it in your configuration (see
-:ref:`using-plugins`).
-
-``source_path`` Usage
+Tracking Source Paths
 ---------------------
 
-The first use case of the ``source_path`` field is in the following scenario:
-You imported all of the directories in your current ``$PWD``:
+The primary use case for the plugin is tracking the original location of
+imported files using the ``source_path`` field. Consider this scenario: you've
+imported all directories in your current working directory using:
 
-::
+.. code-block:: bash
 
     beet import --flat --copy */
 
-Then, something went wrong, and you need to rerun this command. But, you don't
-want to tell beets to read again the already successfully imported directories
-again. So, you can view which files were successfully imported, using:
+Later, for instance if the import didn't complete successfully, you'll need to
+rerun the import but don't want Beets to re-process the already successfully
+imported directories. You can view which files were successfully imported using:
 
-::
+.. code-block:: bash
 
     beet ls source_path:$PWD --format='$source_path'
 
-You can of course pipe this command to other standard UNIX utilities:
+To extract just the directory names, pipe the output to standard UNIX utilities:
 
-::
+.. code-block:: bash
 
-    # The following prints the directories without the l
     beet ls source_path:$PWD --format='$source_path' | \
       sed "s#$(dirname $PWD)/\([^/]*\)/.*#\1#" | \
       sort -u
 
-The above will print only the directories you successfully finished importing
-with ``beet import --flat --copy */``.
+This might help to find out what's left to be imported.
 
-Removal Suggestion Usage
-------------------------
+Removal Suggestion
+------------------
 
-A second use case of the plugin is described in the following scenario: Imagine
-you imported an album using:
+Another feature of the plugin is suggesting removal of original source files
+when items are deleted from your library. Consider this scenario: you imported
+an album using:
 
-::
+.. code-block:: bash
 
     beet import --copy --flat ~/Desktop/interesting-album-to-check/
 
-Then you listened to that album and decided it wasn't good and you want to
-delete it from your library, and from your ``~/Desktop``, so you run:
+After listening to that album and deciding it wasn't good, you want to delete it
+from your library as well as from your ``~/Desktop``, so you run:
 
-::
+.. code-block:: bash
 
     beet remove --delete source_path:$HOME/Desktop/interesting-album-to-check
 
-After you'll approve the deletion, this plugin will ask you:
+After approving the deletion, the plugin will prompt:
 
-::
+.. code-block:: text
 
     The item:
     <music-library>/Interesting Album/01 Interesting Song.flac
@@ -71,9 +69,6 @@ After you'll approve the deletion, this plugin will ask you:
     Delete the item's source, Recursively delete the source's directory,
     do Nothing,
     do nothing and Stop suggesting to delete items from this album?
-
-Thus the plugin helps you delete the files from the beets library and from their
-source as one.
 
 Configuration
 -------------
