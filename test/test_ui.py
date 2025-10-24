@@ -456,7 +456,7 @@ class MoveTest(BeetsTestCase):
 
     def _move(
         self,
-        query=(),
+        query=None,
         dest=None,
         copy=False,
         album=False,
@@ -1254,7 +1254,7 @@ class ShowChangeTest(IOMixin, unittest.TestCase):
 
     def test_album_data_change_wrap_newline(self):
         # Patch ui.term_width to force wrapping
-        with patch("beets.ui.commands.ui.term_width", return_value=30):
+        with patch("beets.ui.commands.term_width", return_value=30):
             # Test newline layout
             config["ui"]["import"]["layout"] = "newline"
             long_name = f"another artist with a{' very' * 10} long name"
@@ -1267,7 +1267,7 @@ class ShowChangeTest(IOMixin, unittest.TestCase):
 
     def test_item_data_change_wrap_column(self):
         # Patch ui.term_width to force wrapping
-        with patch("beets.ui.commands.ui.term_width", return_value=54):
+        with patch("beets.ui.commands.term_width", return_value=54):
             # Test Column layout
             config["ui"]["import"]["layout"] = "column"
             long_title = f"a track with a{' very' * 10} long name"
@@ -1277,7 +1277,7 @@ class ShowChangeTest(IOMixin, unittest.TestCase):
 
     def test_item_data_change_wrap_newline(self):
         # Patch ui.term_width to force wrapping
-        with patch("beets.ui.commands.ui.term_width", return_value=30):
+        with patch("beets.ui.commands.term_width", return_value=30):
             config["ui"]["import"]["layout"] = "newline"
             long_title = f"a track with a{' very' * 10} long name"
             self.items[0].title = long_title

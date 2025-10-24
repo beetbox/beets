@@ -272,7 +272,7 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
         self.addCleanup(self.matcher.restore)
         # keep track of ui.input_option() calls
         self.input_options_patcher = patch(
-            "beets.ui.input_options", side_effect=ui.input_options
+            "beets.ui.commands.input_options", side_effect=ui.input_options
         )
         self.mock_input_options = self.input_options_patcher.start()
 
