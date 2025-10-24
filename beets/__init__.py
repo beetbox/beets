@@ -13,17 +13,16 @@
 # included in all copies or substantial portions of the Software.
 
 
-from sys import stderr
-
-import confuse
-
+from .config import IncludeLazyConfig, config
 from .util import deprecate_imports
 
-__version__ = "2.5.1"
-__author__ = "Adrian Sampson <adrian@radbox.org>"
+__version__: str = "2.5.1"
+__author__: str = "Adrian Sampson <adrian@radbox.org>"
+
+__all__: list[str] = ["IncludeLazyConfig", "config"]
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> str:
     """Handle deprecated imports."""
     return deprecate_imports(
         old_module=__name__,
@@ -34,23 +33,3 @@ def __getattr__(name: str):
         name=name,
         version="3.0.0",
     )
-
-
-class IncludeLazyConfig(confuse.LazyConfig):
-    """A version of Confuse's LazyConfig that also merges in data from
-    YAML files specified in an `include` setting.
-    """
-
-    def read(self, user=True, defaults=True):
-        super().read(user, defaults)
-
-        try:
-            for view in self["include"]:
-                self.set_file(view.as_filename())
-        except confuse.NotFoundError:
-            pass
-        except confuse.ConfigReadError as err:
-            stderr.write(f"configuration `import` failed: {err.reason}")
-
-
-config = IncludeLazyConfig("beets", __name__)
