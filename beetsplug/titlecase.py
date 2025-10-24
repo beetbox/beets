@@ -60,9 +60,11 @@ class TitlecasePlugin(BeetsPlugin):
     def __init__(self) -> None:
         super().__init__()
 
+        self.template_funcs["titlecase"] = self.titlecase
+
         self.config.add(
             {
-                "auto": False,
+                "auto": True,
                 "preserve": [],
                 "include": [],
                 "exclude": [],
@@ -122,10 +124,11 @@ class TitlecasePlugin(BeetsPlugin):
         )
         self.__get_config_file__()
         if self.config["auto"]:
-            self.import_stages = [self.imported]
+            self.register_listener(
+                    "import_task_before_choice",
+                    self.on_import_task_before_choice
+                    )
         # Register template function
-        self.template_funcs["titlecase"] = self.titlecase
-
 
     def __get_config_file__(self):
         self.force_lowercase = self.config["force_lowercase"].get(bool)
@@ -215,6 +218,10 @@ class TitlecasePlugin(BeetsPlugin):
             small_first_last=self.config["small_first_last"],
             callback=self.__preserved__,
         )
+
+    def on_import_task_before_choice(self, task: ImportTask, session: ImportSession) -> None:
+        """Maps imported to on_import_task_before_choice"""
+        return imported(session, task)
 
     def imported(self, session: ImportSession, task: ImportTask) -> None:
         """Import hook for titlecasing on import."""
