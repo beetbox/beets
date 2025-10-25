@@ -99,19 +99,6 @@ class TitlecasePluginTest(PluginTestCase):
                     "artist": "Bad Case",
                     "album": "the album",
                 },
-                "-e title album",
-            ),
-            (
-                {
-                    "title": "poorLy cased Title",
-                    "artist": "Bad CaSE",
-                    "album": "the album",
-                },
-                {
-                    "title": "poorLy cased Title",
-                    "artist": "Bad Case",
-                    "album": "the album",
-                },
                 "-i artist",
             ),
             (

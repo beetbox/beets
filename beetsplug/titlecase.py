@@ -31,20 +31,23 @@ __version__ = "1.0"
 # function
 EXCLUDED_INFO_FIELDS = set(
     [
+        "acoustid_fingerprint",
+        "acoustid_id",
+        "artists_ids",
+        "asin",
+        "deezer_track_id",
+        "format",
         "id",
+        "isrc",
         "mb_workid",
         "mb_trackid",
         "mb_albumid",
         "mb_artistid",
+        "mb_artistids",
         "mb_albumartistid",
         "mb_albumartistids",
         "mb_releasetrackid",
-        "acoustid_fingerprint",
-        "acoustid_id",
         "mb_releasegroupid",
-        "asin",
-        "isrc",
-        "format",
         "bitrate_mode",
         "encoder_info",
         "encoder_settings",
@@ -67,8 +70,7 @@ class TitlecasePlugin(BeetsPlugin):
                 "auto": True,
                 "preserve": [],
                 "include": [],
-                "exclude": [],
-                "force_lowercase": True,
+                "force_lowercase": False,
                 "small_first_last": True,
             }
         )
@@ -90,19 +92,11 @@ class TitlecasePlugin(BeetsPlugin):
         )
 
         self._command.parser.add_option(
-            "-f",
-            "--force-off",
+            "-l",
+            "--lower",
             dest="force_lowercase",
-            action="store_false",
-            help="Turn off forcing lowercase first.",
-        )
-
-        self._command.parser.add_option(
-            "-p",
-            "--preserve",
-            dest="preserve",
-            action="store",
-            help="Preserve the case of the given words.",
+            action="store_true",
+            help="Force lowercase first.",
         )
 
         self._command.parser.add_option(
@@ -110,54 +104,35 @@ class TitlecasePlugin(BeetsPlugin):
             "--include",
             dest="include",
             action="store",
-            help="""Metadata fields to titlecase to, default is all.
+            help="""Metadata fields to titlecase.
             Always ignores case sensitive fields.""",
         )
 
-        self._command.parser.add_option(
-            "-e",
-            "--exclude",
-            dest="exclude",
-            action="store",
-            help="""Metadata fields to skip, default is none.
-            Always ignores case sensitive fields.""",
-        )
         self.__get_config_file__()
         if self.config["auto"]:
-            self.register_listener(
-                "import_task_before_choice", self.on_import_task_before_choice
-            )
+            self.import_stages = [self.imported]
+            # self.register_listener(
+            #     "import_task_before_choice", self.on_import_task_before_choice
+            # )
         # Register template function
 
     def __get_config_file__(self):
         self.force_lowercase = self.config["force_lowercase"].get(bool)
         self.__preserve_words__(self.config["preserve"].as_str_seq())
-        self.__init_field_list__(
+        self.__init_fields_to_process__(
             self.config["include"].as_str_seq(),
-            self.config["exclude"].as_str_seq(),
         )
 
-    def __init_field_list__(
-        self, include: list[str], exclude: list[str]
+    def __init_fields_to_process__(
+        self, include: list[str]
     ) -> None:
         """Creates the set for fields to process in tagging.
-        If we have include_fields from config, the shared fields will be used.
-        Then, any fields specified to be excluded will be removed.
-        This will result in exclude_fields overriding include_fields.
+        Only uses fields included.
         Last, the EXCLUDED_INFO_FIELDS are removed to prevent unitentional modification.
         """
-        initial_field_list = set(
-            [
-                k
-                for k, v in Item()._fields.items()
-                if isinstance(v, types.String)
-                or isinstance(v, types.DelimitedString)
-            ]
-        )
+        initial_field_list = set([])
         if include:
             initial_field_list = initial_field_list.intersection(set(include))
-        if exclude:
-            initial_field_list -= set(exclude)
         initial_field_list -= set(EXCLUDED_INFO_FIELDS)
         self.fields_to_process = initial_field_list
 
@@ -178,12 +153,15 @@ class TitlecasePlugin(BeetsPlugin):
         def func(lib, opts, args):
             opts = opts.__dict__
             preserve = split_if_exists(opts["preserve"])
-            excl = split_if_exists(opts["exclude"])
             incl = split_if_exists(opts["include"])
             if opts["force_lowercase"] is not None:
-                self.force_lowercase = False
-            self.__preserve_words__(preserve)
-            self.__init_field_list__(incl, excl)
+                self.force_lowercase = True
+            self.__preserve_words__(
+                preserve.append(self.config["preserve"].as_str_seq())
+                )
+            self.__init_fields_to_process__(
+                incl.append(self.config["include"].as_str_seq())
+                )
             write = ui.should_write()
 
             for item in lib.items(args):
@@ -202,10 +180,18 @@ class TitlecasePlugin(BeetsPlugin):
         set exclude lists.
         """
         for field in self.fields_to_process:
-            init_str = getattr(item, field, "")
-            if init_str:
-                cased = self.titlecase(init_str)
-                self._log.info(f"{field}: {init_str} -> {cased}")
+            init_field = getattr(item, field, "")
+            if isinstance(init_field, list):
+                cased_list: list[str] = [self.titlecase(i) for i in init_field]
+                self._log.info(
+                    f"""
+                    {field}: {", ".join(init_field)} ->
+                    {", ".join(cased_list)}"""
+                )
+                setattr(item, field, cased_list)
+            elif init_field and isinstance(init_field, str):
+                cased: str = self.titlecase(init_field)
+                self._log.info(f"{field}: {init_field} -> {cased}")
                 setattr(item, field, cased)
             else:
                 self._log.info(f"{field}: no string present")
@@ -218,11 +204,11 @@ class TitlecasePlugin(BeetsPlugin):
             callback=self.__preserved__,
         )
 
-    def on_import_task_before_choice(
-        self, task: ImportTask, session: ImportSession
-    ) -> None:
-        """Maps imported to on_import_task_before_choice"""
-        self.imported(session, task)
+    # def on_import_task_before_choice(
+    #     self, task: ImportTask, session: ImportSession
+    # ) -> None:
+    #     """Maps imported to on_import_task_before_choice"""
+    #     self.imported(session, task)
 
     def imported(self, session: ImportSession, task: ImportTask) -> None:
         """Import hook for titlecasing on import."""
