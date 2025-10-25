@@ -231,7 +231,10 @@ class DiscogsPlugin(MetadataSourcePlugin):
         return track_info
 
     def item_candidates(
-        self, item: Item, artist: str, title: str
+        self,
+        item: Item,
+        artist: str,
+        title: str,
     ) -> Iterable[TrackInfo]:
         albums = self.candidates([item], artist, title, False)
 
@@ -290,6 +293,15 @@ class DiscogsPlugin(MetadataSourcePlugin):
         # Strip medium information from query, Things like "CD1" and "disk 1"
         # can also negate an otherwise positive result.
         query = re.sub(r"(?i)\b(CD|disc|vinyl)\s*\d+", "", query)
+
+        # query may be empty strings
+        # We want to skip the lookup in this case.
+        if not query.strip():
+            self._log.debug(
+                "Empty search query after preprocessing, skipping {.data_source}.",
+                self,
+            )
+            return []
 
         try:
             results = self.discogs_client.search(query, type="release")

@@ -457,6 +457,16 @@ class BeatportPlugin(MetadataSourcePlugin):
         # Strip medium information from query, Things like "CD1" and "disk 1"
         # can also negate an otherwise positive result.
         query = re.sub(r"\b(CD|disc)\s*\d+", "", query, flags=re.I)
+
+        # query may be empty strings
+        # We want to skip the lookup in this case.
+        if not query.strip():
+            self._log.debug(
+                "Empty search query after preprocessing, skipping {.data_source}.",
+                self,
+            )
+            return
+
         for beatport_release in self.client.search(query, "release"):
             if beatport_release is None:
                 continue
@@ -522,8 +532,18 @@ class BeatportPlugin(MetadataSourcePlugin):
         """
         return self.get_artist(artists=artists, id_key=0, name_key=1)
 
-    def _get_tracks(self, query):
+    def _get_tracks(self, query: str):
         """Returns a list of TrackInfo objects for a Beatport query."""
+
+        # query may be empty strings
+        # We want to skip the lookup in this case.
+        if not query.strip():
+            self._log.debug(
+                "Empty search query after preprocessing, skipping {.data_source}.",
+                self,
+            )
+            return []
+
         bp_tracks = self.client.search(query, release_type="track")
         tracks = [self._get_track_info(x) for x in bp_tracks]
         return tracks

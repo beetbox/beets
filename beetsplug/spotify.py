@@ -434,6 +434,13 @@ class SpotifyPlugin(
             filters=filters, query_string=query_string
         )
 
+        if not query.strip():
+            self._log.debug(
+                "Empty search query after applying filters, skipping {.data_source}.",
+                self,
+            )
+            return []
+
         self._log.debug("Searching {.data_source} for '{}'", self, query)
         try:
             response = self._handle_response(
