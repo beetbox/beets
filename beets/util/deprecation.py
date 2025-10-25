@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import warnings
 from importlib import import_module
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from packaging.version import Version
 
 import beets
+
+if TYPE_CHECKING:
+    from logging import Logger
 
 
 def _format_message(old: str, new: str | None = None) -> str:
@@ -16,6 +19,10 @@ def _format_message(old: str, new: str | None = None) -> str:
         msg += f" Use {new} instead."
 
     return msg
+
+
+def deprecate_for_user(logger: Logger, old: str, new: str) -> None:
+    logger.warning(_format_message(old, new))
 
 
 def deprecate_for_maintainers(
