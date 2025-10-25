@@ -2,7 +2,8 @@
 
 import os
 
-from beets import logging, ui
+from beets import logging
+from beets.ui.core import Subcommand, print_
 from beets.util import syspath
 from beets.util.units import human_bytes, human_seconds
 
@@ -40,7 +41,7 @@ def show_stats(lib, query, exact):
     if exact:
         size_str += f" ({total_size} bytes)"
 
-    ui.print_(f"""Tracks: {total_items}
+    print_(f"""Tracks: {total_items}
 Total time: {human_seconds(total_time)}
 {f" ({total_time:.2f} seconds)" if exact else ""}
 {"Total size" if exact else "Approximate total size"}: {size_str}
@@ -53,7 +54,7 @@ def stats_func(lib, opts, args):
     show_stats(lib, args, opts.exact)
 
 
-stats_cmd = ui.Subcommand(
+stats_cmd = Subcommand(
     "stats", help="show statistics about the library or a query"
 )
 stats_cmd.parser.add_option(
