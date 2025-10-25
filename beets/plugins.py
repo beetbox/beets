@@ -417,9 +417,13 @@ def get_plugin_names() -> list[str]:
     # TODO: Remove in v3.0.0
     if (
         "musicbrainz" not in plugins
-        and "musicbrainz" in beets.config
-        and beets.config["musicbrainz"].get().get("enabled")
+        and beets.config["musicbrainz"].flatten().get("enabled") is not False
     ):
+        deprecate_for_user(
+            log,
+            "Automatic loading of 'musicbrainz' plugin",
+            "'plugins' configuration to explicitly add 'musicbrainz'",
+        )
         plugins.append("musicbrainz")
 
     beets.config.add({"disabled_plugins": []})
