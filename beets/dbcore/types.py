@@ -62,7 +62,7 @@ class Type(ABC, Generic[T, N]):
     """The SQLite column type for the value.
     """
 
-    query: query.FieldQueryType = query.SubstringQuery
+    query: type[query.FieldQuery] = query.SubstringQuery
     """The `Query` subclass to be used when querying the field.
     """
 
@@ -242,7 +242,7 @@ class BaseFloat(Type[float, N]):
     """
 
     sql = "REAL"
-    query: query.FieldQueryType = query.NumericQuery
+    query: type[query.FieldQuery] = query.NumericQuery
     model_type = float
 
     def __init__(self, digits: int = 1):
