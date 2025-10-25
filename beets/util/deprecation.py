@@ -21,7 +21,9 @@ def _format_message(old: str, new: str | None = None) -> str:
     return msg
 
 
-def deprecate_for_user(logger: Logger, old: str, new: str) -> None:
+def deprecate_for_user(
+    logger: Logger, old: str, new: str | None = None
+) -> None:
     logger.warning(_format_message(old, new))
 
 
