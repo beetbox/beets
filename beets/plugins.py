@@ -414,23 +414,24 @@ def get_plugin_names() -> list[str]:
     # *contain* a `beetsplug` package.
     sys.path += paths
     plugins = unique_list(beets.config["plugins"].as_str_seq())
+    beets.config.add({"disabled_plugins": []})
+    disabled_plugins = set(beets.config["disabled_plugins"].as_str_seq())
     # TODO: Remove in v3.0.0
-    if "musicbrainz" not in plugins:
+    if "musicbrainz" not in plugins and "musicbrainz" not in disabled_plugins:
         deprecate_for_user(
             log,
             "Automatic loading of 'musicbrainz' plugin",
             "'plugins' configuration to explicitly add 'musicbrainz'",
         )
-        enabled = beets.config["musicbrainz"].flatten().get("enabled")
-        if enabled is not None:
-            deprecate_for_user(
-                log, "'musicbrainz.enabled' configuration option"
-            )
-        if enabled is not False:
-            plugins.append("musicbrainz")
 
-    beets.config.add({"disabled_plugins": []})
-    disabled_plugins = set(beets.config["disabled_plugins"].as_str_seq())
+    enabled = beets.config["musicbrainz"].flatten().get("enabled")
+    if enabled is not None:
+        deprecate_for_user(log, "'musicbrainz.enabled' configuration option")
+    if enabled is False:
+        disabled_plugins.add("musicbrainz")
+    else:
+        plugins.append("musicbrainz")
+
     return [p for p in plugins if p not in disabled_plugins]
 
 

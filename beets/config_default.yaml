@@ -7,6 +7,7 @@ statefile: state.pickle
 # --------------- Plugins ---------------
 
 plugins: []
+disabled_plugins: []
 
 pluginpath: []
 
