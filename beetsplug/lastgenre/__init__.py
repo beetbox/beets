@@ -106,7 +106,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 "separator": ", ",
                 "prefer_specific": False,
                 "title_case": True,
-                "extended_debug": False,
                 "pretend": False,
             }
         )
@@ -161,6 +160,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 genres_tree = yaml.safe_load(f)
             flatten_tree(genres_tree, [], c14n_branches)
         return c14n_branches, canonicalize
+
+    def _tunelog(self, msg, *args, **kwargs):
+        """Log tuning messages at DEBUG level when verbosity level is high enough."""
+        if config["verbose"].as_number() >= 3:
+            self._log.debug(msg, *args, **kwargs)
 
     @property
     def sources(self) -> tuple[str, ...]:
@@ -293,8 +297,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             self._genre_cache[key] = self.fetch_genre(method(*args))
 
         genre = self._genre_cache[key]
-        if self.config["extended_debug"]:
-            self._log.debug("last.fm (unfiltered) {} tags: {}", entity, genre)
+        self._tunelog("last.fm (unfiltered) {} tags: {}", entity, genre)
         return genre
 
     def fetch_album_genre(self, obj):
@@ -553,13 +556,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             action="store_true",
             dest="album",
             help="match albums instead of items (default)",
-        )
-        lastgenre_cmd.parser.add_option(
-            "-d",
-            "--debug",
-            action="store_true",
-            dest="extended_debug",
-            help="extended last.fm debug logging",
         )
         lastgenre_cmd.parser.set_defaults(album=True)
 
