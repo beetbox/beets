@@ -6,7 +6,8 @@ statefile: state.pickle
 
 # --------------- Plugins ---------------
 
-plugins: [musicbrainz]
+plugins: []
+disabled_plugins: []
 
 pluginpath: []
 
