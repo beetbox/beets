@@ -9,7 +9,8 @@ from jellyfish import levenshtein_distance
 from unidecode import unidecode
 
 from beets import config, metadata_plugins
-from beets.util import as_string, cached_classproperty, get_most_common_tags
+from beets.util import as_string, cached_classproperty
+from beets.util.misc import get_most_common_tags
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
