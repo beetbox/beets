@@ -13,7 +13,7 @@ NEW_MODULE_BY_NAME = dict.fromkeys(
 
 
 def __getattr__(name: str):
-    return deprecate_imports(__name__, NEW_MODULE_BY_NAME, name, "3.0.0")
+    return deprecate_imports(__name__, NEW_MODULE_BY_NAME, name)
 
 
 __all__ = [
