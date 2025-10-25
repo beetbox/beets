@@ -421,7 +421,8 @@ def get_plugin_names() -> list[str]:
     # TODO: Remove in v3.0.0
     if (
         "musicbrainz" not in plugins
-        and beets.config["musicbrainz"].get({}).get("enabled") is not False
+        and "musicbrainz" in beets.config
+        and beets.config["musicbrainz"].get().get("enabled")
     ):
         plugins.append("musicbrainz")
 
