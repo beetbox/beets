@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 
+import logging
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any, NamedTuple, TypeVar
 
@@ -25,6 +26,8 @@ if TYPE_CHECKING:
     from beets.library import Item
 
     from .distance import Distance
+
+log = logging.getLogger(__name__)
 
 V = TypeVar("V")
 
