@@ -32,7 +32,7 @@ from typing_extensions import ParamSpec
 import beets
 from beets import logging
 from beets.util import unique_list
-from beets.util.deprecation import deprecate_for_maintainers
+from beets.util.deprecation import deprecate_for_maintainers, deprecate_for_user
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Sequence
@@ -257,14 +257,14 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         ):
             return
 
-        message = (
-            "'source_weight' configuration option is deprecated and will be"
-            " removed in v3.0.0. Use 'data_source_mismatch_penalty' instead"
-        )
         for source in self.config.root().sources:
             if "source_weight" in (source.get(self.name) or {}):
                 if source.filename:  # user config
-                    self._log.warning(message)
+                    deprecate_for_user(
+                        self._log,
+                        f"'{self.name}.source_weight' configuration option",
+                        f"'{self.name}.data_source_mismatch_penalty'",
+                    )
                 else:  # 3rd-party plugin config
                     deprecate_for_maintainers(
                         "'source_weight' configuration option",
