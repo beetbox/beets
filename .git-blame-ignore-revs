@@ -49,6 +49,10 @@ f36bc497c8c8f89004f3f6879908d3f0b25123e1
 c490ac5810b70f3cf5fd8649669838e8fdb19f4d
 # Importer restructure
 9147577b2b19f43ca827e9650261a86fb0450cef
+# Move functionality under MusicBrainz plugin
+529aaac7dced71266c6d69866748a7d044ec20ff
+# musicbrainz: reorder methods
+5dc6f45110b99f0cc8dbb94251f9b1f6d69583fa
 # Copy paste query, types from library to dbcore
 1a045c91668c771686f4c871c84f1680af2e944b
 # Library restructure (split library.py into multiple modules)
