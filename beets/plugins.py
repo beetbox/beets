@@ -20,7 +20,6 @@ import abc
 import inspect
 import re
 import sys
-import warnings
 from collections import defaultdict
 from functools import cached_property, wraps
 from importlib import import_module
@@ -33,6 +32,7 @@ from typing_extensions import ParamSpec
 import beets
 from beets import logging
 from beets.util import unique_list
+from beets.util.deprecation import deprecate_for_maintainers
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Sequence
@@ -184,11 +184,12 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         ):
             return
 
-        warnings.warn(
-            f"{cls.__name__} is used as a legacy metadata source. "
-            "It should extend MetadataSourcePlugin instead of BeetsPlugin. "
-            "Support for this will be removed in the v3.0.0 release!",
-            DeprecationWarning,
+        deprecate_for_maintainers(
+            (
+                f"'{cls.__name__}' is used as a legacy metadata source since it"
+                " inherits 'beets.plugins.BeetsPlugin'. Support for this"
+            ),
+            "'beets.metadata_plugins.MetadataSourcePlugin'",
             stacklevel=3,
         )
 
@@ -265,7 +266,10 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
                 if source.filename:  # user config
                     self._log.warning(message)
                 else:  # 3rd-party plugin config
-                    warnings.warn(message, DeprecationWarning, stacklevel=0)
+                    deprecate_for_maintainers(
+                        "'source_weight' configuration option",
+                        "'data_source_mismatch_penalty'",
+                    )
 
     def commands(self) -> Sequence[Subcommand]:
         """Should return a list of beets.ui.Subcommand objects for
