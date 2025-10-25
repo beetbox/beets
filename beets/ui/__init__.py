@@ -1682,7 +1682,7 @@ def _raw_main(args: list[str], lib=None) -> None:
         and subargs[0] == "config"
         and ("-e" in subargs or "--edit" in subargs)
     ):
-        from beets.ui.commands import config_edit
+        from beets.ui.commands.config import config_edit
 
         return config_edit()
 
