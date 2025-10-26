@@ -76,7 +76,7 @@ requests = { version = "*", optional = true }
 resampy = { version = ">=0.4.3", optional = true }
 requests-oauthlib = { version = ">=0.6.1", optional = true }
 soco = { version = "*", optional = true }
-titlecase = { version = "^2.4.1", optional = true }
+
 docutils = { version = ">=0.20.1", optional = true }
 pydata-sphinx-theme = { version = "*", optional = true }
 sphinx = { version = "*", optional = true }
@@ -162,7 +162,6 @@ replaygain = [
 scrub = ["mutagen"]
 sonosupdate = ["soco"]
 thumbnails = ["Pillow", "pyxdg"]
-titlecase = ["titlecase"]
 web = ["flask", "flask-cors"]
 
 [tool.poetry.scripts]
