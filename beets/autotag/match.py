@@ -69,7 +69,7 @@ class Proposal(NamedTuple):
 def assign_items(
     items: Sequence[Item],
     tracks: Sequence[TrackInfo],
-) -> tuple[dict[Item, TrackInfo], list[Item], list[TrackInfo]]:
+) -> tuple[list[tuple[Item, TrackInfo]], list[Item], list[TrackInfo]]:
     """Given a list of Items and a list of TrackInfo objects, find the
     best mapping between them. Returns a mapping from Items to TrackInfo
     objects, a set of extra Items, and a set of extra TrackInfo
@@ -86,16 +86,17 @@ def assign_items(
     # Each item in `assigned_item_idxs` list corresponds to a track in the
     # `tracks` list. Each value is either an index into the assigned item in
     # `items` list, or -1 if that track has no match.
-    mapping = {
-        items[iidx]: t
+    item_info_pairs = [
+        (items[iidx], t)
         for iidx, t in zip(assigned_item_idxs, tracks)
         if iidx != -1
-    }
-    extra_items = list(set(items) - mapping.keys())
+    ]
+    item_info_pairs.sort(key=lambda it: (it[0].disc, it[0].track, it[0].title))
+    extra_items = list(set(items) - {i for i, _ in item_info_pairs})
     extra_items.sort(key=lambda i: (i.disc, i.track, i.title))
-    extra_tracks = list(set(tracks) - set(mapping.values()))
+    extra_tracks = list(set(tracks) - {t for _, t in item_info_pairs})
     extra_tracks.sort(key=lambda t: (t.index, t.title))
-    return mapping, extra_items, extra_tracks
+    return item_info_pairs, extra_items, extra_tracks
 
 
 def match_by_id(items: Iterable[Item]) -> AlbumInfo | None:
@@ -217,10 +218,12 @@ def _add_candidate(
             return
 
     # Find mapping between the items and the track info.
-    mapping, extra_items, extra_tracks = assign_items(items, info.tracks)
+    item_info_pairs, extra_items, extra_tracks = assign_items(
+        items, info.tracks
+    )
 
     # Get the change distance.
-    dist = distance(items, info, mapping)
+    dist = distance(items, info, item_info_pairs)
 
     # Skip matches with ignored penalties.
     penalties = [key for key, _ in dist]
@@ -232,7 +235,7 @@ def _add_candidate(
 
     log.debug("Success. Distance: {}", dist)
     results[info.album_id] = hooks.AlbumMatch(
-        dist, info, mapping, extra_items, extra_tracks
+        dist, info, dict(item_info_pairs), extra_items, extra_tracks
     )
 
 

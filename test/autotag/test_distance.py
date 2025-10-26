@@ -182,7 +182,7 @@ class TestAlbumDistance:
     @pytest.fixture
     def get_dist(self, items):
         def inner(info: AlbumInfo):
-            return distance(items, info, dict(zip(items, info.tracks)))
+            return distance(items, info, list(zip(items, info.tracks)))
 
         return inner
 
