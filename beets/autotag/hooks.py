@@ -18,9 +18,12 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import dataclass
+from functools import cached_property
 from typing import TYPE_CHECKING, Any, TypeVar
 
 from typing_extensions import Self
+
+from beets.util import cached_classproperty
 
 if TYPE_CHECKING:
     from beets.library import Item
@@ -54,6 +57,10 @@ class AttrDict(dict[str, V]):
 
 class Info(AttrDict[Any]):
     """Container for metadata about a musical entity."""
+
+    @cached_property
+    def name(self) -> str:
+        raise NotImplementedError
 
     def __init__(
         self,
@@ -95,6 +102,10 @@ class AlbumInfo(Info):
     provider. Used during matching to evaluate similarity against a group of
     user items, and later to drive tagging decisions once selected.
     """
+
+    @cached_property
+    def name(self) -> str:
+        return self.album or ""
 
     def __init__(
         self,
@@ -168,6 +179,10 @@ class TrackInfo(Info):
     stand alone for singleton matching.
     """
 
+    @cached_property
+    def name(self) -> str:
+        return self.title or ""
+
     def __init__(
         self,
         *,
@@ -219,6 +234,10 @@ class TrackInfo(Info):
 class Match:
     distance: Distance
     info: Info
+
+    @cached_classproperty
+    def type(cls) -> str:
+        return cls.__name__.removesuffix("Match")  # type: ignore[attr-defined]
 
 
 @dataclass
