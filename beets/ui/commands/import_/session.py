@@ -1,9 +1,15 @@
+from __future__ import annotations
+
 from collections import Counter
 from itertools import chain
-from typing import Any, NamedTuple
+from typing import TYPE_CHECKING, NamedTuple, overload
 
-from beets import autotag, config, importer, logging, plugins, ui
-from beets.autotag import Recommendation
+from typing_extensions import override
+
+from beets import autotag, config, importer, logging, plugins
+from beets.autotag import Recommendation, TrackMatch
+from beets.ui.colors import colorize
+from beets.ui.core import input_, input_options, input_yn, print_
 from beets.util import displayable_path
 from beets.util.units import human_bytes, human_seconds_short
 
@@ -15,33 +21,45 @@ from .display import (
     show_item_change,
 )
 
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
+    from typing import Any, Literal
+
+    from typing_extensions import Never
+
+    from beets.autotag import AlbumMatch, Proposal
+    from beets.library import Album, Item
+
 # Global logger.
-log = logging.getLogger("beets")
+log: logging.BeetsLogger = logging.getLogger("beets")
 
 
 class TerminalImportSession(importer.ImportSession):
     """An import session that runs in a terminal."""
 
-    def choose_match(self, task):
+    @override
+    def choose_match(
+        self, task: importer.ImportTask
+    ) -> AlbumMatch | Literal[importer.Action.ASIS, importer.Action.SKIP]:
         """Given an initial autotagging of items, go through an interactive
         dance with the user to ask for a choice of metadata. Returns an
         AlbumMatch object, ASIS, or SKIP.
         """
         # Show what we're tagging.
-        ui.print_()
+        print_()
 
-        path_str0 = displayable_path(task.paths, "\n")
-        path_str = ui.colorize("import_path", path_str0)
-        items_str0 = f"({len(task.items)} items)"
-        items_str = ui.colorize("import_path_items", items_str0)
-        ui.print_(" ".join([path_str, items_str]))
+        path_str0: str = displayable_path(task.paths, "\n")
+        path_str: str = colorize("import_path", path_str0)
+        items_str0: str = f"({len(task.items)} items)"
+        items_str: str = colorize("import_path_items", items_str0)
+        print_(" ".join([path_str, items_str]))
 
         # Let plugins display info or prompt the user before we go through the
         # process of selecting candidate.
-        results = plugins.send(
+        results: list[Any] = plugins.send(
             "import_task_before_choice", session=self, task=task
         )
-        actions = [action for action in results if action]
+        actions: list[Any] = [action for action in results if action]
 
         if len(actions) == 1:
             return actions[0]
@@ -52,9 +70,16 @@ class TerminalImportSession(importer.ImportSession):
             )
 
         # Take immediate action if appropriate.
-        action = _summary_judgment(task.rec)
+        action: (
+            Literal[
+                importer.Action.APPLY,
+                importer.Action.ASIS,
+                importer.Action.SKIP,
+            ]
+            | None
+        ) = _summary_judgment(task.rec)
         if action == importer.Action.APPLY:
-            match = task.candidates[0]
+            match: AlbumMatch = task.candidates[0]
             show_change(task.cur_artist, task.cur_album, match)
             return match
         elif action is not None:
@@ -66,8 +91,12 @@ class TerminalImportSession(importer.ImportSession):
             # `choose_candidate` may be an `importer.Action`, an
             # `AlbumMatch` object for a specific selection, or a
             # `PromptChoice`.
-            choices = self._get_choices(task)
-            choice = choose_candidate(
+            choices: list[PromptChoice] = self._get_choices(task)
+            choice: (
+                Literal[importer.Action.ASIS, importer.Action.SKIP]
+                | AlbumMatch
+                | PromptChoice
+            ) = choose_candidate(
                 task.candidates,
                 False,
                 task.rec,
@@ -85,7 +114,11 @@ class TerminalImportSession(importer.ImportSession):
             # Plugin-provided choices. We invoke the associated callback
             # function.
             elif choice in choices:
-                post_choice = choice.callback(self, task)
+                assert choice.callback
+                post_choice: (
+                    Literal[importer.Action.ASIS, importer.Action.SKIP]
+                    | Proposal
+                ) = choice.callback(self, task)
                 if isinstance(post_choice, importer.Action):
                     return post_choice
                 elif isinstance(post_choice, autotag.Proposal):
@@ -100,18 +133,29 @@ class TerminalImportSession(importer.ImportSession):
                 assert isinstance(choice, autotag.AlbumMatch)
                 return choice
 
-    def choose_item(self, task):
+    def choose_item(
+        self, task: importer.SingletonImportTask
+    ) -> Literal[importer.Action.ASIS, importer.Action.SKIP] | TrackMatch:
         """Ask the user for a choice about tagging a single item. Returns
         either an action constant or a TrackMatch object.
         """
-        ui.print_()
-        ui.print_(displayable_path(task.item.path))
+        print_()
+        print_(displayable_path(task.item.path))
+        candidates: Sequence[AlbumMatch | TrackMatch]
+        rec: Recommendation | None
         candidates, rec = task.candidates, task.rec
 
         # Take immediate action if appropriate.
-        action = _summary_judgment(task.rec)
+        action: (
+            Literal[
+                importer.Action.APPLY,
+                importer.Action.ASIS,
+                importer.Action.SKIP,
+            ]
+            | None
+        ) = _summary_judgment(task.rec)
         if action == importer.Action.APPLY:
-            match = candidates[0]
+            match: TrackMatch = candidates[0]
             show_item_change(task.item, match)
             return match
         elif action is not None:
@@ -119,8 +163,12 @@ class TerminalImportSession(importer.ImportSession):
 
         while True:
             # Ask for a choice.
-            choices = self._get_choices(task)
-            choice = choose_candidate(
+            choices: list[PromptChoice] = self._get_choices(task)
+            choice: (
+                Literal[importer.Action.ASIS, importer.Action.SKIP]
+                | TrackMatch
+                | PromptChoice
+            ) = choose_candidate(
                 candidates, True, rec, item=task.item, choices=choices
             )
 
@@ -128,7 +176,11 @@ class TerminalImportSession(importer.ImportSession):
                 return choice
 
             elif choice in choices:
-                post_choice = choice.callback(self, task)
+                assert choice.callback
+                post_choice: (
+                    Proposal
+                    | Literal[importer.Action.ASIS, importer.Action.SKIP]
+                ) = choice.callback(self, task)
                 if isinstance(post_choice, importer.Action):
                     return post_choice
                 elif isinstance(post_choice, autotag.Proposal):
@@ -140,7 +192,9 @@ class TerminalImportSession(importer.ImportSession):
                 assert isinstance(choice, autotag.TrackMatch)
                 return choice
 
-    def resolve_duplicate(self, task, found_duplicates):
+    def resolve_duplicate(
+        self, task: importer.ImportTask, found_duplicates: list[Album]
+    ) -> None:
         """Decide what to do when a new album or item seems similar to one
         that's already in the library.
         """
@@ -149,6 +203,7 @@ class TerminalImportSession(importer.ImportSession):
             ("album" if task.is_album else "item"),
         )
 
+        sel: int | str
         if config["import"]["quiet"]:
             # In quiet mode, don't prompt -- just skip.
             log.info("Skipping.")
@@ -156,8 +211,9 @@ class TerminalImportSession(importer.ImportSession):
         else:
             # Print some detail about the existing and new items so the
             # user can make an informed decision.
+            duplicate: Album
             for duplicate in found_duplicates:
-                ui.print_(
+                print_(
                     "Old: "
                     + summarize_items(
                         (
@@ -170,12 +226,13 @@ class TerminalImportSession(importer.ImportSession):
                 )
                 if config["import"]["duplicate_verbose_prompt"]:
                     if task.is_album:
+                        dup: Item
                         for dup in duplicate.items():
                             print(f"  {dup}")
                     else:
                         print(f"  {duplicate}")
 
-            ui.print_(
+            print_(
                 "New: "
                 + summarize_items(
                     task.imported_items(),
@@ -183,13 +240,15 @@ class TerminalImportSession(importer.ImportSession):
                 )
             )
             if config["import"]["duplicate_verbose_prompt"]:
+                item: Item
                 for item in task.imported_items():
                     print(f"  {item}")
 
-            sel = ui.input_options(
+            sel = input_options(
                 ("Skip new", "Keep all", "Remove old", "Merge all")
             )
 
+        assert isinstance(sel, str)
         if sel == "s":
             # Skip new.
             task.set_choice(importer.Action.SKIP)
@@ -204,13 +263,13 @@ class TerminalImportSession(importer.ImportSession):
         else:
             assert False
 
-    def should_resume(self, path):
-        return ui.input_yn(
+    def should_resume(self, path) -> bool:
+        return input_yn(
             f"Import of the directory:\n{displayable_path(path)}\n"
             "was interrupted. Resume (Y/n)?"
         )
 
-    def _get_choices(self, task):
+    def _get_choices(self, task) -> list[PromptChoice]:
         """Get the list of prompt choices that should be presented to the
         user. This consists of both built-in choices and ones provided by
         plugins.
@@ -227,7 +286,7 @@ class TerminalImportSession(importer.ImportSession):
         Returns a list of `PromptChoice`s.
         """
         # Standard, built-in choices.
-        choices = [
+        choices: list[PromptChoice] = [
             PromptChoice("s", "Skip", lambda s, t: importer.Action.SKIP),
             PromptChoice("u", "Use as-is", lambda s, t: importer.Action.ASIS),
         ]
@@ -247,7 +306,7 @@ class TerminalImportSession(importer.ImportSession):
         ]
 
         # Send the before_choose_candidate event and flatten list.
-        extra_choices = list(
+        extra_choices: list[PromptChoice] = list(
             chain(
                 *plugins.send(
                     "before_choose_candidate", session=self, task=task
@@ -257,7 +316,7 @@ class TerminalImportSession(importer.ImportSession):
 
         # Add a "dummy" choice for the other baked-in option, for
         # duplicate checking.
-        all_choices = (
+        all_choices: list[PromptChoice] = (
             [
                 PromptChoice("a", "Apply", None),
             ]
@@ -266,15 +325,19 @@ class TerminalImportSession(importer.ImportSession):
         )
 
         # Check for conflicts.
-        short_letters = [c.short for c in all_choices]
+        short_letters: list[str] = [c.short for c in all_choices]
         if len(short_letters) != len(set(short_letters)):
             # Duplicate short letter has been found.
-            duplicates = [
+            duplicates: list[str] = [
                 i for i, count in Counter(short_letters).items() if count > 1
             ]
+            short: str
             for short in duplicates:
                 # Keep the first of the choices, removing the rest.
-                dup_choices = [c for c in all_choices if c.short == short]
+                dup_choices: list[PromptChoice] = [
+                    c for c in all_choices if c.short == short
+                ]
+                c: PromptChoice
                 for c in dup_choices[1:]:
                     log.warning(
                         "Prompt choice '{0.long}' removed due to conflict "
@@ -287,7 +350,7 @@ class TerminalImportSession(importer.ImportSession):
         return choices + extra_choices
 
 
-def summarize_items(items, singleton):
+def summarize_items(items: Sequence[Item], singleton):
     """Produces a brief summary line describing a set of items. Used for
     manually resolving duplicates during import.
 
@@ -295,11 +358,12 @@ def summarize_items(items, singleton):
     this is an album or single-item import (if the latter, them `items`
     should only have one element).
     """
-    summary_parts = []
+    summary_parts: list[str] = []
     if not singleton:
         summary_parts.append(f"{len(items)} items")
 
-    format_counts = {}
+    format_counts: dict[str, int] = {}
+    item: Item
     for item in items:
         format_counts[item.format] = format_counts.get(item.format, 0) + 1
     if len(format_counts) == 1:
@@ -307,6 +371,8 @@ def summarize_items(items, singleton):
         summary_parts.append(items[0].format)
     else:
         # Enumerate all the formats by decreasing frequencies:
+        fmt: str
+        count: int
         for fmt, count in sorted(
             format_counts.items(),
             key=lambda fmt_and_count: (-fmt_and_count[1], fmt_and_count[0]),
@@ -314,12 +380,14 @@ def summarize_items(items, singleton):
             summary_parts.append(f"{fmt} {count}")
 
     if items:
-        average_bitrate = sum([item.bitrate for item in items]) / len(items)
-        total_duration = sum([item.length for item in items])
-        total_filesize = sum([item.filesize for item in items])
+        average_bitrate: float = sum([item.bitrate for item in items]) / len(
+            items
+        )
+        total_duration: int = sum([item.length for item in items])
+        total_filesize: int = sum([item.filesize for item in items])
         summary_parts.append(f"{int(average_bitrate / 1000)}kbps")
         if items[0].format == "FLAC":
-            sample_bits = (
+            sample_bits: str = (
                 f"{round(int(items[0].samplerate) / 1000, 1)}kHz"
                 f"/{items[0].bitdepth} bit"
             )
@@ -330,7 +398,12 @@ def summarize_items(items, singleton):
     return ", ".join(summary_parts)
 
 
-def _summary_judgment(rec):
+def _summary_judgment(
+    rec,
+) -> (
+    Literal[importer.Action.APPLY, importer.Action.ASIS, importer.Action.SKIP]
+    | None
+):
     """Determines whether a decision should be made without even asking
     the user. This occurs in quiet mode and when an action is chosen for
     NONE recommendations. Return None if the user should be queried.
@@ -338,6 +411,14 @@ def _summary_judgment(rec):
     summary judgment is made.
     """
 
+    action: (
+        Literal[
+            importer.Action.APPLY,
+            importer.Action.ASIS,
+            importer.Action.SKIP,
+        ]
+        | None
+    )
     if config["import"]["quiet"]:
         if rec == Recommendation.strong:
             return importer.Action.APPLY
@@ -362,27 +443,72 @@ def _summary_judgment(rec):
         return None
 
     if action == importer.Action.SKIP:
-        ui.print_("Skipping.")
+        print_("Skipping.")
     elif action == importer.Action.ASIS:
-        ui.print_("Importing as-is.")
+        print_("Importing as-is.")
     return action
 
 
 class PromptChoice(NamedTuple):
     short: str
     long: str
-    callback: Any
+    callback: (
+        Callable[
+            [TerminalImportSession, importer.ImportTask],
+            importer.Action | Proposal,
+        ]
+        | None
+    )
+
+
+@overload
+def choose_candidate(
+    candidates: Sequence[TrackMatch],
+    singleton: Literal[True],
+    rec: Recommendation | None,
+    cur_artist: str | None = None,
+    cur_album: str | None = None,
+    item: Item | None = None,
+    itemcount: int | None = None,
+    choices: list[PromptChoice] = [],
+) -> (
+    Literal[importer.Action.SKIP, importer.Action.ASIS]
+    | TrackMatch
+    | PromptChoice
+): ...
+
+
+@overload
+def choose_candidate(
+    candidates: Sequence[AlbumMatch],
+    singleton: Literal[False],
+    rec: Recommendation | None,
+    cur_artist: str | None = None,
+    cur_album: str | None = None,
+    item: Item | None = None,
+    itemcount: int | None = None,
+    choices: list[PromptChoice] = [],
+) -> (
+    Literal[importer.Action.SKIP, importer.Action.ASIS]
+    | AlbumMatch
+    | PromptChoice
+): ...
 
 
 def choose_candidate(
-    candidates,
-    singleton,
-    rec,
-    cur_artist=None,
-    cur_album=None,
-    item=None,
-    itemcount=None,
-    choices=[],
+    candidates: Sequence[AlbumMatch | TrackMatch],
+    singleton: bool,
+    rec: Recommendation | None,
+    cur_artist: str | None = None,
+    cur_album: str | None = None,
+    item: Item | None = None,
+    itemcount: int | None = None,
+    choices: list[PromptChoice] = [],
+) -> (
+    Literal[importer.Action.SKIP, importer.Action.ASIS]
+    | AlbumMatch
+    | TrackMatch
+    | PromptChoice
 ):
     """Given a sorted list of candidates, ask the user for a selection
     of which candidate to use. Applies to both full albums and
@@ -406,88 +532,101 @@ def choose_candidate(
         assert cur_album is not None
 
     # Build helper variables for the prompt choices.
-    choice_opts = tuple(c.long for c in choices)
-    choice_actions = {c.short: c for c in choices}
+    choice_opts: tuple[str, ...] = tuple(c.long for c in choices)
+    choice_actions: dict[str, PromptChoice] = {c.short: c for c in choices}
 
     # Zero candidates.
+    sel: int | str
     if not candidates:
         if singleton:
-            ui.print_("No matching recordings found.")
+            print_("No matching recordings found.")
         else:
-            ui.print_(f"No matching release found for {itemcount} tracks.")
-            ui.print_(
+            print_(f"No matching release found for {itemcount} tracks.")
+            print_(
                 "For help, see: "
                 "https://beets.readthedocs.org/en/latest/faq.html#nomatch"
             )
-        sel = ui.input_options(choice_opts)
-        if sel in choice_actions:
+        sel = input_options(choice_opts)
+        if isinstance(sel, str) and sel in choice_actions:
             return choice_actions[sel]
         else:
             assert False
 
     # Is the change good enough?
-    bypass_candidates = False
-    if rec != Recommendation.none:
-        match = candidates[0]
-        bypass_candidates = True
+    bypass_candidates: bool = rec != Recommendation.none
+    match: AlbumMatch | TrackMatch = candidates[0]
 
     while True:
         # Display and choose from candidates.
-        require = rec <= Recommendation.low
+        require: bool = not rec or (rec <= Recommendation.low)
 
         if not bypass_candidates:
             # Display list of candidates.
-            ui.print_("")
-            ui.print_(
-                f"Finding tags for {'track' if singleton else 'album'} "
-                f'"{item.artist if singleton else cur_artist} -'
-                f' {item.title if singleton else cur_album}".'
+            print_("")
+            artist: str | None
+            title: str | None
+            print_(
+                f'Finding tags for {"track" if singleton else "album"} "'
+                + str(
+                    artist
+                    if singleton and item and (artist := item.artist)
+                    else cur_artist
+                )
+                + " - "
+                + str(
+                    title
+                    if singleton and item and (title := item.title)
+                    else cur_album
+                )
+                + '".'
             )
 
-            ui.print_("  Candidates:")
+            print_("  Candidates:")
+            i: int
             for i, match in enumerate(candidates):
                 # Index, metadata, and distance.
-                index0 = f"{i + 1}."
-                index = dist_colorize(index0, match.distance)
-                dist = f"({(1 - match.distance) * 100:.1f}%)"
-                distance = dist_colorize(dist, match.distance)
-                metadata = (
+                index0: str = f"{i + 1}."
+                index: str = dist_colorize(index0, match.distance)
+                dist: str = f"({(1 - match.distance) * 100:.1f}%)"
+                distance: str = dist_colorize(dist, match.distance)
+                metadata: str = (
                     f"{match.info.artist} -"
                     f" {match.info.title if singleton else match.info.album}"
                 )
                 if i == 0:
                     metadata = dist_colorize(metadata, match.distance)
                 else:
-                    metadata = ui.colorize("text_highlight_minor", metadata)
-                line1 = [index, distance, metadata]
-                ui.print_(f"  {' '.join(line1)}")
+                    metadata = colorize("text_highlight_minor", metadata)
+                line1: list[str] = [index, distance, metadata]
+                print_(f"  {' '.join(line1)}")
 
                 # Penalties.
-                penalties = penalty_string(match.distance, 3)
+                penalties: str | None = penalty_string(match.distance, 3)
                 if penalties:
-                    ui.print_(f"{' ' * 13}{penalties}")
+                    print_(f"{' ' * 13}{penalties}")
 
                 # Disambiguation
-                disambig = disambig_string(match.info)
+                disambig: str | None = disambig_string(match.info)
                 if disambig:
-                    ui.print_(f"{' ' * 13}{disambig}")
+                    print_(f"{' ' * 13}{disambig}")
 
             # Ask the user for a choice.
-            sel = ui.input_options(choice_opts, numrange=(1, len(candidates)))
-            if sel == "m":
-                pass
-            elif sel in choice_actions:
-                return choice_actions[sel]
-            else:  # Numerical selection.
+            sel = input_options(choice_opts, numrange=(1, len(candidates)))
+            if isinstance(sel, int):  # Numerical selection.
                 match = candidates[sel - 1]
                 if sel != 1:
                     # When choosing anything but the first match,
                     # disable the default action.
                     require = True
+            elif sel == "m":
+                pass
+            elif sel in choice_actions:
+                return choice_actions[sel]
+
         bypass_candidates = False
 
         # Show what we're about to do.
-        if singleton:
+        if singleton and isinstance(match, TrackMatch):
             show_item_change(item, match)
         else:
             show_change(cur_artist, cur_album, match)
@@ -497,7 +636,7 @@ def choose_candidate(
             return match
 
         # Ask for confirmation.
-        default = config["import"]["default_action"].as_choice(
+        default: str | None = config["import"]["default_action"].as_choice(
             {
                 "apply": "a",
                 "skip": "s",
@@ -509,49 +648,59 @@ def choose_candidate(
             require = True
         # Bell ring when user interaction is needed.
         if config["import"]["bell"]:
-            ui.print_("\a", end="")
-        sel = ui.input_options(
+            print_("\a", end="")
+        sel = input_options(
             ("Apply", "More candidates") + choice_opts,
             require=require,
             default=default,
         )
+        if not isinstance(sel, str):
+            continue
         if sel == "a":
             return match
         elif sel in choice_actions:
             return choice_actions[sel]
 
 
-def manual_search(session, task):
+def manual_search(
+    session: TerminalImportSession, task: importer.ImportTask
+) -> Proposal:
     """Get a new `Proposal` using manual search criteria.
 
     Input either an artist and album (for full albums) or artist and
     track name (for singletons) for manual search.
     """
-    artist = ui.input_("Artist:").strip()
-    name = ui.input_("Album:" if task.is_album else "Track:").strip()
+    artist: str = input_("Artist:").strip()
+    name: str = input_("Album:" if task.is_album else "Track:").strip()
 
-    if task.is_album:
+    if not task.is_album and isinstance(task, importer.SingletonImportTask):
+        return autotag.tag_item(task.item, artist, name)
+    else:
+        prop: Proposal
         _, _, prop = autotag.tag_album(task.items, artist, name)
         return prop
-    else:
-        return autotag.tag_item(task.item, artist, name)
 
 
-def manual_id(session, task):
+def manual_id(
+    session: TerminalImportSession, task: importer.ImportTask
+) -> Proposal:
     """Get a new `Proposal` using a manually-entered ID.
 
     Input an ID, either for an album ("release") or a track ("recording").
     """
-    prompt = f"Enter {'release' if task.is_album else 'recording'} ID:"
-    search_id = ui.input_(prompt).strip()
+    prompt: str = f"Enter {'release' if task.is_album else 'recording'} ID:"
+    search_id: str = input_(prompt).strip()
 
-    if task.is_album:
+    if not task.is_album and isinstance(task, importer.SingletonImportTask):
+        return autotag.tag_item(task.item, search_ids=search_id.split())
+    else:
+        prop: Proposal
         _, _, prop = autotag.tag_album(task.items, search_ids=search_id.split())
         return prop
-    else:
-        return autotag.tag_item(task.item, search_ids=search_id.split())
 
 
-def abort_action(session, task):
+def abort_action(
+    session: TerminalImportSession, task: importer.ImportTask
+) -> Never:
     """A prompt choice callback that aborts the importer."""
     raise importer.ImportAbortError()

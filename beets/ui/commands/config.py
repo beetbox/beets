@@ -2,7 +2,9 @@
 
 import os
 
-from beets import config, ui, util
+from beets import config, util
+from beets.ui._common import UserError
+from beets.ui.core import Subcommand, print_
 
 
 def config_func(lib, opts, args):
@@ -25,7 +27,7 @@ def config_func(lib, opts, args):
             filenames.insert(0, user_path)
 
         for filename in filenames:
-            ui.print_(util.displayable_path(filename))
+            print_(util.displayable_path(filename))
 
     # Open in editor.
     elif opts.edit:
@@ -35,7 +37,7 @@ def config_func(lib, opts, args):
     else:
         config_out = config.dump(full=opts.defaults, redact=opts.redact)
         if config_out.strip() != "{}":
-            ui.print_(config_out)
+            print_(config_out)
         else:
             print("Empty configuration")
 
@@ -56,10 +58,10 @@ def config_edit():
             message += (
                 ". Please set the VISUAL (or EDITOR) environment variable"
             )
-        raise ui.UserError(message)
+        raise UserError(message)
 
 
-config_cmd = ui.Subcommand("config", help="show or edit the user configuration")
+config_cmd = Subcommand("config", help="show or edit the user configuration")
 config_cmd.parser.add_option(
     "-p",
     "--paths",

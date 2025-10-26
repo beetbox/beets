@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import os
 import time
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING
 
 from beets import config, dbcore, library, logging, plugins, util
 from beets.importer.tasks import Action
@@ -25,6 +25,10 @@ from . import stages as stagefuncs
 from .state import ImportState
 
 if TYPE_CHECKING:
+    from typing import Literal, Sequence
+
+    from beets.autotag import AlbumMatch, TrackMatch
+    from beets.importer.tasks import SingletonImportTask
     from beets.util import PathBytes
 
     from .tasks import ImportTask
@@ -60,7 +64,7 @@ class ImportSession:
         lib: library.Library,
         loghandler: logging.Handler | None,
         paths: Sequence[PathBytes] | None,
-        query: dbcore.Query | None,
+        query: dbcore.Query | str | list[str] | tuple[str] | None,
     ):
         """Create a session.
 
@@ -173,16 +177,20 @@ class ImportSession:
             elif task.choice_flag is Action.SKIP:
                 self.tag_log("skip", paths)
 
-    def should_resume(self, path: PathBytes):
+    def should_resume(self, path: PathBytes) -> bool:
         raise NotImplementedError
 
-    def choose_match(self, task: ImportTask):
+    def choose_match(
+        self, task: ImportTask
+    ) -> Literal[Action.ASIS, Action.SKIP] | AlbumMatch | TrackMatch:
         raise NotImplementedError
 
-    def resolve_duplicate(self, task: ImportTask, found_duplicates):
+    def resolve_duplicate(self, task: ImportTask, found_duplicates) -> None:
         raise NotImplementedError
 
-    def choose_item(self, task: ImportTask):
+    def choose_item(
+        self, task: SingletonImportTask
+    ) -> Literal[Action.ASIS, Action.SKIP] | AlbumMatch | TrackMatch:
         raise NotImplementedError
 
     def run(self):
