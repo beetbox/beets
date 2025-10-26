@@ -373,8 +373,9 @@ class AlbumChange(ChangeRepresentation):
         # Tracks.
         # match is an AlbumMatch NamedTuple, mapping is a dict
         # Sort the pairs by the track_info index (at index 1 of the NamedTuple)
-        pairs = list(self.match.mapping.items())
-        pairs.sort(key=lambda item_and_track_info: item_and_track_info[1].index)
+        pairs = sorted(
+            self.match.item_info_pairs, key=lambda pair: pair[1].index
+        )
         # Build up LHS and RHS for track difference display. The `lines` list
         # contains `(left, right)` tuples.
         lines = []
