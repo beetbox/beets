@@ -82,6 +82,7 @@ pydata-sphinx-theme = { version = "*", optional = true }
 sphinx = { version = "*", optional = true }
 sphinx-design = { version = ">=0.6.1", optional = true }
 sphinx-copybutton = { version = ">=0.5.2", optional = true }
+titlecase = {version = "^2.4.1", optional = true}
 
 [tool.poetry.group.test.dependencies]
 beautifulsoup4 = "*"
@@ -161,6 +162,7 @@ replaygain = [
 ] # python-gi and GStreamer 1.0+ or mp3gain/aacgain or Python Audio Tools or ffmpeg
 scrub = ["mutagen"]
 sonosupdate = ["soco"]
+titlecase = ["titlecase"]
 thumbnails = ["Pillow", "pyxdg"]
 web = ["flask", "flask-cors"]
 

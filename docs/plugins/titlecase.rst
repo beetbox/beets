@@ -31,6 +31,14 @@ To use the ``titlecase`` plugin, first enable it in your configuration (see
 
     pip install "beets[titlecase]"
 
+If you'd like to just use the path format expression, call ``%titlecase`` in
+your path formatter, and set ``auto`` to ``no`` in the configuration.
+
+::
+
+    paths:
+      default: %titlecase($albumartist)/$titlecase($albumtitle)/$track $title
+
 You can now configure ``titlecase`` to your preference.
 
 Configuration
@@ -46,53 +54,66 @@ Default
 
     titlecase:
         auto: yes
-        preserve: None
-        include: ALL
-        exclude:
-        force_lowercase: yes
+        fields:
+        preserve:
+        force_lowercase: no
         small_first_last: yes
 
-- **auto**: Whether to automatically apply titlecase to new imports. Default:
-  ``yes``
-- **preserve**: Space seperated list of words and acronyms to preserve the case
-  of. For example, without specifying ``DJ`` on the list, titlecase will format
-  it as ``Dj``.
-- **include**: Space seperated list of fields to titlecase. When filled out,
-  only the fields specified will be touched by the plugin. Default: ``ALL``
-- **exclude**: Space seperated list of fields to exclude from processing. If a
-  field is listed in include, and is listed in exclude, exclude takes
-  precedence.
-- **force_lowercase**: Force all strings to lowercase before applying titlecase.
-  This helps fix ``uNuSuAl CaPiTaLiZaTiOn PaTtErNs``. Default: ``yes``
-- **small_first_last**: An option from the base titlecase library. Controls if
-  capitalize small words at the start of a sentence. With this turned off ``a``
-  and similar words will not be capitalized under any circumstance. Default:
-  ``yes``
+.. conf:: auto
+    :default: yes
+
+    Whether to automatically apply titlecase to new imports.
+
+.. conf:: fields
+
+    A list of fields to apply the titlecase logic to. You must specify the fields
+    you want to have modified in order for titlecase to apply changes to metadata.
+
+.. conf:: preserve
+
+    List of words and phrases to preserve the case of. Without specifying ``DJ`` on
+    the list, titlecase will format it as ``Dj``, or specify ``The Beatles`` to make sure
+    ``With The Beatles`` is not capitalized as ``With the Beatles``
+
+.. conf:: force_lowercase
+    :default: no
+
+    Force all strings to lowercase before applying titlecase, but can cause
+    problems with all caps acronyms titlecase would otherwise recognize.
+
+.. conf:: small_first_last
+
+    An option from the base titlecase library. Controls capitalizing small words at the start
+    of a sentence. With this turned off ``a`` and similar words will not be capitalized
+    under any circumstance.
 
 Excluded Fields
 ~~~~~~~~~~~~~~~
 
 ``titlecase`` only ever modifies string fields, and will never interact with
-fields that are considered to be case sensitive.
+fields that it considers to be case sensitive.
 
 For reference, the string fields ``titlecase`` ignores:
 
 .. code-block:: bash
 
+    acoustid_fingerprint
+    acoustid_id
+    artists_ids
+    asin
+    deezer_track_id
+    format
     id
+    isrc
     mb_workid
     mb_trackid
     mb_albumid
     mb_artistid
+    mb_artistids
     mb_albumartistid
     mb_albumartistids
     mb_releasetrackid
-    acoustid_fingerprint
-    acoustid_id
     mb_releasegroupid
-    asin
-    isrc
-    format
     bitrate_mode
     encoder_info
     encoder_settings
@@ -106,4 +127,5 @@ From the command line, type:
 
     $ beet titlecase [QUERY]
 
-You can specify additional configuration options with the following flags:
+Configuration is drawn from the config file. Without a query the operation will
+be applied to the entire collection.

@@ -2182,6 +2182,8 @@ files = [
     {file = "pycairo-1.28.0-cp313-cp313-win32.whl", hash = "sha256:d13352429d8a08a1cb3607767d23d2fb32e4c4f9faa642155383980ec1478c24"},
     {file = "pycairo-1.28.0-cp313-cp313-win_amd64.whl", hash = "sha256:082aef6b3a9dcc328fa648d38ed6b0a31c863e903ead57dd184b2e5f86790140"},
     {file = "pycairo-1.28.0-cp313-cp313-win_arm64.whl", hash = "sha256:026afd53b75291917a7412d9fe46dcfbaa0c028febd46ff1132d44a53ac2c8b6"},
+    {file = "pycairo-1.28.0-cp314-cp314-win32.whl", hash = "sha256:d0ab30585f536101ad6f09052fc3895e2a437ba57531ea07223d0e076248025d"},
+    {file = "pycairo-1.28.0-cp314-cp314-win_amd64.whl", hash = "sha256:94f2ed204999ab95a0671a0fa948ffbb9f3d6fb8731fe787917f6d022d9c1c0f"},
     {file = "pycairo-1.28.0-cp39-cp39-win32.whl", hash = "sha256:3ed16d48b8a79cc584cb1cb0ad62dfb265f2dda6d6a19ef5aab181693e19c83c"},
     {file = "pycairo-1.28.0-cp39-cp39-win_amd64.whl", hash = "sha256:da0d1e6d4842eed4d52779222c6e43d254244a486ca9fdab14e30042fd5bdf28"},
     {file = "pycairo-1.28.0-cp39-cp39-win_arm64.whl", hash = "sha256:458877513eb2125513122e8aa9c938630e94bb0574f94f4fb5ab55eb23d6e9ac"},
@@ -3408,6 +3410,19 @@ files = [
 ]
 
 [[package]]
+name = "titlecase"
+version = "2.4.1"
+description = "Python Port of John Gruber's titlecase.pl"
+optional = true
+python-versions = ">=3.7"
+files = [
+    {file = "titlecase-2.4.1.tar.gz", hash = "sha256:7d83a277ccbbda11a2944e78a63e5ccaf3d32f828c594312e4862f9a07f635f5"},
+]
+
+[package.extras]
+regex = ["regex (>=2020.4.4)"]
+
+[[package]]
 name = "toml"
 version = "0.10.2"
 description = "Python Library for Tom's Obvious, Minimal Language"
@@ -3678,9 +3693,10 @@ replaygain = ["PyGObject"]
 scrub = ["mutagen"]
 sonosupdate = ["soco"]
 thumbnails = ["Pillow", "pyxdg"]
+titlecase = ["titlecase"]
 web = ["flask", "flask-cors"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "aedfeb1ac78ae0120855c6a7d6f35963c63cc50a8750142c95dd07ffd213683f"
+content-hash = "83c439c2612f445d31a5047a5f2c6e1c887770b21c008874aa7ba5ebd3cd40b1"
