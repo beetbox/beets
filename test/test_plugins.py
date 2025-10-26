@@ -543,3 +543,39 @@ class TestDeprecationCopy:
         assert hasattr(LegacyMetadataPlugin, "data_source_mismatch_penalty")
         assert hasattr(LegacyMetadataPlugin, "_extract_id")
         assert hasattr(LegacyMetadataPlugin, "get_artist")
+
+
+class TestMusicBrainzPluginLoading:
+    @pytest.fixture(autouse=True)
+    def config(self):
+        _config = config
+        _config.sources = []
+        _config.read(user=False, defaults=True)
+        return _config
+
+    def test_default(self):
+        assert "musicbrainz" in plugins.get_plugin_names()
+
+    def test_other_plugin_enabled(self, config):
+        config["plugins"] = ["anything"]
+
+        assert "musicbrainz" not in plugins.get_plugin_names()
+
+    def test_deprecated_enabled(self, config, caplog):
+        config["plugins"] = ["anything"]
+        config["musicbrainz"]["enabled"] = True
+
+        assert "musicbrainz" in plugins.get_plugin_names()
+        assert (
+            "musicbrainz.enabled' configuration option is deprecated"
+            in caplog.text
+        )
+
+    def test_deprecated_disabled(self, config, caplog):
+        config["musicbrainz"]["enabled"] = False
+
+        assert "musicbrainz" not in plugins.get_plugin_names()
+        assert (
+            "musicbrainz.enabled' configuration option is deprecated"
+            in caplog.text
+        )
