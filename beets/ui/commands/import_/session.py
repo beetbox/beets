@@ -566,9 +566,19 @@ def choose_candidate(
             artist: str | None
             title: str | None
             print_(
-                f"Finding tags for {'track' if singleton else 'album'} "
-                f'"{artist if singleton and item and (artist := item.artist) else cur_artist} -'
-                f' {title if singleton and item and (title := item.title) else cur_album}".'
+                f'Finding tags for {"track" if singleton else "album"} "'
+                + str(
+                    artist
+                    if singleton and item and (artist := item.artist)
+                    else cur_artist
+                )
+                + " - "
+                + str(
+                    title
+                    if singleton and item and (title := item.title)
+                    else cur_album
+                )
+                + '".'
             )
 
             print_("  Candidates:")
