@@ -17,7 +17,7 @@ Title case logic is derived from the python-titlecase library.
 Provides a template function and a tag modification function."""
 
 import re
-from typing import Pattern
+from typing import Pattern, Optional
 
 from titlecase import titlecase
 
@@ -32,8 +32,7 @@ __version__ = "1.0"
 # These fields are excluded to avoid modifying anything
 # that may be case sensistive, or important to database
 # function
-EXCLUDED_INFO_FIELDS = set(
-    [
+EXCLUDED_INFO_FIELDS: set[str] = {
         "acoustid_fingerprint",
         "acoustid_id",
         "artists_ids",
@@ -54,15 +53,14 @@ EXCLUDED_INFO_FIELDS = set(
         "bitrate_mode",
         "encoder_info",
         "encoder_settings",
-    ]
-)
+        }
 
 
 class TitlecasePlugin(BeetsPlugin):
     preserve: dict[str, str] = {}
     preserve_phrases: dict[str, Pattern[str]] = {}
     force_lowercase: bool = True
-    fields_to_process: set[str] = set([])
+    fields_to_process: set[str] = {}
 
     def __init__(self) -> None:
         super().__init__()
@@ -111,9 +109,10 @@ class TitlecasePlugin(BeetsPlugin):
         Only uses fields included.
         Last, the EXCLUDED_INFO_FIELDS are removed to prevent unitentional modification.
         """
-        initial_field_list = set(fields)
-        initial_field_list -= set(EXCLUDED_INFO_FIELDS)
-        self.fields_to_process = initial_field_list
+        if fields:
+            initial_field_list = set(fields)
+            initial_field_list -= set(EXCLUDED_INFO_FIELDS)
+            self.fields_to_process = initial_field_list
 
     def __preserve_words__(self, preserve: list[str]) -> None:
         for word in preserve:
@@ -124,7 +123,7 @@ class TitlecasePlugin(BeetsPlugin):
             else:
                 self.preserve[word.upper()] = word
 
-    def __preserved__(self, word, **kwargs) -> str | None:
+    def __preserved__(self, word, **kwargs) -> Optional[str]:
         """Callback function for words to preserve case of."""
         if preserved_word := self.preserve.get(word.upper(), ""):
             return preserved_word
@@ -150,20 +149,18 @@ class TitlecasePlugin(BeetsPlugin):
         """
         for field in self.fields_to_process:
             init_field = getattr(item, field, "")
-            if isinstance(init_field, list):
-                cased_list: list[str] = [self.titlecase(i) for i in init_field]
-                self._log.info(
-                    f"""
-                    {field}: {", ".join(init_field)} ->
-                    {", ".join(cased_list)}"""
-                )
-                setattr(item, field, cased_list)
-            elif init_field and isinstance(init_field, str):
-                cased: str = self.titlecase(init_field)
-                self._log.info(f"{field}: {init_field} -> {cased}")
-                setattr(item, field, cased)
-            else:
-                self._log.info(f"{field}: no string present")
+            if init_field:
+                if isinstance(init_field, list) and isinstance(init_field[0], str):
+                    cased_list: list[str] = [self.titlecase(i) for i in init_field]
+                    self._log.info((f"{field}: {', '.join(init_field)} -> " 
+                                    f"{', '.join(cased_list)}"))
+                    setattr(item, field, cased_list)
+                elif isinstance(init_field, str):
+                    cased: str = self.titlecase(init_field)
+                    self._log.info(f"{field}: {init_field} -> {cased}")
+                    setattr(item, field, cased)
+                else:
+                    self._log.info(f"{field}: no string present")
 
     def titlecase(self, text: str) -> str:
         """Titlecase the given text."""
@@ -179,6 +176,9 @@ class TitlecasePlugin(BeetsPlugin):
     def imported(self, session: ImportSession, task: ImportTask) -> None:
         """Import hook for titlecasing on import."""
         for item in task.imported_items():
-            self._log.info(f"titlecasing {item.title}:")
-            self.titlecase_fields(item)
-            item.store()
+            try:
+                self._log.info(f"titlecasing {item.title}:")
+                self.titlecase_fields(item)
+                item.store()
+            except Exception as e:
+                self._log.info(f"titlecasing exception {e}")

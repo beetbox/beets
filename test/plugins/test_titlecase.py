@@ -66,6 +66,55 @@ titlecase_test_cases = [
             album="the black messiah",
             title="Till It's Done (Tutu)",
         ),
+    },
+    {
+        "config": {
+            "preserve": [""],
+            "fields": ["artist", "albumartist",
+                "title",
+                "album",
+                "mb_albumd", "year"],
+            "force_lowercase": True,
+            "small_first_last": True,
+        },
+        "item": Item(
+            artist="OPHIDIAN",
+            albumartist="ophiDIAN",
+            format="CD",
+            year=2003,
+            album="BLACKBOX",
+            title="KhAmElEoN",
+        ),
+        "expected": Item(
+            artist="Ophidian",
+            albumartist="Ophidian",
+            format="CD",
+            year=2003,
+            album="Blackbox",
+            title="Khameleon",
+        ),
+    },
+    {
+        "config": {
+            "preserve": [""],
+            "fields": [
+                "artists",
+                "artists_ids",
+                "discogs_artistid"
+                ],
+            "force_lowercase": False,
+            "small_first_last": True,
+        },
+        "item": Item(
+            artists=["artist_one", "artist_two"],
+            artists_ids=["aBcDeF32", "aBcDeF12"],
+            discogs_artistid=21
+        ),
+        "expected": Item(
+            artists=["Artist_One", "Artist_Two"],
+            artists_ids=["aBcDeF32", "aBcDeF12"],
+            discogs_artistid=21
+        ),
     }
 ]
 
@@ -146,3 +195,4 @@ class TitlecasePluginTest(PluginTestCase):
                     output
                     == f"{expected.artist} - {expected.album} - {expected.title}\n"
                 )
+                self.run_command(f"remove", expected.artist, "-f")

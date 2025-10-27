@@ -5,13 +5,13 @@ The ``titlecase`` plugin lets you format tags and paths in accordance with the
 titlecase guidelines in the `New York Times Manual of Style`_ and uses the
 `python titlecase library`_.
 
-Motiviation for this plugin comes from a desire to resolve differences in style
+Motivation for this plugin comes from a desire to resolve differences in style
 between databases sources. For example, `MusicBrainz style`_ follows standard
 title case rules, except in the case of terms that are deemed generic, like
 "mix" and "remix". On the other hand, `Discogs guidlines`_ recommend
 capitalizing the first letter of each word, even for small words like "of" and
-"a". This plugin aims to achieve a middleground between disparate approaches to
-casing, and bring more consistency to titlecasing in your library.
+"a". This plugin aims to achieve a middle ground between disparate approaches to
+casing, and bring more consistency to titles in your library.
 
 .. _discogs style: https://support.discogs.com/hc/en-us/articles/360005006334-Database-Guidelines-1-General-Rules#Capitalization_And_Grammar
 
