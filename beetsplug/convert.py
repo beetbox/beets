@@ -616,21 +616,28 @@ class ConvertPlugin(BeetsPlugin):
         )
 
         if playlist:
-    # Generate playlist paths from converted item paths (updated in database)
             pl_normpath = util.normpath(playlist)
             pl_dir = os.path.dirname(pl_normpath)
             self._log.info("Creating playlist file {}", pl_normpath)
-            
-            # Refresh item paths to converted ones before generating playlist
-            updated_paths = [
-                os.path.relpath(item.path, pl_dir)
-                for item in items
-            ]
-            
+
+            items_paths = []
+            for item in items:
+                # Use item.path if available and not empty, otherwise fallback to item.destination()
+                path = item.path if item.path else item.destination(basedir=dest, path_formats=path_formats)
+                
+                # Make path relative to playlist folder
+                rel_path = os.path.relpath(path, pl_dir)
+
+                # Ensure string encoding for all playlist entries (unicode or utf-8 bytes)
+                if isinstance(rel_path, bytes):
+                    rel_path = rel_path.decode('utf-8', errors='replace')
+                items_paths.append(rel_path)
+
             if not pretend:
                 m3ufile = M3UFile(playlist)
-                m3ufile.set_contents(updated_paths)
+                m3ufile.set_contents(items_paths)
                 m3ufile.write()
+
 
 
     def convert_on_import(self, lib, item):
