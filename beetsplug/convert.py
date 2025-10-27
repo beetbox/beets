@@ -640,8 +640,6 @@ class ConvertPlugin(BeetsPlugin):
                 m3ufile.set_contents(items_paths)
                 m3ufile.write()  # Assume m3ufile.write expects str lines
 
-
-
     def convert_on_import(self, lib, item):
         """Transcode a file automatically after it is imported into the
         library.
