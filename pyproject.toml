@@ -22,7 +22,6 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: Implementation :: CPython",
 ]
 packages = [
@@ -52,8 +51,8 @@ lap = ">=0.5.12"
 mediafile = ">=0.12.0"
 musicbrainzngs = ">=0.4"
 numpy = [
-    { python = "<3.14", version = ">=2.0.2" },
-    { python = ">=3.14", version = ">=2.3.4" },
+    { python = "<3.13", version = ">=2.0.2" },
+    { python = ">=3.13", version = ">=2.3.4" },
 ]
 platformdirs = ">=3.5.0"
 pyyaml = "*"
@@ -67,12 +66,12 @@ flask-cors = { version = "*", optional = true }
 langdetect = { version = "*", optional = true }
 librosa = { version = ">=0.11", optional = true }
 scipy = [ # for librosa
-    { python = "<3.14", version = ">=1.13.1", optional = true },
-    { python = ">=3.14", version = ">=1.16.1", optional = true },
+    { python = "<3.13", version = ">=1.13.1", optional = true },
+    { python = ">=3.13", version = ">=1.16.1", optional = true },
 ]
 numba = [ # for librosa
-    { python = "<3.14", version = ">=0.60", optional = true },
-    { python = ">=3.14", version = ">=0.62.1", optional = true },
+    { python = "<3.13", version = ">=0.60", optional = true },
+    { python = ">=3.13", version = ">=0.62.1", optional = true },
 ]
 mutagen = { version = ">=1.33", optional = true }
 Pillow = { version = "*", optional = true }

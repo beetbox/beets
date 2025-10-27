@@ -18,7 +18,7 @@ New features:
       to receive extra verbose logging around last.fm results and how they are
       resolved. The ``extended_debug`` config setting and ``--debug`` option
       have been removed.
-- Added support for Python 3.13 and 3.14.
+- Added support for Python 3.13.
 
 Bug fixes:
 
