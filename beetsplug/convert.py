@@ -622,13 +622,18 @@ class ConvertPlugin(BeetsPlugin):
 
             items_paths = []
             for item in items:
-                # Use item.path if available and not empty, otherwise fallback to item.destination()
-                path = item.path if item.path else item.destination(basedir=dest, path_formats=path_formats)
-                
+                # Use item.path if available and not empty, otherwise fallback to item.
+                path = (
+                    item.path
+                    if item.path
+                    else item.destination(basedir=dest, path_formats=path_formats)
+                )
+
+
                 # Make path relative to playlist folder
                 rel_path = os.path.relpath(path, pl_dir)
 
-                # Ensure string encoding for all playlist entries (unicode or utf-8 bytes)
+                # Ensure string encoding for all playlist entries
                 if isinstance(rel_path, bytes):
                     rel_path = rel_path.decode('utf-8', errors='replace')
                 items_paths.append(rel_path)
