@@ -261,10 +261,15 @@ class ConvertCliTest(ConvertTestCase, ConvertCommand):
         assert not (self.convert_dest / "playlist.m3u8").exists()
 
     def test_playlist_generation_with_fallback(self, library, convert_plugin):
-        # Setup items with one having no path, one with Unicode filename
-        item_with_path = library.add_item(path=str(self.tmp_path / "song1.mp3"))
+    # Setup items with one having no path, one with Unicode filename
+        item_with_path = library.add_item(
+            path=str(self.tmp_path / "song1.mp3")
+        )
         item_with_path.path = str(self.tmp_path / "song1.mp3")
-        item_missing_path = library.add_item(path=str(self.tmp_path / "song\u2603.mp3"))
+
+        item_missing_path = library.add_item(
+            path=str(self.tmp_path / "song\u2603.mp3")
+        )
         item_missing_path.path = ""  # empty path to force fallback
 
         # Destination directory
@@ -275,13 +280,15 @@ class ConvertCliTest(ConvertTestCase, ConvertCommand):
 
         # Manually call playlist generation code from convert_func
         items = [item_with_path, item_missing_path]
-        # pl_normpath = str(playlist_path)
         pl_dir = str(playlist_path.parent)
 
         items_paths = []
         for item in items:
-            path = item.path if item.path else item.destination(basedir=str(dest))
+            path = (
+                item.path if item.path else item.destination(basedir=str(dest))
+            )
             rel_path = os.path.relpath(path, pl_dir)
+
             # Ensure UTF-8 string
             if isinstance(rel_path, bytes):
                 rel_path = rel_path.decode("utf-8", errors="replace")
@@ -296,6 +303,7 @@ class ConvertCliTest(ConvertTestCase, ConvertCommand):
         content = playlist_path.read_text(encoding="utf-8")
         assert "song1.mp3" in content
         assert "\u2603" in content  # snowman unicode char
+
 
 
 
