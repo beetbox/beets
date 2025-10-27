@@ -46,14 +46,10 @@ jobs:
             python3-gst-1.0 \
             libcairo2-dev \
             libgirepository-2.0-dev \
+            libopenblas-dev \
+            llvm-20-dev \
             pandoc \
             imagemagick
-
-          if [[ "${{ matrix.python-version }}" == '3.14' ]]; then
-            sudo apt install --yes --no-install-recommends libopenblas-dev llvm-20-dev clang-20
-            sudo update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-20 200
-            sudo update-alternatives --set llvm-config /usr/bin/llvm-config-20
-          fi
 
       - name: Get changed lyrics files
         id: lyrics-update
@@ -71,14 +67,7 @@ jobs:
 
       - if: ${{ env.IS_MAIN_PYTHON != 'true' }}
         name: Test without coverage
-        shell: bash
         run: |
-          if [[ "${{ matrix.python-version }}" == '3.14' ]]; then
-            export CC=gcc
-            export CXX=g++
-            export LLVM_DIR=/usr/lib/llvm-20/lib/cmake/llvm
-          fi
-
           poetry install --without=lint --extras=autobpm --extras=lyrics --extras=replaygain --extras=reflink --extras=fetchart --extras=chroma --extras=sonosupdate
           poe test
 
