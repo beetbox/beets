@@ -260,22 +260,22 @@ class ConvertCliTest(ConvertTestCase, ConvertCommand):
         self.run_convert("--playlist", "playlist.m3u8", "--pretend")
         assert not (self.convert_dest / "playlist.m3u8").exists()
 
-    def test_playlist_generation_with_fallback_and_unicode(tmp_path, library, convert_plugin):
-        # Setup items with one having no path (to trigger fallback), one with Unicode filename
-        item_with_path = library.add_item(path=str(tmp_path / "song1.mp3"))
-        item_with_path.path = str(tmp_path / "song1.mp3")
-        item_missing_path = library.add_item(path=str(tmp_path / "song\u2603.mp3"))
+    def test_playlist_generation_with_fallback(self, library, convert_plugin):
+        # Setup items with one having no path, one with Unicode filename
+        item_with_path = library.add_item(path=str(self.tmp_path / "song1.mp3"))
+        item_with_path.path = str(self.tmp_path / "song1.mp3")
+        item_missing_path = library.add_item(path=str(self.tmp_path / "song\u2603.mp3"))
         item_missing_path.path = ""  # empty path to force fallback
 
         # Destination directory
-        dest = tmp_path / "dest"
+        dest = self.tmp_path / "dest"
         dest.mkdir()
 
-        playlist_path = tmp_path / "test_playlist.m3u"
+        playlist_path = self.tmp_path / "test_playlist.m3u"
 
         # Manually call playlist generation code from convert_func
         items = [item_with_path, item_missing_path]
-        pl_normpath = str(playlist_path)
+        # pl_normpath = str(playlist_path)
         pl_dir = str(playlist_path.parent)
 
         items_paths = []
