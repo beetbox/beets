@@ -622,26 +622,23 @@ class ConvertPlugin(BeetsPlugin):
 
             items_paths = []
             for item in items:
-                # Use item.path if available and not empty, otherwise fallback to item.
                 path = (
                     item.path
                     if item.path
                     else item.destination(basedir=dest, path_formats=path_formats)
                 )
-
-
-                # Make path relative to playlist folder
                 rel_path = os.path.relpath(path, pl_dir)
 
-                # Ensure string encoding for all playlist entries
+                # Ensure string encoding for playlist entries (convert bytes to str)
                 if isinstance(rel_path, bytes):
                     rel_path = rel_path.decode('utf-8', errors='replace')
+
                 items_paths.append(rel_path)
 
             if not pretend:
                 m3ufile = M3UFile(playlist)
                 m3ufile.set_contents(items_paths)
-                m3ufile.write()
+                m3ufile.write()  # Assume m3ufile.write expects str lines
 
 
 
