@@ -23,8 +23,8 @@ import errno
 import optparse
 import os.path
 import re
+import shutil
 import sqlite3
-import struct
 import sys
 import textwrap
 import traceback
@@ -699,27 +699,11 @@ def get_replacements():
     return replacements
 
 
-def term_width():
+@cache
+def term_width() -> int:
     """Get the width (columns) of the terminal."""
-    fallback = config["ui"]["terminal_width"].get(int)
-
-    # The fcntl and termios modules are not available on non-Unix
-    # platforms, so we fall back to a constant.
-    try:
-        import fcntl
-        import termios
-    except ImportError:
-        return fallback
-
-    try:
-        buf = fcntl.ioctl(0, termios.TIOCGWINSZ, " " * 4)
-    except OSError:
-        return fallback
-    try:
-        height, width = struct.unpack("hh", buf)
-    except struct.error:
-        return fallback
-    return width
+    columns, _ = shutil.get_terminal_size(fallback=(0, 0))
+    return columns if columns else config["ui"]["terminal_width"].get(int)
 
 
 def split_into_lines(string, width_tuple):

@@ -745,7 +745,9 @@ class Translator(RequestHandler):
     TRANSLATE_URL = "https://api.cognitive.microsofttranslator.com/translate"
     LINE_PARTS_RE = re.compile(r"^(\[\d\d:\d\d.\d\d\]|) *(.*)$")
     SEPARATOR = " | "
-    remove_translations = partial(re.compile(r" / [^\n]+").sub, "")
+    remove_translations = staticmethod(
+        partial(re.compile(r" / [^\n]+").sub, "")
+    )
 
     _log: Logger
     api_key: str
