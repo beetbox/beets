@@ -1,5 +1,5 @@
 Scrub Plugin
-=============
+============
 
 The ``scrub`` plugin lets you remove extraneous metadata from files' tags. If
 you'd prefer never to see crufty tags that come from other tools, the plugin can
@@ -40,8 +40,7 @@ whatsoever.
 Configuration
 -------------
 
-To configure the plugin, make a ``scrub:`` section in your
-configuration file. There is one option:
+To configure the plugin, make a ``scrub:`` section in your configuration file.
+There is one option:
 
-- **auto**: Enable metadata stripping during import.
-  Default: ``yes``.
+- **auto**: Enable metadata stripping during import. Default: ``yes``.

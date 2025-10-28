@@ -12,15 +12,18 @@
 # included in all copies or substantial portions of the Software.
 
 
-import fnmatch
 import os
 import tempfile
 from collections.abc import Sequence
+from pathlib import Path
 
 import beets
-from beets.dbcore.query import InQuery
-from beets.library import BLOB_TYPE
+from beets.dbcore.query import BLOB_TYPE, InQuery
 from beets.util import path_as_posix
+
+
+def is_m3u_file(path: str) -> bool:
+    return Path(path).suffix.lower() in {".m3u", ".m3u8"}
 
 
 class PlaylistQuery(InQuery[bytes]):
@@ -46,7 +49,7 @@ class PlaylistQuery(InQuery[bytes]):
 
         paths = []
         for playlist_path in playlist_paths:
-            if not fnmatch.fnmatch(playlist_path, "*.[mM]3[uU]"):
+            if not is_m3u_file(playlist_path):
                 # This is not am M3U playlist, skip this candidate
                 continue
 
@@ -120,7 +123,7 @@ class PlaylistPlugin(beets.plugins.BeetsPlugin):
 
     def cli_exit(self, lib):
         for playlist in self.find_playlists():
-            self._log.info(f"Updating playlist: {playlist}")
+            self._log.info("Updating playlist: {}", playlist)
             base_dir = beets.util.bytestring_path(
                 self.relative_to
                 if self.relative_to
@@ -130,26 +133,21 @@ class PlaylistPlugin(beets.plugins.BeetsPlugin):
             try:
                 self.update_playlist(playlist, base_dir)
             except beets.util.FilesystemError:
-                self._log.error(
-                    "Failed to update playlist: {}".format(
-                        beets.util.displayable_path(playlist)
-                    )
-                )
+                self._log.error("Failed to update playlist: {}", playlist)
 
     def find_playlists(self):
         """Find M3U playlists in the playlist directory."""
+        playlist_dir = beets.util.syspath(self.playlist_dir)
         try:
-            dir_contents = os.listdir(beets.util.syspath(self.playlist_dir))
+            dir_contents = os.listdir(playlist_dir)
         except OSError:
             self._log.warning(
-                "Unable to open playlist directory {}".format(
-                    beets.util.displayable_path(self.playlist_dir)
-                )
+                "Unable to open playlist directory {.playlist_dir}", self
             )
             return
 
         for filename in dir_contents:
-            if fnmatch.fnmatch(filename, "*.[mM]3[uU]"):
+            if is_m3u_file(filename):
                 yield os.path.join(self.playlist_dir, filename)
 
     def update_playlist(self, filename, base_dir):
@@ -192,9 +190,10 @@ class PlaylistPlugin(beets.plugins.BeetsPlugin):
 
         if changes or deletions:
             self._log.info(
-                "Updated playlist {} ({} changes, {} deletions)".format(
-                    filename, changes, deletions
-                )
+                "Updated playlist {} ({} changes, {} deletions)",
+                filename,
+                changes,
+                deletions,
             )
             beets.util.copy(new_playlist, filename, replace=True)
         beets.util.remove(new_playlist)

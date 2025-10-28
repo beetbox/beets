@@ -7,12 +7,12 @@ jobs:
   test_integration:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install Python tools
-        uses: BrandonLWhite/pipx-install-action@v0.1.1
-      - uses: actions/setup-python@v5
+        uses: BrandonLWhite/pipx-install-action@v1.0.3
+      - uses: actions/setup-python@v6
         with:
-          python-version: 3.8
+          python-version: 3.9
           cache: poetry
 
       - name: Install dependencies
