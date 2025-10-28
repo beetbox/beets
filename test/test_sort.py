@@ -378,7 +378,7 @@ class ConfigSortTest(DummyDataTestCase):
         assert results[0].albumartist > results[1].albumartist
 
 
-class CaseSensitivityTest(DummyDataTestCase, BeetsTestCase):
+class CaseSensitivityTest(DummyDataTestCase):
     """If case_insensitive is false, lower-case values should be placed
     after all upper-case values. E.g., `Foo Qux bar`
     """

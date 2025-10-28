@@ -15,7 +15,6 @@
 
 from confuse import ConfigValueError
 
-from beets import library
 from beets.dbcore import types
 from beets.plugins import BeetsPlugin
 
@@ -42,9 +41,9 @@ class TypesPlugin(BeetsPlugin):
             elif value.get() == "bool":
                 mytypes[key] = types.BOOLEAN
             elif value.get() == "date":
-                mytypes[key] = library.DateType()
+                mytypes[key] = types.DATE
             else:
                 raise ConfigValueError(
-                    "unknown type '{}' for the '{}' field".format(value, key)
+                    f"unknown type '{value}' for the '{key}' field"
                 )
         return mytypes

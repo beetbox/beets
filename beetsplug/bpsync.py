@@ -65,10 +65,9 @@ class BPSyncPlugin(BeetsPlugin):
         move = ui.should_move(opts.move)
         pretend = opts.pretend
         write = ui.should_write(opts.write)
-        query = ui.decargs(args)
 
-        self.singletons(lib, query, move, pretend, write)
-        self.albums(lib, query, move, pretend, write)
+        self.singletons(lib, args, move, pretend, write)
+        self.albums(lib, args, move, pretend, write)
 
     def singletons(self, lib, query, move, pretend, write):
         """Retrieve and apply info from the autotagger for items matched by
@@ -83,8 +82,8 @@ class BPSyncPlugin(BeetsPlugin):
 
             if not self.is_beatport_track(item):
                 self._log.info(
-                    "Skipping non-{} singleton: {}",
-                    self.beatport_plugin.data_source,
+                    "Skipping non-{.beatport_plugin.data_source} singleton: {}",
+                    self,
                     item,
                 )
                 continue
@@ -108,8 +107,8 @@ class BPSyncPlugin(BeetsPlugin):
             return False
         if not album.mb_albumid.isnumeric():
             self._log.info(
-                "Skipping album with invalid {} ID: {}",
-                self.beatport_plugin.data_source,
+                "Skipping album with invalid {.beatport_plugin.data_source} ID: {}",
+                self,
                 album,
             )
             return False
@@ -118,8 +117,8 @@ class BPSyncPlugin(BeetsPlugin):
             return items
         if not all(self.is_beatport_track(item) for item in items):
             self._log.info(
-                "Skipping non-{} release: {}",
-                self.beatport_plugin.data_source,
+                "Skipping non-{.beatport_plugin.data_source} release: {}",
+                self,
                 album,
             )
             return False
@@ -140,9 +139,7 @@ class BPSyncPlugin(BeetsPlugin):
             albuminfo = self.beatport_plugin.album_for_id(album.mb_albumid)
             if not albuminfo:
                 self._log.info(
-                    "Release ID {} not found for album {}",
-                    album.mb_albumid,
-                    album,
+                    "Release ID {0.mb_albumid} not found for album {0}", album
                 )
                 continue
 

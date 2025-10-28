@@ -36,14 +36,16 @@ from __future__ import annotations
 import queue
 import sys
 from threading import Lock, Thread
-from typing import Callable, Generator
+from typing import Callable, Generator, TypeVar
 
-from typing_extensions import TypeVar, TypeVarTuple, Unpack
+from typing_extensions import TypeVarTuple, Unpack
 
 BUBBLE = "__PIPELINE_BUBBLE__"
 POISON = "__PIPELINE_POISON__"
 
 DEFAULT_QUEUE_SIZE = 16
+
+Tq = TypeVar("Tq")
 
 
 def _invalidate_queue(q, val=None, sync=True):
@@ -88,7 +90,7 @@ def _invalidate_queue(q, val=None, sync=True):
             q.mutex.release()
 
 
-class CountedQueue(queue.Queue):
+class CountedQueue(queue.Queue[Tq]):
     """A queue that keeps track of the number of threads that are
     still feeding into it. The queue is poisoned when all threads are
     finished with the queue.
@@ -489,64 +491,3 @@ class Pipeline:
                 msgs = next_msgs
             for msg in msgs:
                 yield msg
-
-
-# Smoke test.
-if __name__ == "__main__":
-    import time
-
-    # Test a normally-terminating pipeline both in sequence and
-    # in parallel.
-    def produce():
-        for i in range(5):
-            print("generating %i" % i)
-            time.sleep(1)
-            yield i
-
-    def work():
-        num = yield
-        while True:
-            print("processing %i" % num)
-            time.sleep(2)
-            num = yield num * 2
-
-    def consume():
-        while True:
-            num = yield
-            time.sleep(1)
-            print("received %i" % num)
-
-    ts_start = time.time()
-    Pipeline([produce(), work(), consume()]).run_sequential()
-    ts_seq = time.time()
-    Pipeline([produce(), work(), consume()]).run_parallel()
-    ts_par = time.time()
-    Pipeline([produce(), (work(), work()), consume()]).run_parallel()
-    ts_end = time.time()
-    print("Sequential time:", ts_seq - ts_start)
-    print("Parallel time:", ts_par - ts_seq)
-    print("Multiply-parallel time:", ts_end - ts_par)
-    print()
-
-    # Test a pipeline that raises an exception.
-    def exc_produce():
-        for i in range(10):
-            print("generating %i" % i)
-            time.sleep(1)
-            yield i
-
-    def exc_work():
-        num = yield
-        while True:
-            print("processing %i" % num)
-            time.sleep(3)
-            if num == 3:
-                raise Exception()
-            num = yield num * 2
-
-    def exc_consume():
-        while True:
-            num = yield
-            print("received %i" % num)
-
-    Pipeline([exc_produce(), exc_work(), exc_consume()]).run_parallel(1)

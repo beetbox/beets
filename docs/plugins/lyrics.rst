@@ -2,13 +2,14 @@ Lyrics Plugin
 =============
 
 The ``lyrics`` plugin fetches and stores song lyrics from databases on the Web.
-Namely, the current version of the plugin uses `Genius.com`_, `Tekstowo.pl`_,
-`LRCLIB`_ and, optionally, the Google Custom Search API.
+Namely, the current version of the plugin uses Genius.com_, Tekstowo.pl_,
+LRCLIB_ and, optionally, the Google Custom Search API.
 
-.. _Genius.com: https://genius.com/
-.. _Tekstowo.pl: https://www.tekstowo.pl/
-.. _LRCLIB: https://lrclib.net/
+.. _genius.com: https://genius.com/
 
+.. _lrclib: https://lrclib.net/
+
+.. _tekstowo.pl: https://www.tekstowo.pl/
 
 Install
 -------
@@ -62,20 +63,20 @@ The available options are:
     ``translate_to`` are translated. Use a list of language codes to restrict
     them.
   - **to_language**: Language code to translate lyrics to.
-- **dist_thresh**: The maximum distance between the artist and title
-  combination of the music file and lyrics candidate to consider them a match.
-  Lower values will make the plugin more strict, higher values will make it
-  more lenient. This does not apply to the ``lrclib`` backend as it matches
-  durations.
+
+- **dist_thresh**: The maximum distance between the artist and title combination
+  of the music file and lyrics candidate to consider them a match. Lower values
+  will make the plugin more strict, higher values will make it more lenient.
+  This does not apply to the ``lrclib`` backend as it matches durations.
 - **fallback**: By default, the file will be left unchanged when no lyrics are
   found. Use the empty string ``''`` to reset the lyrics in such a case.
 - **force**: By default, beets won't fetch lyrics if the files already have
   ones. To instead always fetch lyrics, set the ``force`` option to ``yes``.
 - **google_API_key**: Your Google API key (to enable the Google Custom Search
   backend).
-- **google_engine_ID**: The custom search engine to use.
-  Default: The `beets custom search engine`_, which gathers an updated list of
-  sources known to be scrapeable.
+- **google_engine_ID**: The custom search engine to use. Default: The `beets
+  custom search engine`_, which gathers an updated list of sources known to be
+  scrapeable.
 - **print**: Print lyrics to the console.
 - **sources**: List of sources to search for lyrics. An asterisk ``*`` expands
   to all available sources. The ``google`` source will be automatically
@@ -109,60 +110,59 @@ Rendering Lyrics into Other Formats
 -----------------------------------
 
 The ``-r directory, --write-rest directory`` option renders all lyrics as
-`reStructuredText`_ (ReST) documents in ``directory``. That directory, in turn,
-can be parsed by tools like `Sphinx`_ to generate HTML, ePUB, or PDF documents.
+reStructuredText_ (ReST) documents in ``directory``. That directory, in turn,
+can be parsed by tools like Sphinx_ to generate HTML, ePUB, or PDF documents.
 
 Minimal ``conf.py`` and ``index.rst`` files are created the first time the
 command is run. They are not overwritten on subsequent runs, so you can safely
 modify these files to customize the output.
 
-Sphinx supports various `builders`_, see a few suggestions:
-
+Sphinx supports various builders_, see a few suggestions:
 
 .. admonition:: Build an HTML version
 
-  ::
+    ::
 
-      sphinx-build -b html <dir> <dir>/html
+        sphinx-build -b html <dir> <dir>/html
 
 .. admonition:: Build an ePUB3 formatted file, usable on ebook readers
 
-  ::
+    ::
 
-      sphinx-build -b epub3 <dir> <dir>/epub
+        sphinx-build -b epub3 <dir> <dir>/epub
 
 .. admonition:: Build a PDF file, which incidentally also builds a LaTeX file
 
-  ::
+    ::
 
-      sphinx-build -b latex <dir> <dir>/latex && make -C <dir>/latex all-pdf
+        sphinx-build -b latex <dir> <dir>/latex && make -C <dir>/latex all-pdf
 
-
-.. _Sphinx: https://www.sphinx-doc.org/
-.. _reStructuredText: http://docutils.sourceforge.net/rst.html
 .. _builders: https://www.sphinx-doc.org/en/stable/builders.html
 
-Activate Google Custom Search
-------------------------------
+.. _restructuredtext: http://docutils.sourceforge.net/rst.html
 
-You need to `register for a Google API key`_. Set the ``google_API_key``
+.. _sphinx: https://www.sphinx-doc.org/
+
+Activate Google Custom Search
+-----------------------------
+
+You need to `register for a Google API key
+<https://console.developers.google.com/>`__. Set the ``google_API_key``
 configuration option to your key.
 
-Then add ``google`` to the list of sources in your configuration (or use
-default list, which includes it as long as you have an API key).
-If you use default ``google_engine_ID``, we recommend limiting the sources to
-``google`` as the other sources are already included in the Google results.
+Then add ``google`` to the list of sources in your configuration (or use default
+list, which includes it as long as you have an API key). If you use default
+``google_engine_ID``, we recommend limiting the sources to ``google`` as the
+other sources are already included in the Google results.
 
 Optionally, you can `define a custom search engine`_. Get your search engine's
-token and use it for your ``google_engine_ID`` configuration option. By
-default, beets use a list of sources known to be scrapeable.
+token and use it for your ``google_engine_ID`` configuration option. By default,
+beets use a list of sources known to be scrapeable.
 
-Note that the Google custom search API is limited to 100 queries per day.
-After that, the lyrics plugin will fall back on other declared data sources.
+Note that the Google custom search API is limited to 100 queries per day. After
+that, the lyrics plugin will fall back on other declared data sources.
 
-.. _register for a Google API key: https://console.developers.google.com/
 .. _define a custom search engine: https://www.google.com/cse/all
-
 
 .. _lyrics-translation:
 
@@ -177,20 +177,22 @@ follow these steps:
 3. Add the API key to your configuration as ``translate.api_key``.
 4. Configure your target language using the ``translate.to_language`` option.
 
-
 For example, with the following configuration
 
 .. code-block:: yaml
 
-  lyrics:
-    translate:
-      api_key: YOUR_TRANSLATOR_API_KEY
-      to_language: de
+    lyrics:
+      translate:
+        api_key: YOUR_TRANSLATOR_API_KEY
+        to_language: de
 
-You should expect lyrics like this::
+You should expect lyrics like this:
 
-  Original verse / Ursprünglicher Vers
-  Some other verse / Ein anderer Vers
+::
 
-.. _create a Translator resource: https://learn.microsoft.com/en-us/azure/ai-services/translator/create-translator-resource
-.. _obtain its API key: https://learn.microsoft.com/en-us/python/api/overview/azure/ai-translation-text-readme?view=azure-python&preserve-view=true#get-an-api-key
+    Original verse / Ursprünglicher Vers
+    Some other verse / Ein anderer Vers
+
+.. _create a translator resource: https://learn.microsoft.com/en-us/azure/ai-services/translator/create-translator-resource
+
+.. _obtain its api key: https://learn.microsoft.com/en-us/python/api/overview/azure/ai-translation-text-readme?view=azure-python&preserve-view=true#get-an-api-key

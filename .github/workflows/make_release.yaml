@@ -8,7 +8,7 @@ on:
         required: true
 
 env:
-  PYTHON_VERSION: 3.8
+  PYTHON_VERSION: 3.9
   NEW_VERSION: ${{ inputs.version }}
   NEW_TAG: v${{ inputs.version }}
 
@@ -17,16 +17,16 @@ jobs:
     name: Bump version, commit and create tag
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install Python tools
-        uses: BrandonLWhite/pipx-install-action@v0.1.1
-      - uses: actions/setup-python@v5
+        uses: BrandonLWhite/pipx-install-action@v1.0.3
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: poetry
 
       - name: Install dependencies
-        run: poetry install --only=release
+        run: poetry install --with=release --extras=docs
 
       - name: Bump project version
         run: poe bump "${{ env.NEW_VERSION }}"
@@ -45,13 +45,13 @@ jobs:
     outputs:
       changelog: ${{ steps.generate_changelog.outputs.changelog }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ env.NEW_TAG }}
 
       - name: Install Python tools
-        uses: BrandonLWhite/pipx-install-action@v0.1.1
-      - uses: actions/setup-python@v5
+        uses: BrandonLWhite/pipx-install-action@v1.0.3
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: poetry
@@ -92,7 +92,7 @@ jobs:
       id-token: write
     steps:
       - name: Download all the dists
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: python-package-distributions
           path: dist/
@@ -107,7 +107,7 @@ jobs:
       CHANGELOG: ${{ needs.build.outputs.changelog }}
     steps:
       - name: Download all the dists
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: python-package-distributions
           path: dist/
