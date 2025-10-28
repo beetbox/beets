@@ -24,7 +24,7 @@ jobs:
       changed_doc_files: ${{ steps.changed-doc-files.outputs.all_changed_files }}
       changed_python_files: ${{ steps.changed-python-files.outputs.all_changed_files }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Get changed docs files
         id: changed-doc-files
         uses: tj-actions/changed-files@v46
@@ -56,10 +56,10 @@ jobs:
     name: Check formatting
     needs: changed-files
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install Python tools
         uses: BrandonLWhite/pipx-install-action@v1.0.3
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: poetry
@@ -77,10 +77,10 @@ jobs:
     name: Check linting
     needs: changed-files
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install Python tools
         uses: BrandonLWhite/pipx-install-action@v1.0.3
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: poetry
@@ -97,10 +97,10 @@ jobs:
     name: Check types with mypy
     needs: changed-files
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install Python tools
         uses: BrandonLWhite/pipx-install-action@v1.0.3
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: poetry
@@ -120,10 +120,10 @@ jobs:
     name: Check docs
     needs: changed-files
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install Python tools
         uses: BrandonLWhite/pipx-install-action@v1.0.3
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: poetry
@@ -143,4 +143,4 @@ jobs:
         run: poe lint-docs
 
       - name: Build docs
-        run: poe docs -e 'SPHINXOPTS=--fail-on-warning --keep-going'
+        run: poe docs -- -e 'SPHINXOPTS=--fail-on-warning --keep-going'

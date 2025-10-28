@@ -5,7 +5,7 @@ Plugins extend beets' core functionality. They add new commands, fetch
 additional data during import, provide new metadata sources, and much more. If
 beets by itself doesn't do what you want it to, you may just need to enable a
 plugin---or, if you want to do something new, :doc:`writing a plugin
-</dev/plugins>` is easy if you know a little Python.
+</dev/plugins/index>` is easy if you know a little Python.
 
 .. _using-plugins:
 
@@ -18,7 +18,7 @@ list), just use the ``plugins`` option in your :doc:`config.yaml
 
 .. code-block:: sh
 
-    plugins: inline convert web
+    plugins: musicbrainz inline convert web
 
 The value for ``plugins`` can be a space-separated list of plugin names or a
 YAML list like ``[foo, bar]``. You can see which plugins are currently enabled
@@ -29,7 +29,7 @@ its name:
 
 .. code-block:: yaml
 
-    plugins: inline convert web
+    plugins: musicbrainz inline convert web
 
     convert:
         auto: true
@@ -47,21 +47,10 @@ some, you can use ``pip``'s "extras" feature to install the dependencies:
 Using Metadata Source Plugins
 -----------------------------
 
-Some plugins provide sources for metadata in addition to MusicBrainz. These
-plugins share the following configuration option:
+We provide several :ref:`autotagger_extensions` that fetch metadata from online
+databases. They share the following configuration options:
 
-- **source_weight**: Penalty applied to matches during import. Set to 0.0 to
-  disable. Default: ``0.5``.
-
-For example, to equally consider matches from Discogs and MusicBrainz add the
-following to your configuration:
-
-.. code-block:: yaml
-
-    plugins: discogs
-
-    discogs:
-       source_weight: 0.0
+.. include:: ./shared_metadata_source_config.rst
 
 .. toctree::
     :hidden:

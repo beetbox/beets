@@ -65,50 +65,99 @@ Configuration
 This plugin can be configured like other metadata source plugins as described in
 :ref:`metadata-source-plugin-configuration`.
 
-There is one additional option in the ``discogs:`` section, ``index_tracks``.
-Index tracks (see the `Discogs guidelines`_) along with headers, mark divisions
-between distinct works on the same release or within works. When
-``index_tracks`` is enabled:
+Default
+~~~~~~~
 
 .. code-block:: yaml
 
     discogs:
-        index_tracks: yes
+        apikey: REDACTED
+        apisecret: REDACTED
+        tokenfile: discogs_token.json
+        user_token:
+        index_tracks: no
+        append_style_genre: no
+        separator: ', '
+        strip_disambiguation: yes
+        featured_string: Feat.
+        anv:
+            artist_credit: yes
+            artist: no
+            album_artist: no
+        data_source_mismatch_penalty: 0.5
+        search_limit: 5
 
-beets will incorporate the names of the divisions containing each track into the
-imported track's title.
+.. conf:: index_tracks
+    :default: no
 
-For example, importing `divisions album`_ would result in track names like:
+    Index tracks (see the `Discogs guidelines`_) along with headers, mark divisions
+    between distinct works on the same release or within works. When enabled,
+    beets will incorporate the names of the divisions containing each track into the
+    imported track's title.
 
-.. code-block:: text
+    For example, importing `divisions album`_ would result in track names like:
 
-    Messiah, Part I: No.1: Sinfony
-    Messiah, Part II: No.22: Chorus- Behold The Lamb Of God
-    Athalia, Act I, Scene I: Sinfonia
+    .. code-block:: text
 
-whereas with ``index_tracks`` disabled you'd get:
+     Messiah, Part I: No.1: Sinfony
+     Messiah, Part II: No.22: Chorus- Behold The Lamb Of God
+     Athalia, Act I, Scene I: Sinfonia
 
-.. code-block:: text
+    whereas with ``index_tracks`` disabled you'd get:
 
-    No.1: Sinfony
-    No.22: Chorus- Behold The Lamb Of God
-    Sinfonia
+    .. code-block:: text
 
-This option is useful when importing classical music.
+     No.1: Sinfony
+     No.22: Chorus- Behold The Lamb Of God
+     Sinfonia
 
-Other configurations available under ``discogs:`` are:
+    This option is useful when importing classical music.
 
-- **append_style_genre**: Appends the Discogs style (if found) to the genre tag.
-  This can be useful if you want more granular genres to categorize your music.
-  For example, a release in Discogs might have a genre of "Electronic" and a
-  style of "Techno": enabling this setting would set the genre to be
-  "Electronic, Techno" (assuming default separator of ``", "``) instead of just
-  "Electronic". Default: ``False``
-- **separator**: How to join multiple genre and style values from Discogs into a
-  string. Default: ``", "``
-- **search_limit**: The maximum number of results to return from Discogs. This
-  is useful if you want to limit the number of results returned to speed up
-  searches. Default: ``5``
+.. conf:: append_style_genre
+    :default: no
+
+    Appends the Discogs style (if found) to the genre tag. This can be useful if
+    you want more granular genres to categorize your music. For example,
+    a release in Discogs might have a genre of "Electronic" and a style of
+    "Techno": enabling this setting would set the genre to be "Electronic,
+    Techno" (assuming default separator of ``", "``) instead of just
+    "Electronic".
+
+.. conf:: separator
+    :default: ", "
+
+    How to join multiple genre and style values from Discogs into a string.
+
+.. conf:: strip_disambiguation
+    :default: yes
+
+    Discogs uses strings like ``"(4)"`` to mark distinct artists and labels with
+    the same name. If you'd like to use the Discogs disambiguation in your tags,
+    you can disable this option.
+
+.. conf:: featured_string
+    :default: Feat.
+
+    Configure the string used for noting featured artists. Useful if you prefer ``Featuring`` or ``ft.``.
+
+.. conf:: anv
+
+    This configuration option is dedicated to handling Artist Name
+    Variations (ANVs). Sometimes a release credits artists differently compared to
+    the majority of their work. For example, "Basement Jaxx" may be credited as
+    "Tha Jaxx" or "The Basement Jaxx". You can select any combination of these
+    config options to control where beets writes and stores the variation credit.
+    The default, shown below, writes variations to the artist_credit field.
+
+    .. code-block:: yaml
+
+        discogs:
+            anv:
+               artist_credit: yes
+               artist: no
+               album_artist: no
+
+.. include:: ./shared_metadata_source_config.rst
 
 .. _discogs guidelines: https://support.discogs.com/hc/en-us/articles/360005055373-Database-Guidelines-12-Tracklisting#Index_Tracks_And_Headings
 

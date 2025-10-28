@@ -110,7 +110,7 @@ class BeatportClient:
         :returns:           OAuth resource owner key and secret as unicode
         """
         self.api.parse_authorization_response(
-            "https://beets.io/auth?" + auth_data
+            f"https://beets.io/auth?{auth_data}"
         )
         access_data = self.api.fetch_access_token(
             self._make_url("/identity/1/oauth/access-token")
@@ -200,8 +200,8 @@ class BeatportClient:
     def _make_url(self, endpoint: str) -> str:
         """Get complete URL for a given API endpoint."""
         if not endpoint.startswith("/"):
-            endpoint = "/" + endpoint
-        return self._api_base + endpoint
+            endpoint = f"/{endpoint}"
+        return f"{self._api_base}{endpoint}"
 
     def _get(self, endpoint: str, **kwargs) -> list[JSONDict]:
         """Perform a GET request on a given API endpoint.
@@ -212,14 +212,10 @@ class BeatportClient:
         try:
             response = self.api.get(self._make_url(endpoint), params=kwargs)
         except Exception as e:
-            raise BeatportAPIError(
-                "Error connecting to Beatport API: {}".format(e)
-            )
+            raise BeatportAPIError(f"Error connecting to Beatport API: {e}")
         if not response:
             raise BeatportAPIError(
-                "Error {0.status_code} for '{0.request.path_url}".format(
-                    response
-                )
+                f"Error {response.status_code} for '{response.request.path_url}"
             )
         return response.json()["results"]
 
@@ -275,15 +271,14 @@ class BeatportRelease(BeatportObject):
         self.genre = data.get("genre")
 
         if "slug" in data:
-            self.url = "https://beatport.com/release/{}/{}".format(
-                data["slug"], data["id"]
+            self.url = (
+                f"https://beatport.com/release/{data['slug']}/{data['id']}"
             )
 
     def __str__(self) -> str:
-        return "<BeatportRelease: {} - {} ({})>".format(
-            self.artists_str(),
-            self.name,
-            self.catalog_number,
+        return (
+            "<BeatportRelease: "
+            f"{self.artists_str()} - {self.name} ({self.catalog_number})>"
         )
 
 
@@ -311,9 +306,7 @@ class BeatportTrack(BeatportObject):
             except ValueError:
                 pass
         if "slug" in data:
-            self.url = "https://beatport.com/track/{}/{}".format(
-                data["slug"], data["id"]
-            )
+            self.url = f"https://beatport.com/track/{data['slug']}/{data['id']}"
         self.track_number = data.get("trackNumber")
         self.bpm = data.get("bpm")
         self.initial_key = str((data.get("key") or {}).get("shortName"))
@@ -335,7 +328,6 @@ class BeatportPlugin(MetadataSourcePlugin):
                 "apikey": "57713c3906af6f5def151b33601389176b37b429",
                 "apisecret": "b3fe08c93c80aefd749fe871a16cd2bb32e2b954",
                 "tokenfile": "beatport_token.json",
-                "source_weight": 0.5,
             }
         )
         self.config["apikey"].redact = True
@@ -373,7 +365,7 @@ class BeatportPlugin(MetadataSourcePlugin):
         try:
             url = auth_client.get_authorize_url()
         except AUTH_ERRORS as e:
-            self._log.debug("authentication error: {0}", e)
+            self._log.debug("authentication error: {}", e)
             raise beets.ui.UserError("communication with Beatport failed")
 
         beets.ui.print_("To authenticate with Beatport, visit:")
@@ -384,11 +376,11 @@ class BeatportPlugin(MetadataSourcePlugin):
         try:
             token, secret = auth_client.get_access_token(data)
         except AUTH_ERRORS as e:
-            self._log.debug("authentication error: {0}", e)
+            self._log.debug("authentication error: {}", e)
             raise beets.ui.UserError("Beatport token request failed")
 
         # Save the token for later use.
-        self._log.debug("Beatport token {0}, secret {1}", token, secret)
+        self._log.debug("Beatport token {}, secret {}", token, secret)
         with open(self._tokenfile(), "w") as f:
             json.dump({"token": token, "secret": secret}, f)
 
@@ -412,7 +404,7 @@ class BeatportPlugin(MetadataSourcePlugin):
         try:
             yield from self._get_releases(query)
         except BeatportAPIError as e:
-            self._log.debug("API Error: {0} (query: {1})", e, query)
+            self._log.debug("API Error: {} (query: {})", e, query)
             return
 
     def item_candidates(
@@ -422,14 +414,14 @@ class BeatportPlugin(MetadataSourcePlugin):
         try:
             return self._get_tracks(query)
         except BeatportAPIError as e:
-            self._log.debug("API Error: {0} (query: {1})", e, query)
+            self._log.debug("API Error: {} (query: {})", e, query)
             return []
 
     def album_for_id(self, album_id: str):
         """Fetches a release by its Beatport ID and returns an AlbumInfo object
         or None if the query is not a valid ID or release is not found.
         """
-        self._log.debug("Searching for release {0}", album_id)
+        self._log.debug("Searching for release {}", album_id)
 
         if not (release_id := self._extract_id(album_id)):
             self._log.debug("Not a valid Beatport release ID.")
@@ -444,7 +436,7 @@ class BeatportPlugin(MetadataSourcePlugin):
         """Fetches a track by its Beatport ID and returns a TrackInfo object
         or None if the track is not a valid Beatport ID or track is not found.
         """
-        self._log.debug("Searching for track {0}", track_id)
+        self._log.debug("Searching for track {}", track_id)
         # TODO: move to extractor
         match = re.search(r"(^|beatport\.com/track/.+/)(\d+)$", track_id)
         if not match:

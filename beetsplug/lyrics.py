@@ -42,10 +42,9 @@ from beets.autotag.distance import string_dist
 from beets.util.config import sanitize_choices
 
 if TYPE_CHECKING:
-    from logging import Logger
-
     from beets.importer import ImportTask
     from beets.library import Item, Library
+    from beets.logging import BeetsLogger as Logger
 
     from ._typing import (
         GeniusAPI,
@@ -154,7 +153,7 @@ def search_pairs(item):
         # examples include (live), (remix), and (acoustic).
         r"(.+?)\s+[(].*[)]$",
         # Remove any featuring artists from the title
-        r"(.*?) {}".format(plugins.feat_tokens(for_artist=False)),
+        rf"(.*?) {plugins.feat_tokens(for_artist=False)}",
         # Remove part of title after colon ':' for songs with subtitles
         r"(.+?)\s*:.*",
     ]
@@ -186,7 +185,7 @@ def slug(text: str) -> str:
 
 
 class RequestHandler:
-    _log: beets.logging.Logger
+    _log: Logger
 
     def debug(self, message: str, *args) -> None:
         """Log a debug message with the class name."""
@@ -508,9 +507,9 @@ class SearchBackend(SoupMixin, Backend):
             # log out the candidate that did not make it but was close.
             # This may show a matching candidate with some noise in the name
             self.debug(
-                "({}, {}) does not match ({}, {}) but dist was close: {:.2f}",
-                result.artist,
-                result.title,
+                "({0.artist}, {0.title}) does not match ({1}, {2}) but dist"
+                " was close: {3:.2f}",
+                result,
                 target_artist,
                 target_title,
                 max_dist,
@@ -582,7 +581,7 @@ class Tekstowo(SearchBackend):
     """Fetch lyrics from Tekstowo.pl."""
 
     BASE_URL = "https://www.tekstowo.pl"
-    SEARCH_URL = BASE_URL + "/szukaj,{}.html"
+    SEARCH_URL = f"{BASE_URL}/szukaj,{{}}.html"
 
     def build_url(self, artist, title):
         artistitle = f"{artist.title()} {title.title()}"
@@ -644,7 +643,7 @@ class Google(SearchBackend):
         re.IGNORECASE | re.VERBOSE,
     )
     #: Split cleaned up URL title into artist and title parts.
-    URL_TITLE_PARTS_RE = re.compile(r" +(?:[ :|-]+|par|by) +")
+    URL_TITLE_PARTS_RE = re.compile(r" +(?:[ :|-]+|par|by) +|, ")
 
     SOURCE_DIST_FACTOR = {"www.azlyrics.com": 0.5, "www.songlyrics.com": 0.6}
 
@@ -702,8 +701,8 @@ class Google(SearchBackend):
                 result_artist, result_title = "", parts[0]
         else:
             # sort parts by their similarity to the artist
-            parts.sort(key=lambda p: cls.get_part_dist(artist, title, p))
-            result_artist, result_title = parts[0], " ".join(parts[1:])
+            result_artist = min(parts, key=lambda p: string_dist(artist, p))
+            result_title = min(parts, key=lambda p: string_dist(title, p))
 
         return SearchResult(result_artist, result_title, item["link"])
 
@@ -746,7 +745,9 @@ class Translator(RequestHandler):
     TRANSLATE_URL = "https://api.cognitive.microsofttranslator.com/translate"
     LINE_PARTS_RE = re.compile(r"^(\[\d\d:\d\d.\d\d\]|) *(.*)$")
     SEPARATOR = " | "
-    remove_translations = partial(re.compile(r" / [^\n]+").sub, "")
+    remove_translations = staticmethod(
+        partial(re.compile(r" / [^\n]+").sub, "")
+    )
 
     _log: Logger
     api_key: str
@@ -838,15 +839,16 @@ class Translator(RequestHandler):
         lyrics_language = langdetect.detect(new_lyrics).upper()
         if lyrics_language == self.to_language:
             self.info(
-                "🔵 Lyrics are already in the target language {}",
-                self.to_language,
+                "🔵 Lyrics are already in the target language {.to_language}",
+                self,
             )
             return new_lyrics
 
         if self.from_languages and lyrics_language not in self.from_languages:
             self.info(
-                "🔵 Configuration {} does not permit translating from {}",
-                self.from_languages,
+                "🔵 Configuration {.from_languages} does not permit translating"
+                " from {}",
+                self,
                 lyrics_language,
             )
             return new_lyrics
@@ -854,7 +856,7 @@ class Translator(RequestHandler):
         lyrics, *url = new_lyrics.split("\n\nSource: ")
         with self.handle_request():
             translated_lines = self.append_translations(lyrics.splitlines())
-            self.info("🟢 Translated lyrics to {}", self.to_language)
+            self.info("🟢 Translated lyrics to {.to_language}", self)
             return "\n\nSource: ".join(["\n".join(translated_lines), *url])
 
 
@@ -1090,7 +1092,7 @@ class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
             return
 
         if lyrics := self.find_lyrics(item):
-            self.info("🟢 Found lyrics: {0}", item)
+            self.info("🟢 Found lyrics: {}", item)
             if translator := self.translator:
                 lyrics = translator.translate(lyrics, item.lyrics)
         else:

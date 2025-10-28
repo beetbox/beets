@@ -51,15 +51,16 @@ SINGLE_ARTIST_THRESH = 0.25
 # def extend_reimport_fresh_fields_item():
 #     importer.REIMPORT_FRESH_FIELDS_ITEM.extend(['tidal_track_popularity']
 # )
-REIMPORT_FRESH_FIELDS_ALBUM = [
+REIMPORT_FRESH_FIELDS_ITEM = [
     "data_source",
     "bandcamp_album_id",
     "spotify_album_id",
     "deezer_album_id",
     "beatport_album_id",
     "tidal_album_id",
+    "data_url",
 ]
-REIMPORT_FRESH_FIELDS_ITEM = list(REIMPORT_FRESH_FIELDS_ALBUM)
+REIMPORT_FRESH_FIELDS_ALBUM = [*REIMPORT_FRESH_FIELDS_ITEM, "media"]
 
 # Global logger.
 log = logging.getLogger("beets")
@@ -267,13 +268,11 @@ class ImportTask(BaseImportTask):
 
     def remove_duplicates(self, lib: library.Library):
         duplicate_items = self.duplicate_items(lib)
-        log.debug("removing {0} old duplicated items", len(duplicate_items))
+        log.debug("removing {} old duplicated items", len(duplicate_items))
         for item in duplicate_items:
             item.remove()
             if lib.directory in util.ancestry(item.path):
-                log.debug(
-                    "deleting duplicate {0}", util.displayable_path(item.path)
-                )
+                log.debug("deleting duplicate {.filepath}", item)
                 util.remove(item.path)
                 util.prune_dirs(os.path.dirname(item.path), lib.directory)
 
@@ -285,10 +284,10 @@ class ImportTask(BaseImportTask):
         for field, view in config["import"]["set_fields"].items():
             value = str(view.get())
             log.debug(
-                "Set field {1}={2} for {0}",
-                util.displayable_path(self.paths),
+                "Set field {}={} for {}",
                 field,
                 value,
+                util.displayable_path(self.paths),
             )
             self.album.set_parse(field, format(self.album, value))
             for item in items:
@@ -554,12 +553,11 @@ class ImportTask(BaseImportTask):
             ]
             if overwritten_fields:
                 log.debug(
-                    "Reimported {} {}. Not preserving flexible attributes {}. "
-                    "Path: {}",
+                    "Reimported {0} {1.id}. Not preserving flexible attributes {2}. "
+                    "Path: {1.filepath}",
                     noun,
-                    new_obj.id,
+                    new_obj,
                     overwritten_fields,
-                    util.displayable_path(new_obj.path),
                 )
                 for key in overwritten_fields:
                     del existing_fields[key]
@@ -578,17 +576,15 @@ class ImportTask(BaseImportTask):
                 self.album.artpath = replaced_album.artpath
                 self.album.store()
                 log.debug(
-                    "Reimported album {}. Preserving attribute ['added']. "
-                    "Path: {}",
-                    self.album.id,
-                    util.displayable_path(self.album.path),
+                    "Reimported album {0.album.id}. Preserving attribute ['added']. "
+                    "Path: {0.album.filepath}",
+                    self,
                 )
                 log.debug(
-                    "Reimported album {}. Preserving flexible attributes {}. "
-                    "Path: {}",
-                    self.album.id,
+                    "Reimported album {0.album.id}. Preserving flexible"
+                    " attributes {1}. Path: {0.album.filepath}",
+                    self,
                     list(album_fields.keys()),
-                    util.displayable_path(self.album.path),
                 )
 
         for item in self.imported_items():
@@ -597,21 +593,19 @@ class ImportTask(BaseImportTask):
                 if dup_item.added and dup_item.added != item.added:
                     item.added = dup_item.added
                     log.debug(
-                        "Reimported item {}. Preserving attribute ['added']. "
-                        "Path: {}",
-                        item.id,
-                        util.displayable_path(item.path),
+                        "Reimported item {0.id}. Preserving attribute ['added']. "
+                        "Path: {0.filepath}",
+                        item,
                     )
                 item_fields = _reduce_and_log(
                     item, dup_item._values_flex, REIMPORT_FRESH_FIELDS_ITEM
                 )
                 item.update(item_fields)
                 log.debug(
-                    "Reimported item {}. Preserving flexible attributes {}. "
-                    "Path: {}",
-                    item.id,
+                    "Reimported item {0.id}. Preserving flexible attributes {1}. "
+                    "Path: {0.filepath}",
+                    item,
                     list(item_fields.keys()),
-                    util.displayable_path(item.path),
                 )
                 item.store()
 
@@ -621,14 +615,10 @@ class ImportTask(BaseImportTask):
         """
         for item in self.imported_items():
             for dup_item in self.replaced_items[item]:
-                log.debug(
-                    "Replacing item {0}: {1}",
-                    dup_item.id,
-                    util.displayable_path(item.path),
-                )
+                log.debug("Replacing item {.id}: {.filepath}", dup_item, item)
                 dup_item.remove()
         log.debug(
-            "{0} of {1} items replaced",
+            "{} of {} items replaced",
             sum(bool(v) for v in self.replaced_items.values()),
             len(self.imported_items()),
         )
@@ -747,10 +737,10 @@ class SingletonImportTask(ImportTask):
         for field, view in config["import"]["set_fields"].items():
             value = str(view.get())
             log.debug(
-                "Set field {1}={2} for {0}",
-                util.displayable_path(self.paths),
+                "Set field {}={} for {}",
                 field,
                 value,
+                util.displayable_path(self.paths),
             )
             self.item.set_parse(field, format(self.item, value))
         self.item.store()
@@ -870,7 +860,7 @@ class ArchiveImportTask(SentinelImportTask):
         """Removes the temporary directory the archive was extracted to."""
         if self.extracted and self.toppath:
             log.debug(
-                "Removing extracted directory: {0}",
+                "Removing extracted directory: {}",
                 util.displayable_path(self.toppath),
             )
             shutil.rmtree(util.syspath(self.toppath))
@@ -1002,7 +992,7 @@ class ImportTaskFactory:
         """Return a `SingletonImportTask` for the music file."""
         if self.session.already_imported(self.toppath, [path]):
             log.debug(
-                "Skipping previously-imported path: {0}",
+                "Skipping previously-imported path: {}",
                 util.displayable_path(path),
             )
             self.skipped += 1
@@ -1026,7 +1016,7 @@ class ImportTaskFactory:
 
         if self.session.already_imported(self.toppath, dirs):
             log.debug(
-                "Skipping previously-imported path: {0}",
+                "Skipping previously-imported path: {}",
                 util.displayable_path(dirs),
             )
             self.skipped += 1
@@ -1063,19 +1053,17 @@ class ImportTaskFactory:
             )
             return
 
-        log.debug(
-            "Extracting archive: {0}", util.displayable_path(self.toppath)
-        )
+        log.debug("Extracting archive: {}", util.displayable_path(self.toppath))
         archive_task = ArchiveImportTask(self.toppath)
         try:
             archive_task.extract()
         except Exception as exc:
-            log.error("extraction failed: {0}", exc)
+            log.error("extraction failed: {}", exc)
             return
 
         # Now read albums from the extracted directory.
         self.toppath = archive_task.toppath
-        log.debug("Archive extracted to: {0}", self.toppath)
+        log.debug("Archive extracted to: {.toppath}", self)
         return archive_task
 
     def read_item(self, path: util.PathBytes):
@@ -1091,10 +1079,10 @@ class ImportTaskFactory:
                 # Silently ignore non-music files.
                 pass
             elif isinstance(exc.reason, mediafile.UnreadableFileError):
-                log.warning("unreadable file: {0}", util.displayable_path(path))
+                log.warning("unreadable file: {}", util.displayable_path(path))
             else:
                 log.error(
-                    "error reading {0}: {1}", util.displayable_path(path), exc
+                    "error reading {}: {}", util.displayable_path(path), exc
                 )
 
 

@@ -23,7 +23,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from mediafile import MediaFile
 
-from beets import art, config, logging, ui
+from beets import config, logging, ui
 from beets.test import _common
 from beets.test.helper import (
     BeetsTestCase,
@@ -33,6 +33,7 @@ from beets.test.helper import (
 )
 from beets.util import bytestring_path, displayable_path, syspath
 from beets.util.artresizer import ArtResizer
+from beetsplug._utils import art
 from test.test_art_resize import DummyIMBackend
 
 
@@ -144,9 +145,7 @@ class EmbedartCliTest(IOMixin, PluginMixin, FetchImageHelper, BeetsTestCase):
         if os.path.isfile(syspath(tmp_path)):
             os.remove(syspath(tmp_path))
             self.fail(
-                "Artwork file {} was not deleted".format(
-                    displayable_path(tmp_path)
-                )
+                f"Artwork file {displayable_path(tmp_path)} was not deleted"
             )
 
     def test_art_file_missing(self):
@@ -285,7 +284,7 @@ class DummyArtResizer(ArtResizer):
 
 
 @patch("beets.util.artresizer.subprocess")
-@patch("beets.art.extract")
+@patch("beetsplug._utils.art.extract")
 class ArtSimilarityTest(unittest.TestCase):
     def setUp(self):
         self.item = _common.item()

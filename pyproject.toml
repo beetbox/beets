@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "beets"
-version = "2.3.1"
+version = "2.5.1"
 description = "music tagger and library organizer"
 authors = ["Adrian Sampson <adrian@radbox.org>"]
 maintainers = ["Serene-Arc"]
@@ -21,6 +21,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: Implementation :: CPython",
 ]
 packages = [
@@ -44,12 +45,15 @@ Changelog = "https://github.com/beetbox/beets/blob/master/docs/changelog.rst"
 python = ">=3.9,<4"
 
 colorama = { version = "*", markers = "sys_platform == 'win32'" }
-confuse = ">=1.5.0"
+confuse = ">=2.1.0"
 jellyfish = "*"
 lap = ">=0.5.12"
 mediafile = ">=0.12.0"
 musicbrainzngs = ">=0.4"
-numpy = ">=1.24.4"
+numpy = [
+    { python = "<3.13", version = ">=2.0.2" },
+    { python = ">=3.13", version = ">=2.3.4" },
+]
 platformdirs = ">=3.5.0"
 pyyaml = "*"
 typing_extensions = "*"
@@ -60,7 +64,15 @@ dbus-python = { version = "*", optional = true }
 flask = { version = "*", optional = true }
 flask-cors = { version = "*", optional = true }
 langdetect = { version = "*", optional = true }
-librosa = { version = "^0.10.2.post1", optional = true }
+librosa = { version = ">=0.11", optional = true }
+scipy = [ # for librosa
+    { python = "<3.13", version = ">=1.13.1", optional = true },
+    { python = ">=3.13", version = ">=1.16.1", optional = true },
+]
+numba = [ # for librosa
+    { python = "<3.13", version = ">=0.60", optional = true },
+    { python = ">=3.13", version = ">=0.62.1", optional = true },
+]
 mutagen = { version = ">=1.33", optional = true }
 Pillow = { version = "*", optional = true }
 py7zr = { version = "*", optional = true }
@@ -77,8 +89,11 @@ resampy = { version = ">=0.4.3", optional = true }
 requests-oauthlib = { version = ">=0.6.1", optional = true }
 soco = { version = "*", optional = true }
 
+docutils = { version = ">=0.20.1", optional = true }
 pydata-sphinx-theme = { version = "*", optional = true }
 sphinx = { version = "*", optional = true }
+sphinx-design = { version = ">=0.6.1", optional = true }
+sphinx-copybutton = { version = ">=0.5.2", optional = true }
 
 [tool.poetry.group.test.dependencies]
 beautifulsoup4 = "*"
@@ -100,13 +115,14 @@ requests_oauthlib = "*"
 responses = ">=0.3.0"
 
 [tool.poetry.group.lint.dependencies]
-docstrfmt = ">=1.10.0"
+docstrfmt = ">=1.11.1"
 ruff = ">=0.6.4"
 sphinx-lint = ">=1.0.0"
 
 [tool.poetry.group.typing.dependencies]
 mypy = "*"
 types-beautifulsoup4 = "*"
+types-docutils = ">=0.22.2.20251006"
 types-mock = "*"
 types-Flask-Cors = "*"
 types-Pillow = "*"
@@ -129,7 +145,14 @@ beatport = ["requests-oauthlib"]
 bpd = ["PyGObject"] # gobject-introspection, gstreamer1.0-plugins-base, python3-gst-1.0
 chroma = ["pyacoustid"] # chromaprint or fpcalc
 # convert # ffmpeg
-docs = ["pydata-sphinx-theme", "sphinx", "sphinx-lint"]
+docs = [
+    "docutils",
+    "pydata-sphinx-theme",
+    "sphinx",
+    "sphinx-lint",
+    "sphinx-design",
+    "sphinx-copybutton",
+]
 discogs = ["python3-discogs-client"]
 embedart = ["Pillow"] # ImageMagick
 embyupdate = ["requests"]
@@ -196,7 +219,8 @@ cmd = "mypy"
 
 [tool.poe.tasks.docs]
 help = "Build documentation"
-cmd = "make -C docs html"
+args = [{ name = "COMMANDS", positional = true, multiple = true, default = "html" }]
+cmd = "make -C docs $COMMANDS"
 
 [tool.poe.tasks.format]
 help = "Format the codebase"
@@ -212,7 +236,7 @@ cmd = "ruff check"
 
 [tool.poe.tasks.lint-docs]
 help = "Lint the documentation"
-shell = "sphinx-lint --enable all $(git ls-files '*.rst')"
+shell = "sphinx-lint --enable all --disable default-role $(git ls-files '*.rst')"
 
 [tool.poe.tasks.update-dependencies]
 help = "Update dependencies to their latest versions."
@@ -275,11 +299,15 @@ select = [
     "E", # pycodestyle
     "F", # pyflakes
     # "B", # flake8-bugbear
+    "G", # flake8-logging-format
     "I", # isort
+    "ISC", # flake8-implicit-str-concat
     "N", # pep8-naming
     "PT", # flake8-pytest-style
     # "RUF", # ruff
     # "UP", # pyupgrade
+    "UP031", # do not use percent formatting
+    "UP032", # use f-string instead of format call
     "TCH", # flake8-type-checking
     "W", # pycodestyle
 ]

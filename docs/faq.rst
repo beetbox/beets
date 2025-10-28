@@ -163,7 +163,7 @@ documentation </dev/index>` pages.
 .. _bugs:
 
 …report a bug in beets?
-~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------
 
 We use the `issue tracker`_ on GitHub where you can `open a new ticket`_. Please
 follow these guidelines when reporting an issue:
@@ -171,7 +171,7 @@ follow these guidelines when reporting an issue:
 - Most importantly: if beets is crashing, please `include the traceback
   <https://imgur.com/jacoj>`__. Tracebacks can be more readable if you put them
   in a pastebin (e.g., `Gist <https://gist.github.com/>`__ or `Hastebin
-  <https://hastebin.com/>`__), especially when communicating over IRC or email.
+  <https://hastebin.com/>`__), especially when communicating over IRC.
 - Turn on beets' debug output (using the -v option: for example, ``beet -v
   import ...``) and include that with your bug report. Look through this verbose
   output for any red flags that might point to the problem.
@@ -236,7 +236,9 @@ Why does beets…
 
 There are a number of possibilities:
 
-- First, make sure the album is in `the MusicBrainz database
+- First, make sure you have at least one autotagger extension/plugin enabled.
+  See :ref:`autotagger_extensions` for a list of valid plugins.
+- Check that the album is in `the MusicBrainz database
   <https://musicbrainz.org/>`__. You can search on their site to make sure it's
   cataloged there. (If not, anyone can edit MusicBrainz---so consider adding the
   data yourself.)

@@ -28,6 +28,11 @@ from beets.util import get_temp_filename
 # If this is missing, they're placed at the end.
 ARGS_MARKER = "$args"
 
+# Indicate where the playlist file (with absolute path) should be inserted into
+# the command string. If this is missing, its placed at the end, but before
+# arguments.
+PLS_MARKER = "$playlist"
+
 
 def play(
     command_str,
@@ -43,7 +48,7 @@ def play(
     """
     # Print number of tracks or albums to be played, log command to be run.
     item_type += "s" if len(selection) > 1 else ""
-    ui.print_("Playing {} {}.".format(len(selection), item_type))
+    ui.print_(f"Playing {len(selection)} {item_type}.")
     log.debug("executing command: {} {!r}", command_str, open_args)
 
     try:
@@ -132,7 +137,22 @@ class PlayPlugin(BeetsPlugin):
             return
 
         open_args = self._playlist_or_paths(paths)
+        open_args_str = [
+            p.decode("utf-8") for p in self._playlist_or_paths(paths)
+        ]
         command_str = self._command_str(opts.args)
+
+        if PLS_MARKER in command_str:
+            if not config["play"]["raw"]:
+                command_str = command_str.replace(
+                    PLS_MARKER, "".join(open_args_str)
+                )
+                self._log.debug(
+                    "command altered by PLS_MARKER to: {}", command_str
+                )
+                open_args = []
+            else:
+                command_str = command_str.replace(PLS_MARKER, " ")
 
         # Check if the selection exceeds configured threshold. If True,
         # cancel, otherwise proceed with play command.
@@ -154,7 +174,7 @@ class PlayPlugin(BeetsPlugin):
                 return f"{command_str} {args}"
         else:
             # Don't include the marker in the command.
-            return command_str.replace(" " + ARGS_MARKER, "")
+            return command_str.replace(f" {ARGS_MARKER}", "")
 
     def _playlist_or_paths(self, paths):
         """Return either the raw paths of items or a playlist of the items."""
@@ -162,6 +182,7 @@ class PlayPlugin(BeetsPlugin):
             return paths
         else:
             return [self._create_tmp_playlist(paths)]
+            return [shlex.quote(self._create_tmp_playlist(paths))]
 
     def _exceeds_threshold(
         self, selection, command_str, open_args, item_type="track"
@@ -179,9 +200,7 @@ class PlayPlugin(BeetsPlugin):
             ui.print_(
                 ui.colorize(
                     "text_warning",
-                    "You are about to queue {} {}.".format(
-                        len(selection), item_type
-                    ),
+                    f"You are about to queue {len(selection)} {item_type}.",
                 )
             )
 

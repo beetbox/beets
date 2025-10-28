@@ -58,7 +58,6 @@ from beets.ui.commands import TerminalImportSession
 from beets.util import (
     MoveOperation,
     bytestring_path,
-    cached_classproperty,
     clean_module_tempdir,
     syspath,
 )
@@ -267,7 +266,7 @@ class TestHelper(ConfigMixin):
         The item is attached to the database from `self.lib`.
         """
         values_ = {
-            "title": "t\u00eftle {0}",
+            "title": "t\u00eftle {}",
             "artist": "the \u00e4rtist",
             "album": "the \u00e4lbum",
             "track": 1,
@@ -278,7 +277,7 @@ class TestHelper(ConfigMixin):
         values_["db"] = self.lib
         item = Item(**values_)
         if "path" not in values:
-            item["path"] = "audio." + item["format"].lower()
+            item["path"] = f"audio.{item['format'].lower()}"
         # mtime needs to be set last since other assignments reset it.
         item.mtime = 12345
         return item
@@ -310,7 +309,7 @@ class TestHelper(ConfigMixin):
         item = self.create_item(**values)
         extension = item["format"].lower()
         item["path"] = os.path.join(
-            _common.RSRC, util.bytestring_path("min." + extension)
+            _common.RSRC, util.bytestring_path(f"min.{extension}")
         )
         item.add(self.lib)
         item.move(operation=MoveOperation.COPY)
@@ -325,7 +324,7 @@ class TestHelper(ConfigMixin):
         """Add a number of items with files to the database."""
         # TODO base this on `add_item()`
         items = []
-        path = os.path.join(_common.RSRC, util.bytestring_path("full." + ext))
+        path = os.path.join(_common.RSRC, util.bytestring_path(f"full.{ext}"))
         for i in range(count):
             item = Item.from_path(path)
             item.album = f"\u00e4lbum {i}"  # Check unicode paths
@@ -372,7 +371,7 @@ class TestHelper(ConfigMixin):
         specified extension a cover art image is added to the media
         file.
         """
-        src = os.path.join(_common.RSRC, util.bytestring_path("full." + ext))
+        src = os.path.join(_common.RSRC, util.bytestring_path(f"full.{ext}"))
         handle, path = mkstemp(dir=self.temp_dir)
         path = bytestring_path(path)
         os.close(handle)
@@ -495,7 +494,6 @@ class PluginMixin(ConfigMixin):
         # FIXME this should eventually be handled by a plugin manager
         plugins = (self.plugin,) if hasattr(self, "plugin") else plugins
         self.config["plugins"] = plugins
-        cached_classproperty.cache.clear()
         beets.plugins.load_plugins()
 
     def unload_plugins(self) -> None:
@@ -570,7 +568,7 @@ class ImportHelper(TestHelper):
         medium = MediaFile(track_path)
         medium.update(
             {
-                "album": "Tag Album" + (f" {album_id}" if album_id else ""),
+                "album": f"Tag Album{f' {album_id}' if album_id else ''}",
                 "albumartist": None,
                 "mb_albumid": None,
                 "comp": None,
@@ -831,23 +829,21 @@ class AutotagStub:
 
     def _make_track_match(self, artist, album, number):
         return TrackInfo(
-            title="Applied Track %d" % number,
-            track_id="match %d" % number,
+            title=f"Applied Track {number}",
+            track_id=f"match {number}",
             artist=artist,
             length=1,
             index=0,
         )
 
     def _make_album_match(self, artist, album, tracks, distance=0, missing=0):
-        if distance:
-            id = " " + "M" * distance
-        else:
-            id = ""
+        id = f" {'M' * distance}" if distance else ""
+
         if artist is None:
             artist = "Various Artists"
         else:
-            artist = artist.replace("Tag", "Applied") + id
-        album = album.replace("Tag", "Applied") + id
+            artist = f"{artist.replace('Tag', 'Applied')}{id}"
+        album = f"{album.replace('Tag', 'Applied')}{id}"
 
         track_infos = []
         for i in range(tracks - missing):
@@ -858,8 +854,8 @@ class AutotagStub:
             album=album,
             tracks=track_infos,
             va=False,
-            album_id="albumid" + id,
-            artist_id="artistid" + id,
+            album_id=f"albumid{id}",
+            artist_id=f"artistid{id}",
             albumtype="soundtrack",
             data_source="match_source",
             bandcamp_album_id="bc_url",
@@ -885,7 +881,7 @@ class FetchImageHelper:
         super().run(*args, **kwargs)
 
     IMAGEHEADER: dict[str, bytes] = {
-        "image/jpeg": b"\xff\xd8\xff" + b"\x00" * 3 + b"JFIF",
+        "image/jpeg": b"\xff\xd8\xff\x00\x00\x00JFIF",
         "image/png": b"\211PNG\r\n\032\n",
         "image/gif": b"GIF89a",
         # dummy type that is definitely not a valid image content type

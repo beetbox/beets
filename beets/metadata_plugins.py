@@ -8,11 +8,12 @@ implemented as plugins.
 from __future__ import annotations
 
 import abc
-import inspect
 import re
-import warnings
+from functools import cache, cached_property
 from typing import TYPE_CHECKING, Generic, Literal, Sequence, TypedDict, TypeVar
 
+import unidecode
+from confuse import NotFoundError
 from typing_extensions import NotRequired
 
 from beets.util import cached_classproperty
@@ -23,36 +24,14 @@ from .plugins import BeetsPlugin, find_plugins, notify_info_yielded, send
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from confuse import ConfigView
-
-    from .autotag import Distance
     from .autotag.hooks import AlbumInfo, Item, TrackInfo
 
 
+@cache
 def find_metadata_source_plugins() -> list[MetadataSourcePlugin]:
-    """Returns a list of MetadataSourcePlugin subclass instances
-
-    Resolved from all currently loaded beets plugins.
-    """
-
-    all_plugins = find_plugins()
-    metadata_plugins: list[MetadataSourcePlugin | BeetsPlugin] = []
-    for plugin in all_plugins:
-        if isinstance(plugin, MetadataSourcePlugin):
-            metadata_plugins.append(plugin)
-        elif hasattr(plugin, "data_source"):
-            # TODO: Remove this in the future major release, v3.0.0
-            warnings.warn(
-                f"{plugin.__class__.__name__} is used as a legacy metadata source. "
-                "It should extend MetadataSourcePlugin instead of BeetsPlugin. "
-                "Support for this will be removed in the v3.0.0 release!",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            metadata_plugins.append(plugin)
-
-    # typeignore: BeetsPlugin is not a MetadataSourcePlugin (legacy support)
-    return metadata_plugins  # type: ignore[return-value]
+    """Return a list of all loaded metadata source plugins."""
+    # TODO: Make this an isinstance(MetadataSourcePlugin, ...) check in v3.0.0
+    return [p for p in find_plugins() if hasattr(p, "data_source")]  # type: ignore[misc]
 
 
 @notify_info_yielded("albuminfo_received")
@@ -95,46 +74,17 @@ def track_for_id(_id: str) -> TrackInfo | None:
     return None
 
 
-def track_distance(item: Item, info: TrackInfo) -> Distance:
-    """Returns the track distance for an item and trackinfo.
-
-    Returns a Distance object is populated by all metadata source plugins
-    that implement the :py:meth:`MetadataSourcePlugin.track_distance` method.
-    """
-    from beets.autotag.distance import Distance
-
-    dist = Distance()
-    for plugin in find_metadata_source_plugins():
-        dist.update(plugin.track_distance(item, info))
-    return dist
-
-
-def album_distance(
-    items: Sequence[Item],
-    album_info: AlbumInfo,
-    mapping: dict[Item, TrackInfo],
-) -> Distance:
-    """Returns the album distance calculated by plugins."""
-    from beets.autotag.distance import Distance
-
-    dist = Distance()
-    for plugin in find_metadata_source_plugins():
-        dist.update(plugin.album_distance(items, album_info, mapping))
-    return dist
-
-
-def _get_distance(
-    config: ConfigView, data_source: str, info: AlbumInfo | TrackInfo
-) -> Distance:
-    """Returns the ``data_source`` weight and the maximum source weight
-    for albums or individual tracks.
-    """
-    from beets.autotag.distance import Distance
-
-    dist = Distance()
-    if info.data_source == data_source:
-        dist.add("source", config["source_weight"].as_number())
-    return dist
+@cache
+def get_penalty(data_source: str | None) -> float:
+    """Get the penalty value for the given data source."""
+    return next(
+        (
+            p.data_source_mismatch_penalty
+            for p in find_metadata_source_plugins()
+            if p.data_source == data_source
+        ),
+        MetadataSourcePlugin.DEFAULT_DATA_SOURCE_MISMATCH_PENALTY,
+    )
 
 
 class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
@@ -145,9 +95,31 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
     and tracks, and to retrieve album and track information by ID.
     """
 
+    DEFAULT_DATA_SOURCE_MISMATCH_PENALTY = 0.5
+
+    @cached_classproperty
+    def data_source(cls) -> str:
+        """The data source name for this plugin.
+
+        This is inferred from the plugin name.
+        """
+        return cls.__name__.replace("Plugin", "")  # type: ignore[attr-defined]
+
+    @cached_property
+    def data_source_mismatch_penalty(self) -> float:
+        try:
+            return self.config["source_weight"].as_number()
+        except NotFoundError:
+            return self.config["data_source_mismatch_penalty"].as_number()
+
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.config.add({"source_weight": 0.5})
+        self.config.add(
+            {
+                "search_limit": 5,
+                "data_source_mismatch_penalty": self.DEFAULT_DATA_SOURCE_MISMATCH_PENALTY,  # noqa: E501
+            }
+        )
 
     @abc.abstractmethod
     def album_for_id(self, album_id: str) -> AlbumInfo | None:
@@ -219,35 +191,6 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
 
         return (self.track_for_id(id) for id in ids)
 
-    def album_distance(
-        self,
-        items: Sequence[Item],
-        album_info: AlbumInfo,
-        mapping: dict[Item, TrackInfo],
-    ) -> Distance:
-        """Calculate the distance for an album based on its items and album info."""
-        return _get_distance(
-            data_source=self.data_source, info=album_info, config=self.config
-        )
-
-    def track_distance(
-        self,
-        item: Item,
-        info: TrackInfo,
-    ) -> Distance:
-        """Calculate the distance for a track based on its item and track info."""
-        return _get_distance(
-            data_source=self.data_source, info=info, config=self.config
-        )
-
-    @cached_classproperty
-    def data_source(cls) -> str:
-        """The data source name for this plugin.
-
-        This is inferred from the plugin name.
-        """
-        return cls.__name__.replace("Plugin", "")  # type: ignore[attr-defined]
-
     def _extract_id(self, url: str) -> str | None:
         """Extract an ID from a URL for this metadata source plugin.
 
@@ -266,10 +209,9 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
         """Returns an artist string (all artists) and an artist_id (the main
         artist) for a list of artist object dicts.
 
-        For each artist, this function moves articles (such as 'a', 'an',
-        and 'the') to the front and strips trailing disambiguation numbers. It
-        returns a tuple containing the comma-separated string of all
-        normalized artists and the ``id`` of the main/first artist.
+        For each artist, this function moves articles (such as 'a', 'an', and 'the')
+        to the front. It returns a tuple containing the comma-separated string
+        of all normalized artists and the ``id`` of the main/first artist.
         Alternatively a keyword can be used to combine artists together into a
         single string by passing the join_key argument.
 
@@ -293,8 +235,6 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
             if not artist_id:
                 artist_id = artist[id_key]
             name = artist[name_key]
-            # Strip disambiguation number.
-            name = re.sub(r" \(\d+\)$", "", name)
             # Move articles to the front.
             name = re.sub(r"^(.*?), (a|an|the)$", r"\2 \1", name, flags=re.I)
             # Use a join keyword if requested and available.
@@ -334,18 +274,26 @@ class SearchApiMetadataSourcePlugin(
     of identifiers for the requested type (album or track).
     """
 
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.config.add(
+            {
+                "search_query_ascii": False,
+            }
+        )
+
     @abc.abstractmethod
     def _search_api(
         self,
         query_type: Literal["album", "track"],
         filters: SearchFilter,
-        keywords: str = "",
+        query_string: str = "",
     ) -> Sequence[R]:
         """Perform a search on the API.
 
         :param query_type: The type of query to perform.
         :param filters: A dictionary of filters to apply to the search.
-        :param keywords: Additional keywords to include in the search.
+        :param query_string: Additional query to include in the search.
 
         Should return a list of identifiers for the requested type (album or track).
         """
@@ -358,7 +306,9 @@ class SearchApiMetadataSourcePlugin(
         album: str,
         va_likely: bool,
     ) -> Iterable[AlbumInfo]:
-        query_filters: SearchFilter = {"album": album}
+        query_filters: SearchFilter = {}
+        if album:
+            query_filters["album"] = album
         if not va_likely:
             query_filters["artist"] = artist
 
@@ -373,7 +323,9 @@ class SearchApiMetadataSourcePlugin(
     def item_candidates(
         self, item: Item, artist: str, title: str
     ) -> Iterable[TrackInfo]:
-        results = self._search_api("track", {"artist": artist}, keywords=title)
+        results = self._search_api(
+            "track", {"artist": artist}, query_string=title
+        )
         if not results:
             return []
 
@@ -382,12 +334,26 @@ class SearchApiMetadataSourcePlugin(
             self.tracks_for_ids([result["id"] for result in results if result]),
         )
 
+    def _construct_search_query(
+        self, filters: SearchFilter, query_string: str
+    ) -> str:
+        """Construct a query string with the specified filters and keywords to
+        be provided to the spotify (or similar) search API.
 
-# Dynamically copy methods to BeetsPlugin for legacy support
-# TODO: Remove this in the future major release, v3.0.0
+        The returned format was initially designed for spotify's search API but
+        we found is also useful with other APIs that support similar query structures.
+        see `spotify <https://developer.spotify.com/documentation/web-api/reference/search>`_
+        and `deezer <https://developers.deezer.com/api/search>`_.
 
-for name, method in inspect.getmembers(
-    MetadataSourcePlugin, predicate=inspect.isfunction
-):
-    if not hasattr(BeetsPlugin, name):
-        setattr(BeetsPlugin, name, method)
+        :param filters: Field filters to apply.
+        :param query_string: Query keywords to use.
+        :return: Query string to be provided to the search API.
+        """
+
+        components = [query_string, *(f"{k}:'{v}'" for k, v in filters.items())]
+        query = " ".join(filter(None, components))
+
+        if self.config["search_query_ascii"].get():
+            query = unidecode.unidecode(query)
+
+        return query
