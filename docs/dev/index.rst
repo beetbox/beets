@@ -18,6 +18,7 @@ configuration files, respectively.
 
     plugins/index
     library
+    paths
     importer
     cli
     ../api/index
