@@ -639,13 +639,13 @@ files = [
 
 [[package]]
 name = "confuse"
-version = "2.0.1"
-description = "Painless YAML configuration."
+version = "2.1.0"
+description = "Painless YAML config files"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.9"
 files = [
-    {file = "confuse-2.0.1-py3-none-any.whl", hash = "sha256:9b9e5bbc70e2cb9b318bcab14d917ec88e21bf1b724365e3815eb16e37aabd2a"},
-    {file = "confuse-2.0.1.tar.gz", hash = "sha256:7379a2ad49aaa862b79600cc070260c1b7974d349f4fa5e01f9afa6c4dd0611f"},
+    {file = "confuse-2.1.0-py3-none-any.whl", hash = "sha256:502be1299aa6bf7c48f7719f56795720c073fb28550c0c7a37394366c9d30316"},
+    {file = "confuse-2.1.0.tar.gz", hash = "sha256:abb9674a99c7a6efaef84e2fc84403ecd2dd304503073ff76ea18ed4176e218d"},
 ]
 
 [package.dependencies]
@@ -4022,4 +4022,4 @@ web = ["flask", "flask-cors"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "d3a1dc19299b117259ac790773ebef872a0b5a2e318b8a36da0918f3bbc54fb8"
+content-hash = "be135ccdcad615804f5fc96290d5d8e6ad51a244599356133c2b68bb030f640f"
