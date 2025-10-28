@@ -26,6 +26,10 @@ For packagers:
 
 Other changes:
 
+- The documentation chapter :doc:`dev/paths` has been moved to the "For
+  Developers" section and revised to reflect current best practices (pathlib
+  usage).
+
 2.5.1 (October 14, 2025)
 ------------------------
 
