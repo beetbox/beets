@@ -8,12 +8,12 @@ titlecase guidelines in the `New York Times Manual of Style`_ and uses the
 Motivation for this plugin comes from a desire to resolve differences in style
 between databases sources. For example, `MusicBrainz style`_ follows standard
 title case rules, except in the case of terms that are deemed generic, like
-"mix" and "remix". On the other hand, `Discogs guidlines`_ recommend
+"mix" and "remix". On the other hand, `Discogs guidelines`_ recommend
 capitalizing the first letter of each word, even for small words like "of" and
 "a". This plugin aims to achieve a middle ground between disparate approaches to
 casing, and bring more consistency to titles in your library.
 
-.. _discogs style: https://support.discogs.com/hc/en-us/articles/360005006334-Database-Guidelines-1-General-Rules#Capitalization_And_Grammar
+.. _discogs guidelines: https://support.discogs.com/hc/en-us/articles/360005006334-Database-Guidelines-1-General-Rules#Capitalization_And_Grammar
 
 .. _musicbrainz style: https://musicbrainz.org/doc/Style
 

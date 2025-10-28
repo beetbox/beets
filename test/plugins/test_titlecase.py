@@ -70,10 +70,14 @@ titlecase_test_cases = [
     {
         "config": {
             "preserve": [""],
-            "fields": ["artist", "albumartist",
+            "fields": [
+                "artist",
+                "albumartist",
                 "title",
                 "album",
-                "mb_albumd", "year"],
+                "mb_albumd",
+                "year",
+            ],
             "force_lowercase": True,
             "small_first_last": True,
         },
@@ -97,25 +101,21 @@ titlecase_test_cases = [
     {
         "config": {
             "preserve": [""],
-            "fields": [
-                "artists",
-                "artists_ids",
-                "discogs_artistid"
-                ],
+            "fields": ["artists", "artists_ids", "discogs_artistid"],
             "force_lowercase": False,
             "small_first_last": True,
         },
         "item": Item(
             artists=["artist_one", "artist_two"],
             artists_ids=["aBcDeF32", "aBcDeF12"],
-            discogs_artistid=21
+            discogs_artistid=21,
         ),
         "expected": Item(
             artists=["Artist_One", "Artist_Two"],
             artists_ids=["aBcDeF32", "aBcDeF12"],
-            discogs_artistid=21
+            discogs_artistid=21,
         ),
-    }
+    },
 ]
 
 
@@ -195,4 +195,4 @@ class TitlecasePluginTest(PluginTestCase):
                     output
                     == f"{expected.artist} - {expected.album} - {expected.title}\n"
                 )
-                self.run_command(f"remove", expected.artist, "-f")
+                self.run_command("remove", expected.artist, "-f")

@@ -17,7 +17,7 @@ Title case logic is derived from the python-titlecase library.
 Provides a template function and a tag modification function."""
 
 import re
-from typing import Pattern, Optional
+from typing import Optional, Pattern
 
 from titlecase import titlecase
 
@@ -33,34 +33,34 @@ __version__ = "1.0"
 # that may be case sensistive, or important to database
 # function
 EXCLUDED_INFO_FIELDS: set[str] = {
-        "acoustid_fingerprint",
-        "acoustid_id",
-        "artists_ids",
-        "asin",
-        "deezer_track_id",
-        "format",
-        "id",
-        "isrc",
-        "mb_workid",
-        "mb_trackid",
-        "mb_albumid",
-        "mb_artistid",
-        "mb_artistids",
-        "mb_albumartistid",
-        "mb_albumartistids",
-        "mb_releasetrackid",
-        "mb_releasegroupid",
-        "bitrate_mode",
-        "encoder_info",
-        "encoder_settings",
-        }
+    "acoustid_fingerprint",
+    "acoustid_id",
+    "artists_ids",
+    "asin",
+    "deezer_track_id",
+    "format",
+    "id",
+    "isrc",
+    "mb_workid",
+    "mb_trackid",
+    "mb_albumid",
+    "mb_artistid",
+    "mb_artistids",
+    "mb_albumartistid",
+    "mb_albumartistids",
+    "mb_releasetrackid",
+    "mb_releasegroupid",
+    "bitrate_mode",
+    "encoder_info",
+    "encoder_settings",
+}
 
 
 class TitlecasePlugin(BeetsPlugin):
     preserve: dict[str, str] = {}
     preserve_phrases: dict[str, Pattern[str]] = {}
     force_lowercase: bool = True
-    fields_to_process: set[str] = {}
+    fields_to_process: set[str]
 
     def __init__(self) -> None:
         super().__init__()
@@ -150,10 +150,18 @@ class TitlecasePlugin(BeetsPlugin):
         for field in self.fields_to_process:
             init_field = getattr(item, field, "")
             if init_field:
-                if isinstance(init_field, list) and isinstance(init_field[0], str):
-                    cased_list: list[str] = [self.titlecase(i) for i in init_field]
-                    self._log.info((f"{field}: {', '.join(init_field)} -> " 
-                                    f"{', '.join(cased_list)}"))
+                if isinstance(init_field, list) and isinstance(
+                    init_field[0], str
+                ):
+                    cased_list: list[str] = [
+                        self.titlecase(i) for i in init_field
+                    ]
+                    self._log.info(
+                        (
+                            f"{field}: {', '.join(init_field)} -> "
+                            f"{', '.join(cased_list)}"
+                        )
+                    )
                     setattr(item, field, cased_list)
                 elif isinstance(init_field, str):
                     cased: str = self.titlecase(init_field)
