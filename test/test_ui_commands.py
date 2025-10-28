@@ -21,7 +21,7 @@ import pytest
 
 from beets import library, ui
 from beets.test import _common
-from beets.test.helper import BeetsTestCase, ItemInDBTestCase
+from beets.test.helper import BeetsTestCase, IOMixin, ItemInDBTestCase
 from beets.ui import commands
 from beets.util import syspath
 
@@ -75,16 +75,7 @@ class QueryTest(BeetsTestCase):
         self.check_do_query(0, 2, album=True, also_items=False)
 
 
-class FieldsTest(ItemInDBTestCase):
-    def setUp(self):
-        super().setUp()
-
-        self.io.install()
-
-    def tearDown(self):
-        super().tearDown()
-        self.io.restore()
-
+class FieldsTest(IOMixin, ItemInDBTestCase):
     def remove_keys(self, keys, text):
         for i in text:
             try:

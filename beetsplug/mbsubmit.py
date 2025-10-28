@@ -73,7 +73,7 @@ class MBSubmitPlugin(BeetsPlugin):
             subprocess.Popen([picard_path] + paths)
             self._log.info("launched picard from\n{}", picard_path)
         except OSError as exc:
-            self._log.error(f"Could not open picard, got error:\n{exc}")
+            self._log.error("Could not open picard, got error:\n{}", exc)
 
     def print_tracks(self, session, task):
         for i in sorted(task.items, key=lambda i: i.track):
@@ -86,7 +86,7 @@ class MBSubmitPlugin(BeetsPlugin):
         )
 
         def func(lib, opts, args):
-            items = lib.items(ui.decargs(args))
+            items = lib.items(args)
             self._mbsubmit(items)
 
         mbsubmit_cmd.func = func

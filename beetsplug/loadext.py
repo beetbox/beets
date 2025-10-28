@@ -25,7 +25,7 @@ class LoadExtPlugin(BeetsPlugin):
         super().__init__()
 
         if not Database.supports_extensions:
-            self._log.warn(
+            self._log.warning(
                 "loadext is enabled but the current SQLite "
                 "installation does not support extensions"
             )

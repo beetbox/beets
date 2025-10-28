@@ -14,19 +14,15 @@
 
 """Tests for BPD's implementation of the MPD protocol."""
 
-import importlib.util
 import multiprocessing as mp
 import os
 import socket
-import sys
 import tempfile
 import threading
 import time
 import unittest
 from contextlib import contextmanager
-
-# Mock GstPlayer so that the forked process doesn't attempt to import gi:
-from unittest import mock
+from unittest.mock import MagicMock, patch
 
 import confuse
 import pytest
@@ -34,43 +30,8 @@ import yaml
 
 from beets.test.helper import PluginTestCase
 from beets.util import bluelet
-from beetsplug import bpd
 
-gstplayer = importlib.util.module_from_spec(
-    importlib.util.find_spec("beetsplug.bpd.gstplayer")
-)
-
-
-def _gstplayer_play(*_):
-    bpd.gstplayer._GstPlayer.playing = True
-    return mock.DEFAULT
-
-
-gstplayer._GstPlayer = mock.MagicMock(
-    spec_set=[
-        "time",
-        "volume",
-        "playing",
-        "run",
-        "play_file",
-        "pause",
-        "stop",
-        "seek",
-        "play",
-        "get_decoders",
-    ],
-    **{
-        "playing": False,
-        "volume": 0,
-        "time.return_value": (0, 0),
-        "play_file.side_effect": _gstplayer_play,
-        "play.side_effect": _gstplayer_play,
-        "get_decoders.return_value": {"default": ({"audio/mpeg"}, {"mp3"})},
-    },
-)
-gstplayer.GstPlayer = lambda _: gstplayer._GstPlayer
-sys.modules["beetsplug.bpd.gstplayer"] = gstplayer
-bpd.gstplayer = gstplayer
+bpd = pytest.importorskip("beetsplug.bpd")
 
 
 class CommandParseTest(unittest.TestCase):
@@ -256,7 +217,7 @@ def implements(commands, fail=False):
 bluelet_listener = bluelet.Listener
 
 
-@mock.patch("beets.util.bluelet.Listener")
+@patch("beets.util.bluelet.Listener")
 def start_server(args, assigned_port, listener_patch):
     """Start the bpd server, writing the port to `assigned_port`."""
 
@@ -311,7 +272,7 @@ class BPDTestHelper(PluginTestCase):
         """
         # Create a config file:
         config = {
-            "pluginpath": [os.fsdecode(self.temp_dir)],
+            "pluginpath": [str(self.temp_dir_path)],
             "plugins": "bpd",
             # use port 0 to let the OS choose a free port
             "bpd": {"host": host, "port": 0, "control_port": 0},
@@ -320,7 +281,7 @@ class BPDTestHelper(PluginTestCase):
             config["bpd"]["password"] = password
         config_file = tempfile.NamedTemporaryFile(
             mode="wb",
-            dir=os.fsdecode(self.temp_dir),
+            dir=str(self.temp_dir_path),
             suffix=".yaml",
             delete=False,
         )
@@ -938,7 +899,7 @@ class BPDPlaylistsTest(BPDTestHelper):
             response = client.send_command("load", "anything")
         self._assert_failed(response, bpd.ERROR_NO_EXIST)
 
-    @unittest.skip
+    @unittest.expectedFailure
     def test_cmd_playlistadd(self):
         with self.run_bpd() as client:
             self._bpd_add(client, self.item1, playlist="anything")
@@ -1128,7 +1089,7 @@ class BPDConnectionTest(BPDTestHelper):
         self._assert_ok(response)
         assert self.TAGTYPES == set(response.data["tagtype"])
 
-    @unittest.skip
+    @unittest.expectedFailure
     def test_tagtypes_mask(self):
         with self.run_bpd() as client:
             response = client.send_command("tagtypes", "clear")
@@ -1169,6 +1130,10 @@ class BPDReflectionTest(BPDTestHelper):
         fail=True,
     )
 
+    @patch(
+        "beetsplug.bpd.gstplayer.GstPlayer.get_decoders",
+        MagicMock(return_value={"default": ({"audio/mpeg"}, {"mp3"})}),
+    )
     def test_cmd_decoders(self):
         with self.run_bpd() as client:
             response = client.send_command("decoders")

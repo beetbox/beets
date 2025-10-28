@@ -16,9 +16,9 @@
 
 from collections.abc import Sequence
 
-from beets.autotag.mb import VARIOUS_ARTISTS_ID
 from beets.test.helper import PluginTestCase
 from beetsplug.albumtypes import AlbumTypesPlugin
+from beetsplug.musicbrainz import VARIOUS_ARTISTS_ID
 
 
 class AlbumTypesPluginTest(PluginTestCase):

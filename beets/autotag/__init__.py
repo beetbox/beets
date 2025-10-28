@@ -14,36 +14,54 @@
 
 """Facilities for automatically determining files' correct metadata."""
 
-from collections.abc import Mapping, Sequence
-from typing import Union
+from __future__ import annotations
+
+import warnings
+from importlib import import_module
+from typing import TYPE_CHECKING, Union
 
 from beets import config, logging
-from beets.library import Album, Item, LibModel
 
 # Parts of external interface.
 from beets.util import unique_list
 
-from .hooks import AlbumInfo, AlbumMatch, Distance, TrackInfo, TrackMatch
-from .match import (
-    Proposal,
-    Recommendation,
-    current_metadata,
-    tag_album,
-    tag_item,
-)
+from ..util import deprecate_imports
+from .hooks import AlbumInfo, AlbumMatch, TrackInfo, TrackMatch
+from .match import Proposal, Recommendation, tag_album, tag_item
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping, Sequence
+
+    from beets.library import Album, Item, LibModel
+
+
+def __getattr__(name: str):
+    if name == "current_metadata":
+        warnings.warn(
+            (
+                f"'beets.autotag.{name}' is deprecated and will be removed in"
+                " 3.0.0. Use 'beets.util.get_most_common_tags' instead."
+            ),
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return import_module("beets.util").get_most_common_tags
+
+    return deprecate_imports(
+        __name__, {"Distance": "beets.autotag.distance"}, name, "3.0.0"
+    )
+
 
 __all__ = [
     "AlbumInfo",
     "AlbumMatch",
-    "Distance",
-    "TrackInfo",
-    "TrackMatch",
     "Proposal",
     "Recommendation",
+    "TrackInfo",
+    "TrackMatch",
     "apply_album_metadata",
     "apply_item_metadata",
     "apply_metadata",
-    "current_metadata",
     "tag_album",
     "tag_item",
 ]
@@ -243,7 +261,7 @@ def apply_metadata(album_info: AlbumInfo, mapping: Mapping[Item, TrackInfo]):
                 continue
 
             for suffix in "year", "month", "day":
-                key = prefix + suffix
+                key = f"{prefix}{suffix}"
                 value = getattr(album_info, key) or 0
 
                 # If we don't even have a year, apply nothing.

@@ -20,11 +20,12 @@ from mimetypes import guess_extension
 
 import requests
 
-from beets import art, config, ui
+from beets import config, ui
 from beets.plugins import BeetsPlugin
-from beets.ui import decargs, print_
+from beets.ui import print_
 from beets.util import bytestring_path, displayable_path, normpath, syspath
 from beets.util.artresizer import ArtResizer
+from beetsplug._utils import art
 
 
 def _confirm(objs, album):
@@ -35,8 +36,9 @@ def _confirm(objs, album):
     to items).
     """
     noun = "album" if album else "file"
-    prompt = "Modify artwork for {} {}{} (Y/n)?".format(
-        len(objs), noun, "s" if len(objs) > 1 else ""
+    prompt = (
+        "Modify artwork for"
+        f" {len(objs)} {noun}{'s' if len(objs) > 1 else ''} (Y/n)?"
     )
 
     # Show all the items or albums.
@@ -66,7 +68,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         if self.config["maxwidth"].get(int) and not ArtResizer.shared.local:
             self.config["maxwidth"] = 0
             self._log.warning(
-                "ImageMagick or PIL not found; " "'maxwidth' option ignored"
+                "ImageMagick or PIL not found; 'maxwidth' option ignored"
             )
         if (
             self.config["compare_threshold"].get(int)
@@ -110,12 +112,10 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 imagepath = normpath(opts.file)
                 if not os.path.isfile(syspath(imagepath)):
                     raise ui.UserError(
-                        "image file {} not found".format(
-                            displayable_path(imagepath)
-                        )
+                        f"image file {displayable_path(imagepath)} not found"
                     )
 
-                items = lib.items(decargs(args))
+                items = lib.items(args)
 
                 # Confirm with user.
                 if not opts.yes and not _confirm(items, not opts.file):
@@ -137,7 +137,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                     response = requests.get(opts.url, timeout=5)
                     response.raise_for_status()
                 except requests.exceptions.RequestException as e:
-                    self._log.error("{}".format(e))
+                    self._log.error("{}", e)
                     return
                 extension = guess_extension(response.headers["Content-Type"])
                 if extension is None:
@@ -149,9 +149,9 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                     with open(tempimg, "wb") as f:
                         f.write(response.content)
                 except Exception as e:
-                    self._log.error("Unable to save image: {}".format(e))
+                    self._log.error("Unable to save image: {}", e)
                     return
-                items = lib.items(decargs(args))
+                items = lib.items(args)
                 # Confirm with user.
                 if not opts.yes and not _confirm(items, not opts.url):
                     os.remove(tempimg)
@@ -169,7 +169,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                     )
                 os.remove(tempimg)
             else:
-                albums = lib.albums(decargs(args))
+                albums = lib.albums(args)
                 # Confirm with user.
                 if not opts.yes and not _confirm(albums, not opts.file):
                     return
@@ -212,7 +212,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         def extract_func(lib, opts, args):
             if opts.outpath:
                 art.extract_first(
-                    self._log, normpath(opts.outpath), lib.items(decargs(args))
+                    self._log, normpath(opts.outpath), lib.items(args)
                 )
             else:
                 filename = bytestring_path(
@@ -223,7 +223,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                         "Only specify a name rather than a path for -n"
                     )
                     return
-                for album in lib.albums(decargs(args)):
+                for album in lib.albums(args):
                     artpath = normpath(os.path.join(album.path, filename))
                     artpath = art.extract_first(
                         self._log, artpath, album.items()
@@ -244,11 +244,11 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         )
 
         def clear_func(lib, opts, args):
-            items = lib.items(decargs(args))
+            items = lib.items(args)
             # Confirm with user.
             if not opts.yes and not _confirm(items, False):
                 return
-            art.clear(self._log, lib, decargs(args))
+            art.clear(self._log, lib, args)
 
         clear_cmd.func = clear_func
 
@@ -274,7 +274,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         """
         if self.config["remove_art_file"] and album.artpath:
             if os.path.isfile(syspath(album.artpath)):
-                self._log.debug("Removing album art file for {0}", album)
+                self._log.debug("Removing album art file for {}", album)
                 os.remove(syspath(album.artpath))
                 album.artpath = None
                 album.store()

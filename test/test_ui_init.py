@@ -16,19 +16,16 @@
 
 import os
 import shutil
+import unittest
 from copy import deepcopy
 from random import random
 
 from beets import config, ui
 from beets.test import _common
-from beets.test.helper import BeetsTestCase, ItemInDBTestCase, control_stdin
+from beets.test.helper import BeetsTestCase, IOMixin, control_stdin
 
 
-class InputMethodsTest(BeetsTestCase):
-    def setUp(self):
-        super().setUp()
-        self.io.install()
-
+class InputMethodsTest(IOMixin, unittest.TestCase):
     def _print_helper(self, s):
         print(s)
 
@@ -86,42 +83,6 @@ class InputMethodsTest(BeetsTestCase):
             "Prompt", full_items, self._print_helper
         )
         assert items == ["1", "3"]
-
-
-class InitTest(ItemInDBTestCase):
-    def test_human_bytes(self):
-        tests = [
-            (0, "0.0 B"),
-            (30, "30.0 B"),
-            (pow(2, 10), "1.0 KiB"),
-            (pow(2, 20), "1.0 MiB"),
-            (pow(2, 30), "1.0 GiB"),
-            (pow(2, 40), "1.0 TiB"),
-            (pow(2, 50), "1.0 PiB"),
-            (pow(2, 60), "1.0 EiB"),
-            (pow(2, 70), "1.0 ZiB"),
-            (pow(2, 80), "1.0 YiB"),
-            (pow(2, 90), "1.0 HiB"),
-            (pow(2, 100), "big"),
-        ]
-        for i, h in tests:
-            assert h == ui.human_bytes(i)
-
-    def test_human_seconds(self):
-        tests = [
-            (0, "0.0 seconds"),
-            (30, "30.0 seconds"),
-            (60, "1.0 minutes"),
-            (90, "1.5 minutes"),
-            (125, "2.1 minutes"),
-            (3600, "1.0 hours"),
-            (86400, "1.0 days"),
-            (604800, "1.0 weeks"),
-            (31449600, "1.0 years"),
-            (314496000, "1.0 decades"),
-        ]
-        for i, h in tests:
-            assert h == ui.human_seconds(i)
 
 
 class ParentalDirCreation(BeetsTestCase):
