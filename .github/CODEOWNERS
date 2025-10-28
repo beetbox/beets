@@ -1,0 +1,5 @@
+# assign the entire repo to the maintainers team
+* @beetbox/maintainers
+
+# Specific ownerships:
+/beets/metadata_plugins.py @semohr

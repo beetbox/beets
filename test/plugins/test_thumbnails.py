@@ -100,12 +100,10 @@ class ThumbnailsTest(BeetsTestCase):
 
     @patch("beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok", Mock())
     @patch("beetsplug.thumbnails.ArtResizer")
-    @patch("beetsplug.thumbnails.util")
+    @patch("beets.util.syspath", Mock(side_effect=lambda x: x))
     @patch("beetsplug.thumbnails.os")
     @patch("beetsplug.thumbnails.shutil")
-    def test_make_cover_thumbnail(
-        self, mock_shutils, mock_os, mock_util, mock_artresizer
-    ):
+    def test_make_cover_thumbnail(self, mock_shutils, mock_os, mock_artresizer):
         thumbnail_dir = os.path.normpath(b"/thumbnail/dir")
         md5_file = os.path.join(thumbnail_dir, b"md5")
         path_to_art = os.path.normpath(b"/path/to/art")
@@ -116,7 +114,6 @@ class ThumbnailsTest(BeetsTestCase):
         plugin.add_tags = Mock()
 
         album = Mock(artpath=path_to_art)
-        mock_util.syspath.side_effect = lambda x: x
         plugin.thumbnail_file_name = Mock(return_value=b"md5")
         mock_os.path.exists.return_value = False
 
@@ -235,8 +232,7 @@ class ThumbnailsTest(BeetsTestCase):
         )
 
     @patch("beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok", Mock())
-    @patch("beetsplug.thumbnails.decargs")
-    def test_invokations(self, mock_decargs):
+    def test_invokations(self):
         plugin = ThumbnailsPlugin()
         plugin.process_album = Mock()
         album = Mock()
@@ -246,7 +242,6 @@ class ThumbnailsTest(BeetsTestCase):
         album2 = Mock()
         lib.albums.return_value = [album, album2]
         plugin.process_query(lib, Mock(), None)
-        lib.albums.assert_called_once_with(mock_decargs.return_value)
         plugin.process_album.assert_has_calls(
             [call(album), call(album2)], any_order=True
         )
@@ -265,7 +260,10 @@ class ThumbnailsTest(BeetsTestCase):
         if not gio.available:
             self.skipTest("GIO library not found")
 
-        assert gio.uri("/foo") == "file:///"  # silent fail
+        import ctypes
+
+        with pytest.raises(ctypes.ArgumentError):
+            gio.uri("/foo")
         assert gio.uri(b"/foo") == "file:///foo"
         assert gio.uri(b"/foo!") == "file:///foo!"
         assert (

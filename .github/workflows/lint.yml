@@ -6,6 +6,11 @@ on:
     branches:
       - master
 
+concurrency:
+  # Cancel previous workflow run when a new commit is pushed to a feature branch
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 env:
   PYTHON_VERSION: 3.9
 
@@ -19,16 +24,16 @@ jobs:
       changed_doc_files: ${{ steps.changed-doc-files.outputs.all_changed_files }}
       changed_python_files: ${{ steps.changed-python-files.outputs.all_changed_files }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Get changed docs files
         id: changed-doc-files
-        uses: tj-actions/changed-files@v44
+        uses: tj-actions/changed-files@v46
         with:
           files: |
             docs/**
       - name: Get changed python files
         id: raw-changed-python-files
-        uses: tj-actions/changed-files@v44
+        uses: tj-actions/changed-files@v46
         with:
           files: |
             **.py
@@ -51,10 +56,10 @@ jobs:
     name: Check formatting
     needs: changed-files
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install Python tools
-        uses: BrandonLWhite/pipx-install-action@v0.1.1
-      - uses: actions/setup-python@v5
+        uses: BrandonLWhite/pipx-install-action@v1.0.3
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: poetry
@@ -72,10 +77,10 @@ jobs:
     name: Check linting
     needs: changed-files
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install Python tools
-        uses: BrandonLWhite/pipx-install-action@v0.1.1
-      - uses: actions/setup-python@v5
+        uses: BrandonLWhite/pipx-install-action@v1.0.3
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: poetry
@@ -92,10 +97,10 @@ jobs:
     name: Check types with mypy
     needs: changed-files
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install Python tools
-        uses: BrandonLWhite/pipx-install-action@v0.1.1
-      - uses: actions/setup-python@v5
+        uses: BrandonLWhite/pipx-install-action@v1.0.3
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: poetry
@@ -105,10 +110,9 @@ jobs:
 
       - name: Type check code
         uses: liskin/gh-problem-matcher-wrap@v3
-        continue-on-error: true
         with:
           linters: mypy
-          run: poe check-types --show-column-numbers --no-error-summary ${{ needs.changed-files.outputs.changed_python_files }}
+          run: poe check-types --show-column-numbers --no-error-summary .
 
   docs:
     if: needs.changed-files.outputs.any_docs_changed == 'true'
@@ -116,10 +120,10 @@ jobs:
     name: Check docs
     needs: changed-files
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install Python tools
-        uses: BrandonLWhite/pipx-install-action@v0.1.1
-      - uses: actions/setup-python@v5
+        uses: BrandonLWhite/pipx-install-action@v1.0.3
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: poetry
@@ -127,11 +131,16 @@ jobs:
       - name: Install dependencies
         run: poetry install --extras=docs
 
-      - name: Add Sphinx problem matcher
-        run: echo "::add-matcher::.github/sphinx-problem-matcher.json"
+      - name: Add Sphinx problem matchers
+        run: |
+          echo "::add-matcher::.github/problem-matchers/sphinx-build.json"
+          echo "::add-matcher::.github/problem-matchers/sphinx-lint.json"
+
+      - name: Check docs formatting
+        run: poe format-docs --check
+
+      - name: Lint docs
+        run: poe lint-docs
 
       - name: Build docs
-        run: |-
-          poe docs |& tee /tmp/output
-          # fail the job if there are issues
-          grep -q " WARNING:" /tmp/output && exit 1 || exit 0
+        run: poe docs -- -e 'SPHINXOPTS=--fail-on-warning --keep-going'

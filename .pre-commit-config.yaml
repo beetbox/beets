@@ -2,7 +2,17 @@
 # See https://pre-commit.com/hooks.html for more hooks
 
 repos:
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.1
+  - repo: local
     hooks:
-      - id: ruff-format
+      - id: format
+        name: Format Python files
+        entry: poe format
+        language: system
+        files: '.*.py'
+        pass_filenames: true
+      - id: format-docs
+        name: Format docs
+        entry: poe format-docs
+        language: system
+        files: '.*.rst'
+        pass_filenames: true

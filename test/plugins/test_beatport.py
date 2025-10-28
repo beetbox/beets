@@ -14,6 +14,7 @@
 
 """Tests for the 'beatport' plugin."""
 
+import unittest
 from datetime import timedelta
 
 from beets.test import _common
@@ -585,7 +586,7 @@ class BeatportTest(BeetsTestCase):
             assert track.genre == test_track.genre
 
 
-class BeatportResponseEmptyTest(BeetsTestCase):
+class BeatportResponseEmptyTest(unittest.TestCase):
     def _make_tracks_response(self):
         results = [
             {
