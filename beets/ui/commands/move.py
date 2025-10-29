@@ -11,7 +11,7 @@ from beets.util import (
     syspath,
 )
 
-from ._utils import do_query
+from .utils import do_query
 
 # Global logger.
 log = logging.getLogger("beets")

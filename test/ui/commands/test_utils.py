@@ -6,7 +6,7 @@ import pytest
 from beets import library, ui
 from beets.test import _common
 from beets.test.helper import BeetsTestCase
-from beets.ui.commands._utils import do_query
+from beets.ui.commands.utils import do_query
 from beets.util import syspath
 
 
