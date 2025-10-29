@@ -9,8 +9,7 @@ from beets import autotag, config, library, ui
 from beets.autotag.match import distance
 from beets.test import _common
 from beets.test.helper import BeetsTestCase, IOMixin
-from beets.ui.commands._utils import paths_from_logfile
-from beets.ui.commands.import_ import import_files
+from beets.ui.commands.import_ import import_files, paths_from_logfile
 from beets.ui.commands.import_.display import show_change
 from beets.ui.commands.import_.session import summarize_items
 

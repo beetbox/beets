@@ -5,11 +5,45 @@ import os
 from beets import config, logging, plugins, ui
 from beets.util import displayable_path, normpath, syspath
 
-from .._utils import parse_logfiles
 from .session import TerminalImportSession
 
 # Global logger.
 log = logging.getLogger("beets")
+
+
+def paths_from_logfile(path):
+    """Parse the logfile and yield skipped paths to pass to the `import`
+    command.
+    """
+    with open(path, encoding="utf-8") as fp:
+        for i, line in enumerate(fp, start=1):
+            verb, sep, paths = line.rstrip("\n").partition(" ")
+            if not sep:
+                raise ValueError(f"line {i} is invalid")
+
+            # Ignore informational lines that don't need to be re-imported.
+            if verb in {"import", "duplicate-keep", "duplicate-replace"}:
+                continue
+
+            if verb not in {"asis", "skip", "duplicate-skip"}:
+                raise ValueError(f"line {i} contains unknown verb {verb}")
+
+            yield os.path.commonpath(paths.split("; "))
+
+
+def parse_logfiles(logfiles):
+    """Parse all `logfiles` and yield paths from it."""
+    for logfile in logfiles:
+        try:
+            yield from paths_from_logfile(syspath(normpath(logfile)))
+        except ValueError as err:
+            raise ui.UserError(
+                f"malformed logfile {displayable_path(logfile)}: {err}"
+            ) from err
+        except OSError as err:
+            raise ui.UserError(
+                f"unreadable logfile {displayable_path(logfile)}: {err}"
+            ) from err
 
 
 def import_files(lib, paths: list[bytes], query):
