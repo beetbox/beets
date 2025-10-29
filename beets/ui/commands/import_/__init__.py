@@ -131,6 +131,32 @@ def import_func(lib, opts, args: list[str]):
     import_files(lib, byte_paths, query)
 
 
+def _store_dict(option, opt_str, value, parser):
+    """Custom action callback to parse options which have ``key=value``
+    pairs as values. All such pairs passed for this option are
+    aggregated into a dictionary.
+    """
+    dest = option.dest
+    option_values = getattr(parser.values, dest, None)
+
+    if option_values is None:
+        # This is the first supplied ``key=value`` pair of option.
+        # Initialize empty dictionary and get a reference to it.
+        setattr(parser.values, dest, {})
+        option_values = getattr(parser.values, dest)
+
+    try:
+        key, value = value.split("=", 1)
+        if not (key and value):
+            raise ValueError
+    except ValueError:
+        raise ui.UserError(
+            f"supplied argument `{value}' is not of the form `key=value'"
+        )
+
+    option_values[key] = value
+
+
 import_cmd = ui.Subcommand(
     "import", help="import new music", aliases=("imp", "im")
 )
@@ -308,7 +334,7 @@ import_cmd.parser.add_option(
     "--set",
     dest="set_fields",
     action="callback",
-    callback=ui._store_dict,
+    callback=_store_dict,
     metavar="FIELD=VALUE",
     help="set the given fields to the supplied values",
 )
