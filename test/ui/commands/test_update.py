@@ -2,11 +2,11 @@ import os
 
 from mediafile import MediaFile
 
-from beets import library, util
+from beets import library
 from beets.test import _common
 from beets.test.helper import BeetsTestCase, IOMixin
 from beets.ui.commands.update import update_items
-from beets.util import MoveOperation, syspath
+from beets.util import MoveOperation, remove, syspath
 
 
 class UpdateTest(IOMixin, BeetsTestCase):
@@ -29,7 +29,7 @@ class UpdateTest(IOMixin, BeetsTestCase):
         _common.touch(artfile)
         self.album.set_art(artfile)
         self.album.store()
-        util.remove(artfile)
+        remove(artfile)
 
     def _update(
         self,
@@ -56,23 +56,23 @@ class UpdateTest(IOMixin, BeetsTestCase):
 
     def test_delete_removes_item(self):
         assert list(self.lib.items())
-        util.remove(self.i.path)
-        util.remove(self.i2.path)
+        remove(self.i.path)
+        remove(self.i2.path)
         self._update()
         assert not list(self.lib.items())
 
     def test_delete_removes_album(self):
         assert self.lib.albums()
-        util.remove(self.i.path)
-        util.remove(self.i2.path)
+        remove(self.i.path)
+        remove(self.i2.path)
         self._update()
         assert not self.lib.albums()
 
     def test_delete_removes_album_art(self):
         art_filepath = self.album.art_filepath
         assert art_filepath.exists()
-        util.remove(self.i.path)
-        util.remove(self.i2.path)
+        remove(self.i.path)
+        remove(self.i2.path)
         self._update()
         assert not art_filepath.exists()
 

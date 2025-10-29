@@ -2,7 +2,14 @@
 
 import os
 
-from beets import logging, ui, util
+from beets import logging, ui
+from beets.util import (
+    MoveOperation,
+    PathLike,
+    displayable_path,
+    normpath,
+    syspath,
+)
 
 from ._utils import do_query
 
@@ -28,8 +35,8 @@ def show_path_changes(path_changes):
     sources, destinations = zip(*path_changes)
 
     # Ensure unicode output
-    sources = list(map(util.displayable_path, sources))
-    destinations = list(map(util.displayable_path, destinations))
+    sources = list(map(displayable_path, sources))
+    destinations = list(map(displayable_path, destinations))
 
     # Calculate widths for terminal split
     col_width = (ui.term_width() - len(" -> ")) // 2
@@ -53,7 +60,7 @@ def show_path_changes(path_changes):
 
 def move_items(
     lib,
-    dest_path: util.PathLike,
+    dest_path: PathLike,
     query,
     copy,
     album,
@@ -128,24 +135,22 @@ def move_items(
             if export:
                 # Copy without affecting the database.
                 obj.move(
-                    operation=util.MoveOperation.COPY, basedir=dest, store=False
+                    operation=MoveOperation.COPY, basedir=dest, store=False
                 )
             else:
                 # Ordinary move/copy: store the new path.
                 if copy:
-                    obj.move(operation=util.MoveOperation.COPY, basedir=dest)
+                    obj.move(operation=MoveOperation.COPY, basedir=dest)
                 else:
-                    obj.move(operation=util.MoveOperation.MOVE, basedir=dest)
+                    obj.move(operation=MoveOperation.MOVE, basedir=dest)
 
 
 def move_func(lib, opts, args):
     dest = opts.dest
     if dest is not None:
-        dest = util.normpath(dest)
-        if not os.path.isdir(util.syspath(dest)):
-            raise ui.UserError(
-                f"no such directory: {util.displayable_path(dest)}"
-            )
+        dest = normpath(dest)
+        if not os.path.isdir(syspath(dest)):
+            raise ui.UserError(f"no such directory: {displayable_path(dest)}")
 
     move_items(
         lib,
