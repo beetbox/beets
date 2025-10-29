@@ -807,6 +807,11 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
         self._log.debug(
             "Searching for MusicBrainz {}s with: {!r}", query_type, filters
         )
+
+        if not filters:
+            self._log.debug("No valid filters provided, skipping search.")
+            return []
+
         try:
             method = getattr(musicbrainzngs, f"search_{query_type}s")
             res = method(limit=self.config["search_limit"].get(), **filters)

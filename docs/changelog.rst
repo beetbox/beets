@@ -22,6 +22,10 @@ New features:
 
 Bug fixes:
 
+- :doc:`plugins/discogs`, :doc:`plugins/beatport`, :doc:`plugins/spotify`,
+  :doc:`plugins/musicbrainz`: Fix an issue where no metadata in a file would
+  crash the import process :bug:`6060`
+
 For packagers:
 
 Other changes:
