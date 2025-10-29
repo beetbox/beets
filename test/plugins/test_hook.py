@@ -43,7 +43,10 @@ class HookLogsTest(HookTestCase):
     def _configure_logs(self, command: str) -> Iterator[list[str]]:
         config = {"hooks": [self._get_hook(self.HOOK, command)]}
 
-        with self.configure_plugin(config), capture_log("beets.hook") as logs:
+        with (
+            self.configure_plugin(config),
+            capture_log("beets.plugins.hook") as logs,
+        ):
             plugins.send(self.HOOK)
             yield logs
 

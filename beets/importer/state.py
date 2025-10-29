@@ -14,21 +14,20 @@
 
 from __future__ import annotations
 
-import logging
 import os
 import pickle
 from bisect import bisect_left, insort
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from beets import config
+from beets import config, logging
 
 if TYPE_CHECKING:
     from beets.util import PathBytes
 
 
 # Global logger.
-log = logging.getLogger("beets")
+log = logging.getLogger(__name__)
 
 
 @dataclass
