@@ -36,7 +36,8 @@ class MoveTest(BeetsTestCase):
         super().setUp()
 
         # make a temporary file
-        self.path = self.temp_dir_path / "temp.mp3"
+        self.temp_music_file_name = "temp.mp3"
+        self.path = self.temp_dir_path / self.temp_music_file_name
         shutil.copy(self.resource_path, self.path)
 
         # add it to a temporary library
@@ -196,6 +197,21 @@ class MoveTest(BeetsTestCase):
     def test_hardlink_changes_path(self):
         self.i.move(operation=MoveOperation.HARDLINK)
         assert self.i.path == util.normpath(self.dest)
+
+    @unittest.skipUnless(_common.HAVE_HARDLINK, "need hardlinks")
+    def test_hardlink_from_symlink(self):
+        link_path = join(self.temp_dir, b"temp_link.mp3")
+        link_source = join("./", self.temp_music_file_name)
+        os.symlink(syspath(link_source), syspath(link_path))
+        self.i.path = link_path
+        self.i.move(operation=MoveOperation.HARDLINK)
+
+        s1 = os.stat(syspath(self.path))
+        s2 = os.stat(syspath(self.dest))
+        assert (s1[stat.ST_INO], s1[stat.ST_DEV]) == (
+            s2[stat.ST_INO],
+            s2[stat.ST_DEV],
+        )
 
 
 class HelperTest(unittest.TestCase):

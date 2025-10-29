@@ -22,6 +22,10 @@ New features:
 
 Bug fixes:
 
+- When hardlinking from a symlink (e.g. importing a symlink with hardlinking
+  enabled), dereference the symlink then hardlink, rather than creating a new
+  (potentially broken) symlink :bug:`5676`
+
 For packagers:
 
 Other changes:
