@@ -22,6 +22,9 @@ New features:
 
 Bug fixes:
 
+- Running `beet --config <mypath> config -e` now edits `<mypath>` rather than
+  the default config path. :bug:`5652`
+
 For packagers:
 
 Other changes:
