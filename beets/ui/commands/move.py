@@ -10,6 +10,47 @@ from ._utils import do_query
 log = logging.getLogger("beets")
 
 
+def show_path_changes(path_changes):
+    """Given a list of tuples (source, destination) that indicate the
+    path changes, log the changes as INFO-level output to the beets log.
+    The output is guaranteed to be unicode.
+
+    Every pair is shown on a single line if the terminal width permits it,
+    else it is split over two lines. E.g.,
+
+    Source -> Destination
+
+    vs.
+
+    Source
+      -> Destination
+    """
+    sources, destinations = zip(*path_changes)
+
+    # Ensure unicode output
+    sources = list(map(util.displayable_path, sources))
+    destinations = list(map(util.displayable_path, destinations))
+
+    # Calculate widths for terminal split
+    col_width = (ui.term_width() - len(" -> ")) // 2
+    max_width = len(max(sources + destinations, key=len))
+
+    if max_width > col_width:
+        # Print every change over two lines
+        for source, dest in zip(sources, destinations):
+            color_source, color_dest = ui.colordiff(source, dest)
+            ui.print_(f"{color_source} \n  -> {color_dest}")
+    else:
+        # Print every change on a single line, and add a header
+        title_pad = max_width - len("Source ") + len(" -> ")
+
+        ui.print_(f"Source {' ' * title_pad} Destination")
+        for source, dest in zip(sources, destinations):
+            pad = max_width - len(source)
+            color_source, color_dest = ui.colordiff(source, dest)
+            ui.print_(f"{color_source} {' ' * pad} -> {color_dest}")
+
+
 def move_items(
     lib,
     dest_path: util.PathLike,
@@ -60,7 +101,7 @@ def move_items(
 
     if pretend:
         if album:
-            ui.show_path_changes(
+            show_path_changes(
                 [
                     (item.path, item.destination(basedir=dest))
                     for obj in objs
@@ -68,7 +109,7 @@ def move_items(
                 ]
             )
         else:
-            ui.show_path_changes(
+            show_path_changes(
                 [(obj.path, obj.destination(basedir=dest)) for obj in objs]
             )
     else:
@@ -76,7 +117,7 @@ def move_items(
             objs = ui.input_select_objects(
                 f"Really {act}",
                 objs,
-                lambda o: ui.show_path_changes(
+                lambda o: show_path_changes(
                     [(o.path, o.destination(basedir=dest))]
                 ),
             )
