@@ -51,5 +51,5 @@ def pytest_assertrepr_compare(op, left, right):
 
 
 @pytest.fixture(autouse=True)
-def clear_cached_classproperty():
-    cached_classproperty.cache.clear()
+def clear_cached_classproperty() -> None:
+    cached_classproperty.clear_cache()

@@ -26,8 +26,10 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
 import traceback
 import warnings
+import weakref
 from collections import Counter
 from collections.abc import Sequence
 from contextlib import suppress
@@ -65,6 +67,8 @@ if TYPE_CHECKING:
 MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = "\\\\?\\"
 T = TypeVar("T")
+T_co = TypeVar("T_co", covariant=True)
+_R_co = TypeVar("_R_co", covariant=True)
 PathLike = Union[str, bytes, Path]
 StrPath = Union[str, Path]
 Replacements = Sequence[tuple[Pattern[str], str]]
@@ -1053,7 +1057,7 @@ def par_map(transform: Callable[[T], Any], items: Sequence[T]) -> None:
     pool.join()
 
 
-class cached_classproperty(Generic[T]):
+class cached_classproperty(Generic[T_co, T]):
     """Descriptor implementing cached class properties.
 
     Provides class-level dynamic property behavior where the getter function is
@@ -1061,39 +1065,48 @@ class cached_classproperty(Generic[T]):
     instance properties, this operates on the class rather than instances.
     """
 
-    cache: ClassVar[dict[tuple[type[object], str], object]] = {}
+    _cache: ClassVar[
+        weakref.WeakKeyDictionary[type[object], dict[str, object]]
+    ] = weakref.WeakKeyDictionary()
+    _lock: ClassVar[threading.RLock] = threading.RLock()
+    name: str | None = None
 
-    name: str = ""
-
-    # Ideally, we would like to use `Callable[[type[T]], Any]` here,
-    # however, `mypy` is unable to see this as a **class** property, and thinks
-    # that this callable receives an **instance** of the object, failing the
-    # type check, for example:
-    # >>> class Album:
-    # >>>     @cached_classproperty
-    # >>>     def foo(cls):
-    # >>>         reveal_type(cls)  # mypy: revealed type is "Album"
-    # >>>         return cls.bar
-    #
-    #   Argument 1 to "cached_classproperty" has incompatible type
-    #   "Callable[[Album], ...]"; expected "Callable[[type[Album]], ...]"
-    #
-    # Therefore, we just use `Any` here, which is not ideal, but works.
-    def __init__(self, getter: Callable[..., T]) -> None:
+    def __init__(self, f: Callable[[T_co], T]) -> None:
         """Initialize the descriptor with the property getter function."""
-        self.getter: Callable[..., T] = getter
 
-    def __set_name__(self, owner: object, name: str) -> None:
+        self.f: Callable[[T_co], T] = f
+
+    def __set_name__(self, owner: type[object], name: str) -> None:
         """Capture the attribute name this descriptor is assigned to."""
         self.name = name
 
-    def __get__(self, instance: object, owner: type[object]) -> T:
+    def __get__(self, instance: object | None, owner: type[object], /) -> T:
         """Compute and cache if needed, and return the property value."""
-        key: tuple[type[object], str] = owner, self.name
-        if key not in self.cache:
-            self.cache[key] = self.getter(owner)
+        if self.name is None:
+            raise RuntimeError(
+                f"{self.__class__.__name__} was not properly initialized. "  # noqa: ISC003
+                + "__set_name__ was never called. This usually happens when "
+                + "the descriptor is used outside of a class definition."
+            )
 
-        return cast(T, self.cache[key])
+        with self._lock:
+            class_cache: dict[str, object] = self._cache.setdefault(owner, {})
+
+            try:
+                return cast(T, class_cache[self.name])
+            except KeyError:
+                ...
+
+            # Compute and cache new value
+            value: T = self.f(cast(T_co, owner))
+            class_cache[self.name] = value
+            return value
+
+    @classmethod
+    def clear_cache(cls) -> None:
+        """Safely clear cache"""
+        with cls._lock:
+            cls._cache.clear()
 
 
 class LazySharedInstance(Generic[T]):
