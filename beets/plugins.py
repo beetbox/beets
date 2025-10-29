@@ -40,9 +40,8 @@ if TYPE_CHECKING:
 
     from confuse import ConfigView
 
-    from beets.dbcore import Query
-    from beets.dbcore.db import FieldQueryType
-    from beets.dbcore.types import Type
+    from beets.dbcore import Query, Type
+    from beets.dbcore.queryparse import Prefixes
     from beets.importer import ImportSession, ImportTask
     from beets.library import Album, Item, Library
     from beets.ui import Subcommand
@@ -332,7 +331,7 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
 
         return wrapper
 
-    def queries(self) -> dict[str, type[Query]]:
+    def queries(self) -> Prefixes:
         """Return a dict mapping prefixes to Query subclasses."""
         return {}
 
@@ -503,22 +502,22 @@ def commands() -> list[Subcommand]:
     return out
 
 
-def queries() -> dict[str, type[Query]]:
+def queries() -> Prefixes:
     """Returns a dict mapping prefix strings to Query subclasses all loaded
     plugins.
     """
-    out: dict[str, type[Query]] = {}
+    out: Prefixes = {}
     for plugin in find_plugins():
         out.update(plugin.queries())
     return out
 
 
-def types(model_cls: type[AnyModel]) -> dict[str, Type]:
+def types(model_cls: AnyModel) -> dict[str, Type]:
     """Return mapping between flex field names and types for the given model."""
-    attr_name = f"{model_cls.__name__.lower()}_types"
+    attr_name: str = f"{model_cls.__name__.lower()}_types"
     types: dict[str, Type] = {}
     for plugin in find_plugins():
-        plugin_types = getattr(plugin, attr_name, {})
+        plugin_types: dict[str, Type] = getattr(plugin, attr_name, {})
         for field in plugin_types:
             if field in types and plugin_types[field] != types[field]:
                 raise PluginConflictError(
@@ -530,9 +529,10 @@ def types(model_cls: type[AnyModel]) -> dict[str, Type]:
     return types
 
 
-def named_queries(model_cls: type[AnyModel]) -> dict[str, FieldQueryType]:
+def named_queries(model_cls: AnyModel) -> dict[str, type[Query]]:
     """Return mapping between field names and queries for the given model."""
-    attr_name = f"{model_cls.__name__.lower()}_queries"
+    attr_name: str = f"{model_cls.__name__.lower()}_queries"
+
     return {
         field: query
         for plugin in find_plugins()
