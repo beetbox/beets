@@ -77,6 +77,11 @@ class APIError(Exception):
     pass
 
 
+class AudioFeaturesUnavailableError(Exception):
+    """Raised when the audio features API returns 403 (deprecated/unavailable)."""
+    pass
+
+
 class SpotifyPlugin(
     SearchApiMetadataSourcePlugin[
         Union[SearchResponseAlbums, SearchResponseTracks]
@@ -140,6 +145,7 @@ class SpotifyPlugin(
         self.config["client_id"].redact = True
         self.config["client_secret"].redact = True
 
+        self.audio_features_available = True  # Track if audio features API is available
         self.setup()
 
     def setup(self):
@@ -242,6 +248,16 @@ class SpotifyPlugin(
                     retry_count=retry_count + 1,
                 )
             elif e.response.status_code == 404:
+                raise APIError(
+                    f"API Error: {e.response.status_code}\n"
+                    f"URL: {url}\nparams: {params}"
+                )
+            elif e.response.status_code == 403:
+                # Check if this is the audio features endpoint
+                if self.audio_features_url in url:
+                    raise AudioFeaturesUnavailableError(
+                        "Audio features API returned 403 (deprecated or unavailable)"
+                    )
                 raise APIError(
                     f"API Error: {e.response.status_code}\n"
                     f"URL: {url}\nparams: {params}"
@@ -691,13 +707,18 @@ class SpotifyPlugin(
             item["isrc"] = isrc
             item["ean"] = ean
             item["upc"] = upc
-            audio_features = self.track_audio_features(spotify_track_id)
-            if audio_features is None:
-                self._log.info("No audio features found for: {}", item)
+
+            if self.audio_features_available:
+                audio_features = self.track_audio_features(spotify_track_id)
+                if audio_features is None:
+                    self._log.info("No audio features found for: {}", item)
+                else:
+                    for feature, value in audio_features.items():
+                        if feature in self.spotify_audio_features:
+                            item[self.spotify_audio_features[feature]] = value
             else:
-                for feature, value in audio_features.items():
-                    if feature in self.spotify_audio_features:
-                        item[self.spotify_audio_features[feature]] = value
+                self._log.debug("Audio features API unavailable, skipping")
+
             item["spotify_updated"] = time.time()
             item.store()
             if write:
@@ -726,6 +747,13 @@ class SpotifyPlugin(
             return self._handle_response(
                 "get", f"{self.audio_features_url}{track_id}"
             )
+        except AudioFeaturesUnavailableError as e:
+            self._log.warning(
+                "Audio features API is unavailable (403 error). "
+                "Skipping audio features for remaining tracks."
+            )
+            self.audio_features_available = False
+            return None
         except APIError as e:
             self._log.debug("Spotify API error: {}", e)
             return None
