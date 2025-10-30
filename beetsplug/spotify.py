@@ -193,8 +193,7 @@ class SpotifyPlugin(
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
             raise ui.UserError(
-                f"Spotify authorization failed: {e}\n"
-                f"{response.text}"
+                f"Spotify authorization failed: {e}\n{response.text}"
             )
         self.access_token = response.json()["access_token"]
 
@@ -451,9 +450,7 @@ class SpotifyPlugin(
         query_type: Literal["album", "track"],
         filters: SearchFilter,
         query_string: str = "",
-    ) -> Sequence[
-        SearchResponseAlbums | SearchResponseTracks
-    ]:
+    ) -> Sequence[SearchResponseAlbums | SearchResponseTracks]:
         """Query the Spotify Search API for the specified ``query_string``,
         applying the provided ``filters``.
 
@@ -467,9 +464,7 @@ class SpotifyPlugin(
             filters=filters, query_string=query_string
         )
 
-        self._log.debug(
-            "Searching {.data_source} for '{}'", self, query
-        )
+        self._log.debug("Searching {.data_source} for '{}'", self, query)
         try:
             response = self._handle_response(
                 "get",
