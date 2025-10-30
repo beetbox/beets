@@ -13,9 +13,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Adds Spotify release and track search support to the autotagger, along with
-Spotify playlist construction.
-"""
+"""Adds Spotify release and track search support to the autotagger, along with Spotify playlist construction."""
 
 from __future__ import annotations
 
@@ -50,13 +48,14 @@ DEFAULT_WAITING_TIME = 5
 class SearchResponseAlbums(IDResponse):
     """A response returned by the Spotify API.
 
-    We only use items and disregard the pagination information.
-    i.e. res["albums"]["items"][0].
+    We only use items and disregard the pagination information. i.e.
+    res["albums"]["items"][0].
 
-    There are more fields in the response, but we only type
-    the ones we currently use.
+    There are more fields in the response, but we only type the ones we
+    currently use.
 
     see https://developer.spotify.com/documentation/web-api/reference/search
+
     """
 
     album_type: str
@@ -164,9 +163,7 @@ class SpotifyPlugin(
         return self.config["tokenfile"].get(confuse.Filename(in_app_dir=True))
 
     def _authenticate(self) -> None:
-        """Request an access token via the Client Credentials Flow:
-        https://developer.spotify.com/documentation/general/guides/authorization-guide/#client-credentials-flow
-        """
+        """Request an access token via the Client Credentials Flow: https://developer.spotify.com/documentation/general/guides/authorization-guide/#client-credentials-flow"""
         c_id: str = self.config["client_id"].as_str()
         c_secret: str = self.config["client_secret"].as_str()
 
@@ -207,9 +204,9 @@ class SpotifyPlugin(
 
         :param method: HTTP method to use for the request.
         :param url: URL for the new :class:`Request` object.
-        :param params: (optional) list of tuples or bytes to send
-            in the query string for the :class:`Request`.
-        :type params: dict
+        :param dict params: (optional) list of tuples or bytes to send in the
+            query string for the :class:`Request`.
+
         """
 
         if retry_count > max_retries:
@@ -292,13 +289,13 @@ class SpotifyPlugin(
                 raise APIError("Request failed.")
 
     def album_for_id(self, album_id: str) -> AlbumInfo | None:
-        """Fetch an album by its Spotify ID or URL and return an
-        AlbumInfo object or None if the album is not found.
+        """Fetch an album by its Spotify ID or URL and return an AlbumInfo object or None if the album is not found.
 
-        :param album_id: Spotify ID or URL for the album
-        :type album_id: str
-        :return: AlbumInfo object for album
+        :param str album_id: Spotify ID or URL for the album
+
+        :returns: AlbumInfo object for album
         :rtype: beets.autotag.hooks.AlbumInfo or None
+
         """
         if not (spotify_id := self._extract_id(album_id)):
             return None
@@ -372,7 +369,9 @@ class SpotifyPlugin(
 
         :param track_data: Simplified track object
             (https://developer.spotify.com/documentation/web-api/reference/object-model/#track-object-simplified)
-        :return: TrackInfo object for track
+
+        :returns: TrackInfo object for track
+
         """
         artist, artist_id = self.get_artist(track_data["artists"])
 
@@ -401,6 +400,7 @@ class SpotifyPlugin(
         """Fetch a track by its Spotify ID or URL.
 
         Returns a TrackInfo object or None if the track is not found.
+
         """
 
         if not (spotify_id := self._extract_id(track_id)):
@@ -438,13 +438,13 @@ class SpotifyPlugin(
         filters: SearchFilter,
         query_string: str = "",
     ) -> Sequence[SearchResponseAlbums | SearchResponseTracks]:
-        """Query the Spotify Search API for the specified ``query_string``,
-        applying the provided ``filters``.
+        """Query the Spotify Search API for the specified ``query_string``, applying the provided ``filters``.
 
-        :param query_type: Item type to search across. Valid types are:
-            'album', 'artist', 'playlist', and 'track'.
+        :param query_type: Item type to search across. Valid types are: 'album',
+            'artist', 'playlist', and 'track'.
         :param filters: Field filters to apply.
         :param query_string: Additional query to include in the search.
+
         """
         query = self._construct_search_query(
             filters=filters, query_string=query_string
@@ -539,13 +539,14 @@ class SpotifyPlugin(
         return True
 
     def _match_library_tracks(self, library: Library, keywords: str):
-        """Get a list of simplified track object dicts for library tracks
-        matching the specified ``keywords``.
+        """Get a list of simplified track object dicts for library tracks matching the specified ``keywords``.
 
         :param library: beets library object to query.
         :param keywords: Query to match library items against.
-        :return: List of simplified track object dicts for library items
+
+        :returns: List of simplified track object dicts for library items
             matching the specified query.
+
         """
         results = []
         failures = []
@@ -656,12 +657,11 @@ class SpotifyPlugin(
         return results
 
     def _output_match_results(self, results):
-        """Open a playlist or print Spotify URLs for the provided track
-        object dicts.
+        """Open a playlist or print Spotify URLs for the provided track object dicts.
 
-        :param results: List of simplified track object dicts
+        :param list[dict] results: List of simplified track object dicts
             (https://developer.spotify.com/documentation/web-api/reference/object-model/#track-object-simplified)
-        :type results: list[dict]
+
         """
         if results:
             spotify_ids = [track_data["id"] for track_data in results]
