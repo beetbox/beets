@@ -13,7 +13,10 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Adds Spotify release and track search support to the autotagger, along with Spotify playlist construction."""
+"""Adds Spotify release and track search support to the autotagger.
+
+Also includes Spotify playlist construction.
+"""
 
 from __future__ import annotations
 
@@ -21,10 +24,10 @@ import base64
 import collections
 import json
 import re
+import threading
 import time
 import webbrowser
 from typing import TYPE_CHECKING, Any, Literal, Sequence, Union
-import threading
 
 import confuse
 import requests
@@ -78,7 +81,7 @@ class APIError(Exception):
 
 
 class AudioFeaturesUnavailableError(Exception):
-    """Raised when the audio features API returns 403 (deprecated/unavailable)."""
+    """Raised when audio features API returns 403 (deprecated)."""
 
     pass
 
@@ -190,7 +193,8 @@ class SpotifyPlugin(
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
             raise ui.UserError(
-                f"Spotify authorization failed: {e}\n{response.text}"
+                f"Spotify authorization failed: {e}\n"
+                f"{response.text}"
             )
         self.access_token = response.json()["access_token"]
 
@@ -211,8 +215,8 @@ class SpotifyPlugin(
 
         :param method: HTTP method to use for the request.
         :param url: URL for the new :class:`Request` object.
-        :param dict params: (optional) list of tuples or bytes to send in the
-            query string for the :class:`Request`.
+        :param dict params: (optional) list of tuples or bytes to send
+            in the query string for the :class:`Request`.
 
         """
 
@@ -260,7 +264,8 @@ class SpotifyPlugin(
                 # Check if this is the audio features endpoint
                 if url.startswith(self.audio_features_url):
                     raise AudioFeaturesUnavailableError(
-                        "Audio features API returned 403 (deprecated or unavailable)"
+                        "Audio features API returned 403 "
+                        "(deprecated or unavailable)"
                     )
                 raise APIError(
                     f"API Error: {e.response.status_code}\n"
@@ -288,7 +293,8 @@ class SpotifyPlugin(
                 raise APIError("Bad Gateway.")
             elif e.response is not None:
                 raise APIError(
-                    f"{self.data_source} API error:\n{e.response.text}\n"
+                    f"{self.data_source} API error:\n"
+                    f"{e.response.text}\n"
                     f"URL:\n{url}\nparams:\n{params}"
                 )
             else:
@@ -296,7 +302,8 @@ class SpotifyPlugin(
                 raise APIError("Request failed.")
 
     def album_for_id(self, album_id: str) -> AlbumInfo | None:
-        """Fetch an album by its Spotify ID or URL and return an AlbumInfo object or None if the album is not found.
+        """Fetch an album by its Spotify ID or URL and return an
+        AlbumInfo object or None if the album is not found.
 
         :param str album_id: Spotify ID or URL for the album
 
@@ -444,8 +451,11 @@ class SpotifyPlugin(
         query_type: Literal["album", "track"],
         filters: SearchFilter,
         query_string: str = "",
-    ) -> Sequence[SearchResponseAlbums | SearchResponseTracks]:
-        """Query the Spotify Search API for the specified ``query_string``, applying the provided ``filters``.
+    ) -> Sequence[
+        SearchResponseAlbums | SearchResponseTracks
+    ]:
+        """Query the Spotify Search API for the specified ``query_string``,
+        applying the provided ``filters``.
 
         :param query_type: Item type to search across. Valid types are: 'album',
             'artist', 'playlist', and 'track'.
@@ -457,7 +467,9 @@ class SpotifyPlugin(
             filters=filters, query_string=query_string
         )
 
-        self._log.debug("Searching {.data_source} for '{}'", self, query)
+        self._log.debug(
+            "Searching {.data_source} for '{}'", self, query
+        )
         try:
             response = self._handle_response(
                 "get",
@@ -546,13 +558,15 @@ class SpotifyPlugin(
         return True
 
     def _match_library_tracks(self, library: Library, keywords: str):
-        """Get a list of simplified track object dicts for library tracks matching the specified ``keywords``.
+        """Get simplified track object dicts for library tracks.
+
+        Matches tracks based on the specified ``keywords``.
 
         :param library: beets library object to query.
         :param keywords: Query to match library items against.
 
-        :returns: List of simplified track object dicts for library items
-            matching the specified query.
+        :returns: List of simplified track object dicts for library
+            items matching the specified query.
 
         """
         results = []
@@ -664,10 +678,13 @@ class SpotifyPlugin(
         return results
 
     def _output_match_results(self, results):
-        """Open a playlist or print Spotify URLs for the provided track object dicts.
+        """Open a playlist or print Spotify URLs.
+
+        Uses the provided track object dicts.
 
         :param list[dict] results: List of simplified track object dicts
-            (https://developer.spotify.com/documentation/web-api/reference/object-model/#track-object-simplified)
+            (https://developer.spotify.com/documentation/web-api/
+            reference/object-model/#track-object-simplified)
 
         """
         if results:
