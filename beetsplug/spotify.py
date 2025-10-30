@@ -79,6 +79,7 @@ class APIError(Exception):
 
 class AudioFeaturesUnavailableError(Exception):
     """Raised when the audio features API returns 403 (deprecated/unavailable)."""
+
     pass
 
 
@@ -145,8 +146,12 @@ class SpotifyPlugin(
         self.config["client_id"].redact = True
         self.config["client_secret"].redact = True
 
-        self.audio_features_available = True  # Track if audio features API is available
-        self._audio_features_lock = threading.Lock()  # Protects audio_features_available
+        self.audio_features_available = (
+            True  # Track if audio features API is available
+        )
+        self._audio_features_lock = (
+            threading.Lock()
+        )  # Protects audio_features_available
         self.setup()
 
     def setup(self):
