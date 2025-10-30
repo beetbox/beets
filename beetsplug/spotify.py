@@ -24,6 +24,7 @@ import re
 import time
 import webbrowser
 from typing import TYPE_CHECKING, Any, Literal, Sequence, Union
+import threading
 
 import confuse
 import requests
@@ -145,6 +146,7 @@ class SpotifyPlugin(
         self.config["client_secret"].redact = True
 
         self.audio_features_available = True  # Track if audio features API is available
+        self._audio_features_lock = threading.Lock()  # Protects audio_features_available
         self.setup()
 
     def setup(self):
@@ -251,7 +253,7 @@ class SpotifyPlugin(
                 )
             elif e.response.status_code == 403:
                 # Check if this is the audio features endpoint
-                if self.audio_features_url in url:
+                if url.startswith(self.audio_features_url):
                     raise AudioFeaturesUnavailableError(
                         "Audio features API returned 403 (deprecated or unavailable)"
                     )
@@ -742,17 +744,33 @@ class SpotifyPlugin(
         )
 
     def track_audio_features(self, track_id: str):
-        """Fetch track audio features by its Spotify ID."""
+        """Fetch track audio features by its Spotify ID.
+
+        Thread-safe: avoids redundant API calls and logs the 403 warning only
+        once.
+
+        """
+        # Fast path: if we've already detected unavailability, skip the call.
+        with self._audio_features_lock:
+            if not self.audio_features_available:
+                return None
+
         try:
             return self._handle_response(
                 "get", f"{self.audio_features_url}{track_id}"
             )
-        except AudioFeaturesUnavailableError as e:
-            self._log.warning(
-                "Audio features API is unavailable (403 error). "
-                "Skipping audio features for remaining tracks."
-            )
-            self.audio_features_available = False
+        except AudioFeaturesUnavailableError:
+            # Disable globally in a thread-safe manner and warn once.
+            should_log = False
+            with self._audio_features_lock:
+                if self.audio_features_available:
+                    self.audio_features_available = False
+                    should_log = True
+            if should_log:
+                self._log.warning(
+                    "Audio features API is unavailable (403 error). "
+                    "Skipping audio features for remaining tracks."
+                )
             return None
         except APIError as e:
             self._log.debug("Spotify API error: {}", e)
