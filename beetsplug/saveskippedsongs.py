@@ -67,6 +67,8 @@ class SaveSkippedSongsPlugin(BeetsPlugin):
             self._log.info(f"Skipped: {result}")
             path = self.config["path"].get(str)
             if path:
+                # Expand user home (~) and environment variables in the path
+                path = os.path.expanduser(os.path.expandvars(path))
                 path = os.path.abspath(path)
                 try:
                     # Read existing lines (if file exists) and avoid duplicates.
