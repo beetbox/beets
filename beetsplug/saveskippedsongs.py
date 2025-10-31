@@ -26,14 +26,14 @@ from beets.importer import Action
 from beets.plugins import BeetsPlugin
 
 if TYPE_CHECKING:
+    from beets.importer import ImportSession, SingletonImportTask
     from beets.metadata_plugins import SearchFilter
-    from beets.plugins import ImportSession, ImportTask
 
 __author__ = "jacob@emberlight.se"
 __version__ = "1.0"
 
 
-def summary(task: "ImportTask"):
+def summary(task: "SingletonImportTask"):
     """Given an ImportTask, produce a short string identifying the
     object.
     """
@@ -55,7 +55,9 @@ class SaveSkippedSongsPlugin(BeetsPlugin):
         )
         self.register_listener("import_task_choice", self.log_skipped_song)
 
-    def log_skipped_song(self, task: "ImportTask", session: "ImportSession"):
+    def log_skipped_song(
+        self, task: "SingletonImportTask", session: "ImportSession"
+    ):
         if task.choice_flag == Action.SKIP:
             # If spotify integration is enabled, try to match with Spotify
             link = None
@@ -93,7 +95,7 @@ class SaveSkippedSongsPlugin(BeetsPlugin):
                     )
 
     def _match_with_spotify(
-        self, task: "ImportTask", session: "ImportSession"
+        self, task: "SingletonImportTask", session: "ImportSession"
     ) -> Optional[str]:
         """Try to match the skipped track/album with Spotify by directly
         calling the Spotify API search.
@@ -129,7 +131,7 @@ class SaveSkippedSongsPlugin(BeetsPlugin):
                 search_type = "album"
             else:
                 # For singleton imports
-                item = task.item  # type: ignore[attr-defined]
+                item = task.item
                 query_string = item.title or ""
                 if item.artist:
                     query_filters["artist"] = item.artist
