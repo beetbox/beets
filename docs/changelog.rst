@@ -19,6 +19,8 @@ New features:
       resolved. The ``extended_debug`` config setting and ``--debug`` option
       have been removed.
 - Added support for Python 3.13.
+- :doc:`plugins/saveskippedsongs`: Added new plugin that saves skipped songs
+      to a text file during import for later review.
 
 Bug fixes:
 
