@@ -115,10 +115,10 @@ class SaveSkippedSongsPlugin(BeetsPlugin):
                     self._log.debug("Loaded Spotify plugin dynamically")
                 except ImportError as e:
                     self._log.debug(f"Could not import Spotify plugin: {e}")
-                    return
+                    return None
                 except Exception as e:
                     self._log.debug(f"Could not initialize Spotify plugin: {e}")
-                    return
+                    return None
 
             # Build search parameters based on the task
             query_filters: SearchFilter = {}
@@ -151,7 +151,7 @@ class SaveSkippedSongsPlugin(BeetsPlugin):
             if results:
                 self._log.info(f"Found {len(results)} Spotify match(es)!")
                 self._log.info("Returning first Spotify match link")
-                return results[0].get("external_urls", {}).get("spotify", "")
+                return results[0].get("external_urls", {}).get("spotify", None)
             else:
                 self._log.info("No Spotify matches found")
 
@@ -159,4 +159,4 @@ class SaveSkippedSongsPlugin(BeetsPlugin):
             self._log.debug(f"Spotify plugin method not available: {e}")
         except Exception as e:
             self._log.debug(f"Error searching Spotify: {e}")
-        return
+        return None
