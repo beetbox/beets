@@ -72,11 +72,15 @@ class SaveSkippedSongsPlugin(BeetsPlugin):
                     # Read existing lines (if file exists) and avoid duplicates.
                     try:
                         with open(path, "r", encoding="utf-8") as f:
-                            existing = {line.rstrip("\n") for line in f}
+                            existing = {
+                                line.rstrip("\n").strip().lower()
+                                for line in f
+                            }
                     except FileNotFoundError:
                         existing = set()
 
-                    if result not in existing:
+                    normalized_result = result.strip().lower()
+                    if normalized_result not in existing:
                         with open(path, "a", encoding="utf-8") as f:
                             f.write(f"{result}\n")
                     else:
