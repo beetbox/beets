@@ -39,8 +39,7 @@ def summary(task: "SingletonImportTask"):
     """
     if task.is_album:
         return f"{task.cur_artist} - {task.cur_album}"
-    item = task.item  # type: ignore[attr-defined]
-    return f"{item.artist} - {item.title}"
+    return f"{task.item.artist} - {task.item.title}"
 
 
 class SaveSkippedSongsPlugin(BeetsPlugin):
@@ -76,8 +75,7 @@ class SaveSkippedSongsPlugin(BeetsPlugin):
                     try:
                         with open(path, "r", encoding="utf-8") as f:
                             existing = {
-                                line.rstrip("\n").strip().lower()
-                                for line in f
+                                line.rstrip("\n").strip().lower() for line in f
                             }
                     except FileNotFoundError:
                         existing = set()
@@ -146,8 +144,8 @@ class SaveSkippedSongsPlugin(BeetsPlugin):
             # Call the Spotify API directly via the plugin's search method
             results = spotify_plugin._search_api(  # type: ignore[attr-defined]
                 query_type=search_type,  # type: ignore[arg-type]
-                query_string=query_string,
                 filters=query_filters,
+                query_string=query_string,
             )
 
             if results:
