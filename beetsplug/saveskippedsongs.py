@@ -39,9 +39,8 @@ def summary(task: "ImportTask"):
     """
     if task.is_album:
         return f"{task.cur_artist} - {task.cur_album}"
-    else:
-        item = task.item  # type: ignore[attr-defined]
-        return f"{item.artist} - {item.title}"
+    item = task.item  # type: ignore[attr-defined]
+    return f"{item.artist} - {item.title}"
 
 
 class SaveSkippedSongsPlugin(BeetsPlugin):
