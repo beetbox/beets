@@ -24,7 +24,7 @@ from typing import TYPE_CHECKING, Any, NamedTuple, TypeVar
 import lap
 import numpy as np
 
-from beets import config, logging, metadata_plugins
+from beets import config, logging, metadata_plugins, plugins
 from beets.autotag import AlbumInfo, AlbumMatch, TrackInfo, TrackMatch, hooks
 from beets.util import get_most_common_tags
 
@@ -274,12 +274,17 @@ def tag_album(
             log.debug("Searching for album ID: {}", search_id)
             if info := metadata_plugins.album_for_id(search_id):
                 _add_candidate(items, candidates, info)
+                if opt_candidate := candidates.get(info.album_id):
+                    plugins.send("album_matched", match=opt_candidate)
 
     # Use existing metadata or text search.
     else:
         # Try search based on current ID.
         if info := match_by_id(items):
             _add_candidate(items, candidates, info)
+            for candidate in candidates.values():
+                plugins.send("album_matched", match=candidate)
+
             rec = _recommendation(list(candidates.values()))
             log.debug("Album ID match recommendation is {}", rec)
             if candidates and not config["import"]["timid"]:
@@ -313,6 +318,8 @@ def tag_album(
             items, search_artist, search_album, va_likely
         ):
             _add_candidate(items, candidates, matched_candidate)
+            if opt_candidate := candidates.get(matched_candidate.album_id):
+                plugins.send("album_matched", match=opt_candidate)
 
     log.debug("Evaluating {} candidates.", len(candidates))
     # Sort and get the recommendation.
