@@ -54,7 +54,7 @@ from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.importer import ImportSession
 from beets.library import Item, Library
 from beets.test import _common
-from beets.ui.commands import TerminalImportSession
+from beets.ui.commands.import_.session import TerminalImportSession
 from beets.util import (
     MoveOperation,
     bytestring_path,
