@@ -14,12 +14,14 @@
 
 """Tests for autotagging functionality."""
 
+import operator
+from unittest import TestCase
+
 import pytest
 
 from beets import autotag, config
 from beets.autotag import AlbumInfo, TrackInfo, correct_list_fields, match
 from beets.library import Item
-from beets.test.helper import BeetsTestCase, ConfigMixin
 
 
 class TestAssignment:
@@ -112,336 +114,172 @@ class TestAssignment:
         assert match.assign_items(items, trackinfo) == expected
 
 
-class ApplyTestUtil:
-    def _apply(self, info=None, per_disc_numbering=False, artist_credit=False):
-        info = info or self.info
+class ApplyTest(TestCase):
+    def _apply(self, per_disc_numbering=False, artist_credit=False):
+        info = self.info
         item_info_pairs = list(zip(self.items, info.tracks))
         config["per_disc_numbering"] = per_disc_numbering
         config["artist_credit"] = artist_credit
-        autotag.apply_metadata(info, item_info_pairs)
+        autotag.apply_metadata(self.info, item_info_pairs)
 
-
-class ApplyTest(BeetsTestCase, ApplyTestUtil):
     def setUp(self):
         super().setUp()
 
-        self.items = []
-        self.items.append(Item({}))
-        self.items.append(Item({}))
-        trackinfo = []
-        trackinfo.append(
-            TrackInfo(
-                title="oneNew",
-                track_id="dfa939ec-118c-4d0f-84a0-60f3d1e6522c",
-                medium=1,
-                medium_index=1,
-                medium_total=1,
-                index=1,
-                artist_credit="trackArtistCredit",
-                artists_credit=["trackArtistCredit"],
-                artist_sort="trackArtistSort",
-                artists_sort=["trackArtistSort"],
-            )
-        )
-        trackinfo.append(
-            TrackInfo(
-                title="twoNew",
-                track_id="40130ed1-a27c-42fd-a328-1ebefb6caef4",
-                medium=2,
-                medium_index=1,
-                index=2,
-                medium_total=1,
-            )
-        )
+        self.items = [Item(), Item()]
         self.info = AlbumInfo(
-            tracks=trackinfo,
-            artist="artistNew",
-            artists=["artistNew", "artistNew2"],
-            album="albumNew",
+            tracks=[
+                TrackInfo(
+                    title="title",
+                    track_id="dfa939ec-118c-4d0f-84a0-60f3d1e6522c",
+                    medium=1,
+                    medium_index=1,
+                    medium_total=1,
+                    index=1,
+                    artist="trackArtist",
+                    artist_credit="trackArtistCredit",
+                    artists_credit=["trackArtistCredit"],
+                    artist_sort="trackArtistSort",
+                    artists_sort=["trackArtistSort"],
+                ),
+                TrackInfo(
+                    title="title2",
+                    track_id="40130ed1-a27c-42fd-a328-1ebefb6caef4",
+                    medium=2,
+                    medium_index=1,
+                    index=2,
+                    medium_total=1,
+                ),
+            ],
+            artist="albumArtist",
+            artists=["albumArtist", "albumArtist2"],
+            album="album",
             album_id="7edb51cb-77d6-4416-a23c-3a8c2994a2c7",
             artist_id="a6623d39-2d8e-4f70-8242-0a9553b91e50",
-            artists_ids=[
-                "a6623d39-2d8e-4f70-8242-0a9553b91e50",
-                "a6623d39-2d8e-4f70-8242-0a9553b91e51",
-            ],
+            artists_ids=None,
             artist_credit="albumArtistCredit",
-            artists_credit=["albumArtistCredit", "albumArtistCredit2"],
-            artist_sort="albumArtistSort",
+            artists_credit=["albumArtistCredit1", "albumArtistCredit2"],
+            artist_sort=None,
             artists_sort=["albumArtistSort", "albumArtistSort2"],
             albumtype="album",
-            va=False,
+            va=True,
             mediums=2,
+            data_source="MusicBrainz",
+            year=2013,
+            month=12,
+            day=18,
         )
 
-    def test_titles_applied(self):
-        self._apply()
-        assert self.items[0].title == "oneNew"
-        assert self.items[1].title == "twoNew"
+        common_expected = {
+            "album": "album",
+            "albumartist_credit": "albumArtistCredit",
+            "albumartist_sort": "",
+            "albumartist": "albumArtist",
+            "albumartists": ["albumArtist", "albumArtist2"],
+            "albumartists_credit": [
+                "albumArtistCredit1",
+                "albumArtistCredit2",
+            ],
+            "albumartists_sort": ["albumArtistSort", "albumArtistSort2"],
+            "albumtype": "album",
+            "albumtypes": ["album"],
+            "comp": True,
+            "disctotal": 2,
+            "mb_albumartistid": "a6623d39-2d8e-4f70-8242-0a9553b91e50",
+            "mb_albumartistids": ["a6623d39-2d8e-4f70-8242-0a9553b91e50"],
+            "mb_albumid": "7edb51cb-77d6-4416-a23c-3a8c2994a2c7",
+            "mb_artistid": "a6623d39-2d8e-4f70-8242-0a9553b91e50",
+            "mb_artistids": ["a6623d39-2d8e-4f70-8242-0a9553b91e50"],
+            "tracktotal": 2,
+            "year": 2013,
+            "month": 12,
+            "day": 18,
+        }
 
-    def test_album_and_artist_applied_to_all(self):
-        self._apply()
-        assert self.items[0].album == "albumNew"
-        assert self.items[1].album == "albumNew"
-        assert self.items[0].artist == "artistNew"
-        assert self.items[1].artist == "artistNew"
-        assert self.items[0].artists == ["artistNew", "artistNew2"]
-        assert self.items[1].artists == ["artistNew", "artistNew2"]
-        assert self.items[0].albumartists == ["artistNew", "artistNew2"]
-        assert self.items[1].albumartists == ["artistNew", "artistNew2"]
+        self.expected_tracks = [
+            {
+                **common_expected,
+                "artist": "trackArtist",
+                "artists": ["albumArtist", "albumArtist2"],
+                "artist_credit": "trackArtistCredit",
+                "artist_sort": "trackArtistSort",
+                "artists_credit": ["trackArtistCredit"],
+                "artists_sort": ["trackArtistSort"],
+                "disc": 1,
+                "mb_trackid": "dfa939ec-118c-4d0f-84a0-60f3d1e6522c",
+                "title": "title",
+                "track": 1,
+            },
+            {
+                **common_expected,
+                "artist": "albumArtist",
+                "artists": ["albumArtist", "albumArtist2"],
+                "artist_credit": "albumArtistCredit",
+                "artist_sort": "",
+                "artists_credit": [
+                    "albumArtistCredit1",
+                    "albumArtistCredit2",
+                ],
+                "artists_sort": ["albumArtistSort", "albumArtistSort2"],
+                "disc": 2,
+                "mb_trackid": "40130ed1-a27c-42fd-a328-1ebefb6caef4",
+                "title": "title2",
+                "track": 2,
+            },
+        ]
 
-    def test_track_index_applied(self):
+    def test_autotag_items(self):
         self._apply()
-        assert self.items[0].track == 1
-        assert self.items[1].track == 2
 
-    def test_track_total_applied(self):
-        self._apply()
-        assert self.items[0].tracktotal == 2
-        assert self.items[1].tracktotal == 2
+        keys = self.expected_tracks[0].keys()
+        get_values = operator.itemgetter(*keys)
 
-    def test_disc_index_applied(self):
-        self._apply()
-        assert self.items[0].disc == 1
-        assert self.items[1].disc == 2
+        applied_data = [
+            dict(zip(keys, get_values(dict(i)))) for i in self.items
+        ]
 
-    def test_disc_total_applied(self):
-        self._apply()
-        assert self.items[0].disctotal == 2
-        assert self.items[1].disctotal == 2
+        assert applied_data == self.expected_tracks
 
     def test_per_disc_numbering(self):
         self._apply(per_disc_numbering=True)
+
         assert self.items[0].track == 1
         assert self.items[1].track == 1
-
-    def test_per_disc_numbering_track_total(self):
-        self._apply(per_disc_numbering=True)
         assert self.items[0].tracktotal == 1
         assert self.items[1].tracktotal == 1
 
-    def test_artist_credit(self):
-        self._apply(artist_credit=True)
-        assert self.items[0].artist == "trackArtistCredit"
-        assert self.items[1].artist == "albumArtistCredit"
-        assert self.items[0].albumartist == "albumArtistCredit"
-        assert self.items[1].albumartist == "albumArtistCredit"
-        assert self.items[0].albumartists == [
-            "albumArtistCredit",
-            "albumArtistCredit2",
-        ]
-        assert self.items[1].albumartists == [
-            "albumArtistCredit",
-            "albumArtistCredit2",
-        ]
-
     def test_artist_credit_prefers_artist_over_albumartist_credit(self):
-        self.info.tracks[0].artist = "oldArtist"
-        self.info.tracks[0].artist_credit = None
+        self.info.tracks[0].update(artist="oldArtist", artist_credit=None)
+
         self._apply(artist_credit=True)
+
         assert self.items[0].artist == "oldArtist"
 
     def test_artist_credit_falls_back_to_albumartist(self):
         self.info.artist_credit = None
+
         self._apply(artist_credit=True)
-        assert self.items[1].artist == "artistNew"
 
-    def test_mb_trackid_applied(self):
+        assert self.items[1].artist == "albumArtist"
+
+    def test_date_only_zeroes_month_and_day(self):
+        self.items = [Item(year=1, month=2, day=3)]
+        self.info.update(year=2013, month=None, day=None)
+
         self._apply()
-        assert (
-            self.items[0].mb_trackid == "dfa939ec-118c-4d0f-84a0-60f3d1e6522c"
-        )
-        assert (
-            self.items[1].mb_trackid == "40130ed1-a27c-42fd-a328-1ebefb6caef4"
-        )
-
-    def test_mb_albumid_and_artistid_applied(self):
-        self._apply()
-        for item in self.items:
-            assert item.mb_albumid == "7edb51cb-77d6-4416-a23c-3a8c2994a2c7"
-            assert item.mb_artistid == "a6623d39-2d8e-4f70-8242-0a9553b91e50"
-            assert item.mb_artistids == [
-                "a6623d39-2d8e-4f70-8242-0a9553b91e50",
-                "a6623d39-2d8e-4f70-8242-0a9553b91e51",
-            ]
-
-    def test_albumtype_applied(self):
-        self._apply()
-        assert self.items[0].albumtype == "album"
-        assert self.items[1].albumtype == "album"
-
-    def test_album_artist_overrides_empty_track_artist(self):
-        my_info = self.info.copy()
-        self._apply(info=my_info)
-        assert self.items[0].artist == "artistNew"
-        assert self.items[1].artist == "artistNew"
-        assert self.items[0].artists == ["artistNew", "artistNew2"]
-        assert self.items[1].artists == ["artistNew", "artistNew2"]
-
-    def test_album_artist_overridden_by_nonempty_track_artist(self):
-        my_info = self.info.copy()
-        my_info.tracks[0].artist = "artist1!"
-        my_info.tracks[1].artist = "artist2!"
-        my_info.tracks[0].artists = ["artist1!", "artist1!!"]
-        my_info.tracks[1].artists = ["artist2!", "artist2!!"]
-        self._apply(info=my_info)
-        assert self.items[0].artist == "artist1!"
-        assert self.items[1].artist == "artist2!"
-        assert self.items[0].artists == ["artist1!", "artist1!!"]
-        assert self.items[1].artists == ["artist2!", "artist2!!"]
-
-    def test_artist_credit_applied(self):
-        self._apply()
-        assert self.items[0].albumartist_credit == "albumArtistCredit"
-        assert self.items[0].albumartists_credit == [
-            "albumArtistCredit",
-            "albumArtistCredit2",
-        ]
-        assert self.items[0].artist_credit == "trackArtistCredit"
-        assert self.items[0].artists_credit == ["trackArtistCredit"]
-        assert self.items[1].albumartist_credit == "albumArtistCredit"
-        assert self.items[1].albumartists_credit == [
-            "albumArtistCredit",
-            "albumArtistCredit2",
-        ]
-        assert self.items[1].artist_credit == "albumArtistCredit"
-        assert self.items[1].artists_credit == [
-            "albumArtistCredit",
-            "albumArtistCredit2",
-        ]
-
-    def test_artist_sort_applied(self):
-        self._apply()
-        assert self.items[0].albumartist_sort == "albumArtistSort"
-        assert self.items[0].albumartists_sort == [
-            "albumArtistSort",
-            "albumArtistSort2",
-        ]
-        assert self.items[0].artist_sort == "trackArtistSort"
-        assert self.items[0].artists_sort == ["trackArtistSort"]
-        assert self.items[1].albumartist_sort == "albumArtistSort"
-        assert self.items[1].albumartists_sort == [
-            "albumArtistSort",
-            "albumArtistSort2",
-        ]
-        assert self.items[1].artist_sort == "albumArtistSort"
-        assert self.items[1].artists_sort == [
-            "albumArtistSort",
-            "albumArtistSort2",
-        ]
-
-    def test_full_date_applied(self):
-        my_info = self.info.copy()
-        my_info.year = 2013
-        my_info.month = 12
-        my_info.day = 18
-        self._apply(info=my_info)
-
-        assert self.items[0].year == 2013
-        assert self.items[0].month == 12
-        assert self.items[0].day == 18
-
-    def test_date_only_zeros_month_and_day(self):
-        self.items = []
-        self.items.append(Item(year=1, month=2, day=3))
-        self.items.append(Item(year=4, month=5, day=6))
-
-        my_info = self.info.copy()
-        my_info.year = 2013
-        self._apply(info=my_info)
 
         assert self.items[0].year == 2013
         assert self.items[0].month == 0
         assert self.items[0].day == 0
 
     def test_missing_date_applies_nothing(self):
-        self.items = []
-        self.items.append(Item(year=1, month=2, day=3))
-        self.items.append(Item(year=4, month=5, day=6))
+        self.items = [Item(year=1, month=2, day=3)]
+        self.info.update(year=None, month=None, day=None)
 
         self._apply()
 
         assert self.items[0].year == 1
         assert self.items[0].month == 2
         assert self.items[0].day == 3
-
-    def test_data_source_applied(self):
-        my_info = self.info.copy()
-        my_info.data_source = "MusicBrainz"
-        self._apply(info=my_info)
-
-        assert self.items[0].data_source == "MusicBrainz"
-
-
-class ApplyCompilationTest(BeetsTestCase, ApplyTestUtil):
-    def setUp(self):
-        super().setUp()
-
-        self.items = []
-        self.items.append(Item({}))
-        self.items.append(Item({}))
-        trackinfo = []
-        trackinfo.append(
-            TrackInfo(
-                title="oneNew",
-                track_id="dfa939ec-118c-4d0f-84a0-60f3d1e6522c",
-                artist="artistOneNew",
-                artist_id="a05686fc-9db2-4c23-b99e-77f5db3e5282",
-                index=1,
-            )
-        )
-        trackinfo.append(
-            TrackInfo(
-                title="twoNew",
-                track_id="40130ed1-a27c-42fd-a328-1ebefb6caef4",
-                artist="artistTwoNew",
-                artist_id="80b3cf5e-18fe-4c59-98c7-e5bb87210710",
-                index=2,
-            )
-        )
-        self.info = AlbumInfo(
-            tracks=trackinfo,
-            artist="variousNew",
-            album="albumNew",
-            album_id="3b69ea40-39b8-487f-8818-04b6eff8c21a",
-            artist_id="89ad4ac3-39f7-470e-963a-56509c546377",
-            albumtype="compilation",
-        )
-
-    def test_album_and_track_artists_separate(self):
-        self._apply()
-        assert self.items[0].artist == "artistOneNew"
-        assert self.items[1].artist == "artistTwoNew"
-        assert self.items[0].albumartist == "variousNew"
-        assert self.items[1].albumartist == "variousNew"
-
-    def test_mb_albumartistid_applied(self):
-        self._apply()
-        assert (
-            self.items[0].mb_albumartistid
-            == "89ad4ac3-39f7-470e-963a-56509c546377"
-        )
-        assert (
-            self.items[1].mb_albumartistid
-            == "89ad4ac3-39f7-470e-963a-56509c546377"
-        )
-        assert (
-            self.items[0].mb_artistid == "a05686fc-9db2-4c23-b99e-77f5db3e5282"
-        )
-        assert (
-            self.items[1].mb_artistid == "80b3cf5e-18fe-4c59-98c7-e5bb87210710"
-        )
-
-    def test_va_flag_cleared_does_not_set_comp(self):
-        self._apply()
-        assert not self.items[0].comp
-        assert not self.items[1].comp
-
-    def test_va_flag_sets_comp(self):
-        va_info = self.info.copy()
-        va_info.va = True
-        self._apply(info=va_info)
-        assert self.items[0].comp
-        assert self.items[1].comp
 
 
 @pytest.mark.parametrize(
