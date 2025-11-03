@@ -19,8 +19,15 @@ from unittest import TestCase
 
 import pytest
 
-from beets import autotag, config
-from beets.autotag import AlbumInfo, TrackInfo, correct_list_fields, match
+from beets import config
+from beets.autotag.hooks import (
+    AlbumInfo,
+    AlbumMatch,
+    TrackInfo,
+    TrackMatch,
+    correct_list_fields,
+)
+from beets.autotag.match import assign_items
 from beets.library import Item
 
 
@@ -57,9 +64,7 @@ class TestAssignment:
         items = [Item(title=title) for title in item_titles]
         tracks = [TrackInfo(title=title) for title in track_titles]
 
-        item_info_pairs, extra_items, extra_tracks = match.assign_items(
-            items, tracks
-        )
+        item_info_pairs, extra_items, extra_tracks = assign_items(items, tracks)
 
         assert (
             {i.title: t.title for i, t in item_info_pairs},
@@ -111,16 +116,17 @@ class TestAssignment:
 
         expected = list(zip(items, trackinfo)), [], []
 
-        assert match.assign_items(items, trackinfo) == expected
+        assert assign_items(items, trackinfo) == expected
 
 
 class ApplyTest(TestCase):
     def _apply(self, per_disc_numbering=False, artist_credit=False):
         info = self.info
-        item_info_pairs = list(zip(self.items, info.tracks))
+        mapping = dict(zip(self.items, info.tracks))
         config["per_disc_numbering"] = per_disc_numbering
         config["artist_credit"] = artist_credit
-        autotag.apply_metadata(self.info, item_info_pairs)
+        amatch = AlbumMatch(0, self.info, mapping)
+        amatch.apply_metadata()
 
     def setUp(self):
         super().setUp()
@@ -200,7 +206,7 @@ class ApplyTest(TestCase):
             {
                 **common_expected,
                 "artist": "trackArtist",
-                "artists": ["trackArtist", "albumArtist", "albumArtist2"],
+                "artists": ["trackArtist"],
                 "artist_credit": "trackArtistCredit",
                 "artist_sort": "trackArtistSort",
                 "artists_credit": ["trackArtistCredit"],
@@ -288,14 +294,7 @@ class ApplyTest(TestCase):
     "overwrite_fields,expected_item_artist",
     [
         pytest.param(["artist"], "", id="overwrite artist"),
-        pytest.param(
-            [],
-            "artist",
-            marks=pytest.mark.xfail(
-                reason="artist gets wrongly always overwritten", strict=True
-            ),
-            id="do not overwrite artist",
-        ),
+        pytest.param([], "artist", id="do not overwrite artist"),
     ],
 )
 class TestOverwriteNull:
@@ -313,12 +312,16 @@ class TestOverwriteNull:
         return TrackInfo(artist=None)
 
     def test_album(self, item, track_info, expected_item_artist):
-        autotag.apply_metadata(AlbumInfo([track_info]), [(item, track_info)])
+        match = AlbumMatch(0, AlbumInfo([track_info]), {item: track_info})
+
+        match.apply_metadata()
 
         assert item.artist == expected_item_artist
 
     def test_singleton(self, item, track_info, expected_item_artist):
-        autotag.apply_item_metadata(item, track_info)
+        match = TrackMatch(0, track_info, item)
+
+        match.apply_metadata()
 
         assert item.artist == expected_item_artist
 
@@ -326,31 +329,32 @@ class TestOverwriteNull:
 @pytest.mark.parametrize(
     "single_field,list_field",
     [
-        ("mb_artistid", "mb_artistids"),
-        ("mb_albumartistid", "mb_albumartistids"),
         ("albumtype", "albumtypes"),
+        ("artist", "artists"),
+        ("artist_credit", "artists_credit"),
+        ("artist_id", "artists_ids"),
+        ("artist_sort", "artists_sort"),
     ],
 )
 @pytest.mark.parametrize(
-    "single_value,list_value",
+    "single_value,list_value,expected_values",
     [
-        (None, []),
-        (None, ["1"]),
-        (None, ["1", "2"]),
-        ("1", []),
-        ("1", ["1"]),
-        ("1", ["1", "2"]),
-        ("1", ["2", "1"]),
+        (None, [], (None, [])),
+        (None, ["1"], ("1", ["1"])),
+        (None, ["1", "2"], ("1", ["1", "2"])),
+        ("1", [], ("1", ["1"])),
+        ("1", ["1"], ("1", ["1"])),
+        ("1", ["1", "2"], ("1", ["1", "2"])),
+        ("1", ["2", "1"], ("1", ["1", "2"])),
+        ("1", ["2"], ("1", ["1", "2"])),
     ],
 )
 def test_correct_list_fields(
-    single_field, list_field, single_value, list_value
+    single_field, list_field, single_value, list_value, expected_values
 ):
     """Ensure that the first value in a list field matches the single field."""
-    data = {single_field: single_value, list_field: list_value}
-    item = Item(**data)
+    input_data = {single_field: single_value, list_field: list_value}
 
-    correct_list_fields(item)
+    data = correct_list_fields(input_data)
 
-    single_val, list_val = item[single_field], item[list_field]
-    assert (not single_val and not list_val) or single_val == list_val[0]
+    assert (data[single_field], data[list_field]) == expected_values
