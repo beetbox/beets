@@ -392,15 +392,15 @@ class SafeProxy(base):
     without crashing beets. E.g. on long running autotag operations.
     """
 
-    _plugin: MetadataSourcePlugin
+    __plugin: MetadataSourcePlugin
 
     def __init__(self, plugin: MetadataSourcePlugin):
-        self._plugin = plugin
+        self.__plugin = plugin
 
     def __getattribute__(self, name):
         if name in {
-            "_plugin",
-            "_handle_exception",
+            "_SafeProxy__plugin",
+            "_SafeProxy__handle_exception",
             "candidates",
             "item_candidates",
             "album_for_id",
@@ -408,21 +408,21 @@ class SafeProxy(base):
         }:
             return super().__getattribute__(name)
         else:
-            return getattr(self._plugin, name)
+            return getattr(self.__plugin, name)
 
     def __setattr__(self, name, value):
-        if name == "_plugin":
+        if name == "_SafeProxy__plugin":
             super().__setattr__(name, value)
         else:
-            self._plugin.__setattr__(name, value)
+            self.__plugin.__setattr__(name, value)
 
-    def _handle_exception(self, func: Callable[P, R], e: Exception) -> None:
+    def __handle_exception(self, func: Callable[P, R], e: Exception) -> None:
         """Helper function to log exceptions from metadata source plugins."""
         if config["raise_on_error"].get(bool):
             raise e
         log.error(
             "Error in '{}.{}': {}",
-            self._plugin.data_source,
+            self.__plugin.data_source,
             func.__name__,
             e,
         )
@@ -430,24 +430,24 @@ class SafeProxy(base):
 
     def album_for_id(self, *args, **kwargs):
         try:
-            return self._plugin.album_for_id(*args, **kwargs)
+            return self.__plugin.album_for_id(*args, **kwargs)
         except Exception as e:
-            return self._handle_exception(self._plugin.album_for_id, e)
+            return self.__handle_exception(self.__plugin.album_for_id, e)
 
     def track_for_id(self, track_id: str):
         try:
-            return self._plugin.track_for_id(track_id)
+            return self.__plugin.track_for_id(track_id)
         except Exception as e:
-            return self._handle_exception(self._plugin.track_for_id, e)
+            return self.__handle_exception(self.__plugin.track_for_id, e)
 
     def candidates(self, *args, **kwargs):
         try:
-            yield from self._plugin.candidates(*args, **kwargs)
+            yield from self.__plugin.candidates(*args, **kwargs)
         except Exception as e:
-            return self._handle_exception(self._plugin.candidates, e)
+            return self.__handle_exception(self.__plugin.candidates, e)
 
     def item_candidates(self, *args, **kwargs):
         try:
-            yield from self._plugin.item_candidates(*args, **kwargs)
+            yield from self.__plugin.item_candidates(*args, **kwargs)
         except Exception as e:
-            return self._handle_exception(self._plugin.item_candidates, e)
+            return self.__handle_exception(self.__plugin.item_candidates, e)
