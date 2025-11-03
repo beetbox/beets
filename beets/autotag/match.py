@@ -349,7 +349,7 @@ def tag_item(
         log.debug("Searching for track IDs: {}", ", ".join(trackids))
         for info in metadata_plugins.tracks_for_ids(trackids):
             dist = track_distance(item, info, incl_artist=True)
-            candidates[info.identifier] = hooks.TrackMatch(dist, info)
+            candidates[info.identifier] = hooks.TrackMatch(dist, info, item)
 
         # If this is a good match, then don't keep searching.
         rec = _recommendation(_sort_candidates(candidates.values()))
@@ -375,7 +375,9 @@ def tag_item(
         item, search_artist, search_name
     ):
         dist = track_distance(item, track_info, incl_artist=True)
-        candidates[track_info.identifier] = hooks.TrackMatch(dist, track_info)
+        candidates[track_info.identifier] = hooks.TrackMatch(
+            dist, track_info, item
+        )
 
     # Sort by distance and return with recommendation.
     log.debug("Found {} candidates.", len(candidates))

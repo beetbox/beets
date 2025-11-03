@@ -14,7 +14,8 @@
 
 """Update library's tags using Beatport."""
 
-from beets import autotag, library, ui, util
+from beets import library, ui, util
+from beets.autotag.hooks import AlbumMatch, TrackMatch
 from beets.plugins import BeetsPlugin, apply_item_changes
 from beets.util.deprecation import deprecate_for_user
 
@@ -93,7 +94,7 @@ class BPSyncPlugin(BeetsPlugin):
             # Apply.
             trackinfo = self.beatport_plugin.track_for_id(item.mb_trackid)
             with lib.transaction():
-                autotag.apply_item_metadata(item, trackinfo)
+                TrackMatch(0, trackinfo, item).apply_metadata()
                 apply_item_changes(lib, item, move, pretend, write)
 
     @staticmethod
@@ -158,7 +159,7 @@ class BPSyncPlugin(BeetsPlugin):
 
             self._log.info("applying changes to {}", album)
             with lib.transaction():
-                autotag.apply_metadata(albuminfo, item_info_pairs)
+                AlbumMatch(0, albuminfo, dict(item_info_pairs)).apply_metadata()
                 changed = False
                 # Find any changed item to apply Beatport changes to album.
                 any_changed_item = items[0]
