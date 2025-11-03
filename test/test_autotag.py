@@ -172,13 +172,14 @@ class ApplyTest(TestCase):
         common_expected = {
             "album": "album",
             "albumartist_credit": "albumArtistCredit",
-            "albumartist_sort": "",
             "albumartist": "albumArtist",
             "albumartists": ["albumArtist", "albumArtist2"],
             "albumartists_credit": [
+                "albumArtistCredit",
                 "albumArtistCredit1",
                 "albumArtistCredit2",
             ],
+            "albumartist_sort": "albumArtistSort",
             "albumartists_sort": ["albumArtistSort", "albumArtistSort2"],
             "albumtype": "album",
             "albumtypes": ["album"],
@@ -199,7 +200,7 @@ class ApplyTest(TestCase):
             {
                 **common_expected,
                 "artist": "trackArtist",
-                "artists": ["albumArtist", "albumArtist2"],
+                "artists": ["trackArtist", "albumArtist", "albumArtist2"],
                 "artist_credit": "trackArtistCredit",
                 "artist_sort": "trackArtistSort",
                 "artists_credit": ["trackArtistCredit"],
@@ -214,8 +215,9 @@ class ApplyTest(TestCase):
                 "artist": "albumArtist",
                 "artists": ["albumArtist", "albumArtist2"],
                 "artist_credit": "albumArtistCredit",
-                "artist_sort": "",
+                "artist_sort": "albumArtistSort",
                 "artists_credit": [
+                    "albumArtistCredit",
                     "albumArtistCredit1",
                     "albumArtistCredit2",
                 ],
