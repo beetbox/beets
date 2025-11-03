@@ -8,18 +8,15 @@ implemented as plugins.
 from __future__ import annotations
 
 import abc
-import inspect
 import re
-from functools import cache, cached_property, wraps
+from functools import cache, cached_property
 from typing import (
     TYPE_CHECKING,
     Callable,
-    ClassVar,
     Generic,
     Literal,
     TypedDict,
     TypeVar,
-    overload,
 )
 
 import unidecode
@@ -396,73 +393,28 @@ class SafeProxy(base):
     """
 
     _plugin: MetadataSourcePlugin
-    _SAFE_METHODS: ClassVar[set[str]] = {
-        "candidates",
-        "item_candidates",
-        "album_for_id",
-        "track_for_id",
-    }
 
     def __init__(self, plugin: MetadataSourcePlugin):
         self._plugin = plugin
 
     def __getattribute__(self, name):
-        if (
-            name == "_plugin"
-            or name == "_handle_exception"
-            or name == "_SAFE_METHODS"
-            or name == "_safe_execute"
-        ):
+        if name in {
+            "_plugin",
+            "_handle_exception",
+            "candidates",
+            "item_candidates",
+            "album_for_id",
+            "track_for_id",
+        }:
             return super().__getattribute__(name)
-
-        attr = getattr(self._plugin, name)
-
-        if callable(attr) and name in SafeProxy._SAFE_METHODS:
-            return self._safe_execute(attr)
-        return attr
+        else:
+            return getattr(self._plugin, name)
 
     def __setattr__(self, name, value):
         if name == "_plugin":
             super().__setattr__(name, value)
         else:
             self._plugin.__setattr__(name, value)
-
-    @overload
-    def _safe_execute(
-        self,
-        func: Callable[P, Iterable[R]],
-    ) -> Callable[P, Iterable[R]]: ...
-    @overload
-    def _safe_execute(self, func: Callable[P, R]) -> Callable[P, R | None]: ...
-    def _safe_execute(
-        self, func: Callable[P, R]
-    ) -> Callable[P, R | Iterable[R] | None]:
-        """Wrap any function (generator or regular) and safely execute it.
-
-        Limitation: This does not work on properties!
-        """
-
-        @wraps(func)
-        def wrapper(
-            *args: P.args, **kwargs: P.kwargs
-        ) -> R | Iterable[R] | None:
-            try:
-                result = func(*args, **kwargs)
-            except Exception as e:
-                self._handle_exception(func, e)
-
-                return None
-
-            if inspect.isgenerator(result):
-                try:
-                    yield from result
-                except Exception as e:
-                    self._handle_exception(func, e)
-                return None
-            else:
-                return result
-
-        return wrapper
 
     def _handle_exception(self, func: Callable[P, R], e: Exception) -> None:
         """Helper function to log exceptions from metadata source plugins."""
@@ -476,17 +428,26 @@ class SafeProxy(base):
         )
         log.debug("Exception details:", exc_info=True)
 
-    # Implement abstract methods to satisfy the ABC
-    # this is only needed because of the typing hack above.
-
-    def album_for_id(self, album_id: str):
-        raise NotImplementedError
+    def album_for_id(self, *args, **kwargs):
+        try:
+            return self._plugin.album_for_id(*args, **kwargs)
+        except Exception as e:
+            return self._handle_exception(self._plugin.album_for_id, e)
 
     def track_for_id(self, track_id: str):
-        raise NotImplementedError
+        try:
+            return self._plugin.track_for_id(track_id)
+        except Exception as e:
+            return self._handle_exception(self._plugin.track_for_id, e)
 
     def candidates(self, *args, **kwargs):
-        raise NotImplementedError
+        try:
+            yield from self._plugin.candidates(*args, **kwargs)
+        except Exception as e:
+            return self._handle_exception(self._plugin.candidates, e)
 
     def item_candidates(self, *args, **kwargs):
-        raise NotImplementedError
+        try:
+            yield from self._plugin.item_candidates(*args, **kwargs)
+        except Exception as e:
+            return self._handle_exception(self._plugin.item_candidates, e)
