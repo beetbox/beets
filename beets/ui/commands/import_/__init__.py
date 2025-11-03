@@ -5,11 +5,45 @@ import os
 from beets import config, logging, plugins, ui
 from beets.util import displayable_path, normpath, syspath
 
-from .._utils import parse_logfiles
 from .session import TerminalImportSession
 
 # Global logger.
 log = logging.getLogger("beets")
+
+
+def paths_from_logfile(path):
+    """Parse the logfile and yield skipped paths to pass to the `import`
+    command.
+    """
+    with open(path, encoding="utf-8") as fp:
+        for i, line in enumerate(fp, start=1):
+            verb, sep, paths = line.rstrip("\n").partition(" ")
+            if not sep:
+                raise ValueError(f"line {i} is invalid")
+
+            # Ignore informational lines that don't need to be re-imported.
+            if verb in {"import", "duplicate-keep", "duplicate-replace"}:
+                continue
+
+            if verb not in {"asis", "skip", "duplicate-skip"}:
+                raise ValueError(f"line {i} contains unknown verb {verb}")
+
+            yield os.path.commonpath(paths.split("; "))
+
+
+def parse_logfiles(logfiles):
+    """Parse all `logfiles` and yield paths from it."""
+    for logfile in logfiles:
+        try:
+            yield from paths_from_logfile(syspath(normpath(logfile)))
+        except ValueError as err:
+            raise ui.UserError(
+                f"malformed logfile {displayable_path(logfile)}: {err}"
+            ) from err
+        except OSError as err:
+            raise ui.UserError(
+                f"unreadable logfile {displayable_path(logfile)}: {err}"
+            ) from err
 
 
 def import_files(lib, paths: list[bytes], query):
@@ -95,6 +129,32 @@ def import_func(lib, opts, args: list[str]):
             raise ui.UserError("none of the paths are importable")
 
     import_files(lib, byte_paths, query)
+
+
+def _store_dict(option, opt_str, value, parser):
+    """Custom action callback to parse options which have ``key=value``
+    pairs as values. All such pairs passed for this option are
+    aggregated into a dictionary.
+    """
+    dest = option.dest
+    option_values = getattr(parser.values, dest, None)
+
+    if option_values is None:
+        # This is the first supplied ``key=value`` pair of option.
+        # Initialize empty dictionary and get a reference to it.
+        setattr(parser.values, dest, {})
+        option_values = getattr(parser.values, dest)
+
+    try:
+        key, value = value.split("=", 1)
+        if not (key and value):
+            raise ValueError
+    except ValueError:
+        raise ui.UserError(
+            f"supplied argument `{value}' is not of the form `key=value'"
+        )
+
+    option_values[key] = value
 
 
 import_cmd = ui.Subcommand(
@@ -274,7 +334,7 @@ import_cmd.parser.add_option(
     "--set",
     dest="set_fields",
     action="callback",
-    callback=ui._store_dict,
+    callback=_store_dict,
     metavar="FIELD=VALUE",
     help="set the given fields to the supplied values",
 )

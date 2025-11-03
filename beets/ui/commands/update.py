@@ -5,7 +5,7 @@ import os
 from beets import library, logging, ui
 from beets.util import ancestry, syspath
 
-from ._utils import do_query
+from .utils import do_query
 
 # Global logger.
 log = logging.getLogger("beets")

@@ -32,6 +32,21 @@ from .update import update_cmd
 from .version import version_cmd
 from .write import write_cmd
 
+
+def __getattr__(name: str):
+    """Handle deprecated imports."""
+    return deprecate_imports(
+        old_module=__name__,
+        new_module_by_name={
+            "TerminalImportSession": "beets.ui.commands.import_.session",
+            "PromptChoice": "beets.ui.commands.import_.session",
+            # TODO: We might want to add more deprecated imports here
+        },
+        name=name,
+        version="3.0.0",
+    )
+
+
 # The list of default subcommands. This is populated with Subcommand
 # objects that can be fed to a SubcommandsOptionParser.
 default_commands = [

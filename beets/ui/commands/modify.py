@@ -3,7 +3,7 @@
 from beets import library, ui
 from beets.util import functemplate
 
-from ._utils import do_query
+from .utils import do_query
 
 
 def modify_items(lib, mods, dels, query, write, move, album, confirm, inherit):

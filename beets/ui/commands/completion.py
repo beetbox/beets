@@ -48,7 +48,7 @@ def completion_script(commands):
     completion data for.
     """
     base_script = os.path.join(
-        os.path.dirname(__file__), "../completion_base.sh"
+        os.path.dirname(__file__), "./completion_base.sh"
     )
     with open(base_script) as base_script:
         yield base_script.read()
