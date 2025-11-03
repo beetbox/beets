@@ -174,6 +174,21 @@ def correct_list_fields(m: LibModel) -> None:
     if hasattr(m, "mb_albumartistids"):
         ensure_first_value("mb_albumartistid", "mb_albumartistids")
 
+    if hasattr(m, "artists_sort"):
+        ensure_first_value("artist_sort", "artists_sort")
+
+    if hasattr(m, "artists_credit"):
+        ensure_first_value("artist_credit", "artists_credit")
+
+    if hasattr(m, "albumartists_credit"):
+        ensure_first_value("albumartist_credit", "albumartists_credit")
+
+    if hasattr(m, "artists"):
+        ensure_first_value("artist", "artists")
+
+    if hasattr(m, "albumartists_sort"):
+        ensure_first_value("albumartist_sort", "albumartists_sort")
+
 
 def apply_item_metadata(item: Item, track_info: TrackInfo):
     """Set an item's metadata from its matched TrackInfo object."""
