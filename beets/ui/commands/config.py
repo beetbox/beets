@@ -2,7 +2,8 @@
 
 import os
 
-from beets import config, ui, util
+from beets import config, ui
+from beets.util import displayable_path, editor_command, interactive_open
 
 
 def config_func(lib, opts, args):
@@ -25,7 +26,7 @@ def config_func(lib, opts, args):
             filenames.insert(0, user_path)
 
         for filename in filenames:
-            ui.print_(util.displayable_path(filename))
+            ui.print_(displayable_path(filename))
 
     # Open in editor.
     elif opts.edit:
@@ -45,11 +46,11 @@ def config_edit():
     An empty config file is created if no existing config file exists.
     """
     path = config.user_config_path()
-    editor = util.editor_command()
+    editor = editor_command()
     try:
         if not os.path.isfile(path):
             open(path, "w+").close()
-        util.interactive_open([path], editor)
+        interactive_open([path], editor)
     except OSError as exc:
         message = f"Could not edit configuration: {exc}"
         if not editor:

@@ -2,7 +2,7 @@
 
 from beets import ui
 
-from ._utils import do_query
+from .utils import do_query
 
 
 def remove_items(lib, query, album, delete, force):

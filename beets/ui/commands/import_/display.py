@@ -2,15 +2,12 @@ import os
 from collections.abc import Sequence
 from functools import cached_property
 
-from beets import autotag, config, logging, ui
+from beets import autotag, config, ui
 from beets.autotag import hooks
 from beets.util import displayable_path
 from beets.util.units import human_seconds_short
 
 VARIOUS_ARTISTS = "Various Artists"
-
-# Global logger.
-log = logging.getLogger("beets")
 
 
 class ChangeRepresentation:

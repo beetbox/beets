@@ -2,17 +2,65 @@
 
 import os
 
-from beets import logging, ui, util
+from beets import logging, ui
+from beets.util import (
+    MoveOperation,
+    PathLike,
+    displayable_path,
+    normpath,
+    syspath,
+)
 
-from ._utils import do_query
+from .utils import do_query
 
 # Global logger.
 log = logging.getLogger("beets")
 
 
+def show_path_changes(path_changes):
+    """Given a list of tuples (source, destination) that indicate the
+    path changes, log the changes as INFO-level output to the beets log.
+    The output is guaranteed to be unicode.
+
+    Every pair is shown on a single line if the terminal width permits it,
+    else it is split over two lines. E.g.,
+
+    Source -> Destination
+
+    vs.
+
+    Source
+      -> Destination
+    """
+    sources, destinations = zip(*path_changes)
+
+    # Ensure unicode output
+    sources = list(map(displayable_path, sources))
+    destinations = list(map(displayable_path, destinations))
+
+    # Calculate widths for terminal split
+    col_width = (ui.term_width() - len(" -> ")) // 2
+    max_width = len(max(sources + destinations, key=len))
+
+    if max_width > col_width:
+        # Print every change over two lines
+        for source, dest in zip(sources, destinations):
+            color_source, color_dest = ui.colordiff(source, dest)
+            ui.print_(f"{color_source} \n  -> {color_dest}")
+    else:
+        # Print every change on a single line, and add a header
+        title_pad = max_width - len("Source ") + len(" -> ")
+
+        ui.print_(f"Source {' ' * title_pad} Destination")
+        for source, dest in zip(sources, destinations):
+            pad = max_width - len(source)
+            color_source, color_dest = ui.colordiff(source, dest)
+            ui.print_(f"{color_source} {' ' * pad} -> {color_dest}")
+
+
 def move_items(
     lib,
-    dest_path: util.PathLike,
+    dest_path: PathLike,
     query,
     copy,
     album,
@@ -60,7 +108,7 @@ def move_items(
 
     if pretend:
         if album:
-            ui.show_path_changes(
+            show_path_changes(
                 [
                     (item.path, item.destination(basedir=dest))
                     for obj in objs
@@ -68,7 +116,7 @@ def move_items(
                 ]
             )
         else:
-            ui.show_path_changes(
+            show_path_changes(
                 [(obj.path, obj.destination(basedir=dest)) for obj in objs]
             )
     else:
@@ -76,7 +124,7 @@ def move_items(
             objs = ui.input_select_objects(
                 f"Really {act}",
                 objs,
-                lambda o: ui.show_path_changes(
+                lambda o: show_path_changes(
                     [(o.path, o.destination(basedir=dest))]
                 ),
             )
@@ -87,24 +135,22 @@ def move_items(
             if export:
                 # Copy without affecting the database.
                 obj.move(
-                    operation=util.MoveOperation.COPY, basedir=dest, store=False
+                    operation=MoveOperation.COPY, basedir=dest, store=False
                 )
             else:
                 # Ordinary move/copy: store the new path.
                 if copy:
-                    obj.move(operation=util.MoveOperation.COPY, basedir=dest)
+                    obj.move(operation=MoveOperation.COPY, basedir=dest)
                 else:
-                    obj.move(operation=util.MoveOperation.MOVE, basedir=dest)
+                    obj.move(operation=MoveOperation.MOVE, basedir=dest)
 
 
 def move_func(lib, opts, args):
     dest = opts.dest
     if dest is not None:
-        dest = util.normpath(dest)
-        if not os.path.isdir(util.syspath(dest)):
-            raise ui.UserError(
-                f"no such directory: {util.displayable_path(dest)}"
-            )
+        dest = normpath(dest)
+        if not os.path.isdir(syspath(dest)):
+            raise ui.UserError(f"no such directory: {displayable_path(dest)}")
 
     move_items(
         lib,
