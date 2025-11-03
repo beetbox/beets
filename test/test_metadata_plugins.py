@@ -39,6 +39,7 @@ class TestMetadataPluginsException(PluginMixin):
 
     @pytest.fixture(autouse=True)
     def setup(self):
+        metadata_plugins.find_metadata_source_plugins.cache_clear()
         self.register_plugin(ErrorMetadataMockPlugin)
         yield
         self.unload_plugins()
