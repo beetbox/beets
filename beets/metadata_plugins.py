@@ -8,14 +8,25 @@ implemented as plugins.
 from __future__ import annotations
 
 import abc
+import inspect
 import re
-from functools import cache, cached_property
-from typing import TYPE_CHECKING, Generic, Literal, TypedDict, TypeVar
+from functools import cache, cached_property, wraps
+from typing import (
+    TYPE_CHECKING,
+    Callable,
+    ClassVar,
+    Generic,
+    Literal,
+    TypedDict,
+    TypeVar,
+    overload,
+)
 
 import unidecode
 from confuse import NotFoundError
-from typing_extensions import NotRequired
+from typing_extensions import NotRequired, ParamSpec
 
+from beets import config, logging
 from beets.util import cached_classproperty
 from beets.util.id_extractors import extract_release_id
 
@@ -26,12 +37,18 @@ if TYPE_CHECKING:
 
     from .autotag.hooks import AlbumInfo, Item, TrackInfo
 
+    P = ParamSpec("P")
+    R = TypeVar("R")
+
+# Global logger.
+log = logging.getLogger("beets")
+
 
 @cache
 def find_metadata_source_plugins() -> list[MetadataSourcePlugin]:
     """Return a list of all loaded metadata source plugins."""
     # TODO: Make this an isinstance(MetadataSourcePlugin, ...) check in v3.0.0
-    return [p for p in find_plugins() if hasattr(p, "data_source")]  # type: ignore[misc]
+    return [SafeProxy(p) for p in find_plugins() if hasattr(p, "data_source")]  # type: ignore[misc,arg-type]
 
 
 @notify_info_yielded("albuminfo_received")
@@ -43,7 +60,7 @@ def candidates(*args, **kwargs) -> Iterable[AlbumInfo]:
 
 @notify_info_yielded("trackinfo_received")
 def item_candidates(*args, **kwargs) -> Iterable[TrackInfo]:
-    """Return matching track candidates fromm all metadata source plugins."""
+    """Return matching track candidates from all metadata source plugins."""
     for plugin in find_metadata_source_plugins():
         yield from plugin.item_candidates(*args, **kwargs)
 
@@ -54,7 +71,7 @@ def album_for_id(_id: str) -> AlbumInfo | None:
     A single ID can yield just a single album, so we return the first match.
     """
     for plugin in find_metadata_source_plugins():
-        if info := plugin.album_for_id(album_id=_id):
+        if info := plugin.album_for_id(_id):
             send("albuminfo_received", info=info)
             return info
 
@@ -259,11 +276,11 @@ class SearchFilter(TypedDict):
     album: NotRequired[str]
 
 
-R = TypeVar("R", bound=IDResponse)
+Res = TypeVar("Res", bound=IDResponse)
 
 
 class SearchApiMetadataSourcePlugin(
-    Generic[R], MetadataSourcePlugin, metaclass=abc.ABCMeta
+    Generic[Res], MetadataSourcePlugin, metaclass=abc.ABCMeta
 ):
     """Helper class to implement a metadata source plugin with an API.
 
@@ -288,7 +305,7 @@ class SearchApiMetadataSourcePlugin(
         query_type: Literal["album", "track"],
         filters: SearchFilter,
         query_string: str = "",
-    ) -> Sequence[R]:
+    ) -> Sequence[Res]:
         """Perform a search on the API.
 
         :param query_type: The type of query to perform.
@@ -357,3 +374,119 @@ class SearchApiMetadataSourcePlugin(
             query = unidecode.unidecode(query)
 
         return query
+
+
+# To have proper typing for the proxy class below, we need to
+# trick mypy into thinking that SafeProxy is a subclass of
+# MetadataSourcePlugin.
+# https://stackoverflow.com/questions/71365594/how-to-make-a-proxy-object-with-typing-as-underlying-object-in-python
+Proxied = TypeVar("Proxied", bound=MetadataSourcePlugin)
+if TYPE_CHECKING:
+    base = MetadataSourcePlugin
+else:
+    base = object
+
+
+class SafeProxy(base):
+    """A proxy class that forwards all attribute access to the wrapped
+    MetadataSourcePlugin instance.
+
+    We use this to catch and log exceptions from metadata source plugins
+    without crashing beets. E.g. on long running autotag operations.
+    """
+
+    _plugin: MetadataSourcePlugin
+    _SAFE_METHODS: ClassVar[set[str]] = {
+        "candidates",
+        "item_candidates",
+        "album_for_id",
+        "track_for_id",
+    }
+
+    def __init__(self, plugin: MetadataSourcePlugin):
+        self._plugin = plugin
+
+    def __getattribute__(self, name):
+        if (
+            name == "_plugin"
+            or name == "_handle_exception"
+            or name == "_SAFE_METHODS"
+            or name == "_safe_execute"
+        ):
+            return super().__getattribute__(name)
+
+        attr = getattr(self._plugin, name)
+
+        if callable(attr) and name in SafeProxy._SAFE_METHODS:
+            return self._safe_execute(attr)
+        return attr
+
+    def __setattr__(self, name, value):
+        if name == "_plugin":
+            super().__setattr__(name, value)
+        else:
+            self._plugin.__setattr__(name, value)
+
+    @overload
+    def _safe_execute(
+        self,
+        func: Callable[P, Iterable[R]],
+    ) -> Callable[P, Iterable[R]]: ...
+    @overload
+    def _safe_execute(self, func: Callable[P, R]) -> Callable[P, R | None]: ...
+    def _safe_execute(
+        self, func: Callable[P, R]
+    ) -> Callable[P, R | Iterable[R] | None]:
+        """Wrap any function (generator or regular) and safely execute it.
+
+        Limitation: This does not work on properties!
+        """
+
+        @wraps(func)
+        def wrapper(
+            *args: P.args, **kwargs: P.kwargs
+        ) -> R | Iterable[R] | None:
+            try:
+                result = func(*args, **kwargs)
+            except Exception as e:
+                self._handle_exception(func, e)
+
+                return None
+
+            if inspect.isgenerator(result):
+                try:
+                    yield from result
+                except Exception as e:
+                    self._handle_exception(func, e)
+                return None
+            else:
+                return result
+
+        return wrapper
+
+    def _handle_exception(self, func: Callable[P, R], e: Exception) -> None:
+        """Helper function to log exceptions from metadata source plugins."""
+        if config["raise_on_error"].get(bool):
+            raise e
+        log.error(
+            "Error in '{}.{}': {}",
+            self._plugin.data_source,
+            func.__name__,
+            e,
+        )
+        log.debug("Exception details:", exc_info=True)
+
+    # Implement abstract methods to satisfy the ABC
+    # this is only needed because of the typing hack above.
+
+    def album_for_id(self, album_id: str):
+        raise NotImplementedError
+
+    def track_for_id(self, track_id: str):
+        raise NotImplementedError
+
+    def candidates(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def item_candidates(self, *args, **kwargs):
+        raise NotImplementedError
