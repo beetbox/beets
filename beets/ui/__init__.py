@@ -32,7 +32,7 @@ import warnings
 from difflib import SequenceMatcher
 from functools import cache
 from itertools import chain
-from typing import Any, Callable, Literal
+from typing import Any, Literal
 
 import confuse
 
@@ -1258,7 +1258,7 @@ class Subcommand:
     invoked by a SubcommandOptionParser.
     """
 
-    func: Callable[[library.Library, optparse.Values, list[str]], Any]
+    def func(self, lib: library.Library, opts: optparse.Values, args: list[str]): ...
 
     def __init__(self, name, parser=None, help="", aliases=(), hide=False):
         """Creates a new subcommand. name is the primary way to invoke
