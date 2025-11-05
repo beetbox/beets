@@ -43,6 +43,9 @@ Other changes:
 - The documentation chapter :doc:`dev/paths` has been moved to the "For
   Developers" section and revised to reflect current best practices (pathlib
   usage).
+- Refactored the ``beets/ui/commands.py`` monolithic file (2000+ lines) into
+  multiple modules within the ``beets/ui/commands`` directory for better
+  maintainability.
 
 2.5.1 (October 14, 2025)
 ------------------------
