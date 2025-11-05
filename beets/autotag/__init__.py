@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import warnings
 from importlib import import_module
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 from beets import config, logging
 
@@ -117,8 +117,8 @@ SPECIAL_FIELDS = {
 
 
 def _apply_metadata(
-    info: Union[AlbumInfo, TrackInfo],
-    db_obj: Union[Album, Item],
+    info: AlbumInfo | TrackInfo,
+    db_obj: Album | Item,
     nullable_fields: Sequence[str] = [],
 ):
     """Set the db_obj's metadata to match the info."""

@@ -19,7 +19,7 @@ from __future__ import annotations
 import itertools
 import traceback
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any, Iterable, Sequence
+from typing import TYPE_CHECKING, Any
 
 import mediafile
 import musicbrainzngs
@@ -40,6 +40,8 @@ from beetsplug.musicbrainz import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
+
     from beets.autotag import AlbumMatch
     from beets.library import Item
     from beetsplug._typing import JSONDict
