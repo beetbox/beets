@@ -18,37 +18,44 @@ from __future__ import annotations
 
 import itertools
 import re
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
-from . import query
+from beets.library import Album, Item, LibModel
+
+from . import FieldQuery, Model, Query, query
 
 if TYPE_CHECKING:
+    import sys
     from collections.abc import Collection, Sequence
 
-    from ..library import LibModel
-    from .query import FieldQueryType, Sort
+    from .query import Sort
 
-    Prefixes = dict[str, FieldQueryType]
+    if not sys.version_info < (3, 10):
+        from typing import TypeAlias  # pyright: ignore[reportUnreachable]
+    else:
+        from typing_extensions import TypeAlias
+
+    Prefixes: TypeAlias = dict[str, type[FieldQuery]]
 
 
 PARSE_QUERY_PART_REGEX = re.compile(
     # Non-capturing optional segment for the keyword.
-    r"(-|\^)?"  # Negation prefixes.
-    r"(?:"
-    r"(\S+?)"  # The field key.
-    r"(?<!\\):"  # Unescaped :
-    r")?"
-    r"(.*)",  # The term itself.
+    r"(-|\^)?"  # Negation prefixes. #  noqa: ISC003
+    + r"(?:"
+    + r"(\S+?)"  # The field key.
+    + r"(?<!\\):"  # Unescaped :
+    + r")?"
+    + r"(.*)",  # The term itself.
     re.I,  # Case-insensitive.
 )
 
 
 def parse_query_part(
     part: str,
-    query_classes: dict[str, FieldQueryType] = {},
+    query_classes: dict[str, type[Query]] = {},
     prefixes: Prefixes = {},
     default_class: type[query.SubstringQuery] = query.SubstringQuery,
-) -> tuple[str | None, str, FieldQueryType, bool]:
+) -> tuple[str | None, str, type[Query], bool]:
     """Parse a single *query part*, which is a chunk of a complete query
     string representing a single criterion.
 
@@ -94,15 +101,17 @@ def parse_query_part(
     """
     # Apply the regular expression and extract the components.
     part = part.strip()
-    match = PARSE_QUERY_PART_REGEX.match(part)
+    match: re.Match[str] | None = PARSE_QUERY_PART_REGEX.match(part)
 
     assert match  # Regex should always match
-    negate = bool(match.group(1))
-    key = match.group(2)
-    term = match.group(3).replace("\\:", ":")
+    negate: bool = bool(match.group(1))
+    key: str = match.group(2)
+    term: str = match.group(3).replace("\\:", ":")
 
     # Check whether there's a prefix in the query and use the
     # corresponding query type.
+    pre: str
+    query_class: type[Query]
     for pre, query_class in prefixes.items():
         if term.startswith(pre):
             return key, term[len(pre) :], query_class, negate
@@ -137,26 +146,30 @@ def construct_query_part(
 
     # Use `model_cls` to build up a map from field (or query) names to
     # `Query` classes.
-    query_classes: dict[str, FieldQueryType] = {}
+    query_classes: dict[str, type[Query]] = {}
     for k, t in itertools.chain(
         model_cls._fields.items(), model_cls._types.items()
     ):
         query_classes[k] = t.query
-    query_classes.update(model_cls._queries)  # Non-field queries.
+    query_classes.update(
+        model_cls._queries.items()  # Non-field queries.
+    )
 
     # Parse the string.
     key, pattern, query_class, negate = parse_query_part(
         query_part, query_classes, prefixes
     )
+    if key is not None:
+        # Field queries get constructed according to the name of the field
+        # they are querying.
+        out_query = model_cls.field_query(
+            key.lower(), pattern, cast(type[FieldQuery], query_class)
+        )
 
-    if key is None:
+    else:
         # If there's no key (field name) specified, this is a "match anything"
         # query.
         out_query = model_cls.any_field_query(pattern, query_class)
-    else:
-        # Field queries get constructed according to the name of the field
-        # they are querying.
-        out_query = model_cls.field_query(key.lower(), pattern, query_class)
 
     # Apply negation.
     if negate:
@@ -176,7 +189,7 @@ def query_from_strings(
     strings in the format used by parse_query_part. `model_cls`
     determines how queries are constructed from strings.
     """
-    subqueries = []
+    subqueries: list[Query] = []
     for part in query_parts:
         subqueries.append(construct_query_part(model_cls, prefixes, part))
     if not subqueries:  # No terms in query.
@@ -185,7 +198,7 @@ def query_from_strings(
 
 
 def construct_sort_part(
-    model_cls: type[LibModel],
+    model_cls: Model,
     part: str,
     case_insensitive: bool = True,
 ) -> Sort:
@@ -196,6 +209,9 @@ def construct_sort_part(
     indicates whether or not the sort should be performed in a case
     sensitive manner.
     """
+    assert isinstance(model_cls, type(Album)) or isinstance(
+        model_cls, type(Item)
+    )
     assert part, "part must be a field name and + or -"
     field = part[:-1]
     assert field, "field is missing"
@@ -224,12 +240,12 @@ def sort_from_strings(
     if not sort_parts:
         return query.NullSort()
     elif len(sort_parts) == 1:
-        return construct_sort_part(model_cls, sort_parts[0], case_insensitive)
+        return construct_sort_part(model_cls, sort_parts[0], case_insensitive)  # type: ignore[arg-type]
     else:
         sort = query.MultipleSort()
         for part in sort_parts:
             sort.add_sort(
-                construct_sort_part(model_cls, part, case_insensitive)
+                construct_sort_part(model_cls, part, case_insensitive)  # type: ignore[arg-type]
             )
         return sort
 

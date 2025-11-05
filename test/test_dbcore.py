@@ -728,16 +728,16 @@ class ResultsIteratorTest(unittest.TestCase):
         self.db._connection().close()
 
     def test_iterate_once(self):
-        objs = self.db._fetch(ModelFixture1)
+        objs = self.db._fetch_model(ModelFixture1)
         assert len(list(objs)) == 2
 
     def test_iterate_twice(self):
-        objs = self.db._fetch(ModelFixture1)
+        objs = self.db._fetch_model(ModelFixture1)
         list(objs)
         assert len(list(objs)) == 2
 
     def test_concurrent_iterators(self):
-        results = self.db._fetch(ModelFixture1)
+        results = self.db._fetch_model(ModelFixture1)
         it1 = iter(results)
         it2 = iter(results)
         next(it1)
@@ -746,44 +746,44 @@ class ResultsIteratorTest(unittest.TestCase):
 
     def test_slow_query(self):
         q = dbcore.query.SubstringQuery("foo", "ba", False)
-        objs = self.db._fetch(ModelFixture1, q)
+        objs = self.db._fetch_model(ModelFixture1, q)
         assert len(list(objs)) == 2
 
     def test_slow_query_negative(self):
         q = dbcore.query.SubstringQuery("foo", "qux", False)
-        objs = self.db._fetch(ModelFixture1, q)
+        objs = self.db._fetch_model(ModelFixture1, q)
         assert len(list(objs)) == 0
 
     def test_iterate_slow_sort(self):
         s = dbcore.query.SlowFieldSort("foo")
-        res = self.db._fetch(ModelFixture1, sort=s)
+        res = self.db._fetch_model(ModelFixture1, sort=s)
         objs = list(res)
         assert objs[0].foo == "bar"
         assert objs[1].foo == "baz"
 
     def test_unsorted_subscript(self):
-        objs = self.db._fetch(ModelFixture1)
+        objs = self.db._fetch_model(ModelFixture1)
         assert objs[0].foo == "baz"
         assert objs[1].foo == "bar"
 
     def test_slow_sort_subscript(self):
         s = dbcore.query.SlowFieldSort("foo")
-        objs = self.db._fetch(ModelFixture1, sort=s)
+        objs = self.db._fetch_model(ModelFixture1, sort=s)
         assert objs[0].foo == "bar"
         assert objs[1].foo == "baz"
 
     def test_length(self):
-        objs = self.db._fetch(ModelFixture1)
+        objs = self.db._fetch_model(ModelFixture1)
         assert len(objs) == 2
 
     def test_out_of_range(self):
-        objs = self.db._fetch(ModelFixture1)
+        objs = self.db._fetch_model(ModelFixture1)
         with pytest.raises(IndexError):
             objs[100]
 
     def test_no_results(self):
         assert (
-            self.db._fetch(ModelFixture1, dbcore.query.FalseQuery()).get()
+            self.db._fetch_model(ModelFixture1, dbcore.query.FalseQuery()).get()
             is None
         )
 

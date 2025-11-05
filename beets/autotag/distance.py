@@ -345,7 +345,7 @@ class Distance:
         dist = string_dist(str1, str2)
         self.add(key, dist)
 
-    def add_data_source(self, before: str | None, after: str | None) -> None:
+    def add_data_source(self, before: object, after: str | None) -> None:
         if before != after and (
             before or len(metadata_plugins.find_metadata_source_plugins()) > 1
         ):
@@ -384,11 +384,19 @@ def track_distance(
     cached because this function is called many times during the matching
     process and their access comes with a performance overhead.
     """
-    dist = Distance()
+    dist: Distance = Distance()
 
     # Length.
+    info_length: float | None
     if info_length := track_info.length:
-        diff = abs(item.length - info_length) - get_track_length_grace()
+        diff: float = (
+            abs(
+                (item.length - info_length)
+                if isinstance(item.length, (int, float))
+                else 0
+            )
+            - get_track_length_grace()
+        )
         dist.add_ratio("track_length", diff, get_track_length_max())
 
     # Title.
