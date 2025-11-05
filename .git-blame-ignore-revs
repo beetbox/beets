@@ -79,3 +79,5 @@ d93ddf8dd43e4f9ed072a03829e287c78d2570a2
 25ae330044abf04045e3f378f72bbaed739fb30d
 # Refactor test_ui_command.py into multiple modules 
 a59e41a88365e414db3282658d2aa456e0b3468a
+# pyupgrade Python 3.10
+301637a1609831947cb5dd90270ed46c24b1ab1b
