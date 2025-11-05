@@ -37,7 +37,7 @@ from typing_extensions import NotRequired, TypedDict
 
 import beets
 import beets.ui
-from beets import config
+from beets import config, logging
 from beets.autotag.distance import string_dist
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.metadata_plugins import MetadataSourcePlugin
@@ -46,6 +46,9 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
 
     from beets.library import Item
+
+# Global logger.
+log = logging.getLogger(__name__)
 
 USER_AGENT = f"beets/{beets.__version__} +https://beets.io/"
 API_KEY = "rAzVUQYRaoFjeBjyWuWZ"

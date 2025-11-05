@@ -27,9 +27,6 @@ class TestStrFormatLogger:
         l4 = log.getLogger("bar123")
         assert l3 == l4
         assert l3.__class__ == blog.BeetsLogger
-        assert isinstance(
-            l3, (blog.StrFormatLogger, blog.ThreadLocalLevelLogger)
-        )
 
         l5 = l3.getChild("shalala")
         assert l5.__class__ == blog.BeetsLogger
@@ -278,24 +275,3 @@ class ConcurrentEventsTest(AsIsImporterMixin, ImportTestCase):
                 dp.lock2.release()
             print("Alive threads:", threading.enumerate())
             raise
-
-    def test_root_logger_levels(self):
-        """Root logger level should be shared between threads."""
-        self.config["threaded"] = True
-
-        blog.getLogger("beets").set_global_level(blog.WARNING)
-        with helper.capture_log() as logs:
-            self.run_asis_importer()
-        assert logs == []
-
-        blog.getLogger("beets").set_global_level(blog.INFO)
-        with helper.capture_log() as logs:
-            self.run_asis_importer()
-        for line in logs:
-            assert "import" in line
-            assert "album" in line
-
-        blog.getLogger("beets").set_global_level(blog.DEBUG)
-        with helper.capture_log() as logs:
-            self.run_asis_importer()
-        assert "Sending event: database_change" in logs

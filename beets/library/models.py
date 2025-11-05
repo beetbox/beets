@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from ..dbcore.query import FieldQuery, FieldQueryType
     from .library import Library  # noqa: F401
 
-log = logging.getLogger("beets")
+log = logging.getLogger(__name__)
 
 
 class LibModel(dbcore.Model["Library"]):

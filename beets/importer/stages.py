@@ -15,10 +15,9 @@
 from __future__ import annotations
 
 import itertools
-import logging
 from typing import TYPE_CHECKING, Callable
 
-from beets import config, plugins
+from beets import config, logging, plugins
 from beets.util import MoveOperation, displayable_path, pipeline
 
 from .tasks import (
@@ -35,7 +34,7 @@ if TYPE_CHECKING:
     from .session import ImportSession
 
 # Global logger.
-log = logging.getLogger("beets")
+log = logging.getLogger(__name__)
 
 # ---------------------------- Producer functions ---------------------------- #
 # Functions that are called first i.e. they generate import tasks

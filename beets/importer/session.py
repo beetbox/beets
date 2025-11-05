@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 QUEUE_SIZE = 128
 
 # Global logger.
-log = logging.getLogger("beets")
+log = logging.getLogger(__name__)
 
 
 class ImportAbortError(Exception):

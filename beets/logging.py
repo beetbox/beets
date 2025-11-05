@@ -22,7 +22,6 @@ calls (`debug`, `info`, etc).
 
 from __future__ import annotations
 
-import threading
 from copy import copy
 from logging import (
     DEBUG,
@@ -31,11 +30,13 @@ from logging import (
     WARNING,
     FileHandler,
     Filter,
+    Formatter,
     Handler,
     Logger,
     NullHandler,
     RootLogger,
     StreamHandler,
+    _levelToName,
 )
 from typing import TYPE_CHECKING, Any, Mapping, TypeVar, Union, overload
 
@@ -46,11 +47,13 @@ __all__ = [
     "WARNING",
     "FileHandler",
     "Filter",
+    "Formatter",
     "Handler",
     "Logger",
     "NullHandler",
     "StreamHandler",
     "getLogger",
+    "getLevelNamesMapping",
 ]
 
 if TYPE_CHECKING:
@@ -64,6 +67,18 @@ if TYPE_CHECKING:
     ]
     _ExcInfoType = Union[None, bool, _SysExcInfoType, BaseException]
     _ArgsType = Union[tuple[object, ...], Mapping[str, object]]
+
+
+def getLevelNamesMapping() -> dict[str, int]:  # noqa: N802  # Hey, I didn't name it!
+    """Returns a mapping from level names to their corresponding logging
+    levels. For example, the string “CRITICAL” maps to CRITICAL. The returned
+    mapping is copied from an internal mapping on each call to this function.
+
+    Polyfill for `logging.getLevelNamesMapping`, which was only added in Python
+    3.11.
+    """
+
+    return {name: level for (level, name) in _levelToName.items()}
 
 
 def _logsafe(val: T) -> str | T:
@@ -141,35 +156,7 @@ class StrFormatLogger(Logger):
         )
 
 
-class ThreadLocalLevelLogger(Logger):
-    """A version of `Logger` whose level is thread-local instead of shared."""
-
-    def __init__(self, name, level=NOTSET):
-        self._thread_level = threading.local()
-        self.default_level = NOTSET
-        super().__init__(name, level)
-
-    @property
-    def level(self):
-        try:
-            return self._thread_level.level
-        except AttributeError:
-            self._thread_level.level = self.default_level
-            return self.level
-
-    @level.setter
-    def level(self, value):
-        self._thread_level.level = value
-
-    def set_global_level(self, level):
-        """Set the level on the current thread + the default value for all
-        threads.
-        """
-        self.default_level = level
-        self.setLevel(level)
-
-
-class BeetsLogger(ThreadLocalLevelLogger, StrFormatLogger):
+class BeetsLogger(StrFormatLogger):
     pass
 
 

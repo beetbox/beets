@@ -14,7 +14,6 @@
 
 """Converts tracks or albums to external directory"""
 
-import logging
 import os
 import shlex
 import subprocess
@@ -25,7 +24,7 @@ from string import Template
 import mediafile
 from confuse import ConfigTypeError, Optional
 
-from beets import config, plugins, ui, util
+from beets import config, logging, plugins, ui, util
 from beets.library import Item, parse_query_string
 from beets.plugins import BeetsPlugin
 from beets.util import par_map
