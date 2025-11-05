@@ -3,6 +3,10 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "0 0 * * SUN" # run every Sunday at midnight
+
+env:
+  PYTHON_VERSION: "3.10"
+
 jobs:
   test_integration:
     runs-on: ubuntu-latest
@@ -12,7 +16,7 @@ jobs:
         uses: BrandonLWhite/pipx-install-action@v1.0.3
       - uses: actions/setup-python@v6
         with:
-          python-version: 3.9
+          python-version: ${{ env.PYTHON_VERSION }}
           cache: poetry
 
       - name: Install dependencies
