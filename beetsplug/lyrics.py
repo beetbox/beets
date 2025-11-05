@@ -28,7 +28,7 @@ from html import unescape
 from http import HTTPStatus
 from itertools import groupby
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterable, Iterator, NamedTuple
+from typing import TYPE_CHECKING, NamedTuple
 from urllib.parse import quote, quote_plus, urlencode, urlparse
 
 import langdetect
@@ -42,6 +42,8 @@ from beets.autotag.distance import string_dist
 from beets.util.config import sanitize_choices
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable, Iterator
+
     from beets.importer import ImportTask
     from beets.library import Item, Library
     from beets.logging import BeetsLogger as Logger

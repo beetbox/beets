@@ -1,6 +1,5 @@
 import datetime
 import os
-import os.path
 
 from beets.library import Album, Item
 from beets.test.helper import PluginTestCase

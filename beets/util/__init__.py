@@ -29,7 +29,7 @@ import tempfile
 import traceback
 import warnings
 from collections import Counter
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from contextlib import suppress
 from enum import Enum
 from functools import cache
@@ -41,7 +41,6 @@ from typing import (
     TYPE_CHECKING,
     Any,
     AnyStr,
-    Callable,
     ClassVar,
     Generic,
     NamedTuple,
