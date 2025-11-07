@@ -31,6 +31,8 @@ Bug fixes:
   calls and rate limit exhaustion.
 - Running `beet --config <mypath> config -e` now edits `<mypath>` rather than
   the default config path. :bug:`5652`
+- :doc:`plugins/lyrics`: Accepts strings for lyrics sources (previously only
+  accepted a list of strings). :bug:`5962`
 
 For plugin developers:
 
