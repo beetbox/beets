@@ -29,7 +29,6 @@ Bug fixes:
   audio-features endpoint, the plugin logs a warning once and skips audio
   features for all remaining tracks in the session, avoiding unnecessary API
   calls and rate limit exhaustion.
-
 - :doc:`plugins/lyrics`: Accepts strings for lyrics sources (previously only
   accepted a list of strings). :bug:`5962`
 
