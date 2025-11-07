@@ -25,7 +25,8 @@ import yaml
 from beets import plugins, ui, util
 from beets.dbcore import types
 from beets.importer import Action
-from beets.ui.commands import PromptChoice, _do_query
+from beets.ui.commands.import_.session import PromptChoice
+from beets.ui.commands.utils import do_query
 
 # These "safe" types can avoid the format/parse cycle that most fields go
 # through: they are safe to edit with native YAML types.
@@ -176,7 +177,7 @@ class EditPlugin(plugins.BeetsPlugin):
     def _edit_command(self, lib, opts, args):
         """The CLI command function for the `beet edit` command."""
         # Get the objects to edit.
-        items, albums = _do_query(lib, args, opts.album, False)
+        items, albums = do_query(lib, args, opts.album, False)
         objs = albums if opts.album else items
         if not objs:
             ui.print_("Nothing to edit.")
