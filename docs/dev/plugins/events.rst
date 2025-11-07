@@ -178,6 +178,13 @@ registration process in this case:
     :Parameters: ``info`` (|AlbumInfo|)
     :Description: Like ``trackinfo_received`` but for album-level metadata.
 
+``album_matched``
+    :Parameters: ``match`` (``AlbumMatch``)
+    :Description: Called after ``Item`` objects from a folder that's being
+        imported have been matched to an ``AlbumInfo`` and the corresponding
+        distance has been calculated. Missing and extra tracks, if any, are
+        included in the match.
+
 ``before_choose_candidate``
     :Parameters: ``task`` (|ImportTask|), ``session`` (|ImportSession|)
     :Description: Called before prompting the user during interactive import.
