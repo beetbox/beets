@@ -18,6 +18,8 @@ New features:
       to receive extra verbose logging around last.fm results and how they are
       resolved. The ``extended_debug`` config setting and ``--debug`` option
       have been removed.
+- :doc:`plugins/mbpseudo`: Add a new `mbpseudo` plugin to proactively receive
+      MusicBrainz pseudo-releases as recommendations during import.
 - Added support for Python 3.13.
 
 Bug fixes:
@@ -25,6 +27,17 @@ Bug fixes:
 - When hardlinking from a symlink (e.g. importing a symlink with hardlinking
   enabled), dereference the symlink then hardlink, rather than creating a new
   (potentially broken) symlink :bug:`5676`
+- :doc:`/plugins/spotify`: The plugin now gracefully handles audio-features API
+  deprecation (HTTP 403 errors). When a 403 error is encountered from the
+  audio-features endpoint, the plugin logs a warning once and skips audio
+  features for all remaining tracks in the session, avoiding unnecessary API
+  calls and rate limit exhaustion.
+
+For plugin developers:
+
+- A new plugin event, ``album_matched``, is sent when an album that is being
+  imported has been matched to its metadata and the corresponding distance has
+  been calculated.
 
 For packagers:
 
@@ -33,6 +46,9 @@ Other changes:
 - The documentation chapter :doc:`dev/paths` has been moved to the "For
   Developers" section and revised to reflect current best practices (pathlib
   usage).
+- Refactored the ``beets/ui/commands.py`` monolithic file (2000+ lines) into
+  multiple modules within the ``beets/ui/commands`` directory for better
+  maintainability.
 
 2.5.1 (October 14, 2025)
 ------------------------
@@ -437,6 +453,7 @@ New features:
   ``beet list -a title:something`` or ``beet list artpath:cover``. Consequently
   album queries involving ``path`` field have been sped up, like ``beet list -a
   path:/path/``.
+- :doc:`plugins/importsource`: Added plugin
 - :doc:`plugins/ftintitle`: New ``keep_in_artist`` option for the plugin, which
   allows keeping the "feat." part in the artist metadata while still changing
   the title.
