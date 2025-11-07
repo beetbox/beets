@@ -1601,7 +1601,7 @@ def _raw_main(args: list[str], lib=None) -> None:
     ):
         from beets.ui.commands.config import config_edit
 
-        return config_edit()
+        return config_edit(options)
 
     test_lib = bool(lib)
     subcommands, lib = _setup(options, lib)

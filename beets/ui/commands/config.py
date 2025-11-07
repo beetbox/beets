@@ -30,7 +30,10 @@ def config_func(lib, opts, args):
 
     # Open in editor.
     elif opts.edit:
-        config_edit()
+        # Note:  This branch *should* be unreachable
+        # since the normal flow should be short-circuited
+        # by the special case in ui._raw_main
+        config_edit(opts)
 
     # Dump configuration.
     else:
@@ -41,11 +44,11 @@ def config_func(lib, opts, args):
             print("Empty configuration")
 
 
-def config_edit():
+def config_edit(cli_options):
     """Open a program to edit the user configuration.
     An empty config file is created if no existing config file exists.
     """
-    path = config.user_config_path()
+    path = cli_options.config or config.user_config_path()
     editor = editor_command()
     try:
         if not os.path.isfile(path):
