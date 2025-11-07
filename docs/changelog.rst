@@ -30,6 +30,9 @@ Bug fixes:
   features for all remaining tracks in the session, avoiding unnecessary API
   calls and rate limit exhaustion.
 
+- :doc:`plugins/lyrics`: Accepts strings (used to only accept list of strings)
+  :bug:`5962`
+
 For plugin developers:
 
 - A new plugin event, ``album_matched``, is sent when an album that is being
