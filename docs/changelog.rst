@@ -21,6 +21,7 @@ New features:
 - :doc:`plugins/mbpseudo`: Add a new `mbpseudo` plugin to proactively receive
       MusicBrainz pseudo-releases as recommendations during import.
 - Added support for Python 3.13.
+-- Added album-level `$media` field derived from items’ media metadata.
 
 Bug fixes:
 
