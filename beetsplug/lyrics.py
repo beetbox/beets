@@ -958,7 +958,7 @@ class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
 
     @cached_property
     def backends(self) -> list[Backend]:
-        user_sources = self.config["sources"].get()
+        user_sources = self.config["sources"].as_str_seq()
 
         chosen = sanitize_choices(user_sources, self.BACKEND_BY_NAME)
         if "google" in chosen and not self.config["google_API_key"].get():
