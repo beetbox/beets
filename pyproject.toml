@@ -304,9 +304,7 @@ select = [
     "N", # pep8-naming
     "PT", # flake8-pytest-style
     # "RUF", # ruff
-    # "UP", # pyupgrade
-    "UP031", # do not use percent formatting
-    "UP032", # use f-string instead of format call
+    "UP", # pyupgrade
     "TCH", # flake8-type-checking
     "W", # pycodestyle
 ]
