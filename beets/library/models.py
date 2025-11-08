@@ -363,7 +363,6 @@ class Album(LibModel):
         getters = plugins.album_field_getters()
         getters["path"] = Album.item_dir
         getters["albumtotal"] = Album._albumtotal
-
         return getters
 
     def items(self):
