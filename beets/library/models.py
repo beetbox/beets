@@ -265,6 +265,7 @@ class Album(LibModel):
         "language": types.STRING,
         "country": types.STRING,
         "albumstatus": types.STRING,
+        "media": types.STRING,
         "albumdisambig": types.STRING,
         "releasegroupdisambig": types.STRING,
         "rg_album_gain": types.NULL_FLOAT,
@@ -320,6 +321,7 @@ class Album(LibModel):
         "language",
         "country",
         "albumstatus",
+        "media",
         "albumdisambig",
         "releasegroupdisambig",
         "release_group_title",
@@ -361,6 +363,7 @@ class Album(LibModel):
         getters = plugins.album_field_getters()
         getters["path"] = Album.item_dir
         getters["albumtotal"] = Album._albumtotal
+
         return getters
 
     def items(self):
