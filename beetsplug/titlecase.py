@@ -29,38 +29,13 @@ from beets.plugins import BeetsPlugin
 __author__ = "henryoberholtzer@gmail.com"
 __version__ = "1.0"
 
-# These fields are excluded to avoid modifying anything
-# that may be case sensistive, or important to database
-# function
-EXCLUDED_INFO_FIELDS: set[str] = {
-    "acoustid_fingerprint",
-    "acoustid_id",
-    "artists_ids",
-    "asin",
-    "deezer_track_id",
-    "format",
-    "id",
-    "isrc",
-    "mb_workid",
-    "mb_trackid",
-    "mb_albumid",
-    "mb_artistid",
-    "mb_artistids",
-    "mb_albumartistid",
-    "mb_albumartistids",
-    "mb_releasetrackid",
-    "mb_releasegroupid",
-    "bitrate_mode",
-    "encoder_info",
-    "encoder_settings",
-}
-
 
 class TitlecasePlugin(BeetsPlugin):
     preserve: dict[str, str] = {}
     preserve_phrases: dict[str, Pattern[str]] = {}
     force_lowercase: bool = True
-    fields_to_process: set[str]
+    fields_to_process: set[str] = set()
+    the_artist: bool = True
 
     def __init__(self) -> None:
         super().__init__()
@@ -75,16 +50,21 @@ class TitlecasePlugin(BeetsPlugin):
                 "fields": [],
                 "force_lowercase": False,
                 "small_first_last": True,
+                "the_artist": True,
             }
         )
 
         """
         auto - Automatically apply titlecase to new import metadata.
-        preserve - Provide a list of words/acronyms with specific case requirements.
-        fields - Fields to apply titlecase to, default is all.
+        preserve - Provide a list of strings with specific case requirements.
+        fields - Fields to apply titlecase to.
         force_lowercase - Lowercases the string before titlecasing.
         small_first_last - If small characters should be cased at the start of strings.
-        NOTE: Titlecase will not interact with possibly case sensitive fields.
+        the_artist - If the plugin infers the field to be an artist field
+        (e.g. the field contains "artist")
+        It will capitalize a lowercase The, helpful for the artist names
+        that start with 'The', like 'The Who' or 'The Talking Heads' when
+        they are not at the start of a string. Superceded by preserved phrases.
         """
 
         # Register UI subcommands
@@ -100,19 +80,20 @@ class TitlecasePlugin(BeetsPlugin):
     def __get_config_file__(self):
         self.force_lowercase = self.config["force_lowercase"].get(bool)
         self.__preserve_words__(self.config["preserve"].as_str_seq())
+        self.the_artist = self.config["the_artist"].get(bool)
         self.__init_fields_to_process__(
             self.config["fields"].as_str_seq(),
         )
 
     def __init_fields_to_process__(self, fields: list[str]) -> None:
-        """Creates the set for fields to process in tagging.
-        Only uses fields included.
-        Last, the EXCLUDED_INFO_FIELDS are removed to prevent unitentional modification.
-        """
+        """Creates the set for fields to process in tagging."""
         if fields:
-            initial_field_list = set(fields)
-            initial_field_list -= set(EXCLUDED_INFO_FIELDS)
-            self.fields_to_process = initial_field_list
+            self.fields_to_process = set(fields)
+            self._log.info(
+                f"set fields to process: {', '.join(self.fields_to_process)}"
+            )
+        else:
+            self._log.info("no fields specified!")
 
     def __preserve_words__(self, preserve: list[str]) -> None:
         for word in preserve:
@@ -156,27 +137,31 @@ class TitlecasePlugin(BeetsPlugin):
                     cased_list: list[str] = [
                         self.titlecase(i) for i in init_field
                     ]
+                    setattr(item, field, cased_list)
                     self._log.info(
                         (
                             f"{field}: {', '.join(init_field)} -> "
                             f"{', '.join(cased_list)}"
                         )
                     )
-                    setattr(item, field, cased_list)
                 elif isinstance(init_field, str):
                     cased: str = self.titlecase(init_field)
-                    self._log.info(f"{field}: {init_field} -> {cased}")
                     setattr(item, field, cased)
+                    self._log.info(f"{field}: {init_field} -> {cased}")
                 else:
                     self._log.info(f"{field}: no string present")
+            else:
+                self._log.info(f"{field}: does not exist on {item}")
 
-    def titlecase(self, text: str) -> str:
+    def titlecase(self, text: str, field: str = "") -> str:
         """Titlecase the given text."""
         titlecased = titlecase(
             text.lower() if self.force_lowercase else text,
             small_first_last=self.config["small_first_last"],
             callback=self.__preserved__,
         )
+        if self.the_artist and "artist" in field:
+            titlecased = titlecased.replace("the", "The")
         for phrase, regexp in self.preserve_phrases.items():
             titlecased = regexp.sub(phrase, titlecased)
         return titlecased

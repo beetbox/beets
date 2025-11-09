@@ -16,10 +16,9 @@
 
 import pytest
 
-from beets import config
 from beets.library import Item
 from beets.test.helper import PluginTestCase
-from beetsplug.titlecase import EXCLUDED_INFO_FIELDS, TitlecasePlugin
+from beetsplug.titlecase import TitlecasePlugin
 
 
 @pytest.mark.parametrize(
@@ -60,7 +59,7 @@ titlecase_test_cases = [
         ),
         "expected": Item(
             artist="D'Angelo and the Vanguard",
-            mb_albumid="ab140e13-7b36-402a-a528-b69e3dee38a8",
+            mb_albumid="Ab140e13-7b36-402a-A528-B69e3dee38a8",
             albumartist="D'Angelo",
             format="CD",
             album="the black messiah",
@@ -101,7 +100,7 @@ titlecase_test_cases = [
     {
         "config": {
             "preserve": [""],
-            "fields": ["artists", "artists_ids", "discogs_artistid"],
+            "fields": ["artists", "discogs_artistid"],
             "force_lowercase": False,
             "small_first_last": True,
         },
@@ -114,6 +113,68 @@ titlecase_test_cases = [
             artists=["Artist_One", "Artist_Two"],
             artists_ids=["aBcDeF32", "aBcDeF12"],
             discogs_artistid=21,
+        ),
+    },
+    {
+        "config": {
+            "the_artist": True,
+            "preserve": ["A Day in the Park"],
+            "fields": [
+                "artists",
+                "artist",
+                "artists_sorttitle",
+                "artists_ids",
+            ],
+        },
+        "item": Item(
+            artists_sort=["b-52s, the"],
+            artist="a day in the park",
+            artists=[
+                "vinylgroover & the red head",
+                "a day in the park",
+                "amyl and the sniffers",
+            ],
+            artists_ids=["aBcDeF32", "aBcDeF12"],
+        ),
+        "expected": Item(
+            artists_sort=["B-52s, The"],
+            artist="A Day in the Park",
+            artists=[
+                "Vinylgroover & The Red Head",
+                "A Day in The ParkAmyl and The Sniffers",
+            ],
+            artists_ids=["ABcDeF32", "ABcDeF12"],
+        ),
+    },
+    {
+        "config": {
+            "the_artist": False,
+            "preserve": ["A Day in the Park"],
+            "fields": [
+                "artists",
+                "artist",
+                "artists_sorttitle",
+                "artists_ids",
+            ],
+        },
+        "item": Item(
+            artists_sort=["b-52s, the"],
+            artist="a day in the park",
+            artists=[
+                "vinylgroover & the red head",
+                "a day in the park",
+                "amyl and the sniffers",
+            ],
+            artists_ids=["aBcDeF32", "aBcDeF12"],
+        ),
+        "expected": Item(
+            artists_sort=["B-52s, The"],
+            artist="A Day in the Park",
+            artists=[
+                "Vinylgroover & the Red Head",
+                "A Day in the ParkAmyl and the Sniffers",
+            ],
+            artists_ids=["ABcDeF32", "ABcDeF12"],
         ),
     },
 ]
@@ -137,17 +198,10 @@ class TitlecasePluginTest(PluginTestCase):
 
     def test_field_list(self):
         fields = ["album", "albumartist"]
-        config["titlecase"]["fields"] = fields
-        t = TitlecasePlugin()
-        for field in fields:
-            assert field in t.fields_to_process
-
-    def test_field_list_default_excluded(self):
-        excluded = list(EXCLUDED_INFO_FIELDS)
-        config["titlecase"]["fields"] = excluded
-        t = TitlecasePlugin()
-        for field in excluded:
-            assert field not in t.fields_to_process
+        with self.configure_plugin({"fields": fields}):
+            t = TitlecasePlugin()
+            for field in fields:
+                assert field in t.fields_to_process
 
     def test_preserved_words(self):
         """Test using given strings to preserve case"""
@@ -159,28 +213,28 @@ class TitlecasePluginTest(PluginTestCase):
             "ABBA",
             "LaTeX",
         ]
-        config["titlecase"]["preserve"] = names_to_preserve
-        for name in names_to_preserve:
-            assert TitlecasePlugin().titlecase(name.lower()) == name
-            assert TitlecasePlugin().titlecase(name.upper()) == name
+        with self.configure_plugin({"preserve": names_to_preserve}):
+            for name in names_to_preserve:
+                assert TitlecasePlugin().titlecase(name.lower()) == name
+                assert TitlecasePlugin().titlecase(name.upper()) == name
 
     def test_preserved_phrases(self):
-        phrases_to_preserve = ["The Beatles", "The Red Hed"]
         test_strings = ["Vinylgroover & The Red Hed", "With The Beatles"]
-        config["titlecase"]["preserve"] = phrases_to_preserve
-        t = TitlecasePlugin()
-        for phrase in test_strings:
-            assert t.titlecase(phrase.lower()) == phrase
+        phrases_to_preserve = ["The Beatles", "The Red Hed"]
+        with self.configure_plugin({"preserve": phrases_to_preserve}):
+            t = TitlecasePlugin()
+            for phrase in test_strings:
+                assert t.titlecase(phrase.lower()) == phrase
 
     def test_titlecase_fields(self):
         for tc in titlecase_test_cases:
-            item = tc["item"]
-            expected = tc["expected"]
-            config["titlecase"] = tc["config"]
-            TitlecasePlugin().titlecase_fields(item)
-            for key, value in vars(item).items():
-                if isinstance(value, str):
-                    assert getattr(item, key) == getattr(expected, key)
+            with self.configure_plugin(tc["config"]):
+                item = tc["item"]
+                expected = tc["expected"]
+                TitlecasePlugin().titlecase_fields(item)
+                for key, value in vars(item).items():
+                    if isinstance(value, str):
+                        assert getattr(item, key) == getattr(expected, key)
 
     def test_cli(self):
         for tc in titlecase_test_cases:

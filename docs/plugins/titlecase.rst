@@ -58,6 +58,7 @@ Default
         preserve:
         force_lowercase: no
         small_first_last: yes
+        the_artist: yes
 
 .. conf:: auto
     :default: yes
@@ -68,6 +69,26 @@ Default
 
     A list of fields to apply the titlecase logic to. You must specify the fields
     you want to have modified in order for titlecase to apply changes to metadata.
+
+    A good starting point is below, which will titlecase artists, album and track titles.
+
+.. code-block:: yaml
+
+    fields:
+      - album
+      - albumartist
+      - albumartist_credit
+      - albumartist_sort
+      - albumartists
+      - albumartists_credit
+      - albumartists_sort
+      - artist
+      - artist_credit
+      - artist_sort
+      - artists
+      - artists_credit
+      - artists_sort
+      - title
 
 .. conf:: preserve
 
@@ -87,13 +108,21 @@ Default
     of a sentence. With this turned off ``a`` and similar words will not be capitalized
     under any circumstance.
 
-Excluded Fields
-~~~~~~~~~~~~~~~
+.. conf:: the_artist
 
-``titlecase`` only ever modifies string fields, and will never interact with
-fields that it considers to be case sensitive.
+    If a field name contains ``artist``, then any lowercase ``the`` will be
+    capitalized. Useful for bands with `The` as part of the proper name,
+    like ``Amyl and The Sniffers``.
 
-For reference, the string fields ``titlecase`` ignores:
+Dangerous Fields
+~~~~~~~~~~~~~~~~
+
+``titlecase`` only ever modifies string fields, however, this doesn't prevent
+you from selecting a case sensitive field that another plugin or feature may
+rely on.
+
+In particular, including any of the following in your configuration could lead
+to unintended behavior:
 
 .. code-block:: bash
 
