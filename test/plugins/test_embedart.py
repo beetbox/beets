@@ -17,6 +17,7 @@ import os
 import os.path
 import shutil
 import tempfile
+import time
 import unittest
 from unittest.mock import MagicMock, patch
 
@@ -225,10 +226,22 @@ class EmbedartCliTest(IOMixin, PluginMixin, FetchImageHelper, BeetsTestCase):
         item = album.items()[0]
         self.io.addinput("y")
         self.run_command("embedart", "-f", self.small_artpath)
+        embedded_time = item.current_mtime()
+        time.sleep(1)
+
         self.io.addinput("y")
         self.run_command("clearart")
         mediafile = MediaFile(syspath(item.path))
         assert not mediafile.images
+        clear_time = item.current_mtime()
+        assert clear_time > embedded_time
+        time.sleep(1)
+
+        # A run on a file without an image should not be modified
+        self.io.addinput("y")
+        self.run_command("clearart")
+        no_clear_time = item.current_mtime()
+        assert no_clear_time == clear_time
 
     def test_clear_art_with_no_input(self):
         self._setup_data()

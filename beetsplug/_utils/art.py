@@ -210,5 +210,8 @@ def clear(log, lib, query):
     items = lib.items(query)
     log.info("Clearing album art from {} items", len(items))
     for item in items:
-        log.debug("Clearing art for {}", item)
-        item.try_write(tags={"images": None})
+        if mediafile.MediaFile(syspath(item.path)).images:
+            log.debug("Clearing art for {}", item)
+            item.try_write(tags={"images": None})
+        else:
+            log.debug("No art to clean for {}", item)

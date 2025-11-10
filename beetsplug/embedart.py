@@ -17,6 +17,7 @@
 import os.path
 import tempfile
 from mimetypes import guess_extension
+from unittest import mock
 
 import requests
 
