@@ -210,8 +210,6 @@ def clear_item(item, log):
     if mediafile.MediaFile(syspath(item.path)).images:
         log.debug("Clearing art for {}", item)
         item.try_write(tags={"images": None})
-    else:
-        log.debug("No art to clean for {}", item)
 
 
 def clear(log, lib, query):
