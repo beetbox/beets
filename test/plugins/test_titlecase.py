@@ -45,14 +45,15 @@ titlecase_test_cases = [
     {
         "config": {
             "preserve": ["D'Angelo"],
+            "replace": [("’", "'")],
             "fields": ["artist", "albumartist", "mb_albumid"],
             "force_lowercase": False,
             "small_first_last": True,
         },
         "item": Item(
-            artist="d'angelo and the vanguard",
+            artist="d’angelo and the vanguard",
             mb_albumid="ab140e13-7b36-402a-a528-b69e3dee38a8",
-            albumartist="d'angelo",
+            albumartist="d’angelo",
             format="CD",
             album="the black messiah",
             title="Till It's Done (Tutu)",

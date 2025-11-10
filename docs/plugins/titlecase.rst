@@ -56,6 +56,7 @@ Default
         auto: yes
         fields:
         preserve:
+        replace:
         force_lowercase: no
         small_first_last: yes
         the_artist: yes
@@ -95,6 +96,12 @@ Default
     List of words and phrases to preserve the case of. Without specifying ``DJ`` on
     the list, titlecase will format it as ``Dj``, or specify ``The Beatles`` to make sure
     ``With The Beatles`` is not capitalized as ``With the Beatles``
+
+.. conf:: replace
+
+   The replace function takes place before any titlecasing occurs, and is intended to
+   help normalize differences in puncuation styles. It accepts a list of tuples, with
+   the first being the target, and the second being the replacement
 
 .. conf:: force_lowercase
     :default: no

@@ -48,6 +48,7 @@ class TitlecasePlugin(BeetsPlugin):
                 "auto": True,
                 "preserve": [],
                 "fields": [],
+                "replace": [],
                 "force_lowercase": False,
                 "small_first_last": True,
                 "the_artist": True,
@@ -58,6 +59,7 @@ class TitlecasePlugin(BeetsPlugin):
         auto - Automatically apply titlecase to new import metadata.
         preserve - Provide a list of strings with specific case requirements.
         fields - Fields to apply titlecase to.
+        replace - List of pairs, first is the target, second is the replacement
         force_lowercase - Lowercases the string before titlecasing.
         small_first_last - If small characters should be cased at the start of strings.
         the_artist - If the plugin infers the field to be an artist field
@@ -80,6 +82,7 @@ class TitlecasePlugin(BeetsPlugin):
     def __get_config_file__(self):
         self.force_lowercase = self.config["force_lowercase"].get(bool)
         self.__preserve_words__(self.config["preserve"].as_str_seq())
+        self.replace = self.config["replace"].as_pairs()
         self.the_artist = self.config["the_artist"].get(bool)
         self.__init_fields_to_process__(
             self.config["fields"].as_str_seq(),
@@ -155,15 +158,22 @@ class TitlecasePlugin(BeetsPlugin):
 
     def titlecase(self, text: str, field: str = "") -> str:
         """Titlecase the given text."""
+        # Any necessary replacements go first.
+        titlecased = text.lower() if self.force_lowercase else text
+        for pair in self.replace:
+            target, replacement = pair
+            titlecased = titlecased.replace(target, replacement)
         titlecased = titlecase(
-            text.lower() if self.force_lowercase else text,
+            titlecased,
             small_first_last=self.config["small_first_last"],
             callback=self.__preserved__,
         )
         if self.the_artist and "artist" in field:
             titlecased = titlecased.replace("the", "The")
+        # More complicated phrase replacements.
         for phrase, regexp in self.preserve_phrases.items():
             titlecased = regexp.sub(phrase, titlecased)
+
         return titlecased
 
     def imported(self, session: ImportSession, task: ImportTask) -> None:
