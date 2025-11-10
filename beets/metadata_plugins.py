@@ -45,7 +45,13 @@ log = logging.getLogger("beets")
 def find_metadata_source_plugins() -> list[MetadataSourcePlugin]:
     """Return a list of all loaded metadata source plugins."""
     # TODO: Make this an isinstance(MetadataSourcePlugin, ...) check in v3.0.0
-    return [SafeProxy(p) for p in find_plugins() if hasattr(p, "data_source")]  # type: ignore[misc,arg-type]
+    # This should also allow us to remove the type: ignore comments below.
+    metadata_plugins = [p for p in find_plugins() if hasattr(p, "data_source")]
+
+    if config["raise_on_error"].get(bool):
+        return metadata_plugins  # type: ignore[return-value]
+    else:
+        return list(map(SafeProxy, metadata_plugins))  # type: ignore[arg-type]
 
 
 @notify_info_yielded("albuminfo_received")
@@ -418,8 +424,6 @@ class SafeProxy(base):
 
     def __handle_exception(self, func: Callable[P, R], e: Exception) -> None:
         """Helper function to log exceptions from metadata source plugins."""
-        if config["raise_on_error"].get(bool):
-            raise e
         log.error(
             "Error in '{}.{}': {}",
             self.__plugin.data_source,
@@ -434,9 +438,9 @@ class SafeProxy(base):
         except Exception as e:
             return self.__handle_exception(self.__plugin.album_for_id, e)
 
-    def track_for_id(self, track_id: str):
+    def track_for_id(self, *args, **kwargs):
         try:
-            return self.__plugin.track_for_id(track_id)
+            return self.__plugin.track_for_id(*args, **kwargs)
         except Exception as e:
             return self.__handle_exception(self.__plugin.track_for_id, e)
 
