@@ -33,6 +33,10 @@ Bug fixes:
   the default config path. :bug:`5652`
 - :doc:`plugins/lyrics`: Accepts strings for lyrics sources (previously only
   accepted a list of strings). :bug:`5962`
+- Errors in metadata plugins during autotage process will now be logged but
+  won't crash beets anymore. If you want to raise exceptions instead, set the
+  new configuration option ``raise_on_error`` to ``yes`` :bug:`5903`,
+  :bug:`4789`.
 
 For plugin developers:
 
