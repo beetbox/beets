@@ -27,6 +27,7 @@ from mediafile import MediaFile
 from beets import config, logging, ui
 from beets.test import _common
 from beets.test.helper import (
+    ImportHelper,
     BeetsTestCase,
     FetchImageHelper,
     IOMixin,
@@ -76,7 +77,9 @@ def require_artresizer_compare(test):
     return wrapper
 
 
-class EmbedartCliTest(IOMixin, PluginMixin, FetchImageHelper, BeetsTestCase):
+class EmbedartCliTest(
+    ImportHelper, IOMixin, PluginMixin, FetchImageHelper, BeetsTestCase
+):
     plugin = "embedart"
     small_artpath = os.path.join(_common.RSRC, b"image-2x3.jpg")
     abbey_artpath = os.path.join(_common.RSRC, b"abbey.jpg")
@@ -285,6 +288,32 @@ class EmbedartCliTest(IOMixin, PluginMixin, FetchImageHelper, BeetsTestCase):
         self.run_command("embedart", "-y", "-u", "http://example.com/test.html")
         mediafile = MediaFile(syspath(item.path))
         assert not mediafile.images
+
+    def test_clearart_on_import_disabled(self):
+        file_path = self.create_mediafile_fixture(
+            images=["jpg"], target_dir=self.import_path
+        )
+        self.import_media.append(file_path)
+        with self.configure_plugin({"clearart_on_import": False}):
+            importer = self.setup_importer(autotag=False, write=True)
+            importer.run()
+
+        item = self.lib.items()[0]
+        assert MediaFile(os.path.join(item.path)).images
+
+    def test_clearart_on_import_enabled(self):
+        file_path = self.create_mediafile_fixture(
+            images=["jpg"], target_dir=self.import_path
+        )
+        self.import_media.append(file_path)
+        # Force re-init the plugin to register the listener
+        self.unload_plugins()
+        with self.configure_plugin({"clearart_on_import": True}):
+            importer = self.setup_importer(autotag=False, write=True)
+            importer.run()
+
+        item = self.lib.items()[0]
+        assert not MediaFile(os.path.join(item.path)).images
 
 
 class DummyArtResizer(ArtResizer):

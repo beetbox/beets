@@ -206,12 +206,16 @@ def extract_first(log, outpath, items):
             return real_path
 
 
+def clear_item(item, log):
+    if mediafile.MediaFile(syspath(item.path)).images:
+        log.debug("Clearing art for {}", item)
+        item.try_write(tags={"images": None})
+    else:
+        log.debug("No art to clean for {}", item)
+
+
 def clear(log, lib, query):
     items = lib.items(query)
     log.info("Clearing album art from {} items", len(items))
     for item in items:
-        if mediafile.MediaFile(syspath(item.path)).images:
-            log.debug("Clearing art for {}", item)
-            item.try_write(tags={"images": None})
-        else:
-            log.debug("No art to clean for {}", item)
+        clear_item(item, log)
