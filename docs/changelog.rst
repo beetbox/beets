@@ -27,6 +27,9 @@ New features:
 
 Bug fixes:
 
+- When hardlinking from a symlink (e.g. importing a symlink with hardlinking
+  enabled), dereference the symlink then hardlink, rather than creating a new
+  (potentially broken) symlink :bug:`5676`
 - :doc:`/plugins/spotify`: The plugin now gracefully handles audio-features API
   deprecation (HTTP 403 errors). When a 403 error is encountered from the
   audio-features endpoint, the plugin logs a warning once and skips audio
