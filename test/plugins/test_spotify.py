@@ -81,6 +81,7 @@ class SpotifyPluginTest(PluginTestCase):
 
         params = _params(responses.calls[0].request.url)
         query = params["q"][0]
+        print(query)
         assert "duifhjslkef" in query
         assert "artist:'ujydfsuihse'" in query
         assert "album:'lkajsdflakjsd'" in query

@@ -18,23 +18,20 @@ from __future__ import annotations
 
 import collections
 import time
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING
 
 import requests
 
 from beets import ui
 from beets.autotag import AlbumInfo, TrackInfo
 from beets.dbcore import types
-from beets.metadata_plugins import (
-    IDResponse,
-    SearchApiMetadataSourcePlugin,
-    SearchFilter,
-)
+from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from beets.library import Item, Library
+    from beets.metadata_plugins import SearchParams
 
     from ._typing import JSONDict
 
@@ -220,58 +217,12 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
             deezer_updated=time.time(),
         )
 
-    def _search_api(
-        self,
-        query_type: Literal[
-            "album",
-            "track",
-            "artist",
-            "history",
-            "playlist",
-            "podcast",
-            "radio",
-            "user",
-        ],
-        filters: SearchFilter,
-        query_string: str = "",
-    ) -> Sequence[IDResponse]:
-        """Query the Deezer Search API for the specified ``query_string``, applying
-        the provided ``filters``.
-
-        :param filters: Field filters to apply.
-        :param query_string: Additional query to include in the search.
-        :return: JSON data for the class:`Response <Response>` object or None
-            if no search results are returned.
-        """
-        query = self._construct_search_query(
-            query_string=query_string, filters=filters
-        )
-        self._log.debug("Searching {.data_source} for '{}'", self, query)
-        try:
-            response = requests.get(
-                f"{self.search_url}{query_type}",
-                params={
-                    "q": query,
-                    "limit": self.config["search_limit"].get(),
-                },
-                timeout=10,
-            )
-            response.raise_for_status()
-        except requests.exceptions.RequestException as e:
-            self._log.error(
-                "Error fetching data from {.data_source} API\n Error: {}",
-                self,
-                e,
-            )
-            return ()
-        response_data: Sequence[IDResponse] = response.json().get("data", [])
-        self._log.debug(
-            "Found {} result(s) from {.data_source} for '{}'",
-            len(response_data),
-            self,
-            query,
-        )
-        return response_data
+    def get_search_response(self, params: SearchParams) -> list[IDResponse]:
+        return requests.get(
+            f"{self.search_url}{params.query_type}",
+            params={**params.filters, "q": params.query},
+            timeout=10,
+        ).json()["data"]
 
     def deezerupdate(self, items: Sequence[Item], write: bool):
         """Obtain rank information from Deezer."""
