@@ -27,7 +27,7 @@ import re
 import threading
 import time
 import webbrowser
-from typing import TYPE_CHECKING, Any, Literal, Sequence, Union
+from typing import TYPE_CHECKING, Any, Literal, Union
 
 import confuse
 import requests
@@ -43,6 +43,8 @@ from beets.metadata_plugins import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from beets.library import Library
     from beetsplug._typing import JSONDict
 

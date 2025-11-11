@@ -283,7 +283,7 @@ class BaseServer:
         if not self.ctrl_sock:
             self.ctrl_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.ctrl_sock.connect((self.ctrl_host, self.ctrl_port))
-        self.ctrl_sock.sendall((f"{message}\n").encode("utf-8"))
+        self.ctrl_sock.sendall((f"{message}\n").encode())
 
     def _send_event(self, event):
         """Notify subscribed connections of an event."""

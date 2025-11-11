@@ -36,9 +36,12 @@ from __future__ import annotations
 import queue
 import sys
 from threading import Lock, Thread
-from typing import Callable, Generator, TypeVar
+from typing import TYPE_CHECKING, TypeVar
 
 from typing_extensions import TypeVarTuple, Unpack
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Generator
 
 BUBBLE = "__PIPELINE_BUBBLE__"
 POISON = "__PIPELINE_POISON__"
