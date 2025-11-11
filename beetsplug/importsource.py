@@ -19,7 +19,7 @@ class ImportSourcePlugin(BeetsPlugin):
 
     def __init__(self):
         """Initialize the plugin and read configuration."""
-        super(ImportSourcePlugin, self).__init__()
+        super().__init__()
         self.config.add(
             {
                 "suggest_removal": False,

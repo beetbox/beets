@@ -7,6 +7,9 @@ below!
 Unreleased
 ----------
 
+Beets now requires Python 3.10 or later since support for EOL Python 3.9 has
+been dropped.
+
 New features:
 
 - :doc:`plugins/ftintitle`: Added argument for custom feat. words in ftintitle.
@@ -41,6 +44,8 @@ For plugin developers:
   been calculated.
 
 For packagers:
+
+- The minimum supported Python version is now 3.10.
 
 Other changes:
 

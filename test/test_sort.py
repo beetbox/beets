@@ -14,7 +14,7 @@
 
 """Various tests for querying the library database."""
 
-from mock import patch
+from unittest.mock import patch
 
 import beets.library
 from beets import config, dbcore

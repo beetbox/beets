@@ -23,7 +23,7 @@ from collections import OrderedDict
 from contextlib import closing
 from enum import Enum
 from functools import cached_property
-from typing import TYPE_CHECKING, AnyStr, ClassVar, Literal, Tuple, Type
+from typing import TYPE_CHECKING, AnyStr, ClassVar, Literal
 
 import confuse
 import requests
@@ -86,7 +86,7 @@ class Candidate:
         path: None | bytes = None,
         url: None | str = None,
         match: None | MetadataMatch = None,
-        size: None | Tuple[int, int] = None,
+        size: None | tuple[int, int] = None,
     ):
         self._log = log
         self.path = path
@@ -682,7 +682,7 @@ class GoogleImages(RemoteArtSource):
         """
         if not (album.albumartist and album.album):
             return
-        search_string = f"{album.albumartist},{album.album}".encode("utf-8")
+        search_string = f"{album.albumartist},{album.album}".encode()
 
         try:
             response = self.request(
@@ -1293,7 +1293,7 @@ class CoverArtUrl(RemoteArtSource):
 
 
 # All art sources. The order they will be tried in is specified by the config.
-ART_SOURCES: set[Type[ArtSource]] = {
+ART_SOURCES: set[type[ArtSource]] = {
     FileSystem,
     CoverArtArchive,
     ITunesStore,

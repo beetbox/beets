@@ -20,9 +20,10 @@ import re
 import shutil
 import time
 from collections import defaultdict
+from collections.abc import Callable, Iterable, Sequence
 from enum import Enum
 from tempfile import mkdtemp
-from typing import TYPE_CHECKING, Any, Callable, Iterable, Sequence
+from typing import TYPE_CHECKING, Any
 
 import mediafile
 

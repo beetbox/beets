@@ -32,7 +32,7 @@ import warnings
 from difflib import SequenceMatcher
 from functools import cache
 from itertools import chain
-from typing import Any, Callable, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import confuse
 
@@ -41,6 +41,9 @@ from beets.dbcore import db
 from beets.dbcore import query as db_query
 from beets.util import as_string
 from beets.util.functemplate import template
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
 if sys.platform == "win32":

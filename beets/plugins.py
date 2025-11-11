@@ -25,7 +25,6 @@ from collections import defaultdict
 from functools import cached_property, wraps
 from importlib import import_module
 from pathlib import Path
-from types import GenericAlias
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeVar
 
 import mediafile
@@ -450,9 +449,6 @@ def _get_plugin(name: str) -> BeetsPlugin | None:
         for obj in reversed(namespace.__dict__.values()):
             if (
                 inspect.isclass(obj)
-                and not isinstance(
-                    obj, GenericAlias
-                )  # seems to be needed for python <= 3.9 only
                 and issubclass(obj, BeetsPlugin)
                 and obj != BeetsPlugin
                 and not inspect.isabstract(obj)

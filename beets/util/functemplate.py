@@ -105,8 +105,6 @@ def compile_func(arg_names, statements, name="_the_func", debug=False):
         decorator_list=[],
     )
 
-    # The ast.Module signature changed in 3.8 to accept a list of types to
-    # ignore.
     mod = ast.Module([func_def], [])
 
     ast.fix_missing_locations(mod)
