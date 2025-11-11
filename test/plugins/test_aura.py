@@ -1,7 +1,7 @@
 import os
 from http import HTTPStatus
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import pytest
 from flask.testing import Client
@@ -58,9 +58,7 @@ class TestAuraResponse:
     def get_response_data(self, client: Client, item):
         """Return a callback accepting `endpoint` and `params` parameters."""
 
-        def get(
-            endpoint: str, params: dict[str, str]
-        ) -> Optional[dict[str, Any]]:
+        def get(endpoint: str, params: dict[str, str]) -> dict[str, Any] | None:
             """Add additional `params` and GET the given endpoint.
 
             `include` parameter is added to every call to check that the

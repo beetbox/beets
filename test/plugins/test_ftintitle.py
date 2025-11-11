@@ -14,7 +14,7 @@
 
 """Tests for the 'ftintitle' plugin."""
 
-from typing import Dict, Generator, Optional, Tuple, Union
+from collections.abc import Generator
 
 import pytest
 
@@ -39,7 +39,7 @@ def env() -> Generator[FtInTitlePluginFunctional, None, None]:
 
 def set_config(
     env: FtInTitlePluginFunctional,
-    cfg: Optional[Dict[str, Union[str, bool, list[str]]]],
+    cfg: dict[str, str | bool | list[str]] | None,
 ) -> None:
     cfg = {} if cfg is None else cfg
     defaults = {
@@ -57,7 +57,7 @@ def add_item(
     path: str,
     artist: str,
     title: str,
-    albumartist: Optional[str],
+    albumartist: str | None,
 ) -> Item:
     return env.add_item(
         path=path,
@@ -250,10 +250,10 @@ def add_item(
 )
 def test_ftintitle_functional(
     env: FtInTitlePluginFunctional,
-    cfg: Optional[Dict[str, Union[str, bool, list[str]]]],
-    cmd_args: Tuple[str, ...],
-    given: Tuple[str, str, Optional[str]],
-    expected: Tuple[str, str],
+    cfg: dict[str, str | bool | list[str]] | None,
+    cmd_args: tuple[str, ...],
+    given: tuple[str, str, str | None],
+    expected: tuple[str, str],
 ) -> None:
     set_config(env, cfg)
     ftintitle.FtInTitlePlugin()
@@ -287,7 +287,7 @@ def test_ftintitle_functional(
 def test_find_feat_part(
     artist: str,
     albumartist: str,
-    expected: Optional[str],
+    expected: str | None,
 ) -> None:
     assert ftintitle.find_feat_part(artist, albumartist) == expected
 
@@ -307,7 +307,7 @@ def test_find_feat_part(
 )
 def test_split_on_feat(
     given: str,
-    expected: Tuple[str, Optional[str]],
+    expected: tuple[str, str | None],
 ) -> None:
     assert ftintitle.split_on_feat(given) == expected
 
@@ -359,7 +359,7 @@ def test_contains_feat(given: str, expected: bool) -> None:
     ],
 )
 def test_custom_words(
-    given: str, custom_words: Optional[list[str]], expected: bool
+    given: str, custom_words: list[str] | None, expected: bool
 ) -> None:
     if custom_words is None:
         custom_words = []

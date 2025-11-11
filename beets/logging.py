@@ -37,7 +37,7 @@ from logging import (
     RootLogger,
     StreamHandler,
 )
-from typing import TYPE_CHECKING, Any, Mapping, TypeVar, Union, overload
+from typing import TYPE_CHECKING, Any, TypeVar, Union, overload
 
 __all__ = [
     "DEBUG",
@@ -54,6 +54,8 @@ __all__ = [
 ]
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     T = TypeVar("T")
     from types import TracebackType
 

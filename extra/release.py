@@ -6,18 +6,18 @@ from __future__ import annotations
 
 import re
 import subprocess
+from collections.abc import Callable
 from contextlib import redirect_stdout
 from datetime import datetime, timezone
 from functools import partial
 from io import StringIO
 from pathlib import Path
-from typing import Callable, NamedTuple
+from typing import NamedTuple, TypeAlias
 
 import click
 import tomli
 from packaging.version import Version, parse
 from sphinx.ext import intersphinx
-from typing_extensions import TypeAlias
 
 from docs.conf import rst_epilog
 
