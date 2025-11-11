@@ -43,6 +43,10 @@ Bug fixes:
   accepted a list of strings). :bug:`5962`
 - Fix a bug introduced in release 2.4.0 where import from any valid
   import-log-file always threw a "none of the paths are importable" error.
+- :doc:`/plugins/web`: repair broken `/item/values/…` and `/albums/values/…`
+  endpoints. Previously, due to single-quotes (ie. string literal) in the SQL
+  query, the query eg. `GET /item/values/albumartist` would return the literal
+  "albumartist" instead of a list of unique album artists.
 
 For plugin developers:
 
