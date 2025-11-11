@@ -7,6 +7,9 @@ below!
 Unreleased
 ----------
 
+Beets now requires Python 3.10 or later since support for EOL Python 3.9 has
+been dropped.
+
 New features:
 
 - :doc:`plugins/ftintitle`: Added argument for custom feat. words in ftintitle.
@@ -32,6 +35,10 @@ Bug fixes:
   audio-features endpoint, the plugin logs a warning once and skips audio
   features for all remaining tracks in the session, avoiding unnecessary API
   calls and rate limit exhaustion.
+- Running `beet --config <mypath> config -e` now edits `<mypath>` rather than
+  the default config path. :bug:`5652`
+- :doc:`plugins/lyrics`: Accepts strings for lyrics sources (previously only
+  accepted a list of strings). :bug:`5962`
 
 For plugin developers:
 
@@ -40,6 +47,8 @@ For plugin developers:
   been calculated.
 
 For packagers:
+
+- The minimum supported Python version is now 3.10.
 
 Other changes:
 

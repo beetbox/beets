@@ -26,7 +26,7 @@ import subprocess
 from abc import ABC, abstractmethod
 from enum import Enum
 from itertools import chain
-from typing import Any, ClassVar, Mapping
+from typing import TYPE_CHECKING, Any, ClassVar
 from urllib.parse import urlencode
 
 from beets import logging, util
@@ -36,6 +36,9 @@ from beets.util import (
     get_temp_filename,
     syspath,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 PROXY_URL = "https://images.weserv.nl/"
 

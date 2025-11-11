@@ -18,8 +18,8 @@ autotagger. Requires the pyacoustid library.
 
 import re
 from collections import defaultdict
+from collections.abc import Iterable
 from functools import cached_property, partial
-from typing import Iterable
 
 import acoustid
 import confuse

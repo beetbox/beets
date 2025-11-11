@@ -8,7 +8,7 @@ on:
         required: true
 
 env:
-  PYTHON_VERSION: 3.9
+  PYTHON_VERSION: "3.10"
   NEW_VERSION: ${{ inputs.version }}
   NEW_TAG: v${{ inputs.version }}
 

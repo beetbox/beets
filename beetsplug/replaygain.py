@@ -28,7 +28,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from multiprocessing.pool import ThreadPool
 from threading import Event, Thread
-from typing import TYPE_CHECKING, Any, Callable, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from beets import ui
 from beets.plugins import BeetsPlugin
@@ -36,7 +36,7 @@ from beets.util import command_output, displayable_path, syspath
 
 if TYPE_CHECKING:
     import optparse
-    from collections.abc import Sequence
+    from collections.abc import Callable, Sequence
     from logging import Logger
 
     from confuse import ConfigView

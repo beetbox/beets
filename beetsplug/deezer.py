@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import collections
 import time
-from typing import TYPE_CHECKING, Literal, Sequence
+from typing import TYPE_CHECKING, Literal
 
 import requests
 
@@ -32,6 +32,8 @@ from beets.metadata_plugins import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from beets.library import Item, Library
 
     from ._typing import JSONDict
