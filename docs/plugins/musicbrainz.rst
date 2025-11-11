@@ -137,11 +137,11 @@ Default
     ``beatport_album_id``, ``deezer_album_id``, ``tidal_album_id``). On re-imports
     existing data will be overwritten.
 
-.. conf:: _genres_tag
-    :default: genres
+.. conf:: genres_tag
+    :default: genre
 
-    Either ``genres`` or ``tags``. Specify ``genres`` to use just musicbrainz genres and
-    ``tags`` to use all user-supplied musicbrainz tags.
+    Either ``genre`` or ``tag``. Specify ``genre`` to use just musicbrainz genre and
+    ``tag`` to use all user-supplied musicbrainz tags.
 
 .. include:: ./shared_metadata_source_config.rst
 

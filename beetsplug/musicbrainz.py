@@ -373,7 +373,7 @@ def _merge_pseudo_and_actual_album(
 class MusicBrainzPlugin(MetadataSourcePlugin):
     @cached_property
     def genres_field(self) -> str:
-        return f"{config['musicbrainz']['genres_tag'].get()}-list"
+        return f"{self.config['genres_tag'].as_choice(['genre', 'tag'])}-list"
 
     def __init__(self):
         """Set up the python-musicbrainz-ngs module according to settings
