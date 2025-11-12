@@ -39,7 +39,7 @@ from beets.library import Library
 from beets.metadata_plugins import (
     IDResponse,
     SearchApiMetadataSourcePlugin,
-    SearchFilter,
+    SearchParams,
 )
 
 if TYPE_CHECKING:
@@ -447,11 +447,8 @@ class SpotifyPlugin(
         track.medium_total = medium_total
         return track
 
-    def _search_api(
-        self,
-        query_type: Literal["album", "track"],
-        filters: SearchFilter,
-        query_string: str = "",
+    def get_search_response(
+        self, params: SearchParams
     ) -> Sequence[SearchResponseAlbums | SearchResponseTracks]:
         """Query the Spotify Search API for the specified ``query_string``,
         applying the provided ``filters``.
@@ -460,34 +457,27 @@ class SpotifyPlugin(
             'artist', 'playlist', and 'track'.
         :param filters: Field filters to apply.
         :param query_string: Additional query to include in the search.
-
         """
-        query = self._construct_search_query(
-            filters=filters, query_string=query_string
+        response = requests.get(
+            self.search_url,
+            headers={"Authorization": f"Bearer {self.access_token}"},
+            params={
+                **params.filters,
+                "q": params.query,
+                "type": params.query_type,
+            },
+            timeout=10,
         )
-
-        self._log.debug("Searching {.data_source} for '{}'", self, query)
         try:
-            response = self._handle_response(
-                "get",
-                self.search_url,
-                params={
-                    "q": query,
-                    "type": query_type,
-                    "limit": self.config["search_limit"].get(),
-                },
-            )
-        except APIError as e:
-            self._log.debug("Spotify API error: {}", e)
-            return ()
-        response_data = response.get(f"{query_type}s", {}).get("items", [])
-        self._log.debug(
-            "Found {} result(s) from {.data_source} for '{}'",
-            len(response_data),
-            self,
-            query,
-        )
-        return response_data
+            response.raise_for_status()
+        except requests.exceptions.HTTPError:
+            if response.status_code == 401:
+                self._authenticate()
+                return self.get_search_response(params)
+
+            raise
+
+        return response.json().get(f"{params.query_type}s", {}).get("items", [])
 
     def commands(self) -> list[ui.Subcommand]:
         # autotagger import command
@@ -600,22 +590,14 @@ class SpotifyPlugin(
             query_string = item["title"]
 
             # Query the Web API for each track, look for the items' JSON data
-            query_filters: SearchFilter = {}
+            query = query_string
             if artist:
-                query_filters["artist"] = artist
+                query += f" artist:'{artist}'"
             if album:
-                query_filters["album"] = album
+                query += f" album:'{album}'"
 
-            response_data_tracks = self._search_api(
-                query_type="track",
-                query_string=query_string,
-                filters=query_filters,
-            )
+            response_data_tracks = self._search_api("track", query, {})
             if not response_data_tracks:
-                query = self._construct_search_query(
-                    query_string=query_string, filters=query_filters
-                )
-
                 failures.append(query)
                 continue
 

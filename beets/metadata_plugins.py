@@ -10,11 +10,17 @@ from __future__ import annotations
 import abc
 import re
 from functools import cache, cached_property
-from typing import TYPE_CHECKING, Generic, Literal, TypedDict, TypeVar
+from typing import (
+    TYPE_CHECKING,
+    Generic,
+    Literal,
+    NamedTuple,
+    TypedDict,
+    TypeVar,
+)
 
 import unidecode
 from confuse import NotFoundError
-from typing_extensions import NotRequired
 
 from beets.util import cached_classproperty
 from beets.util.id_extractors import extract_release_id
@@ -25,6 +31,8 @@ if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
     from .autotag.hooks import AlbumInfo, Item, TrackInfo
+
+    QueryType = Literal["album", "track"]
 
 
 @cache
@@ -169,7 +177,7 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
         """
         raise NotImplementedError
 
-    def albums_for_ids(self, ids: Sequence[str]) -> Iterable[AlbumInfo | None]:
+    def albums_for_ids(self, ids: Iterable[str]) -> Iterable[AlbumInfo | None]:
         """Batch lookup of album metadata for a list of album IDs.
 
         Given a list of album identifiers, yields corresponding AlbumInfo objects.
@@ -180,7 +188,7 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
 
         return (self.album_for_id(id) for id in ids)
 
-    def tracks_for_ids(self, ids: Sequence[str]) -> Iterable[TrackInfo | None]:
+    def tracks_for_ids(self, ids: Iterable[str]) -> Iterable[TrackInfo | None]:
         """Batch lookup of track metadata for a list of track IDs.
 
         Given a list of track identifiers, yields corresponding TrackInfo objects.
@@ -254,12 +262,13 @@ class IDResponse(TypedDict):
     id: str
 
 
-class SearchFilter(TypedDict):
-    artist: NotRequired[str]
-    album: NotRequired[str]
-
-
 R = TypeVar("R", bound=IDResponse)
+
+
+class SearchParams(NamedTuple):
+    query_type: QueryType
+    query: str
+    filters: dict[str, str]
 
 
 class SearchApiMetadataSourcePlugin(
@@ -282,12 +291,26 @@ class SearchApiMetadataSourcePlugin(
             }
         )
 
-    @abc.abstractmethod
-    def _search_api(
+    def get_search_filters(
         self,
-        query_type: Literal["album", "track"],
-        filters: SearchFilter,
-        query_string: str = "",
+        query_type: QueryType,
+        items: Sequence[Item],
+        artist: str,
+        name: str,
+        va_likely: bool,
+    ) -> tuple[str, dict[str, str]]:
+        query = f'album:"{name}"' if query_type == "album" else name
+        if query_type == "track" or not va_likely:
+            query += f' artist:"{artist}"'
+
+        return query, {}
+
+    @abc.abstractmethod
+    def get_search_response(self, params: SearchParams) -> Sequence[R]:
+        raise NotImplementedError
+
+    def _search_api(
+        self, query_type: QueryType, query: str, filters: dict[str, str]
     ) -> Sequence[R]:
         """Perform a search on the API.
 
@@ -297,7 +320,28 @@ class SearchApiMetadataSourcePlugin(
 
         Should return a list of identifiers for the requested type (album or track).
         """
-        raise NotImplementedError
+        if self.config["search_query_ascii"].get():
+            query = unidecode.unidecode(query)
+
+        filters["limit"] = str(self.config["search_limit"].get())
+        params = SearchParams(query_type, query, filters)
+
+        self._log.debug("Searching for '{}' with {}", query, filters)
+        try:
+            response_data = self.get_search_response(params)
+        except Exception:
+            self._log.error("Error fetching data", exc_info=True)
+            return ()
+
+        self._log.debug("Found {} result(s)", len(response_data))
+        return response_data
+
+    def _get_candidates(
+        self, query_type: QueryType, *args, **kwargs
+    ) -> Sequence[R]:
+        return self._search_api(
+            query_type, *self.get_search_filters(query_type, *args, **kwargs)
+        )
 
     def candidates(
         self,
@@ -306,54 +350,11 @@ class SearchApiMetadataSourcePlugin(
         album: str,
         va_likely: bool,
     ) -> Iterable[AlbumInfo]:
-        query_filters: SearchFilter = {}
-        if album:
-            query_filters["album"] = album
-        if not va_likely:
-            query_filters["artist"] = artist
-
-        results = self._search_api("album", query_filters)
-        if not results:
-            return []
-
-        return filter(
-            None, self.albums_for_ids([result["id"] for result in results])
-        )
+        results = self._get_candidates("album", items, artist, album, va_likely)
+        return filter(None, self.albums_for_ids(r["id"] for r in results))
 
     def item_candidates(
         self, item: Item, artist: str, title: str
     ) -> Iterable[TrackInfo]:
-        results = self._search_api(
-            "track", {"artist": artist}, query_string=title
-        )
-        if not results:
-            return []
-
-        return filter(
-            None,
-            self.tracks_for_ids([result["id"] for result in results if result]),
-        )
-
-    def _construct_search_query(
-        self, filters: SearchFilter, query_string: str
-    ) -> str:
-        """Construct a query string with the specified filters and keywords to
-        be provided to the spotify (or similar) search API.
-
-        The returned format was initially designed for spotify's search API but
-        we found is also useful with other APIs that support similar query structures.
-        see `spotify <https://developer.spotify.com/documentation/web-api/reference/search>`_
-        and `deezer <https://developers.deezer.com/api/search>`_.
-
-        :param filters: Field filters to apply.
-        :param query_string: Query keywords to use.
-        :return: Query string to be provided to the search API.
-        """
-
-        components = [query_string, *(f"{k}:'{v}'" for k, v in filters.items())]
-        query = " ".join(filter(None, components))
-
-        if self.config["search_query_ascii"].get():
-            query = unidecode.unidecode(query)
-
-        return query
+        results = self._get_candidates("track", [item], artist, title, False)
+        return filter(None, self.tracks_for_ids(r["id"] for r in results))
