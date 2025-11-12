@@ -125,7 +125,7 @@ def import_func(lib, opts, args: list[str]):
 
         # If all paths were read from a logfile, and none of them exist, throw
         # an error
-        if not paths:
+        if not byte_paths:
             raise ui.UserError("none of the paths are importable")
 
     import_files(lib, byte_paths, query)
