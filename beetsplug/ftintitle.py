@@ -59,6 +59,89 @@ def contains_feat(title: str, custom_words: list[str] | None = None) -> bool:
     )
 
 
+# Default keywords that indicate remix/edit/version content
+DEFAULT_BRACKET_KEYWORDS = [
+    "abridged",
+    "acapella",
+    "club",
+    "demo",
+    "edit",
+    "extended",
+    "instrumental",
+    "live",
+    "mix",
+    "radio",
+    "release",
+    "remaster",
+    "remastered",
+    "remix",
+    "rmx",
+    "unabridged",
+    "unreleased",
+    "version",
+    "vip",
+]
+
+
+def find_bracket_position(
+    title: str, keywords: list[str] | None = None
+) -> int | None:
+    """Find the position of the first opening bracket that contains
+    remix/edit-related keywords and has a matching closing bracket.
+
+    Args:
+        title: The title to search in.
+        keywords: List of keywords to match. If None, uses DEFAULT_BRACKET_KEYWORDS.
+            If an empty list, matches any bracket content (not just keywords).
+
+    Returns:
+        The position of the opening bracket, or None if no match found.
+    """
+    if keywords is None:
+        keywords = DEFAULT_BRACKET_KEYWORDS
+
+    # If keywords is empty, match any bracket content
+    if not keywords:
+        pattern = None
+    else:
+        # Build regex pattern with word boundaries
+        keyword_pattern = "|".join(rf"\b{re.escape(kw)}\b" for kw in keywords)
+        pattern = re.compile(keyword_pattern, re.IGNORECASE)
+
+    # Bracket pairs (opening, closing)
+    bracket_pairs = [("(", ")"), ("[", "]"), ("<", ">"), ("{", "}")]
+
+    # Track the earliest valid bracket position
+    earliest_pos = None
+
+    for open_char, close_char in bracket_pairs:
+        pos = 0
+        while True:
+            # Find next opening bracket
+            open_pos = title.find(open_char, pos)
+            if open_pos == -1:
+                break
+
+            # Find matching closing bracket
+            close_pos = title.find(close_char, open_pos + 1)
+            if close_pos == -1:
+                break
+
+            # Extract content between brackets
+            content = title[open_pos + 1 : close_pos]
+
+            # Check if content matches: if pattern is None (empty keywords),
+            # match any content; otherwise check for keywords
+            if pattern is None or pattern.search(content):
+                if earliest_pos is None or open_pos < earliest_pos:
+                    earliest_pos = open_pos
+
+            # Continue searching from after this closing bracket
+            pos = close_pos + 1
+
+    return earliest_pos
+
+
 def find_feat_part(
     artist: str,
     albumartist: str | None,
@@ -110,6 +193,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
                 "keep_in_artist": False,
                 "preserve_album_artist": True,
                 "custom_words": [],
+                "bracket_keywords": DEFAULT_BRACKET_KEYWORDS,
             }
         )
 
@@ -138,6 +222,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
                 bool
             )
             custom_words = self.config["custom_words"].get(list)
+            bracket_keywords = self.config["bracket_keywords"].get(list)
             write = ui.should_write()
 
             for item in lib.items(args):
@@ -147,6 +232,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
                     keep_in_artist_field,
                     preserve_album_artist,
                     custom_words,
+                    bracket_keywords,
                 ):
                     item.store()
                     if write:
@@ -161,6 +247,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         keep_in_artist_field = self.config["keep_in_artist"].get(bool)
         preserve_album_artist = self.config["preserve_album_artist"].get(bool)
         custom_words = self.config["custom_words"].get(list)
+        bracket_keywords = self.config["bracket_keywords"].get(list)
 
         for item in task.imported_items():
             if self.ft_in_title(
@@ -169,6 +256,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
                 keep_in_artist_field,
                 preserve_album_artist,
                 custom_words,
+                bracket_keywords,
             ):
                 item.store()
 
@@ -179,6 +267,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         drop_feat: bool,
         keep_in_artist_field: bool,
         custom_words: list[str],
+        bracket_keywords: list[str] | None = None,
     ) -> None:
         """Choose how to add new artists to the title and set the new
         metadata. Also, print out messages about any changes that are made.
@@ -208,7 +297,14 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         if not drop_feat and not contains_feat(item.title, custom_words):
             feat_format = self.config["format"].as_str()
             new_format = feat_format.format(feat_part)
-            new_title = f"{item.title} {new_format}"
+            # Insert before the first bracket containing remix/edit keywords
+            bracket_pos = find_bracket_position(item.title, bracket_keywords)
+            if bracket_pos is not None:
+                title_before = item.title[:bracket_pos].rstrip()
+                title_after = item.title[bracket_pos:]
+                new_title = f"{title_before} {new_format} {title_after}"
+            else:
+                new_title = f"{item.title} {new_format}"
             self._log.info("title: {.title} -> {}", item, new_title)
             item.title = new_title
 
@@ -219,6 +315,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         keep_in_artist_field: bool,
         preserve_album_artist: bool,
         custom_words: list[str],
+        bracket_keywords: list[str] | None = None,
     ) -> bool:
         """Look for featured artists in the item's artist fields and move
         them to the title.
@@ -250,6 +347,11 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
 
         # If we have a featuring artist, move it to the title.
         self.update_metadata(
-            item, feat_part, drop_feat, keep_in_artist_field, custom_words
+            item,
+            feat_part,
+            drop_feat,
+            keep_in_artist_field,
+            custom_words,
+            bracket_keywords,
         )
         return True

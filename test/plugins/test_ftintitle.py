@@ -246,6 +246,49 @@ def add_item(
             ("Alice", "Song 1 feat. Bob"),
             id="skip-if-artist-and-album-artists-is-the-same-matching-match-b",
         ),
+        # ---- titles with brackets/parentheses ----
+        pytest.param(
+            {"format": "ft. {}"},
+            ("ftintitle",),
+            ("Alice ft. Bob", "Song 1 (Carol Remix)", "Alice"),
+            ("Alice", "Song 1 ft. Bob (Carol Remix)"),
+            id="title-with-brackets-insert-before",
+        ),
+        pytest.param(
+            {"format": "ft. {}", "keep_in_artist": True},
+            ("ftintitle",),
+            ("Alice ft. Bob", "Song 1 (Carol Remix)", "Alice"),
+            ("Alice ft. Bob", "Song 1 ft. Bob (Carol Remix)"),
+            id="title-with-brackets-keep-in-artist",
+        ),
+        pytest.param(
+            {"format": "ft. {}"},
+            ("ftintitle",),
+            ("Alice ft. Bob", "Song 1 (Remix) (Live)", "Alice"),
+            ("Alice", "Song 1 ft. Bob (Remix) (Live)"),
+            id="title-with-multiple-brackets-uses-first-with-keyword",
+        ),
+        pytest.param(
+            {"format": "ft. {}"},
+            ("ftintitle",),
+            ("Alice ft. Bob", "Song 1 (Arbitrary)", "Alice"),
+            ("Alice", "Song 1 (Arbitrary) ft. Bob"),
+            id="title-with-brackets-no-keyword-appends",
+        ),
+        pytest.param(
+            {"format": "ft. {}"},
+            ("ftintitle",),
+            ("Alice ft. Bob", "Song 1 [Edit]", "Alice"),
+            ("Alice", "Song 1 ft. Bob [Edit]"),
+            id="title-with-square-brackets-keyword",
+        ),
+        pytest.param(
+            {"format": "ft. {}"},
+            ("ftintitle",),
+            ("Alice ft. Bob", "Song 1 <Version>", "Alice"),
+            ("Alice", "Song 1 ft. Bob <Version>"),
+            id="title-with-angle-brackets-keyword",
+        ),
     ],
 )
 def test_ftintitle_functional(
@@ -310,6 +353,69 @@ def test_split_on_feat(
     expected: tuple[str, str | None],
 ) -> None:
     assert ftintitle.split_on_feat(given) == expected
+
+
+@pytest.mark.parametrize(
+    "given,expected",
+    [
+        # different braces and keywords
+        ("Song (Remix)", 5),
+        ("Song [Version]", 5),
+        ("Song {Extended Mix}", 5),
+        ("Song <Instrumental>", 5),
+        # two keyword clauses
+        ("Song (Remix) (Live)", 5),
+        # brace insensitivity
+        ("Song (Live) [Remix]", 5),
+        ("Song [Edit] (Remastered)", 5),
+        # negative cases
+        ("Song", None),  # no clause
+        ("Song (Arbitrary)", None),  # no keyword
+        ("Song (", None),  # no matching brace or keyword
+        ("Song (Live", None),  # no matching brace with keyword
+        # one keyword clause, one non-keyword clause
+        ("Song (Live) (Arbitrary)", 5),
+        ("Song (Arbitrary) (Remix)", 17),
+        # nested brackets - same type
+        ("Song (Remix (Extended))", 5),
+        ("Song [Arbitrary [Description]]", None),
+        # nested brackets - different types
+        ("Song (Remix [Extended])", 5),
+        # nested - returns outer start position despite inner keyword
+        ("Song [Arbitrary {Extended}]", 5),
+        ("Song {Live <Arbitrary>}", 5),
+        ("Song <Remaster (Arbitrary)>", 5),
+        ("Song <Extended> [Live]", 5),
+        ("Song (Version) <Live>", 5),
+        ("Song (Arbitrary [Description])", None),
+        ("Song [Description (Arbitrary)]", None),
+    ],
+)
+def test_find_bracket_position(given: str, expected: int | None) -> None:
+    assert ftintitle.find_bracket_position(given) == expected
+
+
+@pytest.mark.parametrize(
+    "given,keywords,expected",
+    [
+        ("Song (Live)", ["live"], 5),
+        ("Song (Live)", None, 5),
+        ("Song (Arbitrary)", None, None),
+        ("Song (Concert)", ["concert"], 5),
+        ("Song (Concert)", None, None),
+        ("Song (Remix)", ["custom"], None),
+        ("Song (Custom)", ["custom"], 5),
+        ("Song (Live)", [], 5),
+        ("Song (Anything)", [], 5),
+        ("Song (Remix)", [], 5),
+        ("Song", [], None),
+        ("Song (", [], None),
+    ],
+)
+def test_find_bracket_position_custom_keywords(
+    given: str, keywords: list[str] | None, expected: int | None
+) -> None:
+    assert ftintitle.find_bracket_position(given, keywords) == expected
 
 
 @pytest.mark.parametrize(
