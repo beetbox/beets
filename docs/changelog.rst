@@ -41,6 +41,8 @@ Bug fixes:
   the default config path. :bug:`5652`
 - :doc:`plugins/lyrics`: Accepts strings for lyrics sources (previously only
   accepted a list of strings). :bug:`5962`
+- Fix a bug introduced in release 2.4.0 where import from any valid
+  import-log-file always threw a "none of the paths are importable" error.
 
 For plugin developers:
 
