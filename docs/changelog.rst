@@ -45,7 +45,6 @@ Bug fixes:
   ``album_id`` from the associated release. :bug:`5886`
 
 
-
 For plugin developers:
 
 - A new plugin event, ``album_matched``, is sent when an album that is being
