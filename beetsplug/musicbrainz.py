@@ -516,8 +516,10 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
 
         # If this recording includes a release list, attach album metadata so
         # recording-based matches still write album/album_id.
-        rel_list = recording.get("release-list") or recording.get("release_list")
-        if rel_list:
+        rel_list = recording.get("release-list") or recording.get(
+            "release_list"
+        )
+        if rel_list and len(rel_list) > 0:
             # Pick the first release as a reasonable default.
             rel0 = rel_list[0] or {}
             # Handle both shapes: {'id','title',...} or {'release': {'id','title',...}}
@@ -869,7 +871,6 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
             except Exception:
                 # Fall back for test environments where get_recording_by_id is not mocked
                 yield self.track_info(r)
-
 
     def album_for_id(
         self, album_id: str

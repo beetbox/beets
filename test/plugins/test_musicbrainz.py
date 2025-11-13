@@ -990,8 +990,11 @@ class TestMusicBrainzPlugin(PluginMixin):
     plugin = "musicbrainz"
 
     mbid = "d2a6f856-b553-40a0-ac54-a321e8e2da99"
-    RECORDING = {"title": "foo", "id": "90b2fd02-19c8-42b8-8592-d62542604ce9", "length": 42}
-
+    RECORDING = {
+        "title": "foo",
+        "id": "90b2fd02-19c8-42b8-8592-d62542604ce9",
+        "length": 42,
+    }
 
     @pytest.fixture
     def plugin_config(self):
@@ -1042,7 +1045,9 @@ class TestMusicBrainzPlugin(PluginMixin):
         assert len(candidates) == 1
         assert candidates[0].track_id == self.RECORDING["id"]
 
-    def test_item_candidates_includes_album_from_release_list(self, monkeypatch, mb):
+    def test_item_candidates_includes_album_from_release_list(
+        self, monkeypatch, mb
+    ):
         """Ensure that item_candidates now attaches album info when the recording includes a release-list."""
         RECORDING_WITH_RELEASE = {
             "title": "Beautiful in White",
@@ -1068,7 +1073,9 @@ class TestMusicBrainzPlugin(PluginMixin):
             lambda *_, **__: {"recording": RECORDING_WITH_RELEASE},
         )
 
-        candidates = list(mb.item_candidates(Item(), "Shane Filan", "Beautiful in White"))
+        candidates = list(
+            mb.item_candidates(Item(), "Shane Filan", "Beautiful in White")
+        )
 
         # Ensure exactly one candidate was found
         assert len(candidates) == 1
@@ -1080,7 +1087,6 @@ class TestMusicBrainzPlugin(PluginMixin):
         # ✅ New expected behavior: album info populated from release-list
         assert candidate.album == "Love Always (Deluxe Edition)"
         assert candidate.album_id == "9ec75bce-60ac-41e9-82a5-3b71a982257d"
-
 
     def test_candidates(self, monkeypatch, mb):
         monkeypatch.setattr(
