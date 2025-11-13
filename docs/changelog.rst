@@ -39,11 +39,10 @@ Bug fixes:
   the default config path. :bug:`5652`
 - :doc:`plugins/lyrics`: Accepts strings for lyrics sources (previously only
   accepted a list of strings). :bug:`5962`
-- Fixed a bug where single-track imports using the MusicBrainz plugin failed
-  to attach album information when the API response included a ``release-list``.
+- Fixed a bug where single-track imports using the MusicBrainz plugin failed to
+  attach album information when the API response included a ``release-list``.
   The ``item_candidates()`` function now correctly assigns ``album`` and
   ``album_id`` from the associated release. :bug:`5886`
-
 
 For plugin developers:
 
