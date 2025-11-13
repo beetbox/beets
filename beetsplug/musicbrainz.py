@@ -869,15 +869,14 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
                 if ti:
                     yield ti
             except Exception:
-                # Fall back for test environments where get_recording_by_id is not mocked
+                # Fall back for tests where get_recording_by_id isn't mocked
                 yield self.track_info(r)
 
     def album_for_id(
         self, album_id: str
     ) -> beets.autotag.hooks.AlbumInfo | None:
-        """Fetches an album by its MusicBrainz ID and returns an AlbumInfo
-        object or None if the album is not found. May raise a
-        MusicBrainzAPIError.
+        """Fetches an album by its MusicBrainz ID and returns an
+        AlbumInfo object or None if the album is not found.
         """
         self._log.debug("Requesting MusicBrainz release {}", album_id)
         if not (albumid := self._extract_id(album_id)):

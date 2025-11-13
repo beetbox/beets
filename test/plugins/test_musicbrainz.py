@@ -1048,8 +1048,9 @@ class TestMusicBrainzPlugin(PluginMixin):
     def test_item_candidates_includes_album_from_release_list(
         self, monkeypatch, mb
     ):
-        """Ensure that item_candidates now attaches album info when the recording includes a release-list."""
-        RECORDING_WITH_RELEASE = {
+        """Ensure that item_candidates now attaches album
+        info when the recording includes a release-list."""
+        recording_with_release = {
             "title": "Beautiful in White",
             "id": "d207c6a8-ea13-4da6-9008-cc1db29a8a35",
             "length": 180000,
@@ -1064,13 +1065,13 @@ class TestMusicBrainzPlugin(PluginMixin):
         # Mock MusicBrainz search_recordings to return a recording with a release-list
         monkeypatch.setattr(
             "musicbrainzngs.search_recordings",
-            lambda *_, **__: {"recording-list": [RECORDING_WITH_RELEASE]},
+            lambda *_, **__: {"recording-list": [recording_with_release]},
         )
 
         # Mock get_recording_by_id so track_for_id() retrieves the same dict
         monkeypatch.setattr(
             "musicbrainzngs.get_recording_by_id",
-            lambda *_, **__: {"recording": RECORDING_WITH_RELEASE},
+            lambda *_, **__: {"recording": recording_with_release},
         )
 
         candidates = list(
