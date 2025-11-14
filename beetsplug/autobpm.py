@@ -36,6 +36,7 @@ class AutoBPMPlugin(BeetsPlugin):
             {
                 "auto": True,
                 "force": False,
+                "quiet": False,
                 "beat_track_kwargs": {},
             }
         )
@@ -63,6 +64,14 @@ class AutoBPMPlugin(BeetsPlugin):
             default=False,
             help="Overwrite existing bpm values",
         )
+        cmd.parser.add_option(
+            "-q",
+            "--quiet",
+            dest="quiet",
+            action="store_true",
+            default=False,
+            help="Suppress already existing values output",
+        )
         cmd.func = self.command
         return [cmd]
 
@@ -72,23 +81,31 @@ class AutoBPMPlugin(BeetsPlugin):
             if hasattr(opts, "force")
             else self.config["force"].get(bool)
         )
+        quiet = self.config["quiet"].get(bool) or opts.quiet
         self.calculate_bpm(
-            list(lib.items(args)), write=should_write(), force=force
+            list(lib.items(args)),
+            write=should_write(),
+            force=force,
+            quiet=quiet,
         )
 
     def imported(self, _, task: ImportTask) -> None:
         self.calculate_bpm(task.imported_items())
 
     def calculate_bpm(
-        self, items: list[Item], write: bool = False, force: bool = False
+        self,
+        items: list[Item],
+        write: bool = False,
+        force: bool = False,
+        quiet: bool = False,
     ) -> None:
         for item in items:
             path = item.filepath
             if bpm := item.bpm:
-                self._log.info("BPM for {} already exists: {}", path, bpm)
+                if not quiet:
+                    self._log.info("BPM for {} already exists: {}", path, bpm)
                 if not force:
                     continue
-
             try:
                 y, sr = librosa.load(item.filepath, res_type="kaiser_fast")
             except Exception as exc:
