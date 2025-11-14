@@ -102,7 +102,9 @@ class MBSyncPlugin(BeetsPlugin):
                 continue
 
             if not (
-                album_info := metadata_plugins.album_for_id(album.mb_albumid)
+                album_info := metadata_plugins.album_for_id(
+                    album.mb_albumid, album.items()
+                )
             ):
                 self._log.info(
                     "Release ID {0.mb_albumid} not found for album {0}", album

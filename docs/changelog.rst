@@ -61,6 +61,8 @@ Bug fixes:
 
 For plugin developers:
 
+- The plugin event ``albuminfo_received`` now has a second argument ``items``
+  with the files that were used in the corresponding search.
 - A new plugin event, ``album_matched``, is sent when an album that is being
   imported has been matched to its metadata and the corresponding distance has
   been calculated.
