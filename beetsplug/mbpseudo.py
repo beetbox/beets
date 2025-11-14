@@ -99,6 +99,9 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
                 pass
 
         self.register_listener("pluginload", self._on_plugins_loaded)
+        self.register_listener(
+            "albuminfo_received", self._on_album_info_received
+        )
         self.register_listener("album_matched", self._adjust_final_album_match)
 
     # noinspection PyMethodMayBeStatic
@@ -111,6 +114,25 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
                     "The musicbrainz plugin should not be enabled together with"
                     " the mbpseudo plugin"
                 )
+
+    def _on_album_info_received(
+        self,
+        info: AlbumInfo,
+        items: Iterable[Item],
+    ):
+        if isinstance(info, PseudoAlbumInfo):
+            for item in items:
+                # particularly relevant for reimport but could also happen during import
+                if "mb_albumid" in item:
+                    del item["mb_albumid"]
+                if "mb_trackid" in item:
+                    del item["mb_trackid"]
+
+            self._log.debug(
+                "Using {0} release for distance calculations for album {1}",
+                info.determine_best_ref(list(items)),
+                info.album_id,
+            )
 
     @override
     def candidates(
@@ -127,11 +149,6 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
                 items, artist, album, va_likely
             ):
                 if isinstance(album_info, PseudoAlbumInfo):
-                    self._log.debug(
-                        "Using {0} release for distance calculations for album {1}",
-                        album_info.determine_best_ref(items),
-                        album_info.album_id,
-                    )
                     yield album_info  # first yield pseudo to give it priority
                     yield album_info.get_official_release()
                 else:

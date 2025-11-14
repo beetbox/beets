@@ -47,6 +47,7 @@ class TestPseudoAlbumInfo:
         self, official_release_info: AlbumInfo, pseudo_release_info: AlbumInfo
     ):
         info = PseudoAlbumInfo(pseudo_release_info, official_release_info)
+        info.use_pseudo_as_ref()
         assert info.album == "In Bloom"
 
     def test_get_attr_from_official(
@@ -123,6 +124,37 @@ class TestMBPseudoPlugin(PluginMixin):
             assert mbpseudo_plugin._extract_id(album_id) is None
         else:
             assert mbpseudo_plugin._extract_id(album_id) == album_id
+
+    def test_reimport_logic(
+        self,
+        mbpseudo_plugin: MusicBrainzPseudoReleasePlugin,
+        official_release_info: AlbumInfo,
+        pseudo_release_info: AlbumInfo,
+    ):
+        pseudo_info = PseudoAlbumInfo(
+            pseudo_release_info, official_release_info
+        )
+
+        item = Item()
+        item["title"] = "百花繚乱"
+
+        # if items don't have mb_*, they are not modified
+        mbpseudo_plugin._on_album_info_received(pseudo_info, [item])
+        assert pseudo_info.album == item.title
+
+        pseudo_info.use_pseudo_as_ref()
+        assert pseudo_info.album == "In Bloom"
+
+        item["mb_albumid"] = "mb_aid"
+        item["mb_trackid"] = "mb_tid"
+        assert item.get("mb_albumid") == "mb_aid"
+        assert item.get("mb_trackid") == "mb_tid"
+
+        # if items have mb_*, they are deleted
+        mbpseudo_plugin._on_album_info_received(pseudo_info, [item])
+        assert pseudo_info.album == item.title
+        assert item.get("mb_albumid") == ""
+        assert item.get("mb_trackid") == ""
 
     def test_album_info_for_pseudo_release(
         self,

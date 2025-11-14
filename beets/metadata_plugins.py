@@ -24,7 +24,8 @@ from .plugins import BeetsPlugin, find_plugins, notify_info_yielded, send
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
-    from .autotag.hooks import AlbumInfo, Item, TrackInfo
+    from .autotag.hooks import AlbumInfo, TrackInfo
+    from .library.models import Item
 
 
 @cache
@@ -34,7 +35,6 @@ def find_metadata_source_plugins() -> list[MetadataSourcePlugin]:
     return [p for p in find_plugins() if hasattr(p, "data_source")]  # type: ignore[misc]
 
 
-@notify_info_yielded("albuminfo_received")
 def candidates(*args, **kwargs) -> Iterable[AlbumInfo]:
     """Return matching album candidates from all metadata source plugins."""
     for plugin in find_metadata_source_plugins():
@@ -48,14 +48,17 @@ def item_candidates(*args, **kwargs) -> Iterable[TrackInfo]:
         yield from plugin.item_candidates(*args, **kwargs)
 
 
-def album_for_id(_id: str) -> AlbumInfo | None:
+def album_for_id(
+    _id: str,
+    items: Iterable[Item],
+) -> AlbumInfo | None:
     """Get AlbumInfo object for the given ID string.
 
     A single ID can yield just a single album, so we return the first match.
     """
     for plugin in find_metadata_source_plugins():
         if info := plugin.album_for_id(album_id=_id):
-            send("albuminfo_received", info=info)
+            send("albuminfo_received", info=info, items=items)
             return info
 
     return None

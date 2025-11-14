@@ -119,7 +119,7 @@ def match_by_id(items: Iterable[Item]) -> AlbumInfo | None:
             return None
     # If all album IDs are equal, look up the album.
     log.debug("Searching for discovered album ID: {}", first)
-    return metadata_plugins.album_for_id(first)
+    return metadata_plugins.album_for_id(first, items)
 
 
 def _recommendation(
@@ -272,7 +272,7 @@ def tag_album(
     if search_ids:
         for search_id in search_ids:
             log.debug("Searching for album ID: {}", search_id)
-            if info := metadata_plugins.album_for_id(search_id):
+            if info := metadata_plugins.album_for_id(search_id, items):
                 _add_candidate(items, candidates, info)
                 if opt_candidate := candidates.get(info.album_id):
                     plugins.send("album_matched", match=opt_candidate)
@@ -317,6 +317,9 @@ def tag_album(
         for matched_candidate in metadata_plugins.candidates(
             items, search_artist, search_album, va_likely
         ):
+            plugins.send(
+                "albuminfo_received", info=matched_candidate, items=items
+            )
             _add_candidate(items, candidates, matched_candidate)
             if opt_candidate := candidates.get(matched_candidate.album_id):
                 plugins.send("album_matched", match=opt_candidate)
