@@ -19,7 +19,7 @@ import pytest
 from beets import autotag, config
 from beets.autotag import AlbumInfo, TrackInfo, correct_list_fields, match
 from beets.library import Item
-from beets.test.helper import BeetsTestCase
+from beets.test.helper import BeetsTestCase, ConfigMixin
 
 
 class TestAssignment:
@@ -442,6 +442,45 @@ class ApplyCompilationTest(BeetsTestCase, ApplyTestUtil):
         self._apply(info=va_info)
         assert self.items[0].comp
         assert self.items[1].comp
+
+
+@pytest.mark.parametrize(
+    "overwrite_fields,expected_item_artist",
+    [
+        pytest.param(["artist"], "", id="overwrite artist"),
+        pytest.param(
+            [],
+            "artist",
+            marks=pytest.mark.xfail(
+                reason="artist gets wrongly always overwritten", strict=True
+            ),
+            id="do not overwrite artist",
+        ),
+    ],
+)
+class TestOverwriteNull:
+    @pytest.fixture(autouse=True)
+    def config(self, config, overwrite_fields):
+        config["overwrite_null"]["album"] = overwrite_fields
+        config["overwrite_null"]["track"] = overwrite_fields
+
+    @pytest.fixture
+    def item(self):
+        return Item(artist="artist")
+
+    @pytest.fixture
+    def track_info(self):
+        return TrackInfo(artist=None)
+
+    def test_album(self, item, track_info, expected_item_artist):
+        autotag.apply_metadata(AlbumInfo([track_info]), [(item, track_info)])
+
+        assert item.artist == expected_item_artist
+
+    def test_singleton(self, item, track_info, expected_item_artist):
+        autotag.apply_item_metadata(item, track_info)
+
+        assert item.artist == expected_item_artist
 
 
 @pytest.mark.parametrize(
