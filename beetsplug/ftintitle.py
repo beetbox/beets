@@ -66,6 +66,7 @@ DEFAULT_BRACKET_KEYWORDS = [
     "club",
     "demo",
     "edit",
+    "edition",
     "extended",
     "instrumental",
     "live",
