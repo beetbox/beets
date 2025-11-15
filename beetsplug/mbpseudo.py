@@ -186,41 +186,39 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
                 return self._resolve_pseudo_album_info(
                     official_release, custom_tags_only, languages, album_info
                 )
-            else:
-                pseudo_releases = [
-                    self._get_raw_pseudo_release(i) for i in pseudo_release_ids
-                ]
 
-                # sort according to the desired languages specified in the config
-                def sort_fun(rel: JSONDict) -> int:
-                    lang = rel.get("text-representation", {}).get(
-                        "language", ""
-                    )
-                    # noinspection PyBroadException
-                    try:
-                        return languages.index(lang[0:2])
-                    except Exception:
-                        return len(languages)
+            pseudo_releases = [
+                self._get_raw_pseudo_release(i) for i in pseudo_release_ids
+            ]
 
-                pseudo_releases.sort(key=sort_fun)
-                multiple_allowed = self.config["multiple_allowed"].get(bool)
-                if custom_tags_only or not multiple_allowed:
-                    return self._resolve_pseudo_album_info(
-                        official_release,
-                        custom_tags_only,
-                        languages,
-                        pseudo_releases[0],
-                    )
-                else:
-                    pseudo_album_infos = [
-                        self._resolve_pseudo_album_info(
-                            official_release, custom_tags_only, languages, i
-                        )
-                        for i in pseudo_releases
-                    ]
-                    return MultiPseudoAlbumInfo(
-                        *pseudo_album_infos, official_release=official_release
-                    )
+            # sort according to the desired languages specified in the config
+            def sort_fun(rel: JSONDict) -> int:
+                lang = rel.get("text-representation", {}).get("language", "")
+                # noinspection PyBroadException
+                try:
+                    return languages.index(lang[0:2])
+                except Exception:
+                    return len(languages)
+
+            pseudo_releases.sort(key=sort_fun)
+            multiple_allowed = self.config["multiple_allowed"].get(bool)
+            if custom_tags_only or not multiple_allowed:
+                return self._resolve_pseudo_album_info(
+                    official_release,
+                    custom_tags_only,
+                    languages,
+                    pseudo_releases[0],
+                )
+
+            pseudo_album_infos = [
+                self._resolve_pseudo_album_info(
+                    official_release, custom_tags_only, languages, i
+                )
+                for i in pseudo_releases
+            ]
+            return MultiPseudoAlbumInfo(
+                *pseudo_album_infos, official_release=official_release
+            )
         else:
             return official_release
 
