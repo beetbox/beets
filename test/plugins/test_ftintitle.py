@@ -15,9 +15,11 @@
 """Tests for the 'ftintitle' plugin."""
 
 from collections.abc import Generator
+from typing import cast
 
 import pytest
 
+from beets.importer import ImportSession, ImportTask
 from beets.library.models import Item
 from beets.test.helper import PluginTestCase
 from beetsplug import ftintitle
@@ -66,6 +68,16 @@ def add_item(
         title=title,
         albumartist=albumartist,
     )
+
+
+class DummyImportTask:
+    """Minimal stand-in for ImportTask used to exercise import hooks."""
+
+    def __init__(self, items: list[Item]) -> None:
+        self._items = items
+
+    def imported_items(self) -> list[Item]:
+        return self._items
 
 
 @pytest.mark.parametrize(
@@ -310,6 +322,31 @@ def test_ftintitle_functional(
     expected_artist, expected_title = expected
     assert item["artist"] == expected_artist
     assert item["title"] == expected_title
+
+
+def test_imported_stage_moves_featured_artist(
+    env: FtInTitlePluginFunctional,
+) -> None:
+    """The import-stage hook should fetch config settings and process items."""
+    set_config(env, None)
+    plugin = ftintitle.FtInTitlePlugin()
+    item = add_item(
+        env,
+        "/imported-hook",
+        "Alice feat. Bob",
+        "Song 1 (Carol Remix)",
+        "Various Artists",
+    )
+    task = DummyImportTask([item])
+
+    plugin.imported(
+        cast(ImportSession, None),
+        cast(ImportTask, task),
+    )
+    item.load()
+
+    assert item["artist"] == "Alice"
+    assert item["title"] == "Song 1 feat. Bob (Carol Remix)"
 
 
 @pytest.mark.parametrize(
