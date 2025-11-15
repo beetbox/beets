@@ -445,6 +445,38 @@ class ApplyCompilationTest(BeetsTestCase, ApplyTestUtil):
 
 
 @pytest.mark.parametrize(
+    "overwrite_fields,expected_item_artist",
+    [
+        pytest.param(["artist"], "", id="overwrite artist"),
+        pytest.param([], "artist", id="do not overwrite artist"),
+    ],
+)
+class TestOverwriteNull(ConfigMixin):
+    @pytest.fixture(autouse=True)
+    def _setup_config(self, overwrite_fields):
+        self.config["overwrite_null"]["album"] = overwrite_fields
+        self.config["overwrite_null"]["track"] = overwrite_fields
+
+    @pytest.fixture
+    def item(self):
+        return Item(artist="artist")
+
+    @pytest.fixture
+    def track_info(self):
+        return TrackInfo(artist=None)
+
+    def test_album(self, item, track_info, expected_item_artist):
+        autotag.apply_metadata(AlbumInfo([track_info]), [(item, track_info)])
+
+        assert item.artist == expected_item_artist
+
+    def test_singleton(self, item, track_info, expected_item_artist):
+        autotag.apply_item_metadata(item, track_info)
+
+        assert item.artist == expected_item_artist
+
+
+@pytest.mark.parametrize(
     "single_field,list_field",
     [
         ("mb_artistid", "mb_artistids"),
