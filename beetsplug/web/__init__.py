@@ -17,9 +17,10 @@
 import base64
 import json
 import os
+import typing as t
 
 import flask
-from flask import g, jsonify
+from flask import jsonify
 from unidecode import unidecode
 from werkzeug.routing import BaseConverter, PathConverter
 
@@ -27,6 +28,17 @@ import beets.library
 from beets import ui, util
 from beets.dbcore.query import PathQuery
 from beets.plugins import BeetsPlugin
+
+# Type checking hacks
+
+if t.TYPE_CHECKING:
+
+    class LibraryCtx(flask.ctx._AppCtxGlobals):
+        lib: beets.library.Library
+
+    g = LibraryCtx()
+else:
+    from flask import g
 
 # Utilities.
 
