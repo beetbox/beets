@@ -317,9 +317,6 @@ def tag_album(
         for matched_candidate in metadata_plugins.candidates(
             items, search_artist, search_album, va_likely
         ):
-            plugins.send(
-                "albuminfo_received", info=matched_candidate, items=items
-            )
             _add_candidate(items, candidates, matched_candidate)
             if opt_candidate := candidates.get(matched_candidate.album_id):
                 plugins.send("album_matched", match=opt_candidate)

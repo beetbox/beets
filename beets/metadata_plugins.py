@@ -35,10 +35,12 @@ def find_metadata_source_plugins() -> list[MetadataSourcePlugin]:
     return [p for p in find_plugins() if hasattr(p, "data_source")]  # type: ignore[misc]
 
 
-def candidates(*args, **kwargs) -> Iterable[AlbumInfo]:
+def candidates(items, *args, **kwargs) -> Iterable[AlbumInfo]:
     """Return matching album candidates from all metadata source plugins."""
     for plugin in find_metadata_source_plugins():
-        yield from plugin.candidates(*args, **kwargs)
+        for info in plugin.candidates(items, *args, **kwargs):
+            send("albuminfo_received", info=info, items=items)
+            yield info
 
 
 @notify_info_yielded("trackinfo_received")
