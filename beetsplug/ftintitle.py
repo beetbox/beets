@@ -19,11 +19,11 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING
 
-from beets import plugins, ui
+from beets import config, plugins, ui
 
 if TYPE_CHECKING:
     from beets.importer import ImportSession, ImportTask
-    from beets.library import Item
+    from beets.library import Album, Item
 
 
 def split_on_feat(
@@ -98,6 +98,11 @@ def find_feat_part(
     return feat_part
 
 
+def _album_artist_no_feat(album: Album) -> str:
+    custom_words = config["ftintitle"]["custom_words"].as_str_seq()
+    return split_on_feat(album["albumartist"], False, list(custom_words))[0]
+
+
 class FtInTitlePlugin(plugins.BeetsPlugin):
     def __init__(self) -> None:
         super().__init__()
@@ -128,6 +133,10 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
 
         if self.config["auto"]:
             self.import_stages = [self.imported]
+
+        self.album_template_fields["album_artist_no_feat"] = (
+            _album_artist_no_feat
+        )
 
     def commands(self) -> list[ui.Subcommand]:
         def func(lib, opts, args):
