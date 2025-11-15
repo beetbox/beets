@@ -60,6 +60,7 @@ Default
         force_lowercase: no
         small_first_last: yes
         the_artist: yes
+        after_choice: no
 
 .. conf:: auto
     :default: yes
@@ -99,9 +100,9 @@ Default
 
 .. conf:: replace
 
-   The replace function takes place before any titlecasing occurs, and is intended to
-   help normalize differences in puncuation styles. It accepts a list of tuples, with
-   the first being the target, and the second being the replacement
+    The replace function takes place before any titlecasing occurs, and is intended to
+    help normalize differences in puncuation styles. It accepts a list of tuples, with
+    the first being the target, and the second being the replacement
 
 .. conf:: force_lowercase
     :default: no
@@ -120,6 +121,13 @@ Default
     If a field name contains ``artist``, then any lowercase ``the`` will be
     capitalized. Useful for bands with `The` as part of the proper name,
     like ``Amyl and The Sniffers``.
+
+.. conf:: after_choice
+
+    By default, titlecase runs on the candidates that are received, adjusting them before
+    you make your selection and creating different weight calculations. If you'd rather
+    see the data as recieved from the database, set this to true to run after you make
+    your tag choice.
 
 Dangerous Fields
 ~~~~~~~~~~~~~~~~

@@ -16,6 +16,7 @@
 
 import pytest
 
+from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.library import Item
 from beets.test.helper import PluginTestCase
 from beetsplug.titlecase import TitlecasePlugin
@@ -59,7 +60,7 @@ titlecase_test_cases = [
             title="Till It's Done (Tutu)",
         ),
         "expected": Item(
-            artist="D'Angelo and the Vanguard",
+            artist="D'Angelo and The Vanguard",
             mb_albumid="Ab140e13-7b36-402a-A528-B69e3dee38a8",
             albumartist="D'Angelo",
             format="CD",
@@ -236,6 +237,47 @@ class TitlecasePluginTest(PluginTestCase):
                 for key, value in vars(item).items():
                     if isinstance(value, str):
                         assert getattr(item, key) == getattr(expected, key)
+
+    def test_recieved_info_handler(self):
+        test_track_info = TrackInfo(
+            album="test album",
+            artist_credit="test artist credit",
+            artists=["artist one", "artist two"],
+        )
+        expected_track_info = TrackInfo(
+            album="Test Album",
+            artist_credit="Test Artist Credit",
+            artists=["Artist One", "Artist Two"],
+        )
+        test_album_info = AlbumInfo(
+            tracks=[test_track_info],
+            album="test album",
+            artist_credit="test artist credit",
+            artists=["artist one", "artist two"],
+        )
+        expected_album_info = AlbumInfo(
+            tracks=[expected_track_info],
+            album="Test Album",
+            artist_credit="Test Artist Credit",
+            artists=["Artist One", "Artist Two"],
+        )
+        with self.configure_plugin(
+            {"fields": ["album", "artist_credit", "artists"]}
+        ):
+            TitlecasePlugin().received_info_handler(test_track_info)
+            assert test_track_info.album == expected_track_info.album
+            assert (
+                test_track_info.artist_credit
+                == expected_track_info.artist_credit
+            )
+            assert test_track_info.artists == expected_track_info.artists
+            TitlecasePlugin().received_info_handler(test_album_info)
+            assert test_album_info.album == expected_album_info.album
+            assert (
+                test_album_info.artist_credit
+                == expected_album_info.artist_credit
+            )
+            assert test_album_info.artists == expected_album_info.artists
 
     def test_cli(self):
         for tc in titlecase_test_cases:

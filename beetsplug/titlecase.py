@@ -22,6 +22,7 @@ from typing import Optional, Pattern
 from titlecase import titlecase
 
 from beets import ui
+from beets.autotag.hooks import AlbumInfo, Info, TrackInfo
 from beets.importer import ImportSession, ImportTask
 from beets.library import Item
 from beets.plugins import BeetsPlugin
@@ -52,6 +53,7 @@ class TitlecasePlugin(BeetsPlugin):
                 "force_lowercase": False,
                 "small_first_last": True,
                 "the_artist": True,
+                "after_choice": False,
             }
         )
 
@@ -77,7 +79,15 @@ class TitlecasePlugin(BeetsPlugin):
 
         self.__get_config_file__()
         if self.config["auto"]:
-            self.import_stages = [self.imported]
+            if self.config["after_choice"].get(bool):
+                self.import_stages = [self.imported]
+            else:
+                self.register_listener(
+                    "trackinfo_received", self.received_info_handler
+                )
+                self.register_listener(
+                    "albuminfo_received", self.received_info_handler
+                )
 
     def __get_config_file__(self):
         self.force_lowercase = self.config["force_lowercase"].get(bool)
@@ -92,11 +102,11 @@ class TitlecasePlugin(BeetsPlugin):
         """Creates the set for fields to process in tagging."""
         if fields:
             self.fields_to_process = set(fields)
-            self._log.info(
+            self._log.debug(
                 f"set fields to process: {', '.join(self.fields_to_process)}"
             )
         else:
-            self._log.info("no fields specified!")
+            self._log.debug("no fields specified!")
 
     def __preserve_words__(self, preserve: list[str]) -> None:
         for word in preserve:
@@ -113,11 +123,17 @@ class TitlecasePlugin(BeetsPlugin):
             return preserved_word
         return None
 
+    def received_info_handler(self, info: AlbumInfo | TrackInfo):
+        self.titlecase_fields(info)
+        if isinstance(info, AlbumInfo):
+            for track in info.tracks:
+                self.titlecase_fields(track)
+
     def commands(self) -> list[ui.Subcommand]:
         def func(lib, opts, args):
             write = ui.should_write()
             for item in lib.items(args):
-                self._log.info(f"titlecasing {item.title}:")
+                self._log.debug(f"titlecasing {item.title}:")
                 self.titlecase_fields(item)
                 item.store()
                 if write:
@@ -126,7 +142,7 @@ class TitlecasePlugin(BeetsPlugin):
         self._command.func = func
         return [self._command]
 
-    def titlecase_fields(self, item: Item):
+    def titlecase_fields(self, item: Item | Info):
         """Applies titlecase to fields, except
         those excluded by the default exclusions and the
         set exclude lists.
@@ -141,20 +157,20 @@ class TitlecasePlugin(BeetsPlugin):
                         self.titlecase(i) for i in init_field
                     ]
                     setattr(item, field, cased_list)
-                    self._log.info(
+                    self._log.debug(
                         (
                             f"{field}: {', '.join(init_field)} -> "
                             f"{', '.join(cased_list)}"
                         )
                     )
                 elif isinstance(init_field, str):
-                    cased: str = self.titlecase(init_field)
+                    cased: str = self.titlecase(init_field, field)
                     setattr(item, field, cased)
-                    self._log.info(f"{field}: {init_field} -> {cased}")
+                    self._log.debug(f"{field}: {init_field} -> {cased}")
                 else:
-                    self._log.info(f"{field}: no string present")
+                    self._log.debug(f"{field}: no string present")
             else:
-                self._log.info(f"{field}: does not exist on {item}")
+                self._log.debug(f"{field}: does not exist on {type(item)}")
 
     def titlecase(self, text: str, field: str = "") -> str:
         """Titlecase the given text."""
@@ -180,8 +196,8 @@ class TitlecasePlugin(BeetsPlugin):
         """Import hook for titlecasing on import."""
         for item in task.imported_items():
             try:
-                self._log.info(f"titlecasing {item.title}:")
+                self._log.debug(f"titlecasing {item.title}:")
                 self.titlecase_fields(item)
                 item.store()
             except Exception as e:
-                self._log.info(f"titlecasing exception {e}")
+                self._log.debug(f"titlecasing exception {e}")
