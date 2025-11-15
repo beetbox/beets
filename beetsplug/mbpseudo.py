@@ -182,15 +182,13 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
             custom_tags_only = self.config["custom_tags_only"].get(bool)
             languages = list(config["import"]["languages"].as_str_seq())
             if len(pseudo_release_ids) == 1 or len(languages) == 0:
-                album_id = self._extract_id(pseudo_release_ids[0])
-                album_info = self._get_raw_pseudo_release(album_id)
+                album_info = self._get_raw_pseudo_release(pseudo_release_ids[0])
                 return self._resolve_pseudo_album_info(
                     official_release, custom_tags_only, languages, album_info
                 )
             else:
                 pseudo_releases = [
-                    self._get_raw_pseudo_release(self._extract_id(i))
-                    for i in pseudo_release_ids
+                    self._get_raw_pseudo_release(i) for i in pseudo_release_ids
                 ]
 
                 # sort according to the desired languages specified in the config
@@ -231,12 +229,14 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
         if self._has_desired_script(data) or not isinstance(album_id, str):
             return []
 
-        return [
-            pr_id
+        ans = [
+            self._extract_id(pr_id)
             for rel in data.get("release-relation-list", [])
             if (pr_id := self._wanted_pseudo_release_id(album_id, rel))
             is not None
         ]
+
+        return list(filter(None, ans))
 
     def _has_desired_script(self, release: JSONDict) -> bool:
         if len(self._scripts) == 0:
@@ -301,7 +301,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
         """Use the pseudo-release's language to search for artist
         alias if the user hasn't configured import languages."""
 
-        if len(languages) > 0:
+        if languages:
             return
 
         lang = raw_pseudo_release.get("text-representation", {}).get("language")
