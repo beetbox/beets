@@ -39,6 +39,23 @@ Therefore, the minimum configuration for this plugin looks like this:
         scripts:
         - Latn
 
+A release may have multiple pseudo-releases, for example when there is both a
+transliteration and a translation available. By default, only 1 pseudo-release
+per official release is emitted as candidate, using the languages from the
+configuration to decide which one has most priority. If you're importing in
+timid mode and you would like to receive all valid pseudo-releases as additional
+candidates, you can add the following to the configuration:
+
+.. code-block:: yaml
+
+    mbpseudo:
+        multiple_allowed: yes
+
+.. note::
+
+    Reimporting in particular might not give you a pseudo-release proposal if
+    multiple candidates exist and are allowed.
+
 Note that the `search_limit` configuration applies to the initial search for
 official releases, and that the `data_source` in the database will be
 "MusicBrainz". Nevertheless, `data_source_mismatch_penalty` must also be
@@ -60,6 +77,9 @@ sources may look like this:
 
     deezer:
         data_source_mismatch_penalty: 0.2
+
+Custom Tags Only
+----------------
 
 By default, the data from the pseudo-release will be used to create a proposal
 that is independent from the official release and sets all properties in its

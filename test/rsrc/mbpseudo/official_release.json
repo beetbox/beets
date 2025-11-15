@@ -754,6 +754,35 @@
           "medium-count": 0,
           "artist-credit-phrase": "Lilas Ikuta"
         }
+      },
+      {
+        "type": "transl-tracklisting",
+        "type-id": "fc399d47-23a7-4c28-bfcf-0607a562b644",
+        "target": "dc3ee2df-mock-49eb-b8c4-34473d279a43",
+        "direction": "forward",
+        "release": {
+          "id": "dc3ee2df-mock-49eb-b8c4-34473d279a43",
+          "title": "Mock Title",
+          "quality": "normal",
+          "text-representation": {
+            "language": "jpn",
+            "script": "Latn"
+          },
+          "artist-credit": [
+            {
+              "name": "Lilas Ikuta",
+              "artist": {
+                "id": "55e42264-ef27-49d8-93fd-29f930dc96e4",
+                "name": "幾田りら",
+                "sort-name": "Ikuta, Lilas",
+                "country": "JP"
+              }
+            }
+          ],
+          "medium-list": [],
+          "medium-count": 0,
+          "artist-credit-phrase": "Lilas Ikuta"
+        }
       }
     ],
     "url-relation-list": [
