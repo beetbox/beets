@@ -105,7 +105,9 @@ def find_bracket_position(
     if not keywords:
         pattern = None
     else:
-        # Build regex pattern with word boundaries
+        # Build regex pattern to support multi-word keywords/phrases.
+        # Each keyword/phrase is escaped and surrounded by word boundaries at
+        # start and end, matching phrases like "club mix" as a whole.
         keyword_pattern = "|".join(rf"\b{re.escape(kw)}\b" for kw in keywords)
         pattern = re.compile(keyword_pattern, re.IGNORECASE)
 
@@ -133,9 +135,10 @@ def find_bracket_position(
 
             # Check if content matches: if pattern is None (empty keywords),
             # match any content; otherwise check for keywords
-            if pattern is None or pattern.search(content):
-                if earliest_pos is None or open_pos < earliest_pos:
-                    earliest_pos = open_pos
+            if (pattern is None or pattern.search(content)) and (
+                earliest_pos is None or open_pos < earliest_pos
+            ):
+                earliest_pos = open_pos
 
             # Continue searching from after this closing bracket
             pos = close_pos + 1
@@ -194,7 +197,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
                 "keep_in_artist": False,
                 "preserve_album_artist": True,
                 "custom_words": [],
-                "bracket_keywords": DEFAULT_BRACKET_KEYWORDS,
+                "bracket_keywords": DEFAULT_BRACKET_KEYWORDS.copy(),
             }
         )
 
