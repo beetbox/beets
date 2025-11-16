@@ -562,6 +562,17 @@ class TestGenreSync:
         assert item.genres == ["Rock", "Alternative"]
         assert item.genre == "Rock, Alternative"
 
+    def test_sync_genres_disabled_conflicting_values(self):
+        """When multi_value_genres is disabled with conflicting values."""
+        config["multi_value_genres"] = False
+
+        item = Item(genre="Jazz", genres=["Rock", "Alternative"])
+        correct_list_fields(item)
+
+        # genre string should take priority and be added to front of list
+        assert item.genre == "Jazz"
+        assert item.genres == ["Jazz", "Rock", "Alternative"]
+
     def test_sync_genres_none_values(self):
         """Handle None values in genre/genres fields without errors."""
         config["multi_value_genres"] = True
@@ -586,5 +597,16 @@ class TestGenreSync:
         correct_list_fields(item)
 
         # Should handle empty list without errors
+        assert item.genres == []
+        assert item.genre == ""
+
+    def test_sync_genres_disabled_none_genres(self):
+        """Handle disabled config with genres=None."""
+        config["multi_value_genres"] = False
+
+        item = Item(genres=None)
+        correct_list_fields(item)
+
+        # Should handle None without errors
         assert item.genres == []
         assert item.genre == ""

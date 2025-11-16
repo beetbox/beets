@@ -235,6 +235,8 @@ class BeatportObject:
             self.artists = [(x["id"], str(x["name"])) for x in data["artists"]]
         if "genres" in data:
             genre_list = [str(x["name"]) for x in data["genres"]]
+            # Remove duplicates while preserving order
+            genre_list = list(dict.fromkeys(genre_list))
             if beets.config["multi_value_genres"]:
                 self.genres = genre_list
             else:
@@ -318,6 +320,9 @@ class BeatportTrack(BeatportObject):
             genre_list = [str(x.get("name")) for x in data["genres"]]
         else:
             genre_list = []
+
+        # Remove duplicates while preserving order
+        genre_list = list(dict.fromkeys(genre_list))
 
         if beets.config["multi_value_genres"]:
             # New behavior: populate both genres list and joined string

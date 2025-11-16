@@ -409,6 +409,7 @@ class LastGenrePluginTest(PluginTestCase):
                 "separator": "\u0000",
                 "canonical": False,
                 "prefer_specific": False,
+                "count": 10,
             },
             "Blues",
             {
@@ -567,6 +568,14 @@ def test_get_genre(config_values, item_genre, mock_genres, expected_result):
     # Configure
     plugin.config.set(config_values)
     plugin.setup()  # Loads default whitelist and canonicalization tree
+
+    # If test specifies a separator, set it as the global genre_separator
+    # (when multi_value_genres is enabled, plugins use the global separator)
+    if "separator" in config_values:
+        from beets import config
+
+        config["genre_separator"] = config_values["separator"]
+
     item = _common.item()
     item.genre = item_genre
 
