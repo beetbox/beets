@@ -17,7 +17,7 @@ Title case logic is derived from the python-titlecase library.
 Provides a template function and a tag modification function."""
 
 import re
-from typing import Optional, Pattern
+from typing import Optional
 
 from titlecase import titlecase
 
@@ -33,7 +33,7 @@ __version__ = "1.0"
 
 class TitlecasePlugin(BeetsPlugin):
     preserve: dict[str, str] = {}
-    preserve_phrases: dict[str, Pattern[str]] = {}
+    preserve_phrases: dict[str, re.Pattern[str]] = {}
     force_lowercase: bool = True
     fields_to_process: set[str] = set()
     the_artist: bool = True
@@ -158,10 +158,8 @@ class TitlecasePlugin(BeetsPlugin):
                     ]
                     setattr(item, field, cased_list)
                     self._log.info(
-                        (
-                            f"{field}: {', '.join(init_field)} -> "
-                            f"{', '.join(cased_list)}"
-                        )
+                        f"{field}: {', '.join(init_field)} ->",
+                        f"{', '.join(cased_list)}",
                     )
                 elif isinstance(init_field, str):
                     cased: str = self.titlecase(init_field, field)
