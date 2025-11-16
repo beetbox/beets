@@ -4,3 +4,4 @@
 # Specific ownerships:
 /beets/metadata_plugins.py @semohr
 /beetsplug/titlecase.py @henry-oberholtzer
+/beetsplug/mbpseudo.py @asardaes

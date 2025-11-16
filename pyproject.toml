@@ -17,10 +17,10 @@ classifiers = [
     "Environment :: Web Environment",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: Implementation :: CPython",
 ]
 packages = [
@@ -41,15 +41,18 @@ Changelog = "https://github.com/beetbox/beets/blob/master/docs/changelog.rst"
 "Bug Tracker" = "https://github.com/beetbox/beets/issues"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<4"
+python = ">=3.10,<4"
 
 colorama = { version = "*", markers = "sys_platform == 'win32'" }
-confuse = ">=1.5.0"
+confuse = ">=2.1.0"
 jellyfish = "*"
 lap = ">=0.5.12"
 mediafile = ">=0.12.0"
 musicbrainzngs = ">=0.4"
-numpy = ">=1.24.4"
+numpy = [
+    { python = "<3.13", version = ">=2.0.2" },
+    { python = ">=3.13", version = ">=2.3.4" },
+]
 platformdirs = ">=3.5.0"
 pyyaml = "*"
 typing_extensions = "*"
@@ -60,7 +63,15 @@ dbus-python = { version = "*", optional = true }
 flask = { version = "*", optional = true }
 flask-cors = { version = "*", optional = true }
 langdetect = { version = "*", optional = true }
-librosa = { version = "^0.10.2.post1", optional = true }
+librosa = { version = ">=0.11", optional = true }
+scipy = [ # for librosa
+    { python = "<3.13", version = ">=1.13.1", optional = true },
+    { python = ">=3.13", version = ">=1.16.1", optional = true },
+]
+numba = [ # for librosa
+    { python = "<3.13", version = ">=0.60", optional = true },
+    { python = ">=3.13", version = ">=0.62.1", optional = true },
+]
 mutagen = { version = ">=1.33", optional = true }
 Pillow = { version = "*", optional = true }
 py7zr = { version = "*", optional = true }
@@ -219,7 +230,7 @@ cmd = "ruff format"
 
 [tool.poe.tasks.format-docs]
 help = "Format the documentation"
-cmd = "docstrfmt"
+cmd = "docstrfmt docs *.rst"
 
 [tool.poe.tasks.lint]
 help = "Check the code for linting issues. Accepts ruff options."
@@ -277,7 +288,6 @@ extend-exclude = [
     "docs/api/**/*",
     "README_kr.rst",
 ]
-files = ["docs", "*.rst"]
 
 [tool.ruff]
 target-version = "py39"
@@ -296,9 +306,7 @@ select = [
     "N", # pep8-naming
     "PT", # flake8-pytest-style
     # "RUF", # ruff
-    # "UP", # pyupgrade
-    "UP031", # do not use percent formatting
-    "UP032", # use f-string instead of format call
+    "UP", # pyupgrade
     "TCH", # flake8-type-checking
     "W", # pycodestyle
 ]

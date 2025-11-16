@@ -23,8 +23,8 @@ import errno
 import optparse
 import os.path
 import re
+import shutil
 import sqlite3
-import struct
 import sys
 import textwrap
 import traceback
@@ -32,7 +32,7 @@ import warnings
 from difflib import SequenceMatcher
 from functools import cache
 from itertools import chain
-from typing import Any, Callable, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import confuse
 
@@ -41,6 +41,9 @@ from beets.dbcore import db
 from beets.dbcore import query as db_query
 from beets.util import as_string
 from beets.util.functemplate import template
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
 if sys.platform == "win32":
@@ -699,27 +702,11 @@ def get_replacements():
     return replacements
 
 
-def term_width():
+@cache
+def term_width() -> int:
     """Get the width (columns) of the terminal."""
-    fallback = config["ui"]["terminal_width"].get(int)
-
-    # The fcntl and termios modules are not available on non-Unix
-    # platforms, so we fall back to a constant.
-    try:
-        import fcntl
-        import termios
-    except ImportError:
-        return fallback
-
-    try:
-        buf = fcntl.ioctl(0, termios.TIOCGWINSZ, " " * 4)
-    except OSError:
-        return fallback
-    try:
-        height, width = struct.unpack("hh", buf)
-    except struct.error:
-        return fallback
-    return width
+    columns, _ = shutil.get_terminal_size(fallback=(0, 0))
+    return columns if columns else config["ui"]["terminal_width"].get(int)
 
 
 def split_into_lines(string, width_tuple):
@@ -1127,74 +1114,7 @@ def show_model_changes(
     return bool(changes)
 
 
-def show_path_changes(path_changes):
-    """Given a list of tuples (source, destination) that indicate the
-    path changes, log the changes as INFO-level output to the beets log.
-    The output is guaranteed to be unicode.
-
-    Every pair is shown on a single line if the terminal width permits it,
-    else it is split over two lines. E.g.,
-
-    Source -> Destination
-
-    vs.
-
-    Source
-      -> Destination
-    """
-    sources, destinations = zip(*path_changes)
-
-    # Ensure unicode output
-    sources = list(map(util.displayable_path, sources))
-    destinations = list(map(util.displayable_path, destinations))
-
-    # Calculate widths for terminal split
-    col_width = (term_width() - len(" -> ")) // 2
-    max_width = len(max(sources + destinations, key=len))
-
-    if max_width > col_width:
-        # Print every change over two lines
-        for source, dest in zip(sources, destinations):
-            color_source, color_dest = colordiff(source, dest)
-            print_(f"{color_source} \n  -> {color_dest}")
-    else:
-        # Print every change on a single line, and add a header
-        title_pad = max_width - len("Source ") + len(" -> ")
-
-        print_(f"Source {' ' * title_pad} Destination")
-        for source, dest in zip(sources, destinations):
-            pad = max_width - len(source)
-            color_source, color_dest = colordiff(source, dest)
-            print_(f"{color_source} {' ' * pad} -> {color_dest}")
-
-
 # Helper functions for option parsing.
-
-
-def _store_dict(option, opt_str, value, parser):
-    """Custom action callback to parse options which have ``key=value``
-    pairs as values. All such pairs passed for this option are
-    aggregated into a dictionary.
-    """
-    dest = option.dest
-    option_values = getattr(parser.values, dest, None)
-
-    if option_values is None:
-        # This is the first supplied ``key=value`` pair of option.
-        # Initialize empty dictionary and get a reference to it.
-        setattr(parser.values, dest, {})
-        option_values = getattr(parser.values, dest)
-
-    try:
-        key, value = value.split("=", 1)
-        if not (key and value):
-            raise ValueError
-    except ValueError:
-        raise UserError(
-            f"supplied argument `{value}' is not of the form `key=value'"
-        )
-
-    option_values[key] = value
 
 
 class CommonOptionsParser(optparse.OptionParser):
@@ -1682,9 +1602,9 @@ def _raw_main(args: list[str], lib=None) -> None:
         and subargs[0] == "config"
         and ("-e" in subargs or "--edit" in subargs)
     ):
-        from beets.ui.commands import config_edit
+        from beets.ui.commands.config import config_edit
 
-        return config_edit()
+        return config_edit(options)
 
     test_lib = bool(lib)
     subcommands, lib = _setup(options, lib)

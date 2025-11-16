@@ -21,7 +21,7 @@ from collections import Counter
 from contextlib import suppress
 from functools import cached_property
 from itertools import product
-from typing import TYPE_CHECKING, Any, Iterable, Sequence
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urljoin
 
 import musicbrainzngs
@@ -34,6 +34,7 @@ from beets.metadata_plugins import MetadataSourcePlugin
 from beets.util.id_extractors import extract_release_id
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
     from typing import Literal
 
     from beets.library import Item
@@ -89,6 +90,7 @@ RELEASE_INCLUDES = list(
         "isrcs",
         "url-rels",
         "release-rels",
+        "genres",
         "tags",
     }
     & set(musicbrainzngs.VALID_INCLUDES["release"])
@@ -118,13 +120,15 @@ BROWSE_CHUNKSIZE = 100
 BROWSE_MAXTRACKS = 500
 
 
-def _preferred_alias(aliases: list[JSONDict]):
-    """Given an list of alias structures for an artist credit, select
-    and return the user's preferred alias alias or None if no matching
+def _preferred_alias(
+    aliases: list[JSONDict], languages: list[str] | None = None
+) -> JSONDict | None:
+    """Given a list of alias structures for an artist credit, select
+    and return the user's preferred alias or None if no matching
     alias is found.
     """
     if not aliases:
-        return
+        return None
 
     # Only consider aliases that have locales set.
     valid_aliases = [a for a in aliases if "locale" in a]
@@ -134,7 +138,10 @@ def _preferred_alias(aliases: list[JSONDict]):
     ignored_alias_types = [a.lower() for a in ignored_alias_types]
 
     # Search configured locales in order.
-    for locale in config["import"]["languages"].as_str_seq():
+    if languages is None:
+        languages = config["import"]["languages"].as_str_seq()
+
+    for locale in languages:
         # Find matching primary aliases for this locale that are not
         # being ignored
         matches = []
@@ -151,6 +158,8 @@ def _preferred_alias(aliases: list[JSONDict]):
             continue
 
         return matches[0]
+
+    return None
 
 
 def _multi_artist_credit(
@@ -323,7 +332,7 @@ def _find_actual_release_from_pseudo_release(
 
 def _merge_pseudo_and_actual_album(
     pseudo: beets.autotag.hooks.AlbumInfo, actual: beets.autotag.hooks.AlbumInfo
-) -> beets.autotag.hooks.AlbumInfo | None:
+) -> beets.autotag.hooks.AlbumInfo:
     """
     Merges a pseudo release with its actual release.
 
@@ -362,6 +371,10 @@ def _merge_pseudo_and_actual_album(
 
 
 class MusicBrainzPlugin(MetadataSourcePlugin):
+    @cached_property
+    def genres_field(self) -> str:
+        return f"{self.config['genres_tag'].as_choice(['genre', 'tag'])}-list"
+
     def __init__(self):
         """Set up the python-musicbrainz-ngs module according to settings
         from the beets configuration. This should be called at startup.
@@ -374,6 +387,7 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
                 "ratelimit": 1,
                 "ratelimit_interval": 1,
                 "genres": False,
+                "genres_tag": "genre",
                 "external_ids": {
                     "discogs": False,
                     "bandcamp": False,
@@ -715,8 +729,8 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
 
         if self.config["genres"]:
             sources = [
-                release["release-group"].get("tag-list", []),
-                release.get("tag-list", []),
+                release["release-group"].get(self.genres_field, []),
+                release.get(self.genres_field, []),
             ]
             genres: Counter[str] = Counter()
             for source in sources:
