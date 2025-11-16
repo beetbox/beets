@@ -68,6 +68,7 @@ class Info(AttrDict[Any]):
         data_source: str | None = None,
         data_url: str | None = None,
         genre: str | None = None,
+        genres: list[str] | None = None,
         media: str | None = None,
         **kwargs,
     ) -> None:
@@ -83,6 +84,7 @@ class Info(AttrDict[Any]):
         self.data_source = data_source
         self.data_url = data_url
         self.genre = genre
+        self.genres = genres or []
         self.media = media
         self.update(kwargs)
 

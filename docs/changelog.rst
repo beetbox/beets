@@ -12,6 +12,24 @@ been dropped.
 
 New features:
 
+- Add native support for multiple genres per album/track. The new ``genres``
+  field stores genres as a list and is written to files as multiple individual
+  genre tags (e.g., separate GENRE tags for FLAC/MP3). A new
+  ``multi_value_genres`` config option (default: yes) controls this behavior.
+  When enabled, provides better interoperability with other music taggers. When
+  disabled, preserves the old single-genre behavior. The ``genre_separator``
+  config option (default: ``", "``) allows customizing the separator used when
+  joining multiple genres into a single string. The default matches the
+  :doc:`plugins/lastgenre` plugin's separator for seamless migration. The
+  :doc:`plugins/musicbrainz`, :doc:`plugins/beatport`, and
+  :doc:`plugins/lastgenre` plugins have been updated to populate the ``genres``
+  field.
+
+  **Migration note**: Most users don't need to do anything. If you previously
+  used a custom ``separator`` in the lastgenre plugin (not the default ``",
+  "``), set ``genre_separator`` to match your custom value. Alternatively, set
+  ``multi_value_genres: no`` to preserve the old behavior entirely.
+
 - :doc:`plugins/ftintitle`: Added argument for custom feat. words in ftintitle.
 - :doc:`plugins/musicbrainz`: Allow selecting tags or genres to populate the
   genres tag.

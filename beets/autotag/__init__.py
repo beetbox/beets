@@ -172,7 +172,47 @@ def correct_list_fields(m: LibModel) -> None:
         elif list_val:
             setattr(m, single_field, list_val[0])
 
+    def sync_genre_fields() -> None:
+        """Synchronize genre and genres fields with proper join/split logic.
+
+        The genre field stores a joined string of all genres (for backward
+        compatibility with users who store multiple genres as delimited strings),
+        while genres is the native list representation.
+
+        When multi_value_genres config is disabled, only the first genre is used.
+        """
+        genre_val = getattr(m, "genre")
+        genres_val = getattr(m, "genres")
+
+        # Handle None values - treat as empty
+        if genres_val is None:
+            genres_val = []
+        if genre_val is None:
+            genre_val = ""
+
+        if config["multi_value_genres"]:
+            # New behavior: sync all genres using configurable separator
+            separator = config["genre_separator"].get(str)
+            if genres_val:
+                # If genres list exists, join it into genre string
+                setattr(m, "genre", separator.join(genres_val))
+            elif genre_val:
+                # If only genre string exists, split it into genres list
+                # and clean up the genre string
+                cleaned_genres = [
+                    g.strip() for g in genre_val.split(separator) if g.strip()
+                ]
+                setattr(m, "genres", cleaned_genres)
+                setattr(m, "genre", separator.join(cleaned_genres))
+        else:
+            # Old behavior: only sync first value (like albumtype)
+            if genre_val:
+                setattr(m, "genres", unique_list([genre_val, *genres_val]))
+            elif genres_val:
+                setattr(m, "genre", genres_val[0])
+
     ensure_first_value("albumtype", "albumtypes")
+    sync_genre_fields()
 
     if hasattr(m, "mb_artistids"):
         ensure_first_value("mb_artistid", "mb_artistids")

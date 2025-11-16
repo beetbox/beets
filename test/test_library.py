@@ -688,13 +688,13 @@ class DestinationFunctionTest(BeetsTestCase, PathFormattingMixin):
         self._assert_dest(b"/base/not_played")
 
     def test_first(self):
-        self.i.genres = "Pop; Rock; Classical Crossover"
-        self._setf("%first{$genres}")
+        self.i.genre = "Pop; Rock; Classical Crossover"
+        self._setf("%first{$genre}")
         self._assert_dest(b"/base/Pop")
 
     def test_first_skip(self):
-        self.i.genres = "Pop; Rock; Classical Crossover"
-        self._setf("%first{$genres,1,2}")
+        self.i.genre = "Pop; Rock; Classical Crossover"
+        self._setf("%first{$genre,1,2}")
         self._assert_dest(b"/base/Classical Crossover")
 
     def test_first_different_sep(self):

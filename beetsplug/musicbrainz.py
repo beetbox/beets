@@ -736,10 +736,19 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
             for source in sources:
                 for genreitem in source:
                     genres[genreitem["name"]] += int(genreitem["count"])
-            info.genre = "; ".join(
+            genre_list = [
                 genre
                 for genre, _count in sorted(genres.items(), key=lambda g: -g[1])
-            )
+            ]
+
+            if config["multi_value_genres"]:
+                # New behavior: populate genres list and joined genre string
+                separator = config["genre_separator"].get(str)
+                info.genres = genre_list
+                info.genre = separator.join(genre_list) if genre_list else None
+            else:
+                # Old behavior: only populate single genre field with first value
+                info.genre = genre_list[0] if genre_list else None
 
         # We might find links to external sources (Discogs, Bandcamp, ...)
         external_ids = self.config["external_ids"].get()

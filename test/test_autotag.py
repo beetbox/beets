@@ -475,3 +475,116 @@ def test_correct_list_fields(
 
     single_val, list_val = item[single_field], item[list_field]
     assert (not single_val and not list_val) or single_val == list_val[0]
+
+
+# Tests for multi-value genres functionality
+class TestGenreSync:
+    """Test the genre/genres field synchronization."""
+
+    def test_sync_genres_enabled_list_to_string(self):
+        """When multi_value_genres is enabled, genres list joins into genre string."""
+        config["multi_value_genres"] = True
+
+        item = Item(genres=["Rock", "Alternative", "Indie"])
+        correct_list_fields(item)
+
+        assert item.genre == "Rock, Alternative, Indie"
+        assert item.genres == ["Rock", "Alternative", "Indie"]
+
+    def test_sync_genres_enabled_string_to_list(self):
+        """When multi_value_genres is enabled, genre string splits into genres list."""
+        config["multi_value_genres"] = True
+
+        item = Item(genre="Rock, Alternative, Indie")
+        correct_list_fields(item)
+
+        assert item.genre == "Rock, Alternative, Indie"
+        assert item.genres == ["Rock", "Alternative", "Indie"]
+
+    def test_sync_genres_disabled_only_first(self):
+        """When multi_value_genres is disabled, only first genre is used."""
+        config["multi_value_genres"] = False
+
+        item = Item(genres=["Rock", "Alternative", "Indie"])
+        correct_list_fields(item)
+
+        assert item.genre == "Rock"
+        assert item.genres == ["Rock", "Alternative", "Indie"]
+
+    def test_sync_genres_disabled_string_becomes_list(self):
+        """When multi_value_genres is disabled, genre string becomes first in list."""
+        config["multi_value_genres"] = False
+
+        item = Item(genre="Rock")
+        correct_list_fields(item)
+
+        assert item.genre == "Rock"
+        assert item.genres == ["Rock"]
+
+    def test_sync_genres_enabled_empty_genre(self):
+        """Empty genre field with multi_value_genres enabled."""
+        config["multi_value_genres"] = True
+
+        item = Item(genre="")
+        correct_list_fields(item)
+
+        assert item.genre == ""
+        assert item.genres == []
+
+    def test_sync_genres_enabled_empty_genres(self):
+        """Empty genres list with multi_value_genres enabled."""
+        config["multi_value_genres"] = True
+
+        item = Item(genres=[])
+        correct_list_fields(item)
+
+        assert item.genre == ""
+        assert item.genres == []
+
+    def test_sync_genres_enabled_with_whitespace(self):
+        """Genre string with extra whitespace gets cleaned up."""
+        config["multi_value_genres"] = True
+
+        item = Item(genre="Rock,  Alternative  ,   Indie")
+        correct_list_fields(item)
+
+        assert item.genres == ["Rock", "Alternative", "Indie"]
+        assert item.genre == "Rock, Alternative, Indie"
+
+    def test_sync_genres_priority_list_over_string(self):
+        """When both genre and genres exist, genres list takes priority."""
+        config["multi_value_genres"] = True
+
+        item = Item(genre="Jazz", genres=["Rock", "Alternative"])
+        correct_list_fields(item)
+
+        # genres list should take priority and update genre string
+        assert item.genres == ["Rock", "Alternative"]
+        assert item.genre == "Rock, Alternative"
+
+    def test_sync_genres_none_values(self):
+        """Handle None values in genre/genres fields without errors."""
+        config["multi_value_genres"] = True
+
+        # Test with None genre
+        item = Item(genre=None, genres=["Rock"])
+        correct_list_fields(item)
+        assert item.genres == ["Rock"]
+        assert item.genre == "Rock"
+
+        # Test with None genres
+        item = Item(genre="Jazz", genres=None)
+        correct_list_fields(item)
+        assert item.genre == "Jazz"
+        assert item.genres == ["Jazz"]
+
+    def test_sync_genres_disabled_empty_genres(self):
+        """Handle disabled config with empty genres list."""
+        config["multi_value_genres"] = False
+
+        item = Item(genres=[])
+        correct_list_fields(item)
+
+        # Should handle empty list without errors
+        assert item.genres == []
+        assert item.genre == ""
