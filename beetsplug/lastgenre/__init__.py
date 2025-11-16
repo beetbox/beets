@@ -422,6 +422,19 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             elif obj.albumartist != config["va_name"].as_str():
                 new_genres = self.fetch_artist_genre(obj.albumartist)
                 stage_label = "album artist"
+                if not new_genres:
+                    self._tunelog(
+                        'No album artist genre found for "{}", '
+                        "trying multi-valued field...",
+                        obj.albumartist,
+                    )
+                    for albumartist in obj.albumartists:
+                        self._tunelog(
+                            'Fetching artist genre for "{}"', albumartist
+                        )
+                        new_genres += self.fetch_artist_genre(albumartist)
+                    if new_genres:
+                        stage_label = "multi-valued album artist"
             else:
                 # For "Various Artists", pick the most popular track genre.
                 item_genres = []
