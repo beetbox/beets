@@ -154,10 +154,10 @@ class TitlecasePlugin(BeetsPlugin):
                     init_field[0], str
                 ):
                     cased_list: list[str] = [
-                        self.titlecase(i) for i in init_field
+                        self.titlecase(i, field) for i in init_field
                     ]
                     setattr(item, field, cased_list)
-                    self._log.debug(
+                    self._log.info(
                         (
                             f"{field}: {', '.join(init_field)} -> "
                             f"{', '.join(cased_list)}"
@@ -166,7 +166,7 @@ class TitlecasePlugin(BeetsPlugin):
                 elif isinstance(init_field, str):
                     cased: str = self.titlecase(init_field, field)
                     setattr(item, field, cased)
-                    self._log.debug(f"{field}: {init_field} -> {cased}")
+                    self._log.info(f"{field}: {init_field} -> {cased}")
                 else:
                     self._log.debug(f"{field}: no string present")
             else:
@@ -185,7 +185,9 @@ class TitlecasePlugin(BeetsPlugin):
             callback=self.__preserved__,
         )
         if self.the_artist and "artist" in field:
-            titlecased = titlecased.replace("the", "The")
+            titlecased = titlecased.replace("the ", "The ").replace(
+                " the", " The"
+            )
         # More complicated phrase replacements.
         for phrase, regexp in self.preserve_phrases.items():
             titlecased = regexp.sub(phrase, titlecased)

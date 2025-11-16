@@ -101,18 +101,21 @@ titlecase_test_cases = [
     },
     {
         "config": {
+            "the_artist": True,
             "preserve": [""],
-            "fields": ["artists", "discogs_artistid"],
+            "fields": ["artist", "artists", "discogs_artistid"],
             "force_lowercase": False,
             "small_first_last": True,
         },
         "item": Item(
-            artists=["artist_one", "artist_two"],
+            artist="pinkpantheress",
+            artists=["pinkpantheress", "artist_two"],
             artists_ids=["aBcDeF32", "aBcDeF12"],
             discogs_artistid=21,
         ),
         "expected": Item(
-            artists=["Artist_One", "Artist_Two"],
+            artist="Pinkpantheress",
+            artists=["Pinkpantheress", "Artist_Two"],
             artists_ids=["aBcDeF32", "aBcDeF12"],
             discogs_artistid=21,
         ),
