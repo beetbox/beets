@@ -300,24 +300,20 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         self._tunelog("last.fm (unfiltered) {} tags: {}", entity, genre)
         return genre
 
-    def fetch_album_genre(self, obj):
-        """Return raw album genres from Last.fm for this Item or Album."""
+    def fetch_album_genre(self, albumartist, albumtitle):
+        """Return genres from Last.fm for the album by albumartist."""
         return self._last_lookup(
-            "album", LASTFM.get_album, obj.albumartist, obj.album
+            "album", LASTFM.get_album, albumartist, albumtitle
         )
 
-    def fetch_album_artist_genre(self, obj):
-        """Return raw album artist genres from Last.fm for this Item or Album."""
-        return self._last_lookup("artist", LASTFM.get_artist, obj.albumartist)
+    def fetch_artist_genre(self, artist):
+        """Return genres from Last.fm for the artist."""
+        return self._last_lookup("artist", LASTFM.get_artist, artist)
 
-    def fetch_artist_genre(self, item):
-        """Returns raw track artist genres from Last.fm for this Item."""
-        return self._last_lookup("artist", LASTFM.get_artist, item.artist)
-
-    def fetch_track_genre(self, obj):
-        """Returns raw track genres from Last.fm for this Item."""
+    def fetch_track_genre(self, trackartist, tracktitle):
+        """Return genres from Last.fm for the track by artist."""
         return self._last_lookup(
-            "track", LASTFM.get_track, obj.artist, obj.title
+            "track", LASTFM.get_track, trackartist, tracktitle
         )
 
     # Main processing: _get_genre() and helpers.
@@ -405,14 +401,14 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # Run through stages: track, album, artist,
         # album artist, or most popular track genre.
         if isinstance(obj, library.Item) and "track" in self.sources:
-            if new_genres := self.fetch_track_genre(obj):
+            if new_genres := self.fetch_track_genre(obj.artist, obj.title):
                 if result := _try_resolve_stage(
                     "track", keep_genres, new_genres
                 ):
                     return result
 
         if "album" in self.sources:
-            if new_genres := self.fetch_album_genre(obj):
+            if new_genres := self.fetch_album_genre(obj.albumartist, obj.album):
                 if result := _try_resolve_stage(
                     "album", keep_genres, new_genres
                 ):
@@ -421,10 +417,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if "artist" in self.sources:
             new_genres = []
             if isinstance(obj, library.Item):
-                new_genres = self.fetch_artist_genre(obj)
+                new_genres = self.fetch_artist_genre(obj.artist)
                 stage_label = "artist"
             elif obj.albumartist != config["va_name"].as_str():
-                new_genres = self.fetch_album_artist_genre(obj)
+                new_genres = self.fetch_artist_genre(obj.albumartist)
                 stage_label = "album artist"
             else:
                 # For "Various Artists", pick the most popular track genre.
@@ -432,9 +428,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 for item in obj.items():
                     item_genre = None
                     if "track" in self.sources:
-                        item_genre = self.fetch_track_genre(item)
+                        item_genre = self.fetch_track_genre(
+                            item.artist, item.title
+                        )
                     if not item_genre:
-                        item_genre = self.fetch_artist_genre(item)
+                        item_genre = self.fetch_artist_genre(item.artist)
                     if item_genre:
                         item_genres += item_genre
                 if item_genres:
