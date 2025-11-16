@@ -301,6 +301,21 @@ class DummyImportTask:
             ("Alice", "Song 1 ft. Bob <Version>"),
             id="title-with-angle-brackets-keyword",
         ),
+        # multi-word keyword
+        pytest.param(
+            {"format": "ft. {}", "bracket_keywords": ["club mix"]},
+            ("ftintitle",),
+            ("Alice ft. Bob", "Song 1 (Club Mix)", "Alice"),
+            ("Alice", "Song 1 ft. Bob (Club Mix)"),
+            id="multi-word-keyword-positive-match",
+        ),
+        pytest.param(
+            {"format": "ft. {}", "bracket_keywords": ["club mix"]},
+            ("ftintitle",),
+            ("Alice ft. Bob", "Song 1 (Club Remix)", "Alice"),
+            ("Alice", "Song 1 (Club Remix) ft. Bob"),
+            id="multi-word-keyword-negative-no-match",
+        ),
     ],
 )
 def test_ftintitle_functional(
@@ -447,6 +462,9 @@ def test_find_bracket_position(given: str, expected: int | None) -> None:
         ("Song (Remix)", [], 5),
         ("Song", [], None),
         ("Song (", [], None),
+        # Multi-word keyword tests
+        ("Song (Club Mix)", ["club mix"], 5),  # Positive: matches multi-word
+        ("Song (Club Remix)", ["club mix"], None),  # Negative: no match
     ],
 )
 def test_find_bracket_position_custom_keywords(

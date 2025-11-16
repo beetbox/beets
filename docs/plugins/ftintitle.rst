@@ -41,7 +41,7 @@ file. The available options are:
   ::
 
       ["abridged", "acapella", "club", "demo", "edit", "edition", "extended",
-       "instrumental", "live", "mix", "radio", "release", "remastered"
+       "instrumental", "live", "mix", "radio", "release", "remaster",
        "remastered", "remix", "rmx", "unabridged", "unreleased",
        "version", "vip"]
 
