@@ -22,7 +22,7 @@ from typing import Optional
 from titlecase import titlecase
 
 from beets import ui
-from beets.autotag.hooks import AlbumInfo, Info, TrackInfo
+from beets.autotag.hooks import AlbumInfo, Info
 from beets.importer import ImportSession, ImportTask
 from beets.library import Item
 from beets.plugins import BeetsPlugin
@@ -37,6 +37,7 @@ class TitlecasePlugin(BeetsPlugin):
     force_lowercase: bool = True
     fields_to_process: set[str] = set()
     the_artist: bool = True
+    the_artist_regexp = re.compile(r"\bthe\b")
 
     def __init__(self) -> None:
         super().__init__()
@@ -77,7 +78,7 @@ class TitlecasePlugin(BeetsPlugin):
             help="Apply titlecasing to metadata specified in config.",
         )
 
-        self.__get_config_file__()
+        self._get_config()
         if self.config["auto"]:
             if self.config["after_choice"].get(bool):
                 self.import_stages = [self.imported]
@@ -89,16 +90,16 @@ class TitlecasePlugin(BeetsPlugin):
                     "albuminfo_received", self.received_info_handler
                 )
 
-    def __get_config_file__(self):
+    def _get_config(self):
         self.force_lowercase = self.config["force_lowercase"].get(bool)
-        self.__preserve_words__(self.config["preserve"].as_str_seq())
         self.replace = self.config["replace"].as_pairs()
         self.the_artist = self.config["the_artist"].get(bool)
-        self.__init_fields_to_process__(
+        self._preserve_words(self.config["preserve"].as_str_seq())
+        self._initialize_fields(
             self.config["fields"].as_str_seq(),
         )
 
-    def __init_fields_to_process__(self, fields: list[str]) -> None:
+    def _initialize_fields(self, fields: list[str]) -> None:
         """Creates the set for fields to process in tagging."""
         if fields:
             self.fields_to_process = set(fields)
@@ -108,22 +109,25 @@ class TitlecasePlugin(BeetsPlugin):
         else:
             self._log.debug("no fields specified!")
 
-    def __preserve_words__(self, preserve: list[str]) -> None:
+    def _preserve_words(self, preserve: list[str]) -> None:
         for word in preserve:
             if " " in word:
                 self.preserve_phrases[word] = re.compile(
-                    re.escape(word), re.IGNORECASE
+                    rf"\b{re.escape(word)}\b", re.IGNORECASE
                 )
             else:
                 self.preserve[word.upper()] = word
 
-    def __preserved__(self, word, **kwargs) -> Optional[str]:
+    def _preserved(self, word, **kwargs) -> Optional[str]:
         """Callback function for words to preserve case of."""
         if preserved_word := self.preserve.get(word.upper(), ""):
             return preserved_word
         return None
 
-    def received_info_handler(self, info: AlbumInfo | TrackInfo):
+    def received_info_handler(self, info: Info):
+        """Calls titlecase fields for AlbumInfo or TrackInfo
+        Processes the tracks field for AlbumInfo
+        """
         self.titlecase_fields(info)
         if isinstance(info, AlbumInfo):
             for track in info.tracks:
@@ -133,7 +137,7 @@ class TitlecasePlugin(BeetsPlugin):
         def func(lib, opts, args):
             write = ui.should_write()
             for item in lib.items(args):
-                self._log.debug(f"titlecasing {item.title}:")
+                self._log.info(f"titlecasing {item.title}:")
                 self.titlecase_fields(item)
                 item.store()
                 if write:
@@ -172,24 +176,23 @@ class TitlecasePlugin(BeetsPlugin):
 
     def titlecase(self, text: str, field: str = "") -> str:
         """Titlecase the given text."""
-        # Any necessary replacements go first.
+        # Any necessary replacements go first, mainly punctuation.
         titlecased = text.lower() if self.force_lowercase else text
         for pair in self.replace:
             target, replacement = pair
             titlecased = titlecased.replace(target, replacement)
+        # General titlecase operation
         titlecased = titlecase(
             titlecased,
             small_first_last=self.config["small_first_last"],
-            callback=self.__preserved__,
+            callback=self._preserved,
         )
+        # Apply "The Artist" feature
         if self.the_artist and "artist" in field:
-            titlecased = titlecased.replace("the ", "The ").replace(
-                " the", " The"
-            )
+            titlecased = self.the_artist_regexp.sub("The", titlecased)
         # More complicated phrase replacements.
         for phrase, regexp in self.preserve_phrases.items():
             titlecased = regexp.sub(phrase, titlecased)
-
         return titlecased
 
     def imported(self, session: ImportSession, task: ImportTask) -> None:

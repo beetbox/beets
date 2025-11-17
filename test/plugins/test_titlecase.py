@@ -18,7 +18,7 @@ import pytest
 
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.library import Item
-from beets.test.helper import PluginTestCase
+from beets.test.helper import PluginMixin
 from beetsplug.titlecase import TitlecasePlugin
 
 
@@ -42,16 +42,52 @@ def test_basic_titlecase(given, expected):
     assert TitlecasePlugin().titlecase(given) == expected
 
 
-titlecase_test_cases = [
-    {
-        "config": {
+to_preserve = [
+    "easyFun",
+    "A.D.O.R",
+    "D'Angelo",
+    "ABBA",
+    "LaTeX",
+    "O.R.B",
+    "PinkPantheress",
+]
+
+
+@pytest.mark.parametrize("name", to_preserve)
+def test_preserved_words(name):
+    """Test using given strings to preserve case"""
+    t = TitlecasePlugin()
+    t._preserve_words(to_preserve)
+    assert t.titlecase(name.lower()) == name
+    assert t.titlecase(name.upper()) == name
+
+
+def phrases_with_preserved_strings(phrases: list[str]) -> list[tuple[str, str]]:
+    def template(x):
+        return f"Example Phrase: Or {x} in Context!"
+
+    return [(template(p.lower()), template(p)) for p in phrases]
+
+
+@pytest.mark.parametrize(
+    "given, expected", phrases_with_preserved_strings(to_preserve)
+)
+def test_preserved_phrases(given, expected):
+    t = TitlecasePlugin()
+    t._preserve_words(to_preserve)
+    assert t.titlecase(given.lower()) == expected
+
+
+item_test_cases = [
+    (
+        {
             "preserve": ["D'Angelo"],
             "replace": [("’", "'")],
             "fields": ["artist", "albumartist", "mb_albumid"],
             "force_lowercase": False,
             "small_first_last": True,
         },
-        "item": Item(
+        Item(
             artist="d’angelo and the vanguard",
             mb_albumid="ab140e13-7b36-402a-a528-b69e3dee38a8",
             albumartist="d’angelo",
@@ -59,7 +95,7 @@ titlecase_test_cases = [
             album="the black messiah",
             title="Till It's Done (Tutu)",
         ),
-        "expected": Item(
+        Item(
             artist="D'Angelo and The Vanguard",
             mb_albumid="Ab140e13-7b36-402a-A528-B69e3dee38a8",
             albumartist="D'Angelo",
@@ -67,10 +103,9 @@ titlecase_test_cases = [
             album="the black messiah",
             title="Till It's Done (Tutu)",
         ),
-    },
-    {
-        "config": {
-            "preserve": [""],
+    ),
+    (
+        {
             "fields": [
                 "artist",
                 "albumartist",
@@ -82,7 +117,7 @@ titlecase_test_cases = [
             "force_lowercase": True,
             "small_first_last": True,
         },
-        "item": Item(
+        Item(
             artist="OPHIDIAN",
             albumartist="ophiDIAN",
             format="CD",
@@ -90,7 +125,7 @@ titlecase_test_cases = [
             album="BLACKBOX",
             title="KhAmElEoN",
         ),
-        "expected": Item(
+        Item(
             artist="Ophidian",
             albumartist="Ophidian",
             format="CD",
@@ -98,30 +133,30 @@ titlecase_test_cases = [
             album="Blackbox",
             title="Khameleon",
         ),
-    },
-    {
-        "config": {
+    ),
+    (
+        {
             "the_artist": True,
-            "preserve": [""],
+            "preserve": ["PANTHER"],
             "fields": ["artist", "artists", "discogs_artistid"],
             "force_lowercase": False,
             "small_first_last": True,
         },
-        "item": Item(
+        Item(
             artist="pinkpantheress",
             artists=["pinkpantheress", "artist_two"],
             artists_ids=["aBcDeF32", "aBcDeF12"],
             discogs_artistid=21,
         ),
-        "expected": Item(
+        Item(
             artist="Pinkpantheress",
             artists=["Pinkpantheress", "Artist_Two"],
             artists_ids=["aBcDeF32", "aBcDeF12"],
             discogs_artistid=21,
         ),
-    },
-    {
-        "config": {
+    ),
+    (
+        {
             "the_artist": True,
             "preserve": ["A Day in the Park"],
             "fields": [
@@ -131,7 +166,7 @@ titlecase_test_cases = [
                 "artists_ids",
             ],
         },
-        "item": Item(
+        Item(
             artists_sort=["b-52s, the"],
             artist="a day in the park",
             artists=[
@@ -141,18 +176,19 @@ titlecase_test_cases = [
             ],
             artists_ids=["aBcDeF32", "aBcDeF12"],
         ),
-        "expected": Item(
+        Item(
             artists_sort=["B-52s, The"],
             artist="A Day in the Park",
             artists=[
                 "Vinylgroover & The Red Head",
-                "A Day in The ParkAmyl and The Sniffers",
+                "A Day in The Park",
+                "Amyl and The Sniffers",
             ],
             artists_ids=["ABcDeF32", "ABcDeF12"],
         ),
-    },
-    {
-        "config": {
+    ),
+    (
+        {
             "the_artist": False,
             "preserve": ["A Day in the Park"],
             "fields": [
@@ -162,7 +198,7 @@ titlecase_test_cases = [
                 "artists_ids",
             ],
         },
-        "item": Item(
+        Item(
             artists_sort=["b-52s, the"],
             artist="a day in the park",
             artists=[
@@ -172,20 +208,62 @@ titlecase_test_cases = [
             ],
             artists_ids=["aBcDeF32", "aBcDeF12"],
         ),
-        "expected": Item(
+        Item(
             artists_sort=["B-52s, The"],
             artist="A Day in the Park",
             artists=[
                 "Vinylgroover & the Red Head",
-                "A Day in the ParkAmyl and the Sniffers",
+                "A Day in the Park",
+                "Amyl and the Sniffers",
             ],
             artists_ids=["ABcDeF32", "ABcDeF12"],
         ),
-    },
+    ),
+]
+
+info_test_cases = [
+    (
+        TrackInfo(
+            album="test album",
+            artist_credit="test artist credit",
+            artists=["artist one", "artist two"],
+        ),
+        TrackInfo(
+            album="Test Album",
+            artist_credit="Test Artist Credit",
+            artists=["Artist One", "Artist Two"],
+        ),
+    ),
+    (
+        AlbumInfo(
+            tracks=[
+                TrackInfo(
+                    album="test album",
+                    artist_credit="test artist credit",
+                    artists=["artist one", "artist two"],
+                )
+            ],
+            album="test album",
+            artist_credit="test artist credit",
+            artists=["artist one", "artist two"],
+        ),
+        AlbumInfo(
+            tracks=[
+                TrackInfo(
+                    album="Test Album",
+                    artist_credit="Test Artist Credit",
+                    artists=["Artist One", "Artist Two"],
+                )
+            ],
+            album="Test Album",
+            artist_credit="Test Artist Credit",
+            artists=["Artist One", "Artist Two"],
+        ),
+    ),
 ]
 
 
-class TitlecasePluginTest(PluginTestCase):
+class TitlecasePluginMethodTests(PluginMixin):
     plugin = "titlecase"
     preload_plugin = False
 
@@ -208,91 +286,32 @@ class TitlecasePluginTest(PluginTestCase):
             for field in fields:
                 assert field in t.fields_to_process
 
-    def test_preserved_words(self):
-        """Test using given strings to preserve case"""
-        names_to_preserve = [
-            "easyFun",
-            "A.D.O.R.",
-            "D.R.",
-            "D'Angelo",
-            "ABBA",
-            "LaTeX",
-        ]
-        with self.configure_plugin({"preserve": names_to_preserve}):
-            for name in names_to_preserve:
-                assert TitlecasePlugin().titlecase(name.lower()) == name
-                assert TitlecasePlugin().titlecase(name.upper()) == name
-
-    def test_preserved_phrases(self):
-        test_strings = ["Vinylgroover & The Red Hed", "With The Beatles"]
-        phrases_to_preserve = ["The Beatles", "The Red Hed"]
-        with self.configure_plugin({"preserve": phrases_to_preserve}):
-            t = TitlecasePlugin()
-            for phrase in test_strings:
-                assert t.titlecase(phrase.lower()) == phrase
-
-    def test_titlecase_fields(self):
-        for tc in titlecase_test_cases:
-            with self.configure_plugin(tc["config"]):
-                item = tc["item"]
-                expected = tc["expected"]
-                TitlecasePlugin().titlecase_fields(item)
-                for key, value in vars(item).items():
-                    if isinstance(value, str):
-                        assert getattr(item, key) == getattr(expected, key)
-
-    def test_recieved_info_handler(self):
-        test_track_info = TrackInfo(
-            album="test album",
-            artist_credit="test artist credit",
-            artists=["artist one", "artist two"],
-        )
-        expected_track_info = TrackInfo(
-            album="Test Album",
-            artist_credit="Test Artist Credit",
-            artists=["Artist One", "Artist Two"],
-        )
-        test_album_info = AlbumInfo(
-            tracks=[test_track_info],
-            album="test album",
-            artist_credit="test artist credit",
-            artists=["artist one", "artist two"],
-        )
-        expected_album_info = AlbumInfo(
-            tracks=[expected_track_info],
-            album="Test Album",
-            artist_credit="Test Artist Credit",
-            artists=["Artist One", "Artist Two"],
-        )
+    @pytest.mark.parametrize("given, expected", info_test_cases)
+    def test_received_info_handler(self, given, expected):
         with self.configure_plugin(
             {"fields": ["album", "artist_credit", "artists"]}
         ):
-            TitlecasePlugin().received_info_handler(test_track_info)
-            assert test_track_info.album == expected_track_info.album
-            assert (
-                test_track_info.artist_credit
-                == expected_track_info.artist_credit
-            )
-            assert test_track_info.artists == expected_track_info.artists
-            TitlecasePlugin().received_info_handler(test_album_info)
-            assert test_album_info.album == expected_album_info.album
-            assert (
-                test_album_info.artist_credit
-                == expected_album_info.artist_credit
-            )
-            assert test_album_info.artists == expected_album_info.artists
+            TitlecasePlugin().received_info_handler(given)
+            assert given == expected
 
-    def test_cli(self):
-        for tc in titlecase_test_cases:
-            with self.configure_plugin(tc["config"]):
-                item = tc["item"]
-                expected = tc["expected"]
-                # Add item to library
-                item.add(self.lib)
-                self.run_command("titlecase")
-                output = self.run_with_output("ls")
-                assert (
-                    output
-                    == f"{expected.artist} - {expected.album} - {expected.title}\n"
-                )
-                self.run_command("remove", expected.artist, "-f")
+
+@pytest.mark.parametrize("config, given, expected", item_test_cases)
+class TitlecasePluginTest(PluginMixin):
+    plugin = "titlecase"
+    preload_plugin = False
+
+    def test_titlecase_fields(self, config, given, expected):
+        with self.configure_plugin(config):
+            TitlecasePlugin.titlecase_fields(given)
+            assert given == expected
+
+    def test_cli(self, config, given, expected):
+        with self.configure_plugin(config):
+            given.add(self.lib)
+            self.run_command("titlecase")
+            output = self.run_with_output("ls")
+            assert (
+                output
+                == f"{expected.artist} - {expected.album} - {expected.title}\n"
+            )
+            self.run_command("remove", expected.artist, "-f")

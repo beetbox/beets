@@ -96,7 +96,7 @@ Default
 
     List of words and phrases to preserve the case of. Without specifying ``DJ`` on
     the list, titlecase will format it as ``Dj``, or specify ``The Beatles`` to make sure
-    ``With The Beatles`` is not capitalized as ``With the Beatles``
+    ``With The Beatles`` is not capitalized as ``With the Beatles``.
 
 .. conf:: replace
 
