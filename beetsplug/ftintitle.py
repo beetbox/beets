@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import re
+from functools import cached_property
 from typing import TYPE_CHECKING
 
 from beets import plugins, ui
@@ -84,58 +85,6 @@ DEFAULT_BRACKET_KEYWORDS = [
 ]
 
 
-def find_bracket_position(
-    title: str, keywords: list[str] | None = None
-) -> int | None:
-    """Find the position of the first opening bracket that contains
-    remix/edit-related keywords and has a matching closing bracket.
-    """
-    if keywords is None:
-        keywords = DEFAULT_BRACKET_KEYWORDS
-
-    # If keywords is empty, match any bracket content
-    if not keywords:
-        pattern = None
-    else:
-        # Build regex pattern to support multi-word keywords/phrases.
-        keyword_pattern = rf"\b{'|'.join(map(re.escape, keywords))}\b"
-        pattern = re.compile(keyword_pattern, re.IGNORECASE)
-
-    # Bracket pairs (opening, closing)
-    bracket_pairs = [("(", ")"), ("[", "]"), ("<", ">"), ("{", "}")]
-
-    # Track the earliest valid bracket position
-    earliest_pos = None
-
-    for open_char, close_char in bracket_pairs:
-        pos = 0
-        while True:
-            # Find next opening bracket
-            open_pos = title.find(open_char, pos)
-            if open_pos == -1:
-                break
-
-            # Find matching closing bracket
-            close_pos = title.find(close_char, open_pos + 1)
-            if close_pos == -1:
-                break
-
-            # Extract content between brackets
-            content = title[open_pos + 1 : close_pos]
-
-            # Check if content matches: if pattern is None (empty keywords),
-            # match any content; otherwise check for keywords
-            if (pattern is None or pattern.search(content)) and (
-                earliest_pos is None or open_pos < earliest_pos
-            ):
-                earliest_pos = open_pos
-
-            # Continue searching from after this closing bracket
-            pos = close_pos + 1
-
-    return earliest_pos
-
-
 def find_feat_part(
     artist: str,
     albumartist: str | None,
@@ -176,6 +125,10 @@ def find_feat_part(
 
 
 class FtInTitlePlugin(plugins.BeetsPlugin):
+    @cached_property
+    def bracket_keywords(self) -> list[str] | None:
+        return self.config["bracket_keywords"].as_str_seq()
+
     def __init__(self) -> None:
         super().__init__()
 
@@ -216,7 +169,6 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
                 bool
             )
             custom_words = self.config["custom_words"].get(list)
-            bracket_keywords = self.config["bracket_keywords"].get(list)
             write = ui.should_write()
 
             for item in lib.items(args):
@@ -226,7 +178,6 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
                     keep_in_artist_field,
                     preserve_album_artist,
                     custom_words,
-                    bracket_keywords,
                 ):
                     item.store()
                     if write:
@@ -241,7 +192,6 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         keep_in_artist_field = self.config["keep_in_artist"].get(bool)
         preserve_album_artist = self.config["preserve_album_artist"].get(bool)
         custom_words = self.config["custom_words"].get(list)
-        bracket_keywords = self.config["bracket_keywords"].get(list)
 
         for item in task.imported_items():
             if self.ft_in_title(
@@ -250,7 +200,6 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
                 keep_in_artist_field,
                 preserve_album_artist,
                 custom_words,
-                bracket_keywords,
             ):
                 item.store()
 
@@ -261,7 +210,6 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         drop_feat: bool,
         keep_in_artist_field: bool,
         custom_words: list[str],
-        bracket_keywords: list[str] | None = None,
     ) -> None:
         """Choose how to add new artists to the title and set the new
         metadata. Also, print out messages about any changes that are made.
@@ -290,15 +238,8 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         # artist and if we do not drop featuring information.
         if not drop_feat and not contains_feat(item.title, custom_words):
             feat_format = self.config["format"].as_str()
-            new_format = feat_format.format(feat_part)
-            # Insert before the first bracket containing remix/edit keywords
-            bracket_pos = find_bracket_position(item.title, bracket_keywords)
-            if bracket_pos is not None:
-                title_before = item.title[:bracket_pos].rstrip()
-                title_after = item.title[bracket_pos:]
-                new_title = f"{title_before} {new_format} {title_after}"
-            else:
-                new_title = f"{item.title} {new_format}"
+            formatted = feat_format.format(feat_part)
+            new_title = self.insert_ft_into_title(item.title, formatted)
             self._log.info("title: {.title} -> {}", item, new_title)
             item.title = new_title
 
@@ -309,7 +250,6 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         keep_in_artist_field: bool,
         preserve_album_artist: bool,
         custom_words: list[str],
-        bracket_keywords: list[str] | None = None,
     ) -> bool:
         """Look for featured artists in the item's artist fields and move
         them to the title.
@@ -346,6 +286,47 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             drop_feat,
             keep_in_artist_field,
             custom_words,
-            bracket_keywords,
         )
         return True
+
+    def find_bracket_position(
+        self,
+        title: str,
+    ) -> int | None:
+        """Find the position of the first opening bracket that contains
+        remix/edit-related keywords and has a matching closing bracket.
+        """
+        keywords = self.bracket_keywords
+
+        # If keywords is empty, match any bracket content
+        if not keywords:
+            keyword_ptn = ".*?"
+        else:
+            # Build regex supporting keywords/multi-word phrases.
+            keyword_ptn = rf"\b{'|'.join(map(re.escape, keywords))}\b"
+
+        pattern = re.compile(
+            rf"""
+            \(.*?({keyword_ptn}).*?\) |
+            \[.*?({keyword_ptn}).*?\] |
+            <.*?({keyword_ptn}).*?> |
+            \{{.*?({keyword_ptn}).*?}}
+            """,
+            re.IGNORECASE | re.VERBOSE,
+        )
+
+        return m.start() if (m := pattern.search(title)) else None
+
+    def insert_ft_into_title(
+        self,
+        title: str,
+        feat_part: str,
+    ) -> str:
+        """Insert featured artist before the first bracket containing
+        remix/edit keywords if present.
+        """
+        if (bracket_pos := self.find_bracket_position(title)) is not None:
+            title_before = title[:bracket_pos].rstrip()
+            title_after = title[bracket_pos:]
+            return f"{title_before} {feat_part} {title_after}"
+        return f"{title} {feat_part}"
