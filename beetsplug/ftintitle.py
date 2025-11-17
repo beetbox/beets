@@ -106,9 +106,7 @@ def find_bracket_position(
         pattern = None
     else:
         # Build regex pattern to support multi-word keywords/phrases.
-        # Each keyword/phrase is escaped and surrounded by word boundaries at
-        # start and end, matching phrases like "club mix" as a whole.
-        keyword_pattern = "|".join(rf"\b{re.escape(kw)}\b" for kw in keywords)
+        keyword_pattern = rf"\b{'|'.join(map(re.escape, keywords))}\b"
         pattern = re.compile(keyword_pattern, re.IGNORECASE)
 
     # Bracket pairs (opening, closing)
