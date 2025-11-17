@@ -35,17 +35,21 @@ def find_metadata_source_plugins() -> list[MetadataSourcePlugin]:
 
 
 @notify_info_yielded("albuminfo_received")
-def candidates(*args, **kwargs) -> Iterable[AlbumInfo]:
+def candidates(
+    items: Sequence[Item], artist: str, album: str, va_likely: bool
+) -> Iterable[AlbumInfo]:
     """Return matching album candidates from all metadata source plugins."""
     for plugin in find_metadata_source_plugins():
-        yield from plugin.candidates(*args, **kwargs)
+        yield from plugin.candidates(
+            items=items, artist=artist, album=album, va_likely=va_likely
+        )
 
 
 @notify_info_yielded("trackinfo_received")
-def item_candidates(*args, **kwargs) -> Iterable[TrackInfo]:
-    """Return matching track candidates fromm all metadata source plugins."""
+def item_candidates(item: Item, artist: str, title: str) -> Iterable[TrackInfo]:
+    """Return matching track candidates from all metadata source plugins."""
     for plugin in find_metadata_source_plugins():
-        yield from plugin.item_candidates(*args, **kwargs)
+        yield from plugin.item_candidates(item=item, artist=artist, title=title)
 
 
 def album_for_id(_id: str) -> AlbumInfo | None:
@@ -152,20 +156,27 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
         :param artist: Album artist
         :param album: Album name
         :param va_likely: Whether the album is likely to be by various artists
+
+        Note that `artist` and `album` may contain additional user-supplied search terms
+        intended to refine the query. When relevant, prefer these values over
+        metadata extracted from item directly.
         """
         raise NotImplementedError
 
     @abc.abstractmethod
     def item_candidates(
-        self, item: Item, artist: str, title: str
+        self,
+        item: Item,
+        artist: str,
+        title: str,
     ) -> Iterable[TrackInfo]:
         """Return :py:class:`TrackInfo` candidates that match the given track.
 
         Used in the autotag functionality to search for tracks.
 
-        :param item: Track item
-        :param artist: Track artist
-        :param title: Track title
+        Note that `artist` and `title` may contain additional user-supplied search terms
+        intended to refine the query. When relevant, prefer these values over
+        metadata extracted from item directly.
         """
         raise NotImplementedError
 
