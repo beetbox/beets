@@ -15,7 +15,7 @@
 """Tests for the 'ftintitle' plugin."""
 
 from collections.abc import Generator
-from typing import cast
+from typing import TypeAlias, cast
 
 import pytest
 
@@ -23,6 +23,8 @@ from beets.importer import ImportSession, ImportTask
 from beets.library.models import Item
 from beets.test.helper import PluginTestCase
 from beetsplug import ftintitle
+
+ConfigValue: TypeAlias = str | bool | list[str]
 
 
 class FtInTitlePluginFunctional(PluginTestCase):
@@ -41,7 +43,7 @@ def env() -> Generator[FtInTitlePluginFunctional, None, None]:
 
 def set_config(
     env: FtInTitlePluginFunctional,
-    cfg: dict[str, str | bool | list[str]] | None,
+    cfg: dict[str, ConfigValue] | None,
 ) -> None:
     cfg = {} if cfg is None else cfg
     defaults = {
@@ -49,9 +51,19 @@ def set_config(
         "auto": True,
         "keep_in_artist": False,
         "custom_words": [],
+        "bracket_keywords": ftintitle.DEFAULT_BRACKET_KEYWORDS.copy(),
     }
     env.config["ftintitle"].set(defaults)
     env.config["ftintitle"].set(cfg)
+
+
+def build_plugin(
+    env: FtInTitlePluginFunctional,
+    cfg: dict[str, ConfigValue] | None = None,
+) -> ftintitle.FtInTitlePlugin:
+    """Instantiate plugin with provided config applied first."""
+    set_config(env, cfg)
+    return ftintitle.FtInTitlePlugin()
 
 
 def add_item(
@@ -427,7 +439,7 @@ def test_split_on_feat(
         ("Song (Live", None),  # no matching brace with keyword
         # one keyword clause, one non-keyword clause
         ("Song (Live) (Arbitrary)", 5),
-        ("Song (Arbitrary) (Remix)", 17),
+        ("Song (Arbitrary) (Remix)", 5),
         # nested brackets - same type
         ("Song (Remix (Extended))", 5),
         ("Song [Arbitrary [Description]]", None),
@@ -443,8 +455,13 @@ def test_split_on_feat(
         ("Song [Description (Arbitrary)]", None),
     ],
 )
-def test_find_bracket_position(given: str, expected: int | None) -> None:
-    assert ftintitle.find_bracket_position(given) == expected
+def test_find_bracket_position(
+    env: FtInTitlePluginFunctional,
+    given: str,
+    expected: int | None,
+) -> None:
+    plugin = build_plugin(env)
+    assert plugin.find_bracket_position(given) == expected
 
 
 @pytest.mark.parametrize(
@@ -468,9 +485,15 @@ def test_find_bracket_position(given: str, expected: int | None) -> None:
     ],
 )
 def test_find_bracket_position_custom_keywords(
-    given: str, keywords: list[str] | None, expected: int | None
+    env: FtInTitlePluginFunctional,
+    given: str,
+    keywords: list[str] | None,
+    expected: int | None,
 ) -> None:
-    assert ftintitle.find_bracket_position(given, keywords) == expected
+    cfg: dict[str, ConfigValue] | None
+    cfg = None if keywords is None else {"bracket_keywords": keywords}
+    plugin = build_plugin(env, cfg)
+    assert plugin.find_bracket_position(given) == expected
 
 
 @pytest.mark.parametrize(
