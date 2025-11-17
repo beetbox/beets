@@ -160,15 +160,17 @@ class TitlecasePlugin(BeetsPlugin):
                     cased_list: list[str] = [
                         self.titlecase(i, field) for i in init_field
                     ]
-                    setattr(item, field, cased_list)
-                    self._log.info(
-                        f"{field}: {', '.join(init_field)} ->",
-                        f"{', '.join(cased_list)}",
-                    )
+                    if cased_list != init_field:
+                        setattr(item, field, cased_list)
+                        self._log.info(
+                            f"{field}: {', '.join(init_field)} ->",
+                            f"{', '.join(cased_list)}",
+                        )
                 elif isinstance(init_field, str):
                     cased: str = self.titlecase(init_field, field)
-                    setattr(item, field, cased)
-                    self._log.info(f"{field}: {init_field} -> {cased}")
+                    if cased != init_field:
+                        setattr(item, field, cased)
+                        self._log.info(f"{field}: {init_field} -> {cased}")
                 else:
                     self._log.debug(f"{field}: no string present")
             else:
