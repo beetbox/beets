@@ -259,7 +259,7 @@ def tag_album(
     items,
     search_artist: str = "",
     search_album: str = "",
-    search_ids: Sequence[str] | None = None,
+    search_ids: Sequence[str] = (),
 ) -> tuple[str, str, Proposal]:
     """Return a tuple of the current artist name, the current album
     name, and a `Proposal` containing `AlbumMatch` candidates.
@@ -288,16 +288,15 @@ def tag_album(
     candidates: dict[Any, AlbumMatch] = {}
 
     # Search by explicit ID.
-    if search_ids:
-        for search_id in search_ids:
-            log.debug("Searching for album ID: {}", search_id)
-            if info := metadata_plugins.album_for_id(search_id):
-                _add_candidate(items, candidates, info)
-                if opt_candidate := candidates.get(info.album_id):
-                    plugins.send("album_matched", match=opt_candidate)
+    for search_id in search_ids:
+        log.debug("Searching for album ID: {}", search_id)
+        if info := metadata_plugins.album_for_id(search_id):
+            _add_candidate(items, candidates, info)
+            if opt_candidate := candidates.get(info.album_id):
+                plugins.send("album_matched", match=opt_candidate)
 
     # Use existing metadata or text search.
-    else:
+    if not search_ids:
         # Try search based on current ID.
         if info := match_by_id(items):
             _add_candidate(items, candidates, info)
@@ -352,7 +351,7 @@ def tag_item(
     item: Item,
     search_artist: str = "",
     search_title: str = "",
-    search_ids: list[str] | None = None,
+    search_ids: Sequence[str] = (),
 ) -> Proposal:
     """Find metadata for a single track. Return a `Proposal` consisting
     of `TrackMatch` objects.
