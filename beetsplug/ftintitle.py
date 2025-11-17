@@ -89,14 +89,6 @@ def find_bracket_position(
 ) -> int | None:
     """Find the position of the first opening bracket that contains
     remix/edit-related keywords and has a matching closing bracket.
-
-    Args:
-        title: The title to search in.
-        keywords: List of keywords to match. If None, uses DEFAULT_BRACKET_KEYWORDS.
-            If an empty list, matches any bracket content (not just keywords).
-
-    Returns:
-        The position of the opening bracket, or None if no match found.
     """
     if keywords is None:
         keywords = DEFAULT_BRACKET_KEYWORDS
