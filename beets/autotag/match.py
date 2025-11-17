@@ -257,9 +257,9 @@ def _parse_search_terms_with_fallbacks(
 
 def tag_album(
     items,
-    search_artist: str | None = None,
-    search_album: str | None = None,
-    search_ids: list[str] | None = None,
+    search_artist: str = "",
+    search_album: str = "",
+    search_ids: Sequence[str] | None = None,
 ) -> tuple[str, str, Proposal]:
     """Return a tuple of the current artist name, the current album
     name, and a `Proposal` containing `AlbumMatch` candidates.
@@ -350,8 +350,8 @@ def tag_album(
 
 def tag_item(
     item: Item,
-    search_artist: str | None = None,
-    search_title: str | None = None,
+    search_artist: str = "",
+    search_title: str = "",
     search_ids: list[str] | None = None,
 ) -> Proposal:
     """Find metadata for a single track. Return a `Proposal` consisting
