@@ -156,6 +156,10 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
         :param artist: Album artist
         :param album: Album name
         :param va_likely: Whether the album is likely to be by various artists
+
+        Note that `artist` and `album` may contain additional user-supplied search terms
+        intended to refine the query. When relevant, prefer these values over
+        metadata extracted from item directly.
         """
         raise NotImplementedError
 
@@ -170,13 +174,9 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
 
         Used in the autotag functionality to search for tracks.
 
-        :param item: Track item
-        :param artist: Track artist, either a search manually provided or
-            preprocessed from the item. If no metadata is available an empty string
-            is passed.
-        :param title: Track title, either a search manually provided or
-            preprocessed from the item. If no metadata is available an empty string
-            is passed.
+        Note that `artist` and `title` may contain additional user-supplied search terms
+        intended to refine the query. When relevant, prefer these values over
+        metadata extracted from item directly.
         """
         raise NotImplementedError
 
