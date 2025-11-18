@@ -66,6 +66,8 @@ Other changes:
 - Refactored the ``beets/ui/commands.py`` monolithic file (2000+ lines) into
   multiple modules within the ``beets/ui/commands`` directory for better
   maintainability.
+- :doc:`plugins/bpd`: Raise ImportError instead of ValueError when GStreamer is
+  unavailable, enabling ``importorskip`` usage in pytest setup.
 
 2.5.1 (October 14, 2025)
 ------------------------
