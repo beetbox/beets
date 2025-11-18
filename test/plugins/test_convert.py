@@ -301,6 +301,20 @@ class NeverConvertLossyFilesTest(ConvertTestCase, ConvertCommand):
         converted = self.convert_dest / "converted.ogg"
         assert not self.file_endswith(converted, "mp3")
 
+    def test_cli_format_overrides_never_convert_lossy_files(self):
+        self.config["convert"]["formats"]["opus"] = {
+            "command": self.tagged_copy_cmd("opus"),
+            "extension": "ops",
+        }
+
+        [item] = self.add_item_fixtures(ext="ogg")
+
+        with control_stdin("y"):
+            self.run_convert_path(item, "--format", "opus")
+
+        converted = self.convert_dest / "converted.ops"
+        assert self.file_endswith(converted, "opus")
+
 
 class TestNoConvert:
     """Test the effect of the `no_convert` option."""

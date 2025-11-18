@@ -95,13 +95,18 @@ def in_no_convert(item: Item) -> bool:
         return False
 
 
-def should_transcode(item, fmt):
+def should_transcode(item, fmt, override_never_lossy: bool = False):
     """Determine whether the item should be transcoded as part of
     conversion (i.e., its bitrate is high or it has the wrong format).
+
+    If ``override_never_lossy`` is True, the ``never_convert_lossy_files``
+    check is ignored (used when the user explicitly requests a format
+    on the CLI).
     """
     if in_no_convert(item) or (
-        config["convert"]["never_convert_lossy_files"]
+        config["convert"]["never_convert_lossy_files"].get(bool)
         and item.format.lower() not in LOSSLESS_FORMATS
+        and not override_never_lossy
     ):
         return False
     maxbr = config["convert"]["max_bitrate"].get(Optional(int))
@@ -259,6 +264,7 @@ class ConvertPlugin(BeetsPlugin):
                 hardlink,
                 link,
                 playlist,
+                fmt_from_cli,
             ) = self._get_opts_and_config(empty_opts)
 
             items = task.imported_items()
@@ -272,6 +278,7 @@ class ConvertPlugin(BeetsPlugin):
                 hardlink,
                 threads,
                 items,
+                fmt_from_cli,
             )
 
     # Utilities converted from functions to methods on logging overhaul
@@ -347,6 +354,7 @@ class ConvertPlugin(BeetsPlugin):
         pretend=False,
         link=False,
         hardlink=False,
+        fmt_from_cli=False,
     ):
         """A pipeline thread that converts `Item` objects from a
         library.
@@ -372,11 +380,15 @@ class ConvertPlugin(BeetsPlugin):
             if keep_new:
                 original = dest
                 converted = item.path
-                if should_transcode(item, fmt):
+                if should_transcode(
+                    item, fmt, override_never_lossy=fmt_from_cli
+                ):
                     converted = replace_ext(converted, ext)
             else:
                 original = item.path
-                if should_transcode(item, fmt):
+                if should_transcode(
+                    item, fmt, override_never_lossy=fmt_from_cli
+                ):
                     dest = replace_ext(dest, ext)
                 converted = dest
 
@@ -406,7 +418,7 @@ class ConvertPlugin(BeetsPlugin):
                     )
                     util.move(item.path, original)
 
-            if should_transcode(item, fmt):
+            if should_transcode(item, fmt, override_never_lossy=fmt_from_cli):
                 linked = False
                 try:
                     self.encode(command, original, converted, pretend)
@@ -577,6 +589,7 @@ class ConvertPlugin(BeetsPlugin):
             hardlink,
             link,
             playlist,
+            fmt_from_cli,
         ) = self._get_opts_and_config(opts)
 
         if opts.album:
@@ -613,6 +626,7 @@ class ConvertPlugin(BeetsPlugin):
             hardlink,
             threads,
             items,
+            fmt_from_cli,
         )
 
         if playlist:
@@ -715,6 +729,7 @@ class ConvertPlugin(BeetsPlugin):
 
         path_formats = ui.get_path_formats(self.config["paths"] or None)
 
+        fmt_from_cli = opts.format is not None
         fmt = opts.format or self.config["format"].as_str().lower()
 
         playlist = opts.playlist or self.config["playlist"].get()
@@ -745,6 +760,7 @@ class ConvertPlugin(BeetsPlugin):
             hardlink,
             link,
             playlist,
+            fmt_from_cli,
         )
 
     def _parallel_convert(
@@ -758,13 +774,21 @@ class ConvertPlugin(BeetsPlugin):
         hardlink,
         threads,
         items,
+        fmt_from_cli,
     ):
         """Run the convert_item function for every items on as many thread as
         defined in threads
         """
         convert = [
             self.convert_item(
-                dest, keep_new, path_formats, fmt, pretend, link, hardlink
+                dest,
+                keep_new,
+                path_formats,
+                fmt,
+                pretend,
+                link,
+                hardlink,
+                fmt_from_cli,
             )
             for _ in range(threads)
         ]

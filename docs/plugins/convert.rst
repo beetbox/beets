@@ -112,7 +112,12 @@ The available options are:
 - **never_convert_lossy_files**: Cross-conversions between lossy codecs---such
   as mp3, ogg vorbis, etc.---makes little sense as they will decrease quality
   even further. If set to ``yes``, lossy files are always copied. Default:
-  ``no``.
+  ``no``. When ``never_convert_lossy_files`` is enabled, lossy source files (for
+  example MP3 or Ogg Vorbis) are normally not transcoded and are instead copied
+  or linked as-is. If you explicitly pass a target format on the command line
+  with ``--format``, this override is respected: lossy files matching the query
+  will be transcoded to the requested format even when
+  ``never_convert_lossy_files`` is enabled.
 - **paths**: The directory structure and naming scheme for the converted files.
   Uses the same format as the top-level ``paths`` section (see
   :ref:`path-format-config`). Default: Reuse your top-level path format
