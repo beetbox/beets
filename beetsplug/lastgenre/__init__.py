@@ -438,6 +438,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             else:
                 # For "Various Artists", pick the most popular track genre.
                 item_genres = []
+                assert isinstance(obj, Album)  # Type narrowing for mypy
                 for item in obj.items():
                     item_genre = None
                     if "track" in self.sources:
