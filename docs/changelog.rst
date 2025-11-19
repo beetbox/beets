@@ -26,6 +26,13 @@ New features:
 - :doc:`plugins/mbpseudo`: Add a new `mbpseudo` plugin to proactively receive
       MusicBrainz pseudo-releases as recommendations during import.
 - Added support for Python 3.13.
+- :doc:`plugins/ftintitle`: Featured artists are now inserted before brackets
+  containing remix/edit-related keywords (e.g., "Remix", "Live", "Edit") instead
+  of being appended at the end. This improves formatting for titles like "Song 1
+  (Carol Remix) ft. Bob" which becomes "Song 1 ft. Bob (Carol Remix)". A variety
+  of brackets are supported and a new ``bracket_keywords`` configuration option
+  allows customizing the keywords. Setting ``bracket_keywords`` to an empty list
+  matches any bracket content regardless of keywords.
 
 Bug fixes:
 
