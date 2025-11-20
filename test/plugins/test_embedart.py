@@ -26,9 +26,9 @@ from mediafile import MediaFile
 from beets import config, logging, ui
 from beets.test import _common
 from beets.test.helper import (
-    ImportHelper,
     BeetsTestCase,
     FetchImageHelper,
+    ImportHelper,
     IOMixin,
     PluginMixin,
 )
