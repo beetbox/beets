@@ -3,14 +3,14 @@
 from beets import config, plugins
 from beets.test.helper import PluginTestCase
 
+
 class TestInlineRecursion(PluginTestCase):
     def test_no_recursion_when_inline_shadows_fixed_field(self):
-        config['plugins'] = ['inline']
+        config["plugins"] = ["inline"]
 
-        config['item_fields'] = {
-            'track_no': (
-                "f'{disc:02d}-{track:02d}' if disctotal > 1 "
-                "else f'{track:02d}'"
+        config["item_fields"] = {
+            "track_no": (
+                "f'{disc:02d}-{track:02d}' if disctotal > 1 else f'{track:02d}'"
             )
         }
 
@@ -18,14 +18,14 @@ class TestInlineRecursion(PluginTestCase):
         plugins.load_plugins()
 
         item = self.add_item_fixture(
-            artist='Artist',
-            album='Album',
-            title='Title',
+            artist="Artist",
+            album="Album",
+            title="Title",
             track=1,
             disc=1,
             disctotal=1,
         )
 
-        out = item.evaluate_template('$track_no')
+        out = item.evaluate_template("$track_no")
 
-        assert out == '01'
+        assert out == "01"
