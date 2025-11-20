@@ -26,9 +26,16 @@ import threading
 import time
 from abc import ABC
 from collections import defaultdict
-from collections.abc import Generator, Iterable, Iterator, Mapping, Sequence
+from collections.abc import (
+    Callable,
+    Generator,
+    Iterable,
+    Iterator,
+    Mapping,
+    Sequence,
+)
 from sqlite3 import Connection, sqlite_version_info
-from typing import TYPE_CHECKING, Any, AnyStr, Callable, Generic
+from typing import TYPE_CHECKING, Any, AnyStr, Generic
 
 from typing_extensions import TypeVar  # default value support
 from unidecode import unidecode
