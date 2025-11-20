@@ -151,9 +151,10 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         list
     )
     listeners: ClassVar[dict[EventType, list[Listener]]] = defaultdict(list)
-    template_funcs: ClassVar[TFuncMap[str]] = {}
-    template_fields: ClassVar[TFuncMap[Item]] = {}
-    album_template_fields: ClassVar[TFuncMap[Album]] = {}
+
+    template_funcs: TFuncMap[str]
+    template_fields: TFuncMap[Item]
+    album_template_fields: TFuncMap[Album]
 
     name: str
     config: ConfigView
@@ -219,14 +220,9 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         self.name = name or self.__module__.split(".")[-1]
         self.config = beets.config[self.name]
 
-        # Set class attributes if they are not already set
-        # for the type of plugin.
-        if not self.template_funcs:
-            self.template_funcs = {}  # type: ignore[misc]
-        if not self.template_fields:
-            self.template_fields = {}  # type: ignore[misc]
-        if not self.album_template_fields:
-            self.album_template_fields = {}  # type: ignore[misc]
+        self.template_funcs = {}
+        self.template_fields = {}
+        self.album_template_fields = {}
 
         self.early_import_stages = []
         self.import_stages = []
@@ -359,33 +355,6 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
             self.listeners[event].append(
                 self._set_log_level_and_params(logging.WARNING, func)
             )
-
-    @classmethod
-    def template_func(cls, name: str) -> Callable[[TFunc[str]], TFunc[str]]:
-        """Decorator that registers a path template function. The
-        function will be invoked as ``%name{}`` from path format
-        strings.
-        """
-
-        def helper(func: TFunc[str]) -> TFunc[str]:
-            cls.template_funcs[name] = func
-            return func
-
-        return helper
-
-    @classmethod
-    def template_field(cls, name: str) -> Callable[[TFunc[Item]], TFunc[Item]]:
-        """Decorator that registers a path template field computation.
-        The value will be referenced as ``$name`` from path format
-        strings. The function must accept a single parameter, the Item
-        being formatted.
-        """
-
-        def helper(func: TFunc[Item]) -> TFunc[Item]:
-            cls.template_fields[name] = func
-            return func
-
-        return helper
 
 
 def get_plugin_names() -> list[str]:
