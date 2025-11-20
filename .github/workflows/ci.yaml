@@ -20,10 +20,10 @@ jobs:
       fail-fast: false
       matrix:
         platform: [ubuntu-latest, windows-latest]
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
     runs-on: ${{ matrix.platform }}
     env:
-      IS_MAIN_PYTHON: ${{ matrix.python-version == '3.9' && matrix.platform == 'ubuntu-latest' }}
+      IS_MAIN_PYTHON: ${{ matrix.python-version == '3.10' && matrix.platform == 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v5
       - name: Install Python tools

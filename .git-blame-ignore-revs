@@ -73,3 +73,11 @@ d93ddf8dd43e4f9ed072a03829e287c78d2570a2
 33f1a5d0bef8ca08be79ee7a0d02a018d502680d
 # Moved art.py utility module from beets into beetsplug
 28aee0fde463f1e18dfdba1994e2bdb80833722f
+# Refactor `ui/commands.py` into multiple modules
+59c93e70139f70e9fd1c6f3c1bceb005945bec33
+# Moved ui.commands._utils into ui.commands.utils
+25ae330044abf04045e3f378f72bbaed739fb30d
+# Refactor test_ui_command.py into multiple modules 
+a59e41a88365e414db3282658d2aa456e0b3468a
+# pyupgrade Python 3.10
+301637a1609831947cb5dd90270ed46c24b1ab1b

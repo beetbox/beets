@@ -29,7 +29,7 @@ import tempfile
 import traceback
 import warnings
 from collections import Counter
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from contextlib import suppress
 from enum import Enum
 from functools import cache
@@ -41,7 +41,6 @@ from typing import (
     TYPE_CHECKING,
     Any,
     AnyStr,
-    Callable,
     ClassVar,
     Generic,
     NamedTuple,
@@ -578,10 +577,14 @@ def hardlink(path: bytes, dest: bytes, replace: bool = False):
     if samefile(path, dest):
         return
 
-    if os.path.exists(syspath(dest)) and not replace:
+    # Dereference symlinks, expand "~", and convert relative paths to absolute
+    origin_path = Path(os.fsdecode(path)).expanduser().resolve()
+    dest_path = Path(os.fsdecode(dest)).expanduser().resolve()
+
+    if dest_path.exists() and not replace:
         raise FilesystemError("file exists", "rename", (path, dest))
     try:
-        os.link(syspath(path), syspath(dest))
+        dest_path.hardlink_to(origin_path)
     except NotImplementedError:
         raise FilesystemError(
             "OS does not support hard links.link",
