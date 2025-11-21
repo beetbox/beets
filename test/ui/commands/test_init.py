@@ -18,13 +18,11 @@ class TestDeprecatedImports:
 
             try:
                 _ = commands.TerminalImportSession
+                # If the import worked, verify a deprecation warning was issued
+                assert any(issubclass(warn.category, DeprecationWarning) for warn in w)
             except AttributeError:
                 # If it doesn't exist, that's also valid (fully removed)
                 pass
-
-            # Check if a deprecation warning was issued (if the import worked)
-            if w:
-                assert any(issubclass(warn.category, DeprecationWarning) for warn in w)
 
     def test_deprecated_import_prompt_choice(self):
         """Test that deprecated PromptChoice import shows warning."""
@@ -35,13 +33,11 @@ class TestDeprecatedImports:
 
             try:
                 _ = commands.PromptChoice
+                # If the import worked, verify a deprecation warning was issued
+                assert any(issubclass(warn.category, DeprecationWarning) for warn in w)
             except AttributeError:
                 # If it doesn't exist, that's also valid (fully removed)
                 pass
-
-            # Check if a deprecation warning was issued (if the import worked)
-            if w:
-                assert any(issubclass(warn.category, DeprecationWarning) for warn in w)
 
     def test_getattr_unknown_name(self):
         """Test that unknown attribute raises AttributeError."""
@@ -69,7 +65,7 @@ class TestDefaultCommands:
         # Check that we have the major commands
         command_names = [cmd.name for cmd in default_commands]
 
-        expected_commands = [
+        expected_commands = {
             "fields",
             "help",
             "import",
@@ -83,7 +79,9 @@ class TestDefaultCommands:
             "write",
             "config",
             "completion",
-        ]
+        }
 
-        for expected in expected_commands:
-            assert expected in command_names, f"{expected} not found in default_commands"
+        # Verify all expected commands are present
+        assert expected_commands.issubset(set(command_names)), (
+            f"Missing commands: {expected_commands - set(command_names)}"
+        )

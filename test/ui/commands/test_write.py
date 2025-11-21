@@ -56,8 +56,7 @@ class WriteTest(BeetsTestCase):
         item_path = item.path
 
         # Delete the file to simulate missing file
-        if os.path.exists(item_path):
-            os.remove(item_path)
+        os.remove(item_path)
 
         with capture_log("beets") as logs:
             write_items(self.lib, [], pretend=False, force=False)
@@ -101,18 +100,23 @@ class WriteTest(BeetsTestCase):
         assert clean_item.title != "new title"
 
     def test_write_force_mode(self):
-        """Test that force mode writes even when tags match."""
+        """Test that force mode writes even when tags match the library."""
+        # Create an item and write its tags once so the file tags match the library
         item = self.add_item_fixture()
-        item.read()  # Make item match file
+        self.write_cmd()  # Initial write to sync tags without forcing
 
-        # Run with force mode
-        output = self.write_cmd("--force")
+        # Capture the file's mtime after the initial write
+        import time
+        time.sleep(0.01)  # Ensure mtime difference is detectable
+        original_mtime = os.path.getmtime(item.path)
 
-        # In force mode, it should still process the item
-        # (even though there are no changes to show)
-        # The mtime should be updated
-        item.load()
-        assert item.mtime > 0
+        # Run write with --force; even though tags are unchanged, this should
+        # trigger a write and thus update the file's mtime
+        self.write_cmd("--force")
+        new_mtime = os.path.getmtime(item.path)
+
+        # Verify that a write occurred by asserting the mtime changed
+        assert new_mtime > original_mtime
 
 
 class WriteItemsTest(BeetsTestCase):

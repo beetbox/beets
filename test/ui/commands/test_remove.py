@@ -118,7 +118,7 @@ class RemoveFuncTest(IOMixin, BeetsTestCase):
 
         # Item should be removed from library
         items = self.lib.items()
-        assert len(list(items)) == 0
+        assert not list(items)
 
     def test_remove_func_with_delete(self):
         """Test remove_func respects delete flag when True."""
@@ -134,7 +134,7 @@ class RemoveFuncTest(IOMixin, BeetsTestCase):
 
         # Item should be removed from library and file deleted
         items = self.lib.items()
-        assert len(list(items)) == 0
+        assert not list(items)
         assert not os.path.exists(syspath(item_path))
 
     def test_remove_func_respects_query(self):

@@ -102,10 +102,13 @@ class ImportTest(BeetsTestCase):
 
     def test_import_files_with_log_file(self):
         """Test that import_files can handle log file configuration."""
+        import pathlib
+
         with tempfile.NamedTemporaryFile(
             mode="w", suffix=".log", delete=False
         ) as logfile:
             logpath = logfile.name
+            log_pathobj = pathlib.Path(logpath)
 
         try:
             config["import"]["log"] = logpath
@@ -124,8 +127,7 @@ class ImportTest(BeetsTestCase):
                 assert mock_instance.run.called
         finally:
             config["import"]["log"] = None
-            if os.path.exists(logpath):
-                os.remove(logpath)
+            log_pathobj.unlink(missing_ok=True)
 
     def test_import_files_log_file_error(self):
         """Test that import_files raises UserError when log file can't be opened."""

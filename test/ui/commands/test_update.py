@@ -518,8 +518,10 @@ class UpdateFuncTest(IOMixin, BeetsTestCase):
 
                 # Verify print was called with warning messages
                 assert mock_print.call_count >= 2
-                call_args = [str(call[0][0]) if call[0] else "" for call in mock_print.call_args_list]
-                output_str = " ".join(call_args)
+                output_str = " ".join(
+                    str(call[0][0]) if call[0] else ""
+                    for call in mock_print.call_args_list
+                )
                 assert "Library path is unavailable or does not exist" in output_str
         finally:
             # Restore original directory

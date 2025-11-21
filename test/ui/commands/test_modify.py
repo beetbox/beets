@@ -27,6 +27,17 @@ class ModifyTest(BeetsTestCase):
     def modify(self, *args):
         self.modify_inp("y", *args)
 
+    def clear_all_items_and_albums(self):
+        """Helper to remove all items and albums from the library."""
+        # Use list() to avoid modifying iterator during iteration
+        all_items = list(self.lib.items())
+        all_albums = list(self.lib.albums())
+
+        for item in all_items:
+            item.remove()
+        for album in all_albums:
+            album.remove()
+
     # Item tests
 
     def test_modify_item(self):
@@ -247,8 +258,7 @@ class ModifyTest(BeetsTestCase):
     def test_modify_items_no_actual_changes(self):
         """Test that modify_items doesn't change items when values are the same."""
         # Remove any existing items from setUp
-        for item in self.lib.items():
-            item.remove()
+        self.clear_all_items_and_albums()
 
         # Add a single item with known title
         item = self.add_item_fixture(title="SameTitle", artist="SameArtist")
@@ -358,10 +368,7 @@ class ModifyTest(BeetsTestCase):
     def test_modify_items_album_mode(self):
         """Test that modify_items works correctly in album mode."""
         # Remove any existing items/albums from setUp
-        for item in self.lib.items():
-            item.remove()
-        for album in self.lib.albums():
-            album.remove()
+        self.clear_all_items_and_albums()
 
         # Add a fresh album
         album = self.add_album_fixture()
@@ -387,8 +394,7 @@ class ModifyTest(BeetsTestCase):
     def test_modify_items_multiple_items(self):
         """Test that modify_items modifies multiple items."""
         # Remove any existing items from setUp
-        for item in self.lib.items():
-            item.remove()
+        self.clear_all_items_and_albums()
 
         # Add two new items with different artists
         item1 = self.add_item_fixture(title="Item1", artist="OldArtist")

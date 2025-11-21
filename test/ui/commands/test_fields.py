@@ -11,6 +11,13 @@ class FieldsTest(IOMixin, ItemInDBTestCase):
             except ValueError:
                 pass
 
+    def add_item_with_flex_attr(self, attr_name, attr_value):
+        """Helper to add an item with a flexible attribute."""
+        item = self.add_item_fixture()
+        setattr(item, attr_name, attr_value)
+        item.store()
+        return item
+
     def test_fields_func(self):
         fields_func(self.lib, [], [])
         items = library.Item.all_keys()
@@ -26,13 +33,8 @@ class FieldsTest(IOMixin, ItemInDBTestCase):
     def test_fields_func_with_flex_attrs(self):
         """Test that flexible attributes are displayed."""
         # Add items with flexible attributes
-        item1 = self.add_item_fixture()
-        item1.custom_field = "value1"
-        item1.store()
-
-        item2 = self.add_item_fixture()
-        item2.another_custom = "value2"
-        item2.store()
+        self.add_item_with_flex_attr("custom_field", "value1")
+        self.add_item_with_flex_attr("another_custom", "value2")
 
         # Add album with flexible attribute
         album = self.add_album_fixture()

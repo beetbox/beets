@@ -274,8 +274,9 @@ class ShowPathChangesTest(IOMixin, BeetsTestCase):
         output = self.io.getoutput()
         # Should show on two lines
         assert " -> " in output
-        # Should NOT have "Source" header (two-line mode)
-        assert "Source" not in output or "Destination" not in output
+        # Should NOT have "Source" or "Destination" headers (two-line mode)
+        assert "Source" not in output
+        assert "Destination" not in output
 
     def test_show_path_changes_multiple_pairs(self):
         """Test showing multiple path changes."""
