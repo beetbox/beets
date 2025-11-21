@@ -51,6 +51,11 @@ instead, passing ``-H`` (``--hardlink``) creates hard links. Note that album art
 embedding is disabled for files that are linked. Refer to the ``link`` and
 ``hardlink`` options below.
 
+The ``-F`` (or ``--force``) option forces transcoding even when safety options
+such as ``no_convert`` or ``never_convert_lossy_files`` would normally cause a
+file to be copied or skipped instead. This can be combined with ``--format`` to
+explicitly transcode lossy inputs to a chosen target format.
+
 The ``-m`` (or ``--playlist``) option enables the plugin to create an m3u8
 playlist file in the destination folder given by the ``-d`` (``--dest``) option
 or the ``dest`` configuration. The path to the playlist file can either be
@@ -114,10 +119,9 @@ The available options are:
   even further. If set to ``yes``, lossy files are always copied. Default:
   ``no``. When ``never_convert_lossy_files`` is enabled, lossy source files (for
   example MP3 or Ogg Vorbis) are normally not transcoded and are instead copied
-  or linked as-is. If you explicitly pass a target format on the command line
-  with ``--format``, this override is respected: lossy files matching the query
-  will be transcoded to the requested format even when
-  ``never_convert_lossy_files`` is enabled.
+  or linked as-is. To explicitly transcode lossy files in spite of this, use the
+  ``--force`` option with the ``convert`` command (optionally together with
+  ``--format`` to choose a target format)
 - **paths**: The directory structure and naming scheme for the converted files.
   Uses the same format as the top-level ``paths`` section (see
   :ref:`path-format-config`). Default: Reuse your top-level path format
