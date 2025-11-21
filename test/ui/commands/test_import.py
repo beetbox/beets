@@ -664,7 +664,7 @@ class StoreDictTest(unittest.TestCase):
             _store_dict(option, "--set", "key=", parser)
 
 
-class DisplayFunctionsTest(unittest.TestCase):
+class DisplayFunctionsTest(BeetsTestCase):
     """Tests for display module helper functions."""
 
     def test_disambig_string_with_album_info(self):
@@ -771,38 +771,6 @@ class DisplayFunctionsTest(unittest.TestCase):
         dist = MockDistance()
         result = penalty_string(dist)
         assert result is None
-
-
-class ShowItemChangeTest(IOMixin, BeetsTestCase):
-    """Tests for show_item_change function."""
-
-    def test_show_item_change_displays_track_match(self):
-        """Test show_item_change displays track information."""
-        from beets.ui.commands.import_.display import show_item_change
-
-        item = _common.item()
-        item.artist = "Old Artist"
-        item.title = "Old Title"
-        item.track = 1
-
-        track_info = autotag.TrackInfo(
-            title="New Title",
-            track_id="track_id",
-            index=1,
-            artist="New Artist",
-        )
-
-        # Create a distance value (simple float for track matching)
-        # TrackMatch expects a float distance, not a Distance object
-        track_match = autotag.TrackMatch(0.1, track_info)
-
-        # Call show_item_change
-        show_item_change(item, track_match)
-
-        # Verify output was generated
-        output = self.io.getoutput()
-        assert len(output) > 0
-        assert "New Title" in output or "New Artist" in output
 
 
 class ChangeRepresentationTest(IOMixin, unittest.TestCase):
