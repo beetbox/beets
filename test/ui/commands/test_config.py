@@ -160,3 +160,11 @@ class ConfigCommandTest(BeetsTestCase):
         # Verify file was created
         assert os.path.isfile(new_config_path)
         execlp.assert_called_once_with("myeditor", "myeditor", new_config_path)
+
+    def test_show_empty_config(self):
+        """Test that empty configuration displays appropriate message."""
+        # Mock config.dump to return empty config
+        with patch("beets.config.dump", return_value="{}"):
+            output = self.run_with_output("config")
+
+        assert "Empty configuration" in output
