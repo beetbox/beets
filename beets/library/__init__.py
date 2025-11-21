@@ -1,4 +1,4 @@
-from beets.util import deprecate_imports
+from beets.util.deprecation import deprecate_imports
 
 from .exceptions import FileOperationError, ReadError, WriteError
 from .library import Library
@@ -13,7 +13,7 @@ NEW_MODULE_BY_NAME = dict.fromkeys(
 
 
 def __getattr__(name: str):
-    return deprecate_imports(__name__, NEW_MODULE_BY_NAME, name, "3.0.0")
+    return deprecate_imports(__name__, NEW_MODULE_BY_NAME, name)
 
 
 __all__ = [
