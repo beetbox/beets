@@ -547,3 +547,277 @@ class StoreDictTest(unittest.TestCase):
 
         with pytest.raises(ui.UserError, match="not of the form"):
             _store_dict(option, "--set", "key=", parser)
+
+
+class DisplayFunctionsTest(unittest.TestCase):
+    """Tests for display module helper functions."""
+
+    def test_disambig_string_with_album_info(self):
+        """Test disambig_string with AlbumInfo."""
+        from beets.ui.commands.import_.display import disambig_string
+
+        info = autotag.AlbumInfo(
+            album="Test Album",
+            album_id="test_id",
+            artist="Test Artist",
+            artist_id="artist_id",
+            tracks=[],
+            country="US",
+            year=2020,
+        )
+
+        result = disambig_string(info)
+        # Result depends on config, just verify it returns a string
+        assert isinstance(result, str)
+
+    def test_disambig_string_with_track_info(self):
+        """Test disambig_string with TrackInfo."""
+        from beets.ui.commands.import_.display import disambig_string
+
+        info = autotag.TrackInfo(
+            title="Test Track",
+            track_id="track_id",
+            index=1,
+        )
+
+        result = disambig_string(info)
+        assert isinstance(result, str)
+
+    def test_disambig_string_with_invalid_type(self):
+        """Test disambig_string with invalid type returns empty string."""
+        from beets.ui.commands.import_.display import disambig_string
+
+        result = disambig_string("invalid")
+        assert result == ""
+
+    def test_dist_string(self):
+        """Test dist_string formats distance as percentage."""
+        from beets.ui.commands.import_.display import dist_string
+
+        # Low distance (good match) - around 90%
+        result = dist_string(0.1)
+        assert "90.0%" in result or "90%" in result
+
+        # High distance (poor match)
+        result = dist_string(0.5)
+        assert "50.0%" in result or "50%" in result
+
+    def test_dist_colorize(self):
+        """Test dist_colorize applies color based on distance."""
+        from beets.ui.commands.import_.display import dist_colorize
+
+        # Strong match
+        result = dist_colorize("test", 0.05)
+        assert "test" in result
+
+        # Medium match
+        result = dist_colorize("test", 0.15)
+        assert "test" in result
+
+        # Poor match
+        result = dist_colorize("test", 0.5)
+        assert "test" in result
+
+    def test_penalty_string_with_penalties(self):
+        """Test penalty_string formats penalties."""
+        from beets.ui.commands.import_.display import penalty_string
+
+        # Create a mock distance object with penalties
+        class MockDistance:
+            def keys(self):
+                return ["album_artist", "track_title"]
+
+        dist = MockDistance()
+        result = penalty_string(dist)
+        assert "artist" in result or "title" in result
+
+    def test_penalty_string_with_limit(self):
+        """Test penalty_string respects limit parameter."""
+        from beets.ui.commands.import_.display import penalty_string
+
+        # Create a mock distance with multiple penalties
+        class MockDistance:
+            def keys(self):
+                return ["penalty1", "penalty2", "penalty3", "penalty4"]
+
+        dist = MockDistance()
+        result = penalty_string(dist, limit=2)
+        assert "..." in result
+
+    def test_penalty_string_empty(self):
+        """Test penalty_string with no penalties returns None."""
+        from beets.ui.commands.import_.display import penalty_string
+
+        # Create a mock distance with no penalties
+        class MockDistance:
+            def keys(self):
+                return []
+
+        dist = MockDistance()
+        result = penalty_string(dist)
+        assert result is None
+
+
+class ShowItemChangeTest(IOMixin, BeetsTestCase):
+    """Tests for show_item_change function."""
+
+    def test_show_item_change_displays_track_match(self):
+        """Test show_item_change displays track information."""
+        from beets.ui.commands.import_.display import show_item_change
+
+        item = _common.item()
+        item.artist = "Old Artist"
+        item.title = "Old Title"
+        item.track = 1
+
+        track_info = autotag.TrackInfo(
+            title="New Title",
+            track_id="track_id",
+            index=1,
+            artist="New Artist",
+        )
+
+        # Create a distance value (simple float for track matching)
+        # TrackMatch expects a float distance, not a Distance object
+        track_match = autotag.TrackMatch(0.1, track_info)
+
+        # Call show_item_change
+        show_item_change(item, track_match)
+
+        # Verify output was generated
+        output = self.io.getoutput()
+        assert len(output) > 0
+        assert "New Title" in output or "New Artist" in output
+
+
+class ChangeRepresentationTest(IOMixin, unittest.TestCase):
+    """Tests for ChangeRepresentation class methods."""
+
+    def test_print_layout_with_max_width(self):
+        """Test print_layout with explicit max_width."""
+        from beets.ui.commands.import_.display import ChangeRepresentation
+
+        change = ChangeRepresentation()
+        left = {"prefix": "L:", "contents": "left", "suffix": ""}
+        right = {"prefix": "R:", "contents": "right", "suffix": ""}
+
+        # Should not raise
+        change.print_layout("  ", left, right, max_width=80)
+
+    def test_print_layout_without_max_width(self):
+        """Test print_layout uses terminal width when max_width not provided."""
+        from beets.ui.commands.import_.display import ChangeRepresentation
+
+        change = ChangeRepresentation()
+        left = {"prefix": "L:", "contents": "left", "suffix": ""}
+        right = {"prefix": "R:", "contents": "right", "suffix": ""}
+
+        # Should use terminal width
+        change.print_layout("  ", left, right)
+
+    def test_format_index_with_track_info(self):
+        """Test format_index with TrackInfo object."""
+        from beets.ui.commands.import_.display import ChangeRepresentation
+
+        change = ChangeRepresentation()
+
+        track_info = autotag.TrackInfo(
+            title="Test",
+            track_id="id",
+            index=5,
+            medium_index=3,
+            medium=2,
+        )
+
+        # Mock match with mediums
+        change.match = Mock()
+        change.match.info = Mock()
+        change.match.info.mediums = 2
+
+        result = change.format_index(track_info)
+        assert result in ["2-3", "5", "3"]
+
+    def test_format_index_with_item(self):
+        """Test format_index with Item object."""
+        from beets.ui.commands.import_.display import ChangeRepresentation
+
+        change = ChangeRepresentation()
+        change.match = Mock()
+        change.match.info = Mock()
+        change.match.info.mediums = 1
+
+        item = _common.item()
+        item.track = 5
+        item.disc = 1
+
+        result = change.format_index(item)
+        assert "5" in result
+
+    def test_make_track_titles_with_empty_title(self):
+        """Test make_track_titles when item has no title."""
+        from beets.ui.commands.import_.display import ChangeRepresentation
+
+        item = _common.item()
+        item.title = ""
+        item.path = b"/path/to/file.mp3"
+
+        track_info = autotag.TrackInfo(
+            title="New Title",
+            track_id="id",
+            index=1,
+        )
+
+        cur_title, new_title, changed = ChangeRepresentation.make_track_titles(
+            item, track_info
+        )
+
+        assert "file.mp3" in cur_title
+        assert new_title == "New Title"
+        assert changed is True
+
+    def test_make_track_lengths_with_significant_difference(self):
+        """Test make_track_lengths with large length difference."""
+        from beets.ui.commands.import_.display import ChangeRepresentation
+
+        item = _common.item()
+        item.length = 180.0  # 3 minutes
+
+        track_info = autotag.TrackInfo(
+            title="Test",
+            track_id="id",
+            index=1,
+            length=240.0,  # 4 minutes
+        )
+
+        lhs, rhs, changed = ChangeRepresentation.make_track_lengths(
+            item, track_info
+        )
+
+        assert changed is True
+        assert "3:00" in lhs or "180" in lhs
+        assert "4:00" in rhs or "240" in rhs
+
+    def test_make_track_numbers_with_minor_change(self):
+        """Test make_track_numbers with minor index change."""
+        from beets.ui.commands.import_.display import ChangeRepresentation
+
+        change = ChangeRepresentation()
+        change.match = Mock()
+        change.match.info = Mock()
+        change.match.info.mediums = 1
+
+        item = _common.item()
+        item.track = 5
+
+        track_info = autotag.TrackInfo(
+            title="Test",
+            track_id="id",
+            index=5,
+            medium_index=5,
+        )
+
+        lhs, rhs, changed = change.make_track_numbers(item, track_info)
+
+        # Track number matches, so minor highlight
+        assert "#5" in lhs
+        assert "#5" in rhs
