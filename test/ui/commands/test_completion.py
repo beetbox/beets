@@ -1,12 +1,13 @@
 import os
 import subprocess
 import sys
+from unittest.mock import patch
 
 import pytest
 
 from beets.test import _common
-from beets.test.helper import IOMixin, has_program
-from beets.ui.commands.completion import BASH_COMPLETION_PATHS
+from beets.test.helper import IOMixin, capture_log, has_program
+from beets.ui.commands.completion import BASH_COMPLETION_PATHS, print_completion
 from beets.util import syspath
 
 from ..test_ui import TestPluginTestCase
@@ -62,3 +63,29 @@ class CompletionTest(IOMixin, TestPluginTestCase):
             "test/test_completion.sh did not execute properly. "
             f"Output:{out.decode('utf-8')}"
         )
+
+
+class PrintCompletionTest(IOMixin, TestPluginTestCase):
+    """Tests for the print_completion function."""
+
+    def test_print_completion_warns_when_bash_completion_not_found(self):
+        """Test that print_completion warns when bash-completion is not found."""
+        # Mock os.path.isfile to return False for all bash completion paths
+        with patch("os.path.isfile", return_value=False):
+            with capture_log("beets") as logs:
+                print_completion()
+
+            log_output = " ".join(logs)
+            assert "bash-completion" in log_output
+            assert "Warning" in log_output
+
+    def test_print_completion_no_warning_when_bash_completion_found(self):
+        """Test that print_completion doesn't warn when bash-completion is found."""
+        # Mock os.path.isfile to return True for at least one path
+        with patch("os.path.isfile", return_value=True):
+            with capture_log("beets") as logs:
+                print_completion()
+
+            log_output = " ".join(logs)
+            # Should not contain the warning
+            assert "Unable to find the bash-completion package" not in log_output
