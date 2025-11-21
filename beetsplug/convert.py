@@ -355,8 +355,12 @@ class ConvertPlugin(BeetsPlugin):
         item, original, converted = None, None, None
         while True:
             item = yield (item, original, converted)
+            # item format should represent the converted format, not the original
+            original_format, new_format = item.format, fmt.upper()
+            item.format = new_format
             dest = item.destination(basedir=dest_dir, path_formats=path_formats)
-
+            # need to restore this attribute for checks further along
+            item.format = original_format
             # Ensure that desired item is readable before processing it. Needed
             # to avoid any side-effect of the conversion (linking, keep_new,
             # refresh) if we already know that it will fail.
