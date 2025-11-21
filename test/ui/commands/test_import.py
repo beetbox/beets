@@ -904,3 +904,74 @@ class ChangeRepresentationTest(IOMixin, unittest.TestCase):
         # Track number matches, so minor highlight
         assert "#5" in lhs
         assert "#5" in rhs
+
+    def test_make_medium_info_line_multiple_mediums_with_title(self):
+        """Test make_medium_info_line with multiple mediums and disc title."""
+        from beets.ui.commands.import_.display import ChangeRepresentation
+
+        change = ChangeRepresentation()
+        change.match = Mock()
+        change.match.info = Mock()
+        change.match.info.mediums = 2
+
+        track_info = Mock()
+        track_info.get = lambda key, default=None: {"media": "CD"}.get(key, default)
+        track_info.disctitle = "Bonus Disc"
+        track_info.medium = 1
+
+        result = change.make_medium_info_line(track_info)
+        assert "CD" in result
+        assert "1" in result
+        assert "Bonus Disc" in result
+
+    def test_make_medium_info_line_multiple_mediums_no_title(self):
+        """Test make_medium_info_line with multiple mediums but no disc title."""
+        from beets.ui.commands.import_.display import ChangeRepresentation
+
+        change = ChangeRepresentation()
+        change.match = Mock()
+        change.match.info = Mock()
+        change.match.info.mediums = 2
+
+        track_info = Mock()
+        track_info.get = lambda key, default=None: {"media": "CD"}.get(key, default)
+        track_info.disctitle = None
+        track_info.medium = 2
+
+        result = change.make_medium_info_line(track_info)
+        assert "CD" in result
+        assert "2" in result
+
+    def test_make_medium_info_line_single_medium_with_title(self):
+        """Test make_medium_info_line with single medium and disc title."""
+        from beets.ui.commands.import_.display import ChangeRepresentation
+
+        change = ChangeRepresentation()
+        change.match = Mock()
+        change.match.info = Mock()
+        change.match.info.mediums = 1
+
+        track_info = Mock()
+        track_info.get = lambda key, default=None: {"media": "Vinyl"}.get(key, default)
+        track_info.disctitle = "Side A"
+
+        result = change.make_medium_info_line(track_info)
+        assert "Vinyl" in result
+        assert "Side A" in result
+        assert ":" in result
+
+    def test_make_medium_info_line_single_medium_no_title(self):
+        """Test make_medium_info_line with single medium and no disc title."""
+        from beets.ui.commands.import_.display import ChangeRepresentation
+
+        change = ChangeRepresentation()
+        change.match = Mock()
+        change.match.info = Mock()
+        change.match.info.mediums = 1
+
+        track_info = Mock()
+        track_info.get = lambda key, default=None: default
+        track_info.disctitle = None
+
+        result = change.make_medium_info_line(track_info)
+        assert result == ""
