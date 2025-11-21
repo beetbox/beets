@@ -6,7 +6,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from beets import autotag, config, library, ui
+from beets import autotag, config, importer, library, ui
+from beets.autotag import Recommendation
 from beets.autotag.match import distance
 from beets.test import _common
 from beets.test.helper import BeetsTestCase, IOMixin
@@ -355,6 +356,120 @@ class SummarizeItemsTest(unittest.TestCase):
 
         summary = summarize_items([self.item, i2, i2], False)
         assert summary == "3 items, G 2, F 1, 4kbps, 32:42, 2.9 KiB"
+
+
+class SummaryJudgmentTest(IOMixin, BeetsTestCase):
+    """Tests for the _summary_judgment function."""
+
+    def test_summary_judgment_quiet_strong(self):
+        """Test _summary_judgment returns APPLY in quiet mode with strong rec."""
+        from beets.ui.commands.import_.session import _summary_judgment
+
+        config["import"]["quiet"] = True
+        result = _summary_judgment(Recommendation.strong)
+        assert result == importer.Action.APPLY
+
+    def test_summary_judgment_quiet_medium_skip_fallback(self):
+        """Test _summary_judgment returns SKIP in quiet mode with medium rec."""
+        from beets.ui.commands.import_.session import _summary_judgment
+
+        config["import"]["quiet"] = True
+        config["import"]["quiet_fallback"] = "skip"
+        result = _summary_judgment(Recommendation.medium)
+        assert result == importer.Action.SKIP
+
+    def test_summary_judgment_quiet_medium_asis_fallback(self):
+        """Test _summary_judgment returns ASIS in quiet mode with medium rec."""
+        from beets.ui.commands.import_.session import _summary_judgment
+
+        config["import"]["quiet"] = True
+        config["import"]["quiet_fallback"] = "asis"
+        result = _summary_judgment(Recommendation.medium)
+        assert result == importer.Action.ASIS
+
+    def test_summary_judgment_timid_returns_none(self):
+        """Test _summary_judgment returns None in timid mode."""
+        from beets.ui.commands.import_.session import _summary_judgment
+
+        config["import"]["quiet"] = False
+        config["import"]["timid"] = True
+        result = _summary_judgment(Recommendation.strong)
+        assert result is None
+
+    def test_summary_judgment_none_rec_skip(self):
+        """Test _summary_judgment returns SKIP for none recommendation."""
+        from beets.ui.commands.import_.session import _summary_judgment
+
+        config["import"]["quiet"] = False
+        config["import"]["timid"] = False
+        config["import"]["none_rec_action"] = "skip"
+        result = _summary_judgment(Recommendation.none)
+        assert result == importer.Action.SKIP
+
+    def test_summary_judgment_none_rec_asis(self):
+        """Test _summary_judgment returns ASIS for none recommendation."""
+        from beets.ui.commands.import_.session import _summary_judgment
+
+        config["import"]["quiet"] = False
+        config["import"]["timid"] = False
+        config["import"]["none_rec_action"] = "asis"
+        result = _summary_judgment(Recommendation.none)
+        assert result == importer.Action.ASIS
+
+    def test_summary_judgment_none_rec_ask(self):
+        """Test _summary_judgment returns None for none recommendation with ask."""
+        from beets.ui.commands.import_.session import _summary_judgment
+
+        config["import"]["quiet"] = False
+        config["import"]["timid"] = False
+        config["import"]["none_rec_action"] = "ask"
+        result = _summary_judgment(Recommendation.none)
+        assert result is None
+
+    def test_summary_judgment_default_returns_none(self):
+        """Test _summary_judgment returns None for default case."""
+        from beets.ui.commands.import_.session import _summary_judgment
+
+        config["import"]["quiet"] = False
+        config["import"]["timid"] = False
+        result = _summary_judgment(Recommendation.medium)
+        assert result is None
+
+
+class AbortActionTest(BeetsTestCase):
+    """Tests for the abort_action function."""
+
+    def test_abort_action_raises_import_abort_error(self):
+        """Test that abort_action raises ImportAbortError."""
+        from beets.ui.commands.import_.session import abort_action
+
+        with pytest.raises(importer.ImportAbortError):
+            abort_action(None, None)
+
+
+class PromptChoiceTest(unittest.TestCase):
+    """Tests for the PromptChoice named tuple."""
+
+    def test_prompt_choice_creation(self):
+        """Test creating a PromptChoice."""
+        from beets.ui.commands.import_.session import PromptChoice
+
+        callback = lambda s, t: None
+        choice = PromptChoice("s", "Skip", callback)
+        assert choice.short == "s"
+        assert choice.long == "Skip"
+        assert choice.callback == callback
+
+    def test_prompt_choice_tuple_behavior(self):
+        """Test PromptChoice behaves as a tuple."""
+        from beets.ui.commands.import_.session import PromptChoice
+
+        callback = lambda s, t: None
+        choice = PromptChoice("s", "Skip", callback)
+        assert len(choice) == 3
+        assert choice[0] == "s"
+        assert choice[1] == "Skip"
+        assert choice[2] == callback
 
 
 class ImportFuncTest(IOMixin, BeetsTestCase):
