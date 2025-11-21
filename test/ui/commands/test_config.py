@@ -136,3 +136,27 @@ class ConfigCommandTest(BeetsTestCase):
         execlp.assert_called_once_with(
             "myeditor", "myeditor", self.cli_config_path
         )
+
+    def test_config_paths_includes_user_path_when_not_in_sources(self):
+        """Test that user config path is prepended if not in sources."""
+        # Create a scenario where config file doesn't exist yet
+        non_existent_path = os.path.join(self.temp_dir.decode(), "nonexistent.yaml")
+
+        with patch("beets.config.user_config_path", return_value=non_existent_path):
+            output = self.run_with_output("config", "-p")
+
+        paths = output.split("\n")
+        # The non-existent user path should be first
+        assert non_existent_path in paths[0]
+
+    def test_edit_creates_config_file_if_not_exists(self):
+        """Test that edit creates config file if it doesn't exist."""
+        new_config_path = os.path.join(self.temp_dir.decode(), "new_config.yaml")
+
+        os.environ["EDITOR"] = "myeditor"
+        with patch("os.execlp") as execlp:
+            self.run_command("--config", new_config_path, "config", "-e")
+
+        # Verify file was created
+        assert os.path.isfile(new_config_path)
+        execlp.assert_called_once_with("myeditor", "myeditor", new_config_path)
