@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 from mediafile import MediaFile
 
-from beets import library
+from beets import library, ui
 from beets.test import _common
 from beets.test.helper import BeetsTestCase, IOMixin, capture_log
 from beets.ui.commands.update import update_func, update_items
@@ -485,3 +485,42 @@ class UpdateFuncTest(IOMixin, BeetsTestCase):
         # Should not contain warning message
         output = self.io.getoutput()
         assert "Library path is unavailable" not in output
+
+    def test_missing_library_directory_user_declines(self):
+        """Test that user can decline to continue with missing directory."""
+        from unittest.mock import patch
+
+        # Create a mock options object
+        class MockOpts:
+            album = False
+            move = False
+            pretend = False
+            fields = None
+            exclude_fields = None
+
+        opts = MockOpts()
+
+        # Save original directory
+        original_dir = self.lib.directory
+        self.lib.directory = b"/nonexistent/path"
+
+        try:
+            # Patch ui.print_ in the update module to handle bytes
+            with patch("beets.ui.commands.update.ui.print_") as mock_print:
+                # User answers 'no' to continue
+                self.io.addinput("n")
+
+                # Call update_func - should return early
+                result = update_func(self.lib, opts, [])
+
+                # Should have returned without doing anything
+                assert result is None
+
+                # Verify print was called with warning messages
+                assert mock_print.call_count >= 2
+                call_args = [str(call[0][0]) if call[0] else "" for call in mock_print.call_args_list]
+                output_str = " ".join(call_args)
+                assert "Library path is unavailable or does not exist" in output_str
+        finally:
+            # Restore original directory
+            self.lib.directory = original_dir
