@@ -1,6 +1,6 @@
 from beets.test import _common
-from beets.test.helper import BeetsTestCase, capture_stdout
-from beets.ui.commands.list import list_items
+from beets.test.helper import BeetsTestCase, IOMixin, capture_stdout
+from beets.ui.commands.list import list_func, list_items
 
 
 class ListTest(BeetsTestCase):
@@ -67,3 +67,51 @@ class ListTest(BeetsTestCase):
         stdout = self._run_list(album=True, fmt="$genre")
         assert "the genre" in stdout.getvalue()
         assert "the album" not in stdout.getvalue()
+
+
+class ListFuncTest(IOMixin, BeetsTestCase):
+    """Tests for the list_func command function."""
+
+    def setUp(self):
+        super().setUp()
+        self.item = self.add_item_fixture(title="TestItem", artist="TestArtist")
+
+    def test_list_func_items(self):
+        """Test list_func lists items by default."""
+
+        class MockOpts:
+            album = False
+
+        opts = MockOpts()
+        list_func(self.lib, opts, [])
+
+        output = self.io.getoutput()
+        assert "TestItem" in output
+
+    def test_list_func_albums(self):
+        """Test list_func lists albums when album flag is set."""
+        album = self.add_album_fixture()
+
+        class MockOpts:
+            album = True
+
+        opts = MockOpts()
+        list_func(self.lib, opts, [])
+
+        output = self.io.getoutput()
+        # Should show album info, not just item title
+        assert "TestItem" not in output  # Item title shouldn't appear in album list
+
+    def test_list_func_with_query(self):
+        """Test list_func passes query arguments."""
+        item2 = self.add_item_fixture(title="DifferentItem", artist="DifferentArtist")
+
+        class MockOpts:
+            album = False
+
+        opts = MockOpts()
+        list_func(self.lib, opts, ["artist:TestArtist"])
+
+        output = self.io.getoutput()
+        assert "TestItem" in output
+        assert "DifferentItem" not in output
