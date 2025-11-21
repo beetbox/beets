@@ -1,8 +1,9 @@
 import os
+from unittest.mock import Mock
 
 from beets import library
 from beets.test.helper import BeetsTestCase, IOMixin
-from beets.ui.commands.remove import remove_items
+from beets.ui.commands.remove import remove_func, remove_items
 from beets.util import MoveOperation, syspath
 
 
@@ -78,3 +79,77 @@ class RemoveTest(IOMixin, BeetsTestCase):
         num_existing += 1 if os.path.exists(syspath(path1)) else 0
         num_existing += 1 if os.path.exists(syspath(path2)) else 0
         assert num_existing == 1
+
+    def test_remove_items_no_selection(self):
+        """Test that nothing is removed when user answers 'n' to all prompts."""
+        # Add another item
+        i2 = library.Item.from_path(self.resource_path)
+        self.lib.add(i2)
+        i2.move(operation=MoveOperation.COPY)
+
+        # User answers 'n' to all items
+        self.io.addinput("n")
+        self.io.addinput("n")
+
+        remove_items(self.lib, "", False, False, False)
+
+        # Both items should still exist
+        items = self.lib.items()
+        assert len(list(items)) == 2
+
+
+class RemoveFuncTest(IOMixin, BeetsTestCase):
+    """Tests for the remove_func command function."""
+
+    def setUp(self):
+        super().setUp()
+        self.item = self.add_item_fixture()
+
+    def test_remove_func_no_delete(self):
+        """Test remove_func respects delete flag when False."""
+
+        class MockOpts:
+            album = False
+            delete = False
+            force = True
+
+        opts = MockOpts()
+        remove_func(self.lib, opts, [])
+
+        # Item should be removed from library
+        items = self.lib.items()
+        assert len(list(items)) == 0
+
+    def test_remove_func_with_delete(self):
+        """Test remove_func respects delete flag when True."""
+        item_path = self.item.path
+
+        class MockOpts:
+            album = False
+            delete = True
+            force = True
+
+        opts = MockOpts()
+        remove_func(self.lib, opts, [])
+
+        # Item should be removed from library and file deleted
+        items = self.lib.items()
+        assert len(list(items)) == 0
+        assert not os.path.exists(syspath(item_path))
+
+    def test_remove_func_respects_query(self):
+        """Test remove_func passes query arguments."""
+        item2 = self.add_item_fixture(artist="DifferentArtist")
+
+        class MockOpts:
+            album = False
+            delete = False
+            force = True
+
+        opts = MockOpts()
+        remove_func(self.lib, opts, ["artist:DifferentArtist"])
+
+        # Only item2 should be removed
+        items = list(self.lib.items())
+        assert len(items) == 1
+        assert items[0].artist != "DifferentArtist"
