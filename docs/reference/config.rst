@@ -306,6 +306,44 @@ Either ``yes`` or ``no``, indicating whether matched tracks and albums should
 use the artist credit, rather than the artist. That is, if this option is turned
 on, then ``artist`` will contain the artist as credited on the release.
 
+.. _multi_value_genres:
+
+multi_value_genres
+~~~~~~~~~~~~~~~~~~
+
+Either ``yes`` or ``no`` (default: ``yes``), controlling whether to use native
+support for multiple genres per album/track. When enabled, the ``genres`` field
+stores genres as a list and writes them to files as multiple individual genre
+tags (e.g., separate GENRE tags for FLAC/MP3). The single ``genre`` field is
+maintained as a joined string for backward compatibility. When disabled, only
+the first genre is used (preserving the old behavior).
+
+.. _genre_separator:
+
+genre_separator
+~~~~~~~~~~~~~~~
+
+Default: ``", "``.
+
+The separator string used when joining multiple genres into the single ``genre``
+field. This setting is only used when :ref:`multi_value_genres` is enabled. For
+example, with the default separator, a track with genres ``["Rock",
+"Alternative", "Indie"]`` will have ``genre`` set to ``"Rock, Alternative,
+Indie"``. You can customize this to match your preferred format (e.g., ``"; "``
+or ``" / "``).
+
+The default (``", "``) matches the :doc:`lastgenre plugin's
+</plugins/lastgenre>` default separator for seamless migration. When
+:ref:`multi_value_genres` is enabled, this global separator takes precedence
+over the lastgenre plugin's ``separator`` option to ensure consistency across
+all genre-related operations.
+
+**Custom separator migration**: If you previously used a custom (non-default)
+``separator`` in the lastgenre plugin, set ``genre_separator`` to match your
+custom value. You can check your existing format by running ``beet ls -f
+'$genre' | head -20``. Alternatively, set ``multi_value_genres: no`` to preserve
+the old behavior entirely.
+
 .. _per_disc_numbering:
 
 per_disc_numbering
