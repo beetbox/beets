@@ -1,9 +1,8 @@
 import os
-from unittest.mock import patch
 
 from mediafile import MediaFile
 
-from beets import library, ui
+from beets import library
 from beets.test import _common
 from beets.test.helper import BeetsTestCase, IOMixin, capture_log
 from beets.ui.commands.update import update_func, update_items
@@ -424,7 +423,7 @@ class UpdateFuncTest(IOMixin, BeetsTestCase):
             assert "Library path is unavailable or does not exist" in output
         except TypeError as e:
             # Expected due to bug in production code
-            assert "expected str instance, bytes found" in str(e)
+            assert "expected str instance, bytes found" in str(e)  # noqa: PT017
         finally:
             # Restore original directory
             self.lib.directory = original_dir
@@ -459,7 +458,7 @@ class UpdateFuncTest(IOMixin, BeetsTestCase):
             assert "Library path is unavailable or does not exist" in output
         except TypeError as e:
             # Expected due to bug in production code
-            assert "expected str instance, bytes found" in str(e)
+            assert "expected str instance, bytes found" in str(e)  # noqa: PT017
         finally:
             # Restore original directory
             self.lib.directory = original_dir

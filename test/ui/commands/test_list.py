@@ -90,7 +90,7 @@ class ListFuncTest(IOMixin, BeetsTestCase):
 
     def test_list_func_albums(self):
         """Test list_func lists albums when album flag is set."""
-        album = self.add_album_fixture()
+        self.add_album_fixture()
 
         class MockOpts:
             album = True
@@ -104,7 +104,7 @@ class ListFuncTest(IOMixin, BeetsTestCase):
 
     def test_list_func_with_query(self):
         """Test list_func passes query arguments."""
-        item2 = self.add_item_fixture(title="DifferentItem", artist="DifferentArtist")
+        self.add_item_fixture(title="DifferentItem", artist="DifferentArtist")
 
         class MockOpts:
             album = False

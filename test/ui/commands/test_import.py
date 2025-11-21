@@ -64,7 +64,7 @@ class ImportTest(BeetsTestCase):
         assert actual_paths == expected_paths
 
     def test_parse_paths_from_logfile_invalid_line_no_separator(self):
-        """Test that paths_from_logfile raises ValueError for lines without separator."""
+        """Test paths_from_logfile raises ValueError for invalid lines."""
         logfile_content = "invalidverb\n"  # No space separator
         logfile = os.path.join(self.temp_dir, b"logfile.log")
         with open(logfile, mode="w") as fp:
@@ -116,7 +116,9 @@ class ImportTest(BeetsTestCase):
             config["import"]["timid"] = False
 
             # Mock TerminalImportSession to avoid actual import
-            with patch("beets.ui.commands.import_.TerminalImportSession") as mock_session:
+            with patch(
+                "beets.ui.commands.import_.TerminalImportSession"
+            ) as mock_session:
                 mock_instance = Mock()
                 mock_session.return_value = mock_instance
 
@@ -124,7 +126,7 @@ class ImportTest(BeetsTestCase):
 
                 # Verify session was created and run was called
                 assert mock_session.called
-                assert mock_instance.run.called
+                assert mock_instance.run.called  # noqa: E501
         finally:
             config["import"]["log"] = None
             log_pathobj.unlink(missing_ok=True)
@@ -456,7 +458,9 @@ class PromptChoiceTest(unittest.TestCase):
         """Test creating a PromptChoice."""
         from beets.ui.commands.import_.session import PromptChoice
 
-        callback = lambda s, t: None
+        def callback(s, t):
+            return None
+
         choice = PromptChoice("s", "Skip", callback)
         assert choice.short == "s"
         assert choice.long == "Skip"
@@ -466,7 +470,9 @@ class PromptChoiceTest(unittest.TestCase):
         """Test PromptChoice behaves as a tuple."""
         from beets.ui.commands.import_.session import PromptChoice
 
-        callback = lambda s, t: None
+        def callback(s, t):
+            return None
+
         choice = PromptChoice("s", "Skip", callback)
         assert len(choice) == 3
         assert choice[0] == "s"

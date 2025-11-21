@@ -1,6 +1,5 @@
 """Tests for the 'stats' command."""
 
-import os
 from unittest.mock import patch
 
 from beets.test.helper import BeetsTestCase, IOMixin
@@ -71,7 +70,7 @@ class StatsTest(IOMixin, BeetsTestCase):
 
     def test_stats_exact_mode(self):
         """Test stats with exact flag for precise size and time."""
-        item = self.add_item_fixture(
+        self.add_item_fixture(
             title="Track",
             artist="Artist",
             album="Album",
@@ -91,7 +90,7 @@ class StatsTest(IOMixin, BeetsTestCase):
 
     def test_stats_exact_mode_file_size(self):
         """Test that exact mode uses actual file size."""
-        item = self.add_item_fixture(
+        self.add_item_fixture(
             title="Track",
             artist="Artist",
             album="Album",
@@ -112,7 +111,7 @@ class StatsTest(IOMixin, BeetsTestCase):
 
     def test_stats_exact_mode_file_not_found(self):
         """Test exact mode when file doesn't exist (OSError)."""
-        item = self.add_item_fixture(
+        self.add_item_fixture(
             title="Track",
             artist="Artist",
             album="Album",

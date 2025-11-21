@@ -1,10 +1,11 @@
 import shutil
 from unittest.mock import patch
 
+import pytest
+
 from beets import library, ui
 from beets.test.helper import BeetsTestCase, IOMixin, capture_log
 from beets.ui.commands.move import move_func, move_items, show_path_changes
-from beets.util import MoveOperation, displayable_path
 
 
 class MoveTest(BeetsTestCase):
@@ -127,11 +128,8 @@ class MoveTest(BeetsTestCase):
         self._move()
 
         # Try to move with a query that matches nothing - should raise UserError
-        try:
+        with pytest.raises(ui.UserError, match="No matching items found"):
             self._move(query=["nonexistent"])
-            assert False, "Should have raised UserError for no matching items"
-        except ui.UserError as e:
-            assert "No matching items found" in str(e)
 
     def test_confirm_mode_item(self):
         """Test that confirm mode prompts for each item."""
@@ -296,7 +294,10 @@ class ShowPathChangesTest(IOMixin, BeetsTestCase):
     def test_show_path_changes_unicode_paths(self):
         """Test handling of unicode characters in paths."""
         path_changes = [
-            (b"/music/artist/\xc3\xa9\xc3\xa0\xc3\xbc.mp3", b"/new/\xc3\xa9\xc3\xa0\xc3\xbc.mp3"),
+            (
+                b"/music/artist/\xc3\xa9\xc3\xa0\xc3\xbc.mp3",
+                b"/new/\xc3\xa9\xc3\xa0\xc3\xbc.mp3",
+            ),
         ]
 
         show_path_changes(path_changes)
@@ -336,11 +337,8 @@ class MoveFuncTest(IOMixin, BeetsTestCase):
         opts = MockOpts()
 
         # Should raise UserError for non-existent directory
-        try:
+        with pytest.raises(ui.UserError, match="no such directory"):
             move_func(self.lib, opts, [])
-            assert False, "Should have raised UserError"
-        except ui.UserError as e:
-            assert "no such directory" in str(e)
 
     def test_valid_destination_no_error(self):
         """Test that valid destination doesn't raise error."""
@@ -414,7 +412,6 @@ class MoveFuncTest(IOMixin, BeetsTestCase):
 
         opts = MockOpts()
 
-        original_path = self.i.path
         move_func(self.lib, opts, [])
 
         # Original should still exist (copy, not move)

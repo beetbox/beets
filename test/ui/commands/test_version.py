@@ -80,7 +80,7 @@ class VersionTest(IOMixin, BeetsTestCase):
             assert "plugins: alpha, beta, zebra" in output
 
     def test_show_version_accepts_args(self):
-        """Test that show_version accepts arbitrary arguments (for command interface)."""
+        """Test show_version accepts arbitrary arguments."""
         # The function signature is show_version(*args) to accept command args
         show_version("arg1", "arg2", "arg3")
 

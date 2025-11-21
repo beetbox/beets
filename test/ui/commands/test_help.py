@@ -1,6 +1,8 @@
 """Tests for the 'help' command."""
 
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
+
+import pytest
 
 from beets import ui
 from beets.test.helper import BeetsTestCase, IOMixin
@@ -59,12 +61,8 @@ class HelpCommandTest(IOMixin, BeetsTestCase):
         self.help_cmd.root_parser = mock_root_parser
 
         # Call func with invalid command name and expect UserError
-        try:
+        with pytest.raises(ui.UserError, match="unknown command.*nonexistent"):
             self.help_cmd.func(self.lib, Mock(), ["nonexistent"])
-            assert False, "Should have raised UserError"
-        except ui.UserError as e:
-            assert "unknown command" in str(e)
-            assert "nonexistent" in str(e)
 
         # Verify _subcommand_for_name was called
         mock_root_parser._subcommand_for_name.assert_called_once_with(

@@ -1,10 +1,11 @@
 import unittest
 from unittest.mock import patch
 
+import pytest
 from mediafile import MediaFile
 
-from beets import library, ui
-from beets.test.helper import BeetsTestCase, IOMixin, capture_log, control_stdin
+from beets import ui
+from beets.test.helper import BeetsTestCase, IOMixin, control_stdin
 from beets.ui.commands.modify import (
     modify_func,
     modify_items,
@@ -236,10 +237,10 @@ class ModifyTest(BeetsTestCase):
     def test_modify_items_no_changes(self):
         """Test that modify_items raises UserError when no items match query."""
         # Add item with specific title
-        item = self.add_item_fixture(title="TargetTitle")
+        self.add_item_fixture(title="TargetTitle")
 
         # Should raise UserError when no items match the query
-        try:
+        with pytest.raises(ui.UserError, match="No matching items found"):
             modify_items(
                 self.lib,
                 {"artist": "NewArtist"},
@@ -251,9 +252,6 @@ class ModifyTest(BeetsTestCase):
                 False,
                 True,
             )
-            assert False, "Should have raised UserError"
-        except ui.UserError as e:
-            assert "No matching items found" in str(e)
 
     def test_modify_items_no_actual_changes(self):
         """Test that modify_items doesn't change items when values are the same."""
@@ -282,7 +280,7 @@ class ModifyTest(BeetsTestCase):
 
     def test_modify_items_confirm_write_and_move(self):
         """Test confirm message when both write and move are enabled."""
-        item = self.add_item_fixture(title="OldTitle")
+        self.add_item_fixture(title="OldTitle")
 
         with patch("beets.ui.input_select_objects") as mock_select:
             mock_select.return_value = []
@@ -304,7 +302,7 @@ class ModifyTest(BeetsTestCase):
 
     def test_modify_items_confirm_write_only(self):
         """Test confirm message when only write is enabled."""
-        item = self.add_item_fixture(title="OldTitle")
+        self.add_item_fixture(title="OldTitle")
 
         with patch("beets.ui.input_select_objects") as mock_select:
             mock_select.return_value = []
@@ -325,7 +323,7 @@ class ModifyTest(BeetsTestCase):
 
     def test_modify_items_confirm_move_only(self):
         """Test confirm message when only move is enabled."""
-        item = self.add_item_fixture(title="OldTitle")
+        self.add_item_fixture(title="OldTitle")
 
         with patch("beets.ui.input_select_objects") as mock_select:
             mock_select.return_value = []
@@ -346,7 +344,7 @@ class ModifyTest(BeetsTestCase):
 
     def test_modify_items_confirm_neither_write_nor_move(self):
         """Test confirm message when neither write nor move is enabled."""
-        item = self.add_item_fixture(title="OldTitle")
+        self.add_item_fixture(title="OldTitle")
 
         with patch("beets.ui.input_select_objects") as mock_select:
             mock_select.return_value = []
@@ -509,11 +507,8 @@ class ModifyFuncTest(IOMixin, BeetsTestCase):
         opts = MockOpts()
 
         # Should raise UserError when no mods or dels
-        try:
+        with pytest.raises(ui.UserError, match="no modifications specified"):
             modify_func(self.lib, opts, [])
-            assert False, "Should have raised UserError"
-        except ui.UserError as e:
-            assert "no modifications specified" in str(e)
 
     def test_modify_func_only_query_no_modifications(self):
         """Test that modify_func raises error with only query, no modifications."""
@@ -528,11 +523,8 @@ class ModifyFuncTest(IOMixin, BeetsTestCase):
         opts = MockOpts()
 
         # Should raise UserError when only query provided
-        try:
+        with pytest.raises(ui.UserError, match="no modifications specified"):
             modify_func(self.lib, opts, ["title:TestTitle"])
-            assert False, "Should have raised UserError"
-        except ui.UserError as e:
-            assert "no modifications specified" in str(e)
 
     def test_modify_func_with_modifications(self):
         """Test that modify_func works with valid modifications."""

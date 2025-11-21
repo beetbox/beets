@@ -1,5 +1,4 @@
 import os
-from unittest.mock import Mock
 
 from beets import library
 from beets.test.helper import BeetsTestCase, IOMixin
@@ -139,7 +138,7 @@ class RemoveFuncTest(IOMixin, BeetsTestCase):
 
     def test_remove_func_respects_query(self):
         """Test remove_func passes query arguments."""
-        item2 = self.add_item_fixture(artist="DifferentArtist")
+        self.add_item_fixture(artist="DifferentArtist")
 
         class MockOpts:
             album = False
