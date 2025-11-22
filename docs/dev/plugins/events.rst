@@ -175,7 +175,7 @@ registration process in this case:
         or adjustments (e.g., ``mbsync``).
 
 ``albuminfo_received``
-    :Parameters: ``info`` (|AlbumInfo|), ``items`` (iterable of |Item|)
+    :Parameters: ``info`` (|AlbumInfo|)
     :Description: Like ``trackinfo_received`` but for album-level metadata.
 
 ``album_matched``
