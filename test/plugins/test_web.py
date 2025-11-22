@@ -118,6 +118,13 @@ class WebPluginTest(ItemInDBTestCase):
         assert response.status_code == 200
         assert len(res_json["items"]) == 3
 
+    def test_get_unique_item_artist(self):
+        response = self.client.get("/item/values/artist")
+        res_json = json.loads(response.data.decode("utf-8"))
+
+        assert response.status_code == 200
+        assert res_json["values"] == ["", "AAA Singers"]
+
     def test_get_single_item_by_id(self):
         response = self.client.get("/item/1")
         res_json = json.loads(response.data.decode("utf-8"))
