@@ -148,7 +148,9 @@ class ImportTest(BeetsTestCase):
         config["import"]["quiet"] = True
         config["import"]["timid"] = False
 
-        with patch("beets.ui.commands.import_.TerminalImportSession") as mock_session:
+        with patch(
+            "beets.ui.commands.import_.TerminalImportSession"
+        ) as mock_session:
             mock_instance = Mock()
             mock_session.return_value = mock_instance
 
@@ -568,7 +570,9 @@ class ImportFuncTest(IOMixin, BeetsTestCase):
         opts.from_logfiles = [logfile.decode()]
 
         # Should raise error when all paths from logfile don't exist
-        with pytest.raises(ui.UserError, match="none of the paths are importable"):
+        with pytest.raises(
+            ui.UserError, match="none of the paths are importable"
+        ):
             import_func(self.lib, opts, [])
 
     def test_import_func_from_logfile_with_existing_path(self):
@@ -636,7 +640,10 @@ class StoreDictTest(unittest.TestCase):
         _store_dict(option, "--set", "album=Abbey Road", parser)
 
         # Verify value was added to existing dictionary
-        assert parser.values.set_fields == {"artist": "Beatles", "album": "Abbey Road"}
+        assert parser.values.set_fields == {
+            "artist": "Beatles",
+            "album": "Abbey Road",
+        }
 
     def test_store_dict_invalid_format_no_equals(self):
         """Test _store_dict with invalid format (no equals sign)."""
@@ -923,7 +930,9 @@ class ChangeRepresentationTest(IOMixin, unittest.TestCase):
         change.match.info.mediums = 2
 
         track_info = Mock()
-        track_info.get = lambda key, default=None: {"media": "CD"}.get(key, default)
+        track_info.get = lambda key, default=None: {"media": "CD"}.get(
+            key, default
+        )
         track_info.disctitle = "Bonus Disc"
         track_info.medium = 1
 
@@ -942,7 +951,9 @@ class ChangeRepresentationTest(IOMixin, unittest.TestCase):
         change.match.info.mediums = 2
 
         track_info = Mock()
-        track_info.get = lambda key, default=None: {"media": "CD"}.get(key, default)
+        track_info.get = lambda key, default=None: {"media": "CD"}.get(
+            key, default
+        )
         track_info.disctitle = None
         track_info.medium = 2
 
@@ -960,7 +971,9 @@ class ChangeRepresentationTest(IOMixin, unittest.TestCase):
         change.match.info.mediums = 1
 
         track_info = Mock()
-        track_info.get = lambda key, default=None: {"media": "Vinyl"}.get(key, default)
+        track_info.get = lambda key, default=None: {"media": "Vinyl"}.get(
+            key, default
+        )
         track_info.disctitle = "Side A"
 
         result = change.make_medium_info_line(track_info)

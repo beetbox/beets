@@ -100,7 +100,9 @@ class ListFuncTest(IOMixin, BeetsTestCase):
 
         output = self.io.getoutput()
         # Should show album info, not just item title
-        assert "TestItem" not in output  # Item title shouldn't appear in album list
+        assert (
+            "TestItem" not in output
+        )  # Item title shouldn't appear in album list
 
     def test_list_func_with_query(self):
         """Test list_func passes query arguments."""

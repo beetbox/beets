@@ -88,4 +88,6 @@ class PrintCompletionTest(IOMixin, TestPluginTestCase):
 
             log_output = " ".join(logs)
             # Should not contain the warning
-            assert "Unable to find the bash-completion package" not in log_output
+            assert (
+                "Unable to find the bash-completion package" not in log_output
+            )

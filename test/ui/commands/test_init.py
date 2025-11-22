@@ -19,7 +19,9 @@ class TestDeprecatedImports:
             try:
                 _ = commands.TerminalImportSession
                 # If the import worked, verify a deprecation warning was issued
-                assert any(issubclass(warn.category, DeprecationWarning) for warn in w)
+                assert any(
+                    issubclass(warn.category, DeprecationWarning) for warn in w
+                )
             except AttributeError:
                 # If it doesn't exist, that's also valid (fully removed)
                 pass
@@ -34,7 +36,9 @@ class TestDeprecatedImports:
             try:
                 _ = commands.PromptChoice
                 # If the import worked, verify a deprecation warning was issued
-                assert any(issubclass(warn.category, DeprecationWarning) for warn in w)
+                assert any(
+                    issubclass(warn.category, DeprecationWarning) for warn in w
+                )
             except AttributeError:
                 # If it doesn't exist, that's also valid (fully removed)
                 pass

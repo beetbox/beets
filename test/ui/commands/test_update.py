@@ -364,6 +364,7 @@ class UpdateTest(IOMixin, BeetsTestCase):
 
         # Touch the file (changes mtime but not metadata)
         import time
+
         time.sleep(0.01)
         os.utime(syspath(self.i.path), None)
 
@@ -397,6 +398,7 @@ class UpdateFuncTest(IOMixin, BeetsTestCase):
         This test exposes a bug in the production code where lib.directory
         (bytes) is passed to ui.print_() which expects a string.
         """
+
         # Create a mock options object
         class MockOpts:
             album = False
@@ -434,6 +436,7 @@ class UpdateFuncTest(IOMixin, BeetsTestCase):
         This test exposes a bug in the production code where lib.directory
         (bytes) is passed to ui.print_() which expects a string.
         """
+
         # Create a mock options object
         class MockOpts:
             album = False
@@ -465,6 +468,7 @@ class UpdateFuncTest(IOMixin, BeetsTestCase):
 
     def test_normal_library_directory_no_prompt(self):
         """Test that valid library directory doesn't prompt user."""
+
         # Create a mock options object
         class MockOpts:
             album = False
@@ -521,7 +525,10 @@ class UpdateFuncTest(IOMixin, BeetsTestCase):
                     str(call[0][0]) if call[0] else ""
                     for call in mock_print.call_args_list
                 )
-                assert "Library path is unavailable or does not exist" in output_str
+                assert (
+                    "Library path is unavailable or does not exist"
+                    in output_str
+                )
         finally:
             # Restore original directory
             self.lib.directory = original_dir

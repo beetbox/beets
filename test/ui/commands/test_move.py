@@ -156,7 +156,14 @@ class MoveTest(BeetsTestCase):
         with patch("beets.ui.input_select_objects") as mock_select:
             mock_select.return_value = [self.album]
             move_items(
-                self.lib, None, (), False, True, False, confirm=True, export=False
+                self.lib,
+                None,
+                (),
+                False,
+                True,
+                False,
+                confirm=True,
+                export=False,
             )
 
             # Verify input_select_objects was called
@@ -261,8 +268,12 @@ class ShowPathChangesTest(IOMixin, BeetsTestCase):
 
     def test_show_path_changes_two_lines(self):
         """Test path changes displayed on two lines for long paths."""
-        long_source = b"/very/long/path/to/source/file/that/exceeds/column/width.mp3"
-        long_dest = b"/very/long/path/to/dest/file/that/exceeds/column/width.mp3"
+        long_source = (
+            b"/very/long/path/to/source/file/that/exceeds/column/width.mp3"
+        )
+        long_dest = (
+            b"/very/long/path/to/dest/file/that/exceeds/column/width.mp3"
+        )
         path_changes = [(long_source, long_dest)]
 
         # Mock narrow terminal

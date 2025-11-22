@@ -42,7 +42,9 @@ class HelpCommandTest(IOMixin, BeetsTestCase):
 
         # Mock root_parser to return the subcommand
         mock_root_parser = Mock()
-        mock_root_parser._subcommand_for_name = Mock(return_value=mock_subcommand)
+        mock_root_parser._subcommand_for_name = Mock(
+            return_value=mock_subcommand
+        )
         self.help_cmd.root_parser = mock_root_parser
 
         # Call func with command name

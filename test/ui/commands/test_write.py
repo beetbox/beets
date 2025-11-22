@@ -107,6 +107,7 @@ class WriteTest(BeetsTestCase):
 
         # Capture the file's mtime after the initial write
         import time
+
         time.sleep(0.01)  # Ensure mtime difference is detectable
         original_mtime = os.path.getmtime(item.path)
 
