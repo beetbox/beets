@@ -39,7 +39,10 @@ def candidates(items, *args, **kwargs) -> Iterable[AlbumInfo]:
     """Return matching album candidates from all metadata source plugins."""
     for plugin in find_metadata_source_plugins():
         for info in plugin.candidates(items, *args, **kwargs):
-            send("albuminfo_received", info=info, items=items)
+            send(
+                "albuminfo_received",
+                info=plugin.before_album_info_emitted(items, info),
+            )
             yield info
 
 
@@ -60,7 +63,10 @@ def album_for_id(
     """
     for plugin in find_metadata_source_plugins():
         if info := plugin.album_for_id(album_id=_id):
-            send("albuminfo_received", info=info, items=items)
+            send(
+                "albuminfo_received",
+                info=plugin.before_album_info_emitted(items, info),
+            )
             return info
 
     return None
@@ -131,6 +137,18 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
         """Return :py:class:`AlbumInfo` object or None if no matching release was
         found."""
         raise NotImplementedError
+
+    def before_album_info_emitted(
+        self,
+        items: Iterable[Item],
+        album_info: AlbumInfo,
+    ) -> AlbumInfo:
+        """Called after an :py:class:`AlbumInfo` object has been found for a set
+        of :py:class:`Item` objects but before the ``albuminfo_received``
+        :py:type:`plugins.EventType` has been sent. The returned instance will
+        be the payload of the event.
+        """
+        return album_info
 
     @abc.abstractmethod
     def track_for_id(self, track_id: str) -> TrackInfo | None:

@@ -141,7 +141,7 @@ class TestMBPseudoPlugin(PluginMixin):
         item["title"] = "百花繚乱"
 
         # if items don't have mb_*, they are not modified
-        mbpseudo_plugin._on_album_info_received(pseudo_info, [item])
+        mbpseudo_plugin.before_album_info_emitted([item], pseudo_info)
         assert pseudo_info.album == item.title
 
         pseudo_info.use_pseudo_as_ref()
@@ -153,7 +153,7 @@ class TestMBPseudoPlugin(PluginMixin):
         assert item.get("mb_trackid") == "mb_tid"
 
         # if items have mb_*, they are deleted
-        mbpseudo_plugin._on_album_info_received(pseudo_info, [item])
+        mbpseudo_plugin.before_album_info_emitted([item], pseudo_info)
         assert pseudo_info.album == item.title
         assert item.get("mb_albumid") == ""
         assert item.get("mb_trackid") == ""

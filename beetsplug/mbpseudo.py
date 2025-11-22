@@ -100,9 +100,6 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
                 pass
 
         self.register_listener("pluginload", self._on_plugins_loaded)
-        self.register_listener(
-            "albuminfo_received", self._on_album_info_received
-        )
         self.register_listener("album_matched", self._adjust_final_album_match)
 
     # noinspection PyMethodMayBeStatic
@@ -116,12 +113,13 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
                     " the mbpseudo plugin"
                 )
 
-    def _on_album_info_received(
+    @override
+    def before_album_info_emitted(
         self,
-        info: AlbumInfo,
         items: Iterable[Item],
+        album_info: AlbumInfo,
     ):
-        if isinstance(info, PseudoAlbumInfo):
+        if isinstance(album_info, PseudoAlbumInfo):
             for item in items:
                 # particularly relevant for reimport but could also happen during import
                 if "mb_albumid" in item:
@@ -131,9 +129,11 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
 
             self._log.debug(
                 "Using {0} release for distance calculations for album {1}",
-                info.determine_best_ref(list(items)),
-                info.album_id,
+                album_info.determine_best_ref(list(items)),
+                album_info.album_id,
             )
+
+        return album_info
 
     @override
     def candidates(
