@@ -356,6 +356,17 @@ class Album(LibModel):
         """The path to album's cover picture as pathlib.Path."""
         return Path(os.fsdecode(self.artpath)) if self.artpath else None
 
+    @property
+    def media(self):
+        """Return a list of distinct media types for the items in this album."""
+        if not self.items():
+            return []
+        media_set = {
+            str(item.media)
+            for item in self.items()
+            if getattr(item, "media", None)}
+        return list(media_set)
+
     @classmethod
     def _getters(cls):
         # In addition to plugin-provided computed fields, also expose
@@ -363,6 +374,7 @@ class Album(LibModel):
         getters = plugins.album_field_getters()
         getters["path"] = Album.item_dir
         getters["albumtotal"] = Album._albumtotal
+        getters["media_types"] = lambda a: a.media_types
         return getters
 
     def items(self):
