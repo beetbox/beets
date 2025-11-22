@@ -28,7 +28,7 @@ import os
 import traceback
 from functools import singledispatchmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 import pylast
 import yaml
@@ -352,7 +352,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         combined = old + new
         return self._resolve_genres(combined)
 
-    def _get_genre(self, obj: LibModel) -> tuple[Union[str, None], ...]:
+    def _get_genre(self, obj: LibModel) -> tuple[str | None, ...]:
         """Get the final genre string for an Album or Item object.
 
         `self.sources` specifies allowed genre sources. Starting with the first

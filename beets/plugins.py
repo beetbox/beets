@@ -25,7 +25,6 @@ from collections import defaultdict
 from functools import cached_property, wraps
 from importlib import import_module
 from pathlib import Path
-from types import GenericAlias
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeVar
 
 import mediafile
@@ -152,9 +151,9 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         list
     )
     listeners: ClassVar[dict[EventType, list[Listener]]] = defaultdict(list)
-    template_funcs: TFuncMap[str] | None = None
-    template_fields: TFuncMap[Item] | None = None
-    album_template_fields: TFuncMap[Album] | None = None
+    template_funcs: ClassVar[TFuncMap[str]] | TFuncMap[str] = {}  # type: ignore[valid-type]
+    template_fields: ClassVar[TFuncMap[Item]] | TFuncMap[Item] = {}  # type: ignore[valid-type]
+    album_template_fields: ClassVar[TFuncMap[Album]] | TFuncMap[Album] = {}  # type: ignore[valid-type]
 
     name: str
     config: ConfigView
@@ -220,8 +219,8 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         self.name = name or self.__module__.split(".")[-1]
         self.config = beets.config[self.name]
 
-        # Set class attributes if they are not already set
-        # for the type of plugin.
+        # If the class attributes are not set, initialize as instance attributes.
+        # TODO: Revise with v3.0.0, see also type: ignore[valid-type] above
         if not self.template_funcs:
             self.template_funcs = {}
         if not self.template_fields:
@@ -369,8 +368,6 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         """
 
         def helper(func: TFunc[str]) -> TFunc[str]:
-            if cls.template_funcs is None:
-                cls.template_funcs = {}
             cls.template_funcs[name] = func
             return func
 
@@ -385,8 +382,6 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         """
 
         def helper(func: TFunc[Item]) -> TFunc[Item]:
-            if cls.template_fields is None:
-                cls.template_fields = {}
             cls.template_fields[name] = func
             return func
 
@@ -450,9 +445,6 @@ def _get_plugin(name: str) -> BeetsPlugin | None:
         for obj in reversed(namespace.__dict__.values()):
             if (
                 inspect.isclass(obj)
-                and not isinstance(
-                    obj, GenericAlias
-                )  # seems to be needed for python <= 3.9 only
                 and issubclass(obj, BeetsPlugin)
                 and obj != BeetsPlugin
                 and not inspect.isabstract(obj)
@@ -569,8 +561,7 @@ def template_funcs() -> TFuncMap[str]:
     """
     funcs: TFuncMap[str] = {}
     for plugin in find_plugins():
-        if plugin.template_funcs:
-            funcs.update(plugin.template_funcs)
+        funcs.update(plugin.template_funcs)
     return funcs
 
 
@@ -596,21 +587,20 @@ F = TypeVar("F")
 
 
 def _check_conflicts_and_merge(
-    plugin: BeetsPlugin, plugin_funcs: dict[str, F] | None, funcs: dict[str, F]
+    plugin: BeetsPlugin, plugin_funcs: dict[str, F], funcs: dict[str, F]
 ) -> None:
     """Check the provided template functions for conflicts and merge into funcs.
 
     Raises a `PluginConflictError` if a plugin defines template functions
     for fields that another plugin has already defined template functions for.
     """
-    if plugin_funcs:
-        if not plugin_funcs.keys().isdisjoint(funcs.keys()):
-            conflicted_fields = ", ".join(plugin_funcs.keys() & funcs.keys())
-            raise PluginConflictError(
-                f"Plugin {plugin.name} defines template functions for "
-                f"{conflicted_fields} that conflict with another plugin."
-            )
-        funcs.update(plugin_funcs)
+    if not plugin_funcs.keys().isdisjoint(funcs.keys()):
+        conflicted_fields = ", ".join(plugin_funcs.keys() & funcs.keys())
+        raise PluginConflictError(
+            f"Plugin {plugin.name} defines template functions for "
+            f"{conflicted_fields} that conflict with another plugin."
+        )
+    funcs.update(plugin_funcs)
 
 
 def item_field_getters() -> TFuncMap[Item]:
