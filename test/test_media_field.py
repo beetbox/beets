@@ -5,7 +5,7 @@ from beets.library import Item, Library
 
 class MediaFieldTest(unittest.TestCase):
     def setUp(self):
-        self.lib = Library(':memory:')
+        self.lib = Library(":memory:")
         self.lib.add_album = self.lib.add_album
 
     def add_album_with_items(self, items_data):
@@ -23,7 +23,7 @@ class MediaFieldTest(unittest.TestCase):
         ]
         album = self.add_album_with_items(items_data)
         media = album.media
-        assert media == ["CD", "Vinyl"]
+        assert sorted(media) == ["CD", "Vinyl"]
 
     def test_album_media_field_single_type(self):
         items_data = [

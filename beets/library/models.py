@@ -364,7 +364,8 @@ class Album(LibModel):
         media_set = {
             str(item.media)
             for item in self.items()
-            if getattr(item, "media", None)}
+            if getattr(item, "media", None)
+        }
         return list(media_set)
 
     @classmethod
