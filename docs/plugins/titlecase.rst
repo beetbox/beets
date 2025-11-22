@@ -54,9 +54,10 @@ Default
 
     titlecase:
         auto: yes
-        fields:
-        preserve:
-        replace:
+        fields: []
+        preserve: []
+        replace: []
+        seperators: []
         force_lowercase: no
         small_first_last: yes
         the_artist: yes
@@ -68,41 +69,62 @@ Default
     Whether to automatically apply titlecase to new imports.
 
 .. conf:: fields
+    :default: []
 
-    A list of fields to apply the titlecase logic to. You must specify the fields
-    you want to have modified in order for titlecase to apply changes to metadata.
+     A list of fields to apply the titlecase logic to. You must specify the fields
+     you want to have modified in order for titlecase to apply changes to metadata.
 
-    A good starting point is below, which will titlecase artists, album and track titles.
+     A good starting point is below, which will titlecase album titles, track titles, and all artist fields.
 
 .. code-block:: yaml
 
-    fields:
-      - album
-      - albumartist
-      - albumartist_credit
-      - albumartist_sort
-      - albumartists
-      - albumartists_credit
-      - albumartists_sort
-      - artist
-      - artist_credit
-      - artist_sort
-      - artists
-      - artists_credit
-      - artists_sort
-      - title
+    titlecase:
+      fields:
+        - album
+        - title
+        - albumartist
+        - albumartist_credit
+        - albumartist_sort
+        - albumartists
+        - albumartists_credit
+        - albumartists_sort
+        - artist
+        - artist_credit
+        - artist_sort
+        - artists
+        - artists_credit
+        - artists_sort
 
 .. conf:: preserve
+    :default: []
 
-    List of words and phrases to preserve the case of. Without specifying ``DJ`` on
-    the list, titlecase will format it as ``Dj``, or specify ``The Beatles`` to make sure
-    ``With The Beatles`` is not capitalized as ``With the Beatles``.
+     List of words and phrases to preserve the case of. Without specifying ``DJ`` on
+     the list, titlecase will format it as ``Dj``, or specify ``The Beatles`` to make sure
+     ``With The Beatles`` is not capitalized as ``With the Beatles``.
 
 .. conf:: replace
+    :default: []
 
-    The replace function takes place before any titlecasing occurs, and is intended to
-    help normalize differences in puncuation styles. It accepts a list of tuples, with
-    the first being the target, and the second being the replacement
+     The replace function takes place before any titlecasing occurs, and is intended to
+     help normalize differences in puncuation styles. It accepts a list of tuples, with
+     the first being the target, and the second being the replacement.
+
+     An example configuration that enforces one style of quotation mark is below.
+
+.. code-block:: yaml
+
+    titlecase:
+      replace:
+        - "’": "'"
+        - "‘": "'"
+        - "“": '"'
+        - "”": '"'
+
+.. conf:: seperators
+    :default: []
+
+     A list of characters to treat as markers of new sentences. Helpful for split titles
+     that might otherwise have a lowercase letter at the start of the second string.
 
 .. conf:: force_lowercase
     :default: no
@@ -111,23 +133,26 @@ Default
     problems with all caps acronyms titlecase would otherwise recognize.
 
 .. conf:: small_first_last
+    :default: yes
 
-    An option from the base titlecase library. Controls capitalizing small words at the start
-    of a sentence. With this turned off ``a`` and similar words will not be capitalized
-    under any circumstance.
+     An option from the base titlecase library. Controls capitalizing small words at the start
+     of a sentence. With this turned off ``a`` and similar words will not be capitalized
+     under any circumstance.
 
 .. conf:: the_artist
+    :default: yes
 
-    If a field name contains ``artist``, then any lowercase ``the`` will be
-    capitalized. Useful for bands with `The` as part of the proper name,
-    like ``Amyl and The Sniffers``.
+     If a field name contains ``artist``, then any lowercase ``the`` will be
+     capitalized. Useful for bands with `The` as part of the proper name,
+     like ``Amyl and The Sniffers``.
 
 .. conf:: after_choice
+    :default: no
 
-    By default, titlecase runs on the candidates that are received, adjusting them before
-    you make your selection and creating different weight calculations. If you'd rather
-    see the data as recieved from the database, set this to true to run after you make
-    your tag choice.
+     By default, titlecase runs on the candidates that are received, adjusting them before
+     you make your selection and creating different weight calculations. If you'd rather
+     see the data as recieved from the database, set this to true to run after you make
+     your tag choice.
 
 Dangerous Fields
 ~~~~~~~~~~~~~~~~

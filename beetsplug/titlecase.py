@@ -17,7 +17,8 @@ Title case logic is derived from the python-titlecase library.
 Provides a template function and a tag modification function."""
 
 import re
-from typing import Optional
+from functools import cached_property
+from typing import TypedDict
 
 from titlecase import titlecase
 
@@ -31,19 +32,14 @@ __author__ = "henryoberholtzer@gmail.com"
 __version__ = "1.0"
 
 
-class TitlecasePlugin(BeetsPlugin):
-    preserve: dict[str, str] = {}
-    preserve_phrases: dict[str, re.Pattern[str]] = {}
-    force_lowercase: bool = True
-    fields_to_process: set[str] = set()
-    the_artist: bool = True
-    the_artist_regexp = re.compile(r"\bthe\b")
+class PreservedText(TypedDict):
+    words: dict[str, str]
+    phrases: dict[str, re.Pattern[str]]
 
+
+class TitlecasePlugin(BeetsPlugin):
     def __init__(self) -> None:
         super().__init__()
-
-        # Register template function
-        self.template_funcs["titlecase"] = self.titlecase  # type: ignore
 
         self.config.add(
             {
@@ -51,6 +47,7 @@ class TitlecasePlugin(BeetsPlugin):
                 "preserve": [],
                 "fields": [],
                 "replace": [],
+                "seperators": [],
                 "force_lowercase": False,
                 "small_first_last": True,
                 "the_artist": True,
@@ -63,6 +60,7 @@ class TitlecasePlugin(BeetsPlugin):
         preserve - Provide a list of strings with specific case requirements.
         fields - Fields to apply titlecase to.
         replace - List of pairs, first is the target, second is the replacement
+        seperators - Other characters to treat like periods.
         force_lowercase - Lowercases the string before titlecasing.
         small_first_last - If small characters should be cased at the start of strings.
         the_artist - If the plugin infers the field to be an artist field
@@ -71,6 +69,8 @@ class TitlecasePlugin(BeetsPlugin):
         that start with 'The', like 'The Who' or 'The Talking Heads' when
         they are not at the start of a string. Superceded by preserved phrases.
         """
+        # Register template function
+        self.template_funcs["titlecase"] = self.titlecase  # type: ignore
 
         # Register UI subcommands
         self._command = ui.Subcommand(
@@ -78,8 +78,7 @@ class TitlecasePlugin(BeetsPlugin):
             help="Apply titlecasing to metadata specified in config.",
         )
 
-        self._get_config()
-        if self.config["auto"]:
+        if self.config["auto"].get(bool):
             if self.config["after_choice"].get(bool):
                 self.import_stages = [self.imported]
             else:
@@ -90,37 +89,56 @@ class TitlecasePlugin(BeetsPlugin):
                     "albuminfo_received", self.received_info_handler
                 )
 
-    def _get_config(self):
-        self.force_lowercase = self.config["force_lowercase"].get(bool)
-        self.replace = self.config["replace"].as_pairs()
-        self.the_artist = self.config["the_artist"].get(bool)
-        self._preserve_words(self.config["preserve"].as_str_seq())
-        self._initialize_fields(
-            self.config["fields"].as_str_seq(),
-        )
+    @cached_property
+    def force_lowercase(self) -> bool:
+        return self.config["force_lowercase"].get(bool)
 
-    def _initialize_fields(self, fields: list[str]) -> None:
-        """Creates the set for fields to process in tagging."""
-        if fields:
-            self.fields_to_process = set(fields)
-            self._log.debug(
-                f"set fields to process: {', '.join(self.fields_to_process)}"
-            )
-        else:
-            self._log.debug("no fields specified!")
+    @cached_property
+    def replace(self) -> list[tuple[str, str]]:
+        return self.config["replace"].as_pairs()
 
-    def _preserve_words(self, preserve: list[str]) -> None:
-        for word in preserve:
-            if " " in word:
-                self.preserve_phrases[word] = re.compile(
-                    rf"\b{re.escape(word)}\b", re.IGNORECASE
+    @cached_property
+    def the_artist(self) -> bool:
+        return self.config["the_artist"].get(bool)
+
+    @cached_property
+    def fields_to_process(self) -> set[str]:
+        fields = set(self.config["fields"].as_str_seq())
+        self._log.debug(f"fields: {', '.join(fields)}")
+        return fields
+
+    @cached_property
+    def preserve(self) -> PreservedText:
+        strings = self.config["preserve"].as_str_seq()
+        preserved: PreservedText = {"words": {}, "phrases": {}}
+        for s in strings:
+            if " " in s:
+                preserved["phrases"][s] = re.compile(
+                    rf"\b{re.escape(s)}\b", re.IGNORECASE
                 )
             else:
-                self.preserve[word.upper()] = word
+                preserved["words"][s.upper()] = s
+        return preserved
 
-    def _preserved(self, word, **kwargs) -> Optional[str]:
+    @cached_property
+    def seperators(self) -> re.Pattern[str] | None:
+        if seperators := "".join(
+            dict.fromkeys(self.config["seperators"].as_str_seq())
+        ):
+            return re.compile(rf"(.*?[{re.escape(seperators)}]+)(\s*)(?=.)")
+        return None
+
+    @cached_property
+    def small_first_last(self) -> bool:
+        return self.config["small_first_last"].get(bool)
+
+    @cached_property
+    def the_artist_regexp(self) -> re.Pattern[str]:
+        return re.compile(r"\bthe\b")
+
+    def titlecase_callback(self, word, **kwargs) -> str | None:
         """Callback function for words to preserve case of."""
-        if preserved_word := self.preserve.get(word.upper(), ""):
+        if preserved_word := self.preserve["words"].get(word.upper(), ""):
             return preserved_word
         return None
 
@@ -146,7 +164,7 @@ class TitlecasePlugin(BeetsPlugin):
         self._command.func = func
         return [self._command]
 
-    def titlecase_fields(self, item: Item | Info):
+    def titlecase_fields(self, item: Item | Info) -> None:
         """Applies titlecase to fields, except
         those excluded by the default exclusions and the
         set exclude lists.
@@ -178,6 +196,17 @@ class TitlecasePlugin(BeetsPlugin):
 
     def titlecase(self, text: str, field: str = "") -> str:
         """Titlecase the given text."""
+        # Check we should split this into two substrings.
+        if self.seperators:
+            if len(splits := self.seperators.findall(text)):
+                print(splits)
+                split_cased = "".join(
+                    [self.titlecase(s[0], field) + s[1] for s in splits]
+                )
+                # Add on the remaining portion
+                return split_cased + self.titlecase(
+                    text[len(split_cased) :], field
+                )
         # Any necessary replacements go first, mainly punctuation.
         titlecased = text.lower() if self.force_lowercase else text
         for pair in self.replace:
@@ -186,14 +215,14 @@ class TitlecasePlugin(BeetsPlugin):
         # General titlecase operation
         titlecased = titlecase(
             titlecased,
-            small_first_last=self.config["small_first_last"],
-            callback=self._preserved,
+            small_first_last=self.small_first_last,
+            callback=self.titlecase_callback,
         )
         # Apply "The Artist" feature
         if self.the_artist and "artist" in field:
             titlecased = self.the_artist_regexp.sub("The", titlecased)
         # More complicated phrase replacements.
-        for phrase, regexp in self.preserve_phrases.items():
+        for phrase, regexp in self.preserve["phrases"].items():
             titlecased = regexp.sub(phrase, titlecased)
         return titlecased
 
