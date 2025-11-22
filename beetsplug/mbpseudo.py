@@ -118,7 +118,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
         self,
         items: Iterable[Item],
         album_info: AlbumInfo,
-    ):
+    ) -> AlbumInfo:
         if isinstance(album_info, PseudoAlbumInfo):
             for item in items:
                 # particularly relevant for reimport but could also happen during import
@@ -177,7 +177,11 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
         official_release = super().album_info(release)
 
         if release.get("status") == _STATUS_PSEUDO:
-            return official_release
+            # already pseudo-release, but wrap in our class for the other checks
+            return PseudoAlbumInfo(
+                pseudo_release=official_release,
+                official_release=official_release,
+            )
         elif pseudo_release_ids := self._intercept_mb_release(release):
             custom_tags_only = self.config["custom_tags_only"].get(bool)
             languages = list(config["import"]["languages"].as_str_seq())
@@ -387,7 +391,7 @@ class PseudoAlbumInfo(AlbumInfo):
         **kwargs,
     ):
         super().__init__(pseudo_release.tracks, **kwargs)
-        self.__dict__["_pseudo_source"] = True
+        self.__dict__["_pseudo_source"] = False
         self.__dict__["_official_release"] = official_release
         for k, v in pseudo_release.items():
             if k not in kwargs:
