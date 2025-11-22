@@ -48,6 +48,11 @@ Bug fixes:
   endpoints. Previously, due to single-quotes (ie. string literal) in the SQL
   query, the query eg. `GET /item/values/albumartist` would return the literal
   "albumartist" instead of a list of unique album artists.
+- :doc:`plugins/lastgenre`: Fix the issue where last.fm does not give a result in
+  the artist genre stage because multi-artist "concatenation" words (like
+  "feat." "+", or "&" prevent exact matches. Using the albumartists list field
+  and fetching a genre for each artist separately massively improves the chance
+  to get a valid result in that stage.
 
 For plugin developers:
 
