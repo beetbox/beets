@@ -164,7 +164,7 @@ class TestMBPseudoPlugin(PluginMixin):
         pseudo_release: JSONDict,
     ):
         album_info = mbpseudo_plugin.album_info(pseudo_release["release"])
-        assert not isinstance(album_info, PseudoAlbumInfo)
+        assert isinstance(album_info, PseudoAlbumInfo)
         assert album_info.data_source == "MusicBrainzPseudoRelease"
         assert album_info.albumstatus == _STATUS_PSEUDO
 
