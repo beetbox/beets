@@ -14,7 +14,10 @@
 
 """Tests for the 'titlecase' plugin"""
 
+from unittest.mock import patch
+
 from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.importer import ImportSession, ImportTask
 from beets.library import Item
 from beets.test.helper import PluginTestCase
 from beetsplug.titlecase import TitlecasePlugin
@@ -55,6 +58,15 @@ titlecase_fields_testcases = [
 class TestTitlecasePlugin(PluginTestCase):
     plugin = "titlecase"
     preload_plugin = False
+
+    def test_auto(self):
+        """Ensure automatic processing gets assigned"""
+        with self.configure_plugin({"auto": True, "after_choice": True}):
+            assert callable(TitlecasePlugin().import_stages[0])
+        with self.configure_plugin({"auto": False, "after_choice": False}):
+            assert len(TitlecasePlugin().import_stages) == 0
+        with self.configure_plugin({"auto": False, "after_choice": True}):
+            assert len(TitlecasePlugin().import_stages) == 0
 
     def test_basic_titlecase(self):
         """Check that default behavior is as expected."""
@@ -336,12 +348,10 @@ class TestTitlecasePlugin(PluginTestCase):
         with self.configure_plugin(cfg):
             given.add(self.lib)
             self.run_command("titlecase")
-            output = self.run_with_output("ls")
-            assert (
-                output
-                == f"{expected.artist} - {expected.album} - {expected.title}\n"
-            )
-            self.run_command("remove", expected.artist, "-f")
+            assert self.lib.items().get().artist == expected.artist
+            assert self.lib.items().get().album == expected.album
+            assert self.lib.items().get().title == expected.title
+            self.lib.items().get().remove()
 
     def test_cli_no_write(self):
         given = Item(
@@ -358,9 +368,32 @@ class TestTitlecasePlugin(PluginTestCase):
         with self.configure_plugin(cfg):
             given.add(self.lib)
             self.run_command("-p", "titlecase")
-            output = self.run_with_output("ls")
-            assert (
-                output
-                == f"{expected.artist} - {expected.album} - {expected.title}\n"
+            assert self.lib.items().get().artist == expected.artist
+            assert self.lib.items().get().album == expected.album
+            assert self.lib.items().get().title == expected.title
+            self.lib.items().get().remove()
+
+    def test_imported(self):
+        given = Item(
+            album="retrodelica 2: back 2 the future",
+            artist="blue planet corporation",
+            title="generator",
+        )
+        expected = Item(
+            album="Retrodelica 2: Back 2 the Future",
+            artist="Blue Planet Corporation",
+            title="Generator",
+        )
+        p = patch("beets.importer.ImportTask.imported_items", lambda x: [given])
+        p.start()
+        with self.configure_plugin({"fields": ["album", "artist", "title"]}):
+            import_session = ImportSession(
+                self.lib, loghandler=None, paths=None, query=None
             )
-            self.run_command("remove", expected.artist, "-f")
+            import_task = ImportTask(toppath=None, paths=None, items=[given])
+            TitlecasePlugin().imported(import_session, import_task)
+            import_task.add(self.lib)
+            item = self.lib.items().get()
+            assert item.artist == expected.artist
+            assert item.album == expected.album
+            assert item.title == expected.title

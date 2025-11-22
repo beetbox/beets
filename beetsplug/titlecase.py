@@ -70,7 +70,7 @@ class TitlecasePlugin(BeetsPlugin):
         they are not at the start of a string. Superceded by preserved phrases.
         """
         # Register template function
-        self.template_funcs["titlecase"] = self.titlecase  # type: ignore
+        self.template_funcs["titlecase"] = self.titlecase
 
         # Register UI subcommands
         self._command = ui.Subcommand(
