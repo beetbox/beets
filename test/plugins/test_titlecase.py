@@ -397,3 +397,4 @@ class TestTitlecasePlugin(PluginTestCase):
             assert item.artist == expected.artist
             assert item.album == expected.album
             assert item.title == expected.title
+        p.stop()
