@@ -128,8 +128,15 @@ class ImportTest(BeetsTestCase):
                 assert mock_session.called
                 assert mock_instance.run.called  # noqa: E501
         finally:
+            # Clear config first to release any file handles
             config["import"]["log"] = None
-            log_pathobj.unlink(missing_ok=True)
+            # On Windows, we need to ensure the file is closed before deletion
+            # Use try/except to handle cases where file is still locked
+            try:
+                log_pathobj.unlink(missing_ok=True)
+            except PermissionError:
+                # File is still locked on Windows, skip deletion
+                pass
 
     def test_import_files_log_file_error(self):
         """Test that import_files raises UserError when log file can't be opened."""

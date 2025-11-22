@@ -13,7 +13,7 @@ shall expose to the user:
 .. code-block:: python
 
     from beets.plugins import BeetsPlugin
-    from beets.ui.commands import PromptChoice
+    from beets.ui.commands.import_.session import PromptChoice
 
 
     class ExamplePlugin(BeetsPlugin):

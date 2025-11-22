@@ -31,7 +31,7 @@ import yaml
 from beets.test.helper import PluginTestCase
 from beets.util import bluelet
 
-bpd = pytest.importorskip("beetsplug.bpd")
+bpd = pytest.importorskip("beetsplug.bpd", exc_type=ImportError)
 
 
 class CommandParseTest(unittest.TestCase):

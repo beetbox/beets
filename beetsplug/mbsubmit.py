@@ -26,7 +26,7 @@ import subprocess
 from beets import ui
 from beets.autotag import Recommendation
 from beets.plugins import BeetsPlugin
-from beets.ui.commands import PromptChoice
+from beets.ui.commands.import_.session import PromptChoice
 from beets.util import displayable_path
 from beetsplug.info import print_data
 

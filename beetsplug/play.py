@@ -21,7 +21,7 @@ from os.path import relpath
 from beets import config, ui, util
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
-from beets.ui.commands import PromptChoice
+from beets.ui.commands.import_.session import PromptChoice
 from beets.util import get_temp_filename
 
 # Indicate where arguments should be inserted into the command string.
