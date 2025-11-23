@@ -54,7 +54,7 @@ def album_for_id(_id: str) -> AlbumInfo | None:
     A single ID can yield just a single album, so we return the first match.
     """
     for plugin in find_metadata_source_plugins():
-        if info := plugin.album_for_id(album_id=_id):
+        if info := plugin.album_for_id(_id):
             send("albuminfo_received", info=info)
             return info
 
