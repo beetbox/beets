@@ -103,28 +103,21 @@ def assign_items(
     return list(mapping.items()), extra_items, extra_tracks
 
 
-def match_by_id(items: Iterable[Item]) -> Iterable[AlbumInfo]:
-    """If the items are tagged with an external source ID, return an
-    AlbumInfo object for the corresponding album. Otherwise, returns
-    None.
+def match_by_id(album_id: str | None, consensus: bool) -> Iterable[AlbumInfo]:
+    """Return album candidates for the given album id.
+
+    Make sure that the ID is present and that there is consensus on it among
+    the items being tagged.
     """
-    albumids = (item.mb_albumid for item in items if item.mb_albumid)
-
-    # Did any of the items have an MB album ID?
-    try:
-        first = next(albumids)
-    except StopIteration:
+    if not album_id:
         log.debug("No album ID found.")
-        return ()
+    elif not consensus:
+        log.debug("No album ID consensus.")
+    else:
+        log.debug("Searching for discovered album ID: {}", album_id)
+        return metadata_plugins.albums_for_ids(album_id)
 
-    # Is there a consensus on the MB album ID?
-    for other in albumids:
-        if other != first:
-            log.debug("No album ID consensus.")
-            return ()
-    # If all album IDs are equal, look up the album.
-    log.debug("Searching for discovered album ID: {}", first)
-    return metadata_plugins.albums_for_ids(first)
+    return ()
 
 
 def _recommendation(
@@ -287,7 +280,9 @@ def tag_album(
     # Use existing metadata or text search.
     else:
         # Try search based on current ID.
-        for info in match_by_id(items):
+        for info in match_by_id(
+            likelies["mb_albumid"], consensus["mb_albumid"]
+        ):
             _add_candidate(items, candidates, info)
             for candidate in candidates.values():
                 plugins.send("album_matched", match=candidate)
