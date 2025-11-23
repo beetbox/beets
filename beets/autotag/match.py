@@ -98,7 +98,7 @@ def assign_items(
     return list(mapping.items()), extra_items, extra_tracks
 
 
-def match_by_id(items: Iterable[Item]) -> AlbumInfo | None:
+def match_by_id(items: Iterable[Item]) -> Iterable[AlbumInfo]:
     """If the items are tagged with an external source ID, return an
     AlbumInfo object for the corresponding album. Otherwise, returns
     None.
@@ -110,16 +110,16 @@ def match_by_id(items: Iterable[Item]) -> AlbumInfo | None:
         first = next(albumids)
     except StopIteration:
         log.debug("No album ID found.")
-        return None
+        return ()
 
     # Is there a consensus on the MB album ID?
     for other in albumids:
         if other != first:
             log.debug("No album ID consensus.")
-            return None
+            return ()
     # If all album IDs are equal, look up the album.
     log.debug("Searching for discovered album ID: {}", first)
-    return metadata_plugins.album_for_id(first)
+    return metadata_plugins.albums_for_ids(first)
 
 
 def _recommendation(
@@ -274,32 +274,32 @@ def tag_album(
     if search_ids:
         for search_id in search_ids:
             log.debug("Searching for album ID: {}", search_id)
-            if info := metadata_plugins.album_for_id(search_id):
-                _add_candidate(items, candidates, info)
-                if opt_candidate := candidates.get(info.album_id):
+            for _info in metadata_plugins.albums_for_ids(search_id):
+                _add_candidate(items, candidates, _info)
+                if opt_candidate := candidates.get(_info.album_id):
                     plugins.send("album_matched", match=opt_candidate)
 
     # Use existing metadata or text search.
     else:
         # Try search based on current ID.
-        if info := match_by_id(items):
+        for info in match_by_id(items):
             _add_candidate(items, candidates, info)
             for candidate in candidates.values():
                 plugins.send("album_matched", match=candidate)
 
-            rec = _recommendation(list(candidates.values()))
-            log.debug("Album ID match recommendation is {}", rec)
-            if candidates and not config["import"]["timid"]:
-                # If we have a very good MBID match, return immediately.
-                # Otherwise, this match will compete against metadata-based
-                # matches.
-                if rec == Recommendation.strong:
-                    log.debug("ID match.")
-                    return (
-                        cur_artist,
-                        cur_album,
-                        Proposal(list(candidates.values()), rec),
-                    )
+        rec = _recommendation(list(candidates.values()))
+        log.debug("Album ID match recommendation is {}", rec)
+        if candidates and not config["import"]["timid"]:
+            # If we have a very good MBID match, return immediately.
+            # Otherwise, this match will compete against metadata-based
+            # matches.
+            if rec == Recommendation.strong:
+                log.debug("ID match.")
+                return (
+                    cur_artist,
+                    cur_album,
+                    Proposal(list(candidates.values()), rec),
+                )
 
         # Search terms.
         if not (search_artist and search_name):
@@ -353,17 +353,15 @@ def tag_item(
     if trackids:
         for trackid in trackids:
             log.debug("Searching for track ID: {}", trackid)
-            if info := metadata_plugins.track_for_id(trackid):
+            for info in metadata_plugins.tracks_for_ids(trackid):
                 dist = track_distance(item, info, incl_artist=True)
                 candidates[info.track_id] = hooks.TrackMatch(dist, info)
-                # If this is a good match, then don't keep searching.
-                rec = _recommendation(_sort_candidates(candidates.values()))
-                if (
-                    rec == Recommendation.strong
-                    and not config["import"]["timid"]
-                ):
-                    log.debug("Track ID match.")
-                    return Proposal(_sort_candidates(candidates.values()), rec)
+
+            # If this is a good match, then don't keep searching.
+            rec = _recommendation(_sort_candidates(candidates.values()))
+            if rec == Recommendation.strong and not config["import"]["timid"]:
+                log.debug("Track ID match.")
+                return Proposal(_sort_candidates(candidates.values()), rec)
 
     # If we're searching by ID, don't proceed.
     if search_ids:

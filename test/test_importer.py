@@ -1517,7 +1517,7 @@ class ImportPretendTest(IOMixin, AutotagImportTestCase):
         assert self.__run(importer) == [f"No files imported from {empty_path}"]
 
 
-def mocked_get_album_by_id(id_):
+def mocked_get_albums_by_ids(ids):
     """Return album candidate for the given id.
 
     The two albums differ only in the release title and artist name, so that
@@ -1525,32 +1525,34 @@ def mocked_get_album_by_id(id_):
     ImportHelper.prepare_album_for_import().
     """
     # Map IDs to (release title, artist), so the distances are different.
-    album, artist = {
+    album_artist_map = {
         ImportIdTest.ID_RELEASE_0: ("VALID_RELEASE_0", "TAG ARTIST"),
         ImportIdTest.ID_RELEASE_1: ("VALID_RELEASE_1", "DISTANT_MATCH"),
-    }[id_]
+    }
 
-    return AlbumInfo(
-        album_id=id_,
-        album=album,
-        artist_id="some-id",
-        artist=artist,
-        albumstatus="Official",
-        tracks=[
-            TrackInfo(
-                track_id="bar",
-                title="foo",
-                artist_id="some-id",
-                artist=artist,
-                length=59,
-                index=9,
-                track_allt="A2",
-            )
-        ],
-    )
+    for id_ in ids:
+        album, artist = album_artist_map[id_]
+        yield AlbumInfo(
+            album_id=id_,
+            album=album,
+            artist_id="some-id",
+            artist=artist,
+            albumstatus="Official",
+            tracks=[
+                TrackInfo(
+                    track_id="bar",
+                    title="foo",
+                    artist_id="some-id",
+                    artist=artist,
+                    length=59,
+                    index=9,
+                    track_allt="A2",
+                )
+            ],
+        )
 
 
-def mocked_get_track_by_id(id_):
+def mocked_get_tracks_by_ids(ids):
     """Return track candidate for the given id.
 
     The two tracks differ only in the release title and artist name, so that
@@ -1558,27 +1560,29 @@ def mocked_get_track_by_id(id_):
     ImportHelper.prepare_album_for_import().
     """
     # Map IDs to (recording title, artist), so the distances are different.
-    title, artist = {
+    title_artist_map = {
         ImportIdTest.ID_RECORDING_0: ("VALID_RECORDING_0", "TAG ARTIST"),
         ImportIdTest.ID_RECORDING_1: ("VALID_RECORDING_1", "DISTANT_MATCH"),
-    }[id_]
+    }
 
-    return TrackInfo(
-        track_id=id_,
-        title=title,
-        artist_id="some-id",
-        artist=artist,
-        length=59,
-    )
+    for id_ in ids:
+        title, artist = title_artist_map[id_]
+        yield TrackInfo(
+            track_id=id_,
+            title=title,
+            artist_id="some-id",
+            artist=artist,
+            length=59,
+        )
 
 
 @patch(
-    "beets.metadata_plugins.track_for_id",
-    Mock(side_effect=mocked_get_track_by_id),
+    "beets.metadata_plugins.tracks_for_ids",
+    Mock(side_effect=mocked_get_tracks_by_ids),
 )
 @patch(
-    "beets.metadata_plugins.album_for_id",
-    Mock(side_effect=mocked_get_album_by_id),
+    "beets.metadata_plugins.albums_for_ids",
+    Mock(side_effect=mocked_get_albums_by_ids),
 )
 class ImportIdTest(ImportTestCase):
     ID_RELEASE_0 = "00000000-0000-0000-0000-000000000000"
