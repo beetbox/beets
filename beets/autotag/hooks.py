@@ -22,6 +22,8 @@ from typing import TYPE_CHECKING, Any, TypeVar
 
 from typing_extensions import Self
 
+from beets import plugins
+
 if TYPE_CHECKING:
     from beets.library import Item
 
@@ -245,6 +247,9 @@ class AlbumMatch(Match):
     mapping: dict[Item, TrackInfo]
     extra_items: list[Item]
     extra_tracks: list[TrackInfo]
+
+    def __post_init__(self) -> None:
+        plugins.send("album_matched", match=self)
 
 
 @dataclass
