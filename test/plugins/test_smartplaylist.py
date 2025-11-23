@@ -350,11 +350,11 @@ class SmartPlaylistTest(BeetsTestCase):
         spl = SmartPlaylistPlugin()
 
         # Create three mock items
-        i1 = Mock(path=b"/item1.mp3")
+        i1 = Mock(path=b"/item1.mp3", id=1)
         i1.evaluate_template.return_value = "ordered.m3u"
-        i2 = Mock(path=b"/item2.mp3")
+        i2 = Mock(path=b"/item2.mp3", id=2)
         i2.evaluate_template.return_value = "ordered.m3u"
-        i3 = Mock(path=b"/item3.mp3")
+        i3 = Mock(path=b"/item3.mp3", id=3)
         i3.evaluate_template.return_value = "ordered.m3u"
 
         lib = Mock()
@@ -404,6 +404,58 @@ class SmartPlaylistTest(BeetsTestCase):
 
         # Items should be in order: i1, i2, i3
         assert content == b"/item1.mp3\n/item2.mp3\n/item3.mp3\n"
+
+    def test_playlist_update_multiple_queries_no_duplicates(self):
+        """Test that items matching multiple queries only appear once."""
+        spl = SmartPlaylistPlugin()
+
+        # Create two mock items
+        i1 = Mock(path=b"/item1.mp3", id=1)
+        i1.evaluate_template.return_value = "dedup.m3u"
+        i2 = Mock(path=b"/item2.mp3", id=2)
+        i2.evaluate_template.return_value = "dedup.m3u"
+
+        lib = Mock()
+        lib.replacements = CHAR_REPLACE
+        lib.albums.return_value = []
+
+        # Set up lib.items so both queries return overlapping items
+        q1 = Mock()
+        q2 = Mock()
+
+        def items_side_effect(query, sort):
+            if query == q1:
+                return [i1, i2]  # Both items match q1
+            elif query == q2:
+                return [i2]  # Only i2 matches q2
+            return []
+
+        lib.items.side_effect = items_side_effect
+
+        # Create playlist with multiple queries (stored as tuple)
+        queries_and_sorts = ((q1, None), (q2, None))
+        pl = "dedup.m3u", (queries_and_sorts, None), (None, None)
+        spl._matched_playlists = [pl]
+
+        dir = mkdtemp()
+        config["smartplaylist"]["relative_to"] = False
+        config["smartplaylist"]["playlist_dir"] = str(dir)
+        try:
+            spl.update_playlists(lib)
+        except Exception:
+            rmtree(syspath(dir))
+            raise
+
+        m3u_filepath = Path(dir, "dedup.m3u")
+        assert m3u_filepath.exists()
+        content = m3u_filepath.read_bytes()
+        rmtree(syspath(dir))
+
+        # i2 should only appear once even though it matches both queries
+        # Order should be: i1 (from q1), i2 (from q1, skipped in q2)
+        assert content == b"/item1.mp3\n/item2.mp3\n"
+        # Verify i2 is not duplicated
+        assert content.count(b"/item2.mp3") == 1
 
 
 class SmartPlaylistCLITest(PluginTestCase):
