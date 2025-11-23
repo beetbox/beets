@@ -277,16 +277,26 @@ class SmartPlaylistPlugin(BeetsPlugin):
             items = []
 
             # Handle tuple/list of queries (preserves order)
+            # Track seen items to avoid duplicates when an item matches
+            # multiple queries
+            seen_ids = set()
+
             if isinstance(query, (list, tuple)):
                 for q, sort in query:
-                    items.extend(lib.items(q, sort))
+                    for item in lib.items(q, sort):
+                        if item.id not in seen_ids:
+                            items.append(item)
+                            seen_ids.add(item.id)
             elif query:
                 items.extend(lib.items(query, q_sort))
 
             if isinstance(album_query, (list, tuple)):
                 for q, sort in album_query:
                     for album in lib.albums(q, sort):
-                        items.extend(album.items())
+                        for item in album.items():
+                            if item.id not in seen_ids:
+                                items.append(item)
+                                seen_ids.add(item.id)
             elif album_query:
                 for album in lib.albums(album_query, a_q_sort):
                     items.extend(album.items())
