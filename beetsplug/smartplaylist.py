@@ -159,7 +159,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
         """
         Instantiate queries for the playlists.
 
-        Each playlist has 2 queries: one or items one for albums, each with a
+        Each playlist has 2 queries: one for items, one for albums, each with a
         sort. We must also remember its name. _unmatched_playlists is a set of
         tuples (name, (q, q_sort), (album_q, album_q_sort)).
 
@@ -168,7 +168,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
         More precisely
         - it will be NullSort when a playlist query ('query' or 'album_query')
           is a single item or a list with 1 element
-        - it will be None when there are multiple items i a query
+        - it will be None when there are multiple items in a query
         """
         self._unmatched_playlists = set()
         self._matched_playlists = set()
@@ -207,16 +207,19 @@ class SmartPlaylistPlugin(BeetsPlugin):
             self._unmatched_playlists.add(playlist_data)
 
     def matches(self, model, query, album_query):
-        # Handle tuple/list of queries (multiple queries preserving order)
-        if isinstance(album_query, (list, tuple)) and isinstance(model, Album):
-            return any(q.match(model) for q, _ in album_query)
-        elif album_query and isinstance(model, Album):
+        # Handle single query object for Album
+        if album_query and not isinstance(album_query, (list, tuple)) and isinstance(model, Album):
             return album_query.match(model)
+        # Handle tuple/list of queries for Album
+        elif isinstance(album_query, (list, tuple)) and isinstance(model, Album):
+            return any(q.match(model) for q, _ in album_query)
 
-        if isinstance(query, (list, tuple)) and isinstance(model, Item):
-            return any(q.match(model) for q, _ in query)
-        elif query and isinstance(model, Item):
+        # Handle single query object for Item
+        if query and not isinstance(query, (list, tuple)) and isinstance(model, Item):
             return query.match(model)
+        # Handle tuple/list of queries for Item
+        elif isinstance(query, (list, tuple)) and isinstance(model, Item):
+            return any(q.match(model) for q, _ in query)
 
         return False
 

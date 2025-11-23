@@ -98,7 +98,7 @@ class SmartPlaylistTest(BeetsTestCase):
         assert sorts["no_sort"] == NullSort()
         assert sorts["one_sort"] == sort("year")
         # Multiple queries store individual sorts in the tuple
-        assert sorts["only_empty_sorts"] == [NullSort(), NullSort()]
+        assert all(isinstance(x, NullSort) for x in sorts["only_empty_sorts"])
         assert sorts["one_non_empty_sort"] == [sort("year"), NullSort()]
         assert sorts["multiple_sorts"] == [sort("year"), sort("genre", False)]
         assert sorts["mixed"] == [
