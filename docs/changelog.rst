@@ -64,6 +64,8 @@ Bug fixes:
   "albumartist" instead of a list of unique album artists.
 - Sanitize log messages by removing control characters preventing terminal
   rendering issues.
+- :doc:`plugins/discogs`: Fixed unexpected flex attr from the Discogs plugin.
+  :bug:`6177`
 
 For plugin developers:
 
