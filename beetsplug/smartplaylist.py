@@ -208,14 +208,24 @@ class SmartPlaylistPlugin(BeetsPlugin):
 
     def matches(self, model, query, album_query):
         # Handle single query object for Album
-        if album_query and not isinstance(album_query, (list, tuple)) and isinstance(model, Album):
+        if (
+            album_query
+            and not isinstance(album_query, (list, tuple))
+            and isinstance(model, Album)
+        ):
             return album_query.match(model)
         # Handle tuple/list of queries for Album
-        elif isinstance(album_query, (list, tuple)) and isinstance(model, Album):
+        elif isinstance(album_query, (list, tuple)) and isinstance(
+            model, Album
+        ):
             return any(q.match(model) for q, _ in album_query)
 
         # Handle single query object for Item
-        if query and not isinstance(query, (list, tuple)) and isinstance(model, Item):
+        if (
+            query
+            and not isinstance(query, (list, tuple))
+            and isinstance(model, Item)
+        ):
             return query.match(model)
         # Handle tuple/list of queries for Item
         elif isinstance(query, (list, tuple)) and isinstance(model, Item):

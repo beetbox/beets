@@ -54,10 +54,12 @@ class SmartPlaylistTest(BeetsTestCase):
         baz_baz = parse_query_string("BAZ baz", Item)
         baz_baz2 = parse_query_string("BAZ baz", Album)
         # Multiple queries are now stored as a tuple of (query, sort) tuples
-        bar_queries = tuple([
-            parse_query_string("BAR bar1", Album),
-            parse_query_string("BAR bar2", Album),
-        ])
+        bar_queries = tuple(
+            [
+                parse_query_string("BAR bar1", Album),
+                parse_query_string("BAR bar2", Album),
+            ]
+        )
         assert spl._unmatched_playlists == {
             ("foo", foo_foo, (None, None)),
             ("baz", baz_baz, baz_baz2),
