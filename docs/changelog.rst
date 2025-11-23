@@ -20,6 +20,9 @@ Bug fixes
   edge-case mismatches (e.g., a song titled "1:00 AM" would incorrectly be
   considered a Windows drive path).
 - :doc:`plugins/fish`: Fix AttributeError. :bug:`6340`
+- :ref:`import-cmd` Autotagging by explicit release or recording IDs now keeps
+  candidates from all enabled metadata sources instead of dropping matches when
+  different providers share the same ID. :bug:`6178` :bug:`6181`
 
 ..
     For plugin developers
