@@ -19,8 +19,7 @@ from urllib.parse import quote
 from urllib.request import pathname2url
 
 from beets import ui
-from beets.dbcore import OrQuery
-from beets.dbcore.query import MultipleSort, ParsingError
+from beets.dbcore.query import ParsingError
 from beets.library import Album, Item, parse_query_string
 from beets.plugins import BeetsPlugin
 from beets.plugins import send as send_event
@@ -190,25 +189,12 @@ class SmartPlaylistPlugin(BeetsPlugin):
                     elif len(qs) == 1:
                         query_and_sort = parse_query_string(qs[0], model_cls)
                     else:
-                        # multiple queries and sorts
-                        queries, sorts = zip(
-                            *(parse_query_string(q, model_cls) for q in qs)
+                        # multiple queries and sorts - preserve order
+                        # Store tuple of (query, sort) tuples for hashability
+                        queries_and_sorts = tuple(
+                            parse_query_string(q, model_cls) for q in qs
                         )
-                        query = OrQuery(queries)
-                        final_sorts = []
-                        for s in sorts:
-                            if s:
-                                if isinstance(s, MultipleSort):
-                                    final_sorts += s.sorts
-                                else:
-                                    final_sorts.append(s)
-                        if not final_sorts:
-                            sort = None
-                        elif len(final_sorts) == 1:
-                            (sort,) = final_sorts
-                        else:
-                            sort = MultipleSort(final_sorts)
-                        query_and_sort = query, sort
+                        query_and_sort = queries_and_sorts, None
 
                     playlist_data += (query_and_sort,)
 
@@ -221,10 +207,17 @@ class SmartPlaylistPlugin(BeetsPlugin):
             self._unmatched_playlists.add(playlist_data)
 
     def matches(self, model, query, album_query):
-        if album_query and isinstance(model, Album):
+        # Handle tuple/list of queries (multiple queries preserving order)
+        if isinstance(album_query, (list, tuple)) and isinstance(model, Album):
+            return any(q.match(model) for q, _ in album_query)
+        elif album_query and isinstance(model, Album):
             return album_query.match(model)
-        if query and isinstance(model, Item):
+
+        if isinstance(query, (list, tuple)) and isinstance(model, Item):
+            return any(q.match(model) for q, _ in query)
+        elif query and isinstance(model, Item):
             return query.match(model)
+
         return False
 
     def db_change(self, lib, model):
@@ -270,9 +263,18 @@ class SmartPlaylistPlugin(BeetsPlugin):
                 self._log.info("Creating playlist {}", name)
             items = []
 
-            if query:
+            # Handle tuple/list of queries (preserves order)
+            if isinstance(query, (list, tuple)):
+                for q, sort in query:
+                    items.extend(lib.items(q, sort))
+            elif query:
                 items.extend(lib.items(query, q_sort))
-            if album_query:
+
+            if isinstance(album_query, (list, tuple)):
+                for q, sort in album_query:
+                    for album in lib.albums(q, sort):
+                        items.extend(album.items())
+            elif album_query:
                 for album in lib.albums(album_query, a_q_sort):
                     items.extend(album.items())
 
