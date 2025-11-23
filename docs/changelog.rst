@@ -29,6 +29,10 @@ New features:
 
 Bug fixes:
 
+- :doc:`/plugins/smartplaylist`: Fixed an issue where multiple queries in a
+  playlist configuration were not preserving their order, causing items to
+  appear in database order rather than the order specified in the config.
+  :bug:`6183`
 - When hardlinking from a symlink (e.g. importing a symlink with hardlinking
   enabled), dereference the symlink then hardlink, rather than creating a new
   (potentially broken) symlink :bug:`5676`
