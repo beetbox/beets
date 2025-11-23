@@ -199,7 +199,6 @@ class TitlecasePlugin(BeetsPlugin):
         # Check we should split this into two substrings.
         if self.seperators:
             if len(splits := self.seperators.findall(text)):
-                print(splits)
                 split_cased = "".join(
                     [self.titlecase(s[0], field) + s[1] for s in splits]
                 )
