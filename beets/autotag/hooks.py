@@ -23,6 +23,7 @@ from typing import TYPE_CHECKING, Any, TypeVar
 
 from typing_extensions import Self
 
+from beets import plugins
 from beets.util import cached_classproperty
 
 if TYPE_CHECKING:
@@ -264,6 +265,9 @@ class AlbumMatch(Match):
     mapping: dict[Item, TrackInfo]
     extra_items: list[Item]
     extra_tracks: list[TrackInfo]
+
+    def __post_init__(self) -> None:
+        plugins.send("album_matched", match=self)
 
     @property
     def item_info_pairs(self) -> list[tuple[Item, TrackInfo]]:
