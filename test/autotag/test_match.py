@@ -162,41 +162,21 @@ class TestTagMultipleDataSources:
         assert len(sources) == 2
         assert set(sources) == {"Discogs", "Deezer"}
 
-    @pytest.mark.xfail(
-        reason="Same ID from different sources is considered a duplicate (#6181)",
-        raises=AssertionError,
-        strict=True,
-    )
     def test_search_album_ids(self, shared_album_id):
         _, _, proposal = match.tag_album([Item()], search_ids=[shared_album_id])
 
         self.check_proposal(proposal)
 
-    @pytest.mark.xfail(
-        reason="Same ID from different sources is considered a duplicate (#6181)",
-        raises=AssertionError,
-        strict=True,
-    )
     def test_search_album_current_id(self, shared_album_id):
         _, _, proposal = match.tag_album([Item(mb_albumid=shared_album_id)])
 
         self.check_proposal(proposal)
 
-    @pytest.mark.xfail(
-        reason="The last match wins",
-        raises=AssertionError,
-        strict=True,
-    )
     def test_search_track_ids(self, shared_track_id):
         proposal = match.tag_item(Item(), search_ids=[shared_track_id])
 
         self.check_proposal(proposal)
 
-    @pytest.mark.xfail(
-        reason="The last match wins",
-        raises=AssertionError,
-        strict=True,
-    )
     def test_search_track_current_id(self, shared_track_id):
         proposal = match.tag_item(Item(mb_trackid=shared_track_id))
 

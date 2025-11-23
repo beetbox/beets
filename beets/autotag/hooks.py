@@ -59,6 +59,18 @@ class AttrDict(dict[str, V]):
 class Info(AttrDict[Any]):
     """Container for metadata about a musical entity."""
 
+    Identifier = tuple[str | None, str | None]
+
+    @property
+    def id(self) -> str | None:
+        """Return the provider-specific identifier for this metadata object."""
+        raise NotImplementedError
+
+    @property
+    def identifier(self) -> Identifier:
+        """Return a cross-provider key in ``(data_source, id)`` form."""
+        return (self.data_source, self.id)
+
     @cached_property
     def name(self) -> str:
         raise NotImplementedError
@@ -117,6 +129,10 @@ class AlbumInfo(Info):
     provider. Used during matching to evaluate similarity against a group of
     user items, and later to drive tagging decisions once selected.
     """
+
+    @property
+    def id(self) -> str | None:
+        return self.album_id
 
     @cached_property
     def name(self) -> str:
@@ -193,6 +209,10 @@ class TrackInfo(Info):
     a user's item. Instances often originate within an AlbumInfo but may also
     stand alone for singleton matching.
     """
+
+    @property
+    def id(self) -> str | None:
+        return self.track_id
 
     @cached_property
     def name(self) -> str:
