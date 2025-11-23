@@ -180,10 +180,9 @@ registration process in this case:
 
 ``album_matched``
     :Parameters: ``match`` (``AlbumMatch``)
-    :Description: Called after ``Item`` objects from a folder that's being
-        imported have been matched to an ``AlbumInfo`` and the corresponding
-        distance has been calculated. Missing and extra tracks, if any, are
-        included in the match.
+    :Description: Called each time an ``AlbumMatch`` candidate is created while
+        importing. This applies to both ID-driven and text-search matching.
+        Missing and extra tracks, if any, are included in the match.
 
 ``before_choose_candidate``
     :Parameters: ``task`` (|ImportTask|), ``session`` (|ImportSession|)
