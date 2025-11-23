@@ -17,9 +17,10 @@
 import base64
 import json
 import os
+import typing as t
 
 import flask
-from flask import g, jsonify
+from flask import jsonify
 from unidecode import unidecode
 from werkzeug.routing import BaseConverter, PathConverter
 
@@ -27,6 +28,17 @@ import beets.library
 from beets import ui, util
 from beets.dbcore.query import PathQuery
 from beets.plugins import BeetsPlugin
+
+# Type checking hacks
+
+if t.TYPE_CHECKING:
+
+    class LibraryCtx(flask.ctx._AppCtxGlobals):
+        lib: beets.library.Library
+
+    g = LibraryCtx()
+else:
+    from flask import g
 
 # Utilities.
 
@@ -232,7 +244,7 @@ def _get_unique_table_field_values(model, field, sort_field):
         raise KeyError
     with g.lib.transaction() as tx:
         rows = tx.query(
-            f"SELECT DISTINCT '{field}' FROM '{model._table}' ORDER BY '{sort_field}'"
+            f"SELECT DISTINCT {field} FROM {model._table} ORDER BY {sort_field}"
         )
     return [row[0] for row in rows]
 
