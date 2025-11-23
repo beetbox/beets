@@ -128,6 +128,7 @@ databases. They share the following configuration options:
     substitute
     the
     thumbnails
+    titlecase
     types
     unimported
     web
