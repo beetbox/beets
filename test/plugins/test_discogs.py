@@ -608,7 +608,7 @@ def test_parse_featured_artists(track, expected_artist):
     """Tests the plugins ability to parse a featured artist.
     Initial check with one featured artist, two featured artists,
     and three. Ignores artists that are not listed as featured."""
-    t = DiscogsPlugin().get_track_info(
+    t, _, _ = DiscogsPlugin().get_track_info(
         track, 1, 1, ("ARTIST", "ARTIST CREDIT", 2)
     )
     assert t.artist == expected_artist

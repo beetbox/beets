@@ -97,6 +97,8 @@ Bug fixes:
 - :doc:`/plugins/convert`: ``auto_keep`` now respects ``no_convert`` and
   ``never_convert_lossy_files`` when deciding whether to copy/transcode items,
   avoiding extra lossy duplicates.
+- :doc:`plugins/discogs`: Fixed unexpected flex attr from the Discogs plugin.
+  :bug:`6177`
 
 For plugin developers:
 
