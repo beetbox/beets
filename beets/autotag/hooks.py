@@ -54,6 +54,16 @@ class AttrDict(dict[str, V]):
 class Info(AttrDict[Any]):
     """Container for metadata about a musical entity."""
 
+    Identifier = tuple[str | None, str | None]
+
+    @property
+    def id(self) -> str | None:
+        raise NotImplementedError
+
+    @property
+    def identifier(self) -> Identifier:
+        return (self.data_source, self.id)
+
     def __init__(
         self,
         album: str | None = None,
@@ -94,6 +104,10 @@ class AlbumInfo(Info):
     provider. Used during matching to evaluate similarity against a group of
     user items, and later to drive tagging decisions once selected.
     """
+
+    @property
+    def id(self) -> str | None:
+        return self.album_id
 
     def __init__(
         self,
@@ -166,6 +180,10 @@ class TrackInfo(Info):
     a user's item. Instances often originate within an AlbumInfo but may also
     stand alone for singleton matching.
     """
+
+    @property
+    def id(self) -> str | None:
+        return self.track_id
 
     def __init__(
         self,
