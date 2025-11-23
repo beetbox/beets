@@ -130,11 +130,11 @@ class TestTagMultipleDataSources:
                     data_source=self.data_source,
                 )
 
-            def album_for_id(self, *_):
-                return self.album
+            def albums_for_ids(self, *_):
+                yield self.album
 
-            def track_for_id(self, *_):
-                return self.track
+            def tracks_for_ids(self, *_):
+                yield self.track
 
             def candidates(self, *_, **__):
                 yield self.album
@@ -162,7 +162,7 @@ class TestTagMultipleDataSources:
         assert set(sources) == {"Discogs", "Deezer"}
 
     @pytest.mark.xfail(
-        reason="Album ID collisions drop extra sources (#6177)",
+        reason="Same ID from different sources is considered a duplicate (#6181)",
         raises=AssertionError,
         strict=True,
     )
@@ -172,7 +172,7 @@ class TestTagMultipleDataSources:
         self.check_proposal(proposal)
 
     @pytest.mark.xfail(
-        reason="Album ID collisions drop extra sources (#6177)",
+        reason="Same ID from different sources is considered a duplicate (#6181)",
         raises=AssertionError,
         strict=True,
     )
@@ -182,7 +182,7 @@ class TestTagMultipleDataSources:
         self.check_proposal(proposal)
 
     @pytest.mark.xfail(
-        reason="Track ID collisions drop extra sources (#6177)",
+        reason="The last match wins",
         raises=AssertionError,
         strict=True,
     )
@@ -192,7 +192,7 @@ class TestTagMultipleDataSources:
         self.check_proposal(proposal)
 
     @pytest.mark.xfail(
-        reason="Track ID collisions drop extra sources (#6177)",
+        reason="The last match wins",
         raises=AssertionError,
         strict=True,
     )
