@@ -13,6 +13,7 @@ been dropped.
 New features:
 
 - :doc:`plugins/ftintitle`: Added argument for custom feat. words in ftintitle.
+- :doc:`plugins/ftintitle`: Added album template value ``album_artist_no_feat``.
 - :doc:`plugins/musicbrainz`: Allow selecting tags or genres to populate the
   genres tag.
 - :doc:`plugins/ftintitle`: Added argument to skip the processing of artist and
@@ -47,6 +48,10 @@ Bug fixes:
   accepted a list of strings). :bug:`5962`
 - Fix a bug introduced in release 2.4.0 where import from any valid
   import-log-file always threw a "none of the paths are importable" error.
+- :doc:`/plugins/web`: repair broken `/item/values/…` and `/albums/values/…`
+  endpoints. Previously, due to single-quotes (ie. string literal) in the SQL
+  query, the query eg. `GET /item/values/albumartist` would return the literal
+  "albumartist" instead of a list of unique album artists.
 
 For plugin developers:
 
@@ -66,6 +71,8 @@ Other changes:
 - Refactored the ``beets/ui/commands.py`` monolithic file (2000+ lines) into
   multiple modules within the ``beets/ui/commands`` directory for better
   maintainability.
+- :doc:`plugins/bpd`: Raise ImportError instead of ValueError when GStreamer is
+  unavailable, enabling ``importorskip`` usage in pytest setup.
 
 2.5.1 (October 14, 2025)
 ------------------------
