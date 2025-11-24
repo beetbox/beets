@@ -281,6 +281,8 @@ constructs include:
 
 - ``$missing`` by :doc:`/plugins/missing`: The number of missing tracks per
   album.
+- ``$album_artist_no_feat`` by :doc:`/plugins/ftintitle`: The album artist
+  without any featured artists
 - ``%bucket{text}`` by :doc:`/plugins/bucket`: Substitute a string by the range
   it belongs to.
 - ``%the{text}`` by :doc:`/plugins/the`: Moves English articles to ends of
