@@ -54,7 +54,9 @@ class TestInlineRecursion(PluginTestCase):
 
     def test_inline_album_expression_uses_items(self):
         plugin = InlinePlugin()
-        func = plugin.compile_inline("len(items)", album=True, field_name="item_count")
+        func = plugin.compile_inline(
+            "len(items)", album=True, field_name="item_count"
+        )
 
         album = self.add_album_fixture()
         assert func(album) == len(list(album.items()))
