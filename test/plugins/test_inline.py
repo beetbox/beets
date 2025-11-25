@@ -14,7 +14,7 @@
 
 from beets import config, plugins
 from beets.test.helper import PluginTestCase
-
+from beetsplug.inline import InlinePlugin
 
 class TestInlineRecursion(PluginTestCase):
     def test_no_recursion_when_inline_shadows_fixed_field(self):
@@ -41,3 +41,19 @@ class TestInlineRecursion(PluginTestCase):
         out = item.evaluate_template("$track_no")
 
         assert out == "01"
+
+    def test_inline_function_body_item_field(self):
+        plugin = InlinePlugin()
+        func = plugin.compile_inline(
+            "return track + 1", album=False, field_name="next_track"
+        )
+
+        item = self.add_item_fixture(track=3)
+        assert func(item) == 4
+
+    def test_inline_album_expression_uses_items(self):
+        plugin = InlinePlugin()
+        func = plugin.compile_inline("len(items)", album=True, field_name="item_count")
+
+        album = self.add_album_fixture()
+        assert func(album) == len(list(album.items()))
