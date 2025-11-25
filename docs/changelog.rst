@@ -13,6 +13,7 @@ been dropped.
 New features:
 
 - :doc:`plugins/ftintitle`: Added argument for custom feat. words in ftintitle.
+- :doc:`plugins/ftintitle`: Added album template value ``album_artist_no_feat``.
 - :doc:`plugins/musicbrainz`: Allow selecting tags or genres to populate the
   genres tag.
 - :doc:`plugins/ftintitle`: Added argument to skip the processing of artist and
@@ -26,6 +27,8 @@ New features:
 - :doc:`plugins/mbpseudo`: Add a new `mbpseudo` plugin to proactively receive
       MusicBrainz pseudo-releases as recommendations during import.
 - Added support for Python 3.13.
+- :doc:`plugins/titlecase`: Add the `titlecase` plugin to allow users to
+      resolve differences in metadata source styles.
 
 Bug fixes:
 
