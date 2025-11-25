@@ -33,6 +33,14 @@ file. The available options are:
 - **custom_words**: List of additional words that will be treated as a marker
   for artist features. Default: ``[]``.
 
+Path Template Values
+--------------------
+
+This plugin provides the ``album_artist_no_feat`` :ref:`template value
+<templ_plugins>` that you can use in your :ref:`path-format-config` in
+``paths.default``. Any ``custom_words`` in the configuration are taken into
+account.
+
 Running Manually
 ----------------
 
