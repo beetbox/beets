@@ -19,9 +19,12 @@ import json
 import os
 import typing as t
 
+from io import BytesIO
+
 import flask
-from flask import jsonify
+import mimetypes
 import random
+from flask import g, jsonify, request
 from unidecode import unidecode
 from werkzeug.routing import BaseConverter, PathConverter
 
@@ -391,7 +394,18 @@ def album_query(queries):
 def album_art(album_id):
     album = g.lib.get_album(album_id)
     if album and album.artpath:
-        return flask.send_file(album.artpath.decode())
+        if 'b64' in request.args:
+            stream = BytesIO()
+            with open(album.artpath, 'rb') as art_file:
+                data = base64.b64encode(art_file.read())
+                stream.write(data)
+                stream.seek(0)
+            return flask.send_file(
+                stream,
+                mimetype=f'{mimetypes.guess_type(util.syspath(album.artpath))};base64'
+            )
+        else:
+            return flask.send_file(album.artpath.decode())
     else:
         return flask.abort(404)
 
