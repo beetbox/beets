@@ -15,6 +15,7 @@
 """Generates smart playlists based on beets queries."""
 
 import os
+from typing import Any, List, Optional, Set, Tuple, Union
 from urllib.parse import quote
 from urllib.request import pathname2url
 
@@ -35,7 +36,7 @@ from beets.util import (
 
 
 class SmartPlaylistPlugin(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.config.add(
             {
@@ -60,7 +61,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
         if self.config["auto"]:
             self.register_listener("database_change", self.db_change)
 
-    def commands(self):
+    def commands(self) -> List[ui.Subcommand]:
         spl_update = ui.Subcommand(
             "splupdate",
             help="update the smart playlists. Playlist names may be "
@@ -123,7 +124,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
         spl_update.func = self.update_cmd
         return [spl_update]
 
-    def update_cmd(self, lib, opts, args):
+    def update_cmd(self, lib: Any, opts: Any, args: List[str]) -> None:
         self.build_queries()
         if args:
             args = set(args)
@@ -150,12 +151,12 @@ class SmartPlaylistPlugin(BeetsPlugin):
         self.__apply_opts_to_config(opts)
         self.update_playlists(lib, opts.pretend)
 
-    def __apply_opts_to_config(self, opts):
+    def __apply_opts_to_config(self, opts: Any) -> None:
         for k, v in opts.__dict__.items():
             if v is not None and k in self.config:
                 self.config[k] = v
 
-    def build_queries(self):
+    def build_queries(self) -> None:
         """
         Instantiate queries for the playlists.
 
@@ -206,7 +207,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
 
             self._unmatched_playlists.add(playlist_data)
 
-    def matches(self, model, query, album_query):
+    def matches(self, model: Union[Item, Album], query: Any, album_query: Any) -> bool:
         # Handle single query object for Album
         if (
             album_query
@@ -233,7 +234,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
 
         return False
 
-    def db_change(self, lib, model):
+    def db_change(self, lib: Any, model: Union[Item, Album]) -> None:
         if self._unmatched_playlists is None:
             self.build_queries()
 
@@ -246,7 +247,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
 
         self._unmatched_playlists -= self._matched_playlists
 
-    def update_playlists(self, lib, pretend=False):
+    def update_playlists(self, lib: Any, pretend: bool = False) -> None:
         if pretend:
             self._log.info(
                 "Showing query results for {} smart playlists...",
@@ -266,7 +267,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
             relative_to = normpath(relative_to)
 
         # Maps playlist filenames to lists of track filenames.
-        m3us = {}
+        m3us: "dict[str, list[PlaylistItem]]" = {}
 
         for playlist in self._matched_playlists:
             name, (query, q_sort), (album_query, a_q_sort) = playlist
@@ -373,6 +374,6 @@ class SmartPlaylistPlugin(BeetsPlugin):
 
 
 class PlaylistItem:
-    def __init__(self, item, uri):
+    def __init__(self, item: Item, uri: bytes) -> None:
         self.item = item
         self.uri = uri
