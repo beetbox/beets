@@ -14,8 +14,10 @@
 
 """Generates smart playlists based on beets queries."""
 
+from __future__ import annotations
+
 import os
-from typing import Any, List, Optional, Set, Tuple, Union
+from typing import Any
 from urllib.parse import quote
 from urllib.request import pathname2url
 
@@ -61,7 +63,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
         if self.config["auto"]:
             self.register_listener("database_change", self.db_change)
 
-    def commands(self) -> List[ui.Subcommand]:
+    def commands(self) -> list[ui.Subcommand]:
         spl_update = ui.Subcommand(
             "splupdate",
             help="update the smart playlists. Playlist names may be "
@@ -124,7 +126,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
         spl_update.func = self.update_cmd
         return [spl_update]
 
-    def update_cmd(self, lib: Any, opts: Any, args: List[str]) -> None:
+    def update_cmd(self, lib: Any, opts: Any, args: list[str]) -> None:
         self.build_queries()
         if args:
             args = set(args)
@@ -207,36 +209,23 @@ class SmartPlaylistPlugin(BeetsPlugin):
 
             self._unmatched_playlists.add(playlist_data)
 
-    def matches(
-        self, model: Union[Item, Album], query: Any, album_query: Any
-    ) -> bool:
-        # Handle single query object for Album
-        if (
-            album_query
-            and not isinstance(album_query, (list, tuple))
-            and isinstance(model, Album)
-        ):
-            return album_query.match(model)
-        # Handle tuple/list of queries for Album
-        elif isinstance(album_query, (list, tuple)) and isinstance(
-            model, Album
-        ):
-            return any(q.match(model) for q, _ in album_query)
-
-        # Handle single query object for Item
-        if (
-            query
-            and not isinstance(query, (list, tuple))
-            and isinstance(model, Item)
-        ):
-            return query.match(model)
-        # Handle tuple/list of queries for Item
-        elif isinstance(query, (list, tuple)) and isinstance(model, Item):
+    def _matches_query(self, model: Item | Album, query: Any) -> bool:
+        if not query:
+            return False
+        if isinstance(query, (list, tuple)):
             return any(q.match(model) for q, _ in query)
+        return query.match(model)
 
+    def matches(
+        self, model: Item | Album, query: Any, album_query: Any
+    ) -> bool:
+        if isinstance(model, Album):
+            return self._matches_query(model, album_query)
+        if isinstance(model, Item):
+            return self._matches_query(model, query)
         return False
 
-    def db_change(self, lib: Any, model: Union[Item, Album]) -> None:
+    def db_change(self, lib: Any, model: Item | Album) -> None:
         if self._unmatched_playlists is None:
             self.build_queries()
 
@@ -269,7 +258,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
             relative_to = normpath(relative_to)
 
         # Maps playlist filenames to lists of track filenames.
-        m3us: "dict[str, list[PlaylistItem]]" = {}
+        m3us: dict[str, list[PlaylistItem]] = {}
 
         for playlist in self._matched_playlists:
             name, (query, q_sort), (album_query, a_q_sort) = playlist
