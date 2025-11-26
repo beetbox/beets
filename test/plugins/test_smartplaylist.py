@@ -33,8 +33,8 @@ from beetsplug.smartplaylist import SmartPlaylistPlugin
 class SmartPlaylistTest(BeetsTestCase):
     def test_build_queries(self):
         spl = SmartPlaylistPlugin()
-        assert spl._matched_playlists is None
-        assert spl._unmatched_playlists is None
+        assert spl._matched_playlists == set()
+        assert spl._unmatched_playlists == set()
 
         config["smartplaylist"]["playlists"].set([])
         spl.build_queries()
@@ -182,7 +182,7 @@ class SmartPlaylistTest(BeetsTestCase):
         q = Mock()
         a_q = Mock()
         pl = b"$title-my<playlist>.m3u", (q, None), (a_q, None)
-        spl._matched_playlists = [pl]
+        spl._matched_playlists = {pl}
 
         dir = mkdtemp()
         config["smartplaylist"]["relative_to"] = False
@@ -224,7 +224,7 @@ class SmartPlaylistTest(BeetsTestCase):
         q = Mock()
         a_q = Mock()
         pl = b"$title-my<playlist>.m3u", (q, None), (a_q, None)
-        spl._matched_playlists = [pl]
+        spl._matched_playlists = {pl}
 
         dir = mkdtemp()
         config["smartplaylist"]["output"] = "extm3u"
@@ -274,7 +274,7 @@ class SmartPlaylistTest(BeetsTestCase):
         q = Mock()
         a_q = Mock()
         pl = b"$title-my<playlist>.m3u", (q, None), (a_q, None)
-        spl._matched_playlists = [pl]
+        spl._matched_playlists = {pl}
 
         dir = mkdtemp()
         config["smartplaylist"]["output"] = "extm3u"
@@ -319,7 +319,7 @@ class SmartPlaylistTest(BeetsTestCase):
         q = Mock()
         a_q = Mock()
         pl = b"$title-my<playlist>.m3u", (q, None), (a_q, None)
-        spl._matched_playlists = [pl]
+        spl._matched_playlists = {pl}
 
         dir = mkdtemp()
         tpl = "http://beets:8337/item/$id/file"
@@ -380,7 +380,7 @@ class SmartPlaylistTest(BeetsTestCase):
         # Create playlist with multiple queries (stored as tuple)
         queries_and_sorts = ((q1, None), (q2, None), (q3, None))
         pl = "ordered.m3u", (queries_and_sorts, None), (None, None)
-        spl._matched_playlists = [pl]
+        spl._matched_playlists = {pl}
 
         dir = mkdtemp()
         config["smartplaylist"]["relative_to"] = False
@@ -435,7 +435,7 @@ class SmartPlaylistTest(BeetsTestCase):
         # Create playlist with multiple queries (stored as tuple)
         queries_and_sorts = ((q1, None), (q2, None))
         pl = "dedup.m3u", (queries_and_sorts, None), (None, None)
-        spl._matched_playlists = [pl]
+        spl._matched_playlists = {pl}
 
         dir = mkdtemp()
         config["smartplaylist"]["relative_to"] = False

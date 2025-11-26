@@ -57,8 +57,8 @@ class SmartPlaylistPlugin(BeetsPlugin):
         )
 
         self.config["prefix"].redact = True  # May contain username/password.
-        self._matched_playlists = None
-        self._unmatched_playlists = None
+        self._matched_playlists: set[tuple[Any, Any, Any]] = set()
+        self._unmatched_playlists: set[tuple[Any, Any, Any]] = set()
 
         if self.config["auto"]:
             self.register_listener("database_change", self.db_change)
@@ -129,15 +129,15 @@ class SmartPlaylistPlugin(BeetsPlugin):
     def update_cmd(self, lib: Any, opts: Any, args: list[str]) -> None:
         self.build_queries()
         if args:
-            args = set(args)
-            for a in list(args):
+            args_set = set(args)
+            for a in list(args_set):
                 if not a.endswith(".m3u"):
-                    args.add(f"{a}.m3u")
+                    args_set.add(f"{a}.m3u")
 
             playlists = {
                 (name, q, a_q)
                 for name, q, a_q in self._unmatched_playlists
-                if name in args
+                if name in args_set
             }
             if not playlists:
                 unmatched = [name for name, _, _ in self._unmatched_playlists]
@@ -185,6 +185,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
             try:
                 for key, model_cls in (("query", Item), ("album_query", Album)):
                     qs = playlist.get(key)
+                    query_and_sort: tuple[Any, Any]
                     if qs is None:
                         query_and_sort = None, None
                     elif isinstance(qs, str):
@@ -353,7 +354,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
                             )
                         f.write(comment.encode("utf-8") + entry.uri + b"\n")
             # Send an event when playlists were updated.
-            send_event("smartplaylist_update")
+            send_event("smartplaylist_update")  # type: ignore
 
         if pretend:
             self._log.info(
