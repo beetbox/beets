@@ -158,6 +158,20 @@ class SmartPlaylistPlugin(BeetsPlugin):
             if v is not None and k in self.config:
                 self.config[k] = v
 
+    def _parse_one_query(
+        self, playlist: dict[str, Any], key: str, model_cls: type
+    ) -> tuple[Any, Any]:
+        qs = playlist.get(key)
+        if qs is None:
+            return None, None
+        if isinstance(qs, str):
+            return parse_query_string(qs, model_cls)
+        if len(qs) == 1:
+            return parse_query_string(qs[0], model_cls)
+
+        queries_and_sorts = tuple(parse_query_string(q, model_cls) for q in qs)
+        return queries_and_sorts, None
+
     def build_queries(self) -> None:
         """
         Instantiate queries for the playlists.
@@ -181,34 +195,16 @@ class SmartPlaylistPlugin(BeetsPlugin):
                 self._log.warning("playlist configuration is missing name")
                 continue
 
-            playlist_data = (playlist["name"],)
             try:
-                for key, model_cls in (("query", Item), ("album_query", Album)):
-                    qs = playlist.get(key)
-                    query_and_sort: tuple[Any, Any]
-                    if qs is None:
-                        query_and_sort = None, None
-                    elif isinstance(qs, str):
-                        query_and_sort = parse_query_string(qs, model_cls)
-                    elif len(qs) == 1:
-                        query_and_sort = parse_query_string(qs[0], model_cls)
-                    else:
-                        # multiple queries and sorts - preserve order
-                        # Store tuple of (query, sort) tuples for hashability
-                        queries_and_sorts = tuple(
-                            parse_query_string(q, model_cls) for q in qs
-                        )
-                        query_and_sort = queries_and_sorts, None
-
-                    playlist_data += (query_and_sort,)
-
+                q_match = self._parse_one_query(playlist, "query", Item)
+                a_match = self._parse_one_query(playlist, "album_query", Album)
             except ParsingError as exc:
                 self._log.warning(
                     "invalid query in playlist {}: {}", playlist["name"], exc
                 )
                 continue
 
-            self._unmatched_playlists.add(playlist_data)
+            self._unmatched_playlists.add((playlist["name"], q_match, a_match))
 
     def _matches_query(self, model: Item | Album, query: Any) -> bool:
         if not query:
