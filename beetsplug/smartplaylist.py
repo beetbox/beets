@@ -207,7 +207,9 @@ class SmartPlaylistPlugin(BeetsPlugin):
 
             self._unmatched_playlists.add(playlist_data)
 
-    def matches(self, model: Union[Item, Album], query: Any, album_query: Any) -> bool:
+    def matches(
+        self, model: Union[Item, Album], query: Any, album_query: Any
+    ) -> bool:
         # Handle single query object for Album
         if (
             album_query
