@@ -32,6 +32,10 @@ New features:
 
 Bug fixes:
 
+- :doc:`plugins/inline`: Fix recursion error when an inline field definition
+  shadows a built-in item field (e.g., redefining ``track_no``). Inline
+  expressions now skip self-references during evaluation to avoid infinite
+  recursion. :bug:`6115`
 - When hardlinking from a symlink (e.g. importing a symlink with hardlinking
   enabled), dereference the symlink then hardlink, rather than creating a new
   (potentially broken) symlink :bug:`5676`
