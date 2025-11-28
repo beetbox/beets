@@ -124,7 +124,7 @@ List all missing albums of release type "compilation" in your collection::
 List all missing albums of release type "compilation" and album in your collection::
 
 ::
-  
+
     beet missing -a --release-type compilation --release-type album
 
 Call this plugin from other beet commands:

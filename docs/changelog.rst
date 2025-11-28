@@ -439,25 +439,7 @@ Other changes:
   wrong (outdated) commit. Now the tag is created in the same workflow step
   right after committing the version update. :bug:`5539`
 - :doc:`/plugins/smartplaylist`: URL-encode additional item ``fields`` within
-  generated EXTM3U playlists inst
-        # build dict mapping artist to list of all albums
-        for artist, albums in albums_by_artist.items():
-            if artist[1] is None or artist[1] == "":
-                albs_no_mbid = ["'" + a["album"] + "'" for a in albums]
-                self._log.info(
-                    "No musicbrainz ID for artist '{}' found in album(s) {}; "
-                    "skipping",
-                    artist[0],
-                    ", ".join(albs_no_mbid),
-                )
-                continue
-
-            try:
-                resp = musicbrainzngs.browse_release_groups(
-                    artist=artist[1],
-                    release_type=release_type,
-                )
-ead of JSON-encoding them.
+  generated EXTM3U playlists instead of JSON-encoding them.
 - typehints: ``./beets/importer.py`` file now has improved typehints.
 - typehints: ``./beets/plugins.py`` file now includes typehints.
 - :doc:`plugins/ftintitle`: Optimize the plugin by avoiding unnecessary writes
