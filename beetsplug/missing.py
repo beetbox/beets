@@ -196,7 +196,7 @@ class MissingPlugin(BeetsPlugin):
             # reporting the same set of missing albums. Instead, we should
             # group by `mb_albumartistid` field only.
             artist = (album["albumartist"], album["mb_albumartistid"])
-            album_ids_by_artist[artist].add(album)
+            album_ids_by_artist[artist].add(album["mb_releasegroupid"])
 
         total_missing = 0
         release_type = self.config["release_type"].get() or ["album"]

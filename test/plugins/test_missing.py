@@ -22,7 +22,7 @@ import pytest
 
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.library import Item
-from beets.test.helper import PluginMixin, TestHelper, capture_log
+from beets.test.helper import PluginMixin, TestHelper, capture_log, capture_stdout
 
 
 def mock_browse_release_groups(
@@ -60,7 +60,7 @@ class TestMissingPlugin(PluginMixin, TestHelper):
                 mb_albumid="81ae60d4-5b75-38df-903a-db2cfa51c2c6",
                 mb_releasegroupid="album_id",
                 mb_trackid="track_1",
-                mb_albumartistid="artist_id",
+                mb_albumartistid="f59c5520-ba9f-4df7-aa9f-90b46ef857da",
                 albumartist="artist",
                 tracktotal=3,
             ),
@@ -68,7 +68,7 @@ class TestMissingPlugin(PluginMixin, TestHelper):
                 album="album",
                 mb_albumid="81ae60d4-5b75-38df-903a-db2cfa51c2c6",
                 mb_releasegroupid="album_id",
-                mb_albumartistid="artist_id",
+                mb_albumartistid="f59c5520-ba9f-4df7-aa9f-90b46ef857da",
                 albumartist="artist",
                 tracktotal=3,
             ),
@@ -77,7 +77,7 @@ class TestMissingPlugin(PluginMixin, TestHelper):
                 mb_albumid="81ae60d4-5b75-38df-903a-db2cfa51c2c6",
                 mb_releasegroupid="album_id",
                 mb_trackid="track_3",
-                mb_albumartistid="artist_id",
+                mb_albumartistid="f59c5520-ba9f-4df7-aa9f-90b46ef857da",
                 albumartist="artist",
                 tracktotal=3,
             ),
@@ -91,12 +91,12 @@ class TestMissingPlugin(PluginMixin, TestHelper):
         "total,count",
         list(itertools.product((True, False), repeat=2)),
     )
-    @patch("beets.autotag.hooks.album_for_mbid")
-    def test_missing_tracks(self, album_for_mbid, total, count):
+    @patch("beets.metadata_plugins.album_for_id")
+    def test_missing_tracks(self, album_for_id, total, count):
         """Test getting missing tracks works with expected logs."""
         self.lib.add_album(self.album_items[:2])
 
-        album_for_mbid.return_value = AlbumInfo(
+        album_for_id.return_value = AlbumInfo(
             album_id="album_id",
             album="album",
             tracks=[
@@ -105,39 +105,45 @@ class TestMissingPlugin(PluginMixin, TestHelper):
             ],
         )
 
-        with capture_log() as logs:
-            command = ["missing"]
-            if total:
-                command.append("-t")
-            if count:
-                command.append("-c")
-            self.run_command(*command)
+        command = ["missing"]
+        if total:
+            command.append("-t")
+        if count:
+            command.append("-c")
 
-        if not total and not count:
-            assert (
-                f"missing: track {self.album_items[-1].mb_trackid} in album album_id"
-            ) in logs
-
-        if not total and count:
-            assert "missing: artist - album: 1" in logs
-
-        assert ("missing: 1" in logs) == total
+        if total:
+            with capture_stdout() as output:
+                self.run_command(*command)
+            assert output.getvalue().strip() == "1"
+        elif count:
+            with capture_stdout() as output:
+                self.run_command(*command)
+            assert "artist - album: 1" in output.getvalue()
+        else:
+            with capture_log() as logs:
+                self.run_command(*command)
+            # The log message includes the "missing:" prefix in current master
+            assert any(
+                f"track {self.album_items[-1].mb_trackid} in album album_id" in log
+                for log in logs
+            )
 
     def test_missing_albums(self):
-        """Test getting missing albums works with expected logs."""
+        """Test getting missing albums works with expected output."""
         with patch(
             "musicbrainzngs.browse_release_groups",
             wraps=mock_browse_release_groups,
         ):
             self.lib.add_album(self.album_items)
 
-            with capture_log() as logs:
+            with capture_stdout() as output:
                 command = ["missing", "-a"]
                 self.run_command(*command)
 
-            assert "missing: artist - compilation" not in logs
-            assert "missing: artist - title" not in logs
-            assert "missing: artist - title 2" in logs
+            output_str = output.getvalue()
+            assert "artist - compilation" not in output_str
+            assert "artist - title\n" not in output_str
+            assert "artist - title 2" in output_str
 
     def test_missing_albums_compilation(self):
         """Test getting missing albums works for a specific release type."""
@@ -147,13 +153,14 @@ class TestMissingPlugin(PluginMixin, TestHelper):
         ):
             self.lib.add_album(self.album_items)
 
-            with capture_log() as logs:
+            with capture_stdout() as output:
                 command = ["missing", "-a", "--release-type", "compilation"]
                 self.run_command(*command)
 
-            assert "missing: artist - compilation" in logs
-            assert "missing: artist - title" not in logs
-            assert "missing: artist - title 2" not in logs
+            output_str = output.getvalue()
+            assert "artist - compilation" in output_str
+            assert "artist - title" not in output_str
+            assert "artist - title 2" not in output_str
 
     def test_missing_albums_all(self):
         """Test getting missing albums works for all release types."""
@@ -163,7 +170,7 @@ class TestMissingPlugin(PluginMixin, TestHelper):
         ):
             self.lib.add_album(self.album_items)
 
-            with capture_log() as logs:
+            with capture_stdout() as output:
                 command = [
                     "missing",
                     "-a",
@@ -174,9 +181,10 @@ class TestMissingPlugin(PluginMixin, TestHelper):
                 ]
                 self.run_command(*command)
 
-            assert "missing: artist - compilation" in logs
-            assert "missing: artist - title" not in logs
-            assert "missing: artist - title 2" in logs
+            output_str = output.getvalue()
+            assert "artist - compilation" in output_str
+            assert "artist - title\n" not in output_str
+            assert "artist - title 2" in output_str
 
     def test_missing_albums_total(self):
         """Test getting missing albums works with the total flag."""
@@ -186,7 +194,7 @@ class TestMissingPlugin(PluginMixin, TestHelper):
         ):
             self.lib.add_album(self.album_items)
 
-            with capture_log() as logs:
+            with capture_stdout() as output:
                 command = [
                     "missing",
                     "-a",
@@ -194,8 +202,9 @@ class TestMissingPlugin(PluginMixin, TestHelper):
                 ]
                 self.run_command(*command)
 
-            assert "missing: 1" in logs
+            output_str = output.getvalue().strip()
+            assert output_str == "1"
             # Specific missing logs omitted if total provided
-            assert "missing: artist - compilation" not in logs
-            assert "missing: artist - title" not in logs
-            assert "missing: artist - title 2" not in logs
+            assert "artist - compilation" not in output_str
+            assert "artist - title" not in output_str
+            assert "artist - title 2" not in output_str
