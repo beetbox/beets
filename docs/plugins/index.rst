@@ -84,7 +84,6 @@ databases. They share the following configuration options:
     fromfilename
     ftintitle
     fuzzy
-    gmusic
     hook
     ihate
     importadded
