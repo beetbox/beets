@@ -1,12 +1,14 @@
-Missing Plugin
-==============
+################
+ Missing Plugin
+################
 
 This plugin adds a new command, ``missing`` or ``miss``, which finds and lists
 missing tracks for albums in your collection. Each album requires one network
 call to album data source.
 
-Usage
------
+*******
+ Usage
+*******
 
 Add the ``missing`` plugin to your configuration (see :ref:`using-plugins`). The
 ``beet missing`` command fetches album information from the origin data source
@@ -36,11 +38,12 @@ library:
 .. warning::
 
     Option ``-c`` is ignored when used with ``-a``, and ``--release-type`` is
-    ignored when not used with ``-a``. Valid release types can be shown by running
-    ``beet missing -h``.
+    ignored when not used with ``-a``. Valid release types can be shown by
+    running ``beet missing -h``.
 
-Configuration
--------------
+***************
+ Configuration
+***************
 
 To configure the plugin, make a ``missing:`` section in your configuration file.
 The available options are:
@@ -51,7 +54,7 @@ The available options are:
   ``no``.
 
 Formatting
-~~~~~~~~~~
+==========
 
 - This plugin uses global formatting options from the main configuration; see
   :ref:`format_item` and :ref:`format_album`:
@@ -69,14 +72,16 @@ Here's an example
         count: no
         total: no
 
-Template Fields
----------------
+*****************
+ Template Fields
+*****************
 
 With this plugin enabled, the ``$missing`` template field expands to the number
 of tracks missing from each album.
 
-Examples
---------
+**********
+ Examples
+**********
 
 List all missing tracks in your collection:
 
@@ -115,15 +120,20 @@ Print out a count of the total number of missing tracks:
 
     beet missing -t
 
-List all missing albums of release type "compilation" in your collection::
+List all missing albums of release type "compilation" in your collection:
 
 ::
+
+    ::
 
     beet missing -a --release-type compilation
 
-List all missing albums of release type "compilation" and album in your collection::
+List all missing albums of release type "compilation" and album in your
+collection:
 
 ::
+
+    ::
 
     beet missing -a --release-type compilation --release-type album
 
