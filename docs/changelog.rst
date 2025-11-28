@@ -54,7 +54,7 @@ Bug fixes:
   endpoints. Previously, due to single-quotes (ie. string literal) in the SQL
   query, the query eg. `GET /item/values/albumartist` would return the literal
   "albumartist" instead of a list of unique album artists.
-* :doc:`plugins/missing`: When running in missing album mode, allows users to specify
+- :doc:`plugins/missing`: When running in missing album mode, allows users to specify
   MusicBrainz release types that they want to show using the ``--release-type``
   flag. The default behavior is also changed to just show releases of type
   ``album``. :bug:`2661`

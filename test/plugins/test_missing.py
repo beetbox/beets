@@ -22,7 +22,12 @@ import pytest
 
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.library import Item
-from beets.test.helper import PluginMixin, TestHelper, capture_log, capture_stdout
+from beets.test.helper import (
+    PluginMixin,
+    TestHelper,
+    capture_log,
+    capture_stdout,
+)
 
 
 def mock_browse_release_groups(
@@ -124,7 +129,8 @@ class TestMissingPlugin(PluginMixin, TestHelper):
                 self.run_command(*command)
             # The log message includes the "missing:" prefix in current master
             assert any(
-                f"track {self.album_items[-1].mb_trackid} in album album_id" in log
+                f"track {self.album_items[-1].mb_trackid} in album album_id"
+                in log
                 for log in logs
             )
 
