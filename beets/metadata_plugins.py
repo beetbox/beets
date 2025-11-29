@@ -49,17 +49,17 @@ def item_candidates(*args, **kwargs) -> Iterable[TrackInfo]:
 
 
 @notify_info_yielded("albuminfo_received")
-def albums_for_ids(_id: str) -> Iterable[AlbumInfo]:
+def albums_for_ids(ids: Sequence[str]) -> Iterable[AlbumInfo]:
     """Return matching albums from all metadata sources for the given ID."""
     for plugin in find_metadata_source_plugins():
-        yield from plugin.albums_for_ids([_id])
+        yield from plugin.albums_for_ids(ids)
 
 
 @notify_info_yielded("trackinfo_received")
-def tracks_for_ids(_id: str) -> Iterable[TrackInfo]:
+def tracks_for_ids(ids: Sequence[str]) -> Iterable[TrackInfo]:
     """Return matching tracks from all metadata sources for the given ID."""
     for plugin in find_metadata_source_plugins():
-        yield from plugin.tracks_for_ids([_id])
+        yield from plugin.tracks_for_ids(ids)
 
 
 @cache
