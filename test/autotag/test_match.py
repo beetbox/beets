@@ -1,5 +1,3 @@
-from typing import ClassVar
-
 import pytest
 
 from beets import metadata_plugins
@@ -108,10 +106,7 @@ class TestTagMultipleDataSources:
 
     @pytest.fixture(autouse=True)
     def _setup_plugins(self, monkeypatch, shared_album_id, shared_track_id):
-        class StubPlugin:
-            data_source: ClassVar[str]
-            data_source_mismatch_penalty = 0
-
+        class StubPlugin(metadata_plugins.MetadataSourcePlugin):
             @property
             def track(self):
                 return TrackInfo(
@@ -131,11 +126,11 @@ class TestTagMultipleDataSources:
                     data_source=self.data_source,
                 )
 
-            def albums_for_ids(self, *_):
-                yield self.album
+            def album_for_id(self, album_id):
+                return self.album if album_id == shared_album_id else None
 
-            def tracks_for_ids(self, *_):
-                yield self.track
+            def track_for_id(self, track_id):
+                return self.track if track_id == shared_track_id else None
 
             def candidates(self, *_, **__):
                 yield self.album
