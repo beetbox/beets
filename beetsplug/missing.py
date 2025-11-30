@@ -220,10 +220,17 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         if len(album.items()) == album.albumtotal:
             return
 
-        item_mbids = {x.mb_trackid for x in album.items()}
         # fetch missing items
         # TODO: Implement caching that without breaking other stuff
-        if album_info := metadata_plugins.album_for_id(album.mb_albumid):
+        if (
+            data_source := album.get("data_source")
+            or album.items()[0].get("data_source")
+        ) and (
+            album_info := metadata_plugins.album_for_id(
+                album.mb_albumid, data_source
+            )
+        ):
+            item_mbids = {x.mb_trackid for x in album.items()}
             for track_info in album_info.tracks:
                 if track_info.track_id not in item_mbids:
                     self._log.debug(

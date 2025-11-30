@@ -72,17 +72,25 @@ class MBSyncPlugin(BeetsPlugin):
         query.
         """
         for item in lib.items(query + ["singleton:true"]):
-            if not item.mb_trackid:
+            if not (track_id := item.mb_trackid):
                 self._log.info(
                     "Skipping singleton with no mb_trackid: {}", item
                 )
                 continue
 
+            if not (data_source := item.get("data_source")):
+                self._log.info(
+                    "Skipping singleton without data source: {}", item
+                )
+                continue
+
             if not (
-                track_info := metadata_plugins.track_for_id(item.mb_trackid)
+                track_info := metadata_plugins.track_for_id(
+                    track_id, data_source
+                )
             ):
                 self._log.info(
-                    "Recording ID not found: {0.mb_trackid} for track {0}", item
+                    "Recording ID not found: {} for track {}", track_id, item
                 )
                 continue
 
@@ -97,15 +105,24 @@ class MBSyncPlugin(BeetsPlugin):
         """
         # Process matching albums.
         for album in lib.albums(query):
-            if not album.mb_albumid:
+            if not (album_id := album.mb_albumid):
                 self._log.info("Skipping album with no mb_albumid: {}", album)
                 continue
 
             if not (
-                album_info := metadata_plugins.album_for_id(album.mb_albumid)
+                data_source := album.get("data_source")
+                or album.items()[0].get("data_source")
+            ):
+                self._log.info("Skipping album without data source: {}", album)
+                continue
+
+            if not (
+                album_info := metadata_plugins.album_for_id(
+                    album_id, data_source
+                )
             ):
                 self._log.info(
-                    "Release ID {0.mb_albumid} not found for album {0}", album
+                    "Release ID {} not found for album {}", album_id, album
                 )
                 continue
 
