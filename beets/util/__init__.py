@@ -167,6 +167,12 @@ class MoveOperation(Enum):
     REFLINK_AUTO = 5
 
 
+class PromptChoice(NamedTuple):
+    short: str
+    long: str
+    callback: Any
+
+
 def normpath(path: PathLike) -> bytes:
     """Provide the canonical form of the path suitable for storing in
     the database.

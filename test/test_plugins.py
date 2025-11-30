@@ -41,7 +41,7 @@ from beets.test.helper import (
     PluginTestCase,
     TerminalImportMixin,
 )
-from beets.util import displayable_path, syspath
+from beets.util import PromptChoice, displayable_path, syspath
 
 
 class TestPluginRegistration(PluginTestCase):
@@ -292,8 +292,8 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
 
             def return_choices(self, session, task):
                 return [
-                    ui.commands.PromptChoice("f", "Foo", None),
-                    ui.commands.PromptChoice("r", "baR", None),
+                    PromptChoice("f", "Foo", None),
+                    PromptChoice("r", "baR", None),
                 ]
 
         self.register_plugin(DummyPlugin)
@@ -328,8 +328,8 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
 
             def return_choices(self, session, task):
                 return [
-                    ui.commands.PromptChoice("f", "Foo", None),
-                    ui.commands.PromptChoice("r", "baR", None),
+                    PromptChoice("f", "Foo", None),
+                    PromptChoice("r", "baR", None),
                 ]
 
         self.register_plugin(DummyPlugin)
@@ -363,10 +363,10 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
 
             def return_choices(self, session, task):
                 return [
-                    ui.commands.PromptChoice("a", "A foo", None),  # dupe
-                    ui.commands.PromptChoice("z", "baZ", None),  # ok
-                    ui.commands.PromptChoice("z", "Zupe", None),  # dupe
-                    ui.commands.PromptChoice("z", "Zoo", None),
+                    PromptChoice("a", "A foo", None),  # dupe
+                    PromptChoice("z", "baZ", None),  # ok
+                    PromptChoice("z", "Zupe", None),  # dupe
+                    PromptChoice("z", "Zoo", None),
                 ]  # dupe
 
         self.register_plugin(DummyPlugin)
@@ -399,7 +399,7 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
                 )
 
             def return_choices(self, session, task):
-                return [ui.commands.PromptChoice("f", "Foo", self.foo)]
+                return [PromptChoice("f", "Foo", self.foo)]
 
             def foo(self, session, task):
                 pass
@@ -441,7 +441,7 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
                 )
 
             def return_choices(self, session, task):
-                return [ui.commands.PromptChoice("f", "Foo", self.foo)]
+                return [PromptChoice("f", "Foo", self.foo)]
 
             def foo(self, session, task):
                 return Action.SKIP
