@@ -19,7 +19,7 @@ from collections import defaultdict
 from collections.abc import Iterator
 
 import musicbrainzngs
-from musicbrainzngs.musicbrainz import MusicBrainzError
+from musicbrainzngs.musicbrainz import VALID_RELEASE_TYPES, MusicBrainzError
 
 from beets import config, metadata_plugins
 from beets.dbcore import types
@@ -100,6 +100,7 @@ class MissingPlugin(BeetsPlugin):
                 "count": False,
                 "total": False,
                 "album": False,
+                "release_type": ["album"],
             }
         )
 
@@ -125,7 +126,19 @@ class MissingPlugin(BeetsPlugin):
             "--album",
             dest="album",
             action="store_true",
-            help="show missing albums for artist instead of tracks",
+            help=(
+                "show missing release for artist instead of tracks. Defaults "
+                "to only releases of type 'album'"
+            ),
+        )
+        self._command.parser.add_option(
+            "--release-type",
+            dest="release_type",
+            action="append",
+            help=(
+                "select release types for missing albums for artist "
+                f"from ({', '.join(VALID_RELEASE_TYPES)})"
+            ),
         )
         self._command.parser.add_format_option()
 
@@ -183,13 +196,17 @@ class MissingPlugin(BeetsPlugin):
             # reporting the same set of missing albums. Instead, we should
             # group by `mb_albumartistid` field only.
             artist = (album["albumartist"], album["mb_albumartistid"])
-            album_ids_by_artist[artist].add(album)
+            album_ids_by_artist[artist].add(album["mb_releasegroupid"])
 
         total_missing = 0
+        release_type = self.config["release_type"].get() or ["album"]
         calculating_total = self.config["total"].get()
         for (artist, artist_id), album_ids in album_ids_by_artist.items():
             try:
-                resp = musicbrainzngs.browse_release_groups(artist=artist_id)
+                resp = musicbrainzngs.browse_release_groups(
+                    artist=artist_id,
+                    release_type=release_type,
+                )
             except MusicBrainzError as err:
                 self._log.info(
                     "Couldn't fetch info for artist '{}' ({}) - '{}'",
