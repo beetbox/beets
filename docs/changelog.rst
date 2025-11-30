@@ -46,7 +46,7 @@ Bug fixes:
 - :doc:`/plugins/web`: repair broken `/item/values/…` and `/albums/values/…`
   endpoints. Previously, due to single-quotes (ie. string literal) in the SQL
   query, the query eg. `GET /item/values/albumartist` would return the literal
-  "albumartist" instead of a list of unique album artists. -
+  "albumartist" instead of a list of unique album artists.
   :doc:`/plugins/convert`: beet convert ignored an explicit --format option when
   never_convert_lossy_files was enabled. Now, --force wil override this config
   setting. Lossy files selected by a query and given a target format on the CLI
