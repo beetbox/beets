@@ -84,7 +84,6 @@ databases. They share the following configuration options:
     fromfilename
     ftintitle
     fuzzy
-    gmusic
     hook
     ihate
     importadded
@@ -128,6 +127,7 @@ databases. They share the following configuration options:
     substitute
     the
     thumbnails
+    titlecase
     types
     unimported
     web
