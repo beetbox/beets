@@ -19,7 +19,7 @@ from typing_extensions import NotRequired
 from beets.util import cached_classproperty
 from beets.util.id_extractors import extract_release_id
 
-from .plugins import BeetsPlugin, find_plugins, notify_info_yielded
+from .plugins import BeetsPlugin, find_plugins, notify_info_yielded, send
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
@@ -32,6 +32,14 @@ def find_metadata_source_plugins() -> list[MetadataSourcePlugin]:
     """Return a list of all loaded metadata source plugins."""
     # TODO: Make this an isinstance(MetadataSourcePlugin, ...) check in v3.0.0
     return [p for p in find_plugins() if hasattr(p, "data_source")]  # type: ignore[misc]
+
+
+@cache
+def get_metadata_source(name: str) -> MetadataSourcePlugin | None:
+    """Get metadata source plugin by name."""
+    name = name.lower()
+    plugins = find_metadata_source_plugins()
+    return next((p for p in plugins if p.data_source.lower() == name), None)
 
 
 @notify_info_yielded("albuminfo_received")
@@ -60,6 +68,28 @@ def tracks_for_ids(ids: Sequence[str]) -> Iterable[TrackInfo]:
     """Return matching tracks from all metadata sources for the given ID."""
     for plugin in find_metadata_source_plugins():
         yield from plugin.tracks_for_ids(ids)
+
+
+def album_for_id(_id: str, data_source: str) -> AlbumInfo | None:
+    """Get AlbumInfo object for the given ID and data source."""
+    if (plugin := get_metadata_source(data_source)) and (
+        info := plugin.album_for_id(_id)
+    ):
+        send("albuminfo_received", info=info)
+        return info
+
+    return None
+
+
+def track_for_id(_id: str, data_source: str) -> TrackInfo | None:
+    """Get TrackInfo object for the given ID and data source."""
+    if (plugin := get_metadata_source(data_source)) and (
+        info := plugin.track_for_id(_id)
+    ):
+        send("trackinfo_received", info=info)
+        return info
+
+    return None
 
 
 @cache
