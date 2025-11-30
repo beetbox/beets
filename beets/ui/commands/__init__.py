@@ -39,7 +39,7 @@ def __getattr__(name: str):
         __name__,
         {
             "TerminalImportSession": "beets.ui.commands.import_.session",
-            "PromptChoice": "beets.ui.commands.import_.session",
+            "PromptChoice": "beets.util",
         },
         name,
     )
