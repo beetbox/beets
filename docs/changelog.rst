@@ -33,7 +33,9 @@ New features:
       resolve differences in metadata source styles.
 
 Bug fixes:
-
+- :doc:`plugins/subsonicupdate`: Improve error messages when the Subsonic server 
+  is unavailable or returns invalid/missing JSON. Previously, failures were 
+  cryptic (e.g., "Expecting value: line 1 column 1 (char 0)"). :bug:`5635`
 - :doc:`plugins/inline`: Fix recursion error when an inline field definition
   shadows a built-in item field (e.g., redefining ``track_no``). Inline
   expressions now skip self-references during evaluation to avoid infinite
