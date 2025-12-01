@@ -52,9 +52,9 @@ embedding is disabled for files that are linked. Refer to the ``link`` and
 ``hardlink`` options below.
 
 The ``-F`` (or ``--force``) option forces transcoding even when safety options
-such as ``no_convert`` or ``never_convert_lossy_files`` would normally cause a
-file to be copied or skipped instead. This can be combined with ``--format`` to
-explicitly transcode lossy inputs to a chosen target format.
+such as ``no_convert``, ``never_convert_lossy_files``, or ``max_bitrate`` would
+normally cause a file to be copied or skipped instead. This can be combined with
+``--format`` to explicitly transcode lossy inputs to a chosen target format.
 
 The ``-m`` (or ``--playlist``) option enables the plugin to create an m3u8
 playlist file in the destination folder given by the ``-d`` (``--dest``) option
@@ -109,11 +109,13 @@ The available options are:
   with high bitrates, even if they are already in the same format as the output.
   Note that this does not guarantee that all converted files will have a lower
   bitrate---that depends on the encoder and its configuration. Default: none.
+  This option will be overridden by the ``--force`` flag
 - **no_convert**: Does not transcode items matching the query string provided
   (see :doc:`/reference/query`). For example, to not convert AAC or WMA formats,
   you can use ``format:AAC, format:WMA`` or ``path::\.(m4a|wma)$``. If you only
   want to transcode WMA format, you can use a negative query, e.g.,
-  ``^path::\.(wma)$``, to not convert any other format except WMA.
+  ``^path::\.(wma)$``, to not convert any other format except WMA. This option
+  will be overridden by the ``--force`` flag
 - **never_convert_lossy_files**: Cross-conversions between lossy codecs---such
   as mp3, ogg vorbis, etc.---makes little sense as they will decrease quality
   even further. If set to ``yes``, lossy files are always copied. Default:
