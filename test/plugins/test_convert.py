@@ -235,6 +235,7 @@ class ConvertCliTest(ConvertTestCase, ConvertCommand):
         assert not self.file_endswith(
             self.convert_dest / "converted.ogg", "ogg"
         )
+
     def test_force_overrides_max_bitrate_and_same_formats(self):
         self.config["convert"]["max_bitrate"] = 5000
         self.config["convert"]["format"] = "ogg"
@@ -259,7 +260,6 @@ class ConvertCliTest(ConvertTestCase, ConvertCommand):
         assert not self.file_endswith(
             self.convert_dest / "converted.ogg", "ogg"
         )
-
 
     def test_playlist(self):
         with control_stdin("y"):
@@ -323,6 +323,7 @@ class NeverConvertLossyFilesTest(ConvertTestCase, ConvertCommand):
 
         converted = self.convert_dest / "converted.ops"
         assert self.file_endswith(converted, "opus")
+
     def test_force_overrides_no_convert(self):
         self.config["convert"]["formats"]["opus"] = {
             "command": self.tagged_copy_cmd("opus"),
@@ -337,7 +338,6 @@ class NeverConvertLossyFilesTest(ConvertTestCase, ConvertCommand):
 
         converted = self.convert_dest / "converted.ops"
         assert self.file_endswith(converted, "opus")
-
 
 
 class TestNoConvert:
