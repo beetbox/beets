@@ -319,7 +319,9 @@ class SmartPlaylistPlugin(BeetsPlugin):
                     if self.config["forward_slash"].get():
                         item_uri = path_as_posix(item_uri)
                     if self.config["urlencode"]:
-                        item_uri = bytestring_path(pathname2url(item_uri))
+                        item_uri = bytestring_path(
+                            pathname2url(os.fsdecode(item_uri))
+                        )
                     item_uri = prefix + item_uri
 
                 if item_uri not in m3us[m3u_name]:
