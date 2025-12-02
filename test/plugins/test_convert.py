@@ -270,6 +270,21 @@ class ConvertCliTest(ConvertTestCase, ConvertCommand):
         self.run_convert("--playlist", "playlist.m3u8", "--pretend")
         assert not (self.convert_dest / "playlist.m3u8").exists()
 
+    def test_force_overrides_no_convert(self):
+        self.config["convert"]["formats"]["opus"] = {
+            "command": self.tagged_copy_cmd("opus"),
+            "extension": "ops",
+        }
+        self.config["convert"]["no_convert"] = "format:ogg"
+
+        [item] = self.add_item_fixtures(ext="ogg")
+
+        with control_stdin("y"):
+            self.run_convert_path(item, "--format", "opus", "--force")
+
+        converted = self.convert_dest / "converted.ops"
+        assert self.file_endswith(converted, "opus")
+
 
 @_common.slow_test()
 class NeverConvertLossyFilesTest(ConvertTestCase, ConvertCommand):
@@ -316,21 +331,6 @@ class NeverConvertLossyFilesTest(ConvertTestCase, ConvertCommand):
             "command": self.tagged_copy_cmd("opus"),
             "extension": "ops",
         }
-        [item] = self.add_item_fixtures(ext="ogg")
-
-        with control_stdin("y"):
-            self.run_convert_path(item, "--format", "opus", "--force")
-
-        converted = self.convert_dest / "converted.ops"
-        assert self.file_endswith(converted, "opus")
-
-    def test_force_overrides_no_convert(self):
-        self.config["convert"]["formats"]["opus"] = {
-            "command": self.tagged_copy_cmd("opus"),
-            "extension": "ops",
-        }
-        self.config["convert"]["no_convert"] = "format:ogg"
-
         [item] = self.add_item_fixtures(ext="ogg")
 
         with control_stdin("y"):
