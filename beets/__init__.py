@@ -17,7 +17,7 @@ from sys import stderr
 
 import confuse
 
-from .util import deprecate_imports
+from .util.deprecation import deprecate_imports
 
 __version__ = "2.5.1"
 __author__ = "Adrian Sampson <adrian@radbox.org>"
@@ -26,13 +26,9 @@ __author__ = "Adrian Sampson <adrian@radbox.org>"
 def __getattr__(name: str):
     """Handle deprecated imports."""
     return deprecate_imports(
-        old_module=__name__,
-        new_module_by_name={
-            "art": "beetsplug._utils",
-            "vfs": "beetsplug._utils",
-        },
-        name=name,
-        version="3.0.0",
+        __name__,
+        {"art": "beetsplug._utils", "vfs": "beetsplug._utils"},
+        name,
     )
 
 
