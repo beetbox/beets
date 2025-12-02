@@ -16,7 +16,7 @@
 Library.
 """
 
-from .db import Database, Model, Results
+from .db import Database, Index, Model, Results
 from .query import (
     AndQuery,
     FieldQuery,
@@ -43,6 +43,7 @@ __all__ = [
     "Query",
     "Results",
     "Type",
+    "Index",
     "parse_sorted_query",
     "query_from_strings",
     "sort_from_strings",
