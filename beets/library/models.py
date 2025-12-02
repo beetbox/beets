@@ -716,6 +716,7 @@ class Item(LibModel):
         "mtime": types.DATE,
         "added": types.DATE,
     }
+    _indices = (dbcore.Index("idx_item_album_id", ("album_id",)),)
 
     _search_fields = (
         "artist",
