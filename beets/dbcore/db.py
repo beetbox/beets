@@ -35,7 +35,7 @@ from collections.abc import (
     Sequence,
 )
 from sqlite3 import Connection, sqlite_version_info
-from typing import TYPE_CHECKING, Any, AnyStr, Generic
+from typing import TYPE_CHECKING, Any, AnyStr, Generic, NamedTuple
 
 from typing_extensions import TypeVar  # default value support
 from unidecode import unidecode
