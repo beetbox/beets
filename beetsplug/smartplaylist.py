@@ -17,13 +17,13 @@
 from __future__ import annotations
 
 import os
-from typing import Any
+from typing import Any, TypeAlias
 from urllib.parse import quote
 from urllib.request import pathname2url
 
 from beets import ui
-from beets.dbcore.query import ParsingError
-from beets.library import Album, Item, parse_query_string
+from beets.dbcore.query import ParsingError, Query, Sort
+from beets.library import Album, Item, Library, parse_query_string
 from beets.plugins import BeetsPlugin
 from beets.plugins import send as send_event
 from beets.util import (
@@ -35,6 +35,14 @@ from beets.util import (
     sanitize_path,
     syspath,
 )
+
+QueryAndSort = tuple[Query, Sort]
+PlaylistQuery = Query | tuple[QueryAndSort, ...] | None
+PlaylistMatch: TypeAlias = tuple[
+    str,
+    tuple[PlaylistQuery, Sort | None],
+    tuple[PlaylistQuery, Sort | None],
+]
 
 
 class SmartPlaylistPlugin(BeetsPlugin):
@@ -57,8 +65,8 @@ class SmartPlaylistPlugin(BeetsPlugin):
         )
 
         self.config["prefix"].redact = True  # May contain username/password.
-        self._matched_playlists: set[tuple[Any, Any, Any]] = set()
-        self._unmatched_playlists: set[tuple[Any, Any, Any]] = set()
+        self._matched_playlists: set[PlaylistMatch] = set()
+        self._unmatched_playlists: set[PlaylistMatch] = set()
 
         if self.config["auto"]:
             self.register_listener("database_change", self.db_change)
@@ -126,7 +134,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
         spl_update.func = self.update_cmd
         return [spl_update]
 
-    def update_cmd(self, lib: Any, opts: Any, args: list[str]) -> None:
+    def update_cmd(self, lib: Library, opts: Any, args: list[str]) -> None:
         self.build_queries()
         if args:
             args_set = set(args)
@@ -160,7 +168,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
 
     def _parse_one_query(
         self, playlist: dict[str, Any], key: str, model_cls: type
-    ) -> tuple[Any, Any]:
+    ) -> tuple[PlaylistQuery, Sort | None]:
         qs = playlist.get(key)
         if qs is None:
             return None, None
@@ -169,7 +177,9 @@ class SmartPlaylistPlugin(BeetsPlugin):
         if len(qs) == 1:
             return parse_query_string(qs[0], model_cls)
 
-        queries_and_sorts = tuple(parse_query_string(q, model_cls) for q in qs)
+        queries_and_sorts: tuple[QueryAndSort, ...] = tuple(
+            parse_query_string(q, model_cls) for q in qs
+        )
         return queries_and_sorts, None
 
     def build_queries(self) -> None:
@@ -206,7 +216,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
 
             self._unmatched_playlists.add((playlist["name"], q_match, a_match))
 
-    def _matches_query(self, model: Item | Album, query: Any) -> bool:
+    def _matches_query(self, model: Item | Album, query: PlaylistQuery) -> bool:
         if not query:
             return False
         if isinstance(query, (list, tuple)):
@@ -214,7 +224,10 @@ class SmartPlaylistPlugin(BeetsPlugin):
         return query.match(model)
 
     def matches(
-        self, model: Item | Album, query: Any, album_query: Any
+        self,
+        model: Item | Album,
+        query: PlaylistQuery,
+        album_query: PlaylistQuery,
     ) -> bool:
         if isinstance(model, Album):
             return self._matches_query(model, album_query)
@@ -222,7 +235,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
             return self._matches_query(model, query)
         return False
 
-    def db_change(self, lib: Any, model: Item | Album) -> None:
+    def db_change(self, lib: Library, model: Item | Album) -> None:
         if self._unmatched_playlists is None:
             self.build_queries()
 
@@ -235,7 +248,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
 
         self._unmatched_playlists -= self._matched_playlists
 
-    def update_playlists(self, lib: Any, pretend: bool = False) -> None:
+    def update_playlists(self, lib: Library, pretend: bool = False) -> None:
         if pretend:
             self._log.info(
                 "Showing query results for {} smart playlists...",
