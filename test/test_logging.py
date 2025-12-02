@@ -67,6 +67,58 @@ class TestStrFormatLogger:
         assert str(caplog.records[0].msg) == expected
 
 
+class TestLogSanitization:
+    """Log messages should have control characters removed from:
+    - String arguments
+    - Keyword argument values
+    - Bytes arguments (which get decoded first)
+    """
+
+    @pytest.mark.parametrize(
+        "msg, args, kwargs, expected",
+        [
+            # Valid UTF-8 bytes are decoded and preserved
+            (
+                "foo {} bar {bar}",
+                (b"oof \xc3\xa9",),
+                {"bar": b"baz \xc3\xa9"},
+                "foo oof é bar baz é",
+            ),
+            # Invalid UTF-8 bytes are decoded with replacement characters
+            (
+                "foo {} bar {bar}",
+                (b"oof \xff",),
+                {"bar": b"baz \xff"},
+                "foo oof � bar baz �",
+            ),
+            # Control characters should be removed
+            (
+                "foo {} bar {bar}",
+                ("oof \x9e",),
+                {"bar": "baz \x9e"},
+                "foo oof � bar baz �",
+            ),
+            # Whitespace control characters should be preserved
+            (
+                "foo {} bar {bar}",
+                ("foo\t\n",),
+                {"bar": "bar\r"},
+                "foo foo\t\n bar bar\r",
+            ),
+        ],
+    )
+    def test_sanitization(self, msg, args, kwargs, expected, caplog):
+        level = log.INFO
+        logger = blog.getLogger("test_logger")
+        logger.setLevel(level)
+
+        with caplog.at_level(level, logger="test_logger"):
+            logger.log(level, msg, *args, **kwargs)
+
+        assert caplog.records, "No log records were captured"
+        assert str(caplog.records[0].msg) == expected
+
+
 class DummyModule(ModuleType):
     class DummyPlugin(plugins.BeetsPlugin):
         def __init__(self):

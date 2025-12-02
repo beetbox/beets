@@ -20,7 +20,6 @@ import abc
 import inspect
 import re
 import sys
-import warnings
 from collections import defaultdict
 from functools import cached_property, wraps
 from importlib import import_module
@@ -33,6 +32,7 @@ from typing_extensions import ParamSpec
 import beets
 from beets import logging
 from beets.util import unique_list
+from beets.util.deprecation import deprecate_for_maintainers, deprecate_for_user
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Sequence
@@ -184,11 +184,12 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         ):
             return
 
-        warnings.warn(
-            f"{cls.__name__} is used as a legacy metadata source. "
-            "It should extend MetadataSourcePlugin instead of BeetsPlugin. "
-            "Support for this will be removed in the v3.0.0 release!",
-            DeprecationWarning,
+        deprecate_for_maintainers(
+            (
+                f"'{cls.__name__}' is used as a legacy metadata source since it"
+                " inherits 'beets.plugins.BeetsPlugin'. Support for this"
+            ),
+            "'beets.metadata_plugins.MetadataSourcePlugin'",
             stacklevel=3,
         )
 
@@ -256,16 +257,19 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         ):
             return
 
-        message = (
-            "'source_weight' configuration option is deprecated and will be"
-            " removed in v3.0.0. Use 'data_source_mismatch_penalty' instead"
-        )
         for source in self.config.root().sources:
             if "source_weight" in (source.get(self.name) or {}):
                 if source.filename:  # user config
-                    self._log.warning(message)
+                    deprecate_for_user(
+                        self._log,
+                        f"'{self.name}.source_weight' configuration option",
+                        f"'{self.name}.data_source_mismatch_penalty'",
+                    )
                 else:  # 3rd-party plugin config
-                    warnings.warn(message, DeprecationWarning, stacklevel=0)
+                    deprecate_for_maintainers(
+                        "'source_weight' configuration option",
+                        "'data_source_mismatch_penalty'",
+                    )
 
     def commands(self) -> Sequence[Subcommand]:
         """Should return a list of beets.ui.Subcommand objects for
@@ -410,16 +414,22 @@ def get_plugin_names() -> list[str]:
     # *contain* a `beetsplug` package.
     sys.path += paths
     plugins = unique_list(beets.config["plugins"].as_str_seq())
-    # TODO: Remove in v3.0.0
-    if (
-        "musicbrainz" not in plugins
-        and "musicbrainz" in beets.config
-        and beets.config["musicbrainz"].get().get("enabled")
-    ):
-        plugins.append("musicbrainz")
-
     beets.config.add({"disabled_plugins": []})
     disabled_plugins = set(beets.config["disabled_plugins"].as_str_seq())
+    # TODO: Remove in v3.0.0
+    mb_enabled = beets.config["musicbrainz"].flatten().get("enabled")
+    if mb_enabled:
+        deprecate_for_user(
+            log,
+            "'musicbrainz.enabled' configuration option",
+            "'plugins' configuration to explicitly add 'musicbrainz'",
+        )
+        if "musicbrainz" not in plugins:
+            plugins.append("musicbrainz")
+    elif mb_enabled is False:
+        deprecate_for_user(log, "'musicbrainz.enabled' configuration option")
+        disabled_plugins.add("musicbrainz")
+
     return [p for p in plugins if p not in disabled_plugins]
 
 

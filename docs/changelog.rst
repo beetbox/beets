@@ -58,6 +58,8 @@ Bug fixes:
   endpoints. Previously, due to single-quotes (ie. string literal) in the SQL
   query, the query eg. `GET /item/values/albumartist` would return the literal
   "albumartist" instead of a list of unique album artists.
+- Sanitize log messages by removing control characters preventing terminal
+  rendering issues.
 
 For plugin developers:
 
