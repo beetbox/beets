@@ -811,7 +811,7 @@ class TestException:
             with db.transaction() as tx:
                 tx.query("select * from test where plz_raise()")
 
-                
+
 class TestIndex:
     @pytest.fixture(autouse=True)
     def db(self):
@@ -876,5 +876,3 @@ class TestIndex:
         # Should be unique or not
         index_set = {index1, index2}
         assert len(index_set) == (1 if equality else 2)
-
-
