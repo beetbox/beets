@@ -79,6 +79,8 @@ Other changes:
   maintainability.
 - :doc:`plugins/bpd`: Raise ImportError instead of ValueError when GStreamer is
   unavailable, enabling ``importorskip`` usage in pytest setup.
+- Finally removed gmusic plugin and all related code/docs as the Google Play
+  Music service was shut down in 2020.
 
 2.5.1 (October 14, 2025)
 ------------------------
@@ -1363,9 +1365,9 @@ There are some fixes in this release:
 
 - Fix a regression in the last release that made the image resizer fail to
   detect older versions of ImageMagick. :bug:`3269`
-- :doc:`/plugins/gmusic`: The ``oauth_file`` config option now supports more
+- ``/plugins/gmusic``: The ``oauth_file`` config option now supports more
   flexible path values, including ``~`` for the home directory. :bug:`3270`
-- :doc:`/plugins/gmusic`: Fix a crash when using version 12.0.0 or later of the
+- ``/plugins/gmusic``: Fix a crash when using version 12.0.0 or later of the
   ``gmusicapi`` module. :bug:`3270`
 - Fix an incompatibility with Python 3.8's AST changes. :bug:`3278`
 
@@ -1416,7 +1418,7 @@ And many improvements to existing plugins:
   singletons. :bug:`3220` :bug:`3219`
 - :doc:`/plugins/play`: The plugin can now emit a UTF-8 BOM, fixing some issues
   with foobar2000 and Winamp. Thanks to :user:`mz2212`. :bug:`2944`
-- :doc:`/plugins/gmusic`:
+- ``/plugins/gmusic``:
 
   - Add a new option to automatically upload to Google Play Music library on
     track import. Thanks to :user:`shuaiscott`.
@@ -1855,7 +1857,7 @@ Here are the new features:
 - :ref:`Date queries <datequery>` can also be *relative*. You can say
   ``added:-1w..`` to match music added in the last week, for example. Thanks to
   :user:`euri10`. :bug:`2598`
-- A new :doc:`/plugins/gmusic` lets you interact with your Google Play Music
+- A new ``/plugins/gmusic`` lets you interact with your Google Play Music
   library. Thanks to :user:`tigranl`. :bug:`2553` :bug:`2586`
 - :doc:`/plugins/replaygain`: We now keep R128 data in separate tags from
   classic ReplayGain data for formats that need it (namely, Ogg Opus). A new
