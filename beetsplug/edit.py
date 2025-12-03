@@ -282,16 +282,18 @@ class EditPlugin(plugins.BeetsPlugin):
                 if choice == "a":  # Apply.
                     return True
                 elif choice == "c":  # Cancel.
+                    # Revert all temporary changes made in this edit session
+                    # so that objects return to their original in-memory
+                    # state (including tags provided by other plugins such as
+                    # `fromfilename`).
+                    self.apply_data(objs, new_data, old_data)
                     return False
                 elif choice == "e":  # Keep editing.
-                    # Reset the temporary changes to the objects. I we have a
-                    # copy from above, use that, else reload from the database.
-                    objs = [
-                        (old_obj or obj) for old_obj, obj in zip(objs_old, objs)
-                    ]
-                    for obj in objs:
-                        if not obj.id < 0:
-                            obj.load()
+                    # Revert changes on the objects, but keep the edited YAML
+                    # file so the user can continue editing from their last
+                    # version. On the next iteration, differences will again
+                    # be computed against the original state (`old_data`).
+                    self.apply_data(objs, new_data, old_data)
                     continue
 
         # Remove the temporary file before returning.
@@ -380,9 +382,11 @@ class EditPlugin(plugins.BeetsPlugin):
             # to the files if needed without re-applying metadata.
             return Action.RETAG
         else:
-            # Edit cancelled / no edits made. Revert changes.
-            for obj in task.items:
-                obj.read()
+            # Edit cancelled / no edits made. `edit_objects` has already
+            # restored each object to its original in-memory state, so there
+            # is nothing more to do here. Returning None lets the importer
+            # resume the candidate prompt.
+            return None
 
     def importer_edit_candidate(self, session, task):
         """Callback for invoking the functionality during an interactive
