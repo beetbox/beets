@@ -20,7 +20,6 @@ import abc
 import inspect
 import re
 import sys
-import warnings
 from collections import defaultdict
 from functools import cached_property, wraps
 from importlib import import_module
@@ -33,6 +32,7 @@ from typing_extensions import ParamSpec
 import beets
 from beets import logging
 from beets.util import unique_list
+from beets.util.deprecation import deprecate_for_maintainers, deprecate_for_user
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Sequence
@@ -151,9 +151,9 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         list
     )
     listeners: ClassVar[dict[EventType, list[Listener]]] = defaultdict(list)
-    template_funcs: TFuncMap[str] | None = None
-    template_fields: TFuncMap[Item] | None = None
-    album_template_fields: TFuncMap[Album] | None = None
+    template_funcs: ClassVar[TFuncMap[str]] | TFuncMap[str] = {}  # type: ignore[valid-type]
+    template_fields: ClassVar[TFuncMap[Item]] | TFuncMap[Item] = {}  # type: ignore[valid-type]
+    album_template_fields: ClassVar[TFuncMap[Album]] | TFuncMap[Album] = {}  # type: ignore[valid-type]
 
     name: str
     config: ConfigView
@@ -184,11 +184,12 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         ):
             return
 
-        warnings.warn(
-            f"{cls.__name__} is used as a legacy metadata source. "
-            "It should extend MetadataSourcePlugin instead of BeetsPlugin. "
-            "Support for this will be removed in the v3.0.0 release!",
-            DeprecationWarning,
+        deprecate_for_maintainers(
+            (
+                f"'{cls.__name__}' is used as a legacy metadata source since it"
+                " inherits 'beets.plugins.BeetsPlugin'. Support for this"
+            ),
+            "'beets.metadata_plugins.MetadataSourcePlugin'",
             stacklevel=3,
         )
 
@@ -219,8 +220,8 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         self.name = name or self.__module__.split(".")[-1]
         self.config = beets.config[self.name]
 
-        # Set class attributes if they are not already set
-        # for the type of plugin.
+        # If the class attributes are not set, initialize as instance attributes.
+        # TODO: Revise with v3.0.0, see also type: ignore[valid-type] above
         if not self.template_funcs:
             self.template_funcs = {}
         if not self.template_fields:
@@ -256,16 +257,19 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         ):
             return
 
-        message = (
-            "'source_weight' configuration option is deprecated and will be"
-            " removed in v3.0.0. Use 'data_source_mismatch_penalty' instead"
-        )
         for source in self.config.root().sources:
             if "source_weight" in (source.get(self.name) or {}):
                 if source.filename:  # user config
-                    self._log.warning(message)
+                    deprecate_for_user(
+                        self._log,
+                        f"'{self.name}.source_weight' configuration option",
+                        f"'{self.name}.data_source_mismatch_penalty'",
+                    )
                 else:  # 3rd-party plugin config
-                    warnings.warn(message, DeprecationWarning, stacklevel=0)
+                    deprecate_for_maintainers(
+                        "'source_weight' configuration option",
+                        "'data_source_mismatch_penalty'",
+                    )
 
     def commands(self) -> Sequence[Subcommand]:
         """Should return a list of beets.ui.Subcommand objects for
@@ -368,8 +372,6 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         """
 
         def helper(func: TFunc[str]) -> TFunc[str]:
-            if cls.template_funcs is None:
-                cls.template_funcs = {}
             cls.template_funcs[name] = func
             return func
 
@@ -384,8 +386,6 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         """
 
         def helper(func: TFunc[Item]) -> TFunc[Item]:
-            if cls.template_fields is None:
-                cls.template_fields = {}
             cls.template_fields[name] = func
             return func
 
@@ -414,16 +414,22 @@ def get_plugin_names() -> list[str]:
     # *contain* a `beetsplug` package.
     sys.path += paths
     plugins = unique_list(beets.config["plugins"].as_str_seq())
-    # TODO: Remove in v3.0.0
-    if (
-        "musicbrainz" not in plugins
-        and "musicbrainz" in beets.config
-        and beets.config["musicbrainz"].get().get("enabled")
-    ):
-        plugins.append("musicbrainz")
-
     beets.config.add({"disabled_plugins": []})
     disabled_plugins = set(beets.config["disabled_plugins"].as_str_seq())
+    # TODO: Remove in v3.0.0
+    mb_enabled = beets.config["musicbrainz"].flatten().get("enabled")
+    if mb_enabled:
+        deprecate_for_user(
+            log,
+            "'musicbrainz.enabled' configuration option",
+            "'plugins' configuration to explicitly add 'musicbrainz'",
+        )
+        if "musicbrainz" not in plugins:
+            plugins.append("musicbrainz")
+    elif mb_enabled is False:
+        deprecate_for_user(log, "'musicbrainz.enabled' configuration option")
+        disabled_plugins.add("musicbrainz")
+
     return [p for p in plugins if p not in disabled_plugins]
 
 
@@ -565,8 +571,7 @@ def template_funcs() -> TFuncMap[str]:
     """
     funcs: TFuncMap[str] = {}
     for plugin in find_plugins():
-        if plugin.template_funcs:
-            funcs.update(plugin.template_funcs)
+        funcs.update(plugin.template_funcs)
     return funcs
 
 
@@ -592,21 +597,20 @@ F = TypeVar("F")
 
 
 def _check_conflicts_and_merge(
-    plugin: BeetsPlugin, plugin_funcs: dict[str, F] | None, funcs: dict[str, F]
+    plugin: BeetsPlugin, plugin_funcs: dict[str, F], funcs: dict[str, F]
 ) -> None:
     """Check the provided template functions for conflicts and merge into funcs.
 
     Raises a `PluginConflictError` if a plugin defines template functions
     for fields that another plugin has already defined template functions for.
     """
-    if plugin_funcs:
-        if not plugin_funcs.keys().isdisjoint(funcs.keys()):
-            conflicted_fields = ", ".join(plugin_funcs.keys() & funcs.keys())
-            raise PluginConflictError(
-                f"Plugin {plugin.name} defines template functions for "
-                f"{conflicted_fields} that conflict with another plugin."
-            )
-        funcs.update(plugin_funcs)
+    if not plugin_funcs.keys().isdisjoint(funcs.keys()):
+        conflicted_fields = ", ".join(plugin_funcs.keys() & funcs.keys())
+        raise PluginConflictError(
+            f"Plugin {plugin.name} defines template functions for "
+            f"{conflicted_fields} that conflict with another plugin."
+        )
+    funcs.update(plugin_funcs)
 
 
 def item_field_getters() -> TFuncMap[Item]:
