@@ -51,6 +51,11 @@ instead, passing ``-H`` (``--hardlink``) creates hard links. Note that album art
 embedding is disabled for files that are linked. Refer to the ``link`` and
 ``hardlink`` options below.
 
+The ``-F`` (or ``--force``) option forces transcoding even when safety options
+such as ``no_convert``, ``never_convert_lossy_files``, or ``max_bitrate`` would
+normally cause a file to be copied or skipped instead. This can be combined with
+``--format`` to explicitly transcode lossy inputs to a chosen target format.
+
 The ``-m`` (or ``--playlist``) option enables the plugin to create an m3u8
 playlist file in the destination folder given by the ``-d`` (``--dest``) option
 or the ``dest`` configuration. The path to the playlist file can either be
@@ -104,15 +109,21 @@ The available options are:
   with high bitrates, even if they are already in the same format as the output.
   Note that this does not guarantee that all converted files will have a lower
   bitrate---that depends on the encoder and its configuration. Default: none.
+  This option will be overridden by the ``--force`` flag
 - **no_convert**: Does not transcode items matching the query string provided
   (see :doc:`/reference/query`). For example, to not convert AAC or WMA formats,
   you can use ``format:AAC, format:WMA`` or ``path::\.(m4a|wma)$``. If you only
   want to transcode WMA format, you can use a negative query, e.g.,
-  ``^path::\.(wma)$``, to not convert any other format except WMA.
+  ``^path::\.(wma)$``, to not convert any other format except WMA. This option
+  will be overridden by the ``--force`` flag
 - **never_convert_lossy_files**: Cross-conversions between lossy codecs---such
   as mp3, ogg vorbis, etc.---makes little sense as they will decrease quality
   even further. If set to ``yes``, lossy files are always copied. Default:
-  ``no``.
+  ``no``. When ``never_convert_lossy_files`` is enabled, lossy source files (for
+  example MP3 or Ogg Vorbis) are normally not transcoded and are instead copied
+  or linked as-is. To explicitly transcode lossy files in spite of this, use the
+  ``--force`` option with the ``convert`` command (optionally together with
+  ``--format`` to choose a target format)
 - **paths**: The directory structure and naming scheme for the converted files.
   Uses the same format as the top-level ``paths`` section (see
   :ref:`path-format-config`). Default: Reuse your top-level path format
