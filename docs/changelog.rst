@@ -34,9 +34,9 @@ New features:
 
 Bug fixes:
 
-- When using :doc:`plugins/fromfilename` together with
-  :doc:`plugins/edit`, temporary tags extracted from filenames are no longer
-  lost when discarding or cancelling an edit session during import. :bug:`6104`
+- When using :doc:`plugins/fromfilename` together with :doc:`plugins/edit`,
+  temporary tags extracted from filenames are no longer lost when discarding or
+  cancelling an edit session during import. :bug:`6104`
 - :doc:`plugins/inline`: Fix recursion error when an inline field definition
   shadows a built-in item field (e.g., redefining ``track_no``). Inline
   expressions now skip self-references during evaluation to avoid infinite
