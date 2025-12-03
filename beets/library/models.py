@@ -361,7 +361,6 @@ class Album(LibModel):
         getters = plugins.album_field_getters()
         getters["path"] = Album.item_dir
         getters["albumtotal"] = Album._albumtotal
-        getters["media_types"] = lambda a: a.media_types
         return getters
 
     def items(self):
