@@ -248,8 +248,8 @@ class ConvertPlugin(BeetsPlugin):
             action="store_true",
             dest="force",
             help=(
-                "force transcoding, overriding safety checks such as "
-                "never_convert_lossy_files and no_convert"
+                "force transcoding. Ignores no_convert, "
+                "never_convert_lossy_files, and max_bitrate"
             ),
         )
         cmd.parser.add_album_option()
