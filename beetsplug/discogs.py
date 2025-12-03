@@ -780,10 +780,21 @@ class DiscogsPlugin(MetadataSourcePlugin):
                 featured_list, self.config["anv"]["artist_credit"]
             )
             if featured:
-                artist += f" {self.config['featured_string']} {featured}"
-                artist_credit += (
-                    f" {self.config['featured_string']} {featured_credit}"
-                )
+                featured_string = self.config["featured_string"].as_str()
+                token = f"{featured_string} {featured}".lower()
+                token_credit = f"{featured_string} {featured_credit}".lower()
+
+                # Only append if this featured artist isn't already present
+                if token not in artist.lower():
+                    artist += f" {featured_string} {featured}"
+
+                if token_credit not in artist_credit.lower():
+                    artist_credit += f" {featured_string} {featured_credit}"
+                # Previous code
+                # artist += f" {self.config['featured_string']} {featured}"
+                # artist_credit += (
+                #     f" {self.config['featured_string']} {featured_credit}"
+                # )
         return IntermediateTrackInfo(
             title=title,
             track_id=track_id,

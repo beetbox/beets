@@ -265,7 +265,6 @@ class Album(LibModel):
         "language": types.STRING,
         "country": types.STRING,
         "albumstatus": types.STRING,
-        "media": types.STRING,
         "albumdisambig": types.STRING,
         "releasegroupdisambig": types.STRING,
         "rg_album_gain": types.NULL_FLOAT,
@@ -321,7 +320,6 @@ class Album(LibModel):
         "language",
         "country",
         "albumstatus",
-        "media",
         "albumdisambig",
         "releasegroupdisambig",
         "release_group_title",
@@ -355,18 +353,6 @@ class Album(LibModel):
     def art_filepath(self) -> Path | None:
         """The path to album's cover picture as pathlib.Path."""
         return Path(os.fsdecode(self.artpath)) if self.artpath else None
-
-    @property
-    def media(self):
-        """Return a list of distinct media types for the items in this album."""
-        if not self.items():
-            return []
-        media_set = {
-            str(item.media)
-            for item in self.items()
-            if getattr(item, "media", None)
-        }
-        return list(media_set)
 
     @classmethod
     def _getters(cls):
