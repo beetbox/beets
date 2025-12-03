@@ -85,7 +85,7 @@ simple if you know a little Python.
 
 .. _transcode audio: https://beets.readthedocs.org/page/plugins/convert.html
 
-.. _writing your own plugin: https://beets.readthedocs.org/page/dev/plugins.html
+.. _writing your own plugin: https://beets.readthedocs.org/page/dev/plugins/index.html
 
 Install
 -------
