@@ -748,14 +748,11 @@ class DiscogsPlugin(MetadataSourcePlugin):
         if feat_str not in artist:
             return set()
 
-        # Split once: "Filteria Feat. Ukiro, Someone" -> ["Filteria ", " Ukiro, Someone"]
+        # Split once: "Filteria Feat. Ukiro, Someone" ->
+        # ["Filteria ", " Ukiro, Someone"]
         _, after_feat = artist.split(feat_str, 1)
         raw_names = [n.strip() for n in after_feat.split(",")]
-        return {
-            self._normalize_featured_name(n)
-            for n in raw_names
-            if n
-        }
+        return {self._normalize_featured_name(n) for n in raw_names if n}
 
     def get_track_info(
         self,
