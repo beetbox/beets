@@ -141,27 +141,21 @@ class SubsonicUpdate(BeetsPlugin):
             try:
                 json = response.json()
             except ValueError:
-                self._log.error("Invalid JSON from Subsonic: {}", response.text[:200])
+                self._log.error(
+                    "Invalid JSON from Subsonic: {}", response.text[:200]
+                )
                 return
             resp = json.get("subsonic-response")
             if not resp:
                 self._log.error("Missing 'subsonic-response' field: {}", json)
                 return
             status = resp.get("status")
-            if (
-                response.status_code == 200
-                and status == "ok"
-            ):
+            if response.status_code == 200 and status == "ok":
                 count = resp.get("scanStatus", {}).get("count", 0)
                 self._log.info("Updating Subsonic; scanning {} tracks", count)
-            elif (
-                response.status_code == 200
-                and status == "failed"
-            ):
+            elif response.status_code == 200 and status == "failed":
                 msg = resp.get("error", {}).get("message", "Unknown error")
-                self._log.error(
-                    "Error: {}", msg
-                )
+                self._log.error("Error: {}", msg)
             else:
                 self._log.error("Error: {}", json)
         except Exception as error:
