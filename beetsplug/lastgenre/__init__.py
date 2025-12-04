@@ -329,12 +329,35 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         else:
             formatted = tags
 
-        return self.config["separator"].as_str().join(formatted)
+        # Use global genre_separator when multi_value_genres is enabled
+        # for consistency with sync logic, otherwise use plugin's own separator
+        if config["multi_value_genres"]:
+            separator = config["genre_separator"].get(str)
+        else:
+            separator = self.config["separator"].as_str()
+
+        return separator.join(formatted)
 
     def _get_existing_genres(self, obj: LibModel) -> list[str]:
         """Return a list of genres for this Item or Album. Empty string genres
         are removed."""
-        separator = self.config["separator"].get()
+        # Prefer the genres field if it exists (multi-value support)
+        if isinstance(obj, library.Item):
+            genres_list = obj.get("genres", with_album=False)
+        else:
+            genres_list = obj.get("genres")
+
+        # If genres field exists and is not empty, use it
+        if genres_list:
+            return [g for g in genres_list if g]
+
+        # Otherwise fall back to splitting the genre field
+        # Use global genre_separator when multi_value_genres is enabled
+        if config["multi_value_genres"]:
+            separator = config["genre_separator"].get(str)
+        else:
+            separator = self.config["separator"].get()
+
         if isinstance(obj, library.Item):
             item_genre = obj.get("genre", with_album=False).split(separator)
         else:
@@ -472,6 +495,17 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         self._log.info(str(obj))
         obj.genre, label = self._get_genre(obj)
         self._log.debug("Resolved ({}): {}", label, obj.genre)
+
+        # Also populate the genres list field if multi_value_genres is enabled
+        if config["multi_value_genres"]:
+            if obj.genre:
+                # Use global genre_separator for consistency with sync logic
+                separator = config["genre_separator"].get(str)
+                obj.genres = [
+                    g.strip() for g in obj.genre.split(separator) if g.strip()
+                ]
+            else:
+                obj.genres = []
 
         ui.show_model_changes(obj, fields=["genre"], print_obj=False)
 

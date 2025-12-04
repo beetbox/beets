@@ -97,6 +97,10 @@ sunique:
 per_disc_numbering: no
 original_date: no
 artist_credit: no
+multi_value_genres: yes
+# Separator for joining multiple genres. Default matches lastgenre's separator.
+# Use "; " or " / " if you prefer a different format.
+genre_separator: ", "
 id3v23: no
 va_name: "Various Artists"
 paths:
