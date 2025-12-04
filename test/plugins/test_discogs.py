@@ -625,6 +625,29 @@ def test_anv_album_artist():
             },
             "Filteria Feat. Ukiro",
         ),
+        (
+            {
+                "type_": "track",
+                "title": "track",
+                "position": "1",
+                "duration": "5:00",
+                "artists": [
+                    {
+                        "name": "ABCD",
+                        "tracks": "",
+                        "id": 11146,
+                    }
+                ],
+                "extraartists": [
+                    {
+                        "name": "D",
+                        "id": 3,
+                        "role": "Featuring",
+                    }
+                ],
+            },
+            "ABCD Feat. D",
+        ),
     ],
 )
 @patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())

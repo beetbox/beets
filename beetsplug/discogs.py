@@ -732,6 +732,31 @@ class DiscogsPlugin(MetadataSourcePlugin):
             return text
         return DISAMBIGUATION_RE.sub("", text)
 
+    def _normalize_featured_name(self, name: str) -> str:
+        """Normalize a featured artist name for comparison."""
+        # Reuse disambiguation stripping so "Artist (5)" and "Artist" match.
+        return self.strip_disambiguation(name).strip().lower()
+
+    def _existing_featured_artists(self, artist: str) -> set[str]:
+        """Extract already-present featured artist names from an artist string.
+
+        For example:
+            "Filteria Feat. Ukiro, Someone Else"
+        -> {"ukiro", "someone else"}
+        """
+        feat_str = self.config["featured_string"].as_str()
+        if feat_str not in artist:
+            return set()
+
+        # Split once: "Filteria Feat. Ukiro, Someone" -> ["Filteria ", " Ukiro, Someone"]
+        _, after_feat = artist.split(feat_str, 1)
+        raw_names = [n.strip() for n in after_feat.split(",")]
+        return {
+            self._normalize_featured_name(n)
+            for n in raw_names
+            if n
+        }
+
     def get_track_info(
         self,
         track: Track,
@@ -780,16 +805,24 @@ class DiscogsPlugin(MetadataSourcePlugin):
                 featured_list, self.config["anv"]["artist_credit"]
             )
             if featured:
-                featured_string = self.config["featured_string"].as_str()
-                token = f"{featured_string} {featured}".lower()
-                token_credit = f"{featured_string} {featured_credit}".lower()
+                feat_str = self.config["featured_string"].as_str()
 
-                # Only append if this featured artist isn't already present
-                if token not in artist.lower():
-                    artist += f" {featured_string} {featured}"
+                # What featured artists are *already* present in the string?
+                existing = self._existing_featured_artists(artist)
 
-                if token_credit not in artist_credit.lower():
-                    artist_credit += f" {featured_string} {featured_credit}"
+                # What are we trying to add now?
+                new = {
+                    self._normalize_featured_name(n)
+                    for n in featured.split(",")
+                    if n.strip()
+                }
+
+                # Only append if we'd actually introduce *new* featured names.
+                # This avoids "Filteria Feat. Ukiro Feat. Ukiro" and also
+                # fixes the ABCD/D example (ABCD feat. D + D again).
+                if not new.issubset(existing):
+                    artist += f" {feat_str} {featured}"
+                    artist_credit += f" {feat_str} {featured_credit}"
                 # Previous code
                 # artist += f" {self.config['featured_string']} {featured}"
                 # artist_credit += (
