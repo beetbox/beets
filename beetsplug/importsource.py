@@ -39,9 +39,13 @@ class ImportSourcePlugin(BeetsPlugin):
         )
 
     def prevent_suggest_removal(self, session, task):
-        for item in task.imported_items():
-            if "mb_albumid" in item:
-                self.stop_suggestions_for_albums.add(item.mb_albumid)
+        try:
+            for item in task.imported_items():
+                if "mb_albumid" in item:
+                    self.stop_suggestions_for_albums.add(item.mb_albumid)
+        except AssertionError:
+            # No imported items - nothing to do
+            pass
 
     def import_stage(self, _, task):
         """Event handler for albums import finished."""
