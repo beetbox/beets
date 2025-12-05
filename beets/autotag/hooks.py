@@ -17,9 +17,12 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any, NamedTuple, TypeVar
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from typing_extensions import Self
+
+from beets import plugins
 
 if TYPE_CHECKING:
     from beets.library import Item
@@ -53,6 +56,16 @@ class AttrDict(dict[str, V]):
 
 class Info(AttrDict[Any]):
     """Container for metadata about a musical entity."""
+
+    Identifier = tuple[str | None, str | None]
+
+    @property
+    def id(self) -> str | None:
+        raise NotImplementedError
+
+    @property
+    def identifier(self) -> Identifier:
+        return (self.data_source, self.id)
 
     def __init__(
         self,
@@ -94,6 +107,10 @@ class AlbumInfo(Info):
     provider. Used during matching to evaluate similarity against a group of
     user items, and later to drive tagging decisions once selected.
     """
+
+    @property
+    def id(self) -> str | None:
+        return self.album_id
 
     def __init__(
         self,
@@ -167,6 +184,10 @@ class TrackInfo(Info):
     stand alone for singleton matching.
     """
 
+    @property
+    def id(self) -> str | None:
+        return self.track_id
+
     def __init__(
         self,
         *,
@@ -214,16 +235,23 @@ class TrackInfo(Info):
 
 
 # Structures that compose all the information for a candidate match.
-
-
-class AlbumMatch(NamedTuple):
+@dataclass
+class Match:
     distance: Distance
+    info: Info
+
+
+@dataclass
+class AlbumMatch(Match):
     info: AlbumInfo
     mapping: dict[Item, TrackInfo]
     extra_items: list[Item]
     extra_tracks: list[TrackInfo]
 
+    def __post_init__(self) -> None:
+        plugins.send("album_matched", match=self)
 
-class TrackMatch(NamedTuple):
-    distance: Distance
+
+@dataclass
+class TrackMatch(Match):
     info: TrackInfo
