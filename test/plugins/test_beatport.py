@@ -583,7 +583,8 @@ class BeatportTest(BeetsTestCase):
 
     def test_genre_applied(self):
         for track, test_track in zip(self.tracks, self.test_tracks):
-            assert track.genre == test_track.genre
+            # BeatportTrack now has genres as a list
+            assert track.genres == [test_track.genre]
 
 
 class BeatportResponseEmptyTest(unittest.TestCase):
@@ -634,7 +635,8 @@ class BeatportResponseEmptyTest(unittest.TestCase):
 
         self.test_tracks[0]["subGenres"] = []
 
-        assert tracks[0].genre == self.test_tracks[0]["genres"][0]["name"]
+        # BeatportTrack now has genres as a list
+        assert tracks[0].genres == [self.test_tracks[0]["genres"][0]["name"]]
 
     def test_genre_empty(self):
         """No 'genre' is provided. Test if 'sub_genre' is applied."""
@@ -643,4 +645,5 @@ class BeatportResponseEmptyTest(unittest.TestCase):
 
         self.test_tracks[0]["genres"] = []
 
-        assert tracks[0].genre == self.test_tracks[0]["subGenres"][0]["name"]
+        # BeatportTrack now has genres as a list
+        assert tracks[0].genres == [self.test_tracks[0]["subGenres"][0]["name"]]

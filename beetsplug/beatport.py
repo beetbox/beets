@@ -234,7 +234,9 @@ class BeatportObject:
         if "artists" in data:
             self.artists = [(x["id"], str(x["name"])) for x in data["artists"]]
         if "genres" in data:
-            self.genres = [str(x["name"]) for x in data["genres"]]
+            genre_list = [str(x["name"]) for x in data["genres"]]
+            # Remove duplicates while preserving order
+            self.genres = list(dict.fromkeys(genre_list))
 
     def artists_str(self) -> str | None:
         if self.artists is not None:
@@ -306,11 +308,16 @@ class BeatportTrack(BeatportObject):
         self.bpm = data.get("bpm")
         self.initial_key = str((data.get("key") or {}).get("shortName"))
 
-        # Use 'subgenre' and if not present, 'genre' as a fallback.
+        # Extract genres list from subGenres or genres
         if data.get("subGenres"):
-            self.genre = str(data["subGenres"][0].get("name"))
+            genre_list = [str(x.get("name")) for x in data["subGenres"]]
         elif data.get("genres"):
-            self.genre = str(data["genres"][0].get("name"))
+            genre_list = [str(x.get("name")) for x in data["genres"]]
+        else:
+            genre_list = []
+
+        # Remove duplicates while preserving order
+        self.genres = list(dict.fromkeys(genre_list))
 
 
 class BeatportPlugin(MetadataSourcePlugin):
@@ -484,6 +491,7 @@ class BeatportPlugin(MetadataSourcePlugin):
             data_source=self.data_source,
             data_url=release.url,
             genre=release.genre,
+            genres=release.genres,
             year=release_date.year if release_date else None,
             month=release_date.month if release_date else None,
             day=release_date.day if release_date else None,
@@ -509,6 +517,7 @@ class BeatportPlugin(MetadataSourcePlugin):
             bpm=track.bpm,
             initial_key=track.initial_key,
             genre=track.genre,
+            genres=track.genres,
         )
 
     def _get_artist(self, artists):
