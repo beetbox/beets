@@ -1,10 +1,9 @@
 from collections import Counter
 from itertools import chain
-from typing import Any, NamedTuple
 
 from beets import autotag, config, importer, logging, plugins, ui
 from beets.autotag import Recommendation
-from beets.util import displayable_path
+from beets.util import PromptChoice, displayable_path
 from beets.util.units import human_bytes, human_seconds_short
 
 from .display import (
@@ -366,12 +365,6 @@ def _summary_judgment(rec):
     elif action == importer.Action.ASIS:
         ui.print_("Importing as-is.")
     return action
-
-
-class PromptChoice(NamedTuple):
-    short: str
-    long: str
-    callback: Any
 
 
 def choose_candidate(

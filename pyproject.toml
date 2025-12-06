@@ -17,7 +17,6 @@ classifiers = [
     "Environment :: Web Environment",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -42,7 +41,7 @@ Changelog = "https://github.com/beetbox/beets/blob/master/docs/changelog.rst"
 "Bug Tracker" = "https://github.com/beetbox/beets/issues"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<4"
+python = ">=3.10,<4"
 
 colorama = { version = "*", markers = "sys_platform == 'win32'" }
 confuse = ">=2.1.0"
@@ -94,6 +93,7 @@ pydata-sphinx-theme = { version = "*", optional = true }
 sphinx = { version = "*", optional = true }
 sphinx-design = { version = ">=0.6.1", optional = true }
 sphinx-copybutton = { version = ">=0.5.2", optional = true }
+titlecase = {version = "^2.4.1", optional = true}
 
 [tool.poetry.group.test.dependencies]
 beautifulsoup4 = "*"
@@ -113,6 +113,7 @@ rarfile = "*"
 requests-mock = ">=1.12.1"
 requests_oauthlib = "*"
 responses = ">=0.3.0"
+titlecase = "^2.4.1"
 
 [tool.poetry.group.lint.dependencies]
 docstrfmt = ">=1.11.1"
@@ -173,6 +174,7 @@ replaygain = [
 ] # python-gi and GStreamer 1.0+ or mp3gain/aacgain or Python Audio Tools or ffmpeg
 scrub = ["mutagen"]
 sonosupdate = ["soco"]
+titlecase = ["titlecase"]
 thumbnails = ["Pillow", "pyxdg"]
 web = ["flask", "flask-cors"]
 
@@ -228,7 +230,7 @@ cmd = "ruff format"
 
 [tool.poe.tasks.format-docs]
 help = "Format the documentation"
-cmd = "docstrfmt"
+cmd = "docstrfmt docs *.rst"
 
 [tool.poe.tasks.lint]
 help = "Check the code for linting issues. Accepts ruff options."
@@ -286,7 +288,6 @@ extend-exclude = [
     "docs/api/**/*",
     "README_kr.rst",
 ]
-files = ["docs", "*.rst"]
 
 [tool.ruff]
 target-version = "py39"
@@ -305,9 +306,7 @@ select = [
     "N", # pep8-naming
     "PT", # flake8-pytest-style
     # "RUF", # ruff
-    # "UP", # pyupgrade
-    "UP031", # do not use percent formatting
-    "UP032", # use f-string instead of format call
+    "UP", # pyupgrade
     "TCH", # flake8-type-checking
     "W", # pycodestyle
 ]

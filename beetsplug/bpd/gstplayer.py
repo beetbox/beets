@@ -27,7 +27,16 @@ import gi
 
 from beets import ui
 
-gi.require_version("Gst", "1.0")
+try:
+    gi.require_version("Gst", "1.0")
+except ValueError as e:
+    # on some scenarios, gi may be importable, but we get a ValueError when
+    # trying to specify the required version. This is problematic in the test
+    # suite where test_bpd.py has a call to
+    # pytest.importorskip("beetsplug.bpd"). Re-raising as an ImportError
+    # makes it so the test collector functions as inteded.
+    raise ImportError from e
+
 from gi.repository import GLib, Gst  # noqa: E402
 
 Gst.init(None)

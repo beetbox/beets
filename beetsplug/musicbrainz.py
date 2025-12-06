@@ -21,7 +21,7 @@ from collections import Counter
 from contextlib import suppress
 from functools import cached_property
 from itertools import product
-from typing import TYPE_CHECKING, Any, Iterable, Sequence
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urljoin
 
 import musicbrainzngs
@@ -31,9 +31,11 @@ import beets
 import beets.autotag.hooks
 from beets import config, plugins, util
 from beets.metadata_plugins import MetadataSourcePlugin
+from beets.util.deprecation import deprecate_for_user
 from beets.util.id_extractors import extract_release_id
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
     from typing import Literal
 
     from beets.library import Item
@@ -89,6 +91,7 @@ RELEASE_INCLUDES = list(
         "isrcs",
         "url-rels",
         "release-rels",
+        "genres",
         "tags",
     }
     & set(musicbrainzngs.VALID_INCLUDES["release"])
@@ -369,6 +372,10 @@ def _merge_pseudo_and_actual_album(
 
 
 class MusicBrainzPlugin(MetadataSourcePlugin):
+    @cached_property
+    def genres_field(self) -> str:
+        return f"{self.config['genres_tag'].as_choice(['genre', 'tag'])}-list"
+
     def __init__(self):
         """Set up the python-musicbrainz-ngs module according to settings
         from the beets configuration. This should be called at startup.
@@ -381,6 +388,7 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
                 "ratelimit": 1,
                 "ratelimit_interval": 1,
                 "genres": False,
+                "genres_tag": "genre",
                 "external_ids": {
                     "discogs": False,
                     "bandcamp": False,
@@ -396,9 +404,10 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
             self.config["search_limit"] = self.config["match"][
                 "searchlimit"
             ].get()
-            self._log.warning(
-                "'musicbrainz.searchlimit' option is deprecated and will be "
-                "removed in 3.0.0. Use 'musicbrainz.search_limit' instead."
+            deprecate_for_user(
+                self._log,
+                "'musicbrainz.searchlimit' configuration option",
+                "'musicbrainz.search_limit'",
             )
         hostname = self.config["host"].as_str()
         https = self.config["https"].get(bool)
@@ -722,8 +731,8 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
 
         if self.config["genres"]:
             sources = [
-                release["release-group"].get("tag-list", []),
-                release.get("tag-list", []),
+                release["release-group"].get(self.genres_field, []),
+                release.get(self.genres_field, []),
             ]
             genres: Counter[str] = Counter()
             for source in sources:
