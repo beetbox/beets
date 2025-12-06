@@ -475,3 +475,116 @@ def test_correct_list_fields(
 
     single_val, list_val = item[single_field], item[list_field]
     assert (not single_val and not list_val) or single_val == list_val[0]
+
+
+# Tests for multi-value genres functionality
+class TestGenreSync:
+    """Test the genre/genres field synchronization."""
+
+    def test_genres_list_to_genre_first(self):
+        """Genres list sets genre to first item."""
+        item = Item(genres=["Rock", "Alternative", "Indie"])
+        correct_list_fields(item)
+
+        assert item.genre == "Rock"
+        assert item.genres == ["Rock", "Alternative", "Indie"]
+
+    def test_genre_string_to_genres_list(self):
+        """Genre string becomes first item in genres list."""
+        item = Item(genre="Rock")
+        correct_list_fields(item)
+
+        assert item.genre == "Rock"
+        assert item.genres == ["Rock"]
+
+    def test_genre_and_genres_both_present(self):
+        """When both genre and genres exist, genre becomes first in list."""
+        item = Item(genre="Jazz", genres=["Rock", "Alternative"])
+        correct_list_fields(item)
+
+        # genre should be prepended to genres list (deduplicated)
+        assert item.genre == "Jazz"
+        assert item.genres == ["Jazz", "Rock", "Alternative"]
+
+    def test_empty_genre(self):
+        """Empty genre field."""
+        item = Item(genre="")
+        correct_list_fields(item)
+
+        assert item.genre == ""
+        assert item.genres == []
+
+    def test_empty_genres(self):
+        """Empty genres list."""
+        item = Item(genres=[])
+        correct_list_fields(item)
+
+        assert item.genre == ""
+        assert item.genres == []
+
+    def test_none_values(self):
+        """Handle None values in genre/genres fields without errors."""
+        # Test with None genre
+        item = Item(genre=None, genres=["Rock"])
+        correct_list_fields(item)
+        assert item.genres == ["Rock"]
+        assert item.genre == "Rock"
+
+        # Test with None genres
+        item = Item(genre="Jazz", genres=None)
+        correct_list_fields(item)
+        assert item.genre == "Jazz"
+        assert item.genres == ["Jazz"]
+
+    def test_none_both(self):
+        """Handle None in both genre and genres."""
+        item = Item(genre=None, genres=None)
+        correct_list_fields(item)
+
+        assert item.genres == []
+        assert item.genre == ""
+
+    def test_migrate_comma_separated_genres(self):
+        """Migrate legacy comma-separated genre strings."""
+        item = Item(genre="Rock, Alternative, Indie", genres=[])
+        correct_list_fields(item)
+
+        # Should split into genres list
+        assert item.genres == ["Rock", "Alternative", "Indie"]
+        # Genre becomes first item after migration
+        assert item.genre == "Rock"
+
+    def test_migrate_semicolon_separated_genres(self):
+        """Migrate legacy semicolon-separated genre strings."""
+        item = Item(genre="Rock; Alternative; Indie", genres=[])
+        correct_list_fields(item)
+
+        assert item.genres == ["Rock", "Alternative", "Indie"]
+        assert item.genre == "Rock"
+
+    def test_migrate_slash_separated_genres(self):
+        """Migrate legacy slash-separated genre strings."""
+        item = Item(genre="Rock / Alternative / Indie", genres=[])
+        correct_list_fields(item)
+
+        assert item.genres == ["Rock", "Alternative", "Indie"]
+        assert item.genre == "Rock"
+
+    def test_no_migration_when_genres_exists(self):
+        """Don't migrate if genres list already populated."""
+        item = Item(genre="Jazz, Blues", genres=["Rock", "Pop"])
+        correct_list_fields(item)
+
+        # Existing genres list should be preserved
+        # The full genre string is prepended (migration doesn't run when genres exists)
+        assert item.genres == ["Jazz, Blues", "Rock", "Pop"]
+        assert item.genre == "Jazz, Blues"
+
+    def test_no_migration_single_genre(self):
+        """Don't split single genres without separators."""
+        item = Item(genre="Rock", genres=[])
+        correct_list_fields(item)
+
+        # Single genre (no separator) should not trigger migration
+        assert item.genres == ["Rock"]
+        assert item.genre == "Rock"

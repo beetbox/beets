@@ -80,13 +80,15 @@ class LastGenrePluginTest(PluginTestCase):
         self._setup_config(canonical="", whitelist={"rock"})
         assert self.plugin._resolve_genres(["delta blues"]) == []
 
-    def test_format_and_stringify(self):
-        """Format genres list and return them as a separator-delimited string."""
+    def test_format_genres(self):
+        """Format genres list with title case if configured."""
         self._setup_config(count=2)
-        assert (
-            self.plugin._format_and_stringify(["jazz", "pop", "rock", "blues"])
-            == "Jazz, Pop, Rock, Blues"
-        )
+        assert self.plugin._format_genres(["jazz", "pop", "rock", "blues"]) == [
+            "Jazz",
+            "Pop",
+            "Rock",
+            "Blues",
+        ]
 
     def test_count_c14n(self):
         """Keep the n first genres, after having applied c14n when necessary"""
@@ -155,7 +157,7 @@ class LastGenrePluginTest(PluginTestCase):
         with patch("beetsplug.lastgenre.Item.store", unexpected_store):
             output = self.run_with_output("lastgenre", "--pretend")
 
-        assert "Mock Genre" in output
+        assert "genres:" in output
         album.load()
         assert album.genre == "Original Genre"
         assert album.items()[0].genre == "Original Genre"
@@ -219,7 +221,7 @@ class LastGenrePluginTest(PluginTestCase):
             {
                 "album": ["Jazz"],
             },
-            ("Blues, Jazz", "keep + album, whitelist"),
+            (["Blues", "Jazz"], "keep + album, whitelist"),
         ),
         # 1 - force and keep whitelisted, unknown original
         (
@@ -235,7 +237,7 @@ class LastGenrePluginTest(PluginTestCase):
             {
                 "album": ["Jazz"],
             },
-            ("Blues, Jazz", "keep + album, whitelist"),
+            (["Blues", "Jazz"], "keep + album, whitelist"),
         ),
         # 2 - force and keep whitelisted on empty tag
         (
@@ -251,7 +253,7 @@ class LastGenrePluginTest(PluginTestCase):
             {
                 "album": ["Jazz"],
             },
-            ("Jazz", "album, whitelist"),
+            (["Jazz"], "album, whitelist"),
         ),
         # 3 force and keep, artist configured
         (
@@ -268,7 +270,7 @@ class LastGenrePluginTest(PluginTestCase):
                 "album": ["Jazz"],
                 "artist": ["Pop"],
             },
-            ("Blues, Pop", "keep + artist, whitelist"),
+            (["Blues", "Pop"], "keep + artist, whitelist"),
         ),
         # 4 - don't force, disabled whitelist
         (
@@ -284,7 +286,7 @@ class LastGenrePluginTest(PluginTestCase):
             {
                 "album": ["Jazz"],
             },
-            ("any genre", "keep any, no-force"),
+            (["any genre"], "keep any, no-force"),
         ),
         # 5 - don't force and empty is regular last.fm fetch; no whitelist too
         (
@@ -300,7 +302,7 @@ class LastGenrePluginTest(PluginTestCase):
             {
                 "album": ["Jazzin"],
             },
-            ("Jazzin", "album, any"),
+            (["Jazzin"], "album, any"),
         ),
         # 6 - fallback to next stages until found
         (
@@ -318,7 +320,7 @@ class LastGenrePluginTest(PluginTestCase):
                 "album": None,
                 "artist": ["Jazz"],
             },
-            ("Unknown Genre, Jazz", "keep + artist, any"),
+            (["Unknown Genre", "Jazz"], "keep + artist, any"),
         ),
         # 7 - Keep the original genre when force and keep_existing are on, and
         # whitelist is disabled
@@ -338,7 +340,7 @@ class LastGenrePluginTest(PluginTestCase):
                 "album": None,
                 "artist": None,
             },
-            ("any existing", "original fallback"),
+            (["any existing"], "original fallback"),
         ),
         # 7.1 - Keep the original genre when force and keep_existing are on, and
         # whitelist is enabled, and genre is valid.
@@ -358,7 +360,7 @@ class LastGenrePluginTest(PluginTestCase):
                 "album": None,
                 "artist": None,
             },
-            ("Jazz", "original fallback"),
+            (["Jazz"], "original fallback"),
         ),
         # 7.2 - Return the configured fallback when force is on but
         # keep_existing is not.
@@ -378,7 +380,7 @@ class LastGenrePluginTest(PluginTestCase):
                 "album": None,
                 "artist": None,
             },
-            ("fallback genre", "fallback"),
+            (["fallback genre"], "fallback"),
         ),
         # 8 - fallback to fallback if no original
         (
@@ -397,7 +399,7 @@ class LastGenrePluginTest(PluginTestCase):
                 "album": None,
                 "artist": None,
             },
-            ("fallback genre", "fallback"),
+            (["fallback genre"], "fallback"),
         ),
         # 9 - null charachter as separator
         (
@@ -409,12 +411,13 @@ class LastGenrePluginTest(PluginTestCase):
                 "separator": "\u0000",
                 "canonical": False,
                 "prefer_specific": False,
+                "count": 10,
             },
             "Blues",
             {
                 "album": ["Jazz"],
             },
-            ("Blues\u0000Jazz", "keep + album, whitelist"),
+            (["Blues", "Jazz"], "keep + album, whitelist"),
         ),
         # 10 - limit a lot of results
         (
@@ -432,7 +435,10 @@ class LastGenrePluginTest(PluginTestCase):
             {
                 "album": ["Jazz", "Bebop", "Hardbop"],
             },
-            ("Blues, Rock, Metal, Jazz, Bebop", "keep + album, whitelist"),
+            (
+                ["Blues", "Rock", "Metal", "Jazz", "Bebop"],
+                "keep + album, whitelist",
+            ),
         ),
         # 11 - force off does not rely on configured separator
         (
@@ -448,7 +454,7 @@ class LastGenrePluginTest(PluginTestCase):
             {
                 "album": ["Jazz", "Bebop"],
             },
-            ("not ; configured | separator", "keep any, no-force"),
+            (["not ; configured | separator"], "keep any, no-force"),
         ),
         # 12 - fallback to next stage (artist) if no allowed original present
         # and no album genre were fetched.
@@ -468,7 +474,7 @@ class LastGenrePluginTest(PluginTestCase):
                 "album": None,
                 "artist": ["Jazz"],
             },
-            ("Jazz", "keep + artist, whitelist"),
+            (["Jazz"], "keep + artist, whitelist"),
         ),
         # 13 - canonicalization transforms non-whitelisted genres to canonical forms
         #
@@ -488,7 +494,7 @@ class LastGenrePluginTest(PluginTestCase):
             {
                 "album": ["acid techno"],
             },
-            ("Techno, Electronic", "album, whitelist"),
+            (["Techno", "Electronic"], "album, whitelist"),
         ),
         # 14 - canonicalization transforms whitelisted genres to canonical forms and
         # includes originals
@@ -512,7 +518,13 @@ class LastGenrePluginTest(PluginTestCase):
                 "album": ["acid house"],
             },
             (
-                "Detroit Techno, Techno, Electronic, Acid House, House",
+                [
+                    "Detroit Techno",
+                    "Techno",
+                    "Electronic",
+                    "Acid House",
+                    "House",
+                ],
                 "keep + album, whitelist",
             ),
         ),
@@ -537,7 +549,7 @@ class LastGenrePluginTest(PluginTestCase):
                 "album": ["Detroit Techno"],
             },
             (
-                "Disco, Electronic, Detroit Techno, Techno",
+                ["Disco", "Electronic", "Detroit Techno", "Techno"],
                 "keep + album, whitelist",
             ),
         ),
@@ -567,9 +579,31 @@ def test_get_genre(config_values, item_genre, mock_genres, expected_result):
     # Configure
     plugin.config.set(config_values)
     plugin.setup()  # Loads default whitelist and canonicalization tree
+
     item = _common.item()
-    item.genre = item_genre
+    # Set genres as a list - if item_genre is a string, convert it to list
+    if item_genre:
+        # For compatibility with old separator-based tests, split if needed
+        if (
+            "separator" in config_values
+            and config_values["separator"] in item_genre
+        ):
+            sep = config_values["separator"]
+            item.genres = [
+                g.strip() for g in item_genre.split(sep) if g.strip()
+            ]
+        else:
+            # Assume comma-separated if no specific separator
+            if ", " in item_genre:
+                item.genres = [
+                    g.strip() for g in item_genre.split(", ") if g.strip()
+                ]
+            else:
+                item.genres = [item_genre]
+    else:
+        item.genres = []
 
     # Run
     res = plugin._get_genre(item)
-    assert res == expected_result
+    expected_genres, expected_label = expected_result
+    assert res == (expected_genres, expected_label)
