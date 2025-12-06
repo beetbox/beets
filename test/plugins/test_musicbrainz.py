@@ -526,14 +526,14 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         config["musicbrainz"]["genres_tag"] = "genre"
         release = self._make_release()
         d = self.mb.album_info(release)
-        assert d.genre == "GENRE"
+        assert d.genres == ["GENRE"]
 
     def test_tags(self):
         config["musicbrainz"]["genres"] = True
         config["musicbrainz"]["genres_tag"] = "tag"
         release = self._make_release()
         d = self.mb.album_info(release)
-        assert d.genre == "TAG"
+        assert d.genres == ["TAG"]
 
     def test_no_genres(self):
         config["musicbrainz"]["genres"] = False
