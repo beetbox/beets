@@ -579,7 +579,7 @@ class SafeMoveCopyTest(FilePathTestCase):
 
     @NEEDS_REFLINK
     def test_successful_reflink(self):
-        util.reflink(self.path, self.dest)
+        util.reflink(str(self.path), str(self.dest))
         assert self.dest.exists()
         assert self.path.exists()
 

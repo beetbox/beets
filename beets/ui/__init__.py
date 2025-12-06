@@ -28,7 +28,6 @@ import sqlite3
 import sys
 import textwrap
 import traceback
-import warnings
 from difflib import SequenceMatcher
 from functools import cache
 from itertools import chain
@@ -40,6 +39,7 @@ from beets import config, library, logging, plugins, util
 from beets.dbcore import db
 from beets.dbcore import query as db_query
 from beets.util import as_string
+from beets.util.deprecation import deprecate_for_maintainers
 from beets.util.functemplate import template
 
 if TYPE_CHECKING:
@@ -114,11 +114,7 @@ def decargs(arglist):
     .. deprecated:: 2.4.0
        This function will be removed in 3.0.0.
     """
-    warnings.warn(
-        "decargs() is deprecated and will be removed in version 3.0.0.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
+    deprecate_for_maintainers("'beets.ui.decargs'")
     return arglist
 
 

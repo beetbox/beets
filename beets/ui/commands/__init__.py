@@ -16,7 +16,7 @@
 interface.
 """
 
-from beets.util import deprecate_imports
+from beets.util.deprecation import deprecate_imports
 
 from .completion import completion_cmd
 from .config import config_cmd
@@ -36,14 +36,12 @@ from .write import write_cmd
 def __getattr__(name: str):
     """Handle deprecated imports."""
     return deprecate_imports(
-        old_module=__name__,
-        new_module_by_name={
+        __name__,
+        {
             "TerminalImportSession": "beets.ui.commands.import_.session",
-            "PromptChoice": "beets.ui.commands.import_.session",
-            # TODO: We might want to add more deprecated imports here
+            "PromptChoice": "beets.util",
         },
-        name=name,
-        version="3.0.0",
+        name,
     )
 
 
