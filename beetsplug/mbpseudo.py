@@ -59,6 +59,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
             {
                 "scripts": [],
                 "custom_tags_only": False,
+                "multiple_allowed": False,
                 "album_custom_tags": {
                     "album_transl": "album",
                     "album_artist_transl": "artist",
@@ -113,6 +114,28 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
                 )
 
     @override
+    def before_album_info_emitted(
+        self,
+        items: Iterable[Item],
+        album_info: AlbumInfo,
+    ) -> AlbumInfo:
+        if isinstance(album_info, PseudoAlbumInfo):
+            for item in items:
+                # particularly relevant for reimport but could also happen during import
+                if "mb_albumid" in item:
+                    del item["mb_albumid"]
+                if "mb_trackid" in item:
+                    del item["mb_trackid"]
+
+            self._log.debug(
+                "Using {0} release for distance calculations for album {1}",
+                album_info.determine_best_ref(list(items)),
+                album_info.album_id,
+            )
+
+        return album_info
+
+    @override
     def candidates(
         self,
         items: Sequence[Item],
@@ -126,51 +149,80 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
             for album_info in super().candidates(
                 items, artist, album, va_likely
             ):
-                if isinstance(album_info, PseudoAlbumInfo):
-                    self._log.debug(
-                        "Using {0} release for distance calculations for album {1}",
-                        album_info.determine_best_ref(items),
-                        album_info.album_id,
-                    )
-                    yield album_info  # first yield pseudo to give it priority
+                # always yield pseudo first to give it priority
+                if isinstance(album_info, MultiPseudoAlbumInfo):
+                    yield from album_info.unwrap()
+                    yield album_info
+                elif isinstance(album_info, PseudoAlbumInfo):
+                    yield album_info
                     yield album_info.get_official_release()
                 else:
                     yield album_info
+
+    def _get_raw_pseudo_release(self, pseudo_album_id: str) -> JSONDict:
+        try:
+            return self._release_getter(pseudo_album_id, RELEASE_INCLUDES)[
+                "release"
+            ]
+        except musicbrainzngs.MusicBrainzError as exc:
+            raise MusicBrainzAPIError(
+                exc,
+                "get pseudo-release by ID",
+                pseudo_album_id,
+                traceback.format_exc(),
+            )
 
     @override
     def album_info(self, release: JSONDict) -> AlbumInfo:
         official_release = super().album_info(release)
 
         if release.get("status") == _STATUS_PSEUDO:
-            return official_release
+            # already pseudo-release, but wrap in our class for the other checks
+            return PseudoAlbumInfo(
+                pseudo_release=official_release,
+                official_release=official_release,
+            )
         elif pseudo_release_ids := self._intercept_mb_release(release):
-            album_id = self._extract_id(pseudo_release_ids[0])
-            try:
-                raw_pseudo_release = self._release_getter(
-                    album_id, RELEASE_INCLUDES
-                )["release"]
-                pseudo_release = super().album_info(raw_pseudo_release)
-
-                if self.config["custom_tags_only"].get(bool):
-                    self._replace_artist_with_alias(
-                        raw_pseudo_release, pseudo_release
-                    )
-                    self._add_custom_tags(official_release, pseudo_release)
-                    return official_release
-                else:
-                    return PseudoAlbumInfo(
-                        pseudo_release=_merge_pseudo_and_actual_album(
-                            pseudo_release, official_release
-                        ),
-                        official_release=official_release,
-                    )
-            except musicbrainzngs.MusicBrainzError as exc:
-                raise MusicBrainzAPIError(
-                    exc,
-                    "get pseudo-release by ID",
-                    album_id,
-                    traceback.format_exc(),
+            custom_tags_only = self.config["custom_tags_only"].get(bool)
+            languages = list(config["import"]["languages"].as_str_seq())
+            if len(pseudo_release_ids) == 1 or len(languages) == 0:
+                album_info = self._get_raw_pseudo_release(pseudo_release_ids[0])
+                return self._resolve_pseudo_album_info(
+                    official_release, custom_tags_only, languages, album_info
                 )
+
+            pseudo_releases = [
+                self._get_raw_pseudo_release(i) for i in pseudo_release_ids
+            ]
+
+            # sort according to the desired languages specified in the config
+            def sort_fun(rel: JSONDict) -> int:
+                lang = rel.get("text-representation", {}).get("language", "")
+                # noinspection PyBroadException
+                try:
+                    return languages.index(lang[0:2])
+                except Exception:
+                    return len(languages)
+
+            pseudo_releases.sort(key=sort_fun)
+            multiple_allowed = self.config["multiple_allowed"].get(bool)
+            if custom_tags_only or not multiple_allowed:
+                return self._resolve_pseudo_album_info(
+                    official_release,
+                    custom_tags_only,
+                    languages,
+                    pseudo_releases[0],
+                )
+
+            pseudo_album_infos = [
+                self._resolve_pseudo_album_info(
+                    official_release, custom_tags_only, languages, i
+                )
+                for i in pseudo_releases
+            ]
+            return MultiPseudoAlbumInfo(
+                *pseudo_album_infos, official_release=official_release
+            )
         else:
             return official_release
 
@@ -179,12 +231,14 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
         if self._has_desired_script(data) or not isinstance(album_id, str):
             return []
 
-        return [
-            pr_id
+        ans = [
+            self._extract_id(pr_id)
             for rel in data.get("release-relation-list", [])
             if (pr_id := self._wanted_pseudo_release_id(album_id, rel))
             is not None
         ]
+
+        return list(filter(None, ans))
 
     def _has_desired_script(self, release: JSONDict) -> bool:
         if len(self._scripts) == 0:
@@ -218,15 +272,38 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
         else:
             return None
 
+    def _resolve_pseudo_album_info(
+        self,
+        official_release: AlbumInfo,
+        custom_tags_only: bool,
+        languages: list[str],
+        raw_pseudo_release: JSONDict,
+    ) -> AlbumInfo:
+        pseudo_release = super().album_info(raw_pseudo_release)
+        if custom_tags_only:
+            self._replace_artist_with_alias(
+                languages, raw_pseudo_release, pseudo_release
+            )
+            self._add_custom_tags(official_release, pseudo_release)
+            return official_release
+        else:
+            return PseudoAlbumInfo(
+                pseudo_release=_merge_pseudo_and_actual_album(
+                    pseudo_release, official_release
+                ),
+                official_release=official_release,
+            )
+
     def _replace_artist_with_alias(
         self,
+        languages: list[str],
         raw_pseudo_release: JSONDict,
         pseudo_release: AlbumInfo,
     ):
         """Use the pseudo-release's language to search for artist
         alias if the user hasn't configured import languages."""
 
-        if len(config["import"]["languages"].as_str_seq()) > 0:
+        if languages:
             return
 
         lang = raw_pseudo_release.get("text-representation", {}).get("language")
@@ -314,7 +391,7 @@ class PseudoAlbumInfo(AlbumInfo):
         **kwargs,
     ):
         super().__init__(pseudo_release.tracks, **kwargs)
-        self.__dict__["_pseudo_source"] = True
+        self.__dict__["_pseudo_source"] = False
         self.__dict__["_official_release"] = official_release
         for k, v in pseudo_release.items():
             if k not in kwargs:
@@ -353,6 +430,38 @@ class PseudoAlbumInfo(AlbumInfo):
             return super().__getattr__(attr)
         else:
             return self.__dict__["_official_release"].__getattr__(attr)
+
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        result = cls.__new__(cls)
+
+        memo[id(self)] = result
+        result.__dict__.update(self.__dict__)
+        for k, v in self.items():
+            result[k] = deepcopy(v, memo)
+
+        return result
+
+
+class MultiPseudoAlbumInfo(AlbumInfo):
+    """For releases that have multiple pseudo-releases"""
+
+    def __init__(
+        self,
+        *args,
+        official_release: AlbumInfo,
+        **kwargs,
+    ):
+        super().__init__(official_release.tracks, **kwargs)
+        self.__dict__["_pseudo_album_infos"] = [
+            arg for arg in args if isinstance(arg, PseudoAlbumInfo)
+        ]
+        for k, v in official_release.items():
+            if k not in kwargs:
+                self[k] = v
+
+    def unwrap(self) -> list[PseudoAlbumInfo]:
+        return self.__dict__["_pseudo_album_infos"]
 
     def __deepcopy__(self, memo):
         cls = self.__class__
