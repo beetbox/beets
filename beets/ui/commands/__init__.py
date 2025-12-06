@@ -24,6 +24,7 @@ from .fields import fields_cmd
 from .help import HelpCommand
 from .import_ import import_cmd
 from .list import list_cmd
+from .migrate import migrate_cmd
 from .modify import modify_cmd
 from .move import move_cmd
 from .remove import remove_cmd
@@ -52,12 +53,13 @@ default_commands = [
     HelpCommand(),
     import_cmd,
     list_cmd,
-    update_cmd,
-    remove_cmd,
-    stats_cmd,
-    version_cmd,
+    migrate_cmd,
     modify_cmd,
     move_cmd,
+    remove_cmd,
+    stats_cmd,
+    update_cmd,
+    version_cmd,
     write_cmd,
     config_cmd,
     completion_cmd,
