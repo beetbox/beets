@@ -122,7 +122,7 @@ command. Instead, you can activate the virtual environment in your shell with:
 
 ::
 
-    $ poetry shell
+    $ poetry env activate
 
 You should see ``(beets-py3.10)`` prefix in your shell prompt. Now you can run
 commands directly, for example:
