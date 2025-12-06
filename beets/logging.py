@@ -22,6 +22,7 @@ calls (`debug`, `info`, etc).
 
 from __future__ import annotations
 
+import re
 import threading
 from copy import copy
 from logging import (
@@ -37,7 +38,7 @@ from logging import (
     RootLogger,
     StreamHandler,
 )
-from typing import TYPE_CHECKING, Any, Mapping, TypeVar, Union, overload
+from typing import TYPE_CHECKING, Any, TypeVar, Union, overload
 
 __all__ = [
     "DEBUG",
@@ -54,6 +55,8 @@ __all__ = [
 ]
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     T = TypeVar("T")
     from types import TracebackType
 
@@ -64,6 +67,15 @@ if TYPE_CHECKING:
     ]
     _ExcInfoType = Union[None, bool, _SysExcInfoType, BaseException]
     _ArgsType = Union[tuple[object, ...], Mapping[str, object]]
+
+
+# Regular expression to match:
+# - C0 control characters (0x00-0x1F) except useful whitespace (\t, \n, \r)
+# - DEL control character (0x7f)
+# - C1 control characters (0x80-0x9F)
+# Used to sanitize log messages that could disrupt terminal output
+_CONTROL_CHAR_REGEX = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f\x80-\x9f]")
+_UNICODE_REPLACEMENT_CHARACTER = "\ufffd"
 
 
 def _logsafe(val: T) -> str | T:
@@ -80,6 +92,10 @@ def _logsafe(val: T) -> str | T:
         # type, and (b) warn the developer if they do this for other
         # bytestrings.
         return val.decode("utf-8", "replace")
+    if isinstance(val, str):
+        # Sanitize log messages by replacing control characters that can disrupt
+        # terminals.
+        return _CONTROL_CHAR_REGEX.sub(_UNICODE_REPLACEMENT_CHARACTER, val)
 
     # Other objects are used as-is so field access, etc., still works in
     # the format string. Relies on a working __str__ implementation.

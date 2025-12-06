@@ -61,18 +61,18 @@ class InlinePlugin(BeetsPlugin):
             config["item_fields"].items(), config["pathfields"].items()
         ):
             self._log.debug("adding item field {}", key)
-            func = self.compile_inline(view.as_str(), False)
+            func = self.compile_inline(view.as_str(), False, key)
             if func is not None:
                 self.template_fields[key] = func
 
         # Album fields.
         for key, view in config["album_fields"].items():
             self._log.debug("adding album field {}", key)
-            func = self.compile_inline(view.as_str(), True)
+            func = self.compile_inline(view.as_str(), True, key)
             if func is not None:
                 self.album_template_fields[key] = func
 
-    def compile_inline(self, python_code, album):
+    def compile_inline(self, python_code, album, field_name):
         """Given a Python expression or function body, compile it as a path
         field function. The returned function takes a single argument, an
         Item, and returns a Unicode string. If the expression cannot be
@@ -97,7 +97,12 @@ class InlinePlugin(BeetsPlugin):
             is_expr = True
 
         def _dict_for(obj):
-            out = dict(obj)
+            out = {}
+            for key in obj.keys(computed=False):
+                if key == field_name:
+                    continue
+                out[key] = obj._get(key)
+
             if album:
                 out["items"] = list(obj.items())
             return out

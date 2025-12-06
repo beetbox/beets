@@ -32,6 +32,7 @@ Default
         ratelimit_interval: 1.0
         extra_tags: []
         genres: no
+        genres_tag: genre
         external_ids:
             discogs: no
             bandcamp: no
@@ -135,6 +136,12 @@ Default
     save the data as flexible attributes (``discogs_album_id``, ``bandcamp_album_id``, ``spotify_album_id``,
     ``beatport_album_id``, ``deezer_album_id``, ``tidal_album_id``). On re-imports
     existing data will be overwritten.
+
+.. conf:: genres_tag
+    :default: genre
+
+    Either ``genre`` or ``tag``. Specify ``genre`` to use just musicbrainz genre and
+    ``tag`` to use all user-supplied musicbrainz tags.
 
 .. include:: ./shared_metadata_source_config.rst
 

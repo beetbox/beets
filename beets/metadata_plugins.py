@@ -10,7 +10,7 @@ from __future__ import annotations
 import abc
 import re
 from functools import cache, cached_property
-from typing import TYPE_CHECKING, Generic, Literal, Sequence, TypedDict, TypeVar
+from typing import TYPE_CHECKING, Generic, Literal, TypedDict, TypeVar
 
 import unidecode
 from confuse import NotFoundError
@@ -22,7 +22,7 @@ from beets.util.id_extractors import extract_release_id
 from .plugins import BeetsPlugin, find_plugins, notify_info_yielded, send
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Sequence
 
     from .autotag.hooks import AlbumInfo, Item, TrackInfo
 

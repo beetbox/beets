@@ -65,6 +65,8 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
             ],
             "date": "3001",
             "medium-list": [],
+            "genre-list": [{"count": 1, "name": "GENRE"}],
+            "tag-list": [{"count": 1, "name": "TAG"}],
             "label-info-list": [
                 {
                     "catalog-number": "CATALOG NUMBER",
@@ -514,6 +516,26 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         release = self._make_release()
         d = self.mb.album_info(release)
         assert d.data_source == "MusicBrainz"
+
+    def test_genres(self):
+        config["musicbrainz"]["genres"] = True
+        config["musicbrainz"]["genres_tag"] = "genre"
+        release = self._make_release()
+        d = self.mb.album_info(release)
+        assert d.genre == "GENRE"
+
+    def test_tags(self):
+        config["musicbrainz"]["genres"] = True
+        config["musicbrainz"]["genres_tag"] = "tag"
+        release = self._make_release()
+        d = self.mb.album_info(release)
+        assert d.genre == "TAG"
+
+    def test_no_genres(self):
+        config["musicbrainz"]["genres"] = False
+        release = self._make_release()
+        d = self.mb.album_info(release)
+        assert d.genre is None
 
     def test_ignored_media(self):
         config["match"]["ignored_media"] = ["IGNORED1", "IGNORED2"]
