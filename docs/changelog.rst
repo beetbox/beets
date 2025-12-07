@@ -45,6 +45,7 @@ New features:
   of brackets are supported and a new ``bracket_keywords`` configuration option
   allows customizing the keywords. Setting ``bracket_keywords`` to an empty list
   matches any bracket content regardless of keywords.
+- :doc:`plugins/discogs`: Added support for multi value fields. :bug:`6068`
 
 Bug fixes:
 
