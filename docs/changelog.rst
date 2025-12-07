@@ -33,6 +33,7 @@ New features:
       resolve differences in metadata source styles.
 - :doc:`plugins/spotify`: Added support for multi-artist albums and tracks,
       saving all contributing artists to the respective fields.
+- :doc:`plugins/discogs`: Added support for multi value fields. :bug:`6068`
 
 Bug fixes:
 
