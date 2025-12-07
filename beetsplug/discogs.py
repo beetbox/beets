@@ -18,6 +18,7 @@ python3-discogs-client library.
 
 from __future__ import annotations
 
+import copy
 import http.client
 import json
 import os
@@ -103,6 +104,24 @@ class Track(TypedDict):
     artists: list[Artist]
     extraartists: NotRequired[list[Artist]]
     sub_tracks: NotRequired[list[Track]]
+
+
+class ArtistInfo(TypedDict):
+    artist: str
+    artists: list[str]
+    artist_credit: str
+    artists_credit: list[str]
+    artist_id: str
+    artists_ids: list[str]
+
+
+class AlbumArtistInfo(ArtistInfo):
+    albumartist: str
+    albumartists: list[str]
+    albumartist_credit: str
+    albumartists_credit: list[str]
+    albumartist_id: str
+    albumartists_ids: list[str]
 
 
 class DiscogsPlugin(MetadataSourcePlugin):
@@ -261,7 +280,6 @@ class DiscogsPlugin(MetadataSourcePlugin):
             for track in album.tracks:
                 if track.track_id == track_id:
                     return track
-
         return None
 
     def get_albums(self, query: str) -> Iterable[AlbumInfo]:
@@ -346,6 +364,121 @@ class DiscogsPlugin(MetadataSourcePlugin):
         artist, artist_id = self.get_artist(artist_list, join_key="join")
         return self.strip_disambiguation(artist), artist_id
 
+    def build_albumartistinfo(self, artists: list[Artist]) -> AlbumArtistInfo:
+        info = self.build_artistinfo(artists, album_artist=True)
+        albumartist: AlbumArtistInfo = {
+            **info,
+            "albumartist": info["artist"],
+            "albumartist_id": info["artist_id"],
+            "albumartists": info["artists"],
+            "albumartists_ids": info["artists_ids"],
+            "albumartist_credit": info["artist_credit"],
+            "albumartists_credit": info["artists_credit"],
+        }
+        return albumartist
+
+    def build_artistinfo(
+        self,
+        given_artists: list[Artist],
+        given_info: ArtistInfo | None = None,
+        album_artist: bool = False,
+    ) -> ArtistInfo:
+        """Iterates through a discogs result and builds
+        up the artist fields. Does not contribute to
+        artist_sort as Discogs does not define that.
+
+        :param artists: A list of Discogs Artist objects
+
+        :param album_artist: If building an album artist,
+            we need to account for the album_artist anv parameter.
+        :return an ArtistInfo dictionary.
+        """
+        info: ArtistInfo = {
+            "artist": "",
+            "artist_id": "",
+            "artists": [],
+            "artists_ids": [],
+            "artist_credit": "",
+            "artists_credit": [],
+        }
+        if given_info:
+            info = copy.deepcopy(given_info)
+
+        a_anv: bool = self.config["anv"]["artist"].get(bool)
+        ac_anv: bool = self.config["anv"]["artist_credit"].get(bool)
+        aa_anv: bool = self.config["anv"]["album_artist"].get(bool)
+        feat_str: str = f" {self.config['featured_string'].get(str)} "
+
+        artist = ""
+        artist_anv = ""
+        artists: list[str] = []
+        artists_anv: list[str] = []
+
+        join = ""
+        featured_flag = False
+        # Iterate through building the artist strings
+        for a in given_artists:
+            # Get the artist name
+            name = self.strip_disambiguation(a["name"])
+            discogs_id = a["id"]
+            anv = a.get("anv", name)
+            role = a.get("role", "").lower()
+            # Check if the artist is Various
+            if name.lower() == "various":
+                name = config["va_name"].as_str()
+                anv = name
+
+            if "featuring" in role:
+                if not featured_flag:
+                    artist += feat_str
+                    artist_anv += feat_str
+                    artist += name
+                    artist_anv += anv
+                    featured_flag = True
+                else:
+                    artist = self._join_artist(artist, name, join)
+                    artist_anv = self._join_artist(artist_anv, anv, join)
+            elif role and "featuring" not in role:
+                continue
+            else:
+                artist = self._join_artist(artist, name, join)
+                artist_anv = self._join_artist(artist_anv, anv, join)
+            artists.append(name)
+            artists_anv.append(anv)
+            # Only the first ID is set for the singular field
+            if not info["artist_id"]:
+                info["artist_id"] = discogs_id
+            info["artists_ids"].append(discogs_id)
+            # Update join for the next artist
+            join = a.get("join", "")
+        # Assign fields as necessary
+        if (a_anv and not album_artist) or (aa_anv and album_artist):
+            info["artist"] += artist_anv
+            info["artists"] += artists_anv
+        else:
+            info["artist"] += artist
+            info["artists"] += artists
+
+        if ac_anv:
+            info["artist_credit"] += artist_anv
+            info["artists_credit"] += artists_anv
+        else:
+            info["artist_credit"] += artist
+            info["artists_credit"] += artists
+        return info
+
+    def _join_artist(self, base: str, artist: str, join: str) -> str:
+        # Expand the artist field
+        if not base:
+            base = artist
+        else:
+            if join:
+                base += f" {join} "
+            else:
+                base += ", "
+            base += artist
+        return base
+
     def get_album_info(self, result: Release) -> AlbumInfo | None:
         """Returns an AlbumInfo object for a discogs Release object."""
         # Explicitly reload the `Release` fields, as they might not be yet
@@ -375,11 +508,8 @@ class DiscogsPlugin(MetadataSourcePlugin):
             return None
 
         artist_data = [a.data for a in result.artists]
-        album_artist, album_artist_id = self.get_artist_with_anv(artist_data)
-        album_artist_anv, _ = self.get_artist_with_anv(
-            artist_data, use_anv=True
-        )
-        artist_credit = album_artist_anv
+        # Information for the album artist
+        albumartist: AlbumArtistInfo = self.build_albumartistinfo(artist_data)
 
         album = re.sub(r" +", " ", result.title)
         album_id = result.data["id"]
@@ -388,18 +518,11 @@ class DiscogsPlugin(MetadataSourcePlugin):
         # information and leave us with skeleton `Artist` objects that will
         # each make an API call just to get the same data back.
         tracks = self.get_tracks(
-            result.data["tracklist"],
-            (album_artist, album_artist_anv, album_artist_id),
+            result.data["tracklist"], self.build_artistinfo(artist_data)
         )
 
-        # Assign ANV to the proper fields for tagging
-        if not self.config["anv"]["artist_credit"]:
-            artist_credit = album_artist
-        if self.config["anv"]["album_artist"]:
-            album_artist = album_artist_anv
-
         # Extract information for the optional AlbumInfo fields, if possible.
-        va = result.data["artists"][0].get("name", "").lower() == "various"
+        va = albumartist["albumartist"] == config["va_name"].as_str()
         year = result.data.get("year")
         mediums = [t.medium for t in tracks]
         country = result.data.get("country")
@@ -431,11 +554,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
         cover_art_url = self.select_cover_art(result)
 
         # Additional cleanups
-        # (various artists name, catalog number, media, disambiguation).
-        if va:
-            va_name = config["va_name"].as_str()
-            album_artist = va_name
-            artist_credit = va_name
+        # (catalog number, media, disambiguation).
         if catalogno == "none":
             catalogno = None
         # Explicitly set the `media` for the tracks, since it is expected by
@@ -458,9 +577,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
         return AlbumInfo(
             album=album,
             album_id=album_id,
-            artist=album_artist,
-            artist_credit=artist_credit,
-            artist_id=album_artist_id,
+            **albumartist,  # Unpacks values to satisfy the keyword arguments
             tracks=tracks,
             albumtype=albumtype,
             va=va,
@@ -478,7 +595,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
             data_url=data_url,
             discogs_albumid=discogs_albumid,
             discogs_labelid=labelid,
-            discogs_artistid=album_artist_id,
+            discogs_artistid=albumartist["albumartist_id"],
             cover_art_url=cover_art_url,
         )
 
@@ -503,7 +620,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
     def _process_clean_tracklist(
         self,
         clean_tracklist: list[Track],
-        album_artist_data: tuple[str, str, str | None],
+        albumartistinfo: ArtistInfo,
     ) -> tuple[
         list[TrackInfo],
         dict[int, str],
@@ -531,7 +648,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
                     divisions += next_divisions
                     del next_divisions[:]
                 track_info, medium, medium_index = self.get_track_info(
-                    track, index, divisions, album_artist_data
+                    track, index, divisions, albumartistinfo
                 )
                 track_info.track_alt = track["position"]
                 tracks.append(track_info)
@@ -565,7 +682,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
     def get_tracks(
         self,
         tracklist: list[Track],
-        album_artist_data: tuple[str, str, str | None],
+        albumartistinfo: ArtistInfo,
     ) -> list[TrackInfo]:
         """Returns a list of TrackInfo objects for a discogs tracklist."""
         try:
@@ -578,7 +695,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
             self._log.error("uncaught exception in coalesce_tracks: {}", exc)
             clean_tracklist = tracklist
         processed = self._process_clean_tracklist(
-            clean_tracklist, album_artist_data
+            clean_tracklist, albumartistinfo
         )
         (
             tracks,
@@ -754,16 +871,11 @@ class DiscogsPlugin(MetadataSourcePlugin):
         track: Track,
         index: int,
         divisions: list[str],
-        album_artist_data: tuple[str, str, str | None],
+        albumartistinfo: ArtistInfo,
     ) -> tuple[TrackInfo, str | None, str | None]:
         """Returns a TrackInfo object for a discogs track."""
 
-        artist, artist_anv, artist_id = album_artist_data
-        artist_credit = artist_anv
-        if not self.config["anv"]["artist_credit"]:
-            artist_credit = artist
-        if self.config["anv"]["artist"]:
-            artist = artist_anv
+        artistinfo = albumartistinfo.copy()
 
         title = track["title"]
         if self.config["index_tracks"]:
@@ -775,39 +887,19 @@ class DiscogsPlugin(MetadataSourcePlugin):
 
         # If artists are found on the track, we will use those instead
         if artists := track.get("artists", []):
-            artist, artist_id = self.get_artist_with_anv(
-                artists, self.config["anv"]["artist"]
-            )
-            artist_credit, _ = self.get_artist_with_anv(
-                artists, self.config["anv"]["artist_credit"]
-            )
+            artistinfo = self.build_artistinfo(artists)
+
         length = self.get_track_length(track["duration"])
 
         # Add featured artists
         if extraartists := track.get("extraartists", []):
-            featured_list = [
-                artist
-                for artist in extraartists
-                if "Featuring" in artist["role"]
-            ]
-            featured, _ = self.get_artist_with_anv(
-                featured_list, self.config["anv"]["artist"]
-            )
-            featured_credit, _ = self.get_artist_with_anv(
-                featured_list, self.config["anv"]["artist_credit"]
-            )
-            if featured:
-                artist += f" {self.config['featured_string']} {featured}"
-                artist_credit += (
-                    f" {self.config['featured_string']} {featured_credit}"
-                )
+            artistinfo = self.build_artistinfo(extraartists, artistinfo)
+
         return (
             TrackInfo(
                 title=title,
                 track_id=track_id,
-                artist_credit=artist_credit,
-                artist=artist,
-                artist_id=artist_id,
+                **artistinfo,
                 length=length,
                 index=index,
             ),
