@@ -995,6 +995,12 @@ class Item(LibModel):
             log.error("{}", exc)
             return False
 
+    def _media_tags_changed(self, original, modified):
+        for f in self._media_tag_fields:   # this is defined in the class already
+            if getattr(original, f) != getattr(modified, f):
+                return True
+        return False
+
     def try_sync(self, write, move, with_album=True):
         """Synchronize the item with the database and, possibly, update its
         tags on disk and its path (by moving the file).
@@ -1007,8 +1013,12 @@ class Item(LibModel):
         Similar to calling :meth:`write`, :meth:`move`, and :meth:`store`
         (conditionally).
         """
-        if write:
+        original = Item.from_path(self.path)
+
+        # only write tags if media tags changed
+        if write and self._media_tags_changed(original, self):
             self.try_write()
+
         if move:
             # Check whether this file is inside the library directory.
             if self._db and self._db.directory in util.ancestry(self.path):
