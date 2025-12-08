@@ -56,6 +56,9 @@ New features
   can now use the ``lrclib.url`` option in the configuration file. :bug:`7118`
 - :doc:`plugins/autobpm`: Add ``-b``/``--start-bpm`` option to override
   ``beat_track_kwargs.start_bpm`` from the command line.
+- :doc:`plugins/web`: The ``/album/<id>/art`` endpoint now falls back to
+  extracting art embedded in the album's media files when the album has no
+  ``artpath``.
 
 Bug fixes
 ~~~~~~~~~

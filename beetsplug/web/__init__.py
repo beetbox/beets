@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import base64
 import contextlib
+import io
 import json
 import os
 from typing import TYPE_CHECKING, Any, Protocol
 
 import flask
+import mediafile
 from flask import jsonify
 from unidecode import unidecode
 from werkzeug.routing import BaseConverter, PathConverter
@@ -391,8 +393,25 @@ def album_query(queries: Sequence[str]) -> Any:
 @app.route("/album/<int:album_id>/art")
 def album_art(album_id: int) -> Any:
     album = g.lib.get_album(album_id)
-    if album and album.artpath:
+    if not album:
+        return flask.abort(404)
+
+    if album.artpath and os.path.isfile(util.syspath(album.artpath)):
         return flask.send_file(album.artpath.decode())
+
+    # Fallback: extract embedded art from the album's items.
+    for item in album.items():
+        try:
+            mf = mediafile.MediaFile(util.syspath(item.path))
+        except mediafile.UnreadableFileError:
+            continue
+        if art := mf.art:
+            return flask.send_file(
+                io.BytesIO(art),
+                mimetype=mediafile.image_mime_type(art)
+                or "application/octet-stream",
+            )
+
     return flask.abort(404)
 
 

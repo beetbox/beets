@@ -666,6 +666,61 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
         # Remove the item
         self.lib.get_item(item_id).remove()
 
+    @pytest.mark.parametrize(
+        "img_ext, mime_type", [("jpg", "image/jpeg"), ("png", "image/png")]
+    )
+    def test_get_album_art_embedded(self, img_ext, mime_type):
+        path = self.create_mediafile_fixture(images=[img_ext])
+        album = self.lib.add_album([Item.from_path(path)])
+        expected = (_common.RSRC / f"image-2x3.{img_ext}").read_bytes()
+
+        response = self.client.get(f"/album/{album.id}/art")
+
+        assert response.status_code == 200
+        assert response.mimetype == mime_type
+        assert response.data == expected
+
+    def test_get_album_art_embedded_skips_unusable_tracks(self):
+        no_art = Item.from_path(self.create_mediafile_fixture())
+        unreadable = Item.from_path(self.create_mediafile_fixture())
+        with_art = Item.from_path(self.create_mediafile_fixture(images=["png"]))
+        for track, item in enumerate((no_art, unreadable, with_art), start=1):
+            item.track = track
+        unreadable.path = os.fsencode(self.temp_path / "missing.mp3")
+        album = self.lib.add_album([no_art, unreadable, with_art])
+        expected = (_common.RSRC / "image-2x3.png").read_bytes()
+
+        response = self.client.get(f"/album/{album.id}/art")
+
+        assert response.status_code == 200
+        assert response.data == expected
+
+    def test_get_album_art_embedded_stale_artpath(self):
+        path = self.create_mediafile_fixture(images=["png"])
+        album = self.lib.add_album([Item.from_path(path)])
+        album.artpath = os.fsencode(self.temp_path / "deleted-cover.jpg")
+        album.store()
+        expected = (_common.RSRC / "image-2x3.png").read_bytes()
+
+        response = self.client.get(f"/album/{album.id}/art")
+
+        assert response.status_code == 200
+        assert response.data == expected
+
+    def test_get_album_art_no_album(self):
+        response = self.client.get("/album/9999/art")
+
+        assert response.status_code == 404
+
+    def test_get_album_art_missing(self):
+        album = self.lib.add_album(
+            [Item.from_path(self.create_mediafile_fixture())]
+        )
+
+        response = self.client.get(f"/album/{album.id}/art")
+
+        assert response.status_code == 404
+
     def test_get_item_file(self):
         ipath = self.temp_path / "testfile2.mp3"
         shutil.copy(_common.RSRC / "full.mp3", ipath)
