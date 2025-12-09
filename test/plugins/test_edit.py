@@ -178,21 +178,32 @@ class EditCommandTest(EditMixin, BeetsTestCase):
 
     def test_title_edit_keep_editing_then_apply(self, mock_write):
         """Edit titles, keep editing once, then apply changes."""
-        # First, choose "keep editing" so changes are reverted in memory but
-        # kept in the YAML file; then choose "apply" to commit them.
         self.run_mocked_command(
             {"replacements": {"t\u00eftle": "modified t\u00eftle"}},
             # keep Editing, then Apply
             ["e", "a"],
         )
 
-        # Writes should only happen once per track, when we finally apply.
         assert mock_write.call_count == self.TRACK_COUNT
-        # All item titles (and mtimes) should now reflect the modified values.
         self.assertItemFieldsModified(
             self.album.items(),
             self.items_orig,
             ["title", "mtime"],
+        )
+
+    def test_title_edit_keep_editing_then_cancel(self, mock_write):
+        """Edit titles, keep editing once, then cancel."""
+        self.run_mocked_command(
+            {"replacements": {"t\u00eftle": "modified t\u00eftle"}},
+            # keep Editing, then Cancel
+            ["e", "c"],
+        )
+
+        assert mock_write.call_count == 0
+        self.assertItemFieldsModified(
+            self.album.items(),
+            self.items_orig,
+            [],
         )
 
     def test_noedit(self, mock_write):
