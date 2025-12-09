@@ -275,24 +275,17 @@ class EditPlugin(plugins.BeetsPlugin):
                     ui.print_("No changes to apply.")
                     return False
 
-                # Confirm the changes.
+                # For cancel/keep-editing, restore objects to their original
+                # in-memory state so temp edits don't leak into the session
                 choice = ui.input_options(
                     ("continue Editing", "apply", "cancel")
                 )
                 if choice == "a":  # Apply.
                     return True
                 elif choice == "c":  # Cancel.
-                    # Revert all temporary changes made in this edit session
-                    # so that objects return to their original in-memory
-                    # state (including tags provided by other plugins such as
-                    # `fromfilename`).
                     self.apply_data(objs, new_data, old_data)
                     return False
                 elif choice == "e":  # Keep editing.
-                    # Revert changes on the objects, but keep the edited YAML
-                    # file so the user can continue editing from their last
-                    # version. On the next iteration, differences will again
-                    # be computed against the original state (`old_data`).
                     self.apply_data(objs, new_data, old_data)
                     continue
 
@@ -382,10 +375,6 @@ class EditPlugin(plugins.BeetsPlugin):
             # to the files if needed without re-applying metadata.
             return Action.RETAG
         else:
-            # Edit cancelled / no edits made. `edit_objects` has already
-            # restored each object to its original in-memory state, so there
-            # is nothing more to do here. Returning None lets the importer
-            # resume the candidate prompt.
             return None
 
     def importer_edit_candidate(self, session, task):
