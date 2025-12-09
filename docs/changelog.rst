@@ -27,6 +27,8 @@ New features:
 - :doc:`plugins/mbpseudo`: Add a new `mbpseudo` plugin to proactively receive
       MusicBrainz pseudo-releases as recommendations during import.
 - Added support for Python 3.13.
+- :doc:`/plugins/convert`: ``force`` can be passed to override checks like
+  no_convert, never_convert_lossy_files, same format, and max_bitrate
 - :doc:`plugins/titlecase`: Add the `titlecase` plugin to allow users to
       resolve differences in metadata source styles.
 
