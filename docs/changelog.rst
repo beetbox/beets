@@ -34,6 +34,10 @@ New features:
 
 Bug fixes:
 
+- :doc:`/plugins/smartplaylist`: Fixed an issue where multiple queries in a
+  playlist configuration were not preserving their order, causing items to
+  appear in database order rather than the order specified in the config.
+  :bug:`6183`
 - :doc:`plugins/inline`: Fix recursion error when an inline field definition
   shadows a built-in item field (e.g., redefining ``track_no``). Inline
   expressions now skip self-references during evaluation to avoid infinite
