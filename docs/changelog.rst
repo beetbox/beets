@@ -62,6 +62,9 @@ Bug fixes:
   "albumartist" instead of a list of unique album artists.
 - Sanitize log messages by removing control characters preventing terminal
   rendering issues.
+- :doc:`/plugins/ftintitle`: Fixed artist name splitting to prioritize explicit
+  featuring tokens (feat, ft, featuring) over generic separators (&, and),
+  preventing incorrect splits when both are present.
 
 For plugin developers:
 
