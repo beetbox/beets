@@ -121,7 +121,17 @@ class AlbumArtistInfo(ArtistInfo):
     albumartist_credit: str
     albumartists_credit: list[str]
     albumartist_id: str
-    albumartists_ids: list[str]
+
+
+class TracklistInfo:
+    def __init__(self):
+        self.index: int = 0
+        self.index_tracks: dict[int, str] = {}
+        self.tracks: list[TrackInfo] = []
+        self.divisions: list[str] = []
+        self.next_divisions: list[str] = []
+        self.mediums: list[str | None] = []
+        self.medium_indices: list[str | None] = []
 
 
 class DiscogsPlugin(MetadataSourcePlugin):
@@ -371,7 +381,6 @@ class DiscogsPlugin(MetadataSourcePlugin):
             "albumartist": info["artist"],
             "albumartist_id": info["artist_id"],
             "albumartists": info["artists"],
-            "albumartists_ids": info["artists_ids"],
             "albumartist_credit": info["artist_credit"],
             "albumartists_credit": info["artists_credit"],
         }
@@ -386,12 +395,6 @@ class DiscogsPlugin(MetadataSourcePlugin):
         """Iterates through a discogs result and builds
         up the artist fields. Does not contribute to
         artist_sort as Discogs does not define that.
-
-        :param artists: A list of Discogs Artist objects
-
-        :param album_artist: If building an album artist,
-            we need to account for the album_artist anv parameter.
-        :return an ArtistInfo dictionary.
         """
         info: ArtistInfo = {
             "artist": "",
@@ -420,7 +423,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
         for a in given_artists:
             # Get the artist name
             name = self.strip_disambiguation(a["name"])
-            discogs_id = a["id"]
+            discogs_id = str(a["id"])
             anv = a.get("anv", name)
             role = a.get("role", "").lower()
             # Check if the artist is Various
@@ -621,63 +624,41 @@ class DiscogsPlugin(MetadataSourcePlugin):
         self,
         clean_tracklist: list[Track],
         albumartistinfo: ArtistInfo,
-    ) -> tuple[
-        list[TrackInfo],
-        dict[int, str],
-        int,
-        list[str],
-        list[str],
-        list[str | None],
-        list[str | None],
-    ]:
+    ) -> TracklistInfo:
         # Distinct works and intra-work divisions, as defined by index tracks.
-        tracks: list[TrackInfo] = []
-        mediums: list[str | None] = []
-        medium_indices: list[str | None] = []
-        index_tracks = {}
-        index = 0
-        divisions: list[str] = []
-        next_divisions: list[str] = []
+        t = TracklistInfo()
         for track in clean_tracklist:
             # Only real tracks have `position`. Otherwise, it's an index track.
             if track["position"]:
-                index += 1
-                if next_divisions:
+                t.index += 1
+                if t.next_divisions:
                     # End of a block of index tracks: update the current
                     # divisions.
-                    divisions += next_divisions
-                    del next_divisions[:]
+                    t.divisions += t.next_divisions
+                    del t.next_divisions[:]
                 track_info, medium, medium_index = self.get_track_info(
-                    track, index, divisions, albumartistinfo
+                    track, t.index, t.divisions, albumartistinfo
                 )
                 track_info.track_alt = track["position"]
-                tracks.append(track_info)
+                t.tracks.append(track_info)
                 if medium:
-                    mediums.append(medium)
+                    t.mediums.append(medium)
                 else:
-                    mediums.append(None)
+                    t.mediums.append(None)
                 if medium_index:
-                    medium_indices.append(medium_index)
+                    t.medium_indices.append(medium_index)
                 else:
-                    medium_indices.append(None)
+                    t.medium_indices.append(None)
             else:
-                next_divisions.append(track["title"])
+                t.next_divisions.append(track["title"])
                 # We expect new levels of division at the beginning of the
                 # tracklist (and possibly elsewhere).
                 try:
-                    divisions.pop()
+                    t.divisions.pop()
                 except IndexError:
                     pass
-                index_tracks[index + 1] = track["title"]
-        return (
-            tracks,
-            index_tracks,
-            index,
-            divisions,
-            next_divisions,
-            mediums,
-            medium_indices,
-        )
+                t.index_tracks[t.index + 1] = track["title"]
+        return t
 
     def get_tracks(
         self,
@@ -694,18 +675,9 @@ class DiscogsPlugin(MetadataSourcePlugin):
             self._log.debug("{}", traceback.format_exc())
             self._log.error("uncaught exception in coalesce_tracks: {}", exc)
             clean_tracklist = tracklist
-        processed = self._process_clean_tracklist(
+        t: TracklistInfo = self._process_clean_tracklist(
             clean_tracklist, albumartistinfo
         )
-        (
-            tracks,
-            index_tracks,
-            index,
-            divisions,
-            next_divisions,
-            mediums,
-            medium_indices,
-        ) = processed
         # Fix up medium and medium_index for each track. Discogs position is
         # unreliable, but tracks are in order.
         medium = None
@@ -714,22 +686,24 @@ class DiscogsPlugin(MetadataSourcePlugin):
 
         # If a medium has two sides (ie. vinyl or cassette), each pair of
         # consecutive sides should belong to the same medium.
-        if all([medium is not None for medium in mediums]):
-            m = sorted({medium.lower() if medium else "" for medium in mediums})
+        if all([medium is not None for medium in t.mediums]):
+            m = sorted(
+                {medium.lower() if medium else "" for medium in t.mediums}
+            )
             # If all track.medium are single consecutive letters, assume it is
             # a 2-sided medium.
             if "".join(m) in ascii_lowercase:
                 sides_per_medium = 2
 
-        for i, track in enumerate(tracks):
+        for i, track in enumerate(t.tracks):
             # Handle special case where a different medium does not indicate a
             # new disc, when there is no medium_index and the ordinal of medium
             # is not sequential. For example, I, II, III, IV, V. Assume these
             # are the track index, not the medium.
             # side_count is the number of mediums or medium sides (in the case
             # of two-sided mediums) that were seen before.
-            medium_str = mediums[i]
-            medium_index = medium_indices[i]
+            medium_str = t.mediums[i]
+            medium_index = t.medium_indices[i]
             medium_is_index = (
                 medium_str
                 and not medium_index
@@ -760,15 +734,15 @@ class DiscogsPlugin(MetadataSourcePlugin):
 
         # Get `disctitle` from Discogs index tracks. Assume that an index track
         # before the first track of each medium is a disc title.
-        for track in tracks:
+        for track in t.tracks:
             if track.medium_index == 1:
-                if track.index in index_tracks:
-                    disctitle = index_tracks[track.index]
+                if track.index in t.index_tracks:
+                    disctitle = t.index_tracks[track.index]
                 else:
                     disctitle = None
             track.disctitle = disctitle
 
-        return tracks
+        return t.tracks
 
     def coalesce_tracks(self, raw_tracklist: list[Track]) -> list[Track]:
         """Pre-process a tracklist, merging subtracks into a single track. The

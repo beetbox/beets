@@ -410,8 +410,11 @@ class DGAlbumInfoTest(BeetsTestCase):
         d = DiscogsPlugin().get_album_info(release)
         assert d.artist == "ARTIST NAME & OTHER ARTIST"
         assert d.artists == ["ARTIST NAME", "OTHER ARTIST"]
+        assert d.artists_ids == ["321", "321"]
         assert d.tracks[0].artist == "TEST ARTIST"
         assert d.tracks[0].artists == ["TEST ARTIST"]
+        assert d.tracks[0].artist_id == "11146"
+        assert d.tracks[0].artists_ids == ["11146"]
         assert d.label == "LABEL NAME"
 
     def test_strip_disambiguation_false(self):
@@ -460,7 +463,7 @@ class DGAlbumInfoTest(BeetsTestCase):
 @pytest.mark.parametrize(
     "track_artist_anv,track_artist,track_artists",
     [
-        (False, "ARTIST Feat. PERFORMER", ["ARTIST", "PEFORMER"]),
+        (False, "ARTIST Feat. PERFORMER", ["ARTIST", "PERFORMER"]),
         (True, "VARIATION Feat. VARIATION", ["VARIATION", "VARIATION"]),
     ],
 )
@@ -480,7 +483,7 @@ class DGAlbumInfoTest(BeetsTestCase):
         (
             False,
             "ARTIST Feat. PERFORMER",
-            ["ARTIST", "PEFORMER"],
+            ["ARTIST", "PERFORMER"],
             "ARTIST & SOLOIST",
             ["ARTIST", "SOLOIST"],
         ),
@@ -551,9 +554,14 @@ def test_anv(
     config["discogs"]["anv"]["artist_credit"] = artist_credit_anv
     r = DiscogsPlugin().get_album_info(release)
     assert r.artist == album_artist
+    assert r.albumartists == album_artists
     assert r.artist_credit == album_artist_credit
+    assert r.albumartist_credit == album_artist_credit
+    assert r.albumartists_credit == album_artists_credit
     assert r.tracks[0].artist == track_artist
+    assert r.tracks[0].artists == track_artists
     assert r.tracks[0].artist_credit == track_artist_credit
+    assert r.tracks[0].artists_credit == track_artists_credit
 
 
 @patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
@@ -590,6 +598,7 @@ def test_anv_album_artist():
     assert r.artists == ["ARTIST"]
     assert r.albumartist == "ARTIST"
     assert r.albumartist_credit == "ARTIST"
+    assert r.albumartist_id == "321"
     assert r.albumartists == ["ARTIST"]
     assert r.albumartists_credit == ["ARTIST"]
     assert r.artist_credit == "ARTIST"
