@@ -36,11 +36,23 @@ def split_on_feat(
     artist, which is always a string, and the featuring artist, which
     may be a string or None if none is present.
     """
-    # split on the first "feat".
-    regex = re.compile(
-        plugins.feat_tokens(for_artist, custom_words), re.IGNORECASE
+    # Try explicit featuring tokens first (ft, feat, featuring, etc.)
+    # to avoid splitting on generic separators like "&" when both are present
+    regex_explicit = re.compile(
+        plugins.feat_tokens(for_artist=False, custom_words=custom_words),
+        re.IGNORECASE,
     )
-    parts = tuple(s.strip() for s in regex.split(artist, 1))
+    parts = tuple(s.strip() for s in regex_explicit.split(artist, 1))
+    if len(parts) == 2:
+        return parts
+
+    # Fall back to all tokens including generic separators if no explicit match
+    if for_artist:
+        regex = re.compile(
+            plugins.feat_tokens(for_artist, custom_words), re.IGNORECASE
+        )
+        parts = tuple(s.strip() for s in regex.split(artist, 1))
+
     if len(parts) == 1:
         return parts[0], None
     else:
