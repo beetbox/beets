@@ -117,7 +117,14 @@ class ReplacePlugin(BeetsPlugin):
             except Exception as e:
                 raise ui.UserError(f"Could not delete original file: {e}")
 
+        # Store the new path in the database.
         song.path = str(dest).encode()
         song.store()
+
+        # Write the metadata in the database to the song file's tags.
+        try:
+            song.write()
+        except Exception as e:
+            raise ui.UserError(f"Error writing metadata to file: {e}")
 
         ui.print_("Replacement successful.")
