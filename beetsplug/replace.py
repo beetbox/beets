@@ -10,6 +10,8 @@ from beets import ui, util
 from beets.plugins import BeetsPlugin
 
 if TYPE_CHECKING:
+    import optparse
+
     from beets.library import Item, Library
 
 
@@ -21,7 +23,7 @@ class ReplacePlugin(BeetsPlugin):
         cmd.func = self.run
         return [cmd]
 
-    def run(self, lib: Library, args: list[str]) -> None:
+    def run(self, lib: Library, opts: optparse.Values, args: list[str]) -> None:
         if len(args) < 2:
             raise ui.UserError("Usage: beet replace <query> <new_file_path>")
 
@@ -61,7 +63,7 @@ class ReplacePlugin(BeetsPlugin):
 
     def select_song(self, items: list[Item]):
         """Present a menu of matching songs and get user selection."""
-        ui.print_("\nMatching songs:")
+        ui.print_("Matching songs:")
         for i, item in enumerate(items, 1):
             ui.print_(f"{i}. {util.displayable_path(item)}")
 
