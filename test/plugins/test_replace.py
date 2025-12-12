@@ -1,4 +1,5 @@
 import shutil
+from collections.abc import Generator
 from pathlib import Path
 
 import pytest
@@ -31,7 +32,7 @@ class TestReplace:
         return dest
 
     @pytest.fixture
-    def library(self) -> Library:
+    def library(self) -> Generator[Library]:
         helper = TestHelper()
         helper.setup_beets()
 
