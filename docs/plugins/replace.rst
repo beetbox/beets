@@ -15,5 +15,8 @@ and then type:
 The plugin will show you a list of files for you to pick from, and then ask for
 confirmation.
 
+The file you pick will be replaced with the file at `path`, and the tags in the
+database will be written to that file's metadata.
+
 Consider using the ``replaygain`` command from the :doc:`/plugins/replaygain`
 plugin, if you usually use it during imports.
