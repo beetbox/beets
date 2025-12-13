@@ -17,7 +17,9 @@ class ReplacePlugin(BeetsPlugin):
         cmd.func = self.run
         return [cmd]
 
-    def run(self, lib: Library, opts: optparse.Values, args: list[str]) -> None:
+    def run(
+        self, lib: Library, _opts: optparse.Values, args: list[str]
+    ) -> None:
         if len(args) < 2:
             raise ui.UserError("Usage: beet replace <query> <new_file_path>")
 
@@ -55,7 +57,7 @@ class ReplacePlugin(BeetsPlugin):
         except mediafile.FileTypeError as fte:
             raise ui.UserError(fte)
 
-    def select_song(self, items: list[Item]):
+    def select_song(self, items: list[Item]) -> Item | None:
         """Present a menu of matching songs and get user selection."""
         ui.print_("Matching songs:")
         for i, item in enumerate(items, 1):
@@ -80,7 +82,7 @@ class ReplacePlugin(BeetsPlugin):
             except ValueError:
                 ui.print_("Invalid input. Please type in a number.")
 
-    def confirm_replacement(self, new_file_path: Path, song: Item):
+    def confirm_replacement(self, new_file_path: Path, song: Item) -> bool:
         """Get user confirmation for the replacement."""
         original_file_path: Path = Path(song.path.decode())
 

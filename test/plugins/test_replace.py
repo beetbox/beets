@@ -1,3 +1,4 @@
+import optparse
 import shutil
 from collections.abc import Generator
 from pathlib import Path
@@ -39,6 +40,34 @@ class TestReplace:
         yield helper.lib
 
         helper.teardown_beets()
+
+    def test_run_replace_with_too_few_args(self):
+        with pytest.raises(ui.UserError) as excinfo:
+            replace.run(None, optparse.Values(), [])
+
+        # Ensure we get a usage-style error message
+        assert "Usage" in str(excinfo.value)
+
+    def test_run_replace(self, monkeypatch, mp3_file, opus_file, library):
+        def always(x):
+            return lambda *args, **kwargs: x
+
+        monkeypatch.setattr(replace, "file_check", always(None))
+        monkeypatch.setattr(replace, "replace_file", always(None))
+        monkeypatch.setattr(replace, "confirm_replacement", always(True))
+
+        mediafile = MediaFile(mp3_file)
+        mediafile.title = "BBB"
+        mediafile.save()
+
+        item = Item.from_path(mp3_file)
+        library.add(item)
+
+        monkeypatch.setattr(
+            replace, "select_song", lambda *args, **kwargs: item
+        )
+
+        replace.run(library, optparse.Values(), ["BBB", str(opus_file)])
 
     def test_path_is_dir(self, tmp_path):
         fake_directory = tmp_path / "fakeDir"
