@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING
 import mediafile
 
 from beets import ui, util
+from beets.library import Item, Library
+from beets.library.exceptions import FileOperationError
 from beets.plugins import BeetsPlugin
 
 if TYPE_CHECKING:
@@ -113,7 +115,7 @@ class ReplacePlugin(BeetsPlugin):
 
         try:
             shutil.move(util.syspath(new_file_path), util.syspath(dest))
-        except Exception as e:
+        except OSError as e:
             raise ui.UserError(f"Error replacing file: {e}")
 
         if (
@@ -122,7 +124,7 @@ class ReplacePlugin(BeetsPlugin):
         ):
             try:
                 original_file_path.unlink()
-            except Exception as e:
+            except OSError as e:
                 raise ui.UserError(f"Could not delete original file: {e}")
 
         # Update the path to point to the new file.
@@ -131,7 +133,7 @@ class ReplacePlugin(BeetsPlugin):
         # Write the metadata in the database to the song file's tags.
         try:
             song.write()
-        except Exception as e:
+        except FileOperationError as e:
             raise ui.UserError(f"Error writing metadata to file: {e}")
 
         # Commit the new path to the database.

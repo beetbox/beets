@@ -2,6 +2,7 @@ import optparse
 import shutil
 from collections.abc import Generator
 from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
 from mediafile import MediaFile
@@ -15,12 +16,20 @@ from beetsplug.replace import ReplacePlugin
 replace = ReplacePlugin()
 
 
+def always(x):
+    return lambda *args, **kwargs: x
+
+
 class TestReplace:
     @pytest.fixture
     def mp3_file(self, tmp_path) -> Path:
         dest = tmp_path / "full.mp3"
         src = Path(_common.RSRC.decode()) / "full.mp3"
         shutil.copyfile(src, dest)
+
+        mediafile = MediaFile(dest)
+        mediafile.title = "AAA"
+        mediafile.save()
 
         return dest
 
@@ -41,33 +50,59 @@ class TestReplace:
 
         helper.teardown_beets()
 
-    def test_run_replace_with_too_few_args(self):
-        with pytest.raises(ui.UserError) as excinfo:
+    def test_run_replace_too_few_args(self):
+        with pytest.raises(ui.UserError):
             replace.run(None, optparse.Values(), [])
 
-        # Ensure we get a usage-style error message
-        assert "Usage" in str(excinfo.value)
+    def test_run_replace_no_matches(self, library):
+        with pytest.raises(ui.UserError):
+            replace.run(library, optparse.Values(), ["BBB", ""])
 
-    def test_run_replace(self, monkeypatch, mp3_file, opus_file, library):
-        def always(x):
-            return lambda *args, **kwargs: x
-
+    def test_run_replace_no_song_selected(
+        self, library, mp3_file, opus_file, monkeypatch
+    ):
         monkeypatch.setattr(replace, "file_check", always(None))
-        monkeypatch.setattr(replace, "replace_file", always(None))
-        monkeypatch.setattr(replace, "confirm_replacement", always(True))
-
-        mediafile = MediaFile(mp3_file)
-        mediafile.title = "BBB"
-        mediafile.save()
+        monkeypatch.setattr(replace, "select_song", always(None))
 
         item = Item.from_path(mp3_file)
         library.add(item)
 
-        monkeypatch.setattr(
-            replace, "select_song", lambda *args, **kwargs: item
-        )
+        replace.run(library, optparse.Values(), ["AAA", str(opus_file)])
 
-        replace.run(library, optparse.Values(), ["BBB", str(opus_file)])
+        assert mp3_file.exists()
+        assert opus_file.exists()
+
+    def test_run_replace_not_confirmed(
+        self, library, mp3_file, opus_file, monkeypatch
+    ):
+        monkeypatch.setattr(replace, "file_check", always(None))
+        monkeypatch.setattr(replace, "confirm_replacement", always(False))
+
+        item = Item.from_path(mp3_file)
+        library.add(item)
+
+        monkeypatch.setattr(replace, "select_song", always(item))
+
+        replace.run(library, optparse.Values(), ["AAA", str(opus_file)])
+
+        assert mp3_file.exists()
+        assert opus_file.exists()
+
+    def test_run_replace(self, library, mp3_file, opus_file, monkeypatch):
+        replace_file = Mock(replace.replace_file, return_value=None)
+        monkeypatch.setattr(replace, "replace_file", replace_file)
+
+        monkeypatch.setattr(replace, "file_check", always(None))
+        monkeypatch.setattr(replace, "confirm_replacement", always(True))
+
+        item = Item.from_path(mp3_file)
+        library.add(item)
+
+        monkeypatch.setattr(replace, "select_song", always(item))
+
+        replace.run(library, optparse.Values(), ["AAA", str(opus_file)])
+
+        replace_file.assert_called_once()
 
     def test_path_is_dir(self, tmp_path):
         fake_directory = tmp_path / "fakeDir"
@@ -175,6 +210,6 @@ class TestReplace:
 
         # Check that the new file has the old file's metadata.
         new_mediafile = MediaFile(opus_file)
-        assert new_mediafile.albumartist == old_mediafile.albumartist
-        assert new_mediafile.disctitle == old_mediafile.disctitle
-        assert new_mediafile.genre == old_mediafile.genre
+        assert new_mediafile.albumartist == "ABC"
+        assert new_mediafile.disctitle == "DEF"
+        assert new_mediafile.genre == "GHI"
