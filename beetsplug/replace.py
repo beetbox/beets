@@ -122,14 +122,12 @@ class ReplacePlugin(BeetsPlugin):
 
         # Update the path to point to the new file.
         song.path = str(dest).encode()
+        song.store()
 
         # Write the metadata in the database to the song file's tags.
         try:
             song.write()
         except FileOperationError as e:
             raise ui.UserError(f"Error writing metadata to file: {e}")
-
-        # Commit the new path to the database.
-        song.store()
 
         ui.print_("Replacement successful.")
