@@ -9,6 +9,7 @@ from mediafile import MediaFile
 
 from beets import ui
 from beets.library import Item, Library
+from beets.library.exceptions import WriteError
 from beets.test import _common
 from beets.test.helper import TestHelper
 from beetsplug.replace import ReplacePlugin
@@ -18,6 +19,13 @@ replace = ReplacePlugin()
 
 def always(x):
     return lambda *args, **kwargs: x
+
+
+def always_raise(x):
+    def err(*args, **kwargs):
+        raise x
+
+    return err
 
 
 class TestReplace:
@@ -186,6 +194,37 @@ class TestReplace:
         song = Song()
 
         assert replace.confirm_replacement("test", song) is False
+
+    def test_replace_file_move_fails(self, tmp_path):
+        item = Item()
+        item.path = bytes(tmp_path / "not_a_song.mp3")
+
+        with pytest.raises(ui.UserError):
+            replace.replace_file(tmp_path / "not_a_file.opus", item)
+
+    def test_replace_file_delete_fails(
+        self, library, mp3_file, opus_file, monkeypatch
+    ):
+        monkeypatch.setattr(Path, "unlink", always_raise(OSError))
+
+        item = Item.from_path(mp3_file)
+        library.add(item)
+
+        with pytest.raises(ui.UserError):
+            replace.replace_file(opus_file, item)
+
+    def test_replace_file_write_fails(
+        self, library, mp3_file, opus_file, monkeypatch
+    ):
+        monkeypatch.setattr(
+            Item, "write", always_raise(WriteError("path", "reason"))
+        )
+
+        item = Item.from_path(mp3_file)
+        library.add(item)
+
+        with pytest.raises(ui.UserError):
+            replace.replace_file(opus_file, item)
 
     def test_replace_file(
         self, mp3_file: Path, opus_file: Path, library: Library
