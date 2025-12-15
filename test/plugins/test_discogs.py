@@ -464,14 +464,14 @@ class DGAlbumInfoTest(BeetsTestCase):
     "track_artist_anv,track_artist,track_artists",
     [
         (False, "ARTIST Feat. PERFORMER", ["ARTIST", "PERFORMER"]),
-        (True, "VARIATION Feat. VARIATION", ["VARIATION", "VARIATION"]),
+        (True, "ART Feat. PERF", ["ART", "PERF"]),
     ],
 )
 @pytest.mark.parametrize(
     "album_artist_anv,album_artist,album_artists",
     [
-        (False, "ARTIST & SOLOIST", ["ARTIST", "SOLOIST"]),
-        (True, "VARIATION & VARIATION", ["VARIATION", "VARIATION"]),
+        (False, "DRUMMER, ARTIST & SOLOIST", ["DRUMMER", "ARTIST", "SOLOIST"]),
+        (True, "DRUM, ARTY & SOLO", ["DRUM", "ARTY", "SOLO"]),
     ],
 )
 @pytest.mark.parametrize(
@@ -484,15 +484,15 @@ class DGAlbumInfoTest(BeetsTestCase):
             False,
             "ARTIST Feat. PERFORMER",
             ["ARTIST", "PERFORMER"],
-            "ARTIST & SOLOIST",
-            ["ARTIST", "SOLOIST"],
+            "DRUMMER, ARTIST & SOLOIST",
+            ["DRUMMER", "ARTIST", "SOLOIST"],
         ),
         (
             True,
-            "VARIATION Feat. VARIATION",
-            ["VARIATION", "VARIATION"],
-            "VARIATION & VARIATION",
-            ["VARIATION", "VARIATION"],
+            "ART Feat. PERF",
+            ["ART", "PERF"],
+            "DRUM, ARTY & SOLO",
+            ["DRUM", "ARTY", "SOLO"],
         ),
     ],
 )
@@ -524,7 +524,7 @@ def test_anv(
                     {
                         "name": "ARTIST",
                         "tracks": "",
-                        "anv": "VARIATION",
+                        "anv": "ART",
                         "id": 11146,
                     }
                 ],
@@ -532,15 +532,16 @@ def test_anv(
                     {
                         "name": "PERFORMER",
                         "role": "Featuring",
-                        "anv": "VARIATION",
+                        "anv": "PERF",
                         "id": 787,
                     }
                 ],
             }
         ],
         "artists": [
-            {"name": "ARTIST (4)", "anv": "VARIATION", "id": 321, "join": "&"},
-            {"name": "SOLOIST", "anv": "VARIATION", "id": 445, "join": ""},
+            {"name": "DRUMMER", "anv": "DRUM", "id": 445, "join": ", "},
+            {"name": "ARTIST (4)", "anv": "ARTY", "id": 321, "join": "&"},
+            {"name": "SOLOIST", "anv": "SOLO", "id": 445, "join": ""},
         ],
         "title": "title",
     }

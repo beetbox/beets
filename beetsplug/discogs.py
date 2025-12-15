@@ -476,7 +476,11 @@ class DiscogsPlugin(MetadataSourcePlugin):
             base = artist
         else:
             if join:
-                base += f" {join} "
+                join = join.strip()
+                if join in ";,":
+                    base += f"{join} "
+                else:
+                    base += f" {join} "
             else:
                 base += ", "
             base += artist
