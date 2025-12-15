@@ -277,11 +277,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
 
         # If we have a featuring artist, move it to the title.
         self.update_metadata(
-            item,
-            feat_part,
-            drop_feat,
-            keep_in_artist_field,
-            custom_words,
+            item, feat_part, drop_feat, keep_in_artist_field, custom_words
         )
         return True
 
