@@ -60,31 +60,6 @@ def contains_feat(title: str, custom_words: list[str] | None = None) -> bool:
     )
 
 
-# Default keywords that indicate remix/edit/version content
-DEFAULT_BRACKET_KEYWORDS = [
-    "abridged",
-    "acapella",
-    "club",
-    "demo",
-    "edit",
-    "edition",
-    "extended",
-    "instrumental",
-    "live",
-    "mix",
-    "radio",
-    "release",
-    "remaster",
-    "remastered",
-    "remix",
-    "rmx",
-    "unabridged",
-    "unreleased",
-    "version",
-    "vip",
-]
-
-
 def find_feat_part(
     artist: str,
     albumartist: str | None,
@@ -140,7 +115,28 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
                 "keep_in_artist": False,
                 "preserve_album_artist": True,
                 "custom_words": [],
-                "bracket_keywords": DEFAULT_BRACKET_KEYWORDS.copy(),
+                "bracket_keywords": [
+                    "abridged",
+                    "acapella",
+                    "club",
+                    "demo",
+                    "edit",
+                    "edition",
+                    "extended",
+                    "instrumental",
+                    "live",
+                    "mix",
+                    "radio",
+                    "release",
+                    "remaster",
+                    "remastered",
+                    "remix",
+                    "rmx",
+                    "unabridged",
+                    "unreleased",
+                    "version",
+                    "vip",
+                ],
             }
         )
 
