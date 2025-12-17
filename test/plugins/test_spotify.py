@@ -249,3 +249,27 @@ class SpotifyPluginTest(PluginTestCase):
             query = params["q"][0]
 
             assert query.isascii()
+
+    @responses.activate
+    def test_multi_artist_album(self):
+        """Tests if plugin is able to map multiple artists in an album"""
+
+        # Mock the Spotify 'Get Album' call
+        json_file = os.path.join(
+            _common.RSRC, b"spotify", b"multi_artist_request.json"
+        )
+        with open(json_file, "rb") as f:
+            response_body = f.read()
+
+        responses.add(
+            responses.GET,
+            f"{spotify.SpotifyPlugin.album_url}0yhKyyjyKXWUieJ4w1IAEa",
+            body=response_body,
+            status=200,
+            content_type="application/json",
+        )
+
+        album_info = self.spotify.album_for_id("0yhKyyjyKXWUieJ4w1IAEa")
+        assert album_info is not None
+        assert album_info.artist == "Project Skylate, Sugar Shrill"
+        assert album_info.artists == ["Project Skylate", "Sugar Shrill"]

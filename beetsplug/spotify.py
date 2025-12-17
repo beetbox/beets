@@ -336,7 +336,9 @@ class SpotifyPlugin(
         if album_data["name"] == "":
             self._log.debug("Album removed from Spotify: {}", album_id)
             return None
-        artists_names, artists_ids = self._multi_artist_credit(album_data["artists"])
+        artists_names, artists_ids = self._multi_artist_credit(
+            album_data["artists"]
+        )
         artist = ", ".join(artists_names)
 
         date_parts = [
@@ -406,7 +408,9 @@ class SpotifyPlugin(
         :returns: TrackInfo object for track
 
         """
-        artists_names, artists_ids = self._multi_artist_credit(track_data["artists"])
+        artists_names, artists_ids = self._multi_artist_credit(
+            track_data["artists"]
+        )
         artist = ", ".join(artists_names)
 
         # Get album information for spotify tracks
