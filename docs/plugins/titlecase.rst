@@ -57,10 +57,12 @@ Default
         fields: []
         preserve: []
         replace: []
-        seperators: []
+        separators: []
         force_lowercase: no
         small_first_last: yes
         the_artist: yes
+        all_lowercase: no
+        all_caps: no
         after_choice: no
 
 .. conf:: auto
@@ -120,7 +122,7 @@ Default
         - "“": '"'
         - "”": '"'
 
-.. conf:: seperators
+.. conf:: separators
     :default: []
 
      A list of characters to treat as markers of new sentences. Helpful for split titles
@@ -145,6 +147,18 @@ Default
      If a field name contains ``artist``, then any lowercase ``the`` will be
      capitalized. Useful for bands with `The` as part of the proper name,
      like ``Amyl and The Sniffers``.
+
+.. conf:: all_caps
+    :default: no
+
+    If the alphabet content of a string is all caps, do not modify. Useful
+    if you encounter a lot of acronyms, etc.
+
+.. conf:: all_lowercase
+
+    If the alphabet content of a string is all lowercase, do not modify. Useful
+    if you encounter a lot of stylized lowercase spellings, but otherwise
+    want titlecase applied.
 
 .. conf:: after_choice
     :default: no
