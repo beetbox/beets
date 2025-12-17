@@ -151,13 +151,14 @@ Default
 .. conf:: all_caps
     :default: no
 
-    If the alphabet content of a string is all caps, do not modify. Useful
-    if you encounter a lot of acronyms, etc.
+    If the letters a-Z in a string are all caps, do not modify the string. Useful
+    if you encounter a lot of acronyms.
 
 .. conf:: all_lowercase
+    :default: no
 
-    If the alphabet content of a string is all lowercase, do not modify. Useful
-    if you encounter a lot of stylized lowercase spellings, but otherwise
+    If the letters a-Z in a string are all lowercase, do not modify the string.
+    Useful if you encounter a lot of stylized lowercase spellings, but otherwise
     want titlecase applied.
 
 .. conf:: after_choice
