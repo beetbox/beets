@@ -140,8 +140,8 @@ class TestTitlecasePlugin(PluginTestCase):
             (False, "RBMK1000", "Rbmk1000"),
             (True, "P A R I S!", "P A R I S!"),
             (True, "pillow dub...", "Pillow Dub..."),
-            (False, "P A R I S!", "P a R I S!")
-                ]
+            (False, "P A R I S!", "P a R I S!"),
+        ]
         for testcase in testcases:
             all_caps, given, expected = testcase
             with self.configure_plugin({"all_caps": all_caps}):
@@ -153,7 +153,7 @@ class TestTitlecasePlugin(PluginTestCase):
             (True, "RBMK1000", "Rbmk1000"),
             (True, "pillow dub...", "pillow dub..."),
             (False, "pillow dub...", "Pillow Dub..."),
-                ]
+        ]
         for testcase in testcases:
             all_lowercase, given, expected = testcase
             with self.configure_plugin({"all_lowercase": all_lowercase}):
