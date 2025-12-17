@@ -304,14 +304,16 @@ class SpotifyPlugin(
 
     def _multi_artist_credit(
         self, artists: list[dict[str | int, str]]
-    ) -> tuple[list[str], list[str]]:
-        """Given a list representing an ``artist``, accumulate data into a pair
+    ) -> tuple[list[str], list[str | None]]:
+        """Given a list of artist dictionaries, accumulate data into a pair
         of lists: the first being the artist names, and the second being the
         artist IDs.
         """
         artist_names = []
         artist_ids = []
         for artist in artists:
+            # Still use the get_artist helper to handle the artical
+            # normalization for each individual artist.
             name, id = self.get_artist([artist])
             artist_names.append(name)
             artist_ids.append(id)
@@ -382,8 +384,8 @@ class SpotifyPlugin(
             album_id=spotify_id,
             spotify_album_id=spotify_id,
             artist=artist,
-            artist_id=artists_ids[0],
-            spotify_artist_id=artists_ids[0],
+            artist_id=artists_ids[0] if len(artists_ids) > 0 else None,
+            spotify_artist_id=artists_ids[0] if len(artists_ids) > 0 else None,
             artists=artists_names,
             artists_ids=artists_ids,
             tracks=tracks,
@@ -424,8 +426,8 @@ class SpotifyPlugin(
             spotify_track_id=track_data["id"],
             artist=artist,
             album=album,
-            artist_id=artists_ids[0],
-            spotify_artist_id=artists_ids[0],
+            artist_id=artists_ids[0] if len(artists_ids) > 0 else None,
+            spotify_artist_id=artists_ids[0] if len(artists_ids) > 0 else None,
             artists=artists_names,
             artists_ids=artists_ids,
             length=track_data["duration_ms"] / 1000,
