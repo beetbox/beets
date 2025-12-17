@@ -327,9 +327,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if genres:
             return genres
 
-        # If not genres found for the joint 'albumartist', try the individual
+        # If no genres found for the joint 'albumartist', try the individual
         # album artists if available in 'albumartists'.
-        if obj.ablumartists and len(obj.albumartists) > 1:
+        if obj.albumartists and len(obj.albumartists) > 1:
             for albumartist in obj.albumartists:
                 genre = self._last_lookup(
                     "artist", LASTFM.get_artist, albumartist
@@ -345,7 +345,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if genres:
             return genres
 
-        # If not genres found for the joint 'artist', try the individual
+        # If no genres found for the joint 'artist', try the individual
         # album artists if available in 'artists'.
         if obj.artists and len(obj.artists) > 1:
             for artist in obj.artists:
@@ -362,7 +362,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if genres:
             return genres
 
-        # If not genres found for the joint 'artist', try the individual
+        # If no genres found for the joint 'artist', try the individual
         # album artists if available in 'artists'.
         if obj.artists and len(obj.artists) > 1:
             for artist in obj.artists:
