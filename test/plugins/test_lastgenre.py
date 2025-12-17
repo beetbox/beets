@@ -546,25 +546,24 @@ class LastGenrePluginTest(PluginTestCase):
 def test_get_genre(config_values, item_genre, mock_genres, expected_result):
     """Test _get_genre with various configurations."""
 
-    def mock_fetch_track_genre(obj=None):
+    def mock_fetch_track_genre(self, obj=None):
         return mock_genres["track"]
 
-    def mock_fetch_album_genre(obj):
+    def mock_fetch_album_genre(self, obj):
         return mock_genres["album"]
 
-    def mock_fetch_artist_genre(obj):
+    def mock_fetch_artist_genre(self, obj):
         return mock_genres["artist"]
-
-    # Initialize plugin instance and item
-    plugin = lastgenre.LastGenrePlugin()
 
     # Mock the last.fm fetchers. When whitelist enabled, we can assume only
     # whitelisted genres get returned, the plugin's _resolve_genre method
     # ensures it.
-    plugin.fetch_track_genre = mock_fetch_track_genre
-    plugin.fetch_album_genre = mock_fetch_album_genre
-    plugin.fetch_artist_genre = mock_fetch_artist_genre
+    lastgenre.LastGenrePlugin.fetch_track_genre = mock_fetch_track_genre
+    lastgenre.LastGenrePlugin.fetch_album_genre = mock_fetch_album_genre
+    lastgenre.LastGenrePlugin.fetch_artist_genre = mock_fetch_artist_genre
 
+    # Initialize plugin instance and item
+    plugin = lastgenre.LastGenrePlugin()
     # Configure
     plugin.config.set(config_values)
     plugin.setup()  # Loads default whitelist and canonicalization tree
@@ -574,36 +573,3 @@ def test_get_genre(config_values, item_genre, mock_genres, expected_result):
     # Run
     res = plugin._get_genre(item)
     assert res == expected_result
-
-
-def test_multiartist_fallback():
-    def mock_lookup(entity, method, *args):
-        # Only response for the first artist, e.g. no results for the joint
-        # artist
-        if entity == "album" and args[0] == "Project Skylate":
-            return ["Electronic"]
-        return []
-
-    plugin = lastgenre.LastGenrePlugin()
-    plugin._last_lookup = mock_lookup
-    plugin.config.set(
-        {
-            "force": True,
-            "keep_existing": False,
-            "source": "album",
-            "whitelist": True,
-            "canonical": False,
-            "count": 5,
-        }
-    )
-    plugin.setup()
-
-    res = plugin._get_genre(
-        _common.item(
-            albumartist="Project Skylate & Sugar Shrill",
-            albumartists=["Project Skylate", "Sugar Shrill"],
-            artist="Project Skylate & Sugar Shrill",
-            artists=["Project Skylate", "Sugar Shrill"],
-        )
-    )
-    assert res == ("Electronic", "album, whitelist")

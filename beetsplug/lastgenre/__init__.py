@@ -302,76 +302,23 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
     def fetch_album_genre(self, obj):
         """Return raw album genres from Last.fm for this Item or Album."""
-        genre = self._last_lookup(
+        return self._last_lookup(
             "album", LASTFM.get_album, obj.albumartist, obj.album
         )
-        if genre:
-            return genre
-
-        # If no genres found for the joint 'albumartist', try the individual
-        # album artists if available in 'albumartists'.
-        if obj.albumartists and len(obj.albumartists) > 1:
-            for albumartist in obj.albumartists:
-                genre = self._last_lookup(
-                    "album", LASTFM.get_album, albumartist, obj.album
-                )
-
-                if genre:
-                    return genre
-
-        return genre
 
     def fetch_album_artist_genre(self, obj):
         """Return raw album artist genres from Last.fm for this Item or Album."""
-        genres = self._last_lookup("artist", LASTFM.get_artist, obj.albumartist)
-        if genres:
-            return genres
+        return self._last_lookup("artist", LASTFM.get_artist, obj.albumartist)
 
-        # If no genres found for the joint 'albumartist', try the individual
-        # album artists if available in 'albumartists'.
-        if obj.albumartists and len(obj.albumartists) > 1:
-            for albumartist in obj.albumartists:
-                genre = self._last_lookup(
-                    "artist", LASTFM.get_artist, albumartist
-                )
-
-                if genre:
-                    return genre
-        return genres
-
-    def fetch_artist_genre(self, obj):
+    def fetch_artist_genre(self, item):
         """Returns raw track artist genres from Last.fm for this Item."""
-        genres = self._last_lookup("artist", LASTFM.get_artist, obj.artist)
-        if genres:
-            return genres
-
-        # If no genres found for the joint 'artist', try the individual
-        # album artists if available in 'artists'.
-        if obj.artists and len(obj.artists) > 1:
-            for artist in obj.artists:
-                genre = self._last_lookup("artist", LASTFM.get_artist, artist)
-                if genre:
-                    return genre
-        return genres
+        return self._last_lookup("artist", LASTFM.get_artist, item.artist)
 
     def fetch_track_genre(self, obj):
         """Returns raw track genres from Last.fm for this Item."""
-        genres = self._last_lookup(
+        return self._last_lookup(
             "track", LASTFM.get_track, obj.artist, obj.title
         )
-        if genres:
-            return genres
-
-        # If no genres found for the joint 'artist', try the individual
-        # album artists if available in 'artists'.
-        if obj.artists and len(obj.artists) > 1:
-            for artist in obj.artists:
-                genre = self._last_lookup(
-                    "track", LASTFM.get_track, artist, obj.title
-                )
-                if genre:
-                    return genre
-        return genres
 
     # Main processing: _get_genre() and helpers.
 

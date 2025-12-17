@@ -33,9 +33,6 @@ New features:
       resolve differences in metadata source styles.
 - :doc:`plugins/spotify`: Added support for multi-artist albums and tracks,
       saving all contributing artists to the respective fields.
-- :doc:`plugins/lastgenre`: If looking up a multi-artist album or track,
-      fall back to searching the individual artists for genres when no results
-      are found for the combined artist string.
 
 Bug fixes:
 
