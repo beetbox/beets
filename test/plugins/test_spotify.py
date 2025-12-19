@@ -251,20 +251,36 @@ class SpotifyPluginTest(PluginTestCase):
             assert query.isascii()
 
     @responses.activate
-    def test_multi_artist_album(self):
-        """Tests if plugin is able to map multiple artists in an album"""
+    def test_multiartist_album_and_track(self):
+        """Tests if plugin is able to map multiple artists in an album and
+        track info correctly"""
 
         # Mock the Spotify 'Get Album' call
         json_file = os.path.join(
-            _common.RSRC, b"spotify", b"multi_artist_request.json"
+            _common.RSRC, b"spotify", b"multiartist_album.json"
         )
         with open(json_file, "rb") as f:
-            response_body = f.read()
+            album_response_body = f.read()
 
         responses.add(
             responses.GET,
             f"{spotify.SpotifyPlugin.album_url}0yhKyyjyKXWUieJ4w1IAEa",
-            body=response_body,
+            body=album_response_body,
+            status=200,
+            content_type="application/json",
+        )
+
+        # Mock the Spotify 'Get Track' call
+        json_file = os.path.join(
+            _common.RSRC, b"spotify", b"multiartist_track.json"
+        )
+        with open(json_file, "rb") as f:
+            track_response_body = f.read()
+
+        responses.add(
+            responses.GET,
+            f"{spotify.SpotifyPlugin.track_url}6sjZfVJworBX6TqyjkxIJ1",
+            body=track_response_body,
             status=200,
             content_type="application/json",
         )
@@ -273,3 +289,21 @@ class SpotifyPluginTest(PluginTestCase):
         assert album_info is not None
         assert album_info.artist == "Project Skylate, Sugar Shrill"
         assert album_info.artists == ["Project Skylate", "Sugar Shrill"]
+        assert album_info.artist_id == "6m8MRXIVKb6wQaPlBIDMr1"
+        assert album_info.artists_ids == [
+            "6m8MRXIVKb6wQaPlBIDMr1",
+            "4kkAIoQmNT5xEoNH5BuQLe",
+        ]
+
+        assert len(album_info.tracks) == 1
+        assert album_info.tracks[0].artist == "Foo, Bar"
+        assert album_info.tracks[0].artists == ["Foo", "Bar"]
+        assert album_info.tracks[0].artist_id == "12345"
+        assert album_info.tracks[0].artists_ids == ["12345", "67890"]
+
+        track_info = self.spotify.track_for_id("6sjZfVJworBX6TqyjkxIJ1")
+        assert track_info is not None
+        assert track_info.artist == "Foo, Bar"
+        assert track_info.artists == ["Foo", "Bar"]
+        assert track_info.artist_id == "12345"
+        assert track_info.artists_ids == ["12345", "67890"]
