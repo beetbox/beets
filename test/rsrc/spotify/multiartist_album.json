@@ -83,8 +83,8 @@
               "spotify": "https://open.spotify.com/artist/6m8MRXIVKb6wQaPlBIDMr1"
             },
             "href": "https://api.spotify.com/v1/artists/6m8MRXIVKb6wQaPlBIDMr1",
-            "id": "6m8MRXIVKb6wQaPlBIDMr1",
-            "name": "Project Skylate",
+            "id": "12345",
+            "name": "Foo",
             "type": "artist",
             "uri": "spotify:artist:6m8MRXIVKb6wQaPlBIDMr1"
           },
@@ -93,8 +93,8 @@
               "spotify": "https://open.spotify.com/artist/4kkAIoQmNT5xEoNH5BuQLe"
             },
             "href": "https://api.spotify.com/v1/artists/4kkAIoQmNT5xEoNH5BuQLe",
-            "id": "4kkAIoQmNT5xEoNH5BuQLe",
-            "name": "Sugar Shrill",
+            "id": "67890",
+            "name": "Bar",
             "type": "artist",
             "uri": "spotify:artist:4kkAIoQmNT5xEoNH5BuQLe"
           }

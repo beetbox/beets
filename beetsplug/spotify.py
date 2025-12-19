@@ -304,7 +304,7 @@ class SpotifyPlugin(
 
     def _multi_artist_credit(
         self, artists: list[dict[str | int, str]]
-    ) -> tuple[list[str], list[str | None]]:
+    ) -> tuple[list[str], list[str]]:
         """Given a list of artist dictionaries, accumulate data into a pair
         of lists: the first being the artist names, and the second being the
         artist IDs.
@@ -312,11 +312,8 @@ class SpotifyPlugin(
         artist_names = []
         artist_ids = []
         for artist in artists:
-            # Still use the get_artist helper to handle the artical
-            # normalization for each individual artist.
-            name, id = self.get_artist([artist])
-            artist_names.append(name)
-            artist_ids.append(id)
+            artist_names.append(artist["name"])
+            artist_ids.append(artist["id"])
         return artist_names, artist_ids
 
     def album_for_id(self, album_id: str) -> AlbumInfo | None:
