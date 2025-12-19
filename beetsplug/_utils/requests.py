@@ -92,6 +92,18 @@ class RequestHandler:
     conversion of standard HTTP errors to beets-specific exceptions. Supports
     custom session types and error mappings that can be overridden by
     subclasses.
+
+    Usage:
+        Subclass and override :class:`RequestHandler.session_type`,
+        :class:`RequestHandler.explicit_http_errors` or
+        :class:`RequestHandler.status_to_error()` to customize behavior.
+
+        Use
+        * :class:`RequestHandler.get_json()` to get JSON response data
+        * :class:`RequestHandler.get()` to get HTTP response object
+        * :class:`RequestHandler.request()` to invoke arbitrary HTTP methods
+
+        Feel free to define common methods that are used in multiple plugins.
     """
 
     session_type: ClassVar[type[TimeoutSession]] = TimeoutSession
