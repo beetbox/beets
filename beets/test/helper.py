@@ -571,12 +571,10 @@ class PluginMixin(TestHelper):
             beetsplug_pkg.__path__ = []
             sys.modules[PLUGIN_NAMESPACE] = beetsplug_pkg
 
-        # Create the plugin module
-        if full_namespace in sys.modules:
-            raise ValueError(f"Plugin {name} already registered")
         module = types.ModuleType(full_namespace)
         module.__file__ = f"<{full_namespace}>"
         module.__package__ = PLUGIN_NAMESPACE
+        plugin_class.__module__ = full_namespace
         setattr(module, plugin_class.__name__, plugin_class)
 
         # Register in sys.modules and as attribute of parent package

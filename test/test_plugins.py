@@ -83,9 +83,9 @@ class TestPluginRegistration(PluginTest):
         delimiter = types.MULTI_VALUE_DSV.delimiter
         assert out == f"one{delimiter}two{delimiter}three\n"
 
-    def test_duplicate_field_typ(self):
-        """Test that if another plugin tries to register the same type,
-        a PluginConflictError is raised.
+    def test_duplicate_field_type(self):
+        """A PluginConflictError should be raised if
+        another plugin tries to register the same field_type str.
         """
 
         class DuplicateDummyPlugin(plugins.BeetsPlugin):
