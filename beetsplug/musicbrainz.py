@@ -35,7 +35,11 @@ from beets.metadata_plugins import MetadataSourcePlugin
 from beets.util.deprecation import deprecate_for_user
 from beets.util.id_extractors import extract_release_id
 
-from ._utils.requests import HTTPNotFoundError, RequestHandler, TimeoutSession
+from ._utils.requests import (
+    HTTPNotFoundError,
+    RequestHandler,
+    TimeoutAndRetrySession,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
@@ -99,20 +103,17 @@ BROWSE_CHUNKSIZE = 100
 BROWSE_MAXTRACKS = 500
 
 
-class LimiterTimeoutSession(LimiterMixin, TimeoutSession):
+class LimiterTimeoutSession(LimiterMixin, TimeoutAndRetrySession):
     pass
 
 
 @dataclass
 class MusicBrainzAPI(RequestHandler):
-    session_type = LimiterTimeoutSession
-
     api_host: str
     rate_limit: float
 
-    @cached_property
-    def session(self) -> LimiterTimeoutSession:
-        return self.session_type(per_second=self.rate_limit)
+    def create_session(self) -> LimiterTimeoutSession:
+        return LimiterTimeoutSession(per_second=self.rate_limit)
 
     def get_entity(self, entity: str, **kwargs) -> JSONDict:
         return self._group_relations(
