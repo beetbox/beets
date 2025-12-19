@@ -1,10 +1,7 @@
 """Stupid tests that ensure logging works as expected"""
 
 import logging as log
-import sys
 import threading
-from types import ModuleType
-from unittest.mock import patch
 
 import pytest
 
@@ -119,7 +116,7 @@ class TestLogSanitization:
         assert str(caplog.records[0].msg) == expected
 
 
-class DummyModule(ModuleType):
+class LoggingLevelTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
     class DummyPlugin(plugins.BeetsPlugin):
         def __init__(self):
             plugins.BeetsPlugin.__init__(self, "dummy")
@@ -142,23 +139,15 @@ class DummyModule(ModuleType):
         def listener(self):
             self.log_all("listener")
 
-    def __init__(self, *_, **__):
-        module_name = "beetsplug.dummy"
-        super().__init__(module_name)
-        self.DummyPlugin.__module__ = module_name
-        self.DummyPlugin = self.DummyPlugin
-
-
-class LoggingLevelTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
     plugin = "dummy"
+    plugin_type = DummyPlugin
 
     @classmethod
-    def setUpClass(cls):
-        patcher = patch.dict(sys.modules, {"beetsplug.dummy": DummyModule()})
-        patcher.start()
-        cls.addClassCleanup(patcher.stop)
-
+    def setUpClass(cls) -> None:
+        # Fixme: unittest ImportTestCase & AsIsImporterMixin in pytest setup
+        cls.register_plugin(cls.plugin_type, cls.plugin)
         super().setUpClass()
+        cls.unregister_plugin(cls.plugin)
 
     def test_command_level0(self):
         self.config["verbose"] = 0
