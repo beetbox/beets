@@ -444,10 +444,7 @@ def choose_candidate(
                 index = dist_colorize(index0, match.distance)
                 dist = f"({(1 - match.distance) * 100:.1f}%)"
                 distance = dist_colorize(dist, match.distance)
-                metadata = (
-                    f"{match.info.artist} -"
-                    f" {match.info.title if singleton else match.info.album}"
-                )
+                metadata = f"{match.info.artist} - {match.info.name}"
                 if i == 0:
                     metadata = dist_colorize(metadata, match.distance)
                 else:
