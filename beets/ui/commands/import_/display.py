@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 
     import confuse
 
+    from beets.autotag.distance import Distance
     from beets.library.models import Item
     from beets.ui import ColorName
 
@@ -47,7 +48,7 @@ class ChangeRepresentation:
         return ui.colorize("changed", "\u2260")
 
     @cached_property
-    def _indentation_config(self) -> confuse.ConfigView:
+    def _indentation_config(self) -> confuse.Subview:
         return config["ui"]["import"]["indentation"]
 
     @cached_property
@@ -196,7 +197,7 @@ class ChangeRepresentation:
             return str(index)
 
     def make_track_numbers(
-        self, item, track_info: hooks.TrackInfo
+        self, item: Item, track_info: hooks.TrackInfo
     ) -> tuple[str, str, bool]:
         """Format colored track indices."""
         cur_track = self.format_index(item)
@@ -307,7 +308,7 @@ class ChangeRepresentation:
             }
             return (lhs, rhs)
 
-    def print_tracklist(self, lines):
+    def print_tracklist(self, lines: list[tuple[Side, Side]]) -> None:
         """Calculates column widths for tracks stored as line tuples:
         (left, right). Then prints each line of tracklist.
         """
@@ -315,7 +316,7 @@ class ChangeRepresentation:
             # If no lines provided, e.g. details not required, do nothing.
             return
 
-        def get_width(side):
+        def get_width(side: Side) -> int:
             """Return the width of left or right in uncolorized characters."""
             try:
                 return len(
@@ -458,7 +459,7 @@ def show_item_change(item: Item, match: hooks.TrackMatch) -> None:
     change.show_match_details()
 
 
-def disambig_string(info):
+def disambig_string(info: hooks.Info) -> str:
     """Generate a string for an AlbumInfo or TrackInfo object that
     provides context that helps disambiguate similar-looking albums and
     tracks.
@@ -524,7 +525,7 @@ def get_album_disambig_fields(info: hooks.AlbumInfo) -> Sequence[str]:
     return out
 
 
-def dist_colorize(string, dist):
+def dist_colorize(string: str, dist: Distance) -> str:
     """Formats a string as a colorized similarity string according to
     a distance.
     """
@@ -537,7 +538,7 @@ def dist_colorize(string, dist):
     return string
 
 
-def dist_string(dist):
+def dist_string(dist: Distance) -> str:
     """Formats a distance (a float) as a colorized similarity percentage
     string.
     """
@@ -545,7 +546,7 @@ def dist_string(dist):
     return dist_colorize(string, dist)
 
 
-def penalty_string(distance, limit=None):
+def penalty_string(distance: Distance, limit: int | None = None) -> str:
     """Returns a colorized string that indicates all the penalties
     applied to a distance object.
     """
@@ -561,3 +562,5 @@ def penalty_string(distance, limit=None):
         # Prefix penalty string with U+2260: Not Equal To
         penalty_string = f"\u2260 {', '.join(penalties)}"
         return ui.colorize("changed", penalty_string)
+
+    return ""
