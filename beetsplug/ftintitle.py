@@ -145,7 +145,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         kw_inner = "|".join(map(re.escape, keywords))
 
         # If we have keywords, require one of them to appear in the bracket text.
-        # If kw == "", the lookahead becomes trivially true and we match any bracket content.
+        # If kw == "", the lookahead becomes true and we match any bracket content.
         kw = rf"\b(?:{kw_inner})\b" if kw_inner else ""
 
         return re.compile(
