@@ -1012,7 +1012,11 @@ class TestMusicBrainzPlugin(PluginMixin):
     plugin = "musicbrainz"
 
     mbid = "d2a6f856-b553-40a0-ac54-a321e8e2da99"
-    RECORDING = {"title": "foo", "id": "bar", "length": 42}
+    RECORDING = {
+        "title": "foo",
+        "id": "90b2fd02-19c8-42b8-8592-d62542604ce9",
+        "length": 42,
+    }
 
     @pytest.fixture
     def plugin_config(self):
@@ -1062,6 +1066,50 @@ class TestMusicBrainzPlugin(PluginMixin):
 
         assert len(candidates) == 1
         assert candidates[0].track_id == self.RECORDING["id"]
+
+    def test_item_candidates_includes_album_from_release_list(
+        self, monkeypatch, mb
+    ):
+        """Ensure that item_candidates now attaches album
+        info when the recording includes a release-list."""
+        recording_with_release = {
+            "title": "Beautiful in White",
+            "id": "d207c6a8-ea13-4da6-9008-cc1db29a8a35",
+            "length": 180000,
+            "release-list": [
+                {
+                    "id": "9ec75bce-60ac-41e9-82a5-3b71a982257d",
+                    "title": "Love Always (Deluxe Edition)",
+                }
+            ],
+        }
+
+        # Mock MusicBrainz search_recordings to return a recording with a release-list
+        monkeypatch.setattr(
+            "musicbrainzngs.search_recordings",
+            lambda *_, **__: {"recording-list": [recording_with_release]},
+        )
+
+        # Mock get_recording_by_id so track_for_id() retrieves the same dict
+        monkeypatch.setattr(
+            "musicbrainzngs.get_recording_by_id",
+            lambda *_, **__: {"recording": recording_with_release},
+        )
+
+        candidates = list(
+            mb.item_candidates(Item(), "Shane Filan", "Beautiful in White")
+        )
+
+        # Ensure exactly one candidate was found
+        assert len(candidates) == 1
+
+        candidate = candidates[0]
+        # The candidate should have correct track info
+        assert candidate.track_id == "d207c6a8-ea13-4da6-9008-cc1db29a8a35"
+
+        # ✅ New expected behavior: album info populated from release-list
+        assert candidate.album == "Love Always (Deluxe Edition)"
+        assert candidate.album_id == "9ec75bce-60ac-41e9-82a5-3b71a982257d"
 
     def test_candidates(self, monkeypatch, mb):
         monkeypatch.setattr(

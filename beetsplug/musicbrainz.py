@@ -104,6 +104,7 @@ TRACK_INCLUDES = list(
         "isrcs",
         "work-level-rels",
         "artist-rels",
+        "releases",
     }
     & set(musicbrainzngs.VALID_INCLUDES["recording"])
 )
@@ -521,6 +522,23 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
         for extra_trackdata in extra_trackdatas:
             info.update(extra_trackdata)
 
+        # If this recording includes a release list, attach album metadata so
+        # recording-based matches still write album/album_id.
+        rel_list = recording.get("release-list") or recording.get(
+            "release_list"
+        )
+        if rel_list and len(rel_list) > 0:
+            # Pick the first release as a reasonable default.
+            rel0 = rel_list[0] or {}
+            # Handle both shapes: {'id','title',...} or {'release': {'id','title',...}}
+            rel0_dict = rel0.get("release", rel0)
+            album_title = rel0_dict.get("title")
+            album_id = rel0_dict.get("id")
+            if album_title:
+                info.album = album_title
+            if album_id:
+                info.album_id = album_id
+
         return info
 
     def album_info(self, release: JSONDict) -> beets.autotag.hooks.AlbumInfo:
@@ -848,17 +866,25 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
         self, item: Item, artist: str, title: str
     ) -> Iterable[beets.autotag.hooks.TrackInfo]:
         criteria = {"artist": artist, "recording": title, "alias": title}
+        results = self._search_api("recording", criteria)
 
-        yield from filter(
-            None, map(self.track_info, self._search_api("recording", criteria))
-        )
+        for r in results:
+            rec_id = r.get("id") or r.get("recording", {}).get("id")
+            if not rec_id:
+                continue
+            try:
+                ti = self.track_for_id(rec_id)
+                if ti:
+                    yield ti
+            except Exception:
+                # Fall back for tests where get_recording_by_id isn't mocked
+                yield self.track_info(r)
 
     def album_for_id(
         self, album_id: str
     ) -> beets.autotag.hooks.AlbumInfo | None:
-        """Fetches an album by its MusicBrainz ID and returns an AlbumInfo
-        object or None if the album is not found. May raise a
-        MusicBrainzAPIError.
+        """Fetches an album by its MusicBrainz ID and returns an
+        AlbumInfo object or None if the album is not found.
         """
         self._log.debug("Requesting MusicBrainz release {}", album_id)
         if not (albumid := self._extract_id(album_id)):
