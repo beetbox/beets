@@ -24,7 +24,8 @@ from .plugins import BeetsPlugin, find_plugins, notify_info_yielded, send
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
-    from .autotag.hooks import AlbumInfo, Item, TrackInfo
+    from .autotag.hooks import AlbumInfo, TrackInfo
+    from .library.models import Item
 
 
 @cache
@@ -35,10 +36,11 @@ def find_metadata_source_plugins() -> list[MetadataSourcePlugin]:
 
 
 @notify_info_yielded("albuminfo_received")
-def candidates(*args, **kwargs) -> Iterable[AlbumInfo]:
+def candidates(items, *args, **kwargs) -> Iterable[AlbumInfo]:
     """Return matching album candidates from all metadata source plugins."""
     for plugin in find_metadata_source_plugins():
-        yield from plugin.candidates(*args, **kwargs)
+        for info in plugin.candidates(items, *args, **kwargs):
+            yield plugin.before_album_info_emitted(items, info)
 
 
 @notify_info_yielded("trackinfo_received")
@@ -48,13 +50,17 @@ def item_candidates(*args, **kwargs) -> Iterable[TrackInfo]:
         yield from plugin.item_candidates(*args, **kwargs)
 
 
-def album_for_id(_id: str) -> AlbumInfo | None:
+def album_for_id(
+    _id: str,
+    items: Iterable[Item],
+) -> AlbumInfo | None:
     """Get AlbumInfo object for the given ID string.
 
     A single ID can yield just a single album, so we return the first match.
     """
     for plugin in find_metadata_source_plugins():
         if info := plugin.album_for_id(album_id=_id):
+            info = plugin.before_album_info_emitted(items, info)
             send("albuminfo_received", info=info)
             return info
 
@@ -126,6 +132,18 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
         """Return :py:class:`AlbumInfo` object or None if no matching release was
         found."""
         raise NotImplementedError
+
+    def before_album_info_emitted(
+        self,
+        items: Iterable[Item],
+        album_info: AlbumInfo,
+    ) -> AlbumInfo:
+        """Called after an :py:class:`AlbumInfo` object has been found for a set
+        of :py:class:`Item` objects but before the ``albuminfo_received``
+        :py:type:`plugins.EventType` has been sent. The returned instance will
+        be the payload of the event.
+        """
+        return album_info
 
     @abc.abstractmethod
     def track_for_id(self, track_id: str) -> TrackInfo | None:
