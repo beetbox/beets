@@ -31,6 +31,7 @@ import beets
 import beets.autotag.hooks
 from beets import config, plugins, util
 from beets.metadata_plugins import MetadataSourcePlugin
+from beets.util.deprecation import deprecate_for_user
 from beets.util.id_extractors import extract_release_id
 
 if TYPE_CHECKING:
@@ -403,9 +404,10 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
             self.config["search_limit"] = self.config["match"][
                 "searchlimit"
             ].get()
-            self._log.warning(
-                "'musicbrainz.searchlimit' option is deprecated and will be "
-                "removed in 3.0.0. Use 'musicbrainz.search_limit' instead."
+            deprecate_for_user(
+                self._log,
+                "'musicbrainz.searchlimit' configuration option",
+                "'musicbrainz.search_limit'",
             )
         hostname = self.config["host"].as_str()
         https = self.config["https"].get(bool)
