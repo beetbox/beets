@@ -115,7 +115,12 @@ class MusicBrainzAPI(RequestHandler):
     def create_session(self) -> LimiterTimeoutSession:
         return LimiterTimeoutSession(per_second=self.rate_limit)
 
-    def get_entity(self, entity: str, **kwargs) -> JSONDict:
+    def get_entity(
+        self, entity: str, inc_list: list[str] | None = None, **kwargs
+    ) -> JSONDict:
+        if inc_list:
+            kwargs["inc"] = "+".join(inc_list)
+
         return self._group_relations(
             self.get_json(
                 f"{self.api_host}/ws/2/{entity}",
@@ -124,14 +129,14 @@ class MusicBrainzAPI(RequestHandler):
         )
 
     def get_release(self, id_: str) -> JSONDict:
-        return self.get_entity(f"release/{id_}", inc=" ".join(RELEASE_INCLUDES))
+        return self.get_entity(f"release/{id_}", inc_list=RELEASE_INCLUDES)
 
     def get_recording(self, id_: str) -> JSONDict:
-        return self.get_entity(f"recording/{id_}", inc=" ".join(TRACK_INCLUDES))
+        return self.get_entity(f"recording/{id_}", inc_list=TRACK_INCLUDES)
 
     def browse_recordings(self, **kwargs) -> list[JSONDict]:
         kwargs.setdefault("limit", BROWSE_CHUNKSIZE)
-        kwargs.setdefault("inc", BROWSE_INCLUDES)
+        kwargs.setdefault("inc_list", BROWSE_INCLUDES)
         return self.get_entity("recording", **kwargs)["recordings"]
 
     @singledispatchmethod
