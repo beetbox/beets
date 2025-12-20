@@ -565,6 +565,56 @@ def test_anv(
     assert r.tracks[0].artists_credit == track_artists_credit
 
 
+@pytest.mark.parametrize("artist_anv", [True, False])
+@pytest.mark.parametrize("albumartist_anv", [True, False])
+@pytest.mark.parametrize("artistcredit_anv", [True, False])
+@patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
+def test_anv_no_variation(artist_anv, albumartist_anv, artistcredit_anv):
+    """Test behavior when there is no ANV but the anv field is set"""
+    data = {
+        "id": 123,
+        "uri": "https://www.discogs.com/release/123456-something",
+        "tracklist": [
+            {
+                "title": "track",
+                "position": "A",
+                "type_": "track",
+                "duration": "5:44",
+                "artists": [
+                    {
+                        "name": "PERFORMER",
+                        "tracks": "",
+                        "anv": "",
+                        "id": 1,
+                    }
+                ],
+            }
+        ],
+        "artists": [
+            {"name": "ARTIST", "anv": "", "id": 2},
+        ],
+        "title": "title",
+    }
+    release = Bag(
+        data=data,
+        title=data["title"],
+        artists=[Bag(data=d) for d in data["artists"]],
+    )
+    config["discogs"]["anv"]["album_artist"] = albumartist_anv
+    config["discogs"]["anv"]["artist"] = artist_anv
+    config["discogs"]["anv"]["artist_credit"] = artistcredit_anv
+    r = DiscogsPlugin().get_album_info(release)
+    assert r.artist == "ARTIST"
+    assert r.albumartists == ["ARTIST"]
+    assert r.artist_credit == "ARTIST"
+    assert r.albumartist_credit == "ARTIST"
+    assert r.albumartists_credit == ["ARTIST"]
+    assert r.tracks[0].artist == "PERFORMER"
+    assert r.tracks[0].artists == ["PERFORMER"]
+    assert r.tracks[0].artist_credit == "PERFORMER"
+    assert r.tracks[0].artists_credit == ["PERFORMER"]
+
+
 @patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
 def test_anv_album_artist():
     """Test using artist name variations when the album artist

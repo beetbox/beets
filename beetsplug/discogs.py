@@ -424,7 +424,9 @@ class DiscogsPlugin(MetadataSourcePlugin):
             # Get the artist name
             name = self.strip_disambiguation(a["name"])
             discogs_id = str(a["id"])
-            anv = a.get("anv", name)
+            anv = a.get("anv", "")
+            if not anv:
+                anv = name
             role = a.get("role", "").lower()
             # Check if the artist is Various
             if name.lower() == "various":
