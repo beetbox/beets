@@ -20,11 +20,35 @@ import re
 from functools import cached_property, lru_cache
 from typing import TYPE_CHECKING
 
-from beets import plugins, ui
+from beets import config, plugins, ui
 
 if TYPE_CHECKING:
     from beets.importer import ImportSession, ImportTask
-    from beets.library import Item
+    from beets.library import Album, Item
+
+
+DEFAULT_BRACKET_KEYWORDS: tuple[str, ...] = (
+    "abridged",
+    "acapella",
+    "club",
+    "demo",
+    "edit",
+    "edition",
+    "extended",
+    "instrumental",
+    "live",
+    "mix",
+    "radio",
+    "release",
+    "remaster",
+    "remastered",
+    "remix",
+    "rmx",
+    "unabridged",
+    "unreleased",
+    "version",
+    "vip",
+)
 
 
 def split_on_feat(
@@ -99,28 +123,9 @@ def find_feat_part(
     return feat_part
 
 
-DEFAULT_BRACKET_KEYWORDS: tuple[str, ...] = (
-    "abridged",
-    "acapella",
-    "club",
-    "demo",
-    "edit",
-    "edition",
-    "extended",
-    "instrumental",
-    "live",
-    "mix",
-    "radio",
-    "release",
-    "remaster",
-    "remastered",
-    "remix",
-    "rmx",
-    "unabridged",
-    "unreleased",
-    "version",
-    "vip",
-)
+def _album_artist_no_feat(album: Album) -> str:
+    custom_words = config["ftintitle"]["custom_words"].as_str_seq()
+    return split_on_feat(album["albumartist"], False, list(custom_words))[0]
 
 
 class FtInTitlePlugin(plugins.BeetsPlugin):
@@ -201,6 +206,10 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
 
         if self.config["auto"]:
             self.import_stages = [self.imported]
+
+        self.album_template_fields["album_artist_no_feat"] = (
+            _album_artist_no_feat
+        )
 
     def commands(self) -> list[ui.Subcommand]:
         def func(lib, opts, args):

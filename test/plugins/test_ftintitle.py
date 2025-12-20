@@ -19,7 +19,7 @@ from typing import TypeAlias
 
 import pytest
 
-from beets.library.models import Item
+from beets.library.models import Album, Item
 from beets.test.helper import PluginTestCase
 from beetsplug import ftintitle
 
@@ -440,3 +440,12 @@ def test_custom_words(
     if custom_words is None:
         custom_words = []
     assert ftintitle.contains_feat(given, custom_words) is expected
+
+
+def test_album_template_value():
+    album = Album()
+    album["albumartist"] = "Foo ft. Bar"
+    assert ftintitle._album_artist_no_feat(album) == "Foo"
+
+    album["albumartist"] = "Foobar"
+    assert ftintitle._album_artist_no_feat(album) == "Foobar"
