@@ -18,7 +18,7 @@
 import os
 import time
 
-from beets import importer
+from beets import importer, plugins
 from beets.test.helper import AutotagImportTestCase, PluginMixin, control_stdin
 from beets.util import syspath
 from beetsplug.importsource import ImportSourcePlugin
@@ -113,3 +113,34 @@ class ImportSourceTest(PluginMixin, AutotagImportTestCase):
             assert current_mtime == original_mtime, (
                 f"Source file timestamp changed: {path}"
             )
+
+    def test_prevent_suggest_removal_on_reimport(self):
+        """Test that removal suggestions are prevented during reimport."""
+        album = self.lib.albums().get()
+        mb_albumid = album.mb_albumid
+
+        # Reimport from library
+        reimporter = self.setup_importer(import_dir=self.libdir)
+        reimporter.add_choice(importer.Action.APPLY)
+        reimporter.run()
+
+        plugin = plugins._instances[0]
+        assert mb_albumid in plugin.stop_suggestions_for_albums
+
+        # Calling suggest_removal should exit early without prompting
+        item = self.lib.items().get()
+        plugin.suggest_removal(item)
+        assert os.path.exists(item.source_path)
+
+    def test_prevent_suggest_removal_handles_skipped_task(self):
+        """Test that skipped tasks don't crash prevent_suggest_removal."""
+
+        class MockTask:
+            skip = True
+
+            def imported_items(self):
+                return "whatever"
+
+        plugin = plugins._instances[0]
+        mock_task = MockTask()
+        plugin.prevent_suggest_removal(None, mock_task)
