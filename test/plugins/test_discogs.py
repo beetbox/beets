@@ -409,7 +409,12 @@ class DGAlbumInfoTest(BeetsTestCase):
         )
         d = DiscogsPlugin().get_album_info(release)
         assert d.artist == "ARTIST NAME & OTHER ARTIST"
+        assert d.artists == ["ARTIST NAME", "OTHER ARTIST"]
+        assert d.artists_ids == ["321", "321"]
         assert d.tracks[0].artist == "TEST ARTIST"
+        assert d.tracks[0].artists == ["TEST ARTIST"]
+        assert d.tracks[0].artist_id == "11146"
+        assert d.tracks[0].artists_ids == ["11146"]
         assert d.label == "LABEL NAME"
 
     def test_strip_disambiguation_false(self):
@@ -448,35 +453,62 @@ class DGAlbumInfoTest(BeetsTestCase):
         )
         d = DiscogsPlugin().get_album_info(release)
         assert d.artist == "ARTIST NAME (2) & OTHER ARTIST (5)"
+        assert d.artists == ["ARTIST NAME (2)", "OTHER ARTIST (5)"]
         assert d.tracks[0].artist == "TEST ARTIST (5)"
+        assert d.tracks[0].artists == ["TEST ARTIST (5)"]
         assert d.label == "LABEL NAME (5)"
         config["discogs"]["strip_disambiguation"] = True
 
 
 @pytest.mark.parametrize(
-    "track_artist_anv,track_artist",
-    [(False, "ARTIST Feat. PERFORMER"), (True, "VARIATION Feat. VARIATION")],
-)
-@pytest.mark.parametrize(
-    "album_artist_anv,album_artist",
-    [(False, "ARTIST & SOLOIST"), (True, "VARIATION & VARIATION")],
-)
-@pytest.mark.parametrize(
-    "artist_credit_anv,track_artist_credit,album_artist_credit",
+    "track_artist_anv,track_artist,track_artists",
     [
-        (False, "ARTIST Feat. PERFORMER", "ARTIST & SOLOIST"),
-        (True, "VARIATION Feat. VARIATION", "VARIATION & VARIATION"),
+        (False, "ARTIST Feat. PERFORMER", ["ARTIST", "PERFORMER"]),
+        (True, "ART Feat. PERF", ["ART", "PERF"]),
+    ],
+)
+@pytest.mark.parametrize(
+    "album_artist_anv,album_artist,album_artists",
+    [
+        (False, "DRUMMER, ARTIST & SOLOIST", ["DRUMMER", "ARTIST", "SOLOIST"]),
+        (True, "DRUM, ARTY & SOLO", ["DRUM", "ARTY", "SOLO"]),
+    ],
+)
+@pytest.mark.parametrize(
+    (
+        "artist_credit_anv,track_artist_credit,"
+        "track_artists_credit,album_artist_credit,album_artists_credit"
+    ),
+    [
+        (
+            False,
+            "ARTIST Feat. PERFORMER",
+            ["ARTIST", "PERFORMER"],
+            "DRUMMER, ARTIST & SOLOIST",
+            ["DRUMMER", "ARTIST", "SOLOIST"],
+        ),
+        (
+            True,
+            "ART Feat. PERF",
+            ["ART", "PERF"],
+            "DRUM, ARTY & SOLO",
+            ["DRUM", "ARTY", "SOLO"],
+        ),
     ],
 )
 @patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
 def test_anv(
     track_artist_anv,
     track_artist,
+    track_artists,
     album_artist_anv,
     album_artist,
+    album_artists,
     artist_credit_anv,
     track_artist_credit,
+    track_artists_credit,
     album_artist_credit,
+    album_artists_credit,
 ):
     """Test using artist name variations."""
     data = {
@@ -492,7 +524,7 @@ def test_anv(
                     {
                         "name": "ARTIST",
                         "tracks": "",
-                        "anv": "VARIATION",
+                        "anv": "ART",
                         "id": 11146,
                     }
                 ],
@@ -500,15 +532,16 @@ def test_anv(
                     {
                         "name": "PERFORMER",
                         "role": "Featuring",
-                        "anv": "VARIATION",
+                        "anv": "PERF",
                         "id": 787,
                     }
                 ],
             }
         ],
         "artists": [
-            {"name": "ARTIST (4)", "anv": "VARIATION", "id": 321, "join": "&"},
-            {"name": "SOLOIST", "anv": "VARIATION", "id": 445, "join": ""},
+            {"name": "DRUMMER", "anv": "DRUM", "id": 445, "join": ", "},
+            {"name": "ARTIST (4)", "anv": "ARTY", "id": 321, "join": "&"},
+            {"name": "SOLOIST", "anv": "SOLO", "id": 445, "join": ""},
         ],
         "title": "title",
     }
@@ -522,9 +555,64 @@ def test_anv(
     config["discogs"]["anv"]["artist_credit"] = artist_credit_anv
     r = DiscogsPlugin().get_album_info(release)
     assert r.artist == album_artist
+    assert r.albumartists == album_artists
     assert r.artist_credit == album_artist_credit
+    assert r.albumartist_credit == album_artist_credit
+    assert r.albumartists_credit == album_artists_credit
     assert r.tracks[0].artist == track_artist
+    assert r.tracks[0].artists == track_artists
     assert r.tracks[0].artist_credit == track_artist_credit
+    assert r.tracks[0].artists_credit == track_artists_credit
+
+
+@pytest.mark.parametrize("artist_anv", [True, False])
+@pytest.mark.parametrize("albumartist_anv", [True, False])
+@pytest.mark.parametrize("artistcredit_anv", [True, False])
+@patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
+def test_anv_no_variation(artist_anv, albumartist_anv, artistcredit_anv):
+    """Test behavior when there is no ANV but the anv field is set"""
+    data = {
+        "id": 123,
+        "uri": "https://www.discogs.com/release/123456-something",
+        "tracklist": [
+            {
+                "title": "track",
+                "position": "A",
+                "type_": "track",
+                "duration": "5:44",
+                "artists": [
+                    {
+                        "name": "PERFORMER",
+                        "tracks": "",
+                        "anv": "",
+                        "id": 1,
+                    }
+                ],
+            }
+        ],
+        "artists": [
+            {"name": "ARTIST", "anv": "", "id": 2},
+        ],
+        "title": "title",
+    }
+    release = Bag(
+        data=data,
+        title=data["title"],
+        artists=[Bag(data=d) for d in data["artists"]],
+    )
+    config["discogs"]["anv"]["album_artist"] = albumartist_anv
+    config["discogs"]["anv"]["artist"] = artist_anv
+    config["discogs"]["anv"]["artist_credit"] = artistcredit_anv
+    r = DiscogsPlugin().get_album_info(release)
+    assert r.artist == "ARTIST"
+    assert r.albumartists == ["ARTIST"]
+    assert r.artist_credit == "ARTIST"
+    assert r.albumartist_credit == "ARTIST"
+    assert r.albumartists_credit == ["ARTIST"]
+    assert r.tracks[0].artist == "PERFORMER"
+    assert r.tracks[0].artists == ["PERFORMER"]
+    assert r.tracks[0].artist_credit == "PERFORMER"
+    assert r.tracks[0].artists_credit == ["PERFORMER"]
 
 
 @patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
@@ -558,13 +646,22 @@ def test_anv_album_artist():
     config["discogs"]["anv"]["artist_credit"] = False
     r = DiscogsPlugin().get_album_info(release)
     assert r.artist == "ARTIST"
+    assert r.artists == ["ARTIST"]
+    assert r.albumartist == "ARTIST"
+    assert r.albumartist_credit == "ARTIST"
+    assert r.albumartist_id == "321"
+    assert r.albumartists == ["ARTIST"]
+    assert r.albumartists_credit == ["ARTIST"]
     assert r.artist_credit == "ARTIST"
+    assert r.artists_credit == ["ARTIST"]
     assert r.tracks[0].artist == "VARIATION"
+    assert r.tracks[0].artists == ["VARIATION"]
     assert r.tracks[0].artist_credit == "ARTIST"
+    assert r.tracks[0].artists_credit == ["ARTIST"]
 
 
 @pytest.mark.parametrize(
-    "track, expected_artist",
+    "track, expected_artist, expected_artists",
     [
         (
             {
@@ -600,18 +697,25 @@ def test_anv_album_artist():
                 ],
             },
             "NEW ARTIST, VOCALIST Feat. SOLOIST, PERFORMER, MUSICIAN",
+            ["NEW ARTIST", "VOCALIST", "SOLOIST", "PERFORMER", "MUSICIAN"],
         ),
     ],
 )
 @patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
-def test_parse_featured_artists(track, expected_artist):
+def test_parse_featured_artists(track, expected_artist, expected_artists):
     """Tests the plugins ability to parse a featured artist.
-    Initial check with one featured artist, two featured artists,
-    and three. Ignores artists that are not listed as featured."""
-    t = DiscogsPlugin().get_track_info(
-        track, 1, 1, ("ARTIST", "ARTIST CREDIT", 2)
-    )
+    Ignores artists that are not listed as featured."""
+    artistinfo = {
+        "artist": "ARTIST",
+        "artist_id": "1",
+        "artists": ["ARTIST"],
+        "artists_ids": ["1"],
+        "artist_credit": "ARTIST",
+        "artists_credit": ["ARTIST"],
+    }
+    t, _, _ = DiscogsPlugin().get_track_info(track, 1, 1, artistinfo)
     assert t.artist == expected_artist
+    assert t.artists == expected_artists
 
 
 @pytest.mark.parametrize(
@@ -635,6 +739,29 @@ def test_get_media_and_albumtype(formats, expected_media, expected_albumtype):
     result = DiscogsPlugin.get_media_and_albumtype(formats)
 
     assert result == (expected_media, expected_albumtype)
+
+
+@pytest.mark.parametrize(
+    "given_artists,expected_info,config_va_name",
+    [
+        (
+            [{"name": "Various", "id": "1"}],
+            {
+                "artist": "VARIOUS ARTISTS",
+                "artist_id": "1",
+                "artists": ["VARIOUS ARTISTS"],
+                "artists_ids": ["1"],
+                "artist_credit": "VARIOUS ARTISTS",
+                "artists_credit": ["VARIOUS ARTISTS"],
+            },
+            "VARIOUS ARTISTS",
+        )
+    ],
+)
+@patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
+def test_va_buildartistinfo(given_artists, expected_info, config_va_name):
+    config["va_name"] = config_va_name
+    assert DiscogsPlugin().build_artistinfo(given_artists) == expected_info
 
 
 @pytest.mark.parametrize(
