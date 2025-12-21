@@ -1,14 +1,14 @@
 import json
 import pathlib
+from copy import deepcopy
 
 import pytest
 
-from beets import config
 from beets.autotag import AlbumMatch
 from beets.autotag.distance import Distance
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.library import Item
-from beets.test.helper import PluginMixin
+from beets.test.helper import ConfigMixin, PluginMixin
 from beetsplug._typing import JSONDict
 from beetsplug.mbpseudo import (
     _STATUS_PSEUDO,
@@ -18,6 +18,23 @@ from beetsplug.mbpseudo import (
 
 
 @pytest.fixture(scope="module")
+def rsrc_dir(pytestconfig: pytest.Config):
+    return pytestconfig.rootpath / "test" / "rsrc" / "mbpseudo"
+
+
+@pytest.fixture
+def official_release(rsrc_dir: pathlib.Path) -> JSONDict:
+    info_json = (rsrc_dir / "official_release.json").read_text(encoding="utf-8")
+    return json.loads(info_json)
+
+
+@pytest.fixture
+def pseudo_release(rsrc_dir: pathlib.Path) -> JSONDict:
+    info_json = (rsrc_dir / "pseudo_release.json").read_text(encoding="utf-8")
+    return json.loads(info_json)
+
+
+@pytest.fixture
 def official_release_info() -> AlbumInfo:
     return AlbumInfo(
         tracks=[TrackInfo(title="百花繚乱")],
@@ -26,13 +43,21 @@ def official_release_info() -> AlbumInfo:
     )
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def pseudo_release_info() -> AlbumInfo:
     return AlbumInfo(
         tracks=[TrackInfo(title="In Bloom")],
         album_id="pseudo",
         album="In Bloom",
     )
+
+
+@pytest.fixture(scope="module", autouse=True)
+def config():
+    config = ConfigMixin().config
+    with pytest.MonkeyPatch.context() as m:
+        m.setattr("beetsplug.mbpseudo.config", config)
+        yield config
 
 
 class TestPseudoAlbumInfo:
@@ -62,8 +87,7 @@ class TestPseudoAlbumInfo:
         info = PseudoAlbumInfo(
             pseudo_release_info, official_release_info, data_source="test"
         )
-        item = Item()
-        item["title"] = "百花繚乱"
+        item = Item(title="百花繚乱")
 
         assert info.determine_best_ref([item]) == "official"
 
@@ -71,37 +95,29 @@ class TestPseudoAlbumInfo:
         assert info.data_source == "test"
 
 
-@pytest.fixture(scope="module")
-def rsrc_dir(pytestconfig: pytest.Config):
-    return pytestconfig.rootpath / "test" / "rsrc" / "mbpseudo"
-
-
-class TestMBPseudoPlugin(PluginMixin):
+class TestMBPseudoMixin(PluginMixin):
     plugin = "mbpseudo"
+
+    @pytest.fixture(autouse=True)
+    def patch_get_release(self, monkeypatch, pseudo_release: JSONDict):
+        monkeypatch.setattr(
+            "beetsplug.musicbrainz.MusicBrainzAPI.get_release",
+            lambda _, album_id: deepcopy(
+                {pseudo_release["id"]: pseudo_release}[album_id]
+            ),
+        )
 
     @pytest.fixture(scope="class")
     def plugin_config(self):
         return {"scripts": ["Latn", "Dummy"]}
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def mbpseudo_plugin(self, plugin_config) -> MusicBrainzPseudoReleasePlugin:
         self.config[self.plugin].set(plugin_config)
         return MusicBrainzPseudoReleasePlugin()
 
-    @pytest.fixture
-    def official_release(self, rsrc_dir: pathlib.Path) -> JSONDict:
-        info_json = (rsrc_dir / "official_release.json").read_text(
-            encoding="utf-8"
-        )
-        return json.loads(info_json)
 
-    @pytest.fixture
-    def pseudo_release(self, rsrc_dir: pathlib.Path) -> JSONDict:
-        info_json = (rsrc_dir / "pseudo_release.json").read_text(
-            encoding="utf-8"
-        )
-        return json.loads(info_json)
-
+class TestMBPseudoPlugin(TestMBPseudoMixin):
     def test_scripts_init(
         self, mbpseudo_plugin: MusicBrainzPseudoReleasePlugin
     ):
@@ -129,7 +145,7 @@ class TestMBPseudoPlugin(PluginMixin):
         mbpseudo_plugin: MusicBrainzPseudoReleasePlugin,
         pseudo_release: JSONDict,
     ):
-        album_info = mbpseudo_plugin.album_info(pseudo_release["release"])
+        album_info = mbpseudo_plugin.album_info(pseudo_release)
         assert not isinstance(album_info, PseudoAlbumInfo)
         assert album_info.data_source == "MusicBrainzPseudoRelease"
         assert album_info.albumstatus == _STATUS_PSEUDO
@@ -148,9 +164,9 @@ class TestMBPseudoPlugin(PluginMixin):
         official_release: JSONDict,
         json_key: str,
     ):
-        del official_release["release"]["release-relation-list"][0][json_key]
+        del official_release["release-relations"][0][json_key]
 
-        album_info = mbpseudo_plugin.album_info(official_release["release"])
+        album_info = mbpseudo_plugin.album_info(official_release)
         assert not isinstance(album_info, PseudoAlbumInfo)
         assert album_info.data_source == "MusicBrainzPseudoRelease"
 
@@ -159,11 +175,11 @@ class TestMBPseudoPlugin(PluginMixin):
         mbpseudo_plugin: MusicBrainzPseudoReleasePlugin,
         official_release: JSONDict,
     ):
-        official_release["release"]["release-relation-list"][0]["release"][
+        official_release["release-relations"][0]["release"][
             "text-representation"
         ]["script"] = "Null"
 
-        album_info = mbpseudo_plugin.album_info(official_release["release"])
+        album_info = mbpseudo_plugin.album_info(official_release)
         assert not isinstance(album_info, PseudoAlbumInfo)
         assert album_info.data_source == "MusicBrainzPseudoRelease"
 
@@ -171,12 +187,8 @@ class TestMBPseudoPlugin(PluginMixin):
         self,
         mbpseudo_plugin: MusicBrainzPseudoReleasePlugin,
         official_release: JSONDict,
-        pseudo_release: JSONDict,
     ):
-        mbpseudo_plugin._release_getter = (
-            lambda album_id, includes: pseudo_release
-        )
-        album_info = mbpseudo_plugin.album_info(official_release["release"])
+        album_info = mbpseudo_plugin.album_info(official_release)
         assert isinstance(album_info, PseudoAlbumInfo)
         assert album_info.data_source == "MusicBrainzPseudoRelease"
 
@@ -226,40 +238,19 @@ class TestMBPseudoPlugin(PluginMixin):
         assert match.info.album == "In Bloom"
 
 
-class TestMBPseudoPluginCustomTagsOnly(PluginMixin):
-    plugin = "mbpseudo"
-
+class TestMBPseudoPluginCustomTagsOnly(TestMBPseudoMixin):
     @pytest.fixture(scope="class")
-    def mbpseudo_plugin(self) -> MusicBrainzPseudoReleasePlugin:
-        self.config[self.plugin]["scripts"] = ["Latn"]
-        self.config[self.plugin]["custom_tags_only"] = True
-        return MusicBrainzPseudoReleasePlugin()
-
-    @pytest.fixture(scope="class")
-    def official_release(self, rsrc_dir: pathlib.Path) -> JSONDict:
-        info_json = (rsrc_dir / "official_release.json").read_text(
-            encoding="utf-8"
-        )
-        return json.loads(info_json)
-
-    @pytest.fixture(scope="class")
-    def pseudo_release(self, rsrc_dir: pathlib.Path) -> JSONDict:
-        info_json = (rsrc_dir / "pseudo_release.json").read_text(
-            encoding="utf-8"
-        )
-        return json.loads(info_json)
+    def plugin_config(self):
+        return {"scripts": ["Latn", "Dummy"], "custom_tags_only": True}
 
     def test_custom_tags(
         self,
+        config,
         mbpseudo_plugin: MusicBrainzPseudoReleasePlugin,
         official_release: JSONDict,
-        pseudo_release: JSONDict,
     ):
-        config["import"]["languages"] = []
-        mbpseudo_plugin._release_getter = (
-            lambda album_id, includes: pseudo_release
-        )
-        album_info = mbpseudo_plugin.album_info(official_release["release"])
+        config["import"]["languages"] = ["en", "jp"]
+        album_info = mbpseudo_plugin.album_info(official_release)
         assert not isinstance(album_info, PseudoAlbumInfo)
         assert album_info.data_source == "MusicBrainzPseudoRelease"
         assert album_info["album_transl"] == "In Bloom"
@@ -269,15 +260,12 @@ class TestMBPseudoPluginCustomTagsOnly(PluginMixin):
 
     def test_custom_tags_with_import_languages(
         self,
+        config,
         mbpseudo_plugin: MusicBrainzPseudoReleasePlugin,
         official_release: JSONDict,
-        pseudo_release: JSONDict,
     ):
-        config["import"]["languages"] = ["en", "jp"]
-        mbpseudo_plugin._release_getter = (
-            lambda album_id, includes: pseudo_release
-        )
-        album_info = mbpseudo_plugin.album_info(official_release["release"])
+        config["import"]["languages"] = []
+        album_info = mbpseudo_plugin.album_info(official_release)
         assert not isinstance(album_info, PseudoAlbumInfo)
         assert album_info.data_source == "MusicBrainzPseudoRelease"
         assert album_info["album_transl"] == "In Bloom"
