@@ -91,6 +91,9 @@ class MusicBrainzAPI(RequestHandler):
     def get_recording(self, id_: str, **kwargs) -> JSONDict:
         return self.get_entity(f"recording/{id_}", **kwargs)
 
+    def get_work(self, id_: str, **kwargs) -> JSONDict:
+        return self.get_entity(f"work/{id_}", **kwargs)
+
     def browse_recordings(self, **kwargs) -> list[JSONDict]:
         return self.get_entity("recording", **kwargs)["recordings"]
 
