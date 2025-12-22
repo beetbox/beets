@@ -2,17 +2,16 @@
 
 import datetime
 
-import musicbrainzngs
 import requests
 
-from beets import __version__, config, ui
+from beets import config, ui
 from beets.plugins import BeetsPlugin
 from beetsplug.lastimport import process_tracks
 
-musicbrainzngs.set_useragent("beets", __version__, "https://beets.io/")
+from ._utils.musicbrainz import MusicBrainzAPIMixin
 
 
-class ListenBrainzPlugin(BeetsPlugin):
+class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
     """A Beets plugin for interacting with ListenBrainz."""
 
     ROOT = "http://api.listenbrainz.org/1/"
@@ -131,17 +130,16 @@ class ListenBrainzPlugin(BeetsPlugin):
             )
         return tracks
 
-    def get_mb_recording_id(self, track):
+    def get_mb_recording_id(self, track) -> str | None:
         """Returns the MusicBrainz recording ID for a track."""
-        resp = musicbrainzngs.search_recordings(
-            query=track["track_metadata"].get("track_name"),
-            release=track["track_metadata"].get("release_name"),
-            strict=True,
+        results = self.mb_api.search_entity(
+            "recording",
+            {
+                "": track["track_metadata"].get("track_name"),
+                "release": track["track_metadata"].get("release_name"),
+            },
         )
-        if resp.get("recording-count") == "1":
-            return resp.get("recording-list")[0].get("id")
-        else:
-            return None
+        return next((r["id"] for r in results), None)
 
     def get_playlists_createdfor(self, username):
         """Returns a list of playlists created by a user."""
@@ -209,17 +207,16 @@ class ListenBrainzPlugin(BeetsPlugin):
         track_info = []
         for track in tracks:
             identifier = track.get("identifier")
-            resp = musicbrainzngs.get_recording_by_id(
+            recording = self.mb_api.get_recording(
                 identifier, includes=["releases", "artist-credits"]
             )
-            recording = resp.get("recording")
             title = recording.get("title")
             artist_credit = recording.get("artist-credit", [])
             if artist_credit:
                 artist = artist_credit[0].get("artist", {}).get("name")
             else:
                 artist = None
-            releases = recording.get("release-list", [])
+            releases = recording.get("releases", [])
             if releases:
                 album = releases[0].get("title")
                 date = releases[0].get("date")

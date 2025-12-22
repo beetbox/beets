@@ -6,41 +6,33 @@ from beetsplug.listenbrainz import ListenBrainzPlugin
 
 class TestListenBrainzPlugin(ConfigMixin):
     @pytest.fixture(scope="class")
-    def plugin(self):
+    def plugin(self) -> ListenBrainzPlugin:
         self.config["listenbrainz"]["token"] = "test_token"
         self.config["listenbrainz"]["username"] = "test_user"
         return ListenBrainzPlugin()
 
     @pytest.mark.parametrize(
         "search_response, expected_id",
-        [
-            (
-                {"recording-count": "1", "recording-list": [{"id": "id1"}]},
-                "id1",
-            ),
-            ({"recording-count": "0"}, None),
-        ],
+        [([{"id": "id1"}], "id1"), ([], None)],
         ids=["found", "not_found"],
     )
     def test_get_mb_recording_id(
-        self, monkeypatch, plugin, search_response, expected_id
+        self, plugin, requests_mock, search_response, expected_id
     ):
-        monkeypatch.setattr(
-            "musicbrainzngs.search_recordings", lambda *_, **__: search_response
+        requests_mock.get(
+            "/ws/2/recording", json={"recordings": search_response}
         )
         track = {"track_metadata": {"track_name": "S", "release_name": "A"}}
 
         assert plugin.get_mb_recording_id(track) == expected_id
 
-    def test_get_track_info(self, monkeypatch, plugin):
-        monkeypatch.setattr(
-            "musicbrainzngs.get_recording_by_id",
-            lambda *_, **__: {
-                "recording": {
-                    "title": "T",
-                    "artist-credit": [],
-                    "release-list": [{"title": "Al", "date": "2023-01"}],
-                }
+    def test_get_track_info(self, plugin, requests_mock):
+        requests_mock.get(
+            "/ws/2/recording/id1?inc=releases%2Bartist-credits",
+            json={
+                "title": "T",
+                "artist-credit": [],
+                "releases": [{"title": "Al", "date": "2023-01"}],
             },
         )
 
