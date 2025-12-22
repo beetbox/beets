@@ -4207,7 +4207,6 @@ import = ["py7zr", "rarfile"]
 kodiupdate = ["requests"]
 lastgenre = ["pylast"]
 lastimport = ["pylast"]
-listenbrainz = ["musicbrainzngs"]
 lyrics = ["beautifulsoup4", "langdetect", "requests"]
 mbcollection = ["musicbrainzngs"]
 metasync = ["dbus-python"]
@@ -4226,4 +4225,4 @@ web = ["flask", "flask-cors"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<4"
-content-hash = "8cf2ad0e6a842511e1215720a63bfdf9d5f49345410644cbb0b5fd8fb74f50d2"
+content-hash = "dc116f6f349c947a8f4598cd197515937a758a96c6d1aa5ac8d00e3e8c8a219b"

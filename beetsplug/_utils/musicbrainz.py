@@ -8,12 +8,14 @@ from typing import TYPE_CHECKING, Any
 
 from requests_ratelimiter import LimiterMixin
 
-from beets import config
+from beets import config, logging
 
 from .requests import RequestHandler, TimeoutAndRetrySession
 
 if TYPE_CHECKING:
     from .._typing import JSONDict
+
+log = logging.getLogger(__name__)
 
 
 class LimiterTimeoutSession(LimiterMixin, TimeoutAndRetrySession):
@@ -62,6 +64,26 @@ class MusicBrainzAPI(RequestHandler):
                 params={**kwargs, "fmt": "json"},
             )
         )
+
+    def search_entity(
+        self, entity: str, filters: dict[str, str], **kwargs
+    ) -> list[JSONDict]:
+        """Search for MusicBrainz entities matching the given filters.
+
+        * Query is constructed by combining the provided filters using AND logic
+        * Each filter key-value pair is formatted as 'key:"value"' unless
+          - 'key' is empty, in which case only the value is used, '"value"'
+          - 'value' is empty, in which case the filter is ignored
+        * Values are lowercased and stripped of whitespace.
+        """
+        query = " AND ".join(
+            ":".join(filter(None, (k, f'"{_v}"')))
+            for k, v in filters.items()
+            if (_v := v.lower().strip())
+        )
+        log.debug("Searching for MusicBrainz {}s with: {!r}", entity, query)
+        kwargs["query"] = query
+        return self.get_entity(entity, **kwargs)[f"{entity}s"]
 
     def get_release(self, id_: str, **kwargs) -> JSONDict:
         return self.get_entity(f"release/{id_}", **kwargs)
