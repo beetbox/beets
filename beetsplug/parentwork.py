@@ -16,56 +16,51 @@
 and work composition date
 """
 
+from __future__ import annotations
+
+from typing import Any
+
 import musicbrainzngs
 
-from beets import ui
+from beets import __version__, ui
 from beets.plugins import BeetsPlugin
 
-
-def direct_parent_id(mb_workid, work_date=None):
-    """Given a Musicbrainz work id, find the id one of the works the work is
-    part of and the first composition date it encounters.
-    """
-    work_info = musicbrainzngs.get_work_by_id(
-        mb_workid, includes=["work-rels", "artist-rels"]
-    )
-    if "artist-relation-list" in work_info["work"] and work_date is None:
-        for artist in work_info["work"]["artist-relation-list"]:
-            if artist["type"] == "composer":
-                if "end" in artist.keys():
-                    work_date = artist["end"]
-
-    if "work-relation-list" in work_info["work"]:
-        for direct_parent in work_info["work"]["work-relation-list"]:
-            if (
-                direct_parent["type"] == "parts"
-                and direct_parent.get("direction") == "backward"
-            ):
-                direct_id = direct_parent["work"]["id"]
-                return direct_id, work_date
-    return None, work_date
+musicbrainzngs.set_useragent("beets", __version__, "https://beets.io/")
 
 
-def work_parent_id(mb_workid):
-    """Find the parent work id and composition date of a work given its id."""
-    work_date = None
-    while True:
-        new_mb_workid, work_date = direct_parent_id(mb_workid, work_date)
-        if not new_mb_workid:
-            return mb_workid, work_date
-        mb_workid = new_mb_workid
-    return mb_workid, work_date
-
-
-def find_parentwork_info(mb_workid):
+def find_parentwork_info(mb_workid: str) -> tuple[dict[str, Any], str | None]:
     """Get the MusicBrainz information dict about a parent work, including
     the artist relations, and the composition date for a work's parent work.
     """
-    parent_id, work_date = work_parent_id(mb_workid)
-    work_info = musicbrainzngs.get_work_by_id(
-        parent_id, includes=["artist-rels"]
-    )
-    return work_info, work_date
+    work_date = None
+
+    parent_id: str | None = mb_workid
+
+    while parent_id:
+        current_id = parent_id
+        work_info = musicbrainzngs.get_work_by_id(
+            current_id, includes=["work-rels", "artist-rels"]
+        )["work"]
+        work_date = work_date or next(
+            (
+                end
+                for a in work_info.get("artist-relation-list", [])
+                if a["type"] == "composer" and (end := a.get("end"))
+            ),
+            None,
+        )
+        parent_id = next(
+            (
+                w["work"]["id"]
+                for w in work_info.get("work-relation-list", [])
+                if w["type"] == "parts" and w["direction"] == "backward"
+            ),
+            None,
+        )
+
+    return musicbrainzngs.get_work_by_id(
+        current_id, includes=["artist-rels"]
+    ), work_date
 
 
 class ParentWorkPlugin(BeetsPlugin):
