@@ -751,17 +751,9 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
         using the provided criteria. Handles API errors by converting them into
         MusicBrainzAPIError exceptions with contextual information.
         """
-        query = " AND ".join(
-            f'{k}:"{_v}"'
-            for k, v in filters.items()
-            if (_v := v.lower().strip())
+        return self.mb_api.search_entity(
+            query_type, filters, limit=self.config["search_limit"].get()
         )
-        self._log.debug(
-            "Searching for MusicBrainz {}s with: {!r}", query_type, query
-        )
-        return self.mb_api.get_entity(
-            query_type, query=query, limit=self.config["search_limit"].get()
-        )[f"{query_type}s"]
 
     def candidates(
         self,
