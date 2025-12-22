@@ -5,9 +5,11 @@ import datetime
 import musicbrainzngs
 import requests
 
-from beets import config, ui
+from beets import __version__, config, ui
 from beets.plugins import BeetsPlugin
 from beetsplug.lastimport import process_tracks
+
+musicbrainzngs.set_useragent("beets", __version__, "https://beets.io/")
 
 
 class ListenBrainzPlugin(BeetsPlugin):
