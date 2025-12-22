@@ -14,9 +14,6 @@
 
 """Tests for the 'parentwork' plugin."""
 
-from typing import Any
-from unittest.mock import Mock, patch
-
 import pytest
 
 from beets.library import Item
@@ -74,55 +71,55 @@ class ParentWorkIntegrationTest(PluginTestCase):
         assert item["mb_parentworkid"] == "XXX"
 
 
-def mock_workid_response(mbid, includes):
-    works: list[dict[str, Any]] = [
-        {
-            "id": "1",
-            "title": "work",
-            "work-relation-list": [
-                {
-                    "type": "parts",
-                    "direction": "backward",
-                    "work": {"id": "2"},
-                }
-            ],
-        },
-        {
-            "id": "2",
-            "title": "directparentwork",
-            "work-relation-list": [
-                {
-                    "type": "parts",
-                    "direction": "backward",
-                    "work": {"id": "3"},
-                }
-            ],
-        },
-        {
-            "id": "3",
-            "title": "parentwork",
-        },
-    ]
-
-    return {
-        "work": {
-            **next(w for w in works if mbid == w["id"]),
-            "artist-relation-list": [
-                {
-                    "type": "composer",
-                    "artist": {
-                        "name": "random composer",
-                        "sort-name": "composer, random",
-                    },
-                }
-            ],
-        }
-    }
-
-
-@patch("musicbrainzngs.get_work_by_id", Mock(side_effect=mock_workid_response))
 class ParentWorkTest(PluginTestCase):
     plugin = "parentwork"
+
+    @pytest.fixture(autouse=True)
+    def patch_works(self, requests_mock):
+        requests_mock.get(
+            "/ws/2/work/1?inc=work-rels%2Bartist-rels",
+            json={
+                "id": "1",
+                "title": "work",
+                "work-relations": [
+                    {
+                        "type": "parts",
+                        "direction": "backward",
+                        "work": {"id": "2"},
+                    }
+                ],
+            },
+        )
+        requests_mock.get(
+            "/ws/2/work/2?inc=work-rels%2Bartist-rels",
+            json={
+                "id": "2",
+                "title": "directparentwork",
+                "work-relations": [
+                    {
+                        "type": "parts",
+                        "direction": "backward",
+                        "work": {"id": "3"},
+                    }
+                ],
+            },
+        )
+        requests_mock.get(
+            "/ws/2/work/3?inc=work-rels%2Bartist-rels",
+            json={
+                "id": "3",
+                "title": "parentwork",
+                "artist-relations": [
+                    {
+                        "type": "composer",
+                        "artist": {
+                            "name": "random composer",
+                            "sort-name": "composer, random",
+                        },
+                    }
+                ],
+            },
+        )
 
     def test_normal_case(self):
         item = Item(path="/file", mb_workid="1", parentwork_workid_current="1")

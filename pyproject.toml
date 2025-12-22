@@ -170,7 +170,6 @@ mbcollection = ["musicbrainzngs"]
 metasync = ["dbus-python"]
 missing = ["musicbrainzngs"]
 mpdstats = ["python-mpd2"]
-parentwork = ["musicbrainzngs"]
 plexupdate = ["requests"]
 reflink = ["reflink"]
 replaygain = [

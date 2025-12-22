@@ -4212,7 +4212,6 @@ mbcollection = ["musicbrainzngs"]
 metasync = ["dbus-python"]
 missing = ["musicbrainzngs"]
 mpdstats = ["python-mpd2"]
-parentwork = ["musicbrainzngs"]
 plexupdate = ["requests"]
 reflink = ["reflink"]
 replaygain = ["PyGObject"]
@@ -4225,4 +4224,4 @@ web = ["flask", "flask-cors"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<4"
-content-hash = "dc116f6f349c947a8f4598cd197515937a758a96c6d1aa5ac8d00e3e8c8a219b"
+content-hash = "a7321747d2259ad5269eec25dfa7c79964f52ba89be37b094eeb6a1b092f8d24"
