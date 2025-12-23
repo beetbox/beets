@@ -4183,7 +4183,6 @@ lastimport = ["pylast"]
 lyrics = ["beautifulsoup4", "langdetect", "requests"]
 mbcollection = ["musicbrainzngs"]
 metasync = ["dbus-python"]
-missing = ["musicbrainzngs"]
 mpdstats = ["python-mpd2"]
 plexupdate = ["requests"]
 reflink = ["reflink"]
@@ -4197,4 +4196,4 @@ web = ["flask", "flask-cors"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<4"
-content-hash = "dbe3785cbffd71f2ca758872f7654522228d6155c76a8f003bec22f03c8eada3"
+content-hash = "a18c3047f4f395841e785ed146af3505974839ab23eccdde34a7738e216f0277"

@@ -97,6 +97,9 @@ class MusicBrainzAPI(RequestHandler):
     def browse_recordings(self, **kwargs) -> list[JSONDict]:
         return self.get_entity("recording", **kwargs)["recordings"]
 
+    def browse_release_groups(self, **kwargs) -> list[JSONDict]:
+        return self.get_entity("release-group", **kwargs)["release-groups"]
+
     @singledispatchmethod
     @classmethod
     def _group_relations(cls, data: Any) -> Any:

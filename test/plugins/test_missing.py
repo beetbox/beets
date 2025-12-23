@@ -37,19 +37,22 @@ class TestMissingAlbums(PluginMixin):
                 {"id": album_in_lib.mb_albumid, "title": album_in_lib.album},
                 "",
                 marks=pytest.mark.xfail(
-                    reason="album in lib should not be reported as missing. Needs fixing."
+                    reason=(
+                        "Album in lib must not be reported as missing."
+                        " Needs fixing."
+                    )
                 ),
                 id="not missing",
             ),
         ],
     )
     def test_missing_artist_albums(
-        self, monkeypatch, helper, release_from_mb, expected_output
+        self, requests_mock, helper, release_from_mb, expected_output
     ):
         helper.lib.add(self.album_in_lib)
-        monkeypatch.setattr(
-            "musicbrainzngs.browse_release_groups",
-            lambda **__: {"release-group-list": [release_from_mb]},
+        requests_mock.get(
+            f"/ws/2/release-group?artist={self.album_in_lib.mb_albumartistid}",
+            json={"release-groups": [release_from_mb]},
         )
 
         with self.configure_plugin({}):
