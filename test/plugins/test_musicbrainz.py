@@ -230,7 +230,25 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
             track["video"] = True
         if disambiguation:
             track["disambiguation"] = disambiguation
+        if aliases is not None:
+            track["aliases"] = aliases
         return track
+
+    def test_parse_release_title(self):
+        release = self._make_release(None)
+        release["aliases"] = [
+            make_alias(suffix="en", locale="en", primary=True),
+        ]
+
+        # test no alias
+        config["import"]["languages"] = [""]
+        d = self.mb.album_info(release)
+        assert d.album == "ALBUM TITLE"
+
+        # test en primary
+        config["import"]["languages"] = ["en"]
+        d = self.mb.album_info(release)
+        assert d.album == "ALIASen"
 
     def test_parse_release_with_year(self):
         release = self._make_release("1984")

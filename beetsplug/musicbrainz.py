@@ -669,8 +669,10 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
                 track_infos.append(ti)
 
         album_artist_ids = _artist_ids(release["artist-credit"])
+        alias = _preferred_alias(release.get("aliases", ()))
+        release_title = alias["name"] if alias else release["title"]
         info = beets.autotag.hooks.AlbumInfo(
-            album=release["title"],
+            album=release_title,
             album_id=release["id"],
             artist=artist_name,
             artist_id=album_artist_ids[0],
