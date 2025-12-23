@@ -1,0 +1,154 @@
+{
+  "album_type": "single",
+  "total_tracks": 1,
+  "available_markets": [
+    "AR", "AU", "AT", "BE", "BO", "BR", "BG", "CA", "CL", "CO", "CR", "CY",
+    "CZ", "DK", "DO", "DE", "EC", "EE", "SV", "FI", "FR", "GR", "GT", "HN",
+    "HK", "HU", "IS", "IE", "IT", "LV", "LT", "LU", "MY", "MT", "MX", "NL",
+    "NZ", "NI", "NO", "PA", "PY", "PE", "PH", "PL", "PT", "SG", "SK", "ES",
+    "SE", "CH", "TW", "TR", "UY", "US", "GB", "AD", "LI", "MC", "ID", "JP",
+    "TH", "VN", "RO", "IL", "ZA", "SA", "AE", "BH", "QA", "OM", "KW", "EG",
+    "MA", "DZ", "TN", "LB", "JO", "PS", "IN", "BY", "KZ", "MD", "UA", "AL",
+    "BA", "HR", "ME", "MK", "RS", "SI", "KR", "BD", "PK", "LK", "GH", "KE",
+    "NG", "TZ", "UG", "AG", "AM", "BS", "BB", "BZ", "BT", "BW", "BF", "CV",
+    "CW", "DM", "FJ", "GM", "GE", "GD", "GW", "GY", "HT", "JM", "KI", "LS",
+    "LR", "MW", "MV", "ML", "MH", "FM", "NA", "NR", "NE", "PW", "PG", "PR",
+    "WS", "SM", "ST", "SN", "SC", "SL", "SB", "KN", "LC", "VC", "SR", "TL",
+    "TO", "TT", "TV", "VU", "AZ", "BN", "BI", "KH", "CM", "TD", "KM", "GQ",
+    "SZ", "GA", "GN", "KG", "LA", "MO", "MR", "MN", "NP", "RW", "TG", "UZ",
+    "ZW", "BJ", "MG", "MU", "MZ", "AO", "CI", "DJ", "ZM", "CD", "CG", "IQ",
+    "LY", "TJ", "VE", "ET", "XK"
+  ],
+  "external_urls": {
+    "spotify": "https://open.spotify.com/album/0yhKyyjyKXWUieJ4w1IAEa"
+  },
+  "href": "https://api.spotify.com/v1/albums/0yhKyyjyKXWUieJ4w1IAEa",
+  "id": "0yhKyyjyKXWUieJ4w1IAEa",
+  "images": [
+    {
+      "url": "https://i.scdn.co/image/ab67616d0000b2739a26f5e04909c87cead97c77",
+      "height": 640,
+      "width": 640
+    },
+    {
+      "url": "https://i.scdn.co/image/ab67616d00001e029a26f5e04909c87cead97c77",
+      "height": 300,
+      "width": 300
+    },
+    {
+      "url": "https://i.scdn.co/image/ab67616d000048519a26f5e04909c87cead97c77",
+      "height": 64,
+      "width": 64
+    }
+  ],
+  "name": "Akiba Night",
+  "release_date": "2017-12-22",
+  "release_date_precision": "day",
+  "type": "album",
+  "uri": "spotify:album:0yhKyyjyKXWUieJ4w1IAEa",
+  "artists": [
+    {
+      "external_urls": {
+        "spotify": "https://open.spotify.com/artist/6m8MRXIVKb6wQaPlBIDMr1"
+      },
+      "href": "https://api.spotify.com/v1/artists/6m8MRXIVKb6wQaPlBIDMr1",
+      "id": "6m8MRXIVKb6wQaPlBIDMr1",
+      "name": "Project Skylate",
+      "type": "artist",
+      "uri": "spotify:artist:6m8MRXIVKb6wQaPlBIDMr1"
+    },
+    {
+      "external_urls": {
+        "spotify": "https://open.spotify.com/artist/4kkAIoQmNT5xEoNH5BuQLe"
+      },
+      "href": "https://api.spotify.com/v1/artists/4kkAIoQmNT5xEoNH5BuQLe",
+      "id": "4kkAIoQmNT5xEoNH5BuQLe",
+      "name": "Sugar Shrill",
+      "type": "artist",
+      "uri": "spotify:artist:4kkAIoQmNT5xEoNH5BuQLe"
+    }
+  ],
+  "tracks": {
+    "href": "https://api.spotify.com/v1/albums/0yhKyyjyKXWUieJ4w1IAEa/tracks?offset=0&limit=50",
+    "limit": 50,
+    "next": null,
+    "offset": 0,
+    "previous": null,
+    "total": 1,
+    "items": [
+      {
+        "artists": [
+          {
+            "external_urls": {
+              "spotify": "https://open.spotify.com/artist/6m8MRXIVKb6wQaPlBIDMr1"
+            },
+            "href": "https://api.spotify.com/v1/artists/6m8MRXIVKb6wQaPlBIDMr1",
+            "id": "12345",
+            "name": "Foo",
+            "type": "artist",
+            "uri": "spotify:artist:6m8MRXIVKb6wQaPlBIDMr1"
+          },
+          {
+            "external_urls": {
+              "spotify": "https://open.spotify.com/artist/4kkAIoQmNT5xEoNH5BuQLe"
+            },
+            "href": "https://api.spotify.com/v1/artists/4kkAIoQmNT5xEoNH5BuQLe",
+            "id": "67890",
+            "name": "Bar",
+            "type": "artist",
+            "uri": "spotify:artist:4kkAIoQmNT5xEoNH5BuQLe"
+          }
+        ],
+        "available_markets": [
+          "AR", "AU", "AT", "BE", "BO", "BR", "BG", "CA", "CL", "CO", "CR",
+          "CY", "CZ", "DK", "DO", "DE", "EC", "EE", "SV", "FI", "FR", "GR",
+          "GT", "HN", "HK", "HU", "IS", "IE", "IT", "LV", "LT", "LU", "MY",
+          "MT", "MX", "NL", "NZ", "NI", "NO", "PA", "PY", "PE", "PH", "PL",
+          "PT", "SG", "SK", "ES", "SE", "CH", "TW", "TR", "UY", "US", "GB",
+          "AD", "LI", "MC", "ID", "JP", "TH", "VN", "RO", "IL", "ZA", "SA",
+          "AE", "BH", "QA", "OM", "KW", "EG", "MA", "DZ", "TN", "LB", "JO",
+          "PS", "IN", "BY", "KZ", "MD", "UA", "AL", "BA", "HR", "ME", "MK",
+          "RS", "SI", "KR", "BD", "PK", "LK", "GH", "KE", "NG", "TZ", "UG",
+          "AG", "AM", "BS", "BB", "BZ", "BT", "BW", "BF", "CV", "CW", "DM",
+          "FJ", "GM", "GE", "GD", "GW", "GY", "HT", "JM", "KI", "LS", "LR",
+          "MW", "MV", "ML", "MH", "FM", "NA", "NR", "NE", "PW", "PG", "PR",
+          "WS", "SM", "ST", "SN", "SC", "SL", "SB", "KN", "LC", "VC", "SR",
+          "TL", "TO", "TT", "TV", "VU", "AZ", "BN", "BI", "KH", "CM", "TD",
+          "KM", "GQ", "SZ", "GA", "GN", "KG", "LA", "MO", "MR", "MN", "NP",
+          "RW", "TG", "UZ", "ZW", "BJ", "MG", "MU", "MZ", "AO", "CI", "DJ",
+          "ZM", "CD", "CG", "IQ", "LY", "TJ", "VE", "ET", "XK"
+        ],
+        "disc_number": 1,
+        "duration_ms": 225268,
+        "explicit": false,
+        "external_urls": {
+          "spotify": "https://open.spotify.com/track/6sjZfVJworBX6TqyjkxIJ1"
+        },
+        "href": "https://api.spotify.com/v1/tracks/6sjZfVJworBX6TqyjkxIJ1",
+        "id": "6sjZfVJworBX6TqyjkxIJ1",
+        "name": "Akiba Nights",
+        "preview_url": "https://p.scdn.co/mp3-preview/a1c6c0c71f42caff0b19d988849602fefbf7754a?cid=4e414367a1d14c75a5c5129a627fcab8",
+        "track_number": 1,
+        "type": "track",
+        "uri": "spotify:track:6sjZfVJworBX6TqyjkxIJ1",
+        "is_local": false
+      }
+    ]
+  },
+  "copyrights": [
+    {
+      "text": "2017 Sugar Shrill",
+      "type": "C"
+    },
+    {
+      "text": "2017 Project Skylate",
+      "type": "P"
+    }
+  ],
+  "external_ids": {
+    "upc": "5057728789361"
+  },
+  "genres": [],
+  "label": "Project Skylate",
+  "popularity": 21
+}

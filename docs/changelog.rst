@@ -24,6 +24,9 @@ New features:
       to receive extra verbose logging around last.fm results and how they are
       resolved. The ``extended_debug`` config setting and ``--debug`` option
       have been removed.
+- :doc:`plugins/importsource`: Added new plugin that tracks original import
+  paths and optionally suggests removing source files when items are removed
+  from the library.
 - :doc:`plugins/mbpseudo`: Add a new `mbpseudo` plugin to proactively receive
       MusicBrainz pseudo-releases as recommendations during import.
 - Added support for Python 3.13.
@@ -31,12 +34,15 @@ New features:
   no_convert, never_convert_lossy_files, same format, and max_bitrate
 - :doc:`plugins/titlecase`: Add the `titlecase` plugin to allow users to
       resolve differences in metadata source styles.
+- :doc:`plugins/spotify`: Added support for multi-artist albums and tracks,
+      saving all contributing artists to the respective fields.
 
 Bug fixes:
 
-- When using :doc:`plugins/fromfilename` together with :doc:`plugins/edit`,
-  temporary tags extracted from filenames are no longer lost when discarding or
-  cancelling an edit session during import. :bug:`6104`
+- :doc:`/plugins/smartplaylist`: Fixed an issue where multiple queries in a
+  playlist configuration were not preserving their order, causing items to
+  appear in database order rather than the order specified in the config.
+  :bug:`6183`
 - :doc:`plugins/inline`: Fix recursion error when an inline field definition
   shadows a built-in item field (e.g., redefining ``track_no``). Inline
   expressions now skip self-references during evaluation to avoid infinite
@@ -61,6 +67,9 @@ Bug fixes:
   "albumartist" instead of a list of unique album artists.
 - Sanitize log messages by removing control characters preventing terminal
   rendering issues.
+- When using :doc:`plugins/fromfilename` together with :doc:`plugins/edit`,
+  temporary tags extracted from filenames are no longer lost when discarding or
+  cancelling an edit session during import. :bug:`6104`
 
 For plugin developers:
 
@@ -488,7 +497,6 @@ New features:
   ``beet list -a title:something`` or ``beet list artpath:cover``. Consequently
   album queries involving ``path`` field have been sped up, like ``beet list -a
   path:/path/``.
-- :doc:`plugins/importsource`: Added plugin
 - :doc:`plugins/ftintitle`: New ``keep_in_artist`` option for the plugin, which
   allows keeping the "feat." part in the artist metadata while still changing
   the title.
