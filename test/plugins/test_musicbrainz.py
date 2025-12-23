@@ -25,6 +25,17 @@ from beets.test.helper import BeetsTestCase, PluginMixin
 from beetsplug import musicbrainz
 
 
+def make_alias(suffix: str, locale: str, primary: bool = False):
+    alias = {
+        "name": f"ALIAS{suffix}",
+        "locale": locale,
+        "sort-name": f"ALIASSORT{suffix}",
+    }
+    if primary:
+        alias["primary"] = True
+    return alias
+
+
 class MusicBrainzTestCase(BeetsTestCase):
     def setUp(self):
         super().setUp()
@@ -698,18 +709,6 @@ class ArtistFlatteningTest(unittest.TestCase):
             "name": f"CREDIT{suffix}",
         }
 
-    def _add_alias(self, credit_dict, suffix="", locale="", primary=False):
-        alias = {
-            "name": f"ALIAS{suffix}",
-            "locale": locale,
-            "sort-name": f"ALIASSORT{suffix}",
-        }
-        if primary:
-            alias["primary"] = "primary"
-        if "aliases" not in credit_dict["artist"]:
-            credit_dict["artist"]["aliases"] = []
-        credit_dict["artist"]["aliases"].append(alias)
-
     def test_single_artist(self):
         credit = [self._credit_dict()]
         a, s, c = musicbrainz._flatten_artist_credit(credit)
@@ -743,14 +742,13 @@ class ArtistFlatteningTest(unittest.TestCase):
 
     def test_alias(self):
         credit_dict = self._credit_dict()
-        self._add_alias(credit_dict, suffix="en", locale="en", primary=True)
-        self._add_alias(
-            credit_dict, suffix="en_GB", locale="en_GB", primary=True
-        )
-        self._add_alias(credit_dict, suffix="fr", locale="fr")
-        self._add_alias(credit_dict, suffix="fr_P", locale="fr", primary=True)
-        self._add_alias(credit_dict, suffix="pt_BR", locale="pt_BR")
-
+        credit_dict["artist"]["aliases"] = [
+            make_alias(suffix="en", locale="en", primary=True),
+            make_alias(suffix="en_GB", locale="en_GB", primary=True),
+            make_alias(suffix="fr", locale="fr"),
+            make_alias(suffix="fr_P", locale="fr", primary=True),
+            make_alias(suffix="pt_BR", locale="pt_BR"),
+        ]
         # test no alias
         config["import"]["languages"] = [""]
         flat = musicbrainz._flatten_artist_credit([credit_dict])

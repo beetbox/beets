@@ -206,20 +206,13 @@ def _preferred_alias(
     for locale in languages:
         # Find matching primary aliases for this locale that are not
         # being ignored
-        matches = []
         for alias in valid_aliases:
             if (
                 alias["locale"] == locale
                 and alias.get("primary")
                 and (alias.get("type") or "").lower() not in ignored_alias_types
             ):
-                matches.append(alias)
-
-        # Skip to the next locale if we have no matches
-        if not matches:
-            continue
-
-        return matches[0]
+                return alias
 
     return None
 
@@ -238,10 +231,7 @@ def _multi_artist_credit(
         alias = _preferred_alias(el["artist"].get("aliases", ()))
 
         # An artist.
-        if alias:
-            cur_artist_name = alias["name"]
-        else:
-            cur_artist_name = el["artist"]["name"]
+        cur_artist_name = alias["name"] if alias else el["artist"]["name"]
         artist_parts.append(cur_artist_name)
 
         # Artist sort name.
