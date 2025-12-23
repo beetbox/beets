@@ -204,7 +204,7 @@ class LyricsRequestHandler(RequestHandler):
         but default to UTF-8 if not specified
         """
         if not r.encoding:
-            r.encoding = 'utf-8'
+            r.encoding = "utf-8"
         return r.text
 
     def get_json(self, url: str, params: JSONDict | None = None, **kwargs):
