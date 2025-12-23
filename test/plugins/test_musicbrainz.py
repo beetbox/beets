@@ -15,10 +15,10 @@
 """Tests for MusicBrainz API wrapper."""
 
 import unittest
+from typing import Any
 from unittest import mock
 
 import pytest
-from typing import Any
 
 from beets import config
 from beets.library import Item
