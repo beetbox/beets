@@ -569,6 +569,7 @@ class Genius(SearchBackend):
 
         return None
 
+
 class Tekstowo(SearchBackend):
     """Fetch lyrics from Tekstowo.pl."""
 
