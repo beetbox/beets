@@ -21,13 +21,15 @@ from collections.abc import Iterator
 import musicbrainzngs
 from musicbrainzngs.musicbrainz import MusicBrainzError
 
-from beets import config, metadata_plugins
+from beets import __version__, config, metadata_plugins
 from beets.dbcore import types
 from beets.library import Album, Item, Library
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, print_
 
 MB_ARTIST_QUERY = r"mb_albumartistid::^\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$"
+
+musicbrainzngs.set_useragent("beets", __version__, "https://beets.io/")
 
 
 def _missing_count(album):
