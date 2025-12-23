@@ -63,6 +63,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
                 "first-release-date": date_str,
                 "id": "RELEASE GROUP ID",
                 "disambiguation": "RG_DISAMBIGUATION",
+                "title": "RELEASE GROUP TITLE",
             },
             "artist-credit": [
                 {
@@ -422,6 +423,22 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         release = self._make_release(None)
         d = self.mb.album_info(release)
         assert d.releasegroup_id == "RELEASE GROUP ID"
+
+    def test_parse_release_group_title(self):
+        release = self._make_release(None)
+        release["release-group"]["aliases"] = [
+            make_alias(suffix="en", locale="en", primary=True),
+        ]
+
+        # test no alias
+        config["import"]["languages"] = [""]
+        d = self.mb.album_info(release)
+        assert d.release_group_title == "RELEASE GROUP TITLE"
+
+        # test en primary
+        config["import"]["languages"] = ["en"]
+        d = self.mb.album_info(release)
+        assert d.release_group_title == "ALIASen"
 
     def test_parse_asin(self):
         release = self._make_release(None)

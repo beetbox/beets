@@ -696,7 +696,10 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
         info.albumstatus = release.get("status")
 
         if release["release-group"].get("title"):
-            info.release_group_title = release["release-group"].get("title")
+            alias = _preferred_alias(release["release-group"].get("aliases", ()))
+            info.release_group_title = (
+                alias["name"] if alias else release["release-group"].get("title")
+            )
 
         # Get the disambiguation strings at the release and release group level.
         if release["release-group"].get("disambiguation"):
