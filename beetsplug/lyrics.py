@@ -563,8 +563,8 @@ class Genius(SearchBackend):
             html_text = cls.remove_backslash(m[0]).replace(r"\n", "\n")
             lyrics = cls.get_soup(html_text).get_text().strip()
             # Clean up any remaining escaped quotes (may need multiple passes)
-            while '\\"' in lyrics:
-                lyrics = lyrics.replace('\\"', '"')
+            # Use regex to handle all escape levels in one pass
+            lyrics = re.sub(r'\\+"', '"', lyrics)
             return lyrics
 
         return None
