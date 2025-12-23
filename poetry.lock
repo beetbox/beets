@@ -1838,7 +1838,7 @@ type = ["mypy", "mypy-extensions"]
 name = "musicbrainzngs"
 version = "0.7.1"
 description = "Python bindings for the MusicBrainz NGS and the Cover Art Archive webservices"
-optional = false
+optional = true
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 files = [
     {file = "musicbrainzngs-0.7.1-py2.py3-none-any.whl", hash = "sha256:e841a8f975104c0a72290b09f59326050194081a5ae62ee512f41915090e1a10"},
@@ -2684,6 +2684,21 @@ fuzzer = ["atheris", "hypothesis"]
 test = ["coverage[toml] (>=5.2)", "hypothesis", "pytest (>=6.0)", "pytest-benchmark", "pytest-cov", "pytest-timeout"]
 
 [[package]]
+name = "pyrate-limiter"
+version = "2.10.0"
+description = "Python Rate-Limiter using Leaky-Bucket Algorithm"
+optional = false
+python-versions = ">=3.7,<4.0"
+files = [
+    {file = "pyrate_limiter-2.10.0-py3-none-any.whl", hash = "sha256:a99e52159f5ed5eb58118bed8c645e30818e7c0e0d127a0585c8277c776b0f7f"},
+    {file = "pyrate_limiter-2.10.0.tar.gz", hash = "sha256:98cc52cdbe058458e945ae87d4fd5a73186497ffa545ee6e98372f8599a5bd34"},
+]
+
+[package.extras]
+all = ["filelock (>=3.0)", "redis (>=3.3,<4.0)", "redis-py-cluster (>=2.1.3,<3.0.0)"]
+docs = ["furo (>=2022.3.4,<2023.0.0)", "myst-parser (>=0.17)", "sphinx (>=4.3.0,<5.0.0)", "sphinx-autodoc-typehints (>=1.17,<2.0)", "sphinx-copybutton (>=0.5)", "sphinxcontrib-apidoc (>=0.3,<0.4)"]
+
+[[package]]
 name = "pytest"
 version = "8.4.2"
 description = "pytest: simple powerful testing with Python"
@@ -3235,6 +3250,24 @@ requests = ">=2.0.0"
 
 [package.extras]
 rsa = ["oauthlib[signedtoken] (>=3.0.0)"]
+
+[[package]]
+name = "requests-ratelimiter"
+version = "0.7.0"
+description = "Rate-limiting for the requests library"
+optional = false
+python-versions = "<4.0,>=3.7"
+files = [
+    {file = "requests_ratelimiter-0.7.0-py3-none-any.whl", hash = "sha256:1a7ef2faaa790272722db8539728690046237766fcc479f85b9591e5356a8185"},
+    {file = "requests_ratelimiter-0.7.0.tar.gz", hash = "sha256:a070c8a359a6f3a001b0ccb08f17228b7ae0a6e21d8df5b6f6bd58389cddde45"},
+]
+
+[package.dependencies]
+pyrate-limiter = "<3.0"
+requests = ">=2.20"
+
+[package.extras]
+docs = ["furo (>=2023.3,<2024.0)", "myst-parser (>=1.0)", "sphinx (>=5.2,<6.0)", "sphinx-autodoc-typehints (>=1.22,<2.0)", "sphinx-copybutton (>=0.5)"]
 
 [[package]]
 name = "resampy"
@@ -4174,9 +4207,13 @@ import = ["py7zr", "rarfile"]
 kodiupdate = ["requests"]
 lastgenre = ["pylast"]
 lastimport = ["pylast"]
+listenbrainz = ["musicbrainzngs"]
 lyrics = ["beautifulsoup4", "langdetect", "requests"]
+mbcollection = ["musicbrainzngs"]
 metasync = ["dbus-python"]
+missing = ["musicbrainzngs"]
 mpdstats = ["python-mpd2"]
+parentwork = ["musicbrainzngs"]
 plexupdate = ["requests"]
 reflink = ["reflink"]
 replaygain = ["PyGObject"]
@@ -4189,4 +4226,4 @@ web = ["flask", "flask-cors"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<4"
-content-hash = "9e154214b2f404415ef17df83f926a326ffb62a83b3901a404946110354d4067"
+content-hash = "8cf2ad0e6a842511e1215720a63bfdf9d5f49345410644cbb0b5fd8fb74f50d2"
