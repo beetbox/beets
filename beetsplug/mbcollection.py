@@ -101,9 +101,9 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
 
         offset = 0
         albums_in_collection, release_count = _fetch(offset)
-        for i in range(0, release_count, FETCH_CHUNK_SIZE):
-            albums_in_collection += _fetch(offset)[0]
+        for i in range(FETCH_CHUNK_SIZE, release_count, FETCH_CHUNK_SIZE):
             offset += FETCH_CHUNK_SIZE
+            albums_in_collection += _fetch(offset)[0]
 
         return albums_in_collection
 
