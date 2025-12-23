@@ -18,6 +18,7 @@ import unittest
 from unittest import mock
 
 import pytest
+from typing import Any
 
 from beets import config
 from beets.library import Item
@@ -26,7 +27,7 @@ from beetsplug import musicbrainz
 
 
 def make_alias(suffix: str, locale: str, primary: bool = False):
-    alias = {
+    alias: dict[str, Any] = {
         "name": f"ALIAS{suffix}",
         "locale": locale,
         "sort-name": f"ALIASSORT{suffix}",

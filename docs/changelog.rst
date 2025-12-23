@@ -37,7 +37,7 @@ New features:
 - :doc:`plugins/spotify`: Added support for multi-artist albums and tracks,
       saving all contributing artists to the respective fields.
 - :doc:`plugins/musicbrainz`: Use title alias for releases, release groups and
-     recordings.
+      recordings.
 
 Bug fixes:
 
