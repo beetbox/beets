@@ -463,8 +463,11 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
         ``medium_index``, the track's index on its medium; ``medium_total``,
         the number of tracks on the medium. Each number is a 1-based index.
         """
+        alias = _preferred_alias(recording.get("aliases", ()))
+        title = alias["name"] if alias else recording["title"]
+
         info = beets.autotag.hooks.TrackInfo(
-            title=recording["title"],
+            title=title,
             track_id=recording["id"],
             index=index,
             medium=medium,
@@ -636,8 +639,11 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
                 ti.media = format
                 ti.track_alt = track["number"]
 
-                # Prefer track data, where present, over recording data.
-                if track.get("title"):
+                # Prefer track data, where present, over recording data except
+                # if an alias is available.
+                if track.get("title") and not _preferred_alias(
+                    track["recording"].get("aliases", ())
+                ):
                     ti.title = track["title"]
                 if track.get("artist-credit"):
                     # Get the artist names.

@@ -180,6 +180,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         disambiguation=None,
         remixer=False,
         multi_artist_credit=False,
+        aliases=None,
     ):
         track = {
             "title": title,
@@ -256,18 +257,45 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
 
     def test_parse_tracks(self):
         tracks = [
-            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
-            self._make_track("TITLE TWO", "ID TWO", 200.0 * 1000.0),
+            self._make_track(
+                "TITLE ONE",
+                "ID ONE",
+                100.0 * 1000.0,
+                aliases=[make_alias(suffix="ONEen", locale="en", primary=True)],
+            ),
+            self._make_track(
+                "TITLE TWO",
+                "ID TWO",
+                200.0 * 1000.0,
+                aliases=[make_alias(suffix="TWOen", locale="en", primary=True)],
+            ),
         ]
         release = self._make_release(tracks=tracks)
 
+        # Preference over recording data
+        release["media"][0]["tracks"][1]["title"] = "TRACK TITLE TWO"
+
+        # test no alias
+        config["import"]["languages"] = [""]
         d = self.mb.album_info(release)
         t = d.tracks
         assert len(t) == 2
         assert t[0].title == "TITLE ONE"
         assert t[0].track_id == "ID ONE"
         assert t[0].length == 100.0
-        assert t[1].title == "TITLE TWO"
+        assert t[1].title == "TRACK TITLE TWO"
+        assert t[1].track_id == "ID TWO"
+        assert t[1].length == 200.0
+
+        # test en primary
+        config["import"]["languages"] = ["en"]
+        d = self.mb.album_info(release)
+        t = d.tracks
+        assert len(t) == 2
+        assert t[0].title == "ALIASONEen"
+        assert t[0].track_id == "ID ONE"
+        assert t[0].length == 100.0
+        assert t[1].title == "ALIASTWOen"
         assert t[1].track_id == "ID TWO"
         assert t[1].length == 200.0
 
