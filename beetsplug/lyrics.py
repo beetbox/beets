@@ -200,7 +200,11 @@ class LyricsRequestHandler(RequestHandler):
         url = self.format_url(url, params)
         self.debug("Fetching HTML from {}", url)
         r = self.get(url, **kwargs)
-        r.encoding = None
+        """Trust server's encoding,
+        but default to UTF-8 if not specified
+        """
+        if not r.encoding:
+            r.encoding = 'utf-8'
         return r.text
 
     def get_json(self, url: str, params: JSONDict | None = None, **kwargs):
@@ -557,10 +561,13 @@ class Genius(SearchBackend):
     def scrape(cls, html: str) -> str | None:
         if m := cls.LYRICS_IN_JSON_RE.search(html):
             html_text = cls.remove_backslash(m[0]).replace(r"\n", "\n")
-            return cls.get_soup(html_text).get_text().strip()
+            lyrics = cls.get_soup(html_text).get_text().strip()
+            # Clean up any remaining escaped quotes (may need multiple passes)
+            while '\\"' in lyrics:
+                lyrics = lyrics.replace('\\"', '"')
+            return lyrics
 
         return None
-
 
 class Tekstowo(SearchBackend):
     """Fetch lyrics from Tekstowo.pl."""
