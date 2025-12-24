@@ -1,3 +1,13 @@
+"""Helpers for communicating with the MusicBrainz webservice.
+
+Provides rate-limited HTTP session and convenience methods to fetch and
+normalize API responses.
+
+This module centralizes request handling and response shaping so callers can
+work with consistently structured data without embedding HTTP or rate-limit
+logic throughout the codebase.
+"""
+
 from __future__ import annotations
 
 import operator
@@ -21,11 +31,22 @@ log = logging.getLogger(__name__)
 
 
 class LimiterTimeoutSession(LimiterMixin, TimeoutAndRetrySession):
-    pass
+    """HTTP session that enforces rate limits."""
 
 
 @dataclass
 class MusicBrainzAPI(RequestHandler):
+    """High-level interface to the MusicBrainz WS/2 API.
+
+    Responsibilities:
+    - Configure the API host and request rate from application configuration.
+    - Offer helpers to fetch common entity types and to run searches.
+    - Normalize MusicBrainz responses so relation lists are grouped by target
+      type for easier downstream consumption.
+
+    Documentation: https://musicbrainz.org/doc/MusicBrainz_API
+    """
+
     api_host: str = field(init=False)
     rate_limit: float = field(init=False)
 
@@ -67,6 +88,12 @@ class MusicBrainzAPI(RequestHandler):
     def get_entity(
         self, entity: str, includes: list[str] | None = None, **kwargs
     ) -> JSONDict:
+        """Retrieve and normalize data from the API entity endpoint.
+
+        If requested, includes are appended to the request. The response is
+        passed through a normalizer that groups relation entries by their
+        target type so that callers receive a consistently structured mapping.
+        """
         if includes:
             kwargs["inc"] = "+".join(includes)
 
@@ -154,6 +181,8 @@ class MusicBrainzAPI(RequestHandler):
 
 
 class MusicBrainzAPIMixin:
+    """Mixin that provides a cached MusicBrainzAPI helper instance."""
+
     @cached_property
     def mb_api(self) -> MusicBrainzAPI:
         return MusicBrainzAPI()

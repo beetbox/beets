@@ -43,6 +43,19 @@ UUID_PAT = re.compile(r"^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$")
 
 @dataclass
 class MusicBrainzUserAPI(MusicBrainzAPI):
+    """MusicBrainz API client with user authentication.
+
+    In order to retrieve private user collections and modify them, we need to
+    authenticate the requests with the user's MusicBrainz credentials.
+
+    See documentation for authentication details:
+        https://musicbrainz.org/doc/MusicBrainz_API#Authentication
+
+    Note that the documentation misleadingly states HTTP 'basic' authentication,
+    and I had to reverse-engineer musicbrainzngs to discover that it actually
+    uses HTTP 'digest' authentication.
+    """
+
     auth: HTTPDigestAuth = field(init=False)
 
     @cached_property
@@ -57,12 +70,18 @@ class MusicBrainzUserAPI(MusicBrainzAPI):
         )
 
     def request(self, *args, **kwargs) -> Response:
+        """Authenticate and include required client param in all requests."""
         kwargs.setdefault("params", {})
         kwargs["params"]["client"] = f"beets-{__version__}"
         kwargs["auth"] = self.auth
         return super().request(*args, **kwargs)
 
     def get_collections(self) -> list[JSONDict]:
+        """Get all collections for the authenticated user.
+
+        Note that both URL parameters must be included to retrieve private
+        collections.
+        """
         return self.get_entity(
             "collection", editor=self.user, includes=["user-collections"]
         ).get("collections", [])
@@ -70,6 +89,13 @@ class MusicBrainzUserAPI(MusicBrainzAPI):
 
 @dataclass
 class MBCollection:
+    """Representation of a user's MusicBrainz collection.
+
+    Provides convenient, chunked operations for retrieving releases and updating
+    the collection via the MusicBrainz web API. Fetch and submission limits are
+    controlled by class-level constants to avoid oversized requests.
+    """
+
     SUBMISSION_CHUNK_SIZE: ClassVar[int] = 200
     FETCH_CHUNK_SIZE: ClassVar[int] = 100
 
@@ -78,22 +104,31 @@ class MBCollection:
 
     @property
     def id(self) -> str:
+        """Unique identifier assigned to the collection by MusicBrainz."""
         return self.data["id"]
 
     @property
     def release_count(self) -> int:
+        """Total number of releases recorded in the collection."""
         return self.data["release-count"]
 
     @property
     def releases_url(self) -> str:
+        """Complete API endpoint URL for listing releases in this collection."""
         return f"{self.mb_api.api_root}/collection/{self.id}/releases"
 
     @property
     def releases(self) -> list[JSONDict]:
+        """Retrieve all releases in the collection, fetched in successive pages.
+
+        The fetch is performed in chunks and returns a flattened sequence of
+        release records.
+        """
         offsets = list(range(0, self.release_count, self.FETCH_CHUNK_SIZE))
         return [r for offset in offsets for r in self.get_releases(offset)]
 
     def get_releases(self, offset: int) -> list[JSONDict]:
+        """Fetch a single page of releases beginning at a given position."""
         return self.mb_api.get_json(
             self.releases_url,
             params={"limit": self.FETCH_CHUNK_SIZE, "offset": offset},
@@ -101,15 +136,24 @@ class MBCollection:
 
     @classmethod
     def get_id_chunks(cls, id_list: list[str]) -> Iterator[list[str]]:
+        """Yield successive sublists of identifiers sized for safe submission.
+
+        Splits a long sequence of identifiers into batches that respect the
+        service's submission limits to avoid oversized requests.
+        """
         for i in range(0, len(id_list), cls.SUBMISSION_CHUNK_SIZE):
             yield id_list[i : i + cls.SUBMISSION_CHUNK_SIZE]
 
     def add_releases(self, releases: list[str]) -> None:
+        """Add releases to the collection in batches."""
         for chunk in self.get_id_chunks(releases):
+            # Need to escape semicolons: https://github.com/psf/requests/issues/6990
             self.mb_api.put(f"{self.releases_url}/{'%3B'.join(chunk)}")
 
     def remove_releases(self, releases: list[str]) -> None:
+        """Remove releases from the collection in chunks."""
         for chunk in self.get_id_chunks(releases):
+            # Need to escape semicolons: https://github.com/psf/requests/issues/6990
             self.mb_api.delete(f"{self.releases_url}/{'%3B'.join(chunk)}")
 
 
