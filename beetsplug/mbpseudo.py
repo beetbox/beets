@@ -264,11 +264,8 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
                 album_info.album_id,
             )
             album_info.use_pseudo_as_ref()
-            mapping = match.mapping
-            new_mappings, _, _ = assign_items(
-                list(mapping.keys()), album_info.tracks
-            )
-            mapping.update(new_mappings)
+            new_pairs, *_ = assign_items(match.items, album_info.tracks)
+            album_info.mapping = dict(new_pairs)
 
         if album_info.data_source == self.data_source:
             album_info.data_source = "MusicBrainz"

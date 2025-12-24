@@ -17,9 +17,13 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any, NamedTuple, TypeVar
+from dataclasses import dataclass
+from functools import cached_property
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from typing_extensions import Self
+
+from beets.util import cached_classproperty
 
 if TYPE_CHECKING:
     from beets.library import Item
@@ -53,6 +57,10 @@ class AttrDict(dict[str, V]):
 
 class Info(AttrDict[Any]):
     """Container for metadata about a musical entity."""
+
+    @cached_property
+    def name(self) -> str:
+        raise NotImplementedError
 
     def __init__(
         self,
@@ -94,6 +102,10 @@ class AlbumInfo(Info):
     provider. Used during matching to evaluate similarity against a group of
     user items, and later to drive tagging decisions once selected.
     """
+
+    @cached_property
+    def name(self) -> str:
+        return self.album or ""
 
     def __init__(
         self,
@@ -167,6 +179,10 @@ class TrackInfo(Info):
     stand alone for singleton matching.
     """
 
+    @cached_property
+    def name(self) -> str:
+        return self.title or ""
+
     def __init__(
         self,
         *,
@@ -214,16 +230,32 @@ class TrackInfo(Info):
 
 
 # Structures that compose all the information for a candidate match.
-
-
-class AlbumMatch(NamedTuple):
+@dataclass
+class Match:
     distance: Distance
+    info: Info
+
+    @cached_classproperty
+    def type(cls) -> str:
+        return cls.__name__.removesuffix("Match")  # type: ignore[attr-defined]
+
+
+@dataclass
+class AlbumMatch(Match):
     info: AlbumInfo
     mapping: dict[Item, TrackInfo]
     extra_items: list[Item]
     extra_tracks: list[TrackInfo]
 
+    @property
+    def item_info_pairs(self) -> list[tuple[Item, TrackInfo]]:
+        return list(self.mapping.items())
 
-class TrackMatch(NamedTuple):
-    distance: Distance
+    @property
+    def items(self) -> list[Item]:
+        return [i for i, _ in self.item_info_pairs]
+
+
+@dataclass
+class TrackMatch(Match):
     info: TrackInfo
