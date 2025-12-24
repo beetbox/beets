@@ -109,6 +109,15 @@ Other changes:
   unavailable, enabling ``importorskip`` usage in pytest setup.
 - Finally removed gmusic plugin and all related code/docs as the Google Play
   Music service was shut down in 2020.
+- Replaced dependency on ``python-musicbrainzngs`` with a lightweight custom
+  MusicBrainz client implementation and updated relevant plugins accordingly:
+
+  - :doc:`plugins/listenbrainz`
+  - :doc:`plugins/mbcollection`
+  - :doc:`plugins/mbpseudo`
+  - :doc:`plugins/missing`
+  - :doc:`plugins/musicbrainz`
+  - :doc:`plugins/parentwork`
 
 2.5.1 (October 14, 2025)
 ------------------------
