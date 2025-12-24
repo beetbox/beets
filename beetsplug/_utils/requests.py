@@ -67,7 +67,7 @@ class TimeoutAndRetrySession(requests.Session, metaclass=SingletonMeta):
 
     * default beets User-Agent header
     * default request timeout
-    * automatic retries on transient connection errors
+    * automatic retries on transient connection or server errors
     * raises exceptions for HTTP error status codes
     """
 
@@ -75,7 +75,18 @@ class TimeoutAndRetrySession(requests.Session, metaclass=SingletonMeta):
         super().__init__(*args, **kwargs)
         self.headers["User-Agent"] = f"beets/{__version__} https://beets.io/"
 
-        retry = Retry(connect=2, total=2, backoff_factor=1)
+        retry = Retry(
+            connect=2,
+            total=2,
+            backoff_factor=1,
+            # Retry on server errors
+            status_forcelist=[
+                HTTPStatus.INTERNAL_SERVER_ERROR,
+                HTTPStatus.BAD_GATEWAY,
+                HTTPStatus.SERVICE_UNAVAILABLE,
+                HTTPStatus.GATEWAY_TIMEOUT,
+            ],
+        )
         adapter = HTTPAdapter(max_retries=retry)
         self.mount("https://", adapter)
         self.mount("http://", adapter)
