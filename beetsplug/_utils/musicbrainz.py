@@ -13,6 +13,8 @@ from beets import config, logging
 from .requests import RequestHandler, TimeoutAndRetrySession
 
 if TYPE_CHECKING:
+    from requests import Response
+
     from .._typing import JSONDict
 
 log = logging.getLogger(__name__)
@@ -49,8 +51,18 @@ class MusicBrainzAPI(RequestHandler):
                 / mb_config["ratelimit_interval"].as_number()
             )
 
+    @cached_property
+    def api_root(self) -> str:
+        return f"{self.api_host}/ws/2"
+
     def create_session(self) -> LimiterTimeoutSession:
         return LimiterTimeoutSession(per_second=self.rate_limit)
+
+    def request(self, *args, **kwargs) -> Response:
+        """Ensure all requests specify JSON response format by default."""
+        kwargs.setdefault("params", {})
+        kwargs["params"]["fmt"] = "json"
+        return super().request(*args, **kwargs)
 
     def get_entity(
         self, entity: str, includes: list[str] | None = None, **kwargs
@@ -59,10 +71,7 @@ class MusicBrainzAPI(RequestHandler):
             kwargs["inc"] = "+".join(includes)
 
         return self._group_relations(
-            self.get_json(
-                f"{self.api_host}/ws/2/{entity}",
-                params={**kwargs, "fmt": "json"},
-            )
+            self.get_json(f"{self.api_root}/{entity}", params=kwargs)
         )
 
     def search_entity(

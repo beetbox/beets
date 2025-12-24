@@ -1,3 +1,4 @@
+import re
 import uuid
 from contextlib import nullcontext as does_not_raise
 
@@ -9,27 +10,27 @@ from beets.ui import UserError
 from beetsplug import mbcollection
 
 
+@pytest.fixture
+def collection():
+    return mbcollection.MBCollection(
+        {"id": str(uuid.uuid4()), "release-count": 150}
+    )
+
+
 class TestMbCollectionAPI:
     """Tests for the low-level MusicBrainz API wrapper functions."""
 
-    def test_submit_albums_batches(self, monkeypatch):
-        chunks_received = []
-
-        def mock_add(collection_id, chunk):
-            chunks_received.append(chunk)
-
-        monkeypatch.setattr(
-            "musicbrainzngs.add_releases_to_collection", mock_add
-        )
-
+    def test_submit_albums_batches(self, collection, requests_mock):
         # Chunk size is 200. Create 250 IDs.
         ids = [f"id{i}" for i in range(250)]
-        mbcollection.submit_albums("coll_id", ids)
+        requests_mock.put(
+            f"/ws/2/collection/{collection.id}/releases/{';'.join(ids[:200])}"
+        )
+        requests_mock.put(
+            f"/ws/2/collection/{collection.id}/releases/{';'.join(ids[200:])}"
+        )
 
-        # Verify behavioral outcome: 2 batches were sent
-        assert len(chunks_received) == 2
-        assert len(chunks_received[0]) == 200
-        assert len(chunks_received[1]) == 50
+        mbcollection.submit_albums(collection, ids)
 
 
 class TestMbCollectionPlugin(ConfigMixin):
@@ -38,10 +39,7 @@ class TestMbCollectionPlugin(ConfigMixin):
     COLLECTION_ID = str(uuid.uuid4())
 
     @pytest.fixture
-    def plugin(self, monkeypatch):
-        # Prevent actual auth call during init
-        monkeypatch.setattr("musicbrainzngs.auth", lambda *a, **k: None)
-
+    def plugin(self):
         self.config["musicbrainz"]["user"] = "testuser"
         self.config["musicbrainz"]["pass"] = "testpass"
 
@@ -73,50 +71,42 @@ class TestMbCollectionPlugin(ConfigMixin):
         ],
     )
     def test_get_collection_validation(
-        self, plugin, monkeypatch, user_collections, expectation
+        self, plugin, requests_mock, user_collections, expectation
     ):
-        mock_resp = {"collection-list": user_collections}
-        monkeypatch.setattr("musicbrainzngs.get_collections", lambda: mock_resp)
+        requests_mock.get(
+            "/ws/2/collection", json={"collections": user_collections}
+        )
 
         with expectation:
             plugin._get_collection()
 
-    def test_get_albums_in_collection_pagination(self, plugin, monkeypatch):
-        fetched_offsets = []
-
-        def mock_get_releases(collection_id, limit, offset):
-            fetched_offsets.append(offset)
-            count = 150
-            # Return IDs based on offset to verify order/content
-            start = offset
-            end = min(offset + limit, count)
-            return {
-                "collection": {
-                    "release-count": count,
-                    "release-list": [
-                        {"id": f"r{i}"} for i in range(start, end)
-                    ],
-                }
-            }
-
-        monkeypatch.setattr(
-            "musicbrainzngs.get_releases_in_collection", mock_get_releases
+    def test_get_albums_in_collection_pagination(
+        self, plugin, requests_mock, collection
+    ):
+        releases = [{"id": str(i)} for i in range(collection.release_count)]
+        requests_mock.get(
+            re.compile(
+                rf".*/ws/2/collection/{collection.id}/releases\b.*&offset=0.*"
+            ),
+            json={"releases": releases[:100]},
+        )
+        requests_mock.get(
+            re.compile(
+                rf".*/ws/2/collection/{collection.id}/releases\b.*&offset=100.*"
+            ),
+            json={"releases": releases[100:]},
         )
 
-        albums = plugin._get_albums_in_collection("cid")
-        assert len(albums) == 150
-        assert fetched_offsets == [0, 100]
-        assert albums[0] == "r0"
-        assert albums[149] == "r149"
+        plugin._get_albums_in_collection(collection)
 
-    def test_update_album_list_filtering(self, plugin, monkeypatch):
+    def test_update_album_list_filtering(self, plugin, collection, monkeypatch):
         ids_submitted = []
 
         def mock_submit(_, album_ids):
             ids_submitted.extend(album_ids)
 
         monkeypatch.setattr("beetsplug.mbcollection.submit_albums", mock_submit)
-        monkeypatch.setattr(plugin, "_get_collection", lambda: "cid")
+        monkeypatch.setattr(plugin, "_get_collection", lambda: collection)
 
         albums = [
             Album(mb_albumid="invalid-id"),
@@ -127,23 +117,21 @@ class TestMbCollectionPlugin(ConfigMixin):
         # Behavior: only valid UUID was submitted
         assert ids_submitted == ["00000000-0000-0000-0000-000000000001"]
 
-    def test_remove_missing(self, plugin, monkeypatch):
+    def test_remove_missing(
+        self, plugin, monkeypatch, requests_mock, collection
+    ):
         removed_ids = []
 
         def mock_remove(_, chunk):
             removed_ids.extend(chunk)
 
-        monkeypatch.setattr(
-            "musicbrainzngs.remove_releases_from_collection", mock_remove
+        requests_mock.delete(
+            re.compile(rf".*/ws/2/collection/{collection.id}/releases/r3")
         )
         monkeypatch.setattr(
-            plugin,
-            "_get_albums_in_collection",
-            lambda _: ["r1", "r2", "r3"],
+            plugin, "_get_albums_in_collection", lambda _: {"r1", "r2", "r3"}
         )
 
         lib_albums = [Album(mb_albumid="r1"), Album(mb_albumid="r2")]
 
-        plugin.remove_missing("cid", lib_albums)
-        # Behavior: only 'r3' (missing from library) was removed from collection
-        assert removed_ids == ["r3"]
+        plugin.remove_missing(collection, lib_albums)

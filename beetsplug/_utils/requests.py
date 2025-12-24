@@ -155,6 +155,7 @@ class RequestHandler:
         except requests.exceptions.HTTPError as e:
             if beets_error := self.status_to_error(e.response.status_code):
                 raise beets_error(response=e.response) from e
+
             raise
 
     def request(self, *args, **kwargs) -> requests.Response:
@@ -169,6 +170,14 @@ class RequestHandler:
     def get(self, *args, **kwargs) -> requests.Response:
         """Perform HTTP GET request with automatic error handling."""
         return self.request("get", *args, **kwargs)
+
+    def put(self, *args, **kwargs) -> requests.Response:
+        """Perform HTTP PUT request with automatic error handling."""
+        return self.request("put", *args, **kwargs)
+
+    def delete(self, *args, **kwargs) -> requests.Response:
+        """Perform HTTP DELETE request with automatic error handling."""
+        return self.request("delete", *args, **kwargs)
 
     def get_json(self, *args, **kwargs):
         """Fetch and parse JSON data from an HTTP endpoint."""
