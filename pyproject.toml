@@ -69,7 +69,6 @@ scipy = [ # for librosa
     { python = "<3.13", version = ">=1.13.1", optional = true },
     { python = ">=3.13", version = ">=1.16.1", optional = true },
 ]
-musicbrainzngs = { version = ">=0.4", optional = true }
 numba = [ # for librosa
     { python = "<3.13", version = ">=0.60", optional = true },
     { python = ">=3.13", version = ">=0.62.1", optional = true },
@@ -164,7 +163,6 @@ kodiupdate = ["requests"]
 lastgenre = ["pylast"]
 lastimport = ["pylast"]
 lyrics = ["beautifulsoup4", "langdetect", "requests"]
-mbcollection = ["musicbrainzngs"]
 metasync = ["dbus-python"]
 mpdstats = ["python-mpd2"]
 plexupdate = ["requests"]
