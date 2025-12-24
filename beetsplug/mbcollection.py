@@ -43,6 +43,19 @@ UUID_PAT = re.compile(r"^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$")
 
 @dataclass
 class MusicBrainzUserAPI(MusicBrainzAPI):
+    """MusicBrainz API client with user authentication.
+
+    In order to retrieve private user collections and modify them, we need to
+    authenticate the requests with the user's MusicBrainz credentials.
+
+    See documentation for authentication details:
+        https://musicbrainz.org/doc/MusicBrainz_API#Authentication
+
+    Note that the documentation misleadingly states HTTP 'basic' authentication,
+    and I had to reverse-engineer musicbrainzngs to discover that it actually
+    uses HTTP 'digest' authentication.
+    """
+
     auth: HTTPDigestAuth = field(init=False)
 
     @cached_property
@@ -57,12 +70,18 @@ class MusicBrainzUserAPI(MusicBrainzAPI):
         )
 
     def request(self, *args, **kwargs) -> Response:
+        """Authenticate and include required client param in all requests."""
         kwargs.setdefault("params", {})
         kwargs["params"]["client"] = f"beets-{__version__}"
         kwargs["auth"] = self.auth
         return super().request(*args, **kwargs)
 
     def get_collections(self) -> list[JSONDict]:
+        """Get all collections for the authenticated user.
+
+        Note that both URL parameters must be included to retrieve private
+        collections.
+        """
         return self.get_entity(
             "collection", editor=self.user, includes=["user-collections"]
         ).get("collections", [])
