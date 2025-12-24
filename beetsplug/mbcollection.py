@@ -13,48 +13,112 @@
 # included in all copies or substantial portions of the Software.
 
 
+from __future__ import annotations
+
 import re
+from dataclasses import dataclass, field
+from functools import cached_property
+from typing import TYPE_CHECKING
 
-import musicbrainzngs
+from requests.auth import HTTPDigestAuth
 
-from beets import config, ui
+from beets import __version__, config, ui
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
+
+from ._utils.musicbrainz import MusicBrainzAPI
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    from requests import Response
+
+    from ._typing import JSONDict
 
 SUBMISSION_CHUNK_SIZE = 200
 FETCH_CHUNK_SIZE = 100
 UUID_REGEX = r"^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$"
 
 
-def mb_call(func, *args, **kwargs):
-    """Call a MusicBrainz API function and catch exceptions."""
-    try:
-        return func(*args, **kwargs)
-    except musicbrainzngs.AuthenticationError:
-        raise ui.UserError("authentication with MusicBrainz failed")
-    except (musicbrainzngs.ResponseError, musicbrainzngs.NetworkError) as exc:
-        raise ui.UserError(f"MusicBrainz API error: {exc}")
-    except musicbrainzngs.UsageError:
-        raise ui.UserError("MusicBrainz credentials missing")
+@dataclass
+class MusicBrainzUserAPI(MusicBrainzAPI):
+    auth: HTTPDigestAuth = field(init=False)
+
+    @cached_property
+    def user(self) -> str:
+        return config["musicbrainz"]["user"].as_str()
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        config["musicbrainz"]["pass"].redact = True
+        self.auth = HTTPDigestAuth(
+            self.user, config["musicbrainz"]["pass"].as_str()
+        )
+
+    def request(self, *args, **kwargs) -> Response:
+        kwargs.setdefault("params", {})
+        kwargs["params"]["client"] = f"beets-{__version__}"
+        kwargs["auth"] = self.auth
+        return super().request(*args, **kwargs)
+
+    def get_collections(self) -> list[JSONDict]:
+        return self.get_entity(
+            "collection", editor=self.user, includes=["user-collections"]
+        ).get("collections", [])
 
 
-def submit_albums(collection_id, release_ids):
+@dataclass
+class MBCollection:
+    data: JSONDict
+    mb_api: MusicBrainzUserAPI
+
+    @property
+    def id(self) -> str:
+        return self.data["id"]
+
+    @property
+    def release_count(self) -> int:
+        return self.data["release-count"]
+
+    @property
+    def releases_url(self) -> str:
+        return f"{self.mb_api.api_root}/collection/{self.id}/releases"
+
+    @property
+    def releases(self) -> list[JSONDict]:
+        offsets = list(range(0, self.release_count, FETCH_CHUNK_SIZE))
+        return [r for offset in offsets for r in self.get_releases(offset)]
+
+    def get_releases(self, offset: int) -> list[JSONDict]:
+        return self.mb_api.get_json(
+            self.releases_url,
+            params={"limit": FETCH_CHUNK_SIZE, "offset": offset},
+        )["releases"]
+
+    @staticmethod
+    def get_id_chunks(id_list: list[str]) -> Iterator[list[str]]:
+        for i in range(0, len(id_list), SUBMISSION_CHUNK_SIZE):
+            yield id_list[i : i + SUBMISSION_CHUNK_SIZE]
+
+    def add_releases(self, releases: list[str]) -> None:
+        for chunk in self.get_id_chunks(releases):
+            self.mb_api.put(f"{self.releases_url}/{'%3B'.join(chunk)}")
+
+    def remove_releases(self, releases: list[str]) -> None:
+        for chunk in self.get_id_chunks(releases):
+            self.mb_api.delete(f"{self.releases_url}/{'%3B'.join(chunk)}")
+
+
+def submit_albums(collection: MBCollection, release_ids):
     """Add all of the release IDs to the indicated collection. Multiple
     requests are made if there are many release IDs to submit.
     """
-    for i in range(0, len(release_ids), SUBMISSION_CHUNK_SIZE):
-        chunk = release_ids[i : i + SUBMISSION_CHUNK_SIZE]
-        mb_call(musicbrainzngs.add_releases_to_collection, collection_id, chunk)
+    collection.add_releases(release_ids)
 
 
 class MusicBrainzCollectionPlugin(BeetsPlugin):
     def __init__(self):
         super().__init__()
-        config["musicbrainz"]["pass"].redact = True
-        musicbrainzngs.auth(
-            config["musicbrainz"]["user"].as_str(),
-            config["musicbrainz"]["pass"].as_str(),
-        )
         self.config.add(
             {
                 "auto": False,
@@ -65,47 +129,34 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
         if self.config["auto"]:
             self.import_stages = [self.imported]
 
-    def _get_collection(self):
-        collections = mb_call(musicbrainzngs.get_collections)
-        if not collections["collection-list"]:
+    @cached_property
+    def mb_api(self) -> MusicBrainzUserAPI:
+        return MusicBrainzUserAPI()
+
+    def _get_collection(self) -> MBCollection:
+        if not (collections := self.mb_api.get_collections()):
             raise ui.UserError("no collections exist for user")
 
         # Get all release collection IDs, avoiding event collections
-        collection_ids = [
-            x["id"]
-            for x in collections["collection-list"]
-            if x["entity-type"] == "release"
-        ]
-        if not collection_ids:
+        if not (
+            collection_by_id := {
+                c["id"]: c for c in collections if c["entity-type"] == "release"
+            }
+        ):
             raise ui.UserError("No release collection found.")
 
         # Check that the collection exists so we can present a nice error
-        collection = self.config["collection"].as_str()
-        if collection:
-            if collection not in collection_ids:
-                raise ui.UserError(f"invalid collection ID: {collection}")
-            return collection
+        if collection_id := self.config["collection"].as_str():
+            if not (collection := collection_by_id.get(collection_id)):
+                raise ui.UserError(f"invalid collection ID: {collection_id}")
+        else:
+            # No specified collection. Just return the first collection ID
+            collection = next(iter(collection_by_id.values()))
 
-        # No specified collection. Just return the first collection ID
-        return collection_ids[0]
+        return MBCollection(collection, self.mb_api)
 
-    def _get_albums_in_collection(self, id):
-        def _fetch(offset):
-            res = mb_call(
-                musicbrainzngs.get_releases_in_collection,
-                id,
-                limit=FETCH_CHUNK_SIZE,
-                offset=offset,
-            )["collection"]
-            return [x["id"] for x in res["release-list"]], res["release-count"]
-
-        offset = 0
-        albums_in_collection, release_count = _fetch(offset)
-        for i in range(FETCH_CHUNK_SIZE, release_count, FETCH_CHUNK_SIZE):
-            offset += FETCH_CHUNK_SIZE
-            albums_in_collection += _fetch(offset)[0]
-
-        return albums_in_collection
+    def _get_albums_in_collection(self, collection: MBCollection) -> set[str]:
+        return {r["id"] for r in collection.releases}
 
     def commands(self):
         mbupdate = Subcommand("mbupdate", help="Update MusicBrainz collection")
@@ -120,17 +171,10 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
         mbupdate.func = self.update_collection
         return [mbupdate]
 
-    def remove_missing(self, collection_id, lib_albums):
+    def remove_missing(self, collection: MBCollection, lib_albums):
         lib_ids = {x.mb_albumid for x in lib_albums}
-        albums_in_collection = self._get_albums_in_collection(collection_id)
-        remove_me = list(set(albums_in_collection) - lib_ids)
-        for i in range(0, len(remove_me), FETCH_CHUNK_SIZE):
-            chunk = remove_me[i : i + FETCH_CHUNK_SIZE]
-            mb_call(
-                musicbrainzngs.remove_releases_from_collection,
-                collection_id,
-                chunk,
-            )
+        albums_in_collection = self._get_albums_in_collection(collection)
+        collection.remove_releases(list(albums_in_collection - lib_ids))
 
     def update_collection(self, lib, opts, args):
         self.config.set_args(opts)
@@ -144,7 +188,7 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
 
     def update_album_list(self, lib, album_list, remove_missing=False):
         """Update the MusicBrainz collection from a list of Beets albums"""
-        collection_id = self._get_collection()
+        collection = self._get_collection()
 
         # Get a list of all the album IDs.
         album_ids = []
@@ -157,8 +201,8 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
                     self._log.info("skipping invalid MBID: {}", aid)
 
         # Submit to MusicBrainz.
-        self._log.info("Updating MusicBrainz collection {}...", collection_id)
-        submit_albums(collection_id, album_ids)
+        self._log.info("Updating MusicBrainz collection {}...", collection.id)
+        submit_albums(collection, album_ids)
         if remove_missing:
-            self.remove_missing(collection_id, lib.albums())
+            self.remove_missing(collection, lib.albums())
         self._log.info("...MusicBrainz collection updated.")

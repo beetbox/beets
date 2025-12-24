@@ -1819,17 +1819,6 @@ test = ["coverage[toml] (>=5.2)", "coveralls (>=2.1.1)", "hypothesis", "pyannota
 type = ["mypy", "mypy-extensions"]
 
 [[package]]
-name = "musicbrainzngs"
-version = "0.7.1"
-description = "Python bindings for the MusicBrainz NGS and the Cover Art Archive webservices"
-optional = true
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-files = [
-    {file = "musicbrainzngs-0.7.1-py2.py3-none-any.whl", hash = "sha256:e841a8f975104c0a72290b09f59326050194081a5ae62ee512f41915090e1a10"},
-    {file = "musicbrainzngs-0.7.1.tar.gz", hash = "sha256:ab1c0100fd0b305852e65f2ed4113c6de12e68afd55186987b8ed97e0f98e627"},
-]
-
-[[package]]
 name = "mutagen"
 version = "1.47.0"
 description = "read and write audio tags for many formats"
@@ -4181,7 +4170,6 @@ kodiupdate = ["requests"]
 lastgenre = ["pylast"]
 lastimport = ["pylast"]
 lyrics = ["beautifulsoup4", "langdetect", "requests"]
-mbcollection = ["musicbrainzngs"]
 metasync = ["dbus-python"]
 mpdstats = ["python-mpd2"]
 plexupdate = ["requests"]
@@ -4196,4 +4184,4 @@ web = ["flask", "flask-cors"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<4"
-content-hash = "a18c3047f4f395841e785ed146af3505974839ab23eccdde34a7738e216f0277"
+content-hash = "cd53b70a9cd746a88e80e04e67e0b010a0e5b87f745be94e901a9fd08619771a"
