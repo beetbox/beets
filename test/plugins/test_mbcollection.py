@@ -5,47 +5,31 @@ from contextlib import nullcontext as does_not_raise
 import pytest
 
 from beets.library import Album
-from beets.test.helper import ConfigMixin
+from beets.test.helper import PluginMixin, TestHelper
 from beets.ui import UserError
 from beetsplug import mbcollection
 
 
-@pytest.fixture
-def collection():
-    return mbcollection.MBCollection(
-        {"id": str(uuid.uuid4()), "release-count": 150}
-    )
-
-
-class TestMbCollectionAPI:
-    """Tests for the low-level MusicBrainz API wrapper functions."""
-
-    def test_submit_albums_batches(self, collection, requests_mock):
-        # Chunk size is 200. Create 250 IDs.
-        ids = [f"id{i}" for i in range(250)]
-        requests_mock.put(
-            f"/ws/2/collection/{collection.id}/releases/{';'.join(ids[:200])}"
-        )
-        requests_mock.put(
-            f"/ws/2/collection/{collection.id}/releases/{';'.join(ids[200:])}"
-        )
-
-        mbcollection.submit_albums(collection, ids)
-
-
-class TestMbCollectionPlugin(ConfigMixin):
+class TestMbCollectionPlugin(PluginMixin, TestHelper):
     """Tests for the MusicBrainzCollectionPlugin class methods."""
+
+    plugin = "mbcollection"
 
     COLLECTION_ID = str(uuid.uuid4())
 
-    @pytest.fixture
-    def plugin(self):
+    @pytest.fixture(autouse=True)
+    def setup_config(self):
         self.config["musicbrainz"]["user"] = "testuser"
         self.config["musicbrainz"]["pass"] = "testpass"
+        self.config["mbcollection"]["collection"] = self.COLLECTION_ID
 
-        plugin = mbcollection.MusicBrainzCollectionPlugin()
-        plugin.config["collection"] = self.COLLECTION_ID
-        return plugin
+    @pytest.fixture(autouse=True)
+    def helper(self):
+        self.setup_beets()
+
+        yield self
+
+        self.teardown_beets()
 
     @pytest.mark.parametrize(
         "user_collections,expectation",
@@ -69,69 +53,90 @@ class TestMbCollectionPlugin(ConfigMixin):
                 does_not_raise(),
             ),
         ],
+        ids=["no collections", "no release collections", "invalid ID", "valid"],
     )
     def test_get_collection_validation(
-        self, plugin, requests_mock, user_collections, expectation
+        self, requests_mock, user_collections, expectation
     ):
         requests_mock.get(
             "/ws/2/collection", json={"collections": user_collections}
         )
 
         with expectation:
-            plugin._get_collection()
+            mbcollection.MusicBrainzCollectionPlugin().collection
 
-    def test_get_albums_in_collection_pagination(
-        self, plugin, requests_mock, collection
-    ):
-        releases = [{"id": str(i)} for i in range(collection.release_count)]
+    def test_mbupdate(self, helper, requests_mock, monkeypatch):
+        """Verify mbupdate sync of a MusicBrainz collection with the library.
+
+        This test ensures that the command:
+        - fetches collection releases using paginated requests,
+        - submits releases that exist locally but are missing from the remote
+          collection
+        - and removes releases from the remote collection that are not in the
+          local library. Small chunk sizes are forced to exercise pagination and
+          batching logic.
+        """
+        for mb_albumid in [
+            # already present in remote collection
+            "in_collection1",
+            "in_collection2",
+            # two new albums not in remote collection
+            "00000000-0000-0000-0000-000000000001",
+            "00000000-0000-0000-0000-000000000002",
+        ]:
+            helper.lib.add(Album(mb_albumid=mb_albumid))
+
+        # The relevant collection
         requests_mock.get(
-            re.compile(
-                rf".*/ws/2/collection/{collection.id}/releases\b.*&offset=0.*"
-            ),
-            json={"releases": releases[:100]},
+            "/ws/2/collection",
+            json={
+                "collections": [
+                    {
+                        "id": self.COLLECTION_ID,
+                        "entity-type": "release",
+                        "release-count": 3,
+                    }
+                ]
+            },
         )
-        requests_mock.get(
-            re.compile(
-                rf".*/ws/2/collection/{collection.id}/releases\b.*&offset=100.*"
-            ),
-            json={"releases": releases[100:]},
-        )
 
-        plugin._get_albums_in_collection(collection)
-
-    def test_update_album_list_filtering(self, plugin, collection, monkeypatch):
-        ids_submitted = []
-
-        def mock_submit(_, album_ids):
-            ids_submitted.extend(album_ids)
-
-        monkeypatch.setattr("beetsplug.mbcollection.submit_albums", mock_submit)
-        monkeypatch.setattr(plugin, "_get_collection", lambda: collection)
-
-        albums = [
-            Album(mb_albumid="invalid-id"),
-            Album(mb_albumid="00000000-0000-0000-0000-000000000001"),
-        ]
-
-        plugin.update_album_list(None, albums)
-        # Behavior: only valid UUID was submitted
-        assert ids_submitted == ["00000000-0000-0000-0000-000000000001"]
-
-    def test_remove_missing(
-        self, plugin, monkeypatch, requests_mock, collection
-    ):
-        removed_ids = []
-
-        def mock_remove(_, chunk):
-            removed_ids.extend(chunk)
-
-        requests_mock.delete(
-            re.compile(rf".*/ws/2/collection/{collection.id}/releases/r3")
-        )
+        collection_releases = f"/ws/2/collection/{self.COLLECTION_ID}/releases"
+        # Force small fetch chunk to require multiple paged requests.
         monkeypatch.setattr(
-            plugin, "_get_albums_in_collection", lambda _: {"r1", "r2", "r3"}
+            "beetsplug.mbcollection.MBCollection.FETCH_CHUNK_SIZE", 2
+        )
+        # 3 releases are fetched in two pages.
+        requests_mock.get(
+            re.compile(rf".*{collection_releases}\b.*&offset=0.*"),
+            json={
+                "releases": [{"id": "in_collection1"}, {"id": "not_in_library"}]
+            },
+        )
+        requests_mock.get(
+            re.compile(rf".*{collection_releases}\b.*&offset=2.*"),
+            json={"releases": [{"id": "in_collection2"}]},
         )
 
-        lib_albums = [Album(mb_albumid="r1"), Album(mb_albumid="r2")]
+        # Force small submission chunk
+        monkeypatch.setattr(
+            "beetsplug.mbcollection.MBCollection.SUBMISSION_CHUNK_SIZE", 1
+        )
+        # so that releases are added using two requests
+        requests_mock.put(
+            re.compile(
+                rf".*{collection_releases}/00000000-0000-0000-0000-000000000001"
+            )
+        )
+        requests_mock.put(
+            re.compile(
+                rf".*{collection_releases}/00000000-0000-0000-0000-000000000002"
+            )
+        )
+        # and finally, one release is removed
+        requests_mock.delete(
+            re.compile(rf".*{collection_releases}/not_in_library")
+        )
 
-        plugin.remove_missing(collection, lib_albums)
+        helper.run_command("mbupdate", "--remove")
+
+        assert requests_mock.call_count == 6
