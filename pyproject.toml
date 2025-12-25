@@ -93,6 +93,7 @@ pydata-sphinx-theme = { version = "*", optional = true }
 sphinx = { version = "*", optional = true }
 sphinx-design = { version = ">=0.6.1", optional = true }
 sphinx-copybutton = { version = ">=0.5.2", optional = true }
+sphinx-toolbox = { version = ">=4.1.0", optional = true }
 titlecase = { version = "^2.4.1", optional = true }
 
 [tool.poetry.group.test.dependencies]
@@ -151,6 +152,7 @@ docs = [
     "sphinx-lint",
     "sphinx-design",
     "sphinx-copybutton",
+    "sphinx-toolbox",
 ]
 discogs = ["python3-discogs-client"]
 embedart = ["Pillow"] # ImageMagick
