@@ -20,23 +20,23 @@ New features:
 - :doc:`plugins/ftintitle`: Added argument to skip the processing of artist and
   album artist are the same in ftintitle.
 - :doc:`plugins/play`: Added `$playlist` marker to precisely edit the playlist
-      filepath into the command calling the player program.
-- :doc:`plugins/lastgenre`: For tuning plugin settings ``-vvv`` can be passed
-      to receive extra verbose logging around last.fm results and how they are
-      resolved. The ``extended_debug`` config setting and ``--debug`` option
-      have been removed.
+  filepath into the command calling the player program.
+- :doc:`plugins/lastgenre`: For tuning plugin settings ``-vvv`` can be passed to
+  receive extra verbose logging around last.fm results and how they are
+  resolved. The ``extended_debug`` config setting and ``--debug`` option have
+  been removed.
 - :doc:`plugins/importsource`: Added new plugin that tracks original import
   paths and optionally suggests removing source files when items are removed
   from the library.
 - :doc:`plugins/mbpseudo`: Add a new `mbpseudo` plugin to proactively receive
-      MusicBrainz pseudo-releases as recommendations during import.
+  MusicBrainz pseudo-releases as recommendations during import.
 - Added support for Python 3.13.
 - :doc:`/plugins/convert`: ``force`` can be passed to override checks like
   no_convert, never_convert_lossy_files, same format, and max_bitrate
-- :doc:`plugins/titlecase`: Add the `titlecase` plugin to allow users to
-      resolve differences in metadata source styles.
+- :doc:`plugins/titlecase`: Add the `titlecase` plugin to allow users to resolve
+  differences in metadata source styles.
 - :doc:`plugins/spotify`: Added support for multi-artist albums and tracks,
-      saving all contributing artists to the respective fields.
+  saving all contributing artists to the respective fields.
 - :doc:`plugins/ftintitle`: Featured artists are now inserted before brackets
   containing remix/edit-related keywords (e.g., "Remix", "Live", "Edit") instead
   of being appended at the end. This improves formatting for titles like "Song 1
