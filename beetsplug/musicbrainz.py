@@ -751,7 +751,7 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
         using the provided criteria. Handles API errors by converting them into
         MusicBrainzAPIError exceptions with contextual information.
         """
-        return self.mb_api.search_entity(
+        return self.mb_api.search(
             query_type, filters, limit=self.config["search_limit"].get()
         )
 
