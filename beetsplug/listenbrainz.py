@@ -132,7 +132,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
 
     def get_mb_recording_id(self, track) -> int | None:
         """Returns the MusicBrainz recording ID for a track."""
-        for recording in self.mb_api.search_entity(
+        for recording in self.mb_api.search(
             "recording",
             {
                 "": track["track_metadata"].get("track_name"),
