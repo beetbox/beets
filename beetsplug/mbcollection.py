@@ -58,15 +58,12 @@ class MusicBrainzUserAPI(MusicBrainzAPI):
 
     auth: HTTPDigestAuth = field(init=False)
 
-    @cached_property
-    def user(self) -> str:
-        return config["musicbrainz"]["user"].as_str()
-
     def __post_init__(self) -> None:
         super().__post_init__()
         config["musicbrainz"]["pass"].redact = True
         self.auth = HTTPDigestAuth(
-            self.user, config["musicbrainz"]["pass"].as_str()
+            config["musicbrainz"]["user"].as_str(),
+            config["musicbrainz"]["pass"].as_str(),
         )
 
     def request(self, *args, **kwargs) -> Response:
@@ -76,15 +73,9 @@ class MusicBrainzUserAPI(MusicBrainzAPI):
         kwargs["auth"] = self.auth
         return super().request(*args, **kwargs)
 
-    def get_collections(self) -> list[JSONDict]:
-        """Get all collections for the authenticated user.
-
-        Note that both URL parameters must be included to retrieve private
-        collections.
-        """
-        return self.get_entity(
-            "collection", editor=self.user, includes=["user-collections"]
-        ).get("collections", [])
+    def browse_collections(self) -> list[JSONDict]:
+        """Get all collections for the authenticated user."""
+        return self._browse("collection")
 
 
 @dataclass
@@ -183,7 +174,7 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
 
     @cached_property
     def collection(self) -> MBCollection:
-        if not (collections := self.mb_api.get_collections()):
+        if not (collections := self.mb_api.browse_collections()):
             raise ui.UserError("no collections exist for user")
 
         # Get all release collection IDs, avoiding event collections
