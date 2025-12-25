@@ -32,9 +32,22 @@ extensions = [
     "sphinx_design",
     "sphinx_copybutton",
     "conf",
+    "sphinx_toolbox.more_autodoc.autotypeddict",
 ]
 
 autosummary_generate = True
+autosummary_context = {
+    "related_typeddicts": {
+        "MusicBrainzAPI": [
+            "beetsplug._utils.musicbrainz.LookupKwargs",
+            "beetsplug._utils.musicbrainz.SearchKwargs",
+            "beetsplug._utils.musicbrainz.BrowseKwargs",
+            "beetsplug._utils.musicbrainz.BrowseRecordingsKwargs",
+            "beetsplug._utils.musicbrainz.BrowseReleaseGroupsKwargs",
+        ],
+    }
+}
+autodoc_member_order = "bysource"
 exclude_patterns = ["_build"]
 templates_path = ["_templates"]
 source_suffix = {".rst": "restructuredtext", ".md": "markdown"}
