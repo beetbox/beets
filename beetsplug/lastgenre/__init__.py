@@ -28,7 +28,7 @@ import os
 import traceback
 from functools import singledispatchmethod
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable
 
 import pylast
 import yaml
@@ -259,9 +259,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         valid_tags = [t for t in tags if self._is_valid(t)]
         return valid_tags[:count]
 
-    def fetch_genre(self, lastfm_obj):
-        """Return the genre for a pylast entity or None if no suitable genre
-        can be found. Ex. 'Electronic, House, Dance'
+    def fetch_genre(
+        self, lastfm_obj: pylast.Album | pylast.Artist | pylast.Track
+    ) -> list[str]:
+        """Return genres for a pylast entity. Returns an empty list if
+        no suitable genres are found.
         """
         min_weight = self.config["min_weight"].get(int)
         return self._tags_for(lastfm_obj, min_weight)
@@ -278,8 +280,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
     # Cached last.fm entity lookups.
 
-    def _last_lookup(self, entity, method, *args):
-        """Get a genre based on the named entity using the callable `method`
+    def _last_lookup(
+        self, entity: str, method: Callable[..., Any], *args: str
+    ) -> list[str]:
+        """Get genres based on the named entity using the callable `method`
         whose arguments are given in the sequence `args`. The genre lookup
         is cached based on the entity name and the arguments.
 
@@ -293,24 +297,24 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         key = f"{entity}.{'-'.join(str(a) for a in args)}"
         if key not in self._genre_cache:
-            args = [a.replace("\u2010", "-") for a in args]
-            self._genre_cache[key] = self.fetch_genre(method(*args))
+            args_replaced = [a.replace("\u2010", "-") for a in args]
+            self._genre_cache[key] = self.fetch_genre(method(*args_replaced))
 
         genre = self._genre_cache[key]
         self._tunelog("last.fm (unfiltered) {} tags: {}", entity, genre)
         return genre
 
-    def fetch_album_genre(self, albumartist, albumtitle):
+    def fetch_album_genre(self, albumartist: str, albumtitle: str) -> list[str]:
         """Return genres from Last.fm for the album by albumartist."""
         return self._last_lookup(
             "album", LASTFM.get_album, albumartist, albumtitle
         )
 
-    def fetch_artist_genre(self, artist):
+    def fetch_artist_genre(self, artist: str) -> list[str]:
         """Return genres from Last.fm for the artist."""
         return self._last_lookup("artist", LASTFM.get_artist, artist)
 
-    def fetch_track_genre(self, trackartist, tracktitle):
+    def fetch_track_genre(self, trackartist: str, tracktitle: str) -> list[str]:
         """Return genres from Last.fm for the track by artist."""
         return self._last_lookup(
             "track", LASTFM.get_track, trackartist, tracktitle
