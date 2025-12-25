@@ -70,6 +70,11 @@ Bug fixes:
 - When using :doc:`plugins/fromfilename` together with :doc:`plugins/edit`,
   temporary tags extracted from filenames are no longer lost when discarding or
   cancelling an edit session during import. :bug:`6104`
+- :doc:`plugins/lastgenre`: Fix the issue where last.fm does not give a result
+  in the artist genre stage because multi-artist "concatenation" words (like
+  "feat." "+", or "&" prevent exact matches. Using the albumartists list field
+  and fetching a genre for each artist separately massively improves the chance
+  to get a valid result in that stage.
 
 For plugin developers:
 
