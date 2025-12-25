@@ -91,6 +91,21 @@ For plugin developers:
 - A new plugin event, ``album_matched``, is sent when an album that is being
   imported has been matched to its metadata and the corresponding distance has
   been calculated.
+- Added a reusable requests handler which can be used by plugins to make HTTP
+  requests with built-in retry and backoff logic. It uses beets user-agent and
+  configures timeouts. See :class:`~beetsplug._utils.requests.RequestHandler`
+  for documentation.
+- Replaced dependency on ``python-musicbrainzngs`` with a lightweight custom
+  MusicBrainz client implementation and updated relevant plugins accordingly:
+
+  - :doc:`plugins/listenbrainz`
+  - :doc:`plugins/mbcollection`
+  - :doc:`plugins/mbpseudo`
+  - :doc:`plugins/missing`
+  - :doc:`plugins/musicbrainz`
+  - :doc:`plugins/parentwork`
+
+  See :class:`~beetsplug._utils.musicbrainz.MusicBrainzAPI` for documentation.
 
 For packagers:
 
@@ -109,15 +124,6 @@ Other changes:
   unavailable, enabling ``importorskip`` usage in pytest setup.
 - Finally removed gmusic plugin and all related code/docs as the Google Play
   Music service was shut down in 2020.
-- Replaced dependency on ``python-musicbrainzngs`` with a lightweight custom
-  MusicBrainz client implementation and updated relevant plugins accordingly:
-
-  - :doc:`plugins/listenbrainz`
-  - :doc:`plugins/mbcollection`
-  - :doc:`plugins/mbpseudo`
-  - :doc:`plugins/missing`
-  - :doc:`plugins/musicbrainz`
-  - :doc:`plugins/parentwork`
 
 2.5.1 (October 14, 2025)
 ------------------------

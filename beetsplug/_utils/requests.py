@@ -113,18 +113,20 @@ class RequestHandler:
     subclasses.
 
     Usage:
-        Subclass and override :class:`RequestHandler.session_type`,
+        Subclass and override :class:`RequestHandler.create_session`,
         :class:`RequestHandler.explicit_http_errors` or
         :class:`RequestHandler.status_to_error()` to customize behavior.
 
-        Use
-        * :class:`RequestHandler.get_json()` to get JSON response data
-        * :class:`RequestHandler.get()` to get HTTP response object
-        * :class:`RequestHandler.request()` to invoke arbitrary HTTP methods
+    Use
 
-        Feel free to define common methods that are used in multiple plugins.
+    - :class:`RequestHandler.get_json()` to get JSON response data
+    - :class:`RequestHandler.get()` to get HTTP response object
+    - :class:`RequestHandler.request()` to invoke arbitrary HTTP methods
+
+    Feel free to define common methods that are used in multiple plugins.
     """
 
+    #: List of custom exceptions to be raised for specific status codes.
     explicit_http_errors: ClassVar[list[type[BeetsHTTPError]]] = [
         HTTPNotFoundError
     ]
@@ -138,7 +140,6 @@ class RequestHandler:
 
     @cached_property
     def session(self) -> TimeoutAndRetrySession:
-        """Lazily initialize and cache the HTTP session."""
         return self.create_session()
 
     def status_to_error(
