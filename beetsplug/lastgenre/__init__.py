@@ -38,6 +38,8 @@ from beets.library import Album, Item
 from beets.util import plurality, unique_list
 
 if TYPE_CHECKING:
+    import optparse
+
     from beets.library import LibModel
 
 LASTFM = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
@@ -52,7 +54,11 @@ PYLAST_EXCEPTIONS = (
 # Canonicalization tree processing.
 
 
-def flatten_tree(elem, path, branches):
+def flatten_tree(
+    elem: dict[Any, Any] | list[Any] | str,
+    path: list[str],
+    branches: list[list[str]],
+) -> None:
     """Flatten nested lists/dictionaries into lists of strings
     (branches).
     """
@@ -69,7 +75,7 @@ def flatten_tree(elem, path, branches):
         branches.append(path + [str(elem)])
 
 
-def find_parents(candidate, branches):
+def find_parents(candidate: str, branches: list[list[str]]) -> list[str]:
     """Find parents genre of a given genre, ordered from the closest to
     the further parent.
     """
@@ -89,7 +95,7 @@ C14N_TREE = os.path.join(os.path.dirname(__file__), "genres-tree.yaml")
 
 
 class LastGenrePlugin(plugins.BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         self.config.add(
@@ -111,12 +117,12 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         )
         self.setup()
 
-    def setup(self):
+    def setup(self) -> None:
         """Setup plugin from config options"""
         if self.config["auto"]:
             self.import_stages = [self.imported]
 
-        self._genre_cache = {}
+        self._genre_cache: dict[str, list[str]] = {}
         self.whitelist = self._load_whitelist()
         self.c14n_branches, self.canonicalize = self._load_c14n_tree()
 
@@ -161,7 +167,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             flatten_tree(genres_tree, [], c14n_branches)
         return c14n_branches, canonicalize
 
-    def _tunelog(self, msg, *args, **kwargs):
+    def _tunelog(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log tuning messages at DEBUG level when verbosity level is high enough."""
         if config["verbose"].as_number() >= 3:
             self._log.debug(msg, *args, **kwargs)
@@ -182,7 +188,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
     # More canonicalization and general helpers.
 
-    def _get_depth(self, tag):
+    def _get_depth(self, tag: str) -> int | None:
         """Find the depth of a tag in the genres tree."""
         depth = None
         for key, value in enumerate(self.c14n_branches):
@@ -191,7 +197,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 break
         return depth
 
-    def _sort_by_depth(self, tags):
+    def _sort_by_depth(self, tags: list[str]) -> list[str]:
         """Given a list of tags, sort the tags by their depths in the
         genre tree.
         """
@@ -372,7 +378,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         and the whitelist feature was disabled.
         """
 
-        def _try_resolve_stage(stage_label: str, keep_genres, new_genres):
+        def _try_resolve_stage(
+            stage_label: str, keep_genres: list[str], new_genres: list[str]
+        ) -> tuple[str, str] | None:
             """Try to resolve genres for a given stage and log the result."""
             resolved_genres = self._combine_resolve_and_log(
                 keep_genres, new_genres
@@ -516,7 +524,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 write=write, move=False, inherit="track" not in self.sources
             )
 
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         lastgenre_cmd = ui.Subcommand("lastgenre", help="fetch genres")
         lastgenre_cmd.parser.add_option(
             "-p",
@@ -575,7 +583,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         )
         lastgenre_cmd.parser.set_defaults(album=True)
 
-        def lastgenre_func(lib, opts, args):
+        def lastgenre_func(
+            lib: library.Library, opts: optparse.Values, args: list[str]
+        ) -> None:
             self.config.set_args(opts)
 
             method = lib.albums if opts.album else lib.items
@@ -585,10 +595,16 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         lastgenre_cmd.func = lastgenre_func
         return [lastgenre_cmd]
 
-    def imported(self, session, task):
+    def imported(
+        self, session: library.Session, task: library.ImportTask
+    ) -> None:
         self._process(task.album if task.is_album else task.item, write=False)
 
-    def _tags_for(self, obj, min_weight=None):
+    def _tags_for(
+        self,
+        obj: pylast.Album | pylast.Artist | pylast.Track,
+        min_weight: int | None = None,
+    ) -> list[str]:
         """Core genre identification routine.
 
         Given a pylast entity (album or track), return a list of
@@ -600,11 +616,12 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # Work around an inconsistency in pylast where
         # Album.get_top_tags() does not return TopItem instances.
         # https://github.com/pylast/pylast/issues/86
+        obj_to_query: Any = obj
         if isinstance(obj, pylast.Album):
-            obj = super(pylast.Album, obj)
+            obj_to_query = super(pylast.Album, obj)
 
         try:
-            res = obj.get_top_tags()
+            res: Any = obj_to_query.get_top_tags()
         except PYLAST_EXCEPTIONS as exc:
             self._log.debug("last.fm error: {}", exc)
             return []
@@ -619,6 +636,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             res = [el for el in res if (int(el.weight or 0)) >= min_weight]
 
         # Get strings from tags.
-        res = [el.item.get_name().lower() for el in res]
+        tags: list[str] = [el.item.get_name().lower() for el in res]
 
-        return res
+        return tags
