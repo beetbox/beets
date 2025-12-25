@@ -36,6 +36,9 @@ New features:
       resolve differences in metadata source styles.
 - :doc:`plugins/spotify`: Added support for multi-artist albums and tracks,
       saving all contributing artists to the respective fields.
+- :doc:`plugins/musicbrainz`: The MusicBrainz plugin now also
+      imports composers, lyricists, and arrangers, as well as their MBIDs as
+      multi-valued tags (``composers``, ``lyricists``, ``composers_ids``, …).
 
 Bug fixes:
 
