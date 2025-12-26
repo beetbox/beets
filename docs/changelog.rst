@@ -36,6 +36,7 @@ New features:
       resolve differences in metadata source styles.
 - :doc:`plugins/spotify`: Added support for multi-artist albums and tracks,
       saving all contributing artists to the respective fields.
+- :doc:`/plugins/harmonicmix`: Suggests harmonically compatible tracks for DJ mixing based on key and BPM.
 
 Bug fixes:
 
