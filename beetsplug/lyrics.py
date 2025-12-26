@@ -550,9 +550,15 @@ class Genius(SearchBackend):
     def headers(self) -> dict[str, str]:
         return {"Authorization": f"Bearer {self.config['genius_api_key']}"}
 
-    def get_text(self, url: str, params: JSONDict | None = None, **kwargs) -> str:
+    def get_text(
+        self,
+        url: str,
+        params: JSONDict | None = None,
+        force_utf8: bool = True,
+        **kwargs,
+    ) -> str:
         """Force UTF-8 encoding for Genius to avoid MacRoman misdetection."""
-        return super().get_text(url, params, force_utf8=True, **kwargs)
+        return super().get_text(url, params, force_utf8=force_utf8, **kwargs)
 
     def search(self, artist: str, title: str) -> Iterable[SearchResult]:
         search_data: GeniusAPI.Search = self.get_json(
