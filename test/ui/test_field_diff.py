@@ -1,17 +1,12 @@
 import pytest
 
 from beets.library import Item
-from beets.test.helper import ConfigMixin
 from beets.ui import _field_diff
 
 p = pytest.param
 
 
 class TestFieldDiff:
-    @pytest.fixture(scope="class", autouse=True)
-    def config(self):
-        return ConfigMixin().config
-
     @pytest.fixture(autouse=True)
     def configure_color(self, config, color):
         config["ui"]["color"] = color
