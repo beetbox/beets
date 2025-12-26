@@ -43,7 +43,10 @@ from beets.util.deprecation import deprecate_for_maintainers
 from beets.util.functemplate import template
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Iterable
+
+    from beets.dbcore.db import FormattedMapping
+
 
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
 if sys.platform == "win32":
@@ -1028,42 +1031,47 @@ def print_newline_layout(
 FLOAT_EPSILON = 0.01
 
 
-def _field_diff(field, old, old_fmt, new, new_fmt):
+def _field_diff(
+    field: str, old: FormattedMapping, new: FormattedMapping
+) -> str | None:
     """Given two Model objects and their formatted views, format their values
     for `field` and highlight changes among them. Return a human-readable
     string. If the value has not changed, return None instead.
     """
-    oldval = old.get(field)
-    newval = new.get(field)
-
     # If no change, abort.
-    if (
+    if (oldval := old.model.get(field)) == (newval := new.model.get(field)) or (
         isinstance(oldval, float)
         and isinstance(newval, float)
         and abs(oldval - newval) < FLOAT_EPSILON
     ):
         return None
-    elif oldval == newval:
-        return None
 
     # Get formatted values for output.
-    oldstr = old_fmt.get(field, "")
-    newstr = new_fmt.get(field, "")
+    oldstr, newstr = old.get(field, ""), new.get(field, "")
+    if field not in new:
+        return colorize("text_diff_removed", f"{field}: {oldstr}")
+
+    if field not in old:
+        return colorize("text_diff_added", f"{field}: {newstr}")
 
     # For strings, highlight changes. For others, colorize the whole
     # thing.
     if isinstance(oldval, str):
-        oldstr, newstr = colordiff(oldval, newstr)
+        oldstr, newstr = colordiff(oldstr, newstr)
     else:
         oldstr = colorize("text_diff_removed", oldstr)
         newstr = colorize("text_diff_added", newstr)
 
-    return f"{oldstr} -> {newstr}"
+    return f"{field}: {oldstr} -> {newstr}"
 
 
 def show_model_changes(
-    new, old=None, fields=None, always=False, print_obj: bool = True
-):
+    new: library.LibModel,
+    old: library.LibModel | None = None,
+    fields: Iterable[str] | None = None,
+    always: bool = False,
+    print_obj: bool = True,
+) -> bool:
     """Given a Model object, print a list of changes from its pristine
     version stored in the database. Return a boolean indicating whether
     any changes were found.
@@ -1081,31 +1089,19 @@ def show_model_changes(
     new_fmt = new.formatted()
 
     # Build up lines showing changed fields.
-    changes = []
-    for field in old:
-        # Subset of the fields. Never show mtime.
-        if field == "mtime" or (fields and field not in fields):
-            continue
+    diff_fields = (set(old) | set(new)) - {"mtime"}
+    if allowed_fields := set(fields or {}):
+        diff_fields &= allowed_fields
 
-        # Detect and show difference for this field.
-        line = _field_diff(field, old, old_fmt, new, new_fmt)
-        if line:
-            changes.append(f"  {field}: {line}")
-
-    # New fields.
-    for field in set(new) - set(old):
-        if fields and field not in fields:
-            continue
-
-        changes.append(
-            f"  {field}: {colorize('text_highlight', new_fmt[field])}"
-        )
+    changes = [
+        d for f in diff_fields if (d := _field_diff(f, old_fmt, new_fmt))
+    ]
 
     # Print changes.
     if print_obj and (changes or always):
         print_(format(old))
     if changes:
-        print_("\n".join(changes))
+        print_(textwrap.indent("\n".join(changes), "  "))
 
     return bool(changes)
 
