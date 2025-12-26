@@ -245,21 +245,21 @@ class ImportTask(BaseImportTask):
         matched items.
         """
         if self.choice_flag in (Action.ASIS, Action.RETAG):
-            return list(self.items)
+            return self.items
         elif self.choice_flag == Action.APPLY and isinstance(
             self.match, autotag.AlbumMatch
         ):
-            return list(self.match.mapping.keys())
+            return self.match.items
         else:
             assert False
 
     def apply_metadata(self):
         """Copy metadata from match info to the items."""
         if config["import"]["from_scratch"]:
-            for item in self.match.mapping:
+            for item in self.match.items:
                 item.clear()
 
-        autotag.apply_metadata(self.match.info, self.match.mapping)
+        autotag.apply_metadata(self.match.info, self.match.item_info_pairs)
 
     def duplicate_items(self, lib: library.Library):
         duplicate_items = []
