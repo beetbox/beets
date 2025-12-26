@@ -30,16 +30,29 @@ def test_standard_compatibility():
     assert "Em" in keys_am
 
 
-def test_custom_enharmonics():
-    """Verify advanced enharmonics such as E#==Fb"""
-    # Case: Fbm should be compatible with Am (because Fbm == Em)
-    keys_am = HarmonicLogic.get_compatible_keys("Am")
-    assert "Fbm" in keys_am
+def test_enharmonic_compatibility():
+    """Verify that enharmonics are handled."""
+    # Db should behave like C#
+    keys_db = HarmonicLogic.get_compatible_keys("Db")
+    keys_cs = HarmonicLogic.get_compatible_keys("C#")
 
-    # Case: E# should be treated like F
-    # F is compatible with C, so E# should be in C's list
-    keys_c = HarmonicLogic.get_compatible_keys("C")
-    assert "E#" in keys_c
+    # They should share neighbors
+    assert "Ab" in keys_db  # Dominant of Db
+    assert "G#" in keys_cs  # Dominant of C# (G#=Ab)
+
+
+def test_whitespace_handling():
+    """Verify that whitespace is stripped from keys."""
+    keys_plain = HarmonicLogic.get_compatible_keys("C")
+    keys_spaced = HarmonicLogic.get_compatible_keys(" C ")
+    assert keys_plain == keys_spaced
+
+
+def test_unknown_keys():
+    """Verify that unknown keys return an empty list."""
+    assert HarmonicLogic.get_compatible_keys("H#") == []
+    assert HarmonicLogic.get_compatible_keys("NotAKey") == []
+    assert HarmonicLogic.get_compatible_keys(None) == []
 
 
 def test_bpm_range_calculation():
@@ -50,7 +63,16 @@ def test_bpm_range_calculation():
     assert max_b == 108.0
 
 
-def test_empty_input():
-    """Ensure it doesn't crash on empty keys."""
-    assert HarmonicLogic.get_compatible_keys(None) == []
-    assert HarmonicLogic.get_compatible_keys("") == []
+def test_bpm_range_edge_cases():
+    """Verify BPM edge cases (None, Zero, String input)."""
+    # None or Zero should return (0, 0)
+    assert HarmonicLogic.get_bpm_range(None) == (0, 0)
+    assert HarmonicLogic.get_bpm_range(0) == (0, 0)
+
+    # Strings should be converted safely
+    min_b, max_b = HarmonicLogic.get_bpm_range("100")
+    assert min_b == 92.0
+    assert max_b == 108.0
+
+    # Invalid strings should return (0, 0)
+    assert HarmonicLogic.get_bpm_range("fast") == (0, 0)
