@@ -38,7 +38,10 @@ from functools import cached_property
 from sqlite3 import Connection, sqlite_version_info
 from typing import TYPE_CHECKING, Any, AnyStr, Generic
 
-from typing_extensions import TypeVar  # default value support
+from typing_extensions import (
+    Self,
+    TypeVar,  # default value support
+)
 from unidecode import unidecode
 
 import beets
@@ -82,6 +85,10 @@ class DBCustomFunctionError(Exception):
             "beets defined SQLite function failed; "
             "see the other errors above for details"
         )
+
+
+class NotFoundError(LookupError):
+    pass
 
 
 class FormattedMapping(Mapping[str, str]):
@@ -368,6 +375,14 @@ class Model(ABC, Generic[D]):
         This validates that the database is attached and the object has an id.
         """
         return self._check_db()
+
+    def get_fresh_from_db(self) -> Self:
+        """Load this object from the database."""
+        model_cls = self.__class__
+        if obj := self.db._get(model_cls, self.id):
+            return obj
+
+        raise NotFoundError(f"No matching {model_cls.__name__} found") from None
 
     @classmethod
     def _getters(cls: type[Model]):
@@ -656,11 +671,8 @@ class Model(ABC, Generic[D]):
         if not self._dirty and self.db.revision == self._revision:
             # Exit early
             return
-        stored_obj = self.db._get(type(self), self.id)
-        assert stored_obj is not None, f"object {self.id} not in DB"
-        self._values_fixed = LazyConvertDict(self)
-        self._values_flex = LazyConvertDict(self)
-        self.update(dict(stored_obj))
+
+        self.__dict__.update(self.get_fresh_from_db().__dict__)
         self.clear_dirty()
 
     def remove(self):
@@ -1309,12 +1321,6 @@ class Database:
             sort if sort.is_slow() else None,  # Slow sort component.
         )
 
-    def _get(
-        self,
-        model_cls: type[AnyModel],
-        id,
-    ) -> AnyModel | None:
-        """Get a Model object by its id or None if the id does not
-        exist.
-        """
-        return self._fetch(model_cls, MatchQuery("id", id)).get()
+    def _get(self, model_cls: type[AnyModel], id_: int) -> AnyModel | None:
+        """Get a Model object by its id or None if the id does not exist."""
+        return self._fetch(model_cls, MatchQuery("id", id_)).get()

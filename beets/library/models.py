@@ -620,6 +620,8 @@ class Album(LibModel):
 class Item(LibModel):
     """Represent a song or track."""
 
+    album_id: int | None
+
     _table = "items"
     _flex_table = "item_attributes"
     _fields = {
