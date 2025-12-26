@@ -34,6 +34,14 @@ def find_metadata_source_plugins() -> list[MetadataSourcePlugin]:
     return [p for p in find_plugins() if hasattr(p, "data_source")]  # type: ignore[misc]
 
 
+@cache
+def get_metadata_source(name: str) -> MetadataSourcePlugin | None:
+    """Get metadata source plugin by name."""
+    name = name.lower()
+    plugins = find_metadata_source_plugins()
+    return next((p for p in plugins if p.data_source.lower() == name), None)
+
+
 @notify_info_yielded("albuminfo_received")
 def candidates(*args, **kwargs) -> Iterable[AlbumInfo]:
     """Return matching album candidates from all metadata source plugins."""
@@ -48,28 +56,38 @@ def item_candidates(*args, **kwargs) -> Iterable[TrackInfo]:
         yield from plugin.item_candidates(*args, **kwargs)
 
 
-def album_for_id(_id: str) -> AlbumInfo | None:
-    """Get AlbumInfo object for the given ID string.
-
-    A single ID can yield just a single album, so we return the first match.
-    """
+@notify_info_yielded("albuminfo_received")
+def albums_for_ids(ids: Sequence[str]) -> Iterable[AlbumInfo]:
+    """Return matching albums from all metadata sources for the given ID."""
     for plugin in find_metadata_source_plugins():
-        if info := plugin.album_for_id(album_id=_id):
-            send("albuminfo_received", info=info)
-            return info
+        yield from plugin.albums_for_ids(ids)
+
+
+@notify_info_yielded("trackinfo_received")
+def tracks_for_ids(ids: Sequence[str]) -> Iterable[TrackInfo]:
+    """Return matching tracks from all metadata sources for the given ID."""
+    for plugin in find_metadata_source_plugins():
+        yield from plugin.tracks_for_ids(ids)
+
+
+def album_for_id(_id: str, data_source: str) -> AlbumInfo | None:
+    """Get AlbumInfo object for the given ID and data source."""
+    if (plugin := get_metadata_source(data_source)) and (
+        info := plugin.album_for_id(_id)
+    ):
+        send("albuminfo_received", info=info)
+        return info
 
     return None
 
 
-def track_for_id(_id: str) -> TrackInfo | None:
-    """Get TrackInfo object for the given ID string.
-
-    A single ID can yield just a single track, so we return the first match.
-    """
-    for plugin in find_metadata_source_plugins():
-        if info := plugin.track_for_id(_id):
-            send("trackinfo_received", info=info)
-            return info
+def track_for_id(_id: str, data_source: str) -> TrackInfo | None:
+    """Get TrackInfo object for the given ID and data source."""
+    if (plugin := get_metadata_source(data_source)) and (
+        info := plugin.track_for_id(_id)
+    ):
+        send("trackinfo_received", info=info)
+        return info
 
     return None
 
@@ -169,7 +187,7 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
         """
         raise NotImplementedError
 
-    def albums_for_ids(self, ids: Sequence[str]) -> Iterable[AlbumInfo | None]:
+    def albums_for_ids(self, ids: Sequence[str]) -> Iterable[AlbumInfo]:
         """Batch lookup of album metadata for a list of album IDs.
 
         Given a list of album identifiers, yields corresponding AlbumInfo objects.
@@ -178,9 +196,9 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
         single calls to album_for_id.
         """
 
-        return (self.album_for_id(id) for id in ids)
+        return filter(None, (self.album_for_id(id) for id in ids))
 
-    def tracks_for_ids(self, ids: Sequence[str]) -> Iterable[TrackInfo | None]:
+    def tracks_for_ids(self, ids: Sequence[str]) -> Iterable[TrackInfo]:
         """Batch lookup of track metadata for a list of track IDs.
 
         Given a list of track identifiers, yields corresponding TrackInfo objects.
@@ -189,7 +207,7 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
         single calls to track_for_id.
         """
 
-        return (self.track_for_id(id) for id in ids)
+        return filter(None, (self.track_for_id(id) for id in ids))
 
     def _extract_id(self, url: str) -> str | None:
         """Extract an ID from a URL for this metadata source plugin.
