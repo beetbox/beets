@@ -305,7 +305,7 @@ class ImportSingletonTest(AutotagImportTestCase):
         }
 
         # As-is item import.
-        assert self.lib.albums().get() is None
+        assert not self.lib.albums()
         self.importer.add_choice(importer.Action.ASIS)
         self.importer.run()
 
@@ -444,7 +444,7 @@ class ImportTest(PathsMixin, AutotagImportTestCase):
         assert f"No files imported from {import_dir}" in logs
 
     def test_asis_no_data_source(self):
-        assert self.lib.items().get() is None
+        assert not self.lib.items()
 
         self.importer.add_choice(importer.Action.ASIS)
         self.importer.run()
@@ -467,7 +467,7 @@ class ImportTest(PathsMixin, AutotagImportTestCase):
         }
 
         # As-is album import.
-        assert self.lib.albums().get() is None
+        assert not self.lib.albums()
         self.importer.add_choice(importer.Action.ASIS)
         self.importer.run()
 
@@ -488,7 +488,7 @@ class ImportTest(PathsMixin, AutotagImportTestCase):
             album.remove()
 
         # Autotagged.
-        assert self.lib.albums().get() is None
+        assert not self.lib.albums()
         self.importer.clear_choices()
         self.importer.add_choice(importer.Action.APPLY)
         self.importer.run()

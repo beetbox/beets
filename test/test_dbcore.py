@@ -782,10 +782,7 @@ class ResultsIteratorTest(unittest.TestCase):
             objs[100]
 
     def test_no_results(self):
-        assert (
-            self.db._fetch(ModelFixture1, dbcore.query.FalseQuery()).get()
-            is None
-        )
+        assert not self.db._fetch(ModelFixture1, dbcore.query.FalseQuery())
 
 
 class TestException:

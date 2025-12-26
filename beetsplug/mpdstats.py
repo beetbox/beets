@@ -20,6 +20,7 @@ import mpd
 
 from beets import config, plugins, ui
 from beets.dbcore import types
+from beets.dbcore.db import NotFoundError
 from beets.dbcore.query import PathQuery
 from beets.util import displayable_path
 
@@ -165,10 +166,9 @@ class MPDStats:
     def get_item(self, path):
         """Return the beets item related to path."""
         query = PathQuery("path", path)
-        item = self.lib.items(query).get()
-        if item:
-            return item
-        else:
+        try:
+            return self.lib.items(query).get()
+        except NotFoundError:
             self._log.info("item not found: {}", displayable_path(path))
 
     def update_item(self, item, attribute, value=None, increment=None):

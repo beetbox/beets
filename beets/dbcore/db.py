@@ -38,7 +38,10 @@ from functools import cached_property
 from sqlite3 import Connection, sqlite_version_info
 from typing import TYPE_CHECKING, Any, AnyStr, Generic
 
-from typing_extensions import TypeVar  # default value support
+from typing_extensions import (
+    Self,
+    TypeVar,  # default value support
+)
 from unidecode import unidecode
 
 import beets
@@ -84,8 +87,13 @@ class DBCustomFunctionError(Exception):
         )
 
 
+class NotFoundError(LookupError):
+    pass
+
+
 class FormattedMapping(Mapping[str, str]):
     """A `dict`-like formatted view of a model.
+
 
     The accessor `mapping[key]` returns the formatted version of
     `model[key]` as a unicode string.
@@ -364,6 +372,9 @@ class Model(ABC, Generic[D]):
     @cached_property
     def db(self) -> D:
         return self._check_db()
+
+    def get_fresh_from_db(self) -> Self:
+        return self.db.from_id(self.__class__, self.id)
 
     @classmethod
     def _getters(cls: type[Model]):
@@ -652,11 +663,10 @@ class Model(ABC, Generic[D]):
         if not self._dirty and self.db.revision == self._revision:
             # Exit early
             return
-        stored_obj = self.db.from_id(type(self), self.id)
-        assert stored_obj is not None, f"object {self.id} not in DB"
+        stored_obj = dict(self.get_fresh_from_db())
         self._values_fixed = LazyConvertDict(self)
         self._values_flex = LazyConvertDict(self)
-        self.update(dict(stored_obj))
+        self.update(stored_obj)
         self.clear_dirty()
 
     def remove(self):
@@ -911,15 +921,14 @@ class Results(Generic[AnyModel]):
         except StopIteration:
             raise IndexError(f"result index {n} out of range")
 
-    def get(self) -> AnyModel | None:
-        """Return the first matching object, or None if no objects
-        match.
-        """
-        it = iter(self)
+    def get(self) -> AnyModel:
+        """Return the first matching object."""
         try:
-            return next(it)
+            return next(iter(self))
         except StopIteration:
-            return None
+            raise NotFoundError(
+                f"No matching {self.model_class.__name__} found"
+            ) from None
 
 
 class Transaction:
@@ -1306,12 +1315,6 @@ class Database:
             sort if sort.is_slow() else None,  # Slow sort component.
         )
 
-    def from_id(
-        self,
-        model_cls: type[AnyModel],
-        id,
-    ) -> AnyModel | None:
-        """Get a Model object by its id or None if the id does not
-        exist.
-        """
-        return self._fetch(model_cls, MatchQuery("id", id)).get()
+    def from_id(self, model_cls: type[AnyModel], id_: int) -> AnyModel:
+        """Get a Model object by its id."""
+        return self._fetch(model_cls, MatchQuery("id", id_)).get()

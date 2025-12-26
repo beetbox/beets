@@ -344,10 +344,9 @@ def item_query(queries):
 @app.route("/item/path/<everything:path>")
 def item_at_path(path):
     query = PathQuery("path", path.encode("utf-8"))
-    item = g.lib.items(query).get()
-    if item:
-        return flask.jsonify(_rep(item))
-    else:
+    try:
+        return flask.jsonify(_rep(g.lib.items(query).get()))
+    except beets.dbcore.db.NotFoundError:
         return flask.abort(404)
 
 
