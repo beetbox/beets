@@ -105,6 +105,8 @@ class FormattedMapping(Mapping[str, str]):
     are replaced.
     """
 
+    model: Model
+
     ALL_KEYS = "*"
 
     def __init__(
@@ -714,7 +716,7 @@ class Model(ABC, Generic[D]):
         self,
         included_keys: str = _formatter.ALL_KEYS,
         for_path: bool = False,
-    ):
+    ) -> FormattedMapping:
         """Get a mapping containing all values on this object formatted
         as human-readable unicode strings.
         """
