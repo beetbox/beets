@@ -576,4 +576,28 @@ lyrics_pages = [
         """,
         marks=[pytest.mark.xfail(reason="Tekstowo seems to be broken again")],
     ),
+    LyricsPage.make(
+        "https://genius.com/Caparezza-argenti-vive-lyrics",
+        """
+        Ciao Dante, ti ricordi di me? Sono Filippo Argenti
+        Il vicino di casa che nella Commedia ponesti tra questi violenti
+        Sono quello che annega nel fango, pestato dai demoni intorno
+        Cos'è, vuoi provocarmi, sommo? Puoi solo provocarmi sonno!
+        """,
+        artist="Caparezza",
+        track_title="Argenti vive",
+        marks=[xfail_on_ci("Genius returns 403 FORBIDDEN in CI")],
+    ),
+    LyricsPage.make(
+        "https://genius.com/Arctic-monkeys-r-u-mine-lyrics",
+        """
+        I go crazy 'cause here isn't where I wanna be
+        And satisfaction feels like a distant memory
+        And I can't help myself, all I
+        Wanna hear her say is "Are you mine?"
+        """,
+        artist="Arctic Monkeys",
+        track_title="R U Mine?",
+        marks=[xfail_on_ci("Genius returns 403 FORBIDDEN in CI")],
+    ),
 ]
