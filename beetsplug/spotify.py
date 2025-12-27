@@ -27,7 +27,7 @@ import re
 import threading
 import time
 import webbrowser
-from typing import TYPE_CHECKING, Any, Literal, Union
+from typing import TYPE_CHECKING, Any, Literal
 
 import confuse
 import requests
@@ -86,9 +86,7 @@ class AudioFeaturesUnavailableError(Exception):
 
 
 class SpotifyPlugin(
-    SearchApiMetadataSourcePlugin[
-        Union[SearchResponseAlbums, SearchResponseTracks]
-    ]
+    SearchApiMetadataSourcePlugin[SearchResponseAlbums | SearchResponseTracks]
 ):
     item_types = {
         "spotify_track_popularity": types.INTEGER,

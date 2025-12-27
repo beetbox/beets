@@ -44,7 +44,6 @@ from typing import (
     Generic,
     NamedTuple,
     TypeVar,
-    Union,
     cast,
 )
 
@@ -63,8 +62,8 @@ if TYPE_CHECKING:
 MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = "\\\\?\\"
 T = TypeVar("T")
-PathLike = Union[str, bytes, Path]
-StrPath = Union[str, Path]
+StrPath = str | Path
+PathLike = StrPath | bytes
 Replacements = Sequence[tuple[Pattern[str], str]]
 
 # Here for now to allow for a easy replace later on

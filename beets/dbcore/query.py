@@ -25,7 +25,7 @@ from datetime import datetime, timedelta
 from functools import cached_property, reduce
 from operator import mul, or_
 from re import Pattern
-from typing import TYPE_CHECKING, Any, Generic, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 from beets import util
 from beets.util.units import raw_seconds_short
@@ -124,7 +124,7 @@ class Query(ABC):
         return hash(type(self))
 
 
-SQLiteType = Union[str, bytes, float, int, memoryview, None]
+SQLiteType = str | bytes | float | int | memoryview | None
 AnySQLiteType = TypeVar("AnySQLiteType", bound=SQLiteType)
 FieldQueryType = type["FieldQuery"]
 
