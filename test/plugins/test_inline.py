@@ -18,6 +18,8 @@ from beetsplug.inline import InlinePlugin
 
 
 class TestInlineRecursion(PluginTestCase):
+    plugin = "inline"
+
     def test_no_recursion_when_inline_shadows_fixed_field(self):
         config["plugins"] = ["inline"]
 
