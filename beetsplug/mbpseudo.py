@@ -24,7 +24,7 @@ import mediafile
 from typing_extensions import override
 
 from beets import config
-from beets.autotag.distance import Distance, distance
+from beets.autotag.distance import distance
 from beets.autotag.hooks import AlbumInfo
 from beets.autotag.match import assign_items
 from beets.plugins import find_plugins
@@ -39,6 +39,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
     from beets.autotag import AlbumMatch
+    from beets.autotag.distance import Distance
     from beets.library import Item
     from beetsplug._typing import JSONDict
 

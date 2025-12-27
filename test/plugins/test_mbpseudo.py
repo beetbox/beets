@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import json
-import pathlib
 from copy import deepcopy
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -9,12 +11,16 @@ from beets.autotag.distance import Distance
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.library import Item
 from beets.test.helper import PluginMixin
-from beetsplug._typing import JSONDict
 from beetsplug.mbpseudo import (
     _STATUS_PSEUDO,
     MusicBrainzPseudoReleasePlugin,
     PseudoAlbumInfo,
 )
+
+if TYPE_CHECKING:
+    import pathlib
+
+    from beetsplug._typing import JSONDict
 
 
 @pytest.fixture(scope="module")

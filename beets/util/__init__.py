@@ -28,7 +28,7 @@ import sys
 import tempfile
 import traceback
 from collections import Counter
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from contextlib import suppress
 from enum import Enum
 from functools import cache
@@ -54,7 +54,7 @@ import beets
 from beets.util import hidden
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Iterator
+    from collections.abc import Callable, Iterable, Iterator
     from logging import Logger
 
     from beets.library import Item

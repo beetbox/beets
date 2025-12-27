@@ -25,16 +25,13 @@ import requests
 from beets import ui
 from beets.autotag import AlbumInfo, TrackInfo
 from beets.dbcore import types
-from beets.metadata_plugins import (
-    IDResponse,
-    SearchApiMetadataSourcePlugin,
-    SearchFilter,
-)
+from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from beets.library import Item, Library
+    from beets.metadata_plugins import SearchFilter
 
     from ._typing import JSONDict
 

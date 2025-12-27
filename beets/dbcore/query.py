@@ -20,7 +20,7 @@ import os
 import re
 import unicodedata
 from abc import ABC, abstractmethod
-from collections.abc import Iterator, MutableSequence, Sequence
+from collections.abc import Sequence
 from datetime import datetime, timedelta
 from functools import cached_property, reduce
 from operator import mul, or_
@@ -31,6 +31,8 @@ from beets import util
 from beets.util.units import raw_seconds_short
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator, MutableSequence
+
     from beets.dbcore.db import AnyModel, Model
 
     P = TypeVar("P", default=Any)

@@ -10,16 +10,19 @@
 #
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
-
+from __future__ import annotations
 
 import os
 import tempfile
-from collections.abc import Sequence
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import beets
 from beets.dbcore.query import BLOB_TYPE, InQuery
 from beets.util import path_as_posix
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 def is_m3u_file(path: str) -> bool:

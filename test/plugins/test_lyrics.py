@@ -14,11 +14,13 @@
 
 """Tests for the 'lyrics' plugin."""
 
+from __future__ import annotations
+
 import re
 import textwrap
 from functools import partial
 from http import HTTPStatus
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -26,7 +28,12 @@ from beets.library import Item
 from beets.test.helper import PluginMixin, TestHelper
 from beetsplug import lyrics
 
-from .lyrics_pages import LyricsPage, lyrics_pages
+from .lyrics_pages import lyrics_pages
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from .lyrics_pages import LyricsPage
 
 PHRASE_BY_TITLE = {
     "Lady Madonna": "friday night arrives without a suitcase",
