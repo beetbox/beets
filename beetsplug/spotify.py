@@ -36,16 +36,13 @@ from beets import ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.dbcore import types
 from beets.library import Library
-from beets.metadata_plugins import (
-    IDResponse,
-    SearchApiMetadataSourcePlugin,
-    SearchFilter,
-)
+from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from beets.library import Library
+    from beets.metadata_plugins import SearchFilter
     from beetsplug._typing import JSONDict
 
 DEFAULT_WAITING_TIME = 5

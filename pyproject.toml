@@ -117,7 +117,7 @@ titlecase = "^2.4.1"
 
 [tool.poetry.group.lint.dependencies]
 docstrfmt = ">=1.11.1"
-ruff = ">=0.6.4"
+ruff = ">=0.13.0"
 sphinx-lint = ">=1.0.0"
 
 [tool.poetry.group.typing.dependencies]
@@ -226,7 +226,7 @@ cmd = "make -C docs $COMMANDS"
 
 [tool.poe.tasks.format]
 help = "Format the codebase"
-cmd = "ruff format"
+cmd = "ruff format --config=pyproject.toml"
 
 [tool.poe.tasks.format-docs]
 help = "Format the documentation"
@@ -234,7 +234,7 @@ cmd = "docstrfmt docs *.rst"
 
 [tool.poe.tasks.lint]
 help = "Check the code for linting issues. Accepts ruff options."
-cmd = "ruff check"
+cmd = "ruff check --config=pyproject.toml"
 
 [tool.poe.tasks.lint-docs]
 help = "Lint the documentation"
@@ -294,6 +294,7 @@ target-version = "py39"
 line-length = 80
 
 [tool.ruff.lint]
+future-annotations = true
 select = [
     # "ARG", # flake8-unused-arguments
     # "C4", # flake8-comprehensions

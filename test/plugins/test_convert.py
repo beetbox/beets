@@ -11,14 +11,14 @@
 #
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
-
+from __future__ import annotations
 
 import fnmatch
 import os.path
 import re
 import sys
 import unittest
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 from mediafile import MediaFile
@@ -34,6 +34,9 @@ from beets.test.helper import (
     control_stdin,
 )
 from beetsplug import convert
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def shell_quote(text):

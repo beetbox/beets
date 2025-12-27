@@ -20,7 +20,7 @@ import re
 import shutil
 import time
 from collections import defaultdict
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable
 from enum import Enum
 from tempfile import mkdtemp
 from typing import TYPE_CHECKING, Any
@@ -33,6 +33,8 @@ from beets.dbcore.query import PathQuery
 from .state import ImportState
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
+
     from beets.autotag.match import Recommendation
 
     from .session import ImportSession

@@ -1,12 +1,16 @@
+from __future__ import annotations
+
 import os
 from http import HTTPStatus
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
-from flask.testing import Client
 
 from beets.test.helper import TestHelper
+
+if TYPE_CHECKING:
+    from flask.testing import Client
 
 
 @pytest.fixture(scope="session", autouse=True)
