@@ -1,3 +1,4 @@
+import optparse
 import shutil
 from pathlib import Path
 
@@ -5,6 +6,7 @@ import mediafile
 
 from beets import ui, util
 from beets.library import Item, Library
+from beets.library.exceptions import FileOperationError
 from beets.plugins import BeetsPlugin
 
 
@@ -16,7 +18,9 @@ class ReplacePlugin(BeetsPlugin):
         cmd.func = self.run
         return [cmd]
 
-    def run(self, lib: Library, args: list[str]) -> None:
+    def run(
+        self, lib: Library, _opts: optparse.Values, args: list[str]
+    ) -> None:
         if len(args) < 2:
             raise ui.UserError("Usage: beet replace <query> <new_file_path>")
 
@@ -54,9 +58,9 @@ class ReplacePlugin(BeetsPlugin):
         except mediafile.FileTypeError as fte:
             raise ui.UserError(fte)
 
-    def select_song(self, items: list[Item]):
+    def select_song(self, items: list[Item]) -> Item | None:
         """Present a menu of matching songs and get user selection."""
-        ui.print_("\nMatching songs:")
+        ui.print_("Matching songs:")
         for i, item in enumerate(items, 1):
             ui.print_(f"{i}. {util.displayable_path(item)}")
 
@@ -79,7 +83,7 @@ class ReplacePlugin(BeetsPlugin):
             except ValueError:
                 ui.print_("Invalid input. Please type in a number.")
 
-    def confirm_replacement(self, new_file_path: Path, song: Item):
+    def confirm_replacement(self, new_file_path: Path, song: Item) -> bool:
         """Get user confirmation for the replacement."""
         original_file_path: Path = Path(song.path.decode())
 
@@ -104,7 +108,7 @@ class ReplacePlugin(BeetsPlugin):
 
         try:
             shutil.move(util.syspath(new_file_path), util.syspath(dest))
-        except Exception as e:
+        except OSError as e:
             raise ui.UserError(f"Error replacing file: {e}")
 
         if (
@@ -113,10 +117,17 @@ class ReplacePlugin(BeetsPlugin):
         ):
             try:
                 original_file_path.unlink()
-            except Exception as e:
+            except OSError as e:
                 raise ui.UserError(f"Could not delete original file: {e}")
 
+        # Update the path to point to the new file.
         song.path = str(dest).encode()
         song.store()
+
+        # Write the metadata in the database to the song file's tags.
+        try:
+            song.write()
+        except FileOperationError as e:
+            raise ui.UserError(f"Error writing metadata to file: {e}")
 
         ui.print_("Replacement successful.")
