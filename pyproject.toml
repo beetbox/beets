@@ -290,7 +290,7 @@ extend-exclude = [
 ]
 
 [tool.ruff]
-target-version = "py39"
+target-version = "py310"
 line-length = 80
 
 [tool.ruff.lint]
@@ -308,7 +308,7 @@ select = [
     "PT", # flake8-pytest-style
     # "RUF", # ruff
     "UP", # pyupgrade
-    "TCH", # flake8-type-checking
+    "TC", # flake8-type-checking
     "W", # pycodestyle
 ]
 ignore = [

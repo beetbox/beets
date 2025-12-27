@@ -28,7 +28,7 @@ import os
 import traceback
 from functools import singledispatchmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any
 
 import pylast
 import yaml
@@ -39,6 +39,7 @@ from beets.util import plurality, unique_list
 
 if TYPE_CHECKING:
     import optparse
+    from collections.abc import Callable
 
     from beets.library import LibModel
 
