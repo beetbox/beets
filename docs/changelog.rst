@@ -12,6 +12,22 @@ been dropped.
 
 New features:
 
+- Add native support for multiple genres per album/track. The ``genres`` field
+  now stores genres as a list and is written to files as multiple individual
+  genre tags (e.g., separate GENRE tags for FLAC/MP3). The single ``genre``
+  field is automatically synchronized to contain the first genre from the list
+  for backward compatibility. The :doc:`plugins/musicbrainz`,
+  :doc:`plugins/beatport`, and :doc:`plugins/lastgenre` plugins have been
+  updated to populate the ``genres`` field as a list.
+
+  **Migration**: Existing libraries with comma-separated, semicolon-separated,
+  or slash-separated genre strings (e.g., ``"Rock, Alternative, Indie"``) will
+  be automatically migrated to the ``genres`` list when items are accessed. No
+  manual reimport or ``mbsync`` is required. For users who prefer explicit
+  control, a new ``beet migrate genres`` command is available to migrate the
+  entire library at once. Use ``beet migrate genres --pretend`` to preview
+  changes before applying them.
+
 - :doc:`plugins/ftintitle`: Added argument for custom feat. words in ftintitle.
 - :doc:`plugins/ftintitle`: Added album template value ``album_artist_no_feat``.
 - :doc:`plugins/musicbrainz`: Allow selecting tags or genres to populate the
