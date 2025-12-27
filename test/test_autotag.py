@@ -19,18 +19,18 @@ import pytest
 from beets import autotag, config
 from beets.autotag import AlbumInfo, TrackInfo, correct_list_fields, match
 from beets.library import Item
-from beets.test.helper import BeetsTestCase, ConfigMixin
+from beets.test.helper import BeetsTestCase
 
 
-class TestAssignment(ConfigMixin):
+class TestAssignment:
     A = "one"
     B = "two"
     C = "three"
 
     @pytest.fixture(autouse=True)
-    def _setup_config(self):
-        self.config["match"]["track_length_grace"] = 10
-        self.config["match"]["track_length_max"] = 30
+    def config(self, config):
+        config["match"]["track_length_grace"] = 10
+        config["match"]["track_length_max"] = 30
 
     @pytest.mark.parametrize(
         # 'expected' is a tuple of expected (mapping, extra_items, extra_tracks)
