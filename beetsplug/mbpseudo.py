@@ -141,7 +141,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
         if (ids := self._intercept_mb_release(release)) and (
             album_id := self._extract_id(ids[0])
         ):
-            raw_pseudo_release = self.api.get_release(album_id)
+            raw_pseudo_release = self.mb_api.get_release(album_id)
             pseudo_release = super().album_info(raw_pseudo_release)
 
             if self.config["custom_tags_only"].get(bool):

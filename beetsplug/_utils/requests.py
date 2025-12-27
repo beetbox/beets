@@ -67,7 +67,7 @@ class TimeoutAndRetrySession(requests.Session, metaclass=SingletonMeta):
 
     * default beets User-Agent header
     * default request timeout
-    * automatic retries on transient connection errors
+    * automatic retries on transient connection or server errors
     * raises exceptions for HTTP error status codes
     """
 
@@ -75,7 +75,18 @@ class TimeoutAndRetrySession(requests.Session, metaclass=SingletonMeta):
         super().__init__(*args, **kwargs)
         self.headers["User-Agent"] = f"beets/{__version__} https://beets.io/"
 
-        retry = Retry(connect=2, total=2, backoff_factor=1)
+        retry = Retry(
+            connect=2,
+            total=2,
+            backoff_factor=1,
+            # Retry on server errors
+            status_forcelist=[
+                HTTPStatus.INTERNAL_SERVER_ERROR,
+                HTTPStatus.BAD_GATEWAY,
+                HTTPStatus.SERVICE_UNAVAILABLE,
+                HTTPStatus.GATEWAY_TIMEOUT,
+            ],
+        )
         adapter = HTTPAdapter(max_retries=retry)
         self.mount("https://", adapter)
         self.mount("http://", adapter)
@@ -102,18 +113,20 @@ class RequestHandler:
     subclasses.
 
     Usage:
-        Subclass and override :class:`RequestHandler.session_type`,
+        Subclass and override :class:`RequestHandler.create_session`,
         :class:`RequestHandler.explicit_http_errors` or
         :class:`RequestHandler.status_to_error()` to customize behavior.
 
-        Use
-        * :class:`RequestHandler.get_json()` to get JSON response data
-        * :class:`RequestHandler.get()` to get HTTP response object
-        * :class:`RequestHandler.request()` to invoke arbitrary HTTP methods
+    Use
 
-        Feel free to define common methods that are used in multiple plugins.
+    - :class:`RequestHandler.get_json()` to get JSON response data
+    - :class:`RequestHandler.get()` to get HTTP response object
+    - :class:`RequestHandler.request()` to invoke arbitrary HTTP methods
+
+    Feel free to define common methods that are used in multiple plugins.
     """
 
+    #: List of custom exceptions to be raised for specific status codes.
     explicit_http_errors: ClassVar[list[type[BeetsHTTPError]]] = [
         HTTPNotFoundError
     ]
@@ -127,7 +140,6 @@ class RequestHandler:
 
     @cached_property
     def session(self) -> TimeoutAndRetrySession:
-        """Lazily initialize and cache the HTTP session."""
         return self.create_session()
 
     def status_to_error(
@@ -155,6 +167,7 @@ class RequestHandler:
         except requests.exceptions.HTTPError as e:
             if beets_error := self.status_to_error(e.response.status_code):
                 raise beets_error(response=e.response) from e
+
             raise
 
     def request(self, *args, **kwargs) -> requests.Response:
@@ -169,6 +182,14 @@ class RequestHandler:
     def get(self, *args, **kwargs) -> requests.Response:
         """Perform HTTP GET request with automatic error handling."""
         return self.request("get", *args, **kwargs)
+
+    def put(self, *args, **kwargs) -> requests.Response:
+        """Perform HTTP PUT request with automatic error handling."""
+        return self.request("put", *args, **kwargs)
+
+    def delete(self, *args, **kwargs) -> requests.Response:
+        """Perform HTTP DELETE request with automatic error handling."""
+        return self.request("delete", *args, **kwargs)
 
     def get_json(self, *args, **kwargs):
         """Fetch and parse JSON data from an HTTP endpoint."""

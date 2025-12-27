@@ -9,12 +9,13 @@ service.
 Installation
 ------------
 
-To use the ``listenbrainz`` plugin, first enable it in your configuration (see
-:ref:`using-plugins`). Then, install ``beets`` with ``listenbrainz`` extra
+To enable the ListenBrainz plugin, add the following to your beets configuration
+file (config.yaml_):
 
-.. code-block:: bash
+.. code-block:: yaml
 
-    pip install "beets[listenbrainz]"
+    plugins:
+        - listenbrainz
 
 You can then configure the plugin by providing your Listenbrainz token (see
 intructions here_) and username:
