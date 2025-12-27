@@ -26,16 +26,9 @@ import threading
 import time
 from abc import ABC
 from collections import defaultdict
-from collections.abc import (
-    Callable,
-    Generator,
-    Iterable,
-    Iterator,
-    Mapping,
-    Sequence,
-)
+from collections.abc import Mapping
 from functools import cached_property
-from sqlite3 import Connection, sqlite_version_info
+from sqlite3 import sqlite_version_info
 from typing import TYPE_CHECKING, Any, AnyStr, Generic
 
 from typing_extensions import (
@@ -48,20 +41,20 @@ import beets
 
 from ..util import cached_classproperty, functemplate
 from . import types
-from .query import (
-    FieldQueryType,
-    FieldSort,
-    MatchQuery,
-    NullSort,
-    Query,
-    Sort,
-    TrueQuery,
-)
+from .query import MatchQuery, NullSort, TrueQuery
 
 if TYPE_CHECKING:
+    from collections.abc import (
+        Callable,
+        Generator,
+        Iterable,
+        Iterator,
+        Sequence,
+    )
+    from sqlite3 import Connection
     from types import TracebackType
 
-    from .query import SQLiteType
+    from .query import FieldQueryType, FieldSort, Query, Sort, SQLiteType
 
 D = TypeVar("D", bound="Database", default=Any)
 

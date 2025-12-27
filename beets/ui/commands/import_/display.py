@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, TypedDict
 
 from typing_extensions import NotRequired
 
-from beets import autotag, config, ui
+from beets import config, ui
 from beets.autotag import hooks
 from beets.util import displayable_path
 from beets.util.units import human_seconds_short
@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 
     import confuse
 
+    from beets import autotag
     from beets.autotag.distance import Distance
     from beets.library.models import Item
     from beets.ui import ColorName

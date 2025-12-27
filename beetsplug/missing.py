@@ -15,17 +15,24 @@
 
 """List missing tracks."""
 
+from __future__ import annotations
+
 from collections import defaultdict
-from collections.abc import Iterator
+from typing import TYPE_CHECKING
 
 import musicbrainzngs
 from musicbrainzngs.musicbrainz import MusicBrainzError
 
 from beets import config, metadata_plugins
 from beets.dbcore import types
-from beets.library import Album, Item, Library
+from beets.library import Item
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, print_
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    from beets.library import Album, Library
 
 MB_ARTIST_QUERY = r"mb_albumartistid::^\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$"
 

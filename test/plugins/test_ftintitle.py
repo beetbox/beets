@@ -14,13 +14,20 @@
 
 """Tests for the 'ftintitle' plugin."""
 
-from collections.abc import Generator
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import pytest
 
-from beets.library.models import Album, Item
+from beets.library.models import Album
 from beets.test.helper import PluginTestCase
 from beetsplug import ftintitle
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from beets.library.models import Item
 
 
 class FtInTitlePluginFunctional(PluginTestCase):
