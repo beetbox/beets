@@ -81,7 +81,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
         assert self.plugin._resolve_genres(["delta blues"]) == []
 
     def test_format_genres(self):
-        """Format genres list with title case if configured."""
+        """Format genres list."""
         self._setup_config(count=2)
         assert self.plugin._format_genres(["jazz", "pop", "rock", "blues"]) == [
             "Jazz",
