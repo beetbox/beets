@@ -473,22 +473,15 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     return result
 
         # Nothing found, leave original if configured and valid.
-        if obj.genre and self.config["keep_existing"]:
-            # Check if at least one genre is valid
-            valid_genres = [
-                g
-                for g in genres
-                if not self.whitelist or self._is_valid(g.lower())
-            ]
-            if valid_genres:
+        if genres and self.config["keep_existing"]:
+            if valid_genres := self._filter_valid(genres):
                 return valid_genres, "original fallback"
-            else:
-                # If the original genre doesn't match a whitelisted genre, check
-                # if we can canonicalize it to find a matching, whitelisted genre!
-                if result := _try_resolve_stage(
-                    "original fallback", keep_genres, []
-                ):
-                    return result
+            # If the original genre doesn't match a whitelisted genre, check
+            # if we can canonicalize it to find a matching, whitelisted genre!
+            if result := _try_resolve_stage(
+                "original fallback", keep_genres, []
+            ):
+                return result
 
         # Return fallback as a list.
         if fallback := self.config["fallback"].get():
@@ -504,7 +497,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         self._log.info(str(obj))
         obj.genres, label = self._get_genre(obj)
         self._log.debug("Resolved ({}): {}", label, obj.genres)
-
 
         ui.show_model_changes(obj, fields=["genres"], print_obj=False)
 
