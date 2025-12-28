@@ -583,7 +583,6 @@ class BeatportTest(BeetsTestCase):
 
     def test_genre_applied(self):
         for track, test_track in zip(self.tracks, self.test_tracks):
-            # BeatportTrack now has genres as a list
             assert track.genres == [test_track.genre]
 
 
