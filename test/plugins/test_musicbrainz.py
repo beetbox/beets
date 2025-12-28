@@ -15,6 +15,7 @@
 """Tests for MusicBrainz API wrapper."""
 
 import unittest
+from typing import Any, ClassVar
 from unittest import mock
 
 import pytest
@@ -1012,7 +1013,11 @@ class TestMusicBrainzPlugin(PluginMixin):
     plugin = "musicbrainz"
 
     mbid = "d2a6f856-b553-40a0-ac54-a321e8e2da99"
-    RECORDING = {"title": "foo", "id": "bar", "length": 42}
+    RECORDING: ClassVar[dict[str, Any]] = {
+        "title": "foo",
+        "id": "bar",
+        "length": 42,
+    }
 
     @pytest.fixture
     def plugin_config(self):

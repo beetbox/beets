@@ -27,7 +27,7 @@ import re
 import threading
 import time
 import webbrowser
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 import confuse
 import requests
@@ -88,7 +88,7 @@ class AudioFeaturesUnavailableError(Exception):
 class SpotifyPlugin(
     SearchApiMetadataSourcePlugin[SearchResponseAlbums | SearchResponseTracks]
 ):
-    item_types = {
+    item_types: ClassVar[dict[str, types.Type]] = {
         "spotify_track_popularity": types.INTEGER,
         "spotify_acousticness": types.FLOAT,
         "spotify_danceability": types.FLOAT,
@@ -114,7 +114,7 @@ class SpotifyPlugin(
     track_url = "https://api.spotify.com/v1/tracks/"
     audio_features_url = "https://api.spotify.com/v1/audio-features/"
 
-    spotify_audio_features = {
+    spotify_audio_features: ClassVar[dict[str, str]] = {
         "acousticness": "spotify_acousticness",
         "danceability": "spotify_danceability",
         "energy": "spotify_energy",

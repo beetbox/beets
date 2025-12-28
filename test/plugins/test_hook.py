@@ -19,7 +19,7 @@ import os
 import sys
 import unittest
 from contextlib import contextmanager
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from beets import plugins
 from beets.test.helper import PluginTestCase, capture_log
@@ -70,7 +70,7 @@ class HookLogsTest(HookTestCase):
 
 
 class HookCommandTest(HookTestCase):
-    EVENTS: list[plugins.EventType] = ["write", "after_write"]
+    EVENTS: ClassVar[list[plugins.EventType]] = ["write", "after_write"]
 
     def setUp(self):
         super().setUp()

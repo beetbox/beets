@@ -18,7 +18,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 import musicbrainzngs
 from musicbrainzngs.musicbrainz import MusicBrainzError
@@ -95,7 +95,7 @@ def _item(track_info, album_info, album_id):
 class MissingPlugin(BeetsPlugin):
     """List missing tracks"""
 
-    album_types = {
+    album_types: ClassVar[dict[str, types.Type]] = {
         "missing": types.INTEGER,
     }
 
