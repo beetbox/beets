@@ -524,7 +524,7 @@ class ImportHelper(TestHelper):
     autotagging library and several assertions for the library.
     """
 
-    default_import_config = {
+    default_import_config: ClassVar[dict[str, bool]] = {
         "autotag": True,
         "copy": True,
         "hardlink": False,
@@ -880,7 +880,7 @@ class FetchImageHelper:
     def run(self, *args, **kwargs):
         super().run(*args, **kwargs)
 
-    IMAGEHEADER: dict[str, bytes] = {
+    IMAGEHEADER: ClassVar[dict[str, bytes]] = {
         "image/jpeg": b"\xff\xd8\xff\x00\x00\x00JFIF",
         "image/png": b"\211PNG\r\n\032\n",
         "image/gif": b"GIF89a",

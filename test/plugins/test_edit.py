@@ -13,6 +13,7 @@
 # included in all copies or substantial portions of the Software.
 
 import codecs
+from typing import ClassVar
 from unittest.mock import patch
 
 from beets.dbcore.query import TrueQuery
@@ -319,7 +320,7 @@ class EditDuringImporterTestCase(
 
     matching = AutotagStub.GOOD
 
-    IGNORED = ["added", "album_id", "id", "mtime", "path"]
+    IGNORED: ClassVar[list[str]] = ["added", "album_id", "id", "mtime", "path"]
 
     def setUp(self):
         super().setUp()

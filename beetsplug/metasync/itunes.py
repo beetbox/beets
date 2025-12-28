@@ -20,6 +20,7 @@ import shutil
 import tempfile
 from contextlib import contextmanager
 from time import mktime
+from typing import ClassVar
 from urllib.parse import unquote, urlparse
 
 from confuse import ConfigValueError
@@ -58,7 +59,7 @@ def _norm_itunes_path(path):
 
 
 class Itunes(MetaSource):
-    item_types = {
+    item_types: ClassVar[dict[str, types.Type]] = {
         "itunes_rating": types.INTEGER,  # 0..100 scale
         "itunes_playcount": types.INTEGER,
         "itunes_skipcount": types.INTEGER,

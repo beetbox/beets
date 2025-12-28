@@ -26,7 +26,7 @@ from functools import cached_property, partial, total_ordering
 from html import unescape
 from itertools import groupby
 from pathlib import Path
-from typing import TYPE_CHECKING, NamedTuple
+from typing import TYPE_CHECKING, ClassVar, NamedTuple
 from urllib.parse import quote, quote_plus, urlencode, urlparse
 
 import langdetect
@@ -367,7 +367,7 @@ class LRCLib(Backend):
 class MusiXmatch(Backend):
     URL_TEMPLATE = "https://www.musixmatch.com/lyrics/{}/{}"
 
-    REPLACEMENTS = {
+    REPLACEMENTS: ClassVar[dict[str, str]] = {
         r"\s+": "-",
         "<": "Less_Than",
         ">": "Greater_Than",
@@ -600,7 +600,7 @@ class Google(SearchBackend):
     SEARCH_URL = "https://www.googleapis.com/customsearch/v1"
 
     #: Exclude some letras.mus.br pages which do not contain lyrics.
-    EXCLUDE_PAGES = [
+    EXCLUDE_PAGES: ClassVar[list[str]] = [
         "significado.html",
         "traduccion.html",
         "traducao.html",
@@ -630,9 +630,12 @@ class Google(SearchBackend):
     #: Split cleaned up URL title into artist and title parts.
     URL_TITLE_PARTS_RE = re.compile(r" +(?:[ :|-]+|par|by) +|, ")
 
-    SOURCE_DIST_FACTOR = {"www.azlyrics.com": 0.5, "www.songlyrics.com": 0.6}
+    SOURCE_DIST_FACTOR: ClassVar[dict[str, float]] = {
+        "www.azlyrics.com": 0.5,
+        "www.songlyrics.com": 0.6,
+    }
 
-    ignored_domains: set[str] = set()
+    ignored_domains: ClassVar[set[str]] = set()
 
     @classmethod
     def pre_process_html(cls, html: str) -> str:
@@ -937,7 +940,7 @@ class RestFiles:
 
 
 class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
-    BACKEND_BY_NAME = {
+    BACKEND_BY_NAME: ClassVar[dict[str, type[Backend]]] = {
         b.name: b for b in [LRCLib, Google, Genius, Tekstowo, MusiXmatch]
     }
 

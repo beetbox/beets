@@ -141,7 +141,13 @@ class PluginLogFilter(logging.Filter):
 # Managing the plugins themselves.
 
 
-class BeetsPlugin(metaclass=abc.ABCMeta):
+class BeetsPluginMeta(abc.ABCMeta):
+    template_funcs: ClassVar[TFuncMap[str]] = {}
+    template_fields: ClassVar[TFuncMap[Item]] = {}
+    album_template_fields: ClassVar[TFuncMap[Album]] = {}
+
+
+class BeetsPlugin(metaclass=BeetsPluginMeta):
     """The base class for all beets plugins. Plugins provide
     functionality by defining a subclass of BeetsPlugin and overriding
     the abstract methods defined here.
@@ -151,9 +157,10 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         list
     )
     listeners: ClassVar[dict[EventType, list[Listener]]] = defaultdict(list)
-    template_funcs: ClassVar[TFuncMap[str]] | TFuncMap[str] = {}  # type: ignore[valid-type]
-    template_fields: ClassVar[TFuncMap[Item]] | TFuncMap[Item] = {}  # type: ignore[valid-type]
-    album_template_fields: ClassVar[TFuncMap[Album]] | TFuncMap[Album] = {}  # type: ignore[valid-type]
+
+    template_funcs: TFuncMap[str]
+    template_fields: TFuncMap[Item]
+    album_template_fields: TFuncMap[Album]
 
     name: str
     config: ConfigView
@@ -220,14 +227,10 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         self.name = name or self.__module__.split(".")[-1]
         self.config = beets.config[self.name]
 
-        # If the class attributes are not set, initialize as instance attributes.
-        # TODO: Revise with v3.0.0, see also type: ignore[valid-type] above
-        if not self.template_funcs:
-            self.template_funcs = {}
-        if not self.template_fields:
-            self.template_fields = {}
-        if not self.album_template_fields:
-            self.album_template_fields = {}
+        # create per-instance storage for template fields and functions
+        self.template_funcs = {}
+        self.template_fields = {}
+        self.album_template_fields = {}
 
         self.early_import_stages = []
         self.import_stages = []

@@ -355,7 +355,7 @@ class ArtSource(RequestMixin, ABC):
     # Specify whether this source fetches local or remote images
     LOC: ClassVar[SourceLocation]
     # A list of methods to match metadata, sorted by descending accuracy
-    VALID_MATCHING_CRITERIA: list[str] = ["default"]
+    VALID_MATCHING_CRITERIA: ClassVar[list[str]] = ["default"]
     # A human-readable name for the art source
     NAME: ClassVar[str]
     # The key to select the art source in the config. This value will also be
@@ -518,8 +518,8 @@ class RemoteArtSource(ArtSource):
 class CoverArtArchive(RemoteArtSource):
     NAME = "Cover Art Archive"
     ID = "coverart"
-    VALID_MATCHING_CRITERIA = ["release", "releasegroup"]
-    VALID_THUMBNAIL_SIZES = [250, 500, 1200]
+    VALID_MATCHING_CRITERIA: ClassVar[list[str]] = ["release", "releasegroup"]
+    VALID_THUMBNAIL_SIZES: ClassVar[list[int]] = [250, 500, 1200]
 
     URL = "https://coverartarchive.org/release/{mbid}"
     GROUP_URL = "https://coverartarchive.org/release-group/{mbid}"
@@ -1128,7 +1128,7 @@ class LastFM(RemoteArtSource):
     ID = "lastfm"
 
     # Sizes in priority order.
-    SIZES = OrderedDict(
+    SIZES: ClassVar[dict[str, tuple[int, int]]] = OrderedDict(
         [
             ("mega", (300, 300)),
             ("extralarge", (300, 300)),
