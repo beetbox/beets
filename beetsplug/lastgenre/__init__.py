@@ -323,7 +323,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
     # Main processing: _get_genre() and helpers.
 
     def _format_genres(self, tags: list[str]) -> list[str]:
-        """Format to title_case if configured and return as list."""
+        """Format to title case if configured."""
         if self.config["title_case"]:
             return [tag.title() for tag in tags]
         else:
