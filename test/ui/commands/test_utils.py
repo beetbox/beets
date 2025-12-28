@@ -19,7 +19,7 @@ class QueryTest(BeetsTestCase):
         )
         item = library.Item.from_path(itempath)
         self.lib.add(item)
-        return item, itempath
+        return item
 
     def add_album(self, items):
         album = self.lib.add_album(items)
@@ -47,13 +47,13 @@ class QueryTest(BeetsTestCase):
         self.check_do_query(2, 0, album=False)
 
     def test_query_album(self):
-        item, itempath = self.add_item()
+        item = self.add_item()
         self.add_album([item])
         self.check_do_query(1, 1, album=True)
         self.check_do_query(0, 1, album=True, also_items=False)
 
-        item, itempath = self.add_item()
-        item2, itempath = self.add_item()
+        item = self.add_item()
+        item2 = self.add_item()
         self.add_album([item, item2])
         self.check_do_query(3, 2, album=True)
         self.check_do_query(0, 2, album=True, also_items=False)

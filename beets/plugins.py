@@ -161,7 +161,7 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
     import_stages: list[ImportStageFunc]
 
     def __init_subclass__(cls) -> None:
-        """Enable legacy metadata‐source plugins to work with the new interface.
+        """Enable legacy metadata source plugins to work with the new interface.
 
         When a plugin subclass of BeetsPlugin defines a `data_source` attribute
         but does not inherit from MetadataSourcePlugin, this hook:

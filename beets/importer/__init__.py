@@ -28,11 +28,11 @@ from .tasks import (
 # Note: Stages are not exposed to the public API
 
 __all__ = [
-    "ImportSession",
-    "ImportAbortError",
     "Action",
-    "ImportTask",
     "ArchiveImportTask",
+    "ImportAbortError",
+    "ImportSession",
+    "ImportTask",
     "SentinelImportTask",
     "SingletonImportTask",
 ]

@@ -306,7 +306,7 @@ select = [
     "ISC", # flake8-implicit-str-concat
     "N", # pep8-naming
     "PT", # flake8-pytest-style
-    # "RUF", # ruff
+    "RUF", # ruff
     "UP", # pyupgrade
     "TC", # flake8-type-checking
     "W", # pycodestyle
@@ -320,6 +320,8 @@ ignore = [
 "test/plugins/test_ftintitle.py" = ["E501"]
 "test/test_util.py" = ["E501"]
 "test/ui/test_field_diff.py" = ["E501"]
+"test/util/test_id_extractors.py" = ["E501"]
+"test/**" = ["RUF001"] # we use Unicode characters in tests
 
 [tool.ruff.lint.isort]
 split-on-trailing-comma = false
