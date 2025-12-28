@@ -411,7 +411,7 @@ class ModelTest(unittest.TestCase):
     def test_computed_field(self):
         model = ModelFixtureWithGetters()
         assert model.aComputedField == "thing"
-        with pytest.raises(KeyError, match="computed field .+ deleted"):
+        with pytest.raises(KeyError, match=r"computed field .+ deleted"):
             del model.aComputedField
 
     def test_items(self):

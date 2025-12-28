@@ -214,13 +214,13 @@ class TestTitlecasePlugin(PluginTestCase):
             (
                 {
                     "preserve": ["D'Angelo"],
-                    "replace": [("’", "'")],
+                    "replace": [("’", "'")],  # noqa: RUF001
                     "fields": ["artist", "albumartist", "mb_albumid"],
                 },
                 Item(
-                    artist="d’angelo and the vanguard",
+                    artist="d’angelo and the vanguard",  # noqa: RUF001
                     mb_albumid="ab140e13-7b36-402a-a528-b69e3dee38a8",
-                    albumartist="d’angelo",
+                    albumartist="d’angelo",  # noqa: RUF001
                     format="CD",
                     album="the black messiah",
                     title="Till It's Done (Tutu)",

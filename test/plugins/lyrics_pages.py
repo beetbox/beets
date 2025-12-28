@@ -127,7 +127,7 @@ lyrics_pages = [
         """,
         artist="Atlanta",
         track_title="Mergaitės Nori Mylėt",
-        url_title="Mergaitės nori mylėt – Atlanta | Dainų Žodžiai",
+        url_title="Mergaitės nori mylėt – Atlanta | Dainų Žodžiai",  # noqa: RUF001
         marks=[xfail_on_ci("Expired SSL certificate")],
     ),
     LyricsPage.make(

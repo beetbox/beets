@@ -350,8 +350,8 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
             self.lib.items(),
             self.items_orig,
             ["title"],
-            self.IGNORED
-            + [
+            [
+                *self.IGNORED,
                 "albumartist",
                 "mb_albumartistid",
                 "mb_albumartistids",
@@ -378,7 +378,7 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
             self.lib.items(),
             self.items_orig,
             [],
-            self.IGNORED + ["albumartist", "mb_albumartistid"],
+            [*self.IGNORED, "albumartist", "mb_albumartistid"],
         )
         assert all("Tag Track" in i.title for i in self.lib.items())
 
@@ -490,6 +490,6 @@ class EditDuringImporterSingletonTest(EditDuringImporterTestCase):
             self.lib.items(),
             self.items_orig,
             ["title"],
-            self.IGNORED + ["albumartist", "mb_albumartistid"],
+            [*self.IGNORED, "albumartist", "mb_albumartistid"],
         )
         assert all("Edited Track" in i.title for i in self.lib.items())

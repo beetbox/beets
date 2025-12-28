@@ -1037,7 +1037,7 @@ class Command:
             raise BPDError(ERROR_PERMISSION, "insufficient privileges")
 
         try:
-            args = [conn] + self.args
+            args = [conn, *self.args]
             results = func(*args)
             if results:
                 for data in results:

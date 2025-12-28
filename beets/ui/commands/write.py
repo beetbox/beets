@@ -15,7 +15,7 @@ def write_items(lib, query, pretend, force):
     """Write tag information from the database to the respective files
     in the filesystem.
     """
-    items, albums = do_query(lib, query, False, False)
+    items, _ = do_query(lib, query, False, False)
 
     for item in items:
         # Item deleted?

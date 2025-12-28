@@ -61,12 +61,12 @@ def flatten_tree(elem, path, branches):
 
     if isinstance(elem, dict):
         for k, v in elem.items():
-            flatten_tree(v, path + [k], branches)
+            flatten_tree(v, [*path, k], branches)
     elif isinstance(elem, list):
         for sub in elem:
             flatten_tree(sub, path, branches)
     else:
-        branches.append(path + [str(elem)])
+        branches.append([*path, str(elem)])
 
 
 def find_parents(candidate, branches):
