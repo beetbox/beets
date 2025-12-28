@@ -29,7 +29,7 @@ from collections import defaultdict
 from collections.abc import Mapping
 from functools import cached_property
 from sqlite3 import sqlite_version_info
-from typing import TYPE_CHECKING, Any, AnyStr, Generic
+from typing import TYPE_CHECKING, Any, AnyStr, ClassVar, Generic
 
 from typing_extensions import (
     Self,
@@ -299,7 +299,7 @@ class Model(ABC, Generic[D]):
     """The flex field SQLite table name.
     """
 
-    _fields: dict[str, types.Type] = {}
+    _fields: ClassVar[dict[str, types.Type]] = {}
     """A mapping indicating available "fixed" fields on this type. The
     keys are field names and the values are `Type` objects.
     """
@@ -314,7 +314,7 @@ class Model(ABC, Generic[D]):
         """Optional types for non-fixed (flexible and computed) fields."""
         return {}
 
-    _sorts: dict[str, type[FieldSort]] = {}
+    _sorts: ClassVar[dict[str, type[FieldSort]]] = {}
     """Optional named sort criteria. The keys are strings and the values
     are subclasses of `Sort`.
     """

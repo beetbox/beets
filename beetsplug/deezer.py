@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import collections
 import time
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, ClassVar, Literal
 
 import requests
 
@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 
 
 class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
-    item_types = {
+    item_types: ClassVar[dict[str, types.Type]] = {
         "deezer_track_rank": types.INTEGER,
         "deezer_track_id": types.INTEGER,
         "deezer_updated": types.DATE,
