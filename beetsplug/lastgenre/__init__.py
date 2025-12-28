@@ -38,6 +38,8 @@ from beets.library import Album, Item
 from beets.util import plurality, unique_list
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from beets.library import LibModel
 
 LASTFM = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
@@ -206,7 +208,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         - Returns an empty list if the input tags list is empty.
         - If canonicalization is enabled, it extends the list by incorporating
           parent genres from the canonicalization tree. When a whitelist is set,
-          only parent tags that pass a validity check (_is_valid) are included;
+          only parent tags that pass the whitelist filter are included;
           otherwise, it adds the oldest ancestor. Adding parent tags is stopped
           when the count of tags reaches the configured limit (count).
         - The tags list is then deduplicated to ensure only unique genres are
@@ -230,11 +232,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 # Add parents that are in the whitelist, or add the oldest
                 # ancestor if no whitelist
                 if self.whitelist:
-                    parents = [
-                        x
-                        for x in find_parents(tag, self.c14n_branches)
-                        if self._is_valid(x)
-                    ]
+                    parents = self._filter_valid(
+                        find_parents(tag, self.c14n_branches)
+                    )
                 else:
                     parents = [find_parents(tag, self.c14n_branches)[-1]]
 
@@ -256,7 +256,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # c14n only adds allowed genres but we may have had forbidden genres in
         # the original tags list
-        valid_tags = [t for t in tags if self._is_valid(t)]
+        valid_tags = self._filter_valid(tags)
         return valid_tags[:count]
 
     def fetch_genre(self, lastfm_obj):
@@ -266,15 +266,16 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         min_weight = self.config["min_weight"].get(int)
         return self._tags_for(lastfm_obj, min_weight)
 
-    def _is_valid(self, genre: str) -> bool:
-        """Check if the genre is valid.
+    def _filter_valid(self, genres: Iterable[str]) -> list[str]:
+        """Filter genres based on whitelist.
 
-        Depending on the whitelist property, valid means a genre is in the
-        whitelist or any genre is allowed.
+        Returns all genres if no whitelist is configured, otherwise returns
+        only genres that are in the whitelist.
         """
-        if genre and (not self.whitelist or genre.lower() in self.whitelist):
-            return True
-        return False
+        if not self.whitelist:
+            return list(genres)
+
+        return [g for g in genres if g.lower() in self.whitelist]
 
     # Cached last.fm entity lookups.
 
@@ -456,7 +457,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         ):
             return valid_genres, "original fallback"
 
-
         # Return fallback as a list.
         if fallback := self.config["fallback"].get():
             return [fallback], "fallback"
@@ -471,7 +471,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         self._log.info(str(obj))
         obj.genres, label = self._get_genre(obj)
         self._log.debug("Resolved ({}): {}", label, obj.genres)
-
 
         ui.show_model_changes(obj, fields=["genres"], print_obj=False)
 

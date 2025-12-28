@@ -21,12 +21,11 @@ New features:
   updated to populate the ``genres`` field as a list.
 
   **Migration**: Existing libraries with comma-separated, semicolon-separated,
-  or slash-separated genre strings (e.g., ``"Rock, Alternative, Indie"``) will
-  be automatically migrated to the ``genres`` list when items are accessed. No
-  manual reimport or ``mbsync`` is required. For users who prefer explicit
-  control, a new ``beet migrate genres`` command is available to migrate the
-  entire library at once. Use ``beet migrate genres --pretend`` to preview
-  changes before applying them.
+  or slash-separated genre strings (e.g., ``"Rock, Alternative, Indie"``) are
+  automatically migrated to the ``genres`` list when you first run beets after
+  upgrading. The migration runs once when the database schema is updated,
+  splitting genre strings and writing the changes to both the database and media
+  files. No manual action or ``mbsync`` is required.
 
 - :doc:`plugins/ftintitle`: Added argument for custom feat. words in ftintitle.
 - :doc:`plugins/ftintitle`: Added album template value ``album_artist_no_feat``.
@@ -111,6 +110,10 @@ Other changes:
   unavailable, enabling ``importorskip`` usage in pytest setup.
 - Finally removed gmusic plugin and all related code/docs as the Google Play
   Music service was shut down in 2020.
+- :doc:`plugins/lastgenre`: The ``separator`` configuration option is
+  deprecated. Genres are now stored as a list in the ``genres`` field and
+  written to files as individual genre tags. The separator option has no effect
+  and will be removed in a future version.
 
 2.5.1 (October 14, 2025)
 ------------------------
