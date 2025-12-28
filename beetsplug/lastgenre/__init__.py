@@ -502,9 +502,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
     def _fetch_and_log_genre(self, obj: LibModel) -> None:
         """Fetch genre and log it."""
         self._log.info(str(obj))
-        genres_list, label = self._get_genre(obj)
-        obj.genres = genres_list
-        self._log.debug("Resolved ({}): {}", label, genres_list)
+        obj.genres, label = self._get_genre(obj)
+        self._log.debug("Resolved ({}): {}", label, obj.genres)
+
 
         ui.show_model_changes(obj, fields=["genres"], print_obj=False)
 
