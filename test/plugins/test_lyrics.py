@@ -431,7 +431,7 @@ class TestTekstowoLyrics(LyricsBackendTest):
         [
             ("tekstowopl/piosenka24kgoldncityofangels1", True),
             (
-                "tekstowopl/piosenkabeethovenbeethovenpianosonata17tempestthe3rdmovement",  # noqa: E501
+                "tekstowopl/piosenkabeethovenbeethovenpianosonata17tempestthe3rdmovement",
                 False,
             ),
         ],
@@ -614,7 +614,7 @@ class TestTranslation:
                 [00:00:50]
                 [00:01.00] Some more synced lyrics / Quelques paroles plus synchronisées
 
-                Source: https://lrclib.net/api/123""",  # noqa: E501
+                Source: https://lrclib.net/api/123""",
                 id="synced",
             ),
             pytest.param(

@@ -120,7 +120,7 @@ def capture_stdout():
 
 def has_program(cmd, args=["--version"]):
     """Returns `True` if `cmd` can be executed."""
-    full_cmd = [cmd] + args
+    full_cmd = [cmd, *args]
     try:
         with open(os.devnull, "wb") as devnull:
             subprocess.check_call(

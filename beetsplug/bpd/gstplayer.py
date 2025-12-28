@@ -37,7 +37,7 @@ except ValueError as e:
     # makes it so the test collector functions as inteded.
     raise ImportError from e
 
-from gi.repository import GLib, Gst  # noqa: E402
+from gi.repository import GLib, Gst
 
 Gst.init(None)
 
@@ -115,7 +115,7 @@ class GstPlayer:
         elif message.type == Gst.MessageType.ERROR:
             # error
             self.player.set_state(Gst.State.NULL)
-            err, debug = message.parse_error()
+            err, _ = message.parse_error()
             print(f"Error: {err}")
             self.playing = False
 
@@ -205,7 +205,7 @@ class GstPlayer:
 
     def seek(self, position):
         """Seeks to position (in seconds)."""
-        cur_pos, cur_len = self.time()
+        _, cur_len = self.time()
         if position > cur_len:
             self.stop()
             return

@@ -867,7 +867,7 @@ class ITunesStore(RemoteArtSource):
                     )
             except KeyError as e:
                 self._log.debug(
-                    "Malformed itunes candidate: {} not found in {}",  # NOQA E501
+                    "Malformed itunes candidate: {} not found in {}",
                     e,
                     list(c.keys()),
                 )

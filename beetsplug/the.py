@@ -58,9 +58,9 @@ class ThePlugin(BeetsPlugin):
                             p,
                         )
         if self.config["a"]:
-            self.patterns = [PATTERN_A] + self.patterns
+            self.patterns = [PATTERN_A, *self.patterns]
         if self.config["the"]:
-            self.patterns = [PATTERN_THE] + self.patterns
+            self.patterns = [PATTERN_THE, *self.patterns]
         if not self.patterns:
             self._log.warning("no patterns defined!")
 

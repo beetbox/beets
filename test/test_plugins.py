@@ -308,7 +308,9 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
             "Enter search",
             "enter Id",
             "aBort",
-        ) + ("Foo", "baR")
+            "Foo",
+            "baR",
+        )
 
         self.importer.add_choice(Action.SKIP)
         self.importer.run()
@@ -342,7 +344,9 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
             "Enter search",
             "enter Id",
             "aBort",
-        ) + ("Foo", "baR")
+            "Foo",
+            "baR",
+        )
 
         config["import"]["singletons"] = True
         self.importer.add_choice(Action.SKIP)
@@ -381,7 +385,8 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
             "Enter search",
             "enter Id",
             "aBort",
-        ) + ("baZ",)
+            "baZ",
+        )
         self.importer.add_choice(Action.SKIP)
         self.importer.run()
         self.mock_input_options.assert_called_once_with(
@@ -416,7 +421,8 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
             "Enter search",
             "enter Id",
             "aBort",
-        ) + ("Foo",)
+            "Foo",
+        )
 
         # DummyPlugin.foo() should be called once
         with patch.object(DummyPlugin, "foo", autospec=True) as mock_foo:
@@ -458,7 +464,8 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
             "Enter search",
             "enter Id",
             "aBort",
-        ) + ("Foo",)
+            "Foo",
+        )
 
         # DummyPlugin.foo() should be called once
         with helper.control_stdin("f\n"):

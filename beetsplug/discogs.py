@@ -572,7 +572,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
         processed = self._process_clean_tracklist(
             clean_tracklist, album_artist_data
         )
-        tracks, index_tracks, index, divisions, next_divisions = processed
+        tracks, index_tracks, *_ = processed
         # Fix up medium and medium_index for each track. Discogs position is
         # unreliable, but tracks are in order.
         medium = None

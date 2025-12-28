@@ -234,7 +234,7 @@ class ImportTask(BaseImportTask):
         or APPLY (in which case the data comes from the choice).
         """
         if self.choice_flag in (Action.ASIS, Action.RETAG):
-            likelies, consensus = util.get_most_common_tags(self.items)
+            likelies, _ = util.get_most_common_tags(self.items)
             return likelies
         elif self.choice_flag is Action.APPLY and self.match:
             return self.match.info.copy()
@@ -892,7 +892,7 @@ class ArchiveImportTask(SentinelImportTask):
                 # The (0, 0, -1) is added to date_time because the
                 # function time.mktime expects a 9-element tuple.
                 # The -1 indicates that the DST flag is unknown.
-                date_time = time.mktime(f.date_time + (0, 0, -1))
+                date_time = time.mktime((*f.date_time, 0, 0, -1))
                 fullpath = os.path.join(extract_to, f.filename)
                 os.utime(fullpath, (date_time, date_time))
 
