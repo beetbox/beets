@@ -448,15 +448,14 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     return result
 
         # Nothing found, leave original if configured and valid.
-        if genres and self.config["keep_existing"]:
-            # Check if at least one genre is valid
-            valid_genres = [
-                g
-                for g in genres
-                if not self.whitelist or self._is_valid(g.lower())
-            ]
-            if valid_genres:
-                return valid_genres, "original fallback"
+        # Nothing found, leave original if configured and valid.
+        if (
+            genres
+            and self.config["keep_existing"]
+            and (valid_genres := self._filter_valid(genres))
+        ):
+            return valid_genres, "original fallback"
+
 
         # Return fallback as a list.
         if fallback := self.config["fallback"].get():
