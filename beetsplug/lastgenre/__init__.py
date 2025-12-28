@@ -338,7 +338,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             genres_list = obj.get("genres")
 
         # Filter out empty strings
-        return [g for g in genres_list if g] if genres_list else []
+        return genres_list
 
     def _combine_resolve_and_log(
         self, old: list[str], new: list[str]
