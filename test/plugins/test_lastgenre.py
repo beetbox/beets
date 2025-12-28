@@ -401,25 +401,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
             },
             (["fallback genre"], "fallback"),
         ),
-        # 9 - null charachter as separator
-        (
-            {
-                "force": True,
-                "keep_existing": True,
-                "source": "album",
-                "whitelist": True,
-                "separator": "\u0000",
-                "canonical": False,
-                "prefer_specific": False,
-                "count": 10,
-            },
-            "Blues",
-            {
-                "album": ["Jazz"],
-            },
-            (["Blues", "Jazz"], "keep + album, whitelist"),
-        ),
-        # 10 - limit a lot of results
+        # 9 - limit a lot of results
         (
             {
                 "force": True,
@@ -429,7 +411,6 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "count": 5,
                 "canonical": False,
                 "prefer_specific": False,
-                "separator": ", ",
             },
             "original unknown, Blues, Rock, Folk, Metal",
             {
@@ -440,23 +421,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "keep + album, whitelist",
             ),
         ),
-        # 11 - force off does not rely on configured separator
-        (
-            {
-                "force": False,
-                "keep_existing": False,
-                "source": "album",
-                "whitelist": True,
-                "count": 2,
-                "separator": ", ",
-            },
-            "not ; configured | separator",
-            {
-                "album": ["Jazz", "Bebop"],
-            },
-            (["not ; configured | separator"], "keep any, no-force"),
-        ),
-        # 12 - fallback to next stage (artist) if no allowed original present
+        # 10 - fallback to next stage (artist) if no allowed original present
         # and no album genre were fetched.
         (
             {
@@ -476,7 +441,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
             },
             (["Jazz"], "keep + artist, whitelist"),
         ),
-        # 13 - canonicalization transforms non-whitelisted genres to canonical forms
+        # 11 - canonicalization transforms non-whitelisted genres to canonical forms
         #
         # "Acid Techno" is not in the default whitelist, thus gets resolved "up" in the
         # tree to "Techno" and "Electronic".
@@ -496,7 +461,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
             },
             (["Techno", "Electronic"], "album, whitelist"),
         ),
-        # 14 - canonicalization transforms whitelisted genres to canonical forms and
+        # 12 - canonicalization transforms whitelisted genres to canonical forms and
         # includes originals
         #
         # "Detroit Techno" is in the default whitelist, thus it stays and and also gets
@@ -528,7 +493,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "keep + album, whitelist",
             ),
         ),
-        # 15 - canonicalization transforms non-whitelisted original genres to canonical
+        # 13 - canonicalization transforms non-whitelisted original genres to canonical
         # forms and deduplication works.
         #
         # "Cosmic Disco" is not in the default whitelist, thus gets resolved "up" in the
@@ -606,25 +571,11 @@ def test_get_genre(config_values, item_genre, mock_genres, expected_result):
     plugin.setup()  # Loads default whitelist and canonicalization tree
 
     item = _common.item()
-    # Set genres as a list - if item_genre is a string, convert it to list
     if item_genre:
-        # For compatibility with old separator-based tests, split if needed
-        if (
-            "separator" in config_values
-            and config_values["separator"] in item_genre
-        ):
-            sep = config_values["separator"]
-            item.genres = [
-                g.strip() for g in item_genre.split(sep) if g.strip()
-            ]
+        if ", " in item_genre:
+            item.genres = [g.strip() for g in item_genre.split(", ")]
         else:
-            # Assume comma-separated if no specific separator
-            if ", " in item_genre:
-                item.genres = [
-                    g.strip() for g in item_genre.split(", ") if g.strip()
-                ]
-            else:
-                item.genres = [item_genre]
+            item.genres = [item_genre]
     else:
         item.genres = []
 

@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 
+import warnings
 from copy import deepcopy
 from dataclasses import dataclass
 from functools import cached_property
@@ -80,6 +81,26 @@ class Info(AttrDict[Any]):
         media: str | None = None,
         **kwargs,
     ) -> None:
+        if genre:
+            warnings.warn(
+                "The 'genre' parameter is deprecated. Use 'genres' (list) instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            if not genres:
+                for separator in [", ", "; ", " / "]:
+                    if separator in genre:
+                        split_genres = [
+                            g.strip()
+                            for g in genre.split(separator)
+                            if g.strip()
+                        ]
+                        if len(split_genres) > 1:
+                            genres = split_genres
+                            break
+                if not genres:
+                    genres = [genre]
+
         self.album = album
         self.artist = artist
         self.artist_credit = artist_credit
@@ -91,7 +112,7 @@ class Info(AttrDict[Any]):
         self.artists_sort = artists_sort or []
         self.data_source = data_source
         self.data_url = data_url
-        self.genre = genre
+        self.genre = None
         self.genres = genres or []
         self.media = media
         self.update(kwargs)

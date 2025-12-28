@@ -166,37 +166,7 @@ def correct_list_fields(m: LibModel) -> None:
         elif list_val:
             setattr(m, single_field, list_val[0])
 
-    def migrate_legacy_genres() -> None:
-        """Migrate comma-separated genre strings to genres list.
-
-        For users upgrading from previous versions, their genre field may
-        contain comma-separated values (e.g., "Rock, Alternative, Indie").
-        This migration splits those values into the genres list on first access,
-        avoiding the need to reimport the entire library.
-        """
-        genre_val = getattr(m, "genre", "")
-        genres_val = getattr(m, "genres", [])
-
-        # Only migrate if genres list is empty and genre contains separators
-        if not genres_val and genre_val:
-            # Try common separators used by lastgenre and other tools
-            for separator in [", ", "; ", " / "]:
-                if separator in genre_val:
-                    # Split and clean the genre string
-                    split_genres = [
-                        g.strip()
-                        for g in genre_val.split(separator)
-                        if g.strip()
-                    ]
-                    if len(split_genres) > 1:
-                        # Found a valid split - populate genres list
-                        setattr(m, "genres", split_genres)
-                        # Clear genre so ensure_first_value sets it correctly
-                        setattr(m, "genre", "")
-                        break
-
     ensure_first_value("albumtype", "albumtypes")
-    migrate_legacy_genres()
     ensure_first_value("genre", "genres")
 
     if hasattr(m, "mb_artistids"):
