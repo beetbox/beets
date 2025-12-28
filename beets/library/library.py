@@ -5,14 +5,19 @@ from typing import TYPE_CHECKING
 import platformdirs
 
 import beets
-from beets import dbcore
+from beets import dbcore, logging, ui
+from beets.autotag import correct_list_fields
 from beets.util import normpath
 
 from .models import Album, Item
 from .queries import PF_KEY_DEFAULT, parse_query_parts, parse_query_string
 
 if TYPE_CHECKING:
-    from beets.dbcore import Results
+    from collections.abc import Mapping
+
+    from beets.dbcore import Results, types
+
+log = logging.getLogger("beets")
 
 
 class Library(dbcore.Database):
@@ -142,3 +147,88 @@ class Library(dbcore.Database):
             item_or_id if isinstance(item_or_id, int) else item_or_id.album_id
         )
         return self._get(Album, album_id) if album_id else None
+
+    # Database schema migration.
+
+    def _make_table(self, table: str, fields: Mapping[str, types.Type]):
+        """Set up the schema of the database, and migrate genres if needed."""
+        with self.transaction() as tx:
+            rows = tx.query(f"PRAGMA table_info({table})")
+        current_fields = {row[1] for row in rows}
+        field_names = set(fields.keys())
+
+        # Check if genres column is being added to items table
+        genres_being_added = (
+            table == "items"
+            and "genres" in field_names
+            and "genres" not in current_fields
+            and "genre" in current_fields
+        )
+
+        # Call parent to create/update table
+        super()._make_table(table, fields)
+
+        # Migrate genre to genres if genres column was just added
+        if genres_being_added:
+            self._migrate_genre_to_genres()
+
+    def _migrate_genre_to_genres(self):
+        """Migrate comma-separated genre strings to genres list.
+
+        This migration runs automatically when the genres column is first
+        created in the database. It splits comma-separated genre values
+        and writes the changes to both the database and media files.
+        """
+        items = list(self.items())
+        migrated_count = 0
+        total_items = len(items)
+
+        if total_items == 0:
+            return
+
+        ui.print_(f"Migrating genres for {total_items} items...")
+
+        for index, item in enumerate(items, 1):
+            genre_val = item.genre or ""
+            genres_val = item.genres or []
+
+            # Check if migration is needed
+            needs_migration = False
+            split_genres = []
+            if not genres_val and genre_val:
+                for separator in [", ", "; ", " / "]:
+                    if separator in genre_val:
+                        split_genres = [
+                            g.strip()
+                            for g in genre_val.split(separator)
+                            if g.strip()
+                        ]
+                        if len(split_genres) > 1:
+                            needs_migration = True
+                            break
+
+            if needs_migration:
+                migrated_count += 1
+                # Show progress every 100 items
+                if migrated_count % 100 == 0:
+                    ui.print_(
+                        f"  Migrated {migrated_count} items "
+                        f"({index}/{total_items} processed)..."
+                    )
+                # Migrate using the same logic as correct_list_fields
+                correct_list_fields(item)
+                item.store()
+                # Write to media file
+                try:
+                    item.try_write()
+                except Exception as e:
+                    log.warning(
+                        "Could not write genres to {}: {}",
+                        item.path,
+                        e,
+                    )
+
+        ui.print_(
+            f"Migration complete: {migrated_count} of {total_items} items "
+            f"updated with comma-separated genres"
+        )

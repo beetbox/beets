@@ -90,9 +90,8 @@ By default, the plugin chooses the most popular tag on Last.fm as a genre. If
 you prefer to use a *list* of popular genre tags, you can increase the number of
 the ``count`` config option.
 
-Lists of up to *count* genres will then be used instead of single genres. The
-genres are separated by commas by default, but you can change this with the
-``separator`` config option.
+Lists of up to *count* genres will be stored in the ``genres`` field as a list
+and written to your media files as separate genre tags.
 
 Last.fm_ provides a popularity factor, a.k.a. *weight*, for each tag ranging
 from 100 for the most popular tag down to 0 for the least popular. The plugin
@@ -192,7 +191,16 @@ file. The available options are:
   Default: ``no``.
 - **source**: Which entity to look up in Last.fm. Can be either ``artist``,
   ``album`` or ``track``. Default: ``album``.
-- **separator**: A separator for multiple genres. Default: ``', '``.
+- **separator**:
+
+  .. deprecated:: 2.6
+
+      The ``separator`` option is deprecated. Genres are now stored as a list in
+      the ``genres`` field and written to files as individual genre tags. This
+      option has no effect and will be removed in a future version.
+
+  Default: ``', '``.
+
 - **whitelist**: The filename of a custom genre list, ``yes`` to use the
   internal whitelist, or ``no`` to consider all genres valid. Default: ``yes``.
 - **title_case**: Convert the new tags to TitleCase before saving. Default:
