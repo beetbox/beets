@@ -204,7 +204,6 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
                 {
                     "type": "remixer",
                     "type-id": "RELATION TYPE ID",
-                    "target": "RECORDING REMIXER ARTIST ID",
                     "direction": "RECORDING RELATION DIRECTION",
                     "artist": {
                         "id": "RECORDING REMIXER ARTIST ID",
@@ -820,8 +819,10 @@ class MBLibraryTest(MusicBrainzTestCase):
                 "release-relations": [
                     {
                         "type": "transl-tracklisting",
-                        "target": "d2a6f856-b553-40a0-ac54-a321e8e2da01",
                         "direction": "backward",
+                        "release": {
+                            "id": "d2a6f856-b553-40a0-ac54-a321e8e2da01"
+                        },
                     }
                 ],
             },
@@ -993,8 +994,10 @@ class MBLibraryTest(MusicBrainzTestCase):
                 "release-relations": [
                     {
                         "type": "remaster",
-                        "target": "d2a6f856-b553-40a0-ac54-a321e8e2da01",
                         "direction": "backward",
+                        "release": {
+                            "id": "d2a6f856-b553-40a0-ac54-a321e8e2da01"
+                        },
                     }
                 ],
             }
