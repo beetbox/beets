@@ -914,7 +914,7 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
                     rel["type"] == "transl-tracklisting"
                     and rel["direction"] == "backward"
                 ):
-                    actual_res = self.api.get_release(rel["target"])
+                    actual_res = self.api.get_release(rel["release"]["id"])
 
         # release is potentially a pseudo release
         release = self.album_info(res)
