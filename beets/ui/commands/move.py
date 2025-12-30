@@ -1,17 +1,17 @@
 """The 'move' command: Move/copy files to the library or a new base directory."""
 
+from __future__ import annotations
+
 import os
+from typing import TYPE_CHECKING
 
 from beets import logging, ui
-from beets.util import (
-    MoveOperation,
-    PathLike,
-    displayable_path,
-    normpath,
-    syspath,
-)
+from beets.util import MoveOperation, displayable_path, normpath, syspath
 
 from .utils import do_query
+
+if TYPE_CHECKING:
+    from beets.util import PathLike
 
 # Global logger.
 log = logging.getLogger("beets")

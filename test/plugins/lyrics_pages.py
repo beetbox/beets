@@ -24,7 +24,7 @@ class LyricsPage(NamedTuple):
     artist: str = "The Beatles"
     track_title: str = "Lady Madonna"
     url_title: str | None = None  # only relevant to the Google backend
-    marks: list[str] = []  # markers for pytest.param
+    marks: list[str] = []  # markers for pytest.param  # noqa: RUF012
 
     def __str__(self) -> str:
         """Return name of this test case."""
@@ -127,7 +127,7 @@ lyrics_pages = [
         """,
         artist="Atlanta",
         track_title="Mergaitės Nori Mylėt",
-        url_title="Mergaitės nori mylėt – Atlanta | Dainų Žodžiai",
+        url_title="Mergaitės nori mylėt – Atlanta | Dainų Žodžiai",  # noqa: RUF001
         marks=[xfail_on_ci("Expired SSL certificate")],
     ),
     LyricsPage.make(

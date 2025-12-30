@@ -274,7 +274,7 @@ class ConvertPlugin(BeetsPlugin):
                 pretend,
                 hardlink,
                 link,
-                playlist,
+                _,
                 force,
             ) = self._get_opts_and_config(empty_opts)
 

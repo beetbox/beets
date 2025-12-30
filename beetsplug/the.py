@@ -15,6 +15,7 @@
 """Moves patterns in path formats (suitable for moving articles)."""
 
 import re
+from typing import ClassVar
 
 from beets.plugins import BeetsPlugin
 
@@ -27,7 +28,7 @@ FORMAT = "{}, {}"
 
 
 class ThePlugin(BeetsPlugin):
-    patterns: list[str] = []
+    patterns: ClassVar[list[str]] = []
 
     def __init__(self):
         super().__init__()
@@ -58,9 +59,9 @@ class ThePlugin(BeetsPlugin):
                             p,
                         )
         if self.config["a"]:
-            self.patterns = [PATTERN_A] + self.patterns
+            self.patterns = [PATTERN_A, *self.patterns]
         if self.config["the"]:
-            self.patterns = [PATTERN_THE] + self.patterns
+            self.patterns = [PATTERN_THE, *self.patterns]
         if not self.patterns:
             self._log.warning("no patterns defined!")
 

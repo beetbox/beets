@@ -18,29 +18,26 @@ from __future__ import annotations
 
 import collections
 import time
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, ClassVar, Literal
 
 import requests
 
 from beets import ui
 from beets.autotag import AlbumInfo, TrackInfo
 from beets.dbcore import types
-from beets.metadata_plugins import (
-    IDResponse,
-    SearchApiMetadataSourcePlugin,
-    SearchFilter,
-)
+from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from beets.library import Item, Library
+    from beets.metadata_plugins import SearchFilter
 
     from ._typing import JSONDict
 
 
 class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
-    item_types = {
+    item_types: ClassVar[dict[str, types.Type]] = {
         "deezer_track_rank": types.INTEGER,
         "deezer_track_id": types.INTEGER,
         "deezer_updated": types.DATE,

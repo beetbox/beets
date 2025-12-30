@@ -148,7 +148,7 @@ class ExportPlugin(BeetsPlugin):
             album=opts.album,
         ):
             try:
-                data, item = data_emitter(included_keys or "*")
+                data, _ = data_emitter(included_keys or "*")
             except (mediafile.UnreadableFileError, OSError) as ex:
                 self._log.error("cannot read file: {}", ex)
                 continue

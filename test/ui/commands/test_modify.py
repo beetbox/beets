@@ -190,27 +190,23 @@ class ModifyTest(BeetsTestCase):
         assert mediafile.initial_key is None
 
     def test_arg_parsing_colon_query(self):
-        (query, mods, dels) = modify_parse_args(
-            ["title:oldTitle", "title=newTitle"]
-        )
+        query, mods, _ = modify_parse_args(["title:oldTitle", "title=newTitle"])
         assert query == ["title:oldTitle"]
         assert mods == {"title": "newTitle"}
 
     def test_arg_parsing_delete(self):
-        (query, mods, dels) = modify_parse_args(["title:oldTitle", "title!"])
+        query, _, dels = modify_parse_args(["title:oldTitle", "title!"])
         assert query == ["title:oldTitle"]
         assert dels == ["title"]
 
     def test_arg_parsing_query_with_exclaimation(self):
-        (query, mods, dels) = modify_parse_args(
+        query, mods, _ = modify_parse_args(
             ["title:oldTitle!", "title=newTitle!"]
         )
         assert query == ["title:oldTitle!"]
         assert mods == {"title": "newTitle!"}
 
     def test_arg_parsing_equals_in_value(self):
-        (query, mods, dels) = modify_parse_args(
-            ["title:foo=bar", "title=newTitle"]
-        )
+        query, mods, _ = modify_parse_args(["title:foo=bar", "title=newTitle"])
         assert query == ["title:foo=bar"]
         assert mods == {"title": "newTitle"}

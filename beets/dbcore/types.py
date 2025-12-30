@@ -20,7 +20,7 @@ import re
 import time
 import typing
 from abc import ABC
-from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar, cast
 
 import beets
 from beets import util
@@ -406,7 +406,7 @@ class MusicalKey(String):
     The standard format is C, Cm, C#, C#m, etc.
     """
 
-    ENHARMONIC = {
+    ENHARMONIC: ClassVar[dict[str, str]] = {
         r"db": "c#",
         r"eb": "d#",
         r"gb": "f#",

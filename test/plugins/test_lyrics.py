@@ -14,11 +14,13 @@
 
 """Tests for the 'lyrics' plugin."""
 
+from __future__ import annotations
+
 import re
 import textwrap
 from functools import partial
 from http import HTTPStatus
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -26,7 +28,12 @@ from beets.library import Item
 from beets.test.helper import PluginMixin, TestHelper
 from beetsplug import lyrics
 
-from .lyrics_pages import LyricsPage, lyrics_pages
+from .lyrics_pages import lyrics_pages
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from .lyrics_pages import LyricsPage
 
 PHRASE_BY_TITLE = {
     "Lady Madonna": "friday night arrives without a suitcase",
@@ -424,7 +431,7 @@ class TestTekstowoLyrics(LyricsBackendTest):
         [
             ("tekstowopl/piosenka24kgoldncityofangels1", True),
             (
-                "tekstowopl/piosenkabeethovenbeethovenpianosonata17tempestthe3rdmovement",  # noqa: E501
+                "tekstowopl/piosenkabeethovenbeethovenpianosonata17tempestthe3rdmovement",
                 False,
             ),
         ],
@@ -550,7 +557,7 @@ class TestTranslation:
                     " | [Refrain : Doja Cat]"
                     " | Difficile pour moi de te laisser partir (Te laisser partir, te laisser partir)"  # noqa: E501
                     " | Mon corps ne me laissait pas le cacher (Cachez-le)"
-                    " | Quoi qu’il arrive, je ne plierais pas (Ne plierait pas, ne plierais pas)"  # noqa: E501
+                    " | Quoi qu’il arrive, je ne plierais pas (Ne plierait pas, ne plierais pas)"  # noqa: E501, RUF001
                     " | Chevauchant à travers le tonnerre, la foudre"
                 )
             elif b"00:00.00" in request.body:
@@ -591,7 +598,7 @@ class TestTranslation:
                 Hard for me to let you go (Let you go, let you go) / Difficile pour moi de te laisser partir (Te laisser partir, te laisser partir)
                 My body wouldn't let me hide it (Hide it) / Mon corps ne me laissait pas le cacher (Cachez-le)
                 No matter what, I wouldn't fold (Wouldn't fold, wouldn't fold) / Quoi qu’il arrive, je ne plierais pas (Ne plierait pas, ne plierais pas)
-                Ridin' through the thunder, lightnin' / Chevauchant à travers le tonnerre, la foudre""",  # noqa: E501
+                Ridin' through the thunder, lightnin' / Chevauchant à travers le tonnerre, la foudre""",  # noqa: E501, RUF001
                 id="plain",
             ),
             pytest.param(
@@ -607,7 +614,7 @@ class TestTranslation:
                 [00:00:50]
                 [00:01.00] Some more synced lyrics / Quelques paroles plus synchronisées
 
-                Source: https://lrclib.net/api/123""",  # noqa: E501
+                Source: https://lrclib.net/api/123""",
                 id="synced",
             ),
             pytest.param(

@@ -73,7 +73,7 @@ class BPSyncPlugin(BeetsPlugin):
         """Retrieve and apply info from the autotagger for items matched by
         query.
         """
-        for item in lib.items(query + ["singleton:true"]):
+        for item in lib.items([*query, "singleton:true"]):
             if not item.mb_trackid:
                 self._log.info(
                     "Skipping singleton with no mb_trackid: {}", item

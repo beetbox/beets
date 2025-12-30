@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, TypedDict
 
 from typing_extensions import NotRequired
 
-from beets import autotag, config, ui
+from beets import config, ui
 from beets.autotag import hooks
 from beets.util import displayable_path
 from beets.util.units import human_seconds_short
@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 
     import confuse
 
+    from beets import autotag
     from beets.autotag.distance import Distance
     from beets.library.models import Item
     from beets.ui import ColorName
@@ -338,13 +339,9 @@ class ChangeRepresentation:
         max_width_l = max(get_width(line_tuple[0]) for line_tuple in lines)
         max_width_r = max(get_width(line_tuple[1]) for line_tuple in lines)
 
-        if (
-            (max_width_l <= col_width)
-            and (max_width_r <= col_width)
-            or (
-                ((max_width_l > col_width) or (max_width_r > col_width))
-                and ((max_width_l + max_width_r) <= col_width * 2)
-            )
+        if ((max_width_l <= col_width) and (max_width_r <= col_width)) or (
+            ((max_width_l > col_width) or (max_width_r > col_width))
+            and ((max_width_l + max_width_r) <= col_width * 2)
         ):
             # All content fits. Either both maximum widths are below column
             # widths, or one of the columns is larger than allowed but the
@@ -558,7 +555,7 @@ def penalty_string(distance: Distance, limit: int | None = None) -> str:
         penalties.append(key)
     if penalties:
         if limit and len(penalties) > limit:
-            penalties = penalties[:limit] + ["..."]
+            penalties = [*penalties[:limit], "..."]
         # Prefix penalty string with U+2260: Not Equal To
         penalty_string = f"\u2260 {', '.join(penalties)}"
         return ui.colorize("changed", penalty_string)

@@ -16,19 +16,25 @@
 autotagger. Requires the pyacoustid library.
 """
 
+from __future__ import annotations
+
 import re
 from collections import defaultdict
-from collections.abc import Iterable
 from functools import cached_property, partial
+from typing import TYPE_CHECKING
 
 import acoustid
 import confuse
 
 from beets import config, ui, util
 from beets.autotag.distance import Distance
-from beets.autotag.hooks import TrackInfo
 from beets.metadata_plugins import MetadataSourcePlugin
 from beetsplug.musicbrainz import MusicBrainzPlugin
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from beets.autotag.hooks import TrackInfo
 
 API_KEY = "1vOwZtEn"
 SCORE_THRESH = 0.5
