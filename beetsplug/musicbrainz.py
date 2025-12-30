@@ -802,15 +802,20 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
         self,
         query_type: Literal["recording", "release"],
         filters: dict[str, str],
+        advanced: bool = True,
+        *args: str,
     ) -> list[JSONDict]:
         """Perform MusicBrainz API search and return results.
 
         Execute a search against the MusicBrainz API for recordings or releases
-        using the provided criteria. Handles API errors by converting them into
-        MusicBrainzAPIError exceptions with contextual information.
+        using the provided criteria.
         """
         return self.mb_api.search(
-            query_type, filters, limit=self.config["search_limit"].get()
+            query_type,
+            filters,
+            advanced,
+            *args,
+            limit=self.config["search_limit"].get(),
         )
 
     def candidates(
@@ -821,7 +826,15 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
         va_likely: bool,
     ) -> Iterable[AlbumInfo]:
         criteria = self.get_album_criteria(items, artist, album, va_likely)
-        release_ids = (r["id"] for r in self._search_api("release", criteria))
+        release_ids = [r["id"] for r in self._search_api("release", criteria)]
+
+        if len(release_ids) == 0 and "artist" in criteria:
+            # try a less advanced search if va_likely is False
+            del criteria["artist"]
+            release_ids = [
+                r["id"]
+                for r in self._search_api("release", criteria, False, artist)
+            ]
 
         for id_ in release_ids:
             with suppress(HTTPNotFoundError):
