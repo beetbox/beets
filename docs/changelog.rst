@@ -17,6 +17,7 @@ New features:
 - :doc:`plugins/ftintitle`: Added album template value ``album_artist_no_feat``.
 - :doc:`plugins/musicbrainz`: Allow selecting tags or genres to populate the
   genres tag.
+- :doc:`plugins/musicbrainz`: Additional functionality for pseudo-releases.
 - :doc:`plugins/ftintitle`: Added argument to skip the processing of artist and
   album artist are the same in ftintitle.
 - :doc:`plugins/play`: Added `$playlist` marker to precisely edit the playlist
@@ -28,8 +29,6 @@ New features:
 - :doc:`plugins/importsource`: Added new plugin that tracks original import
   paths and optionally suggests removing source files when items are removed
   from the library.
-- :doc:`plugins/mbpseudo`: Add a new `mbpseudo` plugin to proactively receive
-      MusicBrainz pseudo-releases as recommendations during import.
 - Added support for Python 3.13.
 - :doc:`/plugins/convert`: ``force`` can be passed to override checks like
   no_convert, never_convert_lossy_files, same format, and max_bitrate
@@ -84,6 +83,9 @@ For plugin developers:
 - A new plugin event, ``album_matched``, is sent when an album that is being
   imported has been matched to its metadata and the corresponding distance has
   been calculated.
+- The ``albuminfo_received`` event has been deprecated in favor of the new
+  ``album_info_received`` event, which includes information about the ``Item``
+  set being imported.
 
 For packagers:
 
