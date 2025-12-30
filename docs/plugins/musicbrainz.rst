@@ -177,7 +177,8 @@ The configuration expects an array of scripts that are desired for the
 pseudo-releases. For ``artist`` in particular, keep in mind that even
 pseudo-releases might specify it with the original script, so you should also
 configure import :ref:`languages` to give artist aliases more priority.
-Therefore, the minimum configuration to enable this functionality like this:
+Therefore, the minimum configuration to enable this functionality looks like
+this:
 
 .. code-block:: yaml
 
@@ -196,7 +197,7 @@ pseudo-releases with desired scripts.
 
 A release may have multiple pseudo-releases, for example when there is both a
 transliteration and a translation available. By default, only 1 pseudo-release
-per original release is emitted as candidate, using the languages from the
+per original release is emitted as a candidate, using the languages from the
 configuration to decide which one has most priority. If you're importing in
 timid mode and you would like to receive all valid pseudo-releases as additional
 candidates, you can add the following to the configuration:
