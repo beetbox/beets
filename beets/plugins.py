@@ -70,6 +70,7 @@ EventType = Literal[
     "album_imported",
     "album_removed",
     "albuminfo_received",
+    "album_info_received",
     "album_matched",
     "before_choose_candidate",
     "before_item_moved",
