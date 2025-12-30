@@ -771,10 +771,10 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
             for source in sources:
                 for genreitem in source:
                     genres[genreitem["name"]] += int(genreitem["count"])
-            info.genre = "; ".join(
+            info.genres = [
                 genre
                 for genre, _count in sorted(genres.items(), key=lambda g: -g[1])
-            )
+            ]
 
         # We might find links to external sources (Discogs, Bandcamp, ...)
         external_ids = self.config["external_ids"].get()

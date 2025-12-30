@@ -80,13 +80,15 @@ class LastGenrePluginTest(PluginTestCase):
         self._setup_config(canonical="", whitelist={"rock"})
         assert self.plugin._resolve_genres(["delta blues"]) == []
 
-    def test_format_and_stringify(self):
-        """Format genres list and return them as a separator-delimited string."""
+    def test_format_genres(self):
+        """Format genres list."""
         self._setup_config(count=2)
-        assert (
-            self.plugin._format_and_stringify(["jazz", "pop", "rock", "blues"])
-            == "Jazz, Pop, Rock, Blues"
-        )
+        assert self.plugin._format_genres(["jazz", "pop", "rock", "blues"]) == [
+            "Jazz",
+            "Pop",
+            "Rock",
+            "Blues",
+        ]
 
     def test_count_c14n(self):
         """Keep the n first genres, after having applied c14n when necessary"""
@@ -155,7 +157,7 @@ class LastGenrePluginTest(PluginTestCase):
         with patch("beetsplug.lastgenre.Item.store", unexpected_store):
             output = self.run_with_output("lastgenre", "--pretend")
 
-        assert "Mock Genre" in output
+        assert "genres:" in output
         album.load()
         assert album.genre == "Original Genre"
         assert album.items()[0].genre == "Original Genre"
@@ -219,7 +221,7 @@ class LastGenrePluginTest(PluginTestCase):
             {
                 "album": ["Jazz"],
             },
-            ("Blues, Jazz", "keep + album, whitelist"),
+            (["Blues", "Jazz"], "keep + album, whitelist"),
         ),
         # 1 - force and keep whitelisted, unknown original
         (
@@ -235,7 +237,7 @@ class LastGenrePluginTest(PluginTestCase):
             {
                 "album": ["Jazz"],
             },
-            ("Blues, Jazz", "keep + album, whitelist"),
+            (["Blues", "Jazz"], "keep + album, whitelist"),
         ),
         # 2 - force and keep whitelisted on empty tag
         (
@@ -251,7 +253,7 @@ class LastGenrePluginTest(PluginTestCase):
             {
                 "album": ["Jazz"],
             },
-            ("Jazz", "album, whitelist"),
+            (["Jazz"], "album, whitelist"),
         ),
         # 3 force and keep, artist configured
         (
@@ -268,7 +270,7 @@ class LastGenrePluginTest(PluginTestCase):
                 "album": ["Jazz"],
                 "artist": ["Pop"],
             },
-            ("Blues, Pop", "keep + artist, whitelist"),
+            (["Blues", "Pop"], "keep + artist, whitelist"),
         ),
         # 4 - don't force, disabled whitelist
         (
@@ -284,7 +286,7 @@ class LastGenrePluginTest(PluginTestCase):
             {
                 "album": ["Jazz"],
             },
-            ("any genre", "keep any, no-force"),
+            (["any genre"], "keep any, no-force"),
         ),
         # 5 - don't force and empty is regular last.fm fetch; no whitelist too
         (
@@ -300,7 +302,7 @@ class LastGenrePluginTest(PluginTestCase):
             {
                 "album": ["Jazzin"],
             },
-            ("Jazzin", "album, any"),
+            (["Jazzin"], "album, any"),
         ),
         # 6 - fallback to next stages until found
         (
@@ -318,7 +320,7 @@ class LastGenrePluginTest(PluginTestCase):
                 "album": None,
                 "artist": ["Jazz"],
             },
-            ("Unknown Genre, Jazz", "keep + artist, any"),
+            (["Unknown Genre", "Jazz"], "keep + artist, any"),
         ),
         # 7 - Keep the original genre when force and keep_existing are on, and
         # whitelist is disabled
@@ -338,7 +340,7 @@ class LastGenrePluginTest(PluginTestCase):
                 "album": None,
                 "artist": None,
             },
-            ("any existing", "original fallback"),
+            (["any existing"], "original fallback"),
         ),
         # 7.1 - Keep the original genre when force and keep_existing are on, and
         # whitelist is enabled, and genre is valid.
@@ -358,7 +360,7 @@ class LastGenrePluginTest(PluginTestCase):
                 "album": None,
                 "artist": None,
             },
-            ("Jazz", "original fallback"),
+            (["Jazz"], "original fallback"),
         ),
         # 7.2 - Return the configured fallback when force is on but
         # keep_existing is not.
@@ -378,7 +380,7 @@ class LastGenrePluginTest(PluginTestCase):
                 "album": None,
                 "artist": None,
             },
-            ("fallback genre", "fallback"),
+            (["fallback genre"], "fallback"),
         ),
         # 8 - fallback to fallback if no original
         (
@@ -397,26 +399,9 @@ class LastGenrePluginTest(PluginTestCase):
                 "album": None,
                 "artist": None,
             },
-            ("fallback genre", "fallback"),
+            (["fallback genre"], "fallback"),
         ),
-        # 9 - null charachter as separator
-        (
-            {
-                "force": True,
-                "keep_existing": True,
-                "source": "album",
-                "whitelist": True,
-                "separator": "\u0000",
-                "canonical": False,
-                "prefer_specific": False,
-            },
-            "Blues",
-            {
-                "album": ["Jazz"],
-            },
-            ("Blues\u0000Jazz", "keep + album, whitelist"),
-        ),
-        # 10 - limit a lot of results
+        # 9 - limit a lot of results
         (
             {
                 "force": True,
@@ -426,31 +411,17 @@ class LastGenrePluginTest(PluginTestCase):
                 "count": 5,
                 "canonical": False,
                 "prefer_specific": False,
-                "separator": ", ",
             },
             "original unknown, Blues, Rock, Folk, Metal",
             {
                 "album": ["Jazz", "Bebop", "Hardbop"],
             },
-            ("Blues, Rock, Metal, Jazz, Bebop", "keep + album, whitelist"),
+            (
+                ["Blues", "Rock", "Metal", "Jazz", "Bebop"],
+                "keep + album, whitelist",
+            ),
         ),
-        # 11 - force off does not rely on configured separator
-        (
-            {
-                "force": False,
-                "keep_existing": False,
-                "source": "album",
-                "whitelist": True,
-                "count": 2,
-                "separator": ", ",
-            },
-            "not ; configured | separator",
-            {
-                "album": ["Jazz", "Bebop"],
-            },
-            ("not ; configured | separator", "keep any, no-force"),
-        ),
-        # 12 - fallback to next stage (artist) if no allowed original present
+        # 10 - fallback to next stage (artist) if no allowed original present
         # and no album genre were fetched.
         (
             {
@@ -468,9 +439,9 @@ class LastGenrePluginTest(PluginTestCase):
                 "album": None,
                 "artist": ["Jazz"],
             },
-            ("Jazz", "keep + artist, whitelist"),
+            (["Jazz"], "keep + artist, whitelist"),
         ),
-        # 13 - canonicalization transforms non-whitelisted genres to canonical forms
+        # 11 - canonicalization transforms non-whitelisted genres to canonical forms
         #
         # "Acid Techno" is not in the default whitelist, thus gets resolved "up" in the
         # tree to "Techno" and "Electronic".
@@ -488,9 +459,9 @@ class LastGenrePluginTest(PluginTestCase):
             {
                 "album": ["acid techno"],
             },
-            ("Techno, Electronic", "album, whitelist"),
+            (["Techno", "Electronic"], "album, whitelist"),
         ),
-        # 14 - canonicalization transforms whitelisted genres to canonical forms and
+        # 12 - canonicalization transforms whitelisted genres to canonical forms and
         # includes originals
         #
         # "Detroit Techno" is in the default whitelist, thus it stays and and also gets
@@ -512,11 +483,17 @@ class LastGenrePluginTest(PluginTestCase):
                 "album": ["acid house"],
             },
             (
-                "Detroit Techno, Techno, Electronic, Acid House, House",
+                [
+                    "Detroit Techno",
+                    "Techno",
+                    "Electronic",
+                    "Acid House",
+                    "House",
+                ],
                 "keep + album, whitelist",
             ),
         ),
-        # 15 - canonicalization transforms non-whitelisted original genres to canonical
+        # 13 - canonicalization transforms non-whitelisted original genres to canonical
         # forms and deduplication works.
         #
         # "Cosmic Disco" is not in the default whitelist, thus gets resolved "up" in the
@@ -537,7 +514,7 @@ class LastGenrePluginTest(PluginTestCase):
                 "album": ["Detroit Techno"],
             },
             (
-                "Disco, Electronic, Detroit Techno, Techno",
+                ["Disco", "Electronic", "Detroit Techno", "Techno"],
                 "keep + album, whitelist",
             ),
         ),
@@ -567,9 +544,17 @@ def test_get_genre(config_values, item_genre, mock_genres, expected_result):
     # Configure
     plugin.config.set(config_values)
     plugin.setup()  # Loads default whitelist and canonicalization tree
+
     item = _common.item()
-    item.genre = item_genre
+    if item_genre:
+        if ", " in item_genre:
+            item.genres = [g.strip() for g in item_genre.split(", ")]
+        else:
+            item.genres = [item_genre]
+    else:
+        item.genres = []
 
     # Run
     res = plugin._get_genre(item)
-    assert res == expected_result
+    expected_genres, expected_label = expected_result
+    assert res == (expected_genres, expected_label)

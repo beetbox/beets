@@ -12,6 +12,21 @@ been dropped.
 
 New features:
 
+- Add native support for multiple genres per album/track. The ``genres`` field
+  now stores genres as a list and is written to files as multiple individual
+  genre tags (e.g., separate GENRE tags for FLAC/MP3). The single ``genre``
+  field is automatically synchronized to contain the first genre from the list
+  for backward compatibility. The :doc:`plugins/musicbrainz`,
+  :doc:`plugins/beatport`, and :doc:`plugins/lastgenre` plugins have been
+  updated to populate the ``genres`` field as a list.
+
+  **Migration**: Existing libraries with comma-separated, semicolon-separated,
+  or slash-separated genre strings (e.g., ``"Rock, Alternative, Indie"``) are
+  automatically migrated to the ``genres`` list when you first run beets after
+  upgrading. The migration runs once when the database schema is updated,
+  splitting genre strings and writing the changes to both the database and media
+  files. No manual action or ``mbsync`` is required.
+
 - :doc:`plugins/ftintitle`: Added argument for custom feat. words in ftintitle.
 - :doc:`plugins/ftintitle`: Added album template value ``album_artist_no_feat``.
 - :doc:`plugins/musicbrainz`: Allow selecting tags or genres to populate the
@@ -95,6 +110,10 @@ Other changes:
   unavailable, enabling ``importorskip`` usage in pytest setup.
 - Finally removed gmusic plugin and all related code/docs as the Google Play
   Music service was shut down in 2020.
+- :doc:`plugins/lastgenre`: The ``separator`` configuration option is
+  deprecated. Genres are now stored as a list in the ``genres`` field and
+  written to files as individual genre tags. The separator option has no effect
+  and will be removed in a future version.
 
 2.5.1 (October 14, 2025)
 ------------------------
