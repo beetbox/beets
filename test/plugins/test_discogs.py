@@ -761,7 +761,7 @@ def test_get_media_and_albumtype(formats, expected_media, expected_albumtype):
 @patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
 def test_va_buildartistinfo(given_artists, expected_info, config_va_name):
     config["va_name"] = config_va_name
-    assert DiscogsPlugin().build_artistinfo(given_artists) == expected_info
+    assert DiscogsPlugin()._build_artistinfo(given_artists) == expected_info
 
 
 @pytest.mark.parametrize(
