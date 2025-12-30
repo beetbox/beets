@@ -957,7 +957,15 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
 
         for id_ in release_ids:
             with suppress(HTTPNotFoundError):
-                if album_info := self.album_for_id(id_):
+                album_info = self.album_for_id(id_)
+                # always yield pseudo first to give it priority
+                if isinstance(album_info, MultiPseudoAlbumInfo):
+                    yield from album_info.unwrap()
+                    yield album_info
+                elif isinstance(album_info, PseudoAlbumInfo):
+                    yield album_info
+                    yield album_info.get_official_release()
+                elif isinstance(album_info, AlbumInfo):
                     yield album_info
 
     def item_candidates(
@@ -1007,15 +1015,19 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
 
         if actual_res is None:
             return pseudo_album_info
-        elif self._has_desired_script(pseudo_release):
+
+        actual_release = self.album_info(actual_res)
+        merged_release = _merge_pseudo_and_actual_album(
+            pseudo_album_info, actual_release
+        )
+
+        if self._has_desired_script(pseudo_release):
             return PseudoAlbumInfo(
-                pseudo_release=pseudo_album_info,
-                official_release=self.album_info(actual_res),
+                pseudo_release=merged_release,
+                official_release=actual_release,
             )
         else:
-            return _merge_pseudo_and_actual_album(
-                pseudo_album_info, self.album_info(actual_res)
-            )
+            return merged_release
 
     def _handle_intercepted_pseudo_releases(
         self,
