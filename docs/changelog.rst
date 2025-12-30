@@ -13,6 +13,12 @@ New features:
 
 Bug fixes:
 
+For plugin developers:
+
+- The ``albuminfo_received`` event has been deprecated in favor of the new
+  ``album_info_received`` event, which includes information about the ``Item``
+  set being imported.
+
 For packagers:
 
 Other changes:
@@ -133,6 +139,9 @@ For plugin developers:
 - A new plugin event, ``album_matched``, is sent when an album that is being
   imported has been matched to its metadata and the corresponding distance has
   been calculated.
+- The ``albuminfo_received`` event has been deprecated in favor of the new
+  ``album_info_received`` event, which includes information about the ``Item``
+  set being imported.
 - Added a reusable requests handler which can be used by plugins to make HTTP
   requests with built-in retry and backoff logic. It uses beets user-agent and
   configures timeouts. See :class:`~beetsplug._utils.requests.RequestHandler`
