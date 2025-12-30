@@ -207,6 +207,16 @@ class TestMBPseudoReleases(TestMBPseudoMixin):
         assert not isinstance(album_info, PseudoAlbumInfo)
         assert album_info.data_source == "MusicBrainz"
 
+    def test_interception_skip_when_relations_missing(
+        self,
+        musicbrainz_plugin: MusicBrainzPlugin,
+        official_release: JSONDict,
+    ):
+        del official_release["release-relations"]
+        album_info = self.get_album_info(musicbrainz_plugin, official_release)
+        assert not isinstance(album_info, PseudoAlbumInfo)
+        assert album_info.data_source == "MusicBrainz"
+
     def test_interception(
         self,
         musicbrainz_plugin: MusicBrainzPlugin,
