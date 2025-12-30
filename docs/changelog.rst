@@ -74,6 +74,11 @@ Bug fixes:
   cancelling an edit session during import. :bug:`6104`
 - :ref:`update-cmd` :doc:`plugins/edit` fix display formatting of field changes
   to clearly show added and removed flexible fields.
+- :doc:`plugins/lastgenre`: Fix the issue where last.fm doesn't return any
+  result in the artist genre stage because "concatenation" words in the artist
+  name (like "feat.", "+", or "&") prevent it. Using the albumartists list field
+  and fetching a genre for each artist separately improves the chance of
+  receiving valid results in that stage.
 - :doc:`plugins/discogs`: Fixed an unexpected flexible attribute originating
   from the Discogs plugin. :bug:`6177`
 
