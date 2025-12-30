@@ -12,6 +12,7 @@ been dropped.
 
 New features:
 
+- :doc:`plugins/fetchart`: Added config setting for a fallback cover art image.
 - :doc:`plugins/ftintitle`: Added argument for custom feat. words in ftintitle.
 - :doc:`plugins/ftintitle`: Added album template value ``album_artist_no_feat``.
 - :doc:`plugins/musicbrainz`: Allow selecting tags or genres to populate the
@@ -24,6 +25,9 @@ New features:
       to receive extra verbose logging around last.fm results and how they are
       resolved. The ``extended_debug`` config setting and ``--debug`` option
       have been removed.
+- :doc:`plugins/importsource`: Added new plugin that tracks original import
+  paths and optionally suggests removing source files when items are removed
+  from the library.
 - :doc:`plugins/mbpseudo`: Add a new `mbpseudo` plugin to proactively receive
       MusicBrainz pseudo-releases as recommendations during import.
 - Added support for Python 3.13.
@@ -65,6 +69,11 @@ Bug fixes:
   "albumartist" instead of a list of unique album artists.
 - Sanitize log messages by removing control characters preventing terminal
   rendering issues.
+- When using :doc:`plugins/fromfilename` together with :doc:`plugins/edit`,
+  temporary tags extracted from filenames are no longer lost when discarding or
+  cancelling an edit session during import. :bug:`6104`
+- :ref:`update-cmd` :doc:`plugins/edit` fix display formatting of field changes
+  to clearly show added and removed flexible fields.
 - :doc:`plugins/discogs`: Fixed an unexpected flexible attribute originating
   from the Discogs plugin. :bug:`6177`
 
@@ -494,7 +503,6 @@ New features:
   ``beet list -a title:something`` or ``beet list artpath:cover``. Consequently
   album queries involving ``path`` field have been sped up, like ``beet list -a
   path:/path/``.
-- :doc:`plugins/importsource`: Added plugin
 - :doc:`plugins/ftintitle`: New ``keep_in_artist`` option for the plugin, which
   allows keeping the "feat." part in the artist metadata while still changing
   the title.

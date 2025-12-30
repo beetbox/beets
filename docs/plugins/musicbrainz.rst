@@ -69,15 +69,14 @@ Default
 .. conf:: ratelimit
     :default: 1
 
-    Controls the number of Web service requests per second.
-
-    **Do not change the rate limit setting** if you're using the main MusicBrainz
-    server---on this public server, you're limited_ to one request per second.
+    Controls the number of Web service requests per second. This setting applies only
+    to custom servers. The official MusicBrainz server enforces a rate limit of 1
+    request per second.
 
 .. conf:: ratelimit_interval
     :default: 1.0
 
-    The time interval (in seconds) for the rate limit.
+    The time interval (in seconds) for the rate limit. Only applies to custom servers.
 
 .. conf:: enabled
     :default: yes
