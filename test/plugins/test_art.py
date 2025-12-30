@@ -261,7 +261,9 @@ class FSArtTest(UseThePlugin):
         os.mkdir(syspath(self.dpath))
 
         self.source = fetchart.FileSystem(logger, self.plugin.config)
-        self.settings = Settings(cautious=False, cover_names=("art",))
+        self.settings = Settings(
+            cautious=False, cover_names=("art",), fallback=None
+        )
 
     def test_finds_jpg_in_directory(self):
         _common.touch(os.path.join(self.dpath, b"a.jpg"))
@@ -284,6 +286,13 @@ class FSArtTest(UseThePlugin):
         self.settings.cautious = True
         with pytest.raises(StopIteration):
             next(self.source.get(None, self.settings, [self.dpath]))
+
+    def test_configured_fallback_is_used(self):
+        fallback = os.path.join(self.temp_dir, b"a.jpg")
+        _common.touch(fallback)
+        self.settings.fallback = fallback
+        candidate = next(self.source.get(None, self.settings, [self.dpath]))
+        assert candidate.path == fallback
 
     def test_empty_dir(self):
         with pytest.raises(StopIteration):
