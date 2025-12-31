@@ -322,6 +322,7 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "beets/**" = ["PT"]
 "test/test_util.py" = ["E501"]
+"test/ui/test_field_diff.py" = ["E501"]
 
 [tool.ruff.lint.isort]
 split-on-trailing-comma = false

@@ -12,6 +12,7 @@ been dropped.
 
 New features:
 
+- :doc:`plugins/fetchart`: Added config setting for a fallback cover art image.
 - :doc:`plugins/ftintitle`: Added argument for custom feat. words in ftintitle.
 - :doc:`plugins/ftintitle`: Added album template value ``album_artist_no_feat``.
 - :doc:`plugins/musicbrainz`: Allow selecting tags or genres to populate the
@@ -70,6 +71,13 @@ Bug fixes:
 - When using :doc:`plugins/fromfilename` together with :doc:`plugins/edit`,
   temporary tags extracted from filenames are no longer lost when discarding or
   cancelling an edit session during import. :bug:`6104`
+- :ref:`update-cmd` :doc:`plugins/edit` fix display formatting of field changes
+  to clearly show added and removed flexible fields.
+- :doc:`plugins/lastgenre`: Fix the issue where last.fm doesn't return any
+  result in the artist genre stage because "concatenation" words in the artist
+  name (like "feat.", "+", or "&") prevent it. Using the albumartists list field
+  and fetching a genre for each artist separately improves the chance of
+  receiving valid results in that stage.
 
 For plugin developers:
 
