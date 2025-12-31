@@ -600,4 +600,148 @@ lyrics_pages = [
         track_title="R U Mine?",
         marks=[xfail_on_ci("Genius returns 403 FORBIDDEN in CI")],
     ),
+    LyricsPage.make(
+        "https://www.azlyrics.com/lyrics/derivakat/bountyhunter.html",
+        """
+        [Romanized:]
+
+        Living legend made of myths and made of stories
+        But I'm present, find the mark and I'll take the glory
+        Hit the dead-end, cornered like an animal, it just
+        Takes one second, I'm nothing if not practical
+        But I don't really care if you're right or you're wrong
+        Bùguǎn nǐ de wùhuì or you're just a disgrace
+        Get in the zone when I put on my song
+        Bìrán de xiànshí when I'm up in your face
+        Zhēn tài kě qíng kùn zài lóng lǐ de nǐ
+        But you'll find in the end that I'll leave you erased
+        (If they call?) I'm the one
+        (Got a job?) Get it done
+        All alone, you and me, I'll be leaving no trace
+
+        No place where I won't go to
+        No limits I won't break through
+        No godless deed I won't do
+        If they got problems, then they know to
+
+        Call the bounty hunter
+        Yeah, they got my number
+        I'm the problem solver
+        Leave you six feet under
+        You won't see another
+        Winter, spring or summer
+        Wǒ huì ràng nǐ xiāoshī
+        No way to recover (Hey!)
+
+        Run it up
+        Night or day (Hey!)
+        Hunt you down
+        Run away
+
+        No mercy from this mercenary
+        Take away your sanctuary
+        Shìlì jiù xiàng 20/20
+        Way I see you'll end up buried
+        Don't deviate
+        Zhǎodào nǐ so I terminate
+        Wúlùn, wǒ huì make you pay
+        I'll double tap you like bang, bang
+
+        (Dead lilac) A ghost you only heard in rumor
+        (Dead lilac) But only if you heard me sooner
+        (Dead lilac) Losing your chances and losing your time
+        (Dead lilac) shìjiè wèilái méi nǐ de cúnzài (Yeah)
+
+        No place where I won't go to (I won't go to)
+        No limits I won't break through (I won't break through)
+        No godless deed I won't do (That I won't do)
+        If they got problems, then they know to
+
+        Call the bounty hunter (Hey)
+        Yeah, they got my number
+        I'm the problem solver (Hey)
+        Leave you six feet under
+        You won't see another (Hey)
+        Winter, spring or summer
+        Wǒ huì ràng nǐ xiāoshī (Hey)
+        No way to recover (Hey!)
+
+        Run it up (Run it up)
+        Night or day (Hey!) (Day)
+        Hunt you down (Hunt you down)
+        Run away
+
+        [English/Chinese:]
+
+        Living legend made of myths and made of stories
+        But I'm present, find the mark and I'll take the glory
+        Hit the dead-end, cornered like an animal, it just
+        Takes one second, I'm nothing if not practical
+        But I don't really care if you're right or you're wrong
+        不管你的误会 or you're just a disgrace
+        Get in the zone when I put on my song
+        必然的现实 when I'm up in your face
+        真太可情 困在笼里的你
+        But you'll find in the end that I'll leave you erased
+        (If they call?) I'm the one
+        (Got a job?) Get it done
+        All alone, you and me, I'll be leaving no trace
+
+        No place where I won't go to
+        No limits I won't break through
+        No godless deed I won't do
+        If they got problems, then they know to
+
+        Call the bounty hunter
+        Yeah, they got my number
+        I'm the problem solver
+        Leave you six feet under
+        You won't see another
+        Winter, spring or summer
+        我会让你消失
+        No way to recover (Hey!)
+
+        Run it up
+        Night or day (Hey!)
+        Hunt you down
+        Run away
+
+        No mercy from this mercenary
+        Take away your sanctuary
+        视力就像 20/20
+        Way I see you'll end up buried
+        Don't deviate
+        找到你 so I terminate
+        无论, 我会 make you pay
+        I'll double tap you like bang, bang
+
+        (Dead lilac) A ghost you only heard in rumor
+        (Dead lilac) But only if you heard me sooner
+        (Dead lilac) Losing your chances and losing your time
+        (Dead lilac) 世界未来没你的存在 (Yeah)
+
+        No place where I won't go to (I won't go to)
+        No limits I won't break through (I won't break through)
+        No godless deed I won't do (That I won't do)
+        If they got problems, then they know to
+
+        Call the bounty hunter (Hey)
+        Yeah, they got my number
+        I'm the problem solver (Hey)
+        Leave you six feet under
+        You won't see another (Hey)
+        Winter, spring or summer
+        我会让你消失 (Hey)
+        No way to recover (Hey!)
+
+        Run it up (Run it up)
+        Night or day (Hey!) (Day)
+        Hunt you down (Hunt you down)
+        Run away
+        """,
+        artist="Derivakat",
+        track_title="Bounty Hunter",
+        url_title="Derivakat - Bounty Hunter Lyrics | AZLyrics.com",
+        marks=[xfail_on_ci("AZLyrics is blocked by Cloudflare")],
+    ),
 ]
