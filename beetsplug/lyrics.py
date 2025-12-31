@@ -198,15 +198,16 @@ class LyricsRequestHandler(RequestHandler):
     ) -> str:
         """Return text / HTML data from the given URL.
 
-        By default, trust the server's encoding and requests' apparent_encoding
-        detection. When force_utf8=True, default to UTF-8 if server doesn't
-        specify encoding (avoids MacRoman misdetection on some sites like Genius).
+        Set encoding to None to let requests auto-detect (works for most sites).
+        For Genius, force UTF-8 to avoid MacRoman misdetection.
         """
         url = self.format_url(url, params)
         self.debug("Fetching HTML from {}", url)
         r = self.get(url, **kwargs)
         if force_utf8:
             r.encoding = r.encoding or "utf-8"
+        else:
+            r.encoding = None
         return r.text
 
     def get_json(self, url: str, params: JSONDict | None = None, **kwargs):
