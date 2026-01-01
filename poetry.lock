@@ -1732,22 +1732,6 @@ mutagen = ">=1.46"
 test = ["tox"]
 
 [[package]]
-name = "mock"
-version = "5.2.0"
-description = "Rolling backport of unittest.mock for all Pythons"
-optional = false
-python-versions = ">=3.6"
-files = [
-    {file = "mock-5.2.0-py3-none-any.whl", hash = "sha256:7ba87f72ca0e915175596069dbbcc7c75af7b5e9b9bc107ad6349ede0819982f"},
-    {file = "mock-5.2.0.tar.gz", hash = "sha256:4e460e818629b4b173f32d08bf30d3af8123afbb8e04bb5707a1fd4799e503f0"},
-]
-
-[package.extras]
-build = ["blurb", "twine", "wheel"]
-docs = ["sphinx"]
-test = ["pytest", "pytest-cov"]
-
-[[package]]
 name = "msgpack"
 version = "1.1.2"
 description = "MessagePack serializer"
@@ -4064,17 +4048,6 @@ files = [
 ]
 
 [[package]]
-name = "types-mock"
-version = "5.2.0.20250924"
-description = "Typing stubs for mock"
-optional = false
-python-versions = ">=3.9"
-files = [
-    {file = "types_mock-5.2.0.20250924-py3-none-any.whl", hash = "sha256:23617ffb4cf948c085db69ec90bd474afbce634ef74995045ae0a5748afbe57d"},
-    {file = "types_mock-5.2.0.20250924.tar.gz", hash = "sha256:953197543b4183f00363e8e626f6c7abea1a3f7a4dd69d199addb70b01b6bb35"},
-]
-
-[[package]]
 name = "types-pillow"
 version = "10.2.0.20240822"
 description = "Typing stubs for Pillow"
@@ -4226,4 +4199,4 @@ web = ["flask", "flask-cors"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<4"
-content-hash = "8cf2ad0e6a842511e1215720a63bfdf9d5f49345410644cbb0b5fd8fb74f50d2"
+content-hash = "45c7dc4ec30f4460a09554d0ec0ebcafebff097386e005e29e12830d16d223dd"
