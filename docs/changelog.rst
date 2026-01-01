@@ -37,6 +37,7 @@ New features:
       resolve differences in metadata source styles.
 - :doc:`plugins/spotify`: Added support for multi-artist albums and tracks,
       saving all contributing artists to the respective fields.
+- :doc:`plugins/discogs`: Added support for multi value fields. :bug:`6068`
 
 Bug fixes:
 
@@ -78,6 +79,8 @@ Bug fixes:
   name (like "feat.", "+", or "&") prevent it. Using the albumartists list field
   and fetching a genre for each artist separately improves the chance of
   receiving valid results in that stage.
+- :doc:`plugins/discogs`: Fixed an unexpected flexible attribute originating
+  from the Discogs plugin. :bug:`6177`
 
 For plugin developers:
 
