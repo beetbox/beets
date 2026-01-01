@@ -8,7 +8,7 @@ from beets.autotag import AlbumMatch
 from beets.autotag.distance import Distance
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.library import Item
-from beets.test.helper import ConfigMixin, PluginMixin
+from beets.test.helper import PluginMixin
 from beetsplug._typing import JSONDict
 from beetsplug.mbpseudo import (
     _STATUS_PSEUDO,
@@ -52,14 +52,7 @@ def pseudo_release_info() -> AlbumInfo:
     )
 
 
-@pytest.fixture(scope="module", autouse=True)
-def config():
-    config = ConfigMixin().config
-    with pytest.MonkeyPatch.context() as m:
-        m.setattr("beetsplug.mbpseudo.config", config)
-        yield config
-
-
+@pytest.mark.usefixtures("config")
 class TestPseudoAlbumInfo:
     def test_album_id_always_from_pseudo(
         self, official_release_info: AlbumInfo, pseudo_release_info: AlbumInfo
