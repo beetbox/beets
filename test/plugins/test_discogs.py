@@ -21,7 +21,7 @@ import pytest
 from beets import config
 from beets.test._common import Bag
 from beets.test.helper import BeetsTestCase, capture_log
-from beetsplug.discogs import DiscogsPlugin
+from beetsplug.discogs import ArtistCreditData, ArtistCreditParts, DiscogsPlugin
 
 
 @patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
@@ -319,6 +319,42 @@ class DGAlbumInfoTest(BeetsTestCase):
         assert d.tracks[2].disctitle == "MEDIUM TITLE CD2"
         assert len(d.tracks) == 3
 
+    def test_populates_multi_value_fields(self):
+        track = self._make_track("Title", "A1", "05:00")
+        track["artists"] = [
+            {"name": "TRACK ARTIST", "id": "TR1", "join": ","},
+            {"name": "GUEST", "id": "TR2", "join": ""},
+        ]
+        track["extraartists"] = [
+            {"name": "FEATURED", "id": "TR3", "role": "Featuring"}
+        ]
+        release = self._make_release(tracks=[track])
+        release.data["artists"] = [
+            {"name": "ALBUM ARTIST", "id": "ALB1", "join": "&"},
+            {"name": "COLLAB", "id": "ALB2", "join": ""},
+        ]
+        release.artists = [Bag(data=d) for d in release.data["artists"]]
+
+        album_info = DiscogsPlugin().get_album_info(release)
+
+        assert album_info.artists == ["ALBUM ARTIST", "COLLAB"]
+        assert album_info.artists_credit == ["ALBUM ARTIST", "COLLAB"]
+        assert album_info.artists_ids == ["ALB1", "ALB2"]
+        assert album_info.albumtypes == ["FORMAT DESC 1", "FORMAT DESC 2"]
+
+        track_info = album_info.tracks[0]
+        assert track_info.artists == [
+            "TRACK ARTIST",
+            "GUEST",
+            "FEATURED",
+        ]
+        assert track_info.artists_credit == [
+            "TRACK ARTIST",
+            "GUEST",
+            "FEATURED",
+        ]
+        assert track_info.artists_ids == ["TR1", "TR2", "TR3"]
+
     def test_parse_minimal_release(self):
         """Test parsing of a release with the minimal amount of information."""
         data = {
@@ -526,6 +562,31 @@ def test_anv(
     assert r.tracks[0].artist == track_artist
     assert r.tracks[0].artist_credit == track_artist_credit
 
+    base_album_artists = ["ARTIST", "SOLOIST"]
+    anv_album_artists = ["VARIATION", "VARIATION"]
+    base_track_artists = ["ARTIST", "PERFORMER"]
+    anv_track_artists = ["VARIATION", "VARIATION"]
+
+    expected_album_artists = (
+        anv_album_artists if album_artist_anv else base_album_artists
+    )
+    expected_album_artists_credit = (
+        anv_album_artists if artist_credit_anv else base_album_artists
+    )
+    expected_track_artists = (
+        anv_track_artists if track_artist_anv else base_track_artists
+    )
+    expected_track_artists_credit = (
+        anv_track_artists if artist_credit_anv else base_track_artists
+    )
+
+    assert r.artists == expected_album_artists
+    assert r.artists_credit == expected_album_artists_credit
+    assert r.tracks[0].artists == expected_track_artists
+    assert r.tracks[0].artists_credit == expected_track_artists_credit
+    assert r.artists_ids == ["321", "445"]
+    assert r.tracks[0].artists_ids == ["11146", "787"]
+
 
 @patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
 def test_anv_album_artist():
@@ -608,9 +669,17 @@ def test_parse_featured_artists(track, expected_artist):
     """Tests the plugins ability to parse a featured artist.
     Initial check with one featured artist, two featured artists,
     and three. Ignores artists that are not listed as featured."""
-    t = DiscogsPlugin().get_track_info(
-        track, 1, 1, ("ARTIST", "ARTIST CREDIT", 2)
+    plugin = DiscogsPlugin()
+    album_artist_data = ArtistCreditData(
+        default=ArtistCreditParts("ARTIST", "2", ("ARTIST",), ("2",)),
+        anv=ArtistCreditParts(
+            "ARTIST CREDIT",
+            "2",
+            ("ARTIST CREDIT",),
+            ("2",),
+        ),
     )
+    t = plugin.get_track_info(track, 1, [], album_artist_data)
     assert t.artist == expected_artist
 
 
