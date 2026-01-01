@@ -88,6 +88,7 @@ For plugin developers:
 For packagers:
 
 - The minimum supported Python version is now 3.10.
+- An unused dependency on ``mock`` has been removed.
 
 Other changes:
 
