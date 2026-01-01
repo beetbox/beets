@@ -335,55 +335,57 @@ def test_split_on_feat(
     [
         ## default keywords
         # different braces and keywords
-        ("Song (Remix)", None, 5),
-        ("Song [Version]", None, 5),
-        ("Song {Extended Mix}", None, 5),
-        ("Song <Instrumental>", None, 5),
+        ("Song (Remix)", None, "Song ft. Bob (Remix)"),
+        ("Song [Version]", None, "Song ft. Bob [Version]"),
+        ("Song {Extended Mix}", None, "Song ft. Bob {Extended Mix}"),
+        ("Song <Instrumental>", None, "Song ft. Bob <Instrumental>"),
         # two keyword clauses
-        ("Song (Remix) (Live)", None, 5),
+        ("Song (Remix) (Live)", None, "Song ft. Bob (Remix) (Live)"),
         # brace insensitivity
-        ("Song (Live) [Remix]", None, 5),
-        ("Song [Edit] (Remastered)", None, 5),
+        ("Song (Live) [Remix]", None, "Song ft. Bob (Live) [Remix]"),
+        ("Song [Edit] (Remastered)", None, "Song ft. Bob [Edit] (Remastered)"),
         # negative cases
-        ("Song", None, None),  # no clause
-        ("Song (Arbitrary)", None, None),  # no keyword
-        ("Song (", None, None),  # no matching brace or keyword
-        ("Song (Live", None, None),  # no matching brace with keyword
+        ("Song", None, "Song ft. Bob"),  # no clause
+        ("Song (Arbitrary)", None, "Song (Arbitrary) ft. Bob"),  # no keyword
+        ("Song (", None, "Song ( ft. Bob"),  # no matching brace or keyword
+        ("Song (Live", None, "Song (Live ft. Bob"),  # no matching brace with keyword
         # one keyword clause, one non-keyword clause
-        ("Song (Live) (Arbitrary)", None, 5),
-        ("Song (Arbitrary) (Remix)", None, 17),
+        ("Song (Live) (Arbitrary)", None, "Song ft. Bob (Live) (Arbitrary)"),
+        ("Song (Arbitrary) (Remix)", None, "Song (Arbitrary) ft. Bob (Remix)"),
         # nested brackets - same type
-        ("Song (Remix (Extended))", None, 5),
-        ("Song [Arbitrary [Description]]", None, None),
+        ("Song (Remix (Extended))", None, "Song ft. Bob (Remix (Extended))"),
+        ("Song [Arbitrary [Description]]", None, "Song [Arbitrary [Description]] ft. Bob"),
         # nested brackets - different types
-        ("Song (Remix [Extended])", None, 5),
+        ("Song (Remix [Extended])", None, "Song ft. Bob (Remix [Extended])"),
         # nested - returns outer start position despite inner keyword
-        ("Song [Arbitrary {Extended}]", None, 5),
-        ("Song {Live <Arbitrary>}", None, 5),
-        ("Song <Remaster (Arbitrary)>", None, 5),
-        ("Song <Extended> [Live]", None, 5),
-        ("Song (Version) <Live>", None, 5),
-        ("Song (Arbitrary [Description])", None, None),
-        ("Song [Description (Arbitrary)]", None, None),
+        ("Song [Arbitrary {Extended}]", None, "Song ft. Bob [Arbitrary {Extended}]"),
+        ("Song {Live <Arbitrary>}", None, "Song ft. Bob {Live <Arbitrary>}"),
+        ("Song <Remaster (Arbitrary)>", None, "Song ft. Bob <Remaster (Arbitrary)>"),
+        ("Song <Extended> [Live]", None, "Song ft. Bob <Extended> [Live]"),
+        ("Song (Version) <Live>", None, "Song ft. Bob (Version) <Live>"),
+        ("Song (Arbitrary [Description])", None, "Song (Arbitrary [Description]) ft. Bob"),
+        ("Song [Description (Arbitrary)]", None, "Song [Description (Arbitrary)] ft. Bob"),
         ## custom keywords
-        ("Song (Live)", ["live"], 5),
-        ("Song (Concert)", ["concert"], 5),
-        ("Song (Remix)", ["custom"], None),
-        ("Song (Custom)", ["custom"], 5),
-        ("Song", [], None),
-        ("Song (", [], None),
+        ("Song (Live)", ["live"], "Song ft. Bob (Live)"),
+        ("Song (Concert)", ["concert"], "Song ft. Bob (Concert)"),
+        ("Song (Remix)", ["custom"], "Song (Remix) ft. Bob"),
+        ("Song (Custom)", ["custom"], "Song ft. Bob (Custom)"),
+        ("Song", [], "Song ft. Bob"),
+        ("Song (", [], "Song ( ft. Bob"),
         # Multi-word keyword tests
-        ("Song (Club Mix)", ["club mix"], 5),  # Positive: matches multi-word
-        ("Song (Club Remix)", ["club mix"], None),  # Negative: no match
+        ("Song (Club Mix)", ["club mix"], "Song ft. Bob (Club Mix)"),  # Positive: matches multi-word
+        ("Song (Club Remix)", ["club mix"], "Song (Club Remix) ft. Bob"),  # Negative: no match
     ],
-)
-def test_find_bracket_position(
+)  # fmt: skip
+def test_insert_ft_into_title(
     given: str,
     keywords: list[str] | None,
-    expected: int | None,
+    expected: str,
 ) -> None:
     assert (
-        ftintitle.FtInTitlePlugin.find_bracket_position(given, keywords)
+        ftintitle.FtInTitlePlugin.insert_ft_into_title(
+            given, "ft. Bob", keywords
+        )
         == expected
     )
 

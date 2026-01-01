@@ -146,32 +146,19 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
 
         # If we have keywords, require one of them to appear in the bracket text.
         # If kw == "", the lookahead becomes true and we match any bracket content.
-        kw = rf"\b(?:{kw_inner})\b" if kw_inner else ""
-
+        kw = rf"\b(?={kw_inner})\b" if kw_inner else ""
         return re.compile(
             rf"""
-            (?:                     # Match ONE bracketed segment of any supported type
-              \(                    # "("
-                (?=[^)]*{kw})       # Lookahead: keyword must appear before closing ")"
-                                      # - if kw == "", this is always true
-                [^)]*               # Consume bracket content (no nested ")" handling)
-              \)                    # ")"
-
-            | \[                    # "["
-                (?=[^\]]*{kw})      # Lookahead
-                [^\]]*              # Consume content up to first "]"
-              \]                    # "]"
-
-            | <                     # "<"
-                (?=[^>]*{kw})       # Lookahead
-                [^>]*               # Consume content up to first ">"
-              >                     # ">"
-
-            | \x7B                  # Literal open brace
-                (?=[^\x7D]*{kw})    # Lookahead
-                [^\x7D]*            # Consume content up to first close brace
-              \x7D                  # Literal close brace
-            )                       # End bracketed segment alternation
+            (?:   # non-capturing group for the split
+              \s*?  # optional whitespace before brackets
+              (?=     # any bracket containing a keyword
+                    \([^)]*{kw}.*?\)
+                |   \[[^]]*{kw}.*?\]
+                |    <[^>]*{kw}.*? >
+                | \{{[^}}]*{kw}.*?\}}
+                | $   # or the end of the string
+              )
+            )
             """,
             re.IGNORECASE | re.VERBOSE,
         )
@@ -290,7 +277,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         if not drop_feat and not contains_feat(item.title, custom_words):
             feat_format = self.config["format"].as_str()
             formatted = feat_format.format(feat_part)
-            new_title = FtInTitlePlugin.insert_ft_into_title(
+            new_title = self.insert_ft_into_title(
                 item.title, formatted, self.bracket_keywords
             )
             self._log.info("title: {.title} -> {}", item, new_title)
@@ -349,19 +336,16 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         m: re.Match[str] | None = pattern.search(title)
         return m.start() if m else None
 
-    @staticmethod
+    @classmethod
     def insert_ft_into_title(
-        title: str, feat_part: str, keywords: list[str] | None = None
+        cls, title: str, feat_part: str, keywords: list[str] | None = None
     ) -> str:
         """Insert featured artist before the first bracket containing
         remix/edit keywords if present.
         """
-        if (
-            bracket_pos := FtInTitlePlugin.find_bracket_position(
-                title, keywords
-            )
-        ) is not None:
-            title_before = title[:bracket_pos].rstrip()
-            title_after = title[bracket_pos:]
-            return f"{title_before} {feat_part} {title_after}"
-        return f"{title} {feat_part}"
+        normalized = (
+            DEFAULT_BRACKET_KEYWORDS if keywords is None else tuple(keywords)
+        )
+        pattern = cls._bracket_position_pattern(normalized)
+        parts = pattern.split(title, maxsplit=1)
+        return f" {feat_part} ".join(parts).strip()
