@@ -275,23 +275,18 @@ class EditPlugin(plugins.BeetsPlugin):
                     ui.print_("No changes to apply.")
                     return False
 
-                # Confirm the changes.
+                # For cancel/keep-editing, restore objects to their original
+                # in-memory state so temp edits don't leak into the session
                 choice = ui.input_options(
                     ("continue Editing", "apply", "cancel")
                 )
                 if choice == "a":  # Apply.
                     return True
                 elif choice == "c":  # Cancel.
+                    self.apply_data(objs, new_data, old_data)
                     return False
                 elif choice == "e":  # Keep editing.
-                    # Reset the temporary changes to the objects. I we have a
-                    # copy from above, use that, else reload from the database.
-                    objs = [
-                        (old_obj or obj) for old_obj, obj in zip(objs_old, objs)
-                    ]
-                    for obj in objs:
-                        if not obj.id < 0:
-                            obj.load()
+                    self.apply_data(objs, new_data, old_data)
                     continue
 
         # Remove the temporary file before returning.
@@ -380,9 +375,7 @@ class EditPlugin(plugins.BeetsPlugin):
             # to the files if needed without re-applying metadata.
             return Action.RETAG
         else:
-            # Edit cancelled / no edits made. Revert changes.
-            for obj in task.items:
-                obj.read()
+            return None
 
     def importer_edit_candidate(self, session, task):
         """Callback for invoking the functionality during an interactive

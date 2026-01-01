@@ -101,7 +101,6 @@ beautifulsoup4 = "*"
 codecov = ">=2.1.13"
 flask = "*"
 langdetect = "*"
-mock = "*"
 pylast = "*"
 pytest = "*"
 pytest-cov = "*"
@@ -125,7 +124,6 @@ sphinx-lint = ">=1.0.0"
 mypy = "*"
 types-beautifulsoup4 = "*"
 types-docutils = ">=0.22.2.20251006"
-types-mock = "*"
 types-Flask-Cors = "*"
 types-Pillow = "*"
 types-PyYAML = "*"
@@ -321,8 +319,9 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "beets/**" = ["PT"]
-"test/test_util.py" = ["E501"]
 "test/plugins/test_ftintitle.py" = ["E501"]
+"test/test_util.py" = ["E501"]
+"test/ui/test_field_diff.py" = ["E501"]
 
 [tool.ruff.lint.isort]
 split-on-trailing-comma = false
