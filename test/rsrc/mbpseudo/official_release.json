@@ -1642,6 +1642,51 @@
       "target-credit": "",
       "type": "transl-tracklisting",
       "type-id": "fc399d47-23a7-4c28-bfcf-0607a562b644"
+    },
+    {
+      "attribute-ids": {},
+      "attribute-values": {},
+      "attributes": [],
+      "begin": null,
+      "direction": "forward",
+      "end": null,
+      "ended": false,
+      "release": {
+        "artist-credit": [
+          {
+            "artist": {
+              "country": "JP",
+              "disambiguation": "",
+              "id": "55e42264-ef27-49d8-93fd-29f930dc96e4",
+              "name": "幾田りら",
+              "sort-name": "Ikuta, Lilas",
+              "type": null,
+              "type-id": null
+            },
+            "joinphrase": "",
+            "name": "Lilas Ikuta"
+          }
+        ],
+        "barcode": null,
+        "disambiguation": "",
+        "id": "mockedid-0bc1-49eb-b8c4-34473d279a43",
+        "media": [],
+        "packaging": null,
+        "packaging-id": null,
+        "quality": "normal",
+        "release-group": null,
+        "status": null,
+        "status-id": null,
+        "text-representation": {
+          "language": "jpn",
+          "script": "Latn"
+        },
+        "title": "Title Desu"
+      },
+      "source-credit": "",
+      "target-credit": "",
+      "type": "transl-tracklisting",
+      "type-id": "fc399d47-23a7-4c28-bfcf-0607a562b644"
     }
   ],
   "status": "Official",
