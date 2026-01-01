@@ -1,11 +1,13 @@
-Changelog
-=========
+###########
+ Changelog
+###########
 
 Changelog goes here! Please add your entry to the bottom of one of the lists
 below!
 
-Unreleased
-----------
+************
+ Unreleased
+************
 
 Beets now requires Python 3.10 or later since support for EOL Python 3.9 has
 been dropped.
@@ -37,6 +39,8 @@ New features:
       resolve differences in metadata source styles.
 - :doc:`plugins/spotify`: Added support for multi-artist albums and tracks,
       saving all contributing artists to the respective fields.
+- :doc:`plugins/harmonicmix`: Suggests harmonically compatible tracks for DJ
+  mixing based on key and BPM.
 
 Bug fixes:
 
@@ -103,8 +107,9 @@ Other changes:
 - Finally removed gmusic plugin and all related code/docs as the Google Play
   Music service was shut down in 2020.
 
-2.5.1 (October 14, 2025)
-------------------------
+**************************
+ 2.5.1 (October 14, 2025)
+**************************
 
 New features:
 
@@ -137,8 +142,9 @@ Other changes:
   automatically. Applied it to :doc:`plugins/deezer`, :doc:`plugins/discogs`,
   :doc:`plugins/musicbrainz` and :doc:`plugins/spotify` plugins documentation.
 
-2.5.0 (October 11, 2025)
-------------------------
+**************************
+ 2.5.0 (October 11, 2025)
+**************************
 
 New features:
 
@@ -221,8 +227,9 @@ For developers and plugin authors:
 - Metadata source plugins are now registered globally when instantiated, which
   makes their handling slightly more efficient.
 
-2.4.0 (September 13, 2025)
---------------------------
+****************************
+ 2.4.0 (September 13, 2025)
+****************************
 
 New features:
 
@@ -365,8 +372,9 @@ Other changes:
 - UI: Use ``text_diff_added`` and ``text_diff_removed`` colors in **all** diff
   comparisons, including case differences.
 
-2.3.1 (May 14, 2025)
---------------------
+**********************
+ 2.3.1 (May 14, 2025)
+**********************
 
 Bug fixes:
 
@@ -379,8 +387,9 @@ For packagers:
 - Force ``poetry`` version below 2 to avoid it mangling file modification times
   in ``sdist`` package. :bug:`5770`
 
-2.3.0 (May 07, 2025)
---------------------
+**********************
+ 2.3.0 (May 07, 2025)
+**********************
 
 Beets now requires Python 3.9 or later since support for EOL Python 3.8 has been
 dropped.
@@ -469,8 +478,9 @@ Other changes:
   to the database.
 - Database models are now serializable with pickle.
 
-2.2.0 (December 02, 2024)
--------------------------
+***************************
+ 2.2.0 (December 02, 2024)
+***************************
 
 New features:
 
@@ -495,8 +505,9 @@ Other changes:
 
 .. _contribute: https://github.com/beetbox/beets/contribute
 
-2.1.0 (November 22, 2024)
--------------------------
+***************************
+ 2.1.0 (November 22, 2024)
+***************************
 
 New features:
 
@@ -585,8 +596,9 @@ Other changes:
   calculate the bpm. Previously this import was being done immediately, so every
   ``beet`` invocation was being delayed by a couple of seconds. :bug:`5185`
 
-2.0.0 (May 30, 2024)
---------------------
+**********************
+ 2.0.0 (May 30, 2024)
+**********************
 
 With this release, beets now requires Python 3.7 or later (it removes support
 for Python 3.6).
@@ -897,8 +909,9 @@ Other changes:
 - :doc:`/faq`: :ref:`src`: Removed some long lines.
 - Refactor the test cases to avoid test smells.
 
-1.6.0 (November 27, 2021)
--------------------------
+***************************
+ 1.6.0 (November 27, 2021)
+***************************
 
 This release is our first experiment with time-based releases! We are aiming to
 publish a new release of beets every 3 months. We therefore have a healthy but
@@ -978,8 +991,9 @@ Here are some notes for packagers:
   Thus, the optional dependency on ``gmusicapi`` does not exist anymore.
   :bug:`4089`
 
-1.5.0 (August 19, 2021)
------------------------
+*************************
+ 1.5.0 (August 19, 2021)
+*************************
 
 This long overdue release of beets includes far too many exciting and useful
 features than could ever be satisfactorily enumerated. As a technical detail, it
@@ -1369,8 +1383,9 @@ For packagers:
 
 .. _works: https://musicbrainz.org/doc/Work
 
-1.4.9 (May 30, 2019)
---------------------
+**********************
+ 1.4.9 (May 30, 2019)
+**********************
 
 This small update is part of our attempt to release new versions more often!
 There are a few important fixes, and we're clearing the deck for a change to
@@ -1400,8 +1415,9 @@ Here's a note for packagers:
 
 .. _no_color: https://no-color.org
 
-1.4.8 (May 16, 2019)
---------------------
+**********************
+ 1.4.8 (May 16, 2019)
+**********************
 
 This release is far too long in coming, but it's a good one. There is the usual
 torrent of new features and a ridiculously long line of fixes, but there are
@@ -1628,8 +1644,9 @@ And some messages for packagers:
 - The optional :pypi:`python-itunes` dependency has been removed.
 - Python versions 3.7 and 3.8 are now supported.
 
-1.4.7 (May 29, 2018)
---------------------
+**********************
+ 1.4.7 (May 29, 2018)
+**********************
 
 This new release includes lots of new features in the importer and the metadata
 source backends that it uses. We've changed how the beets importer handles
@@ -1752,8 +1769,9 @@ There are a couple of changes for developers:
   all cases, most notably when using the ``mbsync`` plugin. This was a
   regression since version 1.4.1. :bug:`2921`
 
-1.4.6 (December 21, 2017)
--------------------------
+***************************
+ 1.4.6 (December 21, 2017)
+***************************
 
 The highlight of this release is "album merging," an oft-requested option in the
 importer to add new tracks to an existing album you already have in your
@@ -1857,8 +1875,9 @@ There are some changes for developers:
   describing the file operation instead of multiple Boolean flags. There is a
   new numerated type describing how to move, copy, or link files. :bug:`2682`
 
-1.4.5 (June 20, 2017)
----------------------
+***********************
+ 1.4.5 (June 20, 2017)
+***********************
 
 Version 1.4.5 adds some oft-requested features. When you're importing files, you
 can now manually set fields on the new music. Date queries have gotten much more
@@ -1899,8 +1918,9 @@ There are also some bug fixes:
 - More informative error messages are displayed when the file format is not
   recognized. :bug:`2599`
 
-1.4.4 (June 10, 2017)
----------------------
+***********************
+ 1.4.4 (June 10, 2017)
+***********************
 
 This release built up a longer-than-normal list of nifty new features. We now
 support DSF audio files and the importer can hard-link your files, for example.
@@ -2019,8 +2039,9 @@ We removed backends from two metadata plugins because of bitrot:
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
 
-1.4.3 (January 9, 2017)
------------------------
+*************************
+ 1.4.3 (January 9, 2017)
+*************************
 
 Happy new year! This new version includes a cornucopia of new features from
 contributors, including new tags related to classical music and a new
@@ -2085,8 +2106,9 @@ For plugin developers: when providing new importer prompt choices (see
 to consider. For example, you might provide an alternative strategy for picking
 between the available alternatives or for looking up a release on MusicBrainz.
 
-1.4.2 (December 16, 2016)
--------------------------
+***************************
+ 1.4.2 (December 16, 2016)
+***************************
 
 This is just a little bug fix release. With 1.4.2, we're also confident enough
 to recommend that anyone who's interested give Python 3 a try: bugs may still
@@ -2109,8 +2131,9 @@ Also, we've removed some special handling for logging in the
 :doc:`/plugins/discogs` that we believe was unnecessary. If spurious log
 messages appear in this version, please let us know by filing a bug.
 
-1.4.1 (November 25, 2016)
--------------------------
+***************************
+ 1.4.1 (November 25, 2016)
+***************************
 
 Version 1.4 has **alpha-level** Python 3 support. Thanks to the heroic efforts
 of :user:`jrobeson`, beets should run both under Python 2.7, as before, and now
@@ -2204,8 +2227,9 @@ you typed ``beet version``. This has been corrected.
 
 .. _six: https://pypi.org/project/six/
 
-1.3.19 (June 25, 2016)
-----------------------
+************************
+ 1.3.19 (June 25, 2016)
+************************
 
 This is primarily a bug fix release: it cleans up a couple of regressions that
 appeared in the last version. But it also features the triumphant return of the
@@ -2255,8 +2279,9 @@ And other fixes:
   versions, the plugin would use a ``.jpg`` extension for all images.
   :bug:`2053`
 
-1.3.18 (May 31, 2016)
----------------------
+***********************
+ 1.3.18 (May 31, 2016)
+***********************
 
 This update adds a new :doc:`/plugins/hook` that lets you integrate beets with
 command-line tools and an :doc:`/plugins/export` that can dump data from the
@@ -2336,8 +2361,9 @@ Fixes:
 - :doc:`/plugins/acousticbrainz`: AcousticBrainz lookups are now done over
   HTTPS. Thanks to :user:`Freso`. :bug:`2007`
 
-1.3.17 (February 7, 2016)
--------------------------
+***************************
+ 1.3.17 (February 7, 2016)
+***************************
 
 This release introduces one new plugin to fetch audio information from the
 AcousticBrainz_ project and another plugin to make it easier to submit your
@@ -2415,8 +2441,9 @@ Fixes:
 
 .. _beets.io: https://beets.io/
 
-1.3.16 (December 28, 2015)
---------------------------
+****************************
+ 1.3.16 (December 28, 2015)
+****************************
 
 The big news in this release is a new :doc:`interactive editor plugin
 </plugins/edit>`. It's really nifty: you can now change your music's metadata by
@@ -2528,8 +2555,9 @@ Fixes:
 
 .. _emby: https://emby.media
 
-1.3.15 (October 17, 2015)
--------------------------
+***************************
+ 1.3.15 (October 17, 2015)
+***************************
 
 This release adds a new plugin for checking file quality and a new source for
 lyrics. The larger features are:
@@ -2591,8 +2619,9 @@ This release has plenty of fixes:
 - Fixed unit of file size to powers of two (MiB, GiB, etc.) instead of powers of
   ten (MB, GB, etc.). :bug:`1623`
 
-1.3.14 (August 2, 2015)
------------------------
+*************************
+ 1.3.14 (August 2, 2015)
+*************************
 
 This is mainly a bugfix release, but we also have a nifty new plugin for ipfs_
 and a bunch of new configuration options.
@@ -2687,8 +2716,9 @@ Fixes:
 
 .. _python bug: https://bugs.python.org/issue16512
 
-1.3.13 (April 24, 2015)
------------------------
+*************************
+ 1.3.13 (April 24, 2015)
+*************************
 
 This is a tiny bug-fix release. It copes with a dependency upgrade that broke
 beets. There are just two fixes:
@@ -2699,8 +2729,9 @@ beets. There are just two fixes:
   album art is no longer embedded on import in order to leave files
   untouched---in effect, ``auto`` is implicitly disabled. :bug:`1427`
 
-1.3.12 (April 18, 2015)
------------------------
+*************************
+ 1.3.12 (April 18, 2015)
+*************************
 
 This little update makes queries more powerful, sorts music more intelligently,
 and removes a performance bottleneck. There's an experimental new plugin for
@@ -2758,8 +2789,9 @@ Little fixes and improvements:
 
 .. _jellyfish: https://github.com/sunlightlabs/jellyfish
 
-1.3.11 (April 5, 2015)
-----------------------
+************************
+ 1.3.11 (April 5, 2015)
+************************
 
 In this release, we refactored the logging system to be more flexible and more
 useful. There are more granular levels of verbosity, the output from plugins
@@ -2949,8 +2981,9 @@ For developers:
 
 .. _bs1770gain: http://bs1770gain.sourceforge.net
 
-1.3.10 (January 5, 2015)
-------------------------
+**************************
+ 1.3.10 (January 5, 2015)
+**************************
 
 This version adds a healthy helping of new features and fixes a critical
 MPEG-4--related bug. There are more lyrics sources, there new plugins for
@@ -3033,8 +3066,9 @@ As usual, there are loads of little fixes and improvements:
 
 .. _plex: https://plex.tv/
 
-1.3.9 (November 17, 2014)
--------------------------
+***************************
+ 1.3.9 (November 17, 2014)
+***************************
 
 This release adds two new standard plugins to beets: one for synchronizing
 Last.fm listening data and one for integrating with Linux desktops. And at long
@@ -3140,8 +3174,9 @@ And countless little improvements and fixes:
 - Importing an archive will no longer leave temporary files behind in ``/tmp``.
   Thanks to :user:`multikatt`. :bug:`1067`, :bug:`1091`
 
-1.3.8 (September 17, 2014)
---------------------------
+****************************
+ 1.3.8 (September 17, 2014)
+****************************
 
 This release has two big new chunks of functionality. Queries now support
 **sorting** and user-defined fields can now have **types**.
@@ -3217,8 +3252,9 @@ Still more fixes and little improvements:
 
 .. _discogs_client: https://github.com/discogs/discogs_client
 
-1.3.7 (August 22, 2014)
------------------------
+*************************
+ 1.3.7 (August 22, 2014)
+*************************
 
 This release of beets fixes all the bugs, and you can be confident that you will
 never again find any bugs in beets, ever. It also adds support for plain old
@@ -3317,8 +3353,9 @@ And the multitude of little improvements and fixes:
 - :doc:`/plugins/mbsync`: Track alignment now works with albums that have
   multiple copies of the same recording. Thanks to Rui Gonçalves.
 
-1.3.6 (May 10, 2014)
---------------------
+**********************
+ 1.3.6 (May 10, 2014)
+**********************
 
 This is primarily a bugfix release, but it also brings two new plugins: one for
 playing music in desktop players and another for organizing your directories
@@ -3360,8 +3397,9 @@ And those all-important bug fixes:
   were embedded into the source files.
 - New plugin event: ``before_item_moved``. Thanks to Robert Speicher.
 
-1.3.5 (April 15, 2014)
-----------------------
+************************
+ 1.3.5 (April 15, 2014)
+************************
 
 This is a short-term release that adds some great new stuff to beets. There's
 support for tracking and calculating musical keys, the ReplayGain plugin was
@@ -3422,8 +3460,9 @@ There are also many bug fixes and little enhancements:
 
 .. _enum34: https://pypi.python.org/pypi/enum34
 
-1.3.4 (April 5, 2014)
----------------------
+***********************
+ 1.3.4 (April 5, 2014)
+***********************
 
 This release brings a hodgepodge of medium-sized conveniences to beets. A new
 :ref:`config-cmd` command manages your configuration, we now have :ref:`bash
@@ -3500,8 +3539,9 @@ Fixes:
 
 .. _requests: https://requests.readthedocs.io/en/master/
 
-1.3.3 (February 26, 2014)
--------------------------
+***************************
+ 1.3.3 (February 26, 2014)
+***************************
 
 Version 1.3.3 brings a bunch changes to how item and album fields work
 internally. Along with laying the groundwork for some great things in the
@@ -3597,8 +3637,9 @@ Other little fixes:
 - Album art in files with Vorbis Comments is now marked with the "front cover"
   type. Thanks to Jason Lefley.
 
-1.3.2 (December 22, 2013)
--------------------------
+***************************
+ 1.3.2 (December 22, 2013)
+***************************
 
 This update brings new plugins for fetching acoustic metrics and listening
 statistics, many more options for the duplicate detection plugin, and flexible
@@ -3672,8 +3713,9 @@ As usual, there are also innumerable little fixes and improvements:
 
 .. _mpd: https://www.musicpd.org/
 
-1.3.1 (October 12, 2013)
-------------------------
+**************************
+ 1.3.1 (October 12, 2013)
+**************************
 
 This release boasts a host of new little features, many of them contributed by
 beets' amazing and prolific community. It adds support for Opus_ files,
@@ -3738,8 +3780,9 @@ And some fixes:
 
 .. _opus: https://www.opus-codec.org/
 
-1.3.0 (September 11, 2013)
---------------------------
+****************************
+ 1.3.0 (September 11, 2013)
+****************************
 
 Albums and items now have **flexible attributes**. This means that, when you
 want to store information about your music in the beets database, you're no
@@ -3780,8 +3823,9 @@ There's more detail than you could ever need `on the beets blog`_.
 
 .. _on the beets blog: https://beets.io/blog/flexattr.html
 
-1.2.2 (August 27, 2013)
------------------------
+*************************
+ 1.2.2 (August 27, 2013)
+*************************
 
 This is a bugfix release. We're in the midst of preparing for a large change in
 beets 1.3, so 1.2.2 resolves some issues that came up over the last few weeks.
@@ -3804,8 +3848,9 @@ The improvements in this release are:
   situation could only arise when importing music from the library directory and
   when the two albums are imported close in time.
 
-1.2.1 (June 22, 2013)
----------------------
+***********************
+ 1.2.1 (June 22, 2013)
+***********************
 
 This release introduces a major internal change in the way that similarity
 scores are handled. It means that the importer interface can now show you
@@ -3854,8 +3899,9 @@ And some little enhancements and bug fixes:
 - :doc:`/plugins/random`: Fix compatibility with Python 2.6. Thanks to Matthias
   Drochner.
 
-1.2.0 (June 5, 2013)
---------------------
+**********************
+ 1.2.0 (June 5, 2013)
+**********************
 
 There's a *lot* of new stuff in this release: new data sources for the
 autotagger, new plugins to look for problems in your library, tracking the date
@@ -3968,8 +4014,9 @@ And a batch of fixes:
 
 .. _discogs: https://discogs.com/
 
-1.1.0 (April 29, 2013)
-----------------------
+************************
+ 1.1.0 (April 29, 2013)
+************************
 
 This final release of 1.1 brings a little polish to the betas that introduced
 the new configuration system. The album art and lyrics plugins also got a little
@@ -4015,8 +4062,9 @@ will automatically migrate your configuration to the new system.
 
 .. _tomahawk: https://github.com/tomahawk-player/tomahawk
 
-1.1b3 (March 16, 2013)
-----------------------
+************************
+ 1.1b3 (March 16, 2013)
+************************
 
 This third beta of beets 1.1 brings a hodgepodge of little new features (and
 internal overhauls that will make improvements easier in the future). There are
@@ -4084,8 +4132,9 @@ Other stuff:
 - :doc:`/plugins/chroma`: Catch Acoustid Web service errors when submitting
   fingerprints.
 
-1.1b2 (February 16, 2013)
--------------------------
+***************************
+ 1.1b2 (February 16, 2013)
+***************************
 
 The second beta of beets 1.1 uses the fancy new configuration infrastructure to
 add many, many new config options. The import process is more flexible;
@@ -4187,8 +4236,9 @@ Other new stuff:
 
 .. _itunes sound check: https://support.apple.com/kb/HT2425
 
-1.1b1 (January 29, 2013)
-------------------------
+**************************
+ 1.1b1 (January 29, 2013)
+**************************
 
 This release entirely revamps beets' configuration system. The configuration
 file is now a YAML_ document and is located, along with other support files, in
@@ -4221,8 +4271,9 @@ It also adds some new features:
 - :doc:`/plugins/importfeeds`: Added a new configuration option that controls
   the base for relative paths used in m3u files. Thanks to Philippe Mongeau.
 
-1.0.0 (January 29, 2013)
-------------------------
+**************************
+ 1.0.0 (January 29, 2013)
+**************************
 
 After fifteen betas and two release candidates, beets has finally hit
 one-point-oh. Congratulations to everybody involved. This version of beets will
@@ -4236,8 +4287,9 @@ ongoing in the betas of version 1.1.
   when analyzing non-ASCII filenames.
 - Silence a spurious warning from version 0.04.12 of the Unidecode module.
 
-1.0rc2 (December 31, 2012)
---------------------------
+****************************
+ 1.0rc2 (December 31, 2012)
+****************************
 
 This second release candidate follows quickly after rc1 and fixes a few small
 bugs found since that release. There were a couple of regressions and some bugs
@@ -4250,8 +4302,9 @@ in a newly added plugin.
   not available from some sources.
 - Fix a regression on Windows that caused all relative paths to be "not found".
 
-1.0rc1 (December 17, 2012)
---------------------------
+****************************
+ 1.0rc1 (December 17, 2012)
+****************************
 
 The first release candidate for beets 1.0 includes a deluge of new features
 contributed by beets users. The vast majority of the credit for this release
@@ -4360,8 +4413,9 @@ today on features for version 1.1.
 
 .. _tomahawk resolver: https://beets.io/blog/tomahawk-resolver.html
 
-1.0b15 (July 26, 2012)
-----------------------
+************************
+ 1.0b15 (July 26, 2012)
+************************
 
 The fifteenth (!) beta of beets is compendium of small fixes and features, most
 of which represent long-standing requests. The improvements include matching
@@ -4469,8 +4523,9 @@ fetching cover art for your music, enable this plugin after upgrading to beets
 
 .. _artist credits: https://wiki.musicbrainz.org/Artist_Credit
 
-1.0b14 (May 12, 2012)
----------------------
+***********************
+ 1.0b14 (May 12, 2012)
+***********************
 
 The centerpiece of this beets release is the graceful handling of
 similarly-named albums. It's now possible to import two albums with the same
@@ -4555,8 +4610,9 @@ release.
 
 .. _pyacoustid: https://github.com/beetbox/pyacoustid
 
-1.0b13 (March 16, 2012)
------------------------
+*************************
+ 1.0b13 (March 16, 2012)
+*************************
 
 Beets 1.0b13 consists of a plethora of small but important fixes and
 refinements. A lyrics plugin is now included with beets; new audio properties
@@ -4626,8 +4682,9 @@ to come in the next couple of releases.
 
 .. _colorama: https://pypi.python.org/pypi/colorama
 
-1.0b12 (January 16, 2012)
--------------------------
+***************************
+ 1.0b12 (January 16, 2012)
+***************************
 
 This release focuses on making beets' path formatting vastly more powerful. It
 adds a function syntax for transforming text. Via a new plugin, arbitrary Python
@@ -4678,8 +4735,9 @@ filenames that would otherwise conflict. Three new plugins (``inline``,
 - Removed the ``--path-format`` global flag for ``beet``.
 - Removed the ``lastid`` plugin, which was deprecated in the previous version.
 
-1.0b11 (December 12, 2011)
---------------------------
+****************************
+ 1.0b11 (December 12, 2011)
+****************************
 
 This version of beets focuses on transitioning the autotagger to the new version
 of the MusicBrainz database (called NGS). This transition brings with it a
@@ -4749,8 +4807,9 @@ release: one for assigning genres and another for ReplayGain analysis.
 
 .. _simon chopin: https://github.com/laarmen
 
-1.0b10 (September 22, 2011)
----------------------------
+*****************************
+ 1.0b10 (September 22, 2011)
+*****************************
 
 This version of beets focuses on making it easier to manage your metadata
 *after* you've imported it. A bumper crop of new commands has been added: a
@@ -4800,8 +4859,9 @@ plugin.
 - Fix Unicode encoding of album artist, album type, and label.
 - Fix crash when "copying" an art file that's already in place.
 
-1.0b9 (July 9, 2011)
---------------------
+**********************
+ 1.0b9 (July 9, 2011)
+**********************
 
 This release focuses on a large number of small fixes and improvements that turn
 beets into a well-oiled, music-devouring machine. See the full release notes,
@@ -4876,8 +4936,9 @@ below, for a plethora of new features.
 
 .. _xargs: https://en.wikipedia.org/wiki/xargs
 
-1.0b8 (April 28, 2011)
-----------------------
+************************
+ 1.0b8 (April 28, 2011)
+************************
 
 This release of beets brings two significant new features. First, beets now has
 first-class support for "singleton" tracks. Previously, it was only really meant
@@ -4927,8 +4988,9 @@ that functionality.
 - Fix adding individual tracks in BPD.
 - Fix crash when ``~/.beetsconfig`` does not exist.
 
-1.0b7 (April 5, 2011)
----------------------
+***********************
+ 1.0b7 (April 5, 2011)
+***********************
 
 Beta 7's focus is on better support for "various artists" releases. These albums
 can be treated differently via the new ``[paths]`` config section and the
@@ -4986,8 +5048,9 @@ new configuration options and the ability to clean up empty directory subtrees.
 
 .. _as specified by musicbrainz: https://wiki.musicbrainz.org/ReleaseType
 
-1.0b6 (January 20, 2011)
-------------------------
+**************************
+ 1.0b6 (January 20, 2011)
+**************************
 
 This version consists primarily of bug fixes and other small improvements. It's
 in preparation for a more feature-ful release in beta 7. The most important
@@ -5028,8 +5091,9 @@ issue involves correct ordering of autotagged albums.
 
 .. _upstream bug: https://github.com/quodlibet/mutagen/issues/7
 
-1.0b5 (September 28, 2010)
---------------------------
+****************************
+ 1.0b5 (September 28, 2010)
+****************************
 
 This version of beets focuses on increasing the accuracy of the autotagger. The
 main addition is an included plugin that uses acoustic fingerprinting to match
@@ -5077,8 +5141,9 @@ are also rolled into this release.
 
 .. _!!!: https://musicbrainz.org/artist/f26c72d3-e52c-467b-b651-679c73d8e1a7.html
 
-1.0b4 (August 9, 2010)
-----------------------
+************************
+ 1.0b4 (August 9, 2010)
+************************
 
 This thrilling new release of beets focuses on making the tagger more usable in
 a variety of ways. First and foremost, it should now be much faster: the tagger
@@ -5150,8 +5215,9 @@ Here's the detailed list of changes:
 - The tagger should now be a little more reluctant to reorder tracks that
   already have indices.
 
-1.0b3 (July 22, 2010)
----------------------
+***********************
+ 1.0b3 (July 22, 2010)
+***********************
 
 This release features two major additions to the autotagger's functionality:
 album art fetching and MusicBrainz ID tags. It also contains some important
@@ -5218,8 +5284,9 @@ when accessed through FUSE. Check it out!
 
 .. _beetfs: https://github.com/jbaiter/beetfs
 
-1.0b2 (July 7, 2010)
---------------------
+**********************
+ 1.0b2 (July 7, 2010)
+**********************
 
 This release focuses on high-priority fixes and conspicuously missing features.
 Highlights include support for two new audio formats (Monkey's Audio and Ogg
@@ -5246,7 +5313,8 @@ Vorbis) and an option to log untaggable albums during import.
 
 .. _a hand-rolled solution: https://gist.github.com/462717
 
-1.0b1 (June 17, 2010)
----------------------
+***********************
+ 1.0b1 (June 17, 2010)
+***********************
 
 Initial release.
