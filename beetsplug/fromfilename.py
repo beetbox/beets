@@ -18,8 +18,11 @@
 
 import os
 import re
+import typing
 
-from beets import plugins
+from beets.importer import ImportSession, ImportTask
+from beets.library import Item
+from beets.plugins import BeetsPlugin
 from beets.util import displayable_path
 
 # Filename field extraction patterns.
@@ -42,20 +45,22 @@ BAD_TITLE_PATTERNS = [
 ]
 
 
-def equal(seq):
+def equal(seq: list[str]):
     """Determine whether a sequence holds identical elements."""
     return len(set(seq)) <= 1
 
 
-def equal_fields(matchdict, field):
+def equal_fields(matchdict: dict[typing.Any, dict[str, str]], field: str):
     """Do all items in `matchdict`, whose values are dictionaries, have
     the same value for `field`? (If they do, the field is probably not
     the title.)
     """
-    return equal(m[field] for m in matchdict.values())
+    return equal(list(m[field] for m in matchdict.values()))
 
 
-def all_matches(names, pattern):
+def all_matches(
+    names: dict[Item, str], pattern: str
+) -> dict[Item, dict[str, str]] | None:
     """If all the filenames in the item/filename mapping match the
     pattern, return a dictionary mapping the items to dictionaries
     giving the value for each named subpattern in the match. Otherwise,
@@ -74,7 +79,7 @@ def all_matches(names, pattern):
     return matches
 
 
-def bad_title(title):
+def bad_title(title: str) -> bool:
     """Determine whether a given title is "bad" (empty or otherwise
     meaningless) and in need of replacement.
     """
@@ -84,62 +89,12 @@ def bad_title(title):
     return False
 
 
-def apply_matches(d, log):
-    """Given a mapping from items to field dicts, apply the fields to
-    the objects.
-    """
-    some_map = list(d.values())[0]
-    keys = some_map.keys()
-
-    # Only proceed if the "tag" field is equal across all filenames.
-    if "tag" in keys and not equal_fields(d, "tag"):
-        return
-
-    # Given both an "artist" and "title" field, assume that one is
-    # *actually* the artist, which must be uniform, and use the other
-    # for the title. This, of course, won't work for VA albums.
-    # Only check for "artist": patterns containing it, also contain "title"
-    if "artist" in keys:
-        if equal_fields(d, "artist"):
-            artist = some_map["artist"]
-            title_field = "title"
-        elif equal_fields(d, "title"):
-            artist = some_map["title"]
-            title_field = "artist"
-        else:
-            # Both vary. Abort.
-            return
-
-        for item in d:
-            if not item.artist:
-                item.artist = artist
-                log.info("Artist replaced with: {.artist}", item)
-    # otherwise, if the pattern contains "title", use that for title_field
-    elif "title" in keys:
-        title_field = "title"
-    else:
-        title_field = None
-
-    # Apply the title and track, if any.
-    for item in d:
-        if title_field and bad_title(item.title):
-            item.title = str(d[item][title_field])
-            log.info("Title replaced with: {.title}", item)
-
-        if "track" in d[item] and item.track == 0:
-            item.track = int(d[item]["track"])
-            log.info("Track replaced with: {.track}", item)
-
-
-# Plugin structure and hook into import process.
-
-
-class FromFilenamePlugin(plugins.BeetsPlugin):
-    def __init__(self):
+class FromFilenamePlugin(BeetsPlugin):
+    def __init__(self) -> None:
         super().__init__()
         self.register_listener("import_task_start", self.filename_task)
 
-    def filename_task(self, task, session):
+    def filename_task(self, task: ImportTask, session: ImportSession) -> None:
         """Examine each item in the task to see if we can extract a title
         from the filename. Try to match all filenames to a number of
         regexps, starting with the most complex patterns and successively
@@ -147,14 +102,15 @@ class FromFilenamePlugin(plugins.BeetsPlugin):
         same regex we can make an educated guess of which part of the
         regex that contains the title.
         """
-        items = task.items if task.is_album else [task.item]
+        # Create the list of items to process
+        items: list[Item] = task.items
 
         # Look for suspicious (empty or meaningless) titles.
         missing_titles = sum(bad_title(i.title) for i in items)
 
         if missing_titles:
             # Get the base filenames (no path or extension).
-            names = {}
+            names: dict[Item, str] = {}
             for item in items:
                 path = displayable_path(item.path)
                 name, _ = os.path.splitext(os.path.basename(path))
@@ -163,6 +119,51 @@ class FromFilenamePlugin(plugins.BeetsPlugin):
             # Look for useful information in the filenames.
             for pattern in PATTERNS:
                 self._log.debug(f"Trying pattern: {pattern}")
-                d = all_matches(names, pattern)
-                if d:
-                    apply_matches(d, self._log)
+                if d := all_matches(names, pattern):
+                    self._apply_matches(d)
+
+    def _apply_matches(self, d: dict[Item, dict[str, str]]) -> None:
+        """Given a mapping from items to field dicts, apply the fields to
+        the objects.
+        """
+        some_map = list(d.values())[0]
+        keys = some_map.keys()
+
+        # Only proceed if the "tag" field is equal across all filenames.
+        if "tag" in keys and not equal_fields(d, "tag"):
+            return
+
+        # Given both an "artist" and "title" field, assume that one is
+        # *actually* the artist, which must be uniform, and use the other
+        # for the title. This, of course, won't work for VA albums.
+        # Only check for "artist": patterns containing it, also contain "title"
+        if "artist" in keys:
+            if equal_fields(d, "artist"):
+                artist = some_map["artist"]
+                title_field = "title"
+            elif equal_fields(d, "title"):
+                artist = some_map["title"]
+                title_field = "artist"
+            else:
+                # Both vary. Abort.
+                return
+
+            for item in d:
+                if not item.artist:
+                    item.artist = artist
+                    self._log.info(f"Artist replaced with: {item.artist}")
+        # otherwise, if the pattern contains "title", use that for title_field
+        elif "title" in keys:
+            title_field = "title"
+        else:
+            title_field = None
+
+        # Apply the title and track, if any.
+        for item in d:
+            if title_field and bad_title(item.title):
+                item.title = str(d[item][title_field])
+                self._log.info(f"Title replaced with: {item.title}")
+
+            if "track" in d[item] and item.track == 0:
+                item.track = int(d[item]["track"])
+                self._log.info(f"Track replaced with: {item.track}")
