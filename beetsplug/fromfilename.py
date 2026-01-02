@@ -15,42 +15,58 @@
 """If the title is empty, try to extract it from the filename
 (possibly also extract track and artist)
 """
+from __future__ import annotations
 
 import os
 import re
 import typing
 
-from beets.importer import ImportSession, ImportTask
-from beets.library import Item
 from beets.plugins import BeetsPlugin
 from beets.util import displayable_path
 
-# Filename field extraction patterns.
-PATTERNS = [
-    # Useful patterns.
-    (
-        r"^(?P<track>\d+)\.?\s*-\s*(?P<artist>.+?)\s*-\s*(?P<title>.+?)"
-        r"(\s*-\s*(?P<tag>.*))?$"
-    ),
-    r"^(?P<artist>.+?)\s*-\s*(?P<title>.+?)(\s*-\s*(?P<tag>.*))?$",
-    r"^(?P<track>\d+)\.?[\s_-]+(?P<title>.+)$",
-    r"^(?P<title>.+) by (?P<artist>.+)$",
-    r"^(track ?)?(?P<track>\d+).*$",
-    r"^(?P<title>.+)$",
-]
+if typing.TYPE_CHECKING:
+    from beets.importer import ImportSession, ImportTask
+    from beets.library import Item
 
-# Titles considered "empty" and in need of replacement.
-BAD_TITLE_PATTERNS = [
-    r"^$",
-]
+# Filename field extraction patterns
+RE_TRACK_INFO = re.compile(
+    r"""
+        (?P<disc>\d+(?=[\.\-_]\d))?
+            # a disc must be followed by punctuation and a digit
+        [\.\-]{,1}
+            # disc punctuation
+        (?P<track>\d+)?
+            # match the track number
+        [\.\-_\s]*
+            # artist separators
+        (?P<artist>.+?(?=[\s*_]?[\.\-by].+))?
+            # artist match depends on title existing
+        [\.\-_\s]*
+        (?P<by>by)?
+            # if 'by' is found, artist and title will need to be swapped
+        [\.\-_\s]*
+            # title separators
+        (?P<title>.+)?
+            # match the track title
+        """,
+    re.VERBOSE | re.IGNORECASE,
+)
+
+# Match the disc names of parent folders
+RE_DISC = re.compile(r"((?:cd|disc)\s*\d+)", re.IGNORECASE)
+
+# Matches fields that are empty or only whitespace
+RE_BAD_TITLE = re.compile(r"^\s*$")
 
 
-def equal(seq: list[str]):
+def equal(seq: list[str]) -> bool:
     """Determine whether a sequence holds identical elements."""
     return len(set(seq)) <= 1
 
 
-def equal_fields(matchdict: dict[typing.Any, dict[str, str]], field: str):
+def equal_fields(
+    matchdict: dict[typing.Any, dict[str, str]], field: str
+) -> bool:
     """Do all items in `matchdict`, whose values are dictionaries, have
     the same value for `field`? (If they do, the field is probably not
     the title.)
@@ -83,9 +99,8 @@ def bad_title(title: str) -> bool:
     """Determine whether a given title is "bad" (empty or otherwise
     meaningless) and in need of replacement.
     """
-    for pat in BAD_TITLE_PATTERNS:
-        if re.match(pat, title, re.IGNORECASE):
-            return True
+    if RE_BAD_TITLE.match(title):
+        return True
     return False
 
 
@@ -117,16 +132,36 @@ class FromFilenamePlugin(BeetsPlugin):
                 names[item] = name
 
             # Look for useful information in the filenames.
-            for pattern in PATTERNS:
-                self._log.debug(f"Trying pattern: {pattern}")
-                if d := all_matches(names, pattern):
-                    self._apply_matches(d)
+            matches: dict[Item, dict[str, str]] = {}
+            for item, name in names.items():
+                m = self.parse_track_info(name)
+                matches[item] = m
+            self._apply_matches(matches)
+
+    def parse_track_info(self, text: str) -> dict[str, str]:
+        m = RE_TRACK_INFO.match(text)
+        assert m is not None
+        matches = m.groupdict()
+        # if the phrase "by" is matched, swap
+        # artist and title
+        if matches["by"]:
+            artist = matches["title"]
+            matches["title"] = matches["artist"]
+            matches["artist"] = artist
+        del matches["by"]
+        # if all fields except track are none
+        # set title to track - we can't be sure if it's the
+        # index or track number
+        if set(matches.values()) == {None, matches["track"]}:
+            matches["title"] = matches["track"]
+
+        return matches
 
     def _apply_matches(self, d: dict[Item, dict[str, str]]) -> None:
         """Given a mapping from items to field dicts, apply the fields to
         the objects.
         """
-        some_map = list(d.values())[0]
+        some_map = next(iter(d.values()))
         keys = some_map.keys()
 
         # Only proceed if the "tag" field is equal across all filenames.
@@ -149,7 +184,7 @@ class FromFilenamePlugin(BeetsPlugin):
                 return
 
             for item in d:
-                if not item.artist:
+                if not item.artist and artist:
                     item.artist = artist
                     self._log.info(f"Artist replaced with: {item.artist}")
         # otherwise, if the pattern contains "title", use that for title_field
@@ -165,5 +200,6 @@ class FromFilenamePlugin(BeetsPlugin):
                 self._log.info(f"Title replaced with: {item.title}")
 
             if "track" in d[item] and item.track == 0:
-                item.track = int(d[item]["track"])
+                if d[item]["track"]:
+                    item.track = int(d[item]["track"])
                 self._log.info(f"Track replaced with: {item.track}")
