@@ -319,6 +319,7 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "beets/**" = ["PT"]
+"test/plugins/test_ftintitle.py" = ["E501"]
 "test/test_util.py" = ["E501"]
 "test/ui/test_field_diff.py" = ["E501"]
 
