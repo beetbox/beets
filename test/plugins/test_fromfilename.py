@@ -13,8 +13,12 @@
 
 """Tests for the fromfilename plugin."""
 
+from dataclasses import dataclass
+
 import pytest
 
+from beets.library import Item
+from beets.test.helper import ConfigMixin
 from beetsplug import fromfilename
 
 
@@ -22,18 +26,25 @@ class Session:
     pass
 
 
-class Item:
-    def __init__(self, path):
-        self.path = path
-        self.track = 0
-        self.artist = ""
-        self.title = ""
+def mock_item(**kwargs):
+    defaults = dict(
+        title="",
+        artist="",
+        albumartist="",
+        album="",
+        disc=0,
+        track=0,
+        catalognum="",
+        media="",
+        mtime=12345,
+    )
+    return Item(**{**defaults, **kwargs})
 
 
+@dataclass
 class Task:
-    def __init__(self, items):
-        self.items = items
-        self.is_album = True
+    items: list[Item]
+    is_album: bool = True
 
 
 @pytest.mark.parametrize(
@@ -104,77 +115,267 @@ def test_parse_track_info(text, matchgroup):
 
 
 @pytest.mark.parametrize(
-    "song1, song2",
+    "text,matchgroup",
     [
         (
-            (
-                "/tmp/01 - The Artist - Song One.m4a",
-                1,
-                "The Artist",
-                "Song One",
-            ),
-            (
-                "/tmp/02. - The Artist - Song Two.m4a",
-                2,
-                "The Artist",
-                "Song Two",
-            ),
+            # highly unlikely
+            "",
+            {
+                "albumartist": None,
+                "album": None,
+                "year": None,
+                "catalognum": None,
+                "media": None,
+            },
         ),
         (
-            (
-                "/tmp/01 The Artist - Song One.m4a",
-                1,
-                "The Artist",
-                "Song One",
-            ),
-            (
-                "/tmp/02 The Artist - Song Two.m4a",
-                2,
-                "The Artist",
-                "Song Two",
-            ),
+            "1970",
+            {
+                "albumartist": None,
+                "album": None,
+                "year": "1970",
+                "catalognum": None,
+                "media": None,
+            },
         ),
         (
-            ("/tmp/01-The_Artist-Song_One.m4a", 1, "The_Artist", "Song_One"),
-            ("/tmp/02.-The_Artist-Song_Two.m4a", 2, "The_Artist", "Song_Two"),
+            "Album Title",
+            {
+                "albumartist": None,
+                "album": "Album Title",
+                "year": None,
+                "catalognum": None,
+                "media": None,
+            },
         ),
         (
-            ("/tmp/01 - Song_One.m4a", 1, "", "Song_One"),
-            ("/tmp/02. - Song_Two.m4a", 2, "", "Song_Two"),
+            "Artist - Album Title",
+            {
+                "albumartist": "Artist",
+                "album": "Album Title",
+                "year": None,
+                "catalognum": None,
+                "media": None,
+            },
         ),
         (
-            ("/tmp/Song One by The Artist.m4a", 0, "The Artist", "Song One"),
-            ("/tmp/Song Two by The Artist.m4a", 0, "The Artist", "Song Two"),
+            "Artist - Album Title (2024)",
+            {
+                "albumartist": "Artist",
+                "album": "Album Title",
+                "year": "2024",
+                "catalognum": None,
+                "media": None,
+            },
         ),
-        (("/tmp/01.m4a", 1, "", "01"), ("/tmp/02.m4a", 2, "", "02")),
         (
-            ("/tmp/Song One.m4a", 0, "", "Song One"),
-            ("/tmp/Song Two.m4a", 0, "", "Song Two"),
+            "Artist - 2024 - Album Title [flac]",
+            {
+                "albumartist": "Artist",
+                "album": "Album Title",
+                "year": "2024",
+                "catalognum": None,
+                "media": None,
+            },
+        ),
+        (
+            "(2024) Album Title [CATALOGNUM] WEB",
+            # sometimes things are just going to be unparsable
+            {
+                "albumartist": "Album Title",
+                "album": "WEB",
+                "year": "2024",
+                "catalognum": "CATALOGNUM",
+                "media": None,
+            },
+        ),
+        (
+            "{2024} Album Artist - Album Title [INFO-WAV]",
+            {
+                "albumartist": "Album Artist",
+                "album": "Album Title",
+                "year": "2024",
+                "catalognum": None,
+                "media": None,
+            },
+        ),
+        (
+            "VA - Album Title [2025] [CD-FLAC]",
+            {
+                "albumartist": "Various Artists",
+                "album": "Album Title",
+                "year": "2025",
+                "catalognum": None,
+                "media": "CD",
+            },
+        ),
+        (
+            "Artist - Album Title 3000 (1998) [FLAC] {CATALOGNUM}",
+            {
+                "albumartist": "Artist",
+                "album": "Album Title 3000",
+                "year": "1998",
+                "catalognum": "CATALOGNUM",
+                "media": None,
+            },
+        ),
+        (
+            "various - cd album (2023) [catalognum 123] {vinyl mp3}",
+            {
+                "albumartist": "Various Artists",
+                "album": "cd album",
+                "year": "2023",
+                "catalognum": "catalognum 123",
+                "media": "Vinyl",
+            },
+        ),
+        (
+            "[CATALOG567] Album - Various (2020) [WEB-FLAC]",
+            {
+                "albumartist": "Various Artists",
+                "album": "Album",
+                "year": "2020",
+                "catalognum": "CATALOG567",
+                "media": "Digital Media",
+            },
+        ),
+        (
+            "Album 3000 {web}",
+            {
+                "albumartist": None,
+                "album": "Album 3000",
+                "year": None,
+                "catalognum": None,
+                "media": "Digital Media",
+            },
         ),
     ],
 )
-def test_fromfilename(song1, song2):
-    """
-    Each "song" is a tuple of path, expected track number, expected artist,
-    expected title.
-
-    We use two songs for each test for two reasons:
-    - The plugin needs more than one item to look for uniform strings in paths
-      in order to guess if the string describes an artist or a title.
-    - Sometimes we allow for an optional "." after the track number in paths.
-    """
-
-    session = Session()
-    item1 = Item(song1[0])
-    item2 = Item(song2[0])
-    task = Task([item1, item2])
-
+def test_parse_album_info(text, matchgroup):
     f = fromfilename.FromFilenamePlugin()
-    f.filename_task(task, session)
+    m = f.parse_album_info(text)
+    assert matchgroup == m
 
-    assert task.items[0].track == song1[1]
-    assert task.items[0].artist == song1[2]
-    assert task.items[0].title == song1[3]
-    assert task.items[1].track == song2[1]
-    assert task.items[1].artist == song2[2]
-    assert task.items[1].title == song2[3]
+
+class TestFromFilename(ConfigMixin):
+    @pytest.mark.parametrize(
+        "expected_item",
+        [
+            mock_item(
+                path="/tmp/01 - The Artist - Song One.m4a",
+                artist="The Artist",
+                track=1,
+                title="Song One",
+            ),
+            mock_item(
+                path="/tmp/01 The Artist - Song One.m4a",
+                artist="The Artist",
+                track=1,
+                title="Song One",
+            ),
+            mock_item(
+                path="/tmp/02 The Artist - Song Two.m4a",
+                artist="The Artist",
+                track=2,
+                title="Song Two",
+            ),
+            mock_item(
+                path="/tmp/01-The_Artist-Song_One.m4a",
+                artist="The_Artist",
+                track=1,
+                title="Song_One",
+            ),
+            mock_item(
+                path="/tmp/02.-The_Artist-Song_Two.m4a",
+                artist="The_Artist",
+                track=2,
+                title="Song_Two",
+            ),
+            mock_item(
+                path="/tmp/01 - Song_One.m4a",
+                track=1,
+                title="Song_One",
+            ),
+            mock_item(
+                path="/tmp/02. - Song_Two.m4a",
+                track=2,
+                title="Song_Two",
+            ),
+            mock_item(
+                path="/tmp/Song One by The Artist.m4a",
+                artist="The Artist",
+                title="Song One",
+            ),
+            mock_item(
+                path="/tmp/Song Two by The Artist.m4a",
+                artist="The Artist",
+                title="Song Two",
+            ),
+            mock_item(
+                path="/tmp/01.m4a",
+                track=1,
+                title="01",
+            ),
+            mock_item(
+                path="/tmp/02.m4a",
+                track=2,
+                title="02",
+            ),
+            mock_item(
+                path="/tmp/Song One.m4a",
+                title="Song One",
+            ),
+            mock_item(
+                path="/tmp/Song Two.m4a",
+                title="Song Two",
+            ),
+            mock_item(
+                path=(
+                    "/tmp/"
+                    "[CATALOG567] Album - Various - [WEB-FLAC]"
+                    "/2-10 - Artist - Song One.m4a"
+                ),
+                album="Album",
+                artist="Artist",
+                track=10,
+                disc=2,
+                albumartist="Various Artists",
+                catalognum="CATALOG567",
+                title="Song One",
+                media="Digital Media",
+            ),
+            mock_item(
+                path=(
+                    "/tmp/"
+                    "[CATALOG567] Album - Various - [WEB-FLAC]"
+                    "/03-04 - Other Artist - Song Two.m4a"
+                ),
+                album="Album",
+                artist="Other Artist",
+                disc=3,
+                track=4,
+                albumartist="Various Artists",
+                catalognum="CATALOG567",
+                title="Song Two",
+                media="Digital Media",
+            ),
+        ],
+    )
+    def test_fromfilename(self, expected_item):
+        """
+        Take expected items, create a task with just the paths.
+
+        After parsing, compare to the original with the expected attributes defined.
+        """
+        task = Task([mock_item(path=expected_item.path)])
+        f = fromfilename.FromFilenamePlugin()
+        f.filename_task(task, Session())
+        res = task.items[0]
+        exp = expected_item
+        assert res.path == exp.path
+        assert res.artist == exp.artist
+        assert res.albumartist == exp.albumartist
+        assert res.disc == exp.disc
+        assert res.catalognum == exp.catalognum
+        assert res.year == exp.year
+        assert res.title == exp.title
