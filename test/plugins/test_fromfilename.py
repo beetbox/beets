@@ -37,6 +37,73 @@ class Task:
 
 
 @pytest.mark.parametrize(
+    "text,matchgroup",
+    [
+        ("3", {"disc": None, "track": "3", "artist": None, "title": "3"}),
+        ("04", {"disc": None, "track": "04", "artist": None, "title": "04"}),
+        ("6.", {"disc": None, "track": "6", "artist": None, "title": "6"}),
+        ("3.5", {"disc": "3", "track": "5", "artist": None, "title": None}),
+        ("1-02", {"disc": "1", "track": "02", "artist": None, "title": None}),
+        ("100-4", {"disc": "100", "track": "4", "artist": None, "title": None}),
+        (
+            "04.Title",
+            {"disc": None, "track": "04", "artist": None, "title": "Title"},
+        ),
+        (
+            "5_-_Title",
+            {"disc": None, "track": "5", "artist": None, "title": "Title"},
+        ),
+        (
+            "1-02 Title",
+            {"disc": "1", "track": "02", "artist": None, "title": "Title"},
+        ),
+        (
+            "3.5 - Title",
+            {"disc": "3", "track": "5", "artist": None, "title": "Title"},
+        ),
+        (
+            "5_-_Artist_-_Title",
+            {"disc": None, "track": "5", "artist": "Artist", "title": "Title"},
+        ),
+        (
+            "3-8- Artist-Title",
+            {"disc": "3", "track": "8", "artist": "Artist", "title": "Title"},
+        ),
+        (
+            "4-3 - Artist Name - Title",
+            {
+                "disc": "4",
+                "track": "3",
+                "artist": "Artist Name",
+                "title": "Title",
+            },
+        ),
+        (
+            "4-3_-_Artist_Name_-_Title",
+            {
+                "disc": "4",
+                "track": "3",
+                "artist": "Artist_Name",
+                "title": "Title",
+            },
+        ),
+        (
+            "6 Title by Artist",
+            {"disc": None, "track": "6", "artist": "Artist", "title": "Title"},
+        ),
+        (
+            "Title",
+            {"disc": None, "track": None, "artist": None, "title": "Title"},
+        ),
+    ],
+)
+def test_parse_track_info(text, matchgroup):
+    f = fromfilename.FromFilenamePlugin()
+    m = f.parse_track_info(text)
+    assert matchgroup == m
+
+
+@pytest.mark.parametrize(
     "song1, song2",
     [
         (
@@ -48,6 +115,20 @@ class Task:
             ),
             (
                 "/tmp/02. - The Artist - Song Two.m4a",
+                2,
+                "The Artist",
+                "Song Two",
+            ),
+        ),
+        (
+            (
+                "/tmp/01 The Artist - Song One.m4a",
+                1,
+                "The Artist",
+                "Song One",
+            ),
+            (
+                "/tmp/02 The Artist - Song Two.m4a",
                 2,
                 "The Artist",
                 "Song Two",
