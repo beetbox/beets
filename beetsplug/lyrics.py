@@ -190,17 +190,24 @@ class LyricsRequestHandler(RequestHandler):
         return f"{url}?{urlencode(params)}"
 
     def get_text(
-        self, url: str, params: JSONDict | None = None, **kwargs
+        self,
+        url: str,
+        params: JSONDict | None = None,
+        force_utf8: bool = False,
+        **kwargs,
     ) -> str:
         """Return text / HTML data from the given URL.
 
-        Set the encoding to None to let requests handle it because some sites
-        set it incorrectly.
+        Set encoding to None to let requests auto-detect (works for most sites).
+        For Genius, force UTF-8 to avoid MacRoman misdetection.
         """
         url = self.format_url(url, params)
         self.debug("Fetching HTML from {}", url)
         r = self.get(url, **kwargs)
-        r.encoding = None
+        if force_utf8:
+            r.encoding = r.encoding or "utf-8"
+        else:
+            r.encoding = None
         return r.text
 
     def get_json(self, url: str, params: JSONDict | None = None, **kwargs):
@@ -544,6 +551,16 @@ class Genius(SearchBackend):
     def headers(self) -> dict[str, str]:
         return {"Authorization": f"Bearer {self.config['genius_api_key']}"}
 
+    def get_text(
+        self,
+        url: str,
+        params: JSONDict | None = None,
+        force_utf8: bool = True,
+        **kwargs,
+    ) -> str:
+        """Force UTF-8 encoding for Genius to avoid MacRoman misdetection."""
+        return super().get_text(url, params, force_utf8=force_utf8, **kwargs)
+
     def search(self, artist: str, title: str) -> Iterable[SearchResult]:
         search_data: GeniusAPI.Search = self.get_json(
             self.SEARCH_URL,
@@ -557,7 +574,10 @@ class Genius(SearchBackend):
     def scrape(cls, html: str) -> str | None:
         if m := cls.LYRICS_IN_JSON_RE.search(html):
             html_text = cls.remove_backslash(m[0]).replace(r"\n", "\n")
-            return cls.get_soup(html_text).get_text().strip()
+            lyrics = cls.get_soup(html_text).get_text().strip()
+            # Genius embeds lyrics in JSON; escape sequences remain after parsing
+            lyrics = re.sub(r'\\+"', '"', lyrics)
+            return lyrics
 
         return None
 
