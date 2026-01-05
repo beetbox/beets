@@ -12,6 +12,10 @@ been dropped.
 
 New features:
 
+- :doc:`plugins/report`: Added `report` plugin to generate a statistical summary
+      of your music library, including tracks, albums, artists, genres, years,
+      listening time, audio quality, decade distribution, top artist/genre/year,
+      longest/shortest tracks, and counts of missing metadata.
 - :doc:`plugins/fetchart`: Added config setting for a fallback cover art image.
 - :doc:`plugins/ftintitle`: Added argument for custom feat. words in ftintitle.
 - :doc:`plugins/ftintitle`: Added album template value ``album_artist_no_feat``.
