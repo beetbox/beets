@@ -79,7 +79,7 @@ Beets는 라이브러리로 디자인 되었기 때문에, 당신이 음악들�
 
 .. _transcode audio: https://beets.readthedocs.org/page/plugins/convert.html
 
-.. _writing your own plugin: https://beets.readthedocs.org/page/dev/plugins.html
+.. _writing your own plugin: https://beets.readthedocs.org/page/dev/plugins/index.html
 
 설치
 -------

@@ -24,7 +24,7 @@ from typing import TYPE_CHECKING, Any, NamedTuple, TypeVar
 import lap
 import numpy as np
 
-from beets import config, logging, metadata_plugins
+from beets import config, logging, metadata_plugins, plugins
 from beets.autotag import AlbumInfo, AlbumMatch, TrackInfo, TrackMatch, hooks
 from beets.util import get_most_common_tags
 
@@ -69,7 +69,7 @@ class Proposal(NamedTuple):
 def assign_items(
     items: Sequence[Item],
     tracks: Sequence[TrackInfo],
-) -> tuple[dict[Item, TrackInfo], list[Item], list[TrackInfo]]:
+) -> tuple[list[tuple[Item, TrackInfo]], list[Item], list[TrackInfo]]:
     """Given a list of Items and a list of TrackInfo objects, find the
     best mapping between them. Returns a mapping from Items to TrackInfo
     objects, a set of extra Items, and a set of extra TrackInfo
@@ -95,7 +95,7 @@ def assign_items(
     extra_items.sort(key=lambda i: (i.disc, i.track, i.title))
     extra_tracks = list(set(tracks) - set(mapping.values()))
     extra_tracks.sort(key=lambda t: (t.index, t.title))
-    return mapping, extra_items, extra_tracks
+    return list(mapping.items()), extra_items, extra_tracks
 
 
 def match_by_id(items: Iterable[Item]) -> AlbumInfo | None:
@@ -217,10 +217,12 @@ def _add_candidate(
             return
 
     # Find mapping between the items and the track info.
-    mapping, extra_items, extra_tracks = assign_items(items, info.tracks)
+    item_info_pairs, extra_items, extra_tracks = assign_items(
+        items, info.tracks
+    )
 
     # Get the change distance.
-    dist = distance(items, info, mapping)
+    dist = distance(items, info, item_info_pairs)
 
     # Skip matches with ignored penalties.
     penalties = [key for key, _ in dist]
@@ -232,14 +234,14 @@ def _add_candidate(
 
     log.debug("Success. Distance: {}", dist)
     results[info.album_id] = hooks.AlbumMatch(
-        dist, info, mapping, extra_items, extra_tracks
+        dist, info, dict(item_info_pairs), extra_items, extra_tracks
     )
 
 
 def tag_album(
     items,
     search_artist: str | None = None,
-    search_album: str | None = None,
+    search_name: str | None = None,
     search_ids: list[str] = [],
 ) -> tuple[str, str, Proposal]:
     """Return a tuple of the current artist name, the current album
@@ -274,12 +276,17 @@ def tag_album(
             log.debug("Searching for album ID: {}", search_id)
             if info := metadata_plugins.album_for_id(search_id):
                 _add_candidate(items, candidates, info)
+                if opt_candidate := candidates.get(info.album_id):
+                    plugins.send("album_matched", match=opt_candidate)
 
     # Use existing metadata or text search.
     else:
         # Try search based on current ID.
         if info := match_by_id(items):
             _add_candidate(items, candidates, info)
+            for candidate in candidates.values():
+                plugins.send("album_matched", match=candidate)
+
             rec = _recommendation(list(candidates.values()))
             log.debug("Album ID match recommendation is {}", rec)
             if candidates and not config["import"]["timid"]:
@@ -295,10 +302,10 @@ def tag_album(
                     )
 
         # Search terms.
-        if not (search_artist and search_album):
+        if not (search_artist and search_name):
             # No explicit search terms -- use current metadata.
-            search_artist, search_album = cur_artist, cur_album
-        log.debug("Search terms: {} - {}", search_artist, search_album)
+            search_artist, search_name = cur_artist, cur_album
+        log.debug("Search terms: {} - {}", search_artist, search_name)
 
         # Is this album likely to be a "various artist" release?
         va_likely = (
@@ -310,9 +317,11 @@ def tag_album(
 
         # Get the results from the data sources.
         for matched_candidate in metadata_plugins.candidates(
-            items, search_artist, search_album, va_likely
+            items, search_artist, search_name, va_likely
         ):
             _add_candidate(items, candidates, matched_candidate)
+            if opt_candidate := candidates.get(matched_candidate.album_id):
+                plugins.send("album_matched", match=opt_candidate)
 
     log.debug("Evaluating {} candidates.", len(candidates))
     # Sort and get the recommendation.
@@ -324,7 +333,7 @@ def tag_album(
 def tag_item(
     item,
     search_artist: str | None = None,
-    search_title: str | None = None,
+    search_name: str | None = None,
     search_ids: list[str] | None = None,
 ) -> Proposal:
     """Find metadata for a single track. Return a `Proposal` consisting
@@ -366,12 +375,12 @@ def tag_item(
 
     # Search terms.
     search_artist = search_artist or item.artist
-    search_title = search_title or item.title
-    log.debug("Item search terms: {} - {}", search_artist, search_title)
+    search_name = search_name or item.title
+    log.debug("Item search terms: {} - {}", search_artist, search_name)
 
     # Get and evaluate candidate metadata.
     for track_info in metadata_plugins.item_candidates(
-        item, search_artist, search_title
+        item, search_artist, search_name
     ):
         dist = track_distance(item, track_info, incl_artist=True)
         candidates[track_info.track_id] = hooks.TrackMatch(dist, track_info)

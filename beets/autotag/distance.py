@@ -430,7 +430,7 @@ def track_distance(
 def distance(
     items: Sequence[Item],
     album_info: AlbumInfo,
-    mapping: dict[Item, TrackInfo],
+    item_info_pairs: list[tuple[Item, TrackInfo]],
 ) -> Distance:
     """Determines how "significant" an album metadata change would be.
     Returns a Distance object. `album_info` is an AlbumInfo object
@@ -526,16 +526,16 @@ def distance(
 
     # Tracks.
     dist.tracks = {}
-    for item, track in mapping.items():
+    for item, track in item_info_pairs:
         dist.tracks[track] = track_distance(item, track, album_info.va)
         dist.add("tracks", dist.tracks[track].distance)
 
     # Missing tracks.
-    for _ in range(len(album_info.tracks) - len(mapping)):
+    for _ in range(len(album_info.tracks) - len(item_info_pairs)):
         dist.add("missing_tracks", 1.0)
 
     # Unmatched tracks.
-    for _ in range(len(items) - len(mapping)):
+    for _ in range(len(items) - len(item_info_pairs)):
         dist.add("unmatched_tracks", 1.0)
 
     dist.add_data_source(likelies["data_source"], album_info.data_source)
