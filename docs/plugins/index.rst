@@ -117,12 +117,12 @@ databases. They share the following configuration options:
     random
     replace
     replaygain
-    report
     rewrite
     scrub
     smartplaylist
     sonosupdate
     spotify
+    stats
     subsonicplaylist
     subsonicupdate
     substitute
