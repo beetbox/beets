@@ -90,7 +90,8 @@ def test_single_item(capsys, library):
     assert avg_bitrate_lines, "Expected an 'Avg bitrate:' line in output"
     avg_line = avg_bitrate_lines[0]
     assert "kbps" in avg_line
-    assert "(" in avg_line and ")" in avg_line  # Quality label
+    assert "(" in avg_line
+    assert ")" in avg_line  # Quality label
 
     # --- Primary format ---
     primary_format_lines = [
