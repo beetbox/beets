@@ -12,9 +12,9 @@
 # included in all copies or substantial portions of the Software.
 
 import pytest
-
+from beets import ui
 from beets.library import Item
-from beets.ui.commands.stats import show_overview_report
+
 
 # --- Fixtures ---
 
@@ -55,21 +55,22 @@ def add_item(
     lib.add(item)
 
 
-# --- Tests ---
+# --- Tests for show_overview_report ---
 
 
 def test_empty_library_overview(capsys, library):
     """Test empty library with overview report."""
-    from beets.ui import _raw_main
+    from beets.ui.commands.stats import show_overview_report
 
-    # Simulate: beet stats --overview
-    _raw_main(["stats", "--overview"], library)
+    show_overview_report(library, [])
     captured = capsys.readouterr()
     assert "Your Beets library is empty." in captured.out
 
 
 def test_single_item_overview(capsys, library):
     """Test library with a single track using overview report."""
+    from beets.ui.commands.stats import show_overview_report
+
     add_item(
         library,
         title="Single Track",
@@ -79,10 +80,7 @@ def test_single_item_overview(capsys, library):
         bitrate=256000,
     )
 
-    from beets.ui import _raw_main
-
-    # Simulate: beet stats --overview
-    _raw_main(["stats", "--overview"], library)
+    show_overview_report(library, [])
     captured = capsys.readouterr()
 
     # --- Check basic statistics ---
@@ -106,6 +104,8 @@ def test_single_item_overview(capsys, library):
 
 def test_multiple_items_overview(capsys, library):
     """Test library with multiple tracks using overview report."""
+    from beets.ui.commands.stats import show_overview_report
+
     # 1995 – 2 tracks Rock
     add_item(library, "Track1", "Artist A", "Album X", "Rock", 1995)
     add_item(library, "Track2", "Artist A", "Album X", "Rock", 1995)
@@ -116,10 +116,7 @@ def test_multiple_items_overview(capsys, library):
     # 2018 – 1 track Electronic
     add_item(library, "Track4", "Artist C", "Album Z", "Electronic", 2018)
 
-    from beets.ui import _raw_main
-
-    # Simulate: beet stats --overview
-    _raw_main(["stats", "--overview"], library)
+    show_overview_report(library, [])
     captured = capsys.readouterr()
 
     # --- Basic stats ---
@@ -147,6 +144,8 @@ def test_multiple_items_overview(capsys, library):
 
 def test_missing_metadata_overview(capsys, library):
     """Test library with missing tags using overview report."""
+    from beets.ui.commands.stats import show_overview_report
+
     # Missing genre
     add_item(
         library,
@@ -170,10 +169,7 @@ def test_missing_metadata_overview(capsys, library):
         bitrate=256000,
     )
 
-    from beets.ui import _raw_main
-
-    # Simulate: beet stats --overview
-    _raw_main(["stats", "--overview"], library)
+    show_overview_report(library, [])
     captured = capsys.readouterr()
 
     # Format has 2 spaces after colon for year tags
@@ -183,15 +179,14 @@ def test_missing_metadata_overview(capsys, library):
 
 def test_various_lengths_and_bitrates_overview(capsys, library):
     """Test track lengths and bitrate classification."""
+    from beets.ui.commands.stats import show_overview_report
+
     add_item(library, "Short", "A", "X", "Pop", 2010, length=60, bitrate=128000)
     add_item(
         library, "Long", "B", "Y", "Rock", 2015, length=3600, bitrate=1024000
     )
 
-    from beets.ui import _raw_main
-
-    # Simulate: beet stats --overview
-    _raw_main(["stats", "--overview"], library)
+    show_overview_report(library, [])
     captured = capsys.readouterr()
 
     # --- Check durations ---

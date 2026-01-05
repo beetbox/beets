@@ -12,7 +12,7 @@ been dropped.
 
 New features:
 
-- :doc:`beets/ui/commands/stats`: Extended the ``stats`` command with an
+- :doc:`beets/ui/commands/stats.py`: Extended the ``stats`` command with an
   overview-style report (``--overview``) that generates a detailed statistical
   summary of the music library, including tracks, albums, artists, genres,
   years, listening time, audio quality, decade distribution, top
