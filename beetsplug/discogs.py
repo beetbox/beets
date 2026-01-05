@@ -25,7 +25,7 @@ import re
 import socket
 import time
 import traceback
-from functools import cache
+from functools import cache, cached_property
 from string import ascii_lowercase
 from typing import TYPE_CHECKING, cast
 
@@ -122,6 +122,10 @@ class IntermediateTrackInfo(TrackInfo):
 
 
 class DiscogsPlugin(MetadataSourcePlugin):
+    @cached_property
+    def separator(self) -> str:
+        return self.config["separator"].as_str()
+
     def __init__(self):
         super().__init__()
         self.config.add(
@@ -423,10 +427,9 @@ class DiscogsPlugin(MetadataSourcePlugin):
         style = self.format(result.data.get("styles"))
         base_genre = self.format(result.data.get("genres"))
 
-        if self.config["append_style_genre"] and style:
-            genre = self.config["separator"].as_str().join([base_genre, style])
-        else:
-            genre = base_genre
+        genre = base_genre
+        if self.config["append_style_genre"] and genre is not None and style:
+            genre += f"{self.separator}{style}"
 
         discogs_albumid = self._extract_id(result.data.get("uri"))
 
@@ -759,10 +762,10 @@ class DiscogsPlugin(MetadataSourcePlugin):
         # If artists are found on the track, we will use those instead
         if artists := track.get("artists", []):
             artist, artist_id = self.get_artist_with_anv(
-                artists, self.config["anv"]["artist"]
+                artists, self.config["anv"]["artist"].get(bool)
             )
             artist_credit, _ = self.get_artist_with_anv(
-                artists, self.config["anv"]["artist_credit"]
+                artists, self.config["anv"]["artist_credit"].get(bool)
             )
         length = self.get_track_length(track["duration"])
 
@@ -774,10 +777,10 @@ class DiscogsPlugin(MetadataSourcePlugin):
                 if "Featuring" in artist["role"]
             ]
             featured, _ = self.get_artist_with_anv(
-                featured_list, self.config["anv"]["artist"]
+                featured_list, self.config["anv"]["artist"].get(bool)
             )
             featured_credit, _ = self.get_artist_with_anv(
-                featured_list, self.config["anv"]["artist_credit"]
+                featured_list, self.config["anv"]["artist_credit"].get(bool)
             )
             if featured:
                 artist += f" {self.config['featured_string']} {featured}"

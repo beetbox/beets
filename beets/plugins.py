@@ -37,7 +37,7 @@ from beets.util.deprecation import deprecate_for_maintainers, deprecate_for_user
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Sequence
 
-    from confuse import ConfigView
+    from confuse import Subview
 
     from beets.dbcore import Query
     from beets.dbcore.db import FieldQueryType
@@ -156,7 +156,7 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
     album_template_fields: ClassVar[TFuncMap[Album]] | TFuncMap[Album] = {}  # type: ignore[valid-type]
 
     name: str
-    config: ConfigView
+    config: Subview
     early_import_stages: list[ImportStageFunc]
     import_stages: list[ImportStageFunc]
 
