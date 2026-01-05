@@ -234,7 +234,7 @@ cmd = "ruff format"
 
 [tool.poe.tasks.format-docs]
 help = "Format the documentation"
-cmd = "docstrfmt docs *.rst"
+cmd = "docstrfmt docs *.rst -pA"
 
 [tool.poe.tasks.lint]
 help = "Check the code for linting issues. Accepts ruff options."
