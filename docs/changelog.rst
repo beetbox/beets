@@ -12,11 +12,11 @@ been dropped.
 
 New features:
 
-- :doc:`beets/ui/commands/stats.py`: Extended the ``stats`` command with an
-  overview-style report (``--overview``) that generates a detailed statistical
-  summary of the music library, including tracks, albums, artists, genres,
-  years, listening time, audio quality, decade distribution, top
-  artist/genre/year, longest/shortest tracks, and counts of missing metadata.
+- :doc:`plugins/stats`: Extended the ``stats`` command with an overview-style
+  report (``--overview``) that generates a detailed statistical summary of the
+  music library, including tracks, albums, artists, genres, years, listening
+  time, audio quality, decade distribution, top artist/genre/year,
+  longest/shortest tracks, and counts of missing metadata.
 - :doc:`plugins/fetchart`: Added config setting for a fallback cover art image.
 - :doc:`plugins/ftintitle`: Added argument for custom feat. words in ftintitle.
 - :doc:`plugins/ftintitle`: Added album template value ``album_artist_no_feat``.

@@ -12,9 +12,10 @@
 # included in all copies or substantial portions of the Software.
 
 import pytest
-from beets import ui
-from beets.library import Item
 
+from beets.ui.commands.stats import show_overview_report
+from beets.library import Item
+from beets.library import Library
 
 # --- Fixtures ---
 
@@ -22,8 +23,6 @@ from beets.library import Item
 @pytest.fixture
 def library(tmp_path):
     """Create a temporary empty Beets library."""
-    from beets.library import Library
-
     lib_path = tmp_path / "beets.db"
     lib = Library(str(lib_path))
     return lib
@@ -60,8 +59,6 @@ def add_item(
 
 def test_empty_library_overview(capsys, library):
     """Test empty library with overview report."""
-    from beets.ui.commands.stats import show_overview_report
-
     show_overview_report(library, [])
     captured = capsys.readouterr()
     assert "Your Beets library is empty." in captured.out
@@ -69,7 +66,6 @@ def test_empty_library_overview(capsys, library):
 
 def test_single_item_overview(capsys, library):
     """Test library with a single track using overview report."""
-    from beets.ui.commands.stats import show_overview_report
 
     add_item(
         library,
@@ -104,7 +100,6 @@ def test_single_item_overview(capsys, library):
 
 def test_multiple_items_overview(capsys, library):
     """Test library with multiple tracks using overview report."""
-    from beets.ui.commands.stats import show_overview_report
 
     # 1995 – 2 tracks Rock
     add_item(library, "Track1", "Artist A", "Album X", "Rock", 1995)
@@ -144,7 +139,6 @@ def test_multiple_items_overview(capsys, library):
 
 def test_missing_metadata_overview(capsys, library):
     """Test library with missing tags using overview report."""
-    from beets.ui.commands.stats import show_overview_report
 
     # Missing genre
     add_item(
@@ -179,7 +173,6 @@ def test_missing_metadata_overview(capsys, library):
 
 def test_various_lengths_and_bitrates_overview(capsys, library):
     """Test track lengths and bitrate classification."""
-    from beets.ui.commands.stats import show_overview_report
 
     add_item(library, "Short", "A", "X", "Pop", 2010, length=60, bitrate=128000)
     add_item(
