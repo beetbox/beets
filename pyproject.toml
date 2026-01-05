@@ -42,7 +42,7 @@ Changelog = "https://github.com/beetbox/beets/blob/master/docs/changelog.rst"
 "Bug Tracker" = "https://github.com/beetbox/beets/issues"
 
 [tool.poetry.dependencies]
-python = ">=3.10,<4"
+python = ">=3.10,<3.15"
 
 colorama = { version = "*", markers = "sys_platform == 'win32'" }
 confuse = ">=2.1.0"
@@ -51,7 +51,7 @@ lap = ">=0.5.12"
 mediafile = ">=0.12.0"
 numpy = [
     { python = "<3.13", version = ">=2.0.2" },
-    { python = ">=3.13", version = ">=2.3.4" },
+    { python = ">=3.13", version = ">=2.3.5" },
 ]
 platformdirs = ">=3.5.0"
 pyyaml = "*"
@@ -73,7 +73,7 @@ scipy = [ # for librosa
 musicbrainzngs = { version = ">=0.4", optional = true }
 numba = [ # for librosa
     { python = "<3.13", version = ">=0.60", optional = true },
-    { python = ">=3.13", version = ">=0.62.1", optional = true },
+    { python = ">=3.13", version = ">=0.63.1", optional = true },
 ]
 mutagen = { version = ">=1.33", optional = true }
 Pillow = { version = "*", optional = true }
