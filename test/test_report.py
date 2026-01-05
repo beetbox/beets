@@ -23,7 +23,8 @@ def add_item(
     genre="Genre",
     year=2000,
     length=180,
-    bitrate=320,
+    bitrate=320000,  # bitrate in bits per second
+    format="MP3",
 ):
     """Add a single Item to the test library."""
     item = Item(
@@ -35,6 +36,7 @@ def add_item(
         year=year,
         length=length,
         bitrate=bitrate,
+        format=format,
     )
     lib.add(item)
 
@@ -51,13 +53,16 @@ def test_empty_library(capsys, library):
 
 
 def test_single_item(capsys, library):
-    """Test library with a single track."""
+    """Test library with a single track, including bitrate/quality and format."""
     add_item(
         library,
         title="Single Track",
         artist="Solo Artist",
         genre="Indie",
         year=2019,
+        length=240,
+        bitrate=256000,  # 256 kbps
+        format="MP3",
     )
     plugin = ReportPlugin()
     plugin._run_report(library, None, [])
@@ -78,6 +83,27 @@ def test_single_item(capsys, library):
     assert "10s" in captured.out
     assert "Top year:" in captured.out
     assert "2019" in captured.out
+
+    # --- Bitrate / quality ---
+    avg_bitrate_lines = [
+        line
+        for line in captured.out.splitlines()
+        if line.strip().startswith("Avg bitrate:")
+    ]
+    assert avg_bitrate_lines, "Expected an 'Avg bitrate:' line in output"
+    avg_line = avg_bitrate_lines[0]
+    assert "kbps" in avg_line
+    assert "(" in avg_line and ")" in avg_line  # Quality label
+
+    # --- Primary format ---
+    primary_format_lines = [
+        line
+        for line in captured.out.splitlines()
+        if line.strip().startswith("Primary format:")
+    ]
+    assert primary_format_lines, "Expected a 'Primary format:' line in output"
+    primary_line = primary_format_lines[0]
+    assert "MP3" in primary_line
 
 
 def test_multiple_items(capsys, library):
@@ -116,10 +142,10 @@ def test_missing_metadata(capsys, library):
         "Track1",
         "Artist",
         "Album",
-        None,
+        None,  # missing genre
         2000,
         length=200,
-        bitrate=256,
+        bitrate=256000,
     )
     add_item(
         library,
@@ -127,7 +153,7 @@ def test_missing_metadata(capsys, library):
         "Artist",
         "Album",
         "Rock",
-        None,
+        None,  # missing year
         length=180,
         bitrate=None,
     )
@@ -137,7 +163,12 @@ def test_missing_metadata(capsys, library):
     captured = capsys.readouterr()
 
     # --- Check missing metadata counts ---
-    assert "Missing genre" in captured.out
-    assert "1" in captured.out  # At least one missing genre
-    assert "Missing year" in captured.out
-    assert "1" in captured.out  # At least one missing year
+    # Use 'in' check instead of exact string match
+    assert any(
+        "Missing genre tags:" in line and "1" in line
+        for line in captured.out.splitlines()
+    )
+    assert any(
+        "Missing year tags:" in line and "1" in line
+        for line in captured.out.splitlines()
+    )
