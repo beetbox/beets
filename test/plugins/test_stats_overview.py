@@ -13,13 +13,11 @@
 
 import pytest
 
+from beets.library import Item, Library
 from beets.ui.commands.stats import show_overview_report
-from beets.library import Item
-from beets.library import Library
+
 
 # --- Fixtures ---
-
-
 @pytest.fixture
 def library(tmp_path):
     """Create a temporary empty Beets library."""
