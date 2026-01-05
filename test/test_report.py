@@ -2,9 +2,8 @@ import pytest
 from beets.library import Item
 from beetsplug.report import ReportPlugin
 
+
 # --- Fixtures ---
-
-
 @pytest.fixture
 def library(tmp_path):
     """Create a temporary empty Beets library."""
@@ -42,8 +41,6 @@ def add_item(
 
 
 # --- Tests ---
-
-
 def test_empty_library(capsys, library):
     """Test empty library: should output message without crashing."""
     plugin = ReportPlugin()
@@ -118,16 +115,24 @@ def test_multiple_items(capsys, library):
     captured = capsys.readouterr()
 
     # --- Basic stats ---
-    assert "Tracks:" in captured.out and "4" in captured.out
-    assert "Albums:" in captured.out and "3" in captured.out
-    assert "Artists:" in captured.out and "3" in captured.out
-    assert "Genres:" in captured.out and "3" in captured.out
+    assert "Tracks:" in captured.out
+    assert "4" in captured.out
+    assert "Albums:" in captured.out
+    assert "3" in captured.out
+    assert "Artists:" in captured.out
+    assert "3" in captured.out
+    assert "Genres:" in captured.out
+    assert "3" in captured.out
 
     # --- Wrapped-style insights ---
-    assert "Top artist:" in captured.out and "Artist A" in captured.out
-    assert "Top genre:" in captured.out and "Rock" in captured.out
-    assert "Top decade:" in captured.out and "90s" in captured.out
-    assert "Top year:" in captured.out and "1995" in captured.out
+    assert "Top artist:" in captured.out
+    assert "Artist A" in captured.out
+    assert "Top genre:" in captured.out
+    assert "Rock" in captured.out
+    assert "Top decade:" in captured.out
+    assert "90s" in captured.out
+    assert "Top year:" in captured.out
+    assert "1995" in captured.out
 
     # --- Decade distribution ---
     assert "90s" in captured.out
@@ -163,12 +168,22 @@ def test_missing_metadata(capsys, library):
     captured = capsys.readouterr()
 
     # --- Check missing metadata counts ---
-    # Use 'in' check instead of exact string match
-    assert any(
-        "Missing genre tags:" in line and "1" in line
-        for line in captured.out.splitlines()
-    )
-    assert any(
-        "Missing year tags:" in line and "1" in line
-        for line in captured.out.splitlines()
-    )
+    lines = captured.out.splitlines()
+
+    # Check for missing genre
+    genre_found = False
+    for line in lines:
+        if "Missing genre tags:" in line:
+            assert "1" in line
+            genre_found = True
+            break
+    assert genre_found
+
+    # Check for missing year
+    year_found = False
+    for line in lines:
+        if "Missing year tags:" in line:
+            assert "1" in line
+            year_found = True
+            break
+    assert year_found

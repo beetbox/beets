@@ -21,7 +21,7 @@ from beets.ui import Subcommand, print_
 
 
 class ReportPlugin(BeetsPlugin):
-    """A Beets plugin that generates a library report with statistics and Wrapped-style insights."""
+    """A Beets plugin that generates a library report with Wrapped-style insights."""
 
     def commands(self):
         report_cmd = Subcommand(
@@ -114,8 +114,6 @@ class ReportPlugin(BeetsPlugin):
 
     def print_report(self, summary):
         """Print the library report based on precomputed summary statistics."""
-        items = summary["items"]
-
         if summary["total_tracks"] == 0:
             print_("Your Beets library is empty.")
             return
@@ -144,11 +142,10 @@ class ReportPlugin(BeetsPlugin):
         print_(f"  Artists:  {len(summary['artists'])}")
         print_(f"  Genres:   {len(summary['genres'])}")
         years = list(summary["years"].keys())
-        print_(
-            f"  Years:    {min(years)} – {max(years)}"
-            if years
-            else "  Years:    n/a"
-        )
+        if years:
+            print_(f"  Years:    {min(years)} – {max(years)}")
+        else:
+            print_("  Years:    n/a")
         print_("-" * 60)
 
         # --- Duration & quality ---
@@ -157,11 +154,13 @@ class ReportPlugin(BeetsPlugin):
         print_(f"  Avg track length: {fmt_time(summary['avg_length'])}")
         if summary["avg_bitrate"] is not None:
             print_(
-                f"  Avg bitrate:      {summary['avg_bitrate']} kbps ({summary['quality']})"
+                f"  Avg bitrate:      {summary['avg_bitrate']} kbps "
+                f"({summary['quality']})"
             )
             if summary["formats"]:
                 print_(
-                    f"  Primary format:   {summary['formats'].most_common(1)[0][0]}"
+                    f"  Primary format:   "
+                    f"{summary['formats'].most_common(1)[0][0]}"
                 )
         print_("-" * 60)
 
@@ -172,7 +171,8 @@ class ReportPlugin(BeetsPlugin):
             for d, c in summary["decade_counter"].most_common():
                 pct = (c / total_decade_tracks) * 100
                 print_(
-                    f"  {decade_label(d):>4} ({d}-{d + 9}): {c:>5} tracks ({pct:4.1f}%)"
+                    f"  {decade_label(d):>4} ({d}-{d + 9}): "
+                    f"{c:>5} tracks ({pct:4.1f}%)"
                 )
         else:
             print_("  n/a")
@@ -182,7 +182,8 @@ class ReportPlugin(BeetsPlugin):
         print_("Your Music Wrapped")
         if top_artist:
             print_(
-                f"  Top artist:   {top_artist[0][0]} ({top_artist[0][1]} tracks)"
+                f"  Top artist:   {top_artist[0][0]} "
+                f"({top_artist[0][1]} tracks)"
             )
         if top_genre:
             print_(
@@ -200,12 +201,14 @@ class ReportPlugin(BeetsPlugin):
         if summary["longest_track"]:
             lt = summary["longest_track"]
             print_(
-                f"  Longest track:  {lt.artist} – {lt.title} ({fmt_time(lt.length)})"
+                f"  Longest track:  {lt.artist} – {lt.title} "
+                f"({fmt_time(lt.length)})"
             )
         if summary["shortest_track"]:
             st = summary["shortest_track"]
             print_(
-                f"  Shortest track: {st.artist} – {st.title} ({fmt_time(st.length)})"
+                f"  Shortest track: {st.artist} – {st.title} "
+                f"({fmt_time(st.length)})"
             )
 
         recent_tracks = sum(1 for y in summary["years"].keys() if y >= 2015)
