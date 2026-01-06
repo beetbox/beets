@@ -39,6 +39,8 @@ class ImportSourcePlugin(BeetsPlugin):
         )
 
     def prevent_suggest_removal(self, session, task):
+        if task.skip:
+            return
         for item in task.imported_items():
             if "mb_albumid" in item:
                 self.stop_suggestions_for_albums.add(item.mb_albumid)

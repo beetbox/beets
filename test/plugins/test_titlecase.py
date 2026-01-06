@@ -112,7 +112,7 @@ class TestTitlecasePlugin(PluginTestCase):
                 assert TitlecasePlugin().titlecase(word.upper()) == word
                 assert TitlecasePlugin().titlecase(word.lower()) == word
 
-    def test_seperators(self):
+    def test_separators(self):
         testcases = [
             ([], "it / a / in / of / to / the", "It / a / in / of / to / The"),
             (["/"], "it / the test", "It / The Test"),
@@ -129,8 +129,34 @@ class TestTitlecasePlugin(PluginTestCase):
             ),
         ]
         for testcase in testcases:
-            seperators, given, expected = testcase
-            with self.configure_plugin({"seperators": seperators}):
+            separators, given, expected = testcase
+            with self.configure_plugin({"separators": separators}):
+                assert TitlecasePlugin().titlecase(given) == expected
+
+    def test_all_caps(self):
+        testcases = [
+            (True, "Unaffected", "Unaffected"),
+            (True, "RBMK1000", "RBMK1000"),
+            (False, "RBMK1000", "Rbmk1000"),
+            (True, "P A R I S!", "P A R I S!"),
+            (True, "pillow dub...", "Pillow Dub..."),
+            (False, "P A R I S!", "P a R I S!"),
+        ]
+        for testcase in testcases:
+            all_caps, given, expected = testcase
+            with self.configure_plugin({"all_caps": all_caps}):
+                assert TitlecasePlugin().titlecase(given) == expected
+
+    def test_all_lowercase(self):
+        testcases = [
+            (True, "Unaffected", "Unaffected"),
+            (True, "RBMK1000", "Rbmk1000"),
+            (True, "pillow dub...", "pillow dub..."),
+            (False, "pillow dub...", "Pillow Dub..."),
+        ]
+        for testcase in testcases:
+            all_lowercase, given, expected = testcase
+            with self.configure_plugin({"all_lowercase": all_lowercase}):
                 assert TitlecasePlugin().titlecase(given) == expected
 
     def test_received_info_handler(self):
