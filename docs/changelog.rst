@@ -31,6 +31,10 @@ New features:
   no_convert, never_convert_lossy_files, same format, and max_bitrate
 - :doc:`plugins/titlecase`: Add the `titlecase` plugin to allow users to
       resolve differences in metadata source styles.
+- :doc:`plugins/embedart`: Embedded arts can now be cleared during import with the
+  ``clearart_on_import`` config option. Also, ``beet clearart`` is only going to
+  update the files matching the query and with an embedded art, leaving
+  untouched the files without.
 
 Bug fixes:
 
