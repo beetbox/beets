@@ -19,6 +19,7 @@ import pytest
 
 from beets.library import Item
 from beets.test.helper import PluginMixin
+from beets.importer.tasks import ImportTask, SingletonImportTask
 from beetsplug.fromfilename import FromFilenamePlugin
 
 
@@ -41,10 +42,8 @@ def mock_item(**kwargs):
     return Item(**{**defaults, **kwargs})
 
 
-@dataclass
-class Task:
-    items: list[Item]
-    is_album: bool = True
+def mock_task(items):
+    return ImportTask(toppath=None, paths=None, items=items)
 
 
 @pytest.mark.parametrize(
@@ -408,7 +407,7 @@ class TestFromFilename(PluginMixin):
 
         After parsing, compare to the original with the expected attributes defined.
         """
-        task = Task([mock_item(path=expected_item.path)])
+        task = mock_task(items=[mock_item(path=expected_item.path)])
         f = FromFilenamePlugin()
         f.filename_task(task, Session())
         res = task.items[0]
@@ -561,7 +560,7 @@ class TestFromFilename(PluginMixin):
 
         After parsing, compare to the expected items.
         """
-        task = Task([mock_item(path=item.path) for item in expected_items])
+        task = mock_task([mock_item(path=item.path) for item in expected_items])
         f = FromFilenamePlugin()
         f.filename_task(task, Session())
         res = task.items
@@ -581,7 +580,15 @@ class TestFromFilename(PluginMixin):
         assert res[1].year == exp[1].year
         assert res[1].title == exp[1].title
 
-    # TODO: Test with singleton import tasks
+    def test_singleton_import(self):
+        task = SingletonImportTask(
+                toppath=None,
+                item=mock_item(path="/01 Track.wav")
+        )
+        f = FromFilenamePlugin()
+        f.filename_task(task, Session())
+        assert task.item.track == 1
+        assert task.item.title == "Track"
 
     # TODO: Test with items that already have data, or other types of bad data.
 
@@ -636,7 +643,7 @@ class TestFromFilename(PluginMixin):
             "/Album Artist - Album (2025) [FLAC CD] {CATALOGNUM}/"
             "1-2 Artist - Track.wav"
         )
-        task = Task([mock_item(path=path)])
+        task = mock_task([mock_item(path=path)])
         expected.path = path
         with self.configure_plugin({"fields": fields}):
             f = FromFilenamePlugin()
@@ -651,5 +658,6 @@ class TestFromFilename(PluginMixin):
             assert res.year == expected.year
             assert res.title == expected.title
 
-    def test_user_regex(self):
+    @pytest.mark.parametrize("patterns,expected_item", [])
+    def test_user_regex(self, patterns, expected_item):
         return
