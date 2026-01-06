@@ -113,7 +113,7 @@ RE_SPLIT = re.compile(r"[\-\_]+")
 RE_BRACKETS = re.compile(r"[\(\[\{].*?[\)\]\}]")
 
 
-class TrackMatches(TypedDict):
+class TrackMatch(TypedDict):
     disc: str | None
     track: str | None
     by: NotRequired[str | None]
@@ -121,7 +121,7 @@ class TrackMatches(TypedDict):
     title: str | None
 
 
-class AlbumMatches(TypedDict):
+class AlbumMatch(TypedDict):
     albumartist: str | None
     album: str | None
     year: str | None
@@ -188,91 +188,88 @@ class FromFilenamePlugin(BeetsPlugin):
         return re.sub("}", "}}", re.sub("{", "{{", text))
 
     def filename_task(self, task: ImportTask, session: ImportSession) -> None:
-        """Examine each item in the task to see if we can extract a title
-        from the filename. Try to match all filenames to a number of
-        regexps, starting with the most complex patterns and successively
-        trying less complex patterns. As soon as all filenames match the
-        same regex we can make an educated guess of which part of the
-        regex that contains the title.
+        """ Examines all files in the given import task for any missing
+        information it can gather from the file and folder names.
+
+        Once the information has been obtained and checked, it
+        is applied to the items to improve later metadata lookup.
         """
         # Create the list of items to process
 
-        # TODO: If it's a singleton import task, use the .item field
-        items: list[Item] = []
-        if isinstance(task, SingletonImportTask):
-            item = task.item
-        else:
-            items = task.items
+        items: list[Item] = task.items
 
-        # TODO: Switch this to gather data anyway, but only
-        # update where missing
-        # Look for suspicious (empty or meaningless) titles.
-        missing_titles = sum(self._bad_field(i.title) for i in items)
+        # TODO: Check each of the fields to see if any are missing
+        # information on the file.
+        parent_folder, item_filenames = self._get_path_strings(items)
 
-        if missing_titles:
-            # Get the base filenames (no path or extension).
-            parent_path: str = ""
-            names: dict[Item, str] = {}
-            for item in items:
-                path: Path = Path(displayable_path(item.path))
-                name = path.stem
-                names[item] = name
-                if not parent_path:
-                    parent_path = path.parent.stem
-                    self._log.debug(
-                        f"Parent Folder: {self._escape(parent_path)}"
-                    )
-
-            album_matches: AlbumMatches = self._parse_album_info(parent_path)
-            self._log.debug(album_matches)
-            # Look for useful information in the filenames.
-            track_matches: dict[Item, TrackMatches] = {}
-            for item, name in names.items():
-                m = self._parse_track_info(name)
-                track_matches[item] = m
-            # Make sure we got the fields right
-            self._sanity_check_matches(album_matches, track_matches)
-            self._apply_matches(album_matches, track_matches)
+        album_matches = self._parse_album_info(parent_folder)
+        # Look for useful information in the filenames.
+        track_matches = self._build_track_matches(item_filenames)
+        # Make sure we got the fields right
+        self._sanity_check_matches(album_matches, track_matches)
+        # Apply the information
+        self._apply_matches(album_matches, track_matches)
 
     @staticmethod
-    def _parse_track_info(text: str) -> TrackMatches:
-        matches: TrackMatches = {
+    def _get_path_strings(items: list[Item]) -> tuple[str, dict[Item, str]]:
+        parent_folder: str = ""
+        filenames: dict[Item, str] = {}
+        for item in items:
+            path: Path = Path(displayable_path(item.path))
+            filename = path.stem
+            filenames[item] = filename
+            if not parent_folder:
+                parent_folder = path.parent.stem
+        return parent_folder, filenames
+
+    def _build_track_matches(self,
+        item_filenames: dict[Item, str]) -> dict[Item, TrackMatch]:
+        track_matches: dict[Item, TrackMatch] = {}
+        for item, filename in item_filenames.items():
+            m = self._parse_track_info(filename)
+            track_matches[item] = m
+        return track_matches
+
+
+    @staticmethod
+    def _parse_track_info(text: str) -> TrackMatch:
+        trackmatch: TrackMatch = {
             "disc": None,
             "track": None,
             "by": None,
             "artist": None,
             "title": None,
         }
-        m = RE_TRACK_INFO.match(text)
-        if m:
-            if disc := m.group("disc"):
-                matches["disc"] = str(disc)
-            if track := m.group("track"):
-                matches["track"] = str(track).strip()
-            if by := m.group("by"):
-                matches["by"] = str(by)
-            if artist := m.group("artist"):
-                matches["artist"] = str(artist).strip()
-            if title := m.group("title"):
-                matches["title"] = str(title).strip()
+        match = RE_TRACK_INFO.match(text)
+        assert match is not None
+        if disc := match.group("disc"):
+            trackmatch["disc"] = str(disc)
+        if track := match.group("track"):
+            trackmatch["track"] = str(track).strip()
+        if by := match.group("by"):
+            trackmatch["by"] = str(by)
+        if artist := match.group("artist"):
+            trackmatch["artist"] = str(artist).strip()
+        if title := match.group("title"):
+            trackmatch["title"] = str(title).strip()
         # if the phrase "by" is matched, swap artist and title
-        if matches["by"]:
-            artist = matches["title"]
-            matches["title"] = matches["artist"]
-            matches["artist"] = artist
+        if trackmatch["by"]:
+            artist = trackmatch["title"]
+            trackmatch["title"] = trackmatch["artist"]
+            trackmatch["artist"] = artist
         # remove that key
-        del matches["by"]
+        del trackmatch["by"]
         # if all fields except `track` are none
         # set title to track number as well
         # we can't be sure if it's actually the track number
         # or track title
-        if set(matches.values()) == {None, matches["track"]}:
-            matches["title"] = matches["track"]
+        if set(trackmatch.values()) == {None, trackmatch["track"]}:
+            trackmatch["title"] = trackmatch["track"]
 
-        return matches
+        return trackmatch
 
-    def _parse_album_info(self, text: str) -> AlbumMatches:
-        matches: AlbumMatches = {
+    def _parse_album_info(self, text: str) -> AlbumMatch:
+        matches: AlbumMatch = {
             "albumartist": None,
             "album": None,
             "year": None,
@@ -313,7 +310,7 @@ class FromFilenamePlugin(BeetsPlugin):
         return matches
 
     def _apply_matches(
-        self, album_match: AlbumMatches, track_matches: dict[Item, TrackMatches]
+        self, album_match: AlbumMatch, track_matches: dict[Item, TrackMatch]
     ) -> None:
         """Apply all valid matched fields to all items in the match dictionary."""
         match = album_match
@@ -422,7 +419,7 @@ class FromFilenamePlugin(BeetsPlugin):
         return text
 
     def _sanity_check_matches(
-        self, album_match: AlbumMatches, track_matches: dict[Item, TrackMatches]
+        self, album_match: AlbumMatch, track_matches: dict[Item, TrackMatch]
     ) -> None:
         """Check to make sure data is coherent between
         track and album matches. Largely looking to see
@@ -430,7 +427,7 @@ class FromFilenamePlugin(BeetsPlugin):
         identified.
         """
 
-        def swap_artist_title(tracks: list[TrackMatches]):
+        def swap_artist_title(tracks: list[TrackMatch]):
             for track in tracks:
                 artist = track["title"]
                 track["title"] = track["artist"]
@@ -447,7 +444,7 @@ class FromFilenamePlugin(BeetsPlugin):
         # if they do not, try seeing if all the titles match
         # if all the titles match, swap title and artist fields
         # If we know that it's a VA album, then we can't assert much from the artists
-        tracks: list[TrackMatches] = list(track_matches.values())
+        tracks: list[TrackMatch] = list(track_matches.values())
         album_artist = album_match["albumartist"]
         one_artist = self._equal_fields(tracks, "artist")
         one_title = self._equal_fields(tracks, "title")
@@ -472,7 +469,7 @@ class FromFilenamePlugin(BeetsPlugin):
         return
 
     @staticmethod
-    def _equal_fields(dictionaries: list[TrackMatches], field: str) -> bool:
+    def _equal_fields(dictionaries: list[TrackMatch], field: str) -> bool:
         """Checks if all values of a field on a dictionary match."""
         return len(set(d[field] for d in dictionaries)) <= 1  # type: ignore
 
