@@ -18,8 +18,8 @@ from dataclasses import dataclass
 import pytest
 
 from beets.library import Item
-from beets.test.helper import ConfigMixin
-from beetsplug import fromfilename
+from beets.test.helper import PluginMixin
+from beetsplug.fromfilename import FromFilenamePlugin
 
 
 class Session:
@@ -109,8 +109,8 @@ class Task:
     ],
 )
 def test_parse_track_info(text, matchgroup):
-    f = fromfilename.FromFilenamePlugin()
-    m = f.parse_track_info(text)
+    f = FromFilenamePlugin()
+    m = f._parse_track_info(text)
     assert matchgroup == m
 
 
@@ -252,12 +252,53 @@ def test_parse_track_info(text, matchgroup):
     ],
 )
 def test_parse_album_info(text, matchgroup):
-    f = fromfilename.FromFilenamePlugin()
-    m = f.parse_album_info(text)
+    f = FromFilenamePlugin()
+    m = f._parse_album_info(text)
     assert matchgroup == m
 
 
-class TestFromFilename(ConfigMixin):
+@pytest.mark.parametrize(
+    "patterns,expected",
+    [
+        (
+            [
+                r"""
+            (?P<disc>\d+(?=[\.\-_]\d))?
+                # a disc must be followed by punctuation and a digit
+            [\.\-]{,1}
+                # disc punctuation
+            (?P<track>\d+)?
+                # match the track number
+            [\.\-_\s]*
+                # artist separators
+            (?P<artist>.+?(?=[\s*_]?[\.\-by].+))?
+                # artist match depends on title existing
+            [\.\-_\s]*
+            (?P<by>by)?
+                # if 'by' is found, artist and title will need to be swapped
+            [\.\-_\s]*
+                # title separators
+            (?P<title>.+)?
+                # match the track title
+            """,
+                r"",
+                r"(?:<invalid)",
+                r"(.*)",
+                r"(?P<disc>asda}]",
+            ],
+            1,
+        )
+    ],
+)
+def test_to_regex(patterns, expected):
+    f = FromFilenamePlugin()
+    p = f._to_regex(patterns)
+    assert len(p) == expected
+
+
+class TestFromFilename(PluginMixin):
+    plugin = "fromfilename"
+
     @pytest.mark.parametrize(
         "expected_item",
         [
@@ -368,7 +409,7 @@ class TestFromFilename(ConfigMixin):
         After parsing, compare to the original with the expected attributes defined.
         """
         task = Task([mock_item(path=expected_item.path)])
-        f = fromfilename.FromFilenamePlugin()
+        f = FromFilenamePlugin()
         f.filename_task(task, Session())
         res = task.items[0]
         exp = expected_item
@@ -379,3 +420,236 @@ class TestFromFilename(ConfigMixin):
         assert res.catalognum == exp.catalognum
         assert res.year == exp.year
         assert res.title == exp.title
+
+    @pytest.mark.parametrize(
+        "expected_items",
+        [
+            [
+                mock_item(
+                    path="/Artist - Album/01 - Track1 - Performer.flac",
+                    track=1,
+                    title="Track1",
+                    album="Album",
+                    albumartist="Artist",
+                    artist="Performer",
+                ),
+                mock_item(
+                    path="/Artist - Album/02 - Track2 - Artist.flac",
+                    track=2,
+                    title="Track2",
+                    album="Album",
+                    albumartist="Artist",
+                    artist="Artist",
+                ),
+            ],
+            [
+                mock_item(
+                    path=(
+                        "/DiY - 8 Definitions of Bounce/"
+                        "01 - Essa - Definition of Bounce.flac"
+                    ),
+                    track=1,
+                    title="Definition of Bounce",
+                    albumartist="DiY",
+                    album="8 Definitions of Bounce",
+                    artist="Essa",
+                ),
+                mock_item(
+                    path=(
+                        "/DiY - 8 Definitions of Bounce/"
+                        "02 - Digs - Definition of Bounce.flac"
+                    ),
+                    track=2,
+                    title="Definition of Bounce",
+                    album="8 Definitions of Bounce",
+                    albumartist="DiY",
+                    artist="Digs",
+                ),
+            ],
+            [
+                mock_item(
+                    path=("/Essa - Magneto Essa/1 - Essa - Magneto Essa.flac"),
+                    track=1,
+                    title="Magneto Essa",
+                    album="Magneto Essa",
+                    albumartist="Essa",
+                    artist="Essa",
+                ),
+                mock_item(
+                    path=("/Essa - Magneto Essa/2 - Essa - The Immortals.flac"),
+                    track=2,
+                    title="The Immortals",
+                    album="Magneto Essa",
+                    albumartist="Essa",
+                    artist="Essa",
+                ),
+            ],
+            [
+                mock_item(
+                    path=("/Magneto Essa/1 - Magneto Essa - Essa.flac"),
+                    track=1,
+                    title="Magneto Essa",
+                    album="Magneto Essa",
+                    artist="Essa",
+                ),
+                mock_item(
+                    path=("/Magneto Essa/2 - The Immortals - Essa.flac"),
+                    track=2,
+                    title="The Immortals",
+                    album="Magneto Essa",
+                    artist="Essa",
+                ),
+            ],
+            [
+                # Even though it might be clear to human eyes,
+                # we can't guess since the various flag is thrown
+                mock_item(
+                    path=(
+                        "/Various - 303 Alliance 012/"
+                        "1 - The End of Satellite - Benji303.flac"
+                    ),
+                    track=1,
+                    title="Benji303",
+                    album="303 Alliance 012",
+                    artist="The End of Satellite",
+                    albumartist="Various Artists",
+                ),
+                mock_item(
+                    path=(
+                        "/Various - 303 Alliance 012/"
+                        "2 - Ruff Beats - Benji303.flac"
+                    ),
+                    track=2,
+                    title="Benji303",
+                    album="303 Alliance 012",
+                    artist="Ruff Beats",
+                    albumartist="Various Artists",
+                ),
+            ],
+            [
+                # Even though it might be clear to human eyes,
+                # we can't guess since the various flag is thrown
+                mock_item(
+                    path=(
+                        "/303 Alliance 012/"
+                        "1 - The End of Satellite - Benji303.flac"
+                    ),
+                    track=1,
+                    title="Benji303",
+                    album="303 Alliance 012",
+                    artist="The End of Satellite",
+                ),
+                mock_item(
+                    path=(
+                        "/303 Alliance 012/"
+                        "2 - Ruff Beats - Benji303 & Sam J.flac"
+                    ),
+                    track=2,
+                    title="Benji303 & Sam J",
+                    album="303 Alliance 012",
+                    artist="Ruff Beats",
+                ),
+            ],
+        ],
+    )
+    def test_sanity_check(self, expected_items):
+        """
+        Take a list of expected items, create a task with just the paths.
+
+        Goal is to ensure that sanity check
+        correctly adjusts the parsed artists and albums
+
+        After parsing, compare to the expected items.
+        """
+        task = Task([mock_item(path=item.path) for item in expected_items])
+        f = FromFilenamePlugin()
+        f.filename_task(task, Session())
+        res = task.items
+        exp = expected_items
+        assert res[0].path == exp[0].path
+        assert res[0].artist == exp[0].artist
+        assert res[0].albumartist == exp[0].albumartist
+        assert res[0].disc == exp[0].disc
+        assert res[0].catalognum == exp[0].catalognum
+        assert res[0].year == exp[0].year
+        assert res[0].title == exp[0].title
+        assert res[1].path == exp[1].path
+        assert res[1].artist == exp[1].artist
+        assert res[1].albumartist == exp[1].albumartist
+        assert res[1].disc == exp[1].disc
+        assert res[1].catalognum == exp[1].catalognum
+        assert res[1].year == exp[1].year
+        assert res[1].title == exp[1].title
+
+    # TODO: Test with singleton import tasks
+
+    # TODO: Test with items that already have data, or other types of bad data.
+
+    # TODO: Test with items that have perfectly fine data for the most part
+
+    @pytest.mark.parametrize(
+        "fields,expected",
+        [
+            (
+                [
+                    "albumartist",
+                    "album",
+                    "year",
+                    "media",
+                    "catalognum",
+                    "artist",
+                    "track",
+                    "disc",
+                    "title",
+                ],
+                mock_item(
+                    albumartist="Album Artist",
+                    album="Album",
+                    year="2025",
+                    media="CD",
+                    catalognum="CATALOGNUM",
+                    disc=1,
+                    track=2,
+                    artist="Artist",
+                    title="Track",
+                ),
+            ),
+            (
+                ["album", "year", "media", "track", "disc", "title"],
+                mock_item(
+                    album="Album",
+                    year="2025",
+                    media="CD",
+                    disc=1,
+                    title="Track",
+                ),
+            ),
+        ],
+    )
+    def test_fields(self, fields, expected):
+        """
+        With a set item and changing list of fields
+
+        After parsing, compare to the original with the expected attributes defined.
+        """
+        path = (
+            "/Album Artist - Album (2025) [FLAC CD] {CATALOGNUM}/"
+            "1-2 Artist - Track.wav"
+        )
+        task = Task([mock_item(path=path)])
+        expected.path = path
+        with self.configure_plugin({"fields": fields}):
+            f = FromFilenamePlugin()
+            f.config
+            f.filename_task(task, Session())
+            res = task.items[0]
+            assert res.path == expected.path
+            assert res.artist == expected.artist
+            assert res.albumartist == expected.albumartist
+            assert res.disc == expected.disc
+            assert res.catalognum == expected.catalognum
+            assert res.year == expected.year
+            assert res.title == expected.title
+
+    def test_user_regex(self):
+        return
