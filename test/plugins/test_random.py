@@ -140,13 +140,15 @@ class TestRandomObjs:
 
     def test_random_selection_by_count(self):
         """Test selecting a specific number of items."""
-        selected = list(random_objs(self.items, number=2))
+        selected = list(random_objs(self.items, "artist", number=2))
         assert len(selected) == 2
         assert all(item in self.items for item in selected)
 
     def test_random_selection_by_time(self):
         """Test selecting items constrained by total time (minutes)."""
-        selected = list(random_objs(self.items, time_minutes=6))  # 6 minutes
+        selected = list(
+            random_objs(self.items, "artist", time_minutes=6)
+        )  # 6 minutes
         total_time = (
             sum(item.length for item in selected) / 60
         )  # Convert to minutes
@@ -160,7 +162,9 @@ class TestRandomObjs:
                 helper.create_item(artist=self.artist1, length=180)
             )
 
-        selected = list(random_objs(self.items, number=10, equal_chance=True))
+        selected = list(
+            random_objs(self.items, "artist", number=10, equal_chance=True)
+        )
         artist_counts = {}
         for item in selected:
             artist_counts[item.artist] = artist_counts.get(item.artist, 0) + 1
@@ -170,11 +174,11 @@ class TestRandomObjs:
 
     def test_empty_input_list(self):
         """Test behavior with an empty input list."""
-        selected = list(random_objs([], number=1))
+        selected = list(random_objs([], "artist", number=1))
         assert len(selected) == 0
 
     def test_no_constraints_returns_all(self):
         """Test that no constraints return all items in random order."""
-        selected = list(random_objs(self.items, 3))
+        selected = list(random_objs(self.items, "artist", number=3))
         assert len(selected) == len(self.items)
         assert set(selected) == set(self.items)
