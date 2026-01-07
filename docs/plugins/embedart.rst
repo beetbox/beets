@@ -70,8 +70,8 @@ file. The available options are:
   :doc:`FetchArt </plugins/fetchart>` plugin to download art with the purpose of
   directly embedding it into the file's metadata without an "intermediate" album
   art file. Default: ``no``.
-- **clearart_on_import**: Enable automatic embedded art clearing. Default: ``no``.
-
+- **clearart_on_import**: Enable automatic embedded art clearing. Default:
+  ``no``.
 
 Note: ``compare_threshold`` option requires ImageMagick_, and ``maxwidth``
 requires either ImageMagick_ or Pillow_.
