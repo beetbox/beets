@@ -7,7 +7,8 @@ but where the filenames contain useful information like the artist and title.
 When you attempt to import a track that's missing a title, this plugin will look
 at the track's filename and parent folder, and guess a number of fields.
 
-The extracted information will be used to search for metadata and match track ordering.
+The extracted information will be used to search for metadata and match track
+ordering.
 
 To use the ``fromfilename`` plugin, enable it in your configuration (see
 :ref:`using-plugins`).
@@ -38,11 +39,21 @@ Default
         patterns:
           file: []
           folder: []
+        ignore_dirs:
 
 .. conf:: fields
     :default: [ artist, album, albumartist, catalognum, disc, media, title, track, year ]
 
-    The fields the plugin will guess with its default pattern matching. If a field is specified in a user pattern,  that field does not need to be present on this list to be applied. If you only want the plugin contribute the track title and artist, you would put ``[title, artist]``.
+    The fields the plugin will guess with its default pattern matching.
+
+    By default, the plugin is configured to match all fields its default
+    patterns are capable of matching.
+
+    If a field is specified in a user pattern, that field does not need
+    to be present on this list to be applied.
+
+    If you only want the plugin to contribute the track title and artist,
+    you would put ``[title, artist]``.
 
 .. conf:: patterns
 
@@ -67,3 +78,9 @@ Default
            file:
              - "$title - $artist"
 
+.. conf:: ignore_dirs
+    :default: []
+
+    Specify parent directory names that will not be searched for album
+    information. Useful if you use a regular directory for importing
+    single files.
