@@ -45,6 +45,7 @@ New features:
   of brackets are supported and a new ``bracket_keywords`` configuration option
   allows customizing the keywords. Setting ``bracket_keywords`` to an empty list
   matches any bracket content regardless of keywords.
+- :doc:`plugins/discogs`: Added support for multi value fields. :bug:`6068`
 
 Bug fixes:
 
@@ -86,6 +87,8 @@ Bug fixes:
   name (like "feat.", "+", or "&") prevent it. Using the albumartists list field
   and fetching a genre for each artist separately improves the chance of
   receiving valid results in that stage.
+- :doc:`plugins/discogs`: Fixed an unexpected flexible attribute originating
+  from the Discogs plugin. :bug:`6177`
 
 For plugin developers:
 
