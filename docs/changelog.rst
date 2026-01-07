@@ -44,6 +44,8 @@ New features:
   of brackets are supported and a new ``bracket_keywords`` configuration option
   allows customizing the keywords. Setting ``bracket_keywords`` to an empty list
   matches any bracket content regardless of keywords.
+- :doc:`plugins/random`: Added ``--field`` option to specify which field to use
+  for equal-chance sampling (default: ``albumartist``).
 
 Bug fixes:
 
@@ -124,7 +126,7 @@ Other changes:
   unavailable, enabling ``importorskip`` usage in pytest setup.
 - Finally removed gmusic plugin and all related code/docs as the Google Play
   Music service was shut down in 2020.
-* Moved `beets/random.py` into `beetsplug/random.py` to cleanup core module.
+- Moved `beets/random.py` into `beetsplug/random.py` to cleanup core module.
 
 2.5.1 (October 14, 2025)
 ------------------------
