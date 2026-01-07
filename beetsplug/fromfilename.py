@@ -25,7 +25,7 @@ from typing import TypedDict
 from typing_extensions import NotRequired
 
 from beets import config
-from beets.importer import ImportSession, ImportTask, SingletonImportTask
+from beets.importer import ImportSession, ImportTask
 from beets.library import Item
 from beets.plugins import BeetsPlugin
 from beets.util import displayable_path
@@ -149,43 +149,19 @@ class FromFilenamePlugin(BeetsPlugin):
                 # TODO: Add ignore parent folder
             }
         )
+        self.fields = set(self.config["fields"].as_str_seq())
         self.register_listener("import_task_start", self.filename_task)
 
     @cached_property
-    def fields(self) -> set[str]:
-        return set(self.config["fields"].as_str_seq())
-
-    @cached_property
     def file_patterns(self) -> list[re.Pattern[str]]:
-        return self._to_regex(self.config["patterns"]["file"].as_str_seq())
+        return self._user_pattern_to_regex(
+            self.config["patterns"]["file"].as_str_seq())
 
     @cached_property
     def folder_patterns(self) -> list[re.Pattern[str]]:
-        return self._to_regex(self.config["patterns"]["folder"].as_str_seq())
-
-    def _to_regex(self, patterns: list[str]) -> list[re.Pattern[str]]:
-        """Compile user patterns into a list of usable regex
-        patterns. Catches errors are continues without bad regex patterns.
-        """
-        compiled: list[re.Pattern[str]] = []
-        for p in patterns:
-            try:
-                # check that the pattern has actual content
-                if len(p) < 1:
-                    raise Exception("pattern is empty")
-                if not RE_NAMED_SUBGROUP.search(p):
-                    raise Exception("no named subgroups")
-                regexp = re.compile(p, re.IGNORECASE | re.VERBOSE)
-                compiled.append(regexp)
-            except Exception as e:
-                self._log.info(f"Invalid user pattern {self._escape(p)!r}: {e}")
-        return compiled
-
-    @staticmethod
-    def _escape(text: str) -> str:
-        # escape brackets for fstring logs
-        # TODO: Create an issue for brackets in logger
-        return re.sub("}", "}}", re.sub("{", "{{", text))
+        return self._user_pattern_to_regex(
+            self.config["patterns"]["folder"].as_str_seq()
+                                           )
 
     def filename_task(self, task: ImportTask, session: ImportSession) -> None:
         """ Examines all files in the given import task for any missing
@@ -210,6 +186,21 @@ class FromFilenamePlugin(BeetsPlugin):
         # Apply the information
         self._apply_matches(album_matches, track_matches)
 
+    def _user_pattern_to_regex(self, patterns: list[str]) -> list[re.Pattern[str]]:
+        """Compile user patterns into a list of usable regex
+        patterns. Catches errors are continues without bad regex patterns.
+        """
+        return [
+            re.compile(regexp) for p in patterns if (
+            regexp := self._parse_user_pattern_strings(p))
+                ]
+
+    @staticmethod
+    def _escape(text: str) -> str:
+        # escape brackets for fstring logs
+        # TODO: Create an issue for brackets in logger
+        return re.sub("}", "}}", re.sub("{", "{{", text))
+
     @staticmethod
     def _get_path_strings(items: list[Item]) -> tuple[str, dict[Item, str]]:
         parent_folder: str = ""
@@ -222,14 +213,23 @@ class FromFilenamePlugin(BeetsPlugin):
                 parent_folder = path.parent.stem
         return parent_folder, filenames
 
-    def _build_track_matches(self,
-        item_filenames: dict[Item, str]) -> dict[Item, TrackMatch]:
-        track_matches: dict[Item, TrackMatch] = {}
-        for item, filename in item_filenames.items():
-            m = self._parse_track_info(filename)
-            track_matches[item] = m
-        return track_matches
+    def _check_user_matches(self, text: str,
+        patterns: list[re.Pattern[str]]) -> dict[str, str]:
+        for p in patterns:
+            if (usermatch := p.fullmatch(text)):
+                return usermatch.groupdict()
+        return None
 
+    def _build_track_matches(self,
+        item_filenames: dict[Item, str]) -> dict[Item, dict[str, str]]:
+        track_matches: dict[Item, dict[str, str]] = {}
+        for item, filename in item_filenames.items():
+            if (m := self._check_user_matches(filename, self.file_patterns)):
+                track_matches[item] = m
+            else:
+                match = self._parse_track_info(filename)
+                track_matches[item] = match
+        return track_matches
 
     @staticmethod
     def _parse_track_info(text: str) -> TrackMatch:
@@ -268,7 +268,10 @@ class FromFilenamePlugin(BeetsPlugin):
 
         return trackmatch
 
-    def _parse_album_info(self, text: str) -> AlbumMatch:
+    def _parse_album_info(self, text: str) -> dict[str, str]:
+        # Check if a user pattern matches
+        if (m := self._check_user_matches(text, self.folder_patterns)):
+            return m
         matches: AlbumMatch = {
             "albumartist": None,
             "album": None,
@@ -411,6 +414,18 @@ class FromFilenamePlugin(BeetsPlugin):
             return match.group("catalognum"), match.span()
         return None, (0, 0)
 
+    def _parse_user_pattern_strings(self, text: str) -> str | None:
+        # escape any special characters
+        fields: list[str] = [s.lower() for s in re.findall(r"\$([a-zA-Z\_]+)", text)]
+        if not fields:
+            # if there are no usable fields
+            return None
+        pattern = re.escape(text)
+        for f in fields:
+            pattern = re.sub(rf"\\\${f}", f"(?P<{f}>.+)", pattern)
+            self.fields.add(f)
+        return rf"{pattern}"
+
     @staticmethod
     def _mutate_string(text: str, span: tuple[int, int]) -> str:
         """Replace a matched field with a seperator"""
@@ -439,11 +454,6 @@ class FromFilenamePlugin(BeetsPlugin):
         if len(track_matches) < 2:
             return
 
-        # If the album artist is not various artists
-        # check that all artists match
-        # if they do not, try seeing if all the titles match
-        # if all the titles match, swap title and artist fields
-        # If we know that it's a VA album, then we can't assert much from the artists
         tracks: list[TrackMatch] = list(track_matches.values())
         album_artist = album_match["albumartist"]
         one_artist = self._equal_fields(tracks, "artist")
