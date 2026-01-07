@@ -17,7 +17,7 @@
 """
 
 import re
-from collections.abc import MutableMapping
+from collections.abc import Iterator, MutableMapping, ValuesView
 from datetime import datetime
 from functools import cached_property
 from pathlib import Path
@@ -118,10 +118,10 @@ class FilenameMatch(MutableMapping[str, str | None]):
             if value is not None:
                 self._matches[key.lower()] = str(value).strip()
 
-    def __getitem__(self, key) -> str | None:
+    def __getitem__(self, key: str) -> str | None:
         return self._matches.get(key, None)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
         return iter(self._matches)
 
     def __len__(self) -> int:
@@ -134,7 +134,7 @@ class FilenameMatch(MutableMapping[str, str | None]):
     def __delitem__(self, key: str) -> None:
         del self._matches[key]
 
-    def values(self):
+    def values(self) -> ValuesView[str | None]:
         return self._matches.values()
 
 
@@ -155,23 +155,22 @@ class FromFilenamePlugin(BeetsPlugin):
                     "year",
                 ],
                 "patterns": {"folder": [], "file": []},
-                # TODO: Add ignore parent folder
+                "ignore_dirs": [],
             }
         )
         self.fields = set(self.config["fields"].as_str_seq())
+        # Evaluate the user patterns to expand the fields
+        self.file_patterns = self._user_pattern_to_regex(
+            self.config["patterns"]["file"].as_str_seq()
+        )
+        self.folder_patterns = self._user_pattern_to_regex(
+            self.config["patterns"]["folder"].as_str_seq()
+        )
         self.register_listener("import_task_start", self.filename_task)
 
     @cached_property
-    def file_patterns(self) -> list[re.Pattern[str]]:
-        return self._user_pattern_to_regex(
-            self.config["patterns"]["file"].as_str_seq()
-        )
-
-    @cached_property
-    def folder_patterns(self) -> list[re.Pattern[str]]:
-        return self._user_pattern_to_regex(
-            self.config["patterns"]["folder"].as_str_seq()
-        )
+    def ignored_directories(self) -> set[str]:
+        return set([p.lower() for p in self.config["ignore_dirs"].as_str_seq()])
 
     def filename_task(self, task: ImportTask, session: ImportSession) -> None:
         """Examines all files in the given import task for any missing
@@ -184,8 +183,10 @@ class FromFilenamePlugin(BeetsPlugin):
 
         items: list[Item] = task.items
 
-        # TODO: Check each of the fields to see if any are missing
-        # information on the file.
+        # If there's no missing data to parse
+        if not self._check_missing_data(items):
+            return
+
         parent_folder, item_filenames = self._get_path_strings(items)
 
         album_matches = self._parse_album_info(parent_folder)
@@ -195,6 +196,31 @@ class FromFilenamePlugin(BeetsPlugin):
         self._sanity_check_matches(album_matches, track_matches)
         # Apply the information
         self._apply_matches(album_matches, track_matches)
+
+    def _check_missing_data(self, items: list[Item]) -> bool:
+        """Look for what fields are missing data on the items.
+        Compare each field in self.fields to the fields on the
+        item.
+
+        If all items have it, remove it from fields.
+
+        If any items are missing it, keep it on the fields.
+
+        If no fields are detect that need to be processed,
+        return false to shortcut the plugin.
+        """
+        remove = set()
+        for field in self.fields:
+            # If any field is a bad field
+            if any([True for item in items if self._bad_field(item[field])]):
+                continue
+            else:
+                remove.add(field)
+        self.fields = self.fields - remove
+        # If all fields have been removed, there is nothing to do
+        if not len(self.fields):
+            return False
+        return True
 
     def _user_pattern_to_regex(
         self, patterns: list[str]
@@ -208,8 +234,9 @@ class FromFilenamePlugin(BeetsPlugin):
             if (regexp := self._parse_user_pattern_strings(p))
         ]
 
-    @staticmethod
-    def _get_path_strings(items: list[Item]) -> tuple[str, dict[Item, str]]:
+    def _get_path_strings(
+        self, items: list[Item]
+    ) -> tuple[str, dict[Item, str]]:
         parent_folder: str = ""
         filenames: dict[Item, str] = {}
         for item in items:
@@ -218,6 +245,8 @@ class FromFilenamePlugin(BeetsPlugin):
             filenames[item] = filename
             if not parent_folder:
                 parent_folder = path.parent.stem
+        if parent_folder.lower() in self.ignored_directories:
+            parent_folder = ""
         return parent_folder, filenames
 
     def _check_user_matches(
@@ -314,7 +343,7 @@ class FromFilenamePlugin(BeetsPlugin):
             for key in match.keys():
                 if key in self.fields:
                     old_value = item.get(key)
-                    new_value = match[key]  # type: ignore
+                    new_value = match[key]
                     if self._bad_field(old_value) and new_value:
                         found_data[key] = new_value
             self._log.info(f"Item updated with: {found_data.items()}")
@@ -436,7 +465,7 @@ class FromFilenamePlugin(BeetsPlugin):
         identified.
         """
 
-        def swap_artist_title(tracks: list[FilenameMatch]):
+        def swap_artist_title(tracks: list[FilenameMatch]) -> None:
             for track in tracks:
                 artist = track["title"]
                 track["title"] = track["artist"]
@@ -475,7 +504,7 @@ class FromFilenamePlugin(BeetsPlugin):
     @staticmethod
     def _equal_fields(dictionaries: list[FilenameMatch], field: str) -> bool:
         """Checks if all values of a field on a dictionary match."""
-        return len(set(d[field] for d in dictionaries)) <= 1  # type: ignore
+        return len(set(d[field] for d in dictionaries)) <= 1
 
     @staticmethod
     def _bad_field(field: str | int) -> bool:
