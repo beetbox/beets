@@ -13,6 +13,9 @@
 
 """Tests for the fromfilename plugin."""
 
+from copy import deepcopy
+from unittest.mock import patch
+
 import pytest
 
 from beets.importer.tasks import ImportTask, SingletonImportTask
@@ -287,6 +290,7 @@ def test_parse_user_pattern_strings(string, pattern):
 
 class TestFromFilename(PluginMixin):
     plugin = "fromfilename"
+    preload_plugin = False
 
     @pytest.mark.parametrize(
         "expected_item",
@@ -707,3 +711,49 @@ class TestFromFilename(PluginMixin):
             assert res.catalognum == expected.catalognum
             assert res.year == expected.year
             assert res.title == expected.title
+
+    def test_no_changes(self):
+        item = mock_item(
+            path="/Folder/File.wav",
+            albumartist="AlbumArtist",
+            artist="Artist",
+            title="Title",
+        )
+        fields = ["artist", "title", "albumartist"]
+        task = mock_task([item])
+        with self.configure_plugin({"fields": fields}):
+            with patch.object(FromFilenamePlugin, "_get_path_strings") as mock:
+                f = FromFilenamePlugin()
+                f.filename_task(task, Session())
+                mock.assert_not_called()
+
+    def test_changes_missing_values(self):
+        item = mock_item(
+            path="/Folder/File.wav",
+            albumartist="AlbumArtist",
+            artist="Artist",
+            title="Title",
+        )
+        item2 = deepcopy(item)
+        item2.title = ""
+        fields = ["artist", "title", "albumartist"]
+        task = mock_task([item, item2])
+        with self.configure_plugin({"fields": fields}):
+            with patch.object(
+                FromFilenamePlugin,
+                "_get_path_strings",
+                return_value=("mock", {item: "mock"}),
+            ) as mock:
+                f = FromFilenamePlugin()
+                f.filename_task(task, Session())
+                assert len(f.fields) == 1
+                assert "title" in f.fields
+                mock.assert_called()
+
+    def test_ignored_directories(self):
+        ignored = "Incoming"
+        item = mock_item(path="/tmp/" + ignored + "/01 - File.wav")
+        with self.configure_plugin({"ignore_dirs": [ignored]}):
+            f = FromFilenamePlugin()
+            parent_folder, _ = f._get_path_strings([item])
+            assert parent_folder == ""
