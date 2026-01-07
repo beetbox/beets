@@ -1,17 +1,31 @@
-"""Get a random song or album from the library."""
+# This file is part of beets.
+# Copyright 2016, Philippe Mongeau.
+# Copyright 2025, Sebastian Mohr.
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
 
 from __future__ import annotations
 
 import random
 from itertools import groupby, islice
 from operator import attrgetter
-from typing import TYPE_CHECKING, Any, Iterable
+from typing import TYPE_CHECKING, Any
 
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, print_
 
 if TYPE_CHECKING:
     import optparse
+    from collections.abc import Iterable
 
     from beets.library import LibModel, Library
 
@@ -24,10 +38,10 @@ def random_func(lib: Library, opts: optparse.Values, args: list[str]):
     # Print a random subset.
     for obj in random_objs(
         objs=objs,
+        equal_chance_field=opts.field,
         number=opts.number,
         time_minutes=opts.time,
         equal_chance=opts.equal_chance,
-        equal_chance_field=opts.field,
     ):
         print_(format(obj))
 
@@ -45,7 +59,7 @@ random_cmd.parser.add_option(
     "-e",
     "--equal-chance",
     action="store_true",
-    help="each artist has the same chance",
+    help="each field has the same chance",
 )
 random_cmd.parser.add_option(
     "-t",
@@ -55,10 +69,10 @@ random_cmd.parser.add_option(
     help="total length in minutes of objects to choose",
 )
 random_cmd.parser.add_option(
-    "-f",
     "--field",
     action="store",
     type="string",
+    default="albumartist",
     help="field to use for equal chance sampling (default: albumartist)",
 )
 random_cmd.parser.add_all_common_options()
@@ -74,13 +88,13 @@ NOT_FOUND_SENTINEL = object()
 
 
 def _equal_chance_permutation(
-    objs: Iterable[LibModel], field: str = "albumartist"
+    objs: Iterable[LibModel], field: str
 ) -> Iterable[LibModel]:
     """Generate (lazily) a permutation of the objects where every group
     with equal values for `field` have an equal chance of appearing in
     any given position.
     """
-    # Group the objects by artist so we can sample from them.
+    # Group the objects by field so we can sample from them.
     key = attrgetter(field)
 
     def get_attr(obj: LibModel) -> Any:
@@ -126,10 +140,10 @@ def _take_time(
 
 def random_objs(
     objs: Iterable[LibModel],
+    equal_chance_field: str,
     number: int = 1,
     time_minutes: float | None = None,
     equal_chance: bool = False,
-    equal_chance_field: str = "albumartist",
 ) -> Iterable[LibModel]:
     """Get a random subset of items, optionally constrained by time or count.
 
@@ -138,15 +152,14 @@ def random_objs(
     - number: The number of objects to select.
     - time_minutes: If specified, the total length of selected objects
       should not exceed this many minutes.
-    - equal_chance: If True, each artist has the same chance of being
+    - equal_chance: If True, each field has the same chance of being
       selected, regardless of how many tracks they have.
     - random_gen: An optional random generator to use for shuffling.
     """
     # Permute the objects either in a straightforward way or an
-    # artist-balanced way.
-    perm: Iterable[LibModel]
+    # field-balanced way.
     if equal_chance:
-        perm = _equal_chance_permutation(objs, field=equal_chance_field)
+        perm = _equal_chance_permutation(objs, equal_chance_field)
     else:
         perm = list(objs)
         random.shuffle(perm)
