@@ -1588,7 +1588,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                     message = ui.colorize(
                         "text_highlight_minor", "has album art"
                     )
-                    self._log.info("{}: {}", album, message)
+                    ui.print_(f"{album}: {message}")
             else:
                 # In ordinary invocations, look for images on the
                 # filesystem. When forcing, however, always go to the Web
@@ -1601,4 +1601,4 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                     message = ui.colorize("text_success", "found album art")
                 else:
                     message = ui.colorize("text_error", "no art found")
-                self._log.info("{}: {}", album, message)
+                ui.print_(f"{album}: {message}")
