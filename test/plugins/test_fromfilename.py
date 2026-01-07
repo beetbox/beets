@@ -13,8 +13,6 @@
 
 """Tests for the fromfilename plugin."""
 
-from dataclasses import dataclass
-
 import pytest
 
 from beets.library import Item
@@ -255,44 +253,19 @@ def test_parse_album_info(text, matchgroup):
     m = f._parse_album_info(text)
     assert matchgroup == m
 
-
-@pytest.mark.parametrize(
-    "patterns,expected",
-    [
+@pytest.mark.parametrize("string,pattern",[
         (
-            [
-                r"""
-            (?P<disc>\d+(?=[\.\-_]\d))?
-                # a disc must be followed by punctuation and a digit
-            [\.\-]{,1}
-                # disc punctuation
-            (?P<track>\d+)?
-                # match the track number
-            [\.\-_\s]*
-                # artist separators
-            (?P<artist>.+?(?=[\s*_]?[\.\-by].+))?
-                # artist match depends on title existing
-            [\.\-_\s]*
-            (?P<by>by)?
-                # if 'by' is found, artist and title will need to be swapped
-            [\.\-_\s]*
-                # title separators
-            (?P<title>.+)?
-                # match the track title
-            """,
-                r"",
-                r"(?:<invalid)",
-                r"(.*)",
-                r"(?P<disc>asda}]",
-            ],
-            1,
-        )
-    ],
-)
-def test_to_regex(patterns, expected):
+        "$albumartist - $album ($year)  {$comments}",
+    r"(?P<albumartist>.+)\ \-\ (?P<album>.+)\ \((?P<year>.+)\)\ \ \{(?P<comments>.+)\}"
+        ),
+        (
+        "$",
+        None
+        ),
+    ])
+def test_parse_user_pattern_strings(string,pattern):
     f = FromFilenamePlugin()
-    p = f._to_regex(patterns)
-    assert len(p) == expected
+    assert f._parse_user_pattern_strings(string) == pattern
 
 
 class TestFromFilename(PluginMixin):
@@ -647,7 +620,6 @@ class TestFromFilename(PluginMixin):
         expected.path = path
         with self.configure_plugin({"fields": fields}):
             f = FromFilenamePlugin()
-            f.config
             f.filename_task(task, Session())
             res = task.items[0]
             assert res.path == expected.path
@@ -658,6 +630,48 @@ class TestFromFilename(PluginMixin):
             assert res.year == expected.year
             assert res.title == expected.title
 
-    @pytest.mark.parametrize("patterns,expected_item", [])
-    def test_user_regex(self, patterns, expected_item):
-        return
+    @pytest.mark.parametrize("patterns,expected", [
+        (
+            {
+                "folder": ["($comments) - {$albumartist} - {$album}"],
+                "file": ["$artist - $track - $title"]
+            },
+        mock_item(
+            path="/(Comment) - {Album Artist} - {Album}/Artist - 02 - Title.flac",
+            comments="Comment",
+            albumartist="Album Artist",
+            album="Album",
+            artist="Artist",
+            track=2,
+            title="Title",
+            )
+        ),
+        (
+            {
+                "folder": ["[$comments] - {$albumartist} - {$album}"],
+                "file": ["$artist - $track - $title"]
+            },
+        mock_item(
+            path="/(Comment) - {Album Artist} - {Album}/Artist - 02 - Title.flac",
+            artist="Artist",
+            track=2,
+            title="Title",
+            catalognum="Comment"
+            )
+        )
+    ])
+    def test_user_patterns(self, patterns, expected):
+        task = mock_task([mock_item(path=expected.path)])
+        with self.configure_plugin({ "patterns": patterns }):
+            f = FromFilenamePlugin()
+            f.filename_task(task, Session())
+            res = task.items[0]
+            assert res.comments == expected.comments
+            assert res.path == expected.path
+            assert res.artist == expected.artist
+            assert res.albumartist == expected.albumartist
+            assert res.disc == expected.disc
+            assert res.catalognum == expected.catalognum
+            assert res.year == expected.year
+            assert res.title == expected.title
+
