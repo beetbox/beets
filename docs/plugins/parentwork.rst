@@ -38,16 +38,6 @@ This plugin adds seven tags:
   to keep track of recordings whose works have changed.
 - **parentwork_date**: The composition date of the parent work.
 
-Installation
-------------
-
-To use the ``parentwork`` plugin, first enable it in your configuration (see
-:ref:`using-plugins`). Then, install ``beets`` with ``parentwork`` extra
-
-.. code-block:: bash
-
-    pip install "beets[parentwork]"
-
 Configuration
 -------------
 

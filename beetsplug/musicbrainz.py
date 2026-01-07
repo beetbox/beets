@@ -16,17 +16,14 @@
 
 from __future__ import annotations
 
-import operator
 from collections import Counter
 from contextlib import suppress
-from dataclasses import dataclass
-from functools import cached_property, singledispatchmethod
-from itertools import groupby, product
+from functools import cached_property
+from itertools import product
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urljoin
 
 from confuse.exceptions import NotFoundError
-from requests_ratelimiter import LimiterMixin
 
 import beets
 import beets.autotag.hooks
@@ -35,11 +32,8 @@ from beets.metadata_plugins import MetadataSourcePlugin
 from beets.util.deprecation import deprecate_for_user
 from beets.util.id_extractors import extract_release_id
 
-from ._utils.requests import (
-    HTTPNotFoundError,
-    RequestHandler,
-    TimeoutAndRetrySession,
-)
+from ._utils.musicbrainz import MusicBrainzAPIMixin
+from ._utils.requests import HTTPNotFoundError
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
@@ -101,86 +95,6 @@ BROWSE_INCLUDES = [
 ]
 BROWSE_CHUNKSIZE = 100
 BROWSE_MAXTRACKS = 500
-
-
-class LimiterTimeoutSession(LimiterMixin, TimeoutAndRetrySession):
-    pass
-
-
-@dataclass
-class MusicBrainzAPI(RequestHandler):
-    api_host: str
-    rate_limit: float
-
-    def create_session(self) -> LimiterTimeoutSession:
-        return LimiterTimeoutSession(per_second=self.rate_limit)
-
-    def get_entity(
-        self, entity: str, inc_list: list[str] | None = None, **kwargs
-    ) -> JSONDict:
-        if inc_list:
-            kwargs["inc"] = "+".join(inc_list)
-
-        return self._group_relations(
-            self.get_json(
-                f"{self.api_host}/ws/2/{entity}",
-                params={**kwargs, "fmt": "json"},
-            )
-        )
-
-    def get_release(self, id_: str) -> JSONDict:
-        return self.get_entity(f"release/{id_}", inc_list=RELEASE_INCLUDES)
-
-    def get_recording(self, id_: str) -> JSONDict:
-        return self.get_entity(f"recording/{id_}", inc_list=TRACK_INCLUDES)
-
-    def browse_recordings(self, **kwargs) -> list[JSONDict]:
-        kwargs.setdefault("limit", BROWSE_CHUNKSIZE)
-        kwargs.setdefault("inc_list", BROWSE_INCLUDES)
-        return self.get_entity("recording", **kwargs)["recordings"]
-
-    @singledispatchmethod
-    @classmethod
-    def _group_relations(cls, data: Any) -> Any:
-        """Normalize MusicBrainz 'relations' into type-keyed fields recursively.
-
-        This helper rewrites payloads that use a generic 'relations' list into
-        a structure that is easier to consume downstream. When a mapping
-        contains 'relations', those entries are regrouped by their 'target-type'
-        and stored under keys like '<target-type>-relations'. The original
-        'relations' key is removed to avoid ambiguous access patterns.
-
-        The transformation is applied recursively so that nested objects and
-        sequences are normalized consistently, while non-container values are
-        left unchanged.
-        """
-        return data
-
-    @_group_relations.register(list)
-    @classmethod
-    def _(cls, data: list[Any]) -> list[Any]:
-        return [cls._group_relations(i) for i in data]
-
-    @_group_relations.register(dict)
-    @classmethod
-    def _(cls, data: JSONDict) -> JSONDict:
-        for k, v in list(data.items()):
-            if k == "relations":
-                get_target_type = operator.methodcaller("get", "target-type")
-                for target_type, group in groupby(
-                    sorted(v, key=get_target_type), get_target_type
-                ):
-                    relations = [
-                        {k: v for k, v in item.items() if k != "target-type"}
-                        for item in group
-                    ]
-                    data[f"{target_type}-relations"] = cls._group_relations(
-                        relations
-                    )
-                data.pop("relations")
-            else:
-                data[k] = cls._group_relations(v)
-        return data
 
 
 def _preferred_alias(
@@ -405,24 +319,10 @@ def _merge_pseudo_and_actual_album(
     return merged
 
 
-class MusicBrainzPlugin(MetadataSourcePlugin):
+class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
     @cached_property
     def genres_field(self) -> str:
         return f"{self.config['genres_tag'].as_choice(['genre', 'tag'])}s"
-
-    @cached_property
-    def api(self) -> MusicBrainzAPI:
-        hostname = self.config["host"].as_str()
-        if hostname == "musicbrainz.org":
-            hostname, rate_limit = "https://musicbrainz.org", 1.0
-        else:
-            https = self.config["https"].get(bool)
-            hostname = f"http{'s' if https else ''}://{hostname}"
-            rate_limit = (
-                self.config["ratelimit"].get(int)
-                / self.config["ratelimit_interval"].as_number()
-            )
-        return MusicBrainzAPI(hostname, rate_limit)
 
     def __init__(self):
         """Set up the python-musicbrainz-ngs module according to settings
@@ -431,10 +331,6 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
         super().__init__()
         self.config.add(
             {
-                "host": "musicbrainz.org",
-                "https": False,
-                "ratelimit": 1,
-                "ratelimit_interval": 1,
                 "genres": False,
                 "genres_tag": "genre",
                 "external_ids": {
@@ -589,7 +485,9 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
             for i in range(0, ntracks, BROWSE_CHUNKSIZE):
                 self._log.debug("Retrieving tracks starting at {}", i)
                 recording_list.extend(
-                    self.api.browse_recordings(release=release["id"], offset=i)
+                    self.mb_api.browse_recordings(
+                        release=release["id"], offset=i
+                    )
                 )
             track_map = {r["id"]: r for r in recording_list}
             for medium in release["media"]:
@@ -853,17 +751,9 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
         using the provided criteria. Handles API errors by converting them into
         MusicBrainzAPIError exceptions with contextual information.
         """
-        query = " AND ".join(
-            f'{k}:"{_v}"'
-            for k, v in filters.items()
-            if (_v := v.lower().strip())
+        return self.mb_api.search(
+            query_type, filters, limit=self.config["search_limit"].get()
         )
-        self._log.debug(
-            "Searching for MusicBrainz {}s with: {!r}", query_type, query
-        )
-        return self.api.get_entity(
-            query_type, query=query, limit=self.config["search_limit"].get()
-        )[f"{query_type}s"]
 
     def candidates(
         self,
@@ -901,7 +791,7 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
             self._log.debug("Invalid MBID ({}).", album_id)
             return None
 
-        res = self.api.get_release(albumid)
+        res = self.mb_api.get_release(albumid, includes=RELEASE_INCLUDES)
 
         # resolve linked release relations
         actual_res = None
@@ -914,7 +804,9 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
                     rel["type"] == "transl-tracklisting"
                     and rel["direction"] == "backward"
                 ):
-                    actual_res = self.api.get_release(rel["release"]["id"])
+                    actual_res = self.mb_api.get_release(
+                        rel["release"]["id"], includes=RELEASE_INCLUDES
+                    )
 
         # release is potentially a pseudo release
         release = self.album_info(res)
@@ -937,6 +829,8 @@ class MusicBrainzPlugin(MetadataSourcePlugin):
             return None
 
         with suppress(HTTPNotFoundError):
-            return self.track_info(self.api.get_recording(trackid))
+            return self.track_info(
+                self.mb_api.get_recording(trackid, includes=TRACK_INCLUDES)
+            )
 
         return None
