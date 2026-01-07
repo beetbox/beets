@@ -138,7 +138,6 @@ class FilenameMatch(MutableMapping[str, str | None]):
         return self._matches.values()
 
 
-
 class FromFilenamePlugin(BeetsPlugin):
     def __init__(self) -> None:
         super().__init__()
@@ -165,16 +164,17 @@ class FromFilenamePlugin(BeetsPlugin):
     @cached_property
     def file_patterns(self) -> list[re.Pattern[str]]:
         return self._user_pattern_to_regex(
-            self.config["patterns"]["file"].as_str_seq())
+            self.config["patterns"]["file"].as_str_seq()
+        )
 
     @cached_property
     def folder_patterns(self) -> list[re.Pattern[str]]:
         return self._user_pattern_to_regex(
             self.config["patterns"]["folder"].as_str_seq()
-                                           )
+        )
 
     def filename_task(self, task: ImportTask, session: ImportSession) -> None:
-        """ Examines all files in the given import task for any missing
+        """Examines all files in the given import task for any missing
         information it can gather from the file and folder names.
 
         Once the information has been obtained and checked, it
@@ -196,19 +196,17 @@ class FromFilenamePlugin(BeetsPlugin):
         # Apply the information
         self._apply_matches(album_matches, track_matches)
 
-    def _user_pattern_to_regex(self, patterns: list[str]) -> list[re.Pattern[str]]:
+    def _user_pattern_to_regex(
+        self, patterns: list[str]
+    ) -> list[re.Pattern[str]]:
         """Compile user patterns into a list of usable regex
         patterns. Catches errors are continues without bad regex patterns.
         """
         return [
-            re.compile(regexp) for p in patterns if (
-            regexp := self._parse_user_pattern_strings(p))
-                ]
-
-    @staticmethod
-    def _escape(text: str) -> str:
-        # escape brackets for fstring logs
-        return re.sub("}", "}}", re.sub("{", "{{", text))
+            re.compile(regexp)
+            for p in patterns
+            if (regexp := self._parse_user_pattern_strings(p))
+        ]
 
     @staticmethod
     def _get_path_strings(items: list[Item]) -> tuple[str, dict[Item, str]]:
@@ -222,18 +220,20 @@ class FromFilenamePlugin(BeetsPlugin):
                 parent_folder = path.parent.stem
         return parent_folder, filenames
 
-    def _check_user_matches(self, text: str,
-        patterns: list[re.Pattern[str]]) -> FilenameMatch:
+    def _check_user_matches(
+        self, text: str, patterns: list[re.Pattern[str]]
+    ) -> FilenameMatch:
         for p in patterns:
-            if (usermatch := p.fullmatch(text)):
+            if usermatch := p.fullmatch(text):
                 return FilenameMatch(usermatch.groupdict())
-        return None
+        return FilenameMatch()
 
-    def _build_track_matches(self,
-        item_filenames: dict[Item, str]) -> dict[Item, FilenameMatch]:
+    def _build_track_matches(
+        self, item_filenames: dict[Item, str]
+    ) -> dict[Item, FilenameMatch]:
         track_matches: dict[Item, FilenameMatch] = {}
         for item, filename in item_filenames.items():
-            if (m := self._check_user_matches(filename, self.file_patterns)):
+            if m := self._check_user_matches(filename, self.file_patterns):
                 track_matches[item] = m
             else:
                 match = self._parse_track_info(filename)
@@ -264,7 +264,7 @@ class FromFilenamePlugin(BeetsPlugin):
 
     def _parse_album_info(self, text: str) -> FilenameMatch:
         # Check if a user pattern matches
-        if (m := self._check_user_matches(text, self.folder_patterns)):
+        if m := self._check_user_matches(text, self.folder_patterns):
             return m
         matches = FilenameMatch()
         # Start with the extra fields to make parsing
@@ -301,7 +301,9 @@ class FromFilenamePlugin(BeetsPlugin):
         return matches
 
     def _apply_matches(
-        self, album_match: FilenameMatch, track_matches: dict[Item, FilenameMatch]
+        self,
+        album_match: FilenameMatch,
+        track_matches: dict[Item, FilenameMatch],
     ) -> None:
         """Apply all valid matched fields to all items in the match dictionary."""
         match = album_match
@@ -404,7 +406,9 @@ class FromFilenamePlugin(BeetsPlugin):
 
     def _parse_user_pattern_strings(self, text: str) -> str | None:
         # escape any special characters
-        fields: list[str] = [s.lower() for s in re.findall(r"\$([a-zA-Z\_]+)", text)]
+        fields: list[str] = [
+            s.lower() for s in re.findall(r"\$([a-zA-Z\_]+)", text)
+        ]
         if not fields:
             # if there are no usable fields
             return None
@@ -422,7 +426,9 @@ class FromFilenamePlugin(BeetsPlugin):
         return text
 
     def _sanity_check_matches(
-        self, album_match: FilenameMatch, track_matches: dict[Item, FilenameMatch]
+        self,
+        album_match: FilenameMatch,
+        track_matches: dict[Item, FilenameMatch],
     ) -> None:
         """Check to make sure data is coherent between
         track and album matches. Largely looking to see
