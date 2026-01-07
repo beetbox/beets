@@ -12,15 +12,13 @@ from beets.autotag.distance import (
 from beets.library import Item
 from beets.metadata_plugins import MetadataSourcePlugin, get_penalty
 from beets.plugins import BeetsPlugin
-from beets.test.helper import ConfigMixin
 
 _p = pytest.param
 
 
 class TestDistance:
     @pytest.fixture(autouse=True, scope="class")
-    def setup_config(self):
-        config = ConfigMixin().config
+    def setup_config(self, config):
         config["match"]["distance_weights"]["data_source"] = 2.0
         config["match"]["distance_weights"]["album"] = 4.0
         config["match"]["distance_weights"]["medium"] = 2.0
@@ -182,7 +180,7 @@ class TestAlbumDistance:
     @pytest.fixture
     def get_dist(self, items):
         def inner(info: AlbumInfo):
-            return distance(items, info, dict(zip(items, info.tracks)))
+            return distance(items, info, list(zip(items, info.tracks)))
 
         return inner
 
