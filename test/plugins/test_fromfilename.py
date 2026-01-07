@@ -15,10 +15,10 @@
 
 import pytest
 
+from beets.importer.tasks import ImportTask, SingletonImportTask
 from beets.library import Item
 from beets.test.helper import PluginMixin
-from beets.importer.tasks import ImportTask, SingletonImportTask
-from beetsplug.fromfilename import FromFilenamePlugin
+from beetsplug.fromfilename import FilenameMatch, FromFilenamePlugin
 
 
 class Session:
@@ -47,68 +47,79 @@ def mock_task(items):
 @pytest.mark.parametrize(
     "text,matchgroup",
     [
-        ("3", {"disc": None, "track": "3", "artist": None, "title": "3"}),
-        ("04", {"disc": None, "track": "04", "artist": None, "title": "04"}),
-        ("6.", {"disc": None, "track": "6", "artist": None, "title": "6"}),
-        ("3.5", {"disc": "3", "track": "5", "artist": None, "title": None}),
-        ("1-02", {"disc": "1", "track": "02", "artist": None, "title": None}),
-        ("100-4", {"disc": "100", "track": "4", "artist": None, "title": None}),
+        ("3", FilenameMatch({"track": "3", "title": "3"})),
+        ("04", FilenameMatch({"track": "04", "title": "04"})),
+        ("6.", FilenameMatch({"track": "6", "title": "6"})),
+        ("3.5", FilenameMatch({"disc": "3", "track": "5"})),
+        ("1-02", FilenameMatch({"disc": "1", "track": "02"})),
+        ("100-4", FilenameMatch({"disc": "100", "track": "4"})),
         (
             "04.Title",
-            {"disc": None, "track": "04", "artist": None, "title": "Title"},
+            FilenameMatch({"track": "04", "title": "Title"}),
         ),
         (
             "5_-_Title",
-            {"disc": None, "track": "5", "artist": None, "title": "Title"},
+            FilenameMatch({"track": "5", "title": "Title"}),
         ),
         (
             "1-02 Title",
-            {"disc": "1", "track": "02", "artist": None, "title": "Title"},
+            FilenameMatch({"disc": "1", "track": "02", "title": "Title"}),
         ),
         (
             "3.5 - Title",
-            {"disc": "3", "track": "5", "artist": None, "title": "Title"},
+            FilenameMatch({"disc": "3", "track": "5", "title": "Title"}),
         ),
         (
             "5_-_Artist_-_Title",
-            {"disc": None, "track": "5", "artist": "Artist", "title": "Title"},
+            FilenameMatch({"track": "5", "artist": "Artist", "title": "Title"}),
         ),
         (
             "3-8- Artist-Title",
-            {"disc": "3", "track": "8", "artist": "Artist", "title": "Title"},
+            FilenameMatch(
+                {
+                    "disc": "3",
+                    "track": "8",
+                    "artist": "Artist",
+                    "title": "Title",
+                }
+            ),
         ),
         (
             "4-3 - Artist Name - Title",
-            {
-                "disc": "4",
-                "track": "3",
-                "artist": "Artist Name",
-                "title": "Title",
-            },
+            FilenameMatch(
+                {
+                    "disc": "4",
+                    "track": "3",
+                    "artist": "Artist Name",
+                    "title": "Title",
+                }
+            ),
         ),
         (
             "4-3_-_Artist_Name_-_Title",
-            {
-                "disc": "4",
-                "track": "3",
-                "artist": "Artist_Name",
-                "title": "Title",
-            },
+            FilenameMatch(
+                {
+                    "disc": "4",
+                    "track": "3",
+                    "artist": "Artist_Name",
+                    "title": "Title",
+                }
+            ),
         ),
         (
             "6 Title by Artist",
-            {"disc": None, "track": "6", "artist": "Artist", "title": "Title"},
+            FilenameMatch({"track": "6", "artist": "Artist", "title": "Title"}),
         ),
         (
             "Title",
-            {"disc": None, "track": None, "artist": None, "title": "Title"},
+            FilenameMatch({"title": "Title"}),
         ),
     ],
 )
 def test_parse_track_info(text, matchgroup):
     f = FromFilenamePlugin()
     m = f._parse_track_info(text)
-    assert matchgroup == m
+    assert dict(matchgroup.items()) == dict(m.items())
 
 
 @pytest.mark.parametrize(
@@ -117,134 +128,137 @@ def test_parse_track_info(text, matchgroup):
         (
             # highly unlikely
             "",
-            {
-                "albumartist": None,
-                "album": None,
-                "year": None,
-                "catalognum": None,
-                "media": None,
-            },
+            FilenameMatch(
+                {
+                    "albumartist": None,
+                    "album": None,
+                    "year": None,
+                    "catalognum": None,
+                    "media": None,
+                }
+            ),
         ),
         (
             "1970",
-            {
-                "albumartist": None,
-                "album": None,
-                "year": "1970",
-                "catalognum": None,
-                "media": None,
-            },
+            FilenameMatch(
+                {
+                    "year": "1970",
+                }
+            ),
         ),
         (
             "Album Title",
-            {
-                "albumartist": None,
-                "album": "Album Title",
-                "year": None,
-                "catalognum": None,
-                "media": None,
-            },
+            FilenameMatch(
+                {
+                    "album": "Album Title",
+                }
+            ),
         ),
         (
             "Artist - Album Title",
-            {
-                "albumartist": "Artist",
-                "album": "Album Title",
-                "year": None,
-                "catalognum": None,
-                "media": None,
-            },
+            FilenameMatch(
+                {
+                    "albumartist": "Artist",
+                    "album": "Album Title",
+                }
+            ),
         ),
         (
             "Artist - Album Title (2024)",
-            {
-                "albumartist": "Artist",
-                "album": "Album Title",
-                "year": "2024",
-                "catalognum": None,
-                "media": None,
-            },
+            FilenameMatch(
+                {
+                    "albumartist": "Artist",
+                    "album": "Album Title",
+                    "year": "2024",
+                }
+            ),
         ),
         (
             "Artist - 2024 - Album Title [flac]",
-            {
-                "albumartist": "Artist",
-                "album": "Album Title",
-                "year": "2024",
-                "catalognum": None,
-                "media": None,
-            },
+            FilenameMatch(
+                {
+                    "albumartist": "Artist",
+                    "album": "Album Title",
+                    "year": "2024",
+                }
+            ),
         ),
         (
             "(2024) Album Title [CATALOGNUM] WEB",
             # sometimes things are just going to be unparsable
-            {
-                "albumartist": "Album Title",
-                "album": "WEB",
-                "year": "2024",
-                "catalognum": "CATALOGNUM",
-                "media": None,
-            },
+            FilenameMatch(
+                {
+                    "albumartist": "Album Title",
+                    "album": "WEB",
+                    "year": "2024",
+                    "catalognum": "CATALOGNUM",
+                }
+            ),
         ),
         (
             "{2024} Album Artist - Album Title [INFO-WAV]",
-            {
-                "albumartist": "Album Artist",
-                "album": "Album Title",
-                "year": "2024",
-                "catalognum": None,
-                "media": None,
-            },
+            FilenameMatch(
+                {
+                    "albumartist": "Album Artist",
+                    "album": "Album Title",
+                    "year": "2024",
+                }
+            ),
         ),
         (
             "VA - Album Title [2025] [CD-FLAC]",
-            {
-                "albumartist": "Various Artists",
-                "album": "Album Title",
-                "year": "2025",
-                "catalognum": None,
-                "media": "CD",
-            },
+            FilenameMatch(
+                {
+                    "albumartist": "Various Artists",
+                    "album": "Album Title",
+                    "year": "2025",
+                    "media": "CD",
+                }
+            ),
         ),
         (
             "Artist - Album Title 3000 (1998) [FLAC] {CATALOGNUM}",
-            {
-                "albumartist": "Artist",
-                "album": "Album Title 3000",
-                "year": "1998",
-                "catalognum": "CATALOGNUM",
-                "media": None,
-            },
+            FilenameMatch(
+                {
+                    "albumartist": "Artist",
+                    "album": "Album Title 3000",
+                    "year": "1998",
+                    "catalognum": "CATALOGNUM",
+                }
+            ),
         ),
         (
             "various - cd album (2023) [catalognum 123] {vinyl mp3}",
-            {
-                "albumartist": "Various Artists",
-                "album": "cd album",
-                "year": "2023",
-                "catalognum": "catalognum 123",
-                "media": "Vinyl",
-            },
+            FilenameMatch(
+                {
+                    "albumartist": "Various Artists",
+                    "album": "cd album",
+                    "year": "2023",
+                    "catalognum": "catalognum 123",
+                    "media": "Vinyl",
+                }
+            ),
         ),
         (
             "[CATALOG567] Album - Various (2020) [WEB-FLAC]",
-            {
-                "albumartist": "Various Artists",
-                "album": "Album",
-                "year": "2020",
-                "catalognum": "CATALOG567",
-                "media": "Digital Media",
-            },
+            FilenameMatch(
+                {
+                    "albumartist": "Various Artists",
+                    "album": "Album",
+                    "year": "2020",
+                    "catalognum": "CATALOG567",
+                    "media": "Digital Media",
+                }
+            ),
         ),
         (
             "Album 3000 {web}",
-            {
-                "albumartist": None,
-                "album": "Album 3000",
-                "year": None,
-                "catalognum": None,
-                "media": "Digital Media",
-            },
+            FilenameMatch(
+                {
+                    "album": "Album 3000",
+                    "media": "Digital Media",
+                }
+            ),
         ),
     ],
 )
@@ -253,17 +267,18 @@ def test_parse_album_info(text, matchgroup):
     m = f._parse_album_info(text)
     assert matchgroup == m
 
-@pytest.mark.parametrize("string,pattern",[
+
+@pytest.mark.parametrize(
+    "string,pattern",
+    [
         (
-        "$albumartist - $album ($year)  {$comments}",
-    r"(?P<albumartist>.+)\ \-\ (?P<album>.+)\ \((?P<year>.+)\)\ \ \{(?P<comments>.+)\}"
+            "$albumartist - $album ($year)  {$comments}",
+            r"(?P<albumartist>.+)\ \-\ (?P<album>.+)\ \((?P<year>.+)\)\ \ \{(?P<comments>.+)\}",
         ),
-        (
-        "$",
-        None
-        ),
-    ])
-def test_parse_user_pattern_strings(string,pattern):
+        ("$", None),
+    ],
+)
+def test_parse_user_pattern_strings(string, pattern):
     f = FromFilenamePlugin()
     assert f._parse_user_pattern_strings(string) == pattern
 
@@ -555,8 +570,7 @@ class TestFromFilename(PluginMixin):
 
     def test_singleton_import(self):
         task = SingletonImportTask(
-                toppath=None,
-                item=mock_item(path="/01 Track.wav")
+            toppath=None, item=mock_item(path="/01 Track.wav")
         )
         f = FromFilenamePlugin()
         f.filename_task(task, Session())
@@ -630,39 +644,42 @@ class TestFromFilename(PluginMixin):
             assert res.year == expected.year
             assert res.title == expected.title
 
-    @pytest.mark.parametrize("patterns,expected", [
-        (
-            {
-                "folder": ["($comments) - {$albumartist} - {$album}"],
-                "file": ["$artist - $track - $title"]
-            },
-        mock_item(
-            path="/(Comment) - {Album Artist} - {Album}/Artist - 02 - Title.flac",
-            comments="Comment",
-            albumartist="Album Artist",
-            album="Album",
-            artist="Artist",
-            track=2,
-            title="Title",
-            )
-        ),
-        (
-            {
-                "folder": ["[$comments] - {$albumartist} - {$album}"],
-                "file": ["$artist - $track - $title"]
-            },
-        mock_item(
-            path="/(Comment) - {Album Artist} - {Album}/Artist - 02 - Title.flac",
-            artist="Artist",
-            track=2,
-            title="Title",
-            catalognum="Comment"
-            )
-        )
-    ])
+    @pytest.mark.parametrize(
+        "patterns,expected",
+        [
+            (
+                {
+                    "folder": ["($comments) - {$albumartist} - {$album}"],
+                    "file": ["$artist - $track - $title"],
+                },
+                mock_item(
+                    path="/(Comment) - {Album Artist} - {Album}/Artist - 02 - Title.flac",
+                    comments="Comment",
+                    albumartist="Album Artist",
+                    album="Album",
+                    artist="Artist",
+                    track=2,
+                    title="Title",
+                ),
+            ),
+            (
+                {
+                    "folder": ["[$comments] - {$albumartist} - {$album}"],
+                    "file": ["$artist - $track - $title"],
+                },
+                mock_item(
+                    path="/(Comment) - {Album Artist} - {Album}/Artist - 02 - Title.flac",
+                    artist="Artist",
+                    track=2,
+                    title="Title",
+                    catalognum="Comment",
+                ),
+            ),
+        ],
+    )
     def test_user_patterns(self, patterns, expected):
         task = mock_task([mock_item(path=expected.path)])
-        with self.configure_plugin({ "patterns": patterns }):
+        with self.configure_plugin({"patterns": patterns}):
             f = FromFilenamePlugin()
             f.filename_task(task, Session())
             res = task.items[0]
@@ -675,3 +692,5 @@ class TestFromFilename(PluginMixin):
             assert res.year == expected.year
             assert res.title == expected.title
 
+    def test_escape(self):
+        assert FromFilenamePlugin._escape("{text}") == "{{text}}"
