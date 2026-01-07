@@ -70,7 +70,15 @@ def correct_list_fields(input_data: JSONDict) -> JSONDict:
 
     def ensure_first_value(single_field: str, list_field: str) -> None:
         """Ensure the first ``list_field`` item is equal to ``single_field``."""
-        single_val, list_val = data.get(single_field), data.get(list_field, [])
+        single_val, list_val = (
+            data.get(single_field) or "",
+            data.get(list_field, []),
+        )
+        if single_val not in list_val and set(single_val.lower().split()) & set(
+            map(str.lower, list_val)
+        ):
+            return
+
         if single_val:
             data[list_field] = unique_list([single_val, *list_val])
         elif list_val:
