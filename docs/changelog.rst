@@ -52,6 +52,8 @@ New features:
   untouched the files without.
 - :doc:`plugins/fish`: Filenames are now completed in more places, like after
   ``beet import``.
+- :doc:`plugins/random`: Added ``--field`` option to specify which field to use
+  for equal-chance sampling (default: ``albumartist``).
 
 Bug fixes:
 
