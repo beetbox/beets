@@ -22,10 +22,13 @@ from beetsplug.fromfilename import FilenameMatch, FromFilenamePlugin
 
 
 class Session:
+    """Mock session, not used by the plugin."""
+
     pass
 
 
 def mock_item(**kwargs):
+    """Mock item with blank defaults."""
     defaults = dict(
         title="",
         artist="",
@@ -41,6 +44,7 @@ def mock_item(**kwargs):
 
 
 def mock_task(items):
+    """Mock task for ease of testing."""
     return ImportTask(toppath=None, paths=None, items=items)
 
 
@@ -117,6 +121,7 @@ def mock_task(items):
     ],
 )
 def test_parse_track_info(text, matchgroup):
+    """Test parsing track information from a filename."""
     f = FromFilenamePlugin()
     m = f._parse_track_info(text)
     assert dict(matchgroup.items()) == dict(m.items())
@@ -128,15 +133,7 @@ def test_parse_track_info(text, matchgroup):
         (
             # highly unlikely
             "",
-            FilenameMatch(
-                {
-                    "albumartist": None,
-                    "album": None,
-                    "year": None,
-                    "catalognum": None,
-                    "media": None,
-                }
-            ),
+            FilenameMatch(),
         ),
         (
             "1970",
@@ -263,6 +260,7 @@ def test_parse_track_info(text, matchgroup):
     ],
 )
 def test_parse_album_info(text, matchgroup):
+    """Test parsing album information from a folder name."""
     f = FromFilenamePlugin()
     m = f._parse_album_info(text)
     assert matchgroup == m
@@ -273,12 +271,16 @@ def test_parse_album_info(text, matchgroup):
     [
         (
             "$albumartist - $album ($year)  {$comments}",
-            r"(?P<albumartist>.+)\ \-\ (?P<album>.+)\ \((?P<year>.+)\)\ \ \{(?P<comments>.+)\}",
+            (
+                r"(?P<albumartist>.+)\ \-\ (?P<album>.+)\ "
+                r"\((?P<year>.+)\)\ \ \{(?P<comments>.+)\}"
+            ),
         ),
         ("$", None),
     ],
 )
 def test_parse_user_pattern_strings(string, pattern):
+    """Test converting a user's format string to regexp"""
     f = FromFilenamePlugin()
     assert f._parse_user_pattern_strings(string) == pattern
 
@@ -514,8 +516,6 @@ class TestFromFilename(PluginMixin):
                 ),
             ],
             [
-                # Even though it might be clear to human eyes,
-                # we can't guess since the various flag is thrown
                 mock_item(
                     path=(
                         "/303 Alliance 012/"
@@ -540,13 +540,9 @@ class TestFromFilename(PluginMixin):
         ],
     )
     def test_sanity_check(self, expected_items):
-        """
-        Take a list of expected items, create a task with just the paths.
-
-        Goal is to ensure that sanity check
-        correctly adjusts the parsed artists and albums
-
-        After parsing, compare to the expected items.
+        """Take a list of expected items, create a task with just the paths.
+        Assert the conditions that cause sanity check to change artist and title
+        fields.
         """
         task = mock_task([mock_item(path=item.path) for item in expected_items])
         f = FromFilenamePlugin()
@@ -569,6 +565,7 @@ class TestFromFilename(PluginMixin):
         assert res[1].title == exp[1].title
 
     def test_singleton_import(self):
+        """Ensure that singletons behave correctly."""
         task = SingletonImportTask(
             toppath=None, item=mock_item(path="/01 Track.wav")
         )
@@ -577,9 +574,25 @@ class TestFromFilename(PluginMixin):
         assert task.item.track == 1
         assert task.item.title == "Track"
 
-    # TODO: Test with items that already have data, or other types of bad data.
-
-    # TODO: Test with items that have perfectly fine data for the most part
+    def test_item_with_existing_data(self):
+        """Ensure that existing metadata is not overwritten, no matter
+        how incorrect it may be."""
+        path = "/Album Artist - Album (1999)/01 - Track Title.wav"
+        albumartist = "Other Artist"
+        title = "Existing Title"
+        given = mock_item(
+            path=path,
+            albumartist=albumartist,
+            album=" ",
+            title=title,
+            year=2024,
+        )
+        f = FromFilenamePlugin()
+        f.filename_task(mock_task([given]), Session())
+        assert given.title == title
+        assert given.albumartist == albumartist
+        assert given.album == "Album"
+        assert given.year == 2024
 
     @pytest.mark.parametrize(
         "fields,expected",
@@ -621,11 +634,7 @@ class TestFromFilename(PluginMixin):
         ],
     )
     def test_fields(self, fields, expected):
-        """
-        With a set item and changing list of fields
-
-        After parsing, compare to the original with the expected attributes defined.
-        """
+        """Test that the applied fields can be adjusted by the user."""
         path = (
             "/Album Artist - Album (2025) [FLAC CD] {CATALOGNUM}/"
             "1-2 Artist - Track.wav"
@@ -653,7 +662,10 @@ class TestFromFilename(PluginMixin):
                     "file": ["$artist - $track - $title"],
                 },
                 mock_item(
-                    path="/(Comment) - {Album Artist} - {Album}/Artist - 02 - Title.flac",
+                    path=(
+                        "/(Comment) - {Album Artist} - {Album}"
+                        "/Artist - 02 - Title.flac"
+                    ),
                     comments="Comment",
                     albumartist="Album Artist",
                     album="Album",
@@ -668,7 +680,10 @@ class TestFromFilename(PluginMixin):
                     "file": ["$artist - $track - $title"],
                 },
                 mock_item(
-                    path="/(Comment) - {Album Artist} - {Album}/Artist - 02 - Title.flac",
+                    path=(
+                        "/(Comment) - {Album Artist} - {Album}"
+                        "/Artist - 02 - Title.flac"
+                    ),
                     artist="Artist",
                     track=2,
                     title="Title",
@@ -678,6 +693,7 @@ class TestFromFilename(PluginMixin):
         ],
     )
     def test_user_patterns(self, patterns, expected):
+        """Test recognizing data from a given user pattern."""
         task = mock_task([mock_item(path=expected.path)])
         with self.configure_plugin({"patterns": patterns}):
             f = FromFilenamePlugin()
@@ -691,6 +707,3 @@ class TestFromFilename(PluginMixin):
             assert res.catalognum == expected.catalognum
             assert res.year == expected.year
             assert res.title == expected.title
-
-    def test_escape(self):
-        assert FromFilenamePlugin._escape("{text}") == "{{text}}"
