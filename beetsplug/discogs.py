@@ -658,7 +658,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
         albumartistinfo: ArtistInfo,
     ) -> TracklistInfo:
         # Distinct works and intra-work divisions, as defined by index tracks.
-        t: TracklistInfo = {
+        info: TracklistInfo = {
             "index": 0,
             "index_tracks": {},
             "tracks": [],
@@ -670,35 +670,35 @@ class DiscogsPlugin(MetadataSourcePlugin):
         for track in clean_tracklist:
             # Only real tracks have `position`. Otherwise, it's an index track.
             if track["position"]:
-                t["index"] += 1
-                if t["next_divisions"]:
+                info["index"] += 1
+                if info["next_divisions"]:
                     # End of a block of index tracks: update the current
                     # divisions.
-                    t["divisions"] += t["next_divisions"]
-                    del t["next_divisions"][:]
+                    info["divisions"] += info["next_divisions"]
+                    del info["next_divisions"][:]
                 track_info, medium, medium_index = self.get_track_info(
-                    track, t["index"], t["divisions"], albumartistinfo
+                    track, info["index"], info["divisions"], albumartistinfo
                 )
                 track_info.track_alt = track["position"]
-                t["tracks"].append(track_info)
+                info["tracks"].append(track_info)
                 if medium:
-                    t["mediums"].append(medium)
+                    info["mediums"].append(medium)
                 else:
-                    t["mediums"].append(None)
+                    info["mediums"].append(None)
                 if medium_index:
-                    t["medium_indices"].append(medium_index)
+                    info["medium_indices"].append(medium_index)
                 else:
-                    t["medium_indices"].append(None)
+                    info["medium_indices"].append(None)
             else:
-                t["next_divisions"].append(track["title"])
+                info["next_divisions"].append(track["title"])
                 # We expect new levels of division at the beginning of the
                 # tracklist (and possibly elsewhere).
                 try:
-                    t["divisions"].pop()
+                    info["divisions"].pop()
                 except IndexError:
                     pass
-                t["index_tracks"][t["index"] + 1] = track["title"]
-        return t
+                info["index_tracks"][info["index"] + 1] = track["title"]
+        return info
 
     def get_tracks(
         self,
