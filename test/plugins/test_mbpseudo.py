@@ -94,7 +94,7 @@ class TestMBPseudoMixin(PluginMixin):
     @pytest.fixture(autouse=True)
     def patch_get_release(self, monkeypatch, pseudo_release: JSONDict):
         monkeypatch.setattr(
-            "beetsplug.musicbrainz.MusicBrainzAPI.get_release",
+            "beetsplug._utils.musicbrainz.MusicBrainzAPI.get_release",
             lambda _, album_id: deepcopy(
                 {pseudo_release["id"]: pseudo_release}[album_id]
             ),
