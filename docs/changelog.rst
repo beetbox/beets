@@ -37,6 +37,7 @@ New features:
   differences in metadata source styles.
 - :doc:`plugins/spotify`: Added support for multi-artist albums and tracks,
   saving all contributing artists to the respective fields.
+- :doc:`plugins/fetchart`: Fix colorized output text.
 - :doc:`plugins/ftintitle`: Featured artists are now inserted before brackets
   containing remix/edit-related keywords (e.g., "Remix", "Live", "Edit") instead
   of being appended at the end. This improves formatting for titles like "Song 1
