@@ -86,6 +86,9 @@ Bug fixes:
   name (like "feat.", "+", or "&") prevent it. Using the albumartists list field
   and fetching a genre for each artist separately improves the chance of
   receiving valid results in that stage.
+- :doc:`/plugins/ftintitle`: Fixed artist name splitting to prioritize explicit
+  featuring tokens (feat, ft, featuring) over generic separators (&, and),
+  preventing incorrect splits when both are present.
 
 For plugin developers:
 
