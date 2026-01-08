@@ -14,18 +14,35 @@
 
 """Synchronise library metadata with metadata source backends."""
 
+from __future__ import annotations
+
+import sys
 from collections import defaultdict
+from typing import TYPE_CHECKING
+
+from typing_extensions import override
 
 from beets import autotag, library, metadata_plugins, ui, util
 from beets.plugins import BeetsPlugin, apply_item_changes
 
+if TYPE_CHECKING:
+    from optparse import Values
+
+if not sys.version_info < (3, 12):
+    from typing import override  # pyright: ignore[reportUnreachable]
+else:
+    from typing_extensions import override
+
 
 class MBSyncPlugin(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
-    def commands(self):
-        cmd = ui.Subcommand("mbsync", help="update metadata from musicbrainz")
+    @override
+    def commands(self) -> list[ui.Subcommand]:
+        cmd: ui.Subcommand = ui.Subcommand(
+            "mbsync", help="update metadata from musicbrainz"
+        )
         cmd.parser.add_option(
             "-p",
             "--pretend",
@@ -58,19 +75,27 @@ class MBSyncPlugin(BeetsPlugin):
         cmd.func = self.func
         return [cmd]
 
-    def func(self, lib, opts, args):
+    def func(self, lib: library.Library, opts: Values, args: list[str]) -> None:
         """Command handler for the mbsync function."""
-        move = ui.should_move(opts.move)
-        pretend = opts.pretend
-        write = ui.should_write(opts.write)
+        move: bool = ui.should_move(opts.move)
+        pretend: bool = opts.pretend
+        write: bool = ui.should_write(opts.write)
 
         self.singletons(lib, args, move, pretend, write)
         self.albums(lib, args, move, pretend, write)
 
-    def singletons(self, lib, query, move, pretend, write):
+    def singletons(
+        self,
+        lib: library.Library,
+        query: list[str],
+        move: bool,
+        pretend: bool,
+        write: bool,
+    ) -> None:
         """Retrieve and apply info from the autotagger for items matched by
         query.
         """
+        item: library.Item
         for item in lib.items(query + ["singleton:true"]):
             if not item.mb_trackid:
                 self._log.info(
@@ -78,6 +103,7 @@ class MBSyncPlugin(BeetsPlugin):
                 )
                 continue
 
+            track_info: autotag.TrackInfo | None
             if not (
                 track_info := metadata_plugins.track_for_id(item.mb_trackid)
             ):
@@ -91,16 +117,25 @@ class MBSyncPlugin(BeetsPlugin):
                 autotag.apply_item_metadata(item, track_info)
                 apply_item_changes(lib, item, move, pretend, write)
 
-    def albums(self, lib, query, move, pretend, write):
+    def albums(
+        self,
+        lib: library.Library,
+        query: list[str],
+        move: bool,
+        pretend: bool,
+        write: bool,
+    ):
         """Retrieve and apply info from the autotagger for albums matched by
         query and their items.
         """
         # Process matching albums.
+        album: library.Album
         for album in lib.albums(query):
             if not album.mb_albumid:
                 self._log.info("Skipping album with no mb_albumid: {}", album)
                 continue
 
+            album_info: autotag.AlbumInfo | None
             if not (
                 album_info := metadata_plugins.album_for_id(album.mb_albumid)
             ):
@@ -112,11 +147,16 @@ class MBSyncPlugin(BeetsPlugin):
             # Map release track and recording MBIDs to their information.
             # Recordings can appear multiple times on a release, so each MBID
             # maps to a list of TrackInfo objects.
-            releasetrack_index = {}
-            track_index = defaultdict(list)
+            releasetrack_index: dict[str, autotag.TrackInfo] = {}
+            track_index: defaultdict[str, list[autotag.TrackInfo]] = (
+                defaultdict(list)
+            )
             for track_info in album_info.tracks:
-                releasetrack_index[track_info.release_track_id] = track_info
-                track_index[track_info.track_id].append(track_info)
+                releasetrack_index[track_info.release_track_id or ""] = (
+                    track_info
+                )
+
+                track_index[track_info.track_id or ""].append(track_info)
 
             # Construct a track mapping according to MBIDs (release track MBIDs
             # first, if available, and recording MBIDs otherwise). This should
@@ -132,7 +172,9 @@ class MBSyncPlugin(BeetsPlugin):
                         (item, releasetrack_index[item.mb_releasetrackid])
                     )
                 else:
-                    candidates = track_index[item.mb_trackid]
+                    candidates: list[autotag.TrackInfo] = track_index[
+                        item.mb_trackid
+                    ]
                     if len(candidates) == 1:
                         item_info_pairs.append((item, candidates[0]))
                     else:
@@ -152,9 +194,9 @@ class MBSyncPlugin(BeetsPlugin):
                 autotag.apply_metadata(album_info, item_info_pairs)
                 changed = False
                 # Find any changed item to apply changes to album.
-                any_changed_item = items[0]
+                any_changed_item: library.Item = items[0]
                 for item in items:
-                    item_changed = ui.show_model_changes(item)
+                    item_changed: bool = ui.show_model_changes(item)
                     changed |= item_changed
                     if item_changed:
                         any_changed_item = item
@@ -166,6 +208,7 @@ class MBSyncPlugin(BeetsPlugin):
 
                 if not pretend:
                     # Update album structure to reflect an item in it.
+                    key: str
                     for key in library.Album.item_keys:
                         album[key] = any_changed_item[key]
                     album.store()

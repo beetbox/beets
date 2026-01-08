@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from typing import TYPE_CHECKING
 
 import platformdirs
@@ -8,11 +9,17 @@ import beets
 from beets import dbcore
 from beets.util import normpath
 
-from .models import Album, Item
+from .models import Album, AnyLibModel, Item
 from .queries import PF_KEY_DEFAULT, parse_query_parts, parse_query_string
 
 if TYPE_CHECKING:
     from beets.dbcore import Results
+    from beets.dbcore.query import Query, Sort
+
+if not sys.version_info < (3, 12):
+    pass  # pyright: ignore[reportUnreachable]
+else:
+    pass
 
 
 class Library(dbcore.Database):
@@ -79,7 +86,12 @@ class Library(dbcore.Database):
 
     # Querying.
 
-    def _fetch(self, model_cls, query, sort=None):
+    def _fetch(
+        self,
+        model_cls: type[AnyLibModel],
+        query: list[str] | Query | str | tuple[str] | None = None,
+        sort: Sort | None = None,
+    ) -> Results[AnyLibModel]:
         """Parse a query and fetch.
 
         If an order specification is present in the query string
@@ -100,7 +112,7 @@ class Library(dbcore.Database):
         if parsed_sort and not isinstance(parsed_sort, dbcore.query.NullSort):
             sort = parsed_sort
 
-        return super()._fetch(model_cls, query, sort)
+        return super()._fetch_model(model_cls, query, sort)
 
     @staticmethod
     def get_default_album_sort():
@@ -116,11 +128,19 @@ class Library(dbcore.Database):
             Item, beets.config["sort_item"].as_str_seq()
         )
 
-    def albums(self, query=None, sort=None) -> Results[Album]:
+    def albums(
+        self,
+        query: list[str] | Query | str | tuple[str] | None = None,
+        sort: Sort | None = None,
+    ) -> Results[Album]:
         """Get :class:`Album` objects matching the query."""
         return self._fetch(Album, query, sort or self.get_default_album_sort())
 
-    def items(self, query=None, sort=None) -> Results[Item]:
+    def items(
+        self,
+        query: list[str] | Query | str | tuple[str] | None = None,
+        sort: Sort | None = None,
+    ) -> Results[Item]:
         """Get :class:`Item` objects matching the query."""
         return self._fetch(Item, query, sort or self.get_default_item_sort())
 

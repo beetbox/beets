@@ -56,9 +56,9 @@ __all__ = [
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
+    from types import TracebackType
 
     T = TypeVar("T")
-    from types import TracebackType
 
     # see https://github.com/python/typeshed/blob/main/stdlib/logging/__init__.pyi
     _SysExcInfoType = Union[
@@ -160,13 +160,13 @@ class StrFormatLogger(Logger):
 class ThreadLocalLevelLogger(Logger):
     """A version of `Logger` whose level is thread-local instead of shared."""
 
-    def __init__(self, name, level=NOTSET):
-        self._thread_level = threading.local()
-        self.default_level = NOTSET
+    def __init__(self, name: str, level: int = NOTSET) -> None:
+        self._thread_level: threading.local = threading.local()
+        self.default_level: int = NOTSET
         super().__init__(name, level)
 
     @property
-    def level(self):
+    def level(self) -> int:
         try:
             return self._thread_level.level
         except AttributeError:
@@ -174,10 +174,10 @@ class ThreadLocalLevelLogger(Logger):
             return self.level
 
     @level.setter
-    def level(self, value):
+    def level(self, value: int) -> None:
         self._thread_level.level = value
 
-    def set_global_level(self, level):
+    def set_global_level(self, level: int) -> None:
         """Set the level on the current thread + the default value for all
         threads.
         """

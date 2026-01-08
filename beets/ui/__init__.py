@@ -149,7 +149,7 @@ def print_(*strings: str, end: str = "\n") -> None:
 # Configuration wrappers.
 
 
-def _bool_fallback(a, b):
+def _bool_fallback(a: bool | None, b: bool | None) -> bool:
     """Given a boolean or None, return the original value or a fallback."""
     if a is None:
         assert isinstance(b, bool)
@@ -159,14 +159,14 @@ def _bool_fallback(a, b):
         return a
 
 
-def should_write(write_opt=None):
+def should_write(write_opt: bool | None = None) -> bool:
     """Decide whether a command that updates metadata should also write
     tags, using the importer configuration as the default.
     """
     return _bool_fallback(write_opt, config["import"]["write"].get(bool))
 
 
-def should_move(move_opt=None):
+def should_move(move_opt: bool | None = None) -> bool:
     """Decide whether a command that updates metadata should also move
     files when they're inside the library, using the importer
     configuration as the default.
@@ -1127,21 +1127,23 @@ class CommonOptionsParser(optparse.OptionParser):
     Each method is fully documented in the related method.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        self._album_flags = False
+        self._album_flags: set[str] | None = None
         # this serves both as an indicator that we offer the feature AND allows
         # us to check whether it has been specified on the CLI - bypassing the
         # fact that arguments may be in any order
 
-    def add_album_option(self, flags=("-a", "--album")):
+    def add_album_option(
+        self, flags: tuple[str, str] = ("-a", "--album")
+    ) -> None:
         """Add a -a/--album option to match albums instead of tracks.
 
         If used then the format option can auto-detect whether we're setting
         the format for items or albums.
         Sets the album property on the options extracted from the CLI.
         """
-        album = optparse.Option(
+        album: optparse.Option = optparse.Option(
             *flags, action="store_true", help="match albums instead of tracks"
         )
         self.add_option(album)
@@ -1149,42 +1151,47 @@ class CommonOptionsParser(optparse.OptionParser):
 
     def _set_format(
         self,
-        option,
-        opt_str,
-        value,
-        parser,
-        target=None,
-        fmt=None,
-        store_true=False,
-    ):
+        option: optparse.Option,
+        opt_str: str,
+        value: str,
+        parser: CommonOptionsParser,
+        target: type[library.Album | library.Item] | None = None,
+        fmt: str | None = None,
+        store_true: bool = False,
+    ) -> None:
         """Internal callback that sets the correct format while parsing CLI
         arguments.
         """
-        if store_true:
+        if store_true and option.dest:
             setattr(parser.values, option.dest, True)
 
         # Use the explicitly specified format, or the string from the option.
         value = fmt or value or ""
+        if parser.values is None:
+            parser.values = optparse.Values()
         parser.values.format = value
 
         if target:
             config[target._format_config_key].set(value)
-        else:
-            if self._album_flags:
-                if parser.values.album:
+            return
+
+        if self._album_flags:
+            if parser.values.album:
+                target = library.Album
+            else:
+                # the option is either missing either not parsed yet
+                if self._album_flags & set(parser.rargs or ()):
                     target = library.Album
                 else:
-                    # the option is either missing either not parsed yet
-                    if self._album_flags & set(parser.rargs):
-                        target = library.Album
-                    else:
-                        target = library.Item
-                config[target._format_config_key].set(value)
-            else:
-                config[library.Item._format_config_key].set(value)
-                config[library.Album._format_config_key].set(value)
+                    target = library.Item
+            config[target._format_config_key].set(value)
+        else:
+            config[library.Item._format_config_key].set(value)
+            config[library.Album._format_config_key].set(value)
 
-    def add_path_option(self, flags=("-p", "--path")):
+    def add_path_option(
+        self, flags: tuple[str, str] = ("-p", "--path")
+    ) -> None:
         """Add a -p/--path option to display the path instead of the default
         format.
 
@@ -1204,7 +1211,11 @@ class CommonOptionsParser(optparse.OptionParser):
         )
         self.add_option(path)
 
-    def add_format_option(self, flags=("-f", "--format"), target=None):
+    def add_format_option(
+        self,
+        flags: tuple[str, ...] = ("-f", "--format"),
+        target: str | type[library.LibModel] | None = None,
+    ) -> None:
         """Add -f/--format option to print some LibModel instances with a
         custom format.
 
@@ -1219,7 +1230,7 @@ class CommonOptionsParser(optparse.OptionParser):
 
         Sets the format property on the options extracted from the CLI.
         """
-        kwargs = {}
+        kwargs: dict[str, type[library.LibModel]] = {}
         if target:
             if isinstance(target, str):
                 target = {"item": library.Item, "album": library.Album}[target]
@@ -1233,8 +1244,9 @@ class CommonOptionsParser(optparse.OptionParser):
             help="print with custom format",
         )
         self.add_option(opt)
+        return None
 
-    def add_all_common_options(self):
+    def add_all_common_options(self) -> None:
         """Add album, path and format options."""
         self.add_album_option()
         self.add_path_option()

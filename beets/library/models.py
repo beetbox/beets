@@ -7,13 +7,14 @@ import time
 import unicodedata
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar, cast
 
 from mediafile import MediaFile, UnreadableFileError
+from typing_extensions import override
 
 import beets
 from beets import dbcore, logging, plugins, util
-from beets.dbcore import types
+from beets.dbcore import Model, Query, types
 from beets.util import (
     MoveOperation,
     bytestring_path,
@@ -24,14 +25,16 @@ from beets.util import (
 )
 from beets.util.functemplate import Template, template
 
+from ..dbcore.query import FieldQuery
 from .exceptions import FileOperationError, ReadError, WriteError
 from .queries import PF_KEY_DEFAULT, parse_query_string
 
 if TYPE_CHECKING:
-    from ..dbcore.query import FieldQuery, FieldQueryType
+    from collections.abc import Iterable
+
     from .library import Library  # noqa: F401
 
-log = logging.getLogger("beets")
+log: logging.BeetsLogger = logging.getLogger("beets")
 
 
 class LibModel(dbcore.Model["Library"]):
@@ -45,13 +48,21 @@ class LibModel(dbcore.Model["Library"]):
     def _types(cls) -> dict[str, types.Type]:
         """Return the types of the fields in this model."""
         return {
-            **plugins.types(cls),  # type: ignore[arg-type]
+            **plugins.types(cls),  # type: ignore[type-var]
             "data_source": types.STRING,
         }
 
     @cached_classproperty
-    def _queries(cls) -> dict[str, FieldQueryType]:
-        return plugins.named_queries(cls)  # type: ignore[arg-type]
+    def _queries(cls) -> dict[str, type[Query]]:
+        return plugins.named_queries(cls)  # type: ignore[type-var]
+
+    @cached_classproperty
+    def _relation(cls) -> type[Model]:
+        return cls  # type: ignore[return-value]
+
+    @cached_classproperty
+    def all_db_fields(cls) -> set[str]:
+        return cls._fields.keys() | cls._relation._fields.keys()
 
     @cached_classproperty
     def writable_media_fields(cls) -> set[str]:
@@ -75,10 +86,10 @@ class LibModel(dbcore.Model["Library"]):
         super().remove()
         plugins.send("database_change", lib=self._db, model=self)
 
-    def add(self, lib=None):
+    def add(self, db=None):
         # super().add() calls self.store(), which sends `database_change`,
         # so don't do it here
-        super().add(lib)
+        super().add(db)
 
     def __format__(self, spec):
         if not spec:
@@ -96,7 +107,7 @@ class LibModel(dbcore.Model["Library"]):
 
     @classmethod
     def field_query(
-        cls, field: str, pattern: str, query_cls: FieldQueryType
+        cls, field: str, pattern: str, query_cls: type[FieldQuery]
     ) -> FieldQuery:
         """Get a `FieldQuery` for the given field on this model."""
         fast = field in cls.all_db_fields
@@ -109,9 +120,18 @@ class LibModel(dbcore.Model["Library"]):
         return query_cls(field, pattern, fast)
 
     @classmethod
-    def any_field_query(cls, *args, **kwargs) -> dbcore.OrQuery:
+    def any_field_query(
+        cls, pattern: str, query_cls: type[Query]
+    ) -> dbcore.OrQuery:
         return dbcore.OrQuery(
-            [cls.field_query(f, *args, **kwargs) for f in cls._search_fields]
+            [
+                cls.field_query(
+                    f,
+                    pattern=pattern,
+                    query_cls=cast(type[FieldQuery], query_cls),
+                )
+                for f in cls._search_fields
+            ]
         )
 
     @classmethod
@@ -129,6 +149,9 @@ class LibModel(dbcore.Model["Library"]):
                 for f in fields
             ]
         )
+
+
+AnyLibModel = TypeVar("AnyLibModel", bound=LibModel)
 
 
 class FormattedItemMapping(dbcore.db.FormattedMapping):
@@ -224,7 +247,7 @@ class Album(LibModel):
     Reflects the library's "albums" table, including album art.
     """
 
-    artpath: bytes
+    artpath: bytes | None
 
     _table = "albums"
     _flex_table = "album_attributes"
@@ -334,7 +357,7 @@ class Album(LibModel):
     _format_config_key = "format_album"
 
     @cached_classproperty
-    def _relation(cls) -> type[Item]:
+    def _relation(cls) -> type[Model]:
         return Item
 
     @cached_classproperty
@@ -400,14 +423,14 @@ class Album(LibModel):
             for item in self.items():
                 item.remove(delete, False)
 
-    def move_art(self, operation=MoveOperation.MOVE):
+    def move_art(self, operation: MoveOperation = MoveOperation.MOVE) -> None:
         """Move, copy, link or hardlink (depending on `operation`) any
         existing album art so that it remains in the same directory as
         the items.
 
         `operation` should be an instance of `util.MoveOperation`.
         """
-        old_art = self.artpath
+        old_art: bytes | None = self.artpath
         if not old_art:
             return
 
@@ -431,7 +454,8 @@ class Album(LibModel):
         )
         if operation == MoveOperation.MOVE:
             util.move(old_art, new_art)
-            util.prune_dirs(os.path.dirname(old_art), self._db.directory)
+            if self._db:
+                util.prune_dirs(os.path.dirname(old_art), self._db.directory)
         elif operation == MoveOperation.COPY:
             util.copy(old_art, new_art)
         elif operation == MoveOperation.LINK:
@@ -446,7 +470,12 @@ class Album(LibModel):
             assert False, "unknown MoveOperation"
         self.artpath = new_art
 
-    def move(self, operation=MoveOperation.MOVE, basedir=None, store=True):
+    def move(
+        self,
+        operation: MoveOperation = MoveOperation.MOVE,
+        basedir: bytes | None = None,
+        store: bool = True,
+    ) -> None:
         """Move, copy, link or hardlink (depending on `operation`)
         all items to their destination. Any album art moves along with them.
 
@@ -459,7 +488,7 @@ class Album(LibModel):
         the album is not stored automatically, and it will have to be manually
         stored after invoking this method.
         """
-        basedir = basedir or self._db.directory
+        basedir = basedir or self._db.directory if self._db else None
 
         # Ensure new metadata is available to items for destination
         # computation.
@@ -467,7 +496,8 @@ class Album(LibModel):
             self.store()
 
         # Move items.
-        items = list(self.items())
+        items: list[Item] = list(self.items())
+        item: Item
         for item in items:
             item.move(operation, basedir=basedir, with_album=False, store=store)
 
@@ -567,7 +597,10 @@ class Album(LibModel):
 
         plugins.send("art_set", album=self)
 
-    def store(self, fields=None, inherit=True):
+    @override
+    def store(
+        self, fields: Iterable[str] | None = None, inherit: bool = True
+    ) -> None:
         """Update the database with the album information.
 
         `fields` represents the fields to be stored. If not specified,
@@ -589,6 +622,8 @@ class Album(LibModel):
                 elif key != "id":  # is a flexible attribute
                     track_updates[key] = self[key]
 
+        if not self._db:
+            return
         with self._db.transaction():
             super().store(fields)
             if track_updates:
@@ -747,7 +782,7 @@ class Item(LibModel):
     _sorts = {"artist": dbcore.query.SmartArtistSort}
 
     @cached_classproperty
-    def _queries(cls) -> dict[str, FieldQueryType]:
+    def _queries(cls) -> dict[str, type[Query]]:
         return {**super()._queries, "singleton": dbcore.query.SingletonQuery}
 
     _format_config_key = "format_item"
@@ -756,7 +791,7 @@ class Item(LibModel):
     __album: Album | None = None
 
     @cached_classproperty
-    def _relation(cls) -> type[Album]:
+    def _relation(cls) -> type[Model]:
         return Album
 
     @cached_classproperty
@@ -1119,11 +1154,11 @@ class Item(LibModel):
 
     def move(
         self,
-        operation=MoveOperation.MOVE,
-        basedir=None,
-        with_album=True,
-        store=True,
-    ):
+        operation: MoveOperation = MoveOperation.MOVE,
+        basedir: bytes | None = None,
+        with_album: bool = True,
+        store: bool = True,
+    ) -> None:
         """Move the item to its designated location within the library
         directory (provided by destination()).
 
@@ -1165,7 +1200,7 @@ class Item(LibModel):
                     album.store()
 
         # Prune vacated directory.
-        if operation == MoveOperation.MOVE:
+        if operation == MoveOperation.MOVE and self._db:
             util.prune_dirs(os.path.dirname(old_path), self._db.directory)
 
     # Templating.

@@ -274,8 +274,7 @@ class TestHelper(ConfigMixin):
         }
         values_.update(values)
         values_["title"] = values_["title"].format(1)
-        values_["db"] = self.lib
-        item = Item(**values_)
+        item = Item(self.lib, **values_)
         if "path" not in values:
             item["path"] = f"audio.{item['format'].lower()}"
         # mtime needs to be set last since other assignments reset it.

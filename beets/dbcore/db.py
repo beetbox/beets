@@ -48,15 +48,7 @@ import beets
 
 from ..util import cached_classproperty, functemplate
 from . import types
-from .query import (
-    FieldQueryType,
-    FieldSort,
-    MatchQuery,
-    NullSort,
-    Query,
-    Sort,
-    TrueQuery,
-)
+from .query import FieldSort, MatchQuery, NullSort, Query, Sort, TrueQuery
 
 if TYPE_CHECKING:
     from types import TracebackType
@@ -327,7 +319,7 @@ class Model(ABC, Generic[D]):
     """
 
     @cached_classproperty
-    def _queries(cls) -> dict[str, FieldQueryType]:
+    def _queries(cls) -> dict[str, type[Query]]:
         """Named queries that use a field-like `name:value` syntax but which
         do not relate to any specific field.
         """
@@ -345,9 +337,9 @@ class Model(ABC, Generic[D]):
     """
 
     @cached_classproperty
-    def _relation(cls):
+    def _relation(cls) -> type[Model[D]]:
         """The model that this model is closely related to."""
-        return cls
+        return cls  # type: ignore[return-value]
 
     @cached_classproperty
     def relation_join(cls) -> str:
@@ -406,7 +398,7 @@ class Model(ABC, Generic[D]):
         """Create a new object with an optional Database association and
         initial field values.
         """
-        self._db = db
+        self._db: D | None = db
         self._dirty: set[str] = set()
         self._values_fixed = LazyConvertDict(self)
         self._values_flex = LazyConvertDict(self)
@@ -771,7 +763,7 @@ class Model(ABC, Generic[D]):
 AnyModel = TypeVar("AnyModel", bound=Model)
 
 
-class Results(Generic[AnyModel]):
+class Results(Generic[AnyModel, D]):
     """An item query result set. Iterating over the collection lazily
     constructs Model objects that reflect database rows.
     """
@@ -1265,7 +1257,7 @@ class Database:
 
     # Querying.
 
-    def _fetch(
+    def _fetch_model(
         self,
         model_cls: type[AnyModel],
         query: Query | None = None,
@@ -1325,4 +1317,4 @@ class Database:
 
     def _get(self, model_cls: type[AnyModel], id_: int) -> AnyModel | None:
         """Get a Model object by its id or None if the id does not exist."""
-        return self._fetch(model_cls, MatchQuery("id", id_)).get()
+        return self._fetch_model(model_cls, MatchQuery("id", id_)).get()
