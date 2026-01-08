@@ -18,7 +18,6 @@ python3-discogs-client library.
 
 from __future__ import annotations
 
-import copy
 import http.client
 import json
 import os
@@ -26,6 +25,7 @@ import re
 import socket
 import time
 import traceback
+from dataclasses import asdict, dataclass, field
 from functools import cache
 from string import ascii_lowercase
 from typing import TYPE_CHECKING
@@ -115,14 +115,6 @@ class ArtistInfo(TypedDict):
     artists_ids: list[str]
 
 
-class AlbumArtistInfo(ArtistInfo):
-    albumartist: str
-    albumartists: list[str]
-    albumartist_credit: str
-    albumartists_credit: list[str]
-    albumartist_id: str
-
-
 class TracklistInfo(TypedDict):
     index: int
     index_tracks: dict[int, str]
@@ -131,6 +123,184 @@ class TracklistInfo(TypedDict):
     next_divisions: list[str]
     mediums: list[str | None]
     medium_indices: list[str | None]
+
+
+@dataclass
+class ArtistState:
+    artist: str = ""
+    artists: list[str] = field(default_factory=list)
+    artist_credit: str = ""
+    artists_credit: list[str] = field(default_factory=list)
+    artist_id: str = ""
+    artists_ids: list[str] = field(default_factory=list)
+
+    @property
+    def info(self) -> ArtistInfo:
+        return asdict(self)  # type: ignore[return-value]
+
+    def clone(self) -> ArtistState:
+        return ArtistState(**asdict(self))
+
+    @classmethod
+    def build(
+        cls,
+        plugin: DiscogsPlugin,
+        given_artists: list[Artist],
+        given_state: ArtistState | None = None,
+        for_album_artist: bool = False,
+    ) -> ArtistState:
+        """Iterates through a discogs result and builds
+        up the artist fields. Does not contribute to
+        artist_sort as Discogs does not define that.
+        """
+        state = given_state.clone() if given_state else cls()
+
+        artist = ""
+        artist_anv = ""
+        artists: list[str] = []
+        artists_anv: list[str] = []
+
+        feat_str: str = f" {plugin.config['featured_string'].as_str()} "
+        join = ""
+        featured_flag = False
+        for a in given_artists:
+            name = plugin.strip_disambiguation(a["name"])
+            discogs_id = str(a["id"])
+            anv = a.get("anv", "") or name
+            role = a.get("role", "").lower()
+            if name.lower() == "various":
+                name = config["va_name"].as_str()
+                anv = name
+            if "featuring" in role:
+                if not featured_flag:
+                    artist += feat_str
+                    artist_anv += feat_str
+                    artist += name
+                    artist_anv += anv
+                    featured_flag = True
+                else:
+                    artist = cls.join_artist(artist, name, join)
+                    artist_anv = cls.join_artist(artist_anv, anv, join)
+            elif role and "featuring" not in role:
+                continue
+            else:
+                artist = cls.join_artist(artist, name, join)
+                artist_anv = cls.join_artist(artist_anv, anv, join)
+            artists.append(name)
+            artists_anv.append(anv)
+            if not state.artist_id:
+                state.artist_id = discogs_id
+            state.artists_ids.append(discogs_id)
+            join = a.get("join", "")
+        cls._assign_anv(
+            plugin,
+            state,
+            artist,
+            artists,
+            artist_anv,
+            artists_anv,
+            for_album_artist,
+        )
+        return state
+
+    @staticmethod
+    def join_artist(base: str, artist: str, join: str) -> str:
+        # Expand the artist field
+        if not base:
+            base = artist
+        else:
+            if join:
+                join = join.strip()
+                if join in ";,":
+                    base += f"{join} "
+                else:
+                    base += f" {join} "
+            else:
+                base += ", "
+            base += artist
+        return base
+
+    @staticmethod
+    def _assign_anv(
+        plugin: DiscogsPlugin,
+        state: ArtistState,
+        artist: str,
+        artists: list[str],
+        artist_anv: str,
+        artists_anv: list[str],
+        for_album_artist: bool,
+    ) -> None:
+        """Assign artist and variation fields based on
+        configuration settings.
+        """
+        use_artist_anv: bool = plugin.config["anv"]["artist"].get(bool)
+        use_artistcredit_anv: bool = plugin.config["anv"]["artist_credit"].get(
+            bool
+        )
+        use_albumartist_anv: bool = plugin.config["anv"]["album_artist"].get(
+            bool
+        )
+
+        if (use_artist_anv and not for_album_artist) or (
+            use_albumartist_anv and for_album_artist
+        ):
+            state.artist += artist_anv
+            state.artists += artists_anv
+        else:
+            state.artist += artist
+            state.artists += artists
+
+        if use_artistcredit_anv:
+            state.artist_credit += artist_anv
+            state.artists_credit += artists_anv
+        else:
+            state.artist_credit += artist
+            state.artists_credit += artists
+
+
+@dataclass
+class TracklistState:
+    index: int = 0
+    index_tracks: dict[int, str] = field(default_factory=dict)
+    tracks: list[TrackInfo] = field(default_factory=list)
+    divisions: list[str] = field(default_factory=list)
+    next_divisions: list[str] = field(default_factory=list)
+    mediums: list[str | None] = field(default_factory=list)
+    medium_indices: list[str | None] = field(default_factory=list)
+
+    @property
+    def info(self) -> TracklistInfo:
+        return asdict(self)  # type: ignore[return-value]
+
+    @classmethod
+    def build(
+        cls,
+        plugin: DiscogsPlugin,
+        clean_tracklist: list[Track],
+        albumartistinfo: ArtistState,
+    ) -> TracklistState:
+        state = cls()
+        for track in clean_tracklist:
+            if track["position"]:
+                state.index += 1
+                if state.next_divisions:
+                    state.divisions += state.next_divisions
+                    state.next_divisions.clear()
+                track_info, medium, medium_index = plugin.get_track_info(
+                    track, state.index, state.divisions, albumartistinfo
+                )
+                track_info.track_alt = track["position"]
+                state.tracks.append(track_info)
+                state.mediums.append(medium or None)
+                state.medium_indices.append(medium_index or None)
+            else:
+                state.next_divisions.append(track["title"])
+                try:
+                    state.divisions.pop()
+                except IndexError:
+                    pass
+                state.index_tracks[state.index + 1] = track["title"]
+        return state
 
 
 class DiscogsPlugin(MetadataSourcePlugin):
@@ -354,166 +524,6 @@ class DiscogsPlugin(MetadataSourcePlugin):
 
         return media, albumtype
 
-    def get_artist_with_anv(
-        self, artists: list[Artist], use_anv: bool = False
-    ) -> tuple[str, str | None]:
-        """Iterates through a discogs result, fetching data
-        if the artist anv is to be used, maps that to the name.
-        Calls the parent class get_artist method."""
-        artist_list: list[dict[str | int, str]] = []
-        for artist_data in artists:
-            a: dict[str | int, str] = {
-                "name": artist_data["name"],
-                "id": artist_data["id"],
-                "join": artist_data.get("join", ""),
-            }
-            if use_anv and (anv := artist_data.get("anv", "")):
-                a["name"] = anv
-            artist_list.append(a)
-        artist, artist_id = self.get_artist(artist_list, join_key="join")
-        return self.strip_disambiguation(artist), artist_id
-
-    def _build_albumartistinfo(self, artists: list[Artist]) -> AlbumArtistInfo:
-        info = self._build_artistinfo(artists, for_album_artist=True)
-        albumartist: AlbumArtistInfo = {
-            **info,
-            "albumartist": info["artist"],
-            "albumartist_id": info["artist_id"],
-            "albumartists": info["artists"],
-            "albumartist_credit": info["artist_credit"],
-            "albumartists_credit": info["artists_credit"],
-        }
-        return albumartist
-
-    def _build_artistinfo(
-        self,
-        given_artists: list[Artist],
-        given_info: ArtistInfo | None = None,
-        for_album_artist: bool = False,
-    ) -> ArtistInfo:
-        """Iterates through a discogs result and builds
-        up the artist fields. Does not contribute to
-        artist_sort as Discogs does not define that.
-        """
-        info: ArtistInfo = {
-            "artist": "",
-            "artist_id": "",
-            "artists": [],
-            "artists_ids": [],
-            "artist_credit": "",
-            "artists_credit": [],
-        }
-        # If starting information is given we start from there
-        # Often used for cases with album artists.
-        # Deepcopy is used to prevent unintentional
-        # extra modifications
-        if given_info:
-            info = copy.deepcopy(given_info)
-        artist = ""
-        artist_anv = ""
-        artists: list[str] = []
-        artists_anv: list[str] = []
-
-        feat_str: str = f" {self.config['featured_string'].as_str()} "
-        join = ""
-        featured_flag = False
-        # Iterate through building the artist strings
-        for a in given_artists:
-            # Get the artist name
-            name = self.strip_disambiguation(a["name"])
-            discogs_id = str(a["id"])
-            anv = a.get("anv", "") or name
-            role = a.get("role", "").lower()
-            # Check if the artist is Various
-            if name.lower() == "various":
-                name = config["va_name"].as_str()
-                anv = name
-            # If the artist is listed as featured
-            if "featuring" in role:
-                if not featured_flag:
-                    artist += feat_str
-                    artist_anv += feat_str
-                    artist += name
-                    artist_anv += anv
-                    featured_flag = True
-                    # Set the featured_flag
-                    # to indicate we no longer need to
-                    # prefix the marker for a featured
-                    # artist
-                else:
-                    artist = self._join_artist(artist, name, join)
-                    artist_anv = self._join_artist(artist_anv, anv, join)
-            elif role and "featuring" not in role:
-                # Current artists that are in the credits
-                # and are not credited as featuring are ignored.
-                continue
-            else:
-                artist = self._join_artist(artist, name, join)
-                artist_anv = self._join_artist(artist_anv, anv, join)
-            artists.append(name)
-            artists_anv.append(anv)
-            # Only the first ID is set for the singular field
-            if not info["artist_id"]:
-                info["artist_id"] = discogs_id
-            info["artists_ids"].append(discogs_id)
-            # Update join for the next artist
-            join = a.get("join", "")
-        return self._assign_anv(
-            info, artist, artists, artist_anv, artists_anv, for_album_artist
-        )
-
-    def _join_artist(self, base: str, artist: str, join: str) -> str:
-        # Expand the artist field
-        if not base:
-            base = artist
-        else:
-            if join:
-                join = join.strip()
-                if join in ";,":
-                    base += f"{join} "
-                else:
-                    base += f" {join} "
-            else:
-                base += ", "
-            base += artist
-        return base
-
-    def _assign_anv(
-        self,
-        info: ArtistInfo,
-        artist: str,
-        artists: list[str],
-        artist_anv: str,
-        artists_anv: list[str],
-        for_album_artist: bool,
-    ) -> ArtistInfo:
-        """Assign artist and variation fields based on
-        configuration settings.
-        """
-        # Fetch configuration options for artist name variations
-        use_artist_anv: bool = self.config["anv"]["artist"].get(bool)
-        use_artistcredit_anv: bool = self.config["anv"]["artist_credit"].get(
-            bool
-        )
-        use_albumartist_anv: bool = self.config["anv"]["album_artist"].get(bool)
-
-        if (use_artist_anv and not for_album_artist) or (
-            use_albumartist_anv and for_album_artist
-        ):
-            info["artist"] += artist_anv
-            info["artists"] += artists_anv
-        else:
-            info["artist"] += artist
-            info["artists"] += artists
-
-        if use_artistcredit_anv:
-            info["artist_credit"] += artist_anv
-            info["artists_credit"] += artists_anv
-        else:
-            info["artist_credit"] += artist
-            info["artists_credit"] += artists
-        return info
-
     def get_album_info(self, result: Release) -> AlbumInfo | None:
         """Returns an AlbumInfo object for a discogs Release object."""
         # Explicitly reload the `Release` fields, as they might not be yet
@@ -544,7 +554,9 @@ class DiscogsPlugin(MetadataSourcePlugin):
 
         artist_data = [a.data for a in result.artists]
         # Information for the album artist
-        albumartist: AlbumArtistInfo = self._build_albumartistinfo(artist_data)
+        albumartist = ArtistState.build(
+            self, artist_data, for_album_artist=True
+        )
 
         album = re.sub(r" +", " ", result.title)
         album_id = result.data["id"]
@@ -553,11 +565,11 @@ class DiscogsPlugin(MetadataSourcePlugin):
         # information and leave us with skeleton `Artist` objects that will
         # each make an API call just to get the same data back.
         tracks = self.get_tracks(
-            result.data["tracklist"], self._build_artistinfo(artist_data)
+            result.data["tracklist"], ArtistState.build(self, artist_data)
         )
 
         # Extract information for the optional AlbumInfo fields, if possible.
-        va = albumartist["albumartist"] == config["va_name"].as_str()
+        va = albumartist.artist == config["va_name"].as_str()
         year = result.data.get("year")
         mediums = [t["medium"] for t in tracks]
         country = result.data.get("country")
@@ -612,7 +624,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
         return AlbumInfo(
             album=album,
             album_id=album_id,
-            **albumartist,  # Unpacks values to satisfy the keyword arguments
+            **albumartist.info,  # Unpacks values to satisfy the keyword arguments
             tracks=tracks,
             albumtype=albumtype,
             va=va,
@@ -630,7 +642,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
             data_url=data_url,
             discogs_albumid=discogs_albumid,
             discogs_labelid=labelid,
-            discogs_artistid=albumartist["albumartist_id"],
+            discogs_artistid=albumartist.artist_id,
             cover_art_url=cover_art_url,
         )
 
@@ -652,58 +664,10 @@ class DiscogsPlugin(MetadataSourcePlugin):
         else:
             return None
 
-    def _process_clean_tracklist(
-        self,
-        clean_tracklist: list[Track],
-        albumartistinfo: ArtistInfo,
-    ) -> TracklistInfo:
-        # Distinct works and intra-work divisions, as defined by index tracks.
-        info: TracklistInfo = {
-            "index": 0,
-            "index_tracks": {},
-            "tracks": [],
-            "divisions": [],
-            "next_divisions": [],
-            "mediums": [],
-            "medium_indices": [],
-        }
-        for track in clean_tracklist:
-            # Only real tracks have `position`. Otherwise, it's an index track.
-            if track["position"]:
-                info["index"] += 1
-                if info["next_divisions"]:
-                    # End of a block of index tracks: update the current
-                    # divisions.
-                    info["divisions"] += info["next_divisions"]
-                    del info["next_divisions"][:]
-                track_info, medium, medium_index = self.get_track_info(
-                    track, info["index"], info["divisions"], albumartistinfo
-                )
-                track_info.track_alt = track["position"]
-                info["tracks"].append(track_info)
-                if medium:
-                    info["mediums"].append(medium)
-                else:
-                    info["mediums"].append(None)
-                if medium_index:
-                    info["medium_indices"].append(medium_index)
-                else:
-                    info["medium_indices"].append(None)
-            else:
-                info["next_divisions"].append(track["title"])
-                # We expect new levels of division at the beginning of the
-                # tracklist (and possibly elsewhere).
-                try:
-                    info["divisions"].pop()
-                except IndexError:
-                    pass
-                info["index_tracks"][info["index"] + 1] = track["title"]
-        return info
-
     def get_tracks(
         self,
         tracklist: list[Track],
-        albumartistinfo: ArtistInfo,
+        albumartistinfo: ArtistState,
     ) -> list[TrackInfo]:
         """Returns a list of TrackInfo objects for a discogs tracklist."""
         try:
@@ -715,9 +679,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
             self._log.debug("{}", traceback.format_exc())
             self._log.error("uncaught exception in _coalesce_tracks: {}", exc)
             clean_tracklist = tracklist
-        t: TracklistInfo = self._process_clean_tracklist(
-            clean_tracklist, albumartistinfo
-        )
+        t = TracklistState.build(self, clean_tracklist, albumartistinfo)
         # Fix up medium and medium_index for each track. Discogs position is
         # unreliable, but tracks are in order.
         medium = None
@@ -726,24 +688,24 @@ class DiscogsPlugin(MetadataSourcePlugin):
 
         # If a medium has two sides (ie. vinyl or cassette), each pair of
         # consecutive sides should belong to the same medium.
-        if all([medium is not None for medium in t["mediums"]]):
+        if all([medium is not None for medium in t.mediums]):
             m = sorted(
-                {medium.lower() if medium else "" for medium in t["mediums"]}
+                {medium.lower() if medium else "" for medium in t.mediums}
             )
             # If all track.medium are single consecutive letters, assume it is
             # a 2-sided medium.
             if "".join(m) in ascii_lowercase:
                 sides_per_medium = 2
 
-        for i, track in enumerate(t["tracks"]):
+        for i, track in enumerate(t.tracks):
             # Handle special case where a different medium does not indicate a
             # new disc, when there is no medium_index and the ordinal of medium
             # is not sequential. For example, I, II, III, IV, V. Assume these
             # are the track index, not the medium.
             # side_count is the number of mediums or medium sides (in the case
             # of two-sided mediums) that were seen before.
-            medium_str = t["mediums"][i]
-            medium_index = t["medium_indices"][i]
+            medium_str = t.mediums[i]
+            medium_index = t.medium_indices[i]
             medium_is_index = (
                 medium_str
                 and not medium_index
@@ -774,15 +736,15 @@ class DiscogsPlugin(MetadataSourcePlugin):
 
         # Get `disctitle` from Discogs index tracks. Assume that an index track
         # before the first track of each medium is a disc title.
-        for track in t["tracks"]:
+        for track in t.tracks:
             if track.medium_index == 1:
-                if track.index in t["index_tracks"]:
-                    disctitle = t["index_tracks"][track.index]
+                if track.index in t.index_tracks:
+                    disctitle = t.index_tracks[track.index]
                 else:
                     disctitle = None
             track.disctitle = disctitle
 
-        return t["tracks"]
+        return t.tracks
 
     def _coalesce_tracks(self, raw_tracklist: list[Track]) -> list[Track]:
         """Pre-process a tracklist, merging subtracks into a single track. The
@@ -885,11 +847,11 @@ class DiscogsPlugin(MetadataSourcePlugin):
         track: Track,
         index: int,
         divisions: list[str],
-        albumartistinfo: ArtistInfo,
+        albumartistinfo: ArtistState,
     ) -> tuple[TrackInfo, str | None, str | None]:
         """Returns a TrackInfo object for a discogs track."""
 
-        artistinfo = albumartistinfo.copy()
+        artistinfo = albumartistinfo.clone()
 
         title = track["title"]
         if self.config["index_tracks"]:
@@ -901,19 +863,19 @@ class DiscogsPlugin(MetadataSourcePlugin):
 
         # If artists are found on the track, we will use those instead
         if artists := track.get("artists", []):
-            artistinfo = self._build_artistinfo(artists)
+            artistinfo = ArtistState.build(self, artists)
 
         length = self.get_track_length(track["duration"])
 
         # Add featured artists
         if extraartists := track.get("extraartists", []):
-            artistinfo = self._build_artistinfo(extraartists, artistinfo)
+            artistinfo = ArtistState.build(self, extraartists, artistinfo)
 
         return (
             TrackInfo(
                 title=title,
                 track_id=track_id,
-                **artistinfo,
+                **artistinfo.info,
                 length=length,
                 index=index,
             ),
