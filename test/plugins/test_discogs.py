@@ -24,6 +24,18 @@ from beets.test.helper import BeetsTestCase, capture_log
 from beetsplug.discogs import ArtistState, DiscogsPlugin
 
 
+def _artist(name: str, **kwargs):
+    return {
+        "id": 1,
+        "name": name,
+        "join": "",
+        "role": "",
+        "anv": "",
+        "tracks": "",
+        "resource_url": "",
+    } | kwargs
+
+
 @patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
 class DGAlbumInfoTest(BeetsTestCase):
     def _make_release(self, tracks=None):
@@ -35,9 +47,7 @@ class DGAlbumInfoTest(BeetsTestCase):
             "uri": "https://www.discogs.com/release/release/13633721",
             "title": "ALBUM TITLE",
             "year": "3001",
-            "artists": [
-                {"name": "ARTIST NAME", "id": "ARTIST ID", "join": ","}
-            ],
+            "artists": [_artist("ARTIST NAME", id="ARTIST ID", join=",")],
             "formats": [
                 {
                     "descriptions": ["FORMAT DESC 1", "FORMAT DESC 2"],
@@ -325,7 +335,7 @@ class DGAlbumInfoTest(BeetsTestCase):
             "id": 123,
             "uri": "https://www.discogs.com/release/123456-something",
             "tracklist": [self._make_track("A", "1", "01:01")],
-            "artists": [{"name": "ARTIST NAME", "id": 321, "join": ""}],
+            "artists": [_artist("ARTIST NAME", id=321)],
             "title": "TITLE",
         }
         release = Bag(
@@ -385,14 +395,12 @@ class DGAlbumInfoTest(BeetsTestCase):
                     "position": "A",
                     "type_": "track",
                     "duration": "5:44",
-                    "artists": [
-                        {"name": "TEST ARTIST (5)", "tracks": "", "id": 11146}
-                    ],
+                    "artists": [_artist("TEST ARTIST (5)", id=11146)],
                 }
             ],
             "artists": [
-                {"name": "ARTIST NAME (2)", "id": 321, "join": "&"},
-                {"name": "OTHER ARTIST (5)", "id": 321, "join": ""},
+                _artist("ARTIST NAME (2)", id=321, join="&"),
+                _artist("OTHER ARTIST (5)", id=321),
             ],
             "title": "title",
             "labels": [
@@ -429,14 +437,12 @@ class DGAlbumInfoTest(BeetsTestCase):
                     "position": "A",
                     "type_": "track",
                     "duration": "5:44",
-                    "artists": [
-                        {"name": "TEST ARTIST (5)", "tracks": "", "id": 11146}
-                    ],
+                    "artists": [_artist("TEST ARTIST (5)", id=11146)],
                 }
             ],
             "artists": [
-                {"name": "ARTIST NAME (2)", "id": 321, "join": "&"},
-                {"name": "OTHER ARTIST (5)", "id": 321, "join": ""},
+                _artist("ARTIST NAME (2)", id=321, join="&"),
+                _artist("OTHER ARTIST (5)", id=321),
             ],
             "title": "title",
             "labels": [
@@ -520,28 +526,21 @@ def test_anv(
                 "position": "A",
                 "type_": "track",
                 "duration": "5:44",
-                "artists": [
-                    {
-                        "name": "ARTIST",
-                        "tracks": "",
-                        "anv": "ART",
-                        "id": 11146,
-                    }
-                ],
+                "artists": [_artist("ARTIST", id=11146, anv="ART")],
                 "extraartists": [
-                    {
-                        "name": "PERFORMER",
-                        "role": "Featuring",
-                        "anv": "PERF",
-                        "id": 787,
-                    }
+                    _artist(
+                        "PERFORMER",
+                        id=787,
+                        role="Featuring",
+                        anv="PERF",
+                    )
                 ],
             }
         ],
         "artists": [
-            {"name": "DRUMMER", "anv": "DRUM", "id": 445, "join": ", "},
-            {"name": "ARTIST (4)", "anv": "ARTY", "id": 321, "join": "&"},
-            {"name": "SOLOIST", "anv": "SOLO", "id": 445, "join": ""},
+            _artist("DRUMMER", id=445, anv="DRUM", join=", "),
+            _artist("ARTIST (4)", id=321, anv="ARTY", join="&"),
+            _artist("SOLOIST", id=445, anv="SOLO"),
         ],
         "title": "title",
     }
@@ -579,19 +578,10 @@ def test_anv_no_variation(artist_anv, albumartist_anv, artistcredit_anv):
                 "position": "A",
                 "type_": "track",
                 "duration": "5:44",
-                "artists": [
-                    {
-                        "name": "PERFORMER",
-                        "tracks": "",
-                        "anv": "",
-                        "id": 1,
-                    }
-                ],
+                "artists": [_artist("PERFORMER", id=1)],
             }
         ],
-        "artists": [
-            {"name": "ARTIST", "anv": "", "id": 2},
-        ],
+        "artists": [_artist("ARTIST", id=2)],
         "title": "title",
     }
     release = Bag(
@@ -629,9 +619,7 @@ def test_anv_album_artist():
                 "duration": "5:44",
             }
         ],
-        "artists": [
-            {"name": "ARTIST (4)", "anv": "VARIATION", "id": 321},
-        ],
+        "artists": [_artist("ARTIST (4)", id=321, anv="VARIATION")],
         "title": "title",
     }
     release = Bag(
@@ -664,33 +652,19 @@ def test_anv_album_artist():
                 "position": "1",
                 "duration": "5:00",
                 "artists": [
-                    {"name": "NEW ARTIST", "tracks": "", "id": 11146},
-                    {"name": "VOCALIST", "tracks": "", "id": 344, "join": "&"},
+                    _artist("NEW ARTIST", id=11146, join="&"),
+                    _artist("VOCALIST", id=344, join="feat."),
                 ],
                 "extraartists": [
-                    {
-                        "name": "SOLOIST",
-                        "id": 3,
-                        "role": "Featuring",
-                    },
-                    {
-                        "name": "PERFORMER (1)",
-                        "id": 5,
-                        "role": "Other Role, Featuring",
-                    },
-                    {
-                        "name": "RANDOM",
-                        "id": 8,
-                        "role": "Written-By",
-                    },
-                    {
-                        "name": "MUSICIAN",
-                        "id": 10,
-                        "role": "Featuring [Uncredited]",
-                    },
+                    _artist("SOLOIST", id=3, role="Featuring"),
+                    _artist(
+                        "PERFORMER (1)", id=5, role="Other Role, Featuring"
+                    ),
+                    _artist("RANDOM", id=8, role="Written-By"),
+                    _artist("MUSICIAN", id=10, role="Featuring [Uncredited]"),
                 ],
             },
-            "NEW ARTIST, VOCALIST Feat. SOLOIST, PERFORMER, MUSICIAN",
+            "NEW ARTIST & VOCALIST feat. SOLOIST, PERFORMER, MUSICIAN",
             ["NEW ARTIST", "VOCALIST", "SOLOIST", "PERFORMER", "MUSICIAN"],
         ),
     ],
@@ -733,7 +707,7 @@ def test_get_media_and_albumtype(formats, expected_media, expected_albumtype):
     "given_artists,expected_info,config_va_name",
     [
         (
-            [{"name": "Various", "id": "1"}],
+            [_artist("Various")],
             {
                 "artist": "VARIOUS ARTISTS",
                 "artist_id": "1",
