@@ -26,9 +26,9 @@ import socket
 import time
 import traceback
 from dataclasses import asdict, dataclass, field
-from functools import cache
+from functools import cache, cached_property
 from string import ascii_lowercase
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 import confuse
 from discogs_client import Client, Master, Release
@@ -127,135 +127,111 @@ class TracklistInfo(TypedDict):
 
 @dataclass
 class ArtistState:
-    artist: str = ""
-    artists: list[str] = field(default_factory=list)
-    artist_credit: str = ""
-    artists_credit: list[str] = field(default_factory=list)
-    artist_id: str = ""
-    artists_ids: list[str] = field(default_factory=list)
+    class ValidArtist(NamedTuple):
+        id: str
+        name: str
+        credit: str
+        join: str
+        is_feat: bool
+
+        def get_artist(self, property_name: str) -> str:
+            return getattr(self, property_name) + (
+                {",": ", ", "": ""}.get(self.join, f" {self.join} ")
+            )
+
+    raw_artists: list[Artist]
+    use_anv: bool
+    use_credit_anv: bool
+    featured_string: str
+    should_strip_disambiguation: bool
 
     @property
     def info(self) -> ArtistInfo:
-        return asdict(self)  # type: ignore[return-value]
+        return {k: getattr(self, k) for k in ArtistInfo.__annotations__}  # type: ignore[return-value]
 
-    def clone(self) -> ArtistState:
-        return ArtistState(**asdict(self))
+    def strip_disambiguation(self, text: str) -> str:
+        """Removes discogs specific disambiguations from a string.
+        Turns 'Label Name (5)' to 'Label Name' or 'Artist (1) & Another Artist (2)'
+        to 'Artist & Another Artist'. Does nothing if strip_disambiguation is False."""
+        if self.should_strip_disambiguation:
+            return DISAMBIGUATION_RE.sub("", text)
+        return text
+
+    @cached_property
+    def valid_artists(self) -> list[ValidArtist]:
+        va_name = config["va_name"].as_str()
+        return [
+            self.ValidArtist(
+                str(a["id"]),
+                self.strip_disambiguation(anv if self.use_anv else name),
+                self.strip_disambiguation(anv if self.use_credit_anv else name),
+                a["join"],
+                is_feat,
+            )
+            for a in self.raw_artists
+            if (
+                (name := va_name if a["name"] == "Various" else a["name"])
+                and (anv := a["anv"] or name)
+                and (
+                    (is_feat := ("featuring" in a["role"].lower()))
+                    or not a["role"]
+                )
+            )
+        ]
+
+    @property
+    def artists_ids(self) -> list[str]:
+        return [a.id for a in self.valid_artists]
+
+    @property
+    def artist_id(self) -> str:
+        return self.artists_ids[0]
+
+    @property
+    def artists(self) -> list[str]:
+        return [a.name for a in self.valid_artists]
+
+    @property
+    def artists_credit(self) -> list[str]:
+        return [a.credit for a in self.valid_artists]
+
+    @property
+    def artist(self) -> str:
+        return self.join_artists("name")
+
+    @property
+    def artist_credit(self) -> str:
+        return self.join_artists("credit")
+
+    def join_artists(self, property_name: str) -> str:
+        non_featured = [a for a in self.valid_artists if not a.is_feat]
+        featured = [a for a in self.valid_artists if a.is_feat]
+
+        artist = "".join(a.get_artist(property_name) for a in non_featured)
+        if featured:
+            if "feat" not in artist:
+                artist += f" {self.featured_string} "
+
+            artist += ", ".join(a.get_artist(property_name) for a in featured)
+
+        return artist
 
     @classmethod
-    def build(
+    def from_plugin(
         cls,
         plugin: DiscogsPlugin,
-        given_artists: list[Artist],
-        given_state: ArtistState | None = None,
+        artists: list[Artist],
         for_album_artist: bool = False,
     ) -> ArtistState:
-        """Iterates through a discogs result and builds
-        up the artist fields. Does not contribute to
-        artist_sort as Discogs does not define that.
-        """
-        state = given_state.clone() if given_state else cls()
-
-        artist = ""
-        artist_anv = ""
-        artists: list[str] = []
-        artists_anv: list[str] = []
-
-        feat_str: str = f" {plugin.config['featured_string'].as_str()} "
-        join = ""
-        featured_flag = False
-        for a in given_artists:
-            name = plugin.strip_disambiguation(a["name"])
-            discogs_id = str(a["id"])
-            anv = a.get("anv", "") or name
-            role = a.get("role", "").lower()
-            if name.lower() == "various":
-                name = config["va_name"].as_str()
-                anv = name
-            if "featuring" in role:
-                if not featured_flag:
-                    artist += feat_str
-                    artist_anv += feat_str
-                    artist += name
-                    artist_anv += anv
-                    featured_flag = True
-                else:
-                    artist = cls.join_artist(artist, name, join)
-                    artist_anv = cls.join_artist(artist_anv, anv, join)
-            elif role and "featuring" not in role:
-                continue
-            else:
-                artist = cls.join_artist(artist, name, join)
-                artist_anv = cls.join_artist(artist_anv, anv, join)
-            artists.append(name)
-            artists_anv.append(anv)
-            if not state.artist_id:
-                state.artist_id = discogs_id
-            state.artists_ids.append(discogs_id)
-            join = a.get("join", "")
-        cls._assign_anv(
-            plugin,
-            state,
-            artist,
+        return cls(
             artists,
-            artist_anv,
-            artists_anv,
-            for_album_artist,
+            plugin.config["anv"][
+                "album_artist" if for_album_artist else "artist"
+            ].get(bool),
+            plugin.config["anv"]["artist_credit"].get(bool),
+            plugin.config["featured_string"].as_str(),
+            plugin.config["strip_disambiguation"].get(bool),
         )
-        return state
-
-    @staticmethod
-    def join_artist(base: str, artist: str, join: str) -> str:
-        # Expand the artist field
-        if not base:
-            base = artist
-        else:
-            if join:
-                join = join.strip()
-                if join in ";,":
-                    base += f"{join} "
-                else:
-                    base += f" {join} "
-            else:
-                base += ", "
-            base += artist
-        return base
-
-    @staticmethod
-    def _assign_anv(
-        plugin: DiscogsPlugin,
-        state: ArtistState,
-        artist: str,
-        artists: list[str],
-        artist_anv: str,
-        artists_anv: list[str],
-        for_album_artist: bool,
-    ) -> None:
-        """Assign artist and variation fields based on
-        configuration settings.
-        """
-        use_artist_anv: bool = plugin.config["anv"]["artist"].get(bool)
-        use_artistcredit_anv: bool = plugin.config["anv"]["artist_credit"].get(
-            bool
-        )
-        use_albumartist_anv: bool = plugin.config["anv"]["album_artist"].get(
-            bool
-        )
-
-        if (use_artist_anv and not for_album_artist) or (
-            use_albumartist_anv and for_album_artist
-        ):
-            state.artist += artist_anv
-            state.artists += artists_anv
-        else:
-            state.artist += artist
-            state.artists += artists
-
-        if use_artistcredit_anv:
-            state.artist_credit += artist_anv
-            state.artists_credit += artists_anv
-        else:
-            state.artist_credit += artist
-            state.artists_credit += artists
 
 
 @dataclass
@@ -554,7 +530,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
 
         artist_data = [a.data for a in result.artists]
         # Information for the album artist
-        albumartist = ArtistState.build(
+        albumartist = ArtistState.from_plugin(
             self, artist_data, for_album_artist=True
         )
 
@@ -565,7 +541,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
         # information and leave us with skeleton `Artist` objects that will
         # each make an API call just to get the same data back.
         tracks = self.get_tracks(
-            result.data["tracklist"], ArtistState.build(self, artist_data)
+            result.data["tracklist"], ArtistState.from_plugin(self, artist_data)
         )
 
         # Extract information for the optional AlbumInfo fields, if possible.
@@ -851,8 +827,6 @@ class DiscogsPlugin(MetadataSourcePlugin):
     ) -> tuple[TrackInfo, str | None, str | None]:
         """Returns a TrackInfo object for a discogs track."""
 
-        artistinfo = albumartistinfo.clone()
-
         title = track["title"]
         if self.config["index_tracks"]:
             prefix = ", ".join(divisions)
@@ -861,15 +835,15 @@ class DiscogsPlugin(MetadataSourcePlugin):
         track_id = None
         medium, medium_index, _ = self.get_track_index(track["position"])
 
-        # If artists are found on the track, we will use those instead
-        if artists := track.get("artists", []):
-            artistinfo = ArtistState.build(self, artists)
-
         length = self.get_track_length(track["duration"])
-
-        # Add featured artists
-        if extraartists := track.get("extraartists", []):
-            artistinfo = ArtistState.build(self, extraartists, artistinfo)
+        # If artists are found on the track, we will use those instead
+        artistinfo = ArtistState.from_plugin(
+            self,
+            [
+                *(track.get("artists") or albumartistinfo.raw_artists),
+                *track.get("extraartists", []),
+            ],
+        )
 
         return (
             TrackInfo(
