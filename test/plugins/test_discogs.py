@@ -699,15 +699,9 @@ def test_anv_album_artist():
 def test_parse_featured_artists(track, expected_artist, expected_artists):
     """Tests the plugins ability to parse a featured artist.
     Ignores artists that are not listed as featured."""
-    artistinfo = ArtistState(
-        artist="ARTIST",
-        artist_id="1",
-        artists=["ARTIST"],
-        artists_ids=["1"],
-        artist_credit="ARTIST",
-        artists_credit=["ARTIST"],
-    )
-    t, _, _ = DiscogsPlugin().get_track_info(track, 1, 1, artistinfo)
+    plugin = DiscogsPlugin()
+    artistinfo = ArtistState.from_plugin(plugin, [_artist("ARTIST")])
+    t, _, _ = plugin.get_track_info(track, 1, 1, artistinfo)
     assert t.artist == expected_artist
     assert t.artists == expected_artists
 
@@ -756,7 +750,8 @@ def test_get_media_and_albumtype(formats, expected_media, expected_albumtype):
 def test_va_buildartistinfo(given_artists, expected_info, config_va_name):
     config["va_name"] = config_va_name
     assert (
-        ArtistState.build(DiscogsPlugin(), given_artists).info == expected_info
+        ArtistState.from_plugin(DiscogsPlugin(), given_artists).info
+        == expected_info
     )
 
 
