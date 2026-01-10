@@ -220,6 +220,9 @@ Bug fixes
   name (like "feat.", "+", or "&") prevent it. Using the albumartists list field
   and fetching a genre for each artist separately improves the chance of
   receiving valid results in that stage.
+- Duplicate detection now works for as-is imports (when ``autotag`` is
+  disabled). Previously, ``duplicate_keys`` and ``duplicate_action`` config
+  options were silently ignored for as-is imports.
 - :doc:`/plugins/ftintitle`: Fixed artist name splitting to prioritize explicit
   featuring tokens (feat, ft, featuring) over generic separators (&, and),
   preventing incorrect splits when both are present.
