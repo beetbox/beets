@@ -29,6 +29,7 @@ class MusicBrainzTestCase(BeetsTestCase):
     def setUp(self):
         super().setUp()
         self.mb = musicbrainz.MusicBrainzPlugin()
+        self.config["match"]["preferred"]["countries"] = ["US"]
 
 
 class MBAlbumInfoTest(MusicBrainzTestCase):
@@ -80,6 +81,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
             "country": "COUNTRY",
             "status": "STATUS",
             "barcode": "BARCODE",
+            "release-events": [{"area": None, "date": "2021-03-26"}],
         }
 
         if multi_artist_credit:
