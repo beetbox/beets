@@ -746,7 +746,7 @@ class TestFromFilename(PluginMixin):
             ) as mock:
                 f = FromFilenamePlugin()
                 f.filename_task(task, Session())
-                assert len(f.fields) == 1
+                assert len(f.session_fields) == 1
                 assert "title" in f.fields
                 mock.assert_called()
 

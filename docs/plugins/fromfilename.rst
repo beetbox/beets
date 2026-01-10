@@ -63,7 +63,7 @@ Default
     of the file.
 
     If ``fromfilename`` can't match the entire string to the given pattern, it will
-    falls back to the default pattern.
+    fall back to the default pattern.
 
     The following custom patterns will match this path and retrieve the specified
     fields.

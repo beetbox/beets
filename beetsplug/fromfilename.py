@@ -112,11 +112,12 @@ RE_BRACKETS = re.compile(r"[\(\[\{].*?[\)\]\}]")
 
 
 class FilenameMatch(MutableMapping[str, str | None]):
-    def __init__(self, matches: dict[str, str] = {}) -> None:
+    def __init__(self, matches: dict[str, str] | None = None) -> None:
         self._matches: dict[str, str] = {}
-        for key, value in matches.items():
-            if value is not None:
-                self._matches[key.lower()] = str(value).strip()
+        if matches:
+            for key, value in matches.items():
+                if value is not None:
+                    self._matches[key.lower()] = str(value).strip()
 
     def __getitem__(self, key: str) -> str | None:
         return self._matches.get(key, None)
@@ -159,13 +160,13 @@ class FromFilenamePlugin(BeetsPlugin):
             }
         )
         self.fields = set(self.config["fields"].as_str_seq())
-        # Evaluate the user patterns to expand the fields
         self.file_patterns = self._user_pattern_to_regex(
             self.config["patterns"]["file"].as_str_seq()
         )
         self.folder_patterns = self._user_pattern_to_regex(
             self.config["patterns"]["folder"].as_str_seq()
         )
+        self.session_fields: set[str] = set()
         self.register_listener("import_task_start", self.filename_task)
 
     @cached_property
@@ -209,16 +210,13 @@ class FromFilenamePlugin(BeetsPlugin):
         If no fields are detect that need to be processed,
         return false to shortcut the plugin.
         """
-        remove = set()
+        self.session_fields = set({})
         for field in self.fields:
             # If any field is a bad field
             if any([True for item in items if self._bad_field(item[field])]):
-                continue
-            else:
-                remove.add(field)
-        self.fields = self.fields - remove
+                self.session_fields.add(field)
         # If all fields have been removed, there is nothing to do
-        if not len(self.fields):
+        if not len(self.session_fields):
             return False
         return True
 
@@ -335,13 +333,13 @@ class FromFilenamePlugin(BeetsPlugin):
         track_matches: dict[Item, FilenameMatch],
     ) -> None:
         """Apply all valid matched fields to all items in the match dictionary."""
-        match = album_match
+        match = dict(album_match._matches)
         for item in track_matches:
-            match.update(track_matches[item])
+            match.update(track_matches[item]._matches)
             found_data: dict[str, int | str] = {}
             self._log.debug(f"Attempting keys: {match.keys()}")
             for key in match.keys():
-                if key in self.fields:
+                if key in self.session_fields:
                     old_value = item.get(key)
                     new_value = match[key]
                     if self._bad_field(old_value) and new_value:
@@ -445,7 +443,7 @@ class FromFilenamePlugin(BeetsPlugin):
         for f in fields:
             pattern = re.sub(rf"\\\${f}", f"(?P<{f}>.+)", pattern)
             self.fields.add(f)
-        return rf"{pattern}"
+        return pattern
 
     @staticmethod
     def _mutate_string(text: str, span: tuple[int, int]) -> str:
