@@ -306,14 +306,10 @@ class BeatportTrack(BeatportObject):
         self.initial_key = str((data.get("key") or {}).get("shortName"))
 
         # Extract genres list from subGenres or genres
-        if data.get("subGenres"):
-            genre_list = [str(x.get("name")) for x in data["subGenres"]]
-        elif data.get("genres"):
-            genre_list = [str(x.get("name")) for x in data["genres"]]
-        else:
-            genre_list = []
-
-        self.genres = unique_list(genre_list)
+        self.genres = unique_list(
+            str(x.get("name"))
+            for x in data.get("subGenres") or data.get("genres") or []
+        )
 
 
 class BeatportPlugin(MetadataSourcePlugin):
