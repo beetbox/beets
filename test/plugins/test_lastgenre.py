@@ -217,7 +217,7 @@ class LastGenrePluginTest(PluginTestCase):
                 "prefer_specific": False,
                 "count": 10,
             },
-            "Blues",
+            ["Blues"],
             {
                 "album": ["Jazz"],
             },
@@ -233,7 +233,7 @@ class LastGenrePluginTest(PluginTestCase):
                 "canonical": False,
                 "prefer_specific": False,
             },
-            "original unknown, Blues",
+            ["original unknown", "Blues"],
             {
                 "album": ["Jazz"],
             },
@@ -249,7 +249,7 @@ class LastGenrePluginTest(PluginTestCase):
                 "canonical": False,
                 "prefer_specific": False,
             },
-            "",
+            [],
             {
                 "album": ["Jazz"],
             },
@@ -265,7 +265,7 @@ class LastGenrePluginTest(PluginTestCase):
                 "canonical": False,
                 "prefer_specific": False,
             },
-            "original unknown, Blues",
+            ["original unknown", "Blues"],
             {
                 "album": ["Jazz"],
                 "artist": ["Pop"],
@@ -282,7 +282,7 @@ class LastGenrePluginTest(PluginTestCase):
                 "canonical": False,
                 "prefer_specific": False,
             },
-            "any genre",
+            ["any genre"],
             {
                 "album": ["Jazz"],
             },
@@ -298,7 +298,7 @@ class LastGenrePluginTest(PluginTestCase):
                 "canonical": False,
                 "prefer_specific": False,
             },
-            "",
+            [],
             {
                 "album": ["Jazzin"],
             },
@@ -314,7 +314,7 @@ class LastGenrePluginTest(PluginTestCase):
                 "canonical": False,
                 "prefer_specific": False,
             },
-            "unknown genre",
+            ["unknown genre"],
             {
                 "track": None,
                 "album": None,
@@ -334,7 +334,7 @@ class LastGenrePluginTest(PluginTestCase):
                 "canonical": False,
                 "prefer_specific": False,
             },
-            "any existing",
+            ["any existing"],
             {
                 "track": None,
                 "album": None,
@@ -354,7 +354,7 @@ class LastGenrePluginTest(PluginTestCase):
                 "canonical": False,
                 "prefer_specific": False,
             },
-            "Jazz",
+            ["Jazz"],
             {
                 "track": None,
                 "album": None,
@@ -374,7 +374,7 @@ class LastGenrePluginTest(PluginTestCase):
                 "canonical": False,
                 "prefer_specific": False,
             },
-            "Jazz",
+            ["Jazz"],
             {
                 "track": None,
                 "album": None,
@@ -393,7 +393,7 @@ class LastGenrePluginTest(PluginTestCase):
                 "canonical": False,
                 "prefer_specific": False,
             },
-            "",
+            [],
             {
                 "track": None,
                 "album": None,
@@ -412,7 +412,7 @@ class LastGenrePluginTest(PluginTestCase):
                 "canonical": False,
                 "prefer_specific": False,
             },
-            "original unknown, Blues, Rock, Folk, Metal",
+            ["original unknown", "Blues", "Rock", "Folk", "Metal"],
             {
                 "album": ["Jazz", "Bebop", "Hardbop"],
             },
@@ -433,7 +433,7 @@ class LastGenrePluginTest(PluginTestCase):
                 "canonical": False,
                 "prefer_specific": False,
             },
-            "not whitelisted original",
+            ["not whitelisted original"],
             {
                 "track": None,
                 "album": None,
@@ -455,7 +455,7 @@ class LastGenrePluginTest(PluginTestCase):
                 "prefer_specific": False,
                 "count": 10,
             },
-            "",
+            [],
             {
                 "album": ["acid techno"],
             },
@@ -478,7 +478,7 @@ class LastGenrePluginTest(PluginTestCase):
                 "count": 10,
                 "extended_debug": True,
             },
-            "detroit techno",
+            ["detroit techno"],
             {
                 "album": ["acid house"],
             },
@@ -509,7 +509,7 @@ class LastGenrePluginTest(PluginTestCase):
                 "prefer_specific": False,
                 "count": 10,
             },
-            "Cosmic Disco",
+            ["Cosmic Disco"],
             {
                 "album": ["Detroit Techno"],
             },
@@ -546,13 +546,7 @@ def test_get_genre(config_values, item_genre, mock_genres, expected_result):
     plugin.setup()  # Loads default whitelist and canonicalization tree
 
     item = _common.item()
-    if item_genre:
-        if ", " in item_genre:
-            item.genres = [g.strip() for g in item_genre.split(", ")]
-        else:
-            item.genres = [item_genre]
-    else:
-        item.genres = []
+    item.genres = item_genre
 
     # Run
     res = plugin._get_genre(item)
