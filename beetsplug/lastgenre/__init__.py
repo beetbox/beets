@@ -331,14 +331,12 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             return tags
 
     def _get_existing_genres(self, obj: LibModel) -> list[str]:
-        """Return a list of genres for this Item or Album. Empty string genres
-        are removed."""
+        """Return a list of genres for this Item or Album."""
         if isinstance(obj, library.Item):
             genres_list = obj.get("genres", with_album=False)
         else:
             genres_list = obj.get("genres")
 
-        # Filter out empty strings
         return genres_list
 
     def _combine_resolve_and_log(
