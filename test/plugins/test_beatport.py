@@ -634,7 +634,6 @@ class BeatportResponseEmptyTest(unittest.TestCase):
 
         self.test_tracks[0]["subGenres"] = []
 
-        # BeatportTrack now has genres as a list
         assert tracks[0].genres == [self.test_tracks[0]["genres"][0]["name"]]
 
     def test_genre_empty(self):
@@ -644,5 +643,4 @@ class BeatportResponseEmptyTest(unittest.TestCase):
 
         self.test_tracks[0]["genres"] = []
 
-        # BeatportTrack now has genres as a list
         assert tracks[0].genres == [self.test_tracks[0]["subGenres"][0]["name"]]
