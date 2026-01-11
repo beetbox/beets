@@ -1101,6 +1101,16 @@ class FileSystem(LocalArtSource):
                 else:
                     remaining.append(fn)
 
+            # Fall back to a configured image.
+            if plugin.fallback:
+                self._log.debug(
+                    "using fallback art file {}",
+                    util.displayable_path(plugin.fallback),
+                )
+                yield self._candidate(
+                    path=plugin.fallback, match=MetadataMatch.FALLBACK
+                )
+
             # Fall back to any image in the folder.
             if remaining and not plugin.cautious:
                 self._log.debug(
@@ -1332,6 +1342,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                 "enforce_ratio": False,
                 "cautious": False,
                 "cover_names": ["cover", "front", "art", "album", "folder"],
+                "fallback": None,
                 "sources": [
                     "filesystem",
                     "coverart",
@@ -1380,6 +1391,9 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         cover_names = self.config["cover_names"].as_str_seq()
         self.cover_names = list(map(util.bytestring_path, cover_names))
         self.cautious = self.config["cautious"].get(bool)
+        self.fallback = self.config["fallback"].get(
+            confuse.Optional(confuse.Filename())
+        )
         self.store_source = self.config["store_source"].get(bool)
 
         self.cover_format = self.config["cover_format"].get(
@@ -1574,7 +1588,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                     message = ui.colorize(
                         "text_highlight_minor", "has album art"
                     )
-                    self._log.info("{}: {}", album, message)
+                    ui.print_(f"{album}: {message}")
             else:
                 # In ordinary invocations, look for images on the
                 # filesystem. When forcing, however, always go to the Web
@@ -1587,4 +1601,4 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                     message = ui.colorize("text_success", "found album art")
                 else:
                     message = ui.colorize("text_error", "no art found")
-                self._log.info("{}: {}", album, message)
+                ui.print_(f"{album}: {message}")

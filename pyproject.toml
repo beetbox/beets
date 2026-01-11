@@ -69,7 +69,6 @@ scipy = [ # for librosa
     { python = "<3.13", version = ">=1.13.1", optional = true },
     { python = ">=3.13", version = ">=1.16.1", optional = true },
 ]
-musicbrainzngs = { version = ">=0.4", optional = true }
 numba = [ # for librosa
     { python = "<3.13", version = ">=0.60", optional = true },
     { python = ">=3.13", version = ">=0.62.1", optional = true },
@@ -94,6 +93,7 @@ pydata-sphinx-theme = { version = "*", optional = true }
 sphinx = { version = "*", optional = true }
 sphinx-design = { version = ">=0.6.1", optional = true }
 sphinx-copybutton = { version = ">=0.5.2", optional = true }
+sphinx-toolbox = { version = ">=4.1.0", optional = true }
 titlecase = { version = "^2.4.1", optional = true }
 
 [tool.poetry.group.test.dependencies]
@@ -101,7 +101,6 @@ beautifulsoup4 = "*"
 codecov = ">=2.1.13"
 flask = "*"
 langdetect = "*"
-mock = "*"
 pylast = "*"
 pytest = "*"
 pytest-cov = "*"
@@ -125,7 +124,6 @@ sphinx-lint = ">=1.0.0"
 mypy = "*"
 types-beautifulsoup4 = "*"
 types-docutils = ">=0.22.2.20251006"
-types-mock = "*"
 types-Flask-Cors = "*"
 types-Pillow = "*"
 types-PyYAML = "*"
@@ -154,6 +152,7 @@ docs = [
     "sphinx-lint",
     "sphinx-design",
     "sphinx-copybutton",
+    "sphinx-toolbox",
 ]
 discogs = ["python3-discogs-client"]
 embedart = ["Pillow"] # ImageMagick
@@ -165,13 +164,9 @@ import = ["py7zr", "rarfile"]
 kodiupdate = ["requests"]
 lastgenre = ["pylast"]
 lastimport = ["pylast"]
-listenbrainz = ["musicbrainzngs"]
 lyrics = ["beautifulsoup4", "langdetect", "requests"]
-mbcollection = ["musicbrainzngs"]
 metasync = ["dbus-python"]
-missing = ["musicbrainzngs"]
 mpdstats = ["python-mpd2"]
-parentwork = ["musicbrainzngs"]
 plexupdate = ["requests"]
 reflink = ["reflink"]
 replaygain = [
@@ -321,6 +316,7 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "beets/**" = ["PT"]
+"test/plugins/test_ftintitle.py" = ["E501"]
 "test/test_util.py" = ["E501"]
 "test/ui/test_field_diff.py" = ["E501"]
 

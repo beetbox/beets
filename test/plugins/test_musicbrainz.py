@@ -204,7 +204,6 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
                 {
                     "type": "remixer",
                     "type-id": "RELATION TYPE ID",
-                    "target": "RECORDING REMIXER ARTIST ID",
                     "direction": "RECORDING RELATION DIRECTION",
                     "artist": {
                         "id": "RECORDING REMIXER ARTIST ID",
@@ -820,8 +819,10 @@ class MBLibraryTest(MusicBrainzTestCase):
                 "release-relations": [
                     {
                         "type": "transl-tracklisting",
-                        "target": "d2a6f856-b553-40a0-ac54-a321e8e2da01",
                         "direction": "backward",
+                        "release": {
+                            "id": "d2a6f856-b553-40a0-ac54-a321e8e2da01"
+                        },
                     }
                 ],
             },
@@ -862,7 +863,7 @@ class MBLibraryTest(MusicBrainzTestCase):
         ]
 
         with mock.patch(
-            "beetsplug.musicbrainz.MusicBrainzAPI.get_release"
+            "beetsplug._utils.musicbrainz.MusicBrainzAPI.get_release"
         ) as gp:
             gp.side_effect = side_effect
             album = self.mb.album_for_id("d2a6f856-b553-40a0-ac54-a321e8e2da02")
@@ -906,7 +907,7 @@ class MBLibraryTest(MusicBrainzTestCase):
         ]
 
         with mock.patch(
-            "beetsplug.musicbrainz.MusicBrainzAPI.get_release"
+            "beetsplug._utils.musicbrainz.MusicBrainzAPI.get_release"
         ) as gp:
             gp.side_effect = side_effect
             album = self.mb.album_for_id("d2a6f856-b553-40a0-ac54-a321e8e2da02")
@@ -950,7 +951,7 @@ class MBLibraryTest(MusicBrainzTestCase):
         ]
 
         with mock.patch(
-            "beetsplug.musicbrainz.MusicBrainzAPI.get_release"
+            "beetsplug._utils.musicbrainz.MusicBrainzAPI.get_release"
         ) as gp:
             gp.side_effect = side_effect
             album = self.mb.album_for_id("d2a6f856-b553-40a0-ac54-a321e8e2da02")
@@ -993,15 +994,17 @@ class MBLibraryTest(MusicBrainzTestCase):
                 "release-relations": [
                     {
                         "type": "remaster",
-                        "target": "d2a6f856-b553-40a0-ac54-a321e8e2da01",
                         "direction": "backward",
+                        "release": {
+                            "id": "d2a6f856-b553-40a0-ac54-a321e8e2da01"
+                        },
                     }
                 ],
             }
         ]
 
         with mock.patch(
-            "beetsplug.musicbrainz.MusicBrainzAPI.get_release"
+            "beetsplug._utils.musicbrainz.MusicBrainzAPI.get_release"
         ) as gp:
             gp.side_effect = side_effect
             album = self.mb.album_for_id("d2a6f856-b553-40a0-ac54-a321e8e2da02")
@@ -1052,7 +1055,7 @@ class TestMusicBrainzPlugin(PluginMixin):
 
     def test_item_candidates(self, monkeypatch, mb):
         monkeypatch.setattr(
-            "beetsplug.musicbrainz.MusicBrainzAPI.get_json",
+            "beetsplug._utils.musicbrainz.MusicBrainzAPI.get_json",
             lambda *_, **__: {"recordings": [self.RECORDING]},
         )
 
@@ -1063,11 +1066,11 @@ class TestMusicBrainzPlugin(PluginMixin):
 
     def test_candidates(self, monkeypatch, mb):
         monkeypatch.setattr(
-            "beetsplug.musicbrainz.MusicBrainzAPI.get_json",
+            "beetsplug._utils.musicbrainz.MusicBrainzAPI.get_json",
             lambda *_, **__: {"releases": [{"id": self.mbid}]},
         )
         monkeypatch.setattr(
-            "beetsplug.musicbrainz.MusicBrainzAPI.get_release",
+            "beetsplug._utils.musicbrainz.MusicBrainzAPI.get_release",
             lambda *_, **__: {
                 "title": "hi",
                 "id": self.mbid,
@@ -1096,84 +1099,3 @@ class TestMusicBrainzPlugin(PluginMixin):
         assert len(candidates) == 1
         assert candidates[0].tracks[0].track_id == self.RECORDING["id"]
         assert candidates[0].album == "hi"
-
-
-def test_group_relations():
-    raw_release = {
-        "id": "r1",
-        "relations": [
-            {"target-type": "artist", "type": "vocal", "name": "A"},
-            {"target-type": "url", "type": "streaming", "url": "http://s"},
-            {"target-type": "url", "type": "purchase", "url": "http://p"},
-            {
-                "target-type": "work",
-                "type": "performance",
-                "work": {
-                    "relations": [
-                        {
-                            "artist": {"name": "幾田りら"},
-                            "target-type": "artist",
-                            "type": "composer",
-                        },
-                        {
-                            "target-type": "url",
-                            "type": "lyrics",
-                            "url": {
-                                "resource": "https://utaten.com/lyric/tt24121002/"
-                            },
-                        },
-                        {
-                            "artist": {"name": "幾田りら"},
-                            "target-type": "artist",
-                            "type": "lyricist",
-                        },
-                        {
-                            "target-type": "url",
-                            "type": "lyrics",
-                            "url": {
-                                "resource": "https://www.uta-net.com/song/366579/"
-                            },
-                        },
-                    ],
-                    "title": "百花繚乱",
-                    "type": "Song",
-                },
-            },
-        ],
-    }
-
-    assert musicbrainz.MusicBrainzAPI._group_relations(raw_release) == {
-        "id": "r1",
-        "artist-relations": [{"type": "vocal", "name": "A"}],
-        "url-relations": [
-            {"type": "streaming", "url": "http://s"},
-            {"type": "purchase", "url": "http://p"},
-        ],
-        "work-relations": [
-            {
-                "type": "performance",
-                "work": {
-                    "artist-relations": [
-                        {"type": "composer", "artist": {"name": "幾田りら"}},
-                        {"type": "lyricist", "artist": {"name": "幾田りら"}},
-                    ],
-                    "url-relations": [
-                        {
-                            "type": "lyrics",
-                            "url": {
-                                "resource": "https://utaten.com/lyric/tt24121002/"
-                            },
-                        },
-                        {
-                            "type": "lyrics",
-                            "url": {
-                                "resource": "https://www.uta-net.com/song/366579/"
-                            },
-                        },
-                    ],
-                    "title": "百花繚乱",
-                    "type": "Song",
-                },
-            },
-        ],
-    }

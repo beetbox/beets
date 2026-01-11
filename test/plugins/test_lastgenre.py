@@ -523,13 +523,13 @@ class LastGenrePluginTest(PluginTestCase):
 def test_get_genre(config_values, item_genre, mock_genres, expected_result):
     """Test _get_genre with various configurations."""
 
-    def mock_fetch_track_genre(self, obj=None):
+    def mock_fetch_track_genre(self, trackartist, tracktitle):
         return mock_genres["track"]
 
-    def mock_fetch_album_genre(self, obj):
+    def mock_fetch_album_genre(self, albumartist, albumtitle):
         return mock_genres["album"]
 
-    def mock_fetch_artist_genre(self, obj):
+    def mock_fetch_artist_genre(self, artist):
         return mock_genres["artist"]
 
     # Mock the last.fm fetchers. When whitelist enabled, we can assume only

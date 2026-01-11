@@ -15,12 +15,15 @@
 """Tests for the 'ftintitle' plugin."""
 
 from collections.abc import Generator
+from typing import TypeAlias
 
 import pytest
 
 from beets.library.models import Album, Item
 from beets.test.helper import PluginTestCase
 from beetsplug import ftintitle
+
+ConfigValue: TypeAlias = str | bool | list[str]
 
 
 class FtInTitlePluginFunctional(PluginTestCase):
@@ -39,7 +42,7 @@ def env() -> Generator[FtInTitlePluginFunctional, None, None]:
 
 def set_config(
     env: FtInTitlePluginFunctional,
-    cfg: dict[str, str | bool | list[str]] | None,
+    cfg: dict[str, ConfigValue] | None,
 ) -> None:
     cfg = {} if cfg is None else cfg
     defaults = {
@@ -246,6 +249,21 @@ def add_item(
             ("Alice", "Song 1 feat. Bob"),
             id="skip-if-artist-and-album-artists-is-the-same-matching-match-b",
         ),
+        # ---- titles with brackets/parentheses ----
+        pytest.param(
+            {"format": "ft. {}", "bracket_keywords": ["mix"]},
+            ("ftintitle",),
+            ("Alice ft. Bob", "Song 1 (Club Mix)", "Alice"),
+            ("Alice", "Song 1 ft. Bob (Club Mix)"),
+            id="ft-inserted-before-matching-bracket-keyword",
+        ),
+        pytest.param(
+            {"format": "ft. {}", "bracket_keywords": ["nomatch"]},
+            ("ftintitle",),
+            ("Alice ft. Bob", "Song 1 (Club Remix)", "Alice"),
+            ("Alice", "Song 1 (Club Remix) ft. Bob"),
+            id="ft-inserted-at-end-no-bracket-keyword-match",
+        ),
     ],
 )
 def test_ftintitle_functional(
@@ -303,6 +321,10 @@ def test_find_feat_part(
         ("Alice and Bob", ("Alice", "Bob")),
         ("Alice With Bob", ("Alice", "Bob")),
         ("Alice defeat Bob", ("Alice defeat Bob", None)),
+        ("Alice & Bob feat Charlie", ("Alice & Bob", "Charlie")),
+        ("Alice & Bob ft. Charlie", ("Alice & Bob", "Charlie")),
+        ("Alice & Bob featuring Charlie", ("Alice & Bob", "Charlie")),
+        ("Alice and Bob feat Charlie", ("Alice and Bob", "Charlie")),
     ],
 )
 def test_split_on_feat(
@@ -310,6 +332,66 @@ def test_split_on_feat(
     expected: tuple[str, str | None],
 ) -> None:
     assert ftintitle.split_on_feat(given) == expected
+
+
+@pytest.mark.parametrize(
+    "given,keywords,expected",
+    [
+        ## default keywords
+        # different braces and keywords
+        ("Song (Remix)", None, "Song ft. Bob (Remix)"),
+        ("Song [Version]", None, "Song ft. Bob [Version]"),
+        ("Song {Extended Mix}", None, "Song ft. Bob {Extended Mix}"),
+        ("Song <Instrumental>", None, "Song ft. Bob <Instrumental>"),
+        # two keyword clauses
+        ("Song (Remix) (Live)", None, "Song ft. Bob (Remix) (Live)"),
+        # brace insensitivity
+        ("Song (Live) [Remix]", None, "Song ft. Bob (Live) [Remix]"),
+        ("Song [Edit] (Remastered)", None, "Song ft. Bob [Edit] (Remastered)"),
+        # negative cases
+        ("Song", None, "Song ft. Bob"),  # no clause
+        ("Song (Arbitrary)", None, "Song (Arbitrary) ft. Bob"),  # no keyword
+        ("Song (", None, "Song ( ft. Bob"),  # no matching brace or keyword
+        ("Song (Live", None, "Song (Live ft. Bob"),  # no matching brace with keyword
+        # one keyword clause, one non-keyword clause
+        ("Song (Live) (Arbitrary)", None, "Song ft. Bob (Live) (Arbitrary)"),
+        ("Song (Arbitrary) (Remix)", None, "Song (Arbitrary) ft. Bob (Remix)"),
+        # nested brackets - same type
+        ("Song (Remix (Extended))", None, "Song ft. Bob (Remix (Extended))"),
+        ("Song [Arbitrary [Description]]", None, "Song [Arbitrary [Description]] ft. Bob"),
+        # nested brackets - different types
+        ("Song (Remix [Extended])", None, "Song ft. Bob (Remix [Extended])"),
+        # nested - returns outer start position despite inner keyword
+        ("Song [Arbitrary {Extended}]", None, "Song ft. Bob [Arbitrary {Extended}]"),
+        ("Song {Live <Arbitrary>}", None, "Song ft. Bob {Live <Arbitrary>}"),
+        ("Song <Remaster (Arbitrary)>", None, "Song ft. Bob <Remaster (Arbitrary)>"),
+        ("Song <Extended> [Live]", None, "Song ft. Bob <Extended> [Live]"),
+        ("Song (Version) <Live>", None, "Song ft. Bob (Version) <Live>"),
+        ("Song (Arbitrary [Description])", None, "Song (Arbitrary [Description]) ft. Bob"),
+        ("Song [Description (Arbitrary)]", None, "Song [Description (Arbitrary)] ft. Bob"),
+        ## custom keywords
+        ("Song (Live)", ["live"], "Song ft. Bob (Live)"),
+        ("Song (Concert)", ["concert"], "Song ft. Bob (Concert)"),
+        ("Song (Remix)", ["custom"], "Song (Remix) ft. Bob"),
+        ("Song (Custom)", ["custom"], "Song ft. Bob (Custom)"),
+        ("Song", [], "Song ft. Bob"),
+        ("Song (", [], "Song ( ft. Bob"),
+        # Multi-word keyword tests
+        ("Song (Club Mix)", ["club mix"], "Song ft. Bob (Club Mix)"),  # Positive: matches multi-word
+        ("Song (Club Remix)", ["club mix"], "Song (Club Remix) ft. Bob"),  # Negative: no match
+    ],
+)  # fmt: skip
+def test_insert_ft_into_title(
+    given: str,
+    keywords: list[str] | None,
+    expected: str,
+) -> None:
+    assert (
+        ftintitle.FtInTitlePlugin.insert_ft_into_title(
+            given, "ft. Bob", keywords
+        )
+        == expected
+    )
 
 
 @pytest.mark.parametrize(

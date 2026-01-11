@@ -6,18 +6,9 @@ maintain your `music collection`_ list there.
 
 .. _music collection: https://musicbrainz.org/doc/Collections
 
-Installation
-------------
-
-To use the ``mbcollection`` plugin, first enable it in your configuration (see
-:ref:`using-plugins`). Then, install ``beets`` with ``mbcollection`` extra
-
-.. code-block:: bash
-
-    pip install "beets[mbcollection]"
-
-Then, add your MusicBrainz username and password to your :doc:`configuration
-file </reference/config>` under a ``musicbrainz`` section:
+To begin, just enable the ``mbcollection`` plugin in your configuration (see
+:ref:`using-plugins`). Then, add your MusicBrainz username and password to your
+:doc:`configuration file </reference/config>` under a ``musicbrainz`` section:
 
 ::
 
