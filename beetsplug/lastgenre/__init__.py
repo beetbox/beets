@@ -378,7 +378,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         def _try_resolve_stage(
             stage_label: str, keep_genres: list[str], new_genres: list[str]
-        ) -> tuple[str, str] | None:
+        ) -> tuple[list[str], str] | None:
             """Try to resolve genres for a given stage and log the result."""
             resolved_genres = self._combine_resolve_and_log(
                 keep_genres, new_genres
