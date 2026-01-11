@@ -143,8 +143,8 @@ class SpotifyPlugin(
                 "show_failures": False,
                 "region_filter": None,
                 "regex": [],
-                "client_id": "78f38736bff14e3cafb16b93ed35113d",
-                "client_secret": "5c33d3e75bbc4d31a080ec0ef092d15c",
+                "client_id": "4e414367a1d14c75a5c5129a627fcab8",
+                "client_secret": "4a9b5b7848e54e118a7523b1c7c3e1e5",
                 "tokenfile": "spotify_token.json",
             }
         )
