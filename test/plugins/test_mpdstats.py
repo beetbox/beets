@@ -13,15 +13,15 @@
 # included in all copies or substantial portions of the Software.
 
 
-from unittest.mock import ANY, Mock, call, patch
+from unittest.mock import ANY, Mock, call
 
 from beets import util
 from beets.library import Item
 from beets.test.helper import PluginTestCase
-from beetsplug.mpdstats import MPDStats
+from beetsplug.mpdstats import MPDClientWrapper, MPDStats
 
 
-class MPDStatsTest(PluginTestCase):
+class TestMPDStats(PluginTestCase):
     plugin = "mpdstats"
 
     def test_update_rating(self):
@@ -53,24 +53,34 @@ class MPDStatsTest(PluginTestCase):
         {"state": "play", "songid": 1, "time": "0:1"},
         {"state": "stop"},
     ]
+
     EVENTS = [["player"]] * (len(STATUSES) - 1) + [KeyboardInterrupt]
     item_path = util.normpath("/foo/bar.flac")
     songid = 1
 
-    @patch(
-        "beetsplug.mpdstats.MPDClientWrapper",
-        return_value=Mock(
-            **{
-                "events.side_effect": EVENTS,
-                "status.side_effect": STATUSES,
-                "currentsong.return_value": (item_path, songid),
-            }
-        ),
-    )
-    def test_run_mpdstats(self, mpd_mock):
+    def test_run_mpdstats(self, monkeypatch):
         item = Item(title="title", path=self.item_path, id=1)
         item.add(self.lib)
 
+        statuses = iter(self.STATUSES)
+        events = iter(self.EVENTS)
+
+        def iter_event_or_raise(*args):
+            i = next(events)
+            if i is KeyboardInterrupt:
+                raise i
+            return i
+
+        monkeypatch.setattr(
+            MPDClientWrapper, "status", lambda _: next(statuses)
+        )
+        monkeypatch.setattr(
+            MPDClientWrapper,
+            "currentsong",
+            lambda x: (self.item_path, self.songid),
+        )
+        monkeypatch.setattr(MPDClientWrapper, "events", iter_event_or_raise)
+        monkeypatch.setattr(MPDClientWrapper, "connect", lambda *_: None)
         log = Mock()
         try:
             MPDStats(self.lib, log).run()
