@@ -38,8 +38,8 @@ from beets.library import Album, Item
 from beets.util import plurality, unique_list
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
     import optparse
+    from collections.abc import Iterable
 
     from beets.library import LibModel
 
