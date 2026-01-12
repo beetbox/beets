@@ -90,6 +90,8 @@ Bug fixes:
 - :doc:`/plugins/ftintitle`: Fixed artist name splitting to prioritize explicit
   featuring tokens (feat, ft, featuring) over generic separators (&, and),
   preventing incorrect splits when both are present.
+- :doc:`/plugins/replace`: Fixed the command failing to run, and now writes the
+  metadata in the database to the newly swapped-in file. :bug:`6260`
 
 For plugin developers:
 
