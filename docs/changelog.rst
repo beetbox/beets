@@ -43,6 +43,7 @@ Bug fixes
   ampersand.
 - :doc:`plugins/zero`: When the ``omit_single_disc`` option is set,
   ``disctotal`` is zeroed alongside ``disc``.
+- :doc:`plugins/fetchart`: Prevent deletion of configured fallback cover art
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
