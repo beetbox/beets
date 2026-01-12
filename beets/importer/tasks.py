@@ -253,13 +253,10 @@ class ImportTask(BaseImportTask):
         else:
             assert False
 
-    def apply_metadata(self):
+    def apply_metadata(self) -> None:
         """Copy metadata from match info to the items."""
-        if config["import"]["from_scratch"]:
-            for item in self.match.items:
-                item.clear()
-
-        autotag.apply_metadata(self.match.info, self.match.item_info_pairs)
+        if self.match:  # TODO: redesign to remove the conditional
+            self.match.apply_metadata()
 
     def duplicate_items(self, lib: library.Library):
         duplicate_items = []
@@ -428,14 +425,17 @@ class ImportTask(BaseImportTask):
         elif self.choice_flag in (Action.APPLY, Action.RETAG):
             # Applying autotagged metadata. Just get AA from the first
             # item.
-            if not self.items[0].albumartist:
-                changes["albumartist"] = self.items[0].artist
-            if not self.items[0].albumartists:
-                changes["albumartists"] = self.items[0].artists
-            if not self.items[0].mb_albumartistid:
-                changes["mb_albumartistid"] = self.items[0].mb_artistid
-            if not self.items[0].mb_albumartistids:
-                changes["mb_albumartistids"] = self.items[0].mb_artistids
+            first = self.items[0]
+            if not first.albumartist:
+                changes["albumartist"] = first.artist
+            if not first.albumartists:
+                changes["albumartists"] = first.artists or [first.artist]
+            if not first.mb_albumartistid:
+                changes["mb_albumartistid"] = first.mb_artistid
+            if not first.mb_albumartistids:
+                changes["mb_albumartistids"] = first.mb_artistids or [
+                    first.mb_artistid
+                ]
 
         # Apply new metadata.
         for item in self.items:
@@ -504,7 +504,7 @@ class ImportTask(BaseImportTask):
                 # TODO: change the flow so we create the `Album` object earlier,
                 #   and we can move this into `self.apply_metadata`, just like
                 #   is done for tracks.
-                autotag.apply_album_metadata(self.match.info, self.album)
+                self.match.apply_album_metadata(self.album)
                 self.album.store()
 
             self.reimport_metadata(lib)
@@ -676,9 +676,6 @@ class SingletonImportTask(ImportTask):
 
     def imported_items(self):
         return [self.item]
-
-    def apply_metadata(self):
-        autotag.apply_item_metadata(self.item, self.match.info)
 
     def _emit_imported(self, lib):
         for item in self.imported_items():
