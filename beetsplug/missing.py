@@ -18,15 +18,15 @@
 from collections import defaultdict
 from collections.abc import Iterator
 
-import musicbrainzngs
-from musicbrainzngs.musicbrainz import MusicBrainzError
+import requests
 
-from beets import config
-from beets.autotag import hooks
+from beets import config, metadata_plugins
 from beets.dbcore import types
 from beets.library import Album, Item, Library
 from beets.plugins import BeetsPlugin
-from beets.ui import Subcommand, decargs, print_
+from beets.ui import Subcommand, print_
+
+from ._utils.musicbrainz import MusicBrainzAPIMixin
 
 MB_ARTIST_QUERY = r"mb_albumartistid::^\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$"
 
@@ -86,7 +86,7 @@ def _item(track_info, album_info, album_id):
     )
 
 
-class MissingPlugin(BeetsPlugin):
+class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
     """List missing tracks"""
 
     album_types = {
@@ -136,7 +136,7 @@ class MissingPlugin(BeetsPlugin):
             albms = self.config["album"].get()
 
             helper = self._missing_albums if albms else self._missing_tracks
-            helper(lib, decargs(args))
+            helper(lib, args)
 
         self._command.func = _miss
         return [self._command]
@@ -190,19 +190,19 @@ class MissingPlugin(BeetsPlugin):
         calculating_total = self.config["total"].get()
         for (artist, artist_id), album_ids in album_ids_by_artist.items():
             try:
-                resp = musicbrainzngs.browse_release_groups(artist=artist_id)
-            except MusicBrainzError as err:
+                resp = self.mb_api.browse_release_groups(artist=artist_id)
+            except requests.exceptions.RequestException:
                 self._log.info(
-                    "Couldn't fetch info for artist '{}' ({}) - '{}'",
+                    "Couldn't fetch info for artist '{}' ({})",
                     artist,
                     artist_id,
-                    err,
+                    exc_info=True,
                 )
                 continue
 
             missing_titles = [
                 f"{artist} - {rg['title']}"
-                for rg in resp["release-group-list"]
+                for rg in resp
                 if rg["id"] not in album_ids
             ]
 
@@ -223,12 +223,12 @@ class MissingPlugin(BeetsPlugin):
         item_mbids = {x.mb_trackid for x in album.items()}
         # fetch missing items
         # TODO: Implement caching that without breaking other stuff
-        if album_info := hooks.album_for_id(album.mb_albumid):
+        if album_info := metadata_plugins.album_for_id(album.mb_albumid):
             for track_info in album_info.tracks:
                 if track_info.track_id not in item_mbids:
                     self._log.debug(
-                        "track {0} in album {1}",
-                        track_info.track_id,
-                        album_info.album_id,
+                        "track {.track_id} in album {.album_id}",
+                        track_info,
+                        album_info,
                     )
                     yield _item(track_info, album_info, album.id)

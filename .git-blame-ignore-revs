@@ -43,3 +43,47 @@ a6e5201ff3fad4c69bf24d17bace2ef744b9f51b
 f36bc497c8c8f89004f3f6879908d3f0b25123e1
 # Remove some lint exclusions and fix the issues
 5f78d1b82b2292d5ce0c99623ba0ec444b80d24c
+
+# 2025
+# Fix formatting
+c490ac5810b70f3cf5fd8649669838e8fdb19f4d
+# Importer restructure
+9147577b2b19f43ca827e9650261a86fb0450cef
+# Move functionality under MusicBrainz plugin
+529aaac7dced71266c6d69866748a7d044ec20ff
+# musicbrainz: reorder methods
+5dc6f45110b99f0cc8dbb94251f9b1f6d69583fa
+# Copy paste query, types from library to dbcore
+1a045c91668c771686f4c871c84f1680af2e944b
+# Library restructure (split library.py into multiple modules)
+0ad4e19d4f870db757373f44d12ff3be2441363a
+# Docs: fix linting issues
+769dcdc88a1263638ae25944ba6b2be3e8933666
+# Reformat all docs using docstrfmt
+ab5acaabb3cd24c482adb7fa4800c89fd6a2f08d
+# Replace format calls with f-strings
+4a361bd501e85de12c91c2474c423559ca672852
+# Replace percent formatting
+9352a79e4108bd67f7e40b1e944c01e0a7353272
+# Replace string concatenation (' + ')
+1c16b2b3087e9c3635d68d41c9541c4319d0bdbe
+# Do not use backslashes to deal with long strings
+2fccf64efe82851861e195b521b14680b480a42a
+# Do not use explicit indices for logging args when not needed
+d93ddf8dd43e4f9ed072a03829e287c78d2570a2
+# Moved dev docs
+07549ed896d9649562d40b75cd30702e6fa6e975
+# Moved plugin docs Further Reading chapter
+33f1a5d0bef8ca08be79ee7a0d02a018d502680d
+# Moved art.py utility module from beets into beetsplug
+28aee0fde463f1e18dfdba1994e2bdb80833722f
+# Refactor `ui/commands.py` into multiple modules
+59c93e70139f70e9fd1c6f3c1bceb005945bec33
+# Moved ui.commands._utils into ui.commands.utils
+25ae330044abf04045e3f378f72bbaed739fb30d
+# Refactor test_ui_command.py into multiple modules 
+a59e41a88365e414db3282658d2aa456e0b3468a
+# pyupgrade Python 3.10
+301637a1609831947cb5dd90270ed46c24b1ab1b
+# Fix changelog formatting
+658b184c59388635787b447983ecd3a575f4fe56

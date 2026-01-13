@@ -14,17 +14,18 @@
 
 """Tests for the 'lastgenre' plugin."""
 
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 
-from beets import config
 from beets.test import _common
-from beets.test.helper import BeetsTestCase
+from beets.test.helper import PluginTestCase
 from beetsplug import lastgenre
 
 
-class LastGenrePluginTest(BeetsTestCase):
+class LastGenrePluginTest(PluginTestCase):
+    plugin = "lastgenre"
+
     def setUp(self):
         super().setUp()
         self.plugin = lastgenre.LastGenrePlugin()
@@ -32,12 +33,12 @@ class LastGenrePluginTest(BeetsTestCase):
     def _setup_config(
         self, whitelist=False, canonical=False, count=1, prefer_specific=False
     ):
-        config["lastgenre"]["canonical"] = canonical
-        config["lastgenre"]["count"] = count
-        config["lastgenre"]["prefer_specific"] = prefer_specific
+        self.config["lastgenre"]["canonical"] = canonical
+        self.config["lastgenre"]["count"] = count
+        self.config["lastgenre"]["prefer_specific"] = prefer_specific
         if isinstance(whitelist, (bool, (str,))):
             # Filename, default, or disabled.
-            config["lastgenre"]["whitelist"] = whitelist
+            self.config["lastgenre"]["whitelist"] = whitelist
         self.plugin.setup()
         if not isinstance(whitelist, (bool, (str,))):
             # Explicit list of genres.
@@ -131,6 +132,33 @@ class LastGenrePluginTest(BeetsTestCase):
             "post-rock",
             "math rock",
         ]
+
+    @patch("beets.ui.should_write", Mock(return_value=True))
+    @patch(
+        "beetsplug.lastgenre.LastGenrePlugin._get_genre",
+        Mock(return_value=("Mock Genre", "mock stage")),
+    )
+    def test_pretend_option_skips_library_updates(self):
+        item = self.create_item(
+            album="Pretend Album",
+            albumartist="Pretend Artist",
+            artist="Pretend Artist",
+            title="Pretend Track",
+            genre="Original Genre",
+        )
+        album = self.lib.add_album([item])
+
+        def unexpected_store(*_, **__):
+            raise AssertionError("Unexpected store call")
+
+        # Verify that try_write was never called (file operations skipped)
+        with patch("beetsplug.lastgenre.Item.store", unexpected_store):
+            output = self.run_with_output("lastgenre", "--pretend")
+
+        assert "Mock Genre" in output
+        album.load()
+        assert album.genre == "Original Genre"
+        assert album.items()[0].genre == "Original Genre"
 
     def test_no_duplicate(self):
         """Remove duplicated genres."""
@@ -442,18 +470,89 @@ class LastGenrePluginTest(BeetsTestCase):
             },
             ("Jazz", "keep + artist, whitelist"),
         ),
+        # 13 - canonicalization transforms non-whitelisted genres to canonical forms
+        #
+        # "Acid Techno" is not in the default whitelist, thus gets resolved "up" in the
+        # tree to "Techno" and "Electronic".
+        (
+            {
+                "force": True,
+                "keep_existing": False,
+                "source": "album",
+                "whitelist": True,
+                "canonical": True,
+                "prefer_specific": False,
+                "count": 10,
+            },
+            "",
+            {
+                "album": ["acid techno"],
+            },
+            ("Techno, Electronic", "album, whitelist"),
+        ),
+        # 14 - canonicalization transforms whitelisted genres to canonical forms and
+        # includes originals
+        #
+        # "Detroit Techno" is in the default whitelist, thus it stays and and also gets
+        # resolved "up" in the tree to "Techno" and "Electronic". The same happens for
+        # newly fetched genre "Acid House".
+        (
+            {
+                "force": True,
+                "keep_existing": True,
+                "source": "album",
+                "whitelist": True,
+                "canonical": True,
+                "prefer_specific": False,
+                "count": 10,
+                "extended_debug": True,
+            },
+            "detroit techno",
+            {
+                "album": ["acid house"],
+            },
+            (
+                "Detroit Techno, Techno, Electronic, Acid House, House",
+                "keep + album, whitelist",
+            ),
+        ),
+        # 15 - canonicalization transforms non-whitelisted original genres to canonical
+        # forms and deduplication works.
+        #
+        # "Cosmic Disco" is not in the default whitelist, thus gets resolved "up" in the
+        # tree to "Disco" and "Electronic". New genre "Detroit Techno" resolves to
+        # "Techno". Both resolve to "Electronic" which gets deduplicated.
+        (
+            {
+                "force": True,
+                "keep_existing": True,
+                "source": "album",
+                "whitelist": True,
+                "canonical": True,
+                "prefer_specific": False,
+                "count": 10,
+            },
+            "Cosmic Disco",
+            {
+                "album": ["Detroit Techno"],
+            },
+            (
+                "Disco, Electronic, Detroit Techno, Techno",
+                "keep + album, whitelist",
+            ),
+        ),
     ],
 )
 def test_get_genre(config_values, item_genre, mock_genres, expected_result):
     """Test _get_genre with various configurations."""
 
-    def mock_fetch_track_genre(self, obj=None):
+    def mock_fetch_track_genre(self, trackartist, tracktitle):
         return mock_genres["track"]
 
-    def mock_fetch_album_genre(self, obj):
+    def mock_fetch_album_genre(self, albumartist, albumtitle):
         return mock_genres["album"]
 
-    def mock_fetch_artist_genre(self, obj):
+    def mock_fetch_artist_genre(self, artist):
         return mock_genres["artist"]
 
     # Mock the last.fm fetchers. When whitelist enabled, we can assume only
@@ -463,11 +562,11 @@ def test_get_genre(config_values, item_genre, mock_genres, expected_result):
     lastgenre.LastGenrePlugin.fetch_album_genre = mock_fetch_album_genre
     lastgenre.LastGenrePlugin.fetch_artist_genre = mock_fetch_artist_genre
 
-    # Configure
-    config["lastgenre"] = config_values
-
     # Initialize plugin instance and item
     plugin = lastgenre.LastGenrePlugin()
+    # Configure
+    plugin.config.set(config_values)
+    plugin.setup()  # Loads default whitelist and canonicalization tree
     item = _common.item()
     item.genre = item_genre
 

@@ -26,8 +26,7 @@ import subprocess
 from beets import ui
 from beets.autotag import Recommendation
 from beets.plugins import BeetsPlugin
-from beets.ui.commands import PromptChoice
-from beets.util import displayable_path
+from beets.util import PromptChoice, displayable_path
 from beetsplug.info import print_data
 
 
@@ -73,7 +72,7 @@ class MBSubmitPlugin(BeetsPlugin):
             subprocess.Popen([picard_path] + paths)
             self._log.info("launched picard from\n{}", picard_path)
         except OSError as exc:
-            self._log.error(f"Could not open picard, got error:\n{exc}")
+            self._log.error("Could not open picard, got error:\n{}", exc)
 
     def print_tracks(self, session, task):
         for i in sorted(task.items, key=lambda i: i.track):
@@ -86,7 +85,7 @@ class MBSubmitPlugin(BeetsPlugin):
         )
 
         def func(lib, opts, args):
-            items = lib.items(ui.decargs(args))
+            items = lib.items(args)
             self._mbsubmit(items)
 
         mbsubmit_cmd.func = func

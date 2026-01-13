@@ -43,7 +43,7 @@ class KeyFinderPlugin(BeetsPlugin):
         return [cmd]
 
     def command(self, lib, opts, args):
-        self.find_key(lib.items(ui.decargs(args)), write=ui.should_write())
+        self.find_key(lib.items(args), write=ui.should_write())
 
     def imported(self, session, task):
         self.find_key(task.imported_items())
@@ -65,7 +65,7 @@ class KeyFinderPlugin(BeetsPlugin):
                     command + [util.syspath(item.path)]
                 ).stdout
             except (subprocess.CalledProcessError, OSError) as exc:
-                self._log.error("execution failed: {0}", exc)
+                self._log.error("execution failed: {}", exc)
                 continue
 
             try:
@@ -73,7 +73,7 @@ class KeyFinderPlugin(BeetsPlugin):
             except IndexError:
                 # Sometimes keyfinder-cli returns 0 but with no key, usually
                 # when the file is silent or corrupt, so we log and skip.
-                self._log.error("no key returned for path: {0}", item.path)
+                self._log.error("no key returned for path: {.path}", item)
                 continue
 
             try:
@@ -84,9 +84,7 @@ class KeyFinderPlugin(BeetsPlugin):
 
             item["initial_key"] = key
             self._log.info(
-                "added computed initial key {0} for {1}",
-                key,
-                util.displayable_path(item.path),
+                "added computed initial key {} for {.filepath}", key, item
             )
 
             if write:

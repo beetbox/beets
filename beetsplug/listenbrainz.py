@@ -2,18 +2,18 @@
 
 import datetime
 
-import musicbrainzngs
 import requests
 
 from beets import config, ui
 from beets.plugins import BeetsPlugin
 from beetsplug.lastimport import process_tracks
 
+from ._utils.musicbrainz import MusicBrainzAPIMixin
 
-class ListenBrainzPlugin(BeetsPlugin):
+
+class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
     """A Beets plugin for interacting with ListenBrainz."""
 
-    data_source = "ListenBrainz"
     ROOT = "http://api.listenbrainz.org/1/"
 
     def __init__(self):
@@ -27,7 +27,7 @@ class ListenBrainzPlugin(BeetsPlugin):
     def commands(self):
         """Add beet UI commands to interact with ListenBrainz."""
         lbupdate_cmd = ui.Subcommand(
-            "lbimport", help=f"Import {self.data_source} history"
+            "lbimport", help="Import ListenBrainz history"
         )
 
         def func(lib, opts, args):
@@ -42,14 +42,14 @@ class ListenBrainzPlugin(BeetsPlugin):
         unknown_total = 0
         ls = self.get_listens()
         tracks = self.get_tracks_from_listens(ls)
-        log.info(f"Found {len(ls)} listens")
+        log.info("Found {} listens", len(ls))
         if tracks:
             found, unknown = process_tracks(lib, tracks, log)
             found_total += found
             unknown_total += unknown
         log.info("... done!")
-        log.info("{0} unknown play-counts", unknown_total)
-        log.info("{0} play-counts imported", found_total)
+        log.info("{} unknown play-counts", unknown_total)
+        log.info("{} play-counts imported", found_total)
 
     def _make_request(self, url, params=None):
         """Makes a request to the ListenBrainz API."""
@@ -63,7 +63,7 @@ class ListenBrainzPlugin(BeetsPlugin):
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
-            self._log.debug(f"Invalid Search Error: {e}")
+            self._log.debug("Invalid Search Error: {}", e)
             return None
 
     def get_listens(self, min_ts=None, max_ts=None, count=None):
@@ -130,17 +130,16 @@ class ListenBrainzPlugin(BeetsPlugin):
             )
         return tracks
 
-    def get_mb_recording_id(self, track):
+    def get_mb_recording_id(self, track) -> str | None:
         """Returns the MusicBrainz recording ID for a track."""
-        resp = musicbrainzngs.search_recordings(
-            query=track["track_metadata"].get("track_name"),
-            release=track["track_metadata"].get("release_name"),
-            strict=True,
+        results = self.mb_api.search(
+            "recording",
+            {
+                "": track["track_metadata"].get("track_name"),
+                "release": track["track_metadata"].get("release_name"),
+            },
         )
-        if resp.get("recording-count") == "1":
-            return resp.get("recording-list")[0].get("id")
-        else:
-            return None
+        return next((r["id"] for r in results), None)
 
     def get_playlists_createdfor(self, username):
         """Returns a list of playlists created by a user."""
@@ -156,7 +155,7 @@ class ListenBrainzPlugin(BeetsPlugin):
             playlist_info = playlist.get("playlist")
             if playlist_info.get("creator") == "listenbrainz":
                 title = playlist_info.get("title")
-                self._log.debug(f"Playlist title: {title}")
+                self._log.debug("Playlist title: {}", title)
                 playlist_type = (
                     "Exploration" if "Exploration" in title else "Jams"
                 )
@@ -179,9 +178,7 @@ class ListenBrainzPlugin(BeetsPlugin):
             listenbrainz_playlists, key=lambda x: x["date"], reverse=True
         )
         for playlist in listenbrainz_playlists:
-            self._log.debug(
-                f'Playlist: {playlist["type"]} - {playlist["date"]}'
-            )
+            self._log.debug("Playlist: {0[type]} - {0[date]}", playlist)
         return listenbrainz_playlists
 
     def get_playlist(self, identifier):
@@ -210,17 +207,16 @@ class ListenBrainzPlugin(BeetsPlugin):
         track_info = []
         for track in tracks:
             identifier = track.get("identifier")
-            resp = musicbrainzngs.get_recording_by_id(
+            recording = self.mb_api.get_recording(
                 identifier, includes=["releases", "artist-credits"]
             )
-            recording = resp.get("recording")
             title = recording.get("title")
             artist_credit = recording.get("artist-credit", [])
             if artist_credit:
                 artist = artist_credit[0].get("artist", {}).get("name")
             else:
                 artist = None
-            releases = recording.get("release-list", [])
+            releases = recording.get("releases", [])
             if releases:
                 album = releases[0].get("title")
                 date = releases[0].get("date")

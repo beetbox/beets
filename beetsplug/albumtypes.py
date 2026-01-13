@@ -14,9 +14,10 @@
 
 """Adds an album template field for formatted album types."""
 
-from beets.autotag.mb import VARIOUS_ARTISTS_ID
 from beets.library import Album
 from beets.plugins import BeetsPlugin
+
+from .musicbrainz import VARIOUS_ARTISTS_ID
 
 
 class AlbumTypesPlugin(BeetsPlugin):

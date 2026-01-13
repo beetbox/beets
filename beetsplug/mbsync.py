@@ -16,8 +16,7 @@
 
 from collections import defaultdict
 
-from beets import autotag, library, ui, util
-from beets.autotag import hooks
+from beets import autotag, library, metadata_plugins, ui, util
 from beets.plugins import BeetsPlugin, apply_item_changes
 
 
@@ -64,10 +63,9 @@ class MBSyncPlugin(BeetsPlugin):
         move = ui.should_move(opts.move)
         pretend = opts.pretend
         write = ui.should_write(opts.write)
-        query = ui.decargs(args)
 
-        self.singletons(lib, query, move, pretend, write)
-        self.albums(lib, query, move, pretend, write)
+        self.singletons(lib, args, move, pretend, write)
+        self.albums(lib, args, move, pretend, write)
 
     def singletons(self, lib, query, move, pretend, write):
         """Retrieve and apply info from the autotagger for items matched by
@@ -80,7 +78,9 @@ class MBSyncPlugin(BeetsPlugin):
                 )
                 continue
 
-            if not (track_info := hooks.track_for_id(item.mb_trackid)):
+            if not (
+                track_info := metadata_plugins.track_for_id(item.mb_trackid)
+            ):
                 self._log.info(
                     "Recording ID not found: {0.mb_trackid} for track {0}", item
                 )
@@ -101,7 +101,9 @@ class MBSyncPlugin(BeetsPlugin):
                 self._log.info("Skipping album with no mb_albumid: {}", album)
                 continue
 
-            if not (album_info := hooks.album_for_id(album.mb_albumid)):
+            if not (
+                album_info := metadata_plugins.album_for_id(album.mb_albumid)
+            ):
                 self._log.info(
                     "Release ID {0.mb_albumid} not found for album {0}", album
                 )
@@ -119,18 +121,20 @@ class MBSyncPlugin(BeetsPlugin):
             # Construct a track mapping according to MBIDs (release track MBIDs
             # first, if available, and recording MBIDs otherwise). This should
             # work for albums that have missing or extra tracks.
-            mapping = {}
+            item_info_pairs = []
             items = list(album.items())
             for item in items:
                 if (
                     item.mb_releasetrackid
                     and item.mb_releasetrackid in releasetrack_index
                 ):
-                    mapping[item] = releasetrack_index[item.mb_releasetrackid]
+                    item_info_pairs.append(
+                        (item, releasetrack_index[item.mb_releasetrackid])
+                    )
                 else:
                     candidates = track_index[item.mb_trackid]
                     if len(candidates) == 1:
-                        mapping[item] = candidates[0]
+                        item_info_pairs.append((item, candidates[0]))
                     else:
                         # If there are multiple copies of a recording, they are
                         # disambiguated using their disc and track number.
@@ -139,13 +143,13 @@ class MBSyncPlugin(BeetsPlugin):
                                 c.medium_index == item.track
                                 and c.medium == item.disc
                             ):
-                                mapping[item] = c
+                                item_info_pairs.append((item, c))
                                 break
 
             # Apply.
             self._log.debug("applying changes to {}", album)
             with lib.transaction():
-                autotag.apply_metadata(album_info, mapping)
+                autotag.apply_metadata(album_info, item_info_pairs)
                 changed = False
                 # Find any changed item to apply changes to album.
                 any_changed_item = items[0]
