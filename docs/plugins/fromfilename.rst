@@ -57,16 +57,16 @@ Default
 
 .. conf:: patterns
 
-    Users can specify patterns to improve the efficacy of the plugin. Patterns can
-    be specified as ``file`` or ``folder`` patterns. ``file`` patterns are checked
-    against the filename. ``folder`` patterns are checked against the parent folder
-    of the file.
+    Users can specify patterns to expand the set of filenames that can
+    be recognized by the plugin. Patterns can be specified as ``file``
+    or ``folder`` patterns. ``file`` patterns are checked against the filename.
+    ``folder`` patterns are checked against the parent folder of the file.
 
-    If ``fromfilename`` can't match the entire string to the given pattern, it will
+    If ``fromfilename`` can't match the entire string to one of the given pattern, it will
     fall back to the default pattern.
 
-    The following custom patterns will match this path and retrieve the specified
-    fields.
+    For example, the following custom patterns will match this path and folder,
+    and retrieve the specified fields.
 
     ``/music/James Lawson - 841689 (2004)/Coming Up - James Lawson & Andy Farley.mp3``
 
