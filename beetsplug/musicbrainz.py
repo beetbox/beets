@@ -134,9 +134,9 @@ def _multi_artist_credit(
 
         # Artist sort name.
         if alias:
-            artist_sort_parts.append(alias["sort-name"])
-        elif "sort-name" in el["artist"]:
-            artist_sort_parts.append(el["artist"]["sort-name"])
+            artist_sort_parts.append(alias["sort_name"])
+        elif "sort_name" in el["artist"]:
+            artist_sort_parts.append(el["artist"]["sort_name"])
         else:
             artist_sort_parts.append(cur_artist_name)
 
@@ -219,10 +219,10 @@ def _preferred_release_event(
     ].as_str_seq()
 
     for country in preferred_countries:
-        for event in release.get("release-events", {}):
+        for event in release.get("release_events", {}):
             try:
                 if area := event.get("area"):
-                    if country in area["iso-3166-1-codes"]:
+                    if country in area["iso_3166_1_codes"]:
                         return country, event["date"]
             except KeyError:
                 pass
@@ -355,28 +355,28 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
             data_url=track_url(recording["id"]),
         )
 
-        if recording.get("artist-credit"):
+        if recording.get("artist_credit"):
             # Get the artist names.
             (
                 info.artist,
                 info.artist_sort,
                 info.artist_credit,
-            ) = _flatten_artist_credit(recording["artist-credit"])
+            ) = _flatten_artist_credit(recording["artist_credit"])
 
             (
                 info.artists,
                 info.artists_sort,
                 info.artists_credit,
             ) = _multi_artist_credit(
-                recording["artist-credit"], include_join_phrase=False
+                recording["artist_credit"], include_join_phrase=False
             )
 
-            info.artists_ids = _artist_ids(recording["artist-credit"])
+            info.artists_ids = _artist_ids(recording["artist_credit"])
             info.artist_id = info.artists_ids[0]
 
-        if recording.get("artist-relations"):
+        if recording.get("artist_relations"):
             info.remixer = _get_related_artist_names(
-                recording["artist-relations"], relation_type="remixer"
+                recording["artist_relations"], relation_type="remixer"
             )
 
         if recording.get("length"):
@@ -390,7 +390,7 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
         lyricist = []
         composer = []
         composer_sort = []
-        for work_relation in recording.get("work-relations", ()):
+        for work_relation in recording.get("work_relations", ()):
             if work_relation["type"] != "performance":
                 continue
             info.work = work_relation["work"]["title"]
@@ -399,7 +399,7 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
                 info.work_disambig = work_relation["work"]["disambiguation"]
 
             for artist_relation in work_relation["work"].get(
-                "artist-relations", ()
+                "artist_relations", ()
             ):
                 if "type" in artist_relation:
                     type = artist_relation["type"]
@@ -408,7 +408,7 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
                     elif type == "composer":
                         composer.append(artist_relation["artist"]["name"])
                         composer_sort.append(
-                            artist_relation["artist"]["sort-name"]
+                            artist_relation["artist"]["sort_name"]
                         )
         if lyricist:
             info.lyricist = ", ".join(lyricist)
@@ -417,7 +417,7 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
             info.composer_sort = ", ".join(composer_sort)
 
         arranger = []
-        for artist_relation in recording.get("artist-relations", ()):
+        for artist_relation in recording.get("artist_relations", ()):
             if "type" in artist_relation:
                 type = artist_relation["type"]
                 if type == "arranger":
@@ -438,7 +438,7 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
         """
         # Get artist name using join phrases.
         artist_name, artist_sort_name, artist_credit_name = (
-            _flatten_artist_credit(release["artist-credit"])
+            _flatten_artist_credit(release["artist_credit"])
         )
 
         (
@@ -446,7 +446,7 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
             artists_sort_names,
             artists_credit_names,
         ) = _multi_artist_credit(
-            release["artist-credit"], include_join_phrase=False
+            release["artist_credit"], include_join_phrase=False
         )
 
         ntracks = sum(len(m.get("tracks", [])) for m in release["media"])
@@ -486,10 +486,10 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
 
             all_tracks = medium.get("tracks", [])
             if (
-                "data-tracks" in medium
+                "data_tracks" in medium
                 and not config["match"]["ignore_data_tracks"]
             ):
-                all_tracks += medium["data-tracks"]
+                all_tracks += medium["data_tracks"]
             track_count = len(all_tracks)
 
             if "pregap" in medium:
@@ -526,30 +526,30 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
                 # Prefer track data, where present, over recording data.
                 if track.get("title"):
                     ti.title = track["title"]
-                if track.get("artist-credit"):
+                if track.get("artist_credit"):
                     # Get the artist names.
                     (
                         ti.artist,
                         ti.artist_sort,
                         ti.artist_credit,
-                    ) = _flatten_artist_credit(track["artist-credit"])
+                    ) = _flatten_artist_credit(track["artist_credit"])
 
                     (
                         ti.artists,
                         ti.artists_sort,
                         ti.artists_credit,
                     ) = _multi_artist_credit(
-                        track["artist-credit"], include_join_phrase=False
+                        track["artist_credit"], include_join_phrase=False
                     )
 
-                    ti.artists_ids = _artist_ids(track["artist-credit"])
+                    ti.artists_ids = _artist_ids(track["artist_credit"])
                     ti.artist_id = ti.artists_ids[0]
                 if track.get("length"):
                     ti.length = int(track["length"]) / (1000.0)
 
                 track_infos.append(ti)
 
-        album_artist_ids = _artist_ids(release["artist-credit"])
+        album_artist_ids = _artist_ids(release["artist_credit"])
         info = beets.autotag.hooks.AlbumInfo(
             album=release["title"],
             album_id=release["id"],
@@ -571,38 +571,38 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
         if info.va:
             info.artist = config["va_name"].as_str()
         info.asin = release.get("asin")
-        info.releasegroup_id = release["release-group"]["id"]
+        info.releasegroup_id = release["release_group"]["id"]
         info.albumstatus = release.get("status")
 
-        if release["release-group"].get("title"):
-            info.release_group_title = release["release-group"].get("title")
+        if release["release_group"].get("title"):
+            info.release_group_title = release["release_group"].get("title")
 
         # Get the disambiguation strings at the release and release group level.
-        if release["release-group"].get("disambiguation"):
-            info.releasegroupdisambig = release["release-group"].get(
+        if release["release_group"].get("disambiguation"):
+            info.releasegroupdisambig = release["release_group"].get(
                 "disambiguation"
             )
         if release.get("disambiguation"):
             info.albumdisambig = release.get("disambiguation")
 
-        if reltype := release["release-group"].get("primary-type"):
+        if reltype := release["release_group"].get("primary_type"):
             info.albumtype = reltype.lower()
 
         # Set the new-style "primary" and "secondary" release types.
         albumtypes = []
-        if "primary-type" in release["release-group"]:
-            rel_primarytype = release["release-group"]["primary-type"]
+        if "primary_type" in release["release_group"]:
+            rel_primarytype = release["release_group"]["primary_type"]
             if rel_primarytype:
                 albumtypes.append(rel_primarytype.lower())
-        if "secondary-types" in release["release-group"]:
-            if release["release-group"]["secondary-types"]:
-                for sec_type in release["release-group"]["secondary-types"]:
+        if "secondary_types" in release["release_group"]:
+            if release["release_group"]["secondary_types"]:
+                for sec_type in release["release_group"]["secondary_types"]:
                     albumtypes.append(sec_type.lower())
         info.albumtypes = albumtypes
 
         # Release events.
         info.country, release_date = _preferred_release_event(release)
-        release_group_date = release["release-group"].get("first-release-date")
+        release_group_date = release["release_group"].get("first_release_date")
         if not release_date:
             # Fall back if release-specific date is not available.
             release_date = release_group_date
@@ -612,17 +612,17 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
         _set_date_str(info, release_group_date, True)
 
         # Label name.
-        if release.get("label-info"):
-            label_info = release["label-info"][0]
+        if release.get("label_info"):
+            label_info = release["label_info"][0]
             if label_info.get("label"):
                 label = label_info["label"]["name"]
                 if label != "[no label]":
                     info.label = label
-            info.catalognum = label_info.get("catalog-number")
+            info.catalognum = label_info.get("catalog_number")
 
         # Text representation data.
-        if release.get("text-representation"):
-            rep = release["text-representation"]
+        if release.get("text_representation"):
+            rep = release["text_representation"]
             info.script = rep.get("script")
             info.language = rep.get("language")
 
@@ -637,7 +637,7 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
 
         if self.config["genres"]:
             sources = [
-                release["release-group"].get(self.genres_field, []),
+                release["release_group"].get(self.genres_field, []),
                 release.get(self.genres_field, []),
             ]
             genres: Counter[str] = Counter()
@@ -654,7 +654,7 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
         wanted_sources = {
             site for site, wanted in external_ids.items() if wanted
         }
-        if wanted_sources and (url_rels := release.get("url-relations")):
+        if wanted_sources and (url_rels := release.get("url_relations")):
             urls = {}
 
             for source, url in product(wanted_sources, url_rels):
@@ -778,7 +778,7 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
         actual_res = None
 
         if res.get("status") == "Pseudo-Release" and (
-            relations := res.get("release-relations")
+            relations := res.get("release_relations")
         ):
             for rel in relations:
                 if (

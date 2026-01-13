@@ -51,18 +51,18 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
             "id": "ALBUM ID",
             "asin": "ALBUM ASIN",
             "disambiguation": "R_DISAMBIGUATION",
-            "release-group": {
-                "primary-type": "Album",
-                "first-release-date": date_str,
+            "release_group": {
+                "primary_type": "Album",
+                "first_release_date": date_str,
                 "id": "RELEASE GROUP ID",
                 "disambiguation": "RG_DISAMBIGUATION",
             },
-            "artist-credit": [
+            "artist_credit": [
                 {
                     "artist": {
                         "name": "ARTIST NAME",
                         "id": "ARTIST ID",
-                        "sort-name": "ARTIST SORT NAME",
+                        "sort_name": "ARTIST SORT NAME",
                     },
                     "name": "ARTIST CREDIT",
                 }
@@ -71,30 +71,30 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
             "media": [],
             "genres": [{"count": 1, "name": "GENRE"}],
             "tags": [{"count": 1, "name": "TAG"}],
-            "label-info": [
+            "label_info": [
                 {
-                    "catalog-number": "CATALOG NUMBER",
+                    "catalog_number": "CATALOG NUMBER",
                     "label": {"name": "LABEL NAME"},
                 }
             ],
-            "text-representation": {
+            "text_representation": {
                 "script": "SCRIPT",
                 "language": "LANGUAGE",
             },
             "country": "COUNTRY",
             "status": "STATUS",
             "barcode": "BARCODE",
-            "release-events": [{"area": None, "date": "2021-03-26"}],
+            "release_events": [{"area": None, "date": "2021-03-26"}],
         }
 
         if multi_artist_credit:
-            release["artist-credit"][0]["joinphrase"] = " & "
-            release["artist-credit"].append(
+            release["artist_credit"][0]["joinphrase"] = " & "
+            release["artist_credit"].append(
                 {
                     "artist": {
                         "name": "ARTIST 2 NAME",
                         "id": "ARTIST 2 ID",
-                        "sort-name": "ARTIST 2 SORT NAME",
+                        "sort_name": "ARTIST 2 SORT NAME",
                     },
                     "name": "ARTIST MULTI CREDIT",
                 }
@@ -117,25 +117,25 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
                 if track_artist:
                     # Similarly, track artists can differ from recording
                     # artists.
-                    track["artist-credit"] = [
+                    track["artist_credit"] = [
                         {
                             "artist": {
                                 "name": "TRACK ARTIST NAME",
                                 "id": "TRACK ARTIST ID",
-                                "sort-name": "TRACK ARTIST SORT NAME",
+                                "sort_name": "TRACK ARTIST SORT NAME",
                             },
                             "name": "TRACK ARTIST CREDIT",
                         }
                     ]
 
                     if multi_artist_credit:
-                        track["artist-credit"][0]["joinphrase"] = " & "
-                        track["artist-credit"].append(
+                        track["artist_credit"][0]["joinphrase"] = " & "
+                        track["artist_credit"].append(
                             {
                                 "artist": {
                                     "name": "TRACK ARTIST 2 NAME",
                                     "id": "TRACK ARTIST 2 ID",
-                                    "sort-name": "TRACK ARTIST 2 SORT NAME",
+                                    "sort_name": "TRACK ARTIST 2 SORT NAME",
                                 },
                                 "name": "TRACK ARTIST 2 CREDIT",
                             }
@@ -157,7 +157,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
             {
                 "position": "1",
                 "tracks": track_list,
-                "data-tracks": data_track_list,
+                "data_tracks": data_track_list,
                 "format": medium_format,
                 "title": "MEDIUM TITLE",
             }
@@ -182,39 +182,39 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         if duration is not None:
             track["length"] = duration
         if artist:
-            track["artist-credit"] = [
+            track["artist_credit"] = [
                 {
                     "artist": {
                         "name": "RECORDING ARTIST NAME",
                         "id": "RECORDING ARTIST ID",
-                        "sort-name": "RECORDING ARTIST SORT NAME",
+                        "sort_name": "RECORDING ARTIST SORT NAME",
                     },
                     "name": "RECORDING ARTIST CREDIT",
                 }
             ]
             if multi_artist_credit:
-                track["artist-credit"][0]["joinphrase"] = " & "
-                track["artist-credit"].append(
+                track["artist_credit"][0]["joinphrase"] = " & "
+                track["artist_credit"].append(
                     {
                         "artist": {
                             "name": "RECORDING ARTIST 2 NAME",
                             "id": "RECORDING ARTIST 2 ID",
-                            "sort-name": "RECORDING ARTIST 2 SORT NAME",
+                            "sort_name": "RECORDING ARTIST 2 SORT NAME",
                         },
                         "name": "RECORDING ARTIST 2 CREDIT",
                     }
                 )
         if remixer:
-            track["artist-relations"] = [
+            track["artist_relations"] = [
                 {
                     "type": "remixer",
-                    "type-id": "RELATION TYPE ID",
+                    "type_id": "RELATION TYPE ID",
                     "direction": "RECORDING RELATION DIRECTION",
                     "artist": {
                         "id": "RECORDING REMIXER ARTIST ID",
                         "type": "RECORDING REMIXER ARTIST TYPE",
                         "name": "RECORDING REMIXER ARTIST NAME",
-                        "sort-name": "RECORDING REMIXER ARTIST SORT NAME",
+                        "sort_name": "RECORDING REMIXER ARTIST SORT NAME",
                     },
                 }
             ]
@@ -354,7 +354,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
 
     def test_detect_various_artists(self):
         release = self._make_release(None)
-        release["artist-credit"][0]["artist"]["id"] = (
+        release["artist_credit"][0]["artist"]["id"] = (
             musicbrainz.VARIOUS_ARTISTS_ID
         )
         d = self.mb.album_info(release)
@@ -429,7 +429,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
 
     def test_missing_language(self):
         release = self._make_release(None)
-        del release["text-representation"]["language"]
+        del release["text_representation"]["language"]
         d = self.mb.album_info(release)
         assert d.language is None
 
@@ -714,7 +714,7 @@ class ArtistFlatteningTest(unittest.TestCase):
         return {
             "artist": {
                 "name": f"NAME{suffix}",
-                "sort-name": f"SORT{suffix}",
+                "sort_name": f"SORT{suffix}",
             },
             "name": f"CREDIT{suffix}",
         }
@@ -723,7 +723,7 @@ class ArtistFlatteningTest(unittest.TestCase):
         alias = {
             "name": f"ALIAS{suffix}",
             "locale": locale,
-            "sort-name": f"ALIASSORT{suffix}",
+            "sort_name": f"ALIASSORT{suffix}",
         }
         if primary:
             alias["primary"] = "primary"
@@ -827,7 +827,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                         "position": 5,
                     }
                 ],
-                "artist-credit": [
+                "artist_credit": [
                     {
                         "artist": {
                             "name": "some-artist",
@@ -835,10 +835,10 @@ class MBLibraryTest(MusicBrainzTestCase):
                         },
                     }
                 ],
-                "release-group": {
+                "release_group": {
                     "id": "another-id",
                 },
-                "release-relations": [
+                "release_relations": [
                     {
                         "type": "transl-tracklisting",
                         "direction": "backward",
@@ -869,7 +869,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                         "position": 5,
                     }
                 ],
-                "artist-credit": [
+                "artist_credit": [
                     {
                         "artist": {
                             "name": "some-artist",
@@ -877,7 +877,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                         },
                     }
                 ],
-                "release-group": {
+                "release_group": {
                     "id": "another-id",
                 },
                 "country": "COUNTRY",
@@ -914,7 +914,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                         "position": 5,
                     }
                 ],
-                "artist-credit": [
+                "artist_credit": [
                     {
                         "artist": {
                             "name": "some-artist",
@@ -922,7 +922,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                         },
                     }
                 ],
-                "release-group": {
+                "release_group": {
                     "id": "another-id",
                 },
             }
@@ -958,7 +958,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                         "position": 5,
                     }
                 ],
-                "artist-credit": [
+                "artist_credit": [
                     {
                         "artist": {
                             "name": "some-artist",
@@ -966,7 +966,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                         },
                     }
                 ],
-                "release-group": {
+                "release_group": {
                     "id": "another-id",
                 },
             }
@@ -1002,7 +1002,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                         "position": 5,
                     }
                 ],
-                "artist-credit": [
+                "artist_credit": [
                     {
                         "artist": {
                             "name": "some-artist",
@@ -1010,10 +1010,10 @@ class MBLibraryTest(MusicBrainzTestCase):
                         },
                     }
                 ],
-                "release-group": {
+                "release_group": {
                     "id": "another-id",
                 },
-                "release-relations": [
+                "release_relations": [
                     {
                         "type": "remaster",
                         "direction": "backward",
@@ -1114,10 +1114,10 @@ class TestMusicBrainzPlugin(PluginMixin):
                         "position": 5,
                     }
                 ],
-                "artist-credit": [
+                "artist_credit": [
                     {"artist": {"name": "some-artist", "id": "some-id"}}
                 ],
-                "release-group": {"id": "another-id"},
+                "release_group": {"id": "another-id"},
             },
         )
         candidates = list(mb.candidates([], "hello", "there", False))

@@ -200,7 +200,7 @@ class MusicBrainzAPI(RequestHandler):
         if includes:
             kwargs["inc"] = "+".join(includes)
 
-        return self._group_relations(
+        return self._normalize_data(
             self.get_json(f"{self.api_root}/{resource}", params=kwargs)
         )
 
@@ -286,29 +286,39 @@ class MusicBrainzAPI(RequestHandler):
 
     @singledispatchmethod
     @classmethod
-    def _group_relations(cls, data: Any) -> Any:
-        """Normalize MusicBrainz 'relations' into type-keyed fields recursively.
+    def _normalize_data(cls, data: Any) -> Any:
+        """Normalize MusicBrainz relation structures into easier-to-use shapes.
 
-        This helper rewrites payloads that use a generic 'relations' list into
-        a structure that is easier to consume downstream. When a mapping
-        contains 'relations', those entries are regrouped by their 'target-type'
-        and stored under keys like '<target-type>-relations'. The original
-        'relations' key is removed to avoid ambiguous access patterns.
-
-        The transformation is applied recursively so that nested objects and
-        sequences are normalized consistently, while non-container values are
-        left unchanged.
+        This default handler is a no-op that returns non-container values
+        unchanged. Specialized handlers for sequences and mappings perform the
+        actual transformations described below.
         """
         return data
 
-    @_group_relations.register(list)
+    @_normalize_data.register(list)
     @classmethod
     def _(cls, data: list[Any]) -> list[Any]:
-        return [cls._group_relations(i) for i in data]
+        """Apply normalization to each element of a sequence recursively.
 
-    @_group_relations.register(dict)
+        Sequences received from the MusicBrainz API may contain nested mappings
+        that require transformation. This handler maps the normalization step
+        over the sequence and preserves order.
+        """
+        return [cls._normalize_data(i) for i in data]
+
+    @_normalize_data.register(dict)
     @classmethod
     def _(cls, data: JSONDict) -> JSONDict:
+        """Transform mappings by regrouping relationships and normalizing keys.
+
+        When a mapping contains a generic 'relations' list, entries are grouped
+        by their 'target-type' and placed under keys like
+        '<target-type>_relations' with the 'target-type' field removed from each
+        entry. All other mapping keys have hyphens converted to underscores and
+        their values are normalized recursively to ensure a consistent shape
+        throughout the payload.
+        """
+        output_data = {}
         for k, v in list(data.items()):
             if k == "relations":
                 get_target_type = operator.methodcaller("get", "target-type")
@@ -319,13 +329,12 @@ class MusicBrainzAPI(RequestHandler):
                         {k: v for k, v in item.items() if k != "target-type"}
                         for item in group
                     ]
-                    data[f"{target_type}-relations"] = cls._group_relations(
-                        relations
+                    output_data[f"{target_type}_relations"] = (
+                        cls._normalize_data(relations)
                     )
-                data.pop("relations")
             else:
-                data[k] = cls._group_relations(v)
-        return data
+                output_data[k.replace("-", "_")] = cls._normalize_data(v)
+        return output_data
 
 
 class MusicBrainzAPIMixin:

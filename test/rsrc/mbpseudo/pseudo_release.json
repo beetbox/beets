@@ -1,6 +1,6 @@
 {
   "aliases": [],
-  "artist-credit": [
+  "artist_credit": [
     {
       "artist": {
         "aliases": [
@@ -11,9 +11,9 @@
             "locale": "en",
             "name": "Lilas Ikuta",
             "primary": true,
-            "sort-name": "Ikuta, Lilas",
+            "sort_name": "Ikuta, Lilas",
             "type": "Artist name",
-            "type-id": "894afba6-2816-3c24-8072-eadb66bd04bc"
+            "type_id": "894afba6-2816-3c24-8072-eadb66bd04bc"
           }
         ],
         "country": "JP",
@@ -34,7 +34,7 @@
         ],
         "id": "55e42264-ef27-49d8-93fd-29f930dc96e4",
         "name": "幾田りら",
-        "sort-name": "Ikuta, Lilas",
+        "sort_name": "Ikuta, Lilas",
         "tags": [
           {
             "count": 1,
@@ -46,7 +46,7 @@
           }
         ],
         "type": "Person",
-        "type-id": "b6e035f4-3ce9-331c-97df-83397230b0df"
+        "type_id": "b6e035f4-3ce9-331c-97df-83397230b0df"
       },
       "joinphrase": "",
       "name": "Lilas Ikuta"
@@ -54,7 +54,7 @@
   ],
   "asin": null,
   "barcode": null,
-  "cover-art-archive": {
+  "cover_art_archive": {
     "artwork": false,
     "back": false,
     "count": 0,
@@ -64,19 +64,19 @@
   "disambiguation": "",
   "genres": [],
   "id": "dc3ee2df-0bc1-49eb-b8c4-34473d279a43",
-  "label-info": [],
+  "label_info": [],
   "media": [
     {
       "format": "Digital Media",
-      "format-id": "907a28d9-b3b2-3ef6-89a8-7b18d91d4794",
+      "format_id": "907a28d9-b3b2-3ef6-89a8-7b18d91d4794",
       "id": "606faab7-60fa-3a8b-a40f-2c66150cce81",
       "position": 1,
       "title": "",
-      "track-count": 1,
-      "track-offset": 0,
+      "track_count": 1,
+      "track_offset": 0,
       "tracks": [
         {
-          "artist-credit": [
+          "artist_credit": [
             {
               "artist": {
                 "aliases": [
@@ -87,18 +87,18 @@
                     "locale": "en",
                     "name": "Lilas Ikuta",
                     "primary": true,
-                    "sort-name": "Ikuta, Lilas",
+                    "sort_name": "Ikuta, Lilas",
                     "type": "Artist name",
-                    "type-id": "894afba6-2816-3c24-8072-eadb66bd04bc"
+                    "type_id": "894afba6-2816-3c24-8072-eadb66bd04bc"
                   }
                 ],
                 "country": "JP",
                 "disambiguation": "",
                 "id": "55e42264-ef27-49d8-93fd-29f930dc96e4",
                 "name": "幾田りら",
-                "sort-name": "Ikuta, Lilas",
+                "sort_name": "Ikuta, Lilas",
                 "type": "Person",
-                "type-id": "b6e035f4-3ce9-331c-97df-83397230b0df"
+                "type_id": "b6e035f4-3ce9-331c-97df-83397230b0df"
               },
               "joinphrase": "",
               "name": "Lilas Ikuta"
@@ -110,43 +110,43 @@
           "position": 1,
           "recording": {
             "aliases": [],
-            "artist-credit": [
+            "artist_credit": [
               {
                 "artist": {
                   "country": "JP",
                   "disambiguation": "",
                   "id": "55e42264-ef27-49d8-93fd-29f930dc96e4",
                   "name": "幾田りら",
-                  "sort-name": "Ikuta, Lilas",
+                  "sort_name": "Ikuta, Lilas",
                   "type": "Person",
-                  "type-id": "b6e035f4-3ce9-331c-97df-83397230b0df"
+                  "type_id": "b6e035f4-3ce9-331c-97df-83397230b0df"
                 },
                 "joinphrase": "",
                 "name": "幾田りら"
               }
             ],
-            "artist-relations": [
+            "artist_relations": [
               {
                 "artist": {
                   "country": "JP",
                   "disambiguation": "Japanese composer/arranger/guitarist, agehasprings",
                   "id": "f24241fb-4d89-4bf2-8336-3f2a7d2c0025",
                   "name": "KOHD",
-                  "sort-name": "KOHD",
+                  "sort_name": "KOHD",
                   "type": "Person",
-                  "type-id": "b6e035f4-3ce9-331c-97df-83397230b0df"
+                  "type_id": "b6e035f4-3ce9-331c-97df-83397230b0df"
                 },
-                "attribute-ids": {},
-                "attribute-values": {},
+                "attribute_ids": {},
+                "attribute_values": {},
                 "attributes": [],
                 "begin": null,
                 "direction": "backward",
                 "end": null,
                 "ended": false,
-                "source-credit": "",
-                "target-credit": "",
+                "source_credit": "",
+                "target_credit": "",
                 "type": "arranger",
-                "type-id": "22661fb8-cdb7-4f67-8385-b2a8be6c9f0d"
+                "type_id": "22661fb8-cdb7-4f67-8385-b2a8be6c9f0d"
               },
               {
                 "artist": {
@@ -154,21 +154,21 @@
                   "disambiguation": "",
                   "id": "55e42264-ef27-49d8-93fd-29f930dc96e4",
                   "name": "幾田りら",
-                  "sort-name": "Ikuta, Lilas",
+                  "sort_name": "Ikuta, Lilas",
                   "type": "Person",
-                  "type-id": "b6e035f4-3ce9-331c-97df-83397230b0df"
+                  "type_id": "b6e035f4-3ce9-331c-97df-83397230b0df"
                 },
-                "attribute-ids": {},
-                "attribute-values": {},
+                "attribute_ids": {},
+                "attribute_values": {},
                 "attributes": [],
                 "begin": "2025",
                 "direction": "backward",
                 "end": "2025",
                 "ended": true,
-                "source-credit": "",
-                "target-credit": "Lilas Ikuta",
+                "source_credit": "",
+                "target_credit": "Lilas Ikuta",
                 "type": "phonographic copyright",
-                "type-id": "7fd5fbc0-fbf4-4d04-be23-417d50a4dc30"
+                "type_id": "7fd5fbc0-fbf4-4d04-be23-417d50a4dc30"
               },
               {
                 "artist": {
@@ -176,21 +176,21 @@
                   "disambiguation": "",
                   "id": "1d27ab8a-a0df-47cf-b4cc-d2d7a0712a05",
                   "name": "山本秀哉",
-                  "sort-name": "Yamamoto, Shuya",
+                  "sort_name": "Yamamoto, Shuya",
                   "type": "Person",
-                  "type-id": "b6e035f4-3ce9-331c-97df-83397230b0df"
+                  "type_id": "b6e035f4-3ce9-331c-97df-83397230b0df"
                 },
-                "attribute-ids": {},
-                "attribute-values": {},
+                "attribute_ids": {},
+                "attribute_values": {},
                 "attributes": [],
                 "begin": null,
                 "direction": "backward",
                 "end": null,
                 "ended": false,
-                "source-credit": "",
-                "target-credit": "",
+                "source_credit": "",
+                "target_credit": "",
                 "type": "producer",
-                "type-id": "5c0ceac3-feb4-41f0-868d-dc06f6e27fc0"
+                "type_id": "5c0ceac3-feb4-41f0-868d-dc06f6e27fc0"
               },
               {
                 "artist": {
@@ -198,25 +198,25 @@
                   "disambiguation": "",
                   "id": "55e42264-ef27-49d8-93fd-29f930dc96e4",
                   "name": "幾田りら",
-                  "sort-name": "Ikuta, Lilas",
+                  "sort_name": "Ikuta, Lilas",
                   "type": "Person",
-                  "type-id": "b6e035f4-3ce9-331c-97df-83397230b0df"
+                  "type_id": "b6e035f4-3ce9-331c-97df-83397230b0df"
                 },
-                "attribute-ids": {},
-                "attribute-values": {},
+                "attribute_ids": {},
+                "attribute_values": {},
                 "attributes": [],
                 "begin": null,
                 "direction": "backward",
                 "end": null,
                 "ended": false,
-                "source-credit": "",
-                "target-credit": "",
+                "source_credit": "",
+                "target_credit": "",
                 "type": "vocal",
-                "type-id": "0fdbe3c6-7700-4a31-ae54-b53f06ae1cfa"
+                "type_id": "0fdbe3c6-7700-4a31-ae54-b53f06ae1cfa"
               }
             ],
             "disambiguation": "",
-            "first-release-date": "2025-01-10",
+            "first_release_date": "2025-01-10",
             "genres": [],
             "id": "781724c1-a039-41e6-bd9b-770c3b9d5b8e",
             "isrcs": [
@@ -225,53 +225,53 @@
             "length": 179546,
             "tags": [],
             "title": "百花繚乱",
-            "url-relations": [
+            "url_relations": [
               {
-                "attribute-ids": {},
-                "attribute-values": {},
+                "attribute_ids": {},
+                "attribute_values": {},
                 "attributes": [],
                 "begin": null,
                 "direction": "forward",
                 "end": null,
                 "ended": false,
-                "source-credit": "",
-                "target-credit": "",
+                "source_credit": "",
+                "target_credit": "",
                 "type": "free streaming",
-                "type-id": "7e41ef12-a124-4324-afdb-fdbae687a89c",
+                "type_id": "7e41ef12-a124-4324-afdb-fdbae687a89c",
                 "url": {
                   "id": "d076eaf9-5fde-4f6e-a946-cde16b67aa3b",
                   "resource": "https://open.spotify.com/track/782PTXsbAWB70ySDZ5NHmP"
                 }
               },
               {
-                "attribute-ids": {},
-                "attribute-values": {},
+                "attribute_ids": {},
+                "attribute_values": {},
                 "attributes": [],
                 "begin": null,
                 "direction": "forward",
                 "end": null,
                 "ended": false,
-                "source-credit": "",
-                "target-credit": "",
+                "source_credit": "",
+                "target_credit": "",
                 "type": "purchase for download",
-                "type-id": "92777657-504c-4acb-bd33-51a201bd57e1",
+                "type_id": "92777657-504c-4acb-bd33-51a201bd57e1",
                 "url": {
                   "id": "64879627-6eca-4755-98b5-b2234a8dbc61",
                   "resource": "https://music.apple.com/jp/song/1857886416"
                 }
               },
               {
-                "attribute-ids": {},
-                "attribute-values": {},
+                "attribute_ids": {},
+                "attribute_values": {},
                 "attributes": [],
                 "begin": null,
                 "direction": "forward",
                 "end": null,
                 "ended": false,
-                "source-credit": "",
-                "target-credit": "",
+                "source_credit": "",
+                "target_credit": "",
                 "type": "streaming",
-                "type-id": "b5f3058a-666c-406f-aafb-f9249fc7b122",
+                "type_id": "b5f3058a-666c-406f-aafb-f9249fc7b122",
                 "url": {
                   "id": "64879627-6eca-4755-98b5-b2234a8dbc61",
                   "resource": "https://music.apple.com/jp/song/1857886416"
@@ -279,42 +279,42 @@
               }
             ],
             "video": false,
-            "work-relations": [
+            "work_relations": [
               {
-                "attribute-ids": {},
-                "attribute-values": {},
+                "attribute_ids": {},
+                "attribute_values": {},
                 "attributes": [],
                 "begin": null,
                 "direction": "forward",
                 "end": null,
                 "ended": false,
-                "source-credit": "",
-                "target-credit": "",
+                "source_credit": "",
+                "target_credit": "",
                 "type": "performance",
-                "type-id": "a3005666-a872-32c3-ad06-98af558e99b0",
+                "type_id": "a3005666-a872-32c3-ad06-98af558e99b0",
                 "work": {
-                  "artist-relations": [
+                  "artist_relations": [
                     {
                       "artist": {
                         "country": "JP",
                         "disambiguation": "",
                         "id": "55e42264-ef27-49d8-93fd-29f930dc96e4",
                         "name": "幾田りら",
-                        "sort-name": "Ikuta, Lilas",
+                        "sort_name": "Ikuta, Lilas",
                         "type": "Person",
-                        "type-id": "b6e035f4-3ce9-331c-97df-83397230b0df"
+                        "type_id": "b6e035f4-3ce9-331c-97df-83397230b0df"
                       },
-                      "attribute-ids": {},
-                      "attribute-values": {},
+                      "attribute_ids": {},
+                      "attribute_values": {},
                       "attributes": [],
                       "begin": null,
                       "direction": "backward",
                       "end": null,
                       "ended": false,
-                      "source-credit": "",
-                      "target-credit": "",
+                      "source_credit": "",
+                      "target_credit": "",
                       "type": "composer",
-                      "type-id": "d59d99ea-23d4-4a80-b066-edca32ee158f"
+                      "type_id": "d59d99ea-23d4-4a80-b066-edca32ee158f"
                     },
                     {
                       "artist": {
@@ -322,21 +322,21 @@
                         "disambiguation": "",
                         "id": "55e42264-ef27-49d8-93fd-29f930dc96e4",
                         "name": "幾田りら",
-                        "sort-name": "Ikuta, Lilas",
+                        "sort_name": "Ikuta, Lilas",
                         "type": "Person",
-                        "type-id": "b6e035f4-3ce9-331c-97df-83397230b0df"
+                        "type_id": "b6e035f4-3ce9-331c-97df-83397230b0df"
                       },
-                      "attribute-ids": {},
-                      "attribute-values": {},
+                      "attribute_ids": {},
+                      "attribute_values": {},
                       "attributes": [],
                       "begin": null,
                       "direction": "backward",
                       "end": null,
                       "ended": false,
-                      "source-credit": "",
-                      "target-credit": "",
+                      "source_credit": "",
+                      "target_credit": "",
                       "type": "lyricist",
-                      "type-id": "3e48faba-ec01-47fd-8e89-30e81161661c"
+                      "type_id": "3e48faba-ec01-47fd-8e89-30e81161661c"
                     }
                   ],
                   "attributes": [],
@@ -349,37 +349,37 @@
                   ],
                   "title": "百花繚乱",
                   "type": "Song",
-                  "type-id": "f061270a-2fd6-32f1-a641-f0f8676d14e6",
-                  "url-relations": [
+                  "type_id": "f061270a-2fd6-32f1-a641-f0f8676d14e6",
+                  "url_relations": [
                     {
-                      "attribute-ids": {},
-                      "attribute-values": {},
+                      "attribute_ids": {},
+                      "attribute_values": {},
                       "attributes": [],
                       "begin": null,
                       "direction": "backward",
                       "end": null,
                       "ended": false,
-                      "source-credit": "",
-                      "target-credit": "",
+                      "source_credit": "",
+                      "target_credit": "",
                       "type": "lyrics",
-                      "type-id": "e38e65aa-75e0-42ba-ace0-072aeb91a538",
+                      "type_id": "e38e65aa-75e0-42ba-ace0-072aeb91a538",
                       "url": {
                         "id": "dfac3640-6b23-4991-a59c-7cb80e8eb950",
                         "resource": "https://utaten.com/lyric/tt24121002/"
                       }
                     },
                     {
-                      "attribute-ids": {},
-                      "attribute-values": {},
+                      "attribute_ids": {},
+                      "attribute_values": {},
                       "attributes": [],
                       "begin": null,
                       "direction": "backward",
                       "end": null,
                       "ended": false,
-                      "source-credit": "",
-                      "target-credit": "",
+                      "source_credit": "",
+                      "target_credit": "",
                       "type": "lyrics",
-                      "type-id": "e38e65aa-75e0-42ba-ace0-072aeb91a538",
+                      "type_id": "e38e65aa-75e0-42ba-ace0-072aeb91a538",
                       "url": {
                         "id": "b1b5d5df-e79d-4cda-bb2a-8014e5505415",
                         "resource": "https://www.uta-net.com/song/366579/"
@@ -396,11 +396,11 @@
     }
   ],
   "packaging": null,
-  "packaging-id": null,
+  "packaging_id": null,
   "quality": "normal",
-  "release-group": {
+  "release_group": {
     "aliases": [],
-    "artist-credit": [
+    "artist_credit": [
       {
         "artist": {
           "aliases": [
@@ -411,54 +411,54 @@
               "locale": "en",
               "name": "Lilas Ikuta",
               "primary": true,
-              "sort-name": "Ikuta, Lilas",
+              "sort_name": "Ikuta, Lilas",
               "type": "Artist name",
-              "type-id": "894afba6-2816-3c24-8072-eadb66bd04bc"
+              "type_id": "894afba6-2816-3c24-8072-eadb66bd04bc"
             }
           ],
           "country": "JP",
           "disambiguation": "",
           "id": "55e42264-ef27-49d8-93fd-29f930dc96e4",
           "name": "幾田りら",
-          "sort-name": "Ikuta, Lilas",
+          "sort_name": "Ikuta, Lilas",
           "type": "Person",
-          "type-id": "b6e035f4-3ce9-331c-97df-83397230b0df"
+          "type_id": "b6e035f4-3ce9-331c-97df-83397230b0df"
         },
         "joinphrase": "",
         "name": "幾田りら"
       }
     ],
     "disambiguation": "",
-    "first-release-date": "2025-01-10",
+    "first_release_date": "2025-01-10",
     "genres": [],
     "id": "da0d6bbb-f44b-4fff-8739-9d72db0402a1",
-    "primary-type": "Single",
-    "primary-type-id": "d6038452-8ee0-3f68-affc-2de9a1ede0b9",
-    "secondary-type-ids": [],
-    "secondary-types": [],
+    "primary_type": "Single",
+    "primary_type_id": "d6038452-8ee0-3f68-affc-2de9a1ede0b9",
+    "secondary_type_ids": [],
+    "secondary_types": [],
     "tags": [],
     "title": "百花繚乱"
   },
-  "release-relations": [
+  "release_relations": [
     {
-      "attribute-ids": {},
-      "attribute-values": {},
+      "attribute_ids": {},
+      "attribute_values": {},
       "attributes": [],
       "begin": null,
       "direction": "backward",
       "end": null,
       "ended": false,
       "release": {
-        "artist-credit": [
+        "artist_credit": [
           {
             "artist": {
               "country": "JP",
               "disambiguation": "",
               "id": "55e42264-ef27-49d8-93fd-29f930dc96e4",
               "name": "幾田りら",
-              "sort-name": "Ikuta, Lilas",
+              "sort_name": "Ikuta, Lilas",
               "type": null,
-              "type-id": null
+              "type_id": null
             },
             "joinphrase": "",
             "name": "幾田りら"
@@ -471,43 +471,43 @@
         "id": "a5ce1d11-2e32-45a4-b37f-c1589d46b103",
         "media": [],
         "packaging": null,
-        "packaging-id": null,
+        "packaging_id": null,
         "quality": "normal",
-        "release-events": [
+        "release_events": [
           {
             "area": {
               "disambiguation": "",
               "id": "525d4e18-3d00-31b9-a58b-a146a916de8f",
-              "iso-3166-1-codes": [
+              "iso_3166_1_codes": [
                 "XW"
               ],
               "name": "[Worldwide]",
-              "sort-name": "[Worldwide]",
+              "sort_name": "[Worldwide]",
               "type": null,
-              "type-id": null
+              "type_id": null
             },
             "date": "2025-01-10"
           }
         ],
-        "release-group": null,
+        "release_group": null,
         "status": null,
-        "status-id": null,
-        "text-representation": {
+        "status_id": null,
+        "text_representation": {
           "language": "jpn",
           "script": "Jpan"
         },
         "title": "百花繚乱"
       },
-      "source-credit": "",
-      "target-credit": "",
+      "source_credit": "",
+      "target_credit": "",
       "type": "transl-tracklisting",
-      "type-id": "fc399d47-23a7-4c28-bfcf-0607a562b644"
+      "type_id": "fc399d47-23a7-4c28-bfcf-0607a562b644"
     }
   ],
   "status": "Pseudo-Release",
-  "status-id": "41121bb9-3413-3818-8a9a-9742318349aa",
+  "status_id": "41121bb9-3413-3818-8a9a-9742318349aa",
   "tags": [],
-  "text-representation": {
+  "text_representation": {
     "language": "eng",
     "script": "Latn"
   },
