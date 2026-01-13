@@ -28,8 +28,10 @@ import sys
 import tempfile
 import traceback
 from collections import Counter
+from collections.abc import Callable, Sequence
 from contextlib import suppress
 from enum import Enum
+from functools import cache
 from importlib import import_module
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
@@ -38,33 +40,36 @@ from typing import (
     TYPE_CHECKING,
     Any,
     AnyStr,
-    Callable,
-    Iterable,
+    ClassVar,
+    Generic,
     NamedTuple,
     TypeVar,
     Union,
+    cast,
 )
 
 from unidecode import unidecode
 
+import beets
 from beets.util import hidden
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator, Sequence
+    from collections.abc import Iterable, Iterator
     from logging import Logger
 
-if sys.version_info >= (3, 10):
-    from typing import TypeAlias
-else:
-    from typing_extensions import TypeAlias
+    from beets.library import Item
 
 
 MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = "\\\\?\\"
 T = TypeVar("T")
-BytesOrStr = Union[str, bytes]
-PathLike = Union[BytesOrStr, Path]
-Replacements: TypeAlias = "Sequence[tuple[Pattern[str], str]]"
+PathLike = Union[str, bytes, Path]
+StrPath = Union[str, Path]
+Replacements = Sequence[tuple[Pattern[str], str]]
+
+# Here for now to allow for a easy replace later on
+# once we can move to a PathLike (mainly used in importer)
+PathBytes = bytes
 
 
 class HumanReadableError(Exception):
@@ -106,7 +111,7 @@ class HumanReadableError(Exception):
         elif hasattr(self.reason, "strerror"):  # i.e., EnvironmentError
             return self.reason.strerror
         else:
-            return '"{}"'.format(str(self.reason))
+            return f'"{self.reason}"'
 
     def get_message(self):
         """Create the human-readable description of the error, sans
@@ -120,7 +125,7 @@ class HumanReadableError(Exception):
         """
         if self.tb:
             logger.debug(self.tb)
-        logger.error("{0}: {1}", self.error_kind, self.args[0])
+        logger.error("{0.error_kind}: {0.args[0]}", self)
 
 
 class FilesystemError(HumanReadableError):
@@ -136,18 +141,16 @@ class FilesystemError(HumanReadableError):
     def get_message(self):
         # Use a nicer English phrasing for some specific verbs.
         if self.verb in ("move", "copy", "rename"):
-            clause = "while {} {} to {}".format(
-                self._gerund(),
-                displayable_path(self.paths[0]),
-                displayable_path(self.paths[1]),
+            clause = (
+                f"while {self._gerund()} {displayable_path(self.paths[0])} to"
+                f" {displayable_path(self.paths[1])}"
             )
         elif self.verb in ("delete", "write", "create", "read"):
-            clause = "while {} {}".format(
-                self._gerund(), displayable_path(self.paths[0])
-            )
+            clause = f"while {self._gerund()} {displayable_path(self.paths[0])}"
         else:
-            clause = "during {} of paths {}".format(
-                self.verb, ", ".join(displayable_path(p) for p in self.paths)
+            clause = (
+                f"during {self.verb} of paths"
+                f" {', '.join(displayable_path(p) for p in self.paths)}"
             )
 
         return f"{self._reasonstr()} {clause}"
@@ -162,6 +165,12 @@ class MoveOperation(Enum):
     HARDLINK = 3
     REFLINK = 4
     REFLINK_AUTO = 5
+
+
+class PromptChoice(NamedTuple):
+    short: str
+    long: str
+    callback: Any
 
 
 def normpath(path: PathLike) -> bytes:
@@ -217,12 +226,12 @@ def sorted_walk(
     # Get all the directories and files at this level.
     try:
         contents = os.listdir(syspath(bytes_path))
-    except OSError as exc:
+    except OSError:
         if logger:
             logger.warning(
-                "could not list directory {}: {}".format(
-                    displayable_path(bytes_path), exc.strerror
-                )
+                "could not list directory {}",
+                displayable_path(bytes_path),
+                exc_info=True,
             )
         return
     dirs = []
@@ -430,8 +439,8 @@ def syspath(path: PathLike, prefix: bool = True) -> str:
     if prefix and not str_path.startswith(WINDOWS_MAGIC_PREFIX):
         if str_path.startswith("\\\\"):
             # UNC path. Final path should look like \\?\UNC\...
-            str_path = "UNC" + str_path[1:]
-        str_path = WINDOWS_MAGIC_PREFIX + str_path
+            str_path = f"UNC{str_path[1:]}"
+        str_path = f"{WINDOWS_MAGIC_PREFIX}{str_path}"
 
     return str_path
 
@@ -503,8 +512,8 @@ def move(path: bytes, dest: bytes, replace: bool = False):
         basename = os.path.basename(bytestring_path(dest))
         dirname = os.path.dirname(bytestring_path(dest))
         tmp = tempfile.NamedTemporaryFile(
-            suffix=syspath(b".beets", prefix=False),
-            prefix=syspath(b"." + basename + b".", prefix=False),
+            suffix=".beets",
+            prefix=f".{os.fsdecode(basename)}.",
             dir=syspath(dirname),
             delete=False,
         )
@@ -557,7 +566,7 @@ def link(path: bytes, dest: bytes, replace: bool = False):
     except NotImplementedError:
         # raised on python >= 3.2 and Windows versions before Vista
         raise FilesystemError(
-            "OS does not support symbolic links." "link",
+            "OS does not support symbolic links.link",
             (path, dest),
             traceback.format_exc(),
         )
@@ -573,20 +582,24 @@ def hardlink(path: bytes, dest: bytes, replace: bool = False):
     if samefile(path, dest):
         return
 
-    if os.path.exists(syspath(dest)) and not replace:
+    # Dereference symlinks, expand "~", and convert relative paths to absolute
+    origin_path = Path(os.fsdecode(path)).expanduser().resolve()
+    dest_path = Path(os.fsdecode(dest)).expanduser().resolve()
+
+    if dest_path.exists() and not replace:
         raise FilesystemError("file exists", "rename", (path, dest))
     try:
-        os.link(syspath(path), syspath(dest))
+        dest_path.hardlink_to(origin_path)
     except NotImplementedError:
         raise FilesystemError(
-            "OS does not support hard links." "link",
+            "OS does not support hard links.link",
             (path, dest),
             traceback.format_exc(),
         )
     except OSError as exc:
         if exc.errno == errno.EXDEV:
             raise FilesystemError(
-                "Cannot hard link across devices." "link",
+                "Cannot hard link across devices.link",
                 (path, dest),
                 traceback.format_exc(),
             )
@@ -694,105 +707,87 @@ def sanitize_path(path: str, replacements: Replacements | None = None) -> str:
     return os.path.join(*comps)
 
 
-def truncate_path(path: AnyStr, length: int = MAX_FILENAME_LENGTH) -> AnyStr:
-    """Given a bytestring path or a Unicode path fragment, truncate the
-    components to a legal length. In the last component, the extension
-    is preserved.
+def truncate_str(s: str, length: int) -> str:
+    """Truncate the string to the given byte length.
+
+    If we end up truncating a unicode character in the middle (rendering it invalid),
+    it is removed:
+
+    >>> s = "🎹🎶"  # 8 bytes
+    >>> truncate_str(s, 6)
+    '🎹'
     """
-    comps = components(path)
+    return os.fsencode(s)[:length].decode(sys.getfilesystemencoding(), "ignore")
 
-    out = [c[:length] for c in comps]
-    base, ext = os.path.splitext(comps[-1])
-    if ext:
-        # Last component has an extension.
-        base = base[: length - len(ext)]
-        out[-1] = base + ext
 
-    return os.path.join(*out)
+def truncate_path(str_path: str) -> str:
+    """Truncate each path part to a legal length preserving the extension."""
+    max_length = get_max_filename_length()
+    path = Path(str_path)
+    parent_parts = [truncate_str(p, max_length) for p in path.parts[:-1]]
+    stem = truncate_str(path.stem, max_length - len(path.suffix))
+    return f"{Path(*parent_parts, stem)}{path.suffix}"
 
 
 def _legalize_stage(
-    path: str,
-    replacements: Replacements | None,
-    length: int,
-    extension: str,
-    fragment: bool,
-) -> tuple[BytesOrStr, bool]:
+    path: str, replacements: Replacements | None, extension: str
+) -> tuple[str, bool]:
     """Perform a single round of path legalization steps
-    (sanitation/replacement, encoding from Unicode to bytes,
-    extension-appending, and truncation). Return the path (Unicode if
-    `fragment` is set, `bytes` otherwise) and whether truncation was
-    required.
+    1. sanitation/replacement
+    2. appending the extension
+    3. truncation.
+
+    Return the path and whether truncation was required.
     """
     # Perform an initial sanitization including user replacements.
     path = sanitize_path(path, replacements)
-
-    # Encode for the filesystem.
-    if not fragment:
-        path = bytestring_path(path)  # type: ignore
 
     # Preserve extension.
     path += extension.lower()
 
     # Truncate too-long components.
     pre_truncate_path = path
-    path = truncate_path(path, length)
+    path = truncate_path(path)
 
     return path, path != pre_truncate_path
 
 
 def legalize_path(
-    path: str,
-    replacements: Replacements | None,
-    length: int,
-    extension: bytes,
-    fragment: bool,
-) -> tuple[BytesOrStr, bool]:
-    """Given a path-like Unicode string, produce a legal path. Return
-    the path and a flag indicating whether some replacements had to be
-    ignored (see below).
+    path: str, replacements: Replacements | None, extension: str
+) -> tuple[str, bool]:
+    """Given a path-like Unicode string, produce a legal path. Return the path
+    and a flag indicating whether some replacements had to be ignored (see
+    below).
 
-    The legalization process (see `_legalize_stage`) consists of
-    applying the sanitation rules in `replacements`, encoding the string
-    to bytes (unless `fragment` is set), truncating components to
-    `length`, appending the `extension`.
+    This function uses `_legalize_stage` function to legalize the path, see its
+    documentation for the details of what this involves. It is called up to
+    three times in case truncation conflicts with replacements (as can happen
+    when truncation creates whitespace at the end of the string, for example).
 
-    This function performs up to three calls to `_legalize_stage` in
-    case truncation conflicts with replacements (as can happen when
-    truncation creates whitespace at the end of the string, for
-    example). The limited number of iterations iterations avoids the
-    possibility of an infinite loop of sanitation and truncation
-    operations, which could be caused by replacement rules that make the
-    string longer. The flag returned from this function indicates that
-    the path has to be truncated twice (indicating that replacements
-    made the string longer again after it was truncated); the
-    application should probably log some sort of warning.
+    The limited number of iterations avoids the possibility of an infinite loop
+    of sanitation and truncation operations, which could be caused by
+    replacement rules that make the string longer.
+
+    The flag returned from this function indicates that the path has to be
+    truncated twice (indicating that replacements made the string longer again
+    after it was truncated); the application should probably log some sort of
+    warning.
     """
+    suffix = as_string(extension)
 
-    if fragment:
-        # Outputting Unicode.
-        extension = extension.decode("utf-8", "ignore")
-
-    first_stage_path, _ = _legalize_stage(
-        path, replacements, length, extension, fragment
+    first_stage, _ = os.path.splitext(
+        _legalize_stage(path, replacements, suffix)[0]
     )
-
-    # Convert back to Unicode with extension removed.
-    first_stage_path, _ = os.path.splitext(displayable_path(first_stage_path))
 
     # Re-sanitize following truncation (including user replacements).
-    second_stage_path, retruncated = _legalize_stage(
-        first_stage_path, replacements, length, extension, fragment
-    )
+    second_stage, truncated = _legalize_stage(first_stage, replacements, suffix)
 
-    # If the path was once again truncated, discard user replacements
+    if not truncated:
+        return second_stage, False
+
+    # If the path was truncated, discard user replacements
     # and run through one last legalization stage.
-    if retruncated:
-        second_stage_path, _ = _legalize_stage(
-            first_stage_path, None, length, extension, fragment
-        )
-
-    return second_stage_path, retruncated
+    return _legalize_stage(first_stage, None, suffix)[0], True
 
 
 def str2bool(value: str) -> bool:
@@ -814,7 +809,7 @@ def as_string(value: Any) -> str:
         return str(value)
 
 
-def plurality(objs: Sequence[T]) -> tuple[T, int]:
+def plurality(objs: Iterable[T]) -> tuple[T, int]:
     """Given a sequence of hashble objects, returns the object that
     is most common in the set and the its number of appearance. The
     sequence must contain at least one object.
@@ -825,13 +820,54 @@ def plurality(objs: Sequence[T]) -> tuple[T, int]:
     return c.most_common(1)[0]
 
 
+def get_most_common_tags(
+    items: Sequence[Item],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Extract the likely current metadata for an album given a list of its
+    items. Return two dictionaries:
+     - The most common value for each field.
+     - Whether each field's value was unanimous (values are booleans).
+    """
+    assert items  # Must be nonempty.
+
+    likelies = {}
+    consensus = {}
+    fields = [
+        "artist",
+        "album",
+        "albumartist",
+        "year",
+        "disctotal",
+        "mb_albumid",
+        "label",
+        "barcode",
+        "catalognum",
+        "country",
+        "media",
+        "albumdisambig",
+        "data_source",
+    ]
+    for field in fields:
+        values = [item.get(field) for item in items if item]
+        likelies[field], freq = plurality(values)
+        consensus[field] = freq == len(values)
+
+    # If there's an album artist consensus, use this for the artist.
+    if consensus["albumartist"] and likelies["albumartist"]:
+        likelies["artist"] = likelies["albumartist"]
+
+    return likelies, consensus
+
+
 # stdout and stderr as bytes
 class CommandOutput(NamedTuple):
     stdout: bytes
     stderr: bytes
 
 
-def command_output(cmd: list[BytesOrStr], shell: bool = False) -> CommandOutput:
+def command_output(
+    cmd: list[str] | list[bytes], shell: bool = False
+) -> CommandOutput:
     """Runs the command and returns its output after it has exited.
 
     Returns a CommandOutput. The attributes ``stdout`` and ``stderr`` contain
@@ -849,8 +885,6 @@ def command_output(cmd: list[BytesOrStr], shell: bool = False) -> CommandOutput:
     This replaces `subprocess.check_output` which can have problems if lots of
     output is sent to stderr.
     """
-    converted_cmd = [os.fsdecode(a) for a in cmd]
-
     devnull = subprocess.DEVNULL
 
     proc = subprocess.Popen(
@@ -865,22 +899,27 @@ def command_output(cmd: list[BytesOrStr], shell: bool = False) -> CommandOutput:
     if proc.returncode:
         raise subprocess.CalledProcessError(
             returncode=proc.returncode,
-            cmd=" ".join(converted_cmd),
+            cmd=" ".join(map(os.fsdecode, cmd)),
             output=stdout + stderr,
         )
     return CommandOutput(stdout, stderr)
 
 
-def max_filename_length(path: BytesOrStr, limit=MAX_FILENAME_LENGTH) -> int:
+@cache
+def get_max_filename_length() -> int:
     """Attempt to determine the maximum filename length for the
     filesystem containing `path`. If the value is greater than `limit`,
     then `limit` is used instead (to prevent errors when a filesystem
     misreports its capacity). If it cannot be determined (e.g., on
     Windows), return `limit`.
     """
+    if length := beets.config["max_filename_length"].get(int):
+        return length
+
+    limit = MAX_FILENAME_LENGTH
     if hasattr(os, "statvfs"):
         try:
-            res = os.statvfs(path)
+            res = os.statvfs(beets.config["directory"].as_str())
         except OSError:
             return limit
         return min(res[9], limit)
@@ -985,19 +1024,6 @@ def case_sensitive(path: bytes) -> bool:
         return not os.path.samefile(lower_sys, upper_sys)
 
 
-def raw_seconds_short(string: str) -> float:
-    """Formats a human-readable M:SS string as a float (number of seconds).
-
-    Raises ValueError if the conversion cannot take place due to `string` not
-    being in the right format.
-    """
-    match = re.match(r"^(\d+):([0-5]\d)$", string)
-    if not match:
-        raise ValueError("String not in M:SS format")
-    minutes, seconds = map(int, match.groups())
-    return float(minutes * 60 + seconds)
-
-
 def asciify_path(path: str, sep_replace: str) -> str:
     """Decodes all unicode characters in a path into ASCII equivalents.
 
@@ -1035,21 +1061,94 @@ def par_map(transform: Callable[[T], Any], items: Sequence[T]) -> None:
     pool.join()
 
 
-class cached_classproperty:
-    """A decorator implementing a read-only property that is *lazy* in
-    the sense that the getter is only invoked once. Subsequent accesses
-    through *any* instance use the cached result.
+class cached_classproperty(Generic[T]):
+    """Descriptor implementing cached class properties.
+
+    Provides class-level dynamic property behavior where the getter function is
+    called once per class and the result is cached for subsequent access. Unlike
+    instance properties, this operates on the class rather than instances.
     """
 
-    def __init__(self, getter):
-        self.getter = getter
-        self.cache = {}
+    cache: ClassVar[dict[tuple[type[object], str], object]] = {}
 
-    def __get__(self, instance, owner):
-        if owner not in self.cache:
-            self.cache[owner] = self.getter(owner)
+    name: str = ""
 
-        return self.cache[owner]
+    # Ideally, we would like to use `Callable[[type[T]], Any]` here,
+    # however, `mypy` is unable to see this as a **class** property, and thinks
+    # that this callable receives an **instance** of the object, failing the
+    # type check, for example:
+    # >>> class Album:
+    # >>>     @cached_classproperty
+    # >>>     def foo(cls):
+    # >>>         reveal_type(cls)  # mypy: revealed type is "Album"
+    # >>>         return cls.bar
+    #
+    #   Argument 1 to "cached_classproperty" has incompatible type
+    #   "Callable[[Album], ...]"; expected "Callable[[type[Album]], ...]"
+    #
+    # Therefore, we just use `Any` here, which is not ideal, but works.
+    def __init__(self, getter: Callable[..., T]) -> None:
+        """Initialize the descriptor with the property getter function."""
+        self.getter: Callable[..., T] = getter
+
+    def __set_name__(self, owner: object, name: str) -> None:
+        """Capture the attribute name this descriptor is assigned to."""
+        self.name = name
+
+    def __get__(self, instance: object, owner: type[object]) -> T:
+        """Compute and cache if needed, and return the property value."""
+        key: tuple[type[object], str] = owner, self.name
+        if key not in self.cache:
+            self.cache[key] = self.getter(owner)
+
+        return cast(T, self.cache[key])
+
+
+class LazySharedInstance(Generic[T]):
+    """A descriptor that provides access to a lazily-created shared instance of
+    the containing class, while calling the class constructor to construct a
+    new object works as usual.
+
+    ```
+    ID: int = 0
+
+    class Foo:
+        def __init__():
+            global ID
+
+            self.id = ID
+            ID += 1
+
+        def func(self):
+            print(self.id)
+
+        shared: LazySharedInstance[Foo] = LazySharedInstance()
+
+    a0 = Foo()
+    a1 = Foo.shared
+    a2 = Foo()
+    a3 = Foo.shared
+
+    a0.func()  # 0
+    a1.func()  # 1
+    a2.func()  # 2
+    a3.func()  # 1
+    ```
+    """
+
+    _instance: T | None = None
+
+    def __get__(self, instance: T | None, owner: type[T]) -> T:
+        if instance is not None:
+            raise RuntimeError(
+                "shared instances must be obtained from the class property, "
+                "not an instance"
+            )
+
+        if self._instance is None:
+            self._instance = owner()
+
+        return self._instance
 
 
 def get_module_tempdir(module: str) -> Path:

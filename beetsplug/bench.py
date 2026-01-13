@@ -17,10 +17,11 @@
 import cProfile
 import timeit
 
-from beets import importer, library, plugins, ui, vfs
+from beets import importer, library, plugins, ui
 from beets.autotag import match
 from beets.plugins import BeetsPlugin
 from beets.util.functemplate import Template
+from beetsplug._utils import vfs
 
 
 def aunique_benchmark(lib, prof):
@@ -125,7 +126,7 @@ class BenchmarkPlugin(BeetsPlugin):
             "-i", "--id", default=None, help="album ID to match against"
         )
         match_bench_cmd.func = lambda lib, opts, args: match_benchmark(
-            lib, opts.profile, ui.decargs(args), opts.id
+            lib, opts.profile, args, opts.id
         )
 
         return [aunique_bench_cmd, match_bench_cmd]

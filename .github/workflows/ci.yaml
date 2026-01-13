@@ -4,6 +4,12 @@ on:
   push:
     branches:
       - master
+
+concurrency:
+  # Cancel previous workflow run when a new commit is pushed to a feature branch
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 env:
   PY_COLORS: 1
 
@@ -14,17 +20,17 @@ jobs:
       fail-fast: false
       matrix:
         platform: [ubuntu-latest, windows-latest]
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
     runs-on: ${{ matrix.platform }}
     env:
-      IS_MAIN_PYTHON: ${{ matrix.python-version == '3.9' && matrix.platform == 'ubuntu-latest' }}
+      IS_MAIN_PYTHON: ${{ matrix.python-version == '3.10' && matrix.platform == 'ubuntu-latest' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install Python tools
-        uses: BrandonLWhite/pipx-install-action@v0.1.1
+        uses: BrandonLWhite/pipx-install-action@v1.0.3
       - name: Setup Python with poetry caching
         # poetry cache requires poetry to already be installed, weirdly
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
           cache: poetry
@@ -33,11 +39,19 @@ jobs:
         if: matrix.platform == 'ubuntu-latest'
         run: |
           sudo apt update
-          sudo apt install ffmpeg gobject-introspection libcairo2-dev libgirepository1.0-dev pandoc
+          sudo apt install --yes --no-install-recommends \
+            ffmpeg \
+            gobject-introspection \
+            gstreamer1.0-plugins-base \
+            python3-gst-1.0 \
+            libcairo2-dev \
+            libgirepository-2.0-dev \
+            pandoc \
+            imagemagick
 
       - name: Get changed lyrics files
         id: lyrics-update
-        uses: tj-actions/changed-files@v45
+        uses: tj-actions/changed-files@v46
         with:
           files: |
             beetsplug/lyrics.py
@@ -52,7 +66,7 @@ jobs:
       - if: ${{ env.IS_MAIN_PYTHON != 'true' }}
         name: Test without coverage
         run: |
-          poetry install --extras=autobpm --extras=lyrics
+          poetry install --without=lint --extras=autobpm --extras=lyrics --extras=replaygain --extras=reflink --extras=fetchart --extras=chroma --extras=sonosupdate
           poe test
 
       - if: ${{ env.IS_MAIN_PYTHON == 'true' }}
@@ -60,9 +74,15 @@ jobs:
         env:
           LYRICS_UPDATED: ${{ steps.lyrics-update.outputs.any_changed }}
         run: |
-          poetry install --extras=autobpm --extras=lyrics --extras=docs --extras=replaygain --extras=reflink
+          poetry install --extras=autobpm --extras=lyrics --extras=docs --extras=replaygain --extras=reflink --extras=fetchart --extras=chroma --extras=sonosupdate
           poe docs
           poe test-with-coverage
+
+      - if: ${{ !cancelled() }}
+        name: Upload test results to Codecov
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
 
       - if: ${{ env.IS_MAIN_PYTHON == 'true' }}
         name: Store the coverage report
@@ -78,15 +98,15 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Get the coverage report
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: coverage-report
 
       - name: Upload code coverage
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           files: ./coverage.xml
           use_oidc: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork) }}

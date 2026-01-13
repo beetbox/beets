@@ -2,16 +2,18 @@ Rewrite Plugin
 ==============
 
 The ``rewrite`` plugin lets you easily substitute values in your templates and
-path formats. Specifically, it is intended to let you *canonicalize* names
-such as artists: for example, perhaps you want albums from The Jimi Hendrix
+path formats. Specifically, it is intended to let you *canonicalize* names such
+as artists: for example, perhaps you want albums from The Jimi Hendrix
 Experience to be sorted into the same folder as solo Hendrix albums.
 
-To use field rewriting, first enable the ``rewrite`` plugin
-(see :ref:`using-plugins`).
-Then, make a ``rewrite:`` section in your config file to contain your rewrite
-rules. Each rule consists of a field name, a regular expression pattern, and a
-replacement value. Rules are written ``fieldname regex: replacement``.
-For example, this line implements the Jimi Hendrix example above::
+To use field rewriting, first enable the ``rewrite`` plugin (see
+:ref:`using-plugins`). Then, make a ``rewrite:`` section in your config file to
+contain your rewrite rules. Each rule consists of a field name, a regular
+expression pattern, and a replacement value. Rules are written ``fieldname
+regex: replacement``. For example, this line implements the Jimi Hendrix example
+above:
+
+::
 
     rewrite:
         artist The Jimi Hendrix Experience: Jimi Hendrix
@@ -21,7 +23,9 @@ would otherwise be "The Jimi Hendrix Experience".
 
 The pattern is a case-insensitive regular expression. This means you can use
 ordinary regular expression syntax to match multiple artists. For example, you
-might use::
+might use:
+
+::
 
     rewrite:
         artist .*jimi hendrix.*: Jimi Hendrix
@@ -31,8 +35,8 @@ As a convenience, the plugin applies patterns for the ``artist`` field to the
 every rule for ``artist`` and ``albumartist``.)
 
 A word of warning: This plugin theoretically only applies to templates and path
-formats; it initially does not modify files' metadata tags or the values
-tracked by beets' library database, but since it *rewrites all field lookups*,
-it modifies the file's metadata anyway. See comments in issue :bug:`2786`.
+formats; it initially does not modify files' metadata tags or the values tracked
+by beets' library database, but since it *rewrites all field lookups*, it
+modifies the file's metadata anyway. See comments in issue :bug:`2786`.
 
 As an alternative to this plugin the :doc:`/plugins/substitute` could be used.
