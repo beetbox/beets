@@ -14,12 +14,13 @@
 
 """An AURA server using Flask."""
 
+from __future__ import annotations
+
 import os
 import re
-from collections.abc import Mapping
 from dataclasses import dataclass
 from mimetypes import guess_type
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from flask import (
     Blueprint,
@@ -40,11 +41,16 @@ from beets.dbcore.query import (
     NotQuery,
     RegexpQuery,
     SlowFieldSort,
-    SQLiteType,
 )
-from beets.library import Album, Item, LibModel, Library
+from beets.library import Album, Item
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, _open_library
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+    from beets.dbcore.query import SQLiteType
+    from beets.library import LibModel, Library
 
 # Constants
 

@@ -337,15 +337,15 @@ class TestDataSourceDistance:
             _p("Original", "Original", 0.5, 1.0, True, MATCH, id="match"),
             _p("Original", "Other", 0.5, 1.0, True, MISMATCH, id="mismatch"),
             _p("Other", "Original", 0.5, 1.0, True, MISMATCH, id="mismatch"),
-            _p("Original", "unknown", 0.5, 1.0, True, MISMATCH, id="mismatch-unknown"),  # noqa: E501
-            _p("Original", None, 0.5, 1.0, True, MISMATCH, id="mismatch-no-info"),  # noqa: E501
+            _p("Original", "unknown", 0.5, 1.0, True, MISMATCH, id="mismatch-unknown"),
+            _p("Original", None, 0.5, 1.0, True, MISMATCH, id="mismatch-no-info"),
             _p(None, "Other", 0.5, 1.0, True, MISMATCH, id="mismatch-no-original-multiple-sources"),  # noqa: E501
             _p(None, "Other", 0.5, 1.0, False, MATCH, id="match-no-original-but-single-source"),  # noqa: E501
             _p("unknown", "unknown", 0.5, 1.0, True, MATCH, id="match-unknown"),
-            _p("Original", "Other", 1.0, 1.0, True, 0.25, id="mismatch-max-penalty"),  # noqa: E501
-            _p("Original", "Other", 0.5, 5.0, True, 0.3125, id="mismatch-high-weight"),  # noqa: E501
-            _p("Original", "Other", 0.0, 1.0, True, MATCH, id="match-no-penalty"),  # noqa: E501
-            _p("Original", "Other", 0.5, 0.0, True, MATCH, id="match-no-weight"),  # noqa: E501
+            _p("Original", "Other", 1.0, 1.0, True, 0.25, id="mismatch-max-penalty"),
+            _p("Original", "Other", 0.5, 5.0, True, 0.3125, id="mismatch-high-weight"),
+            _p("Original", "Other", 0.0, 1.0, True, MATCH, id="match-no-penalty"),
+            _p("Original", "Other", 0.5, 0.0, True, MATCH, id="match-no-weight"),
         ],
     )  # fmt: skip
     def test_distance(self, item, info, expected_distance):

@@ -642,11 +642,11 @@ class CommandBackend(Backend):
         cmd: list[str] = [self.command, "-o", "-s", "s"]
         if self.noclip:
             # Adjust to avoid clipping.
-            cmd = cmd + ["-k"]
+            cmd = [*cmd, "-k"]
         else:
             # Disable clipping warning.
-            cmd = cmd + ["-c"]
-        cmd = cmd + ["-d", str(int(target_level - 89))]
+            cmd = [*cmd, "-c"]
+        cmd = [*cmd, "-d", str(int(target_level - 89))]
         cmd = cmd + [syspath(i.path) for i in items]
 
         self._log.debug("analyzing {} files", len(items))
@@ -1105,7 +1105,7 @@ class AudioToolsBackend(Backend):
         # The first item is taken and opened to get the sample rate to
         # initialize the replaygain object. The object is used for all the
         # tracks in the album to get the album values.
-        item = list(task.items)[0]
+        item = next(iter(task.items))
         audiofile = self.open_audio_file(item)
         rg = self.init_replaygain(audiofile, item)
 
