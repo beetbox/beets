@@ -33,6 +33,7 @@ import beets
 import beets.ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.metadata_plugins import MetadataSourcePlugin
+from beets.util import unique_list
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
@@ -234,7 +235,8 @@ class BeatportObject:
         if "artists" in data:
             self.artists = [(x["id"], str(x["name"])) for x in data["artists"]]
         if "genres" in data:
-            self.genres = [str(x["name"]) for x in data["genres"]]
+            genre_list = [str(x["name"]) for x in data["genres"]]
+            self.genres = unique_list(genre_list)
 
     def artists_str(self) -> str | None:
         if self.artists is not None:
@@ -253,7 +255,6 @@ class BeatportRelease(BeatportObject):
     label_name: str | None
     category: str | None
     url: str | None
-    genre: str | None
 
     tracks: list[BeatportTrack] | None = None
 
@@ -263,7 +264,6 @@ class BeatportRelease(BeatportObject):
         self.catalog_number = data.get("catalogNumber")
         self.label_name = data.get("label", {}).get("name")
         self.category = data.get("category")
-        self.genre = data.get("genre")
 
         if "slug" in data:
             self.url = (
@@ -285,7 +285,6 @@ class BeatportTrack(BeatportObject):
     track_number: int | None
     bpm: str | None
     initial_key: str | None
-    genre: str | None
 
     def __init__(self, data: JSONDict):
         super().__init__(data)
@@ -306,11 +305,11 @@ class BeatportTrack(BeatportObject):
         self.bpm = data.get("bpm")
         self.initial_key = str((data.get("key") or {}).get("shortName"))
 
-        # Use 'subgenre' and if not present, 'genre' as a fallback.
-        if data.get("subGenres"):
-            self.genre = str(data["subGenres"][0].get("name"))
-        elif data.get("genres"):
-            self.genre = str(data["genres"][0].get("name"))
+        # Extract genres list from subGenres or genres
+        self.genres = unique_list(
+            str(x.get("name"))
+            for x in data.get("subGenres") or data.get("genres") or []
+        )
 
 
 class BeatportPlugin(MetadataSourcePlugin):
@@ -483,7 +482,7 @@ class BeatportPlugin(MetadataSourcePlugin):
             media="Digital",
             data_source=self.data_source,
             data_url=release.url,
-            genre=release.genre,
+            genres=release.genres,
             year=release_date.year if release_date else None,
             month=release_date.month if release_date else None,
             day=release_date.day if release_date else None,
@@ -508,7 +507,7 @@ class BeatportPlugin(MetadataSourcePlugin):
             data_url=track.url,
             bpm=track.bpm,
             initial_key=track.initial_key,
-            genre=track.genre,
+            genres=track.genres,
         )
 
     def _get_artist(self, artists):
