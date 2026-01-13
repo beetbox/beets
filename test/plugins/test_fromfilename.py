@@ -712,6 +712,37 @@ class TestFromFilename(PluginMixin):
             assert res.year == expected.year
             assert res.title == expected.title
 
+    @pytest.mark.parametrize(
+        "expected",
+        [
+            (
+                mock_item(path="/temp/A - track.wav", track=1),
+                mock_item(path="/temp/B - track.wav", track=2),
+                mock_item(path="/temp/C - track.wav", track=3),
+            ),
+            # Test with numbers
+            (
+                mock_item(path="/temp/A1 - track.wav", track=1),
+                mock_item(path="/temp/A2 - track.wav", track=2),
+                mock_item(path="/temp/B1 - track.wav", track=3),
+            ),
+            # Test out of order
+            (
+                mock_item(path="/temp/Z - track.wav", track=3),
+                mock_item(path="/temp/X - track.wav", track=1),
+                mock_item(path="/temp/Y - track.wav", track=2),
+            ),
+        ],
+    )
+    def test_alphanumeric_index(self, expected):
+        """Test parsing an alphanumeric index string."""
+        task = mock_task([mock_item(path=item.path) for item in expected])
+        f = FromFilenamePlugin()
+        f.filename_task(task, Session())
+        assert task.items[0].track == expected[0].track
+        assert task.items[1].track == expected[1].track
+        assert task.items[2].track == expected[2].track
+
     def test_no_changes(self):
         item = mock_item(
             path="/Folder/File.wav",

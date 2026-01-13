@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2016, Jan-Erik Dahlin
+# Copyright 2016, Jan-Erik Dahlin, Henry Oberholtzer.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -16,17 +16,22 @@
 (possibly also extract track and artist)
 """
 
+from __future__ import annotations
+
 import re
 from collections.abc import Iterator, MutableMapping, ValuesView
 from datetime import datetime
 from functools import cached_property
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from beets import config
-from beets.importer import ImportSession, ImportTask
-from beets.library import Item
 from beets.plugins import BeetsPlugin
 from beets.util import displayable_path
+
+if TYPE_CHECKING:
+    from beets.importer import ImportSession, ImportTask
+    from beets.library import Item
 
 # Filename field extraction patterns
 RE_TRACK_INFO = re.compile(
@@ -51,6 +56,8 @@ RE_TRACK_INFO = re.compile(
     """,
     re.VERBOSE | re.IGNORECASE,
 )
+
+RE_ALPHANUM_INDEX = re.compile(r"^[A-Z]{1,2}\d{,2}\b")
 
 # Catalog number extraction pattern
 RE_CATALOGNUM = re.compile(
@@ -180,14 +187,14 @@ class FromFilenamePlugin(BeetsPlugin):
         Once the information has been obtained and checked, it
         is applied to the items to improve later metadata lookup.
         """
-        # Create the list of items to process
+        # Retrieve the list of items to process
 
         items: list[Item] = task.items
 
         # If there's no missing data to parse
         if not self._check_missing_data(items):
             return
-
+        # Retrieve the path characteristics to check
         parent_folder, item_filenames = self._get_path_strings(items)
 
         album_matches = self._parse_album_info(parent_folder)
@@ -259,6 +266,8 @@ class FromFilenamePlugin(BeetsPlugin):
         self, item_filenames: dict[Item, str]
     ) -> dict[Item, FilenameMatch]:
         track_matches: dict[Item, FilenameMatch] = {}
+        # Check for alphanumeric indices
+        self._parse_alphanumeric_index(item_filenames)
         for item, filename in item_filenames.items():
             if m := self._check_user_matches(filename, self.file_patterns):
                 track_matches[item] = m
@@ -266,6 +275,48 @@ class FromFilenamePlugin(BeetsPlugin):
                 match = self._parse_track_info(filename)
                 track_matches[item] = match
         return track_matches
+
+    @staticmethod
+    def _parse_alphanumeric_index(item_filenames: dict[Item, str]) -> None:
+        """Before continuing to regular track matches, see if an alphanumeric
+        tracklist can be extracted. "A1, B1, B2" Sometimes these are followed
+        by a dash or dot and must be anchored to the start of the string.
+
+        All matched patterns are extracted, and replaced with integers.
+
+        Discs are not accounted for.
+        """
+
+        def match_index(filename: str) -> str:
+            m = RE_ALPHANUM_INDEX.match(filename)
+            if not m:
+                return ""
+            else:
+                return m.group()
+
+        # Extract matches for alphanumeric indexes
+        indexes: list[tuple[str, Item]] = [
+            (match_index(filename), item)
+            for item, filename in item_filenames.items()
+        ]
+        # If all the tracks do not start with a vinyl index, abort
+        if not all([i[0] for i in indexes]):
+            return
+
+        # Utility function for sorting
+        def index_key(x: tuple[str, Item]):
+            return x[0]
+
+        # If all have match, sort by the matched strings
+        indexes.sort(key=index_key)
+        # Iterate through all the filenames
+        for index, pair in enumerate(indexes):
+            match, item = pair
+            # Substitute the alnum index with an integer
+            new_filename = item_filenames[item].replace(
+                match, str(index + 1), 1
+            )
+            item_filenames[item] = new_filename
 
     @staticmethod
     def _parse_track_info(text: str) -> FilenameMatch:
