@@ -299,7 +299,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
                 identifier, includes=["releases", "artist-credits"]
             )
             title = recording.get("title")
-            artist_credit = recording.get("artist-credit", [])
+            artist_credit = recording.get("artist_credit", [])
             if artist_credit:
                 artist = artist_credit[0].get("artist", {}).get("name")
             else:
