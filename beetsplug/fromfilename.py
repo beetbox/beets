@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2016, Jan-Erik Dahlin
+# Copyright 2016, Jan-Erik Dahlin, Henry Oberholtzer.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -16,153 +16,550 @@
 (possibly also extract track and artist)
 """
 
-import os
-import re
+from __future__ import annotations
 
-from beets import plugins
+import re
+from collections.abc import Iterator, MutableMapping, ValuesView
+from datetime import datetime
+from functools import cached_property
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+from beets import config
+from beets.plugins import BeetsPlugin
 from beets.util import displayable_path
 
-# Filename field extraction patterns.
-PATTERNS = [
-    # Useful patterns.
-    (
-        r"^(?P<track>\d+)\.?\s*-\s*(?P<artist>.+?)\s*-\s*(?P<title>.+?)"
-        r"(\s*-\s*(?P<tag>.*))?$"
-    ),
-    r"^(?P<artist>.+?)\s*-\s*(?P<title>.+?)(\s*-\s*(?P<tag>.*))?$",
-    r"^(?P<track>\d+)\.?[\s_-]+(?P<title>.+)$",
-    r"^(?P<title>.+) by (?P<artist>.+)$",
-    r"^(?P<track>\d+).*$",
-    r"^(?P<title>.+)$",
-]
+if TYPE_CHECKING:
+    from beets.importer import ImportSession, ImportTask
+    from beets.library import Item
 
-# Titles considered "empty" and in need of replacement.
-BAD_TITLE_PATTERNS = [
-    r"^$",
-]
+# Filename field extraction patterns
+RE_TRACK_INFO = re.compile(
+    r"""
+    (?P<disc>\d+(?=[\.\-_]\d))?
+        # a disc must be followed by punctuation and a digit
+    [\.\-]{,1}
+        # disc punctuation
+    (?P<track>\d+)?
+        # match the track number
+    [\.\-_\s]*
+        # artist separators
+    (?P<artist>.+?(?=[\s_]*?[\.\-]|by.+))?
+        # artist match depends on title existing
+    [\.\-_\s]*
+    (?P<by>by)?
+        # if 'by' is found, artist and title will need to be swapped
+    [\.\-_\s]*
+        # title separators
+    (?P<title>.+)?
+        # match the track title
+    """,
+    re.VERBOSE | re.IGNORECASE,
+)
 
+RE_ALPHANUM_INDEX = re.compile(r"^[A-Z]{1,2}\d{,2}\b")
 
-def equal(seq):
-    """Determine whether a sequence holds identical elements."""
-    return len(set(seq)) <= 1
+# Catalog number extraction pattern
+RE_CATALOGNUM = re.compile(
+    r"""
+    [\(\[\{]
+        # starts with a bracket
+    (?!flac|mp3|wav)
+        # does not start with file format
+    (?P<catalognum>[\w\s]+)
+        # actual catalog number
+    (?<!flac|.mp3|.wav)
+        # does not end with file format
+    [\)\]\}]
+        # ends with a bracket
+    """,
+    re.VERBOSE | re.IGNORECASE,
+)
 
+RE_NAMED_SUBGROUP = re.compile(r"\(\?P\<\w+\>")
 
-def equal_fields(matchdict, field):
-    """Do all items in `matchdict`, whose values are dictionaries, have
-    the same value for `field`? (If they do, the field is probably not
-    the title.)
-    """
-    return equal(m[field] for m in matchdict.values())
+# Matches fields that are empty or only whitespace
+RE_BAD_FIELD = re.compile(r"^\s*$")
 
+# First priority for matching a year is a year surrounded
+# by brackets, dashes, or punctuation
+RE_YEAR_BRACKETED = re.compile(
+    r"[\(\[\{\-\_]\s*(?P<year>\d{4}).*?[\)\]\}\-\_,]"
+)
 
-def all_matches(names, pattern):
-    """If all the filenames in the item/filename mapping match the
-    pattern, return a dictionary mapping the items to dictionaries
-    giving the value for each named subpattern in the match. Otherwise,
-    return None.
-    """
-    matches = {}
-    for item, name in names.items():
-        m = re.match(pattern, name, re.IGNORECASE)
-        if m and m.groupdict():
-            # Only yield a match when the regex applies *and* has
-            # capture groups. Otherwise, no information can be extracted
-            # from the filename.
-            matches[item] = m.groupdict()
-        else:
-            return None
-    return matches
+# Look for a year at the start
+RE_YEAR_START = re.compile(r"^(?P<year>\d{4})")
 
+# Look for a year at the end
+RE_YEAR_END = re.compile(r"$(?P<year>\d{4})")
 
-def bad_title(title):
-    """Determine whether a given title is "bad" (empty or otherwise
-    meaningless) and in need of replacement.
-    """
-    for pat in BAD_TITLE_PATTERNS:
-        if re.match(pat, title, re.IGNORECASE):
-            return True
-    return False
+# Just look for four digits
+RE_YEAR_ANY = re.compile(r"(?P<year>\d{4})")
 
+# All year regexp in order of preference
+YEAR_REGEX = [RE_YEAR_BRACKETED, RE_YEAR_START, RE_YEAR_END, RE_YEAR_ANY]
 
-def apply_matches(d, log):
-    """Given a mapping from items to field dicts, apply the fields to
-    the objects.
-    """
-    some_map = list(d.values())[0]
-    keys = some_map.keys()
+RE_MEDIA_TYPE = re.compile(
+    r"""
+    [\(\[\{].*?
+    ((?P<vinyl>vinyl)|
+    (?P<cd>cd)|
+    (?P<web>web)|
+    (?P<cassette>cassette))
+    .*?[\)\]\}]
+    """,
+    re.VERBOSE | re.IGNORECASE,
+)
 
-    # Only proceed if the "tag" field is equal across all filenames.
-    if "tag" in keys and not equal_fields(d, "tag"):
-        return
+RE_VARIOUS = re.compile(r"va(rious)?(\sartists)?", re.IGNORECASE)
 
-    # Given both an "artist" and "title" field, assume that one is
-    # *actually* the artist, which must be uniform, and use the other
-    # for the title. This, of course, won't work for VA albums.
-    # Only check for "artist": patterns containing it, also contain "title"
-    if "artist" in keys:
-        if equal_fields(d, "artist"):
-            artist = some_map["artist"]
-            title_field = "title"
-        elif equal_fields(d, "title"):
-            artist = some_map["title"]
-            title_field = "artist"
-        else:
-            # Both vary. Abort.
-            return
+RE_SPLIT = re.compile(r"[\-\_]+")
 
-        for item in d:
-            if not item.artist:
-                item.artist = artist
-                log.info("Artist replaced with: {.artist}", item)
-    # otherwise, if the pattern contains "title", use that for title_field
-    elif "title" in keys:
-        title_field = "title"
-    else:
-        title_field = None
-
-    # Apply the title and track, if any.
-    for item in d:
-        if title_field and bad_title(item.title):
-            item.title = str(d[item][title_field])
-            log.info("Title replaced with: {.title}", item)
-
-        if "track" in d[item] and item.track == 0:
-            item.track = int(d[item]["track"])
-            log.info("Track replaced with: {.track}", item)
+RE_BRACKETS = re.compile(r"[\(\[\{].*?[\)\]\}]")
 
 
-# Plugin structure and hook into import process.
+class FilenameMatch(MutableMapping[str, str | None]):
+    def __init__(self, matches: dict[str, str] | None = None) -> None:
+        self._matches: dict[str, str] = {}
+        if matches:
+            for key, value in matches.items():
+                if value is not None:
+                    self._matches[key.lower()] = str(value).strip()
+
+    def __getitem__(self, key: str) -> str | None:
+        return self._matches.get(key, None)
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self._matches)
+
+    def __len__(self) -> int:
+        return len(self._matches)
+
+    def __setitem__(self, key: str, value: str | None) -> None:
+        if value:
+            self._matches[key] = value.strip()
+
+    def __delitem__(self, key: str) -> None:
+        del self._matches[key]
+
+    def values(self) -> ValuesView[str | None]:
+        return self._matches.values()
 
 
-class FromFilenamePlugin(plugins.BeetsPlugin):
-    def __init__(self):
+class FromFilenamePlugin(BeetsPlugin):
+    def __init__(self) -> None:
         super().__init__()
+        self.config.add(
+            {
+                "fields": [
+                    "artist",
+                    "album",
+                    "albumartist",
+                    "catalognum",
+                    "disc",
+                    "media",
+                    "title",
+                    "track",
+                    "year",
+                ],
+                "patterns": {"folder": [], "file": []},
+                "ignore_dirs": [],
+            }
+        )
+        self.fields = set(self.config["fields"].as_str_seq())
+        self.file_patterns = self._user_pattern_to_regex(
+            self.config["patterns"]["file"].as_str_seq()
+        )
+        self.folder_patterns = self._user_pattern_to_regex(
+            self.config["patterns"]["folder"].as_str_seq()
+        )
+        self.session_fields: set[str] = set()
         self.register_listener("import_task_start", self.filename_task)
 
-    def filename_task(self, task, session):
-        """Examine each item in the task to see if we can extract a title
-        from the filename. Try to match all filenames to a number of
-        regexps, starting with the most complex patterns and successively
-        trying less complex patterns. As soon as all filenames match the
-        same regex we can make an educated guess of which part of the
-        regex that contains the title.
+    @cached_property
+    def ignored_directories(self) -> set[str]:
+        return set([p.lower() for p in self.config["ignore_dirs"].as_str_seq()])
+
+    def filename_task(self, task: ImportTask, session: ImportSession) -> None:
+        """Examines all files in the given import task for any missing
+        information it can gather from the file and folder names.
+
+        Once the information has been obtained and checked, it
+        is applied to the items to improve later metadata lookup.
         """
-        items = task.items if task.is_album else [task.item]
+        # Retrieve the list of items to process
 
-        # Look for suspicious (empty or meaningless) titles.
-        missing_titles = sum(bad_title(i.title) for i in items)
+        items: list[Item] = task.items
 
-        if missing_titles:
-            # Get the base filenames (no path or extension).
-            names = {}
-            for item in items:
-                path = displayable_path(item.path)
-                name, _ = os.path.splitext(os.path.basename(path))
-                names[item] = name
+        # If there's no missing data to parse
+        if not self._check_missing_data(items):
+            return
+        # Retrieve the path characteristics to check
+        parent_folder, item_filenames = self._get_path_strings(items)
 
-            # Look for useful information in the filenames.
-            for pattern in PATTERNS:
-                self._log.debug(f"Trying pattern: {pattern}")
-                d = all_matches(names, pattern)
-                if d:
-                    apply_matches(d, self._log)
+        album_matches = self._parse_album_info(parent_folder)
+        # Look for useful information in the filenames.
+        track_matches = self._build_track_matches(item_filenames)
+        # Make sure we got the fields right
+        self._sanity_check_matches(album_matches, track_matches)
+        # Apply the information
+        self._apply_matches(album_matches, track_matches)
+
+    def _check_missing_data(self, items: list[Item]) -> bool:
+        """Look for what fields are missing data on the items.
+        Compare each field in self.fields to the fields on the
+        item.
+
+        If all items have it, remove it from fields.
+
+        If any items are missing it, keep it on the fields.
+
+        If no fields are detect that need to be processed,
+        return false to shortcut the plugin.
+        """
+        self.session_fields = set({})
+        for field in self.fields:
+            # If any field is a bad field
+            if any([True for item in items if self._bad_field(item[field])]):
+                self.session_fields.add(field)
+        # If all fields have been removed, there is nothing to do
+        if not len(self.session_fields):
+            return False
+        return True
+
+    def _user_pattern_to_regex(
+        self, patterns: list[str]
+    ) -> list[re.Pattern[str]]:
+        """Compile user patterns into a list of usable regex
+        patterns. Catches errors are continues without bad regex patterns.
+        """
+        return [
+            re.compile(regexp)
+            for p in patterns
+            if (regexp := self._parse_user_pattern_strings(p))
+        ]
+
+    def _get_path_strings(
+        self, items: list[Item]
+    ) -> tuple[str, dict[Item, str]]:
+        parent_folder: str = ""
+        filenames: dict[Item, str] = {}
+        for item in items:
+            path: Path = Path(displayable_path(item.path))
+            filename = path.stem
+            filenames[item] = filename
+            if not parent_folder:
+                parent_folder = path.parent.stem
+        if parent_folder.lower() in self.ignored_directories:
+            parent_folder = ""
+        return parent_folder, filenames
+
+    def _check_user_matches(
+        self, text: str, patterns: list[re.Pattern[str]]
+    ) -> FilenameMatch:
+        for p in patterns:
+            if usermatch := p.fullmatch(text):
+                return FilenameMatch(usermatch.groupdict())
+        return FilenameMatch()
+
+    def _build_track_matches(
+        self, item_filenames: dict[Item, str]
+    ) -> dict[Item, FilenameMatch]:
+        track_matches: dict[Item, FilenameMatch] = {}
+        # Check for alphanumeric indices
+        self._parse_alphanumeric_index(item_filenames)
+        for item, filename in item_filenames.items():
+            if m := self._check_user_matches(filename, self.file_patterns):
+                track_matches[item] = m
+            else:
+                match = self._parse_track_info(filename)
+                track_matches[item] = match
+        return track_matches
+
+    @staticmethod
+    def _parse_alphanumeric_index(item_filenames: dict[Item, str]) -> None:
+        """Before continuing to regular track matches, see if an alphanumeric
+        tracklist can be extracted. "A1, B1, B2" Sometimes these are followed
+        by a dash or dot and must be anchored to the start of the string.
+
+        All matched patterns are extracted, and replaced with integers.
+
+        Discs are not accounted for.
+        """
+
+        def match_index(filename: str) -> str:
+            m = RE_ALPHANUM_INDEX.match(filename)
+            if not m:
+                return ""
+            else:
+                return m.group()
+
+        # Extract matches for alphanumeric indexes
+        indexes: list[tuple[str, Item]] = [
+            (match_index(filename), item)
+            for item, filename in item_filenames.items()
+        ]
+        # If all the tracks do not start with a vinyl index, abort
+        if not all([i[0] for i in indexes]):
+            return
+
+        # Utility function for sorting
+        def index_key(x: tuple[str, Item]):
+            return x[0]
+
+        # If all have match, sort by the matched strings
+        indexes.sort(key=index_key)
+        # Iterate through all the filenames
+        for index, pair in enumerate(indexes):
+            match, item = pair
+            # Substitute the alnum index with an integer
+            new_filename = item_filenames[item].replace(
+                match, str(index + 1), 1
+            )
+            item_filenames[item] = new_filename
+
+    @staticmethod
+    def _parse_track_info(text: str) -> FilenameMatch:
+        match = RE_TRACK_INFO.match(text)
+        assert match is not None
+        trackmatch = FilenameMatch(match.groupdict())
+        # if the phrase "by" is matched, swap artist and title
+        if trackmatch["by"]:
+            artist = trackmatch["title"]
+            trackmatch["title"] = trackmatch["artist"]
+            trackmatch["artist"] = artist
+            # remove that key
+            del trackmatch["by"]
+        # if all fields except `track` are none
+        # set title to track number as well
+        # we can't be sure if it's actually the track number
+        # or track title
+        track = match.group("track")
+        if set(trackmatch.values()) == {track}:
+            trackmatch["title"] = track
+
+        return trackmatch
+
+    def _parse_album_info(self, text: str) -> FilenameMatch:
+        # Check if a user pattern matches
+        if m := self._check_user_matches(text, self.folder_patterns):
+            return m
+        matches = FilenameMatch()
+        # Start with the extra fields to make parsing
+        # the album artist and artist field easier
+        year, span = self._parse_year(text)
+        if year:
+            # Remove it from the string if found
+            text = self._mutate_string(text, span)
+            matches["year"] = year
+
+        # Look for the catalog number, it must be in brackets
+        # It will not contain the filetype, flac, mp3, wav, etc
+        catalognum, span = self._parse_catalognum(text)
+        if catalognum:
+            text = self._mutate_string(text, span)
+            matches["catalognum"] = catalognum
+        # Look for a media type
+        media, span = self._parse_media(text)
+        if media:
+            text = self._mutate_string(text, span)
+            matches["media"] = media
+
+        # Remove anything left within brackets
+        brackets = RE_BRACKETS.search(text)
+        while brackets:
+            span = brackets.span()
+            text = self._mutate_string(text, span)
+            brackets = RE_BRACKETS.search(text)
+        # Remaining text used for album, albumartist
+        album, albumartist = self._parse_album_and_albumartist(text)
+        matches["album"] = album
+        matches["albumartist"] = albumartist
+
+        return matches
+
+    def _apply_matches(
+        self,
+        album_match: FilenameMatch,
+        track_matches: dict[Item, FilenameMatch],
+    ) -> None:
+        """Apply all valid matched fields to all items in the match dictionary."""
+        match = dict(album_match._matches)
+        for item in track_matches:
+            match.update(track_matches[item]._matches)
+            found_data: dict[str, int | str] = {}
+            self._log.debug(f"Attempting keys: {match.keys()}")
+            for key in match.keys():
+                if key in self.session_fields:
+                    old_value = item.get(key)
+                    new_value = match[key]
+                    if self._bad_field(old_value) and new_value:
+                        found_data[key] = new_value
+            self._log.info(f"Item updated with: {found_data.items()}")
+            item.update(found_data)
+
+    @staticmethod
+    def _parse_album_and_albumartist(
+        text: str,
+    ) -> tuple[str | None, str | None]:
+        """Takes the remaining string and splits it along common dividers.
+        Assumes the first field to be the albumartist and the last field to be the
+        album. Checks against various artist fields.
+        """
+        possible_albumartist = None
+        possible_album = None
+        # What is left we can assume to contain the title and artist
+        remaining = [
+            f for field in RE_SPLIT.split(text) if (f := field.strip())
+        ]
+        if remaining:
+            # If two fields remain, assume artist and album artist
+            if len(remaining) == 2:
+                possible_albumartist = remaining[0]
+                possible_album = remaining[1]
+                # Look for known album artists
+                # VA, Various, Vartious Artists will all result in
+                # using the beets VA default for album artist name
+                # assume the artist comes before the title in most situations
+                if RE_VARIOUS.match(possible_album):
+                    possible_album = possible_albumartist
+                    possible_albumartist = config["va_name"].as_str()
+                elif RE_VARIOUS.match(possible_albumartist):
+                    possible_albumartist = config["va_name"].as_str()
+            else:
+                # If one field remains, assume album title
+                possible_album = remaining[0].strip()
+        return possible_album, possible_albumartist
+
+    @staticmethod
+    def _parse_year(text: str) -> tuple[str | None, tuple[int, int]]:
+        """The year will be a four digit number. The search goes
+        through a list of ordered patterns to try and find the year.
+        To be a valid year, it must be less than the current year.
+        """
+        current_year = datetime.now().year
+        year = None
+        span = (0, 0)
+        for exp in YEAR_REGEX:
+            match = exp.search(text)
+            if not match:
+                continue
+            year_candidate = match.group("year")
+            # If the year is matched and not in the future
+            if year_candidate and int(year_candidate) <= current_year:
+                year = year_candidate
+                span = match.span()
+                break
+        return year, span
+
+    @staticmethod
+    def _parse_media(text: str) -> tuple[str | None, tuple[int, int]]:
+        """Look for the media type, we are only interested in a few common
+        types - CD, Vinyl, Cassette or WEB. To avoid overreach, in the
+        case of titles containing a medium, only searches for media types
+        within a pair of brackets.
+        """
+        mappings = {
+            "cd": "CD",
+            "vinyl": "Vinyl",
+            "web": "Digital Media",
+            "cassette": "Cassette",
+        }
+        match = RE_MEDIA_TYPE.search(text)
+        if match:
+            media = None
+            for key, value in match.groupdict().items():
+                if value:
+                    media = mappings[key]
+            return media, match.span()
+        return None, (0, 0)
+
+    @staticmethod
+    def _parse_catalognum(text: str) -> tuple[str | None, tuple[int, int]]:
+        match = RE_CATALOGNUM.search(text)
+        # assert that it cannot be mistaken for a media type
+        if match and not RE_MEDIA_TYPE.match(match[0]):
+            return match.group("catalognum"), match.span()
+        return None, (0, 0)
+
+    def _parse_user_pattern_strings(self, text: str) -> str | None:
+        # escape any special characters
+        fields: list[str] = [
+            s.lower() for s in re.findall(r"\$([a-zA-Z\_]+)", text)
+        ]
+        if not fields:
+            # if there are no usable fields
+            return None
+        pattern = re.escape(text)
+        for f in fields:
+            pattern = re.sub(rf"\\\${f}", f"(?P<{f}>.+)", pattern)
+            self.fields.add(f)
+        return pattern
+
+    @staticmethod
+    def _mutate_string(text: str, span: tuple[int, int]) -> str:
+        """Replace a matched field with a seperator"""
+        start, end = span
+        text = text[:start] + "-" + text[end:]
+        return text
+
+    def _sanity_check_matches(
+        self,
+        album_match: FilenameMatch,
+        track_matches: dict[Item, FilenameMatch],
+    ) -> None:
+        """Check to make sure data is coherent between
+        track and album matches. Largely looking to see
+        if the arist and album artist fields are properly
+        identified.
+        """
+
+        def swap_artist_title(tracks: list[FilenameMatch]) -> None:
+            for track in tracks:
+                artist = track["title"]
+                track["title"] = track["artist"]
+                track["artist"] = artist
+            # swap the track titles and track artists
+            self._log.info("Swapped title and artist fields.")
+
+        # None of this logic applies if there's only one track
+        if len(track_matches) < 2:
+            return
+
+        tracks: list[FilenameMatch] = list(track_matches.values())
+        album_artist = album_match["albumartist"]
+        one_artist = self._equal_fields(tracks, "artist")
+        one_title = self._equal_fields(tracks, "title")
+
+        if not album_artist or album_artist != config["va_name"].as_str():
+            if one_artist and not one_title:
+                # All the artist fields match, and the title fields don't
+                # It's probably the artist
+                return
+            elif one_title and not one_artist and not album_artist:
+                # If the track titles match, and there's no album
+                # artist to check on
+                swap_artist_title(tracks)
+            elif album_artist:
+                # The artist fields don't match, and the title fields don't match
+                # If the albumartist field matches any track, then we know
+                # that the track field is likely the artist field.
+                # Sometimes an album has a presenter credited
+                track_titles = [str(t["title"]).upper() for t in tracks]
+                if album_artist and album_artist.upper() in track_titles:
+                    swap_artist_title(tracks)
+        return
+
+    @staticmethod
+    def _equal_fields(dictionaries: list[FilenameMatch], field: str) -> bool:
+        """Checks if all values of a field on a dictionary match."""
+        return len(set(d[field] for d in dictionaries)) <= 1
+
+    @staticmethod
+    def _bad_field(field: str | int) -> bool:
+        """Determine whether a given title is "bad" (empty or otherwise
+        meaningless) and in need of replacement.
+        """
+        if isinstance(field, int):
+            return True if field <= 0 else False
+        return True if RE_BAD_FIELD.match(field) else False
