@@ -247,8 +247,9 @@ def _preferred_release_event(
     for country in preferred_countries:
         for event in release.get("release-events", {}):
             try:
-                if country in event["area"]["iso-3166-1-codes"]:
-                    return country, event["date"]
+                if area := event.get("area"):
+                    if country in area["iso-3166-1-codes"]:
+                        return country, event["date"]
             except KeyError:
                 pass
 
