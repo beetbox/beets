@@ -10,9 +10,9 @@ Installation
 ------------
 
 This plugin can use one of many backends to compute the ReplayGain values:
-GStreamer, mp3gain (and its cousin, aacgain), Python Audio Tools or ffmpeg.
-ffmpeg and mp3gain can be easier to install. mp3gain supports less audio formats
-than the other backend.
+GStreamer, mp3gain (and its cousins, aacgain and mp3rgain), Python Audio Tools
+or ffmpeg. ffmpeg and mp3gain can be easier to install. mp3gain supports fewer
+audio formats than the other backends.
 
 Once installed, this plugin analyzes all files during the import process. This
 can be a slow process; to instead analyze after the fact, disable automatic
@@ -51,22 +51,32 @@ configuration file:
 
 The GStreamer backend does not support parallel analysis.
 
-mp3gain and aacgain
-~~~~~~~~~~~~~~~~~~~
+mp3gain, aacgain, and mp3rgain
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In order to use this backend, you will need to install the mp3gain_ command-line
-tool or the aacgain_ fork thereof. Here are some hints:
+tool, the aacgain_ fork, or mp3rgain_. Here are some hints:
 
-- On Mac OS X, you can use Homebrew_. Type ``brew install aacgain``.
+- On Mac OS X, you can use Homebrew_. Type ``brew install aacgain`` or
+  ``brew install mp3rgain``.
 - On Linux, mp3gain_ is probably in your repositories. On Debian or Ubuntu, for
-  example, you can run ``apt-get install mp3gain``.
-- On Windows, download and install the original mp3gain_.
+  example, you can run ``apt-get install mp3gain``. Alternatively, mp3rgain is
+  available via Nix (``nix-env -iA nixpkgs.mp3rgain``) or AUR for Arch Linux.
+- On Windows, download and install mp3rgain_ (recommended) or the original
+  mp3gain_.
+
+mp3rgain_ is a modern Rust rewrite of mp3gain that also supports AAC/M4A files.
+It addresses security vulnerabilities (CVE-2021-34085, CVE-2019-18359) present
+in the original mp3gain and works on modern systems including Windows 11 and
+macOS with Apple Silicon.
 
 .. _aacgain: https://aacgain.altosdesign.com
 
 .. _homebrew: https://brew.sh
 
 .. _mp3gain: http://mp3gain.sourceforge.net/download.php
+
+.. _mp3rgain: https://github.com/M-Igashi/mp3rgain
 
 Then, enable the plugin (see :ref:`using-plugins`) and specify the "command"
 backend in your configuration file:
@@ -144,8 +154,8 @@ file. The available options are:
 
 These options only work with the "command" backend:
 
-- **command**: The path to the ``mp3gain`` or ``aacgain`` executable (if beets
-  cannot find it by itself). For example:
+- **command**: The path to the ``mp3rgain``, ``mp3gain``, or ``aacgain``
+  executable (if beets cannot find it by itself). For example:
   ``/Applications/MacMP3Gain.app/Contents/Resources/aacgain``. Default: Search
   in your ``$PATH``.
 - **noclip**: Reduce the amount of ReplayGain adjustment to whatever amount

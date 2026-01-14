@@ -565,7 +565,7 @@ class CommandBackend(Backend):
                 )
         else:
             # Check whether the program is in $PATH.
-            for cmd in ("mp3gain", "aacgain"):
+            for cmd in ("mp3rgain", "mp3gain", "aacgain"):
                 try:
                     call([cmd, "-v"], self._log)
                     self.command = cmd
@@ -573,7 +573,7 @@ class CommandBackend(Backend):
                     pass
         if not self.command:
             raise FatalReplayGainError(
-                "no replaygain command found: install mp3gain or aacgain"
+                "no replaygain command found: install mp3rgain, mp3gain, or aacgain"
             )
 
         self.noclip = config["noclip"].get(bool)
@@ -608,10 +608,18 @@ class CommandBackend(Backend):
 
     def format_supported(self, item: Item) -> bool:
         """Checks whether the given item is supported by the selected tool."""
-        if "mp3gain" in self.command and item.format != "MP3":
-            return False
-        elif "aacgain" in self.command and item.format not in ("MP3", "AAC"):
-            return False
+        # Get the base name of the command for comparison
+        cmd_name = os.path.basename(self.command).lower()
+        
+        if cmd_name.startswith("mp3rgain"):
+            # mp3rgain supports MP3 and AAC/M4A formats
+            return item.format in ("MP3", "AAC")
+        elif cmd_name.startswith("aacgain"):
+            # aacgain supports MP3 and AAC formats
+            return item.format in ("MP3", "AAC")
+        elif cmd_name.startswith("mp3gain"):
+            # mp3gain only supports MP3
+            return item.format == "MP3"
         return True
 
     def compute_gain(
