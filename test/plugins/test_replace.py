@@ -175,7 +175,7 @@ class TestReplace:
 
     def test_confirm_replacement_yes(self, monkeypatch):
         src = Path(_common.RSRC.decode()) / "full.mp3"
-        monkeypatch.setattr("builtins.input", lambda _: "YES    ")
+        monkeypatch.setattr("builtins.input", always("yes"))
 
         class Song:
             path = str(src).encode()
@@ -186,7 +186,7 @@ class TestReplace:
 
     def test_confirm_replacement_no(self, monkeypatch):
         src = Path(_common.RSRC.decode()) / "full.mp3"
-        monkeypatch.setattr("builtins.input", lambda _: "test123")
+        monkeypatch.setattr("builtins.input", always("no"))
 
         class Song:
             path = str(src).encode()
