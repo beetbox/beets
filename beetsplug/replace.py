@@ -1,13 +1,18 @@
+from __future__ import annotations
+
 import optparse
 import shutil
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import mediafile
 
 from beets import ui, util
 from beets.library import Item, Library
-from beets.library.exceptions import FileOperationError
 from beets.plugins import BeetsPlugin
+
+if TYPE_CHECKING:
+    from beets.library import Item, Library
 
 
 class ReplacePlugin(BeetsPlugin):

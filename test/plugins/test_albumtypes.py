@@ -14,11 +14,16 @@
 
 """Tests for the 'albumtypes' plugin."""
 
-from collections.abc import Sequence
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from beets.test.helper import PluginTestCase
 from beetsplug.albumtypes import AlbumTypesPlugin
 from beetsplug.musicbrainz import VARIOUS_ARTISTS_ID
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 class AlbumTypesPluginTest(PluginTestCase):
