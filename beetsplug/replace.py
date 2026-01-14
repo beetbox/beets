@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import optparse
 import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -12,6 +11,8 @@ from beets.library import Item, Library
 from beets.plugins import BeetsPlugin
 
 if TYPE_CHECKING:
+    import optparse
+
     from beets.library import Item, Library
 
 

@@ -1,18 +1,25 @@
+from __future__ import annotations
+
 import optparse
 import shutil
-from collections.abc import Generator
 from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
 import pytest
 from mediafile import MediaFile
 
 from beets import ui
-from beets.library import Item, Library
+from beets.library import Item
 from beets.library.exceptions import WriteError
 from beets.test import _common
 from beets.test.helper import TestHelper, capture_log
 from beetsplug.replace import ReplacePlugin
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from beets.library import Library
 
 replace = ReplacePlugin()
 
