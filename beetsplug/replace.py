@@ -101,7 +101,9 @@ class ReplacePlugin(BeetsPlugin):
             f"-> {util.displayable_path(original_file_path)}"
         )
 
-        return ui.input_yn("Are you sure you want to replace this track (y/n)?")
+        return ui.input_yn(
+            "Are you sure you want to replace this track (y/n)?", require=True
+        )
 
     def replace_file(self, new_file_path: Path, song: Item) -> None:
         """Replace the existing file with the new one."""
