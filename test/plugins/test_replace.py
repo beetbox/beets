@@ -11,7 +11,7 @@ from beets import ui
 from beets.library import Item, Library
 from beets.library.exceptions import WriteError
 from beets.test import _common
-from beets.test.helper import TestHelper
+from beets.test.helper import TestHelper, capture_log
 from beetsplug.replace import ReplacePlugin
 
 replace = ReplacePlugin()
@@ -223,8 +223,11 @@ class TestReplace:
         item = Item.from_path(mp3_file)
         library.add(item)
 
-        with pytest.raises(ui.UserError):
+        with capture_log() as logs:
             replace.replace_file(opus_file, item)
+
+        # Assert that a writing error was logged
+        assert next(m for m in logs if m.startswith("error writing"))
 
     def test_replace_file(
         self, mp3_file: Path, opus_file: Path, library: Library
@@ -238,14 +241,19 @@ class TestReplace:
         item = Item.from_path(mp3_file)
         library.add(item)
 
+        item.mtime = 0
+        item.store()
+
         replace.replace_file(opus_file, item)
 
         # Check that the file has been replaced.
         assert opus_file.exists()
         assert not mp3_file.exists()
 
-        # Check that the database path has been updated.
+        # Check that the database path and mtime have been updated.
+        item.load()
         assert item.path == bytes(opus_file)
+        assert item.mtime > 0
 
         # Check that the new file has the old file's metadata.
         new_mediafile = MediaFile(opus_file)

@@ -118,12 +118,8 @@ class ReplacePlugin(BeetsPlugin):
 
         # Update the path to point to the new file.
         song.path = util.bytestring_path(dest)
-        song.store()
 
-        # Write the metadata in the database to the song file's tags.
-        try:
-            song.write()
-        except FileOperationError as e:
-            raise ui.UserError(f"Error writing metadata to file: {e}")
-
-        ui.print_("Replacement successful.")
+        # Synchronise the new file with the database. This copies metadata from the
+        # Item to the new file (i.e. title, artist, album, etc.),
+        # and then from the Item to the database (i.e. path and mtime).
+        song.try_sync(write=True, move=False)
