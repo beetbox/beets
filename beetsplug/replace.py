@@ -94,12 +94,8 @@ class ReplacePlugin(BeetsPlugin):
             f"\nReplacing: {util.displayable_path(new_file_path)} "
             f"-> {util.displayable_path(original_file_path)}"
         )
-        decision: str = (
-            input("Are you sure you want to replace this track? (y/N): ")
-            .strip()
-            .casefold()
-        )
-        return decision in {"yes", "y"}
+
+        return ui.input_yn("Are you sure you want to replace this track (y/n)?")
 
     def replace_file(self, new_file_path: Path, song: Item) -> None:
         """Replace the existing file with the new one."""
@@ -121,7 +117,7 @@ class ReplacePlugin(BeetsPlugin):
                 raise ui.UserError(f"Could not delete original file: {e}")
 
         # Update the path to point to the new file.
-        song.path = str(dest).encode()
+        song.path = util.bytestring_path(dest)
         song.store()
 
         # Write the metadata in the database to the song file's tags.
