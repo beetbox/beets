@@ -15,10 +15,13 @@
 """Tests for MusicBrainz API wrapper."""
 
 import unittest
+import uuid
 from typing import ClassVar
 from unittest import mock
 
 import pytest
+import requests
+import responses
 
 from beets import config
 from beets.library import Item
@@ -1106,3 +1109,34 @@ class TestMusicBrainzPlugin(PluginMixin):
         assert len(candidates) == 1
         assert candidates[0].tracks[0].track_id == self.RECORDING["id"]
         assert candidates[0].album == "hi"
+
+    @responses.activate
+    def test_import_handles_404_gracefully(self, mb):
+        id_ = uuid.uuid4()
+        params = {"fmt": "json", "inc": "+".join(musicbrainz.RELEASE_INCLUDES)}
+        responses.get(
+            url=f"https://musicbrainz.org/ws/2/release/{id_}",
+            status=404,
+            body="",
+            match=[responses.matchers.query_param_matcher(params)],
+        )
+        res = mb.album_for_id(str(id_))
+        assert res is None
+
+    def test_import_propagates_non_404_errors(self, mb):
+        class DummyResponse:
+            status_code = 500
+
+        error = requests.exceptions.HTTPError(response=DummyResponse())
+
+        def raise_error(*args, **kwargs):
+            raise error
+
+        # Simulate mb.mb_api.get_release raising a non-404 HTTP error
+        mb.mb_api.get_release = raise_error
+
+        with pytest.raises(requests.exceptions.HTTPError) as excinfo:
+            mb.album_for_id(str(uuid.uuid4()))
+
+        # Ensure the exact error is propagated, not swallowed
+        assert excinfo.value is error
