@@ -71,11 +71,11 @@ class TestPluginTestCase(PluginTestCase):
     plugin = "test"
 
     def setUp(self):
+        self.config["pluginpath"] = [_common.PLUGINPATH]
         super().setUp()
-        config["pluginpath"] = [_common.PLUGINPATH]
 
 
-class ConfigTest(TestPluginTestCase):
+class ConfigTest(IOMixin, TestPluginTestCase):
     def setUp(self):
         super().setUp()
 
@@ -162,6 +162,7 @@ class ConfigTest(TestPluginTestCase):
         with self.write_config_file() as config:
             config.write("library: /xxx/yyy/not/a/real/path")
 
+        self.io.addinput("n")
         with pytest.raises(ui.UserError):
             self.run_command("test", lib=None)
 

@@ -454,7 +454,9 @@ def test_custom_words(
     assert ftintitle.contains_feat(given, custom_words) is expected
 
 
-def test_album_template_value():
+def test_album_template_value(config):
+    config["ftintitle"]["custom_words"] = []
+
     album = Album()
     album["albumartist"] = "Foo ft. Bar"
     assert ftintitle._album_artist_no_feat(album) == "Foo"
