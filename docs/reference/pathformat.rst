@@ -281,6 +281,8 @@ constructs include:
 
 - ``$missing`` by :doc:`/plugins/missing`: The number of missing tracks per
   album.
+- ``$album_artist_no_feat`` by :doc:`/plugins/ftintitle`: The album artist
+  without any featured artists
 - ``%bucket{text}`` by :doc:`/plugins/bucket`: Substitute a string by the range
   it belongs to.
 - ``%the{text}`` by :doc:`/plugins/the`: Moves English articles to ends of
@@ -289,4 +291,4 @@ constructs include:
 The :doc:`/plugins/inline` lets you define template fields in your beets
 configuration file using Python snippets. And for more advanced processing, you
 can go all-in and write a dedicated plugin to register your own fields and
-functions (see :ref:`writing-plugins`).
+functions (see :ref:`basic-plugin-setup`).

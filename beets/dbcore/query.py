@@ -20,17 +20,19 @@ import os
 import re
 import unicodedata
 from abc import ABC, abstractmethod
-from collections.abc import Iterator, MutableSequence, Sequence
+from collections.abc import Sequence
 from datetime import datetime, timedelta
 from functools import cached_property, reduce
 from operator import mul, or_
 from re import Pattern
-from typing import TYPE_CHECKING, Any, Generic, TypeVar, Union
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar
 
 from beets import util
 from beets.util.units import raw_seconds_short
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator, MutableSequence
+
     from beets.dbcore.db import AnyModel, Model
 
     P = TypeVar("P", default=Any)
@@ -122,7 +124,7 @@ class Query(ABC):
         return hash(type(self))
 
 
-SQLiteType = Union[str, bytes, float, int, memoryview, None]
+SQLiteType = str | bytes | float | int | memoryview | None
 AnySQLiteType = TypeVar("AnySQLiteType", bound=SQLiteType)
 FieldQueryType = type["FieldQuery"]
 
@@ -190,7 +192,7 @@ class MatchQuery(FieldQuery[AnySQLiteType]):
     """A query that looks for exact matches in an Model field."""
 
     def col_clause(self) -> tuple[str, Sequence[SQLiteType]]:
-        return self.field + " = ?", [self.pattern]
+        return f"{self.field} = ?", [self.pattern]
 
     @classmethod
     def value_match(cls, pattern: AnySQLiteType, value: Any) -> bool:
@@ -204,7 +206,7 @@ class NoneQuery(FieldQuery[None]):
         super().__init__(field, None, fast)
 
     def col_clause(self) -> tuple[str, Sequence[SQLiteType]]:
-        return self.field + " IS NULL", ()
+        return f"{self.field} IS NULL", ()
 
     def match(self, obj: Model) -> bool:
         return obj.get(self.field_name) is None
@@ -246,7 +248,7 @@ class StringQuery(StringFieldQuery[str]):
             .replace("%", "\\%")
             .replace("_", "\\_")
         )
-        clause = self.field + " like ? escape '\\'"
+        clause = f"{self.field} like ? escape '\\'"
         subvals = [search]
         return clause, subvals
 
@@ -264,8 +266,8 @@ class SubstringQuery(StringFieldQuery[str]):
             .replace("%", "\\%")
             .replace("_", "\\_")
         )
-        search = "%" + pattern + "%"
-        clause = self.field + " like ? escape '\\'"
+        search = f"%{pattern}%"
+        clause = f"{self.field} like ? escape '\\'"
         subvals = [search]
         return clause, subvals
 
@@ -471,11 +473,11 @@ class NumericQuery(FieldQuery[str]):
 
     def col_clause(self) -> tuple[str, Sequence[SQLiteType]]:
         if self.point is not None:
-            return self.field + "=?", (self.point,)
+            return f"{self.field}=?", (self.point,)
         else:
             if self.rangemin is not None and self.rangemax is not None:
                 return (
-                    "{0} >= ? AND {0} <= ?".format(self.field),
+                    f"{self.field} >= ? AND {self.field} <= ?",
                     (self.rangemin, self.rangemax),
                 )
             elif self.rangemin is not None:
@@ -549,9 +551,9 @@ class CollectionQuery(Query):
             if not subq_clause:
                 # Fall back to slow query.
                 return None, ()
-            clause_parts.append("(" + subq_clause + ")")
+            clause_parts.append(f"({subq_clause})")
             subvals += subq_subvals
-        clause = (" " + joiner + " ").join(clause_parts)
+        clause = f" {joiner} ".join(clause_parts)
         return clause, subvals
 
     def __repr__(self) -> str:
@@ -689,10 +691,13 @@ class Period:
         ("%Y-%m-%dT%H:%M", "%Y-%m-%d %H:%M"),  # minute
         ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"),  # second
     )
-    relative_units = {"y": 365, "m": 30, "w": 7, "d": 1}
-    relative_re = (
-        "(?P<sign>[+|-]?)(?P<quantity>[0-9]+)" + "(?P<timespan>[y|m|w|d])"
-    )
+    relative_units: ClassVar[dict[str, int]] = {
+        "y": 365,
+        "m": 30,
+        "w": 7,
+        "d": 1,
+    }
+    relative_re = "(?P<sign>[+|-]?)(?P<quantity>[0-9]+)(?P<timespan>[y|m|w|d])"
 
     def __init__(self, date: datetime, precision: str):
         """Create a period with the given date (a `datetime` object) and
@@ -800,9 +805,7 @@ class DateInterval:
 
     def __init__(self, start: datetime | None, end: datetime | None):
         if start is not None and end is not None and not start < end:
-            raise ValueError(
-                "start date {} is not before end date {}".format(start, end)
-            )
+            raise ValueError(f"start date {start} is not before end date {end}")
         self.start = start
         self.end = end
 
@@ -850,8 +853,6 @@ class DateQuery(FieldQuery[str]):
         date = datetime.fromtimestamp(timestamp)
         return self.interval.contains(date)
 
-    _clause_tmpl = "{0} {1} ?"
-
     def col_clause(self) -> tuple[str, Sequence[SQLiteType]]:
         clause_parts = []
         subvals = []
@@ -859,11 +860,11 @@ class DateQuery(FieldQuery[str]):
         # Convert the `datetime` objects to an integer number of seconds since
         # the (local) Unix epoch using `datetime.timestamp()`.
         if self.interval.start:
-            clause_parts.append(self._clause_tmpl.format(self.field, ">="))
+            clause_parts.append(f"{self.field} >= ?")
             subvals.append(int(self.interval.start.timestamp()))
 
         if self.interval.end:
-            clause_parts.append(self._clause_tmpl.format(self.field, "<"))
+            clause_parts.append(f"{self.field} < ?")
             subvals.append(int(self.interval.end.timestamp()))
 
         if clause_parts:
@@ -1074,9 +1075,9 @@ class FixedFieldSort(FieldSort):
         if self.case_insensitive:
             field = (
                 "(CASE "
-                "WHEN TYPEOF({0})='text' THEN LOWER({0}) "
-                "WHEN TYPEOF({0})='blob' THEN LOWER({0}) "
-                "ELSE {0} END)".format(self.field)
+                f"WHEN TYPEOF({self.field})='text' THEN LOWER({self.field}) "
+                f"WHEN TYPEOF({self.field})='blob' THEN LOWER({self.field}) "
+                f"ELSE {self.field} END)"
             )
         else:
             field = self.field

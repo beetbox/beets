@@ -15,6 +15,7 @@
 """Tests for MusicBrainz API wrapper."""
 
 import unittest
+from typing import ClassVar
 from unittest import mock
 
 import pytest
@@ -29,6 +30,7 @@ class MusicBrainzTestCase(BeetsTestCase):
     def setUp(self):
         super().setUp()
         self.mb = musicbrainz.MusicBrainzPlugin()
+        self.config["match"]["preferred"]["countries"] = ["US"]
 
 
 class MBAlbumInfoTest(MusicBrainzTestCase):
@@ -64,8 +66,10 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
                 }
             ],
             "date": "3001",
-            "medium-list": [],
-            "label-info-list": [
+            "media": [],
+            "genres": [{"count": 1, "name": "GENRE"}],
+            "tags": [{"count": 1, "name": "TAG"}],
+            "label-info": [
                 {
                     "catalog-number": "CATALOG NUMBER",
                     "label": {"name": "LABEL NAME"},
@@ -78,10 +82,11 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
             "country": "COUNTRY",
             "status": "STATUS",
             "barcode": "BARCODE",
+            "release-events": [{"area": None, "date": "2021-03-26"}],
         }
 
         if multi_artist_credit:
-            release["artist-credit"].append(" & ")  # add join phase
+            release["artist-credit"][0]["joinphrase"] = " & "
             release["artist-credit"].append(
                 {
                     "artist": {
@@ -99,7 +104,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
             for recording in tracks:
                 i += 1
                 track = {
-                    "id": "RELEASE TRACK ID %d" % i,
+                    "id": f"RELEASE TRACK ID {i}",
                     "recording": recording,
                     "position": i,
                     "number": "A1",
@@ -122,7 +127,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
                     ]
 
                     if multi_artist_credit:
-                        track["artist-credit"].append(" & ")  # add join phase
+                        track["artist-credit"][0]["joinphrase"] = " & "
                         track["artist-credit"].append(
                             {
                                 "artist": {
@@ -140,17 +145,17 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
             for recording in data_tracks:
                 i += 1
                 data_track = {
-                    "id": "RELEASE TRACK ID %d" % i,
+                    "id": f"RELEASE TRACK ID {i}",
                     "recording": recording,
                     "position": i,
                     "number": "A1",
                 }
                 data_track_list.append(data_track)
-        release["medium-list"].append(
+        release["media"].append(
             {
                 "position": "1",
-                "track-list": track_list,
-                "data-track-list": data_track_list,
+                "tracks": track_list,
+                "data-tracks": data_track_list,
                 "format": medium_format,
                 "title": "MEDIUM TITLE",
             }
@@ -186,7 +191,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
                 }
             ]
             if multi_artist_credit:
-                track["artist-credit"].append(" & ")  # add join phase
+                track["artist-credit"][0]["joinphrase"] = " & "
                 track["artist-credit"].append(
                     {
                         "artist": {
@@ -198,11 +203,10 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
                     }
                 )
         if remixer:
-            track["artist-relation-list"] = [
+            track["artist-relations"] = [
                 {
                     "type": "remixer",
                     "type-id": "RELATION TYPE ID",
-                    "target": "RECORDING REMIXER ARTIST ID",
                     "direction": "RECORDING RELATION DIRECTION",
                     "artist": {
                         "id": "RECORDING REMIXER ARTIST ID",
@@ -213,7 +217,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
                 }
             ]
         if video:
-            track["video"] = "true"
+            track["video"] = True
         if disambiguation:
             track["disambiguation"] = disambiguation
         return track
@@ -299,10 +303,10 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
                 "number": "A1",
             }
         ]
-        release["medium-list"].append(
+        release["media"].append(
             {
                 "position": "2",
-                "track-list": second_track_list,
+                "tracks": second_track_list,
             }
         )
 
@@ -515,6 +519,26 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         d = self.mb.album_info(release)
         assert d.data_source == "MusicBrainz"
 
+    def test_genres(self):
+        config["musicbrainz"]["genres"] = True
+        config["musicbrainz"]["genres_tag"] = "genre"
+        release = self._make_release()
+        d = self.mb.album_info(release)
+        assert d.genre == "GENRE"
+
+    def test_tags(self):
+        config["musicbrainz"]["genres"] = True
+        config["musicbrainz"]["genres_tag"] = "tag"
+        release = self._make_release()
+        d = self.mb.album_info(release)
+        assert d.genre == "TAG"
+
+    def test_no_genres(self):
+        config["musicbrainz"]["genres"] = False
+        release = self._make_release()
+        d = self.mb.album_info(release)
+        assert d.genre is None
+
     def test_ignored_media(self):
         config["match"]["ignored_media"] = ["IGNORED1", "IGNORED2"]
         tracks = [
@@ -670,23 +694,23 @@ class ArtistFlatteningTest(unittest.TestCase):
     def _credit_dict(self, suffix=""):
         return {
             "artist": {
-                "name": "NAME" + suffix,
-                "sort-name": "SORT" + suffix,
+                "name": f"NAME{suffix}",
+                "sort-name": f"SORT{suffix}",
             },
-            "name": "CREDIT" + suffix,
+            "name": f"CREDIT{suffix}",
         }
 
     def _add_alias(self, credit_dict, suffix="", locale="", primary=False):
         alias = {
-            "alias": "ALIAS" + suffix,
+            "name": f"ALIAS{suffix}",
             "locale": locale,
-            "sort-name": "ALIASSORT" + suffix,
+            "sort-name": f"ALIASSORT{suffix}",
         }
         if primary:
             alias["primary"] = "primary"
-        if "alias-list" not in credit_dict["artist"]:
-            credit_dict["artist"]["alias-list"] = []
-        credit_dict["artist"]["alias-list"].append(alias)
+        if "aliases" not in credit_dict["artist"]:
+            credit_dict["artist"]["aliases"] = []
+        credit_dict["artist"]["aliases"].append(alias)
 
     def test_single_artist(self):
         credit = [self._credit_dict()]
@@ -703,7 +727,10 @@ class ArtistFlatteningTest(unittest.TestCase):
         assert c == ["CREDIT"]
 
     def test_two_artists(self):
-        credit = [self._credit_dict("a"), " AND ", self._credit_dict("b")]
+        credit = [
+            {**self._credit_dict("a"), "joinphrase": " AND "},
+            self._credit_dict("b"),
+        ]
         a, s, c = musicbrainz._flatten_artist_credit(credit)
         assert a == "NAMEa AND NAMEb"
         assert s == "SORTa AND SORTb"
@@ -761,86 +788,86 @@ class MBLibraryTest(MusicBrainzTestCase):
     def test_follow_pseudo_releases(self):
         side_effect = [
             {
-                "release": {
-                    "title": "pseudo",
-                    "id": "d2a6f856-b553-40a0-ac54-a321e8e2da02",
-                    "status": "Pseudo-Release",
-                    "medium-list": [
-                        {
-                            "track-list": [
-                                {
-                                    "id": "baz",
-                                    "recording": {
-                                        "title": "translated title",
-                                        "id": "bar",
-                                        "length": 42,
-                                    },
-                                    "position": 9,
-                                    "number": "A1",
-                                }
-                            ],
-                            "position": 5,
-                        }
-                    ],
-                    "artist-credit": [
-                        {
-                            "artist": {
-                                "name": "some-artist",
-                                "id": "some-id",
-                            },
-                        }
-                    ],
-                    "release-group": {
-                        "id": "another-id",
-                    },
-                    "release-relation-list": [
-                        {
-                            "type": "transl-tracklisting",
-                            "target": "d2a6f856-b553-40a0-ac54-a321e8e2da01",
-                            "direction": "backward",
-                        }
-                    ],
-                }
+                "title": "pseudo",
+                "id": "d2a6f856-b553-40a0-ac54-a321e8e2da02",
+                "status": "Pseudo-Release",
+                "media": [
+                    {
+                        "tracks": [
+                            {
+                                "id": "baz",
+                                "recording": {
+                                    "title": "translated title",
+                                    "id": "bar",
+                                    "length": 42,
+                                },
+                                "position": 9,
+                                "number": "A1",
+                            }
+                        ],
+                        "position": 5,
+                    }
+                ],
+                "artist-credit": [
+                    {
+                        "artist": {
+                            "name": "some-artist",
+                            "id": "some-id",
+                        },
+                    }
+                ],
+                "release-group": {
+                    "id": "another-id",
+                },
+                "release-relations": [
+                    {
+                        "type": "transl-tracklisting",
+                        "direction": "backward",
+                        "release": {
+                            "id": "d2a6f856-b553-40a0-ac54-a321e8e2da01"
+                        },
+                    }
+                ],
             },
             {
-                "release": {
-                    "title": "actual",
-                    "id": "d2a6f856-b553-40a0-ac54-a321e8e2da01",
-                    "status": "Official",
-                    "medium-list": [
-                        {
-                            "track-list": [
-                                {
-                                    "id": "baz",
-                                    "recording": {
-                                        "title": "original title",
-                                        "id": "bar",
-                                        "length": 42,
-                                    },
-                                    "position": 9,
-                                    "number": "A1",
-                                }
-                            ],
-                            "position": 5,
-                        }
-                    ],
-                    "artist-credit": [
-                        {
-                            "artist": {
-                                "name": "some-artist",
-                                "id": "some-id",
-                            },
-                        }
-                    ],
-                    "release-group": {
-                        "id": "another-id",
-                    },
-                    "country": "COUNTRY",
-                }
+                "title": "actual",
+                "id": "d2a6f856-b553-40a0-ac54-a321e8e2da01",
+                "status": "Official",
+                "media": [
+                    {
+                        "tracks": [
+                            {
+                                "id": "baz",
+                                "recording": {
+                                    "title": "original title",
+                                    "id": "bar",
+                                    "length": 42,
+                                },
+                                "position": 9,
+                                "number": "A1",
+                            }
+                        ],
+                        "position": 5,
+                    }
+                ],
+                "artist-credit": [
+                    {
+                        "artist": {
+                            "name": "some-artist",
+                            "id": "some-id",
+                        },
+                    }
+                ],
+                "release-group": {
+                    "id": "another-id",
+                },
+                "country": "COUNTRY",
             },
         ]
 
-        with mock.patch("musicbrainzngs.get_release_by_id") as gp:
+        with mock.patch(
+            "beetsplug._utils.musicbrainz.MusicBrainzAPI.get_release"
+        ) as gp:
             gp.side_effect = side_effect
             album = self.mb.album_for_id("d2a6f856-b553-40a0-ac54-a321e8e2da02")
             assert album.country == "COUNTRY"
@@ -848,44 +875,43 @@ class MBLibraryTest(MusicBrainzTestCase):
     def test_pseudo_releases_with_empty_links(self):
         side_effect = [
             {
-                "release": {
-                    "title": "pseudo",
-                    "id": "d2a6f856-b553-40a0-ac54-a321e8e2da02",
-                    "status": "Pseudo-Release",
-                    "medium-list": [
-                        {
-                            "track-list": [
-                                {
-                                    "id": "baz",
-                                    "recording": {
-                                        "title": "translated title",
-                                        "id": "bar",
-                                        "length": 42,
-                                    },
-                                    "position": 9,
-                                    "number": "A1",
-                                }
-                            ],
-                            "position": 5,
-                        }
-                    ],
-                    "artist-credit": [
-                        {
-                            "artist": {
-                                "name": "some-artist",
-                                "id": "some-id",
-                            },
-                        }
-                    ],
-                    "release-group": {
-                        "id": "another-id",
-                    },
-                    "release-relation-list": [],
-                }
-            },
+                "title": "pseudo",
+                "id": "d2a6f856-b553-40a0-ac54-a321e8e2da02",
+                "status": "Pseudo-Release",
+                "media": [
+                    {
+                        "tracks": [
+                            {
+                                "id": "baz",
+                                "recording": {
+                                    "title": "translated title",
+                                    "id": "bar",
+                                    "length": 42,
+                                },
+                                "position": 9,
+                                "number": "A1",
+                            }
+                        ],
+                        "position": 5,
+                    }
+                ],
+                "artist-credit": [
+                    {
+                        "artist": {
+                            "name": "some-artist",
+                            "id": "some-id",
+                        },
+                    }
+                ],
+                "release-group": {
+                    "id": "another-id",
+                },
+            }
         ]
 
-        with mock.patch("musicbrainzngs.get_release_by_id") as gp:
+        with mock.patch(
+            "beetsplug._utils.musicbrainz.MusicBrainzAPI.get_release"
+        ) as gp:
             gp.side_effect = side_effect
             album = self.mb.album_for_id("d2a6f856-b553-40a0-ac54-a321e8e2da02")
             assert album.country is None
@@ -893,43 +919,43 @@ class MBLibraryTest(MusicBrainzTestCase):
     def test_pseudo_releases_without_links(self):
         side_effect = [
             {
-                "release": {
-                    "title": "pseudo",
-                    "id": "d2a6f856-b553-40a0-ac54-a321e8e2da02",
-                    "status": "Pseudo-Release",
-                    "medium-list": [
-                        {
-                            "track-list": [
-                                {
-                                    "id": "baz",
-                                    "recording": {
-                                        "title": "translated title",
-                                        "id": "bar",
-                                        "length": 42,
-                                    },
-                                    "position": 9,
-                                    "number": "A1",
-                                }
-                            ],
-                            "position": 5,
-                        }
-                    ],
-                    "artist-credit": [
-                        {
-                            "artist": {
-                                "name": "some-artist",
-                                "id": "some-id",
-                            },
-                        }
-                    ],
-                    "release-group": {
-                        "id": "another-id",
-                    },
-                }
-            },
+                "title": "pseudo",
+                "id": "d2a6f856-b553-40a0-ac54-a321e8e2da02",
+                "status": "Pseudo-Release",
+                "media": [
+                    {
+                        "tracks": [
+                            {
+                                "id": "baz",
+                                "recording": {
+                                    "title": "translated title",
+                                    "id": "bar",
+                                    "length": 42,
+                                },
+                                "position": 9,
+                                "number": "A1",
+                            }
+                        ],
+                        "position": 5,
+                    }
+                ],
+                "artist-credit": [
+                    {
+                        "artist": {
+                            "name": "some-artist",
+                            "id": "some-id",
+                        },
+                    }
+                ],
+                "release-group": {
+                    "id": "another-id",
+                },
+            }
         ]
 
-        with mock.patch("musicbrainzngs.get_release_by_id") as gp:
+        with mock.patch(
+            "beetsplug._utils.musicbrainz.MusicBrainzAPI.get_release"
+        ) as gp:
             gp.side_effect = side_effect
             album = self.mb.album_for_id("d2a6f856-b553-40a0-ac54-a321e8e2da02")
             assert album.country is None
@@ -937,50 +963,52 @@ class MBLibraryTest(MusicBrainzTestCase):
     def test_pseudo_releases_with_unsupported_links(self):
         side_effect = [
             {
-                "release": {
-                    "title": "pseudo",
-                    "id": "d2a6f856-b553-40a0-ac54-a321e8e2da02",
-                    "status": "Pseudo-Release",
-                    "medium-list": [
-                        {
-                            "track-list": [
-                                {
-                                    "id": "baz",
-                                    "recording": {
-                                        "title": "translated title",
-                                        "id": "bar",
-                                        "length": 42,
-                                    },
-                                    "position": 9,
-                                    "number": "A1",
-                                }
-                            ],
-                            "position": 5,
-                        }
-                    ],
-                    "artist-credit": [
-                        {
-                            "artist": {
-                                "name": "some-artist",
-                                "id": "some-id",
-                            },
-                        }
-                    ],
-                    "release-group": {
-                        "id": "another-id",
-                    },
-                    "release-relation-list": [
-                        {
-                            "type": "remaster",
-                            "target": "d2a6f856-b553-40a0-ac54-a321e8e2da01",
-                            "direction": "backward",
-                        }
-                    ],
-                }
-            },
+                "title": "pseudo",
+                "id": "d2a6f856-b553-40a0-ac54-a321e8e2da02",
+                "status": "Pseudo-Release",
+                "media": [
+                    {
+                        "tracks": [
+                            {
+                                "id": "baz",
+                                "recording": {
+                                    "title": "translated title",
+                                    "id": "bar",
+                                    "length": 42,
+                                },
+                                "position": 9,
+                                "number": "A1",
+                            }
+                        ],
+                        "position": 5,
+                    }
+                ],
+                "artist-credit": [
+                    {
+                        "artist": {
+                            "name": "some-artist",
+                            "id": "some-id",
+                        },
+                    }
+                ],
+                "release-group": {
+                    "id": "another-id",
+                },
+                "release-relations": [
+                    {
+                        "type": "remaster",
+                        "direction": "backward",
+                        "release": {
+                            "id": "d2a6f856-b553-40a0-ac54-a321e8e2da01"
+                        },
+                    }
+                ],
+            }
         ]
 
-        with mock.patch("musicbrainzngs.get_release_by_id") as gp:
+        with mock.patch(
+            "beetsplug._utils.musicbrainz.MusicBrainzAPI.get_release"
+        ) as gp:
             gp.side_effect = side_effect
             album = self.mb.album_for_id("d2a6f856-b553-40a0-ac54-a321e8e2da02")
             assert album.country is None
@@ -990,7 +1018,11 @@ class TestMusicBrainzPlugin(PluginMixin):
     plugin = "musicbrainz"
 
     mbid = "d2a6f856-b553-40a0-ac54-a321e8e2da99"
-    RECORDING = {"title": "foo", "id": "bar", "length": 42}
+    RECORDING: ClassVar[dict[str, int | str]] = {
+        "title": "foo",
+        "id": "bar",
+        "length": 42,
+    }
 
     @pytest.fixture
     def plugin_config(self):
@@ -1025,15 +1057,13 @@ class TestMusicBrainzPlugin(PluginMixin):
 
         assert mb.get_album_criteria(items, "Artist ", " Album", va_likely) == {
             "release": " Album",
-            "alias": " Album",
-            "tracks": str(len(items)),
             **expected_additional_criteria,
         }
 
     def test_item_candidates(self, monkeypatch, mb):
         monkeypatch.setattr(
-            "musicbrainzngs.search_recordings",
-            lambda *_, **__: {"recording-list": [self.RECORDING]},
+            "beetsplug._utils.musicbrainz.MusicBrainzAPI.get_json",
+            lambda *_, **__: {"recordings": [self.RECORDING]},
         )
 
         candidates = list(mb.item_candidates(Item(), "hello", "there"))
@@ -1043,34 +1073,32 @@ class TestMusicBrainzPlugin(PluginMixin):
 
     def test_candidates(self, monkeypatch, mb):
         monkeypatch.setattr(
-            "musicbrainzngs.search_releases",
-            lambda *_, **__: {"release-list": [{"id": self.mbid}]},
+            "beetsplug._utils.musicbrainz.MusicBrainzAPI.get_json",
+            lambda *_, **__: {"releases": [{"id": self.mbid}]},
         )
         monkeypatch.setattr(
-            "musicbrainzngs.get_release_by_id",
+            "beetsplug._utils.musicbrainz.MusicBrainzAPI.get_release",
             lambda *_, **__: {
-                "release": {
-                    "title": "hi",
-                    "id": self.mbid,
-                    "status": "status",
-                    "medium-list": [
-                        {
-                            "track-list": [
-                                {
-                                    "id": "baz",
-                                    "recording": self.RECORDING,
-                                    "position": 9,
-                                    "number": "A1",
-                                }
-                            ],
-                            "position": 5,
-                        }
-                    ],
-                    "artist-credit": [
-                        {"artist": {"name": "some-artist", "id": "some-id"}}
-                    ],
-                    "release-group": {"id": "another-id"},
-                }
+                "title": "hi",
+                "id": self.mbid,
+                "status": "status",
+                "media": [
+                    {
+                        "tracks": [
+                            {
+                                "id": "baz",
+                                "recording": self.RECORDING,
+                                "position": 9,
+                                "number": "A1",
+                            }
+                        ],
+                        "position": 5,
+                    }
+                ],
+                "artist-credit": [
+                    {"artist": {"name": "some-artist", "id": "some-id"}}
+                ],
+                "release-group": {"id": "another-id"},
             },
         )
         candidates = list(mb.candidates([], "hello", "there", False))

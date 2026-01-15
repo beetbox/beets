@@ -125,24 +125,20 @@ class Library(dbcore.Database):
         return self._fetch(Item, query, sort or self.get_default_item_sort())
 
     # Convenience accessors.
-
-    def get_item(self, id):
+    def get_item(self, id_: int) -> Item | None:
         """Fetch a :class:`Item` by its ID.
 
         Return `None` if no match is found.
         """
-        return self._get(Item, id)
+        return self._get(Item, id_)
 
-    def get_album(self, item_or_id):
+    def get_album(self, item_or_id: Item | int) -> Album | None:
         """Given an album ID or an item associated with an album, return
         a :class:`Album` object for the album.
 
         If no such album exists, return `None`.
         """
-        if isinstance(item_or_id, int):
-            album_id = item_or_id
-        else:
-            album_id = item_or_id.album_id
-        if album_id is None:
-            return None
-        return self._get(Album, album_id)
+        album_id = (
+            item_or_id if isinstance(item_or_id, int) else item_or_id.album_id
+        )
+        return self._get(Album, album_id) if album_id else None

@@ -22,7 +22,6 @@ from unittest.mock import MagicMock, Mock, PropertyMock
 import pytest
 
 from beets import config
-from beets.dbcore import OrQuery
 from beets.dbcore.query import FixedFieldSort, MultipleSort, NullSort
 from beets.library import Album, Item, parse_query_string
 from beets.test.helper import BeetsTestCase, PluginTestCase
@@ -34,8 +33,8 @@ from beetsplug.smartplaylist import SmartPlaylistPlugin
 class SmartPlaylistTest(BeetsTestCase):
     def test_build_queries(self):
         spl = SmartPlaylistPlugin()
-        assert spl._matched_playlists is None
-        assert spl._unmatched_playlists is None
+        assert spl._matched_playlists == set()
+        assert spl._unmatched_playlists == set()
 
         config["smartplaylist"]["playlists"].set([])
         spl.build_queries()
@@ -54,16 +53,17 @@ class SmartPlaylistTest(BeetsTestCase):
         foo_foo = parse_query_string("FOO foo", Item)
         baz_baz = parse_query_string("BAZ baz", Item)
         baz_baz2 = parse_query_string("BAZ baz", Album)
-        bar_bar = OrQuery(
-            (
-                parse_query_string("BAR bar1", Album)[0],
-                parse_query_string("BAR bar2", Album)[0],
-            )
+        # Multiple queries are now stored as a tuple of (query, sort) tuples
+        bar_queries = tuple(
+            [
+                parse_query_string("BAR bar1", Album),
+                parse_query_string("BAR bar2", Album),
+            ]
         )
         assert spl._unmatched_playlists == {
             ("foo", foo_foo, (None, None)),
             ("baz", baz_baz, baz_baz2),
-            ("bar", (None, None), (bar_bar, None)),
+            ("bar", (None, None), (bar_queries, None)),
         }
 
     def test_build_queries_with_sorts(self):
@@ -86,19 +86,28 @@ class SmartPlaylistTest(BeetsTestCase):
         )
 
         spl.build_queries()
-        sorts = {name: sort for name, (_, sort), _ in spl._unmatched_playlists}
+
+        # Multiple queries now return a tuple of (query, sort) tuples, not combined
+        sorts = {}
+        for name, (query_data, sort), _ in spl._unmatched_playlists:
+            if isinstance(query_data, tuple):
+                # Tuple of queries - each has its own sort
+                sorts[name] = [s for _, s in query_data]
+            else:
+                sorts[name] = sort
 
         sort = FixedFieldSort  # short cut since we're only dealing with this
         assert sorts["no_sort"] == NullSort()
         assert sorts["one_sort"] == sort("year")
-        assert sorts["only_empty_sorts"] is None
-        assert sorts["one_non_empty_sort"] == sort("year")
-        assert sorts["multiple_sorts"] == MultipleSort(
-            [sort("year"), sort("genre", False)]
-        )
-        assert sorts["mixed"] == MultipleSort(
-            [sort("year"), sort("genre"), sort("id", False)]
-        )
+        # Multiple queries store individual sorts in the tuple
+        assert all(isinstance(x, NullSort) for x in sorts["only_empty_sorts"])
+        assert sorts["one_non_empty_sort"] == [sort("year"), NullSort()]
+        assert sorts["multiple_sorts"] == [sort("year"), sort("genre", False)]
+        assert sorts["mixed"] == [
+            sort("year"),
+            NullSort(),
+            MultipleSort([sort("genre"), sort("id", False)]),
+        ]
 
     def test_matches(self):
         spl = SmartPlaylistPlugin()
@@ -121,6 +130,15 @@ class SmartPlaylistTest(BeetsTestCase):
 
         assert spl.matches(i, query, a_query)
         assert spl.matches(a, query, a_query)
+
+        # Test with list of queries
+        q1 = Mock()
+        q1.match.return_value = False
+        q2 = Mock()
+        q2.match.side_effect = {i: True}.__getitem__
+        queries_list = [(q1, None), (q2, None)]
+        assert spl.matches(i, queries_list, None)
+        assert not spl.matches(a, queries_list, None)
 
     def test_db_changes(self):
         spl = SmartPlaylistPlugin()
@@ -164,7 +182,7 @@ class SmartPlaylistTest(BeetsTestCase):
         q = Mock()
         a_q = Mock()
         pl = b"$title-my<playlist>.m3u", (q, None), (a_q, None)
-        spl._matched_playlists = [pl]
+        spl._matched_playlists = {pl}
 
         dir = mkdtemp()
         config["smartplaylist"]["relative_to"] = False
@@ -206,7 +224,7 @@ class SmartPlaylistTest(BeetsTestCase):
         q = Mock()
         a_q = Mock()
         pl = b"$title-my<playlist>.m3u", (q, None), (a_q, None)
-        spl._matched_playlists = [pl]
+        spl._matched_playlists = {pl}
 
         dir = mkdtemp()
         config["smartplaylist"]["output"] = "extm3u"
@@ -227,11 +245,10 @@ class SmartPlaylistTest(BeetsTestCase):
         content = m3u_filepath.read_bytes()
         rmtree(syspath(dir))
 
-        assert (
-            content
-            == b"#EXTM3U\n"
-            + b"#EXTINF:300,fake artist - fake title\n"
-            + b"http://beets:8337/files/tagada.mp3\n"
+        assert content == (
+            b"#EXTM3U\n"
+            b"#EXTINF:300,fake artist - fake title\n"
+            b"http://beets:8337/files/tagada.mp3\n"
         )
 
     def test_playlist_update_output_extm3u_fields(self):
@@ -257,7 +274,7 @@ class SmartPlaylistTest(BeetsTestCase):
         q = Mock()
         a_q = Mock()
         pl = b"$title-my<playlist>.m3u", (q, None), (a_q, None)
-        spl._matched_playlists = [pl]
+        spl._matched_playlists = {pl}
 
         dir = mkdtemp()
         config["smartplaylist"]["output"] = "extm3u"
@@ -278,11 +295,10 @@ class SmartPlaylistTest(BeetsTestCase):
         content = m3u_filepath.read_bytes()
         rmtree(syspath(dir))
 
-        assert (
-            content
-            == b"#EXTM3U\n"
-            + b'#EXTINF:300 id="456" genre="Fake%20Genre",Fake Artist - fake Title\n'
-            + b"/tagada.mp3\n"
+        assert content == (
+            b"#EXTM3U\n"
+            b'#EXTINF:300 id="456" genre="Fake%20Genre",Fake Artist - fake Title\n'
+            b"/tagada.mp3\n"
         )
 
     def test_playlist_update_uri_format(self):
@@ -303,7 +319,7 @@ class SmartPlaylistTest(BeetsTestCase):
         q = Mock()
         a_q = Mock()
         pl = b"$title-my<playlist>.m3u", (q, None), (a_q, None)
-        spl._matched_playlists = [pl]
+        spl._matched_playlists = {pl}
 
         dir = mkdtemp()
         tpl = "http://beets:8337/item/$id/file"
@@ -328,6 +344,118 @@ class SmartPlaylistTest(BeetsTestCase):
         rmtree(syspath(dir))
 
         assert content == b"http://beets:8337/item/3/file\n"
+
+    def test_playlist_update_multiple_queries_preserve_order(self):
+        """Test that multiple queries preserve their order in the playlist."""
+        spl = SmartPlaylistPlugin()
+
+        # Create three mock items
+        i1 = Mock(path=b"/item1.mp3", id=1)
+        i1.evaluate_template.return_value = "ordered.m3u"
+        i2 = Mock(path=b"/item2.mp3", id=2)
+        i2.evaluate_template.return_value = "ordered.m3u"
+        i3 = Mock(path=b"/item3.mp3", id=3)
+        i3.evaluate_template.return_value = "ordered.m3u"
+
+        lib = Mock()
+        lib.replacements = CHAR_REPLACE
+        lib.albums.return_value = []
+
+        # Set up lib.items to return different items for different queries
+        q1 = Mock()
+        q2 = Mock()
+        q3 = Mock()
+
+        def items_side_effect(query, sort):
+            if query == q1:
+                return [i1]
+            elif query == q2:
+                return [i2]
+            elif query == q3:
+                return [i3]
+            return []
+
+        lib.items.side_effect = items_side_effect
+
+        # Create playlist with multiple queries (stored as tuple)
+        queries_and_sorts = ((q1, None), (q2, None), (q3, None))
+        pl = "ordered.m3u", (queries_and_sorts, None), (None, None)
+        spl._matched_playlists = {pl}
+
+        dir = mkdtemp()
+        config["smartplaylist"]["relative_to"] = False
+        config["smartplaylist"]["playlist_dir"] = str(dir)
+        try:
+            spl.update_playlists(lib)
+        except Exception:
+            rmtree(syspath(dir))
+            raise
+
+        # Verify that lib.items was called with queries in the correct order
+        assert lib.items.call_count == 3
+        lib.items.assert_any_call(q1, None)
+        lib.items.assert_any_call(q2, None)
+        lib.items.assert_any_call(q3, None)
+
+        m3u_filepath = Path(dir, "ordered.m3u")
+        assert m3u_filepath.exists()
+        content = m3u_filepath.read_bytes()
+        rmtree(syspath(dir))
+
+        # Items should be in order: i1, i2, i3
+        assert content == b"/item1.mp3\n/item2.mp3\n/item3.mp3\n"
+
+    def test_playlist_update_multiple_queries_no_duplicates(self):
+        """Test that items matching multiple queries only appear once."""
+        spl = SmartPlaylistPlugin()
+
+        # Create two mock items
+        i1 = Mock(path=b"/item1.mp3", id=1)
+        i1.evaluate_template.return_value = "dedup.m3u"
+        i2 = Mock(path=b"/item2.mp3", id=2)
+        i2.evaluate_template.return_value = "dedup.m3u"
+
+        lib = Mock()
+        lib.replacements = CHAR_REPLACE
+        lib.albums.return_value = []
+
+        # Set up lib.items so both queries return overlapping items
+        q1 = Mock()
+        q2 = Mock()
+
+        def items_side_effect(query, sort):
+            if query == q1:
+                return [i1, i2]  # Both items match q1
+            elif query == q2:
+                return [i2]  # Only i2 matches q2
+            return []
+
+        lib.items.side_effect = items_side_effect
+
+        # Create playlist with multiple queries (stored as tuple)
+        queries_and_sorts = ((q1, None), (q2, None))
+        pl = "dedup.m3u", (queries_and_sorts, None), (None, None)
+        spl._matched_playlists = {pl}
+
+        dir = mkdtemp()
+        config["smartplaylist"]["relative_to"] = False
+        config["smartplaylist"]["playlist_dir"] = str(dir)
+        try:
+            spl.update_playlists(lib)
+        except Exception:
+            rmtree(syspath(dir))
+            raise
+
+        m3u_filepath = Path(dir, "dedup.m3u")
+        assert m3u_filepath.exists()
+        content = m3u_filepath.read_bytes()
+        rmtree(syspath(dir))
+
+        # i2 should only appear once even though it matches both queries
+        # Order should be: i1 (from q1), i2 (from q1, skipped in q2)
+        assert content == b"/item1.mp3\n/item2.mp3\n"
+        # Verify i2 is not duplicated
+        assert content.count(b"/item2.mp3") == 1
 
 
 class SmartPlaylistCLITest(PluginTestCase):

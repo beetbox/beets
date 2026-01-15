@@ -17,9 +17,10 @@
 import base64
 import json
 import os
+import typing as t
 
 import flask
-from flask import g, jsonify
+from flask import jsonify
 from unidecode import unidecode
 from werkzeug.routing import BaseConverter, PathConverter
 
@@ -27,6 +28,17 @@ import beets.library
 from beets import ui, util
 from beets.dbcore.query import PathQuery
 from beets.plugins import BeetsPlugin
+
+# Type checking hacks
+
+if t.TYPE_CHECKING:
+
+    class LibraryCtx(flask.ctx._AppCtxGlobals):
+        lib: beets.library.Library
+
+    g = LibraryCtx()
+else:
+    from flask import g
 
 # Utilities.
 
@@ -77,7 +89,7 @@ def json_generator(items, root, expand=False):
                    representation
     :returns:     generator that yields strings
     """
-    yield '{"%s":[' % root
+    yield f'{{"{root}":['
     first = True
     for item in items:
         if first:
@@ -232,9 +244,7 @@ def _get_unique_table_field_values(model, field, sort_field):
         raise KeyError
     with g.lib.transaction() as tx:
         rows = tx.query(
-            "SELECT DISTINCT '{}' FROM '{}' ORDER BY '{}'".format(
-                field, model._table, sort_field
-            )
+            f"SELECT DISTINCT {field} FROM {model._table} ORDER BY {sort_field}"
         )
     return [row[0] for row in rows]
 
@@ -476,7 +486,7 @@ class WebPlugin(BeetsPlugin):
             # Enable CORS if required.
             if self.config["cors"]:
                 self._log.info(
-                    "Enabling CORS with origin: {0}", self.config["cors"]
+                    "Enabling CORS with origin: {}", self.config["cors"]
                 )
                 from flask_cors import CORS
 

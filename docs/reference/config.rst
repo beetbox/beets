@@ -77,10 +77,10 @@ pluginpath
 ~~~~~~~~~~
 
 Directories to search for plugins. Each Python file or directory in a plugin
-path represents a plugin and should define a subclass of :class:`BeetsPlugin`. A
-plugin can then be loaded by adding the filename to the ``plugins``
-configuration. The plugin path can either be a single string or a list of
-strings---so, if you have multiple paths, format them as a YAML list like so:
+path represents a plugin and should define a subclass of |BeetsPlugin|. A plugin
+can then be loaded by adding the plugin name to the ``plugins`` configuration.
+The plugin path can either be a single string or a list of strings---so, if you
+have multiple paths, format them as a YAML list like so:
 
 ::
 
@@ -376,7 +376,7 @@ terminal_encoding
 ~~~~~~~~~~~~~~~~~
 
 The text encoding, as `known to Python
-<https://docs.python.org/2/library/codecs.html#standard-encodings>`__, to use
+<https://docs.python.org/3/library/codecs.html#standard-encodings>`__, to use
 for messages printed to the standard output. It's also used to read messages
 from the standard input. By default, this is determined automatically from the
 locale environment variables.
@@ -429,20 +429,11 @@ UI Options
 The options that allow for customization of the visual appearance of the console
 interface.
 
-These options are available in this section:
-
 color
 ~~~~~
 
-Either ``yes`` or ``no``; whether to use color in console output (currently only
-in the ``import`` command). Turn this off if your terminal doesn't support ANSI
-colors.
-
-.. note::
-
-    The ``color`` option was previously a top-level configuration. This is still
-    respected, but a deprecation message will be shown until your top-level
-    ``color`` configuration has been nested under ``ui``.
+Either ``yes`` or ``no``; whether to use color in console output. Turn this off
+if your terminal doesn't support ANSI colors.
 
 .. _colors:
 
@@ -450,10 +441,9 @@ colors
 ~~~~~~
 
 The colors that are used throughout the user interface. These are only used if
-the ``color`` option is set to ``yes``. For example, you might have a section in
-your configuration file that looks like this:
+the ``color`` option is set to ``yes``. See the default configuration:
 
-::
+.. code-block:: yaml
 
     ui:
         colors:
@@ -465,28 +455,26 @@ your configuration file that looks like this:
             action_default: ['bold', 'cyan']
             action: ['bold', 'cyan']
             # New colors after UI overhaul
-            text: ['normal']
             text_faint: ['faint']
             import_path: ['bold', 'blue']
             import_path_items: ['bold', 'blue']
-            added:   ['green']
-            removed: ['red']
             changed: ['yellow']
-            added_highlight:   ['bold', 'green']
-            removed_highlight: ['bold', 'red']
-            changed_highlight: ['bold', 'yellow']
-            text_diff_added:   ['bold', 'red']
+            text_diff_added: ['bold', 'green']
             text_diff_removed: ['bold', 'red']
-            text_diff_changed: ['bold', 'red']
             action_description: ['white']
 
-Available colors: black, darkred, darkgreen, brown (darkyellow), darkblue,
-purple (darkmagenta), teal (darkcyan), lightgray, darkgray, red, green, yellow,
-blue, fuchsia (magenta), turquoise (cyan), white
+Available attributes:
 
-Legacy UI colors config directive used strings. If any colors value is still a
-string instead of a list, it will be translated to list automatically. For
-example ``blue`` will become ``['blue']``.
+Foreground colors
+    ``black``, ``red``, ``green``, ``yellow``, ``blue``, ``magenta``, ``cyan``,
+    ``white``
+
+Background colors
+    ``bg_black``, ``bg_red``, ``bg_green``, ``bg_yellow``, ``bg_blue``,
+    ``bg_magenta``, ``bg_cyan``, ``bg_white``
+
+Text styles
+    ``normal``, ``bold``, ``faint``, ``underline``, ``reverse``
 
 terminal_width
 ~~~~~~~~~~~~~~
@@ -495,7 +483,7 @@ Controls line wrapping on non-Unix systems. On Unix systems, the width of the
 terminal is detected automatically. If this fails, or on non-Unix systems, the
 specified value is used as a fallback. Defaults to ``80`` characters:
 
-::
+.. code-block:: yaml
 
     ui:
         terminal_width: 80
@@ -511,7 +499,7 @@ different track lengths are colored with ``text_highlight_minor``.
 matching or distance score calculation (see :ref:`match-config`,
 ``distance_weights`` and :ref:`colors`):
 
-::
+.. code-block:: yaml
 
     ui:
         length_diff_thresh: 10.0
@@ -523,18 +511,18 @@ When importing, beets will read several options to configure the visuals of the
 import dialogue. There are two layouts controlling how horizontal space and line
 wrapping is dealt with: ``column`` and ``newline``. The indentation of the
 respective elements of the import UI can also be configured. For example setting
-``4`` for ``match_header`` will indent the very first block of a proposed match
-by five characters in the terminal:
+``2`` for ``match_header`` will indent the very first block of a proposed match
+by two characters in the terminal:
 
-::
+.. code-block:: yaml
 
     ui:
         import:
             indentation:
-                match_header: 4
-                match_details: 4
-                match_tracklist: 7
-            layout: newline
+                match_header: 2
+                match_details: 2
+                match_tracklist: 5
+            layout: column
 
 Importer Options
 ----------------
@@ -947,7 +935,7 @@ can be one of ``none``, ``low``, ``medium`` or ``strong``. When the maximum
 recommendation is ``strong``, no "downgrading" occurs. The available penalty
 names here are:
 
-- source
+- data_source
 - artist
 - album
 - media
