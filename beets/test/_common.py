@@ -190,14 +190,6 @@ class DummyIO:
     def readcount(self):
         return self.stdin.reads
 
-    def install(self):
-        sys.stdin = self.stdin
-        sys.stdout = self.stdout
-
-    def restore(self):
-        sys.stdin = sys.__stdin__
-        sys.stdout = sys.__stdout__
-
 
 # Utility.
 
