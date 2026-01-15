@@ -168,13 +168,14 @@ class IOMixin:
     def io(self) -> _common.DummyIO:
         return _common.DummyIO()
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
-        self.io.install()
 
-    def tearDown(self):
-        super().tearDown()
-        self.io.restore()
+        patcher = patch.multiple(
+            "sys", stdin=self.io.stdin, stdout=self.io.stdout
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
 
 class TestHelper(ConfigMixin):
@@ -759,7 +760,6 @@ class TerminalImportMixin(IOMixin, ImportHelper):
     io: _common.DummyIO
 
     def _get_import_session(self, import_dir: bytes) -> importer.ImportSession:
-        self.io.install()
         return TerminalImportSessionFixture(
             self.lib,
             loghandler=None,
