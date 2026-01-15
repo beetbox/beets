@@ -14,13 +14,19 @@
 
 """Synchronize information from music player libraries"""
 
+from __future__ import annotations
+
 from abc import ABCMeta, abstractmethod
 from importlib import import_module
+from typing import TYPE_CHECKING, ClassVar
 
 from confuse import ConfigValueError
 
 from beets import ui
 from beets.plugins import BeetsPlugin
+
+if TYPE_CHECKING:
+    from beets.dbcore import types
 
 METASYNC_MODULE = "beetsplug.metasync"
 
@@ -32,8 +38,9 @@ SOURCES = {
 
 
 class MetaSource(metaclass=ABCMeta):
+    item_types: ClassVar[dict[str, types.Type]]
+
     def __init__(self, config, log):
-        self.item_types = {}
         self.config = config
         self._log = log
 
@@ -49,7 +56,7 @@ def load_meta_sources():
     meta_sources = {}
 
     for module_path, class_name in SOURCES.items():
-        module = import_module(METASYNC_MODULE + "." + module_path)
+        module = import_module(f"{METASYNC_MODULE}.{module_path}")
         meta_sources[class_name.lower()] = getattr(module, class_name)
 
     return meta_sources
@@ -117,13 +124,13 @@ class MetaSyncPlugin(BeetsPlugin):
             try:
                 cls = META_SOURCES[player]
             except KeyError:
-                self._log.error("Unknown metadata source '{}'".format(player))
+                self._log.error("Unknown metadata source '{}'", player)
 
             try:
                 meta_source_instances[player] = cls(self.config, self._log)
             except (ImportError, ConfigValueError) as e:
                 self._log.error(
-                    f"Failed to instantiate metadata source {player!r}: {e}"
+                    "Failed to instantiate metadata source {!r}: {}", player, e
                 )
 
         # Avoid needlessly iterating over items

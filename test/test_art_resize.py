@@ -136,7 +136,8 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
         """
         im = IMBackend()
         path = im.deinterlace(self.IMG_225x225)
-        cmd = im.identify_cmd + [
+        cmd = [
+            *im.identify_cmd,
             "-format",
             "%[interlace]",
             syspath(path, prefix=False),
@@ -150,9 +151,5 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
         metadata = {"a": "A", "b": "B"}
         im = DummyIMBackend()
         im.write_metadata("foo", metadata)
-        try:
-            command = im.convert_cmd + "foo -set a A -set b B foo".split()
-            mock_util.command_output.assert_called_once_with(command)
-        except AssertionError:
-            command = im.convert_cmd + "foo -set b B -set a A foo".split()
-            mock_util.command_output.assert_called_once_with(command)
+        command = [*im.convert_cmd, *"foo -set a A -set b B foo".split()]
+        mock_util.command_output.assert_called_once_with(command)

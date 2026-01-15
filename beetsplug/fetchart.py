@@ -23,7 +23,7 @@ from collections import OrderedDict
 from contextlib import closing
 from enum import Enum
 from functools import cached_property
-from typing import TYPE_CHECKING, AnyStr, ClassVar, Literal, Tuple, Type
+from typing import TYPE_CHECKING, AnyStr, ClassVar, Literal
 
 import confuse
 import requests
@@ -36,10 +36,10 @@ from beets.util.config import sanitize_pairs
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
-    from logging import Logger
 
     from beets.importer import ImportSession, ImportTask
     from beets.library import Album, Library
+    from beets.logging import BeetsLogger as Logger
 
 try:
     from bs4 import BeautifulSoup, Tag
@@ -86,7 +86,7 @@ class Candidate:
         path: None | bytes = None,
         url: None | str = None,
         match: None | MetadataMatch = None,
-        size: None | Tuple[int, int] = None,
+        size: None | tuple[int, int] = None,
     ):
         self._log = log
         self.path = path
@@ -133,7 +133,7 @@ class Candidate:
         # get_size returns None if no local imaging backend is available
         if not self.size:
             self.size = ArtResizer.shared.get_size(self.path)
-        self._log.debug("image size: {}", self.size)
+        self._log.debug("image size: {.size}", self)
 
         if not self.size:
             self._log.warning(
@@ -151,7 +151,7 @@ class Candidate:
         # Check minimum dimension.
         if plugin.minwidth and self.size[0] < plugin.minwidth:
             self._log.debug(
-                "image too small ({} < {})", self.size[0], plugin.minwidth
+                "image too small ({} < {.minwidth})", self.size[0], plugin
             )
             return ImageAction.BAD
 
@@ -162,10 +162,10 @@ class Candidate:
                 if edge_diff > plugin.margin_px:
                     self._log.debug(
                         "image is not close enough to being "
-                        "square, ({} - {} > {})",
+                        "square, ({} - {} > {.margin_px})",
                         long_edge,
                         short_edge,
-                        plugin.margin_px,
+                        plugin,
                     )
                     return ImageAction.BAD
             elif plugin.margin_percent:
@@ -190,7 +190,7 @@ class Candidate:
         downscale = False
         if plugin.maxwidth and self.size[0] > plugin.maxwidth:
             self._log.debug(
-                "image needs rescaling ({} > {})", self.size[0], plugin.maxwidth
+                "image needs rescaling ({} > {.maxwidth})", self.size[0], plugin
             )
             downscale = True
 
@@ -200,9 +200,9 @@ class Candidate:
             filesize = os.stat(syspath(self.path)).st_size
             if filesize > plugin.max_filesize:
                 self._log.debug(
-                    "image needs resizing ({}B > {}B)",
+                    "image needs resizing ({}B > {.max_filesize}B)",
                     filesize,
-                    plugin.max_filesize,
+                    plugin,
                 )
                 downsize = True
 
@@ -213,9 +213,9 @@ class Candidate:
             reformat = fmt != plugin.cover_format
             if reformat:
                 self._log.debug(
-                    "image needs reformatting: {} -> {}",
+                    "image needs reformatting: {} -> {.cover_format}",
                     fmt,
-                    plugin.cover_format,
+                    plugin,
                 )
 
         skip_check_for = skip_check_for or []
@@ -329,7 +329,7 @@ def _logged_get(log: Logger, *args, **kwargs) -> requests.Response:
             prepped.url, {}, None, None, None
         )
         send_kwargs.update(settings)
-        log.debug("{}: {}", message, prepped.url)
+        log.debug("{}: {.url}", message, prepped)
         return s.send(prepped, **send_kwargs)
 
 
@@ -355,7 +355,7 @@ class ArtSource(RequestMixin, ABC):
     # Specify whether this source fetches local or remote images
     LOC: ClassVar[SourceLocation]
     # A list of methods to match metadata, sorted by descending accuracy
-    VALID_MATCHING_CRITERIA: list[str] = ["default"]
+    VALID_MATCHING_CRITERIA: ClassVar[list[str]] = ["default"]
     # A human-readable name for the art source
     NAME: ClassVar[str]
     # The key to select the art source in the config. This value will also be
@@ -518,8 +518,8 @@ class RemoteArtSource(ArtSource):
 class CoverArtArchive(RemoteArtSource):
     NAME = "Cover Art Archive"
     ID = "coverart"
-    VALID_MATCHING_CRITERIA = ["release", "releasegroup"]
-    VALID_THUMBNAIL_SIZES = [250, 500, 1200]
+    VALID_MATCHING_CRITERIA: ClassVar[list[str]] = ["release", "releasegroup"]
+    VALID_THUMBNAIL_SIZES: ClassVar[list[int]] = [250, 500, 1200]
 
     URL = "https://coverartarchive.org/release/{mbid}"
     GROUP_URL = "https://coverartarchive.org/release-group/{mbid}"
@@ -542,14 +542,14 @@ class CoverArtArchive(RemoteArtSource):
             try:
                 response = self.request(url)
             except requests.RequestException:
-                self._log.debug("{}: error receiving response", self.NAME)
+                self._log.debug("{.NAME}: error receiving response", self)
                 return
 
             try:
                 data = response.json()
             except ValueError:
                 self._log.debug(
-                    "{}: error loading response: {}", self.NAME, response.text
+                    "{.NAME}: error loading response: {.text}", self, response
                 )
                 return
 
@@ -593,7 +593,7 @@ class CoverArtArchive(RemoteArtSource):
 class Amazon(RemoteArtSource):
     NAME = "Amazon"
     ID = "amazon"
-    URL = "https://images.amazon.com/images/P/%s.%02i.LZZZZZZZ.jpg"
+    URL = "https://images.amazon.com/images/P/{}.{:02d}.LZZZZZZZ.jpg"
     INDICES = (1, 2)
 
     def get(
@@ -606,7 +606,7 @@ class Amazon(RemoteArtSource):
         if album.asin:
             for index in self.INDICES:
                 yield self._candidate(
-                    url=self.URL % (album.asin, index),
+                    url=self.URL.format(album.asin, index),
                     match=MetadataMatch.EXACT,
                 )
 
@@ -629,7 +629,7 @@ class AlbumArtOrg(RemoteArtSource):
         # Get the page from albumart.org.
         try:
             resp = self.request(self.URL, params={"asin": album.asin})
-            self._log.debug("scraped art URL: {}", resp.url)
+            self._log.debug("scraped art URL: {.url}", resp)
         except requests.RequestException:
             self._log.debug("error scraping art page")
             return
@@ -682,7 +682,7 @@ class GoogleImages(RemoteArtSource):
         """
         if not (album.albumartist and album.album):
             return
-        search_string = (album.albumartist + "," + album.album).encode("utf-8")
+        search_string = f"{album.albumartist},{album.album}".encode()
 
         try:
             response = self.request(
@@ -702,7 +702,7 @@ class GoogleImages(RemoteArtSource):
         try:
             data = response.json()
         except ValueError:
-            self._log.debug("google: error loading response: {}", response.text)
+            self._log.debug("google: error loading response: {.text}", response)
             return
 
         if "error" in data:
@@ -723,7 +723,7 @@ class FanartTV(RemoteArtSource):
     NAME = "fanart.tv"
     ID = "fanarttv"
     API_URL = "https://webservice.fanart.tv/v3/"
-    API_ALBUMS = API_URL + "music/albums/"
+    API_ALBUMS = f"{API_URL}music/albums/"
     PROJECT_KEY = "61a7d0ab4e67162b7a0c7c35915cd48e"
 
     def __init__(self, *args, **kwargs):
@@ -750,7 +750,7 @@ class FanartTV(RemoteArtSource):
 
         try:
             response = self.request(
-                self.API_ALBUMS + album.mb_releasegroupid,
+                f"{self.API_ALBUMS}{album.mb_releasegroupid}",
                 headers={
                     "api-key": self.PROJECT_KEY,
                     "client-key": self.client_key,
@@ -764,7 +764,7 @@ class FanartTV(RemoteArtSource):
             data = response.json()
         except ValueError:
             self._log.debug(
-                "fanart.tv: error loading response: {}", response.text
+                "fanart.tv: error loading response: {.text}", response
             )
             return
 
@@ -820,7 +820,7 @@ class ITunesStore(RemoteArtSource):
             return
 
         payload = {
-            "term": album.albumartist + " " + album.album,
+            "term": f"{album.albumartist} {album.album}",
             "entity": "album",
             "media": "music",
             "limit": 200,
@@ -867,7 +867,7 @@ class ITunesStore(RemoteArtSource):
                     )
             except KeyError as e:
                 self._log.debug(
-                    "Malformed itunes candidate: {} not found in {}",  # NOQA E501
+                    "Malformed itunes candidate: {} not found in {}",
                     e,
                     list(c.keys()),
                 )
@@ -947,14 +947,14 @@ class Wikipedia(RemoteArtSource):
             data = dbpedia_response.json()
             results = data["results"]["bindings"]
             if results:
-                cover_filename = "File:" + results[0]["coverFilename"]["value"]
+                cover_filename = f"File:{results[0]['coverFilename']['value']}"
                 page_id = results[0]["pageId"]["value"]
             else:
                 self._log.debug("wikipedia: album not found on dbpedia")
         except (ValueError, KeyError, IndexError):
             self._log.debug(
-                "wikipedia: error scraping dbpedia response: {}",
-                dbpedia_response.text,
+                "wikipedia: error scraping dbpedia response: {.text}",
+                dbpedia_response,
             )
 
         # Ensure we have a filename before attempting to query wikipedia
@@ -996,7 +996,7 @@ class Wikipedia(RemoteArtSource):
                 results = data["query"]["pages"][page_id]["images"]
                 for result in results:
                     if re.match(
-                        re.escape(lpart) + r".*?\." + re.escape(rpart),
+                        rf"{re.escape(lpart)}.*?\.{re.escape(rpart)}",
                         result["title"],
                     ):
                         cover_filename = result["title"]
@@ -1101,6 +1101,16 @@ class FileSystem(LocalArtSource):
                 else:
                     remaining.append(fn)
 
+            # Fall back to a configured image.
+            if plugin.fallback:
+                self._log.debug(
+                    "using fallback art file {}",
+                    util.displayable_path(plugin.fallback),
+                )
+                yield self._candidate(
+                    path=plugin.fallback, match=MetadataMatch.FALLBACK
+                )
+
             # Fall back to any image in the folder.
             if remaining and not plugin.cautious:
                 self._log.debug(
@@ -1118,7 +1128,7 @@ class LastFM(RemoteArtSource):
     ID = "lastfm"
 
     # Sizes in priority order.
-    SIZES = OrderedDict(
+    SIZES: ClassVar[dict[str, tuple[int, int]]] = OrderedDict(
         [
             ("mega", (300, 300)),
             ("extralarge", (300, 300)),
@@ -1179,7 +1189,7 @@ class LastFM(RemoteArtSource):
             if "error" in data:
                 if data["error"] == 6:
                     self._log.debug(
-                        "lastfm: no results for {}", album.mb_albumid
+                        "lastfm: no results for {.mb_albumid}", album
                     )
                 else:
                     self._log.error(
@@ -1200,7 +1210,7 @@ class LastFM(RemoteArtSource):
                             url=images[size], size=self.SIZES[size]
                         )
         except ValueError:
-            self._log.debug("lastfm: error loading response: {}", response.text)
+            self._log.debug("lastfm: error loading response: {.text}", response)
             return
 
 
@@ -1227,7 +1237,7 @@ class Spotify(RemoteArtSource):
         paths: None | Sequence[bytes],
     ) -> Iterator[Candidate]:
         try:
-            url = self.SPOTIFY_ALBUM_URL + album.items().get().spotify_album_id
+            url = f"{self.SPOTIFY_ALBUM_URL}{album.items().get().spotify_album_id}"
         except AttributeError:
             self._log.debug("Fetchart: no Spotify album ID found")
             return
@@ -1244,7 +1254,7 @@ class Spotify(RemoteArtSource):
             soup = BeautifulSoup(html, "html.parser")
         except ValueError:
             self._log.debug(
-                "Spotify: error loading response: {}", response.text
+                "Spotify: error loading response: {.text}", response
             )
             return
 
@@ -1293,7 +1303,7 @@ class CoverArtUrl(RemoteArtSource):
 
 
 # All art sources. The order they will be tried in is specified by the config.
-ART_SOURCES: set[Type[ArtSource]] = {
+ART_SOURCES: set[type[ArtSource]] = {
     FileSystem,
     CoverArtArchive,
     ITunesStore,
@@ -1332,6 +1342,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                 "enforce_ratio": False,
                 "cautious": False,
                 "cover_names": ["cover", "front", "art", "album", "folder"],
+                "fallback": None,
                 "sources": [
                     "filesystem",
                     "coverart",
@@ -1380,6 +1391,9 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         cover_names = self.config["cover_names"].as_str_seq()
         self.cover_names = list(map(util.bytestring_path, cover_names))
         self.cautious = self.config["cautious"].get(bool)
+        self.fallback = self.config["fallback"].get(
+            confuse.Optional(confuse.Filename())
+        )
         self.store_source = self.config["store_source"].get(bool)
 
         self.cover_format = self.config["cover_format"].get(
@@ -1541,9 +1555,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                         out = candidate
                         assert out.path is not None  # help mypy
                         self._log.debug(
-                            "using {0.LOC} image {1}",
-                            source,
-                            util.displayable_path(out.path),
+                            "using {.LOC} image {.path}", source, out
                         )
                         break
                     # Remove temporary files for invalid candidates.
@@ -1576,7 +1588,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                     message = ui.colorize(
                         "text_highlight_minor", "has album art"
                     )
-                    self._log.info("{0}: {1}", album, message)
+                    ui.print_(f"{album}: {message}")
             else:
                 # In ordinary invocations, look for images on the
                 # filesystem. When forcing, however, always go to the Web
@@ -1589,4 +1601,4 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                     message = ui.colorize("text_success", "found album art")
                 else:
                     message = ui.colorize("text_error", "no art found")
-                self._log.info("{0}: {1}", album, message)
+                ui.print_(f"{album}: {message}")

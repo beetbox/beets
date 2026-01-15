@@ -20,11 +20,12 @@ from mimetypes import guess_extension
 
 import requests
 
-from beets import art, config, ui
+from beets import config, ui
 from beets.plugins import BeetsPlugin
 from beets.ui import print_
 from beets.util import bytestring_path, displayable_path, normpath, syspath
 from beets.util.artresizer import ArtResizer
+from beetsplug._utils import art
 
 
 def _confirm(objs, album):
@@ -35,8 +36,9 @@ def _confirm(objs, album):
     to items).
     """
     noun = "album" if album else "file"
-    prompt = "Modify artwork for {} {}{} (Y/n)?".format(
-        len(objs), noun, "s" if len(objs) > 1 else ""
+    prompt = (
+        "Modify artwork for"
+        f" {len(objs)} {noun}{'s' if len(objs) > 1 else ''} (Y/n)?"
     )
 
     # Show all the items or albums.
@@ -110,9 +112,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 imagepath = normpath(opts.file)
                 if not os.path.isfile(syspath(imagepath)):
                     raise ui.UserError(
-                        "image file {} not found".format(
-                            displayable_path(imagepath)
-                        )
+                        f"image file {displayable_path(imagepath)} not found"
                     )
 
                 items = lib.items(args)
@@ -137,7 +137,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                     response = requests.get(opts.url, timeout=5)
                     response.raise_for_status()
                 except requests.exceptions.RequestException as e:
-                    self._log.error("{}".format(e))
+                    self._log.error("{}", e)
                     return
                 extension = guess_extension(response.headers["Content-Type"])
                 if extension is None:
@@ -149,7 +149,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                     with open(tempimg, "wb") as f:
                         f.write(response.content)
                 except Exception as e:
-                    self._log.error("Unable to save image: {}".format(e))
+                    self._log.error("Unable to save image: {}", e)
                     return
                 items = lib.items(args)
                 # Confirm with user.
@@ -274,7 +274,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         """
         if self.config["remove_art_file"] and album.artpath:
             if os.path.isfile(syspath(album.artpath)):
-                self._log.debug("Removing album art file for {0}", album)
+                self._log.debug("Removing album art file for {}", album)
                 os.remove(syspath(album.artpath))
                 album.artpath = None
                 album.store()

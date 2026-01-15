@@ -82,8 +82,8 @@ class SpotifyPluginTest(PluginTestCase):
         params = _params(responses.calls[0].request.url)
         query = params["q"][0]
         assert "duifhjslkef" in query
-        assert "artist:ujydfsuihse" in query
-        assert "album:lkajsdflakjsd" in query
+        assert "artist:'ujydfsuihse'" in query
+        assert "album:'lkajsdflakjsd'" in query
         assert params["type"] == ["track"]
 
     @responses.activate
@@ -117,8 +117,8 @@ class SpotifyPluginTest(PluginTestCase):
         params = _params(responses.calls[0].request.url)
         query = params["q"][0]
         assert "Happy" in query
-        assert "artist:Pharrell Williams" in query
-        assert "album:Despicable Me 2" in query
+        assert "artist:'Pharrell Williams'" in query
+        assert "album:'Despicable Me 2'" in query
         assert params["type"] == ["track"]
 
     @responses.activate
@@ -132,7 +132,7 @@ class SpotifyPluginTest(PluginTestCase):
 
         responses.add(
             responses.GET,
-            spotify.SpotifyPlugin.track_url + "6NPVjNh8Jhru9xOmyQigds",
+            f"{spotify.SpotifyPlugin.track_url}6NPVjNh8Jhru9xOmyQigds",
             body=response_body,
             status=200,
             content_type="application/json",
@@ -145,7 +145,7 @@ class SpotifyPluginTest(PluginTestCase):
 
         responses.add(
             responses.GET,
-            spotify.SpotifyPlugin.album_url + "5l3zEmMrOhOzG8d8s83GOL",
+            f"{spotify.SpotifyPlugin.album_url}5l3zEmMrOhOzG8d8s83GOL",
             body=response_body,
             status=200,
             content_type="application/json",
@@ -233,8 +233,8 @@ class SpotifyPluginTest(PluginTestCase):
             params = _params(responses.calls[0].request.url)
             query = params["q"][0]
             assert item.title in query
-            assert f"artist:{item.albumartist}" in query
-            assert f"album:{item.album}" in query
+            assert f"artist:'{item.albumartist}'" in query
+            assert f"album:'{item.album}'" in query
             assert not query.isascii()
 
         # Is not found in the library if ascii encoding is enabled
@@ -249,3 +249,61 @@ class SpotifyPluginTest(PluginTestCase):
             query = params["q"][0]
 
             assert query.isascii()
+
+    @responses.activate
+    def test_multiartist_album_and_track(self):
+        """Tests if plugin is able to map multiple artists in an album and
+        track info correctly"""
+
+        # Mock the Spotify 'Get Album' call
+        json_file = os.path.join(
+            _common.RSRC, b"spotify", b"multiartist_album.json"
+        )
+        with open(json_file, "rb") as f:
+            album_response_body = f.read()
+
+        responses.add(
+            responses.GET,
+            f"{spotify.SpotifyPlugin.album_url}0yhKyyjyKXWUieJ4w1IAEa",
+            body=album_response_body,
+            status=200,
+            content_type="application/json",
+        )
+
+        # Mock the Spotify 'Get Track' call
+        json_file = os.path.join(
+            _common.RSRC, b"spotify", b"multiartist_track.json"
+        )
+        with open(json_file, "rb") as f:
+            track_response_body = f.read()
+
+        responses.add(
+            responses.GET,
+            f"{spotify.SpotifyPlugin.track_url}6sjZfVJworBX6TqyjkxIJ1",
+            body=track_response_body,
+            status=200,
+            content_type="application/json",
+        )
+
+        album_info = self.spotify.album_for_id("0yhKyyjyKXWUieJ4w1IAEa")
+        assert album_info is not None
+        assert album_info.artist == "Project Skylate, Sugar Shrill"
+        assert album_info.artists == ["Project Skylate", "Sugar Shrill"]
+        assert album_info.artist_id == "6m8MRXIVKb6wQaPlBIDMr1"
+        assert album_info.artists_ids == [
+            "6m8MRXIVKb6wQaPlBIDMr1",
+            "4kkAIoQmNT5xEoNH5BuQLe",
+        ]
+
+        assert len(album_info.tracks) == 1
+        assert album_info.tracks[0].artist == "Foo, Bar"
+        assert album_info.tracks[0].artists == ["Foo", "Bar"]
+        assert album_info.tracks[0].artist_id == "12345"
+        assert album_info.tracks[0].artists_ids == ["12345", "67890"]
+
+        track_info = self.spotify.track_for_id("6sjZfVJworBX6TqyjkxIJ1")
+        assert track_info is not None
+        assert track_info.artist == "Foo, Bar"
+        assert track_info.artists == ["Foo", "Bar"]
+        assert track_info.artist_id == "12345"
+        assert track_info.artists_ids == ["12345", "67890"]

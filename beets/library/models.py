@@ -7,7 +7,7 @@ import time
 import unicodedata
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from mediafile import MediaFile, UnreadableFileError
 
@@ -229,7 +229,7 @@ class Album(LibModel):
     _table = "albums"
     _flex_table = "album_attributes"
     _always_dirty = True
-    _fields = {
+    _fields: ClassVar[dict[str, types.Type]] = {
         "id": types.PRIMARY_ID,
         "artpath": types.NullPathType(),
         "added": types.DATE,
@@ -281,13 +281,13 @@ class Album(LibModel):
     def _types(cls) -> dict[str, types.Type]:
         return {**super()._types, "path": types.PathType()}
 
-    _sorts = {
+    _sorts: ClassVar[dict[str, type[dbcore.query.FieldSort]]] = {
         "albumartist": dbcore.query.SmartArtistSort,
         "artist": dbcore.query.SmartArtistSort,
     }
 
     # List of keys that are set on an album's items.
-    item_keys = [
+    item_keys: ClassVar[list[str]] = [
         "added",
         "albumartist",
         "albumartists",
@@ -425,7 +425,7 @@ class Album(LibModel):
 
         new_art = util.unique_path(new_art)
         log.debug(
-            "moving album art {0} to {1}",
+            "moving album art {} to {}",
             util.displayable_path(old_art),
             util.displayable_path(new_art),
         )
@@ -482,7 +482,7 @@ class Album(LibModel):
         """
         item = self.items().get()
         if not item:
-            raise ValueError("empty album for album id %d" % self.id)
+            raise ValueError(f"empty album for album id {self.id}")
         return os.path.dirname(item.path)
 
     def _albumtotal(self):
@@ -620,9 +620,11 @@ class Album(LibModel):
 class Item(LibModel):
     """Represent a song or track."""
 
+    album_id: int | None
+
     _table = "items"
     _flex_table = "item_attributes"
-    _fields = {
+    _fields: ClassVar[dict[str, types.Type]] = {
         "id": types.PRIMARY_ID,
         "path": types.PathType(),
         "album_id": types.FOREIGN_ID,
@@ -742,7 +744,9 @@ class Item(LibModel):
 
     _formatter = FormattedItemMapping
 
-    _sorts = {"artist": dbcore.query.SmartArtistSort}
+    _sorts: ClassVar[dict[str, type[dbcore.query.FieldSort]]] = {
+        "artist": dbcore.query.SmartArtistSort
+    }
 
     @cached_classproperty
     def _queries(cls) -> dict[str, FieldQueryType]:
@@ -844,12 +848,9 @@ class Item(LibModel):
         # This must not use `with_album=True`, because that might access
         # the database. When debugging, that is not guaranteed to succeed, and
         # can even deadlock due to the database lock.
-        return "{}({})".format(
-            type(self).__name__,
-            ", ".join(
-                "{}={!r}".format(k, self[k])
-                for k in self.keys(with_album=False)
-            ),
+        return (
+            f"{type(self).__name__}"
+            f"({', '.join(f'{k}={self[k]!r}' for k in self.keys(with_album=False))})"
         )
 
     def keys(self, computed=False, with_album=True):
@@ -995,7 +996,7 @@ class Item(LibModel):
             self.write(*args, **kwargs)
             return True
         except FileOperationError as exc:
-            log.error("{0}", exc)
+            log.error("{}", exc)
             return False
 
     def try_sync(self, write, move, with_album=True):
@@ -1015,10 +1016,7 @@ class Item(LibModel):
         if move:
             # Check whether this file is inside the library directory.
             if self._db and self._db.directory in util.ancestry(self.path):
-                log.debug(
-                    "moving {0} to synchronize path",
-                    util.displayable_path(self.path),
-                )
+                log.debug("moving {.filepath} to synchronize path", self)
                 self.move(with_album=with_album)
         self.store()
 
@@ -1090,7 +1088,7 @@ class Item(LibModel):
         try:
             return os.path.getsize(syspath(self.path))
         except (OSError, Exception) as exc:
-            log.warning("could not get filesize: {0}", exc)
+            log.warning("could not get filesize: {}", exc)
             return 0
 
     # Model methods.
@@ -1149,7 +1147,6 @@ class Item(LibModel):
         If `store` is `False` however, the item won't be stored and it will
         have to be manually stored after invoking this method.
         """
-        self._check_db()
         dest = self.destination(basedir=basedir)
 
         # Create necessary ancestry for the move.
@@ -1189,9 +1186,8 @@ class Item(LibModel):
         is true, returns just the fragment of the path underneath the library
         base directory.
         """
-        db = self._check_db()
-        basedir = basedir or db.directory
-        path_formats = path_formats or db.path_formats
+        basedir = basedir or self.db.directory
+        path_formats = path_formats or self.db.path_formats
 
         # Use a path format based on a query, falling back on the
         # default.
@@ -1230,7 +1226,7 @@ class Item(LibModel):
             )
 
         lib_path_str, fallback = util.legalize_path(
-            subpath, db.replacements, self.filepath.suffix
+            subpath, self.db.replacements, self.filepath.suffix
         )
         if fallback:
             # Print an error message if legalization fell back to

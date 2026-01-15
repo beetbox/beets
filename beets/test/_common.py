@@ -107,7 +107,11 @@ def item(lib=None, **kwargs):
 
 # Dummy import session.
 def import_session(lib=None, loghandler=None, paths=[], query=[], cli=False):
-    cls = commands.TerminalImportSession if cli else importer.ImportSession
+    cls = (
+        commands.import_.session.TerminalImportSession
+        if cli
+        else importer.ImportSession
+    )
     return cls(lib, loghandler, paths, query)
 
 
@@ -153,7 +157,7 @@ class DummyIn:
         self.out = out
 
     def add(self, s):
-        self.buf.append(s + "\n")
+        self.buf.append(f"{s}\n")
 
     def close(self):
         pass

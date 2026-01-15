@@ -28,8 +28,7 @@ class InlineError(Exception):
 
     def __init__(self, code, exc):
         super().__init__(
-            ("error in inline path field code:\n%s\n%s: %s")
-            % (code, type(exc).__name__, str(exc))
+            f"error in inline path field code:\n{code}\n{type(exc).__name__}: {exc}"
         )
 
 
@@ -37,7 +36,8 @@ def _compile_func(body):
     """Given Python code for a function body, return a compiled
     callable that invokes that code.
     """
-    body = "def {}():\n    {}".format(FUNC_NAME, body.replace("\n", "\n    "))
+    body = body.replace("\n", "\n    ")
+    body = f"def {FUNC_NAME}():\n    {body}"
     code = compile(body, "inline", "exec")
     env = {}
     eval(code, env)
@@ -60,19 +60,19 @@ class InlinePlugin(BeetsPlugin):
         for key, view in itertools.chain(
             config["item_fields"].items(), config["pathfields"].items()
         ):
-            self._log.debug("adding item field {0}", key)
-            func = self.compile_inline(view.as_str(), False)
+            self._log.debug("adding item field {}", key)
+            func = self.compile_inline(view.as_str(), False, key)
             if func is not None:
                 self.template_fields[key] = func
 
         # Album fields.
         for key, view in config["album_fields"].items():
-            self._log.debug("adding album field {0}", key)
-            func = self.compile_inline(view.as_str(), True)
+            self._log.debug("adding album field {}", key)
+            func = self.compile_inline(view.as_str(), True, key)
             if func is not None:
                 self.album_template_fields[key] = func
 
-    def compile_inline(self, python_code, album):
+    def compile_inline(self, python_code, album, field_name):
         """Given a Python expression or function body, compile it as a path
         field function. The returned function takes a single argument, an
         Item, and returns a Unicode string. If the expression cannot be
@@ -87,7 +87,7 @@ class InlinePlugin(BeetsPlugin):
                 func = _compile_func(python_code)
             except SyntaxError:
                 self._log.error(
-                    "syntax error in inline field definition:\n{0}",
+                    "syntax error in inline field definition:\n{}",
                     traceback.format_exc(),
                 )
                 return
@@ -97,7 +97,12 @@ class InlinePlugin(BeetsPlugin):
             is_expr = True
 
         def _dict_for(obj):
-            out = dict(obj)
+            out = {}
+            for key in obj.keys(computed=False):
+                if key == field_name:
+                    continue
+                out[key] = obj._get(key)
+
             if album:
                 out["items"] = list(obj.items())
             return out

@@ -16,19 +16,25 @@
 autotagger. Requires the pyacoustid library.
 """
 
+from __future__ import annotations
+
 import re
 from collections import defaultdict
 from functools import cached_property, partial
-from typing import Iterable
+from typing import TYPE_CHECKING
 
 import acoustid
 import confuse
 
 from beets import config, ui, util
 from beets.autotag.distance import Distance
-from beets.autotag.hooks import TrackInfo
 from beets.metadata_plugins import MetadataSourcePlugin
 from beetsplug.musicbrainz import MusicBrainzPlugin
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from beets.autotag.hooks import TrackInfo
 
 API_KEY = "1vOwZtEn"
 SCORE_THRESH = 0.5
@@ -90,7 +96,7 @@ def acoustid_match(log, path):
         duration, fp = acoustid.fingerprint_file(util.syspath(path))
     except acoustid.FingerprintGenerationError as exc:
         log.error(
-            "fingerprinting of {0} failed: {1}",
+            "fingerprinting of {} failed: {}",
             util.displayable_path(repr(path)),
             exc,
         )
@@ -98,15 +104,17 @@ def acoustid_match(log, path):
     fp = fp.decode()
     _fingerprints[path] = fp
     try:
-        res = acoustid.lookup(API_KEY, fp, duration, meta="recordings releases")
+        res = acoustid.lookup(
+            API_KEY, fp, duration, meta="recordings releases", timeout=10
+        )
     except acoustid.AcoustidError as exc:
         log.debug(
-            "fingerprint matching {0} failed: {1}",
+            "fingerprint matching {} failed: {}",
             util.displayable_path(repr(path)),
             exc,
         )
         return None
-    log.debug("chroma: fingerprinted {0}", util.displayable_path(repr(path)))
+    log.debug("chroma: fingerprinted {}", util.displayable_path(repr(path)))
 
     # Ensure the response is usable and parse it.
     if res["status"] != "ok" or not res.get("results"):
@@ -144,7 +152,7 @@ def acoustid_match(log, path):
     release_ids = [rel["id"] for rel in releases]
 
     log.debug(
-        "matched recordings {0} on releases {1}", recording_ids, release_ids
+        "matched recordings {} on releases {}", recording_ids, release_ids
     )
     _matches[path] = recording_ids, release_ids
 
@@ -209,7 +217,7 @@ class AcoustidPlugin(MetadataSourcePlugin):
             if album:
                 albums.append(album)
 
-        self._log.debug("acoustid album candidates: {0}", len(albums))
+        self._log.debug("acoustid album candidates: {}", len(albums))
         return albums
 
     def item_candidates(self, item, artist, title) -> Iterable[TrackInfo]:
@@ -222,7 +230,7 @@ class AcoustidPlugin(MetadataSourcePlugin):
             track = self.mb.track_for_id(recording_id)
             if track:
                 tracks.append(track)
-        self._log.debug("acoustid item candidates: {0}", len(tracks))
+        self._log.debug("acoustid item candidates: {}", len(tracks))
         return tracks
 
     def album_for_id(self, *args, **kwargs):
@@ -290,11 +298,11 @@ def submit_items(log, userkey, items, chunksize=64):
 
     def submit_chunk():
         """Submit the current accumulated fingerprint data."""
-        log.info("submitting {0} fingerprints", len(data))
+        log.info("submitting {} fingerprints", len(data))
         try:
-            acoustid.submit(API_KEY, userkey, data)
+            acoustid.submit(API_KEY, userkey, data, timeout=10)
         except acoustid.AcoustidError as exc:
-            log.warning("acoustid submission error: {0}", exc)
+            log.warning("acoustid submission error: {}", exc)
         del data[:]
 
     for item in items:
@@ -341,31 +349,23 @@ def fingerprint_item(log, item, write=False):
     """
     # Get a fingerprint and length for this track.
     if not item.length:
-        log.info("{0}: no duration available", util.displayable_path(item.path))
+        log.info("{.filepath}: no duration available", item)
     elif item.acoustid_fingerprint:
         if write:
-            log.info(
-                "{0}: fingerprint exists, skipping",
-                util.displayable_path(item.path),
-            )
+            log.info("{.filepath}: fingerprint exists, skipping", item)
         else:
-            log.info(
-                "{0}: using existing fingerprint",
-                util.displayable_path(item.path),
-            )
+            log.info("{.filepath}: using existing fingerprint", item)
         return item.acoustid_fingerprint
     else:
-        log.info("{0}: fingerprinting", util.displayable_path(item.path))
+        log.info("{.filepath}: fingerprinting", item)
         try:
             _, fp = acoustid.fingerprint_file(util.syspath(item.path))
             item.acoustid_fingerprint = fp.decode()
             if write:
-                log.info(
-                    "{0}: writing fingerprint", util.displayable_path(item.path)
-                )
+                log.info("{.filepath}: writing fingerprint", item)
                 item.try_write()
             if item._db:
                 item.store()
             return item.acoustid_fingerprint
         except acoustid.FingerprintGenerationError as exc:
-            log.info("fingerprint generation failed: {0}", exc)
+            log.info("fingerprint generation failed: {}", exc)

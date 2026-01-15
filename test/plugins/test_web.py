@@ -118,6 +118,13 @@ class WebPluginTest(ItemInDBTestCase):
         assert response.status_code == 200
         assert len(res_json["items"]) == 3
 
+    def test_get_unique_item_artist(self):
+        response = self.client.get("/item/values/artist")
+        res_json = json.loads(response.data.decode("utf-8"))
+
+        assert response.status_code == 200
+        assert res_json["values"] == ["", "AAA Singers"]
+
     def test_get_single_item_by_id(self):
         response = self.client.get("/item/1")
         res_json = json.loads(response.data.decode("utf-8"))
@@ -142,7 +149,7 @@ class WebPluginTest(ItemInDBTestCase):
     def test_get_single_item_by_path(self):
         data_path = os.path.join(_common.RSRC, b"full.mp3")
         self.lib.add(Item.from_path(data_path))
-        response = self.client.get("/item/path/" + data_path.decode("utf-8"))
+        response = self.client.get(f"/item/path/{data_path.decode('utf-8')}")
         res_json = json.loads(response.data.decode("utf-8"))
 
         assert response.status_code == 200
@@ -152,12 +159,11 @@ class WebPluginTest(ItemInDBTestCase):
         data_path = os.path.join(_common.RSRC, b"full.mp3")
         # data_path points to a valid file, but we have not added the file
         # to the library.
-        response = self.client.get("/item/path/" + data_path.decode("utf-8"))
+        response = self.client.get(f"/item/path/{data_path.decode('utf-8')}")
 
         assert response.status_code == 404
 
     def test_get_item_empty_query(self):
-        """testing item query: <empty>"""
         response = self.client.get("/item/query/")
         res_json = json.loads(response.data.decode("utf-8"))
 
@@ -165,7 +171,6 @@ class WebPluginTest(ItemInDBTestCase):
         assert len(res_json["items"]) == 3
 
     def test_get_simple_item_query(self):
-        """testing item query: another"""
         response = self.client.get("/item/query/another")
         res_json = json.loads(response.data.decode("utf-8"))
 
@@ -174,8 +179,7 @@ class WebPluginTest(ItemInDBTestCase):
         assert res_json["results"][0]["title"] == "another title"
 
     def test_query_item_string(self):
-        """testing item query: testattr:ABC"""
-        response = self.client.get("/item/query/testattr%3aABC")
+        response = self.client.get("/item/query/testattr%3aABC")  # testattr:ABC
         res_json = json.loads(response.data.decode("utf-8"))
 
         assert response.status_code == 200
@@ -183,8 +187,9 @@ class WebPluginTest(ItemInDBTestCase):
         assert res_json["results"][0]["title"] == "and a third"
 
     def test_query_item_regex(self):
-        """testing item query: testattr::[A-C]+"""
-        response = self.client.get("/item/query/testattr%3a%3a[A-C]%2b")
+        response = self.client.get(
+            "/item/query/testattr%3a%3a[A-C]%2b"
+        )  # testattr::[A-C]+
         res_json = json.loads(response.data.decode("utf-8"))
 
         assert response.status_code == 200
@@ -192,8 +197,9 @@ class WebPluginTest(ItemInDBTestCase):
         assert res_json["results"][0]["title"] == "and a third"
 
     def test_query_item_regex_backslash(self):
-        # """ testing item query: testattr::\w+ """
-        response = self.client.get("/item/query/testattr%3a%3a%5cw%2b")
+        response = self.client.get(
+            "/item/query/testattr%3a%3a%5cw%2b"
+        )  # testattr::\w+
         res_json = json.loads(response.data.decode("utf-8"))
 
         assert response.status_code == 200
@@ -201,7 +207,6 @@ class WebPluginTest(ItemInDBTestCase):
         assert res_json["results"][0]["title"] == "and a third"
 
     def test_query_item_path(self):
-        # """ testing item query: path:\somewhere\a """
         """Note: path queries are special: the query item must match the path
         from the root all the way to a directory, so this matches 1 item"""
         """ Note: filesystem separators in the query must be '\' """
@@ -267,8 +272,9 @@ class WebPluginTest(ItemInDBTestCase):
         assert response_track_titles == {"title", "and a third"}
 
     def test_query_album_string(self):
-        """testing query: albumtest:xy"""
-        response = self.client.get("/album/query/albumtest%3axy")
+        response = self.client.get(
+            "/album/query/albumtest%3axy"
+        )  # albumtest:xy
         res_json = json.loads(response.data.decode("utf-8"))
 
         assert response.status_code == 200
@@ -276,8 +282,9 @@ class WebPluginTest(ItemInDBTestCase):
         assert res_json["results"][0]["album"] == "album"
 
     def test_query_album_artpath_regex(self):
-        """testing query: artpath::art_"""
-        response = self.client.get("/album/query/artpath%3a%3aart_")
+        response = self.client.get(
+            "/album/query/artpath%3a%3aart_"
+        )  # artpath::art_
         res_json = json.loads(response.data.decode("utf-8"))
 
         assert response.status_code == 200
@@ -285,8 +292,9 @@ class WebPluginTest(ItemInDBTestCase):
         assert res_json["results"][0]["album"] == "other album"
 
     def test_query_album_regex_backslash(self):
-        # """ testing query: albumtest::\w+ """
-        response = self.client.get("/album/query/albumtest%3a%3a%5cw%2b")
+        response = self.client.get(
+            "/album/query/albumtest%3a%3a%5cw%2b"
+        )  # albumtest::\w+
         res_json = json.loads(response.data.decode("utf-8"))
 
         assert response.status_code == 200
@@ -310,18 +318,18 @@ class WebPluginTest(ItemInDBTestCase):
         )
 
         # Check we can find the temporary item we just created
-        response = self.client.get("/item/" + str(item_id))
+        response = self.client.get(f"/item/{item_id}")
         res_json = json.loads(response.data.decode("utf-8"))
         assert response.status_code == 200
         assert res_json["id"] == item_id
 
         # Delete item by id
-        response = self.client.delete("/item/" + str(item_id))
+        response = self.client.delete(f"/item/{item_id}")
         res_json = json.loads(response.data.decode("utf-8"))
         assert response.status_code == 200
 
         # Check the item has gone
-        response = self.client.get("/item/" + str(item_id))
+        response = self.client.get(f"/item/{item_id}")
         assert response.status_code == 404
         # Note: if this fails, the item may still be around
         # and may cause other tests to fail
@@ -336,18 +344,18 @@ class WebPluginTest(ItemInDBTestCase):
         item_id = self.lib.add(Item.from_path(ipath))
 
         # Check we can find the temporary item we just created
-        response = self.client.get("/item/" + str(item_id))
+        response = self.client.get(f"/item/{item_id}")
         res_json = json.loads(response.data.decode("utf-8"))
         assert response.status_code == 200
         assert res_json["id"] == item_id
 
         # Delete item by id, without deleting file
-        response = self.client.delete("/item/" + str(item_id))
+        response = self.client.delete(f"/item/{item_id}")
         res_json = json.loads(response.data.decode("utf-8"))
         assert response.status_code == 200
 
         # Check the item has gone
-        response = self.client.get("/item/" + str(item_id))
+        response = self.client.get(f"/item/{item_id}")
         assert response.status_code == 404
 
         # Check the file has not gone
@@ -364,18 +372,18 @@ class WebPluginTest(ItemInDBTestCase):
         item_id = self.lib.add(Item.from_path(ipath))
 
         # Check we can find the temporary item we just created
-        response = self.client.get("/item/" + str(item_id))
+        response = self.client.get(f"/item/{item_id}")
         res_json = json.loads(response.data.decode("utf-8"))
         assert response.status_code == 200
         assert res_json["id"] == item_id
 
         # Delete item by id, with file
-        response = self.client.delete("/item/" + str(item_id) + "?delete")
+        response = self.client.delete(f"/item/{item_id}?delete")
         res_json = json.loads(response.data.decode("utf-8"))
         assert response.status_code == 200
 
         # Check the item has gone
-        response = self.client.get("/item/" + str(item_id))
+        response = self.client.get(f"/item/{item_id}")
         assert response.status_code == 404
 
         # Check the file has gone
@@ -427,17 +435,17 @@ class WebPluginTest(ItemInDBTestCase):
         )
 
         # Check we can find the temporary item we just created
-        response = self.client.get("/item/" + str(item_id))
+        response = self.client.get(f"/item/{item_id}")
         res_json = json.loads(response.data.decode("utf-8"))
         assert response.status_code == 200
         assert res_json["id"] == item_id
 
         # Try to delete item by id
-        response = self.client.delete("/item/" + str(item_id))
+        response = self.client.delete(f"/item/{item_id}")
         assert response.status_code == 405
 
         # Check the item has not gone
-        response = self.client.get("/item/" + str(item_id))
+        response = self.client.get(f"/item/{item_id}")
         res_json = json.loads(response.data.decode("utf-8"))
         assert response.status_code == 200
         assert res_json["id"] == item_id
@@ -481,18 +489,18 @@ class WebPluginTest(ItemInDBTestCase):
         )
 
         # Check we can find the temporary album we just created
-        response = self.client.get("/album/" + str(album_id))
+        response = self.client.get(f"/album/{album_id}")
         res_json = json.loads(response.data.decode("utf-8"))
         assert response.status_code == 200
         assert res_json["id"] == album_id
 
         # Delete album by id
-        response = self.client.delete("/album/" + str(album_id))
+        response = self.client.delete(f"/album/{album_id}")
         res_json = json.loads(response.data.decode("utf-8"))
         assert response.status_code == 200
 
         # Check the album has gone
-        response = self.client.get("/album/" + str(album_id))
+        response = self.client.get(f"/album/{album_id}")
         assert response.status_code == 404
         # Note: if this fails, the album may still be around
         # and may cause other tests to fail
@@ -543,17 +551,17 @@ class WebPluginTest(ItemInDBTestCase):
         )
 
         # Check we can find the temporary album we just created
-        response = self.client.get("/album/" + str(album_id))
+        response = self.client.get(f"/album/{album_id}")
         res_json = json.loads(response.data.decode("utf-8"))
         assert response.status_code == 200
         assert res_json["id"] == album_id
 
         # Try to delete album by id
-        response = self.client.delete("/album/" + str(album_id))
+        response = self.client.delete(f"/album/{album_id}")
         assert response.status_code == 405
 
         # Check the item has not gone
-        response = self.client.get("/album/" + str(album_id))
+        response = self.client.get(f"/album/{album_id}")
         res_json = json.loads(response.data.decode("utf-8"))
         assert response.status_code == 200
         assert res_json["id"] == album_id
@@ -603,7 +611,7 @@ class WebPluginTest(ItemInDBTestCase):
         )
 
         # Check we can find the temporary item we just created
-        response = self.client.get("/item/" + str(item_id))
+        response = self.client.get(f"/item/{item_id}")
         res_json = json.loads(response.data.decode("utf-8"))
         assert response.status_code == 200
         assert res_json["id"] == item_id
@@ -613,7 +621,7 @@ class WebPluginTest(ItemInDBTestCase):
         # Patch item by id
         # patch_json = json.JSONEncoder().encode({"test_patch_f2": "New"}]})
         response = self.client.patch(
-            "/item/" + str(item_id), json={"test_patch_f2": "New"}
+            f"/item/{item_id}", json={"test_patch_f2": "New"}
         )
         res_json = json.loads(response.data.decode("utf-8"))
         assert response.status_code == 200
@@ -622,7 +630,7 @@ class WebPluginTest(ItemInDBTestCase):
         assert res_json["test_patch_f2"] == "New"
 
         # Check the update has really worked
-        response = self.client.get("/item/" + str(item_id))
+        response = self.client.get(f"/item/{item_id}")
         res_json = json.loads(response.data.decode("utf-8"))
         assert response.status_code == 200
         assert res_json["id"] == item_id
@@ -647,7 +655,7 @@ class WebPluginTest(ItemInDBTestCase):
         )
 
         # Check we can find the temporary item we just created
-        response = self.client.get("/item/" + str(item_id))
+        response = self.client.get(f"/item/{item_id}")
         res_json = json.loads(response.data.decode("utf-8"))
         assert response.status_code == 200
         assert res_json["id"] == item_id
@@ -657,7 +665,7 @@ class WebPluginTest(ItemInDBTestCase):
         # Patch item by id
         # patch_json = json.JSONEncoder().encode({"test_patch_f2": "New"})
         response = self.client.patch(
-            "/item/" + str(item_id), json={"test_patch_f2": "New"}
+            f"/item/{item_id}", json={"test_patch_f2": "New"}
         )
         assert response.status_code == 405
 
@@ -670,6 +678,6 @@ class WebPluginTest(ItemInDBTestCase):
         assert os.path.exists(ipath)
         item_id = self.lib.add(Item.from_path(ipath))
 
-        response = self.client.get("/item/" + str(item_id) + "/file")
+        response = self.client.get(f"/item/{item_id}/file")
 
         assert response.status_code == 200

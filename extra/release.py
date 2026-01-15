@@ -6,18 +6,20 @@ from __future__ import annotations
 
 import re
 import subprocess
+from collections.abc import Callable
 from contextlib import redirect_stdout
 from datetime import datetime, timezone
 from functools import partial
 from io import StringIO
 from pathlib import Path
-from typing import Callable, NamedTuple
+from typing import NamedTuple, TypeAlias
 
 import click
 import tomli
 from packaging.version import Version, parse
 from sphinx.ext import intersphinx
-from typing_extensions import TypeAlias
+
+from docs.conf import rst_epilog
 
 BASE = Path(__file__).parent.parent.absolute()
 PYPROJECT = BASE / "pyproject.toml"
@@ -104,11 +106,21 @@ def create_rst_replacements() -> list[Replacement]:
     plugins = "|".join(
         r.split("/")[-1] for r in refs if r.startswith("plugins/")
     )
+    explicit_replacements = dict(
+        line.removeprefix(".. ").split(" replace:: ")
+        for line in filter(None, rst_epilog.splitlines())
+    )
     return [
-        # Replace Sphinx :ref: and :doc: directives by documentation URLs
+        # Replace explicitly defined substitutions from rst_epilog
+        #    |BeetsPlugin| -> :class:`beets.plugins.BeetsPlugin`
+        (
+            r"\|\w[^ ]*\|",
+            lambda m: explicit_replacements.get(m[0], m[0]),
+        ),
+        # Replace Sphinx directives by documentation URLs, e.g.,
         #   :ref:`/plugins/autobpm` -> [AutoBPM Plugin](DOCS/plugins/autobpm.html)
         (
-            r":(?:ref|doc):`+(?:([^`<]+)<)?/?([\w./_-]+)>?`+",
+            r":(?:ref|doc|class|conf):`+(?:([^`<]+)<)?/?([\w.:/_-]+)>?`+",
             lambda m: make_ref_link(m[2], m[1]),
         ),
         # Convert command references to documentation URLs

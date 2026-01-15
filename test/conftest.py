@@ -3,7 +3,10 @@ import os
 
 import pytest
 
+from beets.autotag.distance import Distance
 from beets.dbcore.query import Query
+from beets.test.helper import ConfigMixin
+from beets.util import cached_classproperty
 
 
 def skip_marked_items(items: list[pytest.Item], marker_name: str, reason: str):
@@ -41,3 +44,19 @@ def pytest_make_parametrize_id(config, val, argname):
         return inspect.getsource(val).split("lambda")[-1][:30]
 
     return repr(val)
+
+
+def pytest_assertrepr_compare(op, left, right):
+    if isinstance(left, Distance) or isinstance(right, Distance):
+        return [f"Comparing Distance: {float(left)} {op} {float(right)}"]
+
+
+@pytest.fixture(autouse=True)
+def clear_cached_classproperty():
+    cached_classproperty.cache.clear()
+
+
+@pytest.fixture(scope="module")
+def config():
+    """Provide a fresh beets configuration for a module, when requested."""
+    return ConfigMixin().config

@@ -124,7 +124,7 @@ tags** and will only **fetch new genres for empty tags**. When ``force`` is
 ``yes`` the setting of the ``whitelist`` option (as documented in Usage_)
 applies to any existing or newly fetched genres.
 
-The follwing configurations are possible:
+The following configurations are possible:
 
 **Setup 1** (default)
 
@@ -147,8 +147,9 @@ Add new last.fm genres when **empty**. Any present tags stay **untouched**.
 **Setup 3**
 
 **Combine** genres in present tags with new ones (be aware of that with an
-enabled ``whitelist`` setting, of course some genres might get cleaned up. To
-make sure any existing genres remain, set ``whitelist: no``).
+enabled ``whitelist`` setting, of course some genres might get cleaned up -
+existing genres take precedence over new ones though. To make sure any existing
+genres remain, set ``whitelist: no``).
 
 .. code-block:: yaml
 
@@ -196,11 +197,6 @@ file. The available options are:
   internal whitelist, or ``no`` to consider all genres valid. Default: ``yes``.
 - **title_case**: Convert the new tags to TitleCase before saving. Default:
   ``yes``.
-- **extended_debug**: Add additional debug logging messages that show what
-  last.fm tags were fetched for tracks, albums and artists. This is done before
-  any canonicalization and whitelist filtering is applied. It's useful for
-  tuning the plugin's settings and understanding how it works, but it can be
-  quite verbose. Default: ``no``.
 
 Running Manually
 ----------------
@@ -212,5 +208,19 @@ fetch genres for albums or items matching a certain query.
 By default, ``beet lastgenre`` matches albums. To match individual tracks or
 singletons, use the ``-A`` switch: ``beet lastgenre -A [QUERY]``.
 
+To preview the changes that would be made without applying them, use the ``-p``
+or ``--pretend`` flag. This shows which genres would be set but does not write
+or store any changes.
+
 To disable automatic genre fetching on import, set the ``auto`` config option to
 false.
+
+Tuning Logs
+-----------
+
+To enable tuning logs, run ``beet -vvv lastgenre ...`` or ``beet -vvv import
+...``. This enables additional messages at the ``DEBUG`` log level, showing for
+example what data was received from last.fm at each stage of genre fetching
+(artist, album, and track levels) before any canonicalization or whitelist
+filtering is applied. Tuning logs are useful for adjusting the plugin’s settings
+and understanding its behavior, though they can be quite verbose.

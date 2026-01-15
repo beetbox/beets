@@ -27,7 +27,6 @@ import subprocess
 import sys
 import tempfile
 import traceback
-import warnings
 from collections import Counter
 from collections.abc import Sequence
 from contextlib import suppress
@@ -41,12 +40,11 @@ from typing import (
     TYPE_CHECKING,
     Any,
     AnyStr,
-    Callable,
     ClassVar,
     Generic,
     NamedTuple,
     TypeVar,
-    Union,
+    cast,
 )
 
 from unidecode import unidecode
@@ -55,7 +53,7 @@ import beets
 from beets.util import hidden
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Iterator
+    from collections.abc import Callable, Iterable, Iterator
     from logging import Logger
 
     from beets.library import Item
@@ -64,8 +62,8 @@ if TYPE_CHECKING:
 MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = "\\\\?\\"
 T = TypeVar("T")
-PathLike = Union[str, bytes, Path]
-StrPath = Union[str, Path]
+StrPath = str | Path
+PathLike = StrPath | bytes
 Replacements = Sequence[tuple[Pattern[str], str]]
 
 # Here for now to allow for a easy replace later on
@@ -112,7 +110,7 @@ class HumanReadableError(Exception):
         elif hasattr(self.reason, "strerror"):  # i.e., EnvironmentError
             return self.reason.strerror
         else:
-            return '"{}"'.format(str(self.reason))
+            return f'"{self.reason}"'
 
     def get_message(self):
         """Create the human-readable description of the error, sans
@@ -126,7 +124,7 @@ class HumanReadableError(Exception):
         """
         if self.tb:
             logger.debug(self.tb)
-        logger.error("{0}: {1}", self.error_kind, self.args[0])
+        logger.error("{0.error_kind}: {0.args[0]}", self)
 
 
 class FilesystemError(HumanReadableError):
@@ -142,18 +140,16 @@ class FilesystemError(HumanReadableError):
     def get_message(self):
         # Use a nicer English phrasing for some specific verbs.
         if self.verb in ("move", "copy", "rename"):
-            clause = "while {} {} to {}".format(
-                self._gerund(),
-                displayable_path(self.paths[0]),
-                displayable_path(self.paths[1]),
+            clause = (
+                f"while {self._gerund()} {displayable_path(self.paths[0])} to"
+                f" {displayable_path(self.paths[1])}"
             )
         elif self.verb in ("delete", "write", "create", "read"):
-            clause = "while {} {}".format(
-                self._gerund(), displayable_path(self.paths[0])
-            )
+            clause = f"while {self._gerund()} {displayable_path(self.paths[0])}"
         else:
-            clause = "during {} of paths {}".format(
-                self.verb, ", ".join(displayable_path(p) for p in self.paths)
+            clause = (
+                f"during {self.verb} of paths"
+                f" {', '.join(displayable_path(p) for p in self.paths)}"
             )
 
         return f"{self._reasonstr()} {clause}"
@@ -168,6 +164,12 @@ class MoveOperation(Enum):
     HARDLINK = 3
     REFLINK = 4
     REFLINK_AUTO = 5
+
+
+class PromptChoice(NamedTuple):
+    short: str
+    long: str
+    callback: Any
 
 
 def normpath(path: PathLike) -> bytes:
@@ -223,12 +225,12 @@ def sorted_walk(
     # Get all the directories and files at this level.
     try:
         contents = os.listdir(syspath(bytes_path))
-    except OSError as exc:
+    except OSError:
         if logger:
             logger.warning(
-                "could not list directory {}: {}".format(
-                    displayable_path(bytes_path), exc.strerror
-                )
+                "could not list directory {}",
+                displayable_path(bytes_path),
+                exc_info=True,
             )
         return
     dirs = []
@@ -436,8 +438,8 @@ def syspath(path: PathLike, prefix: bool = True) -> str:
     if prefix and not str_path.startswith(WINDOWS_MAGIC_PREFIX):
         if str_path.startswith("\\\\"):
             # UNC path. Final path should look like \\?\UNC\...
-            str_path = "UNC" + str_path[1:]
-        str_path = WINDOWS_MAGIC_PREFIX + str_path
+            str_path = f"UNC{str_path[1:]}"
+        str_path = f"{WINDOWS_MAGIC_PREFIX}{str_path}"
 
     return str_path
 
@@ -509,8 +511,8 @@ def move(path: bytes, dest: bytes, replace: bool = False):
         basename = os.path.basename(bytestring_path(dest))
         dirname = os.path.dirname(bytestring_path(dest))
         tmp = tempfile.NamedTemporaryFile(
-            suffix=syspath(b".beets", prefix=False),
-            prefix=syspath(b"." + basename + b".", prefix=False),
+            suffix=".beets",
+            prefix=f".{os.fsdecode(basename)}.",
             dir=syspath(dirname),
             delete=False,
         )
@@ -579,10 +581,14 @@ def hardlink(path: bytes, dest: bytes, replace: bool = False):
     if samefile(path, dest):
         return
 
-    if os.path.exists(syspath(dest)) and not replace:
+    # Dereference symlinks, expand "~", and convert relative paths to absolute
+    origin_path = Path(os.fsdecode(path)).expanduser().resolve()
+    dest_path = Path(os.fsdecode(dest)).expanduser().resolve()
+
+    if dest_path.exists() and not replace:
         raise FilesystemError("file exists", "rename", (path, dest))
     try:
-        os.link(syspath(path), syspath(dest))
+        dest_path.hardlink_to(origin_path)
     except NotImplementedError:
         raise FilesystemError(
             "OS does not support hard links.link",
@@ -719,7 +725,7 @@ def truncate_path(str_path: str) -> str:
     path = Path(str_path)
     parent_parts = [truncate_str(p, max_length) for p in path.parts[:-1]]
     stem = truncate_str(path.stem, max_length - len(path.suffix))
-    return str(Path(*parent_parts, stem)) + path.suffix
+    return f"{Path(*parent_parts, stem)}{path.suffix}"
 
 
 def _legalize_stage(
@@ -838,9 +844,10 @@ def get_most_common_tags(
         "country",
         "media",
         "albumdisambig",
+        "data_source",
     ]
     for field in fields:
-        values = [item[field] for item in items if item]
+        values = [item.get(field) for item in items if item]
         likelies[field], freq = plurality(values)
         consensus[field] = freq == len(values)
 
@@ -1053,7 +1060,7 @@ def par_map(transform: Callable[[T], Any], items: Sequence[T]) -> None:
     pool.join()
 
 
-class cached_classproperty:
+class cached_classproperty(Generic[T]):
     """Descriptor implementing cached class properties.
 
     Provides class-level dynamic property behavior where the getter function is
@@ -1061,9 +1068,9 @@ class cached_classproperty:
     instance properties, this operates on the class rather than instances.
     """
 
-    cache: ClassVar[dict[tuple[Any, str], Any]] = {}
+    cache: ClassVar[dict[tuple[type[object], str], object]] = {}
 
-    name: str
+    name: str = ""
 
     # Ideally, we would like to use `Callable[[type[T]], Any]` here,
     # however, `mypy` is unable to see this as a **class** property, and thinks
@@ -1079,21 +1086,21 @@ class cached_classproperty:
     #   "Callable[[Album], ...]"; expected "Callable[[type[Album]], ...]"
     #
     # Therefore, we just use `Any` here, which is not ideal, but works.
-    def __init__(self, getter: Callable[[Any], Any]) -> None:
+    def __init__(self, getter: Callable[..., T]) -> None:
         """Initialize the descriptor with the property getter function."""
-        self.getter = getter
+        self.getter: Callable[..., T] = getter
 
-    def __set_name__(self, owner: Any, name: str) -> None:
+    def __set_name__(self, owner: object, name: str) -> None:
         """Capture the attribute name this descriptor is assigned to."""
         self.name = name
 
-    def __get__(self, instance: Any, owner: type[Any]) -> Any:
+    def __get__(self, instance: object, owner: type[object]) -> T:
         """Compute and cache if needed, and return the property value."""
-        key = owner, self.name
+        key: tuple[type[object], str] = owner, self.name
         if key not in self.cache:
             self.cache[key] = self.getter(owner)
 
-        return self.cache[key]
+        return cast(T, self.cache[key])
 
 
 class LazySharedInstance(Generic[T]):
@@ -1192,26 +1199,3 @@ def get_temp_filename(
 def unique_list(elements: Iterable[T]) -> list[T]:
     """Return a list with unique elements in the original order."""
     return list(dict.fromkeys(elements))
-
-
-def deprecate_imports(
-    old_module: str, new_module_by_name: dict[str, str], name: str, version: str
-) -> Any:
-    """Handle deprecated module imports by redirecting to new locations.
-
-    Facilitates gradual migration of module structure by intercepting import
-    attempts for relocated functionality. Issues deprecation warnings while
-    transparently providing access to the moved implementation, allowing
-    existing code to continue working during transition periods.
-    """
-    if new_module := new_module_by_name.get(name):
-        warnings.warn(
-            (
-                f"'{old_module}.{name}' is deprecated and will be removed"
-                f" in {version}. Use '{new_module}.{name}' instead."
-            ),
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return getattr(import_module(new_module), name)
-    raise AttributeError(f"module '{old_module}' has no attribute '{name}'")

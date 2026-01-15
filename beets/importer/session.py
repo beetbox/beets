@@ -15,9 +15,9 @@ from __future__ import annotations
 
 import os
 import time
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING
 
-from beets import config, dbcore, library, logging, plugins, util
+from beets import config, logging, plugins, util
 from beets.importer.tasks import Action
 from beets.util import displayable_path, normpath, pipeline, syspath
 
@@ -25,6 +25,9 @@ from . import stages as stagefuncs
 from .state import ImportState
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from beets import dbcore, library
     from beets.util import PathBytes
 
     from .tasks import ImportTask
@@ -150,7 +153,7 @@ class ImportSession:
         """Log a message about a given album to the importer log. The status
         should reflect the reason the album couldn't be tagged.
         """
-        self.logger.info("{0} {1}", status, displayable_path(paths))
+        self.logger.info("{} {}", status, displayable_path(paths))
 
     def log_choice(self, task: ImportTask, duplicate=False):
         """Logs the task's current choice if it should be logged. If
@@ -187,7 +190,7 @@ class ImportSession:
 
     def run(self):
         """Run the import task."""
-        self.logger.info("import started {0}", time.asctime())
+        self.logger.info("import started {}", time.asctime())
         self.set_config(config["import"])
 
         # Set up the pipeline.
@@ -297,7 +300,7 @@ class ImportSession:
             # Either accept immediately or prompt for input to decide.
             if self.want_resume is True or self.should_resume(toppath):
                 log.warning(
-                    "Resuming interrupted import of {0}",
+                    "Resuming interrupted import of {}",
                     util.displayable_path(toppath),
                 )
                 self._is_resuming[toppath] = True

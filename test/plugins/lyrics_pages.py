@@ -24,7 +24,7 @@ class LyricsPage(NamedTuple):
     artist: str = "The Beatles"
     track_title: str = "Lady Madonna"
     url_title: str | None = None  # only relevant to the Google backend
-    marks: list[str] = []  # markers for pytest.param
+    marks: list[str] = []  # markers for pytest.param  # noqa: RUF012
 
     def __str__(self) -> str:
         """Return name of this test case."""
@@ -128,6 +128,7 @@ lyrics_pages = [
         artist="Atlanta",
         track_title="Mergaitės Nori Mylėt",
         url_title="Mergaitės nori mylėt – Atlanta | Dainų Žodžiai",
+        marks=[xfail_on_ci("Expired SSL certificate")],
     ),
     LyricsPage.make(
         "https://genius.com/The-beatles-lady-madonna-lyrics",
@@ -328,34 +329,40 @@ lyrics_pages = [
         url_title="The Beatles - Lady Madonna Lyrics",
     ),
     LyricsPage.make(
-        "https://www.lyricsmode.com/lyrics/b/beatles/lady_madonna.html",
+        "https://www.lyricsmode.com/lyrics/b/beatles/mother_natures_son.html",
         """
-        Lady Madonna, children at your feet.
-        Wonder how you manage to make ends meet.
-        Who finds the money? When you pay the rent?
-        Did you think that money was heaven sent?
+        Born a poor young country boy, Mother Nature's son
+        All day long I'm sitting singing songs for everyone
 
-        Friday night arrives without a suitcase.
-        Sunday morning creep in like a nun.
-        Mondays child has learned to tie his bootlace.
-        See how they run.
+        Sit beside a mountain stream, see her waters rise
+        Listen to the pretty sound of music as she flies
 
-        Lady Madonna, baby at your breast.
-        Wonder how you manage to feed the rest.
+        Doo doo doo doo doo doo doo doo doo doo doo
+        Doo doo doo doo doo doo doo doo doo
+        Doo doo doo
 
-        See how they run.
-        Lady Madonna, lying on the bed,
-        Listen to the music playing in your head.
+        Find me in my field of grass, Mother Nature's son
+        Swaying daises sing a lazy song beneath the sun
 
-        Tuesday afternoon is never ending.
-        Wednesday morning papers didn't come.
-        Thursday night you stockings needed mending.
-        See how they run.
+        Doo doo doo doo doo doo doo doo doo doo doo
+        Doo doo doo doo doo doo doo doo doo
+        Doo doo doo doo doo doo
+        Yeah yeah yeah
 
-        Lady Madonna, children at your feet.
-        Wonder how you manage to make ends meet.
+        Mm mm mm mm mm mm mm
+        Mm mm mm, ooh ooh ooh
+        Mm mm mm mm mm mm mm
+        Mm mm mm mm, wah wah wah
+
+        Wah, Mother Nature's son
         """,
-        url_title="Lady Madonna lyrics by The Beatles - original song full text. Official Lady Madonna lyrics, 2024 version | LyricsMode.com",  # noqa: E501
+        artist="The Beatles",
+        track_title="Mother Nature's Son",
+        url_title=(
+            "Mother Nature's Son lyrics by The Beatles - original song full"
+            " text. Official Mother Nature's Son lyrics, 2025 version"
+            " | LyricsMode.com"
+        ),
     ),
     LyricsPage.make(
         "https://www.lyricsontop.com/amy-winehouse-songs/jazz-n-blues-lyrics.html",
@@ -528,6 +535,7 @@ lyrics_pages = [
         Wonder how you manage to make ends meet.
         """,
         url_title="The Beatles - Lady Madonna",
+        marks=[xfail_on_ci("Sweetslyrics also fails with 403 FORBIDDEN in CI")],
     ),
     LyricsPage.make(
         "https://www.tekstowo.pl/piosenka,the_beatles,lady_madonna.html",

@@ -26,14 +26,15 @@ import sys
 import time
 import traceback
 from string import Template
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 import beets
 import beets.ui
-from beets import dbcore, logging, vfs
+from beets import dbcore, logging
 from beets.library import Item
 from beets.plugins import BeetsPlugin
 from beets.util import as_string, bluelet
+from beetsplug._utils import vfs
 
 if TYPE_CHECKING:
     from beets.dbcore.query import Query
@@ -52,7 +53,7 @@ except ImportError as e:
 PROTOCOL_VERSION = "0.16.0"
 BUFSIZE = 1024
 
-HELLO = "OK MPD %s" % PROTOCOL_VERSION
+HELLO = f"OK MPD {PROTOCOL_VERSION}"
 CLIST_BEGIN = "command_list_begin"
 CLIST_VERBOSE_BEGIN = "command_list_ok_begin"
 CLIST_END = "command_list_end"
@@ -282,7 +283,7 @@ class BaseServer:
         if not self.ctrl_sock:
             self.ctrl_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.ctrl_sock.connect((self.ctrl_host, self.ctrl_port))
-        self.ctrl_sock.sendall((message + "\n").encode("utf-8"))
+        self.ctrl_sock.sendall((f"{message}\n").encode())
 
     def _send_event(self, event):
         """Notify subscribed connections of an event."""
@@ -376,13 +377,13 @@ class BaseServer:
         if self.password and not conn.authenticated:
             # Not authenticated. Show limited list of commands.
             for cmd in SAFE_COMMANDS:
-                yield "command: " + cmd
+                yield f"command: {cmd}"
 
         else:
             # Authenticated. Show all commands.
             for func in dir(self):
                 if func.startswith("cmd_"):
-                    yield "command: " + func[4:]
+                    yield f"command: {func[4:]}"
 
     def cmd_notcommands(self, conn):
         """Lists all unavailable commands."""
@@ -392,7 +393,7 @@ class BaseServer:
                 if func.startswith("cmd_"):
                     cmd = func[4:]
                     if cmd not in SAFE_COMMANDS:
-                        yield "command: " + cmd
+                        yield f"command: {cmd}"
 
         else:
             # Authenticated. No commands are unavailable.
@@ -406,22 +407,22 @@ class BaseServer:
         playlist, playlistlength, and xfade.
         """
         yield (
-            "repeat: " + str(int(self.repeat)),
-            "random: " + str(int(self.random)),
-            "consume: " + str(int(self.consume)),
-            "single: " + str(int(self.single)),
-            "playlist: " + str(self.playlist_version),
-            "playlistlength: " + str(len(self.playlist)),
-            "mixrampdb: " + str(self.mixrampdb),
+            f"repeat: {int(self.repeat)}",
+            f"random: {int(self.random)}",
+            f"consume: {int(self.consume)}",
+            f"single: {int(self.single)}",
+            f"playlist: {self.playlist_version}",
+            f"playlistlength: {len(self.playlist)}",
+            f"mixrampdb: {self.mixrampdb}",
         )
 
         if self.volume > 0:
-            yield "volume: " + str(self.volume)
+            yield f"volume: {self.volume}"
 
         if not math.isnan(self.mixrampdelay):
-            yield "mixrampdelay: " + str(self.mixrampdelay)
+            yield f"mixrampdelay: {self.mixrampdelay}"
         if self.crossfade > 0:
-            yield "xfade: " + str(self.crossfade)
+            yield f"xfade: {self.crossfade}"
 
         if self.current_index == -1:
             state = "stop"
@@ -429,20 +430,20 @@ class BaseServer:
             state = "pause"
         else:
             state = "play"
-        yield "state: " + state
+        yield f"state: {state}"
 
         if self.current_index != -1:  # i.e., paused or playing
             current_id = self._item_id(self.playlist[self.current_index])
-            yield "song: " + str(self.current_index)
-            yield "songid: " + str(current_id)
+            yield f"song: {self.current_index}"
+            yield f"songid: {current_id}"
             if len(self.playlist) > self.current_index + 1:
                 # If there's a next song, report its index too.
                 next_id = self._item_id(self.playlist[self.current_index + 1])
-                yield "nextsong: " + str(self.current_index + 1)
-                yield "nextsongid: " + str(next_id)
+                yield f"nextsong: {self.current_index + 1}"
+                yield f"nextsongid: {next_id}"
 
         if self.error:
-            yield "error: " + self.error
+            yield f"error: {self.error}"
 
     def cmd_clearerror(self, conn):
         """Removes the persistent error state of the server. This
@@ -522,7 +523,7 @@ class BaseServer:
 
     def cmd_replay_gain_status(self, conn):
         """Get the replaygain mode."""
-        yield "replay_gain_mode: " + str(self.replay_gain_mode)
+        yield f"replay_gain_mode: {self.replay_gain_mode}"
 
     def cmd_clear(self, conn):
         """Clear the playlist."""
@@ -643,8 +644,8 @@ class BaseServer:
         Also a dummy implementation.
         """
         for idx, track in enumerate(self.playlist):
-            yield "cpos: " + str(idx)
-            yield "Id: " + str(track.id)
+            yield f"cpos: {idx}"
+            yield f"Id: {track.id}"
 
     def cmd_currentsong(self, conn):
         """Sends information about the currently-playing song."""
@@ -759,11 +760,11 @@ class Connection:
         """Create a new connection for the accepted socket `client`."""
         self.server = server
         self.sock = sock
-        self.address = "{}:{}".format(*sock.sock.getpeername())
+        self.address = ":".join(map(str, sock.sock.getpeername()))
 
     def debug(self, message, kind=" "):
         """Log a debug message about this connection."""
-        self.server._log.debug("{}[{}]: {}", kind, self.address, message)
+        self.server._log.debug("{}[{.address}]: {}", kind, self, message)
 
     def run(self):
         pass
@@ -899,9 +900,7 @@ class MPDConnection(Connection):
                     return
                 except BPDIdleError as e:
                     self.idle_subscriptions = e.subsystems
-                    self.debug(
-                        "awaiting: {}".format(" ".join(e.subsystems)), kind="z"
-                    )
+                    self.debug(f"awaiting: {' '.join(e.subsystems)}", kind="z")
                 yield bluelet.call(self.server.dispatch_events())
 
 
@@ -913,7 +912,7 @@ class ControlConnection(Connection):
         super().__init__(server, sock)
 
     def debug(self, message, kind=" "):
-        self.server._log.debug("CTRL {}[{}]: {}", kind, self.address, message)
+        self.server._log.debug("CTRL {}[{.address}]: {}", kind, self, message)
 
     def run(self):
         """Listen for control commands and delegate to `ctrl_*` methods."""
@@ -933,7 +932,7 @@ class ControlConnection(Connection):
                 func = command.delegate("ctrl_", self)
                 yield bluelet.call(func(*command.args))
             except (AttributeError, TypeError) as e:
-                yield self.send("ERROR: {}".format(e.args[0]))
+                yield self.send(f"ERROR: {e.args[0]}")
             except Exception:
                 yield self.send(
                     ["ERROR: server error", traceback.format_exc().rstrip()]
@@ -992,7 +991,7 @@ class Command:
         of arguments.
         """
         # Attempt to get correct command function.
-        func_name = prefix + self.name
+        func_name = f"{prefix}{self.name}"
         if not hasattr(target, func_name):
             raise AttributeError(f'unknown command "{self.name}"')
         func = getattr(target, func_name)
@@ -1011,7 +1010,7 @@ class Command:
         # If the command accepts a variable number of arguments skip the check.
         if wrong_num and not argspec.varargs:
             raise TypeError(
-                'wrong number of arguments for "{}"'.format(self.name),
+                f'wrong number of arguments for "{self.name}"',
                 self.name,
             )
 
@@ -1038,7 +1037,7 @@ class Command:
             raise BPDError(ERROR_PERMISSION, "insufficient privileges")
 
         try:
-            args = [conn] + self.args
+            args = [conn, *self.args]
             results = func(*args)
             if results:
                 for data in results:
@@ -1110,10 +1109,8 @@ class Server(BaseServer):
         self.lib = library
         self.player = gstplayer.GstPlayer(self.play_finished)
         self.cmd_update(None)
-        log.info("Server ready and listening on {}:{}".format(host, port))
-        log.debug(
-            "Listening for control signals on {}:{}".format(host, ctrl_port)
-        )
+        log.info("Server ready and listening on {}:{}", host, port)
+        log.debug("Listening for control signals on {}:{}", host, ctrl_port)
 
     def run(self):
         self.player.run()
@@ -1128,23 +1125,21 @@ class Server(BaseServer):
 
     def _item_info(self, item):
         info_lines = [
-            "file: " + as_string(item.destination(relative_to_libdir=True)),
-            "Time: " + str(int(item.length)),
-            "duration: " + f"{item.length:.3f}",
-            "Id: " + str(item.id),
+            f"file: {as_string(item.destination(relative_to_libdir=True))}",
+            f"Time: {int(item.length)}",
+            "duration: {item.length:.3f}",
+            f"Id: {item.id}",
         ]
 
         try:
             pos = self._id_to_index(item.id)
-            info_lines.append("Pos: " + str(pos))
+            info_lines.append(f"Pos: {pos}")
         except ArgumentNotFoundError:
             # Don't include position if not in playlist.
             pass
 
         for tagtype, field in self.tagtype_map.items():
-            info_lines.append(
-                "{}: {}".format(tagtype, str(getattr(item, field)))
-            )
+            info_lines.append(f"{tagtype}: {getattr(item, field)}")
 
         return info_lines
 
@@ -1207,7 +1202,7 @@ class Server(BaseServer):
 
     def _path_join(self, p1, p2):
         """Smashes together two BPD paths."""
-        out = p1 + "/" + p2
+        out = f"{p1}/{p2}"
         return out.replace("//", "/").replace("//", "/")
 
     def cmd_lsinfo(self, conn, path="/"):
@@ -1225,7 +1220,7 @@ class Server(BaseServer):
                 if dirpath.startswith("/"):
                     # Strip leading slash (libmpc rejects this).
                     dirpath = dirpath[1:]
-                yield "directory: %s" % dirpath
+                yield f"directory: {dirpath}"
 
     def _listall(self, basepath, node, info=False):
         """Helper function for recursive listing. If info, show
@@ -1237,7 +1232,7 @@ class Server(BaseServer):
                 item = self.lib.get_item(node)
                 yield self._item_info(item)
             else:
-                yield "file: " + basepath
+                yield f"file: {basepath}"
         else:
             # List a directory. Recurse into both directories and files.
             for name, itemid in sorted(node.files.items()):
@@ -1246,7 +1241,7 @@ class Server(BaseServer):
                 yield from self._listall(newpath, itemid, info)
             for name, subdir in sorted(node.dirs.items()):
                 newpath = self._path_join(basepath, name)
-                yield "directory: " + newpath
+                yield f"directory: {newpath}"
                 yield from self._listall(newpath, subdir, info)
 
     def cmd_listall(self, conn, path="/"):
@@ -1280,7 +1275,7 @@ class Server(BaseServer):
         for item in self._all_items(self._resolve_path(path)):
             self.playlist.append(item)
             if send_id:
-                yield "Id: " + str(item.id)
+                yield f"Id: {item.id}"
         self.playlist_version += 1
         self._send_event("playlist")
 
@@ -1302,20 +1297,13 @@ class Server(BaseServer):
             item = self.playlist[self.current_index]
 
             yield (
-                "bitrate: " + str(item.bitrate / 1000),
-                "audio: {}:{}:{}".format(
-                    str(item.samplerate),
-                    str(item.bitdepth),
-                    str(item.channels),
-                ),
+                f"bitrate: {item.bitrate / 1000}",
+                f"audio: {item.samplerate}:{item.bitdepth}:{item.channels}",
             )
 
             (pos, total) = self.player.time()
             yield (
-                "time: {}:{}".format(
-                    str(int(pos)),
-                    str(int(total)),
-                ),
+                f"time: {int(pos)}:{int(total)}",
                 "elapsed: " + f"{pos:.3f}",
                 "duration: " + f"{total:.3f}",
             )
@@ -1335,13 +1323,13 @@ class Server(BaseServer):
             artists, albums, songs, totaltime = tx.query(statement)[0]
 
         yield (
-            "artists: " + str(artists),
-            "albums: " + str(albums),
-            "songs: " + str(songs),
-            "uptime: " + str(int(time.time() - self.startup_time)),
-            "playtime: " + "0",  # Missing.
-            "db_playtime: " + str(int(totaltime)),
-            "db_update: " + str(int(self.updated_time)),
+            f"artists: {artists}",
+            f"albums: {albums}",
+            f"songs: {songs}",
+            f"uptime: {int(time.time() - self.startup_time)}",
+            "playtime: 0",  # Missing.
+            f"db_playtime: {int(totaltime)}",
+            f"db_update: {int(self.updated_time)}",
         )
 
     def cmd_decoders(self, conn):
@@ -1356,7 +1344,7 @@ class Server(BaseServer):
 
     # Searching.
 
-    tagtype_map = {
+    tagtype_map: ClassVar[dict[str, str]] = {
         "Artist": "artist",
         "ArtistSort": "artist_sort",
         "Album": "album",
@@ -1383,7 +1371,7 @@ class Server(BaseServer):
         searching.
         """
         for tag in self.tagtype_map:
-            yield "tagtype: " + tag
+            yield f"tagtype: {tag}"
 
     def _tagtype_lookup(self, tag):
         """Uses `tagtype_map` to look up the beets column name for an
@@ -1458,12 +1446,9 @@ class Server(BaseServer):
 
         clause, subvals = query.clause()
         statement = (
-            "SELECT DISTINCT "
-            + show_key
-            + " FROM items WHERE "
-            + clause
-            + " ORDER BY "
-            + show_key
+            f"SELECT DISTINCT {show_key}"
+            f" FROM items WHERE {clause}"
+            f" ORDER BY {show_key}"
         )
         self._log.debug(statement)
         with self.lib.transaction() as tx:
@@ -1473,7 +1458,7 @@ class Server(BaseServer):
             if not row[0]:
                 # Skip any empty values of the field.
                 continue
-            yield show_tag_canon + ": " + str(row[0])
+            yield f"{show_tag_canon}: {row[0]}"
 
     def cmd_count(self, conn, tag, value):
         """Returns the number and total time of songs matching the
@@ -1487,8 +1472,8 @@ class Server(BaseServer):
         ):
             songs += 1
             playtime += item.length
-        yield "songs: " + str(songs)
-        yield "playtime: " + str(int(playtime))
+        yield f"songs: {songs}"
+        yield f"playtime: {int(playtime)}"
 
     # Persistent playlist manipulation. In MPD this is an optional feature so
     # these dummy implementations match MPD's behaviour with the feature off.
