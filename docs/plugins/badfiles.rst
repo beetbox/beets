@@ -35,7 +35,7 @@ option. When on, checkers will be run against every imported file and warnings
 and errors will be presented when selecting a tagging option.
 
 `import_action_on_error` and `import_action_on_warning` can be used to take
-automatic action on warning and errors. Both options default to `ask`.
+automatic action on warnings and errors. Both options default to `ask`.
 Valid options for both `import_action_on_(warning|error)` are
 `ask skip abort continue`.
 
