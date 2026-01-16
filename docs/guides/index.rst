@@ -6,8 +6,9 @@ with beets. If you're new to beets, you'll want to begin with the :doc:`main`
 guide.
 
 .. toctree::
-   :maxdepth: 1
+    :maxdepth: 1
 
-   main
-   tagger
-   advanced
+    main
+    installation
+    tagger
+    advanced

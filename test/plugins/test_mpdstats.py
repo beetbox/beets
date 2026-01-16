@@ -13,6 +13,7 @@
 # included in all copies or substantial portions of the Software.
 
 
+from typing import Any, ClassVar
 from unittest.mock import ANY, Mock, call, patch
 
 from beets import util
@@ -46,9 +47,8 @@ class MPDStatsTest(PluginTestCase):
         assert mpdstats.get_item("/some/non-existing/path") is None
         assert "item not found:" in log.info.call_args[0][0]
 
-    FAKE_UNKNOWN_STATE = "some-unknown-one"
-    STATUSES = [
-        {"state": FAKE_UNKNOWN_STATE},
+    STATUSES: ClassVar[list[dict[str, Any]]] = [
+        {"state": "some-unknown-one"},
         {"state": "pause"},
         {"state": "play", "songid": 1, "time": "0:1"},
         {"state": "stop"},
@@ -77,7 +77,7 @@ class MPDStatsTest(PluginTestCase):
         except KeyboardInterrupt:
             pass
 
-        log.debug.assert_has_calls([call('unhandled status "{0}"', ANY)])
+        log.debug.assert_has_calls([call('unhandled status "{}"', ANY)])
         log.info.assert_has_calls(
-            [call("pause"), call("playing {0}", ANY), call("stop")]
+            [call("pause"), call("playing {}", ANY), call("stop")]
         )

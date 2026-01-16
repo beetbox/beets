@@ -14,36 +14,48 @@
 
 """Facilities for automatically determining files' correct metadata."""
 
-from collections.abc import Mapping, Sequence
-from typing import Union
+from __future__ import annotations
+
+from importlib import import_module
+from typing import TYPE_CHECKING
 
 from beets import config, logging
-from beets.library import Album, Item, LibModel
 
 # Parts of external interface.
 from beets.util import unique_list
+from beets.util.deprecation import deprecate_for_maintainers, deprecate_imports
 
-from .hooks import AlbumInfo, AlbumMatch, Distance, TrackInfo, TrackMatch
-from .match import (
-    Proposal,
-    Recommendation,
-    current_metadata,
-    tag_album,
-    tag_item,
-)
+from .hooks import AlbumInfo, AlbumMatch, TrackInfo, TrackMatch
+from .match import Proposal, Recommendation, tag_album, tag_item
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from beets.library import Album, Item, LibModel
+
+
+def __getattr__(name: str):
+    if name == "current_metadata":
+        deprecate_for_maintainers(
+            f"'beets.autotag.{name}'", "'beets.util.get_most_common_tags'"
+        )
+        return import_module("beets.util").get_most_common_tags
+
+    return deprecate_imports(
+        __name__, {"Distance": "beets.autotag.distance"}, name
+    )
+
 
 __all__ = [
     "AlbumInfo",
     "AlbumMatch",
-    "Distance",
-    "TrackInfo",
-    "TrackMatch",
     "Proposal",
     "Recommendation",
+    "TrackInfo",
+    "TrackMatch",
     "apply_album_metadata",
     "apply_item_metadata",
     "apply_metadata",
-    "current_metadata",
     "tag_album",
     "tag_item",
 ]
@@ -99,8 +111,8 @@ SPECIAL_FIELDS = {
 
 
 def _apply_metadata(
-    info: Union[AlbumInfo, TrackInfo],
-    db_obj: Union[Album, Item],
+    info: AlbumInfo | TrackInfo,
+    db_obj: Album | Item,
     nullable_fields: Sequence[str] = [],
 ):
     """Set the db_obj's metadata to match the info."""
@@ -192,11 +204,11 @@ def apply_album_metadata(album_info: AlbumInfo, album: Album):
     correct_list_fields(album)
 
 
-def apply_metadata(album_info: AlbumInfo, mapping: Mapping[Item, TrackInfo]):
-    """Set the items' metadata to match an AlbumInfo object using a
-    mapping from Items to TrackInfo objects.
-    """
-    for item, track_info in mapping.items():
+def apply_metadata(
+    album_info: AlbumInfo, item_info_pairs: list[tuple[Item, TrackInfo]]
+):
+    """Set items metadata to match corresponding tagged info."""
+    for item, track_info in item_info_pairs:
         # Artist or artist credit.
         if config["artist_credit"]:
             item.artist = (
@@ -243,7 +255,7 @@ def apply_metadata(album_info: AlbumInfo, mapping: Mapping[Item, TrackInfo]):
                 continue
 
             for suffix in "year", "month", "day":
-                key = prefix + suffix
+                key = f"{prefix}{suffix}"
                 value = getattr(album_info, key) or 0
 
                 # If we don't even have a year, apply nothing.

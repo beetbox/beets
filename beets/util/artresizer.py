@@ -16,24 +16,37 @@
 public resizing proxy if neither is available.
 """
 
+from __future__ import annotations
+
 import os
 import os.path
 import platform
 import re
 import subprocess
+from abc import ABC, abstractmethod
+from enum import Enum
 from contextlib import suppress
 from itertools import chain
+from typing import TYPE_CHECKING, Any, ClassVar
 from urllib.parse import urlencode
 
 from beets import logging, util
-from beets.util import displayable_path, get_temp_filename, syspath
+from beets.util import (
+    LazySharedInstance,
+    displayable_path,
+    get_temp_filename,
+    syspath,
+)
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 PROXY_URL = "https://images.weserv.nl/"
 
 log = logging.getLogger("beets")
 
 
-def resize_url(url, maxwidth, quality=0):
+def resize_url(url: str, maxwidth: int, quality: int = 0) -> str:
     """Return a proxied image URL that resizes the original image to
     maxwidth (preserving aspect ratio).
     """
@@ -45,24 +58,124 @@ def resize_url(url, maxwidth, quality=0):
     if quality > 0:
         params["q"] = quality
 
-    return "{}?{}".format(PROXY_URL, urlencode(params))
+    return f"{PROXY_URL}?{urlencode(params)}"
 
 
 class LocalBackendNotAvailableError(Exception):
     pass
 
 
-_NOT_AVAILABLE = object()
+# Singleton pattern that the typechecker understands:
+# https://peps.python.org/pep-0484/#support-for-singleton-types-in-unions
+class NotAvailable(Enum):
+    token = 0
 
 
-class LocalBackend:
+_NOT_AVAILABLE = NotAvailable.token
+
+
+class LocalBackend(ABC):
+    NAME: ClassVar[str]
+
     @classmethod
-    def available(cls):
+    @abstractmethod
+    def version(cls) -> Any:
+        """Return the backend version if its dependencies are satisfied or
+        raise `LocalBackendNotAvailableError`.
+        """
+        pass
+
+    @classmethod
+    def available(cls) -> bool:
+        """Return `True` this backend's dependencies are satisfied and it can
+        be used, `False` otherwise."""
         try:
             cls.version()
             return True
         except LocalBackendNotAvailableError:
             return False
+
+    @abstractmethod
+    def resize(
+        self,
+        maxwidth: int,
+        path_in: bytes,
+        path_out: bytes | None = None,
+        quality: int = 0,
+        max_filesize: int = 0,
+    ) -> bytes:
+        """Resize an image to the given width and return the output path.
+
+        On error, logs a warning and returns `path_in`.
+        """
+        pass
+
+    @abstractmethod
+    def get_size(self, path_in: bytes) -> tuple[int, int] | None:
+        """Return the (width, height) of the image or None if unavailable."""
+        pass
+
+    @abstractmethod
+    def deinterlace(
+        self,
+        path_in: bytes,
+        path_out: bytes | None = None,
+    ) -> bytes:
+        """Remove interlacing from an image and return the output path.
+
+        On error, logs a warning and returns `path_in`.
+        """
+        pass
+
+    @abstractmethod
+    def get_format(self, path_in: bytes) -> str | None:
+        """Return the image format (e.g., 'PNG') or None if undetectable."""
+        pass
+
+    @abstractmethod
+    def convert_format(
+        self,
+        source: bytes,
+        target: bytes,
+        deinterlaced: bool,
+    ) -> bytes:
+        """Convert an image to a new format and return the new file path.
+
+        On error, logs a warning and returns `source`.
+        """
+        pass
+
+    @property
+    def can_compare(self) -> bool:
+        """Indicate whether image comparison is supported by this backend."""
+        return False
+
+    def compare(
+        self,
+        im1: bytes,
+        im2: bytes,
+        compare_threshold: float,
+    ) -> bool | None:
+        """Compare two images and return `True` if they are similar enough, or
+        `None` if there is an error.
+
+        This must only be called if `self.can_compare()` returns `True`.
+        """
+        # It is an error to call this when ArtResizer.can_compare is not True.
+        raise NotImplementedError()
+
+    @property
+    def can_write_metadata(self) -> bool:
+        """Indicate whether writing metadata to images is supported."""
+        return False
+
+    def write_metadata(self, file: bytes, metadata: Mapping[str, str]) -> None:
+        """Write key-value metadata into the image file.
+
+        This must only be called if `self.can_write_metadata()` returns `True`.
+        """
+        # It is an error to call this when ArtResizer.can_write_metadata is not True.
+        raise NotImplementedError()
 
 
 class IMBackend(LocalBackend):
@@ -71,11 +184,11 @@ class IMBackend(LocalBackend):
     # These fields are used as a cache for `version()`. `_legacy` indicates
     # whether the modern `magick` binary is available or whether to fall back
     # to the old-style `convert`, `identify`, etc. commands.
-    _version = None
-    _legacy = None
+    _version: tuple[int, int, int] | NotAvailable | None = None
+    _legacy: bool | None = None
 
     @classmethod
-    def version(cls):
+    def version(cls) -> tuple[int, int, int]:
         """Obtain and cache ImageMagick version.
 
         Raises `LocalBackendNotAvailableError` if not available.
@@ -99,12 +212,17 @@ class IMBackend(LocalBackend):
                             )
                             cls._legacy = legacy
 
-        if cls._version is _NOT_AVAILABLE:
+        # cls._version is never None here, but mypy doesn't get that
+        if cls._version is _NOT_AVAILABLE or cls._version is None:
             raise LocalBackendNotAvailableError()
         else:
             return cls._version
 
-    def __init__(self):
+    convert_cmd: list[str]
+    identify_cmd: list[str]
+    compare_cmd: list[str]
+
+    def __init__(self) -> None:
         """Initialize a wrapper around ImageMagick for local image operations.
 
         Stores the ImageMagick version and legacy flag. If ImageMagick is not
@@ -125,8 +243,13 @@ class IMBackend(LocalBackend):
             self.compare_cmd = ["magick", "compare"]
 
     def resize(
-        self, maxwidth, path_in, path_out=None, quality=0, max_filesize=0
-    ):
+        self,
+        maxwidth: int,
+        path_in: bytes,
+        path_out: bytes | None = None,
+        quality: int = 0,
+        max_filesize: int = 0,
+    ) -> bytes:
         """Resize using ImageMagick.
 
         Use the ``magick`` program or ``convert`` on older versions. Return
@@ -136,7 +259,7 @@ class IMBackend(LocalBackend):
             path_out = get_temp_filename(__name__, "resize_IM_", path_in)
 
         log.debug(
-            "artresizer: ImageMagick resizing {0} to {1}",
+            "artresizer: ImageMagick resizing {} to {}",
             displayable_path(path_in),
             displayable_path(path_out),
         )
@@ -146,7 +269,8 @@ class IMBackend(LocalBackend):
         # with regards to the height.
         # ImageMagick already seems to default to no interlace, but we include
         # it here for the sake of explicitness.
-        cmd = self.convert_cmd + [
+        cmd: list[str] = [
+            *self.convert_cmd,
             syspath(path_in, prefix=False),
             "-resize",
             f"{maxwidth}x>",
@@ -168,15 +292,16 @@ class IMBackend(LocalBackend):
             util.command_output(cmd)
         except subprocess.CalledProcessError:
             log.warning(
-                "artresizer: IM convert failed for {0}",
+                "artresizer: IM convert failed for {}",
                 displayable_path(path_in),
             )
             return path_in
 
         return path_out
 
-    def get_size(self, path_in):
-        cmd = self.identify_cmd + [
+    def get_size(self, path_in: bytes) -> tuple[int, int] | None:
+        cmd: list[str] = [
+            *self.identify_cmd,
             "-format",
             "%w %h",
             syspath(path_in, prefix=False),
@@ -187,24 +312,35 @@ class IMBackend(LocalBackend):
         except subprocess.CalledProcessError as exc:
             log.warning("ImageMagick size query failed")
             log.debug(
-                "`convert` exited with (status {}) when "
+                "`convert` exited with (status {.returncode}) when "
                 "getting size with command {}:\n{}",
-                exc.returncode,
+                exc,
                 cmd,
                 exc.output.strip(),
             )
             return None
         try:
-            return tuple(map(int, out.split(b" ")))
+            size = tuple(map(int, out.split(b" ")))
         except IndexError:
             log.warning("Could not understand IM output: {0!r}", out)
             return None
 
-    def deinterlace(self, path_in, path_out=None):
+        if len(size) != 2:
+            log.warning("Could not understand IM output: {0!r}", out)
+            return None
+
+        return size
+
+    def deinterlace(
+        self,
+        path_in: bytes,
+        path_out: bytes | None = None,
+    ) -> bytes:
         if not path_out:
             path_out = get_temp_filename(__name__, "deinterlace_IM_", path_in)
 
-        cmd = self.convert_cmd + [
+        cmd = [
+            *self.convert_cmd,
             syspath(path_in, prefix=False),
             "-interlace",
             "none",
@@ -218,17 +354,26 @@ class IMBackend(LocalBackend):
             # FIXME: Should probably issue a warning?
             return path_in
 
-    def get_format(self, filepath):
-        cmd = self.identify_cmd + ["-format", "%[magick]", syspath(filepath)]
+    def get_format(self, path_in: bytes) -> str | None:
+        cmd = [*self.identify_cmd, "-format", "%[magick]", syspath(path_in)]
 
         try:
-            return util.command_output(cmd).stdout
-        except subprocess.CalledProcessError:
+            # Image formats should really only be ASCII strings such as "PNG",
+            # if anything else is returned, something is off and we return
+            # None for safety.
+            return util.command_output(cmd).stdout.decode("ascii", "strict")
+        except (subprocess.CalledProcessError, UnicodeError):
             # FIXME: Should probably issue a warning?
             return None
 
-    def convert_format(self, source, target, deinterlaced):
-        cmd = self.convert_cmd + [
+    def convert_format(
+        self,
+        source: bytes,
+        target: bytes,
+        deinterlaced: bool,
+    ) -> bytes:
+        cmd = [
+            *self.convert_cmd,
             syspath(source),
             *(["-interlace", "none"] if deinterlaced else []),
             syspath(target),
@@ -244,10 +389,15 @@ class IMBackend(LocalBackend):
             return source
 
     @property
-    def can_compare(self):
+    def can_compare(self) -> bool:
         return self.version() > (6, 8, 7)
 
-    def compare(self, im1, im2, compare_threshold):
+    def compare(
+        self,
+        im1: bytes,
+        im2: bytes,
+        compare_threshold: float,
+    ) -> bool | None:
         is_windows = platform.system() == "Windows"
 
         # Converting images to grayscale tends to minimize the weight
@@ -255,14 +405,16 @@ class IMBackend(LocalBackend):
         # to grayscale and then pipe them into the `compare` command.
         # On Windows, ImageMagick doesn't support the magic \\?\ prefix
         # on paths, so we pass `prefix=False` to `syspath`.
-        convert_cmd = self.convert_cmd + [
+        convert_cmd = [
+            *self.convert_cmd,
             syspath(im2, prefix=False),
             syspath(im1, prefix=False),
             "-colorspace",
             "gray",
             "MIFF:-",
         ]
-        compare_cmd = self.compare_cmd + [
+        compare_cmd = [
+            *self.compare_cmd,
             "-define",
             "phash:colorspaces=sRGB,HCLp",
             "-metric",
@@ -287,6 +439,10 @@ class IMBackend(LocalBackend):
             close_fds=not is_windows,
         )
 
+        # help out mypy
+        assert convert_proc.stdout is not None
+        assert convert_proc.stderr is not None
+
         # Check the convert output. We're not interested in the
         # standard output; that gets piped to the next stage.
         convert_proc.stdout.close()
@@ -295,8 +451,8 @@ class IMBackend(LocalBackend):
         convert_proc.wait()
         if convert_proc.returncode:
             log.debug(
-                "ImageMagick convert failed with status {}: {!r}",
-                convert_proc.returncode,
+                "ImageMagick convert failed with status {.returncode}: {!r}",
+                convert_proc,
                 convert_stderr,
             )
             return None
@@ -306,7 +462,7 @@ class IMBackend(LocalBackend):
         if compare_proc.returncode:
             if compare_proc.returncode != 1:
                 log.debug(
-                    "ImageMagick compare failed: {0}, {1}",
+                    "ImageMagick compare failed: {}, {}",
                     displayable_path(im2),
                     displayable_path(im1),
                 )
@@ -326,18 +482,19 @@ class IMBackend(LocalBackend):
             log.debug("IM output is not a number: {0!r}", out_str)
             return None
 
-        log.debug("ImageMagick compare score: {0}", phash_diff)
+        log.debug("ImageMagick compare score: {}", phash_diff)
         return phash_diff <= compare_threshold
 
     @property
-    def can_write_metadata(self):
+    def can_write_metadata(self) -> bool:
         return True
 
-    def write_metadata(self, file, metadata):
-        assignments = list(
-            chain.from_iterable(("-set", k, v) for k, v in metadata.items())
+    def write_metadata(self, file: bytes, metadata: Mapping[str, str]) -> None:
+        assignments = chain.from_iterable(
+            ("-set", k, v) for k, v in metadata.items()
         )
-        command = self.convert_cmd + [file, *assignments, file]
+        str_file = os.fsdecode(file)
+        command = [*self.convert_cmd, str_file, *assignments, str_file]
 
         util.command_output(command)
 
@@ -346,13 +503,13 @@ class PILBackend(LocalBackend):
     NAME = "PIL"
 
     @classmethod
-    def version(cls):
+    def version(cls) -> None:
         try:
             __import__("PIL", fromlist=["Image"])
         except ImportError:
             raise LocalBackendNotAvailableError()
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize a wrapper around PIL for local image operations.
 
         If PIL is not available, raise an Exception.
@@ -360,8 +517,13 @@ class PILBackend(LocalBackend):
         self.version()
 
     def resize(
-        self, maxwidth, path_in, path_out=None, quality=0, max_filesize=0
-    ):
+        self,
+        maxwidth: int,
+        path_in: bytes,
+        path_out: bytes | None = None,
+        quality: int = 0,
+        max_filesize: int = 0,
+    ) -> bytes:
         """Resize using Python Imaging Library (PIL).  Return the output path
         of resized image.
         """
@@ -371,7 +533,7 @@ class PILBackend(LocalBackend):
         from PIL import Image
 
         log.debug(
-            "artresizer: PIL resizing {0} to {1}",
+            "artresizer: PIL resizing {} to {}",
             displayable_path(path_in),
             displayable_path(path_out),
         )
@@ -400,7 +562,7 @@ class PILBackend(LocalBackend):
                 for i in range(5):
                     # 5 attempts is an arbitrary choice
                     filesize = os.stat(syspath(path_out)).st_size
-                    log.debug("PIL Pass {0} : Output size: {1}B", i, filesize)
+                    log.debug("PIL Pass {} : Output size: {}B", i, filesize)
                     if filesize <= max_filesize:
                         return path_out
                     # The relationship between filesize & quality will be
@@ -417,7 +579,7 @@ class PILBackend(LocalBackend):
                         progressive=False,
                     )
                 log.warning(
-                    "PIL Failed to resize file to below {0}B", max_filesize
+                    "PIL Failed to resize file to below {}B", max_filesize
                 )
                 return path_out
 
@@ -425,12 +587,12 @@ class PILBackend(LocalBackend):
                 return path_out
         except OSError:
             log.error(
-                "PIL cannot create thumbnail for '{0}'",
+                "PIL cannot create thumbnail for '{}'",
                 displayable_path(path_in),
             )
             return path_in
 
-    def get_size(self, path_in):
+    def get_size(self, path_in: bytes) -> tuple[int, int] | None:
         from PIL import Image
 
         try:
@@ -442,7 +604,11 @@ class PILBackend(LocalBackend):
             )
             return None
 
-    def deinterlace(self, path_in, path_out=None):
+    def deinterlace(
+        self,
+        path_in: bytes,
+        path_out: bytes | None = None,
+    ) -> bytes:
         if not path_out:
             path_out = get_temp_filename(__name__, "deinterlace_PIL_", path_in)
 
@@ -456,11 +622,11 @@ class PILBackend(LocalBackend):
             # FIXME: Should probably issue a warning?
             return path_in
 
-    def get_format(self, filepath):
+    def get_format(self, path_in: bytes) -> str | None:
         from PIL import Image, UnidentifiedImageError
 
         try:
-            with Image.open(syspath(filepath)) as im:
+            with Image.open(syspath(path_in)) as im:
                 return im.format
         except (
             ValueError,
@@ -468,10 +634,15 @@ class PILBackend(LocalBackend):
             UnidentifiedImageError,
             FileNotFoundError,
         ):
-            log.exception("failed to detect image format for {}", filepath)
+            log.exception("failed to detect image format for {}", path_in)
             return None
 
-    def convert_format(self, source, target, deinterlaced):
+    def convert_format(
+        self,
+        source: bytes,
+        target: bytes,
+        deinterlaced: bool,
+    ) -> bytes:
         from PIL import Image, UnidentifiedImageError
 
         try:
@@ -489,18 +660,23 @@ class PILBackend(LocalBackend):
             return source
 
     @property
-    def can_compare(self):
+    def can_compare(self) -> bool:
         return False
 
-    def compare(self, im1, im2, compare_threshold):
+    def compare(
+        self,
+        im1: bytes,
+        im2: bytes,
+        compare_threshold: float,
+    ) -> bool | None:
         # It is an error to call this when ArtResizer.can_compare is not True.
         raise NotImplementedError()
 
     @property
-    def can_write_metadata(self):
+    def can_write_metadata(self) -> bool:
         return True
 
-    def write_metadata(self, file, metadata):
+    def write_metadata(self, file: bytes, metadata: Mapping[str, str]) -> None:
         from PIL import Image, PngImagePlugin
 
         # FIXME: Detect and handle other file types (currently, the only user
@@ -508,68 +684,68 @@ class PILBackend(LocalBackend):
         im = Image.open(syspath(file))
         meta = PngImagePlugin.PngInfo()
         for k, v in metadata.items():
-            meta.add_text(k, v, 0)
+            meta.add_text(k, v, zip=False)
         im.save(os.fsdecode(file), "PNG", pnginfo=meta)
 
 
-class Shareable(type):
-    """A pseudo-singleton metaclass that allows both shared and
-    non-shared instances. The ``MyClass.shared`` property holds a
-    lazily-created shared instance of ``MyClass`` while calling
-    ``MyClass()`` to construct a new object works as usual.
-    """
-
-    def __init__(cls, name, bases, dict):
-        super().__init__(name, bases, dict)
-        cls._instance = None
-
-    @property
-    def shared(cls):
-        if cls._instance is None:
-            cls._instance = cls()
-        return cls._instance
-
-
-BACKEND_CLASSES = [
+BACKEND_CLASSES: list[type[LocalBackend]] = [
     IMBackend,
     PILBackend,
 ]
 
 
-class ArtResizer(metaclass=Shareable):
-    """A singleton class that performs image resizes."""
+class ArtResizer:
+    """A class that dispatches image operations to an available backend."""
 
-    def __init__(self):
+    local_method: LocalBackend | None
+
+    def __init__(self) -> None:
         """Create a resizer object with an inferred method."""
         # Check if a local backend is available, and store an instance of the
         # backend class. Otherwise, fallback to the web proxy.
         for backend_cls in BACKEND_CLASSES:
             try:
                 self.local_method = backend_cls()
-                log.debug(f"artresizer: method is {self.local_method.NAME}")
+                log.debug("artresizer: method is {.local_method.NAME}", self)
                 break
             except LocalBackendNotAvailableError:
                 continue
         else:
+            # FIXME: Turn WEBPROXY into a backend class as well to remove all
+            # the special casing. Then simply delegate all methods to the
+            # backends. (How does proxy_url fit in here, however?)
+            # Use an ABC (or maybe a typing Protocol?) for backend
+            # methods, such that both individual backends as well as
+            # ArtResizer implement it.
+            # It should probably be configurable which backends classes to
+            # consider, similar to fetchart or lyrics backends (i.e. a list
+            # of backends sorted by priority).
             log.debug("artresizer: method is WEBPROXY")
             self.local_method = None
 
+    shared: LazySharedInstance[ArtResizer] = LazySharedInstance()
+
     @property
-    def method(self):
-        if self.local:
+    def method(self) -> str:
+        if self.local_method is not None:
             return self.local_method.NAME
         else:
             return "WEBPROXY"
 
     def resize(
-        self, maxwidth, path_in, path_out=None, quality=0, max_filesize=0
-    ):
+        self,
+        maxwidth: int,
+        path_in: bytes,
+        path_out: bytes | None = None,
+        quality: int = 0,
+        max_filesize: int = 0,
+    ) -> bytes:
         """Manipulate an image file according to the method, returning a
         new path. For PIL or IMAGEMAGIC methods, resizes the image to a
         temporary file and encodes with the specified quality level.
         For WEBPROXY, returns `path_in` unmodified.
         """
-        if self.local:
+        if self.local_method is not None:
             return self.local_method.resize(
                 maxwidth,
                 path_in,
@@ -581,18 +757,22 @@ class ArtResizer(metaclass=Shareable):
             # Handled by `proxy_url` already.
             return path_in
 
-    def deinterlace(self, path_in, path_out=None):
+    def deinterlace(
+        self,
+        path_in: bytes,
+        path_out: bytes | None = None,
+    ) -> bytes:
         """Deinterlace an image.
 
         Only available locally.
         """
-        if self.local:
+        if self.local_method is not None:
             return self.local_method.deinterlace(path_in, path_out)
         else:
             # FIXME: Should probably issue a warning?
             return path_in
 
-    def proxy_url(self, maxwidth, url, quality=0):
+    def proxy_url(self, maxwidth: int, url: str, quality: int = 0) -> str:
         """Modifies an image URL according the method, returning a new
         URL. For WEBPROXY, a URL on the proxy server is returned.
         Otherwise, the URL is returned unmodified.
@@ -604,42 +784,48 @@ class ArtResizer(metaclass=Shareable):
             return resize_url(url, maxwidth, quality)
 
     @property
-    def local(self):
+    def local(self) -> bool:
         """A boolean indicating whether the resizing method is performed
         locally (i.e., PIL or ImageMagick).
         """
         return self.local_method is not None
 
-    def get_size(self, path_in):
+    def get_size(self, path_in: bytes) -> tuple[int, int] | None:
         """Return the size of an image file as an int couple (width, height)
         in pixels.
 
         Only available locally.
         """
-        if self.local:
+        if self.local_method is not None:
             return self.local_method.get_size(path_in)
         else:
-            # FIXME: Should probably issue a warning?
-            return path_in
+            raise RuntimeError(
+                "image cannot be obtained without artresizer backend"
+            )
 
-    def get_format(self, path_in):
+    def get_format(self, path_in: bytes) -> str | None:
         """Returns the format of the image as a string.
 
         Only available locally.
         """
-        if self.local:
+        if self.local_method is not None:
             return self.local_method.get_format(path_in)
         else:
             # FIXME: Should probably issue a warning?
             return None
 
-    def reformat(self, path_in, new_format, deinterlaced=True):
+    def reformat(
+        self,
+        path_in: bytes,
+        new_format: str,
+        deinterlaced: bool = True,
+    ) -> bytes:
         """Converts image to desired format, updating its extension, but
         keeping the same filename.
 
         Only available locally.
         """
-        if not self.local:
+        if self.local_method is None:
             # FIXME: Should probably issue a warning?
             return path_in
 
@@ -649,7 +835,7 @@ class ArtResizer(metaclass=Shareable):
             "jpeg": "jpg",
         }.get(new_format, new_format)
 
-        fname, ext = os.path.splitext(path_in)
+        fname, _ = os.path.splitext(path_in)
         path_new = fname + b"." + new_format.encode("utf8")
 
         # allows the exception to propagate, while still making sure a changed
@@ -666,40 +852,45 @@ class ArtResizer(metaclass=Shareable):
         return result_path
 
     @property
-    def can_compare(self):
+    def can_compare(self) -> bool:
         """A boolean indicating whether image comparison is available"""
 
-        if self.local:
+        if self.local_method is not None:
             return self.local_method.can_compare
         else:
             return False
 
-    def compare(self, im1, im2, compare_threshold):
+    def compare(
+        self,
+        im1: bytes,
+        im2: bytes,
+        compare_threshold: float,
+    ) -> bool | None:
         """Return a boolean indicating whether two images are similar.
 
         Only available locally.
         """
-        if self.local:
+        if self.local_method is not None:
             return self.local_method.compare(im1, im2, compare_threshold)
         else:
             # FIXME: Should probably issue a warning?
             return None
 
     @property
-    def can_write_metadata(self):
+    def can_write_metadata(self) -> bool:
         """A boolean indicating whether writing image metadata is supported."""
 
-        if self.local:
+        if self.local_method is not None:
             return self.local_method.can_write_metadata
         else:
             return False
 
-    def write_metadata(self, file, metadata):
+    def write_metadata(self, file: bytes, metadata: Mapping[str, str]) -> None:
         """Write key-value metadata to the image file.
 
         Only available locally. Currently, expects the image to be a PNG file.
         """
-        if self.local:
+        if self.local_method is not None:
             self.local_method.write_metadata(file, metadata)
         else:
             # FIXME: Should probably issue a warning?

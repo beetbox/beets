@@ -22,29 +22,36 @@ pytestmark = pytest.mark.skipif(
 def rst_changelog():
     return """New features:
 
-* :doc:`/plugins/substitute`: Some substitute
+- :doc:`/plugins/substitute`: Some substitute
   multi-line change.
   :bug:`5467`
-* :ref:`list-cmd` Update.
+- :ref:`list-cmd` Update.
 
-You can do something with this command::
+You can do something with this command:
+
+::
 
     $ do-something
 
 Bug fixes:
 
-* Some fix that refers to an issue.
+- Some fix that refers to an issue.
   :bug:`5467`
-* Some fix that mentions user :user:`username`.
-* Some fix thanks to
+- Some fix that mentions user :user:`username`.
+- Some fix thanks to
   :user:`username`. :bug:`5467`
-* Some fix with its own bullet points using incorrect indentation:
-   * First nested bullet point
-     with some text that wraps to the next line
-   * Second nested bullet point
-* Another fix with its own bullet points using correct indentation:
-  * First
-  * Second
+- Some fix with its own bullet points using incorrect indentation:
+
+  - First nested bullet point
+    with some text that wraps to the next line
+  - Second nested bullet point
+
+- Another fix with an enumerated list
+
+  1. First
+     and some details
+  2. Second
+     and some details
 
 Section naaaaaaaaaaaaaaaaaaaaaaaammmmmmmmmmmmmmmmeeeeeeeeeeeeeee with over 80
 characters:
@@ -53,7 +60,7 @@ Empty section:
 
 Other changes:
 
-* Changed `bitesize` label to `good first issue`. Our `contribute`_ page is now
+- Changed ``bitesize`` label to ``good first issue``. Our `contribute`_ page is now
   automatically populated with these issues. :bug:`4855`
 
 .. _contribute: https://github.com/beetbox/beets/contribute
@@ -63,7 +70,7 @@ Other changes:
 
 Bug fixes:
 
-* Fixed something."""
+- Fixed something."""
 
 
 @pytest.fixture
@@ -79,9 +86,9 @@ You can do something with this command:
 
 ### Bug fixes
 
-- Another fix with its own bullet points using correct indentation:
-  - First
-  - Second
+- Another fix with an enumerated list
+  1.  First and some details
+  2.  Second and some details
 - Some fix thanks to @username. :bug: (#5467)
 - Some fix that mentions user @username.
 - Some fix that refers to an issue. :bug: (#5467)

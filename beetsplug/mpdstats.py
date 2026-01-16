@@ -15,17 +15,20 @@
 
 import os
 import time
+from typing import ClassVar
 
 import mpd
 
-from beets import config, library, plugins, ui
+from beets import config, plugins, ui
 from beets.dbcore import types
+from beets.dbcore.query import PathQuery
 from beets.util import displayable_path
 
 # If we lose the connection, how many times do we want to retry and how
 # much time should we wait between retries?
 RETRIES = 10
 RETRY_INTERVAL = 5
+DUPLICATE_PLAY_THRESHOLD = 10.0
 
 
 mpd_config = config["mpd"]
@@ -49,8 +52,8 @@ class MPDClientWrapper:
         if not self.strip_path.endswith("/"):
             self.strip_path += "/"
 
-        self._log.debug("music_directory: {0}", self.music_directory)
-        self._log.debug("strip_path: {0}", self.strip_path)
+        self._log.debug("music_directory: {.music_directory}", self)
+        self._log.debug("strip_path: {.strip_path}", self)
 
         self.client = mpd.MPDClient()
 
@@ -62,7 +65,7 @@ class MPDClientWrapper:
         if host[0] in ["/", "~"]:
             host = os.path.expanduser(host)
 
-        self._log.info("connecting to {0}:{1}", host, port)
+        self._log.info("connecting to {}:{}", host, port)
         try:
             self.client.connect(host, port)
         except OSError as e:
@@ -87,7 +90,7 @@ class MPDClientWrapper:
         try:
             return getattr(self.client, command)()
         except (OSError, mpd.ConnectionError) as err:
-            self._log.error("{0}", err)
+            self._log.error("{}", err)
 
         if retries <= 0:
             # if we exited without breaking, we couldn't reconnect in time :(
@@ -121,7 +124,7 @@ class MPDClientWrapper:
                 result = os.path.join(self.music_directory, file)
             else:
                 result = entry["file"]
-        self._log.debug("returning: {0}", result)
+        self._log.debug("returning: {}", result)
         return result, entry.get("id")
 
     def status(self):
@@ -142,7 +145,9 @@ class MPDStats:
 
         self.do_rating = mpd_config["rating"].get(bool)
         self.rating_mix = mpd_config["rating_mix"].get(float)
-        self.time_threshold = 10.0  # TODO: maybe add config option?
+        self.played_ratio_threshold = mpd_config["played_ratio_threshold"].get(
+            float
+        )
 
         self.now_playing = None
         self.mpd = MPDClientWrapper(log)
@@ -160,12 +165,12 @@ class MPDStats:
 
     def get_item(self, path):
         """Return the beets item related to path."""
-        query = library.PathQuery("path", path)
+        query = PathQuery("path", path)
         item = self.lib.items(query).get()
         if item:
             return item
         else:
-            self._log.info("item not found: {0}", displayable_path(path))
+            self._log.info("item not found: {}", displayable_path(path))
 
     def update_item(self, item, attribute, value=None, increment=None):
         """Update the beets item. Set attribute to value or increment the value
@@ -184,10 +189,10 @@ class MPDStats:
             item.store()
 
             self._log.debug(
-                "updated: {0} = {1} [{2}]",
+                "updated: {} = {} [{.filepath}]",
                 attribute,
                 item[attribute],
-                displayable_path(item.path),
+                item,
             )
 
     def update_rating(self, item, skipped):
@@ -215,10 +220,8 @@ class MPDStats:
 
         Returns whether the change was manual (skipped previous song or not)
         """
-        diff = abs(song["remaining"] - (time.time() - song["started"]))
-
-        skipped = diff >= self.time_threshold
-
+        elapsed = song["elapsed_at_start"] + (time.time() - song["started"])
+        skipped = elapsed / song["duration"] < self.played_ratio_threshold
         if skipped:
             self.handle_skipped(song)
         else:
@@ -232,12 +235,12 @@ class MPDStats:
     def handle_played(self, song):
         """Updates the play count of a song."""
         self.update_item(song["beets_item"], "play_count", increment=1)
-        self._log.info("played {0}", displayable_path(song["path"]))
+        self._log.info("played {}", displayable_path(song["path"]))
 
     def handle_skipped(self, song):
         """Updates the skip count of a song."""
         self.update_item(song["beets_item"], "skip_count", increment=1)
-        self._log.info("skipped {0}", displayable_path(song["path"]))
+        self._log.info("skipped {}", displayable_path(song["path"]))
 
     def on_stop(self, status):
         self._log.info("stop")
@@ -255,13 +258,10 @@ class MPDStats:
 
     def on_play(self, status):
         path, songid = self.mpd.currentsong()
-
         if not path:
             return
 
         played, duration = map(int, status["time"].split(":", 1))
-        remaining = duration - played
-
         if self.now_playing:
             if self.now_playing["path"] != path:
                 self.handle_song_change(self.now_playing)
@@ -272,22 +272,23 @@ class MPDStats:
                 # after natural song start.
                 diff = abs(time.time() - self.now_playing["started"])
 
-                if diff <= self.time_threshold:
+                if diff <= DUPLICATE_PLAY_THRESHOLD:
                     return
 
                 if self.now_playing["path"] == path and played == 0:
                     self.handle_song_change(self.now_playing)
 
         if is_url(path):
-            self._log.info("playing stream {0}", displayable_path(path))
+            self._log.info("playing stream {}", displayable_path(path))
             self.now_playing = None
             return
 
-        self._log.info("playing {0}", displayable_path(path))
+        self._log.info("playing {}", displayable_path(path))
 
         self.now_playing = {
             "started": time.time(),
-            "remaining": remaining,
+            "elapsed_at_start": played,
+            "duration": duration,
             "path": path,
             "id": songid,
             "beets_item": self.get_item(path),
@@ -307,21 +308,21 @@ class MPDStats:
             if "player" in events:
                 status = self.mpd.status()
 
-                handler = getattr(self, "on_" + status["state"], None)
+                handler = getattr(self, f"on_{status['state']}", None)
 
                 if handler:
                     handler(status)
                 else:
-                    self._log.debug('unhandled status "{0}"', status)
+                    self._log.debug('unhandled status "{}"', status)
 
             events = self.mpd.events()
 
 
 class MPDStatsPlugin(plugins.BeetsPlugin):
-    item_types = {
+    item_types: ClassVar[dict[str, types.Type]] = {
         "play_count": types.INTEGER,
         "skip_count": types.INTEGER,
-        "last_played": library.DateType(),
+        "last_played": types.DATE,
         "rating": types.FLOAT,
     }
 
@@ -336,6 +337,7 @@ class MPDStatsPlugin(plugins.BeetsPlugin):
                 "host": os.environ.get("MPD_HOST", "localhost"),
                 "port": int(os.environ.get("MPD_PORT", 6600)),
                 "password": "",
+                "played_ratio_threshold": 0.85,
             }
         )
         mpd_config["password"].redact = True

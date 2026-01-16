@@ -43,7 +43,7 @@ list_field_extension = mediafile.ListMediaField(
 
 class ExtendedFieldTestMixin(BeetsTestCase):
     def _mediafile_fixture(self, name, extension="mp3"):
-        name = bytestring_path(name + "." + extension)
+        name = bytestring_path(f"{name}.{extension}")
         src = os.path.join(_common.RSRC, name)
         target = os.path.join(self.temp_dir, name)
         shutil.copy(syspath(src), syspath(target))

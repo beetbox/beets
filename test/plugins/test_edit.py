@@ -13,15 +13,16 @@
 # included in all copies or substantial portions of the Software.
 
 import codecs
+from typing import ClassVar
 from unittest.mock import patch
 
 from beets.dbcore.query import TrueQuery
 from beets.library import Item
 from beets.test import _common
 from beets.test.helper import (
+    AutotagImportTestCase,
     AutotagStub,
     BeetsTestCase,
-    ImportTestCase,
     PluginMixin,
     TerminalImportMixin,
     control_stdin,
@@ -134,22 +135,6 @@ class EditCommandTest(EditMixin, BeetsTestCase):
             {f: item[f] for f in item._fields} for item in self.album.items()
         ]
 
-    def assertCounts(
-        self,
-        mock_write,
-        album_count=ALBUM_COUNT,
-        track_count=TRACK_COUNT,
-        write_call_count=TRACK_COUNT,
-        title_starts_with="",
-    ):
-        """Several common assertions on Album, Track and call counts."""
-        assert len(self.lib.albums()) == album_count
-        assert len(self.lib.items()) == track_count
-        assert mock_write.call_count == write_call_count
-        assert all(
-            i.title.startswith(title_starts_with) for i in self.lib.items()
-        )
-
     def test_title_edit_discard(self, mock_write):
         """Edit title for all items in the library, then discard changes."""
         # Edit track titles.
@@ -159,9 +144,7 @@ class EditCommandTest(EditMixin, BeetsTestCase):
             ["c"],
         )
 
-        self.assertCounts(
-            mock_write, write_call_count=0, title_starts_with="t\u00eftle"
-        )
+        assert mock_write.call_count == 0
         self.assertItemFieldsModified(self.album.items(), self.items_orig, [])
 
     def test_title_edit_apply(self, mock_write):
@@ -173,11 +156,7 @@ class EditCommandTest(EditMixin, BeetsTestCase):
             ["a"],
         )
 
-        self.assertCounts(
-            mock_write,
-            write_call_count=self.TRACK_COUNT,
-            title_starts_with="modified t\u00eftle",
-        )
+        assert mock_write.call_count == self.TRACK_COUNT
         self.assertItemFieldsModified(
             self.album.items(), self.items_orig, ["title", "mtime"]
         )
@@ -191,15 +170,42 @@ class EditCommandTest(EditMixin, BeetsTestCase):
             ["a"],
         )
 
-        self.assertCounts(
-            mock_write,
-            write_call_count=1,
-        )
+        assert mock_write.call_count == 1
         # No changes except on last item.
         self.assertItemFieldsModified(
             list(self.album.items())[:-1], self.items_orig[:-1], []
         )
         assert list(self.album.items())[-1].title == "modified t\u00eftle 9"
+
+    def test_title_edit_keep_editing_then_apply(self, mock_write):
+        """Edit titles, keep editing once, then apply changes."""
+        self.run_mocked_command(
+            {"replacements": {"t\u00eftle": "modified t\u00eftle"}},
+            # keep Editing, then Apply
+            ["e", "a"],
+        )
+
+        assert mock_write.call_count == self.TRACK_COUNT
+        self.assertItemFieldsModified(
+            self.album.items(),
+            self.items_orig,
+            ["title", "mtime"],
+        )
+
+    def test_title_edit_keep_editing_then_cancel(self, mock_write):
+        """Edit titles, keep editing once, then cancel."""
+        self.run_mocked_command(
+            {"replacements": {"t\u00eftle": "modified t\u00eftle"}},
+            # keep Editing, then Cancel
+            ["e", "c"],
+        )
+
+        assert mock_write.call_count == 0
+        self.assertItemFieldsModified(
+            self.album.items(),
+            self.items_orig,
+            [],
+        )
 
     def test_noedit(self, mock_write):
         """Do not edit anything."""
@@ -210,9 +216,7 @@ class EditCommandTest(EditMixin, BeetsTestCase):
             [],
         )
 
-        self.assertCounts(
-            mock_write, write_call_count=0, title_starts_with="t\u00eftle"
-        )
+        assert mock_write.call_count == 0
         self.assertItemFieldsModified(self.album.items(), self.items_orig, [])
 
     def test_album_edit_apply(self, mock_write):
@@ -226,7 +230,7 @@ class EditCommandTest(EditMixin, BeetsTestCase):
             ["a"],
         )
 
-        self.assertCounts(mock_write, write_call_count=self.TRACK_COUNT)
+        assert mock_write.call_count == self.TRACK_COUNT
         self.assertItemFieldsModified(
             self.album.items(), self.items_orig, ["album", "mtime"]
         )
@@ -249,9 +253,7 @@ class EditCommandTest(EditMixin, BeetsTestCase):
         # Even though a flexible attribute was written (which is not directly
         # written to the tags), write should still be called since templates
         # might use it.
-        self.assertCounts(
-            mock_write, write_call_count=1, title_starts_with="t\u00eftle"
-        )
+        assert mock_write.call_count == 1
 
     def test_a_album_edit_apply(self, mock_write):
         """Album query (-a), edit album field, apply changes."""
@@ -263,7 +265,7 @@ class EditCommandTest(EditMixin, BeetsTestCase):
         )
 
         self.album.load()
-        self.assertCounts(mock_write, write_call_count=self.TRACK_COUNT)
+        assert mock_write.call_count == self.TRACK_COUNT
         assert self.album.album == "modified \u00e4lbum"
         self.assertItemFieldsModified(
             self.album.items(), self.items_orig, ["album", "mtime"]
@@ -279,7 +281,7 @@ class EditCommandTest(EditMixin, BeetsTestCase):
         )
 
         self.album.load()
-        self.assertCounts(mock_write, write_call_count=self.TRACK_COUNT)
+        assert mock_write.call_count == self.TRACK_COUNT
         assert self.album.albumartist == "the modified album artist"
         self.assertItemFieldsModified(
             self.album.items(), self.items_orig, ["albumartist", "mtime"]
@@ -295,9 +297,7 @@ class EditCommandTest(EditMixin, BeetsTestCase):
             ["n"],
         )
 
-        self.assertCounts(
-            mock_write, write_call_count=0, title_starts_with="t\u00eftle"
-        )
+        assert mock_write.call_count == 0
 
     def test_invalid_yaml(self, mock_write):
         """Edit the yaml file incorrectly (resulting in a well-formed but
@@ -309,30 +309,24 @@ class EditCommandTest(EditMixin, BeetsTestCase):
             [],
         )
 
-        self.assertCounts(
-            mock_write, write_call_count=0, title_starts_with="t\u00eftle"
-        )
+        assert mock_write.call_count == 0
 
 
 @_common.slow_test()
 class EditDuringImporterTestCase(
-    EditMixin, TerminalImportMixin, ImportTestCase
+    EditMixin, TerminalImportMixin, AutotagImportTestCase
 ):
     """TODO"""
 
-    IGNORED = ["added", "album_id", "id", "mtime", "path"]
+    matching = AutotagStub.GOOD
+
+    IGNORED: ClassVar[list[str]] = ["added", "album_id", "id", "mtime", "path"]
 
     def setUp(self):
         super().setUp()
         # Create some mediafiles, and store them for comparison.
         self.prepare_album_for_import(1)
         self.items_orig = [Item.from_path(f.path) for f in self.import_media]
-        self.matcher = AutotagStub().install()
-        self.matcher.matching = AutotagStub.GOOD
-
-    def tearDown(self):
-        super().tearDown()
-        self.matcher.restore()
 
 
 @_common.slow_test()
@@ -357,8 +351,8 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
             self.lib.items(),
             self.items_orig,
             ["title"],
-            self.IGNORED
-            + [
+            [
+                *self.IGNORED,
                 "albumartist",
                 "mb_albumartistid",
                 "mb_albumartistids",
@@ -385,7 +379,7 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
             self.lib.items(),
             self.items_orig,
             [],
-            self.IGNORED + ["albumartist", "mb_albumartistid"],
+            [*self.IGNORED, "albumartist", "mb_albumartistid"],
         )
         assert all("Tag Track" in i.title for i in self.lib.items())
 
@@ -497,6 +491,6 @@ class EditDuringImporterSingletonTest(EditDuringImporterTestCase):
             self.lib.items(),
             self.items_orig,
             ["title"],
-            self.IGNORED + ["albumartist", "mb_albumartistid"],
+            [*self.IGNORED, "albumartist", "mb_albumartistid"],
         )
         assert all("Edited Track" in i.title for i in self.lib.items())

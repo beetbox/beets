@@ -61,9 +61,9 @@ class ParseTest(unittest.TestCase):
         """
         assert isinstance(obj, functemplate.Call), f"not a Call: {obj}"
         assert obj.ident == ident, f"wrong identifier: {obj.ident} vs. {ident}"
-        assert (
-            len(obj.args) == numargs
-        ), f"wrong argument count in {obj.ident}: {len(obj.args)} vs. {numargs}"
+        assert len(obj.args) == numargs, (
+            f"wrong argument count in {obj.ident}: {len(obj.args)} vs. {numargs}"
+        )
 
     def test_plain_text(self):
         assert list(_normparse("hello world")) == ["hello world"]

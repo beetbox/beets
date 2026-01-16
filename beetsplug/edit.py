@@ -24,8 +24,9 @@ import yaml
 
 from beets import plugins, ui, util
 from beets.dbcore import types
-from beets.importer import action
-from beets.ui.commands import PromptChoice, _do_query
+from beets.importer import Action
+from beets.ui.commands.utils import do_query
+from beets.util import PromptChoice
 
 # These "safe" types can avoid the format/parse cycle that most fields go
 # through: they are safe to edit with native YAML types.
@@ -46,9 +47,7 @@ def edit(filename, log):
     try:
         subprocess.call(cmd)
     except OSError as exc:
-        raise ui.UserError(
-            "could not run editor command {!r}: {}".format(cmd[0], exc)
-        )
+        raise ui.UserError(f"could not run editor command {cmd[0]!r}: {exc}")
 
 
 def dump(arg):
@@ -71,9 +70,7 @@ def load(s):
         for d in yaml.safe_load_all(s):
             if not isinstance(d, dict):
                 raise ParseError(
-                    "each entry must be a dictionary; found {}".format(
-                        type(d).__name__
-                    )
+                    f"each entry must be a dictionary; found {type(d).__name__}"
                 )
 
             # Convert all keys to strings. They started out as strings,
@@ -180,8 +177,7 @@ class EditPlugin(plugins.BeetsPlugin):
     def _edit_command(self, lib, opts, args):
         """The CLI command function for the `beet edit` command."""
         # Get the objects to edit.
-        query = ui.decargs(args)
-        items, albums = _do_query(lib, query, opts.album, False)
+        items, albums = do_query(lib, args, opts.album, False)
         objs = albums if opts.album else items
         if not objs:
             ui.print_("Nothing to edit.")
@@ -279,23 +275,18 @@ class EditPlugin(plugins.BeetsPlugin):
                     ui.print_("No changes to apply.")
                     return False
 
-                # Confirm the changes.
+                # For cancel/keep-editing, restore objects to their original
+                # in-memory state so temp edits don't leak into the session
                 choice = ui.input_options(
                     ("continue Editing", "apply", "cancel")
                 )
                 if choice == "a":  # Apply.
                     return True
                 elif choice == "c":  # Cancel.
+                    self.apply_data(objs, new_data, old_data)
                     return False
                 elif choice == "e":  # Keep editing.
-                    # Reset the temporary changes to the objects. I we have a
-                    # copy from above, use that, else reload from the database.
-                    objs = [
-                        (old_obj or obj) for old_obj, obj in zip(objs_old, objs)
-                    ]
-                    for obj in objs:
-                        if not obj.id < 0:
-                            obj.load()
+                    self.apply_data(objs, new_data, old_data)
                     continue
 
         # Remove the temporary file before returning.
@@ -380,13 +371,11 @@ class EditPlugin(plugins.BeetsPlugin):
 
         # Save the new data.
         if success:
-            # Return action.RETAG, which makes the importer write the tags
+            # Return Action.RETAG, which makes the importer write the tags
             # to the files if needed without re-applying metadata.
-            return action.RETAG
+            return Action.RETAG
         else:
-            # Edit cancelled / no edits made. Revert changes.
-            for obj in task.items:
-                obj.read()
+            return None
 
     def importer_edit_candidate(self, session, task):
         """Callback for invoking the functionality during an interactive

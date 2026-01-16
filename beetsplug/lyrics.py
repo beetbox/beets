@@ -16,7 +16,6 @@
 
 from __future__ import annotations
 
-import atexit
 import itertools
 import math
 import re
@@ -25,10 +24,9 @@ from contextlib import contextmanager, suppress
 from dataclasses import dataclass
 from functools import cached_property, partial, total_ordering
 from html import unescape
-from http import HTTPStatus
 from itertools import groupby
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterable, Iterator, NamedTuple
+from typing import TYPE_CHECKING, ClassVar, NamedTuple
 from urllib.parse import quote, quote_plus, urlencode, urlparse
 
 import langdetect
@@ -36,15 +34,20 @@ import requests
 from bs4 import BeautifulSoup
 from unidecode import unidecode
 
-import beets
 from beets import plugins, ui
-from beets.autotag.hooks import string_dist
+from beets.autotag.distance import string_dist
+from beets.util.config import sanitize_choices
+
+from ._utils.requests import HTTPNotFoundError, RequestHandler
 
 if TYPE_CHECKING:
-    from logging import Logger
+    from collections.abc import Iterable, Iterator
+
+    import confuse
 
     from beets.importer import ImportTask
     from beets.library import Item, Library
+    from beets.logging import BeetsLogger as Logger
 
     from ._typing import (
         GeniusAPI,
@@ -54,41 +57,12 @@ if TYPE_CHECKING:
         TranslatorAPI,
     )
 
-USER_AGENT = f"beets/{beets.__version__}"
 INSTRUMENTAL_LYRICS = "[Instrumental]"
 
 
-class NotFoundError(requests.exceptions.HTTPError):
-    pass
-
-
 class CaptchaError(requests.exceptions.HTTPError):
-    pass
-
-
-class TimeoutSession(requests.Session):
-    def request(self, *args, **kwargs):
-        """Wrap the request method to raise an exception on HTTP errors."""
-        kwargs.setdefault("timeout", 10)
-        r = super().request(*args, **kwargs)
-        if r.status_code == HTTPStatus.NOT_FOUND:
-            raise NotFoundError("HTTP Error: Not Found", response=r)
-        if 300 <= r.status_code < 400:
-            raise CaptchaError("Captcha is required", response=r)
-
-        r.raise_for_status()
-
-        return r
-
-
-r_session = TimeoutSession()
-r_session.headers.update({"User-Agent": USER_AGENT})
-
-
-@atexit.register
-def close_session():
-    """Close the requests session on shut down."""
-    r_session.close()
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__("Captcha is required", *args, **kwargs)
 
 
 # Utilities.
@@ -153,7 +127,7 @@ def search_pairs(item):
         # examples include (live), (remix), and (acoustic).
         r"(.+?)\s+[(].*[)]$",
         # Remove any featuring artists from the title
-        r"(.*?) {}".format(plugins.feat_tokens(for_artist=False)),
+        rf"(.*?) {plugins.feat_tokens(for_artist=False)}",
         # Remove part of title after colon ':' for songs with subtitles
         r"(.+?)\s*:.*",
     ]
@@ -184,8 +158,17 @@ def slug(text: str) -> str:
     return re.sub(r"\W+", "-", unidecode(text).lower().strip()).strip("-")
 
 
-class RequestHandler:
-    _log: beets.logging.Logger
+class LyricsRequestHandler(RequestHandler):
+    _log: Logger
+
+    def status_to_error(self, code: int) -> type[requests.HTTPError] | None:
+        if err := super().status_to_error(code):
+            return err
+
+        if 300 <= code < 400:
+            return CaptchaError
+
+        return None
 
     def debug(self, message: str, *args) -> None:
         """Log a debug message with the class name."""
@@ -206,7 +189,7 @@ class RequestHandler:
 
         return f"{url}?{urlencode(params)}"
 
-    def fetch_text(
+    def get_text(
         self, url: str, params: JSONDict | None = None, **kwargs
     ) -> str:
         """Return text / HTML data from the given URL.
@@ -216,21 +199,21 @@ class RequestHandler:
         """
         url = self.format_url(url, params)
         self.debug("Fetching HTML from {}", url)
-        r = r_session.get(url, **kwargs)
+        r = self.get(url, **kwargs)
         r.encoding = None
         return r.text
 
-    def fetch_json(self, url: str, params: JSONDict | None = None, **kwargs):
+    def get_json(self, url: str, params: JSONDict | None = None, **kwargs):
         """Return JSON data from the given URL."""
         url = self.format_url(url, params)
         self.debug("Fetching JSON from {}", url)
-        return r_session.get(url, **kwargs).json()
+        return super().get_json(url, **kwargs)
 
     def post_json(self, url: str, params: JSONDict | None = None, **kwargs):
         """Send POST request and return JSON response."""
         url = self.format_url(url, params)
         self.debug("Posting JSON to {}", url)
-        return r_session.post(url, **kwargs).json()
+        return self.request("post", url, **kwargs).json()
 
     @contextmanager
     def handle_request(self) -> Iterator[None]:
@@ -249,8 +232,10 @@ class BackendClass(type):
         return cls.__name__.lower()
 
 
-class Backend(RequestHandler, metaclass=BackendClass):
-    def __init__(self, config, log):
+class Backend(LyricsRequestHandler, metaclass=BackendClass):
+    config: confuse.Subview
+
+    def __init__(self, config: confuse.Subview, log: Logger) -> None:
         self._log = log
         self.config = config
 
@@ -354,10 +339,10 @@ class LRCLib(Backend):
         if album:
             get_params["album_name"] = album
 
-        yield self.fetch_json(self.SEARCH_URL, params=base_params)
+        yield self.get_json(self.SEARCH_URL, params=base_params)
 
-        with suppress(NotFoundError):
-            yield [self.fetch_json(self.GET_URL, params=get_params)]
+        with suppress(HTTPNotFoundError):
+            yield [self.get_json(self.GET_URL, params=get_params)]
 
     @classmethod
     def pick_best_match(cls, lyrics: Iterable[LRCLyrics]) -> LRCLyrics | None:
@@ -382,7 +367,7 @@ class LRCLib(Backend):
 class MusiXmatch(Backend):
     URL_TEMPLATE = "https://www.musixmatch.com/lyrics/{}/{}"
 
-    REPLACEMENTS = {
+    REPLACEMENTS: ClassVar[dict[str, str]] = {
         r"\s+": "-",
         "<": "Less_Than",
         ">": "Greater_Than",
@@ -405,7 +390,7 @@ class MusiXmatch(Backend):
     def fetch(self, artist: str, title: str, *_) -> tuple[str, str] | None:
         url = self.build_url(artist, title)
 
-        html = self.fetch_text(url)
+        html = self.get_text(url)
         if "We detected that your IP is blocked" in html:
             self.warn("Failed: Blocked IP address")
             return None
@@ -507,9 +492,9 @@ class SearchBackend(SoupMixin, Backend):
             # log out the candidate that did not make it but was close.
             # This may show a matching candidate with some noise in the name
             self.debug(
-                "({}, {}) does not match ({}, {}) but dist was close: {:.2f}",
-                result.artist,
-                result.title,
+                "({0.artist}, {0.title}) does not match ({1}, {2}) but dist"
+                " was close: {3:.2f}",
+                result,
                 target_artist,
                 target_title,
                 max_dist,
@@ -530,7 +515,7 @@ class SearchBackend(SoupMixin, Backend):
     def fetch(self, artist: str, title: str, *_) -> tuple[str, str] | None:
         """Fetch lyrics for the given artist and title."""
         for result in self.get_results(artist, title):
-            if (html := self.fetch_text(result.url)) and (
+            if (html := self.get_text(result.url)) and (
                 lyrics := self.scrape(html)
             ):
                 return lyrics, result.url
@@ -557,10 +542,10 @@ class Genius(SearchBackend):
 
     @cached_property
     def headers(self) -> dict[str, str]:
-        return {"Authorization": f'Bearer {self.config["genius_api_key"]}'}
+        return {"Authorization": f"Bearer {self.config['genius_api_key']}"}
 
     def search(self, artist: str, title: str) -> Iterable[SearchResult]:
-        search_data: GeniusAPI.Search = self.fetch_json(
+        search_data: GeniusAPI.Search = self.get_json(
             self.SEARCH_URL,
             params={"q": f"{artist} {title}"},
             headers=self.headers,
@@ -581,7 +566,7 @@ class Tekstowo(SearchBackend):
     """Fetch lyrics from Tekstowo.pl."""
 
     BASE_URL = "https://www.tekstowo.pl"
-    SEARCH_URL = BASE_URL + "/szukaj,{}.html"
+    SEARCH_URL = f"{BASE_URL}/szukaj,{{}}.html"
 
     def build_url(self, artist, title):
         artistitle = f"{artist.title()} {title.title()}"
@@ -589,7 +574,7 @@ class Tekstowo(SearchBackend):
         return self.SEARCH_URL.format(quote_plus(unidecode(artistitle)))
 
     def search(self, artist: str, title: str) -> Iterable[SearchResult]:
-        if html := self.fetch_text(self.build_url(title, artist)):
+        if html := self.get_text(self.build_url(title, artist)):
             soup = self.get_soup(html)
             for tag in soup.select("div[class=flex-group] > a[title*=' - ']"):
                 artist, title = str(tag["title"]).split(" - ", 1)
@@ -615,7 +600,7 @@ class Google(SearchBackend):
     SEARCH_URL = "https://www.googleapis.com/customsearch/v1"
 
     #: Exclude some letras.mus.br pages which do not contain lyrics.
-    EXCLUDE_PAGES = [
+    EXCLUDE_PAGES: ClassVar[list[str]] = [
         "significado.html",
         "traduccion.html",
         "traducao.html",
@@ -643,11 +628,14 @@ class Google(SearchBackend):
         re.IGNORECASE | re.VERBOSE,
     )
     #: Split cleaned up URL title into artist and title parts.
-    URL_TITLE_PARTS_RE = re.compile(r" +(?:[ :|-]+|par|by) +")
+    URL_TITLE_PARTS_RE = re.compile(r" +(?:[ :|-]+|par|by) +|, ")
 
-    SOURCE_DIST_FACTOR = {"www.azlyrics.com": 0.5, "www.songlyrics.com": 0.6}
+    SOURCE_DIST_FACTOR: ClassVar[dict[str, float]] = {
+        "www.azlyrics.com": 0.5,
+        "www.songlyrics.com": 0.6,
+    }
 
-    ignored_domains: set[str] = set()
+    ignored_domains: ClassVar[set[str]] = set()
 
     @classmethod
     def pre_process_html(cls, html: str) -> str:
@@ -655,12 +643,12 @@ class Google(SearchBackend):
         html = Html.remove_ads(super().pre_process_html(html))
         return Html.remove_formatting(Html.merge_paragraphs(html))
 
-    def fetch_text(self, *args, **kwargs) -> str:
+    def get_text(self, *args, **kwargs) -> str:
         """Handle an error so that we can continue with the next URL."""
         kwargs.setdefault("allow_redirects", False)
         with self.handle_request():
             try:
-                return super().fetch_text(*args, **kwargs)
+                return super().get_text(*args, **kwargs)
             except CaptchaError:
                 self.ignored_domains.add(urlparse(args[0]).netloc)
                 raise
@@ -701,8 +689,8 @@ class Google(SearchBackend):
                 result_artist, result_title = "", parts[0]
         else:
             # sort parts by their similarity to the artist
-            parts.sort(key=lambda p: cls.get_part_dist(artist, title, p))
-            result_artist, result_title = parts[0], " ".join(parts[1:])
+            result_artist = min(parts, key=lambda p: string_dist(artist, p))
+            result_title = min(parts, key=lambda p: string_dist(title, p))
 
         return SearchResult(result_artist, result_title, item["link"])
 
@@ -716,7 +704,7 @@ class Google(SearchBackend):
             "excludeTerms": ", ".join(self.EXCLUDE_PAGES),
         }
 
-        data: GoogleCustomSearchAPI.Response = self.fetch_json(
+        data: GoogleCustomSearchAPI.Response = self.get_json(
             self.SEARCH_URL, params=params
         )
         for item in data.get("items", []):
@@ -741,11 +729,13 @@ class Google(SearchBackend):
 
 
 @dataclass
-class Translator(RequestHandler):
+class Translator(LyricsRequestHandler):
     TRANSLATE_URL = "https://api.cognitive.microsofttranslator.com/translate"
     LINE_PARTS_RE = re.compile(r"^(\[\d\d:\d\d.\d\d\]|) *(.*)$")
     SEPARATOR = " | "
-    remove_translations = partial(re.compile(r" / [^\n]+").sub, "")
+    remove_translations = staticmethod(
+        partial(re.compile(r" / [^\n]+").sub, "")
+    )
 
     _log: Logger
     api_key: str
@@ -837,15 +827,16 @@ class Translator(RequestHandler):
         lyrics_language = langdetect.detect(new_lyrics).upper()
         if lyrics_language == self.to_language:
             self.info(
-                "🔵 Lyrics are already in the target language {}",
-                self.to_language,
+                "🔵 Lyrics are already in the target language {.to_language}",
+                self,
             )
             return new_lyrics
 
         if self.from_languages and lyrics_language not in self.from_languages:
             self.info(
-                "🔵 Configuration {} does not permit translating from {}",
-                self.from_languages,
+                "🔵 Configuration {.from_languages} does not permit translating"
+                " from {}",
+                self,
                 lyrics_language,
             )
             return new_lyrics
@@ -853,7 +844,7 @@ class Translator(RequestHandler):
         lyrics, *url = new_lyrics.split("\n\nSource: ")
         with self.handle_request():
             translated_lines = self.append_translations(lyrics.splitlines())
-            self.info("🟢 Translated lyrics to {}", self.to_language)
+            self.info("🟢 Translated lyrics to {.to_language}", self)
             return "\n\nSource: ".join(["\n".join(translated_lines), *url])
 
 
@@ -913,17 +904,17 @@ class RestFiles:
 
     def write_artist(self, artist: str, items: Iterable[Item]) -> None:
         parts = [
-            f'{artist}\n{"=" * len(artist)}',
+            f"{artist}\n{'=' * len(artist)}",
             ".. contents::\n   :local:",
         ]
         for album, items in groupby(items, key=lambda i: i.album):
-            parts.append(f'{album}\n{"-" * len(album)}')
+            parts.append(f"{album}\n{'-' * len(album)}")
             parts.extend(
                 part
                 for i in items
                 if (title := f":index:`{i.title.strip()}`")
                 for part in (
-                    f'{title}\n{"~" * len(title)}',
+                    f"{title}\n{'~' * len(title)}",
                     textwrap.indent(i.lyrics, "| "),
                 )
             )
@@ -941,23 +932,23 @@ class RestFiles:
         d = self.directory
         text = f"""
         ReST files generated. to build, use one of:
-          sphinx-build -b html  {d} {d/"html"}
-          sphinx-build -b epub  {d} {d/"epub"}
-          sphinx-build -b latex {d} {d/"latex"} && make -C {d/"latex"} all-pdf
+          sphinx-build -b html  {d} {d / "html"}
+          sphinx-build -b epub  {d} {d / "epub"}
+          sphinx-build -b latex {d} {d / "latex"} && make -C {d / "latex"} all-pdf
         """
         ui.print_(textwrap.dedent(text))
 
 
-class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
-    BACKEND_BY_NAME = {
+class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
+    BACKEND_BY_NAME: ClassVar[dict[str, type[Backend]]] = {
         b.name: b for b in [LRCLib, Google, Genius, Tekstowo, MusiXmatch]
     }
 
     @cached_property
     def backends(self) -> list[Backend]:
-        user_sources = self.config["sources"].get()
+        user_sources = self.config["sources"].as_str_seq()
 
-        chosen = plugins.sanitize_choices(user_sources, self.BACKEND_BY_NAME)
+        chosen = sanitize_choices(user_sources, self.BACKEND_BY_NAME)
         if "google" in chosen and not self.config["google_API_key"].get():
             self.warn("Disabling Google source: no API key configured.")
             chosen.remove("google")
@@ -1089,7 +1080,7 @@ class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
             return
 
         if lyrics := self.find_lyrics(item):
-            self.info("🟢 Found lyrics: {0}", item)
+            self.info("🟢 Found lyrics: {}", item)
             if translator := self.translator:
                 lyrics = translator.translate(lyrics, item.lyrics)
         else:

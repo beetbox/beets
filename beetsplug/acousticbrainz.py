@@ -15,6 +15,7 @@
 """Fetch various AcousticBrainz metadata using MBID."""
 
 from collections import defaultdict
+from typing import ClassVar
 
 import requests
 
@@ -55,7 +56,7 @@ ABSCHEME = {
 
 
 class AcousticPlugin(plugins.BeetsPlugin):
-    item_types = {
+    item_types: ClassVar[dict[str, types.Type]] = {
         "average_loudness": types.Float(6),
         "chords_changes_rate": types.Float(6),
         "chords_key": types.STRING,
@@ -97,7 +98,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
                     "with an HTTP scheme"
                 )
             elif self.base_url[-1] != "/":
-                self.base_url = self.base_url + "/"
+                self.base_url = f"{self.base_url}/"
 
         if self.config["auto"]:
             self.register_listener("import_task_files", self.import_task_files)
@@ -116,7 +117,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
         )
 
         def func(lib, opts, args):
-            items = lib.items(ui.decargs(args))
+            items = lib.items(args)
             self._fetch_info(
                 items,
                 ui.should_write(),
@@ -153,7 +154,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
             try:
                 data.update(res.json())
             except ValueError:
-                self._log.debug("Invalid Response: {}", res.text)
+                self._log.debug("Invalid Response: {.text}", res)
                 return {}
 
         return data
@@ -286,7 +287,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
                     yield v, subdata[k]
             else:
                 self._log.warning(
-                    "Acousticbrainz did not provide info " "about {}", k
+                    "Acousticbrainz did not provide info about {}", k
                 )
                 self._log.debug(
                     "Data {} could not be mapped to scheme {} "
@@ -300,4 +301,4 @@ class AcousticPlugin(plugins.BeetsPlugin):
 def _generate_urls(base_url, mbid):
     """Generates AcousticBrainz end point urls for given `mbid`."""
     for level in LEVELS:
-        yield base_url + mbid + level
+        yield f"{base_url}{mbid}{level}"
