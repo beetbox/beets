@@ -1529,9 +1529,10 @@ def _open_library(config: confuse.LazyConfig) -> library.Library:
         if "readonly" in error_str or "unable to open" in error_str:
             db_dir = os.path.dirname(dbpath)
             raise UserError(
-                f"database file {dbpath_display} could not be opened due to a "
-                f"permissions error. Please check that the directory "
-                f"{util.displayable_path(db_dir)} is writable."
+                f"database file {dbpath_display} could not be opened. "
+                f"This may indicate a permissions issue - please check that "
+                f"the file and directory {util.displayable_path(db_dir)} "
+                f"are writable (original error: {db_error})."
             )
         raise UserError(
             f"database file {dbpath_display} could not be opened: {db_error}"
