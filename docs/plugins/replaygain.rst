@@ -57,8 +57,8 @@ mp3gain, aacgain, and mp3rgain
 In order to use this backend, you will need to install the mp3gain_ command-line
 tool, the aacgain_ fork, or mp3rgain_. Here are some hints:
 
-- On Mac OS X, you can use Homebrew_. Type ``brew install aacgain`` or
-  ``brew install mp3rgain``.
+- On Mac OS X, you can use Homebrew_. Type ``brew install aacgain`` or ``brew
+  install mp3rgain``.
 - On Linux, mp3gain_ is probably in your repositories. On Debian or Ubuntu, for
   example, you can run ``apt-get install mp3gain``. Alternatively, mp3rgain is
   available via Nix (``nix-env -iA nixpkgs.mp3rgain``) or AUR for Arch Linux.
