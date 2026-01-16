@@ -15,9 +15,6 @@
 """This module includes various helpers that provide fixtures, capture
 information or mock the environment.
 
-- `capture_stdout` context managers allow one to interact with the user
-  interface.
-
 - `has_program` checks the presence of a command on the system.
 
 - The `ImportSessionFixture` allows one to run importer code while
@@ -38,7 +35,6 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import Enum
 from functools import cached_property
-from io import StringIO
 from pathlib import Path
 from tempfile import gettempdir, mkdtemp, mkstemp
 from typing import Any, ClassVar
@@ -82,25 +78,6 @@ def capture_log(logger="beets"):
         yield capture.messages
     finally:
         log.removeHandler(capture)
-
-
-@contextmanager
-def capture_stdout():
-    """Save stdout in a StringIO.
-
-    >>> with capture_stdout() as output:
-    ...     print('spam')
-    ...
-    >>> output.getvalue()
-    'spam'
-    """
-    org = sys.stdout
-    sys.stdout = capture = StringIO()
-    try:
-        yield sys.stdout
-    finally:
-        sys.stdout = org
-        print(capture.getvalue())
 
 
 def has_program(cmd, args=["--version"]):
@@ -148,12 +125,31 @@ NEEDS_REFLINK = unittest.skipUnless(
 )
 
 
+class RunMixin:
+    def run_command(self, *args, **kwargs):
+        """Run a beets command with an arbitrary amount of arguments. The
+        Library` defaults to `self.lib`, but can be overridden with
+        the keyword argument `lib`.
+        """
+        sys.argv = ["beet"]  # avoid leakage from test suite args
+        lib = None
+        if hasattr(self, "lib"):
+            lib = self.lib
+        lib = kwargs.get("lib", lib)
+        beets.ui._raw_main(list(args), lib)
+
+
 @pytest.mark.usefixtures("io")
-class IOMixin:
+class IOMixin(RunMixin):
     io: _common.DummyIO
 
+    def run_with_output(self, *args):
+        self.io.getoutput()
+        self.run_command(*args)
+        return self.io.getoutput()
 
-class TestHelper(ConfigMixin):
+
+class TestHelper(RunMixin, ConfigMixin):
     """Helper mixin for high-level cli and plugin tests.
 
     This mixin provides methods to isolate beets' global state provide
@@ -367,25 +363,6 @@ class TestHelper(ConfigMixin):
             mediafile.save()
 
         return path
-
-    # Running beets commands
-
-    def run_command(self, *args, **kwargs):
-        """Run a beets command with an arbitrary amount of arguments. The
-        Library` defaults to `self.lib`, but can be overridden with
-        the keyword argument `lib`.
-        """
-        sys.argv = ["beet"]  # avoid leakage from test suite args
-        lib = None
-        if hasattr(self, "lib"):
-            lib = self.lib
-        lib = kwargs.get("lib", lib)
-        beets.ui._raw_main(list(args), lib)
-
-    def run_with_output(self, *args):
-        with capture_stdout() as out:
-            self.run_command(*args)
-        return out.getvalue()
 
     # Safe file operations
 

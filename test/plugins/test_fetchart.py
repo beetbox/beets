@@ -18,10 +18,10 @@ import os
 import sys
 
 from beets import util
-from beets.test.helper import PluginTestCase
+from beets.test.helper import IOMixin, PluginTestCase
 
 
-class FetchartCliTest(PluginTestCase):
+class FetchartCliTest(IOMixin, PluginTestCase):
     plugin = "fetchart"
 
     def setUp(self):

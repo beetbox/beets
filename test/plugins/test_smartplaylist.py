@@ -24,7 +24,7 @@ import pytest
 from beets import config
 from beets.dbcore.query import FixedFieldSort, MultipleSort, NullSort
 from beets.library import Album, Item, parse_query_string
-from beets.test.helper import BeetsTestCase, PluginTestCase
+from beets.test.helper import BeetsTestCase, IOMixin, PluginTestCase
 from beets.ui import UserError
 from beets.util import CHAR_REPLACE, syspath
 from beetsplug.smartplaylist import SmartPlaylistPlugin
@@ -458,7 +458,7 @@ class SmartPlaylistTest(BeetsTestCase):
         assert content.count(b"/item2.mp3") == 1
 
 
-class SmartPlaylistCLITest(PluginTestCase):
+class SmartPlaylistCLITest(IOMixin, PluginTestCase):
     plugin = "smartplaylist"
 
     def setUp(self):

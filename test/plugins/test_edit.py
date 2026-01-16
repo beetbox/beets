@@ -74,7 +74,7 @@ class ModifyFileMocker:
             f.write(contents)
 
 
-class EditMixin(IOMixin, PluginMixin):
+class EditMixin(PluginMixin):
     """Helper containing some common functionality used for the Edit tests."""
 
     plugin = "edit"
@@ -120,7 +120,7 @@ class EditMixin(IOMixin, PluginMixin):
 
 @_common.slow_test()
 @patch("beets.library.Item.write")
-class EditCommandTest(EditMixin, BeetsTestCase):
+class EditCommandTest(IOMixin, EditMixin, BeetsTestCase):
     """Black box tests for `beetsplug.edit`. Command line interaction is
     simulated using mocked stdin, and yaml editing via an external editor is
     simulated using `ModifyFileMocker`.

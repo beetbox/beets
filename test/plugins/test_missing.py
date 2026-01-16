@@ -3,20 +3,23 @@ import uuid
 import pytest
 
 from beets.library import Album
-from beets.test.helper import PluginMixin, TestHelper
+from beets.test.helper import IOMixin, PluginMixin, TestHelper
 
 
 @pytest.fixture
-def helper():
+def helper(request):
     helper = TestHelper()
     helper.setup_beets()
 
-    yield helper
+    request.instance.lib = helper.lib
+
+    yield
 
     helper.teardown_beets()
 
 
-class TestMissingAlbums(PluginMixin):
+@pytest.mark.usefixtures("helper")
+class TestMissingAlbums(IOMixin, PluginMixin):
     plugin = "missing"
     album_in_lib = Album(
         album="Album",
@@ -47,15 +50,13 @@ class TestMissingAlbums(PluginMixin):
         ],
     )
     def test_missing_artist_albums(
-        self, requests_mock, helper, release_from_mb, expected_output
+        self, requests_mock, release_from_mb, expected_output
     ):
-        helper.lib.add(self.album_in_lib)
+        self.lib.add(self.album_in_lib)
         requests_mock.get(
             f"/ws/2/release-group?artist={self.album_in_lib.mb_albumartistid}",
             json={"release-groups": [release_from_mb]},
         )
 
         with self.configure_plugin({}):
-            assert (
-                helper.run_with_output("missing", "--album") == expected_output
-            )
+            assert self.run_with_output("missing", "--album") == expected_output
