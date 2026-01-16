@@ -610,7 +610,7 @@ class CommandBackend(Backend):
         """Checks whether the given item is supported by the selected tool."""
         # Get the base name of the command for comparison
         cmd_name = os.path.basename(self.command).lower()
-        
+
         if cmd_name.startswith("mp3rgain"):
             # mp3rgain supports MP3 and AAC/M4A formats
             return item.format in ("MP3", "AAC")
