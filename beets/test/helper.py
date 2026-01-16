@@ -44,6 +44,7 @@ from tempfile import gettempdir, mkdtemp, mkstemp
 from typing import Any, ClassVar
 from unittest.mock import patch
 
+import pytest
 import responses
 from mediafile import Image, MediaFile
 
@@ -163,19 +164,9 @@ NEEDS_REFLINK = unittest.skipUnless(
 )
 
 
+@pytest.mark.usefixtures("io")
 class IOMixin:
-    @cached_property
-    def io(self) -> _common.DummyIO:
-        return _common.DummyIO()
-
-    def setUp(self) -> None:
-        super().setUp()
-
-        patcher = patch.multiple(
-            "sys", stdin=self.io.stdin, stdout=self.io.stdout
-        )
-        patcher.start()
-        self.addCleanup(patcher.stop)
+    io: _common.DummyIO
 
 
 class TestHelper(ConfigMixin):
@@ -756,8 +747,6 @@ class TerminalImportSessionFixture(TerminalImportSession):
 
 class TerminalImportMixin(IOMixin, ImportHelper):
     """Provides_a terminal importer for the import session."""
-
-    io: _common.DummyIO
 
     def _get_import_session(self, import_dir: bytes) -> importer.ImportSession:
         return TerminalImportSessionFixture(
