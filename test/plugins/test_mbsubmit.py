@@ -18,7 +18,6 @@ from beets.test.helper import (
     PluginMixin,
     TerminalImportMixin,
     capture_stdout,
-    control_stdin,
 )
 
 
@@ -35,9 +34,10 @@ class MBSubmitPluginTest(
     def test_print_tracks_output(self):
         """Test the output of the "print tracks" choice."""
         with capture_stdout() as output:
-            with control_stdin("\n".join(["p", "s"])):
-                # Print tracks; Skip
-                self.importer.run()
+            self.io.addinput("p")
+            self.io.addinput("s")
+            # Print tracks; Skip
+            self.importer.run()
 
         # Manually build the string for comparing the output.
         tracklist = (
@@ -50,9 +50,12 @@ class MBSubmitPluginTest(
     def test_print_tracks_output_as_tracks(self):
         """Test the output of the "print tracks" choice, as singletons."""
         with capture_stdout() as output:
-            with control_stdin("\n".join(["t", "s", "p", "s"])):
-                # as Tracks; Skip; Print tracks; Skip
-                self.importer.run()
+            self.io.addinput("t")
+            self.io.addinput("s")
+            self.io.addinput("p")
+            self.io.addinput("s")
+            # as Tracks; Skip; Print tracks; Skip
+            self.importer.run()
 
         # Manually build the string for comparing the output.
         tracklist = (

@@ -15,8 +15,8 @@
 """This module includes various helpers that provide fixtures, capture
 information or mock the environment.
 
-- The `control_stdin` and `capture_stdout` context managers allow one to
-  interact with the user interface.
+- `capture_stdout` context managers allow one to interact with the user
+  interface.
 
 - `has_program` checks the presence of a command on the system.
 
@@ -82,22 +82,6 @@ def capture_log(logger="beets"):
         yield capture.messages
     finally:
         log.removeHandler(capture)
-
-
-@contextmanager
-def control_stdin(input=None):
-    """Sends ``input`` to stdin.
-
-    >>> with control_stdin('yes'):
-    ...     input()
-    'yes'
-    """
-    org = sys.stdin
-    sys.stdin = StringIO(input)
-    try:
-        yield sys.stdin
-    finally:
-        sys.stdin = org
 
 
 @contextmanager

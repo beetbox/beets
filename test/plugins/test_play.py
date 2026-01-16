@@ -21,14 +21,14 @@ from unittest.mock import ANY, patch
 
 import pytest
 
-from beets.test.helper import CleanupModulesMixin, PluginTestCase, control_stdin
+from beets.test.helper import CleanupModulesMixin, PluginTestCase, IOMixin
 from beets.ui import UserError
 from beets.util import open_anything
 from beetsplug.play import PlayPlugin
 
 
 @patch("beetsplug.play.util.interactive_open")
-class PlayPluginTest(CleanupModulesMixin, PluginTestCase):
+class PlayPluginTest(IOMixin, CleanupModulesMixin, PluginTestCase):
     modules = (PlayPlugin.__module__,)
     plugin = "play"
 
@@ -127,8 +127,8 @@ class PlayPluginTest(CleanupModulesMixin, PluginTestCase):
         self.config["play"]["warning_threshold"] = 1
         self.add_item(title="another NiceTitle")
 
-        with control_stdin("a"):
-            self.run_command("play", "nice")
+        self.io.addinput("a")
+        self.run_command("play", "nice")
 
         open_mock.assert_not_called()
 
@@ -138,12 +138,12 @@ class PlayPluginTest(CleanupModulesMixin, PluginTestCase):
 
         expected_playlist = f"{self.item.filepath}\n{self.other_item.filepath}"
 
-        with control_stdin("a"):
-            self.run_and_assert(
-                open_mock,
-                ["-y", "NiceTitle"],
-                expected_playlist=expected_playlist,
-            )
+        self.io.addinput("a")
+        self.run_and_assert(
+            open_mock,
+            ["-y", "NiceTitle"],
+            expected_playlist=expected_playlist,
+        )
 
     def test_command_failed(self, open_mock):
         open_mock.side_effect = OSError("some reason")
