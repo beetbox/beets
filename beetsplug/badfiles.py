@@ -227,6 +227,8 @@ class BadFiles(BeetsPlugin):
 
                     ui.print_(error_line)
 
+            # Check for and handle automatic actions.
+            # Errors always take precedence over warnings.
             if found_error and error_action != "ask":
                 return self.handle_import_action(error_action, "error")
             elif found_warning and warning_action != "ask":
