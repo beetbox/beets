@@ -16,7 +16,7 @@ class FieldsTest(IOMixin, ItemInDBTestCase):
         items = library.Item.all_keys()
         albums = library.Album.all_keys()
 
-        output = self.io.stdout.get().split()
+        output = self.io.getoutput().split()
         self.remove_keys(items, output)
         self.remove_keys(albums, output)
 
