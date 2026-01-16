@@ -90,6 +90,11 @@ Bug fixes:
 - :doc:`/plugins/ftintitle`: Fixed artist name splitting to prioritize explicit
   featuring tokens (feat, ft, featuring) over generic separators (&, and),
   preventing incorrect splits when both are present.
+- :doc:`reference/cli`: Fix 'from_scratch' option for singleton imports: delete
+  all (old) metadata when new metadata is applied. :bug:`3706`
+- :doc:`/plugins/convert`: ``auto_keep`` now respects ``no_convert`` and
+  ``never_convert_lossy_files`` when deciding whether to copy/transcode items,
+  avoiding extra lossy duplicates.
 
 For plugin developers:
 
