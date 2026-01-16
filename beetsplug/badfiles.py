@@ -170,15 +170,67 @@ class BadFiles(BeetsPlugin):
         if checks_failed:
             task._badfiles_checks_failed = checks_failed
 
+    def handle_import_action(self, action, failure_type):
+        if action == "abort":
+            ui.print_(
+                f"{ui.colorize('text_warning', 'Aborting')}"
+                f" due to import_action_on_{failure_type} configuration"
+            )
+            raise importer.ImportAbortError()
+        elif action == "skip":
+            ui.print_(
+                f"{ui.colorize('text_warning', 'Skipping')}"
+                f" due to import_action_on_{failure_type} configuration"
+            )
+            return importer.Action.SKIP
+        elif action == "continue":
+            ui.print_(
+                f"{ui.colorize('text_warning', 'Continuing')}"
+                f" due to import_action_on_{failure_type} configuration"
+            )
+            return None
+        else:
+            ui.print_(
+                ui.colorize(
+                    "text_warning",
+                    f"Got invalid import_action_on_{failure_type}"
+                    f" configuration: {action}",
+                )
+            )
+            ui.print_(
+                ui.colorize(
+                    "text_warning",
+                    f"import_action_on_{failure_type} should be one of:"
+                    f" ask abort skip continue",
+                )
+            )
+            raise importer.ImportAbortError()
+
     def on_import_task_before_choice(self, task, session):
         if hasattr(task, "_badfiles_checks_failed"):
+            warning_action = self.config["import_action_on_warning"].get("ask")
+            error_action = self.config["import_action_on_error"].get("ask")
+
             ui.print_(
                 f"{ui.colorize('text_warning', 'BAD')} one or more files failed"
                 " checks:"
             )
+
+            found_warning = False
+            found_error = False
             for error in task._badfiles_checks_failed:
                 for error_line in error:
+                    if "warning" in error_line.lower():
+                        found_warning = True
+                    if "error" in error_line.lower():
+                        found_error = True
+
                     ui.print_(error_line)
+
+            if found_error and error_action != "ask":
+                return self.handle_import_action(error_action, "error")
+            elif found_warning and warning_action != "ask":
+                return self.handle_import_action(warning_action, "warning")
 
             ui.print_()
             ui.print_("What would you like to do?")
