@@ -117,6 +117,406 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 
+class _Period(TypedDict):
+    begin: str | None
+    end: str | None
+    ended: bool
+
+
+class Alias(_Period):
+    locale: str | None
+    name: str
+    primary: bool | None
+    sort_name: str
+    type: (
+        Literal[
+            "Artist name",
+            "Label name",
+            "Legal name",
+            "Recording name",
+            "Release name",
+            "Release group name",
+            "Search hint",
+        ]
+        | None
+    )
+    type_id: str | None
+
+
+class Artist(TypedDict):
+    country: str | None
+    disambiguation: str
+    id: str
+    name: str
+    sort_name: str
+    type: (
+        Literal["Character", "Choir", "Group", "Orchestra", "Other", "Person"]
+        | None
+    )
+    type_id: str | None
+    aliases: NotRequired[list[Alias]]
+    genres: NotRequired[list[Genre]]
+    tags: NotRequired[list[Tag]]
+
+
+class ArtistCredit(TypedDict):
+    artist: Artist
+    joinphrase: str
+    name: str
+
+
+class Genre(TypedDict):
+    count: int
+    disambiguation: str
+    id: str
+    name: str
+
+
+class Tag(TypedDict):
+    count: int
+    name: str
+
+
+ReleaseStatus = Literal[
+    "Bootleg",
+    "Cancelled",
+    "Expunged",
+    "Official",
+    "Promotion",
+    "Pseudo-Release",
+    "Withdrawn",
+]
+
+ReleasePackaging = Literal[
+    "Book",
+    "Box",
+    "Cardboard/Paper Sleeve",
+    "Cassette Case",
+    "Clamshell Case",
+    "Digibook",
+    "Digifile",
+    "Digipak",
+    "Discbox Slider",
+    "Fatbox",
+    "Gatefold Cover",
+    "Jewel Case",
+    "None",
+    "Keep Case",
+    "Longbox",
+    "Metal Tin",
+    "Other",
+    "Plastic Sleeve",
+    "Slidepack",
+    "Slipcase",
+    "Snap Case",
+    "SnapPack",
+    "Slim Jewel Case",
+    "Super Jewel Box",
+]
+
+
+ReleaseQuality = Literal["high", "low", "normal"]
+
+
+class ReleaseGroup(TypedDict):
+    aliases: list[Alias]
+    artist_credit: list[ArtistCredit]
+    disambiguation: str
+    first_release_date: str
+    genres: list[Genre]
+    id: str
+    primary_type: Literal["Album", "Broadcast", "EP", "Other", "Single"] | None
+    primary_type_id: str | None
+    secondary_type_ids: list[str]
+    secondary_types: list[
+        Literal[
+            "Audiobook",
+            "Audio drama",
+            "Compilation",
+            "DJ-mix",
+            "Demo",
+            "Field recording",
+            "Interview",
+            "Live",
+            "Mixtape/Street",
+            "Remix",
+            "Soundtrack",
+            "Spokenword",
+        ]
+    ]
+    tags: list[Tag]
+    title: str
+
+
+class CoverArtArchive(TypedDict):
+    artwork: bool
+    back: bool
+    count: int
+    darkened: bool
+    front: bool
+
+
+class TextRepresentation(TypedDict):
+    language: str | None
+    script: str | None
+
+
+class Area(TypedDict):
+    disambiguation: str
+    id: str
+    iso_3166_1_codes: list[str]
+    iso_3166_2_codes: NotRequired[list[str]]
+    name: str
+    sort_name: str
+    type: None
+    type_id: None
+
+
+class ReleaseEvent(TypedDict):
+    area: Area | None
+    date: str
+
+
+class Label(TypedDict):
+    aliases: list[Alias]
+    disambiguation: str
+    genres: list[Genre]
+    id: str
+    label_code: int | None
+    name: str
+    sort_name: str
+    tags: list[Tag]
+    type: (
+        Literal[
+            "Bootleg Production",
+            "Broadcaster",
+            "Distributor",
+            "Holding",
+            "Imprint",
+            "Manufacturer",
+            "Original Production",
+            "Publisher",
+            "Reissue Production",
+            "Rights Society",
+        ]
+        | None
+    )
+    type_id: str | None
+
+
+class LabelInfo(TypedDict):
+    catalog_number: str | None
+    label: Label
+
+
+class Url(TypedDict):
+    id: str
+    resource: str
+
+
+class RelationBase(_Period):
+    attribute_ids: dict[str, str]
+    attribute_values: dict[str, str]
+    attributes: list[str]
+    direction: Literal["backward", "forward"]
+    source_credit: str
+    target_credit: str
+    type_id: str
+
+
+ArtistRelationType = Literal[
+    "arranger",
+    "art direction",
+    "artwork",
+    "composer",
+    "conductor",
+    "copyright",
+    "design",
+    "design/illustration",
+    "editor",
+    "engineer",
+    "graphic design",
+    "illustration",
+    "instrument",
+    "instrument arranger",
+    "liner notes",
+    "lyricist",
+    "mastering",
+    "misc",
+    "mix",
+    "mix-DJ",
+    "performer",
+    "phonographic copyright",
+    "photography",
+    "previous attribution",
+    "producer",
+    "programming",
+    "recording",
+    "remixer",
+    "sound",
+    "vocal",
+    "vocal arranger",
+    "writer",
+]
+
+
+class ArtistRelation(RelationBase):
+    type: ArtistRelationType
+    artist: Artist
+    attribute_credits: NotRequired[dict[str, str]]
+
+
+class UrlRelation(RelationBase):
+    type: Literal[
+        "IMDB samples",
+        "IMDb",
+        "allmusic",
+        "amazon asin",
+        "discography entry",
+        "discogs",
+        "download for free",
+        "fanpage",
+        "free streaming",
+        "lyrics",
+        "other databases",
+        "purchase for download",
+        "purchase for mail-order",
+        "secondhandsongs",
+        "show notes",
+        "songfacts",
+        "streaming",
+        "wikidata",
+        "wikipedia",
+    ]
+    url: Url
+
+
+class WorkRelation(RelationBase):
+    type: Literal[
+        "adaptation",
+        "arrangement",
+        "based on",
+        "included works",
+        "lyrical quotation",
+        "medley",
+        "musical quotation",
+        "named after work",
+        "orchestration",
+        "other version",
+        "parts",
+        "revision of",
+    ]
+    ordering_key: NotRequired[int]
+    work: Work
+
+
+class Work(TypedDict):
+    attributes: list[str]
+    disambiguation: str
+    id: str
+    iswcs: list[str]
+    language: str | None
+    languages: list[str]
+    title: str
+    type: str | None
+    type_id: str | None
+    artist_relations: NotRequired[list[ArtistRelation]]
+    url_relations: NotRequired[list[UrlRelation]]
+    work_relations: NotRequired[list[WorkRelation]]
+
+
+class Recording(TypedDict):
+    aliases: list[Alias]
+    artist_credit: list[ArtistCredit]
+    disambiguation: str
+    id: str
+    isrcs: list[str]
+    length: int | None
+    title: str
+    video: bool
+    artist_relations: NotRequired[list[ArtistRelation]]
+    first_release_date: NotRequired[str]
+    genres: NotRequired[list[Genre]]
+    tags: NotRequired[list[Tag]]
+    url_relations: NotRequired[list[UrlRelation]]
+    work_relations: NotRequired[list[WorkRelation]]
+
+
+class Track(TypedDict):
+    artist_credit: list[ArtistCredit]
+    id: str
+    length: int | None
+    number: str
+    position: int
+    recording: Recording
+    title: str
+
+
+class Medium(TypedDict):
+    format: str | None
+    format_id: str | None
+    id: str
+    position: int
+    title: str
+    track_count: int
+    data_tracks: NotRequired[list[Track]]
+    pregap: NotRequired[Track]
+    track_offset: NotRequired[int]
+    tracks: NotRequired[list[Track]]
+
+
+class ReleaseRelationRelease(TypedDict):
+    artist_credit: list[ArtistCredit]
+    barcode: str | None
+    country: str | None
+    date: str
+    disambiguation: str
+    id: str
+    media: list[Medium]
+    packaging: ReleasePackaging | None
+    packaging_id: str | None
+    quality: ReleaseQuality
+    release_events: list[ReleaseEvent]
+    release_group: ReleaseGroup
+    status: ReleaseStatus | None
+    status_id: str | None
+    text_representation: TextRepresentation
+    title: str
+
+
+class ReleaseRelation(RelationBase):
+    type: Literal["remaster", "transl-tracklisting", "replaced by"]
+    release: ReleaseRelationRelease
+
+
+class Release(TypedDict):
+    aliases: list[Alias]
+    artist_credit: list[ArtistCredit]
+    asin: str | None
+    barcode: str | None
+    cover_art_archive: CoverArtArchive
+    disambiguation: str
+    genres: list[Genre]
+    id: str
+    label_info: list[LabelInfo]
+    media: list[Medium]
+    packaging: ReleasePackaging | None
+    packaging_id: str | None
+    quality: ReleaseQuality
+    release_group: ReleaseGroup
+    status: ReleaseStatus | None
+    status_id: str | None
+    tags: list[Tag]
+    text_representation: TextRepresentation
+    title: str
+    artist_relations: NotRequired[list[ArtistRelation]]
+    country: NotRequired[str | None]
+    date: NotRequired[str]
+    release_events: NotRequired[list[ReleaseEvent]]
+    release_relations: NotRequired[list[ReleaseRelation]]
+    url_relations: NotRequired[list[UrlRelation]]
+
+
 def require_one_of(*keys: str) -> Callable[[Callable[P, R]], Callable[P, R]]:
     required = frozenset(keys)
 
@@ -206,10 +606,10 @@ class MusicBrainzAPI(RequestHandler):
 
     def _lookup(
         self, entity: Entity, id_: str, **kwargs: Unpack[LookupKwargs]
-    ) -> JSONDict:
+    ) -> Any:
         return self._get_resource(f"{entity}/{id_}", **kwargs)
 
-    def _browse(self, entity: Entity, **kwargs) -> list[JSONDict]:
+    def _browse(self, entity: Entity, **kwargs) -> list[Any]:
         return self._get_resource(entity, **kwargs).get(f"{entity}s", [])
 
     @staticmethod
@@ -248,26 +648,26 @@ class MusicBrainzAPI(RequestHandler):
         kwargs["query"] = query
         return self._get_resource(entity, **kwargs)[f"{entity}s"]
 
-    def get_release(self, id_: str, **kwargs: Unpack[LookupKwargs]) -> JSONDict:
+    def get_release(self, id_: str, **kwargs: Unpack[LookupKwargs]) -> Release:
         """Retrieve a release by its MusicBrainz ID."""
         kwargs.setdefault("includes", RELEASE_INCLUDES)
         return self._lookup("release", id_, **kwargs)
 
     def get_recording(
         self, id_: str, **kwargs: Unpack[LookupKwargs]
-    ) -> JSONDict:
+    ) -> Recording:
         """Retrieve a recording by its MusicBrainz ID."""
         kwargs.setdefault("includes", RECORDING_INCLUDES)
         return self._lookup("recording", id_, **kwargs)
 
-    def get_work(self, id_: str, **kwargs: Unpack[LookupKwargs]) -> JSONDict:
+    def get_work(self, id_: str, **kwargs: Unpack[LookupKwargs]) -> Work:
         """Retrieve a work by its MusicBrainz ID."""
         return self._lookup("work", id_, **kwargs)
 
     @require_one_of("artist", "collection", "release", "work")
     def browse_recordings(
         self, **kwargs: Unpack[BrowseRecordingsKwargs]
-    ) -> list[JSONDict]:
+    ) -> list[Recording]:
         """Browse recordings related to the given entities.
 
         At least one of artist, collection, release, or work must be provided.
@@ -277,7 +677,7 @@ class MusicBrainzAPI(RequestHandler):
     @require_one_of("artist", "collection", "release")
     def browse_release_groups(
         self, **kwargs: Unpack[BrowseReleaseGroupsKwargs]
-    ) -> list[JSONDict]:
+    ) -> list[ReleaseGroup]:
         """Browse release groups related to the given entities.
 
         At least one of artist, collection, or release must be provided.

@@ -20,7 +20,7 @@ from collections import Counter
 from contextlib import suppress
 from functools import cached_property
 from itertools import product
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Literal
 from urllib.parse import urljoin
 
 from confuse.exceptions import NotFoundError
@@ -37,11 +37,18 @@ from ._utils.requests import HTTPNotFoundError
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
-    from typing import Literal
 
     from beets.library import Item
 
     from ._typing import JSONDict
+    from ._utils.musicbrainz import (
+        Alias,
+        ArtistCredit,
+        ArtistRelation,
+        ArtistRelationType,
+        Recording,
+        Release,
+    )
 
 VARIOUS_ARTISTS_ID = "89ad4ac3-39f7-470e-963a-56509c546377"
 
@@ -71,9 +78,14 @@ BROWSE_CHUNKSIZE = 100
 BROWSE_MAXTRACKS = 500
 
 
+UrlSource = Literal[
+    "discogs", "bandcamp", "spotify", "deezer", "tidal", "beatport"
+]
+
+
 def _preferred_alias(
-    aliases: list[JSONDict], languages: list[str] | None = None
-) -> JSONDict | None:
+    aliases: list[Alias], languages: list[str] | None = None
+) -> Alias | None:
     """Given a list of alias structures for an artist credit, select
     and return the user's preferred alias or None if no matching
     """
@@ -113,7 +125,7 @@ def _preferred_alias(
 
 
 def _multi_artist_credit(
-    credit: list[JSONDict], include_join_phrase: bool
+    credit: list[ArtistCredit], include_join_phrase: bool
 ) -> tuple[list[str], list[str], list[str]]:
     """Given a list representing an ``artist-credit`` block, accumulate
     data into a triple of joined artist name lists: canonical, sort, and
@@ -123,7 +135,7 @@ def _multi_artist_credit(
     artist_sort_parts = []
     artist_credit_parts = []
     for el in credit:
-        alias = _preferred_alias(el["artist"].get("aliases", ()))
+        alias = _preferred_alias(el["artist"].get("aliases", []))
 
         # An artist.
         if alias:
@@ -162,7 +174,7 @@ def track_url(trackid: str) -> str:
     return urljoin(BASE_URL, f"recording/{trackid}")
 
 
-def _flatten_artist_credit(credit: list[JSONDict]) -> tuple[str, str, str]:
+def _flatten_artist_credit(credit: list[ArtistCredit]) -> tuple[str, str, str]:
     """Given a list representing an ``artist-credit`` block, flatten the
     data into a triple of joined artist name strings: canonical, sort, and
     credit.
@@ -177,7 +189,7 @@ def _flatten_artist_credit(credit: list[JSONDict]) -> tuple[str, str, str]:
     )
 
 
-def _artist_ids(credit: list[JSONDict]) -> list[str]:
+def _artist_ids(credit: list[ArtistCredit]) -> list[str]:
     """
     Given a list representing an ``artist-credit``,
     return a list of artist IDs
@@ -190,7 +202,9 @@ def _artist_ids(credit: list[JSONDict]) -> list[str]:
     return artist_ids
 
 
-def _get_related_artist_names(relations, relation_type):
+def _get_related_artist_names(
+    relations: list[ArtistRelation], relation_type: ArtistRelationType
+) -> str:
     """Given a list representing the artist relationships extract the names of
     the remixers and concatenate them.
     """
@@ -207,9 +221,7 @@ def album_url(albumid: str) -> str:
     return urljoin(BASE_URL, f"release/{albumid}")
 
 
-def _preferred_release_event(
-    release: dict[str, Any],
-) -> tuple[str | None, str | None]:
+def _preferred_release_event(release: Release) -> tuple[str | None, str | None]:
     """Given a release, select and return the user's preferred release
     event as a tuple of (country, release_date). Fall back to the
     default release event if a preferred event is not found.
@@ -234,7 +246,7 @@ def _set_date_str(
     info: beets.autotag.hooks.AlbumInfo,
     date_str: str,
     original: bool = False,
-):
+) -> None:
     """Given a (possibly partial) YYYY-MM-DD string and an AlbumInfo
     object, set the object's release date fields appropriately. If
     `original`, then set the original_year, etc., fields.
@@ -296,10 +308,14 @@ def _merge_pseudo_and_actual_album(
 
 class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
     @cached_property
-    def genres_field(self) -> str:
-        return f"{self.config['genres_tag'].as_choice(['genre', 'tag'])}s"
+    def genres_field(self) -> Literal["genres", "tags"]:
+        choices: list[Literal["genre", "tag"]] = ["genre", "tag"]
+        choice = self.config["genres_tag"].as_choice(choices)
+        if choice == "genre":
+            return "genres"
+        return "tags"
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Set up the python-musicbrainz-ngs module according to settings
         from the beets configuration. This should be called at startup.
         """
@@ -331,7 +347,7 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
 
     def track_info(
         self,
-        recording: JSONDict,
+        recording: Recording,
         index: int | None = None,
         medium: int | None = None,
         medium_index: int | None = None,
@@ -432,7 +448,7 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
 
         return info
 
-    def album_info(self, release: JSONDict) -> beets.autotag.hooks.AlbumInfo:
+    def album_info(self, release: Release) -> beets.autotag.hooks.AlbumInfo:
         """Takes a MusicBrainz release result dictionary and returns a beets
         AlbumInfo object containing the interesting data about that release.
         """
@@ -456,7 +472,7 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
         # on chunks of tracks to recover the same information in this case.
         if ntracks > BROWSE_MAXTRACKS:
             self._log.debug("Album {} has too many tracks", release["id"])
-            recording_list = []
+            recording_list: list[Recording] = []
             for i in range(0, ntracks, BROWSE_CHUNKSIZE):
                 self._log.debug("Retrieving tracks starting at {}", i)
                 recording_list.extend(
@@ -651,18 +667,20 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
 
         # We might find links to external sources (Discogs, Bandcamp, ...)
         external_ids = self.config["external_ids"].get()
-        wanted_sources = {
+        wanted_sources: set[UrlSource] = {
             site for site, wanted in external_ids.items() if wanted
         }
         if wanted_sources and (url_rels := release.get("url_relations")):
             urls = {}
 
-            for source, url in product(wanted_sources, url_rels):
-                if f"{source}.com" in (target := url["url"]["resource"]):
-                    urls[source] = target
+            for url_source, url_relation in product(wanted_sources, url_rels):
+                if f"{url_source}.com" in (
+                    target := url_relation["url"]["resource"]
+                ):
+                    urls[url_source] = target
                     self._log.debug(
                         "Found link to {} release via MusicBrainz",
-                        source.capitalize(),
+                        url_source.capitalize(),
                     )
 
             for source, url in urls.items():

@@ -43,6 +43,12 @@ if TYPE_CHECKING:
     from beets.library import Item
     from beetsplug._typing import JSONDict
 
+    from ._utils.musicbrainz import (
+        Release,
+        ReleaseRelation,
+        ReleaseRelationRelease,
+    )
+
 _STATUS_PSEUDO = "Pseudo-Release"
 
 
@@ -133,7 +139,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
                     yield album_info
 
     @override
-    def album_info(self, release: JSONDict) -> AlbumInfo:
+    def album_info(self, release: Release) -> AlbumInfo:
         official_release = super().album_info(release)
 
         if release.get("status") == _STATUS_PSEUDO:
@@ -161,7 +167,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
         else:
             return official_release
 
-    def _intercept_mb_release(self, data: JSONDict) -> list[str]:
+    def _intercept_mb_release(self, data: Release) -> list[str]:
         album_id = data["id"] if "id" in data else None
         if self._has_desired_script(data) or not isinstance(album_id, str):
             return []
@@ -173,7 +179,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
             is not None
         ]
 
-    def _has_desired_script(self, release: JSONDict) -> bool:
+    def _has_desired_script(self, release: Release) -> bool:
         if len(self._scripts) == 0:
             return False
         elif script := release.get("text_representation", {}).get("script"):
@@ -184,7 +190,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
     def _wanted_pseudo_release_id(
         self,
         album_id: str,
-        relation: JSONDict,
+        relation: ReleaseRelation,
     ) -> str | None:
         if (
             len(self._scripts) == 0
