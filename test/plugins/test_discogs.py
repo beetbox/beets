@@ -601,6 +601,30 @@ def test_anv_album_artist():
             },
             "NEW ARTIST, VOCALIST Feat. SOLOIST, PERFORMER, MUSICIAN",
         ),
+        (
+            {
+                "type_": "track",
+                "title": "Infinite Regression",
+                "position": "6",
+                "duration": "5:00",
+                "artists": [
+                    {
+                        "name": "Filteria Feat. Ukiro",
+                        "tracks": "",
+                        "id": 11146,
+                        "join": "",
+                    }
+                ],
+                "extraartists": [
+                    {
+                        "name": "Ukiro",
+                        "id": 3,
+                        "role": "Featuring",
+                    },
+                ],
+            },
+            "Filteria Feat. Ukiro",
+        ),
     ],
 )
 @patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
