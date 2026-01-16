@@ -29,8 +29,8 @@ from beets.test import _common
 from beets.test.helper import (
     AsIsImporterMixin,
     ImportHelper,
-    PluginTestCase,
     IOMixin,
+    PluginTestCase,
     capture_log,
 )
 from beetsplug import convert

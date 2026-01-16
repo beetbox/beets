@@ -5,10 +5,10 @@ import pytest
 import yaml
 
 from beets import config, ui
-from beets.test.helper import BeetsTestCase
+from beets.test.helper import BeetsTestCase, IOMixin
 
 
-class ConfigCommandTest(BeetsTestCase):
+class ConfigCommandTest(IOMixin, BeetsTestCase):
     def setUp(self):
         super().setUp()
         for k in ("VISUAL", "EDITOR"):

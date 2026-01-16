@@ -398,7 +398,7 @@ class PluginTest(TestPluginTestCase):
         self.run_command("test", lib=None)
 
 
-class CommonOptionsParserCliTest(BeetsTestCase):
+class CommonOptionsParserCliTest(IOMixin, BeetsTestCase):
     """Test CommonOptionsParser and formatting LibModel formatting on 'list'
     command.
     """

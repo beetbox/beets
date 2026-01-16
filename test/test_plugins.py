@@ -38,6 +38,7 @@ from beets.test import helper
 from beets.test.helper import (
     AutotagStub,
     ImportHelper,
+    IOMixin,
     PluginMixin,
     PluginTestCase,
     TerminalImportMixin,
@@ -45,7 +46,7 @@ from beets.test.helper import (
 from beets.util import PromptChoice, displayable_path, syspath
 
 
-class TestPluginRegistration(PluginTestCase):
+class TestPluginRegistration(IOMixin, PluginTestCase):
     class RatingPlugin(plugins.BeetsPlugin):
         item_types: ClassVar[dict[str, types.Type]] = {
             "rating": types.Float(),

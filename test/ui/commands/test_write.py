@@ -1,7 +1,7 @@
-from beets.test.helper import BeetsTestCase
+from beets.test.helper import BeetsTestCase, IOMixin
 
 
-class WriteTest(BeetsTestCase):
+class WriteTest(IOMixin, BeetsTestCase):
     def write_cmd(self, *args):
         return self.run_with_output("write", *args)
 
