@@ -16,25 +16,35 @@
 
 from __future__ import annotations
 
+import os
 import re
 import unicodedata
 from abc import ABC, abstractmethod
-from collections.abc import Iterator, MutableSequence, Sequence
+from collections.abc import Sequence
 from datetime import datetime, timedelta
-from functools import reduce
+from functools import cached_property, reduce
 from operator import mul, or_
 from re import Pattern
-from typing import TYPE_CHECKING, Any, Generic, TypeVar, Union
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar
 
 from beets import util
+from beets.util.units import raw_seconds_short
 
 if TYPE_CHECKING:
-    from beets.dbcore import Model
-    from beets.dbcore.db import AnyModel
+    from collections.abc import Iterator, MutableSequence
+
+    from beets.dbcore.db import AnyModel, Model
 
     P = TypeVar("P", default=Any)
 else:
     P = TypeVar("P")
+
+# To use the SQLite "blob" type, it doesn't suffice to provide a byte
+# string; SQLite treats that as encoded text. Wrapping it in a
+# `memoryview` tells it that we actually mean non-text data.
+# needs to be defined in here due to circular import.
+# TODO: remove it from this module and define it in dbcore/types.py instead
+BLOB_TYPE = memoryview
 
 
 class ParsingError(ValueError):
@@ -78,6 +88,7 @@ class Query(ABC):
         """Return a set with field names that this query operates on."""
         return set()
 
+    @abstractmethod
     def clause(self) -> tuple[str | None, Sequence[Any]]:
         """Generate an SQLite expression implementing the query.
 
@@ -88,14 +99,12 @@ class Query(ABC):
         The default implementation returns None, falling back to a slow query
         using `match()`.
         """
-        return None, ()
 
     @abstractmethod
     def match(self, obj: Model):
         """Check whether this query matches a given Model. Can be used to
         perform queries on arbitrary sets of Model.
         """
-        ...
 
     def __and__(self, other: Query) -> AndQuery:
         return AndQuery([self, other])
@@ -115,7 +124,7 @@ class Query(ABC):
         return hash(type(self))
 
 
-SQLiteType = Union[str, bytes, float, int, memoryview, None]
+SQLiteType = str | bytes | float | int | memoryview | None
 AnySQLiteType = TypeVar("AnySQLiteType", bound=SQLiteType)
 FieldQueryType = type["FieldQuery"]
 
@@ -145,7 +154,7 @@ class FieldQuery(Query, Generic[P]):
         self.fast = fast
 
     def col_clause(self) -> tuple[str, Sequence[SQLiteType]]:
-        return self.field, ()
+        raise NotImplementedError
 
     def clause(self) -> tuple[str | None, Sequence[SQLiteType]]:
         if self.fast:
@@ -157,7 +166,7 @@ class FieldQuery(Query, Generic[P]):
     @classmethod
     def value_match(cls, pattern: P, value: Any):
         """Determine whether the value matches the pattern."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def match(self, obj: Model) -> bool:
         return self.value_match(self.pattern, obj.get(self.field_name))
@@ -183,7 +192,7 @@ class MatchQuery(FieldQuery[AnySQLiteType]):
     """A query that looks for exact matches in an Model field."""
 
     def col_clause(self) -> tuple[str, Sequence[SQLiteType]]:
-        return self.field + " = ?", [self.pattern]
+        return f"{self.field} = ?", [self.pattern]
 
     @classmethod
     def value_match(cls, pattern: AnySQLiteType, value: Any) -> bool:
@@ -197,7 +206,7 @@ class NoneQuery(FieldQuery[None]):
         super().__init__(field, None, fast)
 
     def col_clause(self) -> tuple[str, Sequence[SQLiteType]]:
-        return self.field + " IS NULL", ()
+        return f"{self.field} IS NULL", ()
 
     def match(self, obj: Model) -> bool:
         return obj.get(self.field_name) is None
@@ -227,7 +236,7 @@ class StringFieldQuery(FieldQuery[P]):
         """Determine whether the value matches the pattern. Both
         arguments are strings. Subclasses implement this method.
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class StringQuery(StringFieldQuery[str]):
@@ -239,7 +248,7 @@ class StringQuery(StringFieldQuery[str]):
             .replace("%", "\\%")
             .replace("_", "\\_")
         )
-        clause = self.field + " like ? escape '\\'"
+        clause = f"{self.field} like ? escape '\\'"
         subvals = [search]
         return clause, subvals
 
@@ -257,14 +266,99 @@ class SubstringQuery(StringFieldQuery[str]):
             .replace("%", "\\%")
             .replace("_", "\\_")
         )
-        search = "%" + pattern + "%"
-        clause = self.field + " like ? escape '\\'"
+        search = f"%{pattern}%"
+        clause = f"{self.field} like ? escape '\\'"
         subvals = [search]
         return clause, subvals
 
     @classmethod
     def string_match(cls, pattern: str, value: str) -> bool:
         return pattern.lower() in value.lower()
+
+
+class PathQuery(FieldQuery[bytes]):
+    """A query that matches all items under a given path.
+
+    Matching can either be case-insensitive or case-sensitive. By
+    default, the behavior depends on the OS: case-insensitive on Windows
+    and case-sensitive otherwise.
+    """
+
+    def __init__(self, field: str, pattern: bytes, fast: bool = True) -> None:
+        """Create a path query.
+
+        `pattern` must be a path, either to a file or a directory.
+        """
+        path = util.normpath(pattern)
+
+        # Case sensitivity depends on the filesystem that the query path is located on.
+        self.case_sensitive = util.case_sensitive(path)
+
+        # Use a normalized-case pattern for case-insensitive matches.
+        if not self.case_sensitive:
+            # We need to lowercase the entire path, not just the pattern.
+            # In particular, on Windows, the drive letter is otherwise not
+            # lowercased.
+            # This also ensures that the `match()` method below and the SQL
+            # from `col_clause()` do the same thing.
+            path = path.lower()
+
+        super().__init__(field, path, fast)
+
+    @cached_property
+    def dir_path(self) -> bytes:
+        return os.path.join(self.pattern, b"")
+
+    @staticmethod
+    def is_path_query(query_part: str) -> bool:
+        """Try to guess whether a unicode query part is a path query.
+
+        The path query must
+        1. precede the colon in the query, if a colon is present
+        2. contain either ``os.sep`` or ``os.altsep`` (Windows)
+        3. this path must exist on the filesystem.
+        """
+        query_part = query_part.split(":")[0]
+
+        return (
+            # make sure the query part contains a path separator
+            bool(set(query_part) & {os.sep, os.altsep})
+            and os.path.exists(util.normpath(query_part))
+        )
+
+    def match(self, obj: Model) -> bool:
+        """Check whether a model object's path matches this query.
+
+        Performs either an exact match against the pattern or checks if the path
+        starts with the given directory path. Case sensitivity depends on the object's
+        filesystem as determined during initialization.
+        """
+        path = obj.path if self.case_sensitive else obj.path.lower()
+        return (path == self.pattern) or path.startswith(self.dir_path)
+
+    def col_clause(self) -> tuple[str, Sequence[SQLiteType]]:
+        """Generate an SQL clause that implements path matching in the database.
+
+        Returns a tuple of SQL clause string and parameter values list that matches
+        paths either exactly or by directory prefix. Handles case sensitivity
+        appropriately using BYTELOWER for case-insensitive matches.
+        """
+        if self.case_sensitive:
+            left, right = self.field, "?"
+        else:
+            left, right = f"BYTELOWER({self.field})", "BYTELOWER(?)"
+
+        return f"({left} = {right}) || (substr({left}, 1, ?) = {right})", [
+            BLOB_TYPE(self.pattern),
+            len(dir_blob := BLOB_TYPE(self.dir_path)),
+            dir_blob,
+        ]
+
+    def __repr__(self) -> str:
+        return (
+            f"{self.__class__.__name__}({self.field!r}, {self.pattern!r}, "
+            f"fast={self.fast}, case_sensitive={self.case_sensitive})"
+        )
 
 
 class RegexpQuery(StringFieldQuery[Pattern[str]]):
@@ -318,39 +412,6 @@ class BooleanQuery(MatchQuery[int]):
         pattern_int = int(pattern)
 
         super().__init__(field_name, pattern_int, fast)
-
-
-class BytesQuery(FieldQuery[bytes]):
-    """Match a raw bytes field (i.e., a path). This is a necessary hack
-    to work around the `sqlite3` module's desire to treat `bytes` and
-    `unicode` equivalently in Python 2. Always use this query instead of
-    `MatchQuery` when matching on BLOB values.
-    """
-
-    def __init__(self, field_name: str, pattern: bytes | str | memoryview):
-        # Use a buffer/memoryview representation of the pattern for SQLite
-        # matching. This instructs SQLite to treat the blob as binary
-        # rather than encoded Unicode.
-        if isinstance(pattern, (str, bytes)):
-            if isinstance(pattern, str):
-                bytes_pattern = pattern.encode("utf-8")
-            else:
-                bytes_pattern = pattern
-            self.buf_pattern = memoryview(bytes_pattern)
-        elif isinstance(pattern, memoryview):
-            self.buf_pattern = pattern
-            bytes_pattern = bytes(pattern)
-        else:
-            raise ValueError("pattern must be bytes, str, or memoryview")
-
-        super().__init__(field_name, bytes_pattern)
-
-    def col_clause(self) -> tuple[str, Sequence[SQLiteType]]:
-        return self.field + " = ?", [self.buf_pattern]
-
-    @classmethod
-    def value_match(cls, pattern: bytes, value: Any) -> bool:
-        return pattern == value
 
 
 class NumericQuery(FieldQuery[str]):
@@ -412,11 +473,11 @@ class NumericQuery(FieldQuery[str]):
 
     def col_clause(self) -> tuple[str, Sequence[SQLiteType]]:
         if self.point is not None:
-            return self.field + "=?", (self.point,)
+            return f"{self.field}=?", (self.point,)
         else:
             if self.rangemin is not None and self.rangemax is not None:
                 return (
-                    "{0} >= ? AND {0} <= ?".format(self.field),
+                    f"{self.field} >= ? AND {self.field} <= ?",
                     (self.rangemin, self.rangemax),
                 )
             elif self.rangemin is not None:
@@ -490,9 +551,9 @@ class CollectionQuery(Query):
             if not subq_clause:
                 # Fall back to slow query.
                 return None, ()
-            clause_parts.append("(" + subq_clause + ")")
+            clause_parts.append(f"({subq_clause})")
             subvals += subq_subvals
-        clause = (" " + joiner + " ").join(clause_parts)
+        clause = f" {joiner} ".join(clause_parts)
         return clause, subvals
 
     def __repr__(self) -> str:
@@ -630,10 +691,13 @@ class Period:
         ("%Y-%m-%dT%H:%M", "%Y-%m-%d %H:%M"),  # minute
         ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"),  # second
     )
-    relative_units = {"y": 365, "m": 30, "w": 7, "d": 1}
-    relative_re = (
-        "(?P<sign>[+|-]?)(?P<quantity>[0-9]+)" + "(?P<timespan>[y|m|w|d])"
-    )
+    relative_units: ClassVar[dict[str, int]] = {
+        "y": 365,
+        "m": 30,
+        "w": 7,
+        "d": 1,
+    }
+    relative_re = "(?P<sign>[+|-]?)(?P<quantity>[0-9]+)(?P<timespan>[y|m|w|d])"
 
     def __init__(self, date: datetime, precision: str):
         """Create a period with the given date (a `datetime` object) and
@@ -741,9 +805,7 @@ class DateInterval:
 
     def __init__(self, start: datetime | None, end: datetime | None):
         if start is not None and end is not None and not start < end:
-            raise ValueError(
-                "start date {} is not before end date {}".format(start, end)
-            )
+            raise ValueError(f"start date {start} is not before end date {end}")
         self.start = start
         self.end = end
 
@@ -791,8 +853,6 @@ class DateQuery(FieldQuery[str]):
         date = datetime.fromtimestamp(timestamp)
         return self.interval.contains(date)
 
-    _clause_tmpl = "{0} {1} ?"
-
     def col_clause(self) -> tuple[str, Sequence[SQLiteType]]:
         clause_parts = []
         subvals = []
@@ -800,11 +860,11 @@ class DateQuery(FieldQuery[str]):
         # Convert the `datetime` objects to an integer number of seconds since
         # the (local) Unix epoch using `datetime.timestamp()`.
         if self.interval.start:
-            clause_parts.append(self._clause_tmpl.format(self.field, ">="))
+            clause_parts.append(f"{self.field} >= ?")
             subvals.append(int(self.interval.start.timestamp()))
 
         if self.interval.end:
-            clause_parts.append(self._clause_tmpl.format(self.field, "<"))
+            clause_parts.append(f"{self.field} < ?")
             subvals.append(int(self.interval.end.timestamp()))
 
         if clause_parts:
@@ -834,7 +894,7 @@ class DurationQuery(NumericQuery):
         if not s:
             return None
         try:
-            return util.raw_seconds_short(s)
+            return raw_seconds_short(s)
         except ValueError:
             try:
                 return float(s)
@@ -842,6 +902,24 @@ class DurationQuery(NumericQuery):
                 raise InvalidQueryArgumentValueError(
                     s, "a M:SS string or a float"
                 )
+
+
+class SingletonQuery(FieldQuery[str]):
+    """This query is responsible for the 'singleton' lookup.
+
+    It is based on the FieldQuery and constructs a SQL clause
+    'album_id is NULL' which yields the same result as the previous filter
+    in Python but is more performant since it's done in SQL.
+
+    Using util.str2bool ensures that lookups like singleton:true, singleton:1
+    and singleton:false, singleton:0 are handled consistently.
+    """
+
+    def __new__(cls, field: str, value: str, *args, **kwargs):
+        query = NoneQuery("album_id")
+        if util.str2bool(value):
+            return query
+        return NotQuery(query)
 
 
 # Sorting.
@@ -997,9 +1075,9 @@ class FixedFieldSort(FieldSort):
         if self.case_insensitive:
             field = (
                 "(CASE "
-                "WHEN TYPEOF({0})='text' THEN LOWER({0}) "
-                "WHEN TYPEOF({0})='blob' THEN LOWER({0}) "
-                "ELSE {0} END)".format(self.field)
+                f"WHEN TYPEOF({self.field})='text' THEN LOWER({self.field}) "
+                f"WHEN TYPEOF({self.field})='blob' THEN LOWER({self.field}) "
+                f"ELSE {self.field} END)"
             )
         else:
             field = self.field

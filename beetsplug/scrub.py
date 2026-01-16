@@ -58,10 +58,8 @@ class ScrubPlugin(BeetsPlugin):
     def commands(self):
         def scrub_func(lib, opts, args):
             # Walk through matching files and remove tags.
-            for item in lib.items(ui.decargs(args)):
-                self._log.info(
-                    "scrubbing: {0}", util.displayable_path(item.path)
-                )
+            for item in lib.items(args):
+                self._log.info("scrubbing: {.filepath}", item)
                 self._scrub_item(item, opts.write)
 
         scrub_cmd = ui.Subcommand("scrub", help="clean audio tags")
@@ -110,7 +108,7 @@ class ScrubPlugin(BeetsPlugin):
                 f.save()
             except (OSError, mutagen.MutagenError) as exc:
                 self._log.error(
-                    "could not scrub {0}: {1}", util.displayable_path(path), exc
+                    "could not scrub {}: {}", util.displayable_path(path), exc
                 )
 
     def _scrub_item(self, item, restore):
@@ -124,7 +122,7 @@ class ScrubPlugin(BeetsPlugin):
                     util.syspath(item.path), config["id3v23"].get(bool)
                 )
             except mediafile.UnreadableFileError as exc:
-                self._log.error("could not open file to scrub: {0}", exc)
+                self._log.error("could not open file to scrub: {}", exc)
                 return
             images = mf.images
 
@@ -144,12 +142,10 @@ class ScrubPlugin(BeetsPlugin):
                     mf.images = images
                     mf.save()
                 except mediafile.UnreadableFileError as exc:
-                    self._log.error("could not write tags: {0}", exc)
+                    self._log.error("could not write tags: {}", exc)
 
     def import_task_files(self, session, task):
         """Automatically scrub imported files."""
         for item in task.imported_items():
-            self._log.debug(
-                "auto-scrubbing {0}", util.displayable_path(item.path)
-            )
+            self._log.debug("auto-scrubbing {.filepath}", item)
             self._scrub_item(item, ui.should_write())

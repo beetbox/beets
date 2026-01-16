@@ -17,7 +17,7 @@ from unittest.mock import Mock, patch
 
 from beets.test import _common
 from beets.test.helper import PluginTestCase
-from beets.util import _fsencoding, bytestring_path
+from beets.util import bytestring_path
 from beetsplug.ipfs import IPFSPlugin
 
 
@@ -36,10 +36,8 @@ class IPFSPluginTest(PluginTestCase):
         for check_item in added_album.items():
             try:
                 if check_item.get("ipfs", with_album=False):
-                    ipfs_item = os.path.basename(want_item.path).decode(
-                        _fsencoding(),
-                    )
-                    want_path = "/ipfs/{}/{}".format(test_album.ipfs, ipfs_item)
+                    ipfs_item = os.fsdecode(os.path.basename(want_item.path))
+                    want_path = f"/ipfs/{test_album.ipfs}/{ipfs_item}"
                     want_path = bytestring_path(want_path)
                     assert check_item.path == want_path
                     assert (

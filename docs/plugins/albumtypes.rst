@@ -2,19 +2,19 @@ AlbumTypes Plugin
 =================
 
 The ``albumtypes`` plugin adds the ability to format and output album types,
-such as "Album", "EP", "Single", etc. For the list of available album types,
-see the `MusicBrainz documentation`_.
+such as "Album", "EP", "Single", etc. For the list of available album types, see
+the `MusicBrainz documentation`_.
 
-To use the ``albumtypes`` plugin, enable it in your configuration
-(see :ref:`using-plugins`). The plugin defines a new field ``$atypes``, which
-you can use in your path formats or elsewhere.
+To use the ``albumtypes`` plugin, enable it in your configuration (see
+:ref:`using-plugins`). The plugin defines a new field ``$atypes``, which you can
+use in your path formats or elsewhere.
 
-.. _MusicBrainz documentation: https://musicbrainz.org/doc/Release_Group/Type
+.. _musicbrainz documentation: https://musicbrainz.org/doc/Release_Group/Type
 
 A bug introduced in beets 1.6.0 could have possibly imported broken data into
-the ``albumtypes`` library field. Please follow the instructions `described
-here <https://github.com/beetbox/beets/pull/4582#issuecomment-1445023493>`_ for
-a sanity check and potential fix. :bug:`4528`
+the ``albumtypes`` library field. Please follow the instructions `described here
+<https://github.com/beetbox/beets/pull/4582#issuecomment-1445023493>`_ for a
+sanity check and potential fix. :bug:`4528`
 
 Configuration
 -------------
@@ -30,7 +30,9 @@ file. The available options are:
   are often compilations.
 - **bracket**: Defines the brackets to enclose each album type in the output.
 
-The default configuration looks like this::
+The default configuration looks like this:
+
+::
 
     albumtypes:
         types:
@@ -45,18 +47,22 @@ The default configuration looks like this::
 
 Examples
 --------
-With path formats configured like::
+
+With path formats configured like:
+
+::
 
     paths:
         default: $albumartist/[$year]$atypes $album/...
         albumtype:soundtrack: Various Artists/$album [$year]$atypes/...
         comp: Various Artists/$album [$year]$atypes/...
 
+The default plugin configuration generates paths that look like this, for
+example:
 
-The default plugin configuration generates paths that look like this, for example::
+::
 
     Aphex Twin/[1993][EP][Remix] On Remixes
     Pink Floyd/[1995][Live] p·u·l·s·e
     Various Artists/20th Century Lullabies [1999]
     Various Artists/Ocean's Eleven [2001][OST]
-

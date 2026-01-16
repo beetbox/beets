@@ -221,7 +221,7 @@ e9.size = "120x600, 160x600";
 
         <h2>John Doe <br> beets song lyrics</h2>
 <img src="images/phone-left.gif" alt="Ringtones left icon" width="16" height="17"> <a href="http://www.ringtonematcher.com/go/?sid=LBSMros&amp;artist=The+John Doe&amp;song=Beets+Song" target="_blank"><b><font size="+1" color="red" face="arial">Send "beets song" Ringtone to your Cell</font></b></a> <img src="images/phone-right.gif" alt="Ringtones right icon" width="16" height="17"><br><br><center>Beets is the media library management system for obsessive music geeks.<br>
-The purpose of beets is to get your music collection right once and for all. It catalogs your collection, automatically improving its metadata as it goes. It then provides a bouquet of tools for manipulating and accessing your music.<br>
+The purpose of beets is to get your music collection right once and for all. It catalogs your collection, automatically improving its metadata as it goes. It then provides a suite of tools for manipulating and accessing your music.<br>
 <div class='flow breaker'>           </div>
 Here's an example of beets' brainy tag corrector doing its thing:
 Because beets is designed as a library, it can do almost anything you can imagine for your music collection. Via plugins, beets becomes a panacea</center>

@@ -1,5 +1,5 @@
 Thumbnails Plugin
-==================
+=================
 
 The ``thumbnails`` plugin creates thumbnails for your album folders with the
 album cover. This works on freedesktop.org-compliant file managers such as
@@ -14,10 +14,11 @@ install ``beets`` with ``thumbnails`` and ``fetchart`` extras
     pip install "beets[fetchart,thumbnails]"
 
 ``thumbnails`` need to resize the covers, and therefore requires either
-`ImageMagick`_ or `Pillow`_.
+ImageMagick_ or Pillow_.
 
-.. _Pillow: https://github.com/python-pillow/Pillow
-.. _ImageMagick: https://www.imagemagick.org/
+.. _imagemagick: https://www.imagemagick.org/
+
+.. _pillow: https://github.com/python-pillow/Pillow
 
 Configuration
 -------------
@@ -28,12 +29,10 @@ file. The available options are
 - **auto**: Whether the thumbnail should be automatically set on import.
   Default: ``yes``.
 - **force**: Generate the thumbnail even when there's one that seems fine (more
-  recent than the cover art).
-  Default: ``no``.
+  recent than the cover art). Default: ``no``.
 - **dolphin**: Generate dolphin-compatible thumbnails. Dolphin (KDE file
   explorer) does not respect freedesktop.org's standard on thumbnails. This
-  functionality replaces the :doc:`/plugins/freedesktop`
-  Default: ``no``
+  functionality replaces the :doc:`/plugins/freedesktop` Default: ``no``
 
 Usage
 -----

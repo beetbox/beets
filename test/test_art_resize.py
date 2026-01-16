@@ -16,6 +16,7 @@
 
 import os
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 from beets.test import _common
@@ -65,7 +66,7 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
             max_filesize=0,
         )
         # check valid path returned - max_filesize hasn't broken resize command
-        self.assertExists(im_95_qual)
+        assert Path(os.fsdecode(im_95_qual)).exists()
 
         # Attempt a lower filesize with same quality
         im_a = backend.resize(
@@ -74,7 +75,7 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
             quality=95,
             max_filesize=0.9 * os.stat(syspath(im_95_qual)).st_size,
         )
-        self.assertExists(im_a)
+        assert Path(os.fsdecode(im_a)).exists()
         # target size was achieved
         assert (
             os.stat(syspath(im_a)).st_size
@@ -88,7 +89,7 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
             quality=75,
             max_filesize=0,
         )
-        self.assertExists(im_75_qual)
+        assert Path(os.fsdecode(im_75_qual)).exists()
 
         im_b = backend.resize(
             225,
@@ -96,7 +97,7 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
             quality=95,
             max_filesize=0.9 * os.stat(syspath(im_75_qual)).st_size,
         )
-        self.assertExists(im_b)
+        assert Path(os.fsdecode(im_b)).exists()
         # Check high (initial) quality still gives a smaller filesize
         assert (
             os.stat(syspath(im_b)).st_size
@@ -135,7 +136,8 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
         """
         im = IMBackend()
         path = im.deinterlace(self.IMG_225x225)
-        cmd = im.identify_cmd + [
+        cmd = [
+            *im.identify_cmd,
             "-format",
             "%[interlace]",
             syspath(path, prefix=False),
@@ -149,9 +151,5 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
         metadata = {"a": "A", "b": "B"}
         im = DummyIMBackend()
         im.write_metadata("foo", metadata)
-        try:
-            command = im.convert_cmd + "foo -set a A -set b B foo".split()
-            mock_util.command_output.assert_called_once_with(command)
-        except AssertionError:
-            command = im.convert_cmd + "foo -set b B -set a A foo".split()
-            mock_util.command_output.assert_called_once_with(command)
+        command = [*im.convert_cmd, *"foo -set a A -set b B foo".split()]
+        mock_util.command_output.assert_called_once_with(command)

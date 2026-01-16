@@ -17,42 +17,46 @@
 from __future__ import annotations
 
 import contextlib
+import functools
 import os
 import re
 import sqlite3
+import sys
 import threading
 import time
 from abc import ABC
 from collections import defaultdict
-from collections.abc import Generator, Iterable, Iterator, Mapping, Sequence
-from sqlite3 import Connection
-from typing import TYPE_CHECKING, Any, AnyStr, Callable, Generic, TypeVar, cast
+from collections.abc import Mapping
+from functools import cached_property
+from sqlite3 import sqlite_version_info
+from typing import TYPE_CHECKING, Any, AnyStr, ClassVar, Generic
 
+from typing_extensions import (
+    Self,
+    TypeVar,  # default value support
+)
 from unidecode import unidecode
 
 import beets
 
 from ..util import cached_classproperty, functemplate
 from . import types
-from .query import (
-    FieldQueryType,
-    FieldSort,
-    MatchQuery,
-    NullSort,
-    Query,
-    Sort,
-    TrueQuery,
-)
+from .query import MatchQuery, NullSort, TrueQuery
 
 if TYPE_CHECKING:
+    from collections.abc import (
+        Callable,
+        Generator,
+        Iterable,
+        Iterator,
+        Sequence,
+    )
+    from sqlite3 import Connection
     from types import TracebackType
 
-    from .query import SQLiteType
+    from .query import FieldQueryType, FieldSort, Query, Sort, SQLiteType
 
-    D = TypeVar("D", bound="Database", default=Any)
-else:
-    D = TypeVar("D", bound="Database")
-
+D = TypeVar("D", bound="Database", default=Any)
 
 FlexAttrs = dict[str, str]
 
@@ -64,6 +68,20 @@ class DBAccessError(Exception):
     example, the database file is deleted or otherwise disappears. There
     is probably no way to recover from this error.
     """
+
+
+class DBCustomFunctionError(Exception):
+    """A sqlite function registered by beets failed."""
+
+    def __init__(self):
+        super().__init__(
+            "beets defined SQLite function failed; "
+            "see the other errors above for details"
+        )
+
+
+class NotFoundError(LookupError):
+    pass
 
 
 class FormattedMapping(Mapping[str, str]):
@@ -79,6 +97,8 @@ class FormattedMapping(Mapping[str, str]):
     If `for_path` is true, all path separators in the formatted values
     are replaced.
     """
+
+    model: Model
 
     ALL_KEYS = "*"
 
@@ -126,8 +146,8 @@ class FormattedMapping(Mapping[str, str]):
             value = value.decode("utf-8", "ignore")
 
         if self.for_path:
-            sep_repl = cast(str, beets.config["path_sep_replace"].as_str())
-            sep_drive = cast(str, beets.config["drive_sep_replace"].as_str())
+            sep_repl: str = beets.config["path_sep_replace"].as_str()
+            sep_drive: str = beets.config["drive_sep_replace"].as_str()
 
             if re.match(r"^\w:", value):
                 value = re.sub(r"(?<=^\w):", sep_drive, value)
@@ -279,7 +299,7 @@ class Model(ABC, Generic[D]):
     """The flex field SQLite table name.
     """
 
-    _fields: dict[str, types.Type] = {}
+    _fields: ClassVar[dict[str, types.Type]] = {}
     """A mapping indicating available "fixed" fields on this type. The
     keys are field names and the values are `Type` objects.
     """
@@ -289,19 +309,22 @@ class Model(ABC, Generic[D]):
     terms.
     """
 
-    _types: dict[str, types.Type] = {}
-    """Optional Types for non-fixed (i.e., flexible and computed) fields.
-    """
+    @cached_classproperty
+    def _types(cls) -> dict[str, types.Type]:
+        """Optional types for non-fixed (flexible and computed) fields."""
+        return {}
 
-    _sorts: dict[str, type[FieldSort]] = {}
+    _sorts: ClassVar[dict[str, type[FieldSort]]] = {}
     """Optional named sort criteria. The keys are strings and the values
     are subclasses of `Sort`.
     """
 
-    _queries: dict[str, FieldQueryType] = {}
-    """Named queries that use a field-like `name:value` syntax but which
-    do not relate to any specific field.
-    """
+    @cached_classproperty
+    def _queries(cls) -> dict[str, FieldQueryType]:
+        """Named queries that use a field-like `name:value` syntax but which
+        do not relate to any specific field.
+        """
+        return {}
 
     _always_dirty = False
     """By default, fields only become "dirty" when their value actually
@@ -339,6 +362,22 @@ class Model(ABC, Generic[D]):
     def other_db_fields(cls) -> set[str]:
         """Fields in the related table."""
         return cls._relation._fields.keys() - cls.shared_db_fields
+
+    @cached_property
+    def db(self) -> D:
+        """Get the database associated with this object.
+
+        This validates that the database is attached and the object has an id.
+        """
+        return self._check_db()
+
+    def get_fresh_from_db(self) -> Self:
+        """Load this object from the database."""
+        model_cls = self.__class__
+        if obj := self.db._get(model_cls, self.id):
+            return obj
+
+        raise NotFoundError(f"No matching {model_cls.__name__} found") from None
 
     @classmethod
     def _getters(cls: type[Model]):
@@ -389,9 +428,9 @@ class Model(ABC, Generic[D]):
         return obj
 
     def __repr__(self) -> str:
-        return "{}({})".format(
-            type(self).__name__,
-            ", ".join(f"{k}={v!r}" for k, v in dict(self).items()),
+        return (
+            f"{type(self).__name__}"
+            f"({', '.join(f'{k}={v!r}' for k, v in dict(self).items())})"
         )
 
     def clear_dirty(self):
@@ -408,9 +447,9 @@ class Model(ABC, Generic[D]):
         exception is raised otherwise.
         """
         if not self._db:
-            raise ValueError("{} has no database".format(type(self).__name__))
+            raise ValueError(f"{type(self).__name__} has no database")
         if need_id and not self.id:
-            raise ValueError("{} has no id".format(type(self).__name__))
+            raise ValueError(f"{type(self).__name__} has no id")
 
         return self._db
 
@@ -579,7 +618,6 @@ class Model(ABC, Generic[D]):
         """
         if fields is None:
             fields = self._fields
-        db = self._check_db()
 
         # Build assignments for query.
         assignments = []
@@ -587,16 +625,14 @@ class Model(ABC, Generic[D]):
         for key in fields:
             if key != "id" and key in self._dirty:
                 self._dirty.remove(key)
-                assignments.append(key + "=?")
+                assignments.append(f"{key}=?")
                 value = self._type(key).to_sql(self[key])
                 subvars.append(value)
 
-        with db.transaction() as tx:
+        with self.db.transaction() as tx:
             # Main table update.
             if assignments:
-                query = "UPDATE {} SET {} WHERE id=?".format(
-                    self._table, ",".join(assignments)
-                )
+                query = f"UPDATE {self._table} SET {','.join(assignments)} WHERE id=?"
                 subvars.append(self.id)
                 tx.mutate(query, subvars)
 
@@ -604,10 +640,11 @@ class Model(ABC, Generic[D]):
             for key, value in self._values_flex.items():
                 if key in self._dirty:
                     self._dirty.remove(key)
+                    value = self._type(key).to_sql(value)
                     tx.mutate(
-                        "INSERT INTO {} "
+                        f"INSERT INTO {self._flex_table} "
                         "(entity_id, key, value) "
-                        "VALUES (?, ?, ?);".format(self._flex_table),
+                        "VALUES (?, ?, ?);",
                         (self.id, key, value),
                     )
 
@@ -626,21 +663,16 @@ class Model(ABC, Generic[D]):
         If check_revision is true, the database is only queried loaded when a
         transaction has been committed since the item was last loaded.
         """
-        db = self._check_db()
-        if not self._dirty and db.revision == self._revision:
+        if not self._dirty and self.db.revision == self._revision:
             # Exit early
             return
-        stored_obj = db._get(type(self), self.id)
-        assert stored_obj is not None, f"object {self.id} not in DB"
-        self._values_fixed = LazyConvertDict(self)
-        self._values_flex = LazyConvertDict(self)
-        self.update(dict(stored_obj))
+
+        self.__dict__.update(self.get_fresh_from_db().__dict__)
         self.clear_dirty()
 
     def remove(self):
         """Remove the object's associated rows from the database."""
-        db = self._check_db()
-        with db.transaction() as tx:
+        with self.db.transaction() as tx:
             tx.mutate(f"DELETE FROM {self._table} WHERE id=?", (self.id,))
             tx.mutate(
                 f"DELETE FROM {self._flex_table} WHERE entity_id=?", (self.id,)
@@ -656,7 +688,7 @@ class Model(ABC, Generic[D]):
         """
         if db:
             self._db = db
-        db = self._check_db(False)
+        db = self._check_db(need_id=False)
 
         with db.transaction() as tx:
             new_id = tx.mutate(f"INSERT INTO {self._table} DEFAULT VALUES")
@@ -677,7 +709,7 @@ class Model(ABC, Generic[D]):
         self,
         included_keys: str = _formatter.ALL_KEYS,
         for_path: bool = False,
-    ):
+    ) -> FormattedMapping:
         """Get a mapping containing all values on this object formatted
         as human-readable unicode strings.
         """
@@ -715,6 +747,15 @@ class Model(ABC, Generic[D]):
     def set_parse(self, key, string: str):
         """Set the object's key to a value represented by a string."""
         self[key] = self._parse(key, string)
+
+    def __getstate__(self):
+        """Return the state of the object for pickling.
+        Remove the database connection as sqlite connections are not
+        picklable.
+        """
+        return {
+            k: v for k, v in self.__dict__.items() if k not in {"_db", "db"}
+        }
 
 
 # Database controller and supporting interfaces.
@@ -919,10 +960,10 @@ class Transaction:
 
     def __exit__(
         self,
-        exc_type: type[Exception],
-        exc_value: Exception,
-        traceback: TracebackType,
-    ):
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> bool | None:
         """Complete a transaction. This must be the most recently
         entered but not yet exited transaction. If it is the last active
         transaction, the database updates are committed.
@@ -937,6 +978,14 @@ class Transaction:
             self.db._connection().commit()
             self._mutated = False
             self.db._db_lock.release()
+
+        if (
+            isinstance(exc_value, sqlite3.OperationalError)
+            and exc_value.args[0] == "user-defined function raised exception"
+        ):
+            raise DBCustomFunctionError()
+
+        return None
 
     def query(
         self, statement: str, subvals: Sequence[SQLiteType] = ()
@@ -997,6 +1046,13 @@ class Database:
             raise RuntimeError(
                 "sqlite3 must be compiled with multi-threading support"
             )
+
+        # Print tracebacks for exceptions in user defined functions
+        # See also `self.add_functions` and `DBCustomFunctionError`.
+        #
+        # `if`: use feature detection because PyPy doesn't support this.
+        if hasattr(sqlite3, "enable_callback_tracebacks"):
+            sqlite3.enable_callback_tracebacks(True)
 
         self.path = path
         self.timeout = timeout
@@ -1061,6 +1117,16 @@ class Database:
             # call conn.close() in _close()
             check_same_thread=False,
         )
+
+        if sys.version_info >= (3, 12) and sqlite3.sqlite_version_info >= (
+            3,
+            29,
+            0,
+        ):
+            # If possible, disable double-quoted strings
+            conn.setconfig(sqlite3.SQLITE_DBCONFIG_DQS_DDL, 0)
+            conn.setconfig(sqlite3.SQLITE_DBCONFIG_DQS_DML, 0)
+
         self.add_functions(conn)
 
         if self.supports_extensions:
@@ -1093,9 +1159,16 @@ class Database:
 
             return bytestring
 
-        conn.create_function("regexp", 2, regexp)
-        conn.create_function("unidecode", 1, unidecode)
-        conn.create_function("bytelower", 1, bytelower)
+        create_function = conn.create_function
+        if sys.version_info >= (3, 8) and sqlite_version_info >= (3, 8, 3):
+            # Let sqlite make extra optimizations
+            create_function = functools.partial(
+                conn.create_function, deterministic=True
+            )
+
+        create_function("regexp", 2, regexp)
+        create_function("unidecode", 1, unidecode)
+        create_function("bytelower", 1, bytelower)
 
     def _close(self):
         """Close the all connections to the underlying SQLite database
@@ -1149,7 +1222,7 @@ class Database:
         """
         # Get current schema.
         with self.transaction() as tx:
-            rows = tx.query("PRAGMA table_info(%s)" % table)
+            rows = tx.query(f"PRAGMA table_info({table})")
         current_fields = {row[1] for row in rows}
 
         field_names = set(fields.keys())
@@ -1162,9 +1235,7 @@ class Database:
             columns = []
             for name, typ in fields.items():
                 columns.append(f"{name} {typ.sql}")
-            setup_sql = "CREATE TABLE {} ({});\n".format(
-                table, ", ".join(columns)
-            )
+            setup_sql = f"CREATE TABLE {table} ({', '.join(columns)});\n"
 
         else:
             # Table exists does not match the field set.
@@ -1172,8 +1243,8 @@ class Database:
             for name, typ in fields.items():
                 if name in current_fields:
                     continue
-                setup_sql += "ALTER TABLE {} ADD COLUMN {} {};\n".format(
-                    table, name, typ.sql
+                setup_sql += (
+                    f"ALTER TABLE {table} ADD COLUMN {name} {typ.sql};\n"
                 )
 
         with self.transaction() as tx:
@@ -1184,18 +1255,16 @@ class Database:
         for the given entity (if they don't exist).
         """
         with self.transaction() as tx:
-            tx.script(
-                """
-                CREATE TABLE IF NOT EXISTS {0} (
+            tx.script(f"""
+                CREATE TABLE IF NOT EXISTS {flex_table} (
                     id INTEGER PRIMARY KEY,
                     entity_id INTEGER,
                     key TEXT,
                     value TEXT,
                     UNIQUE(entity_id, key) ON CONFLICT REPLACE);
-                CREATE INDEX IF NOT EXISTS {0}_by_entity
-                    ON {0} (entity_id);
-                """.format(flex_table)
-            )
+                CREATE INDEX IF NOT EXISTS {flex_table}_by_entity
+                    ON {flex_table} (entity_id);
+                """)
 
     # Querying.
 
@@ -1257,12 +1326,6 @@ class Database:
             sort if sort.is_slow() else None,  # Slow sort component.
         )
 
-    def _get(
-        self,
-        model_cls: type[AnyModel],
-        id,
-    ) -> AnyModel | None:
-        """Get a Model object by its id or None if the id does not
-        exist.
-        """
-        return self._fetch(model_cls, MatchQuery("id", id)).get()
+    def _get(self, model_cls: type[AnyModel], id_: int) -> AnyModel | None:
+        """Get a Model object by its id or None if the id does not exist."""
+        return self._fetch(model_cls, MatchQuery("id", id_)).get()

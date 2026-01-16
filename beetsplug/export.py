@@ -144,13 +144,13 @@ class ExportPlugin(BeetsPlugin):
         items = []
         for data_emitter in data_collector(
             lib,
-            ui.decargs(args),
+            args,
             album=opts.album,
         ):
             try:
-                data, item = data_emitter(included_keys or "*")
+                data, _ = data_emitter(included_keys or "*")
             except (mediafile.UnreadableFileError, OSError) as ex:
-                self._log.error("cannot read file: {0}", ex)
+                self._log.error("cannot read file: {}", ex)
                 continue
 
             for key, value in data.items():
