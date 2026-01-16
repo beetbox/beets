@@ -474,7 +474,7 @@ Bug fixes:
   result. Update the default ``sources`` configuration to prioritize ``lrclib``
   over other sources since it returns reliable results quicker than others.
   :bug:`5102`
-* Handle potential OSError when unlinking temporary files in ArtResizer.
+- Handle potential OSError when unlinking temporary files in ArtResizer.
   :bug:`5615`
 - :doc:`plugins/lyrics`: Fix the issue with ``genius`` backend not being able to
   match lyrics when there is a slight variation in the artist name. :bug:`4791`

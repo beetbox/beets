@@ -24,8 +24,8 @@ import platform
 import re
 import subprocess
 from abc import ABC, abstractmethod
-from enum import Enum
 from contextlib import suppress
+from enum import Enum
 from itertools import chain
 from typing import TYPE_CHECKING, Any, ClassVar
 from urllib.parse import urlencode
