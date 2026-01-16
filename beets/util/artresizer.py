@@ -21,6 +21,7 @@ import os.path
 import platform
 import re
 import subprocess
+from contextlib import suppress
 from itertools import chain
 from urllib.parse import urlencode
 
@@ -660,10 +661,8 @@ class ArtResizer(metaclass=Shareable):
             )
         finally:
             if result_path != path_in:
-                try:
+                with suppress(OSError):
                     os.unlink(path_in)
-                except OSError:
-                    pass
         return result_path
 
     @property
