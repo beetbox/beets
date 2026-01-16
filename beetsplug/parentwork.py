@@ -18,7 +18,7 @@ and work composition date
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING
 
 import requests
 
@@ -26,6 +26,9 @@ from beets import ui
 from beets.plugins import BeetsPlugin
 
 from ._utils.musicbrainz import MusicBrainzAPIMixin
+
+if TYPE_CHECKING:
+    from beetsplug._utils.musicbrainz import Work
 
 
 class ParentWorkPlugin(MusicBrainzAPIMixin, BeetsPlugin):
@@ -191,9 +194,7 @@ class ParentWorkPlugin(MusicBrainzAPIMixin, BeetsPlugin):
                 ],
             )
 
-    def find_parentwork_info(
-        self, mb_workid: str
-    ) -> tuple[dict[str, Any], str | None]:
+    def find_parentwork_info(self, mb_workid: str) -> tuple[Work, str | None]:
         """Get the MusicBrainz information dict about a parent work, including
         the artist relations, and the composition date for a work's parent work.
         """
