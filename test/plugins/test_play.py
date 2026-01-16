@@ -21,7 +21,7 @@ from unittest.mock import ANY, patch
 
 import pytest
 
-from beets.test.helper import CleanupModulesMixin, PluginTestCase, IOMixin
+from beets.test.helper import CleanupModulesMixin, IOMixin, PluginTestCase
 from beets.ui import UserError
 from beets.util import open_anything
 from beetsplug.play import PlayPlugin
