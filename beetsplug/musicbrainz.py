@@ -395,10 +395,10 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
                 recording["artist_relations"], relation_type="remixer"
             )
 
-        if recording.get("length"):
-            info.length = int(recording["length"]) / 1000.0
+        if length := recording["length"]:
+            info.length = int(length) / 1000.0
 
-        info.trackdisambig = recording.get("disambiguation")
+        info.trackdisambig = recording["disambiguation"] or None
 
         if recording.get("isrcs"):
             info.isrc = ";".join(recording["isrcs"])
