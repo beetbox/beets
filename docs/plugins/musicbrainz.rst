@@ -45,6 +45,7 @@ Default
         pseudo_releases:
             scripts: []
             custom_tags_only: no
+            multiple_allowed: no
             album_custom_tags:
                 album_transl: album
                 album_artist_transl: artist
@@ -201,6 +202,26 @@ this:
 Pseudo-releases will only be included if the initial search in MusicBrainz
 returns releases whose script is *not* desired and whose relationships include
 pseudo-releases with desired scripts.
+
+A release may have multiple pseudo-releases, for example when there is both a
+transliteration and a translation available. By default, only 1 pseudo-release
+per original release is emitted as a candidate, using the languages from the
+configuration to decide which one has most priority. If you're importing in
+timid mode and you would like to receive all valid pseudo-releases as additional
+candidates, you can add the following to the configuration:
+
+.. code-block:: yaml
+
+    musicbrainz:
+        pseudo_releases:
+            # other config not shown
+            multiple_allowed: yes
+
+.. note::
+
+    A limitation of reimporting in particular is that it will *not* give you a
+    pseudo-release proposal if multiple candidates exist and are allowed, so you
+    should disallow multiple in that scenario.
 
 By default, the data from the pseudo-release will be used to create a proposal
 that is independent from the original release and sets all properties in its

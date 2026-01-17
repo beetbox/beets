@@ -11,7 +11,11 @@ from beets.autotag.distance import Distance
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.library import Item
 from beets.test.helper import PluginMixin
-from beetsplug.musicbrainz import MusicBrainzPlugin, PseudoAlbumInfo
+from beetsplug.musicbrainz import (
+    MultiPseudoAlbumInfo,
+    MusicBrainzPlugin,
+    PseudoAlbumInfo,
+)
 
 if TYPE_CHECKING:
     import pathlib
@@ -136,6 +140,37 @@ class TestMBPseudoReleases(TestMBPseudoMixin):
     def test_scripts_init(self, musicbrainz_plugin: MusicBrainzPlugin):
         assert musicbrainz_plugin._scripts == ["Latn", "Dummy"]
 
+    def test_reimport_logic(
+        self,
+        musicbrainz_plugin: MusicBrainzPlugin,
+        official_release_info: AlbumInfo,
+        pseudo_release_info: AlbumInfo,
+    ):
+        pseudo_info = PseudoAlbumInfo(
+            pseudo_release_info, official_release_info
+        )
+
+        item = Item()
+        item["title"] = "百花繚乱"
+
+        # if items don't have mb_*, they are not modified
+        musicbrainz_plugin._determine_pseudo_album_info_ref([item], pseudo_info)
+        assert pseudo_info.album == item.title
+
+        pseudo_info.use_pseudo_as_ref()
+        assert pseudo_info.album == "In Bloom"
+
+        item["mb_albumid"] = "mb_aid"
+        item["mb_trackid"] = "mb_tid"
+        assert item.get("mb_albumid") == "mb_aid"
+        assert item.get("mb_trackid") == "mb_tid"
+
+        # if items have mb_*, they are deleted
+        musicbrainz_plugin._determine_pseudo_album_info_ref([item], pseudo_info)
+        assert pseudo_info.album == item.title
+        assert item.get("mb_albumid") == ""
+        assert item.get("mb_trackid") == ""
+
     def test_album_info_for_pseudo_release(
         self,
         musicbrainz_plugin: MusicBrainzPlugin,
@@ -240,6 +275,67 @@ class TestMBPseudoReleases(TestMBPseudoMixin):
         assert match.info.data_source == "MusicBrainz"
         assert match.info.album_id == "pseudo"
         assert match.info.album == "In Bloom"
+
+
+class TestMBMultiplePseudoReleases(PluginMixin):
+    plugin = "musicbrainz"
+
+    @pytest.fixture(autouse=True)
+    def patch_get_release(
+        self,
+        monkeypatch,
+        official_release: JSONDict,
+        pseudo_release: JSONDict,
+    ):
+        def mock_get_release(_, album_id: str, **kwargs):
+            if album_id == official_release["id"]:
+                return official_release
+            elif album_id == pseudo_release["id"]:
+                return pseudo_release
+            else:
+                clone = deepcopy(pseudo_release)
+                clone["id"] = album_id
+                clone["text-representation"]["language"] = "jpn"
+                return clone
+
+        monkeypatch.setattr(
+            "beetsplug._utils.musicbrainz.MusicBrainzAPI.get_release",
+            mock_get_release,
+        )
+
+    @pytest.fixture(scope="class")
+    def plugin_config(self):
+        return {
+            "pseudo_releases": {
+                "scripts": ["Latn", "Dummy"],
+                "multiple_allowed": True,
+            }
+        }
+
+    @pytest.fixture
+    def musicbrainz_plugin(self, config, plugin_config) -> MusicBrainzPlugin:
+        self.config[self.plugin].set(plugin_config)
+        config["import"]["languages"] = ["jp", "en"]
+        return MusicBrainzPlugin()
+
+    def test_multiple_releases(
+        self,
+        musicbrainz_plugin: MusicBrainzPlugin,
+        official_release: JSONDict,
+        pseudo_release: JSONDict,
+    ):
+        album_info = musicbrainz_plugin.album_for_id(official_release["id"])
+        assert isinstance(album_info, MultiPseudoAlbumInfo)
+        assert album_info.data_source == "MusicBrainz"
+        assert len(album_info.unwrap()) == 2
+        assert (
+            album_info.unwrap()[0].album_id
+            == "mockedid-0bc1-49eb-b8c4-34473d279a43"
+        )
+        assert (
+            album_info.unwrap()[1].album_id
+            == "dc3ee2df-0bc1-49eb-b8c4-34473d279a43"
+        )
 
 
 class TestMBPseudoReleasesCustomTagsOnly(TestMBPseudoMixin):

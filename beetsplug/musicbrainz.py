@@ -328,6 +328,7 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
                 "pseudo_releases": {
                     "scripts": [],
                     "custom_tags_only": False,
+                    "multiple_allowed": False,
                     "album_custom_tags": {
                         "album_transl": "album",
                         "album_artist_transl": "artist",
@@ -384,7 +385,29 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
                 # ignore errors due to duplicates
                 pass
 
+        self.register_listener(
+            "album_info_received", self._determine_pseudo_album_info_ref
+        )
         self.register_listener("album_matched", self._adjust_final_album_match)
+
+    def _determine_pseudo_album_info_ref(
+        self,
+        items: Iterable[Item],
+        album_info: AlbumInfo,
+    ):
+        if isinstance(album_info, PseudoAlbumInfo):
+            for item in items:
+                # particularly relevant for reimport but could also happen during import
+                if "mb_albumid" in item:
+                    del item["mb_albumid"]
+                if "mb_trackid" in item:
+                    del item["mb_trackid"]
+
+            self._log.debug(
+                "Using {0} release for distance calculations for album {1}",
+                album_info.determine_best_ref(list(items)),
+                album_info.album_id,
+            )
 
     def track_info(
         self,
@@ -804,12 +827,11 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
             with suppress(HTTPNotFoundError):
                 album_info = self.album_for_id(id_)
                 # always yield pseudo first to give it priority
-                if isinstance(album_info, PseudoAlbumInfo):
-                    self._log.debug(
-                        "Using {0} release for distance calculations for album {1}",
-                        album_info.determine_best_ref(list(items)),
-                        album_info.album_id,
-                    )
+                if isinstance(album_info, MultiPseudoAlbumInfo):
+                    yield from album_info.unwrap()
+                    yield album_info
+                elif isinstance(album_info, PseudoAlbumInfo):
+                    self._determine_pseudo_album_info_ref(items, album_info)
                     yield album_info
                     yield album_info.get_official_release()
                 elif isinstance(album_info, AlbumInfo):
@@ -913,11 +935,23 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
                 return len(languages)
 
         pseudo_releases.sort(key=sort_fun)
-        return self._resolve_pseudo_album_info(
-            release,
-            custom_tags_only,
-            languages,
-            pseudo_releases[0],
+        multiple_allowed = pseudo_config["multiple_allowed"].get(bool)
+        if custom_tags_only or not multiple_allowed:
+            return self._resolve_pseudo_album_info(
+                release,
+                custom_tags_only,
+                languages,
+                pseudo_releases[0],
+            )
+
+        pseudo_album_infos = [
+            self._resolve_pseudo_album_info(
+                release, custom_tags_only, languages, i
+            )
+            for i in pseudo_releases
+        ]
+        return MultiPseudoAlbumInfo(
+            *pseudo_album_infos, official_release=release
         )
 
     def track_for_id(
@@ -1134,6 +1168,38 @@ class PseudoAlbumInfo(AlbumInfo):
             return super().__getattr__(attr)
         else:
             return self.__dict__["_official_release"].__getattr__(attr)
+
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        result = cls.__new__(cls)
+
+        memo[id(self)] = result
+        result.__dict__.update(self.__dict__)
+        for k, v in self.items():
+            result[k] = deepcopy(v, memo)
+
+        return result
+
+
+class MultiPseudoAlbumInfo(AlbumInfo):
+    """For releases that have multiple pseudo-releases"""
+
+    def __init__(
+        self,
+        *args,
+        official_release: AlbumInfo,
+        **kwargs,
+    ):
+        super().__init__(official_release.tracks, **kwargs)
+        self.__dict__["_pseudo_album_infos"] = [
+            arg for arg in args if isinstance(arg, PseudoAlbumInfo)
+        ]
+        for k, v in official_release.items():
+            if k not in kwargs:
+                self[k] = v
+
+    def unwrap(self) -> list[PseudoAlbumInfo]:
+        return self.__dict__["_pseudo_album_infos"]
 
     def __deepcopy__(self, memo):
         cls = self.__class__
