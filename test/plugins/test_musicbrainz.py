@@ -50,7 +50,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
     def _make_release(
         self,
         date_str="2009",
-        tracks=None,
+        recordings=None,
         track_length=None,
         track_artist=False,
         multi_artist_credit=False,
@@ -114,8 +114,8 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
 
         i = 0
         track_list = []
-        if tracks:
-            for recording in tracks:
+        if recordings:
+            for recording in recordings:
                 i += 1
                 track = {
                     "id": f"RELEASE TRACK ID {i}",
@@ -176,7 +176,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         )
         return release
 
-    def _make_track(
+    def _make_recording(
         self,
         title,
         tr_id,
@@ -187,14 +187,14 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         multi_artist_credit=False,
         aliases=None,
     ):
-        track = {
+        recording = {
             "title": title,
             "id": tr_id,
         }
         if duration is not None:
-            track["length"] = duration
+            recording["length"] = duration
         if artist:
-            track["artist_credit"] = [
+            recording["artist_credit"] = [
                 {
                     "artist": {
                         "name": "RECORDING ARTIST NAME",
@@ -205,8 +205,8 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
                 }
             ]
             if multi_artist_credit:
-                track["artist_credit"][0]["joinphrase"] = " & "
-                track["artist_credit"].append(
+                recording["artist_credit"][0]["joinphrase"] = " & "
+                recording["artist_credit"].append(
                     {
                         "artist": {
                             "name": "RECORDING ARTIST 2 NAME",
@@ -217,12 +217,12 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
                     }
                 )
         if video:
-            track["video"] = True
+            recording["video"] = True
         if disambiguation:
-            track["disambiguation"] = disambiguation
+            recording["disambiguation"] = disambiguation
         if aliases is not None:
-            track["aliases"] = aliases
-        return track
+            recording["aliases"] = aliases
+        return recording
 
     def test_parse_release_title(self):
         release = self._make_release(None)
@@ -264,21 +264,21 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert d.original_day == 31
 
     def test_parse_tracks(self):
-        tracks = [
-            self._make_track(
+        recordings = [
+            self._make_recording(
                 "TITLE ONE",
                 "ID ONE",
                 100.0 * 1000.0,
                 aliases=[make_alias(suffix="ONEen", locale="en", primary=True)],
             ),
-            self._make_track(
+            self._make_recording(
                 "TITLE TWO",
                 "ID TWO",
                 200.0 * 1000.0,
                 aliases=[make_alias(suffix="TWOen", locale="en", primary=True)],
             ),
         ]
-        release = self._make_release(tracks=tracks)
+        release = self._make_release(recordings=recordings)
 
         # Preference over recording data
         release["media"][0]["tracks"][1]["title"] = "TRACK TITLE TWO"
@@ -308,11 +308,11 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert t[1].length == 200.0
 
     def test_parse_track_indices(self):
-        tracks = [
-            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
-            self._make_track("TITLE TWO", "ID TWO", 200.0 * 1000.0),
+        recordings = [
+            self._make_recording("TITLE ONE", "ID ONE", 100.0 * 1000.0),
+            self._make_recording("TITLE TWO", "ID TWO", 200.0 * 1000.0),
         ]
-        release = self._make_release(tracks=tracks)
+        release = self._make_release(recordings=recordings)
 
         d = self.mb.album_info(release)
         t = d.tracks
@@ -322,11 +322,11 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert t[1].index == 2
 
     def test_parse_medium_numbers_single_medium(self):
-        tracks = [
-            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
-            self._make_track("TITLE TWO", "ID TWO", 200.0 * 1000.0),
+        recordings = [
+            self._make_recording("TITLE ONE", "ID ONE", 100.0 * 1000.0),
+            self._make_recording("TITLE TWO", "ID TWO", 200.0 * 1000.0),
         ]
-        release = self._make_release(tracks=tracks)
+        release = self._make_release(recordings=recordings)
 
         d = self.mb.album_info(release)
         assert d.mediums == 1
@@ -335,15 +335,15 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert t[1].medium == 1
 
     def test_parse_medium_numbers_two_mediums(self):
-        tracks = [
-            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
-            self._make_track("TITLE TWO", "ID TWO", 200.0 * 1000.0),
+        recordings = [
+            self._make_recording("TITLE ONE", "ID ONE", 100.0 * 1000.0),
+            self._make_recording("TITLE TWO", "ID TWO", 200.0 * 1000.0),
         ]
-        release = self._make_release(tracks=[tracks[0]])
+        release = self._make_release(recordings=[recordings[0]])
         second_track_list = [
             {
                 "id": "RELEASE TRACK ID 2",
-                "recording": tracks[1],
+                "recording": recordings[1],
                 "position": "1",
                 "number": "A1",
             }
@@ -372,14 +372,16 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert d.original_month == 3
 
     def test_no_durations(self):
-        tracks = [self._make_track("TITLE", "ID", None)]
-        release = self._make_release(tracks=tracks)
+        recordings = [self._make_recording("TITLE", "ID", None)]
+        release = self._make_release(recordings=recordings)
         d = self.mb.album_info(release)
         assert d.tracks[0].length is None
 
     def test_track_length_overrides_recording_length(self):
-        tracks = [self._make_track("TITLE", "ID", 1.0 * 1000.0)]
-        release = self._make_release(tracks=tracks, track_length=2.0 * 1000.0)
+        recordings = [self._make_recording("TITLE", "ID", 1.0 * 1000.0)]
+        release = self._make_release(
+            recordings=recordings, track_length=2.0 * 1000.0
+        )
         d = self.mb.album_info(release)
         assert d.tracks[0].length == 2.0
 
@@ -461,11 +463,11 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert d.barcode == "BARCODE"
 
     def test_parse_media(self):
-        tracks = [
-            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
-            self._make_track("TITLE TWO", "ID TWO", 200.0 * 1000.0),
+        recordings = [
+            self._make_recording("TITLE ONE", "ID ONE", 100.0 * 1000.0),
+            self._make_recording("TITLE TWO", "ID TWO", 200.0 * 1000.0),
         ]
-        release = self._make_release(None, tracks=tracks)
+        release = self._make_release(None, recordings=recordings)
         d = self.mb.album_info(release)
         assert d.media == "FORMAT"
 
@@ -476,11 +478,11 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert d.releasegroupdisambig == "RG_DISAMBIGUATION"
 
     def test_parse_disctitle(self):
-        tracks = [
-            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
-            self._make_track("TITLE TWO", "ID TWO", 200.0 * 1000.0),
+        recordings = [
+            self._make_recording("TITLE ONE", "ID ONE", 100.0 * 1000.0),
+            self._make_recording("TITLE TWO", "ID TWO", 200.0 * 1000.0),
         ]
-        release = self._make_release(None, tracks=tracks)
+        release = self._make_release(None, recordings=recordings)
         d = self.mb.album_info(release)
         t = d.tracks
         assert t[0].disctitle == "MEDIUM TITLE"
@@ -493,8 +495,8 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert d.language is None
 
     def test_parse_recording_artist(self):
-        tracks = [self._make_track("a", "b", 1, True)]
-        release = self._make_release(None, tracks=tracks)
+        recordings = [self._make_recording("a", "b", 1, True)]
+        release = self._make_release(None, recordings=recordings)
         track = self.mb.album_info(release).tracks[0]
         assert track.artist == "RECORDING ARTIST NAME"
         assert track.artist_id == "RECORDING ARTIST ID"
@@ -502,8 +504,10 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert track.artist_credit == "RECORDING ARTIST CREDIT"
 
     def test_parse_recording_artist_multi(self):
-        tracks = [self._make_track("a", "b", 1, True, multi_artist_credit=True)]
-        release = self._make_release(None, tracks=tracks)
+        recordings = [
+            self._make_recording("a", "b", 1, True, multi_artist_credit=True)
+        ]
+        release = self._make_release(None, recordings=recordings)
         track = self.mb.album_info(release).tracks[0]
         assert track.artist == "RECORDING ARTIST NAME & RECORDING ARTIST 2 NAME"
         assert track.artist_id == "RECORDING ARTIST ID"
@@ -534,8 +538,10 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         ]
 
     def test_track_artist_overrides_recording_artist(self):
-        tracks = [self._make_track("a", "b", 1, True)]
-        release = self._make_release(None, tracks=tracks, track_artist=True)
+        recordings = [self._make_recording("a", "b", 1, True)]
+        release = self._make_release(
+            None, recordings=recordings, track_artist=True
+        )
         track = self.mb.album_info(release).tracks[0]
         assert track.artist == "TRACK ARTIST NAME"
         assert track.artist_id == "TRACK ARTIST ID"
@@ -543,9 +549,14 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert track.artist_credit == "TRACK ARTIST CREDIT"
 
     def test_track_artist_overrides_recording_artist_multi(self):
-        tracks = [self._make_track("a", "b", 1, True, multi_artist_credit=True)]
+        recordings = [
+            self._make_recording("a", "b", 1, True, multi_artist_credit=True)
+        ]
         release = self._make_release(
-            None, tracks=tracks, track_artist=True, multi_artist_credit=True
+            None,
+            recordings=recordings,
+            track_artist=True,
+            multi_artist_credit=True,
         )
         track = self.mb.album_info(release).tracks[0]
         assert track.artist == "TRACK ARTIST NAME & TRACK ARTIST 2 NAME"
@@ -570,8 +581,8 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         ]
 
     def test_parse_recording_artist_credits(self):
-        tracks = [self._make_track("a", "b", 1)]
-        tracks[0]["artist_relations"] = [
+        recordings = [self._make_recording("a", "b", 1)]
+        recordings[0]["artist_relations"] = [
             {
                 "type": "remixer",
                 "artist": {
@@ -594,7 +605,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
                 },
             },
         ]
-        tracks[0]["work_relations"] = [
+        recordings[0]["work_relations"] = [
             {
                 "type": "performance",
                 "work": {
@@ -640,7 +651,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
             }
         ]
 
-        release = self._make_release(None, tracks=tracks)
+        release = self._make_release(None, recordings=recordings)
         track = self.mb.album_info(release).tracks[0]
         assert track.remixers == ["RECORDING REMIXER ARTIST NAME"]
         assert track.arrangers == [
@@ -695,47 +706,55 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
 
     def test_ignored_media(self):
         config["match"]["ignored_media"] = ["IGNORED1", "IGNORED2"]
-        tracks = [
-            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
-            self._make_track("TITLE TWO", "ID TWO", 200.0 * 1000.0),
+        recordings = [
+            self._make_recording("TITLE ONE", "ID ONE", 100.0 * 1000.0),
+            self._make_recording("TITLE TWO", "ID TWO", 200.0 * 1000.0),
         ]
-        release = self._make_release(tracks=tracks, medium_format="IGNORED1")
+        release = self._make_release(
+            recordings=recordings, medium_format="IGNORED1"
+        )
         d = self.mb.album_info(release)
         assert len(d.tracks) == 0
 
     def test_no_ignored_media(self):
         config["match"]["ignored_media"] = ["IGNORED1", "IGNORED2"]
-        tracks = [
-            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
-            self._make_track("TITLE TWO", "ID TWO", 200.0 * 1000.0),
+        recordings = [
+            self._make_recording("TITLE ONE", "ID ONE", 100.0 * 1000.0),
+            self._make_recording("TITLE TWO", "ID TWO", 200.0 * 1000.0),
         ]
-        release = self._make_release(tracks=tracks, medium_format="NON-IGNORED")
+        release = self._make_release(
+            recordings=recordings, medium_format="NON-IGNORED"
+        )
         d = self.mb.album_info(release)
         assert len(d.tracks) == 2
 
     def test_skip_data_track(self):
-        tracks = [
-            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
-            self._make_track("[data track]", "ID DATA TRACK", 100.0 * 1000.0),
-            self._make_track("TITLE TWO", "ID TWO", 200.0 * 1000.0),
+        recordings = [
+            self._make_recording("TITLE ONE", "ID ONE", 100.0 * 1000.0),
+            self._make_recording(
+                "[data track]", "ID DATA TRACK", 100.0 * 1000.0
+            ),
+            self._make_recording("TITLE TWO", "ID TWO", 200.0 * 1000.0),
         ]
-        release = self._make_release(tracks=tracks)
+        release = self._make_release(recordings=recordings)
         d = self.mb.album_info(release)
         assert len(d.tracks) == 2
         assert d.tracks[0].title == "TITLE ONE"
         assert d.tracks[1].title == "TITLE TWO"
 
     def test_skip_audio_data_tracks_by_default(self):
-        tracks = [
-            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
-            self._make_track("TITLE TWO", "ID TWO", 200.0 * 1000.0),
+        recordings = [
+            self._make_recording("TITLE ONE", "ID ONE", 100.0 * 1000.0),
+            self._make_recording("TITLE TWO", "ID TWO", 200.0 * 1000.0),
         ]
         data_tracks = [
-            self._make_track(
+            self._make_recording(
                 "TITLE AUDIO DATA", "ID DATA TRACK", 100.0 * 1000.0
             )
         ]
-        release = self._make_release(tracks=tracks, data_tracks=data_tracks)
+        release = self._make_release(
+            recordings=recordings, data_tracks=data_tracks
+        )
         d = self.mb.album_info(release)
         assert len(d.tracks) == 2
         assert d.tracks[0].title == "TITLE ONE"
@@ -743,16 +762,18 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
 
     def test_no_skip_audio_data_tracks_if_configured(self):
         config["match"]["ignore_data_tracks"] = False
-        tracks = [
-            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
-            self._make_track("TITLE TWO", "ID TWO", 200.0 * 1000.0),
+        recordings = [
+            self._make_recording("TITLE ONE", "ID ONE", 100.0 * 1000.0),
+            self._make_recording("TITLE TWO", "ID TWO", 200.0 * 1000.0),
         ]
         data_tracks = [
-            self._make_track(
+            self._make_recording(
                 "TITLE AUDIO DATA", "ID DATA TRACK", 100.0 * 1000.0
             )
         ]
-        release = self._make_release(tracks=tracks, data_tracks=data_tracks)
+        release = self._make_release(
+            recordings=recordings, data_tracks=data_tracks
+        )
         d = self.mb.album_info(release)
         assert len(d.tracks) == 3
         assert d.tracks[0].title == "TITLE ONE"
@@ -760,30 +781,32 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert d.tracks[2].title == "TITLE AUDIO DATA"
 
     def test_skip_video_tracks_by_default(self):
-        tracks = [
-            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
-            self._make_track(
+        recordings = [
+            self._make_recording("TITLE ONE", "ID ONE", 100.0 * 1000.0),
+            self._make_recording(
                 "TITLE VIDEO", "ID VIDEO", 100.0 * 1000.0, False, True
             ),
-            self._make_track("TITLE TWO", "ID TWO", 200.0 * 1000.0),
+            self._make_recording("TITLE TWO", "ID TWO", 200.0 * 1000.0),
         ]
-        release = self._make_release(tracks=tracks)
+        release = self._make_release(recordings=recordings)
         d = self.mb.album_info(release)
         assert len(d.tracks) == 2
         assert d.tracks[0].title == "TITLE ONE"
         assert d.tracks[1].title == "TITLE TWO"
 
     def test_skip_video_data_tracks_by_default(self):
-        tracks = [
-            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
-            self._make_track("TITLE TWO", "ID TWO", 200.0 * 1000.0),
+        recordings = [
+            self._make_recording("TITLE ONE", "ID ONE", 100.0 * 1000.0),
+            self._make_recording("TITLE TWO", "ID TWO", 200.0 * 1000.0),
         ]
         data_tracks = [
-            self._make_track(
+            self._make_recording(
                 "TITLE VIDEO", "ID VIDEO", 100.0 * 1000.0, False, True
             )
         ]
-        release = self._make_release(tracks=tracks, data_tracks=data_tracks)
+        release = self._make_release(
+            recordings=recordings, data_tracks=data_tracks
+        )
         d = self.mb.album_info(release)
         assert len(d.tracks) == 2
         assert d.tracks[0].title == "TITLE ONE"
@@ -792,14 +815,14 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
     def test_no_skip_video_tracks_if_configured(self):
         config["match"]["ignore_data_tracks"] = False
         config["match"]["ignore_video_tracks"] = False
-        tracks = [
-            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
-            self._make_track(
+        recordings = [
+            self._make_recording("TITLE ONE", "ID ONE", 100.0 * 1000.0),
+            self._make_recording(
                 "TITLE VIDEO", "ID VIDEO", 100.0 * 1000.0, False, True
             ),
-            self._make_track("TITLE TWO", "ID TWO", 200.0 * 1000.0),
+            self._make_recording("TITLE TWO", "ID TWO", 200.0 * 1000.0),
         ]
-        release = self._make_release(tracks=tracks)
+        release = self._make_release(recordings=recordings)
         d = self.mb.album_info(release)
         assert len(d.tracks) == 3
         assert d.tracks[0].title == "TITLE ONE"
@@ -809,16 +832,18 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
     def test_no_skip_video_data_tracks_if_configured(self):
         config["match"]["ignore_data_tracks"] = False
         config["match"]["ignore_video_tracks"] = False
-        tracks = [
-            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
-            self._make_track("TITLE TWO", "ID TWO", 200.0 * 1000.0),
+        recordings = [
+            self._make_recording("TITLE ONE", "ID ONE", 100.0 * 1000.0),
+            self._make_recording("TITLE TWO", "ID TWO", 200.0 * 1000.0),
         ]
         data_tracks = [
-            self._make_track(
+            self._make_recording(
                 "TITLE VIDEO", "ID VIDEO", 100.0 * 1000.0, False, True
             )
         ]
-        release = self._make_release(tracks=tracks, data_tracks=data_tracks)
+        release = self._make_release(
+            recordings=recordings, data_tracks=data_tracks
+        )
         d = self.mb.album_info(release)
         assert len(d.tracks) == 3
         assert d.tracks[0].title == "TITLE ONE"
@@ -826,16 +851,16 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert d.tracks[2].title == "TITLE VIDEO"
 
     def test_track_disambiguation(self):
-        tracks = [
-            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
-            self._make_track(
+        recordings = [
+            self._make_recording("TITLE ONE", "ID ONE", 100.0 * 1000.0),
+            self._make_recording(
                 "TITLE TWO",
                 "ID TWO",
                 200.0 * 1000.0,
                 disambiguation="SECOND TRACK",
             ),
         ]
-        release = self._make_release(tracks=tracks)
+        release = self._make_release(recordings=recordings)
 
         d = self.mb.album_info(release)
         t = d.tracks
@@ -844,16 +869,16 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert t[1].trackdisambig == "SECOND TRACK"
 
     def test_missing_tracks(self):
-        tracks = [
-            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
-            self._make_track(
+        recordings = [
+            self._make_recording("TITLE ONE", "ID ONE", 100.0 * 1000.0),
+            self._make_recording(
                 "TITLE TWO",
                 "ID TWO",
                 200.0 * 1000.0,
                 disambiguation="SECOND TRACK",
             ),
         ]
-        release = self._make_release(tracks=tracks)
+        release = self._make_release(recordings=recordings)
         release["media"].append(release["media"][0])
         del release["media"][0]["tracks"]
         del release["media"][0]["data_tracks"]
