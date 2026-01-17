@@ -372,10 +372,10 @@ class MusicBrainzPlugin(
             info.artists_ids = _artist_ids(recording["artist_credit"])
             info.artist_id = info.artists_ids[0]
 
-        if length := recording.get("length"):
+        if length := recording["length"]:
             info.length = length / 1000.0
 
-        info.trackdisambig = recording.get("disambiguation")
+        info.trackdisambig = recording["disambiguation"] or None
 
         if recording.get("isrcs"):
             info.isrc = ";".join(recording["isrcs"])
