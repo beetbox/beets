@@ -657,6 +657,7 @@ class Item(LibModel):
         "work_disambig": types.STRING,
         "arranger": types.STRING,
         "grouping": types.STRING,
+        "subtitle": types.STRING,
         "year": types.PaddedInt(4),
         "month": types.PaddedInt(2),
         "day": types.PaddedInt(2),

@@ -1870,13 +1870,13 @@ files = [
 
 [[package]]
 name = "mediafile"
-version = "0.13.0"
-description = "Handles low-level interfacing for files' tags. Wraps Mutagen to"
+version = "0.14.0"
+description = "A simple, cross-format library for reading and writing media file metadata."
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.10"
 files = [
-    {file = "mediafile-0.13.0-py3-none-any.whl", hash = "sha256:cd8d183d0e0671b5203a86e92cf4e3338ecc892a1ec9dcd7ec0ed87779e514cb"},
-    {file = "mediafile-0.13.0.tar.gz", hash = "sha256:de71063e1bffe9733d6ccad526ea7dac8a9ce760105827f81ab0cb034c729a6d"},
+    {file = "mediafile-0.14.0-py3-none-any.whl", hash = "sha256:6f5c3c9e1535bfdb4f299d1558862f063bf3e8a4f1e0ec9df04a3c5bdc620ecc"},
+    {file = "mediafile-0.14.0.tar.gz", hash = "sha256:4b56aeae5cad227f25c11721347a8d85e502080852ddc6351fd43e6cdf6fa3f7"},
 ]
 
 [package.dependencies]
@@ -1884,7 +1884,7 @@ filetype = ">=1.2.0"
 mutagen = ">=1.46"
 
 [package.extras]
-test = ["tox"]
+docs = ["sphinx (>=7.4.7)"]
 
 [[package]]
 name = "more-itertools"
