@@ -11,11 +11,7 @@ from beets.autotag.distance import Distance
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.library import Item
 from beets.test.helper import PluginMixin
-from beetsplug.mbpseudo import (
-    _STATUS_PSEUDO,
-    MusicBrainzPseudoReleasePlugin,
-    PseudoAlbumInfo,
-)
+from beetsplug.musicbrainz import MusicBrainzPlugin, PseudoAlbumInfo
 
 if TYPE_CHECKING:
     import pathlib
@@ -25,7 +21,7 @@ if TYPE_CHECKING:
 
 @pytest.fixture(scope="module")
 def rsrc_dir(pytestconfig: pytest.Config):
-    return pytestconfig.rootpath / "test" / "rsrc" / "mbpseudo"
+    return pytestconfig.rootpath / "test" / "rsrc" / "musicbrainz"
 
 
 @pytest.fixture
@@ -71,6 +67,7 @@ class TestPseudoAlbumInfo:
         self, official_release_info: AlbumInfo, pseudo_release_info: AlbumInfo
     ):
         info = PseudoAlbumInfo(pseudo_release_info, official_release_info)
+        info.use_pseudo_as_ref()
         assert info.album == "In Bloom"
 
     def test_get_attr_from_official(
@@ -95,59 +92,59 @@ class TestPseudoAlbumInfo:
 
 
 class TestMBPseudoMixin(PluginMixin):
-    plugin = "mbpseudo"
+    plugin = "musicbrainz"
 
     @pytest.fixture(autouse=True)
-    def patch_get_release(self, monkeypatch, pseudo_release: JSONDict):
+    def patch_get_release(
+        self,
+        monkeypatch,
+        official_release: JSONDict,
+        pseudo_release: JSONDict,
+    ):
+        def mock_get_release(_, album_id: str, **kwargs):
+            if album_id == official_release["id"]:
+                return deepcopy(official_release)
+            else:
+                return deepcopy(pseudo_release)
+
         monkeypatch.setattr(
             "beetsplug._utils.musicbrainz.MusicBrainzAPI.get_release",
-            lambda _, album_id: deepcopy(
-                {pseudo_release["id"]: pseudo_release}[album_id]
-            ),
+            mock_get_release,
         )
 
     @pytest.fixture(scope="class")
     def plugin_config(self):
-        return {"scripts": ["Latn", "Dummy"]}
+        return {"pseudo_releases": {"scripts": ["Latn", "Dummy"]}}
 
     @pytest.fixture
-    def mbpseudo_plugin(self, plugin_config) -> MusicBrainzPseudoReleasePlugin:
+    def musicbrainz_plugin(self, plugin_config) -> MusicBrainzPlugin:
         self.config[self.plugin].set(plugin_config)
-        return MusicBrainzPseudoReleasePlugin()
+        return MusicBrainzPlugin()
 
-
-class TestMBPseudoPlugin(TestMBPseudoMixin):
-    def test_scripts_init(
-        self, mbpseudo_plugin: MusicBrainzPseudoReleasePlugin
-    ):
-        assert mbpseudo_plugin._scripts == ["Latn", "Dummy"]
-
-    @pytest.mark.parametrize(
-        "album_id",
-        [
-            "a5ce1d11-2e32-45a4-b37f-c1589d46b103",
-            "-5ce1d11-2e32-45a4-b37f-c1589d46b103",
-        ],
-    )
-    def test_extract_id_uses_music_brainz_pattern(
-        self,
-        mbpseudo_plugin: MusicBrainzPseudoReleasePlugin,
-        album_id: str,
-    ):
-        if album_id.startswith("-"):
-            assert mbpseudo_plugin._extract_id(album_id) is None
+    @staticmethod
+    def get_album_info(
+        musicbrainz_plugin: MusicBrainzPlugin,
+        raw: JSONDict,
+    ) -> AlbumInfo:
+        if info := musicbrainz_plugin.album_for_id(raw["id"]):
+            return info
         else:
-            assert mbpseudo_plugin._extract_id(album_id) == album_id
+            raise AssertionError("AlbumInfo is None")
+
+
+class TestMBPseudoReleases(TestMBPseudoMixin):
+    def test_scripts_init(self, musicbrainz_plugin: MusicBrainzPlugin):
+        assert musicbrainz_plugin._scripts == ["Latn", "Dummy"]
 
     def test_album_info_for_pseudo_release(
         self,
-        mbpseudo_plugin: MusicBrainzPseudoReleasePlugin,
+        musicbrainz_plugin: MusicBrainzPlugin,
         pseudo_release: JSONDict,
     ):
-        album_info = mbpseudo_plugin.album_info(pseudo_release)
-        assert not isinstance(album_info, PseudoAlbumInfo)
-        assert album_info.data_source == "MusicBrainzPseudoRelease"
-        assert album_info.albumstatus == _STATUS_PSEUDO
+        album_info = self.get_album_info(musicbrainz_plugin, pseudo_release)
+        assert isinstance(album_info, PseudoAlbumInfo)
+        assert album_info.data_source == "MusicBrainz"
+        assert album_info.albumstatus == "Official"
 
     @pytest.mark.parametrize(
         "json_key",
@@ -159,41 +156,51 @@ class TestMBPseudoPlugin(TestMBPseudoMixin):
     )
     def test_interception_skip_when_rel_values_dont_match(
         self,
-        mbpseudo_plugin: MusicBrainzPseudoReleasePlugin,
+        musicbrainz_plugin: MusicBrainzPlugin,
         official_release: JSONDict,
         json_key: str,
     ):
-        del official_release["release-relations"][0][json_key]
+        for r in official_release["release-relations"]:
+            del r[json_key]
 
-        album_info = mbpseudo_plugin.album_info(official_release)
+        album_info = self.get_album_info(musicbrainz_plugin, official_release)
         assert not isinstance(album_info, PseudoAlbumInfo)
-        assert album_info.data_source == "MusicBrainzPseudoRelease"
+        assert album_info.data_source == "MusicBrainz"
 
     def test_interception_skip_when_script_doesnt_match(
         self,
-        mbpseudo_plugin: MusicBrainzPseudoReleasePlugin,
+        musicbrainz_plugin: MusicBrainzPlugin,
         official_release: JSONDict,
     ):
-        official_release["release-relations"][0]["release"][
-            "text-representation"
-        ]["script"] = "Null"
+        for r in official_release["release-relations"]:
+            r["release"]["text-representation"]["script"] = "Null"
 
-        album_info = mbpseudo_plugin.album_info(official_release)
+        album_info = self.get_album_info(musicbrainz_plugin, official_release)
         assert not isinstance(album_info, PseudoAlbumInfo)
-        assert album_info.data_source == "MusicBrainzPseudoRelease"
+        assert album_info.data_source == "MusicBrainz"
+
+    def test_interception_skip_when_relations_missing(
+        self,
+        musicbrainz_plugin: MusicBrainzPlugin,
+        official_release: JSONDict,
+    ):
+        del official_release["release-relations"]
+        album_info = self.get_album_info(musicbrainz_plugin, official_release)
+        assert not isinstance(album_info, PseudoAlbumInfo)
+        assert album_info.data_source == "MusicBrainz"
 
     def test_interception(
         self,
-        mbpseudo_plugin: MusicBrainzPseudoReleasePlugin,
+        musicbrainz_plugin: MusicBrainzPlugin,
         official_release: JSONDict,
     ):
-        album_info = mbpseudo_plugin.album_info(official_release)
+        album_info = self.get_album_info(musicbrainz_plugin, official_release)
         assert isinstance(album_info, PseudoAlbumInfo)
-        assert album_info.data_source == "MusicBrainzPseudoRelease"
+        assert album_info.data_source == "MusicBrainz"
 
     def test_final_adjustment_skip(
         self,
-        mbpseudo_plugin: MusicBrainzPseudoReleasePlugin,
+        musicbrainz_plugin: MusicBrainzPlugin,
     ):
         match = AlbumMatch(
             distance=Distance(),
@@ -202,20 +209,18 @@ class TestMBPseudoPlugin(TestMBPseudoMixin):
             extra_items=[],
             extra_tracks=[],
         )
-
-        mbpseudo_plugin._adjust_final_album_match(match)
-        assert match.info.data_source == "mb"
+        musicbrainz_plugin._adjust_final_album_match(match)
 
     def test_final_adjustment(
         self,
-        mbpseudo_plugin: MusicBrainzPseudoReleasePlugin,
+        musicbrainz_plugin: MusicBrainzPlugin,
         official_release_info: AlbumInfo,
         pseudo_release_info: AlbumInfo,
     ):
         pseudo_album_info = PseudoAlbumInfo(
             pseudo_release=pseudo_release_info,
             official_release=official_release_info,
-            data_source=mbpseudo_plugin.data_source,
+            data_source=musicbrainz_plugin.data_source,
         )
         pseudo_album_info.use_official_as_ref()
 
@@ -230,28 +235,33 @@ class TestMBPseudoPlugin(TestMBPseudoMixin):
             extra_tracks=[],
         )
 
-        mbpseudo_plugin._adjust_final_album_match(match)
+        musicbrainz_plugin._adjust_final_album_match(match)
 
         assert match.info.data_source == "MusicBrainz"
         assert match.info.album_id == "pseudo"
         assert match.info.album == "In Bloom"
 
 
-class TestMBPseudoPluginCustomTagsOnly(TestMBPseudoMixin):
+class TestMBPseudoReleasesCustomTagsOnly(TestMBPseudoMixin):
     @pytest.fixture(scope="class")
     def plugin_config(self):
-        return {"scripts": ["Latn", "Dummy"], "custom_tags_only": True}
+        return {
+            "pseudo_releases": {
+                "scripts": ["Latn", "Dummy"],
+                "custom_tags_only": True,
+            }
+        }
 
     def test_custom_tags(
         self,
         config,
-        mbpseudo_plugin: MusicBrainzPseudoReleasePlugin,
+        musicbrainz_plugin: MusicBrainzPlugin,
         official_release: JSONDict,
     ):
-        config["import"]["languages"] = ["en", "jp"]
-        album_info = mbpseudo_plugin.album_info(official_release)
+        config["import"]["languages"] = []
+        album_info = self.get_album_info(musicbrainz_plugin, official_release)
         assert not isinstance(album_info, PseudoAlbumInfo)
-        assert album_info.data_source == "MusicBrainzPseudoRelease"
+        assert album_info.data_source == "MusicBrainz"
         assert album_info["album_transl"] == "In Bloom"
         assert album_info["album_artist_transl"] == "Lilas Ikuta"
         assert album_info.tracks[0]["title_transl"] == "In Bloom"
@@ -260,13 +270,14 @@ class TestMBPseudoPluginCustomTagsOnly(TestMBPseudoMixin):
     def test_custom_tags_with_import_languages(
         self,
         config,
-        mbpseudo_plugin: MusicBrainzPseudoReleasePlugin,
+        musicbrainz_plugin: MusicBrainzPlugin,
         official_release: JSONDict,
     ):
         config["import"]["languages"] = []
-        album_info = mbpseudo_plugin.album_info(official_release)
+        config["import"]["languages"] = ["en", "jp"]
+        album_info = self.get_album_info(musicbrainz_plugin, official_release)
         assert not isinstance(album_info, PseudoAlbumInfo)
-        assert album_info.data_source == "MusicBrainzPseudoRelease"
+        assert album_info.data_source == "MusicBrainz"
         assert album_info["album_transl"] == "In Bloom"
         assert album_info["album_artist_transl"] == "Lilas Ikuta"
         assert album_info.tracks[0]["title_transl"] == "In Bloom"
