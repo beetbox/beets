@@ -48,6 +48,8 @@ New features:
 
 Bug fixes:
 
+- Handle potential OSError when unlinking temporary files in ArtResizer.
+  :bug:`5615`
 - :doc:`/plugins/spotify`: Updated Spotify API credentials. :bug:`6270`
 - :doc:`/plugins/smartplaylist`: Fixed an issue where multiple queries in a
   playlist configuration were not preserving their order, causing items to
@@ -474,8 +476,6 @@ Bug fixes:
   result. Update the default ``sources`` configuration to prioritize ``lrclib``
   over other sources since it returns reliable results quicker than others.
   :bug:`5102`
-- Handle potential OSError when unlinking temporary files in ArtResizer.
-  :bug:`5615`
 - :doc:`plugins/lyrics`: Fix the issue with ``genius`` backend not being able to
   match lyrics when there is a slight variation in the artist name. :bug:`4791`
 - :doc:`plugins/lyrics`: Fix plugin crash when ``genius`` backend returns empty
