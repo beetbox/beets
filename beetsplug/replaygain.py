@@ -28,7 +28,9 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from multiprocessing.pool import ThreadPool
 from threading import Event, Thread
-from typing import TYPE_CHECKING, Any, TypeVar
+import shutil
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeVar
 
 from beets import ui
 from beets.plugins import BeetsPlugin
@@ -542,9 +544,19 @@ class FfmpegBackend(Backend):
 
 
 # mpgain/aacgain CLI tool backend.
+Tool = Literal["mp3rgain", "aacgain", "mp3gain"]
+
+
 class CommandBackend(Backend):
     NAME = "command"
+    SUPPORTED_FORMATS_BY_TOOL: ClassVar[dict[Tool, set[str]]] = {
+        "mp3rgain": {"AAC", "MP3"},
+        "aacgain": {"AAC", "MP3"},
+        "mp3gain": {"MP3"},
+    }
     do_parallel = True
+
+    cmd_name: Tool
 
     def __init__(self, config: ConfigView, log: Logger):
         super().__init__(config, log)
@@ -555,26 +567,35 @@ class CommandBackend(Backend):
             }
         )
 
-        self.command: str = config["command"].as_str()
+        cmd_path: Path = Path(config["command"].as_str())
+        supported_tools = set(self.SUPPORTED_FORMATS_BY_TOOL)
 
-        if self.command:
-            # Explicit executable path.
-            if not os.path.isfile(self.command):
+        if cmd_path.name:
+            # Explicit command specified
+            if cmd_path.name not in supported_tools:
                 raise FatalReplayGainError(
-                    f"replaygain command does not exist: {self.command}"
+                    f"replaygain.command must be one of {supported_tools!r},"
+                    f" not {cmd_path.name!r}"
+                )
+            if command_exec := shutil.which(str(cmd_path)):
+                self.command = command_exec
+                self.cmd_name = cmd_path.name  # type: ignore[assignment]
+            else:
+                raise FatalReplayGainError(
+                    f"replaygain command not found: {cmd_path}"
                 )
         else:
             # Check whether the program is in $PATH.
             for cmd in ("mp3rgain", "mp3gain", "aacgain"):
-                try:
-                    call([cmd, "-v"], self._log)
-                    self.command = cmd
-                except OSError:
-                    pass
-        if not self.command:
-            raise FatalReplayGainError(
-                "no replaygain command found: install mp3rgain, mp3gain, or aacgain"
-            )
+                if command_exec := shutil.which(cmd):
+                    self.command = command_exec
+                    self.cmd_name = cmd  # type: ignore[assignment]
+                    break
+            else:
+                raise FatalReplayGainError(
+                    "no replaygain command found: install mp3rgain, mp3gain, "
+                    "or aacgain"
+                )
 
         self.noclip = config["noclip"].get(bool)
 
@@ -608,19 +629,7 @@ class CommandBackend(Backend):
 
     def format_supported(self, item: Item) -> bool:
         """Checks whether the given item is supported by the selected tool."""
-        # Get the base name of the command for comparison
-        cmd_name = os.path.basename(self.command).lower()
-
-        if cmd_name.startswith("mp3rgain"):
-            # mp3rgain supports MP3 and AAC/M4A formats
-            return item.format in ("MP3", "AAC")
-        elif cmd_name.startswith("aacgain"):
-            # aacgain supports MP3 and AAC formats
-            return item.format in ("MP3", "AAC")
-        elif cmd_name.startswith("mp3gain"):
-            # mp3gain only supports MP3
-            return item.format == "MP3"
-        return True
+        return item.format in self.SUPPORTED_FORMATS_BY_TOOL[self.cmd_name]
 
     def compute_gain(
         self,
