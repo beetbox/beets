@@ -607,12 +607,8 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
         if release.get("disambiguation"):
             info.albumdisambig = release.get("disambiguation")
 
-        # Get the "classic" Release type. This data comes from a legacy API
-        # feature before MusicBrainz supported multiple release types.
-        if "type" in release["release-group"]:
-            reltype = release["release-group"]["type"]
-            if reltype:
-                info.albumtype = reltype.lower()
+        if reltype := release["release-group"].get("primary-type"):
+            info.albumtype = reltype.lower()
 
         # Set the new-style "primary" and "secondary" release types.
         albumtypes = []
