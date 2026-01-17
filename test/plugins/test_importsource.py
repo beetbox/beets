@@ -144,3 +144,35 @@ class ImportSourceTest(PluginMixin, AutotagImportTestCase):
         plugin = plugins._instances[0]
         mock_task = MockTask()
         plugin.prevent_suggest_removal(None, mock_task)
+
+
+class ImportSourceTestListenerRegistration(PluginMixin, AutotagImportTestCase):
+    """Test listener registration based on config."""
+
+    plugin = "importsource"
+    preload_plugin = False
+
+    def setUp(self):
+        preserve_plugin_listeners()
+        super().setUp()
+
+    def test_listeners_not_registered_when_disabled(self):
+        """Test that listeners are not registered when suggest_removal is False."""
+        self.config[self.plugin]["suggest_removal"] = False
+        self.load_plugins()
+
+        plugin = plugins._instances[0]
+        assert not hasattr(plugin, "stop_suggestions_for_albums")
+        assert "item_removed" not in plugin._raw_listeners
+        assert "import_task_choice" not in plugin._raw_listeners
+
+    def test_listeners_registered_when_enabled(self):
+        """Test that listeners are registered when suggest_removal is True."""
+        self.config[self.plugin]["suggest_removal"] = True
+        self.load_plugins()
+
+        plugin = plugins._instances[0]
+        assert hasattr(plugin, "stop_suggestions_for_albums")
+        assert isinstance(plugin.stop_suggestions_for_albums, set)
+        assert "item_removed" in plugin._raw_listeners
+        assert "import_task_choice" in plugin._raw_listeners
