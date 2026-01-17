@@ -20,6 +20,7 @@ import enum
 import math
 import os
 import queue
+import shutil
 import signal
 import subprocess
 import sys
@@ -27,9 +28,8 @@ import warnings
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from multiprocessing.pool import ThreadPool
-from threading import Event, Thread
-import shutil
 from pathlib import Path
+from threading import Event, Thread
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeVar
 
 from beets import ui
