@@ -56,7 +56,7 @@ class CompletionTest(IOMixin, TestPluginTestCase):
         test_script_name = os.path.join(_common.RSRC, b"test_completion.sh")
         with open(test_script_name, "rb") as test_script_file:
             tester.stdin.writelines(test_script_file)
-        out, err = tester.communicate()
+        out, _ = tester.communicate()
         assert tester.returncode == 0
         assert out == b"completion tests passed\n", (
             "test/test_completion.sh did not execute properly. "

@@ -17,6 +17,7 @@
 from datetime import datetime
 from os.path import basename
 from time import mktime
+from typing import ClassVar
 from xml.sax.saxutils import quoteattr
 
 from beets.dbcore import types
@@ -35,7 +36,7 @@ dbus = import_dbus()
 
 
 class Amarok(MetaSource):
-    item_types = {
+    item_types: ClassVar[dict[str, types.Type]] = {
         "amarok_rating": types.INTEGER,
         "amarok_score": types.FLOAT,
         "amarok_uid": types.STRING,

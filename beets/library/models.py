@@ -7,7 +7,7 @@ import time
 import unicodedata
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from mediafile import MediaFile, UnreadableFileError
 
@@ -229,7 +229,7 @@ class Album(LibModel):
     _table = "albums"
     _flex_table = "album_attributes"
     _always_dirty = True
-    _fields = {
+    _fields: ClassVar[dict[str, types.Type]] = {
         "id": types.PRIMARY_ID,
         "artpath": types.NullPathType(),
         "added": types.DATE,
@@ -282,13 +282,13 @@ class Album(LibModel):
     def _types(cls) -> dict[str, types.Type]:
         return {**super()._types, "path": types.PathType()}
 
-    _sorts = {
+    _sorts: ClassVar[dict[str, type[dbcore.query.FieldSort]]] = {
         "albumartist": dbcore.query.SmartArtistSort,
         "artist": dbcore.query.SmartArtistSort,
     }
 
     # List of keys that are set on an album's items.
-    item_keys = [
+    item_keys: ClassVar[list[str]] = [
         "added",
         "albumartist",
         "albumartists",
@@ -626,7 +626,7 @@ class Item(LibModel):
 
     _table = "items"
     _flex_table = "item_attributes"
-    _fields = {
+    _fields: ClassVar[dict[str, types.Type]] = {
         "id": types.PRIMARY_ID,
         "path": types.PathType(),
         "album_id": types.FOREIGN_ID,
@@ -747,7 +747,9 @@ class Item(LibModel):
 
     _formatter = FormattedItemMapping
 
-    _sorts = {"artist": dbcore.query.SmartArtistSort}
+    _sorts: ClassVar[dict[str, type[dbcore.query.FieldSort]]] = {
+        "artist": dbcore.query.SmartArtistSort
+    }
 
     @cached_classproperty
     def _queries(cls) -> dict[str, FieldQueryType]:

@@ -256,13 +256,11 @@ class TerminalImportSession(importer.ImportSession):
 
         # Add a "dummy" choice for the other baked-in option, for
         # duplicate checking.
-        all_choices = (
-            [
-                PromptChoice("a", "Apply", None),
-            ]
-            + choices
-            + extra_choices
-        )
+        all_choices = [
+            PromptChoice("a", "Apply", None),
+            *choices,
+            *extra_choices,
+        ]
 
         # Check for conflicts.
         short_letters = [c.short for c in all_choices]
@@ -501,7 +499,7 @@ def choose_candidate(
         if config["import"]["bell"]:
             ui.print_("\a", end="")
         sel = ui.input_options(
-            ("Apply", "More candidates") + choice_opts,
+            ("Apply", "More candidates", *choice_opts),
             require=require,
             default=default,
         )

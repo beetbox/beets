@@ -1084,7 +1084,7 @@ class PathStringTest(BeetsTestCase):
         assert isinstance(self.i.path, bytes)
 
     def test_fetched_item_path_is_bytestring(self):
-        i = list(self.lib.items())[0]
+        i = next(iter(self.lib.items()))
         assert isinstance(i.path, bytes)
 
     def test_unicode_path_becomes_bytestring(self):
@@ -1098,14 +1098,14 @@ class PathStringTest(BeetsTestCase):
         """,
             (self.i.id, "somepath"),
         )
-        i = list(self.lib.items())[0]
+        i = next(iter(self.lib.items()))
         assert isinstance(i.path, bytes)
 
     def test_special_chars_preserved_in_database(self):
         path = "b\xe1r".encode()
         self.i.path = path
         self.i.store()
-        i = list(self.lib.items())[0]
+        i = next(iter(self.lib.items()))
         assert i.path == path
 
     def test_special_char_path_added_to_database(self):
@@ -1114,7 +1114,7 @@ class PathStringTest(BeetsTestCase):
         i = item()
         i.path = path
         self.lib.add(i)
-        i = list(self.lib.items())[0]
+        i = next(iter(self.lib.items()))
         assert i.path == path
 
     def test_destination_returns_bytestring(self):

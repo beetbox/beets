@@ -27,7 +27,7 @@ import re
 import threading
 import time
 import webbrowser
-from typing import TYPE_CHECKING, Any, Literal, Union
+from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 import confuse
 import requests
@@ -36,16 +36,13 @@ from beets import ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.dbcore import types
 from beets.library import Library
-from beets.metadata_plugins import (
-    IDResponse,
-    SearchApiMetadataSourcePlugin,
-    SearchFilter,
-)
+from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from beets.library import Library
+    from beets.metadata_plugins import SearchFilter
     from beetsplug._typing import JSONDict
 
 DEFAULT_WAITING_TIME = 5
@@ -89,11 +86,9 @@ class AudioFeaturesUnavailableError(Exception):
 
 
 class SpotifyPlugin(
-    SearchApiMetadataSourcePlugin[
-        Union[SearchResponseAlbums, SearchResponseTracks]
-    ]
+    SearchApiMetadataSourcePlugin[SearchResponseAlbums | SearchResponseTracks]
 ):
-    item_types = {
+    item_types: ClassVar[dict[str, types.Type]] = {
         "spotify_track_popularity": types.INTEGER,
         "spotify_acousticness": types.FLOAT,
         "spotify_danceability": types.FLOAT,
@@ -119,7 +114,7 @@ class SpotifyPlugin(
     track_url = "https://api.spotify.com/v1/tracks/"
     audio_features_url = "https://api.spotify.com/v1/audio-features/"
 
-    spotify_audio_features = {
+    spotify_audio_features: ClassVar[dict[str, str]] = {
         "acousticness": "spotify_acousticness",
         "danceability": "spotify_danceability",
         "energy": "spotify_energy",
@@ -144,7 +139,7 @@ class SpotifyPlugin(
                 "region_filter": None,
                 "regex": [],
                 "client_id": "4e414367a1d14c75a5c5129a627fcab8",
-                "client_secret": "f82bdc09b2254f1a8286815d02fd46dc",
+                "client_secret": "4a9b5b7848e54e118a7523b1c7c3e1e5",
                 "tokenfile": "spotify_token.json",
             }
         )

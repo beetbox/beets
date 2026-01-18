@@ -17,13 +17,13 @@ def __getattr__(name: str):
 
 
 __all__ = [
-    "Library",
-    "LibModel",
     "Album",
-    "Item",
-    "parse_query_parts",
-    "parse_query_string",
     "FileOperationError",
+    "Item",
+    "LibModel",
+    "Library",
     "ReadError",
     "WriteError",
+    "parse_query_parts",
+    "parse_query_string",
 ]
