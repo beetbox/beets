@@ -261,7 +261,8 @@ class ZeroPluginTest(PluginTestCase):
 
         mf = MediaFile(syspath(item.path))
         assert mf.comments is None
-        assert mf.disc == 0
+        assert mf.disc is None
+        assert mf.disctotal is None
 
     def test_omit_single_disc_with_tags_multi(self):
         item = self.add_item_fixture(
@@ -276,6 +277,7 @@ class ZeroPluginTest(PluginTestCase):
         mf = MediaFile(syspath(item.path))
         assert mf.comments is None
         assert mf.disc == 1
+        assert mf.disctotal == 4
 
     def test_omit_single_disc_only_change_single(self):
         item = self.add_item_fixture(disctotal=1, disc=1)
@@ -285,7 +287,8 @@ class ZeroPluginTest(PluginTestCase):
             item.write()
 
         mf = MediaFile(syspath(item.path))
-        assert mf.disc == 0
+        assert mf.disc is None
+        assert mf.disctotal is None
 
     def test_omit_single_disc_only_change_multi(self):
         item = self.add_item_fixture(disctotal=4, disc=1)
@@ -296,6 +299,7 @@ class ZeroPluginTest(PluginTestCase):
 
         mf = MediaFile(syspath(item.path))
         assert mf.disc == 1
+        assert mf.disctotal == 4
 
     def test_empty_query_n_response_no_changes(self):
         item = self.add_item_fixture(
