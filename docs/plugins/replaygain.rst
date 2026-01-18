@@ -51,24 +51,59 @@ configuration file:
 
 The GStreamer backend does not support parallel analysis.
 
-mp3gain, aacgain, and mp3rgain
+Supported ``command`` backends
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In order to use this backend, you will need to install the mp3gain_ command-line
-tool, the aacgain_ fork, or mp3rgain_. Here are some hints:
+In order to use this backend, you will need to install a supported command-line
+tool:
 
-- On Mac OS X, you can use Homebrew_. Type ``brew install aacgain`` or ``brew
-  install mp3rgain``.
+- mp3gain_ (MP3 only)
+- aacgain_ (MP3, AAC/M4A)
+- mp3rgain_ (MP3, AAC/M4A)
+
+mp3gain
++++++++
+
 - On Linux, mp3gain_ is probably in your repositories. On Debian or Ubuntu, for
-  example, you can run ``apt-get install mp3gain``. Alternatively, mp3rgain is
-  available via Nix (``nix-env -iA nixpkgs.mp3rgain``) or AUR for Arch Linux.
-- On Windows, download and install mp3rgain_ (recommended) or the original
-  mp3gain_.
+  example, you can run ``apt-get install mp3gain``.
+- On Windows, download and install mp3gain_.
 
-mp3rgain_ is a modern Rust rewrite of mp3gain that also supports AAC/M4A files.
-It addresses security vulnerabilities (CVE-2021-34085, CVE-2019-18359) present
-in the original mp3gain and works on modern systems including Windows 11 and
-macOS with Apple Silicon.
+aacgain
++++++++
+
+- On macOS, install via Homebrew_: ``brew install aacgain``.
+- For other platforms, download from aacgain_ or use a compatible fork if
+  available for your system.
+
+mp3rgain
+++++++++
+
+mp3rgain_ is a modern Rust rewrite of ``mp3gain`` that also supports AAC/M4A
+files. It addresses security vulnerability CVE-2019-18359 present in the
+original mp3gain and works on modern systems including Windows 11 and macOS with
+Apple Silicon.
+
+- On macOS, install via Homebrew_: ``brew install mp3rgain``.
+- On Linux, install via Nix: ``nix-env -iA nixpkgs.mp3rgain`` or from your
+  distribution packaging (for example, AUR on Arch Linux).
+- On Windows, download and install mp3rgain_.
+
+Configuration
++++++++++++++
+
+.. code-block:: yaml
+
+    replaygain:
+        backend: command
+        command: # mp3rgain, mp3gain, or aacgain
+
+If beets doesn't automatically find the command executable, you can configure
+the path explicitly like so:
+
+.. code-block:: yaml
+
+    replaygain:
+        command: /Applications/MacMP3Gain.app/Contents/Resources/aacgain
 
 .. _aacgain: https://aacgain.altosdesign.com
 
@@ -77,22 +112,6 @@ macOS with Apple Silicon.
 .. _mp3gain: http://mp3gain.sourceforge.net/download.php
 
 .. _mp3rgain: https://github.com/M-Igashi/mp3rgain
-
-Then, enable the plugin (see :ref:`using-plugins`) and specify the "command"
-backend in your configuration file:
-
-::
-
-    replaygain:
-        backend: command
-
-If beets doesn't automatically find the ``mp3gain`` or ``aacgain`` executable,
-you can configure the path explicitly like so:
-
-::
-
-    replaygain:
-        command: /Applications/MacMP3Gain.app/Contents/Resources/aacgain
 
 Python Audio Tools
 ~~~~~~~~~~~~~~~~~~
@@ -154,10 +173,8 @@ file. The available options are:
 
 These options only work with the "command" backend:
 
-- **command**: The path to the ``mp3rgain``, ``mp3gain``, or ``aacgain``
-  executable (if beets cannot find it by itself). For example:
-  ``/Applications/MacMP3Gain.app/Contents/Resources/aacgain``. Default: Search
-  in your ``$PATH``.
+- **command**: Name or path to your command backend of choice: either of
+  ``mp3gain``, ``aacgain`` or ``mp3rgain``.
 - **noclip**: Reduce the amount of ReplayGain adjustment to whatever amount
   would keep clipping from occurring. Default: ``yes``.
 
