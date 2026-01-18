@@ -21,12 +21,12 @@ New features:
   updated to populate the ``genres`` field as a list.
 
   **Migration**: Existing libraries with genre strings are migrated to the
-  ``genres`` list when you first run beets after upgrading. The migration
-  tries your configured ``list_sep`` separator first (if set), then common
-  defaults (``", "``, ``"; "``, ``" / "``), splitting genre strings like
-  ``"Rock, Alternative, Indie"`` into individual genres. The migration runs once
-  when the database schema is updated, writing the changes to both the database
-  and media files. No manual action or ``mbsync`` is required.
+  ``genres`` list when you first run beets after upgrading. The migration tries
+  your configured ``list_sep`` separator first (if set), then common defaults
+  (``", "``, ``"; "``, ``" / "``), splitting genre strings like ``"Rock,
+  Alternative, Indie"`` into individual genres. The migration runs once when the
+  database schema is updated, writing the changes to both the database and media
+  files. No manual action or ``mbsync`` is required.
 
 - :doc:`plugins/fetchart`: Added config setting for a fallback cover art image.
 - :doc:`plugins/ftintitle`: Added argument for custom feat. words in ftintitle.
