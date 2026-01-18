@@ -39,8 +39,7 @@ from beets.util import plurality, unique_list
 
 if TYPE_CHECKING:
     import optparse
-    from collections.abc import Callable
-    from collections.abc import Iterable
+    from collections.abc import Callable, Iterable
 
     from beets.library import LibModel
 
