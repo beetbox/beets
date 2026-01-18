@@ -15,7 +15,7 @@
 """Tests for MusicBrainz API wrapper."""
 
 import unittest
-from typing import Any, ClassVar 
+from typing import Any, ClassVar
 from unittest import mock
 
 import pytest
