@@ -204,7 +204,11 @@ class Library(dbcore.Database):
                 )
 
                 # Try user's separator first, then common defaults
-                separators = ([user_sep] if user_sep else []) + [", ", "; ", " / "]
+                separators = ([user_sep] if user_sep else []) + [
+                    ", ",
+                    "; ",
+                    " / ",
+                ]
 
                 for separator in separators:
                     if separator in genre_val:
