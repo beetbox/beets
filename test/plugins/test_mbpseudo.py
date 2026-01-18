@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import json
-import pathlib
 from copy import deepcopy
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -8,13 +10,17 @@ from beets.autotag import AlbumMatch
 from beets.autotag.distance import Distance
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.library import Item
-from beets.test.helper import ConfigMixin, PluginMixin
-from beetsplug._typing import JSONDict
+from beets.test.helper import PluginMixin
 from beetsplug.mbpseudo import (
     _STATUS_PSEUDO,
     MusicBrainzPseudoReleasePlugin,
     PseudoAlbumInfo,
 )
+
+if TYPE_CHECKING:
+    import pathlib
+
+    from beetsplug._typing import JSONDict
 
 
 @pytest.fixture(scope="module")
@@ -52,14 +58,7 @@ def pseudo_release_info() -> AlbumInfo:
     )
 
 
-@pytest.fixture(scope="module", autouse=True)
-def config():
-    config = ConfigMixin().config
-    with pytest.MonkeyPatch.context() as m:
-        m.setattr("beetsplug.mbpseudo.config", config)
-        yield config
-
-
+@pytest.mark.usefixtures("config")
 class TestPseudoAlbumInfo:
     def test_album_id_always_from_pseudo(
         self, official_release_info: AlbumInfo, pseudo_release_info: AlbumInfo
@@ -101,7 +100,7 @@ class TestMBPseudoMixin(PluginMixin):
     @pytest.fixture(autouse=True)
     def patch_get_release(self, monkeypatch, pseudo_release: JSONDict):
         monkeypatch.setattr(
-            "beetsplug.musicbrainz.MusicBrainzAPI.get_release",
+            "beetsplug._utils.musicbrainz.MusicBrainzAPI.get_release",
             lambda _, album_id: deepcopy(
                 {pseudo_release["id"]: pseudo_release}[album_id]
             ),

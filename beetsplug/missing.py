@@ -15,17 +15,25 @@
 
 """List missing tracks."""
 
-from collections import defaultdict
-from collections.abc import Iterator
+from __future__ import annotations
 
-import musicbrainzngs
-from musicbrainzngs.musicbrainz import MusicBrainzError
+from collections import defaultdict
+from typing import TYPE_CHECKING, ClassVar
+
+import requests
 
 from beets import config, metadata_plugins
 from beets.dbcore import types
-from beets.library import Album, Item, Library
+from beets.library import Item
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, print_
+
+from ._utils.musicbrainz import MusicBrainzAPIMixin
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    from beets.library import Album, Library
 
 MB_ARTIST_QUERY = r"mb_albumartistid::^\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$"
 
@@ -85,10 +93,10 @@ def _item(track_info, album_info, album_id):
     )
 
 
-class MissingPlugin(BeetsPlugin):
+class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
     """List missing tracks"""
 
-    album_types = {
+    album_types: ClassVar[dict[str, types.Type]] = {
         "missing": types.INTEGER,
     }
 
@@ -189,19 +197,19 @@ class MissingPlugin(BeetsPlugin):
         calculating_total = self.config["total"].get()
         for (artist, artist_id), album_ids in album_ids_by_artist.items():
             try:
-                resp = musicbrainzngs.browse_release_groups(artist=artist_id)
-            except MusicBrainzError as err:
+                resp = self.mb_api.browse_release_groups(artist=artist_id)
+            except requests.exceptions.RequestException:
                 self._log.info(
-                    "Couldn't fetch info for artist '{}' ({}) - '{}'",
+                    "Couldn't fetch info for artist '{}' ({})",
                     artist,
                     artist_id,
-                    err,
+                    exc_info=True,
                 )
                 continue
 
             missing_titles = [
                 f"{artist} - {rg['title']}"
-                for rg in resp["release-group-list"]
+                for rg in resp
                 if rg["id"] not in album_ids
             ]
 

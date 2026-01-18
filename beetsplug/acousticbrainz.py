@@ -15,6 +15,7 @@
 """Fetch various AcousticBrainz metadata using MBID."""
 
 from collections import defaultdict
+from typing import ClassVar
 
 import requests
 
@@ -55,7 +56,7 @@ ABSCHEME = {
 
 
 class AcousticPlugin(plugins.BeetsPlugin):
-    item_types = {
+    item_types: ClassVar[dict[str, types.Type]] = {
         "average_loudness": types.Float(6),
         "chords_changes_rate": types.Float(6),
         "chords_key": types.STRING,

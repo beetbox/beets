@@ -35,10 +35,25 @@ from logging import (
     Handler,
     Logger,
     NullHandler,
-    RootLogger,
     StreamHandler,
 )
-from typing import TYPE_CHECKING, Any, TypeVar, Union, overload
+from typing import TYPE_CHECKING, Any, TypeVar, overload
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+    from logging import RootLogger
+    from types import TracebackType
+
+    T = TypeVar("T")
+
+    # see https://github.com/python/typeshed/blob/main/stdlib/logging/__init__.pyi
+    _SysExcInfoType = (
+        tuple[type[BaseException], BaseException, TracebackType | None]
+        | tuple[None, None, None]
+    )
+    _ExcInfoType = _SysExcInfoType | BaseException | bool | None
+    _ArgsType = tuple[object, ...] | Mapping[str, object]
+
 
 __all__ = [
     "DEBUG",
@@ -53,21 +68,6 @@ __all__ = [
     "StreamHandler",
     "getLogger",
 ]
-
-if TYPE_CHECKING:
-    from collections.abc import Mapping
-
-    T = TypeVar("T")
-    from types import TracebackType
-
-    # see https://github.com/python/typeshed/blob/main/stdlib/logging/__init__.pyi
-    _SysExcInfoType = Union[
-        tuple[type[BaseException], BaseException, Union[TracebackType, None]],
-        tuple[None, None, None],
-    ]
-    _ExcInfoType = Union[None, bool, _SysExcInfoType, BaseException]
-    _ArgsType = Union[tuple[object, ...], Mapping[str, object]]
-
 
 # Regular expression to match:
 # - C0 control characters (0x00-0x1F) except useful whitespace (\t, \n, \r)

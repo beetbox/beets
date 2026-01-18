@@ -120,7 +120,7 @@ def capture_stdout():
 
 def has_program(cmd, args=["--version"]):
     """Returns `True` if `cmd` can be executed."""
-    full_cmd = [cmd] + args
+    full_cmd = [cmd, *args]
     try:
         with open(os.devnull, "wb") as devnull:
             subprocess.check_call(
@@ -524,7 +524,7 @@ class ImportHelper(TestHelper):
     autotagging library and several assertions for the library.
     """
 
-    default_import_config = {
+    default_import_config: ClassVar[dict[str, bool]] = {
         "autotag": True,
         "copy": True,
         "hardlink": False,
@@ -880,7 +880,7 @@ class FetchImageHelper:
     def run(self, *args, **kwargs):
         super().run(*args, **kwargs)
 
-    IMAGEHEADER: dict[str, bytes] = {
+    IMAGEHEADER: ClassVar[dict[str, bytes]] = {
         "image/jpeg": b"\xff\xd8\xff\x00\x00\x00JFIF",
         "image/png": b"\211PNG\r\n\032\n",
         "image/gif": b"GIF89a",
