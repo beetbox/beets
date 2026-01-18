@@ -570,32 +570,19 @@ class CommandBackend(Backend):
         cmd_path: Path = Path(config["command"].as_str())
         supported_tools = set(self.SUPPORTED_FORMATS_BY_TOOL)
 
-        if cmd_path.name:
-            # Explicit command specified
-            if cmd_path.name not in supported_tools:
-                raise FatalReplayGainError(
-                    f"replaygain.command must be one of {supported_tools!r},"
-                    f" not {cmd_path.name!r}"
-                )
-            if command_exec := shutil.which(str(cmd_path)):
-                self.command = command_exec
-                self.cmd_name = cmd_path.name  # type: ignore[assignment]
-            else:
-                raise FatalReplayGainError(
-                    f"replaygain command not found: {cmd_path}"
-                )
+        if (cmd_name := cmd_path.name) not in supported_tools:
+            raise FatalReplayGainError(
+                f"replaygain.command must be one of {supported_tools!r},"
+                f" not {cmd_name!r}"
+            )
+
+        if command_exec := shutil.which(str(cmd_path)):
+            self.command = command_exec
+            self.cmd_name = cmd_name  # type: ignore[assignment]
         else:
-            # Check whether the program is in $PATH.
-            for cmd in ("mp3rgain", "mp3gain", "aacgain"):
-                if command_exec := shutil.which(cmd):
-                    self.command = command_exec
-                    self.cmd_name = cmd  # type: ignore[assignment]
-                    break
-            else:
-                raise FatalReplayGainError(
-                    "no replaygain command found: install mp3rgain, mp3gain, "
-                    "or aacgain"
-                )
+            raise FatalReplayGainError(
+                f"replaygain command not found: {cmd_path}"
+            )
 
         self.noclip = config["noclip"].get(bool)
 
