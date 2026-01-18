@@ -196,24 +196,15 @@ class Library(dbcore.Database):
             needs_migration = False
             split_genres = []
             if not genres_val and genre_val:
-                separators = []
-                if (
-                    "lastgenre" in beets.config
-                    and "separator" in beets.config["lastgenre"]
-                ):
-                    try:
-                        user_sep = beets.config["lastgenre"][
-                            "separator"
-                        ].as_str()
-                        if user_sep:
-                            separators.append(user_sep)
-                    except (
-                        beets.config.ConfigNotFoundError,
-                        beets.config.ConfigTypeError,
-                    ):
-                        pass
+                # Read user's configured lastgenre separator (optional)
+                user_sep = (
+                    beets.config["lastgenre"]["separator"].get(str)
+                    if "lastgenre" in beets.config
+                    else None
+                )
 
-                separators.extend([", ", "; ", " / "])
+                # Try user's separator first, then common defaults
+                separators = ([user_sep] if user_sep else []) + [", ", "; ", " / "]
 
                 for separator in separators:
                     if separator in genre_val:
