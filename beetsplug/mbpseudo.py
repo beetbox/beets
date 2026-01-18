@@ -24,7 +24,7 @@ import mediafile
 from typing_extensions import override
 
 from beets import config
-from beets.autotag.distance import Distance, distance
+from beets.autotag.distance import distance
 from beets.autotag.hooks import AlbumInfo
 from beets.autotag.match import assign_items
 from beets.plugins import find_plugins
@@ -39,6 +39,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
     from beets.autotag import AlbumMatch
+    from beets.autotag.distance import Distance
     from beets.library import Item
     from beetsplug._typing import JSONDict
 
@@ -141,7 +142,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
         if (ids := self._intercept_mb_release(release)) and (
             album_id := self._extract_id(ids[0])
         ):
-            raw_pseudo_release = self.api.get_release(album_id)
+            raw_pseudo_release = self.mb_api.get_release(album_id)
             pseudo_release = super().album_info(raw_pseudo_release)
 
             if self.config["custom_tags_only"].get(bool):
@@ -264,11 +265,8 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
                 album_info.album_id,
             )
             album_info.use_pseudo_as_ref()
-            mapping = match.mapping
-            new_mappings, _, _ = assign_items(
-                list(mapping.keys()), album_info.tracks
-            )
-            mapping.update(new_mappings)
+            new_pairs, *_ = assign_items(match.items, album_info.tracks)
+            album_info.mapping = dict(new_pairs)
 
         if album_info.data_source == self.data_source:
             album_info.data_source = "MusicBrainz"

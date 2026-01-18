@@ -81,7 +81,17 @@ d93ddf8dd43e4f9ed072a03829e287c78d2570a2
 59c93e70139f70e9fd1c6f3c1bceb005945bec33
 # Moved ui.commands._utils into ui.commands.utils
 25ae330044abf04045e3f378f72bbaed739fb30d
-# Refactor test_ui_command.py into multiple modules 
+# Refactor test_ui_command.py into multiple modules
 a59e41a88365e414db3282658d2aa456e0b3468a
 # pyupgrade Python 3.10
 301637a1609831947cb5dd90270ed46c24b1ab1b
+# Fix changelog formatting
+658b184c59388635787b447983ecd3a575f4fe56
+# Configure future-annotations
+ac7f3d9da95c2d0a32e5c908ea68480518a1582d
+# Configure ruff for py310
+c46069654628040316dea9db85d01b263db3ba9e
+# Enable RUF rules
+4749599913a42e02e66b37db9190de11d6be2cdf
+# Address RUF012
+bc71ec308eb938df1d349f6857634ddf2a82e339

@@ -374,7 +374,7 @@ class ShowModelChangeTest(IOMixin, unittest.TestCase):
     def test_both_values_shown(self):
         self.a.title = "foo"
         self.b.title = "bar"
-        change, out = self._show()
+        _, out = self._show()
         assert "foo" in out
         assert "bar" in out
 

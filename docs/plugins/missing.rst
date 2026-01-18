@@ -5,16 +5,6 @@ This plugin adds a new command, ``missing`` or ``miss``, which finds and lists
 missing tracks for albums in your collection. Each album requires one network
 call to album data source.
 
-Installation
-------------
-
-To use the ``missing`` plugin, first enable it in your configuration (see
-:ref:`using-plugins`). Then, install ``beets`` with ``missing`` extra
-
-.. code-block:: bash
-
-    pip install "beets[missing]"
-
 Usage
 -----
 
