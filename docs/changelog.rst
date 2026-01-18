@@ -45,6 +45,8 @@ New features:
   of brackets are supported and a new ``bracket_keywords`` configuration option
   allows customizing the keywords. Setting ``bracket_keywords`` to an empty list
   matches any bracket content regardless of keywords.
+- :doc:`plugins/musicbrainz`: Use title alias for releases, release groups and
+  recordings.
 
 Bug fixes:
 
