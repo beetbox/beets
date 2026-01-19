@@ -364,15 +364,17 @@ class TestHelper(ConfigMixin):
                 items.append(item)
         return self.lib.add_album(items)
 
-    def create_mediafile_fixture(self, ext="mp3", images=[]):
+    def create_mediafile_fixture(self, ext="mp3", images=[], target_dir=None):
         """Copy a fixture mediafile with the extension to `temp_dir`.
 
         `images` is a subset of 'png', 'jpg', and 'tiff'. For each
         specified extension a cover art image is added to the media
         file.
         """
+        if not target_dir:
+            target_dir = self.temp_dir
         src = os.path.join(_common.RSRC, util.bytestring_path(f"full.{ext}"))
-        handle, path = mkstemp(dir=self.temp_dir)
+        handle, path = mkstemp(dir=target_dir)
         path = bytestring_path(path)
         os.close(handle)
         shutil.copyfile(syspath(src), syspath(path))
