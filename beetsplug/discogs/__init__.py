@@ -18,9 +18,11 @@ python3-discogs-client library.
 
 from __future__ import annotations
 
+import http.client
 import json
 import os
 import re
+import socket
 import time
 import traceback
 from functools import cache
@@ -30,6 +32,7 @@ from typing import TYPE_CHECKING
 import confuse
 from discogs_client import Client, Master, Release
 from discogs_client.exceptions import DiscogsAPIError
+from requests.exceptions import ConnectionError
 
 import beets
 import beets.ui
@@ -38,8 +41,7 @@ from beets.autotag.distance import string_dist
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.metadata_plugins import MetadataSourcePlugin
 
-from .states import ArtistState, TracklistState
-from .utils import CONNECTION_ERRORS, DISAMBIGUATION_RE, TRACK_INDEX_RE
+from .states import DISAMBIGUATION_RE, ArtistState, TracklistState
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Sequence
@@ -51,6 +53,31 @@ if TYPE_CHECKING:
 USER_AGENT = f"beets/{beets.__version__} +https://beets.io/"
 API_KEY = "rAzVUQYRaoFjeBjyWuWZ"
 API_SECRET = "plxtUTqoCzwxZpqdPysCwGuBSmZNdZVy"
+
+
+# Exceptions that discogs_client should really handle but does not.
+CONNECTION_ERRORS = (
+    ConnectionError,
+    socket.error,
+    http.client.HTTPException,
+    ValueError,  # JSON decoding raises a ValueError.
+    DiscogsAPIError,
+)
+
+TRACK_INDEX_RE = re.compile(
+    r"""
+    (.*?)   # medium: everything before medium_index.
+    (\d*?)  # medium_index: a number at the end of
+            # `position`, except if followed by a subtrack index.
+            # subtrack_index: can only be matched if medium
+            # or medium_index have been matched, and can be
+    (
+        (?<=\w)\.[\w]+  # a dot followed by a string (A.1, 2.A)
+      | (?<=\d)[A-Z]+   # a string that follows a number (1A, B2a)
+    )?
+    """,
+    re.VERBOSE,
+)
 
 
 class DiscogsPlugin(MetadataSourcePlugin):
@@ -304,8 +331,8 @@ class DiscogsPlugin(MetadataSourcePlugin):
 
         artist_data = [a.data for a in result.artists]
         # Information for the album artist
-        albumartist = ArtistState.from_plugin(
-            self, artist_data, for_album_artist=True
+        albumartist = ArtistState.from_config(
+            self.config, artist_data, for_album_artist=True
         )
 
         album = re.sub(r" +", " ", result.title)
@@ -315,7 +342,8 @@ class DiscogsPlugin(MetadataSourcePlugin):
         # information and leave us with skeleton `Artist` objects that will
         # each make an API call just to get the same data back.
         tracks = self.get_tracks(
-            result.data["tracklist"], ArtistState.from_plugin(self, artist_data)
+            result.data["tracklist"],
+            ArtistState.from_config(self.config, artist_data),
         )
 
         # Extract information for the optional AlbumInfo fields, if possible.
@@ -611,8 +639,8 @@ class DiscogsPlugin(MetadataSourcePlugin):
 
         length = self.get_track_length(track["duration"])
         # If artists are found on the track, we will use those instead
-        artistinfo = ArtistState.from_plugin(
-            self,
+        artistinfo = ArtistState.from_config(
+            self.config,
             [
                 *(track.get("artists") or albumartistinfo.raw_artists),
                 *track.get("extraartists", []),
