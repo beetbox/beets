@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import asdict, dataclass, field
 from functools import cached_property
 from typing import TYPE_CHECKING, NamedTuple
@@ -23,12 +24,15 @@ from typing import TYPE_CHECKING, NamedTuple
 from beets import config
 
 from .types import Artist, ArtistInfo, Track, TracklistInfo
-from .utils import DISAMBIGUATION_RE
 
 if TYPE_CHECKING:
+    from confuse import ConfigView
+
     from beets.autotag.hooks import TrackInfo
 
     from . import DiscogsPlugin
+
+DISAMBIGUATION_RE = re.compile(r" \(\d+\)")
 
 
 @dataclass
@@ -170,20 +174,20 @@ class ArtistState:
         return artist
 
     @classmethod
-    def from_plugin(
+    def from_config(
         cls,
-        plugin: DiscogsPlugin,
+        config: ConfigView,
         artists: list[Artist],
         for_album_artist: bool = False,
     ) -> ArtistState:
         return cls(
             artists,
-            plugin.config["anv"][
-                "album_artist" if for_album_artist else "artist"
-            ].get(bool),
-            plugin.config["anv"]["artist_credit"].get(bool),
-            plugin.config["featured_string"].as_str(),
-            plugin.config["strip_disambiguation"].get(bool),
+            config["anv"]["album_artist" if for_album_artist else "artist"].get(
+                bool
+            ),
+            config["anv"]["artist_credit"].get(bool),
+            config["featured_string"].as_str(),
+            config["strip_disambiguation"].get(bool),
         )
 
 
