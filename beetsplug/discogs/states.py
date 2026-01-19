@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING, NamedTuple
 
 from beets import config
 
-from .types import Artist, ArtistInfo, Track, TracklistInfo
+from .types import ArtistInfo
 
 if TYPE_CHECKING:
     from confuse import ConfigView
@@ -31,6 +31,7 @@ if TYPE_CHECKING:
     from beets.autotag.hooks import TrackInfo
 
     from . import DiscogsPlugin
+    from .types import Artist, Track, TracklistInfo
 
 DISAMBIGUATION_RE = re.compile(r" \(\d+\)")
 
