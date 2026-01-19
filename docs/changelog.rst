@@ -46,6 +46,10 @@ New features:
   allows customizing the keywords. Setting ``bracket_keywords`` to an empty list
   matches any bracket content regardless of keywords.
 - :doc:`plugins/discogs`: Added support for multi value fields. :bug:`6068`
+- :doc:`plugins/embedart`: Embedded arts can now be cleared during import with
+  the ``clearart_on_import`` config option. Also, ``beet clearart`` is only
+  going to update the files matching the query and with an embedded art, leaving
+  untouched the files without.
 
 Bug fixes:
 
