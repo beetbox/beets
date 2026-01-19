@@ -6,4 +6,5 @@ API Reference
     :titlesonly:
 
     plugins
+    plugin_utilities
     database

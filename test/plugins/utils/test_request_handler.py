@@ -48,11 +48,20 @@ class TestRequestHandlerRetry:
         assert response.status_code == HTTPStatus.OK
 
     @pytest.mark.parametrize(
-        "last_response", [ConnectionResetError], ids=["conn_error"]
+        "last_response",
+        [
+            ConnectionResetError,
+            HTTPResponse(
+                body=io.BytesIO(b"Server Error"),
+                status=HTTPStatus.INTERNAL_SERVER_ERROR,
+                preload_content=False,
+            ),
+        ],
+        ids=["conn_error", "server_error"],
     )
     def test_retry_exhaustion(self, request_handler):
         """Verify that the handler raises an error after exhausting retries."""
         with pytest.raises(
-            requests.exceptions.ConnectionError, match="Max retries exceeded"
+            requests.exceptions.RequestException, match="Max retries exceeded"
         ):
             request_handler.get("http://example.com/api")

@@ -136,7 +136,8 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
         """
         im = IMBackend()
         path = im.deinterlace(self.IMG_225x225)
-        cmd = im.identify_cmd + [
+        cmd = [
+            *im.identify_cmd,
             "-format",
             "%[interlace]",
             syspath(path, prefix=False),

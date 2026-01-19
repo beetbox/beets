@@ -28,7 +28,7 @@ import os
 import traceback
 from functools import singledispatchmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any
 
 import pylast
 import yaml
@@ -39,6 +39,7 @@ from beets.util import plurality, unique_list
 
 if TYPE_CHECKING:
     import optparse
+    from collections.abc import Callable
 
     from beets.library import LibModel
 
@@ -67,12 +68,12 @@ def flatten_tree(
 
     if isinstance(elem, dict):
         for k, v in elem.items():
-            flatten_tree(v, path + [k], branches)
+            flatten_tree(v, [*path, k], branches)
     elif isinstance(elem, list):
         for sub in elem:
             flatten_tree(sub, path, branches)
     else:
-        branches.append(path + [str(elem)])
+        branches.append([*path, str(elem)])
 
 
 def find_parents(candidate: str, branches: list[list[str]]) -> list[str]:

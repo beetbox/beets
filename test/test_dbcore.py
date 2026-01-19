@@ -19,6 +19,7 @@ import shutil
 import sqlite3
 import unittest
 from tempfile import mkstemp
+from typing import ClassVar
 
 import pytest
 
@@ -57,13 +58,13 @@ class QueryFixture(dbcore.query.FieldQuery):
 class ModelFixture1(LibModel):
     _table = "test"
     _flex_table = "testflex"
-    _fields = {
+    _fields: ClassVar[dict[str, dbcore.types.Type]] = {
         "id": dbcore.types.PRIMARY_ID,
         "field_one": dbcore.types.INTEGER,
         "field_two": dbcore.types.STRING,
     }
 
-    _sorts = {
+    _sorts: ClassVar[dict[str, type[dbcore.query.FieldSort]]] = {
         "some_sort": SortFixture,
     }
 
@@ -92,7 +93,7 @@ class DatabaseFixture1(dbcore.Database):
 
 
 class ModelFixture2(ModelFixture1):
-    _fields = {
+    _fields: ClassVar[dict[str, dbcore.types.Type]] = {
         "id": dbcore.types.PRIMARY_ID,
         "field_one": dbcore.types.INTEGER,
         "field_two": dbcore.types.INTEGER,
@@ -104,7 +105,7 @@ class DatabaseFixture2(dbcore.Database):
 
 
 class ModelFixture3(ModelFixture1):
-    _fields = {
+    _fields: ClassVar[dict[str, dbcore.types.Type]] = {
         "id": dbcore.types.PRIMARY_ID,
         "field_one": dbcore.types.INTEGER,
         "field_two": dbcore.types.INTEGER,
@@ -117,7 +118,7 @@ class DatabaseFixture3(dbcore.Database):
 
 
 class ModelFixture4(ModelFixture1):
-    _fields = {
+    _fields: ClassVar[dict[str, dbcore.types.Type]] = {
         "id": dbcore.types.PRIMARY_ID,
         "field_one": dbcore.types.INTEGER,
         "field_two": dbcore.types.INTEGER,
@@ -133,14 +134,14 @@ class DatabaseFixture4(dbcore.Database):
 class AnotherModelFixture(ModelFixture1):
     _table = "another"
     _flex_table = "anotherflex"
-    _fields = {
+    _fields: ClassVar[dict[str, dbcore.types.Type]] = {
         "id": dbcore.types.PRIMARY_ID,
         "foo": dbcore.types.INTEGER,
     }
 
 
 class ModelFixture5(ModelFixture1):
-    _fields = {
+    _fields: ClassVar[dict[str, dbcore.types.Type]] = {
         "some_string_field": dbcore.types.STRING,
         "some_float_field": dbcore.types.FLOAT,
         "some_boolean_field": dbcore.types.BOOLEAN,
@@ -411,7 +412,7 @@ class ModelTest(unittest.TestCase):
     def test_computed_field(self):
         model = ModelFixtureWithGetters()
         assert model.aComputedField == "thing"
-        with pytest.raises(KeyError, match="computed field .+ deleted"):
+        with pytest.raises(KeyError, match=r"computed field .+ deleted"):
             del model.aComputedField
 
     def test_items(self):
