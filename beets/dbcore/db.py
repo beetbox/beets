@@ -26,17 +26,10 @@ import threading
 import time
 from abc import ABC
 from collections import defaultdict
-from collections.abc import (
-    Callable,
-    Generator,
-    Iterable,
-    Iterator,
-    Mapping,
-    Sequence,
-)
+from collections.abc import Mapping
 from functools import cached_property
-from sqlite3 import Connection, sqlite_version_info
-from typing import TYPE_CHECKING, Any, AnyStr, Generic
+from sqlite3 import sqlite_version_info
+from typing import TYPE_CHECKING, Any, AnyStr, ClassVar, Generic
 
 from typing_extensions import (
     Self,
@@ -48,20 +41,20 @@ import beets
 
 from ..util import cached_classproperty, functemplate
 from . import types
-from .query import (
-    FieldQueryType,
-    FieldSort,
-    MatchQuery,
-    NullSort,
-    Query,
-    Sort,
-    TrueQuery,
-)
+from .query import MatchQuery, NullSort, TrueQuery
 
 if TYPE_CHECKING:
+    from collections.abc import (
+        Callable,
+        Generator,
+        Iterable,
+        Iterator,
+        Sequence,
+    )
+    from sqlite3 import Connection
     from types import TracebackType
 
-    from .query import SQLiteType
+    from .query import FieldQueryType, FieldSort, Query, Sort, SQLiteType
 
 D = TypeVar("D", bound="Database", default=Any)
 
@@ -306,7 +299,7 @@ class Model(ABC, Generic[D]):
     """The flex field SQLite table name.
     """
 
-    _fields: dict[str, types.Type] = {}
+    _fields: ClassVar[dict[str, types.Type]] = {}
     """A mapping indicating available "fixed" fields on this type. The
     keys are field names and the values are `Type` objects.
     """
@@ -321,7 +314,7 @@ class Model(ABC, Generic[D]):
         """Optional types for non-fixed (flexible and computed) fields."""
         return {}
 
-    _sorts: dict[str, type[FieldSort]] = {}
+    _sorts: ClassVar[dict[str, type[FieldSort]]] = {}
     """Optional named sort criteria. The keys are strings and the values
     are subclasses of `Sort`.
     """
@@ -1124,6 +1117,16 @@ class Database:
             # call conn.close() in _close()
             check_same_thread=False,
         )
+
+        if sys.version_info >= (3, 12) and sqlite3.sqlite_version_info >= (
+            3,
+            29,
+            0,
+        ):
+            # If possible, disable double-quoted strings
+            conn.setconfig(sqlite3.SQLITE_DBCONFIG_DQS_DDL, 0)
+            conn.setconfig(sqlite3.SQLITE_DBCONFIG_DQS_DML, 0)
+
         self.add_functions(conn)
 
         if self.supports_extensions:

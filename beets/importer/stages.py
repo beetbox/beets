@@ -388,5 +388,5 @@ def _extend_pipeline(tasks, *stages):
     else:
         task_iter = tasks
 
-    ipl = pipeline.Pipeline([task_iter] + list(stages))
+    ipl = pipeline.Pipeline([task_iter, *list(stages)])
     return pipeline.multiple(ipl.pull())

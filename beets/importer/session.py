@@ -17,7 +17,7 @@ import os
 import time
 from typing import TYPE_CHECKING
 
-from beets import config, dbcore, library, logging, plugins, util
+from beets import config, logging, plugins, util
 from beets.importer.tasks import Action
 from beets.util import displayable_path, normpath, pipeline, syspath
 
@@ -27,6 +27,7 @@ from .state import ImportState
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    from beets import dbcore, library
     from beets.util import PathBytes
 
     from .tasks import ImportTask

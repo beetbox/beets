@@ -25,7 +25,7 @@ import lap
 import numpy as np
 
 from beets import config, logging, metadata_plugins, plugins
-from beets.autotag import AlbumInfo, AlbumMatch, TrackInfo, TrackMatch, hooks
+from beets.autotag import AlbumMatch, TrackMatch, hooks
 from beets.util import get_most_common_tags
 
 from .distance import VA_ARTISTS, distance, track_distance
@@ -33,6 +33,7 @@ from .distance import VA_ARTISTS, distance, track_distance
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
+    from beets.autotag import AlbumInfo, TrackInfo
     from beets.library import Item
 
 # Global logger.

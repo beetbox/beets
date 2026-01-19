@@ -14,14 +14,20 @@
 
 """Tests for the 'ftintitle' plugin."""
 
-from collections.abc import Generator
-from typing import TypeAlias
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, TypeAlias
 
 import pytest
 
-from beets.library.models import Album, Item
+from beets.library.models import Album
 from beets.test.helper import PluginTestCase
 from beetsplug import ftintitle
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from beets.library.models import Item
 
 ConfigValue: TypeAlias = str | bool | list[str]
 
@@ -321,6 +327,10 @@ def test_find_feat_part(
         ("Alice and Bob", ("Alice", "Bob")),
         ("Alice With Bob", ("Alice", "Bob")),
         ("Alice defeat Bob", ("Alice defeat Bob", None)),
+        ("Alice & Bob feat Charlie", ("Alice & Bob", "Charlie")),
+        ("Alice & Bob ft. Charlie", ("Alice & Bob", "Charlie")),
+        ("Alice & Bob featuring Charlie", ("Alice & Bob", "Charlie")),
+        ("Alice and Bob feat Charlie", ("Alice and Bob", "Charlie")),
     ],
 )
 def test_split_on_feat(

@@ -13,6 +13,7 @@
 # included in all copies or substantial portions of the Software.
 
 import codecs
+from typing import ClassVar
 from unittest.mock import patch
 
 from beets.dbcore.query import TrueQuery
@@ -319,7 +320,7 @@ class EditDuringImporterTestCase(
 
     matching = AutotagStub.GOOD
 
-    IGNORED = ["added", "album_id", "id", "mtime", "path"]
+    IGNORED: ClassVar[list[str]] = ["added", "album_id", "id", "mtime", "path"]
 
     def setUp(self):
         super().setUp()
@@ -350,8 +351,8 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
             self.lib.items(),
             self.items_orig,
             ["title"],
-            self.IGNORED
-            + [
+            [
+                *self.IGNORED,
                 "albumartist",
                 "mb_albumartistid",
                 "mb_albumartistids",
@@ -378,7 +379,7 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
             self.lib.items(),
             self.items_orig,
             [],
-            self.IGNORED + ["albumartist", "mb_albumartistid"],
+            [*self.IGNORED, "albumartist", "mb_albumartistid"],
         )
         assert all("Tag Track" in i.title for i in self.lib.items())
 
@@ -490,6 +491,6 @@ class EditDuringImporterSingletonTest(EditDuringImporterTestCase):
             self.lib.items(),
             self.items_orig,
             ["title"],
-            self.IGNORED + ["albumartist", "mb_albumartistid"],
+            [*self.IGNORED, "albumartist", "mb_albumartistid"],
         )
         assert all("Edited Track" in i.title for i in self.lib.items())
