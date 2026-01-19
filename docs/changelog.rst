@@ -57,6 +57,9 @@ New features:
 
 Bug fixes:
 
+- :doc:`/plugins/lastgenre`: Canonicalize genres when ``force`` and
+  ``keep_existing`` are ``on``, yet no genre info on lastfm could be found.
+  :bug:`6303`
 - Handle potential OSError when unlinking temporary files in ArtResizer.
   :bug:`5615`
 - :doc:`/plugins/spotify`: Updated Spotify API credentials. :bug:`6270`

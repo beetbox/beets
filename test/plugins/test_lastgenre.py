@@ -541,6 +541,31 @@ class LastGenrePluginTest(PluginTestCase):
                 "keep + album, whitelist",
             ),
         ),
+        # 16 - canonicalization transforms non-whitelisted original genres to canonical
+        # forms and deduplication works, **even** when no new genres are found online.
+        #
+        # "Cosmic Disco" is not in the default whitelist, thus gets resolved "up" in the
+        # tree to "Disco" and "Electronic".
+        (
+            {
+                "force": True,
+                "keep_existing": True,
+                "source": "album",
+                "whitelist": True,
+                "canonical": True,
+                "prefer_specific": False,
+                "count": 10,
+            },
+            "Cosmic Disco",
+            {
+                "album": [],
+                "artist": [],
+            },
+            (
+                "Disco, Electronic",
+                "keep + original fallback, whitelist",
+            ),
+        ),
     ],
 )
 def test_get_genre(config_values, item_genre, mock_genres, expected_result):
