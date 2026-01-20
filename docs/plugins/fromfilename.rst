@@ -84,3 +84,14 @@ Default
     Specify parent directory names that will not be searched for album
     information. Useful if you use a regular directory for importing
     single files.
+
+.. conf:: guess
+
+     Disable guessing from the folder or filename. Be aware that disabling both
+     will cause the plugin to have no effect!
+
+    .. code-block:: yaml
+
+       guess:
+           folder: yes
+           file: yes

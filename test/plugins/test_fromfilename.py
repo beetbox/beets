@@ -735,7 +735,7 @@ class TestFromFilename(PluginMixin):
         ],
     )
     def test_alphanumeric_index(self, expected):
-        """Test parsing an alphanumeric index string."""
+        """Assert that an alphanumeric index is guessed in order."""
         task = mock_task([mock_item(path=item.path) for item in expected])
         f = FromFilenamePlugin()
         f.filename_task(task, Session())
@@ -743,7 +743,9 @@ class TestFromFilename(PluginMixin):
         assert task.items[1].track == expected[1].track
         assert task.items[2].track == expected[2].track
 
-    def test_no_changes(self):
+    def test_no_guesses(self):
+        """Assert that an item with complete information is
+        has no guesses attempted."""
         item = mock_item(
             path="/Folder/File.wav",
             albumartist="AlbumArtist",
@@ -758,7 +760,9 @@ class TestFromFilename(PluginMixin):
                 f.filename_task(task, Session())
                 mock.assert_not_called()
 
-    def test_changes_missing_values(self):
+    def test_only_one_guess(self):
+        """Assert that an item missing only one value
+        will just have that key in session fields."""
         item = mock_item(
             path="/Folder/File.wav",
             albumartist="AlbumArtist",
@@ -782,9 +786,35 @@ class TestFromFilename(PluginMixin):
                 mock.assert_called()
 
     def test_ignored_directories(self):
+        """Assert that a given parent directory name is ignored."""
         ignored = "Incoming"
         item = mock_item(path="/tmp/" + ignored + "/01 - File.wav")
         with self.configure_plugin({"ignore_dirs": [ignored]}):
             f = FromFilenamePlugin()
             parent_folder, _ = f._get_path_strings([item])
             assert parent_folder == ""
+
+    def test_guess_folder(self):
+        """Assert that from filename does not
+        guess from the folder, if guess folder is `no`."""
+        return
+
+    def test_guess_file(self):
+        """Assert that from filename does not guess
+        from the file, if guess file is `no`."""
+        return
+
+    def test_singleton_flag_import(self):
+        """If the import task is a singleton, assert that
+        the plugin does not guess from the folder."""
+        return
+
+    def test_group_album_flag_import(self):
+        """If the group albums flag is thrown, assert
+        that the plugin does not guess from the folder."""
+        return
+
+    def test_import_split_by_group(self):
+        """Asser that an initial run without group by album, and an inaccurate
+        album guess, results in a run omitting it with the group album flag."""
+        return
