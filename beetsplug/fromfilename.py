@@ -164,6 +164,7 @@ class FromFilenamePlugin(BeetsPlugin):
                 ],
                 "patterns": {"folder": [], "file": []},
                 "ignore_dirs": [],
+                "guess": {"folder": True, "file": True},
             }
         )
         self.fields = set(self.config["fields"].as_str_seq())
@@ -341,10 +342,17 @@ class FromFilenamePlugin(BeetsPlugin):
         return trackmatch
 
     def _parse_album_info(self, text: str) -> FilenameMatch:
+        matches = FilenameMatch()
+
+        if not self.config["guess"]["folder"] or (
+            config["import"]["group_albums"] or config["import"]["singletons"]
+        ):
+            # If the group albums flag is thrown, we can't trust the parent directory
+            # likewise for singletons - return an empty match
+            return matches
         # Check if a user pattern matches
         if m := self._check_user_matches(text, self.folder_patterns):
             return m
-        matches = FilenameMatch()
         # Start with the extra fields to make parsing
         # the album artist and artist field easier
         year, span = self._parse_year(text)
@@ -388,15 +396,23 @@ class FromFilenamePlugin(BeetsPlugin):
         for item in track_matches:
             match.update(track_matches[item]._matches)
             found_data: dict[str, int | str] = {}
-            self._log.debug(f"Attempting keys: {match.keys()}")
+            self._log.debug(f"keys: {', '.join(match.keys())}")
+            # Check every key we are supposed to match.
             for key in match.keys():
+                # If the key is applicable to the session, we will update it.
                 if key in self.session_fields:
                     old_value = item.get(key)
                     new_value = match[key]
+                    # If the field is bad, and we have a new value
                     if self._bad_field(old_value) and new_value:
                         found_data[key] = new_value
-            self._log.info(f"Item updated with: {found_data.items()}")
+            self._log.info(f"guessing {self._format_guesses(found_data)}")
             item.update(found_data)
+
+    @staticmethod
+    def _format_guesses(guesses: dict[str, int | str]) -> str:
+        """Format guesses in a 'field="guess"' style for logging"""
+        return ", ".join([f'{g[0]}="{g[1]}"' for g in guesses.items()])
 
     @staticmethod
     def _parse_album_and_albumartist(
