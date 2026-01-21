@@ -767,10 +767,9 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
         self, item: Item, artist: str, title: str
     ) -> Iterable[beets.autotag.hooks.TrackInfo]:
         criteria = {"artist": artist, "recording": title, "alias": title}
+        ids = (r["id"] for r in self._search_api("recording", criteria))
 
-        yield from filter(
-            None, map(self.track_info, self._search_api("recording", criteria))
-        )
+        return filter(None, map(self.track_for_id, ids))
 
     def album_for_id(
         self, album_id: str
