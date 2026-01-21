@@ -14,9 +14,11 @@
 
 """Tests for MusicBrainz API wrapper."""
 
+from __future__ import annotations
+
 import unittest
 import uuid
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 from unittest import mock
 
 import pytest
@@ -26,6 +28,9 @@ from beets import config
 from beets.library import Item
 from beets.test.helper import BeetsTestCase, PluginMixin
 from beetsplug import musicbrainz
+
+if TYPE_CHECKING:
+    from beetsplug._utils import musicbrainz as mb
 
 
 def make_alias(suffix: str, locale: str, primary: bool = False):
@@ -45,10 +50,8 @@ class MusicBrainzTestCase(BeetsTestCase):
         self.mb = musicbrainz.MusicBrainzPlugin()
         self.config["match"]["preferred"]["countries"] = ["US"]
 
-
-class MBAlbumInfoTest(MusicBrainzTestCase):
+    @staticmethod
     def _make_release(
-        self,
         date_str="2009",
         recordings=None,
         track_length=None,
@@ -176,52 +179,57 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         )
         return release
 
+    @staticmethod
     def _make_recording(
-        self,
         title,
         tr_id,
         duration,
-        artist=False,
         video=False,
-        disambiguation=None,
+        disambiguation="",
         multi_artist_credit=False,
         aliases=None,
-    ):
-        recording = {
+    ) -> mb.Recording:
+        recording: mb.Recording = {
             "title": title,
             "id": tr_id,
-        }
-        if duration is not None:
-            recording["length"] = duration
-        if artist:
-            recording["artist_credit"] = [
+            "length": duration,
+            "video": video,
+            "disambiguation": disambiguation,
+            "isrcs": [],
+            "aliases": aliases or [],
+            "artist_credit": [
                 {
                     "artist": {
                         "name": "RECORDING ARTIST NAME",
                         "id": "RECORDING ARTIST ID",
                         "sort_name": "RECORDING ARTIST SORT NAME",
+                        "country": None,
+                        "disambiguation": "",
+                        "type": "Person",
+                        "type_id": "b6e035f4-3ce9-331c-97df-83397230b0df",
                     },
                     "name": "RECORDING ARTIST CREDIT",
+                    "joinphrase": "",
                 }
-            ]
-            if multi_artist_credit:
-                recording["artist_credit"][0]["joinphrase"] = " & "
-                recording["artist_credit"].append(
-                    {
-                        "artist": {
-                            "name": "RECORDING ARTIST 2 NAME",
-                            "id": "RECORDING ARTIST 2 ID",
-                            "sort_name": "RECORDING ARTIST 2 SORT NAME",
-                        },
-                        "name": "RECORDING ARTIST 2 CREDIT",
-                    }
-                )
-        if video:
-            recording["video"] = True
-        if disambiguation:
-            recording["disambiguation"] = disambiguation
-        if aliases is not None:
-            recording["aliases"] = aliases
+            ],
+        }
+        if multi_artist_credit:
+            recording["artist_credit"][0]["joinphrase"] = " & "
+            recording["artist_credit"].append(
+                {
+                    "artist": {
+                        "name": "RECORDING ARTIST 2 NAME",
+                        "id": "RECORDING ARTIST 2 ID",
+                        "sort_name": "RECORDING ARTIST 2 SORT NAME",
+                        "country": None,
+                        "disambiguation": "",
+                        "type": "Person",
+                        "type_id": "b6e035f4-3ce9-331c-97df-83397230b0df",
+                    },
+                    "name": "RECORDING ARTIST 2 CREDIT",
+                    "joinphrase": "",
+                }
+            )
         return recording
 
     def test_parse_release_title(self):
@@ -240,6 +248,8 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         d = self.mb.album_info(release)
         assert d.album == "ALIASen"
 
+
+class MBAlbumInfoTest(MusicBrainzTestCase):
     def test_parse_release_with_year(self):
         release = self._make_release("1984")
         d = self.mb.album_info(release)
@@ -495,7 +505,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert d.language is None
 
     def test_parse_recording_artist(self):
-        recordings = [self._make_recording("a", "b", 1, True)]
+        recordings = [self._make_recording("a", "b", 1)]
         release = self._make_release(None, recordings=recordings)
         track = self.mb.album_info(release).tracks[0]
         assert track.artist == "RECORDING ARTIST NAME"
@@ -505,7 +515,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
 
     def test_parse_recording_artist_multi(self):
         recordings = [
-            self._make_recording("a", "b", 1, True, multi_artist_credit=True)
+            self._make_recording("a", "b", 1, multi_artist_credit=True)
         ]
         release = self._make_release(None, recordings=recordings)
         track = self.mb.album_info(release).tracks[0]
@@ -538,7 +548,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         ]
 
     def test_track_artist_overrides_recording_artist(self):
-        recordings = [self._make_recording("a", "b", 1, True)]
+        recordings = [self._make_recording("a", "b", 1)]
         release = self._make_release(
             None, recordings=recordings, track_artist=True
         )
@@ -550,7 +560,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
 
     def test_track_artist_overrides_recording_artist_multi(self):
         recordings = [
-            self._make_recording("a", "b", 1, True, multi_artist_credit=True)
+            self._make_recording("a", "b", 1, multi_artist_credit=True)
         ]
         release = self._make_release(
             None,
@@ -585,24 +595,69 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         recordings[0]["artist_relations"] = [
             {
                 "type": "remixer",
+                "type_id": "RELATION TYPE ID",
+                "direction": "backward",
                 "artist": {
-                    "name": "RECORDING REMIXER ARTIST NAME",
                     "id": "RECORDING REMIXER ARTIST ID",
+                    "type": "Person",
+                    "name": "RECORDING REMIXER ARTIST NAME",
+                    "sort_name": "RECORDING REMIXER ARTIST SORT NAME",
+                    "country": "GB",
+                    "disambiguation": "",
+                    "type_id": "b6e035f4-3ce9-331c-97df-83397230b0df",
                 },
+                "attribute_ids": {},
+                "attribute_values": {},
+                "attributes": [],
+                "begin": None,
+                "end": None,
+                "ended": False,
+                "source_credit": "",
+                "target_credit": "",
             },
             {
                 "type": "arranger",
+                "type_id": "RELATION TYPE ID",
+                "direction": "backward",
                 "artist": {
-                    "name": "RECORDING ARRANGER ARTIST NAME",
                     "id": "RECORDING ARRANGER ARTIST ID",
+                    "type": "Person",
+                    "name": "RECORDING ARRANGER ARTIST NAME",
+                    "sort_name": "RECORDING ARRANGER ARTIST SORT NAME",
+                    "country": "GB",
+                    "disambiguation": "",
+                    "type_id": "b6e035f4-3ce9-331c-97df-83397230b0df",
                 },
+                "attribute_ids": {},
+                "attribute_values": {},
+                "attributes": [],
+                "begin": None,
+                "end": None,
+                "ended": False,
+                "source_credit": "",
+                "target_credit": "",
             },
             {
                 "type": "arranger",
+                "type_id": "RELATION TYPE ID",
+                "direction": "backward",
                 "artist": {
-                    "name": "RECORDING ARRANGER 2 ARTIST NAME",
                     "id": "RECORDING ARRANGER 2 ARTIST ID",
+                    "type": "Person",
+                    "name": "RECORDING ARRANGER 2 ARTIST NAME",
+                    "sort_name": "RECORDING ARRANGER 2 ARTIST SORT NAME",
+                    "country": "GB",
+                    "disambiguation": "",
+                    "type_id": "b6e035f4-3ce9-331c-97df-83397230b0df",
                 },
+                "attribute_ids": {},
+                "attribute_values": {},
+                "attributes": [],
+                "begin": None,
+                "end": None,
+                "ended": False,
+                "source_credit": "",
+                "target_credit": "",
             },
         ]
         recordings[0]["work_relations"] = [
@@ -614,37 +669,91 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
                     "artist_relations": [
                         {
                             "type": "lyricist",
+                            "type_id": "RELATION TYPE ID",
+                            "direction": "backward",
                             "artist": {
-                                "name": "RECORDING LYRICIST ARTIST NAME",
                                 "id": "RECORDING LYRICIST ARTIST ID",
+                                "type": "Person",
+                                "name": "RECORDING LYRICIST ARTIST NAME",
+                                "sort_name": "RECORDING LYRICIST ARTIST SORT NAME",
+                                "country": "GB",
+                                "disambiguation": "",
+                                "type_id": "b6e035f4-3ce9-331c-97df-83397230b0df",
                             },
+                            "attribute_ids": {},
+                            "attribute_values": {},
+                            "attributes": [],
+                            "begin": None,
+                            "end": None,
+                            "ended": False,
+                            "source_credit": "",
+                            "target_credit": "",
                         },
                         {
                             "type": "lyricist",
+                            "type_id": "RELATION TYPE ID",
+                            "direction": "backward",
                             "artist": {
-                                "name": "RECORDING LYRICIST 2 ARTIST NAME",
                                 "id": "RECORDING LYRICIST 2 ARTIST ID",
+                                "type": "Person",
+                                "name": "RECORDING LYRICIST 2 ARTIST NAME",
+                                "sort_name": "RECORDING LYRICIST 2 ARTIST SORT NAME",
+                                "country": "GB",
+                                "disambiguation": "",
+                                "type_id": "b6e035f4-3ce9-331c-97df-83397230b0df",
                             },
+                            "attribute_ids": {},
+                            "attribute_values": {},
+                            "attributes": [],
+                            "begin": None,
+                            "end": None,
+                            "ended": False,
+                            "source_credit": "",
+                            "target_credit": "",
                         },
                         {
                             "type": "composer",
+                            "type_id": "RELATION TYPE ID",
+                            "direction": "backward",
                             "artist": {
-                                "name": "RECORDING COMPOSER ARTIST NAME",
                                 "id": "RECORDING COMPOSER ARTIST ID",
-                                "sort_name": (
-                                    "RECORDING COMPOSER ARTIST SORT NAME"
-                                ),
+                                "type": "Person",
+                                "name": "RECORDING COMPOSER ARTIST NAME",
+                                "sort_name": "RECORDING COMPOSER ARTIST SORT NAME",
+                                "country": "GB",
+                                "disambiguation": "",
+                                "type_id": "b6e035f4-3ce9-331c-97df-83397230b0df",
                             },
+                            "attribute_ids": {},
+                            "attribute_values": {},
+                            "attributes": [],
+                            "begin": None,
+                            "end": None,
+                            "ended": False,
+                            "source_credit": "",
+                            "target_credit": "",
                         },
                         {
                             "type": "composer",
+                            "type_id": "RELATION TYPE ID",
+                            "direction": "backward",
                             "artist": {
-                                "name": "RECORDING COMPOSER 2 ARTIST NAME",
                                 "id": "RECORDING COMPOSER 2 ARTIST ID",
-                                "sort_name": (
-                                    "RECORDING COMPOSER 2 ARTIST SORT NAME"
-                                ),
+                                "type": "Person",
+                                "name": "RECORDING COMPOSER 2 ARTIST NAME",
+                                "sort_name": "RECORDING COMPOSER 2 ARTIST SORT NAME",
+                                "country": "GB",
+                                "disambiguation": "",
+                                "type_id": "b6e035f4-3ce9-331c-97df-83397230b0df",
                             },
+                            "attribute_ids": {},
+                            "attribute_values": {},
+                            "attributes": [],
+                            "begin": None,
+                            "end": None,
+                            "ended": False,
+                            "source_credit": "",
+                            "target_credit": "",
                         },
                     ],
                 },
@@ -784,7 +893,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         recordings = [
             self._make_recording("TITLE ONE", "ID ONE", 100.0 * 1000.0),
             self._make_recording(
-                "TITLE VIDEO", "ID VIDEO", 100.0 * 1000.0, False, True
+                "TITLE VIDEO", "ID VIDEO", 100.0 * 1000.0, video=True
             ),
             self._make_recording("TITLE TWO", "ID TWO", 200.0 * 1000.0),
         ]
@@ -801,7 +910,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         ]
         data_tracks = [
             self._make_recording(
-                "TITLE VIDEO", "ID VIDEO", 100.0 * 1000.0, False, True
+                "TITLE VIDEO", "ID VIDEO", 100.0 * 1000.0, True
             )
         ]
         release = self._make_release(
@@ -818,7 +927,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         recordings = [
             self._make_recording("TITLE ONE", "ID ONE", 100.0 * 1000.0),
             self._make_recording(
-                "TITLE VIDEO", "ID VIDEO", 100.0 * 1000.0, False, True
+                "TITLE VIDEO", "ID VIDEO", 100.0 * 1000.0, True
             ),
             self._make_recording("TITLE TWO", "ID TWO", 200.0 * 1000.0),
         ]
@@ -838,7 +947,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         ]
         data_tracks = [
             self._make_recording(
-                "TITLE VIDEO", "ID VIDEO", 100.0 * 1000.0, False, True
+                "TITLE VIDEO", "ID VIDEO", 100.0 * 1000.0, True
             )
         ]
         release = self._make_release(
@@ -979,11 +1088,9 @@ class MBLibraryTest(MusicBrainzTestCase):
                         "tracks": [
                             {
                                 "id": "baz",
-                                "recording": {
-                                    "title": "translated title",
-                                    "id": "bar",
-                                    "length": 42,
-                                },
+                                "recording": self._make_recording(
+                                    "translated title", "bar", 42
+                                ),
                                 "position": 9,
                                 "number": "A1",
                             }
@@ -1022,11 +1129,9 @@ class MBLibraryTest(MusicBrainzTestCase):
                         "tracks": [
                             {
                                 "id": "baz",
-                                "recording": {
-                                    "title": "original title",
-                                    "id": "bar",
-                                    "length": 42,
-                                },
+                                "recording": self._make_recording(
+                                    "original title", "bar", 42
+                                ),
                                 "position": 9,
                                 "number": "A1",
                             }
@@ -1068,11 +1173,9 @@ class MBLibraryTest(MusicBrainzTestCase):
                         "tracks": [
                             {
                                 "id": "baz",
-                                "recording": {
-                                    "title": "translated title",
-                                    "id": "bar",
-                                    "length": 42,
-                                },
+                                "recording": self._make_recording(
+                                    "translated title", "bar", 42
+                                ),
                                 "position": 9,
                                 "number": "A1",
                             }
@@ -1113,11 +1216,9 @@ class MBLibraryTest(MusicBrainzTestCase):
                         "tracks": [
                             {
                                 "id": "baz",
-                                "recording": {
-                                    "title": "translated title",
-                                    "id": "bar",
-                                    "length": 42,
-                                },
+                                "recording": self._make_recording(
+                                    "translated title", "bar", 42
+                                ),
                                 "position": 9,
                                 "number": "A1",
                             }
@@ -1158,11 +1259,9 @@ class MBLibraryTest(MusicBrainzTestCase):
                         "tracks": [
                             {
                                 "id": "baz",
-                                "recording": {
-                                    "title": "translated title",
-                                    "id": "bar",
-                                    "length": 42,
-                                },
+                                "recording": self._make_recording(
+                                    "translated title", "bar", 42
+                                ),
                                 "position": 9,
                                 "number": "A1",
                             }
@@ -1206,11 +1305,9 @@ class TestMusicBrainzPlugin(PluginMixin):
     plugin = "musicbrainz"
 
     mbid = "d2a6f856-b553-40a0-ac54-a321e8e2da99"
-    RECORDING: ClassVar[dict[str, int | str]] = {
-        "title": "foo",
-        "id": mbid,
-        "length": 42,
-    }
+    RECORDING: ClassVar[mb.Recording] = MusicBrainzTestCase._make_recording(
+        "foo", mbid, 42
+    )
 
     @pytest.fixture
     def plugin_config(self):
