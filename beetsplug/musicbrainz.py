@@ -54,8 +54,6 @@ VARIOUS_ARTISTS_ID = "89ad4ac3-39f7-470e-963a-56509c546377"
 
 BASE_URL = "https://musicbrainz.org/"
 
-SKIPPED_TRACKS = ["[data track]"]
-
 FIELDS_TO_MB_KEYS = {
     "barcode": "barcode",
     "catalognum": "catno",
@@ -353,12 +351,14 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
         medium_index: int | None = None,
         medium_total: int | None = None,
     ) -> beets.autotag.hooks.TrackInfo:
-        """Translates a MusicBrainz recording result dictionary into a beets
-        ``TrackInfo`` object. Three parameters are optional and are used
-        only for tracks that appear on releases (non-singletons): ``index``,
-        the overall track number; ``medium``, the disc number;
-        ``medium_index``, the track's index on its medium; ``medium_total``,
-        the number of tracks on the medium. Each number is a 1-based index.
+        """Build a `TrackInfo` object from a MusicBrainz recording payload.
+
+        This is the main translation layer between MusicBrainz's recording model
+        and beets' internal autotag representation. It gathers core identifying
+        metadata (title, MBIDs, URLs), timing information, and artist-credit
+        fields, then enriches the result with relationship-derived roles (such
+        as remixers and arrangers) and work-level credits (such as lyricists and
+        composers).
         """
         info = beets.autotag.hooks.TrackInfo(
             title=recording["title"],
@@ -369,77 +369,69 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
             medium_total=medium_total,
             data_source=self.data_source,
             data_url=track_url(recording["id"]),
+            length=(
+                int(length) / 1000.0
+                if (length := recording["length"])
+                else None
+            ),
+            trackdisambig=recording["disambiguation"] or None,
+            isrc=(
+                ";".join(isrcs) if (isrcs := recording.get("isrcs")) else None
+            ),
         )
 
-        if recording.get("artist_credit"):
-            # Get the artist names.
-            (
-                info.artist,
-                info.artist_sort,
-                info.artist_credit,
-            ) = _flatten_artist_credit(recording["artist_credit"])
+        # Get the artist names.
+        (
+            info.artist,
+            info.artist_sort,
+            info.artist_credit,
+        ) = _flatten_artist_credit(recording["artist_credit"])
 
-            (
-                info.artists,
-                info.artists_sort,
-                info.artists_credit,
-            ) = _multi_artist_credit(
-                recording["artist_credit"], include_join_phrase=False
-            )
+        (
+            info.artists,
+            info.artists_sort,
+            info.artists_credit,
+        ) = _multi_artist_credit(
+            recording["artist_credit"], include_join_phrase=False
+        )
 
-            info.artists_ids = _artist_ids(recording["artist_credit"])
-            info.artist_id = info.artists_ids[0]
+        info.artists_ids = _artist_ids(recording["artist_credit"])
+        info.artist_id = info.artists_ids[0]
 
-        if recording.get("artist_relations"):
-            info.remixer = _get_related_artist_names(
-                recording["artist_relations"], relation_type="remixer"
-            )
+        if artist_relations := recording.get("artist_relations"):
+            if remixer := _get_related_artist_names(
+                artist_relations, "remixer"
+            ):
+                info.remixer = remixer
+            if arranger := _get_related_artist_names(
+                artist_relations, "arranger"
+            ):
+                info.arranger = arranger
 
-        if length := recording["length"]:
-            info.length = int(length) / 1000.0
-
-        info.trackdisambig = recording["disambiguation"] or None
-
-        if recording.get("isrcs"):
-            info.isrc = ";".join(recording["isrcs"])
-
-        lyricist = []
-        composer = []
-        composer_sort = []
+        lyricist: list[str] = []
+        composer: list[str] = []
+        composer_sort: list[str] = []
         for work_relation in recording.get("work_relations", ()):
             if work_relation["type"] != "performance":
                 continue
-            info.work = work_relation["work"]["title"]
-            info.mb_workid = work_relation["work"]["id"]
-            if "disambiguation" in work_relation["work"]:
-                info.work_disambig = work_relation["work"]["disambiguation"]
 
-            for artist_relation in work_relation["work"].get(
-                "artist_relations", ()
-            ):
-                if "type" in artist_relation:
-                    type = artist_relation["type"]
-                    if type == "lyricist":
-                        lyricist.append(artist_relation["artist"]["name"])
-                    elif type == "composer":
-                        composer.append(artist_relation["artist"]["name"])
-                        composer_sort.append(
-                            artist_relation["artist"]["sort_name"]
-                        )
+            work = work_relation["work"]
+            info.work = work["title"]
+            info.mb_workid = work["id"]
+            if "disambiguation" in work:
+                info.work_disambig = work["disambiguation"]
+
+            for artist_relation in work.get("artist_relations", ()):
+                if (rel_type := artist_relation["type"]) == "lyricist":
+                    lyricist.append(artist_relation["artist"]["name"])
+                elif rel_type == "composer":
+                    composer.append(artist_relation["artist"]["name"])
+                    composer_sort.append(artist_relation["artist"]["sort_name"])
         if lyricist:
             info.lyricist = ", ".join(lyricist)
         if composer:
             info.composer = ", ".join(composer)
             info.composer_sort = ", ".join(composer_sort)
-
-        arranger = []
-        for artist_relation in recording.get("artist_relations", ()):
-            if "type" in artist_relation:
-                type = artist_relation["type"]
-                if type == "arranger":
-                    arranger.append(artist_relation["artist"]["name"])
-        if arranger:
-            info.arranger = ", ".join(arranger)
 
         # Supplementary fields provided by plugins
         extra_trackdatas = plugins.send("mb_track_extract", data=recording)
@@ -512,15 +504,8 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
                 all_tracks.insert(0, medium["pregap"])
 
             for track in all_tracks:
-                if (
-                    "title" in track["recording"]
-                    and track["recording"]["title"] in SKIPPED_TRACKS
-                ):
-                    continue
-
-                if (
-                    "video" in track["recording"]
-                    and track["recording"]["video"]
+                if track["recording"]["title"] == "[data track]" or (
+                    track["recording"]["video"]
                     and config["match"]["ignore_video_tracks"]
                 ):
                     continue
