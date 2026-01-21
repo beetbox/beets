@@ -1022,7 +1022,7 @@ class TestMusicBrainzPlugin(PluginMixin):
     mbid = "d2a6f856-b553-40a0-ac54-a321e8e2da99"
     RECORDING: ClassVar[dict[str, int | str]] = {
         "title": "foo",
-        "id": "bar",
+        "id": "00000000-0000-0000-0000-000000000000",
         "length": 42,
     }
 
@@ -1065,7 +1065,11 @@ class TestMusicBrainzPlugin(PluginMixin):
     def test_item_candidates(self, monkeypatch, mb):
         monkeypatch.setattr(
             "beetsplug._utils.musicbrainz.MusicBrainzAPI.get_json",
-            lambda *_, **__: {"recordings": [self.RECORDING]},
+            lambda *_, **__: {"recordings": [{"id": self.RECORDING["id"]}]},
+        )
+        monkeypatch.setattr(
+            "beetsplug._utils.musicbrainz.MusicBrainzAPI.get_recording",
+            lambda *_, **__: self.RECORDING,
         )
 
         candidates = list(mb.item_candidates(Item(), "hello", "there"))
