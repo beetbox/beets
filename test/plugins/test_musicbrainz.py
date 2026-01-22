@@ -40,6 +40,10 @@ def alias_factory(**kwargs) -> mb.Alias:
     return factories.AliasFactory.build(**kwargs)
 
 
+def artist_factory(**kwargs) -> mb.Artist:
+    return factories.ArtistFactory.build(**kwargs)
+
+
 def artist_credit_factory(**kwargs) -> mb.ArtistCredit:
     return factories.ArtistCreditFactory.build(**kwargs)
 
@@ -556,15 +560,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
                 "type": "remixer",
                 "type_id": "RELATION TYPE ID",
                 "direction": "backward",
-                "artist": {
-                    "id": "RECORDING REMIXER ARTIST ID",
-                    "type": "Person",
-                    "name": "RECORDING REMIXER ARTIST NAME",
-                    "sort_name": "RECORDING REMIXER ARTIST SORT NAME",
-                    "country": "GB",
-                    "disambiguation": "",
-                    "type_id": "b6e035f4-3ce9-331c-97df-83397230b0df",
-                },
+                "artist": artist_factory(index=1, name="Recording Remixer"),
                 "attribute_ids": {},
                 "attribute_values": {},
                 "attributes": [],
@@ -578,15 +574,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
                 "type": "arranger",
                 "type_id": "RELATION TYPE ID",
                 "direction": "backward",
-                "artist": {
-                    "id": "RECORDING ARRANGER ARTIST ID",
-                    "type": "Person",
-                    "name": "RECORDING ARRANGER ARTIST NAME",
-                    "sort_name": "RECORDING ARRANGER ARTIST SORT NAME",
-                    "country": "GB",
-                    "disambiguation": "",
-                    "type_id": "b6e035f4-3ce9-331c-97df-83397230b0df",
-                },
+                "artist": artist_factory(index=2, name="Recording Arranger"),
                 "attribute_ids": {},
                 "attribute_values": {},
                 "attributes": [],
@@ -600,15 +588,9 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
                 "type": "arranger",
                 "type_id": "RELATION TYPE ID",
                 "direction": "backward",
-                "artist": {
-                    "id": "RECORDING ARRANGER 2 ARTIST ID",
-                    "type": "Person",
-                    "name": "RECORDING ARRANGER 2 ARTIST NAME",
-                    "sort_name": "RECORDING ARRANGER 2 ARTIST SORT NAME",
-                    "country": "GB",
-                    "disambiguation": "",
-                    "type_id": "b6e035f4-3ce9-331c-97df-83397230b0df",
-                },
+                "artist": artist_factory(
+                    index=3, name="Another Recording Arranger"
+                ),
                 "attribute_ids": {},
                 "attribute_values": {},
                 "attributes": [],
@@ -630,15 +612,9 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
                             "type": "lyricist",
                             "type_id": "RELATION TYPE ID",
                             "direction": "backward",
-                            "artist": {
-                                "id": "RECORDING LYRICIST ARTIST ID",
-                                "type": "Person",
-                                "name": "RECORDING LYRICIST ARTIST NAME",
-                                "sort_name": "RECORDING LYRICIST ARTIST SORT NAME",
-                                "country": "GB",
-                                "disambiguation": "",
-                                "type_id": "b6e035f4-3ce9-331c-97df-83397230b0df",
-                            },
+                            "artist": artist_factory(
+                                index=4, name="Recording Lyricist"
+                            ),
                             "attribute_ids": {},
                             "attribute_values": {},
                             "attributes": [],
@@ -652,15 +628,9 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
                             "type": "lyricist",
                             "type_id": "RELATION TYPE ID",
                             "direction": "backward",
-                            "artist": {
-                                "id": "RECORDING LYRICIST 2 ARTIST ID",
-                                "type": "Person",
-                                "name": "RECORDING LYRICIST 2 ARTIST NAME",
-                                "sort_name": "RECORDING LYRICIST 2 ARTIST SORT NAME",
-                                "country": "GB",
-                                "disambiguation": "",
-                                "type_id": "b6e035f4-3ce9-331c-97df-83397230b0df",
-                            },
+                            "artist": artist_factory(
+                                index=5, name="Another Recording Lyricist"
+                            ),
                             "attribute_ids": {},
                             "attribute_values": {},
                             "attributes": [],
@@ -674,15 +644,9 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
                             "type": "composer",
                             "type_id": "RELATION TYPE ID",
                             "direction": "backward",
-                            "artist": {
-                                "id": "RECORDING COMPOSER ARTIST ID",
-                                "type": "Person",
-                                "name": "RECORDING COMPOSER ARTIST NAME",
-                                "sort_name": "RECORDING COMPOSER ARTIST SORT NAME",
-                                "country": "GB",
-                                "disambiguation": "",
-                                "type_id": "b6e035f4-3ce9-331c-97df-83397230b0df",
-                            },
+                            "artist": artist_factory(
+                                index=6, name="Recording Composer"
+                            ),
                             "attribute_ids": {},
                             "attribute_values": {},
                             "attributes": [],
@@ -696,15 +660,9 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
                             "type": "composer",
                             "type_id": "RELATION TYPE ID",
                             "direction": "backward",
-                            "artist": {
-                                "id": "RECORDING COMPOSER 2 ARTIST ID",
-                                "type": "Person",
-                                "name": "RECORDING COMPOSER 2 ARTIST NAME",
-                                "sort_name": "RECORDING COMPOSER 2 ARTIST SORT NAME",
-                                "country": "GB",
-                                "disambiguation": "",
-                                "type_id": "b6e035f4-3ce9-331c-97df-83397230b0df",
-                            },
+                            "artist": artist_factory(
+                                index=7, name="Another Recording Composer"
+                            ),
                             "attribute_ids": {},
                             "attribute_values": {},
                             "attributes": [],
@@ -721,30 +679,29 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
 
         release = self._make_release(None, recordings=recordings)
         track = self.mb.album_info(release).tracks[0]
-        assert track.remixers == ["RECORDING REMIXER ARTIST NAME"]
+        assert track.remixers == ["Recording Remixer"]
         assert track.arrangers == [
-            "RECORDING ARRANGER ARTIST NAME",
-            "RECORDING ARRANGER 2 ARTIST NAME",
+            "Recording Arranger",
+            "Another Recording Arranger",
         ]
         assert track.lyricists_ids == [
-            "RECORDING LYRICIST ARTIST ID",
-            "RECORDING LYRICIST 2 ARTIST ID",
+            "00000000-0000-0000-0000-000000000004",
+            "00000000-0000-0000-0000-000000000005",
         ]
         assert track.lyricists == [
-            "RECORDING LYRICIST ARTIST NAME",
-            "RECORDING LYRICIST 2 ARTIST NAME",
+            "Recording Lyricist",
+            "Another Recording Lyricist",
         ]
         assert track.composers == [
-            "RECORDING COMPOSER ARTIST NAME",
-            "RECORDING COMPOSER 2 ARTIST NAME",
+            "Recording Composer",
+            "Another Recording Composer",
         ]
         assert track.composers_ids == [
-            "RECORDING COMPOSER ARTIST ID",
-            "RECORDING COMPOSER 2 ARTIST ID",
+            "00000000-0000-0000-0000-000000000006",
+            "00000000-0000-0000-0000-000000000007",
         ]
         assert track.composer_sort == (
-            "RECORDING COMPOSER ARTIST SORT NAME, "
-            "RECORDING COMPOSER 2 ARTIST SORT NAME"
+            "Recording Composer, The, Another Recording Composer, The"
         )
 
     def test_data_source(self):
