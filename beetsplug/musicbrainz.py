@@ -127,14 +127,6 @@ def _key_with_preferred_alias(
     return alias["name"] if alias else obj[key]
 
 
-def track_url(trackid: str) -> str:
-    return urljoin(BASE_URL, f"recording/{trackid}")
-
-
-def album_url(albumid: str) -> str:
-    return urljoin(BASE_URL, f"release/{albumid}")
-
-
 def _preferred_release_event(release: Release) -> tuple[str | None, str | None]:
     """Given a release, select and return the user's preferred release
     event as a tuple of (country, release_date). Fall back to the
@@ -337,7 +329,7 @@ class MusicBrainzPlugin(
             medium_index=medium_index,
             medium_total=medium_total,
             data_source=self.data_source,
-            data_url=track_url(recording["id"]),
+            data_url=urljoin(BASE_URL, f"recording/{recording['id']}"),
             length=(
                 length / 1000.0 if (length := recording["length"]) else None
             ),
@@ -500,7 +492,7 @@ class MusicBrainzPlugin(
             tracks=track_infos,
             mediums=len(release["media"]),
             data_source=self.data_source,
-            data_url=album_url(release["id"]),
+            data_url=urljoin(BASE_URL, f"release/{release['id']}"),
             barcode=release.get("barcode"),
         )
         info.va = info.artist_id == VARIOUS_ARTISTS_ID
