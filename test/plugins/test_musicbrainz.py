@@ -729,9 +729,11 @@ class ArtistTest(unittest.TestCase):
 
         assert MusicBrainzPlugin._parse_artist_credits(credit) == {
             "artist": "Artist",
+            "artist_id": "00000000-0000-0000-0000-000000000001",
             "artist_sort": "Artist, The",
             "artist_credit": "Artist Credit",
             "artists": ["Artist"],
+            "artists_ids": ["00000000-0000-0000-0000-000000000001"],
             "artists_sort": ["Artist, The"],
             "artists_credit": ["Artist Credit"],
         }
@@ -739,14 +741,21 @@ class ArtistTest(unittest.TestCase):
     def test_two_artists(self):
         credit = [
             artist_credit_factory(artist__name="Artist", joinphrase=" AND "),
-            artist_credit_factory(artist__name="Other Artist"),
+            artist_credit_factory(
+                artist__name="Other Artist", artist__id_suffix="1"
+            ),
         ]
 
         assert MusicBrainzPlugin._parse_artist_credits(credit) == {
             "artist": "Artist AND Other Artist",
+            "artist_id": "00000000-0000-0000-0000-000000000001",
             "artist_sort": "Artist, The AND Other Artist, The",
             "artist_credit": "Artist Credit AND Other Artist Credit",
             "artists": ["Artist", "Other Artist"],
+            "artists_ids": [
+                "00000000-0000-0000-0000-000000000001",
+                "00000000-0000-0000-0000-000000000002",
+            ],
             "artists_sort": ["Artist, The", "Other Artist, The"],
             "artists_credit": ["Artist Credit", "Other Artist Credit"],
         }
