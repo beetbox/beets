@@ -50,6 +50,8 @@ New features:
   the ``clearart_on_import`` config option. Also, ``beet clearart`` is only
   going to update the files matching the query and with an embedded art, leaving
   untouched the files without.
+- :doc:`plugins/fish`: Filenames are now completed in more places, like after
+  ``beet import``.
 
 Bug fixes:
 
