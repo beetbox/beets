@@ -122,10 +122,6 @@ def _preferred_alias(
     return next(matches, None)
 
 
-def track_url(trackid: str) -> str:
-    return urljoin(BASE_URL, f"recording/{trackid}")
-
-
 def _get_related_artist_names(
     relations: list[ArtistRelation], relation_type: ArtistRelationType
 ) -> str:
@@ -133,10 +129,6 @@ def _get_related_artist_names(
     return ", ".join(
         r["artist"]["name"] for r in relations if r["type"] == relation_type
     )
-
-
-def album_url(albumid: str) -> str:
-    return urljoin(BASE_URL, f"release/{albumid}")
 
 
 def _preferred_release_event(release: Release) -> tuple[str | None, str | None]:
@@ -339,7 +331,7 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
             medium_index=medium_index,
             medium_total=medium_total,
             data_source=self.data_source,
-            data_url=track_url(recording["id"]),
+            data_url=urljoin(BASE_URL, f"recording/{recording['id']}"),
             length=(
                 int(length) / 1000.0
                 if (length := recording["length"])
@@ -484,7 +476,7 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
             tracks=track_infos,
             mediums=len(release["media"]),
             data_source=self.data_source,
-            data_url=album_url(release["id"]),
+            data_url=urljoin(BASE_URL, f"release/{release['id']}"),
             barcode=release.get("barcode"),
         )
         info.va = info.artist_id == VARIOUS_ARTISTS_ID
