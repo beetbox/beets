@@ -40,6 +40,10 @@ def alias_factory(**kwargs) -> mb.Alias:
     return factories.AliasFactory.build(**kwargs)
 
 
+def artist_factory(**kwargs) -> mb.Artist:
+    return factories.ArtistFactory.build(**kwargs)
+
+
 def artist_credit_factory(**kwargs) -> mb.ArtistCredit:
     return factories.ArtistCreditFactory.build(**kwargs)
 
@@ -187,15 +191,7 @@ class MusicBrainzTestCase(BeetsTestCase):
                     "type": "remixer",
                     "type_id": "RELATION TYPE ID",
                     "direction": "backward",
-                    "artist": {
-                        "id": "RECORDING REMIXER ARTIST ID",
-                        "type": "Person",
-                        "name": "RECORDING REMIXER ARTIST NAME",
-                        "sort_name": "RECORDING REMIXER ARTIST SORT NAME",
-                        "country": "GB",
-                        "disambiguation": "",
-                        "type_id": "b6e035f4-3ce9-331c-97df-83397230b0df",
-                    },
+                    "artist": artist_factory(name="Recording Remixer"),
                     "attribute_ids": {},
                     "attribute_values": {},
                     "attributes": [],
@@ -514,7 +510,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         recordings = [self._make_recording("a", "b", 1, remixer=True)]
         release = self._make_release(None, recordings=recordings)
         track = self.mb.album_info(release).tracks[0]
-        assert track.remixer == "RECORDING REMIXER ARTIST NAME"
+        assert track.remixer == "Recording Remixer"
 
     def test_data_source(self):
         release = self._make_release()
