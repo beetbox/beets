@@ -29,8 +29,14 @@ from beets.library import Item
 from beets.test.helper import BeetsTestCase, PluginMixin
 from beetsplug import musicbrainz
 
+from .factories import musicbrainz as factories
+
 if TYPE_CHECKING:
     from beetsplug._utils import musicbrainz as mb
+
+
+def alias_factory(**kwargs) -> mb.Alias:
+    return factories.AliasFactory.build(**kwargs)
 
 
 class MusicBrainzTestCase(BeetsTestCase):
@@ -757,7 +763,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert d.mediums == 2
 
 
-class ArtistFlatteningTest(unittest.TestCase):
+class ArtistTest(unittest.TestCase):
     def _credit_dict(self, suffix=""):
         return {
             "artist": {
@@ -766,18 +772,6 @@ class ArtistFlatteningTest(unittest.TestCase):
             },
             "name": f"CREDIT{suffix}",
         }
-
-    def _add_alias(self, credit_dict, suffix="", locale="", primary=False):
-        alias = {
-            "name": f"ALIAS{suffix}",
-            "locale": locale,
-            "sort_name": f"ALIASSORT{suffix}",
-        }
-        if primary:
-            alias["primary"] = "primary"
-        if "aliases" not in credit_dict["artist"]:
-            credit_dict["artist"]["aliases"] = []
-        credit_dict["artist"]["aliases"].append(alias)
 
     def test_single_artist(self):
         credit = [self._credit_dict()]
@@ -810,45 +804,48 @@ class ArtistFlatteningTest(unittest.TestCase):
         assert s == ["SORTa", "SORTb"]
         assert c == ["CREDITa", "CREDITb"]
 
-    def test_alias(self):
-        credit_dict = self._credit_dict()
-        self._add_alias(credit_dict, suffix="en", locale="en", primary=True)
-        self._add_alias(
-            credit_dict, suffix="en_GB", locale="en_GB", primary=True
-        )
-        self._add_alias(credit_dict, suffix="fr", locale="fr")
-        self._add_alias(credit_dict, suffix="fr_P", locale="fr", primary=True)
-        self._add_alias(credit_dict, suffix="pt_BR", locale="pt_BR")
+    def test_preferred_alias(self):
+        aliases = [
+            alias_factory(suffix="en", locale="en", primary=True),
+            alias_factory(suffix="en_GB", locale="en_GB", primary=True),
+            alias_factory(suffix="fr", locale="fr"),
+            alias_factory(suffix="fr_P", locale="fr", primary=True),
+            alias_factory(suffix="pt_BR", locale="pt_BR"),
+        ]
 
         # test no alias
         config["import"]["languages"] = [""]
-        flat = musicbrainz._flatten_artist_credit([credit_dict])
-        assert flat == ("NAME", "SORT", "CREDIT")
+        assert not musicbrainz._preferred_alias(aliases)
 
         # test en primary
         config["import"]["languages"] = ["en"]
-        flat = musicbrainz._flatten_artist_credit([credit_dict])
-        assert flat == ("ALIASen", "ALIASSORTen", "CREDIT")
+        preferred_alias = musicbrainz._preferred_alias(aliases)
+        assert preferred_alias
+        assert preferred_alias["name"] == "Alias en"
 
         # test en_GB en primary
         config["import"]["languages"] = ["en_GB", "en"]
-        flat = musicbrainz._flatten_artist_credit([credit_dict])
-        assert flat == ("ALIASen_GB", "ALIASSORTen_GB", "CREDIT")
+        preferred_alias = musicbrainz._preferred_alias(aliases)
+        assert preferred_alias
+        assert preferred_alias["name"] == "Alias en_GB"
 
         # test en en_GB primary
         config["import"]["languages"] = ["en", "en_GB"]
-        flat = musicbrainz._flatten_artist_credit([credit_dict])
-        assert flat == ("ALIASen", "ALIASSORTen", "CREDIT")
+        preferred_alias = musicbrainz._preferred_alias(aliases)
+        assert preferred_alias
+        assert preferred_alias["name"] == "Alias en"
 
         # test fr primary
         config["import"]["languages"] = ["fr"]
-        flat = musicbrainz._flatten_artist_credit([credit_dict])
-        assert flat == ("ALIASfr_P", "ALIASSORTfr_P", "CREDIT")
+        preferred_alias = musicbrainz._preferred_alias(aliases)
+        assert preferred_alias
+        assert preferred_alias["name"] == "Alias fr_P"
 
         # test for not matching non-primary
         config["import"]["languages"] = ["pt_BR", "fr"]
-        flat = musicbrainz._flatten_artist_credit([credit_dict])
-        assert flat == ("ALIASfr_P", "ALIASSORTfr_P", "CREDIT")
+        preferred_alias = musicbrainz._preferred_alias(aliases)
+        assert preferred_alias
+        assert preferred_alias["name"] == "Alias fr_P"
 
 
 class MBLibraryTest(MusicBrainzTestCase):

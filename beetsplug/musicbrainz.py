@@ -84,42 +84,31 @@ UrlSource = Literal[
 def _preferred_alias(
     aliases: list[Alias], languages: list[str] | None = None
 ) -> Alias | None:
-    """Given a list of alias structures for an artist credit, select
-    and return the user's preferred alias or None if no matching
-    """
+    """Select the most appropriate alias based on user preferences."""
     if not aliases:
         return None
 
-    # Only consider aliases that have locales set.
-    valid_aliases = [a for a in aliases if "locale" in a]
-
     # Get any ignored alias types and lower case them to prevent case issues
-    ignored_alias_types = config["import"]["ignored_alias_types"].as_str_seq()
-    ignored_alias_types = [a.lower() for a in ignored_alias_types]
+    ignored_alias_types = {
+        a.lower() for a in config["import"]["ignored_alias_types"].as_str_seq()
+    }
 
     # Search configured locales in order.
-    if languages is None:
-        languages = config["import"]["languages"].as_str_seq()
+    languages = languages or config["import"]["languages"].as_str_seq()
 
-    for locale in languages:
+    matches = (
+        al
+        for locale in languages
+        for al in aliases
         # Find matching primary aliases for this locale that are not
         # being ignored
-        matches = []
-        for alias in valid_aliases:
-            if (
-                alias["locale"] == locale
-                and alias.get("primary")
-                and (alias.get("type") or "").lower() not in ignored_alias_types
-            ):
-                matches.append(alias)
-
-        # Skip to the next locale if we have no matches
-        if not matches:
-            continue
-
-        return matches[0]
-
-    return None
+        if (
+            al["locale"] == locale
+            and al["primary"]
+            and (al["type"] or "").lower() not in ignored_alias_types
+        )
+    )
+    return next(matches, None)
 
 
 def _multi_artist_credit(
