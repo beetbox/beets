@@ -48,6 +48,10 @@ def artist_credit_factory(**kwargs) -> mb.ArtistCredit:
     return factories.ArtistCreditFactory.build(**kwargs)
 
 
+def artist_relation_factory(**kwargs) -> mb.ArtistRelation:
+    return factories.ArtistRelationFactory.build(**kwargs)
+
+
 class MusicBrainzTestCase(BeetsTestCase):
     def setUp(self):
         super().setUp()
@@ -187,20 +191,9 @@ class MusicBrainzTestCase(BeetsTestCase):
             )
         if remixer:
             recording["artist_relations"] = [
-                {
-                    "type": "remixer",
-                    "type_id": "RELATION TYPE ID",
-                    "direction": "backward",
-                    "artist": artist_factory(name="Recording Remixer"),
-                    "attribute_ids": {},
-                    "attribute_values": {},
-                    "attributes": [],
-                    "begin": None,
-                    "end": None,
-                    "ended": False,
-                    "source_credit": "",
-                    "target_credit": "",
-                }
+                artist_relation_factory(
+                    type="remixer", artist__name="Recording Remixer"
+                )
             ]
         return recording
 

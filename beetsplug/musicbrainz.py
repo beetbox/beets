@@ -129,16 +129,10 @@ def track_url(trackid: str) -> str:
 def _get_related_artist_names(
     relations: list[ArtistRelation], relation_type: ArtistRelationType
 ) -> str:
-    """Given a list representing the artist relationships extract the names of
-    the remixers and concatenate them.
-    """
-    related_artists = []
-
-    for relation in relations:
-        if relation["type"] == relation_type:
-            related_artists.append(relation["artist"]["name"])
-
-    return ", ".join(related_artists)
+    """Return a comma-separated list of artist names for a relation type."""
+    return ", ".join(
+        r["artist"]["name"] for r in relations if r["type"] == relation_type
+    )
 
 
 def album_url(albumid: str) -> str:
