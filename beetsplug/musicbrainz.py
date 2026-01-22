@@ -81,9 +81,11 @@ UrlSource = Literal[
 
 class ArtistInfo(TypedDict):
     artist: str
+    artist_id: str
     artist_sort: str
     artist_credit: str
     artists: list[str]
+    artists_ids: list[str]
     artists_sort: list[str]
     artists_credit: list[str]
 
@@ -127,19 +129,6 @@ def _key_with_preferred_alias(
 
 def track_url(trackid: str) -> str:
     return urljoin(BASE_URL, f"recording/{trackid}")
-
-
-def _artist_ids(credit: list[ArtistCredit]) -> list[str]:
-    """
-    Given a list representing an ``artist-credit``,
-    return a list of artist IDs
-    """
-    artist_ids: list[str] = []
-    for el in credit:
-        if isinstance(el, dict):
-            artist_ids.append(el["artist"]["id"])
-
-    return artist_ids
 
 
 def album_url(albumid: str) -> str:
@@ -294,8 +283,10 @@ class MusicBrainzPlugin(
         artists: list[str] = []
         artists_sort: list[str] = []
         artists_credit: list[str] = []
+        artists_ids: list[str] = []
 
         for el in artist_credits:
+            artists_ids.append(el["artist"]["id"])
             alias = _preferred_alias(el["artist"].get("aliases", []))
             artist_object = alias or el["artist"]
 
@@ -310,9 +301,11 @@ class MusicBrainzPlugin(
 
         return {
             "artist": "".join(artist_parts),
+            "artist_id": artists_ids[0],
             "artist_sort": "".join(artist_sort_parts),
             "artist_credit": "".join(artist_credit_parts),
             "artists": artists,
+            "artists_ids": artists_ids,
             "artists_sort": artists_sort,
             "artists_credit": artists_credit,
         }
@@ -354,9 +347,6 @@ class MusicBrainzPlugin(
             ),
             **self._parse_artist_credits(recording["artist_credit"]),
         )
-
-        info.artists_ids = _artist_ids(recording["artist_credit"])
-        info.artist_id = info.artists_ids[0]
 
         lyricists: list[str] = []
         lyricists_ids: list[str] = []
@@ -502,22 +492,16 @@ class MusicBrainzPlugin(
                     ti.update(
                         **self._parse_artist_credits(track["artist_credit"])
                     )
-
-                    ti.artists_ids = _artist_ids(track["artist_credit"])
-                    ti.artist_id = ti.artists_ids[0]
                 if length := track.get("length"):
                     ti.length = length / 1000.0
 
                 track_infos.append(ti)
 
-        album_artist_ids = _artist_ids(release["artist_credit"])
         release_title = _key_with_preferred_alias(release, key="title")
         info = AlbumInfo(
             **self._parse_artist_credits(release["artist_credit"]),
             album=release_title,
             album_id=release["id"],
-            artist_id=album_artist_ids[0],
-            artists_ids=album_artist_ids,
             tracks=track_infos,
             mediums=len(release["media"]),
             data_source=self.data_source,
