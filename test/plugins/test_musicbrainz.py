@@ -40,6 +40,10 @@ def alias_factory(**kwargs) -> mb.Alias:
     return factories.AliasFactory.build(**kwargs)
 
 
+def artist_credit_factory(**kwargs) -> mb.ArtistCredit:
+    return factories.ArtistCreditFactory.build(**kwargs)
+
+
 class MusicBrainzTestCase(BeetsTestCase):
     def setUp(self):
         super().setUp()
@@ -67,16 +71,7 @@ class MusicBrainzTestCase(BeetsTestCase):
                 "id": "RELEASE GROUP ID",
                 "disambiguation": "RG_DISAMBIGUATION",
             },
-            "artist_credit": [
-                {
-                    "artist": {
-                        "name": "ARTIST NAME",
-                        "id": "ARTIST ID",
-                        "sort_name": "ARTIST SORT NAME",
-                    },
-                    "name": "ARTIST CREDIT",
-                }
-            ],
+            "artist_credit": [artist_credit_factory(artist__id_base=10)],
             "date": "3001",
             "media": [],
             "genres": [{"count": 1, "name": "GENRE"}],
@@ -100,14 +95,7 @@ class MusicBrainzTestCase(BeetsTestCase):
         if multi_artist_credit:
             release["artist_credit"][0]["joinphrase"] = " & "
             release["artist_credit"].append(
-                {
-                    "artist": {
-                        "name": "ARTIST 2 NAME",
-                        "id": "ARTIST 2 ID",
-                        "sort_name": "ARTIST 2 SORT NAME",
-                    },
-                    "name": "ARTIST MULTI CREDIT",
-                }
+                artist_credit_factory(artist__name="Other Artist")
             )
 
         i = 0
@@ -128,27 +116,16 @@ class MusicBrainzTestCase(BeetsTestCase):
                     # Similarly, track artists can differ from recording
                     # artists.
                     track["artist_credit"] = [
-                        {
-                            "artist": {
-                                "name": "TRACK ARTIST NAME",
-                                "id": "TRACK ARTIST ID",
-                                "sort_name": "TRACK ARTIST SORT NAME",
-                            },
-                            "name": "TRACK ARTIST CREDIT",
-                        }
+                        artist_credit_factory(artist__name="Track Artist")
                     ]
 
                     if multi_artist_credit:
                         track["artist_credit"][0]["joinphrase"] = " & "
                         track["artist_credit"].append(
-                            {
-                                "artist": {
-                                    "name": "TRACK ARTIST 2 NAME",
-                                    "id": "TRACK ARTIST 2 ID",
-                                    "sort_name": "TRACK ARTIST 2 SORT NAME",
-                                },
-                                "name": "TRACK ARTIST 2 CREDIT",
-                            }
+                            artist_credit_factory(
+                                artist__name="Other Track Artist",
+                                artist__index=2,
+                            )
                         )
 
                 track_list.append(track)
@@ -193,37 +170,16 @@ class MusicBrainzTestCase(BeetsTestCase):
             "isrcs": [],
             "aliases": [],
             "artist_credit": [
-                {
-                    "artist": {
-                        "name": "RECORDING ARTIST NAME",
-                        "id": "RECORDING ARTIST ID",
-                        "sort_name": "RECORDING ARTIST SORT NAME",
-                        "country": None,
-                        "disambiguation": "",
-                        "type": "Person",
-                        "type_id": "b6e035f4-3ce9-331c-97df-83397230b0df",
-                    },
-                    "name": "RECORDING ARTIST CREDIT",
-                    "joinphrase": "",
-                }
+                artist_credit_factory(artist__name="Recording Artist")
             ],
         }
         if multi_artist_credit:
             recording["artist_credit"][0]["joinphrase"] = " & "
             recording["artist_credit"].append(
-                {
-                    "artist": {
-                        "name": "RECORDING ARTIST 2 NAME",
-                        "id": "RECORDING ARTIST 2 ID",
-                        "sort_name": "RECORDING ARTIST 2 SORT NAME",
-                        "country": None,
-                        "disambiguation": "",
-                        "type": "Person",
-                        "type_id": "b6e035f4-3ce9-331c-97df-83397230b0df",
-                    },
-                    "name": "RECORDING ARTIST 2 CREDIT",
-                    "joinphrase": "",
-                }
+                artist_credit_factory(
+                    artist__name="Other Recording Artist",
+                    artist__index=2,
+                )
             )
         if remixer:
             recording["artist_relations"] = [
@@ -259,11 +215,11 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         d = self.mb.album_info(release)
         assert d.album == "ALBUM TITLE"
         assert d.album_id == "ALBUM ID"
-        assert d.artist == "ARTIST NAME"
-        assert d.artist_id == "ARTIST ID"
+        assert d.artist == "Artist"
+        assert d.artist_id == "00000000-0000-0000-0000-000000000011"
         assert d.original_year == 1984
         assert d.year == 3001
-        assert d.artist_credit == "ARTIST CREDIT"
+        assert d.artist_credit == "Artist Credit"
 
     def test_parse_release_type(self):
         release = self._make_release("1984")
@@ -395,7 +351,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
     def test_parse_artist_sort_name(self):
         release = self._make_release(None)
         d = self.mb.album_info(release)
-        assert d.artist_sort == "ARTIST SORT NAME"
+        assert d.artist_sort == "Artist, The"
 
     def test_parse_releasegroupid(self):
         release = self._make_release(None)
@@ -469,10 +425,10 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         recordings = [self._make_recording("a", "b", 1)]
         release = self._make_release(None, recordings=recordings)
         track = self.mb.album_info(release).tracks[0]
-        assert track.artist == "RECORDING ARTIST NAME"
-        assert track.artist_id == "RECORDING ARTIST ID"
-        assert track.artist_sort == "RECORDING ARTIST SORT NAME"
-        assert track.artist_credit == "RECORDING ARTIST CREDIT"
+        assert track.artist == "Recording Artist"
+        assert track.artist_id == "00000000-0000-0000-0000-000000000001"
+        assert track.artist_sort == "Recording Artist, The"
+        assert track.artist_credit == "Recording Artist Credit"
 
     def test_parse_recording_artist_multi(self):
         recordings = [
@@ -480,32 +436,32 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         ]
         release = self._make_release(None, recordings=recordings)
         track = self.mb.album_info(release).tracks[0]
-        assert track.artist == "RECORDING ARTIST NAME & RECORDING ARTIST 2 NAME"
-        assert track.artist_id == "RECORDING ARTIST ID"
+        assert track.artist == "Recording Artist & Other Recording Artist"
+        assert track.artist_id == "00000000-0000-0000-0000-000000000001"
         assert (
             track.artist_sort
-            == "RECORDING ARTIST SORT NAME & RECORDING ARTIST 2 SORT NAME"
+            == "Recording Artist, The & Other Recording Artist, The"
         )
         assert (
             track.artist_credit
-            == "RECORDING ARTIST CREDIT & RECORDING ARTIST 2 CREDIT"
+            == "Recording Artist Credit & Other Recording Artist Credit"
         )
 
         assert track.artists == [
-            "RECORDING ARTIST NAME",
-            "RECORDING ARTIST 2 NAME",
+            "Recording Artist",
+            "Other Recording Artist",
         ]
         assert track.artists_ids == [
-            "RECORDING ARTIST ID",
-            "RECORDING ARTIST 2 ID",
+            "00000000-0000-0000-0000-000000000001",
+            "00000000-0000-0000-0000-000000000002",
         ]
         assert track.artists_sort == [
-            "RECORDING ARTIST SORT NAME",
-            "RECORDING ARTIST 2 SORT NAME",
+            "Recording Artist, The",
+            "Other Recording Artist, The",
         ]
         assert track.artists_credit == [
-            "RECORDING ARTIST CREDIT",
-            "RECORDING ARTIST 2 CREDIT",
+            "Recording Artist Credit",
+            "Other Recording Artist Credit",
         ]
 
     def test_track_artist_overrides_recording_artist(self):
@@ -514,10 +470,10 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
             None, recordings=recordings, track_artist=True
         )
         track = self.mb.album_info(release).tracks[0]
-        assert track.artist == "TRACK ARTIST NAME"
-        assert track.artist_id == "TRACK ARTIST ID"
-        assert track.artist_sort == "TRACK ARTIST SORT NAME"
-        assert track.artist_credit == "TRACK ARTIST CREDIT"
+        assert track.artist == "Track Artist"
+        assert track.artist_id == "00000000-0000-0000-0000-000000000001"
+        assert track.artist_sort == "Track Artist, The"
+        assert track.artist_credit == "Track Artist Credit"
 
     def test_track_artist_overrides_recording_artist_multi(self):
         recordings = [
@@ -530,25 +486,28 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
             multi_artist_credit=True,
         )
         track = self.mb.album_info(release).tracks[0]
-        assert track.artist == "TRACK ARTIST NAME & TRACK ARTIST 2 NAME"
-        assert track.artist_id == "TRACK ARTIST ID"
+        assert track.artist == "Track Artist & Other Track Artist"
+        assert track.artist_id == "00000000-0000-0000-0000-000000000001"
         assert (
-            track.artist_sort
-            == "TRACK ARTIST SORT NAME & TRACK ARTIST 2 SORT NAME"
+            track.artist_sort == "Track Artist, The & Other Track Artist, The"
         )
         assert (
-            track.artist_credit == "TRACK ARTIST CREDIT & TRACK ARTIST 2 CREDIT"
+            track.artist_credit
+            == "Track Artist Credit & Other Track Artist Credit"
         )
 
-        assert track.artists == ["TRACK ARTIST NAME", "TRACK ARTIST 2 NAME"]
-        assert track.artists_ids == ["TRACK ARTIST ID", "TRACK ARTIST 2 ID"]
+        assert track.artists == ["Track Artist", "Other Track Artist"]
+        assert track.artists_ids == [
+            "00000000-0000-0000-0000-000000000001",
+            "00000000-0000-0000-0000-000000000002",
+        ]
         assert track.artists_sort == [
-            "TRACK ARTIST SORT NAME",
-            "TRACK ARTIST 2 SORT NAME",
+            "Track Artist, The",
+            "Other Track Artist, The",
         ]
         assert track.artists_credit == [
-            "TRACK ARTIST CREDIT",
-            "TRACK ARTIST 2 CREDIT",
+            "Track Artist Credit",
+            "Other Track Artist Credit",
         ]
 
     def test_parse_recording_remixer(self):
@@ -765,46 +724,31 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
 
 
 class ArtistTest(unittest.TestCase):
-    def _credit_dict(self, suffix="", joinphrase="") -> mb.ArtistCredit:
-        return {
-            "artist": {
-                "name": f"NAME{suffix}",
-                "id": f"ID{suffix}",
-                "sort_name": f"SORT{suffix}",
-                "country": None,
-                "disambiguation": "",
-                "type": "Person",
-                "type_id": "b6e035f4-3ce9-331c-97df-83397230b0df",
-            },
-            "name": f"CREDIT{suffix}",
-            "joinphrase": joinphrase,
-        }
-
     def test_single_artist(self):
-        credit = [self._credit_dict()]
+        credit = [artist_credit_factory(artist__name="Artist")]
 
         assert MusicBrainzPlugin._parse_artist_credits(credit) == {
-            "artist": "NAME",
-            "artist_sort": "SORT",
-            "artist_credit": "CREDIT",
-            "artists": ["NAME"],
-            "artists_sort": ["SORT"],
-            "artists_credit": ["CREDIT"],
+            "artist": "Artist",
+            "artist_sort": "Artist, The",
+            "artist_credit": "Artist Credit",
+            "artists": ["Artist"],
+            "artists_sort": ["Artist, The"],
+            "artists_credit": ["Artist Credit"],
         }
 
     def test_two_artists(self):
         credit = [
-            self._credit_dict("a", " AND "),
-            self._credit_dict("b"),
+            artist_credit_factory(artist__name="Artist", joinphrase=" AND "),
+            artist_credit_factory(artist__name="Other Artist"),
         ]
 
         assert MusicBrainzPlugin._parse_artist_credits(credit) == {
-            "artist": "NAMEa AND NAMEb",
-            "artist_sort": "SORTa AND SORTb",
-            "artist_credit": "CREDITa AND CREDITb",
-            "artists": ["NAMEa", "NAMEb"],
-            "artists_sort": ["SORTa", "SORTb"],
-            "artists_credit": ["CREDITa", "CREDITb"],
+            "artist": "Artist AND Other Artist",
+            "artist_sort": "Artist, The AND Other Artist, The",
+            "artist_credit": "Artist Credit AND Other Artist Credit",
+            "artists": ["Artist", "Other Artist"],
+            "artists_sort": ["Artist, The", "Other Artist, The"],
+            "artists_credit": ["Artist Credit", "Other Artist Credit"],
         }
 
     def test_preferred_alias(self):
@@ -873,14 +817,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                         "position": 5,
                     }
                 ],
-                "artist_credit": [
-                    {
-                        "artist": {
-                            "name": "some-artist",
-                            "id": "some-id",
-                        },
-                    }
-                ],
+                "artist_credit": [artist_credit_factory()],
                 "release_group": {
                     "id": "another-id",
                 },
@@ -913,14 +850,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                         "position": 5,
                     }
                 ],
-                "artist_credit": [
-                    {
-                        "artist": {
-                            "name": "some-artist",
-                            "id": "some-id",
-                        },
-                    }
-                ],
+                "artist_credit": [artist_credit_factory()],
                 "release_group": {
                     "id": "another-id",
                 },
@@ -956,14 +886,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                         "position": 5,
                     }
                 ],
-                "artist_credit": [
-                    {
-                        "artist": {
-                            "name": "some-artist",
-                            "id": "some-id",
-                        },
-                    }
-                ],
+                "artist_credit": [artist_credit_factory()],
                 "release_group": {
                     "id": "another-id",
                 },
@@ -998,14 +921,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                         "position": 5,
                     }
                 ],
-                "artist_credit": [
-                    {
-                        "artist": {
-                            "name": "some-artist",
-                            "id": "some-id",
-                        },
-                    }
-                ],
+                "artist_credit": [artist_credit_factory()],
                 "release_group": {
                     "id": "another-id",
                 },
@@ -1040,14 +956,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                         "position": 5,
                     }
                 ],
-                "artist_credit": [
-                    {
-                        "artist": {
-                            "name": "some-artist",
-                            "id": "some-id",
-                        },
-                    }
-                ],
+                "artist_credit": [artist_credit_factory()],
                 "release_group": {
                     "id": "another-id",
                 },
@@ -1154,9 +1063,7 @@ class TestMusicBrainzPlugin(PluginMixin):
                         "position": 5,
                     }
                 ],
-                "artist_credit": [
-                    {"artist": {"name": "some-artist", "id": "some-id"}}
-                ],
+                "artist_credit": [artist_credit_factory()],
                 "release_group": {"id": "another-id"},
             },
         )
