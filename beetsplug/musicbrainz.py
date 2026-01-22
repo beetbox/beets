@@ -20,7 +20,7 @@ from collections import Counter
 from contextlib import suppress
 from functools import cached_property
 from itertools import product
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, TypedDict
 from urllib.parse import urljoin
 
 from confuse.exceptions import NotFoundError
@@ -81,6 +81,15 @@ UrlSource = Literal[
 ]
 
 
+class ArtistInfo(TypedDict):
+    artist: str
+    artist_sort: str
+    artist_credit: str
+    artists: list[str]
+    artists_sort: list[str]
+    artists_credit: list[str]
+
+
 def _preferred_alias(
     aliases: list[Alias], languages: list[str] | None = None
 ) -> Alias | None:
@@ -111,69 +120,8 @@ def _preferred_alias(
     return next(matches, None)
 
 
-def _multi_artist_credit(
-    credit: list[ArtistCredit], include_join_phrase: bool
-) -> tuple[list[str], list[str], list[str]]:
-    """Given a list representing an ``artist-credit`` block, accumulate
-    data into a triple of joined artist name lists: canonical, sort, and
-    credit.
-    """
-    artist_parts = []
-    artist_sort_parts = []
-    artist_credit_parts = []
-    for el in credit:
-        alias = _preferred_alias(el["artist"].get("aliases", []))
-
-        # An artist.
-        if alias:
-            cur_artist_name = alias["name"]
-        else:
-            cur_artist_name = el["artist"]["name"]
-        artist_parts.append(cur_artist_name)
-
-        # Artist sort name.
-        if alias:
-            artist_sort_parts.append(alias["sort_name"])
-        elif "sort_name" in el["artist"]:
-            artist_sort_parts.append(el["artist"]["sort_name"])
-        else:
-            artist_sort_parts.append(cur_artist_name)
-
-        # Artist credit.
-        if "name" in el:
-            artist_credit_parts.append(el["name"])
-        else:
-            artist_credit_parts.append(cur_artist_name)
-
-        if include_join_phrase and (joinphrase := el.get("joinphrase")):
-            artist_parts.append(joinphrase)
-            artist_sort_parts.append(joinphrase)
-            artist_credit_parts.append(joinphrase)
-
-    return (
-        artist_parts,
-        artist_sort_parts,
-        artist_credit_parts,
-    )
-
-
 def track_url(trackid: str) -> str:
     return urljoin(BASE_URL, f"recording/{trackid}")
-
-
-def _flatten_artist_credit(credit: list[ArtistCredit]) -> tuple[str, str, str]:
-    """Given a list representing an ``artist-credit`` block, flatten the
-    data into a triple of joined artist name strings: canonical, sort, and
-    credit.
-    """
-    artist_parts, artist_sort_parts, artist_credit_parts = _multi_artist_credit(
-        credit, include_join_phrase=True
-    )
-    return (
-        "".join(artist_parts),
-        "".join(artist_sort_parts),
-        "".join(artist_credit_parts),
-    )
 
 
 def _artist_ids(credit: list[ArtistCredit]) -> list[str]:
@@ -332,6 +280,53 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
                 "'musicbrainz.search_limit'",
             )
 
+    @staticmethod
+    def _parse_artist_credits(artist_credits: list[ArtistCredit]) -> ArtistInfo:
+        """Normalize MusicBrainz artist-credit data into tag-friendly fields.
+
+        MusicBrainz represents credits as a sequence of credited artists, each
+        with a display name and a `joinphrase` (for example `' & '`, `' feat.
+        '`, or `''`). This helper converts that structured representation into
+        both:
+
+        - Single string values suitable for common tags (concatenated names with
+          joinphrases preserved).
+        - Parallel lists that keep the per-artist granularity for callers that
+          need to reason about individual credited artists.
+
+        When available, a preferred alias is used for the canonical artist name
+        and sort name, while the credit name preserves the exact credited text
+        from the release.
+        """
+        artist_parts: list[str] = []
+        artist_sort_parts: list[str] = []
+        artist_credit_parts: list[str] = []
+        artists: list[str] = []
+        artists_sort: list[str] = []
+        artists_credit: list[str] = []
+
+        for el in artist_credits:
+            alias = _preferred_alias(el["artist"].get("aliases", []))
+            artist_object = alias or el["artist"]
+
+            joinphrase = el["joinphrase"]
+            for name, parts, multi in (
+                (artist_object["name"], artist_parts, artists),
+                (artist_object["sort_name"], artist_sort_parts, artists_sort),
+                (el["name"], artist_credit_parts, artists_credit),
+            ):
+                parts.extend([name, joinphrase])
+                multi.append(name)
+
+        return {
+            "artist": "".join(artist_parts),
+            "artist_sort": "".join(artist_sort_parts),
+            "artist_credit": "".join(artist_credit_parts),
+            "artists": artists,
+            "artists_sort": artists_sort,
+            "artists_credit": artists_credit,
+        }
+
     def track_info(
         self,
         recording: Recording,
@@ -367,21 +362,7 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
             isrc=(
                 ";".join(isrcs) if (isrcs := recording.get("isrcs")) else None
             ),
-        )
-
-        # Get the artist names.
-        (
-            info.artist,
-            info.artist_sort,
-            info.artist_credit,
-        ) = _flatten_artist_credit(recording["artist_credit"])
-
-        (
-            info.artists,
-            info.artists_sort,
-            info.artists_credit,
-        ) = _multi_artist_credit(
-            recording["artist_credit"], include_join_phrase=False
+            **self._parse_artist_credits(recording["artist_credit"]),
         )
 
         info.artists_ids = _artist_ids(recording["artist_credit"])
@@ -433,19 +414,6 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
         """Takes a MusicBrainz release result dictionary and returns a beets
         AlbumInfo object containing the interesting data about that release.
         """
-        # Get artist name using join phrases.
-        artist_name, artist_sort_name, artist_credit_name = (
-            _flatten_artist_credit(release["artist_credit"])
-        )
-
-        (
-            artists_names,
-            artists_sort_names,
-            artists_credit_names,
-        ) = _multi_artist_credit(
-            release["artist_credit"], include_join_phrase=False
-        )
-
         ntracks = sum(len(m.get("tracks", [])) for m in release["media"])
 
         # The MusicBrainz API omits 'relations'
@@ -517,19 +485,8 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
                 if track.get("title"):
                     ti.title = track["title"]
                 if track.get("artist_credit"):
-                    # Get the artist names.
-                    (
-                        ti.artist,
-                        ti.artist_sort,
-                        ti.artist_credit,
-                    ) = _flatten_artist_credit(track["artist_credit"])
-
-                    (
-                        ti.artists,
-                        ti.artists_sort,
-                        ti.artists_credit,
-                    ) = _multi_artist_credit(
-                        track["artist_credit"], include_join_phrase=False
+                    ti.update(
+                        **self._parse_artist_credits(track["artist_credit"])
                     )
 
                     ti.artists_ids = _artist_ids(track["artist_credit"])
@@ -541,18 +498,13 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
 
         album_artist_ids = _artist_ids(release["artist_credit"])
         info = beets.autotag.hooks.AlbumInfo(
+            **self._parse_artist_credits(release["artist_credit"]),
             album=release["title"],
             album_id=release["id"],
-            artist=artist_name,
             artist_id=album_artist_ids[0],
-            artists=artists_names,
             artists_ids=album_artist_ids,
             tracks=track_infos,
             mediums=len(release["media"]),
-            artist_sort=artist_sort_name,
-            artists_sort=artists_sort_names,
-            artist_credit=artist_credit_name,
-            artists_credit=artists_credit_names,
             data_source=self.data_source,
             data_url=album_url(release["id"]),
             barcode=release.get("barcode"),

@@ -28,6 +28,7 @@ from beets import config
 from beets.library import Item
 from beets.test.helper import BeetsTestCase, PluginMixin
 from beetsplug import musicbrainz
+from beetsplug.musicbrainz import MusicBrainzPlugin
 
 from .factories import musicbrainz as factories
 
@@ -764,45 +765,47 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
 
 
 class ArtistTest(unittest.TestCase):
-    def _credit_dict(self, suffix=""):
+    def _credit_dict(self, suffix="", joinphrase="") -> mb.ArtistCredit:
         return {
             "artist": {
                 "name": f"NAME{suffix}",
+                "id": f"ID{suffix}",
                 "sort_name": f"SORT{suffix}",
+                "country": None,
+                "disambiguation": "",
+                "type": "Person",
+                "type_id": "b6e035f4-3ce9-331c-97df-83397230b0df",
             },
             "name": f"CREDIT{suffix}",
+            "joinphrase": joinphrase,
         }
 
     def test_single_artist(self):
         credit = [self._credit_dict()]
-        a, s, c = musicbrainz._flatten_artist_credit(credit)
-        assert a == "NAME"
-        assert s == "SORT"
-        assert c == "CREDIT"
 
-        a, s, c = musicbrainz._multi_artist_credit(
-            credit, include_join_phrase=False
-        )
-        assert a == ["NAME"]
-        assert s == ["SORT"]
-        assert c == ["CREDIT"]
+        assert MusicBrainzPlugin._parse_artist_credits(credit) == {
+            "artist": "NAME",
+            "artist_sort": "SORT",
+            "artist_credit": "CREDIT",
+            "artists": ["NAME"],
+            "artists_sort": ["SORT"],
+            "artists_credit": ["CREDIT"],
+        }
 
     def test_two_artists(self):
         credit = [
-            {**self._credit_dict("a"), "joinphrase": " AND "},
+            self._credit_dict("a", " AND "),
             self._credit_dict("b"),
         ]
-        a, s, c = musicbrainz._flatten_artist_credit(credit)
-        assert a == "NAMEa AND NAMEb"
-        assert s == "SORTa AND SORTb"
-        assert c == "CREDITa AND CREDITb"
 
-        a, s, c = musicbrainz._multi_artist_credit(
-            credit, include_join_phrase=False
-        )
-        assert a == ["NAMEa", "NAMEb"]
-        assert s == ["SORTa", "SORTb"]
-        assert c == ["CREDITa", "CREDITb"]
+        assert MusicBrainzPlugin._parse_artist_credits(credit) == {
+            "artist": "NAMEa AND NAMEb",
+            "artist_sort": "SORTa AND SORTb",
+            "artist_credit": "CREDITa AND CREDITb",
+            "artists": ["NAMEa", "NAMEb"],
+            "artists_sort": ["SORTa", "SORTb"],
+            "artists_credit": ["CREDITa", "CREDITb"],
+        }
 
     def test_preferred_alias(self):
         aliases = [
