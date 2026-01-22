@@ -55,6 +55,7 @@ New features:
 
 Bug fixes:
 
+- Added case when none of the editors is present in the environment. :bug:`6176`
 - Handle potential OSError when unlinking temporary files in ArtResizer.
   :bug:`5615`
 - :doc:`/plugins/spotify`: Updated Spotify API credentials. :bug:`6270`
