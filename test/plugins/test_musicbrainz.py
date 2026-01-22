@@ -48,6 +48,10 @@ def artist_credit_factory(**kwargs) -> mb.ArtistCredit:
     return factories.ArtistCreditFactory.build(**kwargs)
 
 
+def artist_relation_factory(**kwargs) -> mb.ArtistRelation:
+    return factories.ArtistRelationFactory.build(**kwargs)
+
+
 class MusicBrainzTestCase(BeetsTestCase):
     def setUp(self):
         super().setUp()
@@ -556,50 +560,21 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
     def test_parse_recording_artist_credits(self):
         recordings = [self._make_recording("a", "b", 1)]
         recordings[0]["artist_relations"] = [
-            {
-                "type": "remixer",
-                "type_id": "RELATION TYPE ID",
-                "direction": "backward",
-                "artist": artist_factory(index=1, name="Recording Remixer"),
-                "attribute_ids": {},
-                "attribute_values": {},
-                "attributes": [],
-                "begin": None,
-                "end": None,
-                "ended": False,
-                "source_credit": "",
-                "target_credit": "",
-            },
-            {
-                "type": "arranger",
-                "type_id": "RELATION TYPE ID",
-                "direction": "backward",
-                "artist": artist_factory(index=2, name="Recording Arranger"),
-                "attribute_ids": {},
-                "attribute_values": {},
-                "attributes": [],
-                "begin": None,
-                "end": None,
-                "ended": False,
-                "source_credit": "",
-                "target_credit": "",
-            },
-            {
-                "type": "arranger",
-                "type_id": "RELATION TYPE ID",
-                "direction": "backward",
-                "artist": artist_factory(
-                    index=3, name="Another Recording Arranger"
-                ),
-                "attribute_ids": {},
-                "attribute_values": {},
-                "attributes": [],
-                "begin": None,
-                "end": None,
-                "ended": False,
-                "source_credit": "",
-                "target_credit": "",
-            },
+            artist_relation_factory(
+                type="remixer",
+                artist__index=1,
+                artist__name="Recording Remixer",
+            ),
+            artist_relation_factory(
+                type="arranger",
+                artist__index=2,
+                artist__name="Recording Arranger",
+            ),
+            artist_relation_factory(
+                type="arranger",
+                artist__index=3,
+                artist__name="Another Recording Arranger",
+            ),
         ]
         recordings[0]["work_relations"] = [
             {
@@ -608,70 +583,26 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
                     "id": "WORK ID",
                     "title": "WORK TITLE",
                     "artist_relations": [
-                        {
-                            "type": "lyricist",
-                            "type_id": "RELATION TYPE ID",
-                            "direction": "backward",
-                            "artist": artist_factory(
-                                index=4, name="Recording Lyricist"
-                            ),
-                            "attribute_ids": {},
-                            "attribute_values": {},
-                            "attributes": [],
-                            "begin": None,
-                            "end": None,
-                            "ended": False,
-                            "source_credit": "",
-                            "target_credit": "",
-                        },
-                        {
-                            "type": "lyricist",
-                            "type_id": "RELATION TYPE ID",
-                            "direction": "backward",
-                            "artist": artist_factory(
-                                index=5, name="Another Recording Lyricist"
-                            ),
-                            "attribute_ids": {},
-                            "attribute_values": {},
-                            "attributes": [],
-                            "begin": None,
-                            "end": None,
-                            "ended": False,
-                            "source_credit": "",
-                            "target_credit": "",
-                        },
-                        {
-                            "type": "composer",
-                            "type_id": "RELATION TYPE ID",
-                            "direction": "backward",
-                            "artist": artist_factory(
-                                index=6, name="Recording Composer"
-                            ),
-                            "attribute_ids": {},
-                            "attribute_values": {},
-                            "attributes": [],
-                            "begin": None,
-                            "end": None,
-                            "ended": False,
-                            "source_credit": "",
-                            "target_credit": "",
-                        },
-                        {
-                            "type": "composer",
-                            "type_id": "RELATION TYPE ID",
-                            "direction": "backward",
-                            "artist": artist_factory(
-                                index=7, name="Another Recording Composer"
-                            ),
-                            "attribute_ids": {},
-                            "attribute_values": {},
-                            "attributes": [],
-                            "begin": None,
-                            "end": None,
-                            "ended": False,
-                            "source_credit": "",
-                            "target_credit": "",
-                        },
+                        artist_relation_factory(
+                            type="lyricist",
+                            artist__index=4,
+                            artist__name="Recording Lyricist",
+                        ),
+                        artist_relation_factory(
+                            type="lyricist",
+                            artist__index=5,
+                            artist__name="Another Recording Lyricist",
+                        ),
+                        artist_relation_factory(
+                            type="composer",
+                            artist__index=6,
+                            artist__name="Recording Composer",
+                        ),
+                        artist_relation_factory(
+                            type="composer",
+                            artist__index=7,
+                            artist__name="Another Recording Composer",
+                        ),
                     ],
                 },
             }
