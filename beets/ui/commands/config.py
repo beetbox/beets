@@ -56,7 +56,7 @@ def config_edit(cli_options):
         interactive_open([path], editor)
     except OSError as exc:
         message = f"Could not edit configuration: {exc}"
-        if not editor:
+        if exc.errno == 2 or not editor:
             message += (
                 ". Please set the VISUAL (or EDITOR) environment variable"
             )
