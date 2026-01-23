@@ -62,3 +62,19 @@ class ArtistRelationFactory(_PeriodFactory):
     target_credit = ""
     type = FuzzyChoice(ArtistRelationType.__args__)  # type: ignore[attr-defined]
     type_id = factory.Faker("uuid4")
+
+
+class AreaFactory(factory.DictFactory):
+    disambiguation = ""
+    id = factory.Faker("uuid4")
+    iso_3166_1_codes = factory.List([])
+    iso_3166_2_codes = factory.List([])
+    name = "Area"
+    sort_name = "Area, The"
+    type: None = None
+    type_id: None = None
+
+
+class ReleaseEventFactory(factory.DictFactory):
+    area = factory.SubFactory(AreaFactory)
+    date = factory.Faker("date")
