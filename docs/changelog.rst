@@ -48,6 +48,10 @@ New features:
 
 Bug fixes:
 
+- Improved error message when database directory is not writable. When SQLite
+  fails to open the database with 'unable to open' error, beets now provides a
+  helpful message suggesting the user check directory permissions. Also fixed
+  typo in error message ('cannot not' to 'could not'). :bug:`1676`
 - :doc:`/plugins/spotify`: Updated Spotify API credentials. :bug:`6270`
 - :doc:`/plugins/smartplaylist`: Fixed an issue where multiple queries in a
   playlist configuration were not preserving their order, causing items to
