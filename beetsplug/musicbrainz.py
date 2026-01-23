@@ -48,6 +48,7 @@ if TYPE_CHECKING:
         ArtistRelationType,
         Recording,
         Release,
+        ReleaseGroup,
     )
 
 VARIOUS_ARTISTS_ID = "89ad4ac3-39f7-470e-963a-56509c546377"
@@ -90,6 +91,17 @@ class ArtistInfo(TypedDict):
     artists_ids: list[str]
     artists_sort: list[str]
     artists_credit: list[str]
+
+
+class ReleaseGroupInfo(TypedDict):
+    albumtype: str | None
+    albumtypes: list[str]
+    releasegroup_id: str
+    release_group_title: str | None
+    releasegroupdisambig: str | None
+    original_year: int | None
+    original_month: int | None
+    original_day: int | None
 
 
 def _preferred_alias(
@@ -373,6 +385,29 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
 
         return info
 
+    @staticmethod
+    def _parse_release_group(release_group: ReleaseGroup) -> ReleaseGroupInfo:
+        albumtype = None
+        albumtypes = []
+        if reltype := release_group["primary_type"]:
+            albumtype = reltype.lower()
+            albumtypes.append(albumtype)
+
+        year, month, day = _get_date(release_group["first_release_date"])
+        return ReleaseGroupInfo(
+            albumtype=albumtype,
+            albumtypes=[
+                *albumtypes,
+                *(st.lower() for st in release_group["secondary_types"]),
+            ],
+            releasegroup_id=release_group["id"],
+            release_group_title=release_group["title"],
+            releasegroupdisambig=release_group["disambiguation"] or None,
+            original_year=year,
+            original_month=month,
+            original_day=day,
+        )
+
     def album_info(self, release: Release) -> beets.autotag.hooks.AlbumInfo:
         """Takes a MusicBrainz release result dictionary and returns a beets
         AlbumInfo object containing the interesting data about that release.
@@ -465,43 +500,17 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
             data_source=self.data_source,
             data_url=urljoin(BASE_URL, f"release/{release['id']}"),
             barcode=release.get("barcode"),
+            **self._parse_release_group(release["release_group"]),
         )
         info.va = info.artist_id == VARIOUS_ARTISTS_ID
         if info.va:
             info.artist = config["va_name"].as_str()
         info.asin = release.get("asin")
-        info.releasegroup_id = release["release_group"]["id"]
         info.albumstatus = release.get("status")
 
-        if release["release_group"].get("title"):
-            info.release_group_title = release["release_group"].get("title")
-
-        # Get the disambiguation strings at the release and release group level.
-        if release["release_group"].get("disambiguation"):
-            info.releasegroupdisambig = release["release_group"].get(
-                "disambiguation"
-            )
         if release.get("disambiguation"):
             info.albumdisambig = release.get("disambiguation")
 
-        if reltype := release["release_group"].get("primary_type"):
-            info.albumtype = reltype.lower()
-
-        # Set the new-style "primary" and "secondary" release types.
-        albumtypes = []
-        if "primary_type" in release["release_group"]:
-            rel_primarytype = release["release_group"]["primary_type"]
-            if rel_primarytype:
-                albumtypes.append(rel_primarytype.lower())
-        if "secondary_types" in release["release_group"]:
-            if release["release_group"]["secondary_types"]:
-                for sec_type in release["release_group"]["secondary_types"]:
-                    albumtypes.append(sec_type.lower())
-        info.albumtypes = albumtypes
-
-        info.original_year, info.original_month, info.original_day = _get_date(
-            release["release_group"]["first_release_date"]
-        )
         # Release events.
         info.country, release_date = _preferred_release_event(release)
         info.year, info.month, info.day = (
@@ -540,7 +549,7 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
 
         if self.config["genres"]:
             sources = [
-                release["release_group"].get(self.genres_field, []),
+                release["release_group"][self.genres_field],
                 release.get(self.genres_field, []),
             ]
             genres: Counter[str] = Counter()
