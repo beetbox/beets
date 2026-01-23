@@ -52,6 +52,10 @@ def artist_relation_factory(**kwargs) -> mb.ArtistRelation:
     return factories.ArtistRelationFactory.build(**kwargs)
 
 
+def release_event_factory(**kwargs) -> mb.ReleaseEvent:
+    return factories.ReleaseEventFactory.build(**kwargs)
+
+
 class MusicBrainzTestCase(BeetsTestCase):
     def setUp(self):
         super().setUp()
@@ -97,7 +101,12 @@ class MusicBrainzTestCase(BeetsTestCase):
             "country": "COUNTRY",
             "status": "STATUS",
             "barcode": "BARCODE",
-            "release_events": [{"area": None, "date": "2021-03-26"}],
+            "release_events": [
+                release_event_factory(area=None, date="2021-03-26"),
+                release_event_factory(
+                    area__iso_3166_1_codes=["US"], date="2020-01-01"
+                ),
+            ],
         }
 
         if multi_artist_credit:
@@ -207,7 +216,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert d.artist == "Artist"
         assert d.artist_id == "00000000-0000-0000-0000-000000000011"
         assert d.original_year == 1984
-        assert d.year == 3001
+        assert d.year == 2020
         assert d.artist_credit == "Artist Credit"
 
     def test_parse_release_type(self):
@@ -366,7 +375,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
     def test_parse_country(self):
         release = self._make_release(None)
         d = self.mb.album_info(release)
-        assert d.country == "COUNTRY"
+        assert d.country == "US"
 
     def test_parse_status(self):
         release = self._make_release(None)
