@@ -70,6 +70,8 @@ file. The available options are:
   :doc:`FetchArt </plugins/fetchart>` plugin to download art with the purpose of
   directly embedding it into the file's metadata without an "intermediate" album
   art file. Default: ``no``.
+- **clearart_on_import**: Enable automatic embedded art clearing. Default:
+  ``no``.
 
 Note: ``compare_threshold`` option requires ImageMagick_, and ``maxwidth``
 requires either ImageMagick_ or Pillow_.
@@ -110,4 +112,7 @@ embedded album art:
   automatically.
 - ``beet clearart QUERY``: removes all embedded images from all items matching
   the query. The command prompts for confirmation before making the change
-  unless you specify the ``-y`` (``--yes``) option.
+  unless you specify the ``-y`` (``--yes``) option. The files listed for
+  confirmation are the ones matching the query independently of having an
+  embedded art. However, only the files with an embedded art are updated,
+  leaving untouched the files without.

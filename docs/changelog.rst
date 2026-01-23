@@ -45,9 +45,18 @@ New features:
   of brackets are supported and a new ``bracket_keywords`` configuration option
   allows customizing the keywords. Setting ``bracket_keywords`` to an empty list
   matches any bracket content regardless of keywords.
+- :doc:`plugins/discogs`: Added support for multi value fields. :bug:`6068`
+- :doc:`plugins/embedart`: Embedded arts can now be cleared during import with
+  the ``clearart_on_import`` config option. Also, ``beet clearart`` is only
+  going to update the files matching the query and with an embedded art, leaving
+  untouched the files without.
+- :doc:`plugins/fish`: Filenames are now completed in more places, like after
+  ``beet import``.
 
 Bug fixes:
 
+- Handle potential OSError when unlinking temporary files in ArtResizer.
+  :bug:`5615`
 - :doc:`/plugins/spotify`: Updated Spotify API credentials. :bug:`6270`
 - :doc:`/plugins/smartplaylist`: Fixed an issue where multiple queries in a
   playlist configuration were not preserving their order, causing items to
@@ -90,6 +99,13 @@ Bug fixes:
 - :doc:`/plugins/ftintitle`: Fixed artist name splitting to prioritize explicit
   featuring tokens (feat, ft, featuring) over generic separators (&, and),
   preventing incorrect splits when both are present.
+- :doc:`reference/cli`: Fix 'from_scratch' option for singleton imports: delete
+  all (old) metadata when new metadata is applied. :bug:`3706`
+- :doc:`/plugins/convert`: ``auto_keep`` now respects ``no_convert`` and
+  ``never_convert_lossy_files`` when deciding whether to copy/transcode items,
+  avoiding extra lossy duplicates.
+- :doc:`plugins/discogs`: Fixed unexpected flex attr from the Discogs plugin.
+  :bug:`6177`
 
 For plugin developers:
 
