@@ -146,28 +146,21 @@ def _preferred_release_event(release: Release) -> tuple[str | None, str | None]:
     return release.get("country"), release.get("date")
 
 
-def _set_date_str(
-    info: beets.autotag.hooks.AlbumInfo,
-    date_str: str,
-    original: bool = False,
-) -> None:
-    """Given a (possibly partial) YYYY-MM-DD string and an AlbumInfo
-    object, set the object's release date fields appropriately. If
-    `original`, then set the original_year, etc., fields.
-    """
-    if date_str:
-        date_parts = date_str.split("-")
-        for key in ("year", "month", "day"):
-            if date_parts:
-                date_part = date_parts.pop(0)
-                try:
-                    date_num = int(date_part)
-                except ValueError:
-                    continue
+def _get_date(date_str: str) -> tuple[int | None, int | None, int | None]:
+    """Parse a partial `YYYY-MM-DD` string into numeric date parts.
 
-                if original:
-                    key = f"original_{key}"
-                setattr(info, key, date_num)
+    Missing components are returned as `None`. Invalid components are ignored.
+    """
+    if not date_str:
+        return None, None, None
+
+    parts = list(map(int, date_str.split("-")))
+
+    return (
+        parts[0] if len(parts) > 0 else None,
+        parts[1] if len(parts) > 1 else None,
+        parts[2] if len(parts) > 2 else None,
+    )
 
 
 def _merge_pseudo_and_actual_album(
@@ -506,16 +499,20 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
                     albumtypes.append(sec_type.lower())
         info.albumtypes = albumtypes
 
+        info.original_year, info.original_month, info.original_day = _get_date(
+            release["release_group"]["first_release_date"]
+        )
         # Release events.
         info.country, release_date = _preferred_release_event(release)
-        release_group_date = release["release_group"].get("first_release_date")
-        if not release_date:
-            # Fall back if release-specific date is not available.
-            release_date = release_group_date
-
-        if release_date:
-            _set_date_str(info, release_date, False)
-        _set_date_str(info, release_group_date, True)
+        info.year, info.month, info.day = (
+            _get_date(release_date)
+            if release_date
+            else (
+                info.original_year,
+                info.original_month,
+                info.original_day,
+            )
+        )
 
         # Label name.
         if release.get("label_info"):

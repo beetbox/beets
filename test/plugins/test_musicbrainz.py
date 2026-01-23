@@ -64,7 +64,7 @@ class MusicBrainzTestCase(BeetsTestCase):
 
     @staticmethod
     def _make_release(
-        date_str="2009",
+        date="2009",
         recordings=None,
         track_length=None,
         track_artist=False,
@@ -79,7 +79,7 @@ class MusicBrainzTestCase(BeetsTestCase):
             "disambiguation": "R_DISAMBIGUATION",
             "release_group": {
                 "primary_type": "Album",
-                "first_release_date": date_str,
+                "first_release_date": date,
                 "id": "RELEASE GROUP ID",
                 "disambiguation": "RG_DISAMBIGUATION",
             },
@@ -209,7 +209,7 @@ class MusicBrainzTestCase(BeetsTestCase):
 
 class MBAlbumInfoTest(MusicBrainzTestCase):
     def test_parse_release_with_year(self):
-        release = self._make_release("1984")
+        release = self._make_release(date="1984")
         d = self.mb.album_info(release)
         assert d.album == "ALBUM TITLE"
         assert d.album_id == "ALBUM ID"
@@ -220,12 +220,12 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert d.artist_credit == "Artist Credit"
 
     def test_parse_release_type(self):
-        release = self._make_release("1984")
+        release = self._make_release(date="1984")
         d = self.mb.album_info(release)
         assert d.albumtype == "album"
 
     def test_parse_release_full_date(self):
-        release = self._make_release("1987-03-31")
+        release = self._make_release(date="1987-03-31")
         d = self.mb.album_info(release)
         assert d.original_year == 1987
         assert d.original_month == 3
@@ -307,7 +307,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert t[1].index == 2
 
     def test_parse_release_year_month_only(self):
-        release = self._make_release("1987-03")
+        release = self._make_release(date="1987-03")
         d = self.mb.album_info(release)
         assert d.original_year == 1987
         assert d.original_month == 3
@@ -327,19 +327,19 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert d.tracks[0].length == 2.0
 
     def test_no_release_date(self):
-        release = self._make_release(None)
+        release = self._make_release(date="")
         d = self.mb.album_info(release)
         assert not d.original_year
         assert not d.original_month
         assert not d.original_day
 
     def test_various_artists_defaults_false(self):
-        release = self._make_release(None)
+        release = self._make_release()
         d = self.mb.album_info(release)
         assert not d.va
 
     def test_detect_various_artists(self):
-        release = self._make_release(None)
+        release = self._make_release()
         release["artist_credit"][0]["artist"]["id"] = (
             musicbrainz.VARIOUS_ARTISTS_ID
         )
@@ -347,43 +347,43 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert d.va
 
     def test_parse_artist_sort_name(self):
-        release = self._make_release(None)
+        release = self._make_release()
         d = self.mb.album_info(release)
         assert d.artist_sort == "Artist, The"
 
     def test_parse_releasegroupid(self):
-        release = self._make_release(None)
+        release = self._make_release()
         d = self.mb.album_info(release)
         assert d.releasegroup_id == "RELEASE GROUP ID"
 
     def test_parse_asin(self):
-        release = self._make_release(None)
+        release = self._make_release()
         d = self.mb.album_info(release)
         assert d.asin == "ALBUM ASIN"
 
     def test_parse_catalognum(self):
-        release = self._make_release(None)
+        release = self._make_release()
         d = self.mb.album_info(release)
         assert d.catalognum == "CATALOG NUMBER"
 
     def test_parse_textrepr(self):
-        release = self._make_release(None)
+        release = self._make_release()
         d = self.mb.album_info(release)
         assert d.script == "SCRIPT"
         assert d.language == "LANGUAGE"
 
     def test_parse_country(self):
-        release = self._make_release(None)
+        release = self._make_release()
         d = self.mb.album_info(release)
         assert d.country == "US"
 
     def test_parse_status(self):
-        release = self._make_release(None)
+        release = self._make_release()
         d = self.mb.album_info(release)
         assert d.albumstatus == "STATUS"
 
     def test_parse_barcode(self):
-        release = self._make_release(None)
+        release = self._make_release()
         d = self.mb.album_info(release)
         assert d.barcode == "BARCODE"
 
@@ -392,12 +392,12 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
             self._make_recording("TITLE ONE", "ID ONE", 100.0 * 1000.0),
             self._make_recording("TITLE TWO", "ID TWO", 200.0 * 1000.0),
         ]
-        release = self._make_release(None, recordings=recordings)
+        release = self._make_release(recordings=recordings)
         d = self.mb.album_info(release)
         assert d.media == "FORMAT"
 
     def test_parse_disambig(self):
-        release = self._make_release(None)
+        release = self._make_release()
         d = self.mb.album_info(release)
         assert d.albumdisambig == "R_DISAMBIGUATION"
         assert d.releasegroupdisambig == "RG_DISAMBIGUATION"
@@ -407,21 +407,21 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
             self._make_recording("TITLE ONE", "ID ONE", 100.0 * 1000.0),
             self._make_recording("TITLE TWO", "ID TWO", 200.0 * 1000.0),
         ]
-        release = self._make_release(None, recordings=recordings)
+        release = self._make_release(recordings=recordings)
         d = self.mb.album_info(release)
         t = d.tracks
         assert t[0].disctitle == "MEDIUM TITLE"
         assert t[1].disctitle == "MEDIUM TITLE"
 
     def test_missing_language(self):
-        release = self._make_release(None)
+        release = self._make_release()
         del release["text_representation"]["language"]
         d = self.mb.album_info(release)
         assert d.language is None
 
     def test_parse_recording_artist(self):
         recordings = [self._make_recording("a", "b", 1)]
-        release = self._make_release(None, recordings=recordings)
+        release = self._make_release(recordings=recordings)
         track = self.mb.album_info(release).tracks[0]
         assert track.artist == "Recording Artist"
         assert track.artist_id == "00000000-0000-0000-0000-000000000001"
@@ -432,7 +432,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         recordings = [
             self._make_recording("a", "b", 1, multi_artist_credit=True)
         ]
-        release = self._make_release(None, recordings=recordings)
+        release = self._make_release(recordings=recordings)
         track = self.mb.album_info(release).tracks[0]
         assert track.artist == "Recording Artist & Other Recording Artist"
         assert track.artist_id == "00000000-0000-0000-0000-000000000001"
@@ -464,9 +464,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
 
     def test_track_artist_overrides_recording_artist(self):
         recordings = [self._make_recording("a", "b", 1)]
-        release = self._make_release(
-            None, recordings=recordings, track_artist=True
-        )
+        release = self._make_release(recordings=recordings, track_artist=True)
         track = self.mb.album_info(release).tracks[0]
         assert track.artist == "Track Artist"
         assert track.artist_id == "00000000-0000-0000-0000-000000000001"
@@ -478,7 +476,6 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
             self._make_recording("a", "b", 1, multi_artist_credit=True)
         ]
         release = self._make_release(
-            None,
             recordings=recordings,
             track_artist=True,
             multi_artist_credit=True,
@@ -510,7 +507,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
 
     def test_parse_recording_remixer(self):
         recordings = [self._make_recording("a", "b", 1, remixer=True)]
-        release = self._make_release(None, recordings=recordings)
+        release = self._make_release(recordings=recordings)
         track = self.mb.album_info(release).tracks[0]
         assert track.remixer == "Recording Remixer"
 
