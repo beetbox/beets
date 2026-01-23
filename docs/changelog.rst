@@ -52,6 +52,8 @@ New features:
   untouched the files without.
 - :doc:`plugins/fish`: Filenames are now completed in more places, like after
   ``beet import``.
+- :doc: `plugins/duplicates`: ``dedupe_mb_trackid_on_import`` option added 
+  to deduplicate during imports based on already-imported ``mb_trackid``.
 
 Bug fixes:
 
