@@ -132,22 +132,16 @@ def _get_related_artist_names(
 
 
 def _preferred_release_event(release: Release) -> tuple[str | None, str | None]:
-    """Given a release, select and return the user's preferred release
-    event as a tuple of (country, release_date). Fall back to the
-    default release event if a preferred event is not found.
+    """Select the most relevant release country and date for matching.
+
+    Fall back to the default release event if a preferred event is not found.
     """
-    preferred_countries: Sequence[str] = config["match"]["preferred"][
-        "countries"
-    ].as_str_seq()
+    preferred_countries = config["match"]["preferred"]["countries"].as_str_seq()
 
     for country in preferred_countries:
-        for event in release.get("release_events", {}):
-            try:
-                if area := event.get("area"):
-                    if country in area["iso_3166_1_codes"]:
-                        return country, event["date"]
-            except KeyError:
-                pass
+        for event in release.get("release_events", []):
+            if (area := event["area"]) and country in area["iso_3166_1_codes"]:
+                return country, event["date"]
 
     return release.get("country"), release.get("date")
 
