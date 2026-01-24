@@ -537,18 +537,38 @@ def move(path: bytes, dest: bytes, replace: bool = False):
 
         # Move the copied file into place.
         tmp_filename = tmp.name
+        move_error = None
+        cleanup_error = None
+
         try:
             os.replace(tmp_filename, syspath(dest))
-            tmp_filename = ""
+            tmp_filename = ""  # Mark as successfully moved
             os.remove(syspath(path))
         except OSError as exc:
-            raise FilesystemError(
-                exc, "move", (path, dest), traceback.format_exc()
-            )
-        finally:
-            if tmp_filename:
-                with suppress(OSError):
-                    os.remove(tmp_filename)
+            move_error = exc
+
+        # Clean up temporary file if it still exists
+        if tmp_filename:
+            try:
+                os.remove(tmp_filename)
+            except OSError as exc:
+                cleanup_error = exc
+
+        # Raise error with full context
+        if move_error:
+            if cleanup_error:
+                # Combine both errors in a readable message
+                error_msg = (
+                    f"{move_error} (also failed to clean up temporary file: "
+                    f"{cleanup_error})"
+                )
+                raise FilesystemError(
+                    error_msg, "move", (path, dest), traceback.format_exc()
+                )
+            else:
+                raise FilesystemError(
+                    move_error, "move", (path, dest), traceback.format_exc()
+                )
 
 
 def link(path: bytes, dest: bytes, replace: bool = False):
