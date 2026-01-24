@@ -55,6 +55,8 @@ New features:
 
 Bug fixes:
 
+- Adding more gracefuuly fallback when fetchart function cannot delete temp file
+  :bug:`6193`
 - Handle potential OSError when unlinking temporary files in ArtResizer.
   :bug:`5615`
 - :doc:`/plugins/spotify`: Updated Spotify API credentials. :bug:`6270`
