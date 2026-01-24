@@ -60,6 +60,14 @@ def release_group_factory(**kwargs) -> mb.ReleaseGroup:
     return factories.ReleaseGroupFactory.build(**kwargs)
 
 
+def genre_factory(**kwargs) -> mb.Genre:
+    return factories.GenreFactory.build(**kwargs)
+
+
+def tag_factory(**kwargs) -> mb.Tag:
+    return factories.TagFactory.build(**kwargs)
+
+
 class MusicBrainzTestCase(BeetsTestCase):
     def setUp(self):
         super().setUp()
@@ -85,8 +93,8 @@ class MusicBrainzTestCase(BeetsTestCase):
             "artist_credit": [artist_credit_factory(artist__id_base=10)],
             "date": "3001",
             "media": [],
-            "genres": [{"count": 1, "name": "GENRE"}],
-            "tags": [{"count": 1, "name": "TAG"}],
+            "genres": [genre_factory()],
+            "tags": [tag_factory()],
             "label_info": [
                 {
                     "catalog_number": "CATALOG NUMBER",
@@ -649,14 +657,14 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         config["musicbrainz"]["genres_tag"] = "genre"
         release = self._make_release()
         d = self.mb.album_info(release)
-        assert d.genres == ["GENRE"]
+        assert d.genres == ["Genre"]
 
     def test_tags(self):
         config["musicbrainz"]["genres"] = True
         config["musicbrainz"]["genres_tag"] = "tag"
         release = self._make_release()
         d = self.mb.album_info(release)
-        assert d.genres == ["TAG"]
+        assert d.genres == ["Tag"]
 
     def test_no_genres(self):
         config["musicbrainz"]["genres"] = False
