@@ -419,7 +419,40 @@ def config(config):
             },
             (["fallback genre"], "fallback"),
         ),
-        # fallback to fallback if no original
+        # Keep the original genre when force is on, whitelist is enabled,
+        # but no valid genre can be found and fallback_original is on.
+        (
+            {
+                "force": True,
+                "keep_existing": False,
+                "source": "track",
+                "whitelist": True,
+                "canonical": True,
+                "fallback_original": True,
+            },
+            ["Jazzers-invalid"],
+            {
+                "track": None,
+                "album": None,
+                "artist": None,
+            },
+            (["Jazzers-invalid"], "fallback + original, force"),
+        ),
+        # Keep the original genre when force is off, whitelist and cleanup_existing is
+        # enabled, but no valid genre can be found and fallback_original is on.
+        (
+            {
+                "force": False,
+                "cleanup_existing": True,
+                "whitelist": True,
+                "fallback_original": True,
+                "canonical": True,
+            },
+            ["Jazzers-invalid"],
+            {},
+            (["Jazzers-invalid"], "fallback + original, no-force"),
+        ),
+        # Fallback to fallback if no original
         (
             {
                 "force": True,

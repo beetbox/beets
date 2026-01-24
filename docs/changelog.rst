@@ -12,6 +12,9 @@ Unreleased
 New features
 ~~~~~~~~~~~~
 
+- :doc:`plugins/lastgenre`: Added ``fallback_original`` configuration flag. This
+  allows users to keep the original genre information, if no genres remain after
+  canonicalization and whitelisting.
 - :doc:`plugins/lastgenre`: Added ``cleanup_existing`` configuration flag to
   allow whitelist canonicalization of existing genres.
 - Add native support for multiple genres per album/track. The ``genres`` field
