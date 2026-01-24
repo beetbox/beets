@@ -316,6 +316,30 @@ def config(config):
             },
             (["Jazzin"], "album, any"),
         ),
+        # Canonicalize original genre when force is **off** and
+        # whitelist, canonical and cleanup_existing are on.
+        # "Cosmic Disco" is not in the default whitelist, thus gets resolved "up" in the
+        # tree to "Disco" and "Electronic".
+        (
+            {
+                "force": False,
+                "keep_existing": False,
+                "source": "artist",
+                "whitelist": True,
+                "canonical": True,
+                "cleanup_existing": True,
+                "prefer_specific": False,
+                "count": 10,
+            },
+            ["Cosmic Disco"],
+            {
+                "artist": [],
+            },
+            (
+                ["Disco", "Electronic"],
+                "keep + cleanup, whitelist",
+            ),
+        ),
         # fallback to next stages until found
         (
             {

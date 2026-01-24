@@ -170,6 +170,11 @@ file. The available options are:
 - **canonical**: Use a canonicalization tree. Setting this to ``yes`` will use a
   built-in tree. You can also set it to a path, like the ``whitelist`` config
   value, to use your own tree. Default: ``no`` (disabled).
+- **cleanup_existing**: This option only takes effect with ``force: no``,
+  Setting this to ``yes`` will result in cleanup of existing genres. That
+  includes canonicalization and whitelisting, if enabled. If no matching genre
+  can be determined, the ``fallback`` is used instead. Default: ``no``
+  (disabled).
 - **count**: Number of genres to fetch. Default: 1
 - **fallback**: A string to use as a fallback genre when no genre is found
   ``or`` the original genre is not desired to be kept (``keep_existing: no``).
