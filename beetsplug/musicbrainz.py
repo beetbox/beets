@@ -16,7 +16,7 @@
 
 from __future__ import annotations
 
-from collections import Counter
+from collections import defaultdict
 from contextlib import suppress
 from functools import cached_property
 from itertools import product
@@ -408,6 +408,23 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
             original_day=day,
         )
 
+    def _parse_genre(self, release: Release) -> str | None:
+        if self.config["genres"]:
+            genres = [
+                *release["release_group"][self.genres_field],
+                *release.get(self.genres_field, []),
+            ]
+            count_by_genre: dict[str, int] = defaultdict(int)
+            for genre in genres:
+                count_by_genre[genre["name"]] += int(genre["count"])
+
+            return "; ".join(
+                g
+                for g, _ in sorted(count_by_genre.items(), key=lambda g: -g[1])
+            )
+
+        return None
+
     def album_info(self, release: Release) -> beets.autotag.hooks.AlbumInfo:
         """Takes a MusicBrainz release result dictionary and returns a beets
         AlbumInfo object containing the interesting data about that release.
@@ -500,6 +517,7 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
             data_source=self.data_source,
             data_url=urljoin(BASE_URL, f"release/{release['id']}"),
             barcode=release.get("barcode"),
+            genre=genre if (genre := self._parse_genre(release)) else None,
             **self._parse_release_group(release["release_group"]),
         )
         info.va = info.artist_id == VARIOUS_ARTISTS_ID
@@ -546,20 +564,6 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
             # Otherwise, let's just call it "Media"
             else:
                 info.media = "Media"
-
-        if self.config["genres"]:
-            sources = [
-                release["release_group"][self.genres_field],
-                release.get(self.genres_field, []),
-            ]
-            genres: Counter[str] = Counter()
-            for source in sources:
-                for genreitem in source:
-                    genres[genreitem["name"]] += int(genreitem["count"])
-            info.genre = "; ".join(
-                genre
-                for genre, _count in sorted(genres.items(), key=lambda g: -g[1])
-            )
 
         # We might find links to external sources (Discogs, Bandcamp, ...)
         external_ids = self.config["external_ids"].get()
