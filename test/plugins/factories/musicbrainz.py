@@ -115,3 +115,14 @@ class ReleaseGroupFactory(_IdFactory):
     secondary_types = factory.List([])
     tags = factory.List([])
     title = "Release Group"
+
+
+class GenreFactory(factory.DictFactory):
+    id = factory.Faker("uuid4")
+    count = 1
+    disambiguation = ""
+    name = "Genre"
+
+
+class TagFactory(GenreFactory):
+    name = "Tag"
