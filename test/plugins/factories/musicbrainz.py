@@ -126,3 +126,21 @@ class GenreFactory(factory.DictFactory):
 
 class TagFactory(GenreFactory):
     name = "Tag"
+
+
+class LabelFactory(_SortNameFactory, _IdFactory):
+    aliases = factory.List([])
+    disambiguation = ""
+    genres = factory.List([])
+    label_code: str | None = None
+    name = "Label"
+    tags = factory.List([])
+    type = "Imprint"
+    type_id = "b6285b2a-3514-3d43-80df-fcf528824ded"
+
+
+class LabelInfoFactory(factory.DictFactory):
+    catalog_number = factory.LazyAttribute(
+        lambda o: f"{o.label['name'][:3].upper()}123"
+    )
+    label = factory.SubFactory(LabelFactory)
