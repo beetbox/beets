@@ -262,8 +262,9 @@ class SmartPlaylistPlugin(BeetsPlugin):
                 "Updating {} smart playlists...", len(self._matched_playlists)
             )
 
-        playlist_dir = self.config["playlist_dir"].as_filename()
-        playlist_dir = bytestring_path(playlist_dir)
+        playlist_dir = bytestring_path(
+            self.config["playlist_dir"].as_filename()
+        )
         tpl = self.config["uri_format"].get()
         prefix = bytestring_path(self.config["prefix"].as_str())
         relative_to = self.config["relative_to"].get()

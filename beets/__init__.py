@@ -37,11 +37,11 @@ class IncludeLazyConfig(confuse.LazyConfig):
     YAML files specified in an `include` setting.
     """
 
-    def read(self, user=True, defaults=True):
+    def read(self, user: bool = True, defaults: bool = True) -> None:
         super().read(user, defaults)
 
         try:
-            for view in self["include"]:
+            for view in self["include"].sequence():
                 self.set_file(view.as_filename())
         except confuse.NotFoundError:
             pass

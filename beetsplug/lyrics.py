@@ -358,7 +358,7 @@ class LRCLib(Backend):
         for group in self.fetch_candidates(artist, title, album, length):
             candidates = [evaluate_item(item) for item in group]
             if item := self.pick_best_match(candidates):
-                lyrics = item.get_text(self.config["synced"])
+                lyrics = item.get_text(self.config["synced"].get(bool))
                 return lyrics, f"{self.GET_URL}/{item.id}"
 
         return None
