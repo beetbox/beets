@@ -472,13 +472,13 @@ CODE_BY_COLOR = {
     "normal": 0,
     "bold": 1,
     "faint": 2,
-    # "italic":       3,
+    "italic": 3,
     "underline": 4,
-    # "blink_slow":   5,
-    # "blink_rapid":  6,
+    "blink_slow": 5,
+    "blink_rapid": 6,
     "inverse": 7,
-    # "conceal":      8,
-    # "crossed_out":  9
+    "conceal": 8,
+    "crossed_out": 9,
     # Text colors.
     "black": 30,
     "red": 31,
