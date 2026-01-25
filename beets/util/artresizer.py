@@ -24,6 +24,7 @@ import platform
 import re
 import subprocess
 from abc import ABC, abstractmethod
+from contextlib import suppress
 from enum import Enum
 from itertools import chain
 from typing import TYPE_CHECKING, Any, ClassVar
@@ -846,7 +847,8 @@ class ArtResizer:
             )
         finally:
             if result_path != path_in:
-                os.unlink(path_in)
+                with suppress(OSError):
+                    os.unlink(path_in)
         return result_path
 
     @property

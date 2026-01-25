@@ -792,7 +792,13 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
             self._log.debug("Invalid MBID ({}).", album_id)
             return None
 
-        res = self.mb_api.get_release(albumid, includes=RELEASE_INCLUDES)
+        # A 404 error here is fine. e.g. re-importing a release that has
+        # been deleted on MusicBrainz.
+        try:
+            res = self.mb_api.get_release(albumid, includes=RELEASE_INCLUDES)
+        except HTTPNotFoundError:
+            self._log.debug("Release {} not found on MusicBrainz.", albumid)
+            return None
 
         # resolve linked release relations
         actual_res = None
