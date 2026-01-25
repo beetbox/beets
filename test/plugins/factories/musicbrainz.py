@@ -149,3 +149,24 @@ class LabelInfoFactory(factory.DictFactory):
 class TextRepresentationFactory(factory.DictFactory):
     language = "eng"
     script = "Latn"
+
+
+class RecordingFactory(_IdFactory):
+    class Params:
+        id_base = 1000
+
+    aliases = factory.List([])
+    artist_credit = factory.List(
+        [
+            factory.SubFactory(
+                ArtistCreditFactory, artist__name="Recording Artist"
+            )
+        ]
+    )
+    disambiguation = ""
+    isrcs = factory.List([])
+    length = 360
+    title = "Recording"
+    video = False
+    genres = factory.List([])
+    tags = factory.List([])
