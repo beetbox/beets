@@ -288,7 +288,8 @@ class Candidate:
         elif check == ImageAction.REFORMAT:
             self.path = ArtResizer.shared.reformat(
                 self.path,
-                plugin.cover_format,
+                # TODO: fix this gnarly logic to remove the need for type ignore
+                plugin.cover_format,  # type: ignore[arg-type]
                 deinterlaced=plugin.deinterlace,
             )
 
@@ -1367,7 +1368,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
 
         # allow both pixel and percentage-based margin specifications
         self.enforce_ratio = self.config["enforce_ratio"].get(
-            confuse.OneOf(
+            confuse.OneOf[bool | str](
                 [
                     bool,
                     confuse.String(pattern=self.PAT_PX),
