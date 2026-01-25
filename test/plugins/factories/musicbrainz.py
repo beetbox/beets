@@ -144,3 +144,8 @@ class LabelInfoFactory(factory.DictFactory):
         lambda o: f"{o.label['name'][:3].upper()}123"
     )
     label = factory.SubFactory(LabelFactory)
+
+
+class TextRepresentationFactory(factory.DictFactory):
+    language = "eng"
+    script = "Latn"
