@@ -14,15 +14,26 @@ from beetsplug._utils.requests import RequestHandler
 class TestRequestHandlerRetry:
     @pytest.fixture(autouse=True)
     def patch_connection(self, monkeypatch, last_response):
+        def make_response():
+            if isinstance(last_response, HTTPResponse):
+                body = last_response.data
+                return HTTPResponse(
+                    body=io.BytesIO(body),
+                    status=last_response.status,
+                    preload_content=False,
+                    headers=last_response.headers,
+                )
+            return last_response
+
+        def responses():
+            yield NewConnectionError(None, "Connection failed")
+            yield URLError("bad")
+            while True:
+                yield make_response()
+
         monkeypatch.setattr(
             "urllib3.connectionpool.HTTPConnectionPool._make_request",
-            Mock(
-                side_effect=[
-                    NewConnectionError(None, "Connection failed"),
-                    URLError("bad"),
-                    last_response,
-                ]
-            ),
+            Mock(side_effect=responses()),
         )
 
     @pytest.fixture
