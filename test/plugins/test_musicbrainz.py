@@ -68,6 +68,10 @@ def tag_factory(**kwargs) -> mb.Tag:
     return factories.TagFactory.build(**kwargs)
 
 
+def label_info_factory(**kwargs) -> mb.LabelInfo:
+    return factories.LabelInfoFactory.build(**kwargs)
+
+
 class MusicBrainzTestCase(BeetsTestCase):
     def setUp(self):
         super().setUp()
@@ -95,12 +99,7 @@ class MusicBrainzTestCase(BeetsTestCase):
             "media": [],
             "genres": [genre_factory()],
             "tags": [tag_factory()],
-            "label_info": [
-                {
-                    "catalog_number": "CATALOG NUMBER",
-                    "label": {"name": "LABEL NAME"},
-                }
-            ],
+            "label_info": [label_info_factory()],
             "text_representation": {
                 "script": "SCRIPT",
                 "language": "LANGUAGE",
@@ -371,7 +370,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
     def test_parse_catalognum(self):
         release = self._make_release()
         d = self.mb.album_info(release)
-        assert d.catalognum == "CATALOG NUMBER"
+        assert d.catalognum == "LAB123"
 
     def test_parse_textrepr(self):
         release = self._make_release()
@@ -813,6 +812,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                 ],
                 "artist_credit": [artist_credit_factory()],
                 "release_group": release_group_factory(),
+                "label_info": [label_info_factory()],
                 "release_relations": [
                     {
                         "type": "transl-tracklisting",
@@ -845,6 +845,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                 "artist_credit": [artist_credit_factory()],
                 "release_group": release_group_factory(),
                 "country": "COUNTRY",
+                "label_info": [label_info_factory()],
             },
         ]
 
@@ -878,6 +879,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                 ],
                 "artist_credit": [artist_credit_factory()],
                 "release_group": release_group_factory(),
+                "label_info": [label_info_factory()],
             }
         ]
 
@@ -911,6 +913,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                 ],
                 "artist_credit": [artist_credit_factory()],
                 "release_group": release_group_factory(),
+                "label_info": [label_info_factory()],
             }
         ]
 
@@ -944,6 +947,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                 ],
                 "artist_credit": [artist_credit_factory()],
                 "release_group": release_group_factory(),
+                "label_info": [label_info_factory()],
                 "release_relations": [
                     {
                         "type": "remaster",
@@ -1049,6 +1053,7 @@ class TestMusicBrainzPlugin(PluginMixin):
                 ],
                 "artist_credit": [artist_credit_factory()],
                 "release_group": release_group_factory(),
+                "label_info": [label_info_factory()],
             },
         )
         candidates = list(mb.candidates([], "hello", "there", False))
