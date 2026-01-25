@@ -1,5 +1,4 @@
 # This file is part of beets.
-# Copyright 2016, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -38,67 +37,54 @@ class MoveFinallyBlockTest(BeetsTestCase):
             f.write(content)
         return path
 
-    def test_finally_block_ignores_temp_file_cleanup_error(self):
-        """Test that errors in finally block's temp file cleanup are ignored.
+    def test_finally_block_raises_error_on_temp_file_cleanup_failure(self):
+        """Test that errors in finally block's temp file cleanup are raised.
 
         Scenario:
         1. First os.replace() fails with EXDEV (cross-device)
         2. Fallback path creates temp file and copies
         3. Second os.replace() fails with PermissionError (file in use)
         4. Finally block tries to remove temp file but also fails with PermissionError
-        5. The original PermissionError from step 3 should be raised as FilesystemError
+        5. The FilesystemError from finally block should be raised
         """
-        # Create source and destination
         src = self.create_test_file(b"source.txt", b"source content")
         dest = os.path.join(self.temp_dir, b"dest.txt")
 
-        # Create destination file to trigger replace=False check
         with open(syspath(dest), "wb") as f:
             f.write(b"existing content")
 
-        # Track the sequence of operations
         operations = []
+        temp_file_paths = []
 
         def mock_replace(source, dest_path, *args, **kwargs):
             operations.append(f"replace: {source} -> {dest_path}")
             if len(operations) == 1:
-                # First replace attempt (direct move) - cross-device error
                 raise OSError(errno.EXDEV, "Invalid cross-device link")
             else:
-                # Second replace attempt (temp file to dest) - permission error
                 raise OSError(errno.EACCES, "Permission denied")
 
         def mock_remove(path):
             operations.append(f"remove: {path}")
-            # Simulate permission error when removing temp file in finally block
             if ".beets" in path:
+                temp_file_paths.append(path)
                 raise OSError(errno.EACCES, "Permission denied")
-            # For non-temp files, use actual remove
             return os.remove(path)
 
-        # Patch the system calls
         with (
             patch("os.replace", side_effect=mock_replace),
             patch("os.remove", side_effect=mock_remove),
         ):
-            # This should raise FilesystemError with PermissionError
-            # from the second os.replace
             with pytest.raises(FilesystemError) as cm:
                 move(src, dest, replace=True)
 
-            # Verify the error message contains info about the original error
             exception_msg = str(cm.value)
+            assert "Failed to remove temporary file" in exception_msg
             assert "Permission denied" in exception_msg
-            assert "while moving" in exception_msg
 
-            # Verify we tried to clean up (the remove error is suppressed)
-            # Check that remove was called at least once for a temp file
-            temp_cleanup_attempted = any(
-                ".beets" in str(op) for op in operations
+            assert len(temp_file_paths) == 1, (
+                "Should have attempted to remove temp file"
             )
-            assert temp_cleanup_attempted, (
-                "Should have attempted temp file cleanup"
-            )
+            assert "delete" in exception_msg or "remove" in exception_msg
 
     def test_finally_block_successful_temp_file_cleanup(self):
         """Test that finally block cleanup works when no errors occur.
@@ -130,24 +116,20 @@ class MoveFinallyBlockTest(BeetsTestCase):
             operations.append(f"remove: {path}")
             if ".beets" in path:
                 temp_file_removed.append(path)
-                # Successfully remove (no exception)
-                return None  # os.remove returns None
+                return None
+            return os.remove(path)
 
         with (
             patch("os.replace", side_effect=mock_replace),
             patch("os.remove", side_effect=mock_remove),
         ):
-            # Should raise FilesystemError
             with pytest.raises(FilesystemError) as cm:
                 move(src, dest, replace=True)
 
-            # Should still get the PermissionError from os.replace
-            assert "Permission denied" in str(cm.value)
+            exception_msg = str(cm.value)
+            assert "Permission denied" in exception_msg
+            assert "Failed to remove temporary file" not in exception_msg
 
-            # Temp file should have been marked for removal
-            assert any(".beets" in str(op) for op in operations)
-
-            # The temp_file_removed list should have one entry
             assert len(temp_file_removed) == 1
 
     def test_no_temp_file_cleanup_when_move_succeeds(self):
@@ -164,21 +146,16 @@ class MoveFinallyBlockTest(BeetsTestCase):
         src = self.create_test_file(b"source.txt", b"source content")
         dest = os.path.join(self.temp_dir, b"dest.txt")
 
-        # Don't create dest file so replace=True works
-
         operations = []
         cleanup_attempted = []
 
         def mock_replace(source, dest_path, *args, **kwargs):
             operations.append(f"replace: {source} -> {dest_path}")
             if len(operations) == 1:
-                # First attempt fails
                 raise OSError(errno.EXDEV, "Invalid cross-device link")
-            # Second attempt succeeds (no exception)
 
         def mock_remove(path):
             operations.append(f"remove: {path}")
-            # Track if we try to remove a temp file
             if ".beets" in path:
                 cleanup_attempted.append(path)
                 raise AssertionError(
@@ -189,12 +166,6 @@ class MoveFinallyBlockTest(BeetsTestCase):
             patch("os.replace", side_effect=mock_replace),
             patch("os.remove", side_effect=mock_remove),
         ):
-            # This should succeed without errors
             move(src, dest, replace=True)
-
-            # Verify operations sequence
-            # At minimum: first replace fails, second succeeds, then remove source
             assert len(operations) >= 3
-
-            # Should NOT have tried to cleanup temp file
             assert len(cleanup_attempted) == 0
