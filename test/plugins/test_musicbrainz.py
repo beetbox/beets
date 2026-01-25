@@ -72,6 +72,10 @@ def label_info_factory(**kwargs) -> mb.LabelInfo:
     return factories.LabelInfoFactory.build(**kwargs)
 
 
+def text_representation_factory(**kwargs) -> mb.TextRepresentation:
+    return factories.TextRepresentationFactory.build(**kwargs)
+
+
 class MusicBrainzTestCase(BeetsTestCase):
     def setUp(self):
         super().setUp()
@@ -100,10 +104,7 @@ class MusicBrainzTestCase(BeetsTestCase):
             "genres": [genre_factory()],
             "tags": [tag_factory()],
             "label_info": [label_info_factory()],
-            "text_representation": {
-                "script": "SCRIPT",
-                "language": "LANGUAGE",
-            },
+            "text_representation": text_representation_factory(),
             "country": "COUNTRY",
             "status": "STATUS",
             "barcode": "BARCODE",
@@ -375,8 +376,8 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
     def test_parse_textrepr(self):
         release = self._make_release()
         d = self.mb.album_info(release)
-        assert d.script == "SCRIPT"
-        assert d.language == "LANGUAGE"
+        assert d.script == "Latn"
+        assert d.language == "eng"
 
     def test_parse_country(self):
         release = self._make_release()
@@ -421,7 +422,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
 
     def test_missing_language(self):
         release = self._make_release()
-        del release["text_representation"]["language"]
+        release["text_representation"]["language"] = None
         d = self.mb.album_info(release)
         assert d.language is None
 
@@ -813,6 +814,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                 "artist_credit": [artist_credit_factory()],
                 "release_group": release_group_factory(),
                 "label_info": [label_info_factory()],
+                "text_representation": text_representation_factory(),
                 "release_relations": [
                     {
                         "type": "transl-tracklisting",
@@ -846,6 +848,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                 "release_group": release_group_factory(),
                 "country": "COUNTRY",
                 "label_info": [label_info_factory()],
+                "text_representation": text_representation_factory(),
             },
         ]
 
@@ -880,6 +883,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                 "artist_credit": [artist_credit_factory()],
                 "release_group": release_group_factory(),
                 "label_info": [label_info_factory()],
+                "text_representation": text_representation_factory(),
             }
         ]
 
@@ -914,6 +918,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                 "artist_credit": [artist_credit_factory()],
                 "release_group": release_group_factory(),
                 "label_info": [label_info_factory()],
+                "text_representation": text_representation_factory(),
             }
         ]
 
@@ -948,6 +953,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                 "artist_credit": [artist_credit_factory()],
                 "release_group": release_group_factory(),
                 "label_info": [label_info_factory()],
+                "text_representation": text_representation_factory(),
                 "release_relations": [
                     {
                         "type": "remaster",
@@ -1054,6 +1060,7 @@ class TestMusicBrainzPlugin(PluginMixin):
                 "artist_credit": [artist_credit_factory()],
                 "release_group": release_group_factory(),
                 "label_info": [label_info_factory()],
+                "text_representation": text_representation_factory(),
             },
         )
         candidates = list(mb.candidates([], "hello", "there", False))
