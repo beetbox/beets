@@ -596,6 +596,9 @@ class MusicBrainzPlugin(
             genres=self._parse_genres(release),
             script=release["text_representation"]["script"],
             language=release["text_representation"]["language"],
+            asin=release["asin"],
+            albumstatus=release["status"],
+            albumdisambig=release["disambiguation"] or None,
             **self._parse_release_group(release["release_group"]),
             **self._parse_label_infos(release["label_info"]),
             **self._parse_external_ids(release.get("url_relations", [])),
@@ -609,11 +612,6 @@ class MusicBrainzPlugin(
             info.artists_sort = [va_name]
             info.artist_credit = va_name
             info.artists_credit = [va_name]
-        info.asin = release.get("asin")
-        info.albumstatus = release.get("status")
-
-        if release.get("disambiguation"):
-            info.albumdisambig = release.get("disambiguation")
 
         # Release events.
         info.country, release_date = _preferred_release_event(release)
