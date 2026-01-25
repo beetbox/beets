@@ -574,6 +574,8 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
             data_url=urljoin(BASE_URL, f"release/{release['id']}"),
             barcode=release.get("barcode"),
             genre=genre if (genre := self._parse_genre(release)) else None,
+            script=release["text_representation"]["script"],
+            language=release["text_representation"]["language"],
             **self._parse_release_group(release["release_group"]),
             **self._parse_label_infos(release["label_info"]),
             **self._parse_external_ids(release.get("url_relations", [])),
@@ -598,12 +600,6 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
                 info.original_day,
             )
         )
-
-        # Text representation data.
-        if release.get("text_representation"):
-            rep = release["text_representation"]
-            info.script = rep.get("script")
-            info.language = rep.get("language")
 
         # Media (format).
         if release["media"]:
