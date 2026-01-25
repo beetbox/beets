@@ -106,7 +106,7 @@ class MusicBrainzTestCase(BeetsTestCase):
             "label_info": [label_info_factory()],
             "text_representation": text_representation_factory(),
             "country": "COUNTRY",
-            "status": "STATUS",
+            "status": "Official",
             "barcode": "BARCODE",
             "release_events": [
                 release_event_factory(area=None, date="2021-03-26"),
@@ -387,7 +387,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
     def test_parse_status(self):
         release = self._make_release()
         d = self.mb.album_info(release)
-        assert d.albumstatus == "STATUS"
+        assert d.albumstatus == "Official"
 
     def test_parse_barcode(self):
         release = self._make_release()
@@ -813,6 +813,8 @@ class MBLibraryTest(MusicBrainzTestCase):
                 "title": "pseudo",
                 "id": "d2a6f856-b553-40a0-ac54-a321e8e2da02",
                 "status": "Pseudo-Release",
+                "asin": None,
+                "disambiguation": "",
                 "media": [
                     {
                         "tracks": [
@@ -846,6 +848,8 @@ class MBLibraryTest(MusicBrainzTestCase):
                 "title": "actual",
                 "id": "d2a6f856-b553-40a0-ac54-a321e8e2da01",
                 "status": "Official",
+                "asin": None,
+                "disambiguation": "",
                 "media": [
                     {
                         "tracks": [
@@ -882,6 +886,8 @@ class MBLibraryTest(MusicBrainzTestCase):
                 "title": "pseudo",
                 "id": "d2a6f856-b553-40a0-ac54-a321e8e2da02",
                 "status": "Pseudo-Release",
+                "asin": None,
+                "disambiguation": "",
                 "media": [
                     {
                         "tracks": [
@@ -917,6 +923,8 @@ class MBLibraryTest(MusicBrainzTestCase):
                 "title": "pseudo",
                 "id": "d2a6f856-b553-40a0-ac54-a321e8e2da02",
                 "status": "Pseudo-Release",
+                "asin": None,
+                "disambiguation": "",
                 "media": [
                     {
                         "tracks": [
@@ -952,6 +960,8 @@ class MBLibraryTest(MusicBrainzTestCase):
                 "title": "pseudo",
                 "id": "d2a6f856-b553-40a0-ac54-a321e8e2da02",
                 "status": "Pseudo-Release",
+                "asin": None,
+                "disambiguation": "",
                 "media": [
                     {
                         "tracks": [
@@ -1060,7 +1070,9 @@ class TestMusicBrainzPlugin(PluginMixin):
             lambda *_, **__: {
                 "title": "hi",
                 "id": self.mbid,
-                "status": "status",
+                "status": "Official",
+                "asin": None,
+                "disambiguation": "",
                 "media": [
                     {
                         "tracks": [

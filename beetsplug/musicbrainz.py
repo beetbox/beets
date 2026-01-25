@@ -576,6 +576,9 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
             genre=genre if (genre := self._parse_genre(release)) else None,
             script=release["text_representation"]["script"],
             language=release["text_representation"]["language"],
+            asin=release["asin"],
+            albumstatus=release["status"],
+            albumdisambig=release["disambiguation"] or None,
             **self._parse_release_group(release["release_group"]),
             **self._parse_label_infos(release["label_info"]),
             **self._parse_external_ids(release.get("url_relations", [])),
@@ -583,11 +586,6 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
         info.va = info.artist_id == VARIOUS_ARTISTS_ID
         if info.va:
             info.artist = config["va_name"].as_str()
-        info.asin = release.get("asin")
-        info.albumstatus = release.get("status")
-
-        if release.get("disambiguation"):
-            info.albumdisambig = release.get("disambiguation")
 
         # Release events.
         info.country, release_date = _preferred_release_event(release)
