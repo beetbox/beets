@@ -24,6 +24,7 @@ from typing import TYPE_CHECKING, Literal, TypedDict
 from urllib.parse import urljoin
 
 from confuse.exceptions import NotFoundError
+from typing_extensions import NotRequired
 
 import beets
 import beets.autotag.hooks
@@ -50,6 +51,7 @@ if TYPE_CHECKING:
         Recording,
         Release,
         ReleaseGroup,
+        UrlRelation,
     )
 
 VARIOUS_ARTISTS_ID = "89ad4ac3-39f7-470e-963a-56509c546377"
@@ -108,6 +110,15 @@ class ReleaseGroupInfo(TypedDict):
 class LabelInfoInfo(TypedDict):
     label: str | None
     catalognum: str | None
+
+
+class ExternalIdsInfo(TypedDict):
+    discogs_album_id: NotRequired[str | None]
+    bandcamp_album_id: NotRequired[str | None]
+    spotify_album_id: NotRequired[str | None]
+    deezer_album_id: NotRequired[str | None]
+    tidal_album_id: NotRequired[str | None]
+    beatport_album_id: NotRequired[str | None]
 
 
 def _preferred_alias(
@@ -442,6 +453,34 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
 
         return None
 
+    def _parse_external_ids(
+        self, url_relations: list[UrlRelation]
+    ) -> ExternalIdsInfo:
+        """Extract configured external release ids from MusicBrainz URLs.
+
+        MusicBrainz releases can include `url_relations` pointing to third-party
+        sites (for example Bandcamp or Discogs). This helper filters those URL
+        relations to only the sources enabled in configuration, then derives a
+        stable external identifier from each matching URL.
+        """
+        external_ids = self.config["external_ids"].get()
+        wanted_sources: set[UrlSource] = {
+            site for site, wanted in external_ids.items() if wanted
+        }
+        url_by_source: dict[UrlSource, str] = {}
+        for source, url_relation in product(wanted_sources, url_relations):
+            if f"{source}.com" in (target := url_relation["url"]["resource"]):
+                url_by_source[source] = target
+                self._log.debug(
+                    "Found link to {} release via MusicBrainz",
+                    source.capitalize(),
+                )
+
+        return {
+            f"{source}_album_id": extract_release_id(source, url)
+            for source, url in url_by_source.items()
+        }  # type: ignore[return-value]
+
     def album_info(self, release: Release) -> beets.autotag.hooks.AlbumInfo:
         """Takes a MusicBrainz release result dictionary and returns a beets
         AlbumInfo object containing the interesting data about that release.
@@ -537,6 +576,7 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
             genre=genre if (genre := self._parse_genre(release)) else None,
             **self._parse_release_group(release["release_group"]),
             **self._parse_label_infos(release["label_info"]),
+            **self._parse_external_ids(release.get("url_relations", [])),
         )
         info.va = info.artist_id == VARIOUS_ARTISTS_ID
         if info.va:
@@ -573,29 +613,6 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
             # Otherwise, let's just call it "Media"
             else:
                 info.media = "Media"
-
-        # We might find links to external sources (Discogs, Bandcamp, ...)
-        external_ids = self.config["external_ids"].get()
-        wanted_sources: set[UrlSource] = {
-            site for site, wanted in external_ids.items() if wanted
-        }
-        if wanted_sources and (url_rels := release.get("url_relations")):
-            urls = {}
-
-            for url_source, url_relation in product(wanted_sources, url_rels):
-                if f"{url_source}.com" in (
-                    target := url_relation["url"]["resource"]
-                ):
-                    urls[url_source] = target
-                    self._log.debug(
-                        "Found link to {} release via MusicBrainz",
-                        url_source.capitalize(),
-                    )
-
-            for source, url in urls.items():
-                setattr(
-                    info, f"{source}_album_id", extract_release_id(source, url)
-                )
 
         extra_albumdatas = plugins.send("mb_album_extract", data=release)
         for extra_albumdata in extra_albumdatas:
