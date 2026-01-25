@@ -46,6 +46,7 @@ if TYPE_CHECKING:
         ArtistCredit,
         ArtistRelation,
         ArtistRelationType,
+        LabelInfo,
         Recording,
         Release,
         ReleaseGroup,
@@ -102,6 +103,11 @@ class ReleaseGroupInfo(TypedDict):
     original_year: int | None
     original_month: int | None
     original_day: int | None
+
+
+class LabelInfoInfo(TypedDict):
+    label: str | None
+    catalognum: str | None
 
 
 def _preferred_alias(
@@ -408,6 +414,17 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
             original_day=day,
         )
 
+    @staticmethod
+    def _parse_label_infos(label_infos: list[LabelInfo]) -> LabelInfoInfo:
+        catalognum = label = None
+        if label_infos:
+            label_info = label_infos[0]
+            catalognum = label_info["catalog_number"]
+            if (_label := label_info["label"]["name"]) != "[no label]":
+                label = _label
+
+        return {"label": label, "catalognum": catalognum}
+
     def _parse_genre(self, release: Release) -> str | None:
         if self.config["genres"]:
             genres = [
@@ -519,6 +536,7 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
             barcode=release.get("barcode"),
             genre=genre if (genre := self._parse_genre(release)) else None,
             **self._parse_release_group(release["release_group"]),
+            **self._parse_label_infos(release["label_info"]),
         )
         info.va = info.artist_id == VARIOUS_ARTISTS_ID
         if info.va:
@@ -540,15 +558,6 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
                 info.original_day,
             )
         )
-
-        # Label name.
-        if release.get("label_info"):
-            label_info = release["label_info"][0]
-            if label_info.get("label"):
-                label = label_info["label"]["name"]
-                if label != "[no label]":
-                    info.label = label
-            info.catalognum = label_info.get("catalog_number")
 
         # Text representation data.
         if release.get("text_representation"):
