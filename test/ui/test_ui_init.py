@@ -129,7 +129,9 @@ class DatabaseErrorTest(BeetsTestCase):
     def test_database_error_with_unable_to_open(self):
         """Test error message when database fails with 'unable to open' error."""
         test_config = deepcopy(config)
-        test_config["library"] = os.path.join(self.temp_dir, "test.db")
+        test_config["library"] = _common.os.fsdecode(
+            os.path.join(self.temp_dir, b"test.db")
+        )
 
         # Mock Library to raise OperationalError with "unable to open"
         with mock.patch.object(
@@ -150,7 +152,9 @@ class DatabaseErrorTest(BeetsTestCase):
     def test_database_error_fallback(self):
         """Test fallback error message for other database errors."""
         test_config = deepcopy(config)
-        test_config["library"] = os.path.join(self.temp_dir, "test.db")
+        test_config["library"] = _common.os.fsdecode(
+            os.path.join(self.temp_dir, b"test.db")
+        )
 
         # Mock Library to raise a different OperationalError
         with mock.patch.object(
