@@ -145,9 +145,10 @@ class DatabaseErrorTest(BeetsTestCase):
                 ui._open_library(test_config)
 
             error_message = str(cm.exception)
-            # Should mention directory permissions
+            # Should mention permissions and directory
             self.assertIn("directory", error_message.lower())
             self.assertIn("writable", error_message.lower())
+            self.assertIn("permissions", error_message.lower())
 
     def test_database_error_fallback(self):
         """Test fallback error message for other database errors."""
@@ -166,8 +167,8 @@ class DatabaseErrorTest(BeetsTestCase):
                 ui._open_library(test_config)
 
             error_message = str(cm.exception)
-            # Should contain the error but not the directory writable message
+            # Should contain the error but not the permissions message
             self.assertIn("could not be opened", error_message)
             self.assertIn("disk I/O error", error_message)
-            # Should NOT have the directory writable message
-            self.assertNotIn("directory", error_message.lower())
+            # Should NOT have the permissions-related message
+            self.assertNotIn("permissions", error_message.lower())
