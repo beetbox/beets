@@ -367,8 +367,7 @@ class ConvertRemoveMissingTest(ConvertTestCase, ConvertCommand):
     def setUp(self):
         super().setUp()
 
-        self.album = self.add_album_fixture(ext="ogg")
-        self.item = self.album.items()[0]
+        self.item = self.add_item(title="title", album="album", format="ogg")
 
         self.convert_dest = self.temp_dir_path / "convert_dest"
         self.file_to_remove = self.convert_dest / "to_remove.mp3"
