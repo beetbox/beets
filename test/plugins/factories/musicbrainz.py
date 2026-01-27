@@ -184,3 +184,17 @@ class TrackFactory(_IdFactory):
     title = factory.LazyAttribute(
         lambda o: f"{'Video: ' if o.recording['video'] else ''}{o.recording['title']}"  # noqa: E501
     )
+
+
+class MediumFactory(_IdFactory):
+    class Params:
+        id_base = 100000
+
+    format = "Digital Media"
+    format_id = "907a28d9-b3b2-3ef6-89a8-7b18d91d4794"
+    position = 1
+    title = "Medium"
+    track_count = 1
+    data_tracks = factory.List([])
+    track_offset: int | None = None
+    tracks = factory.List([factory.SubFactory(TrackFactory)])

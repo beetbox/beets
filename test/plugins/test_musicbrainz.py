@@ -84,6 +84,10 @@ def track_factory(**kwargs) -> mb.Track:
     return factories.TrackFactory.build(**kwargs)
 
 
+def medium_factory(**kwargs) -> mb.Medium:
+    return factories.MediumFactory.build(**kwargs)
+
+
 class MusicBrainzTestCase(BeetsTestCase):
     def setUp(self):
         super().setUp()
@@ -162,13 +166,11 @@ class MusicBrainzTestCase(BeetsTestCase):
                 )
 
         release["media"].append(
-            {
-                "position": "1",
-                "tracks": track_list,
-                "data_tracks": data_track_list,
-                "format": medium_format,
-                "title": "MEDIUM TITLE",
-            }
+            medium_factory(
+                format=medium_format,
+                tracks=track_list,
+                data_tracks=data_track_list,
+            )
         )
         return release
 
@@ -238,12 +240,12 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
     def test_parse_medium_numbers_two_mediums(self):
         release = self._make_release(recordings=[recording_factory()])
         release["media"].append(
-            {
-                "position": "2",
-                "tracks": [
+            medium_factory(
+                position=2,
+                tracks=[
                     track_factory(recording__index=2, title="Other Recording")
                 ],
-            }
+            )
         )
 
         d = self.mb.album_info(release)
@@ -352,8 +354,8 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         release = self._make_release(recordings=recordings)
         d = self.mb.album_info(release)
         t = d.tracks
-        assert t[0].disctitle == "MEDIUM TITLE"
-        assert t[1].disctitle == "MEDIUM TITLE"
+        assert t[0].disctitle == "Medium"
+        assert t[1].disctitle == "Medium"
 
     def test_missing_language(self):
         release = self._make_release()
@@ -735,12 +737,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                 "status": "Pseudo-Release",
                 "asin": None,
                 "disambiguation": "",
-                "media": [
-                    {
-                        "tracks": [track_factory()],
-                        "position": 5,
-                    }
-                ],
+                "media": [medium_factory()],
                 "artist_credit": [artist_credit_factory()],
                 "release_group": release_group_factory(),
                 "label_info": [label_info_factory()],
@@ -761,12 +758,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                 "status": "Official",
                 "asin": None,
                 "disambiguation": "",
-                "media": [
-                    {
-                        "tracks": [track_factory()],
-                        "position": 5,
-                    }
-                ],
+                "media": [medium_factory()],
                 "artist_credit": [artist_credit_factory()],
                 "release_group": release_group_factory(),
                 "country": "COUNTRY",
@@ -790,12 +782,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                 "status": "Pseudo-Release",
                 "asin": None,
                 "disambiguation": "",
-                "media": [
-                    {
-                        "tracks": [track_factory()],
-                        "position": 5,
-                    }
-                ],
+                "media": [medium_factory()],
                 "artist_credit": [artist_credit_factory()],
                 "release_group": release_group_factory(),
                 "label_info": [label_info_factory()],
@@ -818,12 +805,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                 "status": "Pseudo-Release",
                 "asin": None,
                 "disambiguation": "",
-                "media": [
-                    {
-                        "tracks": [track_factory()],
-                        "position": 5,
-                    }
-                ],
+                "media": [medium_factory()],
                 "artist_credit": [artist_credit_factory()],
                 "release_group": release_group_factory(),
                 "label_info": [label_info_factory()],
@@ -846,12 +828,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                 "status": "Pseudo-Release",
                 "asin": None,
                 "disambiguation": "",
-                "media": [
-                    {
-                        "tracks": [track_factory()],
-                        "position": 5,
-                    }
-                ],
+                "media": [medium_factory()],
                 "artist_credit": [artist_credit_factory()],
                 "release_group": release_group_factory(),
                 "label_info": [label_info_factory()],
@@ -946,12 +923,7 @@ class TestMusicBrainzPlugin(PluginMixin):
                 "status": "Official",
                 "asin": None,
                 "disambiguation": "",
-                "media": [
-                    {
-                        "tracks": [track_factory()],
-                        "position": 5,
-                    }
-                ],
+                "media": [medium_factory()],
                 "artist_credit": [artist_credit_factory()],
                 "release_group": release_group_factory(),
                 "label_info": [label_info_factory()],
