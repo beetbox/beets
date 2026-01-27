@@ -386,7 +386,15 @@ class ConvertRemoveMissingTest(ConvertTestCase, ConvertCommand):
 
         assert self.file_to_remove.exists()
 
+    def test_convert_pretend_removemissing(self):
+        self.run_convert("--yes", "--remove-missing", "--pretend")
+
+        assert self.file_to_remove.exists()
+
     def test_convert_removemissing(self):
-        self.run_convert("--remove-missing", "--yes")
+        self.run_convert("--yes", "--remove-missing")
 
         assert not self.file_to_remove.exists()
+
+        # This should hit the case where no files to remove are present
+        self.run_convert("--remove-missing", "--yes")
