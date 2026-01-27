@@ -69,6 +69,9 @@ Depending on the beets user's settings a generated playlist potentially could
 contain unicode characters. This is supported, playlists are written in `M3U8
 format`_.
 
+The ``-r`` (or ``--remove-missing``) option will remove files in the destination
+folder that are not present in the library.
+
 Configuration
 -------------
 
@@ -151,6 +154,12 @@ The available options are:
   as well. The final destination of the playlist file will always be relative to
   the destination path (``dest``, ``--dest``, ``-d``). This configuration is
   overridden by the ``-m`` (``--playlist``) command line option. Default: none.
+- **remove_missing**: Whether or not to remove files in the destination folder
+  that are no longer present in the library. This means that if you removed an
+  item from the database that was previously converted, it will be removed in
+  the next run of the ``convert`` command (it will ask for confirmation unless
+  the ``--yes`` option is enabled). This is useful if you want to keep a
+  converted version of your library synced. Default: ``false``.
 
 You can also configure the format to use for transcoding (see the next section):
 
