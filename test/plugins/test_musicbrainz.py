@@ -56,6 +56,10 @@ def release_event_factory(**kwargs) -> mb.ReleaseEvent:
     return factories.ReleaseEventFactory.build(**kwargs)
 
 
+def release_group_factory(**kwargs) -> mb.ReleaseGroup:
+    return factories.ReleaseGroupFactory.build(**kwargs)
+
+
 class MusicBrainzTestCase(BeetsTestCase):
     def setUp(self):
         super().setUp()
@@ -77,12 +81,7 @@ class MusicBrainzTestCase(BeetsTestCase):
             "id": "ALBUM ID",
             "asin": "ALBUM ASIN",
             "disambiguation": "R_DISAMBIGUATION",
-            "release_group": {
-                "primary_type": "Album",
-                "first_release_date": date,
-                "id": "RELEASE GROUP ID",
-                "disambiguation": "RG_DISAMBIGUATION",
-            },
+            "release_group": release_group_factory(first_release_date=date),
             "artist_credit": [artist_credit_factory(artist__id_base=10)],
             "date": "3001",
             "media": [],
@@ -354,7 +353,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
     def test_parse_releasegroupid(self):
         release = self._make_release()
         d = self.mb.album_info(release)
-        assert d.releasegroup_id == "RELEASE GROUP ID"
+        assert d.releasegroup_id == "00000000-0000-0000-0000-000000000101"
 
     def test_parse_asin(self):
         release = self._make_release()
@@ -400,7 +399,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         release = self._make_release()
         d = self.mb.album_info(release)
         assert d.albumdisambig == "R_DISAMBIGUATION"
-        assert d.releasegroupdisambig == "RG_DISAMBIGUATION"
+        assert d.releasegroupdisambig == "Release Group Disambiguation"
 
     def test_parse_disctitle(self):
         recordings = [
@@ -822,9 +821,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                     }
                 ],
                 "artist_credit": [artist_credit_factory()],
-                "release_group": {
-                    "id": "another-id",
-                },
+                "release_group": release_group_factory(),
                 "release_relations": [
                     {
                         "type": "transl-tracklisting",
@@ -855,9 +852,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                     }
                 ],
                 "artist_credit": [artist_credit_factory()],
-                "release_group": {
-                    "id": "another-id",
-                },
+                "release_group": release_group_factory(),
                 "country": "COUNTRY",
             },
         ]
@@ -891,9 +886,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                     }
                 ],
                 "artist_credit": [artist_credit_factory()],
-                "release_group": {
-                    "id": "another-id",
-                },
+                "release_group": release_group_factory(),
             }
         ]
 
@@ -926,9 +919,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                     }
                 ],
                 "artist_credit": [artist_credit_factory()],
-                "release_group": {
-                    "id": "another-id",
-                },
+                "release_group": release_group_factory(),
             }
         ]
 
@@ -961,9 +952,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                     }
                 ],
                 "artist_credit": [artist_credit_factory()],
-                "release_group": {
-                    "id": "another-id",
-                },
+                "release_group": release_group_factory(),
                 "release_relations": [
                     {
                         "type": "remaster",
@@ -1068,7 +1057,7 @@ class TestMusicBrainzPlugin(PluginMixin):
                     }
                 ],
                 "artist_credit": [artist_credit_factory()],
-                "release_group": {"id": "another-id"},
+                "release_group": release_group_factory(),
             },
         )
         candidates = list(mb.candidates([], "hello", "there", False))
