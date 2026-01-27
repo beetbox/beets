@@ -12,6 +12,10 @@ Unreleased
 ..
     New features
     ~~~~~~~~~~~~
+  
+- :doc:`plugins/convert`: Added the new ``remove_missing`` configuration and
+  corresponding ``--remove-missing`` option to enable removing files in the
+  destination directory that were removed from the library.
 
 Bug fixes
 ~~~~~~~~~
