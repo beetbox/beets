@@ -165,6 +165,7 @@ class ConvertPlugin(BeetsPlugin):
                 "album_art_maxwidth": 0,
                 "delete_originals": False,
                 "playlist": None,
+                "remove_missing": False,
             }
         )
         self.early_import_stages = [self.auto_convert, self.auto_convert_keep]
@@ -243,6 +244,13 @@ class ConvertPlugin(BeetsPlugin):
                               will be used.""",
         )
         cmd.parser.add_option(
+            "-r",
+            "--remove-missing",
+            action="store_true",
+            help="""remove all files in the destination directory that are not
+                    present in the library.""",
+        )
+        cmd.parser.add_option(
             "-F",
             "--force",
             action="store_true",
@@ -274,6 +282,7 @@ class ConvertPlugin(BeetsPlugin):
                 pretend,
                 hardlink,
                 link,
+                _,
                 _,
                 force,
             ) = self._get_opts_and_config(empty_opts)
@@ -600,6 +609,7 @@ class ConvertPlugin(BeetsPlugin):
             hardlink,
             link,
             playlist,
+            remove_missing,
             force,
         ) = self._get_opts_and_config(opts)
 
@@ -626,6 +636,9 @@ class ConvertPlugin(BeetsPlugin):
                 self.copy_album_art(
                     album, dest, path_formats, pretend, link, hardlink
                 )
+
+        if remove_missing:
+            self.remove_non_item_files(items, dest, fmt, pretend, opts.yes)
 
         self._parallel_convert(
             dest,
@@ -760,7 +773,14 @@ class ConvertPlugin(BeetsPlugin):
         else:
             hardlink = self.config["hardlink"].get(bool)
             link = self.config["link"].get(bool)
+
+        if opts.remove_missing is not None:
+            remove_missing = opts.remove_missing
+        else:
+            remove_missing = self.config["remove_missing"].get(bool)
+
         force = getattr(opts, "force", False)
+
         return (
             dest,
             threads,
@@ -770,6 +790,7 @@ class ConvertPlugin(BeetsPlugin):
             hardlink,
             link,
             playlist,
+            remove_missing,
             force,
         )
 
@@ -804,3 +825,35 @@ class ConvertPlugin(BeetsPlugin):
         ]
         pipe = util.pipeline.Pipeline([iter(items), convert])
         pipe.run_parallel()
+
+    def remove_non_item_files(self, items, dest, fmt, pretend, yes):
+        """
+        Remove all files in the destination directory ``dest`` that do not
+        correspond to an item to be converted. If ``pretend=True`` it will
+        not actually remove any files and only print a list of files to be
+        deleted. If ``yes=True`` it will not ask for confirmation.
+        """
+        _, ext = get_format(fmt)
+        item_destinations = {
+            replace_ext(item.destination(basedir=dest), ext) for item in items
+        }
+        files_to_remove = list()
+
+        for dirpath, _, filenames in os.walk(dest):
+            for filename in filenames:
+                filepath = util.bytestring_path(os.path.join(dirpath, filename))
+                if filepath not in item_destinations:
+                    files_to_remove.append(filepath)
+
+        if not files_to_remove:
+            ui.print_("No files to be removed")
+            return
+
+        ui.print_("Files to be deleted in the destination folder:")
+        for f in files_to_remove:
+            ui.print_(util.displayable_path(f))
+
+        if (not pretend) and (yes or ui.input_yn("Delete files? (Y/n)")):
+            for file in files_to_remove:
+                util.remove(file)
+                self._log.info(f'Removed file "{util.displayable_path(file)}"')
