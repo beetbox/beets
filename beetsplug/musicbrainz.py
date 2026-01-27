@@ -36,7 +36,7 @@ from ._utils.musicbrainz import MusicBrainzAPIMixin
 from ._utils.requests import HTTPNotFoundError
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Iterable, Sequence
 
     from beets.library import Item
     from beets.metadata_plugins import QueryType, SearchParams
@@ -45,6 +45,7 @@ if TYPE_CHECKING:
         Alias,
         ArtistCredit,
         LabelInfo,
+        Medium,
         Recording,
         Release,
         ReleaseGroup,
@@ -489,8 +490,63 @@ class MusicBrainzPlugin(
         }  # type: ignore[return-value]
 
     @cached_property
+    def ignored_media(self) -> set[str]:
+        return set(config["match"]["ignored_media"].as_str_seq())
+
+    @cached_property
+    def ignore_data_tracks(self) -> bool:
+        return config["match"]["ignore_data_tracks"].get(bool)
+
+    @cached_property
     def ignore_video_tracks(self) -> bool:
         return config["match"]["ignore_video_tracks"].get(bool)
+
+    def get_tracks_from_medium(self, medium: Medium) -> Iterable[TrackInfo]:
+        all_tracks = []
+        if pregap := medium.get("pregap"):
+            all_tracks.append(pregap)
+
+        all_tracks.extend(medium.get("tracks", []))
+
+        if not self.ignore_data_tracks:
+            all_tracks.extend(medium.get("data_tracks", []))
+
+        medium_data = {
+            "medium": medium["position"],
+            "medium_total": medium["track_count"],
+            "disctitle": medium["title"],
+            "media": medium["format"],
+        }
+        valid_tracks = [
+            t
+            for t in all_tracks
+            if (
+                # skip data tracks without titles
+                t["recording"]["title"] != "[data track]"
+                # and video tracks if we're configured to ignore them
+                and not (self.ignore_video_tracks and t["recording"]["video"])
+            )
+        ]
+        for track in valid_tracks:
+            # make a copy since we need to modify it with track-level overrides
+            recording = track["recording"].copy()
+            # Prefer track data, where present, over recording data.
+            recording["length"] = track["length"] or recording["length"]
+            recording["artist_credit"] = (
+                track["artist_credit"] or recording["artist_credit"]
+            )
+            if track["title"] and not _preferred_alias(recording["aliases"]):
+                recording["title"] = track["title"]
+
+            ti = self.track_info(recording)
+            ti.update(
+                medium_index=int(track["position"]),
+                release_track_id=track["id"],
+                track_alt=track["number"],
+                **medium_data,
+            )
+
+            yield ti
 
     def album_info(self, release: Release) -> AlbumInfo:
         """Takes a MusicBrainz release result dictionary and returns a beets
@@ -522,67 +578,15 @@ class MusicBrainzPlugin(
                     ]
 
         # Basic info.
-        track_infos = []
-        index = 0
-        for medium in release["media"]:
-            format = medium.get("format")
+        valid_media = [
+            m for m in release["media"] if m["format"] not in self.ignored_media
+        ]
+        track_infos: list[TrackInfo] = []
+        for medium in valid_media:
+            track_infos.extend(self.get_tracks_from_medium(medium))
 
-            if format in config["match"]["ignored_media"].as_str_seq():
-                continue
-
-            all_tracks = medium.get("tracks", [])
-            if (
-                "data_tracks" in medium
-                and not config["match"]["ignore_data_tracks"]
-            ):
-                all_tracks += medium["data_tracks"]
-
-            medium_data = {
-                "medium": int(medium["position"]),
-                "medium_total": len(all_tracks),
-                "disctitle": medium.get("title"),
-                "media": format,
-            }
-
-            if "pregap" in medium:
-                all_tracks.insert(0, medium["pregap"])
-
-            valid_tracks = [
-                t
-                for t in all_tracks
-                if (
-                    # skip data tracks without titles
-                    t["recording"]["title"] != "[data track]"
-                    # and video tracks if we're configured to ignore them
-                    and not (
-                        self.ignore_video_tracks and t["recording"]["video"]
-                    )
-                )
-            ]
-            for track in valid_tracks:
-                index += 1
-                # make a copy since we need to modify it with track-level overrides
-                recording = track["recording"].copy()
-                # Prefer track data, where present, over recording data.
-                recording["length"] = track["length"] or recording["length"]
-                recording["artist_credit"] = (
-                    track["artist_credit"] or recording["artist_credit"]
-                )
-                if track["title"] and not _preferred_alias(
-                    recording["aliases"]
-                ):
-                    recording["title"] = track["title"]
-
-                ti = self.track_info(recording)
-                ti.update(
-                    index=index,
-                    medium_index=track["position"],
-                    release_track_id=track["id"],
-                    track_alt=track["number"],
-                    **medium_data,
-                )
-
-                track_infos.append(ti)
+        for index, track_info in enumerate(track_infos, 1):
+            track_info.index = index
 
         release_title = _key_with_preferred_alias(release, key="title")
         info = AlbumInfo(
@@ -590,6 +594,11 @@ class MusicBrainzPlugin(
             album=release_title,
             album_id=release["id"],
             tracks=track_infos,
+            media=(
+                medias.pop()
+                if len(medias := {t.media for t in track_infos}) == 1
+                else "Media"
+            ),
             mediums=len(release["media"]),
             data_source=self.data_source,
             data_url=urljoin(BASE_URL, f"release/{release['id']}"),
@@ -625,15 +634,6 @@ class MusicBrainzPlugin(
                 info.original_day,
             )
         )
-
-        # Media (format).
-        if release["media"]:
-            # If all media are the same, use that medium name
-            if len({m.get("format") for m in release["media"]}) == 1:
-                info.media = release["media"][0].get("format")
-            # Otherwise, let's just call it "Media"
-            else:
-                info.media = "Media"
 
         extra_albumdatas = plugins.send("mb_album_extract", data=release)
         for extra_albumdata in extra_albumdatas:
