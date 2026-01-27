@@ -88,6 +88,10 @@ def medium_factory(**kwargs) -> mb.Medium:
     return factories.MediumFactory.build(**kwargs)
 
 
+def release_factory(**kwargs) -> mb.Release:
+    return factories.ReleaseFactory.build(**kwargs)
+
+
 class MusicBrainzTestCase(BeetsTestCase):
     def setUp(self):
         super().setUp()
@@ -102,31 +106,11 @@ class MusicBrainzTestCase(BeetsTestCase):
         track_artist=False,
         multi_artist_credit=False,
         data_tracks=None,
-        medium_format="FORMAT",
-    ):
-        release = {
-            "title": "ALBUM TITLE",
-            "id": "ALBUM ID",
-            "asin": "ALBUM ASIN",
-            "disambiguation": "R_DISAMBIGUATION",
-            "release_group": release_group_factory(first_release_date=date),
-            "artist_credit": [artist_credit_factory(artist__id_base=10)],
-            "date": "3001",
-            "media": [],
-            "genres": [genre_factory()],
-            "tags": [tag_factory()],
-            "label_info": [label_info_factory()],
-            "text_representation": text_representation_factory(),
-            "country": "COUNTRY",
-            "status": "Official",
-            "barcode": "BARCODE",
-            "release_events": [
-                release_event_factory(area=None, date="2021-03-26"),
-                release_event_factory(
-                    area__iso_3166_1_codes=["US"], date="2020-01-01"
-                ),
-            ],
-        }
+        medium_format="Digital Media",
+    ) -> mb.Release:
+        release: mb.Release = release_factory(
+            release_group__first_release_date=date
+        )
 
         if multi_artist_credit:
             release["artist_credit"][0]["joinphrase"] = " & "
@@ -179,8 +163,8 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
     def test_parse_release_with_year(self):
         release = self._make_release(date="1984")
         d = self.mb.album_info(release)
-        assert d.album == "ALBUM TITLE"
-        assert d.album_id == "ALBUM ID"
+        assert d.album == "Album"
+        assert d.album_id == "00000000-0000-0000-0000-000001000001"
         assert d.artist == "Artist"
         assert d.artist_id == "00000000-0000-0000-0000-000000000011"
         assert d.original_year == 1984
@@ -188,7 +172,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert d.artist_credit == "Artist Credit"
 
     def test_parse_release_type(self):
-        release = self._make_release(date="1984")
+        release = self._make_release()
         d = self.mb.album_info(release)
         assert d.albumtype == "album"
 
@@ -309,7 +293,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
     def test_parse_asin(self):
         release = self._make_release()
         d = self.mb.album_info(release)
-        assert d.asin == "ALBUM ASIN"
+        assert d.asin == "Album Asin"
 
     def test_parse_catalognum(self):
         release = self._make_release()
@@ -335,18 +319,18 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
     def test_parse_barcode(self):
         release = self._make_release()
         d = self.mb.album_info(release)
-        assert d.barcode == "BARCODE"
+        assert d.barcode == "0000000000000"
 
     def test_parse_media(self):
         recordings = [recording_factory(), recording_factory()]
         release = self._make_release(recordings=recordings)
         d = self.mb.album_info(release)
-        assert d.media == "FORMAT"
+        assert d.media == "Digital Media"
 
     def test_parse_disambig(self):
         release = self._make_release()
         d = self.mb.album_info(release)
-        assert d.albumdisambig == "R_DISAMBIGUATION"
+        assert d.albumdisambig == "Album Disambiguation"
         assert d.releasegroupdisambig == "Release Group Disambiguation"
 
     def test_parse_disctitle(self):
@@ -730,19 +714,14 @@ class ArtistTest(unittest.TestCase):
 
 class MBLibraryTest(MusicBrainzTestCase):
     def test_follow_pseudo_releases(self):
-        side_effect = [
-            {
-                "title": "pseudo",
-                "id": "d2a6f856-b553-40a0-ac54-a321e8e2da02",
-                "status": "Pseudo-Release",
-                "asin": None,
-                "disambiguation": "",
-                "media": [medium_factory()],
-                "artist_credit": [artist_credit_factory()],
-                "release_group": release_group_factory(),
-                "label_info": [label_info_factory()],
-                "text_representation": text_representation_factory(),
-                "release_relations": [
+        side_effect: list[mb.Release] = [
+            release_factory(
+                id="d2a6f856-b553-40a0-ac54-a321e8e2da02",
+                title="pseudo",
+                status="Pseudo-Release",
+                country=None,
+                release_events=[],
+                release_relations=[
                     {
                         "type": "transl-tracklisting",
                         "direction": "backward",
@@ -751,20 +730,11 @@ class MBLibraryTest(MusicBrainzTestCase):
                         },
                     }
                 ],
-            },
-            {
-                "title": "actual",
-                "id": "d2a6f856-b553-40a0-ac54-a321e8e2da01",
-                "status": "Official",
-                "asin": None,
-                "disambiguation": "",
-                "media": [medium_factory()],
-                "artist_credit": [artist_credit_factory()],
-                "release_group": release_group_factory(),
-                "country": "COUNTRY",
-                "label_info": [label_info_factory()],
-                "text_representation": text_representation_factory(),
-            },
+            ),
+            release_factory(
+                title="actual",
+                id="d2a6f856-b553-40a0-ac54-a321e8e2da01",
+            ),
         ]
 
         with mock.patch(
@@ -772,22 +742,16 @@ class MBLibraryTest(MusicBrainzTestCase):
         ) as gp:
             gp.side_effect = side_effect
             album = self.mb.album_for_id("d2a6f856-b553-40a0-ac54-a321e8e2da02")
-            assert album.country == "COUNTRY"
+            assert album.country == "US"
 
     def test_pseudo_releases_with_empty_links(self):
-        side_effect = [
-            {
-                "title": "pseudo",
-                "id": "d2a6f856-b553-40a0-ac54-a321e8e2da02",
-                "status": "Pseudo-Release",
-                "asin": None,
-                "disambiguation": "",
-                "media": [medium_factory()],
-                "artist_credit": [artist_credit_factory()],
-                "release_group": release_group_factory(),
-                "label_info": [label_info_factory()],
-                "text_representation": text_representation_factory(),
-            }
+        side_effect: list[mb.Release] = [
+            release_factory(
+                id="d2a6f856-b553-40a0-ac54-a321e8e2da02",
+                title="pseudo",
+                status="Pseudo-Release",
+                release_events=[],
+            )
         ]
 
         with mock.patch(
@@ -798,19 +762,13 @@ class MBLibraryTest(MusicBrainzTestCase):
             assert album.country is None
 
     def test_pseudo_releases_without_links(self):
-        side_effect = [
-            {
-                "title": "pseudo",
-                "id": "d2a6f856-b553-40a0-ac54-a321e8e2da02",
-                "status": "Pseudo-Release",
-                "asin": None,
-                "disambiguation": "",
-                "media": [medium_factory()],
-                "artist_credit": [artist_credit_factory()],
-                "release_group": release_group_factory(),
-                "label_info": [label_info_factory()],
-                "text_representation": text_representation_factory(),
-            }
+        side_effect: list[mb.Release] = [
+            release_factory(
+                id="d2a6f856-b553-40a0-ac54-a321e8e2da02",
+                title="pseudo",
+                status="Pseudo-Release",
+                release_events=[],
+            )
         ]
 
         with mock.patch(
@@ -821,19 +779,13 @@ class MBLibraryTest(MusicBrainzTestCase):
             assert album.country is None
 
     def test_pseudo_releases_with_unsupported_links(self):
-        side_effect = [
-            {
-                "title": "pseudo",
-                "id": "d2a6f856-b553-40a0-ac54-a321e8e2da02",
-                "status": "Pseudo-Release",
-                "asin": None,
-                "disambiguation": "",
-                "media": [medium_factory()],
-                "artist_credit": [artist_credit_factory()],
-                "release_group": release_group_factory(),
-                "label_info": [label_info_factory()],
-                "text_representation": text_representation_factory(),
-                "release_relations": [
+        side_effect: list[mb.Release] = [
+            release_factory(
+                id="d2a6f856-b553-40a0-ac54-a321e8e2da02",
+                title="pseudo",
+                status="Pseudo-Release",
+                release_events=[],
+                release_relations=[
                     {
                         "type": "remaster",
                         "direction": "backward",
@@ -842,7 +794,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                         },
                     }
                 ],
-            }
+            )
         ]
 
         with mock.patch(
@@ -917,24 +869,15 @@ class TestMusicBrainzPlugin(PluginMixin):
         )
         monkeypatch.setattr(
             "beetsplug._utils.musicbrainz.MusicBrainzAPI.get_release",
-            lambda *_, **__: {
-                "title": "hi",
-                "id": self.mbid,
-                "status": "Official",
-                "asin": None,
-                "disambiguation": "",
-                "media": [medium_factory()],
-                "artist_credit": [artist_credit_factory()],
-                "release_group": release_group_factory(),
-                "label_info": [label_info_factory()],
-                "text_representation": text_representation_factory(),
-            },
+            lambda *_, **__: release_factory(
+                id=self.mbid, media=[medium_factory()]
+            ),
         )
         candidates = list(mb.candidates([], "hello", "there", False))
 
         assert len(candidates) == 1
         assert candidates[0].tracks[0].track_id == self.RECORDING["id"]
-        assert candidates[0].album == "hi"
+        assert candidates[0].album == "Album"
 
     def test_import_handles_404_gracefully(self, mb, requests_mock):
         id_ = uuid.uuid4()

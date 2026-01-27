@@ -198,3 +198,52 @@ class MediumFactory(_IdFactory):
     data_tracks = factory.List([])
     track_offset: int | None = None
     tracks = factory.List([factory.SubFactory(TrackFactory)])
+
+
+class ReleaseFactory(_IdFactory):
+    class Params:
+        id_base = 1000000
+
+    aliases = factory.List([])
+    artist_credit = factory.List(
+        [factory.SubFactory(ArtistCreditFactory, artist__id_base=10)]
+    )
+    asin = factory.LazyAttribute(lambda o: f"{o.title} Asin")
+    barcode = "0000000000000"
+    country = "XW"
+    cover_art_archive = factory.Dict(
+        {
+            "artwork": False,
+            "back": False,
+            "count": 0,
+            "darkened": False,
+            "front": False,
+        }
+    )
+    disambiguation = factory.LazyAttribute(
+        lambda o: f"{o.title} Disambiguation"
+    )
+    genres = factory.List([factory.SubFactory(GenreFactory)])
+    label_info = factory.List([factory.SubFactory(LabelInfoFactory)])
+    media = factory.List([])
+    packaging: str | None = None
+    packaging_id: str | None = None
+    quality = "normal"
+    release_events = factory.List(
+        [
+            factory.SubFactory(
+                ReleaseEventFactory, area=None, date="2021-03-26"
+            ),
+            factory.SubFactory(
+                ReleaseEventFactory,
+                area__iso_3166_1_codes=["US"],
+                date="2020-01-01",
+            ),
+        ]
+    )
+    release_group = factory.SubFactory(ReleaseGroupFactory)
+    status = "Official"
+    status_id = "4e304316-386d-3409-af2e-78857eec5cfe"
+    tags = factory.List([factory.SubFactory(TagFactory)])
+    text_representation = factory.SubFactory(TextRepresentationFactory)
+    title = "Album"
