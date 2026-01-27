@@ -1511,12 +1511,8 @@ def _open_library(config: confuse.LazyConfig) -> library.Library:
         error_str = str(db_error).lower()
         dbpath_display = util.displayable_path(dbpath)
         if "unable to open" in error_str:
-            # Normalize path and get directory
-            normalized_path = os.path.abspath(dbpath)
-            db_dir = os.path.dirname(normalized_path)
-            # Handle edge case where path has no directory component
-            if not db_dir:
-                db_dir = "."
+            # Get the directory containing the database and normalize it
+            db_dir = os.path.abspath(os.path.dirname(dbpath) or ".")
             raise UserError(
                 f"database file {dbpath_display} could not be opened. "
                 f"This may be due to a permissions issue. If the database "
