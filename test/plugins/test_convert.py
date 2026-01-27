@@ -359,3 +359,35 @@ class TestNoConvert:
         item = Item(format="ogg", bitrate=256)
         convert.config["convert"]["no_convert"] = config_value
         assert convert.in_no_convert(item) == should_skip
+
+
+class ConvertRemoveMissingTest(ConvertTestCase, ConvertCommand):
+    "Tests the effect of the `remove_missing option`"
+
+    def setUp(self):
+        super().setUp()
+
+        self.album = self.add_album_fixture(ext="ogg")
+        self.item = self.album.items()[0]
+
+        self.convert_dest = self.temp_dir_path / "convert_dest"
+        self.file_to_remove = self.convert_dest / "to_remove.mp3"
+        self.convert_dest.mkdir(parents=True)
+
+        self.config["convert"] = {
+            "dest": str(self.convert_dest),
+            "format": "mp3",
+        }
+
+        with self.file_to_remove.open("w") as f:
+            f.write("test")
+
+    def test_convert_not_removemissing(self):
+        self.run_convert("--yes")
+
+        assert self.file_to_remove.exists()
+
+    def test_convert_removemissing(self):
+        self.run_convert("--remove-missing", "--yes")
+
+        assert not self.file_to_remove.exists()
