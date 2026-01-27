@@ -367,10 +367,11 @@ class ConvertRemoveMissingTest(ConvertTestCase, ConvertCommand):
     def setUp(self):
         super().setUp()
 
-        self.item = self.add_item(title="title", album="album", format="ogg")
+        self.item = self.add_item_fixture(
+            title="title", artist="artist", album="album", format="flac"
+        )
 
         self.convert_dest = self.temp_dir_path / "convert_dest"
-        self.file_to_remove = self.convert_dest / "to_remove.mp3"
         self.convert_dest.mkdir(parents=True)
 
         self.config["convert"] = {
@@ -378,23 +379,59 @@ class ConvertRemoveMissingTest(ConvertTestCase, ConvertCommand):
             "format": "mp3",
         }
 
-        with self.file_to_remove.open("w") as f:
+    def create_dummy_file(self, path):
+        "Creates a dummy file in the conversion directory"
+        p = self.convert_dest / path
+        p.parent.mkdir(parents=True, exist_ok=True)
+        with p.open("w") as f:
             f.write("test")
+        return p
 
     def test_convert_not_removemissing(self):
+        "Test that files are not removed when the remove_missing option is not enabled"
+        file_to_remove = self.create_dummy_file("to_remove.mp3")
+
         self.run_convert("--yes")
 
-        assert self.file_to_remove.exists()
+        assert file_to_remove.exists()
 
     def test_convert_pretend_removemissing(self):
+        "Test that files are not removed when the pretend flag is enabled"
+        file_to_remove = self.create_dummy_file("to_remove.mp3")
+
         self.run_convert("--yes", "--remove-missing", "--pretend")
 
-        assert self.file_to_remove.exists()
+        assert file_to_remove.exists()
 
-    def test_convert_removemissing(self):
+    def test_convert_removemissing_option(self):
+        "Test that files are removed when the remove_missing option is enabled"
+        file_to_remove = self.create_dummy_file("to_remove.mp3")
+
         self.run_convert("--yes", "--remove-missing")
 
-        assert not self.file_to_remove.exists()
+        assert not file_to_remove.exists()
 
         # This should hit the case where no files to remove are present
-        self.run_convert("--remove-missing", "--yes")
+        self.run_convert("--yes", "--remove-missing")
+
+    def test_convert_removemissing_config(self):
+        "Test that files are removed when the remove_missing config is set to True"
+        file_to_remove = self.create_dummy_file("to_remove.mp3")
+
+        self.config["convert"]["remove_missing"] = True
+        self.run_convert("--yes")
+
+        assert not file_to_remove.exists()
+
+    def test_convert_dont_remove_present(self):
+        """Test that already converted files are not removed when the
+        remove_missing option is enabled"""
+        # This file mocks an already existing converted file that should not be
+        # removed or modified.
+        file_not_to_remove = self.create_dummy_file("artist/album/01 title.mp3")
+        original_mtime = os.path.getmtime(file_not_to_remove)
+
+        self.run_convert("--yes", "--remove-missing")
+
+        assert file_not_to_remove.exists()
+        assert os.path.getmtime(file_not_to_remove) == original_mtime
