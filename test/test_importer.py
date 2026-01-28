@@ -956,29 +956,34 @@ class ImportDuplicateAlbumTest(PluginMixin, ImportTestCase):
         item = self.lib.items().get()
         assert item.title == "new title"
 
-    def test_no_autotag_keeps_duplicate_album(self):
+    def test_no_autotag_removes_duplicate_album(self):
         config["import"]["autotag"] = False
+        album = self.lib.albums().get()
         item = self.lib.items().get()
         assert item.title == "t\xeftle 0"
         assert item.filepath.exists()
 
-        # Imported item has the same artist and album as the one in the
-        # library.
+        # Imported item has the same albumartist and album as the one in the
+        # library album. We use album metadata (not item metadata) since
+        # duplicate detection uses album-level fields.
         import_file = os.path.join(
             self.importer.paths[0], b"album", b"track_1.mp3"
         )
         import_file = MediaFile(import_file)
-        import_file.artist = item["artist"]
-        import_file.albumartist = item["artist"]
-        import_file.album = item["album"]
+        import_file.artist = album.albumartist
+        import_file.albumartist = album.albumartist
+        import_file.album = album.album
         import_file.title = "new title"
+        import_file.save()
 
         self.importer.default_resolution = self.importer.Resolution.REMOVE
         self.importer.run()
 
-        assert item.filepath.exists()
-        assert len(self.lib.albums()) == 2
-        assert len(self.lib.items()) == 2
+        # Old duplicate should be removed, new one imported
+        assert len(self.lib.albums()) == 1
+        assert len(self.lib.items()) == 1
+        # The new item should be in the library
+        assert self.lib.items().get().title == "new title"
 
     def test_keep_duplicate_album(self):
         self.importer.default_resolution = self.importer.Resolution.KEEPBOTH
@@ -1106,6 +1111,32 @@ class ImportDuplicateSingletonTest(ImportTestCase):
         self.importer.run()
 
         assert len(self.lib.items()) == 2
+
+    def test_no_autotag_removes_duplicate_singleton(self):
+        config["import"]["autotag"] = False
+        item = self.lib.items().get()
+        assert item.mb_trackid == "old trackid"
+        assert item.filepath.exists()
+
+        # Imported item has the same artist and title as the one in the
+        # library. We use item metadata since duplicate detection uses
+        # item-level fields for singletons.
+        import_file = os.path.join(
+            self.importer.paths[0], b"album", b"track_1.mp3"
+        )
+        import_file = MediaFile(import_file)
+        import_file.artist = item.artist
+        import_file.title = item.title
+        import_file.mb_trackid = "new trackid"
+        import_file.save()
+
+        self.importer.default_resolution = self.importer.Resolution.REMOVE
+        self.importer.run()
+
+        # Old duplicate should be removed, new one imported
+        assert len(self.lib.items()) == 1
+        # The new item should be in the library
+        assert self.lib.items().get().mb_trackid == "new trackid"
 
     def test_twice_in_import_dir(self):
         self.skipTest("write me")
