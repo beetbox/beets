@@ -44,7 +44,7 @@ Changelog = "https://github.com/beetbox/beets/blob/master/docs/changelog.rst"
 python = ">=3.10,<4"
 
 colorama = { version = "*", markers = "sys_platform == 'win32'" }
-confuse = ">=2.1.0"
+confuse = ">=2.2.0"
 jellyfish = "*"
 lap = ">=0.5.12"
 mediafile = ">=0.12.0"
