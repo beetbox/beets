@@ -169,7 +169,7 @@ def _all_releases(items):
     for item in items:
         if item.path not in _matches:
             continue
-
+        
         _, release_ids = _matches[item.path]
         for release_id in release_ids:
             relcounts[release_id] += 1
@@ -187,7 +187,7 @@ class AcoustidPlugin(MetadataSourcePlugin):
                 "auto": True,
             }
         )
-        config["acoustid"]["apikey"].redact = True
+        self.config["acoustid"]["apikey"].redact = True
 
         if self.config["auto"]:
             self.register_listener("import_task_start", self.fingerprint_task)

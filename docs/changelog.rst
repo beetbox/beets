@@ -106,6 +106,9 @@ Bug fixes:
   avoiding extra lossy duplicates.
 - :doc:`plugins/discogs`: Fixed unexpected flex attr from the Discogs plugin.
   :bug:`6177`
+- :doc:`plugins/chroma`: Fix to properly redact Acoustid API key when dumping 
+  configuration file.
+  :bug:`6276`
 
 For plugin developers:
 
