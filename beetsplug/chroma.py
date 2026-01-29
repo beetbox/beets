@@ -169,7 +169,6 @@ def _all_releases(items):
     for item in items:
         if item.path not in _matches:
             continue
-        
         _, release_ids = _matches[item.path]
         for release_id in release_ids:
             relcounts[release_id] += 1
