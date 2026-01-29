@@ -145,6 +145,7 @@ Other changes:
   unavailable, enabling ``importorskip`` usage in pytest setup.
 - Finally removed gmusic plugin and all related code/docs as the Google Play
   Music service was shut down in 2020.
+- Updated color documentation with ``bright_*`` and ``bg_bright_*`` entries.
 
 2.5.1 (October 14, 2025)
 ------------------------
