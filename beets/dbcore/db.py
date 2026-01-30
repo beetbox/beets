@@ -26,10 +26,17 @@ import threading
 import time
 from abc import ABC
 from collections import defaultdict
-from collections.abc import Mapping
+from collections.abc import (
+    Callable,
+    Generator,
+    Iterable,
+    Iterator,
+    Mapping,
+    Sequence,
+)
 from functools import cached_property
-from sqlite3 import sqlite_version_info
-from typing import TYPE_CHECKING, Any, AnyStr, ClassVar, Generic
+from sqlite3 import Connection, sqlite_version_info
+from typing import TYPE_CHECKING, Any, AnyStr, ClassVar, Generic, NamedTuple
 
 from typing_extensions import (
     Self,
@@ -307,6 +314,11 @@ class Model(ABC, Generic[D]):
     _search_fields: Sequence[str] = ()
     """The fields that should be queried by default by unqualified query
     terms.
+    """
+
+    _indices: Sequence[Index] = ()
+    """A sequence of `Index` objects that describe the indices to be
+    created for this table.
     """
 
     @cached_classproperty
@@ -1079,6 +1091,7 @@ class Database:
         for model_cls in self._models:
             self._make_table(model_cls._table, model_cls._fields)
             self._make_attribute_table(model_cls._flex_table)
+            self._create_indices(model_cls._table, model_cls._indices)
 
     # Primitive access control: connections and transactions.
 
@@ -1266,6 +1279,19 @@ class Database:
                     ON {flex_table} (entity_id);
                 """)
 
+    def _create_indices(
+        self,
+        table: str,
+        indices: Sequence[Index],
+    ):
+        """Create indices for the given table if they don't exist."""
+        with self.transaction() as tx:
+            for index in indices:
+                tx.script(
+                    f"CREATE INDEX IF NOT EXISTS {index.name} "
+                    f"ON {table} ({', '.join(index.columns)});"
+                )
+
     # Querying.
 
     def _fetch(
@@ -1329,3 +1355,12 @@ class Database:
     def _get(self, model_cls: type[AnyModel], id_: int) -> AnyModel | None:
         """Get a Model object by its id or None if the id does not exist."""
         return self._fetch(model_cls, MatchQuery("id", id_)).get()
+
+
+class Index(NamedTuple):
+    """A helper class to represent the index
+    information in the database schema.
+    """
+
+    name: str
+    columns: tuple[str, ...]
