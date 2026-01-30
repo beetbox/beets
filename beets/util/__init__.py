@@ -547,7 +547,15 @@ def move(path: bytes, dest: bytes, replace: bool = False):
             )
         finally:
             if tmp_filename:
-                os.remove(tmp_filename)
+                try:
+                    os.remove(tmp_filename)
+                except (OSError, PermissionError) as exc:
+                    raise FilesystemError(
+                        f"Failed to remove temporary file: {exc.strerror}",
+                        "delete",
+                        (bytestring_path(tmp_filename)),
+                        traceback.format_exc(),
+                    )
 
 
 def link(path: bytes, dest: bytes, replace: bool = False):
