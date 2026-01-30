@@ -52,6 +52,8 @@ New features:
   untouched the files without.
 - :doc:`plugins/fish`: Filenames are now completed in more places, like after
   ``beet import``.
+- :doc:`plugins/random`: Added ``--field`` option to specify which field to use
+  for equal-chance sampling (default: ``albumartist``).
 
 Bug fixes:
 
@@ -146,6 +148,7 @@ Other changes:
 - Finally removed gmusic plugin and all related code/docs as the Google Play
   Music service was shut down in 2020.
 - Updated color documentation with ``bright_*`` and ``bg_bright_*`` entries.
+- Moved `beets/random.py` into `beetsplug/random.py` to cleanup core module.
 
 2.5.1 (October 14, 2025)
 ------------------------
