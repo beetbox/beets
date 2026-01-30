@@ -19,18 +19,18 @@ import pytest
 from beets import autotag, config
 from beets.autotag import AlbumInfo, TrackInfo, correct_list_fields, match
 from beets.library import Item
-from beets.test.helper import BeetsTestCase, ConfigMixin
+from beets.test.helper import BeetsTestCase
 
 
-class TestAssignment(ConfigMixin):
+class TestAssignment:
     A = "one"
     B = "two"
     C = "three"
 
     @pytest.fixture(autouse=True)
-    def _setup_config(self):
-        self.config["match"]["track_length_grace"] = 10
-        self.config["match"]["track_length_max"] = 30
+    def config(self, config):
+        config["match"]["track_length_grace"] = 10
+        config["match"]["track_length_max"] = 30
 
     @pytest.mark.parametrize(
         # 'expected' is a tuple of expected (mapping, extra_items, extra_tracks)
@@ -55,10 +55,12 @@ class TestAssignment(ConfigMixin):
         items = [Item(title=title) for title in item_titles]
         tracks = [TrackInfo(title=title) for title in track_titles]
 
-        mapping, extra_items, extra_tracks = match.assign_items(items, tracks)
+        item_info_pairs, extra_items, extra_tracks = match.assign_items(
+            items, tracks
+        )
 
         assert (
-            {i.title: t.title for i, t in mapping.items()},
+            {i.title: t.title for i, t in item_info_pairs},
             [i.title for i in extra_items],
             [t.title for t in extra_tracks],
         ) == (expected_mapping, expected_extra_items, expected_extra_tracks)
@@ -105,7 +107,7 @@ class TestAssignment(ConfigMixin):
         trackinfo.append(info(11, "Beloved One", 243.733))
         trackinfo.append(info(12, "In the Lord's Arms", 186.13300000000001))
 
-        expected = dict(zip(items, trackinfo)), [], []
+        expected = list(zip(items, trackinfo)), [], []
 
         assert match.assign_items(items, trackinfo) == expected
 
@@ -113,12 +115,10 @@ class TestAssignment(ConfigMixin):
 class ApplyTestUtil:
     def _apply(self, info=None, per_disc_numbering=False, artist_credit=False):
         info = info or self.info
-        mapping = {}
-        for i, t in zip(self.items, info.tracks):
-            mapping[i] = t
+        item_info_pairs = list(zip(self.items, info.tracks))
         config["per_disc_numbering"] = per_disc_numbering
         config["artist_credit"] = artist_credit
-        autotag.apply_metadata(info, mapping)
+        autotag.apply_metadata(info, item_info_pairs)
 
 
 class ApplyTest(BeetsTestCase, ApplyTestUtil):

@@ -87,15 +87,17 @@ class ShowChangeTest(IOMixin, unittest.TestCase):
         """Return an unicode string representing the changes"""
         items = items or self.items
         info = info or self.info
-        mapping = dict(zip(items, info.tracks))
+        item_info_pairs = list(zip(items, info.tracks))
         config["ui"]["color"] = color
         config["import"]["detail"] = True
-        change_dist = distance(items, info, mapping)
+        change_dist = distance(items, info, item_info_pairs)
         change_dist._penalties = {"album": [dist], "artist": [dist]}
         show_change(
             cur_artist,
             cur_album,
-            autotag.AlbumMatch(change_dist, info, mapping, set(), set()),
+            autotag.AlbumMatch(
+                change_dist, info, dict(item_info_pairs), set(), set()
+            ),
         )
         return self.io.getoutput().lower()
 

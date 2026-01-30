@@ -73,7 +73,7 @@ class BPSyncPlugin(BeetsPlugin):
         """Retrieve and apply info from the autotagger for items matched by
         query.
         """
-        for item in lib.items(query + ["singleton:true"]):
+        for item in lib.items([*query, "singleton:true"]):
             if not item.mb_trackid:
                 self._log.info(
                     "Skipping singleton with no mb_trackid: {}", item
@@ -149,14 +149,14 @@ class BPSyncPlugin(BeetsPlugin):
             library_trackid_to_item = {
                 int(item.mb_trackid): item for item in items
             }
-            item_to_trackinfo = {
-                item: beatport_trackid_to_trackinfo[track_id]
+            item_info_pairs = [
+                (item, beatport_trackid_to_trackinfo[track_id])
                 for track_id, item in library_trackid_to_item.items()
-            }
+            ]
 
             self._log.info("applying changes to {}", album)
             with lib.transaction():
-                autotag.apply_metadata(albuminfo, item_to_trackinfo)
+                autotag.apply_metadata(albuminfo, item_info_pairs)
                 changed = False
                 # Find any changed item to apply Beatport changes to album.
                 any_changed_item = items[0]

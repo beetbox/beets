@@ -7,7 +7,7 @@ import time
 import unicodedata
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from mediafile import MediaFile, UnreadableFileError
 
@@ -40,6 +40,7 @@ class LibModel(dbcore.Model["Library"]):
     # Config key that specifies how an instance should be formatted.
     _format_config_key: str
     path: bytes
+    length: float
 
     @cached_classproperty
     def _types(cls) -> dict[str, types.Type]:
@@ -229,7 +230,7 @@ class Album(LibModel):
     _table = "albums"
     _flex_table = "album_attributes"
     _always_dirty = True
-    _fields = {
+    _fields: ClassVar[dict[str, types.Type]] = {
         "id": types.PRIMARY_ID,
         "artpath": types.NullPathType(),
         "added": types.DATE,
@@ -281,13 +282,13 @@ class Album(LibModel):
     def _types(cls) -> dict[str, types.Type]:
         return {**super()._types, "path": types.PathType()}
 
-    _sorts = {
+    _sorts: ClassVar[dict[str, type[dbcore.query.FieldSort]]] = {
         "albumartist": dbcore.query.SmartArtistSort,
         "artist": dbcore.query.SmartArtistSort,
     }
 
     # List of keys that are set on an album's items.
-    item_keys = [
+    item_keys: ClassVar[list[str]] = [
         "added",
         "albumartist",
         "albumartists",
@@ -616,13 +617,20 @@ class Album(LibModel):
         for item in self.items():
             item.try_sync(write, move)
 
+    @cached_property
+    def length(self) -> float:  # type: ignore[override] # still writable since we override __setattr__
+        """Return the total length of all items in this album in seconds."""
+        return sum(item.length for item in self.items())
+
 
 class Item(LibModel):
     """Represent a song or track."""
 
+    album_id: int | None
+
     _table = "items"
     _flex_table = "item_attributes"
-    _fields = {
+    _fields: ClassVar[dict[str, types.Type]] = {
         "id": types.PRIMARY_ID,
         "path": types.PathType(),
         "album_id": types.FOREIGN_ID,
@@ -743,7 +751,9 @@ class Item(LibModel):
 
     _formatter = FormattedItemMapping
 
-    _sorts = {"artist": dbcore.query.SmartArtistSort}
+    _sorts: ClassVar[dict[str, type[dbcore.query.FieldSort]]] = {
+        "artist": dbcore.query.SmartArtistSort
+    }
 
     @cached_classproperty
     def _queries(cls) -> dict[str, FieldQueryType]:
@@ -1144,7 +1154,6 @@ class Item(LibModel):
         If `store` is `False` however, the item won't be stored and it will
         have to be manually stored after invoking this method.
         """
-        self._check_db()
         dest = self.destination(basedir=basedir)
 
         # Create necessary ancestry for the move.
@@ -1184,9 +1193,8 @@ class Item(LibModel):
         is true, returns just the fragment of the path underneath the library
         base directory.
         """
-        db = self._check_db()
-        basedir = basedir or db.directory
-        path_formats = path_formats or db.path_formats
+        basedir = basedir or self.db.directory
+        path_formats = path_formats or self.db.path_formats
 
         # Use a path format based on a query, falling back on the
         # default.
@@ -1225,7 +1233,7 @@ class Item(LibModel):
             )
 
         lib_path_str, fallback = util.legalize_path(
-            subpath, db.replacements, self.filepath.suffix
+            subpath, self.db.replacements, self.filepath.suffix
         )
         if fallback:
             # Print an error message if legalization fell back to

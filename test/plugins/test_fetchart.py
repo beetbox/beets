@@ -98,3 +98,8 @@ class FetchartCliTest(PluginTestCase):
         self.run_command("fetchart")
         self.album.load()
         self.check_cover_is_stored()
+
+    def test_colorization(self):
+        self.config["ui"]["color"] = True
+        out = self.run_with_output("fetchart")
+        assert " - the älbum: \x1b[1;31mno art found\x1b[39;49;00m\n" == out

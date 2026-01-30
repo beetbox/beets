@@ -192,7 +192,7 @@ def stage(
         task: R | T | None = None
         while True:
             task = yield task
-            task = func(*(args + (task,)))
+            task = func(*args, task)
 
     return coro
 
@@ -216,7 +216,7 @@ def mutator_stage(func: Callable[[Unpack[A], T], R]):
         task = None
         while True:
             task = yield task
-            func(*(args + (task,)))
+            func(*args, task)
 
     return coro
 

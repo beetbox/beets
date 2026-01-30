@@ -622,7 +622,7 @@ beets-youtube_
 
 .. _beets-setlister: https://github.com/tomjaspers/beets-setlister
 
-.. _beets-usertag: https://github.com/igordertigor/beets-usertag
+.. _beets-usertag: https://github.com/edgars-supe/beets-usertag
 
 .. _beets-webm3u: https://github.com/mgoltzsche/beets-webm3u
 
