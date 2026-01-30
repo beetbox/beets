@@ -45,18 +45,23 @@ class TestMetadataPluginsException(PluginMixin):
         self.unload_plugins()
 
     @pytest.mark.parametrize(
-        "method_name,args",
+        "method_name,error_method_name,args",
         [
-            ("candidates", ()),
-            ("item_candidates", ()),
-            ("album_for_id", ("some_id",)),
-            ("track_for_id", ("some_id",)),
+            ("candidates", "candidates", ()),
+            ("item_candidates", "item_candidates", ()),
+            ("albums_for_ids", "albums_for_ids", (["some_id"],)),
+            ("tracks_for_ids", "tracks_for_ids", (["some_id"],)),
+            # Currently, singular methods call plural ones internally and log
+            # errors from there
+            ("album_for_id", "albums_for_ids", ("some_id",)),
+            ("track_for_id", "tracks_for_ids", ("some_id",)),
         ],
     )
     def test_logging(
         self,
         caplog,
         method_name,
+        error_method_name,
         args,
     ):
         self.config["raise_on_error"] = False
@@ -72,7 +77,7 @@ class TestMetadataPluginsException(PluginMixin):
             for msg in logs:
                 assert (
                     msg
-                    == f"Error in 'ErrorMetadataMockPlugin.{method_name}': Mocked error"
+                    == f"Error in 'ErrorMetadataMockPlugin.{error_method_name}': Mocked error"  # noqa: E501
                 )
 
             caplog.clear()
