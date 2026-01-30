@@ -28,6 +28,7 @@ from beets.test import _common
 from beets.test.helper import (
     BeetsTestCase,
     FetchImageHelper,
+    ImportHelper,
     IOMixin,
     PluginMixin,
 )
@@ -75,7 +76,9 @@ def require_artresizer_compare(test):
     return wrapper
 
 
-class EmbedartCliTest(IOMixin, PluginMixin, FetchImageHelper, BeetsTestCase):
+class EmbedartCliTest(
+    ImportHelper, IOMixin, PluginMixin, FetchImageHelper, BeetsTestCase
+):
     plugin = "embedart"
     small_artpath = os.path.join(_common.RSRC, b"image-2x3.jpg")
     abbey_artpath = os.path.join(_common.RSRC, b"abbey.jpg")
@@ -225,10 +228,20 @@ class EmbedartCliTest(IOMixin, PluginMixin, FetchImageHelper, BeetsTestCase):
         item = album.items()[0]
         self.io.addinput("y")
         self.run_command("embedart", "-f", self.small_artpath)
+        embedded_time = os.path.getmtime(syspath(item.path))
+
         self.io.addinput("y")
         self.run_command("clearart")
         mediafile = MediaFile(syspath(item.path))
         assert not mediafile.images
+        clear_time = os.path.getmtime(syspath(item.path))
+        assert clear_time > embedded_time
+
+        # A run on a file without an image should not be modified
+        self.io.addinput("y")
+        self.run_command("clearart")
+        no_clear_time = os.path.getmtime(syspath(item.path))
+        assert no_clear_time == clear_time
 
     def test_clear_art_with_no_input(self):
         self._setup_data()
@@ -272,6 +285,32 @@ class EmbedartCliTest(IOMixin, PluginMixin, FetchImageHelper, BeetsTestCase):
         self.run_command("embedart", "-y", "-u", "http://example.com/test.html")
         mediafile = MediaFile(syspath(item.path))
         assert not mediafile.images
+
+    def test_clearart_on_import_disabled(self):
+        file_path = self.create_mediafile_fixture(
+            images=["jpg"], target_dir=self.import_path
+        )
+        self.import_media.append(file_path)
+        with self.configure_plugin({"clearart_on_import": False}):
+            importer = self.setup_importer(autotag=False, write=True)
+            importer.run()
+
+        item = self.lib.items()[0]
+        assert MediaFile(os.path.join(item.path)).images
+
+    def test_clearart_on_import_enabled(self):
+        file_path = self.create_mediafile_fixture(
+            images=["jpg"], target_dir=self.import_path
+        )
+        self.import_media.append(file_path)
+        # Force re-init the plugin to register the listener
+        self.unload_plugins()
+        with self.configure_plugin({"clearart_on_import": True}):
+            importer = self.setup_importer(autotag=False, write=True)
+            importer.run()
+
+        item = self.lib.items()[0]
+        assert not MediaFile(os.path.join(item.path)).images
 
 
 class DummyArtResizer(ArtResizer):

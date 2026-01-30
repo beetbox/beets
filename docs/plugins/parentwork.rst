@@ -38,9 +38,6 @@ This plugin adds seven tags:
   to keep track of recordings whose works have changed.
 - **parentwork_date**: The composition date of the parent work.
 
-To use the ``parentwork`` plugin, enable it in your configuration (see
-:ref:`using-plugins`).
-
 Configuration
 -------------
 

@@ -62,6 +62,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 "ifempty": False,
                 "remove_art_file": False,
                 "quality": 0,
+                "clearart_on_import": False,
             }
         )
 
@@ -81,6 +82,9 @@ class EmbedCoverArtPlugin(BeetsPlugin):
             )
 
         self.register_listener("art_set", self.process_album)
+
+        if self.config["clearart_on_import"].get(bool):
+            self.register_listener("import_task_files", self.import_task_files)
 
     def commands(self):
         # Embed command.
@@ -278,3 +282,9 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 os.remove(syspath(album.artpath))
                 album.artpath = None
                 album.store()
+
+    def import_task_files(self, session, task):
+        """Automatically clearart of imported files."""
+        for item in task.imported_items():
+            self._log.debug("clearart-on-import {.filepath}", item)
+            art.clear_item(item, self._log)

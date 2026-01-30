@@ -69,7 +69,7 @@ class MBSubmitPlugin(BeetsPlugin):
             paths.append(displayable_path(p))
         try:
             picard_path = self.config["picard_path"].as_str()
-            subprocess.Popen([picard_path] + paths)
+            subprocess.Popen([picard_path, *paths])
             self._log.info("launched picard from\n{}", picard_path)
         except OSError as exc:
             self._log.error("Could not open picard, got error:\n{}", exc)

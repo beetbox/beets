@@ -24,7 +24,7 @@ class LyricsPage(NamedTuple):
     artist: str = "The Beatles"
     track_title: str = "Lady Madonna"
     url_title: str | None = None  # only relevant to the Google backend
-    marks: list[str] = []  # markers for pytest.param
+    marks: list[str] = []  # markers for pytest.param  # noqa: RUF012
 
     def __str__(self) -> str:
         """Return name of this test case."""

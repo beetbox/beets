@@ -43,7 +43,10 @@ from beets.util.deprecation import deprecate_for_maintainers
 from beets.util.functemplate import template
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Iterable
+
+    from beets.dbcore.db import FormattedMapping
+
 
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
 if sys.platform == "win32":
@@ -469,13 +472,13 @@ CODE_BY_COLOR = {
     "normal": 0,
     "bold": 1,
     "faint": 2,
-    # "italic":       3,
+    "italic": 3,
     "underline": 4,
-    # "blink_slow":   5,
-    # "blink_rapid":  6,
+    "blink_slow": 5,
+    "blink_rapid": 6,
     "inverse": 7,
-    # "conceal":      8,
-    # "crossed_out":  9
+    "conceal": 8,
+    "crossed_out": 9,
     # Text colors.
     "black": 30,
     "red": 31,
@@ -485,6 +488,14 @@ CODE_BY_COLOR = {
     "magenta": 35,
     "cyan": 36,
     "white": 37,
+    "bright_black": 90,
+    "bright_red": 91,
+    "bright_green": 92,
+    "bright_yellow": 93,
+    "bright_blue": 94,
+    "bright_magenta": 95,
+    "bright_cyan": 96,
+    "bright_white": 97,
     # Background colors.
     "bg_black": 40,
     "bg_red": 41,
@@ -494,6 +505,14 @@ CODE_BY_COLOR = {
     "bg_magenta": 45,
     "bg_cyan": 46,
     "bg_white": 47,
+    "bg_bright_black": 100,
+    "bg_bright_red": 101,
+    "bg_bright_green": 102,
+    "bg_bright_yellow": 103,
+    "bg_bright_blue": 104,
+    "bg_bright_magenta": 105,
+    "bg_bright_cyan": 106,
+    "bg_bright_white": 107,
 }
 RESET_COLOR = f"{COLOR_ESCAPE}[39;49;00m"
 # Precompile common ANSI-escape regex patterns
@@ -1028,42 +1047,47 @@ def print_newline_layout(
 FLOAT_EPSILON = 0.01
 
 
-def _field_diff(field, old, old_fmt, new, new_fmt):
+def _field_diff(
+    field: str, old: FormattedMapping, new: FormattedMapping
+) -> str | None:
     """Given two Model objects and their formatted views, format their values
     for `field` and highlight changes among them. Return a human-readable
     string. If the value has not changed, return None instead.
     """
-    oldval = old.get(field)
-    newval = new.get(field)
-
     # If no change, abort.
-    if (
+    if (oldval := old.model.get(field)) == (newval := new.model.get(field)) or (
         isinstance(oldval, float)
         and isinstance(newval, float)
         and abs(oldval - newval) < FLOAT_EPSILON
     ):
         return None
-    elif oldval == newval:
-        return None
 
     # Get formatted values for output.
-    oldstr = old_fmt.get(field, "")
-    newstr = new_fmt.get(field, "")
+    oldstr, newstr = old.get(field, ""), new.get(field, "")
+    if field not in new:
+        return colorize("text_diff_removed", f"{field}: {oldstr}")
+
+    if field not in old:
+        return colorize("text_diff_added", f"{field}: {newstr}")
 
     # For strings, highlight changes. For others, colorize the whole
     # thing.
     if isinstance(oldval, str):
-        oldstr, newstr = colordiff(oldval, newstr)
+        oldstr, newstr = colordiff(oldstr, newstr)
     else:
         oldstr = colorize("text_diff_removed", oldstr)
         newstr = colorize("text_diff_added", newstr)
 
-    return f"{oldstr} -> {newstr}"
+    return f"{field}: {oldstr} -> {newstr}"
 
 
 def show_model_changes(
-    new, old=None, fields=None, always=False, print_obj: bool = True
-):
+    new: library.LibModel,
+    old: library.LibModel | None = None,
+    fields: Iterable[str] | None = None,
+    always: bool = False,
+    print_obj: bool = True,
+) -> bool:
     """Given a Model object, print a list of changes from its pristine
     version stored in the database. Return a boolean indicating whether
     any changes were found.
@@ -1073,7 +1097,7 @@ def show_model_changes(
     restrict the detection to. `always` indicates whether the object is
     always identified, regardless of whether any changes are present.
     """
-    old = old or new._db._get(type(new), new.id)
+    old = old or new.get_fresh_from_db()
 
     # Keep the formatted views around instead of re-creating them in each
     # iteration step
@@ -1081,31 +1105,21 @@ def show_model_changes(
     new_fmt = new.formatted()
 
     # Build up lines showing changed fields.
-    changes = []
-    for field in old:
-        # Subset of the fields. Never show mtime.
-        if field == "mtime" or (fields and field not in fields):
-            continue
+    diff_fields = (set(old) | set(new)) - {"mtime"}
+    if allowed_fields := set(fields or {}):
+        diff_fields &= allowed_fields
 
-        # Detect and show difference for this field.
-        line = _field_diff(field, old, old_fmt, new, new_fmt)
-        if line:
-            changes.append(f"  {field}: {line}")
-
-    # New fields.
-    for field in set(new) - set(old):
-        if fields and field not in fields:
-            continue
-
-        changes.append(
-            f"  {field}: {colorize('text_highlight', new_fmt[field])}"
-        )
+    changes = [
+        d
+        for f in sorted(diff_fields)
+        if (d := _field_diff(f, old_fmt, new_fmt))
+    ]
 
     # Print changes.
     if print_obj and (changes or always):
         print_(format(old))
     if changes:
-        print_("\n".join(changes))
+        print_(textwrap.indent("\n".join(changes), "  "))
 
     return bool(changes)
 

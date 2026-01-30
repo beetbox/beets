@@ -16,17 +16,22 @@
 Title case logic is derived from the python-titlecase library.
 Provides a template function and a tag modification function."""
 
+from __future__ import annotations
+
 import re
 from functools import cached_property
-from typing import TypedDict
+from typing import TYPE_CHECKING, TypedDict
 
 from titlecase import titlecase
 
 from beets import ui
-from beets.autotag.hooks import AlbumInfo, Info
-from beets.importer import ImportSession, ImportTask
-from beets.library import Item
+from beets.autotag.hooks import AlbumInfo
 from beets.plugins import BeetsPlugin
+
+if TYPE_CHECKING:
+    from beets.autotag.hooks import Info
+    from beets.importer import ImportSession, ImportTask
+    from beets.library import Item
 
 __author__ = "henryoberholtzer@gmail.com"
 __version__ = "1.0"
@@ -47,10 +52,12 @@ class TitlecasePlugin(BeetsPlugin):
                 "preserve": [],
                 "fields": [],
                 "replace": [],
-                "seperators": [],
+                "separators": [],
                 "force_lowercase": False,
                 "small_first_last": True,
                 "the_artist": True,
+                "all_caps": False,
+                "all_lowercase": False,
                 "after_choice": False,
             }
         )
@@ -60,14 +67,16 @@ class TitlecasePlugin(BeetsPlugin):
         preserve - Provide a list of strings with specific case requirements.
         fields - Fields to apply titlecase to.
         replace - List of pairs, first is the target, second is the replacement
-        seperators - Other characters to treat like periods.
-        force_lowercase - Lowercases the string before titlecasing.
+        separators - Other characters to treat like periods.
+        force_lowercase - Lowercase the string before titlecase.
         small_first_last - If small characters should be cased at the start of strings.
         the_artist - If the plugin infers the field to be an artist field
         (e.g. the field contains "artist")
         It will capitalize a lowercase The, helpful for the artist names
         that start with 'The', like 'The Who' or 'The Talking Heads' when
-        they are not at the start of a string. Superceded by preserved phrases.
+        they are not at the start of a string. Superseded by preserved phrases.
+        all_caps - If the alphabet in the string is all uppercase, do not modify.
+        all_lowercase - If the alphabet in the string is all lowercase, do not modify.
         """
         # Register template function
         self.template_funcs["titlecase"] = self.titlecase
@@ -121,16 +130,24 @@ class TitlecasePlugin(BeetsPlugin):
         return preserved
 
     @cached_property
-    def seperators(self) -> re.Pattern[str] | None:
-        if seperators := "".join(
-            dict.fromkeys(self.config["seperators"].as_str_seq())
+    def separators(self) -> re.Pattern[str] | None:
+        if separators := "".join(
+            dict.fromkeys(self.config["separators"].as_str_seq())
         ):
-            return re.compile(rf"(.*?[{re.escape(seperators)}]+)(\s*)(?=.)")
+            return re.compile(rf"(.*?[{re.escape(separators)}]+)(\s*)(?=.)")
         return None
 
     @cached_property
     def small_first_last(self) -> bool:
         return self.config["small_first_last"].get(bool)
+
+    @cached_property
+    def all_caps(self) -> bool:
+        return self.config["all_caps"].get(bool)
+
+    @cached_property
+    def all_lowercase(self) -> bool:
+        return self.config["all_lowercase"].get(bool)
 
     @cached_property
     def the_artist_regexp(self) -> re.Pattern[str]:
@@ -180,7 +197,7 @@ class TitlecasePlugin(BeetsPlugin):
                     ]
                     if cased_list != init_field:
                         setattr(item, field, cased_list)
-                        self._log.info(
+                        self._log.debug(
                             f"{field}: {', '.join(init_field)} ->",
                             f"{', '.join(cased_list)}",
                         )
@@ -188,7 +205,7 @@ class TitlecasePlugin(BeetsPlugin):
                     cased: str = self.titlecase(init_field, field)
                     if cased != init_field:
                         setattr(item, field, cased)
-                        self._log.info(f"{field}: {init_field} -> {cased}")
+                        self._log.debug(f"{field}: {init_field} -> {cased}")
                 else:
                     self._log.debug(f"{field}: no string present")
             else:
@@ -197,8 +214,8 @@ class TitlecasePlugin(BeetsPlugin):
     def titlecase(self, text: str, field: str = "") -> str:
         """Titlecase the given text."""
         # Check we should split this into two substrings.
-        if self.seperators:
-            if len(splits := self.seperators.findall(text)):
+        if self.separators:
+            if len(splits := self.separators.findall(text)):
                 split_cased = "".join(
                     [self.titlecase(s[0], field) + s[1] for s in splits]
                 )
@@ -206,6 +223,11 @@ class TitlecasePlugin(BeetsPlugin):
                 return split_cased + self.titlecase(
                     text[len(split_cased) :], field
                 )
+        # Check if A-Z is all uppercase or all lowercase
+        if self.all_lowercase and text.islower():
+            return text
+        elif self.all_caps and text.isupper():
+            return text
         # Any necessary replacements go first, mainly punctuation.
         titlecased = text.lower() if self.force_lowercase else text
         for pair in self.replace:

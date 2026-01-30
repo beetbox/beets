@@ -28,7 +28,7 @@ import sys
 import tempfile
 import traceback
 from collections import Counter
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from contextlib import suppress
 from enum import Enum
 from functools import cache
@@ -44,7 +44,6 @@ from typing import (
     Generic,
     NamedTuple,
     TypeVar,
-    Union,
     cast,
 )
 
@@ -54,7 +53,7 @@ import beets
 from beets.util import hidden
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Iterator
+    from collections.abc import Callable, Iterable, Iterator
     from logging import Logger
 
     from beets.library import Item
@@ -63,8 +62,8 @@ if TYPE_CHECKING:
 MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = "\\\\?\\"
 T = TypeVar("T")
-PathLike = Union[str, bytes, Path]
-StrPath = Union[str, Path]
+StrPath = str | Path
+PathLike = StrPath | bytes
 Replacements = Sequence[tuple[Pattern[str], str]]
 
 # Here for now to allow for a easy replace later on

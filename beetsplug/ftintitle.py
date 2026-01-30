@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import re
+from functools import cached_property, lru_cache
 from typing import TYPE_CHECKING
 
 from beets import config, plugins, ui
@@ -24,6 +25,30 @@ from beets import config, plugins, ui
 if TYPE_CHECKING:
     from beets.importer import ImportSession, ImportTask
     from beets.library import Album, Item
+
+
+DEFAULT_BRACKET_KEYWORDS: tuple[str, ...] = (
+    "abridged",
+    "acapella",
+    "club",
+    "demo",
+    "edit",
+    "edition",
+    "extended",
+    "instrumental",
+    "live",
+    "mix",
+    "radio",
+    "release",
+    "remaster",
+    "remastered",
+    "remix",
+    "rmx",
+    "unabridged",
+    "unreleased",
+    "version",
+    "vip",
+)
 
 
 def split_on_feat(
@@ -36,11 +61,23 @@ def split_on_feat(
     artist, which is always a string, and the featuring artist, which
     may be a string or None if none is present.
     """
-    # split on the first "feat".
-    regex = re.compile(
-        plugins.feat_tokens(for_artist, custom_words), re.IGNORECASE
+    # Try explicit featuring tokens first (ft, feat, featuring, etc.)
+    # to avoid splitting on generic separators like "&" when both are present
+    regex_explicit = re.compile(
+        plugins.feat_tokens(for_artist=False, custom_words=custom_words),
+        re.IGNORECASE,
     )
-    parts = tuple(s.strip() for s in regex.split(artist, 1))
+    parts = tuple(s.strip() for s in regex_explicit.split(artist, 1))
+    if len(parts) == 2:
+        return parts
+
+    # Fall back to all tokens including generic separators if no explicit match
+    if for_artist:
+        regex = re.compile(
+            plugins.feat_tokens(for_artist, custom_words), re.IGNORECASE
+        )
+        parts = tuple(s.strip() for s in regex.split(artist, 1))
+
     if len(parts) == 1:
         return parts[0], None
     else:
@@ -104,6 +141,40 @@ def _album_artist_no_feat(album: Album) -> str:
 
 
 class FtInTitlePlugin(plugins.BeetsPlugin):
+    @cached_property
+    def bracket_keywords(self) -> list[str]:
+        return self.config["bracket_keywords"].as_str_seq()
+
+    @staticmethod
+    @lru_cache(maxsize=256)
+    def _bracket_position_pattern(keywords: tuple[str, ...]) -> re.Pattern[str]:
+        """
+        Build a compiled regex to find the first bracketed segment that contains
+        any of the provided keywords.
+
+        Cached by keyword tuple to avoid recompiling on every track/title.
+        """
+        kw_inner = "|".join(map(re.escape, keywords))
+
+        # If we have keywords, require one of them to appear in the bracket text.
+        # If kw == "", the lookahead becomes true and we match any bracket content.
+        kw = rf"\b(?={kw_inner})\b" if kw_inner else ""
+        return re.compile(
+            rf"""
+            (?:   # non-capturing group for the split
+              \s*?  # optional whitespace before brackets
+              (?=     # any bracket containing a keyword
+                    \([^)]*{kw}.*?\)
+                |   \[[^]]*{kw}.*?\]
+                |    <[^>]*{kw}.*? >
+                | \{{[^}}]*{kw}.*?\}}
+                | $   # or the end of the string
+              )
+            )
+            """,
+            re.IGNORECASE | re.VERBOSE,
+        )
+
     def __init__(self) -> None:
         super().__init__()
 
@@ -115,6 +186,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
                 "keep_in_artist": False,
                 "preserve_album_artist": True,
                 "custom_words": [],
+                "bracket_keywords": list(DEFAULT_BRACKET_KEYWORDS),
             }
         )
 
@@ -216,8 +288,10 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         # artist and if we do not drop featuring information.
         if not drop_feat and not contains_feat(item.title, custom_words):
             feat_format = self.config["format"].as_str()
-            new_format = feat_format.format(feat_part)
-            new_title = f"{item.title} {new_format}"
+            formatted = feat_format.format(feat_part)
+            new_title = self.insert_ft_into_title(
+                item.title, formatted, self.bracket_keywords
+            )
             self._log.info("title: {.title} -> {}", item, new_title)
             item.title = new_title
 
@@ -262,3 +336,28 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             item, feat_part, drop_feat, keep_in_artist_field, custom_words
         )
         return True
+
+    @staticmethod
+    def find_bracket_position(
+        title: str, keywords: list[str] | None = None
+    ) -> int | None:
+        normalized = (
+            DEFAULT_BRACKET_KEYWORDS if keywords is None else tuple(keywords)
+        )
+        pattern = FtInTitlePlugin._bracket_position_pattern(normalized)
+        m: re.Match[str] | None = pattern.search(title)
+        return m.start() if m else None
+
+    @classmethod
+    def insert_ft_into_title(
+        cls, title: str, feat_part: str, keywords: list[str] | None = None
+    ) -> str:
+        """Insert featured artist before the first bracket containing
+        remix/edit keywords if present.
+        """
+        normalized = (
+            DEFAULT_BRACKET_KEYWORDS if keywords is None else tuple(keywords)
+        )
+        pattern = cls._bracket_position_pattern(normalized)
+        parts = pattern.split(title, maxsplit=1)
+        return f" {feat_part} ".join(parts).strip()

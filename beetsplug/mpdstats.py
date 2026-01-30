@@ -15,6 +15,7 @@
 
 import os
 import time
+from typing import ClassVar
 
 import mpd
 
@@ -318,7 +319,7 @@ class MPDStats:
 
 
 class MPDStatsPlugin(plugins.BeetsPlugin):
-    item_types = {
+    item_types: ClassVar[dict[str, types.Type]] = {
         "play_count": types.INTEGER,
         "skip_count": types.INTEGER,
         "last_played": types.DATE,

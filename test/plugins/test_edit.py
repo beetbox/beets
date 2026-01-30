@@ -13,6 +13,7 @@
 # included in all copies or substantial portions of the Software.
 
 import codecs
+from typing import ClassVar
 from unittest.mock import patch
 
 from beets.dbcore.query import TrueQuery
@@ -176,6 +177,36 @@ class EditCommandTest(EditMixin, BeetsTestCase):
         )
         assert list(self.album.items())[-1].title == "modified t\u00eftle 9"
 
+    def test_title_edit_keep_editing_then_apply(self, mock_write):
+        """Edit titles, keep editing once, then apply changes."""
+        self.run_mocked_command(
+            {"replacements": {"t\u00eftle": "modified t\u00eftle"}},
+            # keep Editing, then Apply
+            ["e", "a"],
+        )
+
+        assert mock_write.call_count == self.TRACK_COUNT
+        self.assertItemFieldsModified(
+            self.album.items(),
+            self.items_orig,
+            ["title", "mtime"],
+        )
+
+    def test_title_edit_keep_editing_then_cancel(self, mock_write):
+        """Edit titles, keep editing once, then cancel."""
+        self.run_mocked_command(
+            {"replacements": {"t\u00eftle": "modified t\u00eftle"}},
+            # keep Editing, then Cancel
+            ["e", "c"],
+        )
+
+        assert mock_write.call_count == 0
+        self.assertItemFieldsModified(
+            self.album.items(),
+            self.items_orig,
+            [],
+        )
+
     def test_noedit(self, mock_write):
         """Do not edit anything."""
         # Do not edit anything.
@@ -289,7 +320,7 @@ class EditDuringImporterTestCase(
 
     matching = AutotagStub.GOOD
 
-    IGNORED = ["added", "album_id", "id", "mtime", "path"]
+    IGNORED: ClassVar[list[str]] = ["added", "album_id", "id", "mtime", "path"]
 
     def setUp(self):
         super().setUp()
@@ -320,8 +351,8 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
             self.lib.items(),
             self.items_orig,
             ["title"],
-            self.IGNORED
-            + [
+            [
+                *self.IGNORED,
                 "albumartist",
                 "mb_albumartistid",
                 "mb_albumartistids",
@@ -348,7 +379,7 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
             self.lib.items(),
             self.items_orig,
             [],
-            self.IGNORED + ["albumartist", "mb_albumartistid"],
+            [*self.IGNORED, "albumartist", "mb_albumartistid"],
         )
         assert all("Tag Track" in i.title for i in self.lib.items())
 
@@ -460,6 +491,6 @@ class EditDuringImporterSingletonTest(EditDuringImporterTestCase):
             self.lib.items(),
             self.items_orig,
             ["title"],
-            self.IGNORED + ["albumartist", "mb_albumartistid"],
+            [*self.IGNORED, "albumartist", "mb_albumartistid"],
         )
         assert all("Edited Track" in i.title for i in self.lib.items())

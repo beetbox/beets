@@ -6,8 +6,8 @@ ListenBrainz Plugin
 The ListenBrainz plugin for beets allows you to interact with the ListenBrainz
 service.
 
-Installation
-------------
+Configuration
+-------------
 
 To enable the ListenBrainz plugin, add the following to your beets configuration
 file (config.yaml_):
