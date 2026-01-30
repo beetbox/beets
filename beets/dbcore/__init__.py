@@ -16,7 +16,7 @@
 Library.
 """
 
-from .db import Database, Model, Results
+from .db import Database, Index, Model, Results
 from .query import (
     AndQuery,
     FieldQuery,
@@ -36,6 +36,7 @@ __all__ = [
     "AndQuery",
     "Database",
     "FieldQuery",
+    "Index",
     "InvalidQueryError",
     "MatchQuery",
     "Model",
