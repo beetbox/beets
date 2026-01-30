@@ -17,8 +17,8 @@ from __future__ import annotations
 
 import random
 from itertools import groupby, islice
-from operator import attrgetter
-from typing import TYPE_CHECKING, Any
+from operator import methodcaller
+from typing import TYPE_CHECKING
 
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, print_
@@ -84,9 +84,6 @@ class Random(BeetsPlugin):
         return [random_cmd]
 
 
-NOT_FOUND_SENTINEL = object()
-
-
 def _equal_chance_permutation(
     objs: Iterable[LibModel], field: str
 ) -> Iterable[LibModel]:
@@ -95,26 +92,16 @@ def _equal_chance_permutation(
     any given position.
     """
     # Group the objects by field so we can sample from them.
-    key = attrgetter(field)
+    get_attr = methodcaller("get", field)
 
-    def get_attr(obj: LibModel) -> Any:
-        try:
-            return key(obj)
-        except AttributeError:
-            return NOT_FOUND_SENTINEL
+    groups = {}
+    for k, values in groupby(sorted(objs, key=get_attr), key=get_attr):
+        if k is not None:
+            vals = list(values)
+            # shuffle in category
+            random.shuffle(vals)
+            groups[str(k)] = vals
 
-    sorted(objs, key=get_attr)
-
-    groups: dict[str | object, list[LibModel]] = {
-        NOT_FOUND_SENTINEL: [],
-    }
-    for k, values in groupby(objs, key=get_attr):
-        groups[k] = list(values)
-        # shuffle in category
-        random.shuffle(groups[k])
-
-    # Remove items without the field value.
-    del groups[NOT_FOUND_SENTINEL]
     while groups:
         group = random.choice(list(groups.keys()))
         yield groups[group].pop()
