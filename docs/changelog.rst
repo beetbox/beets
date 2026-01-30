@@ -149,6 +149,8 @@ Other changes:
   Music service was shut down in 2020.
 - Updated color documentation with ``bright_*`` and ``bg_bright_*`` entries.
 - Moved `beets/random.py` into `beetsplug/random.py` to cleanup core module.
+- dbcore: Allow models to declare SQL indices; add an ``items.album_id`` index
+  to speed up ``album.items()`` queries. :bug:`5809`
 
 2.5.1 (October 14, 2025)
 ------------------------
