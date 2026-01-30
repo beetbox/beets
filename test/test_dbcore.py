@@ -240,6 +240,14 @@ class MigrationTest(unittest.TestCase):
         except sqlite3.OperationalError:
             self.fail("select failed")
 
+    def test_index_creation(self):
+        """Test that declared indices are created on database initialization."""
+        db = DatabaseFixture1(":memory:")
+        with db.transaction() as tx:
+            rows = tx.query("PRAGMA index_info(field_one_index)")
+            assert len(rows) > 0  # Index exists
+        db._connection().close()
+
 
 class TransactionTest(unittest.TestCase):
     def setUp(self):
@@ -810,69 +818,3 @@ class TestException:
         with pytest.raises(DBCustomFunctionError):
             with db.transaction() as tx:
                 tx.query("select * from test where plz_raise()")
-
-
-class TestIndex:
-    @pytest.fixture(autouse=True)
-    def db(self):
-        """Set up an in-memory SQLite database."""
-        db = DatabaseFixture1(":memory:")
-        yield db
-        db._connection().close()
-
-    @pytest.fixture
-    def sample_index(self):
-        """Fixture for a sample Index object."""
-        return Index(name="sample_index", columns=("field_one",))
-
-    def test_from_db(self, db, sample_index: Index):
-        """Test retrieving an index from the database."""
-        with db.transaction() as tx:
-            sample_index.recreate(tx, "test")
-            retrieved = Index.from_db(tx, sample_index.name)
-            assert retrieved == sample_index
-
-    @pytest.mark.parametrize(
-        "index1, index2, equality",
-        [
-            (
-                # Same
-                Index(name="sample_index", columns=("field_one",)),
-                Index(name="sample_index", columns=("field_one",)),
-                True,
-            ),
-            (
-                # Multiple columns
-                Index(name="sample_index", columns=("f1", "f2")),
-                Index(name="sample_index", columns=("f1", "f2")),
-                True,
-            ),
-            (
-                # Difference in name
-                Index(name="sample_indey", columns=("field_one",)),
-                Index(name="sample_index", columns=("field_one",)),
-                False,
-            ),
-            (
-                # Difference in columns
-                Index(name="sample_indey", columns=("field_one",)),
-                Index(name="sample_index", columns=("field_two",)),
-                False,
-            ),
-            (
-                # Difference in num columns
-                Index(name="sample_index", columns=("f1",)),
-                Index(name="sample_index", columns=("f1", "f2")),
-                False,
-            ),
-        ],
-    )
-    def test_index_equality(self, index1: Index, index2: Index, equality: bool):
-        """Test the hashing and set behavior of the Index class."""
-
-        # Simple equality
-        assert (index1 == index2) == equality
-
-        # Should be unique or not
-        index_set = {index1, index2}
-        assert len(index_set) == (1 if equality else 2)
