@@ -111,6 +111,10 @@ Bug fixes:
   avoiding extra lossy duplicates.
 - :doc:`plugins/discogs`: Fixed unexpected flex attr from the Discogs plugin.
   :bug:`6177`
+- Errors in metadata plugins during autotage process will now be logged but
+  won't crash beets anymore. If you want to raise exceptions instead, set the
+  new configuration option ``raise_on_error`` to ``yes`` :bug:`5903`,
+  :bug:`4789`.
 
 For plugin developers:
 
