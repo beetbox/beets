@@ -197,7 +197,19 @@ class MediumFactory(_IdFactory):
     track_count = 1
     data_tracks = factory.List([])
     track_offset: int | None = None
-    tracks = factory.List([factory.SubFactory(TrackFactory)])
+
+    @factory.post_generation
+    def tracks(self, create, _tracks, **kwargs):
+        if not create:
+            return
+
+        if not _tracks:
+            _tracks = [TrackFactory() for _ in range(kwargs.get("count", 1))]
+
+        for index, track in enumerate(_tracks, 1):
+            track["position"] = index
+
+        self["tracks"] = _tracks  # type: ignore[index]
 
 
 class ReleaseFactory(_IdFactory):
@@ -210,7 +222,6 @@ class ReleaseFactory(_IdFactory):
     )
     asin = factory.LazyAttribute(lambda o: f"{o.title} Asin")
     barcode = "0000000000000"
-    country = "XW"
     cover_art_archive = factory.Dict(
         {
             "artwork": False,
@@ -225,7 +236,7 @@ class ReleaseFactory(_IdFactory):
     )
     genres = factory.List([factory.SubFactory(GenreFactory)])
     label_info = factory.List([factory.SubFactory(LabelInfoFactory)])
-    media = factory.List([])
+    media = factory.List([factory.SubFactory(MediumFactory)])
     packaging: str | None = None
     packaging_id: str | None = None
     quality = "normal"
