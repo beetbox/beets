@@ -335,6 +335,7 @@ def _summary_judgment(rec):
     summary judgment is made.
     """
 
+    action: importer.Action | None
     if config["import"]["quiet"]:
         if rec == Recommendation.strong:
             return importer.Action.APPLY
