@@ -182,7 +182,9 @@ class TrackFactory(_IdFactory):
     position = 1
     recording = factory.SubFactory(RecordingFactory)
     title = factory.LazyAttribute(
-        lambda o: f"{'Video: ' if o.recording['video'] else ''}{o.recording['title']}"  # noqa: E501
+        lambda o: (
+            f"{'Video: ' if o.recording['video'] else ''}{o.recording['title']}"
+        )
     )
 
 
@@ -197,7 +199,22 @@ class MediumFactory(_IdFactory):
     track_count = 1
     data_tracks = factory.List([])
     track_offset: int | None = None
-    tracks = factory.List([factory.SubFactory(TrackFactory)])
+
+    @factory.post_generation
+    def tracks(self, create, _tracks, **kwargs):
+        if not create:
+            return
+
+        if not _tracks:
+            _tracks = [TrackFactory() for _ in range(kwargs.get("count", 1))]
+
+        for index, track in enumerate(_tracks, 1):
+            track["position"] = index
+
+        if _tracks:
+            self["tracks"] = _tracks  # type: ignore[index]
+
+        self["track_count"] = len(_tracks)
 
 
 class ReleaseFactory(_IdFactory):
@@ -224,7 +241,7 @@ class ReleaseFactory(_IdFactory):
     )
     genres = factory.List([factory.SubFactory(GenreFactory)])
     label_info = factory.List([factory.SubFactory(LabelInfoFactory)])
-    media = factory.List([])
+    media = factory.List([factory.SubFactory(MediumFactory)])
     packaging: str | None = None
     packaging_id: str | None = None
     quality = "normal"
