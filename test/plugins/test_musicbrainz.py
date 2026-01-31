@@ -691,6 +691,7 @@ class MBLibraryTest(MusicBrainzTestCase):
         ) as gp:
             gp.side_effect = side_effect
             album = self.mb.album_for_id("d2a6f856-b553-40a0-ac54-a321e8e2da02")
+            assert album
             assert album.country == "US"
 
     def test_pseudo_releases_with_empty_links(self):
@@ -708,6 +709,7 @@ class MBLibraryTest(MusicBrainzTestCase):
         ) as gp:
             gp.side_effect = side_effect
             album = self.mb.album_for_id("d2a6f856-b553-40a0-ac54-a321e8e2da02")
+            assert album
             assert album.country is None
 
     def test_pseudo_releases_without_links(self):
@@ -725,6 +727,7 @@ class MBLibraryTest(MusicBrainzTestCase):
         ) as gp:
             gp.side_effect = side_effect
             album = self.mb.album_for_id("d2a6f856-b553-40a0-ac54-a321e8e2da02")
+            assert album
             assert album.country is None
 
     def test_pseudo_releases_with_unsupported_links(self):
@@ -751,6 +754,7 @@ class MBLibraryTest(MusicBrainzTestCase):
         ) as gp:
             gp.side_effect = side_effect
             album = self.mb.album_for_id("d2a6f856-b553-40a0-ac54-a321e8e2da02")
+            assert album
             assert album.country is None
 
 
