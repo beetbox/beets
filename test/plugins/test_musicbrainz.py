@@ -52,7 +52,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
             "asin": "ALBUM ASIN",
             "disambiguation": "R_DISAMBIGUATION",
             "release-group": {
-                "type": "Album",
+                "primary-type": "Album",
                 "first-release-date": date_str,
                 "id": "RELEASE GROUP ID",
                 "disambiguation": "RG_DISAMBIGUATION",
