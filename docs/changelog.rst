@@ -7,6 +7,17 @@ below!
 Unreleased
 ----------
 
+New features:
+
+Bug fixes:
+
+For packagers:
+
+Other changes:
+
+2.6.0 (February 01, 2026)
+-------------------------
+
 Beets now requires Python 3.10 or later since support for EOL Python 3.9 has
 been dropped.
 
