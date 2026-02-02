@@ -22,7 +22,7 @@ from random import random
 
 from beets import config, ui
 from beets.test import _common
-from beets.test.helper import BeetsTestCase, IOMixin, control_stdin
+from beets.test.helper import BeetsTestCase, IOMixin
 
 
 class InputMethodsTest(IOMixin, unittest.TestCase):
@@ -85,7 +85,7 @@ class InputMethodsTest(IOMixin, unittest.TestCase):
         assert items == ["1", "3"]
 
 
-class ParentalDirCreation(BeetsTestCase):
+class ParentalDirCreation(IOMixin, BeetsTestCase):
     def test_create_yes(self):
         non_exist_path = _common.os.fsdecode(
             os.path.join(self.temp_dir, b"nonexist", str(random()).encode())
@@ -94,8 +94,8 @@ class ParentalDirCreation(BeetsTestCase):
         # occur; wish I can use a golang defer here.
         test_config = deepcopy(config)
         test_config["library"] = non_exist_path
-        with control_stdin("y"):
-            lib = ui._open_library(test_config)
+        self.io.addinput("y")
+        lib = ui._open_library(test_config)
         lib._close()
 
     def test_create_no(self):
@@ -108,14 +108,14 @@ class ParentalDirCreation(BeetsTestCase):
         test_config = deepcopy(config)
         test_config["library"] = non_exist_path
 
-        with control_stdin("n"):
-            try:
-                lib = ui._open_library(test_config)
-            except ui.UserError:
-                if os.path.exists(non_exist_path_parent):
-                    shutil.rmtree(non_exist_path_parent)
-                    raise OSError("Parent directories should not be created.")
-            else:
-                if lib:
-                    lib._close()
+        self.io.addinput("n")
+        try:
+            lib = ui._open_library(test_config)
+        except ui.UserError:
+            if os.path.exists(non_exist_path_parent):
+                shutil.rmtree(non_exist_path_parent)
                 raise OSError("Parent directories should not be created.")
+        else:
+            if lib:
+                lib._close()
+            raise OSError("Parent directories should not be created.")

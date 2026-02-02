@@ -38,6 +38,7 @@ from beets.test import helper
 from beets.test.helper import (
     AutotagStub,
     ImportHelper,
+    IOMixin,
     PluginMixin,
     PluginTestCase,
     TerminalImportMixin,
@@ -45,7 +46,7 @@ from beets.test.helper import (
 from beets.util import PromptChoice, displayable_path, syspath
 
 
-class TestPluginRegistration(PluginTestCase):
+class TestPluginRegistration(IOMixin, PluginTestCase):
     class RatingPlugin(plugins.BeetsPlugin):
         item_types: ClassVar[dict[str, types.Type]] = {
             "rating": types.Float(),
@@ -429,8 +430,9 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
 
         # DummyPlugin.foo() should be called once
         with patch.object(DummyPlugin, "foo", autospec=True) as mock_foo:
-            with helper.control_stdin("\n".join(["f", "s"])):
-                self.importer.run()
+            self.io.addinput("f")
+            self.io.addinput("n")
+            self.importer.run()
             assert mock_foo.call_count == 1
 
         # input_options should be called twice, as foo() returns None
@@ -471,8 +473,8 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
         )
 
         # DummyPlugin.foo() should be called once
-        with helper.control_stdin("f\n"):
-            self.importer.run()
+        self.io.addinput("f")
+        self.importer.run()
 
         # input_options should be called once, as foo() returns SKIP
         self.mock_input_options.assert_called_once_with(
