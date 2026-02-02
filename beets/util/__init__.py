@@ -64,8 +64,7 @@ if TYPE_CHECKING:
 MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = "\\\\?\\"
 T = TypeVar("T")
-T_co = TypeVar("T_co", covariant=True)
-_R_co = TypeVar("_R_co", covariant=True)
+T2 = TypeVar("T2")
 StrPath = str | Path
 PathLike = StrPath | bytes
 Replacements = Sequence[tuple[Pattern[str], str]]
@@ -1064,7 +1063,7 @@ def par_map(transform: Callable[[T], Any], items: Sequence[T]) -> None:
     pool.join()
 
 
-class cached_classproperty(Generic[T_co, T]):
+class cached_classproperty(Generic[T, T2]):
     """Descriptor implementing cached class properties.
 
     Provides class-level dynamic property behavior where the getter function is
@@ -1072,22 +1071,42 @@ class cached_classproperty(Generic[T_co, T]):
     instance properties, this operates on the class rather than instances.
     """
 
-    _cache: ClassVar[
-        weakref.WeakKeyDictionary[type[object], dict[str, object]]
-    ] = weakref.WeakKeyDictionary()
+    _cache: weakref.WeakKeyDictionary[type[T], dict[str, T2]] = (
+        weakref.WeakKeyDictionary()
+    )
     _lock: ClassVar[threading.RLock] = threading.RLock()
     name: str | None = None
 
-    def __init__(self, f: Callable[[T_co], T]) -> None:
+    # Ideally, we would like to use `Callable[[type[T]], T2]` here,
+    # however, `mypy` is unable to see this as a **class** property, and thinks
+    # that this callable receives an **instance** of the object, failing the
+    # type check, for example:
+    # >>> class Album:
+    # >>>     @cached_classproperty
+    # >>>     def foo(cls):
+    # >>>         reveal_type(cls)  # mypy: revealed type is "Album"
+    # >>>         return cls.bar
+    #
+    #   Argument 1 to "cached_classproperty" has incompatible type
+    #   "Callable[[Album], ...]"; expected "Callable[[type[Album]], ...]"
+    #
+    # Therefore, we just use `...` here, which is not ideal, but works.
+    def __init__(self, getter: Callable[..., T2]) -> None:
         """Initialize the descriptor with the property getter function."""
 
-        self.f: Callable[[T_co], T] = f
+        self.getter: Callable[[type[T]], T2] = getter
 
-    def __set_name__(self, owner: type[object], name: str) -> None:
+    def __set_name__(self, owner: type[T], name: str) -> None:
         """Capture the attribute name this descriptor is assigned to."""
         self.name = name
 
-    def __get__(self, instance: object | None, owner: type[object], /) -> T:
+    # For some reason, if we use T instead of object,
+    # mypy complains when accessing a cached_property, e. g.:
+    # error: Argument 1 to "__get__" of "cached_classproperty" has incompatible type
+    # "MetadataSourcePlugin"; expected "Never"
+    # error: Argument 2 to "__get__" of "cached_classproperty" has incompatible type
+    # "type[MetadataSourcePlugin]"; expected "type[Never]"
+    def __get__(self, instance: object | None, owner: type[object], /) -> T2:
         """Compute and cache if needed, and return the property value."""
         if self.name is None:
             raise RuntimeError(
@@ -1096,16 +1115,17 @@ class cached_classproperty(Generic[T_co, T]):
                 + "the descriptor is used outside of a class definition."
             )
 
+        owner = cast(type[T], owner)
         with self._lock:
-            class_cache: dict[str, object] = self._cache.setdefault(owner, {})
+            class_cache: dict[str, T2] = self._cache.setdefault(owner, {})
 
             try:
-                return cast(T, class_cache[self.name])
+                return class_cache[self.name]
             except KeyError:
                 ...
 
             # Compute and cache new value
-            value: T = self.f(cast(T_co, owner))
+            value: T2 = self.getter(owner)
             class_cache[self.name] = value
             return value
 
