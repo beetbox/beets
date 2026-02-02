@@ -53,7 +53,7 @@ class TestMetadataPluginsException(PluginMixin):
             ("tracks_for_ids", "tracks_for_ids", (["some_id"],)),
             # Currently, singular methods call plural ones internally and log
             # errors from there
-            ("album_for_id", "albums_for_ids", ("some_id",)),
+            ("album_for_id", "albums_for_ids", ("some_id", [])),
             ("track_for_id", "tracks_for_ids", ("some_id",)),
         ],
     )
@@ -72,7 +72,7 @@ class TestMetadataPluginsException(PluginMixin):
         [
             ("candidates", ()),
             ("item_candidates", ()),
-            ("album_for_id", ("some_id",)),
+            ("album_for_id", ("some_id", [])),
             ("track_for_id", ("some_id",)),
         ],
     )
