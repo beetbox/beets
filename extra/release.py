@@ -146,7 +146,7 @@ MD_REPLACEMENTS: list[Replacement] = [
 ]
 order_bullet_points = partial(
     re.compile(r"(\n- .*?(?=\n(?! *(-|\d\.) )|$))", flags=re.DOTALL).sub,
-    lambda m: "\n- ".join(sorted(m.group().split("\n- "))),
+    lambda m: "\n- ".join(sorted(m.group().split("\n- "), key=str.lower)),
 )
 
 
