@@ -65,6 +65,7 @@ if TYPE_CHECKING:
 MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = "\\\\?\\"
 T = TypeVar("T")
+T2 = TypeVar("T2")
 PathLike = Union[str, bytes, Path]
 StrPath = Union[str, Path]
 Replacements = Sequence[tuple[Pattern[str], str]]
@@ -1053,7 +1054,7 @@ def par_map(transform: Callable[[T], Any], items: Sequence[T]) -> None:
     pool.join()
 
 
-class cached_classproperty(Generic[T]):
+class cached_classproperty(Generic[T, T2]):
     """Descriptor implementing cached class properties.
 
     Provides class-level dynamic property behavior where the getter function is
@@ -1061,7 +1062,7 @@ class cached_classproperty(Generic[T]):
     instance properties, this operates on the class rather than instances.
     """
 
-    cache: ClassVar[dict[tuple[type[object], str], object]] = {}
+    cache: dict[tuple[type[T], str], T2] = {}
 
     name: str = ""
 
@@ -1079,21 +1080,28 @@ class cached_classproperty(Generic[T]):
     #   "Callable[[Album], ...]"; expected "Callable[[type[Album]], ...]"
     #
     # Therefore, we just use `Any` here, which is not ideal, but works.
-    def __init__(self, getter: Callable[..., T]) -> None:
+    def __init__(self, getter: Callable[..., T2]) -> None:
         """Initialize the descriptor with the property getter function."""
-        self.getter: Callable[..., T] = getter
+        self.getter: Callable[[type[T]], T2] = getter
 
-    def __set_name__(self, owner: object, name: str) -> None:
+    def __set_name__(self, owner: T, name: str) -> None:
         """Capture the attribute name this descriptor is assigned to."""
         self.name = name
 
-    def __get__(self, instance: object, owner: type[object]) -> T:
+    # For some reason, if we use T instead of object here,
+    # mypy complains when accessing a cached_property, e. g.:
+    # error: Argument 1 to "__get__" of "cached_classproperty" has incompatible type
+    # "MetadataSourcePlugin"; expected "Never"
+    # error: Argument 2 to "__get__" of "cached_classproperty" has incompatible type
+    # "type[MetadataSourcePlugin]"; expected "type[Never]"
+    def __get__(self, instance: object, owner: type[object]) -> T2:
         """Compute and cache if needed, and return the property value."""
-        key: tuple[type[object], str] = owner, self.name
+        owner = cast(type[T], owner)
+        key: tuple[type[T], str] = owner, self.name
         if key not in self.cache:
             self.cache[key] = self.getter(owner)
 
-        return cast(T, self.cache[key])
+        return self.cache[key]
 
 
 class LazySharedInstance(Generic[T]):
