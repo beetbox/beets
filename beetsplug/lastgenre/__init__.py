@@ -106,6 +106,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 "count": 1,
                 "fallback": None,
                 "canonical": False,
+                "canonicalize_existing": False,
                 "source": "album",
                 "force": False,
                 "keep_existing": False,
@@ -399,6 +400,24 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         genres = self._get_existing_genres(obj)
 
         if genres and not self.config["force"]:
+            # Without force and whitelisting + canonicalize_existing, we attempt
+            # to canonicalize pre-populated tags before returning them.
+            # If none are found, we use the fallback.
+            if (
+                self.config["whitelist"]
+                and self.config["canonical"]
+                and self.config["canonicalize_existing"]
+            ):
+                keep_genres = [g.lower() for g in genres]
+                if result := _try_resolve_stage("original", keep_genres, []):
+                    return result
+                elif fallback := self.config["fallback"].get():
+                    # Return fallback string.
+                    return fallback, "fallback"
+                else:
+                    # No fallback configured.
+                    return None, "fallback unconfigured"
+
             # Without force pre-populated tags are returned as-is.
             label = "keep any, no-force"
             if isinstance(obj, library.Item):
