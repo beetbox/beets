@@ -24,9 +24,10 @@ import platform
 import re
 import subprocess
 from abc import ABC, abstractmethod
+from contextlib import suppress
 from enum import Enum
 from itertools import chain
-from typing import Any, ClassVar, Mapping
+from typing import TYPE_CHECKING, Any, ClassVar
 from urllib.parse import urlencode
 
 from beets import logging, util
@@ -36,6 +37,9 @@ from beets.util import (
     get_temp_filename,
     syspath,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 PROXY_URL = "https://images.weserv.nl/"
 
@@ -265,7 +269,8 @@ class IMBackend(LocalBackend):
         # with regards to the height.
         # ImageMagick already seems to default to no interlace, but we include
         # it here for the sake of explicitness.
-        cmd: list[str] = self.convert_cmd + [
+        cmd: list[str] = [
+            *self.convert_cmd,
             syspath(path_in, prefix=False),
             "-resize",
             f"{maxwidth}x>",
@@ -295,7 +300,8 @@ class IMBackend(LocalBackend):
         return path_out
 
     def get_size(self, path_in: bytes) -> tuple[int, int] | None:
-        cmd: list[str] = self.identify_cmd + [
+        cmd: list[str] = [
+            *self.identify_cmd,
             "-format",
             "%w %h",
             syspath(path_in, prefix=False),
@@ -333,7 +339,8 @@ class IMBackend(LocalBackend):
         if not path_out:
             path_out = get_temp_filename(__name__, "deinterlace_IM_", path_in)
 
-        cmd = self.convert_cmd + [
+        cmd = [
+            *self.convert_cmd,
             syspath(path_in, prefix=False),
             "-interlace",
             "none",
@@ -348,7 +355,7 @@ class IMBackend(LocalBackend):
             return path_in
 
     def get_format(self, path_in: bytes) -> str | None:
-        cmd = self.identify_cmd + ["-format", "%[magick]", syspath(path_in)]
+        cmd = [*self.identify_cmd, "-format", "%[magick]", syspath(path_in)]
 
         try:
             # Image formats should really only be ASCII strings such as "PNG",
@@ -365,7 +372,8 @@ class IMBackend(LocalBackend):
         target: bytes,
         deinterlaced: bool,
     ) -> bytes:
-        cmd = self.convert_cmd + [
+        cmd = [
+            *self.convert_cmd,
             syspath(source),
             *(["-interlace", "none"] if deinterlaced else []),
             syspath(target),
@@ -397,14 +405,16 @@ class IMBackend(LocalBackend):
         # to grayscale and then pipe them into the `compare` command.
         # On Windows, ImageMagick doesn't support the magic \\?\ prefix
         # on paths, so we pass `prefix=False` to `syspath`.
-        convert_cmd = self.convert_cmd + [
+        convert_cmd = [
+            *self.convert_cmd,
             syspath(im2, prefix=False),
             syspath(im1, prefix=False),
             "-colorspace",
             "gray",
             "MIFF:-",
         ]
-        compare_cmd = self.compare_cmd + [
+        compare_cmd = [
+            *self.compare_cmd,
             "-define",
             "phash:colorspaces=sRGB,HCLp",
             "-metric",
@@ -484,7 +494,7 @@ class IMBackend(LocalBackend):
             ("-set", k, v) for k, v in metadata.items()
         )
         str_file = os.fsdecode(file)
-        command = self.convert_cmd + [str_file, *assignments, str_file]
+        command = [*self.convert_cmd, str_file, *assignments, str_file]
 
         util.command_output(command)
 
@@ -825,7 +835,7 @@ class ArtResizer:
             "jpeg": "jpg",
         }.get(new_format, new_format)
 
-        fname, ext = os.path.splitext(path_in)
+        fname, _ = os.path.splitext(path_in)
         path_new = fname + b"." + new_format.encode("utf8")
 
         # allows the exception to propagate, while still making sure a changed
@@ -837,7 +847,8 @@ class ArtResizer:
             )
         finally:
             if result_path != path_in:
-                os.unlink(path_in)
+                with suppress(OSError):
+                    os.unlink(path_in)
         return result_path
 
     @property

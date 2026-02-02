@@ -26,7 +26,7 @@ import sys
 import time
 import traceback
 from string import Template
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 import beets
 import beets.ui
@@ -283,7 +283,7 @@ class BaseServer:
         if not self.ctrl_sock:
             self.ctrl_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.ctrl_sock.connect((self.ctrl_host, self.ctrl_port))
-        self.ctrl_sock.sendall((f"{message}\n").encode("utf-8"))
+        self.ctrl_sock.sendall((f"{message}\n").encode())
 
     def _send_event(self, event):
         """Notify subscribed connections of an event."""
@@ -1037,7 +1037,7 @@ class Command:
             raise BPDError(ERROR_PERMISSION, "insufficient privileges")
 
         try:
-            args = [conn] + self.args
+            args = [conn, *self.args]
             results = func(*args)
             if results:
                 for data in results:
@@ -1344,7 +1344,7 @@ class Server(BaseServer):
 
     # Searching.
 
-    tagtype_map = {
+    tagtype_map: ClassVar[dict[str, str]] = {
         "Artist": "artist",
         "ArtistSort": "artist_sort",
         "Album": "album",

@@ -20,6 +20,7 @@ import enum
 import math
 import os
 import queue
+import shutil
 import signal
 import subprocess
 import sys
@@ -27,8 +28,9 @@ import warnings
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from multiprocessing.pool import ThreadPool
+from pathlib import Path
 from threading import Event, Thread
-from typing import TYPE_CHECKING, Any, Callable, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeVar
 
 from beets import ui
 from beets.plugins import BeetsPlugin
@@ -36,7 +38,7 @@ from beets.util import command_output, displayable_path, syspath
 
 if TYPE_CHECKING:
     import optparse
-    from collections.abc import Sequence
+    from collections.abc import Callable, Sequence
     from logging import Logger
 
     from confuse import ConfigView
@@ -542,9 +544,19 @@ class FfmpegBackend(Backend):
 
 
 # mpgain/aacgain CLI tool backend.
+Tool = Literal["mp3rgain", "aacgain", "mp3gain"]
+
+
 class CommandBackend(Backend):
     NAME = "command"
+    SUPPORTED_FORMATS_BY_TOOL: ClassVar[dict[Tool, set[str]]] = {
+        "mp3rgain": {"AAC", "MP3"},
+        "aacgain": {"AAC", "MP3"},
+        "mp3gain": {"MP3"},
+    }
     do_parallel = True
+
+    cmd_name: Tool
 
     def __init__(self, config: ConfigView, log: Logger):
         super().__init__(config, log)
@@ -555,25 +567,21 @@ class CommandBackend(Backend):
             }
         )
 
-        self.command: str = config["command"].as_str()
+        cmd_path: Path = Path(config["command"].as_str())
+        supported_tools = set(self.SUPPORTED_FORMATS_BY_TOOL)
 
-        if self.command:
-            # Explicit executable path.
-            if not os.path.isfile(self.command):
-                raise FatalReplayGainError(
-                    f"replaygain command does not exist: {self.command}"
-                )
-        else:
-            # Check whether the program is in $PATH.
-            for cmd in ("mp3gain", "aacgain"):
-                try:
-                    call([cmd, "-v"], self._log)
-                    self.command = cmd
-                except OSError:
-                    pass
-        if not self.command:
+        if (cmd_name := cmd_path.name) not in supported_tools:
             raise FatalReplayGainError(
-                "no replaygain command found: install mp3gain or aacgain"
+                f"replaygain.command must be one of {supported_tools!r},"
+                f" not {cmd_name!r}"
+            )
+
+        if command_exec := shutil.which(str(cmd_path)):
+            self.command = command_exec
+            self.cmd_name = cmd_name  # type: ignore[assignment]
+        else:
+            raise FatalReplayGainError(
+                f"replaygain command not found: {cmd_path}"
             )
 
         self.noclip = config["noclip"].get(bool)
@@ -608,11 +616,7 @@ class CommandBackend(Backend):
 
     def format_supported(self, item: Item) -> bool:
         """Checks whether the given item is supported by the selected tool."""
-        if "mp3gain" in self.command and item.format != "MP3":
-            return False
-        elif "aacgain" in self.command and item.format not in ("MP3", "AAC"):
-            return False
-        return True
+        return item.format in self.SUPPORTED_FORMATS_BY_TOOL[self.cmd_name]
 
     def compute_gain(
         self,
@@ -642,11 +646,11 @@ class CommandBackend(Backend):
         cmd: list[str] = [self.command, "-o", "-s", "s"]
         if self.noclip:
             # Adjust to avoid clipping.
-            cmd = cmd + ["-k"]
+            cmd = [*cmd, "-k"]
         else:
             # Disable clipping warning.
-            cmd = cmd + ["-c"]
-        cmd = cmd + ["-d", str(int(target_level - 89))]
+            cmd = [*cmd, "-c"]
+        cmd = [*cmd, "-d", str(int(target_level - 89))]
         cmd = cmd + [syspath(i.path) for i in items]
 
         self._log.debug("analyzing {} files", len(items))
@@ -1105,7 +1109,7 @@ class AudioToolsBackend(Backend):
         # The first item is taken and opened to get the sample rate to
         # initialize the replaygain object. The object is used for all the
         # tracks in the album to get the album values.
-        item = list(task.items)[0]
+        item = next(iter(task.items))
         audiofile = self.open_audio_file(item)
         rg = self.init_replaygain(audiofile, item)
 

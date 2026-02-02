@@ -14,13 +14,19 @@
 
 """Synchronize information from music player libraries"""
 
+from __future__ import annotations
+
 from abc import ABCMeta, abstractmethod
 from importlib import import_module
+from typing import TYPE_CHECKING, ClassVar
 
 from confuse import ConfigValueError
 
 from beets import ui
 from beets.plugins import BeetsPlugin
+
+if TYPE_CHECKING:
+    from beets.dbcore import types
 
 METASYNC_MODULE = "beetsplug.metasync"
 
@@ -32,8 +38,9 @@ SOURCES = {
 
 
 class MetaSource(metaclass=ABCMeta):
+    item_types: ClassVar[dict[str, types.Type]]
+
     def __init__(self, config, log):
-        self.item_types = {}
         self.config = config
         self._log = log
 

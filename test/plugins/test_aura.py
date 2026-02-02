@@ -1,12 +1,16 @@
+from __future__ import annotations
+
 import os
 from http import HTTPStatus
 from pathlib import Path
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any
 
 import pytest
-from flask.testing import Client
 
 from beets.test.helper import TestHelper
+
+if TYPE_CHECKING:
+    from flask.testing import Client
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -58,9 +62,7 @@ class TestAuraResponse:
     def get_response_data(self, client: Client, item):
         """Return a callback accepting `endpoint` and `params` parameters."""
 
-        def get(
-            endpoint: str, params: dict[str, str]
-        ) -> Optional[dict[str, Any]]:
+        def get(endpoint: str, params: dict[str, str]) -> dict[str, Any] | None:
             """Add additional `params` and GET the given endpoint.
 
             `include` parameter is added to every call to check that the

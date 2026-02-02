@@ -23,7 +23,7 @@ from collections import OrderedDict
 from contextlib import closing
 from enum import Enum
 from functools import cached_property
-from typing import TYPE_CHECKING, AnyStr, ClassVar, Literal, Tuple, Type
+from typing import TYPE_CHECKING, AnyStr, ClassVar, Literal
 
 import confuse
 import requests
@@ -86,7 +86,7 @@ class Candidate:
         path: None | bytes = None,
         url: None | str = None,
         match: None | MetadataMatch = None,
-        size: None | Tuple[int, int] = None,
+        size: None | tuple[int, int] = None,
     ):
         self._log = log
         self.path = path
@@ -355,7 +355,7 @@ class ArtSource(RequestMixin, ABC):
     # Specify whether this source fetches local or remote images
     LOC: ClassVar[SourceLocation]
     # A list of methods to match metadata, sorted by descending accuracy
-    VALID_MATCHING_CRITERIA: list[str] = ["default"]
+    VALID_MATCHING_CRITERIA: ClassVar[list[str]] = ["default"]
     # A human-readable name for the art source
     NAME: ClassVar[str]
     # The key to select the art source in the config. This value will also be
@@ -518,8 +518,8 @@ class RemoteArtSource(ArtSource):
 class CoverArtArchive(RemoteArtSource):
     NAME = "Cover Art Archive"
     ID = "coverart"
-    VALID_MATCHING_CRITERIA = ["release", "releasegroup"]
-    VALID_THUMBNAIL_SIZES = [250, 500, 1200]
+    VALID_MATCHING_CRITERIA: ClassVar[list[str]] = ["release", "releasegroup"]
+    VALID_THUMBNAIL_SIZES: ClassVar[list[int]] = [250, 500, 1200]
 
     URL = "https://coverartarchive.org/release/{mbid}"
     GROUP_URL = "https://coverartarchive.org/release-group/{mbid}"
@@ -682,7 +682,7 @@ class GoogleImages(RemoteArtSource):
         """
         if not (album.albumartist and album.album):
             return
-        search_string = f"{album.albumartist},{album.album}".encode("utf-8")
+        search_string = f"{album.albumartist},{album.album}".encode()
 
         try:
             response = self.request(
@@ -867,7 +867,7 @@ class ITunesStore(RemoteArtSource):
                     )
             except KeyError as e:
                 self._log.debug(
-                    "Malformed itunes candidate: {} not found in {}",  # NOQA E501
+                    "Malformed itunes candidate: {} not found in {}",
                     e,
                     list(c.keys()),
                 )
@@ -1101,6 +1101,16 @@ class FileSystem(LocalArtSource):
                 else:
                     remaining.append(fn)
 
+            # Fall back to a configured image.
+            if plugin.fallback:
+                self._log.debug(
+                    "using fallback art file {}",
+                    util.displayable_path(plugin.fallback),
+                )
+                yield self._candidate(
+                    path=plugin.fallback, match=MetadataMatch.FALLBACK
+                )
+
             # Fall back to any image in the folder.
             if remaining and not plugin.cautious:
                 self._log.debug(
@@ -1118,7 +1128,7 @@ class LastFM(RemoteArtSource):
     ID = "lastfm"
 
     # Sizes in priority order.
-    SIZES = OrderedDict(
+    SIZES: ClassVar[dict[str, tuple[int, int]]] = OrderedDict(
         [
             ("mega", (300, 300)),
             ("extralarge", (300, 300)),
@@ -1293,7 +1303,7 @@ class CoverArtUrl(RemoteArtSource):
 
 
 # All art sources. The order they will be tried in is specified by the config.
-ART_SOURCES: set[Type[ArtSource]] = {
+ART_SOURCES: set[type[ArtSource]] = {
     FileSystem,
     CoverArtArchive,
     ITunesStore,
@@ -1332,6 +1342,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                 "enforce_ratio": False,
                 "cautious": False,
                 "cover_names": ["cover", "front", "art", "album", "folder"],
+                "fallback": None,
                 "sources": [
                     "filesystem",
                     "coverart",
@@ -1380,6 +1391,9 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         cover_names = self.config["cover_names"].as_str_seq()
         self.cover_names = list(map(util.bytestring_path, cover_names))
         self.cautious = self.config["cautious"].get(bool)
+        self.fallback = self.config["fallback"].get(
+            confuse.Optional(confuse.Filename())
+        )
         self.store_source = self.config["store_source"].get(bool)
 
         self.cover_format = self.config["cover_format"].get(
@@ -1574,7 +1588,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                     message = ui.colorize(
                         "text_highlight_minor", "has album art"
                     )
-                    self._log.info("{}: {}", album, message)
+                    ui.print_(f"{album}: {message}")
             else:
                 # In ordinary invocations, look for images on the
                 # filesystem. When forcing, however, always go to the Web
@@ -1587,4 +1601,4 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                     message = ui.colorize("text_success", "found album art")
                 else:
                     message = ui.colorize("text_error", "no art found")
-                self._log.info("{}: {}", album, message)
+                ui.print_(f"{album}: {message}")

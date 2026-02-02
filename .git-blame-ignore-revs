@@ -27,6 +27,14 @@ af102c3e2f1c7a49e99839e2825906fe01780eec
 910354a6c617ed5aa643cff666205b43e1557373
 # pyupgrade beetsplug and tests
 1ec87a3bdd737abe46c6e614051bf9e314db4619
+# Updates docstrings in library.py.
+8c5ced3ee11a353546034189736c6001115135a4
+# Fixes inconsistencies in ending quote placements for single-line docstrings.
+bbd32639b4c469fe3d6668f1e3bb17d8ba7a70ce
+# Fixes linting errors by removing trailing whitespaces.
+acf576c455e59e8197359d4517f8c0a5a9f362bb
+# Alters docstrings in library.py to be imperative-style.
+2f42c8b1c019a90448d33d940b609c18ba644cbc
 
 # 2022
 # Reformat flake8 config comments
@@ -37,22 +45,78 @@ abc3dfbf429b179fac25bd1dff72d577cd4d04c7
 a6e5201ff3fad4c69bf24d17bace2ef744b9f51b
 
 # 2024
+# Replace assertTrue
+0ecc345143cf89fabe74bb2e95eedfa1114857a3
+# Replace assertFalse
+cb82917fe0d5476c74bb946f91ea0d9a9f019c9b
+# Replace assertIsNone
+5d4911e905d3a89793332eb851035e6529c0725e
+# Replace assertIsNotNone
+2616bcc950e592745713f28db0192293410ed3e3
+# Replace assertIn
+11e948121cde969f9ea27caa545a6508145572fb
+# Replace assertNotIn
+6631b6aef6da3e09d3531de6df7995dd5396398f
+# Replace assertEqual
+9a05d27acfef3788d10dd0a8db72a6c8c15dfbe9
+# Replace assertNotEqual
+f9359df0d15ea8ee8e3c80bc198e779f185160cb
+# Replace assertIsInstance
+eda0ef11d67f482fe50bbe581685b8b6a284afb9
+# Replace assertLess and assertLessEqual
+6a3380bcb5e803e825bd9485fcc4b70d352947eb
+# Replace assertGreater and assertGreaterEqual
+46bdb84b464ffec3f0ce88d53467391be7b7046f
+# Replace assertCountEqual
+fdb8c28271e8b22d458330598a524067ca37026e
+# Replace assertListEqual
+fcc4d8481df295019945ac7973906f960c58c9fb
+# Use f-string syntax
+4b69b493d2630b723684f259ee9e7e07c480e8ee
 # Reformat the codebase
 85a17ee5039628a6f3cdcb7a03d7d1bd530fbe89
 # Fix lint issues
 f36bc497c8c8f89004f3f6879908d3f0b25123e1
 # Remove some lint exclusions and fix the issues
 5f78d1b82b2292d5ce0c99623ba0ec444b80d24c
+# Use PEP585 lowercase collections typing annotations
+51f9dd229e64f5106d69f87906a94e75604f346b
+# Remove unnecessary quotes from types
+fbfdfd54446fab6782ef0629da303f14f0a2ecdf
+# Replace Union types by PEP604 pipe character
+7ef1b61070ed4ed79c4720d019968baf38e38050
+# Update deprecated imports
+161b0522bbf7f4984173fee4128416b05f6cc5f3
+# Move imports required for typing under the TYPE_CHECKING block
+5c81f94cf7ced476673d0fa948cc7ecda00bae99
 
 # 2025
 # Fix formatting
 c490ac5810b70f3cf5fd8649669838e8fdb19f4d
 # Importer restructure
 9147577b2b19f43ca827e9650261a86fb0450cef
+# Move functionality under MusicBrainz plugin
+529aaac7dced71266c6d69866748a7d044ec20ff
+# musicbrainz: reorder methods
+5dc6f45110b99f0cc8dbb94251f9b1f6d69583fa
 # Copy paste query, types from library to dbcore
 1a045c91668c771686f4c871c84f1680af2e944b
 # Library restructure (split library.py into multiple modules)
 0ad4e19d4f870db757373f44d12ff3be2441363a
+# Split library file into different files inside library folder.
+98377ab5f6fc1829d79211b376bfd8d82bafaf33
+# Use pathlib.Path in test_smartplaylist.py
+d017270196dc8e0e2a4051afa5d05213946cbbbc
+# Replace assertIsFile
+ca4fa6ba10807f4a48a428d23e45c023c15dfa7d
+# Replace assertIsDir
+43b8cce063b1a1ef079266f362272307fb328d73
+# Replace assertFileTag and assertNoFileTag
+c6b5b3bed31704f7fe8632a6aef1a2348028348f
+# Replace assertAlbumImport
+3c8179a762c4387f9c40a12e3b9e560ff1c194ec
+# Replace assertCount
+72caf0d2cdc8fcefe1c252bdb0ac9b11b90cc649
 # Docs: fix linting issues
 769dcdc88a1263638ae25944ba6b2be3e8933666
 # Reformat all docs using docstrfmt
@@ -73,3 +137,21 @@ d93ddf8dd43e4f9ed072a03829e287c78d2570a2
 33f1a5d0bef8ca08be79ee7a0d02a018d502680d
 # Moved art.py utility module from beets into beetsplug
 28aee0fde463f1e18dfdba1994e2bdb80833722f
+# Refactor `ui/commands.py` into multiple modules
+59c93e70139f70e9fd1c6f3c1bceb005945bec33
+# Moved ui.commands._utils into ui.commands.utils
+25ae330044abf04045e3f378f72bbaed739fb30d
+# Refactor test_ui_command.py into multiple modules
+a59e41a88365e414db3282658d2aa456e0b3468a
+# pyupgrade Python 3.10
+301637a1609831947cb5dd90270ed46c24b1ab1b
+# Fix changelog formatting
+658b184c59388635787b447983ecd3a575f4fe56
+# Configure future-annotations
+ac7f3d9da95c2d0a32e5c908ea68480518a1582d
+# Configure ruff for py310
+c46069654628040316dea9db85d01b263db3ba9e
+# Enable RUF rules
+4749599913a42e02e66b37db9190de11d6be2cdf
+# Address RUF012
+bc71ec308eb938df1d349f6857634ddf2a82e339

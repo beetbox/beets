@@ -11,14 +11,14 @@
 #
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
-
+from __future__ import annotations
 
 import fnmatch
 import os.path
 import re
 import sys
 import unittest
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 from mediafile import MediaFile
@@ -34,6 +34,9 @@ from beets.test.helper import (
     control_stdin,
 )
 from beetsplug import convert
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def shell_quote(text):
@@ -236,6 +239,16 @@ class ConvertCliTest(ConvertTestCase, ConvertCommand):
             self.convert_dest / "converted.ogg", "ogg"
         )
 
+    def test_force_overrides_max_bitrate_and_same_formats(self):
+        self.config["convert"]["max_bitrate"] = 5000
+        self.config["convert"]["format"] = "ogg"
+
+        with control_stdin("y"):
+            self.run_convert("--force")
+
+        converted = self.convert_dest / "converted.ogg"
+        assert self.file_endswith(converted, "ogg")
+
     def test_transcode_when_maxbr_set_low_and_same_formats(self):
         self.config["convert"]["max_bitrate"] = 5
         self.config["convert"]["format"] = "ogg"
@@ -259,6 +272,21 @@ class ConvertCliTest(ConvertTestCase, ConvertCommand):
     def test_playlist_pretend(self):
         self.run_convert("--playlist", "playlist.m3u8", "--pretend")
         assert not (self.convert_dest / "playlist.m3u8").exists()
+
+    def test_force_overrides_no_convert(self):
+        self.config["convert"]["formats"]["opus"] = {
+            "command": self.tagged_copy_cmd("opus"),
+            "extension": "ops",
+        }
+        self.config["convert"]["no_convert"] = "format:ogg"
+
+        [item] = self.add_item_fixtures(ext="ogg")
+
+        with control_stdin("y"):
+            self.run_convert_path(item, "--format", "opus", "--force")
+
+        converted = self.convert_dest / "converted.ops"
+        assert self.file_endswith(converted, "opus")
 
 
 @_common.slow_test()
@@ -300,6 +328,19 @@ class NeverConvertLossyFilesTest(ConvertTestCase, ConvertCommand):
             self.run_convert_path(item)
         converted = self.convert_dest / "converted.ogg"
         assert not self.file_endswith(converted, "mp3")
+
+    def test_force_overrides_never_convert_lossy_files(self):
+        self.config["convert"]["formats"]["opus"] = {
+            "command": self.tagged_copy_cmd("opus"),
+            "extension": "ops",
+        }
+        [item] = self.add_item_fixtures(ext="ogg")
+
+        with control_stdin("y"):
+            self.run_convert_path(item, "--format", "opus", "--force")
+
+        converted = self.convert_dest / "converted.ops"
+        assert self.file_endswith(converted, "opus")
 
 
 class TestNoConvert:

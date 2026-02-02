@@ -128,3 +128,11 @@ class ConfigCommandTest(BeetsTestCase):
         with patch("os.execlp") as execlp:
             self.run_command("config", "-e")
         execlp.assert_called_once_with("myeditor", "myeditor", self.config_path)
+
+    def test_edit_config_with_custom_config_path(self):
+        os.environ["EDITOR"] = "myeditor"
+        with patch("os.execlp") as execlp:
+            self.run_command("--config", self.cli_config_path, "config", "-e")
+        execlp.assert_called_once_with(
+            "myeditor", "myeditor", self.cli_config_path
+        )

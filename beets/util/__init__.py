@@ -28,7 +28,6 @@ import sys
 import tempfile
 import threading
 import traceback
-import warnings
 import weakref
 from collections import Counter
 from collections.abc import Sequence
@@ -43,12 +42,10 @@ from typing import (
     TYPE_CHECKING,
     Any,
     AnyStr,
-    Callable,
     ClassVar,
     Generic,
     NamedTuple,
     TypeVar,
-    Union,
     cast,
 )
 
@@ -58,7 +55,7 @@ import beets
 from beets.util import hidden
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Iterator
+    from collections.abc import Callable, Iterable, Iterator
     from logging import Logger
 
     from beets.library import Item
@@ -69,8 +66,8 @@ WINDOWS_MAGIC_PREFIX = "\\\\?\\"
 T = TypeVar("T")
 T_co = TypeVar("T_co", covariant=True)
 _R_co = TypeVar("_R_co", covariant=True)
-PathLike = Union[str, bytes, Path]
-StrPath = Union[str, Path]
+StrPath = str | Path
+PathLike = StrPath | bytes
 Replacements = Sequence[tuple[Pattern[str], str]]
 
 # Here for now to allow for a easy replace later on
@@ -171,6 +168,12 @@ class MoveOperation(Enum):
     HARDLINK = 3
     REFLINK = 4
     REFLINK_AUTO = 5
+
+
+class PromptChoice(NamedTuple):
+    short: str
+    long: str
+    callback: Any
 
 
 def normpath(path: PathLike) -> bytes:
@@ -582,10 +585,14 @@ def hardlink(path: bytes, dest: bytes, replace: bool = False):
     if samefile(path, dest):
         return
 
-    if os.path.exists(syspath(dest)) and not replace:
+    # Dereference symlinks, expand "~", and convert relative paths to absolute
+    origin_path = Path(os.fsdecode(path)).expanduser().resolve()
+    dest_path = Path(os.fsdecode(dest)).expanduser().resolve()
+
+    if dest_path.exists() and not replace:
         raise FilesystemError("file exists", "rename", (path, dest))
     try:
-        os.link(syspath(path), syspath(dest))
+        dest_path.hardlink_to(origin_path)
     except NotImplementedError:
         raise FilesystemError(
             "OS does not support hard links.link",
@@ -1205,26 +1212,3 @@ def get_temp_filename(
 def unique_list(elements: Iterable[T]) -> list[T]:
     """Return a list with unique elements in the original order."""
     return list(dict.fromkeys(elements))
-
-
-def deprecate_imports(
-    old_module: str, new_module_by_name: dict[str, str], name: str, version: str
-) -> Any:
-    """Handle deprecated module imports by redirecting to new locations.
-
-    Facilitates gradual migration of module structure by intercepting import
-    attempts for relocated functionality. Issues deprecation warnings while
-    transparently providing access to the moved implementation, allowing
-    existing code to continue working during transition periods.
-    """
-    if new_module := new_module_by_name.get(name):
-        warnings.warn(
-            (
-                f"'{old_module}.{name}' is deprecated and will be removed"
-                f" in {version}. Use '{new_module}.{name}' instead."
-            ),
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return getattr(import_module(new_module), name)
-    raise AttributeError(f"module '{old_module}' has no attribute '{name}'")

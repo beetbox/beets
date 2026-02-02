@@ -5,6 +5,7 @@ import pytest
 
 from beets.autotag.distance import Distance
 from beets.dbcore.query import Query
+from beets.test.helper import ConfigMixin
 from beets.util import cached_classproperty
 
 
@@ -53,3 +54,9 @@ def pytest_assertrepr_compare(op, left, right):
 @pytest.fixture(autouse=True)
 def clear_cached_classproperty() -> None:
     cached_classproperty.clear_cache()
+
+
+@pytest.fixture(scope="module")
+def config():
+    """Provide a fresh beets configuration for a module, when requested."""
+    return ConfigMixin().config

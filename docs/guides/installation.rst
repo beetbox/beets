@@ -1,10 +1,10 @@
 Installation
 ============
 
-Beets requires `Python 3.9 or later`_. You can install it using package
+Beets requires `Python 3.10 or later`_. You can install it using package
 managers, pipx_, pip_ or by using package managers.
 
-.. _python 3.9 or later: https://python.org/download/
+.. _python 3.10 or later: https://python.org/download/
 
 Using ``pipx`` or ``pip``
 -------------------------

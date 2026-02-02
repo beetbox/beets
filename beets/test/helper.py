@@ -54,7 +54,7 @@ from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.importer import ImportSession
 from beets.library import Item, Library
 from beets.test import _common
-from beets.ui.commands import TerminalImportSession
+from beets.ui.commands.import_.session import TerminalImportSession
 from beets.util import (
     MoveOperation,
     bytestring_path,
@@ -120,7 +120,7 @@ def capture_stdout():
 
 def has_program(cmd, args=["--version"]):
     """Returns `True` if `cmd` can be executed."""
-    full_cmd = [cmd] + args
+    full_cmd = [cmd, *args]
     try:
         with open(os.devnull, "wb") as devnull:
             subprocess.check_call(
@@ -364,15 +364,17 @@ class TestHelper(ConfigMixin):
                 items.append(item)
         return self.lib.add_album(items)
 
-    def create_mediafile_fixture(self, ext="mp3", images=[]):
+    def create_mediafile_fixture(self, ext="mp3", images=[], target_dir=None):
         """Copy a fixture mediafile with the extension to `temp_dir`.
 
         `images` is a subset of 'png', 'jpg', and 'tiff'. For each
         specified extension a cover art image is added to the media
         file.
         """
+        if not target_dir:
+            target_dir = self.temp_dir
         src = os.path.join(_common.RSRC, util.bytestring_path(f"full.{ext}"))
-        handle, path = mkstemp(dir=self.temp_dir)
+        handle, path = mkstemp(dir=target_dir)
         path = bytestring_path(path)
         os.close(handle)
         shutil.copyfile(syspath(src), syspath(path))
@@ -524,7 +526,7 @@ class ImportHelper(TestHelper):
     autotagging library and several assertions for the library.
     """
 
-    default_import_config = {
+    default_import_config: ClassVar[dict[str, bool]] = {
         "autotag": True,
         "copy": True,
         "hardlink": False,
@@ -880,7 +882,7 @@ class FetchImageHelper:
     def run(self, *args, **kwargs):
         super().run(*args, **kwargs)
 
-    IMAGEHEADER: dict[str, bytes] = {
+    IMAGEHEADER: ClassVar[dict[str, bytes]] = {
         "image/jpeg": b"\xff\xd8\xff\x00\x00\x00JFIF",
         "image/png": b"\211PNG\r\n\032\n",
         "image/gif": b"GIF89a",
