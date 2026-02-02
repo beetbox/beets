@@ -26,6 +26,8 @@ def rst_changelog():
   multi-line change.
   :bug:`5467`
 - :ref:`list-cmd` Update.
+- |BeetsPlugin| Some plugin change.
+- See :class:`~beetsplug._utils.musicbrainz.MusicBrainzAPI` for documentation.
 
 You can do something with this command:
 
@@ -77,7 +79,9 @@ Bug fixes:
 def md_changelog():
     return r"""### New features
 
+- See [beetsplug.\_utils.musicbrainz.MusicBrainzAPI](https://beets.readthedocs.io/en/stable/api/generated/beetsplug._utils.musicbrainz.MusicBrainzAPI.html#beetsplug._utils.musicbrainz.MusicBrainzAPI) for documentation.
 - [Substitute Plugin](https://beets.readthedocs.io/en/stable/plugins/substitute.html): Some substitute multi-line change. :bug: (#5467)
+- [beets.plugins.BeetsPlugin](https://beets.readthedocs.io/en/stable/api/generated/beets.plugins.BeetsPlugin.html#beets.plugins.BeetsPlugin) Some plugin change.
 - [list](https://beets.readthedocs.io/en/stable/reference/cli.html#list-cmd) Update.
 
 You can do something with this command:
