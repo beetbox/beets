@@ -25,6 +25,9 @@ from pathlib import Path
 def is_hidden(path: bytes | Path) -> bool:
     """
     Determine whether the given path is treated as a 'hidden file' by the OS.
+
+    Note: A platform-specific check is performed on each invocation. Bytes
+    inputs are supported for backward compatibility.
     """
 
     if isinstance(path, bytes):
