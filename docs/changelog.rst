@@ -7,13 +7,9 @@ below!
 Unreleased
 ----------
 
-New features:
-
 Bug fixes:
 
-For packagers:
-
-Other changes:
+- Make ``packaging`` a required dependency. :bug:`6332`
 
 2.6.0 (February 01, 2026)
 -------------------------
