@@ -9,6 +9,8 @@ Unreleased
 
 New features:
 
+- :doc:`plugins/musicbrainz`: Additional functionality for pseudo-releases.
+
 Bug fixes:
 
 For packagers:
@@ -46,8 +48,6 @@ New features:
 - :doc:`plugins/importsource`: Added new plugin that tracks original import
   paths and optionally suggests removing source files when items are removed
   from the library.
-- :doc:`plugins/mbpseudo`: Add a new `mbpseudo` plugin to proactively receive
-  MusicBrainz pseudo-releases as recommendations during import.
 - Added support for Python 3.13.
 - :doc:`/plugins/convert`: ``force`` can be passed to override checks like
   no_convert, never_convert_lossy_files, same format, and max_bitrate
@@ -148,7 +148,6 @@ For plugin developers:
 
   - :doc:`plugins/listenbrainz`
   - :doc:`plugins/mbcollection`
-  - :doc:`plugins/mbpseudo`
   - :doc:`plugins/missing`
   - :doc:`plugins/musicbrainz`
   - :doc:`plugins/parentwork`
