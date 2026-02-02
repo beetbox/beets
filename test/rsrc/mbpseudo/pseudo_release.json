@@ -1,346 +1,515 @@
 {
-  "release": {
-    "id": "dc3ee2df-0bc1-49eb-b8c4-34473d279a43",
-    "title": "In Bloom",
-    "status": "Pseudo-Release",
-    "quality": "normal",
-    "text-representation": {
-      "language": "eng",
-      "script": "Latn"
-    },
-    "artist-credit": [
-      {
-        "name": "Lilas Ikuta",
-        "artist": {
-          "id": "55e42264-ef27-49d8-93fd-29f930dc96e4",
-          "type": "Person",
-          "name": "幾田りら",
-          "sort-name": "Ikuta, Lilas",
-          "country": "JP",
-          "alias-list": [
+  "aliases": [],
+  "artist-credit": [
+    {
+      "artist": {
+        "aliases": [
+          {
+            "begin": null,
+            "end": null,
+            "ended": false,
+            "locale": "en",
+            "name": "Lilas Ikuta",
+            "primary": true,
+            "sort-name": "Ikuta, Lilas",
+            "type": "Artist name",
+            "type-id": "894afba6-2816-3c24-8072-eadb66bd04bc"
+          }
+        ],
+        "country": "JP",
+        "disambiguation": "",
+        "genres": [
+          {
+            "count": 1,
+            "disambiguation": "",
+            "id": "eba7715e-ee26-4989-8d49-9db382955419",
+            "name": "j-pop"
+          },
+          {
+            "count": 1,
+            "disambiguation": "",
+            "id": "455f264b-db00-4716-991d-fbd32dc24523",
+            "name": "singer-songwriter"
+          }
+        ],
+        "id": "55e42264-ef27-49d8-93fd-29f930dc96e4",
+        "name": "幾田りら",
+        "sort-name": "Ikuta, Lilas",
+        "tags": [
+          {
+            "count": 1,
+            "name": "j-pop"
+          },
+          {
+            "count": 1,
+            "name": "singer-songwriter"
+          }
+        ],
+        "type": "Person",
+        "type-id": "b6e035f4-3ce9-331c-97df-83397230b0df"
+      },
+      "joinphrase": "",
+      "name": "Lilas Ikuta"
+    }
+  ],
+  "asin": null,
+  "barcode": null,
+  "cover-art-archive": {
+    "artwork": false,
+    "back": false,
+    "count": 0,
+    "darkened": false,
+    "front": false
+  },
+  "disambiguation": "",
+  "genres": [],
+  "id": "dc3ee2df-0bc1-49eb-b8c4-34473d279a43",
+  "label-info": [],
+  "media": [
+    {
+      "format": "Digital Media",
+      "format-id": "907a28d9-b3b2-3ef6-89a8-7b18d91d4794",
+      "id": "606faab7-60fa-3a8b-a40f-2c66150cce81",
+      "position": 1,
+      "title": "",
+      "track-count": 1,
+      "track-offset": 0,
+      "tracks": [
+        {
+          "artist-credit": [
             {
-              "locale": "en",
-              "sort-name": "Ikuta, Lilas",
-              "type": "Artist name",
-              "primary": "primary",
-              "alias": "Lilas Ikuta"
+              "artist": {
+                "aliases": [
+                  {
+                    "begin": null,
+                    "end": null,
+                    "ended": false,
+                    "locale": "en",
+                    "name": "Lilas Ikuta",
+                    "primary": true,
+                    "sort-name": "Ikuta, Lilas",
+                    "type": "Artist name",
+                    "type-id": "894afba6-2816-3c24-8072-eadb66bd04bc"
+                  }
+                ],
+                "country": "JP",
+                "disambiguation": "",
+                "id": "55e42264-ef27-49d8-93fd-29f930dc96e4",
+                "name": "幾田りら",
+                "sort-name": "Ikuta, Lilas",
+                "type": "Person",
+                "type-id": "b6e035f4-3ce9-331c-97df-83397230b0df"
+              },
+              "joinphrase": "",
+              "name": "Lilas Ikuta"
             }
           ],
-          "alias-count": 1,
-          "tag-list": [
-            {
-              "count": "1",
-              "name": "j-pop"
-            },
-            {
-              "count": "1",
-              "name": "singer-songwriter"
-            }
-          ]
-        }
-      }
-    ],
-    "release-group": {
-      "id": "da0d6bbb-f44b-4fff-8739-9d72db0402a1",
-      "type": "Single",
-      "title": "百花繚乱",
-      "first-release-date": "2025-01-10",
-      "primary-type": "Single",
-      "artist-credit": [
-        {
-          "artist": {
-            "id": "55e42264-ef27-49d8-93fd-29f930dc96e4",
-            "type": "Person",
-            "name": "幾田りら",
-            "sort-name": "Ikuta, Lilas",
-            "country": "JP",
-            "alias-list": [
-              {
-                "locale": "en",
-                "sort-name": "Ikuta, Lilas",
-                "type": "Artist name",
-                "primary": "primary",
-                "alias": "Lilas Ikuta"
-              }
-            ],
-            "alias-count": 1,
-            "tag-list": [
-              {
-                "count": "1",
-                "name": "j-pop"
-              },
-              {
-                "count": "1",
-                "name": "singer-songwriter"
-              }
-            ]
-          }
-        }
-      ],
-      "artist-credit-phrase": "幾田りら"
-    },
-    "cover-art-archive": {
-      "artwork": "false",
-      "count": "0",
-      "front": "false",
-      "back": "false"
-    },
-    "label-info-list": [],
-    "label-info-count": 0,
-    "medium-list": [
-      {
-        "position": "1",
-        "format": "Digital Media",
-        "track-list": [
-          {
-            "id": "2018b012-a184-49a2-a464-fb4628a89588",
-            "position": "1",
-            "number": "1",
-            "title": "In Bloom",
-            "length": "179239",
+          "id": "2018b012-a184-49a2-a464-fb4628a89588",
+          "length": 179239,
+          "number": "1",
+          "position": 1,
+          "recording": {
+            "aliases": [],
             "artist-credit": [
               {
-                "name": "Lilas Ikuta",
                 "artist": {
+                  "country": "JP",
+                  "disambiguation": "",
                   "id": "55e42264-ef27-49d8-93fd-29f930dc96e4",
-                  "type": "Person",
                   "name": "幾田りら",
                   "sort-name": "Ikuta, Lilas",
+                  "type": "Person",
+                  "type-id": "b6e035f4-3ce9-331c-97df-83397230b0df"
+                },
+                "joinphrase": "",
+                "name": "幾田りら"
+              }
+            ],
+            "artist-relations": [
+              {
+                "artist": {
                   "country": "JP",
-                  "alias-list": [
+                  "disambiguation": "Japanese composer/arranger/guitarist, agehasprings",
+                  "id": "f24241fb-4d89-4bf2-8336-3f2a7d2c0025",
+                  "name": "KOHD",
+                  "sort-name": "KOHD",
+                  "type": "Person",
+                  "type-id": "b6e035f4-3ce9-331c-97df-83397230b0df"
+                },
+                "attribute-ids": {},
+                "attribute-values": {},
+                "attributes": [],
+                "begin": null,
+                "direction": "backward",
+                "end": null,
+                "ended": false,
+                "source-credit": "",
+                "target-credit": "",
+                "type": "arranger",
+                "type-id": "22661fb8-cdb7-4f67-8385-b2a8be6c9f0d"
+              },
+              {
+                "artist": {
+                  "country": "JP",
+                  "disambiguation": "",
+                  "id": "55e42264-ef27-49d8-93fd-29f930dc96e4",
+                  "name": "幾田りら",
+                  "sort-name": "Ikuta, Lilas",
+                  "type": "Person",
+                  "type-id": "b6e035f4-3ce9-331c-97df-83397230b0df"
+                },
+                "attribute-ids": {},
+                "attribute-values": {},
+                "attributes": [],
+                "begin": "2025",
+                "direction": "backward",
+                "end": "2025",
+                "ended": true,
+                "source-credit": "",
+                "target-credit": "Lilas Ikuta",
+                "type": "phonographic copyright",
+                "type-id": "7fd5fbc0-fbf4-4d04-be23-417d50a4dc30"
+              },
+              {
+                "artist": {
+                  "country": "JP",
+                  "disambiguation": "",
+                  "id": "1d27ab8a-a0df-47cf-b4cc-d2d7a0712a05",
+                  "name": "山本秀哉",
+                  "sort-name": "Yamamoto, Shuya",
+                  "type": "Person",
+                  "type-id": "b6e035f4-3ce9-331c-97df-83397230b0df"
+                },
+                "attribute-ids": {},
+                "attribute-values": {},
+                "attributes": [],
+                "begin": null,
+                "direction": "backward",
+                "end": null,
+                "ended": false,
+                "source-credit": "",
+                "target-credit": "",
+                "type": "producer",
+                "type-id": "5c0ceac3-feb4-41f0-868d-dc06f6e27fc0"
+              },
+              {
+                "artist": {
+                  "country": "JP",
+                  "disambiguation": "",
+                  "id": "55e42264-ef27-49d8-93fd-29f930dc96e4",
+                  "name": "幾田りら",
+                  "sort-name": "Ikuta, Lilas",
+                  "type": "Person",
+                  "type-id": "b6e035f4-3ce9-331c-97df-83397230b0df"
+                },
+                "attribute-ids": {},
+                "attribute-values": {},
+                "attributes": [],
+                "begin": null,
+                "direction": "backward",
+                "end": null,
+                "ended": false,
+                "source-credit": "",
+                "target-credit": "",
+                "type": "vocal",
+                "type-id": "0fdbe3c6-7700-4a31-ae54-b53f06ae1cfa"
+              }
+            ],
+            "disambiguation": "",
+            "first-release-date": "2025-01-10",
+            "genres": [],
+            "id": "781724c1-a039-41e6-bd9b-770c3b9d5b8e",
+            "isrcs": [
+              "JPP302400868"
+            ],
+            "length": 179546,
+            "tags": [],
+            "title": "百花繚乱",
+            "url-relations": [
+              {
+                "attribute-ids": {},
+                "attribute-values": {},
+                "attributes": [],
+                "begin": null,
+                "direction": "forward",
+                "end": null,
+                "ended": false,
+                "source-credit": "",
+                "target-credit": "",
+                "type": "free streaming",
+                "type-id": "7e41ef12-a124-4324-afdb-fdbae687a89c",
+                "url": {
+                  "id": "d076eaf9-5fde-4f6e-a946-cde16b67aa3b",
+                  "resource": "https://open.spotify.com/track/782PTXsbAWB70ySDZ5NHmP"
+                }
+              },
+              {
+                "attribute-ids": {},
+                "attribute-values": {},
+                "attributes": [],
+                "begin": null,
+                "direction": "forward",
+                "end": null,
+                "ended": false,
+                "source-credit": "",
+                "target-credit": "",
+                "type": "purchase for download",
+                "type-id": "92777657-504c-4acb-bd33-51a201bd57e1",
+                "url": {
+                  "id": "64879627-6eca-4755-98b5-b2234a8dbc61",
+                  "resource": "https://music.apple.com/jp/song/1857886416"
+                }
+              },
+              {
+                "attribute-ids": {},
+                "attribute-values": {},
+                "attributes": [],
+                "begin": null,
+                "direction": "forward",
+                "end": null,
+                "ended": false,
+                "source-credit": "",
+                "target-credit": "",
+                "type": "streaming",
+                "type-id": "b5f3058a-666c-406f-aafb-f9249fc7b122",
+                "url": {
+                  "id": "64879627-6eca-4755-98b5-b2234a8dbc61",
+                  "resource": "https://music.apple.com/jp/song/1857886416"
+                }
+              }
+            ],
+            "video": false,
+            "work-relations": [
+              {
+                "attribute-ids": {},
+                "attribute-values": {},
+                "attributes": [],
+                "begin": null,
+                "direction": "forward",
+                "end": null,
+                "ended": false,
+                "source-credit": "",
+                "target-credit": "",
+                "type": "performance",
+                "type-id": "a3005666-a872-32c3-ad06-98af558e99b0",
+                "work": {
+                  "artist-relations": [
                     {
-                      "locale": "en",
-                      "sort-name": "Ikuta, Lilas",
-                      "type": "Artist name",
-                      "primary": "primary",
-                      "alias": "Lilas Ikuta"
-                    }
-                  ],
-                  "alias-count": 1,
-                  "tag-list": [
-                    {
-                      "count": "1",
-                      "name": "j-pop"
+                      "artist": {
+                        "country": "JP",
+                        "disambiguation": "",
+                        "id": "55e42264-ef27-49d8-93fd-29f930dc96e4",
+                        "name": "幾田りら",
+                        "sort-name": "Ikuta, Lilas",
+                        "type": "Person",
+                        "type-id": "b6e035f4-3ce9-331c-97df-83397230b0df"
+                      },
+                      "attribute-ids": {},
+                      "attribute-values": {},
+                      "attributes": [],
+                      "begin": null,
+                      "direction": "backward",
+                      "end": null,
+                      "ended": false,
+                      "source-credit": "",
+                      "target-credit": "",
+                      "type": "composer",
+                      "type-id": "d59d99ea-23d4-4a80-b066-edca32ee158f"
                     },
                     {
-                      "count": "1",
-                      "name": "singer-songwriter"
+                      "artist": {
+                        "country": "JP",
+                        "disambiguation": "",
+                        "id": "55e42264-ef27-49d8-93fd-29f930dc96e4",
+                        "name": "幾田りら",
+                        "sort-name": "Ikuta, Lilas",
+                        "type": "Person",
+                        "type-id": "b6e035f4-3ce9-331c-97df-83397230b0df"
+                      },
+                      "attribute-ids": {},
+                      "attribute-values": {},
+                      "attributes": [],
+                      "begin": null,
+                      "direction": "backward",
+                      "end": null,
+                      "ended": false,
+                      "source-credit": "",
+                      "target-credit": "",
+                      "type": "lyricist",
+                      "type-id": "3e48faba-ec01-47fd-8e89-30e81161661c"
+                    }
+                  ],
+                  "attributes": [],
+                  "disambiguation": "",
+                  "id": "9e14d6b2-ac7d-43e9-82a9-561bc76ce2ed",
+                  "iswcs": [],
+                  "language": "jpn",
+                  "languages": [
+                    "jpn"
+                  ],
+                  "title": "百花繚乱",
+                  "type": "Song",
+                  "type-id": "f061270a-2fd6-32f1-a641-f0f8676d14e6",
+                  "url-relations": [
+                    {
+                      "attribute-ids": {},
+                      "attribute-values": {},
+                      "attributes": [],
+                      "begin": null,
+                      "direction": "backward",
+                      "end": null,
+                      "ended": false,
+                      "source-credit": "",
+                      "target-credit": "",
+                      "type": "lyrics",
+                      "type-id": "e38e65aa-75e0-42ba-ace0-072aeb91a538",
+                      "url": {
+                        "id": "dfac3640-6b23-4991-a59c-7cb80e8eb950",
+                        "resource": "https://utaten.com/lyric/tt24121002/"
+                      }
+                    },
+                    {
+                      "attribute-ids": {},
+                      "attribute-values": {},
+                      "attributes": [],
+                      "begin": null,
+                      "direction": "backward",
+                      "end": null,
+                      "ended": false,
+                      "source-credit": "",
+                      "target-credit": "",
+                      "type": "lyrics",
+                      "type-id": "e38e65aa-75e0-42ba-ace0-072aeb91a538",
+                      "url": {
+                        "id": "b1b5d5df-e79d-4cda-bb2a-8014e5505415",
+                        "resource": "https://www.uta-net.com/song/366579/"
+                      }
                     }
                   ]
                 }
               }
-            ],
-            "recording": {
-              "id": "781724c1-a039-41e6-bd9b-770c3b9d5b8e",
-              "title": "百花繚乱",
-              "length": "179546",
-              "artist-credit": [
-                {
-                  "artist": {
-                    "id": "55e42264-ef27-49d8-93fd-29f930dc96e4",
-                    "type": "Person",
-                    "name": "幾田りら",
-                    "sort-name": "Ikuta, Lilas",
-                    "country": "JP",
-                    "alias-list": [
-                      {
-                        "locale": "en",
-                        "sort-name": "Ikuta, Lilas",
-                        "type": "Artist name",
-                        "primary": "primary",
-                        "alias": "Lilas Ikuta"
-                      }
-                    ],
-                    "alias-count": 1,
-                    "tag-list": [
-                      {
-                        "count": "1",
-                        "name": "j-pop"
-                      },
-                      {
-                        "count": "1",
-                        "name": "singer-songwriter"
-                      }
-                    ]
-                  }
-                }
-              ],
-              "isrc-list": [
-                "JPP302400868"
-              ],
-              "isrc-count": 1,
-              "artist-relation-list": [
-                {
-                  "type": "arranger",
-                  "type-id": "22661fb8-cdb7-4f67-8385-b2a8be6c9f0d",
-                  "target": "f24241fb-4d89-4bf2-8336-3f2a7d2c0025",
-                  "direction": "backward",
-                  "artist": {
-                    "id": "f24241fb-4d89-4bf2-8336-3f2a7d2c0025",
-                    "type": "Person",
-                    "name": "KOHD",
-                    "sort-name": "KOHD",
-                    "country": "JP",
-                    "disambiguation": "Japanese composer/arranger/guitarist, agehasprings"
-                  }
-                },
-                {
-                  "type": "phonographic copyright",
-                  "type-id": "7fd5fbc0-fbf4-4d04-be23-417d50a4dc30",
-                  "target": "55e42264-ef27-49d8-93fd-29f930dc96e4",
-                  "direction": "backward",
-                  "begin": "2025",
-                  "end": "2025",
-                  "ended": "true",
-                  "artist": {
-                    "id": "55e42264-ef27-49d8-93fd-29f930dc96e4",
-                    "type": "Person",
-                    "name": "幾田りら",
-                    "sort-name": "Ikuta, Lilas",
-                    "country": "JP"
-                  },
-                  "target-credit": "Lilas Ikuta"
-                },
-                {
-                  "type": "producer",
-                  "type-id": "5c0ceac3-feb4-41f0-868d-dc06f6e27fc0",
-                  "target": "1d27ab8a-a0df-47cf-b4cc-d2d7a0712a05",
-                  "direction": "backward",
-                  "artist": {
-                    "id": "1d27ab8a-a0df-47cf-b4cc-d2d7a0712a05",
-                    "type": "Person",
-                    "name": "山本秀哉",
-                    "sort-name": "Yamamoto, Shuya",
-                    "country": "JP"
-                  }
-                },
-                {
-                  "type": "vocal",
-                  "type-id": "0fdbe3c6-7700-4a31-ae54-b53f06ae1cfa",
-                  "target": "55e42264-ef27-49d8-93fd-29f930dc96e4",
-                  "direction": "backward",
-                  "artist": {
-                    "id": "55e42264-ef27-49d8-93fd-29f930dc96e4",
-                    "type": "Person",
-                    "name": "幾田りら",
-                    "sort-name": "Ikuta, Lilas",
-                    "country": "JP"
-                  }
-                }
-              ],
-              "work-relation-list": [
-                {
-                  "type": "performance",
-                  "type-id": "a3005666-a872-32c3-ad06-98af558e99b0",
-                  "target": "9e14d6b2-ac7d-43e9-82a9-561bc76ce2ed",
-                  "direction": "forward",
-                  "work": {
-                    "id": "9e14d6b2-ac7d-43e9-82a9-561bc76ce2ed",
-                    "type": "Song",
-                    "title": "百花繚乱",
-                    "language": "jpn",
-                    "artist-relation-list": [
-                      {
-                        "type": "composer",
-                        "type-id": "d59d99ea-23d4-4a80-b066-edca32ee158f",
-                        "target": "55e42264-ef27-49d8-93fd-29f930dc96e4",
-                        "direction": "backward",
-                        "artist": {
-                          "id": "55e42264-ef27-49d8-93fd-29f930dc96e4",
-                          "type": "Person",
-                          "name": "幾田りら",
-                          "sort-name": "Ikuta, Lilas",
-                          "country": "JP"
-                        }
-                      },
-                      {
-                        "type": "lyricist",
-                        "type-id": "3e48faba-ec01-47fd-8e89-30e81161661c",
-                        "target": "55e42264-ef27-49d8-93fd-29f930dc96e4",
-                        "direction": "backward",
-                        "artist": {
-                          "id": "55e42264-ef27-49d8-93fd-29f930dc96e4",
-                          "type": "Person",
-                          "name": "幾田りら",
-                          "sort-name": "Ikuta, Lilas",
-                          "country": "JP"
-                        }
-                      }
-                    ],
-                    "url-relation-list": [
-                      {
-                        "type": "lyrics",
-                        "type-id": "e38e65aa-75e0-42ba-ace0-072aeb91a538",
-                        "target": "https://utaten.com/lyric/tt24121002/",
-                        "direction": "backward"
-                      },
-                      {
-                        "type": "lyrics",
-                        "type-id": "e38e65aa-75e0-42ba-ace0-072aeb91a538",
-                        "target": "https://www.uta-net.com/song/366579/",
-                        "direction": "backward"
-                      }
-                    ]
-                  }
-                }
-              ],
-              "artist-credit-phrase": "幾田りら"
+            ]
+          },
+          "title": "In Bloom"
+        }
+      ]
+    }
+  ],
+  "packaging": null,
+  "packaging-id": null,
+  "quality": "normal",
+  "release-group": {
+    "aliases": [],
+    "artist-credit": [
+      {
+        "artist": {
+          "aliases": [
+            {
+              "begin": null,
+              "end": null,
+              "ended": false,
+              "locale": "en",
+              "name": "Lilas Ikuta",
+              "primary": true,
+              "sort-name": "Ikuta, Lilas",
+              "type": "Artist name",
+              "type-id": "894afba6-2816-3c24-8072-eadb66bd04bc"
+            }
+          ],
+          "country": "JP",
+          "disambiguation": "",
+          "id": "55e42264-ef27-49d8-93fd-29f930dc96e4",
+          "name": "幾田りら",
+          "sort-name": "Ikuta, Lilas",
+          "type": "Person",
+          "type-id": "b6e035f4-3ce9-331c-97df-83397230b0df"
+        },
+        "joinphrase": "",
+        "name": "幾田りら"
+      }
+    ],
+    "disambiguation": "",
+    "first-release-date": "2025-01-10",
+    "genres": [],
+    "id": "da0d6bbb-f44b-4fff-8739-9d72db0402a1",
+    "primary-type": "Single",
+    "primary-type-id": "d6038452-8ee0-3f68-affc-2de9a1ede0b9",
+    "secondary-type-ids": [],
+    "secondary-types": [],
+    "tags": [],
+    "title": "百花繚乱"
+  },
+  "release-relations": [
+    {
+      "attribute-ids": {},
+      "attribute-values": {},
+      "attributes": [],
+      "begin": null,
+      "direction": "backward",
+      "end": null,
+      "ended": false,
+      "release": {
+        "artist-credit": [
+          {
+            "artist": {
+              "country": "JP",
+              "disambiguation": "",
+              "id": "55e42264-ef27-49d8-93fd-29f930dc96e4",
+              "name": "幾田りら",
+              "sort-name": "Ikuta, Lilas",
+              "type": null,
+              "type-id": null
             },
-            "artist-credit-phrase": "Lilas Ikuta",
-            "track_or_recording_length": "179239"
+            "joinphrase": "",
+            "name": "幾田りら"
           }
         ],
-        "track-count": 1
-      }
-    ],
-    "medium-count": 1,
-    "release-relation-list": [
-      {
-        "type": "transl-tracklisting",
-        "type-id": "fc399d47-23a7-4c28-bfcf-0607a562b644",
-        "target": "a5ce1d11-2e32-45a4-b37f-c1589d46b103",
-        "direction": "backward",
-        "release": {
-          "id": "a5ce1d11-2e32-45a4-b37f-c1589d46b103",
-          "title": "百花繚乱",
-          "quality": "normal",
-          "text-representation": {
-            "language": "jpn",
-            "script": "Jpan"
-          },
-          "artist-credit": [
-            {
-              "artist": {
-                "id": "55e42264-ef27-49d8-93fd-29f930dc96e4",
-                "name": "幾田りら",
-                "sort-name": "Ikuta, Lilas",
-                "country": "JP"
-              }
-            }
-          ],
-          "date": "2025-01-10",
-          "country": "XW",
-          "release-event-list": [
-            {
-              "date": "2025-01-10",
-              "area": {
-                "id": "525d4e18-3d00-31b9-a58b-a146a916de8f",
-                "name": "[Worldwide]",
-                "sort-name": "[Worldwide]",
-                "iso-3166-1-code-list": [
-                  "XW"
-                ]
-              }
-            }
-          ],
-          "release-event-count": 1,
-          "barcode": "199066336168",
-          "medium-list": [],
-          "medium-count": 0,
-          "artist-credit-phrase": "幾田りら"
-        }
-      }
-    ],
-    "artist-credit-phrase": "Lilas Ikuta"
-  }
+        "barcode": "199066336168",
+        "country": "XW",
+        "date": "2025-01-10",
+        "disambiguation": "",
+        "id": "a5ce1d11-2e32-45a4-b37f-c1589d46b103",
+        "media": [],
+        "packaging": null,
+        "packaging-id": null,
+        "quality": "normal",
+        "release-events": [
+          {
+            "area": {
+              "disambiguation": "",
+              "id": "525d4e18-3d00-31b9-a58b-a146a916de8f",
+              "iso-3166-1-codes": [
+                "XW"
+              ],
+              "name": "[Worldwide]",
+              "sort-name": "[Worldwide]",
+              "type": null,
+              "type-id": null
+            },
+            "date": "2025-01-10"
+          }
+        ],
+        "release-group": null,
+        "status": null,
+        "status-id": null,
+        "text-representation": {
+          "language": "jpn",
+          "script": "Jpan"
+        },
+        "title": "百花繚乱"
+      },
+      "source-credit": "",
+      "target-credit": "",
+      "type": "transl-tracklisting",
+      "type-id": "fc399d47-23a7-4c28-bfcf-0607a562b644"
+    }
+  ],
+  "status": "Pseudo-Release",
+  "status-id": "41121bb9-3413-3818-8a9a-9742318349aa",
+  "tags": [],
+  "text-representation": {
+    "language": "eng",
+    "script": "Latn"
+  },
+  "title": "In Bloom"
 }

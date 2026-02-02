@@ -26,31 +26,42 @@ import threading
 import time
 from abc import ABC
 from collections import defaultdict
-from collections.abc import Generator, Iterable, Iterator, Mapping, Sequence
+from collections.abc import (
+    Callable,
+    Generator,
+    Iterable,
+    Iterator,
+    Mapping,
+    Sequence,
+)
+from functools import cached_property
 from sqlite3 import Connection, sqlite_version_info
-from typing import TYPE_CHECKING, Any, AnyStr, Callable, Generic
+from typing import TYPE_CHECKING, Any, AnyStr, ClassVar, Generic, NamedTuple
 
-from typing_extensions import TypeVar  # default value support
+from typing_extensions import (
+    Self,
+    TypeVar,  # default value support
+)
 from unidecode import unidecode
 
 import beets
 
 from ..util import cached_classproperty, functemplate
 from . import types
-from .query import (
-    FieldQueryType,
-    FieldSort,
-    MatchQuery,
-    NullSort,
-    Query,
-    Sort,
-    TrueQuery,
-)
+from .query import MatchQuery, NullSort, TrueQuery
 
 if TYPE_CHECKING:
+    from collections.abc import (
+        Callable,
+        Generator,
+        Iterable,
+        Iterator,
+        Sequence,
+    )
+    from sqlite3 import Connection
     from types import TracebackType
 
-    from .query import SQLiteType
+    from .query import FieldQueryType, FieldSort, Query, Sort, SQLiteType
 
 D = TypeVar("D", bound="Database", default=Any)
 
@@ -76,6 +87,10 @@ class DBCustomFunctionError(Exception):
         )
 
 
+class NotFoundError(LookupError):
+    pass
+
+
 class FormattedMapping(Mapping[str, str]):
     """A `dict`-like formatted view of a model.
 
@@ -89,6 +104,8 @@ class FormattedMapping(Mapping[str, str]):
     If `for_path` is true, all path separators in the formatted values
     are replaced.
     """
+
+    model: Model
 
     ALL_KEYS = "*"
 
@@ -289,7 +306,7 @@ class Model(ABC, Generic[D]):
     """The flex field SQLite table name.
     """
 
-    _fields: dict[str, types.Type] = {}
+    _fields: ClassVar[dict[str, types.Type]] = {}
     """A mapping indicating available "fixed" fields on this type. The
     keys are field names and the values are `Type` objects.
     """
@@ -299,12 +316,17 @@ class Model(ABC, Generic[D]):
     terms.
     """
 
+    _indices: Sequence[Index] = ()
+    """A sequence of `Index` objects that describe the indices to be
+    created for this table.
+    """
+
     @cached_classproperty
     def _types(cls) -> dict[str, types.Type]:
         """Optional types for non-fixed (flexible and computed) fields."""
         return {}
 
-    _sorts: dict[str, type[FieldSort]] = {}
+    _sorts: ClassVar[dict[str, type[FieldSort]]] = {}
     """Optional named sort criteria. The keys are strings and the values
     are subclasses of `Sort`.
     """
@@ -352,6 +374,22 @@ class Model(ABC, Generic[D]):
     def other_db_fields(cls) -> set[str]:
         """Fields in the related table."""
         return cls._relation._fields.keys() - cls.shared_db_fields
+
+    @cached_property
+    def db(self) -> D:
+        """Get the database associated with this object.
+
+        This validates that the database is attached and the object has an id.
+        """
+        return self._check_db()
+
+    def get_fresh_from_db(self) -> Self:
+        """Load this object from the database."""
+        model_cls = self.__class__
+        if obj := self.db._get(model_cls, self.id):
+            return obj
+
+        raise NotFoundError(f"No matching {model_cls.__name__} found") from None
 
     @classmethod
     def _getters(cls: type[Model]):
@@ -592,7 +630,6 @@ class Model(ABC, Generic[D]):
         """
         if fields is None:
             fields = self._fields
-        db = self._check_db()
 
         # Build assignments for query.
         assignments = []
@@ -604,7 +641,7 @@ class Model(ABC, Generic[D]):
                 value = self._type(key).to_sql(self[key])
                 subvars.append(value)
 
-        with db.transaction() as tx:
+        with self.db.transaction() as tx:
             # Main table update.
             if assignments:
                 query = f"UPDATE {self._table} SET {','.join(assignments)} WHERE id=?"
@@ -638,21 +675,16 @@ class Model(ABC, Generic[D]):
         If check_revision is true, the database is only queried loaded when a
         transaction has been committed since the item was last loaded.
         """
-        db = self._check_db()
-        if not self._dirty and db.revision == self._revision:
+        if not self._dirty and self.db.revision == self._revision:
             # Exit early
             return
-        stored_obj = db._get(type(self), self.id)
-        assert stored_obj is not None, f"object {self.id} not in DB"
-        self._values_fixed = LazyConvertDict(self)
-        self._values_flex = LazyConvertDict(self)
-        self.update(dict(stored_obj))
+
+        self.__dict__.update(self.get_fresh_from_db().__dict__)
         self.clear_dirty()
 
     def remove(self):
         """Remove the object's associated rows from the database."""
-        db = self._check_db()
-        with db.transaction() as tx:
+        with self.db.transaction() as tx:
             tx.mutate(f"DELETE FROM {self._table} WHERE id=?", (self.id,))
             tx.mutate(
                 f"DELETE FROM {self._flex_table} WHERE entity_id=?", (self.id,)
@@ -668,7 +700,7 @@ class Model(ABC, Generic[D]):
         """
         if db:
             self._db = db
-        db = self._check_db(False)
+        db = self._check_db(need_id=False)
 
         with db.transaction() as tx:
             new_id = tx.mutate(f"INSERT INTO {self._table} DEFAULT VALUES")
@@ -689,7 +721,7 @@ class Model(ABC, Generic[D]):
         self,
         included_keys: str = _formatter.ALL_KEYS,
         for_path: bool = False,
-    ):
+    ) -> FormattedMapping:
         """Get a mapping containing all values on this object formatted
         as human-readable unicode strings.
         """
@@ -733,9 +765,9 @@ class Model(ABC, Generic[D]):
         Remove the database connection as sqlite connections are not
         picklable.
         """
-        state = self.__dict__.copy()
-        state["_db"] = None
-        return state
+        return {
+            k: v for k, v in self.__dict__.items() if k not in {"_db", "db"}
+        }
 
 
 # Database controller and supporting interfaces.
@@ -1059,6 +1091,7 @@ class Database:
         for model_cls in self._models:
             self._make_table(model_cls._table, model_cls._fields)
             self._make_attribute_table(model_cls._flex_table)
+            self._create_indices(model_cls._table, model_cls._indices)
 
     # Primitive access control: connections and transactions.
 
@@ -1097,6 +1130,16 @@ class Database:
             # call conn.close() in _close()
             check_same_thread=False,
         )
+
+        if sys.version_info >= (3, 12) and sqlite3.sqlite_version_info >= (
+            3,
+            29,
+            0,
+        ):
+            # If possible, disable double-quoted strings
+            conn.setconfig(sqlite3.SQLITE_DBCONFIG_DQS_DDL, 0)
+            conn.setconfig(sqlite3.SQLITE_DBCONFIG_DQS_DML, 0)
+
         self.add_functions(conn)
 
         if self.supports_extensions:
@@ -1236,6 +1279,19 @@ class Database:
                     ON {flex_table} (entity_id);
                 """)
 
+    def _create_indices(
+        self,
+        table: str,
+        indices: Sequence[Index],
+    ):
+        """Create indices for the given table if they don't exist."""
+        with self.transaction() as tx:
+            for index in indices:
+                tx.script(
+                    f"CREATE INDEX IF NOT EXISTS {index.name} "
+                    f"ON {table} ({', '.join(index.columns)});"
+                )
+
     # Querying.
 
     def _fetch(
@@ -1296,12 +1352,15 @@ class Database:
             sort if sort.is_slow() else None,  # Slow sort component.
         )
 
-    def _get(
-        self,
-        model_cls: type[AnyModel],
-        id,
-    ) -> AnyModel | None:
-        """Get a Model object by its id or None if the id does not
-        exist.
-        """
-        return self._fetch(model_cls, MatchQuery("id", id)).get()
+    def _get(self, model_cls: type[AnyModel], id_: int) -> AnyModel | None:
+        """Get a Model object by its id or None if the id does not exist."""
+        return self._fetch(model_cls, MatchQuery("id", id_)).get()
+
+
+class Index(NamedTuple):
+    """A helper class to represent the index
+    information in the database schema.
+    """
+
+    name: str
+    columns: tuple[str, ...]

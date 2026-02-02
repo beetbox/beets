@@ -22,6 +22,7 @@ import threading
 import time
 import unittest
 from contextlib import contextmanager
+from typing import ClassVar
 from unittest.mock import MagicMock, patch
 
 import confuse
@@ -837,7 +838,7 @@ class BPDQueueTest(BPDTestHelper):
         fail=True,
     )
 
-    METADATA = {"Pos", "Time", "Id", "file", "duration"}
+    METADATA: ClassVar[set[str]] = {"Pos", "Time", "Id", "file", "duration"}
 
     def test_cmd_add(self):
         with self.run_bpd() as client:
@@ -1032,7 +1033,7 @@ class BPDConnectionTest(BPDTestHelper):
         }
     )
 
-    ALL_MPD_TAGTYPES = {
+    ALL_MPD_TAGTYPES: ClassVar[set[str]] = {
         "Artist",
         "ArtistSort",
         "Album",
@@ -1057,7 +1058,7 @@ class BPDConnectionTest(BPDTestHelper):
         "MUSICBRAINZ_RELEASETRACKID",
         "MUSICBRAINZ_WORKID",
     }
-    UNSUPPORTED_TAGTYPES = {
+    UNSUPPORTED_TAGTYPES: ClassVar[set[str]] = {
         "MUSICBRAINZ_WORKID",  # not tracked by beets
         "Performer",  # not tracked by beets
         "AlbumSort",  # not tracked by beets

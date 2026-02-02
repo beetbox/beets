@@ -1,10 +1,9 @@
 from collections import Counter
 from itertools import chain
-from typing import Any, NamedTuple
 
 from beets import autotag, config, importer, logging, plugins, ui
 from beets.autotag import Recommendation
-from beets.util import displayable_path
+from beets.util import PromptChoice, displayable_path
 from beets.util.units import human_bytes, human_seconds_short
 
 from .display import (
@@ -257,13 +256,11 @@ class TerminalImportSession(importer.ImportSession):
 
         # Add a "dummy" choice for the other baked-in option, for
         # duplicate checking.
-        all_choices = (
-            [
-                PromptChoice("a", "Apply", None),
-            ]
-            + choices
-            + extra_choices
-        )
+        all_choices = [
+            PromptChoice("a", "Apply", None),
+            *choices,
+            *extra_choices,
+        ]
 
         # Check for conflicts.
         short_letters = [c.short for c in all_choices]
@@ -368,12 +365,6 @@ def _summary_judgment(rec):
     return action
 
 
-class PromptChoice(NamedTuple):
-    short: str
-    long: str
-    callback: Any
-
-
 def choose_candidate(
     candidates,
     singleton,
@@ -451,10 +442,7 @@ def choose_candidate(
                 index = dist_colorize(index0, match.distance)
                 dist = f"({(1 - match.distance) * 100:.1f}%)"
                 distance = dist_colorize(dist, match.distance)
-                metadata = (
-                    f"{match.info.artist} -"
-                    f" {match.info.title if singleton else match.info.album}"
-                )
+                metadata = f"{match.info.artist} - {match.info.name}"
                 if i == 0:
                     metadata = dist_colorize(metadata, match.distance)
                 else:
@@ -511,7 +499,7 @@ def choose_candidate(
         if config["import"]["bell"]:
             ui.print_("\a", end="")
         sel = ui.input_options(
-            ("Apply", "More candidates") + choice_opts,
+            ("Apply", "More candidates", *choice_opts),
             require=require,
             default=default,
         )

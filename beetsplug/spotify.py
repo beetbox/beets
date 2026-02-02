@@ -27,7 +27,7 @@ import re
 import threading
 import time
 import webbrowser
-from typing import TYPE_CHECKING, Any, Literal, Sequence, Union
+from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 import confuse
 import requests
@@ -36,14 +36,13 @@ from beets import ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.dbcore import types
 from beets.library import Library
-from beets.metadata_plugins import (
-    IDResponse,
-    SearchApiMetadataSourcePlugin,
-    SearchFilter,
-)
+from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from beets.library import Library
+    from beets.metadata_plugins import SearchFilter
     from beetsplug._typing import JSONDict
 
 DEFAULT_WAITING_TIME = 5
@@ -87,11 +86,9 @@ class AudioFeaturesUnavailableError(Exception):
 
 
 class SpotifyPlugin(
-    SearchApiMetadataSourcePlugin[
-        Union[SearchResponseAlbums, SearchResponseTracks]
-    ]
+    SearchApiMetadataSourcePlugin[SearchResponseAlbums | SearchResponseTracks]
 ):
-    item_types = {
+    item_types: ClassVar[dict[str, types.Type]] = {
         "spotify_track_popularity": types.INTEGER,
         "spotify_acousticness": types.FLOAT,
         "spotify_danceability": types.FLOAT,
@@ -117,7 +114,7 @@ class SpotifyPlugin(
     track_url = "https://api.spotify.com/v1/tracks/"
     audio_features_url = "https://api.spotify.com/v1/audio-features/"
 
-    spotify_audio_features = {
+    spotify_audio_features: ClassVar[dict[str, str]] = {
         "acousticness": "spotify_acousticness",
         "danceability": "spotify_danceability",
         "energy": "spotify_energy",
@@ -142,7 +139,7 @@ class SpotifyPlugin(
                 "region_filter": None,
                 "regex": [],
                 "client_id": "4e414367a1d14c75a5c5129a627fcab8",
-                "client_secret": "f82bdc09b2254f1a8286815d02fd46dc",
+                "client_secret": "4a9b5b7848e54e118a7523b1c7c3e1e5",
                 "tokenfile": "spotify_token.json",
             }
         )
@@ -300,6 +297,20 @@ class SpotifyPlugin(
                 self._log.error("Request failed. Error: {}", e)
                 raise APIError("Request failed.")
 
+    def _multi_artist_credit(
+        self, artists: list[dict[str | int, str]]
+    ) -> tuple[list[str], list[str]]:
+        """Given a list of artist dictionaries, accumulate data into a pair
+        of lists: the first being the artist names, and the second being the
+        artist IDs.
+        """
+        artist_names = []
+        artist_ids = []
+        for artist in artists:
+            artist_names.append(artist["name"])
+            artist_ids.append(artist["id"])
+        return artist_names, artist_ids
+
     def album_for_id(self, album_id: str) -> AlbumInfo | None:
         """Fetch an album by its Spotify ID or URL and return an
         AlbumInfo object or None if the album is not found.
@@ -319,7 +330,10 @@ class SpotifyPlugin(
         if album_data["name"] == "":
             self._log.debug("Album removed from Spotify: {}", album_id)
             return None
-        artist, artist_id = self.get_artist(album_data["artists"])
+        artists_names, artists_ids = self._multi_artist_credit(
+            album_data["artists"]
+        )
+        artist = ", ".join(artists_names)
 
         date_parts = [
             int(part) for part in album_data["release_date"].split("-")
@@ -362,8 +376,10 @@ class SpotifyPlugin(
             album_id=spotify_id,
             spotify_album_id=spotify_id,
             artist=artist,
-            artist_id=artist_id,
-            spotify_artist_id=artist_id,
+            artist_id=artists_ids[0] if len(artists_ids) > 0 else None,
+            spotify_artist_id=artists_ids[0] if len(artists_ids) > 0 else None,
+            artists=artists_names,
+            artists_ids=artists_ids,
             tracks=tracks,
             albumtype=album_data["album_type"],
             va=len(album_data["artists"]) == 1
@@ -386,7 +402,10 @@ class SpotifyPlugin(
         :returns: TrackInfo object for track
 
         """
-        artist, artist_id = self.get_artist(track_data["artists"])
+        artists_names, artists_ids = self._multi_artist_credit(
+            track_data["artists"]
+        )
+        artist = ", ".join(artists_names)
 
         # Get album information for spotify tracks
         try:
@@ -399,8 +418,10 @@ class SpotifyPlugin(
             spotify_track_id=track_data["id"],
             artist=artist,
             album=album,
-            artist_id=artist_id,
-            spotify_artist_id=artist_id,
+            artist_id=artists_ids[0] if len(artists_ids) > 0 else None,
+            spotify_artist_id=artists_ids[0] if len(artists_ids) > 0 else None,
+            artists=artists_names,
+            artists_ids=artists_ids,
             length=track_data["duration_ms"] / 1000,
             index=track_data["track_number"],
             medium=track_data["disc_number"],

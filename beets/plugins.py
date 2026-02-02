@@ -20,12 +20,10 @@ import abc
 import inspect
 import re
 import sys
-import warnings
 from collections import defaultdict
 from functools import cached_property, wraps
 from importlib import import_module
 from pathlib import Path
-from types import GenericAlias
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeVar
 
 import mediafile
@@ -34,9 +32,10 @@ from typing_extensions import ParamSpec
 import beets
 from beets import logging
 from beets.util import unique_list
+from beets.util.deprecation import deprecate_for_maintainers, deprecate_for_user
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Sequence
+    from collections.abc import Callable, Iterable, Iterator, Sequence
 
     from confuse import ConfigView
 
@@ -59,7 +58,6 @@ if TYPE_CHECKING:
     P = ParamSpec("P")
     Ret = TypeVar("Ret", bound=Any)
     Listener = Callable[..., Any]
-    IterF = Callable[P, Iterable[Ret]]
 
 
 PLUGIN_NAMESPACE = "beetsplug"
@@ -142,7 +140,13 @@ class PluginLogFilter(logging.Filter):
 # Managing the plugins themselves.
 
 
-class BeetsPlugin(metaclass=abc.ABCMeta):
+class BeetsPluginMeta(abc.ABCMeta):
+    template_funcs: ClassVar[TFuncMap[str]] = {}
+    template_fields: ClassVar[TFuncMap[Item]] = {}
+    album_template_fields: ClassVar[TFuncMap[Album]] = {}
+
+
+class BeetsPlugin(metaclass=BeetsPluginMeta):
     """The base class for all beets plugins. Plugins provide
     functionality by defining a subclass of BeetsPlugin and overriding
     the abstract methods defined here.
@@ -152,9 +156,10 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         list
     )
     listeners: ClassVar[dict[EventType, list[Listener]]] = defaultdict(list)
-    template_funcs: TFuncMap[str] | None = None
-    template_fields: TFuncMap[Item] | None = None
-    album_template_fields: TFuncMap[Album] | None = None
+
+    template_funcs: TFuncMap[str]
+    template_fields: TFuncMap[Item]
+    album_template_fields: TFuncMap[Album]
 
     name: str
     config: ConfigView
@@ -162,7 +167,7 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
     import_stages: list[ImportStageFunc]
 
     def __init_subclass__(cls) -> None:
-        """Enable legacy metadata‐source plugins to work with the new interface.
+        """Enable legacy metadata source plugins to work with the new interface.
 
         When a plugin subclass of BeetsPlugin defines a `data_source` attribute
         but does not inherit from MetadataSourcePlugin, this hook:
@@ -185,11 +190,12 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         ):
             return
 
-        warnings.warn(
-            f"{cls.__name__} is used as a legacy metadata source. "
-            "It should extend MetadataSourcePlugin instead of BeetsPlugin. "
-            "Support for this will be removed in the v3.0.0 release!",
-            DeprecationWarning,
+        deprecate_for_maintainers(
+            (
+                f"'{cls.__name__}' is used as a legacy metadata source since it"
+                " inherits 'beets.plugins.BeetsPlugin'. Support for this"
+            ),
+            "'beets.metadata_plugins.MetadataSourcePlugin'",
             stacklevel=3,
         )
 
@@ -220,14 +226,10 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         self.name = name or self.__module__.split(".")[-1]
         self.config = beets.config[self.name]
 
-        # Set class attributes if they are not already set
-        # for the type of plugin.
-        if not self.template_funcs:
-            self.template_funcs = {}
-        if not self.template_fields:
-            self.template_fields = {}
-        if not self.album_template_fields:
-            self.album_template_fields = {}
+        # create per-instance storage for template fields and functions
+        self.template_funcs = {}
+        self.template_fields = {}
+        self.album_template_fields = {}
 
         self.early_import_stages = []
         self.import_stages = []
@@ -257,16 +259,19 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         ):
             return
 
-        message = (
-            "'source_weight' configuration option is deprecated and will be"
-            " removed in v3.0.0. Use 'data_source_mismatch_penalty' instead"
-        )
         for source in self.config.root().sources:
             if "source_weight" in (source.get(self.name) or {}):
                 if source.filename:  # user config
-                    self._log.warning(message)
+                    deprecate_for_user(
+                        self._log,
+                        f"'{self.name}.source_weight' configuration option",
+                        f"'{self.name}.data_source_mismatch_penalty'",
+                    )
                 else:  # 3rd-party plugin config
-                    warnings.warn(message, DeprecationWarning, stacklevel=0)
+                    deprecate_for_maintainers(
+                        "'source_weight' configuration option",
+                        "'data_source_mismatch_penalty'",
+                    )
 
     def commands(self) -> Sequence[Subcommand]:
         """Should return a list of beets.ui.Subcommand objects for
@@ -369,8 +374,6 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         """
 
         def helper(func: TFunc[str]) -> TFunc[str]:
-            if cls.template_funcs is None:
-                cls.template_funcs = {}
             cls.template_funcs[name] = func
             return func
 
@@ -385,8 +388,6 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         """
 
         def helper(func: TFunc[Item]) -> TFunc[Item]:
-            if cls.template_fields is None:
-                cls.template_fields = {}
             cls.template_fields[name] = func
             return func
 
@@ -415,16 +416,22 @@ def get_plugin_names() -> list[str]:
     # *contain* a `beetsplug` package.
     sys.path += paths
     plugins = unique_list(beets.config["plugins"].as_str_seq())
-    # TODO: Remove in v3.0.0
-    if (
-        "musicbrainz" not in plugins
-        and "musicbrainz" in beets.config
-        and beets.config["musicbrainz"].get().get("enabled")
-    ):
-        plugins.append("musicbrainz")
-
     beets.config.add({"disabled_plugins": []})
     disabled_plugins = set(beets.config["disabled_plugins"].as_str_seq())
+    # TODO: Remove in v3.0.0
+    mb_enabled = beets.config["musicbrainz"].flatten().get("enabled")
+    if mb_enabled:
+        deprecate_for_user(
+            log,
+            "'musicbrainz.enabled' configuration option",
+            "'plugins' configuration to explicitly add 'musicbrainz'",
+        )
+        if "musicbrainz" not in plugins:
+            plugins.append("musicbrainz")
+    elif mb_enabled is False:
+        deprecate_for_user(log, "'musicbrainz.enabled' configuration option")
+        disabled_plugins.add("musicbrainz")
+
     return [p for p in plugins if p not in disabled_plugins]
 
 
@@ -450,9 +457,6 @@ def _get_plugin(name: str) -> BeetsPlugin | None:
         for obj in reversed(namespace.__dict__.values()):
             if (
                 inspect.isclass(obj)
-                and not isinstance(
-                    obj, GenericAlias
-                )  # seems to be needed for python <= 3.9 only
                 and issubclass(obj, BeetsPlugin)
                 and obj != BeetsPlugin
                 and not inspect.isabstract(obj)
@@ -543,7 +547,7 @@ def named_queries(model_cls: type[AnyModel]) -> dict[str, FieldQueryType]:
 
 def notify_info_yielded(
     event: EventType,
-) -> Callable[[IterF[P, Ret]], IterF[P, Ret]]:
+) -> Callable[[Callable[P, Iterable[Ret]]], Callable[P, Iterator[Ret]]]:
     """Makes a generator send the event 'event' every time it yields.
     This decorator is supposed to decorate a generator, but any function
     returning an iterable should work.
@@ -551,9 +555,11 @@ def notify_info_yielded(
     'send'.
     """
 
-    def decorator(func: IterF[P, Ret]) -> IterF[P, Ret]:
+    def decorator(
+        func: Callable[P, Iterable[Ret]],
+    ) -> Callable[P, Iterator[Ret]]:
         @wraps(func)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> Iterable[Ret]:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> Iterator[Ret]:
             for v in func(*args, **kwargs):
                 send(event, info=v)
                 yield v
@@ -569,8 +575,7 @@ def template_funcs() -> TFuncMap[str]:
     """
     funcs: TFuncMap[str] = {}
     for plugin in find_plugins():
-        if plugin.template_funcs:
-            funcs.update(plugin.template_funcs)
+        funcs.update(plugin.template_funcs)
     return funcs
 
 
@@ -596,21 +601,20 @@ F = TypeVar("F")
 
 
 def _check_conflicts_and_merge(
-    plugin: BeetsPlugin, plugin_funcs: dict[str, F] | None, funcs: dict[str, F]
+    plugin: BeetsPlugin, plugin_funcs: dict[str, F], funcs: dict[str, F]
 ) -> None:
     """Check the provided template functions for conflicts and merge into funcs.
 
     Raises a `PluginConflictError` if a plugin defines template functions
     for fields that another plugin has already defined template functions for.
     """
-    if plugin_funcs:
-        if not plugin_funcs.keys().isdisjoint(funcs.keys()):
-            conflicted_fields = ", ".join(plugin_funcs.keys() & funcs.keys())
-            raise PluginConflictError(
-                f"Plugin {plugin.name} defines template functions for "
-                f"{conflicted_fields} that conflict with another plugin."
-            )
-        funcs.update(plugin_funcs)
+    if not plugin_funcs.keys().isdisjoint(funcs.keys()):
+        conflicted_fields = ", ".join(plugin_funcs.keys() & funcs.keys())
+        raise PluginConflictError(
+            f"Plugin {plugin.name} defines template functions for "
+            f"{conflicted_fields} that conflict with another plugin."
+        )
+    funcs.update(plugin_funcs)
 
 
 def item_field_getters() -> TFuncMap[Item]:

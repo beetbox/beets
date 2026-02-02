@@ -14,74 +14,10 @@
 
 """Tests for the 'parentwork' plugin."""
 
-from unittest.mock import patch
-
 import pytest
 
 from beets.library import Item
 from beets.test.helper import PluginTestCase
-from beetsplug import parentwork
-
-work = {
-    "work": {
-        "id": "1",
-        "title": "work",
-        "work-relation-list": [
-            {"type": "parts", "direction": "backward", "work": {"id": "2"}}
-        ],
-        "artist-relation-list": [
-            {
-                "type": "composer",
-                "artist": {
-                    "name": "random composer",
-                    "sort-name": "composer, random",
-                },
-            }
-        ],
-    }
-}
-dp_work = {
-    "work": {
-        "id": "2",
-        "title": "directparentwork",
-        "work-relation-list": [
-            {"type": "parts", "direction": "backward", "work": {"id": "3"}}
-        ],
-        "artist-relation-list": [
-            {
-                "type": "composer",
-                "artist": {
-                    "name": "random composer",
-                    "sort-name": "composer, random",
-                },
-            }
-        ],
-    }
-}
-p_work = {
-    "work": {
-        "id": "3",
-        "title": "parentwork",
-        "artist-relation-list": [
-            {
-                "type": "composer",
-                "artist": {
-                    "name": "random composer",
-                    "sort-name": "composer, random",
-                },
-            }
-        ],
-    }
-}
-
-
-def mock_workid_response(mbid, includes):
-    if mbid == "1":
-        return work
-    elif mbid == "2":
-        return dp_work
-    elif mbid == "3":
-        return p_work
 
 
 @pytest.mark.integration_test
@@ -134,35 +70,56 @@ class ParentWorkIntegrationTest(PluginTestCase):
         item.load()
         assert item["mb_parentworkid"] == "XXX"
 
-    # test different cases, still with Matthew Passion Ouverture or Mozart
-    # requiem
-
-    def test_direct_parent_work_real(self):
-        mb_workid = "2e4a3668-458d-3b2a-8be2-0b08e0d8243a"
-        assert (
-            "f04b42df-7251-4d86-a5ee-67cfa49580d1"
-            == parentwork.direct_parent_id(mb_workid)[0]
-        )
-        assert (
-            "45afb3b2-18ac-4187-bc72-beb1b1c194ba"
-            == parentwork.work_parent_id(mb_workid)[0]
-        )
-
 
 class ParentWorkTest(PluginTestCase):
     plugin = "parentwork"
 
-    def setUp(self):
-        """Set up configuration"""
-        super().setUp()
-        self.patcher = patch(
-            "musicbrainzngs.get_work_by_id", side_effect=mock_workid_response
+    @pytest.fixture(autouse=True)
+    def patch_works(self, requests_mock):
+        requests_mock.get(
+            "/ws/2/work/1?inc=work-rels%2Bartist-rels",
+            json={
+                "id": "1",
+                "title": "work",
+                "work-relations": [
+                    {
+                        "type": "parts",
+                        "direction": "backward",
+                        "work": {"id": "2"},
+                    }
+                ],
+            },
         )
-        self.patcher.start()
-
-    def tearDown(self):
-        super().tearDown()
-        self.patcher.stop()
+        requests_mock.get(
+            "/ws/2/work/2?inc=work-rels%2Bartist-rels",
+            json={
+                "id": "2",
+                "title": "directparentwork",
+                "work-relations": [
+                    {
+                        "type": "parts",
+                        "direction": "backward",
+                        "work": {"id": "3"},
+                    }
+                ],
+            },
+        )
+        requests_mock.get(
+            "/ws/2/work/3?inc=work-rels%2Bartist-rels",
+            json={
+                "id": "3",
+                "title": "parentwork",
+                "artist-relations": [
+                    {
+                        "type": "composer",
+                        "artist": {
+                            "name": "random composer",
+                            "sort-name": "composer, random",
+                        },
+                    }
+                ],
+            },
+        )
 
     def test_normal_case(self):
         item = Item(path="/file", mb_workid="1", parentwork_workid_current="1")
@@ -204,7 +161,3 @@ class ParentWorkTest(PluginTestCase):
 
         item.load()
         assert item["mb_parentworkid"] == "XXX"
-
-    def test_direct_parent_work(self):
-        assert "2" == parentwork.direct_parent_id("1")[0]
-        assert "3" == parentwork.work_parent_id("1")[0]

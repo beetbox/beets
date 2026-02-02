@@ -27,8 +27,17 @@ import gi
 
 from beets import ui
 
-gi.require_version("Gst", "1.0")
-from gi.repository import GLib, Gst  # noqa: E402
+try:
+    gi.require_version("Gst", "1.0")
+except ValueError as e:
+    # on some scenarios, gi may be importable, but we get a ValueError when
+    # trying to specify the required version. This is problematic in the test
+    # suite where test_bpd.py has a call to
+    # pytest.importorskip("beetsplug.bpd"). Re-raising as an ImportError
+    # makes it so the test collector functions as inteded.
+    raise ImportError from e
+
+from gi.repository import GLib, Gst
 
 Gst.init(None)
 
@@ -106,7 +115,7 @@ class GstPlayer:
         elif message.type == Gst.MessageType.ERROR:
             # error
             self.player.set_state(Gst.State.NULL)
-            err, debug = message.parse_error()
+            err, _ = message.parse_error()
             print(f"Error: {err}")
             self.playing = False
 
@@ -196,7 +205,7 @@ class GstPlayer:
 
     def seek(self, position):
         """Seeks to position (in seconds)."""
-        cur_pos, cur_len = self.time()
+        _, cur_len = self.time()
         if position > cur_len:
             self.stop()
             return

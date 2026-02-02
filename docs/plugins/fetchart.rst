@@ -33,6 +33,8 @@ file. The available options are:
   contain one of the keywords in ``cover_names``. Default: ``no``.
 - **cover_names**: Prioritize images containing words in this list. Default:
   ``cover front art album folder``.
+- **fallback**: Path to a fallback album art file if no album art was found
+  otherwise. Default: ``None`` (disabled).
 - **minwidth**: Only images with a width bigger or equal to ``minwidth`` are
   considered as valid album art candidates. Default: 0.
 - **maxwidth**: A maximum image width to downscale fetched images if they are

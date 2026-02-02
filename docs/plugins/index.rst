@@ -84,7 +84,6 @@ databases. They share the following configuration options:
     fromfilename
     ftintitle
     fuzzy
-    gmusic
     hook
     ihate
     importadded
@@ -128,6 +127,7 @@ databases. They share the following configuration options:
     substitute
     the
     thumbnails
+    titlecase
     types
     unimported
     web
@@ -622,7 +622,7 @@ beets-youtube_
 
 .. _beets-setlister: https://github.com/tomjaspers/beets-setlister
 
-.. _beets-usertag: https://github.com/igordertigor/beets-usertag
+.. _beets-usertag: https://github.com/edgars-supe/beets-usertag
 
 .. _beets-webm3u: https://github.com/mgoltzsche/beets-webm3u
 

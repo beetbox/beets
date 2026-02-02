@@ -32,6 +32,26 @@ file. The available options are:
   skip the ftintitle processing. Default: ``yes``.
 - **custom_words**: List of additional words that will be treated as a marker
   for artist features. Default: ``[]``.
+- **bracket_keywords**: Controls where the featuring text is inserted when the
+  title includes bracketed qualifiers such as ``(Remix)`` or ``[Live]``.
+  FtInTitle inserts the new text before the first bracket whose contents match
+  any of these keywords. Supply a list of words to fine-tune the behavior or set
+  the list to ``[]`` to match *any* bracket regardless of its contents. Default:
+
+  ::
+
+      ["abridged", "acapella", "club", "demo", "edit", "edition", "extended",
+       "instrumental", "live", "mix", "radio", "release", "remaster",
+       "remastered", "remix", "rmx", "unabridged", "unreleased",
+       "version", "vip"]
+
+Path Template Values
+--------------------
+
+This plugin provides the ``album_artist_no_feat`` :ref:`template value
+<templ_plugins>` that you can use in your :ref:`path-format-config` in
+``paths.default``. Any ``custom_words`` in the configuration are taken into
+account.
 
 Running Manually
 ----------------

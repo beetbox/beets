@@ -9,21 +9,89 @@ Unreleased
 
 New features:
 
-- :doc:`plugins/ftintitle`: Added argument for custom feat. words in ftintitle.
-- :doc:`plugins/ftintitle`: Added argument to skip the processing of artist and
-  album artist are the same in ftintitle.
-- :doc:`plugins/play`: Added `$playlist` marker to precisely edit the playlist
-      filepath into the command calling the player program.
-- :doc:`plugins/lastgenre`: For tuning plugin settings ``-vvv`` can be passed
-      to receive extra verbose logging around last.fm results and how they are
-      resolved. The ``extended_debug`` config setting and ``--debug`` option
-      have been removed.
-- :doc:`plugins/mbpseudo`: Add a new `mbpseudo` plugin to proactively receive
-      MusicBrainz pseudo-releases as recommendations during import.
-- Added support for Python 3.13.
+Bug fixes:
+
+For packagers:
+
+Other changes:
+
+2.6.1 (February 02, 2026)
+-------------------------
 
 Bug fixes:
 
+- Make ``packaging`` a required dependency. :bug:`6332`
+
+2.6.0 (February 01, 2026)
+-------------------------
+
+Beets now requires Python 3.10 or later since support for EOL Python 3.9 has
+been dropped.
+
+New features:
+
+- :doc:`plugins/fetchart`: Added config setting for a fallback cover art image.
+- :doc:`plugins/ftintitle`: Added argument for custom feat. words in ftintitle.
+- :doc:`plugins/ftintitle`: Added album template value ``album_artist_no_feat``.
+- :doc:`plugins/musicbrainz`: Allow selecting tags or genres to populate the
+  genres tag.
+- :doc:`plugins/ftintitle`: Added argument to skip the processing of artist and
+  album artist are the same in ftintitle.
+- :doc:`plugins/play`: Added `$playlist` marker to precisely edit the playlist
+  filepath into the command calling the player program.
+- :doc:`plugins/lastgenre`: For tuning plugin settings ``-vvv`` can be passed to
+  receive extra verbose logging around last.fm results and how they are
+  resolved. The ``extended_debug`` config setting and ``--debug`` option have
+  been removed.
+- :doc:`plugins/importsource`: Added new plugin that tracks original import
+  paths and optionally suggests removing source files when items are removed
+  from the library.
+- :doc:`plugins/mbpseudo`: Add a new `mbpseudo` plugin to proactively receive
+  MusicBrainz pseudo-releases as recommendations during import.
+- Added support for Python 3.13.
+- :doc:`/plugins/convert`: ``force`` can be passed to override checks like
+  no_convert, never_convert_lossy_files, same format, and max_bitrate
+- :doc:`plugins/titlecase`: Add the `titlecase` plugin to allow users to resolve
+  differences in metadata source styles.
+- :doc:`plugins/spotify`: Added support for multi-artist albums and tracks,
+  saving all contributing artists to the respective fields.
+- :doc:`plugins/fetchart`: Fix colorized output text.
+- :doc:`plugins/ftintitle`: Featured artists are now inserted before brackets
+  containing remix/edit-related keywords (e.g., "Remix", "Live", "Edit") instead
+  of being appended at the end. This improves formatting for titles like "Song 1
+  (Carol Remix) ft. Bob" which becomes "Song 1 ft. Bob (Carol Remix)". A variety
+  of brackets are supported and a new ``bracket_keywords`` configuration option
+  allows customizing the keywords. Setting ``bracket_keywords`` to an empty list
+  matches any bracket content regardless of keywords.
+- :doc:`plugins/discogs`: Added support for multi value fields. :bug:`6068`
+- :doc:`plugins/embedart`: Embedded arts can now be cleared during import with
+  the ``clearart_on_import`` config option. Also, ``beet clearart`` is only
+  going to update the files matching the query and with an embedded art, leaving
+  untouched the files without.
+- :doc:`plugins/fish`: Filenames are now completed in more places, like after
+  ``beet import``.
+- :doc:`plugins/random`: Added ``--field`` option to specify which field to use
+  for equal-chance sampling (default: ``albumartist``).
+
+Bug fixes:
+
+- :doc:`/plugins/lastgenre`: Canonicalize genres when ``force`` and
+  ``keep_existing`` are ``on``, yet no genre info on lastfm could be found.
+  :bug:`6303`
+- Handle potential OSError when unlinking temporary files in ArtResizer.
+  :bug:`5615`
+- :doc:`/plugins/spotify`: Updated Spotify API credentials. :bug:`6270`
+- :doc:`/plugins/smartplaylist`: Fixed an issue where multiple queries in a
+  playlist configuration were not preserving their order, causing items to
+  appear in database order rather than the order specified in the config.
+  :bug:`6183`
+- :doc:`plugins/inline`: Fix recursion error when an inline field definition
+  shadows a built-in item field (e.g., redefining ``track_no``). Inline
+  expressions now skip self-references during evaluation to avoid infinite
+  recursion. :bug:`6115`
+- When hardlinking from a symlink (e.g. importing a symlink with hardlinking
+  enabled), dereference the symlink then hardlink, rather than creating a new
+  (potentially broken) symlink :bug:`5676`
 - :doc:`/plugins/spotify`: The plugin now gracefully handles audio-features API
   deprecation (HTTP 403 errors). When a 403 error is encountered from the
   audio-features endpoint, the plugin logs a warning once and skips audio
@@ -33,14 +101,64 @@ Bug fixes:
   the default config path. :bug:`5652`
 - :doc:`plugins/lyrics`: Accepts strings for lyrics sources (previously only
   accepted a list of strings). :bug:`5962`
+- Fix a bug introduced in release 2.4.0 where import from any valid
+  import-log-file always threw a "none of the paths are importable" error.
+- :doc:`/plugins/web`: repair broken `/item/values/…` and `/albums/values/…`
+  endpoints. Previously, due to single-quotes (ie. string literal) in the SQL
+  query, the query eg. `GET /item/values/albumartist` would return the literal
+  "albumartist" instead of a list of unique album artists.
+- Sanitize log messages by removing control characters preventing terminal
+  rendering issues.
+- When using :doc:`plugins/fromfilename` together with :doc:`plugins/edit`,
+  temporary tags extracted from filenames are no longer lost when discarding or
+  cancelling an edit session during import. :bug:`6104`
+- :ref:`update-cmd` :doc:`plugins/edit` fix display formatting of field changes
+  to clearly show added and removed flexible fields.
+- :doc:`plugins/lastgenre`: Fix the issue where last.fm doesn't return any
+  result in the artist genre stage because "concatenation" words in the artist
+  name (like "feat.", "+", or "&") prevent it. Using the albumartists list field
+  and fetching a genre for each artist separately improves the chance of
+  receiving valid results in that stage.
+- :doc:`/plugins/ftintitle`: Fixed artist name splitting to prioritize explicit
+  featuring tokens (feat, ft, featuring) over generic separators (&, and),
+  preventing incorrect splits when both are present.
+- :doc:`reference/cli`: Fix 'from_scratch' option for singleton imports: delete
+  all (old) metadata when new metadata is applied. :bug:`3706`
+- :doc:`/plugins/convert`: ``auto_keep`` now respects ``no_convert`` and
+  ``never_convert_lossy_files`` when deciding whether to copy/transcode items,
+  avoiding extra lossy duplicates.
+- :doc:`plugins/discogs`: Fixed unexpected flex attr from the Discogs plugin.
+  :bug:`6177`
+- Errors in metadata plugins during autotage process will now be logged but
+  won't crash beets anymore. If you want to raise exceptions instead, set the
+  new configuration option ``raise_on_error`` to ``yes`` :bug:`5903`,
+  :bug:`4789`.
 
 For plugin developers:
 
 - A new plugin event, ``album_matched``, is sent when an album that is being
   imported has been matched to its metadata and the corresponding distance has
   been calculated.
+- Added a reusable requests handler which can be used by plugins to make HTTP
+  requests with built-in retry and backoff logic. It uses beets user-agent and
+  configures timeouts. See :class:`~beetsplug._utils.requests.RequestHandler`
+  for documentation.
+- Replaced dependency on ``python-musicbrainzngs`` with a lightweight custom
+  MusicBrainz client implementation and updated relevant plugins accordingly:
+
+  - :doc:`plugins/listenbrainz`
+  - :doc:`plugins/mbcollection`
+  - :doc:`plugins/mbpseudo`
+  - :doc:`plugins/missing`
+  - :doc:`plugins/musicbrainz`
+  - :doc:`plugins/parentwork`
+
+  See :class:`~beetsplug._utils.musicbrainz.MusicBrainzAPI` for documentation.
 
 For packagers:
+
+- The minimum supported Python version is now 3.10.
+- An unused dependency on ``mock`` has been removed.
 
 Other changes:
 
@@ -50,6 +168,14 @@ Other changes:
 - Refactored the ``beets/ui/commands.py`` monolithic file (2000+ lines) into
   multiple modules within the ``beets/ui/commands`` directory for better
   maintainability.
+- :doc:`plugins/bpd`: Raise ImportError instead of ValueError when GStreamer is
+  unavailable, enabling ``importorskip`` usage in pytest setup.
+- Finally removed gmusic plugin and all related code/docs as the Google Play
+  Music service was shut down in 2020.
+- Updated color documentation with ``bright_*`` and ``bg_bright_*`` entries.
+- Moved `beets/random.py` into `beetsplug/random.py` to cleanup core module.
+- dbcore: Allow models to declare SQL indices; add an ``items.album_id`` index
+  to speed up ``album.items()`` queries. :bug:`5809`
 
 2.5.1 (October 14, 2025)
 ------------------------
@@ -454,7 +580,6 @@ New features:
   ``beet list -a title:something`` or ``beet list artpath:cover``. Consequently
   album queries involving ``path`` field have been sped up, like ``beet list -a
   path:/path/``.
-- :doc:`plugins/importsource`: Added plugin
 - :doc:`plugins/ftintitle`: New ``keep_in_artist`` option for the plugin, which
   allows keeping the "feat." part in the artist metadata while still changing
   the title.
@@ -1334,9 +1459,9 @@ There are some fixes in this release:
 
 - Fix a regression in the last release that made the image resizer fail to
   detect older versions of ImageMagick. :bug:`3269`
-- :doc:`/plugins/gmusic`: The ``oauth_file`` config option now supports more
+- ``/plugins/gmusic``: The ``oauth_file`` config option now supports more
   flexible path values, including ``~`` for the home directory. :bug:`3270`
-- :doc:`/plugins/gmusic`: Fix a crash when using version 12.0.0 or later of the
+- ``/plugins/gmusic``: Fix a crash when using version 12.0.0 or later of the
   ``gmusicapi`` module. :bug:`3270`
 - Fix an incompatibility with Python 3.8's AST changes. :bug:`3278`
 
@@ -1387,7 +1512,7 @@ And many improvements to existing plugins:
   singletons. :bug:`3220` :bug:`3219`
 - :doc:`/plugins/play`: The plugin can now emit a UTF-8 BOM, fixing some issues
   with foobar2000 and Winamp. Thanks to :user:`mz2212`. :bug:`2944`
-- :doc:`/plugins/gmusic`:
+- ``/plugins/gmusic``:
 
   - Add a new option to automatically upload to Google Play Music library on
     track import. Thanks to :user:`shuaiscott`.
@@ -1826,7 +1951,7 @@ Here are the new features:
 - :ref:`Date queries <datequery>` can also be *relative*. You can say
   ``added:-1w..`` to match music added in the last week, for example. Thanks to
   :user:`euri10`. :bug:`2598`
-- A new :doc:`/plugins/gmusic` lets you interact with your Google Play Music
+- A new ``/plugins/gmusic`` lets you interact with your Google Play Music
   library. Thanks to :user:`tigranl`. :bug:`2553` :bug:`2586`
 - :doc:`/plugins/replaygain`: We now keep R128 data in separate tags from
   classic ReplayGain data for formats that need it (namely, Ogg Opus). A new

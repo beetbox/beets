@@ -19,14 +19,7 @@ from __future__ import annotations
 import json
 import re
 from datetime import datetime, timedelta
-from typing import (
-    TYPE_CHECKING,
-    Iterable,
-    Iterator,
-    Literal,
-    Sequence,
-    overload,
-)
+from typing import TYPE_CHECKING, Literal, overload
 
 import confuse
 from requests_oauthlib import OAuth1Session
@@ -42,6 +35,8 @@ from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.metadata_plugins import MetadataSourcePlugin
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable, Iterator, Sequence
+
     from beets.importer import ImportSession
     from beets.library import Item
 

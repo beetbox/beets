@@ -20,9 +20,10 @@ import re
 import shutil
 import time
 from collections import defaultdict
+from collections.abc import Callable
 from enum import Enum
 from tempfile import mkdtemp
-from typing import TYPE_CHECKING, Any, Callable, Iterable, Sequence
+from typing import TYPE_CHECKING, Any
 
 import mediafile
 
@@ -32,6 +33,8 @@ from beets.dbcore.query import PathQuery
 from .state import ImportState
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
+
     from beets.autotag.match import Recommendation
 
     from .session import ImportSession
@@ -231,7 +234,7 @@ class ImportTask(BaseImportTask):
         or APPLY (in which case the data comes from the choice).
         """
         if self.choice_flag in (Action.ASIS, Action.RETAG):
-            likelies, consensus = util.get_most_common_tags(self.items)
+            likelies, _ = util.get_most_common_tags(self.items)
             return likelies
         elif self.choice_flag is Action.APPLY and self.match:
             return self.match.info.copy()
@@ -244,21 +247,21 @@ class ImportTask(BaseImportTask):
         matched items.
         """
         if self.choice_flag in (Action.ASIS, Action.RETAG):
-            return list(self.items)
+            return self.items
         elif self.choice_flag == Action.APPLY and isinstance(
             self.match, autotag.AlbumMatch
         ):
-            return list(self.match.mapping.keys())
+            return self.match.items
         else:
-            assert False
+            return []
 
     def apply_metadata(self):
         """Copy metadata from match info to the items."""
         if config["import"]["from_scratch"]:
-            for item in self.match.mapping:
+            for item in self.match.items:
                 item.clear()
 
-        autotag.apply_metadata(self.match.info, self.match.mapping)
+        autotag.apply_metadata(self.match.info, self.match.item_info_pairs)
 
     def duplicate_items(self, lib: library.Library):
         duplicate_items = []
@@ -677,6 +680,8 @@ class SingletonImportTask(ImportTask):
         return [self.item]
 
     def apply_metadata(self):
+        if config["import"]["from_scratch"]:
+            self.item.clear()
         autotag.apply_item_metadata(self.item, self.match.info)
 
     def _emit_imported(self, lib):
@@ -889,7 +894,7 @@ class ArchiveImportTask(SentinelImportTask):
                 # The (0, 0, -1) is added to date_time because the
                 # function time.mktime expects a 9-element tuple.
                 # The -1 indicates that the DST flag is unknown.
-                date_time = time.mktime(f.date_time + (0, 0, -1))
+                date_time = time.mktime((*f.date_time, 0, 0, -1))
                 fullpath = os.path.join(extract_to, f.filename)
                 os.utime(fullpath, (date_time, date_time))
 

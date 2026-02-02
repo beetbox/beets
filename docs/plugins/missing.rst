@@ -8,9 +8,8 @@ call to album data source.
 Usage
 -----
 
-Add the ``missing`` plugin to your configuration (see :ref:`using-plugins`). The
-``beet missing`` command fetches album information from the origin data source
-and lists names of the **tracks** that are missing from your library.
+The ``beet missing`` command fetches album information from the origin data
+source and lists names of the **tracks** that are missing from your library.
 
 It can also list the names of missing **albums** for each artist, although this
 is limited to albums from the MusicBrainz data source only.

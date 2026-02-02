@@ -26,8 +26,7 @@ import subprocess
 from beets import ui
 from beets.autotag import Recommendation
 from beets.plugins import BeetsPlugin
-from beets.ui.commands import PromptChoice
-from beets.util import displayable_path
+from beets.util import PromptChoice, displayable_path
 from beetsplug.info import print_data
 
 
@@ -70,7 +69,7 @@ class MBSubmitPlugin(BeetsPlugin):
             paths.append(displayable_path(p))
         try:
             picard_path = self.config["picard_path"].as_str()
-            subprocess.Popen([picard_path] + paths)
+            subprocess.Popen([picard_path, *paths])
             self._log.info("launched picard from\n{}", picard_path)
         except OSError as exc:
             self._log.error("Could not open picard, got error:\n{}", exc)

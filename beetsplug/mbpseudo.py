@@ -17,30 +17,29 @@
 from __future__ import annotations
 
 import itertools
-import traceback
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any, Iterable, Sequence
+from typing import TYPE_CHECKING, Any
 
 import mediafile
-import musicbrainzngs
 from typing_extensions import override
 
 from beets import config
-from beets.autotag.distance import Distance, distance
+from beets.autotag.distance import distance
 from beets.autotag.hooks import AlbumInfo
 from beets.autotag.match import assign_items
 from beets.plugins import find_plugins
 from beets.util.id_extractors import extract_release_id
 from beetsplug.musicbrainz import (
-    RELEASE_INCLUDES,
-    MusicBrainzAPIError,
     MusicBrainzPlugin,
     _merge_pseudo_and_actual_album,
     _preferred_alias,
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
+
     from beets.autotag import AlbumMatch
+    from beets.autotag.distance import Distance
     from beets.library import Item
     from beetsplug._typing import JSONDict
 
@@ -50,8 +49,6 @@ _STATUS_PSEUDO = "Pseudo-Release"
 class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
     def __init__(self) -> None:
         super().__init__()
-
-        self._release_getter = musicbrainzngs.get_release_by_id
 
         self.config.add(
             {
@@ -141,33 +138,25 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
 
         if release.get("status") == _STATUS_PSEUDO:
             return official_release
-        elif pseudo_release_ids := self._intercept_mb_release(release):
-            album_id = self._extract_id(pseudo_release_ids[0])
-            try:
-                raw_pseudo_release = self._release_getter(
-                    album_id, RELEASE_INCLUDES
-                )["release"]
-                pseudo_release = super().album_info(raw_pseudo_release)
 
-                if self.config["custom_tags_only"].get(bool):
-                    self._replace_artist_with_alias(
-                        raw_pseudo_release, pseudo_release
-                    )
-                    self._add_custom_tags(official_release, pseudo_release)
-                    return official_release
-                else:
-                    return PseudoAlbumInfo(
-                        pseudo_release=_merge_pseudo_and_actual_album(
-                            pseudo_release, official_release
-                        ),
-                        official_release=official_release,
-                    )
-            except musicbrainzngs.MusicBrainzError as exc:
-                raise MusicBrainzAPIError(
-                    exc,
-                    "get pseudo-release by ID",
-                    album_id,
-                    traceback.format_exc(),
+        if (ids := self._intercept_mb_release(release)) and (
+            album_id := self._extract_id(ids[0])
+        ):
+            raw_pseudo_release = self.mb_api.get_release(album_id)
+            pseudo_release = super().album_info(raw_pseudo_release)
+
+            if self.config["custom_tags_only"].get(bool):
+                self._replace_artist_with_alias(
+                    raw_pseudo_release, pseudo_release
+                )
+                self._add_custom_tags(official_release, pseudo_release)
+                return official_release
+            else:
+                return PseudoAlbumInfo(
+                    pseudo_release=_merge_pseudo_and_actual_album(
+                        pseudo_release, official_release
+                    ),
+                    official_release=official_release,
                 )
         else:
             return official_release
@@ -179,7 +168,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
 
         return [
             pr_id
-            for rel in data.get("release-relation-list", [])
+            for rel in data.get("release-relations", [])
             if (pr_id := self._wanted_pseudo_release_id(album_id, rel))
             is not None
         ]
@@ -232,7 +221,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
             "artist-credit", []
         )
         aliases = [
-            artist_credit.get("artist", {}).get("alias-list", [])
+            artist_credit.get("artist", {}).get("aliases", [])
             for artist_credit in artist_credits
         ]
 
@@ -245,7 +234,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
                 aliases_flattened,
             )
             if alias_dict := _preferred_alias(aliases_flattened, [locale]):
-                if alias := alias_dict.get("alias"):
+                if alias := alias_dict.get("name"):
                     self._log.debug("Got alias '{0}'", alias)
                     pseudo_release.artist = alias
                     for track in pseudo_release.tracks:
@@ -276,11 +265,8 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
                 album_info.album_id,
             )
             album_info.use_pseudo_as_ref()
-            mapping = match.mapping
-            new_mappings, _, _ = assign_items(
-                list(mapping.keys()), album_info.tracks
-            )
-            mapping.update(new_mappings)
+            new_pairs, *_ = assign_items(match.items, album_info.tracks)
+            album_info.mapping = dict(new_pairs)
 
         if album_info.data_source == self.data_source:
             album_info.data_source = "MusicBrainz"
