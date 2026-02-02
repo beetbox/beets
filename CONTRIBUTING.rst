@@ -112,7 +112,7 @@ This can be done with:
 This will install ``beets`` and all development dependencies into its own
 virtual environment in your ``$POETRY_CACHE_DIR``. See ``poetry install --help``
 for installation options, including installing ``extra`` dependencies for
-plugins.
+plugins. If you want to install all extras, use ``poetry install --all-extras``.
 
 In order to run something within this virtual environment, start the command
 with ``poetry run`` to them, for example ``poetry run pytest``.
@@ -122,9 +122,9 @@ command. Instead, you can activate the virtual environment in your shell with:
 
 ::
 
-    $ poetry shell
+    $ poetry env activate
 
-You should see ``(beets-py3.10)`` prefix in your shell prompt. Now you can run
+Now you can run
 commands directly, for example:
 
 ::
