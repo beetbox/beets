@@ -1062,7 +1062,7 @@ class cached_classproperty(Generic[T, T2]):
     instance properties, this operates on the class rather than instances.
     """
 
-    cache: dict[tuple[type[T], str], T2] = {}
+    _cache: dict[tuple[type[T], str], T2] = {}
 
     name: str = ""
 
@@ -1098,10 +1098,14 @@ class cached_classproperty(Generic[T, T2]):
         """Compute and cache if needed, and return the property value."""
         owner = cast(type[T], owner)
         key: tuple[type[T], str] = owner, self.name
-        if key not in self.cache:
-            self.cache[key] = self.getter(owner)
+        if key not in self._cache:
+            self._cache[key] = self.getter(owner)
 
-        return self.cache[key]
+        return self._cache[key]
+
+    @classmethod
+    def clear_cache(cls) -> None:
+        cls._cache.clear()
 
 
 class LazySharedInstance(Generic[T]):
