@@ -19,7 +19,7 @@ copyright = "2016, Adrian Sampson"
 master_doc = "index"
 language = "en"
 version = "2.6"
-release = "2.6.0"
+release = "2.6.1"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
