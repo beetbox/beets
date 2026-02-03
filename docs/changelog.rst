@@ -11,6 +11,8 @@ New features:
 
 Bug fixes:
 
+- :doc:`plugins/fetchart`: Prevent deletion of configured fallback cover art
+
 For packagers:
 
 Other changes:
