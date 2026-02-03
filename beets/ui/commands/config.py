@@ -50,17 +50,19 @@ def config_edit(cli_options):
     """
     path = cli_options.config or config.user_config_path()
     editor = editor_command()
+
+    if not editor:
+        raise ui.UserError(
+            "Please set the VISUAL or EDITOR environment variable to edit configuration."
+        )
     try:
         if not os.path.isfile(path):
             open(path, "w+").close()
         interactive_open([path], editor)
+    except FileNotFoundError:
+        raise ui.UserError(f"Editor {editor!r} not found.")
     except OSError as exc:
-        message = f"Could not edit configuration: {exc}"
-        if exc.errno == 2 or not editor:
-            message += (
-                ". Please set the VISUAL (or EDITOR) environment variable"
-            )
-        raise ui.UserError(message)
+        raise ui.UserError(f"Could not edit configuration: {exc}")
 
 
 config_cmd = ui.Subcommand("config", help="show or edit the user configuration")
