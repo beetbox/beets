@@ -1069,7 +1069,7 @@ class cached_classproperty(Generic[T, T2]):
     instance properties, this operates on the class rather than instances.
     """
 
-    _cache: dict[tuple[type[T], str], T2] = {}
+    _cache: ClassVar[dict[tuple[type[object], str], object]] = {}
 
     name: str = ""
 
@@ -1106,9 +1106,9 @@ class cached_classproperty(Generic[T, T2]):
         owner = cast(type[T], owner)
         key: tuple[type[T], str] = owner, self.name
         if key not in self._cache:
-            self._cache[key] = self.getter(owner)
+            cached_classproperty._cache[key] = self.getter(owner)
 
-        return self._cache[key]
+        return cast(T2, cached_classproperty._cache[key])
 
     @classmethod
     def clear_cache(cls) -> None:
