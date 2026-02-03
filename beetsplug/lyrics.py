@@ -984,10 +984,12 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
                 "local": False,
                 "print": False,
                 "synced": False,
-                # Musixmatch is disabled by default as they are currently blocking
-                # requests with the beets user agent.
+                # Musixmatch and Tekstowo are disabled by default as they
+                # currently block requests with the beets user agent.
                 "sources": [
-                    n for n in self.BACKEND_BY_NAME if n != "musixmatch"
+                    n
+                    for n in self.BACKEND_BY_NAME
+                    if n not in {"musixmatch", "tekstowo"}
                 ],
             }
         )
