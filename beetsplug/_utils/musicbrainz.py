@@ -238,10 +238,13 @@ class MusicBrainzAPI(RequestHandler):
         At least one of artist, collection, or release must be provided.
         Optionally filter by release_type (e.g., ["album", "ep"]).
         """
+        api_params: dict[str, Any] = dict(kwargs)
         # MusicBrainz API uses "type" parameter for release type filtering
-        if release_type := kwargs.pop("release_type", None):
-            kwargs["type"] = "|".join(release_type)
-        return self._get_resource("release-group", **kwargs)["release-groups"]
+        if release_type := api_params.pop("release_type", None):
+            api_params["type"] = "|".join(release_type)
+        return self._get_resource("release-group", **api_params)[
+            "release-groups"
+        ]
 
     @singledispatchmethod
     @classmethod
