@@ -231,6 +231,8 @@ Other changes
 - Beets now requires Python 3.11.5 or later. Every fixed release of
   ``soupsieve`` (3.0.2 and up) needs it, so with 3.11.0 to 3.11.4 still
   supported the lockfile kept a vulnerable ``soupsieve`` for those versions.
+- :doc:`plugins/web`: Upgrade the bundled front-end libraries: jQuery 1.7.1 to
+  4.1.0, Underscore 1.2.2 to 1.13.8 and Backbone 0.5.3 to 1.6.1.
 
 2.14.1 (September 17, 2026)
 ---------------------------
