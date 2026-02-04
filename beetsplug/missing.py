@@ -22,6 +22,25 @@ from typing import TYPE_CHECKING, ClassVar
 
 import requests
 
+# Valid MusicBrainz release types for filtering release groups
+VALID_RELEASE_TYPES = [
+    "nat",
+    "album",
+    "single",
+    "ep",
+    "broadcast",
+    "other",
+    "compilation",
+    "soundtrack",
+    "spokenword",
+    "interview",
+    "audiobook",
+    "live",
+    "remix",
+    "dj-mix",
+    "mixtape/street",
+]
+
 from beets import config, metadata_plugins
 from beets.dbcore import types
 from beets.library import Item
@@ -108,6 +127,7 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
                 "count": False,
                 "total": False,
                 "album": False,
+                "release_type": ["album"],
             }
         )
 
@@ -133,7 +153,19 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             "--album",
             dest="album",
             action="store_true",
-            help="show missing albums for artist instead of tracks",
+            help=(
+                "show missing release for artist instead of tracks. Defaults "
+                "to only releases of type 'album'"
+            ),
+        )
+        self._command.parser.add_option(
+            "--release-type",
+            dest="release_type",
+            action="append",
+            help=(
+                "select release types for missing albums for artist "
+                f"from ({', '.join(VALID_RELEASE_TYPES)})"
+            ),
         )
         self._command.parser.add_format_option()
 
@@ -181,7 +213,7 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         """
         query.append(MB_ARTIST_QUERY)
 
-        # build dict mapping artist to set of their album ids in library
+        # build dict mapping artist to set of their release group ids in library
         album_ids_by_artist = defaultdict(set)
         for album in lib.albums(query):
             # TODO(@snejus): Some releases have different `albumartist` for the
@@ -191,13 +223,17 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             # reporting the same set of missing albums. Instead, we should
             # group by `mb_albumartistid` field only.
             artist = (album["albumartist"], album["mb_albumartistid"])
-            album_ids_by_artist[artist].add(album)
+            album_ids_by_artist[artist].add(album["mb_releasegroupid"])
 
         total_missing = 0
+        release_type = self.config["release_type"].get() or ["album"]
         calculating_total = self.config["total"].get()
         for (artist, artist_id), album_ids in album_ids_by_artist.items():
             try:
-                resp = self.mb_api.browse_release_groups(artist=artist_id)
+                resp = self.mb_api.browse_release_groups(
+                    artist=artist_id,
+                    release_type=release_type,
+                )
             except requests.exceptions.RequestException:
                 self._log.info(
                     "Couldn't fetch info for artist '{}' ({})",
