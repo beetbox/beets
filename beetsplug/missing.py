@@ -22,6 +22,19 @@ from typing import TYPE_CHECKING, ClassVar
 
 import requests
 
+from beets import config, metadata_plugins
+from beets.dbcore import types
+from beets.library import Item
+from beets.plugins import BeetsPlugin
+from beets.ui import Subcommand, print_
+
+from ._utils.musicbrainz import MusicBrainzAPIMixin
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    from beets.library import Album, Library
+
 # Valid MusicBrainz release types for filtering release groups
 VALID_RELEASE_TYPES = [
     "nat",
@@ -40,19 +53,6 @@ VALID_RELEASE_TYPES = [
     "dj-mix",
     "mixtape/street",
 ]
-
-from beets import config, metadata_plugins
-from beets.dbcore import types
-from beets.library import Item
-from beets.plugins import BeetsPlugin
-from beets.ui import Subcommand, print_
-
-from ._utils.musicbrainz import MusicBrainzAPIMixin
-
-if TYPE_CHECKING:
-    from collections.abc import Iterator
-
-    from beets.library import Album, Library
 
 MB_ARTIST_QUERY = r"mb_albumartistid::^\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$"
 
