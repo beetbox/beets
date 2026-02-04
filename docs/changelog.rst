@@ -20,10 +20,17 @@ New features
   library. This is useful when items have been imported in don't copy-move (``-C
   -M``) mode in the library but are later passed through the ``convert`` plugin
   which will regenerate new paths according to the Beets path format.
+- :doc:`plugins/missing`: When running in missing album mode, allows users to
+  specify MusicBrainz release types to show using the ``--release-type`` flag.
+  The default behavior is also changed to just show releases of type ``album``.
+  :bug:`2661`
 
 Bug fixes
 ~~~~~~~~~
 
+- :doc:`plugins/missing`: Fix ``--album`` mode incorrectly reporting albums
+  already in the library as missing. The comparison now correctly uses
+  ``mb_releasegroupid``.
 - :ref:`replace`: Made ``drive_sep_replace`` regex logic more precise to prevent
   edge-case mismatches (e.g., a song titled "1:00 AM" would incorrectly be
   considered a Windows drive path).
