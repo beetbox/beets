@@ -9,7 +9,16 @@ Unreleased
 
 New features:
 
+- :doc:`plugins/missing`: When running in missing album mode, allows users to
+  specify MusicBrainz release types to show using the ``--release-type`` flag.
+  The default behavior is also changed to just show releases of type ``album``.
+  :bug:`2661`
+
 Bug fixes:
+
+- :doc:`plugins/missing`: Fix ``--album`` mode incorrectly reporting albums
+  already in the library as missing. The comparison now correctly uses
+  ``mb_releasegroupid``.
 
 For packagers:
 
