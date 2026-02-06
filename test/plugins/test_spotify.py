@@ -4,10 +4,12 @@ import os
 from urllib.parse import parse_qs, urlparse
 
 import responses
+from mediafile import MediaFile
 
 from beets.library import Item
 from beets.test import _common
 from beets.test.helper import PluginTestCase
+from beets.util import syspath
 from beetsplug import spotify
 
 
@@ -289,21 +291,119 @@ class SpotifyPluginTest(PluginTestCase):
         assert album_info is not None
         assert album_info.artist == "Project Skylate, Sugar Shrill"
         assert album_info.artists == ["Project Skylate", "Sugar Shrill"]
-        assert album_info.artist_id == "6m8MRXIVKb6wQaPlBIDMr1"
-        assert album_info.artists_ids == [
-            "6m8MRXIVKb6wQaPlBIDMr1",
-            "4kkAIoQmNT5xEoNH5BuQLe",
-        ]
+        assert album_info.spotify_artist_id == "6m8MRXIVKb6wQaPlBIDMr1"
 
         assert len(album_info.tracks) == 1
         assert album_info.tracks[0].artist == "Foo, Bar"
         assert album_info.tracks[0].artists == ["Foo", "Bar"]
-        assert album_info.tracks[0].artist_id == "12345"
-        assert album_info.tracks[0].artists_ids == ["12345", "67890"]
+        assert album_info.tracks[0].spotify_artist_id == "12345"
 
         track_info = self.spotify.track_for_id("6sjZfVJworBX6TqyjkxIJ1")
         assert track_info is not None
         assert track_info.artist == "Foo, Bar"
         assert track_info.artists == ["Foo", "Bar"]
-        assert track_info.artist_id == "12345"
-        assert track_info.artists_ids == ["12345", "67890"]
+        assert track_info.spotify_artist_id == "12345"
+
+
+class SpotifyMediaFieldTest(PluginTestCase):
+    """Test that Spotify IDs are written to and read from media files."""
+
+    plugin = "spotify"
+
+    @responses.activate
+    def setUp(self):
+        responses.add(
+            responses.POST,
+            spotify.SpotifyPlugin.oauth_token_url,
+            status=200,
+            json={
+                "access_token": "test_token",
+                "token_type": "Bearer",
+                "expires_in": 3600,
+            },
+        )
+        super().setUp()
+
+    def test_spotify_track_id_written_to_file(self):
+        """Verify spotify_track_id is written to media files."""
+        item = self.add_item_fixture()
+        item.spotify_track_id = "6NPVjNh8Jhru9xOmyQigds"
+        item.write()
+
+        # Read back from file
+        mf = MediaFile(syspath(item.path))
+        assert mf.spotify_track_id == "6NPVjNh8Jhru9xOmyQigds"
+
+    def test_spotify_album_id_written_to_file(self):
+        """Verify spotify_album_id is written to media files."""
+        item = self.add_item_fixture()
+        item.spotify_album_id = "5l3zEmMrOhOzG8d8s83GOL"
+        item.write()
+
+        # Read back from file
+        mf = MediaFile(syspath(item.path))
+        assert mf.spotify_album_id == "5l3zEmMrOhOzG8d8s83GOL"
+
+    def test_spotify_artist_id_written_to_file(self):
+        """Verify spotify_artist_id is written to media files."""
+        item = self.add_item_fixture()
+        item.spotify_artist_id = "3OWO2LOPTl1u6XvJHkwHmd"
+        item.write()
+
+        # Read back from file
+        mf = MediaFile(syspath(item.path))
+        assert mf.spotify_artist_id == "3OWO2LOPTl1u6XvJHkwHmd"
+
+    def test_spotify_ids_read_from_file(self):
+        """Verify Spotify IDs can be read from file into Item."""
+        item = self.add_item_fixture()
+        mf = MediaFile(syspath(item.path))
+        mf.spotify_track_id = "track123"
+        mf.spotify_album_id = "album456"
+        mf.spotify_artist_id = "artist789"
+        mf.save()
+
+        # Read back into Item
+        item_reloaded = Item.from_path(item.path)
+        assert item_reloaded.spotify_track_id == "track123"
+        assert item_reloaded.spotify_album_id == "album456"
+        assert item_reloaded.spotify_artist_id == "artist789"
+
+    def test_spotify_ids_persist_across_writes(self):
+        """Verify IDs are not lost when updating other fields."""
+        item = self.add_item_fixture()
+        item.spotify_track_id = "track123"
+        item.spotify_album_id = "album456"
+        item.write()
+
+        # Update different field
+        item.title = "New Title"
+        item.write()
+
+        # Verify IDs still in file
+        mf = MediaFile(syspath(item.path))
+        assert mf.spotify_track_id == "track123"
+        assert mf.spotify_album_id == "album456"
+
+    def test_spotify_ids_not_in_musicbrainz_fields(self):
+        """Verify Spotify IDs don't pollute MusicBrainz fields."""
+        item = self.add_item_fixture()
+        # Set Spotify IDs
+        item.spotify_track_id = "6NPVjNh8Jhru9xOmyQigds"
+        item.spotify_album_id = "5l3zEmMrOhOzG8d8s83GOL"
+        item.spotify_artist_id = "3OWO2LOPTl1u6XvJHkwHmd"
+        item.write()
+
+        # Read back and verify MusicBrainz fields are NOT set to Spotify IDs
+        mf = MediaFile(syspath(item.path))
+
+        # MusicBrainz fields should be None or empty, not Spotify IDs
+        assert mf.mb_trackid != "6NPVjNh8Jhru9xOmyQigds"
+        assert mf.mb_albumid != "5l3zEmMrOhOzG8d8s83GOL"
+        assert mf.mb_artistid != "3OWO2LOPTl1u6XvJHkwHmd"
+        assert mf.mb_albumartistid != "3OWO2LOPTl1u6XvJHkwHmd"
+
+        # Spotify IDs should be in their own fields
+        assert mf.spotify_track_id == "6NPVjNh8Jhru9xOmyQigds"
+        assert mf.spotify_album_id == "5l3zEmMrOhOzG8d8s83GOL"
+        assert mf.spotify_artist_id == "3OWO2LOPTl1u6XvJHkwHmd"
