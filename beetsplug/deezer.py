@@ -20,6 +20,7 @@ import collections
 import time
 from typing import TYPE_CHECKING, ClassVar, Literal
 
+import mediafile
 import requests
 
 from beets import ui
@@ -40,6 +41,8 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
     item_types: ClassVar[dict[str, types.Type]] = {
         "deezer_track_rank": types.INTEGER,
         "deezer_track_id": types.INTEGER,
+        "deezer_album_id": types.INTEGER,
+        "deezer_artist_id": types.INTEGER,
         "deezer_updated": types.DATE,
     }
     # Base URLs for the Deezer API
@@ -50,6 +53,20 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
 
     def __init__(self) -> None:
         super().__init__()
+
+        # Register Deezer ID fields as media fields
+        for field in ["deezer_track_id", "deezer_album_id", "deezer_artist_id"]:
+            media_field = mediafile.MediaField(
+                mediafile.MP3DescStorageStyle(field),
+                mediafile.MP4StorageStyle(f"----:com.apple.iTunes:{field}"),
+                mediafile.StorageStyle(field),
+                mediafile.ASFStorageStyle(field),
+            )
+            try:
+                self.add_media_field(field, media_field)
+            except ValueError:
+                # Ignore errors due to duplicate registration
+                pass
 
     def commands(self):
         """Add beet UI commands to interact with Deezer."""
@@ -127,11 +144,10 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
 
         return AlbumInfo(
             album=album_data["title"],
-            album_id=deezer_id,
             deezer_album_id=deezer_id,
             artist=artist,
             artist_credit=self.get_artist([album_data["artist"]])[0],
-            artist_id=artist_id,
+            deezer_artist_id=artist_id,
             tracks=tracks,
             albumtype=album_data["record_type"],
             va=(
@@ -202,11 +218,10 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         )
         return TrackInfo(
             title=track_data["title"],
-            track_id=track_data["id"],
             deezer_track_id=track_data["id"],
             isrc=track_data.get("isrc"),
             artist=artist,
-            artist_id=artist_id,
+            deezer_artist_id=artist_id,
             length=track_data["duration"],
             index=track_data.get("track_position"),
             medium=track_data.get("disk_number"),
