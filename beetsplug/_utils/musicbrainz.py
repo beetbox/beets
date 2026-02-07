@@ -197,9 +197,21 @@ class MusicBrainzAPI(RequestHandler):
         * Values are lowercased and stripped of whitespace.
         """
         def format_value(value: str) -> str:
-            """Format a filter value, quoting it unless it's a UUID."""
-            # Check if value is a UUID (MBID) - 8-4-4-4-12 format with hyphens
-            if len(value) == 36 and value.count("-") == 4:
+            """Format a filter value, quoting it unless it's a UUID.
+            
+            UUIDs are detected by checking for the 8-4-4-4-12 format:
+            - Total length of 36 characters
+            - Exactly 4 hyphens
+            - Hyphens at positions 8, 13, 18, and 23
+            """
+            if (
+                len(value) == 36
+                and value.count("-") == 4
+                and value[8] == "-"
+                and value[13] == "-"
+                and value[18] == "-"
+                and value[23] == "-"
+            ):
                 # Likely a UUID/MBID, don't quote it
                 return value
             # Regular string value, quote it
