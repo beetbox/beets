@@ -25,7 +25,7 @@ import pylast
 
 from beets import plugins
 
-from .utils import tunelog
+from .utils import make_tunelog
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -50,6 +50,7 @@ class LastFmClient:
         The min_weight parameter filters tags by their minimum weight.
         """
         self._log = log
+        self._tunelog = make_tunelog(log)
         self._min_weight = min_weight
         self._genre_cache: dict[str, list[str]] = {}
 
@@ -122,7 +123,7 @@ class LastFmClient:
             self._genre_cache[key] = self.fetch_genre(method(*args_replaced))
 
         genre = self._genre_cache[key]
-        tunelog(self._log, "last.fm (unfiltered) {} tags: {}", entity, genre)
+        self._tunelog("last.fm (unfiltered) {} tags: {}", entity, genre)
         return genre
 
     def fetch_album_genre(self, albumartist: str, albumtitle: str) -> list[str]:
