@@ -11,6 +11,8 @@ New features:
 
 Bug fixes:
 
+- :doc:`plugins/musicbrainz`: Fix search terms escaping. :bug:`6347`
+
 For packagers:
 
 Other changes:
