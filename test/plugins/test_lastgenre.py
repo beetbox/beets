@@ -186,9 +186,9 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 return [tag1, tag2]
 
         plugin = lastgenre.LastGenrePlugin()
-        res = plugin._tags_for(MockPylastObj())
+        res = plugin.client._tags_for(MockPylastObj())
         assert res == ["pop", "rap"]
-        res = plugin._tags_for(MockPylastObj(), min_weight=50)
+        res = plugin.client._tags_for(MockPylastObj(), min_weight=50)
         assert res == ["pop"]
 
     def test_sort_by_depth(self):
@@ -560,9 +560,9 @@ def test_get_genre(config_values, item_genre, mock_genres, expected_result):
     # Mock the last.fm fetchers. When whitelist enabled, we can assume only
     # whitelisted genres get returned, the plugin's _resolve_genre method
     # ensures it.
-    lastgenre.LastGenrePlugin.fetch_track_genre = mock_fetch_track_genre
-    lastgenre.LastGenrePlugin.fetch_album_genre = mock_fetch_album_genre
-    lastgenre.LastGenrePlugin.fetch_artist_genre = mock_fetch_artist_genre
+    lastgenre.client.LastFmClient.fetch_track_genre = mock_fetch_track_genre
+    lastgenre.client.LastFmClient.fetch_album_genre = mock_fetch_album_genre
+    lastgenre.client.LastFmClient.fetch_artist_genre = mock_fetch_artist_genre
 
     # Initialize plugin instance and item
     plugin = lastgenre.LastGenrePlugin()
