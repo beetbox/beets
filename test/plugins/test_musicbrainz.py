@@ -1109,6 +1109,62 @@ class TestMusicBrainzPlugin(PluginMixin):
         assert candidates[0].tracks[0].track_id == self.RECORDING["id"]
         assert candidates[0].album == "hi"
 
+    def test_candidates_with_va_likely(self, monkeypatch, mb):
+        """Test that Various Artists searches work with unquoted MBIDs."""
+        from unittest import mock
+        
+        # Track what query was used
+        query_used = []
+        
+        def mock_get_json(*args, **kwargs):
+            if 'params' in kwargs and 'query' in kwargs['params']:
+                query_used.append(kwargs['params']['query'])
+            return {"releases": [{"id": self.mbid}]}
+        
+        monkeypatch.setattr(
+            "beetsplug._utils.musicbrainz.MusicBrainzAPI.get_json",
+            mock_get_json,
+        )
+        monkeypatch.setattr(
+            "beetsplug._utils.musicbrainz.MusicBrainzAPI.get_release",
+            lambda *_, **__: {
+                "title": "VA Album",
+                "id": self.mbid,
+                "status": "official",
+                "media": [
+                    {
+                        "tracks": [
+                            {
+                                "id": "track1",
+                                "recording": self.RECORDING,
+                                "position": 1,
+                                "number": "1",
+                            }
+                        ],
+                        "position": 1,
+                    }
+                ],
+                "artist-credit": [
+                    {"artist": {"name": "Various Artists", "id": musicbrainz.VARIOUS_ARTISTS_ID}}
+                ],
+                "release-group": {"id": "rg-id"},
+            },
+        )
+        
+        # Test VA search
+        candidates = list(mb.candidates([], "Various Artists", "Test Album", va_likely=True))
+        
+        assert len(candidates) == 1
+        assert candidates[0].album == "VA Album"
+        
+        # Verify that the MBID was NOT quoted in the query
+        assert len(query_used) == 1
+        query = query_used[0]
+        # The VA MBID should appear unquoted
+        assert f'arid:{musicbrainz.VARIOUS_ARTISTS_ID}' in query
+        # Make sure it's not quoted
+        assert f'arid:"{musicbrainz.VARIOUS_ARTISTS_ID}"' not in query
+
     def test_import_handles_404_gracefully(self, mb, requests_mock):
         id_ = uuid.uuid4()
         response = requests.Response()

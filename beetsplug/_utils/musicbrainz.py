@@ -193,10 +193,20 @@ class MusicBrainzAPI(RequestHandler):
         * Each filter key-value pair is formatted as 'key:"value"' unless
           - 'key' is empty, in which case only the value is used, '"value"'
           - 'value' is empty, in which case the filter is ignored
+          - 'value' is a UUID (MBID), in which case it's not quoted
         * Values are lowercased and stripped of whitespace.
         """
+        def format_value(value: str) -> str:
+            """Format a filter value, quoting it unless it's a UUID."""
+            # Check if value is a UUID (MBID) - 8-4-4-4-12 format with hyphens
+            if len(value) == 36 and value.count("-") == 4:
+                # Likely a UUID/MBID, don't quote it
+                return value
+            # Regular string value, quote it
+            return f'"{value}"'
+
         query = " AND ".join(
-            ":".join(filter(None, (k, f'"{_v}"')))
+            ":".join(filter(None, (k, format_value(_v))))
             for k, v in filters.items()
             if (_v := v.lower().strip())
         )
