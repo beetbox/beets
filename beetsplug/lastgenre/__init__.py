@@ -36,7 +36,7 @@ from beets.library import Album, Item
 from beets.util import plurality, unique_list
 
 from .client import LastFmClient
-from .utils import tunelog
+from .utils import make_tunelog
 
 if TYPE_CHECKING:
     import optparse
@@ -115,6 +115,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if self.config["auto"]:
             self.import_stages = [self.imported]
 
+        self._tunelog = make_tunelog(self._log)
         self.client = LastFmClient(
             self._log, self.config["min_weight"].get(int)
         )
@@ -378,15 +379,13 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 new_genres = self.client.fetch_artist_genre(obj.albumartist)
                 stage_label = "album artist"
                 if not new_genres:
-                    tunelog(
-                        self._log,
+                    self._tunelog(
                         'No album artist genre found for "{}", '
                         "trying multi-valued field...",
                         obj.albumartist,
                     )
                     for albumartist in obj.albumartists:
-                        tunelog(
-                            self._log,
+                        self._tunelog(
                             'Fetching artist genre for "{}"',
                             albumartist,
                         )
