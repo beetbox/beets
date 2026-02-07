@@ -100,15 +100,15 @@ databases. They share the following configuration options:
     listenbrainz
     loadext
     lyrics
-    mbcollection
-    mbpseudo
-    mbsubmit
     mbsync
     metasync
     missing
     mpdstats
     mpdupdate
     musicbrainz
+    mbcollection
+    mbpseudo
+    mbsubmit
     parentwork
     permissions
     play

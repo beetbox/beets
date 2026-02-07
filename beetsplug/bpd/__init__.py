@@ -30,7 +30,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 import beets
 import beets.ui
-from beets import dbcore, logging
+from beets import dbcore
 from beets.library import Item
 from beets.plugins import BeetsPlugin
 from beets.util import as_string, bluelet
@@ -38,8 +38,6 @@ from beetsplug._utils import vfs
 
 if TYPE_CHECKING:
     from beets.dbcore.query import Query
-
-log = logging.getLogger(__name__)
 
 
 try:
