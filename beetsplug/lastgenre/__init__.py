@@ -26,7 +26,7 @@ from __future__ import annotations
 
 from functools import singledispatchmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from beets import config, library, plugins, ui
 from beets.library import Album, Item
@@ -40,43 +40,6 @@ if TYPE_CHECKING:
     import optparse
 
     from beets.library import LibModel
-
-
-# Canonicalization tree processing.
-
-
-def flatten_tree(
-    elem: dict[Any, Any] | list[Any] | str,
-    path: list[str],
-    branches: list[list[str]],
-) -> None:
-    """Flatten nested lists/dictionaries into lists of strings
-    (branches).
-    """
-    if not path:
-        path = []
-
-    if isinstance(elem, dict):
-        for k, v in elem.items():
-            flatten_tree(v, [*path, k], branches)
-    elif isinstance(elem, list):
-        for sub in elem:
-            flatten_tree(sub, path, branches)
-    else:
-        branches.append([*path, str(elem)])
-
-
-def find_parents(candidate: str, branches: list[list[str]]) -> list[str]:
-    """Find parents genre of a given genre, ordered from the closest to
-    the further parent.
-    """
-    for branch in branches:
-        try:
-            idx = branch.index(candidate.lower())
-            return list(reversed(branch[: idx + 1]))
-        except ValueError:
-            continue
-    return [candidate]
 
 
 class LastGenrePlugin(plugins.BeetsPlugin):
@@ -113,7 +76,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         )
 
         loader = DataFileLoader.from_config(
-            self.config, self._log, Path(__file__).parent, flatten_tree
+            self.config, self._log, Path(__file__).parent
         )
         self.whitelist = loader.whitelist
         self.c14n_branches = loader.c14n_branches
@@ -133,7 +96,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             return ("artist",)
         return tuple()
 
-    # More canonicalization and general helpers.
+    # Canonicalization and filtering.
 
     def _get_depth(self, tag: str) -> int | None:
         """Find the depth of a tag in the genres tree."""
@@ -152,6 +115,17 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         depth_tag_pairs = [e for e in depth_tag_pairs if e[0] is not None]
         depth_tag_pairs.sort(reverse=True)
         return [p[1] for p in depth_tag_pairs]
+
+    @staticmethod
+    def find_parents(candidate: str, branches: list[list[str]]) -> list[str]:
+        """Find parent genres of a given genre, ordered from closest to furthest."""
+        for branch in branches:
+            try:
+                idx = branch.index(candidate.lower())
+                return list(reversed(branch[: idx + 1]))
+            except ValueError:
+                continue
+        return [candidate]
 
     def _resolve_genres(self, tags: list[str]) -> list[str]:
         """Canonicalize, sort and filter a list of genres.
@@ -185,11 +159,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 if self.whitelist:
                     parents = [
                         x
-                        for x in find_parents(tag, self.c14n_branches)
+                        for x in self.find_parents(tag, self.c14n_branches)
                         if self._is_valid(x)
                     ]
                 else:
-                    parents = [find_parents(tag, self.c14n_branches)[-1]]
+                    parents = [self.find_parents(tag, self.c14n_branches)[-1]]
 
                 tags_all += parents
                 # Stop if we have enough tags already, unless we need to find
