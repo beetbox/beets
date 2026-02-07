@@ -56,7 +56,6 @@ class DataFileLoader:
         config: ConfigView,
         log: Logger,
         plugin_dir: Path,
-        flatten_func: Callable,
     ) -> DataFileLoader:
         """Create a DataFileLoader from plugin configuration.
 
@@ -77,7 +76,6 @@ class DataFileLoader:
             config["canonical"].get(),
             default_tree,
             config["prefer_specific"].get(),
-            flatten_func,
         )
 
         return cls(log, plugin_dir, whitelist, c14n_branches, canonicalize)
@@ -109,7 +107,6 @@ class DataFileLoader:
         config_value: str | bool | None,
         default_path: str,
         prefer_specific: bool,
-        flatten_func: Callable,
     ) -> tuple[list[list[str]], bool]:
         """Load the canonicalization tree from a YAML file.
 
@@ -129,5 +126,24 @@ class DataFileLoader:
             log.debug("Loading canonicalization tree {}", c14n_filename)
             with Path(c14n_filename).expanduser().open(encoding="utf-8") as f:
                 genres_tree = yaml.safe_load(f)
-            flatten_func(genres_tree, [], c14n_branches)
+            DataFileLoader.flatten_tree(genres_tree, [], c14n_branches)
         return c14n_branches, canonicalize
+
+    @staticmethod
+    def flatten_tree(
+        elem: dict | list | str,
+        path: list[str],
+        branches: list[list[str]],
+    ) -> None:
+        """Flatten nested lists/dictionaries into lists of strings (branches)."""
+        if not path:
+            path = []
+
+        if isinstance(elem, dict):
+            for k, v in elem.items():
+                DataFileLoader.flatten_tree(v, [*path, k], branches)
+        elif isinstance(elem, list):
+            for sub in elem:
+                DataFileLoader.flatten_tree(sub, path, branches)
+        else:
+            branches.append([*path, str(elem)])
