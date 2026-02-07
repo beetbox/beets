@@ -22,10 +22,20 @@ from typing import TYPE_CHECKING, Any
 from beets import config
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from beets.logging import Logger
 
 
-def tunelog(log: Logger, msg: str, *args: Any, **kwargs: Any) -> None:
-    """Log tuning messages at DEBUG level when verbosity level is high enough."""
-    if config["verbose"].as_number() >= 3:
-        log.debug(msg, *args, **kwargs)
+def make_tunelog(log: Logger) -> Callable[..., None]:
+    """Create a tunelog function bound to a specific logger.
+
+    Returns a callable that logs tuning messages at DEBUG level when
+    verbosity is high enough.
+    """
+
+    def tunelog(msg: str, *args: Any, **kwargs: Any) -> None:
+        if config["verbose"].as_number() >= 3:
+            log.debug(msg, *args, **kwargs)
+
+    return tunelog
