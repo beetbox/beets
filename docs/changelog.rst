@@ -12,6 +12,8 @@ New features:
 Bug fixes:
 
 - :doc:`plugins/musicbrainz`: Fix search terms escaping. :bug:`6347`
+- :doc:`plugins/musicbrainz`: Fix support for ``alias`` and ``tracks``
+  :conf:`plugins.musicbrainz:extra_tags`.
 
 For packagers:
 
