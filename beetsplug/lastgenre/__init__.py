@@ -24,18 +24,16 @@ https://gist.github.com/1241307
 
 from __future__ import annotations
 
-import os
 from functools import singledispatchmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
-
-import yaml
 
 from beets import config, library, plugins, ui
 from beets.library import Album, Item
 from beets.util import plurality, unique_list
 
 from .client import LastFmClient
+from .loaders import DataFileLoader
 from .utils import make_tunelog
 
 if TYPE_CHECKING:
@@ -83,12 +81,6 @@ def find_parents(candidate: str, branches: list[list[str]]) -> list[str]:
     return [candidate]
 
 
-# Main plugin logic.
-
-WHITELIST = os.path.join(os.path.dirname(__file__), "genres.txt")
-C14N_TREE = os.path.join(os.path.dirname(__file__), "genres-tree.yaml")
-
-
 class LastGenrePlugin(plugins.BeetsPlugin):
     def __init__(self) -> None:
         super().__init__()
@@ -120,49 +112,13 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         self.client = LastFmClient(
             self._log, self.config["min_weight"].get(int)
         )
-        self.whitelist = self._load_whitelist()
-        self.c14n_branches, self.canonicalize = self._load_c14n_tree()
 
-    def _load_whitelist(self) -> set[str]:
-        """Load the whitelist from a text file.
-
-        Default whitelist is used if config is True, empty string or set to "nothing".
-        """
-        whitelist = set()
-        wl_filename = self.config["whitelist"].get()
-        if wl_filename in (True, "", None):  # Indicates the default whitelist.
-            wl_filename = WHITELIST
-        if wl_filename:
-            self._log.debug("Loading whitelist {}", wl_filename)
-            text = Path(wl_filename).expanduser().read_text(encoding="utf-8")
-            for line in text.splitlines():
-                if (line := line.strip().lower()) and not line.startswith("#"):
-                    whitelist.add(line)
-
-        return whitelist
-
-    def _load_c14n_tree(self) -> tuple[list[list[str]], bool]:
-        """Load the canonicalization tree from a YAML file.
-
-        Default tree is used if config is True, empty string, set to "nothing"
-        or if prefer_specific is enabled.
-        """
-        c14n_branches: list[list[str]] = []
-        c14n_filename = self.config["canonical"].get()
-        canonicalize = c14n_filename is not False
-        # Default tree
-        if c14n_filename in (True, "", None) or (
-            # prefer_specific requires a tree, load default tree
-            not canonicalize and self.config["prefer_specific"].get()
-        ):
-            c14n_filename = C14N_TREE
-        # Read the tree
-        if c14n_filename:
-            self._log.debug("Loading canonicalization tree {}", c14n_filename)
-            with Path(c14n_filename).expanduser().open(encoding="utf-8") as f:
-                genres_tree = yaml.safe_load(f)
-            flatten_tree(genres_tree, [], c14n_branches)
-        return c14n_branches, canonicalize
+        loader = DataFileLoader.from_config(
+            self.config, self._log, Path(__file__).parent, flatten_tree
+        )
+        self.whitelist = loader.whitelist
+        self.c14n_branches = loader.c14n_branches
+        self.canonicalize = loader.canonicalize
 
     @property
     def sources(self) -> tuple[str, ...]:
