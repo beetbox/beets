@@ -19,7 +19,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import yaml
 
@@ -92,7 +92,7 @@ class DataFileLoader:
         wl_filename = config_value
         if wl_filename in (True, "", None):  # Indicates the default whitelist.
             wl_filename = default_path
-        if wl_filename:
+        if wl_filename and isinstance(wl_filename, str):
             log.debug("Loading whitelist {}", wl_filename)
             text = Path(wl_filename).expanduser().read_text(encoding="utf-8")
             for line in text.splitlines():
@@ -122,7 +122,7 @@ class DataFileLoader:
         ):
             c14n_filename = default_path
         # Read the tree
-        if c14n_filename:
+        if c14n_filename and isinstance(c14n_filename, str):
             log.debug("Loading canonicalization tree {}", c14n_filename)
             with Path(c14n_filename).expanduser().open(encoding="utf-8") as f:
                 genres_tree = yaml.safe_load(f)
@@ -131,7 +131,7 @@ class DataFileLoader:
 
     @staticmethod
     def flatten_tree(
-        elem: dict | list | str,
+        elem: dict[str, Any] | list[Any] | str,
         path: list[str],
         branches: list[list[str]],
     ) -> None:
