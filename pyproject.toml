@@ -238,7 +238,17 @@ cmd = "ruff check --config=pyproject.toml"
 
 [tool.poe.tasks.lint-docs]
 help = "Lint the documentation"
-shell = "sphinx-lint --enable all --disable default-role $(git ls-files '*.rst')"
+interpreter = "bash"
+shell = """
+set -o pipefail
+files=$(git ls-files '*.rst')
+
+grep -Eno ' `[^`][^`]+`[^_]' $files |
+    sed 's/ .*/ Use double backticks for inline literal (double-backticks-required)/' && failed=1
+sphinx-lint --enable all --disable default-role $files || failed=1
+
+exit ${failed:-0}
+"""
 
 [tool.poe.tasks.update-dependencies]
 help = "Update dependencies to their latest versions."
