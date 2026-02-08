@@ -54,7 +54,7 @@ New features
   genres tag.
 - :doc:`plugins/ftintitle`: Added argument to skip the processing of artist and
   album artist are the same in ftintitle.
-- :doc:`plugins/play`: Added `$playlist` marker to precisely edit the playlist
+- :doc:`plugins/play`: Added ``$playlist`` marker to precisely edit the playlist
   filepath into the command calling the player program.
 - :doc:`plugins/lastgenre`: For tuning plugin settings ``-vvv`` can be passed to
   receive extra verbose logging around last.fm results and how they are
@@ -63,13 +63,13 @@ New features
 - :doc:`plugins/importsource`: Added new plugin that tracks original import
   paths and optionally suggests removing source files when items are removed
   from the library.
-- :doc:`plugins/mbpseudo`: Add a new `mbpseudo` plugin to proactively receive
+- :doc:`plugins/mbpseudo`: Add a new ``mbpseudo`` plugin to proactively receive
   MusicBrainz pseudo-releases as recommendations during import.
 - Added support for Python 3.13.
 - :doc:`/plugins/convert`: ``force`` can be passed to override checks like
   no_convert, never_convert_lossy_files, same format, and max_bitrate
-- :doc:`plugins/titlecase`: Add the `titlecase` plugin to allow users to resolve
-  differences in metadata source styles.
+- :doc:`plugins/titlecase`: Add the ``titlecase`` plugin to allow users to
+  resolve differences in metadata source styles.
 - :doc:`plugins/spotify`: Added support for multi-artist albums and tracks,
   saving all contributing artists to the respective fields.
 - :doc:`plugins/fetchart`: Fix colorized output text.
@@ -115,15 +115,15 @@ Bug fixes
   audio-features endpoint, the plugin logs a warning once and skips audio
   features for all remaining tracks in the session, avoiding unnecessary API
   calls and rate limit exhaustion.
-- Running `beet --config <mypath> config -e` now edits `<mypath>` rather than
-  the default config path. :bug:`5652`
+- Running ``beet --config <mypath> config -e`` now edits ``<mypath>`` rather
+  than the default config path. :bug:`5652`
 - :doc:`plugins/lyrics`: Accepts strings for lyrics sources (previously only
   accepted a list of strings). :bug:`5962`
 - Fix a bug introduced in release 2.4.0 where import from any valid
   import-log-file always threw a "none of the paths are importable" error.
-- :doc:`/plugins/web`: repair broken `/item/values/…` and `/albums/values/…`
+- :doc:`/plugins/web`: repair broken ``/item/values/…`` and `/albums/values/…`
   endpoints. Previously, due to single-quotes (ie. string literal) in the SQL
-  query, the query eg. `GET /item/values/albumartist` would return the literal
+  query, the query eg. ``GET /item/values/albumartist`` would return the literal
   "albumartist" instead of a list of unique album artists.
 - Sanitize log messages by removing control characters preventing terminal
   rendering issues.
@@ -194,7 +194,7 @@ Other changes
 - Finally removed gmusic plugin and all related code/docs as the Google Play
   Music service was shut down in 2020.
 - Updated color documentation with ``bright_*`` and ``bg_bright_*`` entries.
-- Moved `beets/random.py` into `beetsplug/random.py` to cleanup core module.
+- Moved ``beets/random.py`` into ``beetsplug/random.py`` to cleanup core module.
 - dbcore: Allow models to declare SQL indices; add an ``items.album_id`` index
   to speed up ``album.items()`` queries. :bug:`5809`
 
@@ -252,12 +252,12 @@ New features
 - :doc:`plugins/discogs` Added support for featured artists. :bug:`6038`
 - :doc:`plugins/discogs` New configuration option
   :conf:`plugins.discogs:featured_string` to change the default string used to
-  join featured artists. The default string is `Feat.`.
-- :doc:`plugins/discogs` Support for `artist_credit` in Discogs tags.
+  join featured artists. The default string is ``Feat.``.
+- :doc:`plugins/discogs` Support for ``artist_credit`` in Discogs tags.
   :bug:`3354`
 - :doc:`plugins/discogs` Support for name variations and config options to
   specify where the variations are written. :bug:`3354`
-- :doc:`plugins/web` Support for `nexttrack` keyboard press
+- :doc:`plugins/web` Support for ``nexttrack`` keyboard press
 
 Bug fixes
 ~~~~~~~~~
@@ -271,8 +271,8 @@ Bug fixes
   problem occurred primarily when no album was provided or when the album field
   was an empty string. :bug:`5189`
 - :doc:`plugins/spotify` Removed old and undocumented config options
-  `artist_field`, `album_field` and `track` that were causing issues with track
-  matching. :bug:`5189`
+  ``artist_field``, ``album_field`` and ``track`` that were causing issues with
+  track matching. :bug:`5189`
 - :doc:`plugins/spotify` Fixed an issue where candidate lookup would not find
   matches due to query escaping (single vs double quotes).
 - :doc:`plugins/discogs` Fixed inconsistency in stripping disambiguation from
