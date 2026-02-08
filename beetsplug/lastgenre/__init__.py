@@ -67,7 +67,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
     def setup(self) -> None:
         """Setup plugin from config options"""
-        if self.config["auto"]:
+        if self.config["auto"].get(bool):
             self.import_stages = [self.imported]
 
         self._tunelog = make_tunelog(self._log)
@@ -169,7 +169,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 # Stop if we have enough tags already, unless we need to find
                 # the most specific tag (instead of the most popular).
                 if (
-                    not self.config["prefer_specific"]
+                    not self.config["prefer_specific"].get(bool)
                     and len(tags_all) >= count
                 ):
                     break
@@ -178,7 +178,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         tags = unique_list(tags)
 
         # Sort the tags by specificity.
-        if self.config["prefer_specific"]:
+        if self.config["prefer_specific"].get(bool):
             tags = self._sort_by_depth(tags)
 
         # c14n only adds allowed genres but we may have had forbidden genres in
@@ -200,7 +200,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
     def _format_and_stringify(self, tags: list[str]) -> str:
         """Format to title_case if configured and return as delimited string."""
-        if self.config["title_case"]:
+        if self.config["title_case"].get(bool):
             formatted = [tag.title() for tag in tags]
         else:
             formatted = tags
@@ -210,7 +210,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
     def _get_existing_genres(self, obj: LibModel) -> list[str]:
         """Return a list of genres for this Item or Album. Empty string genres
         are removed."""
-        separator = self.config["separator"].get()
+        separator = self.config["separator"].as_str()
         if isinstance(obj, library.Item):
             item_genre = obj.get("genre", with_album=False).split(separator)
         else:
@@ -267,14 +267,14 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         new_genres = []
         genres = self._get_existing_genres(obj)
 
-        if genres and not self.config["force"]:
+        if genres and not self.config["force"].get(bool):
             # Without force pre-populated tags are returned as-is.
             label = "keep any, no-force"
             if isinstance(obj, library.Item):
                 return obj.get("genre", with_album=False), label
             return obj.get("genre"), label
 
-        if self.config["force"]:
+        if self.config["force"].get(bool):
             # Force doesn't keep any unless keep_existing is set.
             # Whitelist validation is handled in _resolve_genres.
             if self.config["keep_existing"]:
@@ -355,7 +355,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     return result
 
         # Nothing found, leave original if configured and valid.
-        if obj.genre and self.config["keep_existing"]:
+        if obj.genre and self.config["keep_existing"].get(bool):
             if not self.whitelist or self._is_valid(obj.genre.lower()):
                 return obj.genre, "original fallback"
             # If the original genre doesn't match a whitelisted genre, check
@@ -391,7 +391,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
     def _process_track(self, obj: Item, write: bool) -> None:
         """Process a single track/item."""
         self._fetch_and_log_genre(obj)
-        if not self.config["pretend"]:
+        if not self.config["pretend"].get(bool):
             obj.try_sync(write=write, move=False)
 
     @_process.register
@@ -402,7 +402,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             for item in obj.items():
                 self._process(item, write)
 
-        if not self.config["pretend"]:
+        if not self.config["pretend"].get(bool):
             obj.try_sync(
                 write=write, move=False, inherit="track" not in self.sources
             )

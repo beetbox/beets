@@ -75,7 +75,7 @@ class DataFileLoader:
             log,
             config["canonical"].get(),
             default_tree,
-            config["prefer_specific"].get(),
+            config["prefer_specific"].get(bool),
         )
 
         return cls(log, plugin_dir, whitelist, c14n_branches, canonicalize)
