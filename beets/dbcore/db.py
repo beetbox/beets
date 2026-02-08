@@ -16,7 +16,6 @@
 
 from __future__ import annotations
 
-import contextlib
 import functools
 import os
 import re
@@ -27,6 +26,7 @@ import time
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Mapping
+from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import cached_property
 from sqlite3 import Connection, sqlite_version_info
@@ -1002,12 +1002,15 @@ class Transaction:
         cursor = self.db._connection().execute(statement, subvals)
         return cursor.fetchall()
 
-    def mutate(self, statement: str, subvals: Sequence[SQLiteType] = ()) -> Any:
-        """Execute an SQL statement with substitution values and return
-        the row ID of the last affected row.
+    @contextmanager
+    def _handle_mutate(self) -> Iterator[None]:
+        """Handle mutation bookkeeping and database access errors.
+
+        Yield control to mutation execution code. If execution succeeds,
+        mark this transaction as mutated.
         """
         try:
-            cursor = self.db._connection().execute(statement, subvals)
+            yield
         except sqlite3.OperationalError as e:
             # In two specific cases, SQLite reports an error while accessing
             # the underlying database file. We surface these exceptions as
@@ -1017,11 +1020,23 @@ class Transaction:
                 "unable to open database file",
             ):
                 raise DBAccessError(e.args[0])
-            else:
-                raise
+            raise
         else:
             self._mutated = True
-            return cursor.lastrowid
+
+    def mutate(self, statement: str, subvals: Sequence[SQLiteType] = ()) -> Any:
+        """Run one write statement with shared mutation/error handling."""
+        with self._handle_mutate():
+            return self.db._connection().execute(statement, subvals).lastrowid
+
+    def mutate_many(
+        self, statement: str, subvals: Sequence[tuple[SQLiteType, ...]] = ()
+    ) -> Any:
+        """Run batched writes with shared mutation/error handling."""
+        with self._handle_mutate():
+            return (
+                self.db._connection().executemany(statement, subvals).lastrowid
+            )
 
     def script(self, statements: str):
         """Execute a string containing multiple SQL statements."""
@@ -1214,7 +1229,7 @@ class Database:
                 _thread_id, conn = self._connections.popitem()
                 conn.close()
 
-    @contextlib.contextmanager
+    @contextmanager
     def _tx_stack(self) -> Generator[list[Transaction]]:
         """A context manager providing access to the current thread's
         transaction stack. The context manager synchronizes access to
