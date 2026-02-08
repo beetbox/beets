@@ -495,11 +495,12 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
                         offset=i,
                     )
                 )
-            track_map = {r["id"]: r for r in recording_list}
+            recording_by_id = {r["id"]: r for r in recording_list}
             for medium in release["media"]:
-                for recording in medium["tracks"]:
-                    recording_info = track_map[recording["recording"]["id"]]
-                    recording["recording"] = recording_info
+                for track in medium["tracks"]:
+                    track["recording"] = recording_by_id[
+                        track["recording"]["id"]
+                    ]
 
         # Basic info.
         track_infos = []
