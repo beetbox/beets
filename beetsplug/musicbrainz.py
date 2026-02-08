@@ -489,7 +489,10 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
                 self._log.debug("Retrieving tracks starting at {}", i)
                 recording_list.extend(
                     self.mb_api.browse_recordings(
-                        release=release["id"], offset=i
+                        release=release["id"],
+                        limit=BROWSE_CHUNKSIZE,
+                        includes=BROWSE_INCLUDES,
+                        offset=i,
                     )
                 )
             track_map = {r["id"]: r for r in recording_list}
