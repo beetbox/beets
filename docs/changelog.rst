@@ -15,6 +15,9 @@ For packagers:
 
 Other changes:
 
+- :doc:`plugins/lyrics`: Disable ``tekstowo`` by default because it blocks the
+  beets User-Agent.
+
 2.6.1 (February 02, 2026)
 -------------------------
 
