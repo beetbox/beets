@@ -87,14 +87,13 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """A tuple of allowed genre sources. May contain 'track',
         'album', or 'artist.'
         """
-        source = self.config["source"].as_choice(("track", "album", "artist"))
-        if source == "track":
-            return "track", "album", "artist"
-        if source == "album":
-            return "album", "artist"
-        if source == "artist":
-            return ("artist",)
-        return tuple()
+        return self.config["source"].as_choice(
+            {
+                "track": ("track", "album", "artist"),
+                "album": ("album", "artist"),
+                "artist": ("artist",),
+            }
+        )
 
     # Canonicalization and filtering.
 
