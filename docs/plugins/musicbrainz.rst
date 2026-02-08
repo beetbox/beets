@@ -93,15 +93,23 @@ Default
     This setting should improve the autotagger results if the metadata with the
     given tags match the metadata returned by MusicBrainz.
 
-    Note that the only tags supported by this setting are: ``barcode``,
-    ``catalognum``, ``country``, ``label``, ``media``, and ``year``.
+    Tags supported by this setting:
+
+    * ``alias`` (also search for release aliases matching the query)
+    * ``barcode``
+    * ``catalognum``
+    * ``country``
+    * ``label``
+    * ``media``
+    * ``tracks`` (number of tracks on the release)
+    * ``year``
 
     Example:
 
     .. code-block:: yaml
 
         musicbrainz:
-            extra_tags: [barcode, catalognum, country, label, media, year]
+            extra_tags: [alias, barcode, catalognum, country, label, media, tracks, year]
 
 .. conf:: genres
     :default: no

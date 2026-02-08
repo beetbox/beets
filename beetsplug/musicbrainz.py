@@ -56,6 +56,8 @@ FIELDS_TO_MB_KEYS = {
     "label": "label",
     "media": "format",
     "year": "date",
+    "tracks": "tracks",
+    "alias": "alias",
 }
 
 
