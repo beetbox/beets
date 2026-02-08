@@ -31,6 +31,8 @@ Other changes
 
 - :doc:`plugins/lyrics`: Disable ``tekstowo`` by default because it blocks the
   beets User-Agent.
+- :doc:`/plugins/lastgenre`: Refactored plugin into modular structure with
+  separate last.fm client, file loaders, and utils modules.
 
 2.6.1 (February 02, 2026)
 -------------------------
