@@ -14,6 +14,8 @@ Bug fixes:
 - :doc:`plugins/musicbrainz`: Fix search terms escaping. :bug:`6347`
 - :doc:`plugins/musicbrainz`: Fix support for ``alias`` and ``tracks``
   :conf:`plugins.musicbrainz:extra_tags`.
+- :doc:`plugins/musicbrainz`: Fix fetching very large releases that have more
+  than 500 tracks. :bug:`6355`
 
 For packagers:
 
