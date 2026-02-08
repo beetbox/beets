@@ -139,11 +139,6 @@ def create_rst_replacements() -> list[Replacement]:
     ]
 
 
-MD_REPLACEMENTS: list[Replacement] = [
-    (r"^(\w[^\n]{,80}):(?=\n\n[^ ])", r"### \1"),  # format section headers
-    (r"^(\w[^\n]{81,}):(?=\n\n[^ ])", r"**\1**"),  # and bolden too long ones
-    (r"### [^\n]+\n+(?=### )", ""),  # remove empty sections
-]
 order_bullet_points = partial(
     re.compile(r"(\n- .*?(?=\n(?! *(-|\d\.) )|$))", flags=re.DOTALL).sub,
     lambda m: "\n- ".join(sorted(m.group().split("\n- "), key=str.lower)),
@@ -254,9 +249,6 @@ def changelog_as_markdown(rst: str) -> str:
         rst = re.sub(pattern, repl, rst, flags=re.M | re.DOTALL)
 
     md = rst2md(rst)
-
-    for pattern, repl in MD_REPLACEMENTS:
-        md = re.sub(pattern, repl, md, flags=re.M | re.DOTALL)
 
     # order bullet points in each of the lists alphabetically to
     # improve readability

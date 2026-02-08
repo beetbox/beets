@@ -61,8 +61,8 @@ Bug fixes
   2. Second
      and some details
 
-Section naaaaaaaaaaaaaaaaaaaaaaaammmmmmmmmmmmmmmmeeeeeeeeeeeeeee with over 80
-characters:
+Long parapgraph naaaaaaaaaaaaaaaaaaaaaaaammmmmmmmmmmmmmmmeeeeeeeeeeeeeee ending
+with a colon:
 
 .. For plugin developers
 .. ~~~~~~~~~~~~~~~~~~~~~
@@ -111,7 +111,7 @@ You can do something with this command:
   - First nested bullet point with some text that wraps to the next line
   - Second nested bullet point
 
-**Section naaaaaaaaaaaaaaaaaaaaaaaammmmmmmmmmmmmmmmeeeeeeeeeeeeeee with over 80 characters**
+Long parapgraph naaaaaaaaaaaaaaaaaaaaaaaammmmmmmmmmmmmmmmeeeeeeeeeeeeeee ending with a colon:
 
 ## Other changes
 
