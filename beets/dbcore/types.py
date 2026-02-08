@@ -30,6 +30,7 @@ from . import query
 
 SQLiteType = query.SQLiteType
 BLOB_TYPE = query.BLOB_TYPE
+MULTI_VALUE_DELIMITER = "\\␀"
 
 
 class ModelType(typing.Protocol):
@@ -481,4 +482,4 @@ DATE = DateType()
 SEMICOLON_SPACE_DSV = DelimitedString("; ")
 
 # Will set the proper null char in mediafile
-MULTI_VALUE_DSV = DelimitedString("\\␀")
+MULTI_VALUE_DSV = DelimitedString(MULTI_VALUE_DELIMITER)
