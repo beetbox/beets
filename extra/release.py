@@ -165,13 +165,21 @@ def update_changelog(text: str, new: Version) -> str:
 Unreleased
 ----------
 
-New features:
+..
+    New features
+    ~~~~~~~~~~~~
 
-Bug fixes:
+..
+    Bug fixes
+    ~~~~~~~~~
 
-For packagers:
+..
+    For plugin developers
+    ~~~~~~~~~~~~~~~~~~~~~
 
-Other changes:
+..
+    Other changes
+    ~~~~~~~~~~~~~
 
 {new_header}
 {"-" * len(new_header)}
