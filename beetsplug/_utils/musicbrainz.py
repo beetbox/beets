@@ -11,9 +11,10 @@ logic throughout the codebase.
 from __future__ import annotations
 
 import operator
+import re
 from dataclasses import dataclass, field
 from functools import cached_property, singledispatchmethod, wraps
-from itertools import groupby
+from itertools import groupby, starmap
 from typing import TYPE_CHECKING, Any, Literal, ParamSpec, TypedDict, TypeVar
 
 from requests_ratelimiter import LimiterMixin
@@ -30,7 +31,10 @@ if TYPE_CHECKING:
 
     from .._typing import JSONDict
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("beets")
+
+
+LUCENE_SPECIAL_CHAR_PAT = re.compile(r'([-+&|!(){}[\]^"~*?:\\/])')
 
 
 class LimiterTimeoutSession(LimiterMixin, TimeoutAndRetrySession):
@@ -181,6 +185,21 @@ class MusicBrainzAPI(RequestHandler):
     def _browse(self, entity: Entity, **kwargs) -> list[JSONDict]:
         return self._get_resource(entity, **kwargs).get(f"{entity}s", [])
 
+    @staticmethod
+    def format_search_term(field: str, term: str) -> str:
+        """Format a search term for the MusicBrainz API.
+
+        See https://lucene.apache.org/core/4_3_0/queryparser/org/apache/lucene/queryparser/classic/package-summary.html
+        """
+        if not (term := term.lower().strip()):
+            return ""
+
+        term = LUCENE_SPECIAL_CHAR_PAT.sub(r"\\\1", term)
+        if field:
+            term = f"{field}:({term})"
+
+        return term
+
     def search(
         self,
         entity: Entity,
@@ -195,10 +214,8 @@ class MusicBrainzAPI(RequestHandler):
           - 'value' is empty, in which case the filter is ignored
         * Values are lowercased and stripped of whitespace.
         """
-        query = " AND ".join(
-            ":".join(filter(None, (k, f'"{_v}"')))
-            for k, v in filters.items()
-            if (_v := v.lower().strip())
+        query = " ".join(
+            filter(None, starmap(self.format_search_term, filters.items()))
         )
         log.debug("Searching for MusicBrainz {}s with: {!r}", entity, query)
         kwargs["query"] = query
