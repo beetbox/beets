@@ -16,7 +16,6 @@
 
 from __future__ import annotations
 
-import warnings
 from copy import deepcopy
 from dataclasses import dataclass
 from functools import cached_property
@@ -25,6 +24,7 @@ from typing import TYPE_CHECKING, Any, TypeVar
 from typing_extensions import Self
 
 from beets.util import cached_classproperty
+from beets.util.deprecation import deprecate_for_maintainers
 
 if TYPE_CHECKING:
     from beets.library import Item
@@ -82,24 +82,16 @@ class Info(AttrDict[Any]):
         **kwargs,
     ) -> None:
         if genre:
-            warnings.warn(
-                "The 'genre' parameter is deprecated. Use 'genres' (list) instead.",
-                DeprecationWarning,
-                stacklevel=2,
+            deprecate_for_maintainers(
+                "The 'genre' parameter", "'genres' (list)", stacklevel=3
             )
             if not genres:
-                for separator in [", ", "; ", " / "]:
-                    if separator in genre:
-                        split_genres = [
-                            g.strip()
-                            for g in genre.split(separator)
-                            if g.strip()
-                        ]
-                        if len(split_genres) > 1:
-                            genres = split_genres
-                            break
-                if not genres:
+                try:
+                    sep = next(s for s in [", ", "; ", " / "] if s in genre)
+                except StopIteration:
                     genres = [genre]
+                else:
+                    genres = list(map(str.strip, genre.split(sep)))
 
         self.album = album
         self.artist = artist
