@@ -84,6 +84,10 @@ New features:
 
 Bug fixes:
 
+- Improved error message when database directory is not writable. When SQLite
+  fails to open the database with 'unable to open' error, beets now provides a
+  helpful message suggesting the user check directory permissions. Also fixed
+  typo in error message ('cannot not' to 'could not'). :bug:`1676`
 - :doc:`/plugins/lastgenre`: Canonicalize genres when ``force`` and
   ``keep_existing`` are ``on``, yet no genre info on lastfm could be found.
   :bug:`6303`
