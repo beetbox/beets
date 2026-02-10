@@ -167,7 +167,6 @@ def correct_list_fields(m: LibModel) -> None:
             setattr(m, single_field, list_val[0])
 
     ensure_first_value("albumtype", "albumtypes")
-    ensure_first_value("genre", "genres")
 
     if hasattr(m, "mb_artistids"):
         ensure_first_value("mb_artistid", "mb_artistids")

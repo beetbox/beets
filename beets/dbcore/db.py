@@ -30,7 +30,16 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import cached_property
 from sqlite3 import Connection, sqlite_version_info
-from typing import TYPE_CHECKING, Any, AnyStr, ClassVar, Generic, NamedTuple
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    AnyStr,
+    ClassVar,
+    Generic,
+    Literal,
+    NamedTuple,
+    TypedDict,
+)
 
 from typing_extensions import (
     Self,
@@ -1055,15 +1064,20 @@ class Migration(ABC):
         name = cls.__name__.removesuffix("Migration")  # type: ignore[attr-defined]
         return re.sub(r"(?<=[a-z])(?=[A-Z])", "_", name).lower()
 
-    def migrate_table(self, table: str) -> None:
+    def migrate_table(self, table: str, *args, **kwargs) -> None:
         """Migrate a specific table."""
         if not self.db.migration_exists(self.name, table):
-            self._migrate_data(table)
+            self._migrate_data(table, *args, **kwargs)
             self.db.record_migration(self.name, table)
 
     @abstractmethod
-    def _migrate_data(self, table: str) -> None:
+    def _migrate_data(self, table: str, current_fields: set[str]) -> None:
         """Migrate data for a specific table."""
+
+
+class TableInfo(TypedDict):
+    columns: set[str]
+    migrations: set[str]
 
 
 class Database:
@@ -1128,6 +1142,32 @@ class Database:
             self._create_indices(model_cls._table, model_cls._indices)
 
         self._migrate()
+
+    @cached_property
+    def db_tables(self) -> dict[str, TableInfo]:
+        column_queries = [
+            f"""
+                SELECT '{m._table}' AS table_name, 'columns' AS source, name
+                FROM pragma_table_info('{m._table}')
+            """
+            for m in self._models
+        ]
+        with self.transaction() as tx:
+            rows = tx.query(f"""
+                {" UNION ALL ".join(column_queries)}
+                UNION ALL
+                SELECT table_name, 'migrations' AS source, name FROM migrations
+            """)
+
+        tables_data: dict[str, TableInfo] = defaultdict(
+            lambda: TableInfo(columns=set(), migrations=set())
+        )
+
+        source: Literal["columns", "migrations"]
+        for table_name, source, name in rows:
+            tables_data[table_name][source].add(name)
+
+        return tables_data
 
     # Primitive access control: connections and transactions.
 
@@ -1269,35 +1309,26 @@ class Database:
         """Set up the schema of the database. `fields` is a mapping
         from field names to `Type`s. Columns are added if necessary.
         """
-        # Get current schema.
-        with self.transaction() as tx:
-            rows = tx.query(f"PRAGMA table_info({table})")
-        current_fields = {row[1] for row in rows}
-
-        field_names = set(fields.keys())
-        if current_fields.issuperset(field_names):
-            # Table exists and has all the required columns.
-            return
-
-        if not current_fields:
+        if table not in self.db_tables:
             # No table exists.
             columns = []
             for name, typ in fields.items():
                 columns.append(f"{name} {typ.sql}")
             setup_sql = f"CREATE TABLE {table} ({', '.join(columns)});\n"
-
         else:
             # Table exists does not match the field set.
             setup_sql = ""
+            current_fields = self.db_tables[table]["columns"]
             for name, typ in fields.items():
-                if name in current_fields:
-                    continue
-                setup_sql += (
-                    f"ALTER TABLE {table} ADD COLUMN {name} {typ.sql};\n"
-                )
+                if name not in current_fields:
+                    setup_sql += (
+                        f"ALTER TABLE {table} ADD COLUMN {name} {typ.sql};\n"
+                    )
 
         with self.transaction() as tx:
             tx.script(setup_sql)
+
+        self.db_tables[table]["columns"] = set(fields)
 
     def _make_attribute_table(self, flex_table: str):
         """Create a table and associated index for flexible attributes
@@ -1345,19 +1376,12 @@ class Database:
         for migration_cls, model_classes in self._migrations:
             migration = migration_cls(self)
             for model_cls in model_classes:
-                migration.migrate_table(model_cls._table)
+                table = model_cls._table
+                migration.migrate_table(table, self.db_tables[table]["columns"])
 
     def migration_exists(self, name: str, table: str) -> bool:
         """Return whether a named migration has been marked complete."""
-        with self.transaction() as tx:
-            return tx.execute(
-                """
-                SELECT EXISTS(
-                    SELECT 1 FROM migrations WHERE name = ? AND table_name = ?
-                )
-                """,
-                (name, table),
-            ).fetchone()[0]
+        return name in self.db_tables[table]["migrations"]
 
     def record_migration(self, name: str, table: str) -> None:
         """Set completion state for a named migration."""

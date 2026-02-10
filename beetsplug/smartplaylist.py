@@ -359,8 +359,8 @@ class SmartPlaylistPlugin(BeetsPlugin):
                         if extm3u:
                             attr = [(k, entry.item[k]) for k in keys]
                             al = [
-                                f' {key}="{quote(str(value), safe="/:")}"'
-                                for key, value in attr
+                                f' {k}="{quote("; ".join(v) if isinstance(v, list) else str(v), safe="/:")}"'  # noqa: E501
+                                for k, v in attr
                             ]
                             attrs = "".join(al)
                             comment = (

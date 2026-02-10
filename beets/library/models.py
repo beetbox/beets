@@ -241,7 +241,6 @@ class Album(LibModel):
         "albumartists_sort": types.MULTI_VALUE_DSV,
         "albumartists_credit": types.MULTI_VALUE_DSV,
         "album": types.STRING,
-        "genre": types.STRING,
         "genres": types.MULTI_VALUE_DSV,
         "style": types.STRING,
         "discogs_albumid": types.INTEGER,
@@ -277,7 +276,7 @@ class Album(LibModel):
         "original_day": types.PaddedInt(2),
     }
 
-    _search_fields = ("album", "albumartist", "genre")
+    _search_fields = ("album", "albumartist", "genres")
 
     @cached_classproperty
     def _types(cls) -> dict[str, types.Type]:
@@ -298,7 +297,6 @@ class Album(LibModel):
         "albumartist_credit",
         "albumartists_credit",
         "album",
-        "genre",
         "genres",
         "style",
         "discogs_albumid",
@@ -652,7 +650,6 @@ class Item(LibModel):
         "albumartists_sort": types.MULTI_VALUE_DSV,
         "albumartist_credit": types.STRING,
         "albumartists_credit": types.MULTI_VALUE_DSV,
-        "genre": types.STRING,
         "genres": types.MULTI_VALUE_DSV,
         "style": types.STRING,
         "discogs_albumid": types.INTEGER,
@@ -735,7 +732,7 @@ class Item(LibModel):
         "comments",
         "album",
         "albumartist",
-        "genre",
+        "genres",
     )
 
     # Set of item fields that are backed by `MediaFile` fields.
