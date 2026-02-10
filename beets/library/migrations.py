@@ -57,8 +57,11 @@ class MultiGenreFieldMigration(Migration):
 
         return genre
 
-    def _migrate_data(self, table: str) -> None:
+    def _migrate_data(self, table: str, current_fields: set[str]) -> None:
         """Migrate legacy genre values to the multi-value genres field."""
+        if "genre" not in current_fields:
+            # No legacy genre field, so nothing to migrate.
+            return
 
         with self.db.transaction() as tx, self.with_factory(GenreRow):
             rows: list[GenreRow] = tx.query(  # type: ignore[assignment]

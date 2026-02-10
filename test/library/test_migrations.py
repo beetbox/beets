@@ -1,5 +1,6 @@
 import pytest
 
+from beets.dbcore import types
 from beets.library.migrations import MultiGenreFieldMigration
 from beets.library.models import Album, Item
 from beets.test.helper import TestHelper
@@ -10,6 +11,19 @@ class TestMultiGenreFieldMigration:
     def helper(self, monkeypatch):
         # do not apply migrations upon library initialization
         monkeypatch.setattr("beets.library.library.Library._migrations", ())
+        # add genre field to both models to make sure this column is created
+        monkeypatch.setattr(
+            "beets.library.models.Item._fields",
+            {**Item._fields, "genre": types.STRING},
+        )
+        monkeypatch.setattr(
+            "beets.library.models.Album._fields",
+            {**Album._fields, "genre": types.STRING},
+        )
+        monkeypatch.setattr(
+            "beets.library.models.Album.item_keys",
+            {*Album.item_keys, "genre"},
+        )
         helper = TestHelper()
         helper.setup_beets()
 
@@ -52,5 +66,7 @@ class TestMultiGenreFieldMigration:
         unmigrated_album.load()
         assert unmigrated_album.genres == ["Album Rock", "Alternative"]
 
+        # remove cached initial db tables data
+        del helper.lib.db_tables
         assert helper.lib.migration_exists("multi_genre_field", "items")
         assert helper.lib.migration_exists("multi_genre_field", "albums")
