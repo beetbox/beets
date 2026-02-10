@@ -1137,7 +1137,10 @@ class Server(BaseServer):
             pass
 
         for tagtype, field in self.tagtype_map.items():
-            info_lines.append(f"{tagtype}: {getattr(item, field)}")
+            field_value = getattr(item, field)
+            if isinstance(field_value, list):
+                field_value = "; ".join(field_value)
+            info_lines.append(f"{tagtype}: {field_value}")
 
         return info_lines
 
