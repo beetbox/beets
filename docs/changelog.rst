@@ -16,6 +16,8 @@ Unreleased
 Bug fixes
 ~~~~~~~~~
 
+- :doc:`plugins/musicbrainz`: Fix musicbrainz: crash when releases
+  lack the "track" key. :bug:`6302`
 - :doc:`plugins/musicbrainz`: Fix search terms escaping. :bug:`6347`
 - :doc:`plugins/musicbrainz`: Fix support for ``alias`` and ``tracks``
   :conf:`plugins.musicbrainz:extra_tags`.
