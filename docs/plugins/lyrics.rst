@@ -174,6 +174,9 @@ We use Azure to optionally translate your lyrics. To set up the integration,
 follow these steps:
 
 1. `Create a Translator resource`_ on Azure.
+    Make sure the region of the translator resource is set to Global. You
+    will get 401 unauthorized errors if not. The region of the resource group
+    does not matter.
 2. `Obtain its API key`_.
 3. Add the API key to your configuration as ``translate.api_key``.
 4. Configure your target language using the ``translate.to_language`` option.
