@@ -23,6 +23,7 @@ Bug fixes
   :conf:`plugins.musicbrainz:extra_tags`.
 - :doc:`plugins/musicbrainz`: Fix fetching very large releases that have more
   than 500 tracks. :bug:`6355`
+- :doc:`plugins/fetchart`: Prevent deletion of configured fallback cover art
 
 ..
     For plugin developers
