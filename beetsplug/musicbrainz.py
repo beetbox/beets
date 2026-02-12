@@ -477,7 +477,7 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
             release["artist-credit"], include_join_phrase=False
         )
 
-        ntracks = sum(len(m["tracks"]) for m in release["media"])
+        ntracks = sum(len(m.get("tracks", [])) for m in release["media"])
 
         # The MusicBrainz API omits 'relations'
         # when the release has more than 500 tracks. So we use browse_recordings
@@ -512,7 +512,7 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
             if format in config["match"]["ignored_media"].as_str_seq():
                 continue
 
-            all_tracks = medium["tracks"]
+            all_tracks = medium.get("tracks", [])
             if (
                 "data-tracks" in medium
                 and not config["match"]["ignore_data_tracks"]
