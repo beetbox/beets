@@ -691,6 +691,23 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert t[0].trackdisambig is None
         assert t[1].trackdisambig == "SECOND TRACK"
 
+    def test_missing_tracks(self):
+        tracks = [
+            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
+            self._make_track(
+                "TITLE TWO",
+                "ID TWO",
+                200.0 * 1000.0,
+                disambiguation="SECOND TRACK",
+            ),
+        ]
+        release = self._make_release(tracks=tracks)
+        release["media"].append(release["media"][0])
+        del release["media"][0]["tracks"]
+        del release["media"][0]["data-tracks"]
+        d = self.mb.album_info(release)
+        assert d.mediums == 2
+
 
 class ArtistFlatteningTest(unittest.TestCase):
     def _credit_dict(self, suffix=""):
