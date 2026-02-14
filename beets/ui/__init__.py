@@ -1523,9 +1523,25 @@ def _open_library(config: confuse.LazyConfig) -> library.Library:
         lib.get_item(0)  # Test database connection.
     except (sqlite3.OperationalError, sqlite3.DatabaseError) as db_error:
         log.debug("{}", traceback.format_exc())
+        # Check for permission-related errors and provide a helpful message
+        error_str = str(db_error).lower()
+        dbpath_display = util.displayable_path(dbpath)
+        if "unable to open" in error_str:
+            # Normalize path and get directory
+            normalized_path = os.path.abspath(dbpath)
+            db_dir = os.path.dirname(normalized_path)
+            # Handle edge case where path has no directory component
+            if not db_dir:
+                db_dir = "."
+            raise UserError(
+                f"database file {dbpath_display} could not be opened. "
+                f"This may be due to a permissions issue. If the database "
+                f"does not exist yet, please check that the file or directory "
+                f"{util.displayable_path(db_dir)} is writable "
+                f"(original error: {db_error})."
+            )
         raise UserError(
-            f"database file {util.displayable_path(dbpath)} cannot not be"
-            f" opened: {db_error}"
+            f"database file {dbpath_display} could not be opened: {db_error}"
         )
     log.debug(
         "library database: {}\nlibrary directory: {}",

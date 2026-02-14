@@ -330,6 +330,7 @@ ignore = [
 "test/plugins/test_ftintitle.py" = ["E501"]
 "test/test_util.py" = ["E501"]
 "test/ui/test_field_diff.py" = ["E501"]
+"test/ui/test_ui_init.py" = ["PT"]
 "test/util/test_id_extractors.py" = ["E501"]
 "test/**" = ["RUF001"] # we use Unicode characters in tests
 

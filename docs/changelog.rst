@@ -98,9 +98,17 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- Improved error message when database cannot be opened. When SQLite fails to
+  open the database with 'unable to open' error, beets now provides a helpful
+  message suggesting it may be a permissions issue and recommends checking that
+  the file or directory is writable. The original SQLite error is included for
+  debugging. Also fixed typo in error message ('cannot not' to 'could not').
+  :bug:`1676`
 - :doc:`/plugins/lastgenre`: Canonicalize genres when ``force`` and
   ``keep_existing`` are ``on``, yet no genre info on lastfm could be found.
   :bug:`6303`
+- Handle potential OSError when unlinking temporary files in ArtResizer.
+  :bug:`5615`
 - Handle potential OSError when unlinking temporary files in ArtResizer.
   :bug:`5615`
 - :doc:`/plugins/spotify`: Updated Spotify API credentials. :bug:`6270`
