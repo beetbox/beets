@@ -49,7 +49,6 @@ class CompletionTest(IOMixin, TestPluginTestCase):
         # Load completion script.
         self.run_command("completion", lib=None)
         completion_script = self.io.getoutput().encode("utf-8")
-        self.io.restore()
         tester.stdin.writelines(completion_script.splitlines(True))
 
         # Load test suite.

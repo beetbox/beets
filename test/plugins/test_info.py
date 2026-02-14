@@ -15,11 +15,11 @@
 
 from mediafile import MediaFile
 
-from beets.test.helper import PluginTestCase
+from beets.test.helper import IOMixin, PluginTestCase
 from beets.util import displayable_path
 
 
-class InfoTest(PluginTestCase):
+class InfoTest(IOMixin, PluginTestCase):
     plugin = "info"
 
     def test_path(self):

@@ -17,15 +17,16 @@ from typing import ClassVar
 from unittest.mock import patch
 
 from beets.dbcore.query import TrueQuery
+from beets.importer import Action
 from beets.library import Item
 from beets.test import _common
 from beets.test.helper import (
     AutotagImportTestCase,
     AutotagStub,
     BeetsTestCase,
+    IOMixin,
     PluginMixin,
     TerminalImportMixin,
-    control_stdin,
 )
 
 
@@ -103,24 +104,26 @@ class EditMixin(PluginMixin):
         """
         m = ModifyFileMocker(**modify_file_args)
         with patch("beetsplug.edit.edit", side_effect=m.action):
-            with control_stdin("\n".join(stdin)):
-                self.importer.run()
+            for char in stdin:
+                self.importer.add_choice(char)
+            self.importer.run()
 
     def run_mocked_command(self, modify_file_args={}, stdin=[], args=[]):
         """Run the edit command, with mocked stdin and yaml writing, and
         passing `args` to `run_command`."""
         m = ModifyFileMocker(**modify_file_args)
         with patch("beetsplug.edit.edit", side_effect=m.action):
-            with control_stdin("\n".join(stdin)):
-                self.run_command("edit", *args)
+            for char in stdin:
+                self.io.addinput(char)
+            self.run_command("edit", *args)
 
 
 @_common.slow_test()
 @patch("beets.library.Item.write")
-class EditCommandTest(EditMixin, BeetsTestCase):
+class EditCommandTest(IOMixin, EditMixin, BeetsTestCase):
     """Black box tests for `beetsplug.edit`. Command line interaction is
-    simulated using `test.helper.control_stdin()`, and yaml editing via an
-    external editor is simulated using `ModifyFileMocker`.
+    simulated using mocked stdin, and yaml editing via an external editor is
+    simulated using `ModifyFileMocker`.
     """
 
     ALBUM_COUNT = 1
@@ -412,7 +415,7 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
         self.run_mocked_interpreter(
             {},
             # 1, Apply changes.
-            ["1", "a"],
+            ["1", Action.APPLY],
         )
 
         # Retag and edit track titles.  On retag, the importer will reset items
