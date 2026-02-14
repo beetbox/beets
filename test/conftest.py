@@ -5,6 +5,7 @@ import pytest
 
 from beets.autotag.distance import Distance
 from beets.dbcore.query import Query
+from beets.test._common import DummyIO
 from beets.test.helper import ConfigMixin
 from beets.util import cached_classproperty
 
@@ -60,3 +61,24 @@ def clear_cached_classproperty():
 def config():
     """Provide a fresh beets configuration for a module, when requested."""
     return ConfigMixin().config
+
+
+@pytest.fixture
+def io(
+    request: pytest.FixtureRequest,
+    monkeypatch: pytest.MonkeyPatch,
+    capteesys: pytest.CaptureFixture[str],
+) -> DummyIO:
+    """Fixture for tests that need controllable stdin and captured stdout.
+
+    This fixture builds a per-test ``DummyIO`` helper and exposes it to the
+    test. When used on a test class, it attaches the helper as ``self.io``
+    attribute to make it available to all test methods, including
+    ``unittest.TestCase``-based ones.
+    """
+    io = DummyIO(monkeypatch, capteesys)
+
+    if request.instance:
+        request.instance.io = io
+
+    return io

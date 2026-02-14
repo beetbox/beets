@@ -3,12 +3,12 @@
 from mediafile import MediaFile
 
 from beets.library import Item
-from beets.test.helper import PluginTestCase, control_stdin
+from beets.test.helper import IOMixin, PluginTestCase
 from beets.util import syspath
 from beetsplug.zero import ZeroPlugin
 
 
-class ZeroPluginTest(PluginTestCase):
+class ZeroPluginTest(IOMixin, PluginTestCase):
     plugin = "zero"
     preload_plugin = False
 
@@ -102,12 +102,10 @@ class ZeroPluginTest(PluginTestCase):
         item.write()
         item_id = item.id
 
-        with (
-            self.configure_plugin(
-                {"fields": ["comments"], "update_database": True, "auto": False}
-            ),
-            control_stdin("y"),
+        with self.configure_plugin(
+            {"fields": ["comments"], "update_database": True, "auto": False}
         ):
+            self.io.addinput("y")
             self.run_command("zero")
 
         mf = MediaFile(syspath(item.path))
@@ -125,16 +123,14 @@ class ZeroPluginTest(PluginTestCase):
         item.write()
         item_id = item.id
 
-        with (
-            self.configure_plugin(
-                {
-                    "fields": ["comments"],
-                    "update_database": False,
-                    "auto": False,
-                }
-            ),
-            control_stdin("y"),
+        with self.configure_plugin(
+            {
+                "fields": ["comments"],
+                "update_database": False,
+                "auto": False,
+            }
         ):
+            self.io.addinput("y")
             self.run_command("zero")
 
         mf = MediaFile(syspath(item.path))
@@ -187,7 +183,8 @@ class ZeroPluginTest(PluginTestCase):
 
         item_id = item.id
 
-        with self.configure_plugin({"fields": []}), control_stdin("y"):
+        with self.configure_plugin({"fields": []}):
+            self.io.addinput("y")
             self.run_command("zero")
 
         item = self.lib.get_item(item_id)
@@ -203,12 +200,10 @@ class ZeroPluginTest(PluginTestCase):
 
         item_id = item.id
 
-        with (
-            self.configure_plugin(
-                {"fields": ["year"], "keep_fields": ["comments"]}
-            ),
-            control_stdin("y"),
+        with self.configure_plugin(
+            {"fields": ["year"], "keep_fields": ["comments"]}
         ):
+            self.io.addinput("y")
             self.run_command("zero")
 
         item = self.lib.get_item(item_id)
@@ -303,12 +298,10 @@ class ZeroPluginTest(PluginTestCase):
         )
         item.write()
         item_id = item.id
-        with (
-            self.configure_plugin(
-                {"fields": ["comments"], "update_database": True, "auto": False}
-            ),
-            control_stdin("n"),
+        with self.configure_plugin(
+            {"fields": ["comments"], "update_database": True, "auto": False}
         ):
+            self.io.addinput("n")
             self.run_command("zero")
 
         mf = MediaFile(syspath(item.path))
