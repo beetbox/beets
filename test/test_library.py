@@ -66,15 +66,17 @@ class StoreTest(ItemInDBTestCase):
         assert new_year == 1987
 
     def test_store_only_writes_dirty_fields(self):
-        original_genre = self.i.genre
-        self.i._values_fixed["genre"] = "beatboxing"  # change w/o dirtying
+        original_genres = self.i.genres
+        self.i._values_fixed["genres"] = ["beatboxing"]  # change w/o dirtying
         self.i.store()
         new_genre = (
             self.lib._connection()
-            .execute("select genre from items where title = ?", (self.i.title,))
-            .fetchone()["genre"]
+            .execute(
+                "select genres from items where title = ?", (self.i.title,)
+            )
+            .fetchone()["genres"]
         )
-        assert new_genre == original_genre
+        assert [new_genre] == original_genres
 
     def test_store_clears_dirty_flags(self):
         self.i.composer = "tvp"

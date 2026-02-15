@@ -539,7 +539,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         config["musicbrainz"]["genres"] = False
         release = self._make_release()
         d = self.mb.album_info(release)
-        assert d.genre is None
+        assert d.genres == []
 
     def test_ignored_media(self):
         config["match"]["ignored_media"] = ["IGNORED1", "IGNORED2"]

@@ -79,7 +79,8 @@ TRACK_ATTR_MAP = {
     "month": "month",
     "day": "day",
     "bpm": "bpm",
-    "genre": "genre",
+    "genre": "genres",
+    "genres": "genres",
     "recording-mbid": "mb_trackid",  # beets trackid is MB recording
     "track-mbid": "mb_releasetrackid",
     "composer": "composer",
@@ -109,7 +110,8 @@ ALBUM_ATTR_MAP = {
     "year": "year",
     "month": "month",
     "day": "day",
-    "genre": "genre",
+    "genre": "genres",
+    "genres": "genres",
     "release-mbid": "mb_albumid",
     "release-group-mbid": "mb_releasegroupid",
 }
