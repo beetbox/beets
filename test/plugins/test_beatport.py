@@ -474,7 +474,7 @@ class BeatportTest(BeetsTestCase):
             item.year = 2016
             item.comp = False
             item.label_name = "Gravitas Recordings"
-            item.genre = "Glitch Hop"
+            item.genres = ["Glitch Hop"]
             item.year = 2016
             item.month = 4
             item.day = 11
@@ -583,7 +583,7 @@ class BeatportTest(BeetsTestCase):
 
     def test_genre_applied(self):
         for track, test_track in zip(self.tracks, self.test_tracks):
-            assert track.genres == [test_track.genre]
+            assert track.genres == test_track.genres
 
 
 class BeatportResponseEmptyTest(unittest.TestCase):
