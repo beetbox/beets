@@ -121,7 +121,7 @@ instance the following configuration exports the ``id`` and ``genre`` fields:
         output: extm3u
         fields:
             - id
-            - genre
+            - genres
         playlists:
             - name: all.m3u
               query: ''
@@ -132,7 +132,7 @@ look as follows:
 ::
 
     #EXTM3U
-    #EXTINF:805 id="1931" genre="Progressive%20Rock",Led Zeppelin - Stairway to Heaven
+    #EXTINF:805 id="1931" genres="Progressive%20Rock",Led Zeppelin - Stairway to Heaven
     ../music/singles/Led Zeppelin/Stairway to Heaven.mp3
 
 To give a usage example, the webm3u_ and Beetstream_ plugins read the exported

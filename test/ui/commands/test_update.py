@@ -103,22 +103,22 @@ class UpdateTest(IOMixin, BeetsTestCase):
     def test_selective_modified_metadata_moved(self):
         mf = MediaFile(syspath(self.i.path))
         mf.title = "differentTitle"
-        mf.genre = "differentGenre"
+        mf.genres = ["differentGenre"]
         mf.save()
         self._update(move=True, fields=["title"])
         item = self.lib.items().get()
         assert b"differentTitle" in item.path
-        assert item.genre != "differentGenre"
+        assert item.genres != ["differentGenre"]
 
     def test_selective_modified_metadata_not_moved(self):
         mf = MediaFile(syspath(self.i.path))
         mf.title = "differentTitle"
-        mf.genre = "differentGenre"
+        mf.genres = ["differentGenre"]
         mf.save()
         self._update(move=False, fields=["title"])
         item = self.lib.items().get()
         assert b"differentTitle" not in item.path
-        assert item.genre != "differentGenre"
+        assert item.genres != ["differentGenre"]
 
     def test_modified_album_metadata_moved(self):
         mf = MediaFile(syspath(self.i.path))
@@ -141,22 +141,22 @@ class UpdateTest(IOMixin, BeetsTestCase):
     def test_selective_modified_album_metadata_moved(self):
         mf = MediaFile(syspath(self.i.path))
         mf.album = "differentAlbum"
-        mf.genre = "differentGenre"
+        mf.genres = ["differentGenre"]
         mf.save()
         self._update(move=True, fields=["album"])
         item = self.lib.items().get()
         assert b"differentAlbum" in item.path
-        assert item.genre != "differentGenre"
+        assert item.genres != ["differentGenre"]
 
     def test_selective_modified_album_metadata_not_moved(self):
         mf = MediaFile(syspath(self.i.path))
         mf.album = "differentAlbum"
-        mf.genre = "differentGenre"
+        mf.genres = ["differentGenre"]
         mf.save()
-        self._update(move=True, fields=["genre"])
+        self._update(move=True, fields=["genres"])
         item = self.lib.items().get()
         assert b"differentAlbum" not in item.path
-        assert item.genre == "differentGenre"
+        assert item.genres == ["differentGenre"]
 
     def test_mtime_match_skips_update(self):
         mf = MediaFile(syspath(self.i.path))

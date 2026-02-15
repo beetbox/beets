@@ -1351,7 +1351,7 @@ class Server(BaseServer):
         "AlbumArtist": "albumartist",
         "AlbumArtistSort": "albumartist_sort",
         "Label": "label",
-        "Genre": "genre",
+        "Genre": "genres",
         "Date": "year",
         "OriginalDate": "original_year",
         "Composer": "composer",

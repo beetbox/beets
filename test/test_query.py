@@ -71,7 +71,7 @@ class TestGet:
                 album="baz",
                 year=2001,
                 comp=True,
-                genre="rock",
+                genres=["rock"],
             ),
             helper.create_item(
                 title="second",
@@ -80,7 +80,7 @@ class TestGet:
                 album="baz",
                 year=2002,
                 comp=True,
-                genre="Rock",
+                genres=["Rock"],
             ),
         ]
         album = helper.lib.add_album(album_items)
@@ -94,7 +94,7 @@ class TestGet:
             album="foo",
             year=2003,
             comp=False,
-            genre="Hard Rock",
+            genres=["Hard Rock"],
             comments="caf\xe9",
         )
 
@@ -125,12 +125,12 @@ class TestGet:
             ("comments:caf\xe9", ["third"]),
             ("comp:true", ["first", "second"]),
             ("comp:false", ["third"]),
-            ("genre:=rock", ["first"]),
-            ("genre:=Rock", ["second"]),
-            ('genre:="Hard Rock"', ["third"]),
-            ('genre:=~"hard rock"', ["third"]),
-            ("genre:=~rock", ["first", "second"]),
-            ('genre:="hard rock"', []),
+            ("genres:=rock", ["first"]),
+            ("genres:=Rock", ["second"]),
+            ('genres:="Hard Rock"', ["third"]),
+            ('genres:=~"hard rock"', ["third"]),
+            ("genres:=~rock", ["first", "second"]),
+            ('genres:="hard rock"', []),
             ("popebear", []),
             ("pope:bear", []),
             ("singleton:true", ["third"]),
@@ -243,13 +243,7 @@ class TestGet:
 class TestMatch:
     @pytest.fixture(scope="class")
     def item(self):
-        return _common.item(
-            album="the album",
-            disc=6,
-            genre="the genre",
-            year=1,
-            bitrate=128000,
-        )
+        return _common.item(album="the album", disc=6, year=1, bitrate=128000)
 
     @pytest.mark.parametrize(
         "q, should_match",
@@ -260,9 +254,9 @@ class TestMatch:
             (SubstringQuery("album", "album"), True),
             (SubstringQuery("album", "ablum"), False),
             (SubstringQuery("disc", "6"), True),
-            (StringQuery("genre", "the genre"), True),
-            (StringQuery("genre", "THE GENRE"), True),
-            (StringQuery("genre", "genre"), False),
+            (StringQuery("album", "the album"), True),
+            (StringQuery("album", "THE ALBUM"), True),
+            (StringQuery("album", "album"), False),
             (NumericQuery("year", "1"), True),
             (NumericQuery("year", "10"), False),
             (NumericQuery("bitrate", "100000..200000"), True),

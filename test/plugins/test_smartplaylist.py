@@ -76,11 +76,11 @@ class SmartPlaylistTest(BeetsTestCase):
                 {"name": "one_non_empty_sort", "query": ["foo year+", "bar"]},
                 {
                     "name": "multiple_sorts",
-                    "query": ["foo year+", "bar genre-"],
+                    "query": ["foo year+", "bar genres-"],
                 },
                 {
                     "name": "mixed",
-                    "query": ["foo year+", "bar", "baz genre+ id-"],
+                    "query": ["foo year+", "bar", "baz genres+ id-"],
                 },
             ]
         )
@@ -102,11 +102,11 @@ class SmartPlaylistTest(BeetsTestCase):
         # Multiple queries store individual sorts in the tuple
         assert all(isinstance(x, NullSort) for x in sorts["only_empty_sorts"])
         assert sorts["one_non_empty_sort"] == [sort("year"), NullSort()]
-        assert sorts["multiple_sorts"] == [sort("year"), sort("genre", False)]
+        assert sorts["multiple_sorts"] == [sort("year"), sort("genres", False)]
         assert sorts["mixed"] == [
             sort("year"),
             NullSort(),
-            MultipleSort([sort("genre"), sort("id", False)]),
+            MultipleSort([sort("genres"), sort("id", False)]),
         ]
 
     def test_matches(self):
@@ -259,7 +259,7 @@ class SmartPlaylistTest(BeetsTestCase):
         type(i).title = PropertyMock(return_value="fake Title")
         type(i).length = PropertyMock(return_value=300.123)
         type(i).path = PropertyMock(return_value=b"/tagada.mp3")
-        a = {"id": 456, "genre": "Fake Genre"}
+        a = {"id": 456, "genres": "Fake Genre"}
         i.__getitem__.side_effect = a.__getitem__
         i.evaluate_template.side_effect = lambda pl, _: pl.replace(
             b"$title",
@@ -280,7 +280,7 @@ class SmartPlaylistTest(BeetsTestCase):
         config["smartplaylist"]["output"] = "extm3u"
         config["smartplaylist"]["relative_to"] = False
         config["smartplaylist"]["playlist_dir"] = str(dir)
-        config["smartplaylist"]["fields"] = ["id", "genre"]
+        config["smartplaylist"]["fields"] = ["id", "genres"]
         try:
             spl.update_playlists(lib)
         except Exception:
@@ -297,7 +297,7 @@ class SmartPlaylistTest(BeetsTestCase):
 
         assert content == (
             b"#EXTM3U\n"
-            b'#EXTINF:300 id="456" genre="Fake%20Genre",Fake Artist - fake Title\n'
+            b'#EXTINF:300 id="456" genres="Fake%20Genre",Fake Artist - fake Title\n'
             b"/tagada.mp3\n"
         )
 
