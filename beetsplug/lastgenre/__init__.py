@@ -111,7 +111,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 "force": False,
                 "keep_existing": False,
                 "auto": True,
-                "separator": ", ",
                 "prefer_specific": False,
                 "title_case": True,
                 "pretend": False,
