@@ -191,16 +191,6 @@ file. The available options are:
   Default: ``no``.
 - **source**: Which entity to look up in Last.fm. Can be either ``artist``,
   ``album`` or ``track``. Default: ``album``.
-- **separator**:
-
-  .. deprecated:: 2.6
-
-      The ``separator`` option is deprecated. Genres are now stored as a list in
-      the ``genres`` field and written to files as individual genre tags. This
-      option has no effect and will be removed in a future version.
-
-  Default: ``', '``.
-
 - **whitelist**: The filename of a custom genre list, ``yes`` to use the
   internal whitelist, or ``no`` to consider all genres valid. Default: ``yes``.
 - **title_case**: Convert the new tags to TitleCase before saving. Default:
