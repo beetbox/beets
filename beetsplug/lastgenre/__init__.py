@@ -41,6 +41,8 @@ if TYPE_CHECKING:
 
     from beets.library import LibModel
 
+    from .types import CanonTree
+
 
 class LastGenrePlugin(plugins.BeetsPlugin):
     def __init__(self) -> None:
@@ -116,7 +118,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         return [p[1] for p in depth_tag_pairs]
 
     @staticmethod
-    def find_parents(candidate: str, branches: list[list[str]]) -> list[str]:
+    def find_parents(candidate: str, branches: CanonTree) -> list[str]:
         """Find parent genres of a given genre, ordered from closest to furthest."""
         for branch in branches:
             try:
