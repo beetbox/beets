@@ -28,6 +28,8 @@ if TYPE_CHECKING:
 
     from beets.logging import Logger
 
+    from .types import CanonTree, Whitelist
+
 
 class DataFileLoader:
     """Loads genre-related data files for the lastgenre plugin."""
@@ -36,8 +38,8 @@ class DataFileLoader:
         self,
         log: Logger,
         plugin_dir: Path,
-        whitelist: set[str],
-        c14n_branches: list[list[str]],
+        whitelist: Whitelist,
+        c14n_branches: CanonTree,
         canonicalize: bool,
     ):
         """Initialize with pre-loaded data.
@@ -83,7 +85,7 @@ class DataFileLoader:
     @staticmethod
     def _load_whitelist(
         log: Logger, config_value: str | bool | None, default_path: str
-    ) -> set[str]:
+    ) -> Whitelist:
         """Load the whitelist from a text file.
 
         Returns set of valid genre names (lowercase).
@@ -107,12 +109,12 @@ class DataFileLoader:
         config_value: str | bool | None,
         default_path: str,
         prefer_specific: bool,
-    ) -> tuple[list[list[str]], bool]:
+    ) -> tuple[CanonTree, bool]:
         """Load the canonicalization tree from a YAML file.
 
         Returns tuple of (branches, canonicalize_enabled).
         """
-        c14n_branches: list[list[str]] = []
+        c14n_branches: CanonTree = []
         c14n_filename = config_value
         canonicalize = c14n_filename is not False
         # Default tree
@@ -133,9 +135,24 @@ class DataFileLoader:
     def flatten_tree(
         elem: dict[str, Any] | list[Any] | str,
         path: list[str],
-        branches: list[list[str]],
+        branches: CanonTree,
     ) -> None:
-        """Flatten nested lists/dictionaries into lists of strings (branches)."""
+        """Flatten nested YAML structure into genre hierarchy branches.
+
+        Recursively converts nested dicts/lists from YAML into a flat list
+        of genre paths, where each path goes from general to specific genre.
+
+        Args:
+            elem: The YAML element to process (dict, list, or string leaf).
+            path: Current path from root to this element (used in recursion).
+            branches: OUTPUT PARAMETER - Empty list that will be populated
+                     with genre paths. Gets mutated by this method.
+
+        Example:
+            branches = []
+            flatten_tree({'rock': ['indie', 'punk']}, [], branches)
+            # branches is now: [['rock', 'indie'], ['rock', 'punk']]
+        """
         if not path:
             path = []
 
