@@ -32,6 +32,8 @@ if TYPE_CHECKING:
 
     from beets.logging import Logger
 
+    from .types import GenreCache
+
 LASTFM = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
 
 PYLAST_EXCEPTIONS = (
@@ -52,7 +54,7 @@ class LastFmClient:
         self._log = log
         self._tunelog = make_tunelog(log)
         self._min_weight = min_weight
-        self._genre_cache: dict[str, list[str]] = {}
+        self._genre_cache: GenreCache = {}
 
     def fetch_genre(
         self, lastfm_obj: pylast.Album | pylast.Artist | pylast.Track
