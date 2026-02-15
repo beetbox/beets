@@ -45,7 +45,6 @@ For example:
     zero:
         fields: month day genre genres comments
         comments: [EAC, LAME, from.+collection, 'ripped by']
-        genre: [rnb, 'power metal']
         genres: [rnb, 'power metal']
         update_database: true
 
