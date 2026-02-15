@@ -161,6 +161,37 @@ genres remain, set ``whitelist: no``).
     If ``force`` is disabled the ``keep_existing`` option is simply ignored
     (since ``force: no`` means ``not touching`` existing tags anyway).
 
+Blacklisting Genres
+-------------------
+
+If you want to blacklist certain genres, they could simply be removed from the
+``whitelist``. This way, they will never be fetched from Last.fm. To only forbid
+them for a specific artist, the ``blacklist`` can be used. A possible
+``blacklist`` file would look like this:
+
+.. code-block:: text
+
+    fracture:
+         ^(heavy|black|power|death)?\s?(metal|rock)$|\w+-metal\d*$
+        progressive metal
+    gilles peterson:
+        samba
+        bossa nova
+    *:
+        electronic
+
+A combination of regex patterns and plain genre names is possible. The ``*`` key
+matches all artists that are not explicitly defined, which is effectively the
+same as removing them from the whitelist (helpful if the default whitelist is
+desired to be kept).
+
+Set the ``blacklist`` option to the path of a blacklist file to enable this
+feature.
+
+.. attention::
+
+    Do not use single or double quotes around the genre names or regex patterns.
+
 Configuration
 -------------
 
@@ -197,6 +228,9 @@ file. The available options are:
   internal whitelist, or ``no`` to consider all genres valid. Default: ``yes``.
 - **title_case**: Convert the new tags to TitleCase before saving. Default:
   ``yes``.
+- **blacklist**: The path to a blacklist file that contains genres to exclude
+  from being set as genres for specific artists. See `Blacklisting Genres`_ for
+  more details. Default: ``no``.
 
 Running Manually
 ----------------
