@@ -69,7 +69,7 @@ class PlaylistQuery(InQuery[bytes]):
                 relative_to = os.path.dirname(playlist_path)
             else:
                 relative_to = config["relative_to"].as_filename()
-            relative_to = beets.util.bytestring_path(relative_to)
+            relative_to_bytes = beets.util.bytestring_path(relative_to)
 
             for line in f:
                 if line[0] == "#":
@@ -78,7 +78,7 @@ class PlaylistQuery(InQuery[bytes]):
 
                 paths.append(
                     beets.util.normpath(
-                        os.path.join(relative_to, line.rstrip())
+                        os.path.join(relative_to_bytes, line.rstrip())
                     )
                 )
             f.close()

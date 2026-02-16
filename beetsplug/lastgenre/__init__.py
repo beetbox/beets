@@ -41,6 +41,7 @@ if TYPE_CHECKING:
     import optparse
     from collections.abc import Callable
 
+    from beets.importer import ImportSession, ImportTask
     from beets.library import LibModel
 
 LASTFM = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
@@ -178,14 +179,13 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """A tuple of allowed genre sources. May contain 'track',
         'album', or 'artist.'
         """
-        source = self.config["source"].as_choice(("track", "album", "artist"))
-        if source == "track":
-            return "track", "album", "artist"
-        if source == "album":
-            return "album", "artist"
-        if source == "artist":
-            return ("artist",)
-        return tuple()
+        return self.config["source"].as_choice(
+            {
+                "track": ("track", "album", "artist"),
+                "album": ("album", "artist"),
+                "artist": ("artist",),
+            }
+        )
 
     # More canonicalization and general helpers.
 
@@ -603,10 +603,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         lastgenre_cmd.func = lastgenre_func
         return [lastgenre_cmd]
 
-    def imported(
-        self, session: library.Session, task: library.ImportTask
-    ) -> None:
-        self._process(task.album if task.is_album else task.item, write=False)
+    def imported(self, _: ImportSession, task: ImportTask) -> None:
+        self._process(task.album if task.is_album else task.item, write=False)  # type: ignore[attr-defined]
 
     def _tags_for(
         self,

@@ -355,10 +355,9 @@ class DiscogsPlugin(MetadataSourcePlugin):
         style = self.format(result.data.get("styles"))
         base_genre = self.format(result.data.get("genres"))
 
-        if self.config["append_style_genre"] and style:
-            genre = self.config["separator"].as_str().join([base_genre, style])
-        else:
-            genre = base_genre
+        genre = base_genre
+        if self.config["append_style_genre"] and genre is not None and style:
+            genre += f"{self.config['separator'].as_str()}{style}"
 
         discogs_albumid = self._extract_id(result.data.get("uri"))
 

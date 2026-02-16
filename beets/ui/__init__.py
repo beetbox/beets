@@ -30,7 +30,6 @@ import textwrap
 import traceback
 from difflib import SequenceMatcher
 from functools import cache
-from itertools import chain
 from typing import TYPE_CHECKING, Any, Literal
 
 import confuse
@@ -551,18 +550,20 @@ def get_color_config() -> dict[ColorName, str]:
     legacy single-color format. Validates all color names against known codes
     and raises an error for any invalid entries.
     """
-    colors_by_color_name: dict[ColorName, list[str]] = {
-        k: (v if isinstance(v, list) else LEGACY_COLORS.get(v, [v]))
-        for k, v in config["ui"]["colors"].flatten().items()
-    }
-
-    if invalid_colors := (
-        set(chain.from_iterable(colors_by_color_name.values()))
-        - CODE_BY_COLOR.keys()
-    ):
-        raise UserError(
-            f"Invalid color(s) in configuration: {', '.join(invalid_colors)}"
+    template_dict: dict[ColorName, confuse.OneOf[str | list[str]]] = {
+        n: confuse.OneOf(
+            [
+                confuse.Choice(sorted(LEGACY_COLORS)),
+                confuse.Sequence(confuse.Choice(sorted(CODE_BY_COLOR))),
+            ]
         )
+        for n in ColorName.__args__  # type: ignore[attr-defined]
+    }
+    template = confuse.MappingTemplate(template_dict)
+    colors_by_color_name = {
+        k: (v if isinstance(v, list) else LEGACY_COLORS.get(v, [v]))
+        for k, v in config["ui"]["colors"].get(template).items()
+    }
 
     return {
         n: ";".join(str(CODE_BY_COLOR[c]) for c in colors)
