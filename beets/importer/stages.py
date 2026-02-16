@@ -1,3 +1,13 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from beets import config, plugins
+
+if TYPE_CHECKING:
+    from .session import ImportSession
+    from .tasks import ImportTask
+
 def _apply_choice(session: ImportSession, task: ImportTask):
     """Apply the task's choice to the Album or Item it contains and add
     it to the library.
