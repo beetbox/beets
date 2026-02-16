@@ -481,6 +481,10 @@ beets-filetote_
     Helps bring non-music extra files, attachments, and artifacts during imports
     and CLI file manipulation actions (``beet move``, etc.).
 
+beets-fillmissing_
+    Interactively prompts you to fill in missing or incomplete metadata fields
+    for music tracks.
+
 beets-follow_
     Lets you check for new albums from artists you like.
 
@@ -595,6 +599,8 @@ beets-youtube_
 .. _beets-describe: https://github.com/adamjakab/BeetsPluginDescribe
 
 .. _beets-filetote: https://github.com/gtronset/beets-filetote
+
+.. _beets-fillmissing: https://github.com/amiv1/beets-fillmissing
 
 .. _beets-follow: https://github.com/nolsto/beets-follow
 
