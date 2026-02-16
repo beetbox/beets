@@ -70,6 +70,14 @@ class Library(dbcore.Database):
             album.add(self)
             for item in items:
                 item.album_id = album.id
+                if item.id is not None:
+                    existing_item = self.get_item(item.id)
+                    if existing_item:
+                        for field in ("year", "month", "day"):
+                            new_value = getattr(item, field, None)
+                            old_value = getattr(existing_item, field, None)
+                            if old_value and not new_value:
+                                setattr(item, field, old_value)
                 if item.id is None:
                     item.add(self)
                 else:
