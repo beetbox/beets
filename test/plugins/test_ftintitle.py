@@ -324,6 +324,11 @@ def test_find_feat_part(
         ("Alice feat. Bob", ("Alice", "Bob")),
         ("Alice featuring Bob", ("Alice", "Bob")),
         ("Alice & Bob", ("Alice", "Bob")),
+        ("Alice, Bob & Charlie", ("Alice", "Bob & Charlie")),
+        (
+            "Alice, Bob & Charlie feat. Xavier",
+            ("Alice, Bob & Charlie", "Xavier"),
+        ),
         ("Alice and Bob", ("Alice", "Bob")),
         ("Alice With Bob", ("Alice", "Bob")),
         ("Alice defeat Bob", ("Alice defeat Bob", None)),
