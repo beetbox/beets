@@ -188,6 +188,7 @@ class AcoustidPlugin(MetadataSourcePlugin):
             }
         )
         config["acoustid"]["apikey"].redact = True
+        # Ensure that the Acoustid API key is redacted when dumping configuration
 
         if self.config["auto"]:
             self.register_listener("import_task_start", self.fingerprint_task)
