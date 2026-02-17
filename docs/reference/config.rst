@@ -467,14 +467,20 @@ Available attributes:
 
 Foreground colors
     ``black``, ``red``, ``green``, ``yellow``, ``blue``, ``magenta``, ``cyan``,
-    ``white``
+    ``white``, ``bright_black``, ``bright_red``, ``bright_green``,
+    ``bright_yellow``, ``bright_blue``, ``bright_magenta``, ``bright_cyan``,
+    ``bright_white``
 
 Background colors
     ``bg_black``, ``bg_red``, ``bg_green``, ``bg_yellow``, ``bg_blue``,
-    ``bg_magenta``, ``bg_cyan``, ``bg_white``
+    ``bg_magenta``, ``bg_cyan``, ``bg_white``, ``bg_bright_black``,
+    ``bg_bright_red``, ``bg_bright_green``, ``bg_bright_yellow``,
+    ``bg_bright_blue``, ``bg_bright_magenta``, ``bg_bright_cyan``,
+    ``bg_bright_white``
 
 Text styles
-    ``normal``, ``bold``, ``faint``, ``underline``, ``reverse``
+    ``normal``, ``bold``, ``faint``, ``italic``, ``underline``, ``blink_slow``,
+    ``blink_rapid``, ``inverse``, ``conceal``, ``crossed_out``
 
 terminal_width
 ~~~~~~~~~~~~~~

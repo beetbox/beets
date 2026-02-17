@@ -30,7 +30,6 @@ import textwrap
 import traceback
 from difflib import SequenceMatcher
 from functools import cache
-from itertools import chain
 from typing import TYPE_CHECKING, Any, Literal
 
 import confuse
@@ -472,13 +471,13 @@ CODE_BY_COLOR = {
     "normal": 0,
     "bold": 1,
     "faint": 2,
-    # "italic":       3,
+    "italic": 3,
     "underline": 4,
-    # "blink_slow":   5,
-    # "blink_rapid":  6,
+    "blink_slow": 5,
+    "blink_rapid": 6,
     "inverse": 7,
-    # "conceal":      8,
-    # "crossed_out":  9
+    "conceal": 8,
+    "crossed_out": 9,
     # Text colors.
     "black": 30,
     "red": 31,
@@ -488,6 +487,14 @@ CODE_BY_COLOR = {
     "magenta": 35,
     "cyan": 36,
     "white": 37,
+    "bright_black": 90,
+    "bright_red": 91,
+    "bright_green": 92,
+    "bright_yellow": 93,
+    "bright_blue": 94,
+    "bright_magenta": 95,
+    "bright_cyan": 96,
+    "bright_white": 97,
     # Background colors.
     "bg_black": 40,
     "bg_red": 41,
@@ -497,6 +504,14 @@ CODE_BY_COLOR = {
     "bg_magenta": 45,
     "bg_cyan": 46,
     "bg_white": 47,
+    "bg_bright_black": 100,
+    "bg_bright_red": 101,
+    "bg_bright_green": 102,
+    "bg_bright_yellow": 103,
+    "bg_bright_blue": 104,
+    "bg_bright_magenta": 105,
+    "bg_bright_cyan": 106,
+    "bg_bright_white": 107,
 }
 RESET_COLOR = f"{COLOR_ESCAPE}[39;49;00m"
 # Precompile common ANSI-escape regex patterns
@@ -535,18 +550,20 @@ def get_color_config() -> dict[ColorName, str]:
     legacy single-color format. Validates all color names against known codes
     and raises an error for any invalid entries.
     """
-    colors_by_color_name: dict[ColorName, list[str]] = {
-        k: (v if isinstance(v, list) else LEGACY_COLORS.get(v, [v]))
-        for k, v in config["ui"]["colors"].flatten().items()
-    }
-
-    if invalid_colors := (
-        set(chain.from_iterable(colors_by_color_name.values()))
-        - CODE_BY_COLOR.keys()
-    ):
-        raise UserError(
-            f"Invalid color(s) in configuration: {', '.join(invalid_colors)}"
+    template_dict: dict[ColorName, confuse.OneOf[str | list[str]]] = {
+        n: confuse.OneOf(
+            [
+                confuse.Choice(sorted(LEGACY_COLORS)),
+                confuse.Sequence(confuse.Choice(sorted(CODE_BY_COLOR))),
+            ]
         )
+        for n in ColorName.__args__  # type: ignore[attr-defined]
+    }
+    template = confuse.MappingTemplate(template_dict)
+    colors_by_color_name = {
+        k: (v if isinstance(v, list) else LEGACY_COLORS.get(v, [v]))
+        for k, v in config["ui"]["colors"].get(template).items()
+    }
 
     return {
         n: ";".join(str(CODE_BY_COLOR[c]) for c in colors)

@@ -19,7 +19,7 @@ import os
 import time
 
 from beets import importer, plugins
-from beets.test.helper import AutotagImportTestCase, PluginMixin, control_stdin
+from beets.test.helper import AutotagImportTestCase, IOMixin, PluginMixin
 from beets.util import syspath
 from beetsplug.importsource import ImportSourcePlugin
 
@@ -34,7 +34,7 @@ def preserve_plugin_listeners():
         ImportSourcePlugin.listeners = _listeners
 
 
-class ImportSourceTest(PluginMixin, AutotagImportTestCase):
+class ImportSourceTest(IOMixin, PluginMixin, AutotagImportTestCase):
     plugin = "importsource"
     preload_plugin = False
 
@@ -50,31 +50,29 @@ class ImportSourceTest(PluginMixin, AutotagImportTestCase):
         self.all_items = self.lib.albums().get().items()
         self.item_to_remove = self.all_items[0]
 
-    def interact(self, stdin_input: str):
-        with control_stdin(stdin_input):
-            self.run_command(
-                "remove",
-                f"path:{syspath(self.item_to_remove.path)}",
-            )
+    def interact(self, stdin: list[str]):
+        for char in stdin:
+            self.io.addinput(char)
+        self.run_command("remove", f"path:{syspath(self.item_to_remove.path)}")
 
     def test_do_nothing(self):
-        self.interact("N")
+        self.interact(["N"])
 
         assert os.path.exists(self.item_to_remove.source_path)
 
     def test_remove_single(self):
-        self.interact("y\nD")
+        self.interact(["y", "D"])
 
         assert not os.path.exists(self.item_to_remove.source_path)
 
     def test_remove_all_from_single(self):
-        self.interact("y\nR\ny")
+        self.interact(["y", "R", "y"])
 
         for item in self.all_items:
             assert not os.path.exists(item.source_path)
 
     def test_stop_suggesting(self):
-        self.interact("y\nS")
+        self.interact(["y", "S"])
 
         for item in self.all_items:
             assert os.path.exists(item.source_path)

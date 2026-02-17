@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "beets"
-version = "2.5.1"
+version = "2.6.1"
 description = "music tagger and library organizer"
 authors = ["Adrian Sampson <adrian@radbox.org>"]
 maintainers = ["Serene-Arc"]
@@ -44,7 +44,7 @@ Changelog = "https://github.com/beetbox/beets/blob/master/docs/changelog.rst"
 python = ">=3.10,<4"
 
 colorama = { version = "*", markers = "sys_platform == 'win32'" }
-confuse = ">=2.1.0"
+confuse = ">=2.2.0"
 jellyfish = "*"
 lap = ">=0.5.12"
 mediafile = ">=0.12.0"
@@ -52,6 +52,7 @@ numpy = [
     { python = "<3.13", version = ">=2.0.2" },
     { python = ">=3.13", version = ">=2.3.4" },
 ]
+packaging = ">=24.0"
 platformdirs = ">=3.5.0"
 pyyaml = "*"
 requests = ">=2.32.5"
@@ -132,7 +133,6 @@ types-urllib3 = "*"
 
 [tool.poetry.group.release.dependencies]
 click = ">=8.1.7"
-packaging = ">=24.0"
 tomli = ">=2.0.1"
 
 [tool.poetry.extras]
@@ -238,7 +238,17 @@ cmd = "ruff check --config=pyproject.toml"
 
 [tool.poe.tasks.lint-docs]
 help = "Lint the documentation"
-shell = "sphinx-lint --enable all --disable default-role $(git ls-files '*.rst')"
+interpreter = "bash"
+shell = """
+set -o pipefail
+files=$(git ls-files '*.rst')
+
+grep -Eno ' `[^`][^`]+`[^_]' $files |
+    sed 's/ .*/ Use double backticks for inline literal (double-backticks-required)/' && failed=1
+sphinx-lint --enable all --disable default-role $files || failed=1
+
+exit ${failed:-0}
+"""
 
 [tool.poe.tasks.update-dependencies]
 help = "Update dependencies to their latest versions."

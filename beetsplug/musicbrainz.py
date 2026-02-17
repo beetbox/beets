@@ -56,6 +56,8 @@ FIELDS_TO_MB_KEYS = {
     "label": "label",
     "media": "format",
     "year": "date",
+    "tracks": "tracks",
+    "alias": "alias",
 }
 
 
@@ -475,7 +477,7 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
             release["artist-credit"], include_join_phrase=False
         )
 
-        ntracks = sum(len(m["tracks"]) for m in release["media"])
+        ntracks = sum(len(m.get("tracks", [])) for m in release["media"])
 
         # The MusicBrainz API omits 'relations'
         # when the release has more than 500 tracks. So we use browse_recordings
@@ -487,14 +489,18 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
                 self._log.debug("Retrieving tracks starting at {}", i)
                 recording_list.extend(
                     self.mb_api.browse_recordings(
-                        release=release["id"], offset=i
+                        release=release["id"],
+                        limit=BROWSE_CHUNKSIZE,
+                        includes=BROWSE_INCLUDES,
+                        offset=i,
                     )
                 )
-            track_map = {r["id"]: r for r in recording_list}
+            recording_by_id = {r["id"]: r for r in recording_list}
             for medium in release["media"]:
-                for recording in medium["tracks"]:
-                    recording_info = track_map[recording["recording"]["id"]]
-                    recording["recording"] = recording_info
+                for track in medium["tracks"]:
+                    track["recording"] = recording_by_id[
+                        track["recording"]["id"]
+                    ]
 
         # Basic info.
         track_infos = []
@@ -506,7 +512,7 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
             if format in config["match"]["ignored_media"].as_str_seq():
                 continue
 
-            all_tracks = medium["tracks"]
+            all_tracks = medium.get("tracks", [])
             if (
                 "data-tracks" in medium
                 and not config["match"]["ignore_data_tracks"]
@@ -607,12 +613,8 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
         if release.get("disambiguation"):
             info.albumdisambig = release.get("disambiguation")
 
-        # Get the "classic" Release type. This data comes from a legacy API
-        # feature before MusicBrainz supported multiple release types.
-        if "type" in release["release-group"]:
-            reltype = release["release-group"]["type"]
-            if reltype:
-                info.albumtype = reltype.lower()
+        if reltype := release["release-group"].get("primary-type"):
+            info.albumtype = reltype.lower()
 
         # Set the new-style "primary" and "secondary" release types.
         albumtypes = []

@@ -40,6 +40,7 @@ class LibModel(dbcore.Model["Library"]):
     # Config key that specifies how an instance should be formatted.
     _format_config_key: str
     path: bytes
+    length: float
 
     @cached_classproperty
     def _types(cls) -> dict[str, types.Type]:
@@ -616,6 +617,11 @@ class Album(LibModel):
         for item in self.items():
             item.try_sync(write, move)
 
+    @cached_property
+    def length(self) -> float:  # type: ignore[override] # still writable since we override __setattr__
+        """Return the total length of all items in this album in seconds."""
+        return sum(item.length for item in self.items())
+
 
 class Item(LibModel):
     """Represent a song or track."""
@@ -718,6 +724,7 @@ class Item(LibModel):
         "mtime": types.DATE,
         "added": types.DATE,
     }
+    _indices = (dbcore.Index("idx_item_album_id", ("album_id",)),)
 
     _search_fields = (
         "artist",

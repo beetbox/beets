@@ -147,7 +147,7 @@ class BadFiles(BeetsPlugin):
         elif errors > 0:
             error_lines.append(
                 f"{ui.colorize('text_warning', dpath)}: checker found"
-                f" {status} errors or warnings"
+                f" {errors} errors or warnings"
             )
             for line in output:
                 error_lines.append(f"  {line}")

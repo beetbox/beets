@@ -20,12 +20,19 @@ pytestmark = pytest.mark.skipif(
 
 @pytest.fixture
 def rst_changelog():
-    return """New features:
+    return """
+Unreleased
+----------
+
+New features
+~~~~~~~~~~~~
 
 - :doc:`/plugins/substitute`: Some substitute
   multi-line change.
   :bug:`5467`
 - :ref:`list-cmd` Update.
+- |BeetsPlugin| Some plugin change.
+- See :class:`~beetsplug._utils.musicbrainz.MusicBrainzAPI` for documentation.
 
 You can do something with this command:
 
@@ -33,7 +40,8 @@ You can do something with this command:
 
     $ do-something
 
-Bug fixes:
+Bug fixes
+~~~~~~~~~
 
 - Some fix that refers to an issue.
   :bug:`5467`
@@ -53,12 +61,14 @@ Bug fixes:
   2. Second
      and some details
 
-Section naaaaaaaaaaaaaaaaaaaaaaaammmmmmmmmmmmmmmmeeeeeeeeeeeeeee with over 80
-characters:
+Long parapgraph naaaaaaaaaaaaaaaaaaaaaaaammmmmmmmmmmmmmmmeeeeeeeeeeeeeee ending
+with a colon:
 
-Empty section:
+.. For plugin developers
+.. ~~~~~~~~~~~~~~~~~~~~~
 
-Other changes:
+Other changes
+~~~~~~~~~~~~~
 
 - Changed ``bitesize`` label to ``good first issue``. Our `contribute`_ page is now
   automatically populated with these issues. :bug:`4855`
@@ -68,23 +78,28 @@ Other changes:
 2.1.0 (November 22, 2024)
 -------------------------
 
-Bug fixes:
+Bug fixes
+~~~~~~~~~
 
 - Fixed something."""
 
 
 @pytest.fixture
 def md_changelog():
-    return r"""### New features
+    return r"""# Unreleased
 
+## New features
+
+- [beets.plugins.BeetsPlugin](https://beets.readthedocs.io/en/stable/api/generated/beets.plugins.BeetsPlugin.html#beets.plugins.BeetsPlugin) Some plugin change.
+- [list command](https://beets.readthedocs.io/en/stable/reference/cli.html#list-cmd) Update.
 - [Substitute Plugin](https://beets.readthedocs.io/en/stable/plugins/substitute.html): Some substitute multi-line change. :bug: (#5467)
-- [list](https://beets.readthedocs.io/en/stable/reference/cli.html#list-cmd) Update.
+- See [beetsplug.\_utils.musicbrainz.MusicBrainzAPI](https://beets.readthedocs.io/en/stable/api/generated/beetsplug._utils.musicbrainz.MusicBrainzAPI.html#beetsplug._utils.musicbrainz.MusicBrainzAPI) for documentation.
 
 You can do something with this command:
 
     $ do-something
 
-### Bug fixes
+## Bug fixes
 
 - Another fix with an enumerated list
   1.  First and some details
@@ -96,15 +111,15 @@ You can do something with this command:
   - First nested bullet point with some text that wraps to the next line
   - Second nested bullet point
 
-**Section naaaaaaaaaaaaaaaaaaaaaaaammmmmmmmmmmmmmmmeeeeeeeeeeeeeee with over 80 characters**
+Long parapgraph naaaaaaaaaaaaaaaaaaaaaaaammmmmmmmmmmmmmmmeeeeeeeeeeeeeee ending with a colon:
 
-### Other changes
+## Other changes
 
 - Changed `bitesize` label to `good first issue`. Our [contribute](https://github.com/beetbox/beets/contribute) page is now automatically populated with these issues. :bug: (#4855)
 
 # 2.1.0 (November 22, 2024)
 
-### Bug fixes
+## Bug fixes
 
 - Fixed something."""  # noqa: E501
 
