@@ -76,9 +76,8 @@ class TimeoutAndRetrySession(requests.Session, metaclass=SingletonMeta):
         self.headers["User-Agent"] = f"beets/{__version__} https://beets.io/"
 
         retry = Retry(
-            connect=2,
-            total=2,
-            backoff_factor=1,
+            total=6,
+            backoff_factor=0.5,
             # Retry on server errors
             status_forcelist=[
                 HTTPStatus.INTERNAL_SERVER_ERROR,

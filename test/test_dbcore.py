@@ -24,7 +24,7 @@ from typing import ClassVar
 import pytest
 
 from beets import dbcore
-from beets.dbcore.db import DBCustomFunctionError
+from beets.dbcore.db import DBCustomFunctionError, Index
 from beets.library import LibModel
 from beets.test import _common
 from beets.util import cached_classproperty
@@ -67,6 +67,7 @@ class ModelFixture1(LibModel):
     _sorts: ClassVar[dict[str, type[dbcore.query.FieldSort]]] = {
         "some_sort": SortFixture,
     }
+    _indices = (Index("field_one_index", ("field_one",)),)
 
     @cached_classproperty
     def _types(cls):
@@ -138,6 +139,7 @@ class AnotherModelFixture(ModelFixture1):
         "id": dbcore.types.PRIMARY_ID,
         "foo": dbcore.types.INTEGER,
     }
+    _indices = (Index("another_foo_index", ("foo",)),)
 
 
 class ModelFixture5(ModelFixture1):
@@ -238,6 +240,14 @@ class MigrationTest(unittest.TestCase):
             c.close()
         except sqlite3.OperationalError:
             self.fail("select failed")
+
+    def test_index_creation(self):
+        """Test that declared indices are created on database initialization."""
+        db = DatabaseFixture1(":memory:")
+        with db.transaction() as tx:
+            rows = tx.query("PRAGMA index_info(field_one_index)")
+            assert len(rows) > 0  # Index exists
+        db._connection().close()
 
 
 class TransactionTest(unittest.TestCase):

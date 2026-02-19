@@ -35,9 +35,9 @@ from beets.util import unique_list
 from beets.util.deprecation import deprecate_for_maintainers, deprecate_for_user
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Sequence
+    from collections.abc import Callable, Iterable, Iterator, Sequence
 
-    from confuse import ConfigView
+    from confuse import Subview
 
     from beets.dbcore import Query
     from beets.dbcore.db import FieldQueryType
@@ -58,7 +58,6 @@ if TYPE_CHECKING:
     P = ParamSpec("P")
     Ret = TypeVar("Ret", bound=Any)
     Listener = Callable[..., Any]
-    IterF = Callable[P, Iterable[Ret]]
 
 
 PLUGIN_NAMESPACE = "beetsplug"
@@ -163,7 +162,7 @@ class BeetsPlugin(metaclass=BeetsPluginMeta):
     album_template_fields: TFuncMap[Album]
 
     name: str
-    config: ConfigView
+    config: Subview
     early_import_stages: list[ImportStageFunc]
     import_stages: list[ImportStageFunc]
 
@@ -548,7 +547,7 @@ def named_queries(model_cls: type[AnyModel]) -> dict[str, FieldQueryType]:
 
 def notify_info_yielded(
     event: EventType,
-) -> Callable[[IterF[P, Ret]], IterF[P, Ret]]:
+) -> Callable[[Callable[P, Iterable[Ret]]], Callable[P, Iterator[Ret]]]:
     """Makes a generator send the event 'event' every time it yields.
     This decorator is supposed to decorate a generator, but any function
     returning an iterable should work.
@@ -556,9 +555,11 @@ def notify_info_yielded(
     'send'.
     """
 
-    def decorator(func: IterF[P, Ret]) -> IterF[P, Ret]:
+    def decorator(
+        func: Callable[P, Iterable[Ret]],
+    ) -> Callable[P, Iterator[Ret]]:
         @wraps(func)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> Iterable[Ret]:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> Iterator[Ret]:
             for v in func(*args, **kwargs):
                 send(event, info=v)
                 yield v

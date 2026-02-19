@@ -253,7 +253,7 @@ class ImportTask(BaseImportTask):
         ):
             return self.match.items
         else:
-            assert False
+            return []
 
     def apply_metadata(self):
         """Copy metadata from match info to the items."""

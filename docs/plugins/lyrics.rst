@@ -49,7 +49,7 @@ Default configuration:
         google_API_key: null
         google_engine_ID: 009217259823014548361:lndtuqkycfu
         print: no
-        sources: [lrclib, google, genius, tekstowo]
+        sources: [lrclib, google, genius]
         synced: no
 
 The available options are:
@@ -80,7 +80,8 @@ The available options are:
 - **print**: Print lyrics to the console.
 - **sources**: List of sources to search for lyrics. An asterisk ``*`` expands
   to all available sources. The ``google`` source will be automatically
-  deactivated if no ``google_API_key`` is setup.
+  deactivated if no ``google_API_key`` is setup. By default, ``musixmatch`` and
+  ``tekstowo`` are excluded because they block the beets User-Agent.
 - **synced**: Prefer synced lyrics over plain lyrics if a source offers them.
   Currently ``lrclib`` is the only source that provides them.
 
@@ -173,6 +174,9 @@ We use Azure to optionally translate your lyrics. To set up the integration,
 follow these steps:
 
 1. `Create a Translator resource`_ on Azure.
+       Make sure the region of the translator resource is set to Global. You
+       will get 401 unauthorized errors if not. The region of the resource group
+       does not matter.
 2. `Obtain its API key`_.
 3. Add the API key to your configuration as ``translate.api_key``.
 4. Configure your target language using the ``translate.to_language`` option.

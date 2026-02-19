@@ -99,6 +99,8 @@ def create_rst_replacements() -> list[Replacement]:
     refs = get_refs()
 
     def make_ref_link(ref_id: str, name: str | None = None) -> str:
+        if ref_id.endswith("-cmd"):
+            name = f"{ref_id.removesuffix('-cmd')} command"
         ref = refs[ref_id]
         return rf"`{name or ref.name} <{ref.url}>`_"
 
@@ -118,13 +120,14 @@ def create_rst_replacements() -> list[Replacement]:
             lambda m: explicit_replacements.get(m[0], m[0]),
         ),
         # Replace Sphinx directives by documentation URLs, e.g.,
-        #   :ref:`/plugins/autobpm` -> [AutoBPM Plugin](DOCS/plugins/autobpm.html)
+        #   :ref:`/plugins/autobpm` -> [AutoBPM Plugin](DOCS/plugins/autobpm.html)  # noqa: E501
+        #   :ref:`list-cmd` -> [list command](DOCS/reference/cli.html#list-cmd)
         (
-            r":(?:ref|doc|class|conf):`+(?:([^`<]+)<)?/?([\w.:/_-]+)>?`+",
+            r":(?:ref|doc|class|conf):`+~?(?:([^`<]+)<)?/?([\w.:/_-]+)>?`+",
             lambda m: make_ref_link(m[2], m[1]),
         ),
         # Convert command references to documentation URLs
-        #   `beet move` or `move` command -> [import](DOCS/reference/cli.html#import)
+        #   `beet move` or `move` command -> [move command](DOCS/reference/cli.html#move-cmd)  # noqa: E501
         (
             rf"`+beet ({commands})`+|`+({commands})`+(?= command)",
             lambda m: make_ref_link(f"{m[1] or m[2]}-cmd"),
@@ -139,14 +142,9 @@ def create_rst_replacements() -> list[Replacement]:
     ]
 
 
-MD_REPLACEMENTS: list[Replacement] = [
-    (r"^(\w[^\n]{,80}):(?=\n\n[^ ])", r"### \1"),  # format section headers
-    (r"^(\w[^\n]{81,}):(?=\n\n[^ ])", r"**\1**"),  # and bolden too long ones
-    (r"### [^\n]+\n+(?=### )", ""),  # remove empty sections
-]
 order_bullet_points = partial(
     re.compile(r"(\n- .*?(?=\n(?! *(-|\d\.) )|$))", flags=re.DOTALL).sub,
-    lambda m: "\n- ".join(sorted(m.group().split("\n- "))),
+    lambda m: "\n- ".join(sorted(m.group().split("\n- "), key=str.lower)),
 )
 
 
@@ -165,13 +163,21 @@ def update_changelog(text: str, new: Version) -> str:
 Unreleased
 ----------
 
-New features:
+..
+    New features
+    ~~~~~~~~~~~~
 
-Bug fixes:
+..
+    Bug fixes
+    ~~~~~~~~~
 
-For packagers:
+..
+    For plugin developers
+    ~~~~~~~~~~~~~~~~~~~~~
 
-Other changes:
+..
+    Other changes
+    ~~~~~~~~~~~~~
 
 {new_header}
 {"-" * len(new_header)}
@@ -246,9 +252,6 @@ def changelog_as_markdown(rst: str) -> str:
         rst = re.sub(pattern, repl, rst, flags=re.M | re.DOTALL)
 
     md = rst2md(rst)
-
-    for pattern, repl in MD_REPLACEMENTS:
-        md = re.sub(pattern, repl, md, flags=re.M | re.DOTALL)
 
     # order bullet points in each of the lists alphabetically to
     # improve readability
