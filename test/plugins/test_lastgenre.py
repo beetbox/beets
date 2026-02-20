@@ -232,6 +232,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "whitelist": True,
                 "canonical": False,
                 "prefer_specific": False,
+                "count": 10,
             },
             ["original unknown", "Blues"],
             {
@@ -264,6 +265,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "whitelist": True,
                 "canonical": False,
                 "prefer_specific": False,
+                "count": 10,
             },
             ["original unknown", "Blues"],
             {
@@ -313,6 +315,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "whitelist": False,
                 "canonical": False,
                 "prefer_specific": False,
+                "count": 10,
             },
             ["unknown genre"],
             {
@@ -567,6 +570,7 @@ def test_get_genre(config_values, item_genre, mock_genres, expected_result):
     # Initialize plugin instance and item
     plugin = lastgenre.LastGenrePlugin()
     # Configure
+    plugin.config.set(lastgenre.LastGenrePlugin.default_configuration())
     plugin.config.set(config_values)
     plugin.setup()  # Loads default whitelist and canonicalization tree
 

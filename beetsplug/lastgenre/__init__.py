@@ -100,23 +100,25 @@ class LastGenrePlugin(plugins.BeetsPlugin):
     def __init__(self) -> None:
         super().__init__()
 
-        self.config.add(
-            {
-                "whitelist": True,
-                "min_weight": 10,
-                "count": 1,
-                "fallback": None,
-                "canonical": False,
-                "source": "album",
-                "force": False,
-                "keep_existing": False,
-                "auto": True,
-                "prefer_specific": False,
-                "title_case": True,
-                "pretend": False,
-            }
-        )
+        self.config.add(LastGenrePlugin.default_configuration())
         self.setup()
+
+    @staticmethod
+    def default_configuration() -> dict[str, Any]:
+        return {
+            "whitelist": True,
+            "min_weight": 10,
+            "count": 1,
+            "fallback": None,
+            "canonical": False,
+            "source": "album",
+            "force": False,
+            "keep_existing": False,
+            "auto": True,
+            "prefer_specific": False,
+            "title_case": True,
+            "pretend": False,
+        }
 
     def setup(self) -> None:
         """Setup plugin from config options"""
