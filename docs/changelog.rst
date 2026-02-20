@@ -24,6 +24,8 @@ Bug fixes
 - :doc:`plugins/musicbrainz`: Fix fetching very large releases that have more
   than 500 tracks. :bug:`6355`
 - :doc:`plugins/badfiles`: Fix number of found errors in log message
+- :doc:`plugins/fetchart`: Gracefully handle permissions errors when setting
+  album art instead of crashing the import. :bug:`6193`
 
 ..
     For plugin developers
