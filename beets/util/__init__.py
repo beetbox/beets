@@ -547,7 +547,10 @@ def move(path: bytes, dest: bytes, replace: bool = False):
             )
         finally:
             if tmp_filename:
-                os.remove(tmp_filename)
+                try:
+                    os.remove(tmp_filename)
+                except OSError:
+                    pass
 
 
 def link(path: bytes, dest: bytes, replace: bool = False):

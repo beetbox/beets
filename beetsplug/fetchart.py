@@ -1492,7 +1492,11 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             candidate = self.art_candidates.pop(task)
             removal_enabled = self._is_source_file_removal_enabled()
 
-            self._set_art(task.album, candidate, not removal_enabled)
+            try:
+                self._set_art(task.album, candidate, not removal_enabled)
+            except util.FilesystemError as exc:
+                self._log.warning("failed to set album art: {}", exc)
+                return
 
             if removal_enabled:
                 task.prune(candidate.path)
