@@ -24,6 +24,8 @@ Bug fixes
 - :doc:`plugins/musicbrainz`: Fix fetching very large releases that have more
   than 500 tracks. :bug:`6355`
 - :doc:`plugins/badfiles`: Fix number of found errors in log message
+- :doc:`plugins/replaygain`: Avoid magic Windows prefix in calls to command
+  backends, such as ``mp3gain``. :bug:`2946`
 
 ..
     For plugin developers
