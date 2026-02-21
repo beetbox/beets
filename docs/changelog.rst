@@ -24,6 +24,8 @@ Bug fixes
 - :doc:`plugins/musicbrainz`: Fix fetching very large releases that have more
   than 500 tracks. :bug:`6355`
 - :doc:`plugins/badfiles`: Fix number of found errors in log message
+- :doc:`plugins/lastgenre`: Apply canonicalization to genres of items with no
+  Last.fm results
 
 ..
     For plugin developers
