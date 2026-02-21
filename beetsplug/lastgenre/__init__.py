@@ -480,15 +480,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # Nothing found, leave original if configured and valid.
         if obj.genre and self.config["keep_existing"]:
-            if not self.whitelist or self._is_valid(obj.genre.lower()):
-                return obj.genre, "original fallback"
-            else:
-                # If the original genre doesn't match a whitelisted genre, check
-                # if we can canonicalize it to find a matching, whitelisted genre!
-                if result := _try_resolve_stage(
-                    "original fallback", keep_genres, []
-                ):
-                    return result
+            # Process existing genres to apply whitelist and canonicalization
+            if result := _try_resolve_stage(
+                "original fallback", keep_genres, []
+            ):
+                return result
 
         # Return fallback string.
         if fallback := self.config["fallback"].get():

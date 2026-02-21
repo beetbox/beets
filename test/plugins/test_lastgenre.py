@@ -338,7 +338,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "album": None,
                 "artist": None,
             },
-            ("any existing", "original fallback"),
+            ("Any Existing", "keep + original fallback, any"),
         ),
         # 7.1 - Keep the original genre when force and keep_existing are on, and
         # whitelist is enabled, and genre is valid.
@@ -358,7 +358,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "album": None,
                 "artist": None,
             },
-            ("Jazz", "original fallback"),
+            ("Jazz", "keep + original fallback, whitelist"),
         ),
         # 7.2 - Return the configured fallback when force is on but
         # keep_existing is not.
@@ -373,6 +373,26 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "prefer_specific": False,
             },
             "Jazz",
+            {
+                "track": None,
+                "album": None,
+                "artist": None,
+            },
+            ("fallback genre", "fallback"),
+        ),
+        # 7.3 - Filter out genres that map to an empty string in tree when
+        # keep_existing is enabled and no Last.fm results are found
+        (
+            {
+                "force": True,
+                "keep_existing": True,
+                "source": "track",
+                "whitelist": False,
+                "fallback": "fallback genre",
+                "canonical": True,
+                "prefer_specific": False,
+            },
+            "blacklisted genre",
             {
                 "track": None,
                 "album": None,
