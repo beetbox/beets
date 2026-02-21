@@ -14,12 +14,11 @@
 
 
 import unittest
-from typing import ClassVar
+from typing import Any, ClassVar
 
 import pytest
 from mediafile import MediaFile
 
-from beets import config
 from beets.test.helper import (
     AsIsImporterMixin,
     ImportTestCase,
@@ -39,10 +38,15 @@ try:
 except (ImportError, ValueError):
     GST_AVAILABLE = False
 
-if any(has_program(cmd, ["-v"]) for cmd in ["mp3gain", "aacgain"]):
-    GAIN_PROG_AVAILABLE = True
-else:
-    GAIN_PROG_AVAILABLE = False
+
+GAIN_PROG = next(
+    (
+        cmd
+        for cmd in ["mp3gain", "mp3rgain", "aacgain"]
+        if has_program(cmd, ["-v"])
+    ),
+    None,
+)
 
 FFMPEG_AVAILABLE = has_program("ffmpeg", ["-version"])
 
@@ -63,14 +67,18 @@ class ReplayGainTestCase(PluginMixin, ImportTestCase):
     plugin = "replaygain"
     preload_plugin = False
 
-    backend: ClassVar[str]
+    plugin_config: ClassVar[dict[str, Any]]
+
+    @property
+    def backend(self):
+        return self.plugin_config["backend"]
 
     def setUp(self):
         # Implemented by Mixins, see above. This may decide to skip the test.
         self.test_backend()
 
         super().setUp()
-        self.config["replaygain"]["backend"] = self.backend
+        self.config["replaygain"].set(self.plugin_config)
 
         self.load_plugins()
 
@@ -81,8 +89,16 @@ class ThreadedImportMixin:
         self.config["threaded"] = True
 
 
-class GstBackendMixin:
-    backend = "gstreamer"
+class BackendMixin:
+    plugin_config: ClassVar[dict[str, Any]]
+    has_r128_support: bool
+
+    def test_backend(self):
+        """Check whether the backend actually has all required functionality."""
+
+
+class GstBackendMixin(BackendMixin):
+    plugin_config: ClassVar[dict[str, Any]] = {"backend": "gstreamer"}
     has_r128_support = True
 
     def test_backend(self):
@@ -90,29 +106,24 @@ class GstBackendMixin:
         try:
             # Check if required plugins can be loaded by instantiating a
             # GStreamerBackend (via its .__init__).
-            config["replaygain"]["targetlevel"] = 89
-            GStreamerBackend(config["replaygain"], None)
+            self.config["replaygain"]["targetlevel"] = 89
+            GStreamerBackend(self.config["replaygain"], None)
         except FatalGstreamerPluginReplayGainError as e:
             # Skip the test if plugins could not be loaded.
             self.skipTest(str(e))
 
 
-class CmdBackendMixin:
-    backend = "command"
+class CmdBackendMixin(BackendMixin):
+    plugin_config: ClassVar[dict[str, Any]] = {
+        "backend": "command",
+        "command": GAIN_PROG,
+    }
     has_r128_support = False
 
-    def test_backend(self):
-        """Check whether the backend actually has all required functionality."""
-        pass
 
-
-class FfmpegBackendMixin:
-    backend = "ffmpeg"
+class FfmpegBackendMixin(BackendMixin):
+    plugin_config: ClassVar[dict[str, Any]] = {"backend": "ffmpeg"}
     has_r128_support = True
-
-    def test_backend(self):
-        """Check whether the backend actually has all required functionality."""
-        pass
 
 
 class ReplayGainCliTest:
@@ -332,7 +343,7 @@ class ReplayGainGstCliTest(
     FNAME = "full"  # file contains only silence
 
 
-@unittest.skipIf(not GAIN_PROG_AVAILABLE, "no *gain command found")
+@unittest.skipIf(not GAIN_PROG, "no *gain command found")
 class ReplayGainCmdCliTest(
     ReplayGainCliTest, ReplayGainTestCase, CmdBackendMixin
 ):
@@ -369,7 +380,7 @@ class ReplayGainGstImportTest(ImportTest, ReplayGainTestCase, GstBackendMixin):
     pass
 
 
-@unittest.skipIf(not GAIN_PROG_AVAILABLE, "no *gain command found")
+@unittest.skipIf(not GAIN_PROG, "no *gain command found")
 class ReplayGainCmdImportTest(ImportTest, ReplayGainTestCase, CmdBackendMixin):
     pass
 
