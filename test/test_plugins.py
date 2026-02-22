@@ -96,8 +96,7 @@ class TestPluginRegistration(IOMixin, PluginTestCase):
         item.add(self.lib)
 
         out = self.run_with_output("ls", "-f", "$multi_value")
-        delimiter = types.MULTI_VALUE_DSV.delimiter
-        assert out == f"one{delimiter}two{delimiter}three\n"
+        assert out == "one; two; three\n"
 
 
 class PluginImportTestCase(ImportHelper, PluginTestCase):
