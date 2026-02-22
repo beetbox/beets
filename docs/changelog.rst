@@ -28,6 +28,14 @@ New features
   command that writes tags (such as ``beet write`` or during import). No manual
   action or ``mbsync`` is required.
 
+  The ``genre`` field is split by the first separator found in the string, in
+  the following order of precedence:
+
+  1. :doc:`plugins/lastgenre` ``separator`` configuration
+  2. Semicolon followed by a space
+  3. Comma followed by a space
+  4. Slash wrapped by spaces
+
 ..
     Bug fixes
     ~~~~~~~~~
