@@ -1048,6 +1048,18 @@ def print_newline_layout(
 FLOAT_EPSILON = 0.01
 
 
+def _multi_value_diff(field: str, oldset: set[str], newset: set[str]) -> str:
+    added = newset - oldset
+    removed = oldset - newset
+
+    parts = [
+        f"{field}:",
+        *(colorize("text_diff_removed", f"  - {i}") for i in sorted(removed)),
+        *(colorize("text_diff_added", f"  + {i}") for i in sorted(added)),
+    ]
+    return "\n".join(parts)
+
+
 def _field_diff(
     field: str, old: FormattedMapping, new: FormattedMapping
 ) -> str | None:
@@ -1063,6 +1075,11 @@ def _field_diff(
     ):
         return None
 
+    if isinstance(oldval, list):
+        if (oldset := set(oldval)) != (newset := set(newval)):
+            return _multi_value_diff(field, oldset, newset)
+        return None
+
     # Get formatted values for output.
     oldstr, newstr = old.get(field, ""), new.get(field, "")
     if field not in new:
@@ -1071,8 +1088,7 @@ def _field_diff(
     if field not in old:
         return colorize("text_diff_added", f"{field}: {newstr}")
 
-    # For strings, highlight changes. For others, colorize the whole
-    # thing.
+    # For strings, highlight changes. For others, colorize the whole thing.
     if isinstance(oldval, str):
         oldstr, newstr = colordiff(oldstr, newstr)
     else:
