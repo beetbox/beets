@@ -37,7 +37,7 @@ class MultiGenreFieldMigration(Migration):
         with suppress(ConfigError):
             separators.append(beets.config["lastgenre"]["separator"].as_str())
 
-        separators.extend([", ", "; ", " / "])
+        separators.extend(["; ", ", ", " / "])
         return unique_list(filter(None, separators))
 
     @contextmanager
