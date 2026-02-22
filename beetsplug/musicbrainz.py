@@ -60,34 +60,6 @@ FIELDS_TO_MB_KEYS = {
     "alias": "alias",
 }
 
-
-RELEASE_INCLUDES = [
-    "artists",
-    "media",
-    "recordings",
-    "release-groups",
-    "labels",
-    "artist-credits",
-    "aliases",
-    "recording-level-rels",
-    "work-rels",
-    "work-level-rels",
-    "artist-rels",
-    "isrcs",
-    "url-rels",
-    "release-rels",
-    "genres",
-    "tags",
-]
-
-TRACK_INCLUDES = [
-    "artists",
-    "aliases",
-    "isrcs",
-    "work-level-rels",
-    "artist-rels",
-]
-
 BROWSE_INCLUDES = [
     "artist-credits",
     "work-rels",
@@ -797,7 +769,7 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
         # A 404 error here is fine. e.g. re-importing a release that has
         # been deleted on MusicBrainz.
         try:
-            res = self.mb_api.get_release(albumid, includes=RELEASE_INCLUDES)
+            res = self.mb_api.get_release(albumid)
         except HTTPNotFoundError:
             self._log.debug("Release {} not found on MusicBrainz.", albumid)
             return None
@@ -813,9 +785,7 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
                     rel["type"] == "transl-tracklisting"
                     and rel["direction"] == "backward"
                 ):
-                    actual_res = self.mb_api.get_release(
-                        rel["release"]["id"], includes=RELEASE_INCLUDES
-                    )
+                    actual_res = self.mb_api.get_release(rel["release"]["id"])
 
         # release is potentially a pseudo release
         release = self.album_info(res)
@@ -838,8 +808,6 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
             return None
 
         with suppress(HTTPNotFoundError):
-            return self.track_info(
-                self.mb_api.get_recording(trackid, includes=TRACK_INCLUDES)
-            )
+            return self.track_info(self.mb_api.get_recording(trackid))
 
         return None
