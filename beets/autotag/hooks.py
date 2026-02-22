@@ -87,7 +87,7 @@ class Info(AttrDict[Any]):
             )
             if not genres:
                 try:
-                    sep = next(s for s in [", ", "; ", " / "] if s in genre)
+                    sep = next(s for s in ["; ", ", ", " / "] if s in genre)
                 except StopIteration:
                     genres = [genre]
                 else:
