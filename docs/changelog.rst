@@ -26,6 +26,8 @@ Bug fixes
 - :doc:`plugins/badfiles`: Fix number of found errors in log message
 - :doc:`plugins/replaygain`: Avoid magic Windows prefix in calls to command
   backends, such as ``mp3gain``. :bug:`2946`
+- :doc:`plugins/mbpseudo`: Fix crash due to missing ``artist_credit`` field in
+  the MusicBrainz API response. :bug:`6339`
 
 ..
     For plugin developers
