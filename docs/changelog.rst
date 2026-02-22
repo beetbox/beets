@@ -13,6 +13,25 @@ Unreleased
     New features
     ~~~~~~~~~~~~
 
+..
+    Bug fixes
+    ~~~~~~~~~
+
+..
+    For plugin developers
+    ~~~~~~~~~~~~~~~~~~~~~
+
+..
+    Other changes
+    ~~~~~~~~~~~~~
+
+2.6.2 (February 22, 2026)
+-------------------------
+
+..
+    New features
+    ~~~~~~~~~~~~
+
 Bug fixes
 ~~~~~~~~~
 

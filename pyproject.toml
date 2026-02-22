@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "beets"
-version = "2.6.1"
+version = "2.6.2"
 description = "music tagger and library organizer"
 authors = ["Adrian Sampson <adrian@radbox.org>"]
 maintainers = ["Serene-Arc"]
