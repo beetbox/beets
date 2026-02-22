@@ -127,7 +127,7 @@ class ChangeRepresentation:
         and artist name.
         """
         # Artist.
-        artist_l, artist_r = self.cur_artist or "", self.match.info.artist
+        artist_l, artist_r = self.cur_artist or "", self.match.info.artist or ""
         if artist_r == VARIOUS_ARTISTS:
             # Hide artists for VA releases.
             artist_l, artist_r = "", ""

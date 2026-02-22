@@ -571,15 +571,16 @@ def get_color_config() -> dict[ColorName, str]:
     }
 
 
-def colorize(color_name: ColorName, text: str) -> str:
-    """Apply ANSI color formatting to text based on configuration settings.
+def _colorize(color_name: ColorName, text: str) -> str:
+    """Apply ANSI color formatting to text based on configuration settings."""
+    color_code = get_color_config()[color_name]
+    return f"{COLOR_ESCAPE}[{color_code}m{text}{RESET_COLOR}"
 
-    Returns colored text when color output is enabled and NO_COLOR environment
-    variable is not set, otherwise returns plain text unchanged.
-    """
+
+def colorize(color_name: ColorName, text: str) -> str:
+    """Colorize text when color output is enabled."""
     if config["ui"]["color"] and "NO_COLOR" not in os.environ:
-        color_code = get_color_config()[color_name]
-        return f"{COLOR_ESCAPE}[{color_code}m{text}{RESET_COLOR}"
+        return _colorize(color_name, text)
 
     return text
 
@@ -643,32 +644,12 @@ def color_len(colored_text):
     return len(uncolorize(colored_text))
 
 
-def _colordiff(a: Any, b: Any) -> tuple[str, str]:
-    """Given two values, return the same pair of strings except with
-    their differences highlighted in the specified color. Strings are
-    highlighted intelligently to show differences; other values are
-    stringified and highlighted in their entirety.
-    """
-    # First, convert paths to readable format
-    if isinstance(a, bytes) or isinstance(b, bytes):
-        # A path field.
-        a = util.displayable_path(a)
-        b = util.displayable_path(b)
-
-    if not isinstance(a, str) or not isinstance(b, str):
-        # Non-strings: use ordinary equality.
-        if a == b:
-            return str(a), str(b)
-        else:
-            return (
-                colorize("text_diff_removed", str(a)),
-                colorize("text_diff_added", str(b)),
-            )
-
+def colordiff(a: str, b: str) -> tuple[str, str]:
+    """Intelligently highlight the differences between two strings."""
     before = ""
     after = ""
 
-    matcher = SequenceMatcher(lambda x: False, a, b)
+    matcher = SequenceMatcher(lambda _: False, a, b)
     for op, a_start, a_end, b_start, b_end in matcher.get_opcodes():
         before_part, after_part = a[a_start:a_end], b[b_start:b_end]
         if op in {"delete", "replace"}:
@@ -680,16 +661,6 @@ def _colordiff(a: Any, b: Any) -> tuple[str, str]:
         after += after_part
 
     return before, after
-
-
-def colordiff(a, b):
-    """Colorize differences between two values if color is enabled.
-    (Like _colordiff but conditional.)
-    """
-    if config["ui"]["color"]:
-        return _colordiff(a, b)
-    else:
-        return str(a), str(b)
 
 
 def get_path_formats(subview=None):
