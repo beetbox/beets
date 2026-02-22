@@ -21,9 +21,13 @@ Unreleased
     For plugin developers
     ~~~~~~~~~~~~~~~~~~~~~
 
-..
-    Other changes
-    ~~~~~~~~~~~~~
+Other changes
+~~~~~~~~~~~~~
+
+- :ref:`modify-cmd`: Use the following separator to delimite multiple field
+  values: |semicolon_space|. For example ``beet modify albumtypes="album; ep"``.
+  Previously, ``\␀`` was used as a separator. This applies to fields such as
+  ``artists``, ``albumtypes`` etc.
 
 2.6.2 (February 22, 2026)
 -------------------------
