@@ -206,7 +206,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
 @pytest.mark.parametrize(
     "config_values, item_genre, mock_genres, expected_result",
     [
-        # 0 - force and keep whitelisted
+        # force and keep whitelisted
         (
             {
                 "force": True,
@@ -223,7 +223,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
             },
             (["Blues", "Jazz"], "keep + album, whitelist"),
         ),
-        # 1 - force and keep whitelisted, unknown original
+        # force and keep whitelisted, unknown original
         (
             {
                 "force": True,
@@ -239,7 +239,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
             },
             (["Blues", "Jazz"], "keep + album, whitelist"),
         ),
-        # 2 - force and keep whitelisted on empty tag
+        # force and keep whitelisted on empty tag
         (
             {
                 "force": True,
@@ -255,7 +255,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
             },
             (["Jazz"], "album, whitelist"),
         ),
-        # 3 force and keep, artist configured
+        # force and keep, artist configured
         (
             {
                 "force": True,
@@ -272,7 +272,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
             },
             (["Blues", "Pop"], "keep + artist, whitelist"),
         ),
-        # 4 - don't force, disabled whitelist
+        # don't force, disabled whitelist
         (
             {
                 "force": False,
@@ -288,7 +288,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
             },
             (["any genre"], "keep any, no-force"),
         ),
-        # 5 - don't force and empty is regular last.fm fetch; no whitelist too
+        # don't force and empty is regular last.fm fetch; no whitelist too
         (
             {
                 "force": False,
@@ -304,7 +304,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
             },
             (["Jazzin"], "album, any"),
         ),
-        # 6 - fallback to next stages until found
+        # fallback to next stages until found
         (
             {
                 "force": True,
@@ -322,7 +322,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
             },
             (["Unknown Genre", "Jazz"], "keep + artist, any"),
         ),
-        # 7 - Keep the original genre when force and keep_existing are on, and
+        # Keep the original genre when force and keep_existing are on, and
         # whitelist is disabled
         (
             {
@@ -342,7 +342,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
             },
             (["any existing"], "original fallback"),
         ),
-        # 7.1 - Keep the original genre when force and keep_existing are on, and
+        # Keep the original genre when force and keep_existing are on, and
         # whitelist is enabled, and genre is valid.
         (
             {
@@ -362,7 +362,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
             },
             (["Jazz"], "original fallback"),
         ),
-        # 7.2 - Return the configured fallback when force is on but
+        # Return the configured fallback when force is on but
         # keep_existing is not.
         (
             {
@@ -382,7 +382,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
             },
             (["fallback genre"], "fallback"),
         ),
-        # 8 - fallback to fallback if no original
+        # fallback to fallback if no original
         (
             {
                 "force": True,
@@ -401,7 +401,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
             },
             (["fallback genre"], "fallback"),
         ),
-        # 9 - limit a lot of results
+        # limit a lot of results
         (
             {
                 "force": True,
@@ -421,7 +421,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "keep + album, whitelist",
             ),
         ),
-        # 10 - fallback to next stage (artist) if no allowed original present
+        # fallback to next stage (artist) if no allowed original present
         # and no album genre were fetched.
         (
             {
@@ -441,7 +441,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
             },
             (["Jazz"], "keep + artist, whitelist"),
         ),
-        # 11 - canonicalization transforms non-whitelisted genres to canonical forms
+        # canonicalization transforms non-whitelisted genres to canonical forms
         #
         # "Acid Techno" is not in the default whitelist, thus gets resolved "up" in the
         # tree to "Techno" and "Electronic".
@@ -461,7 +461,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
             },
             (["Techno", "Electronic"], "album, whitelist"),
         ),
-        # 12 - canonicalization transforms whitelisted genres to canonical forms and
+        # canonicalization transforms whitelisted genres to canonical forms and
         # includes originals
         #
         # "Detroit Techno" is in the default whitelist, thus it stays and and also gets
@@ -493,7 +493,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "keep + album, whitelist",
             ),
         ),
-        # 13 - canonicalization transforms non-whitelisted original genres to canonical
+        # canonicalization transforms non-whitelisted original genres to canonical
         # forms and deduplication works.
         #
         # "Cosmic Disco" is not in the default whitelist, thus gets resolved "up" in the
@@ -518,7 +518,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "keep + album, whitelist",
             ),
         ),
-        # 16 - canonicalization transforms non-whitelisted original genres to canonical
+        # canonicalization transforms non-whitelisted original genres to canonical
         # forms and deduplication works, **even** when no new genres are found online.
         #
         # "Cosmic Disco" is not in the default whitelist, thus gets resolved "up" in the
