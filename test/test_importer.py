@@ -131,7 +131,7 @@ class NonAutotaggedImportTest(PathsMixin, AsIsImporterMixin, ImportTestCase):
 
         assert self.track_lib_path.exists()
         assert self.track_lib_path.is_symlink()
-        assert self.track_lib_path.resolve() == self.track_import_path
+        assert self.track_lib_path.resolve() == self.track_import_path.resolve()
 
     @unittest.skipUnless(_common.HAVE_HARDLINK, "need hardlinks")
     def test_import_hardlink_arrives(self):
