@@ -474,7 +474,7 @@ class BeatportTest(BeetsTestCase):
             item.year = 2016
             item.comp = False
             item.label_name = "Gravitas Recordings"
-            item.genres = ["Glitch Hop"]
+            item.genres = ["Glitch Hop", "Breaks"]
             item.year = 2016
             item.month = 4
             item.day = 11

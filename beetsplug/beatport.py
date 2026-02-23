@@ -234,9 +234,11 @@ class BeatportObject:
             )
         if "artists" in data:
             self.artists = [(x["id"], str(x["name"])) for x in data["artists"]]
-        if "genres" in data:
-            genre_list = [str(x["name"]) for x in data["genres"]]
-            self.genres = unique_list(genre_list)
+
+        self.genres = unique_list(
+            x["name"]
+            for x in (*data.get("subGenres", []), *data.get("genres", []))
+        )
 
     def artists_str(self) -> str | None:
         if self.artists is not None:
@@ -304,12 +306,6 @@ class BeatportTrack(BeatportObject):
         self.track_number = data.get("trackNumber")
         self.bpm = data.get("bpm")
         self.initial_key = str((data.get("key") or {}).get("shortName"))
-
-        # Extract genres list from subGenres or genres
-        self.genres = unique_list(
-            str(x.get("name"))
-            for x in data.get("subGenres") or data.get("genres") or []
-        )
 
 
 class BeatportPlugin(MetadataSourcePlugin):
