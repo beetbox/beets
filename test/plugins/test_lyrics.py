@@ -597,6 +597,7 @@ class TestTranslation:
                     " | [Refrain : Doja Cat]"
                     " | Difficile pour moi de te laisser partir (Te laisser partir, te laisser partir)"  # noqa: E501
                     " | Mon corps ne me laissait pas le cacher (Cachez-le)"
+                    " | [Chorus]"
                     " | Quoi qu’il arrive, je ne plierais pas (Ne plierait pas, ne plierais pas)"  # noqa: E501
                     " | Chevauchant à travers le tonnerre, la foudre"
                 )
@@ -630,6 +631,7 @@ class TestTranslation:
                 [Refrain: Doja Cat]
                 Hard for me to let you go (Let you go, let you go)
                 My body wouldn't let me hide it (Hide it)
+                [Chorus]
                 No matter what, I wouldn't fold (Wouldn't fold, wouldn't fold)
                 Ridin' through the thunder, lightnin'""",
                 "",
@@ -637,6 +639,7 @@ class TestTranslation:
                 [Refrain: Doja Cat] / [Refrain : Doja Cat]
                 Hard for me to let you go (Let you go, let you go) / Difficile pour moi de te laisser partir (Te laisser partir, te laisser partir)
                 My body wouldn't let me hide it (Hide it) / Mon corps ne me laissait pas le cacher (Cachez-le)
+                [Chorus] / [Chorus]
                 No matter what, I wouldn't fold (Wouldn't fold, wouldn't fold) / Quoi qu’il arrive, je ne plierais pas (Ne plierait pas, ne plierais pas)
                 Ridin' through the thunder, lightnin' / Chevauchant à travers le tonnerre, la foudre""",  # noqa: E501
                 id="plain",
