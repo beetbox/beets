@@ -1,3 +1,5 @@
+from textwrap import dedent
+
 import pytest
 
 from beets.library import Item
@@ -15,7 +17,7 @@ class TestFieldDiff:
     def patch_colorize(self, monkeypatch):
         """Patch to return a deterministic string format instead of ANSI codes."""
         monkeypatch.setattr(
-            "beets.ui.colorize",
+            "beets.ui._colorize",
             lambda color_name, text: f"[{color_name}]{text}[/]",
         )
 
@@ -38,6 +40,19 @@ class TestFieldDiff:
             p({"mb_trackid": None}, {"mb_trackid": "1234"}, "mb_trackid", "mb_trackid:  -> [text_diff_added]1234[/]", id="none_to_value"),
             p({}, {"new_flex": "foo"}, "new_flex", "[text_diff_added]new_flex: foo[/]", id="flex_field_added"),
             p({"old_flex": "foo"}, {}, "old_flex", "[text_diff_removed]old_flex: foo[/]", id="flex_field_removed"),
+            p({"albumtypes": ["album", "ep"]}, {"albumtypes": ["ep", "album"]}, "albumtypes", None, id="multi_value_unchanged"),
+            p(
+                {"albumtypes": ["ep"]},
+                {"albumtypes": ["album", "compilation"]},
+                "albumtypes",
+                dedent("""
+                    albumtypes:
+                    [text_diff_removed]  - ep[/]
+                    [text_diff_added]  + album[/]
+                    [text_diff_added]  + compilation[/]
+                """).strip(),
+                id="multi_value_changed"
+            ),
         ],
     )  # fmt: skip
     @pytest.mark.parametrize("color", [True], ids=["color_enabled"])
