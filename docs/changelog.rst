@@ -84,6 +84,9 @@ Other changes
   Since genres are now stored as a list in the ``genres`` field and written to
   files as individual genre tags, this option has no effect and has been
   removed.
+- :doc:`plugins/lyrics`: To cut down noise from the ``lrclib`` lyrics source,
+  synced lyrics are now checked to ensure the final verse falls within the
+  track's duration.
 
 2.6.2 (February 22, 2026)
 -------------------------

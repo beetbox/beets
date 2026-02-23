@@ -263,16 +263,34 @@ class LRCLyrics:
         return self.dist < other.dist
 
     @classmethod
+    def verify_synced_lyrics(
+        cls, duration: float, lyrics: str | None
+    ) -> str | None:
+        if lyrics and (
+            m := Translator.LINE_PARTS_RE.match(lyrics.splitlines()[-1])
+        ):
+            ts, _ = m.groups()
+            if ts:
+                mm, ss = map(float, ts.strip("[]").split(":"))
+                if 60 * mm + ss <= duration:
+                    return lyrics
+
+        return None
+
+    @classmethod
     def make(
         cls, candidate: LRCLibAPI.Item, target_duration: float
     ) -> LRCLyrics:
+        duration = candidate["duration"] or 0.0
         return cls(
             target_duration,
             candidate["id"],
-            candidate["duration"] or 0.0,
+            duration,
             candidate["instrumental"],
             candidate["plainLyrics"],
-            candidate["syncedLyrics"],
+            cls.verify_synced_lyrics(
+                target_duration, candidate["syncedLyrics"]
+            ),
         )
 
     @cached_property
