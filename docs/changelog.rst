@@ -32,6 +32,9 @@ Other changes
 - :doc:`plugins/edit`: Editing multi-valued fields now behaves more naturally,
   with list values handled directly to make metadata edits smoother and more
   predictable.
+- :doc:`plugins/lyrics`: To cut down noise from the ``lrclib`` lyrics source,
+  synced lyrics are now checked to ensure the final verse falls within the
+  track's duration.
 
 2.6.2 (February 22, 2026)
 -------------------------

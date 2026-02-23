@@ -448,7 +448,7 @@ def lyrics_match(**overrides):
         "id": 1,
         "instrumental": False,
         "duration": LYRICS_DURATION,
-        "syncedLyrics": "synced",
+        "syncedLyrics": "[00:00.00] synced",
         "plainLyrics": "plain",
         **overrides,
     }
@@ -456,6 +456,7 @@ def lyrics_match(**overrides):
 
 class TestLRCLibLyrics(LyricsBackendTest):
     ITEM_DURATION = 999
+    SYNCED = "[00:00.00] synced"
 
     @pytest.fixture(scope="class")
     def backend_name(self):
@@ -471,11 +472,13 @@ class TestLRCLibLyrics(LyricsBackendTest):
     @pytest.mark.parametrize("response_data", [[lyrics_match()]])
     @pytest.mark.parametrize(
         "plugin_config, expected_lyrics",
-        [({"synced": True}, "synced"), ({"synced": False}, "plain")],
+        [({"synced": True}, SYNCED), ({"synced": False}, "plain")],
     )
     def test_synced_config_option(self, fetch_lyrics, expected_lyrics):
-        lyrics, _ = fetch_lyrics()
+        lyrics_info = fetch_lyrics()
+        assert lyrics_info
 
+        lyrics, _ = lyrics_info
         assert lyrics == expected_lyrics
 
     @pytest.mark.parametrize(
@@ -484,7 +487,7 @@ class TestLRCLibLyrics(LyricsBackendTest):
             pytest.param([], None, id="handle non-matching lyrics"),
             pytest.param(
                 [lyrics_match()],
-                "synced",
+                SYNCED,
                 id="synced when available",
             ),
             pytest.param(
@@ -509,9 +512,9 @@ class TestLRCLibLyrics(LyricsBackendTest):
                         syncedLyrics=None,
                         plainLyrics="plain with closer duration",
                     ),
-                    lyrics_match(syncedLyrics="synced", plainLyrics="plain 2"),
+                    lyrics_match(syncedLyrics=SYNCED, plainLyrics="plain 2"),
                 ],
-                "synced",
+                SYNCED,
                 id="prefer synced lyrics even if plain duration is closer",
             ),
             pytest.param(
@@ -530,8 +533,17 @@ class TestLRCLibLyrics(LyricsBackendTest):
                 id="ignore synced with invalid duration",
             ),
             pytest.param(
+                [
+                    lyrics_match(
+                        duration=59, syncedLyrics="[01:00.00] invalid synced"
+                    )
+                ],
+                None,
+                id="ignore synced with a timestamp longer than duration",
+            ),
+            pytest.param(
                 [lyrics_match(syncedLyrics=None), lyrics_match()],
-                "synced",
+                SYNCED,
                 id="prefer match with synced lyrics",
             ),
         ],
@@ -539,9 +551,10 @@ class TestLRCLibLyrics(LyricsBackendTest):
     @pytest.mark.parametrize("plugin_config", [{"synced": True}])
     def test_fetch_lyrics(self, fetch_lyrics, expected_lyrics):
         lyrics_info = fetch_lyrics()
-        if lyrics_info is None:
-            assert expected_lyrics is None
+        if expected_lyrics is None:
+            assert not lyrics_info
         else:
+            assert lyrics_info
             lyrics, _ = fetch_lyrics()
 
             assert lyrics == expected_lyrics
