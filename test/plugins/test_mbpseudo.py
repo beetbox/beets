@@ -163,7 +163,7 @@ class TestMBPseudoPlugin(TestMBPseudoMixin):
         official_release: JSONDict,
         json_key: str,
     ):
-        del official_release["release-relations"][0][json_key]
+        del official_release["release_relations"][0][json_key]
 
         album_info = mbpseudo_plugin.album_info(official_release)
         assert not isinstance(album_info, PseudoAlbumInfo)
@@ -174,8 +174,8 @@ class TestMBPseudoPlugin(TestMBPseudoMixin):
         mbpseudo_plugin: MusicBrainzPseudoReleasePlugin,
         official_release: JSONDict,
     ):
-        official_release["release-relations"][0]["release"][
-            "text-representation"
+        official_release["release_relations"][0]["release"][
+            "text_representation"
         ]["script"] = "Null"
 
         album_info = mbpseudo_plugin.album_info(official_release)

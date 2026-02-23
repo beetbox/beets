@@ -43,6 +43,12 @@ if TYPE_CHECKING:
     from beets.library import Item
     from beetsplug._typing import JSONDict
 
+    from ._utils.musicbrainz import (
+        Release,
+        ReleaseRelation,
+        ReleaseRelationRelease,
+    )
+
 _STATUS_PSEUDO = "Pseudo-Release"
 
 
@@ -133,7 +139,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
                     yield album_info
 
     @override
-    def album_info(self, release: JSONDict) -> AlbumInfo:
+    def album_info(self, release: Release) -> AlbumInfo:
         official_release = super().album_info(release)
 
         if release.get("status") == _STATUS_PSEUDO:
@@ -161,22 +167,22 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
         else:
             return official_release
 
-    def _intercept_mb_release(self, data: JSONDict) -> list[str]:
+    def _intercept_mb_release(self, data: Release) -> list[str]:
         album_id = data["id"] if "id" in data else None
         if self._has_desired_script(data) or not isinstance(album_id, str):
             return []
 
         return [
             pr_id
-            for rel in data.get("release-relations", [])
+            for rel in data.get("release_relations", [])
             if (pr_id := self._wanted_pseudo_release_id(album_id, rel))
             is not None
         ]
 
-    def _has_desired_script(self, release: JSONDict) -> bool:
+    def _has_desired_script(self, release: Release) -> bool:
         if len(self._scripts) == 0:
             return False
-        elif script := release.get("text-representation", {}).get("script"):
+        elif script := release.get("text_representation", {}).get("script"):
             return script in self._scripts
         else:
             return False
@@ -184,7 +190,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
     def _wanted_pseudo_release_id(
         self,
         album_id: str,
-        relation: JSONDict,
+        relation: ReleaseRelation,
     ) -> str | None:
         if (
             len(self._scripts) == 0
@@ -216,9 +222,9 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
         if len(config["import"]["languages"].as_str_seq()) > 0:
             return
 
-        lang = raw_pseudo_release.get("text-representation", {}).get("language")
-        artist_credits = raw_pseudo_release.get("release-group", {}).get(
-            "artist-credit", []
+        lang = raw_pseudo_release.get("text_representation", {}).get("language")
+        artist_credits = raw_pseudo_release.get("release_group", {}).get(
+            "artist_credit", []
         )
         aliases = [
             artist_credit.get("artist", {}).get("aliases", [])

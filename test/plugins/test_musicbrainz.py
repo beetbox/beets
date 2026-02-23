@@ -14,9 +14,11 @@
 
 """Tests for MusicBrainz API wrapper."""
 
+from __future__ import annotations
+
 import unittest
 import uuid
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 from unittest import mock
 
 import pytest
@@ -26,6 +28,44 @@ from beets import config
 from beets.library import Item
 from beets.test.helper import BeetsTestCase, PluginMixin
 from beetsplug import musicbrainz
+from beetsplug.musicbrainz import MusicBrainzPlugin
+
+from .factories import musicbrainz as factories
+
+if TYPE_CHECKING:
+    from beetsplug._utils import musicbrainz as mb
+
+
+def alias_factory(**kwargs) -> mb.Alias:
+    return factories.AliasFactory.build(**kwargs)
+
+
+def artist_credit_factory(**kwargs) -> mb.ArtistCredit:
+    return factories.ArtistCreditFactory.build(**kwargs)
+
+
+def artist_relation_factory(**kwargs) -> mb.ArtistRelation:
+    return factories.ArtistRelationFactory.build(**kwargs)
+
+
+def release_group_factory(**kwargs) -> mb.ReleaseGroup:
+    return factories.ReleaseGroupFactory.build(**kwargs)
+
+
+def recording_factory(**kwargs) -> mb.Recording:
+    return factories.RecordingFactory.build(**kwargs)
+
+
+def track_factory(**kwargs) -> mb.Track:
+    return factories.TrackFactory.build(**kwargs)
+
+
+def medium_factory(**kwargs) -> mb.Medium:
+    return factories.MediumFactory(**kwargs)  # type: ignore[return-value]
+
+
+def release_factory(**kwargs) -> mb.Release:
+    return factories.ReleaseFactory(**kwargs)  # type: ignore[return-value]
 
 
 class MusicBrainzTestCase(BeetsTestCase):
@@ -36,240 +76,55 @@ class MusicBrainzTestCase(BeetsTestCase):
 
 
 class MBAlbumInfoTest(MusicBrainzTestCase):
-    def _make_release(
-        self,
-        date_str="2009",
-        tracks=None,
-        track_length=None,
-        track_artist=False,
-        multi_artist_credit=False,
-        data_tracks=None,
-        medium_format="FORMAT",
-    ):
-        release = {
-            "title": "ALBUM TITLE",
-            "id": "ALBUM ID",
-            "asin": "ALBUM ASIN",
-            "disambiguation": "R_DISAMBIGUATION",
-            "release-group": {
-                "primary-type": "Album",
-                "first-release-date": date_str,
-                "id": "RELEASE GROUP ID",
-                "disambiguation": "RG_DISAMBIGUATION",
-            },
-            "artist-credit": [
-                {
-                    "artist": {
-                        "name": "ARTIST NAME",
-                        "id": "ARTIST ID",
-                        "sort-name": "ARTIST SORT NAME",
-                    },
-                    "name": "ARTIST CREDIT",
-                }
-            ],
-            "date": "3001",
-            "media": [],
-            "genres": [{"count": 1, "name": "GENRE"}],
-            "tags": [{"count": 1, "name": "TAG"}],
-            "label-info": [
-                {
-                    "catalog-number": "CATALOG NUMBER",
-                    "label": {"name": "LABEL NAME"},
-                }
-            ],
-            "text-representation": {
-                "script": "SCRIPT",
-                "language": "LANGUAGE",
-            },
-            "country": "COUNTRY",
-            "status": "STATUS",
-            "barcode": "BARCODE",
-            "release-events": [{"area": None, "date": "2021-03-26"}],
-        }
-
-        if multi_artist_credit:
-            release["artist-credit"][0]["joinphrase"] = " & "
-            release["artist-credit"].append(
-                {
-                    "artist": {
-                        "name": "ARTIST 2 NAME",
-                        "id": "ARTIST 2 ID",
-                        "sort-name": "ARTIST 2 SORT NAME",
-                    },
-                    "name": "ARTIST MULTI CREDIT",
-                }
-            )
-
-        i = 0
-        track_list = []
-        if tracks:
-            for recording in tracks:
-                i += 1
-                track = {
-                    "id": f"RELEASE TRACK ID {i}",
-                    "recording": recording,
-                    "position": i,
-                    "number": "A1",
-                }
-                if track_length:
-                    # Track lengths are distinct from recording lengths.
-                    track["length"] = track_length
-                if track_artist:
-                    # Similarly, track artists can differ from recording
-                    # artists.
-                    track["artist-credit"] = [
-                        {
-                            "artist": {
-                                "name": "TRACK ARTIST NAME",
-                                "id": "TRACK ARTIST ID",
-                                "sort-name": "TRACK ARTIST SORT NAME",
-                            },
-                            "name": "TRACK ARTIST CREDIT",
-                        }
-                    ]
-
-                    if multi_artist_credit:
-                        track["artist-credit"][0]["joinphrase"] = " & "
-                        track["artist-credit"].append(
-                            {
-                                "artist": {
-                                    "name": "TRACK ARTIST 2 NAME",
-                                    "id": "TRACK ARTIST 2 ID",
-                                    "sort-name": "TRACK ARTIST 2 SORT NAME",
-                                },
-                                "name": "TRACK ARTIST 2 CREDIT",
-                            }
-                        )
-
-                track_list.append(track)
-        data_track_list = []
-        if data_tracks:
-            for recording in data_tracks:
-                i += 1
-                data_track = {
-                    "id": f"RELEASE TRACK ID {i}",
-                    "recording": recording,
-                    "position": i,
-                    "number": "A1",
-                }
-                data_track_list.append(data_track)
-        release["media"].append(
-            {
-                "position": "1",
-                "tracks": track_list,
-                "data-tracks": data_track_list,
-                "format": medium_format,
-                "title": "MEDIUM TITLE",
-            }
-        )
-        return release
-
-    def _make_track(
-        self,
-        title,
-        tr_id,
-        duration,
-        artist=False,
-        video=False,
-        disambiguation=None,
-        remixer=False,
-        multi_artist_credit=False,
-    ):
-        track = {
-            "title": title,
-            "id": tr_id,
-        }
-        if duration is not None:
-            track["length"] = duration
-        if artist:
-            track["artist-credit"] = [
-                {
-                    "artist": {
-                        "name": "RECORDING ARTIST NAME",
-                        "id": "RECORDING ARTIST ID",
-                        "sort-name": "RECORDING ARTIST SORT NAME",
-                    },
-                    "name": "RECORDING ARTIST CREDIT",
-                }
-            ]
-            if multi_artist_credit:
-                track["artist-credit"][0]["joinphrase"] = " & "
-                track["artist-credit"].append(
-                    {
-                        "artist": {
-                            "name": "RECORDING ARTIST 2 NAME",
-                            "id": "RECORDING ARTIST 2 ID",
-                            "sort-name": "RECORDING ARTIST 2 SORT NAME",
-                        },
-                        "name": "RECORDING ARTIST 2 CREDIT",
-                    }
-                )
-        if remixer:
-            track["artist-relations"] = [
-                {
-                    "type": "remixer",
-                    "type-id": "RELATION TYPE ID",
-                    "direction": "RECORDING RELATION DIRECTION",
-                    "artist": {
-                        "id": "RECORDING REMIXER ARTIST ID",
-                        "type": "RECORDING REMIXER ARTIST TYPE",
-                        "name": "RECORDING REMIXER ARTIST NAME",
-                        "sort-name": "RECORDING REMIXER ARTIST SORT NAME",
-                    },
-                }
-            ]
-        if video:
-            track["video"] = True
-        if disambiguation:
-            track["disambiguation"] = disambiguation
-        return track
-
     def test_parse_release_with_year(self):
-        release = self._make_release("1984")
+        release = release_factory(release_group__first_release_date="1984")
         d = self.mb.album_info(release)
-        assert d.album == "ALBUM TITLE"
-        assert d.album_id == "ALBUM ID"
-        assert d.artist == "ARTIST NAME"
-        assert d.artist_id == "ARTIST ID"
+        assert d.album == "Album"
+        assert d.album_id == "00000000-0000-0000-0000-000001000001"
+        assert d.artist == "Artist"
+        assert d.artist_id == "00000000-0000-0000-0000-000000000011"
         assert d.original_year == 1984
-        assert d.year == 3001
-        assert d.artist_credit == "ARTIST CREDIT"
+        assert d.year == 2020
+        assert d.artist_credit == "Artist Credit"
 
     def test_parse_release_type(self):
-        release = self._make_release("1984")
+        release = release_factory()
         d = self.mb.album_info(release)
         assert d.albumtype == "album"
 
     def test_parse_release_full_date(self):
-        release = self._make_release("1987-03-31")
+        release = release_factory(
+            release_group__first_release_date="1987-03-31"
+        )
         d = self.mb.album_info(release)
         assert d.original_year == 1987
         assert d.original_month == 3
         assert d.original_day == 31
 
     def test_parse_tracks(self):
-        tracks = [
-            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
-            self._make_track("TITLE TWO", "ID TWO", 200.0 * 1000.0),
-        ]
-        release = self._make_release(tracks=tracks)
+        release = release_factory(
+            media__0__tracks=[
+                track_factory(recording__length=100000),
+                track_factory(
+                    recording__index=2,
+                    recording__length=200000,
+                    recording__title="Other Recording",
+                ),
+            ]
+        )
 
         d = self.mb.album_info(release)
         t = d.tracks
         assert len(t) == 2
-        assert t[0].title == "TITLE ONE"
-        assert t[0].track_id == "ID ONE"
+        assert t[0].title == "Recording"
+        assert t[0].track_id == "00000000-0000-0000-0000-000000001001"
         assert t[0].length == 100.0
-        assert t[1].title == "TITLE TWO"
-        assert t[1].track_id == "ID TWO"
+        assert t[1].title == "Other Recording"
+        assert t[1].track_id == "00000000-0000-0000-0000-000000001002"
         assert t[1].length == 200.0
 
     def test_parse_track_indices(self):
-        tracks = [
-            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
-            self._make_track("TITLE TWO", "ID TWO", 200.0 * 1000.0),
-        ]
-        release = self._make_release(tracks=tracks)
+        release = release_factory(media__0__tracks__count=2)
 
         d = self.mb.album_info(release)
         t = d.tracks
@@ -279,11 +134,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert t[1].index == 2
 
     def test_parse_medium_numbers_single_medium(self):
-        tracks = [
-            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
-            self._make_track("TITLE TWO", "ID TWO", 200.0 * 1000.0),
-        ]
-        release = self._make_release(tracks=tracks)
+        release = release_factory(media__0__tracks__count=2)
 
         d = self.mb.album_info(release)
         assert d.mediums == 1
@@ -292,24 +143,8 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert t[1].medium == 1
 
     def test_parse_medium_numbers_two_mediums(self):
-        tracks = [
-            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
-            self._make_track("TITLE TWO", "ID TWO", 200.0 * 1000.0),
-        ]
-        release = self._make_release(tracks=[tracks[0]])
-        second_track_list = [
-            {
-                "id": "RELEASE TRACK ID 2",
-                "recording": tracks[1],
-                "position": "1",
-                "number": "A1",
-            }
-        ]
-        release["media"].append(
-            {
-                "position": "2",
-                "tracks": second_track_list,
-            }
+        release = release_factory(
+            media=[medium_factory(), medium_factory(position=2)]
         )
 
         d = self.mb.album_info(release)
@@ -323,367 +158,405 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert t[1].index == 2
 
     def test_parse_release_year_month_only(self):
-        release = self._make_release("1987-03")
+        release = release_factory(release_group__first_release_date="1987-03")
         d = self.mb.album_info(release)
         assert d.original_year == 1987
         assert d.original_month == 3
 
     def test_no_durations(self):
-        tracks = [self._make_track("TITLE", "ID", None)]
-        release = self._make_release(tracks=tracks)
+        release = release_factory(
+            media__0__tracks=[track_factory(recording__length=None)]
+        )
         d = self.mb.album_info(release)
         assert d.tracks[0].length is None
 
     def test_track_length_overrides_recording_length(self):
-        tracks = [self._make_track("TITLE", "ID", 1.0 * 1000.0)]
-        release = self._make_release(tracks=tracks, track_length=2.0 * 1000.0)
+        release = release_factory(
+            media__0__tracks=[track_factory(recording__length=2000.0)]
+        )
         d = self.mb.album_info(release)
         assert d.tracks[0].length == 2.0
 
     def test_no_release_date(self):
-        release = self._make_release(None)
+        release = release_factory(release_group__first_release_date="")
         d = self.mb.album_info(release)
         assert not d.original_year
         assert not d.original_month
         assert not d.original_day
 
     def test_various_artists_defaults_false(self):
-        release = self._make_release(None)
+        release = release_factory()
         d = self.mb.album_info(release)
         assert not d.va
 
     def test_detect_various_artists(self):
-        release = self._make_release(None)
-        release["artist-credit"][0]["artist"]["id"] = (
+        release = release_factory()
+        release["artist_credit"][0]["artist"]["id"] = (
             musicbrainz.VARIOUS_ARTISTS_ID
         )
         d = self.mb.album_info(release)
         assert d.va
 
     def test_parse_artist_sort_name(self):
-        release = self._make_release(None)
+        release = release_factory()
         d = self.mb.album_info(release)
-        assert d.artist_sort == "ARTIST SORT NAME"
+        assert d.artist_sort == "Artist, The"
 
     def test_parse_releasegroupid(self):
-        release = self._make_release(None)
+        release = release_factory()
         d = self.mb.album_info(release)
-        assert d.releasegroup_id == "RELEASE GROUP ID"
+        assert d.releasegroup_id == "00000000-0000-0000-0000-000000000101"
 
     def test_parse_asin(self):
-        release = self._make_release(None)
+        release = release_factory()
         d = self.mb.album_info(release)
-        assert d.asin == "ALBUM ASIN"
+        assert d.asin == "Album Asin"
 
     def test_parse_catalognum(self):
-        release = self._make_release(None)
+        release = release_factory()
         d = self.mb.album_info(release)
-        assert d.catalognum == "CATALOG NUMBER"
+        assert d.catalognum == "LAB123"
 
     def test_parse_textrepr(self):
-        release = self._make_release(None)
+        release = release_factory()
         d = self.mb.album_info(release)
-        assert d.script == "SCRIPT"
-        assert d.language == "LANGUAGE"
+        assert d.script == "Latn"
+        assert d.language == "eng"
 
     def test_parse_country(self):
-        release = self._make_release(None)
+        release = release_factory()
         d = self.mb.album_info(release)
-        assert d.country == "COUNTRY"
+        assert d.country == "US"
 
     def test_parse_status(self):
-        release = self._make_release(None)
+        release = release_factory()
         d = self.mb.album_info(release)
-        assert d.albumstatus == "STATUS"
+        assert d.albumstatus == "Official"
 
     def test_parse_barcode(self):
-        release = self._make_release(None)
+        release = release_factory()
         d = self.mb.album_info(release)
-        assert d.barcode == "BARCODE"
+        assert d.barcode == "0000000000000"
 
     def test_parse_media(self):
-        tracks = [
-            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
-            self._make_track("TITLE TWO", "ID TWO", 200.0 * 1000.0),
-        ]
-        release = self._make_release(None, tracks=tracks)
+        release = release_factory()
         d = self.mb.album_info(release)
-        assert d.media == "FORMAT"
+        assert d.media == "Digital Media"
 
     def test_parse_disambig(self):
-        release = self._make_release(None)
+        release = release_factory()
         d = self.mb.album_info(release)
-        assert d.albumdisambig == "R_DISAMBIGUATION"
-        assert d.releasegroupdisambig == "RG_DISAMBIGUATION"
+        assert d.albumdisambig == "Album Disambiguation"
+        assert d.releasegroupdisambig == "Release Group Disambiguation"
 
     def test_parse_disctitle(self):
-        tracks = [
-            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
-            self._make_track("TITLE TWO", "ID TWO", 200.0 * 1000.0),
-        ]
-        release = self._make_release(None, tracks=tracks)
+        release = release_factory(media__0__tracks__count=2)
         d = self.mb.album_info(release)
         t = d.tracks
-        assert t[0].disctitle == "MEDIUM TITLE"
-        assert t[1].disctitle == "MEDIUM TITLE"
+        assert t[0].disctitle == "Medium"
+        assert t[1].disctitle == "Medium"
 
     def test_missing_language(self):
-        release = self._make_release(None)
-        del release["text-representation"]["language"]
+        release = release_factory()
+        release["text_representation"]["language"] = None
         d = self.mb.album_info(release)
         assert d.language is None
 
     def test_parse_recording_artist(self):
-        tracks = [self._make_track("a", "b", 1, True)]
-        release = self._make_release(None, tracks=tracks)
+        release = release_factory()
         track = self.mb.album_info(release).tracks[0]
-        assert track.artist == "RECORDING ARTIST NAME"
-        assert track.artist_id == "RECORDING ARTIST ID"
-        assert track.artist_sort == "RECORDING ARTIST SORT NAME"
-        assert track.artist_credit == "RECORDING ARTIST CREDIT"
+        assert track.artist == "Recording Artist"
+        assert track.artist_id == "00000000-0000-0000-0000-000000000001"
+        assert track.artist_sort == "Recording Artist, The"
+        assert track.artist_credit == "Recording Artist Credit"
 
     def test_parse_recording_artist_multi(self):
-        tracks = [self._make_track("a", "b", 1, True, multi_artist_credit=True)]
-        release = self._make_release(None, tracks=tracks)
+        release = release_factory(
+            media__0__tracks=[
+                track_factory(
+                    recording__artist_credit=[
+                        artist_credit_factory(
+                            artist__name="Recording Artist",
+                            joinphrase=" & ",
+                        ),
+                        artist_credit_factory(
+                            artist__name="Other Recording Artist",
+                            artist__index=2,
+                        ),
+                    ]
+                )
+            ]
+        )
         track = self.mb.album_info(release).tracks[0]
-        assert track.artist == "RECORDING ARTIST NAME & RECORDING ARTIST 2 NAME"
-        assert track.artist_id == "RECORDING ARTIST ID"
+        assert track.artist == "Recording Artist & Other Recording Artist"
+        assert track.artist_id == "00000000-0000-0000-0000-000000000001"
         assert (
             track.artist_sort
-            == "RECORDING ARTIST SORT NAME & RECORDING ARTIST 2 SORT NAME"
+            == "Recording Artist, The & Other Recording Artist, The"
         )
         assert (
             track.artist_credit
-            == "RECORDING ARTIST CREDIT & RECORDING ARTIST 2 CREDIT"
+            == "Recording Artist Credit & Other Recording Artist Credit"
         )
 
         assert track.artists == [
-            "RECORDING ARTIST NAME",
-            "RECORDING ARTIST 2 NAME",
+            "Recording Artist",
+            "Other Recording Artist",
         ]
         assert track.artists_ids == [
-            "RECORDING ARTIST ID",
-            "RECORDING ARTIST 2 ID",
+            "00000000-0000-0000-0000-000000000001",
+            "00000000-0000-0000-0000-000000000002",
         ]
         assert track.artists_sort == [
-            "RECORDING ARTIST SORT NAME",
-            "RECORDING ARTIST 2 SORT NAME",
+            "Recording Artist, The",
+            "Other Recording Artist, The",
         ]
         assert track.artists_credit == [
-            "RECORDING ARTIST CREDIT",
-            "RECORDING ARTIST 2 CREDIT",
+            "Recording Artist Credit",
+            "Other Recording Artist Credit",
         ]
 
     def test_track_artist_overrides_recording_artist(self):
-        tracks = [self._make_track("a", "b", 1, True)]
-        release = self._make_release(None, tracks=tracks, track_artist=True)
+        release = release_factory(
+            media__0__tracks=[
+                track_factory(
+                    artist_credit=[
+                        artist_credit_factory(artist__name="Track Artist")
+                    ]
+                )
+            ]
+        )
         track = self.mb.album_info(release).tracks[0]
-        assert track.artist == "TRACK ARTIST NAME"
-        assert track.artist_id == "TRACK ARTIST ID"
-        assert track.artist_sort == "TRACK ARTIST SORT NAME"
-        assert track.artist_credit == "TRACK ARTIST CREDIT"
+        assert track.artist == "Track Artist"
+        assert track.artist_id == "00000000-0000-0000-0000-000000000001"
+        assert track.artist_sort == "Track Artist, The"
+        assert track.artist_credit == "Track Artist Credit"
 
     def test_track_artist_overrides_recording_artist_multi(self):
-        tracks = [self._make_track("a", "b", 1, True, multi_artist_credit=True)]
-        release = self._make_release(
-            None, tracks=tracks, track_artist=True, multi_artist_credit=True
+        release = release_factory(
+            media__0__tracks=[
+                track_factory(
+                    artist_credit=[
+                        artist_credit_factory(
+                            artist__name="Track Artist",
+                            joinphrase=" & ",
+                        ),
+                        artist_credit_factory(
+                            artist__name="Other Track Artist",
+                            artist__index=2,
+                        ),
+                    ],
+                    recording__artist_credit=[
+                        artist_credit_factory(
+                            artist__name="Recording Artist",
+                            joinphrase=" & ",
+                        ),
+                        artist_credit_factory(
+                            artist__name="Other Recording Artist",
+                            artist__index=2,
+                        ),
+                    ],
+                ),
+            ]
         )
         track = self.mb.album_info(release).tracks[0]
-        assert track.artist == "TRACK ARTIST NAME & TRACK ARTIST 2 NAME"
-        assert track.artist_id == "TRACK ARTIST ID"
+        assert track.artist == "Track Artist & Other Track Artist"
+        assert track.artist_id == "00000000-0000-0000-0000-000000000001"
         assert (
-            track.artist_sort
-            == "TRACK ARTIST SORT NAME & TRACK ARTIST 2 SORT NAME"
+            track.artist_sort == "Track Artist, The & Other Track Artist, The"
         )
         assert (
-            track.artist_credit == "TRACK ARTIST CREDIT & TRACK ARTIST 2 CREDIT"
+            track.artist_credit
+            == "Track Artist Credit & Other Track Artist Credit"
         )
 
-        assert track.artists == ["TRACK ARTIST NAME", "TRACK ARTIST 2 NAME"]
-        assert track.artists_ids == ["TRACK ARTIST ID", "TRACK ARTIST 2 ID"]
+        assert track.artists == ["Track Artist", "Other Track Artist"]
+        assert track.artists_ids == [
+            "00000000-0000-0000-0000-000000000001",
+            "00000000-0000-0000-0000-000000000002",
+        ]
         assert track.artists_sort == [
-            "TRACK ARTIST SORT NAME",
-            "TRACK ARTIST 2 SORT NAME",
+            "Track Artist, The",
+            "Other Track Artist, The",
         ]
         assert track.artists_credit == [
-            "TRACK ARTIST CREDIT",
-            "TRACK ARTIST 2 CREDIT",
+            "Track Artist Credit",
+            "Other Track Artist Credit",
         ]
 
     def test_parse_recording_remixer(self):
-        tracks = [self._make_track("a", "b", 1, remixer=True)]
-        release = self._make_release(None, tracks=tracks)
+        release = release_factory(
+            media__0__tracks=[
+                track_factory(
+                    recording__artist_relations=[
+                        artist_relation_factory(
+                            type="remixer", artist__name="Recording Remixer"
+                        )
+                    ]
+                )
+            ]
+        )
         track = self.mb.album_info(release).tracks[0]
-        assert track.remixer == "RECORDING REMIXER ARTIST NAME"
+        assert track.remixer == "Recording Remixer"
 
     def test_data_source(self):
-        release = self._make_release()
+        release = release_factory()
         d = self.mb.album_info(release)
         assert d.data_source == "MusicBrainz"
 
     def test_genres(self):
         config["musicbrainz"]["genres"] = True
         config["musicbrainz"]["genres_tag"] = "genre"
-        release = self._make_release()
+        release = release_factory()
         d = self.mb.album_info(release)
-        assert d.genre == "GENRE"
+        assert d.genre == "Genre"
 
     def test_tags(self):
         config["musicbrainz"]["genres"] = True
         config["musicbrainz"]["genres_tag"] = "tag"
-        release = self._make_release()
+        release = release_factory()
         d = self.mb.album_info(release)
-        assert d.genre == "TAG"
+        assert d.genre == "Tag"
 
     def test_no_genres(self):
         config["musicbrainz"]["genres"] = False
-        release = self._make_release()
+        release = release_factory()
         d = self.mb.album_info(release)
         assert d.genre is None
 
     def test_ignored_media(self):
         config["match"]["ignored_media"] = ["IGNORED1", "IGNORED2"]
-        tracks = [
-            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
-            self._make_track("TITLE TWO", "ID TWO", 200.0 * 1000.0),
-        ]
-        release = self._make_release(tracks=tracks, medium_format="IGNORED1")
+        release = release_factory(
+            media__0__format="IGNORED1", media__0__tracks__count=2
+        )
         d = self.mb.album_info(release)
         assert len(d.tracks) == 0
 
     def test_no_ignored_media(self):
         config["match"]["ignored_media"] = ["IGNORED1", "IGNORED2"]
-        tracks = [
-            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
-            self._make_track("TITLE TWO", "ID TWO", 200.0 * 1000.0),
-        ]
-        release = self._make_release(tracks=tracks, medium_format="NON-IGNORED")
+        release = release_factory(
+            media__0__format="NON-IGNORED", media__0__tracks__count=2
+        )
         d = self.mb.album_info(release)
         assert len(d.tracks) == 2
 
     def test_skip_data_track(self):
-        tracks = [
-            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
-            self._make_track("[data track]", "ID DATA TRACK", 100.0 * 1000.0),
-            self._make_track("TITLE TWO", "ID TWO", 200.0 * 1000.0),
-        ]
-        release = self._make_release(tracks=tracks)
+        release = release_factory(
+            media__0__tracks=[
+                track_factory(),
+                track_factory(recording__title="[data track]"),
+                track_factory(recording__title="Other Recording"),
+            ]
+        )
         d = self.mb.album_info(release)
         assert len(d.tracks) == 2
-        assert d.tracks[0].title == "TITLE ONE"
-        assert d.tracks[1].title == "TITLE TWO"
+        assert d.tracks[0].title == "Recording"
+        assert d.tracks[1].title == "Other Recording"
 
     def test_skip_audio_data_tracks_by_default(self):
-        tracks = [
-            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
-            self._make_track("TITLE TWO", "ID TWO", 200.0 * 1000.0),
-        ]
-        data_tracks = [
-            self._make_track(
-                "TITLE AUDIO DATA", "ID DATA TRACK", 100.0 * 1000.0
-            )
-        ]
-        release = self._make_release(tracks=tracks, data_tracks=data_tracks)
+        release = release_factory(
+            media__0__tracks=[
+                track_factory(),
+                track_factory(recording__title="Other Recording"),
+            ],
+            media__0__data_tracks=[
+                track_factory(recording__title="Audio Data Recording"),
+            ],
+        )
         d = self.mb.album_info(release)
         assert len(d.tracks) == 2
-        assert d.tracks[0].title == "TITLE ONE"
-        assert d.tracks[1].title == "TITLE TWO"
+        assert d.tracks[0].title == "Recording"
+        assert d.tracks[1].title == "Other Recording"
 
     def test_no_skip_audio_data_tracks_if_configured(self):
         config["match"]["ignore_data_tracks"] = False
-        tracks = [
-            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
-            self._make_track("TITLE TWO", "ID TWO", 200.0 * 1000.0),
-        ]
-        data_tracks = [
-            self._make_track(
-                "TITLE AUDIO DATA", "ID DATA TRACK", 100.0 * 1000.0
-            )
-        ]
-        release = self._make_release(tracks=tracks, data_tracks=data_tracks)
+        release = release_factory(
+            media__0__tracks=[
+                track_factory(),
+                track_factory(recording__title="Other Recording"),
+            ],
+            media__0__data_tracks=[
+                track_factory(recording__title="Audio Data Recording"),
+            ],
+        )
         d = self.mb.album_info(release)
         assert len(d.tracks) == 3
-        assert d.tracks[0].title == "TITLE ONE"
-        assert d.tracks[1].title == "TITLE TWO"
-        assert d.tracks[2].title == "TITLE AUDIO DATA"
+        assert d.tracks[0].title == "Recording"
+        assert d.tracks[1].title == "Other Recording"
+        assert d.tracks[2].title == "Audio Data Recording"
 
     def test_skip_video_tracks_by_default(self):
-        tracks = [
-            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
-            self._make_track(
-                "TITLE VIDEO", "ID VIDEO", 100.0 * 1000.0, False, True
-            ),
-            self._make_track("TITLE TWO", "ID TWO", 200.0 * 1000.0),
-        ]
-        release = self._make_release(tracks=tracks)
+        release = release_factory(
+            media__0__tracks=[
+                track_factory(),
+                track_factory(recording__video=True),
+                track_factory(recording__title="Other Recording"),
+            ]
+        )
         d = self.mb.album_info(release)
         assert len(d.tracks) == 2
-        assert d.tracks[0].title == "TITLE ONE"
-        assert d.tracks[1].title == "TITLE TWO"
+        assert d.tracks[0].title == "Recording"
+        assert d.tracks[1].title == "Other Recording"
 
     def test_skip_video_data_tracks_by_default(self):
-        tracks = [
-            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
-            self._make_track("TITLE TWO", "ID TWO", 200.0 * 1000.0),
-        ]
-        data_tracks = [
-            self._make_track(
-                "TITLE VIDEO", "ID VIDEO", 100.0 * 1000.0, False, True
-            )
-        ]
-        release = self._make_release(tracks=tracks, data_tracks=data_tracks)
+        release = release_factory(
+            media__0__tracks=[
+                track_factory(),
+                track_factory(recording__title="Other Recording"),
+            ],
+            media__0__data_tracks=[
+                track_factory(recording__video=True),
+            ],
+        )
         d = self.mb.album_info(release)
         assert len(d.tracks) == 2
-        assert d.tracks[0].title == "TITLE ONE"
-        assert d.tracks[1].title == "TITLE TWO"
+        assert d.tracks[0].title == "Recording"
+        assert d.tracks[1].title == "Other Recording"
 
     def test_no_skip_video_tracks_if_configured(self):
         config["match"]["ignore_data_tracks"] = False
         config["match"]["ignore_video_tracks"] = False
-        tracks = [
-            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
-            self._make_track(
-                "TITLE VIDEO", "ID VIDEO", 100.0 * 1000.0, False, True
-            ),
-            self._make_track("TITLE TWO", "ID TWO", 200.0 * 1000.0),
-        ]
-        release = self._make_release(tracks=tracks)
+        release = release_factory(
+            media__0__tracks=[
+                track_factory(),
+                track_factory(recording__video=True),
+                track_factory(recording__title="Other Recording"),
+            ]
+        )
         d = self.mb.album_info(release)
         assert len(d.tracks) == 3
-        assert d.tracks[0].title == "TITLE ONE"
-        assert d.tracks[1].title == "TITLE VIDEO"
-        assert d.tracks[2].title == "TITLE TWO"
+        assert d.tracks[0].title == "Recording"
+        assert d.tracks[1].title == "Video: Recording"
+        assert d.tracks[2].title == "Other Recording"
 
     def test_no_skip_video_data_tracks_if_configured(self):
         config["match"]["ignore_data_tracks"] = False
         config["match"]["ignore_video_tracks"] = False
-        tracks = [
-            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
-            self._make_track("TITLE TWO", "ID TWO", 200.0 * 1000.0),
-        ]
-        data_tracks = [
-            self._make_track(
-                "TITLE VIDEO", "ID VIDEO", 100.0 * 1000.0, False, True
-            )
-        ]
-        release = self._make_release(tracks=tracks, data_tracks=data_tracks)
+        release = release_factory(
+            media__0__tracks=[
+                track_factory(),
+                track_factory(recording__title="Other Recording"),
+            ],
+            media__0__data_tracks=[
+                track_factory(recording__video=True),
+            ],
+        )
         d = self.mb.album_info(release)
         assert len(d.tracks) == 3
-        assert d.tracks[0].title == "TITLE ONE"
-        assert d.tracks[1].title == "TITLE TWO"
-        assert d.tracks[2].title == "TITLE VIDEO"
+        assert d.tracks[0].title == "Recording"
+        assert d.tracks[1].title == "Other Recording"
+        assert d.tracks[2].title == "Video: Recording"
 
     def test_track_disambiguation(self):
-        tracks = [
-            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
-            self._make_track(
-                "TITLE TWO",
-                "ID TWO",
-                200.0 * 1000.0,
-                disambiguation="SECOND TRACK",
-            ),
-        ]
-        release = self._make_release(tracks=tracks)
+        release = release_factory(
+            media__0__tracks=[
+                track_factory(),
+                track_factory(
+                    recording__title="Other Recording",
+                    recording__disambiguation="SECOND TRACK",
+                ),
+            ]
+        )
 
         d = self.mb.album_info(release)
         t = d.tracks
@@ -709,136 +582,95 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert d.mediums == 2
 
 
-class ArtistFlatteningTest(unittest.TestCase):
-    def _credit_dict(self, suffix=""):
-        return {
-            "artist": {
-                "name": f"NAME{suffix}",
-                "sort-name": f"SORT{suffix}",
-            },
-            "name": f"CREDIT{suffix}",
-        }
-
-    def _add_alias(self, credit_dict, suffix="", locale="", primary=False):
-        alias = {
-            "name": f"ALIAS{suffix}",
-            "locale": locale,
-            "sort-name": f"ALIASSORT{suffix}",
-        }
-        if primary:
-            alias["primary"] = "primary"
-        if "aliases" not in credit_dict["artist"]:
-            credit_dict["artist"]["aliases"] = []
-        credit_dict["artist"]["aliases"].append(alias)
-
+class ArtistTest(unittest.TestCase):
     def test_single_artist(self):
-        credit = [self._credit_dict()]
-        a, s, c = musicbrainz._flatten_artist_credit(credit)
-        assert a == "NAME"
-        assert s == "SORT"
-        assert c == "CREDIT"
+        credit = [artist_credit_factory(artist__name="Artist")]
 
-        a, s, c = musicbrainz._multi_artist_credit(
-            credit, include_join_phrase=False
-        )
-        assert a == ["NAME"]
-        assert s == ["SORT"]
-        assert c == ["CREDIT"]
+        assert MusicBrainzPlugin._parse_artist_credits(credit) == {
+            "artist": "Artist",
+            "artist_id": "00000000-0000-0000-0000-000000000001",
+            "artist_sort": "Artist, The",
+            "artist_credit": "Artist Credit",
+            "artists": ["Artist"],
+            "artists_ids": ["00000000-0000-0000-0000-000000000001"],
+            "artists_sort": ["Artist, The"],
+            "artists_credit": ["Artist Credit"],
+        }
 
     def test_two_artists(self):
         credit = [
-            {**self._credit_dict("a"), "joinphrase": " AND "},
-            self._credit_dict("b"),
+            artist_credit_factory(artist__name="Artist", joinphrase=" AND "),
+            artist_credit_factory(artist__name="Other Artist", artist__index=2),
         ]
-        a, s, c = musicbrainz._flatten_artist_credit(credit)
-        assert a == "NAMEa AND NAMEb"
-        assert s == "SORTa AND SORTb"
-        assert c == "CREDITa AND CREDITb"
 
-        a, s, c = musicbrainz._multi_artist_credit(
-            credit, include_join_phrase=False
-        )
-        assert a == ["NAMEa", "NAMEb"]
-        assert s == ["SORTa", "SORTb"]
-        assert c == ["CREDITa", "CREDITb"]
+        assert MusicBrainzPlugin._parse_artist_credits(credit) == {
+            "artist": "Artist AND Other Artist",
+            "artist_id": "00000000-0000-0000-0000-000000000001",
+            "artist_sort": "Artist, The AND Other Artist, The",
+            "artist_credit": "Artist Credit AND Other Artist Credit",
+            "artists": ["Artist", "Other Artist"],
+            "artists_ids": [
+                "00000000-0000-0000-0000-000000000001",
+                "00000000-0000-0000-0000-000000000002",
+            ],
+            "artists_sort": ["Artist, The", "Other Artist, The"],
+            "artists_credit": ["Artist Credit", "Other Artist Credit"],
+        }
 
-    def test_alias(self):
-        credit_dict = self._credit_dict()
-        self._add_alias(credit_dict, suffix="en", locale="en", primary=True)
-        self._add_alias(
-            credit_dict, suffix="en_GB", locale="en_GB", primary=True
-        )
-        self._add_alias(credit_dict, suffix="fr", locale="fr")
-        self._add_alias(credit_dict, suffix="fr_P", locale="fr", primary=True)
-        self._add_alias(credit_dict, suffix="pt_BR", locale="pt_BR")
+    def test_preferred_alias(self):
+        aliases = [
+            alias_factory(suffix="en", locale="en", primary=True),
+            alias_factory(suffix="en_GB", locale="en_GB", primary=True),
+            alias_factory(suffix="fr", locale="fr"),
+            alias_factory(suffix="fr_P", locale="fr", primary=True),
+            alias_factory(suffix="pt_BR", locale="pt_BR"),
+        ]
 
         # test no alias
         config["import"]["languages"] = [""]
-        flat = musicbrainz._flatten_artist_credit([credit_dict])
-        assert flat == ("NAME", "SORT", "CREDIT")
+        assert not musicbrainz._preferred_alias(aliases)
 
         # test en primary
         config["import"]["languages"] = ["en"]
-        flat = musicbrainz._flatten_artist_credit([credit_dict])
-        assert flat == ("ALIASen", "ALIASSORTen", "CREDIT")
+        preferred_alias = musicbrainz._preferred_alias(aliases)
+        assert preferred_alias
+        assert preferred_alias["name"] == "Alias en"
 
         # test en_GB en primary
         config["import"]["languages"] = ["en_GB", "en"]
-        flat = musicbrainz._flatten_artist_credit([credit_dict])
-        assert flat == ("ALIASen_GB", "ALIASSORTen_GB", "CREDIT")
+        preferred_alias = musicbrainz._preferred_alias(aliases)
+        assert preferred_alias
+        assert preferred_alias["name"] == "Alias en_GB"
 
         # test en en_GB primary
         config["import"]["languages"] = ["en", "en_GB"]
-        flat = musicbrainz._flatten_artist_credit([credit_dict])
-        assert flat == ("ALIASen", "ALIASSORTen", "CREDIT")
+        preferred_alias = musicbrainz._preferred_alias(aliases)
+        assert preferred_alias
+        assert preferred_alias["name"] == "Alias en"
 
         # test fr primary
         config["import"]["languages"] = ["fr"]
-        flat = musicbrainz._flatten_artist_credit([credit_dict])
-        assert flat == ("ALIASfr_P", "ALIASSORTfr_P", "CREDIT")
+        preferred_alias = musicbrainz._preferred_alias(aliases)
+        assert preferred_alias
+        assert preferred_alias["name"] == "Alias fr_P"
 
         # test for not matching non-primary
         config["import"]["languages"] = ["pt_BR", "fr"]
-        flat = musicbrainz._flatten_artist_credit([credit_dict])
-        assert flat == ("ALIASfr_P", "ALIASSORTfr_P", "CREDIT")
+        preferred_alias = musicbrainz._preferred_alias(aliases)
+        assert preferred_alias
+        assert preferred_alias["name"] == "Alias fr_P"
 
 
 class MBLibraryTest(MusicBrainzTestCase):
     def test_follow_pseudo_releases(self):
-        side_effect = [
-            {
-                "title": "pseudo",
-                "id": "d2a6f856-b553-40a0-ac54-a321e8e2da02",
-                "status": "Pseudo-Release",
-                "media": [
-                    {
-                        "tracks": [
-                            {
-                                "id": "baz",
-                                "recording": {
-                                    "title": "translated title",
-                                    "id": "bar",
-                                    "length": 42,
-                                },
-                                "position": 9,
-                                "number": "A1",
-                            }
-                        ],
-                        "position": 5,
-                    }
-                ],
-                "artist-credit": [
-                    {
-                        "artist": {
-                            "name": "some-artist",
-                            "id": "some-id",
-                        },
-                    }
-                ],
-                "release-group": {
-                    "id": "another-id",
-                },
-                "release-relations": [
+        side_effect: list[mb.Release] = [
+            release_factory(
+                id="d2a6f856-b553-40a0-ac54-a321e8e2da02",
+                title="pseudo",
+                status="Pseudo-Release",
+                country=None,
+                release_events=[],
+                release_relations=[
                     {
                         "type": "transl-tracklisting",
                         "direction": "backward",
@@ -847,41 +679,11 @@ class MBLibraryTest(MusicBrainzTestCase):
                         },
                     }
                 ],
-            },
-            {
-                "title": "actual",
-                "id": "d2a6f856-b553-40a0-ac54-a321e8e2da01",
-                "status": "Official",
-                "media": [
-                    {
-                        "tracks": [
-                            {
-                                "id": "baz",
-                                "recording": {
-                                    "title": "original title",
-                                    "id": "bar",
-                                    "length": 42,
-                                },
-                                "position": 9,
-                                "number": "A1",
-                            }
-                        ],
-                        "position": 5,
-                    }
-                ],
-                "artist-credit": [
-                    {
-                        "artist": {
-                            "name": "some-artist",
-                            "id": "some-id",
-                        },
-                    }
-                ],
-                "release-group": {
-                    "id": "another-id",
-                },
-                "country": "COUNTRY",
-            },
+            ),
+            release_factory(
+                title="actual",
+                id="d2a6f856-b553-40a0-ac54-a321e8e2da01",
+            ),
         ]
 
         with mock.patch(
@@ -889,43 +691,17 @@ class MBLibraryTest(MusicBrainzTestCase):
         ) as gp:
             gp.side_effect = side_effect
             album = self.mb.album_for_id("d2a6f856-b553-40a0-ac54-a321e8e2da02")
-            assert album.country == "COUNTRY"
+            assert album
+            assert album.country == "US"
 
     def test_pseudo_releases_with_empty_links(self):
-        side_effect = [
-            {
-                "title": "pseudo",
-                "id": "d2a6f856-b553-40a0-ac54-a321e8e2da02",
-                "status": "Pseudo-Release",
-                "media": [
-                    {
-                        "tracks": [
-                            {
-                                "id": "baz",
-                                "recording": {
-                                    "title": "translated title",
-                                    "id": "bar",
-                                    "length": 42,
-                                },
-                                "position": 9,
-                                "number": "A1",
-                            }
-                        ],
-                        "position": 5,
-                    }
-                ],
-                "artist-credit": [
-                    {
-                        "artist": {
-                            "name": "some-artist",
-                            "id": "some-id",
-                        },
-                    }
-                ],
-                "release-group": {
-                    "id": "another-id",
-                },
-            }
+        side_effect: list[mb.Release] = [
+            release_factory(
+                id="d2a6f856-b553-40a0-ac54-a321e8e2da02",
+                title="pseudo",
+                status="Pseudo-Release",
+                release_events=[],
+            )
         ]
 
         with mock.patch(
@@ -933,43 +709,17 @@ class MBLibraryTest(MusicBrainzTestCase):
         ) as gp:
             gp.side_effect = side_effect
             album = self.mb.album_for_id("d2a6f856-b553-40a0-ac54-a321e8e2da02")
+            assert album
             assert album.country is None
 
     def test_pseudo_releases_without_links(self):
-        side_effect = [
-            {
-                "title": "pseudo",
-                "id": "d2a6f856-b553-40a0-ac54-a321e8e2da02",
-                "status": "Pseudo-Release",
-                "media": [
-                    {
-                        "tracks": [
-                            {
-                                "id": "baz",
-                                "recording": {
-                                    "title": "translated title",
-                                    "id": "bar",
-                                    "length": 42,
-                                },
-                                "position": 9,
-                                "number": "A1",
-                            }
-                        ],
-                        "position": 5,
-                    }
-                ],
-                "artist-credit": [
-                    {
-                        "artist": {
-                            "name": "some-artist",
-                            "id": "some-id",
-                        },
-                    }
-                ],
-                "release-group": {
-                    "id": "another-id",
-                },
-            }
+        side_effect: list[mb.Release] = [
+            release_factory(
+                id="d2a6f856-b553-40a0-ac54-a321e8e2da02",
+                title="pseudo",
+                status="Pseudo-Release",
+                release_events=[],
+            )
         ]
 
         with mock.patch(
@@ -977,43 +727,17 @@ class MBLibraryTest(MusicBrainzTestCase):
         ) as gp:
             gp.side_effect = side_effect
             album = self.mb.album_for_id("d2a6f856-b553-40a0-ac54-a321e8e2da02")
+            assert album
             assert album.country is None
 
     def test_pseudo_releases_with_unsupported_links(self):
-        side_effect = [
-            {
-                "title": "pseudo",
-                "id": "d2a6f856-b553-40a0-ac54-a321e8e2da02",
-                "status": "Pseudo-Release",
-                "media": [
-                    {
-                        "tracks": [
-                            {
-                                "id": "baz",
-                                "recording": {
-                                    "title": "translated title",
-                                    "id": "bar",
-                                    "length": 42,
-                                },
-                                "position": 9,
-                                "number": "A1",
-                            }
-                        ],
-                        "position": 5,
-                    }
-                ],
-                "artist-credit": [
-                    {
-                        "artist": {
-                            "name": "some-artist",
-                            "id": "some-id",
-                        },
-                    }
-                ],
-                "release-group": {
-                    "id": "another-id",
-                },
-                "release-relations": [
+        side_effect: list[mb.Release] = [
+            release_factory(
+                id="d2a6f856-b553-40a0-ac54-a321e8e2da02",
+                title="pseudo",
+                status="Pseudo-Release",
+                release_events=[],
+                release_relations=[
                     {
                         "type": "remaster",
                         "direction": "backward",
@@ -1022,7 +746,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                         },
                     }
                 ],
-            }
+            )
         ]
 
         with mock.patch(
@@ -1030,6 +754,7 @@ class MBLibraryTest(MusicBrainzTestCase):
         ) as gp:
             gp.side_effect = side_effect
             album = self.mb.album_for_id("d2a6f856-b553-40a0-ac54-a321e8e2da02")
+            assert album
             assert album.country is None
 
 
@@ -1037,11 +762,7 @@ class TestMusicBrainzPlugin(PluginMixin):
     plugin = "musicbrainz"
 
     mbid = "d2a6f856-b553-40a0-ac54-a321e8e2da99"
-    RECORDING: ClassVar[dict[str, int | str]] = {
-        "title": "foo",
-        "id": "bar",
-        "length": 42,
-    }
+    RECORDING: ClassVar[mb.Recording] = recording_factory()
 
     @pytest.fixture
     def plugin_config(self):
@@ -1082,7 +803,11 @@ class TestMusicBrainzPlugin(PluginMixin):
     def test_item_candidates(self, monkeypatch, mb):
         monkeypatch.setattr(
             "beetsplug._utils.musicbrainz.MusicBrainzAPI.get_json",
-            lambda *_, **__: {"recordings": [self.RECORDING]},
+            lambda *_, **__: {"recordings": [{"id": self.RECORDING["id"]}]},
+        )
+        monkeypatch.setattr(
+            "beetsplug._utils.musicbrainz.MusicBrainzAPI.get_recording",
+            lambda *_, **__: self.RECORDING,
         )
 
         candidates = list(mb.item_candidates(Item(), "hello", "there"))
@@ -1097,34 +822,15 @@ class TestMusicBrainzPlugin(PluginMixin):
         )
         monkeypatch.setattr(
             "beetsplug._utils.musicbrainz.MusicBrainzAPI.get_release",
-            lambda *_, **__: {
-                "title": "hi",
-                "id": self.mbid,
-                "status": "status",
-                "media": [
-                    {
-                        "tracks": [
-                            {
-                                "id": "baz",
-                                "recording": self.RECORDING,
-                                "position": 9,
-                                "number": "A1",
-                            }
-                        ],
-                        "position": 5,
-                    }
-                ],
-                "artist-credit": [
-                    {"artist": {"name": "some-artist", "id": "some-id"}}
-                ],
-                "release-group": {"id": "another-id"},
-            },
+            lambda *_, **__: release_factory(
+                id=self.mbid, media=[medium_factory()]
+            ),
         )
         candidates = list(mb.candidates([], "hello", "there", False))
 
         assert len(candidates) == 1
         assert candidates[0].tracks[0].track_id == self.RECORDING["id"]
-        assert candidates[0].album == "hi"
+        assert candidates[0].album == "Album"
 
     def test_import_handles_404_gracefully(self, mb, requests_mock):
         id_ = uuid.uuid4()
