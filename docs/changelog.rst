@@ -38,6 +38,9 @@ New features
   3. Comma followed by a space
   4. Slash wrapped by spaces
 
+- :doc:`plugins/lyrics`: With ``synced`` enabled, existing synced lyrics are no
+  longer replaced by newly fetched plain lyrics, even when ``force`` is enabled.
+
 Bug fixes
 ~~~~~~~~~
 
