@@ -1546,8 +1546,8 @@ class DefaultTemplateFunctions:
             s: the string
             count: The number of items included
             skip: The number of items skipped
-            sep: the separator. Usually is '; ' (default) or '/ '
-            join_str: the string which will join the items, default '; '.
+            sep: the separator
+            join_str: the string which will join the items
         """
         skip = int(skip)
         count = skip + int(count)
