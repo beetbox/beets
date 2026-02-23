@@ -29,6 +29,9 @@ Other changes
   Previously, ``\␀`` was used as a separator. This applies to fields such as
   ``artists``, ``albumtypes`` etc.
 - Improve highlighting of multi-valued fields changes.
+- :doc:`plugins/edit`: Editing multi-valued fields now behaves more naturally,
+  with list values handled directly to make metadata edits smoother and more
+  predictable.
 
 2.6.2 (February 22, 2026)
 -------------------------
