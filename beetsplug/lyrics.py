@@ -58,6 +58,7 @@ if TYPE_CHECKING:
     )
 
 INSTRUMENTAL_LYRICS = "[Instrumental]"
+SYNCED_LYRICS_PAT = re.compile(r"\[\d\d:\d\d.\d\d\]")
 
 
 class CaptchaError(requests.exceptions.HTTPError):
@@ -1107,7 +1108,13 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             self.info("🔴 Lyrics not found: {}", item)
             lyrics = self.config["fallback"].get()
 
-        if lyrics not in {None, item.lyrics}:
+        has_new_lyrics = lyrics not in {None, item.lyrics}
+        synced_mode = self.config["synced"].get(bool)
+        existing_synced = bool(SYNCED_LYRICS_PAT.search(item.lyrics))
+        new_synced = bool(SYNCED_LYRICS_PAT.search(lyrics or ""))
+        if has_new_lyrics and not (
+            synced_mode and existing_synced and not new_synced
+        ):
             item.lyrics = lyrics
             if write:
                 item.try_write()

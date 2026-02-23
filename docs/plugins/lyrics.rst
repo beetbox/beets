@@ -83,7 +83,9 @@ The available options are:
   deactivated if no ``google_API_key`` is setup. By default, ``musixmatch`` and
   ``tekstowo`` are excluded because they block the beets User-Agent.
 - **synced**: Prefer synced lyrics over plain lyrics if a source offers them.
-  Currently ``lrclib`` is the only source that provides them.
+  Currently ``lrclib`` is the only source that provides them. Using this option,
+  existing synced lyrics are not replaced by newly fetched plain lyrics (even
+  when ``force`` is enabled). To allow that replacement, disable ``synced``.
 
 .. _beets custom search engine: https://www.google.com:443/cse/publicurl?cx=009217259823014548361:lndtuqkycfu
 

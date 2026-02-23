@@ -9,9 +9,11 @@ below!
 Unreleased
 ----------
 
-..
-    New features
-    ~~~~~~~~~~~~
+New features
+~~~~~~~~~~~~
+
+- :doc:`plugins/lyrics`: With ``synced`` enabled, existing synced lyrics are no
+  longer replaced by newly fetched plain lyrics, even when ``force`` is enabled.
 
 ..
     Bug fixes
