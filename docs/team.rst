@@ -74,6 +74,17 @@ of what you can expect from these *knowledge owners*.
 - Code quality
 - Typing
 
+@snejus
+-------
+
+- Grug-minded approach: simple, obvious solutions over clever complexity
+- MusicBrainz/autotagger internals and source-plugin behavior
+- Query/path handling and SQL-backed lookup behavior
+- Typing and tooling modernization (mypy, Ruff, annotations)
+- Test architecture, CI reliability, and coverage improvements
+- Release and packaging workflows (Poetry/pyproject, dependencies, changelog)
+- Cross-plugin refactors (especially metadata and lyrics-related internals)
+
 @wisp3rwind
 -----------
 
