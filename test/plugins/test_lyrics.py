@@ -249,21 +249,48 @@ class TestLyricsPlugin(LyricsPluginMixin):
         assert re.search(expected_log_match, last_log, re.I)
 
     @pytest.mark.parametrize(
-        "plugin_config, found, expected",
+        "plugin_config, old_lyrics, found, expected",
         [
-            ({}, "new", "old"),
-            ({"force": True}, "new", "new"),
-            ({"force": True, "local": True}, "new", "old"),
-            ({"force": True, "fallback": None}, "", "old"),
-            ({"force": True, "fallback": ""}, "", ""),
-            ({"force": True, "fallback": "default"}, "", "default"),
+            ({}, "old", "new", "old"),
+            ({"force": True}, "old", "new", "new"),
+            ({"force": True, "local": True}, "old", "new", "old"),
+            ({"force": True, "fallback": None}, "old", "", "old"),
+            ({"force": True, "fallback": ""}, "old", "", ""),
+            ({"force": True, "fallback": "default"}, "old", "", "default"),
+            pytest.param(
+                {"force": True, "synced": True},
+                "[00:00.00] old synced",
+                "new plain",
+                "[00:00.00] old synced",
+                id="keep-existing-synced-lyrics",
+            ),
+            pytest.param(
+                {"force": True, "synced": True},
+                "[00:00.00] old synced",
+                "[00:00.00] new synced",
+                "[00:00.00] new synced",
+                id="replace-with-new-synced-lyrics",
+            ),
+            pytest.param(
+                {"force": True, "synced": False},
+                "[00:00.00] old synced",
+                "new plain",
+                "new plain",
+                id="replace-with-unsynced-lyrics-when-disabled",
+            ),
         ],
     )
     def test_overwrite_config(
-        self, monkeypatch, helper, lyrics_plugin, found, expected
+        self,
+        monkeypatch,
+        helper,
+        lyrics_plugin,
+        old_lyrics,
+        found,
+        expected,
     ):
         monkeypatch.setattr(lyrics_plugin, "find_lyrics", lambda _: found)
-        item = helper.create_item(id=1, lyrics="old")
+        item = helper.create_item(id=1, lyrics=old_lyrics)
 
         lyrics_plugin.add_item_lyrics(item, False)
 
