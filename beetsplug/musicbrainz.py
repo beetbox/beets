@@ -387,8 +387,10 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
         if recording.get("isrcs"):
             info.isrc = ";".join(recording["isrcs"])
 
-        lyricist = []
-        composer = []
+        lyricists = []
+        lyricists_ids = []
+        composers = []
+        composers_ids = []
         composer_sort = []
         for work_relation in recording.get("work-relations", ()):
             if work_relation["type"] != "performance":
@@ -404,26 +406,36 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
                 if "type" in artist_relation:
                     type = artist_relation["type"]
                     if type == "lyricist":
-                        lyricist.append(artist_relation["artist"]["name"])
+                        lyricists.append(artist_relation["artist"]["name"])
+                        lyricists_ids.append(artist_relation["artist"]["id"])
                     elif type == "composer":
-                        composer.append(artist_relation["artist"]["name"])
+                        composers.append(artist_relation["artist"]["name"])
+                        composers_ids.append(artist_relation["artist"]["id"])
                         composer_sort.append(
                             artist_relation["artist"]["sort-name"]
                         )
-        if lyricist:
-            info.lyricist = ", ".join(lyricist)
-        if composer:
-            info.composer = ", ".join(composer)
+        if lyricists:
+            info.lyricist = ", ".join(lyricists)
+            info.lyricists = lyricists
+            info.lyricists_ids = lyricists_ids
+        if composers:
+            info.composer = ", ".join(composers)
+            info.composers = composers
+            info.composers_ids = composers_ids
             info.composer_sort = ", ".join(composer_sort)
 
-        arranger = []
+        arrangers = []
+        arrangers_ids = []
         for artist_relation in recording.get("artist-relations", ()):
             if "type" in artist_relation:
                 type = artist_relation["type"]
                 if type == "arranger":
-                    arranger.append(artist_relation["artist"]["name"])
-        if arranger:
-            info.arranger = ", ".join(arranger)
+                    arrangers.append(artist_relation["artist"]["name"])
+                    arrangers_ids.append(artist_relation["artist"]["id"])
+        if arrangers:
+            info.arranger = ", ".join(arrangers)
+            info.arrangers = arrangers
+            info.arrangers_ids = arrangers_ids
 
         # Supplementary fields provided by plugins
         extra_trackdatas = plugins.send("mb_track_extract", data=recording)

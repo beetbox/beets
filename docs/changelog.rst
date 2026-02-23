@@ -32,6 +32,9 @@ Other changes
 - :doc:`plugins/edit`: Editing multi-valued fields now behaves more naturally,
   with list values handled directly to make metadata edits smoother and more
   predictable.
+- :doc:`plugins/musicbrainz`: The MusicBrainz plugin now also imports composers,
+  lyricists, and arrangers, as well as their MBIDs as multi-valued tags
+  (``composers``, ``lyricists``, ``composers_ids``, …).
 
 2.6.2 (February 22, 2026)
 -------------------------
