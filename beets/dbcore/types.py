@@ -66,6 +66,8 @@ class Type(ABC, Generic[T, N]):
     """The `Query` subclass to be used when querying the field.
     """
 
+    # For sequence-like types, keep ``model_type`` unsubscripted as it's used
+    # for ``isinstance`` checks. Use ``list`` instead of ``list[str]``
     model_type: type[T]
     """The Python type that is used to represent the value in the model.
 
@@ -287,7 +289,7 @@ class String(BaseString[str, Any]):
     model_type = str
 
 
-class DelimitedString(BaseString[list[str], list[str]]):
+class DelimitedString(BaseString[list, list]):  # type: ignore[type-arg]
     r"""A list of Unicode strings, represented in-database by a single string
     containing delimiter-separated values.
 
@@ -297,7 +299,7 @@ class DelimitedString(BaseString[list[str], list[str]]):
     as it contains a backslash character.
     """
 
-    model_type = list[str]
+    model_type = list
     fmt_delimiter = "; "
 
     def __init__(self, db_delimiter: str):
