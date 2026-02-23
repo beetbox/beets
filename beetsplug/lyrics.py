@@ -36,6 +36,7 @@ from unidecode import unidecode
 
 from beets import plugins, ui
 from beets.autotag.distance import string_dist
+from beets.util import unique_list
 from beets.util.config import sanitize_choices
 
 from ._utils.requests import HTTPNotFoundError, RequestHandler
@@ -820,7 +821,7 @@ class Translator(LyricsRequestHandler):
         text_pairs = self.get_translations([ln for _, ln in ts_and_text])
 
         # only add the separator for non-empty translations
-        texts = [" / ".join(filter(None, p)) for p in text_pairs]
+        texts = [" / ".join(unique_list(filter(None, p))) for p in text_pairs]
         # only add the space between non-empty timestamps and texts
         return [" ".join(filter(None, p)) for p in zip(timestamps, texts)]
 
