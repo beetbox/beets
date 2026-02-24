@@ -641,24 +641,29 @@ class ConvertPlugin(BeetsPlugin):
         )
 
         if playlist:
-            # Playlist paths are understood as relative to the dest directory.
             pl_normpath = util.normpath(playlist)
             pl_dir = os.path.dirname(pl_normpath)
             self._log.info("Creating playlist file {}", pl_normpath)
-            # Generates a list of paths to media files, ensures the paths are
-            # relative to the playlist's location and translates the unicode
-            # strings we get from item.destination to bytes.
-            items_paths = [
-                os.path.relpath(
-                    item.destination(basedir=dest, path_formats=path_formats),
-                    pl_dir,
+
+            items_paths = []
+            for item in items:
+                path = (
+                    item.path
+                    if item.path
+                    else item.destination(basedir=dest, path_formats=path_formats)
                 )
-                for item in items
-            ]
+                rel_path = os.path.relpath(path, pl_dir)
+
+                # Ensure string encoding for playlist entries (convert bytes to str)
+                if isinstance(rel_path, bytes):
+                    rel_path = rel_path.decode('utf-8', errors='replace')
+
+                items_paths.append(rel_path)
+
             if not pretend:
                 m3ufile = M3UFile(playlist)
                 m3ufile.set_contents(items_paths)
-                m3ufile.write()
+                m3ufile.write()  # Assume m3ufile.write expects str lines
 
     def convert_on_import(self, lib, item):
         """Transcode a file automatically after it is imported into the
