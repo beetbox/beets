@@ -123,12 +123,10 @@ class ZeroPlugin(BeetsPlugin):
         config.
         """
         fields_set = False
-
-        if "disc" in tags and self.config["omit_single_disc"].get(bool):
-            if item.disctotal == 1:
+        if self.config["omit_single_disc"].get(bool) and item.disctotal == 1:
+            for tag in {"disc", "disctotal"} & set(tags):
+                tags[tag] = None
                 fields_set = True
-                self._log.debug("disc: {.disc} -> None", item)
-                tags["disc"] = None
 
         if not self.fields_to_progs:
             self._log.warning("no fields list to remove")

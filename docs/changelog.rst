@@ -125,6 +125,8 @@ New features
   ``beet import``.
 - :doc:`plugins/random`: Added ``--field`` option to specify which field to use
   for equal-chance sampling (default: ``albumartist``).
+- :doc:`plugins/zero`: When the ``omit_single_disc`` option is set,
+  ``disctotal`` is zeroed alongside ``disc``.
 
 Bug fixes
 ~~~~~~~~~
