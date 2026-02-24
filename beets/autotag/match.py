@@ -92,6 +92,21 @@ def assign_items(
         for iidx, t in zip(assigned_item_idxs, tracks)
         if iidx != -1
     }
+
+    # allow plugins to modify the mapping
+    new_assign_list = plugins.send(
+        "assign_items", mapping=mapping, org_items=items, org_tracks=tracks
+    )
+
+    # get the first plugin provided mapping that is a dict and not empty
+    new_mapping = next(
+        (item for item in new_assign_list if isinstance(item, dict) and item),
+        None,
+    )
+    if new_mapping:
+        # if a plugin provided a mapping, use that instead of the default one
+        mapping = new_mapping
+
     extra_items = list(set(items) - mapping.keys())
     extra_items.sort(key=lambda i: (i.disc, i.track, i.title))
     extra_tracks = list(set(tracks) - set(mapping.values()))
@@ -156,6 +171,15 @@ def _recommendation(
         rec = Recommendation.low
     else:
         # No conclusion. Return immediately. Can't be downgraded any further.
+        # but allow plugins to modify the recommendation
+        new_rec_list = plugins.send(
+            "recommendation", results=results, org_rec=Recommendation.none
+        )
+        # take the first recommendation from a plugin
+        if len(new_rec_list) > 0 and isinstance(
+            new_rec_list[0], Recommendation
+        ):
+            return new_rec_list[0]
         return Recommendation.none
 
     # Downgrade to the max rec if it is lower than the current rec for an
@@ -177,6 +201,11 @@ def _recommendation(
             )
             rec = min(rec, max_rec)
 
+    # allow plugins to modify the recommendation
+    new_rec_list = plugins.send("recommendation", results=results, org_rec=rec)
+    # take the first recommendation from a plugin
+    if len(new_rec_list) > 0 and isinstance(new_rec_list[0], Recommendation):
+        rec = new_rec_list[0]
     return rec
 
 
