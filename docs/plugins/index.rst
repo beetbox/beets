@@ -122,6 +122,7 @@ databases. They share the following configuration options:
     smartplaylist
     sonosupdate
     spotify
+    stats
     subsonicplaylist
     subsonicupdate
     substitute
