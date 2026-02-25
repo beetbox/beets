@@ -67,6 +67,10 @@ class CaptchaError(requests.exceptions.HTTPError):
         super().__init__("Captcha is required", *args, **kwargs)
 
 
+class GeniusHTTPError(requests.exceptions.HTTPError):
+    pass
+
+
 # Utilities.
 
 
@@ -564,8 +568,16 @@ class Genius(SearchBackend):
     def headers(self) -> dict[str, str]:
         return {"Authorization": f"Bearer {self.config['genius_api_key']}"}
 
+    def get_json(self, *args, **kwargs) -> GeniusAPI.Search:
+        response: GeniusAPI.Response = super().get_json(*args, **kwargs)
+        if "response" in response:
+            return response  # type: ignore[return-value]
+
+        meta = response["meta"]
+        raise GeniusHTTPError(f"{meta['message']} Status: {meta['status']}")
+
     def search(self, artist: str, title: str) -> Iterable[SearchResult]:
-        search_data: GeniusAPI.Search = self.get_json(
+        search_data = self.get_json(
             self.SEARCH_URL,
             params={"q": f"{artist} {title}"},
             headers=self.headers,

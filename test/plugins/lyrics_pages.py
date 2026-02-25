@@ -133,15 +133,13 @@ lyrics_pages = [
     LyricsPage.make(
         "https://genius.com/The-beatles-lady-madonna-lyrics",
         """
-        [Intro: Instrumental]
-
         [Verse 1: Paul McCartney]
         Lady Madonna, children at your feet
         Wonder how you manage to make ends meet
         Who finds the money when you pay the rent?
         Did you think that money was heaven sent?
 
-        [Bridge: Paul McCartney]
+        [Bridge: Paul McCartney, Paul McCartney, John Lennon & George Harrison]
         Friday night arrives without a suitcase
         Sunday morning creeping like a nun
         Monday's child has learned to tie his bootlace
@@ -150,27 +148,28 @@ lyrics_pages = [
         [Verse 2: Paul McCartney]
         Lady Madonna, baby at your breast
         Wonders how you manage to feed the rest
-
-        [Bridge: Paul McCartney, John Lennon & George Harrison]
         [Tenor Saxophone Solo: Ronnie Scott]
+
+        [Bridge: John Lennon & George Harrison, Paul McCartney, John Lennon & George Harrison]
+        Pa-pa-pa-pa, pa-pa-pa-pa-pa
+        Pa-pa-pa-pa-pa, pa-pa-pa, pa-pa, pa-pa
+        Pa-pa-pa-pa, pa-pa-pa-pa-pa
         See how they run
 
         [Verse 3: Paul McCartney]
         Lady Madonna, lying on the bed
         Listen to the music playing in your head
 
-        [Bridge: Paul McCartney]
-        Tuesday afternoon is never ending
-        Wednesday morning papers didn't come
-        Thursday night your stockings needed mending
+        [Bridge: Paul McCartney, John Lennon & George Harrison, Paul McCartney, John Lennon & George Harrison]
+        Tuesday afternoon is never ending (Pa-pa-pa-pa, pa-pa-pa-pa-pa)
+        Wednesday morning, papers didn't come (Pa-pa-pa-pa-pa, pa-pa-pa, pa-pa, pa-pa)
+        Thursday night, your stockings needed mending (Pa-pa-pa-pa, pa-pa-pa-pa-pa)
         See how they run
 
         [Verse 4: Paul McCartney]
         Lady Madonna, children at your feet
         Wonder how you manage to make ends meet
-
-        [Outro: Instrumental]
-        """,
+        """,  # noqa: E501
         marks=[xfail_on_ci("Genius returns 403 FORBIDDEN in CI")],
     ),
     LyricsPage.make(
