@@ -14,6 +14,10 @@ New features
 
 - :doc:`plugins/lyrics`: With ``synced`` enabled, existing synced lyrics are no
   longer replaced by newly fetched plain lyrics, even when ``force`` is enabled.
+- :doc:`plugins/lyrics`: Remove ``Source: <lyrics-url>`` suffix from lyrics.
+  Store the backend name in ``lyrics_backend``, URL in ``lyrics_url``, language
+  in ``lyrics_language`` and translation language (if enabled) in
+  ``lyrics_translation_language`` flexible attributes. :bug:`6370`
 
 ..
     Bug fixes

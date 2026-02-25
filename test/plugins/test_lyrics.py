@@ -23,10 +23,12 @@ from http import HTTPStatus
 from typing import TYPE_CHECKING
 
 import pytest
+import requests
 
 from beets.library import Item
 from beets.test.helper import PluginMixin, TestHelper
 from beetsplug import lyrics
+from beetsplug.lyrics import Lyrics
 
 from .lyrics_pages import lyrics_pages
 
@@ -251,12 +253,48 @@ class TestLyricsPlugin(LyricsPluginMixin):
     @pytest.mark.parametrize(
         "plugin_config, old_lyrics, found, expected",
         [
-            ({}, "old", "new", "old"),
-            ({"force": True}, "old", "new", "new"),
-            ({"force": True, "local": True}, "old", "new", "old"),
-            ({"force": True, "fallback": None}, "old", "", "old"),
-            ({"force": True, "fallback": ""}, "old", "", ""),
-            ({"force": True, "fallback": "default"}, "old", "", "default"),
+            pytest.param(
+                {},
+                "old",
+                "new",
+                "old",
+                id="no_force_keeps_old",
+            ),
+            pytest.param(
+                {"force": True},
+                "old",
+                "new",
+                "new",
+                id="force_overwrites_with_new",
+            ),
+            pytest.param(
+                {"force": True, "local": True},
+                "old",
+                "new",
+                "old",
+                id="force_local_keeps_old",
+            ),
+            pytest.param(
+                {"force": True, "fallback": None},
+                "old",
+                None,
+                "old",
+                id="force_fallback_none_keeps_old",
+            ),
+            pytest.param(
+                {"force": True, "fallback": ""},
+                "old",
+                None,
+                "",
+                id="force_fallback_empty_uses_empty",
+            ),
+            pytest.param(
+                {"force": True, "fallback": "default"},
+                "old",
+                None,
+                "default",
+                id="force_fallback_default_uses_default",
+            ),
             pytest.param(
                 {"force": True, "synced": True},
                 "[00:00.00] old synced",
@@ -289,12 +327,28 @@ class TestLyricsPlugin(LyricsPluginMixin):
         found,
         expected,
     ):
-        monkeypatch.setattr(lyrics_plugin, "find_lyrics", lambda _: found)
+        monkeypatch.setattr(
+            lyrics_plugin,
+            "find_lyrics",
+            lambda _: Lyrics(found, "") if found is not None else None,
+        )
         item = helper.create_item(id=1, lyrics=old_lyrics)
 
         lyrics_plugin.add_item_lyrics(item, False)
 
         assert item.lyrics == expected
+
+    def test_set_additional_lyrics_info(
+        self, monkeypatch, helper, lyrics_plugin
+    ):
+        lyrics = Lyrics("new lyrics", "lrclib", url="https://lrclib.net/api/1")
+        monkeypatch.setattr(lyrics_plugin, "find_lyrics", lambda _: lyrics)
+        item = helper.create_item(id=1, lyrics="")
+
+        lyrics_plugin.add_item_lyrics(item, False)
+
+        assert item.lyrics_url == lyrics.url
+        assert item.lyrics_backend == lyrics.backend
 
 
 class LyricsBackendTest(LyricsPluginMixin):
@@ -343,20 +397,28 @@ class TestLyricsSources(LyricsBackendTest):
         }
         requests_mock.get(lyrics.Google.SEARCH_URL, json=data)
 
-    def test_backend_source(self, lyrics_plugin, lyrics_page: LyricsPage):
+    def test_backend_source(
+        self, monkeypatch, lyrics_plugin, lyrics_page: LyricsPage
+    ):
         """Test parsed lyrics from each of the configured lyrics pages."""
-        lyrics_info = lyrics_plugin.find_lyrics(
+        monkeypatch.setattr(
+            "beetsplug.lyrics.LyricsRequestHandler.create_session",
+            lambda _: requests.Session(),
+        )
+
+        assert lyrics_plugin.find_lyrics(
             Item(
                 artist=lyrics_page.artist,
                 title=lyrics_page.track_title,
                 album="",
                 length=186.0,
             )
+        ) == Lyrics(
+            lyrics_page.lyrics,
+            lyrics_page.backend,
+            url=lyrics_page.url,
+            language=lyrics_page.language,
         )
-
-        assert lyrics_info
-        lyrics, _ = lyrics_info.split("\n\nSource: ")
-        assert lyrics == lyrics_page.lyrics
 
 
 class TestGoogleLyrics(LyricsBackendTest):
@@ -499,14 +561,19 @@ class TestLRCLibLyrics(LyricsBackendTest):
     @pytest.mark.parametrize("response_data", [[lyrics_match()]])
     @pytest.mark.parametrize(
         "plugin_config, expected_lyrics",
-        [({"synced": True}, SYNCED), ({"synced": False}, "plain")],
+        [
+            pytest.param({"synced": True}, SYNCED, id="pick-synced"),
+            pytest.param({"synced": False}, "plain", id="pick-plain"),
+        ],
     )
-    def test_synced_config_option(self, fetch_lyrics, expected_lyrics):
-        lyrics_info = fetch_lyrics()
-        assert lyrics_info
+    def test_synced_config_option(
+        self, backend_name, fetch_lyrics, expected_lyrics
+    ):
+        lyrics = fetch_lyrics()
 
-        lyrics, _ = lyrics_info
-        assert lyrics == expected_lyrics
+        assert lyrics
+        assert lyrics.text == expected_lyrics
+        assert lyrics.backend == backend_name
 
     @pytest.mark.parametrize(
         "response_data, expected_lyrics",
@@ -577,14 +644,12 @@ class TestLRCLibLyrics(LyricsBackendTest):
     )
     @pytest.mark.parametrize("plugin_config", [{"synced": True}])
     def test_fetch_lyrics(self, fetch_lyrics, expected_lyrics):
-        lyrics_info = fetch_lyrics()
+        lyrics = fetch_lyrics()
         if expected_lyrics is None:
-            assert not lyrics_info
+            assert not lyrics
         else:
-            assert lyrics_info
-            lyrics, _ = fetch_lyrics()
-
-            assert lyrics == expected_lyrics
+            assert lyrics
+            assert lyrics.text == expected_lyrics
 
 
 class TestTranslation:
@@ -624,7 +689,7 @@ class TestTranslation:
         requests_mock.post(lyrics.Translator.TRANSLATE_URL, json=callback)
 
     @pytest.mark.parametrize(
-        "new_lyrics, old_lyrics, expected",
+        "new_lyrics, old_lyrics, expected_lyrics",
         [
             pytest.param(
                 """
@@ -634,14 +699,19 @@ class TestTranslation:
                 [Chorus]
                 No matter what, I wouldn't fold (Wouldn't fold, wouldn't fold)
                 Ridin' through the thunder, lightnin'""",
-                "",
-                """
+                Lyrics("", ""),
+                Lyrics(
+                    textwrap.dedent("""
                 [Refrain: Doja Cat] / [Refrain : Doja Cat]
                 Hard for me to let you go (Let you go, let you go) / Difficile pour moi de te laisser partir (Te laisser partir, te laisser partir)
                 My body wouldn't let me hide it (Hide it) / Mon corps ne me laissait pas le cacher (Cachez-le)
                 [Chorus]
                 No matter what, I wouldn't fold (Wouldn't fold, wouldn't fold) / Quoi qu’il arrive, je ne plierais pas (Ne plierait pas, ne plierais pas)
-                Ridin' through the thunder, lightnin' / Chevauchant à travers le tonnerre, la foudre""",  # noqa: E501
+                Ridin' through the thunder, lightnin' / Chevauchant à travers le tonnerre, la foudre"""),  # noqa: E501
+                    "",
+                    language="EN",
+                    translation_language="FR",
+                ),
                 id="plain",
             ),
             pytest.param(
@@ -649,38 +719,51 @@ class TestTranslation:
                 [00:00.00] Some synced lyrics
                 [00:00:50]
                 [00:01.00] Some more synced lyrics
-
-                Source: https://lrclib.net/api/123""",
-                "",
-                """
+                """,
+                Lyrics("", ""),
+                Lyrics(
+                    textwrap.dedent("""
                 [00:00.00] Some synced lyrics / Quelques paroles synchronisées
                 [00:00:50]
-                [00:01.00] Some more synced lyrics / Quelques paroles plus synchronisées
-
-                Source: https://lrclib.net/api/123""",
+                [00:01.00] Some more synced lyrics / Quelques paroles plus synchronisées"""),  # noqa: E501
+                    "",
+                    language="EN",
+                    translation_language="FR",
+                ),
                 id="synced",
             ),
             pytest.param(
                 "Quelques paroles",
-                "",
-                "Quelques paroles",
+                Lyrics("", ""),
+                Lyrics("Quelques paroles", "", language="FR"),
                 id="already in the target language",
             ),
             pytest.param(
                 "Some lyrics",
-                "Some lyrics / Some translation",
-                "Some lyrics / Some translation",
+                Lyrics(
+                    "Some lyrics / Some translation",
+                    "",
+                    language="EN",
+                    translation_language="FR",
+                ),
+                Lyrics(
+                    "Some lyrics / Some translation",
+                    "",
+                    language="EN",
+                    translation_language="FR",
+                ),
                 id="already translated",
             ),
         ],
     )
-    def test_translate(self, new_lyrics, old_lyrics, expected):
+    def test_translate(self, new_lyrics, old_lyrics, expected_lyrics):
         plugin = lyrics.LyricsPlugin()
         bing = lyrics.Translator(plugin._log, "123", "FR", ["EN"])
 
-        assert bing.translate(
-            textwrap.dedent(new_lyrics), old_lyrics
-        ) == textwrap.dedent(expected)
+        assert (
+            bing.translate(Lyrics(textwrap.dedent(new_lyrics), ""), old_lyrics)
+            == expected_lyrics
+        )
 
 
 class TestRestFiles:
