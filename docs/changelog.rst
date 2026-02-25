@@ -9,9 +9,15 @@ below!
 Unreleased
 ----------
 
-..
-    New features
-    ~~~~~~~~~~~~
+New features
+~~~~~~~~~~~~
+
+- :doc:`plugins/lyrics`: With ``synced`` enabled, existing synced lyrics are no
+  longer replaced by newly fetched plain lyrics, even when ``force`` is enabled.
+- :doc:`plugins/lyrics`: Remove ``Source: <lyrics-url>`` suffix from lyrics.
+  Store the backend name in ``lyrics_backend``, URL in ``lyrics_url``, language
+  in ``lyrics_language`` and translation language (if enabled) in
+  ``lyrics_translation_language`` flexible attributes. :bug:`6370`
 
 ..
     Bug fixes
@@ -32,6 +38,9 @@ Other changes
 - :doc:`plugins/edit`: Editing multi-valued fields now behaves more naturally,
   with list values handled directly to make metadata edits smoother and more
   predictable.
+- :doc:`plugins/lyrics`: To cut down noise from the ``lrclib`` lyrics source,
+  synced lyrics are now checked to ensure the final verse falls within the
+  track's duration.
 
 2.6.2 (February 22, 2026)
 -------------------------
