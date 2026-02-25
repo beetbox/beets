@@ -42,12 +42,11 @@ of what you can expect from these *knowledge owners*.
 -----
 
 - The Discogs plugin
-- Other metadata source plugins
-- Generalization of source plugin logic (The MetaDataSourcePlugin abstract
-  class)
 - Good documentation throughout the project
 - The smartplaylist plugin
-- Things around m3u and other playlist formats
+- The lastgenre plugin
+- Support for M3U and other playlist formats
+- Beets as a DJ companion tool (BPM, audio features, key)
 
 @RollingStar
 ------------
