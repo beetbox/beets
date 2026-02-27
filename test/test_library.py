@@ -56,25 +56,18 @@ class LoadTest(ItemInDBTestCase):
 
 class StoreTest(ItemInDBTestCase):
     def test_store_changes_database_value(self):
-        self.i.year = 1987
+        new_year = 1987
+        self.i.year = new_year
         self.i.store()
-        new_year = (
-            self.lib._connection()
-            .execute("select year from items where title = ?", (self.i.title,))
-            .fetchone()["year"]
-        )
-        assert new_year == 1987
+
+        assert self.lib.get_item(self.i.id).year == new_year
 
     def test_store_only_writes_dirty_fields(self):
-        original_genre = self.i.genre
-        self.i._values_fixed["genre"] = "beatboxing"  # change w/o dirtying
+        new_year = 1987
+        self.i._values_fixed["year"] = new_year  # change w/o dirtying
         self.i.store()
-        new_genre = (
-            self.lib._connection()
-            .execute("select genre from items where title = ?", (self.i.title,))
-            .fetchone()["genre"]
-        )
-        assert new_genre == original_genre
+
+        assert self.lib.get_item(self.i.id).year != new_year
 
     def test_store_clears_dirty_flags(self):
         self.i.composer = "tvp"

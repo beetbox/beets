@@ -143,9 +143,9 @@ Optional command flags:
   :ref:`set_fields` configuration dictionary. You can use the option multiple
   times on the command line, like so:
 
-  ::
+.. code-block:: sh
 
-      beet import --set genre="Alternative Rock" --set mood="emotional"
+    beet import --set genres="Alternative Rock" --set mood="emotional"
 
 .. _py7zr: https://pypi.org/project/py7zr/
 

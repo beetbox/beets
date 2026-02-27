@@ -39,7 +39,7 @@ from beets.util import plurality, unique_list
 
 if TYPE_CHECKING:
     import optparse
-    from collections.abc import Callable
+    from collections.abc import Callable, Iterable
 
     from beets.importer import ImportSession, ImportTask
     from beets.library import LibModel
@@ -111,7 +111,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 "force": False,
                 "keep_existing": False,
                 "auto": True,
-                "separator": ", ",
                 "prefer_specific": False,
                 "title_case": True,
                 "pretend": False,
@@ -213,7 +212,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         - Returns an empty list if the input tags list is empty.
         - If canonicalization is enabled, it extends the list by incorporating
           parent genres from the canonicalization tree. When a whitelist is set,
-          only parent tags that pass a validity check (_is_valid) are included;
+          only parent tags that pass the whitelist filter are included;
           otherwise, it adds the oldest ancestor. Adding parent tags is stopped
           when the count of tags reaches the configured limit (count).
         - The tags list is then deduplicated to ensure only unique genres are
@@ -237,11 +236,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 # Add parents that are in the whitelist, or add the oldest
                 # ancestor if no whitelist
                 if self.whitelist:
-                    parents = [
-                        x
-                        for x in find_parents(tag, self.c14n_branches)
-                        if self._is_valid(x)
-                    ]
+                    parents = self._filter_valid(
+                        find_parents(tag, self.c14n_branches)
+                    )
                 else:
                     parents = [find_parents(tag, self.c14n_branches)[-1]]
 
@@ -263,7 +260,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # c14n only adds allowed genres but we may have had forbidden genres in
         # the original tags list
-        valid_tags = [t for t in tags if self._is_valid(t)]
+        valid_tags = self._filter_valid(tags)
         return valid_tags[:count]
 
     def fetch_genre(
@@ -275,15 +272,19 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         min_weight = self.config["min_weight"].get(int)
         return self._tags_for(lastfm_obj, min_weight)
 
-    def _is_valid(self, genre: str) -> bool:
-        """Check if the genre is valid.
+    def _filter_valid(self, genres: Iterable[str]) -> list[str]:
+        """Filter genres based on whitelist.
 
-        Depending on the whitelist property, valid means a genre is in the
-        whitelist or any genre is allowed.
+        Returns all genres if no whitelist is configured, otherwise returns
+        only genres that are in the whitelist.
         """
-        if genre and (not self.whitelist or genre.lower() in self.whitelist):
-            return True
-        return False
+        # First, drop any falsy or whitespace-only genre strings to avoid
+        # retaining empty tags from multi-valued fields.
+        cleaned = [g for g in genres if g and g.strip()]
+        if not self.whitelist:
+            return cleaned
+
+        return [g for g in cleaned if g.lower() in self.whitelist]
 
     # Cached last.fm entity lookups.
 
@@ -329,26 +330,21 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
     # Main processing: _get_genre() and helpers.
 
-    def _format_and_stringify(self, tags: list[str]) -> str:
-        """Format to title_case if configured and return as delimited string."""
+    def _format_genres(self, tags: list[str]) -> list[str]:
+        """Format to title case if configured."""
         if self.config["title_case"]:
-            formatted = [tag.title() for tag in tags]
+            return [tag.title() for tag in tags]
         else:
-            formatted = tags
-
-        return self.config["separator"].as_str().join(formatted)
+            return tags
 
     def _get_existing_genres(self, obj: LibModel) -> list[str]:
-        """Return a list of genres for this Item or Album. Empty string genres
-        are removed."""
-        separator = self.config["separator"].get()
+        """Return a list of genres for this Item or Album."""
         if isinstance(obj, library.Item):
-            item_genre = obj.get("genre", with_album=False).split(separator)
+            genres_list = obj.get("genres", with_album=False)
         else:
-            item_genre = obj.get("genre").split(separator)
+            genres_list = obj.get("genres")
 
-        # Filter out empty strings
-        return [g for g in item_genre if g]
+        return genres_list
 
     def _combine_resolve_and_log(
         self, old: list[str], new: list[str]
@@ -359,8 +355,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         combined = old + new
         return self._resolve_genres(combined)
 
-    def _get_genre(self, obj: LibModel) -> tuple[str | None, ...]:
-        """Get the final genre string for an Album or Item object.
+    def _get_genre(self, obj: LibModel) -> tuple[list[str], str]:
+        """Get the final genre list for an Album or Item object.
 
         `self.sources` specifies allowed genre sources. Starting with the first
         source in this tuple, the following stages run through until a genre is
@@ -370,9 +366,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             - artist, albumartist or "most popular track genre" (for VA-albums)
             - original fallback
             - configured fallback
-            - None
+            - empty list
 
-        A `(genre, label)` pair is returned, where `label` is a string used for
+        A `(genres, label)` pair is returned, where `label` is a string used for
         logging. For example, "keep + artist, whitelist" indicates that existing
         genres were combined with new last.fm genres and whitelist filtering was
         applied, while "artist, any" means only new last.fm genres are included
@@ -381,7 +377,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         def _try_resolve_stage(
             stage_label: str, keep_genres: list[str], new_genres: list[str]
-        ) -> tuple[str, str] | None:
+        ) -> tuple[list[str], str] | None:
             """Try to resolve genres for a given stage and log the result."""
             resolved_genres = self._combine_resolve_and_log(
                 keep_genres, new_genres
@@ -391,7 +387,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 label = f"{stage_label}, {suffix}"
                 if keep_genres:
                     label = f"keep + {label}"
-                return self._format_and_stringify(resolved_genres), label
+                return self._format_genres(resolved_genres), label
             return None
 
         keep_genres = []
@@ -400,10 +396,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         if genres and not self.config["force"]:
             # Without force pre-populated tags are returned as-is.
-            label = "keep any, no-force"
-            if isinstance(obj, library.Item):
-                return obj.get("genre", with_album=False), label
-            return obj.get("genre"), label
+            return genres, "keep any, no-force"
 
         if self.config["force"]:
             # Force doesn't keep any unless keep_existing is set.
@@ -479,33 +472,32 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     return result
 
         # Nothing found, leave original if configured and valid.
-        if obj.genre and self.config["keep_existing"]:
-            if not self.whitelist or self._is_valid(obj.genre.lower()):
-                return obj.genre, "original fallback"
-            else:
-                # If the original genre doesn't match a whitelisted genre, check
-                # if we can canonicalize it to find a matching, whitelisted genre!
-                if result := _try_resolve_stage(
-                    "original fallback", keep_genres, []
-                ):
-                    return result
+        if genres and self.config["keep_existing"]:
+            if valid_genres := self._filter_valid(genres):
+                return valid_genres, "original fallback"
+            # If the original genre doesn't match a whitelisted genre, check
+            # if we can canonicalize it to find a matching, whitelisted genre!
+            if result := _try_resolve_stage(
+                "original fallback", keep_genres, []
+            ):
+                return result
 
-        # Return fallback string.
+        # Return fallback as a list.
         if fallback := self.config["fallback"].get():
-            return fallback, "fallback"
+            return [fallback], "fallback"
 
         # No fallback configured.
-        return None, "fallback unconfigured"
+        return [], "fallback unconfigured"
 
     # Beets plugin hooks and CLI.
 
     def _fetch_and_log_genre(self, obj: LibModel) -> None:
         """Fetch genre and log it."""
         self._log.info(str(obj))
-        obj.genre, label = self._get_genre(obj)
-        self._log.debug("Resolved ({}): {}", label, obj.genre)
+        obj.genres, label = self._get_genre(obj)
+        self._log.debug("Resolved ({}): {}", label, obj.genres)
 
-        ui.show_model_changes(obj, fields=["genre"], print_obj=False)
+        ui.show_model_changes(obj, fields=["genres"], print_obj=False)
 
     @singledispatchmethod
     def _process(self, obj: LibModel, write: bool) -> None:
