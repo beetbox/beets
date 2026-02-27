@@ -64,7 +64,9 @@ These functions are built in to beets:
 - ``%if{condition,text}`` or ``%if{condition,truetext,falsetext}``: If
   ``condition`` is nonempty (or nonzero, if it's a number), then returns the
   second argument. Otherwise, returns the third argument if specified (or
-  nothing if ``falsetext`` is left off).
+  nothing if ``falsetext`` is left off). Note that beets doesn't distinguish
+  between different data types, so ``%if{album,album/}`` evaluates as false for
+  albums named exactly "0".
 - ``%asciify{text}``: Convert non-ASCII characters to their ASCII equivalents.
   For example, "café" becomes "cafe". Uses the mapping provided by the
   `unidecode module`_. See the :ref:`asciify-paths` configuration option.
