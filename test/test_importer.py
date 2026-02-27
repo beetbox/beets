@@ -304,15 +304,15 @@ class ImportSingletonTest(AutotagImportTestCase):
         assert len(self.lib.albums()) == 2
 
     def test_set_fields(self):
-        genre = "\U0001f3b7 Jazz"
+        genres = ["\U0001f3b7 Jazz", "Rock"]
         collection = "To Listen"
         disc = 0
 
         config["import"]["set_fields"] = {
+            "genres": "; ".join(genres),
             "collection": collection,
-            "genres": genre,
-            "title": "$title - formatted",
             "disc": disc,
+            "title": "$title - formatted",
         }
 
         # As-is item import.
@@ -322,7 +322,7 @@ class ImportSingletonTest(AutotagImportTestCase):
 
         for item in self.lib.items():
             item.load()  # TODO: Not sure this is necessary.
-            assert item.genres == [genre]
+            assert item.genres == genres
             assert item.collection == collection
             assert item.title == "Tag Track 1 - formatted"
             assert item.disc == disc
@@ -337,7 +337,7 @@ class ImportSingletonTest(AutotagImportTestCase):
 
         for item in self.lib.items():
             item.load()
-            assert item.genres == [genre]
+            assert item.genres == genres
             assert item.collection == collection
             assert item.title == "Applied Track 1 - formatted"
             assert item.disc == disc
@@ -464,17 +464,17 @@ class ImportTest(PathsMixin, AutotagImportTestCase):
             self.lib.items().get().data_source
 
     def test_set_fields(self):
-        genre = "\U0001f3b7 Jazz"
+        genres = ["\U0001f3b7 Jazz", "Rock"]
         collection = "To Listen"
-        comments = "managed by beets"
         disc = 0
+        comments = "managed by beets"
 
         config["import"]["set_fields"] = {
-            "genres": genre,
+            "genres": "; ".join(genres),
             "collection": collection,
+            "disc": disc,
             "comments": comments,
             "album": "$album - formatted",
-            "disc": disc,
         }
 
         # As-is album import.
@@ -483,10 +483,10 @@ class ImportTest(PathsMixin, AutotagImportTestCase):
         self.importer.run()
 
         for album in self.lib.albums():
-            assert album.genres == [genre]
+            assert album.genres == genres
             assert album.comments == comments
             for item in album.items():
-                assert item.get("genres", with_album=False) == [genre]
+                assert item.get("genres", with_album=False) == genres
                 assert item.get("collection", with_album=False) == collection
                 assert item.get("comments", with_album=False) == comments
                 assert (
@@ -504,10 +504,10 @@ class ImportTest(PathsMixin, AutotagImportTestCase):
         self.importer.run()
 
         for album in self.lib.albums():
-            assert album.genres == [genre]
+            assert album.genres == genres
             assert album.comments == comments
             for item in album.items():
-                assert item.get("genres", with_album=False) == [genre]
+                assert item.get("genres", with_album=False) == genres
                 assert item.get("collection", with_album=False) == collection
                 assert item.get("comments", with_album=False) == comments
                 assert (
