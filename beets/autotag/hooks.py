@@ -24,6 +24,7 @@ from typing import TYPE_CHECKING, Any, TypeVar
 from typing_extensions import Self
 
 from beets.util import cached_classproperty
+from beets.util.deprecation import deprecate_for_maintainers
 
 if TYPE_CHECKING:
     from beets.library import Item
@@ -76,9 +77,22 @@ class Info(AttrDict[Any]):
         data_source: str | None = None,
         data_url: str | None = None,
         genre: str | None = None,
+        genres: list[str] | None = None,
         media: str | None = None,
         **kwargs,
     ) -> None:
+        if genre is not None:
+            deprecate_for_maintainers(
+                "The 'genre' parameter", "'genres' (list)", stacklevel=3
+            )
+            if not genres:
+                try:
+                    sep = next(s for s in ["; ", ", ", " / "] if s in genre)
+                except StopIteration:
+                    genres = [genre]
+                else:
+                    genres = list(map(str.strip, genre.split(sep)))
+
         self.album = album
         self.artist = artist
         self.artist_credit = artist_credit
@@ -90,7 +104,8 @@ class Info(AttrDict[Any]):
         self.artists_sort = artists_sort or []
         self.data_source = data_source
         self.data_url = data_url
-        self.genre = genre
+        self.genre = None
+        self.genres = genres or []
         self.media = media
         self.update(kwargs)
 

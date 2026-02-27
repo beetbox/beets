@@ -16,7 +16,6 @@
 
 from __future__ import annotations
 
-import contextlib
 import functools
 import os
 import re
@@ -24,19 +23,23 @@ import sqlite3
 import sys
 import threading
 import time
-from abc import ABC
+from abc import ABC, abstractmethod
 from collections import defaultdict
-from collections.abc import (
-    Callable,
-    Generator,
-    Iterable,
-    Iterator,
-    Mapping,
-    Sequence,
-)
+from collections.abc import Mapping
+from contextlib import contextmanager
+from dataclasses import dataclass
 from functools import cached_property
 from sqlite3 import Connection, sqlite_version_info
-from typing import TYPE_CHECKING, Any, AnyStr, ClassVar, Generic, NamedTuple
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    AnyStr,
+    ClassVar,
+    Generic,
+    Literal,
+    NamedTuple,
+    TypedDict,
+)
 
 from typing_extensions import (
     Self,
@@ -1008,12 +1011,15 @@ class Transaction:
         cursor = self.db._connection().execute(statement, subvals)
         return cursor.fetchall()
 
-    def mutate(self, statement: str, subvals: Sequence[SQLiteType] = ()) -> Any:
-        """Execute an SQL statement with substitution values and return
-        the row ID of the last affected row.
+    @contextmanager
+    def _handle_mutate(self) -> Iterator[None]:
+        """Handle mutation bookkeeping and database access errors.
+
+        Yield control to mutation execution code. If execution succeeds,
+        mark this transaction as mutated.
         """
         try:
-            cursor = self.db._connection().execute(statement, subvals)
+            yield
         except sqlite3.OperationalError as e:
             # In two specific cases, SQLite reports an error while accessing
             # the underlying database file. We surface these exceptions as
@@ -1023,17 +1029,55 @@ class Transaction:
                 "unable to open database file",
             ):
                 raise DBAccessError(e.args[0])
-            else:
-                raise
+            raise
         else:
             self._mutated = True
-            return cursor.lastrowid
+
+    def mutate(self, statement: str, subvals: Sequence[SQLiteType] = ()) -> Any:
+        """Run one write statement with shared mutation/error handling."""
+        with self._handle_mutate():
+            return self.db._connection().execute(statement, subvals).lastrowid
+
+    def mutate_many(
+        self, statement: str, subvals: Sequence[tuple[SQLiteType, ...]] = ()
+    ) -> Any:
+        """Run batched writes with shared mutation/error handling."""
+        with self._handle_mutate():
+            return (
+                self.db._connection().executemany(statement, subvals).lastrowid
+            )
 
     def script(self, statements: str):
         """Execute a string containing multiple SQL statements."""
         # We don't know whether this mutates, but quite likely it does.
         self._mutated = True
         self.db._connection().executescript(statements)
+
+
+@dataclass
+class Migration(ABC):
+    db: Database
+
+    @cached_classproperty
+    def name(cls) -> str:
+        """Class name (except Migration) converted to snake case."""
+        name = cls.__name__.removesuffix("Migration")  # type: ignore[attr-defined]
+        return re.sub(r"(?<=[a-z])(?=[A-Z])", "_", name).lower()
+
+    def migrate_table(self, table: str, *args, **kwargs) -> None:
+        """Migrate a specific table."""
+        if not self.db.migration_exists(self.name, table):
+            self._migrate_data(table, *args, **kwargs)
+            self.db.record_migration(self.name, table)
+
+    @abstractmethod
+    def _migrate_data(self, table: str, current_fields: set[str]) -> None:
+        """Migrate data for a specific table."""
+
+
+class TableInfo(TypedDict):
+    columns: set[str]
+    migrations: set[str]
 
 
 class Database:
@@ -1044,6 +1088,9 @@ class Database:
     _models: Sequence[type[Model]] = ()
     """The Model subclasses representing tables in this database.
     """
+
+    _migrations: Sequence[tuple[type[Migration], Sequence[type[Model]]]] = ()
+    """Migrations that are to be performed for the configured models."""
 
     supports_extensions = hasattr(sqlite3.Connection, "enable_load_extension")
     """Whether or not the current version of SQLite supports extensions"""
@@ -1088,10 +1135,39 @@ class Database:
         self._db_lock = threading.Lock()
 
         # Set up database schema.
+        self._ensure_migration_state_table()
         for model_cls in self._models:
             self._make_table(model_cls._table, model_cls._fields)
             self._make_attribute_table(model_cls._flex_table)
             self._create_indices(model_cls._table, model_cls._indices)
+
+        self._migrate()
+
+    @cached_property
+    def db_tables(self) -> dict[str, TableInfo]:
+        column_queries = [
+            f"""
+                SELECT '{m._table}' AS table_name, 'columns' AS source, name
+                FROM pragma_table_info('{m._table}')
+            """
+            for m in self._models
+        ]
+        with self.transaction() as tx:
+            rows = tx.query(f"""
+                {" UNION ALL ".join(column_queries)}
+                UNION ALL
+                SELECT table_name, 'migrations' AS source, name FROM migrations
+            """)
+
+        tables_data: dict[str, TableInfo] = defaultdict(
+            lambda: TableInfo(columns=set(), migrations=set())
+        )
+
+        source: Literal["columns", "migrations"]
+        for table_name, source, name in rows:
+            tables_data[table_name][source].add(name)
+
+        return tables_data
 
     # Primitive access control: connections and transactions.
 
@@ -1193,7 +1269,7 @@ class Database:
                 _thread_id, conn = self._connections.popitem()
                 conn.close()
 
-    @contextlib.contextmanager
+    @contextmanager
     def _tx_stack(self) -> Generator[list[Transaction]]:
         """A context manager providing access to the current thread's
         transaction stack. The context manager synchronizes access to
@@ -1233,35 +1309,26 @@ class Database:
         """Set up the schema of the database. `fields` is a mapping
         from field names to `Type`s. Columns are added if necessary.
         """
-        # Get current schema.
-        with self.transaction() as tx:
-            rows = tx.query(f"PRAGMA table_info({table})")
-        current_fields = {row[1] for row in rows}
-
-        field_names = set(fields.keys())
-        if current_fields.issuperset(field_names):
-            # Table exists and has all the required columns.
-            return
-
-        if not current_fields:
+        if table not in self.db_tables:
             # No table exists.
             columns = []
             for name, typ in fields.items():
                 columns.append(f"{name} {typ.sql}")
             setup_sql = f"CREATE TABLE {table} ({', '.join(columns)});\n"
-
         else:
             # Table exists does not match the field set.
             setup_sql = ""
+            current_fields = self.db_tables[table]["columns"]
             for name, typ in fields.items():
-                if name in current_fields:
-                    continue
-                setup_sql += (
-                    f"ALTER TABLE {table} ADD COLUMN {name} {typ.sql};\n"
-                )
+                if name not in current_fields:
+                    setup_sql += (
+                        f"ALTER TABLE {table} ADD COLUMN {name} {typ.sql};\n"
+                    )
 
         with self.transaction() as tx:
             tx.script(setup_sql)
+
+        self.db_tables[table]["columns"] = set(fields)
 
     def _make_attribute_table(self, flex_table: str):
         """Create a table and associated index for flexible attributes
@@ -1291,6 +1358,38 @@ class Database:
                     f"CREATE INDEX IF NOT EXISTS {index.name} "
                     f"ON {table} ({', '.join(index.columns)});"
                 )
+
+    # Generic migration state handling.
+
+    def _ensure_migration_state_table(self) -> None:
+        with self.transaction() as tx:
+            tx.script("""
+                CREATE TABLE IF NOT EXISTS migrations (
+                    name TEXT NOT NULL,
+                    table_name TEXT NOT NULL,
+                    PRIMARY KEY(name, table_name)
+                );
+            """)
+
+    def _migrate(self) -> None:
+        """Perform any necessary migration for the database."""
+        for migration_cls, model_classes in self._migrations:
+            migration = migration_cls(self)
+            for model_cls in model_classes:
+                table = model_cls._table
+                migration.migrate_table(table, self.db_tables[table]["columns"])
+
+    def migration_exists(self, name: str, table: str) -> bool:
+        """Return whether a named migration has been marked complete."""
+        return name in self.db_tables[table]["migrations"]
+
+    def record_migration(self, name: str, table: str) -> None:
+        """Set completion state for a named migration."""
+        with self.transaction() as tx:
+            tx.mutate(
+                "INSERT INTO migrations(name, table_name) VALUES (?, ?)",
+                (name, table),
+            )
 
     # Querying.
 

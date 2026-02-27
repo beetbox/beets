@@ -853,11 +853,11 @@ set_fields
 A dictionary indicating fields to set to values for newly imported music. Here's
 an example:
 
-::
+.. code-block:: yaml
 
     set_fields:
-        genre: 'To Listen'
-        collection: 'Unordered'
+        genres: To Listen
+        collection: Unordered
 
 Other field/value pairs supplied via the ``--set`` option on the command-line
 override any settings here for fields with the same name.
@@ -1172,9 +1172,9 @@ Here's an example file:
         color: yes
 
     paths:
-        default: $genre/$albumartist/$album/$track $title
+        default: %first{$genres}/$albumartist/$album/$track $title
         singleton: Singletons/$artist - $title
-        comp: $genre/$album/$track $title
+        comp: %first{$genres}/$album/$track $title
         albumtype:soundtrack: Soundtracks/$album/$track $title
 
 .. only:: man
