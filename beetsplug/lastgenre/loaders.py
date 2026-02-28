@@ -37,7 +37,6 @@ class DataFileLoader:
     def __init__(
         self,
         log: Logger,
-        plugin_dir: Path,
         whitelist: Whitelist,
         c14n_branches: CanonTree,
         canonicalize: bool,
@@ -47,7 +46,6 @@ class DataFileLoader:
         Use from_config() classmethod to construct from plugin config.
         """
         self._log = log
-        self._plugin_dir = plugin_dir
         self.whitelist = whitelist
         self.c14n_branches = c14n_branches
         self.canonicalize = canonicalize
@@ -80,7 +78,7 @@ class DataFileLoader:
             config["prefer_specific"].get(bool),
         )
 
-        return cls(log, plugin_dir, whitelist, c14n_branches, canonicalize)
+        return cls(log, whitelist, c14n_branches, canonicalize)
 
     @staticmethod
     def _load_whitelist(
