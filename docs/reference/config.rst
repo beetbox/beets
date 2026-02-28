@@ -913,6 +913,51 @@ and the next-best match is above the *gap* threshold, the importer will suggest
 that match but not automatically confirm it. Otherwise, you'll see a list of
 options to choose from.
 
+.. _distance-weights:
+
+distance_weights
+~~~~~~~~~~~~~~~~
+
+The ``distance_weights`` option allows you to customize how much each field
+contributes to the overall distance score when matching albums and tracks. Higher
+weights mean that differences in that field are penalized more heavily, making
+them more important in the matching decision.
+
+The defaults are::
+
+    match:
+        distance_weights:
+            data_source: 2.0
+            artist: 3.0
+            album: 3.0
+            media: 1.0
+            mediums: 1.0
+            year: 1.0
+            country: 0.5
+            label: 0.5
+            catalognum: 0.5
+            albumdisambig: 0.5
+            album_id: 5.0
+            tracks: 2.0
+            missing_tracks: 0.9
+            unmatched_tracks: 0.6
+            track_title: 3.0
+            track_artist: 2.0
+            track_index: 1.0
+            track_length: 2.0
+            track_id: 5.0
+            medium: 1.0
+
+For example, if you don't care as much about matching the exact release year,
+you can reduce its weight::
+
+    match:
+        distance_weights:
+            year: 0.1
+
+You only need to specify the fields you want to override; unspecified fields
+keep their default weights.
+
 .. _max_rec:
 
 max_rec
