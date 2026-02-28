@@ -100,23 +100,26 @@ class LastGenrePlugin(plugins.BeetsPlugin):
     def __init__(self) -> None:
         super().__init__()
 
-        self.config.add(
-            {
-                "whitelist": True,
-                "min_weight": 10,
-                "count": 1,
-                "fallback": None,
-                "canonical": False,
-                "source": "album",
-                "force": False,
-                "keep_existing": False,
-                "auto": True,
-                "prefer_specific": False,
-                "title_case": True,
-                "pretend": False,
-            }
-        )
+        self.config.add(LastGenrePlugin.default_configuration())
         self.setup()
+
+    @staticmethod
+    def default_configuration() -> dict[str, Any]:
+        return {
+            "whitelist": True,
+            "min_weight": 10,
+            "count": 1,
+            "fallback": None,
+            "canonical": False,
+            "cleanup_existing": False,
+            "source": "album",
+            "force": False,
+            "keep_existing": False,
+            "auto": True,
+            "prefer_specific": False,
+            "title_case": True,
+            "pretend": False,
+        }
 
     def setup(self) -> None:
         """Setup plugin from config options"""
@@ -395,7 +398,19 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         genres = self._get_existing_genres(obj)
 
         if genres and not self.config["force"]:
-            # Without force pre-populated tags are returned as-is.
+            # Without force, but cleanup_existing enabled, we attempt
+            # to canonicalize pre-populated tags before returning them.
+            # If none are found, we use the fallback (if set).
+            if self.config["cleanup_existing"]:
+                keep_genres = [g.lower() for g in genres]
+                if result := _try_resolve_stage("original", keep_genres, []):
+                    return result
+
+                # Return fallback string (None if not set).
+                return self.config["fallback"].get(), "fallback"
+
+            # If cleanup_existing is not set, the pre-populated tags are
+            # returned as-is.
             return genres, "keep any, no-force"
 
         if self.config["force"]:

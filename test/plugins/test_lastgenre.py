@@ -232,6 +232,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "whitelist": True,
                 "canonical": False,
                 "prefer_specific": False,
+                "count": 10,
             },
             ["original unknown", "Blues"],
             {
@@ -264,6 +265,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "whitelist": True,
                 "canonical": False,
                 "prefer_specific": False,
+                "count": 10,
             },
             ["original unknown", "Blues"],
             {
@@ -304,6 +306,30 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
             },
             (["Jazzin"], "album, any"),
         ),
+        # Canonicalize original genre when force is **off** and
+        # whitelist, canonical and cleanup_existing are on.
+        # "Cosmic Disco" is not in the default whitelist, thus gets resolved "up" in the
+        # tree to "Disco" and "Electronic".
+        (
+            {
+                "force": False,
+                "keep_existing": False,
+                "source": "artist",
+                "whitelist": True,
+                "canonical": True,
+                "cleanup_existing": True,
+                "prefer_specific": False,
+                "count": 10,
+            },
+            ["Cosmic Disco"],
+            {
+                "artist": [],
+            },
+            (
+                ["Disco", "Electronic"],
+                "keep + original, whitelist",
+            ),
+        ),
         # fallback to next stages until found
         (
             {
@@ -313,6 +339,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "whitelist": False,
                 "canonical": False,
                 "prefer_specific": False,
+                "count": 10,
             },
             ["unknown genre"],
             {
@@ -567,6 +594,7 @@ def test_get_genre(config_values, item_genre, mock_genres, expected_result):
     # Initialize plugin instance and item
     plugin = lastgenre.LastGenrePlugin()
     # Configure
+    plugin.config.set(lastgenre.LastGenrePlugin.default_configuration())
     plugin.config.set(config_values)
     plugin.setup()  # Loads default whitelist and canonicalization tree
 
