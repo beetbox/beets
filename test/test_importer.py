@@ -1526,7 +1526,7 @@ class ImportPretendTest(IOMixin, AutotagImportTestCase):
         assert self.__run(importer) == [f"No files imported from {empty_path}"]
 
 
-def mocked_get_album_by_id(id_):
+def mocked_get_album_by_id(id_, _):
     """Return album candidate for the given id.
 
     The two albums differ only in the release title and artist name, so that

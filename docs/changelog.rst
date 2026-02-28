@@ -43,6 +43,9 @@ New features
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
 
+- The ``albuminfo_received`` event has been deprecated in favor of the new
+  ``album_info_received`` event, which includes information about the ``Item``
+  set being imported.
 - If you maintain a metadata source plugin that populates the ``genre`` field,
   please update it to populate a list of ``genres`` instead. You will see a
   deprecation warning for now, but support for populating the single ``genre``
@@ -84,8 +87,8 @@ Bug fixes
 - :doc:`plugins/badfiles`: Fix number of found errors in log message
 - :doc:`plugins/replaygain`: Avoid magic Windows prefix in calls to command
   backends, such as ``mp3gain``. :bug:`2946`
-- :doc:`plugins/mbpseudo`: Fix crash due to missing ``artist_credit`` field in
-  the MusicBrainz API response. :bug:`6339`
+- ``plugins/mbpseudo``: Fix crash due to missing ``artist_credit`` field in the
+  MusicBrainz API response. :bug:`6339`
 
 ..
     For plugin developers
@@ -130,7 +133,7 @@ New features
 - :doc:`plugins/importsource`: Added new plugin that tracks original import
   paths and optionally suggests removing source files when items are removed
   from the library.
-- :doc:`plugins/mbpseudo`: Add a new ``mbpseudo`` plugin to proactively receive
+- ``plugins/mbpseudo``: Add a new ``mbpseudo`` plugin to proactively receive
   MusicBrainz pseudo-releases as recommendations during import.
 - Added support for Python 3.13.
 - :doc:`/plugins/convert`: ``force`` can be passed to override checks like
@@ -234,7 +237,7 @@ For plugin developers
 
   - :doc:`plugins/listenbrainz`
   - :doc:`plugins/mbcollection`
-  - :doc:`plugins/mbpseudo`
+  - ``plugins/mbpseudo``
   - :doc:`plugins/missing`
   - :doc:`plugins/musicbrainz`
   - :doc:`plugins/parentwork`

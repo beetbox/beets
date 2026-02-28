@@ -21,12 +21,13 @@ from beets import config, logging
 from beets.util import cached_classproperty
 from beets.util.id_extractors import extract_release_id
 
-from .plugins import BeetsPlugin, find_plugins, notify_info_yielded
+from .plugins import BeetsPlugin, find_plugins, notify_info_yielded, send
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator, Sequence
 
-    from .autotag.hooks import AlbumInfo, Item, TrackInfo
+    from .autotag.hooks import AlbumInfo, TrackInfo
+    from .library.models import Item
 
     Ret = TypeVar("Ret")
 
@@ -95,8 +96,10 @@ def tracks_for_ids(*args, **kwargs) -> Iterator[TrackInfo]:
     yield from ()
 
 
-def album_for_id(_id: str) -> AlbumInfo | None:
-    return next(albums_for_ids([_id]), None)
+def album_for_id(_id: str, items: Iterable[Item]) -> AlbumInfo | None:
+    album_info = next(albums_for_ids([_id]), None)
+    send("album_info_received", items=items, album_info=album_info)
+    return album_info
 
 
 def track_for_id(_id: str) -> TrackInfo | None:
