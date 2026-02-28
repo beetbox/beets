@@ -1315,6 +1315,7 @@ class Database:
             for name, typ in fields.items():
                 columns.append(f"{name} {typ.sql}")
             setup_sql = f"CREATE TABLE {table} ({', '.join(columns)});\n"
+            self.db_tables[table]["columns"] = set(fields)
         else:
             # Table exists does not match the field set.
             setup_sql = ""
@@ -1327,8 +1328,6 @@ class Database:
 
         with self.transaction() as tx:
             tx.script(setup_sql)
-
-        self.db_tables[table]["columns"] = set(fields)
 
     def _make_attribute_table(self, flex_table: str):
         """Create a table and associated index for flexible attributes
