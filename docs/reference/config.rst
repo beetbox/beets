@@ -919,11 +919,13 @@ distance_weights
 ~~~~~~~~~~~~~~~~
 
 The ``distance_weights`` option allows you to customize how much each field
-contributes to the overall distance score when matching albums and tracks. Higher
-weights mean that differences in that field are penalized more heavily, making
-them more important in the matching decision.
+contributes to the overall distance score when matching albums and tracks.
+Higher weights mean that differences in that field are penalized more heavily,
+making them more important in the matching decision.
 
-The defaults are::
+The defaults are:
+
+::
 
     match:
         distance_weights:
@@ -949,7 +951,9 @@ The defaults are::
             medium: 1.0
 
 For example, if you don't care as much about matching the exact release year,
-you can reduce its weight::
+you can reduce its weight:
+
+::
 
     match:
         distance_weights:
