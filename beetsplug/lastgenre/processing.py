@@ -98,9 +98,45 @@ class GenreProcessor:
         # retaining empty tags from multi-valued fields.
         cleaned = [g for g in genres if g and g.strip()]
 
+        # Short-circuit: if no filters configured, return cleaned list
+        if not self.whitelist and not self.blacklist:
+            return cleaned
+
+        # Pre-compute blacklist patterns once (avoid repeated dict lookups)
+        global_patterns = None
+        artist_patterns = None
+        artist_lower = None
+
+        if self.blacklist:
+            global_patterns = self.blacklist.get("*")
+            if artist:
+                artist_lower = artist.lower()
+                artist_patterns = self.blacklist.get(artist_lower)
+
         result = []
         for genre in cleaned:
-            if self.is_valid(genre) and not self.is_forbidden(genre, artist):
+            # Lowercase once per genre
+            genre_lower = genre.lower()
+
+            # Whitelist check (if configured)
+            if self.whitelist and genre_lower not in self.whitelist:
+                continue
+
+            # Blacklist check (if configured) - inline to avoid function call
+            forbidden = False
+            if global_patterns:
+                for pattern in global_patterns:
+                    if pattern.search(genre_lower):
+                        forbidden = True
+                        break
+
+            if not forbidden and artist_patterns:
+                for pattern in artist_patterns:
+                    if pattern.search(genre_lower):
+                        forbidden = True
+                        break
+
+            if not forbidden:
                 result.append(genre)
 
         return result
