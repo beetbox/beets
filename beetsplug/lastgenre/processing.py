@@ -50,6 +50,34 @@ class GenreProcessor:
             return True
         return False
 
+    def _matches_blacklist_patterns(
+        self,
+        genre_lower: str,
+        global_patterns: list | None,
+        artist_patterns: list | None,
+    ) -> bool:
+        """Check if a lowercased genre matches any blacklist patterns.
+
+        Args:
+            genre_lower: Genre string already lowercased
+            global_patterns: Global ("*") blacklist patterns or None
+            artist_patterns: Artist-specific blacklist patterns or None
+
+        Returns:
+            True if genre matches any pattern, False otherwise
+        """
+        if global_patterns:
+            for pattern in global_patterns:
+                if pattern.search(genre_lower):
+                    return True
+
+        if artist_patterns:
+            for pattern in artist_patterns:
+                if pattern.search(genre_lower):
+                    return True
+
+        return False
+
     def is_forbidden(self, genre: str, artist: str | None = None) -> bool:
         """Check if genre matches blacklist patterns.
 
@@ -59,23 +87,17 @@ class GenreProcessor:
         if not self.blacklist:
             return False
 
-        genre = genre.lower()
+        genre_lower = genre.lower()
+        global_patterns = self.blacklist.get("*")
+        artist_patterns = None
 
-        # Check global forbidden patterns
-        if "*" in self.blacklist:
-            for pattern in self.blacklist["*"]:
-                if pattern.search(genre):
-                    return True
-
-        # Check artist-specific forbidden patterns
         if artist:
-            artist = artist.lower()
-            if artist in self.blacklist:
-                for pattern in self.blacklist[artist]:
-                    if pattern.search(genre):
-                        return True
+            artist_lower = artist.lower()
+            artist_patterns = self.blacklist.get(artist_lower)
 
-        return False
+        return self._matches_blacklist_patterns(
+            genre_lower, global_patterns, artist_patterns
+        )
 
     def filter_genres(
         self, genres: Iterable[str], artist: str | None = None
@@ -122,22 +144,13 @@ class GenreProcessor:
             if self.whitelist and genre_lower not in self.whitelist:
                 continue
 
-            # Blacklist check (if configured) - inline to avoid function call
-            forbidden = False
-            if global_patterns:
-                for pattern in global_patterns:
-                    if pattern.search(genre_lower):
-                        forbidden = True
-                        break
+            # Blacklist check (if configured) - shared logic via helper
+            if self._matches_blacklist_patterns(
+                genre_lower, global_patterns, artist_patterns
+            ):
+                continue
 
-            if not forbidden and artist_patterns:
-                for pattern in artist_patterns:
-                    if pattern.search(genre_lower):
-                        forbidden = True
-                        break
-
-            if not forbidden:
-                result.append(genre)
+            result.append(genre)
 
         return result
 
