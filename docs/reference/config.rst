@@ -925,7 +925,7 @@ making them more important in the matching decision.
 
 The defaults are:
 
-::
+.. code-block:: yaml
 
     match:
         distance_weights:
@@ -953,7 +953,7 @@ The defaults are:
 For example, if you don't care as much about matching the exact release year,
 you can reduce its weight:
 
-::
+.. code-block:: yaml
 
     match:
         distance_weights:
