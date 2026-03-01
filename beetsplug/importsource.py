@@ -26,11 +26,12 @@ class ImportSourcePlugin(BeetsPlugin):
             }
         )
         self.import_stages = [self.import_stage]
+        # In order to stop future removal suggestions for an album we keep
+        # track of `mb_albumid`s in this set. Always initialize to avoid
+        # AttributeError when methods access this even if feature disabled.
+        self.stop_suggestions_for_albums = set()
         # Only register removal suggestion listeners if the feature is enabled
         if self.config["suggest_removal"]:
-            # In order to stop future removal suggestions for an album we keep
-            # track of `mb_albumid`s in this set.
-            self.stop_suggestions_for_albums = set()
             self.register_listener("item_removed", self.suggest_removal)
             # During reimports (import --library) both the import_task_choice and
             # the item_removed event are triggered. The item_removed event is
