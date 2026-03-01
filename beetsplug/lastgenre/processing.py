@@ -77,8 +77,39 @@ class GenreProcessor:
 
         return False
 
+    def filter_genres(
+        self, genres: Iterable[str], artist: str | None = None
+    ) -> list[str]:
+        """Filter genres through whitelist and blacklist validation.
+
+        Returns genres that:
+        - Pass whitelist validation (if configured)
+        - Don't match blacklist patterns (if configured)
+        - Are not empty or whitespace-only
+
+        Args:
+            genres: Iterable of genre strings to filter
+            artist: Optional artist name for artist-specific blacklist checks
+
+        Returns:
+            List of valid genres that pass all filters
+        """
+        # First, drop any falsy or whitespace-only genre strings to avoid
+        # retaining empty tags from multi-valued fields.
+        cleaned = [g for g in genres if g and g.strip()]
+
+        result = []
+        for genre in cleaned:
+            if self.is_valid(genre) and not self.is_forbidden(genre, artist):
+                result.append(genre)
+
+        return result
+
     def _filter_valid(self, genres: Iterable[str]) -> list[str]:
-        """Filter genres based on whitelist.
+        """Filter genres based on whitelist only.
+
+        .. deprecated::
+            Use :meth:`filter_genres` instead for unified validation.
 
         Returns all genres if no whitelist is configured, otherwise returns
         only genres that are in the whitelist.

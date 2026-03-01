@@ -163,8 +163,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 # Add parents that are in the whitelist, or add the oldest
                 # ancestor if no whitelist
                 if self.processor.whitelist:
-                    parents = self.processor._filter_valid(
-                        self.find_parents(tag, self.c14n_branches)
+                    parents = self.processor.filter_genres(
+                        self.find_parents(tag, self.c14n_branches),
+                        artist=artist,
                     )
                 else:
                     parents = [self.find_parents(tag, self.c14n_branches)[-1]]
@@ -187,13 +188,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # c14n only adds allowed genres but we may have had forbidden genres in
         # the original tags list
-        # valid_tags = self._filter_valid(tags)
-        valid_tags = [
-            t
-            for t in tags
-            if self.processor.is_valid(t)
-            and not self.processor.is_forbidden(t, artist=artist)
-        ]
+        valid_tags = self.processor.filter_genres(tags, artist=artist)
         return valid_tags[:count]
 
     # Main processing: _get_genre() and helpers.
@@ -351,7 +346,12 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # Nothing found, leave original if configured and valid.
         if genres and self.config["keep_existing"].get(bool):
-            if valid_genres := self._filter_valid(genres):
+            artist = getattr(obj, "albumartist", None) or getattr(
+                obj, "artist", None
+            )
+            if valid_genres := self.processor.filter_genres(
+                genres, artist=artist
+            ):
                 return valid_genres, "original fallback"
             # If the original genre doesn't match a whitelisted genre, check
             # if we can canonicalize it to find a matching, whitelisted genre!
