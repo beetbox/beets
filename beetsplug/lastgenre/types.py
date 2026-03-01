@@ -17,6 +17,8 @@
 
 from __future__ import annotations
 
+import re
+
 Whitelist = set[str]
 """Set of valid genre names (lowercase). Empty set means all genres allowed."""
 
@@ -28,3 +30,11 @@ GenreCache = dict[str, list[str]]
 """Cache mapping entity keys to their genre lists.
 Keys are formatted as 'entity.arg1-arg2-...' (e.g., 'album.artist-title').
 Values are lists of lowercase genre strings."""
+
+RawBlacklist = dict[str, list[str]]
+"""Artist name -> unparsed regex pattern strings for forbidden genres.
+Key "*" for global patterns. Intermediate format before compilation."""
+
+Blacklist = dict[str, list[re.Pattern[str]]]
+"""Artist name -> compiled regex patterns for forbidden genres.
+Key "*" for global patterns applying to all artists."""

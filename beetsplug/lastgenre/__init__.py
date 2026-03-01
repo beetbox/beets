@@ -34,11 +34,11 @@ from beets.util import plurality, unique_list
 
 from .client import LastFmClient
 from .loaders import DataFileLoader
+from .processing import GenreProcessor
 from .utils import make_tunelog
 
 if TYPE_CHECKING:
     import optparse
-    from collections.abc import Iterable
 
     from beets.importer import ImportSession, ImportTask
     from beets.library import LibModel
@@ -64,6 +64,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 "prefer_specific": False,
                 "title_case": True,
                 "pretend": False,
+                "blacklist": False,
             }
         )
         self.setup()
@@ -74,16 +75,17 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             self.import_stages = [self.imported]
 
         self._tunelog = make_tunelog(self._log)
-        self.client = LastFmClient(
-            self._log, self.config["min_weight"].get(int)
-        )
 
         loader = DataFileLoader.from_config(
             self.config, self._log, Path(__file__).parent
         )
-        self.whitelist = loader.whitelist
+        self.processor = GenreProcessor(loader.whitelist, loader.blacklist)
         self.c14n_branches = loader.c14n_branches
         self.canonicalize = loader.canonicalize
+
+        self.client = LastFmClient(
+            self._log, self.config["min_weight"].get(int), self.processor
+        )
 
     @property
     def sources(self) -> tuple[str, ...]:
@@ -129,7 +131,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 continue
         return [candidate]
 
-    def _resolve_genres(self, tags: list[str]) -> list[str]:
+    def _resolve_genres(
+        self, tags: list[str], artist: str | None = None
+    ) -> list[str]:
         """Canonicalize, sort and filter a list of genres.
 
         - Returns an empty list if the input tags list is empty.
@@ -158,8 +162,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             for tag in tags:
                 # Add parents that are in the whitelist, or add the oldest
                 # ancestor if no whitelist
-                if self.whitelist:
-                    parents = self._filter_valid(
+                if self.processor.whitelist:
+                    parents = self.processor._filter_valid(
                         self.find_parents(tag, self.c14n_branches)
                     )
                 else:
@@ -183,22 +187,14 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # c14n only adds allowed genres but we may have had forbidden genres in
         # the original tags list
-        valid_tags = self._filter_valid(tags)
+        # valid_tags = self._filter_valid(tags)
+        valid_tags = [
+            t
+            for t in tags
+            if self.processor.is_valid(t)
+            and not self.processor.is_forbidden(t, artist=artist)
+        ]
         return valid_tags[:count]
-
-    def _filter_valid(self, genres: Iterable[str]) -> list[str]:
-        """Filter genres based on whitelist.
-
-        Returns all genres if no whitelist is configured, otherwise returns
-        only genres that are in the whitelist.
-        """
-        # First, drop any falsy or whitespace-only genre strings to avoid
-        # retaining empty tags from multi-valued fields.
-        cleaned = [g for g in genres if g and g.strip()]
-        if not self.whitelist:
-            return cleaned
-
-        return [g for g in cleaned if g.lower() in self.whitelist]
 
     # Main processing: _get_genre() and helpers.
 
@@ -219,13 +215,13 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         return genres_list
 
     def _combine_resolve_and_log(
-        self, old: list[str], new: list[str]
+        self, old: list[str], new: list[str], artist: str | None = None
     ) -> list[str]:
         """Combine old and new genres and process via _resolve_genres."""
         self._log.debug("raw last.fm tags: {}", new)
         self._log.debug("existing genres taken into account: {}", old)
         combined = old + new
-        return self._resolve_genres(combined)
+        return self._resolve_genres(combined, artist=artist)
 
     def _get_genre(self, obj: LibModel) -> tuple[list[str], str]:
         """Get the final genre list for an Album or Item object.
@@ -251,11 +247,14 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             stage_label: str, keep_genres: list[str], new_genres: list[str]
         ) -> tuple[list[str], str] | None:
             """Try to resolve genres for a given stage and log the result."""
+            artist = getattr(obj, "albumartist", None) or getattr(
+                obj, "artist", None
+            )
             resolved_genres = self._combine_resolve_and_log(
-                keep_genres, new_genres
+                keep_genres, new_genres, artist=artist
             )
             if resolved_genres:
-                suffix = "whitelist" if self.whitelist else "any"
+                suffix = "whitelist" if self.processor.whitelist else "any"
                 label = f"{stage_label}, {suffix}"
                 if keep_genres:
                     label = f"keep + {label}"
@@ -351,7 +350,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     return result
 
         # Nothing found, leave original if configured and valid.
-        if genres and self.config["keep_existing"]:
+        if genres and self.config["keep_existing"].get(bool):
             if valid_genres := self._filter_valid(genres):
                 return valid_genres, "original fallback"
             # If the original genre doesn't match a whitelisted genre, check
