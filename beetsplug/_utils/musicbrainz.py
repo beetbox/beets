@@ -36,6 +36,33 @@ log = logging.getLogger("beets")
 
 LUCENE_SPECIAL_CHAR_PAT = re.compile(r'([-+&|!(){}[\]^"~*?:\\/])')
 
+RELEASE_INCLUDES = [
+    "artists",
+    "media",
+    "recordings",
+    "release-groups",
+    "labels",
+    "artist-credits",
+    "aliases",
+    "recording-level-rels",
+    "work-rels",
+    "work-level-rels",
+    "artist-rels",
+    "isrcs",
+    "url-rels",
+    "release-rels",
+    "genres",
+    "tags",
+]
+
+RECORDING_INCLUDES = [
+    "artists",
+    "aliases",
+    "isrcs",
+    "work-level-rels",
+    "artist-rels",
+]
+
 
 class LimiterTimeoutSession(LimiterMixin, TimeoutAndRetrySession):
     """HTTP session that enforces rate limits."""
@@ -223,12 +250,14 @@ class MusicBrainzAPI(RequestHandler):
 
     def get_release(self, id_: str, **kwargs: Unpack[LookupKwargs]) -> JSONDict:
         """Retrieve a release by its MusicBrainz ID."""
+        kwargs.setdefault("includes", RELEASE_INCLUDES)
         return self._lookup("release", id_, **kwargs)
 
     def get_recording(
         self, id_: str, **kwargs: Unpack[LookupKwargs]
     ) -> JSONDict:
         """Retrieve a recording by its MusicBrainz ID."""
+        kwargs.setdefault("includes", RECORDING_INCLUDES)
         return self._lookup("recording", id_, **kwargs)
 
     def get_work(self, id_: str, **kwargs: Unpack[LookupKwargs]) -> JSONDict:

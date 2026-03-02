@@ -262,8 +262,9 @@ class SmartPlaylistPlugin(BeetsPlugin):
                 "Updating {} smart playlists...", len(self._matched_playlists)
             )
 
-        playlist_dir = self.config["playlist_dir"].as_filename()
-        playlist_dir = bytestring_path(playlist_dir)
+        playlist_dir = bytestring_path(
+            self.config["playlist_dir"].as_filename()
+        )
         tpl = self.config["uri_format"].get()
         prefix = bytestring_path(self.config["prefix"].as_str())
         relative_to = self.config["relative_to"].get()
@@ -358,8 +359,8 @@ class SmartPlaylistPlugin(BeetsPlugin):
                         if extm3u:
                             attr = [(k, entry.item[k]) for k in keys]
                             al = [
-                                f' {key}="{quote(str(value), safe="/:")}"'
-                                for key, value in attr
+                                f' {k}="{quote("; ".join(v) if isinstance(v, list) else str(v), safe="/:")}"'  # noqa: E501
+                                for k, v in attr
                             ]
                             attrs = "".join(al)
                             comment = (

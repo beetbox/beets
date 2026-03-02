@@ -474,7 +474,7 @@ class BeatportTest(BeetsTestCase):
             item.year = 2016
             item.comp = False
             item.label_name = "Gravitas Recordings"
-            item.genre = "Glitch Hop"
+            item.genres = ["Glitch Hop", "Breaks"]
             item.year = 2016
             item.month = 4
             item.day = 11
@@ -583,7 +583,7 @@ class BeatportTest(BeetsTestCase):
 
     def test_genre_applied(self):
         for track, test_track in zip(self.tracks, self.test_tracks):
-            assert track.genre == test_track.genre
+            assert track.genres == test_track.genres
 
 
 class BeatportResponseEmptyTest(unittest.TestCase):
@@ -634,7 +634,7 @@ class BeatportResponseEmptyTest(unittest.TestCase):
 
         self.test_tracks[0]["subGenres"] = []
 
-        assert tracks[0].genre == self.test_tracks[0]["genres"][0]["name"]
+        assert tracks[0].genres == [self.test_tracks[0]["genres"][0]["name"]]
 
     def test_genre_empty(self):
         """No 'genre' is provided. Test if 'sub_genre' is applied."""
@@ -643,4 +643,4 @@ class BeatportResponseEmptyTest(unittest.TestCase):
 
         self.test_tracks[0]["genres"] = []
 
-        assert tracks[0].genre == self.test_tracks[0]["subGenres"][0]["name"]
+        assert tracks[0].genres == [self.test_tracks[0]["subGenres"][0]["name"]]
