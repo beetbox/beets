@@ -31,13 +31,10 @@ def check_permissions(path, permission):
     return oct(stat.S_IMODE(os.stat(syspath(path)).st_mode)) == oct(permission)
 
 
-def assert_permissions(path, permission, log) -> bool:
+def assert_permissions(path, permission, log):
     """Check whether the file's permissions are as expected, otherwise,
     log a warning message. Return a boolean indicating the match, like
     `check_permissions`.
-
-    Returns:
-        True if the permissions are as expected, False otherwise.
     """
     if not check_permissions(path, permission):
         log.warning("could not set permissions on {}", displayable_path(path))

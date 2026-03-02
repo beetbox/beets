@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import platformdirs
 
 import beets
-from beets import dbcore
+from beets import dbcore, ui
 from beets.util import normpath
 
 from .migrations import MultiGenreFieldMigration
@@ -14,7 +14,6 @@ from .queries import PF_KEY_DEFAULT, parse_query_parts, parse_query_string
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
-
     from beets.dbcore import Results
 
 
@@ -136,8 +135,6 @@ class Library(dbcore.Database):
         unit: str = "item",
     ) -> "Iterator[Item]":
         """Iterate over items while displaying a progress bar."""
-        from beets import ui
-
         for item in ui.iprogress_bar(
             self.items(query, sort),
             desc=desc,
@@ -153,8 +150,6 @@ class Library(dbcore.Database):
         unit: str = "album",
     ) -> "Iterator[Album]":
         """Iterate over albums while displaying a progress bar."""
-        from beets import ui
-
         for album in ui.iprogress_bar(
             self.albums(query, sort),
             desc=desc,

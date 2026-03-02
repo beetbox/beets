@@ -291,7 +291,7 @@ class DuplicatesPlugin(BeetsPlugin):
             unit="items",
         ):
             values = [getattr(obj, k, None) for k in keys]
-            values = list(filter(lambda v: v not in (None, ""), values))
+            values = [v for v in values if v not in (None, "")]
             if strict and len(values) < len(keys):
                 self._log.debug(
                     "some keys {} on item {.filepath} are null or empty: skipping",

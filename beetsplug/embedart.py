@@ -119,14 +119,15 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                         f"image file {displayable_path(imagepath)} not found"
                     )
 
-                # Confirm with user.
                 items = lib.items(args)
+
+                # Confirm with user.
                 if not opts.yes and not _confirm(items, not opts.file):
                     return
 
-                for item in lib.items_with_progress(
-                    "Embedding artwork",
-                    args,
+                for item in ui.iprogress_bar(
+                    items,
+                    desc="Embedding artwork",
                     unit="items",
                 ):
                     art.embed_item(
@@ -163,9 +164,9 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 if not opts.yes and not _confirm(items, not opts.url):
                     os.remove(tempimg)
                     return
-                for item in lib.items_with_progress(
-                    "Embedding artwork",
-                    args,
+                for item in ui.iprogress_bar(
+                    items,
+                    desc="Embedding artwork",
                     unit="items",
                 ):
                     art.embed_item(
@@ -184,9 +185,9 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 albums = lib.albums(args)
                 if not opts.yes and not _confirm(albums, not opts.file):
                     return
-                for album in lib.albums_with_progress(
-                    "Embedding artwork",
-                    args,
+                for album in ui.iprogress_bar(
+                    albums,
+                    desc="Embedding artwork",
                     unit="albums",
                 ):
                     art.embed_album(
