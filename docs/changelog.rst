@@ -58,6 +58,11 @@ For plugin developers
   please update it to populate a list of ``genres`` instead. You will see a
   deprecation warning for now, but support for populating the single ``genre``
   field will be removed in version ``3.0.0``.
+- :doc:`dev/plugins/other/progressbars`: The :class:`~beets.library.Library` now provides
+  :meth:`~beets.library.Library.items_with_progress` and
+  :meth:`~beets.library.Library.albums_with_progress` for iterating over items
+  or albums while showing a progress bar, reducing duplication when using
+  ``ui.iprogress_bar`` with library queries.
 
 Other changes
 ~~~~~~~~~~~~~

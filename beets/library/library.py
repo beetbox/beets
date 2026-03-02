@@ -13,6 +13,8 @@ from .models import Album, Item
 from .queries import PF_KEY_DEFAULT, parse_query_parts, parse_query_string
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from beets.dbcore import Results
 
 
@@ -125,6 +127,40 @@ class Library(dbcore.Database):
     def items(self, query=None, sort=None) -> Results[Item]:
         """Get :class:`Item` objects matching the query."""
         return self._fetch(Item, query, sort or self.get_default_item_sort())
+
+    def items_with_progress(
+        self,
+        desc: str,
+        query=None,
+        sort=None,
+        unit: str = "item",
+    ) -> "Iterator[Item]":
+        """Iterate over items while displaying a progress bar."""
+        from beets import ui
+
+        for item in ui.iprogress_bar(
+            self.items(query, sort),
+            desc=desc,
+            unit=unit,
+        ):
+            yield item
+
+    def albums_with_progress(
+        self,
+        desc: str,
+        query=None,
+        sort=None,
+        unit: str = "album",
+    ) -> "Iterator[Album]":
+        """Iterate over albums while displaying a progress bar."""
+        from beets import ui
+
+        for album in ui.iprogress_bar(
+            self.albums(query, sort),
+            desc=desc,
+            unit=unit,
+        ):
+            yield album
 
     # Convenience accessors.
     def get_item(self, id_: int) -> Item | None:
