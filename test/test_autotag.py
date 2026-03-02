@@ -229,7 +229,6 @@ class ApplyTest(BeetsTestCase):
             },
         ]
 
-    @pytest.mark.xfail(reason="Album genres are not applied to tracks")
     def test_autotag_items(self):
         self._apply()
 

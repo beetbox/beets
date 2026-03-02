@@ -44,6 +44,9 @@ Bug fixes
 - :doc:`plugins/zero`: When the ``omit_single_disc`` option is set,
   ``disctotal`` is zeroed alongside ``disc``.
 - :doc:`plugins/fetchart`: Prevent deletion of configured fallback cover art
+- In autotagging, initialise empty multi-valued fields with ``None`` instead of
+  empty list, which caused beets to overwrite existing metadata with empty list
+  values instead of leaving them unchanged. :bug:`6403`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
