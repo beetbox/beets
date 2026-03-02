@@ -41,6 +41,8 @@ Bug fixes
 
 - :doc:`plugins/ftintitle`: Fix handling of multiple featured artists with
   ampersand.
+- :doc:`plugins/zero`: When the ``omit_single_disc`` option is set,
+  ``disctotal`` is zeroed alongside ``disc``.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
