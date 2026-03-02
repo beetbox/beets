@@ -227,9 +227,9 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             custom_words = self.config["custom_words"].get(list)
             write = ui.should_write()
 
-            for item in ui.iprogress_bar(
-                lib.items(args),
-                desc="Analyzing songs",
+            for item in lib.items_with_progress(
+                "Analyzing songs",
+                args,
                 unit="songs",
             ):
                 if self.ft_in_title(
