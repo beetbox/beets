@@ -36,9 +36,11 @@ New features
   3. Comma followed by a space
   4. Slash wrapped by spaces
 
-..
-    Bug fixes
-    ~~~~~~~~~
+Bug fixes
+~~~~~~~~~
+
+- :doc:`plugins/ftintitle`: Fix handling of multiple featured artists with
+  ampersand.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
@@ -86,8 +88,6 @@ Bug fixes
   backends, such as ``mp3gain``. :bug:`2946`
 - :doc:`plugins/mbpseudo`: Fix crash due to missing ``artist_credit`` field in
   the MusicBrainz API response. :bug:`6339`
-- :doc:`plugins/ftintitle`: Fix handling of multiple featured artists with
-  ampersand.
 
 ..
     For plugin developers
