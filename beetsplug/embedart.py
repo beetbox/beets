@@ -119,15 +119,14 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                         f"image file {displayable_path(imagepath)} not found"
                     )
 
-                items = lib.items(args)
-
                 # Confirm with user.
+                items = lib.items(args)
                 if not opts.yes and not _confirm(items, not opts.file):
                     return
 
-                for item in ui.iprogress_bar(
-                    items,
-                    desc="Embedding artwork",
+                for item in lib.items_with_progress(
+                    "Embedding artwork",
+                    args,
                     unit="items",
                 ):
                     art.embed_item(
@@ -159,14 +158,14 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 except Exception as e:
                     self._log.error("Unable to save image: {}", e)
                     return
-                items = lib.items(args)
                 # Confirm with user.
+                items = lib.items(args)
                 if not opts.yes and not _confirm(items, not opts.url):
                     os.remove(tempimg)
                     return
-                for item in ui.iprogress_bar(
-                    items,
-                    desc="Embedding artwork",
+                for item in lib.items_with_progress(
+                    "Embedding artwork",
+                    args,
                     unit="items",
                 ):
                     art.embed_item(
@@ -181,13 +180,13 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                     )
                 os.remove(tempimg)
             else:
-                albums = lib.albums(args)
                 # Confirm with user.
+                albums = lib.albums(args)
                 if not opts.yes and not _confirm(albums, not opts.file):
                     return
-                for album in ui.iprogress_bar(
-                    albums,
-                    desc="Embedding artwork",
+                for album in lib.albums_with_progress(
+                    "Embedding artwork",
+                    args,
                     unit="albums",
                 ):
                     art.embed_album(

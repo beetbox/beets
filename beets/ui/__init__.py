@@ -35,8 +35,8 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Generator,
     Iterable,
+    Iterator,
     Literal,
     Sized,
     TypeVar,
@@ -1259,23 +1259,26 @@ class CommonOptionsParser(optparse.OptionParser):
         self.add_format_option()
 
 
-T = TypeVar("T", covariant=True)
+T_co = TypeVar("T_co", covariant=True)
 U = TypeVar("U")
 
 
-class SizedIterable(Protocol[T], Sized, Iterable[T]):
+class SizedIterable(Protocol[T_co], Sized, Iterable[T_co]):
     pass
 
 
 def iprogress_bar(
     sequence: Union[Iterable[U], SizedIterable[U]], **kwargs
-) -> Generator[U, None, None]:
+) -> Iterator[U]:
     """Construct and manage an `enlighten.Counter` progress bar while iterating.
 
     Example usage:
     ```
     for album in ui.iprogress_bar(
-        lib.albums(), desc="Updating albums", unit="albums"):
+        lib.albums(),
+        desc="Updating albums",
+        unit="albums",
+    ):
         do_something_to(album)
     ```
 
@@ -1295,10 +1298,6 @@ def iprogress_bar(
     Yields:
         The items from the sequence.
     """
-    if sequence is None:
-        log.error("sequence must not be None")
-        return
-
     # If the total was not directly set, and the iterable is sized, then use its size as
     # the progress bar's total.
     if "total" not in kwargs:
