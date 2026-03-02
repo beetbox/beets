@@ -12,9 +12,6 @@ Unreleased
 New features
 ~~~~~~~~~~~~
 
-New features
-~~~~~~~~~~~~
-
 - Add native support for multiple genres per album/track. The ``genres`` field
   now stores genres as a list and is written to files as multiple individual
   genre tags (e.g., separate GENRE tags for FLAC/MP3). The
@@ -59,8 +56,8 @@ For plugin developers
   please update it to populate a list of ``genres`` instead. You will see a
   deprecation warning for now, but support for populating the single ``genre``
   field will be removed in version ``3.0.0``.
-- :doc:`dev/plugins/other/progressbars`: The :class:`~beets.library.Library` now provides
-  :meth:`~beets.library.Library.items_with_progress` and
+- :doc:`dev/plugins/other/progressbars`: The :class:`~beets.library.Library` now
+  provides :meth:`~beets.library.Library.items_with_progress` and
   :meth:`~beets.library.Library.albums_with_progress` for iterating over items
   or albums while showing a progress bar, reducing duplication when using
   ``ui.iprogress_bar`` with library queries.
@@ -320,11 +317,12 @@ Other changes
   automatically. Applied it to :doc:`plugins/deezer`, :doc:`plugins/discogs`,
   :doc:`plugins/musicbrainz` and :doc:`plugins/spotify` plugins documentation.
 
-For developers and plugin authors:
+For developers and plugin authors
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- :doc:`dev/plugins/other/progressbars`: Added progress bar helper function -
-  `ui.iprogress_bar`, which can be used by plugin authors to consistently show
-  progress in the terminal for long-running operations. :bug:`5711`
+- :doc:`dev/plugins/other/progressbars`: Added progress bar helper function
+  ``ui.iprogress_bar``, which can be used by plugin authors to consistently
+  show progress in the terminal for long-running operations. :bug:`5711`
 
 2.5.0 (October 11, 2025)
 ------------------------

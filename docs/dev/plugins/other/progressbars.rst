@@ -3,7 +3,7 @@
 Progress Bars
 =============
 
-Progress Bars for long-running operations provide valuable feedback to the user,
+Progress bars for long-running operations provide valuable feedback to the user,
 giving a realistic expectation of how long the command will take to finish, and
 reassuring them that progress is being made. A standard implementation of
 progress bars for Beets is available in the core UI module as
@@ -74,8 +74,8 @@ items to process can be provided with the ``total`` kwarg, for example:
         self.handle_track(item)
 
 A simple method for displaying progress while applying a function to all results
-in parallel is to use the ``concurrent.futures.ThreadPoolExecutor#map`` method,
-and to iterate over its results, for example:
+in parallel is to use the ``ThreadPoolExecutor.map()`` method, and to iterate
+over its results, for example:
 
 .. code-block:: python
 
