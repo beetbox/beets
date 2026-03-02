@@ -327,7 +327,7 @@ def summarize_items(items, singleton):
     return ", ".join(summary_parts)
 
 
-def _summary_judgment(rec):
+def _summary_judgment(rec: Recommendation) -> importer.Action | None:
     """Determines whether a decision should be made without even asking
     the user. This occurs in quiet mode and when an action is chosen for
     NONE recommendations. Return None if the user should be queried.
@@ -335,6 +335,7 @@ def _summary_judgment(rec):
     summary judgment is made.
     """
 
+    action: importer.Action | None
     if config["import"]["quiet"]:
         if rec == Recommendation.strong:
             return importer.Action.APPLY

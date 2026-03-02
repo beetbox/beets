@@ -19,7 +19,7 @@ copyright = "2016, Adrian Sampson"
 master_doc = "index"
 language = "en"
 version = "2.6"
-release = "2.6.1"
+release = "2.6.2"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -98,7 +98,7 @@ man_pages = [
 ]
 
 # Global substitutions that can be used anywhere in the documentation.
-rst_epilog = """
+rst_epilog = r"""
 .. |Album| replace:: :class:`~beets.library.models.Album`
 .. |AlbumInfo| replace:: :class:`beets.autotag.hooks.AlbumInfo`
 .. |BeetsPlugin| replace:: :class:`beets.plugins.BeetsPlugin`
@@ -108,6 +108,7 @@ rst_epilog = """
 .. |Library| replace:: :class:`~beets.library.library.Library`
 .. |Model| replace:: :class:`~beets.dbcore.db.Model`
 .. |TrackInfo| replace:: :class:`beets.autotag.hooks.TrackInfo`
+.. |semicolon_space| replace:: :literal:`; \ `
 """
 
 # -- Options for HTML output -------------------------------------------------

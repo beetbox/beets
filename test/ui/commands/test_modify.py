@@ -2,23 +2,24 @@ import unittest
 
 from mediafile import MediaFile
 
-from beets.test.helper import BeetsTestCase, control_stdin
+from beets.test.helper import BeetsTestCase, IOMixin
 from beets.ui.commands.modify import modify_parse_args
 from beets.util import syspath
 
 
-class ModifyTest(BeetsTestCase):
+class ModifyTest(IOMixin, BeetsTestCase):
     def setUp(self):
         super().setUp()
         self.album = self.add_album_fixture()
         [self.item] = self.album.items()
 
-    def modify_inp(self, inp, *args):
-        with control_stdin(inp):
-            self.run_command("modify", *args)
+    def modify_inp(self, inp: list[str], *args):
+        for chat in inp:
+            self.io.addinput(chat)
+        self.run_command("modify", *args)
 
     def modify(self, *args):
-        self.modify_inp("y", *args)
+        self.modify_inp(["y"], *args)
 
     # Item tests
 
@@ -30,14 +31,14 @@ class ModifyTest(BeetsTestCase):
     def test_modify_item_abort(self):
         item = self.lib.items().get()
         title = item.title
-        self.modify_inp("n", "title=newTitle")
+        self.modify_inp(["n"], "title=newTitle")
         item = self.lib.items().get()
         assert item.title == title
 
     def test_modify_item_no_change(self):
         title = "Tracktitle"
         item = self.add_item_fixture(title=title)
-        self.modify_inp("y", "title", f"title={title}")
+        self.modify_inp(["y"], "title", f"title={title}")
         item = self.lib.items(title).get()
         assert item.title == title
 
@@ -96,7 +97,9 @@ class ModifyTest(BeetsTestCase):
                 title=f"{title}{i}", artist=original_artist, album=album
             )
         self.modify_inp(
-            "s\ny\ny\ny\nn\nn\ny\ny\ny\ny\nn", title, f"artist={new_artist}"
+            ["s", "y", "y", "y", "n", "n", "y", "y", "y", "y", "n"],
+            title,
+            f"artist={new_artist}",
         )
         original_items = self.lib.items(f"artist:{original_artist}")
         new_items = self.lib.items(f"artist:{new_artist}")

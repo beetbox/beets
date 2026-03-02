@@ -324,6 +324,11 @@ def test_find_feat_part(
         ("Alice feat. Bob", ("Alice", "Bob")),
         ("Alice featuring Bob", ("Alice", "Bob")),
         ("Alice & Bob", ("Alice", "Bob")),
+        ("Alice, Bob & Charlie", ("Alice", "Bob & Charlie")),
+        (
+            "Alice, Bob & Charlie feat. Xavier",
+            ("Alice, Bob & Charlie", "Xavier"),
+        ),
         ("Alice and Bob", ("Alice", "Bob")),
         ("Alice With Bob", ("Alice", "Bob")),
         ("Alice defeat Bob", ("Alice defeat Bob", None)),
@@ -454,7 +459,9 @@ def test_custom_words(
     assert ftintitle.contains_feat(given, custom_words) is expected
 
 
-def test_album_template_value():
+def test_album_template_value(config):
+    config["ftintitle"]["custom_words"] = []
+
     album = Album()
     album["albumartist"] = "Foo ft. Bar"
     assert ftintitle._album_artist_no_feat(album) == "Foo"
