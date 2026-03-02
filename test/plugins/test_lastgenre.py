@@ -203,6 +203,16 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
         assert res == ["ambient", "electronic"]
 
 
+@pytest.fixture
+def config(config):
+    """Provide a fresh beets configuration for every test/parameterize call
+
+    This is necessary to prevent the following parameterized test to bleed
+    config test state in between test cases.
+    """
+    return config
+
+
 @pytest.mark.parametrize(
     "config_values, item_genre, mock_genres, expected_result",
     [
@@ -232,6 +242,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "whitelist": True,
                 "canonical": False,
                 "prefer_specific": False,
+                "count": 10,
             },
             ["original unknown", "Blues"],
             {
@@ -264,6 +275,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "whitelist": True,
                 "canonical": False,
                 "prefer_specific": False,
+                "count": 10,
             },
             ["original unknown", "Blues"],
             {
@@ -313,6 +325,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "whitelist": False,
                 "canonical": False,
                 "prefer_specific": False,
+                "count": 10,
             },
             ["unknown genre"],
             {
@@ -545,7 +558,9 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
         ),
     ],
 )
-def test_get_genre(config_values, item_genre, mock_genres, expected_result):
+def test_get_genre(
+    config, config_values, item_genre, mock_genres, expected_result
+):
     """Test _get_genre with various configurations."""
 
     def mock_fetch_track_genre(self, trackartist, tracktitle):
