@@ -36,9 +36,11 @@ New features
   3. Comma followed by a space
   4. Slash wrapped by spaces
 
-..
-    Bug fixes
-    ~~~~~~~~~
+Bug fixes
+~~~~~~~~~
+
+- :doc:`plugins/ftintitle`: Fix handling of multiple featured artists with
+  ampersand.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
