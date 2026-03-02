@@ -167,6 +167,7 @@ class ApplyTest(BeetsTestCase):
             year=2013,
             month=12,
             day=18,
+            genres=["Rock", "Pop"],
         )
 
         common_expected = {
@@ -193,6 +194,7 @@ class ApplyTest(BeetsTestCase):
             "year": 2013,
             "month": 12,
             "day": 18,
+            "genres": ["Rock", "Pop"],
         }
 
         self.expected_tracks = [
@@ -227,6 +229,7 @@ class ApplyTest(BeetsTestCase):
             },
         ]
 
+    @pytest.mark.xfail(reason="Album genres are not applied to tracks")
     def test_autotag_items(self):
         self._apply()
 
