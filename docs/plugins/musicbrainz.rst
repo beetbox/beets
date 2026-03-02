@@ -42,6 +42,15 @@ Default
             tidal: no
         data_source_mismatch_penalty: 0.5
         search_limit: 5
+        pseudo_releases:
+            scripts: []
+            custom_tags_only: no
+            album_custom_tags:
+                album_transl: album
+                album_artist_transl: artist
+            track_custom_tags:
+                title_transl: title
+                artist_transl: artist
 
 .. conf:: host
     :default: musicbrainz.org
@@ -157,3 +166,82 @@ Default
 .. _limited: https://musicbrainz.org/doc/XML_Web_Service/Rate_Limiting
 
 .. _main server: https://musicbrainz.org/
+
+Pseudo-Releases
+---------------
+
+This plugin can also search for MusicBrainz pseudo-releases_ during the import
+process, which are added to the normal candidates from the MusicBrainz search.
+
+.. _pseudo-releases: https://musicbrainz.org/doc/Style/Specific_types_of_releases/Pseudo-Releases
+
+This is useful for releases whose title and track titles are written with a
+script_ that can be translated or transliterated into a different one.
+
+.. _script: https://en.wikipedia.org/wiki/ISO_15924
+
+The configuration expects an array of scripts that are desired for the
+pseudo-releases. For ``artist`` in particular, keep in mind that even
+pseudo-releases might specify it with the original script, so you should also
+configure import :ref:`languages` to give artist aliases more priority.
+Therefore, the minimum configuration to enable this functionality looks like
+this:
+
+.. code-block:: yaml
+
+    import:
+        languages: en
+
+    musicbrainz:
+        # other config not shown
+        pseudo_releases:
+            scripts:
+            - Latn
+
+Pseudo-releases will only be included if the initial search in MusicBrainz
+returns releases whose script is *not* desired and whose relationships include
+pseudo-releases with desired scripts.
+
+By default, the data from the pseudo-release will be used to create a proposal
+that is independent from the original release and sets all properties in its
+metadata. It's possible to change the configuration so that some information
+from the pseudo-release is instead added as custom tags, keeping the metadata
+from the original release:
+
+.. code-block:: yaml
+
+    musicbrainz:
+        pseudo_releases:
+            # other config not shown
+            custom_tags_only: yes
+
+The default custom tags with this configuration are specified as mappings where
+the keys define the tag names and the values define the pseudo-release property
+that will be used to set the tag's value:
+
+.. code-block:: yaml
+
+    musicbrainz:
+        pseudo_releases:
+            # other config not shown
+            album_custom_tags:
+                album_transl: album
+                album_artist_transl: artist
+            track_custom_tags:
+                title_transl: title
+                artist_transl: artist
+
+Note that the information for each set of custom tags corresponds to different
+metadata levels (album or track level), which is why ``artist`` appears twice
+even though it effectively references album artist and track artist
+respectively.
+
+If you want to modify any mapping under ``album_custom_tags`` or
+``track_custom_tags``, you must specify *everything* for that set of tags in
+your configuration file because any customization replaces the whole dictionary
+of mappings for that level.
+
+.. note::
+
+    These custom tags are also added to the music files, not only to the
+    database.

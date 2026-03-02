@@ -6,8 +6,6 @@
 
 /beetsplug/titlecase.py @henry-oberholtzer
 
-/beetsplug/mbpseudo.py @asardaes
-
 /beetsplug/_utils/requests.py @snejus
 /beetsplug/_utils/musicbrainz.py @snejus
 /beetsplug/musicbrainz.py @snejus
