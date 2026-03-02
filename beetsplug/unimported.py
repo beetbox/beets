@@ -55,9 +55,7 @@ class Unimported(BeetsPlugin):
             in_library = {x.path for x in lib.items()}
             art_files = {x.artpath for x in lib.albums()}
             unimported_files = in_folder - in_library - art_files
-            for f in ui.iprogress_bar(
-                unimported_files, desc="Listing", unit="file"
-            ):
+            for f in ui.iprogress_bar(unimported_files, desc="Identifying", unit="file"):
                 print_(util.displayable_path(f))
 
         unimported = Subcommand(
