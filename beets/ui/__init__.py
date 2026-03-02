@@ -1287,6 +1287,12 @@ def iprogress_bar(
     with white and blue to indicate total progress and the portion of items that have
     been modified.
 
+    Progress bars are disabled in Windows environments and when not attached to a TTY.
+
+    The progress bar's description should be the action being performed without
+    specifying the object type, i.e. "Updating" but not "Updating items". The unit
+    should be singular, i.e. "item" but not "items".
+
     Args:
         sequence: An `Iterable` sequence to iterate over. If provided, and the
             sequence can return its length, then the length will be used as the

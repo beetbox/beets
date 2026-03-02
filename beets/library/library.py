@@ -134,7 +134,19 @@ class Library(dbcore.Database):
         sort=None,
         unit: str = "item",
     ) -> "Iterator[Item]":
-        """Iterate over items while displaying a progress bar."""
+        """Iterate over items while displaying a progress bar.
+        
+        Args:
+            desc: The description of the progress bar. Semantically should be
+                the action being performed on the items without specifying the
+                object type, i.e. "Updating" but not "Updating items".
+            query: The query to filter the items, equivalent to
+                :meth:`Library.items`'s `query` argument.
+            sort: The sort to apply to the items, equivalent to
+                :meth:`Library.items`'s `sort` argument.
+            unit: The unit of the progress bar, defaults to "item".
+                Should be singular, i.e. "item" but not "items".
+        """
         for item in ui.iprogress_bar(
             self.items(query, sort),
             desc=desc,
@@ -149,7 +161,19 @@ class Library(dbcore.Database):
         sort=None,
         unit: str = "album",
     ) -> "Iterator[Album]":
-        """Iterate over albums while displaying a progress bar."""
+        """Iterate over albums while displaying a progress bar.
+        
+        Args:
+            desc: The description of the progress bar. Should be the action
+                being performed on the albums without specifying the object
+                type, i.e. "Updating" but not "Updating albums".
+            query: The query to filter the albums, equivalent to
+                :meth:`Library.albums`'s `query` argument.
+            sort: The sort to apply to the albums, equivalent to
+                :meth:`Library.albums`'s `sort` argument.
+            unit: The unit of the progress bar, defaults to "album". Should be
+                singular, i.e. "album" but not "albums".
+        """
         for album in ui.iprogress_bar(
             self.albums(query, sort),
             desc=desc,

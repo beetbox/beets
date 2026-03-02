@@ -165,7 +165,7 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         if count:
             fmt += ": $missing"
         
-        for album in ui.iprogress_bar(albums, desc="Analyzing albums", unit="albums"):
+        for album in ui.iprogress_bar(albums, desc="Analyzing", unit="album"):
             if count:
                 if _missing_count(album):
                     print_(format(album, fmt))
