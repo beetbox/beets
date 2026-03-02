@@ -176,7 +176,14 @@ registration process in this case:
 
 ``albuminfo_received``
     :Parameters: ``info`` (|AlbumInfo|)
-    :Description: Like ``trackinfo_received`` but for album-level metadata.
+    :Description: Deprecated. Like ``trackinfo_received`` but for album-level
+        metadata.
+
+``album_info_received``
+    :Parameters: ``items`` (``Sequence`` of |Item|), ``album_info``
+        (|AlbumInfo|)
+    :Description: After searching based on the given ``items``, the specified
+        ``album_info`` was received.
 
 ``album_matched``
     :Parameters: ``match`` (``AlbumMatch``)

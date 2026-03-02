@@ -14,7 +14,7 @@ import operator
 import re
 from dataclasses import dataclass, field
 from functools import cached_property, singledispatchmethod, wraps
-from itertools import groupby, starmap
+from itertools import chain, groupby, starmap
 from typing import TYPE_CHECKING, Any, Literal, ParamSpec, TypedDict, TypeVar
 
 from requests_ratelimiter import LimiterMixin
@@ -231,6 +231,8 @@ class MusicBrainzAPI(RequestHandler):
         self,
         entity: Entity,
         filters: dict[str, str],
+        advanced: bool = True,
+        *args: str,
         **kwargs: Unpack[SearchKwargs],
     ) -> list[JSONDict]:
         """Search for MusicBrainz entities matching the given filters.
@@ -241,9 +243,21 @@ class MusicBrainzAPI(RequestHandler):
           - 'value' is empty, in which case the filter is ignored
         * Values are lowercased and stripped of whitespace.
         """
-        query = " ".join(
-            filter(None, starmap(self.format_search_term, filters.items()))
-        )
+        if advanced:
+            query = " ".join(
+                filter(None, starmap(self.format_search_term, filters.items()))
+            )
+        else:
+            params = chain(
+                (str(arg) for arg in args),
+                (
+                    f'{k}:"{_v}"'
+                    for k, v in filters.items()
+                    if (_v := v.lower().strip())
+                ),
+            )
+            query = " ".join(params)
+
         log.debug("Searching for MusicBrainz {}s with: {!r}", entity, query)
         kwargs["query"] = query
         return self._get_resource(entity, **kwargs)[f"{entity}s"]
