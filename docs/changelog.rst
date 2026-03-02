@@ -22,6 +22,10 @@ New features
   deprecate ``overwrite``.
 - :doc:`plugins/autobpm`: The "BPM already exists for item" log message can now
   be hidden with the ``--quiet`` flag.
+- :doc:`plugins/smartplaylist`: The list of available playlists shown when an
+  unknown playlist name is passed as an argument is now sorted alphabetically
+  and printed space-delimited and POSIX shell-quoted when required. This makes
+  it easier to copy and paste multiple playlists for further use in the shell.
 
 Bug fixes
 ~~~~~~~~~
