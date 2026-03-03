@@ -53,7 +53,8 @@ def config_edit(cli_options):
 
     if not editor:
         raise ui.UserError(
-            "Please set the VISUAL or EDITOR environment variable to edit configuration."
+            "Please set the VISUAL or EDITOR environment variable to edit"
+            " configuration."
         )
     try:
         if not os.path.isfile(path):
