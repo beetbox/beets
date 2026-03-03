@@ -231,7 +231,7 @@ cmd = "ruff format --config=pyproject.toml"
 
 [tool.poe.tasks.format-docs]
 help = "Format the documentation"
-cmd = "docstrfmt docs *.rst"
+cmd = "docstrfmt docs/dev/plugins/other/progressbars.rst"
 
 [tool.poe.tasks.lint]
 help = "Check the code for linting issues. Accepts ruff options."
