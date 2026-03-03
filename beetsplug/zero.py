@@ -81,7 +81,9 @@ class ZeroPlugin(BeetsPlugin):
             ):
                 return
 
-            for item in lib.items_with_progress("Zeroing fields", args, unit="item"):
+            for item in lib.items_with_progress(
+                "Zeroing fields", args, unit="item"
+            ):
                 self.process_item(item)
 
         zero_command.func = zero_fields

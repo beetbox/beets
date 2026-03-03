@@ -1332,17 +1332,13 @@ class ItemsWithProgressTest(BeetsTestCase):
         i1.store()
         i2.store()
         progress_list = list(
-            self.lib.items_with_progress(
-                "Test", query="title:aaa", unit="item"
-            )
+            self.lib.items_with_progress("Test", query="title:aaa", unit="item")
         )
         assert len(progress_list) == 1
         assert progress_list[0].title == "aaa"
 
     def test_items_with_progress_empty_library(self):
-        progress_list = list(
-            self.lib.items_with_progress("Test", unit="item")
-        )
+        progress_list = list(self.lib.items_with_progress("Test", unit="item"))
         assert progress_list == []
 
 
