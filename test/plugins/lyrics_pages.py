@@ -23,6 +23,7 @@ class LyricsPage(NamedTuple):
     lyrics: str
     artist: str = "The Beatles"
     track_title: str = "Lady Madonna"
+    language: str = "EN"
     url_title: str | None = None  # only relevant to the Google backend
     marks: list[str] = []  # markers for pytest.param  # noqa: RUF012
 
@@ -127,6 +128,7 @@ lyrics_pages = [
         """,
         artist="Atlanta",
         track_title="Mergaitės Nori Mylėt",
+        language="LT",
         url_title="Mergaitės nori mylėt – Atlanta | Dainų Žodžiai",
         marks=[xfail_on_ci("Expired SSL certificate")],
     ),
@@ -221,6 +223,7 @@ lyrics_pages = [
         Je me demande comment vous vous débrouillez pour joindre les deux bouts
         """,
         url_title="Paroles et traduction The Beatles : Lady Madonna - paroles de chanson",  # noqa: E501
+        language="FR",
     ),
     LyricsPage.make(
         # note that this URL needs to be followed with a slash, otherwise it
@@ -268,7 +271,7 @@ lyrics_pages = [
         url_title="Lady Madonna - The Beatles - LETRAS.MUS.BR",
     ),
     LyricsPage.make(
-        "https://lrclib.net/api/get/14038",
+        "https://lrclib.net/api/get/19648857",
         """
         [00:08.35] Lady Madonna, children at your feet
         [00:12.85] Wonder how you manage to make ends meet
