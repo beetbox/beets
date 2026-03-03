@@ -724,13 +724,13 @@ class TestTranslation:
             pytest.param(
                 """
                 [00:00.00] Some synced lyrics
-                [00:00:50]
+                [00:00.50]
                 [00:01.00] Some more synced lyrics
                 """,
                 Lyrics("", ""),
                 """
                 [00:00.00] Some synced lyrics / Quelques paroles synchronisées
-                [00:00:50]
+                [00:00.50]
                 [00:01.00] Some more synced lyrics / Quelques paroles plus synchronisées""",  # noqa: E501
                 id="synced",
             ),
