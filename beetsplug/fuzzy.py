@@ -22,8 +22,12 @@ from beets.plugins import BeetsPlugin
 
 
 class FuzzyQuery(StringFieldQuery[str]):
+    def __init__(self, field_name: str, pattern: str, *_) -> None:
+        # Fuzzy matching is only available via `string_match`.
+        super().__init__(field_name, pattern, fast=False)
+
     @classmethod
-    def string_match(cls, pattern: str, val: str):
+    def string_match(cls, pattern: str, val: str) -> bool:
         # smartcase
         if pattern.islower():
             val = val.lower()
@@ -45,7 +49,7 @@ class FuzzyQuery(StringFieldQuery[str]):
 
 
 class FuzzyPlugin(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.config.add(
             {
