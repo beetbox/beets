@@ -30,7 +30,6 @@ import textwrap
 import traceback
 from difflib import SequenceMatcher
 from functools import cache
-from itertools import chain
 from typing import TYPE_CHECKING, Any, Literal
 
 import confuse
@@ -472,13 +471,13 @@ CODE_BY_COLOR = {
     "normal": 0,
     "bold": 1,
     "faint": 2,
-    # "italic":       3,
+    "italic": 3,
     "underline": 4,
-    # "blink_slow":   5,
-    # "blink_rapid":  6,
+    "blink_slow": 5,
+    "blink_rapid": 6,
     "inverse": 7,
-    # "conceal":      8,
-    # "crossed_out":  9
+    "conceal": 8,
+    "crossed_out": 9,
     # Text colors.
     "black": 30,
     "red": 31,
@@ -488,6 +487,14 @@ CODE_BY_COLOR = {
     "magenta": 35,
     "cyan": 36,
     "white": 37,
+    "bright_black": 90,
+    "bright_red": 91,
+    "bright_green": 92,
+    "bright_yellow": 93,
+    "bright_blue": 94,
+    "bright_magenta": 95,
+    "bright_cyan": 96,
+    "bright_white": 97,
     # Background colors.
     "bg_black": 40,
     "bg_red": 41,
@@ -497,6 +504,14 @@ CODE_BY_COLOR = {
     "bg_magenta": 45,
     "bg_cyan": 46,
     "bg_white": 47,
+    "bg_bright_black": 100,
+    "bg_bright_red": 101,
+    "bg_bright_green": 102,
+    "bg_bright_yellow": 103,
+    "bg_bright_blue": 104,
+    "bg_bright_magenta": 105,
+    "bg_bright_cyan": 106,
+    "bg_bright_white": 107,
 }
 RESET_COLOR = f"{COLOR_ESCAPE}[39;49;00m"
 # Precompile common ANSI-escape regex patterns
@@ -535,18 +550,20 @@ def get_color_config() -> dict[ColorName, str]:
     legacy single-color format. Validates all color names against known codes
     and raises an error for any invalid entries.
     """
-    colors_by_color_name: dict[ColorName, list[str]] = {
-        k: (v if isinstance(v, list) else LEGACY_COLORS.get(v, [v]))
-        for k, v in config["ui"]["colors"].flatten().items()
-    }
-
-    if invalid_colors := (
-        set(chain.from_iterable(colors_by_color_name.values()))
-        - CODE_BY_COLOR.keys()
-    ):
-        raise UserError(
-            f"Invalid color(s) in configuration: {', '.join(invalid_colors)}"
+    template_dict: dict[ColorName, confuse.OneOf[str | list[str]]] = {
+        n: confuse.OneOf(
+            [
+                confuse.Choice(sorted(LEGACY_COLORS)),
+                confuse.Sequence(confuse.Choice(sorted(CODE_BY_COLOR))),
+            ]
         )
+        for n in ColorName.__args__  # type: ignore[attr-defined]
+    }
+    template = confuse.MappingTemplate(template_dict)
+    colors_by_color_name = {
+        k: (v if isinstance(v, list) else LEGACY_COLORS.get(v, [v]))
+        for k, v in config["ui"]["colors"].get(template).items()
+    }
 
     return {
         n: ";".join(str(CODE_BY_COLOR[c]) for c in colors)
@@ -554,15 +571,16 @@ def get_color_config() -> dict[ColorName, str]:
     }
 
 
-def colorize(color_name: ColorName, text: str) -> str:
-    """Apply ANSI color formatting to text based on configuration settings.
+def _colorize(color_name: ColorName, text: str) -> str:
+    """Apply ANSI color formatting to text based on configuration settings."""
+    color_code = get_color_config()[color_name]
+    return f"{COLOR_ESCAPE}[{color_code}m{text}{RESET_COLOR}"
 
-    Returns colored text when color output is enabled and NO_COLOR environment
-    variable is not set, otherwise returns plain text unchanged.
-    """
+
+def colorize(color_name: ColorName, text: str) -> str:
+    """Colorize text when color output is enabled."""
     if config["ui"]["color"] and "NO_COLOR" not in os.environ:
-        color_code = get_color_config()[color_name]
-        return f"{COLOR_ESCAPE}[{color_code}m{text}{RESET_COLOR}"
+        return _colorize(color_name, text)
 
     return text
 
@@ -626,32 +644,12 @@ def color_len(colored_text):
     return len(uncolorize(colored_text))
 
 
-def _colordiff(a: Any, b: Any) -> tuple[str, str]:
-    """Given two values, return the same pair of strings except with
-    their differences highlighted in the specified color. Strings are
-    highlighted intelligently to show differences; other values are
-    stringified and highlighted in their entirety.
-    """
-    # First, convert paths to readable format
-    if isinstance(a, bytes) or isinstance(b, bytes):
-        # A path field.
-        a = util.displayable_path(a)
-        b = util.displayable_path(b)
-
-    if not isinstance(a, str) or not isinstance(b, str):
-        # Non-strings: use ordinary equality.
-        if a == b:
-            return str(a), str(b)
-        else:
-            return (
-                colorize("text_diff_removed", str(a)),
-                colorize("text_diff_added", str(b)),
-            )
-
+def colordiff(a: str, b: str) -> tuple[str, str]:
+    """Intelligently highlight the differences between two strings."""
     before = ""
     after = ""
 
-    matcher = SequenceMatcher(lambda x: False, a, b)
+    matcher = SequenceMatcher(lambda _: False, a, b)
     for op, a_start, a_end, b_start, b_end in matcher.get_opcodes():
         before_part, after_part = a[a_start:a_end], b[b_start:b_end]
         if op in {"delete", "replace"}:
@@ -663,16 +661,6 @@ def _colordiff(a: Any, b: Any) -> tuple[str, str]:
         after += after_part
 
     return before, after
-
-
-def colordiff(a, b):
-    """Colorize differences between two values if color is enabled.
-    (Like _colordiff but conditional.)
-    """
-    if config["ui"]["color"]:
-        return _colordiff(a, b)
-    else:
-        return str(a), str(b)
 
 
 def get_path_formats(subview=None):
@@ -1031,6 +1019,18 @@ def print_newline_layout(
 FLOAT_EPSILON = 0.01
 
 
+def _multi_value_diff(field: str, oldset: set[str], newset: set[str]) -> str:
+    added = newset - oldset
+    removed = oldset - newset
+
+    parts = [
+        f"{field}:",
+        *(colorize("text_diff_removed", f"  - {i}") for i in sorted(removed)),
+        *(colorize("text_diff_added", f"  + {i}") for i in sorted(added)),
+    ]
+    return "\n".join(parts)
+
+
 def _field_diff(
     field: str, old: FormattedMapping, new: FormattedMapping
 ) -> str | None:
@@ -1046,6 +1046,11 @@ def _field_diff(
     ):
         return None
 
+    if isinstance(oldval, list):
+        if (oldset := set(oldval)) != (newset := set(newval)):
+            return _multi_value_diff(field, oldset, newset)
+        return None
+
     # Get formatted values for output.
     oldstr, newstr = old.get(field, ""), new.get(field, "")
     if field not in new:
@@ -1054,8 +1059,7 @@ def _field_diff(
     if field not in old:
         return colorize("text_diff_added", f"{field}: {newstr}")
 
-    # For strings, highlight changes. For others, colorize the whole
-    # thing.
+    # For strings, highlight changes. For others, colorize the whole thing.
     if isinstance(oldval, str):
         oldstr, newstr = colordiff(oldstr, newstr)
     else:

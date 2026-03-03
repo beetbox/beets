@@ -34,7 +34,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeVar
 
 from beets import ui
 from beets.plugins import BeetsPlugin
-from beets.util import command_output, displayable_path, syspath
+from beets.util import command_output, syspath
 
 if TYPE_CHECKING:
     import optparse
@@ -425,7 +425,7 @@ class FfmpegBackend(Backend):
         # call ffmpeg
         self._log.debug("analyzing {}", item)
         cmd = self._construct_cmd(item, peak_method)
-        self._log.debug("executing {}", " ".join(map(displayable_path, cmd)))
+        self._log.debug("executing {}", " ".join(cmd))
         output = call(cmd, self._log).stderr.splitlines()
 
         # parse output
@@ -643,18 +643,20 @@ class CommandBackend(Backend):
         # tag-writing; this turns the mp3gain/aacgain tool into a gain
         # calculator rather than a tag manipulator because we take care
         # of changing tags ourselves.
-        cmd: list[str] = [self.command, "-o", "-s", "s"]
-        if self.noclip:
-            # Adjust to avoid clipping.
-            cmd = [*cmd, "-k"]
-        else:
-            # Disable clipping warning.
-            cmd = [*cmd, "-c"]
-        cmd = [*cmd, "-d", str(int(target_level - 89))]
-        cmd = cmd + [syspath(i.path) for i in items]
+        cmd = [
+            self.command,
+            "-o",
+            "-s",
+            "s",
+            # Avoid clipping or disable clipping warning
+            "-k" if self.noclip else "-c",
+            "-d",
+            str(int(target_level - 89)),
+            *[str(i.filepath) for i in items],
+        ]
 
         self._log.debug("analyzing {} files", len(items))
-        self._log.debug("executing {}", " ".join(map(displayable_path, cmd)))
+        self._log.debug("executing {}", " ".join(cmd))
         output = call(cmd, self._log).stdout
         self._log.debug("analysis finished")
         return self.parse_tool_output(

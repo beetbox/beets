@@ -165,7 +165,7 @@ class MoveTest(BeetsTestCase):
         self.i.move(operation=MoveOperation.LINK)
         assert self.dest.exists()
         assert os.path.islink(syspath(self.dest))
-        assert self.dest.resolve() == self.path
+        assert self.dest.resolve() == self.path.resolve()
 
     @unittest.skipUnless(_common.HAVE_SYMLINK, "need symlinks")
     def test_link_does_not_depart(self):

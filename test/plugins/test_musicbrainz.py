@@ -15,10 +15,12 @@
 """Tests for MusicBrainz API wrapper."""
 
 import unittest
+import uuid
 from typing import ClassVar
 from unittest import mock
 
 import pytest
+import requests
 
 from beets import config
 from beets.library import Item
@@ -50,7 +52,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
             "asin": "ALBUM ASIN",
             "disambiguation": "R_DISAMBIGUATION",
             "release-group": {
-                "type": "Album",
+                "primary-type": "Album",
                 "first-release-date": date_str,
                 "id": "RELEASE GROUP ID",
                 "disambiguation": "RG_DISAMBIGUATION",
@@ -524,20 +526,20 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         config["musicbrainz"]["genres_tag"] = "genre"
         release = self._make_release()
         d = self.mb.album_info(release)
-        assert d.genre == "GENRE"
+        assert d.genres == ["GENRE"]
 
     def test_tags(self):
         config["musicbrainz"]["genres"] = True
         config["musicbrainz"]["genres_tag"] = "tag"
         release = self._make_release()
         d = self.mb.album_info(release)
-        assert d.genre == "TAG"
+        assert d.genres == ["TAG"]
 
     def test_no_genres(self):
         config["musicbrainz"]["genres"] = False
         release = self._make_release()
         d = self.mb.album_info(release)
-        assert d.genre is None
+        assert d.genres is None
 
     def test_ignored_media(self):
         config["match"]["ignored_media"] = ["IGNORED1", "IGNORED2"]
@@ -688,6 +690,23 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert len(t) == 2
         assert t[0].trackdisambig is None
         assert t[1].trackdisambig == "SECOND TRACK"
+
+    def test_missing_tracks(self):
+        tracks = [
+            self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
+            self._make_track(
+                "TITLE TWO",
+                "ID TWO",
+                200.0 * 1000.0,
+                disambiguation="SECOND TRACK",
+            ),
+        ]
+        release = self._make_release(tracks=tracks)
+        release["media"].append(release["media"][0])
+        del release["media"][0]["tracks"]
+        del release["media"][0]["data-tracks"]
+        d = self.mb.album_info(release)
+        assert d.mediums == 2
 
 
 class ArtistFlatteningTest(unittest.TestCase):
@@ -1106,3 +1125,32 @@ class TestMusicBrainzPlugin(PluginMixin):
         assert len(candidates) == 1
         assert candidates[0].tracks[0].track_id == self.RECORDING["id"]
         assert candidates[0].album == "hi"
+
+    def test_import_handles_404_gracefully(self, mb, requests_mock):
+        id_ = uuid.uuid4()
+        response = requests.Response()
+        response.status_code = 404
+        requests_mock.get(
+            f"/ws/2/release/{id_}",
+            exc=requests.exceptions.HTTPError(response=response),
+        )
+        res = mb.album_for_id(str(id_))
+        assert res is None
+
+    def test_import_propagates_non_404_errors(self, mb):
+        class DummyResponse:
+            status_code = 500
+
+        error = requests.exceptions.HTTPError(response=DummyResponse())
+
+        def raise_error(*args, **kwargs):
+            raise error
+
+        # Simulate mb.mb_api.get_release raising a non-404 HTTP error
+        mb.mb_api.get_release = raise_error
+
+        with pytest.raises(requests.exceptions.HTTPError) as excinfo:
+            mb.album_for_id(str(uuid.uuid4()))
+
+        # Ensure the exact error is propagated, not swallowed
+        assert excinfo.value is error

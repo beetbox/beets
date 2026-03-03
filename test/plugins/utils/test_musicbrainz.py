@@ -1,3 +1,5 @@
+import pytest
+
 from beetsplug._utils.musicbrainz import MusicBrainzAPI
 
 
@@ -80,3 +82,15 @@ def test_group_relations():
             },
         ],
     }
+
+
+@pytest.mark.parametrize(
+    "field, term, expected",
+    [
+        ("artist", '  AC/DC + "[Live]"  ', r"artist:(ac\/dc \+ \"\[live\]\")"),
+        ("", "Foo:Bar", r"foo\:bar"),
+        ("artist", "   ", ""),
+    ],
+)
+def test_format_search_term(field, term, expected):
+    assert MusicBrainzAPI.format_search_term(field, term) == expected

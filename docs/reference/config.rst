@@ -467,14 +467,20 @@ Available attributes:
 
 Foreground colors
     ``black``, ``red``, ``green``, ``yellow``, ``blue``, ``magenta``, ``cyan``,
-    ``white``
+    ``white``, ``bright_black``, ``bright_red``, ``bright_green``,
+    ``bright_yellow``, ``bright_blue``, ``bright_magenta``, ``bright_cyan``,
+    ``bright_white``
 
 Background colors
     ``bg_black``, ``bg_red``, ``bg_green``, ``bg_yellow``, ``bg_blue``,
-    ``bg_magenta``, ``bg_cyan``, ``bg_white``
+    ``bg_magenta``, ``bg_cyan``, ``bg_white``, ``bg_bright_black``,
+    ``bg_bright_red``, ``bg_bright_green``, ``bg_bright_yellow``,
+    ``bg_bright_blue``, ``bg_bright_magenta``, ``bg_bright_cyan``,
+    ``bg_bright_white``
 
 Text styles
-    ``normal``, ``bold``, ``faint``, ``underline``, ``reverse``
+    ``normal``, ``bold``, ``faint``, ``italic``, ``underline``, ``blink_slow``,
+    ``blink_rapid``, ``inverse``, ``conceal``, ``crossed_out``
 
 terminal_width
 ~~~~~~~~~~~~~~
@@ -847,11 +853,11 @@ set_fields
 A dictionary indicating fields to set to values for newly imported music. Here's
 an example:
 
-::
+.. code-block:: yaml
 
     set_fields:
-        genre: 'To Listen'
-        collection: 'Unordered'
+        genres: To Listen
+        collection: Unordered
 
 Other field/value pairs supplied via the ``--set`` option on the command-line
 override any settings here for fields with the same name.
@@ -906,6 +912,55 @@ match is below the *medium* recommendation threshold or the distance between it
 and the next-best match is above the *gap* threshold, the importer will suggest
 that match but not automatically confirm it. Otherwise, you'll see a list of
 options to choose from.
+
+.. _distance-weights:
+
+distance_weights
+~~~~~~~~~~~~~~~~
+
+The ``distance_weights`` option allows you to customize how much each field
+contributes to the overall distance score when matching albums and tracks.
+Higher weights mean that differences in that field are penalized more heavily,
+making them more important in the matching decision.
+
+The defaults are:
+
+.. code-block:: yaml
+
+    match:
+        distance_weights:
+            data_source: 2.0
+            artist: 3.0
+            album: 3.0
+            media: 1.0
+            mediums: 1.0
+            year: 1.0
+            country: 0.5
+            label: 0.5
+            catalognum: 0.5
+            albumdisambig: 0.5
+            album_id: 5.0
+            tracks: 2.0
+            missing_tracks: 0.9
+            unmatched_tracks: 0.6
+            track_title: 3.0
+            track_artist: 2.0
+            track_index: 1.0
+            track_length: 2.0
+            track_id: 5.0
+            medium: 1.0
+
+For example, if you don't care as much about matching the exact release year,
+you can reduce its weight:
+
+.. code-block:: yaml
+
+    match:
+        distance_weights:
+            year: 0.1
+
+You only need to specify the fields you want to override; unspecified fields
+keep their default weights.
 
 .. _max_rec:
 
@@ -1166,9 +1221,9 @@ Here's an example file:
         color: yes
 
     paths:
-        default: $genre/$albumartist/$album/$track $title
+        default: %first{$genres}/$albumartist/$album/$track $title
         singleton: Singletons/$artist - $title
-        comp: $genre/$album/$track $title
+        comp: %first{$genres}/$album/$track $title
         albumtype:soundtrack: Soundtracks/$album/$track $title
 
 .. only:: man

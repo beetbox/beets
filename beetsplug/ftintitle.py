@@ -71,6 +71,12 @@ def split_on_feat(
     if len(parts) == 2:
         return parts
 
+    # Try comma as separator
+    # (e.g. "Alice, Bob & Charlie" where Bob and Charlie are featuring)
+    if for_artist and "," in artist:
+        comma_parts = artist.split(",", 1)
+        return comma_parts[0].strip(), comma_parts[1].strip()
+
     # Fall back to all tokens including generic separators if no explicit match
     if for_artist:
         regex = re.compile(

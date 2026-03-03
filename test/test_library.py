@@ -56,25 +56,18 @@ class LoadTest(ItemInDBTestCase):
 
 class StoreTest(ItemInDBTestCase):
     def test_store_changes_database_value(self):
-        self.i.year = 1987
+        new_year = 1987
+        self.i.year = new_year
         self.i.store()
-        new_year = (
-            self.lib._connection()
-            .execute("select year from items where title = ?", (self.i.title,))
-            .fetchone()["year"]
-        )
-        assert new_year == 1987
+
+        assert self.lib.get_item(self.i.id).year == new_year
 
     def test_store_only_writes_dirty_fields(self):
-        original_genre = self.i.genre
-        self.i._values_fixed["genre"] = "beatboxing"  # change w/o dirtying
+        new_year = 1987
+        self.i._values_fixed["year"] = new_year  # change w/o dirtying
         self.i.store()
-        new_genre = (
-            self.lib._connection()
-            .execute("select genre from items where title = ?", (self.i.title,))
-            .fetchone()["genre"]
-        )
-        assert new_genre == original_genre
+
+        assert self.lib.get_item(self.i.id).year != new_year
 
     def test_store_clears_dirty_flags(self):
         self.i.composer = "tvp"
@@ -688,14 +681,14 @@ class DestinationFunctionTest(BeetsTestCase, PathFormattingMixin):
         self._assert_dest(b"/base/not_played")
 
     def test_first(self):
-        self.i.genres = "Pop; Rock; Classical Crossover"
-        self._setf("%first{$genres}")
-        self._assert_dest(b"/base/Pop")
+        self.i.albumtypes = ["album", "compilation"]
+        self._setf("%first{$albumtypes}")
+        self._assert_dest(b"/base/album")
 
     def test_first_skip(self):
-        self.i.genres = "Pop; Rock; Classical Crossover"
-        self._setf("%first{$genres,1,2}")
-        self._assert_dest(b"/base/Classical Crossover")
+        self.i.albumtype = "album; ep; compilation"
+        self._setf("%first{$albumtype,1,2}")
+        self._assert_dest(b"/base/compilation")
 
     def test_first_different_sep(self):
         self._setf("%first{Alice / Bob / Eve,2,0, / , & }")

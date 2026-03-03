@@ -352,13 +352,11 @@ class DiscogsPlugin(MetadataSourcePlugin):
         mediums = [t["medium"] for t in tracks]
         country = result.data.get("country")
         data_url = result.data.get("uri")
-        style = self.format(result.data.get("styles"))
-        base_genre = self.format(result.data.get("genres"))
+        styles: list[str] = result.data.get("styles") or []
+        genres: list[str] = result.data.get("genres") or []
 
-        if self.config["append_style_genre"] and style:
-            genre = self.config["separator"].as_str().join([base_genre, style])
-        else:
-            genre = base_genre
+        if self.config["append_style_genre"]:
+            genres.extend(styles)
 
         discogs_albumid = self._extract_id(result.data.get("uri"))
 
@@ -412,8 +410,10 @@ class DiscogsPlugin(MetadataSourcePlugin):
             releasegroup_id=master_id,
             catalognum=catalogno,
             country=country,
-            style=style,
-            genre=genre,
+            style=(
+                self.config["separator"].as_str().join(sorted(styles)) or None
+            ),
+            genres=sorted(genres),
             media=media,
             original_year=original_year,
             data_source=self.data_source,
@@ -433,14 +433,6 @@ class DiscogsPlugin(MetadataSourcePlugin):
             return result.data.get("images")[0].get("uri")
 
         return None
-
-    def format(self, classification: Iterable[str]) -> str | None:
-        if classification:
-            return (
-                self.config["separator"].as_str().join(sorted(classification))
-            )
-        else:
-            return None
 
     def get_tracks(
         self,

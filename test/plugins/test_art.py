@@ -310,6 +310,16 @@ class FSArtTest(UseThePlugin):
         ]
         assert candidates == paths
 
+    @patch("os.path.samefile")
+    def test_is_candidate_fallback_os_error(self, mock_samefile):
+        mock_samefile.side_effect = OSError("os error")
+        fallback = os.path.join(self.temp_dir, b"a.jpg")
+        self.plugin.fallback = fallback
+        candidate = fetchart.Candidate(logger, self.source.ID, fallback)
+        result = self.plugin._is_candidate_fallback(candidate)
+        mock_samefile.assert_called_once()
+        assert not result
+
 
 class CombinedTest(FetchImageTestCase, CAAHelper):
     ASIN = "xxxx"

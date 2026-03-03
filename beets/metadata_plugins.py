@@ -9,69 +9,98 @@ from __future__ import annotations
 
 import abc
 import re
-from functools import cache, cached_property
+from contextlib import contextmanager, nullcontext
+from functools import cache, cached_property, wraps
 from typing import TYPE_CHECKING, Generic, Literal, TypedDict, TypeVar
 
 import unidecode
 from confuse import NotFoundError
 from typing_extensions import NotRequired
 
+from beets import config, logging
 from beets.util import cached_classproperty
 from beets.util.id_extractors import extract_release_id
 
-from .plugins import BeetsPlugin, find_plugins, notify_info_yielded, send
+from .plugins import BeetsPlugin, find_plugins, notify_info_yielded
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
+    from collections.abc import Callable, Iterable, Iterator, Sequence
 
     from .autotag.hooks import AlbumInfo, Item, TrackInfo
+
+    Ret = TypeVar("Ret")
+
+# Global logger.
+log = logging.getLogger("beets")
 
 
 @cache
 def find_metadata_source_plugins() -> list[MetadataSourcePlugin]:
     """Return a list of all loaded metadata source plugins."""
     # TODO: Make this an isinstance(MetadataSourcePlugin, ...) check in v3.0.0
+    # This should also allow us to remove the type: ignore comments below.
     return [p for p in find_plugins() if hasattr(p, "data_source")]  # type: ignore[misc]
 
 
+@contextmanager
+def handle_plugin_error(plugin: MetadataSourcePlugin, method_name: str):
+    """Safely call a plugin method, catching and logging exceptions."""
+    try:
+        yield
+    except Exception as e:
+        log.error("Error in '{}.{}': {}", plugin.data_source, method_name, e)
+        log.debug("Exception details:", exc_info=True)
+
+
+def _yield_from_plugins(
+    func: Callable[..., Iterable[Ret]],
+) -> Callable[..., Iterator[Ret]]:
+    method_name = func.__name__
+
+    @wraps(func)
+    def wrapper(*args, **kwargs) -> Iterator[Ret]:
+        for plugin in find_metadata_source_plugins():
+            method = getattr(plugin, method_name)
+            with (
+                nullcontext()
+                if config["raise_on_error"]
+                else handle_plugin_error(plugin, method_name)
+            ):
+                yield from filter(None, method(*args, **kwargs))
+
+    return wrapper
+
+
 @notify_info_yielded("albuminfo_received")
-def candidates(*args, **kwargs) -> Iterable[AlbumInfo]:
-    """Return matching album candidates from all metadata source plugins."""
-    for plugin in find_metadata_source_plugins():
-        yield from plugin.candidates(*args, **kwargs)
+@_yield_from_plugins
+def candidates(*args, **kwargs) -> Iterator[AlbumInfo]:
+    yield from ()
 
 
 @notify_info_yielded("trackinfo_received")
-def item_candidates(*args, **kwargs) -> Iterable[TrackInfo]:
-    """Return matching track candidates fromm all metadata source plugins."""
-    for plugin in find_metadata_source_plugins():
-        yield from plugin.item_candidates(*args, **kwargs)
+@_yield_from_plugins
+def item_candidates(*args, **kwargs) -> Iterator[TrackInfo]:
+    yield from ()
+
+
+@notify_info_yielded("albuminfo_received")
+@_yield_from_plugins
+def albums_for_ids(*args, **kwargs) -> Iterator[AlbumInfo]:
+    yield from ()
+
+
+@notify_info_yielded("trackinfo_received")
+@_yield_from_plugins
+def tracks_for_ids(*args, **kwargs) -> Iterator[TrackInfo]:
+    yield from ()
 
 
 def album_for_id(_id: str) -> AlbumInfo | None:
-    """Get AlbumInfo object for the given ID string.
-
-    A single ID can yield just a single album, so we return the first match.
-    """
-    for plugin in find_metadata_source_plugins():
-        if info := plugin.album_for_id(album_id=_id):
-            send("albuminfo_received", info=info)
-            return info
-
-    return None
+    return next(albums_for_ids([_id]), None)
 
 
 def track_for_id(_id: str) -> TrackInfo | None:
-    """Get TrackInfo object for the given ID string.
-
-    A single ID can yield just a single track, so we return the first match.
-    """
-    for plugin in find_metadata_source_plugins():
-        if info := plugin.track_for_id(_id):
-            send("trackinfo_received", info=info)
-            return info
-
-    return None
+    return next(tracks_for_ids([_id]), None)
 
 
 @cache

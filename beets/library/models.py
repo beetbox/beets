@@ -40,6 +40,7 @@ class LibModel(dbcore.Model["Library"]):
     # Config key that specifies how an instance should be formatted.
     _format_config_key: str
     path: bytes
+    length: float
 
     @cached_classproperty
     def _types(cls) -> dict[str, types.Type]:
@@ -240,7 +241,7 @@ class Album(LibModel):
         "albumartists_sort": types.MULTI_VALUE_DSV,
         "albumartists_credit": types.MULTI_VALUE_DSV,
         "album": types.STRING,
-        "genre": types.STRING,
+        "genres": types.MULTI_VALUE_DSV,
         "style": types.STRING,
         "discogs_albumid": types.INTEGER,
         "discogs_artistid": types.INTEGER,
@@ -275,7 +276,7 @@ class Album(LibModel):
         "original_day": types.PaddedInt(2),
     }
 
-    _search_fields = ("album", "albumartist", "genre")
+    _search_fields = ("album", "albumartist", "genres")
 
     @cached_classproperty
     def _types(cls) -> dict[str, types.Type]:
@@ -296,7 +297,7 @@ class Album(LibModel):
         "albumartist_credit",
         "albumartists_credit",
         "album",
-        "genre",
+        "genres",
         "style",
         "discogs_albumid",
         "discogs_artistid",
@@ -616,6 +617,11 @@ class Album(LibModel):
         for item in self.items():
             item.try_sync(write, move)
 
+    @cached_property
+    def length(self) -> float:  # type: ignore[override] # still writable since we override __setattr__
+        """Return the total length of all items in this album in seconds."""
+        return sum(item.length for item in self.items())
+
 
 class Item(LibModel):
     """Represent a song or track."""
@@ -644,7 +650,7 @@ class Item(LibModel):
         "albumartists_sort": types.MULTI_VALUE_DSV,
         "albumartist_credit": types.STRING,
         "albumartists_credit": types.MULTI_VALUE_DSV,
-        "genre": types.STRING,
+        "genres": types.MULTI_VALUE_DSV,
         "style": types.STRING,
         "discogs_albumid": types.INTEGER,
         "discogs_artistid": types.INTEGER,
@@ -718,6 +724,7 @@ class Item(LibModel):
         "mtime": types.DATE,
         "added": types.DATE,
     }
+    _indices = (dbcore.Index("idx_item_album_id", ("album_id",)),)
 
     _search_fields = (
         "artist",
@@ -725,7 +732,7 @@ class Item(LibModel):
         "comments",
         "album",
         "albumartist",
-        "genre",
+        "genres",
     )
 
     # Set of item fields that are backed by `MediaFile` fields.
@@ -1539,8 +1546,8 @@ class DefaultTemplateFunctions:
             s: the string
             count: The number of items included
             skip: The number of items skipped
-            sep: the separator. Usually is '; ' (default) or '/ '
-            join_str: the string which will join the items, default '; '.
+            sep: the separator
+            join_str: the string which will join the items
         """
         skip = int(skip)
         count = skip + int(count)
