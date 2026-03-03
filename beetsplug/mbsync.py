@@ -74,7 +74,7 @@ class MBSyncPlugin(BeetsPlugin):
         for item in lib.items_with_progress(
             "Syncing",
             [*query, "singleton:true"],
-            unit="singletons",
+            unit="singleton",
         ):
             if not item.mb_trackid:
                 self._log.info(
