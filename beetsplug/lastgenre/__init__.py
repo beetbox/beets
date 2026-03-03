@@ -45,13 +45,22 @@ if TYPE_CHECKING:
     from beets.importer import ImportSession, ImportTask
     from beets.library import LibModel
 
+    Whitelist = set[str]
+    """Set of valid genre names (lowercase). Empty set means all genres allowed."""
+
+    CanonTree = list[list[str]]
+    """Genre hierarchy as list of paths from general to specific.
+    Example: [['electronic', 'house'], ['electronic', 'techno']]"""
+
+
+
 # Canonicalization tree processing.
 
 
 def flatten_tree(
     elem: dict[Any, Any] | list[Any] | str,
     path: list[str],
-    branches: list[list[str]],
+    branches: CanonTree,
 ) -> None:
     """Flatten nested lists/dictionaries into lists of strings
     (branches).
@@ -69,7 +78,7 @@ def flatten_tree(
         branches.append([*path, str(elem)])
 
 
-def find_parents(candidate: str, branches: list[list[str]]) -> list[str]:
+def find_parents(candidate: str, branches: CanonTree) -> list[str]:
     """Find parents genre of a given genre, ordered from the closest to
     the further parent.
     """
@@ -119,10 +128,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         self.client = LastFmClient(
             self._log, self.config["min_weight"].get(int)
         )
-        self.whitelist = self._load_whitelist()
+        self.whitelist: Whitelist = self._load_whitelist()
+        self.c14n_branches: CanonTree
         self.c14n_branches, self.canonicalize = self._load_c14n_tree()
 
-    def _load_whitelist(self) -> set[str]:
+    def _load_whitelist(self) -> Whitelist:
         """Load the whitelist from a text file.
 
         Default whitelist is used if config is True, empty string or set to "nothing".
@@ -140,13 +150,13 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         return whitelist
 
-    def _load_c14n_tree(self) -> tuple[list[list[str]], bool]:
+    def _load_c14n_tree(self) -> tuple[CanonTree, bool]:
         """Load the canonicalization tree from a YAML file.
 
         Default tree is used if config is True, empty string, set to "nothing"
         or if prefer_specific is enabled.
         """
-        c14n_branches: list[list[str]] = []
+        c14n_branches: CanonTree = []
         c14n_filename = self.config["canonical"].get()
         canonicalize = c14n_filename is not False
         # Default tree
