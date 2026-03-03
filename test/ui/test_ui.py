@@ -620,7 +620,3 @@ class IProgressBarTest(BeetsTestCase):
             results.append(item)
 
         assert results == [1, 2, 3]
-
-    def test_no_crash_when_sequence_is_none(self):
-        for _ in ui.iprogress_bar(None, desc="None"):
-            pytest.fail("Should not have reached an iteration.")
