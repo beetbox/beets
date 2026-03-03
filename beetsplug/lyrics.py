@@ -1042,7 +1042,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             for item in ui.iprogress_bar(
                 items,
                 desc="Fetching lyrics",
-                unit="items",
+                unit="item",
             ):
                 self.add_item_lyrics(item, ui.should_write())
                 if item.lyrics and opts.print:

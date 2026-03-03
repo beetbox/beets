@@ -1583,7 +1583,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         for album in ui.iprogress_bar(
             albums,
             desc="Fetching album art",
-            unit="albums",
+            unit="album",
         ):
             if (
                 album.artpath

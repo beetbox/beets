@@ -592,7 +592,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             for obj in ui.iprogress_bar(
                 method(args),
                 desc="Fetching genres",
-                unit="albums" if opts.album else "tracks",
+                unit="album" if opts.album else "track",
             ):
                 self._process(obj, write=ui.should_write())
 

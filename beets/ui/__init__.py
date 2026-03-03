@@ -1268,7 +1268,7 @@ def iprogress_bar(
     for album in ui.iprogress_bar(
         lib.albums(),
         desc="Updating albums",
-        unit="albums",
+        unit="album",
     ):
         do_something_to(album)
     ```
