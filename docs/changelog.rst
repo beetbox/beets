@@ -47,6 +47,9 @@ Bug fixes
 - In autotagging, initialise empty multi-valued fields with ``None`` instead of
   empty list, which caused beets to overwrite existing metadata with empty list
   values instead of leaving them unchanged. :bug:`6403`
+- :doc:`plugins/fuzzy`: Improve fuzzy matching when the query is shorter than
+  the field value so substring-style searches produce more useful results.
+  :bug:`2043`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
