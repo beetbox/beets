@@ -99,7 +99,9 @@ class Permissions(BeetsPlugin):
         dir_perm = convert_perm(dir_perm)
 
         # Change permissions for the files.
-        for path in ui.iprogress_bar(files, desc="Setting permissions", unit="file"):
+        for path in ui.iprogress_bar(
+            files, desc="Setting permissions", unit="file"
+        ):
             # Changing permissions on the destination file.
             self._log.debug(
                 "setting file permissions on {}",
