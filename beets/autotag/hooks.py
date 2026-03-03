@@ -97,15 +97,15 @@ class Info(AttrDict[Any]):
         self.artist = artist
         self.artist_credit = artist_credit
         self.artist_id = artist_id
-        self.artists = artists or []
-        self.artists_credit = artists_credit or []
-        self.artists_ids = artists_ids or []
+        self.artists = artists
+        self.artists_credit = artists_credit
+        self.artists_ids = artists_ids
         self.artist_sort = artist_sort
-        self.artists_sort = artists_sort or []
+        self.artists_sort = artists_sort
         self.data_source = data_source
         self.data_url = data_url
         self.genre = None
-        self.genres = genres or []
+        self.genres = genres
         self.media = media
         self.update(kwargs)
 
@@ -160,7 +160,7 @@ class AlbumInfo(Info):
         self.albumdisambig = albumdisambig
         self.albumstatus = albumstatus
         self.albumtype = albumtype
-        self.albumtypes = albumtypes or []
+        self.albumtypes = albumtypes
         self.asin = asin
         self.barcode = barcode
         self.catalognum = catalognum
