@@ -50,6 +50,9 @@ Bug fixes
 - :doc:`plugins/fuzzy`: Improve fuzzy matching when the query is shorter than
   the field value so substring-style searches produce more useful results.
   :bug:`2043`
+- :doc:`plugins/fuzzy`: Force slow query evaluation whenever the fuzzy prefix is
+  used (for example ``~foo`` or ``%%foo``), so fuzzy matching is applied
+  consistently. :bug:`5638`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
