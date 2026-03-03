@@ -156,6 +156,8 @@ class TestHelper(RunMixin, ConfigMixin):
     fixtures.
     """
 
+    lib: Library
+
     resource_path = Path(os.fsdecode(_common.RSRC)) / "full.mp3"
 
     db_on_disk: ClassVar[bool] = False

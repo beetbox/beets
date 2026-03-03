@@ -75,11 +75,34 @@ These functions are built in to beets:
 - ``%time{date_time,format}``: Return the date and time in any format accepted
   by strftime_. For example, to get the year some music was added to your
   library, use ``%time{$added,%Y}``.
-- ``%first{text}``: Returns the first item, separated by ``;`` (a semicolon
-  followed by a space). You can use ``%first{text,count,skip}``, where ``count``
-  is the number of items (default 1) and ``skip`` is number to skip (default 0).
-  You can also use ``%first{text,count,skip,sep,join}`` where ``sep`` is the
-  separator, like ``;`` or ``/`` and join is the text to concatenate the items.
+- ``%first{text,count,skip,sep,join}``: Extract a subset of items from a
+  delimited string. Splits ``text`` by ``sep``, skips the first ``skip`` items,
+  then returns the next ``count`` items joined by ``join``.
+
+  This is especially useful for multi-valued fields like ``artists`` or
+  ``genres`` where you may only want the first artist or a limited number of
+  genres in a path.
+
+  Defaults:
+
+  ..
+      Comically, you need to follow |semicolon_space| with some punctuation to
+      make sure it gets rendered correctly as '; ' in the docs.
+
+  - **count**: 1,
+  - **skip**: 0,
+  - **sep**: |semicolon_space|,
+  - **join**: |semicolon_space|.
+
+  Examples:
+
+  ::
+
+      %first{$genres}             →  returns the first genre
+      %first{$genres,2}           →  returns the first two genres, joined by "; "
+      %first{$genres,2,1}         →  skips the first genre, returns the next two
+      %first{$genres,2,0, , -> }  →  splits by space, joins with " -> "
+
 - ``%ifdef{field}``, ``%ifdef{field,truetext}`` or
   ``%ifdef{field,truetext,falsetext}``: Checks if an flexible attribute
   ``field`` is defined. If it exists, then return ``truetext`` or ``field``
