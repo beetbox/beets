@@ -19,7 +19,6 @@ import re
 import confuse
 from mediafile import MediaFile
 
-from beets import ui
 from beets.importer import Action
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, input_yn

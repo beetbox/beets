@@ -14,6 +14,7 @@
 
 """Use command-line tools to check for audio file corruption."""
 
+import concurrent
 import errno
 import os
 import shlex

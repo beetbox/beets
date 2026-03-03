@@ -112,7 +112,11 @@ class Permissions(BeetsPlugin):
             assert_permissions(path, file_perm, self._log)
 
         # Change permissions for the directories.
-        for path in ui.iprogress_bar(dirs, desc="Setting permissions", unit="directory"):
+        for path in ui.iprogress_bar(
+            dirs,
+            desc="Setting permissions",
+            unit="directory",
+        ):
             # Changing permissions on the destination directory.
             self._log.debug(
                 "setting directory permissions on {}",

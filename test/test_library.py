@@ -1357,7 +1357,7 @@ class AlbumsWithProgressTest(BeetsTestCase):
 
     def test_albums_with_progress_respects_query(self):
         self.add_album_fixture()
-        album = list(self.lib.albums())[0]
+        album = next(iter(self.lib.albums()))
         album.album = "Unique Album Title"
         album.store()
         progress_list = list(
