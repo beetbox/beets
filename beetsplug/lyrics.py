@@ -234,7 +234,7 @@ class LyricsRequestHandler(RequestHandler):
 @dataclass
 class Lyrics:
     TRANSLATION_PAT = re.compile(r" / [^\n]+")
-    LINE_PARTS_PAT = re.compile(r"^(\[\d\d:\d\d.\d\d\]|) *(.*)$")
+    LINE_PARTS_PAT = re.compile(r"^(\[\d\d:\d\d\.\d\d\]|) *(.*)$")
 
     text: str
     backend: str
