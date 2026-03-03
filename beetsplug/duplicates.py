@@ -284,11 +284,12 @@ class DuplicatesPlugin(BeetsPlugin):
         """
         import collections
 
+        unit = "album" if objs and isinstance(objs[0], Album) else "item"
         counts = collections.defaultdict(list)
         for obj in ui.iprogress_bar(
             objs,
             desc="Finding duplicates",
-            unit="item",
+            unit=unit,
         ):
             values = [getattr(obj, k, None) for k in keys]
             values = [v for v in values if v not in (None, "")]
