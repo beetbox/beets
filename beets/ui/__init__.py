@@ -1320,7 +1320,7 @@ def iprogress_bar(
                 yield item
 
                 if (
-                    revision
+                    revision is not None
                     and hasattr(item, "_revision")
                     and item._revision != revision
                 ):
