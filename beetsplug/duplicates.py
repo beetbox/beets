@@ -288,7 +288,7 @@ class DuplicatesPlugin(BeetsPlugin):
         for obj in ui.iprogress_bar(
             objs,
             desc="Finding duplicates",
-            unit="items",
+            unit="item",
         ):
             values = [getattr(obj, k, None) for k in keys]
             values = [v for v in values if v not in (None, "")]

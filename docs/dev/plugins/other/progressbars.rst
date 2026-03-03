@@ -25,14 +25,14 @@ plus a description and optional unit label for the progress bar:
     for item in lib.items_with_progress(
         "Embedding artwork",
         args,
-        unit="items",
+        unit="item",
     ):
         art.embed_item(self._log, item, imagepath, ...)
 
     for album in lib.albums_with_progress(
         "Updating albums",
         args,
-        unit="albums",
+        unit="album",
     ):
         do_something_to(album)
 

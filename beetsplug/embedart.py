@@ -128,7 +128,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 for item in ui.iprogress_bar(
                     items,
                     desc="Embedding artwork",
-                    unit="items",
+                    unit="item",
                 ):
                     art.embed_item(
                         self._log,
@@ -167,7 +167,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 for item in ui.iprogress_bar(
                     items,
                     desc="Embedding artwork",
-                    unit="items",
+                    unit="item",
                 ):
                     art.embed_item(
                         self._log,
@@ -188,7 +188,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 for album in ui.iprogress_bar(
                     albums,
                     desc="Embedding artwork",
-                    unit="albums",
+                    unit="album",
                 ):
                     art.embed_album(
                         self._log,

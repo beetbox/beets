@@ -56,7 +56,7 @@ class AutoBPMPlugin(BeetsPlugin):
         self.calculate_bpm(task.imported_items())
 
     def calculate_bpm(self, items: list[Item], write: bool = False) -> None:
-        for item in iprogress_bar(items, desc="Calculating BPM", unit="items"):
+        for item in iprogress_bar(items, desc="Calculating BPM", unit="item"):
             path = item.filepath
             if bpm := item.bpm:
                 self._log.info("BPM for {} already exists: {}", path, bpm)
