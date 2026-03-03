@@ -94,6 +94,8 @@ Bug fixes
   backends, such as ``mp3gain``. :bug:`2946`
 - :doc:`plugins/mbpseudo`: Fix crash due to missing ``artist_credit`` field in
   the MusicBrainz API response. :bug:`6339`
+- :ref:`config-cmd`: Improved error message when user-configured editor does not
+  exist. :bug:`6176`
 
 ..
     For plugin developers
