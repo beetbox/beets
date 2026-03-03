@@ -164,7 +164,7 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         # Default format string for count mode.
         if count:
             fmt += ": $missing"
-        
+
         for album in ui.iprogress_bar(albums, desc="Analyzing", unit="album"):
             if count:
                 if _missing_count(album):

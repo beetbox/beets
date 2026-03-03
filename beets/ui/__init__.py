@@ -28,20 +28,11 @@ import sqlite3
 import sys
 import textwrap
 import traceback
+import typing
+from collections.abc import Callable, Iterable, Sized
 from difflib import SequenceMatcher
 from functools import cache
-import typing
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Iterable,
-    Iterator,
-    Literal,
-    Sized,
-    TypeVar,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, Literal, TypeVar
 
 import confuse
 import enlighten
@@ -55,7 +46,7 @@ from beets.util.deprecation import deprecate_for_maintainers
 from beets.util.functemplate import template
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
+    from collections.abc import Callable, Iterator
 
     from beets.dbcore.db import FormattedMapping
 
@@ -1268,7 +1259,7 @@ class SizedIterable(Protocol[T_co], Sized, Iterable[T_co]):
 
 
 def iprogress_bar(
-    sequence: Union[Iterable[U], SizedIterable[U]], **kwargs
+    sequence: Iterable[U] | SizedIterable[U], **kwargs
 ) -> Iterator[U]:
     """Construct and manage an `enlighten.Counter` progress bar while iterating.
 

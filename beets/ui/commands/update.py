@@ -102,7 +102,11 @@ def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
             return
 
         # Modify affected albums to reflect changes in their items.
-        for album_id in ui.iprogress_bar(affected_albums, desc="Updating", unit="album"):
+        for album_id in ui.iprogress_bar(
+            affected_albums,
+            desc="Updating",
+            unit="album",
+        ):
             if album_id is None:  # Singletons.
                 continue
             album = lib.get_album(album_id)

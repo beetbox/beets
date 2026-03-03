@@ -84,7 +84,8 @@ def move_items(
     def isalbummoved(album):
         return any(isitemmoved(i) for i in album.items())
 
-    objs = [o for o in ui.iprogress_bar(objs, desc="Preparing", unit="item") if (isalbummoved if album else isitemmoved)(o)]
+    objs_progress = ui.iprogress_bar(objs, desc="Preparing", unit="item")
+    objs = [o for o in objs_progress if (isalbummoved if album else isitemmoved)(o)]
     num_unmoved = num_objs - len(objs)
     # Report unmoved files that match the query.
     unmoved_msg = ""
