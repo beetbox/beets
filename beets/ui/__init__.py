@@ -1325,8 +1325,7 @@ def iprogress_bar(
                     and item._revision != revision
                 ):
                     change_counter.update()
-                else:
-                    counter.update()
+                counter.update()
 
 
 # Subcommand parsing infrastructure.
