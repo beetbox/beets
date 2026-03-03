@@ -1351,7 +1351,9 @@ class AlbumsWithProgressTest(BeetsTestCase):
             self.lib.albums_with_progress("Test", unit="albums")
         )
         assert len(albums_progress_list) == len(albums_list)
-        assert [a.id for a in albums_progress_list] == [a.id for a in albums_list]
+        assert [a.id for a in albums_progress_list] == [
+            a.id for a in albums_list
+        ]
 
     def test_albums_with_progress_respects_query(self):
         self.add_album_fixture()
