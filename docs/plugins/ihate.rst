@@ -26,12 +26,12 @@ Here's an example:
     ihate:
         warn:
             - artist:rnb
-            - genre:soul
+            - genres:soul
             # Only warn about tribute albums in rock genre.
-            - genre:rock album:tribute
+            - genres:rock album:tribute
         skip:
-            - genre::russian\srock
-            - genre:polka
+            - genres::russian\srock
+            - genres:polka
             - artist:manowar
             - album:christmas
 

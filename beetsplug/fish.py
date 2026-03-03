@@ -16,10 +16,10 @@
 """This plugin generates tab completions for Beets commands for the Fish shell
 <https://fishshell.com/>, including completions for Beets commands, plugin
 commands, and option flags. Also generated are completions for all the album
-and track fields, suggesting for example `genre:` or `album:` when querying the
+and track fields, suggesting for example `genres:` or `album:` when querying the
 Beets database. Completions for the *values* of those fields are not generated
 by default but can be added via the `-e` / `--extravalues` flag. For example:
-`beet fish -e genre -e albumartist`
+`beet fish -e genres -e albumartist`
 """
 
 import os

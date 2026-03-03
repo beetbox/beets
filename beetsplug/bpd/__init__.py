@@ -30,7 +30,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 import beets
 import beets.ui
-from beets import dbcore, logging
+from beets import dbcore
 from beets.library import Item
 from beets.plugins import BeetsPlugin
 from beets.util import as_string, bluelet
@@ -38,8 +38,6 @@ from beetsplug._utils import vfs
 
 if TYPE_CHECKING:
     from beets.dbcore.query import Query
-
-log = logging.getLogger(__name__)
 
 
 try:
@@ -1139,7 +1137,10 @@ class Server(BaseServer):
             pass
 
         for tagtype, field in self.tagtype_map.items():
-            info_lines.append(f"{tagtype}: {getattr(item, field)}")
+            field_value = getattr(item, field)
+            if isinstance(field_value, list):
+                field_value = "; ".join(field_value)
+            info_lines.append(f"{tagtype}: {field_value}")
 
         return info_lines
 
@@ -1353,7 +1354,7 @@ class Server(BaseServer):
         "AlbumArtist": "albumartist",
         "AlbumArtistSort": "albumartist_sort",
         "Label": "label",
-        "Genre": "genre",
+        "Genre": "genres",
         "Date": "year",
         "OriginalDate": "original_year",
         "Composer": "composer",
