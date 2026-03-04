@@ -5,8 +5,14 @@ repos:
   - repo: local
     hooks:
       - id: format
-        name: Format
+        name: Format Python files
         entry: poe format
         language: system
         files: '.*.py'
+        pass_filenames: true
+      - id: format-docs
+        name: Format docs
+        entry: poe format-docs
+        language: system
+        files: '.*.rst'
         pass_filenames: true

@@ -241,6 +241,11 @@ var AppView = Backbone.View.extend({
             'pause': _.bind(this.audioPause, this),
             'ended': _.bind(this.audioEnded, this)
         });
+	if ("mediaSession" in navigator) {
+	    navigator.mediaSession.setActionHandler("nexttrack", () => {
+	        this.playNext();
+	    });
+	}
     },
     showItems: function(items) {
         this.shownItems = items;
@@ -266,13 +271,35 @@ var AppView = Backbone.View.extend({
     playItem: function(item) {
         var url = 'item/' + item.get('id') + '/file';
         $('#player audio').attr('src', url);
-        $('#player audio').get(0).play();
+        $('#player audio').get(0).play().then(() => {
+            this.updateMediaSession(item);
+        });
 
         if (this.playingItem != null) {
             this.playingItem.entryView.setPlaying(false);
         }
         item.entryView.setPlaying(true);
         this.playingItem = item;
+    },
+
+    updateMediaSession: function (item) {
+      if ("mediaSession" in navigator) {
+        const album_id = item.get("album_id");
+        const album_art_url = "album/" + album_id + "/art";
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: item.get("title"),
+          artist: item.get("artist"),
+          album: item.get("album"),
+          artwork: [
+            { src: album_art_url, sizes: "96x96" },
+            { src: album_art_url, sizes: "128x128" },
+            { src: album_art_url, sizes: "192x192" },
+            { src: album_art_url, sizes: "256x256" },
+            { src: album_art_url, sizes: "384x384" },
+            { src: album_art_url, sizes: "512x512" },
+          ],
+        });
+      }
     },
 
     audioPause: function() {
@@ -284,7 +311,9 @@ var AppView = Backbone.View.extend({
     },
     audioEnded: function() {
         this.playingItem.entryView.setPlaying(false);
-
+        this.playNext();
+    },
+    playNext: function(){
         // Try to play the next track.
         var idx = this.shownItems.indexOf(this.playingItem);
         if (idx == -1) {

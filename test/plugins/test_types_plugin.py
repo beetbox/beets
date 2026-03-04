@@ -19,10 +19,10 @@ from datetime import datetime
 import pytest
 from confuse import ConfigValueError
 
-from beets.test.helper import PluginTestCase
+from beets.test.helper import IOMixin, PluginTestCase
 
 
-class TypesPluginTest(PluginTestCase):
+class TypesPluginTest(IOMixin, PluginTestCase):
     plugin = "types"
 
     def test_integer_modify_and_query(self):
@@ -134,7 +134,7 @@ class TypesPluginTest(PluginTestCase):
     def test_unknown_type_error(self):
         self.config["types"] = {"flex": "unkown type"}
         with pytest.raises(ConfigValueError):
-            self.run_command("ls")
+            self.add_item(flex="test")
 
     def test_template_if_def(self):
         # Tests for a subtle bug when using %ifdef in templates along with

@@ -250,7 +250,7 @@ def parse_sorted_query(
     # Split up query in to comma-separated subqueries, each representing
     # an AndQuery, which need to be joined together in one OrQuery
     subquery_parts = []
-    for part in parts + [","]:
+    for part in [*parts, ","]:
         if part.endswith(","):
             # Ensure we can catch "foo, bar" as well as "foo , bar"
             last_subquery_part = part[:-1]

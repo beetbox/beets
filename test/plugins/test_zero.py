@@ -3,12 +3,12 @@
 from mediafile import MediaFile
 
 from beets.library import Item
-from beets.test.helper import PluginTestCase, control_stdin
+from beets.test.helper import IOMixin, PluginTestCase
 from beets.util import syspath
 from beetsplug.zero import ZeroPlugin
 
 
-class ZeroPluginTest(PluginTestCase):
+class ZeroPluginTest(IOMixin, PluginTestCase):
     plugin = "zero"
     preload_plugin = False
 
@@ -102,12 +102,10 @@ class ZeroPluginTest(PluginTestCase):
         item.write()
         item_id = item.id
 
-        with (
-            self.configure_plugin(
-                {"fields": ["comments"], "update_database": True, "auto": False}
-            ),
-            control_stdin("y"),
+        with self.configure_plugin(
+            {"fields": ["comments"], "update_database": True, "auto": False}
         ):
+            self.io.addinput("y")
             self.run_command("zero")
 
         mf = MediaFile(syspath(item.path))
@@ -125,16 +123,14 @@ class ZeroPluginTest(PluginTestCase):
         item.write()
         item_id = item.id
 
-        with (
-            self.configure_plugin(
-                {
-                    "fields": ["comments"],
-                    "update_database": False,
-                    "auto": False,
-                }
-            ),
-            control_stdin("y"),
+        with self.configure_plugin(
+            {
+                "fields": ["comments"],
+                "update_database": False,
+                "auto": False,
+            }
         ):
+            self.io.addinput("y")
             self.run_command("zero")
 
         mf = MediaFile(syspath(item.path))
@@ -187,7 +183,8 @@ class ZeroPluginTest(PluginTestCase):
 
         item_id = item.id
 
-        with self.configure_plugin({"fields": []}), control_stdin("y"):
+        with self.configure_plugin({"fields": []}):
+            self.io.addinput("y")
             self.run_command("zero")
 
         item = self.lib.get_item(item_id)
@@ -203,12 +200,10 @@ class ZeroPluginTest(PluginTestCase):
 
         item_id = item.id
 
-        with (
-            self.configure_plugin(
-                {"fields": ["year"], "keep_fields": ["comments"]}
-            ),
-            control_stdin("y"),
+        with self.configure_plugin(
+            {"fields": ["year"], "keep_fields": ["comments"]}
         ):
+            self.io.addinput("y")
             self.run_command("zero")
 
         item = self.lib.get_item(item_id)
@@ -249,18 +244,68 @@ class ZeroPluginTest(PluginTestCase):
 
         assert "id" not in z.fields_to_progs
 
+    def test_omit_single_disc_with_tags_single(self):
+        item = self.add_item_fixture(
+            disctotal=1, disc=1, comments="test comment"
+        )
+        item.write()
+        with self.configure_plugin(
+            {"omit_single_disc": True, "fields": ["comments"]}
+        ):
+            item.write()
+
+        mf = MediaFile(syspath(item.path))
+        assert mf.comments is None
+        assert mf.disc is None
+        assert mf.disctotal is None
+
+    def test_omit_single_disc_with_tags_multi(self):
+        item = self.add_item_fixture(
+            disctotal=4, disc=1, comments="test comment"
+        )
+        item.write()
+        with self.configure_plugin(
+            {"omit_single_disc": True, "fields": ["comments"]}
+        ):
+            item.write()
+
+        mf = MediaFile(syspath(item.path))
+        assert mf.comments is None
+        assert mf.disc == 1
+        assert mf.disctotal == 4
+
+    def test_omit_single_disc_only_change_single(self):
+        item = self.add_item_fixture(disctotal=1, disc=1)
+        item.write()
+
+        with self.configure_plugin({"omit_single_disc": True}):
+            item.write()
+
+        mf = MediaFile(syspath(item.path))
+        assert mf.disc is None
+        assert mf.disctotal is None
+
+    def test_omit_single_disc_only_change_multi(self):
+        item = self.add_item_fixture(disctotal=4, disc=1)
+        item.write()
+
+        with self.configure_plugin({"omit_single_disc": True}):
+            item.write()
+
+        mf = MediaFile(syspath(item.path))
+        assert mf.disc == 1
+        assert mf.disctotal == 4
+
     def test_empty_query_n_response_no_changes(self):
         item = self.add_item_fixture(
             year=2016, day=13, month=3, comments="test comment"
         )
         item.write()
         item_id = item.id
-        with (
-            self.configure_plugin(
-                {"fields": ["comments"], "update_database": True, "auto": False}
-            ),
-            control_stdin("n"),
+        with self.configure_plugin(
+            {"fields": ["comments"], "update_database": True, "auto": False}
         ):
+            self.io.addinput("n")
             self.run_command("zero")
 
         mf = MediaFile(syspath(item.path))

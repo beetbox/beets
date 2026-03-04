@@ -36,17 +36,19 @@ from __future__ import annotations
 import queue
 import sys
 from threading import Lock, Thread
-from typing import Callable, Generator, TypeVar
+from typing import TYPE_CHECKING, TypeVar
 
-if sys.version_info >= (3, 11):
-    from typing import TypeVarTuple, Unpack
-else:
-    from typing_extensions import TypeVarTuple, Unpack
+from typing_extensions import TypeVarTuple, Unpack
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Generator
 
 BUBBLE = "__PIPELINE_BUBBLE__"
 POISON = "__PIPELINE_POISON__"
 
 DEFAULT_QUEUE_SIZE = 16
+
+Tq = TypeVar("Tq")
 
 
 def _invalidate_queue(q, val=None, sync=True):
@@ -91,7 +93,7 @@ def _invalidate_queue(q, val=None, sync=True):
             q.mutex.release()
 
 
-class CountedQueue(queue.Queue):
+class CountedQueue(queue.Queue[Tq]):
     """A queue that keeps track of the number of threads that are
     still feeding into it. The queue is poisoned when all threads are
     finished with the queue.
@@ -190,7 +192,7 @@ def stage(
         task: R | T | None = None
         while True:
             task = yield task
-            task = func(*(args + (task,)))
+            task = func(*args, task)
 
     return coro
 
@@ -214,7 +216,7 @@ def mutator_stage(func: Callable[[Unpack[A], T], R]):
         task = None
         while True:
             task = yield task
-            func(*(args + (task,)))
+            func(*args, task)
 
     return coro
 

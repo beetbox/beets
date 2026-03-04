@@ -14,27 +14,21 @@
 
 """Allows custom commands to be run when an event is emitted by beets"""
 
+from __future__ import annotations
+
+import os
 import shlex
 import string
 import subprocess
-import sys
+from typing import Any
 
 from beets.plugins import BeetsPlugin
 
 
-class CodingFormatter(string.Formatter):
-    """A variant of `string.Formatter` that converts everything to `unicode`
-    strings.
+class BytesToStrFormatter(string.Formatter):
+    """A variant of `string.Formatter` that converts `bytes` to `str`."""
 
-    This was necessary on Python 2, in needs to be kept for backwards
-    compatibility.
-    """
-
-    def __init__(self, coding):
-        """Creates a new coding formatter with the provided coding."""
-        self._coding = coding
-
-    def convert_field(self, value, conversion):
+    def convert_field(self, value: Any, conversion: str | None) -> Any:
         """Converts the provided value given a conversion type.
 
         This method decodes the converted value using the formatter's coding.
@@ -42,7 +36,7 @@ class CodingFormatter(string.Formatter):
         converted = super().convert_field(value, conversion)
 
         if isinstance(converted, bytes):
-            return converted.decode(self._coding)
+            return os.fsdecode(converted)
 
         return converted
 
@@ -68,19 +62,19 @@ class HookPlugin(BeetsPlugin):
     def create_and_register_hook(self, event, command):
         def hook_function(**kwargs):
             if command is None or len(command) == 0:
-                self._log.error('invalid command "{0}"', command)
+                self._log.error('invalid command "{}"', command)
                 return
 
             # For backwards compatibility, use a string formatter that decodes
-            # bytes (in particular, paths) to unicode strings.
-            formatter = CodingFormatter(sys.getfilesystemencoding())
+            # bytes (in particular, paths) to strings.
+            formatter = BytesToStrFormatter()
             command_pieces = [
                 formatter.format(piece, event=event, **kwargs)
                 for piece in shlex.split(command)
             ]
 
             self._log.debug(
-                'running command "{0}" for event {1}',
+                'running command "{}" for event {}',
                 " ".join(command_pieces),
                 event,
             )
@@ -89,9 +83,9 @@ class HookPlugin(BeetsPlugin):
                 subprocess.check_call(command_pieces)
             except subprocess.CalledProcessError as exc:
                 self._log.error(
-                    "hook for {0} exited with status {1}", event, exc.returncode
+                    "hook for {} exited with status {.returncode}", event, exc
                 )
             except OSError as exc:
-                self._log.error("hook for {0} failed: {1}", event, exc)
+                self._log.error("hook for {} failed: {}", event, exc)
 
         self.register_listener(event, hook_function)

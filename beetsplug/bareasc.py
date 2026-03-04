@@ -23,7 +23,7 @@ from unidecode import unidecode
 from beets import ui
 from beets.dbcore.query import StringFieldQuery
 from beets.plugins import BeetsPlugin
-from beets.ui import decargs, print_
+from beets.ui import print_
 
 
 class BareascQuery(StringFieldQuery[str]):
@@ -83,14 +83,13 @@ class BareascPlugin(BeetsPlugin):
 
     def unidecode_list(self, lib, opts, args):
         """Emulate normal 'list' command but with unidecode output."""
-        query = decargs(args)
         album = opts.album
         # Copied from commands.py - list_items
         if album:
-            for album in lib.albums(query):
+            for album in lib.albums(args):
                 bare = unidecode(str(album))
                 print_(bare)
         else:
-            for item in lib.items(query):
+            for item in lib.items(args):
                 bare = unidecode(str(item))
                 print_(bare)

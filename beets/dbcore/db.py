@@ -16,43 +16,57 @@
 
 from __future__ import annotations
 
-import contextlib
+import functools
 import os
 import re
 import sqlite3
+import sys
 import threading
 import time
-from abc import ABC
+from abc import ABC, abstractmethod
 from collections import defaultdict
-from collections.abc import Generator, Iterable, Iterator, Mapping, Sequence
-from sqlite3 import Connection
-from typing import TYPE_CHECKING, Any, AnyStr, Callable, Generic, TypeVar
+from collections.abc import Mapping
+from contextlib import contextmanager
+from dataclasses import dataclass
+from functools import cached_property
+from sqlite3 import Connection, sqlite_version_info
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    AnyStr,
+    ClassVar,
+    Generic,
+    Literal,
+    NamedTuple,
+    TypedDict,
+)
 
+from typing_extensions import (
+    Self,
+    TypeVar,  # default value support
+)
 from unidecode import unidecode
 
 import beets
 
 from ..util import cached_classproperty, functemplate
 from . import types
-from .query import (
-    FieldQueryType,
-    FieldSort,
-    MatchQuery,
-    NullSort,
-    Query,
-    Sort,
-    TrueQuery,
-)
+from .query import MatchQuery, NullSort, TrueQuery
 
 if TYPE_CHECKING:
+    from collections.abc import (
+        Callable,
+        Generator,
+        Iterable,
+        Iterator,
+        Sequence,
+    )
+    from sqlite3 import Connection
     from types import TracebackType
 
-    from .query import SQLiteType
+    from .query import FieldQueryType, FieldSort, Query, Sort, SQLiteType
 
-    D = TypeVar("D", bound="Database", default=Any)
-else:
-    D = TypeVar("D", bound="Database")
-
+D = TypeVar("D", bound="Database", default=Any)
 
 FlexAttrs = dict[str, str]
 
@@ -64,6 +78,20 @@ class DBAccessError(Exception):
     example, the database file is deleted or otherwise disappears. There
     is probably no way to recover from this error.
     """
+
+
+class DBCustomFunctionError(Exception):
+    """A sqlite function registered by beets failed."""
+
+    def __init__(self):
+        super().__init__(
+            "beets defined SQLite function failed; "
+            "see the other errors above for details"
+        )
+
+
+class NotFoundError(LookupError):
+    pass
 
 
 class FormattedMapping(Mapping[str, str]):
@@ -79,6 +107,8 @@ class FormattedMapping(Mapping[str, str]):
     If `for_path` is true, all path separators in the formatted values
     are replaced.
     """
+
+    model: Model
 
     ALL_KEYS = "*"
 
@@ -279,7 +309,7 @@ class Model(ABC, Generic[D]):
     """The flex field SQLite table name.
     """
 
-    _fields: dict[str, types.Type] = {}
+    _fields: ClassVar[dict[str, types.Type]] = {}
     """A mapping indicating available "fixed" fields on this type. The
     keys are field names and the values are `Type` objects.
     """
@@ -289,19 +319,27 @@ class Model(ABC, Generic[D]):
     terms.
     """
 
-    _types: dict[str, types.Type] = {}
-    """Optional Types for non-fixed (i.e., flexible and computed) fields.
+    _indices: Sequence[Index] = ()
+    """A sequence of `Index` objects that describe the indices to be
+    created for this table.
     """
 
-    _sorts: dict[str, type[FieldSort]] = {}
+    @cached_classproperty
+    def _types(cls) -> dict[str, types.Type]:
+        """Optional types for non-fixed (flexible and computed) fields."""
+        return {}
+
+    _sorts: ClassVar[dict[str, type[FieldSort]]] = {}
     """Optional named sort criteria. The keys are strings and the values
     are subclasses of `Sort`.
     """
 
-    _queries: dict[str, FieldQueryType] = {}
-    """Named queries that use a field-like `name:value` syntax but which
-    do not relate to any specific field.
-    """
+    @cached_classproperty
+    def _queries(cls) -> dict[str, FieldQueryType]:
+        """Named queries that use a field-like `name:value` syntax but which
+        do not relate to any specific field.
+        """
+        return {}
 
     _always_dirty = False
     """By default, fields only become "dirty" when their value actually
@@ -339,6 +377,22 @@ class Model(ABC, Generic[D]):
     def other_db_fields(cls) -> set[str]:
         """Fields in the related table."""
         return cls._relation._fields.keys() - cls.shared_db_fields
+
+    @cached_property
+    def db(self) -> D:
+        """Get the database associated with this object.
+
+        This validates that the database is attached and the object has an id.
+        """
+        return self._check_db()
+
+    def get_fresh_from_db(self) -> Self:
+        """Load this object from the database."""
+        model_cls = self.__class__
+        if obj := self.db._get(model_cls, self.id):
+            return obj
+
+        raise NotFoundError(f"No matching {model_cls.__name__} found") from None
 
     @classmethod
     def _getters(cls: type[Model]):
@@ -389,9 +443,9 @@ class Model(ABC, Generic[D]):
         return obj
 
     def __repr__(self) -> str:
-        return "{}({})".format(
-            type(self).__name__,
-            ", ".join(f"{k}={v!r}" for k, v in dict(self).items()),
+        return (
+            f"{type(self).__name__}"
+            f"({', '.join(f'{k}={v!r}' for k, v in dict(self).items())})"
         )
 
     def clear_dirty(self):
@@ -408,9 +462,9 @@ class Model(ABC, Generic[D]):
         exception is raised otherwise.
         """
         if not self._db:
-            raise ValueError("{} has no database".format(type(self).__name__))
+            raise ValueError(f"{type(self).__name__} has no database")
         if need_id and not self.id:
-            raise ValueError("{} has no id".format(type(self).__name__))
+            raise ValueError(f"{type(self).__name__} has no id")
 
         return self._db
 
@@ -579,7 +633,6 @@ class Model(ABC, Generic[D]):
         """
         if fields is None:
             fields = self._fields
-        db = self._check_db()
 
         # Build assignments for query.
         assignments = []
@@ -587,16 +640,14 @@ class Model(ABC, Generic[D]):
         for key in fields:
             if key != "id" and key in self._dirty:
                 self._dirty.remove(key)
-                assignments.append(key + "=?")
+                assignments.append(f"{key}=?")
                 value = self._type(key).to_sql(self[key])
                 subvars.append(value)
 
-        with db.transaction() as tx:
+        with self.db.transaction() as tx:
             # Main table update.
             if assignments:
-                query = "UPDATE {} SET {} WHERE id=?".format(
-                    self._table, ",".join(assignments)
-                )
+                query = f"UPDATE {self._table} SET {','.join(assignments)} WHERE id=?"
                 subvars.append(self.id)
                 tx.mutate(query, subvars)
 
@@ -604,10 +655,11 @@ class Model(ABC, Generic[D]):
             for key, value in self._values_flex.items():
                 if key in self._dirty:
                     self._dirty.remove(key)
+                    value = self._type(key).to_sql(value)
                     tx.mutate(
-                        "INSERT INTO {} "
+                        f"INSERT INTO {self._flex_table} "
                         "(entity_id, key, value) "
-                        "VALUES (?, ?, ?);".format(self._flex_table),
+                        "VALUES (?, ?, ?);",
                         (self.id, key, value),
                     )
 
@@ -626,21 +678,16 @@ class Model(ABC, Generic[D]):
         If check_revision is true, the database is only queried loaded when a
         transaction has been committed since the item was last loaded.
         """
-        db = self._check_db()
-        if not self._dirty and db.revision == self._revision:
+        if not self._dirty and self.db.revision == self._revision:
             # Exit early
             return
-        stored_obj = db._get(type(self), self.id)
-        assert stored_obj is not None, f"object {self.id} not in DB"
-        self._values_fixed = LazyConvertDict(self)
-        self._values_flex = LazyConvertDict(self)
-        self.update(dict(stored_obj))
+
+        self.__dict__.update(self.get_fresh_from_db().__dict__)
         self.clear_dirty()
 
     def remove(self):
         """Remove the object's associated rows from the database."""
-        db = self._check_db()
-        with db.transaction() as tx:
+        with self.db.transaction() as tx:
             tx.mutate(f"DELETE FROM {self._table} WHERE id=?", (self.id,))
             tx.mutate(
                 f"DELETE FROM {self._flex_table} WHERE entity_id=?", (self.id,)
@@ -656,7 +703,7 @@ class Model(ABC, Generic[D]):
         """
         if db:
             self._db = db
-        db = self._check_db(False)
+        db = self._check_db(need_id=False)
 
         with db.transaction() as tx:
             new_id = tx.mutate(f"INSERT INTO {self._table} DEFAULT VALUES")
@@ -677,7 +724,7 @@ class Model(ABC, Generic[D]):
         self,
         included_keys: str = _formatter.ALL_KEYS,
         for_path: bool = False,
-    ):
+    ) -> FormattedMapping:
         """Get a mapping containing all values on this object formatted
         as human-readable unicode strings.
         """
@@ -721,9 +768,9 @@ class Model(ABC, Generic[D]):
         Remove the database connection as sqlite connections are not
         picklable.
         """
-        state = self.__dict__.copy()
-        state["_db"] = None
-        return state
+        return {
+            k: v for k, v in self.__dict__.items() if k not in {"_db", "db"}
+        }
 
 
 # Database controller and supporting interfaces.
@@ -928,10 +975,10 @@ class Transaction:
 
     def __exit__(
         self,
-        exc_type: type[Exception],
-        exc_value: Exception,
-        traceback: TracebackType,
-    ):
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> bool | None:
         """Complete a transaction. This must be the most recently
         entered but not yet exited transaction. If it is the last active
         transaction, the database updates are committed.
@@ -947,6 +994,14 @@ class Transaction:
             self._mutated = False
             self.db._db_lock.release()
 
+        if (
+            isinstance(exc_value, sqlite3.OperationalError)
+            and exc_value.args[0] == "user-defined function raised exception"
+        ):
+            raise DBCustomFunctionError()
+
+        return None
+
     def query(
         self, statement: str, subvals: Sequence[SQLiteType] = ()
     ) -> list[sqlite3.Row]:
@@ -956,12 +1011,15 @@ class Transaction:
         cursor = self.db._connection().execute(statement, subvals)
         return cursor.fetchall()
 
-    def mutate(self, statement: str, subvals: Sequence[SQLiteType] = ()) -> Any:
-        """Execute an SQL statement with substitution values and return
-        the row ID of the last affected row.
+    @contextmanager
+    def _handle_mutate(self) -> Iterator[None]:
+        """Handle mutation bookkeeping and database access errors.
+
+        Yield control to mutation execution code. If execution succeeds,
+        mark this transaction as mutated.
         """
         try:
-            cursor = self.db._connection().execute(statement, subvals)
+            yield
         except sqlite3.OperationalError as e:
             # In two specific cases, SQLite reports an error while accessing
             # the underlying database file. We surface these exceptions as
@@ -971,17 +1029,55 @@ class Transaction:
                 "unable to open database file",
             ):
                 raise DBAccessError(e.args[0])
-            else:
-                raise
+            raise
         else:
             self._mutated = True
-            return cursor.lastrowid
+
+    def mutate(self, statement: str, subvals: Sequence[SQLiteType] = ()) -> Any:
+        """Run one write statement with shared mutation/error handling."""
+        with self._handle_mutate():
+            return self.db._connection().execute(statement, subvals).lastrowid
+
+    def mutate_many(
+        self, statement: str, subvals: Sequence[tuple[SQLiteType, ...]] = ()
+    ) -> Any:
+        """Run batched writes with shared mutation/error handling."""
+        with self._handle_mutate():
+            return (
+                self.db._connection().executemany(statement, subvals).lastrowid
+            )
 
     def script(self, statements: str):
         """Execute a string containing multiple SQL statements."""
         # We don't know whether this mutates, but quite likely it does.
         self._mutated = True
         self.db._connection().executescript(statements)
+
+
+@dataclass
+class Migration(ABC):
+    db: Database
+
+    @cached_classproperty
+    def name(cls) -> str:
+        """Class name (except Migration) converted to snake case."""
+        name = cls.__name__.removesuffix("Migration")  # type: ignore[attr-defined]
+        return re.sub(r"(?<=[a-z])(?=[A-Z])", "_", name).lower()
+
+    def migrate_table(self, table: str, *args, **kwargs) -> None:
+        """Migrate a specific table."""
+        if not self.db.migration_exists(self.name, table):
+            self._migrate_data(table, *args, **kwargs)
+            self.db.record_migration(self.name, table)
+
+    @abstractmethod
+    def _migrate_data(self, table: str, current_fields: set[str]) -> None:
+        """Migrate data for a specific table."""
+
+
+class TableInfo(TypedDict):
+    columns: set[str]
+    migrations: set[str]
 
 
 class Database:
@@ -992,6 +1088,9 @@ class Database:
     _models: Sequence[type[Model]] = ()
     """The Model subclasses representing tables in this database.
     """
+
+    _migrations: Sequence[tuple[type[Migration], Sequence[type[Model]]]] = ()
+    """Migrations that are to be performed for the configured models."""
 
     supports_extensions = hasattr(sqlite3.Connection, "enable_load_extension")
     """Whether or not the current version of SQLite supports extensions"""
@@ -1006,6 +1105,13 @@ class Database:
             raise RuntimeError(
                 "sqlite3 must be compiled with multi-threading support"
             )
+
+        # Print tracebacks for exceptions in user defined functions
+        # See also `self.add_functions` and `DBCustomFunctionError`.
+        #
+        # `if`: use feature detection because PyPy doesn't support this.
+        if hasattr(sqlite3, "enable_callback_tracebacks"):
+            sqlite3.enable_callback_tracebacks(True)
 
         self.path = path
         self.timeout = timeout
@@ -1029,9 +1135,39 @@ class Database:
         self._db_lock = threading.Lock()
 
         # Set up database schema.
+        self._ensure_migration_state_table()
         for model_cls in self._models:
             self._make_table(model_cls._table, model_cls._fields)
             self._make_attribute_table(model_cls._flex_table)
+            self._create_indices(model_cls._table, model_cls._indices)
+
+        self._migrate()
+
+    @cached_property
+    def db_tables(self) -> dict[str, TableInfo]:
+        column_queries = [
+            f"""
+                SELECT '{m._table}' AS table_name, 'columns' AS source, name
+                FROM pragma_table_info('{m._table}')
+            """
+            for m in self._models
+        ]
+        with self.transaction() as tx:
+            rows = tx.query(f"""
+                {" UNION ALL ".join(column_queries)}
+                UNION ALL
+                SELECT table_name, 'migrations' AS source, name FROM migrations
+            """)
+
+        tables_data: dict[str, TableInfo] = defaultdict(
+            lambda: TableInfo(columns=set(), migrations=set())
+        )
+
+        source: Literal["columns", "migrations"]
+        for table_name, source, name in rows:
+            tables_data[table_name][source].add(name)
+
+        return tables_data
 
     # Primitive access control: connections and transactions.
 
@@ -1070,6 +1206,16 @@ class Database:
             # call conn.close() in _close()
             check_same_thread=False,
         )
+
+        if sys.version_info >= (3, 12) and sqlite3.sqlite_version_info >= (
+            3,
+            29,
+            0,
+        ):
+            # If possible, disable double-quoted strings
+            conn.setconfig(sqlite3.SQLITE_DBCONFIG_DQS_DDL, 0)
+            conn.setconfig(sqlite3.SQLITE_DBCONFIG_DQS_DML, 0)
+
         self.add_functions(conn)
 
         if self.supports_extensions:
@@ -1102,9 +1248,16 @@ class Database:
 
             return bytestring
 
-        conn.create_function("regexp", 2, regexp)
-        conn.create_function("unidecode", 1, unidecode)
-        conn.create_function("bytelower", 1, bytelower)
+        create_function = conn.create_function
+        if sys.version_info >= (3, 8) and sqlite_version_info >= (3, 8, 3):
+            # Let sqlite make extra optimizations
+            create_function = functools.partial(
+                conn.create_function, deterministic=True
+            )
+
+        create_function("regexp", 2, regexp)
+        create_function("unidecode", 1, unidecode)
+        create_function("bytelower", 1, bytelower)
 
     def _close(self):
         """Close the all connections to the underlying SQLite database
@@ -1116,7 +1269,7 @@ class Database:
                 _thread_id, conn = self._connections.popitem()
                 conn.close()
 
-    @contextlib.contextmanager
+    @contextmanager
     def _tx_stack(self) -> Generator[list[Transaction]]:
         """A context manager providing access to the current thread's
         transaction stack. The context manager synchronizes access to
@@ -1156,34 +1309,22 @@ class Database:
         """Set up the schema of the database. `fields` is a mapping
         from field names to `Type`s. Columns are added if necessary.
         """
-        # Get current schema.
-        with self.transaction() as tx:
-            rows = tx.query("PRAGMA table_info(%s)" % table)
-        current_fields = {row[1] for row in rows}
-
-        field_names = set(fields.keys())
-        if current_fields.issuperset(field_names):
-            # Table exists and has all the required columns.
-            return
-
-        if not current_fields:
+        if table not in self.db_tables:
             # No table exists.
             columns = []
             for name, typ in fields.items():
                 columns.append(f"{name} {typ.sql}")
-            setup_sql = "CREATE TABLE {} ({});\n".format(
-                table, ", ".join(columns)
-            )
-
+            setup_sql = f"CREATE TABLE {table} ({', '.join(columns)});\n"
+            self.db_tables[table]["columns"] = set(fields)
         else:
             # Table exists does not match the field set.
             setup_sql = ""
+            current_fields = self.db_tables[table]["columns"]
             for name, typ in fields.items():
-                if name in current_fields:
-                    continue
-                setup_sql += "ALTER TABLE {} ADD COLUMN {} {};\n".format(
-                    table, name, typ.sql
-                )
+                if name not in current_fields:
+                    setup_sql += (
+                        f"ALTER TABLE {table} ADD COLUMN {name} {typ.sql};\n"
+                    )
 
         with self.transaction() as tx:
             tx.script(setup_sql)
@@ -1193,17 +1334,60 @@ class Database:
         for the given entity (if they don't exist).
         """
         with self.transaction() as tx:
-            tx.script(
-                """
-                CREATE TABLE IF NOT EXISTS {0} (
+            tx.script(f"""
+                CREATE TABLE IF NOT EXISTS {flex_table} (
                     id INTEGER PRIMARY KEY,
                     entity_id INTEGER,
                     key TEXT,
                     value TEXT,
                     UNIQUE(entity_id, key) ON CONFLICT REPLACE);
-                CREATE INDEX IF NOT EXISTS {0}_by_entity
-                    ON {0} (entity_id);
-                """.format(flex_table)
+                CREATE INDEX IF NOT EXISTS {flex_table}_by_entity
+                    ON {flex_table} (entity_id);
+                """)
+
+    def _create_indices(
+        self,
+        table: str,
+        indices: Sequence[Index],
+    ):
+        """Create indices for the given table if they don't exist."""
+        with self.transaction() as tx:
+            for index in indices:
+                tx.script(
+                    f"CREATE INDEX IF NOT EXISTS {index.name} "
+                    f"ON {table} ({', '.join(index.columns)});"
+                )
+
+    # Generic migration state handling.
+
+    def _ensure_migration_state_table(self) -> None:
+        with self.transaction() as tx:
+            tx.script("""
+                CREATE TABLE IF NOT EXISTS migrations (
+                    name TEXT NOT NULL,
+                    table_name TEXT NOT NULL,
+                    PRIMARY KEY(name, table_name)
+                );
+            """)
+
+    def _migrate(self) -> None:
+        """Perform any necessary migration for the database."""
+        for migration_cls, model_classes in self._migrations:
+            migration = migration_cls(self)
+            for model_cls in model_classes:
+                table = model_cls._table
+                migration.migrate_table(table, self.db_tables[table]["columns"])
+
+    def migration_exists(self, name: str, table: str) -> bool:
+        """Return whether a named migration has been marked complete."""
+        return name in self.db_tables[table]["migrations"]
+
+    def record_migration(self, name: str, table: str) -> None:
+        """Set completion state for a named migration."""
+        with self.transaction() as tx:
+            tx.mutate(
+                "INSERT INTO migrations(name, table_name) VALUES (?, ?)",
+                (name, table),
             )
 
     # Querying.
@@ -1266,12 +1450,15 @@ class Database:
             sort if sort.is_slow() else None,  # Slow sort component.
         )
 
-    def _get(
-        self,
-        model_cls: type[AnyModel],
-        id,
-    ) -> AnyModel | None:
-        """Get a Model object by its id or None if the id does not
-        exist.
-        """
-        return self._fetch(model_cls, MatchQuery("id", id)).get()
+    def _get(self, model_cls: type[AnyModel], id_: int) -> AnyModel | None:
+        """Get a Model object by its id or None if the id does not exist."""
+        return self._fetch(model_cls, MatchQuery("id", id_)).get()
+
+
+class Index(NamedTuple):
+    """A helper class to represent the index
+    information in the database schema.
+    """
+
+    name: str
+    columns: tuple[str, ...]

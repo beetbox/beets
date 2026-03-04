@@ -13,17 +13,11 @@
 # included in all copies or substantial portions of the Software.
 
 
-import warnings
-
 import mediafile
 
-warnings.warn(
-    "beets.mediafile is deprecated; use mediafile instead",
-    # Show the location of the `import mediafile` statement as the warning's
-    # source, rather than this file, such that the offending module can be
-    # identified easily.
-    stacklevel=2,
-)
+from .util.deprecation import deprecate_for_maintainers
+
+deprecate_for_maintainers("'beets.mediafile'", "'mediafile'", stacklevel=2)
 
 # Import everything from the mediafile module into this module.
 for key, value in mediafile.__dict__.items():
@@ -31,4 +25,4 @@ for key, value in mediafile.__dict__.items():
         globals()[key] = value
 
 # Cleanup namespace.
-del key, value, warnings, mediafile
+del key, value, mediafile

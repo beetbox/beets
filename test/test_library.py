@@ -19,7 +19,6 @@ import os.path
 import re
 import shutil
 import stat
-import time
 import unicodedata
 import unittest
 from unittest.mock import patch
@@ -29,12 +28,13 @@ from mediafile import MediaFile, UnreadableFileError
 
 import beets.dbcore.query
 import beets.library
+import beets.logging as blog
 from beets import config, plugins, util
 from beets.library import Album
 from beets.test import _common
 from beets.test._common import item
-from beets.test.helper import BeetsTestCase, ItemInDBTestCase
-from beets.util import as_string, bytestring_path, syspath
+from beets.test.helper import BeetsTestCase, ItemInDBTestCase, capture_log
+from beets.util import as_string, bytestring_path, normpath, syspath
 
 # Shortcut to path normalization.
 np = util.normpath
@@ -56,25 +56,18 @@ class LoadTest(ItemInDBTestCase):
 
 class StoreTest(ItemInDBTestCase):
     def test_store_changes_database_value(self):
-        self.i.year = 1987
+        new_year = 1987
+        self.i.year = new_year
         self.i.store()
-        new_year = (
-            self.lib._connection()
-            .execute("select year from items where title = ?", (self.i.title,))
-            .fetchone()["year"]
-        )
-        assert new_year == 1987
+
+        assert self.lib.get_item(self.i.id).year == new_year
 
     def test_store_only_writes_dirty_fields(self):
-        original_genre = self.i.genre
-        self.i._values_fixed["genre"] = "beatboxing"  # change w/o dirtying
+        new_year = 1987
+        self.i._values_fixed["year"] = new_year  # change w/o dirtying
         self.i.store()
-        new_genre = (
-            self.lib._connection()
-            .execute("select genre from items where title = ?", (self.i.title,))
-            .fetchone()["genre"]
-        )
-        assert new_genre == original_genre
+
+        assert self.lib.get_item(self.i.id).year != new_year
 
     def test_store_clears_dirty_flags(self):
         self.i.composer = "tvp"
@@ -126,6 +119,25 @@ class AddTest(BeetsTestCase):
         )
         assert new_grouping == self.i.grouping
 
+    def test_library_add_one_database_change_event(self):
+        """Test library.add emits only one database_change event."""
+        self.item = _common.item()
+        self.item.path = beets.util.normpath(
+            os.path.join(
+                self.temp_dir,
+                b"a",
+                b"b.mp3",
+            )
+        )
+        self.item.album = "a"
+        self.item.title = "b"
+
+        blog.getLogger("beets").set_global_level(blog.DEBUG)
+        with capture_log() as logs:
+            self.lib.add(self.item)
+
+        assert logs.count("Sending event: database_change") == 1
+
 
 class RemoveTest(ItemInDBTestCase):
     def test_remove_deletes_from_db(self):
@@ -175,7 +187,7 @@ class DestinationTest(BeetsTestCase):
 
     def create_temp_dir(self, **kwargs):
         kwargs["prefix"] = "."
-        super().create_temp_dir(**kwargs)
+        return super().create_temp_dir(**kwargs)
 
     def setUp(self):
         super().setUp()
@@ -553,6 +565,9 @@ class ItemFormattedMappingTest(ItemInDBTestCase):
 class PathFormattingMixin:
     """Utilities for testing path formatting."""
 
+    i: beets.library.Item
+    lib: beets.library.Library
+
     def _setf(self, fmt):
         self.lib.path_formats.insert(0, ("default", fmt))
 
@@ -560,9 +575,12 @@ class PathFormattingMixin:
         if i is None:
             i = self.i
 
+        # Handle paths on Windows.
         if os.path.sep != "/":
             dest = dest.replace(b"/", os.path.sep.encode())
-            dest = b"D:" + dest
+
+            # Paths are normalized based on the CWD.
+            dest = normpath(dest)
 
         actual = i.destination()
 
@@ -663,14 +681,14 @@ class DestinationFunctionTest(BeetsTestCase, PathFormattingMixin):
         self._assert_dest(b"/base/not_played")
 
     def test_first(self):
-        self.i.genres = "Pop; Rock; Classical Crossover"
-        self._setf("%first{$genres}")
-        self._assert_dest(b"/base/Pop")
+        self.i.albumtypes = ["album", "compilation"]
+        self._setf("%first{$albumtypes}")
+        self._assert_dest(b"/base/album")
 
     def test_first_skip(self):
-        self.i.genres = "Pop; Rock; Classical Crossover"
-        self._setf("%first{$genres,1,2}")
-        self._assert_dest(b"/base/Classical Crossover")
+        self.i.albumtype = "album; ep; compilation"
+        self._setf("%first{$albumtype,1,2}")
+        self._assert_dest(b"/base/compilation")
 
     def test_first_different_sep(self):
         self._setf("%first{Alice / Bob / Eve,2,0, / , & }")
@@ -1008,7 +1026,7 @@ class ArtDestinationTest(BeetsTestCase):
 
     def test_art_filename_respects_setting(self):
         art = self.ai.art_destination("something.jpg")
-        new_art = bytestring_path("%sartimage.jpg" % os.path.sep)
+        new_art = bytestring_path(f"{os.path.sep}artimage.jpg")
         assert new_art in art
 
     def test_art_path_in_item_dir(self):
@@ -1031,7 +1049,7 @@ class PathStringTest(BeetsTestCase):
         assert isinstance(self.i.path, bytes)
 
     def test_fetched_item_path_is_bytestring(self):
-        i = list(self.lib.items())[0]
+        i = next(iter(self.lib.items()))
         assert isinstance(i.path, bytes)
 
     def test_unicode_path_becomes_bytestring(self):
@@ -1045,14 +1063,14 @@ class PathStringTest(BeetsTestCase):
         """,
             (self.i.id, "somepath"),
         )
-        i = list(self.lib.items())[0]
+        i = next(iter(self.lib.items()))
         assert isinstance(i.path, bytes)
 
     def test_special_chars_preserved_in_database(self):
         path = "b\xe1r".encode()
         self.i.path = path
         self.i.store()
-        i = list(self.lib.items())[0]
+        i = next(iter(self.lib.items()))
         assert i.path == path
 
     def test_special_char_path_added_to_database(self):
@@ -1061,7 +1079,7 @@ class PathStringTest(BeetsTestCase):
         i = item()
         i.path = path
         self.lib.add(i)
-        i = list(self.lib.items())[0]
+        i = next(iter(self.lib.items()))
         assert i.path == path
 
     def test_destination_returns_bytestring(self):
@@ -1294,56 +1312,3 @@ class ParseQueryTest(unittest.TestCase):
     def test_parse_bytes(self):
         with pytest.raises(AssertionError):
             beets.library.parse_query_string(b"query", None)
-
-
-class LibraryFieldTypesTest(unittest.TestCase):
-    """Test format() and parse() for library-specific field types"""
-
-    def test_datetype(self):
-        t = beets.library.DateType()
-
-        # format
-        time_format = beets.config["time_format"].as_str()
-        time_local = time.strftime(time_format, time.localtime(123456789))
-        assert time_local == t.format(123456789)
-        # parse
-        assert 123456789.0 == t.parse(time_local)
-        assert 123456789.0 == t.parse("123456789.0")
-        assert t.null == t.parse("not123456789.0")
-        assert t.null == t.parse("1973-11-29")
-
-    def test_pathtype(self):
-        t = beets.library.PathType()
-
-        # format
-        assert "/tmp" == t.format("/tmp")
-        assert "/tmp/\xe4lbum" == t.format("/tmp/\u00e4lbum")
-        # parse
-        assert np(b"/tmp") == t.parse("/tmp")
-        assert np(b"/tmp/\xc3\xa4lbum") == t.parse("/tmp/\u00e4lbum/")
-
-    def test_musicalkey(self):
-        t = beets.library.MusicalKey()
-
-        # parse
-        assert "C#m" == t.parse("c#m")
-        assert "Gm" == t.parse("g   minor")
-        assert "Not c#m" == t.parse("not C#m")
-
-    def test_durationtype(self):
-        t = beets.library.DurationType()
-
-        # format
-        assert "1:01" == t.format(61.23)
-        assert "60:01" == t.format(3601.23)
-        assert "0:00" == t.format(None)
-        # parse
-        assert 61.0 == t.parse("1:01")
-        assert 61.23 == t.parse("61.23")
-        assert 3601.0 == t.parse("60:01")
-        assert t.null == t.parse("1:00:01")
-        assert t.null == t.parse("not61.23")
-        # config format_raw_length
-        beets.config["format_raw_length"] = True
-        assert 61.23 == t.format(61.23)
-        assert 3601.23 == t.format(3601.23)
