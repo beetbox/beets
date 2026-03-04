@@ -19,10 +19,10 @@ from datetime import datetime
 import pytest
 from confuse import ConfigValueError
 
-from beets.test.helper import PluginTestCase
+from beets.test.helper import IOMixin, PluginTestCase
 
 
-class TypesPluginTest(PluginTestCase):
+class TypesPluginTest(IOMixin, PluginTestCase):
     plugin = "types"
 
     def test_integer_modify_and_query(self):

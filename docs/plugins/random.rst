@@ -8,24 +8,115 @@ listen to.
 First, enable the plugin named ``random`` (see :ref:`using-plugins`). You'll
 then be able to use the ``beet random`` command:
 
-::
+.. code-block:: shell
 
-    $ beet random
-    Aesop Rock - None Shall Pass - The Harbor Is Yours
+    beet random
+    >> Aesop Rock - None Shall Pass - The Harbor Is Yours
 
-The command has several options that resemble those for the ``beet list``
-command (see :doc:`/reference/cli`). To choose an album instead of a single
-track, use ``-a``; to print paths to items instead of metadata, use ``-p``; and
-to use a custom format for printing, use ``-f FORMAT``.
+Usage
+-----
 
-If the ``-e`` option is passed, the random choice will be even among artists
-(the albumartist field). This makes sure that your anthology of Bob Dylan won't
-make you listen to Bob Dylan 50% of the time.
+The basic command selects and displays a single random track. Several options
+allow you to customize the selection:
 
-The ``-n NUMBER`` option controls the number of objects that are selected and
-printed (default 1). To select 5 tracks from your library, type ``beet random
--n5``.
+.. code-block:: shell
 
-As an alternative, you can use ``-t MINUTES`` to choose a set of music with a
-given play time. To select tracks that total one hour, for example, type ``beet
-random -t60``.
+    Usage: beet random [options]
+
+    Options:
+      -h, --help            show this help message and exit
+      -n NUMBER, --number=NUMBER
+                            number of objects to choose
+      -e, --equal-chance    each field has the same chance
+      -t TIME, --time=TIME  total length in minutes of objects to choose
+      --field=FIELD         field to use for equal chance sampling (default:
+                            albumartist)
+      -a, --album           match albums instead of tracks
+      -p PATH, --path=PATH  print paths for matched items or albums
+      -f FORMAT, --format=FORMAT
+                            print with custom format
+
+Detailed Options
+----------------
+
+``-n, --number=NUMBER``
+    Select multiple items at once. The default is 1.
+
+``-e, --equal-chance``
+    Give each distinct value of a field an equal chance of being selected. This
+    prevents artists with many albums/tracks from dominating the selection.
+
+    **Implementation note:** When this option is used, the plugin:
+
+    1. Groups items by the specified field
+    2. Shuffles items within each group
+    3. Randomly selects groups, then items from those groups
+    4. Continues until all groups are exhausted
+
+    Items without the specified field (``--field``) value are excluded from the
+    selection.
+
+``--field=FIELD``
+    Specify which field to use for equal chance sampling. Default is
+    ``albumartist``.
+
+``-t, --time=TIME``
+    Select items whose total duration (in minutes) is approximately equal to
+    TIME. The plugin will continue adding items until the total exceeds the
+    requested time.
+
+``-a, --album``
+    Operate on albums instead of tracks.
+
+``-p, --path``
+    Output filesystem paths instead of formatted metadata.
+
+``-f, --format=FORMAT``
+    Use a custom format string for output. See :doc:`/reference/query` for
+    format syntax.
+
+Examples
+--------
+
+Select multiple items:
+
+.. code-block:: shell
+
+    # Select 5 random tracks
+    beet random -n 5
+
+    # Select 3 random albums
+    beet random -a -n 3
+
+Control selection fairness:
+
+.. code-block:: shell
+
+    # Ensure equal chance per artist (default field: albumartist)
+    beet random -e
+
+    # Ensure equal chance per genre
+    beet random -e --field genre
+
+Select by total playtime:
+
+.. code-block:: shell
+
+    # Select tracks totaling 60 minutes (1 hour)
+    beet random -t 60
+
+    # Select albums totaling 120 minutes (2 hours)
+    beet random -a -t 120
+
+Custom output formats:
+
+.. code-block:: shell
+
+    # Print only artist and title
+    beet random -f '$artist - $title'
+
+    # Print file paths
+    beet random -p
+
+    # Print album paths
+    beet random -a -p

@@ -358,7 +358,7 @@ class LRCLib(Backend):
         for group in self.fetch_candidates(artist, title, album, length):
             candidates = [evaluate_item(item) for item in group]
             if item := self.pick_best_match(candidates):
-                lyrics = item.get_text(self.config["synced"])
+                lyrics = item.get_text(self.config["synced"].get(bool))
                 return lyrics, f"{self.GET_URL}/{item.id}"
 
         return None
@@ -984,10 +984,12 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
                 "local": False,
                 "print": False,
                 "synced": False,
-                # Musixmatch is disabled by default as they are currently blocking
-                # requests with the beets user agent.
+                # Musixmatch and Tekstowo are disabled by default as they
+                # currently block requests with the beets user agent.
                 "sources": [
-                    n for n in self.BACKEND_BY_NAME if n != "musixmatch"
+                    n
+                    for n in self.BACKEND_BY_NAME
+                    if n not in {"musixmatch", "tekstowo"}
                 ],
             }
         )

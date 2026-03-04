@@ -116,17 +116,21 @@ Default
 .. conf:: append_style_genre
     :default: no
 
-    Appends the Discogs style (if found) to the genre tag. This can be useful if
-    you want more granular genres to categorize your music. For example,
-    a release in Discogs might have a genre of "Electronic" and a style of
-    "Techno": enabling this setting would set the genre to be "Electronic,
-    Techno" (assuming default separator of ``", "``) instead of just
-    "Electronic".
+    Appends the Discogs style (if found) to the ``genres`` tag. This can be
+    useful if you want more granular genres to categorize your music. For
+    example, a release in Discogs might have a genre of "Electronic" and a style
+    of "Techno": enabling this setting would append "Techno" to the ``genres``
+    list.
 
 .. conf:: separator
     :default: ", "
 
-    How to join multiple genre and style values from Discogs into a string.
+    How to join multiple style values from Discogs into a string.
+
+    .. versionchanged:: 2.7.0
+
+       This option now only applies to the ``style`` field as beets now only
+       handles lists of ``genres``.
 
 .. conf:: strip_disambiguation
     :default: yes

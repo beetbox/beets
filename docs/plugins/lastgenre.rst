@@ -90,9 +90,8 @@ By default, the plugin chooses the most popular tag on Last.fm as a genre. If
 you prefer to use a *list* of popular genre tags, you can increase the number of
 the ``count`` config option.
 
-Lists of up to *count* genres will then be used instead of single genres. The
-genres are separated by commas by default, but you can change this with the
-``separator`` config option.
+Lists of up to *count* genres will be stored in the ``genres`` field as a list
+and written to your media files as separate genre tags.
 
 Last.fm_ provides a popularity factor, a.k.a. *weight*, for each tag ranging
 from 100 for the most popular tag down to 0 for the least popular. The plugin
@@ -171,6 +170,11 @@ file. The available options are:
 - **canonical**: Use a canonicalization tree. Setting this to ``yes`` will use a
   built-in tree. You can also set it to a path, like the ``whitelist`` config
   value, to use your own tree. Default: ``no`` (disabled).
+- **cleanup_existing**: This option only takes effect with ``force: no``,
+  Setting this to ``yes`` will result in cleanup of existing genres. That
+  includes canonicalization and whitelisting, if enabled. If no matching genre
+  can be determined, the ``fallback`` is used instead. Default: ``no``
+  (disabled).
 - **count**: Number of genres to fetch. Default: 1
 - **fallback**: A string to use as a fallback genre when no genre is found
   ``or`` the original genre is not desired to be kept (``keep_existing: no``).
@@ -192,7 +196,6 @@ file. The available options are:
   Default: ``no``.
 - **source**: Which entity to look up in Last.fm. Can be either ``artist``,
   ``album`` or ``track``. Default: ``album``.
-- **separator**: A separator for multiple genres. Default: ``', '``.
 - **whitelist**: The filename of a custom genre list, ``yes`` to use the
   internal whitelist, or ``no`` to consider all genres valid. Default: ``yes``.
 - **title_case**: Convert the new tags to TitleCase before saving. Default:
