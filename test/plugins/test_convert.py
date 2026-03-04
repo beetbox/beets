@@ -293,13 +293,13 @@ class ConvertCliTest(ConvertTestCase, ConvertCommand):
         conversion occurs."""
         # We expect a converted file with the MP3 extension.
         self.config["convert"]["format"] = "mp3"
-        with control_stdin("y"):
-            self.run_convert("--playlist", "playlist.m3u8")
-            # Check playlist content.
-            m3u_created = os.path.join(self.convert_dest, b"playlist.m3u8")
-            with open(m3u_created, "r") as m3u_file:
-                assert m3u_file.readline() == "#EXTM3U\n"
-                assert m3u_file.readline() == "converted.mp3\n"
+        self.io.addinput("y")
+        self.run_convert("--playlist", "playlist.m3u8")
+        # Check playlist content.
+        m3u_created = os.path.join(self.convert_dest, b"playlist.m3u8")
+        with open(m3u_created) as m3u_file:
+            assert m3u_file.readline() == "#EXTM3U\n"
+            assert m3u_file.readline() == "converted.mp3\n"
 
 
 @_common.slow_test()
