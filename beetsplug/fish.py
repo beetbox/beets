@@ -16,10 +16,10 @@
 """This plugin generates tab completions for Beets commands for the Fish shell
 <https://fishshell.com/>, including completions for Beets commands, plugin
 commands, and option flags. Also generated are completions for all the album
-and track fields, suggesting for example `genre:` or `album:` when querying the
+and track fields, suggesting for example `genres:` or `album:` when querying the
 Beets database. Completions for the *values* of those fields are not generated
 by default but can be added via the `-e` / `--extravalues` flag. For example:
-`beet fish -e genre -e albumartist`
+`beet fish -e genres -e albumartist`
 """
 
 import os
@@ -89,8 +89,9 @@ class FishPlugin(BeetsPlugin):
             "-o",
             "--output",
             default="~/.config/fish/completions/beet.fish",
-            help="where to save the script. default: "
-            "~/.config/fish/completions",
+            help=(
+                "where to save the script. default: ~/.config/fish/completions"
+            ),
         )
         return [cmd]
 
@@ -122,23 +123,13 @@ class FishPlugin(BeetsPlugin):
             for name in names:
                 cmd_names_help.append((name, cmd.help))
         # Concatenate the string
-        totstring = HEAD + "\n"
+        totstring = f"{HEAD}\n"
         totstring += get_cmds_list([name[0] for name in cmd_names_help])
         totstring += "" if nobasicfields else get_standard_fields(fields)
         totstring += get_extravalues(lib, extravalues) if extravalues else ""
-        totstring += (
-            "\n"
-            + "# ====== {} =====".format("setup basic beet completion")
-            + "\n" * 2
-        )
+        totstring += "\n# ====== setup basic beet completion =====\n\n"
         totstring += get_basic_beet_options()
-        totstring += (
-            "\n"
-            + "# ====== {} =====".format(
-                "setup field completion for subcommands"
-            )
-            + "\n"
-        )
+        totstring += "\n# ====== setup field completion for subcommands =====\n"
         totstring += get_subcommands(cmd_names_help, nobasicfields, extravalues)
         # Set up completion for all the command options
         totstring += get_all_commands(beetcmds)
@@ -150,23 +141,19 @@ class FishPlugin(BeetsPlugin):
 def _escape(name):
     # Escape ? in fish
     if name == "?":
-        name = "\\" + name
+        name = f"\\{name}"
     return name
 
 
 def get_cmds_list(cmds_names):
     # Make a list of all Beets core & plugin commands
-    substr = ""
-    substr += "set CMDS " + " ".join(cmds_names) + ("\n" * 2)
-    return substr
+    return f"set CMDS {' '.join(cmds_names)}\n\n"
 
 
 def get_standard_fields(fields):
     # Make a list of album/track fields and append with ':'
-    fields = (field + ":" for field in fields)
-    substr = ""
-    substr += "set FIELDS " + " ".join(fields) + ("\n" * 2)
-    return substr
+    fields = (f"{field}:" for field in fields)
+    return f"set FIELDS {' '.join(fields)}\n\n"
 
 
 def get_extravalues(lib, extravalues):
@@ -175,14 +162,8 @@ def get_extravalues(lib, extravalues):
     word = ""
     values_set = get_set_of_values_for_field(lib, extravalues)
     for fld in extravalues:
-        extraname = fld.upper() + "S"
-        word += (
-            "set  "
-            + extraname
-            + " "
-            + " ".join(sorted(values_set[fld]))
-            + ("\n" * 2)
-        )
+        extraname = f"{fld.upper()}S"
+        word += f"set  {extraname} {' '.join(sorted(values_set[fld]))}\n\n"
     return word
 
 
@@ -202,16 +183,16 @@ def get_basic_beet_options():
         BL_NEED2.format("-l format-item", "-f -d 'print with custom format'")
         + BL_NEED2.format("-l format-album", "-f -d 'print with custom format'")
         + BL_NEED2.format(
-            "-s  l  -l library", "-f -r -d 'library database file to use'"
+            "-s  l  -l library", "-F -r -d 'library database file to use'"
         )
         + BL_NEED2.format(
-            "-s  d  -l directory", "-f -r -d 'destination music directory'"
+            "-s  d  -l directory", "-F -r -d 'destination music directory'"
         )
         + BL_NEED2.format(
             "-s  v  -l verbose", "-f -d 'print debugging information'"
         )
         + BL_NEED2.format(
-            "-s  c  -l config", "-f -r -d 'path to configuration file'"
+            "-s  c  -l config", "-F -r -d 'path to configuration file'"
         )
         + BL_NEED2.format(
             "-s  h  -l help", "-f -d 'print this help message and exit'"
@@ -226,35 +207,29 @@ def get_subcommands(cmd_name_and_help, nobasicfields, extravalues):
     for cmdname, cmdhelp in cmd_name_and_help:
         cmdname = _escape(cmdname)
 
-        word += (
-            "\n"
-            + "# ------ {} -------".format("fieldsetups for  " + cmdname)
-            + "\n"
-        )
+        word += f"\n# ------ fieldsetups for {cmdname} -------\n"
         word += BL_NEED2.format(
-            ("-a " + cmdname), ("-f " + "-d " + wrap(clean_whitespace(cmdhelp)))
+            f"-a {cmdname}", f"-f -d {wrap(clean_whitespace(cmdhelp))}"
         )
 
         if nobasicfields is False:
             word += BL_USE3.format(
                 cmdname,
-                ("-a " + wrap("$FIELDS")),
-                ("-f " + "-d " + wrap("fieldname")),
+                f"-a {wrap('$FIELDS')}",
+                f"-d {wrap('fieldname')}",
             )
 
         if extravalues:
             for f in extravalues:
-                setvar = wrap("$" + f.upper() + "S")
-                word += (
-                    " ".join(
-                        BL_EXTRA3.format(
-                            (cmdname + " " + f + ":"),
-                            ("-f " + "-A " + "-a " + setvar),
-                            ("-d " + wrap(f)),
-                        ).split()
-                    )
-                    + "\n"
+                setvar = wrap(f"${f.upper()}S")
+                word += " ".join(
+                    BL_EXTRA3.format(
+                        f"{cmdname} {f}:",
+                        f"-f -A -a {setvar}",
+                        f"-d {wrap(f)}",
+                    ).split()
                 )
+                word += "\n"
     return word
 
 
@@ -267,59 +242,44 @@ def get_all_commands(beetcmds):
         for name in names:
             name = _escape(name)
 
-            word += "\n"
-            word += (
-                ("\n" * 2)
-                + "# ====== {} =====".format("completions for  " + name)
-                + "\n"
-            )
+            word += f"\n\n\n# ====== completions for {name} =====\n"
 
             for option in cmd.parser._get_all_options()[1:]:
                 cmd_l = (
-                    (" -l " + option._long_opts[0].replace("--", ""))
+                    f" -l {option._long_opts[0].replace('--', '')}"
                     if option._long_opts
                     else ""
                 )
                 cmd_s = (
-                    (" -s " + option._short_opts[0].replace("-", ""))
+                    f" -s {option._short_opts[0].replace('-', '')}"
                     if option._short_opts
                     else ""
                 )
                 cmd_need_arg = " -r " if option.nargs in [1] else ""
                 cmd_helpstr = (
-                    (" -d " + wrap(" ".join(option.help.split())))
+                    f" -d {wrap(' '.join(option.help.split()))}"
                     if option.help
                     else ""
                 )
                 cmd_arglist = (
-                    (" -a " + wrap(" ".join(option.choices)))
+                    f" -a {wrap(' '.join(option.choices))}"
                     if option.choices
                     else ""
                 )
 
-                word += (
-                    " ".join(
-                        BL_USE3.format(
-                            name,
-                            (
-                                cmd_need_arg
-                                + cmd_s
-                                + cmd_l
-                                + " -f "
-                                + cmd_arglist
-                            ),
-                            cmd_helpstr,
-                        ).split()
-                    )
-                    + "\n"
+                word += " ".join(
+                    BL_USE3.format(
+                        name,
+                        f"{cmd_need_arg}{cmd_s}{cmd_l} {cmd_arglist}",
+                        cmd_helpstr,
+                    ).split()
                 )
+                word += "\n"
 
-            word = word + " ".join(
-                BL_USE3.format(
-                    name,
-                    ("-s " + "h " + "-l " + "help" + " -f "),
-                    ("-d " + wrap("print help") + "\n"),
-                ).split()
+            word = word + BL_USE3.format(
+                name,
+                "-s h -l help",
+                f"-d {wrap('print help')}",
             )
     return word
 
@@ -332,9 +292,9 @@ def clean_whitespace(word):
 def wrap(word):
     # Need " or ' around strings but watch out if they're in the string
     sptoken = '"'
-    if ('"') in word and ("'") in word:
+    if '"' in word and ("'") in word:
         word.replace('"', sptoken)
-        return '"' + word + '"'
+        return f'"{word}"'
 
     tok = '"' if "'" in word else "'"
-    return tok + word + tok
+    return f"{tok}{word}{tok}"

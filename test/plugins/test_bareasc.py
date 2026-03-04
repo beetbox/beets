@@ -4,10 +4,10 @@
 """Tests for the 'bareasc' plugin."""
 
 from beets import logging
-from beets.test.helper import PluginTestCase, capture_stdout
+from beets.test.helper import IOMixin, PluginTestCase
 
 
-class BareascPluginTest(PluginTestCase):
+class BareascPluginTest(IOMixin, PluginTestCase):
     """Test bare ASCII query matching."""
 
     plugin = "bareasc"
@@ -65,16 +65,12 @@ class BareascPluginTest(PluginTestCase):
 
     def test_bareasc_list_output(self):
         """Bare-ASCII version of list command - check output."""
-        with capture_stdout() as output:
-            self.run_command("bareasc", "with accents")
+        self.run_command("bareasc", "with accents")
 
-        assert "Antonin Dvorak" in output.getvalue()
+        assert "Antonin Dvorak" in self.io.getoutput()
 
     def test_bareasc_format_output(self):
         """Bare-ASCII version of list -f command - check output."""
-        with capture_stdout() as output:
-            self.run_command(
-                "bareasc", "with accents", "-f", "$artist:: $title"
-            )
+        self.run_command("bareasc", "with accents", "-f", "$artist:: $title")
 
-        assert "Antonin Dvorak:: with accents\n" == output.getvalue()
+        assert "Antonin Dvorak:: with accents\n" == self.io.getoutput()

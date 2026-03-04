@@ -29,122 +29,68 @@ from beets.dbcore.query import (
 from beets.test.helper import ItemInDBTestCase
 
 
-def _date(string):
-    return datetime.strptime(string, "%Y-%m-%dT%H:%M:%S")
+class TestDateInterval:
+    now = datetime.now().replace(microsecond=0, second=0).isoformat()
 
-
-def _datepattern(datetimedate):
-    return datetimedate.strftime("%Y-%m-%dT%H:%M:%S")
-
-
-class DateIntervalTest(unittest.TestCase):
-    def test_year_precision_intervals(self):
-        self.assertContains("2000..2001", "2000-01-01T00:00:00")
-        self.assertContains("2000..2001", "2001-06-20T14:15:16")
-        self.assertContains("2000..2001", "2001-12-31T23:59:59")
-        self.assertExcludes("2000..2001", "1999-12-31T23:59:59")
-        self.assertExcludes("2000..2001", "2002-01-01T00:00:00")
-
-        self.assertContains("2000..", "2000-01-01T00:00:00")
-        self.assertContains("2000..", "2099-10-11T00:00:00")
-        self.assertExcludes("2000..", "1999-12-31T23:59:59")
-
-        self.assertContains("..2001", "2001-12-31T23:59:59")
-        self.assertExcludes("..2001", "2002-01-01T00:00:00")
-
-        self.assertContains("-1d..1d", _datepattern(datetime.now()))
-        self.assertExcludes("-2d..-1d", _datepattern(datetime.now()))
-
-    def test_day_precision_intervals(self):
-        self.assertContains("2000-06-20..2000-06-20", "2000-06-20T00:00:00")
-        self.assertContains("2000-06-20..2000-06-20", "2000-06-20T10:20:30")
-        self.assertContains("2000-06-20..2000-06-20", "2000-06-20T23:59:59")
-        self.assertExcludes("2000-06-20..2000-06-20", "2000-06-19T23:59:59")
-        self.assertExcludes("2000-06-20..2000-06-20", "2000-06-21T00:00:00")
-
-    def test_month_precision_intervals(self):
-        self.assertContains("1999-12..2000-02", "1999-12-01T00:00:00")
-        self.assertContains("1999-12..2000-02", "2000-02-15T05:06:07")
-        self.assertContains("1999-12..2000-02", "2000-02-29T23:59:59")
-        self.assertExcludes("1999-12..2000-02", "1999-11-30T23:59:59")
-        self.assertExcludes("1999-12..2000-02", "2000-03-01T00:00:00")
-
-    def test_hour_precision_intervals(self):
-        # test with 'T' separator
-        self.assertExcludes(
-            "2000-01-01T12..2000-01-01T13", "2000-01-01T11:59:59"
-        )
-        self.assertContains(
-            "2000-01-01T12..2000-01-01T13", "2000-01-01T12:00:00"
-        )
-        self.assertContains(
-            "2000-01-01T12..2000-01-01T13", "2000-01-01T12:30:00"
-        )
-        self.assertContains(
-            "2000-01-01T12..2000-01-01T13", "2000-01-01T13:30:00"
-        )
-        self.assertContains(
-            "2000-01-01T12..2000-01-01T13", "2000-01-01T13:59:59"
-        )
-        self.assertExcludes(
-            "2000-01-01T12..2000-01-01T13", "2000-01-01T14:00:00"
-        )
-        self.assertExcludes(
-            "2000-01-01T12..2000-01-01T13", "2000-01-01T14:30:00"
-        )
-
-        # test non-range query
-        self.assertContains("2008-12-01T22", "2008-12-01T22:30:00")
-        self.assertExcludes("2008-12-01T22", "2008-12-01T23:30:00")
-
-    def test_minute_precision_intervals(self):
-        self.assertExcludes(
-            "2000-01-01T12:30..2000-01-01T12:31", "2000-01-01T12:29:59"
-        )
-        self.assertContains(
-            "2000-01-01T12:30..2000-01-01T12:31", "2000-01-01T12:30:00"
-        )
-        self.assertContains(
-            "2000-01-01T12:30..2000-01-01T12:31", "2000-01-01T12:30:30"
-        )
-        self.assertContains(
-            "2000-01-01T12:30..2000-01-01T12:31", "2000-01-01T12:31:59"
-        )
-        self.assertExcludes(
-            "2000-01-01T12:30..2000-01-01T12:31", "2000-01-01T12:32:00"
-        )
-
-    def test_second_precision_intervals(self):
-        self.assertExcludes(
-            "2000-01-01T12:30:50..2000-01-01T12:30:55", "2000-01-01T12:30:49"
-        )
-        self.assertContains(
-            "2000-01-01T12:30:50..2000-01-01T12:30:55", "2000-01-01T12:30:50"
-        )
-        self.assertContains(
-            "2000-01-01T12:30:50..2000-01-01T12:30:55", "2000-01-01T12:30:55"
-        )
-        self.assertExcludes(
-            "2000-01-01T12:30:50..2000-01-01T12:30:55", "2000-01-01T12:30:56"
-        )
-
-    def test_unbounded_endpoints(self):
-        self.assertContains("..", date=datetime.max)
-        self.assertContains("..", date=datetime.min)
-        self.assertContains("..", "1000-01-01T00:00:00")
-
-    def assertContains(self, interval_pattern, date_pattern=None, date=None):
-        if date is None:
-            date = _date(date_pattern)
-        (start, end) = _parse_periods(interval_pattern)
+    @pytest.mark.parametrize(
+        "pattern, datestr, include",
+        [
+            # year precision
+            ("2000..2001", "2000-01-01T00:00:00", True),
+            ("2000..2001", "2001-06-20T14:15:16", True),
+            ("2000..2001", "2001-12-31T23:59:59", True),
+            ("2000..2001", "1999-12-31T23:59:59", False),
+            ("2000..2001", "2002-01-01T00:00:00", False),
+            ("2000..", "2000-01-01T00:00:00", True),
+            ("2000..", "2099-10-11T00:00:00", True),
+            ("2000..", "1999-12-31T23:59:59", False),
+            ("..2001", "2001-12-31T23:59:59", True),
+            ("..2001", "2002-01-01T00:00:00", False),
+            ("-1d..1d", now, True),
+            ("-2d..-1d", now, False),
+            # month precision
+            ("2000-06-20..2000-06-20", "2000-06-20T00:00:00", True),
+            ("2000-06-20..2000-06-20", "2000-06-20T10:20:30", True),
+            ("2000-06-20..2000-06-20", "2000-06-20T23:59:59", True),
+            ("2000-06-20..2000-06-20", "2000-06-19T23:59:59", False),
+            ("2000-06-20..2000-06-20", "2000-06-21T00:00:00", False),
+            # day precision
+            ("1999-12..2000-02", "1999-12-01T00:00:00", True),
+            ("1999-12..2000-02", "2000-02-15T05:06:07", True),
+            ("1999-12..2000-02", "2000-02-29T23:59:59", True),
+            ("1999-12..2000-02", "1999-11-30T23:59:59", False),
+            ("1999-12..2000-02", "2000-03-01T00:00:00", False),
+            # hour precision with 'T' separator
+            ("2000-01-01T12..2000-01-01T13", "2000-01-01T11:59:59", False),
+            ("2000-01-01T12..2000-01-01T13", "2000-01-01T12:00:00", True),
+            ("2000-01-01T12..2000-01-01T13", "2000-01-01T12:30:00", True),
+            ("2000-01-01T12..2000-01-01T13", "2000-01-01T13:30:00", True),
+            ("2000-01-01T12..2000-01-01T13", "2000-01-01T13:59:59", True),
+            ("2000-01-01T12..2000-01-01T13", "2000-01-01T14:00:00", False),
+            ("2000-01-01T12..2000-01-01T13", "2000-01-01T14:30:00", False),
+            # hour precision non-range query
+            ("2008-12-01T22", "2008-12-01T22:30:00", True),
+            ("2008-12-01T22", "2008-12-01T23:30:00", False),
+            # minute precision
+            ("2000-01-01T12:30..2000-01-01T12:31", "2000-01-01T12:29:59", False),
+            ("2000-01-01T12:30..2000-01-01T12:31", "2000-01-01T12:30:00", True),
+            ("2000-01-01T12:30..2000-01-01T12:31", "2000-01-01T12:30:30", True),
+            ("2000-01-01T12:30..2000-01-01T12:31", "2000-01-01T12:31:59", True),
+            ("2000-01-01T12:30..2000-01-01T12:31", "2000-01-01T12:32:00", False),
+            # second precision
+            ("2000-01-01T12:30:50..2000-01-01T12:30:55", "2000-01-01T12:30:49", False),
+            ("2000-01-01T12:30:50..2000-01-01T12:30:55", "2000-01-01T12:30:50", True),
+            ("2000-01-01T12:30:50..2000-01-01T12:30:55", "2000-01-01T12:30:55", True),
+            ("2000-01-01T12:30:50..2000-01-01T12:30:55", "2000-01-01T12:30:56", False), # unbounded  # noqa: E501
+            ("..", datetime.max.isoformat(), True),
+            ("..", datetime.min.isoformat(), True),
+            ("..", "1000-01-01T00:00:00", True),
+        ],
+    )  # fmt: skip
+    def test_intervals(self, pattern, datestr, include):
+        (start, end) = _parse_periods(pattern)
         interval = DateInterval.from_periods(start, end)
-        assert interval.contains(date)
-
-    def assertExcludes(self, interval_pattern, date_pattern):
-        date = _date(date_pattern)
-        (start, end) = _parse_periods(interval_pattern)
-        interval = DateInterval.from_periods(start, end)
-        assert not interval.contains(date)
+        assert interval.contains(datetime.fromisoformat(datestr)) == include
 
 
 def _parsetime(s):
@@ -240,37 +186,37 @@ class DateQueryTestRelativeMore(ItemInDBTestCase):
 
     def test_relative(self):
         for timespan in ["d", "w", "m", "y"]:
-            query = DateQuery("added", "-4" + timespan + "..+4" + timespan)
+            query = DateQuery("added", f"-4{timespan}..+4{timespan}")
             matched = self.lib.items(query)
             assert len(matched) == 1
 
     def test_relative_fail(self):
         for timespan in ["d", "w", "m", "y"]:
-            query = DateQuery("added", "-2" + timespan + "..-1" + timespan)
+            query = DateQuery("added", f"-2{timespan}..-1{timespan}")
             matched = self.lib.items(query)
             assert len(matched) == 0
 
     def test_start_relative(self):
         for timespan in ["d", "w", "m", "y"]:
-            query = DateQuery("added", "-4" + timespan + "..")
+            query = DateQuery("added", f"-4{timespan}..")
             matched = self.lib.items(query)
             assert len(matched) == 1
 
     def test_start_relative_fail(self):
         for timespan in ["d", "w", "m", "y"]:
-            query = DateQuery("added", "4" + timespan + "..")
+            query = DateQuery("added", f"4{timespan}..")
             matched = self.lib.items(query)
             assert len(matched) == 0
 
     def test_end_relative(self):
         for timespan in ["d", "w", "m", "y"]:
-            query = DateQuery("added", "..+4" + timespan)
+            query = DateQuery("added", f"..+4{timespan}")
             matched = self.lib.items(query)
             assert len(matched) == 1
 
     def test_end_relative_fail(self):
         for timespan in ["d", "w", "m", "y"]:
-            query = DateQuery("added", "..-4" + timespan)
+            query = DateQuery("added", f"..-4{timespan}")
             matched = self.lib.items(query)
             assert len(matched) == 0
 

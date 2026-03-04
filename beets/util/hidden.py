@@ -20,10 +20,9 @@ import os
 import stat
 import sys
 from pathlib import Path
-from typing import Union
 
 
-def is_hidden(path: Union[bytes, Path]) -> bool:
+def is_hidden(path: bytes | Path) -> bool:
     """
     Determine whether the given path is treated as a 'hidden file' by the OS.
     """

@@ -6,6 +6,7 @@ SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
 PAPER         =
 BUILDDIR      = _build
+SOURCEDIR	  = .
 
 # When both are available, use Sphinx 2.x for autodoc compatibility.
 ifeq ($(shell which sphinx-build2 >/dev/null 2>&1 ; echo $$?),0)
@@ -39,7 +40,7 @@ help:
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
 
 clean:
-	-rm -rf $(BUILDDIR)/*
+	-rm -rf $(BUILDDIR)/* $(SOURCEDIR)/api/generated/*
 
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html

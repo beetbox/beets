@@ -15,17 +15,17 @@
 
 from __future__ import annotations
 
-import os.path
+import os
 import sys
 import unittest
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, ClassVar
 
 from beets import plugins
 from beets.test.helper import PluginTestCase, capture_log
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Callable, Iterator
 
 
 class HookTestCase(PluginTestCase):
@@ -37,12 +37,14 @@ class HookTestCase(PluginTestCase):
 
 
 class HookLogsTest(HookTestCase):
+    HOOK: plugins.EventType = "write"
+
     @contextmanager
     def _configure_logs(self, command: str) -> Iterator[list[str]]:
-        config = {"hooks": [self._get_hook("test_event", command)]}
+        config = {"hooks": [self._get_hook(self.HOOK, command)]}
 
         with self.configure_plugin(config), capture_log("beets.hook") as logs:
-            plugins.send("test_event")
+            plugins.send(self.HOOK)
             yield logs
 
     def test_hook_empty_command(self):
@@ -53,13 +55,13 @@ class HookLogsTest(HookTestCase):
     @unittest.skipIf(sys.platform == "win32", "win32")
     def test_hook_non_zero_exit(self):
         with self._configure_logs('sh -c "exit 1"') as logs:
-            assert "hook: hook for test_event exited with status 1" in logs
+            assert f"hook: hook for {self.HOOK} exited with status 1" in logs
 
     def test_hook_non_existent_command(self):
         with self._configure_logs("non-existent-command") as logs:
             logs = "\n".join(logs)
 
-        assert "hook: hook for test_event failed: " in logs
+        assert f"hook: hook for {self.HOOK} failed: " in logs
         # The error message is different for each OS. Unfortunately the text is
         # different in each case, where the only shared text is the string
         # 'file' and substring 'Err'
@@ -68,14 +70,11 @@ class HookLogsTest(HookTestCase):
 
 
 class HookCommandTest(HookTestCase):
-    TEST_HOOK_COUNT = 2
-
-    events = [f"test_event_{i}" for i in range(TEST_HOOK_COUNT)]
+    EVENTS: ClassVar[list[plugins.EventType]] = ["write", "after_write"]
 
     def setUp(self):
         super().setUp()
-        temp_dir = os.fsdecode(self.temp_dir)
-        self.paths = [os.path.join(temp_dir, e) for e in self.events]
+        self.paths = [str(self.temp_dir_path / e) for e in self.EVENTS]
 
     def _test_command(
         self,
@@ -94,13 +93,14 @@ class HookCommandTest(HookTestCase):
         2. Assert that a file has been created under the original path, which proves
            that the configured hook command has been executed.
         """
+        events_with_paths = list(zip(self.EVENTS, self.paths))
         hooks = [
             self._get_hook(e, f"touch {make_test_path(e, p)}")
-            for e, p in zip(self.events, self.paths)
+            for e, p in events_with_paths
         ]
 
         with self.configure_plugin({"hooks": hooks}):
-            for event, path in zip(self.events, self.paths):
+            for event, path in events_with_paths:
                 if send_path_kwarg:
                     plugins.send(event, path=path)
                 else:

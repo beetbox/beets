@@ -559,7 +559,7 @@ def spawn(coro):
     and child coroutines run concurrently.
     """
     if not isinstance(coro, types.GeneratorType):
-        raise ValueError("%s is not a coroutine" % coro)
+        raise ValueError(f"{coro} is not a coroutine")
     return SpawnEvent(coro)
 
 
@@ -569,7 +569,7 @@ def call(coro):
     returns a value using end(), then this event returns that value.
     """
     if not isinstance(coro, types.GeneratorType):
-        raise ValueError("%s is not a coroutine" % coro)
+        raise ValueError(f"{coro} is not a coroutine")
     return DelegationEvent(coro)
 
 

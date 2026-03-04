@@ -14,10 +14,13 @@
 
 """Some common functionality for beets' test cases."""
 
+from __future__ import annotations
+
 import os
 import sys
 import unittest
 from contextlib import contextmanager
+from typing import TYPE_CHECKING
 
 import beets
 import beets.library
@@ -27,6 +30,9 @@ import beetsplug
 from beets import importer, logging, util
 from beets.ui import commands
 from beets.util import syspath
+
+if TYPE_CHECKING:
+    import pytest
 
 beetsplug.__path__ = [
     os.path.abspath(
@@ -63,13 +69,13 @@ HAVE_SYMLINK = sys.platform != "win32"
 HAVE_HARDLINK = sys.platform != "win32"
 
 
-def item(lib=None):
-    i = beets.library.Item(
+def item(lib=None, **kwargs):
+    defaults = dict(
         title="the title",
         artist="the artist",
         albumartist="the album artist",
         album="the album",
-        genre="the genre",
+        genres=["the genre"],
         lyricist="the lyricist",
         composer="the composer",
         arranger="the arranger",
@@ -99,6 +105,7 @@ def item(lib=None):
         album_id=None,
         mtime=12345,
     )
+    i = beets.library.Item(**{**defaults, **kwargs})
     if lib:
         lib.add(i)
     return i
@@ -106,120 +113,66 @@ def item(lib=None):
 
 # Dummy import session.
 def import_session(lib=None, loghandler=None, paths=[], query=[], cli=False):
-    cls = commands.TerminalImportSession if cli else importer.ImportSession
+    cls = (
+        commands.import_.session.TerminalImportSession
+        if cli
+        else importer.ImportSession
+    )
     return cls(lib, loghandler, paths, query)
-
-
-class Assertions:
-    """A mixin with additional unit test assertions."""
-
-    def assertExists(self, path):
-        assert os.path.exists(syspath(path)), f"file does not exist: {path!r}"
-
-    def assertNotExists(self, path):
-        assert not os.path.exists(syspath(path)), f"file exists: {path!r}"
-
-    def assertIsFile(self, path):
-        self.assertExists(path)
-        assert os.path.isfile(syspath(path)), (
-            "path exists, but is not a regular file: {!r}".format(path)
-        )
-
-    def assertIsDir(self, path):
-        self.assertExists(path)
-        assert os.path.isdir(syspath(path)), (
-            "path exists, but is not a directory: {!r}".format(path)
-        )
-
-    def assert_equal_path(self, a, b):
-        """Check that two paths are equal."""
-        a_bytes, b_bytes = util.normpath(a), util.normpath(b)
-
-        assert a_bytes == b_bytes, f"{a_bytes=} != {b_bytes=}"
 
 
 # Mock I/O.
 
 
-class InputError(Exception):
-    def __init__(self, output=None):
-        self.output = output
-
-    def __str__(self):
-        msg = "Attempt to read with no input provided."
-        if self.output is not None:
-            msg += f" Output: {self.output!r}"
-        return msg
-
-
-class DummyOut:
-    encoding = "utf-8"
-
-    def __init__(self):
-        self.buf = []
-
-    def write(self, s):
-        self.buf.append(s)
-
-    def get(self):
-        return "".join(self.buf)
-
-    def flush(self):
-        self.clear()
-
-    def clear(self):
-        self.buf = []
+class InputError(IOError):
+    def __str__(self) -> str:
+        return "Attempt to read with no input provided."
 
 
 class DummyIn:
     encoding = "utf-8"
 
-    def __init__(self, out=None):
-        self.buf = []
-        self.reads = 0
-        self.out = out
+    def __init__(self) -> None:
+        self.buf: list[str] = []
 
-    def add(self, s):
-        self.buf.append(s + "\n")
+    def add(self, s: str) -> None:
+        self.buf.append(f"{s}\n")
 
-    def close(self):
+    def close(self) -> None:
         pass
 
-    def readline(self):
+    def readline(self) -> str:
         if not self.buf:
-            if self.out:
-                raise InputError(self.out.get())
-            else:
-                raise InputError()
-        self.reads += 1
+            raise InputError
+
         return self.buf.pop(0)
 
 
 class DummyIO:
-    """Mocks input and output streams for testing UI code."""
+    """Test helper that manages standard input and output."""
 
-    def __init__(self):
-        self.stdout = DummyOut()
-        self.stdin = DummyIn(self.stdout)
+    def __init__(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capteesys: pytest.CaptureFixture[str],
+    ) -> None:
+        self._capteesys = capteesys
+        self.stdin = DummyIn()
 
-    def addinput(self, s):
-        self.stdin.add(s)
+        monkeypatch.setattr("sys.stdin", self.stdin)
 
-    def getoutput(self):
-        res = self.stdout.get()
-        self.stdout.clear()
-        return res
+    def addinput(self, text: str) -> None:
+        """Simulate user typing into stdin."""
+        self.stdin.add(text)
 
-    def readcount(self):
-        return self.stdin.reads
+    def getoutput(self) -> str:
+        """Get the standard output captured so far.
 
-    def install(self):
-        sys.stdin = self.stdin
-        sys.stdout = self.stdout
-
-    def restore(self):
-        sys.stdin = sys.__stdin__
-        sys.stdout = sys.__stdout__
+        Note: it clears the internal buffer, so subsequent calls will only
+        return *new* output.
+        """
+        # Using capteesys allows you to see output in the console if the test fails
+        return self._capteesys.readouterr().out
 
 
 # Utility.

@@ -3,22 +3,21 @@
 import logging as log
 import sys
 import threading
-from io import StringIO
+from types import ModuleType
+from unittest.mock import patch
+
+import pytest
 
 import beets.logging as blog
-import beetsplug
 from beets import plugins, ui
 from beets.test import _common, helper
-from beets.test.helper import (
-    AsIsImporterMixin,
-    BeetsTestCase,
-    ImportTestCase,
-    PluginMixin,
-)
+from beets.test.helper import AsIsImporterMixin, ImportTestCase, PluginMixin
 
 
-class LoggingTest(BeetsTestCase):
-    def test_logging_management(self):
+class TestStrFormatLogger:
+    """Tests for the custom str-formatting logger."""
+
+    def test_logger_creation(self):
         l1 = log.getLogger("foo123")
         l2 = blog.getLogger("foo123")
         assert l1 == l2
@@ -38,49 +37,128 @@ class LoggingTest(BeetsTestCase):
         l6 = blog.getLogger()
         assert l1 != l6
 
-    def test_str_format_logging(self):
-        logger = blog.getLogger("baz123")
-        stream = StringIO()
-        handler = log.StreamHandler(stream)
+    @pytest.mark.parametrize(
+        "level", [log.DEBUG, log.INFO, log.WARNING, log.ERROR]
+    )
+    @pytest.mark.parametrize(
+        "msg, args, kwargs, expected",
+        [
+            ("foo {} bar {}", ("oof", "baz"), {}, "foo oof bar baz"),
+            (
+                "foo {bar} baz {foo}",
+                (),
+                {"foo": "oof", "bar": "baz"},
+                "foo baz baz oof",
+            ),
+            ("no args", (), {}, "no args"),
+            ("foo {} bar {baz}", ("oof",), {"baz": "baz"}, "foo oof bar baz"),
+        ],
+    )
+    def test_str_format_logging(
+        self, level, msg, args, kwargs, expected, caplog
+    ):
+        logger = blog.getLogger("test_logger")
+        logger.setLevel(level)
 
-        logger.addHandler(handler)
-        logger.propagate = False
+        with caplog.at_level(level, logger="test_logger"):
+            logger.log(level, msg, *args, **kwargs)
 
-        logger.warning("foo {0} {bar}", "oof", bar="baz")
-        handler.flush()
-        assert stream.getvalue(), "foo oof baz"
+        assert caplog.records, "No log records were captured"
+        assert str(caplog.records[0].msg) == expected
+
+
+class TestLogSanitization:
+    """Log messages should have control characters removed from:
+    - String arguments
+    - Keyword argument values
+    - Bytes arguments (which get decoded first)
+    """
+
+    @pytest.mark.parametrize(
+        "msg, args, kwargs, expected",
+        [
+            # Valid UTF-8 bytes are decoded and preserved
+            (
+                "foo {} bar {bar}",
+                (b"oof \xc3\xa9",),
+                {"bar": b"baz \xc3\xa9"},
+                "foo oof é bar baz é",
+            ),
+            # Invalid UTF-8 bytes are decoded with replacement characters
+            (
+                "foo {} bar {bar}",
+                (b"oof \xff",),
+                {"bar": b"baz \xff"},
+                "foo oof � bar baz �",
+            ),
+            # Control characters should be removed
+            (
+                "foo {} bar {bar}",
+                ("oof \x9e",),
+                {"bar": "baz \x9e"},
+                "foo oof � bar baz �",
+            ),
+            # Whitespace control characters should be preserved
+            (
+                "foo {} bar {bar}",
+                ("foo\t\n",),
+                {"bar": "bar\r"},
+                "foo foo\t\n bar bar\r",
+            ),
+        ],
+    )
+    def test_sanitization(self, msg, args, kwargs, expected, caplog):
+        level = log.INFO
+        logger = blog.getLogger("test_logger")
+        logger.setLevel(level)
+
+        with caplog.at_level(level, logger="test_logger"):
+            logger.log(level, msg, *args, **kwargs)
+
+        assert caplog.records, "No log records were captured"
+        assert str(caplog.records[0].msg) == expected
+
+
+class DummyModule(ModuleType):
+    class DummyPlugin(plugins.BeetsPlugin):
+        def __init__(self):
+            plugins.BeetsPlugin.__init__(self, "dummy")
+            self.import_stages = [self.import_stage]
+            self.register_listener("dummy_event", self.listener)
+
+        def log_all(self, name):
+            self._log.debug("debug {}", name)
+            self._log.info("info {}", name)
+            self._log.warning("warning {}", name)
+
+        def commands(self):
+            cmd = ui.Subcommand("dummy")
+            cmd.func = lambda _, __, ___: self.log_all("cmd")
+            return (cmd,)
+
+        def import_stage(self, session, task):
+            self.log_all("import_stage")
+
+        def listener(self):
+            self.log_all("listener")
+
+    def __init__(self, *_, **__):
+        module_name = "beetsplug.dummy"
+        super().__init__(module_name)
+        self.DummyPlugin.__module__ = module_name
+        self.DummyPlugin = self.DummyPlugin
 
 
 class LoggingLevelTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
     plugin = "dummy"
 
-    class DummyModule:
-        class DummyPlugin(plugins.BeetsPlugin):
-            def __init__(self):
-                plugins.BeetsPlugin.__init__(self, "dummy")
-                self.import_stages = [self.import_stage]
-                self.register_listener("dummy_event", self.listener)
+    @classmethod
+    def setUpClass(cls):
+        patcher = patch.dict(sys.modules, {"beetsplug.dummy": DummyModule()})
+        patcher.start()
+        cls.addClassCleanup(patcher.stop)
 
-            def log_all(self, name):
-                self._log.debug("debug " + name)
-                self._log.info("info " + name)
-                self._log.warning("warning " + name)
-
-            def commands(self):
-                cmd = ui.Subcommand("dummy")
-                cmd.func = lambda _, __, ___: self.log_all("cmd")
-                return (cmd,)
-
-            def import_stage(self, session, task):
-                self.log_all("import_stage")
-
-            def listener(self):
-                self.log_all("listener")
-
-    def setUp(self):
-        sys.modules["beetsplug.dummy"] = self.DummyModule
-        beetsplug.dummy = self.DummyModule
-        super().setUp()
+        super().setUpClass()
 
     def test_command_level0(self):
         self.config["verbose"] = 0
@@ -176,9 +254,9 @@ class ConcurrentEventsTest(AsIsImporterMixin, ImportTestCase):
             self.t1_step = self.t2_step = 0
 
         def log_all(self, name):
-            self._log.debug("debug " + name)
-            self._log.info("info " + name)
-            self._log.warning("warning " + name)
+            self._log.debug("debug {}", name)
+            self._log.info("info {}", name)
+            self._log.warning("warning {}", name)
 
         def listener1(self):
             try:

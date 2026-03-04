@@ -21,14 +21,14 @@ from unittest.mock import ANY, patch
 
 import pytest
 
-from beets.test.helper import CleanupModulesMixin, PluginTestCase, control_stdin
+from beets.test.helper import CleanupModulesMixin, IOMixin, PluginTestCase
 from beets.ui import UserError
 from beets.util import open_anything
 from beetsplug.play import PlayPlugin
 
 
 @patch("beetsplug.play.util.interactive_open")
-class PlayPluginTest(CleanupModulesMixin, PluginTestCase):
+class PlayPluginTest(IOMixin, CleanupModulesMixin, PluginTestCase):
     modules = (PlayPlugin.__module__,)
     plugin = "play"
 
@@ -49,7 +49,7 @@ class PlayPluginTest(CleanupModulesMixin, PluginTestCase):
 
         open_mock.assert_called_once_with(ANY, expected_cmd)
         expected_playlist = expected_playlist or self.item.path.decode("utf-8")
-        exp_playlist = expected_playlist + "\n"
+        exp_playlist = f"{expected_playlist}\n"
         with open(open_mock.call_args[0][0][0], "rb") as playlist:
             assert exp_playlist == playlist.read().decode("utf-8")
 
@@ -96,9 +96,7 @@ class PlayPluginTest(CleanupModulesMixin, PluginTestCase):
         open_mock.assert_called_once_with(ANY, open_anything())
         with open(open_mock.call_args[0][0][0], "rb") as f:
             playlist = f.read().decode("utf-8")
-        assert (
-            f"{os.path.dirname(self.item.path.decode('utf-8'))}\n" == playlist
-        )
+        assert f"{self.item.filepath.parent}\n" == playlist
 
     def test_raw(self, open_mock):
         self.config["play"]["raw"] = True
@@ -106,6 +104,19 @@ class PlayPluginTest(CleanupModulesMixin, PluginTestCase):
         self.run_command("play", "nice")
 
         open_mock.assert_called_once_with([self.item.path], "echo")
+
+    def test_pls_marker(self, open_mock):
+        self.config["play"]["command"] = (
+            "echo --some params --playlist=$playlist --some-more params"
+        )
+
+        self.run_command("play", "nice")
+
+        open_mock.assert_called_once
+
+        commandstr = open_mock.call_args_list[0][0][1]
+        assert commandstr.startswith("echo --some params --playlist=")
+        assert commandstr.endswith(" --some-more params")
 
     def test_not_found(self, open_mock):
         self.run_command("play", "not found")
@@ -116,8 +127,8 @@ class PlayPluginTest(CleanupModulesMixin, PluginTestCase):
         self.config["play"]["warning_threshold"] = 1
         self.add_item(title="another NiceTitle")
 
-        with control_stdin("a"):
-            self.run_command("play", "nice")
+        self.io.addinput("a")
+        self.run_command("play", "nice")
 
         open_mock.assert_not_called()
 
@@ -125,16 +136,14 @@ class PlayPluginTest(CleanupModulesMixin, PluginTestCase):
         self.config["play"]["warning_threshold"] = 1
         self.other_item = self.add_item(title="another NiceTitle")
 
-        expected_playlist = "{}\n{}".format(
-            self.item.path.decode("utf-8"), self.other_item.path.decode("utf-8")
-        )
+        expected_playlist = f"{self.item.filepath}\n{self.other_item.filepath}"
 
-        with control_stdin("a"):
-            self.run_and_assert(
-                open_mock,
-                ["-y", "NiceTitle"],
-                expected_playlist=expected_playlist,
-            )
+        self.io.addinput("a")
+        self.run_and_assert(
+            open_mock,
+            ["-y", "NiceTitle"],
+            expected_playlist=expected_playlist,
+        )
 
     def test_command_failed(self, open_mock):
         open_mock.side_effect = OSError("some reason")

@@ -19,9 +19,9 @@ import re
 import confuse
 from mediafile import MediaFile
 
-from beets.importer import action
+from beets.importer import Action
 from beets.plugins import BeetsPlugin
-from beets.ui import Subcommand, decargs, input_yn
+from beets.ui import Subcommand, input_yn
 
 __author__ = "baobab@heresiarch.info"
 
@@ -41,6 +41,7 @@ class ZeroPlugin(BeetsPlugin):
                 "fields": [],
                 "keep_fields": [],
                 "update_database": False,
+                "omit_single_disc": False,
             }
         )
 
@@ -75,11 +76,11 @@ class ZeroPlugin(BeetsPlugin):
         zero_command = Subcommand("zero", help="set fields to null")
 
         def zero_fields(lib, opts, args):
-            if not decargs(args) and not input_yn(
+            if not args and not input_yn(
                 "Remove fields for all items? (Y/n)", True
             ):
                 return
-            for item in lib.items(decargs(args)):
+            for item in lib.items(args):
                 self.process_item(item)
 
         zero_command.func = zero_fields
@@ -90,10 +91,10 @@ class ZeroPlugin(BeetsPlugin):
         Do some sanity checks then compile the regexes.
         """
         if field not in MediaFile.fields():
-            self._log.error("invalid field: {0}", field)
+            self._log.error("invalid field: {}", field)
         elif field in ("id", "path", "album_id"):
             self._log.warning(
-                "field '{0}' ignored, zeroing it would be dangerous", field
+                "field '{}' ignored, zeroing it would be dangerous", field
             )
         else:
             try:
@@ -105,7 +106,7 @@ class ZeroPlugin(BeetsPlugin):
                 self.fields_to_progs[field] = []
 
     def import_task_choice_event(self, session, task):
-        if task.choice_flag == action.ASIS and not self.warned:
+        if task.choice_flag == Action.ASIS and not self.warned:
             self._log.warning('cannot zero in "as-is" mode')
             self.warned = True
         # TODO request write in as-is mode
@@ -122,10 +123,13 @@ class ZeroPlugin(BeetsPlugin):
         config.
         """
         fields_set = False
+        if self.config["omit_single_disc"].get(bool) and item.disctotal == 1:
+            for tag in {"disc", "disctotal"} & set(tags):
+                tags[tag] = None
+                fields_set = True
 
         if not self.fields_to_progs:
-            self._log.warning("no fields, nothing to do")
-            return False
+            self._log.warning("no fields list to remove")
 
         for field, progs in self.fields_to_progs.items():
             if field in tags:
@@ -137,7 +141,7 @@ class ZeroPlugin(BeetsPlugin):
 
             if match:
                 fields_set = True
-                self._log.debug("{0}: {1} -> None", field, value)
+                self._log.debug("{}: {} -> None", field, value)
                 tags[field] = None
                 if self.config["update_database"]:
                     item[field] = None
