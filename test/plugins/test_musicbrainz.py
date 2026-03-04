@@ -16,7 +16,7 @@
 
 import unittest
 import uuid
-from typing import ClassVar
+from typing import Any, ClassVar
 from unittest import mock
 
 import pytest
