@@ -288,7 +288,8 @@ class Candidate:
         elif check == ImageAction.REFORMAT:
             self.path = ArtResizer.shared.reformat(
                 self.path,
-                plugin.cover_format,
+                # TODO: fix this gnarly logic to remove the need for type ignore
+                plugin.cover_format,  # type: ignore[arg-type]
                 deinterlaced=plugin.deinterlace,
             )
 
@@ -1367,7 +1368,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
 
         # allow both pixel and percentage-based margin specifications
         self.enforce_ratio = self.config["enforce_ratio"].get(
-            confuse.OneOf(
+            confuse.OneOf[bool | str](
                 [
                     bool,
                     confuse.String(pattern=self.PAT_PX),
@@ -1445,6 +1446,16 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             "move"
         ].get(bool)
 
+    def _is_candidate_fallback(self, candidate: Candidate) -> bool:
+        try:
+            return (
+                candidate.path is not None
+                and self.fallback is not None
+                and os.path.samefile(candidate.path, self.fallback)
+            )
+        except OSError:
+            return False
+
     # Asynchronous; after music is added to the library.
     def fetch_art(self, session: ImportSession, task: ImportTask) -> None:
         """Find art for the album being imported."""
@@ -1493,7 +1504,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
 
             self._set_art(task.album, candidate, not removal_enabled)
 
-            if removal_enabled:
+            if removal_enabled and not self._is_candidate_fallback(candidate):
                 task.prune(candidate.path)
 
     # Manual album art fetching.

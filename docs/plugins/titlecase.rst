@@ -145,7 +145,7 @@ Default
     :default: yes
 
      If a field name contains ``artist``, then any lowercase ``the`` will be
-     capitalized. Useful for bands with `The` as part of the proper name,
+     capitalized. Useful for bands with ``The`` as part of the proper name,
      like ``Amyl and The Sniffers``.
 
 .. conf:: all_caps

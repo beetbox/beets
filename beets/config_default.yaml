@@ -10,6 +10,8 @@ plugins: [musicbrainz]
 
 pluginpath: []
 
+raise_on_error: no
+
 # --------------- Import ---------------
 
 clutter: ["Thumbs.DB", ".DS_Store"]

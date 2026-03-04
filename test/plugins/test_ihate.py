@@ -11,7 +11,7 @@ class IHatePluginTest(unittest.TestCase):
     def test_hate(self):
         match_pattern = {}
         test_item = Item(
-            genre="TestGenre", album="TestAlbum", artist="TestArtist"
+            genres=["TestGenre"], album="TestAlbum", artist="TestArtist"
         )
         task = importer.SingletonImportTask(None, test_item)
 
@@ -27,19 +27,19 @@ class IHatePluginTest(unittest.TestCase):
         assert IHatePlugin.do_i_hate_this(task, match_pattern)
 
         # Query is blocked by AND clause.
-        match_pattern = ["album:notthis genre:testgenre"]
+        match_pattern = ["album:notthis genres:testgenre"]
         assert not IHatePlugin.do_i_hate_this(task, match_pattern)
 
         # Both queries are blocked by AND clause with unmatched condition.
         match_pattern = [
-            "album:notthis genre:testgenre",
+            "album:notthis genres:testgenre",
             "artist:testartist album:notthis",
         ]
         assert not IHatePlugin.do_i_hate_this(task, match_pattern)
 
         # Only one query should fire.
         match_pattern = [
-            "album:testalbum genre:testgenre",
+            "album:testalbum genres:testgenre",
             "artist:testartist album:notthis",
         ]
         assert IHatePlugin.do_i_hate_this(task, match_pattern)

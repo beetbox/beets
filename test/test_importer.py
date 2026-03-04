@@ -131,7 +131,7 @@ class NonAutotaggedImportTest(PathsMixin, AsIsImporterMixin, ImportTestCase):
 
         assert self.track_lib_path.exists()
         assert self.track_lib_path.is_symlink()
-        assert self.track_lib_path.resolve() == self.track_import_path
+        assert self.track_lib_path.resolve() == self.track_import_path.resolve()
 
     @unittest.skipUnless(_common.HAVE_HARDLINK, "need hardlinks")
     def test_import_hardlink_arrives(self):
@@ -304,15 +304,15 @@ class ImportSingletonTest(AutotagImportTestCase):
         assert len(self.lib.albums()) == 2
 
     def test_set_fields(self):
-        genre = "\U0001f3b7 Jazz"
+        genres = ["\U0001f3b7 Jazz", "Rock"]
         collection = "To Listen"
         disc = 0
 
         config["import"]["set_fields"] = {
+            "genres": "; ".join(genres),
             "collection": collection,
-            "genre": genre,
-            "title": "$title - formatted",
             "disc": disc,
+            "title": "$title - formatted",
         }
 
         # As-is item import.
@@ -322,7 +322,7 @@ class ImportSingletonTest(AutotagImportTestCase):
 
         for item in self.lib.items():
             item.load()  # TODO: Not sure this is necessary.
-            assert item.genre == genre
+            assert item.genres == genres
             assert item.collection == collection
             assert item.title == "Tag Track 1 - formatted"
             assert item.disc == disc
@@ -337,7 +337,7 @@ class ImportSingletonTest(AutotagImportTestCase):
 
         for item in self.lib.items():
             item.load()
-            assert item.genre == genre
+            assert item.genres == genres
             assert item.collection == collection
             assert item.title == "Applied Track 1 - formatted"
             assert item.disc == disc
@@ -373,12 +373,12 @@ class ImportTest(PathsMixin, AutotagImportTestCase):
         config["import"]["from_scratch"] = True
 
         for mediafile in self.import_media:
-            mediafile.genre = "Tag Genre"
+            mediafile.genres = ["Tag Genre"]
             mediafile.save()
 
         self.importer.add_choice(importer.Action.APPLY)
         self.importer.run()
-        assert self.lib.items().get().genre == ""
+        assert not self.lib.items().get().genres
 
     def test_apply_from_scratch_keeps_format(self):
         config["import"]["from_scratch"] = True
@@ -464,17 +464,17 @@ class ImportTest(PathsMixin, AutotagImportTestCase):
             self.lib.items().get().data_source
 
     def test_set_fields(self):
-        genre = "\U0001f3b7 Jazz"
+        genres = ["\U0001f3b7 Jazz", "Rock"]
         collection = "To Listen"
-        comments = "managed by beets"
         disc = 0
+        comments = "managed by beets"
 
         config["import"]["set_fields"] = {
-            "genre": genre,
+            "genres": "; ".join(genres),
             "collection": collection,
+            "disc": disc,
             "comments": comments,
             "album": "$album - formatted",
-            "disc": disc,
         }
 
         # As-is album import.
@@ -483,11 +483,10 @@ class ImportTest(PathsMixin, AutotagImportTestCase):
         self.importer.run()
 
         for album in self.lib.albums():
-            album.load()  # TODO: Not sure this is necessary.
-            assert album.genre == genre
+            assert album.genres == genres
             assert album.comments == comments
             for item in album.items():
-                assert item.get("genre", with_album=False) == genre
+                assert item.get("genres", with_album=False) == genres
                 assert item.get("collection", with_album=False) == collection
                 assert item.get("comments", with_album=False) == comments
                 assert (
@@ -505,11 +504,10 @@ class ImportTest(PathsMixin, AutotagImportTestCase):
         self.importer.run()
 
         for album in self.lib.albums():
-            album.load()
-            assert album.genre == genre
+            assert album.genres == genres
             assert album.comments == comments
             for item in album.items():
-                assert item.get("genre", with_album=False) == genre
+                assert item.get("genres", with_album=False) == genres
                 assert item.get("collection", with_album=False) == collection
                 assert item.get("comments", with_album=False) == comments
                 assert (
@@ -956,29 +954,34 @@ class ImportDuplicateAlbumTest(PluginMixin, ImportTestCase):
         item = self.lib.items().get()
         assert item.title == "new title"
 
-    def test_no_autotag_keeps_duplicate_album(self):
+    def test_no_autotag_removes_duplicate_album(self):
         config["import"]["autotag"] = False
+        album = self.lib.albums().get()
         item = self.lib.items().get()
         assert item.title == "t\xeftle 0"
         assert item.filepath.exists()
 
-        # Imported item has the same artist and album as the one in the
-        # library.
+        # Imported item has the same albumartist and album as the one in the
+        # library album. We use album metadata (not item metadata) since
+        # duplicate detection uses album-level fields.
         import_file = os.path.join(
             self.importer.paths[0], b"album", b"track_1.mp3"
         )
         import_file = MediaFile(import_file)
-        import_file.artist = item["artist"]
-        import_file.albumartist = item["artist"]
-        import_file.album = item["album"]
+        import_file.artist = album.albumartist
+        import_file.albumartist = album.albumartist
+        import_file.album = album.album
         import_file.title = "new title"
+        import_file.save()
 
         self.importer.default_resolution = self.importer.Resolution.REMOVE
         self.importer.run()
 
-        assert item.filepath.exists()
-        assert len(self.lib.albums()) == 2
-        assert len(self.lib.items()) == 2
+        # Old duplicate should be removed, new one imported
+        assert len(self.lib.albums()) == 1
+        assert len(self.lib.items()) == 1
+        # The new item should be in the library
+        assert self.lib.items().get().title == "new title"
 
     def test_keep_duplicate_album(self):
         self.importer.default_resolution = self.importer.Resolution.KEEPBOTH
@@ -1106,6 +1109,32 @@ class ImportDuplicateSingletonTest(ImportTestCase):
         self.importer.run()
 
         assert len(self.lib.items()) == 2
+
+    def test_no_autotag_removes_duplicate_singleton(self):
+        config["import"]["autotag"] = False
+        item = self.lib.items().get()
+        assert item.mb_trackid == "old trackid"
+        assert item.filepath.exists()
+
+        # Imported item has the same artist and title as the one in the
+        # library. We use item metadata since duplicate detection uses
+        # item-level fields for singletons.
+        import_file = os.path.join(
+            self.importer.paths[0], b"album", b"track_1.mp3"
+        )
+        import_file = MediaFile(import_file)
+        import_file.artist = item.artist
+        import_file.title = item.title
+        import_file.mb_trackid = "new trackid"
+        import_file.save()
+
+        self.importer.default_resolution = self.importer.Resolution.REMOVE
+        self.importer.run()
+
+        # Old duplicate should be removed, new one imported
+        assert len(self.lib.items()) == 1
+        # The new item should be in the library
+        assert self.lib.items().get().mb_trackid == "new trackid"
 
     def test_twice_in_import_dir(self):
         self.skipTest("write me")

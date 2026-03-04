@@ -99,7 +99,7 @@ started.
                        write: no    # Don't modify tags
 4. **Add customization via plugins (optional):**
        Beets comes with many plugins that extend its functionality. You can
-       enable plugins by adding a `plugins` section to your config file.
+       enable plugins by adding a ``plugins`` section to your config file.
 
        We recommend adding at least one :ref:`Autotagger Plugin
        <autotagger_extensions>` to help with fetching metadata during import.

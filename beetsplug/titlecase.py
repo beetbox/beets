@@ -104,7 +104,7 @@ class TitlecasePlugin(BeetsPlugin):
 
     @cached_property
     def replace(self) -> list[tuple[str, str]]:
-        return self.config["replace"].as_pairs()
+        return self.config["replace"].as_pairs(default_value="")
 
     @cached_property
     def the_artist(self) -> bool:

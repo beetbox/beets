@@ -1,7 +1,7 @@
 MusicBrainz Pseudo-Release Plugin
 =================================
 
-The `mbpseudo` plugin can be used *instead of* the `musicbrainz` plugin to
+The ``mbpseudo`` plugin can be used *instead of* the ``musicbrainz`` plugin to
 search for MusicBrainz pseudo-releases_ during the import process, which are
 added to the normal candidates from the MusicBrainz search.
 
@@ -20,12 +20,12 @@ Configuration
 -------------
 
 Since this plugin first searches for official releases from MusicBrainz, all
-options from the `musicbrainz` plugin's :ref:`musicbrainz-config` are supported,
-but they must be specified under `mbpseudo` in the configuration file.
-Additionally, the configuration expects an array of scripts that are desired for
-the pseudo-releases. For ``artist`` in particular, keep in mind that even
-pseudo-releases might specify it with the original script, so you should also
-configure import :ref:`languages` to give artist aliases more priority.
+options from the ``musicbrainz`` plugin's :ref:`musicbrainz-config` are
+supported, but they must be specified under ``mbpseudo`` in the configuration
+file. Additionally, the configuration expects an array of scripts that are
+desired for the pseudo-releases. For ``artist`` in particular, keep in mind that
+even pseudo-releases might specify it with the original script, so you should
+also configure import :ref:`languages` to give artist aliases more priority.
 Therefore, the minimum configuration for this plugin looks like this:
 
 .. code-block:: yaml
@@ -39,10 +39,10 @@ Therefore, the minimum configuration for this plugin looks like this:
         scripts:
         - Latn
 
-Note that the `search_limit` configuration applies to the initial search for
-official releases, and that the `data_source` in the database will be
-"MusicBrainz". Nevertheless, `data_source_mismatch_penalty` must also be
-specified under `mbpseudo` if desired (see also
+Note that the ``search_limit`` configuration applies to the initial search for
+official releases, and that the ``data_source`` in the database will be
+"MusicBrainz". Nevertheless, ``data_source_mismatch_penalty`` must also be
+specified under ``mbpseudo`` if desired (see also
 :ref:`metadata-source-plugin-configuration`). An example with multiple data
 sources may look like this:
 
