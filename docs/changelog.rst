@@ -44,15 +44,18 @@ Bug fixes
 - :doc:`plugins/zero`: When the ``omit_single_disc`` option is set,
   ``disctotal`` is zeroed alongside ``disc``.
 - :doc:`plugins/fetchart`: Prevent deletion of configured fallback cover art
-- In autotagging, initialise empty multi-valued fields with ``None`` instead of
-  empty list, which caused beets to overwrite existing metadata with empty list
-  values instead of leaving them unchanged. :bug:`6403`
+- :ref:`import-cmd` When autotagging, initialise empty multi-valued fields with
+  ``None`` instead of empty list, which caused beets to overwrite existing
+  metadata with empty list values instead of leaving them unchanged. :bug:`6403`
 - :doc:`plugins/fuzzy`: Improve fuzzy matching when the query is shorter than
   the field value so substring-style searches produce more useful results.
   :bug:`2043`
 - :doc:`plugins/fuzzy`: Force slow query evaluation whenever the fuzzy prefix is
   used (for example ``~foo`` or ``%%foo``), so fuzzy matching is applied
   consistently. :bug:`5638`
+- :ref:`import-cmd` Duplicate detection now works for as-is imports (when
+  ``autotag`` is disabled). Previously, ``duplicate_keys`` and
+  ``duplicate_action`` config options were silently ignored for as-is imports.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
