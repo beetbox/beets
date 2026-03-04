@@ -105,6 +105,11 @@ def _preferred_alias(
     return None
 
 
+def _key_with_preferred_alias(obj: JSONDict, key: str) -> str:
+    alias = _preferred_alias(obj.get("aliases", ()))
+    return alias["name"] if alias else obj[key]
+
+
 def _multi_artist_credit(
     credit: list[JSONDict], include_join_phrase: bool
 ) -> tuple[list[str], list[str], list[str]]:
@@ -334,8 +339,7 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
         ``medium_index``, the track's index on its medium; ``medium_total``,
         the number of tracks on the medium. Each number is a 1-based index.
         """
-        alias = _preferred_alias(recording.get("aliases", ()))
-        title = alias["name"] if alias else recording["title"]
+        title = _key_with_preferred_alias(recording, key="title")
 
         info = beets.autotag.hooks.TrackInfo(
             title=title,
@@ -546,8 +550,7 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
                 track_infos.append(ti)
 
         album_artist_ids = _artist_ids(release["artist-credit"])
-        alias = _preferred_alias(release.get("aliases", ()))
-        release_title = alias["name"] if alias else release["title"]
+        release_title = _key_with_preferred_alias(release, key="title")
         info = beets.autotag.hooks.AlbumInfo(
             album=release_title,
             album_id=release["id"],
@@ -573,13 +576,8 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
         info.albumstatus = release.get("status")
 
         if release["release-group"].get("title"):
-            alias = _preferred_alias(
-                release["release-group"].get("aliases", ())
-            )
-            info.release_group_title = (
-                alias["name"]
-                if alias
-                else release["release-group"].get("title")
+            info.release_group_title = _key_with_preferred_alias(
+                release["release-group"], key="title"
             )
 
         # Get the disambiguation strings at the release and release group level.
