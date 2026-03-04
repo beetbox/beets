@@ -179,8 +179,8 @@ New features
   ``beet import``.
 - :doc:`plugins/random`: Added ``--field`` option to specify which field to use
   for equal-chance sampling (default: ``albumartist``).
-- :doc:`plugins/musicbrainz`: Use title alias for releases, release groups and
-  recordings.
+- :doc:`plugins/musicbrainz`: Use title aliases for releases, release groups,
+  and recordings.
 
 Bug fixes
 ~~~~~~~~~
