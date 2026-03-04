@@ -56,6 +56,8 @@ Bug fixes
 - :ref:`import-cmd` Duplicate detection now works for as-is imports (when
   ``autotag`` is disabled). Previously, ``duplicate_keys`` and
   ``duplicate_action`` config options were silently ignored for as-is imports.
+- :doc:`/plugins/convert`: Fix extension substitution inside path of the
+  exported playlist.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
