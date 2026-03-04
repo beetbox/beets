@@ -12,6 +12,8 @@ Unreleased
 New features
 ~~~~~~~~~~~~
 
+- :doc:`plugins/lastgenre`: Added ``cleanup_existing`` configuration flag to
+  allow whitelist canonicalization of existing genres.
 - Add native support for multiple genres per album/track. The ``genres`` field
   now stores genres as a list and is written to files as multiple individual
   genre tags (e.g., separate GENRE tags for FLAC/MP3). The
