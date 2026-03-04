@@ -627,6 +627,28 @@ class ConvertPlugin(BeetsPlugin):
                     album, dest, path_formats, pretend, link, hardlink
                 )
 
+        # If the user supplied a playlist name, create a playlist for files
+        # copied to the destination.
+        pl_normpath = None
+        items_paths = None
+        if playlist:
+            _, ext = get_format(fmt)
+            # Playlist paths are understood as relative to the dest directory.
+            pl_normpath = util.normpath(playlist)
+            pl_dir = os.path.dirname(pl_normpath)
+            items_paths = []
+            for item in items:
+                item_path = item.destination(
+                    basedir=dest, path_formats=path_formats
+                )
+
+                # When keeping new files in the library, destination paths
+                # keep original files and extensions.
+                if not opts.keep_new and should_transcode(item, fmt, force):
+                    item_path = replace_ext(item_path, ext)
+
+                items_paths.append(os.path.relpath(item_path, pl_dir))
+
         self._parallel_convert(
             dest,
             opts.keep_new,
@@ -640,30 +662,8 @@ class ConvertPlugin(BeetsPlugin):
             force,
         )
 
-        # If the user supplied a playlist name, create a playlist containing
-        # all converted titles using this name.
         if playlist:
-            # Playlist paths are understood as relative to the dest directory.
-            pl_normpath = util.normpath(playlist)
-            pl_dir = os.path.dirname(pl_normpath)
             self._log.info("Creating playlist file {}", pl_normpath)
-            # Generates a list of paths to media files, ensures the paths are
-            # relative to the playlist's location and translates the unicode
-            # strings we get from item.destination to bytes.
-            items_paths = [
-                os.path.relpath(
-                    # Substitute the before-conversion file extension by
-                    # the after-conversion extension.
-                    replace_ext(
-                        item.destination(
-                            basedir=dest, path_formats=path_formats
-                        ),
-                        get_format()[1],
-                    ),
-                    pl_dir,
-                )
-                for item in items
-            ]
             if not pretend:
                 m3ufile = M3UFile(playlist)
                 m3ufile.set_contents(items_paths)
