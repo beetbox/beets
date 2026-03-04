@@ -70,24 +70,19 @@ class ReplacePlugin(BeetsPlugin):
         for i, item in enumerate(items, 1):
             ui.print_(f"{i}. {util.displayable_path(item)}")
 
-        while True:
-            try:
-                index = int(
-                    input(
-                        f"Which song would you like to replace? "
-                        f"[1-{len(items)}] (0 to cancel): "
-                    )
-                )
-                if index == 0:
-                    return None
-                if 1 <= index <= len(items):
-                    return items[index - 1]
-                ui.print_(
-                    f"Invalid choice. Please enter a number "
-                    f"between 1 and {len(items)}."
-                )
-            except ValueError:
-                ui.print_("Invalid input. Please type in a number.")
+        index = ui.input_options(
+            [],
+            require=True,
+            prompt=(
+                f"Which song would you like to replace? "
+                f"[1-{len(items)}] (0 to cancel):"
+            ),
+            numrange=(0, len(items)),
+        )
+
+        if index == 0:
+            return None
+        return items[index - 1]
 
     def confirm_replacement(self, new_file_path: Path, song: Item) -> bool:
         """Get user confirmation for the replacement."""
