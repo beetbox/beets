@@ -288,18 +288,25 @@ class ConvertCliTest(ConvertTestCase, ConvertCommand):
         converted = self.convert_dest / "converted.ops"
         assert self.file_endswith(converted, "opus")
 
-    def test_playlist_ext(self):
-        """Test correct extension of file inside the playlist when format
-        conversion occurs."""
-        # We expect a converted file with the MP3 extension.
-        self.config["convert"]["format"] = "mp3"
+    def assert_playlist_entry(self, expected_entry, *args):
         self.io.addinput("y")
-        self.run_convert("--playlist", "playlist.m3u8")
-        # Check playlist content.
-        m3u_created = os.path.join(self.convert_dest, b"playlist.m3u8")
-        with open(m3u_created) as m3u_file:
-            assert m3u_file.readline() == "#EXTM3U\n"
-            assert m3u_file.readline() == "converted.mp3\n"
+        self.run_convert(*args, "--playlist", "playlist.m3u8")
+        lines = (self.convert_dest / "playlist.m3u8").read_text().splitlines()
+        assert lines[0] == "#EXTM3U"
+        assert lines[1] == expected_entry
+
+    def test_playlist_entry_uses_config_format(self):
+        self.assert_playlist_entry("converted.mp3")
+
+    def test_playlist_entry_uses_cli_format(self):
+        self.assert_playlist_entry("converted.ops", "--format", "opus")
+
+    def test_playlist_entry_keeps_original_extension_when_not_transcoded(self):
+        self.config["convert"]["no_convert"] = "format:ogg"
+        self.assert_playlist_entry("converted.ogg")
+
+    def test_playlist_entry_keep_new_points_to_destination_file(self):
+        self.assert_playlist_entry("converted.ogg", "--keep-new")
 
 
 @_common.slow_test()
