@@ -330,7 +330,7 @@ class TestLyricsPlugin(LyricsPluginMixin):
         monkeypatch.setattr(
             lyrics_plugin,
             "find_lyrics",
-            lambda _: Lyrics(found, "") if found is not None else None,
+            lambda _: Lyrics(found) if found is not None else None,
         )
         item = helper.create_item(id=1, lyrics=old_lyrics)
 
@@ -711,7 +711,7 @@ class TestTranslation:
                 [Chorus]
                 No matter what, I wouldn't fold (Wouldn't fold, wouldn't fold)
                 Ridin' through the thunder, lightnin'""",
-                Lyrics("", ""),
+                Lyrics(""),
                 """
                 [Refrain: Doja Cat] / [Refrain : Doja Cat]
                 Hard for me to let you go (Let you go, let you go) / Difficile pour moi de te laisser partir (Te laisser partir, te laisser partir)
@@ -727,7 +727,7 @@ class TestTranslation:
                 [00:00.50]
                 [00:01.00] Some more synced lyrics
                 """,
-                Lyrics("", ""),
+                Lyrics(""),
                 """
                 [00:00.00] Some synced lyrics / Quelques paroles synchronisées
                 [00:00.50]
@@ -736,7 +736,7 @@ class TestTranslation:
             ),
             pytest.param(
                 "Quelques paroles",
-                Lyrics("", ""),
+                Lyrics(""),
                 "Quelques paroles",
                 id="already in the target language",
             ),
@@ -744,7 +744,6 @@ class TestTranslation:
                 "Some lyrics",
                 Lyrics(
                     "Some lyrics / Some translation",
-                    "",
                     language="EN",
                     translation_language="FR",
                 ),
@@ -758,8 +757,42 @@ class TestTranslation:
         bing = lyrics.Translator(plugin._log, "123", "FR", ["EN"])
 
         assert bing.translate(
-            Lyrics(textwrap.dedent(new_lyrics), ""), old_lyrics
+            Lyrics(textwrap.dedent(new_lyrics)), old_lyrics
         ).full_text == textwrap.dedent(expected)
+
+
+class TestLegacyLyrics:
+    def test_instrumental_lyrics(self):
+        lyrics = Lyrics(
+            "[Instrumental]", "lrclib", url="https://lrclib.net/api/1"
+        )
+
+        assert lyrics.full_text == "[Instrumental]"
+        assert lyrics.backend == "lrclib"
+        assert lyrics.url == "https://lrclib.net/api/1"
+        assert lyrics.language is None
+        assert lyrics.translation_language is None
+
+    def test_from_legacy_text(self):
+        text = textwrap.dedent("""
+        [00:00.00] Some synced lyrics / Quelques paroles synchronisées
+        [00:00.50]
+        [00:01.00] Some more synced lyrics / Quelques paroles plus synchronisées
+
+        Source: https://lrclib.net/api/1/""")
+
+        lyrics = Lyrics.from_legacy_text(text)
+
+        assert lyrics.full_text == textwrap.dedent(
+            """
+            [00:00.00] Some synced lyrics / Quelques paroles synchronisées
+            [00:00.50]
+            [00:01.00] Some more synced lyrics / Quelques paroles plus synchronisées"""
+        )
+        assert lyrics.backend == "lrclib"
+        assert lyrics.url == "https://lrclib.net/api/1/"
+        assert lyrics.language == "EN"
+        assert lyrics.translation_language == "FR"
 
 
 class TestRestFiles:

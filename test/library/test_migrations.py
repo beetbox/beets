@@ -1,7 +1,9 @@
+import textwrap
+
 import pytest
 
 from beets.dbcore import types
-from beets.library.migrations import MultiGenreFieldMigration
+from beets.library import migrations
 from beets.library.models import Album, Item
 from beets.test.helper import TestHelper
 
@@ -30,13 +32,13 @@ class TestMultiGenreFieldMigration:
         # and now configure the migrations to be tested
         monkeypatch.setattr(
             "beets.library.library.Library._migrations",
-            ((MultiGenreFieldMigration, (Item, Album)),),
+            ((migrations.MultiGenreFieldMigration, (Item, Album)),),
         )
         yield helper
 
         helper.teardown_beets()
 
-    def test_migrates_only_rows_with_missing_genres(self, helper: TestHelper):
+    def test_migrate(self, helper: TestHelper):
         helper.config["lastgenre"]["separator"] = " - "
 
         expected_item_genres = []
@@ -70,3 +72,63 @@ class TestMultiGenreFieldMigration:
         del helper.lib.db_tables
         assert helper.lib.migration_exists("multi_genre_field", "items")
         assert helper.lib.migration_exists("multi_genre_field", "albums")
+
+
+class TestLyricsMetadataInFlexFieldsMigration:
+    @pytest.fixture
+    def helper(self, monkeypatch):
+        # do not apply migrations upon library initialization
+        monkeypatch.setattr("beets.library.library.Library._migrations", ())
+
+        helper = TestHelper()
+        helper.setup_beets()
+
+        # and now configure the migrations to be tested
+        monkeypatch.setattr(
+            "beets.library.library.Library._migrations",
+            ((migrations.LyricsMetadataInFlexFieldsMigration, (Item,)),),
+        )
+        yield helper
+
+        helper.teardown_beets()
+
+    def test_migrate(self, helper: TestHelper):
+        lyrics_item = helper.add_item(
+            lyrics=textwrap.dedent("""
+            [00:00.00] Some synced lyrics / Quelques paroles synchronisées
+            [00:00.50]
+            [00:01.00] Some more synced lyrics / Quelques paroles plus synchronisées
+
+            Source: https://lrclib.net/api/1/""")
+        )
+        instrumental_lyrics_item = helper.add_item(lyrics="[Instrumental]")
+
+        helper.lib._migrate()
+
+        lyrics_item.load()
+
+        assert lyrics_item.lyrics == textwrap.dedent(
+            """
+            [00:00.00] Some synced lyrics / Quelques paroles synchronisées
+            [00:00.50]
+            [00:01.00] Some more synced lyrics / Quelques paroles plus synchronisées"""
+        )
+        assert lyrics_item.lyrics_backend == "lrclib"
+        assert lyrics_item.lyrics_url == "https://lrclib.net/api/1/"
+        assert lyrics_item.lyrics_language == "EN"
+        assert lyrics_item.lyrics_translation_language == "FR"
+
+        with pytest.raises(AttributeError):
+            instrumental_lyrics_item.lyrics_backend
+        with pytest.raises(AttributeError):
+            instrumental_lyrics_item.lyrics_url
+        with pytest.raises(AttributeError):
+            instrumental_lyrics_item.lyrics_language
+        with pytest.raises(AttributeError):
+            instrumental_lyrics_item.lyrics_translation_language
+
+        # remove cached initial db tables data
+        del helper.lib.db_tables
+        assert helper.lib.migration_exists(
+            "lyrics_metadata_in_flex_fields", "items"
+        )

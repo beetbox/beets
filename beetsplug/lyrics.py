@@ -26,10 +26,9 @@ from functools import cached_property, partial, total_ordering
 from html import unescape
 from itertools import groupby
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, NamedTuple
+from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple
 from urllib.parse import quote, quote_plus, urlencode, urlparse
 
-import langdetect
 import requests
 from bs4 import BeautifulSoup
 from unidecode import unidecode
@@ -233,20 +232,55 @@ class LyricsRequestHandler(RequestHandler):
 
 @dataclass
 class Lyrics:
+    ORIGINAL_PAT = re.compile(r"[^\n]+ / ")
     TRANSLATION_PAT = re.compile(r" / [^\n]+")
     LINE_PARTS_PAT = re.compile(r"^(\[\d\d:\d\d\.\d\d\]|) *(.*)$")
 
     text: str
-    backend: str
+    backend: str | None = None
     url: str | None = None
     language: str | None = None
     translation_language: str | None = None
     translations: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
-        if not self.language and self.text:
+        try:
+            import langdetect
+        except ImportError:
+            return
+
+        if not self.text or self.text == INSTRUMENTAL_LYRICS:
+            return
+
+        if not self.language:
             with suppress(langdetect.LangDetectException):
                 self.language = langdetect.detect(self.original_text).upper()
+
+        if not self.translation_language:
+            all_lines = self.text.splitlines()
+            lines_with_delimiter_count = sum(
+                1 for ln in all_lines if " / " in ln
+            )
+            if lines_with_delimiter_count >= len(all_lines) / 2:
+                # we are confident we are dealing with translations
+                with suppress(langdetect.LangDetectException):
+                    self.translation_language = langdetect.detect(
+                        self.ORIGINAL_PAT.sub("", self.text)
+                    ).upper()
+
+    @classmethod
+    def from_legacy_text(cls, text: str) -> Lyrics:
+        data: dict[str, Any] = {}
+        data["text"], *suffix = text.split("\n\nSource: ")
+        if suffix:
+            url = suffix[0].strip()
+            url_root = urlparse(url).netloc.removeprefix("www.").split(".")[0]
+            data.update(
+                url=url,
+                backend=url_root if url_root in BACKEND_BY_NAME else "google",
+            )
+
+        return cls(**data)
 
     @classmethod
     def from_item(cls, item: Item) -> Lyrics:
@@ -1014,10 +1048,12 @@ class RestFiles:
         ui.print_(textwrap.dedent(text))
 
 
+BACKEND_BY_NAME = {
+    b.name: b for b in [LRCLib, Google, Genius, Tekstowo, MusiXmatch]
+}
+
+
 class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
-    BACKEND_BY_NAME: ClassVar[dict[str, type[Backend]]] = {
-        b.name: b for b in [LRCLib, Google, Genius, Tekstowo, MusiXmatch]
-    }
     item_types: ClassVar[dict[str, types.Type]] = {
         "lyrics_url": types.STRING,
         "lyrics_backend": types.STRING,
@@ -1029,12 +1065,12 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
     def backends(self) -> list[Backend]:
         user_sources = self.config["sources"].as_str_seq()
 
-        chosen = sanitize_choices(user_sources, self.BACKEND_BY_NAME)
+        chosen = sanitize_choices(user_sources, BACKEND_BY_NAME)
         if "google" in chosen and not self.config["google_API_key"].get():
             self.warn("Disabling Google source: no API key configured.")
             chosen.remove("google")
 
-        return [self.BACKEND_BY_NAME[c](self.config, self._log) for c in chosen]
+        return [BACKEND_BY_NAME[c](self.config, self._log) for c in chosen]
 
     @cached_property
     def translator(self) -> Translator | None:
@@ -1069,7 +1105,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
                 # currently block requests with the beets user agent.
                 "sources": [
                     n
-                    for n in self.BACKEND_BY_NAME
+                    for n in BACKEND_BY_NAME
                     if n not in {"musixmatch", "tekstowo"}
                 ],
             }
