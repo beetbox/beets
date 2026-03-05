@@ -27,7 +27,9 @@ authorization.
 
 Matches from Discogs will now show up during import alongside matches from
 MusicBrainz. The search terms sent to the Discogs API are based on the artist
-and album tags of your tracks. If those are empty no query will be issued.
+and album tags of your tracks. When available, additional tags such as
+catalog number (``catalognum``) can be used to refine the search, similar to
+the MusicBrainz plugin. If artist and album are empty no query will be issued.
 
 If you have a Discogs ID for an album you want to tag, you can also enter it at
 the "enter Id" prompt in the importer.
@@ -84,8 +86,22 @@ Default
             artist_credit: yes
             artist: no
             album_artist: no
+        extra_tags: [catalognum]
         data_source_mismatch_penalty: 0.5
         search_limit: 5
+
+.. conf:: extra_tags
+    :default: [catalognum]
+
+    List of tag names to use when refining the Discogs search during
+    autotagging. If your items already have these tags (e.g. from a previous
+    import or manual tagging), their most common value across the album is
+    sent to the Discogs API as an extra filter, which can improve match
+    accuracy. Supported tags: ``catalognum`` (maps to Discogs catalog number),
+    ``label``, ``country``, ``year``. For example, with ``catalognum`` in
+    ``extra_tags``, an album whose tracks have ``catalognum=ABC 123`` will
+    trigger a search that includes the catalog number, helping distinguish
+    between otherwise similar releases.
 
 .. conf:: index_tracks
     :default: no
