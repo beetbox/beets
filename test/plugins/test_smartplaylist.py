@@ -13,7 +13,7 @@
 # included in all copies or substantial portions of the Software.
 
 
-from os import path, remove
+from os import path, remove, fsdecode
 from pathlib import Path
 from shutil import rmtree
 from tempfile import mkdtemp
@@ -26,7 +26,7 @@ from beets.dbcore.query import FixedFieldSort, MultipleSort, NullSort
 from beets.library import Album, Item, parse_query_string
 from beets.test.helper import BeetsTestCase, IOMixin, PluginTestCase
 from beets.ui import UserError
-from beets.util import CHAR_REPLACE, syspath
+from beets.util import CHAR_REPLACE, syspath, bytestring_path
 from beetsplug.smartplaylist import SmartPlaylistPlugin
 
 
@@ -456,6 +456,90 @@ class SmartPlaylistTest(BeetsTestCase):
         assert content == b"/item1.mp3\n/item2.mp3\n"
         # Verify i2 is not duplicated
         assert content.count(b"/item2.mp3") == 1
+
+    def test_playlist_update_dest_regen(self):
+        spl = SmartPlaylistPlugin()
+
+        i = MagicMock()
+        type(i).artist = PropertyMock(return_value="fake artist")
+        type(i).title = PropertyMock(return_value="fake title")
+        type(i).length = PropertyMock(return_value=300.123)
+        # Set a path which is not equal to the one returned by `item.destination`.
+        type(i).path = PropertyMock(
+            return_value=b"/imported/path/with/dont/move/tagada.mp3"
+        )
+        # Set a path which would be equal to the one returned by `item.destination`.
+        type(i).destination = PropertyMock(return_value=lambda: b"/tagada.mp3")
+        i.evaluate_template.side_effect = lambda pl, _: pl.replace(
+            b"$title",
+            b"ta:ga:da",
+        ).decode()
+
+        lib = Mock()
+        lib.replacements = CHAR_REPLACE
+        lib.items.return_value = [i]
+        lib.albums.return_value = []
+
+        q = Mock()
+        a_q = Mock()
+        pl = b"$title-my<playlist>.m3u", (q, None), (a_q, None)
+        spl._matched_playlists = [pl]
+
+        dir = bytestring_path(mkdtemp())
+        config["smartplaylist"]["output"] = "extm3u"
+        config["smartplaylist"]["prefix"] = "http://beets:8337/files"
+        config["smartplaylist"]["relative_to"] = False
+        config["smartplaylist"]["playlist_dir"] = fsdecode(dir)
+
+        # Test when `dest_regen` is set to True:
+        # Intended behavior is to use the path of `i.destination`.
+
+        config["smartplaylist"]["dest_regen"] = True
+        try:
+            spl.update_playlists(lib)
+        except Exception:
+            rmtree(syspath(dir))
+            raise
+
+        lib.items.assert_called_once_with(q, None)
+        lib.albums.assert_called_once_with(a_q, None)
+
+        m3u_filepath = path.join(dir, b"ta_ga_da-my_playlist_.m3u")
+        self.assertExists(m3u_filepath)
+        with open(syspath(m3u_filepath), "rb") as f:
+            content = f.read()
+        rmtree(syspath(dir))
+
+        assert (
+            content
+            == (b"#EXTM3U\n"
+                b"#EXTINF:300,fake artist - fake title\n"
+                b"http://beets:8337/files/tagada.mp3\n")
+        )
+
+        # Test when `dest_regen` is set to False:
+        # Intended behavior is to use the path of `i.path`.
+
+        config["smartplaylist"]["dest_regen"] = False
+
+        try:
+            spl.update_playlists(lib)
+        except Exception:
+            rmtree(syspath(dir))
+            raise
+
+        m3u_filepath = path.join(dir, b"ta_ga_da-my_playlist_.m3u")
+        self.assertExists(m3u_filepath)
+        with open(syspath(m3u_filepath), "rb") as f:
+            content = f.read()
+        rmtree(syspath(dir))
+
+        assert (
+            content
+            == (b"#EXTM3U\n"
+                b"#EXTINF:300,fake artist - fake title\n"
+                b"http://beets:8337/files/imported/path/with/dont/move/tagada.mp3\n")
+        )
 
 
 class SmartPlaylistCLITest(IOMixin, PluginTestCase):
