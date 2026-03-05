@@ -249,6 +249,9 @@ class Lyrics:
         except ImportError:
             return
 
+        # Set seed to 0 for deterministic results
+        langdetect.DetectorFactory.seed = 0
+
         if not self.text or self.text == INSTRUMENTAL_LYRICS:
             return
 
