@@ -1520,7 +1520,7 @@ def _open_library(config: confuse.LazyConfig) -> library.Library:
             db_dir = os.path.dirname(normalized_path)
             # Handle edge case where path has no directory component
             if not db_dir:
-                db_dir = "."
+                db_dir = b"."
             raise UserError(
                 f"database file {dbpath_display} could not be opened. "
                 f"This may be due to a permissions issue. If the database "
