@@ -34,8 +34,11 @@ def chunks(lst: list[T], n: int) -> Iterator[list[T]]:
 
 
 class MultiGenreFieldMigration(Migration):
+    """Backfill multi-value genres from legacy single-string genre data."""
+
     @cached_property
     def separators(self) -> list[str]:
+        """Return known separators that indicate multiple legacy genres."""
         separators = []
         with suppress(ConfigError):
             separators.append(beets.config["lastgenre"]["separator"].as_str())
@@ -44,6 +47,7 @@ class MultiGenreFieldMigration(Migration):
         return unique_list(filter(None, separators))
 
     def get_genres(self, genre: str) -> str:
+        """Normalize legacy genre separators to the canonical delimiter."""
         for separator in self.separators:
             if separator in genre:
                 return genre.replace(separator, MULTI_VALUE_DELIMITER)
@@ -100,6 +104,8 @@ class LyricsRow(NamedTuple):
 
 
 class LyricsMetadataInFlexFieldsMigration(Migration):
+    """Move legacy inline lyrics metadata into dedicated flexible fields."""
+
     def _migrate_data(self, model_cls: type[Model], _: set[str]) -> None:
         """Migrate legacy lyrics to move metadata to flex attributes."""
         table = model_cls._table
