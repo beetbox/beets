@@ -77,6 +77,7 @@ New features
   4. Slash wrapped by spaces
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 - :doc:`plugins/lyrics`: With ``synced`` enabled, existing synced lyrics are no
   longer replaced by newly fetched plain lyrics, even when ``force`` is enabled.
 - :doc:`plugins/lyrics`: Remove ``Source: <lyrics-url>`` suffix from lyrics.
@@ -87,6 +88,9 @@ New features
 =======
 - :doc:`plugins/discogs`: Added ``extra_tags`` functionality.
 >>>>>>> b44257bfb (Fixing syntax and formatting errors)
+=======
+- :doc:`plugins/discogs`: Added ``extra_tags`` functionality
+>>>>>>> 74f69b7a4 (Update changelog.rst)
 
 Bug fixes
 ~~~~~~~~~
