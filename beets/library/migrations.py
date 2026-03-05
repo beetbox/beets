@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from contextlib import contextmanager, suppress
+from contextlib import suppress
 from functools import cached_property
 from typing import TYPE_CHECKING, NamedTuple, TypeVar
 
@@ -14,6 +14,8 @@ from beets.util import unique_list
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+
+    from beets.dbcore.db import Model
 
 T = TypeVar("T")
 
@@ -40,16 +42,6 @@ class MultiGenreFieldMigration(Migration):
         separators.extend(["; ", ", ", " / "])
         return unique_list(filter(None, separators))
 
-    @contextmanager
-    def with_factory(self, factory: type[NamedTuple]) -> Iterator[None]:
-        """Temporarily set the row factory to a specific type."""
-        original_factory = self.db._connection().row_factory
-        self.db._connection().row_factory = lambda _, row: factory(*row)
-        try:
-            yield
-        finally:
-            self.db._connection().row_factory = original_factory
-
     def get_genres(self, genre: str) -> str:
         for separator in self.separators:
             if separator in genre:
@@ -57,13 +49,17 @@ class MultiGenreFieldMigration(Migration):
 
         return genre
 
-    def _migrate_data(self, table: str, current_fields: set[str]) -> None:
+    def _migrate_data(
+        self, model_cls: type[Model], current_fields: set[str]
+    ) -> None:
         """Migrate legacy genre values to the multi-value genres field."""
         if "genre" not in current_fields:
             # No legacy genre field, so nothing to migrate.
             return
 
-        with self.db.transaction() as tx, self.with_factory(GenreRow):
+        table = model_cls._table
+
+        with self.db.transaction() as tx, self.with_row_factory(GenreRow):
             rows: list[GenreRow] = tx.query(  # type: ignore[assignment]
                 f"""
                 SELECT id, genre, genres
@@ -86,6 +82,91 @@ class MultiGenreFieldMigration(Migration):
                     f"UPDATE {table} SET genres = ? WHERE id = ?",
                     [(self.get_genres(e.genre), e.id) for e in batch],
                 )
+
+            migrated += len(batch)
+
+            ui.print_(
+                f"  Migrated {migrated} {table} "
+                f"({migrated}/{total} processed)..."
+            )
+
+        ui.print_(f"Migration complete: {migrated} of {total} {table} updated")
+
+
+class LyricsRow(NamedTuple):
+    id: int
+    lyrics: str
+
+
+class LyricsMetadataInFlexFieldsMigration(Migration):
+    def _migrate_data(self, model_cls: type[Model], _: set[str]) -> None:
+        """Migrate legacy lyrics to move metadata to flex attributes."""
+        table = model_cls._table
+        flex_table = model_cls._flex_table
+
+        with self.db.transaction() as tx:
+            migrated_ids = {
+                r[0]
+                for r in tx.query(
+                    f"""
+                    SELECT entity_id
+                    FROM {flex_table}
+                    WHERE key == 'lyrics_backend'
+                    """
+                )
+            }
+        with self.db.transaction() as tx, self.with_row_factory(LyricsRow):
+            rows: list[LyricsRow] = tx.query(  # type: ignore[assignment]
+                f"""
+                SELECT id, lyrics
+                FROM {table}
+                WHERE lyrics IS NOT NULL AND lyrics != ''
+                """
+            )
+
+        total = len(rows)
+        to_migrate = [r for r in rows if r.id not in migrated_ids]
+        if not to_migrate:
+            return
+
+        from beetsplug.lyrics import Lyrics
+
+        migrated = total - len(to_migrate)
+
+        ui.print_(f"Migrating lyrics for {total} {table}...")
+        lyr_fields = ["backend", "url", "language", "translation_language"]
+        for batch in chunks(to_migrate, 100):
+            lyrics_batch = [Lyrics.from_legacy_text(r.lyrics) for r in batch]
+            ids_with_lyrics = [
+                (lyr, r.id) for lyr, r in zip(lyrics_batch, batch)
+            ]
+            with self.db.transaction() as tx:
+                update_rows = [
+                    (lyr.full_text, r.id)
+                    for lyr, r in zip(lyrics_batch, batch)
+                    if lyr.full_text != r.lyrics
+                ]
+                if update_rows:
+                    tx.mutate_many(
+                        f"UPDATE {table} SET lyrics = ? WHERE id = ?",
+                        update_rows,
+                    )
+
+                # Only insert flex rows for non-null metadata values
+                flex_rows = [
+                    (_id, f"lyrics_{field}", val)
+                    for lyr, _id in ids_with_lyrics
+                    for field in lyr_fields
+                    if (val := getattr(lyr, field)) is not None
+                ]
+                if flex_rows:
+                    tx.mutate_many(
+                        f"""
+                        INSERT INTO {flex_table} (entity_id, key, value)
+                        VALUES (?, ?, ?)
+                        """,
+                        flex_rows,
+                    )
 
             migrated += len(batch)
 

@@ -42,8 +42,9 @@ New features
   longer replaced by newly fetched plain lyrics, even when ``force`` is enabled.
 - :doc:`plugins/lyrics`: Remove ``Source: <lyrics-url>`` suffix from lyrics.
   Store the backend name in ``lyrics_backend``, URL in ``lyrics_url``, language
-  in ``lyrics_language`` and translation language (if enabled) in
-  ``lyrics_translation_language`` flexible attributes. :bug:`6370`
+  in ``lyrics_language`` and translation language (if translations present) in
+  ``lyrics_translation_language`` flexible attributes. Lyrics are automatically
+  migrated on the first beets run. :bug:`6370`
 
 Bug fixes
 ~~~~~~~~~
