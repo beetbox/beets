@@ -1056,6 +1056,8 @@ class Transaction:
 
 @dataclass
 class Migration(ABC):
+    """Define a one-time data migration that runs during database startup."""
+
     db: Database
 
     @cached_classproperty
@@ -1066,7 +1068,7 @@ class Migration(ABC):
 
     @contextmanager
     def with_row_factory(self, factory: type[NamedTuple]) -> Iterator[None]:
-        """Temporarily set the row factory to a specific type."""
+        """Temporarily decode query rows into a typed tuple shape."""
         original_factory = self.db._connection().row_factory
         self.db._connection().row_factory = lambda _, row: factory(*row)
         try:
@@ -1075,7 +1077,7 @@ class Migration(ABC):
             self.db._connection().row_factory = original_factory
 
     def migrate_model(self, model_cls: type[Model], *args, **kwargs) -> None:
-        """Migrate a specific table."""
+        """Run this migration once for a model's backing table."""
         table = model_cls._table
         if not self.db.migration_exists(self.name, table):
             self._migrate_data(model_cls, *args, **kwargs)

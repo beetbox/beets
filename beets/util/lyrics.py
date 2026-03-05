@@ -18,6 +18,13 @@ BACKEND_NAMES = {"genius", "musixmatch", "lrclib", "tekstowo"}
 
 @dataclass
 class Lyrics:
+    """Represent lyrics text together with structured source metadata.
+
+    This value object keeps the canonical lyrics body, optional provenance, and
+    optional translation metadata synchronized across fetching, translation, and
+    persistence.
+    """
+
     ORIGINAL_PAT = re.compile(r"[^\n]+ / ")
     TRANSLATION_PAT = re.compile(r" / [^\n]+")
     LINE_PARTS_PAT = re.compile(r"^(\[\d\d:\d\d\.\d\d\]|) *(.*)$")
@@ -30,6 +37,7 @@ class Lyrics:
     translations: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
+        """Populate missing language metadata from the current text."""
         try:
             import langdetect
         except ImportError:
@@ -59,6 +67,7 @@ class Lyrics:
 
     @classmethod
     def from_legacy_text(cls, text: str) -> Lyrics:
+        """Build lyrics from legacy text that may include an inline source."""
         data: dict[str, Any] = {}
         data["text"], *suffix = text.split("\n\nSource: ")
         if suffix:
@@ -73,6 +82,7 @@ class Lyrics:
 
     @classmethod
     def from_item(cls, item: Item) -> Lyrics:
+        """Build lyrics from an item's canonical text and flexible metadata."""
         data = {"text": item.lyrics}
         for key in ("backend", "url", "language", "translation_language"):
             data[key] = item.get(f"lyrics_{key}", with_album=False)
@@ -87,14 +97,10 @@ class Lyrics:
 
     @cached_property
     def _split_lines(self) -> list[tuple[str, str]]:
-        """Append translations to the given lyrics texts.
+        """Split lyrics into timestamp/text pairs for line-wise processing.
 
-        Lines may contain timestamps from LRCLib which need to be temporarily
-        removed for the translation. They can take any of these forms:
-                        - empty
-        Text            - text only
-        [00:00.00]      - timestamp only
-        [00:00.00] Text - timestamp with text
+        Timestamps, when present, are kept separate so callers can translate or
+        normalize text without losing synced timing information.
         """
         return [
             (m[1], m[2]) if (m := self.LINE_PARTS_PAT.match(line)) else ("", "")
@@ -103,22 +109,27 @@ class Lyrics:
 
     @cached_property
     def timestamps(self) -> list[str]:
+        """Return per-line timestamp prefixes from the lyrics text."""
         return [ts for ts, _ in self._split_lines]
 
     @cached_property
     def text_lines(self) -> list[str]:
+        """Return per-line lyric text with timestamps removed."""
         return [ln for _, ln in self._split_lines]
 
     @property
     def synced(self) -> bool:
+        """Return whether the lyrics contain synced timestamp markers."""
         return any(self.timestamps)
 
     @property
     def translated(self) -> bool:
+        """Return whether translation metadata is available."""
         return bool(self.translation_language)
 
     @property
     def full_text(self) -> str:
+        """Return canonical text with translations merged when available."""
         if not self.translations:
             return self.text
 
