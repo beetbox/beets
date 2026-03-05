@@ -11,6 +11,7 @@ from beets import ui
 from beets.dbcore.db import Migration
 from beets.dbcore.types import MULTI_VALUE_DELIMITER
 from beets.util import unique_list
+from beets.util.lyrics import Lyrics
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -128,8 +129,6 @@ class LyricsMetadataInFlexFieldsMigration(Migration):
         to_migrate = [r for r in rows if r.id not in migrated_ids]
         if not to_migrate:
             return
-
-        from beetsplug.lyrics import Lyrics
 
         migrated = total - len(to_migrate)
 
