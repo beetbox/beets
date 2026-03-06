@@ -181,3 +181,13 @@ these track attributes from Spotify:
   - ``tempo``
   - ``time_signature``
   - ``valence``
+
+Stored Fields
+-------------
+
+When Spotify is used as a metadata source during import, the plugin stores these
+identifiers:
+
+- ``spotify_track_id``
+- ``spotify_album_id``
+- ``spotify_artist_id``
