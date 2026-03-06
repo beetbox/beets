@@ -95,6 +95,8 @@ Other changes
 - :doc:`plugins/lyrics`: To cut down noise from the ``lrclib`` lyrics source,
   synced lyrics are now checked to ensure the final verse falls within the
   track's duration.
+- Updated URLs in the documentation to use HTTPS where possible and updated
+  outdated links.
 
 2.6.2 (February 22, 2026)
 -------------------------
