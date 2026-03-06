@@ -232,9 +232,9 @@ options and a thorough discussion of MP3 encoding.
 
 .. _documentation: https://sourceforge.net/projects/lame/
 
-.. _gapless: https://wiki.hydrogenaud.io/index.php?title=Gapless_playback
+.. _gapless: https://wiki.hydrogenaudio.org/index.php?title=Gapless_playback
 
-.. _hydrogenaudio wiki: https://wiki.hydrogenaud.io/index.php?title=LAME
+.. _hydrogenaudio wiki: https://wiki.hydrogenaudio.org/index.php?title=LAME
 
 .. _lame: https://sourceforge.net/projects/lame/
 

@@ -160,13 +160,13 @@ Autotagger Extensions
 :doc:`spotify <spotify>`
     Search for releases in the Spotify_ database.
 
-.. _deezer: https://www.deezer.com
+.. _deezer: https://www.deezer.com/en/
 
 .. _discogs: https://www.discogs.com
 
 .. _musicbrainz: https://www.musicbrainz.com
 
-.. _spotify: https://www.spotify.com
+.. _spotify: https://open.spotify.com/
 
 Metadata
 --------
@@ -318,7 +318,7 @@ Interoperability
 :doc:`subsonicupdate <subsonicupdate>`
     Automatically notifies Subsonic_ whenever the beets library changes.
 
-.. _aura: https://auraspec.readthedocs.io
+.. _aura: https://auraspec.readthedocs.io/en/latest/
 
 .. _emby: https://emby.media
 
@@ -326,11 +326,11 @@ Interoperability
 
 .. _kodi: https://kodi.tv
 
-.. _plex: https://plex.tv
+.. _plex: https://watch.plex.tv/
 
-.. _sonos: https://sonos.com
+.. _sonos: https://www.sonos.com/
 
-.. _subsonic: https://www.subsonic.org/
+.. _subsonic: https://www.subsonic.org/pages/index.jsp
 
 Miscellaneous
 -------------

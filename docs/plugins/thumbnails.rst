@@ -16,7 +16,7 @@ install ``beets`` with ``thumbnails`` and ``fetchart`` extras
 ``thumbnails`` need to resize the covers, and therefore requires either
 ImageMagick_ or Pillow_.
 
-.. _imagemagick: https://www.imagemagick.org/
+.. _imagemagick: https://imagemagick.org/
 
 .. _pillow: https://github.com/python-pillow/Pillow
 
