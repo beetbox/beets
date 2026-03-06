@@ -237,7 +237,7 @@ Metadata
 :doc:`zero <zero>`
     Nullify fields by pattern or unconditionally.
 
-.. _keyfinder: http://www.ibrahimshaath.co.uk/keyfinder/
+.. _keyfinder: https://www.ibrahimshaath.co.uk/keyfinder/
 
 .. _librosa: https://github.com/librosa/librosa/
 
@@ -330,7 +330,7 @@ Interoperability
 
 .. _sonos: https://sonos.com
 
-.. _subsonic: http://www.subsonic.org/
+.. _subsonic: https://www.subsonic.org/
 
 Miscellaneous
 -------------
@@ -646,7 +646,7 @@ beets-youtube_
 
 .. _beetstream: https://github.com/BinaryBrain/Beetstream
 
-.. _cmus: http://cmus.sourceforge.net/
+.. _cmus: https://cmus.sourceforge.net/
 
 .. _drop2beets: https://github.com/martinkirch/drop2beets
 
@@ -654,6 +654,6 @@ beets-youtube_
 
 .. _ibroadcast: https://ibroadcast.com/
 
-.. _subsonic api: http://www.subsonic.org/pages/api.jsp
+.. _subsonic api: https://www.subsonic.org/pages/api.jsp
 
 .. _whatlastgenre: https://github.com/YetAnotherNerd/whatlastgenre/tree/master/plugin/beets
