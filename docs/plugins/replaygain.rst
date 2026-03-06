@@ -105,11 +105,11 @@ the path explicitly like so:
     replaygain:
         command: /Applications/MacMP3Gain.app/Contents/Resources/aacgain
 
-.. _aacgain: https://aacgain.altosdesign.com
+.. _aacgain: https://github.com/dgilman/aacgain
 
 .. _homebrew: https://brew.sh
 
-.. _mp3gain: https://mp3gain.sourceforge.net/download.php
+.. _mp3gain: https://sourceforge.net/projects/mp3gain/download.php
 
 .. _mp3rgain: https://github.com/M-Igashi/mp3rgain
 
@@ -128,7 +128,7 @@ On OS X, most of the dependencies can be installed with Homebrew_:
 
 The Python Audio Tools backend does not support parallel analysis.
 
-.. _python audio tools: https://audiotools.sourceforge.net
+.. _python audio tools: https://sourceforge.net/projects/audiotools/
 
 ffmpeg
 ~~~~~~

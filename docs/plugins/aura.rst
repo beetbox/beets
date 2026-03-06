@@ -131,7 +131,7 @@ The plugin should work behind a reverse proxy without further configuration,
 however this has not been tested extensively. For details of what headers must
 be rewritten and a sample NGINX configuration see `Flask proxy setups`_.
 
-.. _flask proxy setups: https://flask.palletsprojects.com/en/1.1.x/deploying/wsgi-standalone/#proxy-setups
+.. _flask proxy setups: https://flask.palletsprojects.com/en/stable/deploying/proxy_fix/
 
 It is (reportedly) possible to run the application under a URL prefix (for
 example so you could have ``/foo/aura/server`` rather than ``/aura/server``),

@@ -78,7 +78,7 @@ requires either ImageMagick_ or Pillow_.
 
 .. _imagemagick: https://www.imagemagick.org/
 
-.. _phash: https://www.fmwconcepts.com/misc_tests/perceptual_hash_test_results_510/
+.. _phash: https://web.archive.org/web/*/http://www.fmwconcepts.com/misc_tests/perceptual_hash_test_results_510/index.html
 
 .. _pillow: https://github.com/python-pillow/Pillow
 

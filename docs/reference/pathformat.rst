@@ -21,7 +21,7 @@ a dollars sign. As with `Python template strings`_, ``${title}`` is equivalent
 to ``$title``; you can use this if you need to separate a field name from the
 text that follows it.
 
-.. _python template strings: https://docs.python.org/library/string.html#template-strings
+.. _python template strings: https://docs.python.org/3/library/string.html#template-strings-strings
 
 A Note About Artists
 --------------------

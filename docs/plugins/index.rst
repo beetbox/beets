@@ -397,7 +397,7 @@ mstream_
 
 .. _mpd: https://www.musicpd.org/
 
-.. _mpd clients: https://mpd.wikia.com/wiki/Clients
+.. _mpd clients: https://mpd.fandom.com/wiki/Clients
 
 .. _mstream: https://github.com/IrosTheBeggar/mStream
 
@@ -646,7 +646,7 @@ beets-youtube_
 
 .. _beetstream: https://github.com/BinaryBrain/Beetstream
 
-.. _cmus: https://cmus.sourceforge.net/
+.. _cmus: https://sourceforge.net/projects/cmus/
 
 .. _drop2beets: https://github.com/martinkirch/drop2beets
 
