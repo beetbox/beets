@@ -21,9 +21,15 @@ Unreleased
     For plugin developers
     ~~~~~~~~~~~~~~~~~~~~~
 
-..
-    Other changes
-    ~~~~~~~~~~~~~
+Other changes
+~~~~~~~~~~~~~
+
+- API-backed metadata source plugins can now use
+  :py:class:`~beets.metadata_plugins.SearchApiMetadataSourcePlugin` for shared
+  search orchestration. Implement provider behavior in
+  :py:meth:`~beets.metadata_plugins.SearchApiMetadataSourcePlugin.get_search_query_with_filters`
+  and
+  :py:meth:`~beets.metadata_plugins.SearchApiMetadataSourcePlugin.get_search_response`.
 
 2.7.0 (March 07, 2026)
 ----------------------
