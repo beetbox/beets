@@ -38,7 +38,7 @@ Commands can access the parameters of events using `Python string formatting`_.
 Use ``{name}`` in your command and the plugin will substitute it with the named
 value. The name can also refer to a field, as in ``{album.path}``.
 
-.. _python string formatting: https://www.python.org/dev/peps/pep-3101/
+.. _python string formatting: https://peps.python.org/pep-3101/
 
 You can find a list of all available events and their arguments in the
 :ref:`plugin events <plugin_events>` documentation.

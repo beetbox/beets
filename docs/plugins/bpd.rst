@@ -111,7 +111,7 @@ behaviour to their MPD equivalents. BPD aims to look enough like MPD that it can
 interact with the ecosystem of clients, but doesn't try to be a fully-fledged
 MPD replacement in terms of its playback capabilities.
 
-.. _the mpd protocol: https://www.musicpd.org/doc/protocol/
+.. _the mpd protocol: https://mpd.readthedocs.io/en/latest/protocol.html
 
 These are some of the known differences between BPD and MPD:
 

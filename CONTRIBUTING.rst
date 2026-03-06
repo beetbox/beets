@@ -157,7 +157,7 @@ Code Contribution Ideas
   <https://github.com/beetbox/beets/labels/good%20first%20issue>`__. These are
   issues that would serve as a good introduction to the codebase. Claim one and
   start exploring!
-- Like testing? Our `test coverage <https://codecov.io/github/beetbox/beets>`__
+- Like testing? Our `test coverage <https://app.codecov.io/github/beetbox/beets>`__
   is somewhat low. You can help out by finding low-coverage modules or checking
   out other `testing-related issues
   <https://github.com/beetbox/beets/labels/testing>`__.
@@ -169,7 +169,7 @@ Code Contribution Ideas
   <https://beets.readthedocs.io/en/stable/dev/library.html>`__ are currently
   quite sparse. You can help by adding to the docstrings in the code and to the
   documentation pages themselves. beets follows `PEP-257
-  <https://www.python.org/dev/peps/pep-0257/>`__ for docstrings and in some
+  <https://peps.python.org/pep-0257/>`__ for docstrings and in some
   places, we also sometimes use `ReST autodoc syntax for Sphinx
   <https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html>`__ to,
   for example, refer to a class name.
@@ -263,12 +263,12 @@ There are a few coding conventions we use in beets:
 - f-strings should be used instead of the ``%`` operator and ``str.format()``
   calls.
 - Never ``print`` informational messages; use the `logging
-  <https://docs.python.org/library/logging.html>`__ module instead. In
+  <https://docs.python.org/3/library/logging.html>`__ module instead. In
   particular, we have our own logging shim, so you’ll see ``from beets import
   logging`` in most files.
 
   - The loggers use `str.format
-    <https://docs.python.org/library/stdtypes.html#str.format>`__-style logging
+    <https://docs.python.org/3/library/stdtypes.html>`__-style logging
     instead of ``%``-style, so you can type ``log.debug("{}", obj)`` to do your
     formatting.
 
@@ -375,7 +375,7 @@ In order to add such a test, mark your test with the ``integration_test`` marker
 
 This way, the test will be run only in the integration test suite.
 
-.. _codecov: https://codecov.io/github/beetbox/beets
+.. _codecov: https://app.codecov.io/github/beetbox/beets
 
 .. _discussion board: https://github.com/beetbox/beets/discussions
 
@@ -391,7 +391,7 @@ This way, the test will be run only in the integration test suite.
 
 .. _poetry: https://python-poetry.org/docs/
 
-.. _pyproject.toml: https://github.com/beetbox/beets/tree/master/pyproject.toml
+.. _pyproject.toml: https://github.com/beetbox/beets/blob/master/pyproject.toml
 
 .. _pytest: https://docs.pytest.org/en/stable/
 

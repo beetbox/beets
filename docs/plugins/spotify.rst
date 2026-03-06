@@ -9,7 +9,7 @@ matches for the importer.
 
 .. _album: https://developer.spotify.com/documentation/web-api/reference/get-an-album
 
-.. _spotify: https://www.spotify.com/
+.. _spotify: https://open.spotify.com/
 
 .. _spotify search api: https://developer.spotify.com/documentation/web-api/reference/search
 

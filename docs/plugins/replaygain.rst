@@ -31,7 +31,7 @@ least GStreamer 1.0 and `PyGObject 3.x`_ (a.k.a. ``python-gi``).
 
 .. _gstreamer: https://gstreamer.freedesktop.org/
 
-.. _pygobject 3.x: https://pygobject.readthedocs.io/en/latest/
+.. _pygobject 3.x: https://pygobject.gnome.org/
 
 Then, install ``beets`` with ``replaygain`` extra which installs ``GStreamer``
 bindings for Python

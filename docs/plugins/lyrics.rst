@@ -95,7 +95,7 @@ The available options are:
   existing synced lyrics are not replaced by newly fetched plain lyrics (even
   when ``force`` is enabled). To allow that replacement, disable ``synced``.
 
-.. _beets custom search engine: https://www.google.com:443/cse/publicurl?cx=009217259823014548361:lndtuqkycfu
+.. _beets custom search engine: https://cse.google.com/cse?cx=009217259823014548361:lndtuqkycfu
 
 Fetching Lyrics Manually
 ------------------------
@@ -148,11 +148,11 @@ Sphinx supports various builders_, see a few suggestions:
 
         sphinx-build -b latex <dir> <dir>/latex && make -C <dir>/latex all-pdf
 
-.. _builders: https://www.sphinx-doc.org/en/stable/builders.html
+.. _builders: https://www.sphinx-doc.org/en/master/usage/builders/index.html
 
 .. _restructuredtext: https://sourceforge.net/projects/docutils/
 
-.. _sphinx: https://www.sphinx-doc.org/
+.. _sphinx: https://www.sphinx-doc.org/en/master/
 
 Activate Google Custom Search
 -----------------------------
@@ -173,7 +173,7 @@ beets use a list of sources known to be scrapeable.
 Note that the Google custom search API is limited to 100 queries per day. After
 that, the lyrics plugin will fall back on other declared data sources.
 
-.. _define a custom search engine: https://www.google.com/cse/all
+.. _define a custom search engine: https://programmablesearchengine.google.com/about/
 
 .. _lyrics-translation:
 

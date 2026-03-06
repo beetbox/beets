@@ -34,7 +34,7 @@ Continuing with the Stop Making Sense example, you'll end up with most of the
 tracks in a "Talking Heads" directory and one in a "Tom Tom Club" directory. You
 probably don't want that! So use ``$albumartist``.
 
-.. _stop making sense: https://musicbrainz.org/release/798dcaab-0f1a-4f02-a9cb-61d5b0ddfd36.html
+.. _stop making sense: https://musicbrainz.org/release/798dcaab-0f1a-4f02-a9cb-61d5b0ddfd36
 
 As a convenience, however, beets allows ``$albumartist`` to fall back to the
 value for ``$artist`` and vice-versa if one tag is present but the other is not.
