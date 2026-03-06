@@ -20,7 +20,7 @@ from collections import Counter
 from contextlib import suppress
 from functools import cached_property
 from itertools import product
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 from urllib.parse import urljoin
 
 from confuse.exceptions import NotFoundError
@@ -28,7 +28,7 @@ from confuse.exceptions import NotFoundError
 import beets
 import beets.autotag.hooks
 from beets import config, plugins, util
-from beets.metadata_plugins import MetadataSourcePlugin
+from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
 from beets.util.deprecation import deprecate_for_user
 from beets.util.id_extractors import extract_release_id
 
@@ -36,10 +36,10 @@ from ._utils.musicbrainz import MusicBrainzAPIMixin
 from ._utils.requests import HTTPNotFoundError
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
-    from typing import Literal
+    from collections.abc import Sequence
 
     from beets.library import Item
+    from beets.metadata_plugins import QueryType, SearchParams
 
     from ._typing import JSONDict
 
@@ -294,7 +294,9 @@ def _merge_pseudo_and_actual_album(
     return merged
 
 
-class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
+class MusicBrainzPlugin(
+    MusicBrainzAPIMixin, SearchApiMetadataSourcePlugin[IDResponse]
+):
     @cached_property
     def genres_field(self) -> str:
         return f"{self.config['genres_tag'].as_choice(['genre', 'tag'])}s"
@@ -718,43 +720,35 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
 
         return criteria
 
-    def _search_api(
+    def get_search_query_with_filters(
         self,
-        query_type: Literal["recording", "release"],
-        filters: dict[str, str],
-    ) -> list[JSONDict]:
+        query_type: QueryType,
+        items: Sequence[Item],
+        artist: str,
+        name: str,
+        va_likely: bool,
+    ) -> tuple[str, dict[str, str]]:
+        if query_type == "album":
+            criteria = self.get_album_criteria(items, artist, name, va_likely)
+        else:
+            criteria = {"artist": artist, "recording": name, "alias": name}
+
+        return "", {
+            k: _v for k, v in criteria.items() if (_v := v.lower().strip())
+        }
+
+    def get_search_response(self, params: SearchParams) -> Sequence[IDResponse]:
         """Perform MusicBrainz API search and return results.
 
         Execute a search against the MusicBrainz API for recordings or releases
         using the provided criteria. Handles API errors by converting them into
         MusicBrainzAPIError exceptions with contextual information.
         """
-        return self.mb_api.search(
-            query_type, filters, limit=self.config["search_limit"].get()
+        mb_entity: Literal["release", "recording"] = (
+            "release" if params.query_type == "album" else "recording"
         )
-
-    def candidates(
-        self,
-        items: Sequence[Item],
-        artist: str,
-        album: str,
-        va_likely: bool,
-    ) -> Iterable[beets.autotag.hooks.AlbumInfo]:
-        criteria = self.get_album_criteria(items, artist, album, va_likely)
-        release_ids = (r["id"] for r in self._search_api("release", criteria))
-
-        for id_ in release_ids:
-            with suppress(HTTPNotFoundError):
-                if album_info := self.album_for_id(id_):
-                    yield album_info
-
-    def item_candidates(
-        self, item: Item, artist: str, title: str
-    ) -> Iterable[beets.autotag.hooks.TrackInfo]:
-        criteria = {"artist": artist, "recording": title, "alias": title}
-
-        yield from filter(
-            None, map(self.track_info, self._search_api("recording", criteria))
+        return self.mb_api.search(
+            mb_entity, dict(params.filters), limit=params.limit
         )
 
     def album_for_id(
