@@ -125,7 +125,11 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 if not opts.yes and not _confirm(items, not opts.file):
                     return
 
-                for item in items:
+                for item in ui.iprogress_bar(
+                    items,
+                    desc="Embedding artwork",
+                    unit="item",
+                ):
                     art.embed_item(
                         self._log,
                         item,
@@ -155,12 +159,16 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 except Exception as e:
                     self._log.error("Unable to save image: {}", e)
                     return
-                items = lib.items(args)
                 # Confirm with user.
+                items = lib.items(args)
                 if not opts.yes and not _confirm(items, not opts.url):
                     os.remove(tempimg)
                     return
-                for item in items:
+                for item in ui.iprogress_bar(
+                    items,
+                    desc="Embedding artwork",
+                    unit="item",
+                ):
                     art.embed_item(
                         self._log,
                         item,
@@ -173,11 +181,15 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                     )
                 os.remove(tempimg)
             else:
-                albums = lib.albums(args)
                 # Confirm with user.
+                albums = lib.albums(args)
                 if not opts.yes and not _confirm(albums, not opts.file):
                     return
-                for album in albums:
+                for album in ui.iprogress_bar(
+                    albums,
+                    desc="Embedding artwork",
+                    unit="album",
+                ):
                     art.embed_album(
                         self._log,
                         album,

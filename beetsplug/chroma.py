@@ -260,7 +260,7 @@ class AcoustidPlugin(MetadataSourcePlugin):
         )
 
         def fingerprint_cmd_func(lib, opts, args):
-            for item in lib.items(args):
+            for item in lib.items_with_progress("Fingerprinting", args):
                 fingerprint_item(self._log, item, write=ui.should_write())
 
         fingerprint_cmd.func = fingerprint_cmd_func

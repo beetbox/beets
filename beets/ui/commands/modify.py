@@ -59,7 +59,7 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm, inherit):
 
     # Apply changes to database and files
     with lib.transaction():
-        for obj in changed:
+        for obj in ui.iprogress_bar(changed, desc="Modifying", unit="item"):
             obj.try_sync(write, move, inherit)
 
 

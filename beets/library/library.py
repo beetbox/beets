@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import platformdirs
 
 import beets
-from beets import dbcore
+from beets import dbcore, ui
 from beets.util import normpath
 
 from . import migrations
@@ -13,6 +13,8 @@ from .models import Album, Item
 from .queries import PF_KEY_DEFAULT, parse_query_parts, parse_query_string
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from beets.dbcore import Results
 
 
@@ -128,6 +130,58 @@ class Library(dbcore.Database):
     def items(self, query=None, sort=None) -> Results[Item]:
         """Get :class:`Item` objects matching the query."""
         return self._fetch(Item, query, sort or self.get_default_item_sort())
+
+    def items_with_progress(
+        self,
+        desc: str,
+        query=None,
+        sort=None,
+        unit: str = "item",
+    ) -> Iterator[Item]:
+        """Iterate over items while displaying a progress bar.
+
+        Args:
+            desc: The description of the progress bar. Semantically should be
+                the action being performed on the items without specifying the
+                object type, i.e. "Updating" but not "Updating items".
+            query: The query to filter the items, equivalent to
+                :meth:`Library.items`'s `query` argument.
+            sort: The sort to apply to the items, equivalent to
+                :meth:`Library.items`'s `sort` argument.
+            unit: The unit of the progress bar, defaults to "item".
+                Should be singular, i.e. "item" but not "items".
+        """
+        yield from ui.iprogress_bar(
+            self.items(query, sort),
+            desc=desc,
+            unit=unit,
+        )
+
+    def albums_with_progress(
+        self,
+        desc: str,
+        query=None,
+        sort=None,
+        unit: str = "album",
+    ) -> Iterator[Album]:
+        """Iterate over albums while displaying a progress bar.
+
+        Args:
+            desc: The description of the progress bar. Should be the action
+                being performed on the albums without specifying the object
+                type, i.e. "Updating" but not "Updating albums".
+            query: The query to filter the albums, equivalent to
+                :meth:`Library.albums`'s `query` argument.
+            sort: The sort to apply to the albums, equivalent to
+                :meth:`Library.albums`'s `sort` argument.
+            unit: The unit of the progress bar, defaults to "album". Should be
+                singular, i.e. "album" but not "albums".
+        """
+        yield from ui.iprogress_bar(
+            self.albums(query, sort),
+            desc=desc,
+            unit=unit,
+        )
 
     # Convenience accessors.
     def get_item(self, id_: int) -> Item | None:

@@ -20,6 +20,10 @@ New features
   :doc:`plugins/musicbrainz`, :doc:`plugins/beatport`, :doc:`plugins/discogs`
   and :doc:`plugins/lastgenre` plugins have been updated to populate the
   ``genres`` field as a list.
+- Added progress bars to commands for several plugins, showing how many albums
+  or songs have been changed (blue) and how many were unchanged (white). The
+  progress bar includes how much time has passed and an estimate of how much
+  time is left. :bug:`5711`
 
   **Migration**: Existing libraries with comma-separated, semicolon-separated,
   or slash-separated genre strings (e.g., ``"Rock, Alternative, Indie"``) are
@@ -76,6 +80,11 @@ For plugin developers
   please update it to populate a list of ``genres`` instead. You will see a
   deprecation warning for now, but support for populating the single ``genre``
   field will be removed in version ``3.0.0``.
+- :doc:`dev/plugins/other/progressbars`: The :class:`~beets.library.Library`
+  provides :meth:`~beets.library.Library.items_with_progress` and
+  :meth:`~beets.library.Library.albums_with_progress` for iterating over items
+  or albums while showing a progress bar. For all other progress bar needs,
+  a lower-level :func:`~beets.ui.iprogress_bar` function is available.
 
 Other changes
 ~~~~~~~~~~~~~

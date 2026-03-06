@@ -17,7 +17,7 @@ def write_items(lib, query, pretend, force):
     """
     items, _ = do_query(lib, query, False, False)
 
-    for item in items:
+    for item in ui.iprogress_bar(items, desc="Writing", unit="item"):
         # Item deleted?
         if not os.path.exists(syspath(item.path)):
             log.info("missing file: {.filepath}", item)

@@ -80,7 +80,10 @@ class ZeroPlugin(BeetsPlugin):
                 "Remove fields for all items? (Y/n)", True
             ):
                 return
-            for item in lib.items(args):
+
+            for item in lib.items_with_progress(
+                "Zeroing fields", args, unit="item"
+            ):
                 self.process_item(item)
 
         zero_command.func = zero_fields

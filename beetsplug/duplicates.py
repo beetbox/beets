@@ -17,6 +17,7 @@
 import os
 import shlex
 
+from beets import ui
 from beets.library import Album, Item
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, UserError, print_
@@ -283,8 +284,13 @@ class DuplicatesPlugin(BeetsPlugin):
         """
         import collections
 
+        unit = "album" if objs and isinstance(objs[0], Album) else "item"
         counts = collections.defaultdict(list)
-        for obj in objs:
+        for obj in ui.iprogress_bar(
+            objs,
+            desc="Finding duplicates",
+            unit=unit,
+        ):
             values = [getattr(obj, k, None) for k in keys]
             values = [v for v in values if v not in (None, "")]
             if strict and len(values) < len(keys):

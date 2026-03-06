@@ -14,6 +14,7 @@
 
 """Use command-line tools to check for audio file corruption."""
 
+import concurrent.futures
 import errno
 import os
 import shlex
@@ -25,7 +26,7 @@ import confuse
 from beets import importer, ui
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
-from beets.util import displayable_path, par_map
+from beets.util import displayable_path
 
 
 class CheckerCommandError(Exception):
@@ -203,7 +204,14 @@ class BadFiles(BeetsPlugin):
             for error_line in self.check_item(item):
                 ui.print_(error_line)
 
-        par_map(check_and_print, items)
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            for _ in ui.iprogress_bar(
+                executor.map(check_and_print, items),
+                desc="Checking",
+                unit="item",
+                total=len(items),
+            ):
+                pass
 
     def commands(self):
         bad_command = Subcommand(

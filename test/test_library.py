@@ -1312,3 +1312,64 @@ class ParseQueryTest(unittest.TestCase):
     def test_parse_bytes(self):
         with pytest.raises(AssertionError):
             beets.library.parse_query_string(b"query", None)
+
+
+class ItemsWithProgressTest(BeetsTestCase):
+    def test_items_with_progress_yields_same_as_items(self):
+        self.add_item_fixture()
+        self.add_item_fixture()
+        items_list = list(self.lib.items())
+        items_progress_list = list(
+            self.lib.items_with_progress("Test", unit="items")
+        )
+        assert len(items_progress_list) == len(items_list)
+        assert [i.id for i in items_progress_list] == [i.id for i in items_list]
+
+    def test_items_with_progress_respects_query(self):
+        i1 = self.add_item_fixture()
+        i2 = self.add_item_fixture()
+        i1.title = "aaa"
+        i2.title = "zzz"
+        i1.store()
+        i2.store()
+        progress_list = list(
+            self.lib.items_with_progress("Test", query="title:aaa", unit="item")
+        )
+        assert len(progress_list) == 1
+        assert progress_list[0].title == "aaa"
+
+    def test_items_with_progress_empty_library(self):
+        progress_list = list(self.lib.items_with_progress("Test", unit="item"))
+        assert progress_list == []
+
+
+class AlbumsWithProgressTest(BeetsTestCase):
+    def test_albums_with_progress_yields_same_as_albums(self):
+        self.add_album_fixture()
+        albums_list = list(self.lib.albums())
+        albums_progress_list = list(
+            self.lib.albums_with_progress("Test", unit="albums")
+        )
+        assert len(albums_progress_list) == len(albums_list)
+        assert [a.id for a in albums_progress_list] == [
+            a.id for a in albums_list
+        ]
+
+    def test_albums_with_progress_respects_query(self):
+        self.add_album_fixture()
+        album = next(iter(self.lib.albums()))
+        album.album = "Unique Album Title"
+        album.store()
+        progress_list = list(
+            self.lib.albums_with_progress(
+                "Test", query="album:Unique Album Title", unit="album"
+            )
+        )
+        assert len(progress_list) == 1
+        assert progress_list[0].album == "Unique Album Title"
+
+    def test_albums_with_progress_empty_library(self):
+        progress_list = list(
+            self.lib.albums_with_progress("Test", unit="album")
+        )
+        assert progress_list == []

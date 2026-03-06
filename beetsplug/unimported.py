@@ -19,7 +19,7 @@ List all files in the library folder which are not listed in the
 
 import os
 
-from beets import util
+from beets import ui, util
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, print_
 
@@ -54,7 +54,12 @@ class Unimported(BeetsPlugin):
 
             in_library = {x.path for x in lib.items()}
             art_files = {x.artpath for x in lib.albums()}
-            for f in in_folder - in_library - art_files:
+            unimported_files = in_folder - in_library - art_files
+            for f in ui.iprogress_bar(
+                unimported_files,
+                desc="Identifying",
+                unit="file",
+            ):
                 print_(util.displayable_path(f))
 
         unimported = Subcommand(

@@ -602,7 +602,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             self.config.set_args(opts)
 
             method = lib.albums if opts.album else lib.items
-            for obj in method(args):
+            for obj in ui.iprogress_bar(
+                method(args),
+                desc="Fetching genres",
+                unit="album" if opts.album else "track",
+            ):
                 self._process(obj, write=ui.should_write())
 
         lastgenre_cmd.func = lastgenre_func

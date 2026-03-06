@@ -76,6 +76,7 @@ def move_items(
     items, albums = do_query(lib, query, album, False)
     objs = albums if album else items
     num_objs = len(objs)
+    entity = "album" if album else "item"
 
     # Filter out files that don't need to be moved.
     def isitemmoved(item):
@@ -84,7 +85,10 @@ def move_items(
     def isalbummoved(album):
         return any(isitemmoved(i) for i in album.items())
 
-    objs = [o for o in objs if (isalbummoved if album else isitemmoved)(o)]
+    objs_progress = ui.iprogress_bar(objs, desc="Preparing", unit=entity)
+    objs = [
+        o for o in objs_progress if (isalbummoved if album else isitemmoved)(o)
+    ]
     num_unmoved = num_objs - len(objs)
     # Report unmoved files that match the query.
     unmoved_msg = ""
@@ -94,7 +98,6 @@ def move_items(
     copy = copy or export  # Exporting always copies.
     action = "Copying" if copy else "Moving"
     act = "copy" if copy else "move"
-    entity = "album" if album else "item"
     log.info(
         "{} {} {}{}{}.",
         action,
@@ -129,7 +132,7 @@ def move_items(
                 ),
             )
 
-        for obj in objs:
+        for obj in ui.iprogress_bar(objs, desc=action, unit=entity):
             log.debug("moving: {.filepath}", obj)
 
             if export:
