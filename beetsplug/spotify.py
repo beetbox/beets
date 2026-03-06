@@ -27,6 +27,7 @@ import re
 import threading
 import time
 import webbrowser
+from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 import confuse
@@ -477,27 +478,33 @@ class SpotifyPlugin(
         :param filters: Field filters to apply.
         :param query_string: Additional query to include in the search.
         """
-        response = requests.get(
-            self.search_url,
-            headers={"Authorization": f"Bearer {self.access_token}"},
-            params={
-                **params.filters,
-                "q": params.query,
-                "type": params.query_type,
-                "limit": str(params.limit),
-            },
-            timeout=10,
-        )
-        try:
-            response.raise_for_status()
-        except requests.exceptions.HTTPError:
-            if response.status_code == 401:
-                self._authenticate()
-                return self.get_search_response(params)
+        for _ in range(2):
+            response = requests.get(
+                self.search_url,
+                headers={"Authorization": f"Bearer {self.access_token}"},
+                params={
+                    **params.filters,
+                    "q": params.query,
+                    "type": params.query_type,
+                    "limit": str(params.limit),
+                },
+                timeout=10,
+            )
+            try:
+                response.raise_for_status()
+            except requests.exceptions.HTTPError:
+                if response.status_code == HTTPStatus.UNAUTHORIZED:
+                    self._authenticate()
+                    continue
+                raise
 
-            raise
+            return (
+                response.json()
+                .get(f"{params.query_type}s", {})
+                .get("items", [])
+            )
 
-        return response.json().get(f"{params.query_type}s", {}).get("items", [])
+        return ()
 
     def commands(self) -> list[ui.Subcommand]:
         # autotagger import command
