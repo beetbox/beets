@@ -1,5 +1,6 @@
-Discogs Plugin
-==============
+################
+ Discogs Plugin
+################
 
 The ``discogs`` plugin extends the autotagger's search capabilities to include
 matches from the Discogs_ database.
@@ -11,8 +12,9 @@ later on.
 
 .. _discogs: https://discogs.com
 
-Installation
-------------
+**************
+ Installation
+**************
 
 To use the ``discogs`` plugin, first enable it in your configuration (see
 :ref:`using-plugins`). Then, install ``beets`` with ``discogs`` extra
@@ -27,22 +29,22 @@ authorization.
 
 Matches from Discogs will now show up during import alongside matches from
 MusicBrainz. The search terms sent to the Discogs API are based on the artist
-and album tags of your tracks. When available, additional tags such as
-catalog number (``catalognum``) can be used to refine the search, similar to
-the MusicBrainz plugin. If artist and album are empty no query will be issued.
+and album tags of your tracks. When available, additional tags such as catalog
+number (``catalognum``) can be used to refine the search, similar to the
+MusicBrainz plugin. If artist and album are empty no query will be issued.
 
 If you have a Discogs ID for an album you want to tag, you can also enter it at
 the "enter Id" prompt in the importer.
 
 OAuth Authorization
-~~~~~~~~~~~~~~~~~~~
+===================
 
 The first time you run the :ref:`import-cmd` command after enabling the plugin,
 it will ask you to authorize with Discogs by visiting the site in a browser.
 Subsequent runs will not require re-authorization.
 
 Authentication via Personal Access Token
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+========================================
 
 As an alternative to OAuth, you can get a token from Discogs and add it to your
 configuration. To get a personal access token (called a "user token" in the
@@ -61,14 +63,15 @@ python3-discogs-client_ documentation):
        discogs:
            user_token: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
-Configuration
--------------
+***************
+ Configuration
+***************
 
 This plugin can be configured like other metadata source plugins as described in
 :ref:`metadata-source-plugin-configuration`.
 
 Default
-~~~~~~~
+=======
 
 .. code-block:: yaml
 
@@ -183,8 +186,9 @@ Default
 
 .. _divisions album: https://www.discogs.com/Handel-Sutherland-Kirkby-Kwella-Nelson-Watkinson-Bowman-Rolfe-Johnson-Elliott-Partridge-Thomas-The-A/release/2026070
 
-Troubleshooting
----------------
+*****************
+ Troubleshooting
+*****************
 
 Several issues have been encountered with the Discogs API. If you have one,
 please start by searching for `a similar issue on the repo
