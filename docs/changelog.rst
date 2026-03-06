@@ -21,30 +21,24 @@ Unreleased
     For plugin developers
     ~~~~~~~~~~~~~~~~~~~~~
 
-..
-    Other changes
-    ~~~~~~~~~~~~~
+Other changes
+~~~~~~~~~~~~~
+
+- API-backed metadata source plugins can now use
+  :py:class:`~beets.metadata_plugins.SearchApiMetadataSourcePlugin` for shared
+  search orchestration. Implement provider behavior in
+  :py:meth:`~beets.metadata_plugins.SearchApiMetadataSourcePlugin.get_search_query_with_filters`
+  and
+  :py:meth:`~beets.metadata_plugins.SearchApiMetadataSourcePlugin.get_search_response`.
 
 2.7.1 (March 08, 2026)
 ----------------------
-
-..
-    New features
-    ~~~~~~~~~~~~
 
 Bug fixes
 ~~~~~~~~~
 
 - Tests that depend on the optional ``langdetect`` package are now skipped when
   the package is not installed. :bug:`6421`
-
-..
-    For plugin developers
-    ~~~~~~~~~~~~~~~~~~~~~
-
-..
-    Other changes
-    ~~~~~~~~~~~~~
 
 2.7.0 (March 07, 2026)
 ----------------------
@@ -141,10 +135,6 @@ Other changes
 2.6.2 (February 22, 2026)
 -------------------------
 
-..
-    New features
-    ~~~~~~~~~~~~
-
 Bug fixes
 ~~~~~~~~~
 
@@ -162,10 +152,6 @@ Bug fixes
   the MusicBrainz API response. :bug:`6339`
 - :ref:`config-cmd`: Improved error message when user-configured editor does not
   exist. :bug:`6176`
-
-..
-    For plugin developers
-    ~~~~~~~~~~~~~~~~~~~~~
 
 Other changes
 ~~~~~~~~~~~~~
