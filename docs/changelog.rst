@@ -38,8 +38,6 @@ New features
   3. Comma followed by a space
   4. Slash wrapped by spaces
 
-- :doc:`plugins/discogs`: Added ``extra_tags`` functionality.
-
 Bug fixes
 ~~~~~~~~~
 
