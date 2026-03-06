@@ -85,6 +85,15 @@ class GeniusAPI:
     class Search(TypedDict):
         response: GeniusAPI.SearchResponse
 
+    class StatusResponse(TypedDict):
+        status: int
+        message: str
+
+    class Meta(TypedDict):
+        meta: GeniusAPI.StatusResponse
+
+    Response = Search | Meta
+
 
 class GoogleCustomSearchAPI:
     class Response(TypedDict):
