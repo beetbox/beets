@@ -738,6 +738,9 @@ MusicBrainz. You can use a space-separated list of language abbreviations, like
 ``en jp es``, to specify a preference order. Defaults to an empty list, meaning
 that no language is preferred.
 
+The alias is used for artist name, track title, album group title and album
+title.
+
 .. _ignored_alias_types:
 
 ignored_alias_types
