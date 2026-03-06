@@ -39,14 +39,15 @@ import beets.ui
 from beets import config
 from beets.autotag.distance import string_dist
 from beets.autotag.hooks import AlbumInfo, TrackInfo
-from beets.metadata_plugins import MetadataSourcePlugin
+from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
 
 from .states import DISAMBIGUATION_RE, ArtistState, TracklistState
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Sequence
+    from collections.abc import Callable, Iterator, Sequence
 
     from beets.library import Item
+    from beets.metadata_plugins import QueryType, SearchParams
 
     from .types import ReleaseFormat, Track
 
@@ -80,7 +81,7 @@ TRACK_INDEX_RE = re.compile(
 )
 
 
-class DiscogsPlugin(MetadataSourcePlugin):
+class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
     def __init__(self):
         super().__init__()
         self.config.add(
@@ -170,11 +171,6 @@ class DiscogsPlugin(MetadataSourcePlugin):
 
         return token, secret
 
-    def candidates(
-        self, items: Sequence[Item], artist: str, album: str, va_likely: bool
-    ) -> Iterable[AlbumInfo]:
-        return self.get_albums(f"{artist} {album}" if va_likely else album)
-
     def get_track_from_album(
         self, album_info: AlbumInfo, compare: Callable[[TrackInfo], float]
     ) -> TrackInfo | None:
@@ -191,21 +187,19 @@ class DiscogsPlugin(MetadataSourcePlugin):
 
     def item_candidates(
         self, item: Item, artist: str, title: str
-    ) -> Iterable[TrackInfo]:
+    ) -> Iterator[TrackInfo]:
         albums = self.candidates([item], artist, title, False)
 
         def compare_func(track_info: TrackInfo) -> float:
             return string_dist(track_info.title, title)
 
         tracks = (self.get_track_from_album(a, compare_func) for a in albums)
-        return list(filter(None, tracks))
+        return filter(None, tracks)
 
     def album_for_id(self, album_id: str) -> AlbumInfo | None:
         """Fetches an album by its Discogs ID and returns an AlbumInfo object
         or None if the album is not found.
         """
-        self._log.debug("Searching for release {}", album_id)
-
         discogs_id = self._extract_id(album_id)
 
         if not discogs_id:
@@ -238,8 +232,15 @@ class DiscogsPlugin(MetadataSourcePlugin):
                     return track
         return None
 
-    def get_albums(self, query: str) -> Iterable[AlbumInfo]:
-        """Returns a list of AlbumInfo objects for a discogs search query."""
+    def get_search_query_with_filters(
+        self,
+        query_type: QueryType,
+        items: Sequence[Item],
+        artist: str,
+        name: str,
+        va_likely: bool,
+    ) -> tuple[str, dict[str, str]]:
+        query = f"{artist} {name}" if va_likely else name
         # Strip non-word characters from query. Things like "!" and "-" can
         # cause a query to return no results, even if they match the artist or
         # album title. Use `re.UNICODE` flag to avoid stripping non-english
@@ -249,18 +250,13 @@ class DiscogsPlugin(MetadataSourcePlugin):
         # can also negate an otherwise positive result.
         query = re.sub(r"(?i)\b(CD|disc|vinyl)\s*\d+", "", query)
 
-        try:
-            results = self.discogs_client.search(query, type="release")
-            results.per_page = self.config["search_limit"].get()
-            releases = results.page(1)
-        except CONNECTION_ERRORS:
-            self._log.debug(
-                "Communication error while searching for {0!r}",
-                query,
-                exc_info=True,
-            )
-            return []
-        return filter(None, map(self.get_album_info, releases))
+        return query, {"type": "release"}
+
+    def get_search_response(self, params: SearchParams) -> Sequence[IDResponse]:
+        """Returns a list of AlbumInfo objects for a discogs search query."""
+        results = self.discogs_client.search(params.query, **params.filters)
+        results.per_page = params.limit
+        return [r.data for r in results.page(1)]
 
     @cache
     def get_master_year(self, master_id: str) -> int | None:

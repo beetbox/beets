@@ -81,3 +81,42 @@ class TestMetadataPluginsException(PluginMixin):
 
         with pytest.raises(ValueError, match="Mocked error"):
             call_method()
+
+
+class TestSearchApiMetadataSourcePlugin(PluginMixin):
+    plugin = "none"
+    preload_plugin = False
+
+    class RaisingSearchApiMetadataMockPlugin(
+        metadata_plugins.SearchApiMetadataSourcePlugin[
+            metadata_plugins.IDResponse
+        ]
+    ):
+        def get_search_response(self, _):
+            raise ValueError("Search failure")
+
+        def album_for_id(self, _):
+            return None
+
+        def track_for_id(self, _):
+            return None
+
+    @pytest.fixture
+    def search_plugin(self):
+        return self.RaisingSearchApiMetadataMockPlugin()
+
+    def test_search_api_returns_empty_when_raise_on_error_disabled(
+        self, config, search_plugin, caplog
+    ):
+        config["raise_on_error"] = False
+
+        assert search_plugin._search_api("track", "query", {}) == ()
+        assert "Search failure" in caplog.text
+
+    def test_search_api_raises_when_raise_on_error_enabled(
+        self, config, search_plugin
+    ):
+        config["raise_on_error"] = True
+
+        with pytest.raises(ValueError, match="Search failure"):
+            search_plugin._search_api("track", "query", {})
