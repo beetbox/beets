@@ -182,10 +182,14 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         return token, secret
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     def get_search_criteria(
         self, items: Sequence[Item]
     ) -> dict[str, str]:
+=======
+    def get_search_criteria(self, items: Sequence[Item]) -> dict[str, str]:
+>>>>>>> b44257bfb (Fixing syntax and formatting errors)
         """Build extra Discogs API search parameters from the most common
         values of configured extra_tags across items (e.g. catalognum, label).
         Used to refine autotag search when existing metadata is available.

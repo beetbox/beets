@@ -1,0 +1,6 @@
+#!/media/jack/samsung1tb/cursor/beets/.ci-venv/bin/python3
+import sys
+from docutils.core import rst2latex
+if __name__ == '__main__':
+    sys.argv[0] = sys.argv[0].removesuffix('.exe')
+    sys.exit(rst2latex())
