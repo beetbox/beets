@@ -57,9 +57,9 @@ file. The available options mirror the command-line options:
 - **delete**: Remove matched items from the library and from the disk. Default:
   ``no``
 - **format**: A specific format with which to print every track or album. This
-  uses the same template syntax as beets' :doc:`path
-  formats</reference/pathformat>`. The usage is inspired by, and therefore
-  similar to, the :ref:`list <list-cmd>` command. Default: :ref:`format_item`
+  uses the same template syntax as beets' :doc:`path formats
+  </reference/pathformat>`. The usage is inspired by, and therefore similar to,
+  the :ref:`list <list-cmd>` command. Default: :ref:`format_item`
 - **full**: List every track or album that has duplicates, not just the
   duplicates themselves. Default: ``no``
 - **keys**: Define in which track or album fields duplicates are to be searched.
