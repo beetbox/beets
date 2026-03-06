@@ -38,6 +38,14 @@ New features
   3. Comma followed by a space
   4. Slash wrapped by spaces
 
+- :doc:`plugins/lyrics`: With ``synced`` enabled, existing synced lyrics are no
+  longer replaced by newly fetched plain lyrics, even when ``force`` is enabled.
+- :doc:`plugins/lyrics`: Remove ``Source: <lyrics-url>`` suffix from lyrics.
+  Store the backend name in ``lyrics_backend``, URL in ``lyrics_url``, language
+  in ``lyrics_language`` and translation language (if translations present) in
+  ``lyrics_translation_language`` flexible attributes. Lyrics are automatically
+  migrated on the first beets run. :bug:`6370`
+
 Bug fixes
 ~~~~~~~~~
 
@@ -84,6 +92,9 @@ Other changes
   Since genres are now stored as a list in the ``genres`` field and written to
   files as individual genre tags, this option has no effect and has been
   removed.
+- :doc:`plugins/lyrics`: To cut down noise from the ``lrclib`` lyrics source,
+  synced lyrics are now checked to ensure the final verse falls within the
+  track's duration.
 
 2.6.2 (February 22, 2026)
 -------------------------

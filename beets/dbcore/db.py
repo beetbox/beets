@@ -1056,6 +1056,8 @@ class Transaction:
 
 @dataclass
 class Migration(ABC):
+    """Define a one-time data migration that runs during database startup."""
+
     db: Database
 
     @cached_classproperty
@@ -1064,15 +1066,28 @@ class Migration(ABC):
         name = cls.__name__.removesuffix("Migration")  # type: ignore[attr-defined]
         return re.sub(r"(?<=[a-z])(?=[A-Z])", "_", name).lower()
 
-    def migrate_table(self, table: str, *args, **kwargs) -> None:
-        """Migrate a specific table."""
+    @contextmanager
+    def with_row_factory(self, factory: type[NamedTuple]) -> Iterator[None]:
+        """Temporarily decode query rows into a typed tuple shape."""
+        original_factory = self.db._connection().row_factory
+        self.db._connection().row_factory = lambda _, row: factory(*row)
+        try:
+            yield
+        finally:
+            self.db._connection().row_factory = original_factory
+
+    def migrate_model(self, model_cls: type[Model], *args, **kwargs) -> None:
+        """Run this migration once for a model's backing table."""
+        table = model_cls._table
         if not self.db.migration_exists(self.name, table):
-            self._migrate_data(table, *args, **kwargs)
+            self._migrate_data(model_cls, *args, **kwargs)
             self.db.record_migration(self.name, table)
 
     @abstractmethod
-    def _migrate_data(self, table: str, current_fields: set[str]) -> None:
-        """Migrate data for a specific table."""
+    def _migrate_data(
+        self, model_cls: type[Model], current_fields: set[str]
+    ) -> None:
+        """Migrate data for a specific model."""
 
 
 class TableInfo(TypedDict):
@@ -1375,8 +1390,9 @@ class Database:
         for migration_cls, model_classes in self._migrations:
             migration = migration_cls(self)
             for model_cls in model_classes:
-                table = model_cls._table
-                migration.migrate_table(table, self.db_tables[table]["columns"])
+                migration.migrate_model(
+                    model_cls, self.db_tables[model_cls._table]["columns"]
+                )
 
     def migration_exists(self, name: str, table: str) -> bool:
         """Return whether a named migration has been marked complete."""
