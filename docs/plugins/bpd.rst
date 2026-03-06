@@ -5,11 +5,11 @@ BPD is a music player using music from a beets library. It runs as a daemon and
 implements the MPD protocol, so it's compatible with all the great MPD clients
 out there. I'm using Theremin_, gmpc_, Sonata_, and Ario_ successfully.
 
-.. _ario: http://ario-player.sourceforge.net/
+.. _ario: https://ario-player.sourceforge.net/
 
 .. _gmpc: https://gmpc.wikia.com/wiki/Gnome_Music_Player_Client
 
-.. _sonata: http://sonata.berlios.de/
+.. _sonata: https://sonata.berlios.de/
 
 .. _theremin: https://github.com/TheStalwart/Theremin
 

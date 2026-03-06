@@ -3244,7 +3244,7 @@ For developers
   immediately after they are initialized. It's also possible to replace the
   originally created tasks by returning new ones using this event.
 
-.. _bs1770gain: http://bs1770gain.sourceforge.net
+.. _bs1770gain: https://bs1770gain.sourceforge.net
 
 1.3.10 (January 5, 2015)
 ------------------------
@@ -4683,7 +4683,7 @@ today on features for version 1.1.
 
 .. _aacgain: https://aacgain.altosdesign.com
 
-.. _mp3gain: http://mp3gain.sourceforge.net/download.php
+.. _mp3gain: https://mp3gain.sourceforge.net/download.php
 
 .. _the echo nest: https://web.archive.org/web/20180329103558/http://the.echonest.com/
 

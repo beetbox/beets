@@ -179,7 +179,7 @@ Your First Contribution
 
 If this is your first time contributing to an open source project, welcome! If
 you are confused at all about how to contribute or what to contribute, take a
-look at `this great tutorial <http://makeapullrequest.com/>`__, or stop by our
+look at `this great tutorial <https://makeapullrequest.com/>`__, or stop by our
 `discussion board`_ if you have any questions.
 
 We maintain a list of issues we reserved for those new to open source labeled
@@ -263,12 +263,12 @@ There are a few coding conventions we use in beets:
 - f-strings should be used instead of the ``%`` operator and ``str.format()``
   calls.
 - Never ``print`` informational messages; use the `logging
-  <http://docs.python.org/library/logging.html>`__ module instead. In
+  <https://docs.python.org/library/logging.html>`__ module instead. In
   particular, we have our own logging shim, so you’ll see ``from beets import
   logging`` in most files.
 
   - The loggers use `str.format
-    <http://docs.python.org/library/stdtypes.html#str.format>`__-style logging
+    <https://docs.python.org/library/stdtypes.html#str.format>`__-style logging
     instead of ``%``-style, so you can type ``log.debug("{}", obj)`` to do your
     formatting.
 

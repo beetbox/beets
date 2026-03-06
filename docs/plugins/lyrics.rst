@@ -150,7 +150,7 @@ Sphinx supports various builders_, see a few suggestions:
 
 .. _builders: https://www.sphinx-doc.org/en/stable/builders.html
 
-.. _restructuredtext: http://docutils.sourceforge.net/rst.html
+.. _restructuredtext: https://docutils.sourceforge.net/rst.html
 
 .. _sphinx: https://www.sphinx-doc.org/
 

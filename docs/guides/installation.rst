@@ -100,11 +100,11 @@ package manager. Here are some common options:
 
 .. _dnf package: https://packages.fedoraproject.org/pkgs/beets/
 
-.. _freebsd: http://portsmon.freebsd.org/portoverview.py?category=audio&portname=beets
+.. _freebsd: https://portsmon.freebsd.org/portoverview.py?category=audio&portname=beets
 
 .. _nixos: https://github.com/NixOS/nixpkgs/tree/master/pkgs/tools/audio/beets
 
-.. _openbsd: http://openports.se/audio/beets
+.. _openbsd: https://openports.se/audio/beets
 
 .. _ubuntu details: https://launchpad.net/ubuntu/+source/beets
 
