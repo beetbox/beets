@@ -2543,7 +2543,7 @@ The ``echonest`` plugin has been removed in this version because the API it used
 is `shutting down`_. You might want to try the :doc:`/plugins/acousticbrainz`
 instead.
 
-.. _shutting down: https://developer.spotify.com/news-stories/2016/03/29/api-improvements-update/
+.. _shutting down: https://web.archive.org/web/20260000000000*/developer.spotify.com/news-stories/2016/03/29/api-improvements-update
 
 Some of the larger new features
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3244,7 +3244,7 @@ For developers
   immediately after they are initialized. It's also possible to replace the
   originally created tasks by returning new ones using this event.
 
-.. _bs1770gain: https://bs1770gain.sourceforge.net
+.. _bs1770gain: https://sourceforge.net/projects/bs1770gain/
 
 1.3.10 (January 5, 2015)
 ------------------------
@@ -4681,9 +4681,9 @@ today on features for version 1.1.
 - Changed plugin loading so that modules can be imported without unintentionally
   loading the plugins they contain.
 
-.. _aacgain: https://aacgain.altosdesign.com
+.. _aacgain: https://github.com/dgilman/aacgain
 
-.. _mp3gain: https://mp3gain.sourceforge.net/download.php
+.. _mp3gain: https://sourceforge.net/projects/mp3gain/
 
 .. _the echo nest: https://web.archive.org/web/20180329103558/http://the.echonest.com/
 
@@ -5066,7 +5066,7 @@ release: one for assigning genres and another for ReplayGain analysis.
 
 .. _acoustid: https://acoustid.org/
 
-.. _albumart.org: https://www.albumart.org/
+.. _albumart.org: https://web.archive.org/web/20191217041318/http://www.albumart.org/
 
 .. _kraymer: https://github.com/KraYmer
 

@@ -357,7 +357,7 @@ Writing Tests
 ~~~~~~~~~~~~~
 
 Writing tests is done by adding or modifying files in folder test_. Take a look
-at `https://github.com/beetbox/beets/blob/master/test/test_template.py#L224`_ to
+at `test-query`_ to
 get a basic view on how tests are written. Since we are currently migrating the
 tests from unittest_ to pytest_, new tests should be written using pytest_.
 Contributions migrating existing tests are welcome!
@@ -381,7 +381,7 @@ This way, the test will be run only in the integration test suite.
 
 .. _documentation: https://beets.readthedocs.io/en/stable/
 
-.. _https://github.com/beetbox/beets/blob/master/test/test_template.py#l224: https://github.com/beetbox/beets/blob/master/test/test_template.py#L224
+.. _test-query: https://github.com/beetbox/beets/blob/master/test/test_query.py
 
 .. _integration test: https://github.com/beetbox/beets/actions?query=workflow%3A%22integration+tests%22
 

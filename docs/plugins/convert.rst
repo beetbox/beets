@@ -230,12 +230,12 @@ use the :doc:`/plugins/replaygain` to do this analysis. See the LAME
 documentation_ and the `HydrogenAudio wiki`_ for other LAME configuration
 options and a thorough discussion of MP3 encoding.
 
-.. _documentation: https://lame.sourceforge.io/index.php
+.. _documentation: https://sourceforge.net/projects/lame/
 
 .. _gapless: https://wiki.hydrogenaud.io/index.php?title=Gapless_playback
 
 .. _hydrogenaudio wiki: https://wiki.hydrogenaud.io/index.php?title=LAME
 
-.. _lame: https://lame.sourceforge.io/index.php
+.. _lame: https://sourceforge.net/projects/lame/
 
 .. _m3u8 format: https://en.wikipedia.org/wiki/M3U#M3U8
