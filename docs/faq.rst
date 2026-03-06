@@ -171,7 +171,8 @@ follow these guidelines when reporting an issue:
 - Most importantly: if beets is crashing, please `include the traceback
   <https://imgur.com/jacoj>`__. Tracebacks can be more readable if you put them
   in a pastebin (e.g., `Gist <https://gist.github.com/>`__ or `Hastebin
-  <https://www.toptal.com/developers/hastebin>`__), especially when communicating over IRC.
+  <https://www.toptal.com/developers/hastebin>`__), especially when
+  communicating over IRC.
 - Turn on beets' debug output (using the -v option: for example, ``beet -v
   import ...``) and include that with your bug report. Look through this verbose
   output for any red flags that might point to the problem.
@@ -298,9 +299,9 @@ remedy this.)
 
 Beets writes ID3v2.4_ tags by default. Some software, including Windows (i.e.,
 Windows Explorer and Windows Media Player) and `id3lib/id3v2
-<https://sourceforge.net/projects/id3v2/>`__, don't support v2.4 tags. When using
-2.4-unaware software, it might look like the tags are unmodified or missing
-completely.
+<https://sourceforge.net/projects/id3v2/>`__, don't support v2.4 tags. When
+using 2.4-unaware software, it might look like the tags are unmodified or
+missing completely.
 
 To enable ID3v2.3 tags, enable the :ref:`id3v23` config option.
 
