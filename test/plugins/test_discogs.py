@@ -19,6 +19,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 from beets import config
+from beets.library import Item
 from beets.test._common import Bag
 from beets.test.helper import BeetsTestCase, capture_log
 from beetsplug.discogs import ArtistState, DiscogsPlugin
@@ -746,3 +747,62 @@ def test_va_buildartistinfo(given_artists, expected_info, config_va_name):
 )
 def test_get_track_index(position, medium, index, subindex):
     assert DiscogsPlugin.get_track_index(position) == (medium, index, subindex)
+
+
+@patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
+def test_get_search_criteria_uses_catalognum_and_strips_spaces():
+    """get_search_criteria should map catalognum to catno and remove spaces."""
+    plugin = DiscogsPlugin()
+    plugin.config["extra_tags"] = ["catalognum"]
+    items = [
+        Item(catalognum="ABC 123"),
+        Item(catalognum="ABC 123"),
+    ]
+
+    criteria = plugin.get_search_criteria(items)
+
+    assert criteria == {"catno": "ABC123"}
+
+
+@patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
+def test_get_search_criteria_ignores_unsupported_tags():
+    """Tags not in FIELDS_TO_DISCOGS_KEYS are ignored when building criteria."""
+    plugin = DiscogsPlugin()
+    plugin.config["extra_tags"] = ["catalognum", "unsupported", "label"]
+    items = [
+        Item(catalognum="XYZ 999", label="Test Label"),
+        Item(catalognum="XYZ 999", label="Test Label"),
+    ]
+
+    criteria = plugin.get_search_criteria(items)
+
+    assert criteria == {"catno": "XYZ999", "label": "Test Label"}
+
+
+@patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
+def test_candidates_passes_extra_criteria_to_get_albums():
+    """candidates() should pass extra search criteria derived from items."""
+    plugin = DiscogsPlugin()
+    plugin.config["extra_tags"] = ["catalognum", "label"]
+    items = [
+        Item(catalognum="ABC 123", label="Label One"),
+        Item(catalognum="ABC 123", label="Label One"),
+    ]
+    plugin.get_albums = Mock(return_value=[])
+
+    # Non-VA query should use album only.
+    list(plugin.candidates(items, "Artist", "Album", va_likely=False))
+    plugin.get_albums.assert_called_once_with(
+        "Album",
+        catno="ABC123",
+        label="Label One",
+    )
+
+    # VA query should prepend artist to the query string.
+    plugin.get_albums.reset_mock()
+    list(plugin.candidates(items, "Various", "Compilation", va_likely=True))
+    plugin.get_albums.assert_called_once_with(
+        "Various Compilation",
+        catno="ABC123",
+        label="Label One",
+    )
