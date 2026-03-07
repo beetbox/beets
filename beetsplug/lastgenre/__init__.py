@@ -53,7 +53,6 @@ if TYPE_CHECKING:
     Example: [['electronic', 'house'], ['electronic', 'techno']]"""
 
 
-
 # Canonicalization tree processing.
 
 
@@ -89,6 +88,22 @@ def find_parents(candidate: str, branches: CanonTree) -> list[str]:
         except ValueError:
             continue
     return [candidate]
+
+
+def get_depth(tag: str, branches: CanonTree) -> int | None:
+    """Find the depth of a tag in the genres tree."""
+    for branch in branches:
+        if tag in branch:
+            return branch.index(tag)
+    return None
+
+
+def sort_by_depth(tags: list[str], branches: CanonTree) -> list[str]:
+    """Given a list of tags, sort the tags by their depths in the genre tree."""
+    depth_tag_pairs = [(get_depth(t, branches), t) for t in tags]
+    depth_tag_pairs = [e for e in depth_tag_pairs if e[0] is not None]
+    depth_tag_pairs.sort(reverse=True)
+    return [p[1] for p in depth_tag_pairs]
 
 
 # Main plugin logic.
@@ -186,26 +201,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             }
         )
 
-    # More canonicalization and general helpers.
-
-    def _get_depth(self, tag: str) -> int | None:
-        """Find the depth of a tag in the genres tree."""
-        depth = None
-        for key, value in enumerate(self.c14n_branches):
-            if tag in value:
-                depth = value.index(tag)
-                break
-        return depth
-
-    def _sort_by_depth(self, tags: list[str]) -> list[str]:
-        """Given a list of tags, sort the tags by their depths in the
-        genre tree.
-        """
-        depth_tag_pairs = [(self._get_depth(t), t) for t in tags]
-        depth_tag_pairs = [e for e in depth_tag_pairs if e[0] is not None]
-        depth_tag_pairs.sort(reverse=True)
-        return [p[1] for p in depth_tag_pairs]
-
     def _resolve_genres(self, tags: list[str]) -> list[str]:
         """Canonicalize, sort and filter a list of genres.
 
@@ -256,7 +251,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # Sort the tags by specificity.
         if self.config["prefer_specific"]:
-            tags = self._sort_by_depth(tags)
+            tags = sort_by_depth(tags, self.c14n_branches)
 
         # c14n only adds allowed genres but we may have had forbidden genres in
         # the original tags list
