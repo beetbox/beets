@@ -62,9 +62,9 @@ These functions are built in to beets:
 - ``%left{text,n}``: Return the first ``n`` characters of ``text``.
 - ``%right{text,n}``: Return the last ``n`` characters of ``text``.
 - ``%if{condition,text}`` or ``%if{condition,truetext,falsetext}``: If
-  ``condition`` is not empty, and not one of the values ``0`` or ``false``
-  (case insensitive), then returns the second argument. Otherwise, returns the
-  third argument if specified (or nothing if ``falsetext`` is left off).
+  ``condition`` is not empty, and not one of the values ``0`` or ``false`` (case
+  insensitive), then returns the second argument. Otherwise, returns the third
+  argument if specified (or nothing if ``falsetext`` is left off).
 - ``%asciify{text}``: Convert non-ASCII characters to their ASCII equivalents.
   For example, "café" becomes "cafe". Uses the mapping provided by the
   `unidecode module`_. See the :ref:`asciify-paths` configuration option.
