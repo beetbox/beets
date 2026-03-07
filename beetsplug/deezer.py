@@ -218,6 +218,8 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         )
 
     def get_search_response(self, params: SearchParams) -> list[IDResponse]:
+        """Search Deezer and return the raw result payload entries."""
+
         response = requests.get(
             f"{self.search_url}{params.query_type}",
             params={

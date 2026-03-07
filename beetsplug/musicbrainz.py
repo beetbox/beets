@@ -728,6 +728,8 @@ class MusicBrainzPlugin(
         name: str,
         va_likely: bool,
     ) -> tuple[str, dict[str, str]]:
+        """Build MusicBrainz criteria filters for album and recording search."""
+
         if query_type == "album":
             criteria = self.get_album_criteria(items, artist, name, va_likely)
         else:
@@ -738,12 +740,8 @@ class MusicBrainzPlugin(
         }
 
     def get_search_response(self, params: SearchParams) -> Sequence[IDResponse]:
-        """Perform MusicBrainz API search and return results.
+        """Search MusicBrainz and return release or recording result mappings."""
 
-        Execute a search against the MusicBrainz API for recordings or releases
-        using the provided criteria. Handles API errors by converting them into
-        MusicBrainzAPIError exceptions with contextual information.
-        """
         mb_entity: Literal["release", "recording"] = (
             "release" if params.query_type == "album" else "recording"
         )

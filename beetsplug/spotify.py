@@ -470,13 +470,10 @@ class SpotifyPlugin(
     def get_search_response(
         self, params: SearchParams
     ) -> Sequence[SearchResponseAlbums | SearchResponseTracks]:
-        """Query the Spotify Search API for the specified ``query_string``,
-        applying the provided ``filters``.
+        """Search Spotify and return raw album or track result items.
 
-        :param query_type: Item type to search across. Valid types are: 'album',
-            'artist', 'playlist', and 'track'.
-        :param filters: Field filters to apply.
-        :param query_string: Additional query to include in the search.
+        Unauthorized responses trigger one token refresh attempt before the
+        method gives up and falls back to an empty result set.
         """
         for _ in range(2):
             response = requests.get(
