@@ -4,7 +4,7 @@ Installation
 Beets requires `Python 3.10 or later`_. You can install it using package
 managers, pipx_, pip_ or by using package managers.
 
-.. _python 3.10 or later: https://python.org/download/
+.. _python 3.10 or later: https://www.python.org/downloads/
 
 Using ``pipx`` or ``pip``
 -------------------------
@@ -40,7 +40,7 @@ conflicts and keeps your system clean.
 If you don't have pipx_ installed, you can follow the instructions on the `pipx
 installation page`_ to get it set up.
 
-.. _pip: https://pip.pypa.io/en/
+.. _pip: https://pip.pypa.io/en/stable/
 
 .. _pipx: https://pipx.pypa.io/stable
 
@@ -100,11 +100,11 @@ package manager. Here are some common options:
 
 .. _dnf package: https://packages.fedoraproject.org/pkgs/beets/
 
-.. _freebsd: http://portsmon.freebsd.org/portoverview.py?category=audio&portname=beets
+.. _freebsd: https://www.freshports.org/audio/beets/
 
-.. _nixos: https://github.com/NixOS/nixpkgs/tree/master/pkgs/tools/audio/beets
+.. _nixos: https://github.com/NixOS/nixpkgs/tree/master/pkgs/development/python-modules/beets
 
-.. _openbsd: http://openports.se/audio/beets
+.. _openbsd: https://openports.pl/path/audio/beets
 
 .. _ubuntu details: https://launchpad.net/ubuntu/+source/beets
 
@@ -160,7 +160,7 @@ necessary keys to your registry. You can then right-click a directory and choose
 
 .. _install pip: https://pip.pypa.io/en/stable/installing/
 
-.. _install python: https://python.org/download/
+.. _install python: https://www.python.org/downloads/
 
 ARM Installation
 ~~~~~~~~~~~~~~~~

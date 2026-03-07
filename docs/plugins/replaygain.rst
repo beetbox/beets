@@ -31,7 +31,7 @@ least GStreamer 1.0 and `PyGObject 3.x`_ (a.k.a. ``python-gi``).
 
 .. _gstreamer: https://gstreamer.freedesktop.org/
 
-.. _pygobject 3.x: https://pygobject.readthedocs.io/en/latest/
+.. _pygobject 3.x: https://pygobject.gnome.org/
 
 Then, install ``beets`` with ``replaygain`` extra which installs ``GStreamer``
 bindings for Python
@@ -105,11 +105,11 @@ the path explicitly like so:
     replaygain:
         command: /Applications/MacMP3Gain.app/Contents/Resources/aacgain
 
-.. _aacgain: https://aacgain.altosdesign.com
+.. _aacgain: https://github.com/dgilman/aacgain
 
 .. _homebrew: https://brew.sh
 
-.. _mp3gain: http://mp3gain.sourceforge.net/download.php
+.. _mp3gain: https://sourceforge.net/projects/mp3gain/download.php
 
 .. _mp3rgain: https://github.com/M-Igashi/mp3rgain
 
@@ -128,7 +128,7 @@ On OS X, most of the dependencies can be installed with Homebrew_:
 
 The Python Audio Tools backend does not support parallel analysis.
 
-.. _python audio tools: http://audiotools.sourceforge.net
+.. _python audio tools: https://sourceforge.net/projects/audiotools/
 
 ffmpeg
 ~~~~~~

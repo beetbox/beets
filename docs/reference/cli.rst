@@ -149,7 +149,7 @@ Optional command flags:
 
 .. _py7zr: https://pypi.org/project/py7zr/
 
-.. _rarfile: https://pypi.python.org/pypi/rarfile/
+.. _rarfile: https://pypi.org/project/rarfile/
 
 .. only:: html
 

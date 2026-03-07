@@ -15,4 +15,4 @@ To use the ``sonosupdate`` plugin, first enable it in your configuration (see
 With that all in place, you'll see beets send the "update" command to your Sonos
 controller every time you change your beets library.
 
-.. _sonos: https://sonos.com/
+.. _sonos: https://www.sonos.com/
