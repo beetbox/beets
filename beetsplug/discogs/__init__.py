@@ -36,7 +36,7 @@ from requests.exceptions import ConnectionError
 
 import beets
 import beets.ui
-from beets import config
+from beets import config, util
 from beets.autotag.distance import string_dist
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.metadata_plugins import MetadataSourcePlugin
@@ -79,6 +79,15 @@ TRACK_INDEX_RE = re.compile(
     re.VERBOSE,
 )
 
+# Beets tag names to Discogs API search parameter names.
+# Used with extra_tags to refine autotag search using existing item metadata.
+FIELDS_TO_DISCOGS_KEYS = {
+    "catalognum": "catno",
+    "label": "label",
+    "country": "country",
+    "year": "year",
+}
+
 
 class DiscogsPlugin(MetadataSourcePlugin):
     def __init__(self):
@@ -99,6 +108,7 @@ class DiscogsPlugin(MetadataSourcePlugin):
                     "artist": False,
                     "album_artist": False,
                 },
+                "extra_tags": ["catalognum"],
             }
         )
         self.config["apikey"].redact = True
@@ -170,10 +180,32 @@ class DiscogsPlugin(MetadataSourcePlugin):
 
         return token, secret
 
+    def get_search_criteria(self, items: Sequence[Item]) -> dict[str, str]:
+        """Build extra Discogs API search parameters from the most common
+        values of configured extra_tags across items (e.g. catalognum, label).
+        Used to refine autotag search when existing metadata is available.
+        """
+        criteria = {}
+        for tag in self.config["extra_tags"].as_str_seq():
+            if tag not in FIELDS_TO_DISCOGS_KEYS:
+                continue
+            most_common, _ = util.plurality([i.get(tag) for i in items])
+            if most_common is None:
+                continue
+            value = str(most_common).strip()
+            if not value:
+                continue
+            if tag == "catalognum":
+                value = value.replace(" ", "")
+            criteria[FIELDS_TO_DISCOGS_KEYS[tag]] = value
+        return criteria
+
     def candidates(
         self, items: Sequence[Item], artist: str, album: str, va_likely: bool
     ) -> Iterable[AlbumInfo]:
-        return self.get_albums(f"{artist} {album}" if va_likely else album)
+        query = f"{artist} {album}" if va_likely else album
+        extra_criteria = self.get_search_criteria(items)
+        return self.get_albums(query, **extra_criteria)
 
     def get_track_from_album(
         self, album_info: AlbumInfo, compare: Callable[[TrackInfo], float]
@@ -238,8 +270,15 @@ class DiscogsPlugin(MetadataSourcePlugin):
                     return track
         return None
 
-    def get_albums(self, query: str) -> Iterable[AlbumInfo]:
-        """Returns a list of AlbumInfo objects for a discogs search query."""
+    def get_albums(
+        self, query: str, **extra_criteria: str
+    ) -> Iterable[AlbumInfo]:
+        """Returns a list of AlbumInfo objects for a discogs search query.
+
+        extra_criteria are passed to the Discogs API as search filters (e.g.
+        catno=, label=, country=, year=) to refine results when autotagging
+        with existing metadata.
+        """
         # Strip non-word characters from query. Things like "!" and "-" can
         # cause a query to return no results, even if they match the artist or
         # album title. Use `re.UNICODE` flag to avoid stripping non-english
@@ -250,7 +289,9 @@ class DiscogsPlugin(MetadataSourcePlugin):
         query = re.sub(r"(?i)\b(CD|disc|vinyl)\s*\d+", "", query)
 
         try:
-            results = self.discogs_client.search(query, type="release")
+            results = self.discogs_client.search(
+                query, type="release", **extra_criteria
+            )
             results.per_page = self.config["search_limit"].get()
             releases = results.page(1)
         except CONNECTION_ERRORS:
