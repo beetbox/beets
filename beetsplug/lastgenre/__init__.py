@@ -201,6 +201,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             }
         )
 
+    # Genre list processing.
+
     def _resolve_genres(self, tags: list[str]) -> list[str]:
         """Canonicalize, sort and filter a list of genres.
 
@@ -272,7 +274,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         return [g for g in cleaned if g.lower() in self.whitelist]
 
-    # Main processing: _get_genre() and helpers.
+    # Genre resolution pipeline.
 
     def _format_genres(self, tags: list[str]) -> list[str]:
         """Format to title case if configured."""
