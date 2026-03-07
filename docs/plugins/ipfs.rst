@@ -4,7 +4,7 @@ IPFS Plugin
 The ``ipfs`` plugin makes it easy to share your library and music with friends.
 The plugin uses ipfs_ for storing the library and file content.
 
-.. _ipfs: https://ipfs.io/
+.. _ipfs: https://about.ipfs.io/
 
 Installation
 ------------
@@ -12,7 +12,7 @@ Installation
 This plugin requires go-ipfs_ to be running as a daemon and that the associated
 ``ipfs`` command is on the user's ``$PATH``.
 
-.. _go-ipfs: https://github.com/ipfs/go-ipfs
+.. _go-ipfs: https://github.com/ipfs/kubo
 
 Once you have the client installed, enable the ``ipfs`` plugin in your
 configuration (see :ref:`using-plugins`).

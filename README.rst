@@ -2,7 +2,7 @@
     :target: https://pypi.python.org/pypi/beets
 
 .. image:: https://img.shields.io/codecov/c/github/beetbox/beets.svg
-    :target: https://codecov.io/github/beetbox/beets
+    :target: https://app.codecov.io/github/beetbox/beets
 
 .. image:: https://img.shields.io/github/actions/workflow/status/beetbox/beets/ci.yaml
     :target: https://github.com/beetbox/beets/actions

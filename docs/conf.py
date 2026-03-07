@@ -69,6 +69,11 @@ linkcheck_ignore = [
     r"https?://127\.0\.0\.1",
     r"https://www.musixmatch.com/",  # blocks requests
     r"https://genius.com/",  # blocks requests
+    r"https://sourceforge\.net/",  # blocks requests
+    r"https://[^/]*fanart\.tv/",  # blocks requests
+    r"https://[^/]*fandom\.com/",  # blocks requests
+    r"https://imgur\.com/",  # not accessible from the UK
+    r"https://www.discogs.com/settings/developers",  # requires login
 ]
 
 # Options for HTML output
