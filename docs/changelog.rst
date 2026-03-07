@@ -12,8 +12,6 @@ Unreleased
 New features
 ~~~~~~~~~~~~
 
-- :doc:`plugins/lastgenre`: Added ``cleanup_existing`` configuration flag to
-  allow whitelist canonicalization of existing genres.
 - Add native support for multiple genres per album/track. The ``genres`` field
   now stores genres as a list and is written to files as multiple individual
   genre tags (e.g., separate GENRE tags for FLAC/MP3). The
@@ -45,6 +43,8 @@ New features
   in ``lyrics_language`` and translation language (if translations present) in
   ``lyrics_translation_language`` flexible attributes. Lyrics are automatically
   migrated on the first beets run. :bug:`6370`
+- :doc:`plugins/lastgenre`: Added ``cleanup_existing`` configuration flag to
+  allow whitelist canonicalization of existing genres.
 
 Bug fixes
 ~~~~~~~~~
