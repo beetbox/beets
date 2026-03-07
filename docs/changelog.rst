@@ -76,6 +76,9 @@ For plugin developers
   please update it to populate a list of ``genres`` instead. You will see a
   deprecation warning for now, but support for populating the single ``genre``
   field will be removed in version ``3.0.0``.
+- The ``tunelog`` logging helper that was exclusively available to the lastgenre
+  plugin is now usable througout beets and was renamed to ``extra_debug``.
+  Import it from the ``beets.logging`` module to use it.
 
 Other changes
 ~~~~~~~~~~~~~
