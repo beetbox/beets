@@ -42,8 +42,8 @@ from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from beets.library import Library
-    from beets.metadata_plugins import SearchParams
+    from beets.library import Item, Library
+    from beets.metadata_plugins import QueryType, SearchParams
     from beetsplug._typing import JSONDict
 
 DEFAULT_WAITING_TIME = 5
@@ -466,6 +466,20 @@ class SpotifyPlugin(
                     track.index = i
         track.medium_total = medium_total
         return track
+
+    def get_search_query_with_filters(
+        self,
+        query_type: QueryType,
+        items: Sequence[Item],
+        artist: str,
+        name: str,
+        va_likely: bool,
+    ) -> tuple[str, dict[str, str]]:
+        query = f'album:"{name}"' if query_type == "album" else name
+        if query_type == "track" or not va_likely:
+            query += f' artist:"{artist}"'
+
+        return query, {}
 
     def get_search_response(
         self, params: SearchParams
