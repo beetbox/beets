@@ -195,11 +195,11 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
         self._setup_config(canonical=True)
         # Normal case.
         tags = ("electronic", "ambient", "post-rock", "downtempo")
-        res = self.plugin._sort_by_depth(tags)
+        res = lastgenre.sort_by_depth(tags, self.plugin.c14n_branches)
         assert res == ["post-rock", "downtempo", "ambient", "electronic"]
         # Non-canonical tag ('chillout') present.
         tags = ("electronic", "ambient", "chillout")
-        res = self.plugin._sort_by_depth(tags)
+        res = lastgenre.sort_by_depth(tags, self.plugin.c14n_branches)
         assert res == ["ambient", "electronic"]
 
 
