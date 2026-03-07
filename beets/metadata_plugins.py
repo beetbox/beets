@@ -291,6 +291,12 @@ class IDResponse(TypedDict):
 
 
 class SearchParams(NamedTuple):
+    """Bundle normalized search context passed to provider search hooks.
+
+    Shared search orchestration constructs this value so plugin hooks receive
+    one object describing search intent, query text, and provider filters.
+    """
+
     query_type: QueryType
     query: str
     filters: dict[str, str]
@@ -328,6 +334,20 @@ class SearchApiMetadataSourcePlugin(
         name: str,
         va_likely: bool,
     ) -> tuple[str, dict[str, str]]:
+        """Build query text and API filters for a provider search.
+
+        Subclasses can override this hook when their API requires a query format
+        or filter set that differs from the default text-based construction.
+
+        :param query_type: The type of query to perform. Either *album* or *track*
+        :param items: List of items the search is being performed for
+        :param artist: Artist name
+        :param name: Album or track name, depending on ``query_type``
+        :param va_likely: Whether the search is likely to be for various artists
+        :return: Tuple of (``query`` text, ``filters`` dict) to use for the
+            search API call
+        """
+
         query = f'album:"{name}"' if query_type == "album" else name
         if query_type == "track" or not va_likely:
             query += f' artist:"{artist}"'
@@ -336,18 +356,25 @@ class SearchApiMetadataSourcePlugin(
 
     @abc.abstractmethod
     def get_search_response(self, params: SearchParams) -> Sequence[R]:
+        """Fetch raw search results for a provider request.
+
+        Implementations should return records containing source IDs so shared
+        candidate resolution can perform ID-based album and track lookups.
+
+        :param params: :py:namedtuple:`~SearchParams` named tuple
+        :return: Sequence of IDResponse dicts containing at least an "id" key for each
+        """
+
         raise NotImplementedError
 
     def _search_api(
         self, query_type: QueryType, query: str, filters: dict[str, str]
     ) -> Sequence[R]:
-        """Perform a search on the API.
+        """Run shared provider search orchestration and return ID-bearing results.
 
-        :param query_type: The type of query to perform.
-        :param filters: A dictionary of filters to apply to the search.
-        :param query_string: Additional query to include in the search.
-
-        Should return a list of identifiers for the requested type (album or track).
+        This path applies optional query normalization and default limits, then
+        delegates API access to provider hooks with consistent logging and
+        failure handling.
         """
         if self.config["search_query_ascii"].get():
             query = unidecode.unidecode(query)
@@ -372,6 +399,8 @@ class SearchApiMetadataSourcePlugin(
     def _get_candidates(
         self, query_type: QueryType, *args, **kwargs
     ) -> Sequence[R]:
+        """Resolve query hooks and execute one provider search request."""
+
         return self._search_api(
             query_type,
             *self.get_search_query_with_filters(query_type, *args, **kwargs),

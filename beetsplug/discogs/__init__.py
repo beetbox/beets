@@ -240,6 +240,12 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         name: str,
         va_likely: bool,
     ) -> tuple[str, dict[str, str]]:
+        """Build a Discogs release query and fixed release-type filter.
+
+        The query is normalized to improve hit rates for punctuation-heavy album
+        names and medium suffixes that can reduce recall.
+        """
+
         query = f"{artist} {name}" if va_likely else name
         # Strip non-word characters from query. Things like "!" and "-" can
         # cause a query to return no results, even if they match the artist or
@@ -253,7 +259,7 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         return query, {"type": "release"}
 
     def get_search_response(self, params: SearchParams) -> Sequence[IDResponse]:
-        """Returns a list of AlbumInfo objects for a discogs search query."""
+        """Search Discogs releases and return raw result mappings with IDs."""
         results = self.discogs_client.search(params.query, **params.filters)
         results.per_page = params.limit
         return [r.data for r in results.page(1)]
