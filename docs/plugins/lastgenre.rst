@@ -173,12 +173,15 @@ file. The available options are:
 - **cleanup_existing**: This option only takes effect with ``force: no``,
   Setting this to ``yes`` will result in cleanup of existing genres. That
   includes canonicalization and whitelisting, if enabled. If no matching genre
-  can be determined, the ``fallback`` is used instead. Default: ``no``
-  (disabled).
+  can be determined, the ``fallback`` is used instead, or ``fallback_original``,
+  if set. Default: ``no`` (disabled).
 - **count**: Number of genres to fetch. Default: 1
 - **fallback**: A string to use as a fallback genre when no genre is found
   ``or`` the original genre is not desired to be kept (``keep_existing: no``).
   You can use the empty string ``''`` to reset the genre. Default: None.
+- **fallback_original**: Setting this to ``yes`` will preserve existing genres
+  instead of deleting them or setting them to ``fallback`` when no genres are
+  found or when none match the canonical whitelist. Default: ``no``.
 - **force**: By default, lastgenre will fetch new genres for empty tags only,
   enable this option to always try to fetch new last.fm genres. Enable the
   ``keep_existing`` option to combine existing and new genres. (see `Handling

@@ -106,6 +106,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 "min_weight": 10,
                 "count": 1,
                 "fallback": None,
+                "fallback_original": False,
                 "canonical": False,
                 "cleanup_existing": False,
                 "source": "album",
@@ -404,8 +405,14 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 if result := _try_resolve_stage("cleanup", keep_genres, []):
                     return result
 
-                # Return fallback string (None if not set).
-                return self.config["fallback"].get(), "fallback"
+                # If configured, keep the original genre information if the genres
+                # could not be resolved/cleaned up or nothing survived the whitelist.
+                #
+                # Otherwise return the fallback string (None if not set).
+                if self.config["fallback_original"]:
+                    return genres, "fallback + original, no-force"
+                else:
+                    return self.config["fallback"].get(), "fallback + no-force"
 
             # If cleanup_existing is not set, the pre-populated tags are
             # returned as-is.
@@ -494,6 +501,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 "original fallback", keep_genres, []
             ):
                 return result
+
+        # If configured, keep the original genre information if the genres
+        # could not be resolved/cleaned up or nothing survived the whitelist.
+        if genres and self.config["force"] and self.config["fallback_original"]:
+            return genres, "fallback + original, force"
 
         # Return fallback as a list.
         if fallback := self.config["fallback"].get():
