@@ -339,7 +339,7 @@ class TestLyricsPlugin(LyricsPluginMixin):
         assert item.lyrics == expected
 
     def test_set_additional_lyrics_info(
-        self, monkeypatch, helper, lyrics_plugin
+        self, monkeypatch, helper, lyrics_plugin, is_importable
     ):
         lyrics = Lyrics(
             "sing in the rain every hour of the day",
@@ -357,7 +357,11 @@ class TestLyricsPlugin(LyricsPluginMixin):
 
         assert item.lyrics_url == lyrics.url
         assert item.lyrics_backend == lyrics.backend
-        assert item.lyrics_language == "EN"
+        if is_importable("langdetect"):
+            assert item.lyrics_language == "EN"
+        else:
+            with pytest.raises(AttributeError):
+                item.lyrics_language
         # make sure translation language is cleared
         with pytest.raises(AttributeError):
             item.lyrics_translation_language
@@ -664,6 +668,7 @@ class TestLRCLibLyrics(LyricsBackendTest):
             assert lyrics.text == expected_lyrics
 
 
+@pytest.mark.requires_import("langdetect")
 class TestTranslation:
     @pytest.fixture(autouse=True)
     def _patch_bing(self, requests_mock):

@@ -92,7 +92,7 @@ class TestLyricsMetadataInFlexFieldsMigration:
 
         helper.teardown_beets()
 
-    def test_migrate(self, helper: TestHelper):
+    def test_migrate(self, helper: TestHelper, is_importable):
         lyrics_item = helper.add_item(
             lyrics=textwrap.dedent("""
             [00:00.00] Some synced lyrics / Quelques paroles synchronisées
@@ -115,8 +115,15 @@ class TestLyricsMetadataInFlexFieldsMigration:
         )
         assert lyrics_item.lyrics_backend == "lrclib"
         assert lyrics_item.lyrics_url == "https://lrclib.net/api/1/"
-        assert lyrics_item.lyrics_language == "EN"
-        assert lyrics_item.lyrics_translation_language == "FR"
+
+        if is_importable("langdetect"):
+            assert lyrics_item.lyrics_language == "EN"
+            assert lyrics_item.lyrics_translation_language == "FR"
+        else:
+            with pytest.raises(AttributeError):
+                instrumental_lyrics_item.lyrics_language
+            with pytest.raises(AttributeError):
+                instrumental_lyrics_item.lyrics_translation_language
 
         with pytest.raises(AttributeError):
             instrumental_lyrics_item.lyrics_backend
