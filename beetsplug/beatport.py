@@ -313,6 +313,12 @@ class BeatportPlugin(MetadataSourcePlugin):
 
     def __init__(self):
         super().__init__()
+        self._log.warning(
+            "The beatport plugin is deprecated because Beatport "
+            "has retired the API this plugin relies on. "
+            "See https://github.com/beetbox/beets/issues/3862 "
+            "and https://github.com/beetbox/beets/pull/4477"
+        )
         self.config.add(
             {
                 "apikey": "57713c3906af6f5def151b33601389176b37b429",

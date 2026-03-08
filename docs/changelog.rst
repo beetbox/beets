@@ -25,6 +25,9 @@ Bug fixes
 Other changes
 ~~~~~~~~~~~~~
 
+- Deprecate the :doc:`plugins/beatport` and :doc:`plugins/bpsync` plugins.
+  Beatport has retired the API these plugins rely on, making them
+  non-functional. :bug:`3862`
 - API-backed metadata source plugins can now use
   :py:class:`~beets.metadata_plugins.SearchApiMetadataSourcePlugin` for shared
   search orchestration. Implement provider behavior in
