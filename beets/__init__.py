@@ -19,7 +19,7 @@ import confuse
 
 from .util.deprecation import deprecate_imports
 
-__version__ = "2.7.0"
+__version__ = "2.7.1"
 __author__ = "Adrian Sampson <adrian@radbox.org>"
 
 
