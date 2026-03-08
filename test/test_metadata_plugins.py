@@ -92,6 +92,9 @@ class TestSearchApiMetadataSourcePlugin(PluginMixin):
             metadata_plugins.IDResponse
         ]
     ):
+        def get_search_query_with_filters(self, _):
+            return "", {}
+
         def get_search_response(self, _):
             raise ValueError("Search failure")
 
