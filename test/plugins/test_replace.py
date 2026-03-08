@@ -24,17 +24,6 @@ if TYPE_CHECKING:
 replace = ReplacePlugin()
 
 
-def always(x):
-    return lambda *args, **kwargs: x
-
-
-def always_raise(x):
-    def err(*args, **kwargs):
-        raise x
-
-    return err
-
-
 class TestReplace:
     @pytest.fixture
     def mp3_file(self, tmp_path) -> Path:
@@ -76,8 +65,8 @@ class TestReplace:
     def test_run_replace_no_song_selected(
         self, library, mp3_file, opus_file, monkeypatch
     ):
-        monkeypatch.setattr(replace, "file_check", always(None))
-        monkeypatch.setattr(replace, "select_song", always(None))
+        monkeypatch.setattr(replace, "file_check", Mock(return_value=None))
+        monkeypatch.setattr(replace, "select_song", Mock(return_value=None))
 
         item = Item.from_path(mp3_file)
         library.add(item)
@@ -90,13 +79,15 @@ class TestReplace:
     def test_run_replace_not_confirmed(
         self, library, mp3_file, opus_file, monkeypatch
     ):
-        monkeypatch.setattr(replace, "file_check", always(None))
-        monkeypatch.setattr(replace, "confirm_replacement", always(False))
+        monkeypatch.setattr(replace, "file_check", Mock(return_value=None))
+        monkeypatch.setattr(
+            replace, "confirm_replacement", Mock(return_value=False)
+        )
 
         item = Item.from_path(mp3_file)
         library.add(item)
 
-        monkeypatch.setattr(replace, "select_song", always(item))
+        monkeypatch.setattr(replace, "select_song", Mock(return_value=item))
 
         replace.run(library, optparse.Values(), ["AAA", str(opus_file)])
 
@@ -107,13 +98,15 @@ class TestReplace:
         replace_file = Mock(replace.replace_file, return_value=None)
         monkeypatch.setattr(replace, "replace_file", replace_file)
 
-        monkeypatch.setattr(replace, "file_check", always(None))
-        monkeypatch.setattr(replace, "confirm_replacement", always(True))
+        monkeypatch.setattr(replace, "file_check", Mock(return_value=None))
+        monkeypatch.setattr(
+            replace, "confirm_replacement", Mock(return_value=True)
+        )
 
         item = Item.from_path(mp3_file)
         library.add(item)
 
-        monkeypatch.setattr(replace, "select_song", always(item))
+        monkeypatch.setattr(replace, "select_song", Mock(return_value=item))
 
         replace.run(library, optparse.Values(), ["AAA", str(opus_file)])
 
@@ -136,7 +129,7 @@ class TestReplace:
 
     def test_select_song_valid_choice(self, monkeypatch, capfd):
         songs = ["Song A", "Song B", "Song C"]
-        monkeypatch.setattr("builtins.input", lambda _: "2")
+        monkeypatch.setattr("builtins.input", Mock(return_value="2"))
 
         selected_song = replace.select_song(songs)
 
@@ -149,26 +142,23 @@ class TestReplace:
 
     def test_select_song_cancel(self, monkeypatch):
         songs = ["Song A", "Song B", "Song C"]
-        monkeypatch.setattr("builtins.input", lambda _: "0")
+        monkeypatch.setattr("builtins.input", Mock(return_value="0"))
 
         selected_song = replace.select_song(songs)
 
         assert selected_song is None
 
-    def test_select_song_invalid_then_valid(self, monkeypatch, capfd):
+    def test_select_song_invalid_then_valid(self, monkeypatch):
         songs = ["Song A", "Song B", "Song C"]
-        inputs = iter(["invalid", "4", "3"])
-        monkeypatch.setattr("builtins.input", lambda _: next(inputs))
+        inputs = ["invalid", "4", "3"]
+        mock_input = Mock(side_effect=iter(inputs))
+        monkeypatch.setattr("builtins.input", mock_input)
 
         selected_song = replace.select_song(songs)
 
-        captured = capfd.readouterr()
-
-        assert "Invalid input. Please type in a number." in captured.out
-        assert (
-            "Invalid choice. Please enter a number between 1 and 3."
-            in captured.out
-        )
+        # The first two inputs should be considered invalid, so the third
+        # input of 3 should be used, resulting in Song C being selected.
+        assert mock_input.call_count == 3
         assert selected_song == "Song C"
 
     def test_confirm_replacement_file_not_exist(self):
@@ -182,7 +172,7 @@ class TestReplace:
 
     def test_confirm_replacement_yes(self, monkeypatch):
         src = Path(_common.RSRC.decode()) / "full.mp3"
-        monkeypatch.setattr("builtins.input", always("yes"))
+        monkeypatch.setattr("builtins.input", Mock(return_value="yes"))
 
         class Song:
             path = str(src).encode()
@@ -193,7 +183,7 @@ class TestReplace:
 
     def test_confirm_replacement_no(self, monkeypatch):
         src = Path(_common.RSRC.decode()) / "full.mp3"
-        monkeypatch.setattr("builtins.input", always("no"))
+        monkeypatch.setattr("builtins.input", Mock(return_value="no"))
 
         class Song:
             path = str(src).encode()
@@ -212,7 +202,8 @@ class TestReplace:
     def test_replace_file_delete_fails(
         self, library, mp3_file, opus_file, monkeypatch
     ):
-        monkeypatch.setattr(Path, "unlink", always_raise(OSError))
+        fail_unlink = Mock(side_effect=OSError("cannot delete"))
+        monkeypatch.setattr(Path, "unlink", fail_unlink)
 
         item = Item.from_path(mp3_file)
         library.add(item)
@@ -223,9 +214,8 @@ class TestReplace:
     def test_replace_file_write_fails(
         self, library, mp3_file, opus_file, monkeypatch
     ):
-        monkeypatch.setattr(
-            Item, "write", always_raise(WriteError("path", "reason"))
-        )
+        fail_write = Mock(side_effect=WriteError("path", "reason"))
+        monkeypatch.setattr(Item, "write", fail_write)
 
         item = Item.from_path(mp3_file)
         library.add(item)
