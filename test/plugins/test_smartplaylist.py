@@ -510,11 +510,10 @@ class SmartPlaylistTest(BeetsTestCase):
             content = f.read()
         rmtree(syspath(dir))
 
-        assert (
-            content
-            == (b"#EXTM3U\n"
-                b"#EXTINF:300,fake artist - fake title\n"
-                b"http://beets:8337/files/tagada.mp3\n")
+        assert content == (
+            b"#EXTM3U\n"
+            b"#EXTINF:300,fake artist - fake title\n"
+            b"http://beets:8337/files/tagada.mp3\n"
         )
 
         # Test when `dest_regen` is set to False:
@@ -534,11 +533,10 @@ class SmartPlaylistTest(BeetsTestCase):
             content = f.read()
         rmtree(syspath(dir))
 
-        assert (
-            content
-            == (b"#EXTM3U\n"
-                b"#EXTINF:300,fake artist - fake title\n"
-                b"http://beets:8337/files/imported/path/with/dont/move/tagada.mp3\n")
+        assert content == (
+            b"#EXTM3U\n"
+            b"#EXTINF:300,fake artist - fake title\n"
+            b"http://beets:8337/files/imported/path/with/dont/move/tagada.mp3\n"
         )
 
 
