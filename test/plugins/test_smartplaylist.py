@@ -13,7 +13,7 @@
 # included in all copies or substantial portions of the Software.
 
 
-from os import path, remove, fsdecode
+from os import fsdecode, path, remove
 from pathlib import Path
 from shutil import rmtree
 from tempfile import mkdtemp
@@ -26,7 +26,7 @@ from beets.dbcore.query import FixedFieldSort, MultipleSort, NullSort
 from beets.library import Album, Item, parse_query_string
 from beets.test.helper import BeetsTestCase, IOMixin, PluginTestCase
 from beets.ui import UserError
-from beets.util import CHAR_REPLACE, syspath, bytestring_path
+from beets.util import CHAR_REPLACE, bytestring_path, syspath
 from beetsplug.smartplaylist import SmartPlaylistPlugin
 
 
