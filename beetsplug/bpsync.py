@@ -23,6 +23,13 @@ from .beatport import BeatportPlugin
 class BPSyncPlugin(BeetsPlugin):
     def __init__(self):
         super().__init__()
+        self._log.warning(
+            "The bpsync plugin is deprecated because it depends "
+            "on the beatport plugin which uses a retired Beatport "
+            "API. See "
+            "https://github.com/beetbox/beets/issues/3862 "
+            "and https://github.com/beetbox/beets/pull/4477"
+        )
         self.beatport_plugin = BeatportPlugin()
         self.beatport_plugin.setup()
 
