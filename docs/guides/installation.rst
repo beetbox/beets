@@ -113,20 +113,6 @@ package manager. Here are some common options:
 Installation FAQ
 ----------------
 
-MacOS Installation
-~~~~~~~~~~~~~~~~~~
-
-**Q: I'm getting permission errors on macOS. What should I do?**
-
-Due to System Integrity Protection on macOS 10.11+, you may need to install for
-your user only:
-
-.. code-block:: console
-
-    pip install --user beets
-
-You might need to also add ``~/Library/Python/3.x/bin`` to your ``$PATH``.
-
 Windows Installation
 ~~~~~~~~~~~~~~~~~~~~
 

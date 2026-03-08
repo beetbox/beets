@@ -45,6 +45,8 @@ Other changes
   :py:meth:`~beets.metadata_plugins.SearchApiMetadataSourcePlugin.get_search_query_with_filters`
   and
   :py:meth:`~beets.metadata_plugins.SearchApiMetadataSourcePlugin.get_search_response`.
+- :doc:`guides/installation`: Remove redundant macOS section from the
+  installation guide.
 
 2.7.1 (March 08, 2026)
 ----------------------
