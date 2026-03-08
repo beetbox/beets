@@ -25,7 +25,7 @@ by default but can be added via the `-e` / `--extravalues` flag. For example:
 import os
 from operator import attrgetter
 
-from beets import library, ui
+from beets import library, plugins, ui
 from beets.plugins import BeetsPlugin
 from beets.ui import commands
 
@@ -111,7 +111,7 @@ class FishPlugin(BeetsPlugin):
         nobasicfields = opts.noFields  # Do not complete for album/track fields
         extravalues = opts.extravalues  # e.g., Also complete artists names
         beetcmds = sorted(
-            (commands.default_commands + commands.plugins.commands()),
+            (commands.default_commands + plugins.commands()),
             key=attrgetter("name"),
         )
         fields = sorted(set(library.Album.all_keys() + library.Item.all_keys()))
