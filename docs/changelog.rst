@@ -13,9 +13,11 @@ Unreleased
     New features
     ~~~~~~~~~~~~
 
-..
-    Bug fixes
-    ~~~~~~~~~
+Bug fixes
+~~~~~~~~~
+
+- Tests that depend on the optional ``langdetect`` package are now skipped when
+  the package is not installed. :bug:`6421`
 
 ..
     For plugin developers
