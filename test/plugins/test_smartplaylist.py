@@ -13,7 +13,7 @@
 # included in all copies or substantial portions of the Software.
 
 
-from os import path, remove
+from os import path, remove, fsdecode
 from pathlib import Path
 from shutil import rmtree
 from tempfile import mkdtemp
@@ -26,7 +26,7 @@ from beets.dbcore.query import FixedFieldSort, MultipleSort, NullSort
 from beets.library import Album, Item, parse_query_string
 from beets.test.helper import BeetsTestCase, IOMixin, PluginTestCase
 from beets.ui import UserError
-from beets.util import CHAR_REPLACE, syspath
+from beets.util import CHAR_REPLACE, syspath, bytestring_path
 from beetsplug.smartplaylist import SmartPlaylistPlugin
 
 
@@ -512,9 +512,9 @@ class SmartPlaylistTest(BeetsTestCase):
 
         assert (
             content
-            == b"#EXTM3U\n"
-            + b"#EXTINF:300,fake artist - fake title\n"
-            + b"http://beets:8337/files/tagada.mp3\n"
+            == (b"#EXTM3U\n"
+                b"#EXTINF:300,fake artist - fake title\n"
+                b"http://beets:8337/files/tagada.mp3\n")
         )
 
         # Test when `dest_regen` is set to False:
@@ -536,9 +536,9 @@ class SmartPlaylistTest(BeetsTestCase):
 
         assert (
             content
-            == b"#EXTM3U\n"
-            + b"#EXTINF:300,fake artist - fake title\n"
-            + b"http://beets:8337/files/imported/path/with/dont/move/tagada.mp3\n"
+            == (b"#EXTM3U\n"
+                b"#EXTINF:300,fake artist - fake title\n"
+                b"http://beets:8337/files/imported/path/with/dont/move/tagada.mp3\n")
         )
 
 
