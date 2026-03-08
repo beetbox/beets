@@ -24,6 +24,8 @@ New features
   specify MusicBrainz release types to show using the ``--release-type`` flag.
   The default behavior is also changed to just show releases of type ``album``.
   :bug:`2661`
+- :doc:`plugins/play`: Added ``-R``/``--randomize`` flag to shuffle the playlist
+  order before passing it to the player.
 
 Bug fixes
 ~~~~~~~~~

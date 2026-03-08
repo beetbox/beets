@@ -120,6 +120,13 @@ The ``--yes`` (or ``-y``) flag to the ``play`` command will skip the warning
 message if you choose to play more items than the **warning_threshold** value
 usually allows.
 
+The ``--randomize`` (or ``-R``) flag shuffles the order of playlist entries
+before passing it to the player:
+
+::
+
+    $ beet play --randomize my query
+
 Note on the Leakage of the Generated Playlists
 ----------------------------------------------
 
