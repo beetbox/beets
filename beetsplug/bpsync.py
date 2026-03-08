@@ -16,6 +16,7 @@
 
 from beets import autotag, library, ui, util
 from beets.plugins import BeetsPlugin, apply_item_changes
+from beets.util.deprecation import deprecate_for_user
 
 from .beatport import BeatportPlugin
 
@@ -23,13 +24,7 @@ from .beatport import BeatportPlugin
 class BPSyncPlugin(BeetsPlugin):
     def __init__(self):
         super().__init__()
-        self._log.warning(
-            "The bpsync plugin is deprecated because it depends "
-            "on the beatport plugin which uses a retired Beatport "
-            "API. See "
-            "https://github.com/beetbox/beets/issues/3862 "
-            "and https://github.com/beetbox/beets/pull/4477"
-        )
+        deprecate_for_user(self._log, "The 'bpsync' plugin")
         self.beatport_plugin = BeatportPlugin()
         self.beatport_plugin.setup()
 
