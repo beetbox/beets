@@ -48,6 +48,21 @@ def pytest_collection_modifyitems(
                 )
 
 
+def pytest_configure(config: pytest.Config) -> None:
+    config.addinivalue_line(
+        "markers",
+        "integration_test: mark a test as an integration test",
+    )
+    config.addinivalue_line(
+        "markers",
+        "on_lyrics_update: run test only when lyrics source code changes",
+    )
+    config.addinivalue_line(
+        "markers",
+        "requires_import(module): run test only if the specified module is available",
+    )
+
+
 def pytest_make_parametrize_id(config, val, argname):
     """Generate readable test identifiers for pytest parametrized tests.
 
