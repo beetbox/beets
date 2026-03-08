@@ -13,7 +13,7 @@
 # included in all copies or substantial portions of the Software.
 
 
-from os import fsdecode, path, remove
+from os import path, remove
 from pathlib import Path
 from shutil import rmtree
 from tempfile import mkdtemp
@@ -26,7 +26,7 @@ from beets.dbcore.query import FixedFieldSort, MultipleSort, NullSort
 from beets.library import Album, Item, parse_query_string
 from beets.test.helper import BeetsTestCase, IOMixin, PluginTestCase
 from beets.ui import UserError
-from beets.util import CHAR_REPLACE, bytestring_path, syspath
+from beets.util import CHAR_REPLACE, syspath
 from beetsplug.smartplaylist import SmartPlaylistPlugin
 
 
@@ -485,11 +485,11 @@ class SmartPlaylistTest(BeetsTestCase):
         pl = b"$title-my<playlist>.m3u", (q, None), (a_q, None)
         spl._matched_playlists = [pl]
 
-        dir = bytestring_path(mkdtemp())
+        dir = mkdtemp()
         config["smartplaylist"]["output"] = "extm3u"
         config["smartplaylist"]["prefix"] = "http://beets:8337/files"
         config["smartplaylist"]["relative_to"] = False
-        config["smartplaylist"]["playlist_dir"] = fsdecode(dir)
+        config["smartplaylist"]["playlist_dir"] = str(dir)
 
         # Test when `dest_regen` is set to True:
         # Intended behavior is to use the path of `i.destination`.
@@ -504,8 +504,8 @@ class SmartPlaylistTest(BeetsTestCase):
         lib.items.assert_called_once_with(q, None)
         lib.albums.assert_called_once_with(a_q, None)
 
-        m3u_filepath = path.join(dir, b"ta_ga_da-my_playlist_.m3u")
-        self.assertExists(m3u_filepath)
+        m3u_filepath = Path(dir, "ta_ga_da-my_playlist_.m3u")
+        assert m3u_filepath.exists()
         with open(syspath(m3u_filepath), "rb") as f:
             content = f.read()
         rmtree(syspath(dir))
@@ -527,8 +527,8 @@ class SmartPlaylistTest(BeetsTestCase):
             rmtree(syspath(dir))
             raise
 
-        m3u_filepath = path.join(dir, b"ta_ga_da-my_playlist_.m3u")
-        self.assertExists(m3u_filepath)
+        m3u_filepath = Path(dir, "ta_ga_da-my_playlist_.m3u")
+        assert m3u_filepath.exists()
         with open(syspath(m3u_filepath), "rb") as f:
             content = f.read()
         rmtree(syspath(dir))
