@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from beets.library import Item, Library
-    from beets.metadata_plugins import SearchParams
+    from beets.metadata_plugins import QueryType, SearchParams
 
     from ._typing import JSONDict
 
@@ -216,6 +216,20 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
             data_url=track_data["link"],
             deezer_updated=time.time(),
         )
+
+    def get_search_query_with_filters(
+        self,
+        query_type: QueryType,
+        items: Sequence[Item],
+        artist: str,
+        name: str,
+        va_likely: bool,
+    ) -> tuple[str, dict[str, str]]:
+        query = f'album:"{name}"' if query_type == "album" else name
+        if query_type == "track" or not va_likely:
+            query += f' artist:"{artist}"'
+
+        return query, {}
 
     def get_search_response(self, params: SearchParams) -> list[IDResponse]:
         """Search Deezer and return the raw result payload entries."""

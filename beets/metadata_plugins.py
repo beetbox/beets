@@ -326,6 +326,7 @@ class SearchApiMetadataSourcePlugin(
             }
         )
 
+    @abc.abstractmethod
     def get_search_query_with_filters(
         self,
         query_type: QueryType,
@@ -347,12 +348,6 @@ class SearchApiMetadataSourcePlugin(
         :return: Tuple of (``query`` text, ``filters`` dict) to use for the
             search API call
         """
-
-        query = f'album:"{name}"' if query_type == "album" else name
-        if query_type == "track" or not va_likely:
-            query += f' artist:"{artist}"'
-
-        return query, {}
 
     @abc.abstractmethod
     def get_search_response(self, params: SearchParams) -> Sequence[R]:
