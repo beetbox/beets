@@ -33,6 +33,7 @@ extensions = [
     "sphinx_copybutton",
     "conf",
     "sphinx_toolbox.more_autodoc.autotypeddict",
+    "sphinx_toolbox.more_autodoc.autonamedtuple",
 ]
 
 autosummary_generate = True

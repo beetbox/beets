@@ -27,6 +27,7 @@ import re
 import threading
 import time
 import webbrowser
+from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 import confuse
@@ -41,8 +42,8 @@ from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from beets.library import Library
-    from beets.metadata_plugins import SearchFilter
+    from beets.library import Item, Library
+    from beets.metadata_plugins import QueryType, SearchParams
     from beetsplug._typing import JSONDict
 
 DEFAULT_WAITING_TIME = 5
@@ -466,47 +467,55 @@ class SpotifyPlugin(
         track.medium_total = medium_total
         return track
 
-    def _search_api(
+    def get_search_query_with_filters(
         self,
-        query_type: Literal["album", "track"],
-        filters: SearchFilter,
-        query_string: str = "",
+        query_type: QueryType,
+        items: Sequence[Item],
+        artist: str,
+        name: str,
+        va_likely: bool,
+    ) -> tuple[str, dict[str, str]]:
+        query = f'album:"{name}"' if query_type == "album" else name
+        if query_type == "track" or not va_likely:
+            query += f' artist:"{artist}"'
+
+        return query, {}
+
+    def get_search_response(
+        self, params: SearchParams
     ) -> Sequence[SearchResponseAlbums | SearchResponseTracks]:
-        """Query the Spotify Search API for the specified ``query_string``,
-        applying the provided ``filters``.
+        """Search Spotify and return raw album or track result items.
 
-        :param query_type: Item type to search across. Valid types are: 'album',
-            'artist', 'playlist', and 'track'.
-        :param filters: Field filters to apply.
-        :param query_string: Additional query to include in the search.
-
+        Unauthorized responses trigger one token refresh attempt before the
+        method gives up and falls back to an empty result set.
         """
-        query = self._construct_search_query(
-            filters=filters, query_string=query_string
-        )
-
-        self._log.debug("Searching {.data_source} for '{}'", self, query)
-        try:
-            response = self._handle_response(
-                "get",
+        for _ in range(2):
+            response = requests.get(
                 self.search_url,
+                headers={"Authorization": f"Bearer {self.access_token}"},
                 params={
-                    "q": query,
-                    "type": query_type,
-                    "limit": self.config["search_limit"].get(),
+                    **params.filters,
+                    "q": params.query,
+                    "type": params.query_type,
+                    "limit": str(params.limit),
                 },
+                timeout=10,
             )
-        except APIError as e:
-            self._log.debug("Spotify API error: {}", e)
-            return ()
-        response_data = response.get(f"{query_type}s", {}).get("items", [])
-        self._log.debug(
-            "Found {} result(s) from {.data_source} for '{}'",
-            len(response_data),
-            self,
-            query,
-        )
-        return response_data
+            try:
+                response.raise_for_status()
+            except requests.exceptions.HTTPError:
+                if response.status_code == HTTPStatus.UNAUTHORIZED:
+                    self._authenticate()
+                    continue
+                raise
+
+            return (
+                response.json()
+                .get(f"{params.query_type}s", {})
+                .get("items", [])
+            )
+
+        return ()
 
     def commands(self) -> list[ui.Subcommand]:
         # autotagger import command
@@ -619,22 +628,14 @@ class SpotifyPlugin(
             query_string = item["title"]
 
             # Query the Web API for each track, look for the items' JSON data
-            query_filters: SearchFilter = {}
+            query = query_string
             if artist:
-                query_filters["artist"] = artist
+                query += f" artist:'{artist}'"
             if album:
-                query_filters["album"] = album
+                query += f" album:'{album}'"
 
-            response_data_tracks = self._search_api(
-                query_type="track",
-                query_string=query_string,
-                filters=query_filters,
-            )
+            response_data_tracks = self._search_api("track", query, {})
             if not response_data_tracks:
-                query = self._construct_search_query(
-                    query_string=query_string, filters=query_filters
-                )
-
                 failures.append(query)
                 continue
 
