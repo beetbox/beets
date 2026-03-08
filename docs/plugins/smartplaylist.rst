@@ -156,7 +156,7 @@ options are:
 - **dest_regen**: Regenerate the destination path as 'move' or 'convert'
   commands would do. This operation will happen before ``relative_to`` and
   ``prefix``. Helpful to generate playlists compatible with the ``convert``
-  plugin when items have been imported with the `-C -M` options. Default:
+  plugin when items have been imported with the ``-C -M`` options. Default:
   ``false``
 - **relative_to**: Generate paths in the playlist files relative to a base
   directory. If you intend to use this plugin to generate playlists for MPD,
