@@ -75,6 +75,6 @@ file. The available options are:
 
 .. _pip: https://pip.pypa.io
 
-.. _requests: https://requests.readthedocs.io/en/master/
+.. _requests: https://requests.readthedocs.io/en/latest/
 
 .. _streaming_extractor_music: https://essentia.upf.edu/

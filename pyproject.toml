@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "beets"
-version = "2.6.2"
+version = "2.7.1"
 description = "music tagger and library organizer"
 authors = ["Adrian Sampson <adrian@radbox.org>"]
 maintainers = ["Serene-Arc"]
@@ -117,7 +117,7 @@ responses = ">=0.3.0"
 titlecase = "^2.4.1"
 
 [tool.poetry.group.lint.dependencies]
-docstrfmt = ">=1.11.1"
+docstrfmt = ">=2.0.2"
 ruff = ">=0.13.0"
 sphinx-lint = ">=1.0.0"
 
@@ -230,7 +230,7 @@ cmd = "ruff format --config=pyproject.toml"
 
 [tool.poe.tasks.format-docs]
 help = "Format the documentation"
-cmd = "docstrfmt docs *.rst"
+cmd = "docstrfmt --preserve-adornments docs *.rst"
 
 [tool.poe.tasks.lint]
 help = "Check the code for linting issues. Accepts ruff options."

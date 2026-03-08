@@ -112,7 +112,7 @@ Pillow_.
     PIL.features.pilinfo() to print a list of all supported formats in Pillow
     (``python3 -c 'import PIL.features as f; f.pilinfo()'``).
 
-.. _beets custom search engine: https://cse.google.com.au:443/cse/publicurl?cx=001442825323518660753:hrh5ch1gjzm
+.. _beets custom search engine: https://cse.google.com/cse?cx=001442825323518660753:hrh5ch1gjzm
 
 Here's an example that makes plugin select only images that contain ``front`` or
 ``back`` keywords in their filenames and prioritizes the iTunes source over
@@ -224,7 +224,7 @@ Optionally, you can `define a custom search engine`_. Get your search engine's
 token and use it for your ``google_engine`` configuration option. The default
 engine searches the entire web for cover art.
 
-.. _define a custom search engine: https://www.google.com/cse/all
+.. _define a custom search engine: https://programmablesearchengine.google.com/about/
 
 Note that the Google custom search API is limited to 100 queries per day. After
 that, the fetchart plugin will fall back on other declared data sources.
@@ -294,6 +294,6 @@ do
 The values written to ``art_source`` are the same names used in the ``sources``
 configuration value.
 
-.. _imagemagick: https://www.imagemagick.org/
+.. _imagemagick: https://imagemagick.org/
 
 .. _pillow: https://github.com/python-pillow/Pillow

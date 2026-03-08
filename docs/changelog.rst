@@ -9,9 +9,49 @@ below!
 Unreleased
 ----------
 
+..
+    New features
+    ~~~~~~~~~~~~
+
+Bug fixes
+~~~~~~~~~
+
+- :doc:`plugins/fish`: Fix AttributeError. :bug:`6340`
+
+..
+    For plugin developers
+    ~~~~~~~~~~~~~~~~~~~~~
+
+Other changes
+~~~~~~~~~~~~~
+
+- Deprecate the :doc:`plugins/beatport` and :doc:`plugins/bpsync` plugins.
+  Beatport has retired the API these plugins rely on, making them
+  non-functional. :bug:`3862`
+- API-backed metadata source plugins can now use
+  :py:class:`~beets.metadata_plugins.SearchApiMetadataSourcePlugin` for shared
+  search orchestration. Implement provider behavior in
+  :py:meth:`~beets.metadata_plugins.SearchApiMetadataSourcePlugin.get_search_query_with_filters`
+  and
+  :py:meth:`~beets.metadata_plugins.SearchApiMetadataSourcePlugin.get_search_response`.
+
+2.7.1 (March 08, 2026)
+----------------------
+
+Bug fixes
+~~~~~~~~~
+
+- Tests that depend on the optional ``langdetect`` package are now skipped when
+  the package is not installed. :bug:`6421`
+
+2.7.0 (March 07, 2026)
+----------------------
+
 New features
 ~~~~~~~~~~~~
 
+- :doc:`plugins/lastgenre`: Added ``cleanup_existing`` configuration flag to
+  allow whitelist canonicalization of existing genres.
 - Add native support for multiple genres per album/track. The ``genres`` field
   now stores genres as a list and is written to files as multiple individual
   genre tags (e.g., separate GENRE tags for FLAC/MP3). The
@@ -36,9 +76,36 @@ New features
   3. Comma followed by a space
   4. Slash wrapped by spaces
 
-..
-    Bug fixes
-    ~~~~~~~~~
+- :doc:`plugins/lyrics`: With ``synced`` enabled, existing synced lyrics are no
+  longer replaced by newly fetched plain lyrics, even when ``force`` is enabled.
+- :doc:`plugins/lyrics`: Remove ``Source: <lyrics-url>`` suffix from lyrics.
+  Store the backend name in ``lyrics_backend``, URL in ``lyrics_url``, language
+  in ``lyrics_language`` and translation language (if translations present) in
+  ``lyrics_translation_language`` flexible attributes. Lyrics are automatically
+  migrated on the first beets run. :bug:`6370`
+
+Bug fixes
+~~~~~~~~~
+
+- :doc:`plugins/ftintitle`: Fix handling of multiple featured artists with
+  ampersand.
+- :doc:`plugins/zero`: When the ``omit_single_disc`` option is set,
+  ``disctotal`` is zeroed alongside ``disc``.
+- :doc:`plugins/fetchart`: Prevent deletion of configured fallback cover art
+- :ref:`import-cmd` When autotagging, initialise empty multi-valued fields with
+  ``None`` instead of empty list, which caused beets to overwrite existing
+  metadata with empty list values instead of leaving them unchanged. :bug:`6403`
+- :doc:`plugins/fuzzy`: Improve fuzzy matching when the query is shorter than
+  the field value so substring-style searches produce more useful results.
+  :bug:`2043`
+- :doc:`plugins/fuzzy`: Force slow query evaluation whenever the fuzzy prefix is
+  used (for example ``~foo`` or ``%%foo``), so fuzzy matching is applied
+  consistently. :bug:`5638`
+- :ref:`import-cmd` Duplicate detection now works for as-is imports (when
+  ``autotag`` is disabled). Previously, ``duplicate_keys`` and
+  ``duplicate_action`` config options were silently ignored for as-is imports.
+- :doc:`/plugins/convert`: Fix extension substitution inside path of the
+  exported playlist.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
@@ -63,13 +130,14 @@ Other changes
   Since genres are now stored as a list in the ``genres`` field and written to
   files as individual genre tags, this option has no effect and has been
   removed.
+- :doc:`plugins/lyrics`: To cut down noise from the ``lrclib`` lyrics source,
+  synced lyrics are now checked to ensure the final verse falls within the
+  track's duration.
+- Updated URLs in the documentation to use HTTPS where possible and updated
+  outdated links.
 
 2.6.2 (February 22, 2026)
 -------------------------
-
-..
-    New features
-    ~~~~~~~~~~~~
 
 Bug fixes
 ~~~~~~~~~
@@ -86,10 +154,8 @@ Bug fixes
   backends, such as ``mp3gain``. :bug:`2946`
 - :doc:`plugins/mbpseudo`: Fix crash due to missing ``artist_credit`` field in
   the MusicBrainz API response. :bug:`6339`
-
-..
-    For plugin developers
-    ~~~~~~~~~~~~~~~~~~~~~
+- :ref:`config-cmd`: Improved error message when user-configured editor does not
+  exist. :bug:`6176`
 
 Other changes
 ~~~~~~~~~~~~~
@@ -1561,13 +1627,13 @@ For packagers
 
 .. _confuse: https://github.com/beetbox/confuse
 
-.. _deezer: https://www.deezer.com
+.. _deezer: https://www.deezer.com/en/
 
 .. _fish shell: https://fishshell.com/
 
 .. _keyfinder-cli: https://github.com/EvanPurkhiser/keyfinder-cli
 
-.. _last.fm: https://last.fm
+.. _last.fm: https://www.last.fm/
 
 .. _mediafile: https://github.com/beetbox/mediafile
 
@@ -2517,7 +2583,7 @@ The ``echonest`` plugin has been removed in this version because the API it used
 is `shutting down`_. You might want to try the :doc:`/plugins/acousticbrainz`
 instead.
 
-.. _shutting down: https://developer.spotify.com/news-stories/2016/03/29/api-improvements-update/
+.. _shutting down: https://web.archive.org/web/20260000000000*/developer.spotify.com/news-stories/2016/03/29/api-improvements-update
 
 Some of the larger new features
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2641,7 +2707,7 @@ There are even more new features
 
 .. _acousticbrainz: https://acousticbrainz.org/
 
-.. _google code-in: https://codein.withgoogle.com/
+.. _google code-in: https://codein.withgoogle.com/archive/
 
 Fixes
 ~~~~~
@@ -2947,7 +3013,7 @@ Fixes
 - :doc:`/plugins/convert`: Fix a problem with filename encoding on Windows under
   Python 3. :bug:`2515` :bug:`2516`
 
-.. _ipfs: https://ipfs.io
+.. _ipfs: https://about.ipfs.io/
 
 .. _python bug: https://bugs.python.org/issue16512
 
@@ -3022,7 +3088,7 @@ Little fixes and improvements
   ``date`` and ``original_date`` (which are not built-in beets fields).
   :bug:`1404`
 
-.. _jellyfish: https://github.com/sunlightlabs/jellyfish
+.. _jellyfish: https://github.com/jamesturk/jellyfish
 
 1.3.11 (April 5, 2015)
 ----------------------
@@ -3218,7 +3284,7 @@ For developers
   immediately after they are initialized. It's also possible to replace the
   originally created tasks by returning new ones using this event.
 
-.. _bs1770gain: http://bs1770gain.sourceforge.net
+.. _bs1770gain: https://sourceforge.net/projects/bs1770gain/
 
 1.3.10 (January 5, 2015)
 ------------------------
@@ -3304,7 +3370,7 @@ As usual, there are loads of little fixes and improvements
 
 .. _musixmatch: https://www.musixmatch.com/
 
-.. _plex: https://plex.tv/
+.. _plex: https://watch.plex.tv/
 
 1.3.9 (November 17, 2014)
 -------------------------
@@ -3528,7 +3594,7 @@ The big new features are
 
 .. _mutagen: https://github.com/quodlibet/mutagen
 
-.. _spotify: https://www.spotify.com/
+.. _spotify: https://open.spotify.com/
 
 And the multitude of little improvements and fixes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3704,7 +3770,7 @@ There are also many bug fixes and little enhancements
 
 .. _enum: https://docs.python.org/3.4/library/enum.html
 
-.. _enum34: https://pypi.python.org/pypi/enum34
+.. _enum34: https://pypi.org/project/enum34/
 
 1.3.4 (April 5, 2014)
 ---------------------
@@ -3784,7 +3850,7 @@ Fixes
 - :doc:`/plugins/convert`: Display a useful error message when the FFmpeg
   executable can't be found.
 
-.. _requests: https://requests.readthedocs.io/en/master/
+.. _requests: https://requests.readthedocs.io/en/latest/
 
 1.3.3 (February 26, 2014)
 -------------------------
@@ -4487,7 +4553,7 @@ Other new stuff
   (YAML doesn't like tabs.)
 - Fix the ``-l`` (log path) command-line option for the ``import`` command.
 
-.. _itunes sound check: https://support.apple.com/kb/HT2425
+.. _itunes sound check: https://support.apple.com/itunes
 
 1.1b1 (January 29, 2013)
 ------------------------
@@ -4655,9 +4721,9 @@ today on features for version 1.1.
 - Changed plugin loading so that modules can be imported without unintentionally
   loading the plugins they contain.
 
-.. _aacgain: https://aacgain.altosdesign.com
+.. _aacgain: https://github.com/dgilman/aacgain
 
-.. _mp3gain: http://mp3gain.sourceforge.net/download.php
+.. _mp3gain: https://sourceforge.net/projects/mp3gain/
 
 .. _the echo nest: https://web.archive.org/web/20180329103558/http://the.echonest.com/
 
@@ -4927,7 +4993,7 @@ to come in the next couple of releases.
   data.
 - Fix the ``list`` command in BPD (thanks to Simon Chopin).
 
-.. _colorama: https://pypi.python.org/pypi/colorama
+.. _colorama: https://pypi.org/project/colorama/
 
 1.0b12 (January 16, 2012)
 -------------------------
@@ -5040,11 +5106,11 @@ release: one for assigning genres and another for ReplayGain analysis.
 
 .. _acoustid: https://acoustid.org/
 
-.. _albumart.org: https://www.albumart.org/
+.. _albumart.org: https://web.archive.org/web/20191217041318/http://www.albumart.org/
 
 .. _kraymer: https://github.com/KraYmer
 
-.. _next generation schema: https://musicbrainz.org/doc/XML_Web_Service/Version_2
+.. _next generation schema: https://musicbrainz.org/doc/MusicBrainz_API
 
 .. _peter brunner: https://github.com/Lugoues
 
@@ -5175,9 +5241,9 @@ below, for a plethora of new features.
 - Suppress errors due to timeouts and bad responses from MusicBrainz.
 - Fix a crash on album queries with item-only field names.
 
-.. _unidecode: https://pypi.python.org/pypi/Unidecode/0.04.1
+.. _unidecode: https://pypi.org/project/Unidecode/0.04.1/
 
-.. _xargs: https://en.wikipedia.org/wiki/xargs
+.. _xargs: https://en.wikipedia.org/wiki/Xargs
 
 1.0b8 (April 28, 2011)
 ----------------------
@@ -5378,7 +5444,7 @@ are also rolled into this release.
 - Fixed normalization of relative paths.
 - Fixed escaping of ``/`` characters in paths on Windows.
 
-.. _!!!: https://musicbrainz.org/artist/f26c72d3-e52c-467b-b651-679c73d8e1a7.html
+.. _!!!: https://musicbrainz.org/artist/f26c72d3-e52c-467b-b651-679c73d8e1a7
 
 1.0b4 (August 9, 2010)
 ----------------------
@@ -5548,7 +5614,7 @@ Vorbis) and an option to log untaggable albums during import.
   removed dependency on the aging ``cmdln`` module in favor of `a hand-rolled
   solution`_.
 
-.. _a hand-rolled solution: https://gist.github.com/462717
+.. _a hand-rolled solution: https://gist.github.com/sampsyo/462717
 
 1.0b1 (June 17, 2010)
 ---------------------

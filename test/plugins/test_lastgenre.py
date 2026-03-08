@@ -203,6 +203,16 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
         assert res == ["ambient", "electronic"]
 
 
+@pytest.fixture
+def config(config):
+    """Provide a fresh beets configuration for every test/parameterize call
+
+    This is necessary to prevent the following parameterized test to bleed
+    config test state in between test cases.
+    """
+    return config
+
+
 @pytest.mark.parametrize(
     "config_values, item_genre, mock_genres, expected_result",
     [
@@ -232,6 +242,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "whitelist": True,
                 "canonical": False,
                 "prefer_specific": False,
+                "count": 10,
             },
             ["original unknown", "Blues"],
             {
@@ -264,6 +275,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "whitelist": True,
                 "canonical": False,
                 "prefer_specific": False,
+                "count": 10,
             },
             ["original unknown", "Blues"],
             {
@@ -304,6 +316,30 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
             },
             (["Jazzin"], "album, any"),
         ),
+        # Canonicalize original genre when force is **off** and
+        # whitelist, canonical and cleanup_existing are on.
+        # "Cosmic Disco" is not in the default whitelist, thus gets resolved "up" in the
+        # tree to "Disco" and "Electronic".
+        (
+            {
+                "force": False,
+                "keep_existing": False,
+                "source": "artist",
+                "whitelist": True,
+                "canonical": True,
+                "cleanup_existing": True,
+                "prefer_specific": False,
+                "count": 10,
+            },
+            ["Cosmic Disco"],
+            {
+                "artist": [],
+            },
+            (
+                ["Disco", "Electronic"],
+                "keep + cleanup, whitelist",
+            ),
+        ),
         # fallback to next stages until found
         (
             {
@@ -313,6 +349,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "whitelist": False,
                 "canonical": False,
                 "prefer_specific": False,
+                "count": 10,
             },
             ["unknown genre"],
             {
@@ -545,7 +582,9 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
         ),
     ],
 )
-def test_get_genre(config_values, item_genre, mock_genres, expected_result):
+def test_get_genre(
+    config, config_values, item_genre, mock_genres, expected_result
+):
     """Test _get_genre with various configurations."""
 
     def mock_fetch_track_genre(self, trackartist, tracktitle):

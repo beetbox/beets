@@ -27,9 +27,9 @@ Plex's own `documentation about tokens`_).
 With that all in place, you'll see beets send the "update" command to your Plex
 server every time you change your beets library.
 
-.. _documentation about tokens: https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
+.. _documentation about tokens: https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/
 
-.. _plex: https://plex.tv/
+.. _plex: https://watch.plex.tv/
 
 Configuration
 -------------
