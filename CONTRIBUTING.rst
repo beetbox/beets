@@ -46,7 +46,7 @@ Non-Programming
   <https://github.com/beetbox/beets/discussions/categories/show-and-tell>`__
   under the “Show and Tell” category for a chance to get featured in `the docs
   <https://beets.readthedocs.io/en/stable/guides/advanced.html>`__.
-- Consider helping out fellow users by by `responding to support requests
+- Consider helping out fellow users by `responding to support requests
   <https://github.com/beetbox/beets/discussions/categories/q-a>`__ .
 
 Programming
