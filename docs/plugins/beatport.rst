@@ -1,10 +1,9 @@
 Beatport Plugin
 ===============
 
-.. deprecated::
-   Beatport has retired the API this plugin relies on, making it non-functional.
-   See `#3862 <https://github.com/beetbox/beets/issues/3862>`_ and
-   `#4477 <https://github.com/beetbox/beets/pull/4477>`_ for details.
+.. deprecated:: Beatport has retired the API this plugin relies on, making it non-functional.
+See `#3862 <https://github.com/beetbox/beets/issues/3862>`_ and
+`#4477 <https://github.com/beetbox/beets/pull/4477>`_ for details.
 
 The ``beatport`` plugin adds support for querying the Beatport_ catalogue during
 the autotagging process. This can potentially be helpful for users whose
