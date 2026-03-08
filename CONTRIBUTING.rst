@@ -374,6 +374,32 @@ In order to add such a test, mark your test with the ``integration_test`` marker
 
 This way, the test will be run only in the integration test suite.
 
+beets also defines custom pytest markers in ``test/conftest.py``:
+
+- ``integration_test``: runs only when ``INTEGRATION_TEST=true`` is set.
+- ``on_lyrics_update``: runs only when ``LYRICS_UPDATED=true`` is set.
+- ``requires_import("module", force_ci=True)``: runs the test only when the
+  module is importable. With the default ``force_ci=True``, this import check is
+  bypassed on GitHub Actions for ``beetbox/beets`` so CI still runs the test.
+  Set ``force_ci=False`` to allow CI to skip when the module is missing.
+
+.. code-block:: python
+
+    @pytest.mark.integration_test
+    def test_external_api_call(): ...
+
+
+    @pytest.mark.on_lyrics_update
+    def test_real_lyrics_backend(): ...
+
+
+    @pytest.mark.requires_import("langdetect")
+    def test_language_detection(): ...
+
+
+    @pytest.mark.requires_import("librosa", force_ci=False)
+    def test_autobpm_command(): ...
+
 .. _codecov: https://app.codecov.io/github/beetbox/beets
 
 .. _discussion board: https://github.com/beetbox/beets/discussions

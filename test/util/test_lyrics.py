@@ -15,7 +15,7 @@ class TestLyrics:
         assert lyrics.language is None
         assert lyrics.translation_language is None
 
-    def test_from_legacy_text(self):
+    def test_from_legacy_text(self, is_importable):
         text = textwrap.dedent("""
         [00:00.00] Some synced lyrics / Quelques paroles synchronisées
         [00:00.50]
@@ -33,5 +33,8 @@ class TestLyrics:
         )
         assert lyrics.backend == "lrclib"
         assert lyrics.url == "https://lrclib.net/api/1/"
-        assert lyrics.language == "EN"
-        assert lyrics.translation_language == "FR"
+        langdetect_available = is_importable("langdetect")
+        assert lyrics.language == ("EN" if langdetect_available else None)
+        assert lyrics.translation_language == (
+            "FR" if langdetect_available else None
+        )
