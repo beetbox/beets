@@ -108,7 +108,10 @@ class TestTagMultipleDataSources:
 
     @pytest.fixture(autouse=True)
     def _setup_plugins(self, monkeypatch, shared_album_id, shared_track_id):
-        class StubPlugin(metadata_plugins.MetadataSourcePlugin):
+        class StubPlugin:
+            data_source: ClassVar[str]
+            data_source_mismatch_penalty = 0
+
             @property
             def track(self):
                 return TrackInfo(
@@ -128,11 +131,11 @@ class TestTagMultipleDataSources:
                     data_source=self.data_source,
                 )
 
-            def album_for_id(self, *_):
-                return self.album
+            def albums_for_ids(self, *_):
+                yield self.album
 
-            def track_for_id(self, *_):
-                return self.track
+            def tracks_for_ids(self, *_):
+                yield self.track
 
             def candidates(self, *_, **__):
                 yield self.album
@@ -141,10 +144,10 @@ class TestTagMultipleDataSources:
                 yield self.track
 
         class DeezerPlugin(StubPlugin):
-            pass
+            data_source = "Deezer"
 
         class DiscogsPlugin(StubPlugin):
-            pass
+            data_source = "Discogs"
 
         monkeypatch.setattr(
             metadata_plugins,
@@ -160,7 +163,7 @@ class TestTagMultipleDataSources:
         assert set(sources) == {"Discogs", "Deezer"}
 
     @pytest.mark.xfail(
-        reason="Album ID collisions drop extra sources (#6177)",
+        reason="Same ID from different sources is considered a duplicate (#6181)",
         raises=AssertionError,
         strict=True,
     )
@@ -170,7 +173,7 @@ class TestTagMultipleDataSources:
         self.check_proposal(proposal)
 
     @pytest.mark.xfail(
-        reason="Album ID collisions drop extra sources (#6177)",
+        reason="Same ID from different sources is considered a duplicate (#6181)",
         raises=AssertionError,
         strict=True,
     )
@@ -180,7 +183,7 @@ class TestTagMultipleDataSources:
         self.check_proposal(proposal)
 
     @pytest.mark.xfail(
-        reason="Track ID collisions drop extra sources (#6177)",
+        reason="The last match wins",
         raises=AssertionError,
         strict=True,
     )
@@ -190,7 +193,7 @@ class TestTagMultipleDataSources:
         self.check_proposal(proposal)
 
     @pytest.mark.xfail(
-        reason="Track ID collisions drop extra sources (#6177)",
+        reason="The last match wins",
         raises=AssertionError,
         strict=True,
     )
