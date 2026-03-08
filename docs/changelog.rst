@@ -13,9 +13,10 @@ Unreleased
     New features
     ~~~~~~~~~~~~
 
-..
-    Bug fixes
-    ~~~~~~~~~
+Bug fixes
+~~~~~~~~~
+
+- :doc:`plugins/fish`: Fix AttributeError. :bug:`6340`
 
 ..
     For plugin developers
