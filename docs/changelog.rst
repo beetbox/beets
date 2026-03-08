@@ -289,6 +289,7 @@ Bug fixes
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
+
 - A new plugin event, ``album_matched``, is sent when an album that is being
   imported has been matched to its metadata and the corresponding distance has
   been calculated.
