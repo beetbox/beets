@@ -483,7 +483,7 @@ class SmartPlaylistTest(BeetsTestCase):
         q = Mock()
         a_q = Mock()
         pl = b"$title-my<playlist>.m3u", (q, None), (a_q, None)
-        spl._matched_playlists = [pl]
+        spl._matched_playlists = {pl}
 
         dir = mkdtemp()
         config["smartplaylist"]["output"] = "extm3u"
