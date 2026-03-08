@@ -1,13 +1,8 @@
-import importlib.util
-import os
-
 import pytest
 
 from beets.test.helper import ImportHelper, PluginMixin
 
-github_ci = os.environ.get("GITHUB_ACTIONS") == "true"
-if not github_ci and not importlib.util.find_spec("librosa"):
-    pytest.skip("librosa isn't available", allow_module_level=True)
+pytestmark = pytest.mark.requires_import("librosa")
 
 
 class TestAutoBPMPlugin(PluginMixin, ImportHelper):
