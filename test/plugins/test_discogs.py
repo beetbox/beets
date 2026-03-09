@@ -18,7 +18,13 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-pytest.importorskip("discogs_client", reason="discogs optional dependency not installed")
+try:
+    import discogs_client  # noqa: F401
+except ImportError:
+    pytest.skip(
+        "discogs optional dependency not installed",
+        allow_module_level=True,
+    )
 
 from beets import config
 from beets.library import Item
