@@ -14,12 +14,17 @@
 
 """Tests for the 'lastgenre' plugin."""
 
+import os
+import re
+import tempfile
+from collections import defaultdict
 from unittest.mock import Mock, patch
 
 import pytest
 
 from beets.test import _common
 from beets.test.helper import IOMixin, PluginTestCase
+from beets.ui import UserError
 from beetsplug import lastgenre
 
 
@@ -201,6 +206,51 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
         tags = ("electronic", "ambient", "chillout")
         res = lastgenre.sort_by_depth(tags, self.plugin.c14n_branches)
         assert res == ["ambient", "electronic"]
+
+    def test_blacklist_filters_genres_in_resolve(self):
+        """Blacklisted genres are stripped by _resolve_genres (no c14n).
+
+        Artist-specific and global patterns are both applied.
+        """
+        self._setup_config(whitelist=False, canonical=False)
+        self.plugin.blacklist = defaultdict(
+            list,
+            {
+                "the artist": [re.compile(r"^metal$", re.IGNORECASE)],
+                "*": [re.compile(r"^rock$", re.IGNORECASE)],
+            },
+        )
+        result = self.plugin._resolve_genres(
+            ["metal", "rock", "jazz"], artist="the artist"
+        )
+        assert "metal" not in result, (
+            "artist-specific blacklisted genre must be removed"
+        )
+        assert "rock" not in result, (
+            "globally blacklisted genre must be removed"
+        )
+        assert "jazz" in result, "non-blacklisted genre must survive"
+
+    def test_blacklist_stops_c14n_ancestry_walk(self):
+        """A blacklisted tag's c14n parents don't bleed into the result.
+
+        Without blacklist, 'delta blues' canonicalizes to 'blues'.
+        With 'delta blues' blacklisted the tag is skipped entirely in the
+        c14n loop, so 'blues' must not appear either.
+        """
+        self._setup_config(whitelist=False, canonical=True, count=99)
+        self.plugin.blacklist = defaultdict(
+            list,
+            {
+                "the artist": [re.compile(r"^delta blues$", re.IGNORECASE)],
+            },
+        )
+        result = self.plugin._resolve_genres(
+            ["delta blues"], artist="the artist"
+        )
+        assert result == [], (
+            "blacklisted tag must not contribute c14n parents to the result"
+        )
 
 
 @pytest.fixture
@@ -614,3 +664,159 @@ def test_get_genre(
 
     # Run
     assert plugin._get_genre(item) == expected_result
+
+
+@pytest.mark.parametrize(
+    "blacklist_dict, artist, genre, expected_forbidden",
+    [
+        # Global blacklist - simple word
+        ({"*": ["spoken word"]}, "Any Artist", "spoken word", True),
+        ({"*": ["spoken word"]}, "Any Artist", "jazz", False),
+        # Global blacklist - regex pattern
+        ({"*": [".*electronic.*"]}, "Any Artist", "ambient electronic", True),
+        ({"*": [".*electronic.*"]}, "Any Artist", "jazz", False),
+        # Artist-specific blacklist
+        ({"metallica": ["metal"]}, "Metallica", "metal", True),
+        ({"metallica": ["metal"]}, "Iron Maiden", "metal", False),
+        # Case insensitive matching
+        ({"metallica": ["metal"]}, "METALLICA", "METAL", True),
+        # Artist-specific blacklist - exact match
+        ({"metallica": ["^Heavy Metal$"]}, "Metallica", "classic metal", False),
+        # Combined global and artist-specific
+        (
+            {"*": ["spoken word"], "metallica": ["metal"]},
+            "Metallica",
+            "spoken word",
+            True,
+        ),
+        (
+            {"*": ["spoken word"], "metallica": ["metal"]},
+            "Metallica",
+            "metal",
+            True,
+        ),
+        # Complex regex pattern with multiple features (raw string)
+        (
+            {
+                "fracture": [
+                    r"^(heavy|black|power|death)?\s?(metal|rock)$|\w+-metal\d*$"
+                ]
+            },
+            "Fracture",
+            "power metal",
+            True,
+        ),
+        # Complex regex pattern with multiple features (regular string)
+        (
+            {"amon tobin": ["d(rum)?[ n/]*b(ass)?"]},
+            "Amon Tobin",
+            "dnb",
+            True,
+        ),
+        # Empty blacklist
+        ({}, "Any Artist", "any genre", False),
+    ],
+)
+def test_blacklist_patterns(blacklist_dict, artist, genre, expected_forbidden):
+    """Test blacklist pattern matching logic directly."""
+
+    # Initialize plugin
+    plugin = lastgenre.LastGenrePlugin()
+
+    # Set up compiled blacklist directly (skipping file parsing)
+    compiled_blacklist = defaultdict(list)
+    for artist_name, patterns in blacklist_dict.items():
+        compiled_blacklist[artist_name.lower()] = [
+            re.compile(pattern, re.IGNORECASE) for pattern in patterns
+        ]
+
+    plugin.blacklist = compiled_blacklist
+
+    # Test the _is_blacklisted method on the plugin
+    result = plugin._is_blacklisted(genre, artist)
+    assert result == expected_forbidden
+
+
+@pytest.mark.parametrize(
+    "file_content, expected_blacklist",
+    [
+        # Basic artist with pattern
+        ("metallica:\n    metal", {"metallica": ["metal"]}),
+        # Global blacklist
+        ("*:\n    spoken word", {"*": ["spoken word"]}),
+        # Multiple patterns per artist
+        (
+            "metallica:\n    metal\n    .*rock.*",
+            {"metallica": ["metal", ".*rock.*"]},
+        ),
+        # Comments and empty lines ignored
+        (
+            "# comment\n*:\n    spoken word\n\nmetallica:\n    metal",
+            {"*": ["spoken word"], "metallica": ["metal"]},
+        ),
+        # Case insensitive artist names — key lowercased, pattern kept as-is
+        # (patterns compiled with re.IGNORECASE so case doesn't matter for matching)
+        ("METALLICA:\n    METAL", {"metallica": ["METAL"]}),
+        # Invalid regex pattern that gets escaped
+        ("artist:\n    [invalid(regex", {"artist": ["\\[invalid\\(regex"]}),
+        # Empty file
+        ("", {}),
+    ],
+)
+def test_blacklist_file_format(config, file_content, expected_blacklist):
+    """Test blacklist file format parsing."""
+
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".txt", delete=False, encoding="utf-8"
+    ) as f:
+        f.write(file_content)
+        blacklist_file = f.name
+
+    try:
+        config["lastgenre"]["blacklist"] = blacklist_file
+        plugin = lastgenre.LastGenrePlugin()
+
+        # Convert compiled regex patterns back to strings for comparison
+        string_blacklist = {
+            artist: [p.pattern for p in patterns]
+            for artist, patterns in plugin.blacklist.items()
+        }
+
+        assert string_blacklist == expected_blacklist
+
+    finally:
+        os.unlink(blacklist_file)
+
+
+@pytest.mark.parametrize(
+    "invalid_content, expected_error_message",
+    [
+        # Missing colon
+        ("metallica\n    metal", "Malformed blacklist section header"),
+        # Pattern before section
+        ("    metal\nmetallica:\n    heavy metal", "before any section header"),
+        # Unindented pattern
+        ("metallica:\nmetal", "Malformed blacklist section header"),
+    ],
+)
+def test_blacklist_file_format_errors(
+    config, invalid_content, expected_error_message
+):
+    """Test blacklist file format error handling."""
+
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".txt", delete=False, encoding="utf-8"
+    ) as f:
+        f.write(invalid_content)
+        blacklist_file = f.name
+
+    try:
+        config["lastgenre"]["blacklist"] = blacklist_file
+
+        with pytest.raises(UserError) as exc_info:
+            lastgenre.LastGenrePlugin()
+
+        assert expected_error_message in str(exc_info.value)
+
+    finally:
+        os.unlink(blacklist_file)

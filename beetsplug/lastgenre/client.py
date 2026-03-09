@@ -27,6 +27,7 @@ from beets import plugins
 from beets.logging import extra_debug
 
 if TYPE_CHECKING:
+    import re
     from collections.abc import Callable
 
     from beets.logging import BeetsLogger
@@ -35,6 +36,9 @@ if TYPE_CHECKING:
     """Cache mapping entity keys to their genre lists.
     Keys are formatted as 'entity.arg1-arg2-...' (e.g., 'album.artist-title').
     Values are lists of lowercase genre strings."""
+
+    Blacklist = dict[str, list[re.Pattern[str]]]
+    """Mapping of artist name to list of compiled case-insensitive patterns."""
 
 
 LASTFM = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
@@ -49,14 +53,39 @@ PYLAST_EXCEPTIONS = (
 class LastFmClient:
     """Client for fetching genres from Last.fm."""
 
-    def __init__(self, log: BeetsLogger, min_weight: int):
+    def __init__(self, log: BeetsLogger, min_weight: int, blacklist: Blacklist):
         """Initialize the client.
 
         The min_weight parameter filters tags by their minimum weight.
+        The blacklist filters forbidden genres directly after Last.fm lookup.
         """
         self._log = log
         self._min_weight = min_weight
+        self._blacklist: Blacklist = blacklist
         self._genre_cache: GenreCache = {}
+
+    def _is_blacklisted(self, genre: str, artist: str) -> bool:
+        """Check if genre tag should be forbidden.
+
+        Returns True if:
+        - tag matches global blacklist, OR
+        - artist matches artist blacklist AND tag matches artist blacklist.
+
+        Tags pass if no blacklist match found.
+
+        KEEP DUPLICATED IN SYNC with LastGenrePlugin._is_blacklisted().
+        TODO: Extract to filters.py when regex genre aliases land (next PR).
+        """
+        if not self._blacklist:
+            return False
+        genre_lower = genre.lower()
+        for pattern in self._blacklist.get("*") or []:
+            if pattern.search(genre_lower):
+                return True
+        for pattern in self._blacklist.get(artist.lower()) or []:
+            if pattern.search(genre_lower):
+                return True
+        return False
 
     def fetch_genre(
         self, lastfm_obj: pylast.Album | pylast.Artist | pylast.Track
@@ -130,6 +159,22 @@ class LastFmClient:
         extra_debug(
             self._log, "last.fm (unfiltered) {} tags: {}", entity, genre
         )
+
+        # Filter forbidden genres
+        if genre and len(args) >= 1:
+            # For all current lastfm API calls, the first argument is always the artist:
+            # - get_album(artist, album)
+            # - get_artist(artist)
+            # - get_track(artist, title)
+            artist = args[0]
+            filtered_genre = [
+                g for g in genre if not self._is_blacklisted(g, artist)
+            ]
+            if filtered_genre != genre:
+                log_filtered = set(genre) - set(filtered_genre)
+                extra_debug(self._log, "blacklisted: {}", log_filtered)
+            genre = filtered_genre
+
         return genre
 
     def fetch_album_genre(self, albumartist: str, albumtitle: str) -> list[str]:
