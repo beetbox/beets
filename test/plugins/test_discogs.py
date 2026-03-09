@@ -18,14 +18,6 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-try:
-    import discogs_client  # noqa: F401
-except ImportError:
-    pytest.skip(
-        "discogs optional dependency not installed",
-        allow_module_level=True,
-    )
-
 from beets import config
 from beets.library import Item
 from beets.test._common import Bag
