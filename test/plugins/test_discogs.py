@@ -806,3 +806,28 @@ def test_candidates_passes_extra_criteria_to_get_albums():
         catno="ABC123",
         label="Label One",
     )
+
+
+@patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
+def test_get_albums_forwards_extra_criteria_to_discogs_client_search():
+    """get_albums should pass extra criteria on to discogs_client.search."""
+    plugin = DiscogsPlugin()
+
+    class DummyResults:
+        def __init__(self):
+            self.per_page = None
+
+        def page(self, _page):
+            return []
+
+    search_mock = Mock(return_value=DummyResults())
+    plugin.discogs_client = Mock(search=search_mock)
+
+    list(plugin.get_albums("Some Query", catno="ABC123", year="1999"))
+
+    search_mock.assert_called_once_with(
+        "Some Query",
+        type="release",
+        catno="ABC123",
+        year="1999",
+    )
