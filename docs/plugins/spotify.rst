@@ -7,13 +7,13 @@ with the ``beet spotify`` command using the `Spotify Search API`_.
 Also, the plugin can use the Spotify Album_ and Track_ APIs to provide metadata
 matches for the importer.
 
-.. _album: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-an-album
+.. _album: https://developer.spotify.com/documentation/web-api/reference/get-an-album
 
-.. _spotify: https://www.spotify.com/
+.. _spotify: https://open.spotify.com/
 
-.. _spotify search api: https://developer.spotify.com/documentation/web-api/reference/#/operations/search
+.. _spotify search api: https://developer.spotify.com/documentation/web-api/reference/search
 
-.. _track: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-track
+.. _track: https://developer.spotify.com/documentation/web-api/reference/get-track
 
 Why Use This Plugin?
 --------------------
@@ -150,9 +150,9 @@ Obtaining Track Popularity and Audio Features from Spotify
 Spotify provides information on track popularity_ and audio features_ that can
 be used for music discovery.
 
-.. _features: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-audio-features
+.. _features: https://developer.spotify.com/documentation/web-api/reference/get-audio-features
 
-.. _popularity: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-track
+.. _popularity: https://developer.spotify.com/documentation/web-api/reference/get-track
 
 The ``spotify`` plugin provides an additional command ``spotifysync`` to obtain
 these track attributes from Spotify:

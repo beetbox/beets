@@ -25,9 +25,17 @@ Fetch Lyrics During Import
 --------------------------
 
 When importing new files, beets will now fetch lyrics for files that don't
-already have them. The lyrics will be stored in the beets database. If the
-``import.write`` config option is on, then the lyrics will also be written to
-the files' tags.
+already have them. The lyrics will be stored in the beets database. The plugin
+also sets a few useful flexible attributes:
+
+- ``lyrics_backend``: name of the backend that provided the lyrics
+- ``lyrics_url``: URL of the page where the lyrics were found
+- ``lyrics_language``: original language of the lyrics
+- ``lyrics_translation_language``: language of the lyrics translation (if
+  translation is enabled)
+
+If the ``import.write`` config option is on, then the lyrics will also be
+written to the files' tags.
 
 Configuration
 -------------
@@ -83,9 +91,11 @@ The available options are:
   deactivated if no ``google_API_key`` is setup. By default, ``musixmatch`` and
   ``tekstowo`` are excluded because they block the beets User-Agent.
 - **synced**: Prefer synced lyrics over plain lyrics if a source offers them.
-  Currently ``lrclib`` is the only source that provides them.
+  Currently ``lrclib`` is the only source that provides them. Using this option,
+  existing synced lyrics are not replaced by newly fetched plain lyrics (even
+  when ``force`` is enabled). To allow that replacement, disable ``synced``.
 
-.. _beets custom search engine: https://www.google.com:443/cse/publicurl?cx=009217259823014548361:lndtuqkycfu
+.. _beets custom search engine: https://cse.google.com/cse?cx=009217259823014548361:lndtuqkycfu
 
 Fetching Lyrics Manually
 ------------------------
@@ -138,11 +148,11 @@ Sphinx supports various builders_, see a few suggestions:
 
         sphinx-build -b latex <dir> <dir>/latex && make -C <dir>/latex all-pdf
 
-.. _builders: https://www.sphinx-doc.org/en/stable/builders.html
+.. _builders: https://www.sphinx-doc.org/en/master/usage/builders/index.html
 
-.. _restructuredtext: http://docutils.sourceforge.net/rst.html
+.. _restructuredtext: https://sourceforge.net/projects/docutils/
 
-.. _sphinx: https://www.sphinx-doc.org/
+.. _sphinx: https://www.sphinx-doc.org/en/master/
 
 Activate Google Custom Search
 -----------------------------
@@ -163,7 +173,7 @@ beets use a list of sources known to be scrapeable.
 Note that the Google custom search API is limited to 100 queries per day. After
 that, the lyrics plugin will fall back on other declared data sources.
 
-.. _define a custom search engine: https://www.google.com/cse/all
+.. _define a custom search engine: https://programmablesearchengine.google.com/about/
 
 .. _lyrics-translation:
 

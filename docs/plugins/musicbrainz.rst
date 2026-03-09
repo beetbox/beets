@@ -152,7 +152,7 @@ Default
 
 .. include:: ./shared_metadata_source_config.rst
 
-.. _building search indexes: https://musicbrainz.org/doc/Development/Search_server_setup
+.. _building search indexes: https://wiki.musicbrainz.org/History:Development/Search_server_setup
 
 .. _limited: https://musicbrainz.org/doc/XML_Web_Service/Rate_Limiting
 

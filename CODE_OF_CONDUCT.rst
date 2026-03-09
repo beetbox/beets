@@ -127,7 +127,7 @@ Attribution
 
 This Code of Conduct is adapted from the [Contributor Covenant][homepage],
 version 2.1, available `here
-<https://www.contributor-covenant.org/version/2/1/code_of_conduct.html>`_.
+<https://www.contributor-covenant.org/version/2/1/code_of_conduct/>`_.
 
 Community Impact Guidelines were inspired by Mozilla's code of conduct
 enforcement ladder.

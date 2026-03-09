@@ -5,12 +5,13 @@ Extending the Autotagger
 
 Beets supports **metadata source plugins**, which allow it to fetch and match
 metadata from external services (such as Spotify, Discogs, or Deezer). This
-guide explains how to build your own metadata source plugin by extending the
-:py:class:`MetadataSourcePlugin`.
+guide explains how to build your own metadata source plugin by extending either
+:py:class:`MetadataSourcePlugin` or :py:class:`SearchApiMetadataSourcePlugin`.
 
 These plugins integrate directly with the autotagger, providing candidate
 metadata during lookups. To implement one, you must subclass
-:py:class:`MetadataSourcePlugin` and implement its abstract methods.
+:py:class:`MetadataSourcePlugin` (or the search API helper base class) and
+implement its abstract methods.
 
 Overview
 --------
@@ -18,7 +19,8 @@ Overview
 Creating a metadata source plugin is very similar to writing a standard plugin
 (see :ref:`basic-plugin-setup`). The main difference is that your plugin must:
 
-1. Subclass :py:class:`MetadataSourcePlugin`.
+1. Subclass :py:class:`MetadataSourcePlugin` or
+   :py:class:`SearchApiMetadataSourcePlugin`.
 2. Implement all required abstract methods.
 
 Here`s a minimal example:
@@ -28,7 +30,7 @@ Here`s a minimal example:
     # beetsplug/myawesomeplugin.py
     from typing import Sequence
     from beets.autotag.hooks import Item
-    from beets.metadata_plugin import MetadataSourcePlugin
+    from beets.metadata_plugins import MetadataSourcePlugin
 
 
     class MyAwesomePlugin(MetadataSourcePlugin):
@@ -46,6 +48,36 @@ Here`s a minimal example:
         def track_for_id(self, track_id: str): ...
 
         def album_for_id(self, album_id: str): ...
+
+For API-backed metadata sources, prefer
+:py:class:`SearchApiMetadataSourcePlugin` to reuse shared search orchestration:
+
+.. code-block:: python
+
+    from beets.metadata_plugins import SearchApiMetadataSourcePlugin, SearchParams
+
+
+    class MyApiPlugin(SearchApiMetadataSourcePlugin):
+
+        def get_search_query_with_filters(self, query_type, items, artist, name, va_likely):
+            query = f'album:"{name}"' if query_type == "album" else name
+            if query_type == "track" or not va_likely:
+                query += f' artist:"{artist}"'
+            return query, {}
+
+        def get_search_response(self, params: SearchParams):
+            # Execute provider API request and return results with "id" fields.
+            ...
+
+        def track_for_id(self, track_id: str): ...
+
+        def album_for_id(self, album_id: str): ...
+
+The shared base class centralizes query normalization, ``search_limit``
+handling, candidate wiring, and consistent error logging for search requests.
+Provider-specific behavior is implemented in
+:py:meth:`~SearchApiMetadataSourcePlugin.get_search_query_with_filters` and
+:py:meth:`~SearchApiMetadataSourcePlugin.get_search_response`.
 
 Each metadata source plugin automatically gets a unique identifier. You can
 access this identifier using the :py:meth:`~MetadataSourcePlugin.data_source`
@@ -96,8 +128,9 @@ Migration guidance
 ------------------
 
 Older metadata plugins that extend |BeetsPlugin| should be migrated to
-:py:class:`MetadataSourcePlugin`. Legacy support will be removed in **beets
-v3.0.0**.
+:py:class:`MetadataSourcePlugin`. API-backed sources should generally migrate to
+:py:class:`SearchApiMetadataSourcePlugin` to avoid duplicating search
+orchestration. Legacy support will be removed in **beets v3.0.0**.
 
 .. seealso::
 

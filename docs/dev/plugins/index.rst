@@ -91,7 +91,7 @@ and you're good to go!
 
 .. _this article: https://realpython.com/python-namespace-package/#setting-up-some-namespace-packages
 
-.. _this stack overflow question: https://stackoverflow.com/a/27586272/9582674
+.. _this stack overflow question: https://stackoverflow.com/questions/1675734/how-do-i-create-a-namespace-package-in-python/27586272#27586272
 
 More information
 ----------------
