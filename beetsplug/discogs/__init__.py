@@ -297,7 +297,9 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
             if tag in {"alias", "tracks"}:
                 continue
 
-            most_common, _count = util.plurality(item.get(tag) for item in items)
+            most_common, _count = util.plurality(
+                item.get(tag) for item in items
+            )
             if most_common is None:
                 continue
 
