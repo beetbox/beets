@@ -9,9 +9,12 @@ below!
 Unreleased
 ----------
 
-..
-    New features
-    ~~~~~~~~~~~~
+New features
+~~~~~~~~~~~~
+
+- :doc:`plugins/discogs`: Add :conf:`plugins.discogs:extra_tags` option to use
+  additional tags (such as ``barcode``, ``catalognum``, ``country``, ``label``,
+  ``media``, and ``year``) in Discogs search queries.
 
 Bug fixes
 ~~~~~~~~~
