@@ -227,8 +227,13 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """
         blacklist_raw: RawBlacklist = defaultdict(list)
         bl_filename = self.config["blacklist"].get()
-        if not bl_filename or not isinstance(bl_filename, str):
+        if not bl_filename:
             return {}
+        if not isinstance(bl_filename, str):
+            raise UserError(
+                "Invalid value for lastgenre.blacklist: expected path string "
+                f"or 'no', got {bl_filename!r} (type {type(bl_filename).__name__})"
+            )
 
         self._log.debug("Loading blacklist file {}", bl_filename)
         section = None
