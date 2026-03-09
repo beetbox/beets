@@ -417,6 +417,12 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         and the whitelist feature was disabled.
         """
 
+        def _fallback_stage() -> tuple[list[str], str]:
+            """Return the fallback genre and label."""
+            if fallback := self.config["fallback"].get():
+                return [fallback], "fallback"
+            return [], "fallback unconfigured"
+
         def _try_resolve_stage(
             stage_label: str,
             keep_genres: list[str],
@@ -453,8 +459,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 ):
                     return result
 
-                # Return fallback string (None if not set).
-                return self.config["fallback"].get(), "fallback"
+                return _fallback_stage()
 
             # If cleanup_existing is not set, the pre-populated tags are
             # returned as-is.
@@ -558,12 +563,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             ):
                 return result
 
-        # Return fallback as a list.
-        if fallback := self.config["fallback"].get():
-            return [fallback], "fallback"
-
-        # No fallback configured.
-        return [], "fallback unconfigured"
+        return _fallback_stage()
 
     # Beets plugin hooks and CLI.
 
