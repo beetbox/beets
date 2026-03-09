@@ -358,41 +358,6 @@ class DGAlbumInfoTest(BeetsTestCase):
         assert d is None
         assert "Release does not contain the required fields" in logs[0]
 
-
-@patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
-class DGSearchQueryTest(BeetsTestCase):
-    def test_default_search_filters_without_extra_tags(self):
-        """Discogs search uses only the type filter when no extra_tags are set."""
-        plugin = DiscogsPlugin()
-        items = [Item()]
-
-        query, filters = plugin.get_search_query_with_filters(
-            "album", items, "Artist", "Album", False
-        )
-
-        assert "Album" in query
-        assert filters == {"type": "release"}
-
-    def test_extra_tags_populate_discogs_filters(self):
-        """Configured extra_tags should populate Discogs search filters."""
-        config["discogs"]["extra_tags"] = ["label", "catalognum"]
-        plugin = DiscogsPlugin()
-
-        items = [
-            Item(catalognum="ABC 123", label="abc"),
-            Item(catalognum="ABC 123", label="abc"),
-            Item(catalognum="ABC 123", label="def"),
-        ]
-
-        _query, filters = plugin.get_search_query_with_filters(
-            "album", items, "Artist", "Album", False
-        )
-
-        assert filters["type"] == "release"
-        assert filters["label"] == "abc"
-        # Catalog number should have whitespace removed.
-        assert filters["catno"] == "ABC123"
-
     def test_default_genre_style_settings(self):
         """Test genre default settings, genres to genre, styles to style"""
         release = self._make_release_from_positions(["1", "2"])
@@ -500,6 +465,41 @@ class DGSearchQueryTest(BeetsTestCase):
         assert d.tracks[0].artists == ["TEST ARTIST (5)"]
         assert d.label == "LABEL NAME (5)"
         config["discogs"]["strip_disambiguation"] = True
+
+
+@patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
+class DGSearchQueryTest(BeetsTestCase):
+    def test_default_search_filters_without_extra_tags(self):
+        """Discogs search uses only the type filter when no extra_tags are set."""
+        plugin = DiscogsPlugin()
+        items = [Item()]
+
+        query, filters = plugin.get_search_query_with_filters(
+            "album", items, "Artist", "Album", False
+        )
+
+        assert "Album" in query
+        assert filters == {"type": "release"}
+
+    def test_extra_tags_populate_discogs_filters(self):
+        """Configured extra_tags should populate Discogs search filters."""
+        config["discogs"]["extra_tags"] = ["label", "catalognum"]
+        plugin = DiscogsPlugin()
+
+        items = [
+            Item(catalognum="ABC 123", label="abc"),
+            Item(catalognum="ABC 123", label="abc"),
+            Item(catalognum="ABC 123", label="def"),
+        ]
+
+        _query, filters = plugin.get_search_query_with_filters(
+            "album", items, "Artist", "Album", False
+        )
+
+        assert filters["type"] == "release"
+        assert filters["label"] == "abc"
+        # Catalog number should have whitespace removed.
+        assert filters["catno"] == "ABC123"
 
 
 @pytest.mark.parametrize(
