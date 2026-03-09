@@ -80,6 +80,7 @@ Default
         separator: ', '
         strip_disambiguation: yes
         featured_string: Feat.
+        extra_tags: []
         anv:
             artist_credit: yes
             artist: no
@@ -143,6 +144,31 @@ Default
     :default: Feat.
 
     Configure the string used for noting featured artists. Useful if you prefer ``Featuring`` or ``ft.``.
+
+.. conf:: extra_tags
+    :default: []
+
+    By default, beets will only use the artist and album information to query Discogs. Additional tags to be queried can be supplied with the
+    ``extra_tags`` setting.
+
+    This setting should improve the autotagger results if the metadata with the
+    given tags match the metadata returned by Discogs.
+
+    Tags supported by this setting:
+
+    * ``barcode``
+    * ``catalognum``
+    * ``country``
+    * ``label``
+    * ``media``
+    * ``year``
+
+    Example:
+
+    .. code-block:: yaml
+
+        discogs:
+            extra_tags: [barcode, catalognum, country, label, media, year]
 
 .. conf:: anv
 
