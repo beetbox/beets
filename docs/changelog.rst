@@ -41,6 +41,9 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- :ref:`replace`: Made ``drive_sep_replace`` regex logic more precise to prevent
+  edge-case mismatches (e.g., a song titled "1:00 AM" would incorrectly be
+  considered a Windows drive path).
 - :doc:`plugins/ftintitle`: Fix handling of multiple featured artists with
   ampersand.
 - :doc:`plugins/zero`: When the ``omit_single_disc`` option is set,
@@ -60,9 +63,6 @@ Bug fixes
   ``duplicate_action`` config options were silently ignored for as-is imports.
 - :doc:`/plugins/convert`: Fix extension substitution inside path of the
   exported playlist.
-- :ref:`replace`: Made ``drive_sep_replace`` regex logic more precise to prevent
-  edge-case mismatches (e.g., a song titled "1:00 AM" would incorrectly be
-  considered a Windows drive path).
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
