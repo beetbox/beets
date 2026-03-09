@@ -25,7 +25,7 @@ import re
 import socket
 import time
 import traceback
-from functools import cache
+from functools import cache, cached_property
 from string import ascii_lowercase
 from typing import TYPE_CHECKING
 
@@ -36,7 +36,7 @@ from requests.exceptions import ConnectionError
 
 import beets
 import beets.ui
-from beets import config
+from beets import config, util
 from beets.autotag.distance import string_dist
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
@@ -80,6 +80,15 @@ TRACK_INDEX_RE = re.compile(
     re.VERBOSE,
 )
 
+FIELDS_TO_DISCOGS_KEYS = {
+    "barcode": "barcode",
+    "catalognum": "catno",
+    "country": "country",
+    "label": "label",
+    "media": "format",
+    "year": "year",
+}
+
 
 class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
     def __init__(self):
@@ -95,6 +104,7 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
                 "append_style_genre": False,
                 "strip_disambiguation": True,
                 "featured_string": "Feat.",
+                "extra_tags": [],
                 "anv": {
                     "artist_credit": True,
                     "artist": False,
@@ -106,6 +116,25 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         self.config["apisecret"].redact = True
         self.config["user_token"].redact = True
         self.setup()
+
+    @cached_property
+    def extra_discogs_field_by_tag(self) -> dict[str, str]:
+        """Map configured extra tags to Discogs API search parameters.
+
+        Process user configuration to determine which additional Discogs
+        fields should be included in search queries.
+        """
+        field_by_tag = {
+            tag: FIELDS_TO_DISCOGS_KEYS[tag]
+            for tag in self.config["extra_tags"].as_str_seq()
+            if tag in FIELDS_TO_DISCOGS_KEYS
+        }
+        if field_by_tag:
+            self._log.debug(
+                "Discogs additional search filters from tags: {}", field_by_tag
+            )
+
+        return field_by_tag
 
     def setup(self, session=None) -> None:
         """Create the `discogs_client` field. Authenticate if necessary."""
@@ -256,7 +285,26 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         # can also negate an otherwise positive result.
         query = re.sub(r"(?i)\b(CD|disc|vinyl)\s*\d+", "", query)
 
-        return query, {"type": "release"}
+        filters: dict[str, str] = {"type": "release"}
+
+        for tag, api_field in self.extra_discogs_field_by_tag.items():
+            # The Discogs search API does not provide direct equivalents for
+            # MusicBrainz "alias" or "tracks" search fields, so we ignore
+            # those tags if configured.
+            if tag in {"alias", "tracks"}:
+                continue
+
+            most_common, _count = util.plurality(item.get(tag) for item in items)
+            if most_common is None:
+                continue
+
+            value = str(most_common)
+            if tag == "catalognum":
+                value = value.replace(" ", "")
+
+            filters[api_field] = value
+
+        return query, filters
 
     def get_search_response(self, params: SearchParams) -> Sequence[IDResponse]:
         """Search Discogs releases and return raw result mappings with IDs."""
