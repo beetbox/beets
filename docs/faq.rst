@@ -171,7 +171,8 @@ follow these guidelines when reporting an issue:
 - Most importantly: if beets is crashing, please `include the traceback
   <https://imgur.com/jacoj>`__. Tracebacks can be more readable if you put them
   in a pastebin (e.g., `Gist <https://gist.github.com/>`__ or `Hastebin
-  <https://hastebin.com/>`__), especially when communicating over IRC.
+  <https://www.toptal.com/developers/hastebin>`__), especially when
+  communicating over IRC.
 - Turn on beets' debug output (using the -v option: for example, ``beet -v
   import ...``) and include that with your bug report. Look through this verbose
   output for any red flags that might point to the problem.
@@ -191,7 +192,7 @@ guidelines for good bug reports`_.
 
 .. _find-config:
 
-.. _general guidelines for good bug reports: https://developer.mozilla.org/en-US/docs/Mozilla/QA/Bug_writing_guidelines
+.. _general guidelines for good bug reports: https://bugzilla.mozilla.org/page.cgi?id=bug-writing.html
 
 .. _issue tracker: https://github.com/beetbox/beets/issues
 
@@ -298,9 +299,9 @@ remedy this.)
 
 Beets writes ID3v2.4_ tags by default. Some software, including Windows (i.e.,
 Windows Explorer and Windows Media Player) and `id3lib/id3v2
-<http://id3v2.sourceforge.net/>`__, don't support v2.4 tags. When using
-2.4-unaware software, it might look like the tags are unmodified or missing
-completely.
+<https://sourceforge.net/projects/id3v2/>`__, don't support v2.4 tags. When
+using 2.4-unaware software, it might look like the tags are unmodified or
+missing completely.
 
 To enable ID3v2.3 tags, enable the :ref:`id3v23` config option.
 
@@ -369,4 +370,4 @@ try `this Super User answer`_.
 
 .. _pip: https://pip.pypa.io/en/stable/
 
-.. _this super user answer: https://superuser.com/a/284361/4569
+.. _this super user answer: https://superuser.com/questions/284342/what-are-path-and-other-environment-variables-and-how-can-i-set-or-use-them/284361#284361

@@ -11,7 +11,7 @@ str.format-style string formatting. So you can write logging calls like this:
 
     self._log.debug("Processing {0.title} by {0.artist}", item)
 
-.. _pep 3101: https://www.python.org/dev/peps/pep-3101/
+.. _pep 3101: https://peps.python.org/pep-3101/
 
 .. _standard python logging module: https://docs.python.org/3/library/logging.html
 

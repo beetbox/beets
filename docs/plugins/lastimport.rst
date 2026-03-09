@@ -6,7 +6,7 @@ into beets' database. You can later create :doc:`smart playlists
 </plugins/smartplaylist>` by querying ``play_count`` and do other fun stuff with
 this field.
 
-.. _last.fm: https://last.fm
+.. _last.fm: https://www.last.fm/
 
 Installation
 ------------

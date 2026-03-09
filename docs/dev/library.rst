@@ -166,6 +166,53 @@ rolling back the transaction if an error occurs.
 
 .. _blog post: https://beets.io/blog/sqlite-nightmare.html
 
+Migrations
+~~~~~~~~~~
+
+The database layer includes a first-class migration system for data changes that
+must happen alongside schema evolution. This keeps compatibility work explicit,
+testable, and isolated from normal query and model code.
+
+Each database subclass declares its migrations in ``_migrations`` as pairs of a
+migration class and the model classes it applies to. During startup, the
+database creates required tables and columns first, then executes configured
+migrations.
+
+Migration completion is tracked in a dedicated ``migrations`` table keyed by
+migration name and table name. This means each migration runs at most once per
+table, so large one-time data rewrites can be safely coordinated across
+restarts.
+
+The migration name is derived from the migration class name. Because that name
+is the persisted identity in the ``migrations`` table, renaming a released
+migration class changes its identity and can cause the migration to run again.
+Treat migration class names as stable once shipped.
+
+For example, ``MultiGenreFieldMigration`` becomes ``multi_genre_field``. After
+it runs for the ``items`` table, beets records a row equivalent to:
+
+.. code-block:: text
+
+    name = "multi_genre_field", table_name = "items"
+
+Common use cases include:
+
+1. Backfilling a newly introduced canonical field from older data.
+2. Normalizing legacy free-form values into a structured representation.
+3. Splitting mixed-content legacy fields into cleaned primary content plus
+   auxiliary metadata stored as flexible attributes.
+
+To add a migration:
+
+1. Create a :class:`beets.dbcore.db.Migration` subclass.
+2. Implement the table-specific data rewrite logic in ``_migrate_data``.
+3. Register the migration in the database subclass ``_migrations`` list for the
+   target models.
+
+In practice, migrations should be idempotent and conservative: gate behavior on
+the current schema when needed, keep writes transactional, and batch large
+updates so startup remains predictable for real libraries.
+
 Queries
 -------
 
