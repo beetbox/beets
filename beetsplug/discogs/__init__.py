@@ -181,15 +181,7 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
 
         return token, secret
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-    def get_search_criteria(
-        self, items: Sequence[Item]
-    ) -> dict[str, str]:
-=======
     def get_search_criteria(self, items: Sequence[Item]) -> dict[str, str]:
->>>>>>> b44257bfb (Fixing syntax and formatting errors)
         """Build extra Discogs API search parameters from the most common
         values of configured extra_tags across items (e.g. catalognum, label).
         Used to refine autotag search when existing metadata is available.
@@ -216,7 +208,6 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         extra_criteria = self.get_search_criteria(items)
         return self.get_albums(query, **extra_criteria)
 
->>>>>>> cdfd0a16c (Add support for extra_tags in discogs plugin)
     def get_track_from_album(
         self, album_info: AlbumInfo, compare: Callable[[TrackInfo], float]
     ) -> TrackInfo | None:
@@ -278,7 +269,39 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
                     return track
         return None
 
-<<<<<<< HEAD
+    def get_albums(
+        self, query: str, **extra_criteria: str
+    ) -> Iterable[AlbumInfo]:
+        """Returns a list of AlbumInfo objects for a discogs search query.
+
+        extra_criteria are passed to the Discogs API as search filters (e.g.
+        catno=, label=, country=, year=) to refine results when autotagging
+        with existing metadata.
+        """
+        # Strip non-word characters from query. Things like "!" and "-" can
+        # cause a query to return no results, even if they match the artist or
+        # album title. Use `re.UNICODE` flag to avoid stripping non-english
+        # word characters.
+        query = re.sub(r"(?u)\W+", " ", query)
+        # Strip medium information from query, Things like "CD1" and "disk 1"
+        # can also negate an otherwise positive result.
+        query = re.sub(r"(?i)\b(CD|disc|vinyl)\s*\d+", "", query)
+
+        try:
+            results = self.discogs_client.search(
+                query, type="release", **extra_criteria
+            )
+            results.per_page = self.config["search_limit"].get()
+            releases = results.page(1)
+        except CONNECTION_ERRORS:
+            self._log.debug(
+                "Communication error while searching for {0!r}",
+                query,
+                exc_info=True,
+            )
+            return []
+        return filter(None, map(self.get_album_info, releases))
+
     def get_search_query_with_filters(
         self,
         query_type: QueryType,
@@ -294,17 +317,6 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         """
 
         query = f"{artist} {name}" if va_likely else name
-=======
-    def get_albums(
-        self, query: str, **extra_criteria: str
-    ) -> Iterable[AlbumInfo]:
-        """Returns a list of AlbumInfo objects for a discogs search query.
-
-        extra_criteria are passed to the Discogs API as search filters (e.g.
-        catno=, label=, country=, year=) to refine results when autotagging
-        with existing metadata.
-        """
->>>>>>> cdfd0a16c (Add support for extra_tags in discogs plugin)
         # Strip non-word characters from query. Things like "!" and "-" can
         # cause a query to return no results, even if they match the artist or
         # album title. Use `re.UNICODE` flag to avoid stripping non-english
@@ -314,30 +326,18 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         # can also negate an otherwise positive result.
         query = re.sub(r"(?i)\b(CD|disc|vinyl)\s*\d+", "", query)
 
-<<<<<<< HEAD
-        return query, {"type": "release"}
+        filters = {"type": "release"}
+        # Reuse extra search criteria when called via shared search orchestration.
+        # This mirrors the behavior of `candidates()` when used directly.
+        filters.update(self.get_search_criteria(items))
+
+        return query, filters
 
     def get_search_response(self, params: SearchParams) -> Sequence[IDResponse]:
         """Search Discogs releases and return raw result mappings with IDs."""
         results = self.discogs_client.search(params.query, **params.filters)
         results.per_page = params.limit
         return [r.data for r in results.page(1)]
-=======
-        try:
-            results = self.discogs_client.search(
-                query, type="release", **extra_criteria
-            )
-            results.per_page = self.config["search_limit"].get()
-            releases = results.page(1)
-        except CONNECTION_ERRORS:
-            self._log.debug(
-                "Communication error while searching for {0!r}",
-                query,
-                exc_info=True,
-            )
-            return []
-        return filter(None, map(self.get_album_info, releases))
->>>>>>> cdfd0a16c (Add support for extra_tags in discogs plugin)
 
     @cache
     def get_master_year(self, master_id: str) -> int | None:
