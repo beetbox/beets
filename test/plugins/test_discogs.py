@@ -18,6 +18,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+pytest.importorskip("discogs_client", reason="discogs optional dependency not installed")
+
 from beets import config
 from beets.library import Item
 from beets.test._common import Bag
@@ -500,6 +502,7 @@ class DGSearchQueryTest(BeetsTestCase):
         assert filters["label"] == "abc"
         # Catalog number should have whitespace removed.
         assert filters["catno"] == "ABC123"
+        config["discogs"]["extra_tags"] = []
 
 
 @pytest.mark.parametrize(
