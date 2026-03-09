@@ -287,6 +287,9 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
 
         filters: dict[str, str] = {"type": "release"}
 
+        if not items:
+            return query, filters
+
         for tag, api_field in self.extra_discogs_field_by_tag.items():
             # The Discogs search API does not provide direct equivalents for
             # MusicBrainz "alias" or "tracks" search fields, so we ignore
