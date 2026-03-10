@@ -246,7 +246,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         ]
 
         # test no alias
-        config["import"]["languages"] = [""]
+        config["import"]["languages"] = []
         d = self.mb.album_info(release)
         assert d.album == "ALBUM TITLE"
 
@@ -299,7 +299,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         release["media"][0]["tracks"][1]["title"] = "TRACK TITLE TWO"
 
         # test no alias
-        config["import"]["languages"] = [""]
+        config["import"]["languages"] = []
         d = self.mb.album_info(release)
         t = d.tracks
         assert len(t) == 2
@@ -435,7 +435,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         ]
 
         # test no alias
-        config["import"]["languages"] = [""]
+        config["import"]["languages"] = []
         d = self.mb.album_info(release)
         assert d.release_group_title == "RELEASE GROUP TITLE"
 
@@ -834,7 +834,7 @@ class ArtistFlatteningTest(unittest.TestCase):
             make_alias(suffix="pt_BR", locale="pt_BR"),
         ]
         # test no alias
-        config["import"]["languages"] = [""]
+        config["import"]["languages"] = []
         flat = musicbrainz._flatten_artist_credit([credit_dict])
         assert flat == ("NAME", "SORT", "CREDIT")
 

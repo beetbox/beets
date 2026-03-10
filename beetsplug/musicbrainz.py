@@ -521,7 +521,7 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
                 ti.track_alt = track["number"]
 
                 # Prefer track data, where present, over recording data except
-                # if an alias is available.
+                # if a preferred recording alias is available.
                 if track.get("title") and not _preferred_alias(
                     track["recording"].get("aliases", ())
                 ):
