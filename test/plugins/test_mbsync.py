@@ -45,10 +45,15 @@ class MbsyncCliTest(PluginTestCase):
             album="old album",
             mb_albumid="album id",
             mb_trackid="track id",
+            data_source="data_source",
         )
         self.lib.add_album([album_item])
 
-        singleton = Item(title="old title", mb_trackid="singleton id")
+        singleton = Item(
+            title="old title",
+            mb_trackid="singleton id",
+            data_source="data_source",
+        )
         self.lib.add(singleton)
 
         self.run_command("mbsync")

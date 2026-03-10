@@ -23,6 +23,7 @@ from typing import TYPE_CHECKING, Any, TypeVar
 
 from typing_extensions import Self
 
+from beets import plugins
 from beets.util import cached_classproperty
 from beets.util.deprecation import deprecate_for_maintainers
 
@@ -58,6 +59,18 @@ class AttrDict(dict[str, V]):
 
 class Info(AttrDict[Any]):
     """Container for metadata about a musical entity."""
+
+    Identifier = tuple[str | None, str | None]
+
+    @property
+    def id(self) -> str | None:
+        """Return the provider-specific identifier for this metadata object."""
+        raise NotImplementedError
+
+    @property
+    def identifier(self) -> Identifier:
+        """Return a cross-provider key in ``(data_source, id)`` form."""
+        return (self.data_source, self.id)
 
     @cached_property
     def name(self) -> str:
@@ -117,6 +130,10 @@ class AlbumInfo(Info):
     provider. Used during matching to evaluate similarity against a group of
     user items, and later to drive tagging decisions once selected.
     """
+
+    @property
+    def id(self) -> str | None:
+        return self.album_id
 
     @cached_property
     def name(self) -> str:
@@ -194,6 +211,10 @@ class TrackInfo(Info):
     stand alone for singleton matching.
     """
 
+    @property
+    def id(self) -> str | None:
+        return self.track_id
+
     @cached_property
     def name(self) -> str:
         return self.title or ""
@@ -261,6 +282,10 @@ class AlbumMatch(Match):
     mapping: dict[Item, TrackInfo]
     extra_items: list[Item]
     extra_tracks: list[TrackInfo]
+
+    def __post_init__(self) -> None:
+        """Notify listeners when an album candidate has been matched."""
+        plugins.send("album_matched", match=self)
 
     @property
     def item_info_pairs(self) -> list[tuple[Item, TrackInfo]]:

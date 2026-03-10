@@ -32,6 +32,7 @@ class TestMetadataPluginsException(PluginMixin):
     @pytest.fixture(autouse=True)
     def setup(self):
         metadata_plugins.find_metadata_source_plugins.cache_clear()
+        metadata_plugins.get_metadata_source.cache_clear()
         self.register_plugin(ErrorMetadataMockPlugin)
         yield
         self.unload_plugins()
@@ -45,25 +46,23 @@ class TestMetadataPluginsException(PluginMixin):
         return _call
 
     @pytest.mark.parametrize(
-        "method_name,error_method_name,args",
+        "method_name,args",
         [
-            ("candidates", "candidates", ()),
-            ("item_candidates", "item_candidates", ()),
-            ("albums_for_ids", "albums_for_ids", (["some_id"],)),
-            ("tracks_for_ids", "tracks_for_ids", (["some_id"],)),
-            # Currently, singular methods call plural ones internally and log
-            # errors from there
-            ("album_for_id", "albums_for_ids", ("some_id",)),
-            ("track_for_id", "tracks_for_ids", ("some_id",)),
+            ("candidates", ()),
+            ("item_candidates", ()),
+            ("albums_for_ids", (["some_id"],)),
+            ("tracks_for_ids", (["some_id"],)),
+            ("album_for_id", ("some_id", "ErrorMetadataMock")),
+            ("track_for_id", ("some_id", "ErrorMetadataMock")),
         ],
     )
-    def test_logging(self, caplog, call_method, error_method_name):
+    def test_logging(self, caplog, call_method, method_name):
         self.config["raise_on_error"] = False
 
         call_method()
 
         assert (
-            f"Error in 'ErrorMetadataMock.{error_method_name}': Mocked error"
+            f"Error in 'ErrorMetadataMock.{method_name}': Mocked error"
             in caplog.text
         )
 
@@ -72,8 +71,10 @@ class TestMetadataPluginsException(PluginMixin):
         [
             ("candidates", ()),
             ("item_candidates", ()),
-            ("album_for_id", ("some_id",)),
-            ("track_for_id", ("some_id",)),
+            ("albums_for_ids", (["some_id"],)),
+            ("tracks_for_ids", (["some_id"],)),
+            ("album_for_id", ("some_id", "ErrorMetadataMock")),
+            ("track_for_id", ("some_id", "ErrorMetadataMock")),
         ],
     )
     def test_raising(self, call_method):
