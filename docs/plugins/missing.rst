@@ -10,6 +10,8 @@ Usage
 
 The ``beet missing`` command fetches album information from the origin data
 source and lists names of the **tracks** that are missing from your library.
+Track-level checks use the album's stored ``data_source`` and fall back to
+``MusicBrainz`` when no source is stored.
 
 It can also list the names of missing **albums** for each artist, although this
 is limited to albums from the MusicBrainz data source only.
