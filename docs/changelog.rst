@@ -16,6 +16,9 @@ Unreleased
 Bug fixes
 ~~~~~~~~~
 
+- :ref:`replace`: Made ``drive_sep_replace`` regex logic more precise to prevent
+  edge-case mismatches (e.g., a song titled "1:00 AM" would incorrectly be
+  considered a Windows drive path).
 - :doc:`plugins/fish`: Fix AttributeError. :bug:`6340`
 
 ..
