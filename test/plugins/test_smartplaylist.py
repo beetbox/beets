@@ -12,6 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+# TODO: Tests in this fire are very bad. Stop using Mocks in this module.
 
 from os import path, remove
 from pathlib import Path
