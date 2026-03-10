@@ -99,9 +99,9 @@ New features
   4. Slash wrapped by spaces
 
 - :doc:`plugins/smartplaylist`: Add new configuration option ``dest_regen`` to
-  regenerate items' path in the generated playlist instead of using the ones of
+  regenerate items' path in the generated playlist instead of using those in
   the library. This is useful when items have been imported in don't copy-move
-  (`-C -M`) mode in the library but are later passed through the `convert`
+  (``-C -M``) mode in the library but are later passed through the ``convert``
   plugin which will regenerate new paths according to the Beets path format.
 - :doc:`plugins/lyrics`: With ``synced`` enabled, existing synced lyrics are no
   longer replaced by newly fetched plain lyrics, even when ``force`` is enabled.
