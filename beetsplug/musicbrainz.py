@@ -94,22 +94,20 @@ def _preferred_alias(
     for locale in languages:
         # Find matching primary aliases for this locale that are not
         # being ignored
-        matches = []
         for alias in valid_aliases:
             if (
                 alias["locale"] == locale
                 and alias.get("primary")
                 and (alias.get("type") or "").lower() not in ignored_alias_types
             ):
-                matches.append(alias)
-
-        # Skip to the next locale if we have no matches
-        if not matches:
-            continue
-
-        return matches[0]
+                return alias
 
     return None
+
+
+def _key_with_preferred_alias(obj: JSONDict, key: str) -> str:
+    alias = _preferred_alias(obj.get("aliases", ()))
+    return alias["name"] if alias else obj[key]
 
 
 def _multi_artist_credit(
@@ -126,10 +124,7 @@ def _multi_artist_credit(
         alias = _preferred_alias(el["artist"].get("aliases", ()))
 
         # An artist.
-        if alias:
-            cur_artist_name = alias["name"]
-        else:
-            cur_artist_name = el["artist"]["name"]
+        cur_artist_name = alias["name"] if alias else el["artist"]["name"]
         artist_parts.append(cur_artist_name)
 
         # Artist sort name.
@@ -346,8 +341,10 @@ class MusicBrainzPlugin(
         ``medium_index``, the track's index on its medium; ``medium_total``,
         the number of tracks on the medium. Each number is a 1-based index.
         """
+        title = _key_with_preferred_alias(recording, key="title")
+
         info = beets.autotag.hooks.TrackInfo(
-            title=recording["title"],
+            title=title,
             track_id=recording["id"],
             index=index,
             medium=medium,
@@ -525,8 +522,11 @@ class MusicBrainzPlugin(
                 ti.media = format
                 ti.track_alt = track["number"]
 
-                # Prefer track data, where present, over recording data.
-                if track.get("title"):
+                # Prefer track data, where present, over recording data except
+                # if a preferred recording alias is available.
+                if track.get("title") and not _preferred_alias(
+                    track["recording"].get("aliases", ())
+                ):
                     ti.title = track["title"]
                 if track.get("artist-credit"):
                     # Get the artist names.
@@ -552,8 +552,9 @@ class MusicBrainzPlugin(
                 track_infos.append(ti)
 
         album_artist_ids = _artist_ids(release["artist-credit"])
+        release_title = _key_with_preferred_alias(release, key="title")
         info = beets.autotag.hooks.AlbumInfo(
-            album=release["title"],
+            album=release_title,
             album_id=release["id"],
             artist=artist_name,
             artist_id=album_artist_ids[0],
@@ -577,7 +578,9 @@ class MusicBrainzPlugin(
         info.albumstatus = release.get("status")
 
         if release["release-group"].get("title"):
-            info.release_group_title = release["release-group"].get("title")
+            info.release_group_title = _key_with_preferred_alias(
+                release["release-group"], key="title"
+            )
 
         # Get the disambiguation strings at the release and release group level.
         if release["release-group"].get("disambiguation"):
