@@ -47,6 +47,6 @@ Additional command-line options include:
   </reference/pathformat>`.
 - ``--keys-only`` or ``-k``: Show the name of the tags without the values.
 
-.. _id3v2: http://id3v2.sourceforge.net
+.. _id3v2: https://sourceforge.net/projects/id3v2/
 
 .. _mp3info: https://www.ibiblio.org/mp3info/

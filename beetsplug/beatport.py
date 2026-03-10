@@ -34,6 +34,7 @@ import beets.ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.metadata_plugins import MetadataSourcePlugin
 from beets.util import unique_list
+from beets.util.deprecation import deprecate_for_user
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
@@ -313,6 +314,7 @@ class BeatportPlugin(MetadataSourcePlugin):
 
     def __init__(self):
         super().__init__()
+        deprecate_for_user(self._log, "The 'beatport' plugin")
         self.config.add(
             {
                 "apikey": "57713c3906af6f5def151b33601389176b37b429",

@@ -200,7 +200,7 @@ with a single ``:``, like so:
     $ beet list ":Ho[pm]eless"
 
 Regular expressions are case-sensitive and build on `Python's built-in
-implementation <https://docs.python.org/library/re.html>`__. See Python's
+implementation <https://docs.python.org/3/library/re.html>`__. See Python's
 documentation for specifics on regex syntax.
 
 Most command-line shells will try to interpret common characters in regular

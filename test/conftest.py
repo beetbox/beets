@@ -1,5 +1,7 @@
+import importlib.util
 import inspect
 import os
+from functools import cache
 
 import pytest
 
@@ -8,6 +10,11 @@ from beets.dbcore.query import Query
 from beets.test._common import DummyIO
 from beets.test.helper import ConfigMixin
 from beets.util import cached_classproperty
+
+
+@cache
+def _is_importable(modname: str) -> bool:
+    return bool(importlib.util.find_spec(modname))
 
 
 def skip_marked_items(items: list[pytest.Item], marker_name: str, reason: str):
@@ -28,6 +35,45 @@ def pytest_collection_modifyitems(
         skip_marked_items(
             items, "on_lyrics_update", "No change in lyrics source code"
         )
+
+    for item in items:
+        if marker := item.get_closest_marker("requires_import"):
+            force_ci = marker.kwargs.get("force_ci", True)
+            if (
+                force_ci
+                and os.environ.get("GITHUB_ACTIONS") == "true"
+                # only apply this to our repository, to allow other projects to
+                # run tests without installing all dependencies
+                and os.environ.get("GITHUB_REPOSITORY", "") == "beetbox/beets"
+            ):
+                continue
+
+            modname = marker.args[0]
+            if not _is_importable(modname):
+                test_name = item.nodeid.split("::", 1)[-1]
+                item.add_marker(
+                    pytest.mark.skip(
+                        f"{modname!r} is not installed: {test_name}"
+                    )
+                )
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    config.addinivalue_line(
+        "markers",
+        "integration_test: mark a test as an integration test",
+    )
+    config.addinivalue_line(
+        "markers",
+        "on_lyrics_update: run test only when lyrics source code changes",
+    )
+    config.addinivalue_line(
+        "markers",
+        (
+            "requires_import(module, force_ci=True): run test only if module"
+            " is importable (use force_ci=False to allow CI to skip the test too)"
+        ),
+    )
 
 
 def pytest_make_parametrize_id(config, val, argname):
@@ -82,3 +128,10 @@ def io(
         request.instance.io = io
 
     return io
+
+
+@pytest.fixture
+def is_importable():
+    """Fixture that provides a function to check if a module can be imported."""
+
+    return _is_importable

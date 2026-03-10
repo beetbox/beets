@@ -29,6 +29,8 @@ if TYPE_CHECKING:
 
     from requests import Response
 
+    from beets.metadata_plugins import IDResponse
+
     from .._typing import JSONDict
 
 log = logging.getLogger("beets")
@@ -232,7 +234,7 @@ class MusicBrainzAPI(RequestHandler):
         entity: Entity,
         filters: dict[str, str],
         **kwargs: Unpack[SearchKwargs],
-    ) -> list[JSONDict]:
+    ) -> list[IDResponse]:
         """Search for MusicBrainz entities matching the given filters.
 
         * Query is constructed by combining the provided filters using AND logic

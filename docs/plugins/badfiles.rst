@@ -34,7 +34,7 @@ and errors will be presented when selecting a tagging option.
 
 .. _flac: https://xiph.org/flac/
 
-.. _mp3val: http://mp3val.sourceforge.net/
+.. _mp3val: https://sourceforge.net/projects/mp3val/
 
 Using
 -----
