@@ -16,11 +16,22 @@ Unreleased
 Bug fixes
 ~~~~~~~~~
 
+- :ref:`replace`: Made ``drive_sep_replace`` regex logic more precise to prevent
+  edge-case mismatches (e.g., a song titled "1:00 AM" would incorrectly be
+  considered a Windows drive path).
 - :doc:`plugins/fish`: Fix AttributeError. :bug:`6340`
+- :ref:`import-cmd` Autotagging by explicit release or recording IDs now keeps
+  candidates from all enabled metadata sources instead of dropping matches when
+  different providers share the same ID. :bug:`6178` :bug:`6181`
+- :doc:`plugins/mbsync` and :doc:`plugins/missing` now use each item's stored
+  ``data_source`` for ID lookups, with a fallback to ``MusicBrainz``.
 
-..
-    For plugin developers
-    ~~~~~~~~~~~~~~~~~~~~~
+For plugin developers
+~~~~~~~~~~~~~~~~~~~~~
+
+- :py:func:`beets.metadata_plugins.album_for_id` and
+  :py:func:`beets.metadata_plugins.track_for_id` now require a ``data_source``
+  argument and query only that provider.
 
 Other changes
 ~~~~~~~~~~~~~
@@ -222,6 +233,8 @@ New features
   ``beet import``.
 - :doc:`plugins/random`: Added ``--field`` option to specify which field to use
   for equal-chance sampling (default: ``albumartist``).
+- :doc:`plugins/musicbrainz`: Use title aliases for releases, release groups,
+  and recordings.
 
 Bug fixes
 ~~~~~~~~~

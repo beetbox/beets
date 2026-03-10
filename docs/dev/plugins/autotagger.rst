@@ -113,6 +113,18 @@ IDs are expected to be strings. If your source uses specific formats, consider
 contributing an extractor regex to the core module:
 :py:mod:`beets.util.id_extractors`.
 
+When beets matches by explicit IDs (for example via ``--search-id`` or existing
+``mb_*id`` fields), it asks every enabled metadata source plugin for candidates
+using :py:meth:`~MetadataSourcePlugin.albums_for_ids` and
+:py:meth:`~MetadataSourcePlugin.tracks_for_ids`. Candidate identity is tracked
+by ``(data_source, id)``, so identical IDs from different providers remain
+separate options.
+
+If you need to query one specific provider, use the module helpers
+:py:func:`beets.metadata_plugins.album_for_id` and
+:py:func:`beets.metadata_plugins.track_for_id` and pass both the ID and the
+provider ``data_source`` name.
+
 Best practices
 --------------
 
