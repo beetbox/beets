@@ -4,7 +4,7 @@ SubsonicUpdate Plugin
 ``subsonicupdate`` is a very simple plugin for beets that lets you automatically
 update Subsonic_'s index whenever you change your beets library.
 
-.. _subsonic: http://www.subsonic.org/pages/index.jsp
+.. _subsonic: https://www.subsonic.org/pages/index.jsp
 
 To use ``subsonicupdate`` plugin, enable it in your configuration (see
 :ref:`using-plugins`). Then, you'll probably want to configure the specifics of
@@ -30,7 +30,7 @@ This plugin requires Subsonic with an active Premium license (or active trial)
 or any other `Subsonic API compatible`_ server implementing the ``startScan``
 endpoint.
 
-.. _subsonic api compatible: http://www.subsonic.org/pages/api.jsp
+.. _subsonic api compatible: https://www.subsonic.org/pages/api.jsp
 
 Configuration
 -------------

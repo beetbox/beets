@@ -46,7 +46,7 @@ Non-Programming
   <https://github.com/beetbox/beets/discussions/categories/show-and-tell>`__
   under the “Show and Tell” category for a chance to get featured in `the docs
   <https://beets.readthedocs.io/en/stable/guides/advanced.html>`__.
-- Consider helping out fellow users by by `responding to support requests
+- Consider helping out fellow users by `responding to support requests
   <https://github.com/beetbox/beets/discussions/categories/q-a>`__ .
 
 Programming
@@ -157,10 +157,10 @@ Code Contribution Ideas
   <https://github.com/beetbox/beets/labels/good%20first%20issue>`__. These are
   issues that would serve as a good introduction to the codebase. Claim one and
   start exploring!
-- Like testing? Our `test coverage <https://codecov.io/github/beetbox/beets>`__
-  is somewhat low. You can help out by finding low-coverage modules or checking
-  out other `testing-related issues
-  <https://github.com/beetbox/beets/labels/testing>`__.
+- Like testing? Our `test coverage
+  <https://app.codecov.io/github/beetbox/beets>`__ is somewhat low. You can help
+  out by finding low-coverage modules or checking out other `testing-related
+  issues <https://github.com/beetbox/beets/labels/testing>`__.
 - There are several ways to improve the tests in general (see :ref:`testing` and
   some places to think about performance optimization (see `Optimization
   <https://github.com/beetbox/beets/wiki/Optimization>`__).
@@ -169,8 +169,8 @@ Code Contribution Ideas
   <https://beets.readthedocs.io/en/stable/dev/library.html>`__ are currently
   quite sparse. You can help by adding to the docstrings in the code and to the
   documentation pages themselves. beets follows `PEP-257
-  <https://www.python.org/dev/peps/pep-0257/>`__ for docstrings and in some
-  places, we also sometimes use `ReST autodoc syntax for Sphinx
+  <https://peps.python.org/pep-0257/>`__ for docstrings and in some places, we
+  also sometimes use `ReST autodoc syntax for Sphinx
   <https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html>`__ to,
   for example, refer to a class name.
 
@@ -179,7 +179,7 @@ Your First Contribution
 
 If this is your first time contributing to an open source project, welcome! If
 you are confused at all about how to contribute or what to contribute, take a
-look at `this great tutorial <http://makeapullrequest.com/>`__, or stop by our
+look at `this great tutorial <https://makeapullrequest.com/>`__, or stop by our
 `discussion board`_ if you have any questions.
 
 We maintain a list of issues we reserved for those new to open source labeled
@@ -263,13 +263,13 @@ There are a few coding conventions we use in beets:
 - f-strings should be used instead of the ``%`` operator and ``str.format()``
   calls.
 - Never ``print`` informational messages; use the `logging
-  <http://docs.python.org/library/logging.html>`__ module instead. In
+  <https://docs.python.org/3/library/logging.html>`__ module instead. In
   particular, we have our own logging shim, so you’ll see ``from beets import
   logging`` in most files.
 
   - The loggers use `str.format
-    <http://docs.python.org/library/stdtypes.html#str.format>`__-style logging
-    instead of ``%``-style, so you can type ``log.debug("{}", obj)`` to do your
+    <https://docs.python.org/3/library/stdtypes.html>`__-style logging instead
+    of ``%``-style, so you can type ``log.debug("{}", obj)`` to do your
     formatting.
 
 - Exception handlers must use ``except A as B:`` instead of ``except A, B:``.
@@ -357,10 +357,9 @@ Writing Tests
 ~~~~~~~~~~~~~
 
 Writing tests is done by adding or modifying files in folder test_. Take a look
-at `https://github.com/beetbox/beets/blob/master/test/test_template.py#L224`_ to
-get a basic view on how tests are written. Since we are currently migrating the
-tests from unittest_ to pytest_, new tests should be written using pytest_.
-Contributions migrating existing tests are welcome!
+at test-query_ to get a basic view on how tests are written. Since we are
+currently migrating the tests from unittest_ to pytest_, new tests should be
+written using pytest_. Contributions migrating existing tests are welcome!
 
 External API requests under test should be mocked with requests-mock_, However,
 we still want to know whether external APIs are up and that they return expected
@@ -375,13 +374,37 @@ In order to add such a test, mark your test with the ``integration_test`` marker
 
 This way, the test will be run only in the integration test suite.
 
-.. _codecov: https://codecov.io/github/beetbox/beets
+beets also defines custom pytest markers in ``test/conftest.py``:
+
+- ``integration_test``: runs only when ``INTEGRATION_TEST=true`` is set.
+- ``on_lyrics_update``: runs only when ``LYRICS_UPDATED=true`` is set.
+- ``requires_import("module", force_ci=True)``: runs the test only when the
+  module is importable. With the default ``force_ci=True``, this import check is
+  bypassed on GitHub Actions for ``beetbox/beets`` so CI still runs the test.
+  Set ``force_ci=False`` to allow CI to skip when the module is missing.
+
+.. code-block:: python
+
+    @pytest.mark.integration_test
+    def test_external_api_call(): ...
+
+
+    @pytest.mark.on_lyrics_update
+    def test_real_lyrics_backend(): ...
+
+
+    @pytest.mark.requires_import("langdetect")
+    def test_language_detection(): ...
+
+
+    @pytest.mark.requires_import("librosa", force_ci=False)
+    def test_autobpm_command(): ...
+
+.. _codecov: https://app.codecov.io/github/beetbox/beets
 
 .. _discussion board: https://github.com/beetbox/beets/discussions
 
 .. _documentation: https://beets.readthedocs.io/en/stable/
-
-.. _https://github.com/beetbox/beets/blob/master/test/test_template.py#l224: https://github.com/beetbox/beets/blob/master/test/test_template.py#L224
 
 .. _integration test: https://github.com/beetbox/beets/actions?query=workflow%3A%22integration+tests%22
 
@@ -391,7 +414,7 @@ This way, the test will be run only in the integration test suite.
 
 .. _poetry: https://python-poetry.org/docs/
 
-.. _pyproject.toml: https://github.com/beetbox/beets/tree/master/pyproject.toml
+.. _pyproject.toml: https://github.com/beetbox/beets/blob/master/pyproject.toml
 
 .. _pytest: https://docs.pytest.org/en/stable/
 
@@ -400,6 +423,8 @@ This way, the test will be run only in the integration test suite.
 .. _requests-mock: https://requests-mock.readthedocs.io/en/latest/response.html
 
 .. _test: https://github.com/beetbox/beets/tree/master/test
+
+.. _test-query: https://github.com/beetbox/beets/blob/master/test/test_query.py
 
 .. _unittest: https://docs.python.org/3/library/unittest.html
 

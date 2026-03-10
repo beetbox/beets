@@ -155,3 +155,15 @@ c46069654628040316dea9db85d01b263db3ba9e
 4749599913a42e02e66b37db9190de11d6be2cdf
 # Address RUF012
 bc71ec308eb938df1d349f6857634ddf2a82e339
+
+# 2026
+# Replace http URLs with https
+3d0d032987c4c2e9550529fd25e79581b06ade73
+# Fix broken URLs
+441c8383873d72d4bb0387cdf1863c0fe9e11098
+# Fix redirect URLs
+ae3a2e5729e3c0a5acbd8967ba2f11f4c53acd09
+# Format docs
+192217da5d70621089b06b06fff3dbcbeb4c0c4d
+# Add a changelog note
+b3f558584910ab4fc6aa185ec4a4c8554001ba24

@@ -6,7 +6,7 @@ Deezer_ Album_ and Track_ APIs.
 
 .. _album: https://developers.deezer.com/api/album
 
-.. _deezer: https://www.deezer.com
+.. _deezer: https://www.deezer.com/en/
 
 .. _track: https://developers.deezer.com/api/track
 

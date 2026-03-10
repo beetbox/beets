@@ -4,7 +4,7 @@ LastGenre Plugin
 The ``lastgenre`` plugin fetches *tags* from Last.fm_ and assigns them as genres
 to your albums and items.
 
-.. _last.fm: https://last.fm/
+.. _last.fm: https://www.last.fm/
 
 Installation
 ------------
@@ -32,7 +32,7 @@ Wikipedia`_.
 
 .. _internal whitelist: https://raw.githubusercontent.com/beetbox/beets/master/beetsplug/lastgenre/genres.txt
 
-.. _script that scrapes wikipedia: https://gist.github.com/1241307
+.. _script that scrapes wikipedia: https://gist.github.com/sampsyo/1241307
 
 Canonicalization
 ~~~~~~~~~~~~~~~~
