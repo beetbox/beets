@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import abc
 import re
-from contextlib import contextmanager, nullcontext
+from contextlib import contextmanager
 from functools import cache, cached_property, wraps
 from typing import (
     TYPE_CHECKING,
@@ -27,7 +27,7 @@ from beets import config, logging
 from beets.util import cached_classproperty
 from beets.util.id_extractors import extract_release_id
 
-from .plugins import BeetsPlugin, find_plugins, notify_info_yielded
+from .plugins import BeetsPlugin, find_plugins, notify_info_yielded, send
 
 Ret = TypeVar("Ret")
 QueryType = Literal["album", "track"]
@@ -49,14 +49,27 @@ def find_metadata_source_plugins() -> list[MetadataSourcePlugin]:
     return [p for p in find_plugins() if hasattr(p, "data_source")]  # type: ignore[misc]
 
 
+@cache
+def get_metadata_source(name: str) -> MetadataSourcePlugin | None:
+    """Get metadata source plugin by name."""
+    name = name.lower()
+    plugins = find_metadata_source_plugins()
+    return next((p for p in plugins if p.data_source.lower() == name), None)
+
+
 @contextmanager
-def handle_plugin_error(plugin: MetadataSourcePlugin, method_name: str):
+def maybe_handle_plugin_error(plugin: MetadataSourcePlugin, method_name: str):
     """Safely call a plugin method, catching and logging exceptions."""
-    try:
+    if config["raise_on_error"]:
         yield
-    except Exception as e:
-        log.error("Error in '{}.{}': {}", plugin.data_source, method_name, e)
-        log.debug("Exception details:", exc_info=True)
+    else:
+        try:
+            yield
+        except Exception as e:
+            log.error(
+                "Error in '{}.{}': {}", plugin.data_source, method_name, e
+            )
+            log.debug("Exception details:", exc_info=True)
 
 
 def _yield_from_plugins(
@@ -68,11 +81,7 @@ def _yield_from_plugins(
     def wrapper(*args, **kwargs) -> Iterator[Ret]:
         for plugin in find_metadata_source_plugins():
             method = getattr(plugin, method_name)
-            with (
-                nullcontext()
-                if config["raise_on_error"]
-                else handle_plugin_error(plugin, method_name)
-            ):
+            with maybe_handle_plugin_error(plugin, method_name):
                 yield from filter(None, method(*args, **kwargs))
 
     return wrapper
@@ -102,12 +111,26 @@ def tracks_for_ids(*args, **kwargs) -> Iterator[TrackInfo]:
     yield from ()
 
 
-def album_for_id(_id: str) -> AlbumInfo | None:
-    return next(albums_for_ids([_id]), None)
+def album_for_id(_id: str, data_source: str) -> AlbumInfo | None:
+    """Get AlbumInfo object for the given ID and data source."""
+    if plugin := get_metadata_source(data_source):
+        with maybe_handle_plugin_error(plugin, "album_for_id"):
+            if info := plugin.album_for_id(_id):
+                send("albuminfo_received", info=info)
+                return info
+
+    return None
 
 
-def track_for_id(_id: str) -> TrackInfo | None:
-    return next(tracks_for_ids([_id]), None)
+def track_for_id(_id: str, data_source: str) -> TrackInfo | None:
+    """Get TrackInfo object for the given ID and data source."""
+    if plugin := get_metadata_source(data_source):
+        with maybe_handle_plugin_error(plugin, "track_for_id"):
+            if info := plugin.track_for_id(_id):
+                send("trackinfo_received", info=info)
+                return info
+
+    return None
 
 
 @cache

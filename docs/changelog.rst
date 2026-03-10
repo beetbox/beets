@@ -23,10 +23,15 @@ Bug fixes
 - :ref:`import-cmd` Autotagging by explicit release or recording IDs now keeps
   candidates from all enabled metadata sources instead of dropping matches when
   different providers share the same ID. :bug:`6178` :bug:`6181`
+- :doc:`plugins/mbsync` and :doc:`plugins/missing` now use each item's stored
+  ``data_source`` for ID lookups, with a fallback to ``MusicBrainz``.
 
-..
-    For plugin developers
-    ~~~~~~~~~~~~~~~~~~~~~
+For plugin developers
+~~~~~~~~~~~~~~~~~~~~~
+
+- :py:func:`beets.metadata_plugins.album_for_id` and
+  :py:func:`beets.metadata_plugins.track_for_id` now require a ``data_source``
+  argument and query only that provider.
 
 Other changes
 ~~~~~~~~~~~~~
