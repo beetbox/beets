@@ -80,6 +80,10 @@ def recording_factory(**kwargs) -> mb.Recording:
     return factories.RecordingFactory.build(**kwargs)
 
 
+def track_factory(**kwargs) -> mb.Track:
+    return factories.TrackFactory.build(**kwargs)
+
+
 class MusicBrainzTestCase(BeetsTestCase):
     def setUp(self):
         super().setUp()
@@ -129,17 +133,10 @@ class MusicBrainzTestCase(BeetsTestCase):
         i = 0
         track_list = []
         if recordings:
-            for recording in recordings:
-                i += 1
-                track = {
-                    "id": f"RELEASE TRACK ID {i}",
-                    "recording": recording,
-                    "position": i,
-                    "number": "A1",
-                }
-                if track_length:
-                    # Track lengths are distinct from recording lengths.
-                    track["length"] = track_length
+            for i, recording in enumerate(recordings, 1):
+                track = track_factory(
+                    recording=recording, position=i, length=track_length
+                )
                 if track_artist:
                     # Similarly, track artists can differ from recording
                     # artists.
@@ -159,15 +156,11 @@ class MusicBrainzTestCase(BeetsTestCase):
                 track_list.append(track)
         data_track_list = []
         if data_tracks:
-            for recording in data_tracks:
-                i += 1
-                data_track = {
-                    "id": f"RELEASE TRACK ID {i}",
-                    "recording": recording,
-                    "position": i,
-                    "number": "A1",
-                }
-                data_track_list.append(data_track)
+            for i, recording in enumerate(data_tracks, 1):
+                data_track_list.append(
+                    track_factory(recording=recording, position=i)
+                )
+
         release["media"].append(
             {
                 "position": "1",
@@ -283,20 +276,13 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert t[1].medium == 1
 
     def test_parse_medium_numbers_two_mediums(self):
-        recordings = [recording_factory(), recording_factory()]
-        release = self._make_release(recordings=[recordings[0]])
-        second_track_list = [
-            {
-                "id": "RELEASE TRACK ID 2",
-                "recording": recordings[1],
-                "position": "1",
-                "number": "A1",
-            }
-        ]
+        release = self._make_release(recordings=[recording_factory()])
         release["media"].append(
             {
                 "position": "2",
-                "tracks": second_track_list,
+                "tracks": [
+                    track_factory(recording__index=2, title="Other Recording")
+                ],
             }
         )
 
@@ -324,9 +310,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
 
     def test_track_length_overrides_recording_length(self):
         recordings = [recording_factory()]
-        release = self._make_release(
-            recordings=recordings, track_length=2.0 * 1000.0
-        )
+        release = self._make_release(recordings=recordings, track_length=2000.0)
         d = self.mb.album_info(release)
         assert d.tracks[0].length == 2.0
 
@@ -670,7 +654,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
             recording_factory(),
             recording_factory(title="Other Recording"),
         ]
-        data_tracks = [recording_factory(title="TITLE AUDIO DATA")]
+        data_tracks = [recording_factory(title="Audio Data Recording")]
         release = self._make_release(
             recordings=recordings, data_tracks=data_tracks
         )
@@ -685,7 +669,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
             recording_factory(),
             recording_factory(title="Other Recording"),
         ]
-        data_tracks = [recording_factory(title="TITLE AUDIO DATA")]
+        data_tracks = [recording_factory(title="Audio Data Recording")]
         release = self._make_release(
             recordings=recordings, data_tracks=data_tracks
         )
@@ -693,12 +677,12 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert len(d.tracks) == 3
         assert d.tracks[0].title == "Recording"
         assert d.tracks[1].title == "Other Recording"
-        assert d.tracks[2].title == "TITLE AUDIO DATA"
+        assert d.tracks[2].title == "Audio Data Recording"
 
     def test_skip_video_tracks_by_default(self):
         recordings = [
             recording_factory(),
-            recording_factory(title="TITLE VIDEO", video=True),
+            recording_factory(video=True),
             recording_factory(title="Other Recording"),
         ]
         release = self._make_release(recordings=recordings)
@@ -712,7 +696,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
             recording_factory(),
             recording_factory(title="Other Recording"),
         ]
-        data_tracks = [recording_factory(title="TITLE VIDEO")]
+        data_tracks = [recording_factory(video=True)]
         release = self._make_release(
             recordings=recordings, data_tracks=data_tracks
         )
@@ -726,14 +710,14 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         config["match"]["ignore_video_tracks"] = False
         recordings = [
             recording_factory(),
-            recording_factory(title="TITLE VIDEO"),
+            recording_factory(video=True),
             recording_factory(title="Other Recording"),
         ]
         release = self._make_release(recordings=recordings)
         d = self.mb.album_info(release)
         assert len(d.tracks) == 3
         assert d.tracks[0].title == "Recording"
-        assert d.tracks[1].title == "TITLE VIDEO"
+        assert d.tracks[1].title == "Video: Recording"
         assert d.tracks[2].title == "Other Recording"
 
     def test_no_skip_video_data_tracks_if_configured(self):
@@ -743,7 +727,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
             recording_factory(),
             recording_factory(title="Other Recording"),
         ]
-        data_tracks = [recording_factory(title="TITLE VIDEO")]
+        data_tracks = [recording_factory(video=True)]
         release = self._make_release(
             recordings=recordings, data_tracks=data_tracks
         )
@@ -751,7 +735,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert len(d.tracks) == 3
         assert d.tracks[0].title == "Recording"
         assert d.tracks[1].title == "Other Recording"
-        assert d.tracks[2].title == "TITLE VIDEO"
+        assert d.tracks[2].title == "Video: Recording"
 
     def test_track_disambiguation(self):
         recordings = [
@@ -873,14 +857,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                 "disambiguation": "",
                 "media": [
                     {
-                        "tracks": [
-                            {
-                                "id": "baz",
-                                "recording": recording_factory(),
-                                "position": 9,
-                                "number": "A1",
-                            }
-                        ],
+                        "tracks": [track_factory()],
                         "position": 5,
                     }
                 ],
@@ -906,14 +883,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                 "disambiguation": "",
                 "media": [
                     {
-                        "tracks": [
-                            {
-                                "id": "baz",
-                                "recording": recording_factory(),
-                                "position": 9,
-                                "number": "A1",
-                            }
-                        ],
+                        "tracks": [track_factory()],
                         "position": 5,
                     }
                 ],
@@ -942,14 +912,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                 "disambiguation": "",
                 "media": [
                     {
-                        "tracks": [
-                            {
-                                "id": "baz",
-                                "recording": recording_factory(),
-                                "position": 9,
-                                "number": "A1",
-                            }
-                        ],
+                        "tracks": [track_factory()],
                         "position": 5,
                     }
                 ],
@@ -977,14 +940,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                 "disambiguation": "",
                 "media": [
                     {
-                        "tracks": [
-                            {
-                                "id": "baz",
-                                "recording": recording_factory(),
-                                "position": 9,
-                                "number": "A1",
-                            }
-                        ],
+                        "tracks": [track_factory()],
                         "position": 5,
                     }
                 ],
@@ -1012,14 +968,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                 "disambiguation": "",
                 "media": [
                     {
-                        "tracks": [
-                            {
-                                "id": "baz",
-                                "recording": recording_factory(),
-                                "position": 9,
-                                "number": "A1",
-                            }
-                        ],
+                        "tracks": [track_factory()],
                         "position": 5,
                     }
                 ],
@@ -1051,7 +1000,7 @@ class TestMusicBrainzPlugin(PluginMixin):
     plugin = "musicbrainz"
 
     mbid = "d2a6f856-b553-40a0-ac54-a321e8e2da99"
-    RECORDING: ClassVar[mb.Recording] = recording_factory(id=mbid)
+    RECORDING: ClassVar[mb.Recording] = recording_factory()
 
     @pytest.fixture
     def plugin_config(self):
@@ -1119,14 +1068,7 @@ class TestMusicBrainzPlugin(PluginMixin):
                 "disambiguation": "",
                 "media": [
                     {
-                        "tracks": [
-                            {
-                                "id": "baz",
-                                "recording": self.RECORDING,
-                                "position": 9,
-                                "number": "A1",
-                            }
-                        ],
+                        "tracks": [track_factory()],
                         "position": 5,
                     }
                 ],
@@ -1139,7 +1081,10 @@ class TestMusicBrainzPlugin(PluginMixin):
         candidates = list(mb.candidates([], "hello", "there", False))
 
         assert len(candidates) == 1
-        assert candidates[0].tracks[0].track_id == self.RECORDING["id"]
+        assert (
+            candidates[0].tracks[0].track_id
+            == "00000000-0000-0000-0000-000000001001"
+        )
         assert candidates[0].album == "hi"
 
     def test_import_handles_404_gracefully(self, mb, requests_mock):
