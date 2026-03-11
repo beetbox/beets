@@ -121,6 +121,8 @@ jobs:
     needs: changed-files
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # needed to get the full git history for the changelog check
       - name: Install Python tools
         uses: BrandonLWhite/pipx-install-action@v1.0.3
       - uses: actions/setup-python@v6
@@ -141,6 +143,18 @@ jobs:
 
       - name: Lint docs
         run: poe lint-docs
+
+      - name: Check changelog entries are added under Unreleased section
+        run: |
+          git diff --word-diff=plain -U1000 origin/${{ github.base_ref }} -- docs/changelog.rst | awk '
+            # match the new version header
+            /^[0-9]+\.[0-9]+\.[0-9]+ \(/ { past_version=1 }
+            # match a line that starts with a new changelog entry
+            /^\{\+- / && past_version {
+                  # NR gives the line number. Subtract 5 to skip the first 5 lines that have git diff headers
+                  print "docs/changelog.rst:" NR - 5 ": Changelog entry must be added under Unreleased section above. (changelog-unreleased)"; exit 1
+                }
+          '
 
       - name: Build docs
         run: poe docs -- -e 'SPHINXOPTS=--fail-on-warning --keep-going'
