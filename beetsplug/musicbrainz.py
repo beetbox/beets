@@ -319,14 +319,7 @@ class MusicBrainzPlugin(
             "artists_credit": artists_credit,
         }
 
-    def track_info(
-        self,
-        recording: Recording,
-        index: int | None = None,
-        medium: int | None = None,
-        medium_index: int | None = None,
-        medium_total: int | None = None,
-    ) -> TrackInfo:
+    def track_info(self, recording: Recording) -> TrackInfo:
         """Build a `TrackInfo` object from a MusicBrainz recording payload.
 
         This is the main translation layer between MusicBrainz's recording model
@@ -341,10 +334,6 @@ class MusicBrainzPlugin(
         info = TrackInfo(
             title=title,
             track_id=recording["id"],
-            index=index,
-            medium=medium,
-            medium_index=medium_index,
-            medium_total=medium_total,
             data_source=self.data_source,
             data_url=urljoin(BASE_URL, f"recording/{recording['id']}"),
             length=(
@@ -497,6 +486,10 @@ class MusicBrainzPlugin(
             for source, url in url_by_source.items()
         }  # type: ignore[return-value]
 
+    @cached_property
+    def ignore_video_tracks(self) -> bool:
+        return config["match"]["ignore_video_tracks"].get(bool)
+
     def album_info(self, release: Release) -> AlbumInfo:
         """Takes a MusicBrainz release result dictionary and returns a beets
         AlbumInfo object containing the interesting data about that release.
@@ -530,7 +523,6 @@ class MusicBrainzPlugin(
         track_infos = []
         index = 0
         for medium in release["media"]:
-            disctitle = medium.get("title")
             format = medium.get("format")
 
             if format in config["match"]["ignored_media"].as_str_seq():
@@ -542,44 +534,45 @@ class MusicBrainzPlugin(
                 and not config["match"]["ignore_data_tracks"]
             ):
                 all_tracks += medium["data_tracks"]
-            track_count = len(all_tracks)
+
+            medium_data = {
+                "medium": int(medium["position"]),
+                "medium_total": len(all_tracks),
+                "disctitle": medium.get("title"),
+                "media": format,
+            }
 
             if "pregap" in medium:
                 all_tracks.insert(0, medium["pregap"])
 
-            for track in all_tracks:
-                if track["recording"]["title"] == "[data track]" or (
-                    track["recording"]["video"]
-                    and config["match"]["ignore_video_tracks"]
-                ):
-                    continue
-
-                # Basic information from the recording.
+            valid_tracks = [
+                t
+                for t in all_tracks
+                if t["recording"]["title"] != "[data track]"
+                and not (self.ignore_video_tracks and t["recording"]["video"])
+            ]
+            for track in valid_tracks:
                 index += 1
-                ti = self.track_info(
-                    track["recording"],
-                    index,
-                    int(medium["position"]),
-                    int(track["position"]),
-                    track_count,
+                # make a copy since we need to modify it with track-level overrides
+                recording = track["recording"].copy()
+                # Prefer track data, where present, over recording data.
+                recording["length"] = track["length"] or recording["length"]
+                recording["artist_credit"] = (
+                    track["artist_credit"] or recording["artist_credit"]
                 )
-                ti.release_track_id = track["id"]
-                ti.disctitle = disctitle
-                ti.media = format
-                ti.track_alt = track["number"]
-
-                # Prefer track data, where present, over recording data except
-                # if a preferred recording alias is available.
-                if track.get("title") and not _preferred_alias(
-                    track["recording"].get("aliases", [])
+                if track["title"] and not _preferred_alias(
+                    recording["aliases"]
                 ):
-                    ti.title = track["title"]
-                if track.get("artist_credit"):
-                    ti.update(
-                        **self._parse_artist_credits(track["artist_credit"])
-                    )
-                if length := track.get("length"):
-                    ti.length = length / 1000.0
+                    recording["title"] = track["title"]
+
+                ti = self.track_info(recording)
+                ti.update(
+                    index=index,
+                    medium_index=track["position"],
+                    release_track_id=track["id"],
+                    track_alt=track["number"],
+                    **medium_data,
+                )
 
                 track_infos.append(ti)
 

@@ -170,3 +170,17 @@ class RecordingFactory(_IdFactory):
     video = False
     genres = factory.List([])
     tags = factory.List([])
+
+
+class TrackFactory(_IdFactory):
+    class Params:
+        id_base = 10000
+
+    artist_credit = factory.List([])
+    length = factory.LazyAttribute(lambda o: o.recording["length"])
+    number = "A1"
+    position = 1
+    recording = factory.SubFactory(RecordingFactory)
+    title = factory.LazyAttribute(
+        lambda o: f"{'Video: ' if o.recording['video'] else ''}{o.recording['title']}"  # noqa: E501
+    )
