@@ -483,8 +483,8 @@ class DGSearchQueryTest(BeetsTestCase):
 
     def test_extra_tags_populate_discogs_filters(self):
         """Configured extra_tags should populate Discogs search filters."""
-        config["discogs"]["extra_tags"] = ["label", "catalognum"]
         plugin = DiscogsPlugin()
+        plugin.config["extra_tags"] = ["label", "catalognum"]
 
         items = [
             Item(catalognum="ABC 123", label="abc"),
