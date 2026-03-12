@@ -108,14 +108,14 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
     def _test_img_reformat(self, backend):
         fname, ext = os.path.splitext(self.IMG_225x225)
         target_png = fname + b"." + "png".encode("utf8")
-        # check reformat converts jpg to png
+        # check convert converts jpg to png
         im_png = backend.convert(
             self.IMG_225x225,
             target=target_png,
         )
         assert backend.get_format(im_png) == "PNG"
 
-        # check reformat converts png to jpg with deinterlaced and maxwidth option
+        # check convert converts png to jpg with deinterlaced and maxwidth option
         fname, ext = os.path.splitext(self.IMG_225x225_PNG)
         target_jpg = fname + b"." + "jpg".encode("utf8")
         im_jpg_deinterlaced = backend.convert(
@@ -128,7 +128,7 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
         assert backend.get_format(im_jpg_deinterlaced) == "JPEG"
         self._test_img_deinterlaced(backend, im_jpg_deinterlaced)
 
-        # check reformat actually also resizes if maxwidth is also passed in
+        # check convert actually also resizes if maxwidth is also passed in
         im_png_deinterlaced_smaller = backend.convert(
             self.IMG_225x225_PNG,
             maxwidth=100,
