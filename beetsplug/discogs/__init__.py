@@ -291,11 +291,6 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
             return query, filters
 
         for tag, api_field in self.extra_discogs_field_by_tag.items():
-            # The Discogs search API does not provide direct equivalents for
-            # MusicBrainz "alias" or "tracks" search fields, so we ignore
-            # those tags if configured.
-            if tag in {"alias", "tracks"}:
-                continue
 
             most_common, _count = util.plurality(
                 item.get(tag) for item in items
