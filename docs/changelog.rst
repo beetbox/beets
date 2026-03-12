@@ -9,9 +9,11 @@ below!
 Unreleased
 ----------
 
-..
-    New features
-    ~~~~~~~~~~~~
+New features
+~~~~~~~~~~~~
+
+- :doc:`plugins/play`: Added ``-R``/``--randomize`` flag to shuffle the playlist
+  order before passing it to the player.
 
 Bug fixes
 ~~~~~~~~~
