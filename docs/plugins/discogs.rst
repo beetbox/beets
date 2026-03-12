@@ -148,7 +148,8 @@ Default
 .. conf:: extra_tags
     :default: []
 
-    By default, beets will only use the artist and album information to query Discogs. Additional tags to be queried can be supplied with the
+    By default, beets will use only the artist and album to query Discogs.
+    Additional tags to be queried can be supplied with the
     ``extra_tags`` setting.
 
     This setting should improve the autotagger results if the metadata with the
