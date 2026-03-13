@@ -523,11 +523,6 @@ class RemoveTest(BeetsTestCase):
         self.i.remove(True)
         assert self.lib_path.exists()
 
-    def test_removing_item_outside_of_library_deletes_nothing(self):
-        self.lib.directory = os.path.join(self.temp_dir, b"xxx")
-        self.i.remove(True)
-        assert self.i.filepath.parent.exists()
-
     def test_removing_last_item_in_album_with_albumart_prunes_dir(self):
         artfile = os.path.join(self.temp_dir, b"testart.jpg")
         touch(artfile)

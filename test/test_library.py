@@ -1071,7 +1071,7 @@ class PathStringTest(BeetsTestCase):
         self.i.path = path
         self.i.store()
         i = next(iter(self.lib.items()))
-        assert i.path == path
+        assert i.path == os.path.join(self.libdir, path)
 
     def test_special_char_path_added_to_database(self):
         self.i.remove()
@@ -1080,7 +1080,7 @@ class PathStringTest(BeetsTestCase):
         i.path = path
         self.lib.add(i)
         i = next(iter(self.lib.items()))
-        assert i.path == path
+        assert i.path == os.path.join(self.libdir, path)
 
     def test_destination_returns_bytestring(self):
         self.i.artist = "b\xe1r"
@@ -1123,6 +1123,17 @@ class PathStringTest(BeetsTestCase):
         )
         alb = self.lib.get_album(alb.id)
         assert isinstance(alb.artpath, bytes)
+
+    def test_relative_path_is_stored(self):
+        relative_path = b"abc/foo.mp3"
+        absolute_path = os.path.join(self.libdir, relative_path)
+        self.i.path = absolute_path
+        self.i.store()
+        album = self.lib.add_album([self.i])
+
+        assert self.i.path == absolute_path
+        assert self.i._values_fixed["path"] == relative_path
+        assert album.path == os.path.dirname(absolute_path)
 
 
 class MtimeTest(BeetsTestCase):

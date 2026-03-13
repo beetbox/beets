@@ -382,10 +382,10 @@ class CommonOptionsParserCliTest(IOMixin, BeetsTestCase):
 
     def test_path_option(self):
         output = self.run_with_output("ls", "-p")
-        assert output == "xxx/yyy\n"
+        assert output == f"{self.lib_path / 'xxx/yyy'}\n"
 
         output = self.run_with_output("ls", "-a", "-p")
-        assert output == "xxx\n"
+        assert output == f"{self.lib_path / 'xxx'}\n"
 
     def test_format_option(self):
         output = self.run_with_output("ls", "-f", "$artist")

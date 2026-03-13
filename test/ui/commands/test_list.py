@@ -30,7 +30,7 @@ class ListTest(IOMixin, BeetsTestCase):
 
     def test_list_item_path(self):
         stdout = self._run_list(fmt="$path")
-        assert stdout.strip() == "xxx/yyy"
+        assert stdout.strip() == str(self.lib_path / "xxx/yyy")
 
     def test_list_album_outputs_something(self):
         stdout = self._run_list(album=True)
@@ -38,7 +38,7 @@ class ListTest(IOMixin, BeetsTestCase):
 
     def test_list_album_path(self):
         stdout = self._run_list(album=True, fmt="$path")
-        assert stdout.strip() == "xxx"
+        assert stdout.strip() == str(self.lib_path / "xxx")
 
     def test_list_album_omits_title(self):
         stdout = self._run_list(album=True)

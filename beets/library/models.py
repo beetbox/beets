@@ -8,7 +8,7 @@ import unicodedata
 from contextlib import suppress
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from mediafile import MediaFile, UnreadableFileError
 
@@ -81,6 +81,36 @@ class LibModel(dbcore.Model["Library"]):
         # super().add() calls self.store(), which sends `database_change`,
         # so don't do it here
         super().add(lib)
+
+    def _setitem(self, key: str, value: Any):
+        """Set the item's value for a standard field or a flexattr."""
+        # Encode unicode paths and read buffers.
+        if key == "path":
+            if isinstance(value, str):
+                value = bytestring_path(value)
+            elif isinstance(value, types.BLOB_TYPE):
+                value = bytes(value)
+            # Store paths relative to the music directory
+            # Check for absolute path because item may be initialised with
+            # a relative path already
+            if os.path.isabs(value):
+                # Suppress these errors since tests may initialise an Item
+                # without the db attribute
+                with suppress(ValueError, AttributeError):
+                    value = os.path.relpath(value, self.db.directory)
+
+        return super()._setitem(key, value)
+
+    def __getitem__(self, key: str):
+        value = super().__getitem__(key)
+        if key == "path" and value:
+            # Return absolute paths.
+            # Suppress these errors since tests may initialise an Item
+            # without the db attribute
+            with suppress(ValueError, AttributeError):
+                value = os.path.join(self.db.directory, value)
+
+        return value
 
     def __format__(self, spec):
         if not spec:
@@ -827,12 +857,7 @@ class Item(LibModel):
     def __setitem__(self, key, value):
         """Set the item's value for a standard field or a flexattr."""
         # Encode unicode paths and read buffers.
-        if key == "path":
-            if isinstance(value, str):
-                value = bytestring_path(value)
-            elif isinstance(value, types.BLOB_TYPE):
-                value = bytes(value)
-        elif key == "album_id":
+        if key == "album_id":
             self._cached_album = None
 
         changed = super()._setitem(key, value)
