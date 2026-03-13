@@ -232,7 +232,7 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             try:
                 resp = self.mb_api.browse_release_groups(
                     artist=artist_id,
-                    release_type=release_type,
+                    type="|".join(release_type),
                 )
             except requests.exceptions.RequestException:
                 self._log.info(
