@@ -19,6 +19,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 from beets import config
+from beets.library import Item
 from beets.test._common import Bag
 from beets.test.helper import BeetsTestCase, capture_log
 from beetsplug.discogs import ArtistState, DiscogsPlugin
@@ -464,6 +465,42 @@ class DGAlbumInfoTest(BeetsTestCase):
         assert d.tracks[0].artists == ["TEST ARTIST (5)"]
         assert d.label == "LABEL NAME (5)"
         config["discogs"]["strip_disambiguation"] = True
+
+
+@patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
+class DGSearchQueryTest(BeetsTestCase):
+    def test_default_search_filters_without_extra_tags(self):
+        """Discogs search uses only the type filter when no extra_tags are set."""
+        plugin = DiscogsPlugin()
+        items = [Item()]
+
+        query, filters = plugin.get_search_query_with_filters(
+            "album", items, "Artist", "Album", False
+        )
+
+        assert "Album" in query
+        assert filters == {"type": "release"}
+
+    def test_extra_tags_populate_discogs_filters(self):
+        """Configured extra_tags should populate Discogs search filters."""
+        plugin = DiscogsPlugin()
+        plugin.config["extra_tags"] = ["label", "catalognum"]
+
+        items = [
+            Item(catalognum="ABC 123", label="abc"),
+            Item(catalognum="ABC 123", label="abc"),
+            Item(catalognum="ABC 123", label="def"),
+        ]
+
+        _query, filters = plugin.get_search_query_with_filters(
+            "album", items, "Artist", "Album", False
+        )
+
+        assert filters["type"] == "release"
+        assert filters["label"] == "abc"
+        # Catalog number should have whitespace removed.
+        assert filters["catno"] == "ABC123"
+        config["discogs"]["extra_tags"] = []
 
 
 @pytest.mark.parametrize(
