@@ -11,16 +11,23 @@ from beets.library import Album, Item
 from beets.test.helper import IOMixin, PluginMixin, TestHelper
 
 
-class TestMissingAlbums(IOMixin, PluginMixin, TestHelper):
+@pytest.fixture
+def helper(request):
+    helper = TestHelper()
+    helper.setup_beets()
+
+    request.instance.lib = helper.lib
+
+    yield
+
+    helper.teardown_beets()
+
+
+@pytest.mark.usefixtures("helper")
+class TestMissingAlbums(IOMixin, PluginMixin):
     """Tests for missing albums functionality."""
 
     plugin = "missing"
-
-    @pytest.fixture(autouse=True)
-    def _setup(self):
-        self.setup_beets()
-        yield
-        self.teardown_beets()
 
     @pytest.mark.parametrize(
         "release_from_mb,expected_output",
@@ -55,7 +62,8 @@ class TestMissingAlbums(IOMixin, PluginMixin, TestHelper):
             json={"release-groups": [release_from_mb]},
         )
 
-        assert self.run_with_output("missing", "--album") == expected_output
+        with self.configure_plugin({}):
+            assert self.run_with_output("missing", "--album") == expected_output
 
     def test_release_type_filters_results(self, requests_mock):
         """Test --release-type filters to only show specified type."""
@@ -78,9 +86,10 @@ class TestMissingAlbums(IOMixin, PluginMixin, TestHelper):
             },
         )
 
-        output = self.run_with_output(
-            "missing", "-a", "--release-type", "compilation"
-        )
+        with self.configure_plugin({}):
+            output = self.run_with_output(
+                "missing", "-a", "--release-type", "compilation"
+            )
 
         assert "artist - compilation" in output
 
@@ -106,14 +115,15 @@ class TestMissingAlbums(IOMixin, PluginMixin, TestHelper):
             },
         )
 
-        output = self.run_with_output(
-            "missing",
-            "-a",
-            "--release-type",
-            "compilation",
-            "--release-type",
-            "album",
-        )
+        with self.configure_plugin({}):
+            output = self.run_with_output(
+                "missing",
+                "-a",
+                "--release-type",
+                "compilation",
+                "--release-type",
+                "album",
+            )
 
         assert "artist - compilation" in output
         assert "artist - title 2" in output
@@ -140,21 +150,17 @@ class TestMissingAlbums(IOMixin, PluginMixin, TestHelper):
             },
         )
 
-        output = self.run_with_output("missing", "-a", "-t")
+        with self.configure_plugin({}):
+            output = self.run_with_output("missing", "-a", "-t")
 
         assert output == "1\n"
 
 
-class TestMissingTracks(IOMixin, PluginMixin, TestHelper):
+@pytest.mark.usefixtures("helper")
+class TestMissingTracks(IOMixin, PluginMixin):
     """Tests for missing tracks functionality."""
 
     plugin = "missing"
-
-    @pytest.fixture(autouse=True)
-    def _setup(self):
-        self.setup_beets()
-        yield
-        self.teardown_beets()
 
     @pytest.mark.parametrize(
         "total,count,expected",
@@ -211,4 +217,5 @@ class TestMissingTracks(IOMixin, PluginMixin, TestHelper):
         if count:
             command.append("-c")
 
-        assert expected in self.run_with_output(*command)
+        with self.configure_plugin({}):
+            assert expected in self.run_with_output(*command)
