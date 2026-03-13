@@ -8,10 +8,10 @@ import pytest
 
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.library import Album, Item
-from beets.test.helper import PluginMixin, TestHelper
+from beets.test.helper import IOMixin, PluginMixin, TestHelper
 
 
-class TestMissingAlbums(PluginMixin, TestHelper):
+class TestMissingAlbums(IOMixin, PluginMixin, TestHelper):
     """Tests for missing albums functionality."""
 
     plugin = "missing"
@@ -145,7 +145,7 @@ class TestMissingAlbums(PluginMixin, TestHelper):
         assert output == "1\n"
 
 
-class TestMissingTracks(PluginMixin, TestHelper):
+class TestMissingTracks(IOMixin, PluginMixin, TestHelper):
     """Tests for missing tracks functionality."""
 
     plugin = "missing"
