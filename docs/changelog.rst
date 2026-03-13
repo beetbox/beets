@@ -28,6 +28,12 @@ Bug fixes
   different providers share the same ID. :bug:`6178` :bug:`6181`
 - :doc:`plugins/mbsync` and :doc:`plugins/missing` now use each item's stored
   ``data_source`` for ID lookups, with a fallback to ``MusicBrainz``.
+- :doc:`plugins/musicbrainz`: Use ``va_name`` config for ``albumartist_sort``,
+  ``albumartists_sort``, ``albumartist_credit``, ``albumartists_credit``, and
+  ``albumartists`` on VA releases instead of hardcoded "Various Artists".
+  :bug:`6316`
+- :doc:`plugins/beatport`: Use ``va_name`` config for the album artist on VA
+  releases instead of hardcoded "Various Artists". :bug:`6316`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
