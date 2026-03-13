@@ -281,7 +281,7 @@ class IPFSPlugin(BeetsPlugin):
 
     def ipfs_added_albums(self, rlib, tmpname):
         """Returns a new library with only albums/items added to ipfs"""
-        tmplib = library.Library(tmpname)
+        tmplib = library.Library(tmpname, directory="/ipfs/")
         for album in rlib.albums():
             try:
                 if album.ipfs:
@@ -300,7 +300,7 @@ class IPFSPlugin(BeetsPlugin):
                 pass
             item_path = os.fsdecode(os.path.basename(item.path))
             # Clear current path from item
-            item.path = f"/ipfs/{album.ipfs}/{item_path}"
+            item.path = f"{album.ipfs}/{item_path}"
 
             item.id = None
             items.append(item)
