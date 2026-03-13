@@ -31,6 +31,7 @@ from requests_oauthlib.oauth1_session import (
 
 import beets
 import beets.ui
+from beets import config
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.metadata_plugins import MetadataSourcePlugin
 from beets.util import unique_list
@@ -459,7 +460,7 @@ class BeatportPlugin(MetadataSourcePlugin):
         va = release.artists is not None and len(release.artists) > 3
         artist, artist_id = self._get_artist(release.artists)
         if va:
-            artist = "Various Artists"
+            artist = config["va_name"].as_str()
         tracks: list[TrackInfo] = []
         if release.tracks is not None:
             tracks = [self._get_track_info(x) for x in release.tracks]

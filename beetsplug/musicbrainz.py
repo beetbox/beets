@@ -572,7 +572,13 @@ class MusicBrainzPlugin(
         )
         info.va = info.artist_id == VARIOUS_ARTISTS_ID
         if info.va:
-            info.artist = config["va_name"].as_str()
+            va_name = config["va_name"].as_str()
+            info.artist = va_name
+            info.artist_sort = va_name
+            info.artists = [va_name]
+            info.artists_sort = [va_name]
+            info.artist_credit = va_name
+            info.artists_credit = [va_name]
         info.asin = release.get("asin")
         info.releasegroup_id = release["release-group"]["id"]
         info.albumstatus = release.get("status")
