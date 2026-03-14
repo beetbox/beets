@@ -1115,7 +1115,7 @@ class Database:
     data is written in a transaction.
     """
 
-    def __init__(self, path, timeout: float = 5.0):
+    def __init__(self, path, timeout: float = 30.0):
         if sqlite3.threadsafety == 0:
             raise RuntimeError(
                 "sqlite3 must be compiled with multi-threading support"
