@@ -10,8 +10,8 @@ from shutil import rmtree
 
 from beets.dbcore.query import PathQuery
 from beets.plugins import BeetsPlugin
-from beets.ui import colorize as colorize_text
 from beets.ui import input_options
+from beets.util.color import colorize
 
 
 class ImportSourcePlugin(BeetsPlugin):
@@ -94,8 +94,8 @@ class ImportSourcePlugin(BeetsPlugin):
 
         # We ask the user whether they'd like to delete the item's source
         # directory
-        item_path = colorize_text("text_warning", item.filepath)
-        source_path = colorize_text("text_warning", srcpath)
+        item_path = colorize("text_warning", item.filepath)
+        source_path = colorize("text_warning", srcpath)
 
         print(
             f"The item:\n{item_path}\nis originated from:\n{source_path}\n"
@@ -136,7 +136,7 @@ class ImportSourcePlugin(BeetsPlugin):
 
             print("Doing so will delete the following items' sources as well:")
             for searched_item in item._db.items(source_dir_query):
-                print(colorize_text("text_warning", searched_item.filepath))
+                print(colorize("text_warning", searched_item.filepath))
 
             print("Would you like to continue?")
             continue_resp = input_options(

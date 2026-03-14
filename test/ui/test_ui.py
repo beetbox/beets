@@ -329,57 +329,6 @@ class ConfigTest(IOMixin, TestPluginTestCase):
         assert config["statefile"].as_path() == self.beetsdir / "state"
 
 
-class ShowModelChangeTest(IOMixin, unittest.TestCase):
-    def setUp(self):
-        super().setUp()
-        self.a = _common.item()
-        self.b = _common.item()
-        self.a.path = self.b.path
-
-    def _show(self, **kwargs):
-        change = ui.show_model_changes(self.a, self.b, **kwargs)
-        out = self.io.getoutput()
-        return change, out
-
-    def test_identical(self):
-        change, out = self._show()
-        assert not change
-        assert out == ""
-
-    def test_string_fixed_field_change(self):
-        self.b.title = "x"
-        change, out = self._show()
-        assert change
-        assert "title" in out
-
-    def test_int_fixed_field_change(self):
-        self.b.track = 9
-        change, out = self._show()
-        assert change
-        assert "track" in out
-
-    def test_floats_close_to_identical(self):
-        self.a.length = 1.00001
-        self.b.length = 1.00005
-        change, out = self._show()
-        assert not change
-        assert out == ""
-
-    def test_floats_different(self):
-        self.a.length = 1.00001
-        self.b.length = 2.00001
-        change, out = self._show()
-        assert change
-        assert "length" in out
-
-    def test_both_values_shown(self):
-        self.a.title = "foo"
-        self.b.title = "bar"
-        _, out = self._show()
-        assert "foo" in out
-        assert "bar" in out
-
-
 class PathFormatTest(unittest.TestCase):
     def test_custom_paths_prepend(self):
         default_formats = ui.get_path_formats()

@@ -4,6 +4,7 @@ import os
 
 from beets import library, logging, ui
 from beets.util import ancestry, syspath
+from beets.util.color import colorize
 
 from .utils import do_query
 
@@ -48,7 +49,7 @@ def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
             # Item deleted?
             if not item.path or not os.path.exists(syspath(item.path)):
                 ui.print_(format(item))
-                ui.print_(ui.colorize("text_error", "  deleted"))
+                ui.print_(colorize("text_error", "  deleted"))
                 if not pretend:
                     item.remove(True)
                 affected_albums.add(item.album_id)

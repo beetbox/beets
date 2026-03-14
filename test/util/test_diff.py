@@ -3,7 +3,7 @@ from textwrap import dedent
 import pytest
 
 from beets.library import Item
-from beets.ui import _field_diff
+from beets.util.diff import _field_diff
 
 p = pytest.param
 
@@ -17,7 +17,7 @@ class TestFieldDiff:
     def patch_colorize(self, monkeypatch):
         """Patch to return a deterministic string format instead of ANSI codes."""
         monkeypatch.setattr(
-            "beets.ui._colorize",
+            "beets.util.color._colorize",
             lambda color_name, text: f"[{color_name}]{text}[/]",
         )
 

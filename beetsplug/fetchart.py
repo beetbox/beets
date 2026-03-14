@@ -32,6 +32,7 @@ from mediafile import image_mime_type
 from beets import config, importer, plugins, ui, util
 from beets.util import bytestring_path, get_temp_filename, sorted_walk, syspath
 from beets.util.artresizer import ArtResizer
+from beets.util.color import colorize
 from beets.util.config import sanitize_pairs
 
 if TYPE_CHECKING:
@@ -1596,9 +1597,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                 and os.path.isfile(syspath(album.artpath))
             ):
                 if not quiet:
-                    message = ui.colorize(
-                        "text_highlight_minor", "has album art"
-                    )
+                    message = colorize("text_highlight_minor", "has album art")
                     ui.print_(f"{album}: {message}")
             else:
                 # In ordinary invocations, look for images on the
@@ -1609,7 +1608,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                 candidate = self.art_for_album(album, local_paths)
                 if candidate:
                     self._set_art(album, candidate)
-                    message = ui.colorize("text_success", "found album art")
+                    message = colorize("text_success", "found album art")
                 else:
-                    message = ui.colorize("text_error", "no art found")
+                    message = colorize("text_error", "no art found")
                 ui.print_(f"{album}: {message}")
