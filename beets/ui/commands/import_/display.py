@@ -12,6 +12,7 @@ from beets.autotag import hooks
 from beets.util import displayable_path
 from beets.util.color import colorize, dist_colorize, uncolorize
 from beets.util.diff import colordiff
+from beets.util.layout import indent, print_column_layout, print_newline_layout
 from beets.util.units import human_seconds_short
 
 if TYPE_CHECKING:
@@ -56,17 +57,15 @@ class ChangeRepresentation:
 
     @cached_property
     def indent_header(self) -> str:
-        return ui.indent(self._indentation_config["match_header"].as_number())
+        return indent(self._indentation_config["match_header"].as_number())
 
     @cached_property
     def indent_detail(self) -> str:
-        return ui.indent(self._indentation_config["match_details"].as_number())
+        return indent(self._indentation_config["match_details"].as_number())
 
     @cached_property
     def indent_tracklist(self) -> str:
-        return ui.indent(
-            self._indentation_config["match_tracklist"].as_number()
-        )
+        return indent(self._indentation_config["match_tracklist"].as_number())
 
     @cached_property
     def layout(self) -> int:
@@ -86,9 +85,9 @@ class ChangeRepresentation:
             # If no max_width provided, use terminal width
             max_width = ui.term_width()
         if self.layout == 0:
-            ui.print_column_layout(indent, left, right, separator, max_width)
+            print_column_layout(indent, left, right, separator, max_width)
         else:
-            ui.print_newline_layout(indent, left, right, separator, max_width)
+            print_newline_layout(indent, left, right, separator, max_width)
 
     def show_match_header(self) -> None:
         """Print out a 'header' identifying the suggested match (album name,
