@@ -7,9 +7,12 @@ from typing import TYPE_CHECKING
 import mediafile
 
 from beets import ui, util
+from beets.library import Item, Library
 from beets.plugins import BeetsPlugin
 
 if TYPE_CHECKING:
+    import optparse
+
     from beets.library import Item, Library
 
 
@@ -21,7 +24,9 @@ class ReplacePlugin(BeetsPlugin):
         cmd.func = self.run
         return [cmd]
 
-    def run(self, lib: Library, args: list[str]) -> None:
+    def run(
+        self, lib: Library, _opts: optparse.Values, args: list[str]
+    ) -> None:
         if len(args) < 2:
             raise ui.UserError("Usage: beet replace <query> <new_file_path>")
 
@@ -59,32 +64,27 @@ class ReplacePlugin(BeetsPlugin):
         except mediafile.FileTypeError as fte:
             raise ui.UserError(fte)
 
-    def select_song(self, items: list[Item]):
+    def select_song(self, items: list[Item]) -> Item | None:
         """Present a menu of matching songs and get user selection."""
-        ui.print_("\nMatching songs:")
+        ui.print_("Matching songs:")
         for i, item in enumerate(items, 1):
             ui.print_(f"{i}. {util.displayable_path(item)}")
 
-        while True:
-            try:
-                index = int(
-                    input(
-                        f"Which song would you like to replace? "
-                        f"[1-{len(items)}] (0 to cancel): "
-                    )
-                )
-                if index == 0:
-                    return None
-                if 1 <= index <= len(items):
-                    return items[index - 1]
-                ui.print_(
-                    f"Invalid choice. Please enter a number "
-                    f"between 1 and {len(items)}."
-                )
-            except ValueError:
-                ui.print_("Invalid input. Please type in a number.")
+        index = ui.input_options(
+            [],
+            require=True,
+            prompt=(
+                f"Which song would you like to replace? "
+                f"[1-{len(items)}] (0 to cancel):"
+            ),
+            numrange=(0, len(items)),
+        )
 
-    def confirm_replacement(self, new_file_path: Path, song: Item):
+        if index == 0:
+            return None
+        return items[index - 1]
+
+    def confirm_replacement(self, new_file_path: Path, song: Item) -> bool:
         """Get user confirmation for the replacement."""
         original_file_path: Path = Path(song.path.decode())
 
@@ -95,12 +95,10 @@ class ReplacePlugin(BeetsPlugin):
             f"\nReplacing: {util.displayable_path(new_file_path)} "
             f"-> {util.displayable_path(original_file_path)}"
         )
-        decision: str = (
-            input("Are you sure you want to replace this track? (y/N): ")
-            .strip()
-            .casefold()
+
+        return ui.input_yn(
+            "Are you sure you want to replace this track (y/n)?", require=True
         )
-        return decision in {"yes", "y"}
 
     def replace_file(self, new_file_path: Path, song: Item) -> None:
         """Replace the existing file with the new one."""
@@ -109,7 +107,7 @@ class ReplacePlugin(BeetsPlugin):
 
         try:
             shutil.move(util.syspath(new_file_path), util.syspath(dest))
-        except Exception as e:
+        except OSError as e:
             raise ui.UserError(f"Error replacing file: {e}")
 
         if (
@@ -118,10 +116,13 @@ class ReplacePlugin(BeetsPlugin):
         ):
             try:
                 original_file_path.unlink()
-            except Exception as e:
+            except OSError as e:
                 raise ui.UserError(f"Could not delete original file: {e}")
 
-        song.path = str(dest).encode()
-        song.store()
+        # Update the path to point to the new file.
+        song.path = util.bytestring_path(dest)
 
-        ui.print_("Replacement successful.")
+        # Synchronise the new file with the database. This copies metadata from the
+        # Item to the new file (i.e. title, artist, album, etc.),
+        # and then from the Item to the database (i.e. path and mtime).
+        song.try_sync(write=True, move=False)
