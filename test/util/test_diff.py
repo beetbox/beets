@@ -3,7 +3,7 @@ from textwrap import dedent
 import pytest
 
 from beets.library import Item
-from beets.ui import _field_diff
+from beets.util.diff import _field_diff
 
 p = pytest.param
 

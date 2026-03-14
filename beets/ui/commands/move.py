@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from beets import logging, ui
 from beets.util import MoveOperation, displayable_path, normpath, syspath
+from beets.util.diff import colordiff
 
 from .utils import do_query
 
@@ -45,7 +46,7 @@ def show_path_changes(path_changes):
     if max_width > col_width:
         # Print every change over two lines
         for source, dest in zip(sources, destinations):
-            color_source, color_dest = ui.colordiff(source, dest)
+            color_source, color_dest = colordiff(source, dest)
             ui.print_(f"{color_source} \n  -> {color_dest}")
     else:
         # Print every change on a single line, and add a header
@@ -54,7 +55,7 @@ def show_path_changes(path_changes):
         ui.print_(f"Source {' ' * title_pad} Destination")
         for source, dest in zip(sources, destinations):
             pad = max_width - len(source)
-            color_source, color_dest = ui.colordiff(source, dest)
+            color_source, color_dest = colordiff(source, dest)
             ui.print_(f"{color_source} {' ' * pad} -> {color_dest}")
 
 
