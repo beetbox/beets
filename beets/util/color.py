@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Literal
 
 import confuse
 
-from beets import config, ui
+from beets import config
 
 if TYPE_CHECKING:
     from beets.autotag.distance import Distance
@@ -164,11 +164,11 @@ def dist_colorize(string: str, dist: Distance) -> str:
     a distance.
     """
     if dist <= config["match"]["strong_rec_thresh"].as_number():
-        string = ui.colorize("text_success", string)
+        string = colorize("text_success", string)
     elif dist <= config["match"]["medium_rec_thresh"].as_number():
-        string = ui.colorize("text_warning", string)
+        string = colorize("text_warning", string)
     else:
-        string = ui.colorize("text_error", string)
+        string = colorize("text_error", string)
     return string
 
 

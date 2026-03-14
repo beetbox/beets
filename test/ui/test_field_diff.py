@@ -17,7 +17,7 @@ class TestFieldDiff:
     def patch_colorize(self, monkeypatch):
         """Patch to return a deterministic string format instead of ANSI codes."""
         monkeypatch.setattr(
-            "beets.ui._colorize",
+            "beets.util.color._colorize",
             lambda color_name, text: f"[{color_name}]{text}[/]",
         )
 
