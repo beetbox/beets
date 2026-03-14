@@ -65,20 +65,9 @@ class ChangeRepresentation:
             {"column": 0, "newline": 1}
         )
 
-    def print_layout(
-        self,
-        indent: str,
-        left: Side,
-        right: Side,
-        separator: str = " -> ",
-        max_width: int | None = None,
-    ) -> None:
-        if not max_width:
-            # If no max_width provided, use terminal width
-            max_width = ui.term_width()
-
+    def print_layout(self, indent: str, left: Side, right: Side) -> None:
         method = get_column_layout if self.layout == 0 else get_newline_layout
-        for line in method(indent, left, right, separator, max_width):
+        for line in method(indent, left, right, ui.term_width()):
             ui.print_(line)
 
     def show_match_header(self) -> None:

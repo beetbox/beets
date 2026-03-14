@@ -15,6 +15,8 @@ from .color import (
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
+SEPARATOR = " -> "
+
 
 class Side(TypedDict):
     prefix: str
@@ -166,7 +168,6 @@ def get_column_layout(
     indent_str: str,
     left: Side,
     right: Side,
-    separator: str,
     max_width: int,
 ) -> Iterator[str]:
     """Print left & right data, with separator inbetween
@@ -184,6 +185,8 @@ def get_column_layout(
     if f"{right['prefix']}{right['contents']}{right['suffix']}" == "":
         # No right hand information, so we don't need a separator.
         separator = ""
+    else:
+        separator = SEPARATOR
     first_line_no_wrap = (
         f"{indent_str}{left['prefix']}{left['contents']}{left['suffix']}"
         f"{separator}{right['prefix']}{right['contents']}{right['suffix']}"
@@ -195,12 +198,8 @@ def get_column_layout(
         # Wrap into columns
         if "width" not in left or "width" not in right:
             # If widths have not been defined, set to share space.
-            left["width"] = (
-                max_width - len(indent_str) - color_len(separator)
-            ) // 2
-            right["width"] = (
-                max_width - len(indent_str) - color_len(separator)
-            ) // 2
+            left["width"] = (max_width - len(indent_str) - len(separator)) // 2
+            right["width"] = (max_width - len(indent_str) - len(separator)) // 2
         # On the first line, account for suffix as well as prefix
         left_width_tuple = (
             left["width"]
@@ -260,7 +259,7 @@ def get_column_layout(
             if i == 0:
                 out += separator
             else:
-                out += indent(color_len(separator))
+                out += indent(len(separator))
 
             # Right prefix, contents, padding, suffix
             if i == 0:
@@ -300,7 +299,6 @@ def get_newline_layout(
     indent_str: str,
     left: Side,
     right: Side,
-    separator: str,
     max_width: int,
 ) -> Iterator[str]:
     """Prints using a newline separator between left & right if
@@ -319,6 +317,8 @@ def get_newline_layout(
     if f"{right['prefix']}{right['contents']}{right['suffix']}" == "":
         # No right hand information, so we don't need a separator.
         separator = ""
+    else:
+        separator = SEPARATOR
     first_line_no_wrap = (
         f"{indent_str}{left['prefix']}{left['contents']}{left['suffix']}"
         f"{separator}{right['prefix']}{right['contents']}{right['suffix']}"
@@ -339,7 +339,7 @@ def get_newline_layout(
         left_split = split_into_lines(left_str, left_width_tuple)
         # Repeat calculations for rhs, including separator on first line
         right_width_tuple = (
-            empty_space - color_len(separator),
+            empty_space - len(separator),
             empty_space - len(indent_str),
             empty_space - len(indent_str),
         )
