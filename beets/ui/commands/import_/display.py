@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from beets import config, ui
 from beets.autotag import hooks
 from beets.util import displayable_path
-from beets.util.color import colorize, dist_colorize, uncolorize
+from beets.util.color import colorize, dist_colorize
 from beets.util.diff import colordiff
 from beets.util.layout import Side, get_layout_lines, indent
 from beets.util.units import human_seconds_short
@@ -274,23 +274,13 @@ class ChangeRepresentation:
             # If no lines provided, e.g. details not required, do nothing.
             return
 
-        def get_width(side: Side) -> int:
-            """Return the width of left or right in uncolorized characters."""
-            try:
-                return len(
-                    uncolorize(f"{side.prefix} {side.contents} {side.suffix}")
-                )
-            except KeyError:
-                # An empty dictionary -> Nothing to report
-                return 0
-
         # Check how to fit content into terminal window
         indent_width = len(self.indent_tracklist)
         terminal_width = ui.term_width()
-        joiner_width = len("".join(["* ", " -> "]))
+        joiner_width = len("*  -> ")
         col_width = (terminal_width - indent_width - joiner_width) // 2
-        max_width_l = max(get_width(line_tuple[0]) for line_tuple in lines)
-        max_width_r = max(get_width(line_tuple[1]) for line_tuple in lines)
+        max_width_l = max(left.rendered_width for left, _ in lines)
+        max_width_r = max(right.rendered_width for _, right in lines)
 
         if ((max_width_l <= col_width) and (max_width_r <= col_width)) or (
             ((max_width_l > col_width) or (max_width_r > col_width))

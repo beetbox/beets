@@ -26,6 +26,18 @@ class Side(NamedTuple):
     def rendered(self) -> str:
         return f"{self.prefix}{self.contents}{self.suffix}"
 
+    @property
+    def prefix_width(self) -> int:
+        return color_len(self.prefix)
+
+    @property
+    def suffix_width(self) -> int:
+        return color_len(self.suffix)
+
+    @property
+    def rendered_width(self) -> int:
+        return color_len(self.rendered)
+
 
 def indent(count: int) -> str:
     """Returns a string with `count` many spaces."""
@@ -191,17 +203,19 @@ def get_column_layout(
         left = left._replace(width=width)
         right = right._replace(width=width)
     # On the first line, account for suffix as well as prefix
+    left_width_without_prefix = left.width - left.prefix_width
     left_width_tuple = (
-        left.width - color_len(left.prefix) - color_len(left.suffix),
-        left.width - color_len(left.prefix),
-        left.width - color_len(left.prefix),
+        left_width_without_prefix - left.suffix_width,
+        left_width_without_prefix,
+        left_width_without_prefix,
     )
 
     left_split = split_into_lines(left.contents, left_width_tuple)
+    right_width_without_prefix = right.width - right.prefix_width
     right_width_tuple = (
-        right.width - color_len(right.prefix) - color_len(right.suffix),
-        right.width - color_len(right.prefix),
-        right.width - color_len(right.prefix),
+        right_width_without_prefix - right.suffix_width,
+        right_width_without_prefix,
+        right_width_without_prefix,
     )
 
     right_split = split_into_lines(right.contents, right_width_tuple)
@@ -216,7 +230,7 @@ def get_column_layout(
         if i == 0:
             out += left.prefix
         else:
-            out += indent(color_len(left.prefix))
+            out += indent(left.prefix_width)
 
         # Line i of left hand side contents.
         if i < len(left_split):
@@ -229,12 +243,12 @@ def get_column_layout(
         # Note: differs from original
         # column calcs in not -1 afterwards for space
         # in track number as that is included in 'prefix'
-        padding = left.width - color_len(left.prefix) - left_part_len
+        padding = left.width - left.prefix_width - left_part_len
 
         # Remove some padding on the first line to display
         # length
         if i == 0:
-            padding -= color_len(left.suffix)
+            padding -= left.suffix_width
 
         out += indent(padding)
 
@@ -251,7 +265,7 @@ def get_column_layout(
         if i == 0:
             out += right.prefix
         else:
-            out += indent(color_len(right.prefix))
+            out += indent(right.prefix_width)
 
         # Line i of right hand side.
         if i < len(right_split):
@@ -261,11 +275,11 @@ def get_column_layout(
             right_part_len = 0
 
         # Padding until end of column
-        padding = right.width - color_len(right.prefix) - right_part_len
+        padding = right.width - right.prefix_width - right_part_len
         # Remove some padding on the first line to display
         # length
         if i == 0:
-            padding -= color_len(right.suffix)
+            padding -= right.suffix_width
         out += indent(padding)
         # Length in first line
         if i == 0:
@@ -299,19 +313,20 @@ def get_newline_layout(
     If {lhs0} would go over the maximum width, the subsequent lines are
     indented a second time for ease of reading.
     """
-    empty_space = max_width - len(indent_str)
+    width_without_prefix = max_width - len(indent_str)
+    width_without_double_prefix = max_width - 2 * len(indent_str)
     # On lower lines we will double the indent for clarity
     left_width_tuple = (
-        empty_space,
-        empty_space - len(indent_str),
-        empty_space - len(indent_str),
+        width_without_prefix,
+        width_without_double_prefix,
+        width_without_double_prefix,
     )
     left_split = split_into_lines(left.rendered, left_width_tuple)
     # Repeat calculations for rhs, including separator on first line
     right_width_tuple = (
-        empty_space - len(separator),
-        empty_space - len(indent_str),
-        empty_space - len(indent_str),
+        width_without_prefix - len(separator),
+        width_without_double_prefix,
+        width_without_double_prefix,
     )
     right_split = split_into_lines(right.rendered, right_width_tuple)
     for i, line in enumerate(left_split):
