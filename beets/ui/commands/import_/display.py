@@ -10,6 +10,7 @@ from typing_extensions import NotRequired
 from beets import config, ui
 from beets.autotag import hooks
 from beets.util import displayable_path
+from beets.util.color import dist_colorize
 from beets.util.units import human_seconds_short
 
 if TYPE_CHECKING:
@@ -520,19 +521,6 @@ def get_album_disambig_fields(info: hooks.AlbumInfo) -> Sequence[str]:
                 print(f"Disambiguation string key {field} does not exist.")
 
     return out
-
-
-def dist_colorize(string: str, dist: Distance) -> str:
-    """Formats a string as a colorized similarity string according to
-    a distance.
-    """
-    if dist <= config["match"]["strong_rec_thresh"].as_number():
-        string = ui.colorize("text_success", string)
-    elif dist <= config["match"]["medium_rec_thresh"].as_number():
-        string = ui.colorize("text_warning", string)
-    else:
-        string = ui.colorize("text_error", string)
-    return string
 
 
 def dist_string(dist: Distance) -> str:
