@@ -44,18 +44,16 @@ def indent(count: int) -> str:
     return " " * count
 
 
-def split_into_lines(
-    string: str, width_tuple: tuple[int, int, int]
-) -> list[str]:
+def split_into_lines(string: str, widths: tuple[int, int, int]) -> list[str]:
     """Splits string into a list of substrings at whitespace.
 
-    `width_tuple` is a 3-tuple of `(first_width, last_width, middle_width)`.
+    `widths` is a 3-tuple of `(first_width, last_width, middle_width)`.
     The first substring has a length not longer than `first_width`, the last
     substring has a length not longer than `last_width`, and all other
     substrings have a length not longer than `middle_width`.
     `string` may contain ANSI codes at word borders.
     """
-    first_width, middle_width, last_width = width_tuple
+    first_width, middle_width, last_width = widths
     words = []
 
     if uncolorize(string) == string:
@@ -204,21 +202,21 @@ def get_column_layout(
         right = right._replace(width=width)
     # On the first line, account for suffix as well as prefix
     left_width_without_prefix = left.width - left.prefix_width
-    left_width_tuple = (
+    left_widths = (
         left_width_without_prefix - left.suffix_width,
         left_width_without_prefix,
         left_width_without_prefix,
     )
 
-    left_split = split_into_lines(left.contents, left_width_tuple)
+    left_split = split_into_lines(left.contents, left_widths)
     right_width_without_prefix = right.width - right.prefix_width
-    right_width_tuple = (
+    right_widths = (
         right_width_without_prefix - right.suffix_width,
         right_width_without_prefix,
         right_width_without_prefix,
     )
 
-    right_split = split_into_lines(right.contents, right_width_tuple)
+    right_split = split_into_lines(right.contents, right_widths)
     max_line_count = max(len(left_split), len(right_split))
 
     out = ""
@@ -316,19 +314,19 @@ def get_newline_layout(
     width_without_prefix = max_width - len(indent_str)
     width_without_double_prefix = max_width - 2 * len(indent_str)
     # On lower lines we will double the indent for clarity
-    left_width_tuple = (
+    left_widths = (
         width_without_prefix,
         width_without_double_prefix,
         width_without_double_prefix,
     )
-    left_split = split_into_lines(left.rendered, left_width_tuple)
+    left_split = split_into_lines(left.rendered, left_widths)
     # Repeat calculations for rhs, including separator on first line
-    right_width_tuple = (
+    right_widths = (
         width_without_prefix - len(separator),
         width_without_double_prefix,
         width_without_double_prefix,
     )
-    right_split = split_into_lines(right.rendered, right_width_tuple)
+    right_split = split_into_lines(right.rendered, right_widths)
     for i, line in enumerate(left_split):
         if i == 0:
             yield f"{indent_str}{line}"
