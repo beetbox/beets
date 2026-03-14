@@ -1,3 +1,9 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, TypedDict
+
+from typing_extensions import NotRequired
+
 from .color import (
     ESC_TEXT_REGEX,
     RESET_COLOR,
@@ -6,13 +12,25 @@ from .color import (
     uncolorize,
 )
 
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
-def indent(count):
+
+class Side(TypedDict):
+    prefix: str
+    contents: str
+    suffix: str
+    width: NotRequired[int]
+
+
+def indent(count: int) -> str:
     """Returns a string with `count` many spaces."""
     return " " * count
 
 
-def split_into_lines(string, width_tuple):
+def split_into_lines(
+    string: str, width_tuple: tuple[int, int, int]
+) -> list[str]:
     """Splits string into a list of substrings at whitespace.
 
     `width_tuple` is a 3-tuple of `(first_width, last_width, middle_width)`.
@@ -87,7 +105,7 @@ def split_into_lines(string, width_tuple):
             else:
                 # Add any words after escape sequence
                 words += m.group("posttext").split()
-    result = []
+    result: list[str] = []
     next_substr = ""
     # Iterate over all words.
     previous_fit = False
@@ -144,7 +162,13 @@ def split_into_lines(string, width_tuple):
     return result
 
 
-def get_column_layout(indent_str, left, right, separator, max_width):
+def get_column_layout(
+    indent_str: str,
+    left: Side,
+    right: Side,
+    separator: str,
+    max_width: int,
+) -> Iterator[str]:
     """Print left & right data, with separator inbetween
     'left' and 'right' have a structure of:
     {'prefix':u'','contents':u'','suffix':u'','width':0}
@@ -272,7 +296,13 @@ def get_column_layout(indent_str, left, right, separator, max_width):
         yield out
 
 
-def get_newline_layout(indent_str, left, right, separator, max_width):
+def get_newline_layout(
+    indent_str: str,
+    left: Side,
+    right: Side,
+    separator: str,
+    max_width: int,
+) -> Iterator[str]:
     """Prints using a newline separator between left & right if
     they go over their allocated widths. The datastructures are
     shared with the column layout. In contrast to the column layout,

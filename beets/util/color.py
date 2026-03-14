@@ -172,7 +172,7 @@ def dist_colorize(string: str, dist: Distance) -> str:
     return string
 
 
-def uncolorize(colored_text):
+def uncolorize(colored_text: str) -> str:
     """Remove colors from a string."""
     # Define a regular expression to match ANSI codes.
     # See: http://stackoverflow.com/a/2187024/1382707
@@ -185,7 +185,7 @@ def uncolorize(colored_text):
     return ANSI_CODE_REGEX.sub("", colored_text)
 
 
-def color_split(colored_text, index):
+def color_split(colored_text: str, index: int) -> tuple[str, str]:
     length = 0
     pre_split = ""
     post_split = ""
@@ -221,7 +221,7 @@ def color_split(colored_text, index):
     return pre_split, post_split
 
 
-def color_len(colored_text):
+def color_len(colored_text: str) -> int:
     """Measure the length of a string while excluding ANSI codes from the
     measurement. The standard `len(my_string)` method also counts ANSI codes
     to the string length, which is counterproductive when layouting a

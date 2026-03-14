@@ -3,9 +3,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from functools import cached_property
-from typing import TYPE_CHECKING, TypedDict
-
-from typing_extensions import NotRequired
+from typing import TYPE_CHECKING
 
 from beets import config, ui
 from beets.autotag import hooks
@@ -24,15 +22,9 @@ if TYPE_CHECKING:
     from beets.autotag.distance import Distance
     from beets.library.models import Item
     from beets.util.color import ColorName
+    from beets.util.layout import Side
 
 VARIOUS_ARTISTS = "Various Artists"
-
-
-class Side(TypedDict):
-    prefix: str
-    contents: str
-    suffix: str
-    width: NotRequired[int]
 
 
 @dataclass
@@ -57,15 +49,15 @@ class ChangeRepresentation:
 
     @cached_property
     def indent_header(self) -> str:
-        return indent(self._indentation_config["match_header"].as_number())
+        return indent(self._indentation_config["match_header"].get(int))
 
     @cached_property
     def indent_detail(self) -> str:
-        return indent(self._indentation_config["match_details"].as_number())
+        return indent(self._indentation_config["match_details"].get(int))
 
     @cached_property
     def indent_tracklist(self) -> str:
-        return indent(self._indentation_config["match_tracklist"].as_number())
+        return indent(self._indentation_config["match_tracklist"].get(int))
 
     @cached_property
     def layout(self) -> int:
