@@ -186,20 +186,20 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 return [tag1, tag2]
 
         plugin = lastgenre.LastGenrePlugin()
-        res = plugin._tags_for(MockPylastObj())
+        res = plugin.client._tags_for(MockPylastObj())
         assert res == ["pop", "rap"]
-        res = plugin._tags_for(MockPylastObj(), min_weight=50)
+        res = plugin.client._tags_for(MockPylastObj(), min_weight=50)
         assert res == ["pop"]
 
     def test_sort_by_depth(self):
         self._setup_config(canonical=True)
         # Normal case.
         tags = ("electronic", "ambient", "post-rock", "downtempo")
-        res = self.plugin._sort_by_depth(tags)
+        res = lastgenre.sort_by_depth(tags, self.plugin.c14n_branches)
         assert res == ["post-rock", "downtempo", "ambient", "electronic"]
         # Non-canonical tag ('chillout') present.
         tags = ("electronic", "ambient", "chillout")
-        res = self.plugin._sort_by_depth(tags)
+        res = lastgenre.sort_by_depth(tags, self.plugin.c14n_branches)
         assert res == ["ambient", "electronic"]
 
 
@@ -599,9 +599,9 @@ def test_get_genre(
     # Mock the last.fm fetchers. When whitelist enabled, we can assume only
     # whitelisted genres get returned, the plugin's _resolve_genre method
     # ensures it.
-    lastgenre.LastGenrePlugin.fetch_track_genre = mock_fetch_track_genre
-    lastgenre.LastGenrePlugin.fetch_album_genre = mock_fetch_album_genre
-    lastgenre.LastGenrePlugin.fetch_artist_genre = mock_fetch_artist_genre
+    lastgenre.client.LastFmClient.fetch_track_genre = mock_fetch_track_genre
+    lastgenre.client.LastFmClient.fetch_album_genre = mock_fetch_album_genre
+    lastgenre.client.LastFmClient.fetch_artist_genre = mock_fetch_artist_genre
 
     # Initialize plugin instance and item
     plugin = lastgenre.LastGenrePlugin()
