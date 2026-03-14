@@ -1,5 +1,3 @@
-from beets import ui
-
 from .color import (
     ESC_TEXT_REGEX,
     RESET_COLOR,
@@ -146,9 +144,7 @@ def split_into_lines(string, width_tuple):
     return result
 
 
-def print_column_layout(
-    indent_str, left, right, separator=" -> ", max_width=ui.term_width()
-):
+def get_column_layout(indent_str, left, right, separator, max_width):
     """Print left & right data, with separator inbetween
     'left' and 'right' have a structure of:
     {'prefix':u'','contents':u'','suffix':u'','width':0}
@@ -170,7 +166,7 @@ def print_column_layout(
     )
     if color_len(first_line_no_wrap) < max_width:
         # Everything fits, print out line.
-        ui.print_(first_line_no_wrap)
+        yield first_line_no_wrap
     else:
         # Wrap into columns
         if "width" not in left or "width" not in right:
@@ -273,12 +269,10 @@ def print_column_layout(
                 out += "\n"
 
         # Constructed all of the columns, now print
-        ui.print_(out)
+        yield out
 
 
-def print_newline_layout(
-    indent_str, left, right, separator=" -> ", max_width=ui.term_width()
-):
+def get_newline_layout(indent_str, left, right, separator, max_width):
     """Prints using a newline separator between left & right if
     they go over their allocated widths. The datastructures are
     shared with the column layout. In contrast to the column layout,
@@ -301,7 +295,7 @@ def print_newline_layout(
     )
     if color_len(first_line_no_wrap) < max_width:
         # Everything fits, print out line.
-        ui.print_(first_line_no_wrap)
+        yield first_line_no_wrap
     else:
         # Newline separation, with wrapping
         empty_space = max_width - len(indent_str)
@@ -323,12 +317,12 @@ def print_newline_layout(
         right_split = split_into_lines(right_str, right_width_tuple)
         for i, line in enumerate(left_split):
             if i == 0:
-                ui.print_(f"{indent_str}{line}")
+                yield f"{indent_str}{line}"
             elif line != "":
                 # Ignore empty lines
-                ui.print_(f"{indent_str * 2}{line}")
+                yield f"{indent_str * 2}{line}"
         for i, line in enumerate(right_split):
             if i == 0:
-                ui.print_(f"{indent_str}{separator}{line}")
+                yield f"{indent_str}{separator}{line}"
             elif line != "":
-                ui.print_(f"{indent_str * 2}{line}")
+                yield f"{indent_str * 2}{line}"

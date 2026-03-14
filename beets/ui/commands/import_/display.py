@@ -12,7 +12,7 @@ from beets.autotag import hooks
 from beets.util import displayable_path
 from beets.util.color import colorize, dist_colorize, uncolorize
 from beets.util.diff import colordiff
-from beets.util.layout import indent, print_column_layout, print_newline_layout
+from beets.util.layout import get_column_layout, get_newline_layout, indent
 from beets.util.units import human_seconds_short
 
 if TYPE_CHECKING:
@@ -84,10 +84,10 @@ class ChangeRepresentation:
         if not max_width:
             # If no max_width provided, use terminal width
             max_width = ui.term_width()
-        if self.layout == 0:
-            print_column_layout(indent, left, right, separator, max_width)
-        else:
-            print_newline_layout(indent, left, right, separator, max_width)
+
+        method = get_column_layout if self.layout == 0 else get_newline_layout
+        for line in method(indent, left, right, separator, max_width):
+            ui.print_(line)
 
     def show_match_header(self) -> None:
         """Print out a 'header' identifying the suggested match (album name,
