@@ -58,7 +58,9 @@ class TestMissingAlbums(IOMixin, PluginMixin):
             )
         )
         requests_mock.get(
-            re.compile(rf"/ws/2/release-group\?artist={artist_mbid}&.*type=album"),
+            re.compile(
+                rf"/ws/2/release-group\?artist={artist_mbid}&.*type=album"
+            ),
             json={"release-groups": [release_from_mb]},
         )
 
@@ -168,7 +170,9 @@ class TestMissingAlbums(IOMixin, PluginMixin):
             )
         )
         requests_mock.get(
-            re.compile(rf"/ws/2/release-group\?artist={artist_mbid}&.*type=album"),
+            re.compile(
+                rf"/ws/2/release-group\?artist={artist_mbid}&.*type=album"
+            ),
             json={
                 "release-groups": [
                     {"id": "album_id", "title": "album"},
