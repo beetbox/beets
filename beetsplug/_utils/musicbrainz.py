@@ -109,6 +109,7 @@ class BrowseReleaseGroupsKwargs(BrowseKwargs, total=False):
     artist: NotRequired[str]
     collection: NotRequired[str]
     release: NotRequired[str]
+    type: NotRequired[str]
 
 
 class BrowseRecordingsKwargs(BrowseReleaseGroupsKwargs, total=False):
@@ -283,8 +284,9 @@ class MusicBrainzAPI(RequestHandler):
         """Browse release groups related to the given entities.
 
         At least one of artist, collection, or release must be provided.
+        Optionally filter by type (e.g., "album|ep").
         """
-        return self._get_resource("release-group", **kwargs)["release-groups"]
+        return self._browse("release-group", **kwargs)
 
     @singledispatchmethod
     @classmethod
