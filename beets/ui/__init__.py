@@ -46,7 +46,7 @@ from beets.util.color import (
     uncolorize,
 )
 from beets.util.deprecation import deprecate_for_maintainers
-from beets.util.diff import _field_diff
+from beets.util.diff import get_model_changes
 from beets.util.functemplate import template
 
 if TYPE_CHECKING:
@@ -802,32 +802,14 @@ def show_model_changes(
     always: bool = False,
     print_obj: bool = True,
 ) -> bool:
-    """Given a Model object, print a list of changes from its pristine
-    version stored in the database. Return a boolean indicating whether
-    any changes were found.
+    """Print a diff of changes between two library model states.
 
-    `old` may be the "original" object to avoid using the pristine
-    version from the database. `fields` may be a list of fields to
-    restrict the detection to. `always` indicates whether the object is
-    always identified, regardless of whether any changes are present.
+    Optionally prints the original object label before listing field-level
+    changes when `print_obj` is enabled. When `always` is set, the object
+    label is printed even if no changes are detected. Returns whether any
+    changes were found.
     """
-    old = old or new.get_fresh_from_db()
-
-    # Keep the formatted views around instead of re-creating them in each
-    # iteration step
-    old_fmt = old.formatted()
-    new_fmt = new.formatted()
-
-    # Build up lines showing changed fields.
-    diff_fields = (set(old) | set(new)) - {"mtime"}
-    if allowed_fields := set(fields or {}):
-        diff_fields &= allowed_fields
-
-    changes = [
-        d
-        for f in sorted(diff_fields)
-        if (d := _field_diff(f, old_fmt, new_fmt))
-    ]
+    changes = get_model_changes(new, old, fields)
 
     # Print changes.
     if print_obj and (changes or always):

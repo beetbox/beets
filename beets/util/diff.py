@@ -6,7 +6,10 @@ from typing import TYPE_CHECKING
 from .color import colorize
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from beets.dbcore.db import FormattedMapping
+    from beets.library.models import LibModel
 
 
 def colordiff(a: str, b: str) -> tuple[str, str]:
@@ -79,3 +82,33 @@ def _field_diff(
         newstr = colorize("text_diff_added", newstr)
 
     return f"{field}: {oldstr} -> {newstr}"
+
+
+def get_model_changes(
+    new: LibModel,
+    old: LibModel | None,
+    fields: Iterable[str] | None,
+) -> list[str]:
+    """Compute human-readable diff lines for changed fields between two models.
+
+    Compares `new` against `old`, falling back to the database version of
+    `new` when `old` is not provided. When `fields` is given, only those
+    fields are considered. The `mtime` field is always excluded.
+    """
+    old = old or new.get_fresh_from_db()
+
+    # Keep the formatted views around instead of re-creating them in each
+    # iteration step
+    old_fmt = old.formatted()
+    new_fmt = new.formatted()
+
+    # Build up lines showing changed fields.
+    diff_fields = (set(old) | set(new)) - {"mtime"}
+    if allowed_fields := set(fields or {}):
+        diff_fields &= allowed_fields
+
+    return [
+        d
+        for f in sorted(diff_fields)
+        if (d := _field_diff(f, old_fmt, new_fmt))
+    ]
