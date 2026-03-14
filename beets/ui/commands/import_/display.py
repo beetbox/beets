@@ -10,12 +10,7 @@ from beets.autotag import hooks
 from beets.util import displayable_path
 from beets.util.color import colorize, dist_colorize, uncolorize
 from beets.util.diff import colordiff
-from beets.util.layout import (
-    Side,
-    get_column_layout,
-    get_newline_layout,
-    indent,
-)
+from beets.util.layout import Side, get_layout_lines, indent
 from beets.util.units import human_seconds_short
 
 if TYPE_CHECKING:
@@ -63,15 +58,8 @@ class ChangeRepresentation:
     def indent_tracklist(self) -> str:
         return indent(self._indentation_config["match_tracklist"].get(int))
 
-    @cached_property
-    def layout(self) -> int:
-        return config["ui"]["import"]["layout"].as_choice(
-            {"column": 0, "newline": 1}
-        )
-
     def print_layout(self, indent: str, left: Side, right: Side) -> None:
-        method = get_column_layout if self.layout == 0 else get_newline_layout
-        for line in method(indent, left, right, ui.term_width()):
+        for line in get_layout_lines(indent, left, right, ui.term_width()):
             ui.print_(line)
 
     def show_match_header(self) -> None:
