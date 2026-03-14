@@ -31,6 +31,8 @@ library:
                           You can provide this argument multiple times to
                           specify multiple release types to filter to. If not
                           provided, defaults to just the "album" release type.
+                          provided, it uses the configured
+                          ``missing.release_type`` (default: "album").
 
 …or by editing the corresponding configuration options.
 

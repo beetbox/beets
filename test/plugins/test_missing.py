@@ -58,7 +58,7 @@ class TestMissingAlbums(IOMixin, PluginMixin):
             )
         )
         requests_mock.get(
-            f"/ws/2/release-group?artist={artist_mbid}",
+            re.compile(rf"/ws/2/release-group\?artist={artist_mbid}&.*type=album"),
             json={"release-groups": [release_from_mb]},
         )
 
@@ -128,6 +128,33 @@ class TestMissingAlbums(IOMixin, PluginMixin):
         assert "artist - compilation" in output
         assert "artist - title 2" in output
 
+    def test_no_release_type_sends_empty_type_param(self, requests_mock):
+        """Test that empty release_types config sends empty type parameter.
+
+        When release_types is empty, type="" is sent to the MusicBrainz API.
+        This behaves the same as not passing type at all, returning all
+        release groups without filtering by type.
+        """
+        artist_mbid = str(uuid.uuid4())
+        self.lib.add(
+            Album(
+                album="album",
+                albumartist="artist",
+                mb_albumartistid=artist_mbid,
+                mb_albumid="album",
+                mb_releasegroupid="album_id",
+            )
+        )
+        adapter = requests_mock.get(
+            re.compile(r"/ws/2/release-group"),
+            json={"release-groups": [{"id": "other_id", "title": "other"}]},
+        )
+
+        with self.configure_plugin({"release_types": []}):
+            self.run_with_output("missing", "-a")
+
+        assert adapter.last_request.qs["type"] == [""]
+
     def test_missing_albums_total(self, requests_mock):
         """Test -t flag with --album shows total count of missing albums."""
         artist_mbid = str(uuid.uuid4())
@@ -141,7 +168,7 @@ class TestMissingAlbums(IOMixin, PluginMixin):
             )
         )
         requests_mock.get(
-            f"/ws/2/release-group?artist={artist_mbid}",
+            re.compile(rf"/ws/2/release-group\?artist={artist_mbid}&.*type=album"),
             json={
                 "release-groups": [
                     {"id": "album_id", "title": "album"},
