@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import textwrap
 from dataclasses import dataclass
 from functools import cached_property
 from typing import TYPE_CHECKING
@@ -8,18 +9,15 @@ from typing import TYPE_CHECKING
 from beets import config, ui
 from beets.autotag import hooks
 from beets.util import displayable_path
-from beets.util.color import colorize, dist_colorize
+from beets.util.color import colorize
 from beets.util.diff import colordiff
 from beets.util.layout import Side, get_layout_lines, indent
 from beets.util.units import human_seconds_short
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
-
     import confuse
 
     from beets import autotag
-    from beets.autotag.distance import Distance
     from beets.library.models import Item
     from beets.util.color import ColorName
 
@@ -47,8 +45,12 @@ class ChangeRepresentation:
         return config["ui"]["import"]["indentation"]
 
     @cached_property
+    def indent(self) -> int:
+        return self._indentation_config["match_header"].get(int)
+
+    @cached_property
     def indent_header(self) -> str:
-        return indent(self._indentation_config["match_header"].get(int))
+        return indent(self.indent)
 
     @cached_property
     def indent_detail(self) -> str:
@@ -68,33 +70,29 @@ class ChangeRepresentation:
         the user accept the match.
         """
         # Print newline at beginning of change block.
-        ui.print_("")
+        parts = [""]
 
         # 'Match' line and similarity.
-        ui.print_(
-            f"{self.indent_header}Match ({dist_string(self.match.distance)}):"
+        parts.append(f"Match ({self.match.distance.string}):")
+        parts.append(
+            ui.colorize(
+                self.match.distance.color,
+                f"{self.match.info.artist} - {self.match.info.name}",
+            )
         )
 
-        artist_name_str = f"{self.match.info.artist} - {self.match.info.name}"
-        ui.print_(
-            self.indent_header
-            + dist_colorize(artist_name_str, self.match.distance)
-        )
+        if penalty_keys := self.match.distance.generic_penalty_keys:
+            parts.append(
+                ui.colorize("changed", f"\u2260 {', '.join(penalty_keys)}")
+            )
 
-        # Penalties.
-        penalties = penalty_string(self.match.distance)
-        if penalties:
-            ui.print_(f"{self.indent_header}{penalties}")
+        if disambig := self.match.disambig_string:
+            parts.append(disambig)
 
-        # Disambiguation.
-        disambig = disambig_string(self.match.info)
-        if disambig:
-            ui.print_(f"{self.indent_header}{disambig}")
+        if data_url := self.match.info.data_url:
+            parts.append(ui.colorize("text_faint", f"{data_url}"))
 
-        # Data URL.
-        if self.match.info.data_url:
-            url = colorize("text_faint", f"{self.match.info.data_url}")
-            ui.print_(f"{self.indent_header}{url}")
+        ui.print_(textwrap.indent("\n".join(parts), self.indent_header))
 
     def show_match_details(self) -> None:
         """Print out the details of the match, including changes in album name
@@ -397,97 +395,3 @@ def show_item_change(item: Item, match: hooks.TrackMatch) -> None:
     change.show_match_header()
     # Print the match details.
     change.show_match_details()
-
-
-def disambig_string(info: hooks.Info) -> str:
-    """Generate a string for an AlbumInfo or TrackInfo object that
-    provides context that helps disambiguate similar-looking albums and
-    tracks.
-    """
-    if isinstance(info, hooks.AlbumInfo):
-        disambig = get_album_disambig_fields(info)
-    elif isinstance(info, hooks.TrackInfo):
-        disambig = get_singleton_disambig_fields(info)
-    else:
-        return ""
-
-    return ", ".join(disambig)
-
-
-def get_singleton_disambig_fields(info: hooks.TrackInfo) -> Sequence[str]:
-    out = []
-    chosen_fields = config["match"]["singleton_disambig_fields"].as_str_seq()
-    calculated_values = {
-        "index": f"Index {info.index}",
-        "track_alt": f"Track {info.track_alt}",
-        "album": (
-            f"[{info.album}]"
-            if (
-                config["import"]["singleton_album_disambig"].get()
-                and info.get("album")
-            )
-            else ""
-        ),
-    }
-
-    for field in chosen_fields:
-        if field in calculated_values:
-            out.append(str(calculated_values[field]))
-        else:
-            try:
-                out.append(str(info[field]))
-            except (AttributeError, KeyError):
-                print(f"Disambiguation string key {field} does not exist.")
-
-    return out
-
-
-def get_album_disambig_fields(info: hooks.AlbumInfo) -> Sequence[str]:
-    out = []
-    chosen_fields = config["match"]["album_disambig_fields"].as_str_seq()
-    calculated_values = {
-        "media": (
-            f"{info.mediums}x{info.media}"
-            if (info.mediums and info.mediums > 1)
-            else info.media
-        ),
-    }
-
-    for field in chosen_fields:
-        if field in calculated_values:
-            out.append(str(calculated_values[field]))
-        else:
-            try:
-                out.append(str(info[field]))
-            except (AttributeError, KeyError):
-                print(f"Disambiguation string key {field} does not exist.")
-
-    return out
-
-
-def dist_string(dist: Distance) -> str:
-    """Formats a distance (a float) as a colorized similarity percentage
-    string.
-    """
-    string = f"{(1 - dist) * 100:.1f}%"
-    return dist_colorize(string, dist)
-
-
-def penalty_string(distance: Distance, limit: int | None = None) -> str:
-    """Returns a colorized string that indicates all the penalties
-    applied to a distance object.
-    """
-    penalties = []
-    for key in distance.keys():
-        key = key.replace("album_", "")
-        key = key.replace("track_", "")
-        key = key.replace("_", " ")
-        penalties.append(key)
-    if penalties:
-        if limit and len(penalties) > limit:
-            penalties = [*penalties[:limit], "..."]
-        # Prefix penalty string with U+2260: Not Equal To
-        penalty_string = f"\u2260 {', '.join(penalties)}"
-        return colorize("changed", penalty_string)
-
-    return ""

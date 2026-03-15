@@ -19,20 +19,26 @@ from __future__ import annotations
 from copy import deepcopy
 from dataclasses import dataclass
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
 from typing_extensions import Self
 
-from beets import plugins
+from beets import config, logging, plugins
 from beets.util import cached_classproperty
 from beets.util.deprecation import deprecate_for_maintainers
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from beets.library import Item
 
     from .distance import Distance
 
 V = TypeVar("V")
+
+JSONDict = dict[str, Any]
+
+log = logging.getLogger("beets")
 
 
 # Classes used to represent candidate options.
@@ -268,6 +274,8 @@ class TrackInfo(Info):
 # Structures that compose all the information for a candidate match.
 @dataclass
 class Match:
+    disambig_fields_key: ClassVar[str]
+
     distance: Distance
     info: Info
 
@@ -275,9 +283,38 @@ class Match:
     def type(cls) -> str:
         return cls.__name__.removesuffix("Match")  # type: ignore[attr-defined]
 
+    @property
+    def disambig_fields(self) -> Sequence[str]:
+        chosen_fields = config["match"][self.disambig_fields_key].as_str_seq()
+        valid_fields = [f for f in chosen_fields if f in self.info]
+        if missing_fields := set(chosen_fields) - set(valid_fields):
+            log.warning(
+                "Disambiguation string keys {} do not exist.", missing_fields
+            )
+
+        return valid_fields
+
+    @property
+    def base_disambig_data(self) -> JSONDict:
+        return {}
+
+    @property
+    def disambig_string(self) -> str:
+        """Build a display string from the candidate's disambiguation fields.
+
+        Merges base disambiguation data with instance-specific field values,
+        then formats them as a comma-separated string in field definition order.
+        """
+        data = {
+            k: self.info[k] for k in self.disambig_fields
+        } | self.base_disambig_data
+        return ", ".join(str(data[k]) for k in self.disambig_fields)
+
 
 @dataclass
 class AlbumMatch(Match):
+    disambig_fields_key = "album_disambig_fields"
+
     info: AlbumInfo
     mapping: dict[Item, TrackInfo]
     extra_items: list[Item]
@@ -295,7 +332,34 @@ class AlbumMatch(Match):
     def items(self) -> list[Item]:
         return [i for i, _ in self.item_info_pairs]
 
+    @property
+    def base_disambig_data(self) -> JSONDict:
+        return {
+            "media": (
+                f"{mediums}x{self.info.media}"
+                if (mediums := self.info.mediums) and mediums > 1
+                else self.info.media
+            ),
+        }
+
 
 @dataclass
 class TrackMatch(Match):
+    disambig_fields_key = "singleton_disambig_fields"
+
     info: TrackInfo
+
+    @property
+    def base_disambig_data(self) -> JSONDict:
+        return {
+            "index": f"Index {self.info.index}",
+            "track_alt": f"Track {self.info.track_alt}",
+            "album": (
+                f"[{self.info.album}]"
+                if (
+                    config["import"]["singleton_album_disambig"].get()
+                    and self.info.album
+                )
+                else ""
+            ),
+        }
