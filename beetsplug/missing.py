@@ -159,12 +159,12 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             ),
         )
         self._command.parser.add_option(
-            "--release-type",
-            dest="release_types",
+            "--release-types",
             action="append",
+            dest="release_types",
             help=(
-                "select release types for missing albums for artist "
-                f"from ({', '.join(VALID_RELEASE_TYPES)})"
+                "comma-separated list of release types for missing albums "
+                f"(valid: {', '.join(VALID_RELEASE_TYPES)})"
             ),
         )
         self._command.parser.add_format_option()
@@ -226,7 +226,9 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             album_ids_by_artist[artist].add(album["mb_releasegroupid"])
 
         total_missing = 0
-        release_types = self.config["release_types"].as_str_seq()
+        release_types = []
+        for rt in self.config["release_types"].as_str_seq():
+            release_types.extend(rt.split(","))
         calculating_total = self.config["total"].get()
         for (artist, artist_id), album_ids in album_ids_by_artist.items():
             try:

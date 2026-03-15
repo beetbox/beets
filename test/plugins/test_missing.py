@@ -67,8 +67,8 @@ class TestMissingAlbums(IOMixin, PluginMixin):
         with self.configure_plugin({}):
             assert self.run_with_output("missing", "--album") == expected_output
 
-    def test_release_type_filters_results(self, requests_mock):
-        """Test --release-type filters to only show specified type."""
+    def test_release_types_filters_results(self, requests_mock):
+        """Test --release-types filters to only show specified type."""
         artist_mbid = str(uuid.uuid4())
         self.lib.add(
             Album(
@@ -90,13 +90,13 @@ class TestMissingAlbums(IOMixin, PluginMixin):
 
         with self.configure_plugin({}):
             output = self.run_with_output(
-                "missing", "-a", "--release-type", "compilation"
+                "missing", "-a", "--release-types", "compilation"
             )
 
         assert "artist - compilation" in output
 
-    def test_release_type_multiple_types(self, requests_mock):
-        """Test multiple --release-type flags include all specified types."""
+    def test_release_types_comma_separated(self, requests_mock):
+        """Test --release-types with comma-separated values."""
         artist_mbid = str(uuid.uuid4())
         self.lib.add(
             Album(
@@ -121,22 +121,15 @@ class TestMissingAlbums(IOMixin, PluginMixin):
             output = self.run_with_output(
                 "missing",
                 "-a",
-                "--release-type",
-                "compilation",
-                "--release-type",
-                "album",
+                "--release-types",
+                "compilation,album",
             )
 
         assert "artist - compilation" in output
         assert "artist - title 2" in output
 
-    def test_no_release_type_sends_empty_type_param(self, requests_mock):
-        """Test that empty release_types config sends empty type parameter.
-
-        When release_types is empty, type="" is sent to the MusicBrainz API.
-        This behaves the same as not passing type at all, returning all
-        release groups without filtering by type.
-        """
+    def test_empty_release_types_config_sends_empty_type(self, requests_mock):
+        """Test that release_types: [] in config sends type="" to the API."""
         artist_mbid = str(uuid.uuid4())
         self.lib.add(
             Album(
@@ -149,7 +142,7 @@ class TestMissingAlbums(IOMixin, PluginMixin):
         )
         adapter = requests_mock.get(
             re.compile(r"/ws/2/release-group"),
-            json={"release-groups": [{"id": "other_id", "title": "other"}]},
+            json={"release-groups": []},
         )
 
         with self.configure_plugin({"release_types": []}):
