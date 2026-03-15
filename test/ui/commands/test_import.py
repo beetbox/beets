@@ -1,5 +1,4 @@
 import os
-import re
 import unittest
 from unittest.mock import Mock, patch
 
@@ -56,124 +55,96 @@ class ImportTest(BeetsTestCase):
         assert actual_paths == expected_paths
 
 
-class ShowChangeTest(IOMixin, unittest.TestCase):
-    def setUp(self):
-        super().setUp()
-
-        self.items = [_common.item()]
-        self.items[0].track = 1
-        self.items[0].path = b"/path/to/file.mp3"
-        self.info = autotag.AlbumInfo(
-            album="the album",
+@patch("beets.ui.term_width", Mock(return_value=54))
+class ShowChangeTestCase(IOMixin, BeetsTestCase):
+    def _show_change(self):
+        """Return an unicode string representing the changes"""
+        long_name = f"a{' very' * 10} long name"
+        items = [
+            _common.item(track=1, title="first title"),
+            _common.item(track=2, title="", path=b"/path/to/file.mp3"),
+            _common.item(track=3, title="caf\xe9"),
+            _common.item(track=4, title=f"title with {long_name}"),
+        ]
+        info = autotag.AlbumInfo(
+            album="caf\xe9",
             album_id="album id",
             artist="the artist",
             artist_id="artist id",
             tracks=[
-                autotag.TrackInfo(
-                    title="the title", track_id="track id", index=1
-                )
+                autotag.TrackInfo(title="first title", index=1),
+                autotag.TrackInfo(title="second title", index=2),
+                autotag.TrackInfo(title="third title", index=3),
+                autotag.TrackInfo(title="fourth title", index=4),
             ],
         )
-
-    def _show_change(
-        self,
-        items=None,
-        info=None,
-        color=False,
-        cur_artist="the artist",
-        cur_album="the album",
-        dist=0.1,
-    ):
-        """Return an unicode string representing the changes"""
-        items = items or self.items
-        info = info or self.info
         item_info_pairs = list(zip(items, info.tracks))
-        config["ui"]["color"] = color
-        config["import"]["detail"] = True
+        self.config["ui"]["color"] = False
+        self.config["import"]["detail"] = True
         change_dist = distance(items, info, item_info_pairs)
-        change_dist._penalties = {"album": [dist], "artist": [dist]}
+        change_dist._penalties = {"album": [0.1], "artist": [0.1]}
         show_change(
-            cur_artist,
-            cur_album,
+            f"another artist with {long_name}",
+            "another album",
             autotag.AlbumMatch(
                 change_dist, info, dict(item_info_pairs), set(), set()
             ),
         )
-        return self.io.getoutput().lower()
+        return self.io.getoutput()
 
-    def test_null_change(self):
+    def test_newline_layout(self):
+        self.config["ui"]["import"]["layout"] = "newline"
         msg = self._show_change()
-        assert "match (90.0%)" in msg
-        assert "album, artist" in msg
-
-    def test_album_data_change(self):
-        msg = self._show_change(
-            cur_artist="another artist", cur_album="another album"
+        assert (
+            msg
+            == """
+  Match (90.0%):
+  the artist - café
+  ≠ album, artist
+  None, None, None, None, None, None, None
+  ≠ Artist: another artist with a very very very very
+    very very very very very very long name
+   -> the artist
+  ≠ Album: another album -> café
+     * (#1) first title (1:00)
+     ≠ (#2) file.mp3 (1:00)
+      -> (#2) second title (0:00)
+     ≠ (#3) café (1:00) -> (#3) third title (0:00)
+     ≠ (#4) title with a very very very very very very
+          very very very very long name (1:00)
+      -> (#4) fourth title (0:00)
+"""
         )
-        assert "another artist -> the artist" in msg
-        assert "another album -> the album" in msg
 
-    def test_item_data_change(self):
-        self.items[0].title = "different"
+    def test_column_layout(self):
+        self.config["ui"]["import"]["layout"] = "column"
         msg = self._show_change()
-        assert "different" in msg
-        assert "the title" in msg
-
-    def test_item_data_change_with_unicode(self):
-        self.items[0].title = "caf\xe9"
-        msg = self._show_change()
-        assert "caf\xe9" in msg
-        assert "the title" in msg
-
-    def test_album_data_change_with_unicode(self):
-        msg = self._show_change(cur_artist="caf\xe9", cur_album="another album")
-        assert "caf\xe9" in msg
-        assert "the artist" in msg
-
-    def test_item_data_change_title_missing(self):
-        self.items[0].title = ""
-        msg = re.sub(r"  +", " ", self._show_change())
-        assert "file.mp3" in msg
-        assert "the title" in msg
-
-    def test_item_data_change_title_missing_with_unicode_filename(self):
-        self.items[0].title = ""
-        self.items[0].path = "/path/to/caf\xe9.mp3".encode()
-        msg = re.sub(r"  +", " ", self._show_change())
-        assert "caf\xe9.mp3" in msg or "caf.mp3" in msg
-
-    def test_album_data_change_wrap_newline(self):
-        # Patch ui.term_width to force wrapping
-        with patch("beets.ui.term_width", return_value=30):
-            # Test newline layout
-            config["ui"]["import"]["layout"] = "newline"
-            long_name = f"another artist with a{' very' * 10} long name"
-            msg = self._show_change(
-                cur_artist=long_name, cur_album="another album"
-            )
-            assert "artist: another artist" in msg
-            assert "  -> the artist" in msg
-            assert "another album -> the album" not in msg
-
-    def test_item_data_change_wrap_column(self):
-        # Patch ui.term_width to force wrapping
-        with patch("beets.ui.term_width", return_value=54):
-            # Test Column layout
-            config["ui"]["import"]["layout"] = "column"
-            long_title = f"a track with a{' very' * 10} long name"
-            self.items[0].title = long_title
-            msg = self._show_change()
-            assert "(#1) a track (1:00) -> (#1) the title (0:00)" in msg
-
-    def test_item_data_change_wrap_newline(self):
-        # Patch ui.term_width to force wrapping
-        with patch("beets.ui.term_width", return_value=30):
-            config["ui"]["import"]["layout"] = "newline"
-            long_title = f"a track with a{' very' * 10} long name"
-            self.items[0].title = long_title
-            msg = self._show_change()
-            assert "(#1) a track with" in msg
-            assert "     -> (#1) the title (0:00)" in msg
+        assert (
+            msg
+            == """
+  Match (90.0%):
+  the artist - café
+  ≠ album, artist
+  None, None, None, None, None, None, None
+  ≠ Artist: another artist -> the artist              
+            with a very                               
+            very very very                            
+            very very very                            
+            very very very                            
+            long name                                 
+  ≠ Album: another album -> café
+     * (#1) first title (1:00)
+     ≠ (#2) file.mp (1:00) -> (#2) second    (0:00)
+            3                      title           
+     ≠ (#3) café (1:00) -> (#3) third title (0:00)
+     ≠ (#4) title   (1:00) -> (#4) fourth    (0:00)
+            with a very            title           
+            very very very                         
+            very very very                         
+            very very very                         
+            long name                              
+"""  # noqa: W291
+        )
 
 
 @patch("beets.library.Item.try_filesize", Mock(return_value=987))
