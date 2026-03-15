@@ -44,16 +44,14 @@ def indent(count: int) -> str:
     return " " * count
 
 
-def split_into_lines(string: str, widths: tuple[int, int, int]) -> list[str]:
-    """Splits string into a list of substrings at whitespace.
+def split_into_lines(string: str, first_width: int, width: int) -> list[str]:
+    """Split string into a list of substrings at whitespace.
 
-    `widths` is a 3-tuple of `(first_width, last_width, middle_width)`.
-    The first substring has a length not longer than `first_width`, the last
-    substring has a length not longer than `last_width`, and all other
-    substrings have a length not longer than `middle_width`.
+    The first substring has a length not longer than `first_width`, and the rest
+    of substrings have a length not longer than `width`.
+
     `string` may contain ANSI codes at word borders.
     """
-    first_width, middle_width, last_width = widths
     words = []
 
     if uncolorize(string) == string:
@@ -131,7 +129,7 @@ def split_into_lines(string: str, widths: tuple[int, int, int]) -> list[str]:
             pot_substr = " ".join([next_substr, words[i]])
         # Find out if the pot(ential)_substr fits into the next substring.
         fits_first = len(result) == 0 and color_len(pot_substr) <= first_width
-        fits_middle = len(result) != 0 and color_len(pot_substr) <= middle_width
+        fits_middle = len(result) != 0 and color_len(pot_substr) <= width
         if fits_first or fits_middle:
             # Fitted(!) let's try and add another word before appending
             next_substr = pot_substr
@@ -140,7 +138,7 @@ def split_into_lines(string: str, widths: tuple[int, int, int]) -> list[str]:
             # Extra word didn't fit, append what we have
             result.append(next_substr)
             next_substr = words[i]
-            previous_fit = color_len(next_substr) <= middle_width
+            previous_fit = color_len(next_substr) <= width
         else:
             # Didn't fit anywhere
             if uncolorize(pot_substr) == pot_substr:
@@ -151,8 +149,8 @@ def split_into_lines(string: str, widths: tuple[int, int, int]) -> list[str]:
                     # add rest of word to next line
                     next_substr = pot_substr[first_width:]
                 else:
-                    result.append(pot_substr[:middle_width])
-                    next_substr = pot_substr[middle_width:]
+                    result.append(pot_substr[:width])
+                    next_substr = pot_substr[width:]
             else:
                 # Colored strings
                 if len(result) == 0:
@@ -160,19 +158,14 @@ def split_into_lines(string: str, widths: tuple[int, int, int]) -> list[str]:
                     result.append(this_line)
                     next_substr = next_line
                 else:
-                    this_line, next_line = color_split(pot_substr, middle_width)
+                    this_line, next_line = color_split(pot_substr, width)
                     result.append(this_line)
                     next_substr = next_line
-            previous_fit = color_len(next_substr) <= middle_width
+            previous_fit = color_len(next_substr) <= width
 
     # We finished constructing the substrings, but the last substring
     # has not yet been added to the result.
     result.append(next_substr)
-    # Also, the length of the last substring was only checked against
-    # `middle_width`. Append an empty substring as the new last substring if
-    # the last substring is too long.
-    if not color_len(next_substr) <= last_width:
-        result.append("")
     return result
 
 
@@ -202,21 +195,19 @@ def get_column_layout(
         right = right._replace(width=width)
     # On the first line, account for suffix as well as prefix
     left_width_without_prefix = left.width - left.prefix_width
-    left_widths = (
+    left_split = split_into_lines(
+        left.contents,
         left_width_without_prefix - left.suffix_width,
         left_width_without_prefix,
-        left_width_without_prefix,
     )
 
-    left_split = split_into_lines(left.contents, left_widths)
     right_width_without_prefix = right.width - right.prefix_width
-    right_widths = (
+    right_split = split_into_lines(
+        right.contents,
         right_width_without_prefix - right.suffix_width,
         right_width_without_prefix,
-        right_width_without_prefix,
     )
 
-    right_split = split_into_lines(right.contents, right_widths)
     max_line_count = max(len(left_split), len(right_split))
 
     out = ""
@@ -314,19 +305,17 @@ def get_newline_layout(
     width_without_prefix = max_width - len(indent_str)
     width_without_double_prefix = max_width - 2 * len(indent_str)
     # On lower lines we will double the indent for clarity
-    left_widths = (
+    left_split = split_into_lines(
+        left.rendered,
         width_without_prefix,
         width_without_double_prefix,
-        width_without_double_prefix,
     )
-    left_split = split_into_lines(left.rendered, left_widths)
     # Repeat calculations for rhs, including separator on first line
-    right_widths = (
+    right_split = split_into_lines(
+        right.rendered,
         width_without_prefix - len(separator),
         width_without_double_prefix,
-        width_without_double_prefix,
     )
-    right_split = split_into_lines(right.rendered, right_widths)
     for i, line in enumerate(left_split):
         if i == 0:
             yield f"{indent_str}{line}"
