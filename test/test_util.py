@@ -31,7 +31,7 @@ from beets.test import _common
 class UtilTest(unittest.TestCase):
     def test_open_anything(self):
         with _common.system_mock("Windows"):
-            assert util.open_anything() == "start"
+            assert util.open_anything() == 'cmd /c start ""'
 
         with _common.system_mock("Darwin"):
             assert util.open_anything() == "open"
