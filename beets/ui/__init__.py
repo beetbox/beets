@@ -472,11 +472,15 @@ def show_model_changes(
 ) -> bool:
     """Print a diff of changes between two library model states.
 
+    Compares `new` against `old`, falling back to the database version of
+    `new` when `old` is not provided.
+
     Optionally prints the original object label before listing field-level
     changes when `print_obj` is enabled. When `always` is set, the object
     label is printed even if no changes are detected. Returns whether any
     changes were found.
     """
+    old = old or new.get_fresh_from_db()
     changes = get_model_changes(new, old, fields)
 
     # Print changes.

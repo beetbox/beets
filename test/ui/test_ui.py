@@ -66,6 +66,20 @@ class PrintTest(IOMixin, unittest.TestCase):
                 del os.environ["LC_CTYPE"]
 
 
+class ShowModelChangesTest(IOMixin, BeetsTestCase):
+    def test_uses_database_state_when_old_not_provided(self):
+        item = self.add_item_fixture(title="old title")
+        old_label = format(item.get_fresh_from_db())
+
+        item.title = "new title"
+
+        assert ui.show_model_changes(item) is True
+        assert self.io.getoutput().splitlines() == [
+            old_label,
+            "  title: old title -> new title",
+        ]
+
+
 @_common.slow_test()
 class TestPluginTestCase(PluginTestCase):
     plugin = "test"
