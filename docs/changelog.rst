@@ -53,6 +53,9 @@ For plugin developers
 - :py:func:`beets.metadata_plugins.album_for_id` and
   :py:func:`beets.metadata_plugins.track_for_id` now require a ``data_source``
   argument and query only that provider.
+- Colorisation, diff and layout utility helpers previously imported from
+  :mod:`beets.ui` now live in :mod:`beets.util.color`, :mod:`beets.util.diff`,
+  and :mod:`beets.util.layout`. Update external imports accordingly.
 
 Other changes
 ~~~~~~~~~~~~~
