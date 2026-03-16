@@ -17,6 +17,13 @@ if TYPE_CHECKING:
 
 
 class Side(NamedTuple):
+    """A labeled segment of a two-column layout row with optional fixed width.
+
+    Holds prefix, content, and suffix strings that together form one side of
+    a formatted row. Width measurements account for ANSI color codes, which
+    do not contribute to visible character count.
+    """
+
     prefix: str
     contents: str
     suffix: str
@@ -24,18 +31,22 @@ class Side(NamedTuple):
 
     @property
     def rendered(self) -> str:
+        """Assemble the full display string by joining prefix, contents, and suffix."""
         return f"{self.prefix}{self.contents}{self.suffix}"
 
     @property
     def prefix_width(self) -> int:
+        """Visible character width of the prefix, excluding color codes."""
         return color_len(self.prefix)
 
     @property
     def suffix_width(self) -> int:
+        """Visible character width of the suffix, excluding color codes."""
         return color_len(self.suffix)
 
     @property
     def rendered_width(self) -> int:
+        """Visible character width of the fully assembled string."""
         return color_len(self.rendered)
 
 
