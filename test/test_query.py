@@ -337,6 +337,13 @@ class TestPathQuery:
 
         assert {i.title for i in lib.items(q)} == set(expected_titles)
 
+    def test_absolute(self, lib, helper):
+        q = f"path::{helper.lib_path / '/aaa/bb/c.mp3'}"
+
+        assert {i.title for i in lib.items(q)} == {"path item"}
+        item = lib.items(q)[0]
+        assert item._values_fixed["path"] == str(helper.lib_path / "/aaa/bb/c.mp3").encode()
+
     @pytest.mark.skipif(sys.platform == "win32", reason=WIN32_NO_IMPLICIT_PATHS)
     @pytest.mark.parametrize(
         "q, expected_titles",

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import platformdirs
 
 import beets
-from beets import dbcore
+from beets import context, dbcore
 from beets.util import normpath
 
 from . import migrations
@@ -40,6 +40,7 @@ class Library(dbcore.Database):
         super().__init__(path, timeout=timeout)
 
         self.directory = normpath(directory or platformdirs.user_music_path())
+        context.set_music_dir(self.directory)
 
         self.path_formats = path_formats
         self.replacements = replacements
