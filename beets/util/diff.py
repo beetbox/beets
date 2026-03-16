@@ -86,17 +86,15 @@ def _field_diff(
 
 def get_model_changes(
     new: LibModel,
-    old: LibModel | None,
+    old: LibModel,
     fields: Iterable[str] | None,
 ) -> list[str]:
     """Compute human-readable diff lines for changed fields between two models.
 
-    Compares `new` against `old`, falling back to the database version of
-    `new` when `old` is not provided. When `fields` is given, only those
-    fields are considered. The `mtime` field is always excluded.
+    Compares ``old`` and ``new`` across fixed and flex fields, excluding
+    internal ones like ``mtime``. If ``fields`` is provided, only the
+    specified subset is considered.
     """
-    old = old or new.get_fresh_from_db()
-
     # Keep the formatted views around instead of re-creating them in each
     # iteration step
     old_fmt = old.formatted()
