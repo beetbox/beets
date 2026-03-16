@@ -5,6 +5,7 @@ import pytest
 import yaml
 
 from beets import config, ui
+from beets.test import _common
 from beets.test.helper import BeetsTestCase, IOMixin
 
 
@@ -108,6 +109,22 @@ class ConfigCommandTest(IOMixin, BeetsTestCase):
                 self.run_command("config", "-e")
         execlp.assert_called_once_with(
             "please_open", "please_open", self.config_path
+        )
+
+    def test_edit_config_with_windows_default_open(self):
+        with (
+            _common.system_mock("Windows"),
+            patch("os.execlp") as execlp,
+        ):
+            self.run_command("config", "-e")
+
+        execlp.assert_called_once_with(
+            "cmd",
+            "cmd",
+            "/c",
+            "start",
+            "",
+            self.config_path,
         )
 
     def test_config_editor_not_found(self):

@@ -31,7 +31,7 @@ from beets.test import _common
 class UtilTest(unittest.TestCase):
     def test_open_anything(self):
         with _common.system_mock("Windows"):
-            assert util.open_anything() == "start"
+            assert util.open_anything() == 'cmd /c start ""'
 
         with _common.system_mock("Darwin"):
             assert util.open_anything() == "open"
@@ -49,6 +49,13 @@ class UtilTest(unittest.TestCase):
 
         util.interactive_open(["foo"], "bar")
         mock_execlp.assert_called_once_with("bar", "bar", "foo")
+
+    @patch("os.execlp")
+    def test_interactive_open_windows_start_command(self, mock_execlp):
+        util.interactive_open(["foo"], 'cmd /c start ""')
+        mock_execlp.assert_called_once_with(
+            "cmd", "cmd", "/c", "start", "", "foo"
+        )
 
     def test_sanitize_unix_replaces_leading_dot(self):
         with _common.platform_posix():
