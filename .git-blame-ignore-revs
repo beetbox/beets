@@ -167,3 +167,9 @@ ae3a2e5729e3c0a5acbd8967ba2f11f4c53acd09
 192217da5d70621089b06b06fff3dbcbeb4c0c4d
 # Add a changelog note
 b3f558584910ab4fc6aa185ec4a4c8554001ba24
+# Fix references to color utils
+a6fcb7ba0f237530ff394a423a7cbe2ac4853c91
+# Fix diff references
+1d54f2bf66506e7a45ce5e962106897e3c98f67a
+# Fix layout references
+ffb43290066c78cb72603b7e2a0a1c90056361dd

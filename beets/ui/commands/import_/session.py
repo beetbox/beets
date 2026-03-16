@@ -4,11 +4,11 @@ from itertools import chain
 from beets import autotag, config, importer, logging, plugins, ui
 from beets.autotag import Recommendation
 from beets.util import PromptChoice, displayable_path
+from beets.util.color import colorize, dist_colorize
 from beets.util.units import human_bytes, human_seconds_short
 
 from .display import (
     disambig_string,
-    dist_colorize,
     penalty_string,
     show_change,
     show_item_change,
@@ -30,9 +30,9 @@ class TerminalImportSession(importer.ImportSession):
         ui.print_()
 
         path_str0 = displayable_path(task.paths, "\n")
-        path_str = ui.colorize("import_path", path_str0)
+        path_str = colorize("import_path", path_str0)
         items_str0 = f"({len(task.items)} items)"
-        items_str = ui.colorize("import_path_items", items_str0)
+        items_str = colorize("import_path_items", items_str0)
         ui.print_(" ".join([path_str, items_str]))
 
         # Let plugins display info or prompt the user before we go through the
@@ -447,7 +447,7 @@ def choose_candidate(
                 if i == 0:
                     metadata = dist_colorize(metadata, match.distance)
                 else:
-                    metadata = ui.colorize("text_highlight_minor", metadata)
+                    metadata = colorize("text_highlight_minor", metadata)
                 line1 = [index, distance, metadata]
                 ui.print_(f"  {' '.join(line1)}")
 

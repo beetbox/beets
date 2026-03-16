@@ -22,6 +22,7 @@ from beets import config, ui, util
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 from beets.util import PromptChoice, get_temp_filename
+from beets.util.color import colorize
 
 # Indicate where arguments should be inserted into the command string.
 # If this is missing, they're placed at the end.
@@ -132,7 +133,7 @@ class PlayPlugin(BeetsPlugin):
             paths = [relpath(path, relative_to) for path in paths]
 
         if not selection:
-            ui.print_(ui.colorize("text_warning", f"No {item_type} to play."))
+            ui.print_(colorize("text_warning", f"No {item_type} to play."))
             return
 
         open_args = self._playlist_or_paths(paths)
@@ -197,7 +198,7 @@ class PlayPlugin(BeetsPlugin):
                 item_type += "s"
 
             ui.print_(
-                ui.colorize(
+                colorize(
                     "text_warning",
                     f"You are about to queue {len(selection)} {item_type}.",
                 )
