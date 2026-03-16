@@ -14,6 +14,7 @@
 
 """Send the results of a query to the configured music player as a playlist."""
 
+import random
 import shlex
 import subprocess
 from os.path import relpath
@@ -93,6 +94,12 @@ class PlayPlugin(BeetsPlugin):
             help="add additional arguments to the command",
         )
         play_command.parser.add_option(
+            "-R",
+            "--randomize",
+            action="store_true",
+            help="randomize the order of playlist entries",
+        )
+        play_command.parser.add_option(
             "-y",
             "--yes",
             action="store_true",
@@ -135,6 +142,9 @@ class PlayPlugin(BeetsPlugin):
         if not selection:
             ui.print_(colorize("text_warning", f"No {item_type} to play."))
             return
+
+        if opts.randomize:
+            random.shuffle(paths)
 
         open_args = self._playlist_or_paths(paths)
         open_args_str = [
