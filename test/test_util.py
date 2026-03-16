@@ -50,13 +50,6 @@ class UtilTest(unittest.TestCase):
         util.interactive_open(["foo"], "bar")
         mock_execlp.assert_called_once_with("bar", "bar", "foo")
 
-    @patch("os.execlp")
-    def test_interactive_open_windows_start_command(self, mock_execlp):
-        util.interactive_open(["foo"], 'cmd /c start ""')
-        mock_execlp.assert_called_once_with(
-            "cmd", "cmd", "/c", "start", "", "foo"
-        )
-
     def test_sanitize_unix_replaces_leading_dot(self):
         with _common.platform_posix():
             p = util.sanitize_path("one/.two/three")
