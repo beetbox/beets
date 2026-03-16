@@ -49,8 +49,8 @@ Bug fixes
 - :doc:`plugins/beatport`: Use ``va_name`` config for the album artist on VA
   releases instead of hardcoded "Various Artists". :bug:`6316`
 - :ref:`config-cmd` on Windows now uses ``cmd /c start ""`` for the default
-  editor fallback so ``beet config -e`` works when ``VISUAL`` and ``EDITOR``
-  are unset. :bug:`6436`
+  editor fallback so ``beet config -e`` works when ``VISUAL`` and ``EDITOR`` are
+  unset. :bug:`6436`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
