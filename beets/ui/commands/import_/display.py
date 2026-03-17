@@ -8,9 +8,9 @@ from typing import TYPE_CHECKING
 from beets import config, ui
 from beets.autotag import hooks
 from beets.util import displayable_path
-from beets.util.color import colorize, dist_colorize, uncolorize
+from beets.util.color import colorize, dist_colorize
 from beets.util.diff import colordiff
-from beets.util.layout import get_column_layout, get_newline_layout, indent
+from beets.util.layout import Side, get_layout_lines, indent
 from beets.util.units import human_seconds_short
 
 if TYPE_CHECKING:
@@ -22,7 +22,6 @@ if TYPE_CHECKING:
     from beets.autotag.distance import Distance
     from beets.library.models import Item
     from beets.util.color import ColorName
-    from beets.util.layout import Side
 
 VARIOUS_ARTISTS = "Various Artists"
 
@@ -59,26 +58,8 @@ class ChangeRepresentation:
     def indent_tracklist(self) -> str:
         return indent(self._indentation_config["match_tracklist"].get(int))
 
-    @cached_property
-    def layout(self) -> int:
-        return config["ui"]["import"]["layout"].as_choice(
-            {"column": 0, "newline": 1}
-        )
-
-    def print_layout(
-        self,
-        indent: str,
-        left: Side,
-        right: Side,
-        separator: str = " -> ",
-        max_width: int | None = None,
-    ) -> None:
-        if not max_width:
-            # If no max_width provided, use terminal width
-            max_width = ui.term_width()
-
-        method = get_column_layout if self.layout == 0 else get_newline_layout
-        for line in method(indent, left, right, separator, max_width):
+    def print_layout(self, indent: str, left: Side, right: Side) -> None:
+        for line in get_layout_lines(indent, left, right, ui.term_width()):
             ui.print_(line)
 
     def show_match_header(self) -> None:
@@ -124,16 +105,10 @@ class ChangeRepresentation:
         if artist_r == VARIOUS_ARTISTS:
             # Hide artists for VA releases.
             artist_l, artist_r = "", ""
-        left: Side
-        right: Side
         if artist_l != artist_r:
             artist_l, artist_r = colordiff(artist_l, artist_r)
-            left = {
-                "prefix": f"{self.changed_prefix} Artist: ",
-                "contents": artist_l,
-                "suffix": "",
-            }
-            right = {"prefix": "", "contents": artist_r, "suffix": ""}
+            left = Side(f"{self.changed_prefix} Artist: ", artist_l, "")
+            right = Side("", artist_r, "")
             self.print_layout(self.indent_detail, left, right)
 
         else:
@@ -144,12 +119,8 @@ class ChangeRepresentation:
             name_l, name_r = self.cur_name or "", self.match.info.name
             if self.cur_name != self.match.info.name != VARIOUS_ARTISTS:
                 name_l, name_r = colordiff(name_l, name_r)
-                left = {
-                    "prefix": f"{self.changed_prefix} {type_}: ",
-                    "contents": name_l,
-                    "suffix": "",
-                }
-                right = {"prefix": "", "contents": name_r, "suffix": ""}
+                left = Side(f"{self.changed_prefix} {type_}: ", name_l, "")
+                right = Side("", name_r, "")
                 self.print_layout(self.indent_detail, left, right)
             else:
                 ui.print_(f"{self.indent_detail}*", f"{type_}:", name_r)
@@ -284,23 +255,16 @@ class ChangeRepresentation:
         # the case, thus the 'info' dictionary is unneeded.
         # penalties = penalty_string(self.match.distance.tracks[track_info])
 
-        lhs: Side = {
-            "prefix": f"{self.changed_prefix if changed else '*'} {lhs_track} ",
-            "contents": lhs_title,
-            "suffix": f" {lhs_length}",
-        }
-        rhs: Side = {"prefix": "", "contents": "", "suffix": ""}
+        lhs = Side(
+            f"{self.changed_prefix if changed else '*'} {lhs_track} ",
+            lhs_title,
+            f" {lhs_length}",
+        )
         if not changed:
             # Only return the left side, as nothing changed.
-            return (lhs, rhs)
-        else:
-            # Construct a dictionary for the "changed to" side
-            rhs = {
-                "prefix": f"{rhs_track} ",
-                "contents": rhs_title,
-                "suffix": f" {rhs_length}",
-            }
-            return (lhs, rhs)
+            return (lhs, Side("", "", ""))
+
+        return (lhs, Side(f"{rhs_track} ", rhs_title, f" {rhs_length}"))
 
     def print_tracklist(self, lines: list[tuple[Side, Side]]) -> None:
         """Calculates column widths for tracks stored as line tuples:
@@ -310,27 +274,13 @@ class ChangeRepresentation:
             # If no lines provided, e.g. details not required, do nothing.
             return
 
-        def get_width(side: Side) -> int:
-            """Return the width of left or right in uncolorized characters."""
-            try:
-                return len(
-                    uncolorize(
-                        " ".join(
-                            [side["prefix"], side["contents"], side["suffix"]]
-                        )
-                    )
-                )
-            except KeyError:
-                # An empty dictionary -> Nothing to report
-                return 0
-
         # Check how to fit content into terminal window
         indent_width = len(self.indent_tracklist)
         terminal_width = ui.term_width()
-        joiner_width = len("".join(["* ", " -> "]))
+        joiner_width = len("*  -> ")
         col_width = (terminal_width - indent_width - joiner_width) // 2
-        max_width_l = max(get_width(line_tuple[0]) for line_tuple in lines)
-        max_width_r = max(get_width(line_tuple[1]) for line_tuple in lines)
+        max_width_l = max(left.rendered_width for left, _ in lines)
+        max_width_r = max(right.rendered_width for _, right in lines)
 
         if ((max_width_l <= col_width) and (max_width_r <= col_width)) or (
             ((max_width_l > col_width) or (max_width_r > col_width))
@@ -350,8 +300,8 @@ class ChangeRepresentation:
 
         # Print out each line, using the calculated width from above.
         for left, right in lines:
-            left["width"] = col_width_l
-            right["width"] = col_width_r
+            left = left._replace(width=col_width_l)
+            right = right._replace(width=col_width_r)
             self.print_layout(self.indent_tracklist, left, right)
 
 
@@ -385,7 +335,7 @@ class AlbumChange(ChangeRepresentation):
 
             # Construct the line tuple for the track.
             left, right = self.make_line(item, track_info)
-            if right["contents"] != "":
+            if right.contents != "":
                 lines.append((left, right))
             else:
                 if config["import"]["detail"]:

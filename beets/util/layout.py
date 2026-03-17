@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING, NamedTuple
 
-from typing_extensions import NotRequired
+import beets
 
 from .color import (
     ESC_TEXT_REGEX,
@@ -13,14 +13,41 @@ from .color import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Callable, Iterator
 
 
-class Side(TypedDict):
+class Side(NamedTuple):
+    """A labeled segment of a two-column layout row with optional fixed width.
+
+    Holds prefix, content, and suffix strings that together form one side of
+    a formatted row. Width measurements account for ANSI color codes, which
+    do not contribute to visible character count.
+    """
+
     prefix: str
     contents: str
     suffix: str
-    width: NotRequired[int]
+    width: int = -1
+
+    @property
+    def rendered(self) -> str:
+        """Assemble the full display string by joining prefix, contents, and suffix."""
+        return f"{self.prefix}{self.contents}{self.suffix}"
+
+    @property
+    def prefix_width(self) -> int:
+        """Visible character width of the prefix, excluding color codes."""
+        return color_len(self.prefix)
+
+    @property
+    def suffix_width(self) -> int:
+        """Visible character width of the suffix, excluding color codes."""
+        return color_len(self.suffix)
+
+    @property
+    def rendered_width(self) -> int:
+        """Visible character width of the fully assembled string."""
+        return color_len(self.rendered)
 
 
 def indent(count: int) -> str:
@@ -28,18 +55,14 @@ def indent(count: int) -> str:
     return " " * count
 
 
-def split_into_lines(
-    string: str, width_tuple: tuple[int, int, int]
-) -> list[str]:
-    """Splits string into a list of substrings at whitespace.
+def split_into_lines(string: str, first_width: int, width: int) -> list[str]:
+    """Split string into a list of substrings at whitespace.
 
-    `width_tuple` is a 3-tuple of `(first_width, last_width, middle_width)`.
-    The first substring has a length not longer than `first_width`, the last
-    substring has a length not longer than `last_width`, and all other
-    substrings have a length not longer than `middle_width`.
+    The first substring has a length not longer than `first_width`, and the rest
+    of substrings have a length not longer than `width`.
+
     `string` may contain ANSI codes at word borders.
     """
-    first_width, middle_width, last_width = width_tuple
     words = []
 
     if uncolorize(string) == string:
@@ -117,7 +140,7 @@ def split_into_lines(
             pot_substr = " ".join([next_substr, words[i]])
         # Find out if the pot(ential)_substr fits into the next substring.
         fits_first = len(result) == 0 and color_len(pot_substr) <= first_width
-        fits_middle = len(result) != 0 and color_len(pot_substr) <= middle_width
+        fits_middle = len(result) != 0 and color_len(pot_substr) <= width
         if fits_first or fits_middle:
             # Fitted(!) let's try and add another word before appending
             next_substr = pot_substr
@@ -126,7 +149,7 @@ def split_into_lines(
             # Extra word didn't fit, append what we have
             result.append(next_substr)
             next_substr = words[i]
-            previous_fit = color_len(next_substr) <= middle_width
+            previous_fit = color_len(next_substr) <= width
         else:
             # Didn't fit anywhere
             if uncolorize(pot_substr) == pot_substr:
@@ -137,8 +160,8 @@ def split_into_lines(
                     # add rest of word to next line
                     next_substr = pot_substr[first_width:]
                 else:
-                    result.append(pot_substr[:middle_width])
-                    next_substr = pot_substr[middle_width:]
+                    result.append(pot_substr[:width])
+                    next_substr = pot_substr[width:]
             else:
                 # Colored strings
                 if len(result) == 0:
@@ -146,19 +169,14 @@ def split_into_lines(
                     result.append(this_line)
                     next_substr = next_line
                 else:
-                    this_line, next_line = color_split(pot_substr, middle_width)
+                    this_line, next_line = color_split(pot_substr, width)
                     result.append(this_line)
                     next_substr = next_line
-            previous_fit = color_len(next_substr) <= middle_width
+            previous_fit = color_len(next_substr) <= width
 
     # We finished constructing the substrings, but the last substring
     # has not yet been added to the result.
     result.append(next_substr)
-    # Also, the length of the last substring was only checked against
-    # `middle_width`. Append an empty substring as the new last substring if
-    # the last substring is too long.
-    if not color_len(next_substr) <= last_width:
-        result.append("")
     return result
 
 
@@ -166,8 +184,8 @@ def get_column_layout(
     indent_str: str,
     left: Side,
     right: Side,
-    separator: str,
     max_width: int,
+    separator: str,
 ) -> Iterator[str]:
     """Print left & right data, with separator inbetween
     'left' and 'right' have a structure of:
@@ -181,127 +199,106 @@ def get_column_layout(
     With subsequent lines (i.e. {lhs1}, {rhs1} onwards) being the
     rest of contents, wrapped if the width would be otherwise exceeded.
     """
-    if f"{right['prefix']}{right['contents']}{right['suffix']}" == "":
-        # No right hand information, so we don't need a separator.
-        separator = ""
-    first_line_no_wrap = (
-        f"{indent_str}{left['prefix']}{left['contents']}{left['suffix']}"
-        f"{separator}{right['prefix']}{right['contents']}{right['suffix']}"
+    if left.width == -1 or right.width == -1:
+        # If widths have not been defined, set to share space.
+        width = (max_width - len(indent_str) - len(separator)) // 2
+        left = left._replace(width=width)
+        right = right._replace(width=width)
+    # On the first line, account for suffix as well as prefix
+    left_width_without_prefix = left.width - left.prefix_width
+    left_split = split_into_lines(
+        left.contents,
+        left_width_without_prefix - left.suffix_width,
+        left_width_without_prefix,
     )
-    if color_len(first_line_no_wrap) < max_width:
-        # Everything fits, print out line.
-        yield first_line_no_wrap
-    else:
-        # Wrap into columns
-        if "width" not in left or "width" not in right:
-            # If widths have not been defined, set to share space.
-            left["width"] = (
-                max_width - len(indent_str) - color_len(separator)
-            ) // 2
-            right["width"] = (
-                max_width - len(indent_str) - color_len(separator)
-            ) // 2
-        # On the first line, account for suffix as well as prefix
-        left_width_tuple = (
-            left["width"]
-            - color_len(left["prefix"])
-            - color_len(left["suffix"]),
-            left["width"] - color_len(left["prefix"]),
-            left["width"] - color_len(left["prefix"]),
-        )
 
-        left_split = split_into_lines(left["contents"], left_width_tuple)
-        right_width_tuple = (
-            right["width"]
-            - color_len(right["prefix"])
-            - color_len(right["suffix"]),
-            right["width"] - color_len(right["prefix"]),
-            right["width"] - color_len(right["prefix"]),
-        )
+    right_width_without_prefix = right.width - right.prefix_width
+    right_split = split_into_lines(
+        right.contents,
+        right_width_without_prefix - right.suffix_width,
+        right_width_without_prefix,
+    )
 
-        right_split = split_into_lines(right["contents"], right_width_tuple)
-        max_line_count = max(len(left_split), len(right_split))
+    max_line_count = max(len(left_split), len(right_split))
 
-        out = ""
-        for i in range(max_line_count):
-            # indentation
-            out += indent_str
+    out = ""
+    for i in range(max_line_count):
+        # indentation
+        out += indent_str
 
-            # Prefix or indent_str for line
-            if i == 0:
-                out += left["prefix"]
-            else:
-                out += indent(color_len(left["prefix"]))
+        # Prefix or indent_str for line
+        if i == 0:
+            out += left.prefix
+        else:
+            out += indent(left.prefix_width)
 
-            # Line i of left hand side contents.
-            if i < len(left_split):
-                out += left_split[i]
-                left_part_len = color_len(left_split[i])
-            else:
-                left_part_len = 0
+        # Line i of left hand side contents.
+        if i < len(left_split):
+            out += left_split[i]
+            left_part_len = color_len(left_split[i])
+        else:
+            left_part_len = 0
 
-            # Padding until end of column.
-            # Note: differs from original
-            # column calcs in not -1 afterwards for space
-            # in track number as that is included in 'prefix'
-            padding = left["width"] - color_len(left["prefix"]) - left_part_len
+        # Padding until end of column.
+        # Note: differs from original
+        # column calcs in not -1 afterwards for space
+        # in track number as that is included in 'prefix'
+        padding = left.width - left.prefix_width - left_part_len
 
-            # Remove some padding on the first line to display
-            # length
-            if i == 0:
-                padding -= color_len(left["suffix"])
+        # Remove some padding on the first line to display
+        # length
+        if i == 0:
+            padding -= left.suffix_width
 
-            out += indent(padding)
+        out += indent(padding)
 
-            if i == 0:
-                out += left["suffix"]
+        if i == 0:
+            out += left.suffix
 
-            # Separator between columns.
-            if i == 0:
-                out += separator
-            else:
-                out += indent(color_len(separator))
+        # Separator between columns.
+        if i == 0:
+            out += separator
+        else:
+            out += indent(len(separator))
 
-            # Right prefix, contents, padding, suffix
-            if i == 0:
-                out += right["prefix"]
-            else:
-                out += indent(color_len(right["prefix"]))
+        # Right prefix, contents, padding, suffix
+        if i == 0:
+            out += right.prefix
+        else:
+            out += indent(right.prefix_width)
 
-            # Line i of right hand side.
-            if i < len(right_split):
-                out += right_split[i]
-                right_part_len = color_len(right_split[i])
-            else:
-                right_part_len = 0
+        # Line i of right hand side.
+        if i < len(right_split):
+            out += right_split[i]
+            right_part_len = color_len(right_split[i])
+        else:
+            right_part_len = 0
 
-            # Padding until end of column
-            padding = (
-                right["width"] - color_len(right["prefix"]) - right_part_len
-            )
-            # Remove some padding on the first line to display
-            # length
-            if i == 0:
-                padding -= color_len(right["suffix"])
-            out += indent(padding)
-            # Length in first line
-            if i == 0:
-                out += right["suffix"]
+        # Padding until end of column
+        padding = right.width - right.prefix_width - right_part_len
+        # Remove some padding on the first line to display
+        # length
+        if i == 0:
+            padding -= right.suffix_width
+        out += indent(padding)
+        # Length in first line
+        if i == 0:
+            out += right.suffix
 
-            # Linebreak, except in the last line.
-            if i < max_line_count - 1:
-                out += "\n"
+        # Linebreak, except in the last line.
+        if i < max_line_count - 1:
+            out += "\n"
 
-        # Constructed all of the columns, now print
-        yield out
+    # Constructed all of the columns, now print
+    yield out
 
 
 def get_newline_layout(
     indent_str: str,
     left: Side,
     right: Side,
-    separator: str,
     max_width: int,
+    separator: str,
 ) -> Iterator[str]:
     """Prints using a newline separator between left & right if
     they go over their allocated widths. The datastructures are
@@ -316,43 +313,53 @@ def get_newline_layout(
     If {lhs0} would go over the maximum width, the subsequent lines are
     indented a second time for ease of reading.
     """
-    if f"{right['prefix']}{right['contents']}{right['suffix']}" == "":
-        # No right hand information, so we don't need a separator.
-        separator = ""
+    width_without_prefix = max_width - len(indent_str)
+    width_without_double_prefix = max_width - 2 * len(indent_str)
+    # On lower lines we will double the indent for clarity
+    left_split = split_into_lines(
+        left.rendered,
+        width_without_prefix,
+        width_without_double_prefix,
+    )
+    # Repeat calculations for rhs, including separator on first line
+    right_split = split_into_lines(
+        right.rendered,
+        width_without_prefix - len(separator),
+        width_without_double_prefix,
+    )
+    for i, line in enumerate(left_split):
+        if i == 0:
+            yield f"{indent_str}{line}"
+        elif line != "":
+            # Ignore empty lines
+            yield f"{indent_str * 2}{line}"
+    for i, line in enumerate(right_split):
+        if i == 0:
+            yield f"{indent_str}{separator}{line}"
+        elif line != "":
+            yield f"{indent_str * 2}{line}"
+
+
+def get_layout_method() -> Callable[[str, Side, Side, int, str], Iterator[str]]:
+    return beets.config["ui"]["import"]["layout"].as_choice(
+        {"column": get_column_layout, "newline": get_newline_layout}
+    )
+
+
+def get_layout_lines(
+    indent_str: str,
+    left: Side,
+    right: Side,
+    max_width: int,
+) -> Iterator[str]:
+    # No right hand information, so we don't need a separator.
+    separator = "" if right.rendered == "" else " -> "
     first_line_no_wrap = (
-        f"{indent_str}{left['prefix']}{left['contents']}{left['suffix']}"
-        f"{separator}{right['prefix']}{right['contents']}{right['suffix']}"
+        f"{indent_str}{left.rendered}{separator}{right.rendered}"
     )
     if color_len(first_line_no_wrap) < max_width:
         # Everything fits, print out line.
         yield first_line_no_wrap
     else:
-        # Newline separation, with wrapping
-        empty_space = max_width - len(indent_str)
-        # On lower lines we will double the indent for clarity
-        left_width_tuple = (
-            empty_space,
-            empty_space - len(indent_str),
-            empty_space - len(indent_str),
-        )
-        left_str = f"{left['prefix']}{left['contents']}{left['suffix']}"
-        left_split = split_into_lines(left_str, left_width_tuple)
-        # Repeat calculations for rhs, including separator on first line
-        right_width_tuple = (
-            empty_space - color_len(separator),
-            empty_space - len(indent_str),
-            empty_space - len(indent_str),
-        )
-        right_str = f"{right['prefix']}{right['contents']}{right['suffix']}"
-        right_split = split_into_lines(right_str, right_width_tuple)
-        for i, line in enumerate(left_split):
-            if i == 0:
-                yield f"{indent_str}{line}"
-            elif line != "":
-                # Ignore empty lines
-                yield f"{indent_str * 2}{line}"
-        for i, line in enumerate(right_split):
-            if i == 0:
-                yield f"{indent_str}{separator}{line}"
-            elif line != "":
-                yield f"{indent_str * 2}{line}"
+        layout_method = get_layout_method()
+        yield from layout_method(indent_str, left, right, max_width, separator)
