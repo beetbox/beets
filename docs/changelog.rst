@@ -84,6 +84,8 @@ Other changes
   :py:meth:`~beets.metadata_plugins.SearchApiMetadataSourcePlugin.get_search_response`.
 - :doc:`guides/installation`: Remove redundant macOS section from the
   installation guide. :bug:`5993`
+- :doc:`guides/installation`: Update installation guide to document plugin
+  management with pipx and move package manager instructions to the FAQ.
 
 2.7.1 (March 08, 2026)
 ----------------------
