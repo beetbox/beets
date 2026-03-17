@@ -173,3 +173,5 @@ a6fcb7ba0f237530ff394a423a7cbe2ac4853c91
 1d54f2bf66506e7a45ce5e962106897e3c98f67a
 # Fix layout references
 ffb43290066c78cb72603b7e2a0a1c90056361dd
+# lastgenre: Move fetching to client module
+b4beee8ff3754b001e7504c05a2b838bfa689022

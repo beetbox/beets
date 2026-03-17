@@ -186,7 +186,19 @@ class ThreadLocalLevelLogger(Logger):
 
 
 class BeetsLogger(ThreadLocalLevelLogger, StrFormatLogger):
-    pass
+    """The logger class used by beets."""
+
+    def extra_debug(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Log a message at DEBUG level only when verbosity level is >= 3.
+
+        Intended for high-verbosity tuning/diagnostic messages that would be too
+        noisy at normal debug level.
+        """
+        # Lazy import to avoid circular dependency (beets.__init__ -> beets.logging)
+        from beets import config
+
+        if config["verbose"].as_number() >= 3:
+            self._log(DEBUG, msg, args, **kwargs)
 
 
 my_manager = copy(Logger.manager)
