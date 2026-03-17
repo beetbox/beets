@@ -86,6 +86,8 @@ Other changes
   installation guide. :bug:`5993`
 - :doc:`guides/installation`: Update installation guide to document plugin
   management with pipx and move package manager instructions to the FAQ.
+- :doc:`guides/main`: Update quick installation section to reflect current
+  installation guide structure.
 
 2.7.1 (March 08, 2026)
 ----------------------
