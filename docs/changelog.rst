@@ -51,6 +51,11 @@ Bug fixes
 - :ref:`config-cmd` on Windows now uses ``cmd /c start ""`` for the default
   editor fallback so ``beet config -e`` works when ``VISUAL`` and ``EDITOR`` are
   unset. :bug:`6436`
+- :doc:`plugins/lastimport`: Rename flexible field ``play_count`` to
+  ``lastfm_play_count`` to avoid conflicts with :doc:`plugins/mpdstats`.
+  **Migration**: This cannot be migrated automatically because of the field
+  clash. If you use ``lastimport`` without ``mpdstats``, migrate manually with
+  ``beet modify lastfm_play_count='$play_count'``.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
