@@ -24,7 +24,6 @@ from typing import TYPE_CHECKING, Any
 import pylast
 
 from beets import plugins
-from beets.logging import extra_debug
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -127,9 +126,7 @@ class LastFmClient:
             self._genre_cache[key] = self.fetch_genre(method(*args_replaced))
 
         genre = self._genre_cache[key]
-        extra_debug(
-            self._log, "last.fm (unfiltered) {} tags: {}", entity, genre
-        )
+        self._log.extra_debug("last.fm (unfiltered) {} tags: {}", entity, genre)
         return genre
 
     def fetch_album_genre(self, albumartist: str, albumtitle: str) -> list[str]:

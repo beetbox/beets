@@ -33,7 +33,6 @@ import yaml
 
 from beets import config, library, plugins, ui
 from beets.library import Album, Item
-from beets.logging import extra_debug
 from beets.util import plurality, unique_list
 
 from .client import LastFmClient
@@ -391,15 +390,13 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 new_genres = self.client.fetch_artist_genre(obj.albumartist)
                 stage_label = "album artist"
                 if not new_genres:
-                    extra_debug(
-                        self._log,
+                    self._log.extra_debug(
                         'No album artist genre found for "{}", '
                         "trying multi-valued field...",
                         obj.albumartist,
                     )
                     for albumartist in obj.albumartists:
-                        extra_debug(
-                            self._log,
+                        self._log.extra_debug(
                             'Fetching artist genre for "{}"',
                             albumartist,
                         )
