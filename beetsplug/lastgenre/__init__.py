@@ -25,6 +25,8 @@ https://gist.github.com/1241307
 from __future__ import annotations
 
 import os
+import re
+from collections import defaultdict
 from functools import singledispatchmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -33,7 +35,9 @@ import yaml
 
 from beets import config, library, plugins, ui
 from beets.library import Album, Item
+from beets.ui import UserError
 from beets.util import plurality, unique_list
+from beetsplug.lastgenre.utils import is_ignored
 
 from .client import LastFmClient
 
@@ -44,12 +48,17 @@ if TYPE_CHECKING:
     from beets.importer import ImportSession, ImportTask
     from beets.library import LibModel
 
+    from .utils import Ignorelist
+
     Whitelist = set[str]
     """Set of valid genre names (lowercase). Empty set means all genres allowed."""
 
     CanonTree = list[list[str]]
     """Genre hierarchy as list of paths from general to specific.
     Example: [['electronic', 'house'], ['electronic', 'techno']]"""
+
+    RawIgnorelist = dict[str, list[str]]
+    """Mapping of artist name to list of raw regex/string patterns."""
 
 
 # Canonicalization tree processing.
@@ -130,6 +139,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 "prefer_specific": False,
                 "title_case": True,
                 "pretend": False,
+                "ignorelist": False,
             }
         )
         self.setup()
@@ -139,12 +149,13 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if self.config["auto"]:
             self.import_stages = [self.imported]
 
-        self.client = LastFmClient(
-            self._log, self.config["min_weight"].get(int)
-        )
         self.whitelist: Whitelist = self._load_whitelist()
         self.c14n_branches: CanonTree
         self.c14n_branches, self.canonicalize = self._load_c14n_tree()
+        self.ignorelist: Ignorelist = self._load_ignorelist()
+        self.client = LastFmClient(
+            self._log, self.config["min_weight"].get(int), self.ignorelist
+        )
 
     def _load_whitelist(self) -> Whitelist:
         """Load the whitelist from a text file.
@@ -187,6 +198,105 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             flatten_tree(genres_tree, [], c14n_branches)
         return c14n_branches, canonicalize
 
+    def _load_ignorelist(self) -> Ignorelist:
+        """Load the genre ignorelist from a configured file path.
+
+        For maximum compatibility with regex patterns, a custom format is used:
+        - Each section starts with an artist name, followed by a colon.
+        - Subsequent lines are indented (at least one space, typically 4 spaces)
+          and contain a regex pattern to match a genre or a literal genre name.
+        - A '*' key for artist can be used to specify global forbidden genres.
+
+        Returns a compiled ignorelist dictionary mapping artist names to lists of
+        case-insensitive regex patterns. Returns empty dict if not configured.
+
+        Example ignorelist file format::
+
+            Artist Name:
+                .*rock.*
+                .*metal.*
+            Another Artist Name:
+                ^jazz$
+            *:
+                spoken word
+                comedy
+
+        Raises:
+            UserError: if the ignorelist file cannot be read or if the file
+            format is invalid.
+        """
+        ignorelist_raw: RawIgnorelist = defaultdict(list)
+        ignorelist_file = self.config["ignorelist"].get()
+        if not ignorelist_file:
+            return {}
+        if not isinstance(ignorelist_file, str):
+            raise UserError(
+                "Invalid value for lastgenre.ignorelist: expected path string "
+                f"or 'no', got {ignorelist_file!r}"
+            )
+
+        self._log.debug("Loading ignorelist file {}", ignorelist_file)
+        section = None
+        try:
+            with Path(ignorelist_file).expanduser().open(encoding="utf-8") as f:
+                for lineno, line in enumerate(f, 1):
+                    if not line.strip() or line.lstrip().startswith("#"):
+                        continue
+                    if not line.startswith(" "):
+                        # Section header
+                        header = line.strip().lower()
+                        if not header.endswith(":"):
+                            raise UserError(
+                                f"Malformed ignorelist section header "
+                                f"at line {lineno}: {line}"
+                            )
+                        section = header[:-1].rstrip()
+                        if not section:
+                            raise UserError(
+                                f"Empty ignorelist section name "
+                                f"at line {lineno}: {line}"
+                            )
+                    else:
+                        # Pattern line: must be indented (at least one space)
+                        if section is None:
+                            raise UserError(
+                                f"Ignorelist pattern line before any section header "
+                                f"at line {lineno}: {line}"
+                            )
+                        ignorelist_raw[section].append(line.strip())
+        except OSError as exc:
+            raise UserError(
+                f"Cannot read ignorelist file {ignorelist_file!r}: {exc}"
+            ) from exc
+        self._log.extra_debug("Ignorelist: {}", ignorelist_raw)
+        return self._compile_ignorelist_patterns(ignorelist_raw)
+
+    @staticmethod
+    def _compile_ignorelist_patterns(
+        ignorelist: RawIgnorelist,
+    ) -> Ignorelist:
+        """Compile ignorelist patterns into regex objects.
+
+        Tries regex compilation first; if the pattern is not valid regex,
+        falls back to treating it as a literal string. Either way the pattern
+        must match the entire genre string (full match). To match substrings,
+        write e.g. ``.*rock.*``. All patterns are case-insensitive.
+        """
+        compiled_ignorelist: defaultdict[str, list[re.Pattern[str]]] = (
+            defaultdict(list)
+        )
+        for artist, patterns in ignorelist.items():
+            compiled_patterns = []
+            for pattern in patterns:
+                try:
+                    compiled_patterns.append(re.compile(pattern, re.IGNORECASE))
+                except re.error:
+                    compiled_patterns.append(
+                        re.compile(re.escape(pattern), re.IGNORECASE)
+                    )
+            compiled_ignorelist[artist] = compiled_patterns
+        return compiled_ignorelist
+
     @property
     def sources(self) -> tuple[str, ...]:
         """A tuple of allowed genre sources. May contain 'track',
@@ -202,7 +312,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
     # Genre list processing.
 
-    def _resolve_genres(self, tags: list[str]) -> list[str]:
+    def _resolve_genres(
+        self, tags: list[str], artist: str | None = None
+    ) -> list[str]:
         """Canonicalize, sort and filter a list of genres.
 
         - Returns an empty list if the input tags list is empty.
@@ -217,6 +329,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
           by the specificity (depth in the canonicalization tree) of the genres.
         - Finally applies whitelist filtering to ensure that only valid
           genres are kept. (This may result in no genres at all being retained).
+        - Ignorelist is applied at each stage: ignored input tags skip ancestry
+          entirely, ignored ancestor tags are dropped, and ignored tags are
+          removed in the final filter.
         - Returns the filtered list of genres, limited to the configured count.
         """
         if not tags:
@@ -229,14 +344,29 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             # Extend the list to consider tags parents in the c14n tree
             tags_all = []
             for tag in tags:
-                # Add parents that are in the whitelist, or add the oldest
-                # ancestor if no whitelist
+                # Skip ignored tags entirely — don't walk their ancestry.
+                if is_ignored(self._log, self.ignorelist, tag, artist):
+                    continue
+
+                # Add parents that pass whitelist (and are not ignored, which
+                # is checked in _filter_valid). With whitelist, we may include
+                # multiple parents
                 if self.whitelist:
                     parents = self._filter_valid(
-                        find_parents(tag, self.c14n_branches)
+                        find_parents(tag, self.c14n_branches),
+                        artist=artist,
                     )
                 else:
-                    parents = [find_parents(tag, self.c14n_branches)[-1]]
+                    # No whitelist: take only the oldest ancestor, skipping it
+                    # if it is in the ignorelist
+                    oldest = find_parents(tag, self.c14n_branches)[-1]
+                    parents = (
+                        []
+                        if is_ignored(
+                            self._log, self.ignorelist, oldest, artist
+                        )
+                        else [oldest]
+                    )
 
                 tags_all += parents
                 # Stop if we have enough tags already, unless we need to find
@@ -254,24 +384,34 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if self.config["prefer_specific"]:
             tags = sort_by_depth(tags, self.c14n_branches)
 
-        # c14n only adds allowed genres but we may have had forbidden genres in
-        # the original tags list
-        valid_tags = self._filter_valid(tags)
+        # Final filter: catches forbidden genres when c14n is disabled,
+        # and any that survived the loop without whitelist/ignorelist active.
+        valid_tags = self._filter_valid(tags, artist=artist)
         return valid_tags[:count]
 
-    def _filter_valid(self, genres: Iterable[str]) -> list[str]:
-        """Filter genres based on whitelist.
+    def _filter_valid(
+        self, genres: Iterable[str], artist: str | None = None
+    ) -> list[str]:
+        """Filter genres through whitelist and ignorelist.
 
-        Returns all genres if no whitelist is configured, otherwise returns
-        only genres that are in the whitelist.
+        Drops empty/whitespace-only strings, then applies whitelist and
+        ignorelist checks. Returns all genres if neither is configured.
+        Whitelist is checked first for performance reasons (ignorelist regex
+        matching is more expensive and for some call sites ignored genres were
+        already filtered).
         """
-        # First, drop any falsy or whitespace-only genre strings to avoid
-        # retaining empty tags from multi-valued fields.
         cleaned = [g for g in genres if g and g.strip()]
-        if not self.whitelist:
+        if not self.whitelist and not self.ignorelist:
             return cleaned
 
-        return [g for g in cleaned if g.lower() in self.whitelist]
+        result = []
+        for genre in cleaned:
+            if self.whitelist and genre.lower() not in self.whitelist:
+                continue
+            if is_ignored(self._log, self.ignorelist, genre, artist):
+                continue
+            result.append(genre)
+        return result
 
     # Genre resolution pipeline.
 
@@ -292,13 +432,13 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         return genres_list
 
     def _combine_resolve_and_log(
-        self, old: list[str], new: list[str]
+        self, old: list[str], new: list[str], artist: str | None = None
     ) -> list[str]:
         """Combine old and new genres and process via _resolve_genres."""
         self._log.debug("raw last.fm tags: {}", new)
         self._log.debug("existing genres taken into account: {}", old)
         combined = old + new
-        return self._resolve_genres(combined)
+        return self._resolve_genres(combined, artist=artist)
 
     def _get_genre(self, obj: LibModel) -> tuple[list[str], str]:
         """Get the final genre list for an Album or Item object.
@@ -321,11 +461,14 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """
 
         def _try_resolve_stage(
-            stage_label: str, keep_genres: list[str], new_genres: list[str]
+            stage_label: str,
+            keep_genres: list[str],
+            new_genres: list[str],
+            artist: str | None = None,
         ) -> tuple[list[str], str] | None:
             """Try to resolve genres for a given stage and log the result."""
             resolved_genres = self._combine_resolve_and_log(
-                keep_genres, new_genres
+                keep_genres, new_genres, artist=artist
             )
             if resolved_genres:
                 suffix = "whitelist" if self.whitelist else "any"
@@ -345,7 +488,12 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             # If none are found, we use the fallback (if set).
             if self.config["cleanup_existing"]:
                 keep_genres = [g.lower() for g in genres]
-                if result := _try_resolve_stage("cleanup", keep_genres, []):
+                cleanup_artist = getattr(obj, "albumartist", None) or getattr(
+                    obj, "artist", None
+                )
+                if result := _try_resolve_stage(
+                    "cleanup", keep_genres, [], artist=cleanup_artist
+                ):
                     return result
 
                 # Return fallback string (None if not set).
@@ -368,7 +516,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 obj.artist, obj.title
             ):
                 if result := _try_resolve_stage(
-                    "track", keep_genres, new_genres
+                    "track", keep_genres, new_genres, artist=obj.artist
                 ):
                     return result
 
@@ -377,18 +525,21 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 obj.albumartist, obj.album
             ):
                 if result := _try_resolve_stage(
-                    "album", keep_genres, new_genres
+                    "album", keep_genres, new_genres, artist=obj.albumartist
                 ):
                     return result
 
         if "artist" in self.sources:
             new_genres = []
+            stage_artist: str | None = None
             if isinstance(obj, library.Item):
                 new_genres = self.client.fetch_artist_genre(obj.artist)
                 stage_label = "artist"
+                stage_artist = obj.artist
             elif obj.albumartist != config["va_name"].as_str():
                 new_genres = self.client.fetch_artist_genre(obj.albumartist)
                 stage_label = "album artist"
+                stage_artist = obj.albumartist
                 if not new_genres:
                     self._log.extra_debug(
                         'No album artist genre found for "{}", '
@@ -431,18 +582,26 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
             if new_genres:
                 if result := _try_resolve_stage(
-                    stage_label, keep_genres, new_genres
+                    stage_label, keep_genres, new_genres, artist=stage_artist
                 ):
                     return result
 
         # Nothing found, leave original if configured and valid.
-        if genres and self.config["keep_existing"]:
-            if valid_genres := self._filter_valid(genres):
+        if genres and self.config["keep_existing"].get(bool):
+            if isinstance(obj, library.Item):
+                # For track items, use track artist (important for compilations).
+                artist = getattr(obj, "artist", None)
+            else:
+                # For albums, prefer albumartist, fall back to artist.
+                artist = getattr(obj, "albumartist", None) or getattr(
+                    obj, "artist", None
+                )
+            if valid_genres := self._filter_valid(genres, artist=artist):
                 return valid_genres, "original fallback"
             # If the original genre doesn't match a whitelisted genre, check
             # if we can canonicalize it to find a matching, whitelisted genre!
             if result := _try_resolve_stage(
-                "original fallback", keep_genres, []
+                "original fallback", keep_genres, [], artist=artist
             ):
                 return result
 

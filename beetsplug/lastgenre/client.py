@@ -25,16 +25,19 @@ import pylast
 
 from beets import plugins
 
+from .utils import is_ignored
+
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from beets.logging import BeetsLogger
 
+    from .utils import Ignorelist
+
     GenreCache = dict[str, list[str]]
     """Cache mapping entity keys to their genre lists.
     Keys are formatted as 'entity.arg1-arg2-...' (e.g., 'album.artist-title').
     Values are lists of lowercase genre strings."""
-
 
 LASTFM = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
 
@@ -48,13 +51,17 @@ PYLAST_EXCEPTIONS = (
 class LastFmClient:
     """Client for fetching genres from Last.fm."""
 
-    def __init__(self, log: BeetsLogger, min_weight: int):
+    def __init__(
+        self, log: BeetsLogger, min_weight: int, ignorelist: Ignorelist
+    ):
         """Initialize the client.
 
         The min_weight parameter filters tags by their minimum weight.
+        The ignorelist filters forbidden genres directly after Last.fm lookup.
         """
         self._log = log
         self._min_weight = min_weight
+        self._ignorelist: Ignorelist = ignorelist
         self._genre_cache: GenreCache = {}
 
     def fetch_genre(
@@ -120,13 +127,35 @@ class LastFmClient:
         if any(not s for s in args):
             return []
 
-        key = f"{entity}.{'-'.join(str(a) for a in args)}"
-        if key not in self._genre_cache:
-            args_replaced = [a.replace("\u2010", "-") for a in args]
-            self._genre_cache[key] = self.fetch_genre(method(*args_replaced))
+        args_replaced = [a.replace("\u2010", "-") for a in args]
+        key = f"{entity}.{'-'.join(str(a) for a in args_replaced)}"
+        if key in self._genre_cache:
+            raw_genre = self._genre_cache[key]
+        else:
+            raw_genre = self.fetch_genre(method(*args_replaced))
+            # Cache raw results only — filtering always runs so ignorelist
+            # hits are always visible in extra_debug logs.
+            self._genre_cache[key] = raw_genre
 
-        genre = self._genre_cache[key]
-        self._log.extra_debug("last.fm (unfiltered) {} tags: {}", entity, genre)
+        self._log.extra_debug(
+            "last.fm (unfiltered) {} tags: {}", entity, raw_genre
+        )
+
+        genre = raw_genre
+
+        # Filter forbidden genres on every call so ignorelist hits are logged.
+        if genre and len(args) >= 1:
+            # For all current lastfm API calls, the first argument is always the artist:
+            # - get_album(artist, album)
+            # - get_artist(artist)
+            # - get_track(artist, title)
+            artist = args[0]
+            genre = [
+                g
+                for g in genre
+                if not is_ignored(self._log, self._ignorelist, g, artist)
+            ]
+
         return genre
 
     def fetch_album_genre(self, albumartist: str, albumtitle: str) -> list[str]:
