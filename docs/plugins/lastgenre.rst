@@ -160,6 +160,50 @@ genres remain, set ``whitelist: no``).
     If ``force`` is disabled the ``keep_existing`` option is simply ignored
     (since ``force: no`` means ``not touching`` existing tags anyway).
 
+Genre Ignorelist
+----------------
+
+Last.fm tags are crowd-sourced, so they can be wrong — especially for artists
+whose names are shared with or confused with others. For example, a "Drum And
+Bass" artist named "Fracture" might incorrectly receive "Metal" tags. The
+ignorelist lets you reject specific genres globally or per-artist.
+
+Another example for the ignorelist is to exclude genres that are technically
+correct but not useful to you. For example, you might want to exclude "Ska" for
+"Bob Marley", even though it is a valid genre for his music.
+
+Filtering is done in two places: when fetching genres from Last.fm and when
+resolving to a final genre list (during canonicalization and whitelisting).
+
+This means that existing genres are also filtered when the ``force`` and
+``keep_existing`` options are enabled (or ``cleanup_existing`` is enabled with
+``force: no``).
+
+A possible ``ignorelist`` file would look like this:
+
+.. code-block:: text
+
+    fracture:
+        ^(heavy|black|power|death)?\s?(metal|rock)$|\w+-metal\d*$
+        progressive metal
+    bob marley:
+        ska
+    *:
+        electronic
+
+A combination of regex patterns and plain genre names is possible. The ``*`` key
+applies globally to all artists — use it to block genres you never want,
+regardless of artist. Patterns are matched against the full genre string, so a
+plain ``metal`` will not match ``heavy metal`` unless you write a regex like
+``.*metal.*``.
+
+Set the ``ignorelist`` option to the path of a file containing such entries to
+enable this feature.
+
+.. attention::
+
+    Do not use single or double quotes around the genre names or regex patterns.
+
 Configuration
 -------------
 
@@ -200,6 +244,9 @@ file. The available options are:
   internal whitelist, or ``no`` to consider all genres valid. Default: ``yes``.
 - **title_case**: Convert the new tags to TitleCase before saving. Default:
   ``yes``.
+- **ignorelist**: The path to a file that contains genres to exclude from being
+  set as genres for specific artists. See `Genre Ignorelist`_ for more details.
+  Default: ``no``.
 
 Running Manually
 ----------------
