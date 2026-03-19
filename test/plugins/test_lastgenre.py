@@ -26,6 +26,7 @@ from beets.test import _common
 from beets.test.helper import IOMixin, PluginTestCase
 from beets.ui import UserError
 from beetsplug import lastgenre
+from beetsplug.lastgenre.utils import is_ignored
 
 
 class LastGenrePluginTest(IOMixin, PluginTestCase):
@@ -773,8 +774,7 @@ def test_ignorelist_patterns(
 
     plugin.ignorelist = compiled_ignorelist
 
-    # Test the _is_ignored method on the plugin
-    result = plugin._is_ignored(genre, artist)
+    result = is_ignored(plugin._log, plugin.ignorelist, genre, artist)
     assert result == expected_forbidden
 
 
@@ -792,9 +792,20 @@ def test_ignorelist_literal_fallback_uses_fullmatch(config):
         {"*": ["[not valid regex"]}
     )
     # Exact match must be caught.
-    assert plugin._is_ignored("[not valid regex", None) is True
+    assert (
+        is_ignored(plugin._log, plugin.ignorelist, "[not valid regex", "")
+        is True
+    )
     # Substring must NOT be caught (would have passed with old .search()).
-    assert plugin._is_ignored("contains [not valid regex inside", None) is False
+    assert (
+        is_ignored(
+            plugin._log,
+            plugin.ignorelist,
+            "contains [not valid regex inside",
+            "",
+        )
+        is False
+    )
 
 
 @pytest.mark.parametrize(
