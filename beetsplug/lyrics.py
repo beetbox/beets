@@ -978,6 +978,8 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
         self.config.add(
             {
                 "auto": True,
+                "exclude_albums": [],
+                "exclude_songs": [],
                 "translate": {
                     "api_key": None,
                     "from_languages": [],
@@ -1066,6 +1068,9 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
     def imported(self, _, task: ImportTask) -> None:
         """Import hook for fetching lyrics automatically."""
         for item in task.imported_items():
+            if self.is_excluded(item):
+                self.info("Skipping excluded item: {}", item)
+                continue
             self.add_item_lyrics(item, False)
 
     def find_lyrics(self, item: Item) -> Lyrics | None:
@@ -1131,3 +1136,15 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
                     return lyrics_info
 
         return None
+    
+    def is_excluded(self, item: Item) -> bool:
+        """Return True if the item matches an exclusion rule."""
+        exclude_albums = [a.lower() for a in self.config["exclude_albums"].as_str_seq()]
+        exclude_songs = [s.lower() for s in self.config["exclude_songs"].as_str_seq()]
+
+        if item.album and item.album.lower() in exclude_albums:
+            return True
+        if item.title and item.title.lower() in exclude_songs:
+            return True
+        return False
+    
