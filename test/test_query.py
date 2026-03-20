@@ -525,9 +525,19 @@ class TestHasCoverArtQuery:
 
     @pytest.fixture(scope="class")
     def lib(self, helper):
-        """Create test items."""
-        helper.add_item(title="with_art")
-        helper.add_item(title="without_art")
+        item_with = helper.add_item_fixture()
+        item_with.title = "with_art"
+
+        path_with = helper.create_mediafile_fixture(images=["jpg"])
+        item_with["path"] = path_with
+        item_with.store()
+
+        path_without = helper.create_mediafile_fixture(images=[])
+        item_without = helper.add_item_fixture()
+        item_without.title = "without_art"
+        item_without["path"] = path_without
+        item_without.store()
+
         return helper.lib
 
     def test_has_cover_art_getter_exists(self):
@@ -536,8 +546,8 @@ class TestHasCoverArtQuery:
         assert "has_cover_art" in getters
         assert getters["has_cover_art"] == Item.has_cover_art
 
-    def test_has_cover_art_returns_boolean(self):
-        """Method always return boolean."""
-        item = _common.item()
-        result = item.has_cover_art()
-        assert isinstance(result, bool)
+    def test_query_true(self, lib):
+        assert {i.title for i in lib.items("has_cover_art:true")} == {"with_art"}
+
+    def test_query_false(self, lib):
+        assert {i.title for i in lib.items("has_cover_art:false")} == {"without_art"}
