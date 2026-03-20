@@ -20,6 +20,7 @@ import re
 import textwrap
 from functools import partial
 from http import HTTPStatus
+from types import SimpleNamespace
 from typing import TYPE_CHECKING
 
 import pytest
@@ -31,8 +32,6 @@ from beets.util.lyrics import Lyrics
 from beetsplug import lyrics
 
 from .lyrics_pages import lyrics_pages
-
-from unittest.mock import MagicMock, patch
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -367,6 +366,150 @@ class TestLyricsPlugin(LyricsPluginMixin):
         # make sure translation language is cleared
         with pytest.raises(AttributeError):
             item.lyrics_translation_language
+
+    @pytest.mark.parametrize(
+        "config_key, exclusions, item, expected",
+        [
+            pytest.param(
+                None,
+                [],
+                Item(title="Come Together", album="Abbey Road"),
+                False,
+                id="default",
+            ),
+            pytest.param(
+                "exclude_albums",
+                ["Greatest Hits"],
+                Item(title="Come Together", album="Greatest Hits"),
+                True,
+                id="exact-album",
+            ),
+            pytest.param(
+                "exclude_songs",
+                ["Come Together"],
+                Item(title="Come Together", album="Abbey Road"),
+                True,
+                id="exact-song",
+            ),
+            pytest.param(
+                "exclude_albums",
+                ["greatest hits"],
+                Item(title="Come Together", album="Greatest Hits"),
+                True,
+                id="album-case-insensitive",
+            ),
+            pytest.param(
+                "exclude_songs",
+                ["COME TOGETHER"],
+                Item(title="Come Together", album="Abbey Road"),
+                True,
+                id="song-case-insensitive",
+            ),
+            pytest.param(
+                "exclude_albums",
+                ["Greatest"],
+                Item(title="Come Together", album="Greatest Hits"),
+                False,
+                id="album-no-partial-match",
+            ),
+            pytest.param(
+                "exclude_songs",
+                ["Come"],
+                Item(title="Come Together", album="Abbey Road"),
+                False,
+                id="song-no-partial-match",
+            ),
+            pytest.param(
+                "exclude_songs",
+                ["Come Together", "Let It Be"],
+                Item(title="Come Together"),
+                True,
+                id="first-of-many",
+            ),
+            pytest.param(
+                "exclude_songs",
+                ["Come Together", "Let It Be"],
+                Item(title="Let It Be"),
+                True,
+                id="second-of-many",
+            ),
+            pytest.param(
+                "exclude_songs",
+                ["Come Together", "Let It Be"],
+                Item(title="Hey Jude"),
+                False,
+                id="not-in-many",
+            ),
+        ],
+    )
+    def test_is_excluded(
+        self, lyrics_plugin, config_key, exclusions, item, expected
+    ):
+        if config_key:
+            lyrics_plugin.config[config_key].set(exclusions)
+
+        assert lyrics_plugin.is_excluded(item) is expected
+
+    @pytest.mark.parametrize(
+        "config_key, exclusions, items, expected_titles",
+        [
+            pytest.param(
+                None,
+                [],
+                [Item(title="Come Together", album="Abbey Road")],
+                ["Come Together"],
+                id="fetch-normal-item",
+            ),
+            pytest.param(
+                "exclude_albums",
+                ["Greatest Hits"],
+                [Item(title="Come Together", album="Greatest Hits")],
+                [],
+                id="skip-excluded-album",
+            ),
+            pytest.param(
+                "exclude_songs",
+                ["Come Together"],
+                [Item(title="Come Together", album="Abbey Road")],
+                [],
+                id="skip-excluded-song",
+            ),
+            pytest.param(
+                "exclude_songs",
+                ["Come Together"],
+                [
+                    Item(title="Hey Jude", album="Abbey Road"),
+                    Item(title="Come Together", album="Abbey Road"),
+                ],
+                ["Hey Jude"],
+                id="mixed-task",
+            ),
+            pytest.param(None, [], [], [], id="empty-task"),
+        ],
+    )
+    def test_imported(
+        self,
+        lyrics_plugin,
+        monkeypatch,
+        config_key,
+        exclusions,
+        items,
+        expected_titles,
+    ):
+        if config_key:
+            lyrics_plugin.config[config_key].set(exclusions)
+
+        calls = []
+        monkeypatch.setattr(
+            lyrics_plugin,
+            "add_item_lyrics",
+            lambda current_item, write: calls.append((current_item.title, write)),
+        )
+
+        task = SimpleNamespace(imported_items=lambda: items)
+        lyrics_plugin.imported(None, task)
+
+        assert calls == [(title, False) for title in expected_titles]
 
 
 class LyricsBackendTest(LyricsPluginMixin):
@@ -814,111 +957,3 @@ class TestRestFiles:
             < c.index("Song Three")
             < c.index("Lyrics Three")
         )
-
-class TestIsExcluded:
-    @pytest.fixture
-    def plugin(self):
-        plugin = lyrics.LyricsPlugin()
-        plugin.config.set({"exclude_albums": [], "exclude_songs": []})
-        return plugin
-
-    def test_not_excluded_by_default(self, plugin):
-        item = Item(title="Come Together", album="Abbey Road")
-        assert plugin.is_excluded(item) is False
-
-    def test_excluded_by_exact_album(self, plugin):
-        plugin.config["exclude_albums"].set(["Greatest Hits"])
-        item = Item(title="Come Together", album="Greatest Hits")
-        assert plugin.is_excluded(item) is True
-
-    def test_excluded_by_exact_song(self, plugin):
-        plugin.config["exclude_songs"].set(["Come Together"])
-        item = Item(title="Come Together", album="Abbey Road")
-        assert plugin.is_excluded(item) is True
-
-    def test_album_exclusion_is_case_insensitive(self, plugin):
-        plugin.config["exclude_albums"].set(["greatest hits"])
-        item = Item(title="Come Together", album="Greatest Hits")
-        assert plugin.is_excluded(item) is True
-
-    def test_song_exclusion_is_case_insensitive(self, plugin):
-        plugin.config["exclude_songs"].set(["COME TOGETHER"])
-        item = Item(title="Come Together", album="Abbey Road")
-        assert plugin.is_excluded(item) is True
-
-    def test_partial_album_name_does_not_match(self, plugin):
-        plugin.config["exclude_albums"].set(["Greatest"])
-        item = Item(title="Come Together", album="Greatest Hits")
-        assert plugin.is_excluded(item) is False
-
-    def test_partial_song_name_does_not_match(self, plugin):
-        plugin.config["exclude_songs"].set(["Come"])
-        item = Item(title="Come Together", album="Abbey Road")
-        assert plugin.is_excluded(item) is False
-
-    def test_multiple_exclusions_in_list(self, plugin):
-        plugin.config["exclude_songs"].set(["Come Together", "Let It Be"])
-        assert plugin.is_excluded(Item(title="Come Together")) is True
-        assert plugin.is_excluded(Item(title="Let It Be")) is True
-        assert plugin.is_excluded(Item(title="Hey Jude")) is False
-
-
-class TestImported:
-    @pytest.fixture
-    def plugin(self):
-        plugin = lyrics.LyricsPlugin()
-        plugin.config.set({"exclude_albums": [], "exclude_songs": []})
-        return plugin
-
-    def make_task(self, *items):
-        task = MagicMock()
-        task.imported_items.return_value = list(items)
-        return task
-
-    def test_fetches_lyrics_for_normal_item(self, plugin):
-        item = Item(title="Come Together", album="Abbey Road")
-        task = self.make_task(item)
-
-        with patch.object(plugin, "add_item_lyrics") as mock_fetch:
-            plugin.imported(None, task)
-
-        mock_fetch.assert_called_once_with(item, False)
-
-    def test_skips_excluded_album(self, plugin):
-        plugin.config["exclude_albums"].set(["Greatest Hits"])
-        item = Item(title="Come Together", album="Greatest Hits")
-        task = self.make_task(item)
-
-        with patch.object(plugin, "add_item_lyrics") as mock_fetch:
-            plugin.imported(None, task)
-
-        mock_fetch.assert_not_called()
-
-    def test_skips_excluded_song(self, plugin):
-        plugin.config["exclude_songs"].set(["Come Together"])
-        item = Item(title="Come Together", album="Abbey Road")
-        task = self.make_task(item)
-
-        with patch.object(plugin, "add_item_lyrics") as mock_fetch:
-            plugin.imported(None, task)
-
-        mock_fetch.assert_not_called()
-
-    def test_mixed_task_skips_only_excluded(self, plugin):
-        plugin.config["exclude_songs"].set(["Come Together"])
-        normal_item = Item(title="Hey Jude", album="Abbey Road")
-        excluded_item = Item(title="Come Together", album="Abbey Road")
-        task = self.make_task(normal_item, excluded_item)
-
-        with patch.object(plugin, "add_item_lyrics") as mock_fetch:
-            plugin.imported(None, task)
-
-        mock_fetch.assert_called_once_with(normal_item, False)
-
-    def test_empty_task_does_not_crash(self, plugin):
-        task = self.make_task()
-
-        with patch.object(plugin, "add_item_lyrics") as mock_fetch:
-            plugin.imported(None, task)
-
-        mock_fetch.assert_not_called()
