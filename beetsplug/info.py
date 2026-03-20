@@ -23,6 +23,20 @@ from beets.library import Item
 from beets.plugins import BeetsPlugin
 from beets.util import displayable_path, normpath, syspath
 
+# Mapping from beets field names to URL templates.
+FIELD_LINK_TEMPLATES: dict[str, str] = {
+    "mb_trackid": "https://musicbrainz.org/recording/{value}",
+    "mb_albumid": "https://musicbrainz.org/release/{value}",
+    "mb_artistid": "https://musicbrainz.org/artist/{value}",
+    "mb_albumartistid": "https://musicbrainz.org/artist/{value}",
+    "mb_releasetrackid": "https://musicbrainz.org/track/{value}",
+    "mb_releasegroupid": "https://musicbrainz.org/release-group/{value}",
+    "mb_workid": "https://musicbrainz.org/work/{value}",
+    "discogs_albumid": "https://www.discogs.com/release/{value}",
+    "discogs_artistid": "https://www.discogs.com/artist/{value}",
+    "discogs_labelid": "https://www.discogs.com/label/{value}",
+}
+
 
 def tag_data(lib, args, album=False):
     query = []
@@ -92,13 +106,16 @@ def update_summary(summary, tags):
     return summary
 
 
-def print_data(data, item=None, fmt=None):
+def print_data(data, item=None, fmt=None, links=False):
     """Print, with optional formatting, the fields of a single element.
 
     If no format string `fmt` is passed, the entries on `data` are printed one
     in each line, with the format 'field: value'. If `fmt` is not `None`, the
     `item` is printed according to `fmt`, using the `Item.__format__`
     machinery.
+
+    When `links == True`, external ID fields will be rendered as clickable
+    terminal hyperlinks using OSC 8 escape sequences.
     """
     if fmt:
         # use fmt specified by the user
@@ -110,7 +127,11 @@ def print_data(data, item=None, fmt=None):
     for key, value in data.items():
         if isinstance(value, list):
             formatted[key] = "; ".join(value)
-        if value is not None:
+        elif value is not None:
+            if links and key in FIELD_LINK_TEMPLATES:
+                value_str = str(value)
+                url = FIELD_LINK_TEMPLATES[key].format(value=value_str)
+                value = ui.terminal_link(url, value_str)
             formatted[key] = value
 
     if len(formatted) == 0:
@@ -181,6 +202,11 @@ class InfoPlugin(BeetsPlugin):
             action="store_true",
             help="show only the keys",
         )
+        cmd.parser.add_option(
+            "--links",
+            action="store_true",
+            help="make ID fields (MusicBrainz, Discogs) clickable terminal hyperlinks",
+        )
         cmd.parser.add_format_option(target="item")
         return [cmd]
 
@@ -231,8 +257,8 @@ class InfoPlugin(BeetsPlugin):
                     print_data_keys(data, item)
                 else:
                     fmt = [opts.format][0] if opts.format else None
-                    print_data(data, item, fmt)
+                    print_data(data, item, fmt, links=opts.links)
                 first = False
 
         if opts.summarize:
-            print_data(summary)
+            print_data(summary, links=opts.links)
