@@ -1139,12 +1139,12 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
 
     def is_excluded(self, item: Item) -> bool:
         """Return True if the item matches an exclusion rule."""
-        exclude_albums = [
+        exclude_albums = {
             a.lower() for a in self.config["exclude_albums"].as_str_seq()
-        ]
-        exclude_songs = [
+        }
+        exclude_songs = {
             s.lower() for s in self.config["exclude_songs"].as_str_seq()
-        ]
+        }
 
         if item.album and item.album.lower() in exclude_albums:
             return True
