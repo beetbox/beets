@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import suppress
 import os
 import string
 import sys
@@ -1105,11 +1106,10 @@ class Item(LibModel):
         Return True if images embedded in file, False otherwise.
         If file unreadable or no images, return False.
         """
-        try:
-            mediafile = MediaFile(syspath(self.path))
-            return bool(mediafile.images)
-        except (UnreadableFileError, Exception):
-            return False
+        with suppress(OSError):
+            return bool(MediaFile(self.path).images)
+        
+        return False
 
     # Model methods.
 
