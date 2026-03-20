@@ -411,15 +411,15 @@ artwork without needing external tools.
 
 To find all tracks with embedded cover art:
 
-::
+.. code-block: shell
 
-    $ beet list has_images:true
+    $ beet list has_cover_art:true
 
 To find all tracks without embedded cover art:
 
-::
+.. code-block: shell
 
-    $ beet list has_images:false
+    $ beet list has_cover_art:false
 
 This query checks the actual file for embedded images, so no re-importing or
 external tagging needed.

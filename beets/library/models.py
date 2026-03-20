@@ -805,7 +805,7 @@ class Item(LibModel):
         getters = plugins.item_field_getters()
         getters["singleton"] = lambda i: i.album_id is None
         getters["filesize"] = Item.try_filesize  # In bytes.
-        getters["has_images"] = Item.has_cover_art
+        getters["has_cover_art"] = Item.has_cover_art
         return getters
 
     def duplicates_query(self, fields: list[str]) -> dbcore.AndQuery:
