@@ -518,3 +518,26 @@ class TestRelatedQueries:
     def test_related_query(self, lib, q, expected_titles, expected_albums):
         assert {i.album for i in lib.albums(q)} == set(expected_albums)
         assert {i.title for i in lib.items(q)} == set(expected_titles)
+
+
+class TestHasImagesQuery:
+    """Test has_images computed field for detecting embedded cover art."""
+
+    @pytest.fixture(scope="class")
+    def lib(self, helper):
+        """Create test items."""
+        helper.add_item(title="with_art")
+        helper.add_item(title="without_art")
+        return helper.lib
+
+    def test_has_images_getter_exists(self):
+        """Verify has_images in getters dict."""
+        getters = Item._getters()
+        assert "has_images" in getters
+        assert getters["has_images"] == Item.has_cover_art
+
+    def test_has_images_returns_boolean(self):
+        """Method always return boolean."""
+        item = _common.item()
+        result = item.has_cover_art()
+        assert isinstance(result, bool)
