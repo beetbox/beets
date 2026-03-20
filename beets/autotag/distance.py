@@ -10,11 +10,13 @@ from unidecode import unidecode
 
 from beets import config, metadata_plugins
 from beets.util import as_string, cached_classproperty, get_most_common_tags
+from beets.util.color import colorize
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
 
     from beets.library import Item
+    from beets.util.color import ColorName
 
     from .hooks import AlbumInfo, TrackInfo
 
@@ -139,6 +141,13 @@ class Distance:
             weights[key] = weights_view[key].as_number()
         return weights
 
+    @property
+    def generic_penalty_keys(self) -> list[str]:
+        return [
+            k.replace("album_", "").replace("track_", "").replace("_", " ")
+            for k in self._penalties
+        ]
+
     # Access the components and their aggregates.
 
     @property
@@ -166,6 +175,18 @@ class Distance:
         for key, penalty in self._penalties.items():
             dist_raw += sum(penalty) * self._weights[key]
         return dist_raw
+
+    @property
+    def color(self) -> ColorName:
+        if self.distance <= config["match"]["strong_rec_thresh"].as_number():
+            return "text_success"
+        if self.distance <= config["match"]["medium_rec_thresh"].as_number():
+            return "text_warning"
+        return "text_error"
+
+    @property
+    def string(self) -> str:
+        return colorize(self.color, f"{(1 - self.distance) * 100:.1f}%")
 
     def items(self) -> list[tuple[str, float]]:
         """Return a list of (key, dist) pairs, with `dist` being the

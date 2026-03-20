@@ -3,14 +3,11 @@ from __future__ import annotations
 import os
 import re
 from functools import cache
-from typing import TYPE_CHECKING, Literal
+from typing import Literal
 
 import confuse
 
 from beets import config
-
-if TYPE_CHECKING:
-    from beets.autotag.distance import Distance
 
 # ANSI terminal colorization code heavily inspired by pygments:
 # https://bitbucket.org/birkenfeld/pygments-main/src/default/pygments/console.py
@@ -157,19 +154,6 @@ def colorize(color_name: ColorName, text: str) -> str:
         return _colorize(color_name, text)
 
     return text
-
-
-def dist_colorize(string: str, dist: Distance) -> str:
-    """Formats a string as a colorized similarity string according to
-    a distance.
-    """
-    if dist <= config["match"]["strong_rec_thresh"].as_number():
-        string = colorize("text_success", string)
-    elif dist <= config["match"]["medium_rec_thresh"].as_number():
-        string = colorize("text_warning", string)
-    else:
-        string = colorize("text_error", string)
-    return string
 
 
 def uncolorize(colored_text: str) -> str:
