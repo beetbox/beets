@@ -503,7 +503,9 @@ class TestLyricsPlugin(LyricsPluginMixin):
         monkeypatch.setattr(
             lyrics_plugin,
             "add_item_lyrics",
-            lambda current_item, write: calls.append((current_item.title, write)),
+            lambda current_item, write: calls.append(
+                (current_item.title, write)
+            ),
         )
 
         task = SimpleNamespace(imported_items=lambda: items)
