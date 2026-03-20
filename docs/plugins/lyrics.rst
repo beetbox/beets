@@ -65,12 +65,12 @@ Default configuration:
 The available options are:
 
 - **auto**: Fetch lyrics automatically during import.
-- **exclude_albums**: A list of album titles to skip when fetching lyrics
-  during auto import. Matching is case-insensitive. Default: ``[]``
-  (no albums excluded).
-- **exclude_songs**: A list of song titles to skip when fetching lyrics
-  during auto import. Matching is case-insensitive. Default: ``[]``
-  (no songs excluded).
+- **exclude_albums**: A list of album titles to skip when fetching lyrics during
+  auto import. Matching is case-insensitive. Default: ``[]`` (no albums
+  excluded).
+- **exclude_songs**: A list of song titles to skip when fetching lyrics during
+  auto import. Matching is case-insensitive. Default: ``[]`` (no songs
+  excluded).
 - **translate**:
 
   - **api_key**: Api key to access your Azure Translator resource. (see

@@ -27,8 +27,8 @@ New features
 - :doc:`plugins/play`: Added ``-R``/``--randomize`` flag to shuffle the playlist
   order before passing it to the player.
 - :doc:`plugins/lyrics`: Add ``exclude_albums`` and ``exclude_songs``
-  configuration options to skip fetching lyrics for specific albums or
-  songs during auto import.
+  configuration options to skip fetching lyrics for specific albums or songs
+  during auto import.
 
 Bug fixes
 ~~~~~~~~~
