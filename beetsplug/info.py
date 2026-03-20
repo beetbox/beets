@@ -22,6 +22,7 @@ from beets import ui
 from beets.library import Item
 from beets.plugins import BeetsPlugin
 from beets.util import displayable_path, normpath, syspath
+from beets.util.urls import field_url
 
 
 def tag_data(lib, args, album=False):
@@ -92,13 +93,16 @@ def update_summary(summary, tags):
     return summary
 
 
-def print_data(data, item=None, fmt=None):
+def print_data(data, item=None, fmt=None, links=False):
     """Print, with optional formatting, the fields of a single element.
 
     If no format string `fmt` is passed, the entries on `data` are printed one
     in each line, with the format 'field: value'. If `fmt` is not `None`, the
     `item` is printed according to `fmt`, using the `Item.__format__`
     machinery.
+
+    When ``links == True``, external ID fields will be rendered as clickable
+    terminal hyperlinks using OSC 8 escape sequences.
     """
     if fmt:
         # use fmt specified by the user
@@ -106,11 +110,17 @@ def print_data(data, item=None, fmt=None):
         return
 
     path = displayable_path(item.path) if item else None
+
+    # ``data_source`` is used to determine the correct website to point to when
+    # ``--links`` has been requested.
+    source = item.get("data_source") if (links and item) else None
     formatted = {}
     for key, value in data.items():
         if isinstance(value, list):
             formatted[key] = "; ".join(value)
-        if value is not None:
+        elif value is not None:
+            if links and (url := field_url(key, value, source)):
+                value = ui.terminal_link(url, str(value))
             formatted[key] = value
 
     if len(formatted) == 0:
@@ -181,6 +191,11 @@ class InfoPlugin(BeetsPlugin):
             action="store_true",
             help="show only the keys",
         )
+        cmd.parser.add_option(
+            "--links",
+            action="store_true",
+            help="make ID fields (MusicBrainz, Discogs) clickable terminal hyperlinks",
+        )
         cmd.parser.add_format_option(target="item")
         return [cmd]
 
@@ -231,8 +246,8 @@ class InfoPlugin(BeetsPlugin):
                     print_data_keys(data, item)
                 else:
                     fmt = [opts.format][0] if opts.format else None
-                    print_data(data, item, fmt)
+                    print_data(data, item, fmt, links=opts.links)
                 first = False
 
         if opts.summarize:
-            print_data(summary)
+            print_data(summary, links=opts.links)

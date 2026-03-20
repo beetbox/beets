@@ -16,6 +16,8 @@ New features
   also available as config options via ``force`` and ``keep_new``.
 - :ref:`import-cmd`: The ``--nomove`` / ``-M`` CLI flag can now be used to
   override the ``move: yes`` config option during import.
+- :doc:`plugins/info`: Added ``--links`` command-line flag, which results in
+  external IDs (MusicBrainz, Discogs) being clickable links in the terminal.
 
 Bug fixes
 ~~~~~~~~~

@@ -26,6 +26,7 @@ from beets.util import (
 )
 from beets.util.deprecation import maybe_replace_legacy_field
 from beets.util.functemplate import Template, template
+from beets.util.urls import album_url, track_url
 
 from .exceptions import FileOperationError, ReadError, WriteError
 from .fields import TYPE_BY_FIELD
@@ -341,6 +342,7 @@ class Album(LibModel):
         getters = plugins.album_field_getters()
         getters["path"] = Album.item_dir
         getters["albumtotal"] = Album._albumtotal
+        getters["url"] = Album._url
         return getters
 
     def items(self):
@@ -488,6 +490,19 @@ class Album(LibModel):
                 break
 
         return total
+
+    def _url(self) -> str | None:
+        """The URL of the album's page on its data source."""
+
+        # First up, check if there's a valid mb_albumid -> data_source combination.
+        if url := album_url(self.get("data_source"), self.get("mb_albumid")):
+            return url
+
+        # Fallback to discogs if set
+        if discogs_id := self.get("discogs_albumid"):
+            return f"https://www.discogs.com/release/{discogs_id}"
+
+        return None
 
     def art_destination(self, image, item_dir=None):
         """Return a path to the destination for the album art image
@@ -744,12 +759,27 @@ class Item(LibModel):
     def _cached_album(self, album):
         self.__album = album
 
+    def _url(self) -> str | None:
+        """The URL of the track's page on its data source.
+
+        Falls back to the album URL when the source has no per-track pages.
+        """
+        source = self.get("data_source")
+        if url := track_url(source, self.get("mb_trackid")):
+            return url
+
+        # Discogs is the only source that doesn't have per-track links as of yet.
+        if discogs_id := self.get("discogs_albumid"):
+            return f"https://www.discogs.com/release/{discogs_id}"
+        return None
+
     @classmethod
     def _getters(cls):
         getters = plugins.item_field_getters()
         getters["singleton"] = lambda i: i.album_id is None
         getters["filesize"] = Item.try_filesize  # In bytes.
         getters["has_cover_art"] = Item.has_cover_art
+        getters["url"] = Item._url
         return getters
 
     def duplicates_query(self, fields: list[str]) -> dbcore.AndQuery:

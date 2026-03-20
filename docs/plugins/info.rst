@@ -46,6 +46,8 @@ Additional command-line options include:
   item. This uses the same template syntax as beets’ :doc:`path formats
   </reference/pathformat>`.
 - ``--keys-only`` or ``-k``: Show the name of the tags without the values.
+- ``--links``: Make external IDs (Discogs/MusicBrainz) clickable links in the
+  terminal.
 
 .. _id3v2: https://sourceforge.net/projects/id3v2/
 

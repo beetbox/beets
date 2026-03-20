@@ -15,8 +15,10 @@
 
 from mediafile import MediaFile
 
+from beets import ui
 from beets.test.helper import IOMixin, PluginTestCase
 from beets.util import displayable_path
+from beets.util.urls import field_url
 
 
 class InfoTest(IOMixin, PluginTestCase):
@@ -116,3 +118,58 @@ class InfoTest(IOMixin, PluginTestCase):
             "$track. $title - $artist ($length)",
         )
         assert "02. tïtle 0 - the artist (0:01)\n" == out
+
+    def _assert_field_link(self, out, field, value, source=None):
+        """Assert that ``field: <hyperlink>`` is present in ``out``."""
+        url = field_url(field, value, source)
+        assert url is not None
+        link = ui.terminal_link(url, str(value))
+        assert f"{field}: {link}" in out
+
+    def test_links(self):
+        """``--links`` defaults to MusicBrainz when ``data_source`` is unset."""
+        (item,) = self.add_item_fixtures()
+        item.mb_albumid = "album-uuid"
+        item.mb_trackid = "track-uuid"
+        item.discogs_albumid = 99999
+        item.album = "MyAlbum"
+        item.store()
+
+        out = self.run_with_output(
+            "info",
+            "--library",
+            "--include-keys",
+            "mb_albumid,mb_trackid,discogs_albumid,album",
+            "--links",
+        )
+
+        self._assert_field_link(out, "mb_albumid", item.mb_albumid)
+        self._assert_field_link(out, "mb_trackid", item.mb_trackid)
+        self._assert_field_link(out, "discogs_albumid", item.discogs_albumid)
+
+        # Non-ID fields remain plain text.
+        assert "album: MyAlbum" in out
+
+    def test_links_with_data_source(self):
+        """Non-MusicBrainz ``data_source`` values pick the right site.
+
+        When ``data_source`` is set, the ``mb_albumid``/``mb_trackid`` fields
+        actually hold IDs for that source's website, so the rendered links
+        must point there too.
+        """
+        (item,) = self.add_item_fixtures()
+        item.data_source = "Deezer"
+        item.mb_albumid = "deezer-album-id"
+        item.mb_trackid = "deezer-track-id"
+        item.store()
+
+        out = self.run_with_output(
+            "info",
+            "--library",
+            "--include-keys",
+            "mb_albumid,mb_trackid",
+            "--links",
+        )
+
+        self._assert_field_link(out, "mb_albumid", item.mb_albumid, "Deezer")
+        self._assert_field_link(out, "mb_trackid", item.mb_trackid, "Deezer")
