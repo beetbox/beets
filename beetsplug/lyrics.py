@@ -1067,6 +1067,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
         return [cmd]
 
     def imported(self, _, task: ImportTask) -> None:
+        """Import hook for fetching lyrics automatically."""
         if query_str := self.config["auto_ignore"].get():
             query, _ = parse_query_string(query_str, Item)
         else:
