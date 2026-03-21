@@ -17,6 +17,7 @@
 from collections import defaultdict
 
 from beets import library, metadata_plugins, ui, util
+from beets.autotag.distance import Distance
 from beets.autotag.hooks import AlbumMatch, TrackMatch
 from beets.plugins import BeetsPlugin, apply_item_changes
 
@@ -91,7 +92,7 @@ class MBSyncPlugin(BeetsPlugin):
 
             # Apply.
             with lib.transaction():
-                TrackMatch(0, track_info, item).apply_metadata()
+                TrackMatch(Distance(), track_info, item).apply_metadata()
                 apply_item_changes(lib, item, move, pretend, write)
 
     def albums(self, lib, query, move, pretend, write):
@@ -158,7 +159,7 @@ class MBSyncPlugin(BeetsPlugin):
             self._log.debug("applying changes to {}", album)
             with lib.transaction():
                 AlbumMatch(
-                    0, album_info, dict(item_info_pairs)
+                    Distance(), album_info, dict(item_info_pairs)
                 ).apply_metadata()
                 changed = False
                 # Find any changed item to apply changes to album.
