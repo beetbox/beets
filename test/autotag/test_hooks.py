@@ -18,6 +18,7 @@ import operator
 
 import pytest
 
+from beets.autotag.distance import Distance
 from beets.autotag.hooks import (
     AlbumInfo,
     AlbumMatch,
@@ -58,7 +59,7 @@ class ApplyTest(BeetsTestCase):
         self.config["artist_credit"] = artist_credit
         self.config["original_date"] = original_date
         self.config["import"]["from_scratch"] = from_scratch
-        amatch = AlbumMatch(0, self.info, mapping)
+        amatch = AlbumMatch(Distance(), self.info, mapping)
         amatch.apply_metadata()
 
     def setUp(self):
@@ -258,7 +259,7 @@ class TestFromScratch:
         return Item(artist="old artist", comments="stale comment")
 
     def test_album_match_clears_stale_metadata(self, album_info, item):
-        match = AlbumMatch(0, album_info, {item: album_info.tracks[0]})
+        match = AlbumMatch(Distance(), album_info, {item: album_info.tracks[0]})
 
         match.apply_metadata()
 
@@ -266,7 +267,7 @@ class TestFromScratch:
         assert item.comments == ""
 
     def test_singleton_match_clears_stale_metadata(self, item):
-        match = TrackMatch(0, TrackInfo(artist="track artist"), item)
+        match = TrackMatch(Distance(), TrackInfo(artist="track artist"), item)
 
         match.apply_metadata()
 
@@ -297,14 +298,16 @@ class TestOverwriteNull:
         return TrackInfo(artist=None)
 
     def test_album(self, item, track_info, expected_item_artist):
-        match = AlbumMatch(0, AlbumInfo([track_info]), {item: track_info})
+        match = AlbumMatch(
+            Distance(), AlbumInfo([track_info]), {item: track_info}
+        )
 
         match.apply_metadata()
 
         assert item.artist == expected_item_artist
 
     def test_singleton(self, item, track_info, expected_item_artist):
-        match = TrackMatch(0, track_info, item)
+        match = TrackMatch(Distance(), track_info, item)
 
         match.apply_metadata()
 
