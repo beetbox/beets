@@ -15,6 +15,7 @@
 
 from mediafile import MediaFile
 
+from beets import ui
 from beets.test.helper import IOMixin, PluginTestCase
 from beets.util import displayable_path
 
@@ -116,3 +117,38 @@ class InfoTest(IOMixin, PluginTestCase):
             "$track. $title - $artist ($length)",
         )
         assert "02. tïtle 0 - the artist (0:01)\n" == out
+
+    def test_links(self):
+        (item,) = self.add_item_fixtures()
+        item.mb_albumid = "album-uuid"
+        item.mb_trackid = "track-uuid"
+        item.discogs_albumid = 99999
+        item.album = "MyAlbum"
+        item.store()
+
+        out = self.run_with_output(
+            "info",
+            "--library",
+            "--include-keys",
+            "mb_albumid,mb_trackid,discogs_albumid,album",
+            "--links",
+        )
+
+        # ID fields are wrapped in terminal hyperlinks
+        mb_album_link = ui.terminal_link(
+            "https://musicbrainz.org/release/album-uuid", "album-uuid"
+        )
+        assert f"mb_albumid: {mb_album_link}" in out
+
+        mb_track_link = ui.terminal_link(
+            "https://musicbrainz.org/recording/track-uuid", "track-uuid"
+        )
+        assert f"mb_trackid: {mb_track_link}" in out
+
+        discogs_link = ui.terminal_link(
+            "https://www.discogs.com/release/99999", "99999"
+        )
+        assert f"discogs_albumid: {discogs_link}" in out
+
+        # Non-ID fields remain plain text
+        assert "album: MyAlbum" in out

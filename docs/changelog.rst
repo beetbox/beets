@@ -26,6 +26,8 @@ New features
   :bug:`2661`
 - :doc:`plugins/play`: Added ``-R``/``--randomize`` flag to shuffle the playlist
   order before passing it to the player.
+- :doc:`plugins/info`: Added ``--links`` command-line flag, which results in
+  external IDs (MusicBrainz, Discogs) being clickable links in the terminal.
 
 Bug fixes
 ~~~~~~~~~
@@ -103,7 +105,6 @@ Bug fixes
 
 New features
 ~~~~~~~~~~~~
-
 - :doc:`plugins/lastgenre`: Added ``cleanup_existing`` configuration flag to
   allow whitelist canonicalization of existing genres.
 - Add native support for multiple genres per album/track. The ``genres`` field

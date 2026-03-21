@@ -156,6 +156,20 @@ def colorize(color_name: ColorName, text: str) -> str:
     return text
 
 
+def terminal_link(url: str, text: str | None = None) -> str:
+    """Create a clickable terminal hyperlink using a OSC 8 escape sequence.
+
+    `text` falls back to `url` if `None`.
+    """
+    display = text if text is not None else url
+
+    return (
+        f"{COLOR_ESCAPE}]8;;{url}{COLOR_ESCAPE}\\"
+        f"{display}"
+        f"{COLOR_ESCAPE}]8;;{COLOR_ESCAPE}\\"
+    )
+
+
 def uncolorize(colored_text: str) -> str:
     """Remove colors from a string."""
     # Define a regular expression to match ANSI codes.

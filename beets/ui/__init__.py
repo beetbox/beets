@@ -37,7 +37,7 @@ from beets import config, library, logging, plugins, util
 from beets.dbcore import db
 from beets.dbcore import query as db_query
 from beets.util import as_string
-from beets.util.color import colorize
+from beets.util.color import colorize, terminal_link
 from beets.util.deprecation import deprecate_for_maintainers
 from beets.util.diff import get_model_changes
 from beets.util.functemplate import template
