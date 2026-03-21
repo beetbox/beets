@@ -1070,9 +1070,8 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
         if query_str := self.config["auto_ignore"].get():
             query, _ = parse_query_string(query_str, Item)
         else:
-            query = (
-                FalseQuery()
-            )  # matches nothing, so all items proceed normally
+            # matches nothing, so all items proceed normally
+            query = FalseQuery()  
 
         for item in filterfalse(query.match, task.imported_items()):
             self.add_item_lyrics(item, False)
