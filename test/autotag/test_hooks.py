@@ -50,12 +50,14 @@ class ApplyTest(BeetsTestCase):
         per_disc_numbering=False,
         artist_credit=False,
         original_date=False,
+        from_scratch=False,
     ):
         info = self.info
         mapping = dict(zip(self.items, info.tracks))
         self.config["per_disc_numbering"] = per_disc_numbering
         self.config["artist_credit"] = artist_credit
         self.config["original_date"] = original_date
+        self.config["import"]["from_scratch"] = from_scratch
         amatch = AlbumMatch(0, self.info, mapping)
         amatch.apply_metadata()
 
@@ -240,6 +242,38 @@ class ApplyTest(BeetsTestCase):
         assert self.items[0].day == 7
 
 
+class TestFromScratch:
+    @pytest.fixture(autouse=True)
+    def config(self, config):
+        config["import"]["from_scratch"] = True
+
+    @pytest.fixture
+    def album_info(self):
+        return AlbumInfo(
+            tracks=[TrackInfo(title="title", artist="track artist", index=1)]
+        )
+
+    @pytest.fixture
+    def item(self):
+        return Item(artist="old artist", comments="stale comment")
+
+    def test_album_match_clears_stale_metadata(self, album_info, item):
+        match = AlbumMatch(0, album_info, {item: album_info.tracks[0]})
+
+        match.apply_metadata()
+
+        assert item.artist == "track artist"
+        assert item.comments == ""
+
+    def test_singleton_match_clears_stale_metadata(self, item):
+        match = TrackMatch(0, TrackInfo(artist="track artist"), item)
+
+        match.apply_metadata()
+
+        assert item.artist == "track artist"
+        assert item.comments == ""
+
+
 @pytest.mark.parametrize(
     "overwrite_fields,expected_item_artist",
     [
@@ -252,6 +286,7 @@ class TestOverwriteNull:
     def config(self, config, overwrite_fields):
         config["overwrite_null"]["album"] = overwrite_fields
         config["overwrite_null"]["track"] = overwrite_fields
+        config["import"]["from_scratch"] = False
 
     @pytest.fixture
     def item(self):
