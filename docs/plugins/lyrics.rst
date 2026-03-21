@@ -74,7 +74,7 @@ The available options are:
         auto_ignore: |
           data_source:bandcamp
           ,
-          genre:techno
+          genres:techno
 
   Default: ``null`` (nothing is ignored). See :doc:`/reference/query` for the
   query syntax.
