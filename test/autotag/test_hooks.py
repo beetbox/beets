@@ -45,11 +45,17 @@ def test_genre_deprecation(genre, expected_genres):
 
 
 class ApplyTest(BeetsTestCase):
-    def _apply(self, per_disc_numbering=False, artist_credit=False):
+    def _apply(
+        self,
+        per_disc_numbering=False,
+        artist_credit=False,
+        original_date=False,
+    ):
         info = self.info
         mapping = dict(zip(self.items, info.tracks))
         self.config["per_disc_numbering"] = per_disc_numbering
         self.config["artist_credit"] = artist_credit
+        self.config["original_date"] = original_date
         amatch = AlbumMatch(0, self.info, mapping)
         amatch.apply_metadata()
 
@@ -215,6 +221,23 @@ class ApplyTest(BeetsTestCase):
         assert self.items[0].year == 1
         assert self.items[0].month == 2
         assert self.items[0].day == 3
+
+    def test_original_date_overrides_release_date(self):
+        self.items = [Item(year=1, month=2, day=3)]
+        self.info.update(
+            year=2013,
+            month=12,
+            day=18,
+            original_year=1999,
+            original_month=4,
+            original_day=7,
+        )
+
+        self._apply(original_date=True)
+
+        assert self.items[0].year == 1999
+        assert self.items[0].month == 4
+        assert self.items[0].day == 7
 
 
 @pytest.mark.parametrize(
