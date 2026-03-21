@@ -131,6 +131,11 @@ New features
   2. Semicolon followed by a space
   3. Comma followed by a space
   4. Slash wrapped by spaces
+- :doc:`plugins/smartplaylist`: The list of available playlists shown when an
+  unknown playlist name is passed as an argument is now sorted alphabetically
+  and printed as a space-delimited list instead of the default Python dict
+  representation. This makes it easier to copy and paste multiple playlists for
+  further use in the shell.
 
 - :doc:`plugins/lyrics`: With ``synced`` enabled, existing synced lyrics are no
   longer replaced by newly fetched plain lyrics, even when ``force`` is enabled.

@@ -160,8 +160,9 @@ class SmartPlaylistPlugin(BeetsPlugin):
             }
             if not playlists:
                 unmatched = [name for name, _, _ in self._unmatched_playlists]
+                unmatched.sort()
                 raise ui.UserError(
-                    f"No playlist matching any of {unmatched} found"
+                    f"No playlist matching any of {' '.join(unmatched)} found"
                 )
 
             self._matched_playlists = playlists
