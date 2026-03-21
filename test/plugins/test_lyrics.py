@@ -378,7 +378,13 @@ class TestLyricsPlugin(LyricsPluginMixin):
             ),
             pytest.param(
                 "album:Greatest Hits",
-                [Item(title="Come Together", album="Greatest Hits", genre="Rock")],
+                [
+                    Item(
+                        title="Come Together",
+                        album="Greatest Hits",
+                        genre="Rock",
+                    )
+                ],
                 [],
                 id="skip-matching-album",
             ),
@@ -398,7 +404,9 @@ class TestLyricsPlugin(LyricsPluginMixin):
                 "genre:Techno",
                 [
                     Item(title="Hey Jude", album="Abbey Road", genre="Rock"),
-                    Item(title="Techno Song", album="Club Hits", genre="Techno"),
+                    Item(
+                        title="Techno Song", album="Club Hits", genre="Techno"
+                    ),
                 ],
                 ["Hey Jude"],
                 id="mixed-task",
@@ -407,8 +415,12 @@ class TestLyricsPlugin(LyricsPluginMixin):
                 "album:Greatest Hits , genre:Techno",
                 [
                     Item(title="Old Song", album="Greatest Hits", genre="Rock"),
-                    Item(title="Techno Song", album="Club Hits", genre="Techno"),
-                    Item(title="Come Together", album="Abbey Road", genre="Rock"),
+                    Item(
+                        title="Techno Song", album="Club Hits", genre="Techno"
+                    ),
+                    Item(
+                        title="Come Together", album="Abbey Road", genre="Rock"
+                    ),
                 ],
                 ["Come Together"],
                 id="multiple-queries",
@@ -431,17 +443,19 @@ class TestLyricsPlugin(LyricsPluginMixin):
     ):
         if auto_ignore:
             lyrics_plugin.config["auto_ignore"].set(auto_ignore)
- 
+
         calls = []
         monkeypatch.setattr(
             lyrics_plugin,
             "add_item_lyrics",
-            lambda current_item, write: calls.append((current_item.title, write)),
+            lambda current_item, write: calls.append(
+                (current_item.title, write)
+            ),
         )
- 
+
         task = SimpleNamespace(imported_items=lambda: items)
         lyrics_plugin.imported(None, task)
- 
+
         assert calls == [(title, False) for title in expected_titles]
 
 

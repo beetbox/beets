@@ -24,7 +24,7 @@ from contextlib import contextmanager, suppress
 from dataclasses import dataclass
 from functools import cached_property, partial, total_ordering
 from html import unescape
-from itertools import groupby, filterfalse
+from itertools import filterfalse, groupby
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, NamedTuple
 from urllib.parse import quote, quote_plus, urlencode, urlparse
@@ -36,10 +36,10 @@ from unidecode import unidecode
 from beets import plugins, ui
 from beets.autotag.distance import string_dist
 from beets.dbcore import types
-from beets.util.config import sanitize_choices
-from beets.util.lyrics import INSTRUMENTAL_LYRICS, Lyrics
 from beets.dbcore.query import FalseQuery
 from beets.library import Item, parse_query_string
+from beets.util.config import sanitize_choices
+from beets.util.lyrics import INSTRUMENTAL_LYRICS, Lyrics
 
 from ._utils.requests import HTTPNotFoundError, RequestHandler
 
@@ -1066,14 +1066,16 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
         cmd.func = func
         return [cmd]
 
-def imported(self, _, task: ImportTask) -> None:
-    if query_str := self.config["auto_ignore"].get():
-        query, _ = parse_query_string(query_str, Item)
-    else:
-        query = FalseQuery()  # matches nothing, so all items proceed normally
+    def imported(self, _, task: ImportTask) -> None:
+        if query_str := self.config["auto_ignore"].get():
+            query, _ = parse_query_string(query_str, Item)
+        else:
+            query = (
+                FalseQuery()
+            )  # matches nothing, so all items proceed normally
 
-    for item in filterfalse(query.match, task.imported_items()):
-        self.add_item_lyrics(item, False)
+        for item in filterfalse(query.match, task.imported_items()):
+            self.add_item_lyrics(item, False)
 
     def find_lyrics(self, item: Item) -> Lyrics | None:
         """Return the first lyrics match from the configured source search."""
@@ -1138,4 +1140,3 @@ def imported(self, _, task: ImportTask) -> None:
                     return lyrics_info
 
         return None
-
