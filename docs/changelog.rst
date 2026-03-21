@@ -88,6 +88,8 @@ Other changes
   management with pipx and move package manager instructions to the FAQ.
 - :doc:`guides/main`: Update quick installation section to reflect current
   installation guide structure.
+- :doc:`guides/installation`: Update pipx installation guide link
+- :doc:`contributing`: Update pipx installation guide link
 
 2.7.1 (March 08, 2026)
 ----------------------
