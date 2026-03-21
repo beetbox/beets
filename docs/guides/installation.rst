@@ -43,7 +43,7 @@ installation page`_ to get it set up.
 
 .. _pipx: https://pipx.pypa.io/stable
 
-.. _pipx installation page: https://pipx.pypa.io/stable/installation/
+.. _pipx installation page: https://pipx.pypa.io/stable/how-to/install-pipx/
 
 Managing Plugins with ``pipx``
 ------------------------------

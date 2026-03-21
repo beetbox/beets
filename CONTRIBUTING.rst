@@ -74,7 +74,7 @@ virtual environment, where its dependencies will not interfere with your system
 and other CLI tools.
 
 If you do not have pipx_ installed in your system, follow `pipx installation
-instructions <https://pipx.pypa.io/stable/installation/>`__ or
+instructions <https://pipx.pypa.io/stable/how-to/install-pipx/>`__ or
 
 .. code-block:: sh
 
