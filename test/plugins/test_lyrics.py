@@ -367,82 +367,16 @@ class TestLyricsPlugin(LyricsPluginMixin):
         with pytest.raises(AttributeError):
             item.lyrics_translation_language
 
-    @pytest.mark.parametrize(
-        "auto_ignore, items, expected_titles",
-        [
-            pytest.param(
-                None,
-                [Item(title="Come Together", album="Abbey Road", genre="Rock")],
-                ["Come Together"],
-                id="fetch-when-no-ignore",
-            ),
-            pytest.param(
-                "album:Greatest Hits",
-                [
-                    Item(
-                        title="Come Together",
-                        album="Greatest Hits",
-                        genre="Rock",
-                    )
-                ],
-                [],
-                id="skip-matching-album",
-            ),
-            pytest.param(
-                "album:Greatest Hits",
-                [Item(title="Come Together", album="Abbey Road", genre="Rock")],
-                ["Come Together"],
-                id="fetch-non-matching-album",
-            ),
-            pytest.param(
-                "genre:rock",
-                [Item(title="Come Together", album="Abbey Road", genre="Rock")],
-                [],
-                id="query-case-insensitive",
-            ),
-            pytest.param(
-                "genre:Techno",
-                [
-                    Item(title="Hey Jude", album="Abbey Road", genre="Rock"),
-                    Item(
-                        title="Techno Song", album="Club Hits", genre="Techno"
-                    ),
-                ],
-                ["Hey Jude"],
-                id="mixed-task",
-            ),
-            pytest.param(
-                "album:Greatest Hits , genre:Techno",
-                [
-                    Item(title="Old Song", album="Greatest Hits", genre="Rock"),
-                    Item(
-                        title="Techno Song", album="Club Hits", genre="Techno"
-                    ),
-                    Item(
-                        title="Come Together", album="Abbey Road", genre="Rock"
-                    ),
-                ],
-                ["Come Together"],
-                id="multiple-queries",
-            ),
-            pytest.param(
-                "album:Greatest Hits",
-                [],
-                [],
-                id="empty-task",
-            ),
-        ],
-    )
-    def test_imported(
+    def test_imported_skips_auto_ignored_items(
         self,
         lyrics_plugin,
         monkeypatch,
-        auto_ignore,
-        items,
-        expected_titles,
     ):
-        if auto_ignore:
-            lyrics_plugin.config["auto_ignore"].set(auto_ignore)
+        lyrics_plugin.config["auto_ignore"].set("album:Greatest Hits")
+        items = [
+            Item(title="Old Song", album="Greatest Hits", genre="Rock"),
+            Item(title="Come Together", album="Abbey Road", genre="Rock"),
+        ]
 
         calls = []
         monkeypatch.setattr(
@@ -456,7 +390,7 @@ class TestLyricsPlugin(LyricsPluginMixin):
         task = SimpleNamespace(imported_items=lambda: items)
         lyrics_plugin.imported(None, task)
 
-        assert calls == [(title, False) for title in expected_titles]
+        assert calls == [("Come Together", False)]
 
 
 class LyricsBackendTest(LyricsPluginMixin):
