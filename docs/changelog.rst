@@ -58,6 +58,9 @@ Bug fixes
   **Migration**: This cannot be migrated automatically because of the field
   clash. If you use ``lastimport`` without ``mpdstats``, migrate manually with
   ``beet modify lastfm_play_count='$play_count'``.
+- :ref:`import-cmd` Simplify autotag metadata application for albums and
+  singletons, fixing null-overwrite handling and keeping singular/plural artist
+  metadata fields in sync during tagging.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
