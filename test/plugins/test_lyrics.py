@@ -368,149 +368,80 @@ class TestLyricsPlugin(LyricsPluginMixin):
             item.lyrics_translation_language
 
     @pytest.mark.parametrize(
-        "config_key, exclusions, item, expected",
+        "auto_ignore, items, expected_titles",
         [
             pytest.param(
                 None,
-                [],
-                Item(title="Come Together", album="Abbey Road"),
-                False,
-                id="default",
-            ),
-            pytest.param(
-                "exclude_albums",
-                ["Greatest Hits"],
-                Item(title="Come Together", album="Greatest Hits"),
-                True,
-                id="exact-album",
-            ),
-            pytest.param(
-                "exclude_songs",
+                [Item(title="Come Together", album="Abbey Road", genre="Rock")],
                 ["Come Together"],
-                Item(title="Come Together", album="Abbey Road"),
-                True,
-                id="exact-song",
+                id="fetch-when-no-ignore",
             ),
             pytest.param(
-                "exclude_albums",
-                ["greatest hits"],
-                Item(title="Come Together", album="Greatest Hits"),
-                True,
-                id="album-case-insensitive",
-            ),
-            pytest.param(
-                "exclude_songs",
-                ["COME TOGETHER"],
-                Item(title="Come Together", album="Abbey Road"),
-                True,
-                id="song-case-insensitive",
-            ),
-            pytest.param(
-                "exclude_albums",
-                ["Greatest"],
-                Item(title="Come Together", album="Greatest Hits"),
-                False,
-                id="album-no-partial-match",
-            ),
-            pytest.param(
-                "exclude_songs",
-                ["Come"],
-                Item(title="Come Together", album="Abbey Road"),
-                False,
-                id="song-no-partial-match",
-            ),
-            pytest.param(
-                "exclude_songs",
-                ["Come Together", "Let It Be"],
-                Item(title="Come Together"),
-                True,
-                id="first-of-many",
-            ),
-            pytest.param(
-                "exclude_songs",
-                ["Come Together", "Let It Be"],
-                Item(title="Let It Be"),
-                True,
-                id="second-of-many",
-            ),
-            pytest.param(
-                "exclude_songs",
-                ["Come Together", "Let It Be"],
-                Item(title="Hey Jude"),
-                False,
-                id="not-in-many",
-            ),
-        ],
-    )
-    def test_is_excluded(
-        self, lyrics_plugin, config_key, exclusions, item, expected
-    ):
-        if config_key:
-            lyrics_plugin.config[config_key].set(exclusions)
-
-        assert lyrics_plugin.is_excluded(item) is expected
-
-    @pytest.mark.parametrize(
-        "config_key, exclusions, items, expected_titles",
-        [
-            pytest.param(
-                None,
+                "album:Greatest Hits",
+                [Item(title="Come Together", album="Greatest Hits", genre="Rock")],
                 [],
-                [Item(title="Come Together", album="Abbey Road")],
-                ["Come Together"],
-                id="fetch-normal-item",
+                id="skip-matching-album",
             ),
             pytest.param(
-                "exclude_albums",
-                ["Greatest Hits"],
-                [Item(title="Come Together", album="Greatest Hits")],
+                "album:Greatest Hits",
+                [Item(title="Come Together", album="Abbey Road", genre="Rock")],
+                ["Come Together"],
+                id="fetch-non-matching-album",
+            ),
+            pytest.param(
+                "genre:rock",
+                [Item(title="Come Together", album="Abbey Road", genre="Rock")],
                 [],
-                id="skip-excluded-album",
+                id="query-case-insensitive",
             ),
             pytest.param(
-                "exclude_songs",
-                ["Come Together"],
-                [Item(title="Come Together", album="Abbey Road")],
-                [],
-                id="skip-excluded-song",
-            ),
-            pytest.param(
-                "exclude_songs",
-                ["Come Together"],
+                "genre:Techno",
                 [
-                    Item(title="Hey Jude", album="Abbey Road"),
-                    Item(title="Come Together", album="Abbey Road"),
+                    Item(title="Hey Jude", album="Abbey Road", genre="Rock"),
+                    Item(title="Techno Song", album="Club Hits", genre="Techno"),
                 ],
                 ["Hey Jude"],
                 id="mixed-task",
             ),
-            pytest.param(None, [], [], [], id="empty-task"),
+            pytest.param(
+                "album:Greatest Hits , genre:Techno",
+                [
+                    Item(title="Old Song", album="Greatest Hits", genre="Rock"),
+                    Item(title="Techno Song", album="Club Hits", genre="Techno"),
+                    Item(title="Come Together", album="Abbey Road", genre="Rock"),
+                ],
+                ["Come Together"],
+                id="multiple-queries",
+            ),
+            pytest.param(
+                "album:Greatest Hits",
+                [],
+                [],
+                id="empty-task",
+            ),
         ],
     )
     def test_imported(
         self,
         lyrics_plugin,
         monkeypatch,
-        config_key,
-        exclusions,
+        auto_ignore,
         items,
         expected_titles,
     ):
-        if config_key:
-            lyrics_plugin.config[config_key].set(exclusions)
-
+        if auto_ignore:
+            lyrics_plugin.config["auto_ignore"].set(auto_ignore)
+ 
         calls = []
         monkeypatch.setattr(
             lyrics_plugin,
             "add_item_lyrics",
-            lambda current_item, write: calls.append(
-                (current_item.title, write)
-            ),
+            lambda current_item, write: calls.append((current_item.title, write)),
         )
-
+ 
         task = SimpleNamespace(imported_items=lambda: items)
         lyrics_plugin.imported(None, task)
-
+ 
         assert calls == [(title, False) for title in expected_titles]
 
 

@@ -24,7 +24,7 @@ from contextlib import contextmanager, suppress
 from dataclasses import dataclass
 from functools import cached_property, partial, total_ordering
 from html import unescape
-from itertools import groupby
+from itertools import groupby, filterfalse
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, NamedTuple
 from urllib.parse import quote, quote_plus, urlencode, urlparse
@@ -38,6 +38,8 @@ from beets.autotag.distance import string_dist
 from beets.dbcore import types
 from beets.util.config import sanitize_choices
 from beets.util.lyrics import INSTRUMENTAL_LYRICS, Lyrics
+from beets.dbcore.query import FalseQuery
+from beets.library import Item, parse_query_string
 
 from ._utils.requests import HTTPNotFoundError, RequestHandler
 
@@ -47,7 +49,7 @@ if TYPE_CHECKING:
     import confuse
 
     from beets.importer import ImportTask
-    from beets.library import Item, Library
+    from beets.library import Library
     from beets.logging import BeetsLogger as Logger
 
     from ._typing import (
@@ -978,8 +980,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
         self.config.add(
             {
                 "auto": True,
-                "exclude_albums": [],
-                "exclude_songs": [],
+                "auto_ignore": None,
                 "translate": {
                     "api_key": None,
                     "from_languages": [],
@@ -1065,13 +1066,14 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
         cmd.func = func
         return [cmd]
 
-    def imported(self, _, task: ImportTask) -> None:
-        """Import hook for fetching lyrics automatically."""
-        for item in task.imported_items():
-            if self.is_excluded(item):
-                self.info("Skipping excluded item: {}", item)
-                continue
-            self.add_item_lyrics(item, False)
+def imported(self, _, task: ImportTask) -> None:
+    if query_str := self.config["auto_ignore"].get():
+        query, _ = parse_query_string(query_str, Item)
+    else:
+        query = FalseQuery()  # matches nothing, so all items proceed normally
+
+    for item in filterfalse(query.match, task.imported_items()):
+        self.add_item_lyrics(item, False)
 
     def find_lyrics(self, item: Item) -> Lyrics | None:
         """Return the first lyrics match from the configured source search."""
@@ -1137,17 +1139,3 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
 
         return None
 
-    def is_excluded(self, item: Item) -> bool:
-        """Return True if the item matches an exclusion rule."""
-        exclude_albums = {
-            a.lower() for a in self.config["exclude_albums"].as_str_seq()
-        }
-        exclude_songs = {
-            s.lower() for s in self.config["exclude_songs"].as_str_seq()
-        }
-
-        if item.album and item.album.lower() in exclude_albums:
-            return True
-        if item.title and item.title.lower() in exclude_songs:
-            return True
-        return False
