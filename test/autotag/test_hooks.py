@@ -274,12 +274,21 @@ class TestOverwriteNull:
         ("1", ["1", "2"], ("1", ["1", "2"])),
         ("1", ["2", "1"], ("1", ["1", "2"])),
         ("1", ["2"], ("1", ["1", "2"])),
+        ("1 ft 2", ["1", "1 ft 2"], ("1 ft 2", ["1 ft 2", "1"])),
+        ("1 FT 2", ["1", "1 ft 2"], ("1 FT 2", ["1", "1 ft 2"])),
+        ("a", ["b", "A"], ("a", ["b", "A"])),
+        ("1 ft 2", ["2", "1"], ("1 ft 2", ["2", "1"])),
     ],
 )
 def test_correct_list_fields(
     single_field, list_field, single_value, list_value, expected_values
 ):
-    """Ensure that the first value in a list field matches the single field."""
+    """Verify that singular and plural field variants are kept consistent.
+
+    Checks that when both a single-value field and its list counterpart are
+    present, the function reconciles them: ensuring the single value appears
+    in the list and the list drives the canonical single value when needed.
+    """
     input_data = {single_field: single_value, list_field: list_value}
 
     data = correct_list_fields(input_data)
