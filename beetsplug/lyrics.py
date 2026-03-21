@@ -1072,7 +1072,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             query, _ = parse_query_string(query_str, Item)
         else:
             # matches nothing, so all items proceed normally
-            query = FalseQuery()  
+            query = FalseQuery()
 
         for item in filterfalse(query.match, task.imported_items()):
             self.add_item_lyrics(item, False)
