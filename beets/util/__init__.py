@@ -934,7 +934,8 @@ def open_anything() -> str:
     if sys_name == "Darwin":
         base_cmd = "open"
     elif sys_name == "Windows":
-        base_cmd = "start"
+        # `start` is a cmd.exe builtin, so invoke it through the shell.
+        base_cmd = 'cmd /c start ""'
     else:  # Assume Unix
         base_cmd = "xdg-open"
     return base_cmd

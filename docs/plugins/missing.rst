@@ -27,12 +27,20 @@ library:
     -c, --count           count missing tracks per album
     -t, --total           count totals across the entire library
     -a, --album           show missing albums for artist instead of tracks for album
+    --release-type        show only missing albums of specified release type.
+                          You can provide this argument multiple times to
+                          specify multiple release types to filter to. If not
+                          provided, defaults to just the "album" release type.
+                          provided, it uses the configured
+                          ``missing.release_type`` (default: "album").
 
 …or by editing the corresponding configuration options.
 
 .. warning::
 
-    Option ``-c`` is ignored when used with ``-a``.
+    Option ``-c`` is ignored when used with ``-a``, and ``--release-type`` is
+    ignored when not used with ``-a``. Valid release types can be shown by
+    running ``beet missing -h``.
 
 Configuration
 -------------
@@ -109,6 +117,19 @@ Print out a count of the total number of missing tracks:
 ::
 
     beet missing -t
+
+List all missing albums of release type "compilation" in your collection:
+
+::
+
+    beet missing -a --release-type compilation
+
+List all missing albums of release type "compilation" and album in your
+collection:
+
+::
+
+    beet missing -a --release-type compilation --release-type album
 
 Call this plugin from other beet commands:
 
