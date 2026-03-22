@@ -37,6 +37,7 @@ from mediafile import MediaFile
 
 from beets import config, importer, logging, util
 from beets.autotag import AlbumInfo, AlbumMatch, TrackInfo
+from beets.autotag.distance import Distance
 from beets.importer.tasks import albums_in_dir
 from beets.test import _common
 from beets.test.helper import (
@@ -884,7 +885,7 @@ class InferAlbumDataTest(unittest.TestCase):
         assert self.items[0].mb_albumartistid == "some album artist id"
 
     def test_apply_gets_artist_and_id(self):
-        self.task.set_choice(AlbumMatch(0, None, {}, set(), set()))  # APPLY
+        self.task.set_choice(AlbumMatch(Distance(), None, {}))  # APPLY
 
         self.task.align_album_level_fields()
 
@@ -895,7 +896,7 @@ class InferAlbumDataTest(unittest.TestCase):
         for item in self.items:
             item.albumartist = "some album artist"
             item.mb_albumartistid = "some album artist id"
-        self.task.set_choice(AlbumMatch(0, None, {}, set(), set()))  # APPLY
+        self.task.set_choice(AlbumMatch(Distance(), None, {}))  # APPLY
 
         self.task.align_album_level_fields()
 

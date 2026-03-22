@@ -29,6 +29,7 @@ import responses
 
 from beets import config, importer, logging, util
 from beets.autotag import AlbumInfo, AlbumMatch
+from beets.autotag.distance import Distance
 from beets.test import _common
 from beets.test.helper import (
     BeetsTestCase,
@@ -806,7 +807,7 @@ class ArtImporterTest(UseThePlugin):
             artist_id="artistid",
             tracks=[],
         )
-        self.task.set_choice(AlbumMatch(0, info, {}, set(), set()))
+        self.task.set_choice(AlbumMatch(Distance(), info, {}))
 
     def tearDown(self):
         super().tearDown()
