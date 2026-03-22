@@ -26,6 +26,8 @@ New features
   :bug:`2661`
 - :doc:`plugins/play`: Added ``-R``/``--randomize`` flag to shuffle the playlist
   order before passing it to the player.
+- :doc:`plugins/lyrics`: Add ``auto_ignore`` configuration option to skip
+  fetching lyrics for items matching a beets query during auto import.
 
 Bug fixes
 ~~~~~~~~~
