@@ -23,6 +23,7 @@ class Library(dbcore.Database):
     _migrations = (
         (migrations.MultiGenreFieldMigration, (Item, Album)),
         (migrations.LyricsMetadataInFlexFieldsMigration, (Item,)),
+        (migrations.RelativePathMigration, (Item, Album)),
     )
 
     def __init__(
@@ -33,10 +34,10 @@ class Library(dbcore.Database):
         replacements=None,
     ):
         timeout = beets.config["timeout"].as_number()
-        super().__init__(path, timeout=timeout)
-
         self.directory = normpath(directory or platformdirs.user_music_path())
         context.set_music_dir(self.directory)
+
+        super().__init__(path, timeout=timeout)
 
         self.path_formats = path_formats
         self.replacements = replacements
