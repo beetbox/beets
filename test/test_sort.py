@@ -14,14 +14,19 @@
 
 """Various tests for querying the library database."""
 
+import os
 from unittest.mock import patch
 
 import beets.library
-from beets import config, dbcore
+from beets import config, dbcore, util
 from beets.dbcore import types
 from beets.library import Album
 from beets.test import _common
 from beets.test.helper import BeetsTestCase
+
+
+def abs_test_path(path: str) -> str:
+    return os.fsdecode(util.normpath(path))
 
 
 # A test case class providing a library with some dummy data and some
@@ -69,7 +74,7 @@ class DummyDataTestCase(BeetsTestCase):
         items[0].flex2 = "Flex2-A"
         items[0].album_id = albums[0].id
         items[0].artist_sort = None
-        items[0].path = "/path0.mp3"
+        items[0].path = abs_test_path("/path0.mp3")
         items[0].track = 1
         items[1].title = "Baz qux"
         items[1].artist = "Two"
@@ -80,7 +85,7 @@ class DummyDataTestCase(BeetsTestCase):
         items[1].flex2 = "Flex2-A"
         items[1].album_id = albums[0].id
         items[1].artist_sort = None
-        items[1].path = "/patH1.mp3"
+        items[1].path = abs_test_path("/patH1.mp3")
         items[1].track = 2
         items[2].title = "Beets 4 eva"
         items[2].artist = "Three"
@@ -91,7 +96,7 @@ class DummyDataTestCase(BeetsTestCase):
         items[2].flex2 = "Flex1-B"
         items[2].album_id = albums[1].id
         items[2].artist_sort = None
-        items[2].path = "/paTH2.mp3"
+        items[2].path = abs_test_path("/paTH2.mp3")
         items[2].track = 3
         items[3].title = "Beets 4 eva"
         items[3].artist = "Three"
@@ -102,7 +107,7 @@ class DummyDataTestCase(BeetsTestCase):
         items[3].flex2 = "Flex1-C"
         items[3].album_id = albums[2].id
         items[3].artist_sort = None
-        items[3].path = "/PATH3.mp3"
+        items[3].path = abs_test_path("/PATH3.mp3")
         items[3].track = 4
         for item in items:
             self.lib.add(item)
@@ -156,10 +161,10 @@ class SortFixedFieldTest(DummyDataTestCase):
         q = ""
         sort = dbcore.query.FixedFieldSort("path", True)
         results = self.lib.items(q, sort)
-        assert results[0]["path"] == b"/path0.mp3"
-        assert results[1]["path"] == b"/patH1.mp3"
-        assert results[2]["path"] == b"/paTH2.mp3"
-        assert results[3]["path"] == b"/PATH3.mp3"
+        assert results[0]["path"] == util.normpath("/path0.mp3")
+        assert results[1]["path"] == util.normpath("/patH1.mp3")
+        assert results[2]["path"] == util.normpath("/paTH2.mp3")
+        assert results[3]["path"] == util.normpath("/PATH3.mp3")
 
 
 class SortFlexFieldTest(DummyDataTestCase):

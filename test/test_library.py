@@ -925,10 +925,10 @@ class AlbumInfoTest(BeetsTestCase):
 
     def test_albuminfo_stores_art(self):
         ai = self.lib.get_album(self.i)
-        ai.artpath = "/my/great/art"
+        ai.artpath = os.fsdecode(np("/my/great/art"))
         ai.store()
         new_ai = self.lib.get_album(self.i)
-        assert new_ai.artpath == b"/my/great/art"
+        assert new_ai.artpath == np("/my/great/art")
 
     def test_albuminfo_for_two_items_doesnt_duplicate_row(self):
         i2 = item(self.lib)
