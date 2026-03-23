@@ -1,3 +1,4 @@
+import os
 import textwrap
 from typing import ClassVar
 
@@ -223,3 +224,52 @@ class TestLyricsMetadataInFlexFieldsMigration:
         assert helper.lib.migration_exists(
             "lyrics_metadata_in_flex_fields", "items"
         )
+
+
+class TestRelativePathMigration:
+    @pytest.fixture
+    def helper(self, monkeypatch):
+        # do not apply migrations upon library initialization
+        monkeypatch.setattr("beets.library.library.Library._migrations", ())
+
+        helper = TestHelper()
+        helper.setup_beets()
+
+        # and now configure the migrations to be tested
+        monkeypatch.setattr(
+            "beets.library.library.Library._migrations",
+            ((migrations.RelativePathMigration, (Item,)),),
+        )
+        yield helper
+
+        helper.teardown_beets()
+
+    def test_migrate(self, helper: TestHelper):
+        relative_path = "foo/bar/baz.mp3"
+        absolute_path = os.fsencode(helper.lib_path / relative_path)
+
+        # need to insert the path directly into the database to bypass the path setter
+        helper.lib._connection().execute(
+            "INSERT INTO items (id, path) VALUES (?, ?)", (1, absolute_path)
+        )
+        old_stored_path = (
+            helper.lib._connection()
+            .execute("select path from items where id=?", (1,))
+            .fetchone()[0]
+        )
+        assert old_stored_path == absolute_path
+
+        helper.lib._migrate()
+
+        item = helper.lib.get_item(1)
+        assert item
+
+        # and now we have a relative path
+        stored_path = (
+            helper.lib._connection()
+            .execute("select path from items where id=?", (item.id,))
+            .fetchone()[0]
+        )
+        assert stored_path == os.fsencode(relative_path)
+        # and the item.path property still returns an absolute path
+        assert item.path == absolute_path
