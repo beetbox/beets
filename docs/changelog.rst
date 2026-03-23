@@ -71,9 +71,10 @@ For plugin developers
 - Colorisation, diff and layout utility helpers previously imported from
   :mod:`beets.ui` now live in :mod:`beets.util.color`, :mod:`beets.util.diff`,
   and :mod:`beets.util.layout`. Update external imports accordingly.
-- The ``tunelog`` logging helper that was exclusively available to the lastgenre
-  plugin is now usable througout beets and was renamed to ``extra_debug``.
-  Import it from the ``beets.logging`` module to use it.
+- The lastgenre ``tunelog`` helper was generalized into
+  :py:meth:`beets.logging.BeetsLogger.extra_debug`, which emits ``DEBUG``
+  messages only at verbosity level 3 or higher (for example ``-vvv``). Plugin
+  authors can use it via ``self._log.extra_debug(...)``.
 
 Other changes
 ~~~~~~~~~~~~~
