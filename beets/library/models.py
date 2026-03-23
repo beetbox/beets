@@ -8,7 +8,7 @@ import unicodedata
 from contextlib import suppress
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from mediafile import MediaFile, UnreadableFileError
 
@@ -83,30 +83,6 @@ class LibModel(dbcore.Model["Library"]):
         # so don't do it here
         super().add(lib)
 
-    def _setitem(self, key: str, value: Any):
-        """Set the item's value for a standard field or a flexattr."""
-        # Encode unicode paths and read buffers.
-        if key == "path":
-            if isinstance(value, str):
-                value = bytestring_path(value)
-            elif isinstance(value, types.BLOB_TYPE):
-                value = bytes(value)
-            # Store paths relative to the music directory
-            # Check for absolute path because item may be initialised with
-            # a relative path already
-            if os.path.isabs(value) and (music_dir := context.get_music_dir()):
-                value = os.path.relpath(value, music_dir)
-
-        return super()._setitem(key, value)
-
-    def __getitem__(self, key: str):
-        value = super().__getitem__(key)
-        if key == "path" and value:
-            # Return absolute paths.
-            value = normpath(os.path.join(context.get_music_dir(), value))
-
-        return value
-
     def __format__(self, spec):
         if not spec:
             spec = beets.config[self._format_config_key].as_str()
@@ -129,6 +105,22 @@ class LibModel(dbcore.Model["Library"]):
         field = maybe_replace_legacy_field(field, cls is Album)
 
         fast = field in cls.all_db_fields
+        if (
+            cls._type(field).query is dbcore.query.PathQuery
+            and query_cls is not dbcore.query.PathQuery
+            and (music_dir := context.get_music_dir())
+        ):
+            # Regex, exact, and string queries operate on the raw DB value, so
+            # strip the library prefix to match the stored relative path.
+            if isinstance(pattern, bytes):
+                prefix = os.path.join(music_dir, b"")
+                if pattern.startswith(prefix):
+                    pattern = os.path.relpath(pattern, music_dir)
+            else:
+                music_dir_str = os.fsdecode(music_dir)
+                prefix = music_dir_str + os.sep
+                if pattern.startswith(prefix):
+                    pattern = pattern.removeprefix(prefix)
         if field in cls.shared_db_fields:
             # This field exists in both tables, so SQLite will encounter
             # an OperationalError if we try to use it in a query.
@@ -858,7 +850,12 @@ class Item(LibModel):
     def __setitem__(self, key, value):
         """Set the item's value for a standard field or a flexattr."""
         # Encode unicode paths and read buffers.
-        if key == "album_id":
+        if key == "path":
+            if isinstance(value, str):
+                value = bytestring_path(value)
+            elif isinstance(value, types.BLOB_TYPE):
+                value = bytes(value)
+        elif key == "album_id":
             self._cached_album = None
 
         changed = super()._setitem(key, value)

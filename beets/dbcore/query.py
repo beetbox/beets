@@ -27,8 +27,10 @@ from operator import mul, or_
 from re import Pattern
 from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar
 
-from beets import util
+from beets import context, util
 from beets.util.units import raw_seconds_short
+
+from . import pathutils
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, MutableSequence
@@ -289,10 +291,21 @@ class PathQuery(FieldQuery[bytes]):
 
         `pattern` must be a path, either to a file or a directory.
         """
+        if not os.path.isabs(pattern) and (
+            music_dir := context.get_music_dir()
+        ):
+            # Interpret relative `path:` queries relative to the library root.
+            if isinstance(pattern, str):
+                pattern = os.path.join(os.fsdecode(music_dir), pattern)
+            else:
+                pattern = os.path.join(music_dir, pattern)
         path = util.normpath(pattern)
 
         # Case sensitivity depends on the filesystem that the query path is located on.
         self.case_sensitive = util.case_sensitive(path)
+        # Path queries compare against the DB representation, which is relative
+        # to the library root when the file lives inside it.
+        path = pathutils.normalize_path_for_db(path)
 
         # Use a normalized-case pattern for case-insensitive matches.
         if not self.case_sensitive:
@@ -333,7 +346,9 @@ class PathQuery(FieldQuery[bytes]):
         starts with the given directory path. Case sensitivity depends on the object's
         filesystem as determined during initialization.
         """
-        path = obj.path if self.case_sensitive else obj.path.lower()
+        path = pathutils.normalize_path_for_db(obj.path)
+        if not self.case_sensitive:
+            path = path.lower()
         return (path == self.pattern) or path.startswith(self.dir_path)
 
     def col_clause(self) -> tuple[str, Sequence[SQLiteType]]:

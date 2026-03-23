@@ -1098,8 +1098,14 @@ class PathStringTest(BeetsTestCase):
         alb = self.lib.add_album([self.i])
         alb.artpath = path
         alb.store()
+        stored_path = (
+            self.lib._connection()
+            .execute("select artpath from albums where id=?", (alb.id,))
+            .fetchone()[0]
+        )
         alb = self.lib.get_album(self.i)
-        assert path == alb.artpath
+        assert stored_path == path
+        assert alb.artpath == os.path.join(self.libdir, path)
 
     def test_sanitize_path_with_special_chars(self):
         path = "b\xe1r?"
@@ -1129,10 +1135,15 @@ class PathStringTest(BeetsTestCase):
         absolute_path = os.path.join(self.libdir, relative_path)
         self.i.path = absolute_path
         self.i.store()
+        stored_path = (
+            self.lib._connection()
+            .execute("select path from items where id=?", (self.i.id,))
+            .fetchone()[0]
+        )
         album = self.lib.add_album([self.i])
 
         assert self.i.path == absolute_path
-        assert self.i._values_fixed["path"] == relative_path
+        assert stored_path == relative_path
         assert album.path == os.path.dirname(absolute_path)
 
 

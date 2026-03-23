@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import collections
+import contextvars
 import enum
 import math
 import os
@@ -1433,6 +1434,9 @@ class ReplayGainPlugin(BeetsPlugin):
         callback: Callable[[AnyRgTask], Any],
     ):
         if self.pool is not None:
+            # Apply the caller's context to both the worker and its callbacks
+            # so lazy path expansion keeps the library root in pool threads.
+            ctx = contextvars.copy_context()
 
             def handle_exc(exc):
                 """Handle exceptions in the async work."""
@@ -1441,8 +1445,19 @@ class ReplayGainPlugin(BeetsPlugin):
                 else:
                     self.exc_queue.put(exc)
 
+            def run_func():
+                return ctx.run(func, *args, **kwds)
+
+            def run_callback(task: AnyRgTask):
+                return ctx.run(callback, task)
+
+            def run_handle_exc(exc):
+                return ctx.run(handle_exc, exc)
+
             self.pool.apply_async(
-                func, args, kwds, callback, error_callback=handle_exc
+                run_func,
+                callback=run_callback,
+                error_callback=run_handle_exc,
             )
         else:
             callback(func(*args, **kwds))
