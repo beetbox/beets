@@ -161,7 +161,7 @@ class TestRelativePathMigration:
         helper.teardown_beets()
 
     def test_migrate(self, helper: TestHelper):
-        relative_path = "foo/bar/baz.mp3"
+        relative_path = os.path.join("foo", "bar", "baz.mp3")
         absolute_path = os.fsencode(helper.lib_path / relative_path)
 
         # need to insert the path directly into the database to bypass the path setter
