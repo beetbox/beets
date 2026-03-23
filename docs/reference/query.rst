@@ -386,6 +386,8 @@ Sometimes it's useful to find all the items in your library that are
 ::
 
     $ beet list path:/my/music/directory
+    $ beet list path:Artist/Album
+    $ beet list path:Artist/Album/track.mp3
 
 In fact, beets automatically recognizes any query term containing a path
 separator (``/`` on POSIX systems) as a path query if that path exists, so this
@@ -394,6 +396,9 @@ command is equivalent as long as ``/my/music/directory`` exist:
 ::
 
     $ beet list /my/music/directory
+
+The ``path:`` field accepts either an absolute path under the configured music
+directory or a path relative to the library root.
 
 Note that this only matches items that are *already in your library*, so a path
 query won't necessarily find *all* the audio files in a directory---just the
