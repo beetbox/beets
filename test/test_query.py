@@ -14,6 +14,7 @@
 
 """Various tests for querying the library database."""
 
+import os
 import sys
 from functools import partial
 from pathlib import Path
@@ -310,12 +311,25 @@ class TestPathQuery:
 
         assert {i.title for i in lib.items(q)} == set(expected_titles)
 
-    def test_absolute(self, lib, helper):
-        q = f"path::{helper.lib_path / '/aaa/bb/c.mp3'}"
+    @pytest.mark.parametrize(
+        "query", ["path:", "path::"], ids=["path", "regex"]
+    )
+    def test_absolute(self, lib, helper, query):
+        item_path = helper.lib_path / "item.mp3"
+        bytes_path = os.fsencode(item_path)
+        helper.add_item(path=bytes_path, title="absolute item")
+        # Escape backslashes for Windows paths
+        q = f"{query}{item_path}".replace("\\", "\\\\")
 
-        assert {i.title for i in lib.items(q)} == {"path item"}
-        item = lib.items(q)[0]
-        assert item._values_fixed["path"] == str(helper.lib_path / "/aaa/bb/c.mp3").encode()
+        assert {i.title for i in lib.items(q)} == {"absolute item"}
+
+    def test_relative(self, lib, helper):
+        item_path = helper.lib_path / "relative" / "item.mp3"
+        bytes_path = os.fsencode(item_path)
+        helper.add_item(path=bytes_path, title="relative item")
+        q = "path:relative/item.mp3"
+
+        assert {i.title for i in lib.items(q)} == {"relative item"}
 
     @pytest.mark.skipif(sys.platform == "win32", reason=WIN32_NO_IMPLICIT_PATHS)
     @pytest.mark.parametrize(
