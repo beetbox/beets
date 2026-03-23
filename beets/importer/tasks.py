@@ -167,7 +167,7 @@ class ImportTask(BaseImportTask):
     # Keep track of the current task item
     cur_album: str | None = None
     cur_artist: str | None = None
-    candidates: Sequence[AlbumMatch | TrackMatch] = []
+    candidates: Sequence[AlbumMatch | TrackMatch] | None = None
     rec: Recommendation | None = None
 
     def __init__(
