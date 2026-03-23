@@ -175,3 +175,5 @@ a6fcb7ba0f237530ff394a423a7cbe2ac4853c91
 ffb43290066c78cb72603b7e2a0a1c90056361dd
 # lastgenre: Move fetching to client module
 b4beee8ff3754b001e7504c05a2b838bfa689022
+# autotag: use explicit imports
+b8def07121431421118ff7d569f8187aae0520f2
