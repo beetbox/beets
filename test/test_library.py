@@ -1094,7 +1094,7 @@ class PathStringTest(BeetsTestCase):
         assert isinstance(dest, bytes)
 
     def test_artpath_stores_special_chars(self):
-        path = b"b\xe1r"
+        path = bytestring_path("b\xe1r")
         alb = self.lib.add_album([self.i])
         alb.artpath = path
         alb.store()
@@ -1131,7 +1131,7 @@ class PathStringTest(BeetsTestCase):
         assert isinstance(alb.artpath, bytes)
 
     def test_relative_path_is_stored(self):
-        relative_path = b"abc/foo.mp3"
+        relative_path = os.path.join(b"abc", b"foo.mp3")
         absolute_path = os.path.join(self.libdir, relative_path)
         self.i.path = absolute_path
         self.i.store()

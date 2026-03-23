@@ -13,8 +13,9 @@ from typing import TYPE_CHECKING, ClassVar
 from mediafile import MediaFile, UnreadableFileError
 
 import beets
-from beets import context, dbcore, logging, plugins, util
+from beets import dbcore, logging, plugins, util
 from beets.dbcore import types
+from beets.dbcore.pathutils import normalize_path_for_db
 from beets.util import (
     MoveOperation,
     bytestring_path,
@@ -108,19 +109,15 @@ class LibModel(dbcore.Model["Library"]):
         if (
             cls._type(field).query is dbcore.query.PathQuery
             and query_cls is not dbcore.query.PathQuery
-            and (music_dir := context.get_music_dir())
         ):
             # Regex, exact, and string queries operate on the raw DB value, so
             # strip the library prefix to match the stored relative path.
             if isinstance(pattern, bytes):
-                prefix = os.path.join(music_dir, b"")
-                if pattern.startswith(prefix):
-                    pattern = os.path.relpath(pattern, music_dir)
+                pattern = normalize_path_for_db(pattern)
             else:
-                music_dir_str = os.fsdecode(music_dir)
-                prefix = music_dir_str + os.sep
-                if pattern.startswith(prefix):
-                    pattern = pattern.removeprefix(prefix)
+                pattern = os.fsdecode(
+                    normalize_path_for_db(util.bytestring_path(pattern))
+                )
         if field in cls.shared_db_fields:
             # This field exists in both tables, so SQLite will encounter
             # an OperationalError if we try to use it in a query.
