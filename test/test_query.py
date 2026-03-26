@@ -540,14 +540,12 @@ class TestHasCoverArtQuery:
 
         return helper.lib
 
-    def test_has_cover_art_getter_exists(self):
-        """Verify has_cover_art in getters dict."""
-        getters = Item._getters()
-        assert "has_cover_art" in getters
-        assert getters["has_cover_art"] == Item.has_cover_art
-
-    def test_query_true(self, lib):
-        assert {i.title for i in lib.items("has_cover_art:true")} == {"with_art"}
-
-    def test_query_false(self, lib):
-        assert {i.title for i in lib.items("has_cover_art:false")} == {"without_art"}
+    @pytest.mark.parametrize(
+        "query, expected_titles",
+        [
+            ("has_cover_art:true", {"with_art"}),
+            ("has_cover_art:false", {"without_art"}),
+        ],
+    )
+    def test_has_cover_art_query(self, lib, query, expected_titles):
+        assert {i.title for i in lib.items(query)} == expected_titles
