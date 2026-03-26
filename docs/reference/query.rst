@@ -406,18 +406,20 @@ Cover Art Queries
 -----------------
 
 You can query items by whether they have embedded cover art using the
-``has_images`` field. This is useful for finding tracks that are missing
-artwork without needing external tools.
+``has_images`` field. This is useful for finding tracks that are missing artwork
+without needing external tools.
 
 To find all tracks with embedded cover art:
 
-.. code-block: shell
+..
+    code-block: shell
 
     $ beet list has_cover_art:true
 
 To find all tracks without embedded cover art:
 
-.. code-block: shell
+..
+    code-block: shell
 
     $ beet list has_cover_art:false
 

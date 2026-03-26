@@ -12,9 +12,9 @@ Unreleased
 New features
 ~~~~~~~~~~~~
 
-- Query: Add ``has_cover_art`` computed field to query items by embedded cover art 
-  presence. Users can now search for tracks with or without embedded artwork using
-  ``beet list has_cover_art:true`` or ``beet list has_cover_art:false``.
+- Query: Add ``has_cover_art`` computed field to query items by embedded cover
+  art presence. Users can now search for tracks with or without embedded artwork
+  using ``beet list has_cover_art:true`` or ``beet list has_cover_art:false``.
 - :doc:`plugins/discogs`: Add :conf:`plugins.discogs:extra_tags` option to use
   additional tags (such as ``barcode``, ``catalognum``, ``country``, ``label``,
   ``media``, and ``year``) in Discogs search queries.
