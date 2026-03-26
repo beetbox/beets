@@ -406,7 +406,7 @@ Cover Art Queries
 -----------------
 
 You can query items by whether they have embedded cover art using the
-``has_images`` field. This is useful for finding tracks that are missing artwork
+``has_cover_art`` field. This is useful for finding tracks that are missing artwork
 without needing external tools.
 
 To find all tracks with embedded cover art:
