@@ -66,6 +66,20 @@ class PrintTest(IOMixin, unittest.TestCase):
                 del os.environ["LC_CTYPE"]
 
 
+class ShowModelChangesTest(IOMixin, BeetsTestCase):
+    def test_uses_database_state_when_old_not_provided(self):
+        item = self.add_item_fixture(title="old title")
+        old_label = format(item.get_fresh_from_db())
+
+        item.title = "new title"
+
+        assert ui.show_model_changes(item) is True
+        assert self.io.getoutput().splitlines() == [
+            old_label,
+            "  title: old title -> new title",
+        ]
+
+
 @_common.slow_test()
 class TestPluginTestCase(PluginTestCase):
     plugin = "test"
@@ -327,57 +341,6 @@ class ConfigTest(IOMixin, TestPluginTestCase):
         config.read()
         assert config["library"].as_path() == self.beetsdir / "beets.db"
         assert config["statefile"].as_path() == self.beetsdir / "state"
-
-
-class ShowModelChangeTest(IOMixin, unittest.TestCase):
-    def setUp(self):
-        super().setUp()
-        self.a = _common.item()
-        self.b = _common.item()
-        self.a.path = self.b.path
-
-    def _show(self, **kwargs):
-        change = ui.show_model_changes(self.a, self.b, **kwargs)
-        out = self.io.getoutput()
-        return change, out
-
-    def test_identical(self):
-        change, out = self._show()
-        assert not change
-        assert out == ""
-
-    def test_string_fixed_field_change(self):
-        self.b.title = "x"
-        change, out = self._show()
-        assert change
-        assert "title" in out
-
-    def test_int_fixed_field_change(self):
-        self.b.track = 9
-        change, out = self._show()
-        assert change
-        assert "track" in out
-
-    def test_floats_close_to_identical(self):
-        self.a.length = 1.00001
-        self.b.length = 1.00005
-        change, out = self._show()
-        assert not change
-        assert out == ""
-
-    def test_floats_different(self):
-        self.a.length = 1.00001
-        self.b.length = 2.00001
-        change, out = self._show()
-        assert change
-        assert "length" in out
-
-    def test_both_values_shown(self):
-        self.a.title = "foo"
-        self.b.title = "bar"
-        _, out = self._show()
-        assert "foo" in out
-        assert "bar" in out
 
 
 class PathFormatTest(unittest.TestCase):

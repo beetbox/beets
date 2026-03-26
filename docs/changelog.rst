@@ -9,9 +9,8 @@ below!
 Unreleased
 ----------
 
-..
-    New features
-    ~~~~~~~~~~~~
+New features
+~~~~~~~~~~~~
 
 - Query: Add ``has_cover_art`` computed field to query items by embedded cover art 
   presence. Users can now search for tracks with or without embedded artwork using
@@ -20,35 +19,98 @@ Unreleased
 ..
     Bug fixes
     ~~~~~~~~~
+- :doc:`plugins/discogs`: Add :conf:`plugins.discogs:extra_tags` option to use
+  additional tags (such as ``barcode``, ``catalognum``, ``country``, ``label``,
+  ``media``, and ``year``) in Discogs search queries.
+- :doc:`plugins/smartplaylist`: Add new configuration option ``dest_regen`` to
+  regenerate items' path in the generated playlist instead of using those in the
+  library. This is useful when items have been imported in don't copy-move (``-C
+  -M``) mode in the library but are later passed through the ``convert`` plugin
+  which will regenerate new paths according to the Beets path format.
+- :doc:`plugins/missing`: When running in missing album mode, allows users to
+  specify MusicBrainz release types to show using the ``--release-type`` flag.
+  The default behavior is also changed to just show releases of type ``album``.
+  :bug:`2661`
+- :doc:`plugins/play`: Added ``-R``/``--randomize`` flag to shuffle the playlist
+  order before passing it to the player.
+- :doc:`plugins/lyrics`: Add ``auto_ignore`` configuration option to skip
+  fetching lyrics for items matching a beets query during auto import.
 
-..
-    For plugin developers
-    ~~~~~~~~~~~~~~~~~~~~~
+Bug fixes
+~~~~~~~~~
 
-..
-    Other changes
-    ~~~~~~~~~~~~~
+- :doc:`plugins/missing`: Fix ``--album`` mode incorrectly reporting albums
+  already in the library as missing. The comparison now correctly uses
+  ``mb_releasegroupid``.
+- :ref:`replace`: Made ``drive_sep_replace`` regex logic more precise to prevent
+  edge-case mismatches (e.g., a song titled "1:00 AM" would incorrectly be
+  considered a Windows drive path).
+- :doc:`plugins/fish`: Fix AttributeError. :bug:`6340`
+- :ref:`import-cmd` Autotagging by explicit release or recording IDs now keeps
+  candidates from all enabled metadata sources instead of dropping matches when
+  different providers share the same ID. :bug:`6178` :bug:`6181`
+- :doc:`plugins/mbsync` and :doc:`plugins/missing` now use each item's stored
+  ``data_source`` for ID lookups, with a fallback to ``MusicBrainz``.
+- :doc:`plugins/musicbrainz`: Use ``va_name`` config for ``albumartist_sort``,
+  ``albumartists_sort``, ``albumartist_credit``, ``albumartists_credit``, and
+  ``albumartists`` on VA releases instead of hardcoded "Various Artists".
+  :bug:`6316`
+- :doc:`plugins/beatport`: Use ``va_name`` config for the album artist on VA
+  releases instead of hardcoded "Various Artists". :bug:`6316`
+- :ref:`config-cmd` on Windows now uses ``cmd /c start ""`` for the default
+  editor fallback so ``beet config -e`` works when ``VISUAL`` and ``EDITOR`` are
+  unset. :bug:`6436`
+- :doc:`plugins/lastimport`: Rename flexible field ``play_count`` to
+  ``lastfm_play_count`` to avoid conflicts with :doc:`plugins/mpdstats`.
+  **Migration**: This cannot be migrated automatically because of the field
+  clash. If you use ``lastimport`` without ``mpdstats``, migrate manually with
+  ``beet modify lastfm_play_count='$play_count'``.
+- :ref:`import-cmd` Simplify autotag metadata application for albums and
+  singletons, fixing null-overwrite handling and keeping singular/plural artist
+  metadata fields in sync during tagging.
+
+For plugin developers
+~~~~~~~~~~~~~~~~~~~~~
+
+- :py:func:`beets.metadata_plugins.album_for_id` and
+  :py:func:`beets.metadata_plugins.track_for_id` now require a ``data_source``
+  argument and query only that provider.
+- Colorisation, diff and layout utility helpers previously imported from
+  :mod:`beets.ui` now live in :mod:`beets.util.color`, :mod:`beets.util.diff`,
+  and :mod:`beets.util.layout`. Update external imports accordingly.
+- The ``tunelog`` logging helper that was exclusively available to the lastgenre
+  plugin is now usable througout beets and was renamed to ``extra_debug``.
+  Import it from the ``beets.logging`` module to use it.
+
+Other changes
+~~~~~~~~~~~~~
+
+- Deprecate the :doc:`plugins/beatport` and :doc:`plugins/bpsync` plugins.
+  Beatport has retired the API these plugins rely on, making them
+  non-functional. :bug:`3862`
+- API-backed metadata source plugins can now use
+  :py:class:`~beets.metadata_plugins.SearchApiMetadataSourcePlugin` for shared
+  search orchestration. Implement provider behavior in
+  :py:meth:`~beets.metadata_plugins.SearchApiMetadataSourcePlugin.get_search_query_with_filters`
+  and
+  :py:meth:`~beets.metadata_plugins.SearchApiMetadataSourcePlugin.get_search_response`.
+- :doc:`guides/installation`: Remove redundant macOS section from the
+  installation guide. :bug:`5993`
+- :doc:`guides/installation`: Update installation guide to document plugin
+  management with pipx and move package manager instructions to the FAQ.
+- :doc:`guides/main`: Update quick installation section to reflect current
+  installation guide structure.
+- :doc:`guides/installation`: Update pipx installation guide link
+- :doc:`contributing`: Update pipx installation guide link
 
 2.7.1 (March 08, 2026)
 ----------------------
-
-..
-    New features
-    ~~~~~~~~~~~~
 
 Bug fixes
 ~~~~~~~~~
 
 - Tests that depend on the optional ``langdetect`` package are now skipped when
   the package is not installed. :bug:`6421`
-
-..
-    For plugin developers
-    ~~~~~~~~~~~~~~~~~~~~~
-
-..
-    Other changes
-    ~~~~~~~~~~~~~
 
 2.7.0 (March 07, 2026)
 ----------------------
@@ -145,10 +207,6 @@ Other changes
 2.6.2 (February 22, 2026)
 -------------------------
 
-..
-    New features
-    ~~~~~~~~~~~~
-
 Bug fixes
 ~~~~~~~~~
 
@@ -166,10 +224,6 @@ Bug fixes
   the MusicBrainz API response. :bug:`6339`
 - :ref:`config-cmd`: Improved error message when user-configured editor does not
   exist. :bug:`6176`
-
-..
-    For plugin developers
-    ~~~~~~~~~~~~~~~~~~~~~
 
 Other changes
 ~~~~~~~~~~~~~
@@ -236,6 +290,8 @@ New features
   ``beet import``.
 - :doc:`plugins/random`: Added ``--field`` option to specify which field to use
   for equal-chance sampling (default: ``albumartist``).
+- :doc:`plugins/musicbrainz`: Use title aliases for releases, release groups,
+  and recordings.
 
 Bug fixes
 ~~~~~~~~~

@@ -145,6 +145,38 @@ class PlayPluginTest(IOMixin, CleanupModulesMixin, PluginTestCase):
             expected_playlist=expected_playlist,
         )
 
+    def _playlist_lines(self, open_mock):
+        """Read the playlist file passed to interactive_open and return its lines."""
+        # interactive_open is called as: interactive_open([playlist_path], command)
+        playlist_path = open_mock.call_args[0][0][0]
+        with open(playlist_path, "rb") as playlist:
+            return playlist.read().decode("utf-8").splitlines()
+
+    def _add_many_ordered_items(self, *, count, album):
+        items = []
+        for track in range(1, count + 1):
+            items.append(
+                self.add_item(
+                    album=album,
+                    artist="randomize artist",
+                    title=f"randomize {track:03d}",
+                    track=track,
+                )
+            )
+        return items
+
+    def test_randomize(self, open_mock):
+        album = "randomize_test"
+        items = self._add_many_ordered_items(count=100, album=album)
+        baseline = [str(item.filepath) for item in items]
+
+        self.run_command("play", "-R", f"album:{album}")
+        lines = self._playlist_lines(open_mock)
+        assert sorted(lines) == sorted(baseline), (
+            "playlist items are not the same"
+        )
+        assert lines != baseline, "playlist order hasn't changed"
+
     def test_command_failed(self, open_mock):
         open_mock.side_effect = OSError("some reason")
 

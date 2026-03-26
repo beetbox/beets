@@ -16,15 +16,15 @@ command:
     :start-after: <!-- start-quick-install -->
     :end-before: <!-- end-quick-install -->
 
-.. admonition:: Need more installation options?
+.. admonition:: Need more information?
 
-    Having trouble with the commands above? Looking for package manager
-    instructions? See the :doc:`complete installation guide
-    </guides/installation>` for:
+    Having trouble with the commands above? Looking for information how to
+    install plugins and keep Beets updated? See the :doc:`complete installation
+    guide </guides/installation>` for:
 
-    - Operating system specific instructions
+    - Managing plugins with pipx
+    - OS-specific installation notes
     - Package manager options
-    - Troubleshooting help
 
 .. _pypi: https://pypi.org/project/beets/
 

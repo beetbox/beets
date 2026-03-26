@@ -46,7 +46,7 @@ Non-Programming
   <https://github.com/beetbox/beets/discussions/categories/show-and-tell>`__
   under the “Show and Tell” category for a chance to get featured in `the docs
   <https://beets.readthedocs.io/en/stable/guides/advanced.html>`__.
-- Consider helping out fellow users by by `responding to support requests
+- Consider helping out fellow users by `responding to support requests
   <https://github.com/beetbox/beets/discussions/categories/q-a>`__ .
 
 Programming
@@ -74,7 +74,7 @@ virtual environment, where its dependencies will not interfere with your system
 and other CLI tools.
 
 If you do not have pipx_ installed in your system, follow `pipx installation
-instructions <https://pipx.pypa.io/stable/installation/>`__ or
+instructions <https://pipx.pypa.io/stable/how-to/install-pipx/>`__ or
 
 .. code-block:: sh
 

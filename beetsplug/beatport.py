@@ -31,9 +31,11 @@ from requests_oauthlib.oauth1_session import (
 
 import beets
 import beets.ui
+from beets import config
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.metadata_plugins import MetadataSourcePlugin
 from beets.util import unique_list
+from beets.util.deprecation import deprecate_for_user
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
@@ -313,6 +315,7 @@ class BeatportPlugin(MetadataSourcePlugin):
 
     def __init__(self):
         super().__init__()
+        deprecate_for_user(self._log, "The 'beatport' plugin")
         self.config.add(
             {
                 "apikey": "57713c3906af6f5def151b33601389176b37b429",
@@ -457,7 +460,7 @@ class BeatportPlugin(MetadataSourcePlugin):
         va = release.artists is not None and len(release.artists) > 3
         artist, artist_id = self._get_artist(release.artists)
         if va:
-            artist = "Various Artists"
+            artist = config["va_name"].as_str()
         tracks: list[TrackInfo] = []
         if release.tracks is not None:
             tracks = [self._get_track_info(x) for x in release.tracks]

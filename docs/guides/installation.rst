@@ -1,8 +1,7 @@
 Installation
 ============
 
-Beets requires `Python 3.10 or later`_. You can install it using package
-managers, pipx_, pip_ or by using package managers.
+Beets requires `Python 3.10 or later`_. You can install it using pipx_ or pip_.
 
 .. _python 3.10 or later: https://www.python.org/downloads/
 
@@ -44,88 +43,41 @@ installation page`_ to get it set up.
 
 .. _pipx: https://pipx.pypa.io/stable
 
-.. _pipx installation page: https://pipx.pypa.io/stable/installation/
+.. _pipx installation page: https://pipx.pypa.io/stable/how-to/install-pipx/
 
-Using a Package Manager
------------------------
+Managing Plugins with ``pipx``
+------------------------------
 
-Depending on your operating system, you may be able to install beets using a
-package manager. Here are some common options:
+When using pipx_, you can install beets with built-in plugin dependencies using
+extras, inject third-party packages, and upgrade everything cleanly.
 
-.. attention::
-
-    Package manager installations may not provide the latest version of beets.
-
-    Release cycles for package managers vary, and they may not always have the
-    most recent version of beets. If you want the latest features and fixes,
-    consider using pipx_ or pip_ as described above.
-
-    Additionally, installing external beets plugins may be surprisingly
-    difficult when using a package manager.
-
-- On **Debian or Ubuntu**, depending on the version, beets is available as an
-  official package (`Debian details`_, `Ubuntu details`_), so try typing:
-  ``apt-get install beets``. But the version in the repositories might lag
-  behind, so make sure you read the right version of these docs. If you want the
-  latest version, you can get everything you need to install with pip as
-  described below by running: ``apt-get install python-dev python-pip``
-- On **Arch Linux**, `beets is in [extra] <arch extra_>`_, so just run ``pacman
-  -S beets``. (There's also a bleeding-edge `dev package <aur_>`_ in the AUR,
-  which will probably set your computer on fire.)
-- On **Alpine Linux**, `beets is in the community repository <alpine package_>`_
-  and can be installed with ``apk add beets``.
-- On **Void Linux**, `beets is in the official repository <void package_>`_ and
-  can be installed with ``xbps-install -S beets``.
-- For **Gentoo Linux**, beets is in Portage as ``media-sound/beets``. Just run
-  ``emerge beets`` to install. There are several USE flags available for
-  optional plugin dependencies.
-- On **FreeBSD**, there's a `beets port <freebsd_>`_ at ``audio/beets``.
-- On **OpenBSD**, there's a `beets port <openbsd_>`_ can be installed with
-  ``pkg_add beets``.
-- On **Fedora** 22 or later, there's a `DNF package`_ you can install with
-  ``sudo dnf install beets beets-plugins beets-doc``.
-- On **Solus**, run ``eopkg install beets``.
-- On **NixOS**, there's a `package <nixos_>`_ you can install with ``nix-env -i
-  beets``.
-- Using **MacPorts**, run ``port install beets`` or ``port install beets-full``
-  to include many third-party plugins.
-
-.. _alpine package: https://pkgs.alpinelinux.org/package/edge/community/x86_64/beets
-
-.. _arch extra: https://archlinux.org/packages/extra/any/beets/
-
-.. _aur: https://aur.archlinux.org/packages/beets-git/
-
-.. _debian details: https://tracker.debian.org/pkg/beets
-
-.. _dnf package: https://packages.fedoraproject.org/pkgs/beets/
-
-.. _freebsd: https://www.freshports.org/audio/beets/
-
-.. _nixos: https://github.com/NixOS/nixpkgs/tree/master/pkgs/development/python-modules/beets
-
-.. _openbsd: https://openports.pl/path/audio/beets
-
-.. _ubuntu details: https://launchpad.net/ubuntu/+source/beets
-
-.. _void package: https://github.com/void-linux/void-packages/tree/master/srcpkgs/beets
-
-Installation FAQ
-----------------
-
-MacOS Installation
-~~~~~~~~~~~~~~~~~~
-
-**Q: I'm getting permission errors on macOS. What should I do?**
-
-Due to System Integrity Protection on macOS 10.11+, you may need to install for
-your user only:
+Install beets with extras for built-in plugins:
 
 .. code-block:: console
 
-    pip install --user beets
+    pipx install "beets[lyrics,lastgenre]"
 
-You might need to also add ``~/Library/Python/3.x/bin`` to your ``$PATH``.
+If you already have beets installed, reinstall with a new set of extras:
+
+.. code-block:: console
+
+    pipx install --force "beets[lyrics,lastgenre]"
+
+Inject additional packages into the beets environment (useful for third-party
+plugins):
+
+.. code-block:: console
+
+    pipx inject beets <package-name>
+
+To upgrade beets and all injected packages:
+
+.. code-block:: console
+
+    pipx upgrade beets
+
+Installation FAQ
+----------------
 
 Windows Installation
 ~~~~~~~~~~~~~~~~~~~~
@@ -177,3 +129,52 @@ platform as well.
 .. _notes for arm: https://github.com/beetbox/beets/discussions/4910
 
 .. _older arm reference: https://discourse.beets.io/t/diary-of-beets-on-arm-odroid-hc4-armbian/1993
+
+Package Manager Installation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Q: Can I install beets using my operating system's built-in package manager?**
+
+We generally don't recommend this route. OS package managers tend to ship
+outdated versions of beets, and installing third-party plugins into a
+system-managed environment ranges from awkward to impossible. You'll have a much
+better time with pipx_ or pip_ as described above.
+
+That said, if you know what you're doing and prefer your system package manager,
+here are the options available:
+
+- **Debian/Ubuntu** (`Debian <debian details_>`_, `Ubuntu <ubuntu details_>`_):
+  ``apt-get install beets``
+- **Arch Linux** (`extra <arch btw_>`_, `AUR dev <aur_>`_): ``pacman -S beets``
+- **Alpine Linux** (`package <alpine package_>`_): ``apk add beets``
+- **Void Linux** (`package <void package_>`_): ``xbps-install -S beets``
+- **Gentoo Linux**: ``emerge beets`` (USE flags available for optional plugin
+  deps)
+- **FreeBSD** (`port <freebsd_>`_): ``audio/beets``
+- **OpenBSD** (`port <openbsd_>`_): ``pkg_add beets``
+- **Fedora** (`package <dnf package_>`_): ``dnf install beets beets-plugins
+  beets-doc``
+- **Solus**: ``eopkg install beets``
+- **NixOS** (`package <nixos_>`_): ``nix-env -i beets``
+- **MacPorts**: ``port install beets`` or ``port install beets-full`` (includes
+  third-party plugins)
+
+.. _alpine package: https://pkgs.alpinelinux.org/package/edge/community/x86_64/beets
+
+.. _arch btw: https://archlinux.org/packages/extra/any/beets/
+
+.. _aur: https://aur.archlinux.org/packages/beets-git/
+
+.. _debian details: https://tracker.debian.org/pkg/beets
+
+.. _dnf package: https://packages.fedoraproject.org/pkgs/beets/
+
+.. _freebsd: https://www.freshports.org/audio/beets/
+
+.. _nixos: https://github.com/NixOS/nixpkgs/tree/master/pkgs/development/python-modules/beets
+
+.. _openbsd: https://openports.pl/path/audio/beets
+
+.. _ubuntu details: https://launchpad.net/ubuntu/+source/beets
+
+.. _void package: https://github.com/void-linux/void-packages/tree/master/srcpkgs/beets

@@ -32,6 +32,7 @@ class TestMetadataPluginsException(PluginMixin):
     @pytest.fixture(autouse=True)
     def setup(self):
         metadata_plugins.find_metadata_source_plugins.cache_clear()
+        metadata_plugins.get_metadata_source.cache_clear()
         self.register_plugin(ErrorMetadataMockPlugin)
         yield
         self.unload_plugins()
@@ -45,25 +46,23 @@ class TestMetadataPluginsException(PluginMixin):
         return _call
 
     @pytest.mark.parametrize(
-        "method_name,error_method_name,args",
+        "method_name,args",
         [
-            ("candidates", "candidates", ()),
-            ("item_candidates", "item_candidates", ()),
-            ("albums_for_ids", "albums_for_ids", (["some_id"],)),
-            ("tracks_for_ids", "tracks_for_ids", (["some_id"],)),
-            # Currently, singular methods call plural ones internally and log
-            # errors from there
-            ("album_for_id", "albums_for_ids", ("some_id",)),
-            ("track_for_id", "tracks_for_ids", ("some_id",)),
+            ("candidates", ()),
+            ("item_candidates", ()),
+            ("albums_for_ids", (["some_id"],)),
+            ("tracks_for_ids", (["some_id"],)),
+            ("album_for_id", ("some_id", "ErrorMetadataMock")),
+            ("track_for_id", ("some_id", "ErrorMetadataMock")),
         ],
     )
-    def test_logging(self, caplog, call_method, error_method_name):
+    def test_logging(self, caplog, call_method, method_name):
         self.config["raise_on_error"] = False
 
         call_method()
 
         assert (
-            f"Error in 'ErrorMetadataMock.{error_method_name}': Mocked error"
+            f"Error in 'ErrorMetadataMock.{method_name}': Mocked error"
             in caplog.text
         )
 
@@ -72,8 +71,10 @@ class TestMetadataPluginsException(PluginMixin):
         [
             ("candidates", ()),
             ("item_candidates", ()),
-            ("album_for_id", ("some_id",)),
-            ("track_for_id", ("some_id",)),
+            ("albums_for_ids", (["some_id"],)),
+            ("tracks_for_ids", (["some_id"],)),
+            ("album_for_id", ("some_id", "ErrorMetadataMock")),
+            ("track_for_id", ("some_id", "ErrorMetadataMock")),
         ],
     )
     def test_raising(self, call_method):
@@ -81,3 +82,45 @@ class TestMetadataPluginsException(PluginMixin):
 
         with pytest.raises(ValueError, match="Mocked error"):
             call_method()
+
+
+class TestSearchApiMetadataSourcePlugin(PluginMixin):
+    plugin = "none"
+    preload_plugin = False
+
+    class RaisingSearchApiMetadataMockPlugin(
+        metadata_plugins.SearchApiMetadataSourcePlugin[
+            metadata_plugins.IDResponse
+        ]
+    ):
+        def get_search_query_with_filters(self, _):
+            return "", {}
+
+        def get_search_response(self, _):
+            raise ValueError("Search failure")
+
+        def album_for_id(self, _):
+            return None
+
+        def track_for_id(self, _):
+            return None
+
+    @pytest.fixture
+    def search_plugin(self):
+        return self.RaisingSearchApiMetadataMockPlugin()
+
+    def test_search_api_returns_empty_when_raise_on_error_disabled(
+        self, config, search_plugin, caplog
+    ):
+        config["raise_on_error"] = False
+
+        assert search_plugin._search_api("track", "query", {}) == ()
+        assert "Search failure" in caplog.text
+
+    def test_search_api_raises_when_raise_on_error_enabled(
+        self, config, search_plugin
+    ):
+        config["raise_on_error"] = True
+
+        with pytest.raises(ValueError, match="Search failure"):
+            search_plugin._search_api("track", "query", {})

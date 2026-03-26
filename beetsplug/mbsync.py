@@ -16,7 +16,9 @@
 
 from collections import defaultdict
 
-from beets import autotag, library, metadata_plugins, ui, util
+from beets import library, metadata_plugins, ui, util
+from beets.autotag.distance import Distance
+from beets.autotag.hooks import AlbumMatch, TrackMatch
 from beets.plugins import BeetsPlugin, apply_item_changes
 
 
@@ -72,23 +74,25 @@ class MBSyncPlugin(BeetsPlugin):
         query.
         """
         for item in lib.items([*query, "singleton:true"]):
-            if not item.mb_trackid:
+            if not (track_id := item.mb_trackid):
                 self._log.info(
                     "Skipping singleton with no mb_trackid: {}", item
                 )
                 continue
 
             if not (
-                track_info := metadata_plugins.track_for_id(item.mb_trackid)
+                track_info := metadata_plugins.track_for_id(
+                    track_id, item.get("data_source", "MusicBrainz")
+                )
             ):
                 self._log.info(
-                    "Recording ID not found: {0.mb_trackid} for track {0}", item
+                    "Recording ID not found: {} for track {}", track_id, item
                 )
                 continue
 
             # Apply.
             with lib.transaction():
-                autotag.apply_item_metadata(item, track_info)
+                TrackMatch(Distance(), track_info, item).apply_metadata()
                 apply_item_changes(lib, item, move, pretend, write)
 
     def albums(self, lib, query, move, pretend, write):
@@ -97,15 +101,20 @@ class MBSyncPlugin(BeetsPlugin):
         """
         # Process matching albums.
         for album in lib.albums(query):
-            if not album.mb_albumid:
+            if not (album_id := album.mb_albumid):
                 self._log.info("Skipping album with no mb_albumid: {}", album)
                 continue
 
+            data_source = album.get("data_source") or album.items()[0].get(
+                "data_source", "MusicBrainz"
+            )
             if not (
-                album_info := metadata_plugins.album_for_id(album.mb_albumid)
+                album_info := metadata_plugins.album_for_id(
+                    album_id, data_source
+                )
             ):
                 self._log.info(
-                    "Release ID {0.mb_albumid} not found for album {0}", album
+                    "Release ID {} not found for album {}", album_id, album
                 )
                 continue
 
@@ -149,7 +158,9 @@ class MBSyncPlugin(BeetsPlugin):
             # Apply.
             self._log.debug("applying changes to {}", album)
             with lib.transaction():
-                autotag.apply_metadata(album_info, item_info_pairs)
+                AlbumMatch(
+                    Distance(), album_info, dict(item_info_pairs)
+                ).apply_metadata()
                 changed = False
                 # Find any changed item to apply changes to album.
                 any_changed_item = items[0]

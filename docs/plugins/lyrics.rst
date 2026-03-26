@@ -47,6 +47,7 @@ Default configuration:
 
     lyrics:
         auto: yes
+        auto_ignore: null
         translate:
             api_key:
             from_languages: []
@@ -63,6 +64,21 @@ Default configuration:
 The available options are:
 
 - **auto**: Fetch lyrics automatically during import.
+- **auto_ignore**: A beets query string of items to skip when fetching lyrics
+  during auto import. For example, to skip tracks from Bandcamp or with a Techno
+  genre:
+
+  .. code-block:: yaml
+
+      lyrics:
+        auto_ignore: |
+          data_source:bandcamp
+          ,
+          genres:techno
+
+  Default: ``null`` (nothing is ignored). See :doc:`/reference/query` for the
+  query syntax.
+
 - **translate**:
 
   - **api_key**: Api key to access your Azure Translator resource. (see

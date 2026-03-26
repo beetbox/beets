@@ -1,6 +1,8 @@
 BPSync Plugin
 =============
 
+.. deprecated:: 2.8 Depends on the deprecated :doc:`beatport` plugin. See :bug:`3862` and :bug:`4477`.
+
 This plugin provides the ``bpsync`` command, which lets you fetch metadata from
 Beatport for albums and tracks that already have Beatport IDs. This plugin works
 similarly to :doc:`/plugins/mbsync`.

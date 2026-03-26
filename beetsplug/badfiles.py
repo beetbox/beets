@@ -26,6 +26,7 @@ from beets import importer, ui
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 from beets.util import displayable_path, par_map
+from beets.util.color import colorize
 
 
 class CheckerCommandError(Exception):
@@ -109,9 +110,7 @@ class BadFiles(BeetsPlugin):
         dpath = displayable_path(item.path)
         self._log.debug("checking path: {}", dpath)
         if not os.path.exists(item.path):
-            ui.print_(
-                f"{ui.colorize('text_error', dpath)}: file does not exist"
-            )
+            ui.print_(f"{colorize('text_error', dpath)}: file does not exist")
 
         # Run the checker against the file if one is found
         ext = os.path.splitext(item.path)[1][1:].decode("utf8", "ignore")
@@ -138,21 +137,20 @@ class BadFiles(BeetsPlugin):
 
         if status > 0:
             error_lines.append(
-                f"{ui.colorize('text_error', dpath)}: checker exited with"
-                f" status {status}"
+                f"{colorize('text_error', dpath)}: checker exited with status {status}"
             )
             for line in output:
                 error_lines.append(f"  {line}")
 
         elif errors > 0:
             error_lines.append(
-                f"{ui.colorize('text_warning', dpath)}: checker found"
+                f"{colorize('text_warning', dpath)}: checker found"
                 f" {errors} errors or warnings"
             )
             for line in output:
                 error_lines.append(f"  {line}")
         elif self.verbose:
-            error_lines.append(f"{ui.colorize('text_success', dpath)}: ok")
+            error_lines.append(f"{colorize('text_success', dpath)}: ok")
 
         return error_lines
 
@@ -173,8 +171,7 @@ class BadFiles(BeetsPlugin):
     def on_import_task_before_choice(self, task, session):
         if hasattr(task, "_badfiles_checks_failed"):
             ui.print_(
-                f"{ui.colorize('text_warning', 'BAD')} one or more files failed"
-                " checks:"
+                f"{colorize('text_warning', 'BAD')} one or more files failed checks:"
             )
             for error in task._badfiles_checks_failed:
                 for error_line in error:
