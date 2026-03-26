@@ -35,6 +35,25 @@ if TYPE_CHECKING:
 
     from beets.library import Album, Library
 
+# Valid MusicBrainz release types for filtering release groups
+VALID_RELEASE_TYPES = [
+    "nat",
+    "album",
+    "single",
+    "ep",
+    "broadcast",
+    "other",
+    "compilation",
+    "soundtrack",
+    "spokenword",
+    "interview",
+    "audiobook",
+    "live",
+    "remix",
+    "dj-mix",
+    "mixtape/street",
+]
+
 MB_ARTIST_QUERY = r"mb_albumartistid::^\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$"
 
 
@@ -108,6 +127,7 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
                 "count": False,
                 "total": False,
                 "album": False,
+                "release_types": ["album"],
             }
         )
 
@@ -133,7 +153,19 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             "--album",
             dest="album",
             action="store_true",
-            help="show missing albums for artist instead of tracks",
+            help=(
+                "show missing album releases for artist instead of tracks; "
+                "Defaults to only releases of type 'album'"
+            ),
+        )
+        self._command.parser.add_option(
+            "--release-types",
+            action="append",
+            dest="release_types",
+            help=(
+                "comma-separated list of release types for missing albums "
+                f"(valid: {', '.join(VALID_RELEASE_TYPES)})"
+            ),
         )
         self._command.parser.add_format_option()
 
@@ -181,7 +213,7 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         """
         query.append(MB_ARTIST_QUERY)
 
-        # build dict mapping artist to set of their album ids in library
+        # build dict mapping artist to set of their release group ids in library
         album_ids_by_artist = defaultdict(set)
         for album in lib.albums(query):
             # TODO(@snejus): Some releases have different `albumartist` for the
@@ -191,13 +223,19 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             # reporting the same set of missing albums. Instead, we should
             # group by `mb_albumartistid` field only.
             artist = (album["albumartist"], album["mb_albumartistid"])
-            album_ids_by_artist[artist].add(album)
+            album_ids_by_artist[artist].add(album["mb_releasegroupid"])
 
         total_missing = 0
+        release_types = []
+        for rt in self.config["release_types"].as_str_seq():
+            release_types.extend(rt.split(","))
         calculating_total = self.config["total"].get()
         for (artist, artist_id), album_ids in album_ids_by_artist.items():
             try:
-                resp = self.mb_api.browse_release_groups(artist=artist_id)
+                resp = self.mb_api.browse_release_groups(
+                    artist=artist_id,
+                    type="|".join(release_types),
+                )
             except requests.exceptions.RequestException:
                 self._log.info(
                     "Couldn't fetch info for artist '{}' ({})",
@@ -227,10 +265,15 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         if len(album.items()) == album.albumtotal:
             return
 
-        item_mbids = {x.mb_trackid for x in album.items()}
         # fetch missing items
         # TODO: Implement caching that without breaking other stuff
-        if album_info := metadata_plugins.album_for_id(album.mb_albumid):
+        data_source = album.get("data_source") or album.items()[0].get(
+            "data_source", "MusicBrainz"
+        )
+        if album_info := metadata_plugins.album_for_id(
+            album.mb_albumid, data_source
+        ):
+            item_mbids = {x.mb_trackid for x in album.items()}
             for track_info in album_info.tracks:
                 if track_info.track_id not in item_mbids:
                     self._log.debug(

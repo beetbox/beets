@@ -20,7 +20,7 @@ from collections import Counter
 from contextlib import suppress
 from functools import cached_property
 from itertools import product
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 from urllib.parse import urljoin
 
 from confuse.exceptions import NotFoundError
@@ -28,7 +28,7 @@ from confuse.exceptions import NotFoundError
 import beets
 import beets.autotag.hooks
 from beets import config, plugins, util
-from beets.metadata_plugins import MetadataSourcePlugin
+from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
 from beets.util.deprecation import deprecate_for_user
 from beets.util.id_extractors import extract_release_id
 
@@ -36,10 +36,10 @@ from ._utils.musicbrainz import MusicBrainzAPIMixin
 from ._utils.requests import HTTPNotFoundError
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
-    from typing import Literal
+    from collections.abc import Sequence
 
     from beets.library import Item
+    from beets.metadata_plugins import QueryType, SearchParams
 
     from ._typing import JSONDict
 
@@ -94,22 +94,20 @@ def _preferred_alias(
     for locale in languages:
         # Find matching primary aliases for this locale that are not
         # being ignored
-        matches = []
         for alias in valid_aliases:
             if (
                 alias["locale"] == locale
                 and alias.get("primary")
                 and (alias.get("type") or "").lower() not in ignored_alias_types
             ):
-                matches.append(alias)
-
-        # Skip to the next locale if we have no matches
-        if not matches:
-            continue
-
-        return matches[0]
+                return alias
 
     return None
+
+
+def _key_with_preferred_alias(obj: JSONDict, key: str) -> str:
+    alias = _preferred_alias(obj.get("aliases", ()))
+    return alias["name"] if alias else obj[key]
 
 
 def _multi_artist_credit(
@@ -126,10 +124,7 @@ def _multi_artist_credit(
         alias = _preferred_alias(el["artist"].get("aliases", ()))
 
         # An artist.
-        if alias:
-            cur_artist_name = alias["name"]
-        else:
-            cur_artist_name = el["artist"]["name"]
+        cur_artist_name = alias["name"] if alias else el["artist"]["name"]
         artist_parts.append(cur_artist_name)
 
         # Artist sort name.
@@ -294,7 +289,9 @@ def _merge_pseudo_and_actual_album(
     return merged
 
 
-class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
+class MusicBrainzPlugin(
+    MusicBrainzAPIMixin, SearchApiMetadataSourcePlugin[IDResponse]
+):
     @cached_property
     def genres_field(self) -> str:
         return f"{self.config['genres_tag'].as_choice(['genre', 'tag'])}s"
@@ -344,8 +341,10 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
         ``medium_index``, the track's index on its medium; ``medium_total``,
         the number of tracks on the medium. Each number is a 1-based index.
         """
+        title = _key_with_preferred_alias(recording, key="title")
+
         info = beets.autotag.hooks.TrackInfo(
-            title=recording["title"],
+            title=title,
             track_id=recording["id"],
             index=index,
             medium=medium,
@@ -523,8 +522,11 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
                 ti.media = format
                 ti.track_alt = track["number"]
 
-                # Prefer track data, where present, over recording data.
-                if track.get("title"):
+                # Prefer track data, where present, over recording data except
+                # if a preferred recording alias is available.
+                if track.get("title") and not _preferred_alias(
+                    track["recording"].get("aliases", ())
+                ):
                     ti.title = track["title"]
                 if track.get("artist-credit"):
                     # Get the artist names.
@@ -550,8 +552,9 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
                 track_infos.append(ti)
 
         album_artist_ids = _artist_ids(release["artist-credit"])
+        release_title = _key_with_preferred_alias(release, key="title")
         info = beets.autotag.hooks.AlbumInfo(
-            album=release["title"],
+            album=release_title,
             album_id=release["id"],
             artist=artist_name,
             artist_id=album_artist_ids[0],
@@ -569,13 +572,21 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
         )
         info.va = info.artist_id == VARIOUS_ARTISTS_ID
         if info.va:
-            info.artist = config["va_name"].as_str()
+            va_name = config["va_name"].as_str()
+            info.artist = va_name
+            info.artist_sort = va_name
+            info.artists = [va_name]
+            info.artists_sort = [va_name]
+            info.artist_credit = va_name
+            info.artists_credit = [va_name]
         info.asin = release.get("asin")
         info.releasegroup_id = release["release-group"]["id"]
         info.albumstatus = release.get("status")
 
         if release["release-group"].get("title"):
-            info.release_group_title = release["release-group"].get("title")
+            info.release_group_title = _key_with_preferred_alias(
+                release["release-group"], key="title"
+            )
 
         # Get the disambiguation strings at the release and release group level.
         if release["release-group"].get("disambiguation"):
@@ -718,43 +729,33 @@ class MusicBrainzPlugin(MusicBrainzAPIMixin, MetadataSourcePlugin):
 
         return criteria
 
-    def _search_api(
+    def get_search_query_with_filters(
         self,
-        query_type: Literal["recording", "release"],
-        filters: dict[str, str],
-    ) -> list[JSONDict]:
-        """Perform MusicBrainz API search and return results.
-
-        Execute a search against the MusicBrainz API for recordings or releases
-        using the provided criteria. Handles API errors by converting them into
-        MusicBrainzAPIError exceptions with contextual information.
-        """
-        return self.mb_api.search(
-            query_type, filters, limit=self.config["search_limit"].get()
-        )
-
-    def candidates(
-        self,
+        query_type: QueryType,
         items: Sequence[Item],
         artist: str,
-        album: str,
+        name: str,
         va_likely: bool,
-    ) -> Iterable[beets.autotag.hooks.AlbumInfo]:
-        criteria = self.get_album_criteria(items, artist, album, va_likely)
-        release_ids = (r["id"] for r in self._search_api("release", criteria))
+    ) -> tuple[str, dict[str, str]]:
+        """Build MusicBrainz criteria filters for album and recording search."""
 
-        for id_ in release_ids:
-            with suppress(HTTPNotFoundError):
-                if album_info := self.album_for_id(id_):
-                    yield album_info
+        if query_type == "album":
+            criteria = self.get_album_criteria(items, artist, name, va_likely)
+        else:
+            criteria = {"artist": artist, "recording": name, "alias": name}
 
-    def item_candidates(
-        self, item: Item, artist: str, title: str
-    ) -> Iterable[beets.autotag.hooks.TrackInfo]:
-        criteria = {"artist": artist, "recording": title, "alias": title}
+        return "", {
+            k: _v for k, v in criteria.items() if (_v := v.lower().strip())
+        }
 
-        yield from filter(
-            None, map(self.track_info, self._search_api("recording", criteria))
+    def get_search_response(self, params: SearchParams) -> Sequence[IDResponse]:
+        """Search MusicBrainz and return release or recording result mappings."""
+
+        mb_entity: Literal["release", "recording"] = (
+            "release" if params.query_type == "album" else "recording"
+        )
+        return self.mb_api.search(
+            mb_entity, dict(params.filters), limit=params.limit
         )
 
     def album_for_id(

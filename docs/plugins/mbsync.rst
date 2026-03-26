@@ -17,6 +17,9 @@ Enable the ``mbsync`` plugin in your configuration (see :ref:`using-plugins`)
 and then run ``beet mbsync QUERY`` to fetch updated metadata for a part of your
 collection (or omit the query to run over your whole library).
 
+ID lookups use each item's stored ``data_source``. If a row has no
+``data_source``, ``mbsync`` falls back to ``MusicBrainz``.
+
 This plugin treats albums and singletons (non-album tracks) separately. It first
 processes all matching singletons and then proceeds on to full albums. The same
 query is used to search for both kinds of entities.

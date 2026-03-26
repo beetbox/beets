@@ -20,6 +20,7 @@ import re
 import textwrap
 from functools import partial
 from http import HTTPStatus
+from types import SimpleNamespace
 from typing import TYPE_CHECKING
 
 import pytest
@@ -365,6 +366,31 @@ class TestLyricsPlugin(LyricsPluginMixin):
         # make sure translation language is cleared
         with pytest.raises(AttributeError):
             item.lyrics_translation_language
+
+    def test_imported_skips_auto_ignored_items(
+        self,
+        lyrics_plugin,
+        monkeypatch,
+    ):
+        lyrics_plugin.config["auto_ignore"].set("album:Greatest Hits")
+        items = [
+            Item(title="Old Song", album="Greatest Hits", genre="Rock"),
+            Item(title="Come Together", album="Abbey Road", genre="Rock"),
+        ]
+
+        calls = []
+        monkeypatch.setattr(
+            lyrics_plugin,
+            "add_item_lyrics",
+            lambda current_item, write: calls.append(
+                (current_item.title, write)
+            ),
+        )
+
+        task = SimpleNamespace(imported_items=lambda: items)
+        lyrics_plugin.imported(None, task)
+
+        assert calls == [("Come Together", False)]
 
 
 class LyricsBackendTest(LyricsPluginMixin):

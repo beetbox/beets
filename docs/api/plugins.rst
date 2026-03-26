@@ -15,3 +15,4 @@ Plugins
 
     MetadataSourcePlugin
     SearchApiMetadataSourcePlugin
+    SearchParams
