@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from contextlib import suppress
 import os
 import string
 import sys
 import time
 import unicodedata
+from contextlib import suppress
 from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
@@ -1102,13 +1102,13 @@ class Item(LibModel):
 
     def has_cover_art(self):
         """Check if item has embedded cover art.
-        
+
         Return True if images embedded in file, False otherwise.
         If file unreadable or no images, return False.
         """
         with suppress(OSError):
             return bool(MediaFile(self.path).images)
-        
+
         return False
 
     # Model methods.
