@@ -179,30 +179,38 @@ This means that existing genres are also filtered when the ``force`` and
 ``keep_existing`` options are enabled (or ``cleanup_existing`` is enabled with
 ``force: no``).
 
-A possible ``ignorelist`` file would look like this:
+To enable this feature, add an ``ignorelist`` section to your ``lastgenre``
+configuration:
 
-.. code-block:: text
+.. code-block:: yaml
 
-    fracture:
-        ^(heavy|black|power|death)?\s?(metal|rock)$|\w+-metal\d*$
-        progressive metal
-    bob marley:
-        ska
-    *:
-        electronic
+    lastgenre:
+        ignorelist:
+            fracture:
+                - ^(heavy|black|power|death)?\s?(metal|rock)$|\w+-metal\d*$
+                - progressive metal
+            bob marley:
+                - ska
+            '*':
+                - electronic
 
-A combination of regex patterns and plain genre names is possible. The ``*`` key
-applies globally to all artists — use it to block genres you never want,
+A combination of regex patterns and plain genre names is possible. The ``'*'``
+key applies globally to all artists — use it to block genres you never want,
 regardless of artist. Patterns are matched against the full genre string, so a
 plain ``metal`` will not match ``heavy metal`` unless you write a regex like
 ``.*metal.*``.
 
-Set the ``ignorelist`` option to the path of a file containing such entries to
-enable this feature.
-
 .. attention::
 
-    Do not use single or double quotes around the genre names or regex patterns.
+    - The global key ``'*'`` **must** be surrounded by single quotes so that
+      YAML does not interpret it as an anchor.
+    - Any regex pattern that starts with special YAML characters (especially
+      ``[`` or ``*``) **must** be surrounded by quotes.
+    - Prefer **single quotes** (``'...'``) when quoting is necessary, as they
+      treat backslashes literally (no double-escaping required).
+    - Because the ignorelist uses plain YAML, you do **not** need to
+      double-escape backslashes in unquoted or single-quoted strings (e.g., use
+      ``\w``, not ``\\w``).
 
 Configuration
 -------------
@@ -244,9 +252,9 @@ file. The available options are:
   internal whitelist, or ``no`` to consider all genres valid. Default: ``yes``.
 - **title_case**: Convert the new tags to TitleCase before saving. Default:
   ``yes``.
-- **ignorelist**: The path to a file that contains genres to exclude from being
-  set as genres for specific artists. See `Genre Ignorelist`_ for more details.
-  Default: ``no``.
+- **ignorelist**: A mapping of artist names (or the global ``'*'`` key) to lists
+  of genres to exclude. See `Genre Ignorelist`_ for more details. Default:
+  ``no``.
 
 Running Manually
 ----------------
