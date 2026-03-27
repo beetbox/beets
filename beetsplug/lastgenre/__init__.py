@@ -37,7 +37,7 @@ from beets import config, library, plugins, ui
 from beets.library import Album, Item
 from beets.ui import UserError
 from beets.util import plurality, unique_list
-from beetsplug.lastgenre.utils import is_ignored
+from beetsplug.lastgenre.utils import is_ignored, normalize_genre
 
 from .client import LastFmClient
 
@@ -48,7 +48,7 @@ if TYPE_CHECKING:
     from beets.importer import ImportSession, ImportTask
     from beets.library import LibModel
 
-    from .utils import Ignorelist
+    from .utils import Aliases, Ignorelist
 
     Whitelist = set[str]
     """Set of valid genre names (lowercase). Empty set means all genres allowed."""
@@ -118,6 +118,7 @@ def sort_by_depth(tags: list[str], branches: CanonTree) -> list[str]:
 
 WHITELIST = os.path.join(os.path.dirname(__file__), "genres.txt")
 C14N_TREE = os.path.join(os.path.dirname(__file__), "genres-tree.yaml")
+ALIASES = os.path.join(os.path.dirname(__file__), "aliases.yaml")
 
 
 class LastGenrePlugin(plugins.BeetsPlugin):
@@ -140,6 +141,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 "title_case": True,
                 "pretend": False,
                 "ignorelist": False,
+                "aliases": True,
             }
         )
         self.setup()
@@ -153,8 +155,12 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         self.c14n_branches: CanonTree
         self.c14n_branches, self.canonicalize = self._load_c14n_tree()
         self.ignorelist: Ignorelist = self._load_ignorelist()
+        self.aliases: Aliases = self._load_aliases()
         self.client = LastFmClient(
-            self._log, self.config["min_weight"].get(int), self.ignorelist
+            self._log,
+            self.config["min_weight"].get(int),
+            self.ignorelist,
+            self.aliases,
         )
 
     def _load_whitelist(self) -> Whitelist:
@@ -244,6 +250,18 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         return self._compile_ignorelist_patterns(ignorelist_raw)
 
     @staticmethod
+    def _compile_pattern(raw: str) -> re.Pattern[str]:
+        """Compile *raw* as a case-insensitive full-match regex.
+
+        Tries regex compilation first; falls back to treating the string as a
+        literal (via ``re.escape``) if it is not valid regex.
+        """
+        try:
+            return re.compile(raw, re.IGNORECASE)
+        except re.error:
+            return re.compile(re.escape(raw), re.IGNORECASE)
+
+    @staticmethod
     def _compile_ignorelist_patterns(
         ignorelist: RawIgnorelist,
     ) -> Ignorelist:
@@ -258,16 +276,62 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             defaultdict(list)
         )
         for artist, patterns in ignorelist.items():
-            compiled_patterns = []
-            for pattern in patterns:
-                try:
-                    compiled_patterns.append(re.compile(pattern, re.IGNORECASE))
-                except re.error:
-                    compiled_patterns.append(
-                        re.compile(re.escape(pattern), re.IGNORECASE)
-                    )
-            compiled_ignorelist[artist] = compiled_patterns
+            compiled_ignorelist[artist] = [
+                LastGenrePlugin._compile_pattern(p) for p in patterns
+            ]
         return compiled_ignorelist
+
+    def _load_aliases(self) -> Aliases:
+        """Load the genre alias table from the beets config.
+
+        Reads ``lastgenre.aliases`` as a mapping of genre names to lists of
+        regex patterns::
+
+            lastgenre:
+                aliases:
+                    drum and bass:
+                        - d(rum)?[ &n/]*b(ass)?
+                    \\g<1> hop:
+                        - (glitch|hip|jazz|trip)y?[ /-]*hop
+
+        The key (genre name) is used as a ``re.Match.expand()`` template,
+        so ``\\g<N>`` back-references to capture groups are supported.
+
+        Setting ``aliases: true`` loads the bundled ``aliases.yaml`` file. Setting
+        ``aliases: false`` disables normalization entirely.
+
+        Raises:
+            UserError: if the config value is not a mapping, or if an entry's value is
+            not a list of strings.
+        """
+        aliases_config = self.config["aliases"].get()
+        if aliases_config is False:
+            return []
+        if aliases_config in (True, "", None):
+            self._log.debug("Loading default aliases from {}", ALIASES)
+            with Path(ALIASES).open(encoding="utf-8") as f:
+                aliases_config = yaml.safe_load(f)
+            if not aliases_config:
+                return []
+        if not isinstance(aliases_config, dict):
+            raise UserError(
+                "Invalid value for lastgenre.aliases: expected a mapping "
+                f"(canonical -> list of patterns), got {aliases_config!r}"
+            )
+
+        entries: Aliases = []
+        for canonical, patterns in aliases_config.items():
+            if not isinstance(patterns, list):
+                raise UserError(
+                    f"Invalid lastgenre.aliases entry for {canonical!r}: "
+                    f"expected a list of patterns, got {patterns!r}"
+                )
+            template = str(canonical).lower()
+            for raw in patterns:
+                entries.append((self._compile_pattern(str(raw)), template))
+
+        self._log.extra_debug("Loaded {} alias entries", len(entries))
+        return entries
 
     @property
     def sources(self) -> tuple[str, ...]:
@@ -290,6 +354,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """Canonicalize, sort and filter a list of genres.
 
         - Returns an empty list if the input tags list is empty.
+        - If aliases are configured, variant spellings are normalised first
+          (e.g. 'hip-hop' → 'hip hop', 'dnb' → 'drum and bass').
         - If canonicalization is enabled, it extends the list by incorporating
           parent genres from the canonicalization tree. When a whitelist is set,
           only parent tags that pass the whitelist filter are included;
@@ -308,6 +374,12 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """
         if not tags:
             return []
+
+        # Normalize variant spellings before any other processing.
+        if self.aliases:
+            tags = [
+                normalize_genre(self._log, self.aliases, tag) for tag in tags
+            ]
 
         count = self.config["count"].get(int)
 

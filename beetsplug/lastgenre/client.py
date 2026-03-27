@@ -25,14 +25,14 @@ import pylast
 
 from beets import plugins
 
-from .utils import is_ignored
+from .utils import is_ignored, normalize_genre
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from beets.logging import BeetsLogger
 
-    from .utils import Ignorelist
+    from .utils import Aliases, Ignorelist
 
     GenreCache = dict[str, list[str]]
     """Cache mapping entity keys to their genre lists.
@@ -52,7 +52,11 @@ class LastFmClient:
     """Client for fetching genres from Last.fm."""
 
     def __init__(
-        self, log: BeetsLogger, min_weight: int, ignorelist: Ignorelist
+        self,
+        log: BeetsLogger,
+        min_weight: int,
+        ignorelist: Ignorelist,
+        aliases: Aliases,
     ):
         """Initialize the client.
 
@@ -62,6 +66,7 @@ class LastFmClient:
         self._log = log
         self._min_weight = min_weight
         self._ignorelist: Ignorelist = ignorelist
+        self._aliases: Aliases = aliases
         self._genre_cache: GenreCache = {}
 
     def fetch_genre(
@@ -138,13 +143,15 @@ class LastFmClient:
             "last.fm (unfiltered) {} tags: {}", entity, genres
         )
 
-        # Filter forbidden genres on every call so ignorelist hits are logged.
-        # Artist is always the first element in args (album, artist, track lookups).
-        return [
-            g
-            for g in genres
-            if not is_ignored(self._log, self._ignorelist, g, args[0])
-        ]
+        result = []
+        for genre in genres:
+            if self._aliases:
+                genre = normalize_genre(self._log, self._aliases, genre)
+
+            if not is_ignored(self._log, self._ignorelist, genre, args[0]):
+                result.append(genre)
+
+        return result
 
     def fetch_album_genre(self, albumartist: str, albumtitle: str) -> list[str]:
         """Return genres from Last.fm for the album by albumartist."""
