@@ -1,0 +1,113 @@
+# Default genre aliases for the lastgenre plugin.
+#
+# Keys are canonical names and support \g<N> back-references to pattern groups.
+# Patterns are case-insensitive full-matches. Order matters: first match wins.
+
+# ---------------------------------------------------------------------------
+# Ampersands / Delimiters
+# ---------------------------------------------------------------------------
+
+# drum and bass (d&b, dnb, drum n bass, ...)
+drum and bass:
+    - d(rum)?[ &n/]*b(ass)?
+
+# rhythm and blues (r&b, rnb, ...)
+rhythm and blues:
+    - r(hythm)?[ &n/]*b(lues)?
+
+# rock and roll (rock & roll, rock'n'roll, rock-n-roll, ...)
+rock and roll:
+    - rock[ '‐&n/ \-]*roll
+
+# ---------------------------------------------------------------------------
+# Consistent Delimiters (Hyphenation)
+# ---------------------------------------------------------------------------
+
+
+# Hyphenate j-pop, k-pop, c-pop, post-rock, etc.
+# Matches: kpop, k pop -> k-pop; j rock -> j-rock; post rock -> post-rock
+#
+# Hyphenate neo-soul, euro-house, tech-house, etc.
+# (Negative lookaheads exclude 'european' and 'techno'/'technic*'.)
+\g<1>-\g<2>:
+    - (c|k|j)[ /-]*(folk|goth|hip hop|pop|rock|ska|trance)
+    - (euro(?!p[ae]+n?)|neo|post|tech(?!n[io]))[ /-]*(\w+)
+
+# lo-fi, glo-fi (lofi, lo fi -> lo-fi)
+lo-fi:
+    - (g?lo)[ /-]*fi
+
+# p-funk, g-funk, etc. (p funk -> p-funk)
+\g<1>-funk:
+    - (p|g)[ /-]*funk
+
+# synthpop, synthwave, etc. (synth pop -> synthpop)
+synth\g<1>:
+    - synth[ /-]+(\w+)
+
+# avant-garde (avantgarde, avant gard, avant-gard)
+avant-garde:
+    - avant[ /-]*(gard(e)?)?
+    - avant-gard
+    - avant
+
+# ---------------------------------------------------------------------------
+# Nu- Genre Spelling (nu jazz, nu-disco, etc.)
+# ---------------------------------------------------------------------------
+
+# Matches: nu-jazz -> nu jazz; nu disco -> nu disco
+# Note: 'nu-disco' is hyphenated in the tree but 'nu jazz' isn't in genres.txt
+nu \g<1>:
+    - nu[ /-]*(disco|jazz|metal|soul)
+
+# ---------------------------------------------------------------------------
+# Terminology / Synonym / Translation fixes
+# ---------------------------------------------------------------------------
+
+# electronic (electronic music, elektronika)
+electronic:
+    - electronic[ /]music
+    - elektronika
+
+# downtempo (downbeat)
+downtempo:
+    - down[ /-]*beat
+
+# shoegaze (shoegazer, shoegazing)
+shoegaze:
+    - shoegaze?r?
+    - shoegazing
+
+# ---------------------------------------------------------------------------
+# Form Fixes (Hip Hop, Trip Hop, etc.)
+# ---------------------------------------------------------------------------
+
+# Normalized spacing: hip-hop, hiphop -> hip hop
+\g<1> hop:
+    - (glitch|hip|jazz|trip)y?([ /-]*hip)?[ /-]*hop
+
+# ---------------------------------------------------------------------------
+# Abbreviations & International Spellings
+# ---------------------------------------------------------------------------
+
+# alternative rock (alt, alternative, alt rock, ...)
+alternative rock:
+    - alt([ /-]*rock)?
+    - alternative([ /-]*rock)?
+    - alternatv[ /-]*rock
+
+# gothic rock (goth, goth rock) - doesn't catch gothic metal
+gothic rock:
+    - goth(?!ic)([ /-]*rock)?
+    - gothic[ /-]*rock
+
+# progressive rock (prog, prog rock, progressive rock)
+# Note: mapping standalone 'progressive' is avoided to prevent catching 'progressive metal', etc.
+progressive rock:
+    - prog([ /-]*rock)?
+    - progressive[ /-]*rock
+
+# traditional folk (trad, traditional)
+# Note: avoids matching 'trad jazz' or 'traditional country'.
+traditional folk:
+    - trad(/|ition(/|al)?)?-?
