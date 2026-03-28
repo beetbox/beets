@@ -352,6 +352,47 @@ class ImportTest(PathsMixin, AutotagImportTestCase):
         self.prepare_album_for_import(1)
         self.setup_importer()
 
+    @unittest.skipIf(
+        not has_program("ffprobe", ["-L"]),
+        "need ffprobe for format recognition",
+    )
+    def test_recognize_format(self):
+        resource_src = os.path.join(_common.RSRC, b"no_ext")
+        resource_path = os.path.join(self.import_dir, b"no_ext")
+        util.copy(resource_src, resource_path)
+        self.setup_importer()
+        self.importer.paths = [resource_path]
+        self.importer.run()
+        assert self.lib.items().get().path.endswith(b".mp3")
+
+    @unittest.skipIf(
+        not has_program("ffprobe", ["-L"]),
+        "need ffprobe for format recognition",
+    )
+    def test_recognize_format_already_exist(self):
+        resource_path = os.path.join(_common.RSRC, b"no_ext")
+        temp_resource_path = os.path.join(self.temp_dir, b"no_ext")
+        util.copy(resource_path, temp_resource_path)
+        new_path = os.path.join(self.temp_dir, b"no_ext.mp3")
+        util.copy(temp_resource_path, new_path)
+        self.setup_importer()
+        self.importer.paths = [temp_resource_path]
+        with capture_log() as logs:
+            self.importer.run()
+        assert "Import file with matching format to original target" in logs
+        assert self.lib.items().get().path.endswith(b".mp3")
+
+    @unittest.skipIf(
+        not has_program("ffprobe", ["-L"]),
+        "need ffprobe for format recognition",
+    )
+    def test_recognize_format_not_music(self):
+        resource_path = os.path.join(_common.RSRC, b"no_ext_not_music")
+        self.setup_importer()
+        self.importer.paths = [resource_path]
+        self.importer.run()
+        assert len(self.lib.items()) == 0
+
     def test_asis_moves_album_and_track(self):
         self.importer.add_choice(importer.Action.ASIS)
         self.importer.run()

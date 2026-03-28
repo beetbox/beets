@@ -9,9 +9,12 @@ below!
 Unreleased
 ----------
 
-..
-    New features
-    ~~~~~~~~~~~~
+New features
+~~~~~~~~~~~~
+
+- Use ffprobe to recognize format of any import music file that has no
+  extension. If the file cannot be recognized as a music file, leave it alone.
+  :bug:`4881`
 
 ..
     Bug fixes
