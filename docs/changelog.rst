@@ -13,9 +13,11 @@ Unreleased
     New features
     ~~~~~~~~~~~~
 
-..
-    Bug fixes
-    ~~~~~~~~~
+
+Bug fixes
+~~~~~~~~~
+
+- Correctly handle semicolon-delimited genre values from externally-tagged files.
 
 ..
     For plugin developers
