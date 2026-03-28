@@ -9,6 +9,25 @@ below!
 Unreleased
 ----------
 
+..
+    New features
+    ~~~~~~~~~~~~
+
+..
+    Bug fixes
+    ~~~~~~~~~
+
+..
+    For plugin developers
+    ~~~~~~~~~~~~~~~~~~~~~
+
+..
+    Other changes
+    ~~~~~~~~~~~~~
+
+2.8.0 (March 28, 2026)
+----------------------
+
 New features
 ~~~~~~~~~~~~
 
@@ -74,9 +93,10 @@ For plugin developers
 - Colorisation, diff and layout utility helpers previously imported from
   :mod:`beets.ui` now live in :mod:`beets.util.color`, :mod:`beets.util.diff`,
   and :mod:`beets.util.layout`. Update external imports accordingly.
-- The ``tunelog`` logging helper that was exclusively available to the lastgenre
-  plugin is now usable througout beets and was renamed to ``extra_debug``.
-  Import it from the ``beets.logging`` module to use it.
+- The lastgenre ``tunelog`` helper was generalized into
+  :py:meth:`beets.logging.BeetsLogger.extra_debug`, which emits ``DEBUG``
+  messages only at verbosity level 3 or higher (for example ``-vvv``). Plugin
+  authors can use it via ``self._log.extra_debug(...)``.
 
 Other changes
 ~~~~~~~~~~~~~
@@ -118,10 +138,10 @@ New features
   allow whitelist canonicalization of existing genres.
 - Add native support for multiple genres per album/track. The ``genres`` field
   now stores genres as a list and is written to files as multiple individual
-  genre tags (e.g., separate GENRE tags for FLAC/MP3). The
-  :doc:`plugins/musicbrainz`, :doc:`plugins/beatport`, :doc:`plugins/discogs`
-  and :doc:`plugins/lastgenre` plugins have been updated to populate the
-  ``genres`` field as a list.
+  genre tags (e.g., separate GENRE tags for FLAC/MP3) while the singular
+  ``genre`` field has been removed. The :doc:`plugins/musicbrainz`,
+  :doc:`plugins/beatport`, :doc:`plugins/discogs` and :doc:`plugins/lastgenre`
+  plugins have been updated to populate the ``genres`` field as a list.
 
   **Migration**: Existing libraries with comma-separated, semicolon-separated,
   or slash-separated genre strings (e.g., ``"Rock, Alternative, Indie"``) are
@@ -132,8 +152,8 @@ New features
   command that writes tags (such as ``beet write`` or during import). No manual
   action or ``mbsync`` is required.
 
-  The ``genre`` field is split by the first separator found in the string, in
-  the following order of precedence:
+  The existing values in the legacy ``genre`` field are split by the first
+  separator found in the string, in the following order of precedence:
 
   1. :doc:`plugins/lastgenre` ``separator`` configuration
   2. Semicolon followed by a space

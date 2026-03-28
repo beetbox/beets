@@ -24,7 +24,7 @@ implemented by MusicBrainz yet.
 import subprocess
 
 from beets import ui
-from beets.autotag import Recommendation
+from beets.autotag.match import Recommendation
 from beets.plugins import BeetsPlugin
 from beets.util import PromptChoice, displayable_path
 from beetsplug.info import print_data

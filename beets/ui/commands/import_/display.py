@@ -7,7 +7,7 @@ from functools import cached_property
 from typing import TYPE_CHECKING
 
 from beets import config, ui
-from beets.autotag import hooks
+from beets.autotag.hooks import TrackInfo
 from beets.util import displayable_path
 from beets.util.color import colorize
 from beets.util.diff import colordiff
@@ -17,7 +17,7 @@ from beets.util.units import human_seconds_short
 if TYPE_CHECKING:
     import confuse
 
-    from beets import autotag
+    from beets.autotag.hooks import AlbumMatch, Match, TrackMatch
     from beets.library.models import Item
     from beets.util.color import ColorName
 
@@ -34,7 +34,7 @@ class ChangeRepresentation:
 
     cur_artist: str
     cur_name: str
-    match: autotag.hooks.Match
+    match: Match
 
     @cached_property
     def changed_prefix(self) -> str:
@@ -123,7 +123,7 @@ class ChangeRepresentation:
             else:
                 ui.print_(f"{self.indent_detail}*", f"{type_}:", name_r)
 
-    def make_medium_info_line(self, track_info: hooks.TrackInfo) -> str:
+    def make_medium_info_line(self, track_info: TrackInfo) -> str:
         """Construct a line with the current medium's info."""
         track_media = track_info.get("media", "Media")
         # Build output string.
@@ -138,11 +138,11 @@ class ChangeRepresentation:
         else:
             return ""
 
-    def format_index(self, track_info: hooks.TrackInfo | Item) -> str:
+    def format_index(self, track_info: TrackInfo | Item) -> str:
         """Return a string representing the track index of the given
         TrackInfo or Item object.
         """
-        if isinstance(track_info, hooks.TrackInfo):
+        if isinstance(track_info, TrackInfo):
             index = track_info.index
             medium_index = track_info.medium_index
             medium = track_info.medium
@@ -160,7 +160,7 @@ class ChangeRepresentation:
             return str(index)
 
     def make_track_numbers(
-        self, item: Item, track_info: hooks.TrackInfo
+        self, item: Item, track_info: TrackInfo
     ) -> tuple[str, str, bool]:
         """Format colored track indices."""
         cur_track = self.format_index(item)
@@ -183,7 +183,7 @@ class ChangeRepresentation:
 
     @staticmethod
     def make_track_titles(
-        item: Item, track_info: hooks.TrackInfo
+        item: Item, track_info: TrackInfo
     ) -> tuple[str, str, bool]:
         """Format colored track titles."""
         new_title = track_info.name
@@ -199,7 +199,7 @@ class ChangeRepresentation:
 
     @staticmethod
     def make_track_lengths(
-        item: Item, track_info: hooks.TrackInfo
+        item: Item, track_info: TrackInfo
     ) -> tuple[str, str, bool]:
         """Format colored track lengths."""
         changed = False
@@ -227,9 +227,7 @@ class ChangeRepresentation:
 
         return lhs_length, rhs_length, changed
 
-    def make_line(
-        self, item: Item, track_info: hooks.TrackInfo
-    ) -> tuple[Side, Side]:
+    def make_line(self, item: Item, track_info: TrackInfo) -> tuple[Side, Side]:
         """Extract changes from item -> new TrackInfo object, and colorize
         appropriately. Returns (lhs, rhs) for column printing.
         """
@@ -304,7 +302,7 @@ class ChangeRepresentation:
 
 
 class AlbumChange(ChangeRepresentation):
-    match: autotag.hooks.AlbumMatch
+    match: AlbumMatch
 
     def show_match_tracks(self) -> None:
         """Print out the tracks of the match, summarizing changes the match
@@ -364,12 +362,10 @@ class AlbumChange(ChangeRepresentation):
 class TrackChange(ChangeRepresentation):
     """Track change representation, comparing item with match."""
 
-    match: autotag.hooks.TrackMatch
+    match: TrackMatch
 
 
-def show_change(
-    cur_artist: str, cur_album: str, match: hooks.AlbumMatch
-) -> None:
+def show_change(cur_artist: str, cur_album: str, match: AlbumMatch) -> None:
     """Print out a representation of the changes that will be made if an
     album's tags are changed according to `match`, which must be an AlbumMatch
     object.
@@ -386,7 +382,7 @@ def show_change(
     change.show_match_tracks()
 
 
-def show_item_change(item: Item, match: hooks.TrackMatch) -> None:
+def show_item_change(item: Item, match: TrackMatch) -> None:
     """Print out the change that would occur by tagging `item` with the
     metadata from `match`, a TrackMatch object.
     """

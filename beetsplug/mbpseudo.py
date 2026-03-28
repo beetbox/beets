@@ -38,8 +38,8 @@ from beetsplug.musicbrainz import (
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
-    from beets.autotag import AlbumMatch
     from beets.autotag.distance import Distance
+    from beets.autotag.hooks import AlbumMatch
     from beets.library import Item
     from beetsplug._typing import JSONDict
 

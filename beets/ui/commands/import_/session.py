@@ -3,8 +3,9 @@ from __future__ import annotations
 from collections import Counter
 from itertools import chain
 
-from beets import autotag, config, importer, logging, plugins, ui
-from beets.autotag import Recommendation
+from beets import config, importer, logging, plugins, ui
+from beets.autotag.hooks import AlbumMatch, TrackMatch
+from beets.autotag.match import Proposal, Recommendation, tag_album, tag_item
 from beets.util import PromptChoice, displayable_path
 from beets.util.color import colorize
 from beets.util.units import human_bytes, human_seconds_short
@@ -84,7 +85,7 @@ class TerminalImportSession(importer.ImportSession):
                 post_choice = choice.callback(self, task)
                 if isinstance(post_choice, importer.Action):
                     return post_choice
-                elif isinstance(post_choice, autotag.Proposal):
+                elif isinstance(post_choice, Proposal):
                     # Use the new candidates and continue around the loop.
                     task.candidates = post_choice.candidates
                     task.rec = post_choice.recommendation
@@ -93,7 +94,7 @@ class TerminalImportSession(importer.ImportSession):
             else:
                 # We have a candidate! Finish tagging. Here, choice is an
                 # AlbumMatch object.
-                assert isinstance(choice, autotag.AlbumMatch)
+                assert isinstance(choice, AlbumMatch)
                 return choice
 
     def choose_item(self, task):
@@ -127,13 +128,13 @@ class TerminalImportSession(importer.ImportSession):
                 post_choice = choice.callback(self, task)
                 if isinstance(post_choice, importer.Action):
                     return post_choice
-                elif isinstance(post_choice, autotag.Proposal):
+                elif isinstance(post_choice, Proposal):
                     candidates = post_choice.candidates
                     rec = post_choice.recommendation
 
             else:
                 # Chose a candidate.
-                assert isinstance(choice, autotag.TrackMatch)
+                assert isinstance(choice, TrackMatch)
                 return choice
 
     def resolve_duplicate(self, task, found_duplicates):
@@ -519,10 +520,10 @@ def manual_search(session, task):
     name = ui.input_("Album:" if task.is_album else "Track:").strip()
 
     if task.is_album:
-        _, _, prop = autotag.tag_album(task.items, artist, name)
+        _, _, prop = tag_album(task.items, artist, name)
         return prop
     else:
-        return autotag.tag_item(task.item, artist, name)
+        return tag_item(task.item, artist, name)
 
 
 def manual_id(session, task):
@@ -534,10 +535,10 @@ def manual_id(session, task):
     search_id = ui.input_(prompt).strip()
 
     if task.is_album:
-        _, _, prop = autotag.tag_album(task.items, search_ids=search_id.split())
+        _, _, prop = tag_album(task.items, search_ids=search_id.split())
         return prop
     else:
-        return autotag.tag_item(task.item, search_ids=search_id.split())
+        return tag_item(task.item, search_ids=search_id.split())
 
 
 def abort_action(session, task):
