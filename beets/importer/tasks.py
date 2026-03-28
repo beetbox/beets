@@ -1108,7 +1108,7 @@ class ImportTaskFactory:
                 "fatal",
                 "-show_format",
                 "--",
-                str(path),
+                str(path.as_posix()),
             ],
             capture_output=True,
         )
