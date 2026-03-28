@@ -56,3 +56,17 @@ def test_durationtype():
     beets.config["format_raw_length"] = True
     assert 61.23 == t.format(61.23)
     assert 3601.23 == t.format(3601.23)
+
+
+def test_delimitedstring_normalize():
+    t = types.MULTI_VALUE_DSV
+    # single element with embedded "; " is expanded
+    assert t.normalize(["Jazz; Folk; Soul"]) == ["Jazz", "Folk", "Soul"]
+    # already-correct list passes through unchanged
+    assert t.normalize(["Jazz", "Folk"]) == ["Jazz", "Folk"]
+    # mixed: only the delimited element is expanded
+    assert t.normalize(["Jazz; Folk", "Soul"]) == ["Jazz", "Folk", "Soul"]
+    # None -> null (empty list)
+    assert t.normalize(None) == []
+    # no false split: value without "; " is unchanged
+    assert t.normalize(["Smith, John"]) == ["Smith, John"]
