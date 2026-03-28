@@ -13,11 +13,11 @@ Unreleased
     New features
     ~~~~~~~~~~~~
 
-
 Bug fixes
 ~~~~~~~~~
 
-- Correctly handle semicolon-delimited genre values from externally-tagged files.
+- Correctly handle semicolon-delimited genre values from externally-tagged
+  files. :bug:`6450`
 
 ..
     For plugin developers
