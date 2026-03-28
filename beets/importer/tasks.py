@@ -1100,18 +1100,35 @@ class ImportTaskFactory:
         # no extension detected
         # use ffprobe to find the format
         formats = []
-        output = subprocess.run(
-            [
-                "ffprobe",
-                "-hide_banner",
-                "-loglevel",
-                "fatal",
-                "-show_format",
-                "--",
-                str(path.as_posix()),
-            ],
-            capture_output=True,
-        )
+        if os.name == "posix":
+            # linux
+            output = subprocess.run(
+                [
+                    "ffprobe",
+                    "-hide_banner",
+                    "-loglevel",
+                    "fatal",
+                    "-show_format",
+                    "--",
+                    str(path),
+                ],
+                capture_output=True,
+            )
+        if os.name == "nt":
+            # windows
+            output = subprocess.run(
+                [
+                    "ffprobe",
+                    "-hide_banner",
+                    "-loglevel",
+                    "fatal",
+                    "-show_format",
+                    "--",
+                    str(path),
+                ],
+                capture_output=True,
+                shell=True,
+            )
         out = output.stdout.decode("utf-8")
         err = output.stderr.decode("utf-8")
         if err != "":
