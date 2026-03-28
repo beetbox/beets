@@ -18,7 +18,7 @@ import cProfile
 import timeit
 
 from beets import importer, library, plugins, ui
-from beets.autotag import match
+from beets.autotag.match import tag_album
 from beets.plugins import BeetsPlugin
 from beets.util.functemplate import Template
 from beetsplug._utils import vfs
@@ -83,7 +83,7 @@ def match_benchmark(lib, prof, query=None, album_id=None):
 
     # Run the match.
     def _run_match():
-        match.tag_album(items, search_ids=[album_id])
+        tag_album(items, search_ids=[album_id])
 
     if prof:
         cProfile.runctx(

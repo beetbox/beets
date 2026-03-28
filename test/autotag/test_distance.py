@@ -2,13 +2,13 @@ import re
 
 import pytest
 
-from beets.autotag import AlbumInfo, TrackInfo
 from beets.autotag.distance import (
     Distance,
     distance,
     string_dist,
     track_distance,
 )
+from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.library import Item
 from beets.metadata_plugins import MetadataSourcePlugin, get_penalty
 from beets.plugins import BeetsPlugin

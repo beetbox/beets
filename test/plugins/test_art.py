@@ -28,8 +28,8 @@ import pytest
 import responses
 
 from beets import config, importer, logging, util
-from beets.autotag import AlbumInfo, AlbumMatch
 from beets.autotag.distance import Distance
+from beets.autotag.hooks import AlbumInfo, AlbumMatch
 from beets.test import _common
 from beets.test.helper import (
     BeetsTestCase,

@@ -3,7 +3,8 @@ from typing import ClassVar
 import pytest
 
 from beets import metadata_plugins
-from beets.autotag import AlbumInfo, TrackInfo, match
+from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.autotag.match import assign_items, tag_album, tag_item
 from beets.library import Item
 
 
@@ -40,9 +41,7 @@ class TestAssignment:
         items = [Item(title=title) for title in item_titles]
         tracks = [TrackInfo(title=title) for title in track_titles]
 
-        item_info_pairs, extra_items, extra_tracks = match.assign_items(
-            items, tracks
-        )
+        item_info_pairs, extra_items, extra_tracks = assign_items(items, tracks)
 
         assert (
             {i.title: t.title for i, t in item_info_pairs},
@@ -94,7 +93,7 @@ class TestAssignment:
 
         expected = list(zip(items, trackinfo)), [], []
 
-        assert match.assign_items(items, trackinfo) == expected
+        assert assign_items(items, trackinfo) == expected
 
 
 class TestTagMultipleDataSources:
@@ -163,21 +162,21 @@ class TestTagMultipleDataSources:
         assert set(sources) == {"Discogs", "Deezer"}
 
     def test_search_album_ids(self, shared_album_id):
-        _, _, proposal = match.tag_album([Item()], search_ids=[shared_album_id])
+        _, _, proposal = tag_album([Item()], search_ids=[shared_album_id])
 
         self.check_proposal(proposal)
 
     def test_search_album_current_id(self, shared_album_id):
-        _, _, proposal = match.tag_album([Item(mb_albumid=shared_album_id)])
+        _, _, proposal = tag_album([Item(mb_albumid=shared_album_id)])
 
         self.check_proposal(proposal)
 
     def test_search_track_ids(self, shared_track_id):
-        proposal = match.tag_item(Item(), search_ids=[shared_track_id])
+        proposal = tag_item(Item(), search_ids=[shared_track_id])
 
         self.check_proposal(proposal)
 
     def test_search_track_current_id(self, shared_track_id):
-        proposal = match.tag_item(Item(mb_trackid=shared_track_id))
+        proposal = tag_item(Item(mb_trackid=shared_track_id))
 
         self.check_proposal(proposal)

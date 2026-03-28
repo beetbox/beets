@@ -4,7 +4,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from beets import autotag, config, library, ui
+from beets import config, library, ui
+from beets.autotag.hooks import AlbumInfo, AlbumMatch, TrackInfo
 from beets.autotag.match import distance
 from beets.test import _common
 from beets.test.helper import BeetsTestCase, IOMixin
@@ -66,16 +67,16 @@ class ShowChangeTestCase(IOMixin, BeetsTestCase):
             _common.item(track=3, title="caf\xe9"),
             _common.item(track=4, title=f"title with {long_name}"),
         ]
-        info = autotag.AlbumInfo(
+        info = AlbumInfo(
             album="caf\xe9",
             album_id="album id",
             artist="the artist",
             artist_id="artist id",
             tracks=[
-                autotag.TrackInfo(title="first title", index=1),
-                autotag.TrackInfo(title="second title", index=2),
-                autotag.TrackInfo(title="third title", index=3),
-                autotag.TrackInfo(title="fourth title", index=4),
+                TrackInfo(title="first title", index=1),
+                TrackInfo(title="second title", index=2),
+                TrackInfo(title="third title", index=3),
+                TrackInfo(title="fourth title", index=4),
             ],
         )
         item_info_pairs = list(zip(items, info.tracks))
@@ -86,9 +87,7 @@ class ShowChangeTestCase(IOMixin, BeetsTestCase):
         show_change(
             f"another artist with {long_name}",
             "another album",
-            autotag.AlbumMatch(
-                change_dist, info, dict(item_info_pairs), set(), set()
-            ),
+            AlbumMatch(change_dist, info, dict(item_info_pairs)),
         )
         return self.io.getoutput()
 
