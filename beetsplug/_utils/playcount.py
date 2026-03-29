@@ -14,21 +14,17 @@ if TYPE_CHECKING:
     from beets.logging import BeetsLogger
 
 
-class Album(TypedDict):
-    name: str
-
-
 class Track(TypedDict):
-    mbid: str
+    mbid: str | None
     name: str
     artist: str
-    album: NotRequired[Album]
     playcount: int
+    album: NotRequired[str | None]
 
 
 def get_items(lib: Library, track: Track, log: BeetsLogger) -> Sequence[Item]:
-    album = track.get("album", {}).get("name", "")
     mbid, artist, title = track["mbid"], track["artist"], track["name"]
+    album = track.get("album") or ""
 
     log.debug("query: {} - {} ({})", artist, title, album)
 
@@ -53,29 +49,33 @@ def get_items(lib: Library, track: Track, log: BeetsLogger) -> Sequence[Item]:
     return list(lib.items(OrQuery(or_queries)))
 
 
-def process_track(lib: Library, track: Track, log: BeetsLogger) -> bool:
+def process_track(
+    lib: Library, track: Track, log: BeetsLogger, source: str
+) -> bool:
     items = get_items(lib, track, log)
     if not items:
         return False
 
     new_count = track["playcount"]
+    field = f"{source}_play_count"
     for song in items:
-        count = int(song.get("lastfm_play_count", 0))
+        count = int(song.get(field, 0))
         log.debug(
             "match: {0.artist} - {0.title} ({0.album}) updating:"
-            " lastfm_play_count {1} => {2}",
+            " {1} {2} => {3}",
             song,
+            field,
             count,
             new_count,
         )
-        song.lastfm_play_count = new_count
+        song[field] = new_count
         song.store()
 
     return True
 
 
-def process_tracks(
-    lib: Library, tracks: Sequence[Track], log: BeetsLogger
+def update_play_counts(
+    lib: Library, tracks: Sequence[Track], log: BeetsLogger, source: str
 ) -> tuple[int, int]:
     total = len(tracks)
     total_found = 0
@@ -83,7 +83,7 @@ def process_tracks(
     log.info("Received {} tracks in this page, processing...", total)
 
     for track in tracks:
-        if process_track(lib, track, log):
+        if process_track(lib, track, log, source):
             total_found += 1
         else:
             total_fails += 1

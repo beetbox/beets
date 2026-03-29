@@ -3,7 +3,11 @@ import pytest
 from beets import logging
 from beets.library import Item
 from beets.test.helper import TestHelper, capture_log
-from beetsplug._utils.playcount import get_items, process_track, process_tracks
+from beetsplug._utils.playcount import (
+    get_items,
+    process_track,
+    update_play_counts,
+)
 
 LOGGER_NAME = "beets.test_playcount"
 
@@ -24,8 +28,18 @@ def helper(request):
 
 @pytest.mark.usefixtures("helper")
 class TestPlayCount:
-    def get_playcount(self, item_id):
-        return int(self.lib.get_item(item_id).get("lastfm_play_count", 0))
+    def track(self, **overrides):
+        return {
+            "mbid": "",
+            "artist": "Artist",
+            "name": "Song",
+            "playcount": 1,
+            **overrides,
+        }
+
+    def get_playcount(self, item_id, source="lastfm"):
+        field = f"{source}_play_count"
+        return int(self.lib.get_item(item_id).get(field, 0))
 
     def add_item(
         self,
@@ -34,7 +48,8 @@ class TestPlayCount:
         artist="Artist",
         album="Album",
         mb_trackid="",
-        lastfm_play_count=None,
+        play_count=None,
+        source="lastfm",
     ):
         item = Item(
             title=title,
@@ -44,23 +59,18 @@ class TestPlayCount:
         )
         self.lib.add(item)
 
-        if lastfm_play_count is not None:
-            item.lastfm_play_count = lastfm_play_count
+        if play_count is not None:
+            item[f"{source}_play_count"] = play_count
             item.store()
 
         return item
 
     @pytest.mark.parametrize(
-        "item_kwargs, track",
+        "item_kwargs, track_kwargs",
         [
             pytest.param(
                 {"title": "Song", "artist": "Artist"},
-                {
-                    "mbid": "",
-                    "artist": "Artist",
-                    "name": "Song",
-                    "playcount": 7,
-                },
+                {"playcount": 7},
                 id="artist-and-title",
             ),
             pytest.param(
@@ -69,12 +79,7 @@ class TestPlayCount:
                     "artist": "Different Artist",
                     "mb_trackid": "track-id",
                 },
-                {
-                    "mbid": "track-id",
-                    "artist": "Artist",
-                    "name": "Song",
-                    "playcount": 5,
-                },
+                {"mbid": "track-id", "playcount": 5},
                 id="musicbrainz-track-id",
             ),
             pytest.param(
@@ -83,31 +88,25 @@ class TestPlayCount:
                     "artist": "Different Artist",
                     "album": "Album",
                 },
-                {
-                    "mbid": "",
-                    "artist": "Artist",
-                    "name": "Song",
-                    "album": {"name": "Album"},
-                    "playcount": 3,
-                },
+                {"album": "Album", "playcount": 3},
                 id="album-and-title",
             ),
             pytest.param(
                 {"title": "Don\u2019t Stop", "artist": "Artist"},
-                {
-                    "mbid": "",
-                    "artist": "Artist",
-                    "name": "Don't Stop",
-                    "playcount": 11,
-                },
+                {"name": "Don't Stop", "playcount": 11},
                 id="apostrophe-normalized",
             ),
         ],
     )
-    def test_get_items_matches_supported_query_paths(self, item_kwargs, track):
+    def test_get_items_matches_supported_query_paths(
+        self, item_kwargs, track_kwargs
+    ):
         item = self.add_item(**item_kwargs)
         matched_ids = [
-            matched.id for matched in get_items(self.lib, track, self.log)
+            matched.id
+            for matched in get_items(
+                self.lib, self.track(**track_kwargs), self.log
+            )
         ]
 
         assert matched_ids == [item.id]
@@ -117,25 +116,21 @@ class TestPlayCount:
             title="Song",
             artist="Artist",
             album="First Album",
-            lastfm_play_count=1,
+            play_count=1,
         )
         second = self.add_item(
             title="Song",
             artist="Artist",
             album="Second Album",
-            lastfm_play_count=9,
+            play_count=9,
         )
 
         assert (
             process_track(
                 self.lib,
-                {
-                    "mbid": "",
-                    "artist": "Artist",
-                    "name": "Song",
-                    "playcount": 0,
-                },
+                self.track(playcount=0),
                 self.log,
+                "lastfm",
             )
             is True
         )
@@ -147,17 +142,34 @@ class TestPlayCount:
         assert (
             process_track(
                 self.lib,
-                {
-                    "mbid": "",
-                    "artist": "Missing Artist",
-                    "name": "Missing Song",
-                    "album": {"name": "Missing Album"},
-                    "playcount": 4,
-                },
+                self.track(
+                    artist="Missing Artist",
+                    name="Missing Song",
+                    album="Missing Album",
+                    playcount=4,
+                ),
                 self.log,
+                "lastfm",
             )
             is False
         )
+
+    def test_process_track_updates_requested_source_field(self):
+        new_count = 6
+        item = self.add_item(play_count=1, source="lastfm")
+
+        assert (
+            process_track(
+                self.lib,
+                self.track(playcount=new_count),
+                self.log,
+                "listenbrainz",
+            )
+            is True
+        )
+
+        assert self.get_playcount(item.id, "lastfm") == 1
+        assert self.get_playcount(item.id, "listenbrainz") == new_count
 
     @pytest.mark.parametrize(
         "tracks, expected_counts, expected_summary, expected_playcount",
@@ -166,13 +178,11 @@ class TestPlayCount:
             pytest.param(
                 [
                     {
-                        "mbid": "",
                         "artist": "Artist",
                         "name": "Known Song",
                         "playcount": 8,
                     },
                     {
-                        "mbid": "",
                         "artist": "Missing Artist",
                         "name": "Missing Song",
                         "playcount": 2,
@@ -185,17 +195,25 @@ class TestPlayCount:
             ),
         ],
     )
-    def test_process_tracks_counts_and_logs_summary(
+    def test_update_play_counts_counts_and_logs_summary(
         self, tracks, expected_counts, expected_summary, expected_playcount
     ):
         item = self.add_item(
             title="Known Song",
             artist="Artist",
-            lastfm_play_count=1,
+            play_count=1,
         )
 
         with capture_log(LOGGER_NAME) as logs:
-            assert process_tracks(self.lib, tracks, self.log) == expected_counts
+            assert (
+                update_play_counts(
+                    self.lib,
+                    [self.track(**track) for track in tracks],
+                    self.log,
+                    "lastfm",
+                )
+                == expected_counts
+            )
 
         assert any(
             f"Received {len(tracks)} tracks in this page, processing..." in log

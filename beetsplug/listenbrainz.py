@@ -1,14 +1,20 @@
 """Adds Listenbrainz support to Beets."""
 
+from __future__ import annotations
+
 import datetime
+from typing import TYPE_CHECKING
 
 import requests
 
 from beets import config, ui
 from beets.plugins import BeetsPlugin
-from beetsplug.lastimport import process_tracks
 
 from ._utils.musicbrainz import MusicBrainzAPIMixin
+from ._utils.playcount import update_play_counts
+
+if TYPE_CHECKING:
+    from ._utils.playcount import Track
 
 
 class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
@@ -44,7 +50,9 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         tracks = self.get_tracks_from_listens(ls)
         log.info("Found {} listens", len(ls))
         if tracks:
-            found, unknown = process_tracks(lib, tracks, log)
+            found, unknown = update_play_counts(
+                lib, tracks, log, "listenbrainz"
+            )
             found_total += found
             unknown_total += unknown
         log.info("... done!")
@@ -103,9 +111,9 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         else:
             return None
 
-    def get_tracks_from_listens(self, listens):
+    def get_tracks_from_listens(self, listens) -> list[Track]:
         """Returns a list of tracks from a list of listens."""
-        tracks = []
+        tracks: list[Track] = []
         for track in listens:
             if track["track_metadata"].get("release_name") is None:
                 continue
@@ -116,16 +124,17 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
                 mbid = self.get_mb_recording_id(track)
             tracks.append(
                 {
-                    "album": {
-                        "name": track["track_metadata"].get("release_name")
-                    },
-                    "name": track["track_metadata"].get("track_name"),
-                    "artist": {
-                        "name": track["track_metadata"].get("artist_name")
-                    },
+                    "album": (
+                        track["track_metadata"].get("release_name") or ""
+                    ).strip(),
+                    "name": (
+                        track["track_metadata"].get("track_name") or ""
+                    ).strip(),
+                    "artist": (
+                        track["track_metadata"].get("artist_name") or ""
+                    ).strip(),
                     "mbid": mbid,
-                    "release_mbid": mbid_mapping.get("release_mbid"),
-                    "listened_at": track.get("listened_at"),
+                    "playcount": 1,
                 }
             )
         return tracks

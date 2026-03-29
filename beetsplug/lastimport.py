@@ -22,7 +22,7 @@ from pylast import TopItem, _extract, _number
 from beets import config, plugins, ui
 from beets.dbcore import types
 
-from ._utils.playcount import process_tracks
+from ._utils.playcount import update_play_counts
 
 if TYPE_CHECKING:
     from ._utils.playcount import Track
@@ -150,7 +150,7 @@ def import_lastfm(lib, log):
                 raise ui.UserError("Last.fm reported no data.")
 
             if tracks:
-                found, unknown = process_tracks(lib, tracks, log)
+                found, unknown = update_play_counts(lib, tracks, log, "lastfm")
                 found_total += found
                 unknown_total += unknown
                 break
