@@ -1,4 +1,4 @@
-from beets import dbcore
+from beets.dbcore.query import AndQuery, MatchQuery, SubstringQuery
 
 
 def process_tracks(lib, tracks, log):
@@ -28,19 +28,17 @@ def process_tracks(lib, tracks, log):
 
         # First try to query by musicbrainz's trackid
         if trackid:
-            song = lib.items(
-                dbcore.query.MatchQuery("mb_trackid", trackid)
-            ).get()
+            song = lib.items(MatchQuery("mb_trackid", trackid)).get()
 
         # If not, try just album/title
         if song is None:
             log.debug(
                 "no album match, trying by album/title: {} - {}", album, title
             )
-            query = dbcore.AndQuery(
+            query = AndQuery(
                 [
-                    dbcore.query.SubstringQuery("album", album),
-                    dbcore.query.SubstringQuery("title", title),
+                    SubstringQuery("album", album),
+                    SubstringQuery("title", title),
                 ]
             )
             song = lib.items(query).get()
@@ -48,10 +46,10 @@ def process_tracks(lib, tracks, log):
         # If not, try just artist/title
         if song is None:
             log.debug("no album match, trying by artist/title")
-            query = dbcore.AndQuery(
+            query = AndQuery(
                 [
-                    dbcore.query.SubstringQuery("artist", artist),
-                    dbcore.query.SubstringQuery("title", title),
+                    SubstringQuery("artist", artist),
+                    SubstringQuery("title", title),
                 ]
             )
             song = lib.items(query).get()
@@ -60,10 +58,10 @@ def process_tracks(lib, tracks, log):
         if song is None:
             title = title.replace("'", "\u2019")
             log.debug("no title match, trying utf-8 single quote")
-            query = dbcore.AndQuery(
+            query = AndQuery(
                 [
-                    dbcore.query.SubstringQuery("artist", artist),
-                    dbcore.query.SubstringQuery("title", title),
+                    SubstringQuery("artist", artist),
+                    SubstringQuery("title", title),
                 ]
             )
             song = lib.items(query).get()
