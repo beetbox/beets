@@ -1,7 +1,27 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, TypedDict
+
 from beets.dbcore.query import AndQuery, MatchQuery, SubstringQuery
 
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
-def process_tracks(lib, tracks, log):
+    from beets.library import Library
+    from beets.logging import BeetsLogger
+
+
+class Track(TypedDict):
+    mbid: str | None
+    name: str | None
+    artist: dict[str, str] | None
+    album: dict[str, str] | None
+    playcount: int
+
+
+def process_tracks(
+    lib: Library, tracks: Sequence[Track], log: BeetsLogger
+) -> tuple[int, int]:
     total = len(tracks)
     total_found = 0
     total_fails = 0
