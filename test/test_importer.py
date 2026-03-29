@@ -343,6 +343,7 @@ class ImportSingletonTest(AutotagImportTestCase):
             assert item.title == "Applied Track 1 - formatted"
             assert item.disc == disc
 
+
 @pytest.mark.skipif(
     not has_program("ffprobe", ["-L"]),
     "need ffprobe for format recognition",
