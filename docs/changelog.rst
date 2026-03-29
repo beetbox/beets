@@ -16,9 +16,11 @@ New features
   art presence. Users can now search for tracks with or without embedded artwork
   using ``beet list has_cover_art:true`` or ``beet list has_cover_art:false``.
 
-..
-    Bug fixes
-    ~~~~~~~~~
+Bug fixes
+~~~~~~~~~
+
+- Correctly handle semicolon-delimited genre values from externally-tagged
+  files. :bug:`6450`
 
 ..
     For plugin developers

@@ -1294,6 +1294,17 @@ class ItemReadTest(unittest.TestCase):
             item.read("/thisfiledoesnotexist")
 
 
+class ItemReadGenreTest(BeetsTestCase):
+    def test_read_semicolon_delimited_genres(self):
+        """Semicolon-delimited genre tags are split into individual genres on read."""
+        path = self.create_mediafile_fixture()
+        mf = MediaFile(syspath(path))
+        mf.genres = ["Jazz; Funk; Soul"]
+        mf.save()
+        item = beets.library.Item.from_path(path)
+        assert item.genres == ["Jazz", "Funk", "Soul"]
+
+
 class FilesizeTest(BeetsTestCase):
     def test_filesize(self):
         item = self.add_item_fixture()
