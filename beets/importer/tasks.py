@@ -31,6 +31,7 @@ from beets import config, library, plugins, util
 from beets.autotag.hooks import AlbumMatch
 from beets.autotag.match import tag_album, tag_item
 from beets.dbcore.query import PathQuery
+from beets.util import extension
 
 from .state import ImportState
 
@@ -1075,7 +1076,7 @@ class ImportTaskFactory:
         # Check if the file has an extension,
         # Add an extension if there isn't one.
         if os.path.isfile(path):
-            path = util.check_extension(path, logger=log)
+            path = extension.fix_extension(path, logger=log)
 
         try:
             return library.Item.from_path(path)

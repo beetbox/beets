@@ -898,7 +898,8 @@ file named ``asdf``, beets look for ``asdf.mp3``. If found, that file will be
 imported instead. Otherwise, if ``fix_ext_inplace`` is ``yes``, then the file
 will be renamed to contain the extension. If ``fix_ext_inplace`` is ``no``, then
 the original will be left untouched and a copy with extension will be created in
-the same directory.
+the same directory. This is only done if the user has ``ffprobe`` (bundled with
+FFmpeg)
 
 Default: ``no``.
 
