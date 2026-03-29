@@ -70,6 +70,11 @@ contains about any genre contained in the tree) with canonicalization because
 nothing would ever be matched to a more generic node since all the specific
 subgenres are in the whitelist to begin with.
 
+If you use canonicalization *without* a whitelist, the plugin will simply map
+every genre to its top-most root category in the tree (e.g., ``Viking Metal`` →
+``Rock``). This is a great way to keep your library broad without needing to
+maintain a manual list of allowed genres.
+
 .. _tree of nested genre names: https://raw.githubusercontent.com/beetbox/beets/master/beetsplug/lastgenre/genres-tree.yaml
 
 .. _yaml: https://yaml.org/
