@@ -320,6 +320,27 @@ class DelimitedString(BaseString[list, list]):  # type: ignore[type-arg]
         )
         return string.split(delimiter)
 
+    def normalize(self, value: Any) -> list[str]:
+        """
+        For multi-valued tags present in externally-tagged media, we may receive
+        delimiter-separated values that have not been split, rather than
+        assuming that Python-originated values are already split into their
+        constituent values. For example, externally-tagged media files may have
+        multi-valued genre tags, which we need to treat as separate list items
+        here.
+        """
+        if value is None:
+            return self.null
+        if isinstance(value, list):
+            result = []
+            for item in value:
+                if isinstance(item, str) and self.fmt_delimiter in item:
+                    result.extend(item.split(self.fmt_delimiter))
+                else:
+                    result.append(item)
+            return result
+        return list(value)
+
     def to_sql(self, model_value: list[str]):
         return self.db_delimiter.join(model_value)
 

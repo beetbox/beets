@@ -580,6 +580,28 @@ def config(config):
                 "keep + original fallback, whitelist",
             ),
         ),
+        # Semicolon-delimited genre tag from an external mediafile
+        # ("Jazz; Funk; Soul" as a single element) is split by
+        # DelimitedString.normalize() on assignment and returned as three
+        # individual genres via the "original fallback" path when all Last.fm
+        # stages return empty.
+        (
+            {
+                "force": True,
+                "keep_existing": True,
+                "source": "album",
+                "whitelist": False,
+                "canonical": False,
+                "prefer_specific": False,
+                "count": 10,
+            },
+            ["Jazz; Funk; Soul"],
+            {
+                "album": [],
+                "artist": [],
+            },
+            (["Jazz", "Funk", "Soul"], "original fallback"),
+        ),
     ],
 )
 def test_get_genre(
