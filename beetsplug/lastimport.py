@@ -12,6 +12,9 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import pylast
 from pylast import TopItem, _extract, _number
@@ -20,6 +23,9 @@ from beets import config, plugins, ui
 from beets.dbcore import types
 
 from ._utils.playcount import process_tracks
+
+if TYPE_CHECKING:
+    from ._utils.playcount import Track
 
 API_URL = "https://ws.audioscrobbler.com/2.0/"
 
@@ -172,28 +178,18 @@ def import_lastfm(lib, log):
     log.info("{} play-counts imported", found_total)
 
 
-def fetch_tracks(user, page, limit):
-    """JSON format:
-    [
-        {
-            "mbid": "...",
-            "artist": "...",
-            "title": "...",
-            "playcount": "..."
-        }
-    ]
-    """
-    network = pylast.LastFMNetwork(api_key=config["lastfm"]["api_key"])
+def fetch_tracks(user, page, limit) -> tuple[list[Track], int]:
+    network = pylast.LastFMNetwork(api_key=config["lastfm"]["api_key"].get(str))
     user_obj = CustomUser(user, network)
     results, total_pages = user_obj.get_top_tracks_by_page(
         limit=limit, page=page
     )
     return [
         {
-            "mbid": track.item.mbid if track.item.mbid else "",
-            "artist": {"name": track.item.artist.name},
-            "name": track.item.title,
-            "playcount": track.weight,
+            "mbid": track.item.mbid or "",
+            "artist": track.item.artist.name.strip(),
+            "name": track.item.title.strip(),
+            "playcount": int(track.weight),
         }
         for track in results
     ], total_pages

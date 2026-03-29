@@ -2,74 +2,65 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypedDict
 
-from beets.dbcore.query import AndQuery, MatchQuery, SubstringQuery
+from typing_extensions import NotRequired
+
+from beets.dbcore.query import AndQuery, MatchQuery, OrQuery, SubstringQuery
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from beets.library import Library
+    from beets.dbcore.query import Query
+    from beets.library import Item, Library
     from beets.logging import BeetsLogger
 
 
+class Album(TypedDict):
+    name: str
+
+
 class Track(TypedDict):
-    mbid: str | None
-    name: str | None
-    artist: dict[str, str] | None
-    album: dict[str, str] | None
+    mbid: str
+    name: str
+    artist: str
+    album: NotRequired[Album]
     playcount: int
 
 
-def process_track(lib: Library, track: Track, log: BeetsLogger) -> bool:
-    song = None
-    trackid = track["mbid"].strip() if track["mbid"] else None
-    artist = (
-        track["artist"].get("name", "").strip()
-        if track["artist"].get("name", "")
-        else None
-    )
-    title = track["name"].strip() if track["name"] else None
-    album = ""
-    if "album" in track:
-        album = (
-            track["album"].get("name", "").strip() if track["album"] else None
-        )
+def get_items(lib: Library, track: Track, log: BeetsLogger) -> Sequence[Item]:
+    album = track.get("album", {}).get("name", "")
+    mbid, artist, title = track["mbid"], track["artist"], track["name"]
 
     log.debug("query: {} - {} ({})", artist, title, album)
 
+    title_query = OrQuery(
+        [
+            SubstringQuery("title", title),
+            # try a right single quotation mark instead of an apostrophe
+            SubstringQuery("title", title.replace("'", "\u2019")),
+        ]
+    )
+    or_queries: list[Query] = [
+        AndQuery([SubstringQuery("artist", artist), title_query])
+    ]
     # First try to query by musicbrainz's trackid
-    if trackid:
-        song = lib.items(MatchQuery("mb_trackid", trackid)).get()
-
-    # If not, try just album/title
-    if song is None:
-        log.debug(
-            "no album match, trying by album/title: {} - {}", album, title
+    if mbid:
+        or_queries.append(MatchQuery("mb_trackid", mbid))
+    if album:
+        or_queries.append(
+            AndQuery([SubstringQuery("album", album), title_query])
         )
-        query = AndQuery(
-            [SubstringQuery("album", album), SubstringQuery("title", title)]
-        )
-        song = lib.items(query).get()
 
-    # If not, try just artist/title
-    if song is None:
-        log.debug("no album match, trying by artist/title")
-        query = AndQuery(
-            [SubstringQuery("artist", artist), SubstringQuery("title", title)]
-        )
-        song = lib.items(query).get()
+    return list(lib.items(OrQuery(or_queries)))
 
-    # Last resort, try just replacing to utf-8 quote
-    if song is None:
-        title = title.replace("'", "\u2019")
-        log.debug("no title match, trying utf-8 single quote")
-        query = AndQuery(
-            [SubstringQuery("artist", artist), SubstringQuery("title", title)]
-        )
-        song = lib.items(query).get()
 
-    if song is not None:
+def process_track(lib: Library, track: Track, log: BeetsLogger) -> bool:
+    items = get_items(lib, track, log)
+    if not items:
+        return False
+
+    new_count = track["playcount"]
+    for song in items:
         count = int(song.get("lastfm_play_count", 0))
-        new_count = int(track["playcount"])
         log.debug(
             "match: {0.artist} - {0.title} ({0.album}) updating:"
             " lastfm_play_count {1} => {2}",
@@ -77,12 +68,10 @@ def process_track(lib: Library, track: Track, log: BeetsLogger) -> bool:
             count,
             new_count,
         )
-        song["lastfm_play_count"] = new_count
+        song.lastfm_play_count = new_count
         song.store()
-        return True
 
-    log.info("  - No match: {} - {} ({})", artist, title, album)
-    return False
+    return True
 
 
 def process_tracks(
