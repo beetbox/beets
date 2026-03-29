@@ -76,5 +76,4 @@ def test_durationtype():
     ],
 )
 def test_delimitedstring_normalize(original, expected):
-    t = types.MULTI_VALUE_DSV
-    assert t.normalize(original) == expected
+    assert types.MULTI_VALUE_DSV.normalize(original) == expected
