@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 import requests
 
 from beets import config, ui
+from beets.dbcore import types
 from beets.plugins import BeetsPlugin
 
 from ._utils.musicbrainz import MusicBrainzAPIMixin
@@ -21,6 +22,10 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
     """A Beets plugin for interacting with ListenBrainz."""
 
     ROOT = "http://api.listenbrainz.org/1/"
+
+    item_types: ClassVar[dict[str, types.Type]] = {
+        "listenbrainz_play_count": types.INTEGER
+    }
 
     def __init__(self):
         """Initialize the plugin."""
