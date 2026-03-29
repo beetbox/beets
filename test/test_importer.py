@@ -393,6 +393,34 @@ class ImportTest(PathsMixin, AutotagImportTestCase):
         self.importer.run()
         assert len(self.lib.items()) == 0
 
+    @unittest.skipIf(
+        not has_program("ffprobe", ["-L"]),
+        "need ffprobe for format recognition",
+    )
+    def test_recognize_format_change_original(self):
+        config["import"]["fix_ext_inplace"] = True
+        resource_src = os.path.join(_common.RSRC, b"no_ext")
+        resource_path = os.path.join(self.temp_dir, b"no_ext")
+        util.copy(resource_src, resource_path)
+        self.setup_importer()
+        self.importer.paths = [resource_path]
+        self.importer.run()
+        assert not Path(os.path.join(self.temp_dir_path, "no_ext")).exists()
+
+    @unittest.skipIf(
+        not has_program("ffprobe", ["-L"]),
+        "need ffprobe for format recognition",
+    )
+    def test_recognize_format_keep_original(self):
+        config["import"]["fix_ext_inplace"] = False
+        resource_src = os.path.join(_common.RSRC, b"no_ext")
+        resource_path = os.path.join(self.temp_dir, b"no_ext")
+        util.copy(resource_src, resource_path)
+        self.setup_importer()
+        self.importer.paths = [resource_path]
+        self.importer.run()
+        assert Path(os.path.join(self.temp_dir_path, "no_ext")).exists()
+
     def test_asis_moves_album_and_track(self):
         self.importer.add_choice(importer.Action.ASIS)
         self.importer.run()

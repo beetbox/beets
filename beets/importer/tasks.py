@@ -18,12 +18,10 @@ import logging
 import os
 import re
 import shutil
-import subprocess
 import time
 from collections import defaultdict
 from collections.abc import Callable
 from enum import Enum
-from pathlib import Path
 from tempfile import mkdtemp
 from typing import TYPE_CHECKING, Any
 
@@ -1073,10 +1071,11 @@ class ImportTaskFactory:
         If an item cannot be read, return `None` instead and log an
         error.
         """
+
         # Check if the file has an extension,
         # Add an extension if there isn't one.
         if os.path.isfile(path):
-            path = self.check_extension(path)
+            path = util.check_extension(path, logger=log)
 
         try:
             return library.Item.from_path(path)
@@ -1090,120 +1089,6 @@ class ImportTaskFactory:
                 log.error(
                     "error reading {}: {}", util.displayable_path(path), exc
                 )
-
-    def check_extension(self, path_bytes: util.PathBytes):
-        path = Path(os.fsdecode(path_bytes))
-        # if there is an extension, ignore
-        if path.suffix != "":
-            return path_bytes
-
-        # no extension detected
-        # use ffprobe to find the format
-        formats = []
-        if os.name == "posix":
-            # linux
-            output = subprocess.run(
-                [
-                    "ffprobe",
-                    "-hide_banner",
-                    "-loglevel",
-                    "fatal",
-                    "-show_format",
-                    "--",
-                    str(path),
-                ],
-                capture_output=True,
-            )
-        if os.name == "nt":
-            # windows
-            output = subprocess.run(
-                [
-                    "ffprobe",
-                    "-hide_banner",
-                    "-loglevel",
-                    "fatal",
-                    "-show_format",
-                    "--",
-                    str(path),
-                ],
-                capture_output=True,
-                shell=True,
-            )
-        out = output.stdout.decode("utf-8")
-        err = output.stderr.decode("utf-8")
-        if err != "":
-            log.error("ffprobe error: %s", err)
-        for line in out.split("\n"):
-            if line.startswith("format_name="):
-                formats = line.split("=")[1].split(",")
-        # a list of audio formats I got from wikipedia https://en.wikipedia.org/wiki/Audio_file_format
-        wiki_formats = {
-            "3gp",
-            "aa",
-            "aac",
-            "aax",
-            "act",
-            "aiff",
-            "alac",
-            "amr",
-            "ape",
-            "au",
-            "awb",
-            "dss",
-            "dvf",
-            "flac",
-            "gsm",
-            "iklax",
-            "ivs",
-            "m4a",
-            "m4b",
-            "m4p",
-            "mmf",
-            "movpkg",
-            "mp1",
-            "mp2",
-            "mp3",
-            "mpc",
-            "msv",
-            "nmf",
-            "ogg",
-            "oga",
-            "mogg",
-            "opus",
-            "ra",
-            "rm",
-            "raw",
-            "rf64",
-            "sln",
-            "tta",
-            "voc",
-            "vox",
-            "wav",
-            "wma",
-            "wv",
-            "webm",
-            "8svx",
-            "cda",
-        }
-        detected_format = ""
-        # The first format from ffprobe that is on this list is taken
-        for f in formats:
-            if f in wiki_formats:
-                detected_format = f
-                break
-
-        # if ffprobe can't find a format, the file is prob not music
-        if detected_format == "":
-            return path_bytes
-
-        # cp and add ext. If already exist, use that file
-        # assume, for example, the only diff between 'asdf.mp3' and 'asdf' is format
-        new_path = path.with_suffix("." + detected_format)
-        if not new_path.exists():
-            util.move(bytes(path), bytes(new_path))
-        else:
-            log.info("Import file with matching format to original target")
-        return new_path
 
 
 MULTIDISC_MARKERS = (rb"dis[ck]", rb"cd")
