@@ -371,6 +371,15 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         else:
             return tags
 
+    def _artist_for_filter(self, obj: LibModel) -> str | None:
+        """Return the representative artist for genre resolution and filtering."""
+        return (
+            getattr(obj, "artist", None)
+            if isinstance(obj, library.Item)
+            else getattr(obj, "albumartist", None)
+            or getattr(obj, "artist", None)
+        )
+
     def _get_existing_genres(self, obj: LibModel) -> list[str]:
         """Return a list of genres for this Item or Album."""
         if isinstance(obj, library.Item):
@@ -443,11 +452,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             # If none are found, we use the fallback (if set).
             if self.config["cleanup_existing"]:
                 keep_genres = [g.lower() for g in genres]
-                cleanup_artist = getattr(obj, "albumartist", None) or getattr(
-                    obj, "artist", None
-                )
                 if result := _try_resolve_stage(
-                    "cleanup", keep_genres, [], artist=cleanup_artist
+                    "cleanup",
+                    keep_genres,
+                    [],
+                    artist=self._artist_for_filter(obj),
                 ):
                     return result
 
@@ -545,14 +554,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # Nothing found, leave original if configured and valid.
         if genres and self.config["keep_existing"].get():
-            if isinstance(obj, library.Item):
-                # For track items, use track artist (important for compilations).
-                artist = getattr(obj, "artist", None)
-            else:
-                # For albums, prefer albumartist, fall back to artist.
-                artist = getattr(obj, "albumartist", None) or getattr(
-                    obj, "artist", None
-                )
+            artist = self._artist_for_filter(obj)
             if valid_genres := self._filter_valid(genres, artist=artist):
                 return valid_genres, "original fallback"
             # If the original genre doesn't match a whitelisted genre, check
