@@ -466,6 +466,15 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         else:
             return tags
 
+    def _artist_for_filter(self, obj: LibModel) -> str | None:
+        """Return the representative artist for genre resolution and filtering."""
+        return (
+            getattr(obj, "artist", None)
+            if isinstance(obj, library.Item)
+            else getattr(obj, "albumartist", None)
+            or getattr(obj, "artist", None)
+        )
+
     def _get_existing_genres(self, obj: LibModel) -> list[str]:
         """Return a list of genres for this Item or Album."""
         if isinstance(obj, library.Item):
@@ -475,6 +484,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         return genres_list
 
+    # -- Core resolution and logging helpers
+
     def _combine_resolve_and_log(
         self, old: list[str], new: list[str], artist: str | None = None
     ) -> list[str]:
@@ -483,6 +494,190 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         self._log.debug("existing genres taken into account: {}", old)
         combined = old + new
         return self._resolve_genres(combined, artist=artist)
+
+    def _fallback_stage(self) -> tuple[list[str], str]:
+        """Return the fallback genre and label."""
+        if fallback := self.config["fallback"].get():
+            return [fallback], "fallback"
+        return [], "fallback unconfigured"
+
+    def _try_resolve_stage(
+        self,
+        stage_label: str,
+        keep_genres: list[str],
+        new_genres: list[str],
+        artist: str | None = None,
+    ) -> tuple[list[str], str] | None:
+        """Try to resolve genres for a given stage and log the result."""
+        resolved_genres = self._combine_resolve_and_log(
+            keep_genres, new_genres, artist=artist
+        )
+        if resolved_genres:
+            suffix = "whitelist" if self.whitelist else "any"
+            label = f"{stage_label}, {suffix}"
+            if keep_genres:
+                label = f"keep + {label}"
+            return self._format_genres(resolved_genres), label
+        return None
+
+    # -- Individual lookup stages
+
+    def _handle_existing_genres(
+        self, obj: LibModel, genres: list[str]
+    ) -> tuple[list[str], str] | None:
+        """Handle pre-existing genres and cleanup_existing flag when not forcing."""
+        if not genres or self.config["force"]:
+            return None
+
+        # Without force, but cleanup_existing enabled, we attempt
+        # to canonicalize pre-populated tags before returning them.
+        # If none are found, we use the fallback (if set).
+        if self.config["cleanup_existing"]:
+            keep_genres = [g.lower() for g in genres]
+            cleanup_artist = self._artist_for_filter(obj)
+            if result := self._try_resolve_stage(
+                "cleanup", keep_genres, [], artist=cleanup_artist
+            ):
+                return result
+
+            return self._fallback_stage()
+
+        # If cleanup_existing is not set, the pre-populated tags are
+        # returned as-is.
+        return genres, "keep any, no-force"
+
+    def _get_track_genre_stage(
+        self, obj: LibModel, keep_genres: list[str]
+    ) -> tuple[list[str], str] | None:
+        """Fetch and resolve track-level genres for Items."""
+        if not (isinstance(obj, library.Item) and "track" in self.sources):
+            return None
+
+        if new_genres := self.client.fetch_track_genre(obj.artist, obj.title):
+            return self._try_resolve_stage(
+                "track",
+                keep_genres,
+                new_genres,
+                artist=self._artist_for_filter(obj),
+            )
+        return None
+
+    def _get_album_genre_stage(
+        self, obj: LibModel, keep_genres: list[str]
+    ) -> tuple[list[str], str] | None:
+        """Fetch and resolve album-level genres."""
+        if "album" not in self.sources:
+            return None
+
+        if new_genres := self.client.fetch_album_genre(
+            obj.albumartist, obj.album
+        ):
+            return self._try_resolve_stage(
+                "album",
+                keep_genres,
+                new_genres,
+                artist=self._artist_for_filter(obj),
+            )
+        return None
+
+    def _get_va_genre_stage(
+        self, obj: Album, keep_genres: list[str]
+    ) -> tuple[list[str], str] | None:
+        """Fetch popular genre from tracks for Various Artists albums."""
+        item_genres = []
+        for item in obj.items():
+            item_genre = None
+            if "track" in self.sources:
+                item_genre = self.client.fetch_track_genre(
+                    item.artist, item.title
+                )
+            if not item_genre:
+                item_genre = self.client.fetch_artist_genre(item.artist)
+            if item_genre:
+                item_genres.extend(item_genre)
+
+        if item_genres:
+            most_popular, rank = plurality(item_genres)
+            self._log.debug(
+                'Most popular track genre "{}" ({}) for VA album.',
+                most_popular,
+                rank,
+            )
+            # For VA albums, we return the most popular genre without an
+            # artist context for ignorelist filtering (or use None).
+            return self._try_resolve_stage(
+                "most popular track", keep_genres, [most_popular], artist=None
+            )
+        return None
+
+    def _get_artist_genre_stage(
+        self, obj: LibModel, keep_genres: list[str]
+    ) -> tuple[list[str], str] | None:
+        """Fetch and resolve artist-level genres."""
+        if "artist" not in self.sources:
+            return None
+
+        if isinstance(obj, library.Item):
+            if new_genres := self.client.fetch_artist_genre(obj.artist):
+                return self._try_resolve_stage(
+                    "artist", keep_genres, new_genres, artist=obj.artist
+                )
+            return None
+
+        # For albums, handle "Various Artists" vs single artist.
+        if obj.albumartist == config["va_name"].as_str():
+            return self._get_va_genre_stage(obj, keep_genres)
+
+        # Single artist or multi-valued albumartist.
+        new_genres = self.client.fetch_artist_genre(obj.albumartist)
+        stage_label = "album artist"
+        stage_artist: str | None = obj.albumartist
+
+        if not new_genres:
+            # Fallback to multi-valued album artist fields.
+            self._log.extra_debug(
+                'No album artist genre found for "{}", '
+                "trying multi-valued field...",
+                obj.albumartist,
+            )
+            for albumartist in obj.albumartists:
+                self._log.extra_debug(
+                    'Fetching artist genre for "{}"',
+                    albumartist,
+                )
+                artist_genres = self.client.fetch_artist_genre(albumartist)
+                if artist_genres:
+                    new_genres.extend(artist_genres)
+            if new_genres:
+                stage_label = "multi-valued album artist"
+                # Multi-valued: artist is None because they were already
+                # filtered per-artist in the client lookup loop.
+                stage_artist = None
+
+        if new_genres:
+            return self._try_resolve_stage(
+                stage_label, keep_genres, new_genres, artist=stage_artist
+            )
+        return None
+
+    def _get_original_fallback(
+        self, obj: LibModel, genres: list[str], keep_genres: list[str]
+    ) -> tuple[list[str], str] | None:
+        """Return existing genres if valid or if they can be canonicalized."""
+        if not (genres and self.config["keep_existing"].get()):
+            return None
+
+        artist = self._artist_for_filter(obj)
+
+        if valid_genres := self._filter_valid(genres, artist=artist):
+            return valid_genres, "original fallback"
+
+        # Check if we can canonicalize to find a matching, whitelisted genre.
+        return self._try_resolve_stage(
+            "original fallback", keep_genres, [], artist=artist
+        )
+
+    # -- Main resolution entry point
 
     def _get_genre(self, obj: LibModel) -> tuple[list[str], str]:
         """Get the final genre list for an Album or Item object.
@@ -504,53 +699,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         and the whitelist feature was disabled.
         """
 
-        def _fallback_stage() -> tuple[list[str], str]:
-            """Return the fallback genre and label."""
-            if fallback := self.config["fallback"].get():
-                return [fallback], "fallback"
-            return [], "fallback unconfigured"
-
-        def _try_resolve_stage(
-            stage_label: str,
-            keep_genres: list[str],
-            new_genres: list[str],
-            artist: str | None = None,
-        ) -> tuple[list[str], str] | None:
-            """Try to resolve genres for a given stage and log the result."""
-            resolved_genres = self._combine_resolve_and_log(
-                keep_genres, new_genres, artist=artist
-            )
-            if resolved_genres:
-                suffix = "whitelist" if self.whitelist else "any"
-                label = f"{stage_label}, {suffix}"
-                if keep_genres:
-                    label = f"keep + {label}"
-                return self._format_genres(resolved_genres), label
-            return None
-
         keep_genres = []
-        new_genres = []
         genres = self._get_existing_genres(obj)
 
-        if genres and not self.config["force"]:
-            # Without force, but cleanup_existing enabled, we attempt
-            # to canonicalize pre-populated tags before returning them.
-            # If none are found, we use the fallback (if set).
-            if self.config["cleanup_existing"]:
-                keep_genres = [g.lower() for g in genres]
-                cleanup_artist = getattr(obj, "albumartist", None) or getattr(
-                    obj, "artist", None
-                )
-                if result := _try_resolve_stage(
-                    "cleanup", keep_genres, [], artist=cleanup_artist
-                ):
-                    return result
-
-                return _fallback_stage()
-
-            # If cleanup_existing is not set, the pre-populated tags are
-            # returned as-is.
-            return genres, "keep any, no-force"
+        if result := self._handle_existing_genres(obj, genres):
+            return result
 
         if self.config["force"]:
             # Force doesn't keep any unless keep_existing is set.
@@ -558,106 +711,19 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             if self.config["keep_existing"]:
                 keep_genres = [g.lower() for g in genres]
 
-        # Run through stages: track, album, artist,
-        # album artist, or most popular track genre.
-        if isinstance(obj, library.Item) and "track" in self.sources:
-            if new_genres := self.client.fetch_track_genre(
-                obj.artist, obj.title
-            ):
-                if result := _try_resolve_stage(
-                    "track", keep_genres, new_genres, artist=obj.artist
-                ):
-                    return result
+        if result := self._get_track_genre_stage(obj, keep_genres):
+            return result
 
-        if "album" in self.sources:
-            if new_genres := self.client.fetch_album_genre(
-                obj.albumartist, obj.album
-            ):
-                if result := _try_resolve_stage(
-                    "album", keep_genres, new_genres, artist=obj.albumartist
-                ):
-                    return result
+        if result := self._get_album_genre_stage(obj, keep_genres):
+            return result
 
-        if "artist" in self.sources:
-            new_genres = []
-            stage_artist: str | None = None
-            if isinstance(obj, library.Item):
-                new_genres = self.client.fetch_artist_genre(obj.artist)
-                stage_label = "artist"
-                stage_artist = obj.artist
-            elif obj.albumartist != config["va_name"].as_str():
-                new_genres = self.client.fetch_artist_genre(obj.albumartist)
-                stage_label = "album artist"
-                stage_artist = obj.albumartist
-                if not new_genres:
-                    self._log.extra_debug(
-                        'No album artist genre found for "{}", '
-                        "trying multi-valued field...",
-                        obj.albumartist,
-                    )
-                    for albumartist in obj.albumartists:
-                        self._log.extra_debug(
-                            'Fetching artist genre for "{}"',
-                            albumartist,
-                        )
-                        new_genres += self.client.fetch_artist_genre(
-                            albumartist
-                        )
-                    if new_genres:
-                        stage_label = "multi-valued album artist"
-                        stage_artist = (
-                            None  # Already filtered per-artist in client
-                        )
-            else:
-                # For "Various Artists", pick the most popular track genre.
-                item_genres = []
-                assert isinstance(obj, Album)  # Type narrowing for mypy
-                for item in obj.items():
-                    item_genre = None
-                    if "track" in self.sources:
-                        item_genre = self.client.fetch_track_genre(
-                            item.artist, item.title
-                        )
-                    if not item_genre:
-                        item_genre = self.client.fetch_artist_genre(item.artist)
-                    if item_genre:
-                        item_genres += item_genre
-                if item_genres:
-                    most_popular, rank = plurality(item_genres)
-                    new_genres = [most_popular]
-                    stage_label = "most popular track"
-                    self._log.debug(
-                        'Most popular track genre "{}" ({}) for VA album.',
-                        most_popular,
-                        rank,
-                    )
+        if result := self._get_artist_genre_stage(obj, keep_genres):
+            return result
 
-            if new_genres:
-                if result := _try_resolve_stage(
-                    stage_label, keep_genres, new_genres, artist=stage_artist
-                ):
-                    return result
+        if result := self._get_original_fallback(obj, genres, keep_genres):
+            return result
 
-        # Nothing found, leave original if configured and valid.
-        if genres and self.config["keep_existing"].get():
-            if isinstance(obj, library.Item):
-                # For track items, use track artist (important for compilations).
-                artist = getattr(obj, "artist", None)
-            else:
-                # For albums, prefer albumartist, fall back to artist.
-                artist = getattr(obj, "albumartist", None) or getattr(
-                    obj, "artist", None
-                )
-            if valid_genres := self._filter_valid(genres, artist=artist):
-                return valid_genres, "original fallback"
-            # If the original genre doesn't match a whitelisted genre, check
-            # if we can canonicalize it to find a matching, whitelisted genre!
-            if result := _try_resolve_stage(
-                "original fallback", keep_genres, [], artist=artist
-            ):
-                return result
-
-        return _fallback_stage()
+        return self._fallback_stage()
 
     # Beets plugin hooks and CLI.
 
