@@ -12,7 +12,7 @@ from __future__ import annotations
 import os
 import re
 from collections import defaultdict
-from functools import singledispatchmethod
+from functools import cached_property, singledispatchmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -441,7 +441,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         combined = old + new
         return self._resolve_genres(combined, artist=artist)
 
-    def _configured_fallback(self) -> tuple[list[str], str]:
+    @cached_property
+    def fallback(self) -> tuple[list[str], str]:
         """Return the configured fallback genre and label."""
         if fallback := self.config["fallback"].get():
             return [fallback], "fallback"
@@ -465,6 +466,23 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 label = f"keep + {label}"
             return self._format_genres(resolved_genres), label
         return None
+
+    def _try_resolve_existing_genres(
+        self, obj: LibModel, genres: list[str]
+    ) -> tuple[list[str], str] | None:
+        """Handle existing genres when not forcing.
+
+        Clean up existing genres if enabled, or return them unchanged. Return
+        ``None`` if cleanup is enabled but fails to resolve, leaving fallback
+        handling to the caller.
+        """
+        if self.config["cleanup_existing"]:
+            keep_genres = [g.lower() for g in genres]
+            return self._try_resolve_stage(
+                "cleanup", keep_genres, [], artist=self._artist_for_filter(obj)
+            )
+
+        return genres, "keep any, no-force"
 
     def _get_genre(self, obj: LibModel) -> tuple[list[str], str]:
         """Get the final genre list for an Album or Item object.
@@ -490,24 +508,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         genres = self._get_existing_genres(obj)
 
         if genres and not self.config["force"]:
-            # Without force, but cleanup_existing enabled, we attempt
-            # to canonicalize pre-populated tags before returning them.
-            # If none are found, we use the fallback (if set).
-            if self.config["cleanup_existing"]:
-                keep_genres = [g.lower() for g in genres]
-                if result := self._try_resolve_stage(
-                    "cleanup",
-                    keep_genres,
-                    [],
-                    artist=self._artist_for_filter(obj),
-                ):
-                    return result
-
-                return self._configured_fallback()
-
-            # If cleanup_existing is not set, the pre-populated tags are
-            # returned as-is.
-            return genres, "keep any, no-force"
+            if resolved := self._try_resolve_existing_genres(
+                obj, genres
+            ):
+                return resolved
+            return self.fallback
 
         keep_genres = (
             [g.lower() for g in genres]
@@ -600,7 +605,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             ):
                 return result
 
-        return self._configured_fallback()
+        return self.fallback
 
     # Beets plugin hooks and CLI.
 
