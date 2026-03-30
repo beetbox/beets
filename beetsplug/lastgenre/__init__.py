@@ -535,6 +535,34 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # returned as-is.
         return genres, "keep any, no-force"
 
+    def _get_track_genre_stage(
+        self, obj: LibModel, keep_genres: list[str]
+    ) -> tuple[list[str], str] | None:
+        """Fetch and resolve track-level genres for Items."""
+        if not (isinstance(obj, library.Item) and "track" in self.sources):
+            return None
+
+        if new_genres := self.client.fetch_track_genre(obj.artist, obj.title):
+            return self._try_resolve_stage(
+                "track", keep_genres, new_genres, artist=obj.artist
+            )
+        return None
+
+    def _get_album_genre_stage(
+        self, obj: LibModel, keep_genres: list[str]
+    ) -> tuple[list[str], str] | None:
+        """Fetch and resolve album-level genres."""
+        if "album" not in self.sources:
+            return None
+
+        if new_genres := self.client.fetch_album_genre(
+            obj.albumartist, obj.album
+        ):
+            return self._try_resolve_stage(
+                "album", keep_genres, new_genres, artist=obj.albumartist
+            )
+        return None
+
     def _get_genre(self, obj: LibModel) -> tuple[list[str], str]:
         """Get the final genre list for an Album or Item object.
 
@@ -568,25 +596,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             if self.config["keep_existing"]:
                 keep_genres = [g.lower() for g in genres]
 
-        # Run through stages: track, album, artist,
-        # album artist, or most popular track genre.
-        if isinstance(obj, library.Item) and "track" in self.sources:
-            if new_genres := self.client.fetch_track_genre(
-                obj.artist, obj.title
-            ):
-                if result := self._try_resolve_stage(
-                    "track", keep_genres, new_genres, artist=obj.artist
-                ):
-                    return result
+        if result := self._get_track_genre_stage(obj, keep_genres):
+            return result
 
-        if "album" in self.sources:
-            if new_genres := self.client.fetch_album_genre(
-                obj.albumartist, obj.album
-            ):
-                if result := self._try_resolve_stage(
-                    "album", keep_genres, new_genres, artist=obj.albumartist
-                ):
-                    return result
+        if result := self._get_album_genre_stage(obj, keep_genres):
+            return result
 
         if "artist" in self.sources:
             new_genres = []
