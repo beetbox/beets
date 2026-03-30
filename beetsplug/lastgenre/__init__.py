@@ -643,6 +643,30 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             )
         return None
 
+    def _get_original_fallback(
+        self, obj: LibModel, genres: list[str], keep_genres: list[str]
+    ) -> tuple[list[str], str] | None:
+        """Return existing genres if valid or if they can be canonicalized."""
+        if not (genres and self.config["keep_existing"].get()):
+            return None
+
+        if isinstance(obj, library.Item):
+            # For track items, use track artist (important for compilations).
+            artist = getattr(obj, "artist", None)
+        else:
+            # For albums, prefer albumartist, fall back to artist.
+            artist = getattr(obj, "albumartist", None) or getattr(
+                obj, "artist", None
+            )
+
+        if valid_genres := self._filter_valid(genres, artist=artist):
+            return valid_genres, "original fallback"
+
+        # Check if we can canonicalize to find a matching, whitelisted genre.
+        return self._try_resolve_stage(
+            "original fallback", keep_genres, [], artist=artist
+        )
+
     def _get_genre(self, obj: LibModel) -> tuple[list[str], str]:
         """Get the final genre list for an Album or Item object.
 
@@ -684,24 +708,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if result := self._get_artist_genre_stage(obj, keep_genres):
             return result
 
-        # Nothing found, leave original if configured and valid.
-        if genres and self.config["keep_existing"].get():
-            if isinstance(obj, library.Item):
-                # For track items, use track artist (important for compilations).
-                artist = getattr(obj, "artist", None)
-            else:
-                # For albums, prefer albumartist, fall back to artist.
-                artist = getattr(obj, "albumartist", None) or getattr(
-                    obj, "artist", None
-                )
-            if valid_genres := self._filter_valid(genres, artist=artist):
-                return valid_genres, "original fallback"
-            # If the original genre doesn't match a whitelisted genre, check
-            # if we can canonicalize it to find a matching, whitelisted genre!
-            if result := self._try_resolve_stage(
-                "original fallback", keep_genres, [], artist=artist
-            ):
-                return result
+        if result := self._get_original_fallback(obj, genres, keep_genres):
+            return result
 
         return self._fallback_stage()
 
