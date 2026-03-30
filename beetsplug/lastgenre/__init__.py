@@ -466,6 +466,28 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             return self._format_genres(resolved_genres), label
         return None
 
+    def _try_resolve_existing_genres(
+        self, obj: LibModel, genres: list[str]
+    ) -> tuple[list[str], str] | None:
+        """Handle existing genres when not forcing.
+
+        Return ``None`` if forcing or no genres exist. Otherwise, clean up existing
+        genres if enabled, falling back if needed, or return them unchanged.
+        """
+        if not genres or self.config["force"]:
+            return None
+
+        if self.config["cleanup_existing"]:
+            keep_genres = [g.lower() for g in genres]
+            if result := self._try_resolve_stage(
+                "cleanup", keep_genres, [], artist=self._artist_for_filter(obj)
+            ):
+                return result
+
+            return self._configured_fallback()
+
+        return genres, "keep any, no-force"
+
     def _get_genre(self, obj: LibModel) -> tuple[list[str], str]:
         """Get the final genre list for an Album or Item object.
 
@@ -490,25 +512,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         new_genres = []
         genres = self._get_existing_genres(obj)
 
-        if genres and not self.config["force"]:
-            # Without force, but cleanup_existing enabled, we attempt
-            # to canonicalize pre-populated tags before returning them.
-            # If none are found, we use the fallback (if set).
-            if self.config["cleanup_existing"]:
-                keep_genres = [g.lower() for g in genres]
-                if result := self._try_resolve_stage(
-                    "cleanup",
-                    keep_genres,
-                    [],
-                    artist=self._artist_for_filter(obj),
-                ):
-                    return result
-
-                return self._configured_fallback()
-
-            # If cleanup_existing is not set, the pre-populated tags are
-            # returned as-is.
-            return genres, "keep any, no-force"
+        if result := self._try_resolve_existing_genres(obj, genres):
+            return result
 
         keep_genres = (
             [g.lower() for g in genres]
