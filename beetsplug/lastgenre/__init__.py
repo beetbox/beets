@@ -484,6 +484,31 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         combined = old + new
         return self._resolve_genres(combined, artist=artist)
 
+    def _fallback_stage(self) -> tuple[list[str], str]:
+        """Return the fallback genre and label."""
+        if fallback := self.config["fallback"].get():
+            return [fallback], "fallback"
+        return [], "fallback unconfigured"
+
+    def _try_resolve_stage(
+        self,
+        stage_label: str,
+        keep_genres: list[str],
+        new_genres: list[str],
+        artist: str | None = None,
+    ) -> tuple[list[str], str] | None:
+        """Try to resolve genres for a given stage and log the result."""
+        resolved_genres = self._combine_resolve_and_log(
+            keep_genres, new_genres, artist=artist
+        )
+        if resolved_genres:
+            suffix = "whitelist" if self.whitelist else "any"
+            label = f"{stage_label}, {suffix}"
+            if keep_genres:
+                label = f"keep + {label}"
+            return self._format_genres(resolved_genres), label
+        return None
+
     def _get_genre(self, obj: LibModel) -> tuple[list[str], str]:
         """Get the final genre list for an Album or Item object.
 
@@ -504,30 +529,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         and the whitelist feature was disabled.
         """
 
-        def _fallback_stage() -> tuple[list[str], str]:
-            """Return the fallback genre and label."""
-            if fallback := self.config["fallback"].get():
-                return [fallback], "fallback"
-            return [], "fallback unconfigured"
-
-        def _try_resolve_stage(
-            stage_label: str,
-            keep_genres: list[str],
-            new_genres: list[str],
-            artist: str | None = None,
-        ) -> tuple[list[str], str] | None:
-            """Try to resolve genres for a given stage and log the result."""
-            resolved_genres = self._combine_resolve_and_log(
-                keep_genres, new_genres, artist=artist
-            )
-            if resolved_genres:
-                suffix = "whitelist" if self.whitelist else "any"
-                label = f"{stage_label}, {suffix}"
-                if keep_genres:
-                    label = f"keep + {label}"
-                return self._format_genres(resolved_genres), label
-            return None
-
         keep_genres = []
         new_genres = []
         genres = self._get_existing_genres(obj)
@@ -541,12 +542,12 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 cleanup_artist = getattr(obj, "albumartist", None) or getattr(
                     obj, "artist", None
                 )
-                if result := _try_resolve_stage(
+                if result := self._try_resolve_stage(
                     "cleanup", keep_genres, [], artist=cleanup_artist
                 ):
                     return result
 
-                return _fallback_stage()
+                return self._fallback_stage()
 
             # If cleanup_existing is not set, the pre-populated tags are
             # returned as-is.
@@ -564,7 +565,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             if new_genres := self.client.fetch_track_genre(
                 obj.artist, obj.title
             ):
-                if result := _try_resolve_stage(
+                if result := self._try_resolve_stage(
                     "track", keep_genres, new_genres, artist=obj.artist
                 ):
                     return result
@@ -573,7 +574,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             if new_genres := self.client.fetch_album_genre(
                 obj.albumartist, obj.album
             ):
-                if result := _try_resolve_stage(
+                if result := self._try_resolve_stage(
                     "album", keep_genres, new_genres, artist=obj.albumartist
                 ):
                     return result
@@ -633,7 +634,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     )
 
             if new_genres:
-                if result := _try_resolve_stage(
+                if result := self._try_resolve_stage(
                     stage_label, keep_genres, new_genres, artist=stage_artist
                 ):
                     return result
@@ -652,12 +653,12 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 return valid_genres, "original fallback"
             # If the original genre doesn't match a whitelisted genre, check
             # if we can canonicalize it to find a matching, whitelisted genre!
-            if result := _try_resolve_stage(
+            if result := self._try_resolve_stage(
                 "original fallback", keep_genres, [], artist=artist
             ):
                 return result
 
-        return _fallback_stage()
+        return self._fallback_stage()
 
     # Beets plugin hooks and CLI.
 
