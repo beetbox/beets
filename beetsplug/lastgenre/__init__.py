@@ -484,6 +484,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         return genres_list
 
+    # -- Core resolution and logging helpers
+
     def _combine_resolve_and_log(
         self, old: list[str], new: list[str], artist: str | None = None
     ) -> list[str]:
@@ -517,6 +519,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 label = f"keep + {label}"
             return self._format_genres(resolved_genres), label
         return None
+
+    # -- Individual lookup stages
 
     def _handle_existing_genres(
         self, obj: LibModel, genres: list[str]
@@ -672,6 +676,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         return self._try_resolve_stage(
             "original fallback", keep_genres, [], artist=artist
         )
+
+    # -- Main resolution entry point
 
     def _get_genre(self, obj: LibModel) -> tuple[list[str], str]:
         """Get the final genre list for an Album or Item object.
