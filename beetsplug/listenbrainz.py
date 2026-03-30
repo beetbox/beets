@@ -257,15 +257,3 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         # Fetch and return tracks from the selected playlist
         playlist = self.get_playlist(selected_playlist.get("identifier"))
         return self.get_tracks_from_playlist(playlist)
-
-    def get_weekly_exploration(self):
-        return self.get_weekly_playlist("Exploration", most_recent=True)
-
-    def get_weekly_jams(self):
-        return self.get_weekly_playlist("Jams", most_recent=True)
-
-    def get_last_weekly_exploration(self):
-        return self.get_weekly_playlist("Exploration", most_recent=False)
-
-    def get_last_weekly_jams(self):
-        return self.get_weekly_playlist("Jams", most_recent=False)
