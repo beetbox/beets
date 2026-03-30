@@ -509,6 +509,32 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             return self._format_genres(resolved_genres), label
         return None
 
+    def _handle_existing_genres(
+        self, obj: LibModel, genres: list[str]
+    ) -> tuple[list[str], str] | None:
+        """Handle pre-existing genres and cleanup_existing flag when not forcing."""
+        if not genres or self.config["force"]:
+            return None
+
+        # Without force, but cleanup_existing enabled, we attempt
+        # to canonicalize pre-populated tags before returning them.
+        # If none are found, we use the fallback (if set).
+        if self.config["cleanup_existing"]:
+            keep_genres = [g.lower() for g in genres]
+            cleanup_artist = getattr(obj, "albumartist", None) or getattr(
+                obj, "artist", None
+            )
+            if result := self._try_resolve_stage(
+                "cleanup", keep_genres, [], artist=cleanup_artist
+            ):
+                return result
+
+            return self._fallback_stage()
+
+        # If cleanup_existing is not set, the pre-populated tags are
+        # returned as-is.
+        return genres, "keep any, no-force"
+
     def _get_genre(self, obj: LibModel) -> tuple[list[str], str]:
         """Get the final genre list for an Album or Item object.
 
@@ -533,25 +559,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         new_genres = []
         genres = self._get_existing_genres(obj)
 
-        if genres and not self.config["force"]:
-            # Without force, but cleanup_existing enabled, we attempt
-            # to canonicalize pre-populated tags before returning them.
-            # If none are found, we use the fallback (if set).
-            if self.config["cleanup_existing"]:
-                keep_genres = [g.lower() for g in genres]
-                cleanup_artist = getattr(obj, "albumartist", None) or getattr(
-                    obj, "artist", None
-                )
-                if result := self._try_resolve_stage(
-                    "cleanup", keep_genres, [], artist=cleanup_artist
-                ):
-                    return result
-
-                return self._fallback_stage()
-
-            # If cleanup_existing is not set, the pre-populated tags are
-            # returned as-is.
-            return genres, "keep any, no-force"
+        if result := self._handle_existing_genres(obj, genres):
+            return result
 
         if self.config["force"]:
             # Force doesn't keep any unless keep_existing is set.
