@@ -563,6 +563,86 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             )
         return None
 
+    def _get_va_genre_stage(
+        self, obj: Album, keep_genres: list[str]
+    ) -> tuple[list[str], str] | None:
+        """Fetch popular genre from tracks for Various Artists albums."""
+        item_genres = []
+        for item in obj.items():
+            item_genre = None
+            if "track" in self.sources:
+                item_genre = self.client.fetch_track_genre(
+                    item.artist, item.title
+                )
+            if not item_genre:
+                item_genre = self.client.fetch_artist_genre(item.artist)
+            if item_genre:
+                item_genres.extend(item_genre)
+
+        if item_genres:
+            most_popular, rank = plurality(item_genres)
+            self._log.debug(
+                'Most popular track genre "{}" ({}) for VA album.',
+                most_popular,
+                rank,
+            )
+            # For VA albums, we return the most popular genre without an
+            # artist context for ignorelist filtering (or use None).
+            return self._try_resolve_stage(
+                "most popular track", keep_genres, [most_popular], artist=None
+            )
+        return None
+
+    def _get_artist_genre_stage(
+        self, obj: LibModel, keep_genres: list[str]
+    ) -> tuple[list[str], str] | None:
+        """Fetch and resolve artist-level genres."""
+        if "artist" not in self.sources:
+            return None
+
+        if isinstance(obj, library.Item):
+            if new_genres := self.client.fetch_artist_genre(obj.artist):
+                return self._try_resolve_stage(
+                    "artist", keep_genres, new_genres, artist=obj.artist
+                )
+            return None
+
+        # For albums, handle "Various Artists" vs single artist.
+        if obj.albumartist == config["va_name"].as_str():
+            return self._get_va_genre_stage(obj, keep_genres)
+
+        # Single artist or multi-valued albumartist.
+        new_genres = self.client.fetch_artist_genre(obj.albumartist)
+        stage_label = "album artist"
+        stage_artist: str | None = obj.albumartist
+
+        if not new_genres:
+            # Fallback to multi-valued album artist fields.
+            self._log.extra_debug(
+                'No album artist genre found for "{}", '
+                "trying multi-valued field...",
+                obj.albumartist,
+            )
+            for albumartist in obj.albumartists:
+                self._log.extra_debug(
+                    'Fetching artist genre for "{}"',
+                    albumartist,
+                )
+                artist_genres = self.client.fetch_artist_genre(albumartist)
+                if artist_genres:
+                    new_genres.extend(artist_genres)
+            if new_genres:
+                stage_label = "multi-valued album artist"
+                # Multi-valued: artist is None because they were already
+                # filtered per-artist in the client lookup loop.
+                stage_artist = None
+
+        if new_genres:
+            return self._try_resolve_stage(
+                stage_label, keep_genres, new_genres, artist=stage_artist
+            )
+        return None
+
     def _get_genre(self, obj: LibModel) -> tuple[list[str], str]:
         """Get the final genre list for an Album or Item object.
 
@@ -584,7 +664,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """
 
         keep_genres = []
-        new_genres = []
         genres = self._get_existing_genres(obj)
 
         if result := self._handle_existing_genres(obj, genres):
@@ -602,65 +681,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if result := self._get_album_genre_stage(obj, keep_genres):
             return result
 
-        if "artist" in self.sources:
-            new_genres = []
-            stage_artist: str | None = None
-            if isinstance(obj, library.Item):
-                new_genres = self.client.fetch_artist_genre(obj.artist)
-                stage_label = "artist"
-                stage_artist = obj.artist
-            elif obj.albumartist != config["va_name"].as_str():
-                new_genres = self.client.fetch_artist_genre(obj.albumartist)
-                stage_label = "album artist"
-                stage_artist = obj.albumartist
-                if not new_genres:
-                    self._log.extra_debug(
-                        'No album artist genre found for "{}", '
-                        "trying multi-valued field...",
-                        obj.albumartist,
-                    )
-                    for albumartist in obj.albumartists:
-                        self._log.extra_debug(
-                            'Fetching artist genre for "{}"',
-                            albumartist,
-                        )
-                        new_genres += self.client.fetch_artist_genre(
-                            albumartist
-                        )
-                    if new_genres:
-                        stage_label = "multi-valued album artist"
-                        stage_artist = (
-                            None  # Already filtered per-artist in client
-                        )
-            else:
-                # For "Various Artists", pick the most popular track genre.
-                item_genres = []
-                assert isinstance(obj, Album)  # Type narrowing for mypy
-                for item in obj.items():
-                    item_genre = None
-                    if "track" in self.sources:
-                        item_genre = self.client.fetch_track_genre(
-                            item.artist, item.title
-                        )
-                    if not item_genre:
-                        item_genre = self.client.fetch_artist_genre(item.artist)
-                    if item_genre:
-                        item_genres += item_genre
-                if item_genres:
-                    most_popular, rank = plurality(item_genres)
-                    new_genres = [most_popular]
-                    stage_label = "most popular track"
-                    self._log.debug(
-                        'Most popular track genre "{}" ({}) for VA album.',
-                        most_popular,
-                        rank,
-                    )
-
-            if new_genres:
-                if result := self._try_resolve_stage(
-                    stage_label, keep_genres, new_genres, artist=stage_artist
-                ):
-                    return result
+        if result := self._get_artist_genre_stage(obj, keep_genres):
+            return result
 
         # Nothing found, leave original if configured and valid.
         if genres and self.config["keep_existing"].get():
