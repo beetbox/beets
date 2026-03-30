@@ -204,14 +204,6 @@ class PaddedInt(BasePaddedInt[int]):
     pass
 
 
-class NullPaddedInt(BasePaddedInt[None]):
-    """Same as `PaddedInt`, but does not normalize `None` to `0`."""
-
-    @property
-    def null(self) -> None:
-        return None
-
-
 class ScaledInt(Integer):
     """An integer whose formatting operation scales the number by a
     constant and adds a suffix. Good for units with large magnitudes.
