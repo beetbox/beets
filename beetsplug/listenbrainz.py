@@ -51,6 +51,9 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
     def _lbupdate(self, lib, log):
         """Obtain play counts from ListenBrainz."""
         listens = self.get_listens()
+        if listens is None:
+            log.error("Failed to fetch listens from ListenBrainz.")
+            return
         if not listens:
             log.info("No listens found.")
             return
@@ -70,15 +73,16 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         We aggregate them by track identity so each unique track gets its total
         count, making the import idempotent.
         """
-        play_counts: Counter[str] = Counter()
-        track_info: dict[str, Track] = {}
+        _AggKey = str | tuple[str, str, str]
+        play_counts: Counter[_AggKey] = Counter()
+        track_info: dict[_AggKey, Track] = {}
         for t in tracks:
             mbid = t.get("mbid") or ""
             artist = t["artist"]
             name = t["name"]
             album = t.get("album") or ""
 
-            key = mbid if mbid else f"{artist}||{name}||{album}"
+            key: _AggKey = mbid if mbid else (artist, name, album)
             play_counts[key] += 1
             if key not in track_info:
                 track_info[key] = t
@@ -116,9 +120,12 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             count: How many listens to return per page (max 1000).
 
         Returns:
-            A list of listen info dictionaries if there's an OK status.
+            A list of listen info dictionaries, or None on API failure.
         """
-        per_page = count or 1000
+        if min_ts is not None and max_ts is not None:
+            raise ValueError("min_ts and max_ts are mutually exclusive.")
+
+        per_page = min(count or 1000, 1000)
         url = f"{self.ROOT}/user/{self.username}/listens"
         all_listens = []
 
@@ -131,6 +138,8 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
 
             response = self._make_request(url, params)
             if response is None:
+                if not all_listens:
+                    return None
                 break
 
             listens = response["payload"]["listens"]
@@ -144,8 +153,12 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             if len(listens) < per_page:
                 break
 
-            # Use the oldest listen's timestamp for the next page
-            max_ts = listens[-1]["listened_at"]
+            # Paginate using the oldest listen's timestamp.
+            # Subtract 1 to avoid re-fetching listens at the boundary.
+            new_max_ts = listens[-1]["listened_at"] - 1
+            if max_ts is not None and new_max_ts >= max_ts:
+                break
+            max_ts = new_max_ts
 
         return all_listens
 
