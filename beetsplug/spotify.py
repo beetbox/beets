@@ -112,7 +112,9 @@ class SpotifyPlugin(
     open_track_url = "https://open.spotify.com/track/"
     search_url = "https://api.spotify.com/v1/search"
     album_url = "https://api.spotify.com/v1/albums/"
+    tracks_url = "https://api.spotify.com/v1/tracks"
     track_url = "https://api.spotify.com/v1/tracks/"
+    audio_features_batch_url = "https://api.spotify.com/v1/audio-features"
     audio_features_url = "https://api.spotify.com/v1/audio-features/"
 
     spotify_audio_features: ClassVar[dict[str, str]] = {
@@ -259,7 +261,7 @@ class SpotifyPlugin(
                 )
             elif e.response.status_code == 403:
                 # Check if this is the audio features endpoint
-                if url.startswith(self.audio_features_url):
+                if url.startswith(self.audio_features_batch_url):
                     raise AudioFeaturesUnavailableError(
                         "Audio features API returned 403 "
                         "(deprecated or unavailable)"
@@ -722,10 +724,98 @@ class SpotifyPlugin(
                 "No {.data_source} tracks found from beets query", self
             )
 
+    @staticmethod
+    def _chunked(ids: Sequence[str], chunk_size: int) -> list[list[str]]:
+        """Split IDs into deterministic chunks for Spotify batch endpoints."""
+        return [ids[i : i + chunk_size] for i in range(0, len(ids), chunk_size)]
+
+    def _disable_audio_features(self) -> None:
+        """Disable audio features globally and warn only once."""
+        should_log = False
+        with self._audio_features_lock:
+            if self.audio_features_available:
+                self.audio_features_available = False
+                should_log = True
+        if should_log:
+            self._log.warning(
+                "Audio features API is unavailable (403 error). "
+                "Skipping audio features for remaining tracks."
+            )
+
+    def track_info_batch(
+        self, track_ids: Sequence[str]
+    ) -> dict[str, tuple[Any, str | None, str | None, str | None]]:
+        """Fetch popularity and external IDs in batches of 50 tracks."""
+        if not track_ids:
+            return {}
+
+        info_by_id: dict[str, tuple[Any, str | None, str | None, str | None]] = {}
+        for chunk in self._chunked(track_ids, 50):
+            track_data = self._handle_response(
+                "get",
+                self.tracks_url,
+                params={"ids": ",".join(chunk)},
+            )
+
+            for idx, track in enumerate(track_data.get("tracks", [])):
+                if track is None:
+                    continue
+
+                external_ids = track.get("external_ids", {})
+                track_id = track.get("id") or chunk[idx]
+                info_by_id[track_id] = (
+                    track.get("popularity"),
+                    external_ids.get("isrc"),
+                    external_ids.get("ean"),
+                    external_ids.get("upc"),
+                )
+
+            for track_id in chunk:
+                info_by_id.setdefault(track_id, (None, None, None, None))
+
+        return info_by_id
+
+    def track_audio_features_batch(
+        self, track_ids: Sequence[str]
+    ) -> dict[str, JSONDict]:
+        """Fetch track audio features in batches of 100 tracks."""
+        if not track_ids:
+            return {}
+
+        with self._audio_features_lock:
+            if not self.audio_features_available:
+                return {}
+
+        features_by_id: dict[str, JSONDict] = {}
+        try:
+            for chunk in self._chunked(track_ids, 100):
+                features_data = self._handle_response(
+                    "get",
+                    self.audio_features_batch_url,
+                    params={"ids": ",".join(chunk)},
+                )
+
+                for idx, feature_data in enumerate(
+                    features_data.get("audio_features", [])
+                ):
+                    if feature_data is None:
+                        continue
+                    track_id = feature_data.get("id") or chunk[idx]
+                    features_by_id[track_id] = feature_data
+            return features_by_id
+        except AudioFeaturesUnavailableError:
+            self._disable_audio_features()
+            return {}
+        except APIError as e:
+            self._log.debug("Spotify API error: {}", e)
+            return {}
+
     def _fetch_info(self, items, write, force):
         """Obtain track information from Spotify."""
 
         self._log.debug("Total {} tracks", len(items))
+
+        items_to_update: list[tuple[Any, str]] = []
 
         for index, item in enumerate(items, start=1):
             self._log.info(
@@ -743,14 +833,30 @@ class SpotifyPlugin(
                 self._log.debug("No track_id present for: {}", item)
                 continue
 
-            popularity, isrc, ean, upc = self.track_info(spotify_track_id)
+            items_to_update.append((item, spotify_track_id))
+
+        if not items_to_update:
+            return
+
+        track_ids = [track_id for _, track_id in items_to_update]
+        unique_track_ids = list(dict.fromkeys(track_ids))
+        track_info_by_id = self.track_info_batch(unique_track_ids)
+        audio_features_by_id = self.track_audio_features_batch(
+            unique_track_ids
+        )
+
+        for item, spotify_track_id in items_to_update:
+            popularity, isrc, ean, upc = track_info_by_id.get(
+                spotify_track_id, (None, None, None, None)
+            )
+
             item["spotify_track_popularity"] = popularity
             item["isrc"] = isrc
             item["ean"] = ean
             item["upc"] = upc
 
             if self.audio_features_available:
-                audio_features = self.track_audio_features(spotify_track_id)
+                audio_features = audio_features_by_id.get(spotify_track_id)
                 if audio_features is None:
                     self._log.info("No audio features found for: {}", item)
                 else:
@@ -799,17 +905,7 @@ class SpotifyPlugin(
                 "get", f"{self.audio_features_url}{track_id}"
             )
         except AudioFeaturesUnavailableError:
-            # Disable globally in a thread-safe manner and warn once.
-            should_log = False
-            with self._audio_features_lock:
-                if self.audio_features_available:
-                    self.audio_features_available = False
-                    should_log = True
-            if should_log:
-                self._log.warning(
-                    "Audio features API is unavailable (403 error). "
-                    "Skipping audio features for remaining tracks."
-                )
+            self._disable_audio_features()
             return None
         except APIError as e:
             self._log.debug("Spotify API error: {}", e)
