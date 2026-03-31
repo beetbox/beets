@@ -17,6 +17,8 @@ New features
   using ``beet list has_cover_art:true`` or ``beet list has_cover_art:false``.
 - :doc:`plugins/autobpm`: Add ``force`` configuration and CLI option and
   deprecate ``overwrite``.
+- :doc:`plugins/autobpm`: The "BPM already exists for item" log message can now
+  be hidden with the ``--quiet`` flag.
 
 Bug fixes
 ~~~~~~~~~
