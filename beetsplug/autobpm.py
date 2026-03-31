@@ -22,6 +22,7 @@ import numpy as np
 
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, should_write
+from beets.util.deprecation import deprecate_for_user
 
 if TYPE_CHECKING:
     from beets.importer import ImportTask
@@ -34,10 +35,18 @@ class AutoBPMPlugin(BeetsPlugin):
         self.config.add(
             {
                 "auto": True,
-                "overwrite": False,
+                "force": False,
                 "beat_track_kwargs": {},
             }
         )
+
+        if self.config["overwrite"].exists():
+            deprecate_for_user(
+                self._log,
+                f"'{self.name}.overwrite' configuration option",
+                f"'{self.name}.force'",
+            )
+            self.config["force"] = self.config["overwrite"].get()
 
         if self.config["auto"]:
             self.import_stages = [self.imported]
@@ -49,7 +58,7 @@ class AutoBPMPlugin(BeetsPlugin):
         cmd.parser.add_option(
             "-f",
             "--force",
-            dest="overwrite",
+            dest="force",
             action="store_true",
             default=False,
             help="Overwrite existing bpm values",
@@ -58,26 +67,26 @@ class AutoBPMPlugin(BeetsPlugin):
         return [cmd]
 
     def command(self, lib: Library, opts, args: list[str]) -> None:
-        overwrite = (
-            opts.overwrite
-            if hasattr(opts, "overwrite")
-            else self.config["overwrite"].get(bool)
+        force = (
+            opts.force
+            if hasattr(opts, "force")
+            else self.config["force"].get(bool)
         )
         self.calculate_bpm(
-            list(lib.items(args)), write=should_write(), overwrite=overwrite
+            list(lib.items(args)), write=should_write(), force=force
         )
 
     def imported(self, _, task: ImportTask) -> None:
         self.calculate_bpm(task.imported_items())
 
     def calculate_bpm(
-        self, items: list[Item], write: bool = False, overwrite: bool = False
+        self, items: list[Item], write: bool = False, force: bool = False
     ) -> None:
         for item in items:
             path = item.filepath
             if bpm := item.bpm:
                 self._log.info("BPM for {} already exists: {}", path, bpm)
-                if not overwrite:
+                if not force:
                     continue
 
             try:
