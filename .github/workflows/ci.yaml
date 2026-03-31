@@ -73,7 +73,7 @@ jobs:
         name: Test without coverage
         run: |
           poetry install --without=lint --extras=autobpm --extras=discogs --extras=lyrics --extras=replaygain --extras=reflink --extras=fetchart --extras=chroma --extras=sonosupdate
-          poe test
+          poe test -n auto
 
       - if: ${{ env.IS_MAIN_PYTHON == 'true' }}
         name: Test with coverage
@@ -82,7 +82,7 @@ jobs:
         run: |
           poetry install --extras=autobpm --extras=discogs --extras=lyrics --extras=docs --extras=replaygain --extras=reflink --extras=fetchart --extras=chroma --extras=sonosupdate
           poe docs
-          poe test-with-coverage
+          poe test-with-coverage -n auto
 
       - if: ${{ !cancelled() }}
         name: Upload test results to Codecov
