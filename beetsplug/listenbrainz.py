@@ -55,9 +55,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             log.info("No listens found.")
             return
         log.info("Found {} listens", len(listens))
-        tracks = self._aggregate_listens(
-            self.get_tracks_from_listens(listens)
-        )
+        tracks = self._aggregate_listens(self.get_tracks_from_listens(listens))
         log.info("Aggregated into {} unique tracks", len(tracks))
         found, unknown = update_play_counts(lib, tracks, log, "listenbrainz")
         log.info("... done!")
@@ -140,9 +138,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
                 break
 
             all_listens.extend(listens)
-            self._log.info(
-                "Fetched {} listens so far...", len(all_listens)
-            )
+            self._log.info("Fetched {} listens so far...", len(all_listens))
 
             # If we got fewer than requested, we've reached the end
             if len(listens) < per_page:
