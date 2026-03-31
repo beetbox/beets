@@ -161,6 +161,31 @@ class TestListenBrainzPlugin(ConfigMixin):
 
         assert result == []
 
+    def test_get_listens_returns_none_on_api_error(self, plugin):
+        def mock_request(url, params=None):
+            return None
+
+        with patch.object(plugin, "_make_request", side_effect=mock_request):
+            result = plugin.get_listens()
+
+        assert result is None
+
+    def test_get_listens_rejects_both_min_and_max_ts(self, plugin):
+        with pytest.raises(ValueError, match="mutually exclusive"):
+            plugin.get_listens(min_ts=1, max_ts=2)
+
+    def test_get_listens_clamps_count_to_1000(self, plugin):
+        calls = []
+
+        def mock_request(url, params=None):
+            calls.append(params)
+            return {"payload": {"listens": []}}
+
+        with patch.object(plugin, "_make_request", side_effect=mock_request):
+            plugin.get_listens(count=5000)
+
+        assert calls[0]["count"] == 1000
+
     def test_get_tracks_from_listens_uses_recording_mbid(self, plugin):
         listens = [
             {
