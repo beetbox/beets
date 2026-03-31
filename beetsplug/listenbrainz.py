@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime
+from collections import Counter
 from typing import TYPE_CHECKING, ClassVar
 
 import requests
@@ -48,21 +49,46 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         return [lbupdate_cmd]
 
     def _lbupdate(self, lib, log):
-        """Obtain view count from Listenbrainz."""
-        found_total = 0
-        unknown_total = 0
-        ls = self.get_listens()
-        tracks = self.get_tracks_from_listens(ls)
-        log.info("Found {} listens", len(ls))
-        if tracks:
-            found, unknown = update_play_counts(
-                lib, tracks, log, "listenbrainz"
-            )
-            found_total += found
-            unknown_total += unknown
+        """Obtain play counts from ListenBrainz."""
+        listens = self.get_listens()
+        if not listens:
+            log.info("No listens found.")
+            return
+        log.info("Found {} listens", len(listens))
+        tracks = self._aggregate_listens(
+            self.get_tracks_from_listens(listens)
+        )
+        log.info("Aggregated into {} unique tracks", len(tracks))
+        found, unknown = update_play_counts(lib, tracks, log, "listenbrainz")
         log.info("... done!")
-        log.info("{} unknown play-counts", unknown_total)
-        log.info("{} play-counts imported", found_total)
+        log.info("{} unknown play-counts", unknown)
+        log.info("{} play-counts imported", found)
+
+    @staticmethod
+    def _aggregate_listens(tracks: list[Track]) -> list[Track]:
+        """Aggregate individual listen events into per-track play counts.
+
+        ListenBrainz returns individual listen events (each with playcount=1).
+        We aggregate them by track identity so each unique track gets its total
+        count, making the import idempotent.
+        """
+        play_counts: Counter[str] = Counter()
+        track_info: dict[str, Track] = {}
+        for t in tracks:
+            mbid = t.get("mbid") or ""
+            artist = t["artist"]
+            name = t["name"]
+            album = t.get("album") or ""
+
+            key = mbid if mbid else f"{artist}||{name}||{album}"
+            play_counts[key] += 1
+            if key not in track_info:
+                track_info[key] = t
+
+        return [
+            {**info, "playcount": play_counts[key]}
+            for key, info in track_info.items()
+        ]
 
     def _make_request(self, url, params=None):
         """Makes a request to the ListenBrainz API."""
@@ -80,41 +106,52 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             return None
 
     def get_listens(self, min_ts=None, max_ts=None, count=None):
-        """Gets the listen history of a given user.
+        """Gets the full listen history of a given user.
+
+        Paginates through all available listens using the max_ts parameter.
 
         Args:
-            username: User to get listen history of.
             min_ts: History before this timestamp will not be returned.
                     DO NOT USE WITH max_ts.
             max_ts: History after this timestamp will not be returned.
                     DO NOT USE WITH min_ts.
-            count: How many listens to return. If not specified,
-                uses a default from the server.
+            count: How many listens to return per page (max 1000).
 
         Returns:
             A list of listen info dictionaries if there's an OK status.
-
-        Raises:
-            An HTTPError if there's a failure.
-            A ValueError if the JSON in the response is invalid.
-            An IndexError if the JSON is not structured as expected.
         """
+        per_page = count or 1000
         url = f"{self.ROOT}/user/{self.username}/listens"
-        params = {
-            k: v
-            for k, v in {
-                "min_ts": min_ts,
-                "max_ts": max_ts,
-                "count": count,
-            }.items()
-            if v is not None
-        }
-        response = self._make_request(url, params)
+        all_listens = []
 
-        if response is not None:
-            return response["payload"]["listens"]
-        else:
-            return None
+        while True:
+            params = {"count": per_page}
+            if max_ts is not None:
+                params["max_ts"] = max_ts
+            if min_ts is not None:
+                params["min_ts"] = min_ts
+
+            response = self._make_request(url, params)
+            if response is None:
+                break
+
+            listens = response["payload"]["listens"]
+            if not listens:
+                break
+
+            all_listens.extend(listens)
+            self._log.info(
+                "Fetched {} listens so far...", len(all_listens)
+            )
+
+            # If we got fewer than requested, we've reached the end
+            if len(listens) < per_page:
+                break
+
+            # Use the oldest listen's timestamp for the next page
+            max_ts = listens[-1]["listened_at"]
+
+        return all_listens
 
     def get_tracks_from_listens(self, listens) -> list[Track]:
         """Returns a list of tracks from a list of listens."""
@@ -123,8 +160,8 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             if track["track_metadata"].get("release_name") is None:
                 continue
             mbid_mapping = track["track_metadata"].get("mbid_mapping", {})
-            mbid = None
-            if mbid_mapping.get("recording_mbid") is None:
+            mbid = mbid_mapping.get("recording_mbid")
+            if mbid is None:
                 # search for the track using title and release
                 mbid = self.get_mb_recording_id(track)
             tracks.append(
