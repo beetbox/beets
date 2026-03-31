@@ -21,6 +21,11 @@ Bug fixes
 
 - Correctly handle semicolon-delimited genre values from externally-tagged
   files. :bug:`6450`
+- :doc:`plugins/listenbrainz`: Fix ``lbimport`` crashing when ListenBrainz
+  tracks are processed through Last.fm-specific play-count import logic.
+  Play-count imports now use source-specific fields so
+  :doc:`plugins/listenbrainz`, :doc:`plugins/lastimport`, and
+  :doc:`plugins/mpdstats` do not clash. :bug:`6469`
 
 ..
     For plugin developers
