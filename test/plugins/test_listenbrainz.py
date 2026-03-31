@@ -50,10 +50,34 @@ class TestListenBrainzPlugin(ConfigMixin):
 
     def test_aggregate_listens_counts_by_mbid(self, plugin):
         tracks = [
-            {"mbid": "m1", "artist": "A", "name": "S", "album": "Al", "playcount": 1},
-            {"mbid": "m1", "artist": "A", "name": "S", "album": "Al", "playcount": 1},
-            {"mbid": "m1", "artist": "A", "name": "S", "album": "Al", "playcount": 1},
-            {"mbid": "m2", "artist": "B", "name": "T", "album": "Bl", "playcount": 1},
+            {
+                "mbid": "m1",
+                "artist": "A",
+                "name": "S",
+                "album": "Al",
+                "playcount": 1,
+            },
+            {
+                "mbid": "m1",
+                "artist": "A",
+                "name": "S",
+                "album": "Al",
+                "playcount": 1,
+            },
+            {
+                "mbid": "m1",
+                "artist": "A",
+                "name": "S",
+                "album": "Al",
+                "playcount": 1,
+            },
+            {
+                "mbid": "m2",
+                "artist": "B",
+                "name": "T",
+                "album": "Bl",
+                "playcount": 1,
+            },
         ]
         result = plugin._aggregate_listens(tracks)
         by_mbid = {t["mbid"]: t["playcount"] for t in result}
@@ -61,9 +85,27 @@ class TestListenBrainzPlugin(ConfigMixin):
 
     def test_aggregate_listens_falls_back_to_artist_title_album(self, plugin):
         tracks = [
-            {"mbid": None, "artist": "A", "name": "S", "album": "Al", "playcount": 1},
-            {"mbid": "", "artist": "A", "name": "S", "album": "Al", "playcount": 1},
-            {"mbid": None, "artist": "A", "name": "S", "album": "Al", "playcount": 1},
+            {
+                "mbid": None,
+                "artist": "A",
+                "name": "S",
+                "album": "Al",
+                "playcount": 1,
+            },
+            {
+                "mbid": "",
+                "artist": "A",
+                "name": "S",
+                "album": "Al",
+                "playcount": 1,
+            },
+            {
+                "mbid": None,
+                "artist": "A",
+                "name": "S",
+                "album": "Al",
+                "playcount": 1,
+            },
         ]
         result = plugin._aggregate_listens(tracks)
         assert len(result) == 1
@@ -71,11 +113,25 @@ class TestListenBrainzPlugin(ConfigMixin):
 
     def test_get_listens_paginates(self, plugin):
         page1 = [
-            {"listened_at": 100 - i, "track_metadata": {"track_name": f"T{i}", "artist_name": "A", "release_name": "R"}}
+            {
+                "listened_at": 100 - i,
+                "track_metadata": {
+                    "track_name": f"T{i}",
+                    "artist_name": "A",
+                    "release_name": "R",
+                },
+            }
             for i in range(5)
         ]
         page2 = [
-            {"listened_at": 50 - i, "track_metadata": {"track_name": f"T{5+i}", "artist_name": "A", "release_name": "R"}}
+            {
+                "listened_at": 50 - i,
+                "track_metadata": {
+                    "track_name": f"T{5 + i}",
+                    "artist_name": "A",
+                    "release_name": "R",
+                },
+            }
             for i in range(3)
         ]
 
