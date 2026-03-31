@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 
 from beets.test.helper import ConfigMixin
@@ -45,3 +47,100 @@ class TestListenBrainzPlugin(ConfigMixin):
                 "year": "2023",
             }
         ]
+
+    def test_aggregate_listens_counts_by_mbid(self, plugin):
+        tracks = [
+            {"mbid": "m1", "artist": "A", "name": "S", "album": "Al", "playcount": 1},
+            {"mbid": "m1", "artist": "A", "name": "S", "album": "Al", "playcount": 1},
+            {"mbid": "m1", "artist": "A", "name": "S", "album": "Al", "playcount": 1},
+            {"mbid": "m2", "artist": "B", "name": "T", "album": "Bl", "playcount": 1},
+        ]
+        result = plugin._aggregate_listens(tracks)
+        by_mbid = {t["mbid"]: t["playcount"] for t in result}
+        assert by_mbid == {"m1": 3, "m2": 1}
+
+    def test_aggregate_listens_falls_back_to_artist_title_album(self, plugin):
+        tracks = [
+            {"mbid": None, "artist": "A", "name": "S", "album": "Al", "playcount": 1},
+            {"mbid": "", "artist": "A", "name": "S", "album": "Al", "playcount": 1},
+            {"mbid": None, "artist": "A", "name": "S", "album": "Al", "playcount": 1},
+        ]
+        result = plugin._aggregate_listens(tracks)
+        assert len(result) == 1
+        assert result[0]["playcount"] == 3
+
+    def test_get_listens_paginates(self, plugin):
+        page1 = [
+            {"listened_at": 100 - i, "track_metadata": {"track_name": f"T{i}", "artist_name": "A", "release_name": "R"}}
+            for i in range(5)
+        ]
+        page2 = [
+            {"listened_at": 50 - i, "track_metadata": {"track_name": f"T{5+i}", "artist_name": "A", "release_name": "R"}}
+            for i in range(3)
+        ]
+
+        call_count = 0
+
+        def mock_request(url, params=None):
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                return {"payload": {"listens": page1}}
+            elif call_count == 2:
+                return {"payload": {"listens": page2}}
+            return {"payload": {"listens": []}}
+
+        with patch.object(plugin, "_make_request", side_effect=mock_request):
+            result = plugin.get_listens(count=5)
+
+        assert len(result) == 8
+        assert call_count == 2
+
+    def test_get_listens_stops_on_empty_page(self, plugin):
+        def mock_request(url, params=None):
+            return {"payload": {"listens": []}}
+
+        with patch.object(plugin, "_make_request", side_effect=mock_request):
+            result = plugin.get_listens()
+
+        assert result == []
+
+    def test_get_tracks_from_listens_uses_recording_mbid(self, plugin):
+        listens = [
+            {
+                "listened_at": 1000,
+                "track_metadata": {
+                    "track_name": "Song",
+                    "artist_name": "Artist",
+                    "release_name": "Album",
+                    "mbid_mapping": {
+                        "recording_mbid": "rec-mbid-123",
+                        "release_mbid": "rel-mbid",
+                    },
+                },
+            }
+        ]
+        with patch.object(plugin, "get_mb_recording_id") as mock_mb:
+            tracks = plugin.get_tracks_from_listens(listens)
+            mock_mb.assert_not_called()
+
+        assert tracks[0]["mbid"] == "rec-mbid-123"
+        assert tracks[0]["playcount"] == 1
+
+    def test_get_tracks_from_listens_flat_structure(self, plugin):
+        listens = [
+            {
+                "listened_at": 1000,
+                "track_metadata": {
+                    "track_name": "Song",
+                    "artist_name": "Artist",
+                    "release_name": "Album",
+                    "mbid_mapping": {"recording_mbid": "m1"},
+                },
+            }
+        ]
+        tracks = plugin.get_tracks_from_listens(listens)
+        t = tracks[0]
+        assert isinstance(t["artist"], str)
+        assert isinstance(t["name"], str)
+        assert t["album"] == "Album"
