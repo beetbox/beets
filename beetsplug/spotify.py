@@ -727,7 +727,10 @@ class SpotifyPlugin(
     @staticmethod
     def _chunked(ids: Sequence[str], chunk_size: int) -> list[list[str]]:
         """Split IDs into deterministic chunks for Spotify batch endpoints."""
-        return [ids[i : i + chunk_size] for i in range(0, len(ids), chunk_size)]
+        return [
+            list(ids[i : i + chunk_size])
+            for i in range(0, len(ids), chunk_size)
+        ]
 
     def _disable_audio_features(self) -> None:
         """Disable audio features globally and warn only once."""
