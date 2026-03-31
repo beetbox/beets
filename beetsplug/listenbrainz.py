@@ -73,16 +73,16 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         We aggregate them by track identity so each unique track gets its total
         count, making the import idempotent.
         """
-        _AggKey = str | tuple[str, str, str]
-        play_counts: Counter[_AggKey] = Counter()
-        track_info: dict[_AggKey, Track] = {}
+        _agg_key = str | tuple[str, str, str]
+        play_counts: Counter[_agg_key] = Counter()
+        track_info: dict[_agg_key, Track] = {}
         for t in tracks:
             mbid = t.get("mbid") or ""
             artist = t["artist"]
             name = t["name"]
             album = t.get("album") or ""
 
-            key: _AggKey = mbid if mbid else (artist, name, album)
+            key: _agg_key = mbid if mbid else (artist, name, album)
             play_counts[key] += 1
             if key not in track_info:
                 track_info[key] = t
