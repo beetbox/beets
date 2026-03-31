@@ -792,28 +792,29 @@ class SpotifyPlugin(
                 return {}
 
         features_by_id: dict[str, JSONDict] = {}
-        try:
-            for chunk in self._chunked(track_ids, 100):
+        for chunk in self._chunked(track_ids, 100):
+            try:
                 features_data = self._handle_response(
                     "get",
                     self.audio_features_batch_url,
                     params={"ids": ",".join(chunk)},
                 )
+            except AudioFeaturesUnavailableError:
+                self._disable_audio_features()
+                break
+            except APIError as e:
+                self._log.debug("Spotify API error: {}", e)
+                continue
 
-                for idx, feature_data in enumerate(
-                    features_data.get("audio_features", [])
-                ):
-                    if feature_data is None:
-                        continue
-                    track_id = feature_data.get("id") or chunk[idx]
-                    features_by_id[track_id] = feature_data
-            return features_by_id
-        except AudioFeaturesUnavailableError:
-            self._disable_audio_features()
-            return {}
-        except APIError as e:
-            self._log.debug("Spotify API error: {}", e)
-            return {}
+            for idx, feature_data in enumerate(
+                features_data.get("audio_features", [])
+            ):
+                if feature_data is None:
+                    continue
+                track_id = feature_data.get("id") or chunk[idx]
+                features_by_id[track_id] = feature_data
+
+        return features_by_id
 
     def _fetch_info(self, items, write, force):
         """Obtain track information from Spotify."""

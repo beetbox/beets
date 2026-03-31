@@ -526,3 +526,43 @@ class SpotifyPluginTest(PluginTestCase):
         assert self.spotify.audio_features_available is False
         assert self.spotify.track_audio_features_batch(["id-2"]) == {}
         assert len(responses.calls) == 1
+
+    @responses.activate
+    def test_track_audio_features_batch_keeps_partial_results_on_api_error(
+        self,
+    ):
+        def callback(request):
+            ids = _params(request.url)["ids"][0].split(",")
+            if "track-100" in ids:
+                return (
+                    502,
+                    {"Content-Type": "application/json"},
+                    json.dumps({"error": {"status": 502}}),
+                )
+            return (
+                200,
+                {"Content-Type": "application/json"},
+                json.dumps(
+                    {
+                        "audio_features": [
+                            {"id": track_id, "tempo": 100.0} for track_id in ids
+                        ]
+                    }
+                ),
+            )
+
+        responses.add_callback(
+            responses.GET,
+            spotify.SpotifyPlugin.audio_features_batch_url,
+            callback=callback,
+            content_type="application/json",
+        )
+
+        track_ids = [f"track-{idx}" for idx in range(201)]
+        features = self.spotify.track_audio_features_batch(track_ids)
+
+        assert "track-0" in features
+        assert "track-99" in features
+        assert "track-100" not in features
+        assert "track-199" not in features
+        assert "track-200" in features
