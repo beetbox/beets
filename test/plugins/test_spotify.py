@@ -409,9 +409,7 @@ class SpotifyPluginTest(PluginTestCase):
         self.spotify._fetch_info(items, write=False, force=True)
 
         get_calls = [
-            call
-            for call in responses.calls
-            if call.request.method == "GET"
+            call for call in responses.calls if call.request.method == "GET"
         ]
         batch_track_calls = [
             call
@@ -431,9 +429,7 @@ class SpotifyPluginTest(PluginTestCase):
         single_audio_calls = [
             call
             for call in get_calls
-            if urlparse(call.request.url).path.startswith(
-                "/v1/audio-features/"
-            )
+            if urlparse(call.request.url).path.startswith("/v1/audio-features/")
         ]
 
         assert len(batch_track_calls) == 1
@@ -483,8 +479,7 @@ class SpotifyPluginTest(PluginTestCase):
                 json.dumps(
                     {
                         "audio_features": [
-                            {"id": track_id, "tempo": 100.0}
-                            for track_id in ids
+                            {"id": track_id, "tempo": 100.0} for track_id in ids
                         ]
                     }
                 ),

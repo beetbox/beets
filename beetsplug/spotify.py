@@ -749,7 +749,9 @@ class SpotifyPlugin(
         if not track_ids:
             return {}
 
-        info_by_id: dict[str, tuple[Any, str | None, str | None, str | None]] = {}
+        info_by_id: dict[
+            str, tuple[Any, str | None, str | None, str | None]
+        ] = {}
         for chunk in self._chunked(track_ids, 50):
             track_data = self._handle_response(
                 "get",
@@ -841,9 +843,7 @@ class SpotifyPlugin(
         track_ids = [track_id for _, track_id in items_to_update]
         unique_track_ids = list(dict.fromkeys(track_ids))
         track_info_by_id = self.track_info_batch(unique_track_ids)
-        audio_features_by_id = self.track_audio_features_batch(
-            unique_track_ids
-        )
+        audio_features_by_id = self.track_audio_features_batch(unique_track_ids)
 
         for item, spotify_track_id in items_to_update:
             popularity, isrc, ean, upc = track_info_by_id.get(
