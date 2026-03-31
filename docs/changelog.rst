@@ -52,6 +52,8 @@ New features
   order before passing it to the player.
 - :doc:`plugins/lyrics`: Add ``auto_ignore`` configuration option to skip
   fetching lyrics for items matching a beets query during auto import.
+- :doc:`plugins/musicbrainz`: Use title aliases for releases, release groups,
+  and recordings.
 
 Bug fixes
 ~~~~~~~~~
@@ -308,8 +310,6 @@ New features
   ``beet import``.
 - :doc:`plugins/random`: Added ``--field`` option to specify which field to use
   for equal-chance sampling (default: ``albumartist``).
-- :doc:`plugins/musicbrainz`: Use title aliases for releases, release groups,
-  and recordings.
 
 Bug fixes
 ~~~~~~~~~
