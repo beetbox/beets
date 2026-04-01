@@ -96,8 +96,8 @@ class MultiValueFieldMigration(Migration):
 class MultiGenreFieldMigration(MultiValueFieldMigration):
     """Backfill multi-value genres from legacy single-string genre data."""
 
-    single_field = "genre"
-    multi_field = "genres"
+    str_field = "genre"
+    list_field = "genres"
 
     @cached_property
     def separators(self) -> list[str]:
@@ -108,6 +108,13 @@ class MultiGenreFieldMigration(MultiValueFieldMigration):
 
         separators.extend(super().separators)
         return unique_list(filter(None, separators))
+
+
+class MultiRemixerFieldMigration(MultiValueFieldMigration):
+    """Backfill multi-value remixers from legacy single-string remixer data."""
+
+    str_field = "remixer"
+    list_field = "remixers"
 
 
 class LyricsRow(NamedTuple):
