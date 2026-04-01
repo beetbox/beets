@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from contextlib import suppress
 from functools import cached_property
-from typing import TYPE_CHECKING, NamedTuple, TypeVar
+from typing import TYPE_CHECKING, ClassVar, NamedTuple, TypeVar
 
 from confuse.exceptions import ConfigError
 
@@ -33,59 +33,60 @@ def chunks(lst: list[T], n: int) -> Iterator[list[T]]:
         yield lst[i : i + n]
 
 
-class MultiGenreFieldMigration(Migration):
-    """Backfill multi-value genres from legacy single-string genre data."""
+class MultiValueFieldMigration(Migration):
+    """Backfill multi-value field from legacy single-string values."""
+
+    str_field: ClassVar[str]
+    list_field: ClassVar[str]
 
     @cached_property
     def separators(self) -> list[str]:
-        """Return known separators that indicate multiple legacy genres."""
-        separators = []
-        with suppress(ConfigError):
-            separators.append(beets.config["lastgenre"]["separator"].as_str())
+        return ["; ", ", ", " / "]
 
-        separators.extend(["; ", ", ", " / "])
-        return unique_list(filter(None, separators))
-
-    def get_genres(self, genre: str) -> str:
-        """Normalize legacy genre separators to the canonical delimiter."""
+    def convert_to_list_value(self, str_value: str) -> str:
+        """Normalize legacy str value separators to the canonical delimiter."""
         for separator in self.separators:
-            if separator in genre:
-                return genre.replace(separator, MULTI_VALUE_DELIMITER)
+            if separator in str_value:
+                return str_value.replace(separator, MULTI_VALUE_DELIMITER)
 
-        return genre
+        return str_value
 
     def _migrate_data(
         self, model_cls: type[Model], current_fields: set[str]
     ) -> None:
-        """Migrate legacy genre values to the multi-value genres field."""
-        if "genre" not in current_fields:
-            # No legacy genre field, so nothing to migrate.
+        """Migrate legacy single-valued field to multi-valued field."""
+        str_field, list_field = self.str_field, self.list_field
+        if str_field not in current_fields:
+            # No legacy single-value field, so nothing to migrate.
             return
 
         table = model_cls._table
 
-        with self.db.transaction() as tx, self.with_row_factory(GenreRow):
-            rows: list[GenreRow] = tx.query(  # type: ignore[assignment]
+        with self.db.transaction() as tx:
+            rows = tx.query(  # type: ignore[assignment]
                 f"""
-                SELECT id, genre, genres
+                SELECT id, {str_field}, {list_field}
                 FROM {table}
-                WHERE genre IS NOT NULL AND genre != ''
+                WHERE {str_field} IS NOT NULL AND {str_field} != ''
                 """
             )
 
         total = len(rows)
-        to_migrate = [e for e in rows if not e.genres]
+        to_migrate = [e for e in rows if not e[list_field]]
         if not to_migrate:
             return
 
         migrated = total - len(to_migrate)
 
-        ui.print_(f"Migrating genres for {total} {table}...")
+        ui.print_(f"Migrating {list_field} for {total} {table}...")
         for batch in chunks(to_migrate, 1000):
             with self.db.transaction() as tx:
                 tx.mutate_many(
-                    f"UPDATE {table} SET genres = ? WHERE id = ?",
-                    [(self.get_genres(e.genre), e.id) for e in batch],
+                    f"UPDATE {table} SET {list_field} = ? WHERE id = ?",
+                    [
+                        (self.convert_to_list_value(e[str_field]), e["id"])
+                        for e in batch
+                    ],
                 )
 
             migrated += len(batch)
@@ -96,6 +97,23 @@ class MultiGenreFieldMigration(Migration):
             )
 
         ui.print_(f"Migration complete: {migrated} of {total} {table} updated")
+
+
+class MultiGenreFieldMigration(MultiValueFieldMigration):
+    """Backfill multi-value genres from legacy single-string genre data."""
+
+    single_field = "genre"
+    multi_field = "genres"
+
+    @cached_property
+    def separators(self) -> list[str]:
+        """Return known separators that indicate multiple legacy genres."""
+        separators = []
+        with suppress(ConfigError):
+            separators.append(beets.config["lastgenre"]["separator"].as_str())
+
+        separators.extend(super().separators)
+        return unique_list(filter(None, separators))
 
 
 class LyricsRow(NamedTuple):
