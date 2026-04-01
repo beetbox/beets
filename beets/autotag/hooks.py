@@ -193,7 +193,6 @@ class Info(AttrDict[Any]):
         artists_sort: list[str] | None = None,
         data_source: str | None = None,
         data_url: str | None = None,
-        genre: str | None = None,
         genres: list[str] | None = None,
         media: str | None = None,
         **kwargs,
@@ -209,9 +208,8 @@ class Info(AttrDict[Any]):
         self.artists_sort = artists_sort
         self.data_source = data_source
         self.data_url = data_url
-        self.genre = None
         self.genres = self._get_list_from_string_value(
-            "genre", "genres", genre, genres
+            "genre", "genres", kwargs.pop("genre", None), genres
         )
         self.media = media
         self.update(kwargs)
@@ -421,6 +419,7 @@ class TrackInfo(Info):
         medium_index: int | None = None,
         medium_total: int | None = None,
         release_track_id: str | None = None,
+        remixers: list[str] | None = None,
         title: str | None = None,
         track_alt: str | None = None,
         track_id: str | None = None,
@@ -442,6 +441,9 @@ class TrackInfo(Info):
         self.medium_index = medium_index
         self.medium_total = medium_total
         self.release_track_id = release_track_id
+        self.remixers = self._get_list_from_string_value(
+            "remixer", "remixers", kwargs.pop("remixer", None), remixers
+        )
         self.title = title
         self.track_alt = track_alt
         self.track_id = track_id
