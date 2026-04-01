@@ -15,6 +15,7 @@
 """Tests for autotagging functionality."""
 
 import operator
+from contextlib import nullcontext as does_not_warn
 
 import pytest
 
@@ -30,19 +31,54 @@ from beets.autotag.hooks import (
 from beets.library import Item
 from beets.test.helper import BeetsTestCase
 
+str_field_deprecation = pytest.warns(
+    DeprecationWarning, match="The 'str_field' parameter is deprecated"
+)
+
+_p = pytest.param
+
 
 @pytest.mark.parametrize(
-    "genre, expected_genres",
+    "str_value, list_value, expected_warning, expected_list_value",
     [
-        ("Rock", ("Rock",)),
-        ("Rock; Alternative", ("Rock", "Alternative")),
+        _p(
+            "value",
+            None,
+            str_field_deprecation,
+            ["value"],
+            id="str value only, warning raised",
+        ),
+        _p(
+            "value; another value",
+            None,
+            str_field_deprecation,
+            ["value", "another value"],
+            id="str value only and split, warning raised",
+        ),
+        _p(
+            "value",
+            ["list value"],
+            str_field_deprecation,
+            ["list value"],
+            id="list value wins, warning raised",
+        ),
+        _p(
+            None,
+            None,
+            does_not_warn(),
+            None,
+            id="no str value, no warning",
+        ),
     ],
 )
-def test_genre_deprecation(genre, expected_genres):
-    with pytest.warns(
-        DeprecationWarning, match="The 'genre' parameter is deprecated"
-    ):
-        assert tuple(Info(genre=genre).genres) == expected_genres
+def test_get_list_from_string_value(
+    str_value, list_value, expected_warning, expected_list_value
+):
+    with expected_warning:
+        actual_list_value = Info._get_list_from_string_value(
+            "str_field", "list_field", str_value, list_value
+        )
+        assert actual_list_value == expected_list_value
 
 
 class ApplyTest(BeetsTestCase):

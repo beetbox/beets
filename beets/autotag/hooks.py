@@ -198,18 +198,6 @@ class Info(AttrDict[Any]):
         media: str | None = None,
         **kwargs,
     ) -> None:
-        if genre is not None:
-            deprecate_for_maintainers(
-                "The 'genre' parameter", "'genres' (list)", stacklevel=3
-            )
-            if not genres:
-                try:
-                    sep = next(s for s in ["; ", ", ", " / "] if s in genre)
-                except StopIteration:
-                    genres = [genre]
-                else:
-                    genres = list(map(str.strip, genre.split(sep)))
-
         self.album = album
         self.artist = artist
         self.artist_credit = artist_credit
@@ -222,9 +210,34 @@ class Info(AttrDict[Any]):
         self.data_source = data_source
         self.data_url = data_url
         self.genre = None
-        self.genres = genres
+        self.genres = self._get_list_from_string_value(
+            "genre", "genres", genre, genres
+        )
         self.media = media
         self.update(kwargs)
+
+    @staticmethod
+    def _get_list_from_string_value(
+        str_field: str,
+        list_field: str,
+        str_value: str | None,
+        list_value: list[str] | None,
+    ) -> list[str] | None:
+        if str_value is not None:
+            deprecate_for_maintainers(
+                f"The '{str_field}' parameter",
+                f"'{list_field}' (list)",
+                stacklevel=3,
+            )
+            if not list_value:
+                try:
+                    sep = next(s for s in ["; ", ", ", " / "] if s in str_value)
+                except StopIteration:
+                    list_value = [str_value]
+                else:
+                    list_value = list(map(str.strip, str_value.split(sep)))
+
+        return list_value
 
 
 class AlbumInfo(Info):
