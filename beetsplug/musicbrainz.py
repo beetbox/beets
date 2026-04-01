@@ -277,7 +277,7 @@ def _merge_pseudo_and_actual_album(
             "barcode",
             "asin",
             "style",
-            "genre",
+            "genres",
         ]
     }
     merged.update(from_actual)
