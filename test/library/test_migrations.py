@@ -74,6 +74,53 @@ class TestMultiGenreFieldMigration:
         assert helper.lib.migration_exists("multi_genre_field", "albums")
 
 
+class TestMultiRemixerFieldMigration:
+    @pytest.fixture
+    def helper(self, monkeypatch):
+        # do not apply migrations upon library initialization
+        monkeypatch.setattr("beets.library.library.Library._migrations", ())
+        # add remixer field to make sure this column is created
+        monkeypatch.setattr(
+            "beets.library.models.Item._fields",
+            {**Item._fields, "remixer": types.STRING},
+        )
+        helper = TestHelper()
+        helper.setup_beets()
+
+        # and now configure the migrations to be tested
+        monkeypatch.setattr(
+            "beets.library.library.Library._migrations",
+            ((migrations.MultiRemixerFieldMigration, (Item,)),),
+        )
+        yield helper
+
+        helper.teardown_beets()
+
+    def test_migrate(self, helper: TestHelper):
+        expected_list_values = []
+        for str_value, initial_list_value, expected_list_value in [
+            # already existing value is not overwritten
+            ("Artist", ("Ignored",), ("Ignored",)),
+            ("", (), ()),
+            ("Artist", (), ("Artist",)),
+            # multiple values are split on one of default separators
+            ("Artist; Another Artist", (), ("Artist", "Another Artist")),
+            # multiple values are split by the existing separator ONLY
+            ("Artist, Another; Artist", (), ("Artist, Another", "Artist")),
+        ]:
+            helper.add_item(remixer=str_value, remixers=initial_list_value)
+            expected_list_values.append(expected_list_value)
+
+        helper.lib._migrate()
+
+        actual_list_values = [tuple(i.remixers) for i in helper.lib.items()]
+        assert actual_list_values == expected_list_values
+
+        # remove cached initial db tables data
+        del helper.lib.db_tables
+        assert helper.lib.migration_exists("multi_remixer_field", "items")
+
+
 class TestLyricsMetadataInFlexFieldsMigration:
     @pytest.fixture
     def helper(self, monkeypatch):

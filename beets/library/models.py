@@ -643,7 +643,7 @@ class Item(LibModel):
         "artists_sort": types.MULTI_VALUE_DSV,
         "artist_credit": types.STRING,
         "artists_credit": types.MULTI_VALUE_DSV,
-        "remixer": types.STRING,
+        "remixers": types.MULTI_VALUE_DSV,
         "album": types.STRING,
         "albumartist": types.STRING,
         "albumartists": types.MULTI_VALUE_DSV,
