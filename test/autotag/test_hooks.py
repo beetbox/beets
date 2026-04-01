@@ -116,6 +116,8 @@ class ApplyTest(BeetsTestCase):
                     artists_credit=["trackArtistCredit"],
                     artist_sort="trackArtistSort",
                     artists_sort=["trackArtistSort"],
+                    genres=["Rock"],
+                    remixer="trackRemixer1, trackRemixer2",
                 ),
                 TrackInfo(
                     title="title2",
@@ -124,6 +126,7 @@ class ApplyTest(BeetsTestCase):
                     medium_index=1,
                     index=2,
                     medium_total=1,
+                    remixers=["trackRemixer1", "trackRemixer2"],
                 ),
             ],
             artist="albumArtist",
@@ -143,7 +146,7 @@ class ApplyTest(BeetsTestCase):
             year=2013,
             month=12,
             day=18,
-            genres=["Rock", "Pop"],
+            genre="Rock; Pop",
         )
 
         common_expected = {
@@ -167,11 +170,11 @@ class ApplyTest(BeetsTestCase):
             "mb_albumid": "7edb51cb-77d6-4416-a23c-3a8c2994a2c7",
             "mb_artistid": "a6623d39-2d8e-4f70-8242-0a9553b91e50",
             "mb_artistids": ["a6623d39-2d8e-4f70-8242-0a9553b91e50"],
+            "remixers": ["trackRemixer1", "trackRemixer2"],
             "tracktotal": 2,
             "year": 2013,
             "month": 12,
             "day": 18,
-            "genres": ["Rock", "Pop"],
         }
 
         self.expected_tracks = [
@@ -184,6 +187,7 @@ class ApplyTest(BeetsTestCase):
                 "artists_credit": ["trackArtistCredit"],
                 "artists_sort": ["trackArtistSort"],
                 "disc": 1,
+                "genres": ["Rock"],
                 "mb_trackid": "dfa939ec-118c-4d0f-84a0-60f3d1e6522c",
                 "title": "title",
                 "track": 1,
@@ -201,6 +205,7 @@ class ApplyTest(BeetsTestCase):
                 ],
                 "artists_sort": ["albumArtistSort", "albumArtistSort2"],
                 "disc": 2,
+                "genres": ["Rock", "Pop"],
                 "mb_trackid": "40130ed1-a27c-42fd-a328-1ebefb6caef4",
                 "title": "title2",
                 "track": 2,
