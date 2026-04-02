@@ -396,7 +396,7 @@ class MusicBrainzPlugin(
         if lyricists:
             info.lyricists = lyricists
         if composer:
-            info.composer = ", ".join(composer)
+            info.composers = composer
             info.composer_sort = ", ".join(composer_sort)
 
         arranger = []

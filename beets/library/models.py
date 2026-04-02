@@ -657,7 +657,7 @@ class Item(LibModel):
         "discogs_artistid": types.INTEGER,
         "discogs_labelid": types.INTEGER,
         "lyricists": types.MULTI_VALUE_DSV,
-        "composer": types.STRING,
+        "composers": types.MULTI_VALUE_DSV,
         "composer_sort": types.STRING,
         "work": types.STRING,
         "mb_workid": types.STRING,

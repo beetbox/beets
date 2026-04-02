@@ -590,6 +590,49 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         track = self.mb.album_info(release).tracks[0]
         assert track.remixers == ["RECORDING REMIXER ARTIST NAME"]
 
+    def test_parse_recording_composers(self):
+        tracks = [self._make_track("a", "b", 1)]
+        tracks[0]["work-relations"] = [
+            {
+                "type": "performance",
+                "work": {
+                    "id": "WORK ID",
+                    "title": "WORK TITLE",
+                    "artist-relations": [
+                        {
+                            "type": "composer",
+                            "artist": {
+                                "name": "RECORDING COMPOSER ARTIST NAME",
+                                "sort-name": (
+                                    "RECORDING COMPOSER ARTIST SORT NAME"
+                                ),
+                            },
+                        },
+                        {
+                            "type": "composer",
+                            "artist": {
+                                "name": "RECORDING COMPOSER 2 ARTIST NAME",
+                                "sort-name": (
+                                    "RECORDING COMPOSER 2 ARTIST SORT NAME"
+                                ),
+                            },
+                        },
+                    ],
+                },
+            }
+        ]
+
+        release = self._make_release(None, tracks=tracks)
+        track = self.mb.album_info(release).tracks[0]
+        assert track.composers == [
+            "RECORDING COMPOSER ARTIST NAME",
+            "RECORDING COMPOSER 2 ARTIST NAME",
+        ]
+        assert (
+            track.composer_sort == "RECORDING COMPOSER ARTIST SORT NAME, "
+            "RECORDING COMPOSER 2 ARTIST SORT NAME"
+        )
+
     def test_data_source(self):
         release = self._make_release()
         d = self.mb.album_info(release)

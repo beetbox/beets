@@ -18,11 +18,12 @@ New features
 - Query: Add ``has_cover_art`` computed field to query items by embedded cover
   art presence. Users can now search for tracks with or without embedded artwork
   using ``beet list has_cover_art:true`` or ``beet list has_cover_art:false``.
-- Store track remixers and lyricists in the multi-value ``remixers`` and
-  ``lyricists`` fields instead of the legacy single-value ``remixer`` and
-  ``lyricist`` fields. Existing libraries are migrated automatically, and
-  :doc:`plugins/musicbrainz` now preserves each MusicBrainz ``remixer`` and
-  ``lyricist`` relation as a separate value.
+- Store track remixers, lyricists, and composers in the multi-value
+  ``remixers``, ``lyricists``, and ``composers`` fields instead of the legacy
+  single-value ``remixer``, ``lyricist``, and ``composer`` fields. Existing
+  libraries are migrated automatically, and :doc:`plugins/musicbrainz` now
+  preserves each MusicBrainz ``remixer``, ``lyricist``, and ``composer``
+  relation as a separate value.
 
 Bug fixes
 ~~~~~~~~~
