@@ -2147,13 +2147,13 @@ files = [
 
 [[package]]
 name = "mediafile"
-version = "0.14.0"
+version = "0.15.0"
 description = "A simple, cross-format library for reading and writing media file metadata."
 optional = false
 python-versions = ">=3.10"
 files = [
-    {file = "mediafile-0.14.0-py3-none-any.whl", hash = "sha256:6f5c3c9e1535bfdb4f299d1558862f063bf3e8a4f1e0ec9df04a3c5bdc620ecc"},
-    {file = "mediafile-0.14.0.tar.gz", hash = "sha256:4b56aeae5cad227f25c11721347a8d85e502080852ddc6351fd43e6cdf6fa3f7"},
+    {file = "mediafile-0.15.0-py3-none-any.whl", hash = "sha256:9d105703a36f5d46545241f7254145a53c8b43ae3e4302d9ce9218a2bbf6e41e"},
+    {file = "mediafile-0.15.0.tar.gz", hash = "sha256:af585d69a3a42567203dd5a891ed36b83b7d1aab4aa824e4575d4917e4583b09"},
 ]
 
 [package.dependencies]
@@ -4797,4 +4797,4 @@ web = ["flask", "flask-cors"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<4"
-content-hash = "c9f26c3eea9635634fb2fdf4fa5406548bdd6ee3d450ffb4b2263d04315350a0"
+content-hash = "92317d2d8adfdaa2d4e4f96095294551d8bdf149a0670898995c628fe6367410"
