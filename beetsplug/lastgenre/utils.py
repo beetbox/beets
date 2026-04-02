@@ -28,6 +28,20 @@ if TYPE_CHECKING:
     """Mapping of artist name to list of compiled case-insensitive patterns."""
 
 
+def drop_ignored_genres(
+    logger: BeetsLogger,
+    ignorelist: Ignorelist,
+    genres: list[str],
+    artist: str | None = None,
+) -> list[str]:
+    """Drop genres that match the ignorelist."""
+    return [
+        genre
+        for genre in genres
+        if not is_ignored(logger, ignorelist, genre, artist)
+    ]
+
+
 def is_ignored(
     logger: BeetsLogger,
     ignorelist: Ignorelist,

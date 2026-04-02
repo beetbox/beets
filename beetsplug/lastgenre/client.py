@@ -25,7 +25,7 @@ import pylast
 
 from beets import plugins
 
-from .utils import is_ignored
+from .utils import drop_ignored_genres
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -140,11 +140,7 @@ class LastFmClient:
 
         # Filter forbidden genres on every call so ignorelist hits are logged.
         # Artist is always the first element in args (album, artist, track lookups).
-        return [
-            g
-            for g in genres
-            if not is_ignored(self._log, self._ignorelist, g, args[0])
-        ]
+        return drop_ignored_genres(self._log, self._ignorelist, genres, args[0])
 
     def fetch_album_genre(self, albumartist: str, albumtitle: str) -> list[str]:
         """Return genres from Last.fm for the album by albumartist."""
