@@ -370,7 +370,7 @@ class MusicBrainzPlugin(
         if recording.get("isrcs"):
             info.isrc = ";".join(recording["isrcs"])
 
-        lyricist = []
+        lyricists = []
         composer = []
         composer_sort = []
         for work_relation in recording.get("work-relations", ()):
@@ -387,14 +387,14 @@ class MusicBrainzPlugin(
                 if "type" in artist_relation:
                     type = artist_relation["type"]
                     if type == "lyricist":
-                        lyricist.append(artist_relation["artist"]["name"])
+                        lyricists.append(artist_relation["artist"]["name"])
                     elif type == "composer":
                         composer.append(artist_relation["artist"]["name"])
                         composer_sort.append(
                             artist_relation["artist"]["sort-name"]
                         )
-        if lyricist:
-            info.lyricist = ", ".join(lyricist)
+        if lyricists:
+            info.lyricists = lyricists
         if composer:
             info.composer = ", ".join(composer)
             info.composer_sort = ", ".join(composer_sort)
