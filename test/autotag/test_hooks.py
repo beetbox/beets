@@ -32,7 +32,7 @@ from beets.library import Item
 from beets.test.helper import BeetsTestCase
 
 str_field_deprecation = pytest.warns(
-    DeprecationWarning, match="The 'str_field' parameter is deprecated"
+    DeprecationWarning, match="The 'genre' parameter is deprecated"
 )
 
 _p = pytest.param
@@ -71,14 +71,25 @@ _p = pytest.param
         ),
     ],
 )
-def test_get_list_from_string_value(
-    str_value, list_value, expected_warning, expected_list_value
-):
-    with expected_warning:
-        actual_list_value = Info._get_list_from_string_value(
-            "str_field", "list_field", str_value, list_value
-        )
+class TestLegacyStringField:
+    def test_init_info(
+        self, str_value, list_value, expected_warning, expected_list_value
+    ):
+        with expected_warning:
+            actual_list_value = Info._get_list_from_string_value(
+                "genre", "genres", str_value, list_value
+            )
+
         assert actual_list_value == expected_list_value
+
+    def test_set_str_value(
+        self, str_value, list_value, expected_warning, expected_list_value
+    ):
+        info = Info(genres=list_value)
+        with expected_warning:
+            info["genre"] = str_value
+
+        assert info["genres"] == expected_list_value
 
 
 class ApplyTest(BeetsTestCase):

@@ -584,11 +584,11 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
             "TRACK ARTIST 2 CREDIT",
         ]
 
-    def test_parse_recording_remixer(self):
+    def test_parse_recording_remixers(self):
         tracks = [self._make_track("a", "b", 1, remixer=True)]
         release = self._make_release(None, tracks=tracks)
         track = self.mb.album_info(release).tracks[0]
-        assert track.remixer == "RECORDING REMIXER ARTIST NAME"
+        assert track.remixers == ["RECORDING REMIXER ARTIST NAME"]
 
     def test_data_source(self):
         release = self._make_release()
