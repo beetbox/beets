@@ -26,7 +26,6 @@ Bug fixes
   Play-count imports now use source-specific fields so
   :doc:`plugins/listenbrainz`, :doc:`plugins/lastimport`, and
   :doc:`plugins/mpdstats` do not clash. :bug:`6469`
-
 - :ref:`import-cmd` Fix ``albumartists_sort`` (and related fields) incorrectly
   prepending the full combined artist credit as the first element for
   multi-artist releases. :bug:`6470`
