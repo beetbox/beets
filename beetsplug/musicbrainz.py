@@ -184,19 +184,6 @@ def _artist_ids(credit: list[JSONDict]) -> list[str]:
     return artist_ids
 
 
-def _get_related_artist_names(relations, relation_type):
-    """Given a list representing the artist relationships extract the names of
-    the remixers and concatenate them.
-    """
-    related_artists = []
-
-    for relation in relations:
-        if relation["type"] == relation_type:
-            related_artists.append(relation["artist"]["name"])
-
-    return ", ".join(related_artists)
-
-
 def album_url(albumid: str) -> str:
     return urljoin(BASE_URL, f"release/{albumid}")
 
@@ -368,10 +355,12 @@ class MusicBrainzPlugin(
             info.artists_ids = _artist_ids(recording["artist-credit"])
             info.artist_id = info.artists_ids[0]
 
-        if recording.get("artist-relations"):
-            info.remixer = _get_related_artist_names(
-                recording["artist-relations"], relation_type="remixer"
-            )
+        artist_relations = recording.get("artist-relations", [])
+        info.remixers = [
+            r["artist"]["name"]
+            for r in artist_relations
+            if r["type"] == "remixer"
+        ] or None
 
         if recording.get("length"):
             info.length = int(recording["length"]) / 1000.0
