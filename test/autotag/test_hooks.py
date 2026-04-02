@@ -339,6 +339,11 @@ class TestOverwriteNull:
         ("1 FT 2", ["1", "1 ft 2"], ("1 FT 2", ["1", "1 ft 2"])),
         ("a", ["b", "A"], ("a", ["b", "A"])),
         ("1 ft 2", ["2", "1"], ("1 ft 2", ["2", "1"])),
+        (
+            "Zimmer, Hans and Powell, John",
+            ["Zimmer, Hans", "Powell, John"],
+            ("Zimmer, Hans and Powell, John", ["Zimmer, Hans", "Powell, John"]),
+        ),
     ],
 )
 def test_correct_list_fields(

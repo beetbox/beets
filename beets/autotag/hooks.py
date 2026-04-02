@@ -80,8 +80,9 @@ def correct_list_fields(input_data: JSONDict) -> JSONDict:
             data.get(single_field) or "",
             data.get(list_field) or [],
         )
-        if single_val not in list_val and set(single_val.lower().split()) & set(
-            map(str.lower, list_val)
+        if single_val not in list_val and (
+            set(single_val.lower().split()) & set(map(str.lower, list_val))
+            or any(v.lower() in single_val.lower() for v in list_val)
         ):
             return
 
