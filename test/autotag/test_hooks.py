@@ -131,6 +131,7 @@ class ApplyTest(BeetsTestCase):
                         "sortLast2, sortFirst2",
                     ],
                     genres=["Rock"],
+                    lyricist="trackLyricist1, trackLyricist2",
                     remixer="trackRemixer1, trackRemixer2",
                 ),
                 TrackInfo(
@@ -140,6 +141,7 @@ class ApplyTest(BeetsTestCase):
                     medium_index=1,
                     index=2,
                     medium_total=1,
+                    lyricists=["trackLyricist1", "trackLyricist2"],
                     remixers=["trackRemixer1", "trackRemixer2"],
                 ),
             ],
@@ -185,6 +187,7 @@ class ApplyTest(BeetsTestCase):
             "mb_artistid": "a6623d39-2d8e-4f70-8242-0a9553b91e50",
             "mb_artistids": ["a6623d39-2d8e-4f70-8242-0a9553b91e50"],
             "remixers": ["trackRemixer1", "trackRemixer2"],
+            "lyricists": ["trackLyricist1", "trackLyricist2"],
             "tracktotal": 2,
             "year": 2013,
             "month": 12,
