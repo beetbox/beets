@@ -18,7 +18,6 @@ Bug fixes
 
 - Correctly handle semicolon-delimited genre values from externally-tagged
   files. :bug:`6450`
-
 - :ref:`import-cmd` Fix ``albumartists_sort`` (and related fields) incorrectly
   prepending the full combined artist credit as the first element for
   multi-artist releases. :bug:`6470`
