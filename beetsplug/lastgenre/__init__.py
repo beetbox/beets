@@ -37,7 +37,7 @@ from beets import config, library, plugins, ui
 from beets.library import Album, Item
 from beets.ui import UserError
 from beets.util import plurality, unique_list
-from beetsplug.lastgenre.utils import is_ignored
+from beetsplug.lastgenre.utils import drop_ignored_genres, is_ignored
 
 from .client import LastFmClient
 
@@ -376,14 +376,14 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if not self.whitelist and not self.ignorelist:
             return cleaned
 
-        result = []
-        for genre in cleaned:
-            if self.whitelist and genre.lower() not in self.whitelist:
-                continue
-            if is_ignored(self._log, self.ignorelist, genre, artist):
-                continue
-            result.append(genre)
-        return result
+        whitelisted = [
+            genre
+            for genre in cleaned
+            if not self.whitelist or genre.lower() in self.whitelist
+        ]
+        return drop_ignored_genres(
+            self._log, self.ignorelist, whitelisted, artist
+        )
 
     # Genre resolution pipeline.
 
