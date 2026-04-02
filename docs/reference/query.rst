@@ -95,8 +95,8 @@ one that matches albums by year:
 Recall that ``-a`` makes the ``list`` command show albums instead of individual
 tracks, so this command shows me all the releases I have from this year.
 
-For multi-valued tags (such as ``artists`` or ``albumartists``), a regular
-expression search must be used to search for a single value within the
+For multi-valued tags (such as ``artists``, ``albumartists``, or ``remixers``),
+a regular expression search must be used to search for a single value within the
 multi-valued tag.
 
 Note that you can filter albums by querying tracks fields and vice versa:
