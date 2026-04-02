@@ -117,6 +117,13 @@ class MultiRemixerFieldMigration(MultiValueFieldMigration):
     list_field = "remixers"
 
 
+class MultiLyricistFieldMigration(MultiValueFieldMigration):
+    """Backfill multi-value remixers from legacy single-string remixer data."""
+
+    str_field = "lyricist"
+    list_field = "lyricists"
+
+
 class LyricsRow(NamedTuple):
     id: int
     lyrics: str
