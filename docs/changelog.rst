@@ -28,6 +28,10 @@ New features
   it easier to copy and paste multiple playlists for further use in the shell.
 - :doc:`plugins/chroma`: Add new command ``chromasearch`` to search the local
   library by chromaprint fingerprint.
+- Store track remixers in the multi-value ``remixers`` field instead of the
+  single-value ``remixer`` field. Existing libraries are migrated automatically,
+  and :doc:`plugins/musicbrainz` now preserves each MusicBrainz ``remixer``
+  relation as a separate value.
 
 Bug fixes
 ~~~~~~~~~
