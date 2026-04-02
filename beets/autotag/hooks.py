@@ -142,6 +142,15 @@ class Info(AttrDict[Any]):
         """Return fields that may be cleared when new metadata is applied."""
         return set(config["overwrite_null"][cls.type.lower()].as_str_seq())
 
+    def __setitem__(self, key: str, value: Any) -> None:
+        # handle info.genre = "abc" and info["genre"] = "abc"
+        if key == "genre":
+            self["genres"] = self._get_list_from_string_value(
+                "genre", "genres", value, self["genres"]
+            )
+        else:
+            super().__setitem__(key, value)
+
     @property
     def id(self) -> str | None:
         """Return the provider-specific identifier for this metadata object."""
@@ -165,6 +174,7 @@ class Info(AttrDict[Any]):
                 artist=self.artist_credit or self.artist,
                 artists=self.artists_credit or self.artists,
             )
+
         return correct_list_fields(data)
 
     @cached_property
@@ -216,9 +226,7 @@ class Info(AttrDict[Any]):
         self.artists_sort = artists_sort
         self.data_source = data_source
         self.data_url = data_url
-        self.genres = self._get_list_from_string_value(
-            "genre", "genres", kwargs.pop("genre", None), genres
-        )
+        self.genres = genres
         self.media = media
         self.update(kwargs)
 
@@ -380,6 +388,15 @@ class TrackInfo(Info):
         "medium_index": "track",
     }
 
+    def __setitem__(self, key: str, value: Any) -> None:
+        # handle info.remixer = "abc" and info["remixer"] = "abc"
+        if key == "remixer":
+            self["remixers"] = self._get_list_from_string_value(
+                "remixer", "remixers", value, self["remixers"]
+            )
+        else:
+            super().__setitem__(key, value)
+
     @property
     def id(self) -> str | None:
         return self.track_id
@@ -449,9 +466,7 @@ class TrackInfo(Info):
         self.medium_index = medium_index
         self.medium_total = medium_total
         self.release_track_id = release_track_id
-        self.remixers = self._get_list_from_string_value(
-            "remixer", "remixers", kwargs.pop("remixer", None), remixers
-        )
+        self.remixers = remixers
         self.title = title
         self.track_alt = track_alt
         self.track_id = track_id
