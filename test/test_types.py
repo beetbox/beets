@@ -1,5 +1,7 @@
 import time
 
+import pytest
+
 import beets
 from beets.dbcore import types
 from beets.util import normpath
@@ -56,3 +58,22 @@ def test_durationtype():
     beets.config["format_raw_length"] = True
     assert 61.23 == t.format(61.23)
     assert 3601.23 == t.format(3601.23)
+
+
+@pytest.mark.parametrize(
+    "original, expected",
+    [
+        # single element with embedded "; " is expanded
+        (["Jazz; Folk; Soul"], ["Jazz", "Folk", "Soul"]),
+        # already-correct list passes through unchanged
+        (["Jazz", "Folk"], ["Jazz", "Folk"]),
+        # mixed: only the delimited element is expanded
+        (["Jazz; Folk", "Soul"], ["Jazz", "Folk", "Soul"]),
+        # None -> null (empty list)
+        (None, []),
+        # no false split: value without "; " is unchanged
+        (["Smith, John"], ["Smith, John"]),
+    ],
+)
+def test_delimitedstring_normalize(original, expected):
+    assert types.MULTI_VALUE_DSV.normalize(original) == expected

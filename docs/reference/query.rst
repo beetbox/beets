@@ -402,6 +402,30 @@ ones you've already added to your beets library.
 Path queries are case sensitive if the queried path is on a case-sensitive
 filesystem.
 
+Cover Art Queries
+-----------------
+
+You can query items by whether they have embedded cover art using the
+``has_cover_art`` field. This is useful for finding tracks that are missing
+artwork without needing external tools.
+
+To find all tracks with embedded cover art:
+
+..
+    code-block: shell
+
+    $ beet list has_cover_art:true
+
+To find all tracks without embedded cover art:
+
+..
+    code-block: shell
+
+    $ beet list has_cover_art:false
+
+This query checks the actual file for embedded images, so no re-importing or
+external tagging needed.
+
 .. _query-sort:
 
 Sort Order
