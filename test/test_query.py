@@ -518,3 +518,34 @@ class TestRelatedQueries:
     def test_related_query(self, lib, q, expected_titles, expected_albums):
         assert {i.album for i in lib.albums(q)} == set(expected_albums)
         assert {i.title for i in lib.items(q)} == set(expected_titles)
+
+
+class TestHasCoverArtQuery:
+    """Test has_cover_art computed field for detecting embedded cover art."""
+
+    @pytest.fixture(scope="class")
+    def lib(self, helper):
+        item_with = helper.add_item_fixture()
+        item_with.title = "with_art"
+
+        path_with = helper.create_mediafile_fixture(images=["jpg"])
+        item_with["path"] = path_with
+        item_with.store()
+
+        path_without = helper.create_mediafile_fixture(images=[])
+        item_without = helper.add_item_fixture()
+        item_without.title = "without_art"
+        item_without["path"] = path_without
+        item_without.store()
+
+        return helper.lib
+
+    @pytest.mark.parametrize(
+        "query, expected_titles",
+        [
+            ("has_cover_art:true", {"with_art"}),
+            ("has_cover_art:false", {"without_art"}),
+        ],
+    )
+    def test_has_cover_art_query(self, lib, query, expected_titles):
+        assert {i.title for i in lib.items(query)} == expected_titles

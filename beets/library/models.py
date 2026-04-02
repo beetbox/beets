@@ -5,6 +5,7 @@ import string
 import sys
 import time
 import unicodedata
+from contextlib import suppress
 from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
@@ -805,6 +806,7 @@ class Item(LibModel):
         getters = plugins.item_field_getters()
         getters["singleton"] = lambda i: i.album_id is None
         getters["filesize"] = Item.try_filesize  # In bytes.
+        getters["has_cover_art"] = Item.has_cover_art
         return getters
 
     def duplicates_query(self, fields: list[str]) -> dbcore.AndQuery:
@@ -1097,6 +1099,17 @@ class Item(LibModel):
         except (OSError, Exception) as exc:
             log.warning("could not get filesize: {}", exc)
             return 0
+
+    def has_cover_art(self):
+        """Check if item has embedded cover art.
+
+        Return True if images embedded in file, False otherwise.
+        If file unreadable or no images, return False.
+        """
+        with suppress(OSError):
+            return bool(MediaFile(self.path).images)
+
+        return False
 
     # Model methods.
 
