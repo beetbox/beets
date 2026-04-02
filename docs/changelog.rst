@@ -9,15 +9,23 @@ below!
 Unreleased
 ----------
 
-..
-    New features
-    ~~~~~~~~~~~~
+New features
+~~~~~~~~~~~~
+
+- Query: Add ``has_cover_art`` computed field to query items by embedded cover
+  art presence. Users can now search for tracks with or without embedded artwork
+  using ``beet list has_cover_art:true`` or ``beet list has_cover_art:false``.
 
 Bug fixes
 ~~~~~~~~~
 
 - Correctly handle semicolon-delimited genre values from externally-tagged
   files. :bug:`6450`
+- :doc:`plugins/listenbrainz`: Fix ``lbimport`` crashing when ListenBrainz
+  tracks are processed through Last.fm-specific play-count import logic.
+  Play-count imports now use source-specific fields so
+  :doc:`plugins/listenbrainz`, :doc:`plugins/lastimport`, and
+  :doc:`plugins/mpdstats` do not clash. :bug:`6469`
 
 - :ref:`import-cmd` Fix ``albumartists_sort`` (and related fields) incorrectly
   prepending the full combined artist credit as the first element for
@@ -49,6 +57,8 @@ New features
   order before passing it to the player.
 - :doc:`plugins/lyrics`: Add ``auto_ignore`` configuration option to skip
   fetching lyrics for items matching a beets query during auto import.
+- :doc:`plugins/musicbrainz`: Use title aliases for releases, release groups,
+  and recordings.
 
 Bug fixes
 ~~~~~~~~~
@@ -305,8 +315,6 @@ New features
   ``beet import``.
 - :doc:`plugins/random`: Added ``--field`` option to specify which field to use
   for equal-chance sampling (default: ``albumartist``).
-- :doc:`plugins/musicbrainz`: Use title aliases for releases, release groups,
-  and recordings.
 
 Bug fixes
 ~~~~~~~~~

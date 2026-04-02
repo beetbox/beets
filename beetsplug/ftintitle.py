@@ -343,17 +343,6 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         )
         return True
 
-    @staticmethod
-    def find_bracket_position(
-        title: str, keywords: list[str] | None = None
-    ) -> int | None:
-        normalized = (
-            DEFAULT_BRACKET_KEYWORDS if keywords is None else tuple(keywords)
-        )
-        pattern = FtInTitlePlugin._bracket_position_pattern(normalized)
-        m: re.Match[str] | None = pattern.search(title)
-        return m.start() if m else None
-
     @classmethod
     def insert_ft_into_title(
         cls, title: str, feat_part: str, keywords: list[str] | None = None
