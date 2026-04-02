@@ -394,9 +394,13 @@ class TrackInfo(Info):
             self["remixers"] = self._get_list_from_string_value(
                 "remixer", "remixers", value, self["remixers"]
             )
-        if key == "lyricist":
+        elif key == "lyricist":
             self["lyricists"] = self._get_list_from_string_value(
                 "lyricist", "lyricists", value, self["lyricists"]
+            )
+        elif key == "composer":
+            self["composers"] = self._get_list_from_string_value(
+                "composer", "composers", value, self["composers"]
             )
         else:
             super().__setitem__(key, value)
@@ -436,7 +440,7 @@ class TrackInfo(Info):
         *,
         arranger: str | None = None,
         bpm: str | None = None,
-        composer: str | None = None,
+        composers: list[str] | None = None,
         composer_sort: str | None = None,
         disctitle: str | None = None,
         index: int | None = None,
@@ -458,7 +462,7 @@ class TrackInfo(Info):
     ) -> None:
         self.arranger = arranger
         self.bpm = bpm
-        self.composer = composer
+        self.composers = composers
         self.composer_sort = composer_sort
         self.disctitle = disctitle
         self.index = index

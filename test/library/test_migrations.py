@@ -146,6 +146,12 @@ class TestMultiLyricistFieldMigration(MultiArtistFieldMigrationTestMixin):
     migration_cls = migrations.MultiLyricistFieldMigration
 
 
+class TestMultiComposerFieldMigration(MultiArtistFieldMigrationTestMixin):
+    str_field = "composer"
+    list_field = "composers"
+    migration_cls = migrations.MultiComposerFieldMigration
+
+
 class TestLyricsMetadataInFlexFieldsMigration:
     @pytest.fixture
     def helper(self, monkeypatch):

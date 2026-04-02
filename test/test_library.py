@@ -70,9 +70,9 @@ class StoreTest(ItemInDBTestCase):
         assert self.lib.get_item(self.i.id).year != new_year
 
     def test_store_clears_dirty_flags(self):
-        self.i.composer = "tvp"
+        self.i.composers = ["tvp"]
         self.i.store()
-        assert "composer" not in self.i._dirty
+        assert "composers" not in self.i._dirty
 
     def test_store_album_cascades_flex_deletes(self):
         album = Album(flex1="Flex-1")
@@ -97,8 +97,8 @@ class AddTest(BeetsTestCase):
         new_grouping = (
             self.lib._connection()
             .execute(
-                "select grouping from items where composer = ?",
-                (self.i.composer,),
+                "select grouping from items where composers = ?",
+                (self.i._type("composers").to_sql(self.i.composers),),
             )
             .fetchone()["grouping"]
         )
@@ -112,8 +112,8 @@ class AddTest(BeetsTestCase):
         new_grouping = (
             self.lib._connection()
             .execute(
-                "select grouping from items where composer = ?",
-                (self.i.composer,),
+                "select grouping from items where composers = ?",
+                (i._type("composers").to_sql(i.composers),),
             )
             .fetchone()["grouping"]
         )

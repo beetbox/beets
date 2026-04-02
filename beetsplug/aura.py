@@ -83,7 +83,7 @@ TRACK_ATTR_MAP = {
     "genres": "genres",
     "recording-mbid": "mb_trackid",  # beets trackid is MB recording
     "track-mbid": "mb_releasetrackid",
-    "composer": "composer",
+    "composer": "composers",
     "albumartist": "albumartist",
     "comments": "comments",
     # Optional for Audio Metadata
