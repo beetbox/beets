@@ -12,6 +12,18 @@ if TYPE_CHECKING:
     from logging import Logger
 
 
+ALBUM_LEGACY_TO_LIST_FIELD = {
+    "genre": "genres",
+}
+ITEM_LEGACY_TO_LIST_FIELD = {
+    "genre": "genres",
+    "arranger": "arrangers",
+    "composer": "composers",
+    "lyricist": "lyricists",
+    "remixer": "remixers",
+}
+
+
 def _format_message(old: str, new: str | None = None) -> str:
     next_major = f"{Version(beets.__version__).major + 1}.0.0"
     msg = f"{old} is deprecated and will be removed in version {next_major}."
