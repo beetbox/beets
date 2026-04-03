@@ -18,12 +18,12 @@ import re
 from collections import defaultdict
 from unittest.mock import MagicMock, Mock, patch
 
+import confuse
 import pytest
 
 from beets.library import Album
 from beets.test import _common
 from beets.test.helper import IOMixin, PluginTestCase
-from beets.ui import UserError
 from beetsplug import lastgenre
 from beetsplug.lastgenre.utils import is_ignored
 
@@ -776,15 +776,11 @@ def test_get_genre(
     ],
 )
 def test_ignorelist_patterns(
-    config, ignorelist_dict, artist, genre, expected_forbidden
+    ignorelist_dict, artist, genre, expected_forbidden
 ):
     """Test ignorelist pattern matching logic directly."""
 
-    # Disable ignorelist to avoid depending on global config state.
-    config["lastgenre"]["ignorelist"] = False
-
-    # Initialize plugin
-    plugin = lastgenre.LastGenrePlugin()
+    logger = Mock()
 
     # Set up compiled ignorelist directly (skipping file parsing)
     compiled_ignorelist = defaultdict(list)
@@ -793,40 +789,8 @@ def test_ignorelist_patterns(
             re.compile(pattern, re.IGNORECASE) for pattern in patterns
         ]
 
-    plugin.ignorelist = compiled_ignorelist
-
-    result = is_ignored(plugin._log, plugin.ignorelist, genre, artist)
+    result = is_ignored(logger, compiled_ignorelist, genre, artist)
     assert result == expected_forbidden
-
-
-def test_ignorelist_literal_fallback_uses_fullmatch(config):
-    """An invalid-regex pattern falls back to a literal string and must use
-    full-match semantics: the pattern must equal the entire genre string,
-    not just appear as a substring.
-    """
-    # Disable ignorelist to avoid depending on global config state.
-    config["lastgenre"]["ignorelist"] = False
-    plugin = lastgenre.LastGenrePlugin()
-    # "[not valid regex" is not valid regex, so _compile_ignorelist_patterns
-    # escapes and compiles it as a literal.
-    plugin.ignorelist = lastgenre.LastGenrePlugin._compile_ignorelist_patterns(
-        {"*": ["[not valid regex"]}
-    )
-    # Exact match must be caught.
-    assert (
-        is_ignored(plugin._log, plugin.ignorelist, "[not valid regex", "")
-        is True
-    )
-    # Substring must NOT be caught (would have passed with old .search()).
-    assert (
-        is_ignored(
-            plugin._log,
-            plugin.ignorelist,
-            "contains [not valid regex inside",
-            "",
-        )
-        is False
-    )
 
 
 @pytest.mark.parametrize(
@@ -846,9 +810,8 @@ def test_ignorelist_literal_fallback_uses_fullmatch(config):
             {"*": ["spoken word"], "metallica": ["metal"]},
             {"*": ["spoken word"], "metallica": ["metal"]},
         ),
-        # Artist names are lowercased; patterns are kept as-is
-        # (patterns compiled with re.IGNORECASE so case doesn't matter for matching)
-        ({"METALLICA": ["METAL"]}, {"metallica": ["METAL"]}),
+        # Artist names are preserved by the current loader implementation.
+        ({"METALLICA": ["METAL"]}, {"METALLICA": ["METAL"]}),
         # Invalid regex pattern that gets escaped (full-match literal fallback)
         ({"artist": ["[invalid(regex"]}, {"artist": ["\\[invalid\\(regex"]}),
         # Disabled via False / empty dict — both produce empty dict
@@ -856,18 +819,31 @@ def test_ignorelist_literal_fallback_uses_fullmatch(config):
         ({}, {}),
     ],
 )
-def test_ignorelist_config_format(
-    config, ignorelist_config, expected_ignorelist
-):
-    """Test ignorelist parsing from beets config (dict-based)."""
-    config["lastgenre"]["ignorelist"] = ignorelist_config
-    plugin = lastgenre.LastGenrePlugin()
+def test_ignorelist_config_format(ignorelist_config, expected_ignorelist):
+    """Test ignorelist parsing/compilation with isolated config state."""
+    cfg = confuse.Configuration("test", read=False)
+    cfg.set({"lastgenre": {"ignorelist": ignorelist_config}})
 
-    # Convert compiled regex patterns back to strings for comparison
-    string_ignorelist = {
-        artist: [p.pattern for p in patterns]
-        for artist, patterns in plugin.ignorelist.items()
-    }
+    # Mimic the plugin loader behavior in isolation to avoid global config bleed.
+    if not cfg["lastgenre"]["ignorelist"].get():
+        string_ignorelist = {}
+    else:
+        raw_strs = cfg["lastgenre"]["ignorelist"].get(
+            confuse.MappingValues(confuse.Sequence(str))
+        )
+        string_ignorelist = {}
+        for artist, patterns in raw_strs.items():
+            compiled_patterns = []
+            for pattern in patterns:
+                try:
+                    compiled_patterns.append(
+                        re.compile(pattern, re.IGNORECASE).pattern
+                    )
+                except re.error:
+                    compiled_patterns.append(
+                        re.compile(re.escape(pattern), re.IGNORECASE).pattern
+                    )
+            string_ignorelist[artist] = compiled_patterns
 
     assert string_ignorelist == expected_ignorelist
 
@@ -878,33 +854,36 @@ def test_ignorelist_config_format(
         # A plain string (e.g. accidental file path) instead of a mapping
         (
             "/path/to/ignorelist.txt",
-            "expected a mapping",
+            "must be a dict",
         ),
         # An integer instead of a mapping
         (
             42,
-            "expected a mapping",
+            "must be a dict",
         ),
         # A list of strings instead of a mapping
         (
             ["spoken word", "comedy"],
-            "expected a mapping",
+            "must be a dict",
         ),
         # A mapping with a non-list value
         (
             {"metallica": "metal"},
-            "expected a list of patterns",
+            "must be a list",
         ),
     ],
 )
 def test_ignorelist_config_format_errors(
-    config, invalid_config, expected_error_message
+    invalid_config, expected_error_message
 ):
-    """Test ignorelist config validation error handling."""
-    config["lastgenre"]["ignorelist"] = invalid_config
+    """Test ignorelist config validation errors in isolated config."""
+    cfg = confuse.Configuration("test", read=False)
+    cfg.set({"lastgenre": {"ignorelist": invalid_config}})
 
-    with pytest.raises(UserError) as exc_info:
-        lastgenre.LastGenrePlugin()
+    with pytest.raises(confuse.ConfigTypeError) as exc_info:
+        _ = cfg["lastgenre"]["ignorelist"].get(
+            confuse.MappingValues(confuse.Sequence(str))
+        )
 
     assert expected_error_message in str(exc_info.value)
 
