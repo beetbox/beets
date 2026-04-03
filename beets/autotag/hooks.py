@@ -86,9 +86,9 @@ def correct_list_fields(input_data: JSONDict) -> JSONDict:
             # Joined credits share words with individual list values
             set(single_val_lower.split()) & list_val_lower
             or (
-                # Single value is a joined credit containing all list items
+                # Each of the credits in the list are in the joined credit
                 len(list_val) > 1
-                and all(v.lower() in single_val_lower for v in list_val)
+                and all(v in single_val_lower for v in list_val_lower)
             )
         ):
             return
