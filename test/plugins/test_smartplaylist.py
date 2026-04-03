@@ -574,3 +574,20 @@ class SmartPlaylistCLITest(IOMixin, PluginTestCase):
         for name in (b"my_playlist.m3u", b"all.m3u"):
             with open(path.join(self.temp_dir, name), "rb") as f:
                 assert f.read() == self.item.path + b"\n"
+
+    def test_splupdate_unknown_playlist_error_is_sorted_and_quoted(self):
+        config["smartplaylist"]["playlists"].set(
+            [
+                {"name": "z last.m3u", "query": self.item.title},
+                {"name": "rock'n roll.m3u", "query": self.item.title},
+                {"name": "a one.m3u", "query": self.item.title},
+            ]
+        )
+
+        with pytest.raises(UserError) as exc_info:
+            self.run_with_output("splupdate", "tagada")
+
+        assert str(exc_info.value) == (
+            "No playlist matching any of "
+            "'a one.m3u' 'rock'\"'\"'n roll.m3u' 'z last.m3u' found"
+        )
