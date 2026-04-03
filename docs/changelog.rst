@@ -12,9 +12,16 @@ Unreleased
 New features
 ~~~~~~~~~~~~
 
+- :ref:`import-cmd` Use ffprobe to recognize format of any import music file
+  that has no extension. If the file cannot be recognized as a music file, leave
+  it alone. :bug:`4881`
 - Query: Add ``has_cover_art`` computed field to query items by embedded cover
   art presence. Users can now search for tracks with or without embedded artwork
   using ``beet list has_cover_art:true`` or ``beet list has_cover_art:false``.
+- :doc:`plugins/autobpm`: Add ``force`` configuration and CLI option and
+  deprecate ``overwrite``.
+- :doc:`plugins/autobpm`: The "BPM already exists for item" log message can now
+  be hidden with the ``--quiet`` flag.
 
 Bug fixes
 ~~~~~~~~~

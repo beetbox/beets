@@ -20,20 +20,52 @@ Configuration
 -------------
 
 To configure the plugin, make a ``autobpm:`` section in your configuration file.
-The available options are:
 
-- **auto**: Analyze every file on import. Otherwise, you need to use the ``beet
-  autobpm`` command explicitly. Default: ``yes``
-- **overwrite**: Calculate a BPM even for files that already have a ``bpm``
-  value. Default: ``no``.
-- **beat_track_kwargs**: Any extra keyword arguments that you would like to
-  provide to librosa's beat_track_ function call, for example:
+Default
+~~~~~~~
 
 .. code-block:: yaml
 
     autobpm:
-      beat_track_kwargs:
-        start_bpm: 160
+        auto: yes
+        force: no
+        beat_track_kwargs: {}
+        quiet: no
+
+.. conf:: auto
+    :default: yes
+
+    Analyze every file on import. Otherwise, you need to use the ``beet
+    autobpm`` command explicitly.
+
+.. conf:: force
+    :default: no
+
+    Calculate a BPM even for files that already have a ``bpm`` value. Can also be set
+    using the ``-f`` or ``--force`` flag.
+
+.. conf:: overwrite
+    :default: no
+
+    .. deprecated:: 2.9 Use ``force`` instead.
+
+.. conf:: beat_track_kwargs
+    :default: {}
+
+    Any extra keyword arguments that you would like to provide to librosa's
+    beat_track_ function call, for example:
+
+    .. code-block:: yaml
+
+        autobpm:
+          beat_track_kwargs:
+            start_bpm: 160
+
+.. conf:: quiet
+    :default: no
+
+    Suppress the message indicating that a file already has a ``bpm`` value. Can also be
+    set using the ``-q`` or ``--quiet`` flag.
 
 .. _beat_track: https://librosa.org/doc/latest/generated/librosa.beat.beat_track.html
 
