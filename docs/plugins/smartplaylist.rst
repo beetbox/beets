@@ -179,9 +179,12 @@ options are:
   playlist. This allows using e.g. the ``id`` field within other tools such as
   the webm3u_ and Beetstream_ plugins. To use this option, you must set the
   ``output`` option to ``extm3u``.
+- **quiet**: Suppress log messages for each created/updated playlist and in
+  pretend mode only print the playlist name and the number of tracks. Default:
+  ``false``.
 
 For many configuration options, there is a corresponding CLI option, e.g.
 ``--playlist-dir``, ``--dest-regen``, ``--relative-to``, ``--prefix``,
 ``--forward-slash``, ``--urlencode``, ``--uri-format``, ``--output``,
-``--pretend-paths``. CLI options take precedence over those specified within the
-configuration file.
+``--pretend-paths``, ``--quiet``. CLI options take precedence over those
+specified within the configuration file.
