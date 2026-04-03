@@ -143,6 +143,7 @@ class LastFmClient:
             "last.fm (unfiltered) {} tags: {}", entity, genres
         )
 
+        # Apply aliases and log each change.
         # Filter forbidden genres on every call so ignorelist hits are logged.
         # Artist is always the first element in args (album, artist, track lookups).
         result = []
