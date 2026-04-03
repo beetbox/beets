@@ -364,18 +364,14 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # Run through stages: track, album, artist,
         # album artist, or most popular track genre.
         if isinstance(obj, library.Item) and "track" in self.sources:
-            if new_genres := self.client.fetch_track_genre(
-                obj.artist, obj.title
-            ):
+            if new_genres := self.client.fetch("track", obj):
                 if result := _try_resolve_stage(
                     "track", keep_genres, new_genres
                 ):
                     return result
 
         if "album" in self.sources:
-            if new_genres := self.client.fetch_album_genre(
-                obj.albumartist, obj.album
-            ):
+            if new_genres := self.client.fetch("album", obj):
                 if result := _try_resolve_stage(
                     "album", keep_genres, new_genres
                 ):
@@ -384,10 +380,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if "artist" in self.sources:
             new_genres = []
             if isinstance(obj, library.Item):
-                new_genres = self.client.fetch_artist_genre(obj.artist)
+                new_genres = self.client.fetch("artist", obj)
                 stage_label = "artist"
             elif obj.albumartist != config["va_name"].as_str():
-                new_genres = self.client.fetch_artist_genre(obj.albumartist)
+                new_genres = self.client.fetch("album_artist", obj)
                 stage_label = "album artist"
                 if not new_genres:
                     self._log.extra_debug(
@@ -400,9 +396,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                             'Fetching artist genre for "{}"',
                             albumartist,
                         )
-                        new_genres += self.client.fetch_artist_genre(
-                            albumartist
-                        )
+                        new_genres += self.client.fetch("album_artist", obj)
                     if new_genres:
                         stage_label = "multi-valued album artist"
             else:
@@ -412,11 +406,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 for item in obj.items():
                     item_genre = None
                     if "track" in self.sources:
-                        item_genre = self.client.fetch_track_genre(
-                            item.artist, item.title
-                        )
+                        item_genre = self.client.fetch("track", item)
                     if not item_genre:
-                        item_genre = self.client.fetch_artist_genre(item.artist)
+                        item_genre = self.client.fetch("artist", item)
                     if item_genre:
                         item_genres += item_genre
                 if item_genres:

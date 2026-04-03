@@ -19,7 +19,7 @@
 from __future__ import annotations
 
 import traceback
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import pylast
 
@@ -28,6 +28,7 @@ from beets import plugins
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from beets.library import LibModel
     from beets.logging import BeetsLogger
 
     GenreCache = dict[str, list[str]]
@@ -47,6 +48,18 @@ PYLAST_EXCEPTIONS = (
 
 class LastFmClient:
     """Client for fetching genres from Last.fm."""
+
+    FETCH_METHODS: ClassVar[
+        dict[
+            str,
+            tuple[Callable[..., Any], Callable[[LibModel], tuple[str, ...]]],
+        ]
+    ] = {
+        "track": (LASTFM.get_track, lambda obj: (obj.artist, obj.title)),
+        "album": (LASTFM.get_album, lambda obj: (obj.albumartist, obj.album)),
+        "artist": (LASTFM.get_artist, lambda obj: (obj.artist,)),
+        "album_artist": (LASTFM.get_artist, lambda obj: (obj.albumartist,)),
+    }
 
     def __init__(self, log: BeetsLogger, min_weight: int):
         """Initialize the client.
@@ -129,18 +142,7 @@ class LastFmClient:
         self._log.extra_debug("last.fm (unfiltered) {} tags: {}", entity, genre)
         return genre
 
-    def fetch_album_genre(self, albumartist: str, albumtitle: str) -> list[str]:
-        """Return genres from Last.fm for the album by albumartist."""
-        return self._last_lookup(
-            "album", LASTFM.get_album, albumartist, albumtitle
-        )
-
-    def fetch_artist_genre(self, artist: str) -> list[str]:
-        """Return genres from Last.fm for the artist."""
-        return self._last_lookup("artist", LASTFM.get_artist, artist)
-
-    def fetch_track_genre(self, trackartist: str, tracktitle: str) -> list[str]:
-        """Return genres from Last.fm for the track by artist."""
-        return self._last_lookup(
-            "track", LASTFM.get_track, trackartist, tracktitle
-        )
+    def fetch(self, kind: str, obj: LibModel) -> list[str]:
+        """Fetch fetcher for Last.fm genres."""
+        method, arg_fn = self.FETCH_METHODS[kind]
+        return self._last_lookup(kind, method, *arg_fn(obj))

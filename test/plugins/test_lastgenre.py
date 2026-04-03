@@ -604,27 +604,18 @@ def config(config):
         ),
     ],
 )
+@pytest.mark.usefixtures("config")
 def test_get_genre(
-    config, config_values, item_genre, mock_genres, expected_result
+    monkeypatch, config_values, item_genre, mock_genres, expected_result
 ):
     """Test _get_genre with various configurations."""
-
-    def mock_fetch_track_genre(self, trackartist, tracktitle):
-        return mock_genres["track"]
-
-    def mock_fetch_album_genre(self, albumartist, albumtitle):
-        return mock_genres["album"]
-
-    def mock_fetch_artist_genre(self, artist):
-        return mock_genres["artist"]
-
     # Mock the last.fm fetchers. When whitelist enabled, we can assume only
     # whitelisted genres get returned, the plugin's _resolve_genre method
     # ensures it.
-    lastgenre.client.LastFmClient.fetch_track_genre = mock_fetch_track_genre
-    lastgenre.client.LastFmClient.fetch_album_genre = mock_fetch_album_genre
-    lastgenre.client.LastFmClient.fetch_artist_genre = mock_fetch_artist_genre
-
+    monkeypatch.setattr(
+        "beetsplug.lastgenre.client.LastFmClient.fetch",
+        lambda _, kind, __: mock_genres[kind],
+    )
     # Initialize plugin instance and item
     plugin = lastgenre.LastGenrePlugin()
     # Configure
