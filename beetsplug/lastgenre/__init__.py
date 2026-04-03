@@ -31,11 +31,11 @@ from functools import singledispatchmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+import confuse
 import yaml
 
 from beets import config, library, plugins, ui
 from beets.library import Album, Item
-from beets.ui import UserError
 from beets.util import plurality, unique_list
 from beetsplug.lastgenre.utils import drop_ignored_genres, is_ignored
 
@@ -56,9 +56,6 @@ if TYPE_CHECKING:
     CanonTree = list[list[str]]
     """Genre hierarchy as list of paths from general to specific.
     Example: [['electronic', 'house'], ['electronic', 'techno']]"""
-
-    RawIgnorelist = dict[str, list[str]]
-    """Mapping of artist name (lowercased) to list of raw regex/string patterns."""
 
 
 # Canonicalization tree processing.
@@ -139,7 +136,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 "prefer_specific": False,
                 "title_case": True,
                 "pretend": False,
-                "ignorelist": False,
+                "ignorelist": {},
             }
         )
         self.setup()
@@ -219,45 +216,18 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         YAML characters (e.g., ``*`` or ``[``); prefer single-quotes.
 
         Raises:
-            UserError: if the config value is not a mapping, or if an entry's
-            value is not a list of strings.
+            Several confuse.ConfigError's that tell the user about the expected
+            format when the config is invalid.
         """
-        ignorelist_config = self.config["ignorelist"].get()
-        if not ignorelist_config:
+        if not self.config["ignorelist"].get():
             return {}
-        if not isinstance(ignorelist_config, dict):
-            raise UserError(
-                "Invalid value for lastgenre.ignorelist: expected a mapping "
-                f"(artist -> list of patterns), got {ignorelist_config!r}"
-            )
 
-        ignorelist_raw: RawIgnorelist = {}
-        for artist, patterns in ignorelist_config.items():
-            if not isinstance(patterns, list):
-                raise UserError(
-                    f"Invalid lastgenre.ignorelist entry for {artist!r}: "
-                    f"expected a list of patterns, got {patterns!r}"
-                )
-            ignorelist_raw[str(artist).lower()] = [str(p) for p in patterns]
-
-        self._log.extra_debug("Ignorelist: {}", ignorelist_raw)
-        return self._compile_ignorelist_patterns(ignorelist_raw)
-
-    @staticmethod
-    def _compile_ignorelist_patterns(
-        ignorelist: RawIgnorelist,
-    ) -> Ignorelist:
-        """Compile ignorelist patterns into regex objects.
-
-        Tries regex compilation first; if the pattern is not valid regex,
-        falls back to treating it as a literal string. Either way the pattern
-        must match the entire genre string (full match). To match substrings,
-        write e.g. ``.*rock.*``. All patterns are case-insensitive.
-        """
-        compiled_ignorelist: defaultdict[str, list[re.Pattern[str]]] = (
-            defaultdict(list)
+        raw_ignorelist = self.config["ignorelist"].get(
+            confuse.MappingValues(confuse.Sequence(str))
         )
-        for artist, patterns in ignorelist.items():
+
+        compiled_ignorelist: Ignorelist = defaultdict(list)
+        for artist, patterns in raw_ignorelist.items():
             compiled_patterns = []
             for pattern in patterns:
                 try:
@@ -266,7 +236,14 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     compiled_patterns.append(
                         re.compile(re.escape(pattern), re.IGNORECASE)
                     )
+            self._log.extra_debug(
+                "ignore for {}: {}",
+                artist,
+                [p.pattern for p in compiled_patterns],
+            )
+
             compiled_ignorelist[artist] = compiled_patterns
+
         return compiled_ignorelist
 
     @property
