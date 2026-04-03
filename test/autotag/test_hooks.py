@@ -79,7 +79,10 @@ class ApplyTest(BeetsTestCase):
                     artist_credit="trackArtistCredit",
                     artists_credit=["trackArtistCredit"],
                     artist_sort="sortLast, sortFirst and sortLast2, sortFirst2",
-                    artists_sort=["sortLast, sortFirst", "sortLast2, sortFirst2"],
+                    artists_sort=[
+                        "sortLast, sortFirst",
+                        "sortLast2, sortFirst2",
+                    ],
                 ),
                 TrackInfo(
                     title="title2",
@@ -146,7 +149,10 @@ class ApplyTest(BeetsTestCase):
                 "artist_credit": "trackArtistCredit",
                 "artist_sort": "sortLast, sortFirst and sortLast2, sortFirst2",
                 "artists_credit": ["trackArtistCredit"],
-                "artists_sort": ["sortLast, sortFirst", "sortLast2, sortFirst2"],
+                "artists_sort": [
+                    "sortLast, sortFirst",
+                    "sortLast2, sortFirst2",
+                ],
                 "disc": 1,
                 "mb_trackid": "dfa939ec-118c-4d0f-84a0-60f3d1e6522c",
                 "title": "title",
