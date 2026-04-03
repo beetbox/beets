@@ -753,6 +753,10 @@ def test_get_media_and_albumtype(formats, expected_media, expected_albumtype):
                 "artists_ids": ["1"],
                 "artist_credit": "VARIOUS ARTISTS",
                 "artists_credit": ["VARIOUS ARTISTS"],
+                "arrangers": None,
+                "composers": None,
+                "remixers": None,
+                "lyricists": None,
             },
             "VARIOUS ARTISTS",
         )

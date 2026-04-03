@@ -59,7 +59,7 @@ class ArtistState:
         name: str
         credit: str
         join: str
-        is_feat: bool
+        role: str
 
         def get_artist(self, property_name: str) -> str:
             """Return the requested display field with its trailing join token.
@@ -111,23 +111,26 @@ class ArtistState:
                 self.strip_disambiguation(anv if self.use_anv else name),
                 self.strip_disambiguation(anv if self.use_credit_anv else name),
                 a["join"].strip(),
-                is_feat,
+                a["role"].lower(),
             )
             for a in self.raw_artists
             if (
                 (name := va_name if a["name"] == "Various" else a["name"])
                 and (anv := a["anv"] or name)
-                and (
-                    (is_feat := ("featuring" in a["role"].lower()))
-                    or not a["role"]
-                )
             )
+        ]
+
+    @property
+    def main_artists(self) -> list[ValidArtist]:
+        """Return the per-artist display names used for the 'artist' field."""
+        return [
+            a for a in self.valid_artists if not a.role or "featuring" in a.role
         ]
 
     @property
     def artists_ids(self) -> list[str]:
         """Return Discogs artist IDs for all valid artists, preserving order."""
-        return [a.id for a in self.valid_artists]
+        return [a.id for a in self.main_artists]
 
     @property
     def artist_id(self) -> str:
@@ -137,12 +140,12 @@ class ArtistState:
     @property
     def artists(self) -> list[str]:
         """Return the per-artist display names used for the 'artist' field."""
-        return [a.name for a in self.valid_artists]
+        return [a.name for a in self.main_artists]
 
     @property
     def artists_credit(self) -> list[str]:
         """Return the per-artist display names used for the credit field."""
-        return [a.credit for a in self.valid_artists]
+        return [a.credit for a in self.main_artists]
 
     @property
     def artist(self) -> str:
@@ -154,6 +157,30 @@ class ArtistState:
         """Return the fully rendered artist credit string."""
         return self.join_artists("credit")
 
+    @property
+    def lyricists(self) -> list[str] | None:
+        return [
+            a.name for a in self.valid_artists if "lyrics" in a.role
+        ] or None
+
+    @property
+    def arrangers(self) -> list[str] | None:
+        return [
+            a.name
+            for a in self.valid_artists
+            if "producer" in a.role and "additional" not in a.role
+        ] or None
+
+    @property
+    def remixers(self) -> list[str] | None:
+        return [a.name for a in self.valid_artists if "remix" in a.role] or None
+
+    @property
+    def composers(self) -> list[str] | None:
+        return [
+            a.name for a in self.valid_artists if a.role == "written-by"
+        ] or None
+
     def join_artists(self, property_name: str) -> str:
         """Render a single artist string with join phrases and featured artists.
 
@@ -162,8 +189,8 @@ class ArtistState:
         Discogs order while keeping featured credits separate from the main
         artist string.
         """
-        non_featured = [a for a in self.valid_artists if not a.is_feat]
-        featured = [a for a in self.valid_artists if a.is_feat]
+        non_featured = [a for a in self.main_artists if not a.role]
+        featured = [a for a in self.main_artists if "featuring" in a.role]
 
         artist = "".join(a.get_artist(property_name) for a in non_featured)
         if featured:
