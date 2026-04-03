@@ -31,6 +31,10 @@ Bug fixes
   multi-artist releases. :bug:`6470`
 
 ..
+    For plugin developers
+    ~~~~~~~~~~~~~~~~~~~~~
+
+..
     Other changes
     ~~~~~~~~~~~~~
 
