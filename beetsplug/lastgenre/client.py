@@ -19,7 +19,7 @@
 from __future__ import annotations
 
 import traceback
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import pylast
 
@@ -30,6 +30,7 @@ from .utils import drop_ignored_genres
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from beets.library import LibModel
     from beets.logging import BeetsLogger
 
     from .utils import GenreIgnorePatterns
@@ -50,6 +51,18 @@ PYLAST_EXCEPTIONS = (
 
 class LastFmClient:
     """Client for fetching genres from Last.fm."""
+
+    FETCH_METHODS: ClassVar[
+        dict[
+            str,
+            tuple[Callable[..., Any], Callable[[LibModel], tuple[str, ...]]],
+        ]
+    ] = {
+        "track": (LASTFM.get_track, lambda obj: (obj.artist, obj.title)),
+        "album": (LASTFM.get_album, lambda obj: (obj.albumartist, obj.album)),
+        "artist": (LASTFM.get_artist, lambda obj: (obj.artist,)),
+        "album_artist": (LASTFM.get_artist, lambda obj: (obj.albumartist,)),
+    }
 
     def __init__(
         self,
@@ -147,18 +160,10 @@ class LastFmClient:
             self._log, self._ignore_patterns, genres, args[0]
         )
 
-    def fetch_album_genre(self, albumartist: str, albumtitle: str) -> list[str]:
-        """Return genres from Last.fm for the album by albumartist."""
-        return self._last_lookup(
-            "album", LASTFM.get_album, albumartist, albumtitle
-        )
+    def fetch(self, kind: str, obj: LibModel, *args: str) -> list[str]:
+        """Fetch Last.fm genres for the specified kind and entity.
 
-    def fetch_artist_genre(self, artist: str) -> list[str]:
-        """Return genres from Last.fm for the artist."""
-        return self._last_lookup("artist", LASTFM.get_artist, artist)
-
-    def fetch_track_genre(self, trackartist: str, tracktitle: str) -> list[str]:
-        """Return genres from Last.fm for the track by artist."""
-        return self._last_lookup(
-            "track", LASTFM.get_track, trackartist, tracktitle
-        )
+        Use ``args`` if provided, otherwise derive arguments from the object.
+        """
+        method, arg_fn = self.FETCH_METHODS[kind]
+        return self._last_lookup(kind, method, *(args or arg_fn(obj)))
