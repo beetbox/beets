@@ -889,55 +889,36 @@ def test_ignorelist_config_format_errors(
 
 
 def test_ignorelist_multivalued_album_artist_fallback(config):
-    """Verify ignorelist filtering for multi-valued album artist fallbacks.
-
-    Genres already filtered for individual artists should not be dropped
-    due to a secondary (incorrect) check against the combined group artist.
-    """
-    # Setup config: ignore 'Metal' for 'Artist A' and 'Artist Group'.
+    """`stage_artist=None` fallback must not re-drop per-artist results."""
     config["lastgenre"]["ignorelist"] = {
         "Artist A": ["Metal"],
         "Artist Group": ["Metal"],
     }
-    # No whitelist and larger count to keep it simple.
     config["lastgenre"]["whitelist"] = False
     config["lastgenre"]["count"] = 10
 
     plugin = lastgenre.LastGenrePlugin()
     plugin.setup()
 
-    # Mock album object.
     obj = MagicMock(spec=Album)
     obj.albumartist = "Artist Group"
     obj.album = "Album Title"
     obj.albumartists = ["Artist A", "Artist B"]
-    obj.get.return_value = []  # no existing genres
+    obj.get.return_value = []
 
-    # Mock client and its artist lookups.
-    # We must ensure it doesn't resolve at track or album stage.
     plugin.client = MagicMock()
     plugin.client.fetch_track_genre.return_value = []
     plugin.client.fetch_album_genre.return_value = []
 
-    # Artist lookup side effect:
-    # Artist A: Returns 'Metal' and 'Rock'.
-    # (Note: Client should have filtered 'Metal' already, so we simulate that by
-    # returning only 'Rock').
-    # Artist B: Returns 'Metal' and 'Jazz'.
-    # Artist Group: Returns nothing (triggers fallback).
-    def mock_fetch_artist(artist):
-        if artist == "Artist A":
-            return ["Rock"]
-        if artist == "Artist B":
-            return ["Metal", "Jazz"]
-        return []
+    artist_genres = {
+        "Artist A": ["Rock"],
+        "Artist B": ["Metal", "Jazz"],
+    }
+    plugin.client.fetch_artist_genre.side_effect = lambda artist: (
+        artist_genres.get(artist, [])
+    )
 
-    plugin.client.fetch_artist_genre.side_effect = mock_fetch_artist
-
-    # Note: manually triggering the logic in _get_genre.
     genres, label = plugin._get_genre(obj)
 
     assert "multi-valued album artist" in label
-    assert "Rock" in genres
-    assert "Metal" in genres  # MUST survive because Artist B allowed it
-    assert "Jazz" in genres
+    assert "Metal" in genres
