@@ -28,6 +28,9 @@ New features
 
 - :doc:`plugins/inline`: Add access to the ``album`` or ``item`` object as
   ``db_obj`` in inline fields.
+- :doc:`plugins/discogs`: Import Discogs remixer, lyricist, composer, and
+  arranger credits into the multi-value ``remixers``, ``lyricists``,
+  ``composers``, and ``arrangers`` fields. :bug:`6380`
 
 Bug fixes
 ~~~~~~~~~
