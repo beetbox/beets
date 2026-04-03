@@ -348,7 +348,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
 
         if not pretend:
             # Write all of the accumulated track lists to files.
-            for m3u in m3us:
+            for m3u, entries in m3us.items():
                 m3u_path = normpath(
                     os.path.join(playlist_dir, bytestring_path(m3u))
                 )
@@ -364,7 +364,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
                     if extm3u:
                         keys = self.config["fields"].get(list)
                         f.write(b"#EXTM3U\n")
-                    for entry in m3us[m3u]:
+                    for entry in entries:
                         item = entry.item
                         comment = ""
                         if extm3u:
