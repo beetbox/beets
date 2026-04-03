@@ -18,6 +18,12 @@ New features
 - Query: Add ``has_cover_art`` computed field to query items by embedded cover
   art presence. Users can now search for tracks with or without embedded artwork
   using ``beet list has_cover_art:true`` or ``beet list has_cover_art:false``.
+- Beets library is now made portable: item and album-art paths are now stored
+  relative to the library root in the database while remaining absolute in the
+  rest of beets. Path queries now match both library-relative paths and absolute
+  paths under the currently configured music directory under the new storage
+  model. The existing paths in the database are migrated automatically the first
+  time you run any ``beet`` command after the update. :bug:`133`
 
 Bug fixes
 ~~~~~~~~~

@@ -15,6 +15,7 @@ from mediafile import MediaFile, UnreadableFileError
 import beets
 from beets import dbcore, logging, plugins, util
 from beets.dbcore import types
+from beets.dbcore.pathutils import normalize_path_for_db
 from beets.util import (
     MoveOperation,
     bytestring_path,
@@ -102,6 +103,18 @@ class LibModel(dbcore.Model["Library"]):
     ) -> FieldQuery:
         """Get a `FieldQuery` for the given field on this model."""
         fast = field in cls.all_db_fields
+        if (
+            cls._type(field).query is dbcore.query.PathQuery
+            and query_cls is not dbcore.query.PathQuery
+        ):
+            # Regex, exact, and string queries operate on the raw DB value, so
+            # strip the library prefix to match the stored relative path.
+            if isinstance(pattern, bytes):
+                pattern = normalize_path_for_db(pattern)
+            else:
+                pattern = os.fsdecode(
+                    normalize_path_for_db(util.bytestring_path(pattern))
+                )
         if field in cls.shared_db_fields:
             # This field exists in both tables, so SQLite will encounter
             # an OperationalError if we try to use it in a query.

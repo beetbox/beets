@@ -26,7 +26,7 @@ import beets
 from beets import util
 from beets.util.units import human_seconds_short, raw_seconds_short
 
-from . import query
+from . import pathutils, query
 
 SQLiteType = query.SQLiteType
 BLOB_TYPE = query.BLOB_TYPE
@@ -402,9 +402,10 @@ class BasePathType(Type[bytes, N]):
             return value
 
     def from_sql(self, sql_value):
-        return self.normalize(sql_value)
+        return pathutils.expand_path_from_db(self.normalize(sql_value))
 
-    def to_sql(self, value: bytes) -> BLOB_TYPE:
+    def to_sql(self, value: pathutils.MaybeBytes) -> BLOB_TYPE | None:
+        value = pathutils.normalize_path_for_db(value)
         if isinstance(value, bytes):
             value = BLOB_TYPE(value)
         return value
