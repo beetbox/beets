@@ -70,6 +70,11 @@ contains about any genre contained in the tree) with canonicalization because
 nothing would ever be matched to a more generic node since all the specific
 subgenres are in the whitelist to begin with.
 
+If you use canonicalization *without* a whitelist, the plugin will simply map
+every genre to its top-most root category in the tree (e.g., ``Viking Metal`` →
+``Rock``). This is a great way to keep your library broad without needing to
+maintain a manual list of allowed genres.
+
 .. _tree of nested genre names: https://raw.githubusercontent.com/beetbox/beets/master/beetsplug/lastgenre/genres-tree.yaml
 
 .. _yaml: https://yaml.org/
@@ -211,6 +216,55 @@ plain ``metal`` will not match ``heavy metal`` unless you write a regex like
     - Because the ignorelist uses plain YAML, you do **not** need to
       double-escape backslashes in unquoted or single-quoted strings (e.g., use
       ``\w``, not ``\\w``).
+
+Genre Normalization (Aliases)
+-----------------------------
+
+Last.fm tags often contain variant spellings, abbreviations, or inconsistent
+formatting (e.g., "hip-hop", "hiphop", and "hip hop"). The normalization feature
+uses an ordered list of regular expression aliases to map these variants to a
+single canonical name *before* any other filtering or canonicalization takes
+place.
+
+This feature is enabled by default (``aliases: yes``) and uses a bundled
+``aliases.yaml`` file which covers many common cases, such as mapping "dnb" to
+"drum and bass" or "r&b" to "rhythm and blues".
+
+You can extend or override these aliases in your configuration. The keys are the
+canonical genre names (which support ``\g<1>`` back-references to regex capture
+groups) and the values are lists of regex patterns:
+
+::
+
+    lastgenre:
+        aliases:
+            drum and bass:
+                - d(rum)?[ &n/]*b(ass)?
+            \g<1> hop:
+                - (glitch|hip|jazz|trip)y?[ /-]*hop
+
+.. note::
+
+    The same formatting and quoting rules regarding YAML special characters and
+    backslashes apply here as well. See the **Attention** box in the **Genre
+    Ignorelist** section above for details.
+
+Choosing the Right Tool
+-----------------------
+
+With multiple ways to filter and map genres, here is a quick guide on when to
+use what:
+
+- **Aliases**: Use these first to fix spelling variants and abbreviations (e.g.,
+  ``dnb`` → ``drum and bass``).
+- **Ignorelist**: Use this for error correction when Last.fm results are not
+  accurate, or for precise per-artist or global exclusions (e.g., rejecting
+  ``Metal`` for specific electronic artists).
+- **Canonicalization**: Use this to automatically map specific sub-genres to
+  broader categories (e.g., ``Grindcore`` → ``Metal``).
+- **Whitelist**: Use this to finally limit your library to a predefined set of
+  genres. When combined with canonicalization, the plugin will try to map a
+  sub-genre to its closest whitelisted parent. Anything else is dropped.
 
 Configuration
 -------------
