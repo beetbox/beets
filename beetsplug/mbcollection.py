@@ -148,13 +148,6 @@ class MBCollection:
             self.mb_api.delete(f"{self.releases_url}/{'%3B'.join(chunk)}")
 
 
-def submit_albums(collection: MBCollection, release_ids):
-    """Add all of the release IDs to the indicated collection. Multiple
-    requests are made if there are many release IDs to submit.
-    """
-    collection.add_releases(release_ids)
-
-
 class MusicBrainzCollectionPlugin(BeetsPlugin):
     def __init__(self) -> None:
         super().__init__()

@@ -58,7 +58,6 @@ if TYPE_CHECKING:
 
     from beets.library import Item
 
-
 MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = "\\\\?\\"
 T = TypeVar("T")

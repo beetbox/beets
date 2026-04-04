@@ -344,6 +344,63 @@ class ImportSingletonTest(AutotagImportTestCase):
             assert item.disc == disc
 
 
+@pytest.mark.skipif(
+    not has_program("ffprobe", ["-L"]),
+    "need ffprobe for format recognition",
+)
+class ImportFormatTest:
+    """Test fix_extension during import."""
+
+    def test_recognize_format(self):
+        resource_src = os.path.join(_common.RSRC, b"no_ext")
+        resource_path = os.path.join(self.import_dir, b"no_ext")
+        util.copy(resource_src, resource_path)
+        self.setup_importer()
+        self.importer.paths = [resource_path]
+        self.importer.run()
+        assert self.lib.items().get().path.endswith(b".mp3")
+
+    def test_recognize_format_already_exist(self):
+        resource_path = os.path.join(_common.RSRC, b"no_ext")
+        temp_resource_path = os.path.join(self.temp_dir, b"no_ext")
+        util.copy(resource_path, temp_resource_path)
+        new_path = os.path.join(self.temp_dir, b"no_ext.mp3")
+        util.copy(temp_resource_path, new_path)
+        self.setup_importer()
+        self.importer.paths = [temp_resource_path]
+        with capture_log() as logs:
+            self.importer.run()
+        assert "Import file with matching format to original target" in logs
+        assert self.lib.items().get().path.endswith(b".mp3")
+
+    def test_recognize_format_not_music(self):
+        resource_path = os.path.join(_common.RSRC, b"no_ext_not_music")
+        self.setup_importer()
+        self.importer.paths = [resource_path]
+        self.importer.run()
+        assert len(self.lib.items()) == 0
+
+    def test_recognize_format_change_original(self):
+        config["import"]["fix_ext_inplace"] = True
+        resource_src = os.path.join(_common.RSRC, b"no_ext")
+        resource_path = os.path.join(self.temp_dir, b"no_ext")
+        util.copy(resource_src, resource_path)
+        self.setup_importer()
+        self.importer.paths = [resource_path]
+        self.importer.run()
+        assert not Path(os.path.join(self.temp_dir_path, "no_ext")).exists()
+
+    def test_recognize_format_keep_original(self):
+        config["import"]["fix_ext_inplace"] = False
+        resource_src = os.path.join(_common.RSRC, b"no_ext")
+        resource_path = os.path.join(self.temp_dir, b"no_ext")
+        util.copy(resource_src, resource_path)
+        self.setup_importer()
+        self.importer.paths = [resource_path]
+        self.importer.run()
+        assert Path(os.path.join(self.temp_dir_path, "no_ext")).exists()
+
+
 class ImportTest(PathsMixin, AutotagImportTestCase):
     """Test APPLY, ASIS and SKIP choices."""
 

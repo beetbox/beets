@@ -80,8 +80,16 @@ def correct_list_fields(input_data: JSONDict) -> JSONDict:
             data.get(single_field) or "",
             data.get(list_field) or [],
         )
-        if single_val not in list_val and set(single_val.lower().split()) & set(
-            map(str.lower, list_val)
+        single_val_lower = single_val.lower()
+        list_val_lower = set(map(str.lower, list_val))
+        if single_val not in list_val and (
+            # Joined credits share words with individual list values
+            set(single_val_lower.split()) & list_val_lower
+            or (
+                # Each of the credits in the list are in the joined credit
+                len(list_val) > 1
+                and all(v in single_val_lower for v in list_val_lower)
+            )
         ):
             return
 

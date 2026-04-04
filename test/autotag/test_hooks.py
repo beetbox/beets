@@ -78,8 +78,11 @@ class ApplyTest(BeetsTestCase):
                     artist="trackArtist",
                     artist_credit="trackArtistCredit",
                     artists_credit=["trackArtistCredit"],
-                    artist_sort="trackArtistSort",
-                    artists_sort=["trackArtistSort"],
+                    artist_sort="sortLast, sortFirst and sortLast2, sortFirst2",
+                    artists_sort=[
+                        "sortLast, sortFirst",
+                        "sortLast2, sortFirst2",
+                    ],
                 ),
                 TrackInfo(
                     title="title2",
@@ -144,9 +147,12 @@ class ApplyTest(BeetsTestCase):
                 "artist": "trackArtist",
                 "artists": ["trackArtist"],
                 "artist_credit": "trackArtistCredit",
-                "artist_sort": "trackArtistSort",
+                "artist_sort": "sortLast, sortFirst and sortLast2, sortFirst2",
                 "artists_credit": ["trackArtistCredit"],
-                "artists_sort": ["trackArtistSort"],
+                "artists_sort": [
+                    "sortLast, sortFirst",
+                    "sortLast2, sortFirst2",
+                ],
                 "disc": 1,
                 "mb_trackid": "dfa939ec-118c-4d0f-84a0-60f3d1e6522c",
                 "title": "title",
@@ -339,6 +345,11 @@ class TestOverwriteNull:
         ("1 FT 2", ["1", "1 ft 2"], ("1 FT 2", ["1", "1 ft 2"])),
         ("a", ["b", "A"], ("a", ["b", "A"])),
         ("1 ft 2", ["2", "1"], ("1 ft 2", ["2", "1"])),
+        (
+            "a, b and c, d",
+            ["a, b", "c, d"],
+            ("a, b and c, d", ["a, b", "c, d"]),
+        ),
     ],
 )
 def test_correct_list_fields(

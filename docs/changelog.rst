@@ -9,15 +9,39 @@ below!
 Unreleased
 ----------
 
-..
-    New features
-    ~~~~~~~~~~~~
+New features
+~~~~~~~~~~~~
+
+- :ref:`import-cmd` Use ffprobe to recognize format of any import music file
+  that has no extension. If the file cannot be recognized as a music file, leave
+  it alone. :bug:`4881`
+- Query: Add ``has_cover_art`` computed field to query items by embedded cover
+  art presence. Users can now search for tracks with or without embedded artwork
+  using ``beet list has_cover_art:true`` or ``beet list has_cover_art:false``.
+- :doc:`plugins/autobpm`: Add ``force`` configuration and CLI option and
+  deprecate ``overwrite``.
+- :doc:`plugins/autobpm`: The "BPM already exists for item" log message can now
+  be hidden with the ``--quiet`` flag.
+- :doc:`plugins/smartplaylist`: The list of available playlists shown when an
+  unknown playlist name is passed as an argument is now sorted alphabetically
+  and printed space-delimited and POSIX shell-quoted when required. This makes
+  it easier to copy and paste multiple playlists for further use in the shell.
+- :doc:`plugins/chroma`: Add new command ``chromasearch`` to search the local
+  library by chromaprint fingerprint.
 
 Bug fixes
 ~~~~~~~~~
 
 - Correctly handle semicolon-delimited genre values from externally-tagged
   files. :bug:`6450`
+- :doc:`plugins/listenbrainz`: Fix ``lbimport`` crashing when ListenBrainz
+  tracks are processed through Last.fm-specific play-count import logic.
+  Play-count imports now use source-specific fields so
+  :doc:`plugins/listenbrainz`, :doc:`plugins/lastimport`, and
+  :doc:`plugins/mpdstats` do not clash. :bug:`6469`
+- :ref:`import-cmd` Fix ``albumartists_sort`` (and related fields) incorrectly
+  prepending the full combined artist credit as the first element for
+  multi-artist releases. :bug:`6470`
 
 ..
     For plugin developers
@@ -51,6 +75,8 @@ New features
   order before passing it to the player.
 - :doc:`plugins/lyrics`: Add ``auto_ignore`` configuration option to skip
   fetching lyrics for items matching a beets query during auto import.
+- :doc:`plugins/musicbrainz`: Use title aliases for releases, release groups,
+  and recordings.
 
 Bug fixes
 ~~~~~~~~~
@@ -307,8 +333,6 @@ New features
   ``beet import``.
 - :doc:`plugins/random`: Added ``--field`` option to specify which field to use
   for equal-chance sampling (default: ``albumartist``).
-- :doc:`plugins/musicbrainz`: Use title aliases for releases, release groups,
-  and recordings.
 
 Bug fixes
 ~~~~~~~~~
