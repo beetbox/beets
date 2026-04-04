@@ -35,6 +35,8 @@ New features
   :doc:`plugins/musicbrainz` now preserves each MusicBrainz ``remixer``,
   ``lyricist``, ``composer``, and ``arranger`` relation as a separate value.
   :bug:`5698`
+- :doc:`plugins/replaygain`: Conflicting replay gain tags are now removed on
+  write. RG_* tags are removed when setting R128_* and vice versa.
 
 Bug fixes
 ~~~~~~~~~

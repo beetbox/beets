@@ -335,6 +335,40 @@ class ReplayGainCliTest:
             assert item.rg_track_gain is not None
             assert item.rg_album_gain is not None
 
+    def test_clears_wrong_tag_type(self):
+        """Check that items that have tags of the wrong type won't be skipped."""
+        if not self.has_r128_support:
+            # This test is a lot less interesting if the backend cannot write
+            # both tag types.
+            self.skipTest(
+                f"r128 tags for opus not supported on backend {self.backend}"
+            )
+
+        album_rg = self._add_album(1)
+        item_rg = album_rg.items()[0]
+
+        album_r128 = self._add_album(1, ext="opus")
+        item_r128 = album_r128.items()[0]
+
+        item_r128.r128_track_gain = 0.0
+        item_r128.store()
+
+        item_rg.rg_track_gain = 0.0
+        item_rg.rg_track_peak = 42.0
+        item_rg.store()
+
+        self.run_command("replaygain")
+        item_rg.load()
+        item_r128.load()
+
+        assert item_rg.rg_track_gain is not None
+        assert item_rg.rg_track_peak is not None
+        assert item_rg.r128_track_gain is None
+
+        assert item_r128.r128_track_gain is not None
+        assert item_r128.rg_track_gain is None
+        assert item_r128.rg_track_peak is None
+
 
 @unittest.skipIf(not GST_AVAILABLE, "gstreamer cannot be found")
 class ReplayGainGstCliTest(
