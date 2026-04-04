@@ -999,20 +999,20 @@ def test_aliases_config_format(
     "invalid_config, expected_error",
     [
         # Plain string instead of mapping
-        ("/path/to/aliases.txt", "expected a mapping"),
+        ("/path/to/aliases.txt", "must be a dict"),
         # Integer
-        (42, "expected a mapping"),
+        (42, "must be a dict"),
         # Mapping with non-list value
-        ({"hip hop": "hip-hop"}, "expected a list of patterns"),
+        ({"hip hop": "hip-hop"}, "must be a list"),
     ],
 )
 def test_aliases_config_format_errors(config, invalid_config, expected_error):
-    """Test that invalid aliases config values raise UserError."""
+    """Test that invalid aliases config values raise confuse.ConfigTypeError."""
     config["lastgenre"]["ignorelist"] = (
         False  # prevent state leak from earlier tests
     )
     config["lastgenre"]["aliases"] = invalid_config
-    with pytest.raises(UserError) as exc_info:
+    with pytest.raises(confuse.ConfigTypeError) as exc_info:
         lastgenre.LastGenrePlugin()
     assert expected_error in str(exc_info.value)
 
@@ -1053,9 +1053,9 @@ def test_aliases_normalize_before_ignorelist(config):
     config["lastgenre"]["aliases"] = {"hip hop": ["hip-hop"]}
     plugin = lastgenre.LastGenrePlugin()
     plugin.setup()
-    plugin.ignorelist = lastgenre.LastGenrePlugin._compile_ignorelist_patterns(
-        {"*": ["hip hop"]}
-    )
+    plugin.ignorelist = {
+        "*": [re.compile("hip hop", re.IGNORECASE)],
+    }
 
     result = plugin._resolve_genres(["hip-hop"])
     assert result == [], (
@@ -1133,9 +1133,10 @@ def test_client_normalization(config):
         for template, patterns in aliases_config.items()
         for pat in patterns
     ]
-    ignorelist = lastgenre.LastGenrePlugin._compile_ignorelist_patterns(
-        ignorelist_config
-    )
+    ignorelist = {
+        artist: [re.compile(pattern, re.IGNORECASE) for pattern in patterns]
+        for artist, patterns in ignorelist_config.items()
+    }
     client = lastgenre.client.LastFmClient(Mock(), 10, ignorelist, aliases)
 
     # 1. Test _tags_for directly: returns raw (un-normalized) tags from pylast
