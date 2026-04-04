@@ -32,6 +32,10 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- :doc:`plugins/listenbrainz`: Paginate through all ListenBrainz listens instead
+  of fetching only 25, aggregate individual listen events into correct play
+  counts, and use ``recording_mbid`` from the API response when available.
+  :bug:`6469`
 - Correctly handle semicolon-delimited genre values from externally-tagged
   files. :bug:`6450`
 - :doc:`plugins/listenbrainz`: Fix ``lbimport`` crashing when ListenBrainz
