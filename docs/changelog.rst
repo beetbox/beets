@@ -391,6 +391,8 @@ Bug fixes
   won't crash beets anymore. If you want to raise exceptions instead, set the
   new configuration option ``raise_on_error`` to ``yes`` :bug:`5903`,
   :bug:`4789`.
+- :doc:`/plugins/replace`: Fixed the command failing to run, and now syncs
+  metadata in the database with the newly swapped-in file. :bug:`6260`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
