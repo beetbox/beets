@@ -28,12 +28,13 @@ New features
   it easier to copy and paste multiple playlists for further use in the shell.
 - :doc:`plugins/chroma`: Add new command ``chromasearch`` to search the local
   library by chromaprint fingerprint.
-- Store track remixers, lyricists, and composers in the multi-value
-  ``remixers``, ``lyricists``, and ``composers`` fields instead of the legacy
-  single-value ``remixer``, ``lyricist``, and ``composer`` fields. Existing
-  libraries are migrated automatically, and :doc:`plugins/musicbrainz` now
-  preserves each MusicBrainz ``remixer``, ``lyricist``, and ``composer``
-  relation as a separate value.
+- Store track remixers, lyricists, composers, and arrangers in the multi-value
+  ``remixers``, ``lyricists``, ``composers``, and ``arrangers`` fields instead
+  of the legacy single-value ``remixer``, ``lyricist``, ``composer``, and
+  ``arranger`` fields. Existing libraries are migrated automatically, and
+  :doc:`plugins/musicbrainz` now preserves each MusicBrainz ``remixer``,
+  ``lyricist``, ``composer``, and ``arranger`` relation as a separate value.
+  :bug:`5698`
 
 Bug fixes
 ~~~~~~~~~
@@ -49,9 +50,13 @@ Bug fixes
   prepending the full combined artist credit as the first element for
   multi-artist releases. :bug:`6470`
 
-..
-    For plugin developers
-    ~~~~~~~~~~~~~~~~~~~~~
+For plugin developers
+~~~~~~~~~~~~~~~~~~~~~
+
+- If you maintain a metadata source plugin that populates any of ``arranger``,
+  ``composer``, ``lyricist``, ``remixer`` fields, update it to populate the
+  respective multi-value fields instead (``arrangers``, ``composers``,
+  ``lyricists``, ``remixers``).
 
 ..
     Other changes

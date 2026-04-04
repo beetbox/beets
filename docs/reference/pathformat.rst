@@ -80,8 +80,8 @@ These functions are built in to beets:
   then returns the next ``count`` items joined by ``join``.
 
   This is especially useful for multi-valued fields like ``artists``,
-  ``genres``, ``remixers``, ``lyricists``, or ``composers`` where you may only
-  want the first value or a limited number of values in a path.
+  ``genres``, ``remixers``, ``lyricists``, ``composers``, or ``arrangers`` where
+  you may only want the first value or a limited number of values in a path.
 
   Defaults:
 
@@ -236,6 +236,7 @@ Ordinary metadata:
 - albumartist_credit
 - genre
 - genres: The track genres as a multi-valued field.
+- arrangers: The track arrangers as a multi-valued field.
 - composers: The track composers as a multi-valued field.
 - lyricists: The track lyricists as a multi-valued field.
 - remixers: The track remixers as a multi-valued field.

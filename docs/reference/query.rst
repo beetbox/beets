@@ -96,8 +96,8 @@ Recall that ``-a`` makes the ``list`` command show albums instead of individual
 tracks, so this command shows me all the releases I have from this year.
 
 For multi-valued tags (such as ``artists``, ``albumartists``, ``remixers``,
-``lyricists``, or ``composers``), a regular expression search must be used to
-search for a single value within the multi-valued tag.
+``lyricists``, ``composers``, or ``arrangers``), a regular expression search
+must be used to search for a single value within the multi-valued tag.
 
 Note that you can filter albums by querying tracks fields and vice versa:
 

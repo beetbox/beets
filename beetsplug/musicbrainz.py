@@ -399,14 +399,14 @@ class MusicBrainzPlugin(
             info.composers = composer
             info.composer_sort = ", ".join(composer_sort)
 
-        arranger = []
+        arrangers = []
         for artist_relation in recording.get("artist-relations", ()):
             if "type" in artist_relation:
                 type = artist_relation["type"]
                 if type == "arranger":
-                    arranger.append(artist_relation["artist"]["name"])
-        if arranger:
-            info.arranger = ", ".join(arranger)
+                    arrangers.append(artist_relation["artist"]["name"])
+        if arrangers:
+            info.arrangers = arrangers
 
         # Supplementary fields provided by plugins
         extra_trackdatas = plugins.send("mb_track_extract", data=recording)

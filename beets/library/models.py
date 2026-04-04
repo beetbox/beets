@@ -662,7 +662,7 @@ class Item(LibModel):
         "work": types.STRING,
         "mb_workid": types.STRING,
         "work_disambig": types.STRING,
-        "arranger": types.STRING,
+        "arrangers": types.MULTI_VALUE_DSV,
         "grouping": types.STRING,
         "year": types.PaddedInt(4),
         "month": types.PaddedInt(2),

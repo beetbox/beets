@@ -268,8 +268,8 @@ artist sort name into the artist field for all your tracks, and ``beet modify
 title='$track $title'`` will add track numbers to their title metadata.
 
 To adjust a multi-valued field, such as ``genres``, ``remixers``, ``lyricists``,
-or ``composers``, separate the values with |semicolon_space|. For example,
-``beet modify genres="rock; pop"``.
+``composers``, or ``arrangers``, separate the values with |semicolon_space|. For
+example, ``beet modify genres="rock; pop"``.
 
 The ``-a`` option changes to querying album fields instead of track fields and
 also enables to operate on albums in addition to the individual tracks. Without

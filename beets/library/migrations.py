@@ -131,6 +131,13 @@ class MultiComposerFieldMigration(MultiValueFieldMigration):
     list_field = "composers"
 
 
+class MultiArrangerFieldMigration(MultiValueFieldMigration):
+    """Backfill multi-value arrangers from legacy single-string arranger data."""
+
+    str_field = "arranger"
+    list_field = "arrangers"
+
+
 class LyricsRow(NamedTuple):
     id: int
     lyrics: str

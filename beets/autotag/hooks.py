@@ -136,6 +136,7 @@ class Info(AttrDict[Any]):
 
     IGNORED_FIELDS: ClassVar[set[str]] = {"data_url"}
     MEDIA_FIELD_MAP: ClassVar[dict[str, str]] = {}
+    LEGACY_TO_LIST_FIELD: ClassVar[dict[str, str]] = {"genre": "genres"}
 
     @cached_classproperty
     def nullable_fields(cls) -> set[str]:
@@ -143,10 +144,10 @@ class Info(AttrDict[Any]):
         return set(config["overwrite_null"][cls.type.lower()].as_str_seq())
 
     def __setitem__(self, key: str, value: Any) -> None:
-        # handle info.genre = "abc" and info["genre"] = "abc"
-        if key == "genre":
-            self["genres"] = self._get_list_from_string_value(
-                "genre", "genres", value, self["genres"]
+        # handle legacy info.str_field = "abc" and info["str_field"] = "abc"
+        if list_field := self.LEGACY_TO_LIST_FIELD.get(key):
+            self[list_field] = self._get_list_from_string_value(
+                key, list_field, value, self[list_field]
             )
         else:
             super().__setitem__(key, value)
@@ -387,23 +388,13 @@ class TrackInfo(Info):
         "track_id": "mb_trackid",
         "medium_index": "track",
     }
-
-    def __setitem__(self, key: str, value: Any) -> None:
-        # handle info.remixer = "abc" and info["remixer"] = "abc"
-        if key == "remixer":
-            self["remixers"] = self._get_list_from_string_value(
-                "remixer", "remixers", value, self["remixers"]
-            )
-        elif key == "lyricist":
-            self["lyricists"] = self._get_list_from_string_value(
-                "lyricist", "lyricists", value, self["lyricists"]
-            )
-        elif key == "composer":
-            self["composers"] = self._get_list_from_string_value(
-                "composer", "composers", value, self["composers"]
-            )
-        else:
-            super().__setitem__(key, value)
+    LEGACY_TO_LIST_FIELD: ClassVar[dict[str, str]] = {
+        **Info.LEGACY_TO_LIST_FIELD,
+        "remixer": "remixers",
+        "lyricist": "lyricists",
+        "composer": "composers",
+        "arranger": "arrangers",
+    }
 
     @property
     def id(self) -> str | None:
@@ -438,7 +429,7 @@ class TrackInfo(Info):
     def __init__(
         self,
         *,
-        arranger: str | None = None,
+        arrangers: list[str] | None = None,
         bpm: str | None = None,
         composers: list[str] | None = None,
         composer_sort: str | None = None,
@@ -460,7 +451,7 @@ class TrackInfo(Info):
         work_disambig: str | None = None,
         **kwargs,
     ) -> None:
-        self.arranger = arranger
+        self.arrangers = arrangers
         self.bpm = bpm
         self.composers = composers
         self.composer_sort = composer_sort

@@ -184,7 +184,6 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         artist=False,
         video=False,
         disambiguation=None,
-        remixer=False,
         multi_artist_credit=False,
         aliases=None,
     ):
@@ -217,20 +216,6 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
                         "name": "RECORDING ARTIST 2 CREDIT",
                     }
                 )
-        if remixer:
-            track["artist-relations"] = [
-                {
-                    "type": "remixer",
-                    "type-id": "RELATION TYPE ID",
-                    "direction": "RECORDING RELATION DIRECTION",
-                    "artist": {
-                        "id": "RECORDING REMIXER ARTIST ID",
-                        "type": "RECORDING REMIXER ARTIST TYPE",
-                        "name": "RECORDING REMIXER ARTIST NAME",
-                        "sort-name": "RECORDING REMIXER ARTIST SORT NAME",
-                    },
-                }
-            ]
         if video:
             track["video"] = True
         if disambiguation:
@@ -584,14 +569,22 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
             "TRACK ARTIST 2 CREDIT",
         ]
 
-    def test_parse_recording_remixers(self):
-        tracks = [self._make_track("a", "b", 1, remixer=True)]
-        release = self._make_release(None, tracks=tracks)
-        track = self.mb.album_info(release).tracks[0]
-        assert track.remixers == ["RECORDING REMIXER ARTIST NAME"]
-
-    def test_parse_recording_composers(self):
+    def test_parse_recording_artist_credits(self):
         tracks = [self._make_track("a", "b", 1)]
+        tracks[0]["artist-relations"] = [
+            {
+                "type": "remixer",
+                "artist": {"name": "RECORDING REMIXER ARTIST NAME"},
+            },
+            {
+                "type": "arranger",
+                "artist": {"name": "RECORDING ARRANGER ARTIST NAME"},
+            },
+            {
+                "type": "arranger",
+                "artist": {"name": "RECORDING ARRANGER 2 ARTIST NAME"},
+            },
+        ]
         tracks[0]["work-relations"] = [
             {
                 "type": "performance",
@@ -599,6 +592,18 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
                     "id": "WORK ID",
                     "title": "WORK TITLE",
                     "artist-relations": [
+                        {
+                            "type": "lyricist",
+                            "artist": {
+                                "name": "RECORDING LYRICIST ARTIST NAME"
+                            },
+                        },
+                        {
+                            "type": "lyricist",
+                            "artist": {
+                                "name": "RECORDING LYRICIST 2 ARTIST NAME"
+                            },
+                        },
                         {
                             "type": "composer",
                             "artist": {
@@ -624,12 +629,21 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
 
         release = self._make_release(None, tracks=tracks)
         track = self.mb.album_info(release).tracks[0]
+        assert track.remixers == ["RECORDING REMIXER ARTIST NAME"]
+        assert track.arrangers == [
+            "RECORDING ARRANGER ARTIST NAME",
+            "RECORDING ARRANGER 2 ARTIST NAME",
+        ]
+        assert track.lyricists == [
+            "RECORDING LYRICIST ARTIST NAME",
+            "RECORDING LYRICIST 2 ARTIST NAME",
+        ]
         assert track.composers == [
             "RECORDING COMPOSER ARTIST NAME",
             "RECORDING COMPOSER 2 ARTIST NAME",
         ]
-        assert (
-            track.composer_sort == "RECORDING COMPOSER ARTIST SORT NAME, "
+        assert track.composer_sort == (
+            "RECORDING COMPOSER ARTIST SORT NAME, "
             "RECORDING COMPOSER 2 ARTIST SORT NAME"
         )
 

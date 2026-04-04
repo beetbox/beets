@@ -152,6 +152,12 @@ class TestMultiComposerFieldMigration(MultiArtistFieldMigrationTestMixin):
     migration_cls = migrations.MultiComposerFieldMigration
 
 
+class TestMultiArrangerFieldMigration(MultiArtistFieldMigrationTestMixin):
+    str_field = "arranger"
+    list_field = "arrangers"
+    migration_cls = migrations.MultiArrangerFieldMigration
+
+
 class TestLyricsMetadataInFlexFieldsMigration:
     @pytest.fixture
     def helper(self, monkeypatch):
