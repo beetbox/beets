@@ -41,6 +41,9 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- :doc:`plugins/deezer`: Fix Various Artists albums being tagged with a
+  localized string instead of the configured ``va_name``. Detection now uses
+  Deezer's artist ID rather than the artist name string. :bug:`4956`
 - Correctly handle semicolon-delimited genre values from externally-tagged
   files. :bug:`6450`
 - :doc:`plugins/listenbrainz`: Fix ``lbimport`` crashing when ListenBrainz
