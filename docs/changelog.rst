@@ -26,6 +26,8 @@ New features
   unknown playlist name is passed as an argument is now sorted alphabetically
   and printed space-delimited and POSIX shell-quoted when required. This makes
   it easier to copy and paste multiple playlists for further use in the shell.
+- :doc:`plugins/chroma`: Add new command ``chromasearch`` to search the local
+  library by chromaprint fingerprint.
 
 Bug fixes
 ~~~~~~~~~

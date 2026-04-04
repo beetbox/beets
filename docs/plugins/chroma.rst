@@ -155,3 +155,43 @@ your library.) The command will use stored fingerprints if they're available;
 otherwise it will fingerprint each file before submitting it.
 
 .. _get an api key: https://acoustid.org/api-key
+
+Fingerprint Search
+------------------
+
+The ``chromasearch`` command lets you search your local beets library for tracks
+with similar audio fingerprints. This is useful for identifying duplicate files,
+finding alternate encodings of the same recording, or locating tracks when
+metadata is missing or incorrect.
+
+To perform a search, run:
+
+.. code-block:: shell
+
+    beet chromasearch -s FINGERPRINT
+
+The fingerprint must be provided using the ``-s`` (``--search``) option. You can
+generate a fingerprint using the external ``fpcalc`` tool from the Chromaprint_
+project. For example:
+
+.. code-block:: shell
+
+    fpcalc -plain somefile.mp3
+
+By default the whole library is searched, use a :doc:`query </reference/query>`
+to restrict the search:
+
+.. code-block:: shell
+
+    beet chromasearch -s FINGERPRINT artist:"rolling stones"
+
+By default, the command returns the top 5 closest matches in your library. You
+can change the number of results using the ``-c`` (``--count``) option.
+
+When an exact match is found, the search normally stops early. To continue
+searching for additional similar items even after an exact match, use the
+``--full`` flag.
+
+The ``-w`` (``--write``) option causes the plugin to store fingerprints for
+files that do not already have them. This can improve search results over time
+by ensuring more items in your library are indexed.
