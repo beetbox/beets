@@ -22,10 +22,12 @@ from typing import TYPE_CHECKING, ClassVar
 
 import requests
 
-from beets import ui
+from beets import config, ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.dbcore import types
 from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
+
+VARIOUS_ARTISTS_ID = 5080
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -125,19 +127,23 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         for track in tracks:
             track.medium_total = medium_totals[track.medium]
 
+        is_va = str(album_data["artist"]["id"]) == str(VARIOUS_ARTISTS_ID)
+        if is_va:
+            va_name = config["va_name"].as_str()
+            artist = va_name
+
         return AlbumInfo(
             album=album_data["title"],
             album_id=deezer_id,
             deezer_album_id=deezer_id,
             artist=artist,
-            artist_credit=self.get_artist([album_data["artist"]])[0],
+            artist_credit=(
+                artist if is_va else self.get_artist([album_data["artist"]])[0]
+            ),
             artist_id=artist_id,
             tracks=tracks,
             albumtype=album_data["record_type"],
-            va=(
-                len(album_data["contributors"]) == 1
-                and (artist or "").lower() == "various artists"
-            ),
+            va=is_va,
             year=year,
             month=month,
             day=day,
