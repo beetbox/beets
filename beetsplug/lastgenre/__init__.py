@@ -137,7 +137,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 "prefer_specific": False,
                 "title_case": True,
                 "pretend": False,
-                "ignorelist": False,
+                "ignorelist": {},
+                "aliases": True,
             }
         )
         self.setup()
@@ -267,38 +268,47 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         The key (genre name) is used as a ``re.Match.expand()`` template,
         so ``\\g<N>`` back-references to capture groups are supported.
 
-        Setting ``aliases: true`` loads the bundled ``aliases.yaml`` file. Setting
-        ``aliases: false`` disables normalization entirely.
+        Setting ``aliases: true`` (the default) loads the bundled
+        ``aliases.yaml`` file. Setting ``aliases: false`` disables
+        normalization entirely.
 
         Raises:
-            UserError: if the config value is not a mapping, or if an entry's value is
-            not a list of strings.
+            confuse.ConfigTypeError: when the config value is not a mapping
+            or a list entry is not a string.
         """
-        aliases_config = self.config["aliases"].get()
-        if aliases_config is False:
+        aliases_raw = self.config["aliases"].get()
+        if aliases_raw is False:
             return []
-        if aliases_config in (True, "", None):
+        if aliases_raw in (True, "", None):
             self._log.debug("Loading default aliases from {}", ALIASES)
             with Path(ALIASES).open(encoding="utf-8") as f:
-                aliases_config = yaml.safe_load(f)
-            if not aliases_config:
+                aliases_dict = yaml.safe_load(f)
+            if not aliases_dict:
                 return []
-        if not isinstance(aliases_config, dict):
-            raise UserError(
-                "Invalid value for lastgenre.aliases: expected a mapping "
-                f"(canonical -> list of patterns), got {aliases_config!r}"
+        else:
+            # Validate only the effective aliases value to avoid stale lower-
+            # priority config layers affecting type checking.
+            aliases_cfg = confuse.Configuration("lastgenre_aliases", read=False)
+            aliases_cfg.set({"aliases": aliases_raw})
+            aliases_dict = aliases_cfg["aliases"].get(
+                confuse.MappingValues(confuse.Sequence(str))
             )
 
         entries: Aliases = []
-        for canonical, patterns in aliases_config.items():
-            if not isinstance(patterns, list):
-                raise UserError(
-                    f"Invalid lastgenre.aliases entry for {canonical!r}: "
-                    f"expected a list of patterns, got {patterns!r}"
-                )
+        for canonical, patterns in aliases_dict.items():
             template = str(canonical).lower()
-            for raw in patterns:
-                entries.append((self._compile_pattern(str(raw)), template))
+            for raw_pat in patterns:
+                try:
+                    entries.append(
+                        (re.compile(str(raw_pat), re.IGNORECASE), template)
+                    )
+                except re.error:
+                    entries.append(
+                        (
+                            re.compile(re.escape(str(raw_pat)), re.IGNORECASE),
+                            template,
+                        )
+                    )
 
         self._log.extra_debug("Loaded {} alias entries", len(entries))
         return entries
