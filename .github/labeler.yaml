@@ -1,0 +1,170 @@
+absubmit:
+  - '(?i)absubmit'
+acousticbrainz:
+  - '(?i)acousticbrainz'
+advancedrewrite:
+  - '(?i)advancedrewrite'
+albumtypes:
+  - '(?i)albumtypes plugin'
+  - '(?i)albumtypes:'
+aura:
+  - '(?i)aura'
+autobpm:
+  - '(?i)autobpm'
+badfiles:
+  - '(?i)badfiles'
+bareasc:
+  - '(?i)bareasc'
+beatport:
+  - '(?i)beatport'
+bpd:
+  - '(?i)bpd'
+bpsync:
+  - '(?i)bpsync'
+bucket:
+  - '(?i)bucket'
+chroma:
+  - '(?i)chroma'
+convert:
+  - '(?i)convert plugin'
+  - '(?i)convert:'
+deezer:
+  - '(?i)deezer'
+discogs:
+  - '(?i)discogs'
+duplicates:
+  - '(?i)duplicates plugin'
+  - '(?i)duplicates:'
+edit:
+  - '(?i)edit plugin'
+  - '(?i)edit:'
+embedart:
+  - '(?i)embedart'
+embyupdate:
+  - '(?i)embyupdate'
+export:
+  - '(?i)export plugin'
+  - '(?i)export:'
+fetchart:
+  - '(?i)fetchart'
+filefilter:
+  - '(?i)filefilter'
+fish:
+  - '(?i)fish'
+freedesktop:
+  - '(?i)freedesktop'
+fromfilename:
+  - '(?i)fromfilename'
+ftintitle:
+  - '(?i)ftintitle'
+fuzzy:
+  - '(?i)fuzzy plugin'
+  - '(?i)fuzzy:'
+hook:
+  - '(?i)hook plugin'
+  - '(?i)hook:'
+ihate:
+  - '(?i)ihate'
+importadded:
+  - '(?i)importadded'
+importfeeds:
+  - '(?i)importfeeds'
+importsource:
+  - '(?i)importsource'
+info:
+  - '(?i)info plugin'
+  - '(?i)info:'
+inline:
+  - '(?i)inline plugin'
+  - '(?i)inline:'
+ipfs:
+  - '(?i)ipfs'
+keyfinder:
+  - '(?i)keyfinder'
+kodiupdate:
+  - '(?i)kodiupdate'
+lastgenre:
+  - '(?i)lastgenre'
+lastimport:
+  - '(?i)lastimport'
+limit:
+  - '(?i)limit plugin'
+  - '(?i)limit:'
+listenbrainz:
+  - '(?i)listenbrainz'
+loadext:
+  - '(?i)loadext'
+lyrics:
+  - '(?i)lyrics'
+mbcollection:
+  - '(?i)mbcollection'
+mbpseudo:
+  - '(?i)mbpseudo'
+mbsubmit:
+  - '(?i)mbsubmit'
+mbsync:
+  - '(?i)mbsync'
+metasync:
+  - '(?i)metasync'
+missing:
+  - '(?i)missing plugin'
+  - '(?i)missing:'
+mpdstats:
+  - '(?i)mpdstats'
+mpdupdate:
+  - '(?i)mpdupdate'
+musicbrainz:
+  - '(?i)musicbrainz'
+parentwork:
+  - '(?i)parentwork'
+permissions:
+  - '(?i)permissions plugin'
+  - '(?i)permissions:'
+play:
+  - '(?i)play plugin'
+  - '(?i)play:'
+playlist:
+  - '(?i)\bplaylist plugin'
+  - '(?i)\bplaylist:'
+plexupdate:
+  - '(?i)plexupdate'
+random:
+  - '(?i)random plugin'
+  - '(?i)random:'
+replace:
+  - '(?i)replace plugin'
+  - '(?i)replace:'
+replaygain:
+  - '(?i)replaygain'
+rewrite:
+  - '(?i)\brewrite plugin'
+  - '(?i)\brewrite:'
+scrub:
+  - '(?i)scrub'
+smartplaylist:
+  - '(?i)smartplaylist'
+sonosupdate:
+  - '(?i)sonosupdate'
+spotify:
+  - '(?i)spotify'
+subsonicplaylist:
+  - '(?i)subsonicplaylist'
+subsonicupdate:
+  - '(?i)subsonicupdate'
+substitute:
+  - '(?i)substitute'
+thumbnails:
+  - '(?i)thumbnails'
+titlecase:
+  - '(?i)titlecase'
+types:
+  - '(?i)\btypes plugin'
+  - '(?i)\btypes:'
+unimported:
+  - '(?i)unimported'
+web:
+  - '(?i)web plugin'
+  - '(?i)web:'
+zero:
+  - '(?i)zero plugin'
+  - '(?i)zero:'
