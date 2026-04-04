@@ -84,15 +84,8 @@ class LastFmClient:
         self, obj: pylast.Album | pylast.Artist | pylast.Track
     ) -> list[str]:
         """Return genres for a pylast entity."""
-        # Work around an inconsistency in pylast where
-        # Album.get_top_tags() does not return TopItem instances.
-        # https://github.com/pylast/pylast/issues/86
-        obj_to_query: Any = obj
-        if isinstance(obj, pylast.Album):
-            obj_to_query = super(pylast.Album, obj)
-
         try:
-            res: Any = obj_to_query.get_top_tags()
+            res = obj.get_top_tags()
         except PYLAST_EXCEPTIONS as exc:
             self._log.debug("last.fm error: {}", exc)
             return []
