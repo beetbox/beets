@@ -70,26 +70,14 @@ class LastFmClient:
         self._min_weight = min_weight
         self._genre_cache: GenreCache = {}
 
-    def fetch_genre(
-        self, lastfm_obj: pylast.Album | pylast.Artist | pylast.Track
+    def fetch_genres(
+        self, obj: pylast.Album | pylast.Artist | pylast.Track
     ) -> list[str]:
-        """Return genres for a pylast entity. Returns an empty list if
-        no suitable genres are found.
-        """
-        return self._tags_for(lastfm_obj, self._min_weight)
-
-    def _tags_for(
-        self,
-        obj: pylast.Album | pylast.Artist | pylast.Track,
-        min_weight: int | None = None,
-    ) -> list[str]:
-        """Core genre identification routine.
+        """Return genres for a pylast entity.
 
         Given a pylast entity (album or track), return a list of
         tag names for that entity. Return an empty list if the entity is
         not found or another error occurs.
-
-        If `min_weight` is specified, tags are filtered by weight.
         """
         # Work around an inconsistency in pylast where
         # Album.get_top_tags() does not return TopItem instances.
@@ -110,13 +98,11 @@ class LastFmClient:
             return []
 
         # Filter by weight (optionally).
-        if min_weight:
+        if min_weight := self._min_weight:
             res = [el for el in res if (int(el.weight or 0)) >= min_weight]
 
         # Get strings from tags.
-        tags: list[str] = [el.item.get_name().lower() for el in res]
-
-        return tags
+        return [el.item.get_name().lower() for el in res]
 
     def _last_lookup(
         self, entity: str, method: Callable[..., Any], *args: str
@@ -136,11 +122,13 @@ class LastFmClient:
         key = f"{entity}.{'-'.join(str(a) for a in args)}"
         if key not in self._genre_cache:
             args_replaced = [a.replace("\u2010", "-") for a in args]
-            self._genre_cache[key] = self.fetch_genre(method(*args_replaced))
+            self._genre_cache[key] = self.fetch_genres(method(*args_replaced))
 
-        genre = self._genre_cache[key]
-        self._log.extra_debug("last.fm (unfiltered) {} tags: {}", entity, genre)
-        return genre
+        genres = self._genre_cache[key]
+        self._log.extra_debug(
+            "last.fm (unfiltered) {} tags: {}", entity, genres
+        )
+        return genres
 
     def fetch(self, kind: str, obj: LibModel) -> list[str]:
         """Fetch fetcher for Last.fm genres."""
