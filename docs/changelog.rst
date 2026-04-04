@@ -87,6 +87,12 @@ Bug fixes
 - :ref:`import-cmd` Autotagging by explicit release or recording IDs now keeps
   candidates from all enabled metadata sources instead of dropping matches when
   different providers share the same ID. :bug:`6178` :bug:`6181`
+- Improved error message when database cannot be opened. When SQLite fails to
+  open the database with 'unable to open' error, beets now provides a helpful
+  message suggesting it may be a permissions issue and recommends checking that
+  the file or directory is writable. The original SQLite error is included for
+  debugging. Also fixed typo in error message ('cannot not' to 'could not').
+  :bug:`1676`
 - :doc:`plugins/mbsync` and :doc:`plugins/missing` now use each item's stored
   ``data_source`` for ID lookups, with a fallback to ``MusicBrainz``.
 - :doc:`plugins/musicbrainz`: Use ``va_name`` config for ``albumartist_sort``,
