@@ -177,7 +177,7 @@ resolving to a final genre list (during canonicalization and whitelisting).
 
 This means that existing genres are also filtered when ``force`` and
 ``keep_existing`` options are enabled (or ``cleanup_existing`` is enabled with
-``force: no``).
+``force`` disabled).
 
 To enable this feature, add an ``ignorelist`` section to your ``lastgenre``
 configuration:
