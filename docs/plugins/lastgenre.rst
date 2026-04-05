@@ -204,8 +204,8 @@ plain ``metal`` will not match ``heavy metal`` unless you write a regex like
 
     - The global key ``'*'`` **must** be surrounded by single quotes so that
       YAML does not interpret it as an anchor.
-    - Any regex pattern that starts with a special YAML character (especially
-      ``[`` or ``*``) **must** be surrounded by quotes.
+    - Any regex pattern that starts with a special YAML character (``[``, ``*``,
+      or ``:``) or ends with ``:`` **must** be surrounded by quotes.
     - Prefer **single quotes** (``'...'``) when quoting is necessary, as they
       treat backslashes literally (no double-escaping required).
     - Because the ignorelist uses plain YAML, you do **not** need to
