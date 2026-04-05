@@ -87,19 +87,27 @@ class SmartPlaylistPlugin(BeetsPlugin):
             action="store_true",
             help="display query results but don't write playlist files.",
         )
-        spl_update.parser.add_format_option(target="item")
+        spl_update.parser.add_option(
+            "-f",
+            "--format",
+            type="string",
+            default=self.config["format"].get(),
+            help="print per-track log lines with custom format",
+        )
         spl_update.parser.add_option(
             "-d",
             "--playlist-dir",
             dest="playlist_dir",
             metavar="PATH",
             type="string",
+            default=self.config["playlist_dir"].get(),
             help="directory to write the generated playlist files to.",
         )
         spl_update.parser.add_option(
             "--dest-regen",
             action="store_true",
             dest="dest_regen",
+            default=self.config["dest_regen"].get(bool),
             help="regenerate the destination path as 'move' or 'convert' "
             "commands would do.",
         )
@@ -108,33 +116,39 @@ class SmartPlaylistPlugin(BeetsPlugin):
             dest="relative_to",
             metavar="PATH",
             type="string",
+            default=self.config["relative_to"].get(),
             help="generate playlist item paths relative to this path.",
         )
         spl_update.parser.add_option(
             "--prefix",
             type="string",
+            default=self.config["prefix"].get(),
             help="prepend string to every path in the playlist file.",
         )
         spl_update.parser.add_option(
             "--forward-slash",
             action="store_true",
             dest="forward_slash",
+            default=self.config["forward_slash"].get(bool),
             help="force forward slash in paths within playlists.",
         )
         spl_update.parser.add_option(
             "--urlencode",
             action="store_true",
+            default=self.config["urlencode"].get(bool),
             help="URL-encode all paths.",
         )
         spl_update.parser.add_option(
             "--uri-format",
             dest="uri_format",
             type="string",
+            default=self.config["uri_format"].get(),
             help="playlist item URI template, e.g. http://beets:8337/item/$id/file.",
         )
         spl_update.parser.add_option(
             "--output",
             type="string",
+            default=self.config["output"].get(),
             help="specify the playlist format: m3u|extm3u.",
         )
         spl_update.func = self.update_cmd
@@ -166,13 +180,8 @@ class SmartPlaylistPlugin(BeetsPlugin):
         else:
             self._matched_playlists = self._unmatched_playlists
 
-        self.__apply_opts_to_config(opts)
+        self.config.set(vars(opts))
         self.update_playlists(lib, opts.pretend)
-
-    def __apply_opts_to_config(self, opts: Any) -> None:
-        for k, v in opts.__dict__.items():
-            if v is not None and k in self.config:
-                self.config[k] = v
 
     def _parse_one_query(
         self, playlist: dict[str, Any], key: str, model_cls: type
