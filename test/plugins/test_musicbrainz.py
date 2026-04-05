@@ -574,15 +574,24 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         tracks[0]["artist-relations"] = [
             {
                 "type": "remixer",
-                "artist": {"name": "RECORDING REMIXER ARTIST NAME"},
+                "artist": {
+                    "name": "RECORDING REMIXER ARTIST NAME",
+                    "id": "RECORDING REMIXER ARTIST ID",
+                },
             },
             {
                 "type": "arranger",
-                "artist": {"name": "RECORDING ARRANGER ARTIST NAME"},
+                "artist": {
+                    "name": "RECORDING ARRANGER ARTIST NAME",
+                    "id": "RECORDING ARRANGER ARTIST ID",
+                },
             },
             {
                 "type": "arranger",
-                "artist": {"name": "RECORDING ARRANGER 2 ARTIST NAME"},
+                "artist": {
+                    "name": "RECORDING ARRANGER 2 ARTIST NAME",
+                    "id": "RECORDING ARRANGER 2 ARTIST ID",
+                },
             },
         ]
         tracks[0]["work-relations"] = [
@@ -595,19 +604,22 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
                         {
                             "type": "lyricist",
                             "artist": {
-                                "name": "RECORDING LYRICIST ARTIST NAME"
+                                "name": "RECORDING LYRICIST ARTIST NAME",
+                                "id": "RECORDING LYRICIST ARTIST ID",
                             },
                         },
                         {
                             "type": "lyricist",
                             "artist": {
-                                "name": "RECORDING LYRICIST 2 ARTIST NAME"
+                                "name": "RECORDING LYRICIST 2 ARTIST NAME",
+                                "id": "RECORDING LYRICIST 2 ARTIST ID",
                             },
                         },
                         {
                             "type": "composer",
                             "artist": {
                                 "name": "RECORDING COMPOSER ARTIST NAME",
+                                "id": "RECORDING COMPOSER ARTIST ID",
                                 "sort-name": (
                                     "RECORDING COMPOSER ARTIST SORT NAME"
                                 ),
@@ -617,6 +629,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
                             "type": "composer",
                             "artist": {
                                 "name": "RECORDING COMPOSER 2 ARTIST NAME",
+                                "id": "RECORDING COMPOSER 2 ARTIST ID",
                                 "sort-name": (
                                     "RECORDING COMPOSER 2 ARTIST SORT NAME"
                                 ),
@@ -634,6 +647,10 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
             "RECORDING ARRANGER ARTIST NAME",
             "RECORDING ARRANGER 2 ARTIST NAME",
         ]
+        assert track.lyricists_ids == [
+            "RECORDING LYRICIST ARTIST ID",
+            "RECORDING LYRICIST 2 ARTIST ID",
+        ]
         assert track.lyricists == [
             "RECORDING LYRICIST ARTIST NAME",
             "RECORDING LYRICIST 2 ARTIST NAME",
@@ -641,6 +658,10 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert track.composers == [
             "RECORDING COMPOSER ARTIST NAME",
             "RECORDING COMPOSER 2 ARTIST NAME",
+        ]
+        assert track.composers_ids == [
+            "RECORDING COMPOSER ARTIST ID",
+            "RECORDING COMPOSER 2 ARTIST ID",
         ]
         assert track.composer_sort == (
             "RECORDING COMPOSER ARTIST SORT NAME, "
