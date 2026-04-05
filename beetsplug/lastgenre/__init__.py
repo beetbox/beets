@@ -374,10 +374,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
     def _artist_for_filter(self, obj: LibModel) -> str | None:
         """Return the representative artist for genre resolution and filtering."""
         return (
-            getattr(obj, "artist", None)
+            obj.artist
             if isinstance(obj, library.Item)
-            else getattr(obj, "albumartist", None)
-            or getattr(obj, "artist", None)
+            else obj.albumartist or obj.artist
         )
 
     def _get_existing_genres(self, obj: LibModel) -> list[str]:
