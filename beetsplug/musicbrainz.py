@@ -355,13 +355,6 @@ class MusicBrainzPlugin(
             info.artists_ids = _artist_ids(recording["artist-credit"])
             info.artist_id = info.artists_ids[0]
 
-        artist_relations = recording.get("artist-relations", [])
-        info.remixers = [
-            r["artist"]["name"]
-            for r in artist_relations
-            if r["type"] == "remixer"
-        ] or None
-
         if recording.get("length"):
             info.length = int(recording["length"]) / 1000.0
 
@@ -407,15 +400,23 @@ class MusicBrainzPlugin(
 
         arrangers = []
         arrangers_ids = []
+        remixers = []
+        remixers_ids = []
         for artist_relation in recording.get("artist-relations", ()):
             if "type" in artist_relation:
                 type = artist_relation["type"]
                 if type == "arranger":
                     arrangers.append(artist_relation["artist"]["name"])
                     arrangers_ids.append(artist_relation["artist"]["id"])
+                elif type == "remixer":
+                    remixers.append(artist_relation["artist"]["name"])
+                    remixers_ids.append(artist_relation["artist"]["id"])
         if arrangers:
             info.arrangers = arrangers
             info.arrangers_ids = arrangers_ids
+        if remixers:
+            info.remixers = remixers
+            info.remixers_ids = remixers_ids
 
         # Supplementary fields provided by plugins
         extra_trackdatas = plugins.send("mb_track_extract", data=recording)
