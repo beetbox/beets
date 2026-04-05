@@ -1,170 +1,170 @@
 absubmit:
-  - 'absubmit'
+  - '/absubmit/i'
 acousticbrainz:
-  - 'acousticbrainz'
+  - '/acousticbrainz/i'
 advancedrewrite:
-  - 'advancedrewrite'
+  - '/advancedrewrite/i'
 albumtypes:
-  - 'albumtypes plugin'
-  - 'albumtypes:'
+  - '/albumtypes plugin/i'
+  - '/albumtypes:/i'
 aura:
-  - 'aura'
+  - '/aura/i'
 autobpm:
-  - 'autobpm'
+  - '/autobpm/i'
 badfiles:
-  - 'badfiles'
+  - '/badfiles/i'
 bareasc:
-  - 'bareasc'
+  - '/bareasc/i'
 beatport:
-  - 'beatport'
+  - '/beatport/i'
 bpd:
-  - 'bpd'
+  - '/bpd/i'
 bpsync:
-  - 'bpsync'
+  - '/bpsync/i'
 bucket:
-  - 'bucket'
+  - '/bucket/i'
 chroma:
-  - 'chroma'
+  - '/chroma/i'
 convert:
-  - 'convert plugin'
-  - 'convert:'
+  - '/convert plugin/i'
+  - '/convert:/i'
 deezer:
-  - 'deezer'
+  - '/deezer/i'
 discogs:
-  - 'discogs'
+  - '/discogs/i'
 duplicates:
-  - 'duplicates plugin'
-  - 'duplicates:'
+  - '/duplicates plugin/i'
+  - '/duplicates:/i'
 edit:
-  - 'edit plugin'
-  - 'edit:'
+  - '/edit plugin/i'
+  - '/edit:/i'
 embedart:
-  - 'embedart'
+  - '/embedart/i'
 embyupdate:
-  - 'embyupdate'
+  - '/embyupdate/i'
 export:
-  - 'export plugin'
-  - 'export:'
+  - '/export plugin/i'
+  - '/export:/i'
 fetchart:
-  - 'fetchart'
+  - '/fetchart/i'
 filefilter:
-  - 'filefilter'
+  - '/filefilter/i'
 fish:
-  - 'fish'
+  - '/fish/i'
 freedesktop:
-  - 'freedesktop'
+  - '/freedesktop/i'
 fromfilename:
-  - 'fromfilename'
+  - '/fromfilename/i'
 ftintitle:
-  - 'ftintitle'
+  - '/ftintitle/i'
 fuzzy:
-  - 'fuzzy plugin'
-  - 'fuzzy:'
+  - '/fuzzy plugin/i'
+  - '/fuzzy:/i'
 hook:
-  - 'hook plugin'
-  - 'hook:'
+  - '/hook plugin/i'
+  - '/hook:/i'
 ihate:
-  - 'ihate'
+  - '/ihate/i'
 importadded:
-  - 'importadded'
+  - '/importadded/i'
 importfeeds:
-  - 'importfeeds'
+  - '/importfeeds/i'
 importsource:
-  - 'importsource'
+  - '/importsource/i'
 info:
-  - 'info plugin'
-  - 'info:'
+  - '/info plugin/i'
+  - '/info:/i'
 inline:
-  - 'inline plugin'
-  - 'inline:'
+  - '/inline plugin/i'
+  - '/inline:/i'
 ipfs:
-  - 'ipfs'
+  - '/ipfs/i'
 keyfinder:
-  - 'keyfinder'
+  - '/keyfinder/i'
 kodiupdate:
-  - 'kodiupdate'
+  - '/kodiupdate/i'
 lastgenre:
-  - 'lastgenre'
+  - '/lastgenre/i'
 lastimport:
-  - 'lastimport'
+  - '/lastimport/i'
 limit:
-  - 'limit plugin'
-  - 'limit:'
+  - '/limit plugin/i'
+  - '/limit:/i'
 listenbrainz:
-  - 'listenbrainz'
+  - '/listenbrainz/i'
 loadext:
-  - 'loadext'
+  - '/loadext/i'
 lyrics:
-  - 'lyrics'
+  - '/lyrics/i'
 mbcollection:
-  - 'mbcollection'
+  - '/mbcollection/i'
 mbpseudo:
-  - 'mbpseudo'
+  - '/mbpseudo/i'
 mbsubmit:
-  - 'mbsubmit'
+  - '/mbsubmit/i'
 mbsync:
-  - 'mbsync'
+  - '/mbsync/i'
 metasync:
-  - 'metasync'
+  - '/metasync/i'
 missing:
-  - 'missing plugin'
-  - 'missing:'
+  - '/missing plugin/i'
+  - '/missing:/i'
 mpdstats:
-  - 'mpdstats'
+  - '/mpdstats/i'
 mpdupdate:
-  - 'mpdupdate'
+  - '/mpdupdate/i'
 musicbrainz:
-  - 'musicbrainz'
+  - '/musicbrainz/i'
 parentwork:
-  - 'parentwork'
+  - '/parentwork/i'
 permissions:
-  - 'permissions plugin'
-  - 'permissions:'
+  - '/permissions plugin/i'
+  - '/permissions:/i'
 play:
-  - 'play plugin'
-  - 'play:'
+  - '/play plugin/i'
+  - '/play:/i'
 playlist:
-  - '\bplaylist plugin'
-  - '\bplaylist:'
+  - '/\bplaylist plugin/i'
+  - '/\bplaylist:/i'
 plexupdate:
-  - 'plexupdate'
+  - '/plexupdate/i'
 random:
-  - 'random plugin'
-  - 'random:'
+  - '/random plugin/i'
+  - '/random:/i'
 replace:
-  - 'replace plugin'
-  - 'replace:'
+  - '/replace plugin/i'
+  - '/replace:/i'
 replaygain:
-  - 'replaygain'
+  - '/replaygain/i'
 rewrite:
-  - '\brewrite plugin'
-  - '\brewrite:'
+  - '/\brewrite plugin/i'
+  - '/\brewrite:/i'
 scrub:
-  - 'scrub'
+  - '/scrub/i'
 smartplaylist:
-  - 'smartplaylist'
+  - '/smartplaylist/i'
 sonosupdate:
-  - 'sonosupdate'
+  - '/sonosupdate/i'
 spotify:
-  - 'spotify'
+  - '/spotify/i'
 subsonicplaylist:
-  - 'subsonicplaylist'
+  - '/subsonicplaylist/i'
 subsonicupdate:
-  - 'subsonicupdate'
+  - '/subsonicupdate/i'
 substitute:
-  - 'substitute'
+  - '/substitute/i'
 thumbnails:
-  - 'thumbnails'
+  - '/thumbnails/i'
 titlecase:
-  - 'titlecase'
+  - '/titlecase/i'
 types:
-  - '\btypes plugin'
-  - '\btypes:'
+  - '/\btypes plugin/i'
+  - '/\btypes:/i'
 unimported:
-  - 'unimported'
+  - '/unimported/i'
 web:
-  - 'web plugin'
-  - 'web:'
+  - '/web plugin/i'
+  - '/web:/i'
 zero:
-  - 'zero plugin'
-  - 'zero:'
+  - '/zero plugin/i'
+  - '/zero:/i'
