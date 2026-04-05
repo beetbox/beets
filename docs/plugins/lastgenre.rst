@@ -175,7 +175,7 @@ correct but not useful to you. For example, you might want to exclude "Ska" for
 Filtering is done in two places: when fetching genres from Last.fm and when
 resolving to a final genre list (during canonicalization and whitelisting).
 
-This means that existing genres are also filtered when the ``force`` and
+This means that existing genres are also filtered when ``force`` and
 ``keep_existing`` options are enabled (or ``cleanup_existing`` is enabled with
 ``force: no``).
 
