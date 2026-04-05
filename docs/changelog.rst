@@ -49,6 +49,10 @@ Bug fixes
 - :ref:`import-cmd` Fix ``albumartists_sort`` (and related fields) incorrectly
   prepending the full combined artist credit as the first element for
   multi-artist releases. :bug:`6470`
+- :doc:`plugins/discogs`: Store specific Discogs styles in beets ``genres`` and
+  broader Discogs genres in the ``style`` field. When
+  :conf:`plugins.discogs:append_style_genre` is enabled, the broader Discogs
+  genres are also appended to the ``genres`` list. :bug:`6390`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~

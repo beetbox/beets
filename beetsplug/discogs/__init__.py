@@ -401,8 +401,10 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         mediums = [t["medium"] for t in tracks]
         country = result.data.get("country")
         data_url = result.data.get("uri")
-        styles: list[str] = result.data.get("styles") or []
-        genres: list[str] = result.data.get("genres") or []
+        # we swap genre and style since discogs genres are more general and
+        # styles more specific
+        styles: list[str] = result.data.get("genres") or []
+        genres: list[str] = result.data.get("styles") or []
 
         if self.config["append_style_genre"]:
             genres.extend(styles)
