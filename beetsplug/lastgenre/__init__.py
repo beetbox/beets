@@ -354,9 +354,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             return cleaned
 
         whitelisted = [
-            genre
-            for genre in cleaned
-            if not self.whitelist or genre.lower() in self.whitelist
+            g
+            for g in cleaned
+            if not self.whitelist or g.lower() in self.whitelist
         ]
         return drop_ignored_genres(
             self._log, self.ignorelist, whitelisted, artist
