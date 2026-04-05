@@ -49,8 +49,6 @@ def is_ignored(
     artist: str | None = None,
 ) -> bool:
     """Check if genre tag should be ignored."""
-    if not ignorelist:
-        return False
     genre_lower = genre.lower()
     for pattern in ignorelist.get("*") or []:
         if pattern.fullmatch(genre_lower):
