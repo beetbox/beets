@@ -16,6 +16,7 @@
 import ctypes
 import os
 import sys
+from unittest.mock import patch
 
 from beets import util
 from beets.test.helper import IOMixin, PluginTestCase
@@ -103,3 +104,18 @@ class FetchartCliTest(IOMixin, PluginTestCase):
         self.config["ui"]["color"] = True
         out = self.run_with_output("fetchart")
         assert " - the älbum: \x1b[1;31mno art found\x1b[39;49;00m\n" == out
+
+    def test_fetchart_handles_filesystem_error(self):
+        """Gracefully handle filesystem errors during art import."""
+        self.touch(b"cover.jpg", dir=self.album.path, content="IMAGE")
+
+        with patch(
+            "beetsplug.fetchart.FetchArtPlugin._set_art",
+            side_effect=util.FilesystemError("permission denied"),
+        ):
+            # Should not crash, just log and continue
+            self.run_command("fetchart")
+
+        self.album.load()
+        # Art should NOT be set since _set_art raised an error
+        assert self.album["artpath"] is None
