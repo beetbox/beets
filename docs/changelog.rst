@@ -34,7 +34,9 @@ New features
   ``arranger`` fields. Existing libraries are migrated automatically, and
   :doc:`plugins/musicbrainz` now preserves each MusicBrainz ``remixer``,
   ``lyricist``, ``composer``, and ``arranger`` relation as a separate value.
-  :bug:`5698`
+  MBIDs for each relation are also stored in new multi-valued fields
+  (``remixers_ids``, ``lyricists_ids``, ``composers_ids``, and
+  ``arrangers_ids``). :bug:`5698`
 - :doc:`plugins/replaygain`: Conflicting replay gain tags are now removed on
   write. RG_* tags are removed when setting R128_* and vice versa.
 - :doc:`plugins/fetchart`: Add support for WebP images.
