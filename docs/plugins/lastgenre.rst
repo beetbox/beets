@@ -198,7 +198,7 @@ A combination of regex patterns and plain genre names is possible. The ``'*'``
 key applies globally to all artists — use it to block genres you never want,
 regardless of artist. Patterns are matched against the full genre string, so a
 plain ``metal`` will not match ``heavy metal`` unless you write a regex like
-``.*metal.*``.
+``.*metal``.
 
 .. attention::
 
