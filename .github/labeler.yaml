@@ -1,170 +1,170 @@
 absubmit:
-  - '(?i)absubmit'
+  - 'absubmit'
 acousticbrainz:
-  - '(?i)acousticbrainz'
+  - 'acousticbrainz'
 advancedrewrite:
-  - '(?i)advancedrewrite'
+  - 'advancedrewrite'
 albumtypes:
-  - '(?i)albumtypes plugin'
-  - '(?i)albumtypes:'
+  - 'albumtypes plugin'
+  - 'albumtypes:'
 aura:
-  - '(?i)aura'
+  - 'aura'
 autobpm:
-  - '(?i)autobpm'
+  - 'autobpm'
 badfiles:
-  - '(?i)badfiles'
+  - 'badfiles'
 bareasc:
-  - '(?i)bareasc'
+  - 'bareasc'
 beatport:
-  - '(?i)beatport'
+  - 'beatport'
 bpd:
-  - '(?i)bpd'
+  - 'bpd'
 bpsync:
-  - '(?i)bpsync'
+  - 'bpsync'
 bucket:
-  - '(?i)bucket'
+  - 'bucket'
 chroma:
-  - '(?i)chroma'
+  - 'chroma'
 convert:
-  - '(?i)convert plugin'
-  - '(?i)convert:'
+  - 'convert plugin'
+  - 'convert:'
 deezer:
-  - '(?i)deezer'
+  - 'deezer'
 discogs:
-  - '(?i)discogs'
+  - 'discogs'
 duplicates:
-  - '(?i)duplicates plugin'
-  - '(?i)duplicates:'
+  - 'duplicates plugin'
+  - 'duplicates:'
 edit:
-  - '(?i)edit plugin'
-  - '(?i)edit:'
+  - 'edit plugin'
+  - 'edit:'
 embedart:
-  - '(?i)embedart'
+  - 'embedart'
 embyupdate:
-  - '(?i)embyupdate'
+  - 'embyupdate'
 export:
-  - '(?i)export plugin'
-  - '(?i)export:'
+  - 'export plugin'
+  - 'export:'
 fetchart:
-  - '(?i)fetchart'
+  - 'fetchart'
 filefilter:
-  - '(?i)filefilter'
+  - 'filefilter'
 fish:
-  - '(?i)fish'
+  - 'fish'
 freedesktop:
-  - '(?i)freedesktop'
+  - 'freedesktop'
 fromfilename:
-  - '(?i)fromfilename'
+  - 'fromfilename'
 ftintitle:
-  - '(?i)ftintitle'
+  - 'ftintitle'
 fuzzy:
-  - '(?i)fuzzy plugin'
-  - '(?i)fuzzy:'
+  - 'fuzzy plugin'
+  - 'fuzzy:'
 hook:
-  - '(?i)hook plugin'
-  - '(?i)hook:'
+  - 'hook plugin'
+  - 'hook:'
 ihate:
-  - '(?i)ihate'
+  - 'ihate'
 importadded:
-  - '(?i)importadded'
+  - 'importadded'
 importfeeds:
-  - '(?i)importfeeds'
+  - 'importfeeds'
 importsource:
-  - '(?i)importsource'
+  - 'importsource'
 info:
-  - '(?i)info plugin'
-  - '(?i)info:'
+  - 'info plugin'
+  - 'info:'
 inline:
-  - '(?i)inline plugin'
-  - '(?i)inline:'
+  - 'inline plugin'
+  - 'inline:'
 ipfs:
-  - '(?i)ipfs'
+  - 'ipfs'
 keyfinder:
-  - '(?i)keyfinder'
+  - 'keyfinder'
 kodiupdate:
-  - '(?i)kodiupdate'
+  - 'kodiupdate'
 lastgenre:
-  - '(?i)lastgenre'
+  - 'lastgenre'
 lastimport:
-  - '(?i)lastimport'
+  - 'lastimport'
 limit:
-  - '(?i)limit plugin'
-  - '(?i)limit:'
+  - 'limit plugin'
+  - 'limit:'
 listenbrainz:
-  - '(?i)listenbrainz'
+  - 'listenbrainz'
 loadext:
-  - '(?i)loadext'
+  - 'loadext'
 lyrics:
-  - '(?i)lyrics'
+  - 'lyrics'
 mbcollection:
-  - '(?i)mbcollection'
+  - 'mbcollection'
 mbpseudo:
-  - '(?i)mbpseudo'
+  - 'mbpseudo'
 mbsubmit:
-  - '(?i)mbsubmit'
+  - 'mbsubmit'
 mbsync:
-  - '(?i)mbsync'
+  - 'mbsync'
 metasync:
-  - '(?i)metasync'
+  - 'metasync'
 missing:
-  - '(?i)missing plugin'
-  - '(?i)missing:'
+  - 'missing plugin'
+  - 'missing:'
 mpdstats:
-  - '(?i)mpdstats'
+  - 'mpdstats'
 mpdupdate:
-  - '(?i)mpdupdate'
+  - 'mpdupdate'
 musicbrainz:
-  - '(?i)musicbrainz'
+  - 'musicbrainz'
 parentwork:
-  - '(?i)parentwork'
+  - 'parentwork'
 permissions:
-  - '(?i)permissions plugin'
-  - '(?i)permissions:'
+  - 'permissions plugin'
+  - 'permissions:'
 play:
-  - '(?i)play plugin'
-  - '(?i)play:'
+  - 'play plugin'
+  - 'play:'
 playlist:
-  - '(?i)\bplaylist plugin'
-  - '(?i)\bplaylist:'
+  - '\bplaylist plugin'
+  - '\bplaylist:'
 plexupdate:
-  - '(?i)plexupdate'
+  - 'plexupdate'
 random:
-  - '(?i)random plugin'
-  - '(?i)random:'
+  - 'random plugin'
+  - 'random:'
 replace:
-  - '(?i)replace plugin'
-  - '(?i)replace:'
+  - 'replace plugin'
+  - 'replace:'
 replaygain:
-  - '(?i)replaygain'
+  - 'replaygain'
 rewrite:
-  - '(?i)\brewrite plugin'
-  - '(?i)\brewrite:'
+  - '\brewrite plugin'
+  - '\brewrite:'
 scrub:
-  - '(?i)scrub'
+  - 'scrub'
 smartplaylist:
-  - '(?i)smartplaylist'
+  - 'smartplaylist'
 sonosupdate:
-  - '(?i)sonosupdate'
+  - 'sonosupdate'
 spotify:
-  - '(?i)spotify'
+  - 'spotify'
 subsonicplaylist:
-  - '(?i)subsonicplaylist'
+  - 'subsonicplaylist'
 subsonicupdate:
-  - '(?i)subsonicupdate'
+  - 'subsonicupdate'
 substitute:
-  - '(?i)substitute'
+  - 'substitute'
 thumbnails:
-  - '(?i)thumbnails'
+  - 'thumbnails'
 titlecase:
-  - '(?i)titlecase'
+  - 'titlecase'
 types:
-  - '(?i)\btypes plugin'
-  - '(?i)\btypes:'
+  - '\btypes plugin'
+  - '\btypes:'
 unimported:
-  - '(?i)unimported'
+  - 'unimported'
 web:
-  - '(?i)web plugin'
-  - '(?i)web:'
+  - 'web plugin'
+  - 'web:'
 zero:
-  - '(?i)zero plugin'
-  - '(?i)zero:'
+  - 'zero plugin'
+  - 'zero:'
