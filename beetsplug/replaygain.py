@@ -139,6 +139,7 @@ class RgTask:
 
     def _store_track_gain(self, item: Item, track_gain: Gain):
         """Store track gain for a single item in the database."""
+        item.r128_track_gain = None
         item.rg_track_gain = track_gain.gain
         item.rg_track_peak = track_gain.peak
         item.store()
@@ -152,6 +153,7 @@ class RgTask:
 
         The caller needs to ensure that `self.album_gain is not None`.
         """
+        item.r128_album_gain = None
         item.rg_album_gain = album_gain.gain
         item.rg_album_peak = album_gain.peak
         item.store()
@@ -228,6 +230,8 @@ class R128Task(RgTask):
         super().__init__(items, album, target_level, None, backend_name, log)
 
     def _store_track_gain(self, item: Item, track_gain: Gain):
+        item.rg_track_gain = None
+        item.rg_track_peak = None
         item.r128_track_gain = track_gain.gain
         item.store()
         self._log.debug("applied r128 track gain {.r128_track_gain} LU", item)
@@ -237,6 +241,8 @@ class R128Task(RgTask):
 
         The caller needs to ensure that `self.album_gain is not None`.
         """
+        item.rg_album_gain = None
+        item.rg_album_peak = None
         item.r128_album_gain = album_gain.gain
         item.store()
         self._log.debug("applied r128 album gain {.r128_album_gain} LU", item)
