@@ -23,7 +23,6 @@ from beets.autotag.distance import Distance
 from beets.autotag.hooks import (
     AlbumInfo,
     AlbumMatch,
-    Info,
     TrackInfo,
     TrackMatch,
     correct_list_fields,
@@ -76,7 +75,7 @@ class TestLegacyStringField:
         self, str_value, list_value, expected_warning, expected_list_value
     ):
         with expected_warning:
-            actual_list_value = Info._get_list_from_string_value(
+            actual_list_value = TrackInfo._get_list_from_string_value(
                 "genre", "genres", str_value, list_value
             )
 
@@ -85,7 +84,7 @@ class TestLegacyStringField:
     def test_set_str_value(
         self, str_value, list_value, expected_warning, expected_list_value
     ):
-        info = Info(genres=list_value)
+        info = TrackInfo(genres=list_value)
         with expected_warning:
             info["genre"] = str_value
 

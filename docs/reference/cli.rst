@@ -271,6 +271,11 @@ To adjust a multi-valued field, such as ``genres``, ``remixers``, ``lyricists``,
 ``composers``, or ``arrangers``, separate the values with |semicolon_space|. For
 example, ``beet modify genres="rock; pop"``.
 
+For compatibility, ``modify`` still accepts legacy singular names such as
+``genre``, ``composer``, ``lyricist``, ``remixer``, and ``arranger`` when you
+assign values, but it will warn and translate them to the plural multi-valued
+fields. Prefer the plural field names in new commands.
+
 The ``-a`` option changes to querying album fields instead of track fields and
 also enables to operate on albums in addition to the individual tracks. Without
 this flag, the command will only change *track-level* data, even if all the

@@ -49,6 +49,10 @@ Bug fixes
 - :ref:`import-cmd` Fix ``albumartists_sort`` (and related fields) incorrectly
   prepending the full combined artist credit as the first element for
   multi-artist releases. :bug:`6470`
+- :ref:`modify-cmd`: Accept legacy singular field names such as ``genre``,
+  ``composer``, ``lyricist``, ``remixer``, and ``arranger`` in assignments,
+  rewrite them to the corresponding multi-valued fields, and warn users to
+  switch to the plural field names. :bug:`6483`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
