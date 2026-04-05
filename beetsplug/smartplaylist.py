@@ -184,8 +184,15 @@ class SmartPlaylistPlugin(BeetsPlugin):
         self.update_playlists(lib, opts.pretend, opts.quiet)
 
     def __apply_opts_to_config(self, opts: Any) -> None:
+        """Apply explicitly set command-line options to the plugin configuration.
+
+        Only explicitly set values are written. Boolean ``False`` (the default
+        for ``store_true`` flags) is skipped so that an unset flag does not
+        overwrite a ``true`` value already set in the config file. Other falsy
+        values (e.g. an empty string for ``--prefix``) are still applied.
+        """
         for k, v in opts.__dict__.items():
-            if v is not None and k in self.config:
+            if v is not False and v is not None and k in self.config:
                 self.config[k] = v
 
     def _parse_one_query(
