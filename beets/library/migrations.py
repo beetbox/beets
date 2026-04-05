@@ -28,7 +28,7 @@ def chunks(lst: list[T], n: int) -> Iterator[list[T]]:
 
 
 class MultiValueFieldMigration(Migration):
-    """Backfill multi-value field from legacy single-string values."""
+    """Backfill multi-valued field from legacy single-string values."""
 
     str_field: ClassVar[str]
     list_field: ClassVar[str]
@@ -94,7 +94,7 @@ class MultiValueFieldMigration(Migration):
 
 
 class MultiGenreFieldMigration(MultiValueFieldMigration):
-    """Backfill multi-value genres from legacy single-string genre data."""
+    """Backfill multi-valued genres from legacy single-string genre data."""
 
     str_field = "genre"
     list_field = "genres"
@@ -111,28 +111,28 @@ class MultiGenreFieldMigration(MultiValueFieldMigration):
 
 
 class MultiRemixerFieldMigration(MultiValueFieldMigration):
-    """Backfill multi-value remixers from legacy single-string remixer data."""
+    """Backfill multi-valued remixers from legacy single-string remixer data."""
 
     str_field = "remixer"
     list_field = "remixers"
 
 
 class MultiLyricistFieldMigration(MultiValueFieldMigration):
-    """Backfill multi-value lyricists from legacy single-string lyricist data."""
+    """Backfill multi-valued lyricists from legacy single-string lyricist data."""
 
     str_field = "lyricist"
     list_field = "lyricists"
 
 
 class MultiComposerFieldMigration(MultiValueFieldMigration):
-    """Backfill multi-value composers from legacy single-string composer data."""
+    """Backfill multi-valued composers from legacy single-string composer data."""
 
     str_field = "composer"
     list_field = "composers"
 
 
 class MultiArrangerFieldMigration(MultiValueFieldMigration):
-    """Backfill multi-value arrangers from legacy single-string arranger data."""
+    """Backfill multi-valued arrangers from legacy single-string arranger data."""
 
     str_field = "arranger"
     list_field = "arrangers"
