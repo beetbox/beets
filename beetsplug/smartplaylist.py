@@ -278,7 +278,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
         )
         tpl = self.config["uri_format"].get()
         prefix = bytestring_path(self.config["prefix"].as_str())
-        dest_regen = self.config["dest_regen"].get()
+        dest_regen = self.config["dest_regen"].get(bool)
         relative_to = self.config["relative_to"].get()
         if relative_to:
             relative_to = normpath(relative_to)
@@ -334,9 +334,9 @@ class SmartPlaylistPlugin(BeetsPlugin):
                         item_uri = item.destination()
                     if relative_to:
                         item_uri = os.path.relpath(item_uri, relative_to)
-                    if self.config["forward_slash"].get():
+                    if self.config["forward_slash"].get(bool):
                         item_uri = path_as_posix(item_uri)
-                    if self.config["urlencode"]:
+                    if self.config["urlencode"].get(bool):
                         item_uri = bytestring_path(
                             pathname2url(os.fsdecode(item_uri))
                         )
