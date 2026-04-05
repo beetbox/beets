@@ -204,7 +204,7 @@ plain ``metal`` will not match ``heavy metal`` unless you write a regex like
 
     - The global key ``'*'`` **must** be surrounded by single quotes so that
       YAML does not interpret it as an anchor.
-    - Any regex pattern that starts with special YAML characters (especially
+    - Any regex pattern that starts with a special YAML character (especially
       ``[`` or ``*``) **must** be surrounded by quotes.
     - Prefer **single quotes** (``'...'``) when quoting is necessary, as they
       treat backslashes literally (no double-escaping required).
