@@ -717,208 +717,222 @@ def test_get_genre(
     assert plugin._get_genre(item) == expected_result
 
 
-# Ignorelist pattern matching tests for _is_ignored, independent of _resolve_genres
+class TestIgnorelist:
+    """Ignorelist pattern matching tests for _is_ignored, independent of _resolve_genres"""
 
-
-@pytest.mark.parametrize(
-    "ignorelist_dict, artist, genre, expected_forbidden",
-    [
-        # Global ignorelist - simple word
-        ({"*": ["spoken word"]}, "Any Artist", "spoken word", True),
-        ({"*": ["spoken word"]}, "Any Artist", "jazz", False),
-        # Global ignorelist - regex pattern
-        ({"*": [".*electronic.*"]}, "Any Artist", "ambient electronic", True),
-        ({"*": [".*electronic.*"]}, "Any Artist", "jazz", False),
-        # Artist-specific ignorelist
-        ({"metallica": ["metal"]}, "Metallica", "metal", True),
-        ({"metallica": ["metal"]}, "Iron Maiden", "metal", False),
-        # Case insensitive matching
-        ({"metallica": ["metal"]}, "METALLICA", "METAL", True),
-        # Full-match behavior: plain "metal" must not match "heavy metal"
-        ({"metallica": ["metal"]}, "Metallica", "heavy metal", False),
-        # Regex behavior: explicit pattern ".*metal.*" may match "heavy metal"
-        ({"metallica": [".*metal.*"]}, "Metallica", "heavy metal", True),
-        # Artist-specific ignorelist - exact match
-        ({"metallica": ["^Heavy Metal$"]}, "Metallica", "classic metal", False),
-        # Combined global and artist-specific
-        (
-            {"*": ["spoken word"], "metallica": ["metal"]},
-            "Metallica",
-            "spoken word",
-            True,
-        ),
-        (
-            {"*": ["spoken word"], "metallica": ["metal"]},
-            "Metallica",
-            "metal",
-            True,
-        ),
-        # Complex regex pattern with multiple features (raw string)
-        (
-            {
-                "fracture": [
-                    r"^(heavy|black|power|death)?\s?(metal|rock)$|\w+-metal\d*$"
-                ]
-            },
-            "Fracture",
-            "power metal",
-            True,
-        ),
-        # Complex regex pattern with multiple features (regular string)
-        (
-            {"amon tobin": ["d(rum)?[ n/]*b(ass)?"]},
-            "Amon Tobin",
-            "dnb",
-            True,
-        ),
-        # Empty ignorelist
-        ({}, "Any Artist", "any genre", False),
-    ],
-)
-def test_ignorelist_patterns(
-    ignorelist_dict, artist, genre, expected_forbidden
-):
-    """Test ignorelist pattern matching logic directly."""
-
-    logger = Mock()
-
-    # Set up compiled ignorelist directly (skipping file parsing)
-    compiled_ignorelist = defaultdict(list)
-    for artist_name, patterns in ignorelist_dict.items():
-        compiled_ignorelist[artist_name.lower()] = [
-            re.compile(pattern, re.IGNORECASE) for pattern in patterns
-        ]
-
-    result = is_ignored(logger, compiled_ignorelist, genre, artist)
-    assert result == expected_forbidden
-
-
-@pytest.mark.parametrize(
-    "ignorelist_config, expected_ignorelist",
-    [
-        # Basic artist with single pattern
-        ({"metallica": ["metal"]}, {"metallica": ["metal"]}),
-        # Global ignorelist with '*' key
-        ({"*": ["spoken word"]}, {"*": ["spoken word"]}),
-        # Multiple patterns per artist
-        (
-            {"metallica": ["metal", ".*rock.*"]},
-            {"metallica": ["metal", ".*rock.*"]},
-        ),
-        # Combined global and artist-specific
-        (
-            {"*": ["spoken word"], "metallica": ["metal"]},
-            {"*": ["spoken word"], "metallica": ["metal"]},
-        ),
-        # Artist names are preserved by the current loader implementation.
-        ({"METALLICA": ["METAL"]}, {"METALLICA": ["METAL"]}),
-        # Invalid regex pattern that gets escaped (full-match literal fallback)
-        ({"artist": ["[invalid(regex"]}, {"artist": ["\\[invalid\\(regex"]}),
-        # Disabled via False / empty dict — both produce empty dict
-        (False, {}),
-        ({}, {}),
-    ],
-)
-def test_ignorelist_config_format(ignorelist_config, expected_ignorelist):
-    """Test ignorelist parsing/compilation with isolated config state."""
-    cfg = confuse.Configuration("test", read=False)
-    cfg.set({"lastgenre": {"ignorelist": ignorelist_config}})
-
-    # Mimic the plugin loader behavior in isolation to avoid global config bleed.
-    if not cfg["lastgenre"]["ignorelist"].get():
-        string_ignorelist = {}
-    else:
-        raw_strs = cfg["lastgenre"]["ignorelist"].get(
-            confuse.MappingValues(confuse.Sequence(str))
-        )
-        string_ignorelist = {}
-        for artist, patterns in raw_strs.items():
-            compiled_patterns = []
-            for pattern in patterns:
-                try:
-                    compiled_patterns.append(
-                        re.compile(pattern, re.IGNORECASE).pattern
-                    )
-                except re.error:
-                    compiled_patterns.append(
-                        re.compile(re.escape(pattern), re.IGNORECASE).pattern
-                    )
-            string_ignorelist[artist] = compiled_patterns
-
-    assert string_ignorelist == expected_ignorelist
-
-
-@pytest.mark.parametrize(
-    "invalid_config, expected_error_message",
-    [
-        # A plain string (e.g. accidental file path) instead of a mapping
-        (
-            "/path/to/ignorelist.txt",
-            "must be a dict",
-        ),
-        # An integer instead of a mapping
-        (
-            42,
-            "must be a dict",
-        ),
-        # A list of strings instead of a mapping
-        (
-            ["spoken word", "comedy"],
-            "must be a dict",
-        ),
-        # A mapping with a non-list value
-        (
-            {"metallica": "metal"},
-            "must be a list",
-        ),
-    ],
-)
-def test_ignorelist_config_format_errors(
-    invalid_config, expected_error_message
-):
-    """Test ignorelist config validation errors in isolated config."""
-    cfg = confuse.Configuration("test", read=False)
-    cfg.set({"lastgenre": {"ignorelist": invalid_config}})
-
-    with pytest.raises(confuse.ConfigTypeError) as exc_info:
-        _ = cfg["lastgenre"]["ignorelist"].get(
-            confuse.MappingValues(confuse.Sequence(str))
-        )
-
-    assert expected_error_message in str(exc_info.value)
-
-
-def test_ignorelist_multivalued_album_artist_fallback(config):
-    """`stage_artist=None` fallback must not re-drop per-artist results."""
-    config["lastgenre"]["ignorelist"] = {
-        "Artist A": ["Metal"],
-        "Artist Group": ["Metal"],
-    }
-    config["lastgenre"]["whitelist"] = False
-    config["lastgenre"]["count"] = 10
-
-    plugin = lastgenre.LastGenrePlugin()
-    plugin.setup()
-
-    obj = MagicMock(spec=Album)
-    obj.albumartist = "Artist Group"
-    obj.album = "Album Title"
-    obj.albumartists = ["Artist A", "Artist B"]
-    obj.get.return_value = []
-
-    plugin.client = MagicMock()
-    plugin.client.fetch_track_genre.return_value = []
-    plugin.client.fetch_album_genre.return_value = []
-
-    artist_genres = {
-        "Artist A": ["Rock"],
-        "Artist B": ["Metal", "Jazz"],
-    }
-    plugin.client.fetch_artist_genre.side_effect = lambda artist: (
-        artist_genres.get(artist, [])
+    @pytest.mark.parametrize(
+        "ignorelist_dict, artist, genre, expected_forbidden",
+        [
+            # Global ignorelist - simple word
+            ({"*": ["spoken word"]}, "Any Artist", "spoken word", True),
+            ({"*": ["spoken word"]}, "Any Artist", "jazz", False),
+            # Global ignorelist - regex pattern
+            (
+                {"*": [".*electronic.*"]},
+                "Any Artist",
+                "ambient electronic",
+                True,
+            ),
+            ({"*": [".*electronic.*"]}, "Any Artist", "jazz", False),
+            # Artist-specific ignorelist
+            ({"metallica": ["metal"]}, "Metallica", "metal", True),
+            ({"metallica": ["metal"]}, "Iron Maiden", "metal", False),
+            # Case insensitive matching
+            ({"metallica": ["metal"]}, "METALLICA", "METAL", True),
+            # Full-match behavior: plain "metal" must not match "heavy metal"
+            ({"metallica": ["metal"]}, "Metallica", "heavy metal", False),
+            # Regex behavior: explicit pattern ".*metal.*" may match "heavy metal"
+            ({"metallica": [".*metal.*"]}, "Metallica", "heavy metal", True),
+            # Artist-specific ignorelist - exact match
+            (
+                {"metallica": ["^Heavy Metal$"]},
+                "Metallica",
+                "classic metal",
+                False,
+            ),
+            # Combined global and artist-specific
+            (
+                {"*": ["spoken word"], "metallica": ["metal"]},
+                "Metallica",
+                "spoken word",
+                True,
+            ),
+            (
+                {"*": ["spoken word"], "metallica": ["metal"]},
+                "Metallica",
+                "metal",
+                True,
+            ),
+            # Complex regex pattern with multiple features (raw string)
+            (
+                {
+                    "fracture": [
+                        r"^(heavy|black|power|death)?\s?(metal|rock)$|\w+-metal\d*$"
+                    ]
+                },
+                "Fracture",
+                "power metal",
+                True,
+            ),
+            # Complex regex pattern with multiple features (regular string)
+            (
+                {"amon tobin": ["d(rum)?[ n/]*b(ass)?"]},
+                "Amon Tobin",
+                "dnb",
+                True,
+            ),
+            # Empty ignorelist
+            ({}, "Any Artist", "any genre", False),
+        ],
     )
+    def test_ignorelist_patterns(
+        self, ignorelist_dict, artist, genre, expected_forbidden
+    ):
+        """Test ignorelist pattern matching logic directly."""
 
-    genres, label = plugin._get_genre(obj)
+        logger = Mock()
 
-    assert "multi-valued album artist" in label
-    assert "Metal" in genres
+        # Set up compiled ignorelist directly (skipping file parsing)
+        compiled_ignorelist = defaultdict(list)
+        for artist_name, patterns in ignorelist_dict.items():
+            compiled_ignorelist[artist_name.lower()] = [
+                re.compile(pattern, re.IGNORECASE) for pattern in patterns
+            ]
+
+        result = is_ignored(logger, compiled_ignorelist, genre, artist)
+        assert result == expected_forbidden
+
+    @pytest.mark.parametrize(
+        "ignorelist_config, expected_ignorelist",
+        [
+            # Basic artist with single pattern
+            ({"metallica": ["metal"]}, {"metallica": ["metal"]}),
+            # Global ignorelist with '*' key
+            ({"*": ["spoken word"]}, {"*": ["spoken word"]}),
+            # Multiple patterns per artist
+            (
+                {"metallica": ["metal", ".*rock.*"]},
+                {"metallica": ["metal", ".*rock.*"]},
+            ),
+            # Combined global and artist-specific
+            (
+                {"*": ["spoken word"], "metallica": ["metal"]},
+                {"*": ["spoken word"], "metallica": ["metal"]},
+            ),
+            # Artist names are preserved by the current loader implementation.
+            ({"METALLICA": ["METAL"]}, {"METALLICA": ["METAL"]}),
+            # Invalid regex pattern that gets escaped (full-match literal fallback)
+            (
+                {"artist": ["[invalid(regex"]},
+                {"artist": ["\\[invalid\\(regex"]},
+            ),
+            # Disabled via False / empty dict — both produce empty dict
+            (False, {}),
+            ({}, {}),
+        ],
+    )
+    def test_ignorelist_config_format(
+        self, ignorelist_config, expected_ignorelist
+    ):
+        """Test ignorelist parsing/compilation with isolated config state."""
+        cfg = confuse.Configuration("test", read=False)
+        cfg.set({"lastgenre": {"ignorelist": ignorelist_config}})
+
+        # Mimic the plugin loader behavior in isolation to avoid global config bleed.
+        if not cfg["lastgenre"]["ignorelist"].get():
+            string_ignorelist = {}
+        else:
+            raw_strs = cfg["lastgenre"]["ignorelist"].get(
+                confuse.MappingValues(confuse.Sequence(str))
+            )
+            string_ignorelist = {}
+            for artist, patterns in raw_strs.items():
+                compiled_patterns = []
+                for pattern in patterns:
+                    try:
+                        compiled_patterns.append(
+                            re.compile(pattern, re.IGNORECASE).pattern
+                        )
+                    except re.error:
+                        compiled_patterns.append(
+                            re.compile(
+                                re.escape(pattern), re.IGNORECASE
+                            ).pattern
+                        )
+                string_ignorelist[artist] = compiled_patterns
+
+        assert string_ignorelist == expected_ignorelist
+
+    @pytest.mark.parametrize(
+        "invalid_config, expected_error_message",
+        [
+            # A plain string (e.g. accidental file path) instead of a mapping
+            (
+                "/path/to/ignorelist.txt",
+                "must be a dict",
+            ),
+            # An integer instead of a mapping
+            (
+                42,
+                "must be a dict",
+            ),
+            # A list of strings instead of a mapping
+            (
+                ["spoken word", "comedy"],
+                "must be a dict",
+            ),
+            # A mapping with a non-list value
+            (
+                {"metallica": "metal"},
+                "must be a list",
+            ),
+        ],
+    )
+    def test_ignorelist_config_format_errors(
+        self, invalid_config, expected_error_message
+    ):
+        """Test ignorelist config validation errors in isolated config."""
+        cfg = confuse.Configuration("test", read=False)
+        cfg.set({"lastgenre": {"ignorelist": invalid_config}})
+
+        with pytest.raises(confuse.ConfigTypeError) as exc_info:
+            _ = cfg["lastgenre"]["ignorelist"].get(
+                confuse.MappingValues(confuse.Sequence(str))
+            )
+
+        assert expected_error_message in str(exc_info.value)
+
+    def test_ignorelist_multivalued_album_artist_fallback(self, config):
+        """`stage_artist=None` fallback must not re-drop per-artist results."""
+        config["lastgenre"]["ignorelist"] = {
+            "Artist A": ["Metal"],
+            "Artist Group": ["Metal"],
+        }
+        config["lastgenre"]["whitelist"] = False
+        config["lastgenre"]["count"] = 10
+
+        plugin = lastgenre.LastGenrePlugin()
+        plugin.setup()
+
+        obj = MagicMock(spec=Album)
+        obj.albumartist = "Artist Group"
+        obj.album = "Album Title"
+        obj.albumartists = ["Artist A", "Artist B"]
+        obj.get.return_value = []
+
+        plugin.client = MagicMock()
+        plugin.client.fetch_track_genre.return_value = []
+        plugin.client.fetch_album_genre.return_value = []
+
+        artist_genres = {
+            "Artist A": ["Rock"],
+            "Artist B": ["Metal", "Jazz"],
+        }
+        plugin.client.fetch_artist_genre.side_effect = lambda artist: (
+            artist_genres.get(artist, [])
+        )
+
+        genres, label = plugin._get_genre(obj)
+
+        assert "multi-valued album artist" in label
+        assert "Metal" in genres
