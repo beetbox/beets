@@ -63,6 +63,9 @@ __all__ = [
 # Global logger.
 log = logging.getLogger("beets")
 
+# The data_source value produced by MusicBrainzPlugin.
+_MUSICBRAINZ_SOURCE = "MusicBrainz"
+
 # Metadata fields that are already hardcoded, or where the tag name changes.
 SPECIAL_FIELDS = {
     "album": (
@@ -199,12 +202,18 @@ def apply_item_metadata(item: Item, track_info: TrackInfo):
     item.artist_credit = track_info.artist_credit
     item.artists_credit = track_info.artists_credit
     item.title = track_info.title
-    item.mb_trackid = track_info.track_id
-    item.mb_releasetrackid = track_info.release_track_id
-    if track_info.artist_id:
-        item.mb_artistid = track_info.artist_id
-    if track_info.artists_ids:
-        item.mb_artistids = track_info.artists_ids
+    if track_info.data_source == _MUSICBRAINZ_SOURCE:
+        item.mb_trackid = track_info.track_id
+        item.mb_releasetrackid = track_info.release_track_id
+        if track_info.artist_id:
+            item.mb_artistid = track_info.artist_id
+        if track_info.artists_ids:
+            item.mb_artistids = track_info.artists_ids
+    else:
+        item.mb_trackid = ""
+        item.mb_releasetrackid = ""
+        item.mb_artistid = ""
+        item.mb_artistids = []
 
     _apply_metadata(track_info, item)
     correct_list_fields(item)
@@ -305,22 +314,37 @@ def apply_metadata(
         item.disc = track_info.medium
         item.disctotal = album_info.mediums
 
-        # MusicBrainz IDs.
-        item.mb_trackid = track_info.track_id
-        item.mb_releasetrackid = track_info.release_track_id or item.mb_trackid
+        # MusicBrainz IDs: only write when the data source is MusicBrainz,
+        # to avoid storing service-specific IDs (Spotify, Deezer, etc.) in
+        # MusicBrainz fields. When the source is not MusicBrainz, clear any
+        # stale values so retagging does not leave invalid IDs behind.
+        if album_info.data_source == _MUSICBRAINZ_SOURCE:
+            item.mb_trackid = track_info.track_id
+            item.mb_releasetrackid = (
+                track_info.release_track_id or item.mb_trackid
+            )
 
-        item.mb_albumid = album_info.album_id
-        item.mb_releasegroupid = album_info.releasegroup_id
+            item.mb_albumid = album_info.album_id
+            item.mb_releasegroupid = album_info.releasegroup_id
 
-        item.mb_albumartistid = album_info.artist_id
-        item.mb_albumartistids = album_info.artists_ids or (
-            [ai] if (ai := item.mb_albumartistid) else []
-        )
+            item.mb_albumartistid = album_info.artist_id
+            item.mb_albumartistids = album_info.artists_ids or (
+                [ai] if (ai := item.mb_albumartistid) else []
+            )
 
-        item.mb_artistid = track_info.artist_id or item.mb_albumartistid
-        item.mb_artistids = track_info.artists_ids or (
-            [iai] if (iai := item.mb_artistid) else []
-        )
+            item.mb_artistid = track_info.artist_id or item.mb_albumartistid
+            item.mb_artistids = track_info.artists_ids or (
+                [iai] if (iai := item.mb_artistid) else []
+            )
+        else:
+            item.mb_trackid = ""
+            item.mb_releasetrackid = ""
+            item.mb_albumid = ""
+            item.mb_releasegroupid = ""
+            item.mb_albumartistid = ""
+            item.mb_albumartistids = []
+            item.mb_artistid = ""
+            item.mb_artistids = []
 
         # Compilation flag.
         item.comp = album_info.va
