@@ -19,7 +19,7 @@
 from __future__ import annotations
 
 import traceback
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import pylast
 
@@ -28,6 +28,7 @@ from beets import plugins
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from beets.library import LibModel
     from beets.logging import BeetsLogger
 
     GenreCache = dict[str, list[str]]
@@ -48,6 +49,18 @@ PYLAST_EXCEPTIONS = (
 class LastFmClient:
     """Client for fetching genres from Last.fm."""
 
+    FETCH_METHODS: ClassVar[
+        dict[
+            str,
+            tuple[Callable[..., Any], Callable[[LibModel], tuple[str, ...]]],
+        ]
+    ] = {
+        "track": (LASTFM.get_track, lambda obj: (obj.artist, obj.title)),
+        "album": (LASTFM.get_album, lambda obj: (obj.albumartist, obj.album)),
+        "artist": (LASTFM.get_artist, lambda obj: (obj.artist,)),
+        "album_artist": (LASTFM.get_artist, lambda obj: (obj.albumartist,)),
+    }
+
     def __init__(self, log: BeetsLogger, min_weight: int):
         """Initialize the client.
 
@@ -57,36 +70,17 @@ class LastFmClient:
         self._min_weight = min_weight
         self._genre_cache: GenreCache = {}
 
-    def fetch_genre(
-        self, lastfm_obj: pylast.Album | pylast.Artist | pylast.Track
+    def fetch_genres(
+        self, obj: pylast.Album | pylast.Artist | pylast.Track
     ) -> list[str]:
-        """Return genres for a pylast entity. Returns an empty list if
-        no suitable genres are found.
-        """
-        return self._tags_for(lastfm_obj, self._min_weight)
-
-    def _tags_for(
-        self,
-        obj: pylast.Album | pylast.Artist | pylast.Track,
-        min_weight: int | None = None,
-    ) -> list[str]:
-        """Core genre identification routine.
+        """Return genres for a pylast entity.
 
         Given a pylast entity (album or track), return a list of
         tag names for that entity. Return an empty list if the entity is
         not found or another error occurs.
-
-        If `min_weight` is specified, tags are filtered by weight.
         """
-        # Work around an inconsistency in pylast where
-        # Album.get_top_tags() does not return TopItem instances.
-        # https://github.com/pylast/pylast/issues/86
-        obj_to_query: Any = obj
-        if isinstance(obj, pylast.Album):
-            obj_to_query = super(pylast.Album, obj)
-
         try:
-            res: Any = obj_to_query.get_top_tags()
+            res = obj.get_top_tags()
         except PYLAST_EXCEPTIONS as exc:
             self._log.debug("last.fm error: {}", exc)
             return []
@@ -97,13 +91,11 @@ class LastFmClient:
             return []
 
         # Filter by weight (optionally).
-        if min_weight:
+        if min_weight := self._min_weight:
             res = [el for el in res if (int(el.weight or 0)) >= min_weight]
 
         # Get strings from tags.
-        tags: list[str] = [el.item.get_name().lower() for el in res]
-
-        return tags
+        return [el.item.get_name().lower() for el in res]
 
     def _last_lookup(
         self, entity: str, method: Callable[..., Any], *args: str
@@ -123,24 +115,15 @@ class LastFmClient:
         key = f"{entity}.{'-'.join(str(a) for a in args)}"
         if key not in self._genre_cache:
             args_replaced = [a.replace("\u2010", "-") for a in args]
-            self._genre_cache[key] = self.fetch_genre(method(*args_replaced))
+            self._genre_cache[key] = self.fetch_genres(method(*args_replaced))
 
-        genre = self._genre_cache[key]
-        self._log.extra_debug("last.fm (unfiltered) {} tags: {}", entity, genre)
-        return genre
-
-    def fetch_album_genre(self, albumartist: str, albumtitle: str) -> list[str]:
-        """Return genres from Last.fm for the album by albumartist."""
-        return self._last_lookup(
-            "album", LASTFM.get_album, albumartist, albumtitle
+        genres = self._genre_cache[key]
+        self._log.extra_debug(
+            "last.fm (unfiltered) {} tags: {}", entity, genres
         )
+        return genres
 
-    def fetch_artist_genre(self, artist: str) -> list[str]:
-        """Return genres from Last.fm for the artist."""
-        return self._last_lookup("artist", LASTFM.get_artist, artist)
-
-    def fetch_track_genre(self, trackartist: str, tracktitle: str) -> list[str]:
-        """Return genres from Last.fm for the track by artist."""
-        return self._last_lookup(
-            "track", LASTFM.get_track, trackartist, tracktitle
-        )
+    def fetch(self, kind: str, obj: LibModel) -> list[str]:
+        """Fetch fetcher for Last.fm genres."""
+        method, arg_fn = self.FETCH_METHODS[kind]
+        return self._last_lookup(kind, method, *arg_fn(obj))
