@@ -57,3 +57,13 @@ The ``deezer`` plugin provides an additional command ``deezerupdate`` to update
 the ``rank`` information from Deezer. The ``rank`` (ranges from 0 to 1M) is a
 global indicator of a song's popularity on Deezer that is updated daily based on
 streams. The higher the ``rank``, the more popular the track is.
+
+Stored Fields
+-------------
+
+When Deezer is used as a metadata source during import, the plugin stores these
+identifiers:
+
+- ``deezer_track_id``
+- ``deezer_album_id``
+- ``deezer_artist_id``
