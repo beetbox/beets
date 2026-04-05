@@ -28,6 +28,11 @@ New features
   it easier to copy and paste multiple playlists for further use in the shell.
 - :doc:`plugins/chroma`: Add new command ``chromasearch`` to search the local
   library by chromaprint fingerprint.
+- :doc:`plugins/smartplaylist`: A ``--quiet`` flag is added to the ``splupdate``
+  command to suppress several log messages for each updated playlist and in
+  pretend mode only prints the playlist name and the number of tracks instead of
+  each track name. This can be useful when testing out new entries in the
+  configuration.
 
 Bug fixes
 ~~~~~~~~~
