@@ -301,8 +301,10 @@ class SmartPlaylistPlugin(BeetsPlugin):
         if relative_to:
             relative_to = normpath(relative_to)
 
-        # Maps playlist filenames to lists of track filenames.
+        # Maps playlist filenames to lists of track entries and URI sets used
+        # to deduplicate output lines.
         m3us: dict[str, list[PlaylistItem]] = {}
+        m3u_uris: dict[str, set[Any]] = {}
 
         for playlist in self._matched_playlists:
             pretend_count = 0
@@ -345,6 +347,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
                 m3u_name = sanitize_path(m3u_name, lib.replacements)
                 if m3u_name not in m3us:
                     m3us[m3u_name] = []
+                    m3u_uris[m3u_name] = set()
                 item_uri = item.path
                 if tpl:
                     item_uri = tpl.replace("$id", str(item.id)).encode("utf-8")
@@ -361,7 +364,8 @@ class SmartPlaylistPlugin(BeetsPlugin):
                         )
                     item_uri = prefix + item_uri
 
-                if item_uri not in m3us[m3u_name]:
+                if item_uri not in m3u_uris[m3u_name]:
+                    m3u_uris[m3u_name].add(item_uri)
                     m3us[m3u_name].append(PlaylistItem(item, item_uri))
                     if (
                         pretend
@@ -371,7 +375,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
                         print(displayable_path(item_uri))
                     elif pretend and not quiet:
                         print(item)
-                pretend_count += 1
+                    pretend_count += 1
             if quiet:
                 self._log.info("{}: {} items matched.", name, pretend_count)
 
