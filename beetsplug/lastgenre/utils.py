@@ -36,9 +36,9 @@ def drop_ignored_genres(
 ) -> list[str]:
     """Drop genres that match the ignorelist."""
     return [
-        genre
-        for genre in genres
-        if not is_ignored(logger, ignorelist, genre, artist)
+        g
+        for g in genres
+        if not is_ignored(logger, ignorelist, g, artist)
     ]
 
 
