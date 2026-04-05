@@ -28,7 +28,7 @@ New features
   it easier to copy and paste multiple playlists for further use in the shell.
 - :doc:`plugins/chroma`: Add new command ``chromasearch`` to search the local
   library by chromaprint fingerprint.
-- Store track remixers, lyricists, composers, and arrangers in the multi-value
+- Store track remixers, lyricists, composers, and arrangers in the multi-valued
   ``remixers``, ``lyricists``, ``composers``, and ``arrangers`` fields instead
   of the legacy single-value ``remixer``, ``lyricist``, ``composer``, and
   ``arranger`` fields. Existing libraries are migrated automatically, and
@@ -55,7 +55,7 @@ For plugin developers
 
 - If you maintain a metadata source plugin that populates any of ``arranger``,
   ``composer``, ``lyricist``, ``remixer`` fields, update it to populate the
-  respective multi-value fields instead (``arrangers``, ``composers``,
+  respective multi-valued fields instead (``arrangers``, ``composers``,
   ``lyricists``, ``remixers``).
 
 ..
