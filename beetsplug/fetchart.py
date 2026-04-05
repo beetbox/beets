@@ -1503,7 +1503,16 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             candidate = self.art_candidates.pop(task)
             removal_enabled = self._is_source_file_removal_enabled()
 
-            self._set_art(task.album, candidate, not removal_enabled)
+            try:
+                self._set_art(task.album, candidate, not removal_enabled)
+            except util.FilesystemError as exc:
+                self._log.debug(
+                    "error setting art for {0.albumartist} - {1}: {2}",
+                    task.album,
+                    task.album.album,
+                    exc,
+                )
+                return
 
             if removal_enabled and not self._is_candidate_fallback(candidate):
                 task.prune(candidate.path)
@@ -1607,8 +1616,18 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
 
                 candidate = self.art_for_album(album, local_paths)
                 if candidate:
-                    self._set_art(album, candidate)
-                    message = colorize("text_success", "found album art")
+                    try:
+                        self._set_art(album, candidate)
+                    except util.FilesystemError as exc:
+                        self._log.debug(
+                            "error setting art for {0.albumartist} - {1}: {2}",
+                            album,
+                            album.album,
+                            exc,
+                        )
+                        message = colorize("text_error", "error setting album art")
+                    else:
+                        message = colorize("text_success", "found album art")
                 else:
                     message = colorize("text_error", "no art found")
                 ui.print_(f"{album}: {message}")
