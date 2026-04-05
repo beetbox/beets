@@ -42,6 +42,7 @@ Bug fixes
 ~~~~~~~~~
 
 - :doc:`plugins/fetchart`: Gracefully handle filesystem errors (permission denied, cross-device move) when setting album art instead of crashing. :bug:`6193`
+- :doc:`plugins/fetchart`: Gracefully handle filesystem errors (permission denied, cross-device move) when setting album art instead of crashing the import. :bug:`6193`
 - Correctly handle semicolon-delimited genre values from externally-tagged
   files. :bug:`6450`
 - :doc:`plugins/listenbrainz`: Fix ``lbimport`` crashing when ListenBrainz
