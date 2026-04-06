@@ -976,6 +976,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                 ],
                 "release_group": {
                     "id": "another-id",
+                    "first_release_date": "2009",
                 },
                 "release_relations": [
                     {
@@ -1018,6 +1019,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                 ],
                 "release_group": {
                     "id": "another-id",
+                    "first_release_date": "2009",
                 },
                 "country": "COUNTRY",
             },
@@ -1063,6 +1065,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                 ],
                 "release_group": {
                     "id": "another-id",
+                    "first_release_date": "2009",
                 },
             }
         ]
@@ -1107,6 +1110,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                 ],
                 "release_group": {
                     "id": "another-id",
+                    "first_release_date": "2009",
                 },
             }
         ]
@@ -1151,6 +1155,7 @@ class MBLibraryTest(MusicBrainzTestCase):
                 ],
                 "release_group": {
                     "id": "another-id",
+                    "first_release_date": "2009",
                 },
                 "release_relations": [
                     {
@@ -1260,7 +1265,10 @@ class TestMusicBrainzPlugin(PluginMixin):
                 "artist_credit": [
                     {"artist": {"name": "some-artist", "id": "some-id"}}
                 ],
-                "release_group": {"id": "another-id"},
+                "release_group": {
+                    "id": "another-id",
+                    "first_release_date": "2009",
+                },
             },
         )
         candidates = list(mb.candidates([], "hello", "there", False))

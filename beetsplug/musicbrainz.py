@@ -372,19 +372,19 @@ class MusicBrainzPlugin(
             info.artists_ids = _artist_ids(recording["artist_credit"])
             info.artist_id = info.artists_ids[0]
 
-        if recording.get("length"):
-            info.length = int(recording["length"]) / 1000.0
+        if length := recording.get("length"):
+            info.length = length / 1000.0
 
         info.trackdisambig = recording.get("disambiguation")
 
         if recording.get("isrcs"):
             info.isrc = ";".join(recording["isrcs"])
 
-        lyricists = []
-        lyricists_ids = []
-        composers = []
-        composers_ids = []
-        composer_sort = []
+        lyricists: list[str] = []
+        lyricists_ids: list[str] = []
+        composers: list[str] = []
+        composers_ids: list[str] = []
+        composer_sort: list[str] = []
         for work_relation in recording.get("work_relations", ()):
             if work_relation["type"] != "performance":
                 continue
@@ -557,8 +557,8 @@ class MusicBrainzPlugin(
 
                     ti.artists_ids = _artist_ids(track["artist_credit"])
                     ti.artist_id = ti.artists_ids[0]
-                if track.get("length"):
-                    ti.length = int(track["length"]) / (1000.0)
+                if length := track.get("length"):
+                    ti.length = length / 1000.0
 
                 track_infos.append(ti)
 
@@ -624,7 +624,7 @@ class MusicBrainzPlugin(
 
         # Release events.
         info.country, release_date = _preferred_release_event(release)
-        release_group_date = release["release_group"].get("first_release_date")
+        release_group_date = release["release_group"]["first_release_date"]
         if not release_date:
             # Fall back if release-specific date is not available.
             release_date = release_group_date
@@ -692,9 +692,11 @@ class MusicBrainzPlugin(
                         url_source.capitalize(),
                     )
 
-            for source, url in urls.items():
+            for url_source, url in urls.items():
                 setattr(
-                    info, f"{source}_album_id", extract_release_id(source, url)
+                    info,
+                    f"{url_source}_album_id",
+                    extract_release_id(url_source, url),
                 )
 
         extra_albumdatas = plugins.send("mb_album_extract", data=release)

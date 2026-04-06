@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     import pathlib
 
     from beetsplug._typing import JSONDict
+    from beetsplug._utils.musicbrainz import Release
 
 
 @pytest.fixture(scope="module")
@@ -28,13 +29,13 @@ def rsrc_dir(pytestconfig: pytest.Config):
 
 
 @pytest.fixture
-def official_release(rsrc_dir: pathlib.Path) -> JSONDict:
+def official_release(rsrc_dir: pathlib.Path) -> Release:
     info_json = (rsrc_dir / "official_release.json").read_text(encoding="utf-8")
     return json.loads(info_json)
 
 
 @pytest.fixture
-def pseudo_release(rsrc_dir: pathlib.Path) -> JSONDict:
+def pseudo_release(rsrc_dir: pathlib.Path) -> Release:
     info_json = (rsrc_dir / "pseudo_release.json").read_text(encoding="utf-8")
     return json.loads(info_json)
 
@@ -141,7 +142,7 @@ class TestMBPseudoPlugin(TestMBPseudoMixin):
     def test_album_info_for_pseudo_release(
         self,
         mbpseudo_plugin: MusicBrainzPseudoReleasePlugin,
-        pseudo_release: JSONDict,
+        pseudo_release: Release,
     ):
         album_info = mbpseudo_plugin.album_info(pseudo_release)
         assert not isinstance(album_info, PseudoAlbumInfo)
@@ -159,10 +160,10 @@ class TestMBPseudoPlugin(TestMBPseudoMixin):
     def test_interception_skip_when_rel_values_dont_match(
         self,
         mbpseudo_plugin: MusicBrainzPseudoReleasePlugin,
-        official_release: JSONDict,
+        official_release: Release,
         json_key: str,
     ):
-        del official_release["release_relations"][0][json_key]
+        del official_release["release_relations"][0][json_key]  # type: ignore[misc]
 
         album_info = mbpseudo_plugin.album_info(official_release)
         assert not isinstance(album_info, PseudoAlbumInfo)
@@ -171,7 +172,7 @@ class TestMBPseudoPlugin(TestMBPseudoMixin):
     def test_interception_skip_when_script_doesnt_match(
         self,
         mbpseudo_plugin: MusicBrainzPseudoReleasePlugin,
-        official_release: JSONDict,
+        official_release: Release,
     ):
         official_release["release_relations"][0]["release"][
             "text_representation"
@@ -184,7 +185,7 @@ class TestMBPseudoPlugin(TestMBPseudoMixin):
     def test_interception(
         self,
         mbpseudo_plugin: MusicBrainzPseudoReleasePlugin,
-        official_release: JSONDict,
+        official_release: Release,
     ):
         album_info = mbpseudo_plugin.album_info(official_release)
         assert isinstance(album_info, PseudoAlbumInfo)
@@ -245,7 +246,7 @@ class TestMBPseudoPluginCustomTagsOnly(TestMBPseudoMixin):
         self,
         config,
         mbpseudo_plugin: MusicBrainzPseudoReleasePlugin,
-        official_release: JSONDict,
+        official_release: Release,
     ):
         config["import"]["languages"] = ["en", "jp"]
         album_info = mbpseudo_plugin.album_info(official_release)
@@ -260,7 +261,7 @@ class TestMBPseudoPluginCustomTagsOnly(TestMBPseudoMixin):
         self,
         config,
         mbpseudo_plugin: MusicBrainzPseudoReleasePlugin,
-        official_release: JSONDict,
+        official_release: Release,
     ):
         config["import"]["languages"] = []
         album_info = mbpseudo_plugin.album_info(official_release)

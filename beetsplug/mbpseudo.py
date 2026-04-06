@@ -41,7 +41,6 @@ if TYPE_CHECKING:
     from beets.autotag.distance import Distance
     from beets.autotag.hooks import AlbumMatch
     from beets.library import Item
-    from beetsplug._typing import JSONDict
 
     from ._utils.musicbrainz import (
         Release,
@@ -179,7 +178,9 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
             is not None
         ]
 
-    def _has_desired_script(self, release: Release) -> bool:
+    def _has_desired_script(
+        self, release: Release | ReleaseRelationRelease
+    ) -> bool:
         if len(self._scripts) == 0:
             return False
         elif script := release.get("text_representation", {}).get("script"):
@@ -212,9 +213,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
             return None
 
     def _replace_artist_with_alias(
-        self,
-        raw_pseudo_release: JSONDict,
-        pseudo_release: AlbumInfo,
+        self, raw_pseudo_release: Release, pseudo_release: AlbumInfo
     ):
         """Use the pseudo-release's language to search for artist
         alias if the user hasn't configured import languages."""
