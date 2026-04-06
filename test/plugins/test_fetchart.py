@@ -19,6 +19,7 @@ import sys
 
 from beets import util
 from beets.test.helper import IOMixin, PluginTestCase
+from beetsplug.fetchart import FetchArtPlugin, FileSystem
 
 
 class FetchartCliTest(IOMixin, PluginTestCase):
@@ -103,3 +104,26 @@ class FetchartCliTest(IOMixin, PluginTestCase):
         self.config["ui"]["color"] = True
         out = self.run_with_output("fetchart")
         assert " - the älbum: \x1b[1;31mno art found\x1b[39;49;00m\n" == out
+
+    def test_sources_is_a_string(self):
+        self.config["fetchart"].set({"sources": "filesystem"})
+        fa = FetchArtPlugin()
+        assert len(fa.sources) == 1
+        assert isinstance(fa.sources[0], FileSystem)
+
+    def test_sources_is_an_asterisk(self):
+        self.config["fetchart"].set({"sources": "*"})
+        fa = FetchArtPlugin()
+        assert len(fa.sources) == 10
+
+    def test_sources_is_a_string_list(self):
+        self.config["fetchart"].set({"sources": ["filesystem", "coverart"]})
+        fa = FetchArtPlugin()
+        assert len(fa.sources) == 3
+
+    def test_sources_is_a_mapping_list(self):
+        self.config["fetchart"].set(
+            {"sources": {"filesystem": "*", "coverart": "*"}}
+        )
+        fa = FetchArtPlugin()
+        assert len(fa.sources) == 3

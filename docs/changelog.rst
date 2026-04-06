@@ -37,6 +37,8 @@ New features
   :bug:`5698`
 - :doc:`plugins/replaygain`: Conflicting replay gain tags are now removed on
   write. RG_* tags are removed when setting R128_* and vice versa.
+- :doc:`plugins/fetchart`: Error when a configured source does not exist or
+  sources configuration is empty.
 
 Bug fixes
 ~~~~~~~~~

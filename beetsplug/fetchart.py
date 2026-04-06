@@ -33,7 +33,7 @@ from beets import config, importer, plugins, ui, util
 from beets.util import bytestring_path, get_temp_filename, sorted_walk, syspath
 from beets.util.artresizer import ArtResizer
 from beets.util.color import colorize
-from beets.util.config import sanitize_pairs
+from beets.util.config import UnknownPairError, sanitize_pairs
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
@@ -1407,16 +1407,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             self.import_stages = [self.fetch_art]
             self.register_listener("import_task_files", self.assign_art)
 
-        available_sources = [
-            (s_cls.ID, c)
-            for s_cls in ART_SOURCES
-            if s_cls.available(self._log, self.config)
-            for c in s_cls.VALID_MATCHING_CRITERIA
-        ]
-        sources = sanitize_pairs(
-            self.config["sources"].as_pairs(default_value="*"),
-            available_sources,
-        )
+        sources = self._get_sources()
 
         if "remote_priority" in self.config:
             self._log.warning(
@@ -1440,6 +1431,33 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             sources_by_name[s](self._log, self.config, match_by=[c])
             for s, c in sources
         ]
+
+    def _get_sources(self) -> list[tuple[str, str]]:
+        available_sources = [
+            (s_cls.ID, c)
+            for s_cls in ART_SOURCES
+            if s_cls.available(self._log, self.config)
+            for c in s_cls.VALID_MATCHING_CRITERIA
+        ]
+
+        if isinstance(self.config["sources"].get(), str):
+            cfg_sources = [(self.config["sources"].get(), "*")]
+        else:
+            cfg_sources = self.config["sources"].as_pairs(default_value="*")
+
+        try:
+            sources = sanitize_pairs(
+                cfg_sources,
+                available_sources,
+                raise_on_unknown=True,
+            )
+
+            if len(sources) == 0:
+                raise ui.UserError("fetchart: no sources defined in config")
+
+            return sources
+        except UnknownPairError as e:
+            raise ui.UserError(e)
 
     @staticmethod
     def _is_source_file_removal_enabled() -> bool:
