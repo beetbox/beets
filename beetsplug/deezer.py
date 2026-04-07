@@ -140,7 +140,7 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
             artist_credit=(
                 artist if is_va else self.get_artist([album_data["artist"]])[0]
             ),
-            artist_id=artist_id,
+            artist_id=str(artist_id),
             tracks=tracks,
             albumtype=album_data["record_type"],
             va=is_va,
@@ -212,7 +212,7 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
             deezer_track_id=track_data["id"],
             isrc=track_data.get("isrc"),
             artist=artist,
-            artist_id=artist_id,
+            artist_id=str(artist_id),
             length=track_data["duration"],
             index=track_data.get("track_position"),
             medium=track_data.get("disk_number"),

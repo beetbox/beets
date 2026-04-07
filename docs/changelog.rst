@@ -58,6 +58,9 @@ Bug fixes
   broader Discogs genres in the ``style`` field. When
   :conf:`plugins.discogs:append_style_genre` is enabled, the broader Discogs
   genres are also appended to the ``genres`` list. :bug:`6390`
+- :doc:`plugins/deezer`: Fix a regression in 2.8.0 where selecting a Deezer
+  match during import could crash with ``AttributeError: 'AlbumInfo' object has
+  no attribute 'raw_data'`` when Deezer returned numeric artist IDs. :bug:`6503`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
