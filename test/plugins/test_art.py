@@ -1048,3 +1048,28 @@ class EnforceRatioConfigTest(unittest.TestCase):
     def test_percent(self):
         self._load_with_config("0% 0.00% 5.1% 5% 100%".split(), False)
         self._load_with_config("00% 1.234% foo5% 100.1%".split(), True)
+
+
+class SourcesConfigTest(unittest.TestCase):
+    """Test that the 'sources' config option handles both list and plain
+    string values correctly.
+    """
+
+    def test_sources_as_list(self):
+        config["fetchart"]["sources"] = ["filesystem"]
+        plugin = fetchart.FetchArtPlugin()
+        assert len(plugin.sources) == 1
+        assert isinstance(plugin.sources[0], fetchart.FileSystem)
+
+    def test_sources_as_string(self):
+        config["fetchart"]["sources"] = "filesystem"
+        plugin = fetchart.FetchArtPlugin()
+        assert len(plugin.sources) == 1
+        assert isinstance(plugin.sources[0], fetchart.FileSystem)
+
+    def test_sources_as_space_separated_string(self):
+        config["fetchart"]["sources"] = "filesystem coverart"
+        plugin = fetchart.FetchArtPlugin()
+        ids = [type(s).ID for s in plugin.sources]
+        assert "filesystem" in ids
+        assert "coverart" in ids

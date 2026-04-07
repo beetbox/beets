@@ -114,6 +114,9 @@ Bug fixes
 - :ref:`replace`: Made ``drive_sep_replace`` regex logic more precise to prevent
   edge-case mismatches (e.g., a song titled "1:00 AM" would incorrectly be
   considered a Windows drive path).
+- :doc:`plugins/fetchart`: Fix ``sources`` config given as a plain string
+  (e.g. ``sources: filesystem``) being parsed character-by-character instead of
+  as a single source name. :bug:`6336`
 - :doc:`plugins/fish`: Fix AttributeError. :bug:`6340`
 - :ref:`import-cmd` Autotagging by explicit release or recording IDs now keeps
   candidates from all enabled metadata sources instead of dropping matches when

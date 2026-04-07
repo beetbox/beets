@@ -1413,6 +1413,13 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             if s_cls.available(self._log, self.config)
             for c in s_cls.VALID_MATCHING_CRITERIA
         ]
+        # When 'sources' is given as a plain string (e.g. "sources: filesystem"
+        # instead of "sources: [filesystem]"), confuse's Pairs template
+        # iterates over individual characters instead of treating it as a
+        # single-item list. Normalize to a list first via as_str_seq().
+        raw_sources = self.config["sources"].get()
+        if isinstance(raw_sources, str):
+            self.config["sources"].set(raw_sources.split())
         sources = sanitize_pairs(
             self.config["sources"].as_pairs(default_value="*"),
             available_sources,
