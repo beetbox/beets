@@ -61,6 +61,12 @@ Bug fixes
 - :doc:`plugins/deezer`: Fix a regression in 2.8.0 where selecting a Deezer
   match during import could crash with ``AttributeError: 'AlbumInfo' object has
   no attribute 'raw_data'`` when Deezer returned numeric artist IDs. :bug:`6503`
+- :ref:`modify-cmd` accepts legacy singular field names such as ``genre``,
+  ``composer``, ``lyricist``, ``remixer``, and ``arranger`` in assignments,
+  rewrites them to the corresponding multi-valued fields, and warns users to
+  switch to the plural field names. :ref:`list-cmd`, and query expressions,
+  accept the same legacy singular field names and warn users to switch to the
+  plural field names. :bug:`6483`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~

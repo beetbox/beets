@@ -25,7 +25,11 @@ from typing_extensions import Self
 
 from beets import config, logging, plugins
 from beets.util import cached_classproperty, unique_list
-from beets.util.deprecation import deprecate_for_maintainers
+from beets.util.deprecation import (
+    ALBUM_LEGACY_TO_LIST_FIELD,
+    ITEM_LEGACY_TO_LIST_FIELD,
+    deprecate_for_maintainers,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -136,7 +140,7 @@ class Info(AttrDict[Any]):
 
     IGNORED_FIELDS: ClassVar[set[str]] = {"data_url"}
     MEDIA_FIELD_MAP: ClassVar[dict[str, str]] = {}
-    LEGACY_TO_LIST_FIELD: ClassVar[dict[str, str]] = {"genre": "genres"}
+    LEGACY_TO_LIST_FIELD: ClassVar[dict[str, str]]
 
     @cached_classproperty
     def nullable_fields(cls) -> set[str]:
@@ -281,6 +285,7 @@ class AlbumInfo(Info):
         "releasegroup_id": "mb_releasegroupid",
         "va": "comp",
     }
+    LEGACY_TO_LIST_FIELD: ClassVar[dict[str, str]] = ALBUM_LEGACY_TO_LIST_FIELD
 
     @property
     def id(self) -> str | None:
@@ -388,13 +393,7 @@ class TrackInfo(Info):
         "track_id": "mb_trackid",
         "medium_index": "track",
     }
-    LEGACY_TO_LIST_FIELD: ClassVar[dict[str, str]] = {
-        **Info.LEGACY_TO_LIST_FIELD,
-        "remixer": "remixers",
-        "lyricist": "lyricists",
-        "composer": "composers",
-        "arranger": "arrangers",
-    }
+    LEGACY_TO_LIST_FIELD: ClassVar[dict[str, str]] = ITEM_LEGACY_TO_LIST_FIELD
 
     @property
     def id(self) -> str | None:

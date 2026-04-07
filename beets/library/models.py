@@ -23,6 +23,7 @@ from beets.util import (
     samefile,
     syspath,
 )
+from beets.util.deprecation import maybe_replace_legacy_field
 from beets.util.functemplate import Template, template
 
 from .exceptions import FileOperationError, ReadError, WriteError
@@ -101,6 +102,8 @@ class LibModel(dbcore.Model["Library"]):
         cls, field: str, pattern: str, query_cls: FieldQueryType
     ) -> FieldQuery:
         """Get a `FieldQuery` for the given field on this model."""
+        field = maybe_replace_legacy_field(field, cls is Album)
+
         fast = field in cls.all_db_fields
         if field in cls.shared_db_fields:
             # This field exists in both tables, so SQLite will encounter
