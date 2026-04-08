@@ -1,4 +1,5 @@
 import textwrap
+from typing import ClassVar
 
 import pytest
 
@@ -72,6 +73,89 @@ class TestMultiGenreFieldMigration:
         del helper.lib.db_tables
         assert helper.lib.migration_exists("multi_genre_field", "items")
         assert helper.lib.migration_exists("multi_genre_field", "albums")
+
+
+class MultiArtistFieldMigrationTestMixin:
+    str_field: ClassVar[str]
+    list_field: ClassVar[str]
+    migration_cls: ClassVar[type[migrations.MultiValueFieldMigration]]
+
+    @pytest.fixture
+    def helper(self, monkeypatch):
+        # do not apply migrations upon library initialization
+        monkeypatch.setattr("beets.library.library.Library._migrations", ())
+        # add legacy str field to make sure this column is created
+        monkeypatch.setattr(
+            "beets.library.models.Item._fields",
+            {**Item._fields, self.str_field: types.STRING},
+        )
+        helper = TestHelper()
+        helper.setup_beets()
+
+        # and now configure the migrations to be tested
+        monkeypatch.setattr(
+            "beets.library.library.Library._migrations",
+            ((self.migration_cls, (Item,)),),
+        )
+        yield helper
+
+        helper.teardown_beets()
+
+    def test_migrate(self, helper: TestHelper):
+        expected_list_values = []
+        for str_value, initial_list_value, expected_list_value in [
+            # already existing value is not overwritten
+            ("Artist", ("Ignored",), ("Ignored",)),
+            ("", (), ()),
+            ("Artist", (), ("Artist",)),
+            # multiple values are split on one of separators
+            ("Artist; Another Artist", (), ("Artist", "Another Artist")),
+            # multiple values are split by the existing separator ONLY
+            ("Artist, Another; Artist", (), ("Artist, Another", "Artist")),
+        ]:
+            data = {
+                self.str_field: str_value,
+                self.list_field: initial_list_value,
+            }
+            helper.add_item(**data)
+            expected_list_values.append(expected_list_value)
+
+        helper.lib._migrate()
+
+        actual_list_values = [
+            tuple(i[self.list_field]) for i in helper.lib.items()
+        ]
+        assert actual_list_values == expected_list_values
+
+        # remove cached initial db tables data
+        del helper.lib.db_tables
+        assert helper.lib.migration_exists(
+            f"multi_{self.str_field}_field", "items"
+        )
+
+
+class TestMultiRemixerFieldMigration(MultiArtistFieldMigrationTestMixin):
+    str_field = "remixer"
+    list_field = "remixers"
+    migration_cls = migrations.MultiRemixerFieldMigration
+
+
+class TestMultiLyricistFieldMigration(MultiArtistFieldMigrationTestMixin):
+    str_field = "lyricist"
+    list_field = "lyricists"
+    migration_cls = migrations.MultiLyricistFieldMigration
+
+
+class TestMultiComposerFieldMigration(MultiArtistFieldMigrationTestMixin):
+    str_field = "composer"
+    list_field = "composers"
+    migration_cls = migrations.MultiComposerFieldMigration
+
+
+class TestMultiArrangerFieldMigration(MultiArtistFieldMigrationTestMixin):
+    str_field = "arranger"
+    list_field = "arrangers"
+    migration_cls = migrations.MultiArrangerFieldMigration
 
 
 class TestLyricsMetadataInFlexFieldsMigration:

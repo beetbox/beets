@@ -23,6 +23,10 @@ class Library(dbcore.Database):
     _migrations = (
         (migrations.MultiGenreFieldMigration, (Item, Album)),
         (migrations.LyricsMetadataInFlexFieldsMigration, (Item,)),
+        (migrations.MultiRemixerFieldMigration, (Item,)),
+        (migrations.MultiLyricistFieldMigration, (Item,)),
+        (migrations.MultiComposerFieldMigration, (Item,)),
+        (migrations.MultiArrangerFieldMigration, (Item,)),
     )
 
     def __init__(

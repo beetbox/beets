@@ -28,10 +28,24 @@ New features
   it easier to copy and paste multiple playlists for further use in the shell.
 - :doc:`plugins/chroma`: Add new command ``chromasearch`` to search the local
   library by chromaprint fingerprint.
+- Store track remixers, lyricists, composers, and arrangers in the multi-valued
+  ``remixers``, ``lyricists``, ``composers``, and ``arrangers`` fields instead
+  of the legacy single-value ``remixer``, ``lyricist``, ``composer``, and
+  ``arranger`` fields. Existing libraries are migrated automatically, and
+  :doc:`plugins/musicbrainz` now preserves each MusicBrainz ``remixer``,
+  ``lyricist``, ``composer``, and ``arranger`` relation as a separate value.
+  :bug:`5698`
+- :doc:`plugins/replaygain`: Conflicting replay gain tags are now removed on
+  write. RG_* tags are removed when setting R128_* and vice versa.
+- :doc:`plugins/fetchart`: Error when a configured source does not exist or
+  sources configuration is empty.
 
 Bug fixes
 ~~~~~~~~~
 
+- :doc:`plugins/deezer`: Fix Various Artists albums being tagged with a
+  localized string instead of the configured ``va_name``. Detection now uses
+  Deezer's artist ID rather than the artist name string. :bug:`4956`
 - Correctly handle semicolon-delimited genre values from externally-tagged
   files. :bug:`6450`
 - :doc:`plugins/listenbrainz`: Fix ``lbimport`` crashing when ListenBrainz
@@ -42,10 +56,27 @@ Bug fixes
 - :ref:`import-cmd` Fix ``albumartists_sort`` (and related fields) incorrectly
   prepending the full combined artist credit as the first element for
   multi-artist releases. :bug:`6470`
+- :doc:`plugins/discogs`: Store specific Discogs styles in beets ``genres`` and
+  broader Discogs genres in the ``style`` field. When
+  :conf:`plugins.discogs:append_style_genre` is enabled, the broader Discogs
+  genres are also appended to the ``genres`` list. :bug:`6390`
+- :doc:`plugins/deezer`: Fix a regression in 2.8.0 where selecting a Deezer
+  match during import could crash with ``AttributeError: 'AlbumInfo' object has
+  no attribute 'raw_data'`` when Deezer returned numeric artist IDs. :bug:`6503`
+- :ref:`modify-cmd` accepts legacy singular field names such as ``genre``,
+  ``composer``, ``lyricist``, ``remixer``, and ``arranger`` in assignments,
+  rewrites them to the corresponding multi-valued fields, and warns users to
+  switch to the plural field names. :ref:`list-cmd`, and query expressions,
+  accept the same legacy singular field names and warn users to switch to the
+  plural field names. :bug:`6483`
 
-..
-    For plugin developers
-    ~~~~~~~~~~~~~~~~~~~~~
+For plugin developers
+~~~~~~~~~~~~~~~~~~~~~
+
+- If you maintain a metadata source plugin that populates any of ``arranger``,
+  ``composer``, ``lyricist``, ``remixer`` fields, update it to populate the
+  respective multi-valued fields instead (``arrangers``, ``composers``,
+  ``lyricists``, ``remixers``).
 
 Other changes
 ~~~~~~~~~~~~~

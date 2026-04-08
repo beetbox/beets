@@ -79,9 +79,9 @@ These functions are built in to beets:
   delimited string. Splits ``text`` by ``sep``, skips the first ``skip`` items,
   then returns the next ``count`` items joined by ``join``.
 
-  This is especially useful for multi-valued fields like ``artists`` or
-  ``genres`` where you may only want the first artist or a limited number of
-  genres in a path.
+  This is especially useful for multi-valued fields like ``artists``,
+  ``genres``, ``remixers``, ``lyricists``, ``composers``, or ``arrangers`` where
+  you may only want the first value or a limited number of values in a path.
 
   Defaults:
 
@@ -227,13 +227,19 @@ Ordinary metadata:
   "White, Jack").
 - artist_credit: The track-specific `artist credit`_ name, which may be a
   variation of the artist's "canonical" name.
+- artists: The track artists as a multi-valued field.
 - album
 - albumartist: The artist for the entire album, which may be different from the
   artists for the individual tracks.
+- albumartists: The album artists as a multi-valued field.
 - albumartist_sort
 - albumartist_credit
 - genre
-- composer
+- genres: The track genres as a multi-valued field.
+- arrangers: The track arrangers as a multi-valued field.
+- composers: The track composers as a multi-valued field.
+- lyricists: The track lyricists as a multi-valued field.
+- remixers: The track remixers as a multi-valued field.
 - grouping
 - year, month, day: The release date of the specific release.
 - original_year, original_month, original_day: The release date of the original

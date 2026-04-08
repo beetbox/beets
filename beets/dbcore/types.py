@@ -331,7 +331,7 @@ class DelimitedString(BaseString[list, list]):  # type: ignore[type-arg]
                 else:
                     result.append(item)
             return result
-        return list(value)
+        return self.model_type(value)
 
     def to_sql(self, model_value: list[str]):
         return self.db_delimiter.join(model_value)

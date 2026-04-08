@@ -25,7 +25,11 @@ from typing_extensions import Self
 
 from beets import config, logging, plugins
 from beets.util import cached_classproperty, unique_list
-from beets.util.deprecation import deprecate_for_maintainers
+from beets.util.deprecation import (
+    ALBUM_LEGACY_TO_LIST_FIELD,
+    ITEM_LEGACY_TO_LIST_FIELD,
+    deprecate_for_maintainers,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -136,11 +140,21 @@ class Info(AttrDict[Any]):
 
     IGNORED_FIELDS: ClassVar[set[str]] = {"data_url"}
     MEDIA_FIELD_MAP: ClassVar[dict[str, str]] = {}
+    LEGACY_TO_LIST_FIELD: ClassVar[dict[str, str]]
 
     @cached_classproperty
     def nullable_fields(cls) -> set[str]:
         """Return fields that may be cleared when new metadata is applied."""
         return set(config["overwrite_null"][cls.type.lower()].as_str_seq())
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        # handle legacy info.str_field = "abc" and info["str_field"] = "abc"
+        if list_field := self.LEGACY_TO_LIST_FIELD.get(key):
+            self[list_field] = self._get_list_from_string_value(
+                key, list_field, value, self[list_field]
+            )
+        else:
+            super().__setitem__(key, value)
 
     @property
     def id(self) -> str | None:
@@ -165,6 +179,7 @@ class Info(AttrDict[Any]):
                 artist=self.artist_credit or self.artist,
                 artists=self.artists_credit or self.artists,
             )
+
         return correct_list_fields(data)
 
     @cached_property
@@ -201,23 +216,10 @@ class Info(AttrDict[Any]):
         artists_sort: list[str] | None = None,
         data_source: str | None = None,
         data_url: str | None = None,
-        genre: str | None = None,
         genres: list[str] | None = None,
         media: str | None = None,
         **kwargs,
     ) -> None:
-        if genre is not None:
-            deprecate_for_maintainers(
-                "The 'genre' parameter", "'genres' (list)", stacklevel=3
-            )
-            if not genres:
-                try:
-                    sep = next(s for s in ["; ", ", ", " / "] if s in genre)
-                except StopIteration:
-                    genres = [genre]
-                else:
-                    genres = list(map(str.strip, genre.split(sep)))
-
         self.album = album
         self.artist = artist
         self.artist_credit = artist_credit
@@ -229,10 +231,32 @@ class Info(AttrDict[Any]):
         self.artists_sort = artists_sort
         self.data_source = data_source
         self.data_url = data_url
-        self.genre = None
         self.genres = genres
         self.media = media
         self.update(kwargs)
+
+    @staticmethod
+    def _get_list_from_string_value(
+        str_field: str,
+        list_field: str,
+        str_value: str | None,
+        list_value: list[str] | None,
+    ) -> list[str] | None:
+        if str_value is not None:
+            deprecate_for_maintainers(
+                f"The '{str_field}' field",
+                f"'{list_field}' (list)",
+                stacklevel=3,
+            )
+            if not list_value:
+                try:
+                    sep = next(s for s in ["; ", ", ", " / "] if s in str_value)
+                except StopIteration:
+                    list_value = [str_value]
+                else:
+                    list_value = list(map(str.strip, str_value.split(sep)))
+
+        return list_value
 
 
 class AlbumInfo(Info):
@@ -261,6 +285,7 @@ class AlbumInfo(Info):
         "releasegroup_id": "mb_releasegroupid",
         "va": "comp",
     }
+    LEGACY_TO_LIST_FIELD: ClassVar[dict[str, str]] = ALBUM_LEGACY_TO_LIST_FIELD
 
     @property
     def id(self) -> str | None:
@@ -368,6 +393,7 @@ class TrackInfo(Info):
         "track_id": "mb_trackid",
         "medium_index": "track",
     }
+    LEGACY_TO_LIST_FIELD: ClassVar[dict[str, str]] = ITEM_LEGACY_TO_LIST_FIELD
 
     @property
     def id(self) -> str | None:
@@ -402,20 +428,21 @@ class TrackInfo(Info):
     def __init__(
         self,
         *,
-        arranger: str | None = None,
+        arrangers: list[str] | None = None,
         bpm: str | None = None,
-        composer: str | None = None,
+        composers: list[str] | None = None,
         composer_sort: str | None = None,
         disctitle: str | None = None,
         index: int | None = None,
         initial_key: str | None = None,
         length: float | None = None,
-        lyricist: str | None = None,
+        lyricists: list[str] | None = None,
         mb_workid: str | None = None,
         medium: int | None = None,
         medium_index: int | None = None,
         medium_total: int | None = None,
         release_track_id: str | None = None,
+        remixers: list[str] | None = None,
         title: str | None = None,
         track_alt: str | None = None,
         track_id: str | None = None,
@@ -423,20 +450,21 @@ class TrackInfo(Info):
         work_disambig: str | None = None,
         **kwargs,
     ) -> None:
-        self.arranger = arranger
+        self.arrangers = arrangers
         self.bpm = bpm
-        self.composer = composer
+        self.composers = composers
         self.composer_sort = composer_sort
         self.disctitle = disctitle
         self.index = index
         self.initial_key = initial_key
         self.length = length
-        self.lyricist = lyricist
+        self.lyricists = lyricists
         self.mb_workid = mb_workid
         self.medium = medium
         self.medium_index = medium_index
         self.medium_total = medium_total
         self.release_track_id = release_track_id
+        self.remixers = remixers
         self.title = title
         self.track_alt = track_alt
         self.track_id = track_id

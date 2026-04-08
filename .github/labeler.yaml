@@ -1,0 +1,170 @@
+absubmit:
+  - '/absubmit/i'
+acousticbrainz:
+  - '/acousticbrainz/i'
+advancedrewrite:
+  - '/advancedrewrite/i'
+albumtypes:
+  - '/albumtypes plugin/i'
+  - '/albumtypes:/i'
+aura:
+  - '/aura/i'
+autobpm:
+  - '/autobpm/i'
+badfiles:
+  - '/badfiles/i'
+bareasc:
+  - '/bareasc/i'
+beatport:
+  - '/beatport/i'
+bpd:
+  - '/bpd/i'
+bpsync:
+  - '/bpsync/i'
+bucket:
+  - '/bucket/i'
+chroma:
+  - '/chroma/i'
+convert:
+  - '/convert plugin/i'
+  - '/convert:/i'
+deezer:
+  - '/deezer/i'
+discogs:
+  - '/discogs/i'
+duplicates:
+  - '/duplicates plugin/i'
+  - '/duplicates:/i'
+edit:
+  - '/edit plugin/i'
+  - '/edit:/i'
+embedart:
+  - '/embedart/i'
+embyupdate:
+  - '/embyupdate/i'
+export:
+  - '/export plugin/i'
+  - '/export:/i'
+fetchart:
+  - '/fetchart/i'
+filefilter:
+  - '/filefilter/i'
+fish:
+  - '/fish/i'
+freedesktop:
+  - '/freedesktop/i'
+fromfilename:
+  - '/fromfilename/i'
+ftintitle:
+  - '/ftintitle/i'
+fuzzy:
+  - '/fuzzy plugin/i'
+  - '/fuzzy:/i'
+hook:
+  - '/hook plugin/i'
+  - '/hook:/i'
+ihate:
+  - '/ihate/i'
+importadded:
+  - '/importadded/i'
+importfeeds:
+  - '/importfeeds/i'
+importsource:
+  - '/importsource/i'
+info:
+  - '/info plugin/i'
+  - '/info:/i'
+inline:
+  - '/inline plugin/i'
+  - '/inline:/i'
+ipfs:
+  - '/ipfs/i'
+keyfinder:
+  - '/keyfinder/i'
+kodiupdate:
+  - '/kodiupdate/i'
+lastgenre:
+  - '/lastgenre/i'
+lastimport:
+  - '/lastimport/i'
+limit:
+  - '/limit plugin/i'
+  - '/limit:/i'
+listenbrainz:
+  - '/listenbrainz/i'
+loadext:
+  - '/loadext/i'
+lyrics:
+  - '/lyrics/i'
+mbcollection:
+  - '/mbcollection/i'
+mbpseudo:
+  - '/mbpseudo/i'
+mbsubmit:
+  - '/mbsubmit/i'
+mbsync:
+  - '/mbsync/i'
+metasync:
+  - '/metasync/i'
+missing:
+  - '/missing plugin/i'
+  - '/missing:/i'
+mpdstats:
+  - '/mpdstats/i'
+mpdupdate:
+  - '/mpdupdate/i'
+musicbrainz:
+  - '/musicbrainz/i'
+parentwork:
+  - '/parentwork/i'
+permissions:
+  - '/permissions plugin/i'
+  - '/permissions:/i'
+play:
+  - '/play plugin/i'
+  - '/play:/i'
+playlist:
+  - '/\bplaylist plugin/i'
+  - '/\bplaylist:/i'
+plexupdate:
+  - '/plexupdate/i'
+random:
+  - '/random plugin/i'
+  - '/random:/i'
+replace:
+  - '/replace plugin/i'
+  - '/replace:/i'
+replaygain:
+  - '/replaygain/i'
+rewrite:
+  - '/\brewrite plugin/i'
+  - '/\brewrite:/i'
+scrub:
+  - '/scrub/i'
+smartplaylist:
+  - '/smartplaylist/i'
+sonosupdate:
+  - '/sonosupdate/i'
+spotify:
+  - '/spotify/i'
+subsonicplaylist:
+  - '/subsonicplaylist/i'
+subsonicupdate:
+  - '/subsonicupdate/i'
+substitute:
+  - '/substitute/i'
+thumbnails:
+  - '/thumbnails/i'
+titlecase:
+  - '/titlecase/i'
+types:
+  - '/\btypes plugin/i'
+  - '/\btypes:/i'
+unimported:
+  - '/unimported/i'
+web:
+  - '/web plugin/i'
+  - '/web:/i'
+zero:
+  - '/zero plugin/i'
+  - '/zero:/i'

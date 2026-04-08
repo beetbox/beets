@@ -14,6 +14,7 @@
 
 """Various tests for querying the library database."""
 
+import logging
 import sys
 from functools import partial
 from pathlib import Path
@@ -72,6 +73,7 @@ class TestGet:
                 year=2001,
                 comp=True,
                 genres=["rock"],
+                composers=["composer"],
             ),
             helper.create_item(
                 title="second",
@@ -238,6 +240,31 @@ class TestGet:
         assert list(map(dict, lib.items(q_fast))) == list(
             map(dict, lib.items(q_slow))
         )
+
+    @pytest.mark.parametrize(
+        "q, legacy_field",
+        [
+            pytest.param("genres::rock", None, id="non-legacy-genres-field"),
+            pytest.param("genre::rock", "genre", id="legacy-genre-field"),
+            pytest.param(
+                "composers::composer", None, id="non-legacy-composer-field"
+            ),
+            pytest.param(
+                "composer::composer", "composer", id="legacy-composer-field"
+            ),
+        ],
+    )
+    def test_legacy_field(self, caplog, lib, q, legacy_field):
+        with caplog.at_level(logging.WARNING, logger="beets"):
+            actual_titles = {i.title for i in lib.items(q)}
+
+        assert actual_titles == {"first"}
+        if legacy_field:
+            assert caplog.records, "No log records were captured"
+            assert len(caplog.records) == 1
+            message = str(caplog.records[0].msg)
+            assert f"The '{legacy_field}' field is deprecated" in message
+            assert f"Use '{legacy_field}s' instead." in message
 
 
 class TestMatch:
