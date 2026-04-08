@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime
+import time
 from collections import Counter
 from typing import TYPE_CHECKING, ClassVar
 
@@ -93,7 +94,12 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         ]
 
     def _make_request(self, url, params=None):
-        """Makes a request to the ListenBrainz API."""
+        """Makes a request to the ListenBrainz API.
+
+        Respects the X-RateLimit-* headers returned by the server: if the
+        remaining quota drops to zero, sleeps until the window resets before
+        returning, so the next call is guaranteed a fresh quota.
+        """
         try:
             response = requests.get(
                 url=url,
@@ -102,6 +108,13 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
                 params=params,
             )
             response.raise_for_status()
+            remaining = response.headers.get("X-RateLimit-Remaining")
+            reset_in = response.headers.get("X-RateLimit-Reset-In")
+            if remaining is not None and int(remaining) == 0 and reset_in:
+                self._log.debug(
+                    "ListenBrainz rate limit reached; sleeping {}s", reset_in
+                )
+                time.sleep(int(reset_in) + 1)
             return response.json()
         except requests.exceptions.RequestException as e:
             self._log.debug("Invalid Search Error: {}", e)
