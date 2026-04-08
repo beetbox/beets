@@ -201,12 +201,40 @@ class TestListenBrainzPlugin(ConfigMixin):
                 },
             }
         ]
-        with patch.object(plugin, "get_mb_recording_id") as mock_mb:
-            tracks = plugin.get_tracks_from_listens(listens)
-            mock_mb.assert_not_called()
-
+        tracks = plugin.get_tracks_from_listens(listens)
         assert tracks[0]["mbid"] == "rec-mbid-123"
         assert tracks[0]["playcount"] == 1
+
+    def test_get_tracks_from_listens_no_mbid_mapping(self, plugin):
+        listens = [
+            {
+                "listened_at": 1000,
+                "track_metadata": {
+                    "track_name": "Song",
+                    "artist_name": "Artist",
+                    "release_name": "Album",
+                },
+            }
+        ]
+        tracks = plugin.get_tracks_from_listens(listens)
+        assert tracks[0]["mbid"] is None
+
+    def test_get_listens_respects_max_total(self, plugin):
+        def mock_request(url, params=None):
+            count = params.get("count", 5)
+            return {
+                "payload": {
+                    "listens": [
+                        {"listened_at": 100 - i, "track_metadata": {}}
+                        for i in range(count)
+                    ]
+                }
+            }
+
+        with patch.object(plugin, "_make_request", side_effect=mock_request):
+            result = plugin.get_listens(max_total=7)
+
+        assert len(result) == 7
 
     def test_get_tracks_from_listens_flat_structure(self, plugin):
         listens = [

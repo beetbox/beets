@@ -42,16 +42,23 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         lbupdate_cmd = ui.Subcommand(
             "lbimport", help="Import ListenBrainz history"
         )
+        lbupdate_cmd.parser.add_option(
+            "--max",
+            dest="max_listens",
+            type="int",
+            default=None,
+            help="maximum number of listens to fetch (default: all)",
+        )
 
         def func(lib, opts, args):
-            self._lbupdate(lib, self._log)
+            self._lbupdate(lib, self._log, max_listens=opts.max_listens)
 
         lbupdate_cmd.func = func
         return [lbupdate_cmd]
 
-    def _lbupdate(self, lib, log):
+    def _lbupdate(self, lib, log, max_listens=None):
         """Obtain play counts from ListenBrainz."""
-        listens = self.get_listens()
+        listens = self.get_listens(max_total=max_listens)
         if listens is None:
             log.error("Failed to fetch listens from ListenBrainz.")
             return
@@ -120,8 +127,8 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             self._log.debug("Invalid Search Error: {}", e)
             return None
 
-    def get_listens(self, min_ts=None, max_ts=None, count=None):
-        """Gets the full listen history of a given user.
+    def get_listens(self, min_ts=None, max_ts=None, count=None, max_total=None):
+        """Gets the listen history of a given user.
 
         Paginates through all available listens using the max_ts parameter.
 
@@ -131,6 +138,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             max_ts: History after this timestamp will not be returned.
                     DO NOT USE WITH min_ts.
             count: How many listens to return per page (max 1000).
+            max_total: Stop after fetching this many listens in total.
 
         Returns:
             A list of listen info dictionaries, or None on API failure.
@@ -143,7 +151,15 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         all_listens = []
 
         while True:
-            params = {"count": per_page}
+            if max_total is not None:
+                remaining_needed = max_total - len(all_listens)
+                if remaining_needed <= 0:
+                    break
+                page_size = min(per_page, remaining_needed)
+            else:
+                page_size = per_page
+
+            params = {"count": page_size}
             if max_ts is not None:
                 params["max_ts"] = max_ts
             if min_ts is not None:
@@ -163,7 +179,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             self._log.info("Fetched {} listens so far...", len(all_listens))
 
             # If we got fewer than requested, we've reached the end
-            if len(listens) < per_page:
+            if len(listens) < page_size:
                 break
 
             # Paginate using the oldest listen's timestamp.
@@ -183,9 +199,6 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
                 continue
             mbid_mapping = track["track_metadata"].get("mbid_mapping", {})
             mbid = mbid_mapping.get("recording_mbid")
-            if mbid is None:
-                # search for the track using title and release
-                mbid = self.get_mb_recording_id(track)
             tracks.append(
                 {
                     "album": (
