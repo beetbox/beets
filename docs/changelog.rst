@@ -37,8 +37,7 @@ New features
   :bug:`5698`
 - :doc:`plugins/replaygain`: Conflicting replay gain tags are now removed on
   write. RG_* tags are removed when setting R128_* and vice versa.
-- :doc:`plugins/fetchart`: Error when a configured source does not exist or
-  sources configuration is empty.
+- :doc:`plugins/fetchart`: Add support for WebP images.
 
 Bug fixes
 ~~~~~~~~~
@@ -74,6 +73,8 @@ Bug fixes
   switch to the plural field names. :ref:`list-cmd`, and query expressions,
   accept the same legacy singular field names and warn users to switch to the
   plural field names. :bug:`6483`
+- :doc:`plugins/fetchart`: Error when a configured source does not exist or
+  sources configuration is empty. :bug:`6336`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~

@@ -50,7 +50,11 @@ except ImportError:
     HAS_BEAUTIFUL_SOUP = False
 
 
-CONTENT_TYPES = {"image/jpeg": [b"jpg", b"jpeg"], "image/png": [b"png"]}
+CONTENT_TYPES = {
+    "image/jpeg": [b"jpg", b"jpeg"],
+    "image/png": [b"png"],
+    "image/webp": [b"webp"],
+}
 IMAGE_EXTENSIONS = [ext for exts in CONTENT_TYPES.values() for ext in exts]
 
 
