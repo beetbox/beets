@@ -82,13 +82,14 @@ def update_play_counts(
     total_fails = 0
     log.info("Received {} tracks in this page, processing...", total)
 
-    for i, track in enumerate(tracks, 1):
-        if i % 250 == 0:
-            log.info("Processing track {}/{} ...", i, total)
-        if process_track(lib, track, log, source):
-            total_found += 1
-        else:
-            total_fails += 1
+    with lib.transaction():
+        for i, track in enumerate(tracks, 1):
+            if i % 250 == 0:
+                log.info("Processing track {}/{} ...", i, total)
+            if process_track(lib, track, log, source):
+                total_found += 1
+            else:
+                total_fails += 1
 
     if total_fails > 0:
         log.info(
