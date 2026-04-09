@@ -34,7 +34,13 @@ from beets.library import Album
 from beets.test import _common
 from beets.test._common import item
 from beets.test.helper import BeetsTestCase, ItemInDBTestCase, capture_log
-from beets.util import as_string, bytestring_path, normpath, syspath
+from beets.util import (
+    as_string,
+    bytestring_path,
+    normpath,
+    path_as_posix,
+    syspath,
+)
 
 # Shortcut to path normalization.
 np = util.normpath
@@ -1143,7 +1149,7 @@ class PathStringTest(BeetsTestCase):
         album = self.lib.add_album([self.i])
 
         assert self.i.path == absolute_path
-        assert stored_path == relative_path
+        assert stored_path == path_as_posix(relative_path)
         assert album.path == os.path.dirname(absolute_path)
 
 

@@ -8,6 +8,7 @@ from beets.dbcore import types
 from beets.library import migrations
 from beets.library.models import Album, Item
 from beets.test.helper import TestHelper
+from beets.util import path_as_posix
 
 
 class TestMultiGenreFieldMigration:
@@ -270,6 +271,6 @@ class TestRelativePathMigration:
             .execute("select path from items where id=?", (item.id,))
             .fetchone()[0]
         )
-        assert stored_path == os.fsencode(relative_path)
+        assert stored_path == path_as_posix(os.fsencode(relative_path))
         # and the item.path property still returns an absolute path
         assert item.path == absolute_path

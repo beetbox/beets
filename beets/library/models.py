@@ -112,12 +112,11 @@ class LibModel(dbcore.Model["Library"]):
         ):
             # Regex, exact, and string queries operate on the raw DB value, so
             # strip the library prefix to match the stored relative path.
-            if isinstance(pattern, bytes):
-                pattern = normalize_path_for_db(pattern)
-            else:
-                pattern = os.fsdecode(
-                    normalize_path_for_db(util.bytestring_path(pattern))
-                )
+            bytes_pattern = normalize_path_for_db(util.bytestring_path(pattern))
+            if query_cls is not dbcore.query.RegexpQuery:
+                bytes_pattern = util.path_as_posix(bytes_pattern)
+            pattern = os.fsdecode(bytes_pattern)
+
         if field in cls.shared_db_fields:
             # This field exists in both tables, so SQLite will encounter
             # an OperationalError if we try to use it in a query.
