@@ -16,7 +16,7 @@
 
 from collections import defaultdict
 
-from beets import library, metadata_plugins, ui, util
+from beets import config, library, metadata_plugins, ui, util
 from beets.autotag.distance import Distance
 from beets.autotag.hooks import AlbumMatch, TrackMatch
 from beets.plugins import BeetsPlugin, apply_item_changes
@@ -25,6 +25,11 @@ from beets.plugins import BeetsPlugin, apply_item_changes
 class MBSyncPlugin(BeetsPlugin):
     def __init__(self):
         super().__init__()
+        self.config.add(
+            {
+                "excluded_fields": [],
+            },
+        )
 
     def commands(self):
         cmd = ui.Subcommand("mbsync", help="update metadata from musicbrainz")
@@ -69,6 +74,24 @@ class MBSyncPlugin(BeetsPlugin):
         self.singletons(lib, args, move, pretend, write)
         self.albums(lib, args, move, pretend, write)
 
+    def _get_excluded_fields(self):
+        """Return a list of fields to be exluded from updates.
+
+        When ``musicbrainz.genres`` is False, also include the
+        ``genres`` field.
+        """
+        fields = set(self.config["excluded_fields"].as_str_seq())
+        if not config["musicbrainz"]["genres"]:
+            fields.update(["genres"])
+        return fields
+
+    def noneify_fields(self, obj):
+        """
+        Reset the given ``fields`` on an object ``obj`` to  None.
+        """
+        for field in self._get_excluded_fields():
+            setattr(obj, field, None)
+
     def singletons(self, lib, query, move, pretend, write):
         """Retrieve and apply info from the autotagger for items matched by
         query.
@@ -89,6 +112,9 @@ class MBSyncPlugin(BeetsPlugin):
                     "Recording ID not found: {} for track {}", track_id, item
                 )
                 continue
+
+            # Ignore excluded fields by setting them back to None
+            self.noneify_fields(track_info)
 
             # Apply.
             with lib.transaction():
@@ -118,12 +144,17 @@ class MBSyncPlugin(BeetsPlugin):
                 )
                 continue
 
+            # Ignore excluded fields by setting them back to None
+            self.noneify_fields(album_info)
+
             # Map release track and recording MBIDs to their information.
             # Recordings can appear multiple times on a release, so each MBID
             # maps to a list of TrackInfo objects.
             releasetrack_index = {}
             track_index = defaultdict(list)
             for track_info in album_info.tracks:
+                # Ignore excluded fields by setting them back to None
+                self.noneify_fields(track_info)
                 releasetrack_index[track_info.release_track_id] = track_info
                 track_index[track_info.track_id].append(track_info)
 
@@ -164,8 +195,13 @@ class MBSyncPlugin(BeetsPlugin):
                 changed = False
                 # Find any changed item to apply changes to album.
                 any_changed_item = items[0]
+
+                # Ignore any excluded fields when displaying changes
+                fields = set(library.Album.item_keys) - set(
+                    self._get_excluded_fields()
+                )
                 for item in items:
-                    item_changed = ui.show_model_changes(item)
+                    item_changed = ui.show_model_changes(item, fields=fields)
                     changed |= item_changed
                     if item_changed:
                         any_changed_item = item
