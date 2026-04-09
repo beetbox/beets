@@ -38,6 +38,9 @@ New features
 - :doc:`plugins/replaygain`: Conflicting replay gain tags are now removed on
   write. RG_* tags are removed when setting R128_* and vice versa.
 - :doc:`plugins/fetchart`: Add support for WebP images.
+- :doc:`plugins/mbsync`: Add support excluding fields from being updated. The
+      genres tag will no longer be updated/wiped when ``musicbrainz.genres`` is
+      ``false``.
 
 Bug fixes
 ~~~~~~~~~
