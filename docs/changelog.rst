@@ -75,6 +75,8 @@ Bug fixes
   plural field names. :bug:`6483`
 - :doc:`plugins/fetchart`: Error when a configured source does not exist or
   sources configuration is empty. :bug:`6336`
+- :doc:`plugins/chroma`: Pace submit requests to avoid rate limit errors
+  :bug:`6510`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~

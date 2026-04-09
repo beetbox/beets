@@ -20,7 +20,9 @@ from __future__ import annotations
 
 import heapq
 import re
+import time
 from collections import defaultdict
+from datetime import datetime, timedelta
 from functools import cached_property, partial
 from typing import TYPE_CHECKING
 
@@ -45,6 +47,12 @@ TRACK_ID_WEIGHT = 10.0
 COMMON_REL_THRESH = 0.6  # How many tracks must have an album in common?
 MAX_RECORDINGS = 5
 MAX_RELEASES = 5
+
+# Max requests per second to acoustid (https://acoustid.org/webservice)
+ACOUSTID_MAX_RPS = 3
+ACOUSTID_SECS_BETWEEN_REQS = 1 / ACOUSTID_MAX_RPS
+ACOUSTID_SUBMIT_RETRY_COUNT = 3
+ACOUSTID_SUBMIT_RETRY_INTERVAL_SECS = 3
 
 # Stores the Acoustid match information for each track. This is
 # populated when an import task begins and then used when searching for
@@ -374,15 +382,36 @@ def apply_acoustid_metadata(task, session):
 def submit_items(log, userkey, items, chunksize=64):
     """Submit fingerprints for the items to the Acoustid server."""
     data = []  # The running list of dictionaries to submit.
+    last_submit_time = datetime.now()
 
     def submit_chunk():
         """Submit the current accumulated fingerprint data."""
+        nonlocal last_submit_time
+
+        next_allowed_time = last_submit_time + timedelta(
+            seconds=ACOUSTID_SECS_BETWEEN_REQS
+        )
+        sleep_time = (next_allowed_time - datetime.now()).total_seconds()
+        if sleep_time > 0:
+            time.sleep(sleep_time)
+
         log.info("submitting {} fingerprints", len(data))
-        try:
-            acoustid.submit(API_KEY, userkey, data, timeout=10)
-        except acoustid.AcoustidError as exc:
-            log.warning("acoustid submission error: {}", exc)
-        del data[:]
+        for attempt in range(ACOUSTID_SUBMIT_RETRY_COUNT):
+            try:
+                acoustid.submit(API_KEY, userkey, data, timeout=10)
+                break
+
+            except acoustid.AcoustidError as exc:
+                if attempt < ACOUSTID_SUBMIT_RETRY_COUNT - 1:
+                    log.warning(
+                        "acoustid submission error, will retry: {}", exc
+                    )
+                    time.sleep(3)
+                else:
+                    log.error("acoustid submission error: {}", exc)
+
+        data.clear()
+        last_submit_time = datetime.now()
 
     for item in items:
         fp = fingerprint_item(log, item, write=ui.should_write())
