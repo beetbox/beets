@@ -455,19 +455,17 @@ class TrackInfo(Info):
         **kwargs,
     ) -> None:
         self.arrangers = arrangers
-        # Stay consistent with arrangers if ids are not supplied by provider
+        # Remove existing IDs if they are not provided by the data source
         self.arrangers_ids = arrangers_ids or []
         self.bpm = bpm
         self.composers = composers
         self.composer_sort = composer_sort
-        # Stay consistent with composers if ids are not supplied by provider
         self.composers_ids = composers_ids or []
         self.disctitle = disctitle
         self.index = index
         self.initial_key = initial_key
         self.length = length
         self.lyricists = lyricists
-        # Stay consistent with lyricists if ids are not supplied by provider
         self.lyricists_ids = lyricists_ids or []
         self.mb_workid = mb_workid
         self.medium = medium
@@ -475,7 +473,6 @@ class TrackInfo(Info):
         self.medium_total = medium_total
         self.release_track_id = release_track_id
         self.remixers = remixers
-        # Stay consistent with remixers if ids are not supplied by provider
         self.remixers_ids = remixers_ids or []
         self.title = title
         self.track_alt = track_alt
