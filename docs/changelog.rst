@@ -40,6 +40,9 @@ New features
 - :doc:`plugins/replaygain`: Conflicting replay gain tags are now removed on
   write. RG_* tags are removed when setting R128_* and vice versa.
 - :doc:`plugins/fetchart`: Add support for WebP images.
+- :doc:`plugins/lastgenre`: Add support for a user-configurable ignorelist to
+  exclude unwanted or incorrect Last.fm (or existing) genres, either per artist
+  or globally :bug:`6449`
 
 Bug fixes
 ~~~~~~~~~
