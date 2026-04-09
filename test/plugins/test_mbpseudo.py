@@ -92,6 +92,16 @@ class TestPseudoAlbumInfo:
         info.use_pseudo_as_ref()
         assert info.data_source == "test"
 
+    def test_raw_data(
+        self, official_release_info: AlbumInfo, pseudo_release_info: AlbumInfo
+    ):
+        # raw_data calls self.__class__(**self.copy()), which failed for
+        # PseudoAlbumInfo because its __init__ requires pseudo_release and
+        # official_release args that are not present in the flat copy() dict.
+        info = PseudoAlbumInfo(pseudo_release_info, official_release_info)
+        data = info.raw_data
+        assert data["album"] == "In Bloom"
+
 
 class TestMBPseudoMixin(PluginMixin):
     plugin = "mbpseudo"
