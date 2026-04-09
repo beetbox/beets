@@ -647,6 +647,7 @@ class Item(LibModel):
         "artist_credit": types.STRING,
         "artists_credit": types.MULTI_VALUE_DSV,
         "remixers": types.MULTI_VALUE_DSV,
+        "remixers_ids": types.MULTI_VALUE_DSV,
         "album": types.STRING,
         "albumartist": types.STRING,
         "albumartists": types.MULTI_VALUE_DSV,
