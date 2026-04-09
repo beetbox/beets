@@ -454,17 +454,17 @@ class TrackInfo(Info):
         **kwargs,
     ) -> None:
         self.arrangers = arrangers
-        self.arrangers_ids = arrangers_ids or []
+        self.arrangers_ids = arrangers_ids
         self.bpm = bpm
         self.composers = composers
         self.composer_sort = composer_sort
-        self.composers_ids = composers_ids or []
+        self.composers_ids = composers_ids
         self.disctitle = disctitle
         self.index = index
         self.initial_key = initial_key
         self.length = length
         self.lyricists = lyricists
-        self.lyricists_ids = lyricists_ids or []
+        self.lyricists_ids = lyricists_ids
         self.mb_workid = mb_workid
         self.medium = medium
         self.medium_index = medium_index
