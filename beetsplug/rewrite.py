@@ -18,9 +18,41 @@ formats.
 
 import re
 from collections import defaultdict
+from functools import singledispatch
+from typing import Any, TypeVar
 
 from beets import library, ui
 from beets.plugins import BeetsPlugin
+
+T = TypeVar("T")
+
+
+@singledispatch
+def rewrite_value(value: Any, pat: re.Pattern[str], repl: str) -> Any:
+    """Rewrite a value if it matches the given pattern."""
+    return value
+
+
+@rewrite_value.register
+def _(value: str, pat: re.Pattern[str], repl: str) -> str:
+    if pat.match(value.lower()):
+        return repl
+    return value
+
+
+@rewrite_value.register(list)
+def _(value: list[str], pat: re.Pattern[str], repl: str) -> list[str]:
+    return [rewrite_value(v, pat, repl) for v in value]
+
+
+def apply_rewrite_rules(
+    value: T, rules: list[tuple[re.Pattern[str], str]]
+) -> T:
+    """Apply all matching rewrite rules to the given value."""
+    for pattern, replacement in rules:
+        value = rewrite_value(value, pattern, replacement)
+
+    return value
 
 
 def rewriter(field, rules):
@@ -30,13 +62,7 @@ def rewriter(field, rules):
     """
 
     def fieldfunc(item):
-        value = item._values_fixed[field]
-        for pattern, replacement in rules:
-            if pattern.match(value.lower()):
-                # Rewrite activated.
-                return replacement
-        # Not activated; return original value.
-        return value
+        return apply_rewrite_rules(item._values_fixed[field], rules)
 
     return fieldfunc
 
