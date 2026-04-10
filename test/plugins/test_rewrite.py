@@ -52,9 +52,6 @@ class RewritePluginTest(PluginTestCase):
             assert matching_item.artist == "LOONA / ODD EYE CIRCLE"
             assert other_item.artist == "ARTMS"
 
-    @pytest.mark.xfail(
-        reason="rewrite currently assumes scalar field values",
-    )
     def test_genres_rewrite_applies_to_matching_list_values(self):
         with self.configure_plugin({"genres rock": "Classic Rock"}):
             item = self.add_item(genres=["rock", "pop"])
