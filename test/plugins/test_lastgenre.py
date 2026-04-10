@@ -14,13 +14,18 @@
 
 """Tests for the 'lastgenre' plugin."""
 
-from unittest.mock import Mock, patch
+import re
+from collections import defaultdict
+from unittest.mock import MagicMock, Mock, patch
 
+import confuse
 import pytest
 
+from beets.library import Album
 from beets.test import _common
 from beets.test.helper import IOMixin, PluginTestCase
 from beetsplug import lastgenre
+from beetsplug.lastgenre.utils import is_ignored
 
 
 class LastGenrePluginTest(IOMixin, PluginTestCase):
@@ -201,6 +206,80 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
         tags = ("electronic", "ambient", "chillout")
         res = lastgenre.sort_by_depth(tags, self.plugin.c14n_branches)
         assert res == ["ambient", "electronic"]
+
+    # Ignorelist tests in resolve_genres and _is_ignored
+
+    def test_ignorelist_filters_genres_in_resolve(self):
+        """Ignored genres are stripped by _resolve_genres (no c14n).
+
+        Artist-specific and global patterns are both applied.
+        """
+        self._setup_config(whitelist=False, canonical=False)
+        self.plugin.ignore_patterns = defaultdict(
+            list,
+            {
+                "the artist": [re.compile(r"^metal$", re.IGNORECASE)],
+                "*": [re.compile(r"^rock$", re.IGNORECASE)],
+            },
+        )
+        result = self.plugin._resolve_genres(
+            ["metal", "rock", "jazz"], artist="the artist"
+        )
+        assert "metal" not in result, (
+            "artist-specific ignored genre must be removed"
+        )
+        assert "rock" not in result, "globally ignored genre must be removed"
+        assert "jazz" in result, "non-ignored genre must survive"
+
+    def test_ignorelist_stops_c14n_ancestry_walk(self):
+        """An ignored tag's c14n parents don't bleed into the result.
+
+        Without ignorelist, 'delta blues' canonicalizes to 'blues'.
+        With 'delta blues' ignored the tag is skipped entirely in the
+        c14n loop, so 'blues' must not appear either.
+        """
+        self._setup_config(whitelist=False, canonical=True, count=99)
+        self.plugin.ignore_patterns = defaultdict(
+            list,
+            {
+                "the artist": [re.compile(r"^delta blues$", re.IGNORECASE)],
+            },
+        )
+        result = self.plugin._resolve_genres(
+            ["delta blues"], artist="the artist"
+        )
+        assert result == [], (
+            "ignored tag must not contribute c14n parents to the result"
+        )
+
+    def test_ignorelist_c14n_no_whitelist_keeps_oldest_ancestor(self):
+        """With c14n on and whitelist off, ignorelist must not change the
+        parent-selection rule: only the oldest ancestor is returned.
+        """
+        self._setup_config(whitelist=False, canonical=True, count=99)
+        # ignorelist targets an unrelated genre — must not affect parent walking
+        self.plugin.ignore_patterns = defaultdict(
+            list,
+            {"*": [re.compile(r"^jazz$", re.IGNORECASE)]},
+        )
+        result = self.plugin._resolve_genres(["delta blues"])
+        assert result == ["blues"], (
+            "oldest ancestor only must be returned, not the full parent chain"
+        )
+
+    def test_ignorelist_c14n_no_whitelist_drops_ignored_ancestor(self):
+        """With c14n on and whitelist off, if the oldest ancestor itself is
+        ignored it must be dropped and the tag contributes nothing.
+        """
+        self._setup_config(whitelist=False, canonical=True, count=99)
+        self.plugin.ignore_patterns = defaultdict(
+            list,
+            {"*": [re.compile(r"^blues$", re.IGNORECASE)]},
+        )
+        result = self.plugin._resolve_genres(["delta blues"])
+        assert result == [], (
+            "ignored oldest ancestor must not appear in the result"
+        )
 
 
 @pytest.fixture
@@ -636,3 +715,224 @@ def test_get_genre(
 
     # Run
     assert plugin._get_genre(item) == expected_result
+
+
+class TestIgnorelist:
+    """Ignorelist pattern matching tests independent of resolve_genres."""
+
+    @pytest.mark.parametrize(
+        "ignorelist_dict, artist, genre, expected_forbidden",
+        [
+            # Global ignorelist - simple word
+            ({"*": ["spoken word"]}, "Any Artist", "spoken word", True),
+            ({"*": ["spoken word"]}, "Any Artist", "jazz", False),
+            # Global ignorelist - regex pattern
+            (
+                {"*": [".*electronic.*"]},
+                "Any Artist",
+                "ambient electronic",
+                True,
+            ),
+            ({"*": [".*electronic.*"]}, "Any Artist", "jazz", False),
+            # Artist-specific ignorelist
+            ({"metallica": ["metal"]}, "Metallica", "metal", True),
+            ({"metallica": ["metal"]}, "Iron Maiden", "metal", False),
+            # Case insensitive matching
+            ({"metallica": ["metal"]}, "METALLICA", "METAL", True),
+            # Full-match behavior: plain "metal" must not match "heavy metal"
+            ({"metallica": ["metal"]}, "Metallica", "heavy metal", False),
+            # Regex behavior: explicit pattern ".*metal.*" may match "heavy metal"
+            ({"metallica": [".*metal.*"]}, "Metallica", "heavy metal", True),
+            # Artist-specific ignorelist - exact match
+            (
+                {"metallica": ["^Heavy Metal$"]},
+                "Metallica",
+                "classic metal",
+                False,
+            ),
+            # Combined global and artist-specific
+            (
+                {"*": ["spoken word"], "metallica": ["metal"]},
+                "Metallica",
+                "spoken word",
+                True,
+            ),
+            (
+                {"*": ["spoken word"], "metallica": ["metal"]},
+                "Metallica",
+                "metal",
+                True,
+            ),
+            # Complex regex pattern with multiple features (raw string)
+            (
+                {
+                    "fracture": [
+                        r"^(heavy|black|power|death)?\s?(metal|rock)$|\w+-metal\d*$"
+                    ]
+                },
+                "Fracture",
+                "power metal",
+                True,
+            ),
+            # Complex regex pattern with multiple features (regular string)
+            (
+                {"amon tobin": ["d(rum)?[ n/]*b(ass)?"]},
+                "Amon Tobin",
+                "dnb",
+                True,
+            ),
+            # Empty ignorelist
+            ({}, "Any Artist", "any genre", False),
+        ],
+    )
+    def test_ignorelist_patterns(
+        self, ignorelist_dict, artist, genre, expected_forbidden
+    ):
+        """Test ignorelist pattern matching logic directly."""
+
+        logger = Mock()
+
+        # Set up compiled ignorelist directly (skipping file parsing)
+        compiled_ignorelist = defaultdict(list)
+        for artist_name, patterns in ignorelist_dict.items():
+            compiled_ignorelist[artist_name.lower()] = [
+                re.compile(pattern, re.IGNORECASE) for pattern in patterns
+            ]
+
+        result = is_ignored(logger, compiled_ignorelist, genre, artist)
+        assert result == expected_forbidden
+
+    @pytest.mark.parametrize(
+        "ignorelist_config, expected_ignorelist",
+        [
+            # Basic artist with single pattern
+            ({"metallica": ["metal"]}, {"metallica": ["metal"]}),
+            # Global ignorelist with '*' key
+            ({"*": ["spoken word"]}, {"*": ["spoken word"]}),
+            # Multiple patterns per artist
+            (
+                {"metallica": ["metal", ".*rock.*"]},
+                {"metallica": ["metal", ".*rock.*"]},
+            ),
+            # Combined global and artist-specific
+            (
+                {"*": ["spoken word"], "metallica": ["metal"]},
+                {"*": ["spoken word"], "metallica": ["metal"]},
+            ),
+            # Artist names are preserved by the current loader implementation.
+            ({"METALLICA": ["METAL"]}, {"METALLICA": ["METAL"]}),
+            # Invalid regex pattern that gets escaped (full-match literal fallback)
+            (
+                {"artist": ["[invalid(regex"]},
+                {"artist": ["\\[invalid\\(regex"]},
+            ),
+            # Disabled via False / empty dict — both produce empty dict
+            (False, {}),
+            ({}, {}),
+        ],
+    )
+    def test_ignorelist_config_format(
+        self, ignorelist_config, expected_ignorelist
+    ):
+        """Test ignorelist parsing/compilation with isolated config state."""
+        cfg = confuse.Configuration("test", read=False)
+        cfg.set({"lastgenre": {"ignorelist": ignorelist_config}})
+
+        # Mimic the plugin loader behavior in isolation to avoid global config bleed.
+        if not cfg["lastgenre"]["ignorelist"].get():
+            string_ignorelist = {}
+        else:
+            raw_strs = cfg["lastgenre"]["ignorelist"].get(
+                confuse.MappingValues(confuse.Sequence(str))
+            )
+            string_ignorelist = {}
+            for artist, patterns in raw_strs.items():
+                compiled_patterns = []
+                for pattern in patterns:
+                    try:
+                        compiled_patterns.append(
+                            re.compile(pattern, re.IGNORECASE).pattern
+                        )
+                    except re.error:
+                        compiled_patterns.append(
+                            re.compile(
+                                re.escape(pattern), re.IGNORECASE
+                            ).pattern
+                        )
+                string_ignorelist[artist] = compiled_patterns
+
+        assert string_ignorelist == expected_ignorelist
+
+    @pytest.mark.parametrize(
+        "invalid_config, expected_error_message",
+        [
+            # A plain string (e.g. accidental file path) instead of a mapping
+            (
+                "/path/to/ignorelist.txt",
+                "must be a dict",
+            ),
+            # An integer instead of a mapping
+            (
+                42,
+                "must be a dict",
+            ),
+            # A list of strings instead of a mapping
+            (
+                ["spoken word", "comedy"],
+                "must be a dict",
+            ),
+            # A mapping with a non-list value
+            (
+                {"metallica": "metal"},
+                "must be a list",
+            ),
+        ],
+    )
+    def test_ignorelist_config_format_errors(
+        self, invalid_config, expected_error_message
+    ):
+        """Test ignorelist config validation errors in isolated config."""
+        cfg = confuse.Configuration("test", read=False)
+        cfg.set({"lastgenre": {"ignorelist": invalid_config}})
+
+        with pytest.raises(confuse.ConfigTypeError) as exc_info:
+            _ = cfg["lastgenre"]["ignorelist"].get(
+                confuse.MappingValues(confuse.Sequence(str))
+            )
+
+        assert expected_error_message in str(exc_info.value)
+
+    def test_ignorelist_multivalued_album_artist_fallback(self, config):
+        """`stage_artist=None` fallback must not re-drop per-artist results."""
+        config["lastgenre"]["ignorelist"] = {
+            "Artist A": ["Metal"],
+            "Artist Group": ["Metal"],
+        }
+        config["lastgenre"]["whitelist"] = False
+        config["lastgenre"]["count"] = 10
+
+        plugin = lastgenre.LastGenrePlugin()
+        plugin.setup()
+
+        obj = MagicMock(spec=Album)
+        obj.albumartist = "Artist Group"
+        obj.album = "Album Title"
+        obj.albumartists = ["Artist A", "Artist B"]
+        obj.get.return_value = []
+
+        plugin.client = MagicMock()
+        plugin.client.fetch_track_genre.return_value = []
+        plugin.client.fetch_album_genre.return_value = []
+
+        artist_genres = {
+            "Artist A": ["Rock"],
+            "Artist B": ["Metal", "Jazz"],
+        }
+        plugin.client.fetch_artist_genre.side_effect = lambda artist: (
+            artist_genres.get(artist, [])
+        )
+
+        genres, label = plugin._get_genre(obj)
+
+        assert "multi-valued album artist" in label
+        assert "Metal" in genres
