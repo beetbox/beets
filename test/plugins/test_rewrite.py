@@ -52,6 +52,17 @@ class RewritePluginTest(PluginTestCase):
             assert matching_item.artist == "LOONA / ODD EYE CIRCLE"
             assert other_item.artist == "ARTMS"
 
+    @pytest.mark.xfail(
+        reason="rewrite currently assumes scalar field values",
+    )
+    def test_genres_rewrite_applies_to_matching_list_values(self):
+        with self.configure_plugin({"genres rock": "Classic Rock"}):
+            item = self.add_item(genres=["rock", "pop"])
+            album = self.lib.add_album([item])
+
+            assert item.genres == ["Classic Rock", "pop"]
+            assert album.evaluate_template("$genres") == "Classic Rock; pop"
+
     def test_invalid_rewrite_spec_raises_user_error(self):
         self.config[self.plugin].set({"artist": "Jimi Hendrix"})
 
