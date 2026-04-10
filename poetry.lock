@@ -2823,12 +2823,13 @@ test = ["coverage[toml] (>=7.10.7)", "coveralls (>=4.0.2)", "py-cpuinfo", "pytes
 
 [[package]]
 name = "pyacoustid"
-version = "1.3.0"
-description = "bindings for Chromaprint acoustic fingerprinting and the Acoustid API"
+version = "1.3.1"
+description = "Bindings for Chromaprint acoustic fingerprinting and the Acoustid API"
 optional = true
-python-versions = "*"
+python-versions = ">=3.10"
 files = [
-    {file = "pyacoustid-1.3.0.tar.gz", hash = "sha256:5f4f487191c19ebb908270b1b7b5297f132da332b1568b96a914574c079ed177"},
+    {file = "pyacoustid-1.3.1-py3-none-any.whl", hash = "sha256:4436732937ac40e4b2fec4808fc81934c0e07ad9e3f0ef5f2b225517c99bb1e4"},
+    {file = "pyacoustid-1.3.1.tar.gz", hash = "sha256:bb0ecae40109c0aa80f709e33c66c83ec36b2fd84658f9fad056a34538f79e8a"},
 ]
 
 [package.dependencies]
@@ -4806,4 +4807,4 @@ web = ["flask", "flask-cors"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.15"
-content-hash = "1c21803b8f8b05084312fd42d5b14418bf8d926dfae6032930e6b0640562df32"
+content-hash = "7baa42edd070e7f72ae51677aa5ac1bcea79ae5f03a8c08f2a1c60001515c494"
