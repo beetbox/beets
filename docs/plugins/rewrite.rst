@@ -30,6 +30,15 @@ might use:
     rewrite:
         artist .*jimi hendrix.*: Jimi Hendrix
 
+Rules also apply to matching elements in multi-valued fields. For example, this
+rewrites the ``rock`` entry in ``genres`` while leaving other genre values
+unchanged:
+
+::
+
+    rewrite:
+        genres rock: Classic Rock
+
 As a convenience, the plugin applies patterns for the ``artist`` field to the
 ``albumartist`` field as well. (Otherwise, you would probably want to duplicate
 every rule for ``artist`` and ``albumartist``.)

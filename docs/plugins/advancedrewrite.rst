@@ -28,6 +28,9 @@ replace a single field:
     advancedrewrite:
       - artist ODD EYE CIRCLE: 이달의 소녀 오드아이써클
 
+As with :doc:`/plugins/rewrite`, simple rules applied to a multi-valued field
+rewrite only the matching list entries.
+
 The advanced syntax consists of a query to match against, as well as a map of
 replacements to apply. For example, to credit all songs of ODD EYE CIRCLE before
 2023 to their original group name, you can use the following rule:

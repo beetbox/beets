@@ -80,6 +80,9 @@ Bug fixes
   plural field names. :bug:`6483`
 - :doc:`plugins/fetchart`: Error when a configured source does not exist or
   sources configuration is empty. :bug:`6336`
+- :doc:`plugins/rewrite` :doc:`plugins/advancedrewrite`: Fix rewriting
+  multi-valued fields such as ``genres`` by applying rules to each matching list
+  entry. :bug:`6515`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
