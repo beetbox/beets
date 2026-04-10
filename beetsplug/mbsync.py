@@ -16,15 +16,28 @@
 
 from collections import defaultdict
 
-from beets import library, metadata_plugins, ui, util
+from beets import config, library, metadata_plugins, ui, util
 from beets.autotag.distance import Distance
 from beets.autotag.hooks import AlbumMatch, TrackMatch
 from beets.plugins import BeetsPlugin, apply_item_changes
 
 
+def noneify_fields(obj, fields):
+    """
+    Reset the given ``fields`` on an object ``obj`` to  None.
+    """
+    for field in fields:
+        setattr(obj, field, None)
+
+
 class MBSyncPlugin(BeetsPlugin):
     def __init__(self):
         super().__init__()
+        self.config.add(
+            {
+                "excluded_fields": [],
+            },
+        )
 
     def commands(self):
         cmd = ui.Subcommand("mbsync", help="update metadata from musicbrainz")
@@ -90,6 +103,14 @@ class MBSyncPlugin(BeetsPlugin):
                 )
                 continue
 
+            # Ignore excluded fields by setting them back to None
+            noneify_fields(
+                track_info, self.config["excluded_fields"].as_str_seq()
+            )
+            # Ignore genres field if `musicbrainz.genres` is False.
+            if not config["musicbrainz"]["genres"]:
+                track_info.genres = None
+
             # Apply.
             with lib.transaction():
                 TrackMatch(Distance(), track_info, item).apply_metadata()
@@ -118,12 +139,28 @@ class MBSyncPlugin(BeetsPlugin):
                 )
                 continue
 
+            # Ignore excluded fields by setting them back to None
+            noneify_fields(
+                album_info, self.config["excluded_fields"].as_str_seq()
+            )
+            # Ignore genres field if `musicbrainz.genres` is False.
+            if not config["musicbrainz"]["genres"]:
+                album_info.genres = None
+
             # Map release track and recording MBIDs to their information.
             # Recordings can appear multiple times on a release, so each MBID
             # maps to a list of TrackInfo objects.
             releasetrack_index = {}
             track_index = defaultdict(list)
             for track_info in album_info.tracks:
+                # Ignore excluded fields by setting them back to None
+                noneify_fields(
+                    track_info, self.config["excluded_fields"].as_str_seq()
+                )
+                # Ignore genres field if `musicbrainz.genres` is False.
+                if not config["musicbrainz"]["genres"]:
+                    track_info.genres = None
+
                 releasetrack_index[track_info.release_track_id] = track_info
                 track_index[track_info.track_id].append(track_info)
 

@@ -22,6 +22,10 @@ from beets.test.helper import PluginTestCase, capture_log
 class MbsyncCliTest(PluginTestCase):
     plugin = "mbsync"
 
+    def setUp(self):
+        super().setUp()
+        self.config["musicbrainz"]["genres"] = True
+
     @patch(
         "beets.metadata_plugins.album_for_id",
         Mock(
@@ -88,3 +92,124 @@ class MbsyncCliTest(PluginTestCase):
 
         assert "mbsync: Skipping album with no mb_albumid: 'no id'" in logs
         assert "mbsync: Skipping singleton with no mb_trackid: 'no id'" in logs
+
+    @patch(
+        "beets.metadata_plugins.album_for_id",
+        Mock(
+            side_effect=lambda *_: AlbumInfo(
+                album_id="album id",
+                album="new album",
+                tracks=[
+                    TrackInfo(
+                        track_id="track id",
+                        title="new title",
+                        genres=["new genre"],
+                    )
+                ],
+                genres=["new genre"],
+            )
+        ),
+    )
+    @patch(
+        "beets.metadata_plugins.track_for_id",
+        Mock(
+            side_effect=lambda *_: TrackInfo(
+                track_id="singleton id",
+                title="new title",
+                genres=["new genre"],
+            )
+        ),
+    )
+    def test_genres_field_is_ignored_when_musicbrainz_genres_is_false(self):
+        self.config["musicbrainz"]["genres"] = False
+        album_item = Item(
+            album="old album",
+            mb_albumid="album id",
+            mb_trackid="track id",
+            data_source="data_source",
+            genres=["old genre"],
+        )
+        self.lib.add_album([album_item])
+
+        singleton = Item(
+            title="old title",
+            mb_trackid="singleton id",
+            data_source="data_source",
+            genres=["old genre"],
+        )
+        self.lib.add(singleton)
+
+        self.run_command("mbsync")
+
+        singleton.load()
+        assert singleton.title == "new title"
+        assert singleton.genres == ["old genre"]
+
+        album_item.load()
+        assert album_item.title == "new title"
+        assert album_item.mb_trackid == "track id"
+        assert album_item.get_album().album == "new album"
+        assert album_item.get_album().genres == ["old genre"]
+
+    @patch(
+        "beets.metadata_plugins.album_for_id",
+        Mock(
+            side_effect=lambda *_: AlbumInfo(
+                album_id="album id",
+                album="new album",
+                tracks=[
+                    TrackInfo(
+                        track_id="track id",
+                        title="new title",
+                        genres=["new genre"],
+                    )
+                ],
+                genres=["new genre"],
+                script="new script",
+            )
+        ),
+    )
+    @patch(
+        "beets.metadata_plugins.track_for_id",
+        Mock(
+            side_effect=lambda *_: TrackInfo(
+                track_id="singleton id",
+                title="new title",
+                genres=["new genre"],
+                script="new script",
+            )
+        ),
+    )
+    def test_excluded_fields_are_excluded_correctly(self):
+        self.config["mbsync"]["excluded_fields"] = ["script"]
+        album_item = Item(
+            album="old album",
+            mb_albumid="album id",
+            mb_trackid="track id",
+            data_source="data_source",
+            genres=["old genre"],
+            script="old script",
+        )
+        self.lib.add_album([album_item])
+
+        singleton = Item(
+            title="old title",
+            mb_trackid="singleton id",
+            data_source="data_source",
+            script="old script",
+        )
+        self.lib.add(singleton)
+
+        self.run_command("mbsync")
+
+        singleton.load()
+        assert singleton.title == "new title"
+        assert singleton.genres == ["new genre"]
+        assert singleton.script == "old script"
+
+        album_item.load()
+        assert album_item.title == "new title"
+        assert album_item.mb_trackid == "track id"
+        assert album_item.get_album().album == "new album"
+        assert album_item.get_album().genres == ["new genre"]
+        assert album_item.get_album().script == "old script"

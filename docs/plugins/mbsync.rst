@@ -10,6 +10,31 @@ contains correct tags, you can speed up the initial import by importing files
 "as-is" and then using ``mbsync`` to write tags according to your beets
 configuration.
 
+Configuration
+-------------
+
+This plugin can be configured like other metadata source plugins as described in
+:ref:`metadata-source-plugin-configuration`.
+
+.. code-block:: yaml
+
+    mbsync:
+        excluded_fields: []
+
+.. conf:: excluded_fields
+    :default: []
+
+    A list of fields to be excluded from updates when mbsync runs.
+
+    Example:
+
+    .. code-block:: yaml
+
+        mbsync:
+            excluded_fields:
+                - genres
+                - composer
+
 Usage
 -----
 
