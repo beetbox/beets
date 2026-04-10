@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from time import sleep
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING
 
 import requests
 
@@ -12,11 +12,9 @@ from beetsplug._utils.requests import RateLimitAdapter, TimeoutAndRetrySession
 from .authenticate import TidalToken
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
-
     from .api_types import AlbumDocument, Document, TrackDocument
 
-log = getLogger("tidal.api")
+log = getLogger("beets.tidal")
 
 
 API_BASE = "https://openapi.tidal.com/v2"
@@ -63,16 +61,21 @@ class TidalSession(TimeoutAndRetrySession):
 
         if self.token.is_expired:
             self._refresh_token()
-        log.debug("Tidal request: %s %s", method, url)
         kwargs["auth"] = self.token
-        res = super().request(method, url, *args, **kwargs)
-        # 401 = Needs refreshing
-        if res.status_code == 401:
-            self._refresh_token()
-            return self.request(method, url, *args, **kwargs)
-        elif res.status_code == 429:
-            self._handle_rate_limit(res)
-            return self.request(method, url, *args, **kwargs)
+        try:
+            # TimeoutAndRetrySession raises on bad requests
+            res = super().request(method, url, *args, **kwargs)
+        except requests.exceptions.HTTPError as e:
+            res = e.response
+
+            # 401 = Needs refreshing
+            if res.status_code == 401:
+                self._refresh_token()
+                return self.request(method, url, *args, **kwargs)
+            elif res.status_code == 429:
+                self._handle_rate_limit(res)
+                return self.request(method, url, *args, **kwargs)
+            raise
 
         return res
 
@@ -127,7 +130,8 @@ class TidalSession(TimeoutAndRetrySession):
         # Dedupe include
         doc["included"] = list(
             {
-                (item["type"], item["id"]): item for item in doc["included"]
+                (item["type"], item["id"]): item
+                for item in doc.get("included", [])
             }.values()
         )
         return doc
@@ -179,7 +183,6 @@ class TidalSession(TimeoutAndRetrySession):
         """
         log.debug("Refreshing expired Tidal token...")
         res = super().request(
-            self,
             "POST",
             "https://auth.tidal.com/v1/oauth2/token",
             data={
@@ -288,14 +291,3 @@ class TidalAPI:
             include,
             params=params,
         )
-
-
-A = TypeVar("A")
-
-
-def chunk_list(lst: list[A], chunk_size: int) -> Iterable[list[A]]:
-    """
-    Chunk a list into smaller lists of the specified size.
-    """
-    for i in range(0, len(lst), chunk_size):
-        yield lst[i : i + chunk_size]
