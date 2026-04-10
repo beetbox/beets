@@ -428,16 +428,19 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if not self.whitelist and not self.ignore_patterns:
             return cleaned
 
-        whitelisted = [
-            g
-            for g in cleaned
-            if not self.whitelist or g.lower() in self.whitelist
-        ]
-        return [
-            g
-            for g in whitelisted
-            if not is_ignored(self._log, self.ignore_patterns, g, artist)
-        ]
+        result = []
+        for genre in cleaned:
+            if self.whitelist and genre.lower() not in self.whitelist:
+                continue
+
+            if self.ignore_patterns and is_ignored(
+                self._log, self.ignore_patterns, genre, artist
+            ):
+                continue
+
+            result.append(genre)
+
+        return result
 
     # Genre resolution pipeline.
 
