@@ -21,7 +21,7 @@ from __future__ import annotations
 import heapq
 import re
 from collections import defaultdict
-from functools import cached_property, partial
+from functools import partial
 from typing import TYPE_CHECKING
 
 import acoustid
@@ -29,15 +29,15 @@ import confuse
 
 from beets import config, ui, util
 from beets.autotag.distance import Distance
-from beets.metadata_plugins import MetadataSourcePlugin
+from beets.metadata_plugins import MetadataSourcePlugin, get_metadata_source
 from beets.util.color import colorize
-from beetsplug.musicbrainz import MusicBrainzPlugin
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
 
     from beets.autotag.hooks import TrackInfo
     from beets.library.models import Item
+    from beetsplug.musicbrainz import MusicBrainzPlugin
 
 API_KEY = "1vOwZtEn"
 SCORE_THRESH = 0.5
@@ -196,9 +196,24 @@ class AcoustidPlugin(MetadataSourcePlugin):
             self.register_listener("import_task_start", self.fingerprint_task)
         self.register_listener("import_task_apply", apply_acoustid_metadata)
 
-    @cached_property
-    def mb(self) -> MusicBrainzPlugin:
-        return MusicBrainzPlugin()
+    def _get_musicbrainz(self) -> MusicBrainzPlugin | None:
+        """Return the loaded MusicBrainz plugin instance, or ``None``.
+
+        Acoustid fingerprint lookups return MusicBrainz release and
+        recording IDs, so chroma can only produce autotagger candidates
+        by resolving those IDs through the musicbrainz plugin. When the
+        user has not enabled the ``musicbrainz`` plugin, we must not
+        return any candidates — otherwise MusicBrainz-sourced results
+        would silently appear during tagging even though the user
+        opted out of that metadata source.
+        """
+        plugin = get_metadata_source("musicbrainz")
+        if plugin is None:
+            self._log.debug(
+                "musicbrainz plugin not enabled; "
+                "acoustid matches will not produce candidates"
+            )
+        return plugin  # type: ignore[return-value]
 
     def fingerprint_task(self, task, session):
         return fingerprint_task(self._log, task, session)
@@ -214,9 +229,13 @@ class AcoustidPlugin(MetadataSourcePlugin):
         return dist
 
     def candidates(self, items, artist, album, va_likely):
+        mb = self._get_musicbrainz()
+        if mb is None:
+            return []
+
         albums = []
         for relid in prefix(_all_releases(items), MAX_RELEASES):
-            album = self.mb.album_for_id(relid)
+            album = mb.album_for_id(relid)
             if album:
                 albums.append(album)
 
@@ -227,10 +246,14 @@ class AcoustidPlugin(MetadataSourcePlugin):
         if item.path not in _matches:
             return []
 
+        mb = self._get_musicbrainz()
+        if mb is None:
+            return []
+
         recording_ids, _ = _matches[item.path]
         tracks = []
         for recording_id in prefix(recording_ids, MAX_RECORDINGS):
-            track = self.mb.track_for_id(recording_id)
+            track = mb.track_for_id(recording_id)
             if track:
                 tracks.append(track)
         self._log.debug("acoustid item candidates: {}", len(tracks))
