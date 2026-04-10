@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from time import sleep
-from typing import TYPE_CHECKING, Literal, TypeVar
+from typing import TYPE_CHECKING, TypeVar
 
 import requests
 
@@ -13,6 +13,8 @@ from .authenticate import TidalToken
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+
+    from .api_types import AlbumDocument, Document, TrackDocument
 
 log = getLogger("tidal.api")
 
@@ -90,10 +92,10 @@ class TidalSession(TimeoutAndRetrySession):
     def get_paginated(
         self,
         url: str,
-        include: list[IncludeItem] | None = None,
+        include: list[str] | str | None = None,
         params: dict | None = None,
         **kwargs,
-    ) -> dict:
+    ) -> Document:
         """
         Perform a GET request to the Tidal API with pagination resolution.
 
@@ -106,7 +108,7 @@ class TidalSession(TimeoutAndRetrySession):
         include = include or []
         params = params or {}
 
-        doc = {
+        doc: Document = {
             "data": [],
             "included": [],
             "links": {"next": url},
@@ -132,9 +134,9 @@ class TidalSession(TimeoutAndRetrySession):
 
     def _merge_multiresource_pagination(
         self,
-        a: dict,
-        b: dict,
-    ) -> dict:
+        a: Document,
+        b: Document,
+    ) -> Document:
         """
         Merge of b into a, following JSON:API spec rules.
 
@@ -198,11 +200,6 @@ class TidalSession(TimeoutAndRetrySession):
         self.token.save_to(self.token_path)
 
 
-IncludeItem = Literal[
-    "albums", "artists", "playlists", "topHits", "tracks", "videos"
-]
-
-
 class TidalAPI:
     session: TidalSession
 
@@ -214,7 +211,7 @@ class TidalAPI:
         query: str,
         *,
         explicit_filter: str = "INCLUDE",
-        include: list[IncludeItem] | None = None,
+        include: list[str] | None = None,
         country_code: str = "US",
     ):
         """Search results for a query.
@@ -234,12 +231,12 @@ class TidalAPI:
     def get_tracks(
         self,
         # filters
-        ids: list[str] | None = None,
-        isrcs: list[str] | None = None,
+        ids: list[str] | str | None = None,
+        isrcs: list[str] | str | None = None,
         *,
-        include: list[IncludeItem] | None = None,
+        include: list[str] | str | None = None,
         country_code: str = "US",
-    ):
+    ) -> TrackDocument:
         """Fetch tracks resolving pagination and included items.
 
         Should only ever be called with 20 items as
@@ -258,6 +255,36 @@ class TidalAPI:
 
         return self.session.get_paginated(
             f"{API_BASE}/tracks",
+            include,
+            params=params,
+        )
+
+    def get_albums(
+        self,
+        # filters
+        ids: list[str] | str | None = None,
+        barcode_ids: list[str] | str | None = None,
+        *,
+        include: list[str] | str | None = None,
+        country_code: str = "US",
+    ) -> AlbumDocument:
+        """Fetch Albums resolving pagination and included items.
+
+        Should only ever be called with 20 items as tidal does not support more per
+        requests. This does not mean more than 20 cant be returned.
+
+        https://tidal-music.github.io/tidal-api-reference/#/albums/get_albums
+        """
+        params: dict[str, str | list[str]] = {}
+        if country_code:
+            params["countryCode"] = country_code
+        if ids:
+            params["filter[id]"] = ids
+        if barcode_ids:
+            params["filter[barcodeId]"] = barcode_ids
+
+        return self.session.get_paginated(
+            f"{API_BASE}/albums",
             include,
             params=params,
         )
