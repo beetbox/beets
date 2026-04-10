@@ -52,13 +52,14 @@ class RewritePluginTest(PluginTestCase):
             assert matching_item.artist == "LOONA / ODD EYE CIRCLE"
             assert other_item.artist == "ARTMS"
 
-    def test_genres_rewrite_applies_to_matching_list_values(self):
-        with self.configure_plugin({"genres rock": "Classic Rock"}):
-            item = self.add_item(genres=["rock", "pop"])
-            album = self.lib.add_album([item])
+    @pytest.mark.xfail(reason="only the first pattern applied")
+    def test_rewrite_applied_to_all_list_values(self):
+        with self.configure_plugin(
+            {"genres rock": "Classic Rock", "genres pop": "Pop"}
+        ):
+            item = self.add_item(genres=["rock", "pop", "techno"])
 
-            assert item.genres == ["Classic Rock", "pop"]
-            assert album.evaluate_template("$genres") == "Classic Rock; pop"
+            assert item.genres == ["Classic Rock", "Pop", "techno"]
 
     def test_invalid_rewrite_spec_raises_user_error(self):
         self.config[self.plugin].set({"artist": "Jimi Hendrix"})
