@@ -16,6 +16,7 @@
 import ctypes
 import os
 import sys
+from unittest.mock import patch
 
 from beets import util
 from beets.test.helper import IOMixin, PluginTestCase
@@ -118,6 +119,43 @@ class FetchartCliTest(IOMixin, PluginTestCase):
         self.config["ui"]["color"] = True
         out = self.run_with_output("fetchart")
         assert " - the älbum: \x1b[1;31mno art found\x1b[39;49;00m\n" == out
+
+    def test_batch_fetch_filesystem_error(self):
+        """When _set_art raises FilesystemError (e.g. permissions), the
+        fetchart command should log a warning instead of crashing."""
+        self.touch(b"c\xc3\xb6ver.jpg", dir=self.album.path, content="IMAGE")
+
+        exc = util.FilesystemError(
+            reason=PermissionError("mocked permission error"),
+            verb="move",
+            paths=[b"/src", b"/dst"],
+        )
+        with patch(
+            "beetsplug.fetchart.FetchArtPlugin._set_art",
+            side_effect=exc,
+        ):
+            out = self.run_with_output("fetchart")
+
+        assert "error setting art" in out
+
+    def test_assign_art_filesystem_error(self):
+        """When _set_art raises FilesystemError during import, the import
+        should continue instead of crashing."""
+        exc = util.FilesystemError(
+            reason=PermissionError("mocked permission error"),
+            verb="move",
+            paths=[b"/src", b"/dst"],
+        )
+        fa = FetchArtPlugin()
+        # Simulate an import task with a queued candidate
+        task = type("FakeTask", (), {"album": self.album})()
+        fa.art_candidates[task] = type(
+            "FakeCandidate", (), {"path": b"/tmp/art.jpg", "source_name": "test"}
+        )()
+
+        with patch.object(fa, "_set_art", side_effect=exc):
+            # Should not raise
+            fa.assign_art(session=None, task=task)
 
     def test_sources_is_a_string(self):
         self.config["fetchart"].set({"sources": "filesystem"})
