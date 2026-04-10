@@ -22,11 +22,11 @@ if TYPE_CHECKING:
     from beets.library.models import Item, Library
 
     from .api_types import (
-        Album,
         AlbumAttributes,
-        Artist,
         ResourceIdentifier,
-        Track,
+        TidalAlbum,
+        TidalArtist,
+        TidalTrack,
         TrackAttributes,
     )
 
@@ -112,13 +112,13 @@ class TidalPlugin(MetadataSourcePlugin):
         if len(album_doc_tidal["data"]) < 1:
             return None
 
-        album: Album = album_doc_tidal["data"][0]
-        track_lookup: dict[str, Track] = {
+        album: TidalAlbum = album_doc_tidal["data"][0]
+        track_lookup: dict[str, TidalTrack] = {
             item["id"]: item
             for item in album_doc_tidal.get("included", [])
             if item["type"] == "tracks"
         }
-        artist_lookup: dict[str, Artist] = {
+        artist_lookup: dict[str, TidalArtist] = {
             item["id"]: item
             for item in album_doc_tidal.get("included", [])
             if item["type"] == "artists"
@@ -143,8 +143,8 @@ class TidalPlugin(MetadataSourcePlugin):
         if len(track_doc_tidal["data"]) < 1:
             return None
 
-        track: Track = track_doc_tidal["data"][0]
-        artist_lookup: dict[str, Artist] = {
+        track: TidalTrack = track_doc_tidal["data"][0]
+        artist_lookup: dict[str, TidalArtist] = {
             item["id"]: item
             for item in track_doc_tidal.get("included", [])
             if item["type"] == "artists"
@@ -171,16 +171,15 @@ class TidalPlugin(MetadataSourcePlugin):
 
     def _get_album_info(
         self,
-        album: Album,
-        track_lookup: dict[str, Track],
-        artist_lookup: dict[str, Artist],
+        album: TidalAlbum,
+        track_lookup: dict[str, TidalTrack],
+        artist_lookup: dict[str, TidalArtist],
     ) -> AlbumInfo:
 
         track_infos: list[TrackInfo] = []
         for i, track_rel in enumerate(
             album["relationships"]["items"]["data"], start=1
         ):
-            breakpoint()
             if track := track_lookup.get(track_rel["id"]):
                 track_info = self._get_track_info(track, artist_lookup)
                 track_info.index = i
@@ -213,20 +212,14 @@ class TidalPlugin(MetadataSourcePlugin):
 
     def _get_track_info(
         self,
-        track: Track,
-        artist_lookup: dict[str, Artist],
+        track: TidalTrack,
+        artist_lookup: dict[str, TidalArtist],
     ) -> TrackInfo:
         # Artists are sorted in the track relationship
         artist_names, artist_ids = self._extract_artists(
             track["relationships"]["artists"]["data"],
             artist_lookup,
         )
-
-        # Title may include a version string
-        # this is how tidal shows the tracks online
-        title = track["attributes"]["title"]
-        if version := track["attributes"].get("version"):
-            title += f" ({version})"
 
         return TrackInfo(
             # Identifier
@@ -246,7 +239,7 @@ class TidalPlugin(MetadataSourcePlugin):
     @staticmethod
     def _extract_artists(
         artist_relationships: list[ResourceIdentifier],
-        artist_lookup: dict[str, Artist],
+        artist_lookup: dict[str, TidalArtist],
     ) -> tuple[list[str], list[str]]:
         """Extract artists from a relatninship.
 

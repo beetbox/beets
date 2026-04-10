@@ -128,20 +128,20 @@ class TrackAttributes(TypedDict):
 # --------------------------------- Resources -------------------------------- #
 
 
-class Artist(TypedDict):
+class TidalArtist(TypedDict):
     id: str
     type: Literal["artists"]
     attributes: ArtistAttributes
 
 
-class Album(TypedDict):
+class TidalAlbum(TypedDict):
     id: str
     type: Literal["albums"]
     attributes: AlbumAttributes
     relationships: dict[str, RelationshipData]
 
 
-class Track(TypedDict):
+class TidalTrack(TypedDict):
     id: str
     type: Literal["tracks"]
     attributes: TrackAttributes
@@ -153,9 +153,9 @@ T = TypeVar("T")
 
 class Document(TypedDict, Generic[T]):
     data: list[T]
-    included: NotRequired[list[Artist | Album | Track]]
+    included: NotRequired[list[TidalArtist | TidalAlbum | TidalTrack]]
     links: NotRequired[dict[str, str]]
 
 
-AlbumDocument = Document[Album]
-TrackDocument = Document[Track]
+AlbumDocument = Document[TidalAlbum]
+TrackDocument = Document[TidalTrack]
