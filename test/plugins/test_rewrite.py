@@ -23,11 +23,11 @@ class RewritePluginTest(PluginTestCase):
             assert item.albumartist == "Jimi Hendrix"
             assert album.evaluate_template("$albumartist") == "Jimi Hendrix"
 
-    def test_rewrite_uses_first_matching_rule(self):
+    def test_rewrite_all_matching_rules(self):
         with self.configure_plugin(
             {
-                "artist .*hendrix.*": "Hendrix catalog",
-                "artist the jimi hendrix experience": "Experience catalog",
+                "artist .*hendrix.*": "hendrix catalog",
+                "artist .*catalog.*": "Experience catalog",
             }
         ):
             item = self.add_item(
@@ -35,7 +35,7 @@ class RewritePluginTest(PluginTestCase):
                 albumartist="The Jimi Hendrix Experience",
             )
 
-            assert item.artist == "Hendrix catalog"
+            assert item.artist == "Experience catalog"
 
     def test_rewrite_is_case_insensitive_and_leaves_non_matches_unchanged(
         self,
@@ -52,7 +52,6 @@ class RewritePluginTest(PluginTestCase):
             assert matching_item.artist == "LOONA / ODD EYE CIRCLE"
             assert other_item.artist == "ARTMS"
 
-    @pytest.mark.xfail(reason="only the first pattern applied")
     def test_rewrite_applied_to_all_list_values(self):
         with self.configure_plugin(
             {"genres rock": "Classic Rock", "genres pop": "Pop"}

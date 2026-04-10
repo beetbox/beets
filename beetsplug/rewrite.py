@@ -48,12 +48,10 @@ def _(value: list[str], pat: re.Pattern[str], repl: str) -> list[str]:
 def apply_rewrite_rules(
     value: T, rules: list[tuple[re.Pattern[str], str]]
 ) -> T:
-    """Apply the first matching rewrite rule to the given value."""
+    """Apply all matching rewrite rules to the given value."""
     for pattern, replacement in rules:
-        if (new_value := rewrite_value(value, pattern, replacement)) != value:
-            # Rewrite activated.
-            return new_value
-    # Not activated; return original value.
+        value = rewrite_value(value, pattern, replacement)
+
     return value
 
 

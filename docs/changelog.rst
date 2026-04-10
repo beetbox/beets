@@ -82,7 +82,8 @@ Bug fixes
   sources configuration is empty. :bug:`6336`
 - :doc:`plugins/rewrite` :doc:`plugins/advancedrewrite`: Fix rewriting
   multi-valued fields such as ``genres`` by applying rules to each matching list
-  entry. :bug:`6515`
+  entry. Additionally, apply rewrite rules in config order, so that multiple
+  rules can be applied to the same field. :bug:`6515`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
