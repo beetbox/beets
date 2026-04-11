@@ -184,7 +184,6 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         artist=False,
         video=False,
         disambiguation=None,
-        remixer=False,
         multi_artist_credit=False,
         aliases=None,
     ):
@@ -217,20 +216,6 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
                         "name": "RECORDING ARTIST 2 CREDIT",
                     }
                 )
-        if remixer:
-            track["artist-relations"] = [
-                {
-                    "type": "remixer",
-                    "type-id": "RELATION TYPE ID",
-                    "direction": "RECORDING RELATION DIRECTION",
-                    "artist": {
-                        "id": "RECORDING REMIXER ARTIST ID",
-                        "type": "RECORDING REMIXER ARTIST TYPE",
-                        "name": "RECORDING REMIXER ARTIST NAME",
-                        "sort-name": "RECORDING REMIXER ARTIST SORT NAME",
-                    },
-                }
-            ]
         if video:
             track["video"] = True
         if disambiguation:
@@ -584,11 +569,104 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
             "TRACK ARTIST 2 CREDIT",
         ]
 
-    def test_parse_recording_remixer(self):
-        tracks = [self._make_track("a", "b", 1, remixer=True)]
+    def test_parse_recording_artist_credits(self):
+        tracks = [self._make_track("a", "b", 1)]
+        tracks[0]["artist-relations"] = [
+            {
+                "type": "remixer",
+                "artist": {
+                    "name": "RECORDING REMIXER ARTIST NAME",
+                    "id": "RECORDING REMIXER ARTIST ID",
+                },
+            },
+            {
+                "type": "arranger",
+                "artist": {
+                    "name": "RECORDING ARRANGER ARTIST NAME",
+                    "id": "RECORDING ARRANGER ARTIST ID",
+                },
+            },
+            {
+                "type": "arranger",
+                "artist": {
+                    "name": "RECORDING ARRANGER 2 ARTIST NAME",
+                    "id": "RECORDING ARRANGER 2 ARTIST ID",
+                },
+            },
+        ]
+        tracks[0]["work-relations"] = [
+            {
+                "type": "performance",
+                "work": {
+                    "id": "WORK ID",
+                    "title": "WORK TITLE",
+                    "artist-relations": [
+                        {
+                            "type": "lyricist",
+                            "artist": {
+                                "name": "RECORDING LYRICIST ARTIST NAME",
+                                "id": "RECORDING LYRICIST ARTIST ID",
+                            },
+                        },
+                        {
+                            "type": "lyricist",
+                            "artist": {
+                                "name": "RECORDING LYRICIST 2 ARTIST NAME",
+                                "id": "RECORDING LYRICIST 2 ARTIST ID",
+                            },
+                        },
+                        {
+                            "type": "composer",
+                            "artist": {
+                                "name": "RECORDING COMPOSER ARTIST NAME",
+                                "id": "RECORDING COMPOSER ARTIST ID",
+                                "sort-name": (
+                                    "RECORDING COMPOSER ARTIST SORT NAME"
+                                ),
+                            },
+                        },
+                        {
+                            "type": "composer",
+                            "artist": {
+                                "name": "RECORDING COMPOSER 2 ARTIST NAME",
+                                "id": "RECORDING COMPOSER 2 ARTIST ID",
+                                "sort-name": (
+                                    "RECORDING COMPOSER 2 ARTIST SORT NAME"
+                                ),
+                            },
+                        },
+                    ],
+                },
+            }
+        ]
+
         release = self._make_release(None, tracks=tracks)
         track = self.mb.album_info(release).tracks[0]
-        assert track.remixer == "RECORDING REMIXER ARTIST NAME"
+        assert track.remixers == ["RECORDING REMIXER ARTIST NAME"]
+        assert track.arrangers == [
+            "RECORDING ARRANGER ARTIST NAME",
+            "RECORDING ARRANGER 2 ARTIST NAME",
+        ]
+        assert track.lyricists_ids == [
+            "RECORDING LYRICIST ARTIST ID",
+            "RECORDING LYRICIST 2 ARTIST ID",
+        ]
+        assert track.lyricists == [
+            "RECORDING LYRICIST ARTIST NAME",
+            "RECORDING LYRICIST 2 ARTIST NAME",
+        ]
+        assert track.composers == [
+            "RECORDING COMPOSER ARTIST NAME",
+            "RECORDING COMPOSER 2 ARTIST NAME",
+        ]
+        assert track.composers_ids == [
+            "RECORDING COMPOSER ARTIST ID",
+            "RECORDING COMPOSER 2 ARTIST ID",
+        ]
+        assert track.composer_sort == (
+            "RECORDING COMPOSER ARTIST SORT NAME, "
+            "RECORDING COMPOSER 2 ARTIST SORT NAME"
+        )
 
     def test_data_source(self):
         release = self._make_release()

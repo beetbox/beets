@@ -1357,7 +1357,7 @@ class Server(BaseServer):
         "Genre": "genres",
         "Date": "year",
         "OriginalDate": "original_year",
-        "Composer": "composer",
+        "Composer": "composers",
         "Disc": "disc",
         "Comment": "comments",
         "MUSICBRAINZ_TRACKID": "mb_trackid",

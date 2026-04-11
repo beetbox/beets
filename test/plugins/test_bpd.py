@@ -34,6 +34,13 @@ from beets.util import bluelet
 
 bpd = pytest.importorskip("beetsplug.bpd", exc_type=ImportError)
 
+if hasattr(mp, "set_start_method"):
+    try:
+        mp.set_start_method("fork", force=True)
+    except RuntimeError:
+        # Already set, which is fine
+        pass
+
 
 class CommandParseTest(unittest.TestCase):
     def test_no_args(self):

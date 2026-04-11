@@ -11,6 +11,23 @@ later on.
 
 .. _discogs: https://discogs.com
 
+Genre Mapping
+-------------
+
+Discogs uses ``styles`` for the more specific classifications and ``genres`` for
+the broader ones. The plugin therefore uses Discogs ``styles`` as the primary
+source for the beets ``genres`` field, because beets treats ``genres`` as the
+main multi-valued genre field.
+
+The broader Discogs ``genres`` values are written to the beets ``style`` field.
+If :conf:`plugins.discogs:append_style_genre` is enabled, those broader Discogs
+``genres`` values are also appended to beets ``genres``.
+
+For example, a Discogs release with ``styles`` set to ``["Techno"]`` and
+``genres`` set to ``["Electronic"]`` becomes beets ``genres`` = ``["Techno"]``
+and ``style`` = ``"Electronic"`` by default. With ``append_style_genre``
+enabled, beets ``genres`` becomes ``["Techno", "Electronic"]``.
+
 Installation
 ------------
 
@@ -117,16 +134,15 @@ Default
 .. conf:: append_style_genre
     :default: no
 
-    Appends the Discogs style (if found) to the ``genres`` tag. This can be
-    useful if you want more granular genres to categorize your music. For
-    example, a release in Discogs might have a genre of "Electronic" and a style
-    of "Techno": enabling this setting would append "Techno" to the ``genres``
-    list.
+    Appends the broader Discogs ``genres`` values to beets ``genres`` after
+    the specific Discogs ``styles`` values already stored there. See the
+    Genre Mapping section above for the default field mapping and an example.
 
 .. conf:: separator
     :default: ", "
 
-    How to join multiple style values from Discogs into a string.
+    How to join multiple Discogs ``genres`` values when writing the beets
+    ``style`` field.
 
     .. versionchanged:: 2.7.0
 

@@ -27,13 +27,16 @@ def sanitize_choices(
 
 
 def sanitize_pairs(
-    pairs: Sequence[tuple[str, str]], pairs_all: Sequence[tuple[str, str]]
+    pairs: Sequence[tuple[str, str]],
+    pairs_all: Sequence[tuple[str, str]],
+    raise_on_unknown: bool = False,
 ) -> list[tuple[str, str]]:
     """Clean up a single-element mapping configuration attribute as returned
     by Confuse's `Pairs` template: keep only two-element tuples present in
     pairs_all, remove duplicate elements, expand ('str', '*') and ('*', '*')
     wildcards while keeping the original order. Note that ('*', '*') and
     ('*', 'whatever') have the same effect.
+    Set raise_on_unknown to raise an error when a provided pair is not recognised
 
     For example,
 
@@ -61,6 +64,17 @@ def sanitize_pairs(
                 res.extend(new)
             elif v == "*":
                 new = [o for o in others if o not in seen and o[0] == k]
+
+                if len(new) == 0 and raise_on_unknown:
+                    raise UnknownPairError(k, v)
+
                 seen.update(new)
                 res.extend(new)
+            elif raise_on_unknown:
+                raise UnknownPairError(k, v)
     return res
+
+
+class UnknownPairError(Exception):
+    def __init__(self, k, v):
+        super().__init__(f"setting {k}={v} is not recognized")

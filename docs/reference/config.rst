@@ -886,6 +886,23 @@ feature is currently supported by the :doc:`/plugins/discogs` and the
 
 Default: ``yes``.
 
+.. _fix_ext_inplace:
+
+fix_ext_inplace
+~~~~~~~~~~~~~~~
+
+The extension of each file is checked at import. If a file has no extension and
+its binary matches a music format, beets will look for a file with the same name
+and matching extension in the same directory. For example, when importing an mp3
+file named ``asdf``, beets look for ``asdf.mp3``. If found, that file will be
+imported instead. Otherwise, if ``fix_ext_inplace`` is ``yes``, then the file
+will be renamed to contain the extension. If ``fix_ext_inplace`` is ``no``, then
+the original will be left untouched and a copy with extension will be created in
+the same directory. This is only done if the user has ``ffprobe`` (bundled with
+FFmpeg)
+
+Default: ``no``.
+
 .. _match-config:
 
 Autotagger Matching Options

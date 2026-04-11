@@ -12,13 +12,85 @@ Unreleased
 New features
 ~~~~~~~~~~~~
 
-- Query: Add ``has_cover_art`` computed field to query items by embedded cover
-  art presence. Users can now search for tracks with or without embedded artwork
-  using ``beet list has_cover_art:true`` or ``beet list has_cover_art:false``.
+- **Beets library is now made portable**: item and album-art paths are now
+  stored relative to the library root in the database while remaining absolute
+  in the rest of beets. Path queries continue matching both library-relative
+  paths and absolute paths under the currently configured music directory under
+  the new storage model. The existing paths in the database are migrated
+  automatically the first time you run any ``beet`` command after the update.
+  :bug:`133`
+
+  .. warning::
+
+      make sure you run ``beet version`` (or any other command) at least once
+      after upgrading to trigger the migration. Only then you can safely move
+      the library to a new location.
 
 Bug fixes
 ~~~~~~~~~
 
+- :doc:`plugins/listenbrainz`: Retry listenbrainz requests for temporary
+  failures.
+
+..
+    For plugin developers
+    ~~~~~~~~~~~~~~~~~~~~~
+
+..
+    Other changes
+    ~~~~~~~~~~~~~
+
+2.9.0 (April 11, 2026)
+----------------------
+
+Beets now officially supports Python 3.14.
+
+New features
+~~~~~~~~~~~~
+
+- :ref:`import-cmd` Use ffprobe to recognize format of any import music file
+  that has no extension. If the file cannot be recognized as a music file, leave
+  it alone. :bug:`4881`
+- Query: Add ``has_cover_art`` computed field to query items by embedded cover
+  art presence. Users can now search for tracks with or without embedded artwork
+  using ``beet list has_cover_art:true`` or ``beet list has_cover_art:false``.
+- :doc:`plugins/autobpm`: Add ``force`` configuration and CLI option and
+  deprecate ``overwrite``.
+- :doc:`plugins/autobpm`: The "BPM already exists for item" log message can now
+  be hidden with the ``--quiet`` flag.
+- :doc:`plugins/smartplaylist`: The list of available playlists shown when an
+  unknown playlist name is passed as an argument is now sorted alphabetically
+  and printed space-delimited and POSIX shell-quoted when required. This makes
+  it easier to copy and paste multiple playlists for further use in the shell.
+- :doc:`plugins/chroma`: Add new command ``chromasearch`` to search the local
+  library by chromaprint fingerprint.
+- Store track remixers, lyricists, composers, and arrangers in the multi-valued
+  ``remixers``, ``lyricists``, ``composers``, and ``arrangers`` fields instead
+  of the legacy single-value ``remixer``, ``lyricist``, ``composer``, and
+  ``arranger`` fields. Existing libraries are migrated automatically, and
+  :doc:`plugins/musicbrainz` now preserves each MusicBrainz ``remixer``,
+  ``lyricist``, ``composer``, and ``arranger`` relation as a separate value.
+- :doc:`plugins/musicbrainz`: Store MBIDs for remixers, lyricists, composers,
+  and arrangers in the new multi-valued fields ``remixers_mbid``,
+  ``lyricists_mbid``, ``composers_mbid``, and ``arrangers_mbid``. :bug:`5698`
+- :doc:`plugins/replaygain`: Conflicting replay gain tags are now removed on
+  write. RG_* tags are removed when setting R128_* and vice versa.
+- :doc:`plugins/fetchart`: Add support for WebP images.
+- :doc:`plugins/lastgenre`: Add support for a user-configurable ignorelist to
+  exclude unwanted or incorrect Last.fm (or existing) genres, either per artist
+  or globally :bug:`6449`
+
+Bug fixes
+~~~~~~~~~
+
+- :doc:`plugins/deezer`: Fix Various Artists albums being tagged with a
+  localized string instead of the configured ``va_name``. Detection now uses
+  Deezer's artist ID rather than the artist name string. :bug:`4956`
+- :doc:`plugins/listenbrainz`: Paginate through all ListenBrainz listens instead
+  of fetching only 25, aggregate individual listen events into correct play
+  counts, use ``recording_mbid`` from the ListenBrainz mapping when available,
+  and avoid per-listen MusicBrainz API lookups that caused imports to hang on
+  large listen histories. :bug:`6469`
 - Correctly handle semicolon-delimited genre values from externally-tagged
   files. :bug:`6450`
 - :doc:`plugins/listenbrainz`: Fix ``lbimport`` crashing when ListenBrainz
@@ -29,14 +101,36 @@ Bug fixes
 - Automatically remux WAV files containing MP3 streams
   (``WAVE_FORMAT_MPEGLAYER3``) to proper MP3 files during import, instead of
   silently importing them with incorrect metadata. :bug:`6455`
+- :ref:`import-cmd` Fix ``albumartists_sort`` (and related fields) incorrectly
+  prepending the full combined artist credit as the first element for
+  multi-artist releases. :bug:`6470`
+- :doc:`plugins/discogs`: Store specific Discogs styles in beets ``genres`` and
+  broader Discogs genres in the ``style`` field. When
+  :conf:`plugins.discogs:append_style_genre` is enabled, the broader Discogs
+  genres are also appended to the ``genres`` list. :bug:`6390`
+- :doc:`plugins/deezer`: Fix a regression in 2.8.0 where selecting a Deezer
+  match during import could crash with ``AttributeError: 'AlbumInfo' object has
+  no attribute 'raw_data'`` when Deezer returned numeric artist IDs. :bug:`6503`
+- :ref:`modify-cmd` accepts legacy singular field names such as ``genre``,
+  ``composer``, ``lyricist``, ``remixer``, and ``arranger`` in assignments,
+  rewrites them to the corresponding multi-valued fields, and warns users to
+  switch to the plural field names. :ref:`list-cmd`, and query expressions,
+  accept the same legacy singular field names and warn users to switch to the
+  plural field names. :bug:`6483`
+- :doc:`plugins/fetchart`: Error when a configured source does not exist or
+  sources configuration is empty. :bug:`6336`
+- :doc:`plugins/rewrite` :doc:`plugins/advancedrewrite`: Fix rewriting
+  multi-valued fields such as ``genres`` by applying rules to each matching list
+  entry. Additionally, apply rewrite rules in config order, so that multiple
+  rules can be applied to the same field. :bug:`6515`
 
-..
-    For plugin developers
-    ~~~~~~~~~~~~~~~~~~~~~
+For plugin developers
+~~~~~~~~~~~~~~~~~~~~~
 
-..
-    Other changes
-    ~~~~~~~~~~~~~
+- If you maintain a metadata source plugin that populates any of ``arranger``,
+  ``composer``, ``lyricist``, ``remixer`` fields, update it to populate the
+  respective multi-valued fields instead (``arrangers``, ``composers``,
+  ``lyricists``, ``remixers``).
 
 2.8.0 (March 28, 2026)
 ----------------------

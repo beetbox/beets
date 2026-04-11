@@ -184,19 +184,6 @@ def _artist_ids(credit: list[JSONDict]) -> list[str]:
     return artist_ids
 
 
-def _get_related_artist_names(relations, relation_type):
-    """Given a list representing the artist relationships extract the names of
-    the remixers and concatenate them.
-    """
-    related_artists = []
-
-    for relation in relations:
-        if relation["type"] == relation_type:
-            related_artists.append(relation["artist"]["name"])
-
-    return ", ".join(related_artists)
-
-
 def album_url(albumid: str) -> str:
     return urljoin(BASE_URL, f"release/{albumid}")
 
@@ -277,7 +264,7 @@ def _merge_pseudo_and_actual_album(
             "barcode",
             "asin",
             "style",
-            "genre",
+            "genres",
         ]
     }
     merged.update(from_actual)
@@ -368,11 +355,6 @@ class MusicBrainzPlugin(
             info.artists_ids = _artist_ids(recording["artist-credit"])
             info.artist_id = info.artists_ids[0]
 
-        if recording.get("artist-relations"):
-            info.remixer = _get_related_artist_names(
-                recording["artist-relations"], relation_type="remixer"
-            )
-
         if recording.get("length"):
             info.length = int(recording["length"]) / 1000.0
 
@@ -381,8 +363,10 @@ class MusicBrainzPlugin(
         if recording.get("isrcs"):
             info.isrc = ";".join(recording["isrcs"])
 
-        lyricist = []
-        composer = []
+        lyricists = []
+        lyricists_ids = []
+        composers = []
+        composers_ids = []
         composer_sort = []
         for work_relation in recording.get("work-relations", ()):
             if work_relation["type"] != "performance":
@@ -398,26 +382,41 @@ class MusicBrainzPlugin(
                 if "type" in artist_relation:
                     type = artist_relation["type"]
                     if type == "lyricist":
-                        lyricist.append(artist_relation["artist"]["name"])
+                        lyricists.append(artist_relation["artist"]["name"])
+                        lyricists_ids.append(artist_relation["artist"]["id"])
                     elif type == "composer":
-                        composer.append(artist_relation["artist"]["name"])
+                        composers.append(artist_relation["artist"]["name"])
+                        composers_ids.append(artist_relation["artist"]["id"])
                         composer_sort.append(
                             artist_relation["artist"]["sort-name"]
                         )
-        if lyricist:
-            info.lyricist = ", ".join(lyricist)
-        if composer:
-            info.composer = ", ".join(composer)
+        if lyricists:
+            info.lyricists = lyricists
+            info.lyricists_ids = lyricists_ids
+        if composers:
+            info.composers = composers
+            info.composers_ids = composers_ids
             info.composer_sort = ", ".join(composer_sort)
 
-        arranger = []
+        arrangers = []
+        arrangers_ids = []
+        remixers = []
+        remixers_ids = []
         for artist_relation in recording.get("artist-relations", ()):
             if "type" in artist_relation:
                 type = artist_relation["type"]
                 if type == "arranger":
-                    arranger.append(artist_relation["artist"]["name"])
-        if arranger:
-            info.arranger = ", ".join(arranger)
+                    arrangers.append(artist_relation["artist"]["name"])
+                    arrangers_ids.append(artist_relation["artist"]["id"])
+                elif type == "remixer":
+                    remixers.append(artist_relation["artist"]["name"])
+                    remixers_ids.append(artist_relation["artist"]["id"])
+        if arrangers:
+            info.arrangers = arrangers
+            info.arrangers_ids = arrangers_ids
+        if remixers:
+            info.remixers = remixers
+            info.remixers_ids = remixers_ids
 
         # Supplementary fields provided by plugins
         extra_trackdatas = plugins.send("mb_track_extract", data=recording)

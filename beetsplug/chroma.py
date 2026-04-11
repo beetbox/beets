@@ -18,6 +18,7 @@ autotagger. Requires the pyacoustid library.
 
 from __future__ import annotations
 
+import heapq
 import re
 from collections import defaultdict
 from functools import cached_property, partial
@@ -29,12 +30,14 @@ import confuse
 from beets import config, ui, util
 from beets.autotag.distance import Distance
 from beets.metadata_plugins import MetadataSourcePlugin
+from beets.util.color import colorize
 from beetsplug.musicbrainz import MusicBrainzPlugin
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Iterator
 
     from beets.autotag.hooks import TrackInfo
+    from beets.library.models import Item
 
 API_KEY = "1vOwZtEn"
 SCORE_THRESH = 0.5
@@ -265,7 +268,83 @@ class AcoustidPlugin(MetadataSourcePlugin):
 
         fingerprint_cmd.func = fingerprint_cmd_func
 
-        return [submit_cmd, fingerprint_cmd]
+        return [submit_cmd, fingerprint_cmd, self.chromasearch_cmd()]
+
+    def chromasearch_cmd(self):
+        cmd = ui.Subcommand(
+            "chromasearch", help="search local database by chroma fingerprint"
+        )
+        cmd.parser.add_path_option()
+        cmd.parser.add_format_option()
+        cmd.parser.add_option(
+            "-s",
+            "--search",
+            dest="search",
+            action="store",
+            help="Fingerprint to search for (from the output of fpcalc -plain)",
+        )
+        cmd.parser.add_option(
+            "-c",
+            "--count",
+            dest="count",
+            action="store",
+            default=5,
+            type=int,
+            help="Number of items in result",
+        )
+        cmd.parser.add_option(
+            "--full",
+            dest="full",
+            action="store_true",
+            help="Don't stop searching once we found an exact match",
+        )
+        cmd.parser.add_option(
+            "-w",
+            "--write",
+            dest="write",
+            action="store_true",
+            help="Write computed fingerprints to files",
+        )
+
+        def search_cmd_func(lib, opts, args):
+            if not opts.search:
+                raise ui.UserError("no --search provided")
+            if opts.count <= 0:
+                raise ui.UserError("--count must be > 0")
+
+            target = (0, opts.search.encode("utf-8"))
+            top = TopN(opts.count)
+
+            for item in lib.items(args):
+                fp = fingerprint_item(
+                    self._log,
+                    item,
+                    write=ui.should_write(opts.write),
+                    quiet=True,
+                )
+                if fp is None:
+                    self._log.warning(f"{item}: could not compute fingerprint")
+                    continue
+
+                score = acoustid.compare_fingerprints(
+                    target, (0, fp.encode("utf-8"))
+                )
+
+                if score == 1 and not opts.full:
+                    ui.print_(
+                        f"{colorize('text_success', 'Found exact match')}: {item}"
+                    )
+                    return
+
+                if score > 0:
+                    top.add(ScoredItem(item, score))
+
+            for item in top:
+                ui.print_(str(item))
+
+        cmd.func = search_cmd_func
+
+        return cmd
 
 
 # Hooks into import process.
@@ -340,7 +419,7 @@ def submit_items(log, userkey, items, chunksize=64):
         submit_chunk()
 
 
-def fingerprint_item(log, item, write=False):
+def fingerprint_item(log, item, write=False, quiet=False):
     """Get the fingerprint for an Item. If the item already has a
     fingerprint, it is not regenerated. If fingerprint generation fails,
     return None. If the items are associated with a library, they are
@@ -351,10 +430,11 @@ def fingerprint_item(log, item, write=False):
     if not item.length:
         log.info("{.filepath}: no duration available", item)
     elif item.acoustid_fingerprint:
-        if write:
-            log.info("{.filepath}: fingerprint exists, skipping", item)
-        else:
-            log.info("{.filepath}: using existing fingerprint", item)
+        if not quiet:
+            if write:
+                log.info("{.filepath}: fingerprint exists, skipping", item)
+            else:
+                log.info("{.filepath}: using existing fingerprint", item)
         return item.acoustid_fingerprint
     else:
         log.info("{.filepath}: fingerprinting", item)
@@ -369,3 +449,45 @@ def fingerprint_item(log, item, write=False):
             return item.acoustid_fingerprint
         except acoustid.FingerprintGenerationError as exc:
             log.info("fingerprint generation failed: {}", exc)
+
+
+# Classes for search.
+
+
+class ScoredItem:
+    def __init__(self, item: Item, score: float):
+        self.item = item
+        self.score = score
+
+    def __lt__(self, other):
+        return self.score < other.score
+
+    def __gt__(self, other):
+        return self.score > other.score
+
+    def __str__(self):
+        percent = f"{round(self.score * 100, 2)}%".rjust(6)
+        if self.score >= 0.95:
+            percent = colorize("text_success", percent)
+        elif self.score >= 0.85:
+            percent = colorize("text_warning", percent)
+        else:
+            percent = colorize("text_error", percent)
+
+        return f"[{percent}] {self.item}"
+
+
+class TopN:
+    def __init__(self, n: int):
+        self.n = n
+        self.heap: list[ScoredItem] = []
+
+    def add(self, value: ScoredItem):
+        if len(self.heap) < self.n:
+            heapq.heappush(self.heap, value)
+        else:
+            if value > self.heap[0]:
+                heapq.heapreplace(self.heap, value)
+
+    def __iter__(self) -> Iterator[ScoredItem]:
+        return iter(sorted(self.heap, reverse=True))
