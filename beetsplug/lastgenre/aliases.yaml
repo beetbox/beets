@@ -91,10 +91,9 @@ shoegaze:
 # ---------------------------------------------------------------------------
 
 # alternative rock (alt, alternative, alt rock, ...)
-alternative rock:
-    - alt([ /-]*rock)?
-    - alternative([ /-]*rock)?
-    - alternatv[ /-]*rock
+# indie rock (indie, indie rock)
+\g<1> rock:
+    - (alt|alternative|indie)([ /-]*rock)?
 
 # gothic rock (goth, goth rock) - doesn't catch gothic metal
 gothic rock:
