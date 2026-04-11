@@ -1058,6 +1058,8 @@ class Transaction:
 class Migration(ABC):
     """Define a one-time data migration that runs during database startup."""
 
+    CHUNK_SIZE: ClassVar[int] = 1000
+
     db: Database
 
     @cached_classproperty

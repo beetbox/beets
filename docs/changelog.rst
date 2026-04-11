@@ -12,6 +12,51 @@ Unreleased
 New features
 ~~~~~~~~~~~~
 
+- **Beets library is now made portable**: item and album-art paths are now
+  stored relative to the library root in the database while remaining absolute
+  in the rest of beets. Path queries continue matching both library-relative
+  paths and absolute paths under the currently configured music directory under
+  the new storage model. The existing paths in the database are migrated
+  automatically the first time you run any ``beet`` command after the update.
+  :bug:`133`
+
+  .. warning::
+
+      make sure you run ``beet version`` (or any other command) at least once
+      after upgrading to trigger the migration. Only then you can safely move
+      the library to a new location.
+
+Bug fixes
+~~~~~~~~~
+
+- :doc:`plugins/listenbrainz`: Retry listenbrainz requests for temporary
+  failures.
+- :doc:`plugins/mbpseudo`: Fix two crashes when applying a pseudo-release match
+  during import. ``PseudoAlbumInfo.raw_data`` now constructs a plain
+  ``AlbumInfo`` instead of calling ``self.__class__(**self.copy())``, which
+  failed with ``TypeError`` because ``PseudoAlbumInfo.__init__`` requires
+  ``pseudo_release`` and ``official_release`` arguments not present in the flat
+  copy. ``_adjust_final_album_match`` now correctly updates ``match.mapping``
+  instead of writing to ``album_info.mapping``, which stored a dict value inside
+  the ``AttrDict``-based ``Info`` object and caused a
+  ``sqlite3.ProgrammingError`` when saving flex fields.
+
+..
+    For plugin developers
+    ~~~~~~~~~~~~~~~~~~~~~
+
+..
+    Other changes
+    ~~~~~~~~~~~~~
+
+2.9.0 (April 11, 2026)
+----------------------
+
+Beets now officially supports Python 3.14.
+
+New features
+~~~~~~~~~~~~
+
 - :ref:`import-cmd` Use ffprobe to recognize format of any import music file
   that has no extension. If the file cannot be recognized as a music file, leave
   it alone. :bug:`4881`
@@ -34,10 +79,15 @@ New features
   ``arranger`` fields. Existing libraries are migrated automatically, and
   :doc:`plugins/musicbrainz` now preserves each MusicBrainz ``remixer``,
   ``lyricist``, ``composer``, and ``arranger`` relation as a separate value.
-  :bug:`5698`
+- :doc:`plugins/musicbrainz`: Store MBIDs for remixers, lyricists, composers,
+  and arrangers in the new multi-valued fields ``remixers_mbid``,
+  ``lyricists_mbid``, ``composers_mbid``, and ``arrangers_mbid``. :bug:`5698`
 - :doc:`plugins/replaygain`: Conflicting replay gain tags are now removed on
   write. RG_* tags are removed when setting R128_* and vice versa.
 - :doc:`plugins/fetchart`: Add support for WebP images.
+- :doc:`plugins/lastgenre`: Add support for a user-configurable ignorelist to
+  exclude unwanted or incorrect Last.fm (or existing) genres, either per artist
+  or globally :bug:`6449`
 
 Bug fixes
 ~~~~~~~~~
@@ -75,15 +125,10 @@ Bug fixes
   plural field names. :bug:`6483`
 - :doc:`plugins/fetchart`: Error when a configured source does not exist or
   sources configuration is empty. :bug:`6336`
-- :doc:`plugins/mbpseudo`: Fix two crashes when applying a pseudo-release match
-  during import. ``PseudoAlbumInfo.raw_data`` now constructs a plain
-  ``AlbumInfo`` instead of calling ``self.__class__(**self.copy())``, which
-  failed with ``TypeError`` because ``PseudoAlbumInfo.__init__`` requires
-  ``pseudo_release`` and ``official_release`` arguments not present in the flat
-  copy. ``_adjust_final_album_match`` now correctly updates ``match.mapping``
-  instead of writing to ``album_info.mapping``, which stored a dict value inside
-  the ``AttrDict``-based ``Info`` object and caused a
-  ``sqlite3.ProgrammingError`` when saving flex fields.
+- :doc:`plugins/rewrite` :doc:`plugins/advancedrewrite`: Fix rewriting
+  multi-valued fields such as ``genres`` by applying rules to each matching list
+  entry. Additionally, apply rewrite rules in config order, so that multiple
+  rules can be applied to the same field. :bug:`6515`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
@@ -92,10 +137,6 @@ For plugin developers
   ``composer``, ``lyricist``, ``remixer`` fields, update it to populate the
   respective multi-valued fields instead (``arrangers``, ``composers``,
   ``lyricists``, ``remixers``).
-
-..
-    Other changes
-    ~~~~~~~~~~~~~
 
 2.8.0 (March 28, 2026)
 ----------------------

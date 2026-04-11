@@ -37,6 +37,12 @@ class AdvancedRewritePluginTest(PluginTestCase):
 
             assert item.artist == "이달의 소녀 오드아이써클"
 
+    def test_list_field(self):
+        with self.configure_plugin([{"genres rock": "techno"}]):
+            item = self.add_item(genres=["rock", "pop"])
+
+            assert item.genres == ["techno", "pop"]
+
     def test_advanced_rewrite_example(self):
         with self.configure_plugin(
             [

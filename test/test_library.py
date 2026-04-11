@@ -34,7 +34,13 @@ from beets.library import Album
 from beets.test import _common
 from beets.test._common import item
 from beets.test.helper import BeetsTestCase, ItemInDBTestCase, capture_log
-from beets.util import as_string, bytestring_path, normpath, syspath
+from beets.util import (
+    as_string,
+    bytestring_path,
+    normpath,
+    path_as_posix,
+    syspath,
+)
 
 # Shortcut to path normalization.
 np = util.normpath
@@ -925,10 +931,10 @@ class AlbumInfoTest(BeetsTestCase):
 
     def test_albuminfo_stores_art(self):
         ai = self.lib.get_album(self.i)
-        ai.artpath = "/my/great/art"
+        ai.artpath = os.fsdecode(np("/my/great/art"))
         ai.store()
         new_ai = self.lib.get_album(self.i)
-        assert new_ai.artpath == b"/my/great/art"
+        assert new_ai.artpath == np("/my/great/art")
 
     def test_albuminfo_for_two_items_doesnt_duplicate_row(self):
         i2 = item(self.lib)
@@ -1071,7 +1077,7 @@ class PathStringTest(BeetsTestCase):
         self.i.path = path
         self.i.store()
         i = next(iter(self.lib.items()))
-        assert i.path == path
+        assert i.path == os.path.join(self.libdir, path)
 
     def test_special_char_path_added_to_database(self):
         self.i.remove()
@@ -1080,7 +1086,7 @@ class PathStringTest(BeetsTestCase):
         i.path = path
         self.lib.add(i)
         i = next(iter(self.lib.items()))
-        assert i.path == path
+        assert i.path == os.path.join(self.libdir, path)
 
     def test_destination_returns_bytestring(self):
         self.i.artist = "b\xe1r"
@@ -1094,12 +1100,18 @@ class PathStringTest(BeetsTestCase):
         assert isinstance(dest, bytes)
 
     def test_artpath_stores_special_chars(self):
-        path = b"b\xe1r"
+        path = bytestring_path("b\xe1r")
         alb = self.lib.add_album([self.i])
         alb.artpath = path
         alb.store()
+        stored_path = (
+            self.lib._connection()
+            .execute("select artpath from albums where id=?", (alb.id,))
+            .fetchone()[0]
+        )
         alb = self.lib.get_album(self.i)
-        assert path == alb.artpath
+        assert stored_path == path
+        assert alb.artpath == os.path.join(self.libdir, path)
 
     def test_sanitize_path_with_special_chars(self):
         path = "b\xe1r?"
@@ -1123,6 +1135,22 @@ class PathStringTest(BeetsTestCase):
         )
         alb = self.lib.get_album(alb.id)
         assert isinstance(alb.artpath, bytes)
+
+    def test_relative_path_is_stored(self):
+        relative_path = os.path.join(b"abc", b"foo.mp3")
+        absolute_path = os.path.join(self.libdir, relative_path)
+        self.i.path = absolute_path
+        self.i.store()
+        stored_path = (
+            self.lib._connection()
+            .execute("select path from items where id=?", (self.i.id,))
+            .fetchone()[0]
+        )
+        album = self.lib.add_album([self.i])
+
+        assert self.i.path == absolute_path
+        assert stored_path == path_as_posix(relative_path)
+        assert album.path == os.path.dirname(absolute_path)
 
 
 class MtimeTest(BeetsTestCase):
