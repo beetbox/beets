@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from contextlib import suppress
 from functools import cached_property
 from typing import TYPE_CHECKING, ClassVar, NamedTuple, TypeVar
@@ -9,6 +10,7 @@ from confuse.exceptions import ConfigError
 import beets
 from beets import ui
 from beets.dbcore.db import Migration
+from beets.dbcore.pathutils import normalize_path_for_db
 from beets.dbcore.types import MULTI_VALUE_DELIMITER
 from beets.util import unique_list
 from beets.util.lyrics import Lyrics
@@ -17,6 +19,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
     from beets.dbcore.db import Model
+    from beets.library import Library
 
 T = TypeVar("T")
 
@@ -73,7 +76,7 @@ class MultiValueFieldMigration(Migration):
         migrated = total - len(to_migrate)
 
         ui.print_(f"Migrating {list_field} for {total} {table}...")
-        for batch in chunks(to_migrate, 1000):
+        for batch in chunks(to_migrate, self.CHUNK_SIZE):
             with self.db.transaction() as tx:
                 tx.mutate_many(
                     f"UPDATE {table} SET {list_field} = ? WHERE id = ?",
@@ -146,6 +149,8 @@ class LyricsRow(NamedTuple):
 class LyricsMetadataInFlexFieldsMigration(Migration):
     """Move legacy inline lyrics metadata into dedicated flexible fields."""
 
+    CHUNK_SIZE = 100
+
     def _migrate_data(self, model_cls: type[Model], _: set[str]) -> None:
         """Migrate legacy lyrics to move metadata to flex attributes."""
         table = model_cls._table
@@ -180,7 +185,7 @@ class LyricsMetadataInFlexFieldsMigration(Migration):
 
         ui.print_(f"Migrating lyrics for {total} {table}...")
         lyr_fields = ["backend", "url", "language", "translation_language"]
-        for batch in chunks(to_migrate, 100):
+        for batch in chunks(to_migrate, self.CHUNK_SIZE):
             lyrics_batch = [Lyrics.from_legacy_text(r.lyrics) for r in batch]
             ids_with_lyrics = [
                 (lyr, r.id) for lyr, r in zip(lyrics_batch, batch)
@@ -221,3 +226,40 @@ class LyricsMetadataInFlexFieldsMigration(Migration):
             )
 
         ui.print_(f"Migration complete: {migrated} of {total} {table} updated")
+
+
+class RelativePathMigration(Migration):
+    """Migrate path field to contain value relative to the music directory."""
+
+    db: Library
+
+    def _migrate_field(self, model_cls: type[Model], field: str) -> None:
+        table = model_cls._table
+
+        with self.db.transaction() as tx:
+            rows = tx.query(f"SELECT id, {field} FROM {table}")  # type: ignore[assignment]
+
+        total = len(rows)
+        to_migrate = [r for r in rows if r[field] and os.path.isabs(r[field])]
+        if not to_migrate:
+            return
+
+        ui.print_(f"Migrating {field} for {total} {table}...")
+        with self.db.transaction() as tx:
+            tx.mutate_many(
+                f"UPDATE {table} SET {field} = ? WHERE id = ?",
+                [
+                    (normalize_path_for_db(r[field]), r["id"])
+                    for r in to_migrate
+                ],
+            )
+
+        ui.print_(
+            f"Migration complete: {len(to_migrate)} of {total} {table} updated"
+        )
+
+    def _migrate_data(
+        self, model_cls: type[Model], current_fields: set[str]
+    ) -> None:
+        for field in {"path", "artpath"} & current_fields:
+            self._migrate_field(model_cls, field)

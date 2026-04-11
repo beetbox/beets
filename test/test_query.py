@@ -15,12 +15,14 @@
 """Various tests for querying the library database."""
 
 import logging
+import os
 import sys
 from functools import partial
 from pathlib import Path
 
 import pytest
 
+from beets import util
 from beets.dbcore import types
 from beets.dbcore.query import (
     AndQuery,
@@ -304,6 +306,23 @@ class TestPathQuery:
     and path separator detection across different platforms.
     """
 
+    @staticmethod
+    def abs_query_path(path: str, trailing_sep: bool = False) -> str:
+        """Build a platform-correct absolute query path without normalizing it.
+
+        On Windows, leading-slash paths are drive-rooted but Python 3.13 no
+        longer treats them as absolute. Prefix the current drive so explicit
+        path queries stay absolute while preserving raw segments such as ``..``.
+        """
+        if os.path.__name__ == "ntpath" and path.startswith("/"):
+            drive, _ = os.path.splitdrive(os.fsdecode(util.normpath(os.sep)))
+            path = drive + path
+
+        path = path.replace("/", os.sep)
+        if trailing_sep:
+            path = os.path.join(path, "")
+        return path.replace("\\", "\\\\")
+
     @pytest.fixture(scope="class")
     def lib(self, helper):
         helper.add_item(path=b"/aaa/bb/c.mp3", title="path item")
@@ -316,26 +335,53 @@ class TestPathQuery:
         return helper.lib
 
     @pytest.mark.parametrize(
-        "q, expected_titles",
+        "path, expected_titles, trailing_sep",
         [
-            _p("path:/aaa/bb/c.mp3", ["path item"], id="exact-match"),
-            _p("path:/aaa", ["path item"], id="parent-dir-no-slash"),
-            _p("path:/aaa/", ["path item"], id="parent-dir-with-slash"),
-            _p("path:/aa", [], id="no-match-does-not-match-parent-dir"),
-            _p("path:/xyzzy/", [], id="no-match"),
-            _p("path:/b/", [], id="fragment-no-match"),
-            _p("path:/x/../aaa/bb", ["path item"], id="non-normalized"),
-            _p("path::c\\.mp3$", ["path item"], id="regex"),
-            _p("path:/c/_", ["with underscore"], id="underscore-escaped"),
-            _p("path:/c/%", ["with percent"], id="percent-escaped"),
-            _p("path:/c/\\\\x", ["with backslash"], id="backslash-escaped"),
+            _p("/aaa/bb/c.mp3", ["path item"], False, id="exact-match"),
+            _p("/aaa", ["path item"], False, id="parent-dir-no-slash"),
+            _p("/aaa", ["path item"], True, id="parent-dir-with-slash"),
+            _p("/aa", [], False, id="no-match-does-not-match-parent-dir"),
+            _p("/xyzzy", [], True, id="no-match"),
+            _p("/b", [], True, id="fragment-no-match"),
+            _p("/x/../aaa/bb", ["path item"], False, id="non-normalized"),
+            _p(r"c\.mp3$", ["path item"], False, id="regex"),
+            _p("/c/_", ["with underscore"], False, id="underscore-escaped"),
+            _p("/c/%", ["with percent"], False, id="percent-escaped"),
+            _p(r"/c/\x", ["with backslash"], False, id="backslash-escaped"),
         ],
     )
-    def test_explicit(self, monkeypatch, lib, q, expected_titles):
+    def test_explicit(
+        self, monkeypatch, lib, path, expected_titles, trailing_sep
+    ):
         """Test explicit path queries with different path specifications."""
         monkeypatch.setattr("beets.util.case_sensitive", lambda *_: True)
+        if path == r"c\.mp3$":
+            q = f"path::{path}"
+        elif path == r"/c/\x" and os.path.__name__ != "ntpath":
+            q = r"path:/c/\\x"
+        else:
+            q = f"path:{self.abs_query_path(path, trailing_sep=trailing_sep)}"
 
         assert {i.title for i in lib.items(q)} == set(expected_titles)
+
+    @pytest.mark.parametrize(
+        "query", ["path:", "path::"], ids=["path", "regex"]
+    )
+    def test_absolute(self, lib, helper, query):
+        item_path = helper.lib_path / "item.mp3"
+        bytes_path = os.fsencode(item_path)
+        helper.add_item(path=bytes_path, title="absolute item")
+        q = f"{query}{item_path}".replace("\\", "\\\\")
+
+        assert {i.title for i in lib.items(q)} == {"absolute item"}
+
+    def test_relative(self, lib, helper):
+        item_path = helper.lib_path / "relative" / "item.mp3"
+        bytes_path = os.fsencode(item_path)
+        helper.add_item(path=bytes_path, title="relative item")
+        q = "path:relative/item.mp3"
+
+        assert {i.title for i in lib.items(q)} == {"relative item"}
 
     @pytest.mark.skipif(sys.platform == "win32", reason=WIN32_NO_IMPLICIT_PATHS)
     @pytest.mark.parametrize(
@@ -366,7 +412,7 @@ class TestPathQuery:
         self, lib, monkeypatch, case_sensitive, expected_titles
     ):
         """Test path matching with different case sensitivity settings."""
-        q = "path:/a/b/c2.mp3"
+        q = f"path:{self.abs_query_path('/a/b/c2.mp3')}"
         monkeypatch.setattr(
             "beets.util.case_sensitive", lambda *_: case_sensitive
         )
