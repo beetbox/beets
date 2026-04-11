@@ -56,10 +56,10 @@ def is_ignored(
 def normalize_genre(logger: BeetsLogger, aliases: Aliases, genre: str) -> str:
     """Return the canonical form of *genre* using *aliases*.
 
-    Tries each alias entry in order. The first full-match wins; the
-    replacement template is expanded via ``re.Match.expand()`` so
-    ``\\g<N>`` back-references work. Returns *genre* unchanged when
-    no alias matches.
+    Tries each alias entry in order. The first full-match wins; the replacement
+    template is expanded via ``re.Match.expand()`` so ``\\g<N>``
+    back-references work. Returns original (lowercased) *genre* when no alias
+    matches.
     """
     genre_lower = genre.lower()
     for pattern, template in aliases:
