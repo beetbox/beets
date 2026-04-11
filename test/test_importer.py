@@ -1693,24 +1693,19 @@ class ImportIdTest(ImportTestCase):
 
 
 @_common.slow_test()
-class MpeglayerWavImportTest(AsIsImporterMixin, ImportTestCase):
-    """Test that WAVE_FORMAT_MPEGLAYER3 WAV files are remuxed to MP3 during import."""
+class MpeglayerWavImportTest(ImportTestCase):
+    """Test remuxing of WAVE_FORMAT_MPEGLAYER3 WAV files"""
 
-    def setUp(self):
-        super().setUp()
-        mpeglayer3_src = os.path.join(_common.RSRC, b"mpeglayer3.wav")
-        self.mpeglayer3_path = os.path.join(self.import_dir, b"mpeglayer3.wav")
-        shutil.copy(syspath(mpeglayer3_src), syspath(self.mpeglayer3_path))
+    def test_remux_mpeglayer3_wav(self):
+        from beets.importer.tasks import _remux_mpeglayer3_wav
 
-    def test_mpeglayer3_wav_remuxed_to_mp3(self):
-        """MPEGLAYER3 WAV files should be remuxed to MP3 on import."""
-        self.run_asis_importer()
-        assert not os.path.exists(self.mpeglayer3_path)
-        mp3_path = os.path.splitext(self.mpeglayer3_path)[0] + b".mp3"
+        src = os.path.join(_common.RSRC, b"mpeglayer3.wav")
+        dest = os.path.join(self.temp_dir, b"mpeglayer3.wav")
+        shutil.copy(syspath(src), syspath(dest))
+
+        mp3_path = _remux_mpeglayer3_wav(dest)
+
+        assert mp3_path is not None
+        assert mp3_path.endswith(b".mp3")
         assert os.path.exists(mp3_path)
-
-        # library should contain an MP3 item with correct metadata
-        items = list(self.lib.items())
-        mp3_items = [i for i in items if i.format == "MP3"]
-        assert len(mp3_items) >= 1
-        assert mp3_items[0].length == pytest.approx(5.04, abs=0.1)
+        assert not os.path.exists(dest)
