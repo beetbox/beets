@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import re
 from functools import cached_property
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, overload
 
 import confuse
 
@@ -11,6 +11,7 @@ from beets import ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.logging import getLogger
 from beets.metadata_plugins import MetadataSourcePlugin
+from beetsplug.tidal.api_types import TrackDocument
 
 from .api import TidalAPI, TidalSession
 from .authenticate import ui_auth_flow
@@ -103,38 +104,115 @@ class TidalPlugin(MetadataSourcePlugin):
         if not (tidal_id := self._extract_id(album_id)):
             return None
 
-        album_doc_tidal = self.api.get_albums(
-            ids=tidal_id,
-            include=["items.artists", "artists"],
-        )
-        # The api may return an empty response if no
-        # matching item is found
-        if len(album_doc_tidal["data"]) < 1:
+        if album := list(self.search_albums_by_ids(ids=[tidal_id])):
+            return album[0]
+
+        log.warning("Could not find album:{0}", tidal_id)
+        return None
+
+    def albums_for_ids(self, ids: Iterable[str]) -> Iterable[AlbumInfo | None]:
+        yield from self.search_albums_by_ids(ids=ids)
+
+    def track_for_id(self, track_id: str) -> TrackInfo | None:
+        if not (tidal_id := self._extract_id(track_id)):
             return None
 
-        album: TidalAlbum = album_doc_tidal["data"][0]
+        if track := list(self.search_tracks_by_ids(ids=[tidal_id])):
+            return track[0]
+
+        log.warning("Could not find track:{0}", tidal_id)
+        return None
+
+    def tracks_for_ids(self, ids: Iterable[str]) -> Iterable[TrackInfo | None]:
+        yield from self.search_tracks_by_ids(ids=ids)
+
+    def candidates(
+        self, items: Sequence[Item], artist: str, album: str, va_likely: bool
+    ) -> Iterable[AlbumInfo]:
+        breakpoint()
+        return []
+
+    def item_candidates(
+        self, item: Item, artist: str, title: str
+    ) -> Iterable[TrackInfo]:
+        breakpoint()
+        return []
+
+    # ---------------------------------- Search ---------------------------------- #
+
+    @overload
+    def search_tracks_by_ids(
+        self, *, ids: Iterable[str]
+    ) -> Iterable[TrackInfo | None]: ...
+
+    @overload
+    def search_tracks_by_ids(
+        self, *, isrcs: Iterable[str]
+    ) -> Iterable[TrackInfo | None]: ...
+
+    def search_tracks_by_ids(
+        self,
+        ids: Iterable[str] | None = None,
+        isrcs: Iterable[str] | None = None,
+    ) -> Iterable[TrackInfo | None]:
+        tidal_ids = list(map(self._extract_id, ids or []))
+        isrcs = list(isrcs or [])
+
+        tracks_doc = self.api.get_tracks(
+            ids=list(filter(None, tidal_ids)),
+            isrcs=isrcs,
+            include=["artists"],
+        )
         track_lookup: dict[str, TidalTrack] = {
             item["id"]: item
-            for item in album_doc_tidal.get("included", [])
+            for item in tracks_doc.get("data", [])
             if item["type"] == "tracks"
         }
         artist_lookup: dict[str, TidalArtist] = {
             item["id"]: item
-            for item in album_doc_tidal.get("included", [])
+            for item in tracks_doc.get("included", [])
             if item["type"] == "artists"
         }
 
-        return self._get_album_info(
-            album,
-            track_lookup=track_lookup,
-            artist_lookup=artist_lookup,
-        )
+        # Yield for IDs first
+        for tidal_id in tidal_ids:
+            if tidal_id is not None and (track := track_lookup.get(tidal_id)):
+                yield self._get_track_info(track, artist_lookup=artist_lookup)
+            else:
+                yield None
 
-    def albums_for_ids(self, ids: Iterable[str]) -> Iterable[AlbumInfo | None]:
-        tidal_ids = list(map(self._extract_id, ids))
+        # Then yield for ISRCs (matching by ISRC field in tracks)
+        for isrc in isrcs:
+            track = next(
+                (t for t in track_lookup.values() if t.get("isrc") == isrc),
+                None,
+            )
+            if track:
+                yield self._get_track_info(track, artist_lookup=artist_lookup)
+            else:
+                yield None
+
+    @overload
+    def search_albums_by_ids(
+        self, *, ids: Iterable[str]
+    ) -> Iterable[AlbumInfo | None]: ...
+
+    @overload
+    def search_albums_by_ids(
+        self, *, barcode_ids: Iterable[str]
+    ) -> Iterable[AlbumInfo | None]: ...
+
+    def search_albums_by_ids(
+        self,
+        ids: Iterable[str] | None = None,
+        barcode_ids: Iterable[str] | None = None,
+    ) -> Iterable[AlbumInfo | None]:
+        tidal_ids = list(map(self._extract_id, ids or []))
+        barcode_ids = list(barcode_ids or [])
 
         albums_doc = self.api.get_albums(
             ids=list(filter(None, tidal_ids)),
+            barcode_ids=barcode_ids,
             include=["items.artists", "artists"],
         )
         album_lookup: dict[str, TidalAlbum] = {
@@ -153,6 +231,7 @@ class TidalPlugin(MetadataSourcePlugin):
             if item["type"] == "artists"
         }
 
+        # Yield for IDs first
         for tidal_id in tidal_ids:
             if tidal_id is not None and (album := album_lookup.get(tidal_id)):
                 yield self._get_album_info(
@@ -162,70 +241,33 @@ class TidalPlugin(MetadataSourcePlugin):
                 )
             else:
                 yield None
-
-    def track_for_id(self, track_id: str) -> TrackInfo | None:
-        if not (tidal_id := self._extract_id(track_id)):
-            return None
-
-        track_doc_tidal = self.api.get_tracks(
-            ids=tidal_id,
-            include=["artists"],
-        )
-        # The api may return an empty response if no
-        # matching item is found
-        if len(track_doc_tidal["data"]) < 1:
-            return None
-
-        track: TidalTrack = track_doc_tidal["data"][0]
-        artist_lookup: dict[str, TidalArtist] = {
-            item["id"]: item
-            for item in track_doc_tidal.get("included", [])
-            if item["type"] == "artists"
-        }
-
-        return self._get_track_info(
-            track,
-            artist_lookup=artist_lookup,
-        )
-
-    def tracks_for_ids(self, ids: Iterable[str]) -> Iterable[TrackInfo | None]:
-        tidal_ids = list(map(self._extract_id, ids))
-
-        tracks_doc = self.api.get_tracks(
-            ids=list(filter(None, tidal_ids)),
-            include=["artists"],
-        )
-        track_lookup: dict[str, TidalTrack] = {
-            item["id"]: item
-            for item in tracks_doc.get("data", [])
-            if item["type"] == "tracks"
-        }
-        artist_lookup: dict[str, TidalArtist] = {
-            item["id"]: item
-            for item in tracks_doc.get("included", [])
-            if item["type"] == "artists"
-        }
-
-        for tidal_id in tidal_ids:
-            if tidal_id is not None and (track := track_lookup.get(tidal_id)):
-                yield self._get_track_info(
-                    track,
+        # Then yield for ISRCs (matching by ISRC field in tracks)
+        for barcode in barcode_ids:
+            album = next(
+                (
+                    a
+                    for a in album_lookup.values()
+                    if a.get("barcodeId") == barcode
+                ),
+                None,
+            )
+            if album:
+                yield self._get_album_info(
+                    album,
+                    track_lookup=track_lookup,
                     artist_lookup=artist_lookup,
                 )
             else:
                 yield None
 
-    def candidates(
-        self, items: Sequence[Item], artist: str, album: str, va_likely: bool
-    ) -> Iterable[AlbumInfo]:
-        breakpoint()
-        return []
+    @staticmethod
+    def _item_queries(item: Item) -> Iterable[str]:
+        """Search query for item.
 
-    def item_candidates(
-        self, item: Item, artist: str, title: str
-    ) -> Iterable[TrackInfo]:
-        breakpoint()
-        return []
+        At the moment we only search using the title but this
+        is designed to be extendable.
+        """
+        yield item.title
 
     # ---------------------------------- Parsing --------------------------------- #
 
