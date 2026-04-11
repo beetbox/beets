@@ -16,7 +16,7 @@
 
 import re
 from collections import defaultdict
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import confuse
 import pytest
