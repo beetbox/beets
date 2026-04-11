@@ -9,6 +9,25 @@ below!
 Unreleased
 ----------
 
+..
+    New features
+    ~~~~~~~~~~~~
+
+..
+    Bug fixes
+    ~~~~~~~~~
+
+..
+    For plugin developers
+    ~~~~~~~~~~~~~~~~~~~~~
+
+..
+    Other changes
+    ~~~~~~~~~~~~~
+
+2.9.0 (April 11, 2026)
+----------------------
+
 Beets now officially supports Python 3.14.
 
 New features
