@@ -33,7 +33,6 @@ from beets.test import helper
 from beets.test.helper import (
     AutotagStub,
     ImportHelper,
-    IOMixin,
     PluginMixin,
     PluginTest,
     TerminalImportMixin,
