@@ -122,6 +122,33 @@ library.) The generated fingerprints will be stored in the library database. If
 you have the ``import.write`` config option enabled, they will also be written
 to files' metadata.
 
+.. note::
+
+    Acoustid only returns MusicBrainz IDs, so ``chroma`` always needs to query
+    MusicBrainz to resolve an acoustid match into release data. Chroma then
+    routes that release through whichever metadata-source plugins you have
+    enabled:
+
+    - With :doc:`musicbrainz` enabled, chroma yields MusicBrainz-sourced album
+      candidates as before.
+    - With any of :doc:`discogs`, bandcamp, :doc:`spotify`, ``deezer``, or
+      ``tidal`` plugins enabled, chroma extracts the corresponding external
+      release ID from the MusicBrainz release's ``url-relations`` and looks the
+      album up through that plugin, even if ``musicbrainz`` itself is not in the
+      active plugins list.
+    - With both kinds enabled, chroma returns both the MusicBrainz candidate and
+      any cross-referenced external candidates.
+
+    If none of these metadata source plugins are loaded, chroma still
+    fingerprints files and stores the ``acoustid_id`` and
+    ``acoustid_fingerprint`` fields, but it does not contribute any candidates
+    during autotagging.
+
+    The ``item_candidates`` (singleton track) path is different: MusicBrainz
+    recording responses do not carry cross-source track IDs, so chroma's
+    per-track candidate resolution still requires the ``musicbrainz`` plugin to
+    be enabled.
+
 .. _submitfp:
 
 Configuration

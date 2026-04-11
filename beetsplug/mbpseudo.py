@@ -133,8 +133,15 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
                     yield album_info
 
     @override
-    def album_info(self, release: JSONDict) -> AlbumInfo:
-        official_release = super().album_info(release)
+    def album_info(
+        self,
+        release: JSONDict,
+        *,
+        extra_external_sources: set[str] | None = None,
+    ) -> AlbumInfo:
+        official_release = super().album_info(
+            release, extra_external_sources=extra_external_sources
+        )
 
         if release.get("status") == _STATUS_PSEUDO:
             return official_release
@@ -143,7 +150,10 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
             album_id := self._extract_id(ids[0])
         ):
             raw_pseudo_release = self.mb_api.get_release(album_id)
-            pseudo_release = super().album_info(raw_pseudo_release)
+            pseudo_release = super().album_info(
+                raw_pseudo_release,
+                extra_external_sources=extra_external_sources,
+            )
 
             if self.config["custom_tags_only"].get(bool):
                 self._replace_artist_with_alias(

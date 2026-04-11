@@ -425,9 +425,22 @@ class MusicBrainzPlugin(
 
         return info
 
-    def album_info(self, release: JSONDict) -> AlbumInfo:
+    def album_info(
+        self,
+        release: JSONDict,
+        *,
+        extra_external_sources: set[str] | None = None,
+    ) -> AlbumInfo:
         """Takes a MusicBrainz release result dictionary and returns a beets
         AlbumInfo object containing the interesting data about that release.
+
+        :param release: Raw MusicBrainz release dictionary.
+        :param extra_external_sources: Additional external source names (e.g.
+            ``{"spotify", "discogs"}``) to extract from ``url-relations`` on
+            top of whatever is configured via ``musicbrainz.external_ids``.
+            This lets callers such as the :doc:`plugins/chroma` plugin force
+            extraction of cross-reference IDs for sources the user has
+            enabled without having to opt into ``external_ids`` globally.
         """
         # Get artist name using join phrases.
         artist_name, artist_sort_name, artist_credit_name = (
@@ -662,6 +675,8 @@ class MusicBrainzPlugin(
         wanted_sources = {
             site for site, wanted in external_ids.items() if wanted
         }
+        if extra_external_sources:
+            wanted_sources |= extra_external_sources
         if wanted_sources and (url_rels := release.get("url-relations")):
             urls = {}
 
@@ -752,10 +767,21 @@ class MusicBrainzPlugin(
             mb_entity, dict(params.filters), limit=params.limit
         )
 
-    def album_for_id(self, album_id: str) -> AlbumInfo | None:
+    def album_for_id(
+        self,
+        album_id: str,
+        *,
+        extra_external_sources: set[str] | None = None,
+    ) -> AlbumInfo | None:
         """Fetches an album by its MusicBrainz ID and returns an AlbumInfo
         object or None if the album is not found. May raise a
         MusicBrainzAPIError.
+
+        :param album_id: MusicBrainz release ID.
+        :param extra_external_sources: Optional set of external source
+            names to force-extract from the release's ``url-relations``
+            in addition to anything configured via
+            ``musicbrainz.external_ids``. See :py:meth:`album_info`.
         """
         self._log.debug("Requesting MusicBrainz release {}", album_id)
         if not (albumid := self._extract_id(album_id)):
@@ -784,11 +810,15 @@ class MusicBrainzPlugin(
                     actual_res = self.mb_api.get_release(rel["release"]["id"])
 
         # release is potentially a pseudo release
-        release = self.album_info(res)
+        release = self.album_info(
+            res, extra_external_sources=extra_external_sources
+        )
 
         # should be None unless we're dealing with a pseudo release
         if actual_res is not None:
-            actual_release = self.album_info(actual_res)
+            actual_release = self.album_info(
+                actual_res, extra_external_sources=extra_external_sources
+            )
             return _merge_pseudo_and_actual_album(release, actual_release)
         else:
             return release
