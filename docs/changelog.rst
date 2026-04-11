@@ -26,9 +26,11 @@ New features
       after upgrading to trigger the migration. Only then you can safely move
       the library to a new location.
 
-..
-    Bug fixes
-    ~~~~~~~~~
+Bug fixes
+~~~~~~~~~
+
+- :doc:`plugins/listenbrainz`: Retry listenbrainz requests for temporary
+  failures.
 
 ..
     For plugin developers
