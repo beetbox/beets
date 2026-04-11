@@ -125,6 +125,11 @@ class TrackAttributes(TypedDict):
     version: NotRequired[str]
 
 
+class SearchAttributes(TypedDict):
+    didYouMean: NotRequired[str]
+    trackingId: str
+
+
 # --------------------------------- Resources -------------------------------- #
 
 
@@ -148,14 +153,24 @@ class TidalTrack(TypedDict):
     relationships: dict[str, RelationshipData]
 
 
+class TidalSearch(TypedDict):
+    id: str
+    type: Literal["searchResults"]
+    attributes: SearchAttributes
+    relationships: dict[str, RelationshipData]
+
+
 T = TypeVar("T")
 
 
 class Document(TypedDict, Generic[T]):
-    data: list[T]
+    data: T
     included: NotRequired[list[TidalArtist | TidalAlbum | TidalTrack]]
     links: NotRequired[dict[str, str]]
 
 
-AlbumDocument = Document[TidalAlbum]
-TrackDocument = Document[TidalTrack]
+AlbumDocument = Document[list[TidalAlbum]]
+TrackDocument = Document[list[TidalTrack]]
+SearchDocument = Document[TidalSearch]
+
+# ----------------------------------- Search ---------------------------------- #

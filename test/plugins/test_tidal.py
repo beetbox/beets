@@ -197,7 +197,7 @@ class TestTrackForID(TidalPluginTest):
 
     def test_track_for_id(self):
         """Test fetching track by ID via API."""
-        track = _make_track("t1", "API Track", "PT3M", "ISRC001", ["a1"])
+        track = _make_track("490839595", "API Track", "PT3M", "ISRC001", ["a1"])
         artist = _make_artist("a1", "API Artist")
 
         self.tidal.api.get_tracks = Mock(
@@ -212,7 +212,7 @@ class TestTrackForID(TidalPluginTest):
 
         assert info is not None
         assert info.title == "API Track"
-        assert info.track_id == "t1"
+        assert info.track_id == "490839595"
         assert info.artist == "API Artist"
 
     def test_track_for_id_not_found(self):
@@ -294,7 +294,7 @@ class TestAlbumForID(TidalPluginTest):
         """Test fetching album by ID via API."""
         track = _make_track("t1", "Album Track", "PT3M30S", "ISRC001", ["a1"])
         album, track_lookup, artist_lookup = _make_album(
-            "al1", "API Album", [track], ["a1"]
+            "226495055", "API Album", [track], ["a1"]
         )
         self.tidal.api.get_albums = Mock(
             return_value={
@@ -307,7 +307,7 @@ class TestAlbumForID(TidalPluginTest):
 
         assert info is not None
         assert info.album == "API Album"
-        assert info.album_id == "al1"
+        assert info.album_id == "226495055"
         assert len(info.tracks) == 1
         assert info.tracks[0].title == "Album Track"
 
