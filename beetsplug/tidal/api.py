@@ -91,7 +91,7 @@ class TidalSession(TimeoutAndRetrySession):
         remaining = int(response.headers.get("Retry-After", 0))
         if remaining > 0:
             log.warning(
-                "Rate limit exceeded. Retrying after %s seconds.", remaining
+                "Rate limit exceeded. Retrying after {0} seconds.", remaining
             )
             sleep(remaining)
         else:
@@ -111,10 +111,6 @@ class TidalSession(TimeoutAndRetrySession):
         Perform a GET request to the Tidal API with pagination resolution.
 
         This handles both top-level pagination and nested relationship pagination.
-
-        Returns
-        -------
-            tuple: (data_items, included_lookup, last_links)
         """
         include = include or []
         params = params or {}
