@@ -98,13 +98,14 @@ class TidalToken:
 
 
 def ui_auth_flow(client_id: str) -> TidalToken:
-    url, code_verifier = build_auth_url(
+    url, code_verifier, state = build_auth_url(
         client_id=client_id,
         redirect_uri="http://localhost",
         scope="search.read",
     )
     ui.print_(f"Visit: {url}")
     redirected_url = ui.input_("Paste redirected URL: ")
+    verify_state(redirected_url, state)
     token_raw = request_token(
         redirected_url,
         code_verifier,
@@ -116,8 +117,8 @@ def ui_auth_flow(client_id: str) -> TidalToken:
 
 def build_auth_url(
     client_id: str, redirect_uri: str, scope: str
-) -> tuple[str | None, str]:
-    """Build Tidal auth URL with PKCE. Returns (url, code_verifier)."""
+) -> tuple[str | None, str, str]:
+    """Build Tidal auth URL with PKCE. Returns (url, code_verifier, state)."""
 
     # pkce pair
     code_verifier = secrets.token_urlsafe(64)
@@ -143,7 +144,7 @@ def build_auth_url(
         },
     )
     prepared = req.prepare()
-    return prepared.url, code_verifier
+    return prepared.url, code_verifier, state
 
 
 def request_token(
@@ -174,3 +175,20 @@ def request_token(
     )
     res.raise_for_status()
     return res.json()
+
+
+def verify_state(redirect_url: str, expected_state: str) -> None:
+    """Verify state parameter matches to prevent CSRF attacks."""
+    parsed = urlparse(redirect_url)
+    params = parse_qs(parsed.query)
+
+    try:
+        received_state = params["state"][0]
+    except (KeyError, IndexError):
+        raise ValueError(f"No state parameter in URL: {redirect_url}")
+
+    if received_state != expected_state:
+        raise ValueError(
+            f"State mismatch: expected {expected_state}, got {received_state}. "
+            "Possible CSRF attack."
+        )
