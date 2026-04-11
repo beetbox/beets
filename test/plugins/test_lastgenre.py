@@ -16,7 +16,7 @@
 
 import re
 from collections import defaultdict
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import confuse
 import pytest
@@ -172,7 +172,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
         self._setup_config(count=99)
         assert self.plugin._resolve_genres(["blues", "blues"]) == ["blues"]
 
-    def test_tags_for(self):
+    def test_fetch_genre(self):
         class MockPylastElem:
             def __init__(self, name):
                 self.name = name
@@ -191,9 +191,11 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 return [tag1, tag2]
 
         plugin = lastgenre.LastGenrePlugin()
-        res = plugin.client._tags_for(MockPylastObj())
+        res = plugin.client.fetch_genres(MockPylastObj())
         assert res == ["pop", "rap"]
-        res = plugin.client._tags_for(MockPylastObj(), min_weight=50)
+
+        plugin.client._min_weight = 50
+        res = plugin.client.fetch_genres(MockPylastObj())
         assert res == ["pop"]
 
     def test_sort_by_depth(self):
@@ -683,27 +685,18 @@ def config(config):
         ),
     ],
 )
+@pytest.mark.usefixtures("config")
 def test_get_genre(
-    config, config_values, item_genre, mock_genres, expected_result
+    monkeypatch, config_values, item_genre, mock_genres, expected_result
 ):
     """Test _get_genre with various configurations."""
-
-    def mock_fetch_track_genre(self, trackartist, tracktitle):
-        return mock_genres["track"]
-
-    def mock_fetch_album_genre(self, albumartist, albumtitle):
-        return mock_genres["album"]
-
-    def mock_fetch_artist_genre(self, artist):
-        return mock_genres["artist"]
-
     # Mock the last.fm fetchers. When whitelist enabled, we can assume only
     # whitelisted genres get returned, the plugin's _resolve_genre method
     # ensures it.
-    lastgenre.client.LastFmClient.fetch_track_genre = mock_fetch_track_genre
-    lastgenre.client.LastFmClient.fetch_album_genre = mock_fetch_album_genre
-    lastgenre.client.LastFmClient.fetch_artist_genre = mock_fetch_artist_genre
-
+    monkeypatch.setattr(
+        "beetsplug.lastgenre.client.LastFmClient.fetch",
+        lambda _, kind, __: mock_genres[kind],
+    )
     # Initialize plugin instance and item
     plugin = lastgenre.LastGenrePlugin()
     # Configure
@@ -902,7 +895,9 @@ class TestIgnorelist:
 
         assert expected_error_message in str(exc_info.value)
 
-    def test_ignorelist_multivalued_album_artist_fallback(self, config):
+    def test_ignorelist_multivalued_album_artist_fallback(
+        self, monkeypatch, config
+    ):
         """`stage_artist=None` fallback must not re-drop per-artist results."""
         config["lastgenre"]["ignorelist"] = {
             "Artist A": ["Metal"],
@@ -914,23 +909,23 @@ class TestIgnorelist:
         plugin = lastgenre.LastGenrePlugin()
         plugin.setup()
 
-        obj = MagicMock(spec=Album)
+        def fake_fetch(_, kind, obj, *args):
+            if kind == "album_artist" and args:
+                album_artist = args[0]
+                return {
+                    "Artist A": ["Rock"],
+                    "Artist B": ["Metal", "Jazz"],
+                }[album_artist]
+            return []
+
+        monkeypatch.setattr(
+            "beetsplug.lastgenre.client.LastFmClient.fetch", fake_fetch
+        )
+
+        obj = Album()
         obj.albumartist = "Artist Group"
         obj.album = "Album Title"
         obj.albumartists = ["Artist A", "Artist B"]
-        obj.get.return_value = []
-
-        plugin.client = MagicMock()
-        plugin.client.fetch_track_genre.return_value = []
-        plugin.client.fetch_album_genre.return_value = []
-
-        artist_genres = {
-            "Artist A": ["Rock"],
-            "Artist B": ["Metal", "Jazz"],
-        }
-        plugin.client.fetch_artist_genre.side_effect = lambda artist: (
-            artist_genres.get(artist, [])
-        )
 
         genres, label = plugin._get_genre(obj)
 
