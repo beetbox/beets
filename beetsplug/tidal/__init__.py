@@ -130,6 +130,39 @@ class TidalPlugin(MetadataSourcePlugin):
             artist_lookup=artist_lookup,
         )
 
+    def albums_for_ids(self, ids: Iterable[str]) -> Iterable[AlbumInfo | None]:
+        tidal_ids = list(map(self._extract_id, ids))
+
+        albums_doc = self.api.get_albums(
+            ids=list(filter(None, tidal_ids)),
+            include=["items.artists", "artists"],
+        )
+        album_lookup: dict[str, TidalAlbum] = {
+            item["id"]: item
+            for item in albums_doc.get("data", [])
+            if item["type"] == "albums"
+        }
+        track_lookup: dict[str, TidalTrack] = {
+            item["id"]: item
+            for item in albums_doc.get("included", [])
+            if item["type"] == "tracks"
+        }
+        artist_lookup: dict[str, TidalArtist] = {
+            item["id"]: item
+            for item in albums_doc.get("included", [])
+            if item["type"] == "artists"
+        }
+
+        for tidal_id in tidal_ids:
+            if tidal_id is not None and (album := album_lookup.get(tidal_id)):
+                yield self._get_album_info(
+                    album,
+                    track_lookup=track_lookup,
+                    artist_lookup=artist_lookup,
+                )
+            else:
+                yield None
+
     def track_for_id(self, track_id: str) -> TrackInfo | None:
         if not (tidal_id := self._extract_id(track_id)):
             return None
@@ -154,6 +187,33 @@ class TidalPlugin(MetadataSourcePlugin):
             track,
             artist_lookup=artist_lookup,
         )
+
+    def tracks_for_ids(self, ids: Iterable[str]) -> Iterable[TrackInfo | None]:
+        tidal_ids = list(map(self._extract_id, ids))
+
+        tracks_doc = self.api.get_tracks(
+            ids=list(filter(None, tidal_ids)),
+            include=["artists"],
+        )
+        track_lookup: dict[str, TidalTrack] = {
+            item["id"]: item
+            for item in tracks_doc.get("data", [])
+            if item["type"] == "tracks"
+        }
+        artist_lookup: dict[str, TidalArtist] = {
+            item["id"]: item
+            for item in tracks_doc.get("included", [])
+            if item["type"] == "artists"
+        }
+
+        for tidal_id in tidal_ids:
+            if tidal_id is not None and (track := track_lookup.get(tidal_id)):
+                yield self._get_track_info(
+                    track,
+                    artist_lookup=artist_lookup,
+                )
+            else:
+                yield None
 
     def candidates(
         self, items: Sequence[Item], artist: str, album: str, va_likely: bool

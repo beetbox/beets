@@ -225,6 +225,68 @@ class TestTrackForID(TidalPluginTest):
         assert info is None
 
 
+class TestTracksForIDs(TidalPluginTest):
+    """Tests for tracks_for_ids with mocked API."""
+
+    def test_tracks_for_ids(self):
+        """Test fetching multiple tracks by IDs via API."""
+        track1 = _make_track(
+            "490839595", "API Track 1", "PT3M", "ISRC001", ["a1"]
+        )
+        track2 = _make_track(
+            "490839596", "API Track 2", "PT4M", "ISRC002", ["a1"]
+        )
+        artist = _make_artist("a1", "API Artist")
+
+        self.tidal.api.get_tracks = Mock(
+            return_value={
+                "data": [track1, track2],
+                "included": [artist],
+            }
+        )
+
+        results = list(
+            self.tidal.tracks_for_ids(
+                [
+                    "https://tidal.com/track/490839595",
+                    "https://tidal.com/track/490839596",
+                ]
+            )
+        )
+        self.tidal.api.get_tracks.assert_called_once()
+        assert len(results) == 2
+        assert results[0] is not None
+        assert results[0].title == "API Track 1"
+        assert results[1] is not None
+        assert results[1].title == "API Track 2"
+
+    def test_tracks_for_ids_with_missing(self):
+        """Test tracks_for_ids yields None for IDs not found."""
+        track = _make_track("490839595", "API Track", "PT3M", "ISRC001", ["a1"])
+        artist = _make_artist("a1", "API Artist")
+
+        self.tidal.api.get_tracks = Mock(
+            return_value={
+                "data": [track],
+                "included": [artist],
+            }
+        )
+
+        results = list(
+            self.tidal.tracks_for_ids(
+                [
+                    "https://tidal.com/track/490839595",
+                    "does_not_exist",
+                ]
+            )
+        )
+
+        assert len(results) == 2
+        assert results[0] is not None
+        assert results[0].title == "API Track"
+        assert results[1] is None
+
+
 class TestAlbumForID(TidalPluginTest):
     """Tests for album_for_id with mocked API."""
 
@@ -257,6 +319,82 @@ class TestAlbumForID(TidalPluginTest):
 
         info = self.tidal.album_for_id("does_not_exist")
         assert info is None
+
+
+class TestAlbumsForIDs(TidalPluginTest):
+    """Tests for albums_for_ids with mocked API."""
+
+    def test_albums_for_ids(self):
+        """Test fetching multiple albums by IDs via API."""
+        track1 = _make_track("t1", "Album Track 1", "PT3M", "ISRC001", ["a1"])
+        track2 = _make_track("t2", "Album Track 2", "PT4M", "ISRC002", ["a1"])
+        album1, track_lookup1, artist_lookup1 = _make_album(
+            "226495055", "API Album 1", [track1], ["a1"]
+        )
+        album2, track_lookup2, artist_lookup2 = _make_album(
+            "226495056", "API Album 2", [track2], ["a1"]
+        )
+
+        # Combine lookups to simulate API response
+        all_included = [
+            *artist_lookup1.values(),
+            *artist_lookup2.values(),
+            *track_lookup1.values(),
+            *track_lookup2.values(),
+        ]
+
+        self.tidal.api.get_albums = Mock(
+            return_value={
+                "data": [album1, album2],
+                "included": all_included,
+            }
+        )
+
+        results = list(
+            self.tidal.albums_for_ids(
+                [
+                    "https://tidal.com/album/226495055",
+                    "https://tidal.com/album/226495056",
+                ]
+            )
+        )
+
+        self.tidal.api.get_albums.assert_called_once()
+        # Note: yields album then None for each ID
+        assert len(results) == 2
+        assert results[0] is not None
+        assert results[0].album == "API Album 1"
+        assert results[1] is not None
+        assert results[1].album == "API Album 2"
+
+    def test_albums_for_ids_with_missing(self):
+        """Test albums_for_ids yields None for IDs not found."""
+        track = _make_track("t1", "Album Track", "PT3M", "ISRC001", ["a1"])
+        album, track_lookup, artist_lookup = _make_album(
+            "226495055", "API Album", [track], ["a1"]
+        )
+
+        self.tidal.api.get_albums = Mock(
+            return_value={
+                "data": [album],
+                "included": [*artist_lookup.values(), *track_lookup.values()],
+            }
+        )
+
+        results = list(
+            self.tidal.albums_for_ids(
+                [
+                    "https://tidal.com/album/226495055",
+                    "does_not_exist",
+                ]
+            )
+        )
+
+        # yields (album, None) for (found, not_found)
+        assert len(results) == 2
+        assert results[0] is not None
+        assert results[0].album == "API Album"
+        assert results[1] is None
 
 
 class TestStaticHelpers:
