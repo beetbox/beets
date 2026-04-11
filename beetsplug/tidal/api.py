@@ -189,19 +189,18 @@ class TidalSession(TimeoutAndRetrySession):
         It will update the token in place.
         """
         log.debug("Refreshing expired Tidal token...")
-        res = super().request(
-            "POST",
-            "https://auth.tidal.com/v1/oauth2/token",
-            data={
-                "grant_type": "refresh_token",
-                "client_id": self.client_id,
-                "refresh_token": self.token.refresh_token,
-            },
-        )
         try:
-            res.raise_for_status()
+            res = super().request(
+                "POST",
+                "https://auth.tidal.com/v1/oauth2/token",
+                data={
+                    "grant_type": "refresh_token",
+                    "client_id": self.client_id,
+                    "refresh_token": self.token.refresh_token,
+                },
+            )
         except requests.HTTPError as e:
-            log.error(res.text, stack_info=False)
+            log.error(e.response.text, stack_info=False)
             raise e
 
         # We update and dont override as the response might not always
