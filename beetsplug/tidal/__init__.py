@@ -66,14 +66,14 @@ class TidalPlugin(MetadataSourcePlugin):
         )
 
     def _tokenfile(self) -> str:
-        """Creates the token file if it doesn't exist"""
+        """Return the configured path to the token file in the app directory."""
         return self.config["tokenfile"].get(confuse.Filename(in_app_dir=True))
 
     def require_authentication(self):
         if not os.path.isfile(self._tokenfile()):
             raise ui.UserError(
                 "Please login to TIDAL"
-                " using `beets tidal --auth` or disable tidal plugin"
+                " using `beet tidal --auth` or disable tidal plugin"
             )
 
     def commands(self) -> list[ui.Subcommand]:
@@ -219,8 +219,8 @@ class TidalPlugin(MetadataSourcePlugin):
             query,
             include=["albums"],
             # include="albums.items.artists" <- not supported
-            # It is a bit inconvinenet but we featch the items and artists
-            # for all albums seperatly
+            # This is a bit inconvenient, but we fetch the items and artists
+            # for all albums separately.
         )
         album_ids = [
             album_rel["id"]
@@ -439,10 +439,11 @@ class TidalPlugin(MetadataSourcePlugin):
         artist_relationships: list[ResourceIdentifier],
         artist_lookup: dict[str, TidalArtist],
     ) -> tuple[list[str], list[str]]:
-        """Extract artists from a relatninship.
+        """Extract artists from a relationship.
 
-        Needed as artists are sorted in the track relationship in order
-        but in the included part of the response the
+        Needed because artists are ordered in the track relationship,
+        while the included response data is accessed by id via
+        ``artist_lookup``.
         """
         artist_names = []
         artist_ids = []
@@ -452,7 +453,7 @@ class TidalPlugin(MetadataSourcePlugin):
                 artist_names.append(artist["attributes"]["name"])
             else:
                 log.warning(
-                    "Artist with id %s not found in lookup",
+                    "Artist with id {0} not found in lookup",
                     artist_rel["id"],
                 )
 
@@ -461,9 +462,9 @@ class TidalPlugin(MetadataSourcePlugin):
     @staticmethod
     def _extract_title(attributes: AlbumAttributes | TrackAttributes):
         """
-        Tidal normally amends the version string at the
-        of the title. We do the same to be consistent
-        with the tidal web ui.
+        Tidal UIs append the version string at the end of the
+        title. We do the same here by formatting it as
+        ``"{title} ({version})"`` to stay consistent.
         """
         if version := attributes.get("version"):
             return f"{attributes['title']} ({version})"
