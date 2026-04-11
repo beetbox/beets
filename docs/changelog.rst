@@ -26,6 +26,12 @@ New features
       after upgrading to trigger the migration. Only then you can safely move
       the library to a new location.
 
+- **Tidal plugin**: We introduce a new plugin which allows to fetch metadata
+  from Tidal. The plugin supports album and track lookups by ID (including batch
+  lookups via ``albums_for_ids`` and ``tracks_for_ids``), search by query, and
+  search by IDs with support for ISRC codes (tracks) and barcode IDs (albums).
+  See :doc:`plugins/tidal` for more information.
+
 ..
     Bug fixes
     ~~~~~~~~~
