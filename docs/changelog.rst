@@ -84,12 +84,16 @@ Bug fixes
   multi-valued fields such as ``genres`` by applying rules to each matching list
   entry. Additionally, apply rewrite rules in config order, so that multiple
   rules can be applied to the same field. :bug:`6515`
-- :doc:`plugins/chroma`: Do not produce MusicBrainz-sourced autotagger
-  candidates when the :doc:`plugins/musicbrainz` plugin is not enabled.
-  Previously, ``chroma`` instantiated its own ``MusicBrainzPlugin`` directly and
-  called ``album_for_id`` / ``track_for_id`` on it regardless of the user's
-  plugin configuration, so MusicBrainz results would surface even for users who
-  had intentionally disabled MusicBrainz. :bug:`6212`
+- :doc:`plugins/chroma`: Route Acoustid fingerprint matches through the
+  metadata-source plugins the user actually has enabled instead of
+  unconditionally returning MusicBrainz candidates. Chroma still queries
+  MusicBrainz for release data (since acoustid only returns MusicBrainz
+  IDs), but it now extracts Discogs / Bandcamp / Spotify / Deezer / Tidal
+  cross-reference IDs from the release's ``url-relations`` and looks the
+  album up through the corresponding plugin when that plugin is loaded,
+  so a user running ``chroma`` with, say, ``spotify`` but without
+  ``musicbrainz`` now gets Spotify candidates from acoustid matches
+  instead of MusicBrainz ones. :bug:`6212`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~

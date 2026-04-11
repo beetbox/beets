@@ -29,13 +29,17 @@ import confuse
 
 from beets import config, ui, util
 from beets.autotag.distance import Distance
-from beets.metadata_plugins import MetadataSourcePlugin, get_metadata_source
+from beets.metadata_plugins import (
+    MetadataSourcePlugin,
+    find_metadata_source_plugins,
+    get_metadata_source,
+)
 from beets.util.color import colorize
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
 
-    from beets.autotag.hooks import TrackInfo
+    from beets.autotag.hooks import AlbumInfo, TrackInfo
     from beets.library.models import Item
     from beetsplug.musicbrainz import MusicBrainzPlugin
 
@@ -45,6 +49,16 @@ TRACK_ID_WEIGHT = 10.0
 COMMON_REL_THRESH = 0.6  # How many tracks must have an album in common?
 MAX_RECORDINGS = 5
 MAX_RELEASES = 5
+
+# External metadata sources that ``musicbrainz.album_info`` knows how to
+# extract cross-reference IDs for via the release's ``url-relations``.
+# Kept in sync with the default keys of ``musicbrainz.external_ids`` in
+# :class:`beetsplug.musicbrainz.MusicBrainzPlugin`. Acoustid fingerprint
+# matches can be routed to any of these sources when the corresponding
+# metadata-source plugin is enabled.
+MB_CROSS_REF_SOURCES = frozenset(
+    {"discogs", "bandcamp", "spotify", "deezer", "tidal"}
+)
 
 # Stores the Acoustid match information for each track. This is
 # populated when an import task begins and then used when searching for
@@ -192,28 +206,104 @@ class AcoustidPlugin(MetadataSourcePlugin):
         )
         config["acoustid"]["apikey"].redact = True
 
+        # Lazy, privately instantiated MusicBrainz client used only
+        # when the user has not enabled the ``musicbrainz`` plugin but
+        # chroma still needs to query MusicBrainz to resolve acoustid
+        # matches into cross-reference external IDs (see
+        # :py:meth:`_musicbrainz_client`).
+        self._private_mb: MusicBrainzPlugin | None = None
+
         if self.config["auto"]:
             self.register_listener("import_task_start", self.fingerprint_task)
         self.register_listener("import_task_apply", apply_acoustid_metadata)
 
-    def _get_musicbrainz(self) -> MusicBrainzPlugin | None:
-        """Return the loaded MusicBrainz plugin instance, or ``None``.
+    def _musicbrainz_client(self) -> MusicBrainzPlugin:
+        """Return a ``MusicBrainzPlugin`` instance for release lookups.
 
-        Acoustid fingerprint lookups return MusicBrainz release and
-        recording IDs, so chroma can only produce autotagger candidates
-        by resolving those IDs through the musicbrainz plugin. When the
-        user has not enabled the ``musicbrainz`` plugin, we must not
-        return any candidates — otherwise MusicBrainz-sourced results
-        would silently appear during tagging even though the user
-        opted out of that metadata source.
+        Acoustid fingerprint matches are always MusicBrainz IDs, so
+        chroma needs to query MusicBrainz to resolve them into release
+        data — even when the user has not added ``musicbrainz`` to their
+        active plugin list. This method prefers the plugin instance
+        registered in the global metadata-source registry (so any other
+        plugin that swaps or wraps the musicbrainz plugin, e.g.
+        :doc:`plugins/mbpseudo`, still takes effect). Only when no
+        musicbrainz plugin is loaded do we fall back to a transient,
+        privately instantiated ``MusicBrainzPlugin`` for the lookup.
         """
         plugin = get_metadata_source("musicbrainz")
-        if plugin is None:
+        if plugin is not None:
+            return plugin  # type: ignore[return-value]
+
+        if self._private_mb is None:
+            # Deferred import to avoid a hard dependency cycle on the
+            # musicbrainz plugin at chroma-import time.
+            from beetsplug.musicbrainz import MusicBrainzPlugin
+
             self._log.debug(
-                "musicbrainz plugin not enabled; "
-                "acoustid matches will not produce candidates"
+                "musicbrainz plugin not loaded; using a private "
+                "MusicBrainzPlugin instance for acoustid lookups"
             )
-        return plugin  # type: ignore[return-value]
+            self._private_mb = MusicBrainzPlugin()
+        return self._private_mb
+
+    def _cross_ref_sources(
+        self,
+    ) -> tuple[bool, dict[str, MetadataSourcePlugin]]:
+        """Discover which metadata-source plugins acoustid can route to.
+
+        Returns a pair ``(mb_loaded, external_plugins)`` where
+        ``mb_loaded`` indicates whether the user has enabled the
+        ``musicbrainz`` plugin as a first-class metadata source (in
+        which case MusicBrainz-sourced candidates should be yielded
+        directly) and ``external_plugins`` maps lowercase source names
+        (e.g. ``"spotify"``) to the corresponding loaded plugin
+        instance for every non-MB source that has both (a) a loaded
+        metadata-source plugin and (b) a MusicBrainz cross-reference
+        entry in ``url-relations``.
+        """
+        mb_loaded = False
+        external_plugins: dict[str, MetadataSourcePlugin] = {}
+        for plugin in find_metadata_source_plugins():
+            name = plugin.data_source.lower()
+            if name == "musicbrainz":
+                mb_loaded = True
+                continue
+            if name in MB_CROSS_REF_SOURCES:
+                external_plugins[name] = plugin
+        return mb_loaded, external_plugins
+
+    def _route_to_external(
+        self,
+        mb_album: AlbumInfo,
+        external_plugins: dict[str, MetadataSourcePlugin],
+    ) -> Iterator[AlbumInfo]:
+        """Yield candidates from external sources referenced by ``mb_album``.
+
+        For every loaded non-MB metadata-source plugin whose source name
+        appears in the ``{source}_album_id`` attributes of the
+        MusicBrainz ``AlbumInfo`` (populated via
+        :py:meth:`MusicBrainzPlugin.album_info`'s ``url-relations``
+        extraction), call the external plugin's ``album_for_id`` and
+        yield any successful responses. This lets a user with, say,
+        ``chroma`` + ``spotify`` enabled but without ``musicbrainz``
+        still get Spotify candidates from acoustid matches.
+        """
+        for source_name, plugin in external_plugins.items():
+            external_id = getattr(mb_album, f"{source_name}_album_id", None)
+            if not external_id:
+                continue
+            try:
+                ext_album = plugin.album_for_id(external_id)
+            except Exception as exc:
+                self._log.debug(
+                    "failed to resolve {} release {!r} for acoustid match: {}",
+                    source_name,
+                    external_id,
+                    exc,
+                )
+                continue
+            if ext_album is not None:
+                yield ext_album
 
     def fingerprint_task(self, task, session):
         return fingerprint_task(self._log, task, session)
@@ -229,15 +319,41 @@ class AcoustidPlugin(MetadataSourcePlugin):
         return dist
 
     def candidates(self, items, artist, album, va_likely):
-        mb = self._get_musicbrainz()
-        if mb is None:
+        mb_loaded, external_plugins = self._cross_ref_sources()
+        if not mb_loaded and not external_plugins:
+            # Neither the musicbrainz plugin nor any cross-reference
+            # target is enabled, so there is nothing acoustid can
+            # resolve its match IDs into.
             return []
 
-        albums = []
+        mb = self._musicbrainz_client()
+        # Force MusicBrainz to populate cross-reference IDs on each
+        # ``AlbumInfo`` for the sources whose plugins are loaded, even
+        # when the user has not opted into ``musicbrainz.external_ids``
+        # globally.
+        extra_external = set(external_plugins.keys()) or None
+
+        albums: list[AlbumInfo] = []
         for relid in prefix(_all_releases(items), MAX_RELEASES):
-            album = mb.album_for_id(relid)
-            if album:
-                albums.append(album)
+            try:
+                mb_album = mb.album_for_id(
+                    relid, extra_external_sources=extra_external
+                )
+            except Exception as exc:
+                self._log.debug(
+                    "musicbrainz release lookup failed for {}: {}", relid, exc
+                )
+                continue
+            if mb_album is None:
+                continue
+
+            if mb_loaded:
+                albums.append(mb_album)
+
+            if external_plugins:
+                albums.extend(
+                    self._route_to_external(mb_album, external_plugins)
+                )
 
         self._log.debug("acoustid album candidates: {}", len(albums))
         return albums
@@ -246,14 +362,23 @@ class AcoustidPlugin(MetadataSourcePlugin):
         if item.path not in _matches:
             return []
 
-        mb = self._get_musicbrainz()
-        if mb is None:
+        # MusicBrainz recording responses do not carry cross-source
+        # track identifiers the way releases do, so there is no
+        # straightforward way to route acoustid track matches to an
+        # external metadata plugin. Fall back to requiring the
+        # ``musicbrainz`` plugin to be enabled for the track path.
+        mb_plugin = get_metadata_source("musicbrainz")
+        if mb_plugin is None:
+            self._log.debug(
+                "musicbrainz plugin not enabled; acoustid track "
+                "matches will not produce candidates"
+            )
             return []
 
         recording_ids, _ = _matches[item.path]
         tracks = []
         for recording_id in prefix(recording_ids, MAX_RECORDINGS):
-            track = mb.track_for_id(recording_id)
+            track = mb_plugin.track_for_id(recording_id)
             if track:
                 tracks.append(track)
         self._log.debug("acoustid item candidates: {}", len(tracks))
