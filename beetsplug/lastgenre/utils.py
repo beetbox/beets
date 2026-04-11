@@ -17,11 +17,10 @@
 
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    import re
-
     from beets.logging import BeetsLogger
 
     GenreIgnorePatterns = dict[str, list[re.Pattern[str]]]
@@ -64,7 +63,16 @@ def normalize_genre(logger: BeetsLogger, aliases: Aliases, genre: str) -> str:
     genre_lower = genre.lower()
     for pattern, template in aliases:
         if m := pattern.fullmatch(genre_lower):
-            expanded = m.expand(template)
+            try:
+                expanded = m.expand(template)
+            except (re.error, IndexError) as exc:
+                logger.warning(
+                    "invalid alias template {}; skipping for genre {}: {}",
+                    template,
+                    genre,
+                    exc,
+                )
+                continue
             if expanded != genre:
                 logger.extra_debug("aliased: {} -> {}", genre, expanded)
             return expanded
