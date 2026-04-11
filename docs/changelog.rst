@@ -9,6 +9,8 @@ below!
 Unreleased
 ----------
 
+Beets now officially supports Python 3.14.
+
 New features
 ~~~~~~~~~~~~
 
