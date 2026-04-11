@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import itertools
 import os
 import re
 from functools import cached_property
@@ -11,7 +12,6 @@ from beets import ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.logging import getLogger
 from beets.metadata_plugins import MetadataSourcePlugin
-from beetsplug.tidal.api_types import TrackDocument
 
 from .api import TidalAPI, TidalSession
 from .authenticate import ui_auth_flow
@@ -104,7 +104,7 @@ class TidalPlugin(MetadataSourcePlugin):
         if not (tidal_id := self._extract_id(album_id)):
             return None
 
-        if album := list(self.search_albums_by_ids(ids=[tidal_id])):
+        if album := list(self.search_albums_by_ids(tidal_ids=[tidal_id])):
             return album[0]
 
         log.warning("Could not find album:{0}", tidal_id)
@@ -117,7 +117,7 @@ class TidalPlugin(MetadataSourcePlugin):
         if not (tidal_id := self._extract_id(track_id)):
             return None
 
-        if track := list(self.search_tracks_by_ids(ids=[tidal_id])):
+        if track := list(self.search_tracks_by_ids(tidal_ids=[tidal_id])):
             return track[0]
 
         log.warning("Could not find track:{0}", tidal_id)
@@ -129,20 +129,115 @@ class TidalPlugin(MetadataSourcePlugin):
     def candidates(
         self, items: Sequence[Item], artist: str, album: str, va_likely: bool
     ) -> Iterable[AlbumInfo]:
-        breakpoint()
-        return []
+        candidates: list[AlbumInfo] = []
+        # Tidal allows to lookup via isrc and barcode (nice!)
+        # We just return early here as a lookup via isrc should
+        # return a 100% match
+        barcodes: list[str] = list(
+            filter(None, set(i.get("barcode") for i in items))
+        )
+        if barcodes and (
+            candidates := list(
+                filter(None, self.search_albums_by_ids(barcode_ids=barcodes)),
+            )
+        ):
+            return candidates
+
+        for query in self._album_queries(items):
+            candidates += self.search_albums_by_query(query)
+
+        log.debug("Found {0} candidates", len(candidates))
+        return candidates
 
     def item_candidates(
         self, item: Item, artist: str, title: str
     ) -> Iterable[TrackInfo]:
-        breakpoint()
-        return []
+        candidates: list[TrackInfo] = []
+        # Tidal allows to lookup via isrc and barcode (nice!)
+        # We just return early here as a lookup via isrc should
+        # return a 100% match
+        if isrc := item.get("isrc"):
+            if candidates := list(
+                filter(None, self.search_tracks_by_ids(isrcs=[isrc]))
+            ):
+                return candidates
+
+        for query in self._item_queries(item):
+            candidates += self.search_tracks_by_query(query)
+
+        log.debug("Found {0} candidates", len(candidates))
+        return candidates
 
     # ---------------------------------- Search ---------------------------------- #
+
+    @staticmethod
+    def _item_queries(item: Item) -> Iterable[str]:
+        """Search queries for items."""
+        yield item.title
+
+        if item.artist:
+            yield f"{item.artist} {item.title}"
+
+    @staticmethod
+    def _album_queries(items: Sequence[Item]) -> Iterable[str]:
+        """Search queries for albums."""
+
+        album_names = set(i.album for i in items)
+        artist_names = set(i.artist for i in items)
+
+        for album, artist in itertools.product(album_names, artist_names):
+            yield f"{artist} {album}"
+
+    def search_tracks_by_query(self, query: str) -> Iterable[TrackInfo]:
+        """Search for tracks given a string query."""
+        search_doc = self.api.search_results(
+            query,
+            include=["tracks.artists"],
+        )
+        track_lookup: dict[str, TidalTrack] = {
+            item["id"]: item
+            for item in search_doc.get("included", [])
+            if item["type"] == "tracks"
+        }
+        artist_lookup: dict[str, TidalArtist] = {
+            item["id"]: item
+            for item in search_doc.get("included", [])
+            if item["type"] == "artists"
+        }
+        for track_rel in search_doc["data"]["relationships"]["tracks"]["data"]:
+            if track := track_lookup.get(track_rel["id"]):
+                yield self._get_track_info(track, artist_lookup=artist_lookup)
+            else:
+                log.warning(
+                    "Track with id {0} not found in lookup",
+                    track_rel["id"],
+                )
+
+    def search_albums_by_query(self, query: str) -> Iterable[AlbumInfo]:
+        """Search for album given a string query."""
+        search_doc = self.api.search_results(
+            query,
+            include=["albums"],
+            # include="albums.items.artists" <- not supported
+            # It is a bit inconvinenet but we featch the items and artists
+            # for all albums seperatly
+        )
+        album_ids = [
+            album_rel["id"]
+            for album_rel in search_doc["data"]["relationships"]["albums"][
+                "data"
+            ]
+        ]
+        yield from filter(None, self.search_albums_by_ids(tidal_ids=album_ids))
 
     @overload
     def search_tracks_by_ids(
         self, *, ids: Iterable[str]
+    ) -> Iterable[TrackInfo | None]: ...
+
+    @overload
+    def search_tracks_by_ids(
+        self, *, tidal_ids: Iterable[str]
     ) -> Iterable[TrackInfo | None]: ...
 
     @overload
@@ -153,13 +248,16 @@ class TidalPlugin(MetadataSourcePlugin):
     def search_tracks_by_ids(
         self,
         ids: Iterable[str] | None = None,
+        tidal_ids: Iterable[str] | None = None,
         isrcs: Iterable[str] | None = None,
     ) -> Iterable[TrackInfo | None]:
-        tidal_ids = list(map(self._extract_id, ids or []))
+        _ids: list[str | None] = list(tidal_ids or [])
         isrcs = list(isrcs or [])
+        if ids:
+            _ids = list(map(self._extract_id, ids))
 
         tracks_doc = self.api.get_tracks(
-            ids=list(filter(None, tidal_ids)),
+            ids=list(filter(None, _ids)),
             isrcs=isrcs,
             include=["artists"],
         )
@@ -175,26 +273,33 @@ class TidalPlugin(MetadataSourcePlugin):
         }
 
         # Yield for IDs first
-        for tidal_id in tidal_ids:
-            if tidal_id is not None and (track := track_lookup.get(tidal_id)):
+        for id in _ids:
+            if id is not None and (track := track_lookup.get(id)):
                 yield self._get_track_info(track, artist_lookup=artist_lookup)
             else:
                 yield None
 
-        # Then yield for ISRCs (matching by ISRC field in tracks)
-        for isrc in isrcs:
-            track = next(
-                (t for t in track_lookup.values() if t.get("isrc") == isrc),
-                None,
-            )
-            if track:
-                yield self._get_track_info(track, artist_lookup=artist_lookup)
-            else:
-                yield None
+        if isrcs:
+            isrc_to_track: dict[str, TidalTrack] = {
+                t["attributes"]["isrc"]: t for t in track_lookup.values()
+            }
+
+            for isrc in isrcs:
+                if track := isrc_to_track.get(isrc):
+                    yield self._get_track_info(
+                        track, artist_lookup=artist_lookup
+                    )
+                else:
+                    yield None
 
     @overload
     def search_albums_by_ids(
         self, *, ids: Iterable[str]
+    ) -> Iterable[AlbumInfo | None]: ...
+
+    @overload
+    def search_albums_by_ids(
+        self, *, tidal_ids: Iterable[str]
     ) -> Iterable[AlbumInfo | None]: ...
 
     @overload
@@ -205,13 +310,16 @@ class TidalPlugin(MetadataSourcePlugin):
     def search_albums_by_ids(
         self,
         ids: Iterable[str] | None = None,
+        tidal_ids: Iterable[str] | None = None,
         barcode_ids: Iterable[str] | None = None,
     ) -> Iterable[AlbumInfo | None]:
-        tidal_ids = list(map(self._extract_id, ids or []))
+        _ids: list[str | None] = list(tidal_ids or [])
         barcode_ids = list(barcode_ids or [])
+        if ids:
+            _ids = list(map(self._extract_id, ids))
 
         albums_doc = self.api.get_albums(
-            ids=list(filter(None, tidal_ids)),
+            ids=list(filter(None, _ids)),
             barcode_ids=barcode_ids,
             include=["items.artists", "artists"],
         )
@@ -232,26 +340,8 @@ class TidalPlugin(MetadataSourcePlugin):
         }
 
         # Yield for IDs first
-        for tidal_id in tidal_ids:
-            if tidal_id is not None and (album := album_lookup.get(tidal_id)):
-                yield self._get_album_info(
-                    album,
-                    track_lookup=track_lookup,
-                    artist_lookup=artist_lookup,
-                )
-            else:
-                yield None
-        # Then yield for ISRCs (matching by ISRC field in tracks)
-        for barcode in barcode_ids:
-            album = next(
-                (
-                    a
-                    for a in album_lookup.values()
-                    if a.get("barcodeId") == barcode
-                ),
-                None,
-            )
-            if album:
+        for id in _ids:
+            if id is not None and (album := album_lookup.get(id)):
                 yield self._get_album_info(
                     album,
                     track_lookup=track_lookup,
@@ -260,14 +350,20 @@ class TidalPlugin(MetadataSourcePlugin):
             else:
                 yield None
 
-    @staticmethod
-    def _item_queries(item: Item) -> Iterable[str]:
-        """Search query for item.
+        if barcode_ids:
+            barcode_to_album: dict[str, TidalAlbum] = {
+                a["attributes"]["barcodeId"]: a for a in album_lookup.values()
+            }
 
-        At the moment we only search using the title but this
-        is designed to be extendable.
-        """
-        yield item.title
+            for barcode in barcode_ids:
+                if album := barcode_to_album.get(barcode):
+                    yield self._get_album_info(
+                        album,
+                        track_lookup=track_lookup,
+                        artist_lookup=artist_lookup,
+                    )
+                else:
+                    yield None
 
     # ---------------------------------- Parsing --------------------------------- #
 

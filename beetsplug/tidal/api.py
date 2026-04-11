@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import urllib.parse
 from pathlib import Path
 from time import sleep
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, TypeVar
 
 import requests
 
@@ -12,7 +13,14 @@ from beetsplug._utils.requests import RateLimitAdapter, TimeoutAndRetrySession
 from .authenticate import TidalToken
 
 if TYPE_CHECKING:
-    from .api_types import AlbumDocument, Document, TrackDocument
+    from .api_types import (
+        AlbumDocument,
+        Document,
+        SearchDocument,
+        TrackDocument,
+    )
+
+    T = TypeVar("T")
 
 log = getLogger("beets.tidal")
 
@@ -96,9 +104,9 @@ class TidalSession(TimeoutAndRetrySession):
         self,
         url: str,
         include: list[str] | str | None = None,
-        params: dict | None = None,
+        params: dict[str, Any] | None = None,
         **kwargs,
-    ) -> Document:
+    ) -> Document[list[Any]]:
         """
         Perform a GET request to the Tidal API with pagination resolution.
 
@@ -111,7 +119,7 @@ class TidalSession(TimeoutAndRetrySession):
         include = include or []
         params = params or {}
 
-        doc: Document = {
+        doc: Document[list[Any]] = {
             "data": [],
             "included": [],
             "links": {"next": url},
@@ -138,9 +146,9 @@ class TidalSession(TimeoutAndRetrySession):
 
     def _merge_multiresource_pagination(
         self,
-        a: Document,
-        b: Document,
-    ) -> Document:
+        a: Document[list[T]],
+        b: Document[list[T]],
+    ) -> Document[list[T]]:
         """
         Merge of b into a, following JSON:API spec rules.
 
@@ -152,7 +160,6 @@ class TidalSession(TimeoutAndRetrySession):
         a["included"] = a.get("included", [])
         a["links"] = a.get("links", {})
 
-        # Append data (primary resources)
         a["data"].extend(b["data"])
 
         # Merge included with deduplication
@@ -165,14 +172,6 @@ class TidalSession(TimeoutAndRetrySession):
 
         # Update pagination links (final state wins)
         a["links"] = b.get("links", {})
-
-        # Merge meta (deep merge if needed)
-        if "meta" in b:
-            if "meta" not in a:
-                a["meta"] = b["meta"]
-            else:
-                a["meta"].update(b["meta"])
-
         return a
 
     def _refresh_token(self) -> None:
@@ -216,7 +215,7 @@ class TidalAPI:
         explicit_filter: str = "INCLUDE",
         include: list[str] | None = None,
         country_code: str = "US",
-    ):
+    ) -> SearchDocument:
         """Search results for a query.
 
         https://tidal-music.github.io/tidal-api-reference/#/searchResults
@@ -228,8 +227,9 @@ class TidalAPI:
         }
 
         return self.session.get(
-            f"{API_BASE}/searchResults/{query}", params=params
-        )
+            f"{API_BASE}/searchResults/{urllib.parse.quote(query)}",
+            params=params,
+        ).json()
 
     def get_tracks(
         self,

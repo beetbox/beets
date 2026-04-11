@@ -16,6 +16,8 @@ from beets import ui
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from beetsplug._typing import JSONDict
+
 
 @dataclass(slots=True)
 class TidalToken:
@@ -28,7 +30,7 @@ class TidalToken:
     expires_at: datetime
 
     @classmethod
-    def from_dict(cls, value: dict) -> TidalToken:
+    def from_dict(cls, value: JSONDict) -> TidalToken:
         """Create token from API response dict (which has expires_in)."""
         if "expires_in" in value:
             expires_at = datetime.now(timezone.utc) + timedelta(
@@ -57,7 +59,7 @@ class TidalToken:
             data = json.load(f)
         return cls.from_dict(data)
 
-    def update(self, value: dict) -> None:
+    def update(self, value: JSONDict) -> None:
         """Update token with new data (e.g., from refresh)."""
         self.access_token = value["access_token"]
         if "refresh_token" in value:
@@ -69,7 +71,7 @@ class TidalToken:
                 seconds=value["expires_in"]
             )
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> JSONDict:
         """Convert to dict for serialization."""
         return {
             "access_token": self.access_token,
@@ -149,7 +151,7 @@ def request_token(
     code_verifier: str,
     client_id: str,
     redirect_uri: str,
-) -> dict:
+) -> JSONDict:
     """Exchange authorization code from redirect URL for a token."""
 
     parsed = urlparse(redirect_url)
