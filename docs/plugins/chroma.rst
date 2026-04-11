@@ -133,21 +133,21 @@ to files' metadata.
       candidates as before.
     - With any of :doc:`discogs`, bandcamp, :doc:`spotify`, ``deezer``, or
       ``tidal`` plugins enabled, chroma extracts the corresponding external
-      release ID from the MusicBrainz release's ``url-relations`` and looks
-      the album up through that plugin, even if ``musicbrainz`` itself is
-      not in the active plugins list.
-    - With both kinds enabled, chroma returns both the MusicBrainz candidate
-      and any cross-referenced external candidates.
+      release ID from the MusicBrainz release's ``url-relations`` and looks the
+      album up through that plugin, even if ``musicbrainz`` itself is not in the
+      active plugins list.
+    - With both kinds enabled, chroma returns both the MusicBrainz candidate and
+      any cross-referenced external candidates.
 
     If none of these metadata source plugins are loaded, chroma still
     fingerprints files and stores the ``acoustid_id`` and
-    ``acoustid_fingerprint`` fields, but it does not contribute any
-    candidates during autotagging.
+    ``acoustid_fingerprint`` fields, but it does not contribute any candidates
+    during autotagging.
 
-    The ``item_candidates`` (singleton track) path is different:
-    MusicBrainz recording responses do not carry cross-source track IDs, so
-    chroma's per-track candidate resolution still requires the ``musicbrainz``
-    plugin to be enabled.
+    The ``item_candidates`` (singleton track) path is different: MusicBrainz
+    recording responses do not carry cross-source track IDs, so chroma's
+    per-track candidate resolution still requires the ``musicbrainz`` plugin to
+    be enabled.
 
 .. _submitfp:
 

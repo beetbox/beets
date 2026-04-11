@@ -87,13 +87,13 @@ Bug fixes
 - :doc:`plugins/chroma`: Route Acoustid fingerprint matches through the
   metadata-source plugins the user actually has enabled instead of
   unconditionally returning MusicBrainz candidates. Chroma still queries
-  MusicBrainz for release data (since acoustid only returns MusicBrainz
-  IDs), but it now extracts Discogs / Bandcamp / Spotify / Deezer / Tidal
-  cross-reference IDs from the release's ``url-relations`` and looks the
-  album up through the corresponding plugin when that plugin is loaded,
-  so a user running ``chroma`` with, say, ``spotify`` but without
-  ``musicbrainz`` now gets Spotify candidates from acoustid matches
-  instead of MusicBrainz ones. :bug:`6212`
+  MusicBrainz for release data (since acoustid only returns MusicBrainz IDs),
+  but it now extracts Discogs / Bandcamp / Spotify / Deezer / Tidal
+  cross-reference IDs from the release's ``url-relations`` and looks the album
+  up through the corresponding plugin when that plugin is loaded, so a user
+  running ``chroma`` with, say, ``spotify`` but without ``musicbrainz`` now gets
+  Spotify candidates from acoustid matches instead of MusicBrainz ones.
+  :bug:`6212`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
