@@ -1751,8 +1751,9 @@ class ImportIdTest(ImportTestCase):
 
 @_common.slow_test()
 class MpeglayerWavImportTest(ImportTestCase):
-    """Test remuxing of WAVE_FORMAT_MPEGLAYER3 WAV files"""
+    """Test remuxing of WAVE_FORMAT_MPEGLAYER3 WAV files."""
 
+    @unittest.skipUnless(shutil.which("ffmpeg"), "ffmpeg not found")
     def test_remux_mpeglayer3_wav(self):
         from beets.importer.tasks import _remux_mpeglayer3_wav
 
