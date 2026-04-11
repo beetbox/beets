@@ -26,6 +26,12 @@ New features
       after upgrading to trigger the migration. Only then you can safely move
       the library to a new location.
 
+- :doc:`plugins/discogs`: Import Discogs remixer, lyricist, composer, and
+  arranger credits into the multi-value ``remixers``, ``lyricists``,
+  ``composers``, and ``arrangers`` fields. Featuring credits are also kept out
+  of the main artist and artist ID fields so contributor roles do not replace
+  the primary release artist. :bug:`6380`
+
 ..
     Bug fixes
     ~~~~~~~~~
