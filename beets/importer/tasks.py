@@ -916,13 +916,13 @@ def _remux_mpeglayer3_wav(path: util.PathBytes) -> util.PathBytes | None:
     try:
         util.command_output(
             [
-                os.fsencode("ffmpeg"),
-                b"-i",
-                util.syspath(path).encode(),
-                b"-c:a",
-                b"copy",
-                b"-y",
-                util.syspath(mp3_path).encode(),
+                "ffmpeg",
+                "-i",
+                util.syspath(path),
+                "-c:a",
+                "copy",
+                "-y",
+                util.syspath(mp3_path),
             ]
         )
         util.remove(path)
