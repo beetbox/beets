@@ -26,6 +26,9 @@ Bug fixes
   Play-count imports now use source-specific fields so
   :doc:`plugins/listenbrainz`, :doc:`plugins/lastimport`, and
   :doc:`plugins/mpdstats` do not clash. :bug:`6469`
+- Automatically remux WAV files containing MP3 streams
+  (``WAVE_FORMAT_MPEGLAYER3``) to proper MP3 files during import, instead of
+  silently importing them with incorrect metadata. :bug:`6455`
 
 ..
     For plugin developers

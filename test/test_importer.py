@@ -1690,3 +1690,27 @@ class ImportIdTest(ImportTestCase):
         assert {"VALID_RECORDING_0", "VALID_RECORDING_1"} == {
             c.info.title for c in task.candidates
         }
+
+
+@_common.slow_test()
+class MpeglayerWavImportTest(AsIsImporterMixin, ImportTestCase):
+    """Test that WAVE_FORMAT_MPEGLAYER3 WAV files are remuxed to MP3 during import."""
+
+    def setUp(self):
+        super().setUp()
+        mpeglayer3_src = os.path.join(_common.RSRC, b"mpeglayer3.wav")
+        self.mpeglayer3_path = os.path.join(self.import_dir, b"mpeglayer3.wav")
+        shutil.copy(syspath(mpeglayer3_src), syspath(self.mpeglayer3_path))
+
+    def test_mpeglayer3_wav_remuxed_to_mp3(self):
+        """MPEGLAYER3 WAV files should be remuxed to MP3 on import."""
+        self.run_asis_importer()
+        assert not os.path.exists(self.mpeglayer3_path)
+        mp3_path = os.path.splitext(self.mpeglayer3_path)[0] + b".mp3"
+        assert os.path.exists(mp3_path)
+
+        # library should contain an MP3 item with correct metadata
+        items = list(self.lib.items())
+        mp3_items = [i for i in items if i.format == "MP3"]
+        assert len(mp3_items) >= 1
+        assert mp3_items[0].length == pytest.approx(5.04, abs=0.1)
