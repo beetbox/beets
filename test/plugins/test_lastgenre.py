@@ -23,12 +23,12 @@ import pytest
 
 from beets.library import Album
 from beets.test import _common
-from beets.test.helper import IOMixin, PluginTestCase
+from beets.test.helper import PluginTest
 from beetsplug import lastgenre
 from beetsplug.lastgenre.utils import is_ignored
 
 
-class LastGenrePluginTest(IOMixin, PluginTestCase):
+class LastGenrePluginTest(PluginTest):
     plugin = "lastgenre"
 
     def setUp(self):
