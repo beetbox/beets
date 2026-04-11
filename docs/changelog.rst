@@ -29,6 +29,9 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- Automatically remux WAV files containing MP3 streams
+  (``WAVE_FORMAT_MPEGLAYER3``) to proper MP3 files during import, instead of
+  silently importing them with incorrect metadata. :bug:`6455`
 - :doc:`plugins/listenbrainz`: Retry listenbrainz requests for temporary
   failures.
 
@@ -83,9 +86,6 @@ New features
 Bug fixes
 ~~~~~~~~~
 
-- Automatically remux WAV files containing MP3 streams
-  (``WAVE_FORMAT_MPEGLAYER3``) to proper MP3 files during import, instead of
-  silently importing them with incorrect metadata. :bug:`6455`
 - :doc:`plugins/deezer`: Fix Various Artists albums being tagged with a
   localized string instead of the configured ``va_name``. Detection now uses
   Deezer's artist ID rather than the artist name string. :bug:`4956`
