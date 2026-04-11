@@ -974,6 +974,15 @@ def test_normalize_genre(
     assert normalize_genre(Mock(), aliases, genre) == expected
 
 
+def test_normalize_genre_invalid_template_does_not_crash() -> None:
+    """Invalid replacement templates are skipped instead of crashing."""
+    logger = Mock()
+    aliases = [(re.compile(r"(hip)[ /-]*hop", re.IGNORECASE), r"\g<2> hop")]
+
+    assert normalize_genre(logger, aliases, "hip-hop") == "hip-hop"
+    logger.warning.assert_called_once()
+
+
 # Aliases: _load_aliases() config parsing tests
 
 
