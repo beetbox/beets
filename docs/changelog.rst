@@ -83,6 +83,9 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- Automatically remux WAV files containing MP3 streams
+  (``WAVE_FORMAT_MPEGLAYER3``) to proper MP3 files during import, instead of
+  silently importing them with incorrect metadata. :bug:`6455`
 - :doc:`plugins/deezer`: Fix Various Artists albums being tagged with a
   localized string instead of the configured ``va_name``. Detection now uses
   Deezer's artist ID rather than the artist name string. :bug:`4956`
@@ -98,9 +101,6 @@ Bug fixes
   Play-count imports now use source-specific fields so
   :doc:`plugins/listenbrainz`, :doc:`plugins/lastimport`, and
   :doc:`plugins/mpdstats` do not clash. :bug:`6469`
-- Automatically remux WAV files containing MP3 streams
-  (``WAVE_FORMAT_MPEGLAYER3``) to proper MP3 files during import, instead of
-  silently importing them with incorrect metadata. :bug:`6455`
 - :ref:`import-cmd` Fix ``albumartists_sort`` (and related fields) incorrectly
   prepending the full combined artist credit as the first element for
   multi-artist releases. :bug:`6470`
