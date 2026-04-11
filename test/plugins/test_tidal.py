@@ -7,6 +7,7 @@ from unittest.mock import Mock
 
 import pytest
 
+from beets.library.models import Item
 from beets.test.helper import PluginTestCase
 from beetsplug.tidal import TidalPlugin
 
@@ -395,6 +396,127 @@ class TestAlbumsForIDs(TidalPluginTest):
         assert results[0] is not None
         assert results[0].album == "API Album"
         assert results[1] is None
+
+
+class TestCandidates(TidalPluginTest):
+    """Tests for candidates method."""
+
+    def test_candidates_with_barcode(self):
+        """Test that candidates uses barcode lookup first."""
+        track = _make_track("t1", "Album Track", "PT3M", "ISRC001", ["a1"])
+        album, track_lookup, artist_lookup = _make_album(
+            "al1", "Barcode Album", [track], ["a1"]
+        )
+
+        self.tidal.api.get_albums = Mock(
+            return_value={
+                "data": [album],
+                "included": [*artist_lookup.values(), *track_lookup.values()],
+            }
+        )
+
+        items = [Item(barcode="123456")]
+
+        candidates = list(
+            self.tidal.candidates(items, "Artist", "Album", False)
+        )
+
+        self.tidal.api.get_albums.assert_called_once()
+        assert len(candidates) == 1
+        assert candidates[0].album == "Barcode Album"
+
+    def test_candidates_with_query_fallback(self):
+        """Test that candidates falls back to query search when no barcode."""
+        items = [Item(title="My Song", artist="My Artist", album="My Album")]
+
+        # Mock search returning album IDs
+        self.tidal.api.search_results = Mock(
+            return_value={
+                "data": {
+                    "relationships": {
+                        "albums": {
+                            "data": [{"id": "al1", "type": "albums"}],
+                        },
+                    },
+                },
+            }
+        )
+
+        # Mock album lookup by ID
+        track = _make_track("t1", "Album Track", "PT3M", "ISRC001", ["a1"])
+        album, track_lookup, artist_lookup = _make_album(
+            "al1", "Query Album", [track], ["a1"]
+        )
+        self.tidal.api.get_albums = Mock(
+            return_value={
+                "data": [album],
+                "included": [*artist_lookup.values(), *track_lookup.values()],
+            }
+        )
+
+        candidates = list(
+            self.tidal.candidates(items, "My Artist", "My Album", False)
+        )
+
+        # Should have called search_results
+        assert self.tidal.api.search_results.called
+        assert len(candidates) == 1
+        assert candidates[0].album == "Query Album"
+
+
+class TestItemCandidates(TidalPluginTest):
+    """Tests for item_candidates method."""
+
+    def test_item_candidates_with_isrc(self):
+        """Test that item_candidates uses ISRC lookup first."""
+        track = _make_track(
+            "490839595", "ISRC Track", "PT3M", "ISRC001", ["a1"]
+        )
+        artist = _make_artist("a1", "ISRC Artist")
+
+        self.tidal.api.get_tracks = Mock(
+            return_value={
+                "data": [track],
+                "included": [artist],
+            }
+        )
+
+        item = Item(isrc="ISRC001")
+
+        results = list(self.tidal.item_candidates(item, "Artist", "Title"))
+
+        self.tidal.api.get_tracks.assert_called_once()
+        assert len(results) == 1
+        assert results[0].title == "ISRC Track"
+
+    def test_item_candidates_with_query_fallback(self):
+        """Test that item_candidates falls back to query search when no ISRC."""
+        item = Item(title="Query Song", artist="Query Artist")
+
+        self.tidal.api.search_results = Mock(
+            return_value={
+                "data": {
+                    "relationships": {
+                        "tracks": {
+                            "data": [{"id": "490839595", "type": "tracks"}],
+                        },
+                    },
+                },
+                "included": [
+                    _make_track(
+                        "490839595", "Query Track", "PT3M", "ISRC002", ["a1"]
+                    ),
+                    _make_artist("a1", "Query Artist"),
+                ],
+            }
+        )
+
+        results = list(
+            self.tidal.item_candidates(item, "Query Artist", "Query Song")
+        )
+
+        assert self.tidal.api.search_results.called
+        assert results[0].title == "Query Track"
 
 
 class TestStaticHelpers:
