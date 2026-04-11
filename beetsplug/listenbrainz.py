@@ -15,6 +15,7 @@ from beets.plugins import BeetsPlugin
 
 from ._utils.musicbrainz import MusicBrainzAPIMixin
 from ._utils.playcount import update_play_counts
+from ._utils.requests import TimeoutAndRetrySession
 
 if TYPE_CHECKING:
     from ._utils.playcount import Track
@@ -34,6 +35,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         super().__init__()
         self.token = self.config["token"].get()
         self.username = self.config["username"].get()
+        self.session = TimeoutAndRetrySession()
         self.AUTH_HEADER = {"Authorization": f"Token {self.token}"}
         config["listenbrainz"]["token"].redact = True
 
@@ -108,7 +110,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         returning, so the next call is guaranteed a fresh quota.
         """
         try:
-            response = requests.get(
+            response = self.session.get(
                 url=url,
                 headers=self.AUTH_HEADER,
                 timeout=10,
