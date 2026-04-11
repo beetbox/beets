@@ -13,6 +13,7 @@
 # included in all copies or substantial portions of the Software.
 
 
+from typing import Any, ClassVar
 from unittest.mock import ANY, Mock, call
 
 from beets import util

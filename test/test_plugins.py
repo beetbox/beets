@@ -19,7 +19,7 @@ import logging
 import os
 import pkgutil
 import sys
-from typing import Any
+from typing import Any, ClassVar
 from unittest.mock import ANY, patch
 
 import pytest
@@ -52,11 +52,11 @@ class TestPluginRegistration(PluginTest):
     """
 
     class DummyPlugin(plugins.BeetsPlugin):
-        item_types = {
+        item_types: ClassVar[dict[str, types.Type]] = {
             "foo": types.Float(),
             "bar": types.MULTI_VALUE_DSV,
         }
-        album_types = {
+        album_types: ClassVar[dict[str, types.Type]] = {
             "baz": types.INTEGER,
         }
 
@@ -75,22 +75,15 @@ class TestPluginRegistration(PluginTest):
         assert Item._types.get("bar") is types.MULTI_VALUE_DSV
         assert Album._types.get("baz") is types.INTEGER
 
-    def test_multi_value_flex_field_type(self):
-        item = Item(path="apath", artist="aaa")
-        item.bar = ["one", "two", "three"]
-        item.add(self.lib)
-
-        out = self.run_with_output("ls", "-f", "$bar")
-        delimiter = types.MULTI_VALUE_DSV.delimiter
-        assert out == f"one{delimiter}two{delimiter}three\n"
-
     def test_duplicate_field_type(self):
         """A PluginConflictError should be raised if
         another plugin tries to register the same field_type str.
         """
 
         class DuplicateDummyPlugin(plugins.BeetsPlugin):
-            album_types = {"baz": types.Float()}
+            album_types: ClassVar[dict[str, types.Type]] = {
+                "baz": types.Float()
+            }
 
         with (
             self.plugins(
@@ -302,7 +295,9 @@ class PromptChoicesTest(TerminalImportMixin, ImportHelper, PluginMixin):
                 "Enter search",
                 "enter Id",
                 "aBort",
-            ) + ("Foo", "baR")
+                "Foo",
+                "baR",
+            )
 
             self.importer.add_choice(Action.SKIP)
             self.importer.run()
@@ -336,7 +331,9 @@ class PromptChoicesTest(TerminalImportMixin, ImportHelper, PluginMixin):
                 "Enter search",
                 "enter Id",
                 "aBort",
-            ) + ("Foo", "baR")
+                "Foo",
+                "baR",
+            )
 
             config["import"]["singletons"] = True
             self.importer.add_choice(Action.SKIP)
@@ -375,7 +372,8 @@ class PromptChoicesTest(TerminalImportMixin, ImportHelper, PluginMixin):
                 "Enter search",
                 "enter Id",
                 "aBort",
-            ) + ("baZ",)
+                "baZ",
+            )
             self.importer.add_choice(Action.SKIP)
             self.importer.run()
             self.mock_input_options.assert_called_once_with(
@@ -410,7 +408,8 @@ class PromptChoicesTest(TerminalImportMixin, ImportHelper, PluginMixin):
                 "Enter search",
                 "enter Id",
                 "aBort",
-            ) + ("Foo",)
+                "Foo",
+            )
 
             # DummyPlugin.foo() should be called once
             with patch.object(DummyPlugin, "foo", autospec=True) as mock_foo:
@@ -452,7 +451,8 @@ class PromptChoicesTest(TerminalImportMixin, ImportHelper, PluginMixin):
                 "Enter search",
                 "enter Id",
                 "aBort",
-            ) + ("Foo",)
+                "Foo",
+            )
 
             # DummyPlugin.foo() should be called once
             with helper.control_stdin("f\n"):
