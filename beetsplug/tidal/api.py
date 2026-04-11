@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import urllib.parse
+from itertools import islice, zip_longest
 from pathlib import Path
 from time import sleep
 from typing import TYPE_CHECKING, Any, TypeVar
@@ -13,6 +14,8 @@ from beetsplug._utils.requests import RateLimitAdapter, TimeoutAndRetrySession
 from .authenticate import TidalToken
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from .api_types import (
         AlbumDocument,
         Document,
@@ -26,6 +29,15 @@ log = getLogger("beets.tidal")
 
 
 API_BASE = "https://openapi.tidal.com/v2"
+MAX_FILTER_SIZE = 20
+
+
+def _batched(iterable: Iterable[T], n: int) -> Iterable[list[T]]:
+    # FIXME: Replace with itertools.batched once
+    # we upgrade to python > 3.12
+    it = iter(iterable)
+    while batch := list(islice(it, n)):
+        yield batch
 
 
 class TidalSession(TimeoutAndRetrySession):
@@ -129,7 +141,7 @@ class TidalSession(TimeoutAndRetrySession):
                 **kwargs,
             )
             page_doc = res.json()
-            doc = self._merge_multiresource_pagination(doc, page_doc)
+            doc = self.merge_multiresource_pagination(doc, page_doc)
 
         # Dedupe include
         doc["included"] = list(
@@ -140,8 +152,8 @@ class TidalSession(TimeoutAndRetrySession):
         )
         return doc
 
-    def _merge_multiresource_pagination(
-        self,
+    @staticmethod
+    def merge_multiresource_pagination(
         a: Document[list[T]],
         b: Document[list[T]],
     ) -> Document[list[T]]:
@@ -229,61 +241,80 @@ class TidalAPI:
 
     def get_tracks(
         self,
-        # filters
-        ids: list[str] | str | None = None,
-        isrcs: list[str] | str | None = None,
-        *,
-        include: list[str] | str | None = None,
+        ids: list[str] | None = None,
+        isrcs: list[str] | None = None,
+        include: list[str] | None = None,
         country_code: str = "US",
     ) -> TrackDocument:
         """Fetch tracks resolving pagination and included items.
 
-        Should only ever be called with 20 items as
-        tidal does not support more per requests. This does not mean more than
-        20 cant be returned.
-
         https://tidal-music.github.io/tidal-api-reference/#/tracks/get_tracks
         """
-        params: dict[str, str | list[str]] = {}
-        if country_code:
-            params["countryCode"] = country_code
-        if ids:
-            params["filter[id]"] = ids
-        if isrcs:
-            params["filter[isrc]"] = isrcs
+        ids = ids or []
+        isrcs = isrcs or []
 
-        return self.session.get_paginated(
-            f"{API_BASE}/tracks",
-            include,
-            params=params,
-        )
+        # Tidal allows at max 20 filters per request. This needs a bit of extra
+        # logic sadly.
+        doc: TrackDocument = {
+            "data": [],
+            "included": [],
+        }
+        for id_batch, isrc_batch in zip_longest(
+            _batched(ids, MAX_FILTER_SIZE),
+            _batched(isrcs, MAX_FILTER_SIZE),
+            fillvalue=(),
+        ):
+            params: dict[str, Any] = {"countryCode": country_code}
+            if id_batch:
+                params["filter[id]"] = id_batch
+            if isrc_batch:
+                params["filter[isrc]"] = isrc_batch
+
+            doc = self.session.merge_multiresource_pagination(
+                doc,
+                self.session.get_paginated(
+                    f"{API_BASE}/tracks", include, params=params
+                ),
+            )
+
+        return doc
 
     def get_albums(
         self,
-        # filters
-        ids: list[str] | str | None = None,
-        barcode_ids: list[str] | str | None = None,
-        *,
-        include: list[str] | str | None = None,
+        ids: list[str] | None = None,
+        barcode_ids: list[str] | None = None,
+        include: list[str] | None = None,
         country_code: str = "US",
     ) -> AlbumDocument:
         """Fetch Albums resolving pagination and included items.
 
-        Should only ever be called with 20 items as tidal does not support more per
-        requests. This does not mean more than 20 cant be returned.
-
         https://tidal-music.github.io/tidal-api-reference/#/albums/get_albums
         """
-        params: dict[str, str | list[str]] = {}
-        if country_code:
-            params["countryCode"] = country_code
-        if ids:
-            params["filter[id]"] = ids
-        if barcode_ids:
-            params["filter[barcodeId]"] = barcode_ids
+        ids = ids or []
+        barcode_ids = barcode_ids or []
 
-        return self.session.get_paginated(
-            f"{API_BASE}/albums",
-            include,
-            params=params,
-        )
+        # Tidal allows at max 20 filters per request. This needs a bit of extra
+        # logic sadly.
+        doc: AlbumDocument = {
+            "data": [],
+            "included": [],
+        }
+        for id_batch, barcode_batch in zip_longest(
+            _batched(ids, MAX_FILTER_SIZE),
+            _batched(barcode_ids, MAX_FILTER_SIZE),
+            fillvalue=(),
+        ):
+            params: dict[str, Any] = {"countryCode": country_code}
+            if id_batch:
+                params["filter[id]"] = id_batch
+            if barcode_batch:
+                params["filter[barcodeId]"] = barcode_batch
+
+            doc = self.session.merge_multiresource_pagination(
+                doc,
+                self.session.get_paginated(
+                    f"{API_BASE}/albums", include, params=params
+                ),
+            )
+
+        return doc
