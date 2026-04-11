@@ -59,6 +59,18 @@ New features
       after upgrading to trigger the migration. Only then you can safely move
       the library to a new location.
 
+- **Tidal plugin**: Introduces a new plugin for fetching metadata from Tidal. It
+  supports album and track lookups by ID, including batch operations via
+  ``albums_for_ids`` and ``tracks_for_ids``. It also enables search by query as
+  well as identifier-based retrieval, with support for ISRC codes (tracks) and
+  barcode/EANs (albums).
+
+  This is an initial, relatively minimal implementation, but already fully
+  usable for common metadata workflows. We welcome feedback, improvement ideas,
+  and community contributions to further extend its capabilities.
+
+  See :doc:`plugins/tidal` for more information.
+
 - :doc:`plugins/inline`: Add access to the ``album`` or ``item`` object as
   ``db_obj`` in inline fields.
 - :doc:`plugins/discogs`: Import Discogs remixer, lyricist, composer, and
