@@ -120,6 +120,11 @@ Bug fixes
   multi-valued fields such as ``genres`` by applying rules to each matching list
   entry. Additionally, apply rewrite rules in config order, so that multiple
   rules can be applied to the same field. :bug:`6515`
+- :doc:`plugins/chroma`: Do not produce MusicBrainz-sourced autotagger
+  candidates when the :doc:`plugins/musicbrainz` plugin is not enabled. The
+  chroma plugin now looks up the musicbrainz plugin through the metadata-source
+  registry instead of unconditionally instantiating its own private instance.
+  :bug:`6212`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
