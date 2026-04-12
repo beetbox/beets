@@ -44,12 +44,14 @@ if TYPE_CHECKING:
     from ._utils.musicbrainz import (
         Alias,
         ArtistCredit,
+        ArtistRelation,
         LabelInfo,
         Medium,
         Recording,
         Release,
         ReleaseGroup,
         UrlRelation,
+        WorkRelation,
     )
 
 VARIOUS_ARTISTS_ID = "89ad4ac3-39f7-470e-963a-56509c546377"
@@ -117,6 +119,16 @@ class ExternalIdsInfo(TypedDict):
     deezer_album_id: NotRequired[str | None]
     tidal_album_id: NotRequired[str | None]
     beatport_album_id: NotRequired[str | None]
+
+
+class WorkRelationsInfo(TypedDict):
+    work: str | None
+    mb_workid: str | None
+    lyricists: list[str] | None
+    lyricists_ids: list[str] | None
+    composers: list[str] | None
+    composers_ids: list[str] | None
+    composer_sort: str | None
 
 
 def _preferred_alias(
@@ -320,6 +332,48 @@ class MusicBrainzPlugin(
             "artists_credit": artists_credit,
         }
 
+    @staticmethod
+    def _parse_work_relations(
+        relations: list[WorkRelation],
+    ) -> WorkRelationsInfo:
+        """Extract composer and lyricist credits from work relations.
+
+        Traverses performance-type relations to collect associated artist
+        credits, separating them into composers and lyricists along with
+        their MusicBrainz IDs and sort names.
+        """
+        lyricists: list[str] = []
+        lyricists_ids: list[str] = []
+        composers: list[str] = []
+        composers_ids: list[str] = []
+        composer_sort: list[str] = []
+
+        artist_relations = [
+            ar
+            for r in relations
+            if r["type"] == "performance"
+            for ar in r["work"].get("artist_relations", [])
+        ]
+        for artist_relation in artist_relations:
+            if (rel_type := artist_relation["type"]) == "lyricist":
+                lyricists.append(artist_relation["artist"]["name"])
+                lyricists_ids.append(artist_relation["artist"]["id"])
+            elif rel_type == "composer":
+                composers.append(artist_relation["artist"]["name"])
+                composers_ids.append(artist_relation["artist"]["id"])
+                composer_sort.append(artist_relation["artist"]["sort_name"])
+
+        return {
+            # TODO: double-check if we should really use the last work here
+            "work": relations[-1]["work"]["title"] if relations else None,
+            "mb_workid": relations[-1]["work"]["id"] if relations else None,
+            "lyricists": lyricists or None,
+            "lyricists_ids": lyricists_ids or None,
+            "composers": composers or None,
+            "composers_ids": composers_ids or None,
+            "composer_sort": ", ".join(composer_sort) or None,
+        }
+
     def track_info(self, recording: Recording) -> TrackInfo:
         """Build a `TrackInfo` object from a MusicBrainz recording payload.
 
@@ -345,38 +399,8 @@ class MusicBrainzPlugin(
                 ";".join(isrcs) if (isrcs := recording.get("isrcs")) else None
             ),
             **self._parse_artist_credits(recording["artist_credit"]),
+            **self._parse_work_relations(recording.get("work_relations", [])),
         )
-
-        lyricists: list[str] = []
-        lyricists_ids: list[str] = []
-        composers: list[str] = []
-        composers_ids: list[str] = []
-        composer_sort: list[str] = []
-        for work_relation in recording.get("work_relations", ()):
-            if work_relation["type"] != "performance":
-                continue
-
-            work = work_relation["work"]
-            info.work = work["title"]
-            info.mb_workid = work["id"]
-            if "disambiguation" in work:
-                info.work_disambig = work["disambiguation"]
-
-            for artist_relation in work.get("artist_relations", ()):
-                if (rel_type := artist_relation["type"]) == "lyricist":
-                    lyricists.append(artist_relation["artist"]["name"])
-                    lyricists_ids.append(artist_relation["artist"]["id"])
-                elif rel_type == "composer":
-                    composers.append(artist_relation["artist"]["name"])
-                    composers_ids.append(artist_relation["artist"]["id"])
-                    composer_sort.append(artist_relation["artist"]["sort_name"])
-        if lyricists:
-            info.lyricists = lyricists
-            info.lyricists_ids = lyricists_ids
-        if composers:
-            info.composers = composers
-            info.composers_ids = composers_ids
-            info.composer_sort = ", ".join(composer_sort)
 
         arrangers = []
         arrangers_ids = []
