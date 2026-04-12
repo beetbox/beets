@@ -258,6 +258,18 @@ class MusicBrainzPlugin(
             return "genres"
         return "tags"
 
+    @cached_property
+    def ignored_media(self) -> set[str]:
+        return set(config["match"]["ignored_media"].as_str_seq())
+
+    @cached_property
+    def ignore_data_tracks(self) -> bool:
+        return config["match"]["ignore_data_tracks"].get(bool)
+
+    @cached_property
+    def ignore_video_tracks(self) -> bool:
+        return config["match"]["ignore_video_tracks"].get(bool)
+
     def __init__(self) -> None:
         """Set up the python-musicbrainz-ngs module according to settings
         from the beets configuration. This should be called at startup.
@@ -534,18 +546,6 @@ class MusicBrainzPlugin(
             f"{source}_album_id": extract_release_id(source, url)
             for source, url in url_by_source.items()
         }  # type: ignore[return-value]
-
-    @cached_property
-    def ignored_media(self) -> set[str]:
-        return set(config["match"]["ignored_media"].as_str_seq())
-
-    @cached_property
-    def ignore_data_tracks(self) -> bool:
-        return config["match"]["ignore_data_tracks"].get(bool)
-
-    @cached_property
-    def ignore_video_tracks(self) -> bool:
-        return config["match"]["ignore_video_tracks"].get(bool)
 
     def get_tracks_from_medium(self, medium: Medium) -> Iterable[TrackInfo]:
         all_tracks = []
