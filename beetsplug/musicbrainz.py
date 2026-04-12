@@ -131,6 +131,13 @@ class WorkRelationsInfo(TypedDict):
     composer_sort: str | None
 
 
+class ArtistRelationsInfo(TypedDict):
+    arrangers: list[str] | None
+    arrangers_ids: list[str] | None
+    remixers: list[str] | None
+    remixers_ids: list[str] | None
+
+
 def _preferred_alias(
     aliases: list[Alias], languages: list[str] | None = None
 ) -> Alias | None:
@@ -355,7 +362,8 @@ class MusicBrainzPlugin(
             for ar in r["work"].get("artist_relations", [])
         ]
         for artist_relation in artist_relations:
-            if (rel_type := artist_relation["type"]) == "lyricist":
+            rel_type = artist_relation["type"]
+            if rel_type == "lyricist":
                 lyricists.append(artist_relation["artist"]["name"])
                 lyricists_ids.append(artist_relation["artist"]["id"])
             elif rel_type == "composer":
@@ -372,6 +380,37 @@ class MusicBrainzPlugin(
             "composers": composers or None,
             "composers_ids": composers_ids or None,
             "composer_sort": ", ".join(composer_sort) or None,
+        }
+
+    @staticmethod
+    def _parse_artist_relations(
+        relations: list[ArtistRelation],
+    ) -> ArtistRelationsInfo:
+        """Extract arranger and remixer credits from artist relations.
+
+        Traverses recording-level artist relations to collect associated artist
+        credits, separating them into arrangers and remixers along with their
+        MusicBrainz IDs.
+        """
+        arrangers: list[str] = []
+        arrangers_ids: list[str] = []
+        remixers: list[str] = []
+        remixers_ids: list[str] = []
+
+        for artist_relation in relations:
+            rel_type = artist_relation["type"]
+            if rel_type == "arranger":
+                arrangers.append(artist_relation["artist"]["name"])
+                arrangers_ids.append(artist_relation["artist"]["id"])
+            elif rel_type == "remixer":
+                remixers.append(artist_relation["artist"]["name"])
+                remixers_ids.append(artist_relation["artist"]["id"])
+
+        return {
+            "arrangers": arrangers or None,
+            "arrangers_ids": arrangers_ids or None,
+            "remixers": remixers or None,
+            "remixers_ids": remixers_ids or None,
         }
 
     def track_info(self, recording: Recording) -> TrackInfo:
@@ -400,27 +439,10 @@ class MusicBrainzPlugin(
             ),
             **self._parse_artist_credits(recording["artist_credit"]),
             **self._parse_work_relations(recording.get("work_relations", [])),
+            **self._parse_artist_relations(
+                recording.get("artist_relations", [])
+            ),
         )
-
-        arrangers = []
-        arrangers_ids = []
-        remixers = []
-        remixers_ids = []
-        for artist_relation in recording.get("artist_relations", ()):
-            if "type" in artist_relation:
-                type = artist_relation["type"]
-                if type == "arranger":
-                    arrangers.append(artist_relation["artist"]["name"])
-                    arrangers_ids.append(artist_relation["artist"]["id"])
-                elif type == "remixer":
-                    remixers.append(artist_relation["artist"]["name"])
-                    remixers_ids.append(artist_relation["artist"]["id"])
-        if arrangers:
-            info.arrangers = arrangers
-            info.arrangers_ids = arrangers_ids
-        if remixers:
-            info.remixers = remixers
-            info.remixers_ids = remixers_ids
 
         # Supplementary fields provided by plugins
         extra_trackdatas = plugins.send("mb_track_extract", data=recording)
