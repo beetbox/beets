@@ -41,15 +41,15 @@ class TestMbCollectionPlugin(PluginMixin, TestHelper):
                 ),
             ),
             (
-                [{"id": "c1", "entity-type": "event"}],
+                [{"id": "c1", "entity_type": "event"}],
                 pytest.raises(UserError, match=r"No release collection found."),
             ),
             (
-                [{"id": "c1", "entity-type": "release"}],
+                [{"id": "c1", "entity_type": "release"}],
                 pytest.raises(UserError, match=r"invalid collection ID"),
             ),
             (
-                [{"id": COLLECTION_ID, "entity-type": "release"}],
+                [{"id": COLLECTION_ID, "entity_type": "release"}],
                 does_not_raise(),
             ),
         ],
@@ -93,8 +93,8 @@ class TestMbCollectionPlugin(PluginMixin, TestHelper):
                 "collections": [
                     {
                         "id": self.COLLECTION_ID,
-                        "entity-type": "release",
-                        "release-count": 3,
+                        "entity_type": "release",
+                        "release_count": 3,
                     }
                 ]
             },

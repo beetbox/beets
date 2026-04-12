@@ -18,7 +18,7 @@ and work composition date
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING
 
 import requests
 
@@ -26,6 +26,9 @@ from beets import ui
 from beets.plugins import BeetsPlugin
 
 from ._utils.musicbrainz import MusicBrainzAPIMixin
+
+if TYPE_CHECKING:
+    from beetsplug._utils.musicbrainz import Work
 
 
 class ParentWorkPlugin(MusicBrainzAPIMixin, BeetsPlugin):
@@ -90,11 +93,11 @@ class ParentWorkPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         parentwork_info = {}
 
         composer_exists = False
-        for artist in work_info.get("artist-relations", []):
+        for artist in work_info.get("artist_relations", []):
             if artist["type"] == "composer":
                 composer_exists = True
                 parent_composer.append(artist["artist"]["name"])
-                parent_composer_sort.append(artist["artist"]["sort-name"])
+                parent_composer_sort.append(artist["artist"]["sort_name"])
                 if "end" in artist.keys():
                     parentwork_info["parentwork_date"] = artist["end"]
 
@@ -191,9 +194,7 @@ class ParentWorkPlugin(MusicBrainzAPIMixin, BeetsPlugin):
                 ],
             )
 
-    def find_parentwork_info(
-        self, mb_workid: str
-    ) -> tuple[dict[str, Any], str | None]:
+    def find_parentwork_info(self, mb_workid: str) -> tuple[Work, str | None]:
         """Get the MusicBrainz information dict about a parent work, including
         the artist relations, and the composition date for a work's parent work.
         """
@@ -209,7 +210,7 @@ class ParentWorkPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             work_date = work_date or next(
                 (
                     end
-                    for a in work_info.get("artist-relations", [])
+                    for a in work_info.get("artist_relations", [])
                     if a["type"] == "composer" and (end := a.get("end"))
                 ),
                 None,
@@ -217,7 +218,7 @@ class ParentWorkPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             parent_id = next(
                 (
                     w["work"]["id"]
-                    for w in work_info.get("work-relations", [])
+                    for w in work_info.get("work_relations", [])
                     if w["type"] == "parts" and w["direction"] == "backward"
                 ),
                 None,
