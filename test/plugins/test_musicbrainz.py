@@ -93,30 +93,113 @@ class MusicBrainzTestCase(BeetsTestCase):
 
 
 class MBAlbumInfoTest(MusicBrainzTestCase):
-    def test_parse_release_with_year(self):
-        release = release_factory(release_group__first_release_date="1984")
-        d = self.mb.album_info(release)
-        assert d.album == "Album"
-        assert d.album_id == "00000000-0000-0000-0000-000001000001"
-        assert d.artist == "Artist"
-        assert d.artist_id == "00000000-0000-0000-0000-000000000011"
-        assert d.original_year == 1984
-        assert d.year == 2020
-        assert d.artist_credit == "Artist Credit"
-
-    def test_parse_release_type(self):
+    def test_parse_release(self):
         release = release_factory()
         d = self.mb.album_info(release)
-        assert d.albumtype == "album"
 
-    def test_parse_release_full_date(self):
-        release = release_factory(
-            release_group__first_release_date="1987-03-31"
-        )
-        d = self.mb.album_info(release)
-        assert d.original_year == 1987
-        assert d.original_month == 3
-        assert d.original_day == 31
+        assert d == {
+            "album": "Album",
+            "album_id": "00000000-0000-0000-0000-000001000001",
+            "albumdisambig": "Album Disambiguation",
+            "albumstatus": "Official",
+            "albumtype": "album",
+            "albumtypes": [
+                "album",
+            ],
+            "artist": "Artist",
+            "artist_credit": "Artist Credit",
+            "artist_id": "00000000-0000-0000-0000-000000000011",
+            "artist_sort": "Artist, The",
+            "artists": [
+                "Artist",
+            ],
+            "artists_credit": [
+                "Artist Credit",
+            ],
+            "artists_ids": [
+                "00000000-0000-0000-0000-000000000011",
+            ],
+            "artists_sort": [
+                "Artist, The",
+            ],
+            "asin": "Album Asin",
+            "barcode": "0000000000000",
+            "catalognum": "LAB123",
+            "country": "US",
+            "data_source": "MusicBrainz",
+            "data_url": "https://musicbrainz.org/release/00000000-0000-0000-0000-000001000001",
+            "day": 1,
+            "discogs_albumid": None,
+            "discogs_artistid": None,
+            "discogs_labelid": None,
+            "genres": None,
+            "label": "Label",
+            "language": "eng",
+            "media": "Digital Media",
+            "mediums": 1,
+            "month": 1,
+            "original_day": 3,
+            "original_month": 2,
+            "original_year": 2001,
+            "release_group_title": "Release Group",
+            "releasegroup_id": "00000000-0000-0000-0000-000000000101",
+            "releasegroupdisambig": "Release Group Disambiguation",
+            "script": "Latn",
+            "style": None,
+            "tracks": [
+                {
+                    "album": None,
+                    "arrangers": None,
+                    "arrangers_ids": [],
+                    "artist": "Recording Artist",
+                    "artist_credit": "Recording Artist Credit",
+                    "artist_id": "00000000-0000-0000-0000-000000000001",
+                    "artist_sort": "Recording Artist, The",
+                    "artists": [
+                        "Recording Artist",
+                    ],
+                    "artists_credit": [
+                        "Recording Artist Credit",
+                    ],
+                    "artists_ids": [
+                        "00000000-0000-0000-0000-000000000001",
+                    ],
+                    "artists_sort": [
+                        "Recording Artist, The",
+                    ],
+                    "bpm": None,
+                    "composer_sort": None,
+                    "composers": None,
+                    "composers_ids": [],
+                    "data_source": "MusicBrainz",
+                    "data_url": "https://musicbrainz.org/recording/00000000-0000-0000-0000-000000001001",
+                    "disctitle": "Medium",
+                    "genres": None,
+                    "index": 1,
+                    "initial_key": None,
+                    "isrc": None,
+                    "length": 0.36,
+                    "lyricists": None,
+                    "lyricists_ids": [],
+                    "mb_workid": None,
+                    "media": "Digital Media",
+                    "medium": 1,
+                    "medium_index": 1,
+                    "medium_total": 1,
+                    "release_track_id": "00000000-0000-0000-0000-000000010001",
+                    "remixers": None,
+                    "remixers_ids": [],
+                    "title": "Recording",
+                    "track_alt": "A1",
+                    "track_id": "00000000-0000-0000-0000-000000001001",
+                    "trackdisambig": None,
+                    "work": None,
+                    "work_disambig": None,
+                },
+            ],
+            "va": False,
+            "year": 2020,
+        }
 
     def test_parse_tracks(self):
         release = release_factory(
@@ -219,11 +302,6 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert not d.original_month
         assert not d.original_day
 
-    def test_various_artists_defaults_false(self):
-        release = release_factory()
-        d = self.mb.album_info(release)
-        assert not d.va
-
     def test_detect_various_artists(self):
         release = release_factory(
             artist_credit=[
@@ -232,16 +310,6 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         )
         d = self.mb.album_info(release)
         assert d.va
-
-    def test_parse_artist_sort_name(self):
-        release = release_factory()
-        d = self.mb.album_info(release)
-        assert d.artist_sort == "Artist, The"
-
-    def test_parse_releasegroupid(self):
-        release = release_factory()
-        d = self.mb.album_info(release)
-        assert d.releasegroup_id == "00000000-0000-0000-0000-000000000101"
 
     def test_parse_release_group_title(self):
         release = release_factory(
@@ -260,48 +328,6 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         d = self.mb.album_info(release)
         assert d.release_group_title == "Alias en"
 
-    def test_parse_asin(self):
-        release = release_factory()
-        d = self.mb.album_info(release)
-        assert d.asin == "Album Asin"
-
-    def test_parse_catalognum(self):
-        release = release_factory()
-        d = self.mb.album_info(release)
-        assert d.catalognum == "LAB123"
-
-    def test_parse_textrepr(self):
-        release = release_factory()
-        d = self.mb.album_info(release)
-        assert d.script == "Latn"
-        assert d.language == "eng"
-
-    def test_parse_country(self):
-        release = release_factory()
-        d = self.mb.album_info(release)
-        assert d.country == "US"
-
-    def test_parse_status(self):
-        release = release_factory()
-        d = self.mb.album_info(release)
-        assert d.albumstatus == "Official"
-
-    def test_parse_barcode(self):
-        release = release_factory()
-        d = self.mb.album_info(release)
-        assert d.barcode == "0000000000000"
-
-    def test_parse_media(self):
-        release = release_factory()
-        d = self.mb.album_info(release)
-        assert d.media == "Digital Media"
-
-    def test_parse_disambig(self):
-        release = release_factory()
-        d = self.mb.album_info(release)
-        assert d.albumdisambig == "Album Disambiguation"
-        assert d.releasegroupdisambig == "Release Group Disambiguation"
-
     def test_parse_disctitle(self):
         release = release_factory(media__0__tracks__count=2)
         d = self.mb.album_info(release)
@@ -313,14 +339,6 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         release = release_factory(text_representation__language=None)
         d = self.mb.album_info(release)
         assert d.language is None
-
-    def test_parse_recording_artist(self):
-        release = release_factory()
-        track = self.mb.album_info(release).tracks[0]
-        assert track.artist == "Recording Artist"
-        assert track.artist_id == "00000000-0000-0000-0000-000000000001"
-        assert track.artist_sort == "Recording Artist, The"
-        assert track.artist_credit == "Recording Artist Credit"
 
     def test_parse_recording_artist_multi(self):
         release = release_factory(
@@ -518,11 +536,6 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
             "Recording Composer, The, Another Recording Composer, The"
         )
 
-    def test_data_source(self):
-        release = release_factory()
-        d = self.mb.album_info(release)
-        assert d.data_source == "MusicBrainz"
-
     def test_genres(self):
         config["musicbrainz"]["genres"] = True
         config["musicbrainz"]["genres_tag"] = "genre"
@@ -536,12 +549,6 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         release = release_factory()
         d = self.mb.album_info(release)
         assert d.genres == ["Tag"]
-
-    def test_no_genres(self):
-        config["musicbrainz"]["genres"] = False
-        release = release_factory()
-        d = self.mb.album_info(release)
-        assert d.genres is None
 
     def test_ignored_media(self):
         config["match"]["ignored_media"] = ["IGNORED1", "IGNORED2"]

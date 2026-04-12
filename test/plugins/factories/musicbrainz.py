@@ -107,7 +107,7 @@ class ReleaseGroupFactory(_IdFactory):
     disambiguation = factory.LazyAttribute(
         lambda o: f"{o.title} Disambiguation"
     )
-    first_release_date = factory.Faker("date")
+    first_release_date = "2001-02-03"
     genres = factory.List([])
     primary_type = "Album"
     primary_type_id = "f529b476-6e62-324f-b0aa-1f3e33d313fc"
