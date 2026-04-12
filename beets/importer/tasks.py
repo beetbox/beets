@@ -899,6 +899,47 @@ class ArchiveImportTask(SentinelImportTask):
         self.toppath = extract_to
 
 
+def _remux_mpeglayer3_wav(path: util.PathBytes) -> util.PathBytes | None:
+    """If 'path' is a WAV file containing an MP3 stream, remix to a
+    proper MP3 file using ffmpeg and return the new path. Returning None
+    if the file is not MPEGLAYER3 or if remuxing fails.
+    """
+    try:
+        import mutagen.wave
+
+        f = mutagen.wave.WAVE(util.syspath(path))
+        if getattr(f.info, "audio_format", 1) != 0x55:
+            return None
+    except Exception:
+        return None
+    mp3_path = os.path.splitext(path)[0] + b".mp3"
+    try:
+        util.command_output(
+            [
+                "ffmpeg",
+                "-i",
+                util.syspath(path),
+                "-c:a",
+                "copy",
+                "-y",
+                util.syspath(mp3_path),
+            ]
+        )
+        util.remove(path)
+        log.debug(
+            "Remuxed MPEGLAYER3 WAV to MP3 and removed original: {}",
+            util.displayable_path(mp3_path),
+        )
+        return mp3_path
+    except Exception as exc:
+        log.warning(
+            "Failed to remux MPEGLAYER3 WAV{}: {}",
+            util.displayable_path(path),
+            exc,
+        )
+        return None
+
+
 class ImportTaskFactory:
     """Generate album and singleton import tasks for all media files
     indicated by a path.
@@ -1082,7 +1123,14 @@ class ImportTaskFactory:
             return library.Item.from_path(path)
         except library.ReadError as exc:
             if isinstance(exc.reason, mediafile.FileTypeError):
-                # Silently ignore non-music files.
+                mp3_path = _remux_mpeglayer3_wav(path)
+                if mp3_path:
+                    log.info(
+                        "Remuxed MPEGLAYER3 WAV to MP3: {}",
+                        util.displayable_path(mp3_path),
+                    )
+                    return library.Item.from_path(mp3_path)
+                # Silently ignore other non-music files
                 pass
             elif isinstance(exc.reason, mediafile.UnreadableFileError):
                 log.warning("unreadable file: {}", util.displayable_path(path))

@@ -1747,3 +1747,23 @@ class ImportIdTest(ImportTestCase):
         assert {"VALID_RECORDING_0", "VALID_RECORDING_1"} == {
             c.info.title for c in task.candidates
         }
+
+
+@_common.slow_test()
+class MpeglayerWavImportTest(ImportTestCase):
+    """Test remuxing of WAVE_FORMAT_MPEGLAYER3 WAV files."""
+
+    @unittest.skipUnless(shutil.which("ffmpeg"), "ffmpeg not found")
+    def test_remux_mpeglayer3_wav(self):
+        from beets.importer.tasks import _remux_mpeglayer3_wav
+
+        src = os.path.join(_common.RSRC, b"mpeglayer3.wav")
+        dest = os.path.join(self.temp_dir, b"mpeglayer3.wav")
+        shutil.copy(syspath(src), syspath(dest))
+
+        mp3_path = _remux_mpeglayer3_wav(dest)
+
+        assert mp3_path is not None
+        assert mp3_path.endswith(b".mp3")
+        assert os.path.exists(mp3_path)
+        assert not os.path.exists(dest)
