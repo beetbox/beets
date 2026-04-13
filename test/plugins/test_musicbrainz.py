@@ -537,20 +537,6 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
             "Recording Composer, The, Another Recording Composer, The"
         )
 
-    def test_genres(self):
-        config["musicbrainz"]["genres"] = True
-        config["musicbrainz"]["genres_tag"] = "genre"
-        release = release_factory()
-        d = self.mb.album_info(release)
-        assert d.genres == ["Genre"]
-
-    def test_tags(self):
-        config["musicbrainz"]["genres"] = True
-        config["musicbrainz"]["genres_tag"] = "tag"
-        release = release_factory()
-        d = self.mb.album_info(release)
-        assert d.genres == ["Tag"]
-
     def test_track_disambiguation(self):
         release = release_factory(
             media__0__tracks=[
@@ -601,7 +587,7 @@ class MusicBrainzPluginTestMixin(PluginMixin):
         return musicbrainz.MusicBrainzPlugin()
 
 
-class TestDataTracks(MusicBrainzPluginTestMixin):
+class TestParse(MusicBrainzPluginTestMixin):
     @pytest.mark.parametrize(
         "beets_match_config, expected_titles",
         [
@@ -641,6 +627,17 @@ class TestDataTracks(MusicBrainzPluginTestMixin):
         actual_titles = tuple(t.title for t in mb.album_info(release).tracks)
 
         assert actual_titles == expected_titles
+
+    @pytest.mark.parametrize(
+        "plugin_config, expected_genres",
+        [
+            _p({"genres": False}, None, id="genres disabled"),
+            _p({"genres": True, "genres_tag": "genre"}, ["Genre"], id="use genres"),
+            _p({"genres": True, "genres_tag": "tag"}, ["Tag"], id="use tags"),
+        ],
+    )  # fmt: skip
+    def test_genres(self, mb, expected_genres):
+        assert mb.album_info(release_factory()).genres == expected_genres
 
 
 class TestArtist:
