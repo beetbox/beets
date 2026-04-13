@@ -16,8 +16,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-import beets.plugins
-from beets import config, metadata_plugins
+from beets import metadata_plugins
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.library import Item
 from beets.test.helper import ImportTestCase, IOMixin, PluginMixin
@@ -92,34 +91,6 @@ class ChromaTest(IOMixin, PluginMixin, ImportTestCase):
 # -----------------------------------------------------------------------------
 
 
-@pytest.fixture
-def reset_plugin_state():
-    """Fully reset plugin and metadata-plugin state around each test."""
-    beets.plugins.BeetsPlugin.listeners.clear()
-    beets.plugins.BeetsPlugin._raw_listeners.clear()
-    beets.plugins._instances.clear()
-    config["plugins"] = []
-    metadata_plugins.find_metadata_source_plugins.cache_clear()
-    metadata_plugins.get_metadata_source.cache_clear()
-    chroma._matches.clear()
-
-    yield
-
-    chroma._matches.clear()
-    beets.plugins.BeetsPlugin.listeners.clear()
-    beets.plugins.BeetsPlugin._raw_listeners.clear()
-    beets.plugins._instances.clear()
-    config["plugins"] = []
-    metadata_plugins.find_metadata_source_plugins.cache_clear()
-    metadata_plugins.get_metadata_source.cache_clear()
-
-
-def _load_plugins(*names: str) -> None:
-    """Load the given plugins into the global beets plugin registry."""
-    config["plugins"] = list(names)
-    beets.plugins.load_plugins()
-
-
 def _seed_acoustid_match(
     item_path: bytes = b"/fake/path.mp3",
     recording_ids: list[str] | None = None,
@@ -135,12 +106,34 @@ def _seed_acoustid_match(
     return Item(path=item_path)
 
 
-@pytest.mark.usefixtures("reset_plugin_state")
-class TestChromaWithoutMusicBrainz:
+class ChromaCandidatesTestBase(PluginMixin):
+    """Shared fixture for chroma candidate tests.
+
+    Subclasses should not set ``plugin`` so that ``load_plugins``
+    accepts explicit plugin-name arguments. The autouse fixture
+    additionally clears the ``@cache``-decorated metadata-source
+    registry and the chroma match state between tests.
+    """
+
+    preload_plugin = False
+
+    @pytest.fixture(autouse=True)
+    def _setup_chroma(self):
+        metadata_plugins.find_metadata_source_plugins.cache_clear()
+        metadata_plugins.get_metadata_source.cache_clear()
+        chroma._matches.clear()
+        yield
+        chroma._matches.clear()
+        self.unload_plugins()
+        metadata_plugins.find_metadata_source_plugins.cache_clear()
+        metadata_plugins.get_metadata_source.cache_clear()
+
+
+class TestChromaWithoutMusicBrainz(ChromaCandidatesTestBase):
     """When musicbrainz is not loaded, chroma must not produce candidates."""
 
     def test_candidates_returns_empty(self):
-        _load_plugins("chroma")
+        self.load_plugins("chroma")
         plugin = chroma.AcoustidPlugin()
         item = _seed_acoustid_match()
 
@@ -151,7 +144,7 @@ class TestChromaWithoutMusicBrainz:
         assert list(result) == []
 
     def test_item_candidates_returns_empty(self):
-        _load_plugins("chroma")
+        self.load_plugins("chroma")
         plugin = chroma.AcoustidPlugin()
         item = _seed_acoustid_match()
 
@@ -160,12 +153,11 @@ class TestChromaWithoutMusicBrainz:
         assert list(result) == []
 
 
-@pytest.mark.usefixtures("reset_plugin_state")
-class TestChromaWithMusicBrainz:
+class TestChromaWithMusicBrainz(ChromaCandidatesTestBase):
     """When musicbrainz IS loaded, chroma uses the registry instance."""
 
     def test_candidates_returns_mb_albums(self, monkeypatch):
-        _load_plugins("chroma", "musicbrainz")
+        self.load_plugins("chroma", "musicbrainz")
 
         fake_album = AlbumInfo(
             tracks=[], album_id="rel-id-1", album="Fake Album"
@@ -187,7 +179,7 @@ class TestChromaWithMusicBrainz:
         mb_plugin.album_for_id.assert_called_with("rel-id-1")
 
     def test_item_candidates_returns_mb_tracks(self, monkeypatch):
-        _load_plugins("chroma", "musicbrainz")
+        self.load_plugins("chroma", "musicbrainz")
 
         fake_track = TrackInfo(title="Fake Track", track_id="rec-id-1")
         mb_plugin = metadata_plugins.get_metadata_source("musicbrainz")

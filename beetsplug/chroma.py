@@ -21,7 +21,7 @@ from __future__ import annotations
 import heapq
 import re
 from collections import defaultdict
-from functools import partial
+from functools import cached_property, partial
 from typing import TYPE_CHECKING
 
 import acoustid
@@ -196,8 +196,9 @@ class AcoustidPlugin(MetadataSourcePlugin):
             self.register_listener("import_task_start", self.fingerprint_task)
         self.register_listener("import_task_apply", apply_acoustid_metadata)
 
-    def _get_musicbrainz(self) -> MusicBrainzPlugin | None:
-        """Return the loaded MusicBrainz plugin, or ``None``.
+    @cached_property
+    def mb(self) -> MusicBrainzPlugin | None:
+        """The loaded MusicBrainz plugin, or ``None``.
 
         Acoustid lookups return MusicBrainz IDs, so chroma needs the
         ``musicbrainz`` plugin to resolve them into album/track
@@ -230,13 +231,12 @@ class AcoustidPlugin(MetadataSourcePlugin):
         return dist
 
     def candidates(self, items, artist, album, va_likely):
-        mb = self._get_musicbrainz()
-        if mb is None:
+        if self.mb is None:
             return []
 
         albums = []
         for relid in prefix(_all_releases(items), MAX_RELEASES):
-            album = mb.album_for_id(relid)
+            album = self.mb.album_for_id(relid)
             if album:
                 albums.append(album)
 
@@ -247,14 +247,13 @@ class AcoustidPlugin(MetadataSourcePlugin):
         if item.path not in _matches:
             return []
 
-        mb = self._get_musicbrainz()
-        if mb is None:
+        if self.mb is None:
             return []
 
         recording_ids, _ = _matches[item.path]
         tracks = []
         for recording_id in prefix(recording_ids, MAX_RECORDINGS):
-            track = mb.track_for_id(recording_id)
+            track = self.mb.track_for_id(recording_id)
             if track:
                 tracks.append(track)
         self._log.debug("acoustid item candidates: {}", len(tracks))
