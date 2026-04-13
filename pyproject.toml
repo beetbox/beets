@@ -306,7 +306,7 @@ line-length = 80
 
 [tool.ruff.lint]
 future-annotations = true
-select = [
+extend-select = [
     # "ARG", # flake8-unused-arguments
     # "C4", # flake8-comprehensions
     "E", # pycodestyle
