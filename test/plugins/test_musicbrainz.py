@@ -16,7 +16,6 @@
 
 from __future__ import annotations
 
-import unittest
 import uuid
 from typing import TYPE_CHECKING, ClassVar
 from unittest import mock
@@ -644,7 +643,7 @@ class TestDataTracks(MusicBrainzPluginTestMixin):
         assert actual_titles == expected_titles
 
 
-class ArtistTest(unittest.TestCase):
+class TestArtist:
     def test_single_artist(self):
         credit = [artist_credit_factory(artist__name="Artist")]
 
@@ -679,7 +678,20 @@ class ArtistTest(unittest.TestCase):
             "artists_credit": ["Artist Credit", "Other Artist Credit"],
         }
 
-    def test_preferred_alias(self):
+    @pytest.mark.parametrize(
+        "languages_config, expected_alias_name",
+        [
+            _p([], None, id="no alias without languages"),
+            _p(["en"], "Alias en", id="en primary"),
+            _p(["en_GB", "en"], "Alias en_GB", id="en_GB primary"),
+            _p(["en", "en_GB"], "Alias en", id="en primary over en_GB"),
+            _p(["fr"], "Alias fr_P", id="fr primary"),
+            _p(["pt_BR", "fr"], "Alias fr_P", id="non-primary ignored"),
+        ],
+    )
+    def test_preferred_alias(
+        self, config, languages_config, expected_alias_name
+    ):
         aliases = [
             alias_factory(suffix="en", locale="en", primary=True),
             alias_factory(suffix="en_GB", locale="en_GB", primary=True),
@@ -688,39 +700,14 @@ class ArtistTest(unittest.TestCase):
             alias_factory(suffix="pt_BR", locale="pt_BR"),
         ]
 
-        # test no alias
-        config["import"]["languages"] = []
-        assert not musicbrainz._preferred_alias(aliases)
+        config["import"]["languages"] = languages_config
 
-        # test en primary
-        config["import"]["languages"] = ["en"]
-        preferred_alias = musicbrainz._preferred_alias(aliases)
-        assert preferred_alias
-        assert preferred_alias["name"] == "Alias en"
+        alias = musicbrainz._preferred_alias(aliases)
 
-        # test en_GB en primary
-        config["import"]["languages"] = ["en_GB", "en"]
-        preferred_alias = musicbrainz._preferred_alias(aliases)
-        assert preferred_alias
-        assert preferred_alias["name"] == "Alias en_GB"
-
-        # test en en_GB primary
-        config["import"]["languages"] = ["en", "en_GB"]
-        preferred_alias = musicbrainz._preferred_alias(aliases)
-        assert preferred_alias
-        assert preferred_alias["name"] == "Alias en"
-
-        # test fr primary
-        config["import"]["languages"] = ["fr"]
-        preferred_alias = musicbrainz._preferred_alias(aliases)
-        assert preferred_alias
-        assert preferred_alias["name"] == "Alias fr_P"
-
-        # test for not matching non-primary
-        config["import"]["languages"] = ["pt_BR", "fr"]
-        preferred_alias = musicbrainz._preferred_alias(aliases)
-        assert preferred_alias
-        assert preferred_alias["name"] == "Alias fr_P"
+        if expected_alias_name is None:
+            assert not alias
+        else:
+            assert alias["name"] == expected_alias_name
 
 
 class MBLibraryTest(MusicBrainzTestCase):
