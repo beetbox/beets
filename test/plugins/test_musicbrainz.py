@@ -35,6 +35,8 @@ from .factories import musicbrainz as factories
 if TYPE_CHECKING:
     from beetsplug._utils import musicbrainz as mb
 
+_p = pytest.param
+
 
 def alias_factory(**kwargs) -> mb.Alias:
     return factories.AliasFactory.build(**kwargs)
@@ -73,23 +75,6 @@ class MusicBrainzTestCase(BeetsTestCase):
         super().setUp()
         self.mb = musicbrainz.MusicBrainzPlugin()
         self.config["match"]["preferred"]["countries"] = ["US"]
-
-    def test_parse_release_title(self):
-        release = release_factory(
-            aliases=[
-                alias_factory(suffix="en", locale="en", primary=True),
-            ]
-        )
-
-        # test no alias
-        config["import"]["languages"] = []
-        d = self.mb.album_info(release)
-        assert d.album == "Album"
-
-        # test en primary
-        config["import"]["languages"] = ["en"]
-        d = self.mb.album_info(release)
-        assert d.album == "Alias en"
 
 
 class MBAlbumInfoTest(MusicBrainzTestCase):
@@ -200,6 +185,23 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
             "va": False,
             "year": 2020,
         }
+
+    def test_parse_release_title(self):
+        release = release_factory(
+            aliases=[
+                alias_factory(suffix="en", locale="en", primary=True),
+            ]
+        )
+
+        # test no alias
+        config["import"]["languages"] = []
+        d = self.mb.album_info(release)
+        assert d.album == "Album"
+
+        # test en primary
+        config["import"]["languages"] = ["en"]
+        d = self.mb.album_info(release)
+        assert d.album == "Alias en"
 
     def test_parse_tracks(self):
         release = release_factory(
@@ -550,129 +552,6 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         d = self.mb.album_info(release)
         assert d.genres == ["Tag"]
 
-    def test_ignored_media(self):
-        config["match"]["ignored_media"] = ["IGNORED1", "IGNORED2"]
-        release = release_factory(
-            media__0__format="IGNORED1", media__0__tracks__count=2
-        )
-        d = self.mb.album_info(release)
-        assert len(d.tracks) == 0
-
-    def test_no_ignored_media(self):
-        config["match"]["ignored_media"] = ["IGNORED1", "IGNORED2"]
-        release = release_factory(
-            media__0__format="NON-IGNORED", media__0__tracks__count=2
-        )
-        d = self.mb.album_info(release)
-        assert len(d.tracks) == 2
-
-    def test_skip_data_track(self):
-        release = release_factory(
-            media__0__tracks=[
-                track_factory(),
-                track_factory(recording__title="[data track]"),
-                track_factory(recording__title="Other Recording"),
-            ]
-        )
-        d = self.mb.album_info(release)
-        assert len(d.tracks) == 2
-        assert d.tracks[0].title == "Recording"
-        assert d.tracks[1].title == "Other Recording"
-
-    def test_skip_audio_data_tracks_by_default(self):
-        release = release_factory(
-            media__0__tracks=[
-                track_factory(),
-                track_factory(recording__title="Other Recording"),
-            ],
-            media__0__data_tracks=[
-                track_factory(recording__title="Audio Data Recording"),
-            ],
-        )
-        d = self.mb.album_info(release)
-        assert len(d.tracks) == 2
-        assert d.tracks[0].title == "Recording"
-        assert d.tracks[1].title == "Other Recording"
-
-    def test_no_skip_audio_data_tracks_if_configured(self):
-        config["match"]["ignore_data_tracks"] = False
-        release = release_factory(
-            media__0__tracks=[
-                track_factory(),
-                track_factory(recording__title="Other Recording"),
-            ],
-            media__0__data_tracks=[
-                track_factory(recording__title="Audio Data Recording"),
-            ],
-        )
-        d = self.mb.album_info(release)
-        assert len(d.tracks) == 3
-        assert d.tracks[0].title == "Recording"
-        assert d.tracks[1].title == "Other Recording"
-        assert d.tracks[2].title == "Audio Data Recording"
-
-    def test_skip_video_tracks_by_default(self):
-        release = release_factory(
-            media__0__tracks=[
-                track_factory(),
-                track_factory(recording__video=True),
-                track_factory(recording__title="Other Recording"),
-            ]
-        )
-        d = self.mb.album_info(release)
-        assert len(d.tracks) == 2
-        assert d.tracks[0].title == "Recording"
-        assert d.tracks[1].title == "Other Recording"
-
-    def test_skip_video_data_tracks_by_default(self):
-        release = release_factory(
-            media__0__tracks=[
-                track_factory(),
-                track_factory(recording__title="Other Recording"),
-            ],
-            media__0__data_tracks=[
-                track_factory(recording__video=True),
-            ],
-        )
-        d = self.mb.album_info(release)
-        assert len(d.tracks) == 2
-        assert d.tracks[0].title == "Recording"
-        assert d.tracks[1].title == "Other Recording"
-
-    def test_no_skip_video_tracks_if_configured(self):
-        config["match"]["ignore_data_tracks"] = False
-        config["match"]["ignore_video_tracks"] = False
-        release = release_factory(
-            media__0__tracks=[
-                track_factory(),
-                track_factory(recording__video=True),
-                track_factory(recording__title="Other Recording"),
-            ]
-        )
-        d = self.mb.album_info(release)
-        assert len(d.tracks) == 3
-        assert d.tracks[0].title == "Recording"
-        assert d.tracks[1].title == "Video: Recording"
-        assert d.tracks[2].title == "Other Recording"
-
-    def test_no_skip_video_data_tracks_if_configured(self):
-        config["match"]["ignore_data_tracks"] = False
-        config["match"]["ignore_video_tracks"] = False
-        release = release_factory(
-            media__0__tracks=[
-                track_factory(),
-                track_factory(recording__title="Other Recording"),
-            ],
-            media__0__data_tracks=[
-                track_factory(recording__video=True),
-            ],
-        )
-        d = self.mb.album_info(release)
-        assert len(d.tracks) == 3
-        assert d.tracks[0].title == "Recording"
-        assert d.tracks[1].title == "Other Recording"
-        assert d.tracks[2].title == "Video: Recording"
-
     def test_track_disambiguation(self):
         release = release_factory(
             media__0__tracks=[
@@ -707,6 +586,62 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         )
         d = self.mb.album_info(release)
         assert d.mediums == 2
+
+
+class MusicBrainzPluginTestMixin(PluginMixin):
+    plugin = "musicbrainz"
+
+    @pytest.fixture
+    def plugin_config(self):
+        return {}
+
+    @pytest.fixture
+    def mb(self, plugin_config):
+        self.config[self.plugin].set(plugin_config)
+
+        return musicbrainz.MusicBrainzPlugin()
+
+
+class TestDataTracks(MusicBrainzPluginTestMixin):
+    @pytest.mark.parametrize(
+        "beets_match_config, expected_titles",
+        [
+            _p({}, ("Audio",), id="only audio tracks by default"),
+            _p(
+                {"ignore_data_tracks": False},
+                ("Audio", "Data"),
+                id="include data tracks",
+            ),
+            _p(
+                {
+                    "ignore_data_tracks": False,
+                    "ignore_video_tracks": False,
+                },
+                ("Audio", "Video: Video", "Data"),
+                id="include data and video tracks",
+            ),
+            _p({"ignored_media": "Vinyl"}, (), id="ignore all tracks"),
+        ],
+    )
+    def test_data_tracks(self, config, beets_match_config, mb, expected_titles):
+        medium = medium_factory(
+            format="Vinyl",
+            tracks=[
+                track_factory(recording__title="Audio"),
+                track_factory(recording__title="[data track]"),
+                track_factory(recording__title="Video", recording__video=True),
+            ],
+            data_tracks=[
+                track_factory(recording__title="Data"),
+            ],
+        )
+        release = release_factory(media=[medium])
+
+        config.set({"match": beets_match_config})
+
+        actual_titles = tuple(t.title for t in mb.album_info(release).tracks)
+
+        assert actual_titles == expected_titles
 
 
 class ArtistTest(unittest.TestCase):
@@ -885,21 +820,9 @@ class MBLibraryTest(MusicBrainzTestCase):
             assert album.country is None
 
 
-class TestMusicBrainzPlugin(PluginMixin):
-    plugin = "musicbrainz"
-
+class TestMusicBrainzPlugin(MusicBrainzPluginTestMixin):
     mbid = "d2a6f856-b553-40a0-ac54-a321e8e2da99"
     RECORDING: ClassVar[mb.Recording] = recording_factory()
-
-    @pytest.fixture
-    def plugin_config(self):
-        return {}
-
-    @pytest.fixture
-    def mb(self, plugin_config):
-        self.config[self.plugin].set(plugin_config)
-
-        return musicbrainz.MusicBrainzPlugin()
 
     @pytest.mark.parametrize(
         "plugin_config,va_likely,expected_additional_criteria",
