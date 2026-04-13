@@ -23,7 +23,6 @@ from unittest import mock
 import pytest
 import requests
 
-from beets import config
 from beets.library import Item
 from beets.test.helper import BeetsTestCase, PluginMixin
 from beetsplug import musicbrainz
@@ -185,45 +184,17 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
             "year": 2020,
         }
 
-    def test_parse_release_title(self):
-        release = release_factory(
-            aliases=[
-                alias_factory(suffix="en", locale="en", primary=True),
-            ]
-        )
-
-        # test no alias
-        config["import"]["languages"] = []
-        d = self.mb.album_info(release)
-        assert d.album == "Album"
-
-        # test en primary
-        config["import"]["languages"] = ["en"]
-        d = self.mb.album_info(release)
-        assert d.album == "Alias en"
-
     def test_parse_tracks(self):
         release = release_factory(
             media__0__tracks=[
-                track_factory(
-                    recording__length=100000,
-                    recording__aliases=[
-                        alias_factory(suffix="ONEen", locale="en", primary=True)
-                    ],
-                ),
+                track_factory(recording__length=100000),
                 track_factory(
                     recording__index=2,
                     recording__length=200000,
                     recording__title="Other Recording",
-                    recording__aliases=[
-                        alias_factory(suffix="TWOen", locale="en", primary=True)
-                    ],
                 ),
             ]
         )
-
-        # test no alias
-        config["import"]["languages"] = []
 
         d = self.mb.album_info(release)
         t = d.tracks
@@ -234,13 +205,6 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         assert t[1].title == "Other Recording"
         assert t[1].track_id == "00000000-0000-0000-0000-000000001002"
         assert t[1].length == 200.0
-
-        # test en primary
-        config["import"]["languages"] = ["en"]
-        d = self.mb.album_info(release)
-        t = d.tracks
-        assert t[0].title == "Alias ONEen"
-        assert t[1].title == "Alias TWOen"
 
     def test_parse_track_indices(self):
         release = release_factory(media__0__tracks__count=2)
@@ -311,23 +275,6 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         )
         d = self.mb.album_info(release)
         assert d.va
-
-    def test_parse_release_group_title(self):
-        release = release_factory(
-            release_group__aliases=[
-                alias_factory(suffix="en", locale="en", primary=True),
-            ]
-        )
-
-        # test no alias
-        config["import"]["languages"] = []
-        d = self.mb.album_info(release)
-        assert d.release_group_title == "Release Group"
-
-        # test en primary
-        config["import"]["languages"] = ["en"]
-        d = self.mb.album_info(release)
-        assert d.release_group_title == "Alias en"
 
     def test_parse_disctitle(self):
         release = release_factory(media__0__tracks__count=2)
@@ -639,6 +586,34 @@ class TestParse(MusicBrainzPluginTestMixin):
     def test_genres(self, mb, expected_genres):
         assert mb.album_info(release_factory()).genres == expected_genres
 
+    @pytest.mark.parametrize(
+        "languages_config, expected_titles",
+        [
+            _p([], ("Album", "Release Group", "Recording"), id="no aliases"),
+            _p(
+                ["en"],
+                (
+                    "Album Alias en",
+                    "Release Group Alias en",
+                    "Recording Alias en",
+                ),
+                id="aliases",
+            ),
+        ],
+    )
+    def test_parse_titles(self, config, mb, languages_config, expected_titles):
+        release = release_factory()
+
+        config["import"]["languages"] = languages_config
+
+        album, release_group_title, track_title = expected_titles
+
+        d = mb.album_info(release)
+
+        assert d.album == album
+        assert d.release_group_title == release_group_title
+        assert d.tracks[0].title == track_title
+
 
 class TestArtist:
     def test_single_artist(self):
@@ -690,11 +665,11 @@ class TestArtist:
         self, config, languages_config, expected_alias_name
     ):
         aliases = [
-            alias_factory(suffix="en", locale="en", primary=True),
-            alias_factory(suffix="en_GB", locale="en_GB", primary=True),
-            alias_factory(suffix="fr", locale="fr"),
-            alias_factory(suffix="fr_P", locale="fr", primary=True),
-            alias_factory(suffix="pt_BR", locale="pt_BR"),
+            alias_factory(locale="en"),
+            alias_factory(locale="en_GB"),
+            alias_factory(locale="fr", primary=False),
+            alias_factory(suffix="fr_P", locale="fr"),
+            alias_factory(locale="pt_BR", primary=False),
         ]
 
         config["import"]["languages"] = languages_config

@@ -5,7 +5,7 @@ from beetsplug._utils.musicbrainz import ArtistRelationType
 
 
 class _SortNameFactory(factory.DictFactory):
-    name: str
+    name: str | factory.LazyAttribute
     sort_name = factory.LazyAttribute(lambda o: f"{o.name}, The")
 
 
@@ -27,11 +27,16 @@ class _IdFactory(factory.DictFactory):
 
 class AliasFactory(_SortNameFactory, _PeriodFactory):
     class Params:
+        prefix = ""
         suffix = ""
 
-    locale: str | None = None
-    name = factory.LazyAttribute(lambda o: f"Alias {o.suffix}")
-    primary = False
+    locale = "en"
+    name = factory.LazyAttribute(
+        lambda o: (
+            f"{o.prefix + ' ' if o.prefix else ''}Alias {o.suffix or o.locale}"
+        )
+    )
+    primary = True
     type = "Artist name"
     type_id = factory.LazyAttribute(
         lambda o: {
@@ -101,7 +106,13 @@ class ReleaseGroupFactory(_IdFactory):
         id_base = 100
 
     aliases = factory.List(
-        [factory.SubFactory(AliasFactory, type="Release group name")]
+        [
+            factory.SubFactory(
+                AliasFactory,
+                type="Release group name",
+                prefix=factory.SelfAttribute("...title"),
+            )
+        ]
     )
     artist_credit = factory.List([factory.SubFactory(ArtistCreditFactory)])
     disambiguation = factory.LazyAttribute(
@@ -155,7 +166,15 @@ class RecordingFactory(_IdFactory):
     class Params:
         id_base = 1000
 
-    aliases = factory.List([])
+    aliases = factory.List(
+        [
+            factory.SubFactory(
+                AliasFactory,
+                type="Recording name",
+                prefix=factory.SelfAttribute("...title"),
+            )
+        ]
+    )
     artist_credit = factory.List(
         [
             factory.SubFactory(
@@ -221,7 +240,15 @@ class ReleaseFactory(_IdFactory):
     class Params:
         id_base = 1000000
 
-    aliases = factory.List([])
+    aliases = factory.List(
+        [
+            factory.SubFactory(
+                AliasFactory,
+                type="Release name",
+                prefix=factory.SelfAttribute("...title"),
+            )
+        ]
+    )
     artist_credit = factory.List(
         [factory.SubFactory(ArtistCreditFactory, artist__id_base=10)]
     )
