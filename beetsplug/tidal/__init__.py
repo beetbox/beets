@@ -36,11 +36,6 @@ log = getLogger("beets.tidal")
 
 
 class TidalPlugin(MetadataSourcePlugin):
-    """Tidal metadata plugin.
-
-    Allows to fetch metadata candidates from tidal.
-    """
-
     def __init__(self) -> None:
         super().__init__()
 
@@ -168,8 +163,6 @@ class TidalPlugin(MetadataSourcePlugin):
         log.debug("Found {0} candidates", len(candidates))
         return candidates
 
-    # ---------------------------------- Search ---------------------------------- #
-
     @staticmethod
     def _item_queries(item: Item) -> Iterable[str]:
         """Search queries for items."""
@@ -272,9 +265,8 @@ class TidalPlugin(MetadataSourcePlugin):
             if item["type"] == "artists"
         }
 
-        # Yield for IDs first
-        for id in _ids:
-            if id is not None and (track := track_lookup.get(id)):
+        for _id in _ids:
+            if _id is not None and (track := track_lookup.get(_id)):
                 yield self._get_track_info(track, artist_lookup=artist_lookup)
             else:
                 yield None
@@ -339,9 +331,8 @@ class TidalPlugin(MetadataSourcePlugin):
             if item["type"] == "artists"
         }
 
-        # Yield for IDs first
-        for id in _ids:
-            if id is not None and (album := album_lookup.get(id)):
+        for _id in _ids:
+            if _id is not None and (album := album_lookup.get(_id)):
                 yield self._get_album_info(
                     album,
                     track_lookup=track_lookup,
@@ -364,8 +355,6 @@ class TidalPlugin(MetadataSourcePlugin):
                     )
                 else:
                     yield None
-
-    # ---------------------------------- Parsing --------------------------------- #
 
     def _get_album_info(
         self,
@@ -413,7 +402,6 @@ class TidalPlugin(MetadataSourcePlugin):
         track: TidalTrack,
         artist_lookup: dict[str, TidalArtist],
     ) -> TrackInfo:
-        # Artists are sorted in the track relationship
         artist_names, artist_ids = self._extract_artists(
             track["relationships"]["artists"]["data"],
             artist_lookup,
@@ -441,9 +429,8 @@ class TidalPlugin(MetadataSourcePlugin):
     ) -> tuple[list[str], list[str]]:
         """Extract artists from a relationship.
 
-        Needed because artists are ordered in the track relationship,
-        while the included response data is accessed by id via
-        ``artist_lookup``.
+        Artists are sorted in the track/album response relationship but not in the
+        track/album responses included items.
         """
         artist_names = []
         artist_ids = []
@@ -462,9 +449,8 @@ class TidalPlugin(MetadataSourcePlugin):
     @staticmethod
     def _extract_title(attributes: AlbumAttributes | TrackAttributes):
         """
-        Tidal UIs append the version string at the end of the
-        title. We do the same here by formatting it as
-        ``"{title} ({version})"`` to stay consistent.
+        Tidal UIs append the version string at the end of the title. We do the same here
+        by formatting it as ``"{title} ({version})"`` to stay consistent.
         """
         if version := attributes.get("version"):
             return f"{attributes['title']} ({version})"

@@ -4,8 +4,6 @@ from typing import Generic, Literal, TypedDict, TypeVar
 
 from typing_extensions import NotRequired
 
-# ----------------------------------- Core ----------------------------------- #
-
 
 class ResourceIdentifier(TypedDict):
     id: str
@@ -34,9 +32,6 @@ class ExternalLink(TypedDict):
 
 class Copyright(TypedDict):
     text: str
-
-
-# -------------------------------- Attributes -------------------------------- #
 
 
 class ArtistAttributes(TypedDict):
@@ -130,9 +125,6 @@ class SearchAttributes(TypedDict):
     trackingId: str
 
 
-# --------------------------------- Resources -------------------------------- #
-
-
 class TidalArtist(TypedDict):
     id: str
     type: Literal["artists"]
@@ -172,5 +164,3 @@ class Document(TypedDict, Generic[T]):
 AlbumDocument = Document[list[TidalAlbum]]
 TrackDocument = Document[list[TidalTrack]]
 SearchDocument = Document[TidalSearch]
-
-# ----------------------------------- Search ---------------------------------- #

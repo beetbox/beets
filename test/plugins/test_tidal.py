@@ -21,7 +21,6 @@ if TYPE_CHECKING:
     )
 
 
-# --------------------------------- Mock Data -------------------------------- #
 def _make_artist(id: str, name: str) -> TidalArtist:
     return {
         "id": id,
