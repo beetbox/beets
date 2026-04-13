@@ -372,29 +372,29 @@ class TidalPlugin(MetadataSourcePlugin):
                 track_info.index = i
                 track_infos.append(track_info)
 
-        artist_names, artist_ids = self._extract_artists(
+        artist_names, artist_ids = self._parse_artists(
             album["relationships"]["artists"]["data"],
             artist_lookup,
         )
-        release = self._extract_release_date(album["attributes"])
+        date_parts = self._parse_release_date(album["attributes"])
         return AlbumInfo(
             # Identifier
             data_source=self.data_source,
             album_id=album["id"],
             artists_ids=artist_ids,
-            data_url=self._extract_data_url(album["attributes"]),
+            data_url=self._parse_data_url(album["attributes"]),
             barcode=album["attributes"]["barcodeId"],
             # Meta
-            album=self._extract_title(album["attributes"]),
+            album=self._parse_title(album["attributes"]),
             tracks=track_infos,
             artist=", ".join(artist_names),
             artists=artist_names,
             duration=self._duration_to_seconds(album["attributes"]["duration"]),
             albumtype=album["attributes"]["albumType"],
-            label=self._extract_label(album["attributes"]),
-            year=release[0] if release else None,
-            month=release[1] if release else None,
-            day=release[2] if release else None,
+            label=self._parse_label(album["attributes"]),
+            year=date_parts[0] if date_parts else None,
+            month=date_parts[1] if date_parts else None,
+            day=date_parts[2] if date_parts else None,
         )
 
     def _get_track_info(
@@ -402,7 +402,7 @@ class TidalPlugin(MetadataSourcePlugin):
         track: TidalTrack,
         artist_lookup: dict[str, TidalArtist],
     ) -> TrackInfo:
-        artist_names, artist_ids = self._extract_artists(
+        artist_names, artist_ids = self._parse_artists(
             track["relationships"]["artists"]["data"],
             artist_lookup,
         )
@@ -412,18 +412,18 @@ class TidalPlugin(MetadataSourcePlugin):
             data_source=self.data_source,
             track_id=track["id"],
             artists_ids=artist_ids,
-            data_url=self._extract_data_url(track["attributes"]),
+            data_url=self._parse_data_url(track["attributes"]),
             # Meta
-            title=self._extract_title(track["attributes"]),
+            title=self._parse_title(track["attributes"]),
             isrc=track["attributes"]["isrc"],
             artist=", ".join(artist_names),
             artists=artist_names,
             duration=self._duration_to_seconds(track["attributes"]["duration"]),
-            label=self._extract_label(track["attributes"]),
+            label=self._parse_label(track["attributes"]),
         )
 
     @staticmethod
-    def _extract_artists(
+    def _parse_artists(
         artist_relationships: list[ResourceIdentifier],
         artist_lookup: dict[str, TidalArtist],
     ) -> tuple[list[str], list[str]]:
@@ -447,7 +447,7 @@ class TidalPlugin(MetadataSourcePlugin):
         return artist_names, artist_ids
 
     @staticmethod
-    def _extract_title(attributes: AlbumAttributes | TrackAttributes):
+    def _parse_title(attributes: AlbumAttributes | TrackAttributes):
         """
         Tidal UIs append the version string at the end of the title. We do the same here
         by formatting it as ``"{title} ({version})"`` to stay consistent.
@@ -458,7 +458,7 @@ class TidalPlugin(MetadataSourcePlugin):
             return attributes["title"]
 
     @staticmethod
-    def _extract_data_url(
+    def _parse_data_url(
         attributes: AlbumAttributes | TrackAttributes,
     ) -> str | None:
         if external_links := attributes.get("externalLinks"):
@@ -483,7 +483,7 @@ class TidalPlugin(MetadataSourcePlugin):
         )
 
     @staticmethod
-    def _extract_label(
+    def _parse_label(
         attributes: AlbumAttributes | TrackAttributes,
     ) -> str | None:
         if copyright := attributes.get("copyright"):
@@ -491,7 +491,7 @@ class TidalPlugin(MetadataSourcePlugin):
         return None
 
     @staticmethod
-    def _extract_release_date(
+    def _parse_release_date(
         attributes: AlbumAttributes,
     ) -> tuple[int, int, int] | None:
         """Returns year, month, day from iso YYYY-MM-DD"""

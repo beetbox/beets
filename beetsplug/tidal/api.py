@@ -121,8 +121,6 @@ class TidalSession(TimeoutAndRetrySession):
     ) -> Document[list[Any]]:
         """
         Perform a GET request to the Tidal API with pagination resolution.
-
-        This handles both top-level pagination and nested relationship pagination.
         """
         include = include or []
         params = params or {}
@@ -134,8 +132,7 @@ class TidalSession(TimeoutAndRetrySession):
         }
 
         while next := doc.get("links", {}).get("next"):
-            res = self.request(
-                method="GET",
+            res = self.get(
                 url=next,
                 params={**params, "include": include},
                 **kwargs,

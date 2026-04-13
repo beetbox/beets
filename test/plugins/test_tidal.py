@@ -535,8 +535,8 @@ class TestStaticHelpers:
             ({}, None),
         ],
     )
-    def test_extract_data_url(self, attrs, expected):
-        assert TidalPlugin._extract_data_url(attrs) == expected
+    def test_parse_data_url(self, attrs, expected):
+        assert TidalPlugin._parse_data_url(attrs) == expected
 
     @pytest.mark.parametrize(
         "attrs, expected",
@@ -545,8 +545,8 @@ class TestStaticHelpers:
             ({}, None),
         ],
     )
-    def test_extract_label(self, attrs, expected):
-        assert TidalPlugin._extract_label(attrs) == expected
+    def test_parse_label(self, attrs, expected):
+        assert TidalPlugin._parse_label(attrs) == expected
 
     @pytest.mark.parametrize(
         "attrs, expected",
@@ -556,8 +556,8 @@ class TestStaticHelpers:
             ({"releaseDate": "2024"}, None),
         ],
     )
-    def test_extract_release_date(self, attrs, expected):
-        assert TidalPlugin._extract_release_date(attrs) == expected
+    def test_parse_release_date(self, attrs, expected):
+        assert TidalPlugin._parse_release_date(attrs) == expected
 
     @pytest.mark.parametrize(
         "duration,expected",
