@@ -44,7 +44,7 @@ absubmit = ["requests"]
 aura = ["flask", "flask-cors", "Pillow"]
 autobpm = ["librosa>=0.11", "resampy>=0.4.3"]
 beatport = ["requests-oauthlib>=0.6.1"]
-bpd = ["PyGObject"]
+bpd = ["PyGObject ; sys_platform != 'win32'"]
 chroma = ["pyacoustid>=1.3.1,<2"]
 discogs = ["python3-discogs-client>=2.3.15"]
 docs = [
@@ -65,11 +65,11 @@ kodiupdate = ["requests"]
 lastgenre = ["pylast"]
 lastimport = ["pylast"]
 lyrics = ["beautifulsoup4", "langdetect", "requests"]
-metasync = ["dbus-python"]
+metasync = ["dbus-python ; sys_platform != 'win32'"]
 mpdstats = ["python-mpd2>=0.4.2"]
 plexupdate = ["requests"]
 reflink = ["reflink"]
-replaygain = ["PyGObject"]
+replaygain = ["PyGObject ; sys_platform != 'win32'"]
 scrub = ["mutagen>=1.33"]
 sonosupdate = ["soco"]
 thumbnails = ["Pillow", "pyxdg"]
@@ -218,7 +218,7 @@ cmd = "uv sync --upgrade"
 
 [tool.poe.tasks.test]
 help = "Run tests with pytest"
-cmd = "pytest $OPTS"
+cmd = "uv run pytest $OPTS"
 env.OPTS.default = "-p no:cov"
 
 [tool.poe.tasks.test-with-coverage]
