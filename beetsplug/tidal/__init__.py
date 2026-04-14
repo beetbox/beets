@@ -13,8 +13,7 @@ from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.logging import getLogger
 from beets.metadata_plugins import MetadataSourcePlugin
 
-from .api import TidalAPI, TidalSession
-from .authenticate import ui_auth_flow
+from .api import TidalAPI
 
 if TYPE_CHECKING:
     import optparse
@@ -54,10 +53,8 @@ class TidalPlugin(MetadataSourcePlugin):
     @cached_property
     def api(self) -> TidalAPI:
         return TidalAPI(
-            TidalSession(
-                client_id=self.config["client_id"].as_str(),
-                token_path=self._tokenfile(),
-            )
+            client_id=self.config["client_id"].as_str(),
+            token_path=self._tokenfile(),
         )
 
     def _tokenfile(self) -> str:
@@ -85,9 +82,7 @@ class TidalPlugin(MetadataSourcePlugin):
 
         def func(lib: Library, opts: optparse.Values, args: list[str]):
             if opts.auth:
-                token = ui_auth_flow(self.config["client_id"].as_str())
-                token.save_to(self._tokenfile())
-                ui.print_(f"Saved tidal token in {self._tokenfile()}")
+                self.api.ui_authenticate_flow()
             else:
                 tidal_cmd.print_help()
 
