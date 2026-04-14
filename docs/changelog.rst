@@ -29,7 +29,7 @@ New features
 Bug fixes
 ~~~~~~~~~
 
-- Automatically remux WAV files containing MP3 streams
+- :ref:`import-cmd` Automatically remux WAV files containing MP3 streams
   (``WAVE_FORMAT_MPEGLAYER3``) to proper MP3 files during import, instead of
   silently importing them with incorrect metadata. :bug:`6455`
 - :doc:`plugins/listenbrainz`: Retry listenbrainz requests for temporary

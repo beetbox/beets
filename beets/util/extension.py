@@ -19,6 +19,8 @@ import subprocess
 from logging import Logger
 from pathlib import Path
 
+import mutagen.wave
+
 import beets
 from beets import util
 
@@ -147,3 +149,34 @@ def fix_extension(path_bytes: PathBytes, logger: Logger | None = None):
         if logger:
             logger.info("Import file with matching format to original target")
     return new_path
+
+
+def _remux_mpeglayer3_wav(path: util.PathBytes) -> util.PathBytes | None:
+    """If 'path' is a WAV file containing an MP3 stream
+    (WAVE_FORMAT_MPEGLAYER3, wFormatTag = 0x0055), extract the MP3 stream
+    to a new .mp3 file and return its path. Returns None if the file is not
+    MPEGLAYER3 or if extraction fails.
+    """
+    try:
+        f = mutagen.wave.WAVE(util.syspath(path))
+    except mutagen.MutagenError:
+        return None
+    if getattr(f.info, "audio_format", 1) != 0x55:
+        return None
+
+    with open(util.syspath(path), "rb") as wav_file:
+        data = wav_file.read()
+
+    data_offset = data.find(b"data")
+    if data_offset == -1:
+        return None
+
+    # Skip 'data' marker (4 bytes) and chunk size (4 bytes).
+    mp3_data = data[data_offset + 8 :]
+
+    mp3_path = os.path.splitext(path)[0] + b".mp3"
+    with open(util.syspath(mp3_path), "wb") as mp3_file:
+        mp3_file.write(mp3_data)
+
+    util.remove(path)
+    return mp3_path

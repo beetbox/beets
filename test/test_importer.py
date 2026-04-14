@@ -53,6 +53,7 @@ from beets.test.helper import (
     has_program,
 )
 from beets.util import bytestring_path, displayable_path, syspath
+from beets.util.extension import _remux_mpeglayer3_wav
 
 
 class PathsMixin:
@@ -1753,8 +1754,6 @@ class MpeglayerWavImportTest(AsIsImporterMixin, ImportTestCase):
     """Test remuxing of WAVE_FORMAT_MPEGLAYER3 WAV files."""
 
     def test_remux_mpeglayer3_wav(self):
-        from beets.importer.tasks import _remux_mpeglayer3_wav
-
         src = os.path.join(_common.RSRC, b"mpeglayer3.wav")
         dest = os.path.join(self.temp_dir, b"mpeglayer3.wav")
         shutil.copy(syspath(src), syspath(dest))

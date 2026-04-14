@@ -32,6 +32,7 @@ from beets.autotag.hooks import AlbumMatch
 from beets.autotag.match import tag_album, tag_item
 from beets.dbcore.query import PathQuery
 from beets.util import extension
+from beets.util.extension import _remux_mpeglayer3_wav
 
 from .state import ImportState
 
@@ -897,55 +898,6 @@ class ArchiveImportTask(SentinelImportTask):
             archive.close()
         self.extracted = True
         self.toppath = extract_to
-
-
-def _remux_mpeglayer3_wav(path: util.PathBytes) -> util.PathBytes | None:
-    """If 'path' is a WAV file containing an MP3 stream
-    (WAVE_FORMAT_MPEGLAYER3, wFormatTag = 0x0055), extract the MP3 stream
-    to a new .mp3 file and return its path. Returns None if the file is not
-    MPEGLAYER3 or if extraction fails.
-    """
-    try:
-        import mutagen.wave
-
-        f = mutagen.wave.WAVE(util.syspath(path))
-        if getattr(f.info, "audio_format", 1) != 0x55:
-            return None
-    except Exception:
-        return None
-
-    try:
-        with open(util.syspath(path), "rb") as wav_file:
-            data = wav_file.read()
-        data_offset = data.find(b"data")
-        if data_offset == -1:
-            log.warning(
-                "Could not find data chunk in MPEGLAYER3 WAV: {}",
-                util.displayable_path(path),
-            )
-            return None
-
-        # Skip 'data' marker (4 bytes) and chunk size (4 bytes).
-        mp3_data = data[data_offset + 8 :]
-
-        mp3_path = os.path.splitext(path)[0] + b".mp3"
-        with open(util.syspath(mp3_path), "wb") as mp3_file:
-            mp3_file.write(mp3_data)
-
-        util.remove(path)
-        log.debug(
-            "Extracted MP3 stream from MPEGLAYER3 WAV: {}",
-            util.displayable_path(mp3_path),
-        )
-        return mp3_path
-
-    except Exception as exc:
-        log.warning(
-            "Failed to extract MP3 from MPEGLAYER3 WAV{}: {}",
-            util.displayable_path(path),
-            exc,
-        )
-        return None
 
 
 class ImportTaskFactory:
