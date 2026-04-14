@@ -34,8 +34,8 @@ Bug fixes
   silently importing them with incorrect metadata. :bug:`6455`
 - :doc:`plugins/listenbrainz`: Retry listenbrainz requests for temporary
   failures.
-- :doc:`plugins/mbpseudo`: Fix crashes when applying a pseudo-release.
-  One in ``PseudoAlbumInfo.raw_data`` and a ``sqlite3.ProgrammingError``.
+- :doc:`plugins/mbpseudo`: Fix crashes when applying a pseudo-release. One in
+  ``PseudoAlbumInfo.raw_data`` and a ``sqlite3.ProgrammingError``.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
