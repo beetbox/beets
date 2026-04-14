@@ -421,6 +421,9 @@ line in your config file.
 
 Here are a few of the plugins written by the beets community:
 
+beets-aisauce_
+    Uses artificial intelligence to clean up or create metadata.
+
 beets-alternatives_
     Manages external files.
 
@@ -577,6 +580,8 @@ beets-youtube_
 .. _beetcamp: https://github.com/snejus/beetcamp
 
 .. _beetfs: https://github.com/jbaiter/beetfs
+
+.. _beets-aisauce: https://github.com/metasauce/beets-aisauce
 
 .. _beets-alternatives: https://github.com/geigerzaehler/beets-alternatives
 
