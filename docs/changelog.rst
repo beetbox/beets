@@ -34,15 +34,8 @@ Bug fixes
   silently importing them with incorrect metadata. :bug:`6455`
 - :doc:`plugins/listenbrainz`: Retry listenbrainz requests for temporary
   failures.
-- :doc:`plugins/mbpseudo`: Fix two crashes when applying a pseudo-release match
-  during import. ``PseudoAlbumInfo.raw_data`` now constructs a plain
-  ``AlbumInfo`` instead of calling ``self.__class__(**self.copy())``, which
-  failed with ``TypeError`` because ``PseudoAlbumInfo.__init__`` requires
-  ``pseudo_release`` and ``official_release`` arguments not present in the flat
-  copy. ``_adjust_final_album_match`` now correctly updates ``match.mapping``
-  instead of writing to ``album_info.mapping``, which stored a dict value inside
-  the ``AttrDict``-based ``Info`` object and caused a
-  ``sqlite3.ProgrammingError`` when saving flex fields.
+- :doc:`plugins/mbpseudo`: Fix crashes when applying a pseudo-release.
+  One in ``PseudoAlbumInfo.raw_data`` and a ``sqlite3.ProgrammingError``.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
