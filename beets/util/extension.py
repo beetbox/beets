@@ -151,7 +151,7 @@ def fix_extension(path_bytes: PathBytes, logger: Logger | None = None):
     return new_path
 
 
-def _remux_mpeglayer3_wav(path: util.PathBytes) -> util.PathBytes | None:
+def remux_mpeglayer3_wav(path: util.PathBytes) -> util.PathBytes | None:
     """If 'path' is a WAV file containing an MP3 stream
     (WAVE_FORMAT_MPEGLAYER3, wFormatTag = 0x0055), extract the MP3 stream
     to a new .mp3 file and return its path. Returns None if the file is not

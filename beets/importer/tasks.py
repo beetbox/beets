@@ -32,7 +32,7 @@ from beets.autotag.hooks import AlbumMatch
 from beets.autotag.match import tag_album, tag_item
 from beets.dbcore.query import PathQuery
 from beets.util import extension
-from beets.util.extension import _remux_mpeglayer3_wav
+from beets.util.extension import remux_mpeglayer3_wav
 
 from .state import ImportState
 
@@ -1085,7 +1085,7 @@ class ImportTaskFactory:
             if isinstance(exc.reason, mediafile.FileTypeError):
                 mp3_path = None
                 if config["import"]["remux_mp3_in_wav"].get(bool):
-                    mp3_path = _remux_mpeglayer3_wav(path)
+                    mp3_path = remux_mpeglayer3_wav(path)
                 if mp3_path:
                     log.info(
                         "Remuxed MPEGLAYER3 WAV to MP3: {}",

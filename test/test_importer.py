@@ -53,7 +53,7 @@ from beets.test.helper import (
     has_program,
 )
 from beets.util import bytestring_path, displayable_path, syspath
-from beets.util.extension import _remux_mpeglayer3_wav
+from beets.util.extension import remux_mpeglayer3_wav
 
 
 class PathsMixin:
@@ -1758,7 +1758,7 @@ class MpeglayerWavImportTest(AsIsImporterMixin, ImportTestCase):
         dest = os.path.join(self.temp_dir, b"mpeglayer3.wav")
         shutil.copy(syspath(src), syspath(dest))
 
-        mp3_path = _remux_mpeglayer3_wav(dest)
+        mp3_path = remux_mpeglayer3_wav(dest)
 
         assert mp3_path is not None
         assert mp3_path.endswith(b".mp3")
