@@ -910,9 +910,9 @@ remux_mp3_in_wav
 
 Some WAV files contain MP3 audio streams (``WAVE_FORMAT_MPEGLAYER3``) rather
 than the standard PCM format. When this option is enabled, beets will
-automatically extract the MP3 stream into a proper ``.mp3`` file during
-import, removing the WAV container. The original WAV file is deleted after
-successful extraction.
+automatically extract the MP3 stream into a proper ``.mp3`` file during import,
+removing the WAV container. The original WAV file is deleted after successful
+extraction.
 
 Default: ``yes``.
 
