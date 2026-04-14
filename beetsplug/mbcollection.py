@@ -101,7 +101,7 @@ class MBCollection:
     @property
     def release_count(self) -> int:
         """Total number of releases recorded in the collection."""
-        return self.data["release-count"]
+        return self.data["release_count"]
 
     @property
     def releases_url(self) -> str:
@@ -173,7 +173,7 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
         # Get all release collection IDs, avoiding event collections
         if not (
             collection_by_id := {
-                c["id"]: c for c in collections if c["entity-type"] == "release"
+                c["id"]: c for c in collections if c["entity_type"] == "release"
             }
         ):
             raise ui.UserError("No release collection found.")

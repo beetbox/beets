@@ -29,6 +29,9 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- :ref:`import-cmd` Automatically remux WAV files containing MP3 streams
+  (``WAVE_FORMAT_MPEGLAYER3``) to proper MP3 files during import, instead of
+  silently importing them with incorrect metadata. :bug:`6455`
 - :doc:`plugins/listenbrainz`: Retry listenbrainz requests for temporary
   failures.
 - :doc:`plugins/mbpseudo`: Fix two crashes when applying a pseudo-release match
@@ -41,9 +44,16 @@ Bug fixes
   the ``AttrDict``-based ``Info`` object and caused a
   ``sqlite3.ProgrammingError`` when saving flex fields.
 
-..
-    For plugin developers
-    ~~~~~~~~~~~~~~~~~~~~~
+For plugin developers
+~~~~~~~~~~~~~~~~~~~~~
+
+- Consumers of :py:class:`beetsplug._utils.musicbrainz.MusicBrainzAPI` now
+  receive normalized MusicBrainz payloads with underscore-separated field names
+  (for example ``artist_credit`` and ``release_group``) and grouped relation
+  lists such as ``work_relations``, ``release_relations``, and
+  ``url_relations``. The API responses are also now fully typed with concrete
+  ``TypedDict`` models for releases, recordings, works, and relations. Update
+  direct access to raw MusicBrainz response keys if needed.
 
 ..
     Other changes
