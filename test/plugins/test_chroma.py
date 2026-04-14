@@ -84,13 +84,6 @@ class ChromaTest(IOMixin, PluginMixin, ImportTestCase):
         assert TEST_TITLE_1 in output.split("\n")[0]
 
 
-# -----------------------------------------------------------------------------
-# Regression tests for issue #6212: chroma must respect which metadata source
-# plugins are enabled. When the musicbrainz plugin is not loaded, chroma must
-# not produce any MusicBrainz-sourced candidates.
-# -----------------------------------------------------------------------------
-
-
 def _seed_acoustid_match(
     item_path: bytes = b"/fake/path.mp3",
     recording_ids: list[str] | None = None,
@@ -106,13 +99,20 @@ def _seed_acoustid_match(
     return Item(path=item_path)
 
 
-class ChromaCandidatesTestBase(PluginMixin):
-    """Shared fixture for chroma candidate tests.
+class TestChromaCandidates(PluginMixin):
+    """Regression tests for issue #6212: chroma must respect which metadata
+    source plugins are enabled.
 
-    Subclasses should not set ``plugin`` so that ``load_plugins``
-    accepts explicit plugin-name arguments. The autouse fixture
-    additionally clears the ``@cache``-decorated metadata-source
-    registry and the chroma match state between tests.
+    When the musicbrainz plugin is not loaded, chroma must not produce any
+    MusicBrainz-sourced candidates (via either ``candidates`` or
+    ``item_candidates``). When it IS loaded, chroma resolves acoustid
+    matches through the registered plugin instance.
+
+    ``plugin`` is intentionally not set on the class so that
+    :py:meth:`PluginMixin.load_plugins` honours explicit plugin-name
+    arguments and each test can choose its own combination. The autouse
+    fixture clears the ``@cache``-decorated metadata-source registry and
+    the chroma match state between tests.
     """
 
     preload_plugin = False
@@ -128,11 +128,7 @@ class ChromaCandidatesTestBase(PluginMixin):
         metadata_plugins.find_metadata_source_plugins.cache_clear()
         metadata_plugins.get_metadata_source.cache_clear()
 
-
-class TestChromaWithoutMusicBrainz(ChromaCandidatesTestBase):
-    """When musicbrainz is not loaded, chroma must not produce candidates."""
-
-    def test_candidates_returns_empty(self):
+    def test_candidates_returns_empty_without_musicbrainz(self):
         self.load_plugins("chroma")
         plugin = chroma.AcoustidPlugin()
         item = _seed_acoustid_match()
@@ -143,7 +139,7 @@ class TestChromaWithoutMusicBrainz(ChromaCandidatesTestBase):
 
         assert list(result) == []
 
-    def test_item_candidates_returns_empty(self):
+    def test_item_candidates_returns_empty_without_musicbrainz(self):
         self.load_plugins("chroma")
         plugin = chroma.AcoustidPlugin()
         item = _seed_acoustid_match()
@@ -152,11 +148,7 @@ class TestChromaWithoutMusicBrainz(ChromaCandidatesTestBase):
 
         assert list(result) == []
 
-
-class TestChromaWithMusicBrainz(ChromaCandidatesTestBase):
-    """When musicbrainz IS loaded, chroma uses the registry instance."""
-
-    def test_candidates_returns_mb_albums(self, monkeypatch):
+    def test_candidates_returns_mb_albums_with_musicbrainz(self, monkeypatch):
         self.load_plugins("chroma", "musicbrainz")
 
         fake_album = AlbumInfo(
@@ -178,7 +170,9 @@ class TestChromaWithMusicBrainz(ChromaCandidatesTestBase):
         assert result == [fake_album]
         mb_plugin.album_for_id.assert_called_with("rel-id-1")
 
-    def test_item_candidates_returns_mb_tracks(self, monkeypatch):
+    def test_item_candidates_returns_mb_tracks_with_musicbrainz(
+        self, monkeypatch
+    ):
         self.load_plugins("chroma", "musicbrainz")
 
         fake_track = TrackInfo(title="Fake Track", track_id="rec-id-1")
