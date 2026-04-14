@@ -1749,11 +1749,9 @@ class ImportIdTest(ImportTestCase):
         }
 
 
-@_common.slow_test()
-class MpeglayerWavImportTest(ImportTestCase):
+class MpeglayerWavImportTest(AsIsImporterMixin, ImportTestCase):
     """Test remuxing of WAVE_FORMAT_MPEGLAYER3 WAV files."""
 
-    @unittest.skipUnless(shutil.which("ffmpeg"), "ffmpeg not found")
     def test_remux_mpeglayer3_wav(self):
         from beets.importer.tasks import _remux_mpeglayer3_wav
 
@@ -1767,3 +1765,13 @@ class MpeglayerWavImportTest(ImportTestCase):
         assert mp3_path.endswith(b".mp3")
         assert os.path.exists(mp3_path)
         assert not os.path.exists(dest)
+
+    def test_remux_mpeglayer3_wav_disabled(self):
+        """When remux_mp3_in_wav is disabled, WAV file should not be remuxed."""
+        self.config["import"]["remux_mp3_in_wav"] = False
+        src = os.path.join(_common.RSRC, b"mpeglayer3.wav")
+        dest = os.path.join(self.import_dir, b"mpeglayer3.wav")
+        shutil.copy(syspath(src), syspath(dest))
+
+        self.run_asis_importer()
+        assert os.path.exists(dest)

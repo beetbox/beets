@@ -900,9 +900,10 @@ class ArchiveImportTask(SentinelImportTask):
 
 
 def _remux_mpeglayer3_wav(path: util.PathBytes) -> util.PathBytes | None:
-    """If 'path' is a WAV file containing an MP3 stream, remix to a
-    proper MP3 file using ffmpeg and return the new path. Returning None
-    if the file is not MPEGLAYER3 or if remuxing fails.
+    """If 'path' is a WAV file containing an MP3 stream
+    (WAVE_FORMAT_MPEGLAYER3, wFormatTag = 0x0055), extract the MP3 stream
+    to a new .mp3 file and return its path. Returns None if the file is not
+    MPEGLAYER3 or if extraction fails.
     """
     try:
         import mutagen.wave
@@ -912,28 +913,35 @@ def _remux_mpeglayer3_wav(path: util.PathBytes) -> util.PathBytes | None:
             return None
     except Exception:
         return None
-    mp3_path = os.path.splitext(path)[0] + b".mp3"
+
     try:
-        util.command_output(
-            [
-                "ffmpeg",
-                "-i",
-                util.syspath(path),
-                "-c:a",
-                "copy",
-                "-y",
-                util.syspath(mp3_path),
-            ]
-        )
+        with open(util.syspath(path), "rb") as wav_file:
+            data = wav_file.read()
+        data_offset = data.find(b"data")
+        if data_offset == -1:
+            log.warning(
+                "Could not find data chunk in MPEGLAYER3 WAV: {}",
+                util.displayable_path(path),
+            )
+            return None
+
+        # Skip 'data' marker (4 bytes) and chunk size (4 bytes).
+        mp3_data = data[data_offset + 8 :]
+
+        mp3_path = os.path.splitext(path)[0] + b".mp3"
+        with open(util.syspath(mp3_path), "wb") as mp3_file:
+            mp3_file.write(mp3_data)
+
         util.remove(path)
         log.debug(
-            "Remuxed MPEGLAYER3 WAV to MP3 and removed original: {}",
+            "Extracted MP3 stream from MPEGLAYER3 WAV: {}",
             util.displayable_path(mp3_path),
         )
         return mp3_path
+
     except Exception as exc:
         log.warning(
-            "Failed to remux MPEGLAYER3 WAV{}: {}",
+            "Failed to extract MP3 from MPEGLAYER3 WAV{}: {}",
             util.displayable_path(path),
             exc,
         )
