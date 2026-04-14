@@ -34,6 +34,12 @@ Bug fixes
   silently importing them with incorrect metadata. :bug:`6455`
 - :doc:`plugins/listenbrainz`: Retry listenbrainz requests for temporary
   failures.
+- :doc:`plugins/chroma`: Do not produce MusicBrainz-sourced autotagger
+  candidates when the :doc:`plugins/musicbrainz` plugin is not enabled. The
+  chroma plugin now looks up the musicbrainz plugin through the metadata-source
+  registry instead of unconditionally instantiating its own private instance,
+  which also restores compatibility with :doc:`plugins/mbpseudo` for
+  chroma-triggered lookups. :bug:`6212` :bug:`6441`
 - :doc:`plugins/mbpseudo`: Fix crashes when applying a pseudo-release. One in
   ``PseudoAlbumInfo.raw_data`` and a ``sqlite3.ProgrammingError``.
 
