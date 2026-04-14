@@ -20,7 +20,7 @@ from collections import Counter
 from contextlib import suppress
 from functools import cached_property
 from itertools import product
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Literal
 from urllib.parse import urljoin
 
 from confuse.exceptions import NotFoundError
@@ -40,7 +40,13 @@ if TYPE_CHECKING:
     from beets.library import Item
     from beets.metadata_plugins import QueryType, SearchParams
 
-    from ._typing import JSONDict
+    from ._utils.musicbrainz import (
+        Alias,
+        ArtistCredit,
+        Recording,
+        Release,
+        ReleaseGroup,
+    )
 
 VARIOUS_ARTISTS_ID = "89ad4ac3-39f7-470e-963a-56509c546377"
 
@@ -70,9 +76,14 @@ BROWSE_CHUNKSIZE = 100
 BROWSE_MAXTRACKS = 500
 
 
+UrlSource = Literal[
+    "discogs", "bandcamp", "spotify", "deezer", "tidal", "beatport"
+]
+
+
 def _preferred_alias(
-    aliases: list[JSONDict], languages: list[str] | None = None
-) -> JSONDict | None:
+    aliases: list[Alias], languages: list[str] | None = None
+) -> Alias | None:
     """Given a list of alias structures for an artist credit, select
     and return the user's preferred alias or None if no matching
     """
@@ -104,13 +115,15 @@ def _preferred_alias(
     return None
 
 
-def _key_with_preferred_alias(obj: JSONDict, key: str) -> str:
-    alias = _preferred_alias(obj.get("aliases", ()))
+def _key_with_preferred_alias(
+    obj: ReleaseGroup | Release | Recording, key: Literal["title"]
+) -> str:
+    alias = _preferred_alias(obj.get("aliases", []))
     return alias["name"] if alias else obj[key]
 
 
 def _multi_artist_credit(
-    credit: list[JSONDict], include_join_phrase: bool
+    credit: list[ArtistCredit], include_join_phrase: bool
 ) -> tuple[list[str], list[str], list[str]]:
     """Given a list representing an ``artist-credit`` block, accumulate
     data into a triple of joined artist name lists: canonical, sort, and
@@ -120,7 +133,7 @@ def _multi_artist_credit(
     artist_sort_parts = []
     artist_credit_parts = []
     for el in credit:
-        alias = _preferred_alias(el["artist"].get("aliases", ()))
+        alias = _preferred_alias(el["artist"].get("aliases", []))
 
         # An artist.
         cur_artist_name = alias["name"] if alias else el["artist"]["name"]
@@ -128,9 +141,9 @@ def _multi_artist_credit(
 
         # Artist sort name.
         if alias:
-            artist_sort_parts.append(alias["sort-name"])
-        elif "sort-name" in el["artist"]:
-            artist_sort_parts.append(el["artist"]["sort-name"])
+            artist_sort_parts.append(alias["sort_name"])
+        elif "sort_name" in el["artist"]:
+            artist_sort_parts.append(el["artist"]["sort_name"])
         else:
             artist_sort_parts.append(cur_artist_name)
 
@@ -156,7 +169,7 @@ def track_url(trackid: str) -> str:
     return urljoin(BASE_URL, f"recording/{trackid}")
 
 
-def _flatten_artist_credit(credit: list[JSONDict]) -> tuple[str, str, str]:
+def _flatten_artist_credit(credit: list[ArtistCredit]) -> tuple[str, str, str]:
     """Given a list representing an ``artist-credit`` block, flatten the
     data into a triple of joined artist name strings: canonical, sort, and
     credit.
@@ -171,7 +184,7 @@ def _flatten_artist_credit(credit: list[JSONDict]) -> tuple[str, str, str]:
     )
 
 
-def _artist_ids(credit: list[JSONDict]) -> list[str]:
+def _artist_ids(credit: list[ArtistCredit]) -> list[str]:
     """
     Given a list representing an ``artist-credit``,
     return a list of artist IDs
@@ -188,9 +201,7 @@ def album_url(albumid: str) -> str:
     return urljoin(BASE_URL, f"release/{albumid}")
 
 
-def _preferred_release_event(
-    release: dict[str, Any],
-) -> tuple[str | None, str | None]:
+def _preferred_release_event(release: Release) -> tuple[str | None, str | None]:
     """Given a release, select and return the user's preferred release
     event as a tuple of (country, release_date). Fall back to the
     default release event if a preferred event is not found.
@@ -200,10 +211,10 @@ def _preferred_release_event(
     ].as_str_seq()
 
     for country in preferred_countries:
-        for event in release.get("release-events", {}):
+        for event in release.get("release_events", {}):
             try:
                 if area := event.get("area"):
-                    if country in area["iso-3166-1-codes"]:
+                    if country in area["iso_3166_1_codes"]:
                         return country, event["date"]
             except KeyError:
                 pass
@@ -211,7 +222,9 @@ def _preferred_release_event(
     return release.get("country"), release.get("date")
 
 
-def _set_date_str(info: AlbumInfo, date_str: str, original: bool = False):
+def _set_date_str(
+    info: AlbumInfo, date_str: str, original: bool = False
+) -> None:
     """Given a (possibly partial) YYYY-MM-DD string and an AlbumInfo
     object, set the object's release date fields appropriately. If
     `original`, then set the original_year, etc., fields.
@@ -275,10 +288,14 @@ class MusicBrainzPlugin(
     MusicBrainzAPIMixin, SearchApiMetadataSourcePlugin[IDResponse]
 ):
     @cached_property
-    def genres_field(self) -> str:
-        return f"{self.config['genres_tag'].as_choice(['genre', 'tag'])}s"
+    def genres_field(self) -> Literal["genres", "tags"]:
+        choices: list[Literal["genre", "tag"]] = ["genre", "tag"]
+        choice = self.config["genres_tag"].as_choice(choices)
+        if choice == "genre":
+            return "genres"
+        return "tags"
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Set up the python-musicbrainz-ngs module according to settings
         from the beets configuration. This should be called at startup.
         """
@@ -310,7 +327,7 @@ class MusicBrainzPlugin(
 
     def track_info(
         self,
-        recording: JSONDict,
+        recording: Recording,
         index: int | None = None,
         medium: int | None = None,
         medium_index: int | None = None,
@@ -336,39 +353,39 @@ class MusicBrainzPlugin(
             data_url=track_url(recording["id"]),
         )
 
-        if recording.get("artist-credit"):
+        if recording.get("artist_credit"):
             # Get the artist names.
             (
                 info.artist,
                 info.artist_sort,
                 info.artist_credit,
-            ) = _flatten_artist_credit(recording["artist-credit"])
+            ) = _flatten_artist_credit(recording["artist_credit"])
 
             (
                 info.artists,
                 info.artists_sort,
                 info.artists_credit,
             ) = _multi_artist_credit(
-                recording["artist-credit"], include_join_phrase=False
+                recording["artist_credit"], include_join_phrase=False
             )
 
-            info.artists_ids = _artist_ids(recording["artist-credit"])
+            info.artists_ids = _artist_ids(recording["artist_credit"])
             info.artist_id = info.artists_ids[0]
 
-        if recording.get("length"):
-            info.length = int(recording["length"]) / 1000.0
+        if length := recording.get("length"):
+            info.length = length / 1000.0
 
         info.trackdisambig = recording.get("disambiguation")
 
         if recording.get("isrcs"):
             info.isrc = ";".join(recording["isrcs"])
 
-        lyricists = []
-        lyricists_ids = []
-        composers = []
-        composers_ids = []
-        composer_sort = []
-        for work_relation in recording.get("work-relations", ()):
+        lyricists: list[str] = []
+        lyricists_ids: list[str] = []
+        composers: list[str] = []
+        composers_ids: list[str] = []
+        composer_sort: list[str] = []
+        for work_relation in recording.get("work_relations", ()):
             if work_relation["type"] != "performance":
                 continue
             info.work = work_relation["work"]["title"]
@@ -377,7 +394,7 @@ class MusicBrainzPlugin(
                 info.work_disambig = work_relation["work"]["disambiguation"]
 
             for artist_relation in work_relation["work"].get(
-                "artist-relations", ()
+                "artist_relations", ()
             ):
                 if "type" in artist_relation:
                     type = artist_relation["type"]
@@ -388,7 +405,7 @@ class MusicBrainzPlugin(
                         composers.append(artist_relation["artist"]["name"])
                         composers_ids.append(artist_relation["artist"]["id"])
                         composer_sort.append(
-                            artist_relation["artist"]["sort-name"]
+                            artist_relation["artist"]["sort_name"]
                         )
         if lyricists:
             info.lyricists = lyricists
@@ -402,7 +419,7 @@ class MusicBrainzPlugin(
         arrangers_ids = []
         remixers = []
         remixers_ids = []
-        for artist_relation in recording.get("artist-relations", ()):
+        for artist_relation in recording.get("artist_relations", ()):
             if "type" in artist_relation:
                 type = artist_relation["type"]
                 if type == "arranger":
@@ -425,13 +442,13 @@ class MusicBrainzPlugin(
 
         return info
 
-    def album_info(self, release: JSONDict) -> AlbumInfo:
+    def album_info(self, release: Release) -> AlbumInfo:
         """Takes a MusicBrainz release result dictionary and returns a beets
         AlbumInfo object containing the interesting data about that release.
         """
         # Get artist name using join phrases.
         artist_name, artist_sort_name, artist_credit_name = (
-            _flatten_artist_credit(release["artist-credit"])
+            _flatten_artist_credit(release["artist_credit"])
         )
 
         (
@@ -439,7 +456,7 @@ class MusicBrainzPlugin(
             artists_sort_names,
             artists_credit_names,
         ) = _multi_artist_credit(
-            release["artist-credit"], include_join_phrase=False
+            release["artist_credit"], include_join_phrase=False
         )
 
         ntracks = sum(len(m.get("tracks", [])) for m in release["media"])
@@ -449,7 +466,7 @@ class MusicBrainzPlugin(
         # on chunks of tracks to recover the same information in this case.
         if ntracks > BROWSE_MAXTRACKS:
             self._log.debug("Album {} has too many tracks", release["id"])
-            recording_list = []
+            recording_list: list[Recording] = []
             for i in range(0, ntracks, BROWSE_CHUNKSIZE):
                 self._log.debug("Retrieving tracks starting at {}", i)
                 recording_list.extend(
@@ -479,10 +496,10 @@ class MusicBrainzPlugin(
 
             all_tracks = medium.get("tracks", [])
             if (
-                "data-tracks" in medium
+                "data_tracks" in medium
                 and not config["match"]["ignore_data_tracks"]
             ):
-                all_tracks += medium["data-tracks"]
+                all_tracks += medium["data_tracks"]
             track_count = len(all_tracks)
 
             if "pregap" in medium:
@@ -519,33 +536,33 @@ class MusicBrainzPlugin(
                 # Prefer track data, where present, over recording data except
                 # if a preferred recording alias is available.
                 if track.get("title") and not _preferred_alias(
-                    track["recording"].get("aliases", ())
+                    track["recording"].get("aliases", [])
                 ):
                     ti.title = track["title"]
-                if track.get("artist-credit"):
+                if track.get("artist_credit"):
                     # Get the artist names.
                     (
                         ti.artist,
                         ti.artist_sort,
                         ti.artist_credit,
-                    ) = _flatten_artist_credit(track["artist-credit"])
+                    ) = _flatten_artist_credit(track["artist_credit"])
 
                     (
                         ti.artists,
                         ti.artists_sort,
                         ti.artists_credit,
                     ) = _multi_artist_credit(
-                        track["artist-credit"], include_join_phrase=False
+                        track["artist_credit"], include_join_phrase=False
                     )
 
-                    ti.artists_ids = _artist_ids(track["artist-credit"])
+                    ti.artists_ids = _artist_ids(track["artist_credit"])
                     ti.artist_id = ti.artists_ids[0]
-                if track.get("length"):
-                    ti.length = int(track["length"]) / (1000.0)
+                if length := track.get("length"):
+                    ti.length = length / 1000.0
 
                 track_infos.append(ti)
 
-        album_artist_ids = _artist_ids(release["artist-credit"])
+        album_artist_ids = _artist_ids(release["artist_credit"])
         release_title = _key_with_preferred_alias(release, key="title")
         info = AlbumInfo(
             album=release_title,
@@ -574,40 +591,40 @@ class MusicBrainzPlugin(
             info.artist_credit = va_name
             info.artists_credit = [va_name]
         info.asin = release.get("asin")
-        info.releasegroup_id = release["release-group"]["id"]
+        info.releasegroup_id = release["release_group"]["id"]
         info.albumstatus = release.get("status")
 
-        if release["release-group"].get("title"):
+        if release["release_group"].get("title"):
             info.release_group_title = _key_with_preferred_alias(
-                release["release-group"], key="title"
+                release["release_group"], key="title"
             )
 
         # Get the disambiguation strings at the release and release group level.
-        if release["release-group"].get("disambiguation"):
-            info.releasegroupdisambig = release["release-group"].get(
+        if release["release_group"].get("disambiguation"):
+            info.releasegroupdisambig = release["release_group"].get(
                 "disambiguation"
             )
         if release.get("disambiguation"):
             info.albumdisambig = release.get("disambiguation")
 
-        if reltype := release["release-group"].get("primary-type"):
+        if reltype := release["release_group"].get("primary_type"):
             info.albumtype = reltype.lower()
 
         # Set the new-style "primary" and "secondary" release types.
         albumtypes = []
-        if "primary-type" in release["release-group"]:
-            rel_primarytype = release["release-group"]["primary-type"]
+        if "primary_type" in release["release_group"]:
+            rel_primarytype = release["release_group"]["primary_type"]
             if rel_primarytype:
                 albumtypes.append(rel_primarytype.lower())
-        if "secondary-types" in release["release-group"]:
-            if release["release-group"]["secondary-types"]:
-                for sec_type in release["release-group"]["secondary-types"]:
+        if "secondary_types" in release["release_group"]:
+            if release["release_group"]["secondary_types"]:
+                for sec_type in release["release_group"]["secondary_types"]:
                     albumtypes.append(sec_type.lower())
         info.albumtypes = albumtypes
 
         # Release events.
         info.country, release_date = _preferred_release_event(release)
-        release_group_date = release["release-group"].get("first-release-date")
+        release_group_date = release["release_group"]["first_release_date"]
         if not release_date:
             # Fall back if release-specific date is not available.
             release_date = release_group_date
@@ -617,17 +634,17 @@ class MusicBrainzPlugin(
         _set_date_str(info, release_group_date, True)
 
         # Label name.
-        if release.get("label-info"):
-            label_info = release["label-info"][0]
+        if release.get("label_info"):
+            label_info = release["label_info"][0]
             if label_info.get("label"):
                 label = label_info["label"]["name"]
                 if label != "[no label]":
                     info.label = label
-            info.catalognum = label_info.get("catalog-number")
+            info.catalognum = label_info.get("catalog_number")
 
         # Text representation data.
-        if release.get("text-representation"):
-            rep = release["text-representation"]
+        if release.get("text_representation"):
+            rep = release["text_representation"]
             info.script = rep.get("script")
             info.language = rep.get("language")
 
@@ -642,7 +659,7 @@ class MusicBrainzPlugin(
 
         if self.config["genres"]:
             sources = [
-                release["release-group"].get(self.genres_field, []),
+                release["release_group"].get(self.genres_field, []),
                 release.get(self.genres_field, []),
             ]
             genres: Counter[str] = Counter()
@@ -659,23 +676,27 @@ class MusicBrainzPlugin(
 
         # We might find links to external sources (Discogs, Bandcamp, ...)
         external_ids = self.config["external_ids"].get()
-        wanted_sources = {
+        wanted_sources: set[UrlSource] = {
             site for site, wanted in external_ids.items() if wanted
         }
-        if wanted_sources and (url_rels := release.get("url-relations")):
+        if wanted_sources and (url_rels := release.get("url_relations")):
             urls = {}
 
-            for source, url in product(wanted_sources, url_rels):
-                if f"{source}.com" in (target := url["url"]["resource"]):
-                    urls[source] = target
+            for url_source, url_relation in product(wanted_sources, url_rels):
+                if f"{url_source}.com" in (
+                    target := url_relation["url"]["resource"]
+                ):
+                    urls[url_source] = target
                     self._log.debug(
                         "Found link to {} release via MusicBrainz",
-                        source.capitalize(),
+                        url_source.capitalize(),
                     )
 
-            for source, url in urls.items():
+            for url_source, url in urls.items():
                 setattr(
-                    info, f"{source}_album_id", extract_release_id(source, url)
+                    info,
+                    f"{url_source}_album_id",
+                    extract_release_id(url_source, url),
                 )
 
         extra_albumdatas = plugins.send("mb_album_extract", data=release)
@@ -774,7 +795,7 @@ class MusicBrainzPlugin(
         actual_res = None
 
         if res.get("status") == "Pseudo-Release" and (
-            relations := res.get("release-relations")
+            relations := res.get("release_relations")
         ):
             for rel in relations:
                 if (

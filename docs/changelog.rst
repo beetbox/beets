@@ -35,9 +35,16 @@ Bug fixes
 - :doc:`plugins/listenbrainz`: Retry listenbrainz requests for temporary
   failures.
 
-..
-    For plugin developers
-    ~~~~~~~~~~~~~~~~~~~~~
+For plugin developers
+~~~~~~~~~~~~~~~~~~~~~
+
+- Consumers of :py:class:`beetsplug._utils.musicbrainz.MusicBrainzAPI` now
+  receive normalized MusicBrainz payloads with underscore-separated field names
+  (for example ``artist_credit`` and ``release_group``) and grouped relation
+  lists such as ``work_relations``, ``release_relations``, and
+  ``url_relations``. The API responses are also now fully typed with concrete
+  ``TypedDict`` models for releases, recordings, works, and relations. Update
+  direct access to raw MusicBrainz response keys if needed.
 
 ..
     Other changes
