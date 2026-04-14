@@ -139,15 +139,12 @@ For plugin developers
   respective multi-valued fields instead (``arrangers``, ``composers``,
   ``lyricists``, ``remixers``).
 
-<<<<<<< HEAD
 Other changes
 ~~~~~~~~~~~~~
 
 - :doc:`plugins/spotify`: Batch ``spotifysync`` track and audio-features API
   requests and deduplicate repeated Spotify track IDs within a run.
 
-=======
->>>>>>> upstream/master
 2.8.0 (March 28, 2026)
 ----------------------
 
