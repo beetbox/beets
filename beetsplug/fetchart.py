@@ -23,7 +23,7 @@ from collections import OrderedDict
 from contextlib import closing
 from enum import Enum
 from functools import cached_property
-from typing import TYPE_CHECKING, AnyStr, ClassVar, Literal
+from typing import TYPE_CHECKING, Any, AnyStr, ClassVar, Literal
 
 import confuse
 import requests
@@ -50,7 +50,11 @@ except ImportError:
     HAS_BEAUTIFUL_SOUP = False
 
 
-CONTENT_TYPES = {"image/jpeg": [b"jpg", b"jpeg"], "image/png": [b"png"]}
+CONTENT_TYPES = {
+    "image/jpeg": [b"jpg", b"jpeg"],
+    "image/png": [b"png"],
+    "image/webp": [b"webp"],
+}
 IMAGE_EXTENSIONS = [ext for exts in CONTENT_TYPES.values() for ext in exts]
 
 
@@ -330,9 +334,9 @@ def _logged_get(log: Logger, *args, **kwargs) -> requests.Response:
         settings = s.merge_environment_settings(
             prepped.url, {}, None, None, None
         )
-        send_kwargs.update(settings)
         log.debug("{}: {.url}", message, prepped)
-        return s.send(prepped, **send_kwargs)
+        merged_kwargs: dict[Any, Any] = {**send_kwargs, **settings}
+        return s.send(prepped, **merged_kwargs)
 
 
 class RequestMixin:

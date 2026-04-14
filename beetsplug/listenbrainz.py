@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import datetime
+import time
+from collections import Counter
 from typing import TYPE_CHECKING, ClassVar
 
 import requests
@@ -13,6 +15,7 @@ from beets.plugins import BeetsPlugin
 
 from ._utils.musicbrainz import MusicBrainzAPIMixin
 from ._utils.playcount import update_play_counts
+from ._utils.requests import TimeoutAndRetrySession
 
 if TYPE_CHECKING:
     from ._utils.playcount import Track
@@ -32,6 +35,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         super().__init__()
         self.token = self.config["token"].get()
         self.username = self.config["username"].get()
+        self.session = TimeoutAndRetrySession()
         self.AUTH_HEADER = {"Authorization": f"Token {self.token}"}
         config["listenbrainz"]["token"].redact = True
 
@@ -40,81 +44,154 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         lbupdate_cmd = ui.Subcommand(
             "lbimport", help="Import ListenBrainz history"
         )
+        lbupdate_cmd.parser.add_option(
+            "--max",
+            dest="max_listens",
+            type="int",
+            default=None,
+            help="maximum number of listens to fetch (default: all)",
+        )
 
         def func(lib, opts, args):
-            self._lbupdate(lib, self._log)
+            self._lbupdate(lib, self._log, max_listens=opts.max_listens)
 
         lbupdate_cmd.func = func
         return [lbupdate_cmd]
 
-    def _lbupdate(self, lib, log):
-        """Obtain view count from Listenbrainz."""
-        found_total = 0
-        unknown_total = 0
-        ls = self.get_listens()
-        tracks = self.get_tracks_from_listens(ls)
-        log.info("Found {} listens", len(ls))
-        if tracks:
-            found, unknown = update_play_counts(
-                lib, tracks, log, "listenbrainz"
-            )
-            found_total += found
-            unknown_total += unknown
+    def _lbupdate(self, lib, log, max_listens=None):
+        """Obtain play counts from ListenBrainz."""
+        listens = self.get_listens(max_total=max_listens)
+        if listens is None:
+            log.error("Failed to fetch listens from ListenBrainz.")
+            return
+        if not listens:
+            log.info("No listens found.")
+            return
+        log.info("Found {} listens", len(listens))
+        tracks = self._aggregate_listens(self.get_tracks_from_listens(listens))
+        log.info("Aggregated into {} unique tracks", len(tracks))
+        found, unknown = update_play_counts(lib, tracks, log, "listenbrainz")
         log.info("... done!")
-        log.info("{} unknown play-counts", unknown_total)
-        log.info("{} play-counts imported", found_total)
+        log.info("{} unknown play-counts", unknown)
+        log.info("{} play-counts imported", found)
+
+    @staticmethod
+    def _aggregate_listens(tracks: list[Track]) -> list[Track]:
+        """Aggregate individual listen events into per-track play counts.
+
+        ListenBrainz returns individual listen events (each with playcount=1).
+        We aggregate them by track identity so each unique track gets its total
+        count, making the import idempotent.
+        """
+        _agg_key = str | tuple[str, str, str]
+        play_counts: Counter[_agg_key] = Counter()
+        track_info: dict[_agg_key, Track] = {}
+        for t in tracks:
+            mbid = t.get("mbid") or ""
+            artist = t["artist"]
+            name = t["name"]
+            album = t.get("album") or ""
+
+            key: _agg_key = mbid if mbid else (artist, name, album)
+            play_counts[key] += 1
+            if key not in track_info:
+                track_info[key] = t
+
+        return [
+            {**info, "playcount": play_counts[key]}
+            for key, info in track_info.items()
+        ]
 
     def _make_request(self, url, params=None):
-        """Makes a request to the ListenBrainz API."""
+        """Makes a request to the ListenBrainz API.
+
+        Respects the X-RateLimit-* headers returned by the server: if the
+        remaining quota drops to zero, sleeps until the window resets before
+        returning, so the next call is guaranteed a fresh quota.
+        """
         try:
-            response = requests.get(
+            response = self.session.get(
                 url=url,
                 headers=self.AUTH_HEADER,
                 timeout=10,
                 params=params,
             )
             response.raise_for_status()
+            remaining = response.headers.get("X-RateLimit-Remaining")
+            reset_in = response.headers.get("X-RateLimit-Reset-In")
+            if remaining is not None and int(remaining) == 0 and reset_in:
+                self._log.debug(
+                    "ListenBrainz rate limit reached; sleeping {}s", reset_in
+                )
+                time.sleep(int(reset_in) + 1)
             return response.json()
         except requests.exceptions.RequestException as e:
             self._log.debug("Invalid Search Error: {}", e)
             return None
 
-    def get_listens(self, min_ts=None, max_ts=None, count=None):
+    def get_listens(self, min_ts=None, max_ts=None, count=None, max_total=None):
         """Gets the listen history of a given user.
 
+        Paginates through all available listens using the max_ts parameter.
+
         Args:
-            username: User to get listen history of.
             min_ts: History before this timestamp will not be returned.
                     DO NOT USE WITH max_ts.
             max_ts: History after this timestamp will not be returned.
                     DO NOT USE WITH min_ts.
-            count: How many listens to return. If not specified,
-                uses a default from the server.
+            count: How many listens to return per page (max 1000).
+            max_total: Stop after fetching this many listens in total.
 
         Returns:
-            A list of listen info dictionaries if there's an OK status.
-
-        Raises:
-            An HTTPError if there's a failure.
-            A ValueError if the JSON in the response is invalid.
-            An IndexError if the JSON is not structured as expected.
+            A list of listen info dictionaries, or None on API failure.
         """
-        url = f"{self.ROOT}/user/{self.username}/listens"
-        params = {
-            k: v
-            for k, v in {
-                "min_ts": min_ts,
-                "max_ts": max_ts,
-                "count": count,
-            }.items()
-            if v is not None
-        }
-        response = self._make_request(url, params)
+        if min_ts is not None and max_ts is not None:
+            raise ValueError("min_ts and max_ts are mutually exclusive.")
 
-        if response is not None:
-            return response["payload"]["listens"]
-        else:
-            return None
+        per_page = min(count or 1000, 1000)
+        url = f"{self.ROOT}/user/{self.username}/listens"
+        all_listens = []
+
+        while True:
+            if max_total is not None:
+                remaining_needed = max_total - len(all_listens)
+                if remaining_needed <= 0:
+                    break
+                page_size = min(per_page, remaining_needed)
+            else:
+                page_size = per_page
+
+            params = {"count": page_size}
+            if max_ts is not None:
+                params["max_ts"] = max_ts
+            if min_ts is not None:
+                params["min_ts"] = min_ts
+
+            response = self._make_request(url, params)
+            if response is None:
+                if not all_listens:
+                    return None
+                break
+
+            listens = response["payload"]["listens"]
+            if not listens:
+                break
+
+            all_listens.extend(listens)
+            self._log.info("Fetched {} listens so far...", len(all_listens))
+
+            # If we got fewer than requested, we've reached the end
+            if len(listens) < page_size:
+                break
+
+            # Paginate using the oldest listen's timestamp.
+            # Subtract 1 to avoid re-fetching listens at the boundary.
+            new_max_ts = listens[-1]["listened_at"] - 1
+            if max_ts is not None and new_max_ts >= max_ts:
+                break
+            max_ts = new_max_ts
+
+        return all_listens
 
     def get_tracks_from_listens(self, listens) -> list[Track]:
         """Returns a list of tracks from a list of listens."""
@@ -123,10 +200,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             if track["track_metadata"].get("release_name") is None:
                 continue
             mbid_mapping = track["track_metadata"].get("mbid_mapping", {})
-            mbid = None
-            if mbid_mapping.get("recording_mbid") is None:
-                # search for the track using title and release
-                mbid = self.get_mb_recording_id(track)
+            mbid = mbid_mapping.get("recording_mbid")
             tracks.append(
                 {
                     "album": (
@@ -225,7 +299,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
                 identifier, includes=["releases", "artist-credits"]
             )
             title = recording.get("title")
-            artist_credit = recording.get("artist-credit", [])
+            artist_credit = recording.get("artist_credit", [])
             if artist_credit:
                 artist = artist_credit[0].get("artist", {}).get("name")
             else:

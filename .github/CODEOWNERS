@@ -11,3 +11,5 @@
 /beetsplug/_utils/requests.py @snejus
 /beetsplug/_utils/musicbrainz.py @snejus
 /beetsplug/musicbrainz.py @snejus
+
+/beetsplug/lastgenre/* @JOJ0

@@ -15,6 +15,7 @@ from mediafile import MediaFile, UnreadableFileError
 import beets
 from beets import dbcore, logging, plugins, util
 from beets.dbcore import types
+from beets.dbcore.pathutils import normalize_path_for_db
 from beets.util import (
     MoveOperation,
     bytestring_path,
@@ -105,6 +106,17 @@ class LibModel(dbcore.Model["Library"]):
         field = maybe_replace_legacy_field(field, cls is Album)
 
         fast = field in cls.all_db_fields
+        if (
+            cls._type(field).query is dbcore.query.PathQuery
+            and query_cls is not dbcore.query.PathQuery
+        ):
+            # Regex, exact, and string queries operate on the raw DB value, so
+            # strip the library prefix to match the stored relative path.
+            bytes_pattern = normalize_path_for_db(util.bytestring_path(pattern))
+            if query_cls is not dbcore.query.RegexpQuery:
+                bytes_pattern = util.path_as_posix(bytes_pattern)
+            pattern = os.fsdecode(bytes_pattern)
+
         if field in cls.shared_db_fields:
             # This field exists in both tables, so SQLite will encounter
             # an OperationalError if we try to use it in a query.
@@ -647,6 +659,7 @@ class Item(LibModel):
         "artist_credit": types.STRING,
         "artists_credit": types.MULTI_VALUE_DSV,
         "remixers": types.MULTI_VALUE_DSV,
+        "remixers_ids": types.MULTI_VALUE_DSV,
         "album": types.STRING,
         "albumartist": types.STRING,
         "albumartists": types.MULTI_VALUE_DSV,
@@ -660,12 +673,15 @@ class Item(LibModel):
         "discogs_artistid": types.INTEGER,
         "discogs_labelid": types.INTEGER,
         "lyricists": types.MULTI_VALUE_DSV,
+        "lyricists_ids": types.MULTI_VALUE_DSV,
         "composers": types.MULTI_VALUE_DSV,
         "composer_sort": types.STRING,
+        "composers_ids": types.MULTI_VALUE_DSV,
         "work": types.STRING,
         "mb_workid": types.STRING,
         "work_disambig": types.STRING,
         "arrangers": types.MULTI_VALUE_DSV,
+        "arrangers_ids": types.MULTI_VALUE_DSV,
         "grouping": types.STRING,
         "year": types.PaddedInt(4),
         "month": types.PaddedInt(2),
