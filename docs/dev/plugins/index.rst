@@ -79,13 +79,11 @@ and you're good to go!
     information, see for example pep-3119_.
 
 .. [3] There are a variety of packaging tools available for python, for example
-    you can use poetry_, setuptools_ or hatchling_.
+    you can use setuptools_ or hatchling_.
 
 .. _hatchling: https://hatch.pypa.io/latest/config/build/#build-system
 
 .. _pep-3119: https://peps.python.org/pep-3119/#rationale
-
-.. _poetry: https://python-poetry.org/docs/pyproject/#packages
 
 .. _setuptools: https://setuptools.pypa.io/en/latest/userguide/package_discovery.html#finding-simple-packages
 

@@ -152,7 +152,8 @@ helpful to run on the "bleeding edge". To run the latest source:
      .. code-block:: shell
 
          git clone https://github.com/beetbox/beets.git
-         poetry install
+         cd beets
+         pip install -e .
 
      This approach lets you decide where the source is stored, with any changes
      immediately reflected in your environment.

@@ -28,12 +28,10 @@ jobs:
       - uses: actions/checkout@v5
       - name: Install Python tools
         uses: BrandonLWhite/pipx-install-action@v1.0.3
-      - name: Setup Python with poetry caching
-        # poetry cache requires poetry to already be installed, weirdly
-        uses: actions/setup-python@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: poetry
 
       - name: Install system dependencies on Windows
         if: matrix.platform == 'windows-latest'
@@ -72,7 +70,7 @@ jobs:
       - if: ${{ env.IS_MAIN_PYTHON != 'true' }}
         name: Test without coverage
         run: |
-          poetry install --without=lint --extras=autobpm --extras=discogs --extras=lyrics --extras=replaygain --extras=reflink --extras=fetchart --extras=chroma --extras=sonosupdate
+          uv sync --group test --extra autobpm --extra discogs --extra lyrics --extra replaygain --extra reflink --extra fetchart --extra chroma --extra sonosupdate
           poe test
 
       - if: ${{ env.IS_MAIN_PYTHON == 'true' }}
@@ -80,7 +78,7 @@ jobs:
         env:
           LYRICS_UPDATED: ${{ steps.lyrics-update.outputs.any_changed }}
         run: |
-          poetry install --extras=autobpm --extras=discogs --extras=lyrics --extras=docs --extras=replaygain --extras=reflink --extras=fetchart --extras=chroma --extras=sonosupdate
+          uv sync --group test --extra autobpm --extra discogs --extra lyrics --extra docs --extra replaygain --extra reflink --extra fetchart --extra chroma --extra sonosupdate
           poe docs
           poe test-with-coverage
 
