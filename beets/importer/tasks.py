@@ -1123,7 +1123,9 @@ class ImportTaskFactory:
             return library.Item.from_path(path)
         except library.ReadError as exc:
             if isinstance(exc.reason, mediafile.FileTypeError):
-                mp3_path = _remux_mpeglayer3_wav(path)
+                mp3_path = None
+                if config["import"]["remux_mp3_in_wav"].get(bool):
+                    mp3_path = _remux_mpeglayer3_wav(path)
                 if mp3_path:
                     log.info(
                         "Remuxed MPEGLAYER3 WAV to MP3: {}",
