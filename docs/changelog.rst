@@ -37,8 +37,9 @@ Bug fixes
 - :doc:`plugins/chroma`: Do not produce MusicBrainz-sourced autotagger
   candidates when the :doc:`plugins/musicbrainz` plugin is not enabled. The
   chroma plugin now looks up the musicbrainz plugin through the metadata-source
-  registry instead of unconditionally instantiating its own private instance.
-  :bug:`6212`
+  registry instead of unconditionally instantiating its own private instance,
+  which also restores compatibility with :doc:`plugins/mbpseudo` for
+  chroma-triggered lookups. :bug:`6212` :bug:`6441`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
