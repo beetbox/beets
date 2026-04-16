@@ -317,6 +317,13 @@ class TestLyricsPlugin(LyricsPluginMixin):
                 "new plain",
                 id="replace-with-unsynced-lyrics-when-disabled",
             ),
+            pytest.param(
+                {"force": True, "keep_synced": True},
+                "[00:00.00] old synced",
+                "new",
+                "[00:00.00] old synced",
+                id="keep_synced_keeps_old_synced",
+            ),
         ],
     )
     def test_overwrite_config(
