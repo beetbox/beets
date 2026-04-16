@@ -204,6 +204,20 @@ Default
                artist: no
                album_artist: no
 
+Contributor credits
+~~~~~~~~~~~~~~~~~~~
+
+When Discogs provides artist roles on a track, beets uses them to separate main
+artists from other credited contributors. Main artist fields such as ``artist``,
+``artists``, ``artist_credit``, ``artists_credit``, ``artist_id``, and
+``artists_ids`` keep the primary artist credits, while featured artists from
+track roles are appended using :conf:`plugins.discogs:featured_string`.
+
+Discogs contributor roles are also imported into beets' multi-value performer
+fields when available. This includes remixer, lyricist, composer, and arranger
+credits, which populate ``remixers``, ``lyricists``, ``composers``, and
+``arrangers`` respectively.
+
 .. include:: ./shared_metadata_source_config.rst
 
 .. _discogs guidelines: https://support.discogs.com/hc/en-us/articles/360005055373-Database-Guidelines-12-Tracklisting#Index_Tracks_And_Headings
