@@ -448,7 +448,11 @@ class Album(LibModel):
         )
         if operation == MoveOperation.MOVE:
             util.move(old_art, new_art)
-            util.prune_dirs(os.path.dirname(old_art), self._db.directory)
+            util.prune_dirs(
+                os.path.dirname(old_art),
+                self._db.directory,
+                clutter=beets.config["clutter"].as_str_seq(),
+            )
         elif operation == MoveOperation.COPY:
             util.copy(old_art, new_art)
         elif operation == MoveOperation.LINK:
@@ -1154,7 +1158,11 @@ class Item(LibModel):
         # Delete the associated file.
         if delete:
             util.remove(self.path)
-            util.prune_dirs(os.path.dirname(self.path), self._db.directory)
+            util.prune_dirs(
+                os.path.dirname(self.path),
+                self._db.directory,
+                clutter=beets.config["clutter"].as_str_seq(),
+            )
 
         self._db._memotable = {}
 
@@ -1207,7 +1215,11 @@ class Item(LibModel):
 
         # Prune vacated directory.
         if operation == MoveOperation.MOVE:
-            util.prune_dirs(os.path.dirname(old_path), self._db.directory)
+            util.prune_dirs(
+                os.path.dirname(old_path),
+                self._db.directory,
+                clutter=beets.config["clutter"].as_str_seq(),
+            )
 
     # Templating.
 

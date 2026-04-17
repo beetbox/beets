@@ -277,7 +277,11 @@ class ImportTask(BaseImportTask):
             if lib.directory in util.ancestry(item.path):
                 log.debug("deleting duplicate {.filepath}", item)
                 util.remove(item.path)
-                util.prune_dirs(os.path.dirname(item.path), lib.directory)
+                util.prune_dirs(
+                    os.path.dirname(item.path),
+                    lib.directory,
+                    clutter=config["clutter"].as_str_seq(),
+                )
 
     def set_fields(self, lib: library.Library):
         """Sets the fields given at CLI or configuration to the specified
