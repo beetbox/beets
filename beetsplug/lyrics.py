@@ -995,6 +995,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
                 ),
                 "fallback": None,
                 "force": False,
+                "keep_synced": False,
                 "local": False,
                 "print": False,
                 "synced": False,
@@ -1039,6 +1040,12 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             action="store_true",
             default=self.config["force"].get(),
             help="always re-download lyrics",
+        )
+        cmd.parser.add_option(
+            "--keep-synced",
+            action="store_true",
+            default=self.config["keep_synced"].get(),
+            help="re-download only unsynced lyrics",
         )
         cmd.parser.add_option(
             "-l",
@@ -1100,6 +1107,10 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             return
 
         existing_lyrics = Lyrics.from_item(item)
+        if self.config["keep_synced"] and existing_lyrics.synced:
+            self.info("🔵 Keeping synced lyrics: {}", item)
+            return
+
         if new_lyrics := self.find_lyrics(item):
             self.info("🟢 Found lyrics: {}", item)
             if translator := self.translator:

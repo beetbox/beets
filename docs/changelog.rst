@@ -31,6 +31,9 @@ New features
 - :doc:`plugins/discogs`: Import Discogs remixer, lyricist, composer, and
   arranger credits into the multi-value ``remixers``, ``lyricists``,
   ``composers``, and ``arrangers`` fields. :bug:`6380`
+- :doc:`plugins/lyrics`: Add ``keep_synced`` config option and ``--keep-synced``
+  CLI flag to skip re-fetching lyrics for tracks that already have synced
+  lyrics, even when ``force`` is enabled. :bug:`5249`
 
 Bug fixes
 ~~~~~~~~~
