@@ -65,26 +65,27 @@ Development Tools
 
 In order to develop beets, you will need a few tools installed:
 
-- poetry_ for packaging, virtual environment and dependency management
+- uv_ for packaging, virtual environment and dependency management
 - poethepoet_ to run tasks, such as linting, formatting, testing
 
-Python community recommends using pipx_ to install stand-alone command-line
-applications such as above. pipx_ installs each application in an isolated
-virtual environment, where its dependencies will not interfere with your system
-and other CLI tools.
+Follow the `uv installation instructions
+<https://docs.astral.sh/uv/getting-started/installation/>`__ to install uv_.
 
-If you do not have pipx_ installed in your system, follow `pipx installation
-instructions <https://pipx.pypa.io/stable/how-to/install-pipx/>`__ or
+poethepoet_ is a stand-alone CLI tool. The Python community recommends using
+pipx_ to install such tools in isolated environments so their dependencies don't
+interfere with your system. If you don't have pipx_ installed, follow the `pipx
+installation instructions <https://pipx.pypa.io/stable/how-to/install-pipx/>`__
+or run:
 
 .. code-block:: sh
 
     $ python3 -m pip install --user pipx
 
-Install poetry_ and poethepoet_ using pipx_:
+Then install poethepoet_:
 
 ::
 
-    $ pipx install poetry poethepoet
+    $ pipx install poethepoet
 
 .. admonition:: Check ``tool.pipx-install`` section in ``pyproject.toml`` to see supported versions
 
@@ -92,7 +93,6 @@ Install poetry_ and poethepoet_ using pipx_:
 
         [tool.pipx-install]
         poethepoet = ">=0.26"
-        poetry = "<2"
 
 .. _getting-the-source:
 
@@ -100,36 +100,31 @@ Getting the Source
 ++++++++++++++++++
 
 The easiest way to get started with the latest beets source is to clone the
-repository and install ``beets`` in a local virtual environment using poetry_.
-This can be done with:
+repository and install ``beets`` in a local virtual environment using uv_. This
+can be done with:
 
 .. code-block:: bash
 
     $ git clone https://github.com/beetbox/beets.git
     $ cd beets
-    $ poetry install
+    $ uv sync
 
-This will install ``beets`` and all development dependencies into its own
-virtual environment in your ``$POETRY_CACHE_DIR``. See ``poetry install --help``
-for installation options, including installing ``extra`` dependencies for
-plugins.
+This will install ``beets`` and all development dependencies into a ``.venv``
+virtual environment. See ``uv sync --help`` for options, including installing
+``extra`` dependencies for plugins (e.g. ``uv sync --extra fetchart``).
 
-In order to run something within this virtual environment, start the command
-with ``poetry run`` to them, for example ``poetry run pytest``.
-
-On the other hand, it may get tedious to type ``poetry run`` before every
-command. Instead, you can activate the virtual environment in your shell with:
+To run commands within this virtual environment, either activate it:
 
 ::
 
-    $ poetry shell
+    $ source .venv/bin/activate
+    $ pytest
 
-You should see ``(beets-py3.10)`` prefix in your shell prompt. Now you can run
-commands directly, for example:
+Or prefix commands with ``uv run``:
 
 ::
 
-    $ (beets-py3.10) pytest
+    $ uv run pytest
 
 Additionally, poethepoet_ task runner assists us with the most common
 operations. Formatting, linting, testing are defined as ``poe`` tasks in
@@ -351,7 +346,7 @@ Test Dependencies
 The tests have a few more dependencies than beets itself. (The additional
 dependencies consist of testing utilities and dependencies of non-default
 plugins exercised by the test suite.) The dependencies are listed under the
-``tool.poetry.group.test.dependencies`` section in pyproject.toml_.
+``test`` group in the ``dependency-groups`` section of pyproject.toml_.
 
 Writing Tests
 ~~~~~~~~~~~~~
@@ -412,8 +407,6 @@ beets also defines custom pytest markers in ``test/conftest.py``:
 
 .. _poethepoet: https://poethepoet.natn.io/index.html
 
-.. _poetry: https://python-poetry.org/docs/
-
 .. _pyproject.toml: https://github.com/beetbox/beets/blob/master/pyproject.toml
 
 .. _pytest: https://docs.pytest.org/en/stable/
@@ -427,5 +420,7 @@ beets also defines custom pytest markers in ``test/conftest.py``:
 .. _test-query: https://github.com/beetbox/beets/blob/master/test/test_query.py
 
 .. _unittest: https://docs.python.org/3/library/unittest.html
+
+.. _uv: https://docs.astral.sh/uv/
 
 .. _vim: https://www.vim.org/

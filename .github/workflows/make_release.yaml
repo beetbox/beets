@@ -20,13 +20,13 @@ jobs:
       - uses: actions/checkout@v5
       - name: Install Python tools
         uses: BrandonLWhite/pipx-install-action@v1.0.3
-      - uses: actions/setup-python@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          cache: poetry
 
       - name: Install dependencies
-        run: poetry install --with=release --extras=docs
+        run: uv sync --no-group test --no-group lint --no-group typing --extra docs
 
       - name: Bump project version
         run: poe bump "${{ env.NEW_VERSION }}"
@@ -51,13 +51,13 @@ jobs:
 
       - name: Install Python tools
         uses: BrandonLWhite/pipx-install-action@v1.0.3
-      - uses: actions/setup-python@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          cache: poetry
 
       - name: Install dependencies
-        run: poetry install --with=release --extras=docs
+        run: uv sync --no-group test --no-group lint --no-group typing --extra docs
 
       - name: Install pandoc
         run: sudo apt update && sudo apt install pandoc -y

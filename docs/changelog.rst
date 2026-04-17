@@ -62,9 +62,14 @@ For plugin developers
   ``TypedDict`` models for releases, recordings, works, and relations. Update
   direct access to raw MusicBrainz response keys if needed.
 
-..
-    Other changes
-    ~~~~~~~~~~~~~
+Other changes
+~~~~~~~~~~~~~
+
+- :doc:`contributing`: The project now uses ``uv`` for packaging, virtual
+  environment, and dependency management, replacing ``poetry``. The build
+  backend has changed from ``poetry-core`` to ``hatchling``. Please see updates
+  in :ref:`development-tools` and :ref:`getting-the-source` for more
+  information. :bug:`5783`
 
 2.9.0 (April 11, 2026)
 ----------------------
