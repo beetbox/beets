@@ -459,11 +459,12 @@ class TidalPlugin(MetadataSourcePlugin):
         return None
 
     @staticmethod
-    def _duration_to_seconds(duration: str) -> int:
+    def _duration_to_seconds(duration: str) -> int | None:
         """Convert ISO 8601 duration to seconds. E.g. 'PT15M2S' -> 902."""
         match = ISO_8601_RE.match(duration)
         if not match:
-            raise ValueError(f"Invalid ISO 8601 duration: {duration}")
+            log.warning("Invalid ISO 8601 duration: {0}", duration)
+            return None
         parts = {k: int(v) if v else 0 for k, v in match.groupdict().items()}
         return parts["seconds"] + parts["minutes"] * 60 + parts["hours"] * 3600
 

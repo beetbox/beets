@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
@@ -572,6 +573,7 @@ class TestStaticHelpers:
     def test_duration_conversions(self, duration, expected):
         assert TidalPlugin._duration_to_seconds(duration) == expected
 
-    def test_duration_invalid_raises(self):
-        with pytest.raises(ValueError, match="Invalid ISO 8601 duration"):
+    def test_duration_invalid_raises(self, caplog):
+        with caplog.at_level(logging.WARNING):
             TidalPlugin._duration_to_seconds("invalid")
+        assert "Invalid ISO 8601 duration: invalid" in caplog.text
