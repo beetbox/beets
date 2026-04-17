@@ -46,6 +46,8 @@ Bug fixes
   registry instead of unconditionally instantiating its own private instance,
   which also restores compatibility with :doc:`plugins/mbpseudo` for
   chroma-triggered lookups. :bug:`6212` :bug:`6441`
+- :doc:`plugins/mbpseudo`: Fix crashes when applying a pseudo-release. One in
+  ``PseudoAlbumInfo.raw_data`` and a ``sqlite3.ProgrammingError``.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~

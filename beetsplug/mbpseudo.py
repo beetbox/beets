@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import itertools
 from copy import deepcopy
+from functools import cached_property
 from typing import TYPE_CHECKING, Any
 
 import mediafile
@@ -271,7 +272,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
             )
             album_info.use_pseudo_as_ref()
             new_pairs, *_ = assign_items(match.items, album_info.tracks)
-            album_info.mapping = dict(new_pairs)
+            match.mapping = dict(new_pairs)
 
         if album_info.data_source == self.data_source:
             album_info.data_source = "MusicBrainz"
@@ -308,6 +309,13 @@ class PseudoAlbumInfo(AlbumInfo):
         for k, v in pseudo_release.items():
             if k not in kwargs:
                 self[k] = v
+
+    @cached_property
+    def raw_data(self):
+        # Info.raw_data does self.__class__(**self.copy()) which fails for
+        # PseudoAlbumInfo since __init__ requires pseudo_release and
+        # official_release. Construct a plain AlbumInfo instead.
+        return AlbumInfo(**self.copy()).raw_data
 
     def get_official_release(self) -> AlbumInfo:
         return self.__dict__["_official_release"]
