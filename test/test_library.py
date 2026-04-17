@@ -1343,6 +1343,42 @@ class FilesizeTest(BeetsTestCase):
         assert item.filesize == 0
 
 
+class ItemPruneDirsClutterTest(BeetsTestCase):
+    """Regression tests: prune_dirs respects config["clutter"] during move/remove."""
+
+    def _drop_clutter(self, directory, filename=b"unwanted.log"):
+        """Create a clutter file in *directory* (bytes path)."""
+        path = os.path.join(directory, filename)
+        with open(syspath(path), "w"):
+            pass
+        return path
+
+    def test_move_prunes_dir_with_config_clutter(self):
+        """After moving an item, old dir is removed even when only clutter remains."""
+        config["clutter"] = ["*.log"]
+        item = self.add_item_fixture()
+        old_dir = os.path.dirname(item.path)
+        self._drop_clutter(old_dir)
+
+        # Change artist so the destination path differs, forcing a real move.
+        item.artist = "new artist"
+        item.store()
+        item.move()
+
+        assert not os.path.exists(syspath(old_dir))
+
+    def test_remove_prunes_dir_with_config_clutter(self):
+        """After deleting an item, its dir is removed even when only clutter remains."""
+        config["clutter"] = ["*.log"]
+        item = self.add_item_fixture()
+        old_dir = os.path.dirname(item.path)
+        self._drop_clutter(old_dir)
+
+        item.remove(delete=True)
+
+        assert not os.path.exists(syspath(old_dir))
+
+
 class ParseQueryTest(unittest.TestCase):
     def test_parse_invalid_query_string(self):
         with pytest.raises(beets.dbcore.query.ParsingError):
