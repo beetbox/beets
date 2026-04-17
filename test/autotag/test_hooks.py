@@ -25,6 +25,7 @@ from beets.autotag.hooks import (
     AlbumMatch,
     TrackInfo,
     TrackMatch,
+    _is_valid_mb_id,
     correct_list_fields,
 )
 from beets.library import Item
@@ -426,3 +427,146 @@ def test_correct_list_fields(
     data = correct_list_fields(input_data)
 
     assert (data[single_field], data[list_field]) == expected_values
+
+
+# Tests for issue #6519: non-MB sources must not pollute MusicBrainz ID tags
+# Real IDs from the issue report (Deezer numeric) and a typical Spotify ID.
+_SPOTIFY_ALBUM_ID = "4aawyAB9vmqN3uQ7FjRGTy"
+_SPOTIFY_TRACK_ID = "6rqhFgbbKwnb9MLmUQDhG6"
+_SPOTIFY_ARTIST_ID = "4Z8W4fKeB5YxbusRsdQVPb"
+_DEEZER_ALBUM_ID = "158760742"
+_DEEZER_TRACK_ID = "930705291"
+_DEEZER_ARTIST_ID = "3876259001"
+
+_VALID_MB_ALBUM_UUID = "7edb51cb-77d6-4416-a23c-3a8c2994a2c7"
+_VALID_MB_TRACK_UUID = "dfa939ec-118c-4d0f-84a0-60f3d1e6522c"
+_VALID_MB_ARTIST_UUID = "a6623d39-2d8e-4f70-8242-0a9553b91e50"
+
+
+@pytest.mark.parametrize(
+    "value, expected",
+    [
+        # Valid UUIDs
+        (_VALID_MB_ALBUM_UUID, True),
+        (_VALID_MB_TRACK_UUID, True),
+        # Valid UUID list
+        ([_VALID_MB_ALBUM_UUID, _VALID_MB_ARTIST_UUID], True),
+        # Spotify base-62 IDs
+        (_SPOTIFY_ALBUM_ID, False),
+        (_SPOTIFY_TRACK_ID, False),
+        # Deezer numeric IDs
+        (_DEEZER_ALBUM_ID, False),
+        (_DEEZER_TRACK_ID, False),
+        # Edge cases
+        (None, False),
+        ("", False),
+        ([], False),
+    ],
+)
+def test_is_valid_mb_id(value, expected):
+    assert _is_valid_mb_id(value) == expected
+
+
+# Regression tests for https://github.com/beetbox/beets/issues/6519:
+# non-MB sources must not write their IDs into MusicBrainz tags.
+
+
+@pytest.mark.parametrize(
+    "album_id, artist_id, track_id",
+    [
+        (_SPOTIFY_ALBUM_ID, _SPOTIFY_ARTIST_ID, _SPOTIFY_TRACK_ID),
+        (_DEEZER_ALBUM_ID, _DEEZER_ARTIST_ID, _DEEZER_TRACK_ID),
+    ],
+    ids=["spotify", "deezer"],
+)
+def test_non_mb_album_ids_not_in_mb_fields(
+    config, album_id, artist_id, track_id
+):
+    """Non-MB album/artist IDs must not appear in MusicBrainz tag fields."""
+    info = AlbumInfo(
+        tracks=[
+            TrackInfo(
+                title="Track",
+                track_id=track_id,
+                artist_id=artist_id,
+                medium=1,
+                medium_index=1,
+                medium_total=1,
+                index=1,
+            )
+        ],
+        album="Album",
+        album_id=album_id,
+        artist="Artist",
+        artist_id=artist_id,
+        year=2024,
+    )
+    data = info.item_data
+    assert "mb_albumid" not in data
+    assert "mb_albumartistid" not in data
+    assert "mb_albumartistids" not in data
+
+
+@pytest.mark.parametrize(
+    "track_id, artist_id",
+    [
+        (_SPOTIFY_TRACK_ID, _SPOTIFY_ARTIST_ID),
+        (_DEEZER_TRACK_ID, _DEEZER_ARTIST_ID),
+    ],
+    ids=["spotify", "deezer"],
+)
+def test_non_mb_track_ids_not_in_mb_fields(config, track_id, artist_id):
+    """Non-MB track/artist IDs must not appear in MusicBrainz tag fields."""
+    track = TrackInfo(
+        title="Track",
+        track_id=track_id,
+        artist_id=artist_id,
+        medium=1,
+        medium_index=1,
+        index=1,
+    )
+    data = track.item_data
+    assert "mb_trackid" not in data
+    assert "mb_artistid" not in data
+    assert "mb_artistids" not in data
+
+
+def test_valid_mb_album_uuids_are_written(config):
+    """Regression: valid MusicBrainz UUIDs must still be written to MB tags."""
+    info = AlbumInfo(
+        tracks=[
+            TrackInfo(
+                title="Track",
+                track_id=_VALID_MB_TRACK_UUID,
+                artist_id=_VALID_MB_ARTIST_UUID,
+                medium=1,
+                medium_index=1,
+                medium_total=1,
+                index=1,
+            )
+        ],
+        album="Album",
+        album_id=_VALID_MB_ALBUM_UUID,
+        artist="Artist",
+        artist_id=_VALID_MB_ARTIST_UUID,
+        data_source="MusicBrainz",
+        year=2024,
+    )
+    data = info.item_data
+    assert data["mb_albumid"] == _VALID_MB_ALBUM_UUID
+    assert data["mb_albumartistid"] == _VALID_MB_ARTIST_UUID
+
+
+def test_valid_mb_track_uuid_is_written(config):
+    """Regression: valid MusicBrainz UUID in track_id must still be written."""
+    track = TrackInfo(
+        title="Track",
+        track_id=_VALID_MB_TRACK_UUID,
+        artist_id=_VALID_MB_ARTIST_UUID,
+        medium=1,
+        medium_index=1,
+        index=1,
+    )
+    data = track.item_data
+    assert data["mb_trackid"] == _VALID_MB_TRACK_UUID
+    assert data["mb_artistid"] == _VALID_MB_ARTIST_UUID

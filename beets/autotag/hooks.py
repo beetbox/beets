@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 
+import re
 from copy import deepcopy
 from dataclasses import dataclass, field
 from functools import cached_property
@@ -43,6 +44,38 @@ V = TypeVar("V")
 JSONDict = dict[str, Any]
 
 log = logging.getLogger("beets")
+
+# MusicBrainz UUIDs standard 8-4-4-4-12 hex format.
+_MB_UUID_RE = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+    re.IGNORECASE,
+)
+
+# Fields in item_data that must contain valid MusicBrainz UUIDs.
+# Values that don't match are dropped
+# cannot accidentally populate MusicBrainz tags with their own numeric/opaque IDs.
+_MB_ID_FIELDS = frozenset(
+    {
+        "mb_albumid",
+        "mb_albumartistid",
+        "mb_albumartistids",
+        "mb_artistid",
+        "mb_artistids",
+        "mb_releasegroupid",
+        "mb_releasetrackid",
+        "mb_trackid",
+    }
+)
+
+
+def _is_valid_mb_id(value: Any) -> bool:
+    """Return True if *value* is a valid MusicBrainz UUID (or a list of them)."""
+    if isinstance(value, list):
+        return bool(value) and all(
+            _MB_UUID_RE.match(str(v)) for v in value if v is not None
+        )
+    return bool(value and _MB_UUID_RE.match(str(value)))
+
 
 SYNCHRONISED_LIST_FIELDS = {
     ("albumtype", "albumtypes"),
@@ -200,6 +233,11 @@ class Info(AttrDict[Any]):
             (k, v) for k, v in self.MEDIA_FIELD_MAP.items() if k in data
         ):
             data[media_field] = data.pop(info_field)
+
+        # Drop any MusicBrainz ID field whose value is not a valid MB UUID.
+        for mb_field in _MB_ID_FIELDS:
+            if mb_field in data and not _is_valid_mb_id(data[mb_field]):
+                del data[mb_field]
 
         return data
 

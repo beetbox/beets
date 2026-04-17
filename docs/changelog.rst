@@ -38,6 +38,7 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+<<<<<<< HEAD
 - :ref:`import-cmd` Automatically remux WAV files containing MP3 streams
   (``WAVE_FORMAT_MPEGLAYER3``) to proper MP3 files during import, instead of
   silently importing them with incorrect metadata. :bug:`6455`
@@ -49,6 +50,13 @@ Bug fixes
   registry instead of unconditionally instantiating its own private instance,
   which also restores compatibility with :doc:`plugins/mbpseudo` for
   chroma-triggered lookups. :bug:`6212` :bug:`6441`
+=======
+- Correctly handle semicolon-delimited genre values from externally-tagged
+  files. :bug:`6450`
+- Fix non-MusicBrainz sources (e.g. Spotify, Deezer) incorrectly writing
+  their numeric or opaque IDs into MusicBrainz tag fields, which caused
+  third-party players to reject the files. :bug:`6519`
+>>>>>>> e157fd245 (Fix non-MB sources writing IDs to MusicBrainz tags)
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
