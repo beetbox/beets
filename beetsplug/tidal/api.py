@@ -63,10 +63,10 @@ class TidalAPI(RequestHandler):
             "include": include or [],
         }
 
-        return self.get(
+        return self.get_json(
             f"{API_BASE}/searchResults/{urllib.parse.quote(query)}",
             params=params,
-        ).json()
+        )
 
     def get_tracks(
         self,
@@ -220,12 +220,11 @@ class TidalAPI(RequestHandler):
         }
 
         while next := doc.get("links", {}).get("next"):
-            res = self.get(
+            page_doc = self.get_json(
                 url=next,
                 params={**params, "include": include},
                 **kwargs,
             )
-            page_doc = res.json()
             doc = self.merge_multiresource_pagination(doc, page_doc)
 
         # Dedupe include

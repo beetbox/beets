@@ -464,16 +464,8 @@ class TidalPlugin(MetadataSourcePlugin):
         match = ISO_8601_RE.match(duration)
         if not match:
             raise ValueError(f"Invalid ISO 8601 duration: {duration}")
-
         parts = {k: int(v) if v else 0 for k, v in match.groupdict().items()}
-        return (
-            parts["seconds"]
-            + parts["minutes"] * 60
-            + parts["hours"] * 3600
-            + parts["days"] * 86400
-            + parts["months"] * 30 * 86400
-            + parts["years"] * 365 * 86400
-        )
+        return parts["seconds"] + parts["minutes"] * 60 + parts["hours"] * 3600
 
     @staticmethod
     def _parse_label(
@@ -489,22 +481,19 @@ class TidalPlugin(MetadataSourcePlugin):
     ) -> tuple[int, int, int] | None:
         """Returns year, month, day from iso YYYY-MM-DD"""
 
-        if release_date := attributes.get("releaseDate"):
-            parts = release_date.split("-")
-            if len(parts) != 3:
-                return None
+        if (
+            (release_date := attributes.get("releaseDate"))
+            and (parts := release_date.split("-"))
+            and len(parts) == 3
+        ):
             return int(parts[0]), int(parts[1]), int(parts[2])
         return None
 
 
 ISO_8601_RE = re.compile(
     r"^P"
-    r"(?:(?P<years>\d+)Y)?"
-    r"(?:(?P<months>\d+)M)?"
-    r"(?:(?P<days>\d+)D)?"
-    r"(?:T"
+    r"T"
     r"(?:(?P<hours>\d+)H)?"
     r"(?:(?P<minutes>\d+)M)?"
-    r"(?:(?P<seconds>\d+)S)?"
-    r")?$"
+    r"(?:(?P<seconds>\d+)S)?$"
 )
