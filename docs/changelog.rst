@@ -49,9 +49,9 @@ Bug fixes
   registry instead of unconditionally instantiating its own private instance,
   which also restores compatibility with :doc:`plugins/mbpseudo` for
   chroma-triggered lookups. :bug:`6212` :bug:`6441`
-- Fix non-MusicBrainz sources (e.g. Spotify, Deezer) incorrectly writing
-  their numeric or opaque IDs into MusicBrainz tag fields, which caused
-  third-party players to reject the files. :bug:`6519`
+- Fix non-MusicBrainz sources (e.g. Spotify, Deezer) incorrectly writing their
+  numeric or opaque IDs into MusicBrainz tag fields, which caused third-party
+  players to reject the files. :bug:`6519`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
