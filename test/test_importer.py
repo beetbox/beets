@@ -1101,7 +1101,7 @@ def item_candidates_mock(*args, **kwargs):
     yield TrackInfo(
         artist="artist",
         title="title",
-        track_id="new trackid",
+        track_id="11111111-1111-4111-8111-111111111111",
         index=0,
     )
 
@@ -1136,7 +1136,7 @@ class ImportDuplicateSingletonTest(ImportTestCase):
         assert not item.filepath.exists()
         assert len(self.lib.items()) == 1
         item = self.lib.items().get()
-        assert item.mb_trackid == "new trackid"
+        assert item.mb_trackid == "11111111-1111-4111-8111-111111111111"
 
     def test_keep_duplicate(self):
         assert len(self.lib.items()) == 1

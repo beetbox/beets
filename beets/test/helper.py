@@ -774,9 +774,9 @@ class AutotagStub:
     def item_candidates(self, item, artist, title):
         yield TrackInfo(
             title=title.replace("Tag", "Applied"),
-            track_id="trackid",
+            track_id="aaaaaa00-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
             artist=artist.replace("Tag", "Applied"),
-            artist_id="artistid",
+            artist_id="cccccc00-cccc-4ccc-8ccc-cccccccccccc",
             length=1,
             index=0,
         )
@@ -784,7 +784,7 @@ class AutotagStub:
     def _make_track_match(self, artist, album, number):
         return TrackInfo(
             title=f"Applied Track {number}",
-            track_id=f"match {number}",
+            track_id=f"aaaaaa{number:02d}-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
             artist=artist,
             length=1,
             index=0,
@@ -808,8 +808,8 @@ class AutotagStub:
             album=album,
             tracks=track_infos,
             va=False,
-            album_id=f"albumid{id}",
-            artist_id=f"artistid{id}",
+            album_id=f"bbbbbb{distance:02d}-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+            artist_id=f"cccccc{distance:02d}-cccc-4ccc-8ccc-cccccccccccc",
             albumtype="soundtrack",
             data_source="match_source",
             bandcamp_album_id="bc_url",
