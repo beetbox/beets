@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import json
+from http import HTTPStatus
 from pathlib import Path
 from time import sleep
 from typing import TYPE_CHECKING
 
 import requests
 from requests_oauthlib import OAuth2Session
+from urllib3.util.retry import Retry
 
 from beets.logging import getLogger
 from beetsplug._utils.requests import RateLimitAdapter, TimeoutAndRetrySession
@@ -48,8 +50,19 @@ class TidalSession(OAuth2Session, TimeoutAndRetrySession):
             pkce="S256",
         )
 
-        # Mount rate limit adapter
-        adapter = RateLimitAdapter(rate_limit=0.25)
+        # Retry on server errors
+        retry = Retry(
+            total=6,
+            backoff_factor=0.5,
+            status_forcelist=[
+                HTTPStatus.INTERNAL_SERVER_ERROR,
+                HTTPStatus.BAD_GATEWAY,
+                HTTPStatus.SERVICE_UNAVAILABLE,
+                HTTPStatus.GATEWAY_TIMEOUT,
+            ],
+        )
+        # Rate limit to ~4/s as tidal will penalize heavily if not respected
+        adapter = RateLimitAdapter(rate_limit=0.25, retry=retry)
         self.mount("https://auth.tidal.com/", adapter)
         self.mount(API_BASE, adapter)
 
@@ -85,7 +98,7 @@ class TidalSession(OAuth2Session, TimeoutAndRetrySession):
     def _handle_rate_limit(self, response: requests.Response) -> None:
         remaining = int(response.headers.get("Retry-After", 0))
         if remaining > 0:
-            log.warning(
+            log.debug(
                 "Rate limit exceeded. Retrying after {0} seconds.", remaining
             )
             sleep(remaining)

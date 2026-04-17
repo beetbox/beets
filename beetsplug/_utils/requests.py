@@ -116,11 +116,8 @@ class RateLimitAdapter(HTTPAdapter):
     Override `_wait_time()` for custom strategies (token bucket, burst, etc.).
     """
 
-    def __init__(
-        self,
-        rate_limit: float = 0.25,
-    ):
-        super().__init__()
+    def __init__(self, rate_limit: float = 0.25, **kwargs):
+        super().__init__(**kwargs)
         self.rate_limit = rate_limit
         self._last_request_time = 0.0
         self._lock = threading.Lock()

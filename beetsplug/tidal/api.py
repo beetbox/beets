@@ -6,6 +6,7 @@ from itertools import islice, zip_longest
 from typing import TYPE_CHECKING, Any, TypeVar
 
 from beets.logging import getLogger
+from beetsplug._utils.requests import RequestHandler
 from beetsplug.tidal.session import TidalSession
 
 if TYPE_CHECKING:
@@ -35,7 +36,7 @@ def _batched(iterable: Iterable[T], n: int) -> Iterable[list[T]]:
         yield batch
 
 
-class TidalAPI:
+class TidalAPI(RequestHandler):
     def __init__(self, client_id: str, token_path: str) -> None:
         self.client_id = client_id
         self.token_path = token_path
@@ -62,7 +63,7 @@ class TidalAPI:
             "include": include or [],
         }
 
-        return self.session.get(
+        return self.get(
             f"{API_BASE}/searchResults/{urllib.parse.quote(query)}",
             params=params,
         ).json()
@@ -219,7 +220,7 @@ class TidalAPI:
         }
 
         while next := doc.get("links", {}).get("next"):
-            res = self.session.get(
+            res = self.get(
                 url=next,
                 params={**params, "include": include},
                 **kwargs,
