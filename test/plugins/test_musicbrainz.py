@@ -422,6 +422,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
                             artist__index=3,
                             artist__name="Another Recording Arranger",
                         ),
+                        artist_relation_factory(type="engineer"),
                     ],
                     recording__work_relations=[
                         {
@@ -450,6 +451,7 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
                                         artist__index=7,
                                         artist__name="Another Recording Composer",
                                     ),
+                                    artist_relation_factory(type="mastering"),
                                 ],
                             },
                         }
