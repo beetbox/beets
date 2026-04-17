@@ -5,6 +5,7 @@ from functools import cached_property
 from itertools import islice, zip_longest
 from typing import TYPE_CHECKING, Any, TypeVar
 
+from beets import ui
 from beets.logging import getLogger
 from beetsplug._utils.requests import RequestHandler
 from beetsplug.tidal.session import TidalSession
@@ -155,8 +156,6 @@ class TidalAPI(RequestHandler):
         2. Paste full redirect URL (with ?code=...)
         3. Token auto-saved for future use
         """
-        from beets import ui
-
         auth_url, _ = self.session.authorization_url(
             "https://login.tidal.com/authorize"
         )
