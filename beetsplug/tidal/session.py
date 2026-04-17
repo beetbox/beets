@@ -62,7 +62,7 @@ class TidalSession(OAuth2Session, TimeoutAndRetrySession):
             ],
         )
         # Rate limit to ~4/s as tidal will penalize heavily if not respected
-        adapter = RateLimitAdapter(rate_limit=0.25, retry=retry)
+        adapter = RateLimitAdapter(rate_limit=0.25, max_retries=retry)
         self.mount("https://auth.tidal.com/", adapter)
         self.mount(API_BASE, adapter)
 

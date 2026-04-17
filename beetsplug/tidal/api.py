@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import urllib.parse
+import webbrowser
 from functools import cached_property
 from itertools import islice, zip_longest
 from typing import TYPE_CHECKING, Any, TypeVar
@@ -159,7 +160,10 @@ class TidalAPI(RequestHandler):
         auth_url, _ = self.session.authorization_url(
             "https://login.tidal.com/authorize"
         )
-        ui.print_(f"Visit: {auth_url}")
+        try:
+            webbrowser.open(auth_url)
+        except webbrowser.Error:
+            ui.print_(f"Visit: {auth_url}")
         redirect_url = ui.input_("Paste redirected URL: ")
         self.session.fetch_token(
             "https://auth.tidal.com/v1/oauth2/token",
@@ -178,9 +182,8 @@ class TidalAPI(RequestHandler):
         Merge of b into a, following JSON:API spec rules.
 
         - Appends data arrays
-        - Deduplicates included by (type,id)
+        - Deduplicates included by (type, id)
         - Updates links (b overrides a)
-        - Merges meta objects
         """
         a["included"] = a.get("included", [])
         a["links"] = a.get("links", {})
