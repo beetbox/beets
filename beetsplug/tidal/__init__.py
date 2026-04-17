@@ -182,19 +182,19 @@ class TidalPlugin(MetadataSourcePlugin):
             query,
             include=["tracks.artists"],
         )
-        track_lookup: dict[str, TidalTrack] = {
+        track_by_id: dict[str, TidalTrack] = {
             item["id"]: item
             for item in search_doc.get("included", [])
             if item["type"] == "tracks"
         }
-        artist_lookup: dict[str, TidalArtist] = {
+        artist_by_id: dict[str, TidalArtist] = {
             item["id"]: item
             for item in search_doc.get("included", [])
             if item["type"] == "artists"
         }
         for track_rel in search_doc["data"]["relationships"]["tracks"]["data"]:
-            if track := track_lookup.get(track_rel["id"]):
-                yield self._get_track_info(track, artist_lookup=artist_lookup)
+            if track := track_by_id.get(track_rel["id"]):
+                yield self._get_track_info(track, artist_by_id=artist_by_id)
             else:
                 log.warning(
                     "Track with id {0} not found in lookup",
@@ -249,33 +249,31 @@ class TidalPlugin(MetadataSourcePlugin):
             isrcs=isrcs,
             include=["artists"],
         )
-        track_lookup: dict[str, TidalTrack] = {
+        track_by_id: dict[str, TidalTrack] = {
             item["id"]: item
             for item in tracks_doc.get("data", [])
             if item["type"] == "tracks"
         }
-        artist_lookup: dict[str, TidalArtist] = {
+        artist_by_id: dict[str, TidalArtist] = {
             item["id"]: item
             for item in tracks_doc.get("included", [])
             if item["type"] == "artists"
         }
 
         for _id in _ids:
-            if _id is not None and (track := track_lookup.get(_id)):
-                yield self._get_track_info(track, artist_lookup=artist_lookup)
+            if _id is not None and (track := track_by_id.get(_id)):
+                yield self._get_track_info(track, artist_by_id=artist_by_id)
             else:
                 yield None
 
         if isrcs:
             isrc_to_track: dict[str, TidalTrack] = {
-                t["attributes"]["isrc"]: t for t in track_lookup.values()
+                t["attributes"]["isrc"]: t for t in track_by_id.values()
             }
 
             for isrc in isrcs:
                 if track := isrc_to_track.get(isrc):
-                    yield self._get_track_info(
-                        track, artist_lookup=artist_lookup
-                    )
+                    yield self._get_track_info(track, artist_by_id=artist_by_id)
                 else:
                     yield None
 
@@ -310,43 +308,43 @@ class TidalPlugin(MetadataSourcePlugin):
             barcode_ids=barcode_ids,
             include=["items.artists", "artists"],
         )
-        album_lookup: dict[str, TidalAlbum] = {
+        album_by_id: dict[str, TidalAlbum] = {
             item["id"]: item
             for item in albums_doc.get("data", [])
             if item["type"] == "albums"
         }
-        track_lookup: dict[str, TidalTrack] = {
+        track_by_id: dict[str, TidalTrack] = {
             item["id"]: item
             for item in albums_doc.get("included", [])
             if item["type"] == "tracks"
         }
-        artist_lookup: dict[str, TidalArtist] = {
+        artist_by_id: dict[str, TidalArtist] = {
             item["id"]: item
             for item in albums_doc.get("included", [])
             if item["type"] == "artists"
         }
 
         for _id in _ids:
-            if _id is not None and (album := album_lookup.get(_id)):
+            if _id is not None and (album := album_by_id.get(_id)):
                 yield self._get_album_info(
                     album,
-                    track_lookup=track_lookup,
-                    artist_lookup=artist_lookup,
+                    track_by_id=track_by_id,
+                    artist_by_id=artist_by_id,
                 )
             else:
                 yield None
 
         if barcode_ids:
             barcode_to_album: dict[str, TidalAlbum] = {
-                a["attributes"]["barcodeId"]: a for a in album_lookup.values()
+                a["attributes"]["barcodeId"]: a for a in album_by_id.values()
             }
 
             for barcode in barcode_ids:
                 if album := barcode_to_album.get(barcode):
                     yield self._get_album_info(
                         album,
-                        track_lookup=track_lookup,
-                        artist_lookup=artist_lookup,
+                        track_by_id=track_by_id,
+                        artist_by_id=artist_by_id,
                     )
                 else:
                     yield None
@@ -354,22 +352,22 @@ class TidalPlugin(MetadataSourcePlugin):
     def _get_album_info(
         self,
         album: TidalAlbum,
-        track_lookup: dict[str, TidalTrack],
-        artist_lookup: dict[str, TidalArtist],
+        track_by_id: dict[str, TidalTrack],
+        artist_by_id: dict[str, TidalArtist],
     ) -> AlbumInfo:
 
         track_infos: list[TrackInfo] = []
         for i, track_rel in enumerate(
             album["relationships"]["items"]["data"], start=1
         ):
-            if track := track_lookup.get(track_rel["id"]):
-                track_info = self._get_track_info(track, artist_lookup)
+            if track := track_by_id.get(track_rel["id"]):
+                track_info = self._get_track_info(track, artist_by_id)
                 track_info.index = i
                 track_infos.append(track_info)
 
         artist_names, artist_ids = self._parse_artists(
             album["relationships"]["artists"]["data"],
-            artist_lookup,
+            artist_by_id,
         )
         date_parts = self._parse_release_date(album["attributes"])
         return AlbumInfo(
@@ -395,11 +393,11 @@ class TidalPlugin(MetadataSourcePlugin):
     def _get_track_info(
         self,
         track: TidalTrack,
-        artist_lookup: dict[str, TidalArtist],
+        artist_by_id: dict[str, TidalArtist],
     ) -> TrackInfo:
         artist_names, artist_ids = self._parse_artists(
             track["relationships"]["artists"]["data"],
-            artist_lookup,
+            artist_by_id,
         )
 
         return TrackInfo(
@@ -420,7 +418,7 @@ class TidalPlugin(MetadataSourcePlugin):
     @staticmethod
     def _parse_artists(
         artist_relationships: list[ResourceIdentifier],
-        artist_lookup: dict[str, TidalArtist],
+        artist_by_id: dict[str, TidalArtist],
     ) -> tuple[list[str], list[str]]:
         """Extract artists from a relationship.
 
@@ -430,7 +428,7 @@ class TidalPlugin(MetadataSourcePlugin):
         artist_names = []
         artist_ids = []
         for artist_rel in artist_relationships:
-            if artist := artist_lookup.get(artist_rel["id"]):
+            if artist := artist_by_id.get(artist_rel["id"]):
                 artist_ids.append(artist["id"])
                 artist_names.append(artist["attributes"]["name"])
             else:
