@@ -49,6 +49,7 @@ Bug fixes
   registry instead of unconditionally instantiating its own private instance,
   which also restores compatibility with :doc:`plugins/mbpseudo` for
   chroma-triggered lookups. :bug:`6212` :bug:`6441`
+- :ref:`import-cmd` Remove clutter from imported album folders. :bug:`5016`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
