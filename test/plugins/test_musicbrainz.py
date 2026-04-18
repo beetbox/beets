@@ -869,12 +869,24 @@ class TestMusicBrainzPlugin(MusicBrainzPluginTestMixin):
     @pytest.mark.parametrize(
         "plugin_config,va_likely,expected_additional_criteria",
         [
-            ({}, False, {"artist": "Artist "}),
-            ({}, True, {"arid": "89ad4ac3-39f7-470e-963a-56509c546377"}),
-            (
+            _p({}, False, {"artist": "Artist "}, id="default"),
+            _p(
+                {},
+                True,
+                {"arid": "89ad4ac3-39f7-470e-963a-56509c546377"},
+                id="va likely",
+            ),
+            _p(
                 {"extra_tags": ["label", "catalognum"]},
                 False,
                 {"artist": "Artist ", "label": "abc", "catno": "ABC123"},
+                id="value-based extra_tags",
+            ),
+            _p(
+                {"extra_tags": ["alias", "tracks"]},
+                False,
+                {"artist": "Artist ", "alias": " Album", "tracks": "3"},
+                id="non-value-based extra_tags",
             ),
         ],
     )
