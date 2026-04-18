@@ -83,12 +83,6 @@ class MusicBrainzTestCase(BeetsTestCase):
 
 
 class MBAlbumInfoTest(MusicBrainzTestCase):
-    def test_parse_release_year_month_only(self):
-        release = release_factory(release_group__first_release_date="1987-03")
-        d = self.mb.album_info(release)
-        assert d.original_year == 1987
-        assert d.original_month == 3
-
     def test_no_durations(self):
         release = release_factory(
             media__0__tracks=[track_factory(recording__length=None)]
@@ -102,13 +96,6 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         )
         d = self.mb.album_info(release)
         assert d.tracks[0].length == 2.0
-
-    def test_no_release_date(self):
-        release = release_factory(release_group__first_release_date="")
-        d = self.mb.album_info(release)
-        assert not d.original_year
-        assert not d.original_month
-        assert not d.original_day
 
     def test_detect_various_artists(self):
         release = release_factory(
@@ -505,6 +492,17 @@ class TestParse(MusicBrainzPluginTestMixin):
             "va": False,
             "year": 2020,
         }
+
+    @pytest.mark.parametrize(
+        "date, expected_parts",
+        [
+            ("1987-03-01", (1987, 3, 1)),
+            ("1987-03", (1987, 3, None)),
+            ("1987", (1987, None, None)),
+        ],
+    )
+    def test_get_date(self, date, expected_parts):
+        assert musicbrainz._get_date(date) == expected_parts
 
     @pytest.mark.parametrize(
         "beets_match_config, expected_titles",
