@@ -627,6 +627,7 @@ class TestParse(MusicBrainzPluginTestMixin):
         second_medium = medium_factory(
             title="Second Medium",
             position=2,
+            pregap=track_factory(recording__title="Pregap", position=0),
             tracks=[track_factory()],
         )
         release = release_factory(media=[first_medium, second_medium])
@@ -635,7 +636,7 @@ class TestParse(MusicBrainzPluginTestMixin):
 
         assert d.mediums == 2
         t = d.tracks
-        assert len(t) == 3
+        assert len(t) == 4
 
         assert t[0].title == "Recording"
         assert t[0].track_id == "00000000-0000-0000-0000-000000001001"
@@ -653,10 +654,16 @@ class TestParse(MusicBrainzPluginTestMixin):
         assert t[1].index == 2
         assert t[1].disctitle == "First Medium"
 
+        assert t[2].title == "Pregap"
         assert t[2].medium == 2
-        assert t[2].medium_index == 1
+        assert t[2].medium_index == 0
         assert t[2].index == 3
         assert t[2].disctitle == "Second Medium"
+
+        assert t[3].medium == 2
+        assert t[3].medium_index == 1
+        assert t[3].index == 4
+        assert t[3].disctitle == "Second Medium"
 
 
 class TestArtist:
