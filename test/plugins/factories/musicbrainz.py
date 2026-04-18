@@ -151,9 +151,7 @@ class LabelFactory(_SortNameFactory, _IdFactory):
 
 
 class LabelInfoFactory(factory.DictFactory):
-    catalog_number = factory.LazyAttribute(
-        lambda o: f"{o.label['name'][:3].upper()}123"
-    )
+    catalog_number = "LAB123"
     label = factory.SubFactory(LabelFactory)
 
 

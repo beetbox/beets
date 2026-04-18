@@ -48,6 +48,10 @@ def artist_relation_factory(**kwargs) -> mb.ArtistRelation:
     return factories.ArtistRelationFactory.build(**kwargs)
 
 
+def label_info_factory(**kwargs) -> mb.LabelInfo:
+    return factories.LabelInfoFactory.build(**kwargs)
+
+
 def release_group_factory(**kwargs) -> mb.ReleaseGroup:
     return factories.ReleaseGroupFactory.build(**kwargs)
 
@@ -615,6 +619,30 @@ class TestParse(MusicBrainzPluginTestMixin):
         assert d.album == album
         assert d.release_group_title == release_group_title
         assert d.tracks[0].title == track_title
+
+    @pytest.mark.parametrize(
+        "label_infos, expected",
+        [
+            _p([], {"catalognum": None, "label": None}, id="no label"),
+            _p(
+                [label_info_factory(label=None)],
+                {"catalognum": "LAB123", "label": None},
+                id="no label",
+            ),
+            _p(
+                [label_info_factory(label__name="[no label]")],
+                {"catalognum": "LAB123", "label": None},
+                id="label with ignored [no label] name",
+            ),
+            _p(
+                [label_info_factory()],
+                {"catalognum": "LAB123", "label": "Label"},
+                id="normal case",
+            ),
+        ],
+    )
+    def test_parse_label_info(self, label_infos, expected):
+        assert MusicBrainzPlugin._parse_label_infos(label_infos) == expected
 
 
 class TestArtist:
