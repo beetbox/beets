@@ -35,8 +35,8 @@ New features
   CLI flag to skip re-fetching lyrics for tracks that already have synced
   lyrics, even when ``force`` is enabled. :bug:`5249`
 - :doc:`plugins/musicbrainz`: Use aliases for artist credit.
-- Execute metadata source plugin searches and lookups concurrently, reducing
-  total wait time when multiple plugins (e.g. MusicBrainz and Spotify) are
+- Metadata source plugin searches and lookups are now executed concurrently,
+  speeding up lookups when multiple plugins (e.g. MusicBrainz and Spotify) are
   enabled.
 
 Bug fixes

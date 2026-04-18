@@ -80,9 +80,7 @@ def _yield_from_plugins(
 
     @wraps(func)
     def wrapper(*args, **kwargs) -> Iterator[Ret]:
-        # Run all metadata source plugins in parallel threads.
-        # Each plugin executes its lookup/search concurrently, so I/O-bound API calls
-        # complete faster than sequential.
+        # Run plugin methods concurrently for faster I/O-bound lookups.
         with ThreadPoolExecutor() as executor:
             futures = {
                 executor.submit(
