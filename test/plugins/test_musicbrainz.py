@@ -23,7 +23,7 @@ import pytest
 import requests
 
 from beets.library import Item
-from beets.test.helper import BeetsTestCase, PluginMixin
+from beets.test.helper import PluginMixin
 from beetsplug import musicbrainz
 from beetsplug.musicbrainz import MusicBrainzPlugin
 
@@ -73,144 +73,6 @@ def medium_factory(**kwargs) -> mb.Medium:
 
 def release_factory(**kwargs) -> mb.Release:
     return factories.ReleaseFactory.build(**kwargs)
-
-
-class MusicBrainzTestCase(BeetsTestCase):
-    def setUp(self):
-        super().setUp()
-        self.mb = musicbrainz.MusicBrainzPlugin()
-        self.config["match"]["preferred"]["countries"] = ["US"]
-
-
-class MBAlbumInfoTest(MusicBrainzTestCase):
-    def test_no_durations(self):
-        release = release_factory(
-            media__0__tracks=[track_factory(recording__length=None)]
-        )
-        d = self.mb.album_info(release)
-        assert d.tracks[0].length is None
-
-    def test_track_length_overrides_recording_length(self):
-        release = release_factory(
-            media__0__tracks=[track_factory(recording__length=2000.0)]
-        )
-        d = self.mb.album_info(release)
-        assert d.tracks[0].length == 2.0
-
-    def test_detect_various_artists(self):
-        release = release_factory(
-            artist_credit=[
-                artist_credit_factory(artist__id=musicbrainz.VARIOUS_ARTISTS_ID)
-            ]
-        )
-        d = self.mb.album_info(release)
-        assert d.va
-
-    def test_missing_language(self):
-        release = release_factory(text_representation__language=None)
-        d = self.mb.album_info(release)
-        assert d.language is None
-
-    def test_parse_recording_artist_credits(self):
-        release = release_factory(
-            media__0__tracks=[
-                track_factory(
-                    recording__artist_relations=[
-                        artist_relation_factory(
-                            type="remixer",
-                            artist__index=1,
-                            artist__name="Recording Remixer",
-                        ),
-                        artist_relation_factory(
-                            type="arranger",
-                            artist__index=2,
-                            artist__name="Recording Arranger",
-                        ),
-                        artist_relation_factory(
-                            type="arranger",
-                            artist__index=3,
-                            artist__name="Another Recording Arranger",
-                        ),
-                        artist_relation_factory(type="engineer"),
-                    ],
-                    recording__work_relations=[
-                        {
-                            "type": "performance",
-                            "work": {
-                                "id": "WORK ID",
-                                "title": "WORK TITLE",
-                                "artist_relations": [
-                                    artist_relation_factory(
-                                        type="lyricist",
-                                        artist__index=4,
-                                        artist__name="Recording Lyricist",
-                                    ),
-                                    artist_relation_factory(
-                                        type="lyricist",
-                                        artist__index=5,
-                                        artist__name="Another Recording Lyricist",
-                                    ),
-                                    artist_relation_factory(
-                                        type="composer",
-                                        artist__index=6,
-                                        artist__name="Recording Composer",
-                                    ),
-                                    artist_relation_factory(
-                                        type="composer",
-                                        artist__index=7,
-                                        artist__name="Another Recording Composer",
-                                    ),
-                                    artist_relation_factory(type="mastering"),
-                                ],
-                            },
-                        }
-                    ],
-                )
-            ]
-        )
-
-        track = self.mb.album_info(release).tracks[0]
-        assert track.remixers == ["Recording Remixer"]
-        assert track.arrangers == [
-            "Recording Arranger",
-            "Another Recording Arranger",
-        ]
-        assert track.lyricists_ids == [
-            "00000000-0000-0000-0000-000000000004",
-            "00000000-0000-0000-0000-000000000005",
-        ]
-        assert track.lyricists == [
-            "Recording Lyricist",
-            "Another Recording Lyricist",
-        ]
-        assert track.composers == [
-            "Recording Composer",
-            "Another Recording Composer",
-        ]
-        assert track.composers_ids == [
-            "00000000-0000-0000-0000-000000000006",
-            "00000000-0000-0000-0000-000000000007",
-        ]
-        assert track.composer_sort == (
-            "Recording Composer, The, Another Recording Composer, The"
-        )
-
-    def test_track_disambiguation(self):
-        release = release_factory(
-            media__0__tracks=[
-                track_factory(),
-                track_factory(
-                    recording__title="Other Recording",
-                    recording__disambiguation="SECOND TRACK",
-                ),
-            ]
-        )
-
-        d = self.mb.album_info(release)
-        t = d.tracks
-        assert len(t) == 2
-        assert t[0].trackdisambig is None
-        assert t[1].trackdisambig == "SECOND TRACK"
 
 
 class TestUtils:
@@ -329,6 +191,136 @@ class MusicBrainzPluginTestMixin(PluginMixin):
         return musicbrainz.MusicBrainzPlugin()
 
 
+class TestParseRecording(MusicBrainzPluginTestMixin):
+    def test_parse_recording(self, mb):
+        recording = recording_factory(
+            length=None,
+            disambiguation="Recording Disambiguation",
+            artist_relations=[
+                artist_relation_factory(
+                    type="remixer",
+                    artist__index=1,
+                    artist__name="Recording Remixer",
+                ),
+                artist_relation_factory(
+                    type="arranger",
+                    artist__index=2,
+                    artist__name="Recording Arranger",
+                ),
+                artist_relation_factory(
+                    type="arranger",
+                    artist__index=3,
+                    artist__name="Another Recording Arranger",
+                ),
+                artist_relation_factory(type="engineer"),
+            ],
+            work_relations=[
+                {
+                    "type": "performance",
+                    "work": {
+                        "id": "WORK ID",
+                        "title": "WORK TITLE",
+                        "artist_relations": [
+                            artist_relation_factory(
+                                type="lyricist",
+                                artist__index=4,
+                                artist__name="Recording Lyricist",
+                            ),
+                            artist_relation_factory(
+                                type="lyricist",
+                                artist__index=5,
+                                artist__name="Another Recording Lyricist",
+                            ),
+                            artist_relation_factory(
+                                type="composer",
+                                artist__index=6,
+                                artist__name="Recording Composer",
+                            ),
+                            artist_relation_factory(
+                                type="composer",
+                                artist__index=7,
+                                artist__name="Another Recording Composer",
+                            ),
+                            artist_relation_factory(type="mastering"),
+                        ],
+                    },
+                }
+            ],
+        )
+
+        assert mb.track_info(recording) == {
+            "album": None,
+            "arrangers": [
+                "Recording Arranger",
+                "Another Recording Arranger",
+            ],
+            "arrangers_ids": [
+                "00000000-0000-0000-0000-000000000002",
+                "00000000-0000-0000-0000-000000000003",
+            ],
+            "artist": "Recording Artist",
+            "artist_credit": "Recording Artist Credit",
+            "artist_id": "00000000-0000-0000-0000-000000000001",
+            "artist_sort": "Recording Artist, The",
+            "artists": [
+                "Recording Artist",
+            ],
+            "artists_credit": [
+                "Recording Artist Credit",
+            ],
+            "artists_ids": [
+                "00000000-0000-0000-0000-000000000001",
+            ],
+            "artists_sort": [
+                "Recording Artist, The",
+            ],
+            "bpm": None,
+            "composer_sort": "Recording Composer, The, Another Recording Composer, The",
+            "composers": [
+                "Recording Composer",
+                "Another Recording Composer",
+            ],
+            "composers_ids": [
+                "00000000-0000-0000-0000-000000000006",
+                "00000000-0000-0000-0000-000000000007",
+            ],
+            "data_source": "MusicBrainz",
+            "data_url": "https://musicbrainz.org/recording/00000000-0000-0000-0000-000000001001",
+            "disctitle": None,
+            "genres": None,
+            "index": None,
+            "initial_key": None,
+            "isrc": None,
+            "length": None,
+            "lyricists": [
+                "Recording Lyricist",
+                "Another Recording Lyricist",
+            ],
+            "lyricists_ids": [
+                "00000000-0000-0000-0000-000000000004",
+                "00000000-0000-0000-0000-000000000005",
+            ],
+            "mb_workid": "WORK ID",
+            "media": None,
+            "medium": None,
+            "medium_index": None,
+            "medium_total": None,
+            "release_track_id": None,
+            "remixers": [
+                "Recording Remixer",
+            ],
+            "remixers_ids": [
+                "00000000-0000-0000-0000-000000000001",
+            ],
+            "title": "Recording",
+            "track_alt": None,
+            "track_id": "00000000-0000-0000-0000-000000001001",
+            "trackdisambig": "Recording Disambiguation",
+            "work": "WORK TITLE",
+            "work_disambig": None,
+        }
+
+
 class TestParseMedia(MusicBrainzPluginTestMixin):
     def test_multiple_mediums(self, mb):
         first_medium = medium_factory(
@@ -385,10 +377,11 @@ class TestParseMedia(MusicBrainzPluginTestMixin):
         assert t[3].index == 4
         assert t[3].disctitle == "Second Medium"
 
-    def test_track_artist_overrides_recording_artist_multi(self, mb):
+    def test_track_overrides_recording(self, mb):
         release = release_factory(
             media__0__tracks=[
                 track_factory(
+                    length=1000.0,
                     artist_credit=[
                         artist_credit_factory(
                             artist__name="Track Artist",
@@ -399,6 +392,7 @@ class TestParseMedia(MusicBrainzPluginTestMixin):
                             artist__index=2,
                         ),
                     ],
+                    recording__length=2000.0,
                     recording__artist_credit=[
                         artist_credit_factory(
                             artist__name="Recording Artist",
@@ -412,7 +406,10 @@ class TestParseMedia(MusicBrainzPluginTestMixin):
                 ),
             ]
         )
+
         track = mb.album_info(release).tracks[0]
+
+        assert track.length == 1.0
         assert track.artist == "Track Artist & Other Track Artist"
         assert track.artist_id == "00000000-0000-0000-0000-000000000001"
         assert (
@@ -629,6 +626,20 @@ class TestParseRelease(MusicBrainzPluginTestMixin):
             "va": False,
             "year": 2020,
         }
+
+    def test_detect_various_artists(self, mb):
+        release = release_factory(
+            artist_credit=[
+                artist_credit_factory(artist__id=musicbrainz.VARIOUS_ARTISTS_ID)
+            ]
+        )
+
+        assert mb.album_info(release).va
+
+    def test_missing_language(self, mb):
+        release = release_factory(text_representation__language=None)
+
+        assert mb.album_info(release).language is None
 
     @pytest.mark.parametrize(
         "plugin_config, expected_genres",
