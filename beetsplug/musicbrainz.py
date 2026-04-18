@@ -594,21 +594,21 @@ class MusicBrainzPlugin(
 
             yield ti
 
-    def album_info(self, release: Release) -> AlbumInfo:
-        """Takes a MusicBrainz release result dictionary and returns a beets
-        AlbumInfo object containing the interesting data about that release.
-        """
-        ntracks = sum(len(m.get("tracks", [])) for m in release["media"])
+    def _ensure_complete_recordings(self, release: Release) -> None:
+        """Patch a release's tracks with full recording data from the API.
 
-        # The MusicBrainz API omits 'relations'
-        # when the release has more than 500 tracks. So we use browse_recordings
-        # on chunks of tracks to recover the same information in this case.
-        if ntracks > BROWSE_MAXTRACKS:
+        The MusicBrainz API silently omits relation data for releases
+        exceeding a track threshold. This method detects that case and
+        re-fetches recordings in paginated chunks, then mutates the
+        release in-place so callers always see complete data.
+        """
+        track_count = sum(len(m.get("tracks", [])) for m in release["media"])
+        if track_count > BROWSE_MAXTRACKS:
             self._log.debug("Album {} has too many tracks", release["id"])
-            recording_list: list[Recording] = []
-            for i in range(0, ntracks, BROWSE_CHUNKSIZE):
+            recordings: list[Recording] = []
+            for i in range(0, track_count, BROWSE_CHUNKSIZE):
                 self._log.debug("Retrieving tracks starting at {}", i)
-                recording_list.extend(
+                recordings.extend(
                     self.mb_api.browse_recordings(
                         release=release["id"],
                         limit=BROWSE_CHUNKSIZE,
@@ -616,12 +616,18 @@ class MusicBrainzPlugin(
                         offset=i,
                     )
                 )
-            recording_by_id = {r["id"]: r for r in recording_list}
+            recording_by_id = {r["id"]: r for r in recordings}
             for medium in release["media"]:
                 for track in medium["tracks"]:
                     track["recording"] = recording_by_id[
                         track["recording"]["id"]
                     ]
+
+    def album_info(self, release: Release) -> AlbumInfo:
+        """Takes a MusicBrainz release result dictionary and returns a beets
+        AlbumInfo object containing the interesting data about that release.
+        """
+        self._ensure_complete_recordings(release)
 
         # Basic info.
         valid_media = [

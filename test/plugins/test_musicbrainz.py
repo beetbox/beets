@@ -665,6 +665,38 @@ class TestParse(MusicBrainzPluginTestMixin):
         assert t[3].index == 4
         assert t[3].disctitle == "Second Medium"
 
+    def test_ensure_complete_recordings(self, monkeypatch, mb):
+        titles = ["Recording", "Other Recording"]
+        initial_recordings = [
+            recording_factory(index=idx, title=t)
+            for idx, t in enumerate(titles)
+        ]
+        complete_recordings = [
+            {**r, "url_relations": [url_relation_factory()]}
+            for r in initial_recordings
+        ]
+
+        monkeypatch.setattr("beetsplug.musicbrainz.BROWSE_CHUNKSIZE", 1)
+        monkeypatch.setattr("beetsplug.musicbrainz.BROWSE_MAXTRACKS", 1)
+        monkeypatch.setattr(
+            mb.mb_api,
+            "browse_recordings",
+            lambda offset=0, **__: [complete_recordings[offset]],
+        )
+
+        release = release_factory(
+            media__0__tracks=[
+                track_factory(recording=r) for r in initial_recordings
+            ]
+        )
+
+        mb._ensure_complete_recordings(release)
+
+        new_recordings = [
+            t["recording"] for m in release["media"] for t in m["tracks"]
+        ]
+        assert new_recordings == complete_recordings
+
 
 class TestArtist:
     def test_single_artist(self):
