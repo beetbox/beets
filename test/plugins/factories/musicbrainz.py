@@ -234,6 +234,16 @@ class MediumFactory(_IdFactory):
         self["track_count"] = len(_tracks)
 
 
+class UrlFactory(factory.DictFactory):
+    id = factory.Faker("uuid4")
+    resource = "https://example.com"
+
+
+class UrlRelationFactory(factory.DictFactory):
+    type = "purchase for download"
+    url = factory.SubFactory(UrlFactory)
+
+
 class ReleaseFactory(_IdFactory):
     class Params:
         id_base = 1000000

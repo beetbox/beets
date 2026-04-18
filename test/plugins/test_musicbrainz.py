@@ -64,6 +64,10 @@ def track_factory(**kwargs) -> mb.Track:
     return factories.TrackFactory.build(**kwargs)
 
 
+def url_relation_factory(**kwargs) -> mb.UrlRelation:
+    return factories.UrlRelationFactory.build(**kwargs)
+
+
 def medium_factory(**kwargs) -> mb.Medium:
     return factories.MediumFactory(**kwargs)  # type: ignore[return-value]
 
@@ -435,8 +439,29 @@ class MusicBrainzPluginTestMixin(PluginMixin):
 class TestParse(MusicBrainzPluginTestMixin):
     def test_parse_release(self, config, mb):
         config["match"]["preferred"]["countries"] = ["US"]
+        mb.config.set(
+            {
+                "external_ids": {
+                    "discogs": True,
+                    "bandcamp": True,
+                    "spotify": False,
+                }
+            }
+        )
 
-        release = release_factory()
+        release = release_factory(
+            url_relations=[
+                url_relation_factory(
+                    url__resource="https://discogs.com/release/123456"
+                ),
+                url_relation_factory(
+                    url__resource="https://open.spotify.com/album/ABCDab2ImQyHZ9sXCXFyZ8",
+                ),
+                url_relation_factory(
+                    url__resource="https://somemusic.bandcamp.com/album/somealbum",
+                ),
+            ]
+        )
         d = mb.album_info(release)
 
         assert d == {
@@ -465,12 +490,14 @@ class TestParse(MusicBrainzPluginTestMixin):
                 "Artist, The",
             ],
             "asin": "Album Asin",
+            "bandcamp_album_id": "https://somemusic.bandcamp.com/album/somealbum",
             "barcode": "0000000000000",
             "catalognum": "LAB123",
             "country": "US",
             "data_source": "MusicBrainz",
             "data_url": "https://musicbrainz.org/release/00000000-0000-0000-0000-000001000001",
             "day": 1,
+            "discogs_album_id": "123456",
             "discogs_albumid": None,
             "discogs_artistid": None,
             "discogs_labelid": None,
