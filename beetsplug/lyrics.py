@@ -1131,7 +1131,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
 
         return None
 
-def add_item_lyrics(self, item: Item, write: bool) -> None:
+    def add_item_lyrics(self, item: Item, write: bool) -> None:
         if self.config["local"]:
             return
 
@@ -1150,6 +1150,15 @@ def add_item_lyrics(self, item: Item, write: bool) -> None:
             self.info("🟢 Found lyrics: {}", item)
             if translator := self.translator:
                 new_lyrics = translator.translate(new_lyrics, existing_lyrics)
+
+            is_override = bool(item.get("lyrics_url"))
+            synced_mode = self.config["synced"].get(bool)
+            if synced_mode and existing_lyrics.synced and not new_lyrics.synced and not is_override:
+                self.info(
+                    "🔴 Not updating synced lyrics with non-synced ones: {}",
+                    item,
+                )
+                return
 
             for key in ("backend", "url", "language", "translation_language"):
                 item_key = f"lyrics_{key}"
