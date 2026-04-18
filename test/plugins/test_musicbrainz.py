@@ -80,114 +80,6 @@ class MusicBrainzTestCase(BeetsTestCase):
 
 
 class MBAlbumInfoTest(MusicBrainzTestCase):
-    def test_parse_release(self):
-        release = release_factory()
-        d = self.mb.album_info(release)
-
-        assert d == {
-            "album": "Album",
-            "album_id": "00000000-0000-0000-0000-000001000001",
-            "albumdisambig": "Album Disambiguation",
-            "albumstatus": "Official",
-            "albumtype": "album",
-            "albumtypes": [
-                "album",
-            ],
-            "artist": "Artist",
-            "artist_credit": "Artist Credit",
-            "artist_id": "00000000-0000-0000-0000-000000000011",
-            "artist_sort": "Artist, The",
-            "artists": [
-                "Artist",
-            ],
-            "artists_credit": [
-                "Artist Credit",
-            ],
-            "artists_ids": [
-                "00000000-0000-0000-0000-000000000011",
-            ],
-            "artists_sort": [
-                "Artist, The",
-            ],
-            "asin": "Album Asin",
-            "barcode": "0000000000000",
-            "catalognum": "LAB123",
-            "country": "US",
-            "data_source": "MusicBrainz",
-            "data_url": "https://musicbrainz.org/release/00000000-0000-0000-0000-000001000001",
-            "day": 1,
-            "discogs_albumid": None,
-            "discogs_artistid": None,
-            "discogs_labelid": None,
-            "genres": None,
-            "label": "Label",
-            "language": "eng",
-            "media": "Digital Media",
-            "mediums": 1,
-            "month": 1,
-            "original_day": 3,
-            "original_month": 2,
-            "original_year": 2001,
-            "release_group_title": "Release Group",
-            "releasegroup_id": "00000000-0000-0000-0000-000000000101",
-            "releasegroupdisambig": "Release Group Disambiguation",
-            "script": "Latn",
-            "style": None,
-            "tracks": [
-                {
-                    "album": None,
-                    "arrangers": None,
-                    "arrangers_ids": [],
-                    "artist": "Recording Artist",
-                    "artist_credit": "Recording Artist Credit",
-                    "artist_id": "00000000-0000-0000-0000-000000000001",
-                    "artist_sort": "Recording Artist, The",
-                    "artists": [
-                        "Recording Artist",
-                    ],
-                    "artists_credit": [
-                        "Recording Artist Credit",
-                    ],
-                    "artists_ids": [
-                        "00000000-0000-0000-0000-000000000001",
-                    ],
-                    "artists_sort": [
-                        "Recording Artist, The",
-                    ],
-                    "bpm": None,
-                    "composer_sort": None,
-                    "composers": None,
-                    "composers_ids": [],
-                    "data_source": "MusicBrainz",
-                    "data_url": "https://musicbrainz.org/recording/00000000-0000-0000-0000-000000001001",
-                    "disctitle": "Medium",
-                    "genres": None,
-                    "index": 1,
-                    "initial_key": None,
-                    "isrc": None,
-                    "length": 0.36,
-                    "lyricists": None,
-                    "lyricists_ids": [],
-                    "mb_workid": None,
-                    "media": "Digital Media",
-                    "medium": 1,
-                    "medium_index": 1,
-                    "medium_total": 1,
-                    "release_track_id": "00000000-0000-0000-0000-000000010001",
-                    "remixers": None,
-                    "remixers_ids": [],
-                    "title": "Recording",
-                    "track_alt": "A1",
-                    "track_id": "00000000-0000-0000-0000-000000001001",
-                    "trackdisambig": None,
-                    "work": None,
-                    "work_disambig": None,
-                },
-            ],
-            "va": False,
-            "year": 2020,
-        }
-
     def test_parse_tracks(self):
         release = release_factory(
             media__0__tracks=[
@@ -541,6 +433,116 @@ class MusicBrainzPluginTestMixin(PluginMixin):
 
 
 class TestParse(MusicBrainzPluginTestMixin):
+    def test_parse_release(self, config, mb):
+        config["match"]["preferred"]["countries"] = ["US"]
+
+        release = release_factory()
+        d = mb.album_info(release)
+
+        assert d == {
+            "album": "Album",
+            "album_id": "00000000-0000-0000-0000-000001000001",
+            "albumdisambig": "Album Disambiguation",
+            "albumstatus": "Official",
+            "albumtype": "album",
+            "albumtypes": [
+                "album",
+            ],
+            "artist": "Artist",
+            "artist_credit": "Artist Credit",
+            "artist_id": "00000000-0000-0000-0000-000000000011",
+            "artist_sort": "Artist, The",
+            "artists": [
+                "Artist",
+            ],
+            "artists_credit": [
+                "Artist Credit",
+            ],
+            "artists_ids": [
+                "00000000-0000-0000-0000-000000000011",
+            ],
+            "artists_sort": [
+                "Artist, The",
+            ],
+            "asin": "Album Asin",
+            "barcode": "0000000000000",
+            "catalognum": "LAB123",
+            "country": "US",
+            "data_source": "MusicBrainz",
+            "data_url": "https://musicbrainz.org/release/00000000-0000-0000-0000-000001000001",
+            "day": 1,
+            "discogs_albumid": None,
+            "discogs_artistid": None,
+            "discogs_labelid": None,
+            "genres": None,
+            "label": "Label",
+            "language": "eng",
+            "media": "Digital Media",
+            "mediums": 1,
+            "month": 1,
+            "original_day": 3,
+            "original_month": 2,
+            "original_year": 2001,
+            "release_group_title": "Release Group",
+            "releasegroup_id": "00000000-0000-0000-0000-000000000101",
+            "releasegroupdisambig": "Release Group Disambiguation",
+            "script": "Latn",
+            "style": None,
+            "tracks": [
+                {
+                    "album": None,
+                    "arrangers": None,
+                    "arrangers_ids": [],
+                    "artist": "Recording Artist",
+                    "artist_credit": "Recording Artist Credit",
+                    "artist_id": "00000000-0000-0000-0000-000000000001",
+                    "artist_sort": "Recording Artist, The",
+                    "artists": [
+                        "Recording Artist",
+                    ],
+                    "artists_credit": [
+                        "Recording Artist Credit",
+                    ],
+                    "artists_ids": [
+                        "00000000-0000-0000-0000-000000000001",
+                    ],
+                    "artists_sort": [
+                        "Recording Artist, The",
+                    ],
+                    "bpm": None,
+                    "composer_sort": None,
+                    "composers": None,
+                    "composers_ids": [],
+                    "data_source": "MusicBrainz",
+                    "data_url": "https://musicbrainz.org/recording/00000000-0000-0000-0000-000000001001",
+                    "disctitle": "Medium",
+                    "genres": None,
+                    "index": 1,
+                    "initial_key": None,
+                    "isrc": None,
+                    "length": 0.36,
+                    "lyricists": None,
+                    "lyricists_ids": [],
+                    "mb_workid": None,
+                    "media": "Digital Media",
+                    "medium": 1,
+                    "medium_index": 1,
+                    "medium_total": 1,
+                    "release_track_id": "00000000-0000-0000-0000-000000010001",
+                    "remixers": None,
+                    "remixers_ids": [],
+                    "title": "Recording",
+                    "track_alt": "A1",
+                    "track_id": "00000000-0000-0000-0000-000000001001",
+                    "trackdisambig": None,
+                    "work": None,
+                    "work_disambig": None,
+                },
+            ],
+            "va": False,
+            "year": 2020,
+        }
+
     @pytest.mark.parametrize(
         "beets_match_config, expected_titles",
         [
