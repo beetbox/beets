@@ -69,11 +69,11 @@ def url_relation_factory(**kwargs) -> mb.UrlRelation:
 
 
 def medium_factory(**kwargs) -> mb.Medium:
-    return factories.MediumFactory(**kwargs)  # type: ignore[return-value]
+    return factories.MediumFactory.build(**kwargs)
 
 
 def release_factory(**kwargs) -> mb.Release:
-    return factories.ReleaseFactory(**kwargs)  # type: ignore[return-value]
+    return factories.ReleaseFactory.build(**kwargs)
 
 
 class MusicBrainzTestCase(BeetsTestCase):
@@ -84,62 +84,6 @@ class MusicBrainzTestCase(BeetsTestCase):
 
 
 class MBAlbumInfoTest(MusicBrainzTestCase):
-    def test_parse_tracks(self):
-        release = release_factory(
-            media__0__tracks=[
-                track_factory(recording__length=100000),
-                track_factory(
-                    recording__index=2,
-                    recording__length=200000,
-                    recording__title="Other Recording",
-                ),
-            ]
-        )
-
-        d = self.mb.album_info(release)
-        t = d.tracks
-        assert len(t) == 2
-        assert t[0].title == "Recording"
-        assert t[0].track_id == "00000000-0000-0000-0000-000000001001"
-        assert t[0].length == 100.0
-        assert t[1].title == "Other Recording"
-        assert t[1].track_id == "00000000-0000-0000-0000-000000001002"
-        assert t[1].length == 200.0
-
-    def test_parse_track_indices(self):
-        release = release_factory(media__0__tracks__count=2)
-
-        d = self.mb.album_info(release)
-        t = d.tracks
-        assert t[0].medium_index == 1
-        assert t[0].index == 1
-        assert t[1].medium_index == 2
-        assert t[1].index == 2
-
-    def test_parse_medium_numbers_single_medium(self):
-        release = release_factory(media__0__tracks__count=2)
-
-        d = self.mb.album_info(release)
-        assert d.mediums == 1
-        t = d.tracks
-        assert t[0].medium == 1
-        assert t[1].medium == 1
-
-    def test_parse_medium_numbers_two_mediums(self):
-        release = release_factory(
-            media=[medium_factory(), medium_factory(position=2)]
-        )
-
-        d = self.mb.album_info(release)
-        assert d.mediums == 2
-        t = d.tracks
-        assert t[0].medium == 1
-        assert t[0].medium_index == 1
-        assert t[0].index == 1
-        assert t[1].medium == 2
-        assert t[1].medium_index == 1
-        assert t[1].index == 2
-
     def test_parse_release_year_month_only(self):
         release = release_factory(release_group__first_release_date="1987-03")
         d = self.mb.album_info(release)
@@ -175,13 +119,6 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         )
         d = self.mb.album_info(release)
         assert d.va
-
-    def test_parse_disctitle(self):
-        release = release_factory(media__0__tracks__count=2)
-        d = self.mb.album_info(release)
-        t = d.tracks
-        assert t[0].disctitle == "Medium"
-        assert t[1].disctitle == "Medium"
 
     def test_missing_language(self):
         release = release_factory(text_representation__language=None)
@@ -672,6 +609,54 @@ class TestParse(MusicBrainzPluginTestMixin):
     )
     def test_parse_label_info(self, label_infos, expected):
         assert MusicBrainzPlugin._parse_label_infos(label_infos) == expected
+
+    def test_parse_media(self, mb):
+        first_medium = medium_factory(
+            title="First Medium",
+            position=1,
+            tracks=[
+                track_factory(recording__length=100000),
+                track_factory(
+                    position=2,
+                    recording__index=2,
+                    recording__length=200000,
+                    recording__title="Other Recording",
+                ),
+            ],
+        )
+        second_medium = medium_factory(
+            title="Second Medium",
+            position=2,
+            tracks=[track_factory()],
+        )
+        release = release_factory(media=[first_medium, second_medium])
+
+        d = mb.album_info(release)
+
+        assert d.mediums == 2
+        t = d.tracks
+        assert len(t) == 3
+
+        assert t[0].title == "Recording"
+        assert t[0].track_id == "00000000-0000-0000-0000-000000001001"
+        assert t[0].length == 100.0
+        assert t[0].medium == 1
+        assert t[0].medium_index == 1
+        assert t[0].index == 1
+        assert t[0].disctitle == "First Medium"
+
+        assert t[1].title == "Other Recording"
+        assert t[1].track_id == "00000000-0000-0000-0000-000000001002"
+        assert t[1].length == 200.0
+        assert t[1].medium == 1
+        assert t[1].medium_index == 2
+        assert t[1].index == 2
+        assert t[1].disctitle == "First Medium"
+
+        assert t[2].medium == 2
+        assert t[2].medium_index == 1
+        assert t[2].index == 3
+        assert t[2].disctitle == "Second Medium"
 
 
 class TestArtist:

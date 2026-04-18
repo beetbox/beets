@@ -213,25 +213,10 @@ class MediumFactory(_IdFactory):
     format_id = "907a28d9-b3b2-3ef6-89a8-7b18d91d4794"
     position = 1
     title = "Medium"
-    track_count = 1
     data_tracks = factory.List([])
     track_offset: int | None = None
-
-    @factory.post_generation
-    def tracks(self, create, _tracks, **kwargs):
-        if not create:
-            return
-
-        if not _tracks:
-            _tracks = [TrackFactory() for _ in range(kwargs.get("count", 1))]
-
-        for index, track in enumerate(_tracks, 1):
-            track["position"] = index
-
-        if _tracks:
-            self["tracks"] = _tracks  # type: ignore[index]
-
-        self["track_count"] = len(_tracks)
+    tracks = factory.List([factory.SubFactory(TrackFactory)])
+    track_count = factory.LazyAttribute(lambda o: len(o.tracks))
 
 
 class UrlFactory(factory.DictFactory):
