@@ -18,7 +18,6 @@ from __future__ import annotations
 
 import uuid
 from typing import TYPE_CHECKING, ClassVar
-from unittest import mock
 
 import pytest
 import requests
@@ -765,101 +764,64 @@ class TestArtist:
             assert alias["name"] == expected_alias_name
 
 
-class MBLibraryTest(MusicBrainzTestCase):
-    def test_follow_pseudo_releases(self):
-        side_effect = [
-            release_factory(
-                id="d2a6f856-b553-40a0-ac54-a321e8e2da02",
-                title="pseudo",
-                status="Pseudo-Release",
-                country=None,
-                release_events=[],
-                release_relations=[
-                    {
-                        "type": "transl-tracklisting",
-                        "direction": "backward",
-                        "release": {
-                            "id": "d2a6f856-b553-40a0-ac54-a321e8e2da01"
-                        },
-                    }
-                ],
-            ),
-            release_factory(
-                title="actual",
-                id="d2a6f856-b553-40a0-ac54-a321e8e2da01",
-            ),
+class TestPseudoRelease(MusicBrainzPluginTestMixin):
+    ACTUAL_RELEASE = release_factory(index=1, country="US")
+    PSEUDO_WITHOUT_LINKS = release_factory(
+        index=2, status="Pseudo-Release", country=None
+    )
+    PSEUDO_INVALID_LINK = release_factory(
+        index=3,
+        status="Pseudo-Release",
+        country=None,
+        release_relations=[
+            {
+                "type": "remaster",
+                "direction": "backward",
+                "release": {"id": "d2a6f856-b553-40a0-ac54-a321e8e2da01"},
+            }
+        ],
+    )
+    PSEUDO_VALID_LINK = release_factory(
+        index=4,
+        status="Pseudo-Release",
+        country=None,
+        release_relations=[
+            {
+                "type": "transl-tracklisting",
+                "direction": "backward",
+                "release": {"id": ACTUAL_RELEASE["id"]},
+            }
+        ],
+    )
+
+    @pytest.fixture(autouse=True)
+    def setup_album_lookup(self, monkeypatch, mb):
+        releases = [
+            self.ACTUAL_RELEASE,
+            self.PSEUDO_WITHOUT_LINKS,
+            self.PSEUDO_INVALID_LINK,
+            self.PSEUDO_VALID_LINK,
         ]
+        release_by_id = {r["id"]: r for r in releases}
 
-        with mock.patch(
-            "beetsplug._utils.musicbrainz.MusicBrainzAPI.get_release"
-        ) as gp:
-            gp.side_effect = side_effect
-            album = self.mb.album_for_id("d2a6f856-b553-40a0-ac54-a321e8e2da02")
-            assert album
-            assert album.country == "US"
+        monkeypatch.setattr(
+            mb.mb_api, "get_release", lambda id_: release_by_id[id_]
+        )
 
-    def test_pseudo_releases_with_empty_links(self):
-        side_effect = [
-            release_factory(
-                id="d2a6f856-b553-40a0-ac54-a321e8e2da02",
-                title="pseudo",
-                status="Pseudo-Release",
-                release_events=[],
-            )
-        ]
+    @pytest.mark.parametrize(
+        "release_id, expected_country",
+        [
+            _p(ACTUAL_RELEASE["id"], "US", id="actual release"),
+            _p(PSEUDO_WITHOUT_LINKS["id"], None, id="pseudo without links"),
+            _p(PSEUDO_INVALID_LINK["id"], None, id="pseudo with invalid link"),
+            _p(PSEUDO_VALID_LINK["id"], "US", id="pseudo with valid link"),
+        ],
+    )
+    def test_follow_pseudo_release(self, mb, release_id, expected_country):
+        album = mb.album_for_id(release_id)
 
-        with mock.patch(
-            "beetsplug._utils.musicbrainz.MusicBrainzAPI.get_release"
-        ) as gp:
-            gp.side_effect = side_effect
-            album = self.mb.album_for_id("d2a6f856-b553-40a0-ac54-a321e8e2da02")
-            assert album
-            assert album.country is None
-
-    def test_pseudo_releases_without_links(self):
-        side_effect = [
-            release_factory(
-                id="d2a6f856-b553-40a0-ac54-a321e8e2da02",
-                title="pseudo",
-                status="Pseudo-Release",
-                release_events=[],
-            )
-        ]
-
-        with mock.patch(
-            "beetsplug._utils.musicbrainz.MusicBrainzAPI.get_release"
-        ) as gp:
-            gp.side_effect = side_effect
-            album = self.mb.album_for_id("d2a6f856-b553-40a0-ac54-a321e8e2da02")
-            assert album
-            assert album.country is None
-
-    def test_pseudo_releases_with_unsupported_links(self):
-        side_effect = [
-            release_factory(
-                id="d2a6f856-b553-40a0-ac54-a321e8e2da02",
-                title="pseudo",
-                status="Pseudo-Release",
-                release_events=[],
-                release_relations=[
-                    {
-                        "type": "remaster",
-                        "direction": "backward",
-                        "release": {
-                            "id": "d2a6f856-b553-40a0-ac54-a321e8e2da01"
-                        },
-                    }
-                ],
-            )
-        ]
-
-        with mock.patch(
-            "beetsplug._utils.musicbrainz.MusicBrainzAPI.get_release"
-        ) as gp:
-            gp.side_effect = side_effect
-            album = self.mb.album_for_id("d2a6f856-b553-40a0-ac54-a321e8e2da02")
-            assert album
-            assert album.country is None
+        assert album
+        assert album.country == expected_country
 
 
 class TestMusicBrainzPlugin(MusicBrainzPluginTestMixin):

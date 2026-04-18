@@ -774,33 +774,29 @@ class MusicBrainzPlugin(
         # A 404 error here is fine. e.g. re-importing a release that has
         # been deleted on MusicBrainz.
         try:
-            res = self.mb_api.get_release(albumid)
+            original_release = self.mb_api.get_release(albumid)
         except HTTPNotFoundError:
             self._log.debug("Release {} not found on MusicBrainz.", albumid)
             return None
 
-        # resolve linked release relations
-        actual_res = None
+        album = self.album_info(original_release)
 
-        if res.get("status") == "Pseudo-Release" and (
-            relations := res.get("release_relations")
-        ):
-            for rel in relations:
+        if original_release["status"] == "Pseudo-Release":
+            linked_releases = (
+                rel
+                for rel in original_release.get("release_relations", [])
                 if (
                     rel["type"] == "transl-tracklisting"
                     and rel["direction"] == "backward"
-                ):
-                    actual_res = self.mb_api.get_release(rel["release"]["id"])
+                )
+            )
+            if rel := next(linked_releases, None):
+                actual_release = self.mb_api.get_release(rel["release"]["id"])
+                album = _merge_pseudo_and_actual_album(
+                    album, self.album_info(actual_release)
+                )
 
-        # release is potentially a pseudo release
-        release = self.album_info(res)
-
-        # should be None unless we're dealing with a pseudo release
-        if actual_res is not None:
-            actual_release = self.album_info(actual_res)
-            return _merge_pseudo_and_actual_album(release, actual_release)
-        else:
-            return release
+        return album
 
     def track_for_id(self, track_id: str) -> TrackInfo | None:
         """Fetches a track by its MusicBrainz ID. Returns a TrackInfo object
