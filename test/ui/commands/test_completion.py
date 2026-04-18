@@ -47,7 +47,7 @@ class CompletionTest(IOMixin, TestPluginTestCase):
             self.skipTest("could not read bash-completion script")
 
         # Load completion script.
-        self.run_command("completion", lib=None)
+        self.run_command("completion")
         completion_script = self.io.getoutput().encode("utf-8")
         tester.stdin.writelines(completion_script.splitlines(True))
 
