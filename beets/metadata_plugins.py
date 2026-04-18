@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import abc
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import contextmanager
 from functools import cache, cached_property, wraps
 from typing import (
@@ -79,10 +80,30 @@ def _yield_from_plugins(
 
     @wraps(func)
     def wrapper(*args, **kwargs) -> Iterator[Ret]:
-        for plugin in find_metadata_source_plugins():
-            method = getattr(plugin, method_name)
-            with maybe_handle_plugin_error(plugin, method_name):
-                yield from filter(None, method(*args, **kwargs))
+        # Run all metadata source plugins in parallel threads.
+        # Each plugin executes its lookup/search concurrently, so I/O-bound API calls
+        # complete faster than sequential.
+        with ThreadPoolExecutor() as executor:
+            futures = {
+                executor.submit(
+                    # Evaluate iterator with list such that results are ready when
+                    # future.result() is called.
+                    lambda *args, **kwargs: list(
+                        getattr(plugin, method_name)(
+                            *args,
+                            **kwargs,
+                        )
+                    ),
+                    *args,
+                    **kwargs,
+                ): plugin
+                for plugin in find_metadata_source_plugins()
+            }
+
+            for future in as_completed(futures):
+                plugin = futures[future]
+                with maybe_handle_plugin_error(plugin, method_name):
+                    yield from filter(None, future.result())
 
     return wrapper
 
