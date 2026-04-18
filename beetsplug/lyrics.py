@@ -1140,7 +1140,11 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             return
 
         existing_lyrics = Lyrics.from_item(item)
-        if self.config["keep_synced"] and existing_lyrics.synced and not item.get("lyrics_url"):
+        if (
+            self.config["keep_synced"]
+            and existing_lyrics.synced
+            and not item.get("lyrics_url")
+        ):
             self.info("🔵 Keeping synced lyrics: {}", item)
             return
 
@@ -1153,7 +1157,12 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
 
             is_override = bool(item.get("lyrics_url"))
             synced_mode = self.config["synced"].get(bool)
-            if synced_mode and existing_lyrics.synced and not new_lyrics.synced and not is_override:
+            if (
+                synced_mode
+                and existing_lyrics.synced
+                and not new_lyrics.synced
+                and not is_override
+            ):
                 self.info(
                     "🔴 Not updating synced lyrics with non-synced ones: {}",
                     item,
