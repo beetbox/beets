@@ -55,6 +55,7 @@ Default configuration:
         dist_thresh: 0.11
         fallback: null
         force: no
+        keep_synced: no
         google_API_key: null
         google_engine_ID: 009217259823014548361:lndtuqkycfu
         print: no
@@ -96,6 +97,10 @@ The available options are:
   found. Use the empty string ``''`` to reset the lyrics in such a case.
 - **force**: By default, beets won't fetch lyrics if the files already have
   ones. To instead always fetch lyrics, set the ``force`` option to ``yes``.
+- **keep_synced**: When enabled, tracks that already have synced lyrics are
+  skipped even when ``force`` is set. Useful when re-fetching lyrics for a
+  library that contains a mix of synced and plain lyrics and you only want to
+  fill in the gaps. Default: ``no``.
 - **google_API_key**: Your Google API key (to enable the Google Custom Search
   backend).
 - **google_engine_ID**: The custom search engine to use. Default: The `beets
@@ -129,6 +134,10 @@ to the console so you can view the fetched (or previously-stored) lyrics.
 
 The ``-f, --force`` option forces the command to fetch lyrics, even for tracks
 that already have lyrics.
+
+The ``--keep-synced`` option skips tracks that already have synced lyrics,
+regardless of the ``force`` flag. This is handy when you want to re-fetch plain
+lyrics without touching tracks that already have a synced version.
 
 Inversely, the ``-l, --local`` option restricts operations to lyrics that are
 locally available, which show lyrics faster without using the network at all.

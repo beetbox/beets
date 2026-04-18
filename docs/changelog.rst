@@ -26,11 +26,30 @@ New features
       after upgrading to trigger the migration. Only then you can safely move
       the library to a new location.
 
+- :doc:`plugins/inline`: Add access to the ``album`` or ``item`` object as
+  ``db_obj`` in inline fields.
+- :doc:`plugins/discogs`: Import Discogs remixer, lyricist, composer, and
+  arranger credits into the multi-value ``remixers``, ``lyricists``,
+  ``composers``, and ``arrangers`` fields. :bug:`6380`
+- :doc:`plugins/lyrics`: Add ``keep_synced`` config option and ``--keep-synced``
+  CLI flag to skip re-fetching lyrics for tracks that already have synced
+  lyrics, even when ``force`` is enabled. :bug:`5249`
+
 Bug fixes
 ~~~~~~~~~
 
+- :ref:`import-cmd` Automatically remux WAV files containing MP3 streams
+  (``WAVE_FORMAT_MPEGLAYER3``) to proper MP3 files during import, instead of
+  silently importing them with incorrect metadata. :bug:`6455`
 - :doc:`plugins/listenbrainz`: Retry listenbrainz requests for temporary
   failures.
+- :doc:`plugins/chroma`: Do not produce MusicBrainz-sourced autotagger
+  candidates when the :doc:`plugins/musicbrainz` plugin is not enabled. The
+  chroma plugin now looks up the musicbrainz plugin through the metadata-source
+  registry instead of unconditionally instantiating its own private instance,
+  which also restores compatibility with :doc:`plugins/mbpseudo` for
+  chroma-triggered lookups. :bug:`6212` :bug:`6441`
+- :ref:`import-cmd` Remove clutter from imported album folders. :bug:`5016`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~

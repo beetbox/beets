@@ -29,15 +29,15 @@ import confuse
 
 from beets import config, ui, util
 from beets.autotag.distance import Distance
-from beets.metadata_plugins import MetadataSourcePlugin
+from beets.metadata_plugins import MetadataSourcePlugin, get_metadata_source
 from beets.util.color import colorize
-from beetsplug.musicbrainz import MusicBrainzPlugin
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
 
     from beets.autotag.hooks import TrackInfo
     from beets.library.models import Item
+    from beetsplug.musicbrainz import MusicBrainzPlugin
 
 API_KEY = "1vOwZtEn"
 SCORE_THRESH = 0.5
@@ -197,8 +197,25 @@ class AcoustidPlugin(MetadataSourcePlugin):
         self.register_listener("import_task_apply", apply_acoustid_metadata)
 
     @cached_property
-    def mb(self) -> MusicBrainzPlugin:
-        return MusicBrainzPlugin()
+    def mb(self) -> MusicBrainzPlugin | None:
+        """The loaded MusicBrainz plugin, or ``None``.
+
+        Acoustid lookups return MusicBrainz IDs, so chroma needs the
+        ``musicbrainz`` plugin to resolve them into album/track
+        candidates. When the user has not enabled ``musicbrainz``,
+        chroma must not produce any candidates.
+
+        Uses the plugin registry so that any plugin that swaps the
+        musicbrainz instance at runtime (e.g. :doc:`plugins/mbpseudo`)
+        is respected.
+        """
+        plugin = get_metadata_source("musicbrainz")
+        if plugin is None:
+            self._log.debug(
+                "musicbrainz plugin not enabled; "
+                "acoustid matches will not produce candidates"
+            )
+        return plugin  # type: ignore[return-value]
 
     def fingerprint_task(self, task, session):
         return fingerprint_task(self._log, task, session)
@@ -214,6 +231,9 @@ class AcoustidPlugin(MetadataSourcePlugin):
         return dist
 
     def candidates(self, items, artist, album, va_likely):
+        if self.mb is None:
+            return []
+
         albums = []
         for relid in prefix(_all_releases(items), MAX_RELEASES):
             album = self.mb.album_for_id(relid)
@@ -225,6 +245,9 @@ class AcoustidPlugin(MetadataSourcePlugin):
 
     def item_candidates(self, item, artist, title) -> Iterable[TrackInfo]:
         if item.path not in _matches:
+            return []
+
+        if self.mb is None:
             return []
 
         recording_ids, _ = _matches[item.path]

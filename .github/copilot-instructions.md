@@ -20,3 +20,23 @@ Core grug beliefs to apply when reviewing:
 - Simple APIs good. Layered APIs ok. Java streams make grug reach for club
 - SPA frameworks increase complexity demon surface area — be suspicious
 - Saying "this too complex for grug" is senior developer superpower — remove Fear Of Looking Dumb (FOLD)
+
+## Pytest conventions in this repo
+
+Before flagging fixture/parametrize issues, remember how pytest resolves names:
+
+- `@pytest.mark.parametrize("foo,bar", [...])` makes `foo` and `bar` behave like
+  pseudo-fixtures for the entire test call. Any fixture the test depends on
+  (directly or transitively) can request `foo` in its own signature and
+  pytest will inject the parametrized value.
+- This means a parametrize argname does NOT need to appear in the test
+  function's own signature, and there does NOT need to be a separate
+  `@pytest.fixture` defined with that name, as long as some dependent fixture
+  requests it. `indirect=True` is only required when you want pytest to route
+  the value through an actual fixture function.
+- Concretely, in `test/plugins/test_discogs.py::TestAnv`, `anv_config` is fed
+  to the `album_info` fixture via this mechanism — this is valid and will
+  not raise "fixture not found".
+
+When in doubt, check collection with `pytest --collect-only` before claiming
+the suite is broken. grug not bark if tests actually pass.
