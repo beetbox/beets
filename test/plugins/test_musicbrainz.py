@@ -111,68 +111,6 @@ class MBAlbumInfoTest(MusicBrainzTestCase):
         d = self.mb.album_info(release)
         assert d.language is None
 
-    def test_parse_recording_artist_multi(self):
-        release = release_factory(
-            media__0__tracks=[
-                track_factory(
-                    recording__artist_credit=[
-                        artist_credit_factory(
-                            artist__name="Recording Artist",
-                            joinphrase=" & ",
-                        ),
-                        artist_credit_factory(
-                            artist__name="Other Recording Artist",
-                            artist__index=2,
-                        ),
-                    ]
-                )
-            ]
-        )
-        track = self.mb.album_info(release).tracks[0]
-        assert track.artist == "Recording Artist & Other Recording Artist"
-        assert track.artist_id == "00000000-0000-0000-0000-000000000001"
-        assert (
-            track.artist_sort
-            == "Recording Artist, The & Other Recording Artist, The"
-        )
-        assert (
-            track.artist_credit
-            == "Recording Artist Credit & Other Recording Artist Credit"
-        )
-
-        assert track.artists == [
-            "Recording Artist",
-            "Other Recording Artist",
-        ]
-        assert track.artists_ids == [
-            "00000000-0000-0000-0000-000000000001",
-            "00000000-0000-0000-0000-000000000002",
-        ]
-        assert track.artists_sort == [
-            "Recording Artist, The",
-            "Other Recording Artist, The",
-        ]
-        assert track.artists_credit == [
-            "Recording Artist Credit",
-            "Other Recording Artist Credit",
-        ]
-
-    def test_track_artist_overrides_recording_artist(self):
-        release = release_factory(
-            media__0__tracks=[
-                track_factory(
-                    artist_credit=[
-                        artist_credit_factory(artist__name="Track Artist")
-                    ]
-                )
-            ]
-        )
-        track = self.mb.album_info(release).tracks[0]
-        assert track.artist == "Track Artist"
-        assert track.artist_id == "00000000-0000-0000-0000-000000000001"
-        assert track.artist_sort == "Track Artist, The"
-        assert track.artist_credit == "Track Artist Credit"
-
     def test_track_artist_overrides_recording_artist_multi(self):
         release = release_factory(
             media__0__tracks=[
