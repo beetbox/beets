@@ -12,6 +12,13 @@ Unreleased
 New features
 ~~~~~~~~~~~~
 
+- :doc:`plugins/smartplaylist`: The ``splupdate`` command output is
+  restructured. The per-playlist summary now includes a track count. Per-track
+  details are shown only when ``-v`` flag is provided (``beet -v splupdate``).
+  The ``--pretend`` flag produces the same output but reports *"N playlists
+  would be updated"* instead of *"N playlists updated"*. The ``--format`` option
+  allows customizing the track line format. The ``--pretend-paths`` option was
+  removed (use ``--format='$path'`` instead). :bug:`6183`
 - :ref:`import-cmd`: When importing an archive (zip, tar, rar, or 7z) with
   ``move: yes``, the source archive is now removed after a successful import.
   Archives are preserved if any file in the archive was not imported (e.g.
