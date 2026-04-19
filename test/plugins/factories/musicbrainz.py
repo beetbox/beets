@@ -60,6 +60,15 @@ class ArtistFactory(_SortNameFactory, _IdFactory):
     name = "Artist"
     type = "Person"
     type_id = "b6e035f4-3ce9-331c-97df-83397230b0df"
+    aliases = factory.List(
+        [
+            factory.SubFactory(
+                AliasFactory,
+                type="Artist name",
+                prefix=factory.SelfAttribute("...name"),
+            )
+        ]
+    )
 
 
 class ArtistCreditFactory(factory.DictFactory):

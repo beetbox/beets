@@ -34,6 +34,7 @@ New features
 - :doc:`plugins/lyrics`: Add ``keep_synced`` config option and ``--keep-synced``
   CLI flag to skip re-fetching lyrics for tracks that already have synced
   lyrics, even when ``force`` is enabled. :bug:`5249`
+- :doc:`plugins/musicbrainz`: Use aliases for artist credit.
 
 Bug fixes
 ~~~~~~~~~
