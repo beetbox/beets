@@ -870,10 +870,12 @@ class ArchiveImportTask(SentinelImportTask):
         return _handlers
 
     def cleanup(self, copy=False, delete=False, move=False):
-        """Remove the temporary extraction directory. In ``move`` mode,
-        if the extraction directory is empty after the pipeline has run
-        (i.e. every file in the archive was successfully imported)
-        also remove the source archive. Archives are preserved on
+        """Remove the temporary extraction directory and the archive if in
+        ``move`` mode.
+
+        In ``move`` mode, if the extraction directory is empty after the
+        pipeline has run (i.e. every file in the archive was successfully
+        imported) also remove the source archive. Archives are preserved on
         partial imports and in non-move modes.
         """
         if not self.extracted:
