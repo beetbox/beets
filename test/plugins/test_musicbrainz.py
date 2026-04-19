@@ -652,33 +652,40 @@ class TestParseRelease(MusicBrainzPluginTestMixin):
     def test_genres(self, mb, expected_genres):
         assert mb.album_info(release_factory()).genres == expected_genres
 
-    @pytest.mark.parametrize(
-        "languages_config, expected_titles",
-        [
-            _p([], ("Album", "Release Group", "Recording"), id="no aliases"),
-            _p(
-                ["en"],
-                (
-                    "Album Alias en",
-                    "Release Group Alias en",
-                    "Recording Alias en",
-                ),
-                id="aliases",
-            ),
-        ],
-    )
-    def test_parse_titles(self, config, mb, languages_config, expected_titles):
+    def test_parse_aliased_titles(self, config, mb: MusicBrainzPlugin):
         release = release_factory()
 
-        config["import"]["languages"] = languages_config
-
-        album, release_group_title, track_title = expected_titles
+        config["import"]["languages"] = ["en"]
 
         d = mb.album_info(release)
 
-        assert d.album == album
-        assert d.release_group_title == release_group_title
-        assert d.tracks[0].title == track_title
+        assert d.album == "Album Alias en"
+        assert d.release_group_title == "Release Group Alias en"
+        assert d.tracks[0].title == "Recording Alias en"
+
+        album_artist = "Artist Alias en"
+        assert d.artist == album_artist
+        assert d.artists == [album_artist]
+        # There is no artist credit specific alias
+        assert d.artist_credit == album_artist
+        assert d.artists_credit == [album_artist]
+
+        album_artist_sort = "Artist Alias en, The"
+        assert d.artist_sort == album_artist_sort
+        assert d.artists_sort == [album_artist_sort]
+
+        first_track = d.tracks[0]
+
+        track_artist = "Recording Artist Alias en"
+        assert first_track.artist == track_artist
+        assert first_track.artists == [track_artist]
+        # There is no artist credit specific alias
+        assert first_track.artist_credit == track_artist
+        assert first_track.artists_credit == [track_artist]
+
+        track_artist_sort = "Recording Artist Alias en, The"
+        assert first_track.artist_sort == track_artist_sort
+        assert first_track.artists_sort == [track_artist_sort]
 
     def test_ensure_complete_recordings(self, monkeypatch, mb):
         titles = ["Recording", "Other Recording"]
