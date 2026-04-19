@@ -9,9 +9,9 @@ below!
 Unreleased
 ----------
 
-..
-    New features
-    ~~~~~~~~~~~~
+New features
+~~~~~~~~~~~~
+
 - :ref:`import-cmd`: When importing an archive (zip, tar, rar, or 7z) with
   ``move: yes``, the source archive is now removed after a successful import.
   Archives are preserved if any file in the archive was not imported (e.g.
