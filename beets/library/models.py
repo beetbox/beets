@@ -187,10 +187,7 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
             if self.included_keys == self.ALL_KEYS:
                 # Performance note: this triggers a database query.
                 for key in self.album.keys(computed=True):
-                    if (
-                        key in Album.item_keys
-                        or key not in self.item._fields.keys()
-                    ):
+                    if key in Album.item_keys or key not in self.item._fields:
                         album_keys.append(key)
             else:
                 album_keys = self.included_keys
@@ -312,49 +309,7 @@ class Album(LibModel):
     }
 
     # List of keys that are set on an album's items.
-    item_keys: ClassVar[list[str]] = [
-        "added",
-        "albumartist",
-        "albumartists",
-        "albumartist_sort",
-        "albumartists_sort",
-        "albumartist_credit",
-        "albumartists_credit",
-        "album",
-        "genres",
-        "style",
-        "discogs_albumid",
-        "discogs_artistid",
-        "discogs_labelid",
-        "year",
-        "month",
-        "day",
-        "disctotal",
-        "comp",
-        "mb_albumid",
-        "mb_albumartistid",
-        "mb_albumartistids",
-        "albumtype",
-        "albumtypes",
-        "label",
-        "barcode",
-        "mb_releasegroupid",
-        "asin",
-        "catalognum",
-        "script",
-        "language",
-        "country",
-        "albumstatus",
-        "albumdisambig",
-        "releasegroupdisambig",
-        "release_group_title",
-        "rg_album_gain",
-        "rg_album_peak",
-        "r128_album_gain",
-        "original_year",
-        "original_month",
-        "original_day",
-    ]
+    item_keys: ClassVar[set[str]] = _field_names - {"artpath", "id"}
 
     _format_config_key = "format_album"
 
