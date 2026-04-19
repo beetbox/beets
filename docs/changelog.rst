@@ -9,6 +9,25 @@ below!
 Unreleased
 ----------
 
+..
+    New features
+    ~~~~~~~~~~~~
+
+..
+    Bug fixes
+    ~~~~~~~~~
+
+..
+    For plugin developers
+    ~~~~~~~~~~~~~~~~~~~~~
+
+..
+    Other changes
+    ~~~~~~~~~~~~~
+
+2.10.0 (April 19, 2026)
+-----------------------
+
 New features
 ~~~~~~~~~~~~
 
@@ -34,6 +53,10 @@ New features
 - :doc:`plugins/lyrics`: Add ``keep_synced`` config option and ``--keep-synced``
   CLI flag to skip re-fetching lyrics for tracks that already have synced
   lyrics, even when ``force`` is enabled. :bug:`5249`
+- :doc:`plugins/musicbrainz`: Use aliases for artist credit.
+- Metadata source plugin searches and lookups are now executed concurrently,
+  speeding up lookups when multiple plugins (e.g. MusicBrainz and Spotify) are
+  enabled.
 - :ref:`import-cmd`: When importing an archive (zip, tar, rar, or 7z) with
   ``move: yes``, the source archive is now removed after a successful import.
   Archives are preserved if any file in the archive was not imported (e.g.
@@ -55,6 +78,10 @@ Bug fixes
   which also restores compatibility with :doc:`plugins/mbpseudo` for
   chroma-triggered lookups. :bug:`6212` :bug:`6441`
 - :ref:`import-cmd` Remove clutter from imported album folders. :bug:`5016`
+- :doc:`plugins/web`: Fix a stored XSS vulnerability where unescaped metadata
+  fields (artist, album, title, comments, lyrics) could execute arbitrary
+  JavaScript in the browser. Template tags now use ``<%-`` (escaped
+  interpolation) instead of ``<%=`` (raw interpolation).
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
