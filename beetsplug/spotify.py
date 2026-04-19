@@ -39,7 +39,7 @@ from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.dbcore import types
 from beets.library import Library
 from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
-from beets.util import chunks
+from beets.util import chunks, unique_list
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -54,10 +54,10 @@ DEFAULT_WAITING_TIME = 5
 class SpotifyTrackInfo(NamedTuple):
     """Popularity and external IDs returned by the /v1/tracks batch endpoint."""
 
-    popularity: int | None
-    isrc: str | None
-    ean: str | None
-    upc: str | None
+    popularity: int | None = None
+    isrc: str | None = None
+    ean: str | None = None
+    upc: str | None = None
 
 
 class SpotifyAudioFeatureData(TypedDict, total=False):
@@ -771,7 +771,7 @@ class SpotifyPlugin(
             return {}
 
         info_by_id: dict[str, SpotifyTrackInfo] = {}
-        for chunk in chunks(list(track_ids), 50):
+        for chunk in chunks(track_ids, 50):
             track_data = self._handle_response(
                 "get",
                 self.track_url,
@@ -792,9 +792,7 @@ class SpotifyPlugin(
                 )
 
             for track_id in chunk:
-                info_by_id.setdefault(
-                    track_id, SpotifyTrackInfo(None, None, None, None)
-                )
+                info_by_id.setdefault(track_id, SpotifyTrackInfo())
 
         return info_by_id
 
@@ -810,7 +808,7 @@ class SpotifyPlugin(
                 return {}
 
         features_by_id: dict[str, SpotifyAudioFeatureData] = {}
-        for chunk in chunks(list(track_ids), 100):
+        for chunk in chunks(track_ids, 100):
             try:
                 features_data = self._handle_response(
                     "get",
@@ -845,8 +843,6 @@ class SpotifyPlugin(
             self._log.info(
                 "Processing {}/{} tracks - {} ", index, len(items), item
             )
-            # If we're not forcing re-downloading for all tracks, check
-            # whether the popularity data is already present
             if not force:
                 if "spotify_track_popularity" in item:
                     self._log.debug("Popularity already present for: {}", item)
@@ -862,16 +858,14 @@ class SpotifyPlugin(
         if not items_to_update:
             return
 
-        unique_track_ids = list(
-            dict.fromkeys(track_id for _, track_id in items_to_update)
+        unique_track_ids = unique_list(
+            track_id for _, track_id in items_to_update
         )
         track_info_by_id = self.track_info_batch(unique_track_ids)
         audio_features_by_id = self.track_audio_features_batch(unique_track_ids)
 
         for item, spotify_track_id in items_to_update:
-            track_info = track_info_by_id.get(
-                spotify_track_id, SpotifyTrackInfo(None, None, None, None)
-            )
+            track_info = track_info_by_id.get(spotify_track_id, SpotifyTrackInfo())
 
             item["spotify_track_popularity"] = track_info.popularity
             item["isrc"] = track_info.isrc
@@ -920,7 +914,6 @@ class SpotifyPlugin(
         once.
 
         """
-        # Fast path: if we've already detected unavailability, skip the call.
         with self._audio_features_lock:
             if not self.audio_features_available:
                 return None

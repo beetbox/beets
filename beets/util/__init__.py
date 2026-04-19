@@ -1206,7 +1206,7 @@ def unique_list(elements: Iterable[T]) -> list[T]:
     return list(dict.fromkeys(elements))
 
 
-def chunks(lst: list[T], n: int) -> Iterator[list[T]]:
+def chunks(lst: Sequence[T], n: int) -> Iterator[list[T]]:
     """Yield successive n-sized chunks from lst."""
     for i in range(0, len(lst), n):
         yield lst[i : i + n]
