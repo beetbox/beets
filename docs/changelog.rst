@@ -9,9 +9,16 @@ below!
 Unreleased
 ----------
 
-..
-    New features
-    ~~~~~~~~~~~~
+New features
+~~~~~~~~~~~~
+
+- :doc:`plugins/smartplaylist`: The ``splupdate`` command output is
+  restructured. The per-playlist summary now includes a track count. Per-track
+  details are shown only when ``-v`` flag is provided (``beet -v splupdate``).
+  The ``--pretend`` flag produces the same output but reports *"N playlists
+  would be updated"* instead of *"N playlists updated"*. The ``--format`` option
+  allows customizing the track line format. The ``--pretend-paths`` option was
+  removed (use ``--format='$path'`` instead). :bug:`6183`
 
 ..
     Bug fixes
