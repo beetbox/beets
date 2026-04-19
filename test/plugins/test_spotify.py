@@ -310,7 +310,7 @@ class SpotifyPluginTest(PluginTestCase):
         assert track_info.artists_ids == ["12345", "67890"]
 
     @responses.activate
-    def test_track_info_batch_chunks_requests(self):
+    def test_get_track_details_by_id_chunks_requests(self):
         ids_per_request = []
 
         def callback(request):
@@ -341,7 +341,7 @@ class SpotifyPluginTest(PluginTestCase):
         )
 
         track_ids = [f"track-{idx}" for idx in range(51)]
-        track_info = self.spotify.track_info_batch(track_ids)
+        track_info = self.spotify.get_track_details_by_id(track_ids)
 
         assert len(track_info) == 51
         assert ids_per_request == [50, 1]

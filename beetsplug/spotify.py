@@ -29,7 +29,7 @@ import threading
 import time
 import webbrowser
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, NamedTuple, TypedDict
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypedDict
 
 import confuse
 import requests
@@ -39,7 +39,7 @@ from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.dbcore import types
 from beets.library import Library
 from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
-from beets.util import chunks, unique_list
+from beets.util import chunks
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -51,16 +51,16 @@ if TYPE_CHECKING:
 DEFAULT_WAITING_TIME = 5
 
 
-class SpotifyTrackInfo(NamedTuple):
+class TrackDetails(TypedDict):
     """Popularity and external IDs returned by the /v1/tracks batch endpoint."""
 
-    popularity: int | None = None
-    isrc: str | None = None
-    ean: str | None = None
-    upc: str | None = None
+    spotify_track_popularity: int | None
+    isrc: str | None
+    ean: str | None
+    upc: str | None
 
 
-class SpotifyAudioFeatureData(TypedDict, total=False):
+class AudioFeatures(TypedDict, total=False):
     """Audio feature fields returned by the /v1/audio-features endpoint."""
 
     id: str
@@ -330,7 +330,10 @@ class SpotifyPlugin(
     def _multi_artist_credit(
         self, artists: list[dict[str | int, str]]
     ) -> tuple[list[str], list[str]]:
-        """Accumulate data from artist dicts into name and ID lists."""
+        """Given a list of artist dictionaries, accumulate data into a pair
+        of lists: the first being the artist names, and the second being the
+        artist IDs.
+        """
         artist_names = []
         artist_ids = []
         for artist in artists:
@@ -339,9 +342,8 @@ class SpotifyPlugin(
         return artist_names, artist_ids
 
     def album_for_id(self, album_id: str) -> AlbumInfo | None:
-        """Fetch an album by its Spotify ID or URL.
-
-        Returns an AlbumInfo object, or None if the album is not found.
+        """Fetch an album by its Spotify ID or URL and return an
+        AlbumInfo object or None if the album is not found.
 
         :param str album_id: Spotify ID or URL for the album
 
@@ -763,14 +765,14 @@ class SpotifyPlugin(
                 "Skipping audio features for remaining tracks."
             )
 
-    def track_info_batch(
+    def get_track_details_by_id(
         self, track_ids: Sequence[str]
-    ) -> dict[str, SpotifyTrackInfo]:
+    ) -> dict[str, TrackDetails]:
         """Fetch popularity and external IDs in batches of 50 tracks."""
         if not track_ids:
             return {}
 
-        info_by_id: dict[str, SpotifyTrackInfo] = {}
+        details_by_id: dict[str, TrackDetails] = {}
         for chunk in chunks(track_ids, 50):
             track_data = self._handle_response(
                 "get",
@@ -784,21 +786,18 @@ class SpotifyPlugin(
 
                 external_ids = track.get("external_ids", {})
                 track_id = track.get("id") or chunk[idx]
-                info_by_id[track_id] = SpotifyTrackInfo(
-                    popularity=track.get("popularity"),
+                details_by_id[track_id] = TrackDetails(
+                    spotify_track_popularity=track.get("popularity"),
                     isrc=external_ids.get("isrc"),
                     ean=external_ids.get("ean"),
                     upc=external_ids.get("upc"),
                 )
 
-            for track_id in chunk:
-                info_by_id.setdefault(track_id, SpotifyTrackInfo())
-
-        return info_by_id
+        return details_by_id
 
     def track_audio_features_batch(
         self, track_ids: Sequence[str]
-    ) -> dict[str, SpotifyAudioFeatureData]:
+    ) -> dict[str, AudioFeatures]:
         """Fetch track audio features in batches of 100 tracks."""
         if not track_ids:
             return {}
@@ -807,7 +806,7 @@ class SpotifyPlugin(
             if not self.audio_features_available:
                 return {}
 
-        features_by_id: dict[str, SpotifyAudioFeatureData] = {}
+        features_by_id: dict[str, AudioFeatures] = {}
         for chunk in chunks(track_ids, 100):
             try:
                 features_data = self._handle_response(
@@ -825,10 +824,9 @@ class SpotifyPlugin(
             for idx, feature_data in enumerate(
                 features_data.get("audio_features", [])
             ):
-                if feature_data is None:
-                    continue
-                track_id = feature_data.get("id") or chunk[idx]
-                features_by_id[track_id] = feature_data
+                if feature_data:
+                    track_id = feature_data.get("id") or chunk[idx]
+                    features_by_id[track_id] = feature_data
 
         return features_by_id
 
@@ -843,6 +841,8 @@ class SpotifyPlugin(
             self._log.info(
                 "Processing {}/{} tracks - {} ", index, len(items), item
             )
+            # If we're not forcing re-downloading for all tracks, check
+            # whether the popularity data is already present
             if not force:
                 if "spotify_track_popularity" in item:
                     self._log.debug("Popularity already present for: {}", item)
@@ -858,21 +858,15 @@ class SpotifyPlugin(
         if not items_to_update:
             return
 
-        unique_track_ids = unique_list(
-            track_id for _, track_id in items_to_update
+        unique_track_ids = list(
+            dict.fromkeys(track_id for _, track_id in items_to_update)
         )
-        track_info_by_id = self.track_info_batch(unique_track_ids)
+        track_details_by_id = self.get_track_details_by_id(unique_track_ids)
         audio_features_by_id = self.track_audio_features_batch(unique_track_ids)
 
         for item, spotify_track_id in items_to_update:
-            track_info = track_info_by_id.get(
-                spotify_track_id, SpotifyTrackInfo()
-            )
-
-            item["spotify_track_popularity"] = track_info.popularity
-            item["isrc"] = track_info.isrc
-            item["ean"] = track_info.ean
-            item["upc"] = track_info.upc
+            if track_details := track_details_by_id.get(spotify_track_id):
+                item.update(track_details)
 
             if self.audio_features_available:
                 audio_features = audio_features_by_id.get(spotify_track_id)
@@ -916,6 +910,7 @@ class SpotifyPlugin(
         once.
 
         """
+        # Fast path: if we've already detected unavailability, skip the call.
         with self._audio_features_lock:
             if not self.audio_features_available:
                 return None
