@@ -270,8 +270,7 @@ ref = "test"
 # measure coverage across logical branches
 # show which tests cover specific lines in the code (see the HTML report)
 env.OPTS = """
---cov=beets
---cov=beetsplug
+--cov=.
 --cov-report=xml:.reports/coverage.xml
 --cov-report=html:.reports/html
 --cov-branch
