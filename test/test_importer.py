@@ -53,6 +53,7 @@ from beets.test.helper import (
     has_program,
 )
 from beets.util import bytestring_path, displayable_path, syspath
+from beets.util.extension import remux_mpeglayer3_wav
 
 
 class PathsMixin:
@@ -1747,3 +1748,29 @@ class ImportIdTest(ImportTestCase):
         assert {"VALID_RECORDING_0", "VALID_RECORDING_1"} == {
             c.info.title for c in task.candidates
         }
+
+
+class MpeglayerWavImportTest(AsIsImporterMixin, ImportTestCase):
+    """Test remuxing of WAVE_FORMAT_MPEGLAYER3 WAV files."""
+
+    def test_remux_mpeglayer3_wav(self):
+        src = os.path.join(_common.RSRC, b"mpeglayer3.wav")
+        dest = os.path.join(self.temp_dir, b"mpeglayer3.wav")
+        shutil.copy(syspath(src), syspath(dest))
+
+        mp3_path = remux_mpeglayer3_wav(dest)
+
+        assert mp3_path is not None
+        assert mp3_path.endswith(b".mp3")
+        assert os.path.exists(mp3_path)
+        assert not os.path.exists(dest)
+
+    def test_remux_mpeglayer3_wav_disabled(self):
+        """When remux_mp3_in_wav is disabled, WAV file should not be remuxed."""
+        self.config["import"]["remux_mp3_in_wav"] = False
+        src = os.path.join(_common.RSRC, b"mpeglayer3.wav")
+        dest = os.path.join(self.import_dir, b"mpeglayer3.wav")
+        shutil.copy(syspath(src), syspath(dest))
+
+        self.run_asis_importer()
+        assert os.path.exists(dest)

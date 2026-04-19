@@ -376,7 +376,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         return (
             obj.artist
             if isinstance(obj, library.Item)
-            else obj.albumartist or obj.artist
+            else obj.albumartist or obj.get("artist")
         )
 
     def _get_existing_genres(self, obj: LibModel) -> list[str]:

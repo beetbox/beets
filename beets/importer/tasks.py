@@ -32,6 +32,7 @@ from beets.autotag.hooks import AlbumMatch
 from beets.autotag.match import tag_album, tag_item
 from beets.dbcore.query import PathQuery
 from beets.util import extension
+from beets.util.extension import remux_mpeglayer3_wav
 
 from .state import ImportState
 
@@ -276,7 +277,11 @@ class ImportTask(BaseImportTask):
             if lib.directory in util.ancestry(item.path):
                 log.debug("deleting duplicate {.filepath}", item)
                 util.remove(item.path)
-                util.prune_dirs(os.path.dirname(item.path), lib.directory)
+                util.prune_dirs(
+                    os.path.dirname(item.path),
+                    lib.directory,
+                    clutter=config["clutter"].as_str_seq(),
+                )
 
     def set_fields(self, lib: library.Library):
         """Sets the fields given at CLI or configuration to the specified
@@ -1078,18 +1083,21 @@ class ImportTaskFactory:
         if os.path.isfile(path):
             path = extension.fix_extension(path, logger=log)
 
+        if config["import"]["remux_mp3_in_wav"].get(bool):
+            mp3_path = remux_mpeglayer3_wav(path)
+            if mp3_path:
+                log.info(
+                    "Remuxed MPEGLAYER3 WAV to MP3: {}",
+                    util.displayable_path(mp3_path),
+                )
+                path = mp3_path
+
         try:
             return library.Item.from_path(path)
         except library.ReadError as exc:
             if isinstance(exc.reason, mediafile.FileTypeError):
-                # Silently ignore non-music files.
+                # Silently ignore other non-music files.
                 pass
-            elif isinstance(exc.reason, mediafile.UnreadableFileError):
-                log.warning("unreadable file: {}", util.displayable_path(path))
-            else:
-                log.error(
-                    "error reading {}: {}", util.displayable_path(path), exc
-                )
 
 
 MULTIDISC_MARKERS = (rb"dis[ck]", rb"cd")

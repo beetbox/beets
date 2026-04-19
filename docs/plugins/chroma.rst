@@ -122,6 +122,16 @@ library.) The generated fingerprints will be stored in the library database. If
 you have the ``import.write`` config option enabled, they will also be written
 to files' metadata.
 
+.. note::
+
+    The ``chroma`` plugin turns Acoustid fingerprint matches into autotagger
+    candidates by resolving them through the :doc:`musicbrainz` plugin, so you
+    need to enable ``musicbrainz`` alongside ``chroma`` to get album and track
+    candidates from acoustid lookups. If ``musicbrainz`` is not enabled, the
+    ``chroma`` plugin will still fingerprint your files and store the
+    ``acoustid_id`` and ``acoustid_fingerprint`` fields, but it will not
+    contribute candidates during autotagging.
+
 .. _submitfp:
 
 Configuration

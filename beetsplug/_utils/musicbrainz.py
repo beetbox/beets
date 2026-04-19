@@ -309,7 +309,7 @@ class Label(TypedDict):
 
 class LabelInfo(TypedDict):
     catalog_number: str | None
-    label: Label
+    label: Label | None
 
 
 class Url(TypedDict):
