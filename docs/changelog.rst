@@ -54,6 +54,10 @@ Bug fixes
   which also restores compatibility with :doc:`plugins/mbpseudo` for
   chroma-triggered lookups. :bug:`6212` :bug:`6441`
 - :ref:`import-cmd` Remove clutter from imported album folders. :bug:`5016`
+- :doc:`plugins/web`: Fix a stored XSS vulnerability where unescaped metadata
+  fields (artist, album, title, comments, lyrics) could execute arbitrary
+  JavaScript in the browser. Template tags now use ``<%-`` (escaped
+  interpolation) instead of ``<%=`` (raw interpolation).
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
