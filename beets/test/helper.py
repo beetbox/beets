@@ -126,7 +126,7 @@ NEEDS_REFLINK = unittest.skipUnless(
 
 
 class RunMixin:
-    lib: Library | None = None
+    lib: Library
 
     def run_command(self, *args, lib: Library | None = None):
         """Run a beets command with an arbitrary amount of arguments. The
@@ -135,7 +135,6 @@ class RunMixin:
         """
         sys.argv = ["beet", *args]  # avoid leakage from test suite args
         lib = lib or self.lib
-        assert lib is not None, "Lib required"
 
         with (
             patch.object(lib, "_close", Mock()),
