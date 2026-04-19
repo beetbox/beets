@@ -804,18 +804,26 @@ class ArchiveImportTask(SentinelImportTask):
     """An import task that represents the processing of an archive.
 
     `toppath` must be a `zip`, `tar`, or `rar` archive. Archive tasks
-    serve two purposes:
+    serve three purposes:
     - First, it will unarchive the files to a temporary directory and
       return it. The client should read tasks from the resulting
       directory and send them through the pipeline.
     - Second, it will clean up the temporary directory when it proceeds
       through the pipeline. The client should send the archive task
       after sending the rest of the music tasks to make this work.
+    - Third, when the import mode is ``move`` and every file in the
+      archive was successfully imported, it will remove the source
+      archive itself. Archives are preserved on partial imports and in
+      non-move modes.
     """
 
     def __init__(self, toppath):
         super().__init__(toppath, ())
         self.extracted = False
+        # ``extract()`` reassigns ``self.toppath`` to the temp extraction
+        # directory; here we track the original archive location so
+        # ``cleanup()`` can remove it when the import mode demands.
+        self.archive_path = toppath
 
     @classmethod
     def is_archive(cls, path):
@@ -862,13 +870,36 @@ class ArchiveImportTask(SentinelImportTask):
         return _handlers
 
     def cleanup(self, copy=False, delete=False, move=False):
-        """Removes the temporary directory the archive was extracted to."""
-        if self.extracted and self.toppath:
+        """Remove the temporary extraction directory. In ``move`` mode,
+        if the extraction directory is empty after the pipeline has run
+        (i.e. every file in the archive was successfully imported)
+        also remove the source archive. Archives are preserved on
+        partial imports and in non-move modes.
+        """
+        if not self.extracted:
+            return
+
+        all_files_imported = move and not any(
+            files for _, _, files in os.walk(util.syspath(self.toppath))
+        )
+
+        log.debug(
+            "Removing extracted directory: {}",
+            util.displayable_path(self.toppath),
+        )
+        shutil.rmtree(util.syspath(self.toppath))
+
+        if all_files_imported:
             log.debug(
-                "Removing extracted directory: {}",
-                util.displayable_path(self.toppath),
+                "Removing imported archive: {}",
+                util.displayable_path(self.archive_path),
             )
-            shutil.rmtree(util.syspath(self.toppath))
+            util.remove(self.archive_path)
+        elif move:
+            log.debug(
+                "Not removing partially imported archive: {}",
+                util.displayable_path(self.archive_path),
+            )
 
     def extract(self):
         """Extracts the archive to a temporary directory and sets
