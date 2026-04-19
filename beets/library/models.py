@@ -28,10 +28,12 @@ from beets.util.deprecation import maybe_replace_legacy_field
 from beets.util.functemplate import Template, template
 
 from .exceptions import FileOperationError, ReadError, WriteError
+from .fields import TYPE_BY_FIELD
 from .queries import PF_KEY_DEFAULT, parse_query_string
 
 if TYPE_CHECKING:
-    from ..dbcore.query import FieldQuery, FieldQueryType
+    from beets.dbcore.query import FieldQuery, FieldQueryType
+
     from .library import Library  # noqa: F401
 
 log = logging.getLogger("beets")
@@ -40,17 +42,23 @@ log = logging.getLogger("beets")
 class LibModel(dbcore.Model["Library"]):
     """Shared concrete functionality for Items and Albums."""
 
+    _field_names: ClassVar[set[str]]
+
     # Config key that specifies how an instance should be formatted.
     _format_config_key: str
     path: bytes
     length: float
 
     @cached_classproperty
+    def _fields(cls) -> dict[str, types.Type]:
+        return {f: TYPE_BY_FIELD[f] for f in sorted(cls._field_names)}
+
+    @cached_classproperty
     def _types(cls) -> dict[str, types.Type]:
         """Return the types of the fields in this model."""
         return {
             **plugins.types(cls),  # type: ignore[arg-type]
-            "data_source": types.STRING,
+            "data_source": TYPE_BY_FIELD["data_source"],
         }
 
     @cached_classproperty
@@ -179,10 +187,7 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
             if self.included_keys == self.ALL_KEYS:
                 # Performance note: this triggers a database query.
                 for key in self.album.keys(computed=True):
-                    if (
-                        key in Album.item_keys
-                        or key not in self.item._fields.keys()
-                    ):
+                    if key in Album.item_keys or key not in self.item._fields:
                         album_keys.append(key)
             else:
                 album_keys = self.included_keys
@@ -246,57 +251,57 @@ class Album(LibModel):
     _table = "albums"
     _flex_table = "album_attributes"
     _always_dirty = True
-    _fields: ClassVar[dict[str, types.Type]] = {
-        "id": types.PRIMARY_ID,
-        "artpath": types.NullPathType(),
-        "added": types.DATE,
-        "albumartist": types.STRING,
-        "albumartist_sort": types.STRING,
-        "albumartist_credit": types.STRING,
-        "albumartists": types.MULTI_VALUE_DSV,
-        "albumartists_sort": types.MULTI_VALUE_DSV,
-        "albumartists_credit": types.MULTI_VALUE_DSV,
-        "album": types.STRING,
-        "genres": types.MULTI_VALUE_DSV,
-        "style": types.STRING,
-        "discogs_albumid": types.INTEGER,
-        "discogs_artistid": types.INTEGER,
-        "discogs_labelid": types.INTEGER,
-        "year": types.PaddedInt(4),
-        "month": types.PaddedInt(2),
-        "day": types.PaddedInt(2),
-        "disctotal": types.PaddedInt(2),
-        "comp": types.BOOLEAN,
-        "mb_albumid": types.STRING,
-        "mb_albumartistid": types.STRING,
-        "mb_albumartistids": types.MULTI_VALUE_DSV,
-        "albumtype": types.STRING,
-        "albumtypes": types.SEMICOLON_SPACE_DSV,
-        "label": types.STRING,
-        "barcode": types.STRING,
-        "mb_releasegroupid": types.STRING,
-        "release_group_title": types.STRING,
-        "asin": types.STRING,
-        "catalognum": types.STRING,
-        "script": types.STRING,
-        "language": types.STRING,
-        "country": types.STRING,
-        "albumstatus": types.STRING,
-        "albumdisambig": types.STRING,
-        "releasegroupdisambig": types.STRING,
-        "rg_album_gain": types.NULL_FLOAT,
-        "rg_album_peak": types.NULL_FLOAT,
-        "r128_album_gain": types.NULL_FLOAT,
-        "original_year": types.PaddedInt(4),
-        "original_month": types.PaddedInt(2),
-        "original_day": types.PaddedInt(2),
+    _field_names: ClassVar[set[str]] = {
+        "added",
+        "album",
+        "albumartist",
+        "albumartist_credit",
+        "albumartists",
+        "albumartists_credit",
+        "albumartist_sort",
+        "albumartists_sort",
+        "albumdisambig",
+        "albumstatus",
+        "albumtype",
+        "albumtypes",
+        "artpath",
+        "asin",
+        "barcode",
+        "catalognum",
+        "comp",
+        "country",
+        "day",
+        "discogs_albumid",
+        "discogs_artistid",
+        "discogs_labelid",
+        "disctotal",
+        "genres",
+        "id",
+        "label",
+        "language",
+        "mb_albumartistid",
+        "mb_albumartistids",
+        "mb_albumid",
+        "mb_releasegroupid",
+        "month",
+        "original_day",
+        "original_month",
+        "original_year",
+        "r128_album_gain",
+        "releasegroupdisambig",
+        "release_group_title",
+        "rg_album_gain",
+        "rg_album_peak",
+        "script",
+        "style",
+        "year",
     }
 
     _search_fields = ("album", "albumartist", "genres")
 
     @cached_classproperty
     def _types(cls) -> dict[str, types.Type]:
-        return {**super()._types, "path": types.PathType()}
+        return {**super()._types, "path": TYPE_BY_FIELD["path"]}
 
     _sorts: ClassVar[dict[str, type[dbcore.query.FieldSort]]] = {
         "albumartist": dbcore.query.SmartArtistSort,
@@ -304,49 +309,7 @@ class Album(LibModel):
     }
 
     # List of keys that are set on an album's items.
-    item_keys: ClassVar[list[str]] = [
-        "added",
-        "albumartist",
-        "albumartists",
-        "albumartist_sort",
-        "albumartists_sort",
-        "albumartist_credit",
-        "albumartists_credit",
-        "album",
-        "genres",
-        "style",
-        "discogs_albumid",
-        "discogs_artistid",
-        "discogs_labelid",
-        "year",
-        "month",
-        "day",
-        "disctotal",
-        "comp",
-        "mb_albumid",
-        "mb_albumartistid",
-        "mb_albumartistids",
-        "albumtype",
-        "albumtypes",
-        "label",
-        "barcode",
-        "mb_releasegroupid",
-        "asin",
-        "catalognum",
-        "script",
-        "language",
-        "country",
-        "albumstatus",
-        "albumdisambig",
-        "releasegroupdisambig",
-        "release_group_title",
-        "rg_album_gain",
-        "rg_album_peak",
-        "r128_album_gain",
-        "original_year",
-        "original_month",
-        "original_day",
-    ]
+    item_keys: ClassVar[set[str]] = _field_names - {"artpath", "id"}
 
     _format_config_key = "format_album"
 
@@ -650,103 +613,61 @@ class Item(LibModel):
 
     _table = "items"
     _flex_table = "item_attributes"
-    _fields: ClassVar[dict[str, types.Type]] = {
-        "id": types.PRIMARY_ID,
-        "path": types.PathType(),
-        "album_id": types.FOREIGN_ID,
-        "title": types.STRING,
-        "artist": types.STRING,
-        "artists": types.MULTI_VALUE_DSV,
-        "artists_ids": types.MULTI_VALUE_DSV,
-        "artist_sort": types.STRING,
-        "artists_sort": types.MULTI_VALUE_DSV,
-        "artist_credit": types.STRING,
-        "artists_credit": types.MULTI_VALUE_DSV,
-        "remixers": types.MULTI_VALUE_DSV,
-        "remixers_ids": types.MULTI_VALUE_DSV,
-        "album": types.STRING,
-        "albumartist": types.STRING,
-        "albumartists": types.MULTI_VALUE_DSV,
-        "albumartist_sort": types.STRING,
-        "albumartists_sort": types.MULTI_VALUE_DSV,
-        "albumartist_credit": types.STRING,
-        "albumartists_credit": types.MULTI_VALUE_DSV,
-        "genres": types.MULTI_VALUE_DSV,
-        "style": types.STRING,
-        "discogs_albumid": types.INTEGER,
-        "discogs_artistid": types.INTEGER,
-        "discogs_labelid": types.INTEGER,
-        "lyricists": types.MULTI_VALUE_DSV,
-        "lyricists_ids": types.MULTI_VALUE_DSV,
-        "composers": types.MULTI_VALUE_DSV,
-        "composer_sort": types.STRING,
-        "composers_ids": types.MULTI_VALUE_DSV,
-        "work": types.STRING,
-        "mb_workid": types.STRING,
-        "work_disambig": types.STRING,
-        "arrangers": types.MULTI_VALUE_DSV,
-        "arrangers_ids": types.MULTI_VALUE_DSV,
-        "grouping": types.STRING,
-        "year": types.PaddedInt(4),
-        "month": types.PaddedInt(2),
-        "day": types.PaddedInt(2),
-        "track": types.PaddedInt(2),
-        "tracktotal": types.PaddedInt(2),
-        "disc": types.PaddedInt(2),
-        "disctotal": types.PaddedInt(2),
-        "lyrics": types.STRING,
-        "comments": types.STRING,
-        "bpm": types.INTEGER,
-        "comp": types.BOOLEAN,
-        "mb_trackid": types.STRING,
-        "mb_albumid": types.STRING,
-        "mb_artistid": types.STRING,
-        "mb_artistids": types.MULTI_VALUE_DSV,
-        "mb_albumartistid": types.STRING,
-        "mb_albumartistids": types.MULTI_VALUE_DSV,
-        "mb_releasetrackid": types.STRING,
-        "trackdisambig": types.STRING,
-        "albumtype": types.STRING,
-        "albumtypes": types.SEMICOLON_SPACE_DSV,
-        "label": types.STRING,
-        "barcode": types.STRING,
-        "acoustid_fingerprint": types.STRING,
-        "acoustid_id": types.STRING,
-        "mb_releasegroupid": types.STRING,
-        "release_group_title": types.STRING,
-        "asin": types.STRING,
-        "isrc": types.STRING,
-        "catalognum": types.STRING,
-        "script": types.STRING,
-        "language": types.STRING,
-        "country": types.STRING,
-        "albumstatus": types.STRING,
-        "media": types.STRING,
-        "albumdisambig": types.STRING,
-        "releasegroupdisambig": types.STRING,
-        "disctitle": types.STRING,
-        "encoder": types.STRING,
-        "rg_track_gain": types.NULL_FLOAT,
-        "rg_track_peak": types.NULL_FLOAT,
-        "rg_album_gain": types.NULL_FLOAT,
-        "rg_album_peak": types.NULL_FLOAT,
-        "r128_track_gain": types.NULL_FLOAT,
-        "r128_album_gain": types.NULL_FLOAT,
-        "original_year": types.PaddedInt(4),
-        "original_month": types.PaddedInt(2),
-        "original_day": types.PaddedInt(2),
-        "initial_key": types.MusicalKey(),
-        "length": types.DurationType(),
-        "bitrate": types.ScaledInt(1000, "kbps"),
-        "bitrate_mode": types.STRING,
-        "encoder_info": types.STRING,
-        "encoder_settings": types.STRING,
-        "format": types.STRING,
-        "samplerate": types.ScaledInt(1000, "kHz"),
-        "bitdepth": types.INTEGER,
-        "channels": types.INTEGER,
-        "mtime": types.DATE,
-        "added": types.DATE,
+    _field_names: ClassVar[set[str]] = (Album._field_names - {"artpath"}) | {
+        "acoustid_fingerprint",
+        "acoustid_id",
+        "album_id",
+        "arrangers",
+        "arrangers_ids",
+        "artist",
+        "artist_credit",
+        "artist_sort",
+        "artists",
+        "artists_credit",
+        "artists_ids",
+        "artists_sort",
+        "bitdepth",
+        "bitrate",
+        "bitrate_mode",
+        "bpm",
+        "channels",
+        "comments",
+        "composer_sort",
+        "composers",
+        "composers_ids",
+        "disc",
+        "disctitle",
+        "encoder",
+        "encoder_info",
+        "encoder_settings",
+        "format",
+        "grouping",
+        "initial_key",
+        "isrc",
+        "length",
+        "lyricists",
+        "lyricists_ids",
+        "lyrics",
+        "mb_artistid",
+        "mb_artistids",
+        "mb_releasetrackid",
+        "mb_trackid",
+        "mb_workid",
+        "media",
+        "mtime",
+        "path",
+        "r128_track_gain",
+        "remixers",
+        "remixers_ids",
+        "rg_track_gain",
+        "rg_track_peak",
+        "samplerate",
+        "title",
+        "track",
+        "trackdisambig",
+        "tracktotal",
+        "work",
+        "work_disambig",
     }
     _indices = (dbcore.Index("idx_item_album_id", ("album_id",)),)
 
@@ -763,15 +684,13 @@ class Item(LibModel):
     # Any kind of field (fixed, flexible, and computed) may be a media
     # field. Only these fields are read from disk in `read` and written in
     # `write`.
-    _media_fields = set(MediaFile.readable_fields()).intersection(
-        _fields.keys()
-    )
+    _media_fields = set(MediaFile.readable_fields()) & _field_names
 
     # Set of item fields that are backed by *writable* `MediaFile` tag
     # fields.
     # This excludes fields that represent audio data, such as `bitrate` or
     # `length`.
-    _media_tag_fields = set(MediaFile.fields()).intersection(_fields.keys())
+    _media_tag_fields = set(MediaFile.fields()) & _field_names
 
     _formatter = FormattedItemMapping
 
