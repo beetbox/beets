@@ -803,7 +803,7 @@ ArchiveHandler = tuple[
 class ArchiveImportTask(SentinelImportTask):
     """An import task that represents the processing of an archive.
 
-    `toppath` must be a `zip`, `tar`, or `rar` archive. Archive tasks
+    `toppath` must be a `zip`, `tar`, `rar`, or `7z` archive. Archive tasks
     serve three purposes:
     - First, it will unarchive the files to a temporary directory and
       return it. The client should read tasks from the resulting
