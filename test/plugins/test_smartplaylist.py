@@ -591,3 +591,31 @@ class SmartPlaylistCLITest(IOMixin, PluginTestCase):
             "No playlist matching any of "
             "'a one.m3u' 'rock'\"'\"'n roll.m3u' 'z last.m3u' found"
         )
+
+    def test_splupdate_log_output(self):
+        with self.assertLogs("beets.smartplaylist", level="INFO") as logs:
+            self.run_with_output("splupdate", "my_playlist")
+
+        output = "\n".join(logs.output)
+        assert "Updating 1 smart playlists..." in output
+        assert "Creating playlist my_playlist.m3u: 1 tracks." in output
+        assert "1 playlists updated" in output
+
+    def test_splupdate_verbose_log_output(self):
+        with self.assertLogs("beets.smartplaylist", level="DEBUG") as logs:
+            self.run_with_output("splupdate", "my_playlist")
+
+        output = "\n".join(logs.output)
+        assert "Updating 1 smart playlists..." in output
+        assert "Creating playlist my_playlist.m3u: 1 tracks." in output
+        assert "the ärtist - " in output
+        assert "1 playlists updated" in output
+
+    def test_splupdate_pretend_log_output(self):
+        with self.assertLogs("beets.smartplaylist", level="INFO") as logs:
+            self.run_with_output("splupdate", "--pretend", "my_playlist")
+
+        output = "\n".join(logs.output)
+        assert "Updating 1 smart playlists..." in output
+        assert "Creating playlist my_playlist.m3u: 1 tracks." in output
+        assert "1 playlists would be updated" in output
