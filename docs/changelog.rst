@@ -12,6 +12,11 @@ Unreleased
 ..
     New features
     ~~~~~~~~~~~~
+- :ref:`import-cmd`: When importing an archive (zip, tar, rar, or 7z) with
+  ``move: yes``, the source archive is now removed after a successful import.
+  Archives are preserved if any file in the archive was not imported (e.g.
+  skipped as a duplicate, or the import was aborted), and in non-move import
+  modes.
 
 ..
     Bug fixes
@@ -57,11 +62,6 @@ New features
 - Metadata source plugin searches and lookups are now executed concurrently,
   speeding up lookups when multiple plugins (e.g. MusicBrainz and Spotify) are
   enabled.
-- :ref:`import-cmd`: When importing an archive (zip, tar, rar, or 7z) with
-  ``move: yes``, the source archive is now removed after a successful import.
-  Archives are preserved if any file in the archive was not imported (e.g.
-  skipped as a duplicate, or the import was aborted), and in non-move import
-  modes.
 
 Bug fixes
 ~~~~~~~~~
