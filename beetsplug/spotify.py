@@ -865,7 +865,9 @@ class SpotifyPlugin(
         audio_features_by_id = self.track_audio_features_batch(unique_track_ids)
 
         for item, spotify_track_id in items_to_update:
-            track_info = track_info_by_id.get(spotify_track_id, SpotifyTrackInfo())
+            track_info = track_info_by_id.get(
+                spotify_track_id, SpotifyTrackInfo()
+            )
 
             item["spotify_track_popularity"] = track_info.popularity
             item["isrc"] = track_info.isrc

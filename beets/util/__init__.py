@@ -1209,4 +1209,4 @@ def unique_list(elements: Iterable[T]) -> list[T]:
 def chunks(lst: Sequence[T], n: int) -> Iterator[list[T]]:
     """Yield successive n-sized chunks from lst."""
     for i in range(0, len(lst), n):
-        yield lst[i : i + n]
+        yield list(lst[i : i + n])
