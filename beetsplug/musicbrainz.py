@@ -330,12 +330,17 @@ class MusicBrainzPlugin(
             artists_ids.append(el["artist"]["id"])
             alias = _preferred_alias(el["artist"].get("aliases", []))
             artist_object = alias or el["artist"]
+            credit_artist_object = alias or el
 
             joinphrase = el["joinphrase"]
             for name, parts, multi in (
                 (artist_object["name"], artist_parts, artists),
                 (artist_object["sort_name"], artist_sort_parts, artists_sort),
-                (el["name"], artist_credit_parts, artists_credit),
+                (
+                    credit_artist_object["name"],
+                    artist_credit_parts,
+                    artists_credit,
+                ),
             ):
                 parts.extend([name, joinphrase])
                 multi.append(name)
