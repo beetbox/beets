@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from contextlib import suppress
 from functools import cached_property
-from typing import TYPE_CHECKING, ClassVar, NamedTuple, TypeVar
+from typing import TYPE_CHECKING, ClassVar, NamedTuple
 
 from confuse.exceptions import ConfigError
 
@@ -12,22 +12,12 @@ from beets import ui
 from beets.dbcore.db import Migration
 from beets.dbcore.pathutils import normalize_path_for_db
 from beets.dbcore.types import MULTI_VALUE_DELIMITER
-from beets.util import unique_list
+from beets.util import chunks, unique_list
 from beets.util.lyrics import Lyrics
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
-
     from beets.dbcore.db import Model
     from beets.library import Library
-
-T = TypeVar("T")
-
-
-def chunks(lst: list[T], n: int) -> Iterator[list[T]]:
-    """Yield successive n-sized chunks from lst."""
-    for i in range(0, len(lst), n):
-        yield lst[i : i + n]
 
 
 class MultiValueFieldMigration(Migration):

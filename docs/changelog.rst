@@ -43,15 +43,14 @@ For plugin developers
   ``TypedDict`` models for releases, recordings, works, and relations. Update
   direct access to raw MusicBrainz response keys if needed.
 
-..
-    Other changes
-    ~~~~~~~~~~~~~
+Other changes
+~~~~~~~~~~~~~
 
 - :doc:`plugins/spotify`: Batch ``spotifysync`` track and audio-features API
   requests and deduplicate repeated Spotify track IDs within a run.
 
-2.8.0 (March 28, 2026)
-----------------------
+2.9.0 (April 11, 2026)
+-----------------------
 
 Beets now officially supports Python 3.14.
 
@@ -138,12 +137,6 @@ For plugin developers
   ``composer``, ``lyricist``, ``remixer`` fields, update it to populate the
   respective multi-valued fields instead (``arrangers``, ``composers``,
   ``lyricists``, ``remixers``).
-
-Other changes
-~~~~~~~~~~~~~
-
-- :doc:`plugins/spotify`: Batch ``spotifysync`` track and audio-features API
-  requests and deduplicate repeated Spotify track IDs within a run.
 
 2.8.0 (March 28, 2026)
 ----------------------

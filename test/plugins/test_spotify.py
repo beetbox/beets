@@ -133,7 +133,7 @@ class SpotifyPluginTest(PluginTestCase):
 
         responses.add(
             responses.GET,
-            f"{spotify.SpotifyPlugin.track_url}6NPVjNh8Jhru9xOmyQigds",
+            f"{spotify.SpotifyPlugin.track_url}/6NPVjNh8Jhru9xOmyQigds",
             body=response_body,
             status=200,
             content_type="application/json",
@@ -280,7 +280,7 @@ class SpotifyPluginTest(PluginTestCase):
 
         responses.add(
             responses.GET,
-            f"{spotify.SpotifyPlugin.track_url}6sjZfVJworBX6TqyjkxIJ1",
+            f"{spotify.SpotifyPlugin.track_url}/6sjZfVJworBX6TqyjkxIJ1",
             body=track_response_body,
             status=200,
             content_type="application/json",
@@ -335,7 +335,7 @@ class SpotifyPluginTest(PluginTestCase):
 
         responses.add_callback(
             responses.GET,
-            spotify.SpotifyPlugin.tracks_url,
+            spotify.SpotifyPlugin.track_url,
             callback=callback,
             content_type="application/json",
         )
@@ -350,7 +350,7 @@ class SpotifyPluginTest(PluginTestCase):
     def test_fetch_info_uses_batch_endpoints(self):
         responses.add(
             responses.GET,
-            spotify.SpotifyPlugin.tracks_url,
+            spotify.SpotifyPlugin.track_url,
             status=200,
             json={
                 "tracks": [
@@ -387,7 +387,7 @@ class SpotifyPluginTest(PluginTestCase):
         )
         responses.add(
             responses.GET,
-            spotify.SpotifyPlugin.audio_features_batch_url,
+            spotify.SpotifyPlugin.audio_features_url,
             status=200,
             json={
                 "audio_features": [
@@ -487,13 +487,13 @@ class SpotifyPluginTest(PluginTestCase):
 
         responses.add_callback(
             responses.GET,
-            spotify.SpotifyPlugin.tracks_url,
+            spotify.SpotifyPlugin.track_url,
             callback=track_callback,
             content_type="application/json",
         )
         responses.add_callback(
             responses.GET,
-            spotify.SpotifyPlugin.audio_features_batch_url,
+            spotify.SpotifyPlugin.audio_features_url,
             callback=audio_callback,
             content_type="application/json",
         )
@@ -516,7 +516,7 @@ class SpotifyPluginTest(PluginTestCase):
     def test_track_audio_features_batch_disables_on_403(self):
         responses.add(
             responses.GET,
-            spotify.SpotifyPlugin.audio_features_batch_url,
+            spotify.SpotifyPlugin.audio_features_url,
             status=403,
             json={"error": {"status": 403}},
             content_type="application/json",
@@ -553,7 +553,7 @@ class SpotifyPluginTest(PluginTestCase):
 
         responses.add_callback(
             responses.GET,
-            spotify.SpotifyPlugin.audio_features_batch_url,
+            spotify.SpotifyPlugin.audio_features_url,
             callback=callback,
             content_type="application/json",
         )

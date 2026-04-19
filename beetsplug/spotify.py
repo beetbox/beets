@@ -28,13 +28,14 @@ import threading
 import time
 import webbrowser
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, ClassVar, Literal
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, NamedTuple, TypedDict
 
 import confuse
 import requests
 
 from beets import ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.util import chunks
 from beets.dbcore import types
 from beets.library import Library
 from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
@@ -47,6 +48,33 @@ if TYPE_CHECKING:
     from beetsplug._typing import JSONDict
 
 DEFAULT_WAITING_TIME = 5
+
+
+class SpotifyTrackInfo(NamedTuple):
+    """Popularity and external IDs returned by the /v1/tracks batch endpoint."""
+
+    popularity: int | None
+    isrc: str | None
+    ean: str | None
+    upc: str | None
+
+
+class SpotifyAudioFeatureData(TypedDict, total=False):
+    """Audio feature fields returned by the /v1/audio-features endpoint."""
+
+    id: str
+    acousticness: float
+    danceability: float
+    energy: float
+    instrumentalness: float
+    key: int
+    liveness: float
+    loudness: float
+    mode: int
+    speechiness: float
+    tempo: float
+    time_signature: int
+    valence: float
 
 
 class SearchResponseAlbums(IDResponse):
@@ -112,10 +140,8 @@ class SpotifyPlugin(
     open_track_url = "https://open.spotify.com/track/"
     search_url = "https://api.spotify.com/v1/search"
     album_url = "https://api.spotify.com/v1/albums/"
-    tracks_url = "https://api.spotify.com/v1/tracks"
-    track_url = "https://api.spotify.com/v1/tracks/"
-    audio_features_batch_url = "https://api.spotify.com/v1/audio-features"
-    audio_features_url = "https://api.spotify.com/v1/audio-features/"
+    track_url = "https://api.spotify.com/v1/tracks"
+    audio_features_url = "https://api.spotify.com/v1/audio-features"
 
     spotify_audio_features: ClassVar[dict[str, str]] = {
         "acousticness": "spotify_acousticness",
@@ -261,7 +287,7 @@ class SpotifyPlugin(
                 )
             elif e.response.status_code == 403:
                 # Check if this is the audio features endpoint
-                if url.startswith(self.audio_features_batch_url):
+                if url.startswith(self.audio_features_url):
                     raise AudioFeaturesUnavailableError(
                         "Audio features API returned 403 "
                         "(deprecated or unavailable)"
@@ -446,7 +472,7 @@ class SpotifyPlugin(
 
         if not (
             track_data := self._handle_response(
-                "get", f"{self.track_url}{spotify_id}"
+                "get", f"{self.track_url}/{spotify_id}"
             )
         ):
             self._log.debug("Track not found: {}", track_id)
@@ -724,14 +750,6 @@ class SpotifyPlugin(
                 "No {.data_source} tracks found from beets query", self
             )
 
-    @staticmethod
-    def _chunked(ids: Sequence[str], chunk_size: int) -> list[list[str]]:
-        """Split IDs into deterministic chunks for Spotify batch endpoints."""
-        return [
-            list(ids[i : i + chunk_size])
-            for i in range(0, len(ids), chunk_size)
-        ]
-
     def _disable_audio_features(self) -> None:
         """Disable audio features globally and warn only once."""
         should_log = False
@@ -747,18 +765,16 @@ class SpotifyPlugin(
 
     def track_info_batch(
         self, track_ids: Sequence[str]
-    ) -> dict[str, tuple[Any, str | None, str | None, str | None]]:
+    ) -> dict[str, SpotifyTrackInfo]:
         """Fetch popularity and external IDs in batches of 50 tracks."""
         if not track_ids:
             return {}
 
-        info_by_id: dict[
-            str, tuple[Any, str | None, str | None, str | None]
-        ] = {}
-        for chunk in self._chunked(track_ids, 50):
+        info_by_id: dict[str, SpotifyTrackInfo] = {}
+        for chunk in chunks(list(track_ids), 50):
             track_data = self._handle_response(
                 "get",
-                self.tracks_url,
+                self.track_url,
                 params={"ids": ",".join(chunk)},
             )
 
@@ -768,21 +784,23 @@ class SpotifyPlugin(
 
                 external_ids = track.get("external_ids", {})
                 track_id = track.get("id") or chunk[idx]
-                info_by_id[track_id] = (
-                    track.get("popularity"),
-                    external_ids.get("isrc"),
-                    external_ids.get("ean"),
-                    external_ids.get("upc"),
+                info_by_id[track_id] = SpotifyTrackInfo(
+                    popularity=track.get("popularity"),
+                    isrc=external_ids.get("isrc"),
+                    ean=external_ids.get("ean"),
+                    upc=external_ids.get("upc"),
                 )
 
             for track_id in chunk:
-                info_by_id.setdefault(track_id, (None, None, None, None))
+                info_by_id.setdefault(
+                    track_id, SpotifyTrackInfo(None, None, None, None)
+                )
 
         return info_by_id
 
     def track_audio_features_batch(
         self, track_ids: Sequence[str]
-    ) -> dict[str, JSONDict]:
+    ) -> dict[str, SpotifyAudioFeatureData]:
         """Fetch track audio features in batches of 100 tracks."""
         if not track_ids:
             return {}
@@ -791,12 +809,12 @@ class SpotifyPlugin(
             if not self.audio_features_available:
                 return {}
 
-        features_by_id: dict[str, JSONDict] = {}
-        for chunk in self._chunked(track_ids, 100):
+        features_by_id: dict[str, SpotifyAudioFeatureData] = {}
+        for chunk in chunks(list(track_ids), 100):
             try:
                 features_data = self._handle_response(
                     "get",
-                    self.audio_features_batch_url,
+                    self.audio_features_url,
                     params={"ids": ",".join(chunk)},
                 )
             except AudioFeaturesUnavailableError:
@@ -821,7 +839,7 @@ class SpotifyPlugin(
 
         self._log.debug("Total {} tracks", len(items))
 
-        items_to_update: list[tuple[Any, str]] = []
+        items_to_update: list[tuple[Item, str]] = []
 
         for index, item in enumerate(items, start=1):
             self._log.info(
@@ -844,20 +862,21 @@ class SpotifyPlugin(
         if not items_to_update:
             return
 
-        track_ids = [track_id for _, track_id in items_to_update]
-        unique_track_ids = list(dict.fromkeys(track_ids))
+        unique_track_ids = list(
+            dict.fromkeys(track_id for _, track_id in items_to_update)
+        )
         track_info_by_id = self.track_info_batch(unique_track_ids)
         audio_features_by_id = self.track_audio_features_batch(unique_track_ids)
 
         for item, spotify_track_id in items_to_update:
-            popularity, isrc, ean, upc = track_info_by_id.get(
-                spotify_track_id, (None, None, None, None)
+            track_info = track_info_by_id.get(
+                spotify_track_id, SpotifyTrackInfo(None, None, None, None)
             )
 
-            item["spotify_track_popularity"] = popularity
-            item["isrc"] = isrc
-            item["ean"] = ean
-            item["upc"] = upc
+            item["spotify_track_popularity"] = track_info.popularity
+            item["isrc"] = track_info.isrc
+            item["ean"] = track_info.ean
+            item["upc"] = track_info.upc
 
             if self.audio_features_available:
                 audio_features = audio_features_by_id.get(spotify_track_id)
@@ -877,7 +896,7 @@ class SpotifyPlugin(
 
     def track_info(self, track_id: str):
         """Fetch a track's popularity and external IDs using its Spotify ID."""
-        track_data = self._handle_response("get", f"{self.track_url}{track_id}")
+        track_data = self._handle_response("get", f"{self.track_url}/{track_id}")
         external_ids = track_data.get("external_ids", {})
         popularity = track_data.get("popularity")
         self._log.debug(
@@ -906,7 +925,7 @@ class SpotifyPlugin(
 
         try:
             return self._handle_response(
-                "get", f"{self.audio_features_url}{track_id}"
+                "get", f"{self.audio_features_url}/{track_id}"
             )
         except AudioFeaturesUnavailableError:
             self._disable_audio_features()
