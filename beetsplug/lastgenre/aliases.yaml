@@ -27,11 +27,8 @@ rock and roll:
 # Hyphenate j-pop, k-pop, c-pop, post-rock, etc.
 # Matches: kpop, k pop -> k-pop; j rock -> j-rock; post rock -> post-rock
 #
-# Hyphenate neo-soul, euro-house, tech-house, etc.
-# (Negative lookaheads exclude 'european' and 'techno'/'technic*'.)
 \g<1>-\g<2>:
-    - (c|k|j)[ /-]*(folk|goth|hip hop|pop|rock|ska|trance)
-    - (euro(?!p[ae]+n?)|neo|post|tech(?!n[io]))[ /-]*(\w+)
+    - (c|k|j)[ /-]*(folk|goth|pop|rock|ska|trance)
 
 # lo-fi, glo-fi (lofi, lo fi -> lo-fi)
 lo-fi:
