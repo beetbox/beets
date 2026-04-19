@@ -314,9 +314,8 @@ class MusicBrainzPlugin(
         - Parallel lists that keep the per-artist granularity for callers that
           need to reason about individual credited artists.
 
-        When available, a preferred alias is used for the canonical artist name
-        and sort name, while the credit name preserves the exact credited text
-        from the release.
+        When available, a preferred alias is used for the canonical artist name,
+        sort name and the credit name.
         """
         artist_parts: list[str] = []
         artist_sort_parts: list[str] = []
