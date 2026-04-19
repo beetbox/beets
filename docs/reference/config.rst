@@ -581,6 +581,9 @@ beets will copy and then delete when a simple rename is impossible.) Moving
 files can be risky—it's a good idea to keep a backup in case beets doesn't do
 what you expect with your files.
 
+In the case of a ``move`` when importing an archive, the archive will be removed
+if all contents were successfully imported.
+
 This option *overrides* ``copy``, so enabling it will always move (and not copy)
 files. The ``-c`` switch to the ``beet import`` command, however, still takes
 precedence.
