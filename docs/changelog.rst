@@ -69,7 +69,7 @@ Other changes
   requests and deduplicate repeated Spotify track IDs within a run.
 
 2.9.0 (April 11, 2026)
------------------------
+----------------------
 
 Beets now officially supports Python 3.14.
 

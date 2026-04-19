@@ -16,6 +16,7 @@
 """Adds Spotify release and track search support to the autotagger.
 
 Also includes Spotify playlist construction.
+
 """
 
 from __future__ import annotations
@@ -35,10 +36,10 @@ import requests
 
 from beets import ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
-from beets.util import chunks
 from beets.dbcore import types
 from beets.library import Library
 from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
+from beets.util import chunks
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -240,8 +241,8 @@ class SpotifyPlugin(
 
         :param method: HTTP method to use for the request.
         :param url: URL for the new :class:`Request` object.
-        :param dict params: (optional) list of tuples or bytes to send
-            in the query string for the :class:`Request`.
+        :param dict params: (optional) list of tuples or bytes to send in the
+            query string for the :class:`Request`.
 
         """
 
@@ -329,10 +330,7 @@ class SpotifyPlugin(
     def _multi_artist_credit(
         self, artists: list[dict[str | int, str]]
     ) -> tuple[list[str], list[str]]:
-        """Given a list of artist dictionaries, accumulate data into a pair
-        of lists: the first being the artist names, and the second being the
-        artist IDs.
-        """
+        """Accumulate data from artist dicts into name and ID lists."""
         artist_names = []
         artist_ids = []
         for artist in artists:
@@ -341,8 +339,9 @@ class SpotifyPlugin(
         return artist_names, artist_ids
 
     def album_for_id(self, album_id: str) -> AlbumInfo | None:
-        """Fetch an album by its Spotify ID or URL and return an
-        AlbumInfo object or None if the album is not found.
+        """Fetch an album by its Spotify ID or URL.
+
+        Returns an AlbumInfo object, or None if the album is not found.
 
         :param str album_id: Spotify ID or URL for the album
 
@@ -516,6 +515,7 @@ class SpotifyPlugin(
 
         Unauthorized responses trigger one token refresh attempt before the
         method gives up and falls back to an empty result set.
+
         """
         for _ in range(2):
             response = requests.get(
@@ -618,8 +618,8 @@ class SpotifyPlugin(
         :param library: beets library object to query.
         :param keywords: Query to match library items against.
 
-        :returns: List of simplified track object dicts for library
-            items matching the specified query.
+        :returns: List of simplified track object dicts for library items
+            matching the specified query.
 
         """
         results = []
@@ -896,7 +896,9 @@ class SpotifyPlugin(
 
     def track_info(self, track_id: str):
         """Fetch a track's popularity and external IDs using its Spotify ID."""
-        track_data = self._handle_response("get", f"{self.track_url}/{track_id}")
+        track_data = self._handle_response(
+            "get", f"{self.track_url}/{track_id}"
+        )
         external_ids = track_data.get("external_ids", {})
         popularity = track_data.get("popularity")
         self._log.debug(
