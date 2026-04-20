@@ -25,14 +25,12 @@ New features
   skipped as a duplicate, or the import was aborted), and in non-move import
   modes.
 
-
 Bug fixes
 ~~~~~~~~~
 
 - :ref:`import-cmd`: Tags with a zero distance penalty are no longer shown as
   differences in the match display. Previously, custom ``distance_weights``
   could cause fields with no actual mismatch to appear in the ``≠`` line.
-
 
 ..
     For plugin developers
