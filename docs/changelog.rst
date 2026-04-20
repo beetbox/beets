@@ -24,6 +24,8 @@ New features
   Archives are preserved if any file in the archive was not imported (e.g.
   skipped as a duplicate, or the import was aborted), and in non-move import
   modes.
+- :doc:`plugins/fromfilename`: Support ``track`` prefix when parsing the track
+  number from the filename (e.g., ``track01.m4a``).
 
 ..
     Bug fixes
