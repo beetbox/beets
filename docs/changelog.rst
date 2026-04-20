@@ -180,8 +180,6 @@ New features
   order before passing it to the player.
 - :doc:`plugins/lyrics`: Add ``auto_ignore`` configuration option to skip
   fetching lyrics for items matching a beets query during auto import.
-- :doc:`plugins/musicbrainz`: Use title aliases for releases, release groups,
-  and recordings.
 
 Bug fixes
 ~~~~~~~~~
