@@ -127,6 +127,7 @@ databases. They share the following configuration options:
     substitute
     the
     thumbnails
+    tidal
     titlecase
     types
     unimported
@@ -160,6 +161,9 @@ Autotagger Extensions
 :doc:`spotify <spotify>`
     Search for releases in the Spotify_ database.
 
+:doc:`tidal <tidal>`
+    Search for releases in the Tidal_ catalog.
+
 .. _deezer: https://www.deezer.com/en/
 
 .. _discogs: https://www.discogs.com
@@ -167,6 +171,8 @@ Autotagger Extensions
 .. _musicbrainz: https://www.musicbrainz.com
 
 .. _spotify: https://open.spotify.com/
+
+.. _tidal: https://tidal.com/
 
 Metadata
 --------

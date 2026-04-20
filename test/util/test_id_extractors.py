@@ -30,6 +30,9 @@ from beets.util.id_extractors import extract_release_id
         ("musicbrainz", "blah blah", None),
         ("musicbrainz", "https://musicbrainz.org/entity/28e32c71-1450-463e-92bf-e0a46446fc11", "28e32c71-1450-463e-92bf-e0a46446fc11"),
         ("bandcamp", "https://nameofartist.bandcamp.com/album/nameofalbum", "https://nameofartist.bandcamp.com/album/nameofalbum"),
+        ("tidal", "https://tidal.com/browse/album/76699758", "76699758"),
+        ("tidal", "https://tidal.com/track/463928643/u", "463928643"),
+        ("tidal", "blah blah", None),
     ],
 )  # fmt: skip
 def test_extract_release_id(source, id_string, expected):
@@ -47,6 +50,7 @@ source_with_urls = [
     SourceWithURL("beatport", "https://www.beatport.com/release/album-name/3089651"),
     SourceWithURL("discogs", "http://www.discogs.com/G%C3%BCnther-Lause-Meru-Ep/release/4354798"),
     SourceWithURL("musicbrainz", "https://musicbrainz.org/entity/28e32c71-1450-463e-92bf-e0a46446fc11"),
+    SourceWithURL("tidal", "https://tidal.com/track/463928643"),
 ]  # fmt: skip
 
 

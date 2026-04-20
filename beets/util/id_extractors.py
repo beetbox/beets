@@ -43,7 +43,7 @@ PATTERN_BY_SOURCE = {
     # - https://github.com/snejus/beetcamp. Bandcamp album URLs usually look
     # like: https://nameofartist.bandcamp.com/album/nameofalbum
     "bandcamp": re.compile(r"(.+)"),
-    "tidal": re.compile(r"([^/]+)$"),
+    "tidal": re.compile(r"(?:^|tidal\.com/(?:browse/)?(?:album|track)/)(\d+)"),
 }
 
 
