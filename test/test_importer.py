@@ -1058,6 +1058,24 @@ class ImportDuplicateAlbumTest(PluginMixin, ImportTestCase):
         item = self.lib.items().get()
         assert item.title == "new title"
 
+    @pytest.mark.xfail(
+        reason="cover art should be removed when album is removed"
+    )
+    def test_remove_duplicate_album_deletes_art(self):
+        album = self.lib.albums().get()
+        art_source = os.path.join(_common.RSRC, b"abbey.jpg")
+        album.set_art(art_source)
+        album.store()
+        old_artpath = album.art_filepath
+
+        assert old_artpath.exists()
+
+        self.importer.default_resolution = self.importer.Resolution.REMOVE
+        self.importer.run()
+
+        assert not old_artpath.exists()
+        assert len(self.lib.albums()) == 1
+
     def test_no_autotag_removes_duplicate_album(self):
         config["import"]["autotag"] = False
         album = self.lib.albums().get()
