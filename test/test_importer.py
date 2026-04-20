@@ -1058,9 +1058,6 @@ class ImportDuplicateAlbumTest(PluginMixin, ImportTestCase):
         item = self.lib.items().get()
         assert item.title == "new title"
 
-    @pytest.mark.xfail(
-        reason="cover art should be removed when album is removed"
-    )
     def test_remove_duplicate_album_deletes_art(self):
         album = self.lib.albums().get()
         art_source = os.path.join(_common.RSRC, b"abbey.jpg")

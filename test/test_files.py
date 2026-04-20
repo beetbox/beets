@@ -414,9 +414,6 @@ class ArtFileTest(BeetsTestCase):
         ai.set_art(artdest)
         assert ai.art_filepath.exists()
 
-    @pytest.mark.xfail(
-        reason="set_art should replace conflicting file, not create suffixed duplicate"
-    )
     def test_setart_to_conflicting_file_replaces_it(self):
         newart = os.path.join(self.libdir, b"newart.jpg")
         touch(newart)
@@ -435,9 +432,6 @@ class ArtFileTest(BeetsTestCase):
         ai.set_art(newart)
         assert artdest == ai.artpath
 
-    @pytest.mark.xfail(
-        reason="set_art should replace old art, even if it has a different extension"
-    )
     def test_setart_replaces_old_art_at_different_path(self):
         newart = os.path.join(self.libdir, b"newart.png")
         touch(newart)

@@ -540,9 +540,9 @@ class Album(LibModel):
             return
 
         # Normal operation.
-        if oldart == artdest:
+        if oldart:
             util.remove(oldart)
-        artdest = util.unique_path(artdest)
+        util.remove(artdest)
         if copy:
             util.copy(path, artdest)
         else:
