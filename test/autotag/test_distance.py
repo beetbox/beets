@@ -124,6 +124,12 @@ class TestDistance:
         dist.add("medium", 0.75)
         assert dist.items() == [("album", 0.25), ("medium", 0.25)]
 
+    def test_generic_penalty_keys_excludes_zero_penalties(self, dist):
+        dist.add("album", 0.5)
+        dist.add("label", 0.0)
+        dist.add("medium", 0.25)
+        assert dist.generic_penalty_keys == ["album", "medium"]
+
     def test_update(self, dist):
         dist1 = dist
         dist1.add("album", 0.5)
