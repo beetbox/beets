@@ -26,6 +26,17 @@ New features
   modes.
 - :doc:`plugins/fromfilename`: Support ``track`` prefix when parsing the track
   number from the filename (e.g., ``track01.m4a``).
+- **Tidal plugin**: Introduces a new plugin for fetching metadata from Tidal. It
+  supports album and track lookups by ID, including batch operations via
+  ``albums_for_ids`` and ``tracks_for_ids``. It also enables search by query as
+  well as identifier-based retrieval, with support for ISRC codes (tracks) and
+  barcode/EANs (albums).
+
+  This is an initial, relatively minimal implementation, but already fully
+  usable for common metadata workflows. We welcome feedback, improvement ideas,
+  and community contributions to further extend its capabilities.
+
+  See :doc:`plugins/tidal` for more information.
 
 ..
     Bug fixes
@@ -58,18 +69,6 @@ New features
       make sure you run ``beet version`` (or any other command) at least once
       after upgrading to trigger the migration. Only then you can safely move
       the library to a new location.
-
-- **Tidal plugin**: Introduces a new plugin for fetching metadata from Tidal. It
-  supports album and track lookups by ID, including batch operations via
-  ``albums_for_ids`` and ``tracks_for_ids``. It also enables search by query as
-  well as identifier-based retrieval, with support for ISRC codes (tracks) and
-  barcode/EANs (albums).
-
-  This is an initial, relatively minimal implementation, but already fully
-  usable for common metadata workflows. We welcome feedback, improvement ideas,
-  and community contributions to further extend its capabilities.
-
-  See :doc:`plugins/tidal` for more information.
 
 - :doc:`plugins/inline`: Add access to the ``album`` or ``item`` object as
   ``db_obj`` in inline fields.
