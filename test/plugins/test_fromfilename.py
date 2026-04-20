@@ -70,6 +70,10 @@ class Task:
             ("/tmp/Song One.m4a", 0, "", "Song One"),
             ("/tmp/Song Two.m4a", 0, "", "Song Two"),
         ),
+        (
+            ("/tmp/track01.m4a", 1, "", "track01"),
+            ("/tmp/track 2.m4a", 2, "", "track 2"),
+        ),
     ],
 )
 def test_fromfilename(song1, song2):

@@ -32,7 +32,7 @@ PATTERNS = [
     r"^(?P<artist>.+?)\s*-\s*(?P<title>.+?)(\s*-\s*(?P<tag>.*))?$",
     r"^(?P<track>\d+)\.?[\s_-]+(?P<title>.+)$",
     r"^(?P<title>.+) by (?P<artist>.+)$",
-    r"^(?P<track>\d+).*$",
+    r"^(track ?)?(?P<track>\d+).*$",
     r"^(?P<title>.+)$",
 ]
 

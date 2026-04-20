@@ -12,6 +12,50 @@ Unreleased
 New features
 ~~~~~~~~~~~~
 
+- :doc:`plugins/smartplaylist`: The ``splupdate`` command output is
+  restructured. The per-playlist summary now includes a track count. Per-track
+  details are shown only when ``-v`` flag is provided (``beet -v splupdate``).
+  The ``--pretend`` flag produces the same output but reports *"N playlists
+  would be updated"* instead of *"N playlists updated"*. The ``--format`` option
+  allows customizing the track line format. The ``--pretend-paths`` option was
+  removed (use ``--format='$path'`` instead). :bug:`6183`
+- :ref:`import-cmd`: When importing an archive (zip, tar, rar, or 7z) with
+  ``move: yes``, the source archive is now removed after a successful import.
+  Archives are preserved if any file in the archive was not imported (e.g.
+  skipped as a duplicate, or the import was aborted), and in non-move import
+  modes.
+- :doc:`plugins/fromfilename`: Support ``track`` prefix when parsing the track
+  number from the filename (e.g., ``track01.m4a``).
+- **Tidal plugin**: Introduces a new plugin for fetching metadata from Tidal. It
+  supports album and track lookups by ID, including batch operations via
+  ``albums_for_ids`` and ``tracks_for_ids``. It also enables search by query as
+  well as identifier-based retrieval, with support for ISRC codes (tracks) and
+  barcode/EANs (albums).
+
+  This is an initial, relatively minimal implementation, but already fully
+  usable for common metadata workflows. We welcome feedback, improvement ideas,
+  and community contributions to further extend its capabilities.
+
+  See :doc:`plugins/tidal` for more information.
+
+..
+    Bug fixes
+    ~~~~~~~~~
+
+..
+    For plugin developers
+    ~~~~~~~~~~~~~~~~~~~~~
+
+..
+    Other changes
+    ~~~~~~~~~~~~~
+
+2.10.0 (April 19, 2026)
+-----------------------
+
+New features
+~~~~~~~~~~~~
+
 - **Beets library is now made portable**: item and album-art paths are now
   stored relative to the library root in the database while remaining absolute
   in the rest of beets. Path queries continue matching both library-relative
@@ -35,6 +79,9 @@ New features
   CLI flag to skip re-fetching lyrics for tracks that already have synced
   lyrics, even when ``force`` is enabled. :bug:`5249`
 - :doc:`plugins/musicbrainz`: Use aliases for artist credit.
+- Metadata source plugin searches and lookups are now executed concurrently,
+  speeding up lookups when multiple plugins (e.g. MusicBrainz and Spotify) are
+  enabled.
 
 Bug fixes
 ~~~~~~~~~
@@ -51,6 +98,10 @@ Bug fixes
   which also restores compatibility with :doc:`plugins/mbpseudo` for
   chroma-triggered lookups. :bug:`6212` :bug:`6441`
 - :ref:`import-cmd` Remove clutter from imported album folders. :bug:`5016`
+- :doc:`plugins/web`: Fix a stored XSS vulnerability where unescaped metadata
+  fields (artist, album, title, comments, lyrics) could execute arbitrary
+  JavaScript in the browser. Template tags now use ``<%-`` (escaped
+  interpolation) instead of ``<%=`` (raw interpolation).
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~

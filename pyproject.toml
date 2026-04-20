@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "beets"
-version = "2.9.0"
+version = "2.10.0"
 description = "music tagger and library organizer"
 authors = ["Adrian Sampson <adrian@radbox.org>"]
 maintainers = ["Serene-Arc"]
@@ -270,8 +270,7 @@ ref = "test"
 # measure coverage across logical branches
 # show which tests cover specific lines in the code (see the HTML report)
 env.OPTS = """
---cov=beets
---cov=beetsplug
+--cov=.
 --cov-report=xml:.reports/coverage.xml
 --cov-report=html:.reports/html
 --cov-branch

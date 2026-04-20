@@ -180,6 +180,9 @@ class RmTempTest(BeetsTestCase):
         super().setUp()
         self.want_resume = False
         self.config["incremental"] = False
+        self.config["copy"] = False
+        self.config["move"] = False
+        self.config["delete"] = False
         self._old_home = None
 
     def test_rm(self):
@@ -190,6 +193,48 @@ class RmTempTest(BeetsTestCase):
         assert tmp_path.exists()
         archive_task.finalize(self)
         assert not tmp_path.exists()
+
+    def test_archive_removed_on_move_complete(self):
+        zip_path = create_archive(self)
+        archive_task = importer.ArchiveImportTask(zip_path)
+        archive_task.extract()
+        for root, _, files in os.walk(syspath(archive_task.toppath)):
+            for f in files:
+                os.remove(os.path.join(root, f))
+        assert Path(os.fsdecode(zip_path)).exists()
+        archive_task.cleanup(move=True)
+        assert not Path(os.fsdecode(zip_path)).exists()
+
+    def test_archive_preserved_on_move_partial(self):
+        zip_path = create_archive(self)
+        archive_task = importer.ArchiveImportTask(zip_path)
+        archive_task.extract()
+        archive_task.cleanup(move=True)
+        assert Path(os.fsdecode(zip_path)).exists()
+
+    def test_archive_preserved_on_copy(self):
+        zip_path = create_archive(self)
+        archive_task = importer.ArchiveImportTask(zip_path)
+        archive_task.extract()
+        archive_task.cleanup(copy=True)
+        assert Path(os.fsdecode(zip_path)).exists()
+
+    def test_tempdir_removed_in_all_modes(self):
+        for cleanup_kwargs in (
+            {},
+            {"move": True},
+            {"copy": True},
+            {"copy": True, "delete": True},
+        ):
+            zip_path = create_archive(self)
+            archive_task = importer.ArchiveImportTask(zip_path)
+            archive_task.extract()
+            tmp_path = Path(os.fsdecode(archive_task.toppath))
+            assert tmp_path.exists(), f"extract failed for {cleanup_kwargs}"
+            archive_task.cleanup(**cleanup_kwargs)
+            assert not tmp_path.exists(), (
+                f"tempdir {tmp_path} not removed for {cleanup_kwargs}"
+            )
 
 
 class ImportZipTest(AsIsImporterMixin, ImportTestCase):
