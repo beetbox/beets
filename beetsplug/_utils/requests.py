@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import atexit
 import threading
+import time
 from contextlib import contextmanager
 from functools import cached_property
 from http import HTTPStatus
@@ -101,6 +102,38 @@ class TimeoutAndRetrySession(requests.Session, metaclass=SingletonMeta):
         r.raise_for_status()
 
         return r
+
+
+class RateLimitAdapter(HTTPAdapter):
+    """HTTPAdapter that enforces minimum interval between requests.
+
+    Prevents server overload and 429 errors by sleeping when requests
+    come too fast. Thread-safe via lock.
+
+    Attributes:
+        rate_limit: Minimum seconds between requests. Default 0.25 (4/sec).
+
+    Override `_wait_time()` for custom strategies (token bucket, burst, etc.).
+    """
+
+    def __init__(self, rate_limit: float = 0.25, **kwargs):
+        super().__init__(**kwargs)
+        self.rate_limit = rate_limit
+        self._last_request_time = 0.0
+        self._lock = threading.Lock()
+
+    def _wait_time(self, elapsed: float) -> float:
+        """Return seconds to wait. Override for custom rate limiting."""
+        return max(0, self.rate_limit - elapsed)
+
+    def send(self, request: requests.PreparedRequest, *args, **kwargs):
+        with self._lock:
+            elapsed = time.monotonic() - self._last_request_time
+            wait = self._wait_time(elapsed)
+            if wait > 0:
+                time.sleep(wait)
+            self._last_request_time = time.monotonic()
+        return super().send(request, *args, **kwargs)
 
 
 class RequestHandler:

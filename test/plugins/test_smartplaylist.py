@@ -14,7 +14,7 @@
 
 # TODO: Tests in this fire are very bad. Stop using Mocks in this module.
 
-from os import path, remove
+import os
 from pathlib import Path
 from shutil import rmtree
 from tempfile import mkdtemp
@@ -171,9 +171,9 @@ class SmartPlaylistTest(BeetsTestCase):
         spl = SmartPlaylistPlugin()
 
         i = Mock(path=b"/tagada.mp3")
-        i.evaluate_template.side_effect = lambda pl, _: pl.replace(
-            b"$title", b"ta:ga:da"
-        ).decode()
+        i.evaluate_template.side_effect = lambda pl, *_: os.fsdecode(
+            pl
+        ).replace("$title", "ta:ga:da")
 
         lib = Mock()
         lib.replacements = CHAR_REPLACE
@@ -212,10 +212,9 @@ class SmartPlaylistTest(BeetsTestCase):
         type(i).title = PropertyMock(return_value="fake title")
         type(i).length = PropertyMock(return_value=300.123)
         type(i).path = PropertyMock(return_value=b"/tagada.mp3")
-        i.evaluate_template.side_effect = lambda pl, _: pl.replace(
-            b"$title",
-            b"ta:ga:da",
-        ).decode()
+        i.evaluate_template.side_effect = lambda pl, *_: os.fsdecode(
+            pl
+        ).replace("$title", "ta:ga:da")
 
         lib = Mock()
         lib.replacements = CHAR_REPLACE
@@ -262,10 +261,9 @@ class SmartPlaylistTest(BeetsTestCase):
         type(i).path = PropertyMock(return_value=b"/tagada.mp3")
         a = {"id": 456, "genres": ["Rock", "Pop"]}
         i.__getitem__.side_effect = a.__getitem__
-        i.evaluate_template.side_effect = lambda pl, _: pl.replace(
-            b"$title",
-            b"ta:ga:da",
-        ).decode()
+        i.evaluate_template.side_effect = lambda pl, *_: os.fsdecode(
+            pl
+        ).replace("$title", "ta:ga:da")
 
         lib = Mock()
         lib.replacements = CHAR_REPLACE
@@ -308,9 +306,9 @@ class SmartPlaylistTest(BeetsTestCase):
         i = MagicMock()
         type(i).id = PropertyMock(return_value=3)
         type(i).path = PropertyMock(return_value=b"/tagada.mp3")
-        i.evaluate_template.side_effect = lambda pl, _: pl.replace(
-            b"$title", b"ta:ga:da"
-        ).decode()
+        i.evaluate_template.side_effect = lambda pl, *_: os.fsdecode(
+            pl
+        ).replace("$title", "ta:ga:da")
 
         lib = Mock()
         lib.replacements = CHAR_REPLACE
@@ -471,10 +469,9 @@ class SmartPlaylistTest(BeetsTestCase):
         )
         # Set a path which would be equal to the one returned by `item.destination`.
         type(i).destination = PropertyMock(return_value=lambda: b"/tagada.mp3")
-        i.evaluate_template.side_effect = lambda pl, _: pl.replace(
-            b"$title",
-            b"ta:ga:da",
-        ).decode()
+        i.evaluate_template.side_effect = lambda pl, *_: os.fsdecode(
+            pl
+        ).replace("$title", "ta:ga:da")
 
         lib = Mock()
         lib.replacements = CHAR_REPLACE
@@ -564,15 +561,15 @@ class SmartPlaylistCLITest(IOMixin, PluginTestCase):
         m3u_path = self.temp_dir_path / "my_playlist.m3u"
         assert m3u_path.exists()
         assert m3u_path.read_bytes() == self.item.path + b"\n"
-        remove(syspath(m3u_path))
+        os.remove(syspath(m3u_path))
 
         self.run_with_output("splupdate", "my_playlist.m3u")
         assert m3u_path.read_bytes() == self.item.path + b"\n"
-        remove(syspath(m3u_path))
+        os.remove(syspath(m3u_path))
 
         self.run_with_output("splupdate")
         for name in (b"my_playlist.m3u", b"all.m3u"):
-            with open(path.join(self.temp_dir, name), "rb") as f:
+            with open(os.path.join(self.temp_dir, name), "rb") as f:
                 assert f.read() == self.item.path + b"\n"
 
     def test_splupdate_unknown_playlist_error_is_sorted_and_quoted(self):
@@ -591,3 +588,31 @@ class SmartPlaylistCLITest(IOMixin, PluginTestCase):
             "No playlist matching any of "
             "'a one.m3u' 'rock'\"'\"'n roll.m3u' 'z last.m3u' found"
         )
+
+    def test_splupdate_log_output(self):
+        with self.assertLogs("beets.smartplaylist", level="INFO") as logs:
+            self.run_with_output("splupdate", "my_playlist")
+
+        output = "\n".join(logs.output)
+        assert "Updating 1 smart playlists..." in output
+        assert "Creating playlist my_playlist.m3u: 1 tracks." in output
+        assert "1 playlists updated" in output
+
+    def test_splupdate_verbose_log_output(self):
+        with self.assertLogs("beets.smartplaylist", level="DEBUG") as logs:
+            self.run_with_output("splupdate", "my_playlist")
+
+        output = "\n".join(logs.output)
+        assert "Updating 1 smart playlists..." in output
+        assert "Creating playlist my_playlist.m3u: 1 tracks." in output
+        assert "the ärtist - " in output
+        assert "1 playlists updated" in output
+
+    def test_splupdate_pretend_log_output(self):
+        with self.assertLogs("beets.smartplaylist", level="INFO") as logs:
+            self.run_with_output("splupdate", "--pretend", "my_playlist")
+
+        output = "\n".join(logs.output)
+        assert "Updating 1 smart playlists..." in output
+        assert "Creating playlist my_playlist.m3u: 1 tracks." in output
+        assert "1 playlists would be updated" in output

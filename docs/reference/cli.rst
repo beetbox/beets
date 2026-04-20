@@ -71,9 +71,11 @@ Optional command flags:
 
 - By default, the command copies files to your library directory and updates the
   ID3 tags on your music. In order to move the files, instead of copying, use
-  the ``-m`` (move) option. If you'd like to leave your music files untouched,
-  try the ``-C`` (don't copy) and ``-W`` (don't write tags) options. You can
-  also disable this behavior by default in the configuration file (below).
+  the ``-m`` (move) option. When importing an archive with ``-m``, if all files
+  are imported, the archive is removed from disk. If you'd like to leave your
+  music files untouched, try the ``-C`` (don't copy) and ``-W`` (don't write
+  tags) options. You can also disable this behavior by default in the
+  configuration file (below).
 - Also, you can disable the autotagging behavior entirely using ``-A`` (don't
   autotag)---then your music will be imported with its existing metadata.
 - During a long tagging import, it can be useful to keep track of albums that
