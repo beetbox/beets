@@ -44,6 +44,10 @@ Bug fixes
 - :ref:`import-cmd`: Tags with a zero distance penalty are no longer shown as
   differences in the match display. Previously, custom ``distance_weights``
   could cause fields with no actual mismatch to appear in the ``≠`` line.
+- Library path migration now also handles manually edited database rows where
+  item or album-art paths were stored as SQLite ``TEXT`` values instead of
+  bytes, so upgrading to the portable-path storage format no longer fails for
+  those libraries. :bug:`6561`
 
 ..
     For plugin developers

@@ -247,18 +247,24 @@ class TestRelativePathMigration:
 
     def test_migrate(self, helper: TestHelper):
         relative_path = os.path.join("foo", "bar", "baz.mp3")
-        absolute_path = os.fsencode(helper.lib_path / relative_path)
+        abs_string_path = str(helper.lib_path / relative_path)
+        abs_bytes_path = os.fsencode(abs_string_path)
 
         # need to insert the path directly into the database to bypass the path setter
-        helper.lib._connection().execute(
-            "INSERT INTO items (id, path) VALUES (?, ?)", (1, absolute_path)
+        helper.lib._connection().executemany(
+            "INSERT INTO items (id, path) VALUES (?, ?)",
+            (
+                (1, abs_bytes_path),
+                # add a string path to ensure the migration handles it
+                (2, abs_string_path),
+            ),
         )
         old_stored_path = (
             helper.lib._connection()
             .execute("select path from items where id=?", (1,))
             .fetchone()[0]
         )
-        assert old_stored_path == absolute_path
+        assert old_stored_path == abs_bytes_path
 
         helper.lib._migrate()
 
@@ -273,4 +279,9 @@ class TestRelativePathMigration:
         )
         assert stored_path == path_as_posix(os.fsencode(relative_path))
         # and the item.path property still returns an absolute path
-        assert item.path == absolute_path
+        assert item.path == abs_bytes_path
+
+        # also check the string path was migrated correctly
+        str_item = helper.lib.get_item(2)
+        assert str_item
+        assert str_item.path == abs_bytes_path
