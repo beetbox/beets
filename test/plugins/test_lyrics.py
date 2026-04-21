@@ -848,7 +848,6 @@ class TestRestFiles:
         )
 
 
-
 _RSRC = Path(__file__).parent.parent / "rsrc"
 
 
