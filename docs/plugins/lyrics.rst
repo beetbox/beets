@@ -116,10 +116,10 @@ The available options are:
   existing synced lyrics are not replaced by newly fetched plain lyrics (even
   when ``force`` is enabled). To allow that replacement, disable ``synced``.
   When synced lyrics are written to an ID3-tagged file (MP3, AIFF, etc.) the
-  plugin stores the timestamped data in the ``SYLT`` (synchronized lyrics)
-  frame and plain text (without timestamps) in the ``USLT`` (unsynchronized
-  lyrics) frame, so players that support only one of the two formats can still
-  show the correct lyrics.
+  plugin stores the timestamped data in the ``SYLT`` (synchronized lyrics) frame
+  and plain text (without timestamps) in the ``USLT`` (unsynchronized lyrics)
+  frame, so players that support only one of the two formats can still show the
+  correct lyrics.
 
 .. _beets custom search engine: https://cse.google.com/cse?cx=009217259823014548361:lndtuqkycfu
 
