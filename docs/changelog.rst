@@ -48,6 +48,10 @@ Bug fixes
   item or album-art paths were stored as SQLite ``TEXT`` values instead of
   bytes, so upgrading to the portable-path storage format no longer fails for
   those libraries. :bug:`6561`
+- :ref:`import-cmd` Fix duplicate album art files (e.g. ``cover.2.jpg``) being
+  created when re-importing albums with the :doc:`plugins/fetchart` plugin
+  enabled. Old album art is now properly removed when replacing duplicate albums
+  during import. :bug:`1264` :bug:`6205`
 
 ..
     For plugin developers

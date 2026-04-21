@@ -270,15 +270,30 @@ class ImportTask(BaseImportTask):
         return duplicate_items
 
     def remove_duplicates(self, lib: library.Library):
-        duplicate_items = self.duplicate_items(lib)
-        log.debug("removing {} old duplicated items", len(duplicate_items))
-        for item in duplicate_items:
-            item.remove()
-            if lib.directory in util.ancestry(item.path):
-                log.debug("deleting duplicate {.filepath}", item)
-                util.remove(item.path)
+        duplicate_albums = self.find_duplicates(lib)
+        log.debug("removing {} old duplicate albums", len(duplicate_albums))
+
+        for album in duplicate_albums:
+            artpath = album.artpath
+
+            for item in album.items():
+                item.remove(with_album=False)
+                if lib.directory in util.ancestry(item.path):
+                    log.debug("deleting duplicate {.filepath}", item)
+                    util.remove(item.path)
+                    util.prune_dirs(
+                        os.path.dirname(item.path),
+                        lib.directory,
+                        clutter=config["clutter"].as_str_seq(),
+                    )
+
+            album.remove(with_items=False)
+
+            if artpath and lib.directory in util.ancestry(artpath):
+                log.debug("deleting duplicate album art {}", artpath)
+                util.remove(artpath)
                 util.prune_dirs(
-                    os.path.dirname(item.path),
+                    os.path.dirname(artpath),
                     lib.directory,
                     clutter=config["clutter"].as_str_seq(),
                 )
@@ -715,6 +730,20 @@ class SingletonImportTask(ImportTask):
         return found_items
 
     duplicate_items = find_duplicates
+
+    def remove_duplicates(self, lib: library.Library):
+        duplicate_items = self.find_duplicates(lib)
+        log.debug("removing {} old duplicated items", len(duplicate_items))
+        for item in duplicate_items:
+            item.remove()
+            if lib.directory in util.ancestry(item.path):
+                log.debug("deleting duplicate {.filepath}", item)
+                util.remove(item.path)
+                util.prune_dirs(
+                    os.path.dirname(item.path),
+                    lib.directory,
+                    clutter=config["clutter"].as_str_seq(),
+                )
 
     def add(self, lib):
         with lib.transaction():
