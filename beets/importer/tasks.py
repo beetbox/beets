@@ -1161,7 +1161,7 @@ class ImportTaskFactory:
                 pass
 
 
-MULTIDISC_MARKERS = (rb"dis[ck]", rb"cd")
+MULTIDISC_MARKERS = (rb"dis[ck]", rb"cd", rb"cassette", rb"digital\s+media", rb"vinyl")
 MULTIDISC_PAT_FMT = rb"^(.*%s[\W_]*)\d"
 
 

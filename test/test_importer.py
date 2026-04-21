@@ -1527,6 +1527,40 @@ class MultiDiscAlbumsInDirTest(BeetsTestCase):
         assert root == self.dirs[0:3]
         assert len(items) == 3
 
+    def test_coalesce_markers(self):
+        for marker in [
+            b"disc",
+            b"disk",
+            b"cd",
+            b"cassette",
+            b"digital media",
+            b"vinyl",
+            b"12 vinyl",
+        ]:
+            with self.subTest(marker=marker):
+                base = os.path.abspath(
+                    os.path.join(self.temp_dir, b"marker_" + marker.replace(b" ", b"_"))
+                )
+                os.mkdir(syspath(base))
+
+                album_dir = os.path.join(base, b"Album Name")
+                os.mkdir(syspath(album_dir))
+
+                disc1 = os.path.join(album_dir, marker + b" 1")
+                disc2 = os.path.join(album_dir, marker + b" 2")
+                os.mkdir(syspath(disc1))
+                os.mkdir(syspath(disc2))
+
+                _mkmp3(syspath(os.path.join(disc1, b"song1.mp3")))
+                _mkmp3(syspath(os.path.join(disc2, b"song2.mp3")))
+
+                albums = list(albums_in_dir(base))
+                assert len(albums) == 1
+                root, items = albums[0]
+                assert disc1 in root
+                assert disc2 in root
+                assert len(items) == 2
+
 
 class ReimportTest(AutotagImportTestCase):
     """Test "re-imports", in which the autotagging machinery is used for
