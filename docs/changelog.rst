@@ -24,6 +24,19 @@ New features
   Archives are preserved if any file in the archive was not imported (e.g.
   skipped as a duplicate, or the import was aborted), and in non-move import
   modes.
+- :doc:`plugins/fromfilename`: Support ``track`` prefix when parsing the track
+  number from the filename (e.g., ``track01.m4a``).
+- **Tidal plugin**: Introduces a new plugin for fetching metadata from Tidal. It
+  supports album and track lookups by ID, including batch operations via
+  ``albums_for_ids`` and ``tracks_for_ids``. It also enables search by query as
+  well as identifier-based retrieval, with support for ISRC codes (tracks) and
+  barcode/EANs (albums).
+
+  This is an initial, relatively minimal implementation, but already fully
+  usable for common metadata workflows. We welcome feedback, improvement ideas,
+  and community contributions to further extend its capabilities.
+
+  See :doc:`plugins/tidal` for more information.
 
 Bug fixes
 ~~~~~~~~~
