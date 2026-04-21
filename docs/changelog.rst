@@ -38,9 +38,12 @@ New features
 
   See :doc:`plugins/tidal` for more information.
 
-..
-    Bug fixes
-    ~~~~~~~~~
+Bug fixes
+~~~~~~~~~
+
+- :ref:`import-cmd`: Tags with a zero distance penalty are no longer shown as
+  differences in the match display. Previously, custom ``distance_weights``
+  could cause fields with no actual mismatch to appear in the ``≠`` line.
 
 ..
     For plugin developers
