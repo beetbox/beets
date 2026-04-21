@@ -65,6 +65,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
                 "urlencode": False,
                 "format": "$artist - $title",
                 "output": "m3u",
+                "pretend": False,
             }
         )
 
@@ -181,7 +182,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
             self._matched_playlists = self._unmatched_playlists
 
         self.config.set(vars(opts))
-        self.update_playlists(lib, opts.pretend)
+        self.update_playlists(lib)
 
     def _parse_one_query(
         self, playlist: dict[str, Any], key: str, model_cls: type
@@ -265,7 +266,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
 
         self._unmatched_playlists -= self._matched_playlists
 
-    def update_playlists(self, lib: Library, pretend: bool = False) -> None:
+    def update_playlists(self, lib: Library) -> None:
         self._log.info(
             "Updating {} smart playlists...",
             len(self._matched_playlists),
@@ -355,7 +356,12 @@ class SmartPlaylistPlugin(BeetsPlugin):
                     item.evaluate_template(self.config["format"].as_str())
                 )
 
-        if not pretend:
+        if self.config["pretend"].get():
+            self._log.info(
+                "{} playlists would be updated",
+                len(self._matched_playlists),
+            )
+        else:
             # Write all of the accumulated track lists to files.
             for m3u, entries in m3us.items():
                 m3u_path = normpath(
@@ -390,13 +396,6 @@ class SmartPlaylistPlugin(BeetsPlugin):
                         f.write(comment.encode("utf-8") + entry.uri + b"\n")
             # Send an event when playlists were updated.
             send_event("smartplaylist_update")  # type: ignore
-
-        if pretend:
-            self._log.info(
-                "{} playlists would be updated",
-                len(self._matched_playlists),
-            )
-        else:
             self._log.info("{} playlists updated", len(self._matched_playlists))
 
 
