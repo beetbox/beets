@@ -237,7 +237,13 @@ class RelativePathMigration(Migration):
         table = model_cls._table
 
         with self.db.transaction() as tx:
-            rows = tx.query(f"SELECT id, {field} FROM {table}")  # type: ignore[assignment]
+            rows = tx.query(
+                f"""
+                SELECT id, {field}
+                FROM {table}
+                WHERE {field} IS NOT NULL
+                """
+            )
 
         total = len(rows)
         to_migrate = [r for r in rows if r[field] and os.path.isabs(r[field])]
@@ -249,7 +255,9 @@ class RelativePathMigration(Migration):
             tx.mutate_many(
                 f"UPDATE {table} SET {field} = ? WHERE id = ?",
                 [
-                    (normalize_path_for_db(r[field]), r["id"])
+                    # Convert to bytes in case a user has manually set paths to
+                    # a TEXT value
+                    (normalize_path_for_db(os.fsencode(r[field])), r["id"])
                     for r in to_migrate
                 ],
             )
