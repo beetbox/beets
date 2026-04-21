@@ -41,10 +41,9 @@ if TYPE_CHECKING:
 
 QueryAndSort = tuple[Query, Sort]
 PlaylistQuery = Query | tuple[QueryAndSort, ...] | None
+PlaylistQueryAndSort = tuple[PlaylistQuery, Sort | None]
 PlaylistMatch: TypeAlias = tuple[
-    str,
-    tuple[PlaylistQuery, Sort | None],
-    tuple[PlaylistQuery, Sort | None],
+    str, PlaylistQueryAndSort, PlaylistQueryAndSort
 ]
 
 
@@ -266,6 +265,43 @@ class SmartPlaylistPlugin(BeetsPlugin):
 
         self._unmatched_playlists -= self._matched_playlists
 
+    @staticmethod
+    def get_playlist_items(
+        lib: Library,
+        item_q: PlaylistQueryAndSort,
+        album_q: PlaylistQueryAndSort,
+    ) -> list[Item]:
+        query, q_sort = item_q
+        album_query, a_q_sort = album_q
+        items = []
+
+        # Handle tuple/list of queries (preserves order)
+        # Track seen items to avoid duplicates when an item matches
+        # multiple queries
+        seen_ids = set()
+
+        if isinstance(query, (list, tuple)):
+            for q, sort in query:
+                for item in lib.items(q, sort):
+                    if item.id not in seen_ids:
+                        items.append(item)
+                        seen_ids.add(item.id)
+        elif query:
+            items.extend(lib.items(query, q_sort))
+
+        if isinstance(album_query, (list, tuple)):
+            for q, sort in album_query:
+                for album in lib.albums(q, sort):
+                    for item in album.items():
+                        if item.id not in seen_ids:
+                            items.append(item)
+                            seen_ids.add(item.id)
+        elif album_query:
+            for album in lib.albums(album_query, a_q_sort):
+                items.extend(album.items())
+
+        return items
+
     def update_playlists(self, lib: Library) -> None:
         playlist_count = len(self._matched_playlists)
         self._log.info("Updating {} smart playlists...", playlist_count)
@@ -284,38 +320,13 @@ class SmartPlaylistPlugin(BeetsPlugin):
         m3u_uris_by_name: dict[str, set[Any]] = {}
 
         for playlist in self._matched_playlists:
-            matched_count = 0
-            name, (query, q_sort), (album_query, a_q_sort) = playlist
-            items = []
-
-            # Handle tuple/list of queries (preserves order)
-            # Track seen items to avoid duplicates when an item matches
-            # multiple queries
-            seen_ids = set()
-
-            if isinstance(query, (list, tuple)):
-                for q, sort in query:
-                    for item in lib.items(q, sort):
-                        if item.id not in seen_ids:
-                            items.append(item)
-                            seen_ids.add(item.id)
-            elif query:
-                items.extend(lib.items(query, q_sort))
-
-            if isinstance(album_query, (list, tuple)):
-                for q, sort in album_query:
-                    for album in lib.albums(q, sort):
-                        for item in album.items():
-                            if item.id not in seen_ids:
-                                items.append(item)
-                                seen_ids.add(item.id)
-            elif album_query:
-                for album in lib.albums(album_query, a_q_sort):
-                    items.extend(album.items())
+            name, item_q, album_q = playlist
+            items = self.get_playlist_items(lib, item_q, album_q)
 
             # As we allow tags in the m3u names, we'll need to iterate through
             # the items and generate the correct m3u file names.
             matched_items: list[tuple[Any, Any]] = []
+            matched_count = 0
             for item in items:
                 m3u_name = item.evaluate_template(name, True)
                 m3u_name = sanitize_path(m3u_name, lib.replacements)
@@ -347,7 +358,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
             self._log.info(
                 "Creating playlist {}: {} tracks.", name, matched_count
             )
-            for item, item_uri in matched_items:
+            for item, _ in matched_items:
                 self._log.debug(
                     item.evaluate_template(self.config["format"].as_str())
                 )
