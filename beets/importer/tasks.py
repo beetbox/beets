@@ -1161,8 +1161,18 @@ class ImportTaskFactory:
                 pass
 
 
-MULTIDISC_MARKERS = (rb"dis[ck]", rb"cd", rb"cassette", rb"digital\s+media", rb"vinyl")
-MULTIDISC_PAT_FMT = rb"^(.*%s[\W_]*)\d"
+_MULTIDISC_MARKERS = (
+    rb"dis[ck]",
+    rb"cd",
+    rb"cassette",
+    rb"digital\s+media",
+    rb"vinyl",
+)
+
+MULTIDISC_PATTERNS = [
+    re.compile(rb"^(.*" + marker + rb"[\W_]*)\d", re.I)
+    for marker in _MULTIDISC_MARKERS
+]
 
 
 def is_subdir_of_any_in_list(path, dirs):
@@ -1215,10 +1225,7 @@ def albums_in_dir(path: util.PathBytes):
         # 1") or it contains no items but only directories that are
         # named in this way.
         start_collapsing = False
-        for marker in MULTIDISC_MARKERS:
-            # We're using replace on %s due to lack of .format() on bytestrings
-            p = MULTIDISC_PAT_FMT.replace(b"%s", marker)
-            marker_pat = re.compile(p, re.I)
+        for marker_pat in MULTIDISC_PATTERNS:
             match = marker_pat.match(os.path.basename(root))
 
             # Is this directory the root of a nested multi-disc album?
