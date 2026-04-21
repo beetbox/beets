@@ -267,10 +267,8 @@ class SmartPlaylistPlugin(BeetsPlugin):
         self._unmatched_playlists -= self._matched_playlists
 
     def update_playlists(self, lib: Library) -> None:
-        self._log.info(
-            "Updating {} smart playlists...",
-            len(self._matched_playlists),
-        )
+        playlist_count = len(self._matched_playlists)
+        self._log.info("Updating {} smart playlists...", playlist_count)
 
         playlist_dir = bytestring_path(
             self.config["playlist_dir"].as_filename()
@@ -357,10 +355,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
                 )
 
         if self.config["pretend"].get():
-            self._log.info(
-                "{} playlists would be updated",
-                len(self._matched_playlists),
-            )
+            self._log.info("{} playlists would be updated", playlist_count)
         else:
             # Write all of the accumulated track lists to files.
             for m3u, entries in m3us.items():
@@ -396,7 +391,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
                         f.write(comment.encode("utf-8") + entry.uri + b"\n")
             # Send an event when playlists were updated.
             send_event("smartplaylist_update")  # type: ignore
-            self._log.info("{} playlists updated", len(self._matched_playlists))
+            self._log.info("{} playlists updated", playlist_count)
 
 
 class PlaylistItem:
