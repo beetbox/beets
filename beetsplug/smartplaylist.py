@@ -275,9 +275,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
         )
         tpl = self.config["uri_format"].get()
         prefix = bytestring_path(self.config["prefix"].as_str())
-        dest_regen = self.config["dest_regen"].get(bool)
-        relative_to = self.config["relative_to"].get()
-        if relative_to:
+        if relative_to := self.config["relative_to"].get():
             relative_to = normpath(relative_to)
 
         # Maps playlist filenames to lists of track entries and URI sets used
@@ -328,7 +326,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
                 if tpl:
                     item_uri = tpl.replace("$id", str(item.id)).encode("utf-8")
                 else:
-                    if dest_regen is True:
+                    if self.config["dest_regen"].get(bool):
                         item_uri = item.destination()
                     if relative_to:
                         item_uri = os.path.relpath(item_uri, relative_to)
