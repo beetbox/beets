@@ -33,7 +33,7 @@ import requests
 from bs4 import BeautifulSoup
 from unidecode import unidecode
 
-from beets import plugins, ui
+from beets import plugins, ui, util
 from beets.autotag.distance import string_dist
 from beets.dbcore import types
 from beets.dbcore.query import FalseQuery
@@ -949,6 +949,56 @@ BACKEND_BY_NAME = {
 }
 
 
+def _write_sylt_to_id3(item: Item, lyrics: Lyrics) -> None:
+    """Write synced lyrics as SYLT (and plain text as USLT) to an ID3 file.
+
+    After :meth:`Item.try_write` stores the raw LRC text in the USLT frame,
+    this function reopens the file with mutagen to:
+
+    * replace the USLT content with plain text (timestamps stripped), and
+    * add a SYLT frame with ``(text, milliseconds)`` pairs.
+
+    For plain (unsynced) lyrics the SYLT frame is removed so stale synced
+    data is never left behind.
+
+    Files that do not carry ID3 tags (FLAC, OGG, …) are silently skipped.
+    """
+    import mutagen
+    from mutagen.id3 import SYLT, USLT
+
+    try:
+        f = mutagen.File(util.syspath(item.path))
+    except Exception:
+        return
+
+    if f is None or not hasattr(f, "tags") or not hasattr(f.tags, "delall"):
+        # Not an ID3-tagged file (FLAC, Vorbis, etc.) - nothing to do.
+        return
+
+    tags = f.tags
+
+    # Overwrite USLT with timestamp-stripped plain text.
+    tags.delall("USLT")
+    plain_text = "\n".join(lyrics.text_lines)
+    if plain_text:
+        tags["USLT::eng"] = USLT(
+            encoding=3, lang="eng", desc="", text=plain_text
+        )
+
+    # Write (or clear) the SYLT frame.
+    tags.delall("SYLT")
+    sylt_data = lyrics.sylt
+    if sylt_data:
+        tags["SYLT::eng"] = SYLT(
+            encoding=3, lang="eng", format=2, type=1, text=sylt_data
+        )
+
+    try:
+        f.save()
+    except Exception:
+        pass
+
+
 class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
     item_types: ClassVar[dict[str, types.Type]] = {
         "lyrics_url": types.STRING,
@@ -1141,6 +1191,9 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             item.store()
             if write:
                 item.try_write()
+                # For ID3 files, replace the raw LRC stored in USLT with plain
+                # text and write a proper SYLT frame (or clear a stale one).
+                _write_sylt_to_id3(item, Lyrics(lyrics_text))
 
     def get_lyrics(self, artist: str, title: str, *args) -> Lyrics | None:
         """Get first found lyrics, trying each source in turn."""

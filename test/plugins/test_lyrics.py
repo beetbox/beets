@@ -16,10 +16,13 @@
 
 from __future__ import annotations
 
+import os
 import re
+import shutil
 import textwrap
 from functools import partial
 from http import HTTPStatus
+from pathlib import Path
 from types import SimpleNamespace
 from typing import TYPE_CHECKING
 
@@ -34,8 +37,6 @@ from beetsplug import lyrics
 from .lyrics_pages import lyrics_pages
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from .lyrics_pages import LyricsPage
 
 PHRASE_BY_TITLE = {
@@ -845,3 +846,107 @@ class TestRestFiles:
             < c.index("Song Three")
             < c.index("Lyrics Three")
         )
+
+
+
+_RSRC = Path(__file__).parent.parent / "rsrc"
+
+
+class TestLyricsSyltProperty:
+    """Unit tests for the Lyrics.sylt timestamp-to-millisecond converter."""
+
+    @pytest.mark.parametrize(
+        "lrc_text, expected_sylt",
+        [
+            pytest.param(
+                "[00:01.00] line one\n[00:02.50] line two",
+                [("line one", 1000), ("line two", 2500)],
+                id="basic-lrc-to-ms",
+            ),
+            pytest.param(
+                "[01:30.50] one and a half minutes",
+                [("one and a half minutes", 90500)],
+                id="over-one-minute",
+            ),
+            pytest.param(
+                "plain lyrics without timestamps",
+                [],
+                id="plain-lyrics-have-no-sylt",
+            ),
+            pytest.param(
+                "[00:00.00] timed\nuntimed line\n[00:05.00] timed again",
+                [("timed", 0), ("timed again", 5000)],
+                id="untimed-lines-omitted",
+            ),
+            pytest.param(
+                "[00:00.00] \n[00:01.00] second",
+                [("", 0), ("second", 1000)],
+                id="empty-text-line-included",
+            ),
+        ],
+    )
+    def test_sylt(self, lrc_text, expected_sylt):
+        assert Lyrics(lrc_text).sylt == expected_sylt
+
+
+class TestWriteSyltToId3:
+    """Integration tests for the _write_sylt_to_id3 helper function."""
+
+    SYNCED_LRC = "[00:01.00] hello\n[00:02.00] world"
+
+    @pytest.fixture
+    def mp3_path(self, tmp_path):
+        """Writable copy of the test MP3 fixture."""
+        dst = tmp_path / "test.mp3"
+        shutil.copy(_RSRC / "full.mp3", dst)
+        return dst
+
+    @pytest.fixture
+    def mp3_item(self, mp3_path):
+        return SimpleNamespace(path=os.fsencode(mp3_path))
+
+    def test_sylt_written_for_synced_lyrics(self, mp3_item):
+        import mutagen
+
+        lyr = Lyrics(self.SYNCED_LRC)
+        lyrics._write_sylt_to_id3(mp3_item, lyr)
+
+        f = mutagen.File(mp3_item.path)
+        assert f.tags.getall("SYLT"), "SYLT frame should be present"
+        sylt = f.tags["SYLT::eng"]
+        assert sylt.text == [("hello", 1000), ("world", 2000)]
+
+    def test_uslt_contains_plain_text_after_sylt_write(self, mp3_item):
+        import mutagen
+
+        lyr = Lyrics(self.SYNCED_LRC)
+        lyrics._write_sylt_to_id3(mp3_item, lyr)
+
+        f = mutagen.File(mp3_item.path)
+        assert f.tags.getall("USLT"), "USLT frame should be present"
+        assert f.tags["USLT::eng"].text == "hello\nworld"
+
+    def test_sylt_cleared_for_plain_lyrics(self, mp3_item):
+        import mutagen
+        from mutagen.id3 import ID3, SYLT
+
+        # Seed an existing SYLT frame.
+        f = ID3(mp3_item.path)
+        f["SYLT::eng"] = SYLT(
+            encoding=3, lang="eng", format=2, type=1, text=[("hello", 1000)]
+        )
+        f.save()
+
+        # Overwrite with plain (non-synced) lyrics.
+        lyrics._write_sylt_to_id3(mp3_item, Lyrics("plain lyrics"))
+
+        f = mutagen.File(mp3_item.path)
+        assert not f.tags.getall("SYLT"), "SYLT frame should be cleared"
+
+    def test_non_id3_file_silently_skipped(self, tmp_path):
+        """Non-ID3 formats (e.g. FLAC) must not raise."""
+        dst = tmp_path / "test.flac"
+        shutil.copy(_RSRC / "full.flac", dst)
+        item = SimpleNamespace(path=os.fsencode(dst))
+        # Must not raise; FLAC files have no ID3 delall attribute.
+        lyrics._write_sylt_to_id3(item, Lyrics("[00:01.00] hello"))
