@@ -315,18 +315,14 @@ class ConvertPlugin(BeetsPlugin):
     # Utilities converted from functions to methods on logging overhaul
 
     def encode(
-        self,
-        command_bytes: bytes,
-        source_bytes: bytes,
-        dest_bytes: bytes,
-        pretend: bool = False,
+        self, command_bytes: bytes, source_bytes: bytes, dest_bytes: bytes
     ) -> None:
         """Encode source to destination using given command template.
 
         Raises `subprocess.CalledProcessError` if the command exited with a
         non-zero status code.
         """
-        quiet = self.config["quiet"].get(bool)
+        pretend, quiet = self.pretend, self.config["quiet"].get(bool)
 
         if not quiet and not pretend:
             self._log.info("Encoding {}", util.displayable_path(source_bytes))
@@ -474,7 +470,7 @@ class ConvertPlugin(BeetsPlugin):
             if self.should_transcode(item):
                 linked = False
                 try:
-                    self.encode(command, original, converted, pretend)
+                    self.encode(command, original, converted)
                 except subprocess.CalledProcessError:
                     continue
             else:
