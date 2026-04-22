@@ -26,11 +26,9 @@ from urllib.request import pathname2url
 
 import confuse
 
-from beets import ui
+from beets import plugins, ui
 from beets.dbcore.query import ParsingError, Query, Sort
 from beets.library import Album, Item, parse_query_string
-from beets.plugins import BeetsPlugin
-from beets.plugins import send as send_event
 from beets.util import (
     bytestring_path,
     mkdirall,
@@ -53,7 +51,7 @@ PlaylistMatch: TypeAlias = tuple[
 ]
 
 
-class SmartPlaylistPlugin(BeetsPlugin):
+class SmartPlaylistPlugin(plugins.BeetsPlugin):
     def __init__(self) -> None:
         super().__init__()
         self.config.add(
@@ -432,7 +430,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
                 self.write_playlist(m3u_path, is_extm3u, entries)
 
             # Send an event when playlists were updated.
-            send_event("smartplaylist_update")  # type: ignore
+            plugins.send("smartplaylist_update")
             self._log.info("{} playlists updated", playlist_count)
 
 
