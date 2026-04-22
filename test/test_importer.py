@@ -1539,7 +1539,9 @@ class MultiDiscAlbumsInDirTest(BeetsTestCase):
         ]:
             with self.subTest(marker=marker):
                 base = os.path.abspath(
-                    os.path.join(self.temp_dir, b"marker_" + marker.replace(b" ", b"_"))
+                    os.path.join(
+                        self.temp_dir, b"marker_" + marker.replace(b" ", b"_")
+                    )
                 )
                 os.mkdir(syspath(base))
 

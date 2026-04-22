@@ -42,9 +42,8 @@ Bug fixes
 ~~~~~~~~~
 
 - :ref:`import-cmd`: Multi-disc album detection now recognizes ``cassette``,
-  ``digital media``, and ``vinyl`` as disc markers (e.g. ``vinyl 1``,
-  ``12 vinyl 2``), in addition to the existing ``disc``, ``disk``, and ``cd``
-  markers.
+  ``digital media``, and ``vinyl`` as disc markers (e.g. ``vinyl 1``, ``12 vinyl
+  2``), in addition to the existing ``disc``, ``disk``, and ``cd`` markers.
 - :ref:`import-cmd`: Tags with a zero distance penalty are no longer shown as
   differences in the match display. Previously, custom ``distance_weights``
   could cause fields with no actual mismatch to appear in the ``≠`` line.

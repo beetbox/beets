@@ -80,8 +80,8 @@ The heuristic works by looking at the names of directories. If multiple
 subdirectories of a common parent directory follow the pattern "(title) disc
 (number) (...)" and the *prefix* (everything up to the number) is the same, the
 directories are collapsed together. One of the following key words must be
-present to make this work: "disc", "disk", "CD", "cassette", "digital media",
-or "vinyl".
+present to make this work: "disc", "disk", "CD", "cassette", "digital media", or
+"vinyl".
 
 If you have trouble tagging a multi-disc album, consider the ``--flat`` flag
 (which treats a whole tree as a single album) or just putting all the tracks
