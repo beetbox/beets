@@ -24,7 +24,7 @@ import tempfile
 import threading
 from functools import cached_property
 from string import Template
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 import mediafile
 from confuse import ConfigTypeError, Optional
@@ -56,6 +56,11 @@ ALIASES = {
 }
 
 LOSSLESS_FORMATS = ["ape", "flac", "alac", "wave", "aiff"]
+
+
+class FormatCommand(NamedTuple):
+    command: bytes
+    ext: bytes
 
 
 def replace_ext(path: bytes, ext: bytes) -> bytes:
@@ -258,6 +263,37 @@ class ConvertPlugin(BeetsPlugin):
     def link(self) -> bool:
         return not self.hardlink and self.config["link"].get(bool)
 
+    @cached_property
+    def command(self) -> FormatCommand:
+        """Return the command template and the extension from the config."""
+        fmt = ALIASES.get(self.fmt, self.fmt)
+
+        try:
+            format_info = self.config["formats"][fmt].get(dict)
+            command = format_info["command"]
+            extension = format_info.get("extension", fmt)
+        except KeyError:
+            raise ui.UserError(
+                f'convert: format {fmt} needs the "command" field'
+            )
+        except ConfigTypeError:
+            command = self.config["formats"][fmt].get(str)
+            extension = fmt
+
+        # Convenience and backwards-compatibility shortcuts.
+        keys = self.config.keys()
+        if "command" in keys:
+            command = self.config["command"].as_str()
+        elif "opts" in keys:
+            # Undocumented option for backwards compatibility with < 1.3.1.
+            command = (
+                f"ffmpeg -i $source -y {self.config['opts'].as_str()} $dest"
+            )
+        if "extension" in keys:
+            extension = self.config["extension"].as_str()
+
+        return FormatCommand(command.encode("utf-8"), extension.encode("utf-8"))
+
     def auto_convert(self, session: ImportSession, task: ImportTask) -> None:
         if self.config["auto"]:
             par_map(
@@ -343,38 +379,6 @@ class ConvertPlugin(BeetsPlugin):
                 "Finished encoding {}", util.displayable_path(source)
             )
 
-    def get_format(self, fmt: str | None = None) -> tuple[bytes, bytes]:
-        """Return the command template and the extension from the config."""
-        if not fmt:
-            fmt = self.config["format"].as_str().lower()
-        fmt = ALIASES.get(fmt, fmt)
-
-        try:
-            format_info = self.config["formats"][fmt].get(dict)
-            command = format_info["command"]
-            extension = format_info.get("extension", fmt)
-        except KeyError:
-            raise ui.UserError(
-                f'convert: format {fmt} needs the "command" field'
-            )
-        except ConfigTypeError:
-            command = self.config["formats"][fmt].get(str)
-            extension = fmt
-
-        # Convenience and backwards-compatibility shortcuts.
-        keys = self.config.keys()
-        if "command" in keys:
-            command = self.config["command"].as_str()
-        elif "opts" in keys:
-            # Undocumented option for backwards compatibility with < 1.3.1.
-            command = (
-                f"ffmpeg -i $source -y {self.config['opts'].as_str()} $dest"
-            )
-        if "extension" in keys:
-            extension = self.config["extension"].as_str()
-
-        return (command.encode("utf-8"), extension.encode("utf-8"))
-
     def in_no_convert(self, item: Item) -> bool:
         no_convert_query = self.config["no_convert"].as_str()
 
@@ -415,7 +419,7 @@ class ConvertPlugin(BeetsPlugin):
         fmt, force, pretend = self.fmt, self.force, self.pretend
         link, hardlink = self.link, self.hardlink
 
-        command, ext = self.get_format(fmt)
+        command, ext = self.command
         item, original, converted = None, None, None
         while True:
             item = yield (item, original, converted)
@@ -630,7 +634,7 @@ class ConvertPlugin(BeetsPlugin):
         self, lib: Library, opts: optparse.Values, args: list[str]
     ) -> None:
         self.config.set(vars(opts))
-        pretend = self.pretend
+        dest, pretend = self.dest, self.pretend
 
         if opts.album:
             albums = lib.albums(args)
@@ -660,14 +664,13 @@ class ConvertPlugin(BeetsPlugin):
         items_paths = None
         fmt = self.fmt
         if playlist := self.playlist:
-            _, ext = self.get_format(fmt)
             # Playlist paths are understood as relative to the dest directory.
             pl_normpath = util.normpath(playlist)
             pl_dir = os.path.dirname(pl_normpath)
             items_paths = []
             for item in items:
                 item_path = item.destination(
-                    basedir=self.dest, path_formats=self.path_formats
+                    basedir=dest, path_formats=self.path_formats
                 )
 
                 # When keeping new files in the library, destination paths
@@ -675,7 +678,7 @@ class ConvertPlugin(BeetsPlugin):
                 if not opts.keep_new and self.should_transcode(
                     item, fmt, self.force
                 ):
-                    item_path = replace_ext(item_path, ext)
+                    item_path = replace_ext(item_path, self.command.ext)
 
                 items_paths.append(os.path.relpath(item_path, pl_dir))
 
@@ -694,9 +697,8 @@ class ConvertPlugin(BeetsPlugin):
         """Transcode a file automatically after it is imported into the
         library.
         """
-        fmt = self.config["format"].as_str().lower()
-        if self.should_transcode(item, fmt):
-            command, ext = self.get_format()
+        if self.should_transcode(item, self.fmt):
+            command, ext = self.command
 
             # Create a temporary file for the conversion.
             tmpdir = self.config["tmpdir"].get()
