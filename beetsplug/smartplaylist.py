@@ -22,6 +22,8 @@ from typing import TYPE_CHECKING, Any, TypeAlias
 from urllib.parse import quote
 from urllib.request import pathname2url
 
+import confuse
+
 from beets import ui
 from beets.dbcore.query import ParsingError, Query, Sort
 from beets.library import Album, Item, parse_query_string
@@ -73,6 +75,8 @@ class SmartPlaylistPlugin(BeetsPlugin):
         self.config["prefix"].redact = True  # May contain username/password.
         self._matched_playlists: set[PlaylistMatch] = set()
         self._unmatched_playlists: set[PlaylistMatch] = set()
+        # validate output format
+        self.config["output"].get(confuse.Choice(["m3u", "extm3u"]))
 
         if self.config["auto"]:
             self.register_listener("database_change", self.db_change)
@@ -149,7 +153,8 @@ class SmartPlaylistPlugin(BeetsPlugin):
         )
         spl_update.parser.add_option(
             "--output",
-            type="string",
+            type="choice",
+            choices=["m3u", "extm3u"],
             default=self.config["output"].get(),
             help="specify the playlist format: m3u|extm3u.",
         )
@@ -389,12 +394,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
                     os.path.join(playlist_dir, bytestring_path(m3u))
                 )
                 mkdirall(m3u_path)
-                pl_format = self.config["output"].get()
-                if pl_format != "m3u" and pl_format != "extm3u":
-                    msg = "Unsupported output format '{}' provided! "
-                    msg += "Supported: m3u, extm3u"
-                    raise Exception(msg.format(pl_format))
-                extm3u = pl_format == "extm3u"
+                extm3u = self.config["output"].get() == "extm3u"
                 with open(syspath(m3u_path), "wb") as f:
                     keys = []
                     if extm3u:
