@@ -22,6 +22,7 @@ import shlex
 import subprocess
 import tempfile
 import threading
+from functools import cached_property
 from string import Template
 from typing import TYPE_CHECKING
 
@@ -42,6 +43,7 @@ if TYPE_CHECKING:
 
     from beets.importer import ImportSession, ImportTask
     from beets.library import Album, Library
+    from beets.util.functemplate import Template as FuncTemplate
 
 _fs_lock = threading.Lock()
 # Keep track of temporary transcoded files for deletion.
@@ -214,6 +216,48 @@ class ConvertPlugin(BeetsPlugin):
         cmd.func = self.convert_func
         return [cmd]
 
+    @cached_property
+    def dest(self) -> bytes:
+        dest = self.config["dest"].get()
+        if not dest:
+            raise ui.UserError("no convert destination set")
+        return util.bytestring_path(dest)
+
+    @cached_property
+    def threads(self) -> int:
+        return self.config["threads"].get(int)
+
+    @cached_property
+    def path_formats(self) -> dict[str, FuncTemplate]:
+        return ui.get_path_formats(self.config["paths"] or None)
+
+    @cached_property
+    def fmt(self) -> str:
+        return self.config["format"].as_str().lower()
+
+    @cached_property
+    def playlist(self) -> bytes | None:
+        if (playlist := self.config["playlist"].get()) is not None:
+            return os.path.join(self.dest, util.bytestring_path(playlist))
+
+        return None
+
+    @cached_property
+    def pretend(self) -> bool:
+        return self.config["pretend"].get(bool)
+
+    @cached_property
+    def force(self) -> bool:
+        return self.config["force"].get(bool)
+
+    @cached_property
+    def hardlink(self) -> bool:
+        return self.config["hardlink"].get(bool)
+
+    @cached_property
+    def link(self) -> bool:
+        return not self.hardlink and self.config["link"].get(bool)
+
     def auto_convert(self, session: ImportSession, task: ImportTask) -> None:
         if self.config["auto"]:
             par_map(
@@ -225,35 +269,14 @@ class ConvertPlugin(BeetsPlugin):
         self, session: ImportSession, task: ImportTask
     ) -> None:
         if self.config["auto_keep"]:
-            (
-                dest,
-                threads,
-                path_formats,
-                fmt,
-                pretend,
-                hardlink,
-                link,
-                _,
-                force,
-            ) = self._get_opts_and_config()
-
             items = task.imported_items()
 
             # Filter items based on should_transcode function
-            items = [item for item in items if self.should_transcode(item, fmt)]
+            items = [
+                item for item in items if self.should_transcode(item, self.fmt)
+            ]
 
-            self._parallel_convert(
-                dest,
-                False,
-                path_formats,
-                fmt,
-                pretend,
-                link,
-                hardlink,
-                threads,
-                items,
-                force,
-            )
+            self._parallel_convert(items, keep_new=False)
 
     # Utilities converted from functions to methods on logging overhaul
 
@@ -384,24 +407,21 @@ class ConvertPlugin(BeetsPlugin):
         return fmt.lower() != item.format.lower()
 
     def convert_item(
-        self,
-        dest_dir: bytes,
-        keep_new: bool,
-        path_formats: dict[str, str],
-        fmt: str,
-        pretend: bool = False,
-        link: bool = False,
-        hardlink: bool = False,
-        force: bool = False,
+        self, keep_new: bool
     ) -> Generator[tuple[Item | None, bytes | None, bytes | None], Item, None]:
         """A pipeline thread that converts `Item` objects from a
         library.
         """
+        fmt, force, pretend = self.fmt, self.force, self.pretend
+        link, hardlink = self.link, self.hardlink
+
         command, ext = self.get_format(fmt)
         item, original, converted = None, None, None
         while True:
             item = yield (item, original, converted)
-            dest = item.destination(basedir=dest_dir, path_formats=path_formats)
+            dest = item.destination(
+                basedir=self.dest, path_formats=self.path_formats
+            )
 
             # Ensure that desired item is readable before processing it. Needed
             # to avoid any side-effect of the conversion (linking, keep_new,
@@ -529,15 +549,7 @@ class ConvertPlugin(BeetsPlugin):
                     "after_convert", item=item, dest=converted, keepnew=False
                 )
 
-    def copy_album_art(
-        self,
-        album: Album,
-        dest_dir: bytes,
-        path_formats: dict[str, str],
-        pretend: bool = False,
-        link: bool = False,
-        hardlink: bool = False,
-    ) -> None:
+    def copy_album_art(self, album: Album) -> None:
         """Copies or converts the associated cover art of the album. Album must
         have at least one track.
         """
@@ -552,7 +564,7 @@ class ConvertPlugin(BeetsPlugin):
         # Get the destination of the first item (track) of the album, we use
         # this function to format the path accordingly to path_formats.
         dest = album_item.destination(
-            basedir=dest_dir, path_formats=path_formats
+            basedir=self.dest, path_formats=self.path_formats
         )
 
         # Remove item from the path.
@@ -562,7 +574,7 @@ class ConvertPlugin(BeetsPlugin):
         if album.artpath == dest:
             return
 
-        if not pretend:
+        if not (pretend := self.pretend):
             util.mkdirall(dest)
 
         if os.path.exists(util.syspath(dest)):
@@ -584,6 +596,7 @@ class ConvertPlugin(BeetsPlugin):
             if not pretend:
                 ArtResizer.shared.resize(maxwidth, album.artpath, dest)
         else:
+            link, hardlink = self.link, self.hardlink
             if pretend:
                 msg = "ln" if hardlink else ("ln -s" if link else "cp")
 
@@ -617,17 +630,7 @@ class ConvertPlugin(BeetsPlugin):
         self, lib: Library, opts: optparse.Values, args: list[str]
     ) -> None:
         self.config.set(vars(opts))
-        (
-            dest,
-            threads,
-            path_formats,
-            fmt,
-            pretend,
-            hardlink,
-            link,
-            playlist,
-            force,
-        ) = self._get_opts_and_config()
+        pretend = self.pretend
 
         if opts.album:
             albums = lib.albums(args)
@@ -649,15 +652,14 @@ class ConvertPlugin(BeetsPlugin):
 
         if opts.album and self.config["copy_album_art"]:
             for album in albums:
-                self.copy_album_art(
-                    album, dest, path_formats, pretend, link, hardlink
-                )
+                self.copy_album_art(album)
 
         # If the user supplied a playlist name, create a playlist for files
         # copied to the destination.
         pl_normpath = None
         items_paths = None
-        if playlist:
+        fmt = self.fmt
+        if playlist := self.playlist:
             _, ext = self.get_format(fmt)
             # Playlist paths are understood as relative to the dest directory.
             pl_normpath = util.normpath(playlist)
@@ -665,29 +667,20 @@ class ConvertPlugin(BeetsPlugin):
             items_paths = []
             for item in items:
                 item_path = item.destination(
-                    basedir=dest, path_formats=path_formats
+                    basedir=self.dest, path_formats=self.path_formats
                 )
 
                 # When keeping new files in the library, destination paths
                 # keep original files and extensions.
                 if not opts.keep_new and self.should_transcode(
-                    item, fmt, force
+                    item, fmt, self.force
                 ):
                     item_path = replace_ext(item_path, ext)
 
                 items_paths.append(os.path.relpath(item_path, pl_dir))
 
         self._parallel_convert(
-            dest,
-            opts.keep_new,
-            path_formats,
-            fmt,
-            pretend,
-            link,
-            hardlink,
-            threads,
-            items,
-            force,
+            items, keep_new=self.config["keep_new"].get(bool)
         )
 
         if playlist:
@@ -763,75 +756,10 @@ class ConvertPlugin(BeetsPlugin):
                     util.remove(path)
                 _temp_files.remove(path)
 
-    def _get_opts_and_config(
-        self,
-    ) -> tuple[
-        bytes, int, dict[str, str], str, bool, bool, bool, str | None, bool
-    ]:
-        """Returns parameters needed for convert function.
-        Get parameters from command line if available,
-        default to config if not available.
-        """
-        dest = self.config["dest"].get()
-        if not dest:
-            raise ui.UserError("no convert destination set")
-        dest = util.bytestring_path(dest)
-
-        threads = self.config["threads"].get(int)
-
-        path_formats = ui.get_path_formats(self.config["paths"] or None)
-
-        fmt = self.config["format"].as_str().lower()
-
-        playlist = self.config["playlist"].get()
-        if playlist is not None:
-            playlist = os.path.join(dest, util.bytestring_path(playlist))
-
-        pretend = self.config["pretend"].get(bool)
-
-        hardlink = self.config["hardlink"].get(bool)
-        link = not hardlink and self.config["link"].get(bool)
-        force = self.config["force"].get(bool)
-        return (
-            dest,
-            threads,
-            path_formats,
-            fmt,
-            pretend,
-            hardlink,
-            link,
-            playlist,
-            force,
-        )
-
-    def _parallel_convert(
-        self,
-        dest: bytes,
-        keep_new: bool,
-        path_formats: dict[str, str],
-        fmt: str,
-        pretend: bool,
-        link: bool,
-        hardlink: bool,
-        threads: int,
-        items: list[Item],
-        force: bool,
-    ):
+    def _parallel_convert(self, items: list[Item], keep_new: bool):
         """Run the convert_item function for every items on as many thread as
         defined in threads
         """
-        convert = [
-            self.convert_item(
-                dest,
-                keep_new,
-                path_formats,
-                fmt,
-                pretend,
-                link,
-                hardlink,
-                force,
-            )
-            for _ in range(threads)
-        ]
+        convert = [self.convert_item(keep_new) for _ in range(self.threads)]
         pipe = util.pipeline.Pipeline([iter(items), convert])
         pipe.run_parallel()
