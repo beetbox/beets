@@ -20,7 +20,6 @@ import re
 import textwrap
 from functools import partial
 from http import HTTPStatus
-from pathlib import Path
 from types import SimpleNamespace
 from typing import TYPE_CHECKING
 
@@ -35,6 +34,8 @@ from beetsplug import lyrics
 from .lyrics_pages import lyrics_pages
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from .lyrics_pages import LyricsPage
 
 PHRASE_BY_TITLE = {
@@ -846,8 +847,6 @@ class TestRestFiles:
         )
 
 
-
-
 class TestLyricsSyltProperty:
     """Unit tests for the Lyrics.sylt timestamp-to-millisecond converter."""
 
@@ -908,7 +907,9 @@ class TestSyncedLyricsWrite(LyricsPluginMixin):
 
         lyrics_plugin.add_item_lyrics(item, write=True)
 
-        assert calls == [{"tags": {"synced_lyrics": [("hello", 1000), ("world", 2000)]}}]
+        assert calls == [
+            {"tags": {"synced_lyrics": [("hello", 1000), ("world", 2000)]}}
+        ]
 
     def test_plain_text_stored_in_lyrics_for_synced(
         self, monkeypatch, helper, lyrics_plugin

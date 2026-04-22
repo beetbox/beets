@@ -33,7 +33,7 @@ import requests
 from bs4 import BeautifulSoup
 from unidecode import unidecode
 
-from beets import logging, plugins, ui
+from beets import plugins, ui
 from beets.autotag.distance import string_dist
 from beets.dbcore import types
 from beets.dbcore.query import FalseQuery
@@ -947,8 +947,6 @@ class RestFiles:
 BACKEND_BY_NAME = {
     b.name: b for b in [LRCLib, Google, Genius, Tekstowo, MusiXmatch]
 }
-
-
 
 
 class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
