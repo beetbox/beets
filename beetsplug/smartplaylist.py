@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import os
+from collections import defaultdict
 from shlex import quote as shell_quote
 from typing import TYPE_CHECKING, Any, TypeAlias
 from urllib.parse import quote
@@ -351,8 +352,8 @@ class SmartPlaylistPlugin(BeetsPlugin):
 
         # Maps playlist filenames to lists of track entries and URI sets used
         # to deduplicate output lines.
-        m3us: dict[str, list[PlaylistItem]] = {}
-        m3u_uris_by_name: dict[str, set[Any]] = {}
+        m3us: dict[str, list[PlaylistItem]] = defaultdict(list)
+        m3u_uris_by_name: dict[str, set[bytes]] = defaultdict(set)
 
         for playlist in self._matched_playlists:
             name, item_q, album_q = playlist
@@ -360,14 +361,10 @@ class SmartPlaylistPlugin(BeetsPlugin):
 
             # As we allow tags in the m3u names, we'll need to iterate through
             # the items and generate the correct m3u file names.
-            matched_items: list[tuple[Any, Any]] = []
-            matched_count = 0
+            matched_items: list[Item] = []
             for item in items:
                 m3u_name = item.evaluate_template(name, True)
                 m3u_name = sanitize_path(m3u_name, lib.replacements)
-                if m3u_name not in m3us:
-                    m3us[m3u_name] = []
-                    m3u_uris_by_name[m3u_name] = set()
                 item_uri = item.path
                 if tpl:
                     item_uri = tpl.replace("$id", str(item.id)).encode("utf-8")
@@ -387,13 +384,12 @@ class SmartPlaylistPlugin(BeetsPlugin):
                 if item_uri not in m3u_uris_by_name[m3u_name]:
                     m3u_uris_by_name[m3u_name].add(item_uri)
                     m3us[m3u_name].append(PlaylistItem(item, item_uri))
-                    matched_items.append((item, item_uri))
-                    matched_count += 1
+                    matched_items.append(item)
 
             self._log.info(
-                "Creating playlist {}: {} tracks.", name, matched_count
+                "Creating playlist {}: {} tracks.", name, len(matched_items)
             )
-            for item, _ in matched_items:
+            for item in matched_items:
                 self._log.debug(
                     item.evaluate_template(self.config["format"].as_str())
                 )
