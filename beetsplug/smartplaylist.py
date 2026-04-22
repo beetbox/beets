@@ -401,20 +401,8 @@ class SmartPlaylistPlugin(BeetsPlugin):
                         keys = self.config["fields"].get(list)
                         f.write(b"#EXTM3U\n")
                     for entry in entries:
-                        item = entry.item
-                        comment = ""
-                        if extm3u:
-                            attr = [(k, entry.item[k]) for k in keys]
-                            al = [
-                                f' {k}="{quote("; ".join(v) if isinstance(v, list) else str(v), safe="/:")}"'  # noqa: E501
-                                for k, v in attr
-                            ]
-                            attrs = "".join(al)
-                            comment = (
-                                f"#EXTINF:{int(item.length)}{attrs},"
-                                f"{item.artist} - {item.title}\n"
-                            )
-                        f.write(comment.encode("utf-8") + entry.uri + b"\n")
+                        f.write(entry.get_comment(extm3u, keys))
+
             # Send an event when playlists were updated.
             send_event("smartplaylist_update")  # type: ignore
             self._log.info("{} playlists updated", playlist_count)
@@ -424,3 +412,19 @@ class PlaylistItem:
     def __init__(self, item: Item, uri: bytes) -> None:
         self.item = item
         self.uri = uri
+
+    def get_comment(self, is_extm3u: bool, fields: list[str]) -> bytes:
+        comment = ""
+        if is_extm3u:
+            attr = [(k, self.item[k]) for k in fields]
+            al = [
+                f' {k}="{quote("; ".join(v) if isinstance(v, list) else str(v), safe="/:")}"'  # noqa: E501
+                for k, v in attr
+            ]
+            attrs = "".join(al)
+            comment = (
+                f"#EXTINF:{int(self.item.length)}{attrs},"
+                f"{self.item.artist} - {self.item.title}\n"
+            )
+
+        return comment.encode("utf-8") + self.uri + b"\n"
