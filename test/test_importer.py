@@ -1528,19 +1528,23 @@ class MultiDiscAlbumsInDirTest(BeetsTestCase):
         assert len(items) == 3
 
     def test_coalesce_markers(self):
-        for marker in [
-            b"Disc",  # titlecase
-            b"disk 757",  # lowercase, numerical suffix
-            b"CD",  # uppercase
-            b"cAsSeTtE",  # mixed case
-            b"Digital   Media",  # multiple spaces
-            b"vinyl",  # lowercase
-            b"12 vinyl",  # common prefix
+        for marker, suffix1, suffix2 in [
+            (b"Disc", b" 1", b" 02"),  # titlecase, space-separated
+            (b"disk 757", b" 1", b" 02"),  # lowercase, numerical suffix
+            (b"CD", b"01", b"02"),  # uppercase, no space (e.g. CD01)
+            (b"disc", b"_1", b"_2"),  # underscore separator (e.g. disc_1)
+            (b"cAsSeTtE", b" 1", b" 02"),  # mixed case
+            (b"Digital   Media", b" 1", b" 02"),  # multiple spaces
+            (b"vinyl", b" 1", b" 02"),  # lowercase
+            (b"12 vinyl", b" 1", b" 02"),  # common prefix
         ]:
-            with self.subTest(marker=marker):
+            with self.subTest(marker=marker, suffix1=suffix1, suffix2=suffix2):
                 base = os.path.abspath(
                     os.path.join(
-                        self.temp_dir, b"marker_" + marker.replace(b" ", b"_")
+                        self.temp_dir,
+                        b"marker_"
+                        + marker.replace(b" ", b"_")
+                        + suffix1.replace(b" ", b"_"),
                     )
                 )
                 os.mkdir(syspath(base))
@@ -1549,7 +1553,7 @@ class MultiDiscAlbumsInDirTest(BeetsTestCase):
                 os.mkdir(syspath(album_dir))
 
                 discs = []
-                for suffix in (b" 1", b" 02"):
+                for suffix in (suffix1, suffix2):
                     disc = os.path.join(album_dir, marker + suffix)
                     os.mkdir(syspath(disc))
                     _mkmp3(syspath(os.path.join(disc, b"song.mp3")))
@@ -1561,6 +1565,23 @@ class MultiDiscAlbumsInDirTest(BeetsTestCase):
                 for disc in discs:
                     assert disc in root
                 assert len(items) == 2
+
+    def test_no_coalesce_mismatched_prefixes(self):
+        # "CD 02" and "Enhanced CD 01" share the "cd" marker but have
+        # different prefixes, so they should not be collapsed.
+        base = os.path.abspath(os.path.join(self.temp_dir, b"mismatched"))
+        os.mkdir(syspath(base))
+
+        album_dir = os.path.join(base, b"Album Name")
+        os.mkdir(syspath(album_dir))
+
+        for subdir in (b"CD 02", b"Enhanced CD 01"):
+            d = os.path.join(album_dir, subdir)
+            os.mkdir(syspath(d))
+            _mkmp3(syspath(os.path.join(d, b"song.mp3")))
+
+        albums = list(albums_in_dir(base))
+        assert len(albums) == 2
 
 
 class ReimportTest(AutotagImportTestCase):
