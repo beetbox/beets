@@ -37,6 +37,8 @@ from beets.util import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from beets.library import Library
 
 QueryAndSort = tuple[Query, Sort]
@@ -266,41 +268,56 @@ class SmartPlaylistPlugin(BeetsPlugin):
         self._unmatched_playlists -= self._matched_playlists
 
     @staticmethod
+    def get_queries(
+        query: PlaylistQueryAndSort,
+    ) -> list[tuple[Query, Sort | None]]:
+        """Normalize a playlist query into a flat list of query-sort pairs.
+
+        Handles both compound (list/tuple of pairs) and single query inputs,
+        returning an empty list when no query is present.
+        """
+        q, sort = query
+
+        if isinstance(q, (list, tuple)):
+            return list(q)
+        if q:
+            return [(q, sort)]
+
+        return []
+
+    @classmethod
     def get_playlist_items(
+        cls,
         lib: Library,
         item_q: PlaylistQueryAndSort,
         album_q: PlaylistQueryAndSort,
-    ) -> list[Item]:
-        query, q_sort = item_q
-        album_query, a_q_sort = album_q
-        items = []
+    ) -> Iterator[Item]:
+        """Collect unique items matching the playlist's item and album queries.
 
-        # Handle tuple/list of queries (preserves order)
-        # Track seen items to avoid duplicates when an item matches
-        # multiple queries
-        seen_ids = set()
+        Queries both tracks directly and albums (expanding them to their
+        tracks), then merges the results into a deduplicated list preserving
+        insertion order.
+        """
+        items: list[Item] = []
 
-        if isinstance(query, (list, tuple)):
-            for q, sort in query:
-                for item in lib.items(q, sort):
-                    if item.id not in seen_ids:
-                        items.append(item)
-                        seen_ids.add(item.id)
-        elif query:
-            items.extend(lib.items(query, q_sort))
+        for q, sort in cls.get_queries(item_q):
+            items.extend(lib.items(q, sort))
 
-        if isinstance(album_query, (list, tuple)):
-            for q, sort in album_query:
-                for album in lib.albums(q, sort):
-                    for item in album.items():
-                        if item.id not in seen_ids:
-                            items.append(item)
-                            seen_ids.add(item.id)
-        elif album_query:
-            for album in lib.albums(album_query, a_q_sort):
+        albums: list[Album] = []
+        for q, sort in cls.get_queries(album_q):
+            albums.extend(lib.albums(q, sort))
+
+        seen_album_ids = set()
+        for album in albums:
+            if album.id not in seen_album_ids:
+                seen_album_ids.add(album.id)
                 items.extend(album.items())
 
-        return items
+        seen_ids = set()
+        for item in items:
+            if item.id not in seen_ids:
+                seen_ids.add(item.id)
+                yield item
 
     def update_playlists(self, lib: Library) -> None:
         playlist_count = len(self._matched_playlists)
