@@ -1529,13 +1529,13 @@ class MultiDiscAlbumsInDirTest(BeetsTestCase):
 
     def test_coalesce_markers(self):
         for marker in [
-            b"disc",
-            b"disk",
-            b"cd",
-            b"cassette",
-            b"digital media",
-            b"vinyl",
-            b"12 vinyl",
+            b"Disc",  # titlecase
+            b"disk 757",  # lowercase, numerical suffix
+            b"CD",  # uppercase
+            b"cAsSeTtE",  # mixed case
+            b"Digital   Media",  # multiple spaces
+            b"vinyl",  # lowercase
+            b"12 vinyl",  # common prefix
         ]:
             with self.subTest(marker=marker):
                 base = os.path.abspath(
@@ -1548,19 +1548,18 @@ class MultiDiscAlbumsInDirTest(BeetsTestCase):
                 album_dir = os.path.join(base, b"Album Name")
                 os.mkdir(syspath(album_dir))
 
-                disc1 = os.path.join(album_dir, marker + b" 1")
-                disc2 = os.path.join(album_dir, marker + b" 2")
-                os.mkdir(syspath(disc1))
-                os.mkdir(syspath(disc2))
-
-                _mkmp3(syspath(os.path.join(disc1, b"song1.mp3")))
-                _mkmp3(syspath(os.path.join(disc2, b"song2.mp3")))
+                discs = []
+                for suffix in (b" 1", b" 02"):
+                    disc = os.path.join(album_dir, marker + suffix)
+                    os.mkdir(syspath(disc))
+                    _mkmp3(syspath(os.path.join(disc, b"song.mp3")))
+                    discs.append(disc)
 
                 albums = list(albums_in_dir(base))
                 assert len(albums) == 1
                 root, items = albums[0]
-                assert disc1 in root
-                assert disc2 in root
+                for disc in discs:
+                    assert disc in root
                 assert len(items) == 2
 
 
