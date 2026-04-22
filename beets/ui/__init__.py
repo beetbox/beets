@@ -902,7 +902,7 @@ def _open_library(config: confuse.LazyConfig) -> library.Library:
     return lib
 
 
-def _raw_main(args: list[str]) -> None:
+def _raw_main(args: list[str] | None) -> None:
     """A helper function for `main` without top-level exception
     handling.
     """
@@ -993,7 +993,7 @@ def _raw_main(args: list[str]) -> None:
     lib._close()
 
 
-def main(args: list[str]) -> None:
+def main(args: list[str] | None = None) -> None:
     """Run the main command-line interface for beets. Includes top-level
     exception handlers that print friendly error messages.
     """
