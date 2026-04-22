@@ -28,7 +28,7 @@ from typing import TYPE_CHECKING
 import mediafile
 from confuse import ConfigTypeError, Optional
 
-from beets import config, plugins, ui, util
+from beets import plugins, ui, util
 from beets.library import Item, parse_query_string
 from beets.plugins import BeetsPlugin
 from beets.util import par_map
@@ -63,68 +63,6 @@ def replace_ext(path: bytes, ext: bytes) -> bytes:
     """
     ext_dot = b"." + ext
     return os.path.splitext(path)[0] + ext_dot
-
-
-def get_format(fmt: str | None = None) -> tuple[bytes, bytes]:
-    """Return the command template and the extension from the config."""
-    if not fmt:
-        fmt = config["convert"]["format"].as_str().lower()
-    fmt = ALIASES.get(fmt, fmt)
-
-    try:
-        format_info = config["convert"]["formats"][fmt].get(dict)
-        command = format_info["command"]
-        extension = format_info.get("extension", fmt)
-    except KeyError:
-        raise ui.UserError(f'convert: format {fmt} needs the "command" field')
-    except ConfigTypeError:
-        command = config["convert"]["formats"][fmt].get(str)
-        extension = fmt
-
-    # Convenience and backwards-compatibility shortcuts.
-    keys = config["convert"].keys()
-    if "command" in keys:
-        command = config["convert"]["command"].as_str()
-    elif "opts" in keys:
-        # Undocumented option for backwards compatibility with < 1.3.1.
-        command = (
-            f"ffmpeg -i $source -y {config['convert']['opts'].as_str()} $dest"
-        )
-    if "extension" in keys:
-        extension = config["convert"]["extension"].as_str()
-
-    return (command.encode("utf-8"), extension.encode("utf-8"))
-
-
-def in_no_convert(item: Item) -> bool:
-    no_convert_query = config["convert"]["no_convert"].as_str()
-
-    if no_convert_query:
-        query, _ = parse_query_string(no_convert_query, Item)
-        return query.match(item)
-    else:
-        return False
-
-
-def should_transcode(item: Item, fmt: str, force: bool = False) -> bool:
-    """Determine whether the item should be transcoded as part of
-    conversion (i.e., its bitrate is high or it has the wrong format).
-
-    If ``force`` is True, safety checks like ``no_convert`` and
-    ``never_convert_lossy_files`` are ignored and the item is always
-    transcoded.
-    """
-    if force:
-        return True
-    if in_no_convert(item) or (
-        config["convert"]["never_convert_lossy_files"].get(bool)
-        and item.format.lower() not in LOSSLESS_FORMATS
-    ):
-        return False
-    maxbr = config["convert"]["max_bitrate"].get(Optional(int))
-    if maxbr is not None and item.bitrate >= 1000 * maxbr:
-        return True
-    return fmt.lower() != item.format.lower()
 
 
 class ConvertPlugin(BeetsPlugin):
@@ -294,7 +232,7 @@ class ConvertPlugin(BeetsPlugin):
             items = task.imported_items()
 
             # Filter items based on should_transcode function
-            items = [item for item in items if should_transcode(item, fmt)]
+            items = [item for item in items if self.should_transcode(item, fmt)]
 
             self._parallel_convert(
                 dest,
@@ -374,6 +312,69 @@ class ConvertPlugin(BeetsPlugin):
                 "Finished encoding {}", util.displayable_path(source)
             )
 
+    def get_format(self, fmt: str | None = None) -> tuple[bytes, bytes]:
+        """Return the command template and the extension from the config."""
+        if not fmt:
+            fmt = self.config["format"].as_str().lower()
+        fmt = ALIASES.get(fmt, fmt)
+
+        try:
+            format_info = self.config["formats"][fmt].get(dict)
+            command = format_info["command"]
+            extension = format_info.get("extension", fmt)
+        except KeyError:
+            raise ui.UserError(
+                f'convert: format {fmt} needs the "command" field'
+            )
+        except ConfigTypeError:
+            command = self.config["formats"][fmt].get(str)
+            extension = fmt
+
+        # Convenience and backwards-compatibility shortcuts.
+        keys = self.config.keys()
+        if "command" in keys:
+            command = self.config["command"].as_str()
+        elif "opts" in keys:
+            # Undocumented option for backwards compatibility with < 1.3.1.
+            command = (
+                f"ffmpeg -i $source -y {self.config['opts'].as_str()} $dest"
+            )
+        if "extension" in keys:
+            extension = self.config["extension"].as_str()
+
+        return (command.encode("utf-8"), extension.encode("utf-8"))
+
+    def in_no_convert(self, item: Item) -> bool:
+        no_convert_query = self.config["no_convert"].as_str()
+
+        if no_convert_query:
+            query, _ = parse_query_string(no_convert_query, Item)
+            return query.match(item)
+        else:
+            return False
+
+    def should_transcode(
+        self, item: Item, fmt: str, force: bool = False
+    ) -> bool:
+        """Determine whether the item should be transcoded as part of
+        conversion (i.e., its bitrate is high or it has the wrong format).
+
+        If ``force`` is True, safety checks like ``no_convert`` and
+        ``never_convert_lossy_files`` are ignored and the item is always
+        transcoded.
+        """
+        if force:
+            return True
+        if self.in_no_convert(item) or (
+            self.config["never_convert_lossy_files"].get(bool)
+            and item.format.lower() not in LOSSLESS_FORMATS
+        ):
+            return False
+        maxbr = self.config["max_bitrate"].get(Optional(int))
+        if maxbr is not None and item.bitrate >= 1000 * maxbr:
+            return True
+        return fmt.lower() != item.format.lower()
+
     def convert_item(
         self,
         dest_dir: bytes,
@@ -388,7 +389,7 @@ class ConvertPlugin(BeetsPlugin):
         """A pipeline thread that converts `Item` objects from a
         library.
         """
-        command, ext = get_format(fmt)
+        command, ext = self.get_format(fmt)
         item, original, converted = None, None, None
         while True:
             item = yield (item, original, converted)
@@ -409,11 +410,11 @@ class ConvertPlugin(BeetsPlugin):
             if keep_new:
                 original = dest
                 converted = item.path
-                if should_transcode(item, fmt, force):
+                if self.should_transcode(item, fmt, force):
                     converted = replace_ext(converted, ext)
             else:
                 original = item.path
-                if should_transcode(item, fmt, force):
+                if self.should_transcode(item, fmt, force):
                     dest = replace_ext(dest, ext)
                 converted = dest
 
@@ -443,7 +444,7 @@ class ConvertPlugin(BeetsPlugin):
                     )
                     util.move(item.path, original)
 
-            if should_transcode(item, fmt, force):
+            if self.should_transcode(item, fmt, force):
                 linked = False
                 try:
                     self.encode(command, original, converted, pretend)
@@ -648,7 +649,7 @@ class ConvertPlugin(BeetsPlugin):
         pl_normpath = None
         items_paths = None
         if playlist:
-            _, ext = get_format(fmt)
+            _, ext = self.get_format(fmt)
             # Playlist paths are understood as relative to the dest directory.
             pl_normpath = util.normpath(playlist)
             pl_dir = os.path.dirname(pl_normpath)
@@ -660,7 +661,9 @@ class ConvertPlugin(BeetsPlugin):
 
                 # When keeping new files in the library, destination paths
                 # keep original files and extensions.
-                if not opts.keep_new and should_transcode(item, fmt, force):
+                if not opts.keep_new and self.should_transcode(
+                    item, fmt, force
+                ):
                     item_path = replace_ext(item_path, ext)
 
                 items_paths.append(os.path.relpath(item_path, pl_dir))
@@ -690,8 +693,8 @@ class ConvertPlugin(BeetsPlugin):
         library.
         """
         fmt = self.config["format"].as_str().lower()
-        if should_transcode(item, fmt):
-            command, ext = get_format()
+        if self.should_transcode(item, fmt):
+            command, ext = self.get_format()
 
             # Create a temporary file for the conversion.
             tmpdir = self.config["tmpdir"].get()
