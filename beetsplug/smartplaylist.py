@@ -324,6 +324,19 @@ class SmartPlaylistPlugin(BeetsPlugin):
                 seen_ids.add(item.id)
                 yield item
 
+    def write_playlist(
+        self, path: bytes, is_extm3u: bool, entries: list[PlaylistItem]
+    ) -> None:
+        """Write a playlist file with the given entries."""
+        mkdirall(path)
+        with open(syspath(path), "wb") as f:
+            keys = []
+            if is_extm3u:
+                keys = self.config["fields"].get(list)
+                f.write(b"#EXTM3U\n")
+            for entry in entries:
+                f.write(entry.get_comment(is_extm3u, keys))
+
     def update_playlists(self, lib: Library) -> None:
         playlist_count = len(self._matched_playlists)
         self._log.info("Updating {} smart playlists...", playlist_count)
@@ -389,19 +402,12 @@ class SmartPlaylistPlugin(BeetsPlugin):
             self._log.info("{} playlists would be updated", playlist_count)
         else:
             # Write all of the accumulated track lists to files.
+            is_extm3u = self.config["output"].get() == "extm3u"
             for m3u, entries in m3us.items():
                 m3u_path = normpath(
                     os.path.join(playlist_dir, bytestring_path(m3u))
                 )
-                mkdirall(m3u_path)
-                extm3u = self.config["output"].get() == "extm3u"
-                with open(syspath(m3u_path), "wb") as f:
-                    keys = []
-                    if extm3u:
-                        keys = self.config["fields"].get(list)
-                        f.write(b"#EXTM3U\n")
-                    for entry in entries:
-                        f.write(entry.get_comment(extm3u, keys))
+                self.write_playlist(m3u_path, is_extm3u, entries)
 
             # Send an event when playlists were updated.
             send_event("smartplaylist_update")  # type: ignore
