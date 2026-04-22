@@ -308,9 +308,7 @@ class ConvertPlugin(BeetsPlugin):
             items = task.imported_items()
 
             # Filter items based on should_transcode function
-            items = [
-                item for item in items if self.should_transcode(item, self.fmt)
-            ]
+            items = [item for item in items if self.should_transcode(item)]
 
             self._parallel_convert(items, keep_new=False)
 
@@ -388,9 +386,7 @@ class ConvertPlugin(BeetsPlugin):
         else:
             return False
 
-    def should_transcode(
-        self, item: Item, fmt: str, force: bool = False
-    ) -> bool:
+    def should_transcode(self, item: Item) -> bool:
         """Determine whether the item should be transcoded as part of
         conversion (i.e., its bitrate is high or it has the wrong format).
 
@@ -398,7 +394,7 @@ class ConvertPlugin(BeetsPlugin):
         ``never_convert_lossy_files`` are ignored and the item is always
         transcoded.
         """
-        if force:
+        if self.force:
             return True
         if self.in_no_convert(item) or (
             self.config["never_convert_lossy_files"].get(bool)
@@ -408,7 +404,7 @@ class ConvertPlugin(BeetsPlugin):
         maxbr = self.config["max_bitrate"].get(Optional(int))
         if maxbr is not None and item.bitrate >= 1000 * maxbr:
             return True
-        return fmt.lower() != item.format.lower()
+        return self.fmt != item.format.lower()
 
     def convert_item(
         self, keep_new: bool
@@ -416,11 +412,10 @@ class ConvertPlugin(BeetsPlugin):
         """A pipeline thread that converts `Item` objects from a
         library.
         """
-        fmt, force, pretend = self.fmt, self.force, self.pretend
-        link, hardlink = self.link, self.hardlink
-
+        pretend, link, hardlink = self.pretend, self.link, self.hardlink
         command, ext = self.command
         item, original, converted = None, None, None
+
         while True:
             item = yield (item, original, converted)
             dest = item.destination(
@@ -442,11 +437,11 @@ class ConvertPlugin(BeetsPlugin):
             if keep_new:
                 original = dest
                 converted = item.path
-                if self.should_transcode(item, fmt, force):
+                if self.should_transcode(item):
                     converted = replace_ext(converted, ext)
             else:
                 original = item.path
-                if self.should_transcode(item, fmt, force):
+                if self.should_transcode(item):
                     dest = replace_ext(dest, ext)
                 converted = dest
 
@@ -476,7 +471,7 @@ class ConvertPlugin(BeetsPlugin):
                     )
                     util.move(item.path, original)
 
-            if self.should_transcode(item, fmt, force):
+            if self.should_transcode(item):
                 linked = False
                 try:
                     self.encode(command, original, converted, pretend)
@@ -662,7 +657,6 @@ class ConvertPlugin(BeetsPlugin):
         # copied to the destination.
         pl_normpath = None
         items_paths = None
-        fmt = self.fmt
         if playlist := self.playlist:
             # Playlist paths are understood as relative to the dest directory.
             pl_normpath = util.normpath(playlist)
@@ -675,9 +669,7 @@ class ConvertPlugin(BeetsPlugin):
 
                 # When keeping new files in the library, destination paths
                 # keep original files and extensions.
-                if not opts.keep_new and self.should_transcode(
-                    item, fmt, self.force
-                ):
+                if not opts.keep_new and self.should_transcode(item):
                     item_path = replace_ext(item_path, self.command.ext)
 
                 items_paths.append(os.path.relpath(item_path, pl_dir))
@@ -697,7 +689,7 @@ class ConvertPlugin(BeetsPlugin):
         """Transcode a file automatically after it is imported into the
         library.
         """
-        if self.should_transcode(item, self.fmt):
+        if self.should_transcode(item):
             command, ext = self.command
 
             # Create a temporary file for the conversion.
