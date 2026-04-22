@@ -1528,19 +1528,21 @@ class MultiDiscAlbumsInDirTest(BeetsTestCase):
         assert len(items) == 3
 
     def test_coalesce_markers(self):
-        for marker, suffix1, suffix2 in [
-            (b"Disc", b" 1", b" 02"),  # titlecase, space-separated
-            (b"disk 757", b" 1", b" 02"),  # lowercase, numerical suffix
-            (b"CD", b"01", b"02"),  # uppercase, no space (e.g. CD01)
-            (b"disc", b"_1", b"_2"),  # underscore separator (e.g. disc_1)
-            (b"cAsSeTtE", b" 1", b" 02"),  # mixed case
-            (b"Digital   Media", b" 1", b" 02"),  # multiple spaces
-            (b"vinyl", b" 1", b" 02"),  # lowercase
-            (b"12 vinyl", b" 1", b" 02"),  # common prefix
-        ]:
+        for i, (marker, suffix1, suffix2) in enumerate(
+            [
+                (b"Disc", b" 1", b" 02"),  # titlecase, space-separated
+                (b"disk 757", b" 1", b" 02"),  # lowercase, numerical suffix
+                (b"CD", b"01", b"02"),  # uppercase, no space (e.g. CD01)
+                (b"disc", b"_1", b"_2"),  # underscore separator (e.g. disc_1)
+                (b"cAsSeTtE", b" 1", b" 02"),  # mixed case
+                (b"Digital   Media", b" 1", b" 02"),  # multiple spaces
+                (b"vinyl", b" 1", b" 02"),  # lowercase
+                (b"12 vinyl", b" 1", b" 02"),  # common prefix
+            ]
+        ):
             with self.subTest(marker=marker, suffix1=suffix1, suffix2=suffix2):
                 base = os.path.abspath(
-                    os.path.join(self.temp_dir, b"marker " + marker)
+                    os.path.join(self.temp_dir, b"marker_" + str(i).encode())
                 )
                 os.mkdir(syspath(base))
 
