@@ -54,7 +54,8 @@ embedding is disabled for files that are linked. Refer to the ``link`` and
 The ``-F`` (or ``--force``) option forces transcoding even when safety options
 such as ``no_convert``, ``never_convert_lossy_files``, or ``max_bitrate`` would
 normally cause a file to be copied or skipped instead. This can be combined with
-``--format`` to explicitly transcode lossy inputs to a chosen target format.
+``--format`` to explicitly transcode lossy inputs to a chosen target format. The
+default value for this flag comes from the ``force`` configuration option.
 
 The ``-m`` (or ``--playlist``) option enables the plugin to create an m3u8
 playlist file in the destination folder given by the ``-d`` (``--dest``) option
@@ -81,7 +82,8 @@ The available options are:
   them to your library. Default: ``no``.
 - **auto_keep**: Convert your files automatically on import to **dest** but
   import the non transcoded version. It uses the default format you have defined
-  in your config file. Default: ``no``.
+  in your config file. Default: ``no``. This import behavior is fixed and is not
+  affected by ``keep_new``.
 
   .. note::
 
@@ -109,21 +111,30 @@ The available options are:
   with high bitrates, even if they are already in the same format as the output.
   Note that this does not guarantee that all converted files will have a lower
   bitrate---that depends on the encoder and its configuration. Default: none.
-  This option will be overridden by the ``--force`` flag
+  This option is ignored when ``force`` is enabled (via config or ``--force``).
 - **no_convert**: Does not transcode items matching the query string provided
   (see :doc:`/reference/query`). For example, to not convert AAC or WMA formats,
   you can use ``format:AAC, format:WMA`` or ``path::\.(m4a|wma)$``. If you only
   want to transcode WMA format, you can use a negative query, e.g.,
   ``^path::\.(wma)$``, to not convert any other format except WMA. This option
-  will be overridden by the ``--force`` flag
+  is ignored when ``force`` is enabled (via config or ``--force``).
 - **never_convert_lossy_files**: Cross-conversions between lossy codecs---such
   as mp3, ogg vorbis, etc.---makes little sense as they will decrease quality
   even further. If set to ``yes``, lossy files are always copied. Default:
   ``no``. When ``never_convert_lossy_files`` is enabled, lossy source files (for
   example MP3 or Ogg Vorbis) are normally not transcoded and are instead copied
   or linked as-is. To explicitly transcode lossy files in spite of this, use the
-  ``--force`` option with the ``convert`` command (optionally together with
-  ``--format`` to choose a target format)
+  ``force`` setting (from config or ``--force``) with the ``convert`` command
+  (optionally together with ``--format`` to choose a target format)
+- **force**: Force transcoding by default. When enabled, items are transcoded
+  even when ``no_convert``, ``never_convert_lossy_files``, or ``max_bitrate``
+  would otherwise copy or skip them. This applies to both ``beet convert`` and
+  automatic conversion during import (``auto`` and ``auto_keep``). Default:
+  ``false``.
+- **keep_new**: Enable ``--keep-new`` behavior by default for ``beet convert``.
+  Converted files stay in your library and originals are moved to the external
+  destination. This option applies only to ``beet convert`` and does not change
+  ``auto_keep`` import semantics. Default: ``false``.
 - **paths**: The directory structure and naming scheme for the converted files.
   Uses the same format as the top-level ``paths`` section (see
   :ref:`path-format-config`). Default: Reuse your top-level path format
