@@ -25,10 +25,13 @@ import pytest
 from beets import config
 from beets.dbcore.query import FixedFieldSort, MultipleSort, NullSort
 from beets.library import Album, Item, parse_query_string
+from beets.test._common import item
 from beets.test.helper import BeetsTestCase, IOMixin, PluginTestCase
 from beets.ui import UserError
 from beets.util import CHAR_REPLACE, syspath
 from beetsplug.smartplaylist import SmartPlaylistPlugin
+
+_p = pytest.param
 
 
 class SmartPlaylistTest(BeetsTestCase):
@@ -300,50 +303,6 @@ class SmartPlaylistTest(BeetsTestCase):
             b"/tagada.mp3\n"
         )
 
-    def test_playlist_update_uri_format(self):
-        spl = SmartPlaylistPlugin()
-
-        i = MagicMock()
-        type(i).id = PropertyMock(return_value=3)
-        type(i).path = PropertyMock(return_value=b"/tagada.mp3")
-        i.evaluate_template.side_effect = lambda pl, *_: os.fsdecode(
-            pl
-        ).replace("$title", "ta:ga:da")
-
-        lib = Mock()
-        lib.replacements = CHAR_REPLACE
-        lib.items.return_value = [i]
-        lib.albums.return_value = []
-
-        q = Mock()
-        a_q = Mock()
-        pl = b"$title-my<playlist>.m3u", (q, None), (a_q, None)
-        spl._matched_playlists = {pl}
-
-        dir = mkdtemp()
-        tpl = "http://beets:8337/item/$id/file"
-        config["smartplaylist"]["uri_format"] = tpl
-        config["smartplaylist"]["playlist_dir"] = dir
-        # The following options should be ignored when uri_format is set
-        config["smartplaylist"]["relative_to"] = "/data"
-        config["smartplaylist"]["prefix"] = "/prefix"
-        config["smartplaylist"]["urlencode"] = True
-        try:
-            spl.update_playlists(lib)
-        except Exception:
-            rmtree(syspath(dir))
-            raise
-
-        lib.items.assert_called_once_with(q, None)
-        lib.albums.assert_called_once_with(a_q, None)
-
-        m3u_filepath = Path(dir, "ta_ga_da-my_playlist_.m3u")
-        assert m3u_filepath.exists()
-        content = m3u_filepath.read_bytes()
-        rmtree(syspath(dir))
-
-        assert content == b"http://beets:8337/item/3/file\n"
-
     def test_get_playlist_items(self):
         """Test get playlist items.
 
@@ -361,86 +320,61 @@ class SmartPlaylistTest(BeetsTestCase):
 
         assert [i.id for i in actual_items] == [3, 2, 1]
 
-    def test_playlist_update_dest_regen(self):
-        spl = SmartPlaylistPlugin()
 
-        i = MagicMock()
-        type(i).artist = PropertyMock(return_value="fake artist")
-        type(i).title = PropertyMock(return_value="fake title")
-        type(i).length = PropertyMock(return_value=300.123)
-        # Set a path which is not equal to the one returned by `item.destination`.
-        type(i).path = PropertyMock(
-            return_value=b"/imported/path/with/dont/move/tagada.mp3"
-        )
-        # Set a path which would be equal to the one returned by `item.destination`.
-        type(i).destination = PropertyMock(return_value=lambda: b"/tagada.mp3")
-        i.evaluate_template.side_effect = lambda pl, *_: os.fsdecode(
-            pl
-        ).replace("$title", "ta:ga:da")
+class TestGetItemURI:
+    @pytest.fixture
+    def plugin_config(self):
+        return {}
 
-        lib = Mock()
-        lib.replacements = CHAR_REPLACE
-        lib.items.return_value = [i]
-        lib.albums.return_value = []
+    @pytest.fixture
+    def plugin(self, config, plugin_config):
+        plugin_config = {
+            "prefix": "http://beets:8337/files",
+            **plugin_config,
+        }
+        config["smartplaylist"].set(plugin_config)
 
-        q = Mock()
-        a_q = Mock()
-        pl = b"$title-my<playlist>.m3u", (q, None), (a_q, None)
-        spl._matched_playlists = {pl}
+        return SmartPlaylistPlugin()
 
-        dir = mkdtemp()
-        config["smartplaylist"]["output"] = "extm3u"
-        config["smartplaylist"]["prefix"] = "http://beets:8337/files"
-        config["smartplaylist"]["relative_to"] = False
-        config["smartplaylist"]["playlist_dir"] = str(dir)
+    @pytest.fixture(autouse=True)
+    def _setup(self, monkeypatch):
+        monkeypatch.setattr(Item, "destination", lambda _: b"/tagada.mp3")
 
-        # Test when `dest_regen` is set to True:
-        # Intended behavior is to use the path of `i.destination`.
-
-        config["smartplaylist"]["dest_regen"] = True
-        try:
-            spl.update_playlists(lib)
-        except Exception:
-            rmtree(syspath(dir))
-            raise
-
-        lib.items.assert_called_once_with(q, None)
-        lib.albums.assert_called_once_with(a_q, None)
-
-        m3u_filepath = Path(dir, "ta_ga_da-my_playlist_.m3u")
-        assert m3u_filepath.exists()
-        with open(syspath(m3u_filepath), "rb") as f:
-            content = f.read()
-        rmtree(syspath(dir))
-
-        assert content == (
-            b"#EXTM3U\n"
-            b"#EXTINF:300,fake artist - fake title\n"
-            b"http://beets:8337/files/tagada.mp3\n"
+    @pytest.fixture
+    def item(self):
+        return item(
+            id=3,
+            artist="fake artist",
+            title="fake title",
+            length=300.123,
+            path=b"/imported/path/with/dont/move/tagada.mp3",
         )
 
-        # Test when `dest_regen` is set to False:
-        # Intended behavior is to use the path of `i.path`.
-
-        config["smartplaylist"]["dest_regen"] = False
-
-        try:
-            spl.update_playlists(lib)
-        except Exception:
-            rmtree(syspath(dir))
-            raise
-
-        m3u_filepath = Path(dir, "ta_ga_da-my_playlist_.m3u")
-        assert m3u_filepath.exists()
-        with open(syspath(m3u_filepath), "rb") as f:
-            content = f.read()
-        rmtree(syspath(dir))
-
-        assert content == (
-            b"#EXTM3U\n"
-            b"#EXTINF:300,fake artist - fake title\n"
-            b"http://beets:8337/files/imported/path/with/dont/move/tagada.mp3\n"
-        )
+    @pytest.mark.parametrize(
+        "plugin_config, expected_uri",
+        [
+            _p(
+                {},
+                b"http://beets:8337/files/imported/path/with/dont/move/tagada.mp3",
+                id="path by default",
+            ),
+            _p(
+                {"dest_regen": True},
+                b"http://beets:8337/files/tagada.mp3",
+                id="dest_regen uses item destination",
+            ),
+            _p(
+                {
+                    "uri_format": "http://beets:8337/item/$id/file",
+                    "dest_regen": True,
+                },
+                b"http://beets:8337/item/3/file",
+                id="uri_format takes precedence",
+            ),
+        ],
+    )
+    def test_get_item_uri(self, plugin, item, expected_uri):
+        assert plugin.get_item_uri(item) == expected_uri
 
 
 class SmartPlaylistCLITest(IOMixin, PluginTestCase):

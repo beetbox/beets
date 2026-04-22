@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import os
 from collections import defaultdict
+from functools import cached_property
 from shlex import quote as shell_quote
 from typing import TYPE_CHECKING, Any, TypeAlias
 from urllib.parse import quote
@@ -81,6 +82,33 @@ class SmartPlaylistPlugin(BeetsPlugin):
 
         if self.config["auto"]:
             self.register_listener("database_change", self.db_change)
+
+    @cached_property
+    def prefix(self) -> bytes:
+        return bytestring_path(self.config["prefix"].as_str())
+
+    @cached_property
+    def relative_to(self) -> bytes | None:
+        if relative_to := self.config["relative_to"].get():
+            return normpath(relative_to)
+
+        return None
+
+    @cached_property
+    def dest_regen(self) -> bool:
+        return self.config["dest_regen"].get(bool)
+
+    @cached_property
+    def forward_slash(self) -> bool:
+        return self.config["forward_slash"].get(bool)
+
+    @cached_property
+    def urlencode(self) -> bool:
+        return self.config["urlencode"].get(bool)
+
+    @cached_property
+    def uri_format(self) -> str | None:
+        return self.config["uri_format"].get()
 
     def commands(self) -> list[ui.Subcommand]:
         spl_update = ui.Subcommand(
@@ -325,6 +353,22 @@ class SmartPlaylistPlugin(BeetsPlugin):
                 seen_ids.add(item.id)
                 yield item
 
+    def get_item_uri(self, item: Item) -> bytes:
+        item_uri = item.path
+        if uri_format := self.uri_format:
+            return uri_format.replace("$id", str(item.id)).encode("utf-8")
+
+        if self.dest_regen:
+            item_uri = item.destination()
+        if self.relative_to:
+            item_uri = os.path.relpath(item_uri, self.relative_to)
+        if self.forward_slash:
+            item_uri = path_as_posix(item_uri)
+        if self.urlencode:
+            item_uri = bytestring_path(pathname2url(os.fsdecode(item_uri)))
+
+        return self.prefix + item_uri
+
     def write_playlist(
         self, path: bytes, is_extm3u: bool, entries: list[PlaylistItem]
     ) -> None:
@@ -345,10 +389,6 @@ class SmartPlaylistPlugin(BeetsPlugin):
         playlist_dir = bytestring_path(
             self.config["playlist_dir"].as_filename()
         )
-        tpl = self.config["uri_format"].get()
-        prefix = bytestring_path(self.config["prefix"].as_str())
-        if relative_to := self.config["relative_to"].get():
-            relative_to = normpath(relative_to)
 
         # Maps playlist filenames to lists of track entries and URI sets used
         # to deduplicate output lines.
@@ -365,21 +405,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
             for item in items:
                 m3u_name = item.evaluate_template(name, True)
                 m3u_name = sanitize_path(m3u_name, lib.replacements)
-                item_uri = item.path
-                if tpl:
-                    item_uri = tpl.replace("$id", str(item.id)).encode("utf-8")
-                else:
-                    if self.config["dest_regen"].get(bool):
-                        item_uri = item.destination()
-                    if relative_to:
-                        item_uri = os.path.relpath(item_uri, relative_to)
-                    if self.config["forward_slash"].get(bool):
-                        item_uri = path_as_posix(item_uri)
-                    if self.config["urlencode"].get(bool):
-                        item_uri = bytestring_path(
-                            pathname2url(os.fsdecode(item_uri))
-                        )
-                    item_uri = prefix + item_uri
+                item_uri = self.get_item_uri(item)
 
                 if item_uri not in m3u_uris_by_name[m3u_name]:
                     m3u_uris_by_name[m3u_name].add(item_uri)
