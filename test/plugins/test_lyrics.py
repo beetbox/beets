@@ -912,7 +912,7 @@ class TestWriteSyltToId3:
 
         f = mutagen.File(mp3_item.path)
         assert f.tags.getall("SYLT"), "SYLT frame should be present"
-        sylt = f.tags["SYLT::eng"]
+        sylt = f.tags["SYLT::XXX"]
         assert sylt.text == [("hello", 1000), ("world", 2000)]
 
     def test_uslt_contains_plain_text_after_sylt_write(self, mp3_item):
@@ -923,7 +923,7 @@ class TestWriteSyltToId3:
 
         f = mutagen.File(mp3_item.path)
         assert f.tags.getall("USLT"), "USLT frame should be present"
-        assert f.tags["USLT::eng"].text == "hello\nworld"
+        assert f.tags["USLT::XXX"].text == "hello\nworld"
 
     def test_sylt_cleared_for_plain_lyrics(self, mp3_item):
         import mutagen
@@ -931,7 +931,7 @@ class TestWriteSyltToId3:
 
         # Seed an existing SYLT frame.
         f = ID3(mp3_item.path)
-        f["SYLT::eng"] = SYLT(
+        f["SYLT::XXX"] = SYLT(
             encoding=3, lang="eng", format=2, type=1, text=[("hello", 1000)]
         )
         f.save()

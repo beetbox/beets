@@ -33,7 +33,7 @@ import requests
 from bs4 import BeautifulSoup
 from unidecode import unidecode
 
-from beets import plugins, ui, util
+from beets import logging, plugins, ui, util
 from beets.autotag.distance import string_dist
 from beets.dbcore import types
 from beets.dbcore.query import FalseQuery
@@ -42,6 +42,8 @@ from beets.util.config import sanitize_choices
 from beets.util.lyrics import INSTRUMENTAL_LYRICS, Lyrics
 
 from ._utils.requests import HTTPNotFoundError, RequestHandler
+
+log = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
@@ -978,25 +980,31 @@ def _write_sylt_to_id3(item: Item, lyrics: Lyrics) -> None:
     tags = f.tags
 
     # Overwrite USLT with timestamp-stripped plain text.
+    # Use "XXX" (ISO 639-2 for "undetermined") rather than a hardcoded language
+    # code — this matches what the upstream mediafile library does for USLT.
     tags.delall("USLT")
     plain_text = "\n".join(lyrics.text_lines)
     if plain_text:
-        tags["USLT::eng"] = USLT(
-            encoding=3, lang="eng", desc="", text=plain_text
+        tags["USLT::XXX"] = USLT(
+            encoding=3, lang="XXX", desc="", text=plain_text
         )
 
     # Write (or clear) the SYLT frame.
     tags.delall("SYLT")
     sylt_data = lyrics.sylt
     if sylt_data:
-        tags["SYLT::eng"] = SYLT(
-            encoding=3, lang="eng", format=2, type=1, text=sylt_data
+        tags["SYLT::XXX"] = SYLT(
+            encoding=3, lang="XXX", format=2, type=1, text=sylt_data
         )
 
     try:
         f.save()
-    except Exception:
-        pass
+    except Exception as exc:
+        log.warning(
+            "failed to write SYLT/USLT tags to {}: {}",
+            util.displayable_path(item.path),
+            exc,
+        )
 
 
 class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
