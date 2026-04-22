@@ -80,7 +80,6 @@ class ShowModelChangesTest(IOMixin, BeetsTestCase):
         ]
 
 
-@_common.slow_test()
 class TestPluginTestCase(PluginTestCase):
     plugin = "test"
 
@@ -361,7 +360,6 @@ class PathFormatTest(unittest.TestCase):
         assert pf[1:] == default_formats
 
 
-@_common.slow_test()
 class PluginTest(TestPluginTestCase):
     def test_plugin_command_from_pluginpath(self):
         self.run_command("test")
