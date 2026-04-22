@@ -312,26 +312,25 @@ class ConvertPlugin(BeetsPlugin):
     # Utilities converted from functions to methods on logging overhaul
 
     def encode(
-        self, command: bytes, source: bytes, dest: bytes, pretend: bool = False
+        self,
+        command_bytes: bytes,
+        source_bytes: bytes,
+        dest_bytes: bytes,
+        pretend: bool = False,
     ) -> None:
-        """Encode `source` to `dest` using command template `command`.
+        """Encode source to destination using given command template.
 
         Raises `subprocess.CalledProcessError` if the command exited with a
         non-zero status code.
         """
-        # The paths and arguments must be bytes.
-        assert isinstance(command, bytes)
-        assert isinstance(source, bytes)
-        assert isinstance(dest, bytes)
-
         quiet = self.config["quiet"].get(bool)
 
         if not quiet and not pretend:
-            self._log.info("Encoding {}", util.displayable_path(source))
+            self._log.info("Encoding {}", util.displayable_path(source_bytes))
 
-        command = os.fsdecode(command)
-        source = os.fsdecode(source)
-        dest = os.fsdecode(dest)
+        command = os.fsdecode(command_bytes)
+        source = os.fsdecode(source_bytes)
+        dest = os.fsdecode(dest_bytes)
 
         # Substitute $source and $dest in the argument list.
         args = shlex.split(command)
@@ -697,8 +696,8 @@ class ConvertPlugin(BeetsPlugin):
             # Create a temporary file for the conversion.
             tmpdir = self.config["tmpdir"].get()
             if tmpdir:
-                tmpdir = os.fsdecode(util.bytestring_path(tmpdir))
-            fd, dest = tempfile.mkstemp(f".{os.fsdecode(ext)}", dir=tmpdir)
+                tmpdir = util.bytestring_path(tmpdir)
+            fd, dest = tempfile.mkstemp(b"." + ext, dir=tmpdir)
             os.close(fd)
             dest = util.bytestring_path(dest)
             _temp_files.append(dest)  # Delete the transcode later.
