@@ -14,6 +14,8 @@
 
 """Converts tracks or albums to external directory"""
 
+from __future__ import annotations
+
 import logging
 import os
 import shlex
@@ -21,6 +23,7 @@ import subprocess
 import tempfile
 import threading
 from string import Template
+from typing import TYPE_CHECKING
 
 import mediafile
 from confuse import ConfigTypeError, Optional
@@ -33,8 +36,16 @@ from beets.util.artresizer import ArtResizer
 from beets.util.m3u import M3UFile
 from beetsplug._utils import art
 
+if TYPE_CHECKING:
+    import optparse
+    from collections.abc import Generator
+
+    from beets.importer import ImportSession, ImportTask
+    from beets.library import Album, Library
+
 _fs_lock = threading.Lock()
-_temp_files = []  # Keep track of temporary transcoded files for deletion.
+# Keep track of temporary transcoded files for deletion.
+_temp_files: list[bytes] = []
 
 # Some convenient alternate names for formats.
 ALIASES = {
@@ -45,7 +56,7 @@ ALIASES = {
 LOSSLESS_FORMATS = ["ape", "flac", "alac", "wave", "aiff"]
 
 
-def replace_ext(path, ext):
+def replace_ext(path: bytes, ext: bytes) -> bytes:
     """Return the path with its extension replaced by `ext`.
 
     The new extension must not contain a leading dot.
@@ -54,7 +65,7 @@ def replace_ext(path, ext):
     return os.path.splitext(path)[0] + ext_dot
 
 
-def get_format(fmt=None):
+def get_format(fmt: str | None = None) -> tuple[bytes, bytes]:
     """Return the command template and the extension from the config."""
     if not fmt:
         fmt = config["convert"]["format"].as_str().lower()
@@ -95,7 +106,7 @@ def in_no_convert(item: Item) -> bool:
         return False
 
 
-def should_transcode(item, fmt, force: bool = False):
+def should_transcode(item: Item, fmt: str, force: bool = False) -> bool:
     """Determine whether the item should be transcoded as part of
     conversion (i.e., its bitrate is high or it has the wrong format).
 
@@ -117,7 +128,7 @@ def should_transcode(item, fmt, force: bool = False):
 
 
 class ConvertPlugin(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.config.add(
             {
@@ -171,7 +182,7 @@ class ConvertPlugin(BeetsPlugin):
 
         self.register_listener("import_task_files", self._cleanup)
 
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         cmd = ui.Subcommand("convert", help="convert to external location")
         cmd.parser.add_option(
             "-p",
@@ -256,14 +267,16 @@ class ConvertPlugin(BeetsPlugin):
         cmd.func = self.convert_func
         return [cmd]
 
-    def auto_convert(self, config, task):
+    def auto_convert(self, session: ImportSession, task: ImportTask) -> None:
         if self.config["auto"]:
             par_map(
-                lambda item: self.convert_on_import(config.lib, item),
+                lambda item: self.convert_on_import(session.lib, item),
                 task.imported_items(),
             )
 
-    def auto_convert_keep(self, config, task):
+    def auto_convert_keep(
+        self, session: ImportSession, task: ImportTask
+    ) -> None:
         if self.config["auto_keep"]:
             empty_opts = self.commands()[0].parser.get_default_values()
             (
@@ -298,7 +311,9 @@ class ConvertPlugin(BeetsPlugin):
 
     # Utilities converted from functions to methods on logging overhaul
 
-    def encode(self, command, source, dest, pretend=False):
+    def encode(
+        self, command: bytes, source: bytes, dest: bytes, pretend: bool = False
+    ) -> None:
         """Encode `source` to `dest` using command template `command`.
 
         Raises `subprocess.CalledProcessError` if the command exited with a
@@ -362,15 +377,15 @@ class ConvertPlugin(BeetsPlugin):
 
     def convert_item(
         self,
-        dest_dir,
-        keep_new,
-        path_formats,
-        fmt,
-        pretend=False,
-        link=False,
-        hardlink=False,
-        force=False,
-    ):
+        dest_dir: bytes,
+        keep_new: bool,
+        path_formats: dict[str, str],
+        fmt: str,
+        pretend: bool = False,
+        link: bool = False,
+        hardlink: bool = False,
+        force: bool = False,
+    ) -> Generator[tuple[Item | None, bytes | None, bytes | None], Item, None]:
         """A pipeline thread that converts `Item` objects from a
         library.
         """
@@ -508,13 +523,13 @@ class ConvertPlugin(BeetsPlugin):
 
     def copy_album_art(
         self,
-        album,
-        dest_dir,
-        path_formats,
-        pretend=False,
-        link=False,
-        hardlink=False,
-    ):
+        album: Album,
+        dest_dir: bytes,
+        path_formats: dict[str, str],
+        pretend: bool = False,
+        link: bool = False,
+        hardlink: bool = False,
+    ) -> None:
         """Copies or converts the associated cover art of the album. Album must
         have at least one track.
         """
@@ -590,7 +605,9 @@ class ConvertPlugin(BeetsPlugin):
                 else:
                     util.copy(album.artpath, dest)
 
-    def convert_func(self, lib, opts, args):
+    def convert_func(
+        self, lib: Library, opts: optparse.Values, args: list[str]
+    ) -> None:
         (
             dest,
             threads,
@@ -669,7 +686,7 @@ class ConvertPlugin(BeetsPlugin):
                 m3ufile.set_contents(items_paths)
                 m3ufile.write()
 
-    def convert_on_import(self, lib, item):
+    def convert_on_import(self, _: Library, item: Item) -> None:
         """Transcode a file automatically after it is imported into the
         library.
         """
@@ -708,7 +725,7 @@ class ConvertPlugin(BeetsPlugin):
                 )
                 util.remove(source_path, False)
 
-    def _get_art_resize(self, artpath):
+    def _get_art_resize(self, artpath: bytes) -> int | None:
         """For a given piece of album art, determine whether or not it needs
         to be resized according to the user's settings. If so, returns the
         new size. If not, returns None.
@@ -728,14 +745,18 @@ class ConvertPlugin(BeetsPlugin):
                 )
         return newwidth
 
-    def _cleanup(self, task, session):
+    def _cleanup(self, task: ImportTask, session: ImportSession) -> None:
         for path in task.old_paths:
             if path in _temp_files:
                 if os.path.isfile(util.syspath(path)):
                     util.remove(path)
                 _temp_files.remove(path)
 
-    def _get_opts_and_config(self, opts):
+    def _get_opts_and_config(
+        self, opts: optparse.Values
+    ) -> tuple[
+        bytes, int, dict[str, str], str, bool, bool, bool, str | None, bool
+    ]:
         """Returns parameters needed for convert function.
         Get parameters from command line if available,
         default to config if not available.
@@ -784,16 +805,16 @@ class ConvertPlugin(BeetsPlugin):
 
     def _parallel_convert(
         self,
-        dest,
-        keep_new,
-        path_formats,
-        fmt,
-        pretend,
-        link,
-        hardlink,
-        threads,
-        items,
-        force,
+        dest: bytes,
+        keep_new: bool,
+        path_formats: dict[str, str],
+        fmt: str,
+        pretend: bool,
+        link: bool,
+        hardlink: bool,
+        threads: int,
+        items: list[Item],
+        force: bool,
     ):
         """Run the convert_item function for every items on as many thread as
         defined in threads
