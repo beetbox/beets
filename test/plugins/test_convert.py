@@ -71,7 +71,6 @@ class ConvertTestCase(IOMixin, ConvertMixin, PluginTestCase):
     plugin = "convert"
 
 
-@_common.slow_test()
 class ImportConvertTest(AsIsImporterMixin, ImportHelper, ConvertTestCase):
     def setUp(self):
         super().setUp()
@@ -133,7 +132,6 @@ class ConvertCommand:
         return self.run_convert_path(self.item, *args)
 
 
-@_common.slow_test()
 class ConvertCliTest(ConvertTestCase, ConvertCommand):
     def setUp(self):
         super().setUp()
@@ -309,7 +307,6 @@ class ConvertCliTest(ConvertTestCase, ConvertCommand):
         self.assert_playlist_entry("converted.ogg", "--keep-new")
 
 
-@_common.slow_test()
 class NeverConvertLossyFilesTest(ConvertTestCase, ConvertCommand):
     """Test the effect of the `never_convert_lossy_files` option."""
 

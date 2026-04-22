@@ -10,7 +10,7 @@ import pytest
 
 import beets.logging as blog
 from beets import plugins, ui
-from beets.test import _common, helper
+from beets.test import helper
 from beets.test.helper import AsIsImporterMixin, ImportTestCase, PluginMixin
 
 
@@ -233,7 +233,6 @@ class LoggingLevelTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
         assert "dummy: debug import_stage" in logs
 
 
-@_common.slow_test()
 class ConcurrentEventsTest(AsIsImporterMixin, ImportTestCase):
     """Similar to LoggingLevelTest but lower-level and focused on multiple
     events interaction. Since this is a bit heavy we don't do it in

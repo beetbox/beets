@@ -315,13 +315,6 @@ Use ``poe`` to run tests:
 
     $ poe test [pytest options]
 
-You can disable a hand-selected set of "slow" tests by setting the environment
-variable ``SKIP_SLOW_TESTS``, for example:
-
-::
-
-    $ SKIP_SLOW_TESTS=1 poe test
-
 Coverage
 ++++++++
 

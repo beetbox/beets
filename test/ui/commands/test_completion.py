@@ -12,7 +12,6 @@ from beets.util import syspath
 from ..test_ui import TestPluginTestCase
 
 
-@_common.slow_test()
 @pytest.mark.xfail(
     os.environ.get("GITHUB_ACTIONS") == "true" and sys.platform == "linux",
     reason="Completion is for some reason unhappy on Ubuntu 24.04 in CI",

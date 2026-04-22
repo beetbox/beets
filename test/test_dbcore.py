@@ -26,7 +26,6 @@ import pytest
 from beets import dbcore
 from beets.dbcore.db import DBCustomFunctionError, Index
 from beets.library import LibModel
-from beets.test import _common
 from beets.util import cached_classproperty
 
 # Fixture: concrete database and model classes. For migration tests, we
@@ -167,7 +166,6 @@ class ModelFixtureWithGetters(dbcore.Model):
         return {}
 
 
-@_common.slow_test()
 class MigrationTest(unittest.TestCase):
     """Tests the ability to change the database schema between
     versions.
