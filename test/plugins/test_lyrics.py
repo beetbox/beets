@@ -16,9 +16,7 @@
 
 from __future__ import annotations
 
-import os
 import re
-import shutil
 import textwrap
 from functools import partial
 from http import HTTPStatus
@@ -308,7 +306,7 @@ class TestLyricsPlugin(LyricsPluginMixin):
                 {"force": True, "synced": True},
                 "[00:00.00] old synced",
                 "[00:00.00] new synced",
-                "[00:00.00] new synced",
+                "new synced",
                 id="replace-with-new-synced-lyrics",
             ),
             pytest.param(
@@ -848,7 +846,6 @@ class TestRestFiles:
         )
 
 
-_RSRC = Path(__file__).parent.parent / "rsrc"
 
 
 class TestLyricsSyltProperty:
@@ -888,64 +885,56 @@ class TestLyricsSyltProperty:
         assert Lyrics(lrc_text).sylt == expected_sylt
 
 
-class TestWriteSyltToId3:
-    """Integration tests for the _write_sylt_to_id3 helper function."""
+class TestSyncedLyricsWrite(LyricsPluginMixin):
+    """Tests that add_item_lyrics passes the correct synced_lyrics tag."""
 
     SYNCED_LRC = "[00:01.00] hello\n[00:02.00] world"
 
     @pytest.fixture
-    def mp3_path(self, tmp_path):
-        """Writable copy of the test MP3 fixture."""
-        dst = tmp_path / "test.mp3"
-        shutil.copy(_RSRC / "full.mp3", dst)
-        return dst
+    def backend_name(self):
+        return "lrclib"
 
-    @pytest.fixture
-    def mp3_item(self, mp3_path):
-        return SimpleNamespace(path=os.fsencode(mp3_path))
-
-    def test_sylt_written_for_synced_lyrics(self, mp3_item):
-        import mutagen
-
-        lyr = Lyrics(self.SYNCED_LRC)
-        lyrics._write_sylt_to_id3(mp3_item, lyr)
-
-        f = mutagen.File(mp3_item.path)
-        assert f.tags.getall("SYLT"), "SYLT frame should be present"
-        sylt = f.tags["SYLT::XXX"]
-        assert sylt.text == [("hello", 1000), ("world", 2000)]
-
-    def test_uslt_contains_plain_text_after_sylt_write(self, mp3_item):
-        import mutagen
-
-        lyr = Lyrics(self.SYNCED_LRC)
-        lyrics._write_sylt_to_id3(mp3_item, lyr)
-
-        f = mutagen.File(mp3_item.path)
-        assert f.tags.getall("USLT"), "USLT frame should be present"
-        assert f.tags["USLT::XXX"].text == "hello\nworld"
-
-    def test_sylt_cleared_for_plain_lyrics(self, mp3_item):
-        import mutagen
-        from mutagen.id3 import ID3, SYLT
-
-        # Seed an existing SYLT frame.
-        f = ID3(mp3_item.path)
-        f["SYLT::XXX"] = SYLT(
-            encoding=3, lang="eng", format=2, type=1, text=[("hello", 1000)]
+    def test_sylt_data_passed_for_synced_lyrics(
+        self, monkeypatch, helper, lyrics_plugin
+    ):
+        monkeypatch.setattr(
+            lyrics_plugin, "find_lyrics", lambda _: Lyrics(self.SYNCED_LRC)
         )
-        f.save()
+        item = helper.create_item(id=1, lyrics="")
+        calls = []
+        monkeypatch.setattr(
+            type(item), "try_write", lambda self, **kw: calls.append(kw) or True
+        )
 
-        # Overwrite with plain (non-synced) lyrics.
-        lyrics._write_sylt_to_id3(mp3_item, Lyrics("plain lyrics"))
+        lyrics_plugin.add_item_lyrics(item, write=True)
 
-        f = mutagen.File(mp3_item.path)
-        assert not f.tags.getall("SYLT"), "SYLT frame should be cleared"
+        assert calls == [{"tags": {"synced_lyrics": [("hello", 1000), ("world", 2000)]}}]
 
-    def test_non_id3_file_silently_skipped(self, tmp_path):
-        """Non-ID3 formats (e.g. FLAC) must not raise."""
-        dst = tmp_path / "test.flac"
-        shutil.copy(_RSRC / "full.flac", dst)
-        item = SimpleNamespace(path=os.fsencode(dst))
-        # Must not raise; FLAC files have no ID3 delall attribute.
-        lyrics._write_sylt_to_id3(item, Lyrics("[00:01.00] hello"))
+    def test_plain_text_stored_in_lyrics_for_synced(
+        self, monkeypatch, helper, lyrics_plugin
+    ):
+        monkeypatch.setattr(
+            lyrics_plugin, "find_lyrics", lambda _: Lyrics(self.SYNCED_LRC)
+        )
+        item = helper.create_item(id=1, lyrics="")
+        monkeypatch.setattr(type(item), "try_write", lambda self, **kw: True)
+
+        lyrics_plugin.add_item_lyrics(item, write=True)
+
+        assert item.lyrics == "hello\nworld"
+
+    def test_sylt_cleared_for_plain_lyrics(
+        self, monkeypatch, helper, lyrics_plugin
+    ):
+        monkeypatch.setattr(
+            lyrics_plugin, "find_lyrics", lambda _: Lyrics("plain lyrics")
+        )
+        item = helper.create_item(id=1, lyrics="")
+        calls = []
+        monkeypatch.setattr(
+            type(item), "try_write", lambda self, **kw: calls.append(kw) or True
+        )
+
+        lyrics_plugin.add_item_lyrics(item, write=True)
+
+        assert calls == [{"tags": {"synced_lyrics": None}}]

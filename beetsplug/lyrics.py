@@ -33,7 +33,7 @@ import requests
 from bs4 import BeautifulSoup
 from unidecode import unidecode
 
-from beets import logging, plugins, ui, util
+from beets import logging, plugins, ui
 from beets.autotag.distance import string_dist
 from beets.dbcore import types
 from beets.dbcore.query import FalseQuery
@@ -42,8 +42,6 @@ from beets.util.config import sanitize_choices
 from beets.util.lyrics import INSTRUMENTAL_LYRICS, Lyrics
 
 from ._utils.requests import HTTPNotFoundError, RequestHandler
-
-log = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
@@ -951,60 +949,6 @@ BACKEND_BY_NAME = {
 }
 
 
-def _write_sylt_to_id3(item: Item, lyrics: Lyrics) -> None:
-    """Write synced lyrics as SYLT (and plain text as USLT) to an ID3 file.
-
-    After :meth:`Item.try_write` stores the raw LRC text in the USLT frame,
-    this function reopens the file with mutagen to:
-
-    * replace the USLT content with plain text (timestamps stripped), and
-    * add a SYLT frame with ``(text, milliseconds)`` pairs.
-
-    For plain (unsynced) lyrics the SYLT frame is removed so stale synced
-    data is never left behind.
-
-    Files that do not carry ID3 tags (FLAC, OGG, …) are silently skipped.
-    """
-    import mutagen
-    from mutagen.id3 import SYLT, USLT
-
-    try:
-        f = mutagen.File(util.syspath(item.path))
-    except Exception:
-        return
-
-    if f is None or not hasattr(f, "tags") or not hasattr(f.tags, "delall"):
-        # Not an ID3-tagged file (FLAC, Vorbis, etc.) - nothing to do.
-        return
-
-    tags = f.tags
-
-    # Overwrite USLT with timestamp-stripped plain text.
-    # Use "XXX" (ISO 639-2 for "undetermined") rather than a hardcoded language
-    # code — this matches what the upstream mediafile library does for USLT.
-    tags.delall("USLT")
-    plain_text = "\n".join(lyrics.text_lines)
-    if plain_text:
-        tags["USLT::XXX"] = USLT(
-            encoding=3, lang="XXX", desc="", text=plain_text
-        )
-
-    # Write (or clear) the SYLT frame.
-    tags.delall("SYLT")
-    sylt_data = lyrics.sylt
-    if sylt_data:
-        tags["SYLT::XXX"] = SYLT(
-            encoding=3, lang="XXX", format=2, type=1, text=sylt_data
-        )
-
-    try:
-        f.save()
-    except Exception as exc:
-        log.warning(
-            "failed to write SYLT/USLT tags to {}: {}",
-            util.displayable_path(item.path),
-            exc,
-        )
 
 
 class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
@@ -1189,19 +1133,24 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
                 elif item_key in item:
                     del item[item_key]
 
-            lyrics_text = new_lyrics.full_text
+            # For synced lyrics, store plain text in USLT and pass SYLT data
+            # separately so mediafile can write the SYLT frame.
+            if new_lyrics.synced:
+                lyrics_text = "\n".join(new_lyrics.text_lines)
+                sylt_data = new_lyrics.sylt
+            else:
+                lyrics_text = new_lyrics.full_text
+                sylt_data = None
         else:
             self.info("🔴 Lyrics not found: {}", item)
             lyrics_text = self.config["fallback"].get()
+            sylt_data = None
 
         if lyrics_text not in {None, item.lyrics}:
             item.lyrics = lyrics_text
             item.store()
             if write:
-                item.try_write()
-                # For ID3 files, replace the raw LRC stored in USLT with plain
-                # text and write a proper SYLT frame (or clear a stale one).
-                _write_sylt_to_id3(item, Lyrics(lyrics_text))
+                item.try_write(tags={"synced_lyrics": sylt_data})
 
     def get_lyrics(self, artist: str, title: str, *args) -> Lyrics | None:
         """Get first found lyrics, trying each source in turn."""
