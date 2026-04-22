@@ -114,6 +114,8 @@ class ConvertPlugin(BeetsPlugin):
                 "album_art_maxwidth": 0,
                 "delete_originals": False,
                 "playlist": None,
+                "force": False,
+                "keep_new": False,
             }
         )
         self.early_import_stages = [self.auto_convert, self.auto_convert_keep]
@@ -126,6 +128,7 @@ class ConvertPlugin(BeetsPlugin):
             "-p",
             "--pretend",
             action="store_true",
+            default=self.config["pretend"].get(),
             help="show actions but do nothing",
         )
         cmd.parser.add_option(
@@ -133,6 +136,7 @@ class ConvertPlugin(BeetsPlugin):
             "--threads",
             action="store",
             type="int",
+            default=self.config["threads"].get(),
             help=(
                 "change the number of threads, defaults to maximum available"
                 " processors"
@@ -143,37 +147,41 @@ class ConvertPlugin(BeetsPlugin):
             "--keep-new",
             action="store_true",
             dest="keep_new",
+            default=self.config["keep_new"].get(),
             help="keep only the converted and move the old files",
         )
         cmd.parser.add_option(
-            "-d", "--dest", action="store", help="set the destination directory"
+            "-d",
+            "--dest",
+            action="store",
+            default=self.config["dest"].get(),
+            help="set the destination directory",
         )
         cmd.parser.add_option(
             "-f",
             "--format",
             action="store",
-            dest="format",
+            default=self.config["format"].get(),
             help="set the target format of the tracks",
         )
         cmd.parser.add_option(
             "-y",
             "--yes",
             action="store_true",
-            dest="yes",
             help="do not ask for confirmation",
         )
         cmd.parser.add_option(
             "-l",
             "--link",
             action="store_true",
-            dest="link",
+            default=self.config["link"].get(),
             help="symlink files that do not need transcoding.",
         )
         cmd.parser.add_option(
             "-H",
             "--hardlink",
             action="store_true",
-            dest="hardlink",
+            default=self.config["hardlink"].get(),
             help=(
                 "hardlink files that do not need transcoding. Overrides --link."
             ),
@@ -182,6 +190,7 @@ class ConvertPlugin(BeetsPlugin):
             "-m",
             "--playlist",
             action="store",
+            default=self.config["playlist"].get(),
             help="""create an m3u8 playlist file containing
                               the converted files. The playlist file will be
                               saved below the destination directory, thus
@@ -195,7 +204,7 @@ class ConvertPlugin(BeetsPlugin):
             "-F",
             "--force",
             action="store_true",
-            dest="force",
+            default=self.config["force"].get(),
             help=(
                 "force transcoding. Ignores no_convert, "
                 "never_convert_lossy_files, and max_bitrate"
@@ -216,7 +225,6 @@ class ConvertPlugin(BeetsPlugin):
         self, session: ImportSession, task: ImportTask
     ) -> None:
         if self.config["auto_keep"]:
-            empty_opts = self.commands()[0].parser.get_default_values()
             (
                 dest,
                 threads,
@@ -227,7 +235,7 @@ class ConvertPlugin(BeetsPlugin):
                 link,
                 _,
                 force,
-            ) = self._get_opts_and_config(empty_opts)
+            ) = self._get_opts_and_config()
 
             items = task.imported_items()
 
@@ -608,6 +616,7 @@ class ConvertPlugin(BeetsPlugin):
     def convert_func(
         self, lib: Library, opts: optparse.Values, args: list[str]
     ) -> None:
+        self.config.set(vars(opts))
         (
             dest,
             threads,
@@ -618,7 +627,7 @@ class ConvertPlugin(BeetsPlugin):
             link,
             playlist,
             force,
-        ) = self._get_opts_and_config(opts)
+        ) = self._get_opts_and_config()
 
         if opts.album:
             albums = lib.albums(args)
@@ -755,7 +764,7 @@ class ConvertPlugin(BeetsPlugin):
                 _temp_files.remove(path)
 
     def _get_opts_and_config(
-        self, opts: optparse.Values
+        self,
     ) -> tuple[
         bytes, int, dict[str, str], str, bool, bool, bool, str | None, bool
     ]:
@@ -763,36 +772,26 @@ class ConvertPlugin(BeetsPlugin):
         Get parameters from command line if available,
         default to config if not available.
         """
-        dest = opts.dest or self.config["dest"].get()
+        dest = self.config["dest"].get()
         if not dest:
             raise ui.UserError("no convert destination set")
         dest = util.bytestring_path(dest)
 
-        threads = opts.threads or self.config["threads"].get(int)
+        threads = self.config["threads"].get(int)
 
         path_formats = ui.get_path_formats(self.config["paths"] or None)
 
-        fmt = opts.format or self.config["format"].as_str().lower()
+        fmt = self.config["format"].as_str().lower()
 
-        playlist = opts.playlist or self.config["playlist"].get()
+        playlist = self.config["playlist"].get()
         if playlist is not None:
             playlist = os.path.join(dest, util.bytestring_path(playlist))
 
-        if opts.pretend is not None:
-            pretend = opts.pretend
-        else:
-            pretend = self.config["pretend"].get(bool)
+        pretend = self.config["pretend"].get(bool)
 
-        if opts.hardlink is not None:
-            hardlink = opts.hardlink
-            link = False
-        elif opts.link is not None:
-            hardlink = False
-            link = opts.link
-        else:
-            hardlink = self.config["hardlink"].get(bool)
-            link = self.config["link"].get(bool)
-        force = getattr(opts, "force", False)
+        hardlink = self.config["hardlink"].get(bool)
+        link = not hardlink and self.config["link"].get(bool)
+        force = self.config["force"].get(bool)
         return (
             dest,
             threads,
