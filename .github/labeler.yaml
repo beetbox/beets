@@ -65,7 +65,7 @@ importfeeds:
 importsource:
   - '/importsource/i'
 info:
-  - '/info(?: plugin|:)/i'
+  - '/\binfo(?: plugin|:)/i'
 inline:
   - '/inline(?: plugin|:)/i'
 ipfs:
@@ -79,7 +79,7 @@ lastgenre:
 lastimport:
   - '/lastimport/i'
 limit:
-  - '/limit(?: plugin|:)/i'
+  - '/\blimit(?: plugin|:)/i'
 listenbrainz:
   - '/listenbrainz/i'
 loadext:
@@ -109,7 +109,7 @@ parentwork:
 permissions:
   - '/permissions(?: plugin|:)/i'
 play:
-  - '/play(?: plugin|:)/i'
+  - '/\bplay(?: plugin|:)/i'
 playlist:
   - '/\bplaylist(?: plugin|:)/i'
 plexupdate:
@@ -147,4 +147,4 @@ unimported:
 web:
   - '/web(?: plugin|:)/i'
 zero:
-  - '/zero(?: plugin|:)/i'
+  - '/\bzero(?: plugin|:)/i'
