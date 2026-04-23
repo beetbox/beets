@@ -642,6 +642,7 @@ class Item(LibModel):
         "encoder_settings",
         "format",
         "grouping",
+        "subtitle",
         "initial_key",
         "isrc",
         "length",
