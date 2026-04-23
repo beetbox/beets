@@ -75,8 +75,9 @@ class DBAccessError(Exception):
     """The SQLite database became inaccessible.
 
     This can happen when trying to read or write the database when, for
-    example, the database file is deleted or otherwise disappears. There
-    is probably no way to recover from this error.
+    example, the database file is deleted, the parent directory is missing,
+    or the file permissions prevent the operation. There is probably no way
+    to recover from this error.
     """
 
 
@@ -1024,11 +1025,17 @@ class Transaction:
             # In two specific cases, SQLite reports an error while accessing
             # the underlying database file. We surface these exceptions as
             # DBAccessError so the application can abort.
-            if e.args[0] in (
-                "attempt to write a readonly database",
-                "unable to open database file",
-            ):
-                raise DBAccessError(e.args[0])
+            if e.args[0] == "unable to open database file":
+                raise DBAccessError(
+                    "unable to open database file. "
+                    "Check that the parent directory exists and is writable."
+                )
+            elif e.args[0] == "attempt to write a readonly database":
+                raise DBAccessError(
+                    "attempt to write a readonly database. "
+                    "Check file permissions: the database file or its directory "
+                    "may not be writable."
+                )
             raise
         else:
             self._mutated = True
