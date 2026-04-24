@@ -307,7 +307,7 @@ class TestLyricsPlugin(LyricsPluginMixin):
                 {"force": True, "synced": True},
                 "[00:00.00] old synced",
                 "[00:00.00] new synced",
-                "new synced",
+                "[00:00.00] new synced",
                 id="replace-with-new-synced-lyrics",
             ),
             pytest.param(
@@ -908,12 +908,18 @@ class TestSyncedLyricsWrite(LyricsPluginMixin):
         lyrics_plugin.add_item_lyrics(item, write=True)
 
         assert calls == [
-            {"tags": {"synced_lyrics": [("hello", 1000), ("world", 2000)]}}
+            {
+                "tags": {
+                    "lyrics": "hello\nworld",
+                    "synced_lyrics": [("hello", 1000), ("world", 2000)],
+                }
+            }
         ]
 
-    def test_plain_text_stored_in_lyrics_for_synced(
+    def test_lrc_text_kept_in_db_for_synced(
         self, monkeypatch, helper, lyrics_plugin
     ):
+        """LRC text is stored in the DB so keep_synced detection still works."""
         monkeypatch.setattr(
             lyrics_plugin, "find_lyrics", lambda _: Lyrics(self.SYNCED_LRC)
         )
@@ -922,7 +928,7 @@ class TestSyncedLyricsWrite(LyricsPluginMixin):
 
         lyrics_plugin.add_item_lyrics(item, write=True)
 
-        assert item.lyrics == "hello\nworld"
+        assert item.lyrics == self.SYNCED_LRC
 
     def test_sylt_cleared_for_plain_lyrics(
         self, monkeypatch, helper, lyrics_plugin
@@ -938,4 +944,23 @@ class TestSyncedLyricsWrite(LyricsPluginMixin):
 
         lyrics_plugin.add_item_lyrics(item, write=True)
 
-        assert calls == [{"tags": {"synced_lyrics": None}}]
+        assert calls == [
+            {"tags": {"lyrics": "plain lyrics", "synced_lyrics": None}}
+        ]
+
+    def test_sylt_and_uslt_written_to_mp3(self, monkeypatch, helper, lyrics_plugin):
+        """Integration: SYLT + plain USLT are written to a real MP3 file."""
+        import mutagen
+
+        monkeypatch.setattr(
+            lyrics_plugin, "find_lyrics", lambda _: Lyrics(self.SYNCED_LRC)
+        )
+        item = helper.add_item_fixture(format="MP3", lyrics="")
+
+        lyrics_plugin.add_item_lyrics(item, write=True)
+
+        f = mutagen.File(item.path)
+        assert f.tags.getall("SYLT"), "SYLT frame should be present"
+        assert f.tags["SYLT::XXX"].text == [("hello", 1000), ("world", 2000)]
+        assert f.tags.getall("USLT"), "USLT frame should be present"
+        assert f.tags["USLT::XXX"].text == "hello\nworld"
