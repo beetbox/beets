@@ -317,8 +317,6 @@ class ZeroPluginTest(IOMixin, PluginTestCase):
         assert item["comments"] == "test comment"
 
     def test_keep_fields_images_preserves_art(self):
-        """Regression test for #3532: 'images' in keep_fields should
-        preserve embedded album art."""
         path = self.create_mediafile_fixture(images=["jpg"])
         item = Item.from_path(path)
 
