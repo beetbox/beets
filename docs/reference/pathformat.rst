@@ -241,6 +241,7 @@ Ordinary metadata:
 - lyricists: The track lyricists as a multi-valued field.
 - remixers: The track remixers as a multi-valued field.
 - grouping
+- subtitle
 - year, month, day: The release date of the specific release.
 - original_year, original_month, original_day: The release date of the original
   version of the album.

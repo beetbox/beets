@@ -31,6 +31,7 @@ New features
   ``albums_for_ids`` and ``tracks_for_ids``. It also enables search by query as
   well as identifier-based retrieval, with support for ISRC codes (tracks) and
   barcode/EANs (albums).
+- Add support for adding or modifying a subtitle (ID3 tag ``TIT3``) field
 
   This is an initial, relatively minimal implementation, but already fully
   usable for common metadata workflows. We welcome feedback, improvement ideas,
@@ -41,9 +42,20 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- :ref:`import-cmd`: Multi-disc album detection now recognizes ``cassette``,
+  ``digital media``, and ``vinyl`` as disc markers (e.g. ``vinyl 1``, ``12 vinyl
+  2``), in addition to the existing ``disc``, ``disk``, and ``cd`` markers.
 - :ref:`import-cmd`: Tags with a zero distance penalty are no longer shown as
   differences in the match display. Previously, custom ``distance_weights``
   could cause fields with no actual mismatch to appear in the ``≠`` line.
+- Library path migration now also handles manually edited database rows where
+  item or album-art paths were stored as SQLite ``TEXT`` values instead of
+  bytes, so upgrading to the portable-path storage format no longer fails for
+  those libraries. :bug:`6561`
+- :ref:`import-cmd` Fix duplicate album art files (e.g. ``cover.2.jpg``) being
+  created when re-importing albums with the :doc:`plugins/fetchart` plugin
+  enabled. Old album art is now properly removed when replacing duplicate albums
+  during import. :bug:`1264` :bug:`6205`
 
 ..
     For plugin developers

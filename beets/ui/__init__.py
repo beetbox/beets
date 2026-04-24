@@ -805,7 +805,7 @@ optparse.Option.ALWAYS_TYPED_ACTIONS += ("callback",)
 
 
 def _setup(
-    options: optparse.Values, lib: library.Library | None
+    options: optparse.Values,
 ) -> tuple[list[Subcommand], library.Library]:
     """Prepare and global state and updates it with command line options.
 
@@ -821,9 +821,8 @@ def _setup(
     subcommands = list(default_commands)
     subcommands.extend(plugins.commands())
 
-    if lib is None:
-        lib = _open_library(config)
-        plugins.send("library_opened", lib=lib)
+    lib = _open_library(config)
+    plugins.send("library_opened", lib=lib)
 
     return subcommands, lib
 
@@ -903,7 +902,7 @@ def _open_library(config: confuse.LazyConfig) -> library.Library:
     return lib
 
 
-def _raw_main(args: list[str], lib=None) -> None:
+def _raw_main(args: list[str] | None) -> None:
     """A helper function for `main` without top-level exception
     handling.
     """
@@ -984,20 +983,17 @@ def _raw_main(args: list[str], lib=None) -> None:
 
         return config_edit(options)
 
-    test_lib = bool(lib)
-    subcommands, lib = _setup(options, lib)
+    subcommands, lib = _setup(options)
     parser.add_subcommand(*subcommands)
 
     subcommand, suboptions, subargs = parser.parse_subcommand(subargs)
     subcommand.func(lib, suboptions, subargs)
 
     plugins.send("cli_exit", lib=lib)
-    if not test_lib:
-        # Clean up the library unless it came from the test harness.
-        lib._close()
+    lib._close()
 
 
-def main(args=None):
+def main(args: list[str] | None = None) -> None:
     """Run the main command-line interface for beets. Includes top-level
     exception handlers that print friendly error messages.
     """
