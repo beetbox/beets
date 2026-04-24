@@ -60,10 +60,6 @@ Bug fixes
   fields when the same artist is credited both in ``artists`` (for example with
   ``Feat.`` join text) and ``extraartists`` as ``Featuring``. :bug:`6166`
 
-- :doc:`plugins/zero`: When using ``keep_fields``, listing ``images`` now
-  correctly preserves embedded album art. Previously, ``art`` also needed to
-  be listed explicitly. :bug:`3532`
-
 ..
     For plugin developers
     ~~~~~~~~~~~~~~~~~~~~~
