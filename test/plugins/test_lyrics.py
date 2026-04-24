@@ -948,7 +948,9 @@ class TestSyncedLyricsWrite(LyricsPluginMixin):
             {"tags": {"lyrics": "plain lyrics", "synced_lyrics": None}}
         ]
 
-    def test_sylt_and_uslt_written_to_mp3(self, monkeypatch, helper, lyrics_plugin):
+    def test_sylt_and_uslt_written_to_mp3(
+        self, monkeypatch, helper, lyrics_plugin
+    ):
         """Integration: SYLT + plain USLT are written to a real MP3 file."""
         import mutagen
 
