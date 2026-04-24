@@ -63,12 +63,16 @@ class ZeroPlugin(BeetsPlugin):
                 self._set_pattern(field)
         # Whitelist mode.
         elif self.config["keep_fields"]:
+            keep = set(self.config["keep_fields"].as_str_seq())
+            # 'images' and 'art' both refer to embedded artwork
+            if "images" in keep:
+                keep.add("art")
+            if "art" in keep:
+                keep.add("images")
             for field in MediaFile.fields():
                 if (
-                    field not in self.config["keep_fields"].as_str_seq()
-                    and
-                    # These fields should always be preserved.
-                    field not in ("id", "path", "album_id")
+                    field not in keep
+                    and field not in ("id", "path", "album_id")
                 ):
                     self._set_pattern(field)
 
