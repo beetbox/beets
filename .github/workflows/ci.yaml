@@ -38,7 +38,7 @@ jobs:
       - name: Install system dependencies on Windows
         if: matrix.platform == 'windows-latest'
         run: |
-          choco install mp3gain -y
+          choco install mp3gain --allow-empty-checksums -y
 
       - name: Install system dependencies on Ubuntu
         if: matrix.platform == 'ubuntu-latest'

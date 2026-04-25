@@ -22,6 +22,7 @@ from functools import cached_property
 from typing import TYPE_CHECKING, NamedTuple
 
 from beets import config
+from beets.util import unique_list
 
 from .types import ArtistInfo
 
@@ -60,6 +61,15 @@ class ArtistState:
         credit: str
         join: str
         role: str
+
+        def __hash__(self) -> int:
+            return hash(self.id)
+
+        def __eq__(self, other: object) -> bool:
+            if isinstance(other, self.__class__):
+                return self.id == other.id
+
+            return False
 
         def get_artist(self, property_name: str) -> str:
             """Return the requested display field with its trailing join token.
@@ -122,9 +132,10 @@ class ArtistState:
     @property
     def main_artists(self) -> list[ValidArtist]:
         """Return the per-artist display names used for the 'artist' field."""
-        return [
+        artists = [
             a for a in self.valid_artists if not a.role or "featuring" in a.role
         ]
+        return unique_list(artists)
 
     @property
     def artists_ids(self) -> list[str]:
