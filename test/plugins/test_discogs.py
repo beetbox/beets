@@ -48,7 +48,7 @@ class DGAlbumInfoTest(BeetsTestCase):
             "uri": "https://www.discogs.com/release/release/13633721",
             "title": "ALBUM TITLE",
             "year": "3001",
-            "artists": [_artist("ARTIST NAME", id="ARTIST ID", join=",")],
+            "artists": [_artist("ARTIST NAME", join=",")],
             "formats": [
                 {
                     "descriptions": ["FORMAT DESC 1", "FORMAT DESC 2"],
@@ -402,7 +402,7 @@ class DGAlbumInfoTest(BeetsTestCase):
             ],
             "artists": [
                 _artist("ARTIST NAME (2)", id=321, join="&"),
-                _artist("OTHER ARTIST (5)", id=321),
+                _artist("OTHER ARTIST (5)", id=322),
             ],
             "title": "title",
             "labels": [
@@ -420,7 +420,7 @@ class DGAlbumInfoTest(BeetsTestCase):
         d = DiscogsPlugin().get_album_info(release)
         assert d.artist == "ARTIST NAME & OTHER ARTIST"
         assert d.artists == ["ARTIST NAME", "OTHER ARTIST"]
-        assert d.artists_ids == ["321", "321"]
+        assert d.artists_ids == ["321", "322"]
         assert d.tracks[0].artist == "TEST ARTIST"
         assert d.tracks[0].artists == ["TEST ARTIST"]
         assert d.tracks[0].artist_id == "11146"
@@ -444,7 +444,7 @@ class DGAlbumInfoTest(BeetsTestCase):
             ],
             "artists": [
                 _artist("ARTIST NAME (2)", id=321, join="&"),
-                _artist("OTHER ARTIST (5)", id=321),
+                _artist("OTHER ARTIST (5)", id=322),
             ],
             "title": "title",
             "labels": [
@@ -571,7 +571,6 @@ class TestAnv:
             ),
         ],
     )
-    @pytest.mark.xfail(reason="ft artist is doubled")
     def test_track_artist_fields(self, album_info, expected_track_fields):
         self._assert_fields(album_info.tracks[0], expected_track_fields)
 
@@ -602,7 +601,6 @@ class TestAnv:
             ),
         ],
     )
-    @pytest.mark.xfail(reason="ft artist is doubled")
     def test_artist_credit_fields(
         self, album_info, expected_album_fields, expected_track_fields
     ):
