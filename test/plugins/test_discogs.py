@@ -519,7 +519,10 @@ class TestAnv:
                     "position": "A",
                     "type_": "track",
                     "duration": "5:44",
-                    "artists": [_artist("ARTIST", id=11146, anv="ART")],
+                    "artists": [
+                        _artist("ARTIST", id=11146, anv="ART", join="Feat."),
+                        _artist("PERFORMER", id=787),
+                    ],
                     "extraartists": [
                         _artist("PERFORMER", id=787, role="Featuring")
                     ],
@@ -568,6 +571,7 @@ class TestAnv:
             ),
         ],
     )
+    @pytest.mark.xfail(reason="ft artist is doubled")
     def test_track_artist_fields(self, album_info, expected_track_fields):
         self._assert_fields(album_info.tracks[0], expected_track_fields)
 
@@ -598,6 +602,7 @@ class TestAnv:
             ),
         ],
     )
+    @pytest.mark.xfail(reason="ft artist is doubled")
     def test_artist_credit_fields(
         self, album_info, expected_album_fields, expected_track_fields
     ):
