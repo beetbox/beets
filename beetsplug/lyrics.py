@@ -1054,6 +1054,14 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             default=self.config["local"].get(),
             help="do not fetch missing lyrics",
         )
+        cmd.parser.add_option(
+            "-u",
+            "--lyrics-url",
+            dest="lyrics_url",
+            action="store",
+            default=None,
+            help="override lyrics source with URL",
+        )
 
         def func(lib: Library, opts, args) -> None:
             # The "write to files" option corresponds to the
@@ -1061,6 +1069,9 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             self.config.set(vars(opts))
             items = list(lib.items(args))
             for item in items:
+                if opts.lyrics_url:
+                    item.lyrics_url = opts.lyrics_url
+                    item.store()
                 self.add_item_lyrics(item, ui.should_write())
                 if item.lyrics and opts.print:
                     ui.print_(item.lyrics)
@@ -1095,10 +1106,32 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
 
         return next(filter(None, matches), None)
 
+    def fetch_url_override(self, item: Item) -> Lyrics | None:
+        """Fetch lyrics from the URL stored in item.lyrics_url, if present."""
+        override_url = item.get("lyrics_url")
+        if not override_url:
+            return None
+
+        self.debug("Using override URL: {}", override_url)
+
+        # detect lrclib API URLs and use proper JSON parsing
+        if re.search(r"lrclib\.net/api/get/\d+", override_url):
+            with self.handle_request():
+                candidate = self.get_json(override_url)
+                lrc = LRCLyrics.make(candidate, round(item.length))
+                lyrics_text = lrc.get_text(self.config["synced"].get(bool))
+                return Lyrics(lyrics_text, "lrclib", override_url)
+            return None
+
+        # fallback: treat URL as plain text (e.g. raw lyrics page)
+        with self.handle_request():
+            text = self.get_text(override_url)
+            if text:
+                return Lyrics(text, "override", override_url)
+
+        return None
+
     def add_item_lyrics(self, item: Item, write: bool) -> None:
-        """Fetch and store lyrics for a single item. If ``write``, then the
-        lyrics will also be written to the file itself.
-        """
         if self.config["local"]:
             return
 
@@ -1107,17 +1140,29 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             return
 
         existing_lyrics = Lyrics.from_item(item)
-        if self.config["keep_synced"] and existing_lyrics.synced:
+        if (
+            self.config["keep_synced"]
+            and existing_lyrics.synced
+            and not item.get("lyrics_url")
+        ):
             self.info("🔵 Keeping synced lyrics: {}", item)
             return
 
-        if new_lyrics := self.find_lyrics(item):
+        if new_lyrics := self.fetch_url_override(item) or self.find_lyrics(
+            item
+        ):
             self.info("🟢 Found lyrics: {}", item)
             if translator := self.translator:
                 new_lyrics = translator.translate(new_lyrics, existing_lyrics)
 
+            is_override = bool(item.get("lyrics_url"))
             synced_mode = self.config["synced"].get(bool)
-            if synced_mode and existing_lyrics.synced and not new_lyrics.synced:
+            if (
+                synced_mode
+                and existing_lyrics.synced
+                and not new_lyrics.synced
+                and not is_override
+            ):
                 self.info(
                     "🔴 Not updating synced lyrics with non-synced ones: {}",
                     item,
