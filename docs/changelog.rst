@@ -56,6 +56,9 @@ Bug fixes
   created when re-importing albums with the :doc:`plugins/fetchart` plugin
   enabled. Old album art is now properly removed when replacing duplicate albums
   during import. :bug:`1264` :bug:`6205`
+- :doc:`plugins/discogs`: Prevent duplicate featured artists in track artist
+  fields when the same artist is credited both in ``artists`` (for example with
+  ``Feat.`` join text) and ``extraartists`` as ``Featuring``. :bug:`6166`
 
 ..
     For plugin developers
