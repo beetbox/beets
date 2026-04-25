@@ -778,6 +778,18 @@ class DisambiguationTest(BeetsTestCase, PathFormattingMixin):
         self._setf("foo%aunique{albumartist album flex,year}/$title")
         self._assert_dest(b"/base/foo/the title", self.i1)
 
+    def test_unique_detects_sanitized_album_collision(self):
+        album1 = self.lib.get_album(self.i1)
+        album2 = self.lib.get_album(self.i2)
+        album1.album = "1/1"
+        album2.album = "1?1"
+        album1.store()
+        album2.store()
+
+        self._setf("$album%aunique{albumartist album,year}/$title")
+        self._assert_dest(b"/base/1_1 [2001]/the title", self.i1)
+        self._assert_dest(b"/base/1_1 [2002]/the title", self.i2)
+
 
 class SingletonDisambiguationTest(BeetsTestCase, PathFormattingMixin):
     def setUp(self):

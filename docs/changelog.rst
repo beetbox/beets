@@ -18,6 +18,8 @@ Bug fixes
 
 - Correctly handle semicolon-delimited genre values from externally-tagged
   files. :bug:`6450`
+- Fix ``%aunique{}`` failing to disambiguate albums whose names collide after
+  path sanitization (e.g., ``"1/1"`` vs ``"1?1"``). :bug:`6462`
 
 ..
     For plugin developers

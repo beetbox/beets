@@ -1503,6 +1503,26 @@ class DefaultTemplateFunctions:
             else self.lib.albums(query)
         )
 
+        # If only one item matches by raw metadata, still check whether
+        # other items would collide after path formatting.
+        if isinstance(db_item, Album):
+            all_items = self.lib.albums()
+
+            def path_key(item):
+                formatted = item.formatted(for_path=True)
+                return tuple(
+                    util.sanitize_path(str(formatted.get(key, "")))
+                    for key in keys
+                )
+
+            path_safe_key = path_key(db_item)
+            path_collisions = [
+                item for item in all_items if path_key(item) == path_safe_key
+            ]
+
+            if len(path_collisions) > len(ambigous_items):
+                ambigous_items = path_collisions
+
         # If there's only one item to matching these details, then do
         # nothing.
         if len(ambigous_items) == 1:
@@ -1512,7 +1532,12 @@ class DefaultTemplateFunctions:
         # Find the first disambiguator that distinguishes the items.
         for disambiguator in disam:
             # Get the value for each item for the current field.
-            disam_values = {s.get(disambiguator, "") for s in ambigous_items}
+            disam_values = {
+                util.sanitize_path(
+                    s.formatted(for_path=True).get(disambiguator, "")
+                )
+                for s in ambigous_items
+            }
 
             # If the set of unique values is equal to the number of
             # items in the disambiguation set, we're done -- this is
