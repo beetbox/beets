@@ -315,3 +315,15 @@ class ZeroPluginTest(IOMixin, PluginTestCase):
         assert mf.year == 2016
         assert mf.comments == "test comment"
         assert item["comments"] == "test comment"
+
+    def test_keep_fields_images_preserves_art(self):
+        path = self.create_mediafile_fixture(images=["jpg"])
+        item = Item.from_path(path)
+
+        with self.configure_plugin({"fields": None, "keep_fields": ["images"]}):
+            item.write()
+
+        mf = MediaFile(syspath(path))
+        assert mf.images, (
+            "images should be preserved when 'images' is in keep_fields"
+        )

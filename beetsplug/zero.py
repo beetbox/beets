@@ -26,6 +26,9 @@ from beets.ui import Subcommand, input_yn
 __author__ = "baobab@heresiarch.info"
 
 
+ARTWORK_FIELDS = {"images", "art"}
+
+
 class ZeroPlugin(BeetsPlugin):
     def __init__(self):
         super().__init__()
@@ -63,12 +66,16 @@ class ZeroPlugin(BeetsPlugin):
                 self._set_pattern(field)
         # Whitelist mode.
         elif self.config["keep_fields"]:
+            keep = set(self.config["keep_fields"].as_str_seq())
+            # ensure that all artwork fields are added when at least
+            # one of them is present
+            if keep & ARTWORK_FIELDS:
+                keep.update(ARTWORK_FIELDS)
             for field in MediaFile.fields():
-                if (
-                    field not in self.config["keep_fields"].as_str_seq()
-                    and
-                    # These fields should always be preserved.
-                    field not in ("id", "path", "album_id")
+                if field not in keep and field not in (
+                    "id",
+                    "path",
+                    "album_id",
                 ):
                     self._set_pattern(field)
 
