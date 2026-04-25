@@ -128,7 +128,6 @@ class TestSearchApiMetadataSourcePlugin(PluginMixin):
             search_plugin._search_api("track", "query", {})
 
 
-@pytest.mark.xfail(reason="Currently only the last plugin is called")
 def test_albums_for_ids_calls_each_plugin_once(monkeypatch):
     start_workers = Event()
 
