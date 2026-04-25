@@ -67,7 +67,8 @@ class ZeroPlugin(BeetsPlugin):
         # Whitelist mode.
         elif self.config["keep_fields"]:
             keep = set(self.config["keep_fields"].as_str_seq())
-            # ensure that all artwork fields are added when at least one of them is present
+            # ensure that all artwork fields are added when at least
+            # one of them is present
             if keep & ARTWORK_FIELDS:
                 keep.update(ARTWORK_FIELDS)
             for field in MediaFile.fields():
