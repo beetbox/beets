@@ -17,16 +17,18 @@
 from __future__ import annotations
 
 import os
+from collections import defaultdict
+from functools import cached_property
 from shlex import quote as shell_quote
 from typing import TYPE_CHECKING, Any, TypeAlias
 from urllib.parse import quote
 from urllib.request import pathname2url
 
-from beets import ui
+import confuse
+
+from beets import plugins, ui
 from beets.dbcore.query import ParsingError, Query, Sort
 from beets.library import Album, Item, parse_query_string
-from beets.plugins import BeetsPlugin
-from beets.plugins import send as send_event
 from beets.util import (
     bytestring_path,
     mkdirall,
@@ -37,18 +39,19 @@ from beets.util import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from beets.library import Library
 
 QueryAndSort = tuple[Query, Sort]
 PlaylistQuery = Query | tuple[QueryAndSort, ...] | None
+PlaylistQueryAndSort = tuple[PlaylistQuery, Sort | None]
 PlaylistMatch: TypeAlias = tuple[
-    str,
-    tuple[PlaylistQuery, Sort | None],
-    tuple[PlaylistQuery, Sort | None],
+    str, PlaylistQueryAndSort, PlaylistQueryAndSort
 ]
 
 
-class SmartPlaylistPlugin(BeetsPlugin):
+class SmartPlaylistPlugin(plugins.BeetsPlugin):
     def __init__(self) -> None:
         super().__init__()
         self.config.add(
@@ -65,15 +68,45 @@ class SmartPlaylistPlugin(BeetsPlugin):
                 "urlencode": False,
                 "format": "$artist - $title",
                 "output": "m3u",
+                "pretend": False,
             }
         )
 
         self.config["prefix"].redact = True  # May contain username/password.
         self._matched_playlists: set[PlaylistMatch] = set()
         self._unmatched_playlists: set[PlaylistMatch] = set()
+        # validate output format
+        self.config["output"].get(confuse.Choice(["m3u", "extm3u"]))
 
         if self.config["auto"]:
             self.register_listener("database_change", self.db_change)
+
+    @cached_property
+    def prefix(self) -> bytes:
+        return bytestring_path(self.config["prefix"].as_str())
+
+    @cached_property
+    def relative_to(self) -> bytes | None:
+        if relative_to := self.config["relative_to"].get():
+            return normpath(relative_to)
+
+        return None
+
+    @cached_property
+    def dest_regen(self) -> bool:
+        return self.config["dest_regen"].get(bool)
+
+    @cached_property
+    def forward_slash(self) -> bool:
+        return self.config["forward_slash"].get(bool)
+
+    @cached_property
+    def urlencode(self) -> bool:
+        return self.config["urlencode"].get(bool)
+
+    @cached_property
+    def uri_format(self) -> str | None:
+        return self.config["uri_format"].get()
 
     def commands(self) -> list[ui.Subcommand]:
         spl_update = ui.Subcommand(
@@ -147,7 +180,8 @@ class SmartPlaylistPlugin(BeetsPlugin):
         )
         spl_update.parser.add_option(
             "--output",
-            type="string",
+            type="choice",
+            choices=["m3u", "extm3u"],
             default=self.config["output"].get(),
             help="specify the playlist format: m3u|extm3u.",
         )
@@ -181,7 +215,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
             self._matched_playlists = self._unmatched_playlists
 
         self.config.set(vars(opts))
-        self.update_playlists(lib, opts.pretend)
+        self.update_playlists(lib)
 
     def _parse_one_query(
         self, playlist: dict[str, Any], key: str, model_cls: type
@@ -265,142 +299,158 @@ class SmartPlaylistPlugin(BeetsPlugin):
 
         self._unmatched_playlists -= self._matched_playlists
 
-    def update_playlists(self, lib: Library, pretend: bool = False) -> None:
-        self._log.info(
-            "Updating {} smart playlists...",
-            len(self._matched_playlists),
-        )
+    @staticmethod
+    def get_queries(
+        query: PlaylistQueryAndSort,
+    ) -> list[tuple[Query, Sort | None]]:
+        """Normalize a playlist query into a flat list of query-sort pairs.
+
+        Handles both compound (list/tuple of pairs) and single query inputs,
+        returning an empty list when no query is present.
+        """
+        q, sort = query
+
+        if isinstance(q, (list, tuple)):
+            return list(q)
+        if q:
+            return [(q, sort)]
+
+        return []
+
+    @classmethod
+    def get_playlist_items(
+        cls,
+        lib: Library,
+        item_q: PlaylistQueryAndSort,
+        album_q: PlaylistQueryAndSort,
+    ) -> Iterator[Item]:
+        """Collect unique items matching the playlist's item and album queries.
+
+        Queries both tracks directly and albums (expanding them to their
+        tracks), then merges the results into a deduplicated list preserving
+        insertion order.
+        """
+        items: list[Item] = []
+
+        for q, sort in cls.get_queries(item_q):
+            items.extend(lib.items(q, sort))
+
+        albums: list[Album] = []
+        for q, sort in cls.get_queries(album_q):
+            albums.extend(lib.albums(q, sort))
+
+        seen_album_ids = set()
+        for album in albums:
+            if album.id not in seen_album_ids:
+                seen_album_ids.add(album.id)
+                items.extend(album.items())
+
+        seen_ids = set()
+        for item in items:
+            if item.id not in seen_ids:
+                seen_ids.add(item.id)
+                yield item
+
+    def get_item_uri(self, item: Item) -> bytes:
+        item_uri = item.path
+        if uri_format := self.uri_format:
+            return uri_format.replace("$id", str(item.id)).encode("utf-8")
+
+        if self.dest_regen:
+            item_uri = item.destination()
+        if self.relative_to:
+            item_uri = os.path.relpath(item_uri, self.relative_to)
+        if self.forward_slash:
+            item_uri = path_as_posix(item_uri)
+        if self.urlencode:
+            item_uri = bytestring_path(pathname2url(os.fsdecode(item_uri)))
+
+        return self.prefix + item_uri
+
+    def write_playlist(
+        self, path: bytes, is_extm3u: bool, entries: list[PlaylistItem]
+    ) -> None:
+        """Write a playlist file with the given entries."""
+        mkdirall(path)
+        with open(syspath(path), "wb") as f:
+            keys = []
+            if is_extm3u:
+                keys = self.config["fields"].get(list)
+                f.write(b"#EXTM3U\n")
+            for entry in entries:
+                f.write(entry.get_comment(is_extm3u, keys))
+
+    def update_playlists(self, lib: Library) -> None:
+        playlist_count = len(self._matched_playlists)
+        self._log.info("Updating {} smart playlists...", playlist_count)
 
         playlist_dir = bytestring_path(
             self.config["playlist_dir"].as_filename()
         )
-        tpl = self.config["uri_format"].get()
-        prefix = bytestring_path(self.config["prefix"].as_str())
-        dest_regen = self.config["dest_regen"].get(bool)
-        relative_to = self.config["relative_to"].get()
-        if relative_to:
-            relative_to = normpath(relative_to)
 
         # Maps playlist filenames to lists of track entries and URI sets used
         # to deduplicate output lines.
-        m3us: dict[str, list[PlaylistItem]] = {}
-        m3u_uris_by_name: dict[str, set[Any]] = {}
+        m3us: dict[str, list[PlaylistItem]] = defaultdict(list)
+        m3u_uris_by_name: dict[str, set[bytes]] = defaultdict(set)
 
         for playlist in self._matched_playlists:
-            matched_count = 0
-            name, (query, q_sort), (album_query, a_q_sort) = playlist
-            items = []
-
-            # Handle tuple/list of queries (preserves order)
-            # Track seen items to avoid duplicates when an item matches
-            # multiple queries
-            seen_ids = set()
-
-            if isinstance(query, (list, tuple)):
-                for q, sort in query:
-                    for item in lib.items(q, sort):
-                        if item.id not in seen_ids:
-                            items.append(item)
-                            seen_ids.add(item.id)
-            elif query:
-                items.extend(lib.items(query, q_sort))
-
-            if isinstance(album_query, (list, tuple)):
-                for q, sort in album_query:
-                    for album in lib.albums(q, sort):
-                        for item in album.items():
-                            if item.id not in seen_ids:
-                                items.append(item)
-                                seen_ids.add(item.id)
-            elif album_query:
-                for album in lib.albums(album_query, a_q_sort):
-                    items.extend(album.items())
+            name, item_q, album_q = playlist
+            items = self.get_playlist_items(lib, item_q, album_q)
 
             # As we allow tags in the m3u names, we'll need to iterate through
             # the items and generate the correct m3u file names.
-            matched_items: list[tuple[Any, Any]] = []
+            matched_items: list[Item] = []
             for item in items:
                 m3u_name = item.evaluate_template(name, True)
                 m3u_name = sanitize_path(m3u_name, lib.replacements)
-                if m3u_name not in m3us:
-                    m3us[m3u_name] = []
-                    m3u_uris_by_name[m3u_name] = set()
-                item_uri = item.path
-                if tpl:
-                    item_uri = tpl.replace("$id", str(item.id)).encode("utf-8")
-                else:
-                    if dest_regen is True:
-                        item_uri = item.destination()
-                    if relative_to:
-                        item_uri = os.path.relpath(item_uri, relative_to)
-                    if self.config["forward_slash"].get(bool):
-                        item_uri = path_as_posix(item_uri)
-                    if self.config["urlencode"].get(bool):
-                        item_uri = bytestring_path(
-                            pathname2url(os.fsdecode(item_uri))
-                        )
-                    item_uri = prefix + item_uri
+                item_uri = self.get_item_uri(item)
 
                 if item_uri not in m3u_uris_by_name[m3u_name]:
                     m3u_uris_by_name[m3u_name].add(item_uri)
                     m3us[m3u_name].append(PlaylistItem(item, item_uri))
-                    matched_items.append((item, item_uri))
-                    matched_count += 1
+                    matched_items.append(item)
 
             self._log.info(
-                "Creating playlist {}: {} tracks.", name, matched_count
+                "Creating playlist {}: {} tracks.", name, len(matched_items)
             )
-            for item, item_uri in matched_items:
+            for item in matched_items:
                 self._log.debug(
                     item.evaluate_template(self.config["format"].as_str())
                 )
 
-        if not pretend:
+        if self.config["pretend"].get():
+            self._log.info("{} playlists would be updated", playlist_count)
+        else:
             # Write all of the accumulated track lists to files.
+            is_extm3u = self.config["output"].get() == "extm3u"
             for m3u, entries in m3us.items():
                 m3u_path = normpath(
                     os.path.join(playlist_dir, bytestring_path(m3u))
                 )
-                mkdirall(m3u_path)
-                pl_format = self.config["output"].get()
-                if pl_format != "m3u" and pl_format != "extm3u":
-                    msg = "Unsupported output format '{}' provided! "
-                    msg += "Supported: m3u, extm3u"
-                    raise Exception(msg.format(pl_format))
-                extm3u = pl_format == "extm3u"
-                with open(syspath(m3u_path), "wb") as f:
-                    keys = []
-                    if extm3u:
-                        keys = self.config["fields"].get(list)
-                        f.write(b"#EXTM3U\n")
-                    for entry in entries:
-                        item = entry.item
-                        comment = ""
-                        if extm3u:
-                            attr = [(k, entry.item[k]) for k in keys]
-                            al = [
-                                f' {k}="{quote("; ".join(v) if isinstance(v, list) else str(v), safe="/:")}"'  # noqa: E501
-                                for k, v in attr
-                            ]
-                            attrs = "".join(al)
-                            comment = (
-                                f"#EXTINF:{int(item.length)}{attrs},"
-                                f"{item.artist} - {item.title}\n"
-                            )
-                        f.write(comment.encode("utf-8") + entry.uri + b"\n")
-            # Send an event when playlists were updated.
-            send_event("smartplaylist_update")  # type: ignore
+                self.write_playlist(m3u_path, is_extm3u, entries)
 
-        if pretend:
-            self._log.info(
-                "{} playlists would be updated",
-                len(self._matched_playlists),
-            )
-        else:
-            self._log.info("{} playlists updated", len(self._matched_playlists))
+            # Send an event when playlists were updated.
+            plugins.send("smartplaylist_update")
+            self._log.info("{} playlists updated", playlist_count)
 
 
 class PlaylistItem:
     def __init__(self, item: Item, uri: bytes) -> None:
         self.item = item
         self.uri = uri
+
+    def get_comment(self, is_extm3u: bool, fields: list[str]) -> bytes:
+        comment = ""
+        if is_extm3u:
+            attr = [(k, self.item[k]) for k in fields]
+            al = [
+                f' {k}="{quote("; ".join(v) if isinstance(v, list) else str(v), safe="/:")}"'  # noqa: E501
+                for k, v in attr
+            ]
+            attrs = "".join(al)
+            comment = (
+                f"#EXTINF:{int(self.item.length)}{attrs},"
+                f"{self.item.artist} - {self.item.title}\n"
+            )
+
+        return comment.encode("utf-8") + self.uri + b"\n"

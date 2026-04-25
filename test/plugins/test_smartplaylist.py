@@ -25,10 +25,13 @@ import pytest
 from beets import config
 from beets.dbcore.query import FixedFieldSort, MultipleSort, NullSort
 from beets.library import Album, Item, parse_query_string
+from beets.test._common import item
 from beets.test.helper import BeetsTestCase, IOMixin, PluginTestCase
 from beets.ui import UserError
 from beets.util import CHAR_REPLACE, syspath
 from beetsplug.smartplaylist import SmartPlaylistPlugin
+
+_p = pytest.param
 
 
 class SmartPlaylistTest(BeetsTestCase):
@@ -300,242 +303,78 @@ class SmartPlaylistTest(BeetsTestCase):
             b"/tagada.mp3\n"
         )
 
-    def test_playlist_update_uri_format(self):
-        spl = SmartPlaylistPlugin()
+    def test_get_playlist_items(self):
+        """Test get playlist items.
 
-        i = MagicMock()
-        type(i).id = PropertyMock(return_value=3)
-        type(i).path = PropertyMock(return_value=b"/tagada.mp3")
-        i.evaluate_template.side_effect = lambda pl, *_: os.fsdecode(
-            pl
-        ).replace("$title", "ta:ga:da")
+        - Items preserve their order in the playlist
+        - There are no duplicates when items match multiple queries
+        """
+        self.add_item(path=b"/item1.mp3", id=1)
+        self.add_item(path=b"/item2.mp3", id=2)
+        self.add_item(path=b"/item3.mp3", id=3)
+        queries_and_sorts = (("path::item id-", None), ("path::item3", None))
 
-        lib = Mock()
-        lib.replacements = CHAR_REPLACE
-        lib.items.return_value = [i]
-        lib.albums.return_value = []
-
-        q = Mock()
-        a_q = Mock()
-        pl = b"$title-my<playlist>.m3u", (q, None), (a_q, None)
-        spl._matched_playlists = {pl}
-
-        dir = mkdtemp()
-        tpl = "http://beets:8337/item/$id/file"
-        config["smartplaylist"]["uri_format"] = tpl
-        config["smartplaylist"]["playlist_dir"] = dir
-        # The following options should be ignored when uri_format is set
-        config["smartplaylist"]["relative_to"] = "/data"
-        config["smartplaylist"]["prefix"] = "/prefix"
-        config["smartplaylist"]["urlencode"] = True
-        try:
-            spl.update_playlists(lib)
-        except Exception:
-            rmtree(syspath(dir))
-            raise
-
-        lib.items.assert_called_once_with(q, None)
-        lib.albums.assert_called_once_with(a_q, None)
-
-        m3u_filepath = Path(dir, "ta_ga_da-my_playlist_.m3u")
-        assert m3u_filepath.exists()
-        content = m3u_filepath.read_bytes()
-        rmtree(syspath(dir))
-
-        assert content == b"http://beets:8337/item/3/file\n"
-
-    def test_playlist_update_multiple_queries_preserve_order(self):
-        """Test that multiple queries preserve their order in the playlist."""
-        spl = SmartPlaylistPlugin()
-
-        # Create three mock items
-        i1 = Mock(path=b"/item1.mp3", id=1)
-        i1.evaluate_template.return_value = "ordered.m3u"
-        i2 = Mock(path=b"/item2.mp3", id=2)
-        i2.evaluate_template.return_value = "ordered.m3u"
-        i3 = Mock(path=b"/item3.mp3", id=3)
-        i3.evaluate_template.return_value = "ordered.m3u"
-
-        lib = Mock()
-        lib.replacements = CHAR_REPLACE
-        lib.albums.return_value = []
-
-        # Set up lib.items to return different items for different queries
-        q1 = Mock()
-        q2 = Mock()
-        q3 = Mock()
-
-        def items_side_effect(query, sort):
-            if query == q1:
-                return [i1]
-            elif query == q2:
-                return [i2]
-            elif query == q3:
-                return [i3]
-            return []
-
-        lib.items.side_effect = items_side_effect
-
-        # Create playlist with multiple queries (stored as tuple)
-        queries_and_sorts = ((q1, None), (q2, None), (q3, None))
-        pl = "ordered.m3u", (queries_and_sorts, None), (None, None)
-        spl._matched_playlists = {pl}
-
-        dir = mkdtemp()
-        config["smartplaylist"]["relative_to"] = False
-        config["smartplaylist"]["playlist_dir"] = str(dir)
-        try:
-            spl.update_playlists(lib)
-        except Exception:
-            rmtree(syspath(dir))
-            raise
-
-        # Verify that lib.items was called with queries in the correct order
-        assert lib.items.call_count == 3
-        lib.items.assert_any_call(q1, None)
-        lib.items.assert_any_call(q2, None)
-        lib.items.assert_any_call(q3, None)
-
-        m3u_filepath = Path(dir, "ordered.m3u")
-        assert m3u_filepath.exists()
-        content = m3u_filepath.read_bytes()
-        rmtree(syspath(dir))
-
-        # Items should be in order: i1, i2, i3
-        assert content == b"/item1.mp3\n/item2.mp3\n/item3.mp3\n"
-
-    def test_playlist_update_multiple_queries_no_duplicates(self):
-        """Test that items matching multiple queries only appear once."""
-        spl = SmartPlaylistPlugin()
-
-        # Create two mock items
-        i1 = Mock(path=b"/item1.mp3", id=1)
-        i1.evaluate_template.return_value = "dedup.m3u"
-        i2 = Mock(path=b"/item2.mp3", id=2)
-        i2.evaluate_template.return_value = "dedup.m3u"
-
-        lib = Mock()
-        lib.replacements = CHAR_REPLACE
-        lib.albums.return_value = []
-
-        # Set up lib.items so both queries return overlapping items
-        q1 = Mock()
-        q2 = Mock()
-
-        def items_side_effect(query, sort):
-            if query == q1:
-                return [i1, i2]  # Both items match q1
-            elif query == q2:
-                return [i2]  # Only i2 matches q2
-            return []
-
-        lib.items.side_effect = items_side_effect
-
-        # Create playlist with multiple queries (stored as tuple)
-        queries_and_sorts = ((q1, None), (q2, None))
-        pl = "dedup.m3u", (queries_and_sorts, None), (None, None)
-        spl._matched_playlists = {pl}
-
-        dir = mkdtemp()
-        config["smartplaylist"]["relative_to"] = False
-        config["smartplaylist"]["playlist_dir"] = str(dir)
-        try:
-            spl.update_playlists(lib)
-        except Exception:
-            rmtree(syspath(dir))
-            raise
-
-        m3u_filepath = Path(dir, "dedup.m3u")
-        assert m3u_filepath.exists()
-        content = m3u_filepath.read_bytes()
-        rmtree(syspath(dir))
-
-        # i2 should only appear once even though it matches both queries
-        # Order should be: i1 (from q1), i2 (from q1, skipped in q2)
-        assert content == b"/item1.mp3\n/item2.mp3\n"
-        # Verify i2 is not duplicated
-        assert content.count(b"/item2.mp3") == 1
-
-    def test_playlist_update_dest_regen(self):
-        spl = SmartPlaylistPlugin()
-
-        i = MagicMock()
-        type(i).artist = PropertyMock(return_value="fake artist")
-        type(i).title = PropertyMock(return_value="fake title")
-        type(i).length = PropertyMock(return_value=300.123)
-        # Set a path which is not equal to the one returned by `item.destination`.
-        type(i).path = PropertyMock(
-            return_value=b"/imported/path/with/dont/move/tagada.mp3"
-        )
-        # Set a path which would be equal to the one returned by `item.destination`.
-        type(i).destination = PropertyMock(return_value=lambda: b"/tagada.mp3")
-        i.evaluate_template.side_effect = lambda pl, *_: os.fsdecode(
-            pl
-        ).replace("$title", "ta:ga:da")
-
-        lib = Mock()
-        lib.replacements = CHAR_REPLACE
-        lib.items.return_value = [i]
-        lib.albums.return_value = []
-
-        q = Mock()
-        a_q = Mock()
-        pl = b"$title-my<playlist>.m3u", (q, None), (a_q, None)
-        spl._matched_playlists = {pl}
-
-        dir = mkdtemp()
-        config["smartplaylist"]["output"] = "extm3u"
-        config["smartplaylist"]["prefix"] = "http://beets:8337/files"
-        config["smartplaylist"]["relative_to"] = False
-        config["smartplaylist"]["playlist_dir"] = str(dir)
-
-        # Test when `dest_regen` is set to True:
-        # Intended behavior is to use the path of `i.destination`.
-
-        config["smartplaylist"]["dest_regen"] = True
-        try:
-            spl.update_playlists(lib)
-        except Exception:
-            rmtree(syspath(dir))
-            raise
-
-        lib.items.assert_called_once_with(q, None)
-        lib.albums.assert_called_once_with(a_q, None)
-
-        m3u_filepath = Path(dir, "ta_ga_da-my_playlist_.m3u")
-        assert m3u_filepath.exists()
-        with open(syspath(m3u_filepath), "rb") as f:
-            content = f.read()
-        rmtree(syspath(dir))
-
-        assert content == (
-            b"#EXTM3U\n"
-            b"#EXTINF:300,fake artist - fake title\n"
-            b"http://beets:8337/files/tagada.mp3\n"
+        actual_items = SmartPlaylistPlugin.get_playlist_items(
+            self.lib, (queries_and_sorts, None), (None, None)
         )
 
-        # Test when `dest_regen` is set to False:
-        # Intended behavior is to use the path of `i.path`.
+        assert [i.id for i in actual_items] == [3, 2, 1]
 
-        config["smartplaylist"]["dest_regen"] = False
 
-        try:
-            spl.update_playlists(lib)
-        except Exception:
-            rmtree(syspath(dir))
-            raise
+class TestGetItemURI:
+    @pytest.fixture
+    def plugin_config(self):
+        return {}
 
-        m3u_filepath = Path(dir, "ta_ga_da-my_playlist_.m3u")
-        assert m3u_filepath.exists()
-        with open(syspath(m3u_filepath), "rb") as f:
-            content = f.read()
-        rmtree(syspath(dir))
+    @pytest.fixture
+    def plugin(self, config, plugin_config):
+        plugin_config = {
+            "prefix": "http://beets:8337/files",
+            **plugin_config,
+        }
+        config["smartplaylist"].set(plugin_config)
 
-        assert content == (
-            b"#EXTM3U\n"
-            b"#EXTINF:300,fake artist - fake title\n"
-            b"http://beets:8337/files/imported/path/with/dont/move/tagada.mp3\n"
+        return SmartPlaylistPlugin()
+
+    @pytest.fixture(autouse=True)
+    def _setup(self, monkeypatch):
+        monkeypatch.setattr(Item, "destination", lambda _: b"/tagada.mp3")
+
+    @pytest.fixture
+    def item(self):
+        return item(
+            id=3,
+            artist="fake artist",
+            title="fake title",
+            length=300.123,
+            path=b"/imported/path/with/dont/move/tagada.mp3",
         )
+
+    @pytest.mark.parametrize(
+        "plugin_config, expected_uri",
+        [
+            _p(
+                {},
+                b"http://beets:8337/files/imported/path/with/dont/move/tagada.mp3",
+                id="path by default",
+            ),
+            _p(
+                {"dest_regen": True},
+                b"http://beets:8337/files/tagada.mp3",
+                id="dest_regen uses item destination",
+            ),
+            _p(
+                {
+                    "uri_format": "http://beets:8337/item/$id/file",
+                    "dest_regen": True,
+                },
+                b"http://beets:8337/item/3/file",
+                id="uri_format takes precedence",
+            ),
+        ],
+    )
+    def test_get_item_uri(self, plugin, item, expected_uri):
+        assert plugin.get_item_uri(item) == expected_uri
 
 
 class SmartPlaylistCLITest(IOMixin, PluginTestCase):
