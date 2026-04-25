@@ -38,7 +38,7 @@ from functools import cached_property
 from pathlib import Path
 from tempfile import gettempdir, mkdtemp, mkstemp
 from typing import Any, ClassVar
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 import responses
@@ -126,17 +126,21 @@ NEEDS_REFLINK = unittest.skipUnless(
 
 
 class RunMixin:
-    def run_command(self, *args, **kwargs):
+    lib: Library
+
+    def run_command(self, *args, lib: Library | None = None):
         """Run a beets command with an arbitrary amount of arguments. The
         Library` defaults to `self.lib`, but can be overridden with
         the keyword argument `lib`.
         """
-        sys.argv = ["beet"]  # avoid leakage from test suite args
-        lib = None
-        if hasattr(self, "lib"):
-            lib = self.lib
-        lib = kwargs.get("lib", lib)
-        beets.ui._raw_main(list(args), lib)
+        sys.argv = ["beet", *args]  # avoid leakage from test suite args
+        lib = lib or self.lib
+
+        with (
+            patch.object(lib, "_close", Mock()),
+            patch("beets.ui._open_library", return_value=lib),
+        ):
+            beets.ui._raw_main(list(args))
 
 
 @pytest.mark.usefixtures("io")

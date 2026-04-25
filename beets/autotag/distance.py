@@ -146,6 +146,7 @@ class Distance:
         return [
             k.replace("album_", "").replace("track_", "").replace("_", " ")
             for k in self._penalties
+            if self[k]
         ]
 
     # Access the components and their aggregates.

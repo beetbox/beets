@@ -761,7 +761,6 @@ class FanartTVTest(UseThePlugin):
             next(self.source.get(album, self.settings, []))
 
 
-@_common.slow_test()
 class ArtImporterTest(UseThePlugin):
     def setUp(self):
         super().setUp()

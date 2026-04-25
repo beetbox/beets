@@ -18,7 +18,6 @@ from __future__ import annotations
 
 import os
 import sys
-import unittest
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
@@ -76,9 +75,9 @@ def item(lib=None, **kwargs):
         albumartist="the album artist",
         album="the album",
         genres=["the genre"],
-        lyricist="the lyricist",
-        composer="the composer",
-        arranger="the arranger",
+        lyricists=["the lyricist"],
+        composers=["the composer"],
+        arrangers=["the arranger"],
         grouping="the grouping",
         work="the work title",
         mb_workid="the work musicbrainz id",
@@ -232,12 +231,3 @@ def system_mock(name):
         yield
     finally:
         platform.system = old_system
-
-
-def slow_test(unused=None):
-    def _id(obj):
-        return obj
-
-    if "SKIP_SLOW_TESTS" in os.environ:
-        return unittest.skip("test is slow")
-    return _id

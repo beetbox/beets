@@ -4,6 +4,9 @@ FetchArt Plugin
 The ``fetchart`` plugin retrieves album art images from various sources on the
 Web and stores them as image files.
 
+``fetchart`` supports fetching images in ``JPEG``, ``PNG``, and ``WebP``
+formats.
+
 To use the ``fetchart`` plugin, first enable it in your configuration (see
 :ref:`using-plugins`). Then, install ``beets`` with ``fetchart`` extra
 
@@ -87,7 +90,7 @@ file. The available options are:
   to store cover art as non-progressive JPEG. You might need this if you use
   DAPs that don't support progressive images. Default: ``no``.
 - **cover_format**: If enabled, forced the cover image into the specified
-  format. Most often, this will be either ``JPEG`` or ``PNG`` (see
+  format. Most often, this will be either ``JPEG``, ``PNG``, or ``WEBP`` (see
   image-formats_). Also respects ``deinterlace``. Default: None (leave
   unchanged).
 

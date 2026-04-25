@@ -26,7 +26,7 @@ import beets
 from beets import util
 from beets.util.units import human_seconds_short, raw_seconds_short
 
-from . import query
+from . import pathutils, query
 
 SQLiteType = query.SQLiteType
 BLOB_TYPE = query.BLOB_TYPE
@@ -204,14 +204,6 @@ class PaddedInt(BasePaddedInt[int]):
     pass
 
 
-class NullPaddedInt(BasePaddedInt[None]):
-    """Same as `PaddedInt`, but does not normalize `None` to `0`."""
-
-    @property
-    def null(self) -> None:
-        return None
-
-
 class ScaledInt(Integer):
     """An integer whose formatting operation scales the number by a
     constant and adds a suffix. Good for units with large magnitudes.
@@ -339,7 +331,7 @@ class DelimitedString(BaseString[list, list]):  # type: ignore[type-arg]
                 else:
                     result.append(item)
             return result
-        return list(value)
+        return self.model_type(value)
 
     def to_sql(self, model_value: list[str]):
         return self.db_delimiter.join(model_value)
@@ -410,9 +402,10 @@ class BasePathType(Type[bytes, N]):
             return value
 
     def from_sql(self, sql_value):
-        return self.normalize(sql_value)
+        return pathutils.expand_path_from_db(self.normalize(sql_value))
 
-    def to_sql(self, value: bytes) -> BLOB_TYPE:
+    def to_sql(self, value: pathutils.MaybeBytes) -> BLOB_TYPE | None:
+        value = pathutils.normalize_path_for_db(value)
         if isinstance(value, bytes):
             value = BLOB_TYPE(value)
         return value

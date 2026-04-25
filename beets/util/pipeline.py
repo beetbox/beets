@@ -33,6 +33,7 @@ in place of any single coroutine.
 
 from __future__ import annotations
 
+import contextvars
 import queue
 import sys
 from threading import Lock, Thread
@@ -237,12 +238,18 @@ def _allmsgs(obj):
 class PipelineThread(Thread):
     """Abstract base class for pipeline-stage threads."""
 
-    def __init__(self, all_threads):
+    def __init__(self, all_threads, ctx: contextvars.Context | None = None):
         super().__init__()
         self.abort_lock = Lock()
         self.abort_flag = False
         self.all_threads = all_threads
         self.exc_info = None
+        self.ctx = ctx
+
+    def _run_in_context(self, func, *args):
+        if self.ctx is None:
+            return func(*args)
+        return self.ctx.run(func, *args)
 
     def abort(self):
         """Shut down the thread at the next chance possible."""
@@ -267,8 +274,8 @@ class FirstPipelineThread(PipelineThread):
     The coroutine should just be a generator.
     """
 
-    def __init__(self, coro, out_queue, all_threads):
-        super().__init__(all_threads)
+    def __init__(self, coro, out_queue, all_threads, ctx=None):
+        super().__init__(all_threads, ctx)
         self.coro = coro
         self.out_queue = out_queue
         self.out_queue.acquire()
@@ -282,7 +289,7 @@ class FirstPipelineThread(PipelineThread):
 
                 # Get the value from the generator.
                 try:
-                    msg = next(self.coro)
+                    msg = self._run_in_context(next, self.coro)
                 except StopIteration:
                     break
 
@@ -306,8 +313,8 @@ class MiddlePipelineThread(PipelineThread):
     last.
     """
 
-    def __init__(self, coro, in_queue, out_queue, all_threads):
-        super().__init__(all_threads)
+    def __init__(self, coro, in_queue, out_queue, all_threads, ctx=None):
+        super().__init__(all_threads, ctx)
         self.coro = coro
         self.in_queue = in_queue
         self.out_queue = out_queue
@@ -316,7 +323,7 @@ class MiddlePipelineThread(PipelineThread):
     def run(self):
         try:
             # Prime the coroutine.
-            next(self.coro)
+            self._run_in_context(next, self.coro)
 
             while True:
                 with self.abort_lock:
@@ -333,7 +340,7 @@ class MiddlePipelineThread(PipelineThread):
                         return
 
                 # Invoke the current stage.
-                out = self.coro.send(msg)
+                out = self._run_in_context(self.coro.send, msg)
 
                 # Send messages to next stage.
                 for msg in _allmsgs(out):
@@ -355,14 +362,14 @@ class LastPipelineThread(PipelineThread):
     should yield nothing.
     """
 
-    def __init__(self, coro, in_queue, all_threads):
-        super().__init__(all_threads)
+    def __init__(self, coro, in_queue, all_threads, ctx=None):
+        super().__init__(all_threads, ctx)
         self.coro = coro
         self.in_queue = in_queue
 
     def run(self):
         # Prime the coroutine.
-        next(self.coro)
+        self._run_in_context(next, self.coro)
 
         try:
             while True:
@@ -380,7 +387,7 @@ class LastPipelineThread(PipelineThread):
                         return
 
                 # Send to consumer.
-                self.coro.send(msg)
+                self._run_in_context(self.coro.send, msg)
 
         except BaseException:
             self.abort_all(sys.exc_info())
@@ -419,26 +426,37 @@ class Pipeline:
         messages between the stages are stored in queues of the given
         size.
         """
+        base_ctx = contextvars.copy_context()
         queue_count = len(self.stages) - 1
         queues = [CountedQueue(queue_size) for i in range(queue_count)]
         threads = []
 
         # Set up first stage.
         for coro in self.stages[0]:
-            threads.append(FirstPipelineThread(coro, queues[0], threads))
+            # Each worker needs its own copy because Context objects cannot be
+            # entered concurrently from multiple threads.
+            threads.append(
+                FirstPipelineThread(coro, queues[0], threads, base_ctx.copy())
+            )
 
         # Middle stages.
         for i in range(1, queue_count):
             for coro in self.stages[i]:
                 threads.append(
                     MiddlePipelineThread(
-                        coro, queues[i - 1], queues[i], threads
+                        coro,
+                        queues[i - 1],
+                        queues[i],
+                        threads,
+                        base_ctx.copy(),
                     )
                 )
 
         # Last stage.
         for coro in self.stages[-1]:
-            threads.append(LastPipelineThread(coro, queues[-1], threads))
+            threads.append(
+                LastPipelineThread(coro, queues[-1], threads, base_ctx.copy())
+            )
 
         # Start threads.
         for thread in threads:

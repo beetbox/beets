@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import os
+from shlex import quote as shell_quote
 from typing import TYPE_CHECKING, Any, TypeAlias
 from urllib.parse import quote
 from urllib.request import pathname2url
@@ -28,7 +29,6 @@ from beets.plugins import BeetsPlugin
 from beets.plugins import send as send_event
 from beets.util import (
     bytestring_path,
-    displayable_path,
     mkdirall,
     normpath,
     path_as_posix,
@@ -63,7 +63,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
                 "forward_slash": False,
                 "prefix": "",
                 "urlencode": False,
-                "pretend_paths": False,
+                "format": "$artist - $title",
                 "output": "m3u",
             }
         )
@@ -88,10 +88,11 @@ class SmartPlaylistPlugin(BeetsPlugin):
             help="display query results but don't write playlist files.",
         )
         spl_update.parser.add_option(
-            "--pretend-paths",
-            action="store_true",
-            dest="pretend_paths",
-            help="in pretend mode, log the playlist item URIs/paths.",
+            "-f",
+            "--format",
+            type="string",
+            default=self.config["format"].get(),
+            help="print per-track log lines with custom format",
         )
         spl_update.parser.add_option(
             "-d",
@@ -99,12 +100,14 @@ class SmartPlaylistPlugin(BeetsPlugin):
             dest="playlist_dir",
             metavar="PATH",
             type="string",
+            default=self.config["playlist_dir"].get(),
             help="directory to write the generated playlist files to.",
         )
         spl_update.parser.add_option(
             "--dest-regen",
             action="store_true",
             dest="dest_regen",
+            default=self.config["dest_regen"].get(bool),
             help="regenerate the destination path as 'move' or 'convert' "
             "commands would do.",
         )
@@ -113,33 +116,39 @@ class SmartPlaylistPlugin(BeetsPlugin):
             dest="relative_to",
             metavar="PATH",
             type="string",
+            default=self.config["relative_to"].get(),
             help="generate playlist item paths relative to this path.",
         )
         spl_update.parser.add_option(
             "--prefix",
             type="string",
+            default=self.config["prefix"].get(),
             help="prepend string to every path in the playlist file.",
         )
         spl_update.parser.add_option(
             "--forward-slash",
             action="store_true",
             dest="forward_slash",
+            default=self.config["forward_slash"].get(bool),
             help="force forward slash in paths within playlists.",
         )
         spl_update.parser.add_option(
             "--urlencode",
             action="store_true",
+            default=self.config["urlencode"].get(bool),
             help="URL-encode all paths.",
         )
         spl_update.parser.add_option(
             "--uri-format",
             dest="uri_format",
             type="string",
+            default=self.config["uri_format"].get(),
             help="playlist item URI template, e.g. http://beets:8337/item/$id/file.",
         )
         spl_update.parser.add_option(
             "--output",
             type="string",
+            default=self.config["output"].get(),
             help="specify the playlist format: m3u|extm3u.",
         )
         spl_update.func = self.update_cmd
@@ -160,8 +169,10 @@ class SmartPlaylistPlugin(BeetsPlugin):
             }
             if not playlists:
                 unmatched = [name for name, _, _ in self._unmatched_playlists]
+                unmatched.sort()
+                quoted_names = " ".join(shell_quote(name) for name in unmatched)
                 raise ui.UserError(
-                    f"No playlist matching any of {unmatched} found"
+                    f"No playlist matching any of {quoted_names} found"
                 )
 
             self._matched_playlists = playlists
@@ -169,13 +180,8 @@ class SmartPlaylistPlugin(BeetsPlugin):
         else:
             self._matched_playlists = self._unmatched_playlists
 
-        self.__apply_opts_to_config(opts)
+        self.config.set(vars(opts))
         self.update_playlists(lib, opts.pretend)
-
-    def __apply_opts_to_config(self, opts: Any) -> None:
-        for k, v in opts.__dict__.items():
-            if v is not None and k in self.config:
-                self.config[k] = v
 
     def _parse_one_query(
         self, playlist: dict[str, Any], key: str, model_cls: type
@@ -260,35 +266,29 @@ class SmartPlaylistPlugin(BeetsPlugin):
         self._unmatched_playlists -= self._matched_playlists
 
     def update_playlists(self, lib: Library, pretend: bool = False) -> None:
-        if pretend:
-            self._log.info(
-                "Showing query results for {} smart playlists...",
-                len(self._matched_playlists),
-            )
-        else:
-            self._log.info(
-                "Updating {} smart playlists...", len(self._matched_playlists)
-            )
+        self._log.info(
+            "Updating {} smart playlists...",
+            len(self._matched_playlists),
+        )
 
         playlist_dir = bytestring_path(
             self.config["playlist_dir"].as_filename()
         )
         tpl = self.config["uri_format"].get()
         prefix = bytestring_path(self.config["prefix"].as_str())
-        dest_regen = self.config["dest_regen"].get()
+        dest_regen = self.config["dest_regen"].get(bool)
         relative_to = self.config["relative_to"].get()
         if relative_to:
             relative_to = normpath(relative_to)
 
-        # Maps playlist filenames to lists of track filenames.
+        # Maps playlist filenames to lists of track entries and URI sets used
+        # to deduplicate output lines.
         m3us: dict[str, list[PlaylistItem]] = {}
+        m3u_uris_by_name: dict[str, set[Any]] = {}
 
         for playlist in self._matched_playlists:
+            matched_count = 0
             name, (query, q_sort), (album_query, a_q_sort) = playlist
-            if pretend:
-                self._log.info("Results for playlist {}:", name)
-            else:
-                self._log.info("Creating playlist {}", name)
             items = []
 
             # Handle tuple/list of queries (preserves order)
@@ -318,11 +318,13 @@ class SmartPlaylistPlugin(BeetsPlugin):
 
             # As we allow tags in the m3u names, we'll need to iterate through
             # the items and generate the correct m3u file names.
+            matched_items: list[tuple[Any, Any]] = []
             for item in items:
                 m3u_name = item.evaluate_template(name, True)
                 m3u_name = sanitize_path(m3u_name, lib.replacements)
                 if m3u_name not in m3us:
                     m3us[m3u_name] = []
+                    m3u_uris_by_name[m3u_name] = set()
                 item_uri = item.path
                 if tpl:
                     item_uri = tpl.replace("$id", str(item.id)).encode("utf-8")
@@ -331,24 +333,31 @@ class SmartPlaylistPlugin(BeetsPlugin):
                         item_uri = item.destination()
                     if relative_to:
                         item_uri = os.path.relpath(item_uri, relative_to)
-                    if self.config["forward_slash"].get():
+                    if self.config["forward_slash"].get(bool):
                         item_uri = path_as_posix(item_uri)
-                    if self.config["urlencode"]:
+                    if self.config["urlencode"].get(bool):
                         item_uri = bytestring_path(
                             pathname2url(os.fsdecode(item_uri))
                         )
                     item_uri = prefix + item_uri
 
-                if item_uri not in m3us[m3u_name]:
+                if item_uri not in m3u_uris_by_name[m3u_name]:
+                    m3u_uris_by_name[m3u_name].add(item_uri)
                     m3us[m3u_name].append(PlaylistItem(item, item_uri))
-                    if pretend and self.config["pretend_paths"]:
-                        print(displayable_path(item_uri))
-                    elif pretend:
-                        print(item)
+                    matched_items.append((item, item_uri))
+                    matched_count += 1
+
+            self._log.info(
+                "Creating playlist {}: {} tracks.", name, matched_count
+            )
+            for item, item_uri in matched_items:
+                self._log.debug(
+                    item.evaluate_template(self.config["format"].as_str())
+                )
 
         if not pretend:
             # Write all of the accumulated track lists to files.
-            for m3u in m3us:
+            for m3u, entries in m3us.items():
                 m3u_path = normpath(
                     os.path.join(playlist_dir, bytestring_path(m3u))
                 )
@@ -364,7 +373,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
                     if extm3u:
                         keys = self.config["fields"].get(list)
                         f.write(b"#EXTM3U\n")
-                    for entry in m3us[m3u]:
+                    for entry in entries:
                         item = entry.item
                         comment = ""
                         if extm3u:
@@ -384,7 +393,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
 
         if pretend:
             self._log.info(
-                "Displayed results for {} playlists",
+                "{} playlists would be updated",
                 len(self._matched_playlists),
             )
         else:

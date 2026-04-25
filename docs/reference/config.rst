@@ -581,6 +581,9 @@ beets will copy and then delete when a simple rename is impossible.) Moving
 files can be risky—it's a good idea to keep a backup in case beets doesn't do
 what you expect with your files.
 
+In the case of a ``move`` when importing an archive, the archive will be removed
+if all contents were successfully imported.
+
 This option *overrides* ``copy``, so enabling it will always move (and not copy)
 files. The ``-c`` switch to the ``beet import`` command, however, still takes
 precedence.
@@ -883,6 +886,36 @@ appended to the disambiguation string of matching track candidates. For example:
 ``The Artist - The Title (Discogs, Index 3, Track B1, [The Album]``. This
 feature is currently supported by the :doc:`/plugins/discogs` and the
 :doc:`/plugins/spotify`.
+
+Default: ``yes``.
+
+.. _fix_ext_inplace:
+
+fix_ext_inplace
+~~~~~~~~~~~~~~~
+
+The extension of each file is checked at import. If a file has no extension and
+its binary matches a music format, beets will look for a file with the same name
+and matching extension in the same directory. For example, when importing an mp3
+file named ``asdf``, beets look for ``asdf.mp3``. If found, that file will be
+imported instead. Otherwise, if ``fix_ext_inplace`` is ``yes``, then the file
+will be renamed to contain the extension. If ``fix_ext_inplace`` is ``no``, then
+the original will be left untouched and a copy with extension will be created in
+the same directory. This is only done if the user has ``ffprobe`` (bundled with
+FFmpeg)
+
+Default: ``no``.
+
+.. _remux_mp3_in_wav:
+
+remux_mp3_in_wav
+~~~~~~~~~~~~~~~~
+
+Some WAV files contain MP3 audio streams (``WAVE_FORMAT_MPEGLAYER3``) rather
+than the standard PCM format. When this option is enabled, beets will
+automatically extract the MP3 stream into a proper ``.mp3`` file during import,
+removing the WAV container. The original WAV file is deleted after successful
+extraction.
 
 Default: ``yes``.
 

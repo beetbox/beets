@@ -17,8 +17,9 @@ long-path support (Windows) are automatically managed by ``pathlib``.
 When storing paths in the database, however, convert them to bytes with
 ``bytestring_path()``. Paths in Beets are currently stored as bytes, although
 there are plans to eventually store ``pathlib.Path`` objects directly. To access
-media file paths in their stored form, use the ``.path`` property on ``Item``
-and ``Album``.
+media file paths from library objects, use ``.path`` for the absolute path as
+``bytes`` or ``.filepath`` for the absolute path as a ``pathlib.Path``. The
+database still stores these paths relative to the configured library root.
 
 Legacy utilities
 ----------------

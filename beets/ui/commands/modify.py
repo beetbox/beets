@@ -2,6 +2,7 @@
 
 from beets import library, ui
 from beets.util import functemplate
+from beets.util.deprecation import maybe_replace_legacy_field
 
 from .utils import do_query
 
@@ -79,10 +80,13 @@ def print_and_modify(obj, mods, dels):
     return ui.show_model_changes(obj)
 
 
-def modify_parse_args(args):
+def modify_parse_args(args, is_album: bool):
     """Split the arguments for the modify subcommand into query parts,
     assignments (field=value), and deletions (field!).  Returns the result as
     a three-tuple in that order.
+
+    Replace legacy string fields with list equivalents, and supply deprecation
+    warnings for the user.
     """
     mods = {}
     dels = []
@@ -92,6 +96,7 @@ def modify_parse_args(args):
             dels.append(arg[:-1])  # Strip trailing !.
         elif "=" in arg and ":" not in arg.split("=", 1)[0]:
             key, val = arg.split("=", 1)
+            key = maybe_replace_legacy_field(key, is_album, modify=True)
             mods[key] = val
         else:
             query.append(arg)
@@ -99,7 +104,7 @@ def modify_parse_args(args):
 
 
 def modify_func(lib, opts, args):
-    query, mods, dels = modify_parse_args(args)
+    query, mods, dels = modify_parse_args(args, is_album=opts.album)
     if not mods and not dels:
         raise ui.UserError("no modifications specified")
     modify_items(

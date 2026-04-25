@@ -95,18 +95,17 @@ You can also use this plugin together with the :doc:`mpdupdate`, in order to
 automatically notify MPD of the playlist change, by adding ``mpdupdate`` to the
 ``plugins`` line in your config file *after* the ``smartplaylist`` plugin.
 
-While changing existing playlists in the beets configuration it can help to use
-the ``--pretend`` option to find out if the edits work as expected. The results
-of the queries will be printed out instead of being written to the playlist
-file.
+While working on smart playlist queries in the beets configuration it can help
+to use the ``--pretend`` option to find out if the edits work as expected before
+writing changes. To list the tracks matching the query, switch to the DEBUG log
+level.
 
 ::
 
-    $ beet splupdate --pretend BeatlesUniverse.m3u
+    $ beet -v splupdate --pretend BeatlesUniverse.m3u
 
-The ``pretend_paths`` configuration option sets whether the items should be
-displayed as per the user's ``format_item`` setting or what the file paths as
-they would be written to the m3u file look like.
+The ``format`` configuration option defaults to ``$artist - $title``, and can be
+set up to a custom format string.
 
 In case you want to export additional fields from the beets database into the
 generated playlists, you can do so by specifying them within the ``fields``
@@ -168,8 +167,6 @@ options are:
   example, you could use the URL for a server where the music is stored.
   Default: empty string.
 - **urlencode**: URL-encode all paths. Default: ``no``.
-- **pretend_paths**: When running with ``--pretend``, show the actual file paths
-  that will be written to the m3u file. Default: ``false``.
 - **uri_format**: Template with an ``$id`` placeholder used generate a playlist
   item URI, e.g. ``http://beets:8337/item/$id/file``. When this option is
   specified, the local path-related options ``dest_regen``, ``prefix``,
@@ -179,9 +176,11 @@ options are:
   playlist. This allows using e.g. the ``id`` field within other tools such as
   the webm3u_ and Beetstream_ plugins. To use this option, you must set the
   ``output`` option to ``extm3u``.
+- **format**: Specify the format a playlist item is logged in ``DEBUG`` level.
+  Default: ``$artist - $title``.
 
 For many configuration options, there is a corresponding CLI option, e.g.
 ``--playlist-dir``, ``--dest-regen``, ``--relative-to``, ``--prefix``,
 ``--forward-slash``, ``--urlencode``, ``--uri-format``, ``--output``,
-``--pretend-paths``. CLI options take precedence over those specified within the
+``--format``. CLI options take precedence over those specified within the
 configuration file.

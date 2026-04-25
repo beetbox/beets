@@ -7,9 +7,24 @@ from typing import TYPE_CHECKING, Any
 from packaging.version import Version
 
 import beets
+from beets import logging
 
 if TYPE_CHECKING:
     from logging import Logger
+
+
+ALBUM_LEGACY_TO_LIST_FIELD = {
+    "genre": "genres",
+}
+ITEM_LEGACY_TO_LIST_FIELD = {
+    "genre": "genres",
+    "arranger": "arrangers",
+    "composer": "composers",
+    "lyricist": "lyricists",
+    "remixer": "remixers",
+}
+
+log = logging.getLogger("beets")
 
 
 def _format_message(old: str, new: str | None = None) -> str:
@@ -58,3 +73,19 @@ def deprecate_imports(
 
         return getattr(import_module(new_module), name)
     raise AttributeError(f"module '{old_module}' has no attribute '{name}'")
+
+
+def maybe_replace_legacy_field(
+    field: str, is_album: bool, modify: bool = False
+) -> str:
+    legacy_to_list_field = (
+        ALBUM_LEGACY_TO_LIST_FIELD if is_album else ITEM_LEGACY_TO_LIST_FIELD
+    )
+    if list_field := legacy_to_list_field.get(field):
+        new = f"'{list_field}'"
+        if modify:
+            new += " (separate values by '; ')"
+        deprecate_for_user(log, f"The '{field}' field", new)
+        return list_field
+
+    return field

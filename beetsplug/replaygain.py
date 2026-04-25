@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import collections
+import contextvars
 import enum
 import math
 import os
@@ -139,6 +140,7 @@ class RgTask:
 
     def _store_track_gain(self, item: Item, track_gain: Gain):
         """Store track gain for a single item in the database."""
+        item.r128_track_gain = None
         item.rg_track_gain = track_gain.gain
         item.rg_track_peak = track_gain.peak
         item.store()
@@ -152,6 +154,7 @@ class RgTask:
 
         The caller needs to ensure that `self.album_gain is not None`.
         """
+        item.r128_album_gain = None
         item.rg_album_gain = album_gain.gain
         item.rg_album_peak = album_gain.peak
         item.store()
@@ -228,6 +231,8 @@ class R128Task(RgTask):
         super().__init__(items, album, target_level, None, backend_name, log)
 
     def _store_track_gain(self, item: Item, track_gain: Gain):
+        item.rg_track_gain = None
+        item.rg_track_peak = None
         item.r128_track_gain = track_gain.gain
         item.store()
         self._log.debug("applied r128 track gain {.r128_track_gain} LU", item)
@@ -237,6 +242,8 @@ class R128Task(RgTask):
 
         The caller needs to ensure that `self.album_gain is not None`.
         """
+        item.rg_album_gain = None
+        item.rg_album_peak = None
         item.r128_album_gain = album_gain.gain
         item.store()
         self._log.debug("applied r128 album gain {.r128_album_gain} LU", item)
@@ -1427,6 +1434,9 @@ class ReplayGainPlugin(BeetsPlugin):
         callback: Callable[[AnyRgTask], Any],
     ):
         if self.pool is not None:
+            # Apply the caller's context to both the worker and its callbacks
+            # so lazy path expansion keeps the library root in pool threads.
+            ctx = contextvars.copy_context()
 
             def handle_exc(exc):
                 """Handle exceptions in the async work."""
@@ -1435,8 +1445,19 @@ class ReplayGainPlugin(BeetsPlugin):
                 else:
                     self.exc_queue.put(exc)
 
+            def run_func():
+                return ctx.run(func, *args, **kwds)
+
+            def run_callback(task: AnyRgTask):
+                return ctx.run(callback, task)
+
+            def run_handle_exc(exc):
+                return ctx.run(handle_exc, exc)
+
             self.pool.apply_async(
-                func, args, kwds, callback, error_callback=handle_exc
+                run_func,
+                callback=run_callback,
+                error_callback=run_handle_exc,
             )
         else:
             callback(func(*args, **kwds))

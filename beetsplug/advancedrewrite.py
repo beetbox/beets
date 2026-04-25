@@ -26,6 +26,8 @@ from beets.library import Album, Item
 from beets.plugins import BeetsPlugin
 from beets.ui import UserError
 
+from .rewrite import apply_rewrite_rules
+
 
 def rewriter(field, simple_rules, advanced_rules):
     """Template field function factory.
@@ -38,10 +40,10 @@ def rewriter(field, simple_rules, advanced_rules):
 
     def fieldfunc(item):
         value = item._values_fixed[field]
-        for pattern, replacement in simple_rules:
-            if pattern.match(value.lower()):
-                # Rewrite activated.
-                return replacement
+        if (new_value := apply_rewrite_rules(value, simple_rules)) != value:
+            # Rewrite activated.
+            return new_value
+
         for query, replacement in advanced_rules:
             if query.match(item):
                 # Rewrite activated.

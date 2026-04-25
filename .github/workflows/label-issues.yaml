@@ -1,0 +1,24 @@
+name: Issue and Pull Request Labeler
+on:
+  issues:
+    types: [opened, edited]
+  pull_request_target:
+    types: [opened, edited]
+
+permissions:
+  issues: write
+  pull-requests: write
+  contents: read
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: github/issue-labeler@v3.4
+        with:
+          configuration-path: .github/labeler.yaml
+          enable-versioned-regex: 0
+          include-title: 1 # match against the title
+          include-body: 0 # do not match against the body
+          sync-labels: 1 # automatically remove labels that no longer match the issue
+          repo-token: ${{ github.token }}

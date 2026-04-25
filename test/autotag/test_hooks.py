@@ -15,6 +15,7 @@
 """Tests for autotagging functionality."""
 
 import operator
+from contextlib import nullcontext as does_not_warn
 
 import pytest
 
@@ -22,7 +23,6 @@ from beets.autotag.distance import Distance
 from beets.autotag.hooks import (
     AlbumInfo,
     AlbumMatch,
-    Info,
     TrackInfo,
     TrackMatch,
     correct_list_fields,
@@ -30,19 +30,65 @@ from beets.autotag.hooks import (
 from beets.library import Item
 from beets.test.helper import BeetsTestCase
 
+str_field_deprecation = pytest.warns(
+    DeprecationWarning, match="The 'genre' field is deprecated"
+)
+
+_p = pytest.param
+
 
 @pytest.mark.parametrize(
-    "genre, expected_genres",
+    "str_value, list_value, expected_warning, expected_list_value",
     [
-        ("Rock", ("Rock",)),
-        ("Rock; Alternative", ("Rock", "Alternative")),
+        _p(
+            "value",
+            None,
+            str_field_deprecation,
+            ["value"],
+            id="str value only, warning raised",
+        ),
+        _p(
+            "value; another value",
+            None,
+            str_field_deprecation,
+            ["value", "another value"],
+            id="str value only and split, warning raised",
+        ),
+        _p(
+            "value",
+            ["list value"],
+            str_field_deprecation,
+            ["list value"],
+            id="list value wins, warning raised",
+        ),
+        _p(
+            None,
+            None,
+            does_not_warn(),
+            None,
+            id="no str value, no warning",
+        ),
     ],
 )
-def test_genre_deprecation(genre, expected_genres):
-    with pytest.warns(
-        DeprecationWarning, match="The 'genre' parameter is deprecated"
+class TestLegacyStringField:
+    def test_init_info(
+        self, str_value, list_value, expected_warning, expected_list_value
     ):
-        assert tuple(Info(genre=genre).genres) == expected_genres
+        with expected_warning:
+            actual_list_value = TrackInfo._get_list_from_string_value(
+                "genre", "genres", str_value, list_value
+            )
+
+        assert actual_list_value == expected_list_value
+
+    def test_set_str_value(
+        self, str_value, list_value, expected_warning, expected_list_value
+    ):
+        info = TrackInfo(genres=list_value)
+        with expected_warning:
+            info["genre"] = str_value
+
+        assert info["genres"] == expected_list_value
 
 
 class ApplyTest(BeetsTestCase):
@@ -78,8 +124,16 @@ class ApplyTest(BeetsTestCase):
                     artist="trackArtist",
                     artist_credit="trackArtistCredit",
                     artists_credit=["trackArtistCredit"],
-                    artist_sort="trackArtistSort",
-                    artists_sort=["trackArtistSort"],
+                    artist_sort="sortLast, sortFirst and sortLast2, sortFirst2",
+                    artists_sort=[
+                        "sortLast, sortFirst",
+                        "sortLast2, sortFirst2",
+                    ],
+                    arranger="trackArranger1, trackArranger2",
+                    composer="trackComposer1, trackComposer2",
+                    genres=["Rock"],
+                    lyricist="trackLyricist1, trackLyricist2",
+                    remixer="trackRemixer1, trackRemixer2",
                 ),
                 TrackInfo(
                     title="title2",
@@ -88,6 +142,10 @@ class ApplyTest(BeetsTestCase):
                     medium_index=1,
                     index=2,
                     medium_total=1,
+                    arrangers=["trackArranger1", "trackArranger2"],
+                    composers=["trackComposer1", "trackComposer2"],
+                    lyricists=["trackLyricist1", "trackLyricist2"],
+                    remixers=["trackRemixer1", "trackRemixer2"],
                 ),
             ],
             artist="albumArtist",
@@ -107,7 +165,7 @@ class ApplyTest(BeetsTestCase):
             year=2013,
             month=12,
             day=18,
-            genres=["Rock", "Pop"],
+            genre="Rock; Pop",
         )
 
         common_expected = {
@@ -131,11 +189,14 @@ class ApplyTest(BeetsTestCase):
             "mb_albumid": "7edb51cb-77d6-4416-a23c-3a8c2994a2c7",
             "mb_artistid": "a6623d39-2d8e-4f70-8242-0a9553b91e50",
             "mb_artistids": ["a6623d39-2d8e-4f70-8242-0a9553b91e50"],
+            "arrangers": ["trackArranger1", "trackArranger2"],
+            "composers": ["trackComposer1", "trackComposer2"],
+            "remixers": ["trackRemixer1", "trackRemixer2"],
+            "lyricists": ["trackLyricist1", "trackLyricist2"],
             "tracktotal": 2,
             "year": 2013,
             "month": 12,
             "day": 18,
-            "genres": ["Rock", "Pop"],
         }
 
         self.expected_tracks = [
@@ -144,10 +205,14 @@ class ApplyTest(BeetsTestCase):
                 "artist": "trackArtist",
                 "artists": ["trackArtist"],
                 "artist_credit": "trackArtistCredit",
-                "artist_sort": "trackArtistSort",
+                "artist_sort": "sortLast, sortFirst and sortLast2, sortFirst2",
                 "artists_credit": ["trackArtistCredit"],
-                "artists_sort": ["trackArtistSort"],
+                "artists_sort": [
+                    "sortLast, sortFirst",
+                    "sortLast2, sortFirst2",
+                ],
                 "disc": 1,
+                "genres": ["Rock"],
                 "mb_trackid": "dfa939ec-118c-4d0f-84a0-60f3d1e6522c",
                 "title": "title",
                 "track": 1,
@@ -165,6 +230,7 @@ class ApplyTest(BeetsTestCase):
                 ],
                 "artists_sort": ["albumArtistSort", "albumArtistSort2"],
                 "disc": 2,
+                "genres": ["Rock", "Pop"],
                 "mb_trackid": "40130ed1-a27c-42fd-a328-1ebefb6caef4",
                 "title": "title2",
                 "track": 2,
@@ -339,6 +405,11 @@ class TestOverwriteNull:
         ("1 FT 2", ["1", "1 ft 2"], ("1 FT 2", ["1", "1 ft 2"])),
         ("a", ["b", "A"], ("a", ["b", "A"])),
         ("1 ft 2", ["2", "1"], ("1 ft 2", ["2", "1"])),
+        (
+            "a, b and c, d",
+            ["a, b", "c, d"],
+            ("a, b and c, d", ["a, b", "c, d"]),
+        ),
     ],
 )
 def test_correct_list_fields(

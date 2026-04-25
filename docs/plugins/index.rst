@@ -127,6 +127,7 @@ databases. They share the following configuration options:
     substitute
     the
     thumbnails
+    tidal
     titlecase
     types
     unimported
@@ -160,6 +161,9 @@ Autotagger Extensions
 :doc:`spotify <spotify>`
     Search for releases in the Spotify_ database.
 
+:doc:`tidal <tidal>`
+    Search for releases in the Tidal_ catalog.
+
 .. _deezer: https://www.deezer.com/en/
 
 .. _discogs: https://www.discogs.com
@@ -167,6 +171,8 @@ Autotagger Extensions
 .. _musicbrainz: https://www.musicbrainz.com
 
 .. _spotify: https://open.spotify.com/
+
+.. _tidal: https://tidal.com/
 
 Metadata
 --------
@@ -421,6 +427,9 @@ line in your config file.
 
 Here are a few of the plugins written by the beets community:
 
+beets-aisauce_
+    Uses artificial intelligence to clean up or create metadata.
+
 beets-alternatives_
     Manages external files.
 
@@ -577,6 +586,8 @@ beets-youtube_
 .. _beetcamp: https://github.com/snejus/beetcamp
 
 .. _beetfs: https://github.com/jbaiter/beetfs
+
+.. _beets-aisauce: https://github.com/metasauce/beets-aisauce
 
 .. _beets-alternatives: https://github.com/geigerzaehler/beets-alternatives
 
