@@ -71,9 +71,10 @@ class ZeroPlugin(BeetsPlugin):
             if keep & ARTWORK_FIELDS:
                 keep.update(ARTWORK_FIELDS)
             for field in MediaFile.fields():
-                if (
-                    field not in keep
-                    and field not in ("id", "path", "album_id")
+                if field not in keep and field not in (
+                    "id",
+                    "path",
+                    "album_id",
                 ):
                     self._set_pattern(field)
 
