@@ -39,6 +39,11 @@ New features
 
   See :doc:`plugins/tidal` for more information.
 
+- :doc:`plugins/lyrics`: Write synced (LRC) lyrics to the ``SYLT`` (synchronized
+  lyrics) ID3 frame and plain text to ``USLT`` for ID3-tagged files, instead of
+  storing raw LRC timestamps in ``USLT``. Players that only support ``USLT``
+  continue to see readable plain lyrics. :bug:`6541`
+
 Bug fixes
 ~~~~~~~~~
 

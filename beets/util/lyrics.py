@@ -117,6 +117,27 @@ class Lyrics:
         """Return per-line lyric text with timestamps removed."""
         return [ln for _, ln in self._split_lines]
 
+    @cached_property
+    def sylt(self) -> list[tuple[str, int]]:
+        """Return SYLT-format (text, milliseconds) pairs from LRC timestamps.
+
+        Converts each LRC-timestamped line into a ``(text, milliseconds)``
+        tuple as expected by the ID3v2 SYLT frame.  Lines without a timestamp
+        (e.g. blank separator lines) are omitted.
+        """
+        result: list[tuple[str, int]] = []
+        for ts, text in self._split_lines:
+            if not ts:
+                continue
+            ts_m = re.match(r"\[(\d{2}):(\d{2})\.(\d{2})\]", ts)
+            if ts_m:
+                minutes = int(ts_m[1])
+                seconds = int(ts_m[2])
+                centiseconds = int(ts_m[3])
+                ms = (minutes * 60 + seconds) * 1000 + centiseconds * 10
+                result.append((text, ms))
+        return result
+
     @property
     def synced(self) -> bool:
         """Return whether the lyrics contain synced timestamp markers."""

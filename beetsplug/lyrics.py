@@ -1131,16 +1131,31 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
                 elif item_key in item:
                     del item[item_key]
 
+            # Keep the canonical LRC text in the database so that
+            # Lyrics.from_item() can still detect synced lyrics on the next
+            # run (e.g. for the keep_synced guard).  When writing to the file,
+            # pass plain text (timestamps stripped) for USLT and the
+            # (text, ms) pairs for SYLT so that both frames are correct.
             lyrics_text = new_lyrics.full_text
+            if new_lyrics.synced:
+                sylt_data = new_lyrics.sylt
+                file_lyrics = "\n".join(new_lyrics.text_lines)
+            else:
+                sylt_data = None
+                file_lyrics = lyrics_text
         else:
             self.info("🔴 Lyrics not found: {}", item)
             lyrics_text = self.config["fallback"].get()
+            sylt_data = None
+            file_lyrics = lyrics_text
 
         if lyrics_text not in {None, item.lyrics}:
             item.lyrics = lyrics_text
             item.store()
             if write:
-                item.try_write()
+                item.try_write(
+                    tags={"lyrics": file_lyrics, "synced_lyrics": sylt_data}
+                )
 
     def get_lyrics(self, artist: str, title: str, *args) -> Lyrics | None:
         """Get first found lyrics, trying each source in turn."""
