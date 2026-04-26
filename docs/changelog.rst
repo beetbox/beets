@@ -42,6 +42,10 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- Correctly handle semicolon-delimited genre values from externally-tagged
+  files. :bug:`6450`
+- Fix ``%aunique{}`` failing to disambiguate albums whose names collide after
+  path sanitization (e.g., ``"1/1"`` vs ``"1?1"``). :bug:`6462`
 - :ref:`import-cmd`: Multi-disc album detection now recognizes ``cassette``,
   ``digital media``, and ``vinyl`` as disc markers (e.g. ``vinyl 1``, ``12 vinyl
   2``), in addition to the existing ``disc``, ``disk``, and ``cd`` markers.
