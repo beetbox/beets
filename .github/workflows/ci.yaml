@@ -37,8 +37,21 @@ jobs:
 
       - name: Install system dependencies on Windows
         if: matrix.platform == 'windows-latest'
+        shell: pwsh
         run: |
-          choco install mp3gain -y
+          $maxAttempts = 3
+          for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+            # mp3gain's Chocolatey install script pulls from a flaky SourceForge
+            # HTTP URL and has no upstream checksums, so allow it and retry.
+            choco install mp3gain -y --allow-empty-checksums --no-progress
+            if ($LASTEXITCODE -eq 0) {
+              break
+            }
+            if ($attempt -eq $maxAttempts) {
+              throw "mp3gain install failed after $maxAttempts attempts."
+            }
+            Start-Sleep -Seconds 3
+          }
 
       - name: Install system dependencies on Ubuntu
         if: matrix.platform == 'ubuntu-latest'

@@ -78,6 +78,12 @@ def _yield_from_plugins(
 ) -> Callable[..., Iterator[Ret]]:
     method_name = func.__name__
 
+    def materialize(
+        plugin: MetadataSourcePlugin, method_name: str, *args, **kwargs
+    ) -> list[Ret]:
+        method = getattr(plugin, method_name)
+        return list(method(*args, **kwargs))
+
     @wraps(func)
     def wrapper(*args, **kwargs) -> Iterator[Ret]:
         # Run plugin methods concurrently for faster I/O-bound lookups.
@@ -86,12 +92,9 @@ def _yield_from_plugins(
                 executor.submit(
                     # Evaluate iterator with list such that results are ready when
                     # future.result() is called.
-                    lambda *args, **kwargs: list(
-                        getattr(plugin, method_name)(
-                            *args,
-                            **kwargs,
-                        )
-                    ),
+                    materialize,
+                    plugin,
+                    method_name,
                     *args,
                     **kwargs,
                 ): plugin

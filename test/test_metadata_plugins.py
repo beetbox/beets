@@ -1,4 +1,6 @@
 from collections.abc import Iterable
+from concurrent.futures import ThreadPoolExecutor as BaseThreadPoolExecutor
+from threading import Event
 
 import pytest
 
@@ -124,3 +126,61 @@ class TestSearchApiMetadataSourcePlugin(PluginMixin):
 
         with pytest.raises(ValueError, match="Search failure"):
             search_plugin._search_api("track", "query", {})
+
+
+def test_albums_for_ids_calls_each_plugin_once(monkeypatch):
+    start_workers = Event()
+
+    class Plugin:
+        def __init__(self, name):
+            self.data_source = name
+            self.calls: list[list[str]] = []
+
+        def albums_for_ids(self, ids):
+            self.calls.append(list(ids))
+            return [self.data_source]
+
+    plugins = [Plugin("discogs"), Plugin("musicbrainz"), Plugin("tidal")]
+
+    class PluginSequence:
+        def __iter__(self):
+            yield from plugins
+            start_workers.set()
+
+    class DelayedStartExecutor:
+        def __init__(self):
+            self._executor = BaseThreadPoolExecutor(max_workers=1)
+
+        def submit(self, fn, *args, **kwargs):
+            return self._executor.submit(self._run, fn, args, kwargs)
+
+        def _run(self, fn, args, kwargs):
+            start_workers.wait()
+            return fn(*args, **kwargs)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            self._executor.shutdown(wait=True)
+            return False
+
+    monkeypatch.setattr(
+        metadata_plugins,
+        "find_metadata_source_plugins",
+        lambda: PluginSequence(),
+    )
+    monkeypatch.setattr(
+        metadata_plugins, "ThreadPoolExecutor", DelayedStartExecutor
+    )
+
+    assert set(metadata_plugins.albums_for_ids(["42"])) == {
+        "discogs",
+        "musicbrainz",
+        "tidal",
+    }
+    assert [plugin.calls for plugin in plugins] == [
+        [["42"]],
+        [["42"]],
+        [["42"]],
+    ]
