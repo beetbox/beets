@@ -66,9 +66,11 @@ Bug fixes
     For plugin developers
     ~~~~~~~~~~~~~~~~~~~~~
 
-..
-    Other changes
-    ~~~~~~~~~~~~~
+Other changes
+~~~~~~~~~~~~~
+
+- :doc:`plugins/spotify`: Batch ``spotifysync`` track and audio-features API
+  requests and deduplicate repeated Spotify track IDs within a run.
 
 2.10.0 (April 19, 2026)
 -----------------------
@@ -133,10 +135,6 @@ For plugin developers
   ``url_relations``. The API responses are also now fully typed with concrete
   ``TypedDict`` models for releases, recordings, works, and relations. Update
   direct access to raw MusicBrainz response keys if needed.
-
-..
-    Other changes
-    ~~~~~~~~~~~~~
 
 2.9.0 (April 11, 2026)
 ----------------------
@@ -249,8 +247,6 @@ New features
   order before passing it to the player.
 - :doc:`plugins/lyrics`: Add ``auto_ignore`` configuration option to skip
   fetching lyrics for items matching a beets query during auto import.
-- :doc:`plugins/musicbrainz`: Use title aliases for releases, release groups,
-  and recordings.
 
 Bug fixes
 ~~~~~~~~~
