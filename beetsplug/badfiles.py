@@ -22,7 +22,7 @@ from subprocess import STDOUT, CalledProcessError, check_output, list2cmdline
 
 import confuse
 
-from beets import importer, ui
+from beets import config, importer, ui
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 from beets.util import displayable_path, par_map
@@ -170,6 +170,8 @@ class BadFiles(BeetsPlugin):
 
     def on_import_task_before_choice(self, task, session):
         if hasattr(task, "_badfiles_checks_failed"):
+            if config["import"]["quiet"]:
+                return None
             ui.print_(
                 f"{colorize('text_warning', 'BAD')} one or more files failed checks:"
             )

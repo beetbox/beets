@@ -68,6 +68,9 @@ Bug fixes
   slug. :bug:`4759`
 - :ref:`import-cmd`: With ``original_date: yes``, album-level ``year``,
   ``month``, and ``day`` now use the original release date. :bug:`6577`
+- :doc:`plugins/badfiles`: Respect quiet mode (the ``--quiet`` flag or
+  ``import.quiet: yes`` config) during import so the corrupt-file prompt is
+  suppressed in non-interactive imports. :bug:`4736`
 
 ..
     For plugin developers
