@@ -9,61 +9,15 @@ below!
 Unreleased
 ----------
 
-New features
-~~~~~~~~~~~~
-
-- :doc:`plugins/smartplaylist`: The ``splupdate`` command output is
-  restructured. The per-playlist summary now includes a track count. Per-track
-  details are shown only when ``-v`` flag is provided (``beet -v splupdate``).
-  The ``--pretend`` flag produces the same output but reports *"N playlists
-  would be updated"* instead of *"N playlists updated"*. The ``--format`` option
-  allows customizing the track line format. The ``--pretend-paths`` option was
-  removed (use ``--format='$path'`` instead). :bug:`6183`
-- :ref:`import-cmd`: When importing an archive (zip, tar, rar, or 7z) with
-  ``move: yes``, the source archive is now removed after a successful import.
-  Archives are preserved if any file in the archive was not imported (e.g.
-  skipped as a duplicate, or the import was aborted), and in non-move import
-  modes.
-- :doc:`plugins/fromfilename`: Support ``track`` prefix when parsing the track
-  number from the filename (e.g., ``track01.m4a``).
-- **Tidal plugin**: Introduces a new plugin for fetching metadata from Tidal. It
-  supports album and track lookups by ID, including batch operations via
-  ``albums_for_ids`` and ``tracks_for_ids``. It also enables search by query as
-  well as identifier-based retrieval, with support for ISRC codes (tracks) and
-  barcode/EANs (albums).
-- Add support for adding or modifying a subtitle (ID3 tag ``TIT3``) field
-
-  This is an initial, relatively minimal implementation, but already fully
-  usable for common metadata workflows. We welcome feedback, improvement ideas,
-  and community contributions to further extend its capabilities.
-
-  See :doc:`plugins/tidal` for more information.
+..
+    New features
+    ~~~~~~~~~~~~
 
 Bug fixes
 ~~~~~~~~~
 
-- :ref:`import-cmd`: Multi-disc album detection now recognizes ``cassette``,
-  ``digital media``, and ``vinyl`` as disc markers (e.g. ``vinyl 1``, ``12 vinyl
-  2``), in addition to the existing ``disc``, ``disk``, and ``cd`` markers.
-- :ref:`import-cmd`: Tags with a zero distance penalty are no longer shown as
-  differences in the match display. Previously, custom ``distance_weights``
-  could cause fields with no actual mismatch to appear in the ``≠`` line.
-- Library path migration now also handles manually edited database rows where
-  item or album-art paths were stored as SQLite ``TEXT`` values instead of
-  bytes, so upgrading to the portable-path storage format no longer fails for
-  those libraries. :bug:`6561`
-- :ref:`import-cmd` Fix duplicate album art files (e.g. ``cover.2.jpg``) being
-  created when re-importing albums with the :doc:`plugins/fetchart` plugin
-  enabled. Old album art is now properly removed when replacing duplicate albums
-  during import. :bug:`1264` :bug:`6205`
-- :doc:`plugins/discogs`: Prevent duplicate featured artists in track artist
-  fields when the same artist is credited both in ``artists`` (for example with
-  ``Feat.`` join text) and ``extraartists`` as ``Featuring``. :bug:`6166`
-- :ref:`import-cmd` Metadata source plugin ID lookups now correctly call each
-  plugin's own lookup method when running in parallel. :bug:`6583`
-- Improve ``DBAccessError`` messages to help users diagnose database permission
-  issues more easily. The error message now mentions directory missing and file
-  permissions as potential causes. :bug:`1676`
+- Correctly handle semicolon-delimited genre values from externally-tagged
+  files. :bug:`6450`
 
 ..
     For plugin developers
@@ -74,159 +28,6 @@ Other changes
 
 - :doc:`plugins/spotify`: Batch ``spotifysync`` track and audio-features API
   requests and deduplicate repeated Spotify track IDs within a run.
-
-2.10.0 (April 19, 2026)
------------------------
-
-New features
-~~~~~~~~~~~~
-
-- **Beets library is now made portable**: item and album-art paths are now
-  stored relative to the library root in the database while remaining absolute
-  in the rest of beets. Path queries continue matching both library-relative
-  paths and absolute paths under the currently configured music directory under
-  the new storage model. The existing paths in the database are migrated
-  automatically the first time you run any ``beet`` command after the update.
-  :bug:`133`
-
-  .. warning::
-
-      make sure you run ``beet version`` (or any other command) at least once
-      after upgrading to trigger the migration. Only then you can safely move
-      the library to a new location.
-
-- :doc:`plugins/inline`: Add access to the ``album`` or ``item`` object as
-  ``db_obj`` in inline fields.
-- :doc:`plugins/discogs`: Import Discogs remixer, lyricist, composer, and
-  arranger credits into the multi-value ``remixers``, ``lyricists``,
-  ``composers``, and ``arrangers`` fields. :bug:`6380`
-- :doc:`plugins/lyrics`: Add ``keep_synced`` config option and ``--keep-synced``
-  CLI flag to skip re-fetching lyrics for tracks that already have synced
-  lyrics, even when ``force`` is enabled. :bug:`5249`
-- :doc:`plugins/musicbrainz`: Use aliases for artist credit.
-- Metadata source plugin searches and lookups are now executed concurrently,
-  speeding up lookups when multiple plugins (e.g. MusicBrainz and Spotify) are
-  enabled.
-
-Bug fixes
-~~~~~~~~~
-
-- :ref:`import-cmd` Automatically remux WAV files containing MP3 streams
-  (``WAVE_FORMAT_MPEGLAYER3``) to proper MP3 files during import, instead of
-  silently importing them with incorrect metadata. :bug:`6455`
-- :doc:`plugins/listenbrainz`: Retry listenbrainz requests for temporary
-  failures.
-- :doc:`plugins/chroma`: Do not produce MusicBrainz-sourced autotagger
-  candidates when the :doc:`plugins/musicbrainz` plugin is not enabled. The
-  chroma plugin now looks up the musicbrainz plugin through the metadata-source
-  registry instead of unconditionally instantiating its own private instance,
-  which also restores compatibility with :doc:`plugins/mbpseudo` for
-  chroma-triggered lookups. :bug:`6212` :bug:`6441`
-- :ref:`import-cmd` Remove clutter from imported album folders. :bug:`5016`
-- :doc:`plugins/web`: Fix a stored XSS vulnerability where unescaped metadata
-  fields (artist, album, title, comments, lyrics) could execute arbitrary
-  JavaScript in the browser. Template tags now use ``<%-`` (escaped
-  interpolation) instead of ``<%=`` (raw interpolation).
-
-For plugin developers
-~~~~~~~~~~~~~~~~~~~~~
-
-- Consumers of :py:class:`beetsplug._utils.musicbrainz.MusicBrainzAPI` now
-  receive normalized MusicBrainz payloads with underscore-separated field names
-  (for example ``artist_credit`` and ``release_group``) and grouped relation
-  lists such as ``work_relations``, ``release_relations``, and
-  ``url_relations``. The API responses are also now fully typed with concrete
-  ``TypedDict`` models for releases, recordings, works, and relations. Update
-  direct access to raw MusicBrainz response keys if needed.
-
-2.9.0 (April 11, 2026)
-----------------------
-
-Beets now officially supports Python 3.14.
-
-New features
-~~~~~~~~~~~~
-
-- :ref:`import-cmd` Use ffprobe to recognize format of any import music file
-  that has no extension. If the file cannot be recognized as a music file, leave
-  it alone. :bug:`4881`
-- Query: Add ``has_cover_art`` computed field to query items by embedded cover
-  art presence. Users can now search for tracks with or without embedded artwork
-  using ``beet list has_cover_art:true`` or ``beet list has_cover_art:false``.
-- :doc:`plugins/autobpm`: Add ``force`` configuration and CLI option and
-  deprecate ``overwrite``.
-- :doc:`plugins/autobpm`: The "BPM already exists for item" log message can now
-  be hidden with the ``--quiet`` flag.
-- :doc:`plugins/smartplaylist`: The list of available playlists shown when an
-  unknown playlist name is passed as an argument is now sorted alphabetically
-  and printed space-delimited and POSIX shell-quoted when required. This makes
-  it easier to copy and paste multiple playlists for further use in the shell.
-- :doc:`plugins/chroma`: Add new command ``chromasearch`` to search the local
-  library by chromaprint fingerprint.
-- Store track remixers, lyricists, composers, and arrangers in the multi-valued
-  ``remixers``, ``lyricists``, ``composers``, and ``arrangers`` fields instead
-  of the legacy single-value ``remixer``, ``lyricist``, ``composer``, and
-  ``arranger`` fields. Existing libraries are migrated automatically, and
-  :doc:`plugins/musicbrainz` now preserves each MusicBrainz ``remixer``,
-  ``lyricist``, ``composer``, and ``arranger`` relation as a separate value.
-- :doc:`plugins/musicbrainz`: Store MBIDs for remixers, lyricists, composers,
-  and arrangers in the new multi-valued fields ``remixers_mbid``,
-  ``lyricists_mbid``, ``composers_mbid``, and ``arrangers_mbid``. :bug:`5698`
-- :doc:`plugins/replaygain`: Conflicting replay gain tags are now removed on
-  write. RG_* tags are removed when setting R128_* and vice versa.
-- :doc:`plugins/fetchart`: Add support for WebP images.
-- :doc:`plugins/lastgenre`: Add support for a user-configurable ignorelist to
-  exclude unwanted or incorrect Last.fm (or existing) genres, either per artist
-  or globally :bug:`6449`
-
-Bug fixes
-~~~~~~~~~
-
-- :doc:`plugins/deezer`: Fix Various Artists albums being tagged with a
-  localized string instead of the configured ``va_name``. Detection now uses
-  Deezer's artist ID rather than the artist name string. :bug:`4956`
-- :doc:`plugins/listenbrainz`: Paginate through all ListenBrainz listens instead
-  of fetching only 25, aggregate individual listen events into correct play
-  counts, use ``recording_mbid`` from the ListenBrainz mapping when available,
-  and avoid per-listen MusicBrainz API lookups that caused imports to hang on
-  large listen histories. :bug:`6469`
-- Correctly handle semicolon-delimited genre values from externally-tagged
-  files. :bug:`6450`
-- :doc:`plugins/listenbrainz`: Fix ``lbimport`` crashing when ListenBrainz
-  tracks are processed through Last.fm-specific play-count import logic.
-  Play-count imports now use source-specific fields so
-  :doc:`plugins/listenbrainz`, :doc:`plugins/lastimport`, and
-  :doc:`plugins/mpdstats` do not clash. :bug:`6469`
-- :ref:`import-cmd` Fix ``albumartists_sort`` (and related fields) incorrectly
-  prepending the full combined artist credit as the first element for
-  multi-artist releases. :bug:`6470`
-- :doc:`plugins/discogs`: Store specific Discogs styles in beets ``genres`` and
-  broader Discogs genres in the ``style`` field. When
-  :conf:`plugins.discogs:append_style_genre` is enabled, the broader Discogs
-  genres are also appended to the ``genres`` list. :bug:`6390`
-- :doc:`plugins/deezer`: Fix a regression in 2.8.0 where selecting a Deezer
-  match during import could crash with ``AttributeError: 'AlbumInfo' object has
-  no attribute 'raw_data'`` when Deezer returned numeric artist IDs. :bug:`6503`
-- :ref:`modify-cmd` accepts legacy singular field names such as ``genre``,
-  ``composer``, ``lyricist``, ``remixer``, and ``arranger`` in assignments,
-  rewrites them to the corresponding multi-valued fields, and warns users to
-  switch to the plural field names. :ref:`list-cmd`, and query expressions,
-  accept the same legacy singular field names and warn users to switch to the
-  plural field names. :bug:`6483`
-- :doc:`plugins/fetchart`: Error when a configured source does not exist or
-  sources configuration is empty. :bug:`6336`
-- :doc:`plugins/rewrite` :doc:`plugins/advancedrewrite`: Fix rewriting
-  multi-valued fields such as ``genres`` by applying rules to each matching list
-  entry. Additionally, apply rewrite rules in config order, so that multiple
-  rules can be applied to the same field. :bug:`6515`
-
-For plugin developers
-~~~~~~~~~~~~~~~~~~~~~
-
-- If you maintain a metadata source plugin that populates any of ``arranger``,
-  ``composer``, ``lyricist``, ``remixer`` fields, update it to populate the
-  respective multi-valued fields instead (``arrangers``, ``composers``,
-  ``lyricists``, ``remixers``).
 
 2.8.0 (March 28, 2026)
 ----------------------
@@ -506,6 +307,8 @@ New features
   ``beet import``.
 - :doc:`plugins/random`: Added ``--field`` option to specify which field to use
   for equal-chance sampling (default: ``albumartist``).
+- :doc:`plugins/musicbrainz`: Use title aliases for releases, release groups,
+  and recordings.
 
 Bug fixes
 ~~~~~~~~~
