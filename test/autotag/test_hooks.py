@@ -107,6 +107,7 @@ class ApplyTest(BeetsTestCase):
         self.config["import"]["from_scratch"] = from_scratch
         amatch = AlbumMatch(Distance(), self.info, mapping)
         amatch.apply_metadata()
+        return amatch
 
     def setUp(self):
         super().setUp()
@@ -291,8 +292,7 @@ class ApplyTest(BeetsTestCase):
         assert self.items[0].month == 2
         assert self.items[0].day == 3
 
-    def test_original_date_overrides_release_date(self):
-        self.items = [Item(year=1, month=2, day=3)]
+    def test_original_date_overrides_album_metadata(self):
         self.info.update(
             year=2013,
             month=12,
@@ -301,12 +301,13 @@ class ApplyTest(BeetsTestCase):
             original_month=4,
             original_day=7,
         )
+        match = self._apply(original_date=True)
+        album = self.lib.add_album(self.items)
+        match.apply_album_metadata(album)
 
-        self._apply(original_date=True)
-
-        assert self.items[0].year == 1999
-        assert self.items[0].month == 4
-        assert self.items[0].day == 7
+        assert album.year == 1999
+        assert album.month == 4
+        assert album.day == 7
 
 
 class TestFromScratch:
