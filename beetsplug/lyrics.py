@@ -399,6 +399,7 @@ class MusiXmatch(Backend):
     URL_TEMPLATE = "https://www.musixmatch.com/lyrics/{}/{}"
 
     REPLACEMENTS: ClassVar[dict[str, str]] = {
+        "['\u2018\u2019]": "-",
         r"\s+": "-",
         "<": "Less_Than",
         ">": "Greater_Than",

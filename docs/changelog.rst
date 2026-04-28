@@ -64,6 +64,8 @@ Bug fixes
 - Improve ``DBAccessError`` messages to help users diagnose database permission
   issues more easily. The error message now mentions directory missing and file
   permissions as potential causes. :bug:`1676`
+- :doc:`plugins/lyrics`: Fix apostrophe handling in the ``musixmatch`` backend
+  slug. :bug:`4759`
 
 ..
     For plugin developers

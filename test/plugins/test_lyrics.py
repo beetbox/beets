@@ -140,6 +140,17 @@ class TestLyricsUtils:
     def test_slug(self, text, expected):
         assert lyrics.slug(text) == expected
 
+    @pytest.mark.parametrize(
+        "text, expected",
+        [
+            ("If They’re Shooting at You", "If-They-re-Shooting-at-You"),
+            ("‘Round Midnight", "-Round-Midnight"),
+            ("Don't Stop", "Don-t-Stop"),
+        ],
+    )
+    def test_musixmatch_encode(self, text, expected):
+        assert lyrics.MusiXmatch.encode(text) == expected
+
 
 class TestHtml:
     def test_scrape_strip_cruft(self):
