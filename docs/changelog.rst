@@ -61,6 +61,9 @@ Bug fixes
   ``Feat.`` join text) and ``extraartists`` as ``Featuring``. :bug:`6166`
 - :ref:`import-cmd` Metadata source plugin ID lookups now correctly call each
   plugin's own lookup method when running in parallel. :bug:`6583`
+- Improve ``DBAccessError`` messages to help users diagnose database permission
+  issues more easily. The error message now mentions directory missing and file
+  permissions as potential causes. :bug:`1676`
 
 ..
     For plugin developers
