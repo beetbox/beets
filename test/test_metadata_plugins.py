@@ -5,7 +5,7 @@ from threading import Event
 import pytest
 
 from beets import metadata_plugins
-from beets.test.helper import PluginMixin
+from beets.test.helper import PluginMixin, PluginTest
 
 
 class ErrorMetadataMockPlugin(metadata_plugins.MetadataSourcePlugin):
@@ -26,21 +26,17 @@ class ErrorMetadataMockPlugin(metadata_plugins.MetadataSourcePlugin):
         raise ValueError("Mocked error")
 
 
-class TestMetadataPluginsException(PluginMixin):
+class TestMetadataPluginsException(PluginTest):
     """Check that errors during the metadata plugins do not crash beets.
     They should be logged as errors instead.
     """
 
-    @pytest.fixture(autouse=True)
-    def setup(self):
-        metadata_plugins.find_metadata_source_plugins.cache_clear()
-        metadata_plugins.get_metadata_source.cache_clear()
-        self.register_plugin(ErrorMetadataMockPlugin)
-        yield
-        self.unload_plugins()
+    plugin = "ErrorMetadataMock"
+    plugin_type = ErrorMetadataMockPlugin
 
     @pytest.fixture
     def call_method(self, method_name, args):
+
         def _call():
             result = getattr(metadata_plugins, method_name)(*args)
             return list(result) if isinstance(result, Iterable) else result
