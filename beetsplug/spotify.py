@@ -16,7 +16,6 @@
 """Adds Spotify release and track search support to the autotagger.
 
 Also includes Spotify playlist construction.
-
 """
 
 from __future__ import annotations
@@ -241,8 +240,8 @@ class SpotifyPlugin(
 
         :param method: HTTP method to use for the request.
         :param url: URL for the new :class:`Request` object.
-        :param dict params: (optional) list of tuples or bytes to send in the
-            query string for the :class:`Request`.
+        :param dict params: (optional) list of tuples or bytes to send
+            in the query string for the :class:`Request`.
 
         """
 
@@ -517,7 +516,6 @@ class SpotifyPlugin(
 
         Unauthorized responses trigger one token refresh attempt before the
         method gives up and falls back to an empty result set.
-
         """
         for _ in range(2):
             response = requests.get(
@@ -620,8 +618,8 @@ class SpotifyPlugin(
         :param library: beets library object to query.
         :param keywords: Query to match library items against.
 
-        :returns: List of simplified track object dicts for library items
-            matching the specified query.
+        :returns: List of simplified track object dicts for library
+            items matching the specified query.
 
         """
         results = []

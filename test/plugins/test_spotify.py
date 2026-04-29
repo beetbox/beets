@@ -253,8 +253,8 @@ class SpotifyPluginTest(PluginTestCase):
 
     @responses.activate
     def test_multiartist_album_and_track(self):
-        """Tests if plugin is able to map multiple artists in an album and track
-        info correctly."""
+        """Tests if plugin is able to map multiple artists in an album and
+        track info correctly"""
 
         # Mock the Spotify 'Get Album' call
         json_file = os.path.join(
