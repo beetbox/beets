@@ -71,9 +71,11 @@ Bug fixes
     For plugin developers
     ~~~~~~~~~~~~~~~~~~~~~
 
-..
-    Other changes
-    ~~~~~~~~~~~~~
+Other changes
+~~~~~~~~~~~~~
+
+- :doc:`plugins/spotify`: Batch ``spotifysync`` track and audio-features API
+  requests and deduplicate repeated Spotify track IDs within a run.
 
 2.10.0 (April 19, 2026)
 -----------------------

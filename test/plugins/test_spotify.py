@@ -1,5 +1,6 @@
 """Tests for the 'spotify' plugin"""
 
+import json
 import os
 from urllib.parse import parse_qs, urlparse
 
@@ -132,7 +133,7 @@ class SpotifyPluginTest(PluginTestCase):
 
         responses.add(
             responses.GET,
-            f"{spotify.SpotifyPlugin.track_url}6NPVjNh8Jhru9xOmyQigds",
+            f"{spotify.SpotifyPlugin.track_url}/6NPVjNh8Jhru9xOmyQigds",
             body=response_body,
             status=200,
             content_type="application/json",
@@ -279,7 +280,7 @@ class SpotifyPluginTest(PluginTestCase):
 
         responses.add(
             responses.GET,
-            f"{spotify.SpotifyPlugin.track_url}6sjZfVJworBX6TqyjkxIJ1",
+            f"{spotify.SpotifyPlugin.track_url}/6sjZfVJworBX6TqyjkxIJ1",
             body=track_response_body,
             status=200,
             content_type="application/json",
@@ -307,3 +308,261 @@ class SpotifyPluginTest(PluginTestCase):
         assert track_info.artists == ["Foo", "Bar"]
         assert track_info.artist_id == "12345"
         assert track_info.artists_ids == ["12345", "67890"]
+
+    @responses.activate
+    def test_get_track_details_by_id_chunks_requests(self):
+        ids_per_request = []
+
+        def callback(request):
+            ids = _params(request.url)["ids"][0].split(",")
+            ids_per_request.append(len(ids))
+            return (
+                200,
+                {"Content-Type": "application/json"},
+                json.dumps(
+                    {
+                        "tracks": [
+                            {
+                                "id": track_id,
+                                "popularity": 50,
+                                "external_ids": {},
+                            }
+                            for track_id in ids
+                        ]
+                    }
+                ),
+            )
+
+        responses.add_callback(
+            responses.GET,
+            spotify.SpotifyPlugin.track_url,
+            callback=callback,
+            content_type="application/json",
+        )
+
+        track_ids = [f"track-{idx}" for idx in range(51)]
+        track_info = self.spotify.get_track_details_by_id(track_ids)
+
+        assert len(track_info) == 51
+        assert ids_per_request == [50, 1]
+
+    @responses.activate
+    def test_fetch_info_uses_batch_endpoints(self):
+        responses.add(
+            responses.GET,
+            spotify.SpotifyPlugin.track_url,
+            status=200,
+            json={
+                "tracks": [
+                    {
+                        "id": "id-1",
+                        "popularity": 10,
+                        "external_ids": {
+                            "isrc": "isrc-1",
+                            "ean": "ean-1",
+                            "upc": "upc-1",
+                        },
+                    },
+                    {
+                        "id": "id-2",
+                        "popularity": 20,
+                        "external_ids": {
+                            "isrc": "isrc-2",
+                            "ean": "ean-2",
+                            "upc": "upc-2",
+                        },
+                    },
+                    {
+                        "id": "id-3",
+                        "popularity": 30,
+                        "external_ids": {
+                            "isrc": "isrc-3",
+                            "ean": "ean-3",
+                            "upc": "upc-3",
+                        },
+                    },
+                ]
+            },
+            content_type="application/json",
+        )
+        responses.add(
+            responses.GET,
+            spotify.SpotifyPlugin.audio_features_url,
+            status=200,
+            json={
+                "audio_features": [
+                    {"id": "id-1", "tempo": 100.1, "energy": 0.4},
+                    {"id": "id-2", "tempo": 110.2, "energy": 0.5},
+                    {"id": "id-3", "tempo": 120.3, "energy": 0.6},
+                ]
+            },
+            content_type="application/json",
+        )
+
+        items = []
+        for idx in range(1, 4):
+            item = Item(title=f"Track {idx}", artist="Artist", length=10)
+            item.add(self.lib)
+            item["spotify_track_id"] = f"id-{idx}"
+            items.append(item)
+
+        self.spotify._fetch_info(items, write=False, force=True)
+
+        get_calls = [
+            call for call in responses.calls if call.request.method == "GET"
+        ]
+        batch_track_calls = [
+            call
+            for call in get_calls
+            if urlparse(call.request.url).path == "/v1/tracks"
+        ]
+        single_track_calls = [
+            call
+            for call in get_calls
+            if urlparse(call.request.url).path.startswith("/v1/tracks/")
+        ]
+        batch_audio_calls = [
+            call
+            for call in get_calls
+            if urlparse(call.request.url).path == "/v1/audio-features"
+        ]
+        single_audio_calls = [
+            call
+            for call in get_calls
+            if urlparse(call.request.url).path.startswith("/v1/audio-features/")
+        ]
+
+        assert len(batch_track_calls) == 1
+        assert len(single_track_calls) == 0
+        assert len(batch_audio_calls) == 1
+        assert len(single_audio_calls) == 0
+
+        assert items[0]["spotify_track_popularity"] == 10
+        assert items[1]["spotify_track_popularity"] == 20
+        assert items[2]["spotify_track_popularity"] == 30
+
+        assert items[0]["spotify_tempo"] == 100.1
+        assert items[1]["spotify_tempo"] == 110.2
+        assert items[2]["spotify_tempo"] == 120.3
+
+    @responses.activate
+    def test_fetch_info_deduplicates_batch_ids(self):
+        seen_track_ids = []
+        seen_audio_ids = []
+
+        def track_callback(request):
+            ids = _params(request.url)["ids"][0].split(",")
+            seen_track_ids.append(ids)
+            return (
+                200,
+                {"Content-Type": "application/json"},
+                json.dumps(
+                    {
+                        "tracks": [
+                            {
+                                "id": track_id,
+                                "popularity": 50,
+                                "external_ids": {},
+                            }
+                            for track_id in ids
+                        ]
+                    }
+                ),
+            )
+
+        def audio_callback(request):
+            ids = _params(request.url)["ids"][0].split(",")
+            seen_audio_ids.append(ids)
+            return (
+                200,
+                {"Content-Type": "application/json"},
+                json.dumps(
+                    {
+                        "audio_features": [
+                            {"id": track_id, "tempo": 100.0} for track_id in ids
+                        ]
+                    }
+                ),
+            )
+
+        responses.add_callback(
+            responses.GET,
+            spotify.SpotifyPlugin.track_url,
+            callback=track_callback,
+            content_type="application/json",
+        )
+        responses.add_callback(
+            responses.GET,
+            spotify.SpotifyPlugin.audio_features_url,
+            callback=audio_callback,
+            content_type="application/json",
+        )
+
+        items = []
+        for idx in range(2):
+            item = Item(title=f"Track {idx}", artist="Artist", length=10)
+            item.add(self.lib)
+            item["spotify_track_id"] = "shared-id"
+            items.append(item)
+
+        self.spotify._fetch_info(items, write=False, force=True)
+
+        assert seen_track_ids == [["shared-id"]]
+        assert seen_audio_ids == [["shared-id"]]
+        assert items[0]["spotify_track_popularity"] == 50
+        assert items[1]["spotify_track_popularity"] == 50
+
+    @responses.activate
+    def test_track_audio_features_batch_disables_on_403(self):
+        responses.add(
+            responses.GET,
+            spotify.SpotifyPlugin.audio_features_url,
+            status=403,
+            json={"error": {"status": 403}},
+            content_type="application/json",
+        )
+
+        assert self.spotify.track_audio_features_batch(["id-1"]) == {}
+        assert self.spotify.audio_features_available is False
+        assert self.spotify.track_audio_features_batch(["id-2"]) == {}
+        assert len(responses.calls) == 1
+
+    @responses.activate
+    def test_track_audio_features_batch_keeps_partial_results_on_api_error(
+        self,
+    ):
+        def callback(request):
+            ids = _params(request.url)["ids"][0].split(",")
+            if "track-100" in ids:
+                return (
+                    502,
+                    {"Content-Type": "application/json"},
+                    json.dumps({"error": {"status": 502}}),
+                )
+            return (
+                200,
+                {"Content-Type": "application/json"},
+                json.dumps(
+                    {
+                        "audio_features": [
+                            {"id": track_id, "tempo": 100.0} for track_id in ids
+                        ]
+                    }
+                ),
+            )
+
+        responses.add_callback(
+            responses.GET,
+            spotify.SpotifyPlugin.audio_features_url,
+            callback=callback,
+            content_type="application/json",
+        )
+
+        track_ids = [f"track-{idx}" for idx in range(201)]
+        features = self.spotify.track_audio_features_batch(track_ids)
+
+        assert "track-0" in features
+        assert "track-99" in features
+        assert "track-100" not in features
+        assert "track-199" not in features
+        assert "track-200" in features
