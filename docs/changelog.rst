@@ -76,6 +76,9 @@ Other changes
 
 - :doc:`plugins/spotify`: Batch ``spotifysync`` track and audio-features API
   requests and deduplicate repeated Spotify track IDs within a run.
+- The internal formatting to append plugin names to log messages (i.e.
+  musicbrainz: msg) is now done by a formatter instead of a filter. This allows
+  easier migration to more complex setups or formatting in the future.
 
 2.10.0 (April 19, 2026)
 -----------------------
