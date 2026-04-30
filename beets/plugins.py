@@ -122,23 +122,6 @@ class PluginImportError(ImportError):
         super().__init__(f"Could not import plugin {name}")
 
 
-class PluginLogFilter(logging.Filter):
-    """A logging filter that identifies the plugin that emitted a log
-    message.
-    """
-
-    def __init__(self, plugin):
-        self.prefix = f"{plugin.name}: "
-
-    def filter(self, record):
-        if hasattr(record.msg, "msg") and isinstance(record.msg.msg, str):
-            # A _LogMessage from our hacked-up Logging replacement.
-            record.msg.msg = f"{self.prefix}{record.msg.msg}"
-        elif isinstance(record.msg, str):
-            record.msg = f"{self.prefix}{record.msg}"
-        return True
-
-
 # Managing the plugins themselves.
 
 
@@ -238,8 +221,6 @@ class BeetsPlugin(metaclass=BeetsPluginMeta):
 
         self._log = log.getChild(self.name)
         self._log.setLevel(logging.NOTSET)  # Use `beets` logger level.
-        if not any(isinstance(f, PluginLogFilter) for f in self._log.filters):
-            self._log.addFilter(PluginLogFilter(self))
 
         # In order to verify the config we need to make sure the plugin is fully
         # configured (plugins usually add the default configuration *after*
