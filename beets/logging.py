@@ -32,6 +32,7 @@ from logging import (
     WARNING,
     FileHandler,
     Filter,
+    Formatter,
     Handler,
     Logger,
     NullHandler,
@@ -100,6 +101,44 @@ def _logsafe(val: T) -> str | T:
     # Other objects are used as-is so field access, etc., still works in
     # the format string. Relies on a working __str__ implementation.
     return val
+
+
+class LegacyFormatter(Formatter):
+    """A ``logging.Formatter`` that reproduces the pre-3.0 beets output style.
+
+    For every log record, this formatter strips the ``beets.`` prefix from
+    the logger name and prepends the remainder to the message, separated by
+    a colon.  Records from the root logger ("beets") or from loggers not
+    under the ``beets`` namespace are passed through unchanged.
+
+    Usage::
+
+        handler.setFormatter(LegacyFormatter("%(legacy_msg)s"))
+
+    The ``legacy_msg`` attribute is attached to the record by
+    ``LegacyFormatter.format()``, so the format string above only works
+    when this class is the active formatter.  Using it with the stdlib
+    ``logging.Formatter`` will raise ``KeyError`` / ``ValueError``.
+
+    Output examples::
+
+        "beets"                     "msg"
+        "beets.musicbrainz"         "musicbrainz: msg"
+        "beets.musicbrainz.sub"     "musicbrainz.sub: msg"
+    """
+
+    def format(self, record):
+        parts = record.name.split(".")
+
+        child_name = ".".join(parts[1:]) if len(parts) > 1 else None
+
+        record.legacy_msg = (
+            f"{child_name}: {record.getMessage()}"
+            if child_name
+            else record.getMessage()
+        )
+
+        return super().format(record)
 
 
 class StrFormatLogger(Logger):
