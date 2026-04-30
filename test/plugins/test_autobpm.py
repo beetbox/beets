@@ -1,6 +1,6 @@
 import pytest
 
-from beets.test.helper import ImportHelper, PluginMixin, capture_log
+from beets.test.helper import ImportHelper, PluginMixin
 
 pytestmark = pytest.mark.requires_import("librosa")
 
@@ -61,19 +61,17 @@ class TestAutoBPMPlugin(PluginMixin, ImportHelper):
         item.load()
         assert item.bpm == 117
 
-    def test_command_quiet(self, lib, item):
+    def test_command_quiet(self, lib, item, caplog):
         item.bpm = 10
         item.store()
 
-        with capture_log() as logs:
+        with caplog.at_level("DEBUG"):
             self.run_command("autobpm", "--quiet", lib=lib)
+        assert not any("already exists" in msg for msg in caplog.messages)
 
-        assert not any("already exists" in log for log in logs)
-
-        with capture_log() as logs:
+        with caplog.at_level("DEBUG"):
             self.run_command("autobpm", lib=lib)
-
-        assert any("already exists" in log for log in logs)
+        assert any("already exists" in msg for msg in caplog.messages)
 
     def test_import(self, lib, importer):
         importer.run()
