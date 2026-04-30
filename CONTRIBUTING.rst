@@ -393,6 +393,18 @@ beets also defines custom pytest markers in ``test/conftest.py``:
     @pytest.mark.requires_import("librosa", force_ci=False)
     def test_autobpm_command(): ...
 
+Notes on AI Usage
+-----------------
+
+We are not opposed to AI-generated contributions, but communication should be
+handled by a real person. We will likely have questions about your PR, and we
+need you to understand the proposed changes in order to discuss with us what the
+implications are. If a contribution is mostly AI-generated, we also expect this
+information to be disclosed upfront.
+
+> Currently we value human oversight and accountability, AI as a tool, not a
+contributor.
+
 .. _codecov: https://app.codecov.io/github/beetbox/beets
 
 .. _discussion board: https://github.com/beetbox/beets/discussions
