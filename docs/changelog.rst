@@ -52,20 +52,22 @@ Bug fixes
   item or album-art paths were stored as SQLite ``TEXT`` values instead of
   bytes, so upgrading to the portable-path storage format no longer fails for
   those libraries. :bug:`6561`
-- :ref:`import-cmd` Fix duplicate album art files (e.g. ``cover.2.jpg``) being
+- :ref:`import-cmd`: Fix duplicate album art files (e.g. ``cover.2.jpg``) being
   created when re-importing albums with the :doc:`plugins/fetchart` plugin
   enabled. Old album art is now properly removed when replacing duplicate albums
   during import. :bug:`1264` :bug:`6205`
 - :doc:`plugins/discogs`: Prevent duplicate featured artists in track artist
   fields when the same artist is credited both in ``artists`` (for example with
   ``Feat.`` join text) and ``extraartists`` as ``Featuring``. :bug:`6166`
-- :ref:`import-cmd` Metadata source plugin ID lookups now correctly call each
+- :ref:`import-cmd`: Metadata source plugin ID lookups now correctly call each
   plugin's own lookup method when running in parallel. :bug:`6583`
 - Improve ``DBAccessError`` messages to help users diagnose database permission
   issues more easily. The error message now mentions directory missing and file
   permissions as potential causes. :bug:`1676`
 - :doc:`plugins/lyrics`: Fix apostrophe handling in the ``musixmatch`` backend
   slug. :bug:`4759`
+- :ref:`import-cmd`: With ``original_date: yes``, album-level ``year``,
+  ``month``, and ``day`` now use the original release date. :bug:`6577`
 
 ..
     For plugin developers

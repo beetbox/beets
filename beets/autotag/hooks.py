@@ -305,6 +305,19 @@ class AlbumInfo(Info):
 
         return data
 
+    @cached_property
+    def item_data(self) -> JSONDict:
+        """Album metadata with optional original-date override."""
+        data = {**super().item_data}
+        if config["original_date"].get(bool) and (
+            original_year := data.get("original_year")
+        ):
+            data["year"] = original_year
+            data["month"] = data.get("original_month") or 0
+            data["day"] = data.get("original_day") or 0
+
+        return data
+
     def __init__(
         self,
         tracks: list[TrackInfo],
@@ -505,15 +518,6 @@ class TrackInfo(Info):
             | {"tracktotal": len(album_info.tracks)}
             | track.item_data
         )
-
-        # When configured, prefer original release date over album date.
-        # This keeps logic local and simple; no need to change AlbumInfo.
-        if config["original_date"].get(bool) and (
-            original_year := merged.get("original_year")
-        ):
-            merged["year"] = original_year
-            merged["month"] = merged.get("original_month") or 0
-            merged["day"] = merged.get("original_day") or 0
         return merged
 
 
