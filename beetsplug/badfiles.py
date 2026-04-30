@@ -169,9 +169,10 @@ class BadFiles(BeetsPlugin):
             task._badfiles_checks_failed = checks_failed
 
     def on_import_task_before_choice(self, task, session):
+        if config["import"]["quiet"]:
+            return None
+
         if hasattr(task, "_badfiles_checks_failed"):
-            if config["import"]["quiet"]:
-                return None
             ui.print_(
                 f"{colorize('text_warning', 'BAD')} one or more files failed checks:"
             )

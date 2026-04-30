@@ -17,6 +17,7 @@
 from types import SimpleNamespace
 from unittest.mock import patch
 
+from beets import importer
 from beets.test.helper import PluginTestCase
 from beetsplug.badfiles import BadFiles
 
@@ -30,10 +31,9 @@ class BadFilesPluginTest(PluginTestCase):
 
         self.config["import"]["quiet"] = True
 
-        with patch("beetsplug.badfiles.ui.input_options") as mock_input:
+        with patch("beetsplug.badfiles.ui.input_options", return_value="s"):
             result = plugin.on_import_task_before_choice(task, session=None)
 
-        mock_input.assert_not_called()
         assert result is None
 
     def test_non_quiet_import_calls_prompt(self):
@@ -42,10 +42,7 @@ class BadFilesPluginTest(PluginTestCase):
 
         self.config["import"]["quiet"] = False
 
-        with patch(
-            "beetsplug.badfiles.ui.input_options", return_value="c"
-        ) as mock_input:
+        with patch("beetsplug.badfiles.ui.input_options", return_value="s"):
             result = plugin.on_import_task_before_choice(task, session=None)
 
-        mock_input.assert_called_once()
-        assert result is None
+        assert result == importer.Action.SKIP
