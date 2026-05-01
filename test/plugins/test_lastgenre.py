@@ -1215,6 +1215,7 @@ def test_client_normalization(config):
         ("hip-hop", "hip hop"),
         ("triphop", "trip hop"),
         ("alt", "alternative rock"),
+        ("alt rock", "alternative rock"),
         ("alternative", "alternative rock"),
         ("goth", "gothic rock"),
         ("goth rock", "gothic rock"),
