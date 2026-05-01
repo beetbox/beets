@@ -966,20 +966,22 @@ def test_normalize_genre(
     expected: str,
 ) -> None:
     """Test normalize_genre() with static and template canonical names."""
-    aliases = [
+    alias_patterns = [
         (re.compile(pat, re.IGNORECASE), template.lower())
         for template, patterns in aliases_dict.items()
         for pat in patterns
     ]
-    assert normalize_genre(Mock(), aliases, genre) == expected
+    assert normalize_genre(Mock(), alias_patterns, genre) == expected
 
 
 def test_normalize_genre_invalid_template_does_not_crash() -> None:
     """Invalid replacement templates are skipped instead of crashing."""
     logger = Mock()
-    aliases = [(re.compile(r"(hip)[ /-]*hop", re.IGNORECASE), r"\g<2> hop")]
+    alias_patterns = [
+        (re.compile(r"(hip)[ /-]*hop", re.IGNORECASE), r"\g<2> hop")
+    ]
 
-    assert normalize_genre(logger, aliases, "hip-hop") == "hip-hop"
+    assert normalize_genre(logger, alias_patterns, "hip-hop") == "hip-hop"
     logger.warning.assert_called_once()
 
 
@@ -1009,7 +1011,7 @@ def test_aliases_config_format(
     )
     config["lastgenre"]["aliases"] = aliases_config
     plugin = lastgenre.LastGenrePlugin()
-    result = normalize_genre(plugin._log, plugin.aliases, input_genre)
+    result = normalize_genre(plugin._log, plugin.alias_patterns, input_genre)
     assert result == expected_genre
 
 
@@ -1112,7 +1114,9 @@ def test_aliases_default_bundled_loads(config):
     config["lastgenre"]["aliases"] = True
     plugin = lastgenre.LastGenrePlugin()
     # Bundled file should have at least one entry.
-    assert len(plugin.aliases) > 0, "bundled aliases.yaml must contain entries"
+    assert len(plugin.alias_patterns) > 0, (
+        "bundled aliases.yaml must contain entries"
+    )
 
 
 def test_aliases_disabled(config):
@@ -1122,10 +1126,16 @@ def test_aliases_disabled(config):
     )
     config["lastgenre"]["aliases"] = False
     plugin = lastgenre.LastGenrePlugin()
-    assert plugin.aliases == []
+    assert plugin.alias_patterns == []
     # normalize_genre with an empty list must return the genre unchanged.
-    assert normalize_genre(plugin._log, plugin.aliases, "hip-hop") == "hip-hop"
-    assert normalize_genre(plugin._log, plugin.aliases, "hiphop") == "hiphop"
+    assert (
+        normalize_genre(plugin._log, plugin.alias_patterns, "hip-hop")
+        == "hip-hop"
+    )
+    assert (
+        normalize_genre(plugin._log, plugin.alias_patterns, "hiphop")
+        == "hiphop"
+    )
 
 
 # Aliases: LastFmClient normalization tests
@@ -1146,20 +1156,22 @@ def test_client_normalization(config):
     mock_lastfm_obj.get_top_tags.return_value = [mock_tag]
 
     # Initialize client manually
-    aliases = [
+    alias_patterns = [
         (re.compile(pat, re.IGNORECASE), template.lower())
         for template, patterns in aliases_config.items()
         for pat in patterns
     ]
-    ignorelist = {
+    ignore_patterns = {
         artist: [re.compile(pattern, re.IGNORECASE) for pattern in patterns]
         for artist, patterns in ignorelist_config.items()
     }
-    client = lastgenre.client.LastFmClient(Mock(), 10, ignorelist, aliases)
+    client = lastgenre.client.LastFmClient(
+        Mock(), 10, ignore_patterns, alias_patterns
+    )
 
-    # 1. Test _tags_for directly: returns raw (un-normalized) tags from pylast
-    tags = client._tags_for(mock_lastfm_obj)
-    assert tags == ["hip-hop"], "client._tags_for must return raw tags"
+    # 1. Test fetch directly: returns raw (un-normalized) tags from pylast
+    tags = client.fetch("track", mock_lastfm_obj)
+    assert tags == ["hip-hop"], "client.fetch must return raw tags"
 
     # 2. Test _last_lookup with ignorelist and aliases:
     # 'hip-hop' normalized to 'hip hop', which is then ignored.
@@ -1219,5 +1231,5 @@ def test_default_aliases_logic(config, input_genre, expected_genre):
     config["lastgenre"]["ignorelist"] = False
     config["lastgenre"]["aliases"] = True
     plugin = lastgenre.LastGenrePlugin()
-    result = normalize_genre(plugin._log, plugin.aliases, input_genre)
+    result = normalize_genre(plugin._log, plugin.alias_patterns, input_genre)
     assert result == expected_genre
