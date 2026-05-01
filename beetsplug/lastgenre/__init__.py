@@ -51,7 +51,7 @@ if TYPE_CHECKING:
     from beets.importer import ImportSession, ImportTask
     from beets.library import LibModel
 
-    from .utils import Aliases, GenreIgnorePatterns
+    from .utils import GenreAliasPatterns, GenreIgnorePatterns
 
     Whitelist = set[str]
     """Set of valid genre names (lowercase). Empty set means all genres allowed."""
@@ -155,12 +155,12 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         self.c14n_branches: CanonTree
         self.c14n_branches, self.canonicalize = self._load_c14n_tree()
         self.ignore_patterns: GenreIgnorePatterns = self._load_ignorelist()
-        self.aliases: Aliases = self._load_aliases()
+        self.alias_patterns: GenreAliasPatterns = self._load_aliases()
         self.client = LastFmClient(
             self._log,
             self.config["min_weight"].get(int),
             self.ignore_patterns,
-            self.aliases,
+            self.alias_patterns,
         )
 
     def _load_whitelist(self) -> Whitelist:
@@ -248,7 +248,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         return compiled_ignorelist
 
-    def _load_aliases(self) -> Aliases:
+    def _load_aliases(self) -> GenreAliasPatterns:
         """Load the genre alias table from the beets config.
 
         Reads ``lastgenre.aliases`` as a mapping of genre names to lists of
@@ -290,7 +290,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 confuse.MappingValues(confuse.Sequence(str))
             )
 
-        entries: Aliases = []
+        entries: GenreAliasPatterns = []
         for canonical, patterns in aliases_dict.items():
             template = str(canonical).lower()
             for raw_pat in patterns:
@@ -342,9 +342,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             return []
 
         # Normalize variant spellings before any other processing.
-        if self.aliases:
+        if self.alias_patterns:
             tags = [
-                normalize_genre(self._log, self.aliases, tag) for tag in tags
+                normalize_genre(self._log, self.alias_patterns, tag)
+                for tag in tags
             ]
 
         count = self.config["count"].get(int)

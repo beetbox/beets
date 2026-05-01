@@ -26,10 +26,7 @@ if TYPE_CHECKING:
     GenreIgnorePatterns = dict[str, list[re.Pattern[str]]]
     """Mapping of artist name to list of compiled case-insensitive patterns."""
 
-    AliasEntry = tuple[re.Pattern[str], str]
-    """A compiled full-match pattern paired with its replacement template."""
-
-    Aliases = list[AliasEntry]
+    GenreAliasPatterns = list[tuple[re.Pattern[str], str]]
     """Ordered list of (pattern, replacement_template) alias entries."""
 
 
@@ -64,8 +61,10 @@ def is_ignored(
     return False
 
 
-def normalize_genre(logger: BeetsLogger, aliases: Aliases, genre: str) -> str:
-    """Return the canonical form of *genre* using *aliases*.
+def normalize_genre(
+    logger: BeetsLogger, alias_patterns: GenreAliasPatterns, genre: str
+) -> str:
+    """Return the canonical form of *genre* using *alias_patterns*.
 
     Tries each alias entry in order. The first full-match wins; the replacement
     template is expanded via ``re.Match.expand()`` so ``\\g<N>``
@@ -73,7 +72,7 @@ def normalize_genre(logger: BeetsLogger, aliases: Aliases, genre: str) -> str:
     matches.
     """
     genre_lower = genre.lower()
-    for pattern, template in aliases:
+    for pattern, template in alias_patterns:
         if m := pattern.fullmatch(genre_lower):
             try:
                 expanded = m.expand(template)

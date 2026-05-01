@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from beets.library import LibModel
     from beets.logging import BeetsLogger
 
-    from .utils import Aliases, GenreIgnorePatterns
+    from .utils import GenreAliasPatterns, GenreIgnorePatterns
 
     GenreCache = dict[str, list[str]]
     """Cache mapping entity keys to their genre lists.
@@ -69,7 +69,7 @@ class LastFmClient:
         log: BeetsLogger,
         min_weight: int,
         ignore_patterns: GenreIgnorePatterns,
-        aliases: Aliases,
+        alias_patterns: GenreAliasPatterns,
     ):
         """Initialize the client.
 
@@ -79,7 +79,7 @@ class LastFmClient:
         self._log = log
         self._min_weight = min_weight
         self._ignore_patterns: GenreIgnorePatterns = ignore_patterns
-        self._aliases: Aliases = aliases
+        self._alias_patterns: GenreAliasPatterns = alias_patterns
         self._genre_cache: GenreCache = {}
 
     def fetch_genres(
@@ -134,8 +134,8 @@ class LastFmClient:
         # Artist is always the first element in args (album, artist, track lookups).
         result = []
         for genre in genres:
-            if self._aliases:
-                genre = normalize_genre(self._log, self._aliases, genre)
+            if self._alias_patterns:
+                genre = normalize_genre(self._log, self._alias_patterns, genre)
 
             if not is_ignored(self._log, self._ignore_patterns, genre, args[0]):
                 result.append(genre)
