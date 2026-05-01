@@ -812,8 +812,8 @@ class TestIgnorelist:
                 {"*": ["spoken word"], "metallica": ["metal"]},
                 {"*": ["spoken word"], "metallica": ["metal"]},
             ),
-            # Artist names are preserved by the current loader implementation.
-            ({"METALLICA": ["METAL"]}, {"METALLICA": ["METAL"]}),
+            # Artist names are lowercased so lookup in is_ignored() matches.
+            ({"METALLICA": ["METAL"]}, {"metallica": ["METAL"]}),
             # Invalid regex pattern that gets escaped (full-match literal fallback)
             (
                 {"artist": ["[invalid(regex"]},
@@ -852,7 +852,7 @@ class TestIgnorelist:
                                 re.escape(pattern), re.IGNORECASE
                             ).pattern
                         )
-                string_ignorelist[artist] = compiled_patterns
+                string_ignorelist[artist.lower()] = compiled_patterns
 
         assert string_ignorelist == expected_ignorelist
 
@@ -1071,7 +1071,7 @@ def test_aliases_normalize_before_ignorelist(config):
     config["lastgenre"]["aliases"] = {"hip hop": ["hip-hop"]}
     plugin = lastgenre.LastGenrePlugin()
     plugin.setup()
-    plugin.ignorelist = {
+    plugin.ignore_patterns = {
         "*": [re.compile("hip hop", re.IGNORECASE)],
     }
 
