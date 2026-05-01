@@ -39,6 +39,9 @@ New features
 
   See :doc:`plugins/tidal` for more information.
 
+- :doc:`plugins/convert`: The ``--force`` and ``--keep-new`` CLI flags are now
+  also available as config options via ``force`` and ``keep_new``.
+
 Bug fixes
 ~~~~~~~~~
 

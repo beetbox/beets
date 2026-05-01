@@ -30,6 +30,7 @@ from beets.test.helper import (
     AsIsImporterMixin,
     ImportHelper,
     IOMixin,
+    PluginMixin,
     PluginTestCase,
     capture_log,
 )
@@ -360,8 +361,16 @@ class NeverConvertLossyFilesTest(ConvertTestCase, ConvertCommand):
         assert self.file_endswith(converted, "opus")
 
 
-class TestNoConvert:
+class TestNoConvert(PluginMixin):
     """Test the effect of the `no_convert` option."""
+
+    plugin = "convert"
+
+    @pytest.fixture(autouse=True)
+    def cleanup_plugins(self):
+        """Make sure hooks are cleared after each test."""
+        yield
+        self.unload_plugins()
 
     @pytest.mark.parametrize(
         "config_value, should_skip",
@@ -372,7 +381,7 @@ class TestNoConvert:
             ("bitrate:320 , format:ogg", True),
         ],
     )
-    def test_no_convert_skip(self, config_value, should_skip):
+    def test_no_convert_skip(self, config, config_value, should_skip):
         item = Item(format="ogg", bitrate=256)
-        convert.config["convert"]["no_convert"] = config_value
-        assert convert.in_no_convert(item) == should_skip
+        config["convert"]["no_convert"] = config_value
+        assert convert.ConvertPlugin().in_no_convert(item) == should_skip
