@@ -282,8 +282,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             if not aliases_dict:
                 return []
         else:
-            # Validate only the effective aliases value to avoid stale lower-
-            # priority config layers affecting type checking.
+            # aliases defaults to True (unlike ignorelist), so MappingValues
+            # would raise on the boolean default layer.
             aliases_cfg = confuse.Configuration("lastgenre_aliases", read=False)
             aliases_cfg.set({"aliases": aliases_raw})
             aliases_dict = aliases_cfg["aliases"].get(
