@@ -933,312 +933,223 @@ class TestIgnorelist:
         assert "Metal" in genres
 
 
-# Aliases: normalize_genre() unit tests
+class TestAliases:
+    """Alias pattern matching and loading tests."""
 
-
-@pytest.mark.parametrize(
-    "aliases_dict, genre, expected",
-    [
-        # Static (no back-references)
-        ({"drum and bass": ["d(rum)?[ &n/]*b(ass)?"]}, "dnb", "drum and bass"),
-        (
-            {"drum and bass": ["d(rum)?[ &n/]*b(ass)?"]},
-            "drum n bass",
-            "drum and bass",
-        ),
-        ({"drum and bass": ["d(rum)?[ &n/]*b(ass)?"]}, "d&b", "drum and bass"),
-        # Template with \g<1> back-reference
-        ({r"\g<1> hop": [r"(hip)[ /-]*hop"]}, "hip-hop", "hip hop"),
-        ({r"\g<1> hop": [r"(trip)[ /-]*hop"]}, "trip hop", "trip hop"),
-        ({r"\g<1>-\g<2>": [r"(post)[ /-]*(\w+)"]}, "post rock", "post-rock"),
-        ({r"\g<1>-\g<2>": [r"(post)[ /-]*(\w+)"]}, "post/rock", "post-rock"),
-        # Case-insensitive matching, result is lowercased template
-        ({"hip hop": ["hiphop"]}, "HipHop", "hip hop"),
-        # No match — genre returned as-is (lowercased)
-        ({"drum and bass": ["d(rum)?[ &n/]*b(ass)?"]}, "jazz", "jazz"),
-        # Empty alias list → no-op
-        ({}, "hip-hop", "hip-hop"),
-    ],
-)
-def test_normalize_genre(
-    aliases_dict: dict,
-    genre: str,
-    expected: str,
-) -> None:
-    """Test normalize_genre() with static and template canonical names."""
-    alias_patterns = [
-        (re.compile(pat, re.IGNORECASE), template.lower())
-        for template, patterns in aliases_dict.items()
-        for pat in patterns
-    ]
-    assert normalize_genre(Mock(), alias_patterns, genre) == expected
-
-
-def test_normalize_genre_invalid_template_does_not_crash() -> None:
-    """Invalid replacement templates are skipped instead of crashing."""
-    logger = Mock()
-    alias_patterns = [
-        (re.compile(r"(hip)[ /-]*hop", re.IGNORECASE), r"\g<2> hop")
-    ]
-
-    assert normalize_genre(logger, alias_patterns, "hip-hop") == "hip-hop"
-    logger.warning.assert_called_once()
-
-
-# Aliases: _load_aliases() config parsing tests
-
-
-@pytest.mark.parametrize(
-    "aliases_config, input_genre, expected_genre",
-    [
-        # Inline static alias
-        ({"hip hop": ["hip-hop", "hiphop"]}, "hip-hop", "hip hop"),
-        ({"hip hop": ["hip-hop", "hiphop"]}, "hiphop", "hip hop"),
-        # Inline template alias
-        ({r"\g<1> hop": [r"(trip)[ /-]*hop"]}, "trip-hop", "trip hop"),
-        # Pattern that does not match — genre unchanged
-        ({"drum and bass": [r"d(rum)?[ &n/]*b(ass)?"]}, "jazz", "jazz"),
-        # False → aliases disabled, genre not normalised
-        (False, "hip-hop", "hip-hop"),
-    ],
-)
-def test_aliases_config_format(
-    config, aliases_config, input_genre, expected_genre
-):
-    """Test _load_aliases() loading from inline config dict (and False)."""
-    config["lastgenre"]["ignorelist"] = (
-        False  # prevent state leak from earlier tests
+    @pytest.mark.parametrize(
+        "aliases_dict, genre, expected",
+        [
+            # Static replacement
+            ({"foo bar": ["foobar"]}, "foobar", "foo bar"),
+            # Template with \g<1> back-reference
+            (
+                {r"\g<1> music": [r"(fake)[ /-]*music"]},
+                "fake-music",
+                "fake music",
+            ),
+            # Template with \g<1> and \g<2> back-references
+            ({r"\g<1>-\g<2>": [r"(x)[ /-]*(y)"]}, "x y", "x-y"),
+            # Case-insensitive matching
+            ({"foo bar": ["foobar"]}, "FOOBAR", "foo bar"),
+            # No match — genre returned as-is (lowercased)
+            ({"foo bar": ["foobar"]}, "jazz", "jazz"),
+            # Empty alias list → no-op
+            ({}, "something", "something"),
+        ],
     )
-    config["lastgenre"]["aliases"] = aliases_config
-    plugin = lastgenre.LastGenrePlugin()
-    result = normalize_genre(plugin._log, plugin.alias_patterns, input_genre)
-    assert result == expected_genre
+    def test_normalize_genre(
+        self,
+        aliases_dict: dict[str, list[str]],
+        genre: str,
+        expected: str,
+    ) -> None:
+        """Test normalize_genre() with static and template canonical names."""
+        alias_patterns = [
+            (re.compile(pat, re.IGNORECASE), template.lower())
+            for template, patterns in aliases_dict.items()
+            for pat in patterns
+        ]
+        assert normalize_genre(Mock(), alias_patterns, genre) == expected
 
+    def test_normalize_genre_invalid_template_does_not_crash(self) -> None:
+        """Invalid replacement templates are skipped instead of crashing."""
+        logger = Mock()
+        alias_patterns = [
+            (re.compile(r"(hip)[ /-]*hop", re.IGNORECASE), r"\g<2> hop")
+        ]
 
-@pytest.mark.parametrize(
-    "invalid_config, expected_error",
-    [
-        # Plain string instead of mapping
-        ("/path/to/aliases.txt", "must be a dict"),
-        # Integer
-        (42, "must be a dict"),
-        # Mapping with non-list value
-        ({"hip hop": "hip-hop"}, "must be a list"),
-    ],
-)
-def test_aliases_config_format_errors(config, invalid_config, expected_error):
-    """Test that invalid aliases config values raise confuse.ConfigTypeError."""
-    config["lastgenre"]["ignorelist"] = (
-        False  # prevent state leak from earlier tests
+        assert normalize_genre(logger, alias_patterns, "hip-hop") == "hip-hop"
+        logger.warning.assert_called_once()
+
+    def test_aliases_config_format(self, config):
+        """Test _load_aliases() loading from inline config dict."""
+        config["lastgenre"]["ignorelist"] = (
+            False  # prevent state leak from earlier tests
+        )
+        # Multi-pattern list: proves all patterns are loaded, not just the first
+        config["lastgenre"]["aliases"] = {"hip hop": ["hip-hop", "hiphop"]}
+        plugin = lastgenre.LastGenrePlugin()
+        assert (
+            normalize_genre(plugin._log, plugin.alias_patterns, "hip-hop")
+            == "hip hop"
+        )
+        assert (
+            normalize_genre(plugin._log, plugin.alias_patterns, "hiphop")
+            == "hip hop"
+        )
+
+    @pytest.mark.parametrize(
+        "invalid_config, expected_error",
+        [
+            # Plain string instead of mapping
+            ("/path/to/aliases.txt", "must be a dict"),
+            # Integer
+            (42, "must be a dict"),
+            # Mapping with non-list value
+            ({"hip hop": "hip-hop"}, "must be a list"),
+        ],
     )
-    config["lastgenre"]["aliases"] = invalid_config
-    with pytest.raises(confuse.ConfigTypeError) as exc_info:
-        lastgenre.LastGenrePlugin()
-    assert expected_error in str(exc_info.value)
+    def test_aliases_config_format_errors(
+        self, config, invalid_config, expected_error
+    ):
+        """Test that invalid aliases config values raise confuse.ConfigTypeError."""
+        config["lastgenre"]["ignorelist"] = (
+            False  # prevent state leak from earlier tests
+        )
+        config["lastgenre"]["aliases"] = invalid_config
+        with pytest.raises(confuse.ConfigTypeError) as exc_info:
+            lastgenre.LastGenrePlugin()
+        assert expected_error in str(exc_info.value)
 
+    def test_normalize_before_whitelist(self, config):
+        """Aliases normalize BEFORE whitelist filtering.
 
-# Aliases: integration with _resolve_genres()
+        'hip-hop' is not on the whitelist but 'hip hop' is.  With aliases
+        enabled the tag must survive whitelist filtering.
+        """
+        config["lastgenre"]["ignorelist"] = (
+            False  # prevent state leak from earlier tests
+        )
+        config["lastgenre"]["aliases"] = {"hip hop": ["hip-hop", "hiphop"]}
+        plugin = lastgenre.LastGenrePlugin()
+        plugin.setup()
+        # Inject only 'hip hop' into the whitelist to prove the alias fired.
+        plugin.whitelist = {"hip hop"}
 
+        result = plugin._resolve_genres(["hip-hop"])
+        assert result == ["hip hop"], (
+            "alias must normalize 'hip-hop' → 'hip hop' before whitelist check"
+        )
 
-def test_aliases_normalize_before_whitelist(config):
-    """Aliases normalize BEFORE whitelist filtering.
+    def test_normalize_before_ignorelist(self, config):
+        """Aliases normalize BEFORE ignorelist filtering.
 
-    'hip-hop' is not on the whitelist but 'hip hop' is.  With aliases
-    enabled the tag must survive whitelist filtering.
-    """
-    config["lastgenre"]["ignorelist"] = (
-        False  # prevent state leak from earlier tests
+        If 'hip hop' is ignored but 'hip-hop' is fed in, the alias fires first
+        so the result is empty (correctly ignored).
+        """
+        config["lastgenre"]["ignorelist"] = (
+            False  # prevent state leak from earlier tests
+        )
+        config["lastgenre"]["aliases"] = {"hip hop": ["hip-hop"]}
+        plugin = lastgenre.LastGenrePlugin()
+        plugin.setup()
+        plugin.ignore_patterns = {
+            "*": [re.compile("hip hop", re.IGNORECASE)],
+        }
+
+        result = plugin._resolve_genres(["hip-hop"])
+        assert result == [], (
+            "alias must normalize 'hip-hop' before ignorelist check drops it"
+        )
+
+    def test_disabled(self, config):
+        """With aliases: false, no normalization is performed."""
+        config["lastgenre"]["ignorelist"] = (
+            False  # prevent state leak from earlier tests
+        )
+        config["lastgenre"]["aliases"] = False
+        plugin = lastgenre.LastGenrePlugin()
+        assert plugin.alias_patterns == []
+        # normalize_genre with an empty list must return the genre unchanged.
+        assert (
+            normalize_genre(plugin._log, plugin.alias_patterns, "hip-hop")
+            == "hip-hop"
+        )
+
+    @pytest.mark.parametrize(
+        "input_genre, expected_genre",
+        [
+            ("dnb", "drum and bass"),
+            ("drum n bass", "drum and bass"),
+            ("r&b", "rhythm and blues"),
+            ("rnb", "rhythm and blues"),
+            ("rock & roll", "rock and roll"),
+            ("rock'n'roll", "rock and roll"),
+            ("kpop", "k-pop"),
+            ("j rock", "j-rock"),
+            ("post rock", "post-rock"),
+            ("lofi", "lo-fi"),
+            ("lo fi", "lo-fi"),
+            ("p funk", "p-funk"),
+            ("synth pop", "synthpop"),
+            ("avantgarde", "avant-garde"),
+            ("avant gard", "avant-garde"),
+            ("nu-jazz", "nu jazz"),
+            ("nu-metal", "nu metal"),
+            ("nu-soul", "nu soul"),
+            ("nu disco", "nu disco"),
+            ("electronic music", "electronic"),
+            ("world", "world music"),
+            ("chill", "chillout"),
+            ("chill out", "chillout"),
+            ("chill-out", "chillout"),
+            ("dark wave", "darkwave"),
+            ("dark-wave", "darkwave"),
+            ("blues rock", "blues rock"),
+            ("blues-rock", "blues rock"),
+            ("folk-rock", "folk rock"),
+            ("downbeat", "downtempo"),
+            ("shoegazer", "shoegaze"),
+            ("shoegazing", "shoegaze"),
+            ("hip-hop", "hip hop"),
+            ("triphop", "trip hop"),
+            ("alt", "alternative rock"),
+            ("alt rock", "alternative rock"),
+            ("alternative", "alternative rock"),
+            ("goth", "gothic rock"),
+            ("goth rock", "gothic rock"),
+            ("gothic rock", "gothic rock"),
+            ("prog", "progressive rock"),
+            ("prog rock", "progressive rock"),
+            ("progressive rock", "progressive rock"),
+            ("trad", "traditional folk"),
+            ("traditional", "traditional folk"),
+        ],
     )
-    config["lastgenre"]["aliases"] = {"hip hop": ["hip-hop", "hiphop"]}
-    plugin = lastgenre.LastGenrePlugin()
-    plugin.setup()
-    # Inject only 'hip hop' into the whitelist to prove the alias fired.
-    plugin.whitelist = {"hip hop"}
+    def test_default_aliases_logic(self, config, input_genre, expected_genre):
+        """Verify that bundled aliases.yaml correctly handles common variants."""
+        config["lastgenre"]["ignorelist"] = False
+        config["lastgenre"]["aliases"] = True
+        plugin = lastgenre.LastGenrePlugin()
+        result = normalize_genre(
+            plugin._log, plugin.alias_patterns, input_genre
+        )
+        assert result == expected_genre
 
-    result = plugin._resolve_genres(["hip-hop"])
-    assert result == ["hip hop"], (
-        "alias must normalize 'hip-hop' → 'hip hop' before whitelist check"
-    )
+    def test_client_normalizes_in_last_lookup(self):
+        """LastFmClient._last_lookup applies alias normalization then ignorelist."""
+        alias_patterns = [(re.compile(r"hip-hop", re.IGNORECASE), "hip hop")]
+        ignore_patterns = {"*": [re.compile("hip hop", re.IGNORECASE)]}
+        client = lastgenre.client.LastFmClient(
+            Mock(), 0, ignore_patterns, alias_patterns
+        )
 
+        mock_lastfm_obj = Mock()
+        mock_lastfm_obj.get_top_tags.return_value = []
+        # Seed the cache directly to avoid a real network call.
+        client._genre_cache["track.artist-title"] = ["hip-hop"]
 
-def test_aliases_normalize_before_ignorelist(config):
-    """Aliases normalize BEFORE ignorelist filtering.
-
-    If 'hip hop' is ignored but 'hip-hop' is fed in, the alias fires first
-    so the result is empty (correctly ignored).
-    """
-    config["lastgenre"]["ignorelist"] = (
-        False  # prevent state leak from earlier tests
-    )
-    config["lastgenre"]["aliases"] = {"hip hop": ["hip-hop"]}
-    plugin = lastgenre.LastGenrePlugin()
-    plugin.setup()
-    plugin.ignore_patterns = {
-        "*": [re.compile("hip hop", re.IGNORECASE)],
-    }
-
-    result = plugin._resolve_genres(["hip-hop"])
-    assert result == [], (
-        "alias must normalize 'hip-hop' before ignorelist check drops it"
-    )
-
-
-def test_aliases_normalize_existing_tags(config):
-    """Aliases also normalize genres already in the file tag.
-
-    Existing genres passed as *old* in keep_genres are lowercased and then
-    flow through _resolve_genres, so aliases must fire for them too.
-    """
-    config["lastgenre"]["ignorelist"] = (
-        False  # prevent state leak from earlier tests
-    )
-    config["lastgenre"]["aliases"] = {
-        "drum and bass": [r"d(rum)?[ &n/]*b(ass)?"]
-    }
-    plugin = lastgenre.LastGenrePlugin()
-    plugin.setup()
-    plugin.whitelist = {"drum and bass"}
-
-    # Simulate existing tag variant 'dnb' passing through resolve.
-    result = plugin._resolve_genres(["dnb"])
-    assert result == ["drum and bass"], (
-        "alias must normalize existing tag variant 'dnb' before whitelist check"
-    )
-
-
-def test_aliases_default_bundled_loads(config):
-    """With aliases: true (default), the bundled aliases.yaml is loaded."""
-    config["lastgenre"]["ignorelist"] = (
-        False  # prevent state leak from earlier tests
-    )
-    config["lastgenre"]["aliases"] = True
-    plugin = lastgenre.LastGenrePlugin()
-    # Bundled file should have at least one entry.
-    assert len(plugin.alias_patterns) > 0, (
-        "bundled aliases.yaml must contain entries"
-    )
-
-
-def test_aliases_disabled(config):
-    """With aliases: false, no normalization is performed."""
-    config["lastgenre"]["ignorelist"] = (
-        False  # prevent state leak from earlier tests
-    )
-    config["lastgenre"]["aliases"] = False
-    plugin = lastgenre.LastGenrePlugin()
-    assert plugin.alias_patterns == []
-    # normalize_genre with an empty list must return the genre unchanged.
-    assert (
-        normalize_genre(plugin._log, plugin.alias_patterns, "hip-hop")
-        == "hip-hop"
-    )
-    assert (
-        normalize_genre(plugin._log, plugin.alias_patterns, "hiphop")
-        == "hiphop"
-    )
-
-
-# Aliases: LastFmClient normalization tests
-
-
-def test_client_normalization(config):
-    """LastFmClient must normalize tags using aliases before filtering."""
-    # Setup aliases: 'hip-hop' -> 'hip hop'
-    aliases_config = {r"hip hop": [r"hip-hop"]}
-    # Setup ignorelist: ignore 'hip hop'
-    ignorelist_config = {"*": ["hip hop"]}
-
-    # Mock pylast objects
-    mock_tag = Mock()
-    mock_tag.item.get_name.return_value = "hip-hop"
-    mock_tag.weight = 100
-    mock_lastfm_obj = Mock()
-    mock_lastfm_obj.get_top_tags.return_value = [mock_tag]
-
-    # Initialize client manually
-    alias_patterns = [
-        (re.compile(pat, re.IGNORECASE), template.lower())
-        for template, patterns in aliases_config.items()
-        for pat in patterns
-    ]
-    ignore_patterns = {
-        artist: [re.compile(pattern, re.IGNORECASE) for pattern in patterns]
-        for artist, patterns in ignorelist_config.items()
-    }
-    client = lastgenre.client.LastFmClient(
-        Mock(), 10, ignore_patterns, alias_patterns
-    )
-
-    # 1. Test fetch directly: returns raw (un-normalized) tags from pylast
-    tags = client.fetch("track", mock_lastfm_obj)
-    assert tags == ["hip-hop"], "client.fetch must return raw tags"
-
-    # 2. Test _last_lookup with ignorelist and aliases:
-    # 'hip-hop' normalized to 'hip hop', which is then ignored.
-    # Result should be empty.
-    def mock_method(*args):
-        return mock_lastfm_obj
-
-    result = client._last_lookup("track", mock_method, "artist", "title")
-    assert result == [], (
-        "normalized 'hip hop' must be caught and filtered by ignorelist in _last_lookup"
-    )
-
-
-@pytest.mark.parametrize(
-    "input_genre, expected_genre",
-    [
-        ("dnb", "drum and bass"),
-        ("drum n bass", "drum and bass"),
-        ("r&b", "rhythm and blues"),
-        ("rnb", "rhythm and blues"),
-        ("rock & roll", "rock and roll"),
-        ("rock'n'roll", "rock and roll"),
-        ("kpop", "k-pop"),
-        ("j rock", "j-rock"),
-        ("post rock", "post-rock"),
-        ("lofi", "lo-fi"),
-        ("lo fi", "lo-fi"),
-        ("p funk", "p-funk"),
-        ("synth pop", "synthpop"),
-        ("avantgarde", "avant-garde"),
-        ("avant gard", "avant-garde"),
-        ("nu-jazz", "nu jazz"),
-        ("nu-metal", "nu metal"),
-        ("nu-soul", "nu soul"),
-        ("nu disco", "nu disco"),
-        ("electronic music", "electronic"),
-        ("world", "world music"),
-        ("chill", "chillout"),
-        ("chill out", "chillout"),
-        ("chill-out", "chillout"),
-        ("dark wave", "darkwave"),
-        ("dark-wave", "darkwave"),
-        ("blues rock", "blues rock"),
-        ("blues-rock", "blues rock"),
-        ("folk-rock", "folk rock"),
-        ("downbeat", "downtempo"),
-        ("shoegazer", "shoegaze"),
-        ("shoegazing", "shoegaze"),
-        ("hip-hop", "hip hop"),
-        ("triphop", "trip hop"),
-        ("alt", "alternative rock"),
-        ("alt rock", "alternative rock"),
-        ("alternative", "alternative rock"),
-        ("goth", "gothic rock"),
-        ("goth rock", "gothic rock"),
-        ("gothic rock", "gothic rock"),
-        ("prog", "progressive rock"),
-        ("prog rock", "progressive rock"),
-        ("progressive rock", "progressive rock"),
-        ("trad", "traditional folk"),
-        ("traditional", "traditional folk"),
-    ],
-)
-def test_default_aliases_logic(config, input_genre, expected_genre):
-    """Verify that bundled aliases.yaml correctly handles common variants."""
-    config["lastgenre"]["ignorelist"] = False
-    config["lastgenre"]["aliases"] = True
-    plugin = lastgenre.LastGenrePlugin()
-    result = normalize_genre(plugin._log, plugin.alias_patterns, input_genre)
-    assert result == expected_genre
+        result = client._last_lookup("track", Mock(), "artist", "title")
+        assert result == [], (
+            "'hip-hop' must be normalized to 'hip hop' then filtered by ignorelist"
+        )
