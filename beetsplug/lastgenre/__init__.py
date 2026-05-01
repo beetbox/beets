@@ -25,7 +25,6 @@ https://gist.github.com/1241307
 from __future__ import annotations
 
 import os
-import re
 from collections import defaultdict
 from functools import singledispatchmethod
 from pathlib import Path
@@ -37,7 +36,11 @@ import yaml
 from beets import config, library, plugins, ui
 from beets.library import Album, Item
 from beets.util import plurality, unique_list
-from beetsplug.lastgenre.utils import is_ignored, normalize_genre
+from beetsplug.lastgenre.utils import (
+    compile_pattern,
+    is_ignored,
+    normalize_genre,
+)
 
 from .client import LastFmClient
 
@@ -234,21 +237,14 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         compiled_ignorelist: GenreIgnorePatterns = defaultdict(list)
         for artist, patterns in raw_ignorelist.items():
-            artist_patterns = []
-            for pattern in patterns:
-                try:
-                    artist_patterns.append(re.compile(pattern, re.IGNORECASE))
-                except re.error:
-                    artist_patterns.append(
-                        re.compile(re.escape(pattern), re.IGNORECASE)
-                    )
+            artist_patterns = [compile_pattern(p) for p in patterns]
             self._log.extra_debug(
                 "ignore for {}: {}",
                 artist,
                 [p.pattern for p in artist_patterns],
             )
 
-            compiled_ignorelist[artist] = artist_patterns
+            compiled_ignorelist[artist.lower()] = artist_patterns
 
         return compiled_ignorelist
 
@@ -298,17 +294,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         for canonical, patterns in aliases_dict.items():
             template = str(canonical).lower()
             for raw_pat in patterns:
-                try:
-                    entries.append(
-                        (re.compile(str(raw_pat), re.IGNORECASE), template)
-                    )
-                except re.error:
-                    entries.append(
-                        (
-                            re.compile(re.escape(str(raw_pat)), re.IGNORECASE),
-                            template,
-                        )
-                    )
+                entries.append((compile_pattern(str(raw_pat)), template))
 
         self._log.extra_debug("Loaded {} alias entries", len(entries))
         return entries
