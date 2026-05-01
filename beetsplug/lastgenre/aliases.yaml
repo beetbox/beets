@@ -67,7 +67,18 @@ nu \g<1>:
 # electronic (electronic music, elektronika)
 electronic:
     - electronic[ /]music
-    - elektronika
+
+# world music (world)
+world music:
+    - world
+
+# chillout (chill, chill out, chill-out)
+chillout:
+    - chill([ /-]*out)?
+
+# darkwave (dark wave)
+darkwave:
+    - dark[ /-]*wave
 
 # downtempo (downbeat)
 downtempo:
@@ -90,10 +101,22 @@ shoegaze:
 # Abbreviations & International Spellings
 # ---------------------------------------------------------------------------
 
-# alternative rock (alt, alternative, alt rock, ...)
+# blues rock (blues-rock)
+blues rock:
+    - blues[ /-]*rock
+
+# folk rock (folk-rock)
+folk rock:
+    - folk[ /-]*rock
+
+# alternative rock (alt, alternative, alt rock, alternative rock, ...)
+alternative rock:
+    - alt([ /-]*rock)?
+    - alternative([ /-]*rock)?
+
 # indie rock (indie, indie rock)
-\g<1> rock:
-    - (alt|alternative|indie)([ /-]*rock)?
+indie rock:
+    - indie([ /-]*rock)?
 
 # gothic rock (goth, goth rock) - doesn't catch gothic metal
 gothic rock:

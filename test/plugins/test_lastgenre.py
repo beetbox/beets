@@ -204,8 +204,8 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
         tags = ("electronic", "ambient", "post-rock", "downtempo")
         res = lastgenre.sort_by_depth(tags, self.plugin.c14n_branches)
         assert res == ["post-rock", "downtempo", "ambient", "electronic"]
-        # Non-canonical tag ('chillout') present.
-        tags = ("electronic", "ambient", "chillout")
+        # Non-canonical tag ('chill out') present.
+        tags = ("electronic", "ambient", "chill out")
         res = lastgenre.sort_by_depth(tags, self.plugin.c14n_branches)
         assert res == ["ambient", "electronic"]
 
@@ -1207,8 +1207,16 @@ def test_client_normalization(config):
         ("nu-metal", "nu metal"),
         ("nu-soul", "nu soul"),
         ("nu disco", "nu disco"),
-        ("elektronika", "electronic"),
         ("electronic music", "electronic"),
+        ("world", "world music"),
+        ("chill", "chillout"),
+        ("chill out", "chillout"),
+        ("chill-out", "chillout"),
+        ("dark wave", "darkwave"),
+        ("dark-wave", "darkwave"),
+        ("blues rock", "blues rock"),
+        ("blues-rock", "blues rock"),
+        ("folk-rock", "folk rock"),
         ("downbeat", "downtempo"),
         ("shoegazer", "shoegaze"),
         ("shoegazing", "shoegaze"),
