@@ -32,6 +32,7 @@ from logging import (
     WARNING,
     FileHandler,
     Filter,
+    Formatter,
     Handler,
     Logger,
     NullHandler,
@@ -100,6 +101,40 @@ def _logsafe(val: T) -> str | T:
     # Other objects are used as-is so field access, etc., still works in
     # the format string. Relies on a working __str__ implementation.
     return val
+
+
+class LegacyFormatter(Formatter):
+    """
+    Custom logging formatter that shows only child logger names (stripping parent)
+    and omits logger name completely for root logger.
+
+    Historically (beets<3.0) this was the standard beets output format. For backwards
+    compatibility, configure the formatter class to `LegacyFormatter` and use this
+    format string:
+
+        format: %(legacy_msg)s
+    `legacy_msg` is added by `LegacyFormatter.format()`, so using this format string
+    with the standard-library `logging.Formatter` will fail.
+
+    Examples:
+        - root: "msg"
+        - beet: "msg
+        - beets.musicbrainz: "musicbrainz: msg"
+        - beets.musicbrainz.sub: "musicbrainz.sub: msg"
+    """
+
+    def format(self, record):
+        parts = record.name.split(".")
+
+        child_name = ".".join(parts[1:]) if len(parts) > 1 else None
+
+        record.legacy_msg = (
+            f"{child_name}: {record.getMessage()}"
+            if child_name
+            else record.getMessage()
+        )
+
+        return super().format(record)
 
 
 class StrFormatLogger(Logger):
