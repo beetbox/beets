@@ -21,7 +21,7 @@ import pytest
 from beets import config
 from beets.library import Item
 from beets.test._common import Bag
-from beets.test.helper import BeetsTestCase, capture_log
+from beets.test.helper import TestHelper
 from beetsplug.discogs import ArtistState, DiscogsPlugin
 
 
@@ -37,8 +37,20 @@ def _artist(name: str, **kwargs):
     } | kwargs
 
 
+class PytestTestHelper(TestHelper):
+    """Same as the BeetsTestCase unittest setup but for pytest."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        self.setup_beets()
+        try:
+            yield
+        finally:
+            self.teardown_beets()
+
+
 @patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
-class DGAlbumInfoTest(BeetsTestCase):
+class TestDGAlbumInfo(PytestTestHelper):
     def _make_release(self, tracks=None):
         """Returns a Bag that mimics a discogs_client.Release. The list
         of elements on the returned Bag is incomplete, including just
@@ -350,14 +362,16 @@ class DGAlbumInfoTest(BeetsTestCase):
         assert d.album == "TITLE"
         assert len(d.tracks) == 1
 
-    def test_parse_release_without_required_fields(self):
+    def test_parse_release_without_required_fields(self, caplog):
         """Test parsing of a release that does not have the required fields."""
         release = Bag(data={}, refresh=lambda *args: None)
-        with capture_log() as logs:
+        with caplog.at_level("DEBUG"):
             d = DiscogsPlugin().get_album_info(release)
 
         assert d is None
-        assert "Release does not contain the required fields" in logs[0]
+        assert (
+            "Release does not contain the required fields" in caplog.messages[0]
+        )
 
     def test_default_genre_style_settings(self):
         """Test genre default settings, genres to genre, styles to style"""
@@ -469,7 +483,7 @@ class DGAlbumInfoTest(BeetsTestCase):
 
 
 @patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
-class DGSearchQueryTest(BeetsTestCase):
+class TestDGSearchQuery(PytestTestHelper):
     def test_default_search_filters_without_extra_tags(self):
         """Discogs search uses only the type filter when no extra_tags are set."""
         plugin = DiscogsPlugin()

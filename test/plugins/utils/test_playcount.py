@@ -2,7 +2,7 @@ import pytest
 
 from beets import logging
 from beets.library import Item
-from beets.test.helper import TestHelper, capture_log
+from beets.test.helper import TestHelper
 from beetsplug._utils.playcount import (
     get_items,
     process_track,
@@ -196,7 +196,12 @@ class TestPlayCount:
         ],
     )
     def test_update_play_counts_counts_and_logs_summary(
-        self, tracks, expected_counts, expected_summary, expected_playcount
+        self,
+        tracks,
+        expected_counts,
+        expected_summary,
+        expected_playcount,
+        caplog,
     ):
         item = self.add_item(
             title="Known Song",
@@ -204,7 +209,7 @@ class TestPlayCount:
             play_count=1,
         )
 
-        with capture_log(LOGGER_NAME) as logs:
+        with caplog.at_level("DEBUG", logger=LOGGER_NAME):
             assert (
                 update_play_counts(
                     self.lib,
@@ -216,11 +221,11 @@ class TestPlayCount:
             )
 
         assert any(
-            f"Received {len(tracks)} tracks in this page, processing..." in log
-            for log in logs
+            f"Received {len(tracks)} tracks in this page, processing..." in msg
+            for msg in caplog.messages
         )
         if expected_summary is None:
-            assert not any("Acquired" in log for log in logs)
+            assert not any("Acquired" in msg for msg in caplog.messages)
         else:
-            assert expected_summary in logs
+            assert expected_summary in caplog.text
             assert self.get_playcount(item.id) == expected_playcount
