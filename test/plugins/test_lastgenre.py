@@ -785,14 +785,14 @@ class TestIgnorelist:
 
         logger = Mock()
 
-        # Set up compiled ignorelist directly (skipping file parsing)
-        compiled_ignorelist = defaultdict(list)
+        # Set up compiled ignore_patterns directly (skipping file parsing)
+        ignore_patterns = defaultdict(list)
         for artist_name, patterns in ignorelist_dict.items():
-            compiled_ignorelist[artist_name.lower()] = [
+            ignore_patterns[artist_name.lower()] = [
                 re.compile(pattern, re.IGNORECASE) for pattern in patterns
             ]
 
-        result = is_ignored(logger, compiled_ignorelist, genre, artist)
+        result = is_ignored(logger, ignore_patterns, genre, artist)
         assert result == expected_forbidden
 
     @pytest.mark.parametrize(
@@ -833,12 +833,12 @@ class TestIgnorelist:
 
         # Mimic the plugin loader behavior in isolation to avoid global config bleed.
         if not cfg["lastgenre"]["ignorelist"].get():
-            string_ignorelist = {}
+            ignore_patterns = {}
         else:
             raw_strs = cfg["lastgenre"]["ignorelist"].get(
                 confuse.MappingValues(confuse.Sequence(str))
             )
-            string_ignorelist = {}
+            ignore_patterns = {}
             for artist, patterns in raw_strs.items():
                 compiled_patterns = []
                 for pattern in patterns:
@@ -852,9 +852,9 @@ class TestIgnorelist:
                                 re.escape(pattern), re.IGNORECASE
                             ).pattern
                         )
-                string_ignorelist[artist.lower()] = compiled_patterns
+                ignore_patterns[artist.lower()] = compiled_patterns
 
-        assert string_ignorelist == expected_ignorelist
+        assert ignore_patterns == expected_ignorelist
 
     @pytest.mark.parametrize(
         "invalid_config, expected_error_message",
