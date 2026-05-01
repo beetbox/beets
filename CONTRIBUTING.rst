@@ -114,6 +114,14 @@ virtual environment in your ``$POETRY_CACHE_DIR``. See ``poetry install --help``
 for installation options, including installing ``extra`` dependencies for
 plugins.
 
+If you will build the documentation you will need to run the following command:
+
+.. code-block:: bash
+
+    $ poetry install -E docs
+
+This will install the optional dependencies for the documentation.
+
 In order to run something within this virtual environment, start the command
 with ``poetry run`` to them, for example ``poetry run pytest``.
 
