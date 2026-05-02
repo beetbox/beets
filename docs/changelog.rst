@@ -31,13 +31,14 @@ New features
   ``albums_for_ids`` and ``tracks_for_ids``. It also enables search by query as
   well as identifier-based retrieval, with support for ISRC codes (tracks) and
   barcode/EANs (albums).
-- Add support for adding or modifying a subtitle (ID3 tag ``TIT3``) field
 
   This is an initial, relatively minimal implementation, but already fully
   usable for common metadata workflows. We welcome feedback, improvement ideas,
   and community contributions to further extend its capabilities.
 
   See :doc:`plugins/tidal` for more information.
+
+- Add support for adding or modifying a subtitle (ID3 tag ``TIT3``) field
 
 Bug fixes
 ~~~~~~~~~
@@ -71,6 +72,8 @@ Bug fixes
 - :ref:`update-cmd`: Fix ``beet update`` re-reporting the same metadata changes
   on every run by persisting the updated ``mtime`` to the database after reading
   file tags. :bug:`6603`
+- :doc:`plugins/musicbrainz`: Correctly handle release dates where leading or
+  intermediate components are missing, e.g. 2008-??-02
 
 ..
     For plugin developers
