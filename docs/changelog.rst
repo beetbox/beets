@@ -68,6 +68,9 @@ Bug fixes
   slug. :bug:`4759`
 - :ref:`import-cmd`: With ``original_date: yes``, album-level ``year``,
   ``month``, and ``day`` now use the original release date. :bug:`6577`
+- :ref:`update-cmd`: Fix ``beet update`` re-reporting the same metadata changes
+  on every run by persisting the updated ``mtime`` to the database after reading
+  file tags. :bug:`6603`
 
 ..
     For plugin developers
