@@ -84,6 +84,11 @@ Other changes
 
 - :doc:`plugins/spotify`: Batch ``spotifysync`` track and audio-features API
   requests and deduplicate repeated Spotify track IDs within a run.
+- :doc:`contributing`: The project now uses ``uv`` for packaging, virtual
+  environment, and dependency management, replacing ``poetry``. The build
+  backend has changed from ``poetry-core`` to ``hatchling``. Please see updates
+  in :ref:`development-tools` and :ref:`getting-the-source` for more
+  information. :bug:`5783`
 
 2.10.0 (April 19, 2026)
 -----------------------

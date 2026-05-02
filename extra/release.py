@@ -208,7 +208,7 @@ def validate_new_version(
 ) -> Version:
     """Validate the version is newer than the current one."""
     with PYPROJECT.open("rb") as f:
-        current = parse(tomli.load(f)["tool"]["poetry"]["version"])
+        current = parse(tomli.load(f)["project"]["version"])
 
     if not value > current:
         msg = f"version must be newer than {current}"
