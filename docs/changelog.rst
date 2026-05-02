@@ -68,6 +68,8 @@ Bug fixes
   slug. :bug:`4759`
 - :ref:`import-cmd`: With ``original_date: yes``, album-level ``year``,
   ``month``, and ``day`` now use the original release date. :bug:`6577`
+- :doc:`plugins/musicbrainz`: Correctly handle release dates where leading or
+  intermediate components are missing, e.g. 2008-??-02
 
 ..
     For plugin developers
