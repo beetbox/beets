@@ -196,6 +196,29 @@ class UpdateTest(IOMixin, BeetsTestCase):
         assert album.albumtype == correct_albumtype
         assert album.albumtypes == correct_albumtypes
 
+    def test_mtime_persisted_when_metadata_changed(self):
+        """mtime must be saved to DB when metadata changes, preventing
+        reprocessing on subsequent runs (github.com/beetbox/beets/issues/6603).
+        """
+        mf = MediaFile(syspath(self.i.path))
+        mf.title = "differentTitle"
+        mf.save()
+        self._update()
+
+        item = self.lib.get_item(self.i.id)
+        assert item.title == "differentTitle"
+        assert item.mtime == item.current_mtime()
+
+    def test_mtime_persisted_when_no_metadata_changes(self):
+        """mtime must be saved to DB even when no metadata changed, preventing
+        reprocessing on subsequent runs (github.com/beetbox/beets/issues/6603).
+        """
+        # _update sets DB mtime=0 by default, so the file will be re-read.
+        self._update()
+
+        item = self.lib.get_item(self.i.id)
+        assert item.mtime == item.current_mtime()
+
     def test_modified_metadata_excluded(self):
         mf = MediaFile(syspath(self.i.path))
         mf.lyrics = "new lyrics"
