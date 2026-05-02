@@ -31,13 +31,14 @@ New features
   ``albums_for_ids`` and ``tracks_for_ids``. It also enables search by query as
   well as identifier-based retrieval, with support for ISRC codes (tracks) and
   barcode/EANs (albums).
-- Add support for adding or modifying a subtitle (ID3 tag ``TIT3``) field
 
   This is an initial, relatively minimal implementation, but already fully
   usable for common metadata workflows. We welcome feedback, improvement ideas,
   and community contributions to further extend its capabilities.
 
   See :doc:`plugins/tidal` for more information.
+
+- Add support for adding or modifying a subtitle (ID3 tag ``TIT3``) field
 
 Bug fixes
 ~~~~~~~~~
@@ -68,6 +69,8 @@ Bug fixes
   slug. :bug:`4759`
 - :ref:`import-cmd`: With ``original_date: yes``, album-level ``year``,
   ``month``, and ``day`` now use the original release date. :bug:`6577`
+- :doc:`plugins/musicbrainz`: Correctly handle release dates where leading or
+  intermediate components are missing, e.g. 2008-??-02
 - :doc:`plugins/badfiles`: Respect quiet mode (the ``--quiet`` flag or
   ``import.quiet: yes`` config) during import so the corrupt-file prompt is
   suppressed in non-interactive imports. :bug:`4736`

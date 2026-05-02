@@ -885,3 +885,20 @@ class TestMusicBrainzPlugin(MusicBrainzPluginTestMixin):
 
         # Ensure the exact error is propagated, not swallowed
         assert excinfo.value is error
+
+    @pytest.mark.parametrize(
+        "input,expected",
+        [
+            ("??-??-??", (None, None, None)),
+            ("??-01-??", (None, 1, None)),
+            ("??-??-02", (None, None, 2)),
+            ("??-01-02", (None, 1, 2)),
+            ("2010-??-01", (2010, None, 1)),
+            ("2010-01-not_an_int", (2010, 1, None)),
+            ("2010", (2010, None, None)),
+            ("2010-01", (2010, 1, None)),
+            ("2010-01-02", (2010, 1, 2)),
+        ],
+    )
+    def test_get_date(self, input, expected):
+        assert musicbrainz._get_date(input) == expected
