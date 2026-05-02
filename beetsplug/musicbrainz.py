@@ -198,7 +198,13 @@ def _get_date(date_str: str) -> tuple[int | None, int | None, int | None]:
     if not date_str:
         return None, None, None
 
-    parts = list(map(int, date_str.split("-")))
+    def _parse_part(part: str) -> int | None:
+        try:
+            return int(part)
+        except ValueError:
+            return None
+
+    parts = list(map(_parse_part, date_str.split("-")))
 
     return (
         parts[0] if len(parts) > 0 else None,
