@@ -74,6 +74,9 @@ Bug fixes
   file tags. :bug:`6603`
 - :doc:`plugins/musicbrainz`: Correctly handle release dates where leading or
   intermediate components are missing, e.g. 2008-??-02
+- :doc:`plugins/badfiles`: Respect quiet mode (the ``--quiet`` flag or
+  ``import.quiet: yes`` config) during import so the corrupt-file prompt is
+  suppressed in non-interactive imports. :bug:`4736`
 
 ..
     For plugin developers
