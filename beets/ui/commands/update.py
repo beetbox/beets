@@ -89,14 +89,15 @@ def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
                     if move and lib.directory in ancestry(item.path):
                         item.move(store=False)
 
-                    item.store(fields=item_fields)
+                    # Include mtime explicitly to persist the updated timestamp.
+                    item.store(fields=set(item_fields) | {"mtime"})
                     affected_albums.add(item.album_id)
                 else:
                     # The file's mtime was different, but there were no
                     # changes to the metadata. Store the new mtime,
                     # which is set in the call to read(), so we don't
                     # check this again in the future.
-                    item.store(fields=item_fields)
+                    item.store(fields=["mtime"])
 
         # Skip album changes while pretending.
         if pretend:
