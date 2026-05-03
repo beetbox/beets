@@ -45,6 +45,13 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             "lbimport", help="Import ListenBrainz history"
         )
         lbupdate_cmd.parser.add_option(
+            "--export-file",
+            dest="export_file",
+            metavar="PATH",
+            default=None,
+            help="path to a ListenBrainz data export .zip file (instead of fetching from the API)",
+        )
+        lbupdate_cmd.parser.add_option(
             "--max",
             dest="max_listens",
             type="int",
@@ -53,12 +60,17 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         )
 
         def func(lib, opts, args):
-            self._lbupdate(lib, self._log, max_listens=opts.max_listens)
+            self._lbupdate(
+                lib,
+                self._log,
+                export_file=opts.export_file,
+                max_listens=opts.max_listens,
+            )
 
         lbupdate_cmd.func = func
         return [lbupdate_cmd]
 
-    def _lbupdate(self, lib, log, max_listens=None):
+    def _lbupdate(self, lib, log, export_file=None, max_listens=None):
         """Obtain play counts from ListenBrainz."""
         listens = self.get_listens(max_total=max_listens)
         if listens is None:
