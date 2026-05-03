@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import datetime
+import json
 import time
+import zipfile
 from collections import Counter
 from typing import TYPE_CHECKING, ClassVar
 
@@ -12,6 +14,7 @@ import requests
 from beets import config, ui
 from beets.dbcore import types
 from beets.plugins import BeetsPlugin
+from beets.util import syspath, normpath
 
 from ._utils.musicbrainz import MusicBrainzAPIMixin
 from ._utils.playcount import update_play_counts
@@ -45,6 +48,13 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             "lbimport", help="Import ListenBrainz history"
         )
         lbupdate_cmd.parser.add_option(
+            "--export-file",
+            dest="export_file",
+            metavar="PATH",
+            default=None,
+            help="path to a ListenBrainz data export .zip file (instead of fetching from the API)",
+        )
+        lbupdate_cmd.parser.add_option(
             "--max",
             dest="max_listens",
             type="int",
@@ -53,14 +63,24 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         )
 
         def func(lib, opts, args):
-            self._lbupdate(lib, self._log, max_listens=opts.max_listens)
+            self._lbupdate(
+                lib,
+                self._log,
+                export_file=opts.export_file,
+                max_listens=opts.max_listens,
+            )
 
         lbupdate_cmd.func = func
         return [lbupdate_cmd]
 
-    def _lbupdate(self, lib, log, max_listens=None):
-        """Obtain play counts from ListenBrainz."""
-        listens = self.get_listens(max_total=max_listens)
+    def _lbupdate(self, lib, log, export_file=None, max_listens=None):
+        """Update play counts from ListenBrainz listening history."""
+        if export_file is not None:
+            log.info("Importing ListenBrainz data from {}...", export_file)
+            listens = self.import_listenbrainz_data_export(log, export_file)
+        else:
+            log.info("Fetching ListenBrainz history...")
+            listens = self.get_listens(max_total=max_listens)
         if listens is None:
             log.error("Failed to fetch listens from ListenBrainz.")
             return
@@ -126,8 +146,28 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             self._log.debug("Invalid Search Error: {}", e)
             return None
 
+    def import_listenbrainz_data_export(self, log, export_file):
+        """Import ListenBrainz data from a .zip file."""
+        export_file = syspath(normpath(export_file))
+
+        all_listens = []
+
+        with zipfile.ZipFile(export_file, "r") as zip_file:
+            for file_name in zip_file.namelist():
+                if file_name.startswith("listens/") and file_name.endswith(
+                    ".jsonl"
+                ):
+                    log.info("Reading listens from {}", file_name)
+                    with zip_file.open(file_name) as file:
+                        data = file.read()
+                        listens = [
+                            json.loads(line) for line in data.splitlines()
+                        ]
+                        all_listens.extend(listens)
+        return all_listens
+
     def get_listens(self, min_ts=None, max_ts=None, count=None, max_total=None):
-        """Gets the listen history of a given user.
+        """Gets the listening history of a given user from the ListenBrainz API.
 
         Paginates through all available listens using the max_ts parameter.
 
