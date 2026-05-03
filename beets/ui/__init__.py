@@ -805,7 +805,7 @@ optparse.Option.ALWAYS_TYPED_ACTIONS += ("callback",)
 
 
 def _setup(
-    options: optparse.Values,
+    options: optparse.Values, lib: library.Library | None
 ) -> tuple[list[Subcommand], library.Library]:
     """Prepare and global state and updates it with command line options.
 
@@ -821,8 +821,9 @@ def _setup(
     subcommands = list(default_commands)
     subcommands.extend(plugins.commands())
 
-    lib = _open_library(config)
-    plugins.send("library_opened", lib=lib)
+    if lib is None:
+        lib = _open_library(config)
+        plugins.send("library_opened", lib=lib)
 
     return subcommands, lib
 
@@ -890,9 +891,25 @@ def _open_library(config: confuse.LazyConfig) -> library.Library:
         lib.get_item(0)  # Test database connection.
     except (sqlite3.OperationalError, sqlite3.DatabaseError) as db_error:
         log.debug("{}", traceback.format_exc())
+        # Check for permission-related errors and provide a helpful message
+        error_str = str(db_error).lower()
+        dbpath_display = util.displayable_path(dbpath)
+        if "unable to open" in error_str:
+            # Normalize path and get directory
+            normalized_path = os.path.abspath(dbpath)
+            db_dir = os.path.dirname(normalized_path)
+            # Handle edge case where path has no directory component
+            if not db_dir:
+                db_dir = b"."
+            raise UserError(
+                f"database file {dbpath_display} could not be opened. "
+                f"This may be due to a permissions issue. If the database "
+                f"does not exist yet, please check that the file or directory "
+                f"{util.displayable_path(db_dir)} is writable "
+                f"(original error: {db_error})."
+            )
         raise UserError(
-            f"database file {util.displayable_path(dbpath)} cannot not be"
-            f" opened: {db_error}"
+            f"database file {dbpath_display} could not be opened: {db_error}"
         )
     log.debug(
         "library database: {}\nlibrary directory: {}",
@@ -902,7 +919,7 @@ def _open_library(config: confuse.LazyConfig) -> library.Library:
     return lib
 
 
-def _raw_main(args: list[str] | None) -> None:
+def _raw_main(args: list[str], lib=None) -> None:
     """A helper function for `main` without top-level exception
     handling.
     """
@@ -983,17 +1000,20 @@ def _raw_main(args: list[str] | None) -> None:
 
         return config_edit(options)
 
-    subcommands, lib = _setup(options)
+    test_lib = bool(lib)
+    subcommands, lib = _setup(options, lib)
     parser.add_subcommand(*subcommands)
 
     subcommand, suboptions, subargs = parser.parse_subcommand(subargs)
     subcommand.func(lib, suboptions, subargs)
 
     plugins.send("cli_exit", lib=lib)
-    lib._close()
+    if not test_lib:
+        # Clean up the library unless it came from the test harness.
+        lib._close()
 
 
-def main(args: list[str] | None = None) -> None:
+def main(args=None):
     """Run the main command-line interface for beets. Includes top-level
     exception handlers that print friendly error messages.
     """

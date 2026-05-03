@@ -75,9 +75,8 @@ class DBAccessError(Exception):
     """The SQLite database became inaccessible.
 
     This can happen when trying to read or write the database when, for
-    example, the database file is deleted, the parent directory is missing,
-    or the file permissions prevent the operation. There is probably no way
-    to recover from this error.
+    example, the database file is deleted or otherwise disappears. There
+    is probably no way to recover from this error.
     """
 
 
@@ -1025,17 +1024,11 @@ class Transaction:
             # In two specific cases, SQLite reports an error while accessing
             # the underlying database file. We surface these exceptions as
             # DBAccessError so the application can abort.
-            if e.args[0] == "unable to open database file":
-                raise DBAccessError(
-                    "unable to open database file. "
-                    "Check that the parent directory exists and is writable."
-                )
-            elif e.args[0] == "attempt to write a readonly database":
-                raise DBAccessError(
-                    "attempt to write a readonly database. "
-                    "Check file permissions: the database file or its directory "
-                    "may not be writable."
-                )
+            if e.args[0] in (
+                "attempt to write a readonly database",
+                "unable to open database file",
+            ):
+                raise DBAccessError(e.args[0])
             raise
         else:
             self._mutated = True
@@ -1064,8 +1057,6 @@ class Transaction:
 @dataclass
 class Migration(ABC):
     """Define a one-time data migration that runs during database startup."""
-
-    CHUNK_SIZE: ClassVar[int] = 1000
 
     db: Database
 
@@ -1124,7 +1115,7 @@ class Database:
     data is written in a transaction.
     """
 
-    def __init__(self, path, timeout: float = 5.0):
+    def __init__(self, path, timeout: float = 30.0):
         if sqlite3.threadsafety == 0:
             raise RuntimeError(
                 "sqlite3 must be compiled with multi-threading support"
