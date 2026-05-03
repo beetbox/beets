@@ -239,7 +239,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         for track in listens:
             if track["track_metadata"].get("release_name") is None:
                 continue
-            mbid_mapping = track["track_metadata"].get("mbid_mapping", {})
+            mbid_mapping = track["track_metadata"].get("mbid_mapping", {}) or {}
             mbid = mbid_mapping.get("recording_mbid")
             tracks.append(
                 {
