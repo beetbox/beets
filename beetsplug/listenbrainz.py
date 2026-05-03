@@ -237,22 +237,20 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         """Returns a list of tracks from a list of listens."""
         tracks: list[Track] = []
         for track in listens:
-            if track["track_metadata"].get("release_name") is None:
+            track_metadata = track["track_metadata"]
+            if track_metadata.get("release_name") is None:
                 continue
-            mbid_mapping = track["track_metadata"].get("mbid_mapping", {}) or {}
-            mbid = mbid_mapping.get("recording_mbid")
+            additional_info = track.get("additional_info", {})
+            recording_mbid = additional_info.get("recording_mbid")
+            if recording_mbid is None:
+                mbid_mapping = track_metadata.get("mbid_mapping", {}) or {}
+                recording_mbid = mbid_mapping.get("recording_mbid")
             tracks.append(
                 {
-                    "album": (
-                        track["track_metadata"].get("release_name") or ""
-                    ).strip(),
-                    "name": (
-                        track["track_metadata"].get("track_name") or ""
-                    ).strip(),
-                    "artist": (
-                        track["track_metadata"].get("artist_name") or ""
-                    ).strip(),
-                    "mbid": mbid,
+                    "album": (track_metadata.get("release_name") or "").strip(),
+                    "name": (track_metadata.get("track_name") or "").strip(),
+                    "artist": (track_metadata.get("artist_name") or "").strip(),
+                    "mbid": recording_mbid,
                     "playcount": 1,
                 }
             )
