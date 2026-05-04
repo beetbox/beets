@@ -683,6 +683,27 @@ def config(config):
             },
             (["Jazz", "Funk", "Soul"], "original fallback"),
         ),
+        # Multiple whitelisted genres in the multi-valued `genres` field must
+        # NOT be wiped when Last.fm returns no tags — whether the album is not
+        # found at all or exists but has no tags. Both scenarios produce an
+        # empty list from the fetcher and must be preserved via "original
+        # fallback".
+        (
+            {
+                "force": True,
+                "keep_existing": True,
+                "source": "album",
+                "whitelist": True,
+                "canonical": False,
+                "prefer_specific": False,
+            },
+            ["Baroque", "Classical"],
+            {
+                "album": [],
+                "artist": [],
+            },
+            (["Baroque", "Classical"], "original fallback"),
+        ),
     ],
 )
 @pytest.mark.usefixtures("config")
