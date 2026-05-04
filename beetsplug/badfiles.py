@@ -220,7 +220,10 @@ class BadFiles(BeetsPlugin):
             found_error = False
             for error in task._badfiles_checks_failed:
                 for error_line in error:
-                    if 'checker found 0 errors or warnings' in error_line.lower():
+                    if (
+                        "checker found 0 errors or warnings"
+                        in error_line.lower()
+                    ):
                         continue
 
                     if "warning" in error_line.lower():
