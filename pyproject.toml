@@ -41,6 +41,16 @@ dependencies = [
 ]
 
 [dependency-groups]
+docs = [
+    "docutils>=0.20.1",
+    "pydata-sphinx-theme",
+    "sphinx<9",
+    "sphinx-lint>=1.0.0",
+    "sphinx-design>=0.6.1",
+    "sphinx-copybutton>=0.5.2",
+    "sphinx-toolbox>=4.1.0",
+    "titlecase>=2.4.1,<3",
+]
 test = [
     "beautifulsoup4",
     "codecov>=2.1.13",
@@ -94,16 +104,6 @@ bpd = [
 chroma = ["pyacoustid>=1.3.1,<2"] # chromaprint or fpcalc
 # convert # ffmpeg
 discogs = ["python3-discogs-client>=2.3.15"]
-docs = [
-    "docutils>=0.20.1",
-    "pydata-sphinx-theme",
-    "sphinx<9",
-    "sphinx-lint>=1.0.0",
-    "sphinx-design>=0.6.1",
-    "sphinx-copybutton>=0.5.2",
-    "sphinx-toolbox>=4.1.0",
-    "titlecase>=2.4.1,<3",
-]
 embedart = ["Pillow"] # ImageMagick
 embyupdate = ["requests"]
 fetchart = ["beautifulsoup4", "langdetect", "Pillow", "requests"]

@@ -323,18 +323,6 @@ chroma = [
 discogs = [
     { name = "python3-discogs-client" },
 ]
-docs = [
-    { name = "docutils" },
-    { name = "pydata-sphinx-theme" },
-    { name = "sphinx", version = "8.1.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "sphinx", version = "8.2.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "sphinx-copybutton" },
-    { name = "sphinx-design", version = "0.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "sphinx-design", version = "0.7.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "sphinx-lint" },
-    { name = "sphinx-toolbox" },
-    { name = "titlecase" },
-]
 embedart = [
     { name = "pillow" },
 ]
@@ -402,6 +390,18 @@ web = [
 ]
 
 [package.dev-dependencies]
+docs = [
+    { name = "docutils" },
+    { name = "pydata-sphinx-theme" },
+    { name = "sphinx", version = "8.1.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "sphinx", version = "8.2.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "sphinx-copybutton" },
+    { name = "sphinx-design", version = "0.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "sphinx-design", version = "0.7.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "sphinx-lint" },
+    { name = "sphinx-toolbox" },
+    { name = "titlecase" },
+]
 lint = [
     { name = "docstrfmt" },
     { name = "ruff" },
@@ -449,7 +449,6 @@ requires-dist = [
     { name = "colorama", marker = "sys_platform == 'win32'" },
     { name = "confuse", specifier = ">=2.2.0" },
     { name = "dbus-python", marker = "sys_platform != 'win32' and extra == 'metasync'" },
-    { name = "docutils", marker = "extra == 'docs'", specifier = ">=0.20.1" },
     { name = "flask", marker = "extra == 'aura'" },
     { name = "flask", marker = "extra == 'web'" },
     { name = "flask-cors", marker = "extra == 'aura'" },
@@ -471,7 +470,6 @@ requires-dist = [
     { name = "platformdirs", specifier = ">=3.5.0" },
     { name = "py7zr", marker = "extra == 'import'" },
     { name = "pyacoustid", marker = "extra == 'chroma'", specifier = ">=1.3.1,<2" },
-    { name = "pydata-sphinx-theme", marker = "extra == 'docs'" },
     { name = "pygobject", marker = "sys_platform != 'win32' and extra == 'bpd'" },
     { name = "pygobject", marker = "sys_platform != 'win32' and extra == 'replaygain'" },
     { name = "pylast", marker = "extra == 'lastgenre'" },
@@ -494,19 +492,23 @@ requires-dist = [
     { name = "requests-ratelimiter", specifier = ">=0.7.0" },
     { name = "resampy", marker = "extra == 'autobpm'", specifier = ">=0.4.3" },
     { name = "soco", marker = "extra == 'sonosupdate'" },
-    { name = "sphinx", marker = "extra == 'docs'", specifier = "<9" },
-    { name = "sphinx-copybutton", marker = "extra == 'docs'", specifier = ">=0.5.2" },
-    { name = "sphinx-design", marker = "extra == 'docs'", specifier = ">=0.6.1" },
-    { name = "sphinx-lint", marker = "extra == 'docs'", specifier = ">=1.0.0" },
-    { name = "sphinx-toolbox", marker = "extra == 'docs'", specifier = ">=4.1.0" },
-    { name = "titlecase", marker = "extra == 'docs'", specifier = ">=2.4.1,<3" },
     { name = "titlecase", marker = "extra == 'titlecase'" },
     { name = "typing-extensions" },
     { name = "unidecode", specifier = ">=1.3.6" },
 ]
-provides-extras = ["absubmit", "aura", "autobpm", "beatport", "bpd", "chroma", "discogs", "docs", "embedart", "embyupdate", "fetchart", "import", "kodiupdate", "lastgenre", "lastimport", "lyrics", "metasync", "mpdstats", "plexupdate", "reflink", "replaygain", "scrub", "sonosupdate", "tidal", "titlecase", "thumbnails", "web"]
+provides-extras = ["absubmit", "aura", "autobpm", "beatport", "bpd", "chroma", "discogs", "embedart", "embyupdate", "fetchart", "import", "kodiupdate", "lastgenre", "lastimport", "lyrics", "metasync", "mpdstats", "plexupdate", "reflink", "replaygain", "scrub", "sonosupdate", "tidal", "titlecase", "thumbnails", "web"]
 
 [package.metadata.requires-dev]
+docs = [
+    { name = "docutils", specifier = ">=0.20.1" },
+    { name = "pydata-sphinx-theme" },
+    { name = "sphinx", specifier = "<9" },
+    { name = "sphinx-copybutton", specifier = ">=0.5.2" },
+    { name = "sphinx-design", specifier = ">=0.6.1" },
+    { name = "sphinx-lint", specifier = ">=1.0.0" },
+    { name = "sphinx-toolbox", specifier = ">=4.1.0" },
+    { name = "titlecase", specifier = ">=2.4.1,<3" },
+]
 lint = [
     { name = "docstrfmt", specifier = ">=2.0.2" },
     { name = "ruff", specifier = ">=0.13.0" },

@@ -117,7 +117,7 @@ If you will build the documentation you will need to run the following command:
 
 .. code-block:: bash
 
-    $ uv sync --extra docs
+    $ uv sync --group docs
 
 This will install the optional dependencies for the documentation.
 

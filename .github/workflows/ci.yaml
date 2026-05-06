@@ -91,7 +91,7 @@ jobs:
         env:
           LYRICS_UPDATED: ${{ steps.lyrics-update.outputs.any_changed }}
         run: |
-          uv sync --group test --extra autobpm --extra discogs --extra lyrics --extra docs --extra replaygain --extra reflink --extra fetchart --extra chroma --extra sonosupdate
+          uv sync --group test --extra autobpm --extra discogs --extra lyrics --extra replaygain --extra reflink --extra fetchart --extra chroma --extra sonosupdate --group docs
           poe docs
           poe test-with-coverage
 
