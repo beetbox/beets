@@ -26,7 +26,7 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
-        run: uv sync --group release --group docs
+        run: poe install --group release --group docs
 
       - name: Bump project version
         run: poe bump "${{ env.NEW_VERSION }}"
@@ -57,7 +57,7 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
-        run: uv sync --group release --group docs
+        run: poe install --group release --group docs
 
       - name: Install pandoc
         run: sudo apt update && sudo apt install pandoc -y

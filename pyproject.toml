@@ -212,6 +212,10 @@ cmd = "ruff format --config=pyproject.toml"
 help = "Format the documentation"
 cmd = "docstrfmt --preserve-adornments docs *.rst"
 
+[tool.poe.tasks.install]
+help = "Install project dependencies"
+cmd = "uv sync --locked"
+
 [tool.poe.tasks.lint]
 help = "Check the code for linting issues. Accepts ruff options."
 cmd = "ruff check --config=pyproject.toml"

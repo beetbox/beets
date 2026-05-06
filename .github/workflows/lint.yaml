@@ -65,7 +65,7 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
-        run: uv sync --only-group lint
+        run: poe install --only-group lint
 
       - name: Check code formatting
         # the job output will contain colored diffs with what needs adjusting
@@ -86,7 +86,7 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
-        run: uv sync --only-group lint
+        run: poe install --only-group lint
 
       - name: Lint code
         run: poe lint --output-format=github ${{ needs.changed-files.outputs.changed_python_files }}
@@ -106,7 +106,7 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
-        run: uv sync --only-group typing
+        run: poe install --only-group typing
 
       - name: Type check code
         uses: liskin/gh-problem-matcher-wrap@v3
@@ -131,7 +131,7 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
-        run: uv sync --group docs
+        run: poe install --group docs
 
       - name: Add Sphinx problem matchers
         run: |
