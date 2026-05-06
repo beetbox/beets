@@ -113,14 +113,6 @@ This will install ``beets`` and all development dependencies into a ``.venv``
 virtual environment. See ``uv sync --help`` for options, including installing
 ``extra`` dependencies for plugins (e.g. ``uv sync --extra fetchart``).
 
-If you will build the documentation you will need to run the following command:
-
-.. code-block:: bash
-
-    $ uv sync --group docs
-
-This will install the optional dependencies for the documentation.
-
 To run commands within this virtual environment, either activate it:
 
 ::

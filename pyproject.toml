@@ -90,6 +90,12 @@ release = [
     "click>=8.1.7",
     "tomli>=2.0.1",
 ]
+dev = [
+    { include-group = "docs" },
+    { include-group = "lint" },
+    { include-group = "test" },
+    { include-group = "typing" },
+]
 
 [project.optional-dependencies]
 # inline comments note required external / non-python dependencies
