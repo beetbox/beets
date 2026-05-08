@@ -56,6 +56,9 @@ import:
     set_fields: {}
     ignored_alias_types: []
     singleton_album_disambig: yes
+    await_stable: no
+    await_stable_interval: 2.0
+    await_stable_count: 3
     fix_ext_inplace: no
     remux_mp3_in_wav: yes
 

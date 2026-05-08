@@ -16,6 +16,8 @@ from __future__ import annotations
 
 import itertools
 import logging
+import os
+import time
 from typing import TYPE_CHECKING
 
 from beets import config, plugins
@@ -33,11 +35,49 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from beets import library
+    from beets.util import PathBytes
 
     from .session import ImportSession
 
 # Global logger.
 log = logging.getLogger("beets")
+
+
+def _file_size_snapshot(path: PathBytes) -> dict[bytes, int]:
+    """Return a mapping of file paths to sizes under `path`."""
+    sizes = {}
+    for root, dirs, files in os.walk(path):
+        for f in files:
+            fp = os.path.join(root, f)
+            try:
+                sizes[fp] = os.path.getsize(fp)
+            except OSError:
+                pass
+    return sizes
+
+
+def _wait_for_stable_files(
+    path: PathBytes, interval: float = 2.0, stable_count: int = 3
+) -> None:
+    """Wait until no file sizes under `path` change for `stable_count`
+    consecutive checks spaced `interval` seconds apart.
+    """
+    if not os.path.isdir(path):
+        return
+
+    log.debug(
+        "Waiting for files to stabilize in {}",
+        displayable_path(path),
+    )
+
+    prev = _file_size_snapshot(path)
+    consecutive = 0
+    while consecutive < stable_count:
+        time.sleep(interval)
+        curr = _file_size_snapshot(path)
+        consecutive = consecutive + 1 if curr == prev else 0
+        prev = curr
+
 
 # ---------------------------- Producer functions ---------------------------- #
 # Functions that are called first i.e. they generate import tasks
@@ -53,6 +93,14 @@ def read_tasks(session: ImportSession):
     for toppath in session.paths:
         # Check whether we need to resume the import.
         session.ask_resume(toppath)
+
+        # Wait for files to finish being written before importing.
+        if session.config["await_stable"]:
+            _wait_for_stable_files(
+                path=toppath,
+                interval=session.config["await_stable_interval"],
+                stable_count=session.config["await_stable_count"],
+            )
 
         # Generate tasks.
         task_factory = ImportTaskFactory(toppath, session)

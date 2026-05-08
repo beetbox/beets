@@ -16,6 +16,9 @@ New features
   also available as config options via ``force`` and ``keep_new``.
 - :ref:`import-cmd`: The ``--nomove`` / ``-M`` CLI flag can now be used to
   override the ``move: yes`` config option during import.
+- :ref:`import-cmd`: New ``await_stable`` config option waits for files to
+  finish being written before importing, useful for automated drop-folder
+  workflows.
 
 ..
     Bug fixes

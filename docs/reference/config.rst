@@ -889,6 +889,39 @@ feature is currently supported by the :doc:`/plugins/discogs` and the
 
 Default: ``yes``.
 
+.. _await_stable:
+
+await_stable
+~~~~~~~~~~~~
+
+When enabled, beets will wait for all files in the import directory to stop
+changing in size before beginning the import. This is useful when importing from
+a drop folder where files may still be in the process of being copied. Beets
+checks file sizes every ``await_stable_interval`` seconds and proceeds once
+sizes are unchanged for ``await_stable_count`` consecutive checks.
+
+Default: ``no``.
+
+.. _await_stable_interval:
+
+await_stable_interval
+~~~~~~~~~~~~~~~~~~~~~
+
+The number of seconds between file size checks when ``await_stable`` is enabled.
+
+Default: ``2.0``.
+
+.. _await_stable_count:
+
+await_stable_count
+~~~~~~~~~~~~~~~~~~
+
+The number of consecutive checks with no file size changes required before
+importing. With the default interval of 2.0 seconds and count of 3, beets waits
+until files have been stable for at least 6 seconds.
+
+Default: ``3``.
+
 .. _fix_ext_inplace:
 
 fix_ext_inplace

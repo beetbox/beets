@@ -22,13 +22,15 @@ import re
 import shutil
 import stat
 import sys
+import threading
+import time
 import unicodedata
 import unittest
 from functools import cached_property
 from io import StringIO
 from pathlib import Path
 from tarfile import TarFile
-from tempfile import mkstemp
+from tempfile import mkdtemp, mkstemp
 from unittest.mock import Mock, patch
 from zipfile import ZipFile
 
@@ -38,6 +40,7 @@ from mediafile import MediaFile
 from beets import config, importer, logging, util
 from beets.autotag.distance import Distance
 from beets.autotag.hooks import AlbumInfo, AlbumMatch, TrackInfo
+from beets.importer.stages import _wait_for_stable_files
 from beets.importer.tasks import albums_in_dir
 from beets.test import _common
 from beets.test.helper import (
@@ -1886,3 +1889,67 @@ class MpeglayerWavImportTest(AsIsImporterMixin, ImportTestCase):
 
         self.run_asis_importer()
         assert os.path.exists(dest)
+
+
+class WaitForStableFilesTest(unittest.TestCase):
+    """Test the _wait_for_stable_files utility."""
+
+    def setUp(self):
+        self.tmpdir = bytestring_path(mkdtemp())
+
+    def tearDown(self):
+        shutil.rmtree(syspath(self.tmpdir))
+
+    @staticmethod
+    def _grow_file(path, data, delay=0.15):
+        time.sleep(delay)
+        with open(syspath(path), "ab") as f:
+            f.write(data)
+
+    @staticmethod
+    def _add_file(path, data, delay=0.15):
+        time.sleep(delay)
+        with open(syspath(path), "wb") as f:
+            f.write(data)
+
+    def test_returns_immediately_for_nonexistent_path(self):
+        _wait_for_stable_files(
+            os.path.join(self.tmpdir, b"nonexistent"),
+            interval=0.1,
+            stable_count=2,
+        )
+
+    def test_returns_for_stable_files(self):
+        path = os.path.join(self.tmpdir, b"test.mp3")
+        with open(syspath(path), "wb") as f:
+            f.write(b"x" * 1024)
+
+        _wait_for_stable_files(self.tmpdir, interval=0.1, stable_count=2)
+        assert os.path.exists(syspath(path))
+
+    def test_waits_while_files_grow(self):
+        path = os.path.join(self.tmpdir, b"test.mp3")
+        with open(syspath(path), "wb") as f:
+            f.write(b"x" * 100)
+
+        t = threading.Thread(target=self._grow_file, args=(path, b"y" * 200))
+        t.start()
+        _wait_for_stable_files(self.tmpdir, interval=0.1, stable_count=3)
+        t.join()
+
+        with open(syspath(path), "rb") as f:
+            data = f.read()
+        assert len(data) == 300
+
+    def test_detects_new_files_appearing(self):
+        path1 = os.path.join(self.tmpdir, b"test1.mp3")
+        with open(syspath(path1), "wb") as f:
+            f.write(b"x" * 100)
+
+        path2 = os.path.join(self.tmpdir, b"test2.mp3")
+        t = threading.Thread(target=self._add_file, args=(path2, b"y" * 100))
+        t.start()
+        _wait_for_stable_files(self.tmpdir, interval=0.1, stable_count=3)
+        t.join()
+
+        assert os.path.exists(syspath(path2))
