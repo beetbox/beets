@@ -19,7 +19,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Iterator, MutableMapping, ValuesView
+from collections.abc import MutableMapping
 from datetime import datetime
 from functools import cached_property
 from pathlib import Path
@@ -30,8 +30,11 @@ from beets.plugins import BeetsPlugin
 from beets.util import displayable_path
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator, ValuesView
+
     from beets.importer import ImportSession, ImportTask
     from beets.library import Item
+
 
 # Filename field extraction patterns
 RE_TRACK_INFO = re.compile(
