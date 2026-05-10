@@ -392,4 +392,13 @@ def _extend_pipeline(tasks, *stages):
 
     ipl = pipeline.Pipeline([task_iter, *list(stages)])
     ctx = contextvars.copy_context()
-    return pipeline.multiple(ctx.run(list, ipl.pull()))
+
+    def _ctx_iter():
+        gen = ipl.pull()
+        while True:
+            try:
+                yield ctx.run(next, gen)
+            except StopIteration:
+                return
+
+    return pipeline.multiple(_ctx_iter())

@@ -20,6 +20,9 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- :ref:`import-cmd`: Fix duplicate album merge during import when running in
+  threaded mode. The merge action no longer creates a duplicate folder or
+  reports ``could not get filesize`` errors. :bug:`6601`
 - :doc:`plugins/mbpseudo`: Fix crashes when applying a pseudo-release. One in
   ``PseudoAlbumInfo.raw_data`` and a ``sqlite3.ProgrammingError``.
 
@@ -92,9 +95,6 @@ Bug fixes
   permissions as potential causes. :bug:`1676`
 - :doc:`plugins/lyrics`: Fix apostrophe handling in the ``musixmatch`` backend
   slug. :bug:`4759`
-- :ref:`import-cmd`: Fix duplicate album merge during import when running in
-  threaded mode. The merge action no longer creates a duplicate folder or
-  reports ``could not get filesize`` errors. :bug:`6601`
 - :ref:`import-cmd`: With ``original_date: yes``, album-level ``year``,
   ``month``, and ``day`` now use the original release date. :bug:`6577`
 - :doc:`plugins/musicbrainz`: Correctly handle release dates where leading or

@@ -1156,6 +1156,39 @@ class ImportDuplicateAlbumTest(PluginMixin, ImportTestCase):
         return album
 
 
+@patch(
+    "beets.metadata_plugins.candidates", Mock(side_effect=album_candidates_mock)
+)
+class ImportDuplicateAlbumThreadedTest(PluginMixin, ImportTestCase):
+    """Regression test for #6601: threaded merge must propagate context vars."""
+
+    plugin = "musicbrainz"
+    db_on_disk = True
+
+    def setUp(self):
+        super().setUp()
+        self.add_album_fixture(albumartist="artist", album="album")
+        self.prepare_album_for_import(1)
+        self.importer = self.setup_importer(
+            duplicate_keys={"album": "albumartist album"}
+        )
+
+    def add_album_fixture(self, **kwargs):
+        album = super().add_album_fixture()
+        album.update(kwargs)
+        album.store()
+        return album
+
+    def test_merge_duplicate_album_threaded(self):
+        config["threaded"] = True
+        self.importer.default_resolution = self.importer.Resolution.MERGE
+        self.importer.run()
+
+        assert len(self.lib.albums()) == 1
+        for item in self.lib.items():
+            assert item.filepath.exists(), f"item path not found: {item.path}"
+
+
 def item_candidates_mock(*args, **kwargs):
     yield TrackInfo(
         artist="artist",
