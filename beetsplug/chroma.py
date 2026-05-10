@@ -369,6 +369,34 @@ class AcoustidPlugin(MetadataSourcePlugin):
 
         return cmd
 
+    def compare_items(
+        self, a: Item, b: Item, write: bool = False
+    ) -> float | None:
+        def item_fingerprint(item: Item) -> str | None:
+            fp = fingerprint_item(
+                self._log,
+                item,
+                write=write,
+                quiet=True,
+            )
+            if fp is None:
+                self._log.warning(f"{item}: could not compute fingerprint")
+
+            return fp
+
+        fp_a = item_fingerprint(a)
+        if fp_a is None:
+            return None
+
+        fp_b = item_fingerprint(b)
+        if fp_b is None:
+            return None
+
+        return acoustid.compare_fingerprints(
+            (0, fp_a.encode("utf-8")),
+            (0, fp_b.encode("utf-8")),
+        )
+
 
 # Hooks into import process.
 

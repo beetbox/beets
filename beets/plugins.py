@@ -501,6 +501,17 @@ def find_plugins() -> Iterable[BeetsPlugin]:
     return _instances
 
 
+U = TypeVar("U", bound=BeetsPlugin)
+
+
+def find_plugin(plugin_type: type[U]) -> U | None:
+    for plugin in find_plugins():
+        if isinstance(plugin, plugin_type):
+            return plugin
+
+    return None
+
+
 # Communication with plugins.
 
 
