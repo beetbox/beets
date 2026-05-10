@@ -14,6 +14,7 @@
 
 from __future__ import annotations
 
+import contextvars
 import itertools
 import logging
 from typing import TYPE_CHECKING
@@ -390,4 +391,5 @@ def _extend_pipeline(tasks, *stages):
         task_iter = tasks
 
     ipl = pipeline.Pipeline([task_iter, *list(stages)])
-    return pipeline.multiple(ipl.pull())
+    ctx = contextvars.copy_context()
+    return pipeline.multiple(ctx.run(list, ipl.pull()))
