@@ -62,6 +62,7 @@ if TYPE_CHECKING:
 MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = "\\\\?\\"
 T = TypeVar("T")
+R_co = TypeVar("R_co", covariant=True)
 StrPath = str | Path
 PathLike = StrPath | bytes
 Replacements = Sequence[tuple[Pattern[str], str]]
@@ -1062,47 +1063,40 @@ def par_map(transform: Callable[[T], Any], items: Sequence[T]) -> None:
         pool.map(_worker, items)
 
 
-class cached_classproperty(Generic[T]):
+class cached_classproperty(Generic[T, R_co]):
     """Descriptor implementing cached class properties.
+
+    Must be used in combination with @classmethod.
 
     Provides class-level dynamic property behavior where the getter function is
     called once per class and the result is cached for subsequent access. Unlike
     instance properties, this operates on the class rather than instances.
     """
 
-    cache: ClassVar[dict[tuple[type[object], str], object]] = {}
+    _cache: ClassVar[dict[tuple[type[object], str], object]] = {}
 
-    name: str = ""
-
-    # Ideally, we would like to use `Callable[[type[T]], Any]` here,
-    # however, `mypy` is unable to see this as a **class** property, and thinks
-    # that this callable receives an **instance** of the object, failing the
-    # type check, for example:
-    # >>> class Album:
-    # >>>     @cached_classproperty
-    # >>>     def foo(cls):
-    # >>>         reveal_type(cls)  # mypy: revealed type is "Album"
-    # >>>         return cls.bar
-    #
-    #   Argument 1 to "cached_classproperty" has incompatible type
-    #   "Callable[[Album], ...]"; expected "Callable[[type[Album]], ...]"
-    #
-    # Therefore, we just use `Any` here, which is not ideal, but works.
-    def __init__(self, getter: Callable[..., T]) -> None:
+    def __init__(self, getter: Callable[[type[T]], R_co], /) -> None:
         """Initialize the descriptor with the property getter function."""
-        self.getter: Callable[..., T] = getter
+        self.getter: Callable[[type[T]], R_co] = getter
+        self.name: str
 
-    def __set_name__(self, owner: object, name: str) -> None:
+    def __set_name__(self, owner: type[T], name: str, /) -> None:
         """Capture the attribute name this descriptor is assigned to."""
         self.name = name
 
-    def __get__(self, instance: object, owner: type[object]) -> T:
+    def __get__(self, instance: T | None, owner: type[T], /) -> R_co:
         """Compute and cache if needed, and return the property value."""
         key: tuple[type[object], str] = owner, self.name
-        if key not in self.cache:
-            self.cache[key] = self.getter(owner)
+        try:
+            return cast(R_co, type(self)._cache[key])
+        except KeyError:
+            obj: R_co = self.getter.__func__(owner)  # type: ignore[attr-defined]
+            type(self)._cache[key] = obj
+            return obj
 
-        return cast(T, self.cache[key])
+    @classmethod
+    def clear_cache(cls) -> None:
+        cls._cache.clear()
 
 
 class LazySharedInstance(Generic[T]):

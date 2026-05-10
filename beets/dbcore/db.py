@@ -326,6 +326,7 @@ class Model(ABC, Generic[D]):
     """
 
     @cached_classproperty
+    @classmethod
     def _types(cls) -> dict[str, types.Type]:
         """Optional types for non-fixed (flexible and computed) fields."""
         return {}
@@ -336,6 +337,7 @@ class Model(ABC, Generic[D]):
     """
 
     @cached_classproperty
+    @classmethod
     def _queries(cls) -> dict[str, FieldQueryType]:
         """Named queries that use a field-like `name:value` syntax but which
         do not relate to any specific field.
@@ -354,11 +356,13 @@ class Model(ABC, Generic[D]):
     """
 
     @cached_classproperty
+    @classmethod
     def _relation(cls):
         """The model that this model is closely related to."""
         return cls
 
     @cached_classproperty
+    @classmethod
     def relation_join(cls) -> str:
         """Return the join required to include the related table in the query.
 
@@ -367,14 +371,17 @@ class Model(ABC, Generic[D]):
         return ""
 
     @cached_classproperty
+    @classmethod
     def all_db_fields(cls) -> set[str]:
         return cls._fields.keys() | cls._relation._fields.keys()
 
     @cached_classproperty
+    @classmethod
     def shared_db_fields(cls) -> set[str]:
         return cls._fields.keys() & cls._relation._fields.keys()
 
     @cached_classproperty
+    @classmethod
     def other_db_fields(cls) -> set[str]:
         """Fields in the related table."""
         return cls._relation._fields.keys() - cls.shared_db_fields
@@ -1081,6 +1088,7 @@ class Migration(ABC):
     db: Database
 
     @cached_classproperty
+    @classmethod
     def name(cls) -> str:
         """Class name (except Migration) converted to snake case."""
         name = cls.__name__.removesuffix("Migration")  # type: ignore[attr-defined]

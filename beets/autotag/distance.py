@@ -131,6 +131,7 @@ class Distance:
         self.tracks: dict[TrackInfo, Distance] = {}
 
     @cached_classproperty
+    @classmethod
     def _weights(cls) -> dict[str, float]:
         """A dictionary from keys to floating-point weights."""
         weights_view = config["match"]["distance_weights"]

@@ -166,6 +166,7 @@ class Info(AttrDict[Any]):
     LEGACY_TO_LIST_FIELD: ClassVar[dict[str, str]]
 
     @cached_classproperty
+    @classmethod
     def nullable_fields(cls) -> set[str]:
         """Return fields that may be cleared when new metadata is applied."""
         return set(config["overwrite_null"][cls.type.lower()].as_str_seq())
