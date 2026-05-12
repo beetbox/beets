@@ -494,12 +494,12 @@ class BeatportTest(BeetsTestCase):
         items[4].length = timedelta(minutes=9, seconds=49).total_seconds()
         items[5].length = timedelta(minutes=7, seconds=5).total_seconds()
 
-        items[0].url = "mirage-a-trois-original-mix"
-        items[1].url = "aeon-bahamut-original-mix"
-        items[2].url = "trancendental-medication-original-mix"
-        items[3].url = "a-list-of-instructions-for-when-im-human-original-mix"
-        items[4].url = "the-great-shenanigan-original-mix"
-        items[5].url = "charade-original-mix"
+        items[0].slug = "mirage-a-trois-original-mix"
+        items[1].slug = "aeon-bahamut-original-mix"
+        items[2].slug = "trancendental-medication-original-mix"
+        items[3].slug = "a-list-of-instructions-for-when-im-human-original-mix"
+        items[4].slug = "the-great-shenanigan-original-mix"
+        items[5].slug = "charade-original-mix"
 
         counter = 0
         for item in items:
@@ -569,8 +569,8 @@ class BeatportTest(BeetsTestCase):
         ]
         # Concatenate with 'id' to pass strict equality test.
         for track, test_track, id in zip(self.tracks, self.test_tracks, ids):
-            assert (
-                track.url == f"https://beatport.com/track/{test_track.url}/{id}"
+            assert track.url == (
+                f"https://beatport.com/track/{test_track.slug}/{id}"
             )
 
     def test_bpm_applied(self):
