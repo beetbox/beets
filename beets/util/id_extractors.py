@@ -17,34 +17,71 @@
 from __future__ import annotations
 
 import re
+from enum import Enum, auto
+from functools import cache
+
+from typing_extensions import override
 
 from beets import logging
 
 log = logging.getLogger("beets")
 
 
-PATTERN_BY_SOURCE = {
-    "spotify": re.compile(r"(?:^|open\.spotify\.com/[^/]+/)([0-9A-Za-z]{22})"),
-    "deezer": re.compile(r"(?:^|deezer\.com/)(?:[a-z]*/)?(?:[^/]+/)?(\d+)"),
-    "beatport": re.compile(r"(?:^|beatport\.com/release/.+/)(\d+)$"),
-    "musicbrainz": re.compile(r"(\w{8}(?:-\w{4}){3}-\w{12})"),
-    # - plain integer, optionally wrapped in brackets and prefixed by an
-    #   'r', as this is how discogs displays the release ID on its webpage.
-    # - legacy url format: discogs.com/<name of release>/release/<id>
-    # - legacy url short format: discogs.com/release/<id>
-    # - current url format: discogs.com/release/<id>-<name of release>
-    # See #291, #4080 and #4085 for the discussions leading up to these
-    # patterns.
-    "discogs": re.compile(
-        r"(?:^|\[?r|discogs\.com/(?:[^/]+/)?release/)(\d+)\b"
-    ),
-    # There is no such thing as a Bandcamp album or artist ID, the URL can be
-    # used as the identifier. The Bandcamp metadata source plugin works that way
-    # - https://github.com/snejus/beetcamp. Bandcamp album URLs usually look
-    # like: https://nameofartist.bandcamp.com/album/nameofalbum
-    "bandcamp": re.compile(r"(.+)"),
-    "tidal": re.compile(r"(?:^|tidal\.com/(?:browse/)?(?:album|track)/)(\d+)"),
-}
+class UrlSource(str, Enum):
+    @staticmethod
+    @override
+    def _generate_next_value_(
+        name: str, start: int, count: int, last_values: list[str]
+    ) -> str:
+        return name.lower()
+
+    DISCOGS = auto()
+    BANDCAMP = auto()
+    SPOTIFY = auto()
+    DEEZER = auto()
+    TIDAL = auto()
+    BEATPORT = auto()
+    MUSICBRAINZ = auto()
+
+    @classmethod
+    def _missing_(cls, value: object) -> UrlSource | None:
+        if isinstance(value, str):
+            value = value.lower()
+            for member in cls:
+                if member.value == value:
+                    return member
+        return None
+
+
+@cache
+def pattern_by_source(source: UrlSource) -> re.Pattern[str]:
+    match source:
+        case UrlSource.SPOTIFY:
+            pattern: str = r"(?:^|open\.spotify\.com/[^/]+/)([0-9A-Za-z]{22})"
+        case UrlSource.DEEZER:
+            pattern = r"(?:^|deezer\.com/)(?:[a-z]*/)?(?:[^/]+/)?(\d+)"
+        case UrlSource.BEATPORT:
+            pattern = r"(?:^|beatport\.com/release/.+/)(\d+)$"
+        case UrlSource.MUSICBRAINZ:
+            pattern = r"(\w{8}(?:-\w{4}){3}-\w{12})"
+        case UrlSource.DISCOGS:
+            # - plain integer, optionally wrapped in brackets and prefixed by an
+            #   'r', as this is how discogs displays the release ID on its webpage.
+            # - legacy url format: discogs.com/<name of release>/release/<id>
+            # - legacy url short format: discogs.com/release/<id>
+            # - current url format: discogs.com/release/<id>-<name of release>
+            # See #291, #4080 and #4085 for the discussions leading up to these
+            # patterns.
+            pattern = r"(?:^|\[?r|discogs\.com/(?:[^/]+/)?release/)(\d+)\b"
+        case UrlSource.BANDCAMP:
+            # There is no such thing as a Bandcamp album or artist ID, the URL can be
+            # used as the identifier. The Bandcamp metadata source plugin works that way
+            # - https://github.com/snejus/beetcamp. Bandcamp album URLs usually look
+            # like: https://nameofartist.bandcamp.com/album/nameofalbum
+            pattern = r"(.+)"
+        case UrlSource.TIDAL:
+            pattern = r"(?:^|tidal\.com/(?:browse/)?(?:album|track)/)(\d+)"
+    return re.compile(pattern)
 
 
 def extract_release_id(source: str, id_: str) -> str | None:
@@ -55,7 +92,7 @@ def extract_release_id(source: str, id_: str) -> str | None:
     `source` provided.
     """
     try:
-        source_pattern = PATTERN_BY_SOURCE[source.lower()]
+        source_pattern = pattern_by_source(UrlSource(source))
     except KeyError:
         log.debug(
             "Unknown source '{}' for ID extraction. Returning id/url as-is.",

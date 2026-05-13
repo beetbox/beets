@@ -30,7 +30,7 @@ from beets import config, plugins, util
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
 from beets.util.deprecation import deprecate_for_user
-from beets.util.id_extractors import extract_release_id
+from beets.util.id_extractors import UrlSource, extract_release_id
 
 from ._utils.musicbrainz import MusicBrainzAPIMixin
 from ._utils.requests import HTTPNotFoundError
@@ -78,11 +78,6 @@ BROWSE_INCLUDES = [
 ]
 BROWSE_CHUNKSIZE = 100
 BROWSE_MAXTRACKS = 500
-
-
-UrlSource = Literal[
-    "discogs", "bandcamp", "spotify", "deezer", "tidal", "beatport"
-]
 
 
 class ArtistInfo(TypedDict):
@@ -541,7 +536,7 @@ class MusicBrainzPlugin(
         """
         external_ids = self.config["external_ids"].get()
         wanted_sources: set[UrlSource] = {
-            site for site, wanted in external_ids.items() if wanted
+            UrlSource(site) for site, wanted in external_ids.items() if wanted
         }
         url_by_source: dict[UrlSource, str] = {}
         for source, url_relation in product(wanted_sources, url_relations):
