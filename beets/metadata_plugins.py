@@ -35,6 +35,7 @@ QueryType = Literal["album", "track"]
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator, Sequence
+    from typing import ClassVar
 
     from .autotag.hooks import AlbumInfo, Item, TrackInfo
 
@@ -178,6 +179,8 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
 
     DEFAULT_DATA_SOURCE_MISMATCH_PENALTY = 0.5
 
+    id_extractor_pattern: ClassVar[re.Pattern[str] | None] = None
+
     @cached_classproperty
     def data_source(cls) -> str:
         """The data source name for this plugin.
@@ -278,6 +281,10 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
         Uses the plugin's data source name to determine the ID format and
         extracts the ID from a given URL.
         """
+        if self.id_extractor_pattern:
+            if m := self.id_extractor_pattern.search(url):
+                return m[1]
+            return None
         return extract_release_id(self.data_source, url)
 
     @staticmethod
