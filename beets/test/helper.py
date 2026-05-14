@@ -818,16 +818,11 @@ class AutotagImportTestCase(ImportTestCase):
         self.addCleanup(self.matcher.restore)
 
 
-class FetchImageHelper:
-    """Helper mixin for mocking requests when fetching images
-    with remote art sources.
-    """
+@dataclass(slots=True)
+class ImageResponseMocker:
+    responses_mock: responses.RequestsMock
 
-    @responses.activate
-    def run(self, *args, **kwargs):
-        super().run(*args, **kwargs)
-
-    IMAGEHEADER: ClassVar[dict[str, bytes]] = {
+    IMAGE_HEADERS: ClassVar[dict[str, bytes]] = {
         "image/jpeg": b"\xff\xd8\xff\x00\x00\x00JFIF",
         "image/png": b"\211PNG\r\n\032\n",
         "image/gif": b"GIF89a",
@@ -839,29 +834,44 @@ class FetchImageHelper:
         ),
     }
 
-    def mock_response(
+    def add(
         self,
         url: str,
+        *,
         content_type: str = "image/jpeg",
-        file_type: None | str = None,
+        file_type: str | None = None,
+        body: str | bytes | None = None,
     ) -> None:
-        # Potentially return a file of a type that differs from the
-        # server-advertised content type to mimic misbehaving servers.
-        if file_type is None:
-            file_type = content_type
+        actual_file_type = file_type or content_type
 
-        try:
-            # imghdr reads 32 bytes
-            header = self.IMAGEHEADER[file_type].ljust(32, b"\x00")
-        except KeyError:
-            # If we can't return a file that looks like real file of the requested
-            # type, better fail the test than returning something else, which might
-            # violate assumption made when writing a test.
-            raise AssertionError(f"Mocking {file_type} responses not supported")
+        if body is None:
+            try:
+                body = self.IMAGE_HEADERS[actual_file_type].ljust(32, b"\x00")
+            except KeyError as exc:
+                # If we can't return a file that looks like real file of the requested
+                # type, better fail the test than returning something else, which might
+                # violate assumption made when writing a test.
+                raise AssertionError(
+                    f"Mocking {actual_file_type!r} responses not supported"
+                ) from exc
 
-        responses.add(
-            responses.GET, url, content_type=content_type, body=header
+        self.responses_mock.add(
+            responses.GET,
+            url,
+            content_type=content_type,
+            body=body,
         )
+
+
+class FetchImageHelper:
+    """Pytest mixin providing image response mocking utilities."""
+
+    @pytest.fixture
+    def image_response_mocker(self):
+        with responses.RequestsMock(
+            assert_all_requests_are_fired=False
+        ) as rsps:
+            yield ImageResponseMocker(rsps)
 
 
 class CleanupModulesMixin:
