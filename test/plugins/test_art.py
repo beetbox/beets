@@ -232,39 +232,62 @@ class CAAHelper:
         )
 
 
-class FetchImageTest(FetchImageTestCase):
-    URL = "http://example.com/test.jpg"
+class TestFetchImage(FetchImageTestCase):
+    URL: str = "http://example.com/test.jpg"
 
-    def setUp(self):
-        super().setUp()
-        self.dpath = os.path.join(self.temp_dir, b"arttest")
-        self.source = DummyRemoteArtSource(logger, self.plugin.config)
-        self.settings = Settings(maxwidth=0)
-        self.candidate = fetchart.Candidate(
-            logger, self.source.ID, url=self.URL
-        )
+    @pytest.fixture
+    def settings(self) -> Settings:
+        return Settings(maxwidth=0)
 
-    def test_invalid_type_returns_none(self):
+    @pytest.fixture
+    def source(self) -> DummyRemoteArtSource:
+        return DummyRemoteArtSource(logger, self.plugin.config)
+
+    @pytest.fixture
+    def candidate(self, source: DummyRemoteArtSource) -> fetchart.Candidate:
+        return fetchart.Candidate(logger, source.ID, url=self.URL)
+
+    def test_invalid_type_returns_none(
+        self,
+        source: DummyRemoteArtSource,
+        candidate: fetchart.Candidate,
+        settings: Settings,
+    ) -> None:
         self.mock_response(self.URL, "image/watercolour")
-        self.source.fetch_image(self.candidate, self.settings)
-        assert self.candidate.path is None
+        source.fetch_image(candidate, settings)
+        assert candidate.path is None
 
-    def test_jpeg_type_returns_path(self):
+    def test_jpeg_type_returns_path(
+        self,
+        source: DummyRemoteArtSource,
+        candidate: fetchart.Candidate,
+        settings: Settings,
+    ) -> None:
         self.mock_response(self.URL, "image/jpeg")
-        self.source.fetch_image(self.candidate, self.settings)
-        assert self.candidate.path is not None
+        source.fetch_image(candidate, settings)
+        assert candidate.path is not None
 
-    def test_extension_set_by_content_type(self):
+    def test_extension_set_by_content_type(
+        self,
+        source: DummyRemoteArtSource,
+        candidate: fetchart.Candidate,
+        settings: Settings,
+    ) -> None:
         self.mock_response(self.URL, "image/png")
-        self.source.fetch_image(self.candidate, self.settings)
-        assert os.path.splitext(self.candidate.path)[1] == b".png"
-        assert Path(os.fsdecode(self.candidate.path)).exists()
+        source.fetch_image(candidate, settings)
+        assert os.path.splitext(candidate.path)[1] == b".png"
+        assert Path(os.fsdecode(candidate.path)).exists()
 
-    def test_does_not_rely_on_server_content_type(self):
+    def test_does_not_rely_on_server_content_type(
+        self,
+        source: DummyRemoteArtSource,
+        candidate: fetchart.Candidate,
+        settings: Settings,
+    ) -> None:
         self.mock_response(self.URL, "image/jpeg", "image/png")
-        self.source.fetch_image(self.candidate, self.settings)
-        assert os.path.splitext(self.candidate.path)[1] == b".png"
-        assert Path(os.fsdecode(self.candidate.path)).exists()
+        source.fetch_image(candidate, settings)
+        assert os.path.splitext(candidate.path)[1] == b".png"
+        assert Path(os.fsdecode(candidate.path)).exists()
 
 
 class FSArtTest(UseThePlugin):
