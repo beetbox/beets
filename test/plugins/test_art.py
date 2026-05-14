@@ -987,9 +987,9 @@ class TestFanartTV(UseThePlugin, FetchImageHelper):
             next(source.get(album, settings, []))
 
 
-class ArtImporterTest(UseThePlugin):
-    def setUp(self):
-        super().setUp()
+class TestArtImporter(UseThePlugin):
+    @pytest.fixture(autouse=True)
+    def _setup(self, setup_plugin):
 
         # Mock the album art fetcher to always return our test file.
         self.art_file = self.temp_dir_path / "tmpcover.jpg"
@@ -1030,9 +1030,7 @@ class ArtImporterTest(UseThePlugin):
             tracks=[],
         )
         self.task.set_choice(AlbumMatch(Distance(), info, {}))
-
-    def tearDown(self):
-        super().tearDown()
+        yield
         self.plugin.art_for_album = self.old_afa
 
     def _fetch_art(self, should_exist):
