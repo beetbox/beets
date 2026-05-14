@@ -384,19 +384,23 @@ class TestFSArt(UseThePlugin):
         assert not result
 
 
-class CombinedTest(FetchImageTestCase, CAAHelper):
+class TestCombined(UseThePlugin, FetchImageHelper, CAAData):
     ASIN = "xxxx"
     MBID = "releaseid"
     AMAZON_URL = f"https://images.amazon.com/images/P/{ASIN}.01.LZZZZZZZ.jpg"
     AAO_URL = f"https://www.albumart.org/index_detail.php?asin={ASIN}"
 
-    def setUp(self):
-        super().setUp()
-        self.dpath = os.path.join(self.temp_dir, b"arttest")
-        os.mkdir(syspath(self.dpath))
+    @pytest.fixture
+    def dpath(self):
+        dpath = os.path.join(self.temp_dir, b"arttest")
+        os.mkdir(syspath(dpath))
+        return dpath
 
-    def test_main_interface_returns_amazon_art(self):
-        self.mock_response(self.AMAZON_URL)
+    def test_main_interface_returns_amazon_art(
+        self,
+        image_response_mocker: ImageResponseMocker,
+    ):
+        image_response_mocker.add(self.AMAZON_URL)
         album = _common.Bag(asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, None)
         assert candidate is not None
@@ -406,42 +410,67 @@ class CombinedTest(FetchImageTestCase, CAAHelper):
         candidate = self.plugin.art_for_album(album, None)
         assert candidate is None
 
-    def test_main_interface_gives_precedence_to_fs_art(self):
-        _common.touch(os.path.join(self.dpath, b"art.jpg"))
-        self.mock_response(self.AMAZON_URL)
+    def test_main_interface_gives_precedence_to_fs_art(
+        self,
+        dpath: bytes,
+        image_response_mocker: ImageResponseMocker,
+    ):
+        _common.touch(os.path.join(dpath, b"art.jpg"))
+        image_response_mocker.add(self.AMAZON_URL)
         album = _common.Bag(asin=self.ASIN)
-        candidate = self.plugin.art_for_album(album, [self.dpath])
+        candidate = self.plugin.art_for_album(album, [dpath])
         assert candidate is not None
-        assert candidate.path == os.path.join(self.dpath, b"art.jpg")
+        assert candidate.path == os.path.join(dpath, b"art.jpg")
 
-    def test_main_interface_falls_back_to_amazon(self):
-        self.mock_response(self.AMAZON_URL)
+    def test_main_interface_falls_back_to_amazon(
+        self,
+        dpath: bytes,
+        image_response_mocker: ImageResponseMocker,
+    ):
+        image_response_mocker.add(self.AMAZON_URL)
         album = _common.Bag(asin=self.ASIN)
-        candidate = self.plugin.art_for_album(album, [self.dpath])
+        candidate = self.plugin.art_for_album(album, [dpath])
         assert candidate is not None
-        assert not candidate.path.startswith(self.dpath)
+        assert not candidate.path.startswith(dpath)
 
-    def test_main_interface_tries_amazon_before_aao(self):
-        self.mock_response(self.AMAZON_URL)
+    def test_main_interface_tries_amazon_before_aao(
+        self,
+        dpath: bytes,
+        image_response_mocker: ImageResponseMocker,
+    ):
+        image_response_mocker.add(self.AMAZON_URL)
         album = _common.Bag(asin=self.ASIN)
-        self.plugin.art_for_album(album, [self.dpath])
-        assert len(responses.calls) == 1
-        assert responses.calls[0].request.url == self.AMAZON_URL
+        self.plugin.art_for_album(album, [dpath])
+        assert len(image_response_mocker.responses_mock.calls) == 1
+        assert (
+            image_response_mocker.responses_mock.calls[0].request.url
+            == self.AMAZON_URL
+        )
 
-    def test_main_interface_falls_back_to_aao(self):
-        self.mock_response(self.AMAZON_URL, content_type="text/html")
+    def test_main_interface_falls_back_to_aao(
+        self,
+        dpath: bytes,
+        image_response_mocker: ImageResponseMocker,
+    ):
+        image_response_mocker.add(self.AMAZON_URL, content_type="text/html")
         album = _common.Bag(asin=self.ASIN)
-        self.plugin.art_for_album(album, [self.dpath])
-        assert responses.calls[-1].request.url == self.AAO_URL
+        self.plugin.art_for_album(album, [dpath])
+        assert (
+            image_response_mocker.responses_mock.calls[-1].request.url
+            == self.AAO_URL
+        )
 
-    def test_main_interface_uses_caa_when_mbid_available(self):
-        self.mock_caa_response(self.RELEASE_URL, self.RESPONSE_RELEASE)
-        self.mock_caa_response(self.GROUP_URL, self.RESPONSE_GROUP)
-        self.mock_response(
+    def test_main_interface_uses_caa_when_mbid_available(
+        self,
+        image_response_mocker: ImageResponseMocker,
+    ):
+        image_response_mocker.add(self.RELEASE_URL, body=self.RESPONSE_RELEASE)
+        image_response_mocker.add(self.GROUP_URL, body=self.RESPONSE_GROUP)
+        image_response_mocker.add(
             "http://coverartarchive.org/release/rid/12345.gif",
             content_type="image/gif",
         )
-        self.mock_response(
+        image_response_mocker.add(
             "http://coverartarchive.org/release/rid/12345.jpg",
             content_type="image/jpeg",
         )
@@ -452,23 +481,31 @@ class CombinedTest(FetchImageTestCase, CAAHelper):
         )
         candidate = self.plugin.art_for_album(album, None)
         assert candidate is not None
-        assert len(responses.calls) == 3
-        assert responses.calls[0].request.url == self.RELEASE_URL
+        assert len(image_response_mocker.responses_mock.calls) == 3
+        assert (
+            image_response_mocker.responses_mock.calls[0].request.url
+            == self.RELEASE_URL
+        )
 
-    def test_local_only_does_not_access_network(self):
+    def test_local_only_does_not_access_network(
+        self,
+        image_response_mocker: ImageResponseMocker,
+    ):
         album = _common.Bag(mb_albumid=self.MBID, asin=self.ASIN)
         self.plugin.art_for_album(album, None, local_only=True)
-        assert len(responses.calls) == 0
+        assert len(image_response_mocker.responses_mock.calls) == 0
 
-    def test_local_only_gets_fs_image(self):
-        _common.touch(os.path.join(self.dpath, b"art.jpg"))
+    def test_local_only_gets_fs_image(
+        self,
+        dpath: bytes,
+        image_response_mocker: ImageResponseMocker,
+    ):
+        _common.touch(os.path.join(dpath, b"art.jpg"))
         album = _common.Bag(mb_albumid=self.MBID, asin=self.ASIN)
-        candidate = self.plugin.art_for_album(
-            album, [self.dpath], local_only=True
-        )
+        candidate = self.plugin.art_for_album(album, [dpath], local_only=True)
         assert candidate is not None
-        assert candidate.path == os.path.join(self.dpath, b"art.jpg")
-        assert len(responses.calls) == 0
+        assert candidate.path == os.path.join(dpath, b"art.jpg")
+        assert len(image_response_mocker.responses_mock.calls) == 0
 
 
 class TestAAO(UseThePlugin, FetchImageHelper):
