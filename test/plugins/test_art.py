@@ -1090,7 +1090,7 @@ class TestAlbumArtPerformOperation(AlbumArtOperationMixin):
         resizer_mock.assert_called_once()
 
 
-class DeprecatedConfigTest(unittest.TestCase):
+class TestDeprecatedConfig:
     """While refactoring the plugin, the remote_priority option was deprecated,
     and a new codepath should translate its effect. Check that it actually does
     so.
@@ -1099,8 +1099,8 @@ class DeprecatedConfigTest(unittest.TestCase):
     # If we subclassed UseThePlugin, the configuration change would either be
     # overwritten by BeetsTestCase or be set after constructing the
     # plugin object
-    def setUp(self):
-        super().setUp()
+    @pytest.fixture(autouse=True)
+    def setup(self):
         config["fetchart"]["remote_priority"] = True
         self.plugin = fetchart.FetchArtPlugin()
 
@@ -1108,7 +1108,7 @@ class DeprecatedConfigTest(unittest.TestCase):
         assert isinstance(self.plugin.sources[-1], fetchart.FileSystem)
 
 
-class EnforceRatioConfigTest(unittest.TestCase):
+class TestEnforceRatioConfig:
     """Throw some data at the regexes."""
 
     def _load_with_config(self, values, should_raise):
