@@ -886,7 +886,7 @@ class ArtImporterTest(UseThePlugin):
         assert self.album.art_filepath.exists()
 
 
-class AlbumArtOperationTestCase(UseThePlugin):
+class AlbumArtOperationMixin(UseThePlugin):
     """Base test case for album art operations.
 
     Provides common setup for testing album art processing operations by setting
@@ -899,24 +899,22 @@ class AlbumArtOperationTestCase(UseThePlugin):
     IMAGE_HEIGHT = 490
     IMAGE_WIDTH_HEIGHT_DIFF = IMAGE_WIDTH - IMAGE_HEIGHT
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-
+    @pytest.fixture(autouse=True, scope="class")
+    def fs_mock(self, cleanup):
         def fs_source_get(_self, album, settings, paths):
             if paths:
                 yield fetchart.Candidate(
-                    logger, source_name=_self.ID, path=cls.IMAGE_PATH
+                    logger, source_name=_self.ID, path=self.IMAGE_PATH
                 )
 
-        patch("beetsplug.fetchart.FileSystem.get", fs_source_get).start()
-        cls.addClassCleanup(patch.stopall)
+        with patch("beetsplug.fetchart.FileSystem.get", fs_source_get):
+            yield
 
     def get_album_art(self):
         return self.plugin.art_for_album(_common.Bag(), [""], True)
 
 
-class AlbumArtOperationConfigurationTest(AlbumArtOperationTestCase):
+class TestAlbumArtOperationConfiguration(AlbumArtOperationMixin):
     """Check that scale & filesize configuration is respected.
 
     Depending on `minwidth`, `enforce_ratio`, `margin_px`, and `margin_percent`
