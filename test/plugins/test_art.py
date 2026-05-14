@@ -290,68 +290,110 @@ class TestFetchImage(FetchImageTestCase):
         assert Path(os.fsdecode(candidate.path)).exists()
 
 
-class FSArtTest(UseThePlugin):
-    def setUp(self):
-        super().setUp()
-        self.dpath = os.path.join(self.temp_dir, b"arttest")
-        os.mkdir(syspath(self.dpath))
+class TestFSArt(UseThePlugin):
+    @pytest.fixture
+    def settings(self) -> Settings:
+        return Settings(cautious=False, cover_names=("art",), fallback=None)
 
-        self.source = fetchart.FileSystem(logger, self.plugin.config)
-        self.settings = Settings(
-            cautious=False, cover_names=("art",), fallback=None
-        )
+    @pytest.fixture
+    def dpath(self) -> bytes:
+        dpath = os.path.join(self.temp_dir, b"arttest")
+        os.mkdir(syspath(dpath))
+        return dpath
 
-    def test_finds_jpg_in_directory(self):
-        _common.touch(os.path.join(self.dpath, b"a.jpg"))
-        candidate = next(self.source.get(None, self.settings, [self.dpath]))
-        assert candidate.path == os.path.join(self.dpath, b"a.jpg")
+    @pytest.fixture
+    def source(self) -> fetchart.FileSystem:
+        return fetchart.FileSystem(logger, self.plugin.config)
 
-    def test_appropriately_named_file_takes_precedence(self):
-        _common.touch(os.path.join(self.dpath, b"a.jpg"))
-        _common.touch(os.path.join(self.dpath, b"art.jpg"))
-        candidate = next(self.source.get(None, self.settings, [self.dpath]))
-        assert candidate.path == os.path.join(self.dpath, b"art.jpg")
+    def test_finds_jpg_in_directory(
+        self,
+        source: fetchart.FileSystem,
+        dpath: bytes,
+        settings: Settings,
+    ) -> None:
+        _common.touch(os.path.join(dpath, b"a.jpg"))
+        candidate = next(source.get(None, settings, [dpath]))
+        assert candidate.path == os.path.join(dpath, b"a.jpg")
 
-    def test_non_image_file_not_identified(self):
-        _common.touch(os.path.join(self.dpath, b"a.txt"))
+    def test_appropriately_named_file_takes_precedence(
+        self,
+        source: fetchart.FileSystem,
+        dpath: bytes,
+        settings: Settings,
+    ) -> None:
+        _common.touch(os.path.join(dpath, b"a.jpg"))
+        _common.touch(os.path.join(dpath, b"art.jpg"))
+        candidate = next(source.get(None, settings, [dpath]))
+        assert candidate.path == os.path.join(dpath, b"art.jpg")
+
+    def test_non_image_file_not_identified(
+        self,
+        source: fetchart.FileSystem,
+        dpath: bytes,
+        settings: Settings,
+    ) -> None:
+        _common.touch(os.path.join(dpath, b"a.txt"))
         with pytest.raises(StopIteration):
-            next(self.source.get(None, self.settings, [self.dpath]))
+            next(source.get(None, settings, [dpath]))
 
-    def test_cautious_skips_fallback(self):
-        _common.touch(os.path.join(self.dpath, b"a.jpg"))
-        self.settings.cautious = True
+    def test_cautious_skips_fallback(
+        self,
+        source: fetchart.FileSystem,
+        dpath: bytes,
+        settings: Settings,
+    ) -> None:
+        _common.touch(os.path.join(dpath, b"a.jpg"))
+        settings.cautious = True
         with pytest.raises(StopIteration):
-            next(self.source.get(None, self.settings, [self.dpath]))
+            next(source.get(None, settings, [dpath]))
 
-    def test_configured_fallback_is_used(self):
+    def test_configured_fallback_is_used(
+        self,
+        source: fetchart.FileSystem,
+        dpath: bytes,
+        settings: Settings,
+    ) -> None:
         fallback = os.path.join(self.temp_dir, b"a.jpg")
         _common.touch(fallback)
-        self.settings.fallback = fallback
-        candidate = next(self.source.get(None, self.settings, [self.dpath]))
+        settings.fallback = fallback
+        candidate = next(source.get(None, settings, [dpath]))
         assert candidate.path == fallback
 
-    def test_empty_dir(self):
+    def test_empty_dir(
+        self,
+        source: fetchart.FileSystem,
+        dpath: bytes,
+        settings: Settings,
+    ) -> None:
         with pytest.raises(StopIteration):
-            next(self.source.get(None, self.settings, [self.dpath]))
+            next(source.get(None, settings, [dpath]))
 
-    def test_precedence_amongst_correct_files(self):
+    def test_precedence_amongst_correct_files(
+        self,
+        source: fetchart.FileSystem,
+        dpath: bytes,
+        settings: Settings,
+    ) -> None:
         images = [b"front-cover.jpg", b"front.jpg", b"back.jpg"]
-        paths = [os.path.join(self.dpath, i) for i in images]
+        paths = [os.path.join(dpath, i) for i in images]
         for p in paths:
             _common.touch(p)
-        self.settings.cover_names = ["cover", "front", "back"]
+        settings.cover_names = ["cover", "front", "back"]
         candidates = [
-            candidate.path
-            for candidate in self.source.get(None, self.settings, [self.dpath])
+            candidate.path for candidate in source.get(None, settings, [dpath])
         ]
         assert candidates == paths
 
     @patch("os.path.samefile")
-    def test_is_candidate_fallback_os_error(self, mock_samefile):
+    def test_is_candidate_fallback_os_error(
+        self,
+        mock_samefile,
+        source: fetchart.FileSystem,
+    ) -> None:
         mock_samefile.side_effect = OSError("os error")
         fallback = os.path.join(self.temp_dir, b"a.jpg")
         self.plugin.fallback = fallback
-        candidate = fetchart.Candidate(logger, self.source.ID, fallback)
+        candidate = fetchart.Candidate(logger, source.ID, fallback)
         result = self.plugin._is_candidate_fallback(candidate)
         mock_samefile.assert_called_once()
         assert not result
