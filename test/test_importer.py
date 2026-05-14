@@ -1193,7 +1193,9 @@ class ImportDuplicateAlbumThreadedTest(PluginMixin, ImportTestCase):
         # Without the fix, lost context vars cause relative paths to stay
         # unresolved, so items land in different (duplicate) directories.
         album_dirs = {item.filepath.parent for item in self.lib.items()}
-        assert len(album_dirs) == 1, f"expected single album dir, got {album_dirs}"
+        assert len(album_dirs) == 1, (
+            f"expected single album dir, got {album_dirs}"
+        )
 
 
 def item_candidates_mock(*args, **kwargs):
