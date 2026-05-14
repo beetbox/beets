@@ -18,7 +18,6 @@ from __future__ import annotations
 
 import os
 import shutil
-import unittest
 from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import patch
@@ -31,7 +30,7 @@ from beets import config, importer, logging, util
 from beets.autotag.distance import Distance
 from beets.autotag.hooks import AlbumInfo, AlbumMatch
 from beets.test import _common
-from beets.test.helper import CleanupModulesMixin, FetchImageHelper, TestHelper
+from beets.test.helper import FetchImageHelper, TestHelper
 from beets.util import clean_module_tempdir, syspath
 from beets.util.artresizer import ArtResizer
 from beetsplug import fetchart
@@ -40,8 +39,10 @@ logger = logging.getLogger("beets.test_art")
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
+    from unittest.mock import MagicMock
 
     from beets.library import Album
+    from beets.test.helper import ImageResponseMocker
 
 
 class Settings:
@@ -524,6 +525,7 @@ class TestAAO(UseThePlugin, FetchImageHelper):
         self,
         source: fetchart.AlbumArtOrg,
         settings: Settings,
+        image_response_mocker: ImageResponseMocker,
     ) -> None:
         body = """
         <br />
@@ -532,7 +534,9 @@ class TestAAO(UseThePlugin, FetchImageHelper):
         <img src="http://www.albumart.org/images/zoom-icon.jpg"
              alt="View larger image" width="17" height="15" border="0"/></a>
         """
-        self.mock_response(self.AAO_URL, body=body, content_type="text/html")
+        image_response_mocker.add(
+            self.AAO_URL, body=body, content_type="text/html"
+        )
         album = _common.Bag(asin=self.ASIN)
         candidate = next(source.get(album, settings, []))
         assert candidate.url == "TARGET_URL"
@@ -541,8 +545,9 @@ class TestAAO(UseThePlugin, FetchImageHelper):
         self,
         source: fetchart.AlbumArtOrg,
         settings: Settings,
+        image_response_mocker: ImageResponseMocker,
     ) -> None:
-        self.mock_response(
+        image_response_mocker.add(
             self.AAO_URL, body="blah blah", content_type="text/html"
         )
         album = _common.Bag(asin=self.ASIN)
