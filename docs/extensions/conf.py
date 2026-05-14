@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 class Conf(ObjectDescription[str]):
     """Directive for documenting a single configuration value."""
 
-    option_spec: ClassVar[OptionSpec] = {
+    option_spec: ClassVar[OptionSpec] = {  # type: ignore[misc]
         "default": directives.unchanged,
     }
 

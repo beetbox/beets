@@ -29,6 +29,8 @@ Bug fixes
   items was not displayed by default. --count option was ignored :bug:`6476`
 - :doc:`plugins/mbsync` / :doc:`plugins/bpsync`: Do not clear items metadata
   when ``import.from_scratch`` is enabled. :bug:`6613`
+- :doc:`plugins/tidal`: add ``tidal`` dependency extra to make sure
+  ``requests-oauthlib`` is installed. :bug:`6633`
 
 ..
     For plugin developers

@@ -14,12 +14,26 @@
 
 from unittest.mock import Mock, patch
 
+import pytest
+
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.library import Item
-from beets.test.helper import ConfigMixin, PluginTestCase, capture_log
+from beets.test.helper import PluginMixin, TestHelper
 
 
-class MbsyncCliTest(PluginTestCase, ConfigMixin):
+class PytestPluginTestHelper(PluginMixin, TestHelper):
+    """Same as the BeetsTestCase unittest setup but for pytest."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        self.setup_beets()
+        try:
+            yield
+        finally:
+            self.teardown_beets()
+
+
+class TestMbsyncCli(PytestPluginTestHelper):
     plugin = "mbsync"
 
     @patch(
@@ -66,7 +80,7 @@ class MbsyncCliTest(PluginTestCase, ConfigMixin):
         assert album_item.mb_trackid == "track id"
         assert album_item.get_album().album == "new album"
 
-    def test_custom_format(self):
+    def test_custom_format(self, caplog):
         for item in [
             Item(artist="albumartist", album="no id"),
             Item(
@@ -83,11 +97,17 @@ class MbsyncCliTest(PluginTestCase, ConfigMixin):
         ]:
             self.lib.add(item)
 
-        with capture_log("beets.mbsync") as logs:
+        with caplog.at_level("DEBUG", logger="beets.mbsync"):
             self.run_command("mbsync", "-f", "'%if{$album,$album,$title}'")
 
-        assert "mbsync: Skipping album with no mb_albumid: 'no id'" in logs
-        assert "mbsync: Skipping singleton with no mb_trackid: 'no id'" in logs
+        assert (
+            "mbsync: Skipping album with no mb_albumid: 'no id'"
+            in caplog.messages
+        )
+        assert (
+            "mbsync: Skipping singleton with no mb_trackid: 'no id'"
+            in caplog.messages
+        )
 
     @patch(
         "beets.metadata_plugins.album_for_id",

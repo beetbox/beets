@@ -51,13 +51,13 @@ MAX_RELEASES = 5
 # candidates. It maps audio file paths to (recording_ids, release_ids)
 # pairs. If a given path is not present in the mapping, then no match
 # was found.
-_matches = {}
+_matches: dict[bytes, tuple[list[str], list[str]]] = {}
 
 # Stores the fingerprint and Acoustid ID for each track. This is stored
 # as metadata for each track for later use but is not relevant for
 # autotagging.
-_fingerprints = {}
-_acoustids = {}
+_fingerprints: dict[bytes, str] = {}
+_acoustids: dict[bytes, str] = {}
 
 
 def prefix(it, count):
