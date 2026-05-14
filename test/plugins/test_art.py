@@ -92,11 +92,7 @@ class UseThePlugin(PytestTestHelper):
             clean_module_tempdir(module)
 
 
-class FetchImageTestCase(FetchImageHelper, UseThePlugin):
-    pass
-
-
-class CAAHelper:
+class CAAData:
     """Helper mixin for mocking requests to the Cover Art Archive."""
 
     MBID_RELASE = "rid"
@@ -109,81 +105,73 @@ class CAAHelper:
     GROUP_URL = f"https://{GROUP_URL}"
 
     RESPONSE_RELEASE = """{
-    "images": [
-      {
-        "approved": false,
-        "back": false,
-        "comment": "GIF",
-        "edit": 12345,
-        "front": true,
-        "id": 12345,
-        "image": "http://coverartarchive.org/release/rid/12345.gif",
-        "thumbnails": {
-          "1200": "http://coverartarchive.org/release/rid/12345-1200.jpg",
-          "250": "http://coverartarchive.org/release/rid/12345-250.jpg",
-          "500": "http://coverartarchive.org/release/rid/12345-500.jpg",
-          "large": "http://coverartarchive.org/release/rid/12345-500.jpg",
-          "small": "http://coverartarchive.org/release/rid/12345-250.jpg"
+        "images": [
+        {
+            "approved": false,
+            "back": false,
+            "comment": "GIF",
+            "edit": 12345,
+            "front": true,
+            "id": 12345,
+            "image": "http://coverartarchive.org/release/rid/12345.gif",
+            "thumbnails": {
+                "1200": "http://coverartarchive.org/release/rid/12345-1200.jpg",
+                "250": "http://coverartarchive.org/release/rid/12345-250.jpg",
+                "500": "http://coverartarchive.org/release/rid/12345-500.jpg",
+                "large": "http://coverartarchive.org/release/rid/12345-500.jpg",
+                "small": "http://coverartarchive.org/release/rid/12345-250.jpg"
+            },
+            "types": ["Front"]
         },
-        "types": [
-          "Front"
-        ]
-      },
-      {
-        "approved": false,
-        "back": false,
-        "comment": "",
-        "edit": 12345,
-        "front": false,
-        "id": 12345,
-        "image": "http://coverartarchive.org/release/rid/12345.jpg",
-        "thumbnails": {
-          "1200": "http://coverartarchive.org/release/rid/12345-1200.jpg",
-          "250": "http://coverartarchive.org/release/rid/12345-250.jpg",
-          "500": "http://coverartarchive.org/release/rid/12345-500.jpg",
-          "large": "http://coverartarchive.org/release/rid/12345-500.jpg",
-          "small": "http://coverartarchive.org/release/rid/12345-250.jpg"
-        },
-        "types": [
-          "Front"
-        ]
-      }
-    ],
-    "release": "https://musicbrainz.org/release/releaseid"
-}"""
+        {
+            "approved": false,
+            "back": false,
+            "comment": "",
+            "edit": 12345,
+            "front": false,
+            "id": 12345,
+            "image": "http://coverartarchive.org/release/rid/12345.jpg",
+            "thumbnails": {
+                "1200": "http://coverartarchive.org/release/rid/12345-1200.jpg",
+                "250": "http://coverartarchive.org/release/rid/12345-250.jpg",
+                "500": "http://coverartarchive.org/release/rid/12345-500.jpg",
+                "large": "http://coverartarchive.org/release/rid/12345-500.jpg",
+                "small": "http://coverartarchive.org/release/rid/12345-250.jpg"
+            },
+            "types": ["Front"]
+        }
+        ],
+        "release": "https://musicbrainz.org/release/releaseid"
+    }"""
     RESPONSE_RELEASE_WITHOUT_THUMBNAILS = """{
-    "images": [
-      {
-        "approved": false,
-        "back": false,
-        "comment": "GIF",
-        "edit": 12345,
-        "front": true,
-        "id": 12345,
-        "image": "http://coverartarchive.org/release/rid/12345.gif",
-        "types": [
-          "Front"
-        ]
-      },
-      {
-        "approved": false,
-        "back": false,
-        "comment": "",
-        "edit": 12345,
-        "front": false,
-        "id": 12345,
-        "image": "http://coverartarchive.org/release/rid/12345.jpg",
-        "thumbnails": {
-            "large": "http://coverartarchive.org/release/rgid/12345-500.jpg",
-            "small": "http://coverartarchive.org/release/rgid/12345-250.jpg"
+        "images": [
+        {
+            "approved": false,
+            "back": false,
+            "comment": "GIF",
+            "edit": 12345,
+            "front": true,
+            "id": 12345,
+            "image": "http://coverartarchive.org/release/rid/12345.gif",
+            "types": ["Front"]
         },
-        "types": [
-          "Front"
-        ]
-      }
-    ],
-    "release": "https://musicbrainz.org/release/releaseid"
-}"""
+        {
+            "approved": false,
+            "back": false,
+            "comment": "",
+            "edit": 12345,
+            "front": false,
+            "id": 12345,
+            "image": "http://coverartarchive.org/release/rid/12345.jpg",
+            "thumbnails": {
+                "large": "http://coverartarchive.org/release/rgid/12345-500.jpg",
+                "small": "http://coverartarchive.org/release/rgid/12345-250.jpg"
+            },
+            "types": ["Front"]
+        }
+        ],
+        "release": "https://musicbrainz.org/release/releaseid"
+    }"""
     RESPONSE_GROUP = """{
         "images": [
           {
@@ -201,9 +189,7 @@ class CAAHelper:
               "large": "http://coverartarchive.org/release/rgid/12345-500.jpg",
               "small": "http://coverartarchive.org/release/rgid/12345-250.jpg"
             },
-            "types": [
-              "Front"
-            ]
+            "types": ["Front"]
           }
         ],
         "release": "https://musicbrainz.org/release/release-id"
@@ -218,18 +204,12 @@ class CAAHelper:
             "front": true,
             "id": 12345,
             "image": "http://coverartarchive.org/release/releaseid/12345.jpg",
-            "types": [
-              "Front"
-            ]
+            "types": ["Front"]
           }
         ],
         "release": "https://musicbrainz.org/release/release-id"
     }"""
 
-    def mock_caa_response(self, url, json):
-        responses.add(
-            responses.GET, url, body=json, content_type="application/json"
-        )
 
 
 class TestFetchImage(FetchImageTestCase):
