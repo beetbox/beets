@@ -211,8 +211,7 @@ class CAAData:
     }"""
 
 
-
-class TestFetchImage(FetchImageTestCase):
+class TestFetchImage(UseThePlugin, FetchImageHelper):
     URL: str = "http://example.com/test.jpg"
 
     @pytest.fixture
@@ -232,8 +231,9 @@ class TestFetchImage(FetchImageTestCase):
         source: DummyRemoteArtSource,
         candidate: fetchart.Candidate,
         settings: Settings,
+        image_response_mocker: ImageResponseMocker,
     ) -> None:
-        self.mock_response(self.URL, "image/watercolour")
+        image_response_mocker.add(self.URL, content_type="image/watercolour")
         source.fetch_image(candidate, settings)
         assert candidate.path is None
 
@@ -242,8 +242,9 @@ class TestFetchImage(FetchImageTestCase):
         source: DummyRemoteArtSource,
         candidate: fetchart.Candidate,
         settings: Settings,
+        image_response_mocker: ImageResponseMocker,
     ) -> None:
-        self.mock_response(self.URL, "image/jpeg")
+        image_response_mocker.add(self.URL, content_type="image/jpeg")
         source.fetch_image(candidate, settings)
         assert candidate.path is not None
 
@@ -252,8 +253,9 @@ class TestFetchImage(FetchImageTestCase):
         source: DummyRemoteArtSource,
         candidate: fetchart.Candidate,
         settings: Settings,
+        image_response_mocker: ImageResponseMocker,
     ) -> None:
-        self.mock_response(self.URL, "image/png")
+        image_response_mocker.add(self.URL, content_type="image/png")
         source.fetch_image(candidate, settings)
         assert os.path.splitext(candidate.path)[1] == b".png"
         assert Path(os.fsdecode(candidate.path)).exists()
@@ -263,8 +265,11 @@ class TestFetchImage(FetchImageTestCase):
         source: DummyRemoteArtSource,
         candidate: fetchart.Candidate,
         settings: Settings,
+        image_response_mocker: ImageResponseMocker,
     ) -> None:
-        self.mock_response(self.URL, "image/jpeg", "image/png")
+        image_response_mocker.add(
+            self.URL, content_type="image/jpeg", file_type="image/png"
+        )
         source.fetch_image(candidate, settings)
         assert os.path.splitext(candidate.path)[1] == b".png"
         assert Path(os.fsdecode(candidate.path)).exists()
