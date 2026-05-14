@@ -90,8 +90,11 @@ class UseThePlugin(PytestTestHelper):
 
     @pytest.fixture(autouse=True, scope="class")
     def cleanup(self):
-        for module in self.modules:
-            clean_module_tempdir(module)
+        try:
+            yield
+        finally:
+            for module in self.modules:
+                clean_module_tempdir(module)
 
 
 class CAAData:
