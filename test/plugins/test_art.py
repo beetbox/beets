@@ -728,7 +728,7 @@ class TestCoverArtArchive(UseThePlugin, FetchImageHelper, CAAData):
             assert f"-{maxwidth}.jpg" not in candidate.url
 
 
-class FanartTVTest(UseThePlugin):
+class TestFanartTV(UseThePlugin, FetchImageHelper):
     RESPONSE_MULTIPLE = """{
         "name": "artistname",
         "mbid_id": "artistid",
@@ -786,56 +786,74 @@ class FanartTVTest(UseThePlugin):
     }"""
     RESPONSE_MALFORMED = "bla blup"
 
-    def setUp(self):
-        super().setUp()
-        self.source = fetchart.FanartTV(logger, self.plugin.config)
-        self.settings = Settings()
+    @pytest.fixture
+    def settings(self):
+        return Settings(maxwidth=0)
 
-    @responses.activate
-    def run(self, *args, **kwargs):
-        super().run(*args, **kwargs)
+    @pytest.fixture
+    def source(self):
+        return fetchart.FanartTV(logger, self.plugin.config)
 
-    def mock_response(self, url, json):
-        responses.add(
-            responses.GET, url, body=json, content_type="application/json"
-        )
-
-    def test_fanarttv_finds_image(self):
+    def test_fanarttv_finds_image(
+        self,
+        source: fetchart.FanartTV,
+        settings: Settings,
+        image_response_mocker: ImageResponseMocker,
+    ):
         album = _common.Bag(mb_releasegroupid="thereleasegroupid")
-        self.mock_response(
+        image_response_mocker.add(
             f"{fetchart.FanartTV.API_ALBUMS}thereleasegroupid",
-            self.RESPONSE_MULTIPLE,
+            body=self.RESPONSE_MULTIPLE,
+            content_type="application/json",
         )
-        candidate = next(self.source.get(album, self.settings, []))
+        candidate = next(source.get(album, settings, []))
         assert candidate.url == "http://example.com/1.jpg"
 
-    def test_fanarttv_returns_no_result_when_error_received(self):
+    def test_fanarttv_returns_no_result_when_error_received(
+        self,
+        source: fetchart.FanartTV,
+        settings: Settings,
+        image_response_mocker: ImageResponseMocker,
+    ):
         album = _common.Bag(mb_releasegroupid="thereleasegroupid")
-        self.mock_response(
+        image_response_mocker.add(
             f"{fetchart.FanartTV.API_ALBUMS}thereleasegroupid",
-            self.RESPONSE_ERROR,
+            body=self.RESPONSE_ERROR,
+            content_type="application/json",
         )
         with pytest.raises(StopIteration):
-            next(self.source.get(album, self.settings, []))
+            next(source.get(album, settings, []))
 
-    def test_fanarttv_returns_no_result_with_malformed_response(self):
+    def test_fanarttv_returns_no_result_with_malformed_response(
+        self,
+        source: fetchart.FanartTV,
+        settings: Settings,
+        image_response_mocker: ImageResponseMocker,
+    ):
         album = _common.Bag(mb_releasegroupid="thereleasegroupid")
-        self.mock_response(
+        image_response_mocker.add(
             f"{fetchart.FanartTV.API_ALBUMS}thereleasegroupid",
-            self.RESPONSE_MALFORMED,
+            body=self.RESPONSE_MALFORMED,
+            content_type="application/json",
         )
         with pytest.raises(StopIteration):
-            next(self.source.get(album, self.settings, []))
+            next(source.get(album, settings, []))
 
-    def test_fanarttv_only_other_images(self):
+    def test_fanarttv_only_other_images(
+        self,
+        source: fetchart.FanartTV,
+        settings: Settings,
+        image_response_mocker: ImageResponseMocker,
+    ):
         # The source used to fail when there were images present, but no cover
         album = _common.Bag(mb_releasegroupid="thereleasegroupid")
-        self.mock_response(
+        image_response_mocker.add(
             f"{fetchart.FanartTV.API_ALBUMS}thereleasegroupid",
-            self.RESPONSE_NO_ART,
+            body=self.RESPONSE_NO_ART,
+            content_type="application/json",
         )
         with pytest.raises(StopIteration):
-            next(self.source.get(album, self.settings, []))
+            next(source.get(album, settings, []))
 
 
 class ArtImporterTest(UseThePlugin):
