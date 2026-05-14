@@ -1163,6 +1163,8 @@ class ImportDuplicateAlbumThreadedTest(PluginMixin, ImportTestCase):
     """Regression test for #6601: threaded merge must propagate context vars."""
 
     plugin = "musicbrainz"
+    # Each thread gets its own connection; :memory: would give each thread an
+    # empty DB, so we need a real file that all threads share.
     db_on_disk = True
 
     def setUp(self):
@@ -1180,13 +1182,18 @@ class ImportDuplicateAlbumThreadedTest(PluginMixin, ImportTestCase):
         return album
 
     def test_merge_duplicate_album_threaded(self):
-        config["threaded"] = True
+        self.config["threaded"] = True
         self.importer.default_resolution = self.importer.Resolution.MERGE
         self.importer.run()
 
         assert len(self.lib.albums()) == 1
         for item in self.lib.items():
             assert item.filepath.exists(), f"item path not found: {item.path}"
+
+        # Without the fix, lost context vars cause relative paths to stay
+        # unresolved, so items land in different (duplicate) directories.
+        album_dirs = {item.filepath.parent for item in self.lib.items()}
+        assert len(album_dirs) == 1, f"expected single album dir, got {album_dirs}"
 
 
 def item_candidates_mock(*args, **kwargs):
