@@ -955,61 +955,68 @@ class TestAlbumArtOperationConfiguration(AlbumArtOperationMixin):
         assert self.get_album_art()
 
 
-class AlbumArtPerformOperationTest(AlbumArtOperationTestCase):
+class TestAlbumArtPerformOperation(AlbumArtOperationMixin):
     """Test that the art is resized and deinterlaced if necessary."""
 
-    def setUp(self):
-        super().setUp()
-        self.resizer_mock = patch.object(
+    @pytest.fixture
+    def resizer_mock(self):
+        with patch.object(
             ArtResizer.shared, "resize", return_value=self.IMAGE_PATH
-        ).start()
-        self.deinterlacer_mock = patch.object(
-            ArtResizer.shared, "deinterlace", return_value=self.IMAGE_PATH
-        ).start()
+        ) as mocked:
+            yield mocked
 
-    def test_resize(self):
+    @pytest.fixture
+    def deinterlacer_mock(self):
+        with patch.object(
+            ArtResizer.shared, "deinterlace", return_value=self.IMAGE_PATH
+        ) as mocked:
+            yield mocked
+
+    def test_resize(self, resizer_mock: MagicMock):
         self.plugin.maxwidth = self.IMAGE_WIDTH / 2
         assert self.get_album_art()
-        assert self.resizer_mock.called
+        resizer_mock.assert_called_once()
 
-    def test_file_resized(self):
+    def test_file_resized(self, resizer_mock: MagicMock):
         self.plugin.max_filesize = self.IMAGE_FILESIZE // 2
         assert self.get_album_art()
-        assert self.resizer_mock.called
+        resizer_mock.assert_called_once()
 
-    def test_file_not_resized(self):
+    def test_file_not_resized(self, resizer_mock: MagicMock):
         self.plugin.max_filesize = self.IMAGE_FILESIZE
         assert self.get_album_art()
-        assert not self.resizer_mock.called
+        resizer_mock.assert_not_called()
 
-    def test_file_resized_but_not_scaled(self):
+    def test_file_resized_but_not_scaled(self, resizer_mock: MagicMock):
         self.plugin.maxwidth = self.IMAGE_WIDTH * 2
         self.plugin.max_filesize = self.IMAGE_FILESIZE // 2
         assert self.get_album_art()
-        assert self.resizer_mock.called
+        resizer_mock.assert_called_once()
 
-    def test_file_resized_and_scaled(self):
+    def test_file_resized_and_scaled(self, resizer_mock: MagicMock):
         self.plugin.maxwidth = self.IMAGE_WIDTH / 2
         self.plugin.max_filesize = self.IMAGE_FILESIZE // 2
         assert self.get_album_art()
-        assert self.resizer_mock.called
+        assert resizer_mock.call_count == 2
 
-    def test_deinterlaced(self):
+    def test_deinterlaced(self, deinterlacer_mock: MagicMock):
         self.plugin.deinterlace = True
         assert self.get_album_art()
-        assert self.deinterlacer_mock.called
+        deinterlacer_mock.assert_called_once()
 
-    def test_not_deinterlaced(self):
+    def test_not_deinterlaced(self, deinterlacer_mock: MagicMock):
         self.plugin.deinterlace = False
         assert self.get_album_art()
-        assert not self.deinterlacer_mock.called
+        deinterlacer_mock.assert_not_called()
 
-    def test_deinterlaced_and_resized(self):
+    def test_deinterlaced_and_resized(
+        self, resizer_mock: MagicMock, deinterlacer_mock: MagicMock
+    ):
         self.plugin.maxwidth = self.IMAGE_WIDTH / 2
         self.plugin.deinterlace = True
         assert self.get_album_art()
-        assert self.deinterlacer_mock.called
-        assert self.resizer_mock.called
+        deinterlacer_mock.assert_called_once()
+        resizer_mock.assert_called_once()
 
 
 class DeprecatedConfigTest(unittest.TestCase):
