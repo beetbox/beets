@@ -655,59 +655,74 @@ class GoogleImageTest(UseThePlugin):
             next(self.source.get(album, self.settings, []))
 
 
-class CoverArtArchiveTest(UseThePlugin, CAAHelper):
-    def setUp(self):
-        super().setUp()
-        self.source = fetchart.CoverArtArchive(logger, self.plugin.config)
-        self.settings = Settings(maxwidth=0)
+class TestCoverArtArchive(UseThePlugin, FetchImageHelper, CAAData):
+    @pytest.fixture
+    def settings(self) -> Settings:
+        return Settings(maxwidth=0)
 
-    @responses.activate
-    def run(self, *args, **kwargs):
-        super().run(*args, **kwargs)
+    @pytest.fixture
+    def source(self) -> fetchart.CoverArtArchive:
+        return fetchart.CoverArtArchive(logger, self.plugin.config)
 
-    def test_caa_finds_image(self):
+    def test_caa_finds_image(
+        self,
+        source: fetchart.CoverArtArchive,
+        settings: Settings,
+        image_response_mocker: ImageResponseMocker,
+    ):
         album = _common.Bag(
             mb_albumid=self.MBID_RELASE, mb_releasegroupid=self.MBID_GROUP
         )
-        self.mock_caa_response(self.RELEASE_URL, self.RESPONSE_RELEASE)
-        self.mock_caa_response(self.GROUP_URL, self.RESPONSE_GROUP)
-        candidates = list(self.source.get(album, self.settings, []))
+        image_response_mocker.add(self.RELEASE_URL, body=self.RESPONSE_RELEASE)
+        image_response_mocker.add(self.GROUP_URL, body=self.RESPONSE_GROUP)
+        candidates = list(source.get(album, settings, []))
         assert len(candidates) == 3
-        assert len(responses.calls) == 2
-        assert responses.calls[0].request.url == self.RELEASE_URL
+        assert len(image_response_mocker.responses_mock.calls) == 2
+        assert (
+            image_response_mocker.responses_mock.calls[0].request.url
+            == self.RELEASE_URL
+        )
 
-    def test_fetchart_uses_caa_pre_sized_maxwidth_thumbs(self):
+    def test_fetchart_uses_caa_pre_sized_maxwidth_thumbs(
+        self,
+        source: fetchart.CoverArtArchive,
+        image_response_mocker: ImageResponseMocker,
+    ):
         # CAA provides pre-sized thumbnails of width 250px, 500px, and 1200px
         # We only test with one of them here
         maxwidth = 1200
-        self.settings = Settings(maxwidth=maxwidth)
+        settings = Settings(maxwidth=maxwidth)
 
         album = _common.Bag(
             mb_albumid=self.MBID_RELASE, mb_releasegroupid=self.MBID_GROUP
         )
-        self.mock_caa_response(self.RELEASE_URL, self.RESPONSE_RELEASE)
-        self.mock_caa_response(self.GROUP_URL, self.RESPONSE_GROUP)
-        candidates = list(self.source.get(album, self.settings, []))
+        image_response_mocker.add(self.RELEASE_URL, body=self.RESPONSE_RELEASE)
+        image_response_mocker.add(self.GROUP_URL, body=self.RESPONSE_GROUP)
+        candidates = list(source.get(album, settings, []))
         assert len(candidates) == 3
         for candidate in candidates:
             assert f"-{maxwidth}.jpg" in candidate.url
 
-    def test_caa_finds_image_if_maxwidth_is_set_and_thumbnails_is_empty(self):
+    def test_caa_finds_image_if_maxwidth_is_set_and_thumbnails_is_empty(
+        self,
+        source: fetchart.CoverArtArchive,
+        image_response_mocker: ImageResponseMocker,
+    ):
         # CAA provides pre-sized thumbnails of width 250px, 500px, and 1200px
         # We only test with one of them here
         maxwidth = 1200
-        self.settings = Settings(maxwidth=maxwidth)
+        settings = Settings(maxwidth=maxwidth)
 
         album = _common.Bag(
             mb_albumid=self.MBID_RELASE, mb_releasegroupid=self.MBID_GROUP
         )
-        self.mock_caa_response(
-            self.RELEASE_URL, self.RESPONSE_RELEASE_WITHOUT_THUMBNAILS
+        image_response_mocker.add(
+            self.RELEASE_URL, body=self.RESPONSE_RELEASE_WITHOUT_THUMBNAILS
         )
-        self.mock_caa_response(
-            self.GROUP_URL, self.RESPONSE_GROUP_WITHOUT_THUMBNAILS
+        image_response_mocker.add(
+            self.GROUP_URL, body=self.RESPONSE_GROUP_WITHOUT_THUMBNAILS
         )
-        candidates = list(self.source.get(album, self.settings, []))
+        candidates = list(source.get(album, settings, []))
         assert len(candidates) == 3
         for candidate in candidates:
             assert f"-{maxwidth}.jpg" not in candidate.url
