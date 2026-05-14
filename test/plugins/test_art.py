@@ -508,23 +508,26 @@ class TestAAO(UseThePlugin, FetchImageHelper):
             next(source.get(album, settings, []))
 
 
-class ITunesStoreTest(UseThePlugin):
-    def setUp(self):
-        super().setUp()
-        self.source = fetchart.ITunesStore(logger, self.plugin.config)
-        self.settings = Settings()
-        self.album = _common.Bag(albumartist="some artist", album="some album")
+class TestITunesStore(UseThePlugin, FetchImageHelper):
+    @pytest.fixture
+    def settings(self):
+        return Settings()
 
-    @responses.activate
-    def run(self, *args, **kwargs):
-        super().run(*args, **kwargs)
+    @pytest.fixture
+    def source(self):
+        return fetchart.ITunesStore(logger, self.plugin.config)
 
-    def mock_response(self, url, json):
-        responses.add(
-            responses.GET, url, body=json, content_type="application/json"
-        )
+    @pytest.fixture
+    def album(self):
+        return _common.Bag(albumartist="some artist", album="some album")
 
-    def test_itunesstore_finds_image(self):
+    def test_itunesstore_finds_image(
+        self,
+        source: fetchart.ITunesStore,
+        settings: Settings,
+        album: _common.Bag,
+        image_response_mocker: ImageResponseMocker,
+    ):
         json = """{
                     "results":
                         [
@@ -535,23 +538,45 @@ class ITunesStoreTest(UseThePlugin):
                             }
                         ]
                   }"""
-        self.mock_response(fetchart.ITunesStore.API_URL, json)
-        candidate = next(self.source.get(self.album, self.settings, []))
+        image_response_mocker.add(
+            fetchart.ITunesStore.API_URL,
+            body=json,
+            content_type="application/json",
+        )
+        candidate = next(source.get(album, settings, []))
         assert candidate.url == "url_to_the_image"
         assert candidate.match == fetchart.MetadataMatch.EXACT
 
-    def test_itunesstore_no_result(self):
+    def test_itunesstore_no_result(
+        self,
+        source: fetchart.ITunesStore,
+        settings: Settings,
+        album: _common.Bag,
+        image_response_mocker: ImageResponseMocker,
+        caplog: pytest.LogCaptureFixture,
+    ):
         json = '{"results": []}'
-        self.mock_response(fetchart.ITunesStore.API_URL, json)
+        image_response_mocker.add(
+            fetchart.ITunesStore.API_URL,
+            body=json,
+            content_type="application/json",
+        )
         expected = "got no results"
 
-        with capture_log("beets.test_art") as logs:
+        with caplog.at_level("DEBUG", logger="beets.test_art"):
             with pytest.raises(StopIteration):
-                next(self.source.get(self.album, self.settings, []))
-        assert expected in logs[1]
+                next(source.get(album, settings, []))
+        assert expected in caplog.messages[1]
 
-    def test_itunesstore_requestexception(self):
-        responses.add(
+    def test_itunesstore_requestexception(
+        self,
+        source: fetchart.ITunesStore,
+        settings: Settings,
+        album: _common.Bag,
+        image_response_mocker: ImageResponseMocker,
+        caplog: pytest.LogCaptureFixture,
+    ):
+        image_response_mocker.responses_mock.add(
             responses.GET,
             fetchart.ITunesStore.API_URL,
             json={"error": "not found"},
@@ -559,12 +584,18 @@ class ITunesStoreTest(UseThePlugin):
         )
         expected = "iTunes search failed: 404 Client Error"
 
-        with capture_log("beets.test_art") as logs:
+        with caplog.at_level("DEBUG", logger="beets.test_art"):
             with pytest.raises(StopIteration):
-                next(self.source.get(self.album, self.settings, []))
-        assert expected in logs[1]
+                next(source.get(album, settings, []))
+        assert expected in caplog.messages[1]
 
-    def test_itunesstore_fallback_match(self):
+    def test_itunesstore_fallback_match(
+        self,
+        source: fetchart.ITunesStore,
+        settings: Settings,
+        album: _common.Bag,
+        image_response_mocker: ImageResponseMocker,
+    ):
         json = """{
                     "results":
                         [
@@ -574,12 +605,23 @@ class ITunesStoreTest(UseThePlugin):
                             }
                         ]
                   }"""
-        self.mock_response(fetchart.ITunesStore.API_URL, json)
-        candidate = next(self.source.get(self.album, self.settings, []))
+        image_response_mocker.add(
+            fetchart.ITunesStore.API_URL,
+            body=json,
+            content_type="application/json",
+        )
+        candidate = next(source.get(album, settings, []))
         assert candidate.url == "url_to_the_image"
         assert candidate.match == fetchart.MetadataMatch.FALLBACK
 
-    def test_itunesstore_returns_result_without_artwork(self):
+    def test_itunesstore_returns_result_without_artwork(
+        self,
+        source: fetchart.ITunesStore,
+        settings: Settings,
+        album: _common.Bag,
+        image_response_mocker: ImageResponseMocker,
+        caplog: pytest.LogCaptureFixture,
+    ):
         json = """{
                     "results":
                         [
@@ -589,33 +631,59 @@ class ITunesStoreTest(UseThePlugin):
                             }
                         ]
                   }"""
-        self.mock_response(fetchart.ITunesStore.API_URL, json)
+        image_response_mocker.add(
+            fetchart.ITunesStore.API_URL,
+            body=json,
+            content_type="application/json",
+        )
         expected = "Malformed itunes candidate"
 
-        with capture_log("beets.test_art") as logs:
+        with caplog.at_level("DEBUG", logger="beets.test_art"):
             with pytest.raises(StopIteration):
-                next(self.source.get(self.album, self.settings, []))
-        assert expected in logs[1]
+                next(source.get(album, settings, []))
+        assert expected in caplog.messages[1]
 
-    def test_itunesstore_returns_no_result_when_error_received(self):
+    def test_itunesstore_returns_no_result_when_error_received(
+        self,
+        source: fetchart.ITunesStore,
+        settings: Settings,
+        album: _common.Bag,
+        image_response_mocker: ImageResponseMocker,
+        caplog: pytest.LogCaptureFixture,
+    ):
         json = '{"error": {"errors": [{"reason": "some reason"}]}}'
-        self.mock_response(fetchart.ITunesStore.API_URL, json)
+        image_response_mocker.add(
+            fetchart.ITunesStore.API_URL,
+            body=json,
+            content_type="application/json",
+        )
         expected = "not found in json. Fields are"
 
-        with capture_log("beets.test_art") as logs:
+        with caplog.at_level("DEBUG", logger="beets.test_art"):
             with pytest.raises(StopIteration):
-                next(self.source.get(self.album, self.settings, []))
-        assert expected in logs[1]
+                next(source.get(album, settings, []))
+        assert expected in caplog.messages[1]
 
-    def test_itunesstore_returns_no_result_with_malformed_response(self):
+    def test_itunesstore_returns_no_result_with_malformed_response(
+        self,
+        source: fetchart.ITunesStore,
+        settings: Settings,
+        album: _common.Bag,
+        image_response_mocker: ImageResponseMocker,
+        caplog: pytest.LogCaptureFixture,
+    ):
         json = """bla blup"""
-        self.mock_response(fetchart.ITunesStore.API_URL, json)
+        image_response_mocker.add(
+            fetchart.ITunesStore.API_URL,
+            body=json,
+            content_type="application/json",
+        )
         expected = "Could not decode json response:"
 
-        with capture_log("beets.test_art") as logs:
+        with caplog.at_level("DEBUG", logger="beets.test_art"):
             with pytest.raises(StopIteration):
-                next(self.source.get(self.album, self.settings, []))
-        assert expected in logs[1]
+                next(source.get(album, settings, []))
+        assert expected in caplog.messages[1]
 
 
 class GoogleImageTest(UseThePlugin):
