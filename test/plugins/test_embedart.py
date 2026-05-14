@@ -289,11 +289,9 @@ class TestEmbedartCli(PytestImportHelper, IOMixin, FetchImageHelper):
         self.io.addinput("y")
         self.run_command("embedart", "-u", "http://example.com/test.jpg")
         mediafile = MediaFile(syspath(item.path))
-        assert mediafile.images[
-            0
-        ].data == image_response_mocker.IMAGE_HEADERS.get("image/jpeg").ljust(
-            32, b"\x00"
-        )
+        assert mediafile.images[0].data == image_response_mocker.IMAGE_HEADERS[
+            "image/jpeg"
+        ].ljust(32, b"\x00")
 
     def test_embed_art_from_url_png(
         self, image_response_mocker: ImageResponseMocker
@@ -306,11 +304,9 @@ class TestEmbedartCli(PytestImportHelper, IOMixin, FetchImageHelper):
         )
         self.run_command("embedart", "-y", "-u", "http://example.com/test.png")
         mediafile = MediaFile(syspath(item.path))
-        assert mediafile.images[
-            0
-        ].data == image_response_mocker.IMAGE_HEADERS.get("image/png").ljust(
-            32, b"\x00"
-        )
+        assert mediafile.images[0].data == image_response_mocker.IMAGE_HEADERS[
+            "image/png"
+        ].ljust(32, b"\x00")
 
     def test_embed_art_from_url_not_image(
         self, image_response_mocker: ImageResponseMocker

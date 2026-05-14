@@ -29,6 +29,7 @@ import responses
 from beets import config, importer, logging, util
 from beets.autotag.distance import Distance
 from beets.autotag.hooks import AlbumInfo, AlbumMatch
+from beets.library import Album
 from beets.test import _common
 from beets.test.helper import FetchImageHelper, TestHelper
 from beets.util import clean_module_tempdir, syspath
@@ -37,15 +38,15 @@ from beetsplug import fetchart
 
 logger = logging.getLogger("beets.test_art")
 
+
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
     from unittest.mock import MagicMock
 
-    from beets.library import Album
     from beets.test.helper import ImageResponseMocker
 
 
-class Settings:
+class Settings(fetchart.FetchArtPlugin):
     """Used to pass settings to the ArtSources when the plugin isn't fully
     instantiated.
     """
@@ -258,6 +259,7 @@ class TestFetchImage(UseThePlugin, FetchImageHelper):
     ) -> None:
         image_response_mocker.add(self.URL, content_type="image/png")
         source.fetch_image(candidate, settings)
+        assert candidate.path is not None
         assert os.path.splitext(candidate.path)[1] == b".png"
         assert Path(os.fsdecode(candidate.path)).exists()
 
@@ -272,6 +274,7 @@ class TestFetchImage(UseThePlugin, FetchImageHelper):
             self.URL, content_type="image/jpeg", file_type="image/png"
         )
         source.fetch_image(candidate, settings)
+        assert candidate.path is not None
         assert os.path.splitext(candidate.path)[1] == b".png"
         assert Path(os.fsdecode(candidate.path)).exists()
 
@@ -298,7 +301,7 @@ class TestFSArt(UseThePlugin):
         settings: Settings,
     ) -> None:
         _common.touch(os.path.join(dpath, b"a.jpg"))
-        candidate = next(source.get(None, settings, [dpath]))
+        candidate = next(source.get(Album(), settings, [dpath]))
         assert candidate.path == os.path.join(dpath, b"a.jpg")
 
     def test_appropriately_named_file_takes_precedence(
@@ -309,7 +312,7 @@ class TestFSArt(UseThePlugin):
     ) -> None:
         _common.touch(os.path.join(dpath, b"a.jpg"))
         _common.touch(os.path.join(dpath, b"art.jpg"))
-        candidate = next(source.get(None, settings, [dpath]))
+        candidate = next(source.get(Album(), settings, [dpath]))
         assert candidate.path == os.path.join(dpath, b"art.jpg")
 
     def test_non_image_file_not_identified(
@@ -320,7 +323,7 @@ class TestFSArt(UseThePlugin):
     ) -> None:
         _common.touch(os.path.join(dpath, b"a.txt"))
         with pytest.raises(StopIteration):
-            next(source.get(None, settings, [dpath]))
+            next(source.get(Album(), settings, [dpath]))
 
     def test_cautious_skips_fallback(
         self,
@@ -331,7 +334,7 @@ class TestFSArt(UseThePlugin):
         _common.touch(os.path.join(dpath, b"a.jpg"))
         settings.cautious = True
         with pytest.raises(StopIteration):
-            next(source.get(None, settings, [dpath]))
+            next(source.get(Album(), settings, [dpath]))
 
     def test_configured_fallback_is_used(
         self,
@@ -341,8 +344,8 @@ class TestFSArt(UseThePlugin):
     ) -> None:
         fallback = os.path.join(self.temp_dir, b"a.jpg")
         _common.touch(fallback)
-        settings.fallback = fallback
-        candidate = next(source.get(None, settings, [dpath]))
+        settings.fallback = fallback  # type: ignore
+        candidate = next(source.get(Album(), settings, [dpath]))
         assert candidate.path == fallback
 
     def test_empty_dir(
@@ -352,7 +355,7 @@ class TestFSArt(UseThePlugin):
         settings: Settings,
     ) -> None:
         with pytest.raises(StopIteration):
-            next(source.get(None, settings, [dpath]))
+            next(source.get(Album(), settings, [dpath]))
 
     def test_precedence_amongst_correct_files(
         self,
@@ -364,9 +367,10 @@ class TestFSArt(UseThePlugin):
         paths = [os.path.join(dpath, i) for i in images]
         for p in paths:
             _common.touch(p)
-        settings.cover_names = ["cover", "front", "back"]
+        settings.cover_names = [b"cover", b"front", b"back"]
         candidates = [
-            candidate.path for candidate in source.get(None, settings, [dpath])
+            candidate.path
+            for candidate in source.get(Album(), settings, [dpath])
         ]
         assert candidates == paths
 
@@ -378,7 +382,7 @@ class TestFSArt(UseThePlugin):
     ) -> None:
         mock_samefile.side_effect = OSError("os error")
         fallback = os.path.join(self.temp_dir, b"a.jpg")
-        self.plugin.fallback = fallback
+        self.plugin.fallback = str(fallback)
         candidate = fetchart.Candidate(logger, source.ID, fallback)
         result = self.plugin._is_candidate_fallback(candidate)
         mock_samefile.assert_called_once()
@@ -402,12 +406,12 @@ class TestCombined(UseThePlugin, FetchImageHelper, CAAData):
         image_response_mocker: ImageResponseMocker,
     ):
         image_response_mocker.add(self.AMAZON_URL)
-        album = _common.Bag(asin=self.ASIN)
+        album = Album(asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, None)
         assert candidate is not None
 
     def test_main_interface_returns_none_for_missing_asin_and_path(self):
-        album = _common.Bag()
+        album = Album()
         candidate = self.plugin.art_for_album(album, None)
         assert candidate is None
 
@@ -418,7 +422,7 @@ class TestCombined(UseThePlugin, FetchImageHelper, CAAData):
     ):
         _common.touch(os.path.join(dpath, b"art.jpg"))
         image_response_mocker.add(self.AMAZON_URL)
-        album = _common.Bag(asin=self.ASIN)
+        album = Album(asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, [dpath])
         assert candidate is not None
         assert candidate.path == os.path.join(dpath, b"art.jpg")
@@ -429,7 +433,7 @@ class TestCombined(UseThePlugin, FetchImageHelper, CAAData):
         image_response_mocker: ImageResponseMocker,
     ):
         image_response_mocker.add(self.AMAZON_URL)
-        album = _common.Bag(asin=self.ASIN)
+        album = Album(asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, [dpath])
         assert candidate is not None
         assert not candidate.path.startswith(dpath)
@@ -440,7 +444,7 @@ class TestCombined(UseThePlugin, FetchImageHelper, CAAData):
         image_response_mocker: ImageResponseMocker,
     ):
         image_response_mocker.add(self.AMAZON_URL)
-        album = _common.Bag(asin=self.ASIN)
+        album = Album(asin=self.ASIN)
         self.plugin.art_for_album(album, [dpath])
         assert len(image_response_mocker.responses_mock.calls) == 1
         assert (
@@ -454,7 +458,7 @@ class TestCombined(UseThePlugin, FetchImageHelper, CAAData):
         image_response_mocker: ImageResponseMocker,
     ):
         image_response_mocker.add(self.AMAZON_URL, content_type="text/html")
-        album = _common.Bag(asin=self.ASIN)
+        album = Album(asin=self.ASIN)
         self.plugin.art_for_album(album, [dpath])
         assert (
             image_response_mocker.responses_mock.calls[-1].request.url
@@ -475,7 +479,7 @@ class TestCombined(UseThePlugin, FetchImageHelper, CAAData):
             "http://coverartarchive.org/release/rid/12345.jpg",
             content_type="image/jpeg",
         )
-        album = _common.Bag(
+        album = Album(
             mb_albumid=self.MBID_RELASE,
             mb_releasegroupid=self.MBID_GROUP,
             asin=self.ASIN,
@@ -492,7 +496,7 @@ class TestCombined(UseThePlugin, FetchImageHelper, CAAData):
         self,
         image_response_mocker: ImageResponseMocker,
     ):
-        album = _common.Bag(mb_albumid=self.MBID, asin=self.ASIN)
+        album = Album(mb_albumid=self.MBID, asin=self.ASIN)
         self.plugin.art_for_album(album, None, local_only=True)
         assert len(image_response_mocker.responses_mock.calls) == 0
 
@@ -502,7 +506,7 @@ class TestCombined(UseThePlugin, FetchImageHelper, CAAData):
         image_response_mocker: ImageResponseMocker,
     ):
         _common.touch(os.path.join(dpath, b"art.jpg"))
-        album = _common.Bag(mb_albumid=self.MBID, asin=self.ASIN)
+        album = Album(mb_albumid=self.MBID, asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, [dpath], local_only=True)
         assert candidate is not None
         assert candidate.path == os.path.join(dpath, b"art.jpg")
@@ -537,7 +541,7 @@ class TestAAO(UseThePlugin, FetchImageHelper):
         image_response_mocker.add(
             self.AAO_URL, body=body, content_type="text/html"
         )
-        album = _common.Bag(asin=self.ASIN)
+        album = Album(asin=self.ASIN)
         candidate = next(source.get(album, settings, []))
         assert candidate.url == "TARGET_URL"
 
@@ -550,7 +554,7 @@ class TestAAO(UseThePlugin, FetchImageHelper):
         image_response_mocker.add(
             self.AAO_URL, body="blah blah", content_type="text/html"
         )
-        album = _common.Bag(asin=self.ASIN)
+        album = Album(asin=self.ASIN)
         with pytest.raises(StopIteration):
             next(source.get(album, settings, []))
 
@@ -566,13 +570,13 @@ class TestITunesStore(UseThePlugin, FetchImageHelper):
 
     @pytest.fixture
     def album(self):
-        return _common.Bag(albumartist="some artist", album="some album")
+        return Album(albumartist="some artist", album="some album")
 
     def test_itunesstore_finds_image(
         self,
         source: fetchart.ITunesStore,
         settings: Settings,
-        album: _common.Bag,
+        album,
         image_response_mocker: ImageResponseMocker,
     ):
         json = """{
@@ -598,7 +602,7 @@ class TestITunesStore(UseThePlugin, FetchImageHelper):
         self,
         source: fetchart.ITunesStore,
         settings: Settings,
-        album: _common.Bag,
+        album: Album,
         image_response_mocker: ImageResponseMocker,
         caplog: pytest.LogCaptureFixture,
     ):
@@ -619,7 +623,7 @@ class TestITunesStore(UseThePlugin, FetchImageHelper):
         self,
         source: fetchart.ITunesStore,
         settings: Settings,
-        album: _common.Bag,
+        album: Album,
         image_response_mocker: ImageResponseMocker,
         caplog: pytest.LogCaptureFixture,
     ):
@@ -640,7 +644,7 @@ class TestITunesStore(UseThePlugin, FetchImageHelper):
         self,
         source: fetchart.ITunesStore,
         settings: Settings,
-        album: _common.Bag,
+        album: Album,
         image_response_mocker: ImageResponseMocker,
     ):
         json = """{
@@ -665,7 +669,7 @@ class TestITunesStore(UseThePlugin, FetchImageHelper):
         self,
         source: fetchart.ITunesStore,
         settings: Settings,
-        album: _common.Bag,
+        album: Album,
         image_response_mocker: ImageResponseMocker,
         caplog: pytest.LogCaptureFixture,
     ):
@@ -694,7 +698,7 @@ class TestITunesStore(UseThePlugin, FetchImageHelper):
         self,
         source: fetchart.ITunesStore,
         settings: Settings,
-        album: _common.Bag,
+        album: Album,
         image_response_mocker: ImageResponseMocker,
         caplog: pytest.LogCaptureFixture,
     ):
@@ -715,7 +719,7 @@ class TestITunesStore(UseThePlugin, FetchImageHelper):
         self,
         source: fetchart.ITunesStore,
         settings: Settings,
-        album: _common.Bag,
+        album: Album,
         image_response_mocker: ImageResponseMocker,
         caplog: pytest.LogCaptureFixture,
     ):
@@ -748,7 +752,7 @@ class TestGoogleImage(UseThePlugin, FetchImageHelper):
         settings: Settings,
         image_response_mocker: ImageResponseMocker,
     ):
-        album = _common.Bag(albumartist="some artist", album="some album")
+        album = Album(albumartist="some artist", album="some album")
         json = '{"items": [{"link": "url_to_the_image"}]}'
         image_response_mocker.add(
             fetchart.GoogleImages.URL,
@@ -764,7 +768,7 @@ class TestGoogleImage(UseThePlugin, FetchImageHelper):
         settings: Settings,
         image_response_mocker: ImageResponseMocker,
     ):
-        album = _common.Bag(albumartist="some artist", album="some album")
+        album = Album(albumartist="some artist", album="some album")
         json = '{"error": {"errors": [{"reason": "some reason"}]}}'
         image_response_mocker.add(
             fetchart.GoogleImages.URL,
@@ -780,7 +784,7 @@ class TestGoogleImage(UseThePlugin, FetchImageHelper):
         settings: Settings,
         image_response_mocker: ImageResponseMocker,
     ):
-        album = _common.Bag(albumartist="some artist", album="some album")
+        album = Album(albumartist="some artist", album="some album")
         json = """bla blup"""
         image_response_mocker.add(
             fetchart.GoogleImages.URL,
@@ -806,7 +810,7 @@ class TestCoverArtArchive(UseThePlugin, FetchImageHelper, CAAData):
         settings: Settings,
         image_response_mocker: ImageResponseMocker,
     ):
-        album = _common.Bag(
+        album = Album(
             mb_albumid=self.MBID_RELASE, mb_releasegroupid=self.MBID_GROUP
         )
         image_response_mocker.add(self.RELEASE_URL, body=self.RESPONSE_RELEASE)
@@ -829,7 +833,7 @@ class TestCoverArtArchive(UseThePlugin, FetchImageHelper, CAAData):
         maxwidth = 1200
         settings = Settings(maxwidth=maxwidth)
 
-        album = _common.Bag(
+        album = Album(
             mb_albumid=self.MBID_RELASE, mb_releasegroupid=self.MBID_GROUP
         )
         image_response_mocker.add(self.RELEASE_URL, body=self.RESPONSE_RELEASE)
@@ -837,6 +841,7 @@ class TestCoverArtArchive(UseThePlugin, FetchImageHelper, CAAData):
         candidates = list(source.get(album, settings, []))
         assert len(candidates) == 3
         for candidate in candidates:
+            assert candidate.url is not None
             assert f"-{maxwidth}.jpg" in candidate.url
 
     def test_caa_finds_image_if_maxwidth_is_set_and_thumbnails_is_empty(
@@ -849,7 +854,7 @@ class TestCoverArtArchive(UseThePlugin, FetchImageHelper, CAAData):
         maxwidth = 1200
         settings = Settings(maxwidth=maxwidth)
 
-        album = _common.Bag(
+        album = Album(
             mb_albumid=self.MBID_RELASE, mb_releasegroupid=self.MBID_GROUP
         )
         image_response_mocker.add(
@@ -861,6 +866,7 @@ class TestCoverArtArchive(UseThePlugin, FetchImageHelper, CAAData):
         candidates = list(source.get(album, settings, []))
         assert len(candidates) == 3
         for candidate in candidates:
+            assert candidate.url is not None
             assert f"-{maxwidth}.jpg" not in candidate.url
 
 
@@ -936,7 +942,7 @@ class TestFanartTV(UseThePlugin, FetchImageHelper):
         settings: Settings,
         image_response_mocker: ImageResponseMocker,
     ):
-        album = _common.Bag(mb_releasegroupid="thereleasegroupid")
+        album: Album = Album(mb_releasegroupid="thereleasegroupid")
         image_response_mocker.add(
             f"{fetchart.FanartTV.API_ALBUMS}thereleasegroupid",
             body=self.RESPONSE_MULTIPLE,
@@ -951,7 +957,7 @@ class TestFanartTV(UseThePlugin, FetchImageHelper):
         settings: Settings,
         image_response_mocker: ImageResponseMocker,
     ):
-        album = _common.Bag(mb_releasegroupid="thereleasegroupid")
+        album = Album(mb_releasegroupid="thereleasegroupid")
         image_response_mocker.add(
             f"{fetchart.FanartTV.API_ALBUMS}thereleasegroupid",
             body=self.RESPONSE_ERROR,
@@ -966,7 +972,7 @@ class TestFanartTV(UseThePlugin, FetchImageHelper):
         settings: Settings,
         image_response_mocker: ImageResponseMocker,
     ):
-        album = _common.Bag(mb_releasegroupid="thereleasegroupid")
+        album = Album(mb_releasegroupid="thereleasegroupid")
         image_response_mocker.add(
             f"{fetchart.FanartTV.API_ALBUMS}thereleasegroupid",
             body=self.RESPONSE_MALFORMED,
@@ -982,7 +988,7 @@ class TestFanartTV(UseThePlugin, FetchImageHelper):
         image_response_mocker: ImageResponseMocker,
     ):
         # The source used to fail when there were images present, but no cover
-        album = _common.Bag(mb_releasegroupid="thereleasegroupid")
+        album = Album(mb_releasegroupid="thereleasegroupid")
         image_response_mocker.add(
             f"{fetchart.FanartTV.API_ALBUMS}thereleasegroupid",
             body=self.RESPONSE_NO_ART,
@@ -1129,7 +1135,7 @@ class AlbumArtOperationMixin(UseThePlugin):
             yield
 
     def get_album_art(self):
-        return self.plugin.art_for_album(_common.Bag(), [""], True)
+        return self.plugin.art_for_album(Album(), [""], True)
 
 
 class TestAlbumArtOperationConfiguration(AlbumArtOperationMixin):
