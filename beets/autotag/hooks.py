@@ -540,8 +540,14 @@ class Match:
         return self.info.type
 
     @cached_property
-    def from_scratch(self) -> bool:
+    def config_from_scratch(self) -> bool:
         return bool(config["import"]["from_scratch"])
+
+    def from_scratch(self, override: bool | None) -> bool:
+        if override is not None:
+            return override
+
+        return self.config_from_scratch
 
     @property
     def disambig_fields(self) -> Sequence[str]:
@@ -617,10 +623,15 @@ class AlbumMatch(Match):
             for i, ti in self.item_info_pairs
         ]
 
-    def apply_metadata(self) -> None:
-        """Apply metadata to each of the items."""
+    def apply_metadata(self, from_scratch: bool | None = None) -> None:
+        """Apply metadata to each of the items.
+
+        If ``from_scratch`` is provided, its value determines whether the
+        items existing metadata are cleared before applying new metadata.
+        Otherwise, the configured ``from_scratch`` setting is used.
+        """
         for item, data in self.merged_pairs:
-            if self.from_scratch:
+            if self.from_scratch(from_scratch):
                 item.clear()
 
             item.update(data)
@@ -655,9 +666,14 @@ class TrackMatch(Match):
             ),
         }
 
-    def apply_metadata(self) -> None:
-        """Apply metadata to the item."""
-        if self.from_scratch:
+    def apply_metadata(self, from_scratch: bool | None = None) -> None:
+        """Apply metadata to the item.
+
+        If ``from_scratch`` is provided, its value determines whether the
+        item's existing metadata is cleared before applying new metadata.
+        Otherwise, the configured ``from_scratch`` setting is used.
+        """
+        if self.from_scratch(from_scratch):
             self.item.clear()
 
         self.item.update(self.info.item_data)
