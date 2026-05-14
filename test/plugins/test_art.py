@@ -486,40 +486,46 @@ class CombinedTest(FetchImageTestCase, CAAHelper):
         assert len(responses.calls) == 0
 
 
-class AAOTest(UseThePlugin):
-    ASIN = "xxxx"
-    AAO_URL = f"https://www.albumart.org/index_detail.php?asin={ASIN}"
+class TestAAO(UseThePlugin, FetchImageHelper):
+    ASIN: str = "xxxx"
+    AAO_URL: str = f"https://www.albumart.org/index_detail.php?asin={ASIN}"
 
-    def setUp(self):
-        super().setUp()
-        self.source = fetchart.AlbumArtOrg(logger, self.plugin.config)
-        self.settings = Settings()
+    @pytest.fixture
+    def settings(self) -> Settings:
+        return Settings()
 
-    @responses.activate
-    def run(self, *args, **kwargs):
-        super().run(*args, **kwargs)
+    @pytest.fixture
+    def source(self) -> fetchart.AlbumArtOrg:
+        return fetchart.AlbumArtOrg(logger, self.plugin.config)
 
-    def mock_response(self, url, body):
-        responses.add(responses.GET, url, body=body, content_type="text/html")
-
-    def test_aao_scraper_finds_image(self):
+    def test_aao_scraper_finds_image(
+        self,
+        source: fetchart.AlbumArtOrg,
+        settings: Settings,
+    ) -> None:
         body = """
         <br />
-        <a href=\"TARGET_URL\" title=\"View larger image\"
-           class=\"thickbox\" style=\"color: #7E9DA2; text-decoration:none;\">
-        <img src=\"http://www.albumart.org/images/zoom-icon.jpg\"
-       alt=\"View larger image\" width=\"17\" height=\"15\"  border=\"0\"/></a>
+        <a href="TARGET_URL" title="View larger image"
+           class="thickbox" style="color: #7E9DA2; text-decoration:none;">
+        <img src="http://www.albumart.org/images/zoom-icon.jpg"
+             alt="View larger image" width="17" height="15" border="0"/></a>
         """
-        self.mock_response(self.AAO_URL, body)
+        self.mock_response(self.AAO_URL, body=body, content_type="text/html")
         album = _common.Bag(asin=self.ASIN)
-        candidate = next(self.source.get(album, self.settings, []))
+        candidate = next(source.get(album, settings, []))
         assert candidate.url == "TARGET_URL"
 
-    def test_aao_scraper_returns_no_result_when_no_image_present(self):
-        self.mock_response(self.AAO_URL, "blah blah")
+    def test_aao_scraper_returns_no_result_when_no_image_present(
+        self,
+        source: fetchart.AlbumArtOrg,
+        settings: Settings,
+    ) -> None:
+        self.mock_response(
+            self.AAO_URL, body="blah blah", content_type="text/html"
+        )
         album = _common.Bag(asin=self.ASIN)
         with pytest.raises(StopIteration):
-            next(self.source.get(album, self.settings, []))
+            next(source.get(album, settings, []))
 
 
 class ITunesStoreTest(UseThePlugin):
