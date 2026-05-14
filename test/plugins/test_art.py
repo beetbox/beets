@@ -686,41 +686,62 @@ class TestITunesStore(UseThePlugin, FetchImageHelper):
         assert expected in caplog.messages[1]
 
 
-class GoogleImageTest(UseThePlugin):
-    def setUp(self):
-        super().setUp()
-        self.source = fetchart.GoogleImages(logger, self.plugin.config)
-        self.settings = Settings()
+class TestGoogleImage(UseThePlugin, FetchImageHelper):
+    @pytest.fixture
+    def settings(self):
+        return Settings()
 
-    @responses.activate
-    def run(self, *args, **kwargs):
-        super().run(*args, **kwargs)
+    @pytest.fixture
+    def source(self):
+        return fetchart.GoogleImages(logger, self.plugin.config)
 
-    def mock_response(self, url, json):
-        responses.add(
-            responses.GET, url, body=json, content_type="application/json"
-        )
-
-    def test_google_art_finds_image(self):
+    def test_google_art_finds_image(
+        self,
+        source: fetchart.GoogleImages,
+        settings: Settings,
+        image_response_mocker: ImageResponseMocker,
+    ):
         album = _common.Bag(albumartist="some artist", album="some album")
         json = '{"items": [{"link": "url_to_the_image"}]}'
-        self.mock_response(fetchart.GoogleImages.URL, json)
-        candidate = next(self.source.get(album, self.settings, []))
+        image_response_mocker.add(
+            fetchart.GoogleImages.URL,
+            body=json,
+            content_type="application/json",
+        )
+        candidate = next(source.get(album, settings, []))
         assert candidate.url == "url_to_the_image"
 
-    def test_google_art_returns_no_result_when_error_received(self):
+    def test_google_art_returns_no_result_when_error_received(
+        self,
+        source: fetchart.GoogleImages,
+        settings: Settings,
+        image_response_mocker: ImageResponseMocker,
+    ):
         album = _common.Bag(albumartist="some artist", album="some album")
         json = '{"error": {"errors": [{"reason": "some reason"}]}}'
-        self.mock_response(fetchart.GoogleImages.URL, json)
+        image_response_mocker.add(
+            fetchart.GoogleImages.URL,
+            body=json,
+            content_type="application/json",
+        )
         with pytest.raises(StopIteration):
-            next(self.source.get(album, self.settings, []))
+            next(source.get(album, settings, []))
 
-    def test_google_art_returns_no_result_with_malformed_response(self):
+    def test_google_art_returns_no_result_with_malformed_response(
+        self,
+        source: fetchart.GoogleImages,
+        settings: Settings,
+        image_response_mocker: ImageResponseMocker,
+    ):
         album = _common.Bag(albumartist="some artist", album="some album")
         json = """bla blup"""
-        self.mock_response(fetchart.GoogleImages.URL, json)
+        image_response_mocker.add(
+            fetchart.GoogleImages.URL,
+            body=json,
+            content_type="application/json",
+        )
         with pytest.raises(StopIteration):
-            next(self.source.get(album, self.settings, []))
+            next(source.get(album, settings, []))
 
 
 class TestCoverArtArchive(UseThePlugin, FetchImageHelper, CAAData):
