@@ -89,8 +89,9 @@ class WebXSSTest(ItemInDBTestCase):
 
         # If we found any user data fields using <%= %>, the templates are vulnerable
         assert len(vulnerable_fields) == 0, (
-            f"Found non-escaping <%= %> tags for user data fields: {vulnerable_fields}. "
-            f"These should use <%- %> for HTML escaping to prevent XSS."
+            "Found non-escaping <%= %> tags for user data fields: "
+            f"{vulnerable_fields}. "
+            "These should use <%- %> for HTML escaping to prevent XSS."
         )
 
         # Also verify that escaping tags (<%- %>) are present for user data
