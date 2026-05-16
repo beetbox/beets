@@ -523,8 +523,8 @@ class TestCombined(UseThePlugin, FetchImageHelper, CAAData):
 
 
 class TestAAO(UseThePlugin, FetchImageHelper):
-    ASIN: str = "xxxx"
-    AAO_URL: str = f"https://www.albumart.org/index_detail.php?asin={ASIN}"
+    ASIN = "xxxx"
+    AAO_URL = f"https://www.albumart.org/index_detail.php?asin={ASIN}"
 
     @pytest.fixture
     def settings(self) -> Settings:
