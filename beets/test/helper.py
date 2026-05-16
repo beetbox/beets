@@ -413,6 +413,18 @@ class BeetsTestCase(unittest.TestCase, TestHelper):
         self.teardown_beets()
 
 
+class PytestTestHelper(TestHelper):
+    """Same as the BeetsTestCase unittest setup but for pytest."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        self.setup_beets()
+        try:
+            yield
+        finally:
+            self.teardown_beets()
+
+
 class ItemInDBTestCase(BeetsTestCase):
     """A test case that includes an in-memory library object (`lib`) and
     an item added to the library (`i`).

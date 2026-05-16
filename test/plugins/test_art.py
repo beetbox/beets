@@ -31,7 +31,7 @@ from beets.autotag.distance import Distance
 from beets.autotag.hooks import AlbumInfo, AlbumMatch
 from beets.library import Album
 from beets.test import _common
-from beets.test.helper import FetchImageHelper, TestHelper
+from beets.test.helper import FetchImageHelper, PytestTestHelper
 from beets.util import clean_module_tempdir, syspath
 from beets.util.artresizer import ArtResizer
 from beetsplug import fetchart
@@ -67,18 +67,6 @@ class DummyRemoteArtSource(fetchart.RemoteArtSource):
         paths: None | Sequence[bytes],
     ) -> Iterator[fetchart.Candidate]:
         return iter(())
-
-
-class PytestTestHelper(TestHelper):
-    """Same as the BeetsTestCase unittest setup but for pytest."""
-
-    @pytest.fixture(autouse=True)
-    def setup(self):
-        self.setup_beets()
-        try:
-            yield
-        finally:
-            self.teardown_beets()
 
 
 class UseThePlugin(PytestTestHelper):
