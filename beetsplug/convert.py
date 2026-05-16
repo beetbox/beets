@@ -394,15 +394,18 @@ class ConvertPlugin(BeetsPlugin):
             return True
         return self.fmt != item.format.lower()
 
+    def get_item_destination(self, item: Item) -> bytes:
+        return item.destination(
+            basedir=self.dest, path_formats=self.path_formats
+        )
+
     @util.pipeline.mutator_stage
     def convert_item(self, keep_new: bool, item: Item) -> None:
         """Convert an Item from the library."""
         pretend, link, hardlink = self.pretend, self.link, self.hardlink
         command, ext = self.command
 
-        dest = item.destination(
-            basedir=self.dest, path_formats=self.path_formats
-        )
+        dest = self.get_item_destination(item)
 
         # Ensure that desired item is readable before processing it. Needed
         # to avoid any side-effect of the conversion (linking, keep_new,
@@ -536,9 +539,7 @@ class ConvertPlugin(BeetsPlugin):
 
         # Get the destination of the first item (track) of the album, we use
         # this function to format the path accordingly to path_formats.
-        dest = album_item.destination(
-            basedir=self.dest, path_formats=self.path_formats
-        )
+        dest = self.get_item_destination(album_item)
 
         # Remove item from the path.
         dest = os.path.join(*util.components(dest)[:-1])
@@ -603,7 +604,7 @@ class ConvertPlugin(BeetsPlugin):
         self, lib: Library, opts: optparse.Values, args: list[str]
     ) -> None:
         self.config.set(vars(opts))
-        dest, pretend = self.dest, self.pretend
+        pretend = self.pretend
 
         if opts.album:
             albums = lib.albums(args)
@@ -637,9 +638,7 @@ class ConvertPlugin(BeetsPlugin):
             pl_dir = os.path.dirname(pl_normpath)
             items_paths = []
             for item in items:
-                item_path = item.destination(
-                    basedir=dest, path_formats=self.path_formats
-                )
+                item_path = self.get_item_destination(item)
 
                 # When keeping new files in the library, destination paths
                 # keep original files and extensions.
