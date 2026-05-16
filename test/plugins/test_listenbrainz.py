@@ -1,9 +1,22 @@
-from unittest.mock import patch
+import io
+import json
+import zipfile
+from unittest.mock import MagicMock, patch
 
 import pytest
 
+from beets import ui
 from beets.test.helper import ConfigMixin
 from beetsplug.listenbrainz import ListenBrainzPlugin
+
+
+def _make_zip(files: dict[str, str]) -> bytes:
+    """Build an in-memory zip with the given {name: content} entries."""
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        for name, content in files.items():
+            zf.writestr(name, content)
+    return buf.getvalue()
 
 
 class TestListenBrainzPlugin(ConfigMixin):
@@ -292,3 +305,64 @@ class TestListenBrainzPlugin(ConfigMixin):
         tracks = plugin.get_tracks_from_listens(listens)
         assert tracks[0]["mbid"] == "rec-mbid-123"
         assert tracks[0]["playcount"] == 1
+
+    def test_import_file_returns_listens(self, plugin, tmp_path):
+        listen = {
+            "listened_at": 1778946700,
+            "track_metadata": {"track_name": "S"},
+        }
+        zip_path = tmp_path / "export.zip"
+        zip_path.write_bytes(
+            _make_zip({"listens/2026.jsonl": json.dumps(listen) + "\n"})
+        )
+
+        result = plugin.import_listenbrainz_data_export(MagicMock(), zip_path)
+
+        assert result == [listen]
+
+    def test_import_file_ignores_non_listens_entries(self, plugin, tmp_path):
+        listen = {"listened_at": 1778946700, "track_metadata": {}}
+        zip_path = tmp_path / "export.zip"
+        zip_path.write_bytes(
+            _make_zip(
+                {
+                    "listens/2026.jsonl": json.dumps(listen) + "\n",
+                    "other/data.jsonl": '{"should": "be ignored"}\n',
+                    "listens/readme.txt": "not a jsonl file\n",
+                }
+            )
+        )
+
+        result = plugin.import_listenbrainz_data_export(MagicMock(), zip_path)
+
+        assert result == [listen]
+
+    def test_import_file_skips_empty_lines(self, plugin, tmp_path):
+        listen = {"listened_at": 1778946700, "track_metadata": {}}
+        content = "\n" + json.dumps(listen) + "\n\n"
+        zip_path = tmp_path / "export.zip"
+        zip_path.write_bytes(_make_zip({"listens/2026.jsonl": content}))
+
+        result = plugin.import_listenbrainz_data_export(MagicMock(), zip_path)
+
+        assert result == [listen]
+
+    def test_import_file_skips_invalid_json_and_logs_error(
+        self, plugin, tmp_path
+    ):
+        listen = {"listened_at": 1778946700, "track_metadata": {}}
+        content = "not valid json\n" + json.dumps(listen) + "\n"
+        zip_path = tmp_path / "export.zip"
+        zip_path.write_bytes(_make_zip({"listens/2026.jsonl": content}))
+        log = MagicMock()
+
+        result = plugin.import_listenbrainz_data_export(log, zip_path)
+
+        assert result == [listen]
+        log.error.assert_called_once()
+
+    def test_import_file_raises_on_missing_file(self, plugin, tmp_path):
+        with pytest.raises(ui.UserError):
+            plugin.import_listenbrainz_data_export(
+                MagicMock(), tmp_path / "nonexistent.zip"
+            )
