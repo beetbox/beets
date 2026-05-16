@@ -253,3 +253,42 @@ class TestListenBrainzPlugin(ConfigMixin):
         assert isinstance(t["artist"], str)
         assert isinstance(t["name"], str)
         assert t["album"] == "Album"
+
+    def test_get_tracks_from_listens_null_mbid_mapping(self, plugin):
+        listens = [
+            {
+                "listened_at": 1000,
+                "track_metadata": {
+                    "track_name": "Song",
+                    "artist_name": "Artist",
+                    "release_name": "Album",
+                    "mbid_mapping": None,
+                },
+            }
+        ]
+        tracks = plugin.get_tracks_from_listens(listens)  # should not raise
+        assert tracks[0]["mbid"] is None
+
+    def test_get_tracks_from_listens_prefers_additional_info_recording_mbid(
+        self, plugin
+    ):
+        listens = [
+            {
+                "listened_at": 1000,
+                "track_metadata": {
+                    "track_name": "Song",
+                    "artist_name": "Artist",
+                    "release_name": "Album",
+                    "additional_info": {
+                        "recording_mbid": "rec-mbid-123",
+                    },
+                    "mbid_mapping": {
+                        "recording_mbid": "rec-mbid-456",
+                        "release_mbid": "rel-mbid",
+                    },
+                },
+            }
+        ]
+        tracks = plugin.get_tracks_from_listens(listens)
+        assert tracks[0]["mbid"] == "rec-mbid-123"
+        assert tracks[0]["playcount"] == 1
