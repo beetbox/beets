@@ -14,7 +14,7 @@ import requests
 from beets import config, ui
 from beets.dbcore import types
 from beets.plugins import BeetsPlugin
-from beets.util import syspath, normpath
+from beets.util import displayable_path, normpath, syspath
 
 from ._utils.musicbrainz import MusicBrainzAPIMixin
 from ._utils.playcount import update_play_counts
@@ -48,18 +48,21 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             "lbimport", help="Import ListenBrainz history"
         )
         lbupdate_cmd.parser.add_option(
+            "-f",
             "--export-file",
             dest="export_file",
             metavar="PATH",
             default=None,
-            help="path to a ListenBrainz data export .zip file (instead of fetching from the API)",
+            help="path to a ListenBrainz data export .zip file "
+            "(instead of fetching from the API)",
         )
         lbupdate_cmd.parser.add_option(
             "--max",
             dest="max_listens",
             type="int",
             default=None,
-            help="maximum number of listens to fetch (default: all)",
+            help="maximum number of listens to fetch via the API (default: all). "
+            "This option does not apply when importing a file via -f/--export-file.",
         )
 
         def func(lib, opts, args):
@@ -77,6 +80,10 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         """Update play counts from ListenBrainz listening history."""
         if export_file is not None:
             log.info("Importing ListenBrainz data from {}...", export_file)
+            if max_listens is not None:
+                log.warning(
+                    "Ignoring superfluous --max flag when importing from file."
+                )
             listens = self.import_listenbrainz_data_export(log, export_file)
         else:
             log.info("Fetching ListenBrainz history...")
@@ -152,18 +159,32 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
 
         all_listens = []
 
-        with zipfile.ZipFile(export_file, "r") as zip_file:
-            for file_name in zip_file.namelist():
-                if file_name.startswith("listens/") and file_name.endswith(
-                    ".jsonl"
-                ):
-                    log.info("Reading listens from {}", file_name)
-                    with zip_file.open(file_name) as file:
-                        data = file.read()
-                        listens = [
-                            json.loads(line) for line in data.splitlines()
-                        ]
-                        all_listens.extend(listens)
+        try:
+            with zipfile.ZipFile(export_file, "r") as zip_file:
+                for file_name in zip_file.namelist():
+                    if file_name.startswith("listens/") and file_name.endswith(
+                        ".jsonl"
+                    ):
+                        log.info(
+                            "Reading listens from {}",
+                            displayable_path(file_name),
+                        )
+                        with zip_file.open(file_name) as file:
+                            for line in file:
+                                if not line.strip():
+                                    continue
+                                try:
+                                    all_listens.append(json.loads(line))
+                                except json.JSONDecodeError as err:
+                                    log.error(
+                                        "Invalid JSON in {}: {}",
+                                        displayable_path(file_name),
+                                        err,
+                                    )
+        except OSError as err:
+            raise ui.UserError(
+                f"unreadable export file {displayable_path(export_file)}: {err}"
+            ) from err
         return all_listens
 
     def get_listens(self, min_ts=None, max_ts=None, count=None, max_total=None):
@@ -237,7 +258,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             track_metadata = track["track_metadata"]
             if track_metadata.get("release_name") is None:
                 continue
-            additional_info = track.get("additional_info", {})
+            additional_info = track_metadata.get("additional_info", {})
             recording_mbid = additional_info.get("recording_mbid")
             if recording_mbid is None:
                 mbid_mapping = track_metadata.get("mbid_mapping", {}) or {}
