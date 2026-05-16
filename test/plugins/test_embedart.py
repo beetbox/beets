@@ -41,7 +41,7 @@ from beetsplug._utils import art
 from test.test_art_resize import DummyIMBackend
 
 if TYPE_CHECKING:
-    from beets.test.helper import ImageResponseMocker
+    from beets.test.helper import ImageRequestMocker
 
 
 def require_artresizer_compare(test):
@@ -278,43 +278,43 @@ class TestEmbedartCli(PytestImportHelper, IOMixin, FetchImageHelper):
         assert mediafile.images[0].data == self.image_data
 
     def test_embed_art_from_url_with_yes_input(
-        self, image_response_mocker: ImageResponseMocker
+        self, image_request_mock: ImageRequestMocker
     ):
         self._setup_data()
         album = self.add_album_fixture()
         item = album.items()[0]
-        image_response_mocker.add(
+        image_request_mock.get(
             "http://example.com/test.jpg", content_type="image/jpeg"
         )
         self.io.addinput("y")
         self.run_command("embedart", "-u", "http://example.com/test.jpg")
         mediafile = MediaFile(syspath(item.path))
-        assert mediafile.images[0].data == image_response_mocker.IMAGE_HEADERS[
+        assert mediafile.images[0].data == image_request_mock.IMAGE_HEADERS[
             "image/jpeg"
         ].ljust(32, b"\x00")
 
     def test_embed_art_from_url_png(
-        self, image_response_mocker: ImageResponseMocker
+        self, image_request_mock: ImageRequestMocker
     ):
         self._setup_data()
         album = self.add_album_fixture()
         item = album.items()[0]
-        image_response_mocker.add(
+        image_request_mock.get(
             "http://example.com/test.png", content_type="image/png"
         )
         self.run_command("embedart", "-y", "-u", "http://example.com/test.png")
         mediafile = MediaFile(syspath(item.path))
-        assert mediafile.images[0].data == image_response_mocker.IMAGE_HEADERS[
+        assert mediafile.images[0].data == image_request_mock.IMAGE_HEADERS[
             "image/png"
         ].ljust(32, b"\x00")
 
     def test_embed_art_from_url_not_image(
-        self, image_response_mocker: ImageResponseMocker
+        self, image_request_mock: ImageRequestMocker
     ):
         self._setup_data()
         album = self.add_album_fixture()
         item = album.items()[0]
-        image_response_mocker.add(
+        image_request_mock.get(
             "http://example.com/test.html", content_type="text/html"
         )
         self.run_command("embedart", "-y", "-u", "http://example.com/test.html")

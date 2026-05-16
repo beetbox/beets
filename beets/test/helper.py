@@ -37,11 +37,10 @@ from enum import Enum
 from functools import cached_property
 from pathlib import Path
 from tempfile import gettempdir, mkdtemp, mkstemp
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 from unittest.mock import Mock, patch
 
 import pytest
-import responses
 from mediafile import Image, MediaFile
 
 import beets
@@ -58,6 +57,9 @@ from beets.util import (
     clean_module_tempdir,
     syspath,
 )
+
+if TYPE_CHECKING:
+    from requests_mock.mocker import Mocker
 
 
 class LogCapture(logging.Handler):
@@ -404,6 +406,8 @@ class BeetsTestCase(unittest.TestCase, TestHelper):
     modifications that will then be automatically removed when the test
     completes. Also provides some additional assertion methods, a
     temporary directory, and a DummyIO.
+
+    DEPRECATED: Use pytest + PytestTestHelper instead.
     """
 
     def setUp(self):
@@ -831,9 +835,10 @@ class AutotagImportTestCase(ImportTestCase):
 
 
 @dataclass(slots=True)
-class ImageResponseMocker:
-    responses_mock: responses.RequestsMock
+class ImageRequestMocker:
+    mocker: Mocker
 
+    # Image types and their file headers
     IMAGE_HEADERS: ClassVar[dict[str, bytes]] = {
         "image/jpeg": b"\xff\xd8\xff\x00\x00\x00JFIF",
         "image/png": b"\211PNG\r\n\032\n",
@@ -846,19 +851,21 @@ class ImageResponseMocker:
         ),
     }
 
-    def add(
+    def get(
         self,
         url: str,
         *,
         content_type: str = "image/jpeg",
         file_type: str | None = None,
-        body: str | bytes | None = None,
+        content: str | bytes | None = None,
     ) -> None:
         actual_file_type = file_type or content_type
 
-        if body is None:
+        if content is None:
             try:
-                body = self.IMAGE_HEADERS[actual_file_type].ljust(32, b"\x00")
+                content = self.IMAGE_HEADERS[actual_file_type].ljust(
+                    32, b"\x00"
+                )
             except KeyError as exc:
                 # If we can't return a file that looks like real file of the requested
                 # type, better fail the test than returning something else, which might
@@ -867,11 +874,15 @@ class ImageResponseMocker:
                     f"Mocking {actual_file_type!r} responses not supported"
                 ) from exc
 
-        self.responses_mock.add(
-            responses.GET,
+        if isinstance(content, str):
+            content = content.encode()
+
+        self.mocker.get(
             url,
-            content_type=content_type,
-            body=body,
+            headers={
+                "Content-Type": content_type,
+            },
+            content=content,
         )
 
 
@@ -879,11 +890,8 @@ class FetchImageHelper:
     """Pytest mixin providing image response mocking utilities."""
 
     @pytest.fixture
-    def image_response_mocker(self):
-        with responses.RequestsMock(
-            assert_all_requests_are_fired=False
-        ) as rsps:
-            yield ImageResponseMocker(rsps)
+    def image_request_mock(self, requests_mock):
+        return ImageRequestMocker(requests_mock)
 
 
 class CleanupModulesMixin:

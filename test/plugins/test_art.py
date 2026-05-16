@@ -24,7 +24,8 @@ from unittest.mock import patch
 
 import confuse
 import pytest
-import responses
+from requests_mock import ANY as ANYREEQUEST
+from requests_mock.exceptions import NoMockAddress
 
 from beets import config, importer, logging, util
 from beets.autotag.distance import Distance
@@ -43,7 +44,9 @@ if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
     from unittest.mock import MagicMock
 
-    from beets.test.helper import ImageResponseMocker
+    from requests_mock.mocker import Mocker
+
+    from beets.test.helper import ImageRequestMocker
 
 
 class Settings(fetchart.FetchArtPlugin):
@@ -75,6 +78,22 @@ class UseThePlugin(PytestTestHelper):
     @pytest.fixture(autouse=True)
     def setup_plugin(self, setup):
         self.plugin = fetchart.FetchArtPlugin()
+
+    @pytest.fixture(autouse=True)
+    def requests_mock_all(self, requests_mock):
+        """Will disable all outgoing requests and raise an error!
+
+        Tests need to mock all requests!
+        """
+        # Register some “safe” mocks you actually want to allow, if any:
+        # requests_mock.get("https://example.com/health", json={"status": "ok"})
+
+        # Optional: disable any URL not explicitly mocked
+        requests_mock.register_uri(
+            ANYREEQUEST,
+            ANYREEQUEST,
+            exc=NoMockAddress,
+        )
 
     @pytest.fixture(autouse=True, scope="class")
     def cleanup(self):
@@ -205,7 +224,7 @@ class CAAData:
 
 
 class TestFetchImage(UseThePlugin, FetchImageHelper):
-    URL: str = "http://example.com/test.jpg"
+    URL = "http://example.com/test.jpg"
 
     @pytest.fixture
     def settings(self) -> Settings:
@@ -224,9 +243,9 @@ class TestFetchImage(UseThePlugin, FetchImageHelper):
         source: DummyRemoteArtSource,
         candidate: fetchart.Candidate,
         settings: Settings,
-        image_response_mocker: ImageResponseMocker,
+        image_request_mock: ImageRequestMocker,
     ) -> None:
-        image_response_mocker.add(self.URL, content_type="image/watercolour")
+        image_request_mock.get(self.URL, content_type="image/watercolour")
         source.fetch_image(candidate, settings)
         assert candidate.path is None
 
@@ -235,9 +254,12 @@ class TestFetchImage(UseThePlugin, FetchImageHelper):
         source: DummyRemoteArtSource,
         candidate: fetchart.Candidate,
         settings: Settings,
-        image_response_mocker: ImageResponseMocker,
+        image_request_mock: ImageRequestMocker,
     ) -> None:
-        image_response_mocker.add(self.URL, content_type="image/jpeg")
+        image_request_mock.get(
+            self.URL,
+            content_type="image/jpeg",
+        )
         source.fetch_image(candidate, settings)
         assert candidate.path is not None
 
@@ -246,9 +268,9 @@ class TestFetchImage(UseThePlugin, FetchImageHelper):
         source: DummyRemoteArtSource,
         candidate: fetchart.Candidate,
         settings: Settings,
-        image_response_mocker: ImageResponseMocker,
+        image_request_mock: ImageRequestMocker,
     ) -> None:
-        image_response_mocker.add(self.URL, content_type="image/png")
+        image_request_mock.get(self.URL, content_type="image/png")
         source.fetch_image(candidate, settings)
         assert candidate.path is not None
         assert os.path.splitext(candidate.path)[1] == b".png"
@@ -259,9 +281,9 @@ class TestFetchImage(UseThePlugin, FetchImageHelper):
         source: DummyRemoteArtSource,
         candidate: fetchart.Candidate,
         settings: Settings,
-        image_response_mocker: ImageResponseMocker,
+        image_request_mock: ImageRequestMocker,
     ) -> None:
-        image_response_mocker.add(
+        image_request_mock.get(
             self.URL, content_type="image/jpeg", file_type="image/png"
         )
         source.fetch_image(candidate, settings)
@@ -394,9 +416,9 @@ class TestCombined(UseThePlugin, FetchImageHelper, CAAData):
 
     def test_main_interface_returns_amazon_art(
         self,
-        image_response_mocker: ImageResponseMocker,
+        image_request_mock: ImageRequestMocker,
     ):
-        image_response_mocker.add(self.AMAZON_URL)
+        image_request_mock.get(self.AMAZON_URL)
         album = Album(asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, None)
         assert candidate is not None
@@ -409,10 +431,10 @@ class TestCombined(UseThePlugin, FetchImageHelper, CAAData):
     def test_main_interface_gives_precedence_to_fs_art(
         self,
         dpath: bytes,
-        image_response_mocker: ImageResponseMocker,
+        image_request_mock: ImageRequestMocker,
     ):
         _common.touch(os.path.join(dpath, b"art.jpg"))
-        image_response_mocker.add(self.AMAZON_URL)
+        image_request_mock.get(self.AMAZON_URL)
         album = Album(asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, [dpath])
         assert candidate is not None
@@ -421,9 +443,9 @@ class TestCombined(UseThePlugin, FetchImageHelper, CAAData):
     def test_main_interface_falls_back_to_amazon(
         self,
         dpath: bytes,
-        image_response_mocker: ImageResponseMocker,
+        image_request_mock: ImageRequestMocker,
     ):
-        image_response_mocker.add(self.AMAZON_URL)
+        image_request_mock.get(self.AMAZON_URL)
         album = Album(asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, [dpath])
         assert candidate is not None
@@ -432,41 +454,38 @@ class TestCombined(UseThePlugin, FetchImageHelper, CAAData):
     def test_main_interface_tries_amazon_before_aao(
         self,
         dpath: bytes,
-        image_response_mocker: ImageResponseMocker,
+        image_request_mock: ImageRequestMocker,
     ):
-        image_response_mocker.add(self.AMAZON_URL)
+        image_request_mock.get(self.AMAZON_URL)
         album = Album(asin=self.ASIN)
         self.plugin.art_for_album(album, [dpath])
-        assert len(image_response_mocker.responses_mock.calls) == 1
+        assert image_request_mock.mocker.called_once
         assert (
-            image_response_mocker.responses_mock.calls[0].request.url
-            == self.AMAZON_URL
+            image_request_mock.mocker.request_history[0].url == self.AMAZON_URL
         )
 
     def test_main_interface_falls_back_to_aao(
         self,
         dpath: bytes,
-        image_response_mocker: ImageResponseMocker,
+        image_request_mock: ImageRequestMocker,
     ):
-        image_response_mocker.add(self.AMAZON_URL, content_type="text/html")
+        image_request_mock.get(self.AMAZON_URL, content_type="text/html")
+        image_request_mock.get(self.AAO_URL, content_type="image/jpeg")
         album = Album(asin=self.ASIN)
         self.plugin.art_for_album(album, [dpath])
-        assert (
-            image_response_mocker.responses_mock.calls[-1].request.url
-            == self.AAO_URL
-        )
+        assert image_request_mock.mocker.request_history[-1].url == self.AAO_URL
 
     def test_main_interface_uses_caa_when_mbid_available(
         self,
-        image_response_mocker: ImageResponseMocker,
+        image_request_mock: ImageRequestMocker,
     ):
-        image_response_mocker.add(self.RELEASE_URL, body=self.RESPONSE_RELEASE)
-        image_response_mocker.add(self.GROUP_URL, body=self.RESPONSE_GROUP)
-        image_response_mocker.add(
+        image_request_mock.get(self.RELEASE_URL, content=self.RESPONSE_RELEASE)
+        image_request_mock.get(self.GROUP_URL, content=self.RESPONSE_GROUP)
+        image_request_mock.get(
             "http://coverartarchive.org/release/rid/12345.gif",
             content_type="image/gif",
         )
-        image_response_mocker.add(
+        image_request_mock.get(
             "http://coverartarchive.org/release/rid/12345.jpg",
             content_type="image/jpeg",
         )
@@ -477,31 +496,30 @@ class TestCombined(UseThePlugin, FetchImageHelper, CAAData):
         )
         candidate = self.plugin.art_for_album(album, None)
         assert candidate is not None
-        assert len(image_response_mocker.responses_mock.calls) == 3
+        assert image_request_mock.mocker.call_count == 3
         assert (
-            image_response_mocker.responses_mock.calls[0].request.url
-            == self.RELEASE_URL
+            image_request_mock.mocker.request_history[0].url == self.RELEASE_URL
         )
 
     def test_local_only_does_not_access_network(
         self,
-        image_response_mocker: ImageResponseMocker,
+        image_request_mock: ImageRequestMocker,
     ):
         album = Album(mb_albumid=self.MBID, asin=self.ASIN)
         self.plugin.art_for_album(album, None, local_only=True)
-        assert len(image_response_mocker.responses_mock.calls) == 0
+        assert not image_request_mock.mocker.called
 
     def test_local_only_gets_fs_image(
         self,
         dpath: bytes,
-        image_response_mocker: ImageResponseMocker,
+        image_request_mock: ImageRequestMocker,
     ):
         _common.touch(os.path.join(dpath, b"art.jpg"))
         album = Album(mb_albumid=self.MBID, asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, [dpath], local_only=True)
         assert candidate is not None
         assert candidate.path == os.path.join(dpath, b"art.jpg")
-        assert len(image_response_mocker.responses_mock.calls) == 0
+        assert not image_request_mock.mocker.called
 
 
 class TestAAO(UseThePlugin, FetchImageHelper):
@@ -520,7 +538,7 @@ class TestAAO(UseThePlugin, FetchImageHelper):
         self,
         source: fetchart.AlbumArtOrg,
         settings: Settings,
-        image_response_mocker: ImageResponseMocker,
+        image_request_mock: ImageRequestMocker,
     ) -> None:
         body = """
         <br />
@@ -529,8 +547,8 @@ class TestAAO(UseThePlugin, FetchImageHelper):
         <img src="http://www.albumart.org/images/zoom-icon.jpg"
              alt="View larger image" width="17" height="15" border="0"/></a>
         """
-        image_response_mocker.add(
-            self.AAO_URL, body=body, content_type="text/html"
+        image_request_mock.get(
+            self.AAO_URL, content=body, content_type="text/html"
         )
         album = Album(asin=self.ASIN)
         candidate = next(source.get(album, settings, []))
@@ -540,10 +558,10 @@ class TestAAO(UseThePlugin, FetchImageHelper):
         self,
         source: fetchart.AlbumArtOrg,
         settings: Settings,
-        image_response_mocker: ImageResponseMocker,
+        image_request_mock: ImageRequestMocker,
     ) -> None:
-        image_response_mocker.add(
-            self.AAO_URL, body="blah blah", content_type="text/html"
+        image_request_mock.get(
+            self.AAO_URL, content="blah blah", content_type="text/html"
         )
         album = Album(asin=self.ASIN)
         with pytest.raises(StopIteration):
@@ -568,7 +586,7 @@ class TestITunesStore(UseThePlugin, FetchImageHelper):
         source: fetchart.ITunesStore,
         settings: Settings,
         album,
-        image_response_mocker: ImageResponseMocker,
+        image_request_mock: ImageRequestMocker,
     ):
         json = """{
                     "results":
@@ -580,9 +598,9 @@ class TestITunesStore(UseThePlugin, FetchImageHelper):
                             }
                         ]
                   }"""
-        image_response_mocker.add(
+        image_request_mock.get(
             fetchart.ITunesStore.API_URL,
-            body=json,
+            content=json,
             content_type="application/json",
         )
         candidate = next(source.get(album, settings, []))
@@ -594,13 +612,13 @@ class TestITunesStore(UseThePlugin, FetchImageHelper):
         source: fetchart.ITunesStore,
         settings: Settings,
         album: Album,
-        image_response_mocker: ImageResponseMocker,
+        image_request_mock: ImageRequestMocker,
         caplog: pytest.LogCaptureFixture,
     ):
         json = '{"results": []}'
-        image_response_mocker.add(
+        image_request_mock.get(
             fetchart.ITunesStore.API_URL,
-            body=json,
+            content=json,
             content_type="application/json",
         )
         expected = "got no results"
@@ -615,14 +633,13 @@ class TestITunesStore(UseThePlugin, FetchImageHelper):
         source: fetchart.ITunesStore,
         settings: Settings,
         album: Album,
-        image_response_mocker: ImageResponseMocker,
+        requests_mock: Mocker,
         caplog: pytest.LogCaptureFixture,
     ):
-        image_response_mocker.responses_mock.add(
-            responses.GET,
+        requests_mock.get(
             fetchart.ITunesStore.API_URL,
             json={"error": "not found"},
-            status=404,
+            status_code=404,
         )
         expected = "iTunes search failed: 404 Client Error"
 
@@ -636,7 +653,7 @@ class TestITunesStore(UseThePlugin, FetchImageHelper):
         source: fetchart.ITunesStore,
         settings: Settings,
         album: Album,
-        image_response_mocker: ImageResponseMocker,
+        image_request_mock: ImageRequestMocker,
     ):
         json = """{
                     "results":
@@ -647,9 +664,9 @@ class TestITunesStore(UseThePlugin, FetchImageHelper):
                             }
                         ]
                   }"""
-        image_response_mocker.add(
+        image_request_mock.get(
             fetchart.ITunesStore.API_URL,
-            body=json,
+            content=json,
             content_type="application/json",
         )
         candidate = next(source.get(album, settings, []))
@@ -661,7 +678,7 @@ class TestITunesStore(UseThePlugin, FetchImageHelper):
         source: fetchart.ITunesStore,
         settings: Settings,
         album: Album,
-        image_response_mocker: ImageResponseMocker,
+        image_request_mock: ImageRequestMocker,
         caplog: pytest.LogCaptureFixture,
     ):
         json = """{
@@ -673,9 +690,9 @@ class TestITunesStore(UseThePlugin, FetchImageHelper):
                             }
                         ]
                   }"""
-        image_response_mocker.add(
+        image_request_mock.get(
             fetchart.ITunesStore.API_URL,
-            body=json,
+            content=json,
             content_type="application/json",
         )
         expected = "Malformed itunes candidate"
@@ -690,13 +707,13 @@ class TestITunesStore(UseThePlugin, FetchImageHelper):
         source: fetchart.ITunesStore,
         settings: Settings,
         album: Album,
-        image_response_mocker: ImageResponseMocker,
+        image_request_mock: ImageRequestMocker,
         caplog: pytest.LogCaptureFixture,
     ):
         json = '{"error": {"errors": [{"reason": "some reason"}]}}'
-        image_response_mocker.add(
+        image_request_mock.get(
             fetchart.ITunesStore.API_URL,
-            body=json,
+            content=json,
             content_type="application/json",
         )
         expected = "not found in json. Fields are"
@@ -711,13 +728,13 @@ class TestITunesStore(UseThePlugin, FetchImageHelper):
         source: fetchart.ITunesStore,
         settings: Settings,
         album: Album,
-        image_response_mocker: ImageResponseMocker,
+        image_request_mock: ImageRequestMocker,
         caplog: pytest.LogCaptureFixture,
     ):
         json = """bla blup"""
-        image_response_mocker.add(
+        image_request_mock.get(
             fetchart.ITunesStore.API_URL,
-            body=json,
+            content=json,
             content_type="application/json",
         )
         expected = "Could not decode json response:"
@@ -741,13 +758,13 @@ class TestGoogleImage(UseThePlugin, FetchImageHelper):
         self,
         source: fetchart.GoogleImages,
         settings: Settings,
-        image_response_mocker: ImageResponseMocker,
+        image_request_mock: ImageRequestMocker,
     ):
         album = Album(albumartist="some artist", album="some album")
         json = '{"items": [{"link": "url_to_the_image"}]}'
-        image_response_mocker.add(
+        image_request_mock.get(
             fetchart.GoogleImages.URL,
-            body=json,
+            content=json,
             content_type="application/json",
         )
         candidate = next(source.get(album, settings, []))
@@ -757,13 +774,13 @@ class TestGoogleImage(UseThePlugin, FetchImageHelper):
         self,
         source: fetchart.GoogleImages,
         settings: Settings,
-        image_response_mocker: ImageResponseMocker,
+        image_request_mock: ImageRequestMocker,
     ):
         album = Album(albumartist="some artist", album="some album")
         json = '{"error": {"errors": [{"reason": "some reason"}]}}'
-        image_response_mocker.add(
+        image_request_mock.get(
             fetchart.GoogleImages.URL,
-            body=json,
+            content=json,
             content_type="application/json",
         )
         with pytest.raises(StopIteration):
@@ -773,13 +790,13 @@ class TestGoogleImage(UseThePlugin, FetchImageHelper):
         self,
         source: fetchart.GoogleImages,
         settings: Settings,
-        image_response_mocker: ImageResponseMocker,
+        image_request_mock: ImageRequestMocker,
     ):
         album = Album(albumartist="some artist", album="some album")
         json = """bla blup"""
-        image_response_mocker.add(
+        image_request_mock.get(
             fetchart.GoogleImages.URL,
-            body=json,
+            content=json,
             content_type="application/json",
         )
         with pytest.raises(StopIteration):
@@ -799,25 +816,24 @@ class TestCoverArtArchive(UseThePlugin, FetchImageHelper, CAAData):
         self,
         source: fetchart.CoverArtArchive,
         settings: Settings,
-        image_response_mocker: ImageResponseMocker,
+        image_request_mock: ImageRequestMocker,
     ):
         album = Album(
             mb_albumid=self.MBID_RELASE, mb_releasegroupid=self.MBID_GROUP
         )
-        image_response_mocker.add(self.RELEASE_URL, body=self.RESPONSE_RELEASE)
-        image_response_mocker.add(self.GROUP_URL, body=self.RESPONSE_GROUP)
+        image_request_mock.get(self.RELEASE_URL, content=self.RESPONSE_RELEASE)
+        image_request_mock.get(self.GROUP_URL, content=self.RESPONSE_GROUP)
         candidates = list(source.get(album, settings, []))
         assert len(candidates) == 3
-        assert len(image_response_mocker.responses_mock.calls) == 2
+        assert image_request_mock.mocker.call_count == 2
         assert (
-            image_response_mocker.responses_mock.calls[0].request.url
-            == self.RELEASE_URL
+            image_request_mock.mocker.request_history[0].url == self.RELEASE_URL
         )
 
     def test_fetchart_uses_caa_pre_sized_maxwidth_thumbs(
         self,
         source: fetchart.CoverArtArchive,
-        image_response_mocker: ImageResponseMocker,
+        image_request_mock: ImageRequestMocker,
     ):
         # CAA provides pre-sized thumbnails of width 250px, 500px, and 1200px
         # We only test with one of them here
@@ -827,8 +843,8 @@ class TestCoverArtArchive(UseThePlugin, FetchImageHelper, CAAData):
         album = Album(
             mb_albumid=self.MBID_RELASE, mb_releasegroupid=self.MBID_GROUP
         )
-        image_response_mocker.add(self.RELEASE_URL, body=self.RESPONSE_RELEASE)
-        image_response_mocker.add(self.GROUP_URL, body=self.RESPONSE_GROUP)
+        image_request_mock.get(self.RELEASE_URL, content=self.RESPONSE_RELEASE)
+        image_request_mock.get(self.GROUP_URL, content=self.RESPONSE_GROUP)
         candidates = list(source.get(album, settings, []))
         assert len(candidates) == 3
         for candidate in candidates:
@@ -838,7 +854,7 @@ class TestCoverArtArchive(UseThePlugin, FetchImageHelper, CAAData):
     def test_caa_finds_image_if_maxwidth_is_set_and_thumbnails_is_empty(
         self,
         source: fetchart.CoverArtArchive,
-        image_response_mocker: ImageResponseMocker,
+        image_request_mock: ImageRequestMocker,
     ):
         # CAA provides pre-sized thumbnails of width 250px, 500px, and 1200px
         # We only test with one of them here
@@ -848,11 +864,11 @@ class TestCoverArtArchive(UseThePlugin, FetchImageHelper, CAAData):
         album = Album(
             mb_albumid=self.MBID_RELASE, mb_releasegroupid=self.MBID_GROUP
         )
-        image_response_mocker.add(
-            self.RELEASE_URL, body=self.RESPONSE_RELEASE_WITHOUT_THUMBNAILS
+        image_request_mock.get(
+            self.RELEASE_URL, content=self.RESPONSE_RELEASE_WITHOUT_THUMBNAILS
         )
-        image_response_mocker.add(
-            self.GROUP_URL, body=self.RESPONSE_GROUP_WITHOUT_THUMBNAILS
+        image_request_mock.get(
+            self.GROUP_URL, content=self.RESPONSE_GROUP_WITHOUT_THUMBNAILS
         )
         candidates = list(source.get(album, settings, []))
         assert len(candidates) == 3
@@ -931,12 +947,12 @@ class TestFanartTV(UseThePlugin, FetchImageHelper):
         self,
         source: fetchart.FanartTV,
         settings: Settings,
-        image_response_mocker: ImageResponseMocker,
+        image_request_mock: ImageRequestMocker,
     ):
         album: Album = Album(mb_releasegroupid="thereleasegroupid")
-        image_response_mocker.add(
+        image_request_mock.get(
             f"{fetchart.FanartTV.API_ALBUMS}thereleasegroupid",
-            body=self.RESPONSE_MULTIPLE,
+            content=self.RESPONSE_MULTIPLE,
             content_type="application/json",
         )
         candidate = next(source.get(album, settings, []))
@@ -946,12 +962,12 @@ class TestFanartTV(UseThePlugin, FetchImageHelper):
         self,
         source: fetchart.FanartTV,
         settings: Settings,
-        image_response_mocker: ImageResponseMocker,
+        image_request_mock: ImageRequestMocker,
     ):
         album = Album(mb_releasegroupid="thereleasegroupid")
-        image_response_mocker.add(
+        image_request_mock.get(
             f"{fetchart.FanartTV.API_ALBUMS}thereleasegroupid",
-            body=self.RESPONSE_ERROR,
+            content=self.RESPONSE_ERROR,
             content_type="application/json",
         )
         with pytest.raises(StopIteration):
@@ -961,12 +977,12 @@ class TestFanartTV(UseThePlugin, FetchImageHelper):
         self,
         source: fetchart.FanartTV,
         settings: Settings,
-        image_response_mocker: ImageResponseMocker,
+        image_request_mock: ImageRequestMocker,
     ):
         album = Album(mb_releasegroupid="thereleasegroupid")
-        image_response_mocker.add(
+        image_request_mock.get(
             f"{fetchart.FanartTV.API_ALBUMS}thereleasegroupid",
-            body=self.RESPONSE_MALFORMED,
+            content=self.RESPONSE_MALFORMED,
             content_type="application/json",
         )
         with pytest.raises(StopIteration):
@@ -976,13 +992,13 @@ class TestFanartTV(UseThePlugin, FetchImageHelper):
         self,
         source: fetchart.FanartTV,
         settings: Settings,
-        image_response_mocker: ImageResponseMocker,
+        image_request_mock: ImageRequestMocker,
     ):
         # The source used to fail when there were images present, but no cover
         album = Album(mb_releasegroupid="thereleasegroupid")
-        image_response_mocker.add(
+        image_request_mock.get(
             f"{fetchart.FanartTV.API_ALBUMS}thereleasegroupid",
-            body=self.RESPONSE_NO_ART,
+            content=self.RESPONSE_NO_ART,
             content_type="application/json",
         )
         with pytest.raises(StopIteration):
