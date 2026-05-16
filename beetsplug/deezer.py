@@ -238,7 +238,9 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
 
         return query, {}
 
-    def get_search_response(self, params: SearchParams) -> list[IDResponse]:
+    def get_search_response(
+        self, params: SearchParams
+    ) -> tuple[int, list[IDResponse]]:
         """Search Deezer and return the raw result payload entries."""
 
         response = requests.get(
@@ -251,7 +253,8 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
             timeout=10,
         )
         response.raise_for_status()
-        return response.json()["data"]
+        json = response.json()["data"]
+        return len(json), json
 
     def deezerupdate(self, items: Sequence[Item], write: bool):
         """Obtain rank information from Deezer."""

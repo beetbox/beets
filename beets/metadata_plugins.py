@@ -390,21 +390,24 @@ class SearchApiMetadataSourcePlugin(
         """
 
     @abc.abstractmethod
-    def get_search_response(self, params: SearchParams) -> Sequence[R]:
+    def get_search_response(
+        self, params: SearchParams
+    ) -> tuple[int, Iterable[R]]:
         """Fetch raw search results for a provider request.
 
         Implementations should return records containing source IDs so shared
         candidate resolution can perform ID-based album and track lookups.
 
         :param params: :py:namedtuple:`~SearchParams` named tuple
-        :return: Sequence of IDResponse dicts containing at least an "id" key for each
+        :return: Tuple of (``total`` number of results, ``results`` Iterable of
+        IDResponse dicts containing at least an "id" key for each)
         """
 
         raise NotImplementedError
 
     def _search_api(
         self, query_type: QueryType, query: str, filters: dict[str, str]
-    ) -> Sequence[R]:
+    ) -> tuple[int, Iterable[R]]:
         """Run shared provider search orchestration and return ID-bearing results.
 
         This path applies optional query normalization and default limits, then
@@ -419,27 +422,27 @@ class SearchApiMetadataSourcePlugin(
 
         self._log.debug("Searching for '{}' with {}", query, filters)
         try:
-            response_data = self.get_search_response(params)
+            total, response_data = self.get_search_response(params)
         except Exception as e:
             if config["raise_on_error"].get(bool):
                 raise
             self._log.error(
                 "Error searching {.data_source}: {}", self, e, exc_info=True
             )
-            return ()
+            return 0, ()
 
-        self._log.debug("Found {} result(s)", len(response_data))
-        return response_data
+        self._log.debug("Found {} result(s)", total)
+        return total, response_data
 
     def _get_candidates(
         self, query_type: QueryType, *args, **kwargs
-    ) -> Sequence[R]:
+    ) -> Iterable[R]:
         """Resolve query hooks and execute one provider search request."""
 
         return self._search_api(
             query_type,
             *self.get_search_query_with_filters(query_type, *args, **kwargs),
-        )
+        )[1]
 
     def get_candidates_from_results(
         self, results: Iterable[R]

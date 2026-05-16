@@ -761,15 +761,18 @@ class MusicBrainzPlugin(
             k: _v for k, v in criteria.items() if (_v := v.lower().strip())
         }
 
-    def get_search_response(self, params: SearchParams) -> Sequence[IDResponse]:
+    def get_search_response(
+        self, params: SearchParams
+    ) -> tuple[int, Sequence[IDResponse]]:
         """Search MusicBrainz and return release or recording result mappings."""
 
         mb_entity: Literal["release", "recording"] = (
             "release" if params.query_type == "album" else "recording"
         )
-        return self.mb_api.search(
+        results = self.mb_api.search(
             mb_entity, dict(params.filters), limit=params.limit
         )
+        return len(results), results
 
     def album_for_id(self, album_id: str) -> AlbumInfo | None:
         """Fetches an album by its MusicBrainz ID and returns an AlbumInfo

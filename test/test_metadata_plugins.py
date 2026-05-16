@@ -116,7 +116,7 @@ class TestSearchApiMetadataSourcePlugin(PluginMixin):
     ):
         config["raise_on_error"] = False
 
-        assert search_plugin._search_api("track", "query", {}) == ()
+        assert search_plugin._search_api("track", "query", {}) == (0, ())
         assert "Search failure" in caplog.text
 
     def test_search_api_raises_when_raise_on_error_enabled(
