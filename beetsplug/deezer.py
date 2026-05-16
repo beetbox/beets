@@ -25,6 +25,7 @@ import requests
 from beets import config, ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.dbcore import types
+from beets.exceptions import UserError
 from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
 
 VARIOUS_ARTISTS_ID = 5080
@@ -96,7 +97,7 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
             month = None
             day = None
         else:
-            raise ui.UserError(
+            raise UserError(
                 f"Invalid `release_date` returned by {self.data_source} API: "
                 f"{release_date!r}"
             )

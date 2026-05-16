@@ -36,6 +36,7 @@ import confuse
 from beets import config, library, logging, plugins, util
 from beets.dbcore import db
 from beets.dbcore import query as db_query
+from beets.exceptions import UserError
 from beets.util import as_string
 from beets.util.color import colorize
 from beets.util.deprecation import deprecate_for_maintainers
@@ -66,12 +67,6 @@ PF_KEY_QUERIES = {
     "comp": "comp:true",
     "singleton": "singleton:true",
 }
-
-
-class UserError(Exception):
-    """UI exception. Commands should throw this in order to display
-    nonrecoverable errors to the user.
-    """
 
 
 # Encoding utilities.

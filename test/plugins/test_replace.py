@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from mediafile import MediaFile
 
-from beets import ui
+from beets.exceptions import UserError
 from beets.test import _common
 from beetsplug.replace import ReplacePlugin
 
@@ -23,13 +23,13 @@ class TestReplace:
     def test_path_is_dir(self):
         fake_directory = self.fake_dir / "fakeDir"
         fake_directory.mkdir()
-        with pytest.raises(ui.UserError):
+        with pytest.raises(UserError):
             replace.file_check(fake_directory)
 
     def test_path_is_unsupported_file(self):
         fake_file = self.fake_file / "fakefile.txt"
         fake_file.write_text("test", encoding="utf-8")
-        with pytest.raises(ui.UserError):
+        with pytest.raises(UserError):
             replace.file_check(fake_file)
 
     def test_path_is_supported_file(self):
@@ -89,7 +89,7 @@ class TestReplace:
 
         song = Song()
 
-        with pytest.raises(ui.UserError):
+        with pytest.raises(UserError):
             replace.confirm_replacement("test", song)
 
     def test_confirm_replacement_yes(self, monkeypatch):

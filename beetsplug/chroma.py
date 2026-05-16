@@ -29,6 +29,7 @@ import confuse
 
 from beets import config, ui, util
 from beets.autotag.distance import Distance
+from beets.exceptions import UserError
 from beets.metadata_plugins import MetadataSourcePlugin, get_metadata_source
 from beets.util.color import colorize
 
@@ -276,7 +277,7 @@ class AcoustidPlugin(MetadataSourcePlugin):
             try:
                 apikey = config["acoustid"]["apikey"].as_str()
             except confuse.NotFoundError:
-                raise ui.UserError("no Acoustid user API key provided")
+                raise UserError("no Acoustid user API key provided")
             submit_items(self._log, apikey, lib.items(args))
 
         submit_cmd.func = submit_cmd_func
@@ -331,9 +332,9 @@ class AcoustidPlugin(MetadataSourcePlugin):
 
         def search_cmd_func(lib, opts, args):
             if not opts.search:
-                raise ui.UserError("no --search provided")
+                raise UserError("no --search provided")
             if opts.count <= 0:
-                raise ui.UserError("--count must be > 0")
+                raise UserError("--count must be > 0")
 
             target = (0, opts.search.encode("utf-8"))
             top = TopN(opts.count)

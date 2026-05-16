@@ -20,6 +20,7 @@ import subprocess
 from os.path import relpath
 
 from beets import config, ui, util
+from beets.exceptions import UserError
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 from beets.util import PromptChoice, get_temp_filename
@@ -60,7 +61,7 @@ def play(
         else:
             util.interactive_open(open_args, command_str)
     except OSError as exc:
-        raise ui.UserError(f"Could not play the query: {exc}")
+        raise UserError(f"Could not play the query: {exc}")
 
 
 class PlayPlugin(BeetsPlugin):

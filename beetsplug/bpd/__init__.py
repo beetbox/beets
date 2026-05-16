@@ -31,6 +31,7 @@ from typing import TYPE_CHECKING, ClassVar
 import beets
 import beets.ui
 from beets import dbcore
+from beets.exceptions import UserError
 from beets.library import Item
 from beets.plugins import BeetsPlugin
 from beets.util import as_string, bluelet
@@ -1618,7 +1619,7 @@ class BPDPlugin(BeetsPlugin):
             else:
                 ctrl_port = self.config["control_port"].get(int)
             if args:
-                raise beets.ui.UserError("too many arguments")
+                raise UserError("too many arguments")
             password = self.config["password"].as_str()
             volume = self.config["volume"].get(int)
             self.start_bpd(

@@ -25,6 +25,7 @@ import pytest
 from confuse import ConfigError
 
 from beets import config, plugins, ui
+from beets.exceptions import UserError
 from beets.test import _common
 from beets.test.helper import BeetsTestCase, IOMixin, PluginTestCase
 from beets.ui import _open_library, commands
@@ -182,7 +183,7 @@ class ConfigTest(IOMixin, TestPluginTestCase):
             config.write("library: /xxx/yyy/not/a/real/path")
 
         self.io.addinput("n")
-        with pytest.raises(ui.UserError):
+        with pytest.raises(UserError):
             self.run_command("test")
 
     def test_user_config_file(self):
@@ -420,7 +421,7 @@ class CommonOptionsParserCliTest(IOMixin, BeetsTestCase):
         output = self.run_with_output("help", "list")
         assert "Usage:" in output
 
-        with pytest.raises(ui.UserError):
+        with pytest.raises(UserError):
             self.run_command("help", "this.is.not.a.real.command")
 
     def test_stats(self):

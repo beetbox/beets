@@ -21,6 +21,7 @@ from pylast import TopItem, _extract, _number
 
 from beets import config, plugins, ui
 from beets.dbcore import types
+from beets.exceptions import UserError
 
 from ._utils.playcount import update_play_counts
 
@@ -126,7 +127,7 @@ def import_lastfm(lib, log):
     per_page = config["lastimport"]["per_page"].get(int)
 
     if not user:
-        raise ui.UserError("You must specify a user name for lastimport")
+        raise UserError("You must specify a user name for lastimport")
 
     log.info("Fetching last.fm library for @{}", user)
 
@@ -147,7 +148,7 @@ def import_lastfm(lib, log):
             tracks, page_total = fetch_tracks(user, page_current + 1, per_page)
             if page_total < 1:
                 # It means nothing to us!
-                raise ui.UserError("Last.fm reported no data.")
+                raise UserError("Last.fm reported no data.")
 
             if tracks:
                 found, unknown = update_play_counts(lib, tracks, log, "lastfm")

@@ -3,6 +3,7 @@
 import os
 
 from beets import config, logging, plugins, ui
+from beets.exceptions import UserError
 from beets.util import displayable_path, normpath, syspath
 
 from .session import TerminalImportSession
@@ -37,11 +38,11 @@ def parse_logfiles(logfiles):
         try:
             yield from paths_from_logfile(syspath(normpath(logfile)))
         except ValueError as err:
-            raise ui.UserError(
+            raise UserError(
                 f"malformed logfile {displayable_path(logfile)}: {err}"
             ) from err
         except OSError as err:
-            raise ui.UserError(
+            raise UserError(
                 f"unreadable logfile {displayable_path(logfile)}: {err}"
             ) from err
 
@@ -52,7 +53,7 @@ def import_files(lib, paths: list[bytes], query):
     """
     # Check parameter consistency.
     if config["import"]["quiet"] and config["import"]["timid"]:
-        raise ui.UserError("can't be both quiet and timid")
+        raise UserError("can't be both quiet and timid")
 
     # Open the log.
     if config["import"]["log"].get() is not None:
@@ -60,7 +61,7 @@ def import_files(lib, paths: list[bytes], query):
         try:
             loghandler = logging.FileHandler(logpath, encoding="utf-8")
         except OSError:
-            raise ui.UserError(
+            raise UserError(
                 "Could not open log file for writing:"
                 f" {displayable_path(logpath)}"
             )
@@ -98,7 +99,7 @@ def import_func(lib, opts, args: list[str]):
         paths_from_logfiles = list(parse_logfiles(opts.from_logfiles or []))
 
         if not paths and not paths_from_logfiles:
-            raise ui.UserError("no path specified")
+            raise UserError("no path specified")
 
         byte_paths = [os.fsencode(p) for p in paths]
         paths_from_logfiles = [os.fsencode(p) for p in paths_from_logfiles]
@@ -106,7 +107,7 @@ def import_func(lib, opts, args: list[str]):
         # Check the user-specified directories.
         for path in byte_paths:
             if not os.path.exists(syspath(normpath(path))):
-                raise ui.UserError(
+                raise UserError(
                     f"no such file or directory: {displayable_path(path)}"
                 )
 
@@ -126,7 +127,7 @@ def import_func(lib, opts, args: list[str]):
         # If all paths were read from a logfile, and none of them exist, throw
         # an error
         if not byte_paths:
-            raise ui.UserError("none of the paths are importable")
+            raise UserError("none of the paths are importable")
 
     import_files(lib, byte_paths, query)
 
@@ -150,7 +151,7 @@ def _store_dict(option, opt_str, value, parser):
         if not (key and value):
             raise ValueError
     except ValueError:
-        raise ui.UserError(
+        raise UserError(
             f"supplied argument `{value}' is not of the form `key=value'"
         )
 

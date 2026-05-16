@@ -21,6 +21,7 @@ from mimetypes import guess_extension
 import requests
 
 from beets import config, ui
+from beets.exceptions import UserError
 from beets.plugins import BeetsPlugin
 from beets.ui import print_
 from beets.util import bytestring_path, displayable_path, normpath, syspath
@@ -115,7 +116,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
             if opts.file:
                 imagepath = normpath(opts.file)
                 if not os.path.isfile(syspath(imagepath)):
-                    raise ui.UserError(
+                    raise UserError(
                         f"image file {displayable_path(imagepath)} not found"
                     )
 

@@ -6,6 +6,7 @@ import os
 from typing import TYPE_CHECKING
 
 from beets import logging, ui
+from beets.exceptions import UserError
 from beets.util import MoveOperation, displayable_path, normpath, syspath
 from beets.util.diff import colordiff
 
@@ -151,7 +152,7 @@ def move_func(lib, opts, args):
     if dest is not None:
         dest = normpath(dest)
         if not os.path.isdir(syspath(dest)):
-            raise ui.UserError(f"no such directory: {displayable_path(dest)}")
+            raise UserError(f"no such directory: {displayable_path(dest)}")
 
     move_items(
         lib,

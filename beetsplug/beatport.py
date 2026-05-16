@@ -33,6 +33,7 @@ import beets
 import beets.ui
 from beets import config
 from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.exceptions import UserError
 from beets.metadata_plugins import MetadataSourcePlugin
 from beets.util import unique_list
 from beets.util.deprecation import deprecate_for_user
@@ -359,7 +360,7 @@ class BeatportPlugin(MetadataSourcePlugin):
             url = auth_client.get_authorize_url()
         except AUTH_ERRORS as e:
             self._log.debug("authentication error: {}", e)
-            raise beets.ui.UserError("communication with Beatport failed")
+            raise UserError("communication with Beatport failed")
 
         beets.ui.print_("To authenticate with Beatport, visit:")
         beets.ui.print_(url)
@@ -370,7 +371,7 @@ class BeatportPlugin(MetadataSourcePlugin):
             token, secret = auth_client.get_access_token(data)
         except AUTH_ERRORS as e:
             self._log.debug("authentication error: {}", e)
-            raise beets.ui.UserError("Beatport token request failed")
+            raise UserError("Beatport token request failed")
 
         # Save the token for later use.
         self._log.debug("Beatport token {}, secret {}", token, secret)

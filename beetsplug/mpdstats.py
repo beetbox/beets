@@ -22,6 +22,7 @@ import mpd
 from beets import config, plugins, ui
 from beets.dbcore import types
 from beets.dbcore.query import PathQuery
+from beets.exceptions import UserError
 from beets.util import displayable_path
 
 # If we lose the connection, how many times do we want to retry and how
@@ -69,14 +70,14 @@ class MPDClientWrapper:
         try:
             self.client.connect(host, port)
         except OSError as e:
-            raise ui.UserError(f"could not connect to MPD: {e}")
+            raise UserError(f"could not connect to MPD: {e}")
 
         password = mpd_config["password"].as_str()
         if password:
             try:
                 self.client.password(password)
             except mpd.CommandError as e:
-                raise ui.UserError(f"could not authenticate to MPD: {e}")
+                raise UserError(f"could not authenticate to MPD: {e}")
 
     def disconnect(self):
         """Disconnect from the MPD."""
@@ -94,7 +95,7 @@ class MPDClientWrapper:
 
         if retries <= 0:
             # if we exited without breaking, we couldn't reconnect in time :(
-            raise ui.UserError("communication with MPD server failed")
+            raise UserError("communication with MPD server failed")
 
         time.sleep(RETRY_INTERVAL)
 

@@ -3,7 +3,8 @@ import shutil
 
 import pytest
 
-from beets import library, ui
+from beets import library
+from beets.exceptions import UserError
 from beets.test import _common
 from beets.test.helper import BeetsTestCase
 from beets.ui.commands.utils import do_query
@@ -33,11 +34,11 @@ class QueryTest(BeetsTestCase):
         assert len(albums) == num_albums
 
     def test_query_empty(self):
-        with pytest.raises(ui.UserError):
+        with pytest.raises(UserError):
             do_query(self.lib, (), False)
 
     def test_query_empty_album(self):
-        with pytest.raises(ui.UserError):
+        with pytest.raises(UserError):
             do_query(self.lib, (), True)
 
     def test_query_item(self):

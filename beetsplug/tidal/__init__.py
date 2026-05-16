@@ -10,6 +10,7 @@ import confuse
 
 from beets import ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.exceptions import UserError
 from beets.logging import getLogger
 from beets.metadata_plugins import MetadataSourcePlugin
 
@@ -63,7 +64,7 @@ class TidalPlugin(MetadataSourcePlugin):
 
     def require_authentication(self):
         if not os.path.isfile(self._tokenfile()):
-            raise ui.UserError(
+            raise UserError(
                 "Please login to TIDAL"
                 " using `beet tidal --auth` or disable tidal plugin"
             )

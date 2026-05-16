@@ -25,6 +25,7 @@ import tempfile
 import requests
 
 from beets import plugins, ui, util
+from beets.exceptions import UserError
 
 # We use this field to check whether AcousticBrainz info is present.
 PROBE_FIELD = "mood_acoustic"
@@ -60,7 +61,7 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
             self.extractor = util.normpath(self.extractor)
             # Explicit path to extractor
             if not os.path.isfile(self.extractor):
-                raise ui.UserError(
+                raise UserError(
                     f"Extractor command does not exist: {self.extractor}."
                 )
         else:
@@ -69,7 +70,7 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
             try:
                 call([self.extractor])
             except OSError:
-                raise ui.UserError(
+                raise UserError(
                     "No extractor command found: please install the extractor"
                     " binary from https://essentia.upf.edu/"
                 )
@@ -92,7 +93,7 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
         base_url = self.config["base_url"].as_str()
         if base_url:
             if not base_url.startswith("http"):
-                raise ui.UserError(
+                raise UserError(
                     "AcousticBrainz server base URL must start "
                     "with an HTTP scheme"
                 )
@@ -128,7 +129,7 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
 
     def command(self, lib, opts, args):
         if not self.url:
-            raise ui.UserError(
+            raise UserError(
                 "This plugin is deprecated since AcousticBrainz no longer "
                 "accepts new submissions. See the base_url configuration "
                 "option."

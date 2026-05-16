@@ -30,6 +30,7 @@ import requests
 from mediafile import image_mime_type
 
 from beets import config, importer, plugins, ui, util
+from beets.exceptions import UserError
 from beets.util import bytestring_path, get_temp_filename, sorted_walk, syspath
 from beets.util.artresizer import ArtResizer
 from beets.util.color import colorize
@@ -1457,11 +1458,11 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             )
 
             if len(sources) == 0:
-                raise ui.UserError("fetchart: no sources defined in config")
+                raise UserError("fetchart: no sources defined in config")
 
             return sources
         except UnknownPairError as e:
-            raise ui.UserError(e)
+            raise UserError(e)
 
     @staticmethod
     def _is_source_file_removal_enabled() -> bool:

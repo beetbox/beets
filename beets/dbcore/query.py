@@ -198,6 +198,8 @@ class MatchQuery(FieldQuery[AnySQLiteType]):
 
     @classmethod
     def value_match(cls, pattern: AnySQLiteType, value: Any) -> bool:
+        if isinstance(value, list):
+            return pattern in value
         return pattern == value
 
 
@@ -227,7 +229,12 @@ class StringFieldQuery(FieldQuery[P]):
         """Determine whether the value matches the pattern. The value
         may have any type.
         """
-        return cls.string_match(pattern, util.as_string(value))
+        if not isinstance(value, list):
+            value = [value]
+
+        return any(
+            cls.string_match(pattern, util.as_string(item)) for item in value
+        )
 
     @classmethod
     def string_match(

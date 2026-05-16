@@ -39,6 +39,7 @@ import beets.ui
 from beets import config, util
 from beets.autotag.distance import string_dist
 from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.exceptions import UserError
 from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
 
 from .states import DISAMBIGUATION_RE, ArtistState, TracklistState
@@ -178,7 +179,7 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
             _, _, url = auth_client.get_authorize_url()
         except CONNECTION_ERRORS as e:
             self._log.debug("connection error: {}", e)
-            raise beets.ui.UserError("communication with Discogs failed")
+            raise UserError("communication with Discogs failed")
 
         beets.ui.print_("To authenticate with Discogs, visit:")
         beets.ui.print_(url)
@@ -188,10 +189,10 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         try:
             token, secret = auth_client.get_access_token(code)
         except DiscogsAPIError:
-            raise beets.ui.UserError("Discogs authorization failed")
+            raise UserError("Discogs authorization failed")
         except CONNECTION_ERRORS as e:
             self._log.debug("connection error: {}", e)
-            raise beets.ui.UserError("Discogs token request failed")
+            raise UserError("Discogs token request failed")
 
         # Save the token for later use.
         self._log.debug("Discogs token {}, secret {}", token, secret)

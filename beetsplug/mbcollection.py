@@ -22,7 +22,8 @@ from typing import TYPE_CHECKING, ClassVar
 
 from requests.auth import HTTPDigestAuth
 
-from beets import __version__, config, ui
+from beets import __version__, config
+from beets.exceptions import UserError
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 
@@ -168,7 +169,7 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
     @cached_property
     def collection(self) -> MBCollection:
         if not (collections := self.mb_api.browse_collections()):
-            raise ui.UserError("no collections exist for user")
+            raise UserError("no collections exist for user")
 
         # Get all release collection IDs, avoiding event collections
         if not (
@@ -176,12 +177,12 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
                 c["id"]: c for c in collections if c["entity_type"] == "release"
             }
         ):
-            raise ui.UserError("No release collection found.")
+            raise UserError("No release collection found.")
 
         # Check that the collection exists so we can present a nice error
         if collection_id := self.config["collection"].as_str():
             if not (collection := collection_by_id.get(collection_id)):
-                raise ui.UserError(f"invalid collection ID: {collection_id}")
+                raise UserError(f"invalid collection ID: {collection_id}")
         else:
             # No specified collection. Just return the first collection ID
             collection = next(iter(collection_by_id.values()))
