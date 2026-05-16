@@ -16,6 +16,9 @@ New features
   also available as config options via ``force`` and ``keep_new``.
 - :ref:`import-cmd`: The ``--nomove`` / ``-M`` CLI flag can now be used to
   override the ``move: yes`` config option during import.
+- :doc:`plugins/listenbrainz`: Add support for importing ListenBrainz listening
+  history from an export file. Use the ``-f`` / ``--export-file`` flag to
+  specify the path to the ListenBrainz export file.
 
 Bug fixes
 ~~~~~~~~~
