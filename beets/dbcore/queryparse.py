@@ -26,7 +26,8 @@ if TYPE_CHECKING:
     from collections.abc import Collection, Sequence
 
     from ..library import LibModel
-    from .query import FieldQueryType, Sort
+    from .query import FieldQueryType
+    from .sort import Sort
 
     Prefixes = dict[str, FieldQueryType]
 

@@ -51,7 +51,8 @@ import beets
 
 from ..util import cached_classproperty, functemplate
 from . import types
-from .query import MatchQuery, NullSort, TrueQuery
+from .query import MatchQuery, TrueQuery
+from .sort import NullSort
 
 if TYPE_CHECKING:
     from collections.abc import (
@@ -64,7 +65,8 @@ if TYPE_CHECKING:
     from sqlite3 import Connection
     from types import TracebackType
 
-    from .query import FieldQueryType, FieldSort, Query, Sort, SQLiteType
+    from .query import FieldQueryType, Query, SQLiteType
+    from .sort import FieldSort, Sort
 
 D = TypeVar("D", bound="Database", default=Any)
 
