@@ -22,7 +22,6 @@ from __future__ import annotations
 import errno
 import optparse
 import os.path
-import re
 import shutil
 import sqlite3
 import sys
@@ -432,20 +431,6 @@ def get_path_formats(subview=None):
         query = PF_KEY_QUERIES.get(query, query)  # Expand common queries.
         path_formats.append((query, template(view.as_str())))
     return path_formats
-
-
-def get_replacements():
-    """Confuse validation function that reads regex/string pairs."""
-    replacements = []
-    for pattern, repl in config["replace"].get(dict).items():
-        repl = repl or ""
-        try:
-            replacements.append((re.compile(pattern), repl))
-        except re.error:
-            raise UserError(
-                f"malformed regular expression in replace: {pattern}"
-            )
-    return replacements
 
 
 @cache
@@ -877,7 +862,6 @@ def _open_library(config: confuse.LazyConfig) -> library.Library:
             dbpath,
             config["directory"].as_filename(),
             get_path_formats(),
-            get_replacements(),
         )
         lib.get_item(0)  # Test database connection.
     except (sqlite3.OperationalError, sqlite3.DatabaseError) as db_error:
