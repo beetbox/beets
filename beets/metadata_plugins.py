@@ -12,6 +12,7 @@ import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import contextmanager
 from functools import cache, cached_property, wraps
+from operator import itemgetter
 from typing import TYPE_CHECKING, Generic, Literal, NamedTuple, TypeVar
 
 import unidecode
@@ -440,6 +441,22 @@ class SearchApiMetadataSourcePlugin(
             *self.get_search_query_with_filters(query_type, *args, **kwargs),
         )
 
+    def get_candidates_from_results(
+        self, results: Iterable[R]
+    ) -> Iterable[AlbumInfo]:
+        """Convert results of album search queries to AlbumInfo objects"""
+        yield from filter(
+            None, self.albums_for_ids(map(itemgetter("id"), results))
+        )
+
+    def get_item_candidates_from_results(
+        self, results: Iterable[R]
+    ) -> Iterable[TrackInfo]:
+        """Convert results of track search queries to TrackInfo objects"""
+        yield from filter(
+            None, self.tracks_for_ids(map(itemgetter("id"), results))
+        )
+
     def candidates(
         self,
         items: Sequence[Item],
@@ -448,10 +465,10 @@ class SearchApiMetadataSourcePlugin(
         va_likely: bool,
     ) -> Iterable[AlbumInfo]:
         results = self._get_candidates("album", items, artist, album, va_likely)
-        return filter(None, self.albums_for_ids(r["id"] for r in results))
+        yield from self.get_candidates_from_results(results)
 
     def item_candidates(
         self, item: Item, artist: str, title: str
     ) -> Iterable[TrackInfo]:
         results = self._get_candidates("track", [item], artist, title, False)
-        return filter(None, self.tracks_for_ids(r["id"] for r in results))
+        yield from self.get_item_candidates_from_results(results)
