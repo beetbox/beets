@@ -20,16 +20,14 @@ import itertools
 import re
 from typing import TYPE_CHECKING
 
-from . import query
+from . import query, sort
 
 if TYPE_CHECKING:
     from collections.abc import Collection, Sequence
 
     from ..library import LibModel
-    from .query import FieldQueryType
-    from .sort import Sort
 
-    Prefixes = dict[str, FieldQueryType]
+    Prefixes = dict[str, query.FieldQueryType]
 
 
 PARSE_QUERY_PART_REGEX = re.compile(
@@ -46,10 +44,10 @@ PARSE_QUERY_PART_REGEX = re.compile(
 
 def parse_query_part(
     part: str,
-    query_classes: dict[str, FieldQueryType] = {},
+    query_classes: dict[str, query.FieldQueryType] = {},
     prefixes: Prefixes = {},
     default_class: type[query.SubstringQuery] = query.SubstringQuery,
-) -> tuple[str | None, str, FieldQueryType, bool]:
+) -> tuple[str | None, str, query.FieldQueryType, bool]:
     """Parse a single *query part*, which is a chunk of a complete query
     string representing a single criterion.
 
@@ -138,7 +136,7 @@ def construct_query_part(
 
     # Use `model_cls` to build up a map from field (or query) names to
     # `Query` classes.
-    query_classes: dict[str, FieldQueryType] = {}
+    query_classes: dict[str, query.FieldQueryType] = {}
     for k, t in itertools.chain(
         model_cls._fields.items(), model_cls._types.items()
     ):
@@ -189,7 +187,7 @@ def construct_sort_part(
     model_cls: type[LibModel],
     part: str,
     case_insensitive: bool = True,
-) -> Sort:
+) -> sort.Sort:
     """Create a `Sort` from a single string criterion.
 
     `model_cls` is the `Model` being queried. `part` is a single string
@@ -205,13 +203,13 @@ def construct_sort_part(
     is_ascending = direction == "+"
 
     if sort_cls := model_cls._sorts.get(field):
-        if isinstance(sort_cls, query.SmartArtistSort):
+        if isinstance(sort_cls, sort.SmartArtistSort):
             field = "albumartist" if model_cls.__name__ == "Album" else "artist"
     elif field in model_cls._fields:
-        sort_cls = query.FixedFieldSort
+        sort_cls = sort.FixedFieldSort
     else:
         # Flexible or computed.
-        sort_cls = query.SlowFieldSort
+        sort_cls = sort.SlowFieldSort
 
     return sort_cls(field, is_ascending, case_insensitive)
 
@@ -220,19 +218,17 @@ def sort_from_strings(
     model_cls: type[LibModel],
     sort_parts: Sequence[str],
     case_insensitive: bool = True,
-) -> Sort:
+) -> sort.Sort:
     """Create a `Sort` from a list of sort criteria (strings)."""
     if not sort_parts:
-        return query.NullSort()
+        return sort.NullSort()
     elif len(sort_parts) == 1:
         return construct_sort_part(model_cls, sort_parts[0], case_insensitive)
     else:
-        sort = query.MultipleSort()
+        s = sort.MultipleSort()
         for part in sort_parts:
-            sort.add_sort(
-                construct_sort_part(model_cls, part, case_insensitive)
-            )
-        return sort
+            s.add_sort(construct_sort_part(model_cls, part, case_insensitive))
+        return s
 
 
 def parse_sorted_query(
@@ -240,7 +236,7 @@ def parse_sorted_query(
     parts: list[str],
     prefixes: Prefixes = {},
     case_insensitive: bool = True,
-) -> tuple[query.Query, Sort]:
+) -> tuple[query.Query, sort.Sort]:
     """Given a list of strings, create the `Query` and `Sort` that they
     represent.
     """
