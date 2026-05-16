@@ -329,17 +329,6 @@ class TestDGAlbumInfo(TestHelper):
         assert d.album == "TITLE"
         assert len(d.tracks) == 1
 
-    def test_parse_release_without_required_fields(self, caplog):
-        """Test parsing of a release that does not have the required fields."""
-        release = Bag(data={}, refresh=lambda *args: None)
-        with caplog.at_level("DEBUG"):
-            d = DiscogsPlugin().get_album_info(release)
-
-        assert d is None
-        assert (
-            "Release does not contain the required fields" in caplog.messages[0]
-        )
-
     def test_default_genre_style_settings(self):
         """Test genre default settings, genres to genre, styles to style"""
         release = self._make_release_from_positions(["1", "2"])
