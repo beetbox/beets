@@ -45,6 +45,9 @@ Bug fixes
   ``__getattr__`` fallback, producing a misleading message about the property
   name itself. The wrapped ``RuntimeError`` keeps the original traceback so it
   still points at the real failing line. :bug:`6558`
+- ``ReadError`` and ``WriteError`` now include the file path and the underlying
+  reason in their message instead of a ``<super: ...>`` object representation.
+  :bug:`6560`
 
 ..
     For plugin developers
