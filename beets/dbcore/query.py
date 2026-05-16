@@ -35,7 +35,7 @@ from . import pathutils
 if TYPE_CHECKING:
     from collections.abc import Iterator, MutableSequence
 
-    from beets.dbcore.db import AnyModel, Model
+    from beets.dbcore.db import Model
 
     P = TypeVar("P", default=Any)
 else:
