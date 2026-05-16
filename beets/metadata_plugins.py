@@ -12,17 +12,11 @@ import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import contextmanager
 from functools import cache, cached_property, wraps
-from typing import (
-    TYPE_CHECKING,
-    Generic,
-    Literal,
-    NamedTuple,
-    TypedDict,
-    TypeVar,
-)
+from typing import TYPE_CHECKING, Generic, Literal, NamedTuple, TypeVar
 
 import unidecode
 from confuse import NotFoundError
+from typing_extensions import TypedDict
 
 from beets import config, logging
 from beets.util import cached_classproperty
