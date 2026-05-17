@@ -6,18 +6,37 @@ import platform
 import shutil
 from collections import Counter
 
+import pytest
+
 from beets import logging
 from beets.library import Album, Item
 from beets.test import _common
-from beets.test.helper import ItemInDBTestCase
+from beets.test.helper import PluginMixin, PytestTestHelper
 from beetsplug import web
 
 
-class WebPluginTest(ItemInDBTestCase):
-    def setUp(self):
-        super().setUp()
-        self.log = logging.getLogger("beets.web")
+class WebPluginMixin(PluginMixin):
+    """Mixin to configure the web plugin for testing."""
 
+    plugin = "web"
+
+    @pytest.fixture(autouse=True)
+    def setup_web_app(self, setup):
+        """Configure the web plugin's Flask app for testing.
+
+        This fixture sets up the Flask test client and configures the app
+        with the test library. It runs after the base setup fixture from
+        PytestTestHelper.
+        """
+        # Set up the web app config - we modify self.config["web"] for beets config
+        # but also need to directly configure the Flask app for tests
+        web.app.config["TESTING"] = True
+        web.app.config["lib"] = self.lib
+        web.app.config["INCLUDE_PATHS"] = False
+        web.app.config["READONLY"] = True
+        self.client = web.app.test_client()
+
+        # Set platform-specific path prefix
         if platform.system() == "Windows":
             self.path_prefix = "C:"
         else:
@@ -61,11 +80,12 @@ class WebPluginTest(ItemInDBTestCase):
         )
         self.lib.add(Album(album="other album", artpath=path4))
 
-        web.app.config["TESTING"] = True
-        web.app.config["lib"] = self.lib
-        web.app.config["INCLUDE_PATHS"] = False
-        web.app.config["READONLY"] = True
-        self.client = web.app.test_client()
+        yield
+        # No explicit cleanup needed for web.app.config as it's global
+
+
+class TestWebPlugin(WebPluginMixin, PytestTestHelper):
+    """Tests for the web plugin."""
 
     def test_config_include_paths_true(self):
         web.app.config["INCLUDE_PATHS"] = True
@@ -681,3 +701,90 @@ class WebPluginTest(ItemInDBTestCase):
         response = self.client.get(f"/item/{item_id}/file")
 
         assert response.status_code == 200
+
+
+class TestWebXSS(WebPluginMixin, PytestTestHelper):
+    """Tests for XSS vulnerability in the web plugin templates.
+
+    These tests verify that the Underscore.js templates in index.html use
+    the escaping syntax (<%- %) instead of the non-escaping syntax (<%= %).
+
+    In Underscore.js 1.2.2 (used by beets):
+    - <%= variable %> does NOT escape HTML (vulnerable to XSS)
+    - <%- variable %> DOES escape HTML (safe)
+
+    This was reported in
+    https://github.com/beetbox/beets/security/advisories/GHSA-3gxm-wfjx-m847
+    """
+
+    def test_templates_use_escaping_syntax(self):
+        """Verify that all Underscore.js templates use <%- %> for escaping.
+
+        This test requests the index.html page and checks that all
+        user data interpolations in the Underscore.js templates use
+        the escaping syntax (<%- %) rather than the non-escaping syntax (<%= %).
+        """
+        import re
+
+        # Request the index.html page
+        response = self.client.get("/")
+        html = response.data.decode("utf-8")
+
+        # Extract the template scripts from the HTML
+        # The templates are in <script type="text/template"> blocks
+        template_pattern = r'<script type="text/template"[^>]*>(.*?)</script>'
+        templates = re.findall(template_pattern, html, re.DOTALL)
+
+        # Combine all template content for checking
+        all_template_content = "\n".join(templates)
+
+        # Check that no <%= %> (non-escaping) tags exist for user data
+        # We look for <%= followed by a variable name (word characters)
+        non_escaping_pattern = r"<%=\s*(\w+)\s*%>"
+        non_escaping_matches = re.findall(
+            non_escaping_pattern, all_template_content
+        )
+
+        # List of fields that should be escaped (user-controlled data)
+        user_data_fields = [
+            "title",
+            "artist",
+            "album",
+            "year",
+            "track",
+            "tracktotal",
+            "disc",
+            "disctotal",
+            "length",
+            "format",
+            "bitrate",
+            "mb_trackid",
+            "id",
+            "lyrics",
+            "comments",
+        ]
+
+        # Check if any user data fields are using non-escaping <%= %>
+        vulnerable_fields = [
+            field for field in non_escaping_matches if field in user_data_fields
+        ]
+
+        # If we found any user data fields using <%= %>, the templates are vulnerable
+        assert len(vulnerable_fields) == 0, (
+            "Found non-escaping <%= %> tags for user data fields: "
+            f"{vulnerable_fields}. "
+            "These should use <%- %> for HTML escaping to prevent XSS."
+        )
+
+        # Also verify that escaping tags (<%- %>) are present for user data
+        escaping_pattern = r"<%-\s*(\w+)\s*%>"
+        escaping_matches = re.findall(escaping_pattern, all_template_content)
+
+        # At least some user data fields should use escaping
+        safe_fields = [
+            field for field in escaping_matches if field in user_data_fields
+        ]
+        assert len(safe_fields) > 0, (
+            "No escaping <%- %> tags found for user data fields. "
+            "Templates should use <%- %> for HTML escaping."
+        )
