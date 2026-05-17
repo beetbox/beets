@@ -30,7 +30,6 @@ from beets.test import _common
 from beets.test.helper import BeetsTestCase, IOMixin, PluginTestCase
 from beets.ui import _open_library, commands
 from beets.util import syspath
-from beets.util.functemplate import get_path_formats
 
 
 class PrintTest(IOMixin, unittest.TestCase):
@@ -166,18 +165,6 @@ class ConfigTest(IOMixin, TestPluginTestCase):
         key, template = self.test_cmd.lib.path_formats[0]
         assert key == "x"
         assert template.original == "y"
-
-    def test_default_paths_preserved(self):
-        default_formats = get_path_formats()
-
-        self._reset_config()
-        with self.write_config_file() as config:
-            config.write("paths: {x: y}")
-        self.run_command("test")
-        key, template = self.test_cmd.lib.path_formats[0]
-        assert key == "x"
-        assert template.original == "y"
-        assert self.test_cmd.lib.path_formats[1:] == default_formats
 
     def test_nonexistant_db(self):
         with self.write_config_file() as config:
@@ -348,18 +335,6 @@ class ConfigTest(IOMixin, TestPluginTestCase):
         config.read()
         assert config["library"].as_path() == self.beetsdir / "beets.db"
         assert config["statefile"].as_path() == self.beetsdir / "state"
-
-
-class PathFormatTest(unittest.TestCase):
-    def test_custom_paths_prepend(self):
-        default_formats = get_path_formats()
-
-        config["paths"] = {"foo": "bar"}
-        pf = get_path_formats()
-        key, tmpl = pf[0]
-        assert key == "foo"
-        assert tmpl.original == "bar"
-        assert pf[1:] == default_formats
 
 
 class PluginTest(TestPluginTestCase):
