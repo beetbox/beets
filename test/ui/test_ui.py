@@ -418,6 +418,11 @@ class CommonOptionsParserCliTest(IOMixin, BeetsTestCase):
         output = self.run_with_output("help")
         assert "Usage:" in output
 
+        # command description is on the same line
+        assert (
+            "config            show or edit the user configuration" in output
+        ), "unexpected command description formatting"
+
         output = self.run_with_output("help", "list")
         assert "Usage:" in output
 
