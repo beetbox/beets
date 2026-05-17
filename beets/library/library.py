@@ -20,6 +20,7 @@ from .queries import PF_KEY_DEFAULT, parse_query_parts, parse_query_string
 if TYPE_CHECKING:
     from beets.dbcore import Results
     from beets.util import Replacements
+    from beets.util.functemplate import Template
 
 
 class Library(dbcore.Database):
@@ -55,7 +56,7 @@ class Library(dbcore.Database):
         self,
         path="library.blb",
         directory: str | None = None,
-        path_formats=((PF_KEY_DEFAULT, "$artist/$album/$track $title"),),
+        path_formats: list[tuple[str, Template]] | None = None,
         set_music_dir: bool = True,
     ):
         timeout = beets.config["timeout"].as_number()
