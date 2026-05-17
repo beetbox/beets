@@ -30,6 +30,7 @@ from beets.test import _common
 from beets.test.helper import BeetsTestCase, IOMixin, PluginTestCase
 from beets.ui import _open_library, commands
 from beets.util import syspath
+from beets.util.functemplate import get_path_formats
 
 
 class PrintTest(IOMixin, unittest.TestCase):
@@ -167,7 +168,7 @@ class ConfigTest(IOMixin, TestPluginTestCase):
         assert template.original == "y"
 
     def test_default_paths_preserved(self):
-        default_formats = ui.get_path_formats()
+        default_formats = get_path_formats()
 
         self._reset_config()
         with self.write_config_file() as config:
@@ -351,10 +352,10 @@ class ConfigTest(IOMixin, TestPluginTestCase):
 
 class PathFormatTest(unittest.TestCase):
     def test_custom_paths_prepend(self):
-        default_formats = ui.get_path_formats()
+        default_formats = get_path_formats()
 
         config["paths"] = {"foo": "bar"}
-        pf = ui.get_path_formats()
+        pf = get_path_formats()
         key, tmpl = pf[0]
         assert key == "foo"
         assert tmpl.original == "bar"

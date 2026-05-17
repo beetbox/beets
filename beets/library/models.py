@@ -27,10 +27,11 @@ from beets.util import (
 )
 from beets.util.deprecation import maybe_replace_legacy_field
 from beets.util.functemplate import Template, template
+from beets.util.pathformats import PF_KEY_DEFAULT
 
 from .exceptions import FileOperationError, ReadError, WriteError
 from .fields import TYPE_BY_FIELD
-from .queries import PF_KEY_DEFAULT, parse_query_string
+from .queries import parse_query_string
 
 if TYPE_CHECKING:
     from beets.dbcore.query import FieldQuery, FieldQueryType

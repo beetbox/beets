@@ -36,6 +36,7 @@ from beets.plugins import BeetsPlugin
 from beets.util import par_map
 from beets.util.artresizer import ArtResizer
 from beets.util.m3u import M3UFile
+from beets.util.pathformats import get_path_formats
 from beetsplug._utils import art
 
 if TYPE_CHECKING:
@@ -43,7 +44,7 @@ if TYPE_CHECKING:
 
     from beets.importer import ImportSession, ImportTask
     from beets.library import Album, Library
-    from beets.util.functemplate import Template as FuncTemplate
+    from beets.util.pathformats import PathFormat
 
 _fs_lock = threading.Lock()
 # Keep track of temporary transcoded files for deletion.
@@ -230,8 +231,8 @@ class ConvertPlugin(BeetsPlugin):
         return self.config["threads"].get(int)
 
     @cached_property
-    def path_formats(self) -> dict[str, FuncTemplate]:
-        return ui.get_path_formats(self.config["paths"] or None)
+    def path_formats(self) -> list[PathFormat]:
+        return get_path_formats(self.config["paths"])
 
     @cached_property
     def fmt(self) -> str:

@@ -224,9 +224,7 @@ class TestHelper(RunMixin, ConfigMixin):
             dbpath = util.bytestring_path(self.config["library"].as_filename())
         else:
             dbpath = ":memory:"
-        self.lib = Library(
-            dbpath, self.libdir, path_formats=beets.ui.get_path_formats()
-        )
+        self.lib = Library(dbpath, self.libdir)
 
     def teardown_beets(self):
         self.env_patcher.stop()
