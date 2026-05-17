@@ -414,9 +414,17 @@ class CommonOptionsParserCliTest(IOMixin, BeetsTestCase):
         )
         assert output == "the album artist\n"
 
+    @pytest.mark.xfail(
+        reason="currently command description is printed in a separate line"
+    )
     def test_help(self):
         output = self.run_with_output("help")
         assert "Usage:" in output
+
+        # command description is on the same line
+        assert (
+            "config            show or edit the user configuration" in output
+        ), "unexpected command description formatting"
 
         output = self.run_with_output("help", "list")
         assert "Usage:" in output
