@@ -439,11 +439,12 @@ class TestAttrDictCachedPropertyMasking:
     attribute lookup falls back to ``__getattr__`` with the property's
     name and the real missing field gets masked behind a misleading
     "object has no attribute 'raw_data'". We intercept cached_property
-    lookups in ``__getattribute__``: a raise from the body is wrapped in
-    ``RuntimeError`` (so Python doesn't fall back to ``__getattr__``)
-    and ``raise ... from exc`` chains the original ``AttributeError``
-    so its traceback still points at the real failing line via the
-    cause chain.
+    lookups in ``__getattribute__``: when ``super().__getattribute__``
+    raises ``AttributeError`` and the attribute resolves to a
+    ``cached_property``, the error is re-raised as ``RuntimeError`` that
+    keeps the original traceback so it still points at the real failing
+    line inside the property body. ``raise ... from None`` suppresses
+    the chained-exception block in CLI tracebacks.
     """
 
     def test_inner_error_surfaces_with_original_message(self):
@@ -456,7 +457,7 @@ class TestAttrDictCachedPropertyMasking:
         with pytest.raises(RuntimeError, match="missing_field"):
             obj.derived
 
-    def test_cause_chain_preserves_original_attributeerror(self):
+    def test_cause_chain_is_suppressed(self):
         class Sample(AttrDict[object]):
             @cached_property
             def derived(self):
@@ -465,10 +466,11 @@ class TestAttrDictCachedPropertyMasking:
         obj = Sample()
         with pytest.raises(RuntimeError) as excinfo:
             obj.derived
-        assert isinstance(excinfo.value.__cause__, AttributeError)
-        assert "missing_field" in str(excinfo.value.__cause__)
+        # ``raise ... from None`` suppresses the chained traceback block.
+        assert excinfo.value.__cause__ is None
+        assert excinfo.value.__suppress_context__ is True
 
-    def test_cause_traceback_points_at_property_body(self):
+    def test_traceback_points_at_property_body(self):
         class Sample(AttrDict[object]):
             @cached_property
             def derived(self):
@@ -477,11 +479,13 @@ class TestAttrDictCachedPropertyMasking:
         obj = Sample()
         with pytest.raises(RuntimeError) as excinfo:
             obj.derived
-        cause_tb = excinfo.value.__cause__.__traceback__
+        # The wrapper reuses the original AttributeError traceback, so the
+        # RuntimeError itself points back at the line that actually failed.
+        tb = excinfo.value.__traceback__
         frames = []
-        while cause_tb is not None:
-            frames.append(cause_tb.tb_frame.f_code.co_name)
-            cause_tb = cause_tb.tb_next
+        while tb is not None:
+            frames.append(tb.tb_frame.f_code.co_name)
+            tb = tb.tb_next
         assert "derived" in frames
 
     def test_cached_property_success_returns_value(self):
