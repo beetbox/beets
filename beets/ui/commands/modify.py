@@ -27,8 +27,7 @@ def _check_modify_operations(model_cls, mods):
             model_cls, field
         ):
             raise UserError(
-                f"field {field!r} does not support the {mod.operator}= "
-                "operator"
+                f"field {field!r} does not support the {mod.operator}= operator"
             )
 
 
@@ -70,9 +69,7 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm, inherit):
     for obj in objs:
         obj_mods = {}
         for key, mod in mods.items():
-            value = model_cls._parse(
-                key, obj.evaluate_template(templates[key])
-            )
+            value = model_cls._parse(key, obj.evaluate_template(templates[key]))
             if isinstance(mod, ModifyOperation):
                 value = _apply_modify_operation(obj, key, mod, value)
             obj_mods[key] = value
