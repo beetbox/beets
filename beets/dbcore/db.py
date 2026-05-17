@@ -68,7 +68,7 @@ if TYPE_CHECKING:
     from .query import FieldQueryType, Query, SQLiteType
     from .sort import FieldSort, Sort
 
-D = TypeVar("D", bound="Database", default=Any)
+D_co = TypeVar("D_co", bound="Database", default="Database", covariant=True)
 
 FlexAttrs = dict[str, str]
 
@@ -97,7 +97,7 @@ class NotFoundError(LookupError):
     pass
 
 
-class FormattedMapping(Mapping[str, str]):
+class FormattedMapping(Mapping[str, str], Generic[D_co]):
     """A `dict`-like formatted view of a model.
 
     The accessor `mapping[key]` returns the formatted version of
@@ -111,13 +111,13 @@ class FormattedMapping(Mapping[str, str]):
     are replaced.
     """
 
-    model: Model
+    model: Model[D_co]
 
     ALL_KEYS = "*"
 
     def __init__(
         self,
-        model: Model,
+        model: Model[D_co],
         included_keys: str = ALL_KEYS,
         for_path: bool = False,
     ):
@@ -151,7 +151,7 @@ class FormattedMapping(Mapping[str, str]):
             default = self.model._type(key).format(None)
         return super().get(key, default)
 
-    def _get_formatted(self, model: Model, key: str) -> str:
+    def _get_formatted(self, model: Model[D_co], key: str) -> str:
         value = model._type(key).format(model.get(key))
         if isinstance(value, bytes):
             value = value.decode("utf-8", "ignore")
@@ -179,10 +179,10 @@ class FormattedMapping(Mapping[str, str]):
 # by some methods build intermediate lists, such that modification of the
 # `LazyConvertDict` becomes safe during iteration. Some code does in fact rely
 # on this.
-class LazyConvertDict:
+class LazyConvertDict(Generic[D_co]):
     """Lazily convert types for attributes fetched from the database"""
 
-    def __init__(self, model_cls: Model):
+    def __init__(self, model_cls: Model[D_co]):
         """Initialize the object empty"""
         # FIXME: Dict[str, SQLiteType]
         self._data: dict[str, Any] = {}
@@ -223,7 +223,7 @@ class LazyConvertDict:
         """Get a list of available field names for this object."""
         return list(self._converted.keys()) + list(self._data.keys())
 
-    def copy(self) -> LazyConvertDict:
+    def copy(self) -> LazyConvertDict[D_co]:
         """Create a copy of the object."""
         new = self.__class__(self.model_cls)
         new._data = self._data.copy()
@@ -276,7 +276,7 @@ class LazyConvertDict:
 # Abstract base for model classes.
 
 
-class Model(ABC, Generic[D]):
+class Model(ABC, Generic[D_co]):
     """An abstract object representing an object in the database. Model
     objects act like dictionaries (i.e., they allow subscript access like
     ``obj['field']``). The same field set is available via attribute
@@ -380,7 +380,7 @@ class Model(ABC, Generic[D]):
         return cls._relation._fields.keys() - cls.shared_db_fields
 
     @cached_property
-    def db(self) -> D:
+    def db(self) -> D_co:
         """Get the database associated with this object.
 
         This validates that the database is attached and the object has an id.
@@ -396,7 +396,7 @@ class Model(ABC, Generic[D]):
         raise NotFoundError(f"No matching {model_cls.__name__} found") from None
 
     @classmethod
-    def _getters(cls: type[Model]):
+    def _getters(cls):
         """Return a mapping from field names to getter functions."""
         # We could cache this if it becomes a performance problem to
         # gather the getter mapping every time.
@@ -411,7 +411,7 @@ class Model(ABC, Generic[D]):
 
     # Basic operation.
 
-    def __init__(self, db: D | None = None, **values):
+    def __init__(self, db: D_co | None = None, **values):
         """Create a new object with an optional Database association and
         initial field values.
         """
@@ -427,7 +427,7 @@ class Model(ABC, Generic[D]):
     @classmethod
     def _awaken(
         cls: type[AnyModel],
-        db: D | None = None,
+        db: D_co | None = None,
         fixed_values: dict[str, Any] = {},
         flex_values: dict[str, Any] = {},
     ) -> AnyModel:
@@ -457,7 +457,7 @@ class Model(ABC, Generic[D]):
         if self._db:
             self._revision = self._db.revision
 
-    def _check_db(self, need_id: bool = True) -> D:
+    def _check_db(self, need_id: bool = True) -> D_co:
         """Ensure that this object is associated with a database row: it
         has a reference to a database (`_db`) and an id. A ValueError
         exception is raised otherwise.
@@ -469,7 +469,7 @@ class Model(ABC, Generic[D]):
 
         return self._db
 
-    def copy(self) -> Model:
+    def copy(self) -> Self:
         """Create a copy of the model object.
 
         The field values and other state is duplicated, but the new copy
@@ -709,7 +709,7 @@ class Model(ABC, Generic[D]):
                 f"DELETE FROM {self._flex_table} WHERE entity_id=?", (self.id,)
             )
 
-    def add(self, db: D | None = None):
+    def add(self, db: D_co | None = None):
         """Add the object to the library database. This object must be
         associated with a database; you can provide one via the `db`
         parameter or use the currently associated database.
@@ -734,11 +734,11 @@ class Model(ABC, Generic[D]):
 
     # Formatting and templating.
 
-    _formatter = FormattedMapping
+    _formatter: type[FormattedMapping[D_co]] = FormattedMapping[D_co]
 
     def formatted(
         self, included_keys: str = _formatter.ALL_KEYS, for_path: bool = False
-    ) -> FormattedMapping:
+    ) -> FormattedMapping[D_co]:
         """Get a mapping containing all values on this object formatted
         as human-readable unicode strings.
         """
@@ -800,7 +800,7 @@ class Results(Generic[AnyModel]):
         self,
         model_class: type[AnyModel],
         rows: list[sqlite3.Row],
-        db: D,
+        db: D_co,
         flex_rows,
         query: Query | None = None,
         sort=None,

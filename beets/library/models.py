@@ -158,7 +158,7 @@ class LibModel(dbcore.Model["Library"]):
         )
 
 
-class FormattedItemMapping(dbcore.db.FormattedMapping):
+class FormattedItemMapping(dbcore.db.FormattedMapping["Library"]):
     """Add lookup for album-level fields.
 
     Album-level fields take precedence if `for_path` is true.
