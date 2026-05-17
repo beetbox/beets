@@ -42,35 +42,30 @@ class WebPluginMixin(PluginMixin):
         else:
             self.path_prefix = ""
 
-        # Add fixtures
+        # Clear any existing items and add test fixtures
         for track in self.lib.items():
             track.remove()
 
         # Add library elements. Note that self.lib.add overrides any "id=<n>"
         # and assigns the next free id number.
         # The following adds will create items #1, #2 and #3
-        path1 = (
-            self.path_prefix + os.sep + os.path.join(b"path_1").decode("utf-8")
-        )
-        self.lib.add(
-            Item(title="title", path=path1, album_id=2, artist="AAA Singers")
-        )
+        path1 = self.path_prefix + os.sep + os.path.join(b"path_1").decode("utf-8")
+        self.lib.add(Item(title="title", path=path1, album_id=2, artist="AAA Singers"))
+
         path2 = (
             self.path_prefix
             + os.sep
             + os.path.join(b"somewhere", b"a").decode("utf-8")
         )
-        self.lib.add(
-            Item(title="another title", path=path2, artist="AAA Singers")
-        )
+        self.lib.add(Item(title="another title", path=path2, artist="AAA Singers"))
+
         path3 = (
             self.path_prefix
             + os.sep
             + os.path.join(b"somewhere", b"abc").decode("utf-8")
         )
-        self.lib.add(
-            Item(title="and a third", testattr="ABC", path=path3, album_id=2)
-        )
+        self.lib.add(Item(title="and a third", testattr="ABC", path=path3, album_id=2))
+
         # The following adds will create albums #1 and #2
         self.lib.add(Album(album="album", albumtest="xyz"))
         path4 = (
@@ -207,9 +202,7 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
         assert res_json["results"][0]["title"] == "and a third"
 
     def test_query_item_regex(self):
-        response = self.client.get(
-            "/item/query/testattr%3a%3a[A-C]%2b"
-        )  # testattr::[A-C]+
+        response = self.client.get("/item/query/testattr%3a%3a[A-C]%2b")  # testattr::[A-C]+
         res_json = json.loads(response.data.decode("utf-8"))
 
         assert response.status_code == 200
@@ -292,9 +285,7 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
         assert response_track_titles == {"title", "and a third"}
 
     def test_query_album_string(self):
-        response = self.client.get(
-            "/album/query/albumtest%3axy"
-        )  # albumtest:xy
+        response = self.client.get("/album/query/albumtest%3axy")  # albumtest:xy
         res_json = json.loads(response.data.decode("utf-8"))
 
         assert response.status_code == 200
@@ -715,6 +706,8 @@ class TestWebXSS(WebPluginMixin, PytestTestHelper):
 
     This was reported in
     https://github.com/beetbox/beets/security/advisories/GHSA-3gxm-wfjx-m847
+    and remediated in
+    https://github.com/beetbox/beets/commit/75f0d8f4899e61afb939adf02dcfb078aed23a6a
     """
 
     def test_templates_use_escaping_syntax(self):
