@@ -736,7 +736,7 @@ class SubcommandsOptionParser(CommonOptionsParser):
                 name = f"{' ' * formatter.current_indent}{name}\n"
                 indent_first = help_position
             else:
-                name = f"{' ' * formatter.current_indent}{name:<{name_width}}\n"
+                name = f"{' ' * formatter.current_indent}{name:<{name_width}}  "
                 indent_first = 0
             result.append(name)
             help_width = formatter.width - help_position

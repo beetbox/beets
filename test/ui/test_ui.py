@@ -414,9 +414,6 @@ class CommonOptionsParserCliTest(IOMixin, BeetsTestCase):
         )
         assert output == "the album artist\n"
 
-    @pytest.mark.xfail(
-        reason="currently command description is printed in a separate line"
-    )
     def test_help(self):
         output = self.run_with_output("help")
         assert "Usage:" in output
