@@ -1,11 +1,53 @@
 """The `modify` command: change metadata fields."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, NamedTuple
+
 from beets import library, ui
+from beets.dbcore import types
 from beets.exceptions import UserError
 from beets.util import functemplate
 from beets.util.deprecation import maybe_replace_legacy_field
 
 from .utils import do_query
+
+if TYPE_CHECKING:
+    from beets.library import LibModel
+
+
+class ModifyOperation(NamedTuple):
+    operator: str | None
+    value: str
+
+    def apply(
+        self, obj: LibModel, field: str, new_values: list[str]
+    ) -> list[str]:
+        if self.operator is None:
+            return new_values
+
+        current = list(obj[field])
+
+        if self.operator == "+":
+            return current + [
+                item for item in new_values if item not in current
+            ]
+
+        return [item for item in current if item not in new_values]
+
+
+def _is_multi_value_field(model_cls: type[LibModel], field: str) -> bool:
+    return isinstance(model_cls._type(field), types.DelimitedString)
+
+
+def _check_modify_operations(
+    model_cls: type[LibModel], mods: dict[str, ModifyOperation]
+) -> None:
+    for field, mod in mods.items():
+        if mod.operator and not _is_multi_value_field(model_cls, field):
+            raise UserError(
+                f"field {field!r} does not support the {mod.operator}= operator"
+            )
 
 
 def modify_items(lib, mods, dels, query, write, move, album, confirm, inherit):
@@ -17,6 +59,7 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm, inherit):
     """
     # Parse key=value specifications into a dictionary.
     model_cls = library.Album if album else library.Item
+    _check_modify_operations(model_cls, mods)
 
     # Get the items to modify.
     items, albums = do_query(lib, query, album, False)
@@ -26,14 +69,16 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm, inherit):
     # objects.
     ui.print_(f"Modifying {len(objs)} {'album' if album else 'item'}s.")
     changed = []
-    templates = {
-        key: functemplate.template(value) for key, value in mods.items()
-    }
+    templates = {}
+    for key, mod in mods.items():
+        templates[key] = functemplate.template(mod.value)
     for obj in objs:
-        obj_mods = {
-            key: model_cls._parse(key, obj.evaluate_template(templates[key]))
-            for key in mods.keys()
-        }
+        obj_mods = {}
+        for key, mod in mods.items():
+            parsed_value = model_cls._parse(
+                key, obj.evaluate_template(templates[key])
+            )
+            obj_mods[key] = mod.apply(obj, key, parsed_value)
         if print_and_modify(obj, obj_mods, dels) and obj not in changed:
             changed.append(obj)
 
@@ -97,8 +142,11 @@ def modify_parse_args(args, is_album: bool):
             dels.append(arg[:-1])  # Strip trailing !.
         elif "=" in arg and ":" not in arg.split("=", 1)[0]:
             key, val = arg.split("=", 1)
+            operator = None
+            if key.endswith(("+", "-")):
+                key, operator = key[:-1], key[-1]
             key = maybe_replace_legacy_field(key, is_album, modify=True)
-            mods[key] = val
+            mods[key] = ModifyOperation(operator, val)
         else:
             query.append(arg)
     return query, mods, dels
