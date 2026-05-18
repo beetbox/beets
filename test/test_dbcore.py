@@ -24,8 +24,9 @@ from typing import ClassVar
 import pytest
 
 from beets import dbcore
+from beets.dbcore import types
 from beets.dbcore.db import DBCustomFunctionError, Index
-from beets.library import LibModel
+from beets.library import Album, Item, LibModel
 from beets.util import cached_classproperty
 
 # Fixture: concrete database and model classes. For migration tests, we
@@ -541,6 +542,31 @@ class ParseTest(unittest.TestCase):
     def test_parse_untyped_field(self):
         value = ModelFixture1._parse("field_nine", "2")
         assert value == "2"
+
+
+# --- Model._type fallback tests ---
+
+
+def test_album_type_falls_back_to_item_type():
+    typ = Album._type("artists")
+    assert isinstance(typ, types.DelimitedString)
+    assert typ is types.MULTI_VALUE_DSV
+
+
+def test_album_type_falls_back_to_item_type_other_list_fields():
+    for field in ["genres", "composers", "artists_sort"]:
+        typ = Album._type(field)
+        assert isinstance(typ, types.DelimitedString), field
+
+
+def test_item_type_does_not_change():
+    typ = Item._type("artists")
+    assert isinstance(typ, types.DelimitedString)
+
+
+def test_unknown_key_falls_through_to_default():
+    typ = Album._type("nonexistent_field_xyz")
+    assert isinstance(typ, types.Default)
 
 
 class QueryParseTest(unittest.TestCase):

@@ -492,8 +492,23 @@ class Model(ABC, Generic[D]):
 
         If the field has no explicit type, it is given the base `Type`,
         which does no conversion.
+
+        For models with a related model (e.g. Album <-> Item), fall back
+        to the related model's field and type definitions for fields not
+        defined on this model. This avoids descending into the sibling's
+        `_type` method to prevent infinite recursion between reciprocal
+        relations.
         """
-        return cls._fields.get(key) or cls._types.get(key) or types.DEFAULT
+        typ = cls._fields.get(key) or cls._types.get(key)
+        if typ is not None:
+            return typ
+        if cls._relation is not cls:
+            typ = cls._relation._fields.get(key) or cls._relation._types.get(
+                key
+            )
+            if typ is not None:
+                return typ
+        return types.DEFAULT
 
     def _get(self, key, default: Any = None, raise_: bool = False):
         """Get the value for a field, or `default`. Alternatively,
