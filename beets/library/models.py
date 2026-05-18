@@ -14,7 +14,6 @@ import beets
 from beets import dbcore, logging, plugins, util
 from beets.dbcore import types
 from beets.dbcore.db import FormattedMapping
-from beets.dbcore.pathutils import normalize_path_for_db
 from beets.dbcore.queryparse import ModelQuery
 from beets.dbcore.sort import SmartArtistSort
 from beets.util import (
@@ -25,7 +24,6 @@ from beets.util import (
     samefile,
     syspath,
 )
-from beets.util.deprecation import maybe_replace_legacy_field
 from beets.util.functemplate import Template, template
 from beets.util.pathformats import PF_KEY_DEFAULT
 
@@ -128,50 +126,19 @@ class LibModel(dbcore.Model["Library"]):
     # Convenient queries.
 
     @classmethod
-    def field_query(
-        cls, field: str, pattern: str, query_cls: type[FieldQuery]
-    ) -> FieldQuery:
-        """Get a `FieldQuery` for the given field on this model."""
-        field = maybe_replace_legacy_field(field, cls is Album)
-
-        fast = field in cls.all_db_fields
-        if (
-            cls._type(field).query is dbcore.query.PathQuery
-            and query_cls is not dbcore.query.PathQuery
-        ):
-            # Regex, exact, and string queries operate on the raw DB value, so
-            # strip the library prefix to match the stored relative path.
-            bytes_pattern = normalize_path_for_db(util.bytestring_path(pattern))
-            if query_cls is not dbcore.query.RegexpQuery:
-                bytes_pattern = util.path_as_posix(bytes_pattern)
-            pattern = os.fsdecode(bytes_pattern)
-
-        if field in cls.shared_db_fields:
-            # This field exists in both tables, so SQLite will encounter
-            # an OperationalError if we try to use it in a query.
-            # Using an explicit table name resolves this.
-            field = f"{cls._table}.{field}"
-
-        return query_cls(field, pattern, fast)
-
-    @classmethod
-    def any_field_query(cls, *args, **kwargs) -> dbcore.OrQuery:
-        return dbcore.OrQuery(
-            [cls.field_query(f, *args, **kwargs) for f in cls._search_fields]
-        )
-
-    @classmethod
-    def any_writable_media_field_query(cls, *args, **kwargs) -> dbcore.OrQuery:
+    def any_writable_media_field_query(
+        cls, pattern: str, query_cls: type[FieldQuery]
+    ) -> dbcore.OrQuery:
         fields = cls.writable_media_fields
         return dbcore.OrQuery(
-            [cls.field_query(f, *args, **kwargs) for f in fields]
+            [query_cls.from_model(cls, f, pattern) for f in fields]
         )
 
     def duplicates_query(self, fields: list[str]) -> dbcore.AndQuery:
         """Return a query for entities with same values in the given fields."""
         return dbcore.AndQuery(
             [
-                self.field_query(f, self.get(f), dbcore.MatchQuery)
+                dbcore.MatchQuery.from_model(self.__class__, f, self.get(f))
                 for f in fields
             ]
         )
