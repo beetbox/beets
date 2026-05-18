@@ -13,7 +13,11 @@ from operator import mul, or_
 from re import Pattern
 from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar
 
+from typing_extensions import Self
+
 from beets import context, util
+from beets.dbcore.pathutils import normalize_path_for_db
+from beets.util.deprecation import maybe_replace_legacy_field
 from beets.util.units import raw_seconds_short
 
 from . import pathutils
@@ -125,6 +129,36 @@ class FieldQuery(Query, Generic[P]):
     same matching functionality in SQLite.
     """
 
+    @classmethod
+    def normalize_pattern(
+        cls, model_cls: type[Model], field: str, pattern: P
+    ) -> P:
+        """Normalize the pattern for this query.
+
+        By default, this does nothing, but subclasses can override it to perform
+        normalization on the pattern before it's used for matching.
+        """
+        return pattern
+
+    @classmethod
+    def from_model(
+        cls, model_cls: type[Model], field_name: str, pattern: P
+    ) -> Self:
+        field = maybe_replace_legacy_field(
+            field_name, model_cls.__name__ == "Album"
+        )
+
+        fast = field in model_cls.all_db_fields
+        if field in model_cls.shared_db_fields:
+            # This field exists in both tables, so SQLite will encounter
+            # an OperationalError if we try to use it in a query.
+            # Using an explicit table name resolves this.
+            field = f"{model_cls._table}.{field}"
+
+        return cls(
+            field, cls.normalize_pattern(model_cls, field, pattern), fast
+        )
+
     @property
     def field(self) -> str:
         return (
@@ -208,6 +242,21 @@ class StringFieldQuery(FieldQuery[P]):
     """A FieldQuery that converts values to strings before matching
     them.
     """
+
+    @classmethod
+    def normalize_pattern(  # type: ignore[override]
+        cls, model_cls: type[Model], field: str, pattern: str
+    ) -> str:
+        """Strip the library prefix to match the stored relative path."""
+        if model_cls._type(field).query is PathQuery:
+            bytes_pattern = normalize_path_for_db(util.bytestring_path(pattern))
+            # do not remove escape chars (`\`) from the pattern, since they are
+            # used for escaping in the SQL query regex
+            if cls is not RegexpQuery:
+                bytes_pattern = util.path_as_posix(bytes_pattern)
+            return os.fsdecode(bytes_pattern)
+
+        return pattern
 
     @classmethod
     def value_match(cls, pattern: P, value: Any):

@@ -169,7 +169,7 @@ class AURADocument:
                 # Add exact match query to list
                 # Use a slow query so it works with all fields
                 queries.append(
-                    self.model_cls.field_query(beets_attr, value, MatchQuery)
+                    MatchQuery.from_model(self.model_cls, beets_attr, value)
                 )
         # NOTE: AURA doesn't officially support multiple queries
         return AndQuery(queries)
@@ -304,7 +304,7 @@ class AURADocument:
             # have a non-empty, non-zero value for that field.
             query.subqueries.extend(
                 NotQuery(
-                    self.model_cls.field_query(s.field, "(^$|^0$)", RegexpQuery)
+                    RegexpQuery.from_model(self.model_cls, s.field, "(^$|^0$)")
                 )
                 for s in sort.sorts
             )
