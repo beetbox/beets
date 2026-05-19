@@ -12,7 +12,6 @@ import platformdirs
 import beets
 from beets import config, context, dbcore
 from beets.dbcore.query import Query
-from beets.dbcore.sort import NullSort
 from beets.exceptions import UserError
 from beets.util import normpath
 from beets.util.pathformats import get_path_formats
@@ -24,7 +23,7 @@ from .queries import parse_query_parts, parse_query_string
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from beets.dbcore.sort import Sort
+    from beets.dbcore.query import Sort
     from beets.util import PathLike, Replacements
     from beets.util.pathformats import PathFormat
 
@@ -182,26 +181,14 @@ class Library(dbcore.Database):
                     )
         except dbcore.query.InvalidQueryArgumentValueError as exc:
             raise dbcore.InvalidQueryError(query, exc)
-
-        # Any non-null sort specified by the parsed query overrides the
-        # provided sort.
-        if parsed_sort and not isinstance(parsed_sort, NullSort):
-            sort = parsed_sort
-
-        return super()._get_results(model_cls, parsed_query, sort, limit)
-
-    @staticmethod
-    def get_default_album_sort() -> Sort:
-        """Get a :class:`Sort` object for albums from the config option."""
-        return dbcore.sort_from_strings(
-            Album, beets.config["sort_album"].as_str_seq()
-        )
-
-    @staticmethod
-    def get_default_item_sort() -> Sort:
-        """Get a :class:`Sort` object for items from the config option."""
-        return dbcore.sort_from_strings(
-            Item, beets.config["sort_item"].as_str_seq()
+        parsed_sort = parsed_sort or sort
+        return self._get_results(
+            model_cls,
+            parsed_query,
+            # Any non-null sort specified by the parsed query overrides the
+            # provided sort.
+            model_cls.default_sort if parsed_sort is None else parsed_sort,
+            limit,
         )
 
     def albums(
@@ -211,9 +198,7 @@ class Library(dbcore.Database):
         limit: int | None = None,
     ) -> dbcore.Results[Album]:
         """Get :class:`Album` objects matching the query."""
-        return self._fetch(
-            Album, query, sort or self.get_default_album_sort(), limit
-        )
+        return self._fetch(Album, query, sort, limit)
 
     def items(
         self,
@@ -222,9 +207,7 @@ class Library(dbcore.Database):
         limit: int | None = None,
     ) -> dbcore.Results[Item]:
         """Get :class:`Item` objects matching the query."""
-        return self._fetch(
-            Item, query, sort or self.get_default_item_sort(), limit
-        )
+        return self._fetch(Item, query, sort, limit)
 
     # Convenience accessors.
     def get_item(self, id_: int) -> Item | None:
