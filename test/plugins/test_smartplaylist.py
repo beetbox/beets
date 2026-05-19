@@ -9,7 +9,7 @@ import pytest
 
 from beets import config
 from beets.dbcore.sort import FixedFieldSort, MultipleSort, NullSort
-from beets.library import Album, Item, parse_query_string
+from beets.library import Album, Item
 from beets.test._common import item
 from beets.test.helper import BeetsTestCase, IOMixin, PathsMixin, PluginTestCase
 from beets.ui import UserError
@@ -48,15 +48,11 @@ class SmartPlaylistTest(PlaylistDirMixin, BeetsTestCase):
         )
         spl.build_queries()
         assert spl._matched_playlists == set()
-        foo_foo = parse_query_string("FOO foo", Item)
-        baz_baz = parse_query_string("BAZ baz", Item)
-        baz_baz2 = parse_query_string("BAZ baz", Album)
-        # Multiple queries are now stored as a tuple of (query, sort) tuples
+        foo_foo = Item.parse_query("FOO foo")
+        baz_baz = Item.parse_query("BAZ baz")
+        baz_baz2 = Album.parse_query("BAZ baz")
         bar_queries = tuple(
-            [
-                parse_query_string("BAR bar1", Album),
-                parse_query_string("BAR bar2", Album),
-            ]
+            [Album.parse_query("BAR bar1"), Album.parse_query("BAR bar2")]
         )
         assert spl._unmatched_playlists == {
             ("foo", foo_foo, (None, None)),
@@ -95,10 +91,10 @@ class SmartPlaylistTest(PlaylistDirMixin, BeetsTestCase):
                 sorts[name] = sort
 
         sort = FixedFieldSort  # short cut since we're only dealing with this
-        assert sorts["no_sort"] == NullSort()
+        assert not sorts["no_sort"]
         assert sorts["one_sort"] == sort("year")
         # Multiple queries store individual sorts in the tuple
-        assert all(isinstance(x, NullSort) for x in sorts["only_empty_sorts"])
+        assert not any(x for x in sorts["only_empty_sorts"])
         assert sorts["one_non_empty_sort"] == [sort("year"), NullSort()]
         assert sorts["multiple_sorts"] == [sort("year"), sort("genres", False)]
         assert sorts["mixed"] == [

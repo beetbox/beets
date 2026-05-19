@@ -304,9 +304,7 @@ class TestNonExistingField:
         If a string ends with a sorting suffix, it takes precedence over the
         NotQuery parsing.
         """
-        query, sort = beets.library.parse_query_string(
-            "-bar+", beets.library.Item
-        )
+        query, sort = beets.library.Item.parse_query("-bar+")
         assert len(query.subqueries) == 1
         assert isinstance(query.subqueries[0], TrueQuery)
         assert isinstance(sort, SlowFieldSort)

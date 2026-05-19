@@ -15,6 +15,7 @@ from beets import dbcore, logging, plugins, util
 from beets.dbcore import types
 from beets.dbcore.db import FormattedMapping
 from beets.dbcore.pathutils import normalize_path_for_db
+from beets.dbcore.queryparse import ModelQuery
 from beets.dbcore.sort import SmartArtistSort
 from beets.util import (
     MoveOperation,
@@ -30,10 +31,9 @@ from beets.util.pathformats import PF_KEY_DEFAULT
 
 from .exceptions import FileOperationError, ReadError, WriteError
 from .fields import TYPE_BY_FIELD
-from .queries import parse_query_string
 
 if TYPE_CHECKING:
-    from collections.abc import KeysView
+    from collections.abc import KeysView, Sequence
 
     from beets.dbcore.query import FieldQuery, FieldQueryType
     from beets.dbcore.sort import FieldSort, Sort
@@ -83,6 +83,12 @@ class LibModel(dbcore.Model["Library"]):
             cls,  # type: ignore[arg-type]
             beets.config[config_key].as_str_seq(),
         )
+
+    @classmethod
+    def parse_query(
+        cls, query: str | Sequence[str] | None = None
+    ) -> ModelQuery:
+        return ModelQuery.parse(cls, query)
 
     @property
     def filepath(self) -> Path:
@@ -1202,10 +1208,10 @@ class Item(LibModel):
 
         # Use a path format based on a query, falling back on the
         # default.
-        for query, path_format in path_formats:
-            if query == PF_KEY_DEFAULT:
+        for query_str, path_format in path_formats:
+            if query_str == PF_KEY_DEFAULT:
                 continue
-            query, _ = parse_query_string(query, type(self))
+            query, _ = self.parse_query(query_str)
             if query.match(self):
                 # The query matches the item! Use the corresponding path
                 # format.
