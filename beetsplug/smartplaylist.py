@@ -17,7 +17,7 @@ from beets.dbcore import Query
 from beets.dbcore.query import ParsingError
 from beets.dbcore.sort import Sort
 from beets.exceptions import UserError
-from beets.library import Album, Item, parse_query_string
+from beets.library import Album, Item
 from beets.util import (
     bytestring_path,
     mkdirall,
@@ -230,12 +230,12 @@ class SmartPlaylistPlugin(plugins.BeetsPlugin):
         if qs is None:
             return None, None
         if isinstance(qs, str):
-            return parse_query_string(qs, model_cls)
+            return model_cls.parse_query(qs)
         if len(qs) == 1:
-            return parse_query_string(qs[0], model_cls)
+            return model_cls.parse_query(qs[0])
 
         queries_and_sorts: tuple[QueryAndSort, ...] = tuple(
-            parse_query_string(q, model_cls) for q in qs
+            model_cls.parse_query(q) for q in qs
         )
         return queries_and_sorts, None
 

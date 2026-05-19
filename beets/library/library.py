@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Sequence
 from contextlib import contextmanager
 from functools import cached_property
 from pathlib import Path
@@ -18,12 +17,11 @@ from beets.util.pathformats import get_path_formats
 
 from . import migrations
 from .models import Album, Item
-from .queries import parse_query_parts, parse_query_string
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Iterator, Sequence
 
-    from beets.dbcore.query import Sort
+    from beets.dbcore.sort import Sort
     from beets.util import PathLike, Replacements
     from beets.util.pathformats import PathFormat
 
@@ -170,15 +168,9 @@ class Library(dbcore.Database):
             # avoids leaking one Library's directory into another's work.
             with context.music_dir(self.directory):
                 if isinstance(query, Query):
-                    parsed_query = query
-                if isinstance(query, str):
-                    parsed_query, parsed_sort = parse_query_string(
-                        query, model_cls
-                    )
-                elif isinstance(query, Sequence):
-                    parsed_query, parsed_sort = parse_query_parts(
-                        query, model_cls
-                    )
+                    parsed_query, parsed_sort = query, sort
+                else:
+                    parsed_query, parsed_sort = model_cls.parse_query(query)
         except dbcore.query.InvalidQueryArgumentValueError as exc:
             raise dbcore.InvalidQueryError(query, exc)
         parsed_sort = parsed_sort or sort

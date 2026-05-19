@@ -12,6 +12,7 @@ from .query import (
     Query,
 )
 from .queryparse import (
+    ModelQuery,
     parse_sorted_query,
     query_from_strings,
     sort_from_strings,
@@ -26,6 +27,7 @@ __all__ = [
     "InvalidQueryError",
     "MatchQuery",
     "Model",
+    "ModelQuery",
     "OrQuery",
     "Query",
     "Results",

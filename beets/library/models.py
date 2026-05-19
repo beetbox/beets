@@ -16,6 +16,7 @@ from beets import dbcore, logging, plugins, util
 from beets.dbcore import sort, types
 from beets.dbcore.db import FormattedMapping
 from beets.dbcore.pathutils import normalize_path_for_db
+from beets.dbcore.queryparse import ModelQuery
 from beets.util import (
     MoveOperation,
     bytestring_path,
@@ -29,10 +30,16 @@ from beets.util.pathformats import PF_KEY_DEFAULT
 
 from .exceptions import FileOperationError, ReadError, WriteError
 from .fields import TYPE_BY_FIELD
-from .queries import parse_query_string
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Iterator, KeysView, Mapping
+    from collections.abc import (
+        Callable,
+        Iterable,
+        Iterator,
+        KeysView,
+        Mapping,
+        Sequence,
+    )
 
     from beets.dbcore import Results, types
     from beets.dbcore.query import FieldQuery, FieldQueryType
@@ -85,6 +92,12 @@ class LibModel(dbcore.Model["Library"]):
             cls,  # type: ignore[arg-type]
             beets.config[config_key].as_str_seq(),
         )
+
+    @classmethod
+    def parse_query(
+        cls, query: str | Sequence[str] | None = None
+    ) -> ModelQuery:
+        return ModelQuery.parse(cls, query)
 
     @property
     def filepath(self) -> Path:
@@ -1265,7 +1278,7 @@ class Item(LibModel):
         for query_str, path_format in path_formats:
             if query_str == PF_KEY_DEFAULT:
                 continue
-            query, _ = parse_query_string(query_str, type(self))
+            query, _ = self.parse_query(query_str)
             if query.match(self):
                 # The query matches the item! Use the corresponding path
                 # format.

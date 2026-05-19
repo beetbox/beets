@@ -2,8 +2,10 @@
 
 import unittest
 
+import pytest
+
 from beets import dbcore
-from beets.dbcore import query, sort
+from beets.dbcore import ModelQuery, query, sort
 from beets.test.fixtures import ModelFixture1, SortFixture
 
 
@@ -178,3 +180,9 @@ class ParseSortedQueryTest(unittest.TestCase):
         assert isinstance(q, query.AndQuery)
         assert isinstance(s, sort.NullSort)
         assert len(q.subqueries) == 1
+
+
+class ParseQueryTest:
+    def test_parse_invalid_query_string(self):
+        with pytest.raises(dbcore.query.ParsingError):
+            ModelQuery.parse(ModelFixture1, 'foo"')
