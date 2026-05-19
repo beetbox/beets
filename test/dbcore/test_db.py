@@ -154,7 +154,7 @@ class MigrationTest(unittest.TestCase):
         c.execute("select * from test")
         row = c.fetchone()
         c.connection.close()
-        assert len(row.keys()) == len(ModelFixture2._fields)
+        assert len(row.keys()) == len(ModelFixture1._fields)
 
     def test_open_with_multiple_new_fields(self):
         new_lib = DatabaseFixture4(self.libfile)
@@ -360,9 +360,12 @@ class ModelTest(unittest.TestCase):
     def test_items(self):
         model = ModelFixture1(self.db)
         model.id = 5
-        assert {("id", 5), ("field_one", 0), ("field_two", "")} == set(
-            model.items()
-        )
+        assert {
+            ("id", 5),
+            ("field_one", 0),
+            ("field_two", ""),
+            ("path", b""),
+        } == set(model.items())
 
     def test_delete_internal_field(self):
         model = dbcore.Model()

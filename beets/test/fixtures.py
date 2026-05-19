@@ -48,6 +48,7 @@ class ModelFixture1(LibModel):
         "id": types.PRIMARY_ID,
         "field_one": types.INTEGER,
         "field_two": types.STRING,
+        "path": types.PathType(),
     }
 
     _sorts: ClassVar[dict[str, type[sort.FieldSort]]] = {
@@ -62,7 +63,7 @@ class ModelFixture1(LibModel):
 
     @cached_classproperty
     def _queries(cls):
-        return {"some_query": QueryFixture}
+        return {"some_query": QueryFixture, "year": query.NumericQuery}
 
     @classmethod
     def _getters(cls):
