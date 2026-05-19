@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-import itertools
 import re
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, NamedTuple
 
 from beets import plugins
+from beets.util import cached_classproperty
 
 from . import query, sort
 
@@ -28,81 +29,82 @@ PARSE_QUERY_PART_REGEX = re.compile(
 )
 
 
-def get_prefixes() -> dict[str, query.FieldQueryType]:
-    """Get query types and their prefix characters."""
-    return {
-        ":": query.RegexpQuery,
-        "=~": query.StringQuery,
-        "=": query.MatchQuery,
-        **plugins.queries(),
-    }
+@dataclass
+class QueryTerm:
+    """Represents a parsed query component with field, operator, and pattern.
 
-
-def parse_query_part(
-    part: str,
-    query_classes: dict[str, query.FieldQueryType] = {},
-    default_class: type[query.SubstringQuery] = query.SubstringQuery,
-) -> tuple[str | None, str, query.FieldQueryType, bool]:
-    """Parse a single *query part*, which is a chunk of a complete query
-    string representing a single criterion.
-
-    A query part is a string consisting of:
-    - A *pattern*: the value to look for.
-    - Optionally, a *field name* preceding the pattern, separated by a
-      colon. So in `foo:bar`, `foo` is the field name and `bar` is the
-      pattern.
-    - Optionally, a *query prefix* just before the pattern (and after the
-      optional colon) indicating the type of query that should be used. For
-      example, in `~foo`, `~` might be a prefix.
-    - Optionally, a negation indicator, `-` or `^`, at the very beginning.
-
-    Both prefixes and the separating `:` character may be escaped with a
-    backslash to avoid their normal meaning.
-
-    The function returns a tuple consisting of:
-    - The field name: a string or None if it's not present.
-    - The pattern, a string.
-    - The query class to use, which inherits from the base
-      :class:`Query` type.
-    - A negation flag, a bool.
-
-    The two optional parameters determine which query class is used (i.e.,
-    the third return value). They are:
-    - `query_classes`, which maps field names to query classes. These
-      are used when no explicit prefix is present.
-    - `default_class`, the fallback when neither the field nor a prefix
-      indicates a query class.
-
-    So the precedence for determining which query class to return is:
-    prefix, followed by field, and finally the default.
-
-    For example, assuming the `:` prefix is used for `RegexpQuery`:
-    - `'stapler'` -> `(None, 'stapler', SubstringQuery, False)`
-    - `'color:red'` -> `('color', 'red', SubstringQuery, False)`
-    - `':^Quiet'` -> `(None, '^Quiet', RegexpQuery, False)`, because
-      the `^` follows the `:`
-    - `'color::b..e'` -> `('color', 'b..e', RegexpQuery, False)`
-    - `'-color:red'` -> `('color', 'red', SubstringQuery, True)`
+    Encapsulates the structure of database query terms, handling negation,
+    field-specific queries, and operator prefixes. Provides the foundation
+    for converting user input into executable database queries.
     """
-    # Apply the regular expression and extract the components.
-    part = part.strip()
-    match = PARSE_QUERY_PART_REGEX.match(part)
 
-    assert match  # Regex should always match
-    negate = bool(match.group(1))
-    key = match.group(2)
-    term = match.group(3).replace("\\:", ":")
+    negate: bool
+    field: str | None
+    prefix: str | None
+    pattern: str
 
-    # Check whether there's a prefix in the query and use the
-    # corresponding query type.
-    for pre, query_class in get_prefixes().items():
-        if term.startswith(pre):
-            return key, term[len(pre) :], query_class, negate
+    @cached_classproperty
+    def query_by_prefix(cls) -> dict[str, query.FieldQueryType]:
+        """Map operator prefixes to their corresponding query class types."""
+        return {
+            ":": query.RegexpQuery,
+            "=~": query.StringQuery,
+            "=": query.MatchQuery,
+            **plugins.queries(),
+        }
 
-    # No matching prefix, so use either the query class determined by
-    # the field or the default as a fallback.
-    query_class = query_classes.get(key, default_class)
-    return key, term, query_class, negate
+    @cached_classproperty
+    def prefix_query_regex(cls) -> re.Pattern[str]:
+        """Compile regex pattern for parsing query syntax components."""
+        return re.compile(
+            rf"""
+    (?P<negate>[-^])?   # Optional negation
+    (                   # Optional field
+        (?P<field>[^:]+?)
+        (?<!\\):        # Needs to end with an unescaped colon
+    )?
+    (                   # Optional prefix
+        (?<!\\)         # Not escaped
+        (?P<prefix>{"|".join(map(re.escape, cls.query_by_prefix))})
+    )?
+    (?P<pattern>.*)     # The query term
+        """,
+            re.I + re.VERBOSE,
+        )
+
+    @classmethod
+    def make(cls, part: str) -> QueryTerm:
+        """Parse a query string into structured query term components."""
+        if query.PathQuery.is_path_query(part):
+            part = f"path:{part}"
+
+        if m := cls.prefix_query_regex.match(part):
+            data = m.groupdict()
+            return cls(
+                negate=bool(data["negate"]),
+                field=data["field"],
+                prefix=data["prefix"],
+                pattern=data["pattern"].replace(r"\:", ":"),
+            )
+
+        raise query.InvalidQueryError(part, "Unrecognised query format")
+
+    def get_query_cls(self, model_cls: type[LibModel]) -> query.FieldQueryType:
+        """Determine the most appropriate query class for filtering this field.
+
+        Resolves query type by checking prefix-specific queries first, then
+        field-specific queries, falling back to substring matching as default.
+        """
+        all_fields = model_cls._fields | model_cls._types
+        model_queries = {
+            **{k: v.query for k, v in all_fields.items()},
+            **model_cls._queries,
+        }
+        return (
+            self.query_by_prefix.get(self.prefix or "")
+            or model_queries.get(self.field)  # type: ignore[arg-type]
+            or query.SubstringQuery
+        )
 
 
 def construct_query_part(
@@ -124,31 +126,21 @@ def construct_query_part(
 
     out_query: query.Query
 
-    # Use `model_cls` to build up a map from field (or query) names to
-    # `Query` classes.
-    query_classes: dict[str, query.FieldQueryType] = {}
-    for k, t in itertools.chain(
-        model_cls._fields.items(), model_cls._types.items()
-    ):
-        query_classes[k] = t.query
-    query_classes.update(model_cls._queries)  # Non-field queries.
-
-    # Parse the string.
-    key, pattern, query_class, negate = parse_query_part(
-        query_part, query_classes
-    )
-
-    if key is None:
+    term = QueryTerm.make(query_part)
+    query_class = term.get_query_cls(model_cls)
+    if not term.field:
         # If there's no key (field name) specified, this is a "match anything"
         # query.
-        out_query = model_cls.any_field_query(pattern, query_class)
+        out_query = model_cls.any_field_query(term.pattern, query_class)
     else:
         # Field queries get constructed according to the name of the field
         # they are querying.
-        out_query = model_cls.field_query(key.lower(), pattern, query_class)
+        out_query = model_cls.field_query(
+            term.field.lower(), term.pattern, query_class
+        )
 
     # Apply negation.
-    if negate:
+    if term.negate:
         return query.NotQuery(out_query)
     return out_query
 

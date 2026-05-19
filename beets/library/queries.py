@@ -17,13 +17,6 @@ def parse_query_parts(parts, model_cls):
     Like `dbcore.parse_sorted_query`, with beets query prefixes and
     ensuring that implicit path queries are made explicit with 'path::<query>'
     """
-    # Special-case path-like queries, which are non-field queries
-    # containing path separators (/).
-    parts = [
-        f"path:{s}" if dbcore.query.PathQuery.is_path_query(s) else s
-        for s in parts
-    ]
-
     query, sort = dbcore.parse_sorted_query(model_cls, parts)
     log.debug("Parsed query: {!r}", query)
     log.debug("Parsed sort: {!r}", sort)
