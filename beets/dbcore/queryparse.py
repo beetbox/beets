@@ -171,15 +171,11 @@ def query_from_strings(
     return query_cls(subqueries)
 
 
-def construct_sort_part(
-    model_cls: type[LibModel], part: str, case_insensitive: bool = True
-) -> sort.Sort:
+def construct_sort_part(model_cls: type[LibModel], part: str) -> sort.FieldSort:
     """Create a `Sort` from a single string criterion.
 
     `model_cls` is the `Model` being queried. `part` is a single string
-    ending in ``+`` or ``-`` indicating the sort. `case_insensitive`
-    indicates whether or not the sort should be performed in a case
-    sensitive manner.
+    ending in ``+`` or ``-`` indicating the sort.
     """
     assert part, "part must be a field name and + or -"
     field = part[:-1]
@@ -197,29 +193,25 @@ def construct_sort_part(
         # Flexible or computed.
         sort_cls = sort.SlowFieldSort
 
-    return sort_cls(field, is_ascending, case_insensitive)
+    return sort_cls(field, is_ascending)
 
 
 def sort_from_strings(
-    model_cls: type[LibModel],
-    sort_parts: Sequence[str],
-    case_insensitive: bool = True,
+    model_cls: type[LibModel], sort_parts: Sequence[str]
 ) -> sort.Sort:
     """Create a `Sort` from a list of sort criteria (strings)."""
     if not sort_parts:
         return sort.NullSort()
     if len(sort_parts) == 1:
-        return construct_sort_part(model_cls, sort_parts[0], case_insensitive)
+        return construct_sort_part(model_cls, sort_parts[0])
     s = sort.MultipleSort()
     for part in sort_parts:
-        s.add_sort(construct_sort_part(model_cls, part, case_insensitive))
+        s.add_sort(construct_sort_part(model_cls, part))
     return s
 
 
 def parse_sorted_query(
-    model_cls: type[LibModel],
-    parts: list[str],
-    case_insensitive: bool = True,
+    model_cls: type[LibModel], parts: list[str]
 ) -> tuple[query.Query, sort.Sort]:
     """Given a list of strings, create the `Query` and `Sort` that they
     represent.
@@ -253,5 +245,5 @@ def parse_sorted_query(
 
     # Avoid needlessly wrapping single statements in an OR
     q = query.OrQuery(query_parts) if len(query_parts) > 1 else query_parts[0]
-    s = sort_from_strings(model_cls, sort_parts, case_insensitive)
+    s = sort_from_strings(model_cls, sort_parts)
     return q, s
