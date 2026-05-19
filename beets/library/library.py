@@ -7,6 +7,7 @@ import platformdirs
 
 import beets
 from beets import context, dbcore
+from beets.dbcore.sort import NullSort
 from beets.util import normpath
 
 from . import migrations
@@ -120,7 +121,7 @@ class Library(dbcore.Database):
 
         # Any non-null sort specified by the parsed query overrides the
         # provided sort.
-        if parsed_sort and not isinstance(parsed_sort, dbcore.query.NullSort):
+        if parsed_sort and not isinstance(parsed_sort, NullSort):
             sort = parsed_sort
 
         return super()._fetch(model_cls, query, sort)

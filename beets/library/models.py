@@ -16,6 +16,7 @@ import beets
 from beets import dbcore, logging, plugins, util
 from beets.dbcore import types
 from beets.dbcore.pathutils import normalize_path_for_db
+from beets.dbcore.sort import SmartArtistSort
 from beets.util import (
     MoveOperation,
     bytestring_path,
@@ -33,6 +34,7 @@ from .queries import PF_KEY_DEFAULT, parse_query_string
 
 if TYPE_CHECKING:
     from beets.dbcore.query import FieldQuery, FieldQueryType
+    from beets.dbcore.sort import FieldSort
 
     from .library import Library  # noqa: F401
 
@@ -303,9 +305,9 @@ class Album(LibModel):
     def _types(cls) -> dict[str, types.Type]:
         return {**super()._types, "path": TYPE_BY_FIELD["path"]}
 
-    _sorts: ClassVar[dict[str, type[dbcore.query.FieldSort]]] = {
-        "albumartist": dbcore.query.SmartArtistSort,
-        "artist": dbcore.query.SmartArtistSort,
+    _sorts: ClassVar[dict[str, type[FieldSort]]] = {
+        "albumartist": SmartArtistSort,
+        "artist": SmartArtistSort,
     }
 
     # List of keys that are set on an album's items.
@@ -695,9 +697,7 @@ class Item(LibModel):
 
     _formatter = FormattedItemMapping
 
-    _sorts: ClassVar[dict[str, type[dbcore.query.FieldSort]]] = {
-        "artist": dbcore.query.SmartArtistSort
-    }
+    _sorts: ClassVar[dict[str, type[FieldSort]]] = {"artist": SmartArtistSort}
 
     @cached_classproperty
     def _queries(cls) -> dict[str, FieldQueryType]:
