@@ -34,6 +34,8 @@ Bug fixes
 - Path format queries now correctly match multi-value fields such as ``genres``
   when using exact string matches like ``genres:=Classical`` or
   ``genres:=~Classical``. :bug:`6598`
+- Fix a CLI help formatting regression that moved command descriptions to
+  separate lines; descriptions are inline again, with regression test coverage.
 
 ..
     For plugin developers
