@@ -3,13 +3,12 @@ from __future__ import annotations
 import re
 from contextlib import contextmanager
 from functools import cached_property
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
 import platformdirs
 
 import beets
 from beets import config, context, dbcore
-from beets.dbcore.sort import NullSort
 from beets.exceptions import UserError
 from beets.util import normpath
 from beets.util.pathformats import get_path_formats
@@ -19,9 +18,16 @@ from .models import Album, Item
 from .queries import parse_query_parts, parse_query_string
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from beets.dbcore import Results
+    from beets.dbcore.query import Query, Sort
     from beets.util import Replacements
     from beets.util.pathformats import PathFormat
+
+    from .models import LibModel
+
+    LM = TypeVar("LM", bound=LibModel)
 
 
 class Library(dbcore.Database):
@@ -123,7 +129,12 @@ class Library(dbcore.Database):
 
     # Querying.
 
-    def _fetch(self, model_cls, query, sort=None):
+    def _fetch(
+        self,
+        model_cls: type[LM],
+        query: str | Sequence[str] | Query | None = None,
+        sort: Sort | None = None,
+    ) -> dbcore.Results[LM]:
         """Parse a query and fetch.
 
         If an order specification is present in the query string
@@ -142,34 +153,22 @@ class Library(dbcore.Database):
         except dbcore.query.InvalidQueryArgumentValueError as exc:
             raise dbcore.InvalidQueryError(query, exc)
 
-        # Any non-null sort specified by the parsed query overrides the
-        # provided sort.
-        if parsed_sort and not isinstance(parsed_sort, NullSort):
-            sort = parsed_sort
-
-        return super().get_results(model_cls, query, sort)
-
-    @staticmethod
-    def get_default_album_sort():
-        """Get a :class:`Sort` object for albums from the config option."""
-        return dbcore.sort_from_strings(
-            Album, beets.config["sort_album"].as_str_seq()
+        parsed_sort = parsed_sort or sort
+        return self.get_results(
+            model_cls,
+            query,
+            # Any non-null sort specified by the parsed query overrides the
+            # provided sort.
+            model_cls.default_sort if parsed_sort is None else parsed_sort,
         )
 
-    @staticmethod
-    def get_default_item_sort():
-        """Get a :class:`Sort` object for items from the config option."""
-        return dbcore.sort_from_strings(
-            Item, beets.config["sort_item"].as_str_seq()
-        )
-
-    def albums(self, query=None, sort=None) -> Results[Album]:
+    def albums(self, *args, **kwargs) -> Results[Album]:
         """Get :class:`Album` objects matching the query."""
-        return self._fetch(Album, query, sort or self.get_default_album_sort())
+        return self._fetch(Album, *args, **kwargs)
 
-    def items(self, query=None, sort=None) -> Results[Item]:
+    def items(self, *args, **kwargs) -> Results[Item]:
         """Get :class:`Item` objects matching the query."""
-        return self._fetch(Item, query, sort or self.get_default_item_sort())
+        return self._fetch(Item, *args, **kwargs)
 
     # Convenience accessors.
     def get_item(self, id_: int) -> Item | None:
