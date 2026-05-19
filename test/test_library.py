@@ -1334,6 +1334,22 @@ class WriteTest(BeetsTestCase):
         item.write()
         assert MediaFile(syspath(item.path)).year == clean_year
 
+    def test_write_omits_unknown_track_and_disc_totals(self):
+        item = self.add_item_fixture(
+            track=1,
+            tracktotal=0,
+            disc=2,
+            disctotal=0,
+        )
+
+        item.write()
+
+        mediafile = MediaFile(syspath(item.path))
+        assert mediafile.track == 1
+        assert mediafile.tracktotal is None
+        assert mediafile.disc == 2
+        assert mediafile.disctotal is None
+
 
 class ItemReadTest(unittest.TestCase):
     def test_unreadable_raise_read_error(self):

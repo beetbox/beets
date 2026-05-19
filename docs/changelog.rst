@@ -20,6 +20,8 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- Avoid writing unknown track and disc totals as ``0`` to media file metadata.
+  :bug:`6194`
 - :ref:`import-cmd`: Fix duplicate album merge during import when running in
   threaded mode. The merge action no longer creates a duplicate folder or
   reports ``could not get filesize`` errors. :bug:`6601`

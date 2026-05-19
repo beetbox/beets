@@ -692,6 +692,7 @@ class Item(LibModel):
     # This excludes fields that represent audio data, such as `bitrate` or
     # `length`.
     _media_tag_fields = set(MediaFile.fields()) & _field_names
+    _media_total_fields = {"tracktotal", "disctotal"}
 
     _formatter = FormattedItemMapping
 
@@ -918,6 +919,9 @@ class Item(LibModel):
         }  # Only write media fields.
         if tags is not None:
             item_tags.update(tags)
+        for field in self._media_total_fields:
+            if item_tags.get(field) == 0:
+                item_tags[field] = None
         plugins.send("write", item=self, path=path, tags=item_tags)
 
         # Open the file.
