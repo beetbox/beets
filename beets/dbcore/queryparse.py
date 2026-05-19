@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 import re
+import shlex
 from dataclasses import dataclass
+from functools import partial
 from typing import TYPE_CHECKING, NamedTuple
 
-from beets import plugins
+from typing_extensions import Self
+
+from beets import logging, plugins
 from beets.util import cached_classproperty
 
 from . import query, sort
@@ -14,7 +18,7 @@ from . import query, sort
 if TYPE_CHECKING:
     from collections.abc import Collection, Sequence
 
-    from ..library import LibModel
+    from beets.library.models import LibModel
 
 
 PARSE_QUERY_PART_REGEX = re.compile(
@@ -27,6 +31,9 @@ PARSE_QUERY_PART_REGEX = re.compile(
     r"(.*)",  # The term itself.
     re.I,  # Case-insensitive.
 )
+
+log = logging.getLogger(__name__)
+escape_commas = partial(re.compile(r"(?<=\S),(?=\S)").sub, r"\,")
 
 
 @dataclass
@@ -231,7 +238,7 @@ def sort_from_strings(
 
 
 def parse_sorted_query(
-    model_cls: type[LibModel], parts: list[str]
+    model_cls: type[LibModel], parts: Sequence[str]
 ) -> tuple[query.Query, sort.Sort]:
     """Given a list of strings, create the `Query` and `Sort` that they
     represent.
@@ -264,3 +271,53 @@ def parse_sorted_query(
     q = query.OrQuery(query_parts) if len(query_parts) > 1 else query_parts[0]
     s = sort_from_strings(model_cls, sort_parts)
     return q, s
+
+
+class ModelQuery(NamedTuple):
+    """Parses a user-provided string into a query and a sort order.
+
+    The query string can contain both search terms and sorting directives.
+    Search terms are combined with AND, and comma-separated groups of terms are
+    combined with OR. For example, `foo bar, baz` becomes
+    `(foo AND bar) OR baz`.
+
+    Sorting is specified by appending `+` (ascending) or `-` (descending) to a
+    field name, e.g., `artist+ album-`.
+    """
+
+    query: query.Query
+    sort: sort.Sort
+
+    @classmethod
+    def parse(
+        cls, model_cls: type[LibModel], parts: str | Sequence[str] | None = None
+    ) -> Self:
+        """Construct a query and sort object from a variety of inputs.
+
+        Create `ModelQuery` instance to parse the provided string or sequence of
+        strings.
+        """
+        parts = parts or []
+        query_str = (
+            parts
+            if isinstance(parts, str)
+            else " ".join(map(shlex.quote, parts))
+        )
+        if parts:
+            log.debug("Query string: {!r}", query_str)
+
+        lex = shlex.shlex(
+            escape_commas(query_str), punctuation_chars=",", posix=True
+        )
+        lex.commenters = ""  # make sure we keep '#example' as it is
+        lex.whitespace_split = True
+
+        try:
+            _query, _sort = parse_sorted_query(model_cls, list(lex))
+        except ValueError as exc:
+            raise query.InvalidQueryError(query_str, exc) from exc
+
+        if parts:
+            log.debug("Parsed query: {!r}", _query)
+            log.debug("Parsed sort: {!r}", _sort)
+        return cls(_query, _sort)

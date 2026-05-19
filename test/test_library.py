@@ -14,7 +14,6 @@ from unittest.mock import patch
 import pytest
 from mediafile import MediaFile, UnreadableFileError
 
-import beets.dbcore.query
 import beets.library
 from beets import config, plugins, util
 from beets.library import Album
@@ -1412,13 +1411,3 @@ class TestItemPruneDirsClutter(TestHelper):
         item.remove(delete=True)
 
         assert not os.path.exists(syspath(old_dir))
-
-
-class TestParseQuery:
-    def test_parse_invalid_query_string(self):
-        with pytest.raises(beets.dbcore.query.ParsingError):
-            beets.library.parse_query_string('foo"', None)
-
-    def test_parse_bytes(self):
-        with pytest.raises(AssertionError):
-            beets.library.parse_query_string(b"query", None)
