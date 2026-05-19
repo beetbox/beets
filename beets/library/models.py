@@ -692,7 +692,7 @@ class Item(LibModel):
     # This excludes fields that represent audio data, such as `bitrate` or
     # `length`.
     _media_tag_fields = set(MediaFile.fields()) & _field_names
-    _media_total_fields = {"tracktotal", "disctotal"}
+    _media_total_fields: ClassVar[set[str]] = {"tracktotal", "disctotal"}
 
     _formatter = FormattedItemMapping
 
