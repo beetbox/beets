@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import shlex
 
-import beets
 from beets import dbcore, logging
 
 log = logging.getLogger("beets")
@@ -25,9 +24,7 @@ def parse_query_parts(parts, model_cls):
         for s in parts
     ]
 
-    case_insensitive = beets.config["sort_case_insensitive"].get(bool)
-
-    query, sort = dbcore.parse_sorted_query(model_cls, parts, case_insensitive)
+    query, sort = dbcore.parse_sorted_query(model_cls, parts)
     log.debug("Parsed query: {!r}", query)
     log.debug("Parsed sort: {!r}", sort)
     return query, sort
