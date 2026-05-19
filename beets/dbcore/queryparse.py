@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import operator
 import re
 import shlex
 from dataclasses import dataclass
-from functools import partial
+from functools import partial, reduce
 from typing import TYPE_CHECKING, NamedTuple
 
 from typing_extensions import Self
@@ -115,45 +116,25 @@ class QueryTerm:
             or query.SubstringQuery
         )
 
+    def get_query(self, model_cls: type[LibModel]) -> query.Query:
+        """Create an executable query object tailored to the target model."""
+        out_query: query.Query
+        if self.pattern:
+            # Field queries get constructed according to the name of the field
+            # they are querying.
+            fields = (
+                [self.field.lower()] if self.field else model_cls._search_fields
+            )
 
-def construct_query_part(
-    model_cls: type[LibModel], query_part: str
-) -> query.Query:
-    """Parse a *query part* string and return a :class:`Query` object.
+            query_cls = self.get_query_cls(model_cls)
+            queries = [
+                query_cls.from_model(model_cls, f, self.pattern) for f in fields
+            ]
+            out_query = reduce(operator.or_, queries)
+        else:
+            out_query = query.TrueQuery()
 
-    :param model_cls: The :class:`Model` class that this is a query for.
-      This is used to determine the appropriate query types for the
-      model's fields.
-    :param query_part: The string to parse.
-
-    See the documentation for `parse_query_part` for more information on
-    query part syntax.
-    """
-    # A shortcut for empty query parts.
-    if not query_part:
-        return query.TrueQuery()
-
-    out_query: query.Query
-
-    term = QueryTerm.make(query_part)
-    query_class = term.get_query_cls(model_cls)
-    if not term.field:
-        # If there's no key (field name) specified, this is a "match anything"
-        # query.
-        out_query = query.OrQuery(
-            [query_class(f, term.pattern) for f in model_cls._search_fields]
-        )
-    else:
-        # Field queries get constructed according to the name of the field
-        # they are querying.
-        out_query = query_class.from_model(
-            model_cls, term.field.lower(), term.pattern
-        )
-
-    # Apply negation.
-    if term.negate:
-        return query.NotQuery(out_query)
-    return out_query
+        return query.NotQuery(out_query) if self.negate else out_query
 
 
 # TYPING ERROR
@@ -168,7 +149,7 @@ def query_from_strings(
     """
     subqueries = []
     for part in query_parts:
-        subqueries.append(construct_query_part(model_cls, part))
+        subqueries.append(QueryTerm.make(part).get_query(model_cls))
     if not subqueries:  # No terms in query.
         subqueries = [query.TrueQuery()]
     return query_cls(subqueries)

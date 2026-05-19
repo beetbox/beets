@@ -56,6 +56,7 @@ class ModelFixture1(LibModel):
     }
     _indices = (Index("field_one_index", ("field_one",)),)
     _formatter = FormattedMapping
+    _search_fields = ("artist", "title")
 
     @cached_classproperty
     def _types(cls):
