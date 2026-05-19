@@ -7,6 +7,7 @@ from os.path import relpath
 
 from beets import config, ui, util
 from beets.exceptions import UserError
+from beets.library import Album
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 from beets.util import PromptChoice, get_temp_filename
@@ -109,7 +110,7 @@ class PlayPlugin(BeetsPlugin):
             selection = lib.albums(args)
             paths = []
 
-            sort = lib.get_default_album_sort()
+            sort = Album.default_sort
             for album in selection:
                 if use_folders:
                     paths.append(album.item_dir())
