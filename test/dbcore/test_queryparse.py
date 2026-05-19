@@ -9,9 +9,8 @@ from beets.test.fixtures import ModelFixture1, SortFixture
 
 class QueryParseTest(unittest.TestCase):
     def pqp(self, part):
-        return dbcore.queryparse.parse_query_part(
-            part, {"year": query.NumericQuery}
-        )[:-1]  # remove the negate flag
+        term = dbcore.queryparse.QueryTerm.make(part)
+        return term.field, term.pattern, term.get_query_cls(ModelFixture1)
 
     def test_one_basic_term(self):
         q = "test"
@@ -61,6 +60,11 @@ class QueryParseTest(unittest.TestCase):
     def test_empty_query_part(self):
         q = ""
         r = (None, "", query.SubstringQuery)
+        assert self.pqp(q) == r
+
+    def test_implicit_path(self):
+        q = "/tmp"
+        r = ("path", "/tmp", dbcore.query.PathQuery)
         assert self.pqp(q) == r
 
 

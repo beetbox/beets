@@ -43,7 +43,9 @@ class InvalidQueryError(ParsingError):
     """
 
     def __init__(
-        self, query: str | Sequence[str] | Query | None, explanation: Exception
+        self,
+        query: str | Sequence[str] | Query | None,
+        explanation: Exception | str,
     ) -> None:
         if isinstance(query, Sequence) and not isinstance(query, str):
             query = " ".join(query)
