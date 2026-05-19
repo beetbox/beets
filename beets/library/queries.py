@@ -3,7 +3,6 @@ from __future__ import annotations
 import shlex
 from typing import TYPE_CHECKING
 
-import beets
 from beets import dbcore, logging
 
 if TYPE_CHECKING:
@@ -33,9 +32,7 @@ def parse_query_parts(
         for s in parts
     ]
 
-    case_insensitive = beets.config["sort_case_insensitive"].get(bool)
-
-    query, sort = dbcore.parse_sorted_query(model_cls, parts, case_insensitive)
+    query, sort = dbcore.parse_sorted_query(model_cls, parts)
     log.debug("Parsed query: {!r}", query)
     log.debug("Parsed sort: {!r}", sort)
     return query, sort

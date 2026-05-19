@@ -6,6 +6,9 @@ from functools import reduce
 from operator import or_
 from typing import TYPE_CHECKING, Any
 
+import beets
+from beets.util import cached_classproperty
+
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
@@ -121,15 +124,13 @@ class FieldSort(Sort):
     any kind).
     """
 
-    def __init__(
-        self,
-        field_name: str,
-        ascending: bool = True,
-        case_insensitive: bool = True,
-    ) -> None:
+    def __init__(self, field_name: str, ascending: bool = True) -> None:
         self.table, _, self.field_name = field_name.rpartition(".")
         self.ascending = ascending
-        self.case_insensitive = case_insensitive
+
+    @cached_classproperty
+    def case_insensitive(cls) -> bool:
+        return beets.config["sort_case_insensitive"].get(bool)
 
     @property
     def field(self) -> str:

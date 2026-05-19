@@ -118,9 +118,7 @@ class LibModel(dbcore.Model["Library"]):
 
     # Convenient queries.
     @classmethod
-    def field_sort(
-        cls, field: str, is_ascending: bool, case_insensitive: bool
-    ) -> FieldSort:
+    def field_sort(cls, field: str, is_ascending: bool) -> FieldSort:
         if sort_cls := cls._sorts.get(field):
             if issubclass(sort_cls, sort.SmartArtistSort):
                 field = "albumartist" if cls.__name__ == "Album" else "artist"
@@ -132,7 +130,7 @@ class LibModel(dbcore.Model["Library"]):
             # Flexible or computed.
             sort_cls = sort.SlowFieldSort
 
-        return sort_cls(field, is_ascending, case_insensitive)
+        return sort_cls(field, is_ascending)
 
     @classmethod
     def field_query(
