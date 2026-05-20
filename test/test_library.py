@@ -66,7 +66,7 @@ class TestLoad(PytestItemInDBHelper):
         assert "artist" not in self.i._dirty
 
 
-class StoreTest(ItemInDBTestCase):
+class TestStore(PytestItemInDBHelper):
     def test_store_changes_database_value(self):
         new_year = 1987
         self.i.year = new_year
