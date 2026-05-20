@@ -36,6 +36,11 @@ Bug fixes
   ``genres:=~Classical``. :bug:`6598`
 - Fix a CLI help formatting regression that moved command descriptions to
   separate lines; descriptions are inline again, with regression test coverage.
+- ``AttrDict.__getattribute__`` now unmasks ``AttributeError`` raised inside a
+  ``cached_property`` body. Previously such errors were swallowed by the
+  ``__getattr__`` fallback, producing a misleading message about the property
+  name itself. The wrapped ``RuntimeError`` keeps the original traceback so it
+  still points at the real failing line. :bug:`6558`
 
 ..
     For plugin developers

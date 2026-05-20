@@ -16,6 +16,7 @@
 
 import operator
 from contextlib import nullcontext as does_not_warn
+from functools import cached_property
 
 import pytest
 
@@ -23,6 +24,7 @@ from beets.autotag.distance import Distance
 from beets.autotag.hooks import (
     AlbumInfo,
     AlbumMatch,
+    AttrDict,
     TrackInfo,
     TrackMatch,
     correct_list_fields,
@@ -427,3 +429,79 @@ def test_correct_list_fields(
     data = correct_list_fields(input_data)
 
     assert (data[single_field], data[list_field]) == expected_values
+
+
+class TestAttrDictCachedPropertyMasking:
+    """Regression tests for #6558.
+
+    When a ``cached_property`` on an :class:`AttrDict` subclass raises
+    ``AttributeError`` during its own computation, Python's default
+    attribute lookup falls back to ``__getattr__`` with the property's
+    name and the real missing field gets masked behind a misleading
+    "object has no attribute 'raw_data'". We intercept cached_property
+    lookups in ``__getattribute__``: when ``super().__getattribute__``
+    raises ``AttributeError`` and the attribute resolves to a
+    ``cached_property``, the error is re-raised as ``RuntimeError`` that
+    keeps the original traceback so it still points at the real failing
+    line inside the property body. ``raise ... from None`` suppresses
+    the chained-exception block in CLI tracebacks.
+    """
+
+    def test_inner_error_surfaces_with_original_message(self):
+        class Sample(AttrDict[object]):
+            @cached_property
+            def derived(self):
+                return self.missing_field
+
+        obj = Sample()
+        with pytest.raises(RuntimeError, match="missing_field"):
+            obj.derived
+
+    def test_cause_chain_is_suppressed(self):
+        class Sample(AttrDict[object]):
+            @cached_property
+            def derived(self):
+                return self.missing_field
+
+        obj = Sample()
+        with pytest.raises(RuntimeError) as excinfo:
+            obj.derived
+        # ``raise ... from None`` suppresses the chained traceback block.
+        assert excinfo.value.__cause__ is None
+        assert excinfo.value.__suppress_context__ is True
+
+    def test_traceback_points_at_property_body(self):
+        class Sample(AttrDict[object]):
+            @cached_property
+            def derived(self):
+                return self.missing_field
+
+        obj = Sample()
+        with pytest.raises(RuntimeError) as excinfo:
+            obj.derived
+        # The wrapper reuses the original AttributeError traceback, so the
+        # RuntimeError itself points back at the line that actually failed.
+        tb = excinfo.value.__traceback__
+        frames = []
+        while tb is not None:
+            frames.append(tb.tb_frame.f_code.co_name)
+            tb = tb.tb_next
+        assert "derived" in frames
+
+    def test_cached_property_success_returns_value(self):
+        class Sample(AttrDict[object]):
+            @cached_property
+            def doubled(self):
+                return self["n"] * 2
+
+        obj = Sample({"n": 21})
+        assert obj.doubled == 42
+
+    def test_plain_missing_attr_still_raises_attributeerror(self):
+        obj = AttrDict[str]()
+        with pytest.raises(AttributeError, match="nope"):
+            obj.nope
+
+    def test_existing_dict_key_returns_value(self):
+        obj = AttrDict[str]({"title": "ok"})
+        assert obj.title == "ok"
