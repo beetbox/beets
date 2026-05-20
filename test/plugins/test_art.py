@@ -380,9 +380,7 @@ class TestCombined(UseThePlugin, FetchImageHelper, CAAData):
         assert candidate is None
 
     def test_main_interface_gives_precedence_to_fs_art(
-        self,
-        dpath,
-        image_request_mock,
+        self, dpath, image_request_mock
     ):
         _common.touch(os.path.join(dpath, b"art.jpg"))
         image_request_mock.get(self.AMAZON_URL)
@@ -392,9 +390,7 @@ class TestCombined(UseThePlugin, FetchImageHelper, CAAData):
         assert candidate.path == os.path.join(dpath, b"art.jpg")
 
     def test_main_interface_falls_back_to_amazon(
-        self,
-        dpath,
-        image_request_mock,
+        self, dpath, image_request_mock
     ):
         image_request_mock.get(self.AMAZON_URL)
         album = Album(asin=self.ASIN)
@@ -403,9 +399,7 @@ class TestCombined(UseThePlugin, FetchImageHelper, CAAData):
         assert not candidate.path.startswith(dpath)
 
     def test_main_interface_tries_amazon_before_aao(
-        self,
-        dpath,
-        image_request_mock,
+        self, dpath, image_request_mock
     ):
         image_request_mock.get(self.AMAZON_URL)
         album = Album(asin=self.ASIN)
