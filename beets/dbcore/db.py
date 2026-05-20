@@ -68,7 +68,7 @@ if TYPE_CHECKING:
     from .query import FieldQueryType, Query, SQLiteType
     from .sort import FieldSort, Sort
 
-D_co = TypeVar("D_co", bound="Database", default="Database", covariant=True)
+D_co = TypeVar("D_co", bound="Database", covariant=True)
 
 FlexAttrs = dict[str, str]
 
@@ -788,7 +788,7 @@ class Model(ABC, Generic[D_co]):
 # Database controller and supporting interfaces.
 
 
-AnyModel = TypeVar("AnyModel", bound=Model)
+AnyModel = TypeVar("AnyModel", bound=Model["Database"])
 
 
 class Results(Generic[AnyModel]):
@@ -1073,12 +1073,12 @@ class Transaction:
 
 
 @dataclass
-class Migration(ABC):
+class Migration(ABC, Generic[D_co]):
     """Define a one-time data migration that runs during database startup."""
 
     CHUNK_SIZE: ClassVar[int] = 1000
 
-    db: Database
+    db: D_co
 
     @cached_classproperty
     def name(cls) -> str:
@@ -1096,7 +1096,9 @@ class Migration(ABC):
         finally:
             self.db._connection().row_factory = original_factory
 
-    def migrate_model(self, model_cls: type[Model], *args, **kwargs) -> None:
+    def migrate_model(
+        self, model_cls: type[Model[D_co]], *args, **kwargs
+    ) -> None:
         """Run this migration once for a model's backing table."""
         table = model_cls._table
         if not self.db.migration_exists(self.name, table):
@@ -1105,7 +1107,7 @@ class Migration(ABC):
 
     @abstractmethod
     def _migrate_data(
-        self, model_cls: type[Model], current_fields: set[str]
+        self, model_cls: type[Model[D_co]], current_fields: set[str]
     ) -> None:
         """Migrate data for a specific model."""
 
@@ -1120,11 +1122,13 @@ class Database:
     the backend.
     """
 
-    _models: Sequence[type[Model]] = ()
+    _models: Sequence[type[Model[Database]]] = ()
     """The Model subclasses representing tables in this database.
     """
 
-    _migrations: Sequence[tuple[type[Migration], Sequence[type[Model]]]] = ()
+    _migrations: Sequence[
+        tuple[type[Migration[Database]], Sequence[type[Model[Database]]]]
+    ] = ()
     """Migrations that are to be performed for the configured models."""
 
     supports_extensions = hasattr(sqlite3.Connection, "enable_load_extension")

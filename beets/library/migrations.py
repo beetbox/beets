@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from beets.library import Library
 
 
-class MultiValueFieldMigration(Migration):
+class MultiValueFieldMigration(Migration["Library"]):
     """Backfill multi-valued field from legacy single-string values."""
 
     str_field: ClassVar[str]
@@ -39,7 +39,7 @@ class MultiValueFieldMigration(Migration):
         return str_value
 
     def _migrate_data(
-        self, model_cls: type[Model], current_fields: set[str]
+        self, model_cls: type[Model[Library]], current_fields: set[str]
     ) -> None:
         """Migrate legacy single-valued field to multi-valued field."""
         str_field, list_field = self.str_field, self.list_field
@@ -136,12 +136,14 @@ class LyricsRow(NamedTuple):
     lyrics: str
 
 
-class LyricsMetadataInFlexFieldsMigration(Migration):
+class LyricsMetadataInFlexFieldsMigration(Migration["Library"]):
     """Move legacy inline lyrics metadata into dedicated flexible fields."""
 
     CHUNK_SIZE = 100
 
-    def _migrate_data(self, model_cls: type[Model], _: set[str]) -> None:
+    def _migrate_data(
+        self, model_cls: type[Model[Library]], _: set[str]
+    ) -> None:
         """Migrate legacy lyrics to move metadata to flex attributes."""
         table = model_cls._table
         flex_table = model_cls._flex_table
@@ -218,12 +220,14 @@ class LyricsMetadataInFlexFieldsMigration(Migration):
         ui.print_(f"Migration complete: {migrated} of {total} {table} updated")
 
 
-class RelativePathMigration(Migration):
+class RelativePathMigration(Migration["Library"]):
     """Migrate path field to contain value relative to the music directory."""
 
     db: Library
 
-    def _migrate_field(self, model_cls: type[Model], field: str) -> None:
+    def _migrate_field(
+        self, model_cls: type[Model[Library]], field: str
+    ) -> None:
         table = model_cls._table
 
         with self.db.transaction() as tx:
@@ -257,7 +261,7 @@ class RelativePathMigration(Migration):
         )
 
     def _migrate_data(
-        self, model_cls: type[Model], current_fields: set[str]
+        self, model_cls: type[Model[Library]], current_fields: set[str]
     ) -> None:
         for field in {"path", "artpath"} & current_fields:
             self._migrate_field(model_cls, field)
