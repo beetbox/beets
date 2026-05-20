@@ -149,7 +149,7 @@ class TestAdd(PytestItemHelper):
         assert caplog.text.count("Sending event: database_change") == 1
 
 
-class RemoveTest(ItemInDBTestCase):
+class TestRemove(PytestItemInDBHelper):
     def test_remove_deletes_from_db(self):
         self.i.remove()
         c = self.lib._connection().execute("select * from items")
