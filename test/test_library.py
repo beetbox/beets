@@ -14,6 +14,8 @@
 
 """Tests for non-query database functions of Item."""
 
+from __future__ import annotations
+
 import os
 import os.path
 import re
@@ -21,6 +23,7 @@ import shutil
 import stat
 import unicodedata
 import unittest
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
@@ -28,12 +31,11 @@ from mediafile import MediaFile, UnreadableFileError
 
 import beets.dbcore.query
 import beets.library
-import beets.logging as blog
 from beets import config, plugins, util
 from beets.library import Album
 from beets.test import _common
 from beets.test._common import item
-from beets.test.helper import BeetsTestCase, ItemInDBTestCase, capture_log
+from beets.test.helper import BeetsTestCase, ItemInDBTestCase, PytestTestHelper
 from beets.util import (
     as_string,
     bytestring_path,
@@ -41,6 +43,9 @@ from beets.util import (
     path_as_posix,
     syspath,
 )
+
+if TYPE_CHECKING:
+    from beets.library.models import Item
 
 # Shortcut to path normalization.
 np = util.normpath
@@ -156,11 +161,7 @@ class TestRemove(PytestItemInDBHelper):
         assert c.fetchone() is None
 
 
-class GetSetTest(BeetsTestCase):
-    def setUp(self):
-        super().setUp()
-        self.i = item()
-
+class TestGetSet(PytestItemHelper):
     def test_set_changes_value(self):
         self.i.bpm = 4915
         assert self.i.bpm == 4915
@@ -179,7 +180,7 @@ class GetSetTest(BeetsTestCase):
 
     def test_album_fallback(self):
         # integration test of item-album fallback
-        i = item(self.lib)
+        i = _common.item(self.lib)
         album = self.lib.add_album([i])
         album["flex"] = "foo"
         album.store()
