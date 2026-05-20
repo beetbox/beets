@@ -52,6 +52,12 @@ class PytestItemInDBHelper(PytestTestHelper):
         self.i = _common.item(self.lib)
 
 
+class PytestItemHelper(PytestTestHelper):
+    @pytest.fixture(autouse=True)
+    def item(self):
+        self.i = _common.item()
+
+
 class TestLoad(PytestItemInDBHelper):
     def test_load_restores_data_from_db(self):
         original_title = self.i.title
@@ -99,11 +105,7 @@ class TestStore(PytestItemInDBHelper):
         assert "flex1" not in album.items()[0]
 
 
-class AddTest(BeetsTestCase):
-    def setUp(self):
-        super().setUp()
-        self.i = item()
-
+class TestAdd(PytestItemHelper):
     def test_item_add_inserts_row(self):
         self.lib.add(self.i)
         new_grouping = (
@@ -129,22 +131,22 @@ class AddTest(BeetsTestCase):
             )
             .fetchone()["grouping"]
         )
-        assert new_grouping == self.i.grouping
+        assert new_grouping == i.grouping
 
-    def test_library_add_one_database_change_event(self):
+    def test_library_add_one_database_change_event(
+        self, caplog: pytest.LogCaptureFixture
+    ):
         """Test library.add emits only one database_change event."""
-        self.item = _common.item()
-        self.item.path = beets.util.normpath(
+        self.i.path = beets.util.normpath(
             os.path.join(self.temp_dir, b"a", b"b.mp3")
         )
-        self.item.album = "a"
-        self.item.title = "b"
+        self.i.album = "a"
+        self.i.title = "b"
 
-        blog.getLogger("beets").set_global_level(blog.DEBUG)
-        with capture_log() as logs:
-            self.lib.add(self.item)
+        with caplog.at_level("DEBUG", logger="beets"):
+            self.lib.add(self.i)
 
-        assert logs.count("Sending event: database_change") == 1
+        assert caplog.text.count("Sending event: database_change") == 1
 
 
 class RemoveTest(ItemInDBTestCase):
