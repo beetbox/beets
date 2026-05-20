@@ -34,19 +34,18 @@ from beets.importer import (
     SingletonImportTask,
 )
 from beets.library import Item
-from beets.test import helper
 from beets.test.helper import (
     AutotagStub,
     ImportHelper,
     IOMixin,
     PluginMixin,
-    PluginTestCase,
+    PytestPluginTestHelper,
     TerminalImportMixin,
 )
 from beets.util import PromptChoice, displayable_path, syspath
 
 
-class TestPluginRegistration(IOMixin, PluginTestCase):
+class TestPluginRegistration(IOMixin, PytestPluginTestHelper):
     class RatingPlugin(plugins.BeetsPlugin):
         item_types: ClassVar[dict[str, types.Type]] = {
             "rating": types.Float(),
@@ -62,9 +61,8 @@ class TestPluginRegistration(IOMixin, PluginTestCase):
             if tags["artist"] == "XXX":
                 tags["artist"] = "YYY"
 
-    def setUp(self):
-        super().setUp()
-
+    @pytest.fixture(autouse=True)
+    def _setup(self):
         self.register_plugin(self.RatingPlugin)
 
     def test_field_type_registered(self):
@@ -99,31 +97,43 @@ class TestPluginRegistration(IOMixin, PluginTestCase):
         assert out == "one; two; three\n"
 
 
-class PluginImportTestCase(ImportHelper, PluginTestCase):
-    def setUp(self):
-        super().setUp()
+class PytestImportHelper(ImportHelper, PytestPluginTestHelper):
+    @pytest.fixture(autouse=True)
+    def setup_import_helper(self, setup):
+        self.import_media = []
+        self.lib.path_formats = [
+            ("default", os.path.join("$artist", "$album", "$title")),
+            ("singleton:true", os.path.join("singletons", "$title")),
+            ("comp:true", os.path.join("compilations", "$album", "$title")),
+        ]
+
+        #
         self.prepare_album_for_import(2)
 
 
-class EventsTest(PluginImportTestCase):
-    def test_import_task_created(self):
+class TestEvents(PytestImportHelper):
+    def test_import_task_created(self, caplog):
         self.importer = self.setup_importer(pretend=True)
 
-        with helper.capture_log() as logs:
+        with caplog.at_level("DEBUG"):
             self.importer.run()
 
         # Exactly one event should have been imported (for the album).
         # Sentinels do not get emitted.
-        assert logs.count("Sending event: import_task_created") == 1
+        assert caplog.text.count("Sending event: import_task_created") == 1
 
-        logs = [line for line in logs if not line.startswith("Sending event:")]
+        logs = [
+            msg
+            for msg in caplog.messages
+            if not msg.startswith("Sending event:")
+        ]
         assert logs == [
             f"Album: {displayable_path(os.path.join(self.import_dir, b'album'))}",
             f"  {displayable_path(self.import_media[0].path)}",
             f"  {displayable_path(self.import_media[1].path)}",
         ]
 
-    def test_import_task_created_with_plugin(self):
+    def test_import_task_created_with_plugin(self, caplog):
         class ToSingletonPlugin(plugins.BeetsPlugin):
             def __init__(self):
                 super().__init__()
@@ -151,21 +161,25 @@ class EventsTest(PluginImportTestCase):
 
         self.importer = self.setup_importer(pretend=True)
 
-        with helper.capture_log() as logs:
+        with caplog.at_level("DEBUG"):
             self.importer.run()
 
         # Exactly one event should have been imported (for the album).
         # Sentinels do not get emitted.
-        assert logs.count("Sending event: import_task_created") == 1
+        assert caplog.text.count("Sending event: import_task_created") == 1
 
-        logs = [line for line in logs if not line.startswith("Sending event:")]
+        logs = [
+            msg
+            for msg in caplog.messages
+            if not msg.startswith("Sending event:")
+        ]
         assert logs == [
             f"Singleton: {displayable_path(self.import_media[0].path)}",
             f"Singleton: {displayable_path(self.import_media[1].path)}",
         ]
 
 
-class ListenersTest(PluginTestCase):
+class TestListeners(PytestPluginTestHelper):
     def test_register(self):
         class DummyPlugin(plugins.BeetsPlugin):
             def __init__(self):
@@ -267,21 +281,19 @@ class ListenersTest(PluginTestCase):
         plugins.send("event9", foo=5)
 
 
-class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
-    def setUp(self):
-        super().setUp()
+class TestPromptChoices(TerminalImportMixin, PytestImportHelper):
+    @pytest.fixture(autouse=True)
+    def setup_prompt_choice(self, io):
         self.setup_importer()
         self.matcher = AutotagStub(AutotagStub.IDENT).install()
-        self.addCleanup(self.matcher.restore)
         # keep track of ui.input_option() calls
         self.input_options_patcher = patch(
             "beets.ui.input_options", side_effect=ui.input_options
         )
         self.mock_input_options = self.input_options_patcher.start()
-
-    def tearDown(self):
-        super().tearDown()
+        yield
         self.input_options_patcher.stop()
+        self.matcher.restore()
 
     def test_plugin_choices_in_ui_input_options_album(self):
         """Test the presence of plugin choices on the prompt (album)."""
