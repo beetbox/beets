@@ -58,11 +58,7 @@ class BareascPlugin(BeetsPlugin):
     def __init__(self):
         """Default prefix for selecting bare-ASCII matching is #."""
         super().__init__()
-        self.config.add(
-            {
-                "prefix": "#",
-            }
-        )
+        self.config.add({"prefix": "#"})
 
     def queries(self):
         """Register bare-ASCII matching."""

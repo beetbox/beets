@@ -200,10 +200,7 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
         mbid = item["mb_trackid"]
         headers = {"Content-Type": "application/json"}
         response = requests.post(
-            self.url.format(mbid=mbid),
-            json=data,
-            headers=headers,
-            timeout=10,
+            self.url.format(mbid=mbid), json=data, headers=headers, timeout=10
         )
         # Test that request was successful and raise an error on failure.
         if response.status_code != 200:
@@ -219,6 +216,5 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
             )
         else:
             self._log.debug(
-                "Successfully submitted AcousticBrainz analysis for {}.",
-                item,
+                "Successfully submitted AcousticBrainz analysis for {}.", item
             )

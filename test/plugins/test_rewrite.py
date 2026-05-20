@@ -37,15 +37,12 @@ class RewritePluginTest(PluginTestCase):
 
             assert item.artist == "Experience catalog"
 
-    def test_rewrite_is_case_insensitive_and_leaves_non_matches_unchanged(
-        self,
-    ):
+    def test_rewrite_is_case_insensitive_and_leaves_non_matches_unchanged(self):
         with self.configure_plugin(
             {"artist odd eye circle": "LOONA / ODD EYE CIRCLE"}
         ):
             matching_item = self.add_item(
-                artist="ODD EYE CIRCLE",
-                albumartist="ODD EYE CIRCLE",
+                artist="ODD EYE CIRCLE", albumartist="ODD EYE CIRCLE"
             )
             other_item = self.add_item(artist="ARTMS", albumartist="ARTMS")
 

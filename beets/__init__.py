@@ -26,9 +26,7 @@ __author__ = "Adrian Sampson <adrian@radbox.org>"
 def __getattr__(name: str):
     """Handle deprecated imports."""
     return deprecate_imports(
-        __name__,
-        {"art": "beetsplug._utils", "vfs": "beetsplug._utils"},
-        name,
+        __name__, {"art": "beetsplug._utils", "vfs": "beetsplug._utils"}, name
     )
 
 

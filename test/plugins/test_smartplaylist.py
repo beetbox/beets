@@ -328,10 +328,7 @@ class TestGetItemURI:
 
     @pytest.fixture
     def plugin(self, config, plugin_config):
-        plugin_config = {
-            "prefix": "http://beets:8337/files",
-            **plugin_config,
-        }
+        plugin_config = {"prefix": "http://beets:8337/files", **plugin_config}
         config["smartplaylist"].set(plugin_config)
 
         return SmartPlaylistPlugin()

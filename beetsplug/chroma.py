@@ -186,11 +186,7 @@ def _all_releases(items):
 class AcoustidPlugin(MetadataSourcePlugin):
     def __init__(self):
         super().__init__()
-        self.config.add(
-            {
-                "auto": True,
-            }
-        )
+        self.config.add({"auto": True})
         config["acoustid"]["apikey"].redact = True
 
         if self.config["auto"]:
@@ -412,10 +408,7 @@ def submit_items(log, userkey, items, chunksize=64):
         fp = fingerprint_item(log, item, write=ui.should_write())
 
         # Construct a submission dictionary for this item.
-        item_data = {
-            "duration": int(item.length),
-            "fingerprint": fp,
-        }
+        item_data = {"duration": int(item.length), "fingerprint": fp}
         if item.mb_trackid:
             item_data["mbid"] = item.mb_trackid
             log.debug("submitting MBID")

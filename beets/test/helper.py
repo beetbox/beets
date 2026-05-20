@@ -316,17 +316,12 @@ class TestHelper(RunMixin, ConfigMixin):
         return items
 
     def add_album_fixture(
-        self,
-        track_count=1,
-        fname="full",
-        ext="mp3",
-        disc_count=1,
+        self, track_count=1, fname="full", ext="mp3", disc_count=1
     ):
         """Add an album with files to the database."""
         items = []
         path = os.path.join(
-            _common.RSRC,
-            util.bytestring_path(f"{fname}.{ext}"),
+            _common.RSRC, util.bytestring_path(f"{fname}.{ext}")
         )
         for discnumber in range(1, disc_count + 1):
             for i in range(track_count):
@@ -519,10 +514,7 @@ class ImportHelper(TestHelper):
         ]
 
     def prepare_track_for_import(
-        self,
-        track_id: int,
-        album_path: Path,
-        album_id: int | None = None,
+        self, track_id: int, album_path: Path, album_id: int | None = None
     ) -> Path:
         track_path = album_path / f"track_{track_id}.mp3"
         shutil.copy(self.resource_path, track_path)
@@ -577,10 +569,7 @@ class ImportHelper(TestHelper):
 
     def _get_import_session(self, import_dir: bytes) -> ImportSession:
         return ImportSessionFixture(
-            self.lib,
-            loghandler=None,
-            query=None,
-            paths=[import_dir],
+            self.lib, loghandler=None, query=None, paths=[import_dir]
         )
 
     def setup_importer(
@@ -871,10 +860,7 @@ class FetchImageHelper:
             raise AssertionError(f"Mocking {file_type} responses not supported")
 
         responses.add(
-            responses.GET,
-            url,
-            content_type=content_type,
-            body=header,
+            responses.GET, url, content_type=content_type, body=header
         )
 
 

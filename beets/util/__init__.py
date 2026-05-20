@@ -609,10 +609,7 @@ def hardlink(path: bytes, dest: bytes, replace: bool = False):
 
 
 def reflink(
-    path: bytes,
-    dest: bytes,
-    replace: bool = False,
-    fallback: bool = False,
+    path: bytes, dest: bytes, replace: bool = False, fallback: bool = False
 ):
     """Create a reflink from `dest` to `path`.
 

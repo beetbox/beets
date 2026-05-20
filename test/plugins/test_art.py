@@ -642,8 +642,7 @@ class CoverArtArchiveTest(UseThePlugin, CAAHelper):
             self.RELEASE_URL, self.RESPONSE_RELEASE_WITHOUT_THUMBNAILS
         )
         self.mock_caa_response(
-            self.GROUP_URL,
-            self.RESPONSE_GROUP_WITHOUT_THUMBNAILS,
+            self.GROUP_URL, self.RESPONSE_GROUP_WITHOUT_THUMBNAILS
         )
         candidates = list(self.source.get(album, self.settings, []))
         assert len(candidates) == 3
@@ -770,9 +769,7 @@ class ArtImporterTest(UseThePlugin):
         self.art_file.touch()
         self.old_afa = self.plugin.art_for_album
         self.afa_response = fetchart.Candidate(
-            logger,
-            source_name="test",
-            path=self.art_file,
+            logger, source_name="test", path=self.art_file
         )
 
         def art_for_album(i, p, local_only=False):
@@ -784,8 +781,7 @@ class ArtImporterTest(UseThePlugin):
         os.mkdir(syspath(os.path.join(self.libdir, b"album")))
         itempath = os.path.join(self.libdir, b"album", b"test.mp3")
         shutil.copyfile(
-            syspath(os.path.join(_common.RSRC, b"full.mp3")),
-            syspath(itempath),
+            syspath(os.path.join(_common.RSRC, b"full.mp3")), syspath(itempath)
         )
         self.i = _common.item()
         self.i.path = itempath
@@ -859,9 +855,7 @@ class ArtImporterTest(UseThePlugin):
         artdest = os.path.join(os.path.dirname(self.i.path), b"cover.jpg")
         shutil.copyfile(self.art_file, syspath(artdest))
         self.afa_response = fetchart.Candidate(
-            logger,
-            source_name="test",
-            path=artdest,
+            logger, source_name="test", path=artdest
         )
         self._fetch_art(True)
 

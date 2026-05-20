@@ -115,12 +115,7 @@ class StrFormatLogger(Logger):
     """
 
     class _LogMessage:
-        def __init__(
-            self,
-            msg: str,
-            args: _ArgsType,
-            kwargs: dict[str, Any],
-        ):
+        def __init__(self, msg: str, args: _ArgsType, kwargs: dict[str, Any]):
             self.msg = msg
             self.args = args
             self.kwargs = kwargs

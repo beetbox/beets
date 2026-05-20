@@ -26,8 +26,7 @@ class TestMultiGenreFieldMigration:
             {**Album._fields, "genre": types.STRING},
         )
         monkeypatch.setattr(
-            "beets.library.models.Album.item_keys",
-            {*Album.item_keys, "genre"},
+            "beets.library.models.Album.item_keys", {*Album.item_keys, "genre"}
         )
         helper = TestHelper()
         helper.setup_beets()

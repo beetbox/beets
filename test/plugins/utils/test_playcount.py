@@ -52,10 +52,7 @@ class TestPlayCount:
         source="lastfm",
     ):
         item = Item(
-            title=title,
-            artist=artist,
-            album=album,
-            mb_trackid=mb_trackid,
+            title=title, artist=artist, album=album, mb_trackid=mb_trackid
         )
         self.lib.add(item)
 
@@ -113,25 +110,14 @@ class TestPlayCount:
 
     def test_process_track_updates_every_matching_song(self):
         first = self.add_item(
-            title="Song",
-            artist="Artist",
-            album="First Album",
-            play_count=1,
+            title="Song", artist="Artist", album="First Album", play_count=1
         )
         second = self.add_item(
-            title="Song",
-            artist="Artist",
-            album="Second Album",
-            play_count=9,
+            title="Song", artist="Artist", album="Second Album", play_count=9
         )
 
         assert (
-            process_track(
-                self.lib,
-                self.track(playcount=0),
-                self.log,
-                "lastfm",
-            )
+            process_track(self.lib, self.track(playcount=0), self.log, "lastfm")
             is True
         )
 
@@ -177,11 +163,7 @@ class TestPlayCount:
             pytest.param([], (0, 0), None, None, id="empty-page"),
             pytest.param(
                 [
-                    {
-                        "artist": "Artist",
-                        "name": "Known Song",
-                        "playcount": 8,
-                    },
+                    {"artist": "Artist", "name": "Known Song", "playcount": 8},
                     {
                         "artist": "Missing Artist",
                         "name": "Missing Song",
@@ -203,11 +185,7 @@ class TestPlayCount:
         expected_playcount,
         caplog,
     ):
-        item = self.add_item(
-            title="Known Song",
-            artist="Artist",
-            play_count=1,
-        )
+        item = self.add_item(title="Known Song", artist="Artist", play_count=1)
 
         with caplog.at_level("DEBUG", logger=LOGGER_NAME):
             assert (

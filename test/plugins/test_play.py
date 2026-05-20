@@ -140,9 +140,7 @@ class PlayPluginTest(IOMixin, CleanupModulesMixin, PluginTestCase):
 
         self.io.addinput("a")
         self.run_and_assert(
-            open_mock,
-            ["-y", "NiceTitle"],
-            expected_playlist=expected_playlist,
+            open_mock, ["-y", "NiceTitle"], expected_playlist=expected_playlist
         )
 
     def _playlist_lines(self, open_mock):

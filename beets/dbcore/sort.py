@@ -117,10 +117,7 @@ class FieldSort(Sort):
     """
 
     def __init__(
-        self,
-        field: str,
-        ascending: bool = True,
-        case_insensitive: bool = True,
+        self, field: str, ascending: bool = True, case_insensitive: bool = True
     ):
         self.field = field
         self.ascending = ascending

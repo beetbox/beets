@@ -63,13 +63,7 @@ _p = pytest.param
             ["list value"],
             id="list value wins, warning raised",
         ),
-        _p(
-            None,
-            None,
-            does_not_warn(),
-            None,
-            id="no str value, no warning",
-        ),
+        _p(None, None, does_not_warn(), None, id="no str value, no warning"),
     ],
 )
 class TestLegacyStringField:

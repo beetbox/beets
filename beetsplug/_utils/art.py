@@ -150,11 +150,7 @@ def resize_image(log, imagepath, maxwidth, quality):
 
 
 def check_art_similarity(
-    log,
-    item,
-    imagepath,
-    compare_threshold,
-    artresizer=None,
+    log, item, imagepath, compare_threshold, artresizer=None
 ):
     """A boolean indicating if an image is similar to embedded item art.
 
@@ -190,9 +186,7 @@ def extract(log, outpath, item):
     outpath += bytestring_path(f".{ext}")
 
     log.info(
-        "Extracting album art from: {} to: {}",
-        item,
-        displayable_path(outpath),
+        "Extracting album art from: {} to: {}", item, displayable_path(outpath)
     )
     with open(syspath(outpath), "wb") as f:
         f.write(art)

@@ -65,21 +65,17 @@ class ModelFixture1(LibModel):
     }
 
     _sorts: ClassVar[dict[str, type[sort.FieldSort]]] = {
-        "some_sort": SortFixture,
+        "some_sort": SortFixture
     }
     _indices = (Index("field_one_index", ("field_one",)),)
 
     @cached_classproperty
     def _types(cls):
-        return {
-            "some_float_field": dbcore.types.FLOAT,
-        }
+        return {"some_float_field": dbcore.types.FLOAT}
 
     @cached_classproperty
     def _queries(cls):
-        return {
-            "some_query": QueryFixture,
-        }
+        return {"some_query": QueryFixture}
 
     @classmethod
     def _getters(cls):
@@ -547,9 +543,7 @@ class ParseTest(unittest.TestCase):
 class QueryParseTest(unittest.TestCase):
     def pqp(self, part):
         return dbcore.queryparse.parse_query_part(
-            part,
-            {"year": query.NumericQuery},
-            {":": query.RegexpQuery},
+            part, {"year": query.NumericQuery}, {":": query.RegexpQuery}
         )[:-1]  # remove the negate flag
 
     def test_one_basic_term(self):
@@ -606,10 +600,7 @@ class QueryParseTest(unittest.TestCase):
 class QueryFromStringsTest(unittest.TestCase):
     def qfs(self, strings):
         return dbcore.queryparse.query_from_strings(
-            query.AndQuery,
-            ModelFixture1,
-            {":": query.RegexpQuery},
-            strings,
+            query.AndQuery, ModelFixture1, {":": query.RegexpQuery}, strings
         )
 
     def test_zero_parts(self):
@@ -640,10 +631,7 @@ class QueryFromStringsTest(unittest.TestCase):
 
 class SortFromStringsTest(unittest.TestCase):
     def sfs(self, strings):
-        return dbcore.queryparse.sort_from_strings(
-            ModelFixture1,
-            strings,
-        )
+        return dbcore.queryparse.sort_from_strings(ModelFixture1, strings)
 
     def test_zero_parts(self):
         s = self.sfs([])
@@ -676,10 +664,7 @@ class SortFromStringsTest(unittest.TestCase):
 
 class ParseSortedQueryTest(unittest.TestCase):
     def psq(self, parts):
-        return dbcore.parse_sorted_query(
-            ModelFixture1,
-            parts.split(),
-        )
+        return dbcore.parse_sorted_query(ModelFixture1, parts.split())
 
     def test_and_query(self):
         q, s = self.psq("foo bar")

@@ -152,13 +152,7 @@ class MBCollection:
 class MusicBrainzCollectionPlugin(BeetsPlugin):
     def __init__(self) -> None:
         super().__init__()
-        self.config.add(
-            {
-                "auto": False,
-                "collection": "",
-                "remove": False,
-            }
-        )
+        self.config.add({"auto": False, "collection": "", "remove": False})
         if self.config["auto"]:
             self.import_stages = [self.imported]
 

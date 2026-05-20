@@ -293,7 +293,7 @@ class MusicBrainzPlugin(
                     "tidal": False,
                 },
                 "extra_tags": [],
-            },
+            }
         )
         # TODO: Remove in 3.0.0
         with suppress(NotFoundError):
@@ -690,11 +690,7 @@ class MusicBrainzPlugin(
         info.year, info.month, info.day = (
             _get_date(release_date)
             if release_date
-            else (
-                info.original_year,
-                info.original_month,
-                info.original_day,
-            )
+            else (info.original_year, info.original_month, info.original_day)
         )
 
         extra_albumdatas = plugins.send("mb_album_extract", data=release)

@@ -25,11 +25,7 @@ def get_music_section(
     url = urljoin(f"{get_protocol(secure)}://{host}:{port}", api_endpoint)
 
     # Sends request.
-    r = requests.get(
-        url,
-        verify=not ignore_cert_errors,
-        timeout=10,
-    )
+    r = requests.get(url, verify=not ignore_cert_errors, timeout=10)
 
     # Parse xml tree and extract music section key.
     tree = ElementTree.fromstring(r.content)
@@ -55,11 +51,7 @@ def update_plex(host, port, token, library_name, secure, ignore_cert_errors):
     url = urljoin(f"{get_protocol(secure)}://{host}:{port}", api_endpoint)
 
     # Sends request and returns requests object.
-    r = requests.get(
-        url,
-        verify=not ignore_cert_errors,
-        timeout=10,
-    )
+    r = requests.get(url, verify=not ignore_cert_errors, timeout=10)
     return r
 
 

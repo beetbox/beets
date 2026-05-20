@@ -129,11 +129,7 @@ class AddTest(BeetsTestCase):
         """Test library.add emits only one database_change event."""
         self.item = _common.item()
         self.item.path = beets.util.normpath(
-            os.path.join(
-                self.temp_dir,
-                b"a",
-                b"b.mp3",
-            )
+            os.path.join(self.temp_dir, b"a", b"b.mp3")
         )
         self.item.album = "a"
         self.item.title = "b"
@@ -925,21 +921,15 @@ class PluginDestinationTest(BeetsTestCase):
         self._assert_dest(b"the artist $foo")
 
     def test_plugin_value_not_substituted(self):
-        self._tv_map = {
-            "foo": "bar",
-        }
+        self._tv_map = {"foo": "bar"}
         self._assert_dest(b"the artist bar")
 
     def test_plugin_value_overrides_attribute(self):
-        self._tv_map = {
-            "artist": "bar",
-        }
+        self._tv_map = {"artist": "bar"}
         self._assert_dest(b"bar $foo")
 
     def test_plugin_value_sanitized(self):
-        self._tv_map = {
-            "foo": "bar/baz",
-        }
+        self._tv_map = {"foo": "bar/baz"}
         self._assert_dest(b"the artist bar_baz")
 
 

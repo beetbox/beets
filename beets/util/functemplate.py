@@ -99,10 +99,7 @@ def compile_func(arg_names, statements, name="_the_func", debug=False):
     args = ast.arguments(**args_fields)
 
     func_def = ast.FunctionDef(
-        name=name,
-        args=args,
-        body=statements,
-        decorator_list=[],
+        name=name, args=args, body=statements, decorator_list=[]
     )
 
     mod = ast.Module([func_def], [])
@@ -558,8 +555,7 @@ class Template:
             argnames.append(f"{FUNCTION_PREFIX}{funcname}")
 
         func = compile_func(
-            argnames,
-            [ast.Return(ast.List(expressions, ast.Load()))],
+            argnames, [ast.Return(ast.List(expressions, ast.Load()))]
         )
 
         def wrapper_func(values={}, functions={}):

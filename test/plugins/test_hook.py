@@ -54,9 +54,7 @@ class TestHookLogs(HookTestCase):
     def _configure_hook(self, command: str) -> None:
         config = {"hooks": [self._get_hook(self.HOOK, command)]}
 
-        with (
-            self.configure_plugin(config),
-        ):
+        with self.configure_plugin(config):
             plugins.send(self.HOOK)
 
     def test_hook_empty_command(self, caplog: pytest.LogCaptureFixture):
