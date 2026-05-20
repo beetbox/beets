@@ -46,7 +46,13 @@ from beets.util import (
 np = util.normpath
 
 
-class LoadTest(ItemInDBTestCase):
+class PytestItemInDBHelper(PytestTestHelper):
+    @pytest.fixture(autouse=True)
+    def item(self):
+        self.i = _common.item(self.lib)
+
+
+class TestLoad(PytestItemInDBHelper):
     def test_load_restores_data_from_db(self):
         original_title = self.i.title
         self.i.title = "something"
