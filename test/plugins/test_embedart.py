@@ -32,8 +32,7 @@ from beets.test.helper import (
     FetchImageHelper,
     ImportHelper,
     IOMixin,
-    PluginMixin,
-    TestHelper,
+    PytestPluginTestHelper,
 )
 from beets.util import bytestring_path, displayable_path, syspath
 from beets.util.artresizer import ArtResizer
@@ -76,18 +75,6 @@ def require_artresizer_compare(test):
 
     wrapper.__name__ = test.__name__
     return wrapper
-
-
-class PytestPluginTestHelper(PluginMixin, TestHelper):
-    """Same as the BeetsTestCase unittest setup but for pytest."""
-
-    @pytest.fixture(autouse=True)
-    def setup(self):
-        self.setup_beets()
-        try:
-            yield
-        finally:
-            self.teardown_beets()
 
 
 class PytestImportHelper(PytestPluginTestHelper, ImportHelper):
