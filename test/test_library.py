@@ -193,16 +193,12 @@ class TestGetSet(PytestItemHelper):
         assert i.get("flexx") is None
 
 
-class DestinationTest(BeetsTestCase):
+class TestDestination(PytestItemInDBHelper):
     """Confirm tests handle temporary directory path containing '.'"""
 
     def create_temp_dir(self, **kwargs):
         kwargs["prefix"] = "."
         return super().create_temp_dir(**kwargs)
-
-    def setUp(self):
-        super().setUp()
-        self.i = item(self.lib)
 
     def test_directory_works_with_trailing_slash(self):
         self.lib.directory = b"one/"
