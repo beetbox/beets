@@ -1362,7 +1362,7 @@ class TestItemReadGenre(PytestTestHelper):
         assert item.genres == ["Jazz", "Funk", "Soul"]
 
 
-class FilesizeTest(BeetsTestCase):
+class TestFilesize(PytestTestHelper):
     def test_filesize(self):
         item = self.add_item_fixture()
         assert item.filesize != 0
