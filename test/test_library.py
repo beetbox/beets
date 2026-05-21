@@ -1260,7 +1260,7 @@ class UnicodePathTest(ItemInDBTestCase):
         self.i.write()
 
 
-class WriteTest(BeetsTestCase):
+class TestWrite(PytestTestHelper):
     def test_write_nonexistant(self):
         item = self.create_item()
         item.path = b"/path/does/not/exist"
@@ -1328,7 +1328,7 @@ class WriteTest(BeetsTestCase):
         assert MediaFile(syspath(item.path)).year == clean_year
 
 
-class ItemReadTest(unittest.TestCase):
+class TestItemRead:
     def test_unreadable_raise_read_error(self):
         unreadable = os.path.join(_common.RSRC, b"image-2x3.png")
         item = beets.library.Item()
@@ -1351,7 +1351,7 @@ class ItemReadTest(unittest.TestCase):
         assert str(exc_info.value.reason) in message
 
 
-class ItemReadGenreTest(BeetsTestCase):
+class TestItemReadGenre(PytestTestHelper):
     def test_read_semicolon_delimited_genres(self):
         """Semicolon-delimited genre tags are split into individual genres on read."""
         path = self.create_mediafile_fixture()
