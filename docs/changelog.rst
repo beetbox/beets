@@ -16,6 +16,10 @@ New features
   also available as config options via ``force`` and ``keep_new``.
 - :ref:`import-cmd`: The ``--nomove`` / ``-M`` CLI flag can now be used to
   override the ``move: yes`` config option during import.
+- :doc:`plugins/lyrics`: Write synced (LRC) lyrics to the ``SYLT`` (synchronized
+  lyrics) ID3 frame and plain text to ``USLT`` for ID3-tagged files, instead of
+  storing raw LRC timestamps in ``USLT``. Players that only support ``USLT``
+  continue to see readable plain lyrics. :bug:`6541`
 
 Bug fixes
 ~~~~~~~~~
@@ -86,10 +90,6 @@ New features
 
   See :doc:`plugins/tidal` for more information.
 
-- :doc:`plugins/lyrics`: Write synced (LRC) lyrics to the ``SYLT`` (synchronized
-  lyrics) ID3 frame and plain text to ``USLT`` for ID3-tagged files, instead of
-  storing raw LRC timestamps in ``USLT``. Players that only support ``USLT``
-  continue to see readable plain lyrics. :bug:`6541`
 - Add support for adding or modifying a subtitle (ID3 tag ``TIT3``) field
 
 Bug fixes
