@@ -53,7 +53,7 @@ np = util.normpath
 
 class PytestItemInDBHelper(PytestTestHelper):
     @pytest.fixture(autouse=True)
-    def item(self):
+    def item(self, setup):
         self.i = _common.item(self.lib)
 
 
@@ -540,7 +540,7 @@ class TestDestination(PytestItemInDBHelper):
         assert self.i.destination() == np("one/foo/two")
 
 
-class ItemFormattedMappingTest(ItemInDBTestCase):
+class TestItemFormattedMapping(PytestItemInDBHelper):
     def test_formatted_item_value(self):
         formatted = self.i.formatted()
         assert formatted["artist"] == "the artist"
