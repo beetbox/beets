@@ -51,6 +51,10 @@ Bug fixes
 - ``ReadError`` and ``WriteError`` now include the file path and the underlying
   reason in their message instead of a ``<super: ...>`` object representation.
   :bug:`6560`
+- :doc:`plugins/mbcollection`: Handle MusicBrainz ``401 Unauthorized`` errors
+  during ``mbupdate`` without crashing, and log a clearer message that points
+  users to ``musicbrainz.user`` and ``musicbrainz.pass`` configuration.
+  :bug:`6651`
 
 ..
     For plugin developers
