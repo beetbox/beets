@@ -1372,7 +1372,7 @@ class TestFilesize(PytestTestHelper):
         assert item.filesize == 0
 
 
-class ItemPruneDirsClutterTest(BeetsTestCase):
+class TestItemPruneDirsClutter(PytestTestHelper):
     """Regression tests: prune_dirs respects config["clutter"] during move/remove."""
 
     def _drop_clutter(self, directory, filename=b"unwanted.log"):
