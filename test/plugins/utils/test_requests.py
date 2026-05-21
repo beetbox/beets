@@ -16,10 +16,7 @@ def _prepared_request(
 class TestRateLimitAdapter:
     @pytest.mark.parametrize(
         "last_request_time, now, expected_sleep",
-        [
-            (100.0, 100.0, 0.25),
-            (100.0, 100.1, 0.15),
-        ],
+        [(100.0, 100.0, 0.25), (100.0, 100.1, 0.15)],
     )
     def test_send_sleeps_for_remaining_time(
         self, monkeypatch, last_request_time, now, expected_sleep
@@ -33,8 +30,7 @@ class TestRateLimitAdapter:
         )
 
         monkeypatch.setattr(
-            "beetsplug._utils.requests.time.monotonic",
-            lambda: now,
+            "beetsplug._utils.requests.time.monotonic", lambda: now
         )
 
         sleep_mock = MagicMock()

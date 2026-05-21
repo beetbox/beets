@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import itertools
 from copy import deepcopy
+from functools import cached_property
 from typing import TYPE_CHECKING, Any
 
 import mediafile
@@ -114,11 +115,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
 
     @override
     def candidates(
-        self,
-        items: Sequence[Item],
-        artist: str,
-        album: str,
-        va_likely: bool,
+        self, items: Sequence[Item], artist: str, album: str, va_likely: bool
     ) -> Iterable[AlbumInfo]:
         if len(self._scripts) == 0:
             yield from super().candidates(items, artist, album, va_likely)
@@ -189,9 +186,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
             return False
 
     def _wanted_pseudo_release_id(
-        self,
-        album_id: str,
-        relation: ReleaseRelation,
+        self, album_id: str, relation: ReleaseRelation
     ) -> str | None:
         if (
             len(self._scripts) == 0
@@ -246,9 +241,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
                         track.artist = alias
 
     def _add_custom_tags(
-        self,
-        official_release: AlbumInfo,
-        pseudo_release: AlbumInfo,
+        self, official_release: AlbumInfo, pseudo_release: AlbumInfo
     ):
         for tag_key, pseudo_key in (
             self.config["album_custom_tags"].get().items()
@@ -271,7 +264,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
             )
             album_info.use_pseudo_as_ref()
             new_pairs, *_ = assign_items(match.items, album_info.tracks)
-            album_info.mapping = dict(new_pairs)
+            match.mapping = dict(new_pairs)
 
         if album_info.data_source == self.data_source:
             album_info.data_source = "MusicBrainz"
@@ -297,10 +290,7 @@ class PseudoAlbumInfo(AlbumInfo):
     """
 
     def __init__(
-        self,
-        pseudo_release: AlbumInfo,
-        official_release: AlbumInfo,
-        **kwargs,
+        self, pseudo_release: AlbumInfo, official_release: AlbumInfo, **kwargs
     ):
         super().__init__(pseudo_release.tracks, **kwargs)
         self.__dict__["_pseudo_source"] = True
@@ -308,6 +298,13 @@ class PseudoAlbumInfo(AlbumInfo):
         for k, v in pseudo_release.items():
             if k not in kwargs:
                 self[k] = v
+
+    @cached_property
+    def raw_data(self):
+        # Info.raw_data does self.__class__(**self.copy()) which fails for
+        # PseudoAlbumInfo since __init__ requires pseudo_release and
+        # official_release. Construct a plain AlbumInfo instead.
+        return AlbumInfo(**self.copy()).raw_data
 
     def get_official_release(self) -> AlbumInfo:
         return self.__dict__["_official_release"]

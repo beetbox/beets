@@ -37,9 +37,7 @@ PATTERNS = [
 ]
 
 # Titles considered "empty" and in need of replacement.
-BAD_TITLE_PATTERNS = [
-    r"^$",
-]
+BAD_TITLE_PATTERNS = [r"^$"]
 
 
 def equal(seq):

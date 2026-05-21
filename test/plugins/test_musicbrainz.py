@@ -250,10 +250,7 @@ class TestParseRecording(MusicBrainzPluginTestMixin):
 
         assert mb.track_info(recording) == {
             "album": None,
-            "arrangers": [
-                "Recording Arranger",
-                "Another Recording Arranger",
-            ],
+            "arrangers": ["Recording Arranger", "Another Recording Arranger"],
             "arrangers_ids": [
                 "00000000-0000-0000-0000-000000000002",
                 "00000000-0000-0000-0000-000000000003",
@@ -262,24 +259,13 @@ class TestParseRecording(MusicBrainzPluginTestMixin):
             "artist_credit": "Recording Artist Credit",
             "artist_id": "00000000-0000-0000-0000-000000000001",
             "artist_sort": "Recording Artist, The",
-            "artists": [
-                "Recording Artist",
-            ],
-            "artists_credit": [
-                "Recording Artist Credit",
-            ],
-            "artists_ids": [
-                "00000000-0000-0000-0000-000000000001",
-            ],
-            "artists_sort": [
-                "Recording Artist, The",
-            ],
+            "artists": ["Recording Artist"],
+            "artists_credit": ["Recording Artist Credit"],
+            "artists_ids": ["00000000-0000-0000-0000-000000000001"],
+            "artists_sort": ["Recording Artist, The"],
             "bpm": None,
             "composer_sort": "Recording Composer, The, Another Recording Composer, The",
-            "composers": [
-                "Recording Composer",
-                "Another Recording Composer",
-            ],
+            "composers": ["Recording Composer", "Another Recording Composer"],
             "composers_ids": [
                 "00000000-0000-0000-0000-000000000006",
                 "00000000-0000-0000-0000-000000000007",
@@ -292,10 +278,7 @@ class TestParseRecording(MusicBrainzPluginTestMixin):
             "initial_key": None,
             "isrc": None,
             "length": None,
-            "lyricists": [
-                "Recording Lyricist",
-                "Another Recording Lyricist",
-            ],
+            "lyricists": ["Recording Lyricist", "Another Recording Lyricist"],
             "lyricists_ids": [
                 "00000000-0000-0000-0000-000000000004",
                 "00000000-0000-0000-0000-000000000005",
@@ -306,12 +289,8 @@ class TestParseRecording(MusicBrainzPluginTestMixin):
             "medium_index": None,
             "medium_total": None,
             "release_track_id": None,
-            "remixers": [
-                "Recording Remixer",
-            ],
-            "remixers_ids": [
-                "00000000-0000-0000-0000-000000000001",
-            ],
+            "remixers": ["Recording Remixer"],
+            "remixers_ids": ["00000000-0000-0000-0000-000000000001"],
             "title": "Recording",
             "track_alt": None,
             "track_id": "00000000-0000-0000-0000-000000001001",
@@ -384,26 +363,23 @@ class TestParseMedia(MusicBrainzPluginTestMixin):
                     length=1000.0,
                     artist_credit=[
                         artist_credit_factory(
-                            artist__name="Track Artist",
-                            joinphrase=" & ",
+                            artist__name="Track Artist", joinphrase=" & "
                         ),
                         artist_credit_factory(
-                            artist__name="Other Track Artist",
-                            artist__index=2,
+                            artist__name="Other Track Artist", artist__index=2
                         ),
                     ],
                     recording__length=2000.0,
                     recording__artist_credit=[
                         artist_credit_factory(
-                            artist__name="Recording Artist",
-                            joinphrase=" & ",
+                            artist__name="Recording Artist", joinphrase=" & "
                         ),
                         artist_credit_factory(
                             artist__name="Other Recording Artist",
                             artist__index=2,
                         ),
                     ],
-                ),
+                )
             ]
         )
 
@@ -462,10 +438,7 @@ class TestParseMedia(MusicBrainzPluginTestMixin):
                 id="include data tracks",
             ),
             _p(
-                {
-                    "ignore_data_tracks": False,
-                    "ignore_video_tracks": False,
-                },
+                {"ignore_data_tracks": False, "ignore_video_tracks": False},
                 ("Audio", "Video: Video", "Data"),
                 id="include data and video tracks",
             ),
@@ -480,9 +453,7 @@ class TestParseMedia(MusicBrainzPluginTestMixin):
                 track_factory(recording__title="[data track]"),
                 track_factory(recording__title="Video", recording__video=True),
             ],
-            data_tracks=[
-                track_factory(recording__title="Data"),
-            ],
+            data_tracks=[track_factory(recording__title="Data")],
         )
         release = release_factory(media=[medium])
 
@@ -512,10 +483,10 @@ class TestParseRelease(MusicBrainzPluginTestMixin):
                     url__resource="https://discogs.com/release/123456"
                 ),
                 url_relation_factory(
-                    url__resource="https://open.spotify.com/album/ABCDab2ImQyHZ9sXCXFyZ8",
+                    url__resource="https://open.spotify.com/album/ABCDab2ImQyHZ9sXCXFyZ8"
                 ),
                 url_relation_factory(
-                    url__resource="https://somemusic.bandcamp.com/album/somealbum",
+                    url__resource="https://somemusic.bandcamp.com/album/somealbum"
                 ),
             ]
         )
@@ -527,25 +498,15 @@ class TestParseRelease(MusicBrainzPluginTestMixin):
             "albumdisambig": "Album Disambiguation",
             "albumstatus": "Official",
             "albumtype": "album",
-            "albumtypes": [
-                "album",
-            ],
+            "albumtypes": ["album"],
             "artist": "Artist",
             "artist_credit": "Artist Credit",
             "artist_id": "00000000-0000-0000-0000-000000000011",
             "artist_sort": "Artist, The",
-            "artists": [
-                "Artist",
-            ],
-            "artists_credit": [
-                "Artist Credit",
-            ],
-            "artists_ids": [
-                "00000000-0000-0000-0000-000000000011",
-            ],
-            "artists_sort": [
-                "Artist, The",
-            ],
+            "artists": ["Artist"],
+            "artists_credit": ["Artist Credit"],
+            "artists_ids": ["00000000-0000-0000-0000-000000000011"],
+            "artists_sort": ["Artist, The"],
             "asin": "Album Asin",
             "bandcamp_album_id": "https://somemusic.bandcamp.com/album/somealbum",
             "barcode": "0000000000000",
@@ -581,18 +542,10 @@ class TestParseRelease(MusicBrainzPluginTestMixin):
                     "artist_credit": "Recording Artist Credit",
                     "artist_id": "00000000-0000-0000-0000-000000000001",
                     "artist_sort": "Recording Artist, The",
-                    "artists": [
-                        "Recording Artist",
-                    ],
-                    "artists_credit": [
-                        "Recording Artist Credit",
-                    ],
-                    "artists_ids": [
-                        "00000000-0000-0000-0000-000000000001",
-                    ],
-                    "artists_sort": [
-                        "Recording Artist, The",
-                    ],
+                    "artists": ["Recording Artist"],
+                    "artists_credit": ["Recording Artist Credit"],
+                    "artists_ids": ["00000000-0000-0000-0000-000000000001"],
+                    "artists_sort": ["Recording Artist, The"],
                     "bpm": None,
                     "composer_sort": None,
                     "composers": None,
@@ -621,7 +574,7 @@ class TestParseRelease(MusicBrainzPluginTestMixin):
                     "trackdisambig": None,
                     "work": None,
                     "work_disambig": None,
-                },
+                }
             ],
             "va": False,
             "year": 2020,
@@ -885,3 +838,20 @@ class TestMusicBrainzPlugin(MusicBrainzPluginTestMixin):
 
         # Ensure the exact error is propagated, not swallowed
         assert excinfo.value is error
+
+    @pytest.mark.parametrize(
+        "input,expected",
+        [
+            ("??-??-??", (None, None, None)),
+            ("??-01-??", (None, 1, None)),
+            ("??-??-02", (None, None, 2)),
+            ("??-01-02", (None, 1, 2)),
+            ("2010-??-01", (2010, None, 1)),
+            ("2010-01-not_an_int", (2010, 1, None)),
+            ("2010", (2010, None, None)),
+            ("2010-01", (2010, 1, None)),
+            ("2010-01-02", (2010, 1, 2)),
+        ],
+    )
+    def test_get_date(self, input, expected):
+        assert musicbrainz._get_date(input) == expected

@@ -12,6 +12,54 @@ Unreleased
 New features
 ~~~~~~~~~~~~
 
+- :doc:`plugins/convert`: The ``--force`` and ``--keep-new`` CLI flags are now
+  also available as config options via ``force`` and ``keep_new``.
+- :ref:`import-cmd`: The ``--nomove`` / ``-M`` CLI flag can now be used to
+  override the ``move: yes`` config option during import.
+
+Bug fixes
+~~~~~~~~~
+
+- :ref:`import-cmd`: Fix duplicate album merge during import when running in
+  threaded mode. The merge action no longer creates a duplicate folder or
+  reports ``could not get filesize`` errors. :bug:`6601`
+- :doc:`plugins/mbpseudo`: Fix crashes when applying a pseudo-release. One in
+  ``PseudoAlbumInfo.raw_data`` and a ``sqlite3.ProgrammingError``.
+- :doc:`plugins/duplicates`: Fix plugin output: information about duplicate
+  items was not displayed by default. --count option was ignored :bug:`6476`
+- :doc:`plugins/mbsync` / :doc:`plugins/bpsync`: Do not clear items metadata
+  when ``import.from_scratch`` is enabled. :bug:`6613`
+- :doc:`plugins/tidal`: add ``tidal`` dependency extra to make sure
+  ``requests-oauthlib`` is installed. :bug:`6633`
+- Path format queries now correctly match multi-value fields such as ``genres``
+  when using exact string matches like ``genres:=Classical`` or
+  ``genres:=~Classical``. :bug:`6598`
+- Fix a CLI help formatting regression that moved command descriptions to
+  separate lines; descriptions are inline again, with regression test coverage.
+- :ref:`modify-cmd`: Fix ``beet modify -a`` splitting multi-value field strings
+  (like ``artists``, ``genres``) into individual characters when modifying
+  albums. Album field types now fall back to the corresponding item field type
+  definitions. :bug:`5690`
+- ``AttrDict.__getattribute__`` now unmasks ``AttributeError`` raised inside a
+  ``cached_property`` body. Previously such errors were swallowed by the
+  ``__getattr__`` fallback, producing a misleading message about the property
+  name itself. The wrapped ``RuntimeError`` keeps the original traceback so it
+  still points at the real failing line. :bug:`6558`
+
+..
+    For plugin developers
+    ~~~~~~~~~~~~~~~~~~~~~
+
+..
+    Other changes
+    ~~~~~~~~~~~~~
+
+2.11.0 (May 06, 2026)
+---------------------
+
+New features
+~~~~~~~~~~~~
+
 - :doc:`plugins/smartplaylist`: The ``splupdate`` command output is
   restructured. The per-playlist summary now includes a track count. Per-track
   details are shown only when ``-v`` flag is provided (``beet -v splupdate``).
@@ -42,10 +90,14 @@ New features
   lyrics) ID3 frame and plain text to ``USLT`` for ID3-tagged files, instead of
   storing raw LRC timestamps in ``USLT``. Players that only support ``USLT``
   continue to see readable plain lyrics. :bug:`6541`
+- Add support for adding or modifying a subtitle (ID3 tag ``TIT3``) field
 
 Bug fixes
 ~~~~~~~~~
 
+- :ref:`import-cmd`: Multi-disc album detection now recognizes ``cassette``,
+  ``digital media``, and ``vinyl`` as disc markers (e.g. ``vinyl 1``, ``12 vinyl
+  2``), in addition to the existing ``disc``, ``disk``, and ``cd`` markers.
 - :ref:`import-cmd`: Tags with a zero distance penalty are no longer shown as
   differences in the match display. Previously, custom ``distance_weights``
   could cause fields with no actual mismatch to appear in the ``≠`` line.
@@ -53,14 +105,37 @@ Bug fixes
   item or album-art paths were stored as SQLite ``TEXT`` values instead of
   bytes, so upgrading to the portable-path storage format no longer fails for
   those libraries. :bug:`6561`
+- :ref:`import-cmd`: Fix duplicate album art files (e.g. ``cover.2.jpg``) being
+  created when re-importing albums with the :doc:`plugins/fetchart` plugin
+  enabled. Old album art is now properly removed when replacing duplicate albums
+  during import. :bug:`1264` :bug:`6205`
+- :doc:`plugins/discogs`: Prevent duplicate featured artists in track artist
+  fields when the same artist is credited both in ``artists`` (for example with
+  ``Feat.`` join text) and ``extraartists`` as ``Featuring``. :bug:`6166`
+- :ref:`import-cmd`: Metadata source plugin ID lookups now correctly call each
+  plugin's own lookup method when running in parallel. :bug:`6583`
+- Improve ``DBAccessError`` messages to help users diagnose database permission
+  issues more easily. The error message now mentions directory missing and file
+  permissions as potential causes. :bug:`1676`
+- :doc:`plugins/lyrics`: Fix apostrophe handling in the ``musixmatch`` backend
+  slug. :bug:`4759`
+- :ref:`import-cmd`: With ``original_date: yes``, album-level ``year``,
+  ``month``, and ``day`` now use the original release date. :bug:`6577`
+- :doc:`plugins/musicbrainz`: Correctly handle release dates where leading or
+  intermediate components are missing, e.g. 2008-??-02
+- :doc:`plugins/badfiles`: Respect quiet mode (the ``--quiet`` flag or
+  ``import.quiet: yes`` config) during import so the corrupt-file prompt is
+  suppressed in non-interactive imports. :bug:`4736`
 
 ..
     For plugin developers
     ~~~~~~~~~~~~~~~~~~~~~
 
-..
-    Other changes
-    ~~~~~~~~~~~~~
+Other changes
+~~~~~~~~~~~~~
+
+- :doc:`plugins/spotify`: Batch ``spotifysync`` track and audio-features API
+  requests and deduplicate repeated Spotify track IDs within a run.
 
 2.10.0 (April 19, 2026)
 -----------------------

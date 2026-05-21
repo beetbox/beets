@@ -170,12 +170,7 @@ T = TypeVar("T")  # Type of the task
 R = TypeVar("R")
 
 
-def stage(
-    func: Callable[
-        [Unpack[A], T],
-        R | None,
-    ],
-):
+def stage(func: Callable[[Unpack[A], T], R | None]):
     """Decorate a function to become a simple stage.
 
     >>> @stage
@@ -444,11 +439,7 @@ class Pipeline:
             for coro in self.stages[i]:
                 threads.append(
                     MiddlePipelineThread(
-                        coro,
-                        queues[i - 1],
-                        queues[i],
-                        threads,
-                        base_ctx.copy(),
+                        coro, queues[i - 1], queues[i], threads, base_ctx.copy()
                     )
                 )
 

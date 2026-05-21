@@ -111,10 +111,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         """
         try:
             response = self.session.get(
-                url=url,
-                headers=self.AUTH_HEADER,
-                timeout=10,
-                params=params,
+                url=url, headers=self.AUTH_HEADER, timeout=10, params=params
             )
             response.raise_for_status()
             remaining = response.headers.get("X-RateLimit-Remaining")

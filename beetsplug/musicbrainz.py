@@ -198,7 +198,13 @@ def _get_date(date_str: str) -> tuple[int | None, int | None, int | None]:
     if not date_str:
         return None, None, None
 
-    parts = list(map(int, date_str.split("-")))
+    def _parse_part(part: str) -> int | None:
+        try:
+            return int(part)
+        except ValueError:
+            return None
+
+    parts = list(map(_parse_part, date_str.split("-")))
 
     return (
         parts[0] if len(parts) > 0 else None,
@@ -287,7 +293,7 @@ class MusicBrainzPlugin(
                     "tidal": False,
                 },
                 "extra_tags": [],
-            },
+            }
         )
         # TODO: Remove in 3.0.0
         with suppress(NotFoundError):
@@ -684,11 +690,7 @@ class MusicBrainzPlugin(
         info.year, info.month, info.day = (
             _get_date(release_date)
             if release_date
-            else (
-                info.original_year,
-                info.original_month,
-                info.original_day,
-            )
+            else (info.original_year, info.original_month, info.original_day)
         )
 
         extra_albumdatas = plugins.send("mb_album_extract", data=release)

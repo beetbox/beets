@@ -24,13 +24,7 @@ from beets.plugins import BeetsPlugin
 class KeyFinderPlugin(BeetsPlugin):
     def __init__(self):
         super().__init__()
-        self.config.add(
-            {
-                "bin": "KeyFinder",
-                "auto": True,
-                "overwrite": False,
-            }
-        )
+        self.config.add({"bin": "KeyFinder", "auto": True, "overwrite": False})
 
         if self.config["auto"].get(bool):
             self.import_stages = [self.imported]

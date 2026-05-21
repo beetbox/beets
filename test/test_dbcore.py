@@ -24,9 +24,9 @@ from typing import ClassVar
 import pytest
 
 from beets import dbcore
+from beets.dbcore import query, sort, types
 from beets.dbcore.db import DBCustomFunctionError, Index
-from beets.library import LibModel
-from beets.test import _common
+from beets.library import Album, Item, LibModel
 from beets.util import cached_classproperty
 
 # Fixture: concrete database and model classes. For migration tests, we
@@ -40,11 +40,11 @@ def db(model):
     db._connection().close()
 
 
-class SortFixture(dbcore.query.FieldSort):
+class SortFixture(sort.FieldSort):
     pass
 
 
-class QueryFixture(dbcore.query.FieldQuery):
+class QueryFixture(query.FieldQuery):
     def __init__(self, pattern):
         self.pattern = pattern
 
@@ -64,22 +64,18 @@ class ModelFixture1(LibModel):
         "field_two": dbcore.types.STRING,
     }
 
-    _sorts: ClassVar[dict[str, type[dbcore.query.FieldSort]]] = {
-        "some_sort": SortFixture,
+    _sorts: ClassVar[dict[str, type[sort.FieldSort]]] = {
+        "some_sort": SortFixture
     }
     _indices = (Index("field_one_index", ("field_one",)),)
 
     @cached_classproperty
     def _types(cls):
-        return {
-            "some_float_field": dbcore.types.FLOAT,
-        }
+        return {"some_float_field": dbcore.types.FLOAT}
 
     @cached_classproperty
     def _queries(cls):
-        return {
-            "some_query": QueryFixture,
-        }
+        return {"some_query": QueryFixture}
 
     @classmethod
     def _getters(cls):
@@ -167,7 +163,6 @@ class ModelFixtureWithGetters(dbcore.Model):
         return {}
 
 
-@_common.slow_test()
 class MigrationTest(unittest.TestCase):
     """Tests the ability to change the database schema between
     versions.
@@ -545,130 +540,142 @@ class ParseTest(unittest.TestCase):
         assert value == "2"
 
 
+class TestModelTypeFallback:
+    def test_album_type_falls_back_to_item_type(self):
+        typ = Album._type("artists")
+        assert isinstance(typ, types.DelimitedString)
+        assert typ is types.MULTI_VALUE_DSV
+
+    def test_album_type_falls_back_to_item_type_other_list_fields(self):
+        for field in ["genres", "composers", "artists_sort"]:
+            typ = Album._type(field)
+            assert isinstance(typ, types.DelimitedString), field
+
+    def test_item_type_does_not_change(self):
+        typ = Item._type("artists")
+        assert isinstance(typ, types.DelimitedString)
+
+    def test_unknown_key_falls_through_to_default(self):
+        typ = Album._type("nonexistent_field_xyz")
+        assert isinstance(typ, types.Default)
+
+
 class QueryParseTest(unittest.TestCase):
     def pqp(self, part):
         return dbcore.queryparse.parse_query_part(
-            part,
-            {"year": dbcore.query.NumericQuery},
-            {":": dbcore.query.RegexpQuery},
+            part, {"year": query.NumericQuery}, {":": query.RegexpQuery}
         )[:-1]  # remove the negate flag
 
     def test_one_basic_term(self):
         q = "test"
-        r = (None, "test", dbcore.query.SubstringQuery)
+        r = (None, "test", query.SubstringQuery)
         assert self.pqp(q) == r
 
     def test_one_keyed_term(self):
         q = "test:val"
-        r = ("test", "val", dbcore.query.SubstringQuery)
+        r = ("test", "val", query.SubstringQuery)
         assert self.pqp(q) == r
 
     def test_colon_at_end(self):
         q = "test:"
-        r = ("test", "", dbcore.query.SubstringQuery)
+        r = ("test", "", query.SubstringQuery)
         assert self.pqp(q) == r
 
     def test_one_basic_regexp(self):
         q = r":regexp"
-        r = (None, "regexp", dbcore.query.RegexpQuery)
+        r = (None, "regexp", query.RegexpQuery)
         assert self.pqp(q) == r
 
     def test_keyed_regexp(self):
         q = r"test::regexp"
-        r = ("test", "regexp", dbcore.query.RegexpQuery)
+        r = ("test", "regexp", query.RegexpQuery)
         assert self.pqp(q) == r
 
     def test_escaped_colon(self):
         q = r"test\:val"
-        r = (None, "test:val", dbcore.query.SubstringQuery)
+        r = (None, "test:val", query.SubstringQuery)
         assert self.pqp(q) == r
 
     def test_escaped_colon_in_regexp(self):
         q = r":test\:regexp"
-        r = (None, "test:regexp", dbcore.query.RegexpQuery)
+        r = (None, "test:regexp", query.RegexpQuery)
         assert self.pqp(q) == r
 
     def test_single_year(self):
         q = "year:1999"
-        r = ("year", "1999", dbcore.query.NumericQuery)
+        r = ("year", "1999", query.NumericQuery)
         assert self.pqp(q) == r
 
     def test_multiple_years(self):
         q = "year:1999..2010"
-        r = ("year", "1999..2010", dbcore.query.NumericQuery)
+        r = ("year", "1999..2010", query.NumericQuery)
         assert self.pqp(q) == r
 
     def test_empty_query_part(self):
         q = ""
-        r = (None, "", dbcore.query.SubstringQuery)
+        r = (None, "", query.SubstringQuery)
         assert self.pqp(q) == r
 
 
 class QueryFromStringsTest(unittest.TestCase):
     def qfs(self, strings):
         return dbcore.queryparse.query_from_strings(
-            dbcore.query.AndQuery,
-            ModelFixture1,
-            {":": dbcore.query.RegexpQuery},
-            strings,
+            query.AndQuery, ModelFixture1, {":": query.RegexpQuery}, strings
         )
 
     def test_zero_parts(self):
         q = self.qfs([])
-        assert isinstance(q, dbcore.query.AndQuery)
+        assert isinstance(q, query.AndQuery)
         assert len(q.subqueries) == 1
-        assert isinstance(q.subqueries[0], dbcore.query.TrueQuery)
+        assert isinstance(q.subqueries[0], query.TrueQuery)
 
     def test_two_parts(self):
         q = self.qfs(["foo", "bar:baz"])
-        assert isinstance(q, dbcore.query.AndQuery)
+        assert isinstance(q, query.AndQuery)
         assert len(q.subqueries) == 2
-        assert isinstance(q.subqueries[0], dbcore.query.OrQuery)
-        assert isinstance(q.subqueries[1], dbcore.query.SubstringQuery)
+        assert isinstance(q.subqueries[0], query.OrQuery)
+        assert isinstance(q.subqueries[1], query.SubstringQuery)
 
     def test_parse_fixed_type_query(self):
         q = self.qfs(["field_one:2..3"])
-        assert isinstance(q.subqueries[0], dbcore.query.NumericQuery)
+        assert isinstance(q.subqueries[0], query.NumericQuery)
 
     def test_parse_flex_type_query(self):
         q = self.qfs(["some_float_field:2..3"])
-        assert isinstance(q.subqueries[0], dbcore.query.NumericQuery)
+        assert isinstance(q.subqueries[0], query.NumericQuery)
 
     def test_empty_query_part(self):
         q = self.qfs([""])
-        assert isinstance(q.subqueries[0], dbcore.query.TrueQuery)
+        assert isinstance(q.subqueries[0], query.TrueQuery)
 
 
 class SortFromStringsTest(unittest.TestCase):
     def sfs(self, strings):
-        return dbcore.queryparse.sort_from_strings(
-            ModelFixture1,
-            strings,
-        )
+        return dbcore.queryparse.sort_from_strings(ModelFixture1, strings)
 
     def test_zero_parts(self):
         s = self.sfs([])
-        assert isinstance(s, dbcore.query.NullSort)
-        assert s == dbcore.query.NullSort()
+        assert isinstance(s, sort.NullSort)
+        assert s == sort.NullSort()
 
     def test_one_parts(self):
         s = self.sfs(["field+"])
-        assert isinstance(s, dbcore.query.Sort)
+        assert isinstance(s, sort.Sort)
 
     def test_two_parts(self):
         s = self.sfs(["field+", "another_field-"])
-        assert isinstance(s, dbcore.query.MultipleSort)
+        assert isinstance(s, sort.MultipleSort)
         assert len(s.sorts) == 2
 
     def test_fixed_field_sort(self):
         s = self.sfs(["field_one+"])
-        assert isinstance(s, dbcore.query.FixedFieldSort)
-        assert s == dbcore.query.FixedFieldSort("field_one")
+        assert isinstance(s, sort.FixedFieldSort)
+        assert s == sort.FixedFieldSort("field_one")
 
     def test_flex_field_sort(self):
         s = self.sfs(["flex_field+"])
-        assert isinstance(s, dbcore.query.SlowFieldSort)
-        assert s == dbcore.query.SlowFieldSort("flex_field")
+        assert isinstance(s, sort.SlowFieldSort)
+        assert s == sort.SlowFieldSort("flex_field")
 
     def test_special_sort(self):
         s = self.sfs(["some_sort+"])
@@ -677,51 +684,48 @@ class SortFromStringsTest(unittest.TestCase):
 
 class ParseSortedQueryTest(unittest.TestCase):
     def psq(self, parts):
-        return dbcore.parse_sorted_query(
-            ModelFixture1,
-            parts.split(),
-        )
+        return dbcore.parse_sorted_query(ModelFixture1, parts.split())
 
     def test_and_query(self):
         q, s = self.psq("foo bar")
-        assert isinstance(q, dbcore.query.AndQuery)
-        assert isinstance(s, dbcore.query.NullSort)
+        assert isinstance(q, query.AndQuery)
+        assert isinstance(s, sort.NullSort)
         assert len(q.subqueries) == 2
 
     def test_or_query(self):
         q, s = self.psq("foo , bar")
-        assert isinstance(q, dbcore.query.OrQuery)
-        assert isinstance(s, dbcore.query.NullSort)
+        assert isinstance(q, query.OrQuery)
+        assert isinstance(s, sort.NullSort)
         assert len(q.subqueries) == 2
 
     def test_no_space_before_comma_or_query(self):
         q, s = self.psq("foo, bar")
-        assert isinstance(q, dbcore.query.OrQuery)
-        assert isinstance(s, dbcore.query.NullSort)
+        assert isinstance(q, query.OrQuery)
+        assert isinstance(s, sort.NullSort)
         assert len(q.subqueries) == 2
 
     def test_no_spaces_or_query(self):
         q, s = self.psq("foo,bar")
-        assert isinstance(q, dbcore.query.AndQuery)
-        assert isinstance(s, dbcore.query.NullSort)
+        assert isinstance(q, query.AndQuery)
+        assert isinstance(s, sort.NullSort)
         assert len(q.subqueries) == 1
 
     def test_trailing_comma_or_query(self):
         q, s = self.psq("foo , bar ,")
-        assert isinstance(q, dbcore.query.OrQuery)
-        assert isinstance(s, dbcore.query.NullSort)
+        assert isinstance(q, query.OrQuery)
+        assert isinstance(s, sort.NullSort)
         assert len(q.subqueries) == 3
 
     def test_leading_comma_or_query(self):
         q, s = self.psq(", foo , bar")
-        assert isinstance(q, dbcore.query.OrQuery)
-        assert isinstance(s, dbcore.query.NullSort)
+        assert isinstance(q, query.OrQuery)
+        assert isinstance(s, sort.NullSort)
         assert len(q.subqueries) == 3
 
     def test_only_direction(self):
         q, s = self.psq("-")
-        assert isinstance(q, dbcore.query.AndQuery)
-        assert isinstance(s, dbcore.query.NullSort)
+        assert isinstance(q, query.AndQuery)
+        assert isinstance(s, sort.NullSort)
         assert len(q.subqueries) == 1
 
 
@@ -756,17 +760,17 @@ class ResultsIteratorTest(unittest.TestCase):
         assert len(list(it1)) == 1
 
     def test_slow_query(self):
-        q = dbcore.query.SubstringQuery("foo", "ba", False)
+        q = query.SubstringQuery("foo", "ba", False)
         objs = self.db._fetch(ModelFixture1, q)
         assert len(list(objs)) == 2
 
     def test_slow_query_negative(self):
-        q = dbcore.query.SubstringQuery("foo", "qux", False)
+        q = query.SubstringQuery("foo", "qux", False)
         objs = self.db._fetch(ModelFixture1, q)
         assert len(list(objs)) == 0
 
     def test_iterate_slow_sort(self):
-        s = dbcore.query.SlowFieldSort("foo")
+        s = sort.SlowFieldSort("foo")
         res = self.db._fetch(ModelFixture1, sort=s)
         objs = list(res)
         assert objs[0].foo == "bar"
@@ -778,7 +782,7 @@ class ResultsIteratorTest(unittest.TestCase):
         assert objs[1].foo == "bar"
 
     def test_slow_sort_subscript(self):
-        s = dbcore.query.SlowFieldSort("foo")
+        s = sort.SlowFieldSort("foo")
         objs = self.db._fetch(ModelFixture1, sort=s)
         assert objs[0].foo == "bar"
         assert objs[1].foo == "baz"
@@ -793,10 +797,7 @@ class ResultsIteratorTest(unittest.TestCase):
             objs[100]
 
     def test_no_results(self):
-        assert (
-            self.db._fetch(ModelFixture1, dbcore.query.FalseQuery()).get()
-            is None
-        )
+        assert self.db._fetch(ModelFixture1, query.FalseQuery()).get() is None
 
 
 class TestException:

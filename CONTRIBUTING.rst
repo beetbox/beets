@@ -114,6 +114,14 @@ virtual environment in your ``$POETRY_CACHE_DIR``. See ``poetry install --help``
 for installation options, including installing ``extra`` dependencies for
 plugins.
 
+If you will build the documentation you will need to run the following command:
+
+.. code-block:: bash
+
+    $ poetry install -E docs
+
+This will install the optional dependencies for the documentation.
+
 In order to run something within this virtual environment, start the command
 with ``poetry run`` to them, for example ``poetry run pytest``.
 
@@ -315,13 +323,6 @@ Use ``poe`` to run tests:
 
     $ poe test [pytest options]
 
-You can disable a hand-selected set of "slow" tests by setting the environment
-variable ``SKIP_SLOW_TESTS``, for example:
-
-::
-
-    $ SKIP_SLOW_TESTS=1 poe test
-
 Coverage
 ++++++++
 
@@ -399,6 +400,17 @@ beets also defines custom pytest markers in ``test/conftest.py``:
 
     @pytest.mark.requires_import("librosa", force_ci=False)
     def test_autobpm_command(): ...
+
+Notes on AI Usage
+-----------------
+
+We are not opposed to AI-generated contributions, but communication should be
+handled by a real person. We will likely have questions about your PR, and we
+need you to understand the proposed changes in order to discuss with us what the
+implications are.
+
+> Currently we value human oversight and accountability, AI as a tool, not a
+contributor.
 
 .. _codecov: https://app.codecov.io/github/beetbox/beets
 

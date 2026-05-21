@@ -414,7 +414,7 @@ class ArtFileTest(BeetsTestCase):
         ai.set_art(artdest)
         assert ai.art_filepath.exists()
 
-    def test_setart_to_conflicting_file_gets_new_path(self):
+    def test_setart_to_conflicting_file_replaces_it(self):
         newart = os.path.join(self.libdir, b"newart.jpg")
         touch(newart)
         i2 = item()
@@ -427,10 +427,33 @@ class ArtFileTest(BeetsTestCase):
         artdest = ai.art_destination(newart)
         touch(artdest)
 
-        # Set the art.
+        # Set the art - should replace the existing file, not create a suffixed
+        # duplicate like cover.2.jpg.
         ai.set_art(newart)
-        assert artdest != ai.artpath
-        assert os.path.dirname(artdest) == os.path.dirname(ai.artpath)
+        assert artdest == ai.artpath
+
+    def test_setart_replaces_old_art_at_different_path(self):
+        newart = os.path.join(self.libdir, b"newart.png")
+        touch(newart)
+        i2 = item()
+        i2.path = self.i.path
+        i2.artist = "someArtist"
+        ai = self.lib.add_album((i2,))
+        i2.move(operation=MoveOperation.COPY)
+
+        # Set initial art.
+        ai.set_art(newart)
+        old_artpath = ai.artpath
+        assert os.path.exists(syspath(old_artpath))
+
+        # Set new art with a different extension.
+        another_art = os.path.join(self.libdir, b"another.jpg")
+        touch(another_art)
+        ai.set_art(another_art)
+
+        # Old art should be removed.
+        assert not os.path.exists(syspath(old_artpath))
+        assert ai.art_filepath.exists()
 
     def test_setart_sets_permissions(self):
         util.remove(self.art)

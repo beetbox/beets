@@ -12,7 +12,6 @@ from beets.util import syspath
 from ..test_ui import TestPluginTestCase
 
 
-@_common.slow_test()
 @pytest.mark.xfail(
     os.environ.get("GITHUB_ACTIONS") == "true" and sys.platform == "linux",
     reason="Completion is for some reason unhappy on Ubuntu 24.04 in CI",
@@ -47,7 +46,7 @@ class CompletionTest(IOMixin, TestPluginTestCase):
             self.skipTest("could not read bash-completion script")
 
         # Load completion script.
-        self.run_command("completion", lib=None)
+        self.run_command("completion")
         completion_script = self.io.getoutput().encode("utf-8")
         tester.stdin.writelines(completion_script.splitlines(True))
 

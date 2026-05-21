@@ -609,10 +609,7 @@ def hardlink(path: bytes, dest: bytes, replace: bool = False):
 
 
 def reflink(
-    path: bytes,
-    dest: bytes,
-    replace: bool = False,
-    fallback: bool = False,
+    path: bytes, dest: bytes, replace: bool = False, fallback: bool = False
 ):
     """Create a reflink from `dest` to `path`.
 
@@ -1204,3 +1201,9 @@ def get_temp_filename(
 def unique_list(elements: Iterable[T]) -> list[T]:
     """Return a list with unique elements in the original order."""
     return list(dict.fromkeys(elements))
+
+
+def chunks(lst: Sequence[T], n: int) -> Iterator[list[T]]:
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(lst), n):
+        yield list(lst[i : i + n])

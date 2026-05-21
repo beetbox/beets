@@ -21,7 +21,7 @@ import pytest
 from beets import config
 from beets.library import Item
 from beets.test._common import Bag
-from beets.test.helper import BeetsTestCase, capture_log
+from beets.test.helper import TestHelper
 from beetsplug.discogs import ArtistState, DiscogsPlugin
 
 
@@ -37,8 +37,20 @@ def _artist(name: str, **kwargs):
     } | kwargs
 
 
+class PytestTestHelper(TestHelper):
+    """Same as the BeetsTestCase unittest setup but for pytest."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        self.setup_beets()
+        try:
+            yield
+        finally:
+            self.teardown_beets()
+
+
 @patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
-class DGAlbumInfoTest(BeetsTestCase):
+class TestDGAlbumInfo(PytestTestHelper):
     def _make_release(self, tracks=None):
         """Returns a Bag that mimics a discogs_client.Release. The list
         of elements on the returned Bag is incomplete, including just
@@ -48,7 +60,7 @@ class DGAlbumInfoTest(BeetsTestCase):
             "uri": "https://www.discogs.com/release/release/13633721",
             "title": "ALBUM TITLE",
             "year": "3001",
-            "artists": [_artist("ARTIST NAME", id="ARTIST ID", join=",")],
+            "artists": [_artist("ARTIST NAME", join=",")],
             "formats": [
                 {
                     "descriptions": ["FORMAT DESC 1", "FORMAT DESC 2"],
@@ -59,12 +71,7 @@ class DGAlbumInfoTest(BeetsTestCase):
             # genres and styles are reversed in Discogs
             "genres": ["STYLE1", "STYLE2"],
             "styles": ["GENRE1", "GENRE2"],
-            "labels": [
-                {
-                    "name": "LABEL NAME",
-                    "catno": "CATALOG NUMBER",
-                }
-            ],
+            "labels": [{"name": "LABEL NAME", "catno": "CATALOG NUMBER"}],
             "tracklist": [],
         }
 
@@ -350,14 +357,16 @@ class DGAlbumInfoTest(BeetsTestCase):
         assert d.album == "TITLE"
         assert len(d.tracks) == 1
 
-    def test_parse_release_without_required_fields(self):
+    def test_parse_release_without_required_fields(self, caplog):
         """Test parsing of a release that does not have the required fields."""
         release = Bag(data={}, refresh=lambda *args: None)
-        with capture_log() as logs:
+        with caplog.at_level("DEBUG"):
             d = DiscogsPlugin().get_album_info(release)
 
         assert d is None
-        assert "Release does not contain the required fields" in logs[0]
+        assert (
+            "Release does not contain the required fields" in caplog.messages[0]
+        )
 
     def test_default_genre_style_settings(self):
         """Test genre default settings, genres to genre, styles to style"""
@@ -402,15 +411,10 @@ class DGAlbumInfoTest(BeetsTestCase):
             ],
             "artists": [
                 _artist("ARTIST NAME (2)", id=321, join="&"),
-                _artist("OTHER ARTIST (5)", id=321),
+                _artist("OTHER ARTIST (5)", id=322),
             ],
             "title": "title",
-            "labels": [
-                {
-                    "name": "LABEL NAME (5)",
-                    "catno": "catalog number",
-                }
-            ],
+            "labels": [{"name": "LABEL NAME (5)", "catno": "catalog number"}],
         }
         release = Bag(
             data=data,
@@ -420,7 +424,7 @@ class DGAlbumInfoTest(BeetsTestCase):
         d = DiscogsPlugin().get_album_info(release)
         assert d.artist == "ARTIST NAME & OTHER ARTIST"
         assert d.artists == ["ARTIST NAME", "OTHER ARTIST"]
-        assert d.artists_ids == ["321", "321"]
+        assert d.artists_ids == ["321", "322"]
         assert d.tracks[0].artist == "TEST ARTIST"
         assert d.tracks[0].artists == ["TEST ARTIST"]
         assert d.tracks[0].artist_id == "11146"
@@ -444,15 +448,10 @@ class DGAlbumInfoTest(BeetsTestCase):
             ],
             "artists": [
                 _artist("ARTIST NAME (2)", id=321, join="&"),
-                _artist("OTHER ARTIST (5)", id=321),
+                _artist("OTHER ARTIST (5)", id=322),
             ],
             "title": "title",
-            "labels": [
-                {
-                    "name": "LABEL NAME (5)",
-                    "catno": "catalog number",
-                }
-            ],
+            "labels": [{"name": "LABEL NAME (5)", "catno": "catalog number"}],
         }
         release = Bag(
             data=data,
@@ -469,7 +468,7 @@ class DGAlbumInfoTest(BeetsTestCase):
 
 
 @patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
-class DGSearchQueryTest(BeetsTestCase):
+class TestDGSearchQuery(PytestTestHelper):
     def test_default_search_filters_without_extra_tags(self):
         """Discogs search uses only the type filter when no extra_tags are set."""
         plugin = DiscogsPlugin()
@@ -519,7 +518,10 @@ class TestAnv:
                     "position": "A",
                     "type_": "track",
                     "duration": "5:44",
-                    "artists": [_artist("ARTIST", id=11146, anv="ART")],
+                    "artists": [
+                        _artist("ARTIST", id=11146, anv="ART", join="Feat."),
+                        _artist("PERFORMER", id=787),
+                    ],
                     "extraartists": [
                         _artist("PERFORMER", id=787, role="Featuring")
                     ],
@@ -695,7 +697,7 @@ def test_anv_album_artist():
             ["NEW ARTIST", "VOCALIST", "SOLOIST", "PERFORMER", "MUSICIAN"],
             ["11146", "344", "3", "5", "10"],
             ["RANDOM"],
-        ),
+        )
     ],
 )
 @patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())

@@ -50,8 +50,8 @@ all of these limitations.
 
   First, directories that look like separate parts of a *multi-disc album* are
   tagged together as a single release. If two adjacent albums have a common
-  prefix, followed by "disc," "disk," or "CD" and then a number, they are tagged
-  together.
+  prefix, followed by "disc," "disk," "CD," "cassette," "digital media," or
+  "vinyl" and then a number, they are tagged together.
 
   Second, if you have jumbled directories containing more than one album, you
   can ask beets to split them apart for you based on their metadata. Use either
@@ -98,6 +98,8 @@ command-line options you should know:
   them where they are
 - ``beet import -m``: move imported files to your music directory (overrides the
   ``-c`` option)
+- ``beet import -M``: don't move imported files to your music directory
+  (overrides the ``-m`` option)
 - ``beet import -l LOGFILE``: write a message to ``LOGFILE`` every time you skip
   an album or choose to take its tags "as-is" (see below) or the album is
   skipped as a duplicate; this lets you come back later and reexamine albums

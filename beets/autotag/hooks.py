@@ -116,6 +116,29 @@ class AttrDict(dict[str, V]):
         """Return a detached copy preserving subclass-specific behavior."""
         return deepcopy(self)
 
+    def __getattribute__(self, attr: str) -> V:
+        # Intercept cached_property failures so an AttributeError raised
+        # inside the property body is not masked by __getattr__ fallback.
+        # Reuse the original traceback so the wrapped RuntimeError still
+        # points at the real failing line, but suppress the printed cause
+        # block to keep CLI tracebacks readable. See #6558 (and #6503 /
+        # #6506 for the same masking pattern with different metadata
+        # providers).
+        try:
+            return super().__getattribute__(attr)
+        except AttributeError as exc:
+            if not attr.startswith("__"):
+                for klass in type(self).__mro__:
+                    descr = klass.__dict__.get(attr)
+                    if descr is None:
+                        continue
+                    if isinstance(descr, cached_property):
+                        raise RuntimeError(
+                            f"{type(self).__name__}.{attr} failed: {exc}"
+                        ).with_traceback(exc.__traceback__) from None
+                    break
+            raise
+
     def __getattr__(self, attr: str) -> V:
         if attr in self:
             return self[attr]
@@ -302,6 +325,19 @@ class AlbumInfo(Info):
         if data["year"]:
             data["month"] = self.month or 0
             data["day"] = self.day or 0
+
+        return data
+
+    @cached_property
+    def item_data(self) -> JSONDict:
+        """Album metadata with optional original-date override."""
+        data = {**super().item_data}
+        if config["original_date"].get(bool) and (
+            original_year := data.get("original_year")
+        ):
+            data["year"] = original_year
+            data["month"] = data.get("original_month") or 0
+            data["day"] = data.get("original_day") or 0
 
         return data
 
@@ -505,15 +541,6 @@ class TrackInfo(Info):
             | {"tracktotal": len(album_info.tracks)}
             | track.item_data
         )
-
-        # When configured, prefer original release date over album date.
-        # This keeps logic local and simple; no need to change AlbumInfo.
-        if config["original_date"].get(bool) and (
-            original_year := merged.get("original_year")
-        ):
-            merged["year"] = original_year
-            merged["month"] = merged.get("original_month") or 0
-            merged["day"] = merged.get("original_day") or 0
         return merged
 
 
@@ -536,8 +563,14 @@ class Match:
         return self.info.type
 
     @cached_property
-    def from_scratch(self) -> bool:
+    def config_from_scratch(self) -> bool:
         return bool(config["import"]["from_scratch"])
+
+    def from_scratch(self, override: bool | None) -> bool:
+        if override is not None:
+            return override
+
+        return self.config_from_scratch
 
     @property
     def disambig_fields(self) -> Sequence[str]:
@@ -602,7 +635,7 @@ class AlbumMatch(Match):
                 f"{mediums}x{self.info.media}"
                 if (mediums := self.info.mediums) and mediums > 1
                 else self.info.media
-            ),
+            )
         }
 
     @property
@@ -613,10 +646,15 @@ class AlbumMatch(Match):
             for i, ti in self.item_info_pairs
         ]
 
-    def apply_metadata(self) -> None:
-        """Apply metadata to each of the items."""
+    def apply_metadata(self, from_scratch: bool | None = None) -> None:
+        """Apply metadata to each of the items.
+
+        If ``from_scratch`` is provided, its value determines whether the
+        items existing metadata are cleared before applying new metadata.
+        Otherwise, the configured ``from_scratch`` setting is used.
+        """
         for item, data in self.merged_pairs:
-            if self.from_scratch:
+            if self.from_scratch(from_scratch):
                 item.clear()
 
             item.update(data)
@@ -651,9 +689,14 @@ class TrackMatch(Match):
             ),
         }
 
-    def apply_metadata(self) -> None:
-        """Apply metadata to the item."""
-        if self.from_scratch:
+    def apply_metadata(self, from_scratch: bool | None = None) -> None:
+        """Apply metadata to the item.
+
+        If ``from_scratch`` is provided, its value determines whether the
+        item's existing metadata is cleared before applying new metadata.
+        Otherwise, the configured ``from_scratch`` setting is used.
+        """
+        if self.from_scratch(from_scratch):
             self.item.clear()
 
         self.item.update(self.info.item_data)

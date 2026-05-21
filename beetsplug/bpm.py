@@ -47,12 +47,7 @@ def bpm(max_strokes):
 class BPMPlugin(BeetsPlugin):
     def __init__(self):
         super().__init__()
-        self.config.add(
-            {
-                "max_strokes": 3,
-                "overwrite": True,
-            }
-        )
+        self.config.add({"max_strokes": 3, "overwrite": True})
 
     def commands(self):
         cmd = ui.Subcommand(

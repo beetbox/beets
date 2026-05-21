@@ -527,6 +527,10 @@ beets-mpd-utils_
     Plugins to interface with MPD_. Comes with ``mpd_tracker`` (track play/skip
     counts from MPD) and ``mpd_dj`` (auto-add songs to your queue.)
 
+BeetNik_
+    A desktop music player for beets libraries. Browse and play your collection
+    by album, artist, or recent additions.
+
 beets-noimport_
     Adds and removes directories from the incremental import skip list.
 
@@ -586,6 +590,8 @@ beets-youtube_
 .. _beetcamp: https://github.com/snejus/beetcamp
 
 .. _beetfs: https://github.com/jbaiter/beetfs
+
+.. _beetnik: https://forge.kanis.fr/ivan/beetnik-desktop
 
 .. _beets-aisauce: https://github.com/metasauce/beets-aisauce
 

@@ -73,8 +73,7 @@ class Proposal(NamedTuple):
 
 
 def assign_items(
-    items: Sequence[Item],
-    tracks: Sequence[TrackInfo],
+    items: Sequence[Item], tracks: Sequence[TrackInfo]
 ) -> tuple[list[tuple[Item, TrackInfo]], list[Item], list[TrackInfo]]:
     """Given a list of Items and a list of TrackInfo objects, find the
     best mapping between them. Returns a mapping from Items to TrackInfo
@@ -184,9 +183,7 @@ def _sort_candidates(candidates: Iterable[AnyMatch]) -> Sequence[AnyMatch]:
 
 
 def _add_candidate(
-    items: Sequence[Item],
-    results: Candidates[AlbumMatch],
-    info: AlbumInfo,
+    items: Sequence[Item], results: Candidates[AlbumMatch], info: AlbumInfo
 ):
     """Given a candidate AlbumInfo object, attempt to add the candidate
     to the output dictionary of AlbumMatch objects. This involves

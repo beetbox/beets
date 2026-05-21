@@ -149,12 +149,7 @@ def update_func(lib, opts, args):
 
 
 update_cmd = ui.Subcommand(
-    "update",
-    help="update the library",
-    aliases=(
-        "upd",
-        "up",
-    ),
+    "update", help="update the library", aliases=("upd", "up")
 )
 update_cmd.parser.add_album_option()
 update_cmd.parser.add_format_option()

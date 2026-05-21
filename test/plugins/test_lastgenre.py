@@ -242,10 +242,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
         """
         self._setup_config(whitelist=False, canonical=True, count=99)
         self.plugin.ignore_patterns = defaultdict(
-            list,
-            {
-                "the artist": [re.compile(r"^delta blues$", re.IGNORECASE)],
-            },
+            list, {"the artist": [re.compile(r"^delta blues$", re.IGNORECASE)]}
         )
         result = self.plugin._resolve_genres(
             ["delta blues"], artist="the artist"
@@ -261,8 +258,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
         self._setup_config(whitelist=False, canonical=True, count=99)
         # ignorelist targets an unrelated genre — must not affect parent walking
         self.plugin.ignore_patterns = defaultdict(
-            list,
-            {"*": [re.compile(r"^jazz$", re.IGNORECASE)]},
+            list, {"*": [re.compile(r"^jazz$", re.IGNORECASE)]}
         )
         result = self.plugin._resolve_genres(["delta blues"])
         assert result == ["blues"], (
@@ -275,8 +271,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
         """
         self._setup_config(whitelist=False, canonical=True, count=99)
         self.plugin.ignore_patterns = defaultdict(
-            list,
-            {"*": [re.compile(r"^blues$", re.IGNORECASE)]},
+            list, {"*": [re.compile(r"^blues$", re.IGNORECASE)]}
         )
         result = self.plugin._resolve_genres(["delta blues"])
         assert result == [], (
@@ -309,9 +304,7 @@ def config(config):
                 "count": 10,
             },
             ["Blues"],
-            {
-                "album": ["Jazz"],
-            },
+            {"album": ["Jazz"]},
             (["Blues", "Jazz"], "keep + album, whitelist"),
         ),
         # force and keep whitelisted, unknown original
@@ -326,9 +319,7 @@ def config(config):
                 "count": 10,
             },
             ["original unknown", "Blues"],
-            {
-                "album": ["Jazz"],
-            },
+            {"album": ["Jazz"]},
             (["Blues", "Jazz"], "keep + album, whitelist"),
         ),
         # force and keep whitelisted on empty tag
@@ -342,9 +333,7 @@ def config(config):
                 "prefer_specific": False,
             },
             [],
-            {
-                "album": ["Jazz"],
-            },
+            {"album": ["Jazz"]},
             (["Jazz"], "album, whitelist"),
         ),
         # force and keep, artist configured
@@ -359,10 +348,7 @@ def config(config):
                 "count": 10,
             },
             ["original unknown", "Blues"],
-            {
-                "album": ["Jazz"],
-                "artist": ["Pop"],
-            },
+            {"album": ["Jazz"], "artist": ["Pop"]},
             (["Blues", "Pop"], "keep + artist, whitelist"),
         ),
         # don't force, disabled whitelist
@@ -376,9 +362,7 @@ def config(config):
                 "prefer_specific": False,
             },
             ["any genre"],
-            {
-                "album": ["Jazz"],
-            },
+            {"album": ["Jazz"]},
             (["any genre"], "keep any, no-force"),
         ),
         # don't force and empty is regular last.fm fetch; no whitelist too
@@ -392,9 +376,7 @@ def config(config):
                 "prefer_specific": False,
             },
             [],
-            {
-                "album": ["Jazzin"],
-            },
+            {"album": ["Jazzin"]},
             (["Jazzin"], "album, any"),
         ),
         # Canonicalize original genre when force is **off** and
@@ -413,13 +395,8 @@ def config(config):
                 "count": 10,
             },
             ["Cosmic Disco"],
-            {
-                "artist": [],
-            },
-            (
-                ["Disco", "Electronic"],
-                "keep + cleanup, whitelist",
-            ),
+            {"artist": []},
+            (["Disco", "Electronic"], "keep + cleanup, whitelist"),
         ),
         # fallback to next stages until found
         (
@@ -433,11 +410,7 @@ def config(config):
                 "count": 10,
             },
             ["unknown genre"],
-            {
-                "track": None,
-                "album": None,
-                "artist": ["Jazz"],
-            },
+            {"track": None, "album": None, "artist": ["Jazz"]},
             (["Unknown Genre", "Jazz"], "keep + artist, any"),
         ),
         # Keep the original genre when force and keep_existing are on, and
@@ -453,11 +426,7 @@ def config(config):
                 "prefer_specific": False,
             },
             ["any existing"],
-            {
-                "track": None,
-                "album": None,
-                "artist": None,
-            },
+            {"track": None, "album": None, "artist": None},
             (["any existing"], "original fallback"),
         ),
         # Keep the original genre when force and keep_existing are on, and
@@ -473,11 +442,7 @@ def config(config):
                 "prefer_specific": False,
             },
             ["Jazz"],
-            {
-                "track": None,
-                "album": None,
-                "artist": None,
-            },
+            {"track": None, "album": None, "artist": None},
             (["Jazz"], "original fallback"),
         ),
         # Return the configured fallback when force is on but
@@ -493,11 +458,7 @@ def config(config):
                 "prefer_specific": False,
             },
             ["Jazz"],
-            {
-                "track": None,
-                "album": None,
-                "artist": None,
-            },
+            {"track": None, "album": None, "artist": None},
             (["fallback genre"], "fallback"),
         ),
         # fallback to fallback if no original
@@ -512,11 +473,7 @@ def config(config):
                 "prefer_specific": False,
             },
             [],
-            {
-                "track": None,
-                "album": None,
-                "artist": None,
-            },
+            {"track": None, "album": None, "artist": None},
             (["fallback genre"], "fallback"),
         ),
         # limit a lot of results
@@ -531,9 +488,7 @@ def config(config):
                 "prefer_specific": False,
             },
             ["original unknown", "Blues", "Rock", "Folk", "Metal"],
-            {
-                "album": ["Jazz", "Bebop", "Hardbop"],
-            },
+            {"album": ["Jazz", "Bebop", "Hardbop"]},
             (
                 ["Blues", "Rock", "Metal", "Jazz", "Bebop"],
                 "keep + album, whitelist",
@@ -552,11 +507,7 @@ def config(config):
                 "prefer_specific": False,
             },
             ["not whitelisted original"],
-            {
-                "track": None,
-                "album": None,
-                "artist": ["Jazz"],
-            },
+            {"track": None, "album": None, "artist": ["Jazz"]},
             (["Jazz"], "keep + artist, whitelist"),
         ),
         # canonicalization transforms non-whitelisted genres to canonical forms
@@ -574,9 +525,7 @@ def config(config):
                 "count": 10,
             },
             [],
-            {
-                "album": ["acid techno"],
-            },
+            {"album": ["acid techno"]},
             (["Techno", "Electronic"], "album, whitelist"),
         ),
         # canonicalization transforms whitelisted genres to canonical forms and
@@ -597,9 +546,7 @@ def config(config):
                 "extended_debug": True,
             },
             ["detroit techno"],
-            {
-                "album": ["acid house"],
-            },
+            {"album": ["acid house"]},
             (
                 [
                     "Detroit Techno",
@@ -628,9 +575,7 @@ def config(config):
                 "count": 10,
             },
             ["Cosmic Disco"],
-            {
-                "album": ["Detroit Techno"],
-            },
+            {"album": ["Detroit Techno"]},
             (
                 ["Disco", "Electronic", "Detroit Techno", "Techno"],
                 "keep + album, whitelist",
@@ -652,14 +597,8 @@ def config(config):
                 "count": 10,
             },
             ["Cosmic Disco"],
-            {
-                "album": [],
-                "artist": [],
-            },
-            (
-                ["Disco", "Electronic"],
-                "keep + original fallback, whitelist",
-            ),
+            {"album": [], "artist": []},
+            (["Disco", "Electronic"], "keep + original fallback, whitelist"),
         ),
         # Semicolon-delimited genre tag from an external mediafile
         # ("Jazz; Funk; Soul" as a single element) is split by
@@ -677,11 +616,26 @@ def config(config):
                 "count": 10,
             },
             ["Jazz; Funk; Soul"],
-            {
-                "album": [],
-                "artist": [],
-            },
+            {"album": [], "artist": []},
             (["Jazz", "Funk", "Soul"], "original fallback"),
+        ),
+        # Multiple whitelisted genres in the multi-valued `genres` field must
+        # NOT be wiped when Last.fm returns no tags — whether the album is not
+        # found at all or exists but has no tags. Both scenarios produce an
+        # empty list from the fetcher and must be preserved via "original
+        # fallback".
+        (
+            {
+                "force": True,
+                "keep_existing": True,
+                "source": "album",
+                "whitelist": True,
+                "canonical": False,
+                "prefer_specific": False,
+            },
+            ["Baroque", "Classical"],
+            {"album": [], "artist": []},
+            (["Baroque", "Classical"], "original fallback"),
         ),
     ],
 )
@@ -860,25 +814,13 @@ class TestIgnorelist:
         "invalid_config, expected_error_message",
         [
             # A plain string (e.g. accidental file path) instead of a mapping
-            (
-                "/path/to/ignorelist.txt",
-                "must be a dict",
-            ),
+            ("/path/to/ignorelist.txt", "must be a dict"),
             # An integer instead of a mapping
-            (
-                42,
-                "must be a dict",
-            ),
+            (42, "must be a dict"),
             # A list of strings instead of a mapping
-            (
-                ["spoken word", "comedy"],
-                "must be a dict",
-            ),
+            (["spoken word", "comedy"], "must be a dict"),
             # A mapping with a non-list value
-            (
-                {"metallica": "metal"},
-                "must be a list",
-            ),
+            ({"metallica": "metal"}, "must be a list"),
         ],
     )
     def test_ignorelist_config_format_errors(
@@ -912,10 +854,9 @@ class TestIgnorelist:
         def fake_fetch(_, kind, obj, *args):
             if kind == "album_artist" and args:
                 album_artist = args[0]
-                return {
-                    "Artist A": ["Rock"],
-                    "Artist B": ["Metal", "Jazz"],
-                }[album_artist]
+                return {"Artist A": ["Rock"], "Artist B": ["Metal", "Jazz"]}[
+                    album_artist
+                ]
             return []
 
         monkeypatch.setattr(

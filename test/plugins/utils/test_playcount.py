@@ -2,7 +2,7 @@ import pytest
 
 from beets import logging
 from beets.library import Item
-from beets.test.helper import TestHelper, capture_log
+from beets.test.helper import TestHelper
 from beetsplug._utils.playcount import (
     get_items,
     process_track,
@@ -52,10 +52,7 @@ class TestPlayCount:
         source="lastfm",
     ):
         item = Item(
-            title=title,
-            artist=artist,
-            album=album,
-            mb_trackid=mb_trackid,
+            title=title, artist=artist, album=album, mb_trackid=mb_trackid
         )
         self.lib.add(item)
 
@@ -113,25 +110,14 @@ class TestPlayCount:
 
     def test_process_track_updates_every_matching_song(self):
         first = self.add_item(
-            title="Song",
-            artist="Artist",
-            album="First Album",
-            play_count=1,
+            title="Song", artist="Artist", album="First Album", play_count=1
         )
         second = self.add_item(
-            title="Song",
-            artist="Artist",
-            album="Second Album",
-            play_count=9,
+            title="Song", artist="Artist", album="Second Album", play_count=9
         )
 
         assert (
-            process_track(
-                self.lib,
-                self.track(playcount=0),
-                self.log,
-                "lastfm",
-            )
+            process_track(self.lib, self.track(playcount=0), self.log, "lastfm")
             is True
         )
 
@@ -177,11 +163,7 @@ class TestPlayCount:
             pytest.param([], (0, 0), None, None, id="empty-page"),
             pytest.param(
                 [
-                    {
-                        "artist": "Artist",
-                        "name": "Known Song",
-                        "playcount": 8,
-                    },
+                    {"artist": "Artist", "name": "Known Song", "playcount": 8},
                     {
                         "artist": "Missing Artist",
                         "name": "Missing Song",
@@ -196,15 +178,16 @@ class TestPlayCount:
         ],
     )
     def test_update_play_counts_counts_and_logs_summary(
-        self, tracks, expected_counts, expected_summary, expected_playcount
+        self,
+        tracks,
+        expected_counts,
+        expected_summary,
+        expected_playcount,
+        caplog,
     ):
-        item = self.add_item(
-            title="Known Song",
-            artist="Artist",
-            play_count=1,
-        )
+        item = self.add_item(title="Known Song", artist="Artist", play_count=1)
 
-        with capture_log(LOGGER_NAME) as logs:
+        with caplog.at_level("DEBUG", logger=LOGGER_NAME):
             assert (
                 update_play_counts(
                     self.lib,
@@ -216,11 +199,11 @@ class TestPlayCount:
             )
 
         assert any(
-            f"Received {len(tracks)} tracks in this page, processing..." in log
-            for log in logs
+            f"Received {len(tracks)} tracks in this page, processing..." in msg
+            for msg in caplog.messages
         )
         if expected_summary is None:
-            assert not any("Acquired" in log for log in logs)
+            assert not any("Acquired" in msg for msg in caplog.messages)
         else:
-            assert expected_summary in logs
+            assert expected_summary in caplog.text
             assert self.get_playcount(item.id) == expected_playcount

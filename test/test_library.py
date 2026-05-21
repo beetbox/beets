@@ -129,11 +129,7 @@ class AddTest(BeetsTestCase):
         """Test library.add emits only one database_change event."""
         self.item = _common.item()
         self.item.path = beets.util.normpath(
-            os.path.join(
-                self.temp_dir,
-                b"a",
-                b"b.mp3",
-            )
+            os.path.join(self.temp_dir, b"a", b"b.mp3")
         )
         self.item.album = "a"
         self.item.title = "b"
@@ -336,6 +332,33 @@ class DestinationTest(BeetsTestCase):
         self.lib.directory = b"one"
         self.lib.path_formats = [("default", "two"), ("comp:true", "three")]
         assert self.i.destination() == np("one/three")
+
+    def test_multi_value_string_query_path(self):
+        self.i.genres = ["Classical"]
+        self.lib.directory = b"one"
+        self.lib.path_formats = [
+            ("default", "two"),
+            ("genres:=~Classical", "three"),
+        ]
+        assert self.i.destination() == np("one/three")
+
+    def test_multi_value_match_query_path(self):
+        self.i.genres = ["Classical"]
+        self.lib.directory = b"one"
+        self.lib.path_formats = [
+            ("default", "two"),
+            ("genres:=Classical", "three"),
+        ]
+        assert self.i.destination() == np("one/three")
+
+    def test_multi_value_string_query_path_no_substring_match(self):
+        self.i.genres = ["Neoclassical"]
+        self.lib.directory = b"one"
+        self.lib.path_formats = [
+            ("default", "two"),
+            ("genres:=~Classical", "three"),
+        ]
+        assert self.i.destination() == np("one/two")
 
     def test_albumtype_query_path(self):
         self.i.comp = True
@@ -898,21 +921,15 @@ class PluginDestinationTest(BeetsTestCase):
         self._assert_dest(b"the artist $foo")
 
     def test_plugin_value_not_substituted(self):
-        self._tv_map = {
-            "foo": "bar",
-        }
+        self._tv_map = {"foo": "bar"}
         self._assert_dest(b"the artist bar")
 
     def test_plugin_value_overrides_attribute(self):
-        self._tv_map = {
-            "artist": "bar",
-        }
+        self._tv_map = {"artist": "bar"}
         self._assert_dest(b"bar $foo")
 
     def test_plugin_value_sanitized(self):
-        self._tv_map = {
-            "foo": "bar/baz",
-        }
+        self._tv_map = {"foo": "bar/baz"}
         self._assert_dest(b"the artist bar_baz")
 
 

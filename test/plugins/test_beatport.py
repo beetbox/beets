@@ -559,14 +559,7 @@ class BeatportTest(BeetsTestCase):
 
     def test_track_url_applied(self):
         # Specify beatport ids here because an 'item.id' is beets-internal.
-        ids = [
-            7817567,
-            7817568,
-            7817569,
-            7817570,
-            7817571,
-            7817572,
-        ]
+        ids = [7817567, 7817568, 7817569, 7817570, 7817571, 7817572]
         # Concatenate with 'id' to pass strict equality test.
         for track, test_track, id in zip(self.tracks, self.test_tracks, ids):
             assert (

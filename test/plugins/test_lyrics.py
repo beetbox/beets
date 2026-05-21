@@ -140,6 +140,17 @@ class TestLyricsUtils:
     def test_slug(self, text, expected):
         assert lyrics.slug(text) == expected
 
+    @pytest.mark.parametrize(
+        "text, expected",
+        [
+            ("If They’re Shooting at You", "If-They-re-Shooting-at-You"),
+            ("‘Round Midnight", "-Round-Midnight"),
+            ("Don't Stop", "Don-t-Stop"),
+        ],
+    )
+    def test_musixmatch_encode(self, text, expected):
+        assert lyrics.MusiXmatch.encode(text) == expected
+
 
 class TestHtml:
     def test_scrape_strip_cruft(self):
@@ -254,13 +265,7 @@ class TestLyricsPlugin(LyricsPluginMixin):
     @pytest.mark.parametrize(
         "plugin_config, old_lyrics, found, expected",
         [
-            pytest.param(
-                {},
-                "old",
-                "new",
-                "old",
-                id="no_force_keeps_old",
-            ),
+            pytest.param({}, "old", "new", "old", id="no_force_keeps_old"),
             pytest.param(
                 {"force": True},
                 "old",
@@ -327,13 +332,7 @@ class TestLyricsPlugin(LyricsPluginMixin):
         ],
     )
     def test_overwrite_config(
-        self,
-        monkeypatch,
-        helper,
-        lyrics_plugin,
-        old_lyrics,
-        found,
-        expected,
+        self, monkeypatch, helper, lyrics_plugin, old_lyrics, found, expected
     ):
         monkeypatch.setattr(
             lyrics_plugin,
@@ -375,9 +374,7 @@ class TestLyricsPlugin(LyricsPluginMixin):
             item.lyrics_translation_language
 
     def test_imported_skips_auto_ignored_items(
-        self,
-        lyrics_plugin,
-        monkeypatch,
+        self, lyrics_plugin, monkeypatch
     ):
         lyrics_plugin.config["auto_ignore"].set("album:Greatest Hits")
         items = [
@@ -628,15 +625,9 @@ class TestLRCLibLyrics(LyricsBackendTest):
         "response_data, expected_lyrics",
         [
             pytest.param([], None, id="handle non-matching lyrics"),
+            pytest.param([lyrics_match()], SYNCED, id="synced when available"),
             pytest.param(
-                [lyrics_match()],
-                SYNCED,
-                id="synced when available",
-            ),
-            pytest.param(
-                [lyrics_match(duration=1)],
-                None,
-                id="none: duration too short",
+                [lyrics_match(duration=1)], None, id="none: duration too short"
             ),
             pytest.param(
                 [lyrics_match(instrumental=True)],
@@ -668,8 +659,7 @@ class TestLRCLibLyrics(LyricsBackendTest):
                         plainLyrics="valid plain",
                     ),
                     lyrics_match(
-                        duration=1,
-                        syncedLyrics="synced with invalid duration",
+                        duration=1, syncedLyrics="synced with invalid duration"
                     ),
                 ],
                 "valid plain",

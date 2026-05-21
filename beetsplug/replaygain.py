@@ -34,6 +34,7 @@ from threading import Event, Thread
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeVar
 
 from beets import ui
+from beets.exceptions import UserError
 from beets.plugins import BeetsPlugin
 from beets.util import command_output, syspath
 
@@ -320,10 +321,7 @@ class FfmpegBackend(Backend):
         """
         task.track_gains = [
             self._analyse_item(
-                item,
-                task.target_level,
-                task.peak_method,
-                count_blocks=False,
+                item, task.target_level, task.peak_method, count_blocks=False
             )[0]  # take only the gain, discarding number of gating blocks
             for item in task.items
         ]
@@ -340,10 +338,7 @@ class FfmpegBackend(Backend):
         # Gives a list of tuples (track_gain, track_n_blocks)
         track_results: list[tuple[Gain, int]] = [
             self._analyse_item(
-                item,
-                task.target_level,
-                task.peak_method,
-                count_blocks=True,
+                item, task.target_level, task.peak_method, count_blocks=True
             )
             for item in task.items
         ]
@@ -448,13 +443,7 @@ class FfmpegBackend(Backend):
                 step_size=-1,
             )
             peak = self._parse_float(
-                output[
-                    self._find_line(
-                        output,
-                        b"    Peak:",
-                        line_peak,
-                    )
-                ]
+                output[self._find_line(output, b"    Peak:", line_peak)]
             )
             # convert TPFS -> part of FS
             peak = 10 ** (peak / 20)
@@ -466,13 +455,7 @@ class FfmpegBackend(Backend):
             step_size=-1,
         )
         gain = self._parse_float(
-            output[
-                self._find_line(
-                    output,
-                    b"    I:",
-                    line_integrated_loudness,
-                )
-            ]
+            output[self._find_line(output, b"    I:", line_integrated_loudness)]
         )
         # convert LUFS -> LU from target level
         gain = target_level_lufs - gain
@@ -567,12 +550,7 @@ class CommandBackend(Backend):
 
     def __init__(self, config: ConfigView, log: Logger):
         super().__init__(config, log)
-        config.add(
-            {
-                "command": "",
-                "noclip": True,
-            }
-        )
+        config.add({"command": "", "noclip": True})
 
         cmd_path: Path = Path(config["command"].as_str())
         supported_tools = set(self.SUPPORTED_FORMATS_BY_TOOL)
@@ -626,10 +604,7 @@ class CommandBackend(Backend):
         return item.format in self.SUPPORTED_FORMATS_BY_TOOL[self.cmd_name]
 
     def compute_gain(
-        self,
-        items: Sequence[Item],
-        target_level: float,
-        is_album: bool,
+        self, items: Sequence[Item], target_level: float, is_album: bool
     ) -> list[Gain]:
         """Computes the track or album gain of a list of items, returns
         a list of TrackGain objects.
@@ -1226,7 +1201,7 @@ class ReplayGainPlugin(BeetsPlugin):
         self.backend_name = self.config["backend"].as_str()
 
         if self.backend_name not in BACKENDS:
-            raise ui.UserError(
+            raise UserError(
                 f"Selected ReplayGain backend {self.backend_name} is not"
                 f" supported. Please select one of: {', '.join(BACKENDS)}"
             )
@@ -1235,7 +1210,7 @@ class ReplayGainPlugin(BeetsPlugin):
         # and deprecating the old name 'peak'.
         peak_method = self.config["peak"].as_str()
         if peak_method not in PeakMethod.__members__:
-            raise ui.UserError(
+            raise UserError(
                 f"Selected ReplayGain peak method {peak_method} is not"
                 " supported. Please select one of:"
                 f" {', '.join(PeakMethod.__members__)}"
@@ -1258,7 +1233,7 @@ class ReplayGainPlugin(BeetsPlugin):
                 self.config, self._log
             )
         except (ReplayGainError, FatalReplayGainError) as e:
-            raise ui.UserError(f"replaygain initialization failed: {e}")
+            raise UserError(f"replaygain initialization failed: {e}")
 
     def should_use_r128(self, item: Item) -> bool:
         """Checks the plugin setting to decide whether the calculation
@@ -1311,10 +1286,7 @@ class ReplayGainPlugin(BeetsPlugin):
         return False
 
     def create_task(
-        self,
-        items: Sequence[Item],
-        use_r128: bool,
-        album: Album | None = None,
+        self, items: Sequence[Item], use_r128: bool, album: Album | None = None
     ) -> RgTask:
         if use_r128:
             return R128Task(
@@ -1381,7 +1353,7 @@ class ReplayGainPlugin(BeetsPlugin):
             except ReplayGainError as e:
                 self._log.info("ReplayGain error: {}", e)
             except FatalReplayGainError as e:
-                raise ui.UserError(f"Fatal replay gain error: {e}")
+                raise UserError(f"Fatal replay gain error: {e}")
 
     def handle_track(self, item: Item, write: bool, force: bool = False):
         """Compute track replay gain and store it in the item.
@@ -1410,7 +1382,7 @@ class ReplayGainPlugin(BeetsPlugin):
         except ReplayGainError as e:
             self._log.info("ReplayGain error: {}", e)
         except FatalReplayGainError as e:
-            raise ui.UserError(f"Fatal replay gain error: {e}")
+            raise UserError(f"Fatal replay gain error: {e}")
 
     def open_pool(self, threads: int):
         """Open a `ThreadPool` instance in `self.pool`"""
@@ -1455,9 +1427,7 @@ class ReplayGainPlugin(BeetsPlugin):
                 return ctx.run(handle_exc, exc)
 
             self.pool.apply_async(
-                run_func,
-                callback=run_callback,
-                error_callback=run_handle_exc,
+                run_func, callback=run_callback, error_callback=run_handle_exc
             )
         else:
             callback(func(*args, **kwds))
@@ -1518,10 +1488,7 @@ class ReplayGainPlugin(BeetsPlugin):
                 self.handle_track(task.item, False, self.force_on_import)
 
     def command_func(
-        self,
-        lib: Library,
-        opts: optparse.Values,
-        args: list[str],
+        self, lib: Library, opts: optparse.Values, args: list[str]
     ):
         try:
             write = ui.should_write(opts.write)

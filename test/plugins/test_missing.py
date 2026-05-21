@@ -119,10 +119,7 @@ class TestMissingAlbums(IOMixin, PluginMixin):
 
         with self.configure_plugin({}):
             output = self.run_with_output(
-                "missing",
-                "-a",
-                "--release-types",
-                "compilation,album",
+                "missing", "-a", "--release-types", "compilation,album"
             )
 
         assert "artist - compilation" in output
@@ -141,8 +138,7 @@ class TestMissingAlbums(IOMixin, PluginMixin):
             )
         )
         adapter = requests_mock.get(
-            re.compile(r"/ws/2/release-group"),
-            json={"release-groups": []},
+            re.compile(r"/ws/2/release-group"), json={"release-groups": []}
         )
 
         with self.configure_plugin({"release_types": []}):
@@ -188,10 +184,7 @@ class TestMissingTracks(IOMixin, PluginMixin):
 
     @pytest.mark.parametrize(
         "total,count,expected",
-        [
-            (True, False, "1\n"),
-            (False, True, "artist - album: 1"),
-        ],
+        [(True, False, "1\n"), (False, True, "artist - album: 1")],
     )
     @patch("beets.metadata_plugins.album_for_id")
     def test_missing_tracks(self, album_for_id, total, count, expected):

@@ -18,8 +18,8 @@ copyright = "2016, Adrian Sampson"
 
 master_doc = "index"
 language = "en"
-version = "2.10"
-release = "2.10.0"
+version = "2.11"
+release = "2.11.0"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -45,7 +45,7 @@ autosummary_context = {
             "beetsplug._utils.musicbrainz.BrowseKwargs",
             "beetsplug._utils.musicbrainz.BrowseRecordingsKwargs",
             "beetsplug._utils.musicbrainz.BrowseReleaseGroupsKwargs",
-        ],
+        ]
     }
 }
 autodoc_member_order = "bysource"
@@ -82,7 +82,7 @@ htmlhelp_basename = "beetsdoc"
 
 # Options for LaTeX output
 latex_documents = [
-    ("index", "beets.tex", "beets Documentation", AUTHOR, "manual"),
+    ("index", "beets.tex", "beets Documentation", AUTHOR, "manual")
 ]
 
 # Options for manual page output

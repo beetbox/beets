@@ -51,7 +51,8 @@ import beets
 
 from ..util import cached_classproperty, functemplate
 from . import types
-from .query import MatchQuery, NullSort, TrueQuery
+from .query import MatchQuery, TrueQuery
+from .sort import NullSort
 
 if TYPE_CHECKING:
     from collections.abc import (
@@ -64,7 +65,8 @@ if TYPE_CHECKING:
     from sqlite3 import Connection
     from types import TracebackType
 
-    from .query import FieldQueryType, FieldSort, Query, Sort, SQLiteType
+    from .query import FieldQueryType, Query, SQLiteType
+    from .sort import FieldSort, Sort
 
 D = TypeVar("D", bound="Database", default=Any)
 
@@ -75,8 +77,9 @@ class DBAccessError(Exception):
     """The SQLite database became inaccessible.
 
     This can happen when trying to read or write the database when, for
-    example, the database file is deleted or otherwise disappears. There
-    is probably no way to recover from this error.
+    example, the database file is deleted, the parent directory is missing,
+    or the file permissions prevent the operation. There is probably no way
+    to recover from this error.
     """
 
 
@@ -141,9 +144,7 @@ class FormattedMapping(Mapping[str, str]):
     # The following signature is incompatible with `Mapping[str, str]`, since
     # the return type doesn't include `None` (but `default` can be `None`).
     def get(  # type: ignore
-        self,
-        key: str,
-        default: str | None = None,
+        self, key: str, default: str | None = None
     ) -> str:
         """Similar to Mapping.get(key, default), but always formats to str."""
         if default is None:
@@ -491,8 +492,23 @@ class Model(ABC, Generic[D]):
 
         If the field has no explicit type, it is given the base `Type`,
         which does no conversion.
+
+        For models with a related model (e.g. Album <-> Item), fall back
+        to the related model's field and type definitions for fields not
+        defined on this model. This avoids descending into the sibling's
+        `_type` method to prevent infinite recursion between reciprocal
+        relations.
         """
-        return cls._fields.get(key) or cls._types.get(key) or types.DEFAULT
+        typ = cls._fields.get(key) or cls._types.get(key)
+        if typ is not None:
+            return typ
+        if cls._relation is not cls:
+            typ = cls._relation._fields.get(key) or cls._relation._types.get(
+                key
+            )
+            if typ is not None:
+                return typ
+        return types.DEFAULT
 
     def _get(self, key, default: Any = None, raise_: bool = False):
         """Get the value for a field, or `default`. Alternatively,
@@ -721,9 +737,7 @@ class Model(ABC, Generic[D]):
     _formatter = FormattedMapping
 
     def formatted(
-        self,
-        included_keys: str = _formatter.ALL_KEYS,
-        for_path: bool = False,
+        self, included_keys: str = _formatter.ALL_KEYS, for_path: bool = False
     ) -> FormattedMapping:
         """Get a mapping containing all values on this object formatted
         as human-readable unicode strings.
@@ -731,9 +745,7 @@ class Model(ABC, Generic[D]):
         return self._formatter(self, included_keys, for_path)
 
     def evaluate_template(
-        self,
-        template: str | functemplate.Template,
-        for_path: bool = False,
+        self, template: str | functemplate.Template, for_path: bool = False
     ) -> str:
         """Evaluate a template (a string or a `Template` object) using
         the object's fields. If `for_path` is true, then no new path
@@ -1024,11 +1036,17 @@ class Transaction:
             # In two specific cases, SQLite reports an error while accessing
             # the underlying database file. We surface these exceptions as
             # DBAccessError so the application can abort.
-            if e.args[0] in (
-                "attempt to write a readonly database",
-                "unable to open database file",
-            ):
-                raise DBAccessError(e.args[0])
+            if e.args[0] == "unable to open database file":
+                raise DBAccessError(
+                    "unable to open database file. "
+                    "Check that the parent directory exists and is writable."
+                )
+            elif e.args[0] == "attempt to write a readonly database":
+                raise DBAccessError(
+                    "attempt to write a readonly database. "
+                    "Check file permissions: the database file or its directory "
+                    "may not be writable."
+                )
             raise
         else:
             self._mutated = True
@@ -1362,11 +1380,7 @@ class Database:
                     ON {flex_table} (entity_id);
                 """)
 
-    def _create_indices(
-        self,
-        table: str,
-        indices: Sequence[Index],
-    ):
+    def _create_indices(self, table: str, indices: Sequence[Index]):
         """Create indices for the given table if they don't exist."""
         with self.transaction() as tx:
             for index in indices:

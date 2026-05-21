@@ -176,9 +176,7 @@ class DuplicatesPlugin(BeetsPlugin):
 
             if path:
                 fmt_tmpl = "$path"
-
-            # Default format string for count mode.
-            if count and not fmt_tmpl:
+            elif not fmt_tmpl:
                 if album:
                     fmt_tmpl = "$albumartist - $album"
                 else:
@@ -206,7 +204,11 @@ class DuplicatesPlugin(BeetsPlugin):
                             delete=delete,
                             remove=remove,
                             tag=tag,
-                            fmt=f"{fmt_tmpl}: {obj_count}",
+                            fmt=(
+                                fmt_tmpl
+                                if not count
+                                else f"{fmt_tmpl}: {obj_count}"
+                            ),
                         )
 
         self._command.func = _dup

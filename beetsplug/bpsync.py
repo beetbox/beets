@@ -95,7 +95,9 @@ class BPSyncPlugin(BeetsPlugin):
             # Apply.
             trackinfo = self.beatport_plugin.track_for_id(item.mb_trackid)
             with lib.transaction():
-                TrackMatch(Distance(), trackinfo, item).apply_metadata()
+                TrackMatch(Distance(), trackinfo, item).apply_metadata(
+                    from_scratch=False
+                )
                 apply_item_changes(lib, item, move, pretend, write)
 
     @staticmethod
@@ -162,7 +164,7 @@ class BPSyncPlugin(BeetsPlugin):
             with lib.transaction():
                 AlbumMatch(
                     Distance(), albuminfo, dict(item_info_pairs)
-                ).apply_metadata()
+                ).apply_metadata(from_scratch=False)
                 changed = False
                 # Find any changed item to apply Beatport changes to album.
                 any_changed_item = items[0]

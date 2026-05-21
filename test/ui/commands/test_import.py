@@ -4,9 +4,10 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from beets import config, library, ui
+from beets import config, library
 from beets.autotag.hooks import AlbumInfo, AlbumMatch, TrackInfo
 from beets.autotag.match import distance
+from beets.exceptions import UserError
 from beets.test import _common
 from beets.test.helper import BeetsTestCase, IOMixin
 from beets.ui.commands.import_ import import_files, paths_from_logfile
@@ -18,7 +19,7 @@ class ImportTest(BeetsTestCase):
     def test_quiet_timid_disallowed(self):
         config["import"]["quiet"] = True
         config["import"]["timid"] = True
-        with pytest.raises(ui.UserError):
+        with pytest.raises(UserError):
             import_files(None, [], None)
 
     def test_parse_paths_from_logfile(self):

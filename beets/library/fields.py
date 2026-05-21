@@ -54,6 +54,7 @@ TYPE_BY_FIELD: dict[str, types.Type] = {
     "format": types.STRING,
     "genres": types.MULTI_VALUE_DSV,
     "grouping": types.STRING,
+    "subtitle": types.STRING,
     "id": types.PRIMARY_ID,
     "initial_key": types.MusicalKey(),
     "isrc": types.STRING,

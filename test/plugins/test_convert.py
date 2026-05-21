@@ -30,6 +30,7 @@ from beets.test.helper import (
     AsIsImporterMixin,
     ImportHelper,
     IOMixin,
+    PluginMixin,
     PluginTestCase,
     capture_log,
 )
@@ -71,7 +72,6 @@ class ConvertTestCase(IOMixin, ConvertMixin, PluginTestCase):
     plugin = "convert"
 
 
-@_common.slow_test()
 class ImportConvertTest(AsIsImporterMixin, ImportHelper, ConvertTestCase):
     def setUp(self):
         super().setUp()
@@ -133,7 +133,6 @@ class ConvertCommand:
         return self.run_convert_path(self.item, *args)
 
 
-@_common.slow_test()
 class ConvertCliTest(ConvertTestCase, ConvertCommand):
     def setUp(self):
         super().setUp()
@@ -309,7 +308,6 @@ class ConvertCliTest(ConvertTestCase, ConvertCommand):
         self.assert_playlist_entry("converted.ogg", "--keep-new")
 
 
-@_common.slow_test()
 class NeverConvertLossyFilesTest(ConvertTestCase, ConvertCommand):
     """Test the effect of the `never_convert_lossy_files` option."""
 
@@ -322,9 +320,7 @@ class NeverConvertLossyFilesTest(ConvertTestCase, ConvertCommand):
             "paths": {"default": "converted"},
             "never_convert_lossy_files": True,
             "format": "mp3",
-            "formats": {
-                "mp3": self.tagged_copy_cmd("mp3"),
-            },
+            "formats": {"mp3": self.tagged_copy_cmd("mp3")},
         }
 
     def test_transcode_from_lossless(self):
@@ -363,8 +359,16 @@ class NeverConvertLossyFilesTest(ConvertTestCase, ConvertCommand):
         assert self.file_endswith(converted, "opus")
 
 
-class TestNoConvert:
+class TestNoConvert(PluginMixin):
     """Test the effect of the `no_convert` option."""
+
+    plugin = "convert"
+
+    @pytest.fixture(autouse=True)
+    def cleanup_plugins(self):
+        """Make sure hooks are cleared after each test."""
+        yield
+        self.unload_plugins()
 
     @pytest.mark.parametrize(
         "config_value, should_skip",
@@ -375,7 +379,7 @@ class TestNoConvert:
             ("bitrate:320 , format:ogg", True),
         ],
     )
-    def test_no_convert_skip(self, config_value, should_skip):
+    def test_no_convert_skip(self, config, config_value, should_skip):
         item = Item(format="ogg", bitrate=256)
-        convert.config["convert"]["no_convert"] = config_value
-        assert convert.in_no_convert(item) == should_skip
+        config["convert"]["no_convert"] = config_value
+        assert convert.ConvertPlugin().in_no_convert(item) == should_skip

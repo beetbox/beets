@@ -3,6 +3,7 @@
 import os
 
 from beets import config, ui
+from beets.exceptions import UserError
 from beets.util import displayable_path, editor_command, interactive_open
 
 
@@ -52,7 +53,7 @@ def config_edit(cli_options):
     editor = editor_command()
 
     if not editor:
-        raise ui.UserError(
+        raise UserError(
             "Please set the VISUAL or EDITOR environment variable to edit"
             " configuration."
         )
@@ -61,9 +62,9 @@ def config_edit(cli_options):
             open(path, "w+").close()
         interactive_open([path], editor)
     except FileNotFoundError:
-        raise ui.UserError(f"Editor {editor!r} not found.")
+        raise UserError(f"Editor {editor!r} not found.")
     except OSError as exc:
-        raise ui.UserError(f"Could not edit configuration: {exc}")
+        raise UserError(f"Could not edit configuration: {exc}")
 
 
 config_cmd = ui.Subcommand("config", help="show or edit the user configuration")

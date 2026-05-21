@@ -60,10 +60,7 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
         """Test resizing based on file size, given a resize_func."""
         # Check quality setting unaffected by new parameter
         im_95_qual = backend.resize(
-            225,
-            self.IMG_225x225,
-            quality=95,
-            max_filesize=0,
+            225, self.IMG_225x225, quality=95, max_filesize=0
         )
         # check valid path returned - max_filesize hasn't broken resize command
         assert Path(os.fsdecode(im_95_qual)).exists()
@@ -84,10 +81,7 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
 
         # Attempt with lower initial quality
         im_75_qual = backend.resize(
-            225,
-            self.IMG_225x225,
-            quality=75,
-            max_filesize=0,
+            225, self.IMG_225x225, quality=75, max_filesize=0
         )
         assert Path(os.fsdecode(im_75_qual)).exists()
 

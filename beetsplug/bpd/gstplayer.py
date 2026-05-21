@@ -25,7 +25,7 @@ import urllib
 
 import gi
 
-from beets import ui
+from beets.exceptions import UserError
 
 try:
     gi.require_version("Gst", "1.0")
@@ -78,12 +78,12 @@ class GstPlayer:
         self.player = Gst.ElementFactory.make("playbin", "player")
 
         if self.player is None:
-            raise ui.UserError("Could not create playbin")
+            raise UserError("Could not create playbin")
 
         fakesink = Gst.ElementFactory.make("fakesink", "fakesink")
 
         if fakesink is None:
-            raise ui.UserError("Could not create fakesink")
+            raise UserError("Could not create fakesink")
 
         self.player.set_property("video-sink", fakesink)
         bus = self.player.get_bus()

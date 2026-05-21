@@ -399,6 +399,7 @@ class MusiXmatch(Backend):
     URL_TEMPLATE = "https://www.musixmatch.com/lyrics/{}/{}"
 
     REPLACEMENTS: ClassVar[dict[str, str]] = {
+        "['\u2018\u2019]": "-",
         r"\s+": "-",
         "<": "Less_Than",
         ">": "Greater_Than",
@@ -459,8 +460,7 @@ class Html:
     remove_aside = partial(re.compile("<aside .+?</aside>").sub, "")
     #: remove adslot-Content_1 div from the lyrics text (paroles.net)
     remove_adslot = partial(
-        re.compile(r"\n</div>[^\n]+-- Content_\d+ --.*?\n<div>", re.S).sub,
-        "\n",
+        re.compile(r"\n</div>[^\n]+-- Content_\d+ --.*?\n<div>", re.S).sub, "\n"
     )
     #: remove text formatting (azlyrics.com, lacocinelle.net)
     remove_formatting = partial(
@@ -908,10 +908,7 @@ class RestFiles:
             conf_file.write_text(self.REST_CONF_TEMPLATE)
 
     def write_artist(self, artist: str, items: Iterable[Item]) -> None:
-        parts = [
-            f"{artist}\n{'=' * len(artist)}",
-            ".. contents::\n   :local:",
-        ]
+        parts = [f"{artist}\n{'=' * len(artist)}", ".. contents::\n   :local:"]
         for album, items in groupby(items, key=lambda i: i.album):
             parts.append(f"{album}\n{'-' * len(album)}")
             parts.extend(

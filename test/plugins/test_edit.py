@@ -19,7 +19,6 @@ from unittest.mock import patch
 from beets.dbcore.query import TrueQuery
 from beets.importer import Action
 from beets.library import Item
-from beets.test import _common
 from beets.test.helper import (
     AutotagImportTestCase,
     AutotagStub,
@@ -118,7 +117,6 @@ class EditMixin(PluginMixin):
             self.run_command("edit", *args)
 
 
-@_common.slow_test()
 @patch("beets.library.Item.write")
 class EditCommandTest(IOMixin, EditMixin, BeetsTestCase):
     """Black box tests for `beetsplug.edit`. Command line interaction is
@@ -190,9 +188,7 @@ class EditCommandTest(IOMixin, EditMixin, BeetsTestCase):
 
         assert mock_write.call_count == self.TRACK_COUNT
         self.assertItemFieldsModified(
-            self.album.items(),
-            self.items_orig,
-            ["title", "mtime"],
+            self.album.items(), self.items_orig, ["title", "mtime"]
         )
 
     def test_title_edit_keep_editing_then_cancel(self, mock_write):
@@ -204,11 +200,7 @@ class EditCommandTest(IOMixin, EditMixin, BeetsTestCase):
         )
 
         assert mock_write.call_count == 0
-        self.assertItemFieldsModified(
-            self.album.items(),
-            self.items_orig,
-            [],
-        )
+        self.assertItemFieldsModified(self.album.items(), self.items_orig, [])
 
     def test_noedit(self, mock_write):
         """Do not edit anything."""
@@ -315,7 +307,6 @@ class EditCommandTest(IOMixin, EditMixin, BeetsTestCase):
         assert mock_write.call_count == 0
 
 
-@_common.slow_test()
 class EditDuringImporterTestCase(
     EditMixin, TerminalImportMixin, AutotagImportTestCase
 ):
@@ -332,7 +323,6 @@ class EditDuringImporterTestCase(
         self.items_orig = [Item.from_path(f.path) for f in self.import_media]
 
 
-@_common.slow_test()
 class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
     def setUp(self):
         super().setUp()
@@ -467,7 +457,6 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
         assert all("match " in i.mb_trackid for i in self.lib.items())
 
 
-@_common.slow_test()
 class EditDuringImporterSingletonTest(EditDuringImporterTestCase):
     def setUp(self):
         super().setUp()

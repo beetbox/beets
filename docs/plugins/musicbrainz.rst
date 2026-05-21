@@ -86,9 +86,10 @@ Default
 .. conf:: extra_tags
     :default: []
 
-    By default, beets will use only the artist, album, and track count to query
-    MusicBrainz. Additional tags to be queried can be supplied with the
-    ``extra_tags`` setting.
+    By default, beets will use only the album and either artist or
+    the MusicBrainz Various Artists ID to query MusicBrainz. Additional
+    tags, including track count, can be queried by using the ``extra_tags``
+    setting.
 
     This setting should improve the autotagger results if the metadata with the
     given tags match the metadata returned by MusicBrainz.

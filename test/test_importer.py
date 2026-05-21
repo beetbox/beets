@@ -72,7 +72,6 @@ class PathsMixin:
         return self.lib_path / "Tag Artist" / "Tag Album" / "Tag Track 1.mp3"
 
 
-@_common.slow_test()
 class NonAutotaggedImportTest(PathsMixin, AsIsImporterMixin, ImportTestCase):
     db_on_disk = True
 
@@ -336,10 +335,7 @@ class ImportSingletonTest(AutotagImportTestCase):
         single_path = os.path.join(self.import_dir, b"track_2.mp3")
 
         util.copy(resource_path, single_path)
-        import_files = [
-            os.path.join(self.import_dir, b"album"),
-            single_path,
-        ]
+        import_files = [os.path.join(self.import_dir, b"album"), single_path]
         self.setup_importer()
         self.importer.paths = import_files
 
@@ -391,8 +387,7 @@ class ImportSingletonTest(AutotagImportTestCase):
 
 
 @pytest.mark.skipif(
-    not has_program("ffprobe", ["-L"]),
-    "need ffprobe for format recognition",
+    not has_program("ffprobe", ["-L"]), "need ffprobe for format recognition"
 )
 class ImportFormatTest:
     """Test fix_extension during import."""
@@ -1058,6 +1053,21 @@ class ImportDuplicateAlbumTest(PluginMixin, ImportTestCase):
         item = self.lib.items().get()
         assert item.title == "new title"
 
+    def test_remove_duplicate_album_deletes_art(self):
+        album = self.lib.albums().get()
+        art_source = os.path.join(_common.RSRC, b"abbey.jpg")
+        album.set_art(art_source)
+        album.store()
+        old_artpath = album.art_filepath
+
+        assert old_artpath.exists()
+
+        self.importer.default_resolution = self.importer.Resolution.REMOVE
+        self.importer.run()
+
+        assert not old_artpath.exists()
+        assert len(self.lib.albums()) == 1
+
     def test_no_autotag_removes_duplicate_album(self):
         config["import"]["autotag"] = False
         album = self.lib.albums().get()
@@ -1142,12 +1152,51 @@ class ImportDuplicateAlbumTest(PluginMixin, ImportTestCase):
         return album
 
 
+@patch(
+    "beets.metadata_plugins.candidates", Mock(side_effect=album_candidates_mock)
+)
+class ImportDuplicateAlbumThreadedTest(PluginMixin, ImportTestCase):
+    """Regression test for #6601: threaded merge must propagate context vars."""
+
+    plugin = "musicbrainz"
+    # Each thread gets its own connection; :memory: would give each thread an
+    # empty DB, so we need a real file that all threads share.
+    db_on_disk = True
+
+    def setUp(self):
+        super().setUp()
+        self.add_album_fixture(albumartist="artist", album="album")
+        self.prepare_album_for_import(1)
+        self.importer = self.setup_importer(
+            duplicate_keys={"album": "albumartist album"}
+        )
+
+    def add_album_fixture(self, **kwargs):
+        album = super().add_album_fixture()
+        album.update(kwargs)
+        album.store()
+        return album
+
+    def test_merge_duplicate_album_threaded(self):
+        self.config["threaded"] = True
+        self.importer.default_resolution = self.importer.Resolution.MERGE
+        self.importer.run()
+
+        assert len(self.lib.albums()) == 1
+        for item in self.lib.items():
+            assert item.filepath.exists(), f"item path not found: {item.path}"
+
+        # Without the fix, lost context vars cause relative paths to stay
+        # unresolved, so items land in different (duplicate) directories.
+        album_dirs = {item.filepath.parent for item in self.lib.items()}
+        assert len(album_dirs) == 1, (
+            f"expected single album dir, got {album_dirs}"
+        )
+
+
 def item_candidates_mock(*args, **kwargs):
     yield TrackInfo(
-        artist="artist",
-        title="title",
-        track_id="new trackid",
-        index=0,
+        artist="artist", title="title", track_id="new trackid", index=0
     )
 
 
@@ -1347,8 +1396,7 @@ class IncrementalImportTest(AsIsImporterMixin, ImportTestCase):
 
 def _mkmp3(path):
     shutil.copyfile(
-        syspath(os.path.join(_common.RSRC, b"min.mp3")),
-        syspath(path),
+        syspath(os.path.join(_common.RSRC, b"min.mp3")), syspath(path)
     )
 
 
@@ -1512,6 +1560,59 @@ class MultiDiscAlbumsInDirTest(BeetsTestCase):
         root, items = albums[0]
         assert root == self.dirs[0:3]
         assert len(items) == 3
+
+    def test_coalesce_markers(self):
+        for i, (marker, suffix1, suffix2) in enumerate(
+            [
+                (b"Disc", b" 1", b" 02"),  # titlecase, space-separated
+                (b"disk 757", b" 1", b" 02"),  # lowercase, numerical suffix
+                (b"CD", b"01", b"02"),  # uppercase, no space (e.g. CD01)
+                (b"disc", b"_1", b"_2"),  # underscore separator (e.g. disc_1)
+                (b"cAsSeTtE", b" 1", b" 02"),  # mixed case
+                (b"Digital   Media", b" 1", b" 02"),  # multiple spaces
+                (b"vinyl", b" 1", b" 02"),  # lowercase
+                (b"12 vinyl", b" 1", b" 02"),  # common prefix
+            ]
+        ):
+            with self.subTest(marker=marker, suffix1=suffix1, suffix2=suffix2):
+                base = os.path.abspath(
+                    os.path.join(self.temp_dir, b"marker_" + str(i).encode())
+                )
+                os.mkdir(syspath(base))
+
+                album_dir = os.path.join(base, b"Album Name")
+                os.mkdir(syspath(album_dir))
+
+                discs = []
+                for suffix in (suffix1, suffix2):
+                    disc = os.path.join(album_dir, marker + suffix)
+                    os.mkdir(syspath(disc))
+                    _mkmp3(syspath(os.path.join(disc, b"song.mp3")))
+                    discs.append(disc)
+
+                albums = list(albums_in_dir(base))
+                assert len(albums) == 1
+                root, items = albums[0]
+                for disc in discs:
+                    assert disc in root
+                assert len(items) == 2
+
+    def test_no_coalesce_mismatched_prefixes(self):
+        # "CD 02" and "Enhanced CD 01" share the "cd" marker but have
+        # different prefixes, so they should not be collapsed.
+        base = os.path.abspath(os.path.join(self.temp_dir, b"mismatched"))
+        os.mkdir(syspath(base))
+
+        album_dir = os.path.join(base, b"Album Name")
+        os.mkdir(syspath(album_dir))
+
+        for subdir in (b"CD 02", b"Enhanced CD 01"):
+            d = os.path.join(album_dir, subdir)
+            os.mkdir(syspath(d))
+            _mkmp3(syspath(os.path.join(d, b"song.mp3")))
+
+        albums = list(albums_in_dir(base))
+        assert len(albums) == 2
 
 
 class ReimportTest(AutotagImportTestCase):

@@ -73,9 +73,7 @@ class ImportState:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._save()
 
-    def _open(
-        self,
-    ):
+    def _open(self):
         try:
             with open(self.path, "rb") as f:
                 state = pickle.load(f)

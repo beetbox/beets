@@ -30,6 +30,7 @@ import requests
 from mediafile import image_mime_type
 
 from beets import config, importer, plugins, ui, util
+from beets.exceptions import UserError
 from beets.util import bytestring_path, get_temp_filename, sorted_walk, syspath
 from beets.util.artresizer import ArtResizer
 from beets.util.color import colorize
@@ -542,8 +543,7 @@ class CoverArtArchive(RemoteArtSource):
         """
 
         def get_image_urls(
-            url: str,
-            preferred_width: None | str = None,
+            url: str, preferred_width: None | str = None
         ) -> Iterator[str]:
             try:
                 response = self.request(url)
@@ -738,11 +738,7 @@ class FanartTV(RemoteArtSource):
 
     @staticmethod
     def add_default_config(config: confuse.ConfigView):
-        config.add(
-            {
-                "fanarttv_key": None,
-            }
-        )
+        config.add({"fanarttv_key": None})
         config["fanarttv_key"].redact = True
 
     def get(
@@ -1152,11 +1148,7 @@ class LastFM(RemoteArtSource):
 
     @staticmethod
     def add_default_config(config: confuse.ConfigView) -> None:
-        config.add(
-            {
-                "lastfm_key": None,
-            }
-        )
+        config.add({"lastfm_key": None})
         config["lastfm_key"].redact = True
 
     @classmethod
@@ -1451,17 +1443,15 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
 
         try:
             sources = sanitize_pairs(
-                cfg_sources,
-                available_sources,
-                raise_on_unknown=True,
+                cfg_sources, available_sources, raise_on_unknown=True
             )
 
             if len(sources) == 0:
-                raise ui.UserError("fetchart: no sources defined in config")
+                raise UserError("fetchart: no sources defined in config")
 
             return sources
         except UnknownPairError as e:
-            raise ui.UserError(e)
+            raise UserError(e)
 
     @staticmethod
     def _is_source_file_removal_enabled() -> bool:
@@ -1603,11 +1593,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         return out
 
     def batch_fetch_art(
-        self,
-        lib: Library,
-        albums: Iterable[Album],
-        force: bool,
-        quiet: bool,
+        self, lib: Library, albums: Iterable[Album], force: bool, quiet: bool
     ) -> None:
         """Fetch album art for each of the albums. This implements the manual
         fetchart CLI command.

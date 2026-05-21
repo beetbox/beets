@@ -29,6 +29,7 @@ import confuse
 
 from beets import config, ui, util
 from beets.autotag.distance import Distance
+from beets.exceptions import UserError
 from beets.metadata_plugins import MetadataSourcePlugin, get_metadata_source
 from beets.util.color import colorize
 
@@ -51,13 +52,13 @@ MAX_RELEASES = 5
 # candidates. It maps audio file paths to (recording_ids, release_ids)
 # pairs. If a given path is not present in the mapping, then no match
 # was found.
-_matches = {}
+_matches: dict[bytes, tuple[list[str], list[str]]] = {}
 
 # Stores the fingerprint and Acoustid ID for each track. This is stored
 # as metadata for each track for later use but is not relevant for
 # autotagging.
-_fingerprints = {}
-_acoustids = {}
+_fingerprints: dict[bytes, str] = {}
+_acoustids: dict[bytes, str] = {}
 
 
 def prefix(it, count):
@@ -185,11 +186,7 @@ def _all_releases(items):
 class AcoustidPlugin(MetadataSourcePlugin):
     def __init__(self):
         super().__init__()
-        self.config.add(
-            {
-                "auto": True,
-            }
-        )
+        self.config.add({"auto": True})
         config["acoustid"]["apikey"].redact = True
 
         if self.config["auto"]:
@@ -276,7 +273,7 @@ class AcoustidPlugin(MetadataSourcePlugin):
             try:
                 apikey = config["acoustid"]["apikey"].as_str()
             except confuse.NotFoundError:
-                raise ui.UserError("no Acoustid user API key provided")
+                raise UserError("no Acoustid user API key provided")
             submit_items(self._log, apikey, lib.items(args))
 
         submit_cmd.func = submit_cmd_func
@@ -331,9 +328,9 @@ class AcoustidPlugin(MetadataSourcePlugin):
 
         def search_cmd_func(lib, opts, args):
             if not opts.search:
-                raise ui.UserError("no --search provided")
+                raise UserError("no --search provided")
             if opts.count <= 0:
-                raise ui.UserError("--count must be > 0")
+                raise UserError("--count must be > 0")
 
             target = (0, opts.search.encode("utf-8"))
             top = TopN(opts.count)
@@ -411,10 +408,7 @@ def submit_items(log, userkey, items, chunksize=64):
         fp = fingerprint_item(log, item, write=ui.should_write())
 
         # Construct a submission dictionary for this item.
-        item_data = {
-            "duration": int(item.length),
-            "fingerprint": fp,
-        }
+        item_data = {"duration": int(item.length), "fingerprint": fp}
         if item.mb_trackid:
             item_data["mbid"] = item.mb_trackid
             log.debug("submitting MBID")

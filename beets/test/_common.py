@@ -18,7 +18,6 @@ from __future__ import annotations
 
 import os
 import sys
-import unittest
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
@@ -232,12 +231,3 @@ def system_mock(name):
         yield
     finally:
         platform.system = old_system
-
-
-def slow_test(unused=None):
-    def _id(obj):
-        return obj
-
-    if "SKIP_SLOW_TESTS" in os.environ:
-        return unittest.skip("test is slow")
-    return _id

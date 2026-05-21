@@ -270,15 +270,30 @@ class ImportTask(BaseImportTask):
         return duplicate_items
 
     def remove_duplicates(self, lib: library.Library):
-        duplicate_items = self.duplicate_items(lib)
-        log.debug("removing {} old duplicated items", len(duplicate_items))
-        for item in duplicate_items:
-            item.remove()
-            if lib.directory in util.ancestry(item.path):
-                log.debug("deleting duplicate {.filepath}", item)
-                util.remove(item.path)
+        duplicate_albums = self.find_duplicates(lib)
+        log.debug("removing {} old duplicate albums", len(duplicate_albums))
+
+        for album in duplicate_albums:
+            artpath = album.artpath
+
+            for item in album.items():
+                item.remove(with_album=False)
+                if lib.directory in util.ancestry(item.path):
+                    log.debug("deleting duplicate {.filepath}", item)
+                    util.remove(item.path)
+                    util.prune_dirs(
+                        os.path.dirname(item.path),
+                        lib.directory,
+                        clutter=config["clutter"].as_str_seq(),
+                    )
+
+            album.remove(with_items=False)
+
+            if artpath and lib.directory in util.ancestry(artpath):
+                log.debug("deleting duplicate album art {}", artpath)
+                util.remove(artpath)
                 util.prune_dirs(
-                    os.path.dirname(item.path),
+                    os.path.dirname(artpath),
                     lib.directory,
                     clutter=config["clutter"].as_str_seq(),
                 )
@@ -716,6 +731,20 @@ class SingletonImportTask(ImportTask):
 
     duplicate_items = find_duplicates
 
+    def remove_duplicates(self, lib: library.Library):
+        duplicate_items = self.find_duplicates(lib)
+        log.debug("removing {} old duplicated items", len(duplicate_items))
+        for item in duplicate_items:
+            item.remove()
+            if lib.directory in util.ancestry(item.path):
+                log.debug("deleting duplicate {.filepath}", item)
+                util.remove(item.path)
+                util.prune_dirs(
+                    os.path.dirname(item.path),
+                    lib.directory,
+                    clutter=config["clutter"].as_str_seq(),
+                )
+
     def add(self, lib):
         with lib.transaction():
             self.record_replaced(lib)
@@ -1132,8 +1161,18 @@ class ImportTaskFactory:
                 pass
 
 
-MULTIDISC_MARKERS = (rb"dis[ck]", rb"cd")
-MULTIDISC_PAT_FMT = rb"^(.*%s[\W_]*)\d"
+_MULTIDISC_MARKERS = (
+    rb"dis[ck]",
+    rb"cd",
+    rb"cassette",
+    rb"digital\s+media",
+    rb"vinyl",
+)
+
+MULTIDISC_PATTERNS = [
+    re.compile(rb"^(.*" + marker + rb"[\W_]*)\d", re.I)
+    for marker in _MULTIDISC_MARKERS
+]
 
 
 def is_subdir_of_any_in_list(path, dirs):
@@ -1186,10 +1225,7 @@ def albums_in_dir(path: util.PathBytes):
         # 1") or it contains no items but only directories that are
         # named in this way.
         start_collapsing = False
-        for marker in MULTIDISC_MARKERS:
-            # We're using replace on %s due to lack of .format() on bytestrings
-            p = MULTIDISC_PAT_FMT.replace(b"%s", marker)
-            marker_pat = re.compile(p, re.I)
+        for marker_pat in MULTIDISC_PATTERNS:
             match = marker_pat.match(os.path.basename(root))
 
             # Is this directory the root of a nested multi-disc album?

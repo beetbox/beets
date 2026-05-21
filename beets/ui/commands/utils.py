@@ -1,6 +1,6 @@
 """Utility functions for beets UI commands."""
 
-from beets import ui
+from beets.exceptions import UserError
 
 
 def do_query(lib, query, album, also_items=True):
@@ -22,8 +22,8 @@ def do_query(lib, query, album, also_items=True):
         items = list(lib.items(query))
 
     if album and not albums:
-        raise ui.UserError("No matching albums found.")
+        raise UserError("No matching albums found.")
     elif not album and not items:
-        raise ui.UserError("No matching items found.")
+        raise UserError("No matching items found.")
 
     return items, albums

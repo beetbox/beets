@@ -92,7 +92,9 @@ class MBSyncPlugin(BeetsPlugin):
 
             # Apply.
             with lib.transaction():
-                TrackMatch(Distance(), track_info, item).apply_metadata()
+                TrackMatch(Distance(), track_info, item).apply_metadata(
+                    from_scratch=False
+                )
                 apply_item_changes(lib, item, move, pretend, write)
 
     def albums(self, lib, query, move, pretend, write):
@@ -160,7 +162,7 @@ class MBSyncPlugin(BeetsPlugin):
             with lib.transaction():
                 AlbumMatch(
                     Distance(), album_info, dict(item_info_pairs)
-                ).apply_metadata()
+                ).apply_metadata(from_scratch=False)
                 changed = False
                 # Find any changed item to apply changes to album.
                 any_changed_item = items[0]

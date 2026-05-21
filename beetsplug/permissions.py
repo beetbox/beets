@@ -57,12 +57,7 @@ class Permissions(BeetsPlugin):
         super().__init__()
 
         # Adding defaults.
-        self.config.add(
-            {
-                "file": "644",
-                "dir": "755",
-            }
-        )
+        self.config.add({"file": "644", "dir": "755"})
 
         self.register_listener("item_imported", self.fix)
         self.register_listener("album_imported", self.fix)
@@ -99,8 +94,7 @@ class Permissions(BeetsPlugin):
         for path in files:
             # Changing permissions on the destination file.
             self._log.debug(
-                "setting file permissions on {}",
-                displayable_path(path),
+                "setting file permissions on {}", displayable_path(path)
             )
             if not check_permissions(path, file_perm):
                 os.chmod(syspath(path), file_perm)
@@ -112,8 +106,7 @@ class Permissions(BeetsPlugin):
         for path in dirs:
             # Changing permissions on the destination directory.
             self._log.debug(
-                "setting directory permissions on {}",
-                displayable_path(path),
+                "setting directory permissions on {}", displayable_path(path)
             )
             if not check_permissions(path, dir_perm):
                 os.chmod(syspath(path), dir_perm)
