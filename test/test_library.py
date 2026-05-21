@@ -624,9 +624,9 @@ class PathFormattingMixin:
         assert actual == dest
 
 
-class DestinationFunctionTest(BeetsTestCase, PathFormattingMixin):
-    def setUp(self):
-        super().setUp()
+class TestDestinationFunction(PytestTestHelper, PathFormattingMixin):
+    @pytest.fixture(autouse=True)
+    def setup_lib(self, setup):
         self.lib.directory = b"/base"
         self.lib.path_formats = [("default", "path")]
         self.i = item(self.lib)
