@@ -1174,9 +1174,9 @@ class TestPathString(PytestItemInDBHelper):
         assert album.path == os.path.dirname(absolute_path)
 
 
-class MtimeTest(BeetsTestCase):
-    def setUp(self):
-        super().setUp()
+class TestMtime(PytestTestHelper):
+    @pytest.fixture(autouse=True)
+    def setup_lib(self, setup):
         self.ipath = os.path.join(self.temp_dir, b"testfile.mp3")
         shutil.copy(
             syspath(os.path.join(_common.RSRC, b"full.mp3")),
@@ -1184,9 +1184,7 @@ class MtimeTest(BeetsTestCase):
         )
         self.i = beets.library.Item.from_path(self.ipath)
         self.lib.add(self.i)
-
-    def tearDown(self):
-        super().tearDown()
+        yield
         if os.path.exists(self.ipath):
             os.remove(self.ipath)
 
