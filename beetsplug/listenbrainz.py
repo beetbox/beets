@@ -53,22 +53,26 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             dest="export_file",
             metavar="PATH",
             default=None,
-            help="path to a ListenBrainz data export .zip file "
-            "(instead of fetching from the API)",
+            help=(
+                "path to a ListenBrainz data export .zip file"
+                " (instead of fetching from the API)"
+            ),
         )
         lbupdate_cmd.parser.add_option(
             "--max",
             dest="max_listens",
             type="int",
             default=None,
-            help="maximum number of listens to fetch via the API (default: all). "
-            "This option does not apply when importing a file via -f/--export-file.",
+            help=(
+                "maximum number of listens to fetch via the API (default: all)."
+                " This option does not apply when importing a file via"
+                " -f/--export-file."
+            ),
         )
 
         def func(lib, opts, args):
             self._lbupdate(
                 lib,
-                self._log,
                 export_file=opts.export_file,
                 max_listens=opts.max_listens,
             )
@@ -76,31 +80,40 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         lbupdate_cmd.func = func
         return [lbupdate_cmd]
 
-    def _lbupdate(self, lib, log, export_file=None, max_listens=None):
+    def _lbupdate(
+        self,
+        lib,
+        export_file: str | None = None,
+        max_listens: int | None = None,
+    ):
         """Update play counts from ListenBrainz listening history."""
         if export_file is not None:
-            log.info("Importing ListenBrainz data from {}...", export_file)
+            self._log.info(
+                "Importing ListenBrainz data from {}...", export_file
+            )
             if max_listens is not None:
-                log.warning(
+                self._log.warning(
                     "Ignoring superfluous --max flag when importing from file."
                 )
-            listens = self.import_listenbrainz_data_export(log, export_file)
+            listens = self.import_listenbrainz_data_export(export_file)
         else:
-            log.info("Fetching ListenBrainz history...")
+            self._log.info("Fetching ListenBrainz history...")
             listens = self.get_listens(max_total=max_listens)
         if listens is None:
-            log.error("Failed to fetch listens from ListenBrainz.")
+            self._log.error("Failed to fetch listens from ListenBrainz.")
             return
         if not listens:
-            log.info("No listens found.")
+            self._log.info("No listens found.")
             return
-        log.info("Found {} listens", len(listens))
+        self._log.info("Found {} listens", len(listens))
         tracks = self._aggregate_listens(self.get_tracks_from_listens(listens))
-        log.info("Aggregated into {} unique tracks", len(tracks))
-        found, unknown = update_play_counts(lib, tracks, log, "listenbrainz")
-        log.info("... done!")
-        log.info("{} unknown play-counts", unknown)
-        log.info("{} play-counts imported", found)
+        self._log.info("Aggregated into {} unique tracks", len(tracks))
+        found, unknown = update_play_counts(
+            lib, tracks, self._log, "listenbrainz"
+        )
+        self._log.info("... done!")
+        self._log.info("{} unknown play-counts", unknown)
+        self._log.info("{} play-counts imported", found)
 
     @staticmethod
     def _aggregate_listens(tracks: list[Track]) -> list[Track]:
@@ -153,7 +166,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             self._log.debug("Invalid Search Error: {}", e)
             return None
 
-    def import_listenbrainz_data_export(self, log, export_file):
+    def import_listenbrainz_data_export(self, export_file: str):
         """Import ListenBrainz data from a .zip file."""
         export_file = syspath(normpath(export_file))
 
@@ -165,7 +178,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
                     if file_name.startswith("listens/") and file_name.endswith(
                         ".jsonl"
                     ):
-                        log.info(
+                        self._log.info(
                             "Reading listens from {}",
                             displayable_path(file_name),
                         )
@@ -176,7 +189,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
                                 try:
                                     all_listens.append(json.loads(line))
                                 except json.JSONDecodeError as err:
-                                    log.error(
+                                    self._log.error(
                                         "Invalid JSON in {}: {}",
                                         displayable_path(file_name),
                                         err,
