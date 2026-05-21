@@ -1510,7 +1510,16 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
     def _set_art(
         self, album: Album, candidate: Candidate, delete: bool = False
     ) -> None:
-        album.set_art(candidate.path, delete)
+        try:
+            album.set_art(candidate.path, delete)
+        except util.FilesystemError as exc:
+            self._log.warning(
+                "fetchart: could not save artwork for {0.albumartist} - "
+                "{0.album}: {1}",
+                album,
+                exc,
+            )
+            return
         if self.store_source:
             # store the source of the chosen artwork in a flexible field
             self._log.debug(
