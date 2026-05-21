@@ -115,11 +115,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
 
     @override
     def candidates(
-        self,
-        items: Sequence[Item],
-        artist: str,
-        album: str,
-        va_likely: bool,
+        self, items: Sequence[Item], artist: str, album: str, va_likely: bool
     ) -> Iterable[AlbumInfo]:
         if len(self._scripts) == 0:
             yield from super().candidates(items, artist, album, va_likely)
@@ -190,9 +186,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
             return False
 
     def _wanted_pseudo_release_id(
-        self,
-        album_id: str,
-        relation: ReleaseRelation,
+        self, album_id: str, relation: ReleaseRelation
     ) -> str | None:
         if (
             len(self._scripts) == 0
@@ -247,9 +241,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
                         track.artist = alias
 
     def _add_custom_tags(
-        self,
-        official_release: AlbumInfo,
-        pseudo_release: AlbumInfo,
+        self, official_release: AlbumInfo, pseudo_release: AlbumInfo
     ):
         for tag_key, pseudo_key in (
             self.config["album_custom_tags"].get().items()
@@ -298,10 +290,7 @@ class PseudoAlbumInfo(AlbumInfo):
     """
 
     def __init__(
-        self,
-        pseudo_release: AlbumInfo,
-        official_release: AlbumInfo,
-        **kwargs,
+        self, pseudo_release: AlbumInfo, official_release: AlbumInfo, **kwargs
     ):
         super().__init__(pseudo_release.tracks, **kwargs)
         self.__dict__["_pseudo_source"] = True

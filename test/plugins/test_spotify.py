@@ -214,11 +214,7 @@ class SpotifyPluginTest(PluginTestCase):
 
         # Search without ascii encoding
 
-        with self.configure_plugin(
-            {
-                "search_query_ascii": False,
-            }
-        ):
+        with self.configure_plugin({"search_query_ascii": False}):
             assert self.spotify.config["search_query_ascii"].get() is False
             # Call the method to match library tracks
             results = self.spotify._match_library_tracks(self.lib, item.title)
@@ -239,11 +235,7 @@ class SpotifyPluginTest(PluginTestCase):
             assert not query.isascii()
 
         # Is not found in the library if ascii encoding is enabled
-        with self.configure_plugin(
-            {
-                "search_query_ascii": True,
-            }
-        ):
+        with self.configure_plugin({"search_query_ascii": True}):
             assert self.spotify.config["search_query_ascii"].get() is True
             results = self.spotify._match_library_tracks(self.lib, item.title)
             params = _params(responses.calls[1].request.url)

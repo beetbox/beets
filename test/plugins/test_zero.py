@@ -14,10 +14,7 @@ class ZeroPluginTest(IOMixin, PluginTestCase):
 
     def test_no_patterns(self):
         item = self.add_item_fixture(
-            comments="test comment",
-            title="Title",
-            month=1,
-            year=2000,
+            comments="test comment", title="Title", month=1, year=2000
         )
         item.write()
 
@@ -124,11 +121,7 @@ class ZeroPluginTest(IOMixin, PluginTestCase):
         item_id = item.id
 
         with self.configure_plugin(
-            {
-                "fields": ["comments"],
-                "update_database": False,
-                "auto": False,
-            }
+            {"fields": ["comments"], "update_database": False, "auto": False}
         ):
             self.io.addinput("y")
             self.run_command("zero")
@@ -213,10 +206,7 @@ class ZeroPluginTest(IOMixin, PluginTestCase):
 
     def test_keep_fields(self):
         item = self.add_item_fixture(year=2016, comments="test comment")
-        tags = {
-            "comments": "test comment",
-            "year": 2016,
-        }
+        tags = {"comments": "test comment", "year": 2016}
 
         with self.configure_plugin(
             {"fields": None, "keep_fields": ["year"], "update_database": True}

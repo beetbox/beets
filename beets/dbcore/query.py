@@ -237,11 +237,7 @@ class StringFieldQuery(FieldQuery[P]):
         )
 
     @classmethod
-    def string_match(
-        cls,
-        pattern: P,
-        value: str,
-    ) -> bool:
+    def string_match(cls, pattern: P, value: str) -> bool:
         """Determine whether the value matches the pattern. Both
         arguments are strings. Subclasses implement this method.
         """
@@ -422,12 +418,7 @@ class BooleanQuery(MatchQuery[int]):
     string reflecting a boolean.
     """
 
-    def __init__(
-        self,
-        field_name: str,
-        pattern: bool,
-        fast: bool = True,
-    ):
+    def __init__(self, field_name: str, pattern: bool, fast: bool = True):
         if isinstance(pattern, str):
             pattern = util.str2bool(pattern)
 
@@ -560,8 +551,7 @@ class CollectionQuery(Query):
         return subq in self.subqueries
 
     def clause_with_joiner(
-        self,
-        joiner: str,
+        self, joiner: str
     ) -> tuple[str | None, Sequence[SQLiteType]]:
         """Return a clause created by joining together the clauses of
         all subqueries with the string joiner (padded by spaces).
@@ -833,9 +823,7 @@ class DateInterval:
 
     @classmethod
     def from_periods(
-        cls,
-        start: Period | None,
-        end: Period | None,
+        cls, start: Period | None, end: Period | None
     ) -> DateInterval:
         """Create an interval with two Periods as the endpoints."""
         end_date = end.open_right_endpoint() if end is not None else None

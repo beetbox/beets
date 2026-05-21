@@ -219,11 +219,7 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def candidates(
-        self,
-        items: Sequence[Item],
-        artist: str,
-        album: str,
-        va_likely: bool,
+        self, items: Sequence[Item], artist: str, album: str, va_likely: bool
     ) -> Iterable[AlbumInfo]:
         """Return :py:class:`AlbumInfo` candidates that match the given album.
 
@@ -365,11 +361,7 @@ class SearchApiMetadataSourcePlugin(
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.config.add(
-            {
-                "search_query_ascii": False,
-            }
-        )
+        self.config.add({"search_query_ascii": False})
 
     @abc.abstractmethod
     def get_search_query_with_filters(
@@ -447,11 +439,7 @@ class SearchApiMetadataSourcePlugin(
         )
 
     def candidates(
-        self,
-        items: Sequence[Item],
-        artist: str,
-        album: str,
-        va_likely: bool,
+        self, items: Sequence[Item], artist: str, album: str, va_likely: bool
     ) -> Iterable[AlbumInfo]:
         results = self._get_candidates("album", items, artist, album, va_likely)
         return filter(None, self.albums_for_ids(r["id"] for r in results))

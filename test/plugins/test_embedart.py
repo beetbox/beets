@@ -59,14 +59,10 @@ def require_artresizer_compare(test):
         compare_threshold = 20
 
         similar_compares_ok = ArtResizer.shared.compare(
-            abbey_artpath,
-            abbey_similarpath,
-            compare_threshold,
+            abbey_artpath, abbey_similarpath, compare_threshold
         )
         different_compares_ok = ArtResizer.shared.compare(
-            abbey_artpath,
-            abbey_differentpath,
-            compare_threshold,
+            abbey_artpath, abbey_differentpath, compare_threshold
         )
         if not similar_compares_ok or different_compares_ok:
             raise unittest.SkipTest("IM version with broken compare")
@@ -333,11 +329,7 @@ class ArtSimilarityTest(unittest.TestCase):
 
     def _similarity(self, threshold):
         return art.check_art_similarity(
-            self.log,
-            self.item,
-            b"path",
-            threshold,
-            artresizer=self.artresizer,
+            self.log, self.item, b"path", threshold, artresizer=self.artresizer
         )
 
     def _popen(self, status=0, stdout="", stderr=""):

@@ -214,9 +214,7 @@ def get_subcommands(cmd_name_and_help, nobasicfields, extravalues):
 
         if nobasicfields is False:
             word += BL_USE3.format(
-                cmdname,
-                f"-a {wrap('$FIELDS')}",
-                f"-d {wrap('fieldname')}",
+                cmdname, f"-a {wrap('$FIELDS')}", f"-d {wrap('fieldname')}"
             )
 
         if extravalues:
@@ -224,9 +222,7 @@ def get_subcommands(cmd_name_and_help, nobasicfields, extravalues):
                 setvar = wrap(f"${f.upper()}S")
                 word += " ".join(
                     BL_EXTRA3.format(
-                        f"{cmdname} {f}:",
-                        f"-f -A -a {setvar}",
-                        f"-d {wrap(f)}",
+                        f"{cmdname} {f}:", f"-f -A -a {setvar}", f"-d {wrap(f)}"
                     ).split()
                 )
                 word += "\n"
@@ -277,9 +273,7 @@ def get_all_commands(beetcmds):
                 word += "\n"
 
             word = word + BL_USE3.format(
-                name,
-                "-s h -l help",
-                f"-d {wrap('print help')}",
+                name, "-s h -l help", f"-d {wrap('print help')}"
             )
     return word
 

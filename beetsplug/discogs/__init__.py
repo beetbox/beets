@@ -242,9 +242,7 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         except DiscogsAPIError as e:
             if e.status_code != 404:
                 self._log.debug(
-                    "API Error: {} (query: {})",
-                    e,
-                    result.data["resource_url"],
+                    "API Error: {} (query: {})", e, result.data["resource_url"]
                 )
                 if e.status_code == 401:
                     self.reset_auth()
@@ -325,9 +323,7 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         except DiscogsAPIError as e:
             if e.status_code != 404:
                 self._log.debug(
-                    "API Error: {} (query: {})",
-                    e,
-                    result.data["resource_url"],
+                    "API Error: {} (query: {})", e, result.data["resource_url"]
                 )
                 if e.status_code == 401:
                     self.reset_auth()
@@ -360,8 +356,7 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
                 result.refresh()
             except CONNECTION_ERRORS:
                 self._log.debug(
-                    "Connection error in release lookup: {0}",
-                    result,
+                    "Connection error in release lookup: {0}", result
                 )
                 return None
 
@@ -487,9 +482,7 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         return None
 
     def get_tracks(
-        self,
-        tracklist: list[Track],
-        albumartistinfo: ArtistState,
+        self, tracklist: list[Track], albumartistinfo: ArtistState
     ) -> list[TrackInfo]:
         """Returns a list of TrackInfo objects for a discogs tracklist."""
         try:
@@ -614,9 +607,7 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         return tracklist
 
     def _add_merged_subtracks(
-        self,
-        tracklist: list[Track],
-        subtracks: list[Track],
+        self, tracklist: list[Track], subtracks: list[Track]
     ) -> None:
         """Modify `tracklist` in place, merging a list of `subtracks` into
         a single track into `tracklist`."""

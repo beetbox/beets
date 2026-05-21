@@ -13,9 +13,7 @@ if TYPE_CHECKING:
     from logging import Logger
 
 
-ALBUM_LEGACY_TO_LIST_FIELD = {
-    "genre": "genres",
-}
+ALBUM_LEGACY_TO_LIST_FIELD = {"genre": "genres"}
 ITEM_LEGACY_TO_LIST_FIELD = {
     "genre": "genres",
     "arranger": "arrangers",

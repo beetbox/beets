@@ -33,7 +33,7 @@ def aunique_benchmark(lib, prof):
         (
             library.PF_KEY_DEFAULT,
             Template("$albumartist/$album%aunique{}/$track $title"),
-        ),
+        )
     ]
     if prof:
         cProfile.runctx(
@@ -51,7 +51,7 @@ def aunique_benchmark(lib, prof):
         (
             library.PF_KEY_DEFAULT,
             Template("$albumartist/$album%lower{}/$track $title"),
-        ),
+        )
     ]
     if prof:
         cProfile.runctx(

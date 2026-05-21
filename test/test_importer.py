@@ -335,10 +335,7 @@ class ImportSingletonTest(AutotagImportTestCase):
         single_path = os.path.join(self.import_dir, b"track_2.mp3")
 
         util.copy(resource_path, single_path)
-        import_files = [
-            os.path.join(self.import_dir, b"album"),
-            single_path,
-        ]
+        import_files = [os.path.join(self.import_dir, b"album"), single_path]
         self.setup_importer()
         self.importer.paths = import_files
 
@@ -390,8 +387,7 @@ class ImportSingletonTest(AutotagImportTestCase):
 
 
 @pytest.mark.skipif(
-    not has_program("ffprobe", ["-L"]),
-    "need ffprobe for format recognition",
+    not has_program("ffprobe", ["-L"]), "need ffprobe for format recognition"
 )
 class ImportFormatTest:
     """Test fix_extension during import."""
@@ -1200,10 +1196,7 @@ class ImportDuplicateAlbumThreadedTest(PluginMixin, ImportTestCase):
 
 def item_candidates_mock(*args, **kwargs):
     yield TrackInfo(
-        artist="artist",
-        title="title",
-        track_id="new trackid",
-        index=0,
+        artist="artist", title="title", track_id="new trackid", index=0
     )
 
 
@@ -1403,8 +1396,7 @@ class IncrementalImportTest(AsIsImporterMixin, ImportTestCase):
 
 def _mkmp3(path):
     shutil.copyfile(
-        syspath(os.path.join(_common.RSRC, b"min.mp3")),
-        syspath(path),
+        syspath(os.path.join(_common.RSRC, b"min.mp3")), syspath(path)
     )
 
 

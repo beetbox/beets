@@ -118,18 +118,12 @@ class BeatportClient:
 
     @overload
     def search(
-        self,
-        query: str,
-        release_type: Literal["release"],
-        details: bool = True,
+        self, query: str, release_type: Literal["release"], details: bool = True
     ) -> Iterator[BeatportRelease]: ...
 
     @overload
     def search(
-        self,
-        query: str,
-        release_type: Literal["track"],
-        details: bool = True,
+        self, query: str, release_type: Literal["track"], details: bool = True
     ) -> Iterator[BeatportTrack]: ...
 
     def search(
@@ -385,11 +379,7 @@ class BeatportPlugin(MetadataSourcePlugin):
         return self.config["tokenfile"].get(confuse.Filename(in_app_dir=True))
 
     def candidates(
-        self,
-        items: Sequence[Item],
-        artist: str,
-        album: str,
-        va_likely: bool,
+        self, items: Sequence[Item], artist: str, album: str, va_likely: bool
     ) -> Iterator[AlbumInfo]:
         if va_likely:
             query = album

@@ -1144,10 +1144,7 @@ class Item(LibModel):
     # Templating.
 
     def destination(
-        self,
-        relative_to_libdir=False,
-        basedir=None,
-        path_formats=None,
+        self, relative_to_libdir=False, basedir=None, path_formats=None
     ) -> bytes:
         """Return the path in the library directory designated for the item
         (i.e., where the file ought to be).
@@ -1405,15 +1402,7 @@ class DefaultTemplateFunctions:
         return (name, keys, disam, item_id)
 
     def _tmpl_unique(
-        self,
-        name,
-        keys,
-        disam,
-        bracket,
-        item_id,
-        db_item,
-        item_keys,
-        skip_item,
+        self, name, keys, disam, bracket, item_id, db_item, item_keys, skip_item
     ):
         """Generate a string that is guaranteed to be unique among all items of
         the same type as "db_item" who share the same set of keys.

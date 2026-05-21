@@ -635,7 +635,7 @@ class AlbumMatch(Match):
                 f"{mediums}x{self.info.media}"
                 if (mediums := self.info.mediums) and mediums > 1
                 else self.info.media
-            ),
+            )
         }
 
     @property

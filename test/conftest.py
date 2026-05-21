@@ -60,8 +60,7 @@ def pytest_collection_modifyitems(
 
 def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line(
-        "markers",
-        "integration_test: mark a test as an integration test",
+        "markers", "integration_test: mark a test as an integration test"
     )
     config.addinivalue_line(
         "markers",

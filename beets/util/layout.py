@@ -181,11 +181,7 @@ def split_into_lines(string: str, first_width: int, width: int) -> list[str]:
 
 
 def get_column_layout(
-    indent_str: str,
-    left: Side,
-    right: Side,
-    max_width: int,
-    separator: str,
+    indent_str: str, left: Side, right: Side, max_width: int, separator: str
 ) -> Iterator[str]:
     """Print left & right data, with separator inbetween
     'left' and 'right' have a structure of:
@@ -294,11 +290,7 @@ def get_column_layout(
 
 
 def get_newline_layout(
-    indent_str: str,
-    left: Side,
-    right: Side,
-    max_width: int,
-    separator: str,
+    indent_str: str, left: Side, right: Side, max_width: int, separator: str
 ) -> Iterator[str]:
     """Prints using a newline separator between left & right if
     they go over their allocated widths. The datastructures are
@@ -317,9 +309,7 @@ def get_newline_layout(
     width_without_double_prefix = max_width - 2 * len(indent_str)
     # On lower lines we will double the indent for clarity
     left_split = split_into_lines(
-        left.rendered,
-        width_without_prefix,
-        width_without_double_prefix,
+        left.rendered, width_without_prefix, width_without_double_prefix
     )
     # Repeat calculations for rhs, including separator on first line
     right_split = split_into_lines(
@@ -347,10 +337,7 @@ def get_layout_method() -> Callable[[str, Side, Side, int, str], Iterator[str]]:
 
 
 def get_layout_lines(
-    indent_str: str,
-    left: Side,
-    right: Side,
-    max_width: int,
+    indent_str: str, left: Side, right: Side, max_width: int
 ) -> Iterator[str]:
     # No right hand information, so we don't need a separator.
     separator = "" if right.rendered == "" else " -> "

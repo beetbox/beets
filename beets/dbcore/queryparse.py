@@ -113,9 +113,7 @@ def parse_query_part(
 
 
 def construct_query_part(
-    model_cls: type[LibModel],
-    prefixes: Prefixes,
-    query_part: str,
+    model_cls: type[LibModel], prefixes: Prefixes, query_part: str
 ) -> query.Query:
     """Parse a *query part* string and return a :class:`Query` object.
 
@@ -184,9 +182,7 @@ def query_from_strings(
 
 
 def construct_sort_part(
-    model_cls: type[LibModel],
-    part: str,
-    case_insensitive: bool = True,
+    model_cls: type[LibModel], part: str, case_insensitive: bool = True
 ) -> sort.Sort:
     """Create a `Sort` from a single string criterion.
 

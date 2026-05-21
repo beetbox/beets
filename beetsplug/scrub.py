@@ -46,11 +46,7 @@ class ScrubPlugin(BeetsPlugin):
 
     def __init__(self):
         super().__init__()
-        self.config.add(
-            {
-                "auto": True,
-            }
-        )
+        self.config.add({"auto": True})
 
         if self.config["auto"]:
             self.register_listener("import_task_files", self.import_task_files)

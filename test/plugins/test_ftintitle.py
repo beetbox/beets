@@ -47,8 +47,7 @@ def env() -> Generator[FtInTitlePluginFunctional, None, None]:
 
 
 def set_config(
-    env: FtInTitlePluginFunctional,
-    cfg: dict[str, ConfigValue] | None,
+    env: FtInTitlePluginFunctional, cfg: dict[str, ConfigValue] | None
 ) -> None:
     cfg = {} if cfg is None else cfg
     defaults = {
@@ -206,50 +205,35 @@ def add_item(
                 "keep_in_artist": True,
                 "custom_words": ["med"],
             },
-            (
-                "ftintitle",
-                "-d",
-            ),
+            ("ftintitle", "-d"),
             ("Alice med Bob", "Song 1", "Alice"),
             ("Alice med Bob", "Song 1"),
             id="custom-feat-words-keep-in-artists-drop-from-title",
         ),
         # ---- preserve_album_artist variants ----
         pytest.param(
-            {
-                "format": "feat. {}",
-                "preserve_album_artist": True,
-            },
+            {"format": "feat. {}", "preserve_album_artist": True},
             ("ftintitle",),
             ("Alice feat. Bob", "Song 1", "Alice"),
             ("Alice", "Song 1 feat. Bob"),
             id="skip-if-artist-and-album-artists-is-the-same-different-match",
         ),
         pytest.param(
-            {
-                "format": "feat. {}",
-                "preserve_album_artist": False,
-            },
+            {"format": "feat. {}", "preserve_album_artist": False},
             ("ftintitle",),
             ("Alice feat. Bob", "Song 1", "Alice"),
             ("Alice", "Song 1 feat. Bob"),
             id="skip-if-artist-and-album-artists-is-the-same-different-match-b",
         ),
         pytest.param(
-            {
-                "format": "feat. {}",
-                "preserve_album_artist": True,
-            },
+            {"format": "feat. {}", "preserve_album_artist": True},
             ("ftintitle",),
             ("Alice feat. Bob", "Song 1", "Alice feat. Bob"),
             ("Alice feat. Bob", "Song 1"),
             id="skip-if-artist-and-album-artists-is-the-same-matching-match",
         ),
         pytest.param(
-            {
-                "format": "feat. {}",
-                "preserve_album_artist": False,
-            },
+            {"format": "feat. {}", "preserve_album_artist": False},
             ("ftintitle",),
             ("Alice feat. Bob", "Song 1", "Alice feat. Bob"),
             ("Alice", "Song 1 feat. Bob"),
@@ -309,9 +293,7 @@ def test_ftintitle_functional(
     ],
 )
 def test_find_feat_part(
-    artist: str,
-    albumartist: str,
-    expected: str | None,
+    artist: str, albumartist: str, expected: str | None
 ) -> None:
     assert ftintitle.find_feat_part(artist, albumartist) == expected
 
@@ -338,10 +320,7 @@ def test_find_feat_part(
         ("Alice and Bob feat Charlie", ("Alice and Bob", "Charlie")),
     ],
 )
-def test_split_on_feat(
-    given: str,
-    expected: tuple[str, str | None],
-) -> None:
+def test_split_on_feat(given: str, expected: tuple[str, str | None]) -> None:
     assert ftintitle.split_on_feat(given) == expected
 
 
@@ -393,9 +372,7 @@ def test_split_on_feat(
     ],
 )  # fmt: skip
 def test_insert_ft_into_title(
-    given: str,
-    keywords: list[str] | None,
-    expected: str,
+    given: str, keywords: list[str] | None, expected: str
 ) -> None:
     assert (
         ftintitle.FtInTitlePlugin.insert_ft_into_title(

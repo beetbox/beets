@@ -50,10 +50,7 @@ _fs_lock = threading.Lock()
 _temp_files: list[bytes] = []
 
 # Some convenient alternate names for formats.
-ALIASES = {
-    "windows media": "wma",
-    "vorbis": "ogg",
-}
+ALIASES = {"windows media": "wma", "vorbis": "ogg"}
 
 LOSSLESS_FORMATS = ["ape", "flac", "alac", "wave", "aiff"]
 
@@ -334,10 +331,7 @@ class ConvertPlugin(BeetsPlugin):
         encode_cmd = []
         for i, arg in enumerate(args):
             args[i] = Template(arg).safe_substitute(
-                {
-                    "source": source,
-                    "dest": dest,
-                }
+                {"source": source, "dest": dest}
             )
             encode_cmd.append(os.fsdecode(args[i]))
 
@@ -447,9 +441,7 @@ class ConvertPlugin(BeetsPlugin):
         if keep_new:
             if pretend:
                 self._log.info(
-                    "mv {.filepath} {}",
-                    item,
-                    util.displayable_path(original),
+                    "mv {.filepath} {}", item, util.displayable_path(original)
                 )
             else:
                 self._log.info("Moving to {}", util.displayable_path(original))
