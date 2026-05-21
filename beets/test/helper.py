@@ -37,11 +37,10 @@ from enum import Enum
 from functools import cached_property
 from pathlib import Path
 from tempfile import gettempdir, mkdtemp, mkstemp
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 from unittest.mock import Mock, patch
 
 import pytest
-import responses
 from mediafile import Image, MediaFile
 
 import beets
@@ -58,6 +57,9 @@ from beets.util import (
     clean_module_tempdir,
     syspath,
 )
+
+if TYPE_CHECKING:
+    from requests_mock.mocker import Mocker
 
 
 class LogCapture(logging.Handler):
@@ -404,6 +406,8 @@ class BeetsTestCase(unittest.TestCase, TestHelper):
     modifications that will then be automatically removed when the test
     completes. Also provides some additional assertion methods, a
     temporary directory, and a DummyIO.
+
+    DEPRECATED: Use pytest + PytestTestHelper instead.
     """
 
     def setUp(self):
@@ -411,6 +415,18 @@ class BeetsTestCase(unittest.TestCase, TestHelper):
 
     def tearDown(self):
         self.teardown_beets()
+
+
+class PytestTestHelper(TestHelper):
+    """Same as the BeetsTestCase unittest setup but for pytest."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        self.setup_beets()
+        try:
+            yield
+        finally:
+            self.teardown_beets()
 
 
 class ItemInDBTestCase(BeetsTestCase):
@@ -818,16 +834,12 @@ class AutotagImportTestCase(ImportTestCase):
         self.addCleanup(self.matcher.restore)
 
 
-class FetchImageHelper:
-    """Helper mixin for mocking requests when fetching images
-    with remote art sources.
-    """
+@dataclass(slots=True)
+class ImageRequestMocker:
+    mocker: Mocker
 
-    @responses.activate
-    def run(self, *args, **kwargs):
-        super().run(*args, **kwargs)
-
-    IMAGEHEADER: ClassVar[dict[str, bytes]] = {
+    # Image types and their file headers
+    IMAGE_HEADERS: ClassVar[dict[str, bytes]] = {
         "image/jpeg": b"\xff\xd8\xff\x00\x00\x00JFIF",
         "image/png": b"\211PNG\r\n\032\n",
         "image/gif": b"GIF89a",
@@ -839,29 +851,43 @@ class FetchImageHelper:
         ),
     }
 
-    def mock_response(
+    def get(
         self,
         url: str,
+        *,
         content_type: str = "image/jpeg",
-        file_type: None | str = None,
+        file_type: str | None = None,
+        content: str | bytes | None = None,
     ) -> None:
-        # Potentially return a file of a type that differs from the
-        # server-advertised content type to mimic misbehaving servers.
-        if file_type is None:
-            file_type = content_type
+        actual_file_type = file_type or content_type
 
-        try:
-            # imghdr reads 32 bytes
-            header = self.IMAGEHEADER[file_type].ljust(32, b"\x00")
-        except KeyError:
-            # If we can't return a file that looks like real file of the requested
-            # type, better fail the test than returning something else, which might
-            # violate assumption made when writing a test.
-            raise AssertionError(f"Mocking {file_type} responses not supported")
+        if content is None:
+            try:
+                content = self.IMAGE_HEADERS[actual_file_type].ljust(
+                    32, b"\x00"
+                )
+            except KeyError as exc:
+                # If we can't return a file that looks like real file of the requested
+                # type, better fail the test than returning something else, which might
+                # violate assumption made when writing a test.
+                raise AssertionError(
+                    f"Mocking {actual_file_type!r} responses not supported"
+                ) from exc
 
-        responses.add(
-            responses.GET, url, content_type=content_type, body=header
+        if isinstance(content, str):
+            content = content.encode()
+
+        self.mocker.get(
+            url, headers={"Content-Type": content_type}, content=content
         )
+
+
+class FetchImageHelper:
+    """Pytest mixin providing image response mocking utilities."""
+
+    @pytest.fixture
+    def image_request_mock(self, requests_mock):
+        return ImageRequestMocker(requests_mock)
 
 
 class CleanupModulesMixin:
