@@ -73,6 +73,12 @@ def test_durationtype():
         (None, []),
         # no false split: value without "; " is unchanged
         (["Smith, John"], ["Smith, John"]),
+        # plain string gets wrapped (not split into characters)
+        ("Charli XCX", ["Charli XCX"]),
+        # string with delimiter gets split
+        ("Jazz; Folk; Soul", ["Jazz", "Folk", "Soul"]),
+        # empty string
+        ("", []),
     ],
 )
 def test_delimitedstring_normalize(original, expected):

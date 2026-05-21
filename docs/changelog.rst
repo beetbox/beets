@@ -36,6 +36,10 @@ Bug fixes
   ``genres:=~Classical``. :bug:`6598`
 - Fix a CLI help formatting regression that moved command descriptions to
   separate lines; descriptions are inline again, with regression test coverage.
+- :ref:`modify-cmd`: Fix ``beet modify -a`` splitting multi-value field strings
+  (like ``artists``, ``genres``) into individual characters when modifying
+  albums. Album field types now fall back to the corresponding item field type
+  definitions. :bug:`5690`
 - ``AttrDict.__getattribute__`` now unmasks ``AttributeError`` raised inside a
   ``cached_property`` body. Previously such errors were swallowed by the
   ``__getattr__`` fallback, producing a misleading message about the property

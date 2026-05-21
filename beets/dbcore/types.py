@@ -331,6 +331,8 @@ class DelimitedString(BaseString[list, list]):  # type: ignore[type-arg]
                 else:
                     result.append(item)
             return result
+        if isinstance(value, str):
+            return self.parse(value)
         return self.model_type(value)
 
     def to_sql(self, model_value: list[str]):
