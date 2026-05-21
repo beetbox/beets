@@ -4876,10 +4876,11 @@ replaygain = ["PyGObject"]
 scrub = ["mutagen"]
 sonosupdate = ["soco"]
 thumbnails = ["Pillow", "pyxdg"]
+tidal = ["requests-oauthlib"]
 titlecase = ["titlecase"]
 web = ["flask", "flask-cors"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.15"
-content-hash = "5785ae32e49a756b0d7ceef8bf8ea7fd6c7c1f606180dc36165e87ba6e6fa18c"
+content-hash = "0de74fb9b87e12e24e5e5c869d138889768e459a78788bf86f991c327f01e160"
