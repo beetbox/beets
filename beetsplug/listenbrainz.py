@@ -72,9 +72,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
 
         def func(lib, opts, args):
             self._lbupdate(
-                lib,
-                export_file=opts.export_file,
-                max_listens=opts.max_listens,
+                lib, export_file=opts.export_file, max_listens=opts.max_listens
             )
 
         lbupdate_cmd.func = func

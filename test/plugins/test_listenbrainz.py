@@ -292,9 +292,7 @@ class TestListenBrainzPlugin(ConfigMixin):
                     "track_name": "Song",
                     "artist_name": "Artist",
                     "release_name": "Album",
-                    "additional_info": {
-                        "recording_mbid": "rec-mbid-123",
-                    },
+                    "additional_info": {"recording_mbid": "rec-mbid-123"},
                     "mbid_mapping": {
                         "recording_mbid": "rec-mbid-456",
                         "release_mbid": "rel-mbid",
