@@ -732,9 +732,9 @@ class TestDestinationFunction(PytestTestHelper, PathFormattingMixin):
         self._assert_dest(b"/base/Alice & Bob")
 
 
-class DisambiguationTest(BeetsTestCase, PathFormattingMixin):
-    def setUp(self):
-        super().setUp()
+class TestDisambiguation(PytestTestHelper, PathFormattingMixin):
+    @pytest.fixture(autouse=True)
+    def setup_lib(self, setup):
         self.lib.directory = b"/base"
         self.lib.path_formats = [("default", "path")]
 
