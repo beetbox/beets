@@ -544,29 +544,24 @@ class ParseTest(unittest.TestCase):
         assert value == "2"
 
 
-# --- Model._type fallback tests ---
+class TestModelTypeFallback:
+    def test_album_type_falls_back_to_item_type(self):
+        typ = Album._type("artists")
+        assert isinstance(typ, types.DelimitedString)
+        assert typ is types.MULTI_VALUE_DSV
 
+    def test_album_type_falls_back_to_item_type_other_list_fields(self):
+        for field in ["genres", "composers", "artists_sort"]:
+            typ = Album._type(field)
+            assert isinstance(typ, types.DelimitedString), field
 
-def test_album_type_falls_back_to_item_type():
-    typ = Album._type("artists")
-    assert isinstance(typ, types.DelimitedString)
-    assert typ is types.MULTI_VALUE_DSV
+    def test_item_type_does_not_change(self):
+        typ = Item._type("artists")
+        assert isinstance(typ, types.DelimitedString)
 
-
-def test_album_type_falls_back_to_item_type_other_list_fields():
-    for field in ["genres", "composers", "artists_sort"]:
-        typ = Album._type(field)
-        assert isinstance(typ, types.DelimitedString), field
-
-
-def test_item_type_does_not_change():
-    typ = Item._type("artists")
-    assert isinstance(typ, types.DelimitedString)
-
-
-def test_unknown_key_falls_through_to_default():
-    typ = Album._type("nonexistent_field_xyz")
-    assert isinstance(typ, types.Default)
+    def test_unknown_key_falls_through_to_default(self):
+        typ = Album._type("nonexistent_field_xyz")
+        assert isinstance(typ, types.Default)
 
 
 class QueryParseTest(unittest.TestCase):

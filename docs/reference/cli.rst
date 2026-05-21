@@ -278,6 +278,10 @@ To adjust a multi-valued field, such as ``genres``, ``remixers``, ``lyricists``,
 ``composers``, or ``arrangers``, separate the values with |semicolon_space|. For
 example, ``beet modify genres="rock; pop"``.
 
+When modifying albums with ``-a``, multi-valued fields such as ``artists``,
+``genres``, ``composers`` are also supported with the same semicolon-separated
+syntax.
+
 For compatibility, ``modify`` assignments and query expressions still accept
 legacy singular names such as ``genre``, ``composer``, ``lyricist``,
 ``remixer``, and ``arranger``, but beets will warn and translate them to the
