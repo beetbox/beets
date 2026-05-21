@@ -816,9 +816,9 @@ class TestDisambiguation(PytestTestHelper, PathFormattingMixin):
         self._assert_dest(b"/base/foo/the title", self.i1)
 
 
-class SingletonDisambiguationTest(BeetsTestCase, PathFormattingMixin):
-    def setUp(self):
-        super().setUp()
+class TestSingletonDisambiguation(PytestTestHelper, PathFormattingMixin):
+    @pytest.fixture(autouse=True)
+    def setup_lib(self, setup):
         self.lib.directory = b"/base"
         self.lib.path_formats = [("default", "path")]
 
