@@ -908,12 +908,7 @@ class TestSyncedLyricsWrite(LyricsPluginMixin):
         lyrics_plugin.add_item_lyrics(item, write=True)
 
         assert calls == [
-            {
-                "tags": {
-                    "lyrics": "hello\nworld",
-                    "synced_lyrics": [("hello", 1000), ("world", 2000)],
-                }
-            }
+            {"tags": {"synced_lyrics": [("hello", 1000), ("world", 2000)]}}
         ]
 
     def test_lrc_text_kept_in_db_for_synced(
@@ -944,9 +939,7 @@ class TestSyncedLyricsWrite(LyricsPluginMixin):
 
         lyrics_plugin.add_item_lyrics(item, write=True)
 
-        assert calls == [
-            {"tags": {"lyrics": "plain lyrics", "synced_lyrics": None}}
-        ]
+        assert calls == [{"tags": {"synced_lyrics": None}}]
 
     def test_sylt_and_uslt_written_to_mp3(
         self, monkeypatch, helper, lyrics_plugin
@@ -965,4 +958,6 @@ class TestSyncedLyricsWrite(LyricsPluginMixin):
         assert f.tags.getall("SYLT"), "SYLT frame should be present"
         assert f.tags["SYLT::XXX"].text == [("hello", 1000), ("world", 2000)]
         assert f.tags.getall("USLT"), "USLT frame should be present"
-        assert f.tags["USLT::XXX"].text == "hello\nworld"
+        # USLT retains the full LRC text (with timestamps) so players that
+        # parse LRC in USLT, and non-ID3 formats, continue to work.
+        assert f.tags["USLT::XXX"].text == self.SYNCED_LRC
