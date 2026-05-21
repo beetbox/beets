@@ -276,10 +276,7 @@ class SpotifyPlugin(
                 )
                 self._authenticate()
                 return self._handle_response(
-                    method,
-                    url,
-                    params=params,
-                    retry_count=retry_count + 1,
+                    method, url, params=params, retry_count=retry_count + 1
                 )
             elif e.response.status_code == 404:
                 raise APIError(
@@ -306,10 +303,7 @@ class SpotifyPlugin(
                 )
                 time.sleep(int(seconds) + 1)
                 return self._handle_response(
-                    method,
-                    url,
-                    params=params,
-                    retry_count=retry_count + 1,
+                    method, url, params=params, retry_count=retry_count + 1
                 )
             elif e.response.status_code == 503:
                 self._log.error("Service Unavailable.")
@@ -774,9 +768,7 @@ class SpotifyPlugin(
         details_by_id: dict[str, TrackDetails] = {}
         for chunk in chunks(track_ids, 50):
             track_data = self._handle_response(
-                "get",
-                self.track_url,
-                params={"ids": ",".join(chunk)},
+                "get", self.track_url, params={"ids": ",".join(chunk)}
             )
 
             for idx, track in enumerate(track_data.get("tracks", [])):

@@ -40,6 +40,11 @@ Bug fixes
   (like ``artists``, ``genres``) into individual characters when modifying
   albums. Album field types now fall back to the corresponding item field type
   definitions. :bug:`5690`
+- ``AttrDict.__getattribute__`` now unmasks ``AttributeError`` raised inside a
+  ``cached_property`` body. Previously such errors were swallowed by the
+  ``__getattr__`` fallback, producing a misleading message about the property
+  name itself. The wrapped ``RuntimeError`` keeps the original traceback so it
+  still points at the real failing line. :bug:`6558`
 
 ..
     For plugin developers

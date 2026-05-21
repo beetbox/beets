@@ -34,23 +34,11 @@ API_URL = "https://ws.audioscrobbler.com/2.0/"
 class LastImportPlugin(plugins.BeetsPlugin):
     def __init__(self):
         super().__init__()
-        config["lastfm"].add(
-            {
-                "user": "",
-                "api_key": plugins.LASTFM_KEY,
-            }
-        )
+        config["lastfm"].add({"user": "", "api_key": plugins.LASTFM_KEY})
         config["lastfm"]["user"].redact = True
         config["lastfm"]["api_key"].redact = True
-        self.config.add(
-            {
-                "per_page": 500,
-                "retry_limit": 3,
-            }
-        )
-        self.item_types = {
-            "lastfm_play_count": types.INTEGER,
-        }
+        self.config.add({"per_page": 500, "retry_limit": 3})
+        self.item_types = {"lastfm_play_count": types.INTEGER}
 
     def commands(self):
         cmd = ui.Subcommand("lastimport", help="import last.fm play-count")

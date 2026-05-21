@@ -112,10 +112,7 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         if not tracks_data:
             return None
         while "next" in tracks_obj:
-            tracks_obj = requests.get(
-                tracks_obj["next"],
-                timeout=10,
-            ).json()
+            tracks_obj = requests.get(tracks_obj["next"], timeout=10).json()
             tracks_data.extend(tracks_obj["data"])
 
         tracks = []

@@ -28,7 +28,7 @@ class Conf(ObjectDescription[str]):
     """Directive for documenting a single configuration value."""
 
     option_spec: ClassVar[OptionSpec] = {  # type: ignore[misc]
-        "default": directives.unchanged,
+        "default": directives.unchanged
     }
 
     def handle_signature(self, sig: str, signode: desc_signature) -> str:

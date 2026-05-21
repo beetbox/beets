@@ -85,9 +85,7 @@ def _field_diff(
 
 
 def get_model_changes(
-    new: LibModel,
-    old: LibModel,
-    fields: Iterable[str] | None,
+    new: LibModel, old: LibModel, fields: Iterable[str] | None
 ) -> list[str]:
     """Compute human-readable diff lines for changed fields between two models.
 

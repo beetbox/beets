@@ -84,9 +84,7 @@ class TestMbsyncCli(PytestPluginTestHelper):
         for item in [
             Item(artist="albumartist", album="no id"),
             Item(
-                artist="albumartist",
-                album="invalid id",
-                mb_albumid="a1b2c3d4",
+                artist="albumartist", album="invalid id", mb_albumid="a1b2c3d4"
             ),
         ]:
             self.lib.add_album([item])

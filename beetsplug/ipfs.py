@@ -25,12 +25,7 @@ from beets.plugins import BeetsPlugin
 class IPFSPlugin(BeetsPlugin):
     def __init__(self):
         super().__init__()
-        self.config.add(
-            {
-                "auto": True,
-                "nocopy": False,
-            }
-        )
+        self.config.add({"auto": True, "nocopy": False})
 
         if self.config["auto"]:
             self.import_stages = [self.auto_add]

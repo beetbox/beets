@@ -63,10 +63,7 @@ if not log.handlers:
 log.propagate = False  # Don't propagate to root handler.
 
 
-PF_KEY_QUERIES = {
-    "comp": "comp:true",
-    "singleton": "singleton:true",
-}
+PF_KEY_QUERIES = {"comp": "comp:true", "singleton": "singleton:true"}
 
 
 # Encoding utilities.

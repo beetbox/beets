@@ -1009,8 +1009,7 @@ class Command:
         # If the command accepts a variable number of arguments skip the check.
         if wrong_num and not argspec.varargs:
             raise TypeError(
-                f'wrong number of arguments for "{self.name}"',
-                self.name,
+                f'wrong number of arguments for "{self.name}"', self.name
             )
 
         return func
@@ -1518,11 +1517,7 @@ class Server(BaseServer):
 
     def cmd_outputs(self, conn):
         """List the available outputs."""
-        yield (
-            "outputid: 0",
-            "outputname: gstreamer",
-            "outputenabled: 1",
-        )
+        yield ("outputid: 0", "outputname: gstreamer", "outputenabled: 1")
 
     def cmd_enableoutput(self, conn, output_id):
         output_id = cast_arg(int, output_id)

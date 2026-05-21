@@ -176,10 +176,7 @@ class InfoPlugin(BeetsPlugin):
             help="comma separated list of keys to show",
         )
         cmd.parser.add_option(
-            "-k",
-            "--keys-only",
-            action="store_true",
-            help="show only the keys",
+            "-k", "--keys-only", action="store_true", help="show only the keys"
         )
         cmd.parser.add_format_option(target="item")
         return [cmd]
@@ -211,11 +208,7 @@ class InfoPlugin(BeetsPlugin):
 
         first = True
         summary = {}
-        for data_emitter in data_collector(
-            lib,
-            args,
-            album=opts.album,
-        ):
+        for data_emitter in data_collector(lib, args, album=opts.album):
             try:
                 data, item = data_emitter(included_keys or "*")
             except (mediafile.UnreadableFileError, OSError) as ex:

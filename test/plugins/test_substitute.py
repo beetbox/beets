@@ -29,12 +29,7 @@ class SubstitutePluginTest(PluginTestCase):
 
     def test_simple_substitute(self):
         self.run_substitute(
-            {
-                "a": "x",
-                "b": "y",
-                "c": "z",
-            },
-            [("a", "x"), ("b", "y"), ("c", "z")],
+            {"a": "x", "b": "y", "c": "z"}, [("a", "x"), ("b", "y"), ("c", "z")]
         )
 
     def test_case_insensitivity(self):
@@ -70,23 +65,10 @@ class SubstitutePluginTest(PluginTestCase):
 
     def test_rules_applied_in_definition_order(self):
         self.run_substitute(
-            {
-                "a": "x",
-                "[ab]": "y",
-                "b": "z",
-            },
-            [
-                ("a", "x"),
-                ("b", "y"),
-            ],
+            {"a": "x", "[ab]": "y", "b": "z"}, [("a", "x"), ("b", "y")]
         )
 
     def test_rules_applied_in_sequence(self):
         self.run_substitute(
-            {"a": "b", "b": "c", "d": "a"},
-            [
-                ("a", "c"),
-                ("b", "c"),
-                ("d", "a"),
-            ],
+            {"a": "b", "b": "c", "d": "a"}, [("a", "c"), ("b", "c"), ("d", "a")]
         )

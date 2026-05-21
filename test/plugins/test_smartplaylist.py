@@ -23,7 +23,7 @@ from unittest.mock import MagicMock, Mock, PropertyMock
 import pytest
 
 from beets import config
-from beets.dbcore.query import FixedFieldSort, MultipleSort, NullSort
+from beets.dbcore.sort import FixedFieldSort, MultipleSort, NullSort
 from beets.library import Album, Item, parse_query_string
 from beets.test._common import item
 from beets.test.helper import BeetsTestCase, IOMixin, PluginTestCase
@@ -328,10 +328,7 @@ class TestGetItemURI:
 
     @pytest.fixture
     def plugin(self, config, plugin_config):
-        plugin_config = {
-            "prefix": "http://beets:8337/files",
-            **plugin_config,
-        }
+        plugin_config = {"prefix": "http://beets:8337/files", **plugin_config}
         config["smartplaylist"].set(plugin_config)
 
         return SmartPlaylistPlugin()

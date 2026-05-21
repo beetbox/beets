@@ -40,13 +40,7 @@ LARGE_DIR = bytestring_path(os.path.join(BASE_DIR, "large"))
 class ThumbnailsPlugin(BeetsPlugin):
     def __init__(self):
         super().__init__()
-        self.config.add(
-            {
-                "auto": True,
-                "force": False,
-                "dolphin": False,
-            }
-        )
+        self.config.add({"auto": True, "force": False, "dolphin": False})
 
         if self.config["auto"] and self._check_local_ok():
             self.register_listener("art_set", self.process_album)

@@ -116,6 +116,29 @@ class AttrDict(dict[str, V]):
         """Return a detached copy preserving subclass-specific behavior."""
         return deepcopy(self)
 
+    def __getattribute__(self, attr: str) -> V:
+        # Intercept cached_property failures so an AttributeError raised
+        # inside the property body is not masked by __getattr__ fallback.
+        # Reuse the original traceback so the wrapped RuntimeError still
+        # points at the real failing line, but suppress the printed cause
+        # block to keep CLI tracebacks readable. See #6558 (and #6503 /
+        # #6506 for the same masking pattern with different metadata
+        # providers).
+        try:
+            return super().__getattribute__(attr)
+        except AttributeError as exc:
+            if not attr.startswith("__"):
+                for klass in type(self).__mro__:
+                    descr = klass.__dict__.get(attr)
+                    if descr is None:
+                        continue
+                    if isinstance(descr, cached_property):
+                        raise RuntimeError(
+                            f"{type(self).__name__}.{attr} failed: {exc}"
+                        ).with_traceback(exc.__traceback__) from None
+                    break
+            raise
+
     def __getattr__(self, attr: str) -> V:
         if attr in self:
             return self[attr]
@@ -612,7 +635,7 @@ class AlbumMatch(Match):
                 f"{mediums}x{self.info.media}"
                 if (mediums := self.info.mediums) and mediums > 1
                 else self.info.media
-            ),
+            )
         }
 
     @property

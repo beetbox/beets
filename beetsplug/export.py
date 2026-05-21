@@ -142,11 +142,7 @@ class ExportPlugin(BeetsPlugin):
             included_keys.extend(keys.split(","))
 
         items = []
-        for data_emitter in data_collector(
-            lib,
-            args,
-            album=opts.album,
-        ):
+        for data_emitter in data_collector(lib, args, album=opts.album):
             try:
                 data, _ = data_emitter(included_keys or "*")
             except (mediafile.UnreadableFileError, OSError) as ex:

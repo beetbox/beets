@@ -71,12 +71,7 @@ class TestDGAlbumInfo(PytestTestHelper):
             # genres and styles are reversed in Discogs
             "genres": ["STYLE1", "STYLE2"],
             "styles": ["GENRE1", "GENRE2"],
-            "labels": [
-                {
-                    "name": "LABEL NAME",
-                    "catno": "CATALOG NUMBER",
-                }
-            ],
+            "labels": [{"name": "LABEL NAME", "catno": "CATALOG NUMBER"}],
             "tracklist": [],
         }
 
@@ -419,12 +414,7 @@ class TestDGAlbumInfo(PytestTestHelper):
                 _artist("OTHER ARTIST (5)", id=322),
             ],
             "title": "title",
-            "labels": [
-                {
-                    "name": "LABEL NAME (5)",
-                    "catno": "catalog number",
-                }
-            ],
+            "labels": [{"name": "LABEL NAME (5)", "catno": "catalog number"}],
         }
         release = Bag(
             data=data,
@@ -461,12 +451,7 @@ class TestDGAlbumInfo(PytestTestHelper):
                 _artist("OTHER ARTIST (5)", id=322),
             ],
             "title": "title",
-            "labels": [
-                {
-                    "name": "LABEL NAME (5)",
-                    "catno": "catalog number",
-                }
-            ],
+            "labels": [{"name": "LABEL NAME (5)", "catno": "catalog number"}],
         }
         release = Bag(
             data=data,
@@ -712,7 +697,7 @@ def test_anv_album_artist():
             ["NEW ARTIST", "VOCALIST", "SOLOIST", "PERFORMER", "MUSICIAN"],
             ["11146", "344", "3", "5", "10"],
             ["RANDOM"],
-        ),
+        )
     ],
 )
 @patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())

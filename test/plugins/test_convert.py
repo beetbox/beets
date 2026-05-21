@@ -320,9 +320,7 @@ class NeverConvertLossyFilesTest(ConvertTestCase, ConvertCommand):
             "paths": {"default": "converted"},
             "never_convert_lossy_files": True,
             "format": "mp3",
-            "formats": {
-                "mp3": self.tagged_copy_cmd("mp3"),
-            },
+            "formats": {"mp3": self.tagged_copy_cmd("mp3")},
         }
 
     def test_transcode_from_lossless(self):

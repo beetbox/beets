@@ -18,8 +18,10 @@ import os
 from unittest.mock import patch
 
 import beets.library
-from beets import config, dbcore, util
+from beets import config, util
 from beets.dbcore import types
+from beets.dbcore.query import TrueQuery
+from beets.dbcore.sort import FixedFieldSort, MultipleSort, SlowFieldSort
 from beets.library import Album
 from beets.test import _common
 from beets.test.helper import BeetsTestCase
@@ -116,7 +118,7 @@ class DummyDataTestCase(BeetsTestCase):
 class SortFixedFieldTest(DummyDataTestCase):
     def test_sort_asc(self):
         q = ""
-        sort = dbcore.query.FixedFieldSort("year", True)
+        sort = FixedFieldSort("year", True)
         results = self.lib.items(q, sort)
         assert results[0]["year"] <= results[1]["year"]
         assert results[0]["year"] == 2001
@@ -128,7 +130,7 @@ class SortFixedFieldTest(DummyDataTestCase):
 
     def test_sort_desc(self):
         q = ""
-        sort = dbcore.query.FixedFieldSort("year", False)
+        sort = FixedFieldSort("year", False)
         results = self.lib.items(q, sort)
         assert results[0]["year"] >= results[1]["year"]
         assert results[0]["year"] == 2004
@@ -140,9 +142,9 @@ class SortFixedFieldTest(DummyDataTestCase):
 
     def test_sort_two_field_asc(self):
         q = ""
-        s1 = dbcore.query.FixedFieldSort("album", True)
-        s2 = dbcore.query.FixedFieldSort("year", True)
-        sort = dbcore.query.MultipleSort()
+        s1 = FixedFieldSort("album", True)
+        s2 = FixedFieldSort("year", True)
+        sort = MultipleSort()
         sort.add_sort(s1)
         sort.add_sort(s2)
         results = self.lib.items(q, sort)
@@ -159,7 +161,7 @@ class SortFixedFieldTest(DummyDataTestCase):
 
     def test_sort_path_field(self):
         q = ""
-        sort = dbcore.query.FixedFieldSort("path", True)
+        sort = FixedFieldSort("path", True)
         results = self.lib.items(q, sort)
         assert results[0]["path"] == util.normpath("/path0.mp3")
         assert results[1]["path"] == util.normpath("/patH1.mp3")
@@ -170,7 +172,7 @@ class SortFixedFieldTest(DummyDataTestCase):
 class SortFlexFieldTest(DummyDataTestCase):
     def test_sort_asc(self):
         q = ""
-        sort = dbcore.query.SlowFieldSort("flex1", True)
+        sort = SlowFieldSort("flex1", True)
         results = self.lib.items(q, sort)
         assert results[0]["flex1"] <= results[1]["flex1"]
         assert results[0]["flex1"] == "Flex1-0"
@@ -182,7 +184,7 @@ class SortFlexFieldTest(DummyDataTestCase):
 
     def test_sort_desc(self):
         q = ""
-        sort = dbcore.query.SlowFieldSort("flex1", False)
+        sort = SlowFieldSort("flex1", False)
         results = self.lib.items(q, sort)
         assert results[0]["flex1"] >= results[1]["flex1"]
         assert results[1]["flex1"] >= results[2]["flex1"]
@@ -196,9 +198,9 @@ class SortFlexFieldTest(DummyDataTestCase):
 
     def test_sort_two_field(self):
         q = ""
-        s1 = dbcore.query.SlowFieldSort("flex2", False)
-        s2 = dbcore.query.SlowFieldSort("flex1", True)
-        sort = dbcore.query.MultipleSort()
+        s1 = SlowFieldSort("flex2", False)
+        s2 = SlowFieldSort("flex1", True)
+        sort = MultipleSort()
         sort.add_sort(s1)
         sort.add_sort(s2)
         results = self.lib.items(q, sort)
@@ -217,7 +219,7 @@ class SortFlexFieldTest(DummyDataTestCase):
 class SortAlbumFixedFieldTest(DummyDataTestCase):
     def test_sort_asc(self):
         q = ""
-        sort = dbcore.query.FixedFieldSort("year", True)
+        sort = FixedFieldSort("year", True)
         results = self.lib.albums(q, sort)
         assert results[0]["year"] <= results[1]["year"]
         assert results[0]["year"] == 2001
@@ -229,7 +231,7 @@ class SortAlbumFixedFieldTest(DummyDataTestCase):
 
     def test_sort_desc(self):
         q = ""
-        sort = dbcore.query.FixedFieldSort("year", False)
+        sort = FixedFieldSort("year", False)
         results = self.lib.albums(q, sort)
         assert results[0]["year"] >= results[1]["year"]
         assert results[0]["year"] == 2005
@@ -241,9 +243,9 @@ class SortAlbumFixedFieldTest(DummyDataTestCase):
 
     def test_sort_two_field_asc(self):
         q = ""
-        s1 = dbcore.query.FixedFieldSort("genres", True)
-        s2 = dbcore.query.FixedFieldSort("album", True)
-        sort = dbcore.query.MultipleSort()
+        s1 = FixedFieldSort("genres", True)
+        s2 = FixedFieldSort("album", True)
+        sort = MultipleSort()
         sort.add_sort(s1)
         sort.add_sort(s2)
         results = self.lib.albums(q, sort)
@@ -262,7 +264,7 @@ class SortAlbumFixedFieldTest(DummyDataTestCase):
 class SortAlbumFlexFieldTest(DummyDataTestCase):
     def test_sort_asc(self):
         q = ""
-        sort = dbcore.query.SlowFieldSort("flex1", True)
+        sort = SlowFieldSort("flex1", True)
         results = self.lib.albums(q, sort)
         assert results[0]["flex1"] <= results[1]["flex1"]
         assert results[1]["flex1"] <= results[2]["flex1"]
@@ -274,7 +276,7 @@ class SortAlbumFlexFieldTest(DummyDataTestCase):
 
     def test_sort_desc(self):
         q = ""
-        sort = dbcore.query.SlowFieldSort("flex1", False)
+        sort = SlowFieldSort("flex1", False)
         results = self.lib.albums(q, sort)
         assert results[0]["flex1"] >= results[1]["flex1"]
         assert results[1]["flex1"] >= results[2]["flex1"]
@@ -286,9 +288,9 @@ class SortAlbumFlexFieldTest(DummyDataTestCase):
 
     def test_sort_two_field_asc(self):
         q = ""
-        s1 = dbcore.query.SlowFieldSort("flex2", True)
-        s2 = dbcore.query.SlowFieldSort("flex1", True)
-        sort = dbcore.query.MultipleSort()
+        s1 = SlowFieldSort("flex2", True)
+        s2 = SlowFieldSort("flex1", True)
+        sort = MultipleSort()
         sort.add_sort(s1)
         sort.add_sort(s2)
         results = self.lib.albums(q, sort)
@@ -307,7 +309,7 @@ class SortAlbumFlexFieldTest(DummyDataTestCase):
 class SortAlbumComputedFieldTest(DummyDataTestCase):
     def test_sort_asc(self):
         q = ""
-        sort = dbcore.query.SlowFieldSort("path", True)
+        sort = SlowFieldSort("path", True)
         results = self.lib.albums(q, sort)
         assert results[0]["path"] <= results[1]["path"]
         assert results[1]["path"] <= results[2]["path"]
@@ -319,7 +321,7 @@ class SortAlbumComputedFieldTest(DummyDataTestCase):
 
     def test_sort_desc(self):
         q = ""
-        sort = dbcore.query.SlowFieldSort("path", False)
+        sort = SlowFieldSort("path", False)
         results = self.lib.albums(q, sort)
         assert results[0]["path"] >= results[1]["path"]
         assert results[1]["path"] >= results[2]["path"]
@@ -333,9 +335,9 @@ class SortAlbumComputedFieldTest(DummyDataTestCase):
 class SortCombinedFieldTest(DummyDataTestCase):
     def test_computed_first(self):
         q = ""
-        s1 = dbcore.query.SlowFieldSort("path", True)
-        s2 = dbcore.query.FixedFieldSort("year", True)
-        sort = dbcore.query.MultipleSort()
+        s1 = SlowFieldSort("path", True)
+        s2 = FixedFieldSort("year", True)
+        sort = MultipleSort()
         sort.add_sort(s1)
         sort.add_sort(s2)
         results = self.lib.albums(q, sort)
@@ -348,9 +350,9 @@ class SortCombinedFieldTest(DummyDataTestCase):
 
     def test_computed_second(self):
         q = ""
-        s1 = dbcore.query.FixedFieldSort("year", True)
-        s2 = dbcore.query.SlowFieldSort("path", True)
-        sort = dbcore.query.MultipleSort()
+        s1 = FixedFieldSort("year", True)
+        s2 = SlowFieldSort("path", True)
+        sort = MultipleSort()
         sort.add_sort(s1)
         sort.add_sort(s2)
         results = self.lib.albums(q, sort)
@@ -568,6 +570,6 @@ class NonExistingFieldTest(DummyDataTestCase):
             "-bar+", beets.library.Item
         )
         assert len(query.subqueries) == 1
-        assert isinstance(query.subqueries[0], dbcore.query.TrueQuery)
-        assert isinstance(sort, dbcore.query.SlowFieldSort)
+        assert isinstance(query.subqueries[0], TrueQuery)
+        assert isinstance(sort, SlowFieldSort)
         assert sort.field == "-bar"

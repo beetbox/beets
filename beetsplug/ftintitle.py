@@ -52,9 +52,7 @@ DEFAULT_BRACKET_KEYWORDS: tuple[str, ...] = (
 
 
 def split_on_feat(
-    artist: str,
-    for_artist: bool = True,
-    custom_words: list[str] | None = None,
+    artist: str, for_artist: bool = True, custom_words: list[str] | None = None
 ) -> tuple[str, str | None]:
     """Given an artist string, split the "main" artist from any artist
     on the right-hand side of a string like "feat". Return the main
@@ -103,9 +101,7 @@ def contains_feat(title: str, custom_words: list[str] | None = None) -> bool:
 
 
 def find_feat_part(
-    artist: str,
-    albumartist: str | None,
-    custom_words: list[str] | None = None,
+    artist: str, albumartist: str | None, custom_words: list[str] | None = None
 ) -> str | None:
     """Attempt to find featured artists in the item's artist fields and
     return the results. Returns None if no featured artist found.

@@ -51,7 +51,8 @@ import beets
 
 from ..util import cached_classproperty, functemplate
 from . import types
-from .query import MatchQuery, NullSort, TrueQuery
+from .query import MatchQuery, TrueQuery
+from .sort import NullSort
 
 if TYPE_CHECKING:
     from collections.abc import (
@@ -64,7 +65,8 @@ if TYPE_CHECKING:
     from sqlite3 import Connection
     from types import TracebackType
 
-    from .query import FieldQueryType, FieldSort, Query, Sort, SQLiteType
+    from .query import FieldQueryType, Query, SQLiteType
+    from .sort import FieldSort, Sort
 
 D = TypeVar("D", bound="Database", default=Any)
 
@@ -142,9 +144,7 @@ class FormattedMapping(Mapping[str, str]):
     # The following signature is incompatible with `Mapping[str, str]`, since
     # the return type doesn't include `None` (but `default` can be `None`).
     def get(  # type: ignore
-        self,
-        key: str,
-        default: str | None = None,
+        self, key: str, default: str | None = None
     ) -> str:
         """Similar to Mapping.get(key, default), but always formats to str."""
         if default is None:
@@ -737,9 +737,7 @@ class Model(ABC, Generic[D]):
     _formatter = FormattedMapping
 
     def formatted(
-        self,
-        included_keys: str = _formatter.ALL_KEYS,
-        for_path: bool = False,
+        self, included_keys: str = _formatter.ALL_KEYS, for_path: bool = False
     ) -> FormattedMapping:
         """Get a mapping containing all values on this object formatted
         as human-readable unicode strings.
@@ -747,9 +745,7 @@ class Model(ABC, Generic[D]):
         return self._formatter(self, included_keys, for_path)
 
     def evaluate_template(
-        self,
-        template: str | functemplate.Template,
-        for_path: bool = False,
+        self, template: str | functemplate.Template, for_path: bool = False
     ) -> str:
         """Evaluate a template (a string or a `Template` object) using
         the object's fields. If `for_path` is true, then no new path
@@ -1384,11 +1380,7 @@ class Database:
                     ON {flex_table} (entity_id);
                 """)
 
-    def _create_indices(
-        self,
-        table: str,
-        indices: Sequence[Index],
-    ):
+    def _create_indices(self, table: str, indices: Sequence[Index]):
         """Create indices for the given table if they don't exist."""
         with self.transaction() as tx:
             for index in indices:

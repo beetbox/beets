@@ -305,6 +305,9 @@ extend-exclude = [
 target-version = "py310"
 line-length = 80
 
+[tool.ruff.format]
+skip-magic-trailing-comma = true
+
 [tool.ruff.lint]
 future-annotations = true
 select = [

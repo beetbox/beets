@@ -63,16 +63,12 @@ class FileFilterPluginNonSingletonTest(FileFilterPluginMixin):
 
     def test_global_config(self):
         self._run(
-            {"path": ".*album.*"},
-            2,
-            {self.album_track, self.other_album_track},
+            {"path": ".*album.*"}, 2, {self.album_track, self.other_album_track}
         )
 
     def test_album_config(self):
         self._run(
-            {"album_path": ".*other_album.*"},
-            1,
-            {self.other_album_track},
+            {"album_path": ".*other_album.*"}, 1, {self.other_album_track}
         )
 
     def test_singleton_config(self):
