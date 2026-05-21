@@ -85,11 +85,7 @@ class UseThePlugin(PytestTestHelper):
         # requests_mock.get("https://example.com/health", json={"status": "ok"})
 
         # Optional: disable any URL not explicitly mocked
-        requests_mock.register_uri(
-            ANYREEQUEST,
-            ANYREEQUEST,
-            exc=NoMockAddress,
-        )
+        requests_mock.register_uri(ANYREEQUEST, ANYREEQUEST, exc=NoMockAddress)
 
     @pytest.fixture(autouse=True, scope="class")
     def cleanup(self):
@@ -244,10 +240,7 @@ class TestFetchImage(UseThePlugin, FetchImageHelper):
     def test_jpeg_type_returns_path(
         self, source, candidate, settings, image_request_mock
     ) -> None:
-        image_request_mock.get(
-            self.URL,
-            content_type="image/jpeg",
-        )
+        image_request_mock.get(self.URL, content_type="image/jpeg")
         source.fetch_image(candidate, settings)
         assert candidate.path is not None
 
@@ -340,9 +333,7 @@ class TestFSArt(UseThePlugin):
 
     @patch("os.path.samefile")
     def test_is_candidate_fallback_os_error(
-        self,
-        mock_samefile,
-        source,
+        self, mock_samefile, source
     ) -> None:
         mock_samefile.side_effect = OSError("os error")
         fallback = os.path.join(self.temp_dir, b"a.jpg")
@@ -365,10 +356,7 @@ class TestCombined(UseThePlugin, FetchImageHelper, CAAData):
         os.mkdir(syspath(dpath))
         return dpath
 
-    def test_main_interface_returns_amazon_art(
-        self,
-        image_request_mock,
-    ):
+    def test_main_interface_returns_amazon_art(self, image_request_mock):
         image_request_mock.get(self.AMAZON_URL)
         album = Album(asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, None)
@@ -562,11 +550,7 @@ class TestITunesStore(UseThePlugin, FetchImageHelper):
         assert expected in caplog.messages[1]
 
     def test_itunesstore_fallback_match(
-        self,
-        source: fetchart.ITunesStore,
-        settings,
-        album,
-        image_request_mock,
+        self, source: fetchart.ITunesStore, settings, album, image_request_mock
     ):
         json = """{
                     "results":

@@ -878,11 +878,7 @@ class ImageRequestMocker:
             content = content.encode()
 
         self.mocker.get(
-            url,
-            headers={
-                "Content-Type": content_type,
-            },
-            content=content,
+            url, headers={"Content-Type": content_type}, content=content
         )
 
 
