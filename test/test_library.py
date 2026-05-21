@@ -896,10 +896,9 @@ class TestSingletonDisambiguation(PytestTestHelper, PathFormattingMixin):
         self._assert_dest(b"/base/foo/the title", self.i1)
 
 
-class PluginDestinationTest(BeetsTestCase):
-    def setUp(self):
-        super().setUp()
-
+class TestPluginDestination(PytestTestHelper):
+    @pytest.fixture(autouse=True)
+    def setup_lib(self, setup):
         # Mock beets.plugins.item_field_getters.
         self._tv_map = {}
 
