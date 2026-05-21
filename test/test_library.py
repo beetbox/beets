@@ -1044,9 +1044,9 @@ class TestAlbumInfo(PytestTestHelper):
         assert i.album == ai.album
 
 
-class ArtDestinationTest(BeetsTestCase):
-    def setUp(self):
-        super().setUp()
+class TestArtDestination(PytestTestHelper):
+    @pytest.fixture(autouse=True)
+    def setup_lib(self, setup):
         config["art_filename"] = "artimage"
         config["replace"] = {"X": "Y"}
         self.lib.replacements = [(re.compile("X"), "Y")]
