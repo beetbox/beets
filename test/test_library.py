@@ -940,9 +940,9 @@ class TestPluginDestination(PytestTestHelper):
         self._assert_dest(b"the artist bar_baz")
 
 
-class AlbumInfoTest(BeetsTestCase):
-    def setUp(self):
-        super().setUp()
+class TestAlbumInfo(PytestTestHelper):
+    @pytest.fixture(autouse=True)
+    def setup_lib(self, setup):
         self.i = item()
         self.lib.add_album((self.i,))
 
