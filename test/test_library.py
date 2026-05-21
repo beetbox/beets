@@ -1415,7 +1415,7 @@ class ItemPruneDirsClutterTest(BeetsTestCase):
         assert not os.path.exists(syspath(old_dir))
 
 
-class ParseQueryTest(unittest.TestCase):
+class TestParseQuery:
     def test_parse_invalid_query_string(self):
         with pytest.raises(beets.dbcore.query.ParsingError):
             beets.library.parse_query_string('foo"', None)
