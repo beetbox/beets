@@ -14,11 +14,13 @@
 
 """List duplicate tracks or albums."""
 
+import itertools
 import os
 import shlex
 
+from beets import ui
 from beets.library import Album, Item
-from beets.plugins import BeetsPlugin
+from beets.plugins import BeetsPlugin, find_plugin
 from beets.ui import Subcommand, UserError, print_
 from beets.util import (
     MoveOperation,
@@ -27,6 +29,7 @@ from beets.util import (
     displayable_path,
     subprocess,
 )
+from beetsplug import chroma
 
 PLUGIN = "duplicates"
 
@@ -41,6 +44,8 @@ class DuplicatesPlugin(BeetsPlugin):
             {
                 "album": False,
                 "checksum": "",
+                "chroma_threshold": 0.90,
+                "chroma": False,
                 "copy": "",
                 "count": False,
                 "delete": False,
@@ -57,95 +62,13 @@ class DuplicatesPlugin(BeetsPlugin):
             }
         )
 
-        self._command = Subcommand("duplicates", help=__doc__, aliases=["dup"])
-        self._command.parser.add_option(
-            "-c",
-            "--count",
-            dest="count",
-            action="store_true",
-            help="show duplicate counts",
-        )
-        self._command.parser.add_option(
-            "-C",
-            "--checksum",
-            dest="checksum",
-            action="store",
-            metavar="PROG",
-            help="report duplicates based on arbitrary command",
-        )
-        self._command.parser.add_option(
-            "-d",
-            "--delete",
-            dest="delete",
-            action="store_true",
-            help="delete items from library and disk",
-        )
-        self._command.parser.add_option(
-            "-F",
-            "--full",
-            dest="full",
-            action="store_true",
-            help="show all versions of duplicate tracks or albums",
-        )
-        self._command.parser.add_option(
-            "-s",
-            "--strict",
-            dest="strict",
-            action="store_true",
-            help="report duplicates only if all attributes are set",
-        )
-        self._command.parser.add_option(
-            "-k",
-            "--key",
-            dest="keys",
-            action="append",
-            metavar="KEY",
-            help="report duplicates based on keys (use multiple times)",
-        )
-        self._command.parser.add_option(
-            "-M",
-            "--merge",
-            dest="merge",
-            action="store_true",
-            help="merge duplicate items",
-        )
-        self._command.parser.add_option(
-            "-m",
-            "--move",
-            dest="move",
-            action="store",
-            metavar="DEST",
-            help="move items to dest",
-        )
-        self._command.parser.add_option(
-            "-o",
-            "--copy",
-            dest="copy",
-            action="store",
-            metavar="DEST",
-            help="copy items to dest",
-        )
-        self._command.parser.add_option(
-            "-t",
-            "--tag",
-            dest="tag",
-            action="store",
-            help="tag matched items with 'k=v' attribute",
-        )
-        self._command.parser.add_option(
-            "-r",
-            "--remove",
-            dest="remove",
-            action="store_true",
-            help="remove items from library",
-        )
-        self._command.parser.add_all_common_options()
-
     def commands(self):
         def _dup(lib, opts, args):
             self.config.set_args(opts)
             album = self.config["album"].get(bool)
             checksum = self.config["checksum"].get(str)
+            chroma = self.config["chroma"].get(bool)
+            chroma_threshold = self.config["chroma_threshold"].get(float)
             copy = bytestring_path(self.config["copy"].as_str())
             count = self.config["count"].get(bool)
             delete = self.config["delete"].get(bool)
@@ -159,6 +82,9 @@ class DuplicatesPlugin(BeetsPlugin):
             tiebreak = self.config["tiebreak"].get(dict)
             strict = self.config["strict"].get(bool)
             tag = self.config["tag"].get(str)
+
+            if album and chroma:
+                raise ui.UserError("cannot use chroma for albums")
 
             if album:
                 if not keys:
@@ -194,6 +120,8 @@ class DuplicatesPlugin(BeetsPlugin):
                 strict=strict,
                 tiebreak=tiebreak,
                 merge=merge,
+                chroma=chroma,
+                chroma_thresh=chroma_threshold,
             ):
                 if obj_id:  # Skip empty IDs.
                     for o in objs:
@@ -211,8 +139,108 @@ class DuplicatesPlugin(BeetsPlugin):
                             ),
                         )
 
-        self._command.func = _dup
-        return [self._command]
+        command = Subcommand("duplicates", help=__doc__, aliases=["dup"])
+        command.parser.add_option(
+            "-c",
+            "--count",
+            dest="count",
+            action="store_true",
+            help="show duplicate counts",
+        )
+        command.parser.add_option(
+            "-C",
+            "--checksum",
+            dest="checksum",
+            action="store",
+            metavar="PROG",
+            help="report duplicates based on arbitrary command",
+        )
+
+        if self._chroma_plug() is not None:
+            command.parser.add_option(
+                "--chroma",
+                dest="chroma",
+                action="store_true",
+                help="check duplicates similarity with the chroma plugin",
+            )
+            command.parser.add_option(
+                "--chroma-threshold",
+                dest="chroma_threshold",
+                action="store",
+                type=float,
+                help="minimum score to consider items equal",
+            )
+
+        command.parser.add_option(
+            "-d",
+            "--delete",
+            dest="delete",
+            action="store_true",
+            help="delete items from library and disk",
+        )
+        command.parser.add_option(
+            "-F",
+            "--full",
+            dest="full",
+            action="store_true",
+            help="show all versions of duplicate tracks or albums",
+        )
+        command.parser.add_option(
+            "-s",
+            "--strict",
+            dest="strict",
+            action="store_true",
+            help="report duplicates only if all attributes are set",
+        )
+        command.parser.add_option(
+            "-k",
+            "--key",
+            dest="keys",
+            action="append",
+            metavar="KEY",
+            help="report duplicates based on keys (use multiple times)",
+        )
+        command.parser.add_option(
+            "-M",
+            "--merge",
+            dest="merge",
+            action="store_true",
+            help="merge duplicate items",
+        )
+        command.parser.add_option(
+            "-m",
+            "--move",
+            dest="move",
+            action="store",
+            metavar="DEST",
+            help="move items to dest",
+        )
+        command.parser.add_option(
+            "-o",
+            "--copy",
+            dest="copy",
+            action="store",
+            metavar="DEST",
+            help="copy items to dest",
+        )
+        command.parser.add_option(
+            "-t",
+            "--tag",
+            dest="tag",
+            action="store",
+            help="tag matched items with 'k=v' attribute",
+        )
+        command.parser.add_option(
+            "-r",
+            "--remove",
+            dest="remove",
+            action="store_true",
+            help="remove items from library",
+        )
+        command.parser.add_all_common_options()
+
+        command.func = _dup
+        return [command]
 
     def _process_item(
         self,
@@ -402,12 +430,36 @@ class DuplicatesPlugin(BeetsPlugin):
             objs = self._merge_albums(objs)
         return objs
 
-    def _duplicates(self, objs, keys, full, strict, tiebreak, merge):
+    def _duplicates(
+        self, objs, keys, full, strict, tiebreak, merge, chroma, chroma_thresh
+    ):
         """Generate triples of keys, duplicate counts, and constituent objects."""
         offset = 0 if full else 1
         for k, objs in self._group_by(objs, keys, strict).items():
-            if len(objs) > 1:
-                objs = self._order(objs, tiebreak)
-                if merge:
-                    objs = self._merge(objs)
-                yield (k, len(objs) - offset, objs[offset:])
+            if len(objs) <= 1:
+                continue
+
+            objs = self._order(objs, tiebreak)
+
+            if chroma:
+                objs = self._chroma_filter_dups(objs, chroma_thresh)
+                if len(objs) <= 1:
+                    continue
+
+            if merge:
+                objs = self._merge(objs)
+            yield (k, len(objs) - offset, objs[offset:])
+
+    def _chroma_filter_dups(self, items, chroma_thresh):
+        choma_plug = self._chroma_plug()
+        res = [items[0]]
+
+        for a, b in itertools.pairwise(items):
+            score = choma_plug.compare_items(a, b)
+            if score is None or score < chroma_thresh:
+                res.append(b)
+
+        return res
+
+    def _chroma_plug(self):
+        return find_plugin(chroma.AcoustidPlugin)

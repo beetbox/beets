@@ -86,6 +86,26 @@ file. The available options mirror the command-line options:
 - **remove**: Remove matched items from the library, but not from the disk.
   Default: ``no``.
 
+.. _duplicates-chroma:
+
+Chroma
+------
+
+When the :doc:`chroma` is enabled, the duplicates plugin can make use of its
+sonic fingerprinting capabilities to compare the tracks audio in addition of
+their ``keys``. This is especially useful when multiple versions of a song, such
+as live or remixes exist in the library.
+
+When the option is enabled, tracks with the same ``keys`` but different audio
+will be excluded from the results.
+
+The following additional options are available when the :doc:`chroma` is
+enabled:
+
+- **chroma**: Enable fingerprint comparison during duplicate search
+- **chroma_threshold**: Threshold, from 0 to 1, to consider track audio the
+  same. 1 means an exact match; 0 nothing alike. Default: ``0.9``.
+
 Examples
 --------
 
