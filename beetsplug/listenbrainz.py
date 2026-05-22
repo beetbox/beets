@@ -7,7 +7,7 @@ import json
 import time
 import zipfile
 from collections import Counter
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import requests
 
@@ -166,7 +166,9 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             self._log.debug("Invalid Search Error: {}", e)
             return None
 
-    def import_listenbrainz_data_export(self, export_file: str | Path):
+    def import_listenbrainz_data_export(
+        self, export_file: str | Path
+    ) -> list[Any]:
         """Import ListenBrainz data from a .zip file."""
         export_file = syspath(normpath(export_file))
 
