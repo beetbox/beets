@@ -7,7 +7,7 @@ import json
 import time
 import zipfile
 from collections import Counter
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, ClassVar, TypedDict
 
 import requests
 
@@ -87,6 +87,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         max_listens: int | None = None,
     ):
         """Update play counts from ListenBrainz listening history."""
+        listens: list[Listen] | None
         if export_file is not None:
             self._log.info(
                 "Importing ListenBrainz data from {}...", export_file
@@ -99,9 +100,9 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         else:
             self._log.info("Fetching ListenBrainz history...")
             listens = self.get_listens(max_total=max_listens)
-        if listens is None:
-            self._log.error("Failed to fetch listens from ListenBrainz.")
-            return
+            if listens is None:
+                self._log.error("Failed to fetch listens from ListenBrainz.")
+                return
         if not listens:
             self._log.info("No listens found.")
             return
@@ -168,7 +169,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
 
     def import_listenbrainz_data_export(
         self, export_file: str | Path
-    ) -> list[Any]:
+    ) -> list[Listen]:
         """Import ListenBrainz data from a .zip file."""
         export_file = syspath(normpath(export_file))
 
@@ -202,7 +203,9 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             ) from err
         return all_listens
 
-    def get_listens(self, min_ts=None, max_ts=None, count=None, max_total=None):
+    def get_listens(
+        self, min_ts=None, max_ts=None, count=None, max_total=None
+    ) -> list[Listen] | None:
         """Gets the listening history of a given user from the ListenBrainz API.
 
         Paginates through all available listens using the max_ts parameter.
@@ -223,7 +226,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
 
         per_page = min(count or 1000, 1000)
         url = f"{self.ROOT}/user/{self.username}/listens"
-        all_listens = []
+        all_listens: list[Listen] = []
 
         while True:
             if max_total is not None:
@@ -266,7 +269,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
 
         return all_listens
 
-    def get_tracks_from_listens(self, listens) -> list[Track]:
+    def get_tracks_from_listens(self, listens: list[Listen]) -> list[Track]:
         """Returns a list of tracks from a list of listens."""
         tracks: list[Track] = []
         for track in listens:
@@ -276,8 +279,9 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             additional_info = track_metadata.get("additional_info", {})
             recording_mbid = additional_info.get("recording_mbid")
             if recording_mbid is None:
-                mbid_mapping = track_metadata.get("mbid_mapping", {}) or {}
-                recording_mbid = mbid_mapping.get("recording_mbid")
+                mbid_mapping = track_metadata.get("mbid_mapping")
+                if mbid_mapping is not None:
+                    recording_mbid = mbid_mapping.get("recording_mbid")
             tracks.append(
                 {
                     "album": (track_metadata.get("release_name") or "").strip(),
@@ -416,3 +420,24 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         # Fetch and return tracks from the selected playlist
         playlist = self.get_playlist(selected_playlist.get("identifier"))
         return self.get_tracks_from_playlist(playlist)
+
+
+class Listen(TypedDict):
+    listened_at: int
+    track_metadata: TrackMetadata
+
+
+class TrackMetadata(TypedDict, total=False):
+    artist_name: str
+    track_name: str
+    release_name: str | None
+    additional_info: AdditionalInfo
+    mbid_mapping: MbidMapping | None
+
+
+class AdditionalInfo(TypedDict, total=False):
+    recording_mbid: str | None
+
+
+class MbidMapping(TypedDict, total=False):
+    recording_mbid: str | None
