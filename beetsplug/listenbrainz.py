@@ -21,6 +21,8 @@ from ._utils.playcount import update_play_counts
 from ._utils.requests import TimeoutAndRetrySession
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from ._utils.playcount import Track
 
 
@@ -164,7 +166,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             self._log.debug("Invalid Search Error: {}", e)
             return None
 
-    def import_listenbrainz_data_export(self, export_file: str):
+    def import_listenbrainz_data_export(self, export_file: str | Path):
         """Import ListenBrainz data from a .zip file."""
         export_file = syspath(normpath(export_file))
 

@@ -1,7 +1,7 @@
 import io
 import json
 import zipfile
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -314,7 +314,7 @@ class TestListenBrainzPlugin(ConfigMixin):
             _make_zip({"listens/2026.jsonl": json.dumps(listen) + "\n"})
         )
 
-        result = plugin.import_listenbrainz_data_export(MagicMock(), zip_path)
+        result = plugin.import_listenbrainz_data_export(zip_path)
 
         assert result == [listen]
 
@@ -331,7 +331,7 @@ class TestListenBrainzPlugin(ConfigMixin):
             )
         )
 
-        result = plugin.import_listenbrainz_data_export(MagicMock(), zip_path)
+        result = plugin.import_listenbrainz_data_export(zip_path)
 
         assert result == [listen]
 
@@ -341,26 +341,20 @@ class TestListenBrainzPlugin(ConfigMixin):
         zip_path = tmp_path / "export.zip"
         zip_path.write_bytes(_make_zip({"listens/2026.jsonl": content}))
 
-        result = plugin.import_listenbrainz_data_export(MagicMock(), zip_path)
+        result = plugin.import_listenbrainz_data_export(zip_path)
 
         assert result == [listen]
 
-    def test_import_file_skips_invalid_json_and_logs_error(
-        self, plugin, tmp_path
-    ):
+    def test_import_file_skips_invalid_json(self, plugin, tmp_path):
         listen = {"listened_at": 1778946700, "track_metadata": {}}
         content = "not valid json\n" + json.dumps(listen) + "\n"
         zip_path = tmp_path / "export.zip"
         zip_path.write_bytes(_make_zip({"listens/2026.jsonl": content}))
-        log = MagicMock()
 
-        result = plugin.import_listenbrainz_data_export(log, zip_path)
+        result = plugin.import_listenbrainz_data_export(zip_path)
 
         assert result == [listen]
-        log.error.assert_called_once()
 
     def test_import_file_raises_on_missing_file(self, plugin, tmp_path):
         with pytest.raises(ui.UserError):
-            plugin.import_listenbrainz_data_export(
-                MagicMock(), tmp_path / "nonexistent.zip"
-            )
+            plugin.import_listenbrainz_data_export(tmp_path / "nonexistent.zip")
