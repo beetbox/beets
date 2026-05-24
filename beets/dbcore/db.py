@@ -68,7 +68,7 @@ if TYPE_CHECKING:
     from .query import FieldQueryType, Query, SQLiteType
     from .sort import FieldSort, Sort
 
-D_co = TypeVar("D_co", bound="Database", covariant=True)
+D_co = TypeVar("D_co", bound="Database", covariant=True, default="Database")
 
 FlexAttrs = dict[str, str]
 
@@ -788,7 +788,7 @@ class Model(ABC, Generic[D_co]):
 # Database controller and supporting interfaces.
 
 
-AnyModel = TypeVar("AnyModel", bound=Model["Database"])
+AnyModel = TypeVar("AnyModel", bound=Model)
 
 
 class Results(Generic[AnyModel]):
@@ -1122,13 +1122,11 @@ class Database:
     the backend.
     """
 
-    _models: Sequence[type[Model[Database]]] = ()
+    _models: Sequence[type[Model]] = ()
     """The Model subclasses representing tables in this database.
     """
 
-    _migrations: Sequence[
-        tuple[type[Migration[Database]], Sequence[type[Model[Database]]]]
-    ] = ()
+    _migrations: Sequence[tuple[type[Migration], Sequence[type[Model]]]] = ()
     """Migrations that are to be performed for the configured models."""
 
     supports_extensions = hasattr(sqlite3.Connection, "enable_load_extension")

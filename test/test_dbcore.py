@@ -154,7 +154,7 @@ class DatabaseFixtureTwoModels(dbcore.Database):
     _models = (ModelFixture2, AnotherModelFixture)
 
 
-class ModelFixtureWithGetters(dbcore.Model[dbcore.Database]):
+class ModelFixtureWithGetters(dbcore.Model):
     @classmethod
     def _getters(cls):
         return {"aComputedField": (lambda s: "thing")}

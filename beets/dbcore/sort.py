@@ -18,7 +18,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from beets.dbcore.db import AnyModel, Database, Model
+    from beets.dbcore.db import AnyModel, Model
 
 
 class Sort:
@@ -128,7 +128,7 @@ class FieldSort(Sort):
         # comparisons with None fail. We should also support flexible
         # attributes with different types without falling over.
 
-        def key(obj: Model[Database]) -> Any:
+        def key(obj: Model) -> Any:
             field_val = obj.get(self.field, None)
             if field_val is None:
                 if _type := obj._types.get(self.field):

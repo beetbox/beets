@@ -35,7 +35,7 @@ from . import pathutils
 if TYPE_CHECKING:
     from collections.abc import Iterator, MutableSequence
 
-    from beets.dbcore.db import Database, Model
+    from beets.dbcore.db import Model
 
     P = TypeVar("P", default=Any)
 else:
@@ -103,7 +103,7 @@ class Query(ABC):
         """
 
     @abstractmethod
-    def match(self, obj: Model[Database]):
+    def match(self, obj: Model):
         """Check whether this query matches a given Model. Can be used to
         perform queries on arbitrary sets of Model.
         """
@@ -170,7 +170,7 @@ class FieldQuery(Query, Generic[P]):
         """Determine whether the value matches the pattern."""
         raise NotImplementedError
 
-    def match(self, obj: Model[Database]) -> bool:
+    def match(self, obj: Model) -> bool:
         return self.value_match(self.pattern, obj.get(self.field_name))
 
     def __repr__(self) -> str:
@@ -212,7 +212,7 @@ class NoneQuery(FieldQuery[None]):
     def col_clause(self) -> tuple[str, Sequence[SQLiteType]]:
         return f"{self.field} IS NULL", ()
 
-    def match(self, obj: Model[Database]) -> bool:
+    def match(self, obj: Model) -> bool:
         return obj.get(self.field_name) is None
 
     def __repr__(self) -> str:
@@ -342,7 +342,7 @@ class PathQuery(FieldQuery[bytes]):
             and os.path.exists(util.normpath(query_part))
         )
 
-    def match(self, obj: Model[Database]) -> bool:
+    def match(self, obj: Model) -> bool:
         """Check whether a model object's path matches this query.
 
         Performs either an exact match against the pattern or checks if the path
@@ -468,7 +468,7 @@ class NumericQuery(FieldQuery[str]):
             self.rangemin = self._convert(parts[0])
             self.rangemax = self._convert(parts[1])
 
-    def match(self, obj: Model[Database]) -> bool:
+    def match(self, obj: Model) -> bool:
         if self.field_name not in obj:
             return False
         value = obj[self.field_name]
@@ -601,7 +601,7 @@ class AndQuery(MutableCollectionQuery):
     def clause(self) -> tuple[str | None, Sequence[SQLiteType]]:
         return self.clause_with_joiner("and")
 
-    def match(self, obj: Model[Database]) -> bool:
+    def match(self, obj: Model) -> bool:
         return all(q.match(obj) for q in self.subqueries)
 
 
@@ -611,7 +611,7 @@ class OrQuery(MutableCollectionQuery):
     def clause(self) -> tuple[str | None, Sequence[SQLiteType]]:
         return self.clause_with_joiner("or")
 
-    def match(self, obj: Model[Database]) -> bool:
+    def match(self, obj: Model) -> bool:
         return any(q.match(obj) for q in self.subqueries)
 
 
@@ -637,7 +637,7 @@ class NotQuery(Query):
             # is handled by match() for slow queries.
             return clause, subvals
 
-    def match(self, obj: Model[Database]) -> bool:
+    def match(self, obj: Model) -> bool:
         return not self.subquery.match(obj)
 
     def __repr__(self) -> str:
@@ -656,7 +656,7 @@ class TrueQuery(Query):
     def clause(self) -> tuple[str, Sequence[SQLiteType]]:
         return "1", ()
 
-    def match(self, obj: Model[Database]) -> bool:
+    def match(self, obj: Model) -> bool:
         return True
 
 
@@ -666,7 +666,7 @@ class FalseQuery(Query):
     def clause(self) -> tuple[str, Sequence[SQLiteType]]:
         return "0", ()
 
-    def match(self, obj: Model[Database]) -> bool:
+    def match(self, obj: Model) -> bool:
         return False
 
 
@@ -856,7 +856,7 @@ class DateQuery(FieldQuery[str]):
         start, end = _parse_periods(pattern)
         self.interval = DateInterval.from_periods(start, end)
 
-    def match(self, obj: Model[Database]) -> bool:
+    def match(self, obj: Model) -> bool:
         if self.field_name not in obj:
             return False
         timestamp = float(obj[self.field_name])
