@@ -26,6 +26,27 @@ if TYPE_CHECKING:
     from ._utils.playcount import Track
 
 
+class Listen(TypedDict):
+    listened_at: int
+    track_metadata: TrackMetadata
+
+
+class TrackMetadata(TypedDict, total=False):
+    artist_name: str
+    track_name: str
+    release_name: str | None
+    additional_info: AdditionalInfo
+    mbid_mapping: MbidMapping | None
+
+
+class AdditionalInfo(TypedDict, total=False):
+    recording_mbid: str | None
+
+
+class MbidMapping(TypedDict, total=False):
+    recording_mbid: str | None
+
+
 class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
     """A Beets plugin for interacting with ListenBrainz."""
 
@@ -420,24 +441,3 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         # Fetch and return tracks from the selected playlist
         playlist = self.get_playlist(selected_playlist.get("identifier"))
         return self.get_tracks_from_playlist(playlist)
-
-
-class Listen(TypedDict):
-    listened_at: int
-    track_metadata: TrackMetadata
-
-
-class TrackMetadata(TypedDict, total=False):
-    artist_name: str
-    track_name: str
-    release_name: str | None
-    additional_info: AdditionalInfo
-    mbid_mapping: MbidMapping | None
-
-
-class AdditionalInfo(TypedDict, total=False):
-    recording_mbid: str | None
-
-
-class MbidMapping(TypedDict, total=False):
-    recording_mbid: str | None
