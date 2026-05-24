@@ -3,6 +3,7 @@ import uuid
 from contextlib import nullcontext as does_not_raise
 
 import pytest
+import requests
 
 from beets.library import Album
 from beets.test.helper import PluginMixin, TestHelper
@@ -140,3 +141,23 @@ class TestMbCollectionPlugin(PluginMixin, TestHelper):
         helper.run_command("mbupdate", "--remove")
 
         assert requests_mock.call_count == 6
+
+    def test_mbupdate_logs_unauthorized_errors(
+        self, helper, requests_mock, caplog
+    ):
+        response = requests.Response()
+        response.status_code = 401
+        requests_mock.get(
+            "/ws/2/collection",
+            exc=requests.exceptions.HTTPError(response=response),
+        )
+
+        with caplog.at_level("ERROR", logger="beets.mbcollection"):
+            helper.run_command("mbupdate")
+
+        expected_message = (
+            "Failed to update MusicBrainz collection: HTTP Error: 401"
+            " Unauthorized. Check your musicbrainz.user and musicbrainz.pass"
+            " configuration"
+        )
+        assert expected_message in caplog.text

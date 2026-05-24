@@ -21,12 +21,11 @@ if TYPE_CHECKING:
 class BeetsHTTPError(requests.exceptions.HTTPError):
     STATUS: ClassVar[HTTPStatus]
 
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(
-            f"HTTP Error: {self.STATUS.value} {self.STATUS.phrase}",
-            *args,
-            **kwargs,
-        )
+    def __init__(self, *args, message: str | None = None, **kwargs) -> None:
+        if not message:
+            message = f"HTTP Error: {self.STATUS.value} {self.STATUS.phrase}"
+
+        super().__init__(message, *args, **kwargs)
 
 
 class HTTPNotFoundError(BeetsHTTPError):
