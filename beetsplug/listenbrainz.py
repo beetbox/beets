@@ -3,22 +3,48 @@
 from __future__ import annotations
 
 import datetime
+import json
 import time
+import zipfile
 from collections import Counter
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, TypedDict
 
 import requests
 
 from beets import config, ui
 from beets.dbcore import types
 from beets.plugins import BeetsPlugin
+from beets.util import displayable_path, normpath, syspath
 
 from ._utils.musicbrainz import MusicBrainzAPIMixin
 from ._utils.playcount import update_play_counts
 from ._utils.requests import TimeoutAndRetrySession
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from ._utils.playcount import Track
+
+
+class Listen(TypedDict):
+    listened_at: int
+    track_metadata: TrackMetadata
+
+
+class TrackMetadata(TypedDict, total=False):
+    artist_name: str
+    track_name: str
+    release_name: str | None
+    additional_info: AdditionalInfo
+    mbid_mapping: MbidMapping | None
+
+
+class AdditionalInfo(TypedDict, total=False):
+    recording_mbid: str | None
+
+
+class MbidMapping(TypedDict, total=False):
+    recording_mbid: str | None
 
 
 class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
@@ -45,35 +71,71 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             "lbimport", help="Import ListenBrainz history"
         )
         lbupdate_cmd.parser.add_option(
+            "-f",
+            "--export-file",
+            dest="export_file",
+            metavar="PATH",
+            default=None,
+            help=(
+                "path to a ListenBrainz data export .zip file"
+                " (instead of fetching from the API)"
+            ),
+        )
+        lbupdate_cmd.parser.add_option(
             "--max",
             dest="max_listens",
             type="int",
             default=None,
-            help="maximum number of listens to fetch (default: all)",
+            help=(
+                "maximum number of listens to fetch via the API (default: all)."
+                " This option does not apply when importing a file via"
+                " -f/--export-file."
+            ),
         )
 
         def func(lib, opts, args):
-            self._lbupdate(lib, self._log, max_listens=opts.max_listens)
+            self._lbupdate(
+                lib, export_file=opts.export_file, max_listens=opts.max_listens
+            )
 
         lbupdate_cmd.func = func
         return [lbupdate_cmd]
 
-    def _lbupdate(self, lib, log, max_listens=None):
-        """Obtain play counts from ListenBrainz."""
-        listens = self.get_listens(max_total=max_listens)
-        if listens is None:
-            log.error("Failed to fetch listens from ListenBrainz.")
-            return
+    def _lbupdate(
+        self,
+        lib,
+        export_file: str | None = None,
+        max_listens: int | None = None,
+    ):
+        """Update play counts from ListenBrainz listening history."""
+        listens: list[Listen] | None
+        if export_file is not None:
+            self._log.info(
+                "Importing ListenBrainz data from {}...", export_file
+            )
+            if max_listens is not None:
+                self._log.warning(
+                    "Ignoring superfluous --max flag when importing from file."
+                )
+            listens = self.import_listenbrainz_data_export(export_file)
+        else:
+            self._log.info("Fetching ListenBrainz history...")
+            listens = self.get_listens(max_total=max_listens)
+            if listens is None:
+                self._log.error("Failed to fetch listens from ListenBrainz.")
+                return
         if not listens:
-            log.info("No listens found.")
+            self._log.info("No listens found.")
             return
-        log.info("Found {} listens", len(listens))
+        self._log.info("Found {} listens", len(listens))
         tracks = self._aggregate_listens(self.get_tracks_from_listens(listens))
-        log.info("Aggregated into {} unique tracks", len(tracks))
-        found, unknown = update_play_counts(lib, tracks, log, "listenbrainz")
-        log.info("... done!")
-        log.info("{} unknown play-counts", unknown)
-        log.info("{} play-counts imported", found)
+        self._log.info("Aggregated into {} unique tracks", len(tracks))
+        found, unknown = update_play_counts(
+            lib, tracks, self._log, "listenbrainz"
+        )
+        self._log.info("... done!")
+        self._log.info("{} unknown play-counts", unknown)
+        self._log.info("{} play-counts imported", found)
 
     @staticmethod
     def _aggregate_listens(tracks: list[Track]) -> list[Track]:
@@ -126,8 +188,46 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             self._log.debug("Invalid Search Error: {}", e)
             return None
 
-    def get_listens(self, min_ts=None, max_ts=None, count=None, max_total=None):
-        """Gets the listen history of a given user.
+    def import_listenbrainz_data_export(
+        self, export_file: str | Path
+    ) -> list[Listen]:
+        """Import ListenBrainz data from a .zip file."""
+        export_file = syspath(normpath(export_file))
+
+        all_listens = []
+
+        try:
+            with zipfile.ZipFile(export_file, "r") as zip_file:
+                for file_name in zip_file.namelist():
+                    if file_name.startswith("listens/") and file_name.endswith(
+                        ".jsonl"
+                    ):
+                        self._log.info(
+                            "Reading listens from {}",
+                            displayable_path(file_name),
+                        )
+                        with zip_file.open(file_name) as file:
+                            for line in file:
+                                if not line.strip():
+                                    continue
+                                try:
+                                    all_listens.append(json.loads(line))
+                                except json.JSONDecodeError as err:
+                                    self._log.error(
+                                        "Invalid JSON in {}: {}",
+                                        displayable_path(file_name),
+                                        err,
+                                    )
+        except OSError as err:
+            raise ui.UserError(
+                f"unreadable export file {displayable_path(export_file)}: {err}"
+            ) from err
+        return all_listens
+
+    def get_listens(
+        self, min_ts=None, max_ts=None, count=None, max_total=None
+    ) -> list[Listen] | None:
+        """Gets the listening history of a given user from the ListenBrainz API.
 
         Paginates through all available listens using the max_ts parameter.
 
@@ -147,7 +247,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
 
         per_page = min(count or 1000, 1000)
         url = f"{self.ROOT}/user/{self.username}/listens"
-        all_listens = []
+        all_listens: list[Listen] = []
 
         while True:
             if max_total is not None:
@@ -190,26 +290,25 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
 
         return all_listens
 
-    def get_tracks_from_listens(self, listens) -> list[Track]:
+    def get_tracks_from_listens(self, listens: list[Listen]) -> list[Track]:
         """Returns a list of tracks from a list of listens."""
         tracks: list[Track] = []
         for track in listens:
-            if track["track_metadata"].get("release_name") is None:
+            track_metadata = track["track_metadata"]
+            if track_metadata.get("release_name") is None:
                 continue
-            mbid_mapping = track["track_metadata"].get("mbid_mapping", {})
-            mbid = mbid_mapping.get("recording_mbid")
+            additional_info = track_metadata.get("additional_info", {})
+            recording_mbid = additional_info.get("recording_mbid")
+            if recording_mbid is None:
+                mbid_mapping = track_metadata.get("mbid_mapping")
+                if mbid_mapping is not None:
+                    recording_mbid = mbid_mapping.get("recording_mbid")
             tracks.append(
                 {
-                    "album": (
-                        track["track_metadata"].get("release_name") or ""
-                    ).strip(),
-                    "name": (
-                        track["track_metadata"].get("track_name") or ""
-                    ).strip(),
-                    "artist": (
-                        track["track_metadata"].get("artist_name") or ""
-                    ).strip(),
-                    "mbid": mbid,
+                    "album": (track_metadata.get("release_name") or "").strip(),
+                    "name": (track_metadata.get("track_name") or "").strip(),
+                    "artist": (track_metadata.get("artist_name") or "").strip(),
+                    "mbid": recording_mbid,
                     "playcount": 1,
                 }
             )

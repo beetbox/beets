@@ -1,9 +1,22 @@
+import io
+import json
+import zipfile
 from unittest.mock import patch
 
 import pytest
 
+from beets import ui
 from beets.test.helper import ConfigMixin
 from beetsplug.listenbrainz import ListenBrainzPlugin
+
+
+def _make_zip(files: dict[str, str]) -> bytes:
+    """Build an in-memory zip with the given {name: content} entries."""
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        for name, content in files.items():
+            zf.writestr(name, content)
+    return buf.getvalue()
 
 
 class TestListenBrainzPlugin(ConfigMixin):
@@ -253,3 +266,95 @@ class TestListenBrainzPlugin(ConfigMixin):
         assert isinstance(t["artist"], str)
         assert isinstance(t["name"], str)
         assert t["album"] == "Album"
+
+    def test_get_tracks_from_listens_null_mbid_mapping(self, plugin):
+        listens = [
+            {
+                "listened_at": 1000,
+                "track_metadata": {
+                    "track_name": "Song",
+                    "artist_name": "Artist",
+                    "release_name": "Album",
+                    "mbid_mapping": None,
+                },
+            }
+        ]
+        tracks = plugin.get_tracks_from_listens(listens)  # should not raise
+        assert tracks[0]["mbid"] is None
+
+    def test_get_tracks_from_listens_prefers_additional_info_recording_mbid(
+        self, plugin
+    ):
+        listens = [
+            {
+                "listened_at": 1000,
+                "track_metadata": {
+                    "track_name": "Song",
+                    "artist_name": "Artist",
+                    "release_name": "Album",
+                    "additional_info": {"recording_mbid": "rec-mbid-123"},
+                    "mbid_mapping": {
+                        "recording_mbid": "rec-mbid-456",
+                        "release_mbid": "rel-mbid",
+                    },
+                },
+            }
+        ]
+        tracks = plugin.get_tracks_from_listens(listens)
+        assert tracks[0]["mbid"] == "rec-mbid-123"
+        assert tracks[0]["playcount"] == 1
+
+    def test_import_file_returns_listens(self, plugin, tmp_path):
+        listen = {
+            "listened_at": 1778946700,
+            "track_metadata": {"track_name": "S"},
+        }
+        zip_path = tmp_path / "export.zip"
+        zip_path.write_bytes(
+            _make_zip({"listens/2026.jsonl": json.dumps(listen) + "\n"})
+        )
+
+        result = plugin.import_listenbrainz_data_export(zip_path)
+
+        assert result == [listen]
+
+    def test_import_file_ignores_non_listens_entries(self, plugin, tmp_path):
+        listen = {"listened_at": 1778946700, "track_metadata": {}}
+        zip_path = tmp_path / "export.zip"
+        zip_path.write_bytes(
+            _make_zip(
+                {
+                    "listens/2026.jsonl": json.dumps(listen) + "\n",
+                    "other/data.jsonl": '{"should": "be ignored"}\n',
+                    "listens/readme.txt": "not a jsonl file\n",
+                }
+            )
+        )
+
+        result = plugin.import_listenbrainz_data_export(zip_path)
+
+        assert result == [listen]
+
+    def test_import_file_skips_empty_lines(self, plugin, tmp_path):
+        listen = {"listened_at": 1778946700, "track_metadata": {}}
+        content = "\n" + json.dumps(listen) + "\n\n"
+        zip_path = tmp_path / "export.zip"
+        zip_path.write_bytes(_make_zip({"listens/2026.jsonl": content}))
+
+        result = plugin.import_listenbrainz_data_export(zip_path)
+
+        assert result == [listen]
+
+    def test_import_file_skips_invalid_json(self, plugin, tmp_path):
+        listen = {"listened_at": 1778946700, "track_metadata": {}}
+        content = "not valid json\n" + json.dumps(listen) + "\n"
+        zip_path = tmp_path / "export.zip"
+        zip_path.write_bytes(_make_zip({"listens/2026.jsonl": content}))
+
+        result = plugin.import_listenbrainz_data_export(zip_path)
+
+        assert result == [listen]
+
+    def test_import_file_raises_on_missing_file(self, plugin, tmp_path):
+        with pytest.raises(ui.UserError):
+            plugin.import_listenbrainz_data_export(tmp_path / "nonexistent.zip")
