@@ -363,13 +363,7 @@ class BPDTestHelper(PluginTestCase):
     def _bpd_add(self, client, *items, **kwargs):
         """Add the given item to the BPD playlist or queue."""
         paths = [
-            "/".join(
-                [
-                    item.artist,
-                    item.album,
-                    os.fsdecode(os.path.basename(item.path)),
-                ]
-            )
+            os.fsdecode(item.destination(relative_to_libdir=True))
             for item in items
         ]
         playlist = kwargs.get("playlist")
