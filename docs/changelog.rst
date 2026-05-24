@@ -23,6 +23,7 @@ New features
 - :doc:`plugins/listenbrainz`: Add support for importing ListenBrainz listening
   history from an export file. Use the ``-f`` / ``--export-file`` flag to
   specify the path to the ListenBrainz export file.
+- :doc:`plugins/musicbrainz`: Make aliases-as-artist-credit optional.
 
 Bug fixes
 ~~~~~~~~~
