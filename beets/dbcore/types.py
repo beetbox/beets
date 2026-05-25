@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
-import re
 import time
 import typing
 from abc import ABC
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
 
 import beets
 from beets import util
+from beets.util.musictheory import normalize_key
 from beets.util.units import human_seconds_short, raw_seconds_short
 
 from . import pathutils, query
@@ -420,23 +420,10 @@ class MusicalKey(String):
     The standard format is C, Cm, C#, C#m, etc.
     """
 
-    ENHARMONIC: ClassVar[dict[str, str]] = {
-        r"db": "c#",
-        r"eb": "d#",
-        r"gb": "f#",
-        r"ab": "g#",
-        r"bb": "a#",
-    }
-
     null = None
 
-    def parse(self, key: str) -> str | None:
-        key = key.lower()
-        for flat, sharp in self.ENHARMONIC.items():
-            key = re.sub(flat, sharp, key)
-        key = re.sub(r"[\W\s]+minor", "m", key)
-        key = re.sub(r"[\W\s]+major", "", key)
-        return key.capitalize()
+    def parse(self, key: str) -> str:
+        return normalize_key(key)
 
     def normalize(self, key: Any) -> str | None:
         if key is None:
