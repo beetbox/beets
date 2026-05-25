@@ -37,6 +37,8 @@ def test_musicalkey():
 
     # parse
     assert "C#m" == t.parse("c#m")
+    assert "C#" == t.parse("Db major")
+    assert "C#m" == t.parse("Db minor")
     assert "Gm" == t.parse("g   minor")
     assert "Not c#m" == t.parse("not C#m")
 
