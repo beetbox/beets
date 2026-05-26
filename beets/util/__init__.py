@@ -29,7 +29,7 @@ import sys
 import tempfile
 import traceback
 from collections import Counter
-from collections.abc import Hashable, Sequence
+from collections.abc import Sequence
 from contextlib import suppress
 from enum import Enum
 from functools import cache
@@ -37,7 +37,16 @@ from importlib import import_module
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from re import Pattern
-from typing import TYPE_CHECKING, Any, AnyStr, Generic, NamedTuple, TypeVar
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    AnyStr,
+    ClassVar,
+    Generic,
+    NamedTuple,
+    TypeVar,
+    cast,
+)
 
 from unidecode import unidecode
 
@@ -1054,15 +1063,7 @@ def par_map(transform: Callable[[T], Any], items: Sequence[T]) -> None:
         pool.map(_worker, items)
 
 
-H = TypeVar("H", bound=type[Hashable])
-
-
-@cache
-def _cached_classproperty_get(getter: Callable[[H], R_co], owner: H, /) -> R_co:
-    return getter(owner)
-
-
-class cached_classproperty(Generic[H, R_co]):
+class cached_classproperty(Generic[T, R_co]):
     """Descriptor implementing cached class properties.
 
     Must be used in combination with @classmethod.
@@ -1072,27 +1073,30 @@ class cached_classproperty(Generic[H, R_co]):
     instance properties, this operates on the class rather than instances.
     """
 
-    def __init__(self, getter: Callable[[H], R_co], /) -> None:
+    _cache: ClassVar[dict[tuple[type[object], str], object]] = {}
+
+    def __init__(self, getter: Callable[[type[T]], R_co], /) -> None:
         """Initialize the descriptor with the property getter function."""
-        self.getter: Callable[[H], R_co] = getter.__func__  # type: ignore[attr-defined]
+        self.getter: Callable[[type[T]], R_co] = getter
         self.name: str
 
-    def __set_name__(self, owner: H, name: str, /) -> None:
+    def __set_name__(self, owner: type[T], name: str, /) -> None:
         """Capture the attribute name this descriptor is assigned to."""
         self.name = name
 
-    @staticmethod
-    @cache
-    def _get_cached(getter: Callable[[H], R_co], owner: H, /) -> R_co:
-        return getter(owner)
-
-    def __get__(self, instance: object | None, owner: H, /) -> R_co:
+    def __get__(self, instance: T | None, owner: type[T], /) -> R_co:
         """Compute and cache if needed, and return the property value."""
-        return _cached_classproperty_get(self.getter, owner)
+        key: tuple[type[object], str] = owner, self.name
+        try:
+            return cast(R_co, type(self)._cache[key])
+        except KeyError:
+            obj: R_co = self.getter.__func__(owner)  # type: ignore[attr-defined]
+            type(self)._cache[key] = obj
+            return obj
 
     @classmethod
     def clear_cache(cls) -> None:
-        _cached_classproperty_get.cache_clear()
+        cls._cache.clear()
 
 
 class LazySharedInstance(Generic[T]):
