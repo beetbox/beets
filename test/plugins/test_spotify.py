@@ -2,13 +2,16 @@
 
 import json
 import os
+import sqlite3
+from contextlib import closing
 from urllib.parse import parse_qs, urlparse
 
 import responses
 
+from beets import plugins
 from beets.library import Item
 from beets.test import _common
-from beets.test.helper import PluginTestCase
+from beets.test.helper import PluginTestCase, capture_log
 from beetsplug import spotify
 
 
@@ -26,6 +29,7 @@ def _params(url):
 
 class SpotifyPluginTest(PluginTestCase):
     plugin = "spotify"
+    db_on_disk = True
 
     @responses.activate
     def setUp(self):
@@ -398,7 +402,7 @@ class SpotifyPluginTest(PluginTestCase):
             item["spotify_track_id"] = f"id-{idx}"
             items.append(item)
 
-        self.spotify._fetch_info(items, write=False, force=True)
+        self.spotify._fetch_info(self.lib, items, write=False, force=True)
 
         get_calls = [
             call for call in responses.calls if call.request.method == "GET"
@@ -497,12 +501,165 @@ class SpotifyPluginTest(PluginTestCase):
             item["spotify_track_id"] = "shared-id"
             items.append(item)
 
-        self.spotify._fetch_info(items, write=False, force=True)
+        self.spotify._fetch_info(self.lib, items, write=False, force=True)
 
         assert seen_track_ids == [["shared-id"]]
         assert seen_audio_ids == [["shared-id"]]
         assert items[0]["spotify_track_popularity"] == 50
         assert items[1]["spotify_track_popularity"] == 50
+
+    @responses.activate
+    def test_fetch_info_commits_changes_after_all_items_store(self):
+        responses.add(
+            responses.GET,
+            spotify.SpotifyPlugin.track_url,
+            status=200,
+            json={
+                "tracks": [
+                    {"id": "id-1", "popularity": 10, "external_ids": {}},
+                    {"id": "id-2", "popularity": 20, "external_ids": {}},
+                ]
+            },
+            content_type="application/json",
+        )
+        responses.add(
+            responses.GET,
+            spotify.SpotifyPlugin.audio_features_url,
+            status=200,
+            json={
+                "audio_features": [
+                    {"id": "id-1", "tempo": 100.1},
+                    {"id": "id-2", "tempo": 110.2},
+                ]
+            },
+            content_type="application/json",
+        )
+
+        items = []
+        for idx in range(1, 3):
+            item = Item(title=f"Track {idx}", artist="Artist", length=10)
+            item.add(self.lib)
+            item["spotify_track_id"] = f"id-{idx}"
+            items.append(item)
+
+        db_path = self.config["library"].as_filename()
+        seen_during_events = []
+
+        def observe_database_change(lib, model):
+            with closing(sqlite3.connect(db_path)) as conn:
+                row = conn.execute(
+                    "SELECT value FROM item_attributes "
+                    "WHERE entity_id=? AND key='spotify_track_popularity'",
+                    (model.id,),
+                ).fetchone()
+            seen_during_events.append(None if row is None else row[0])
+
+        plugins.BeetsPlugin.listeners["database_change"].append(
+            observe_database_change
+        )
+        try:
+            self.spotify._fetch_info(self.lib, items, write=False, force=True)
+        finally:
+            plugins.BeetsPlugin.listeners["database_change"].remove(
+                observe_database_change
+            )
+
+        assert seen_during_events == [None, None]
+
+        with closing(sqlite3.connect(db_path)) as conn:
+            rows = conn.execute(
+                "SELECT value FROM item_attributes "
+                "WHERE key='spotify_track_popularity' ORDER BY entity_id"
+            ).fetchall()
+        assert rows == [("10",), ("20",)]
+
+    @responses.activate
+    def test_fetch_info_writes_before_store(self):
+        responses.add(
+            responses.GET,
+            spotify.SpotifyPlugin.track_url,
+            status=200,
+            json={
+                "tracks": [{"id": "id-1", "popularity": 10, "external_ids": {}}]
+            },
+            content_type="application/json",
+        )
+        responses.add(
+            responses.GET,
+            spotify.SpotifyPlugin.audio_features_url,
+            status=200,
+            json={"audio_features": [{"id": "id-1", "tempo": 100.1}]},
+            content_type="application/json",
+        )
+
+        item = self.add_item_fixture(title="Track 1", artist="Artist")
+        item["spotify_track_id"] = "id-1"
+
+        with capture_log("beets") as logs:
+            self.spotify._fetch_info(self.lib, [item], write=True, force=True)
+
+        write_event_index = next(
+            idx
+            for idx, message in enumerate(logs)
+            if message == "Sending event: write"
+        )
+        database_change_index = next(
+            idx
+            for idx, message in enumerate(logs)
+            if message == "Sending event: database_change"
+        )
+
+        assert write_event_index < database_change_index
+
+        fresh_item = self.lib.get_item(item.id)
+        assert fresh_item["spotify_track_popularity"] == 10
+        assert fresh_item["spotify_tempo"] == 100.1
+        assert fresh_item.mtime >= item.current_mtime()
+
+    @responses.activate
+    def test_fetch_info_logs_audio_features_unavailable_once(self):
+        responses.add(
+            responses.GET,
+            spotify.SpotifyPlugin.track_url,
+            status=200,
+            json={
+                "tracks": [
+                    {"id": f"id-{idx}", "popularity": idx, "external_ids": {}}
+                    for idx in range(1, 4)
+                ]
+            },
+            content_type="application/json",
+        )
+        responses.add(
+            responses.GET,
+            spotify.SpotifyPlugin.audio_features_url,
+            status=403,
+            json={"error": {"status": 403}},
+            content_type="application/json",
+        )
+
+        items = []
+        for idx in range(1, 4):
+            item = Item(title=f"Track {idx}", artist="Artist", length=10)
+            item.add(self.lib)
+            item["spotify_track_id"] = f"id-{idx}"
+            items.append(item)
+
+        with capture_log("beets") as logs:
+            self.spotify._fetch_info(self.lib, items, write=False, force=True)
+
+        assert (
+            sum(
+                "Audio features API is unavailable (403 error). "
+                "Skipping audio features for remaining tracks." in message
+                for message in logs
+            )
+            == 1
+        )
+        assert not any(
+            "Audio features API unavailable, skipping" in message
+            for message in logs
+        )
 
     @responses.activate
     def test_track_audio_features_batch_disables_on_403(self):

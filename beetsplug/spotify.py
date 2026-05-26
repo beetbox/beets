@@ -584,7 +584,7 @@ class SpotifyPlugin(
 
         def func(lib, opts, args):
             items = lib.items(args)
-            self._fetch_info(items, ui.should_write(), opts.force_refetch)
+            self._fetch_info(lib, items, ui.should_write(), opts.force_refetch)
 
         sync_cmd.func = func
         return [spotify_cmd, sync_cmd]
@@ -821,7 +821,7 @@ class SpotifyPlugin(
 
         return features_by_id
 
-    def _fetch_info(self, items, write, force):
+    def _fetch_info(self, lib, items, write, force):
         """Obtain track information from Spotify."""
 
         self._log.debug("Total {} tracks", len(items))
@@ -867,13 +867,14 @@ class SpotifyPlugin(
                     for feature, value in audio_features.items():
                         if feature in self.spotify_audio_features:
                             item[self.spotify_audio_features[feature]] = value
-            else:
-                self._log.debug("Audio features API unavailable, skipping")
 
             item["spotify_updated"] = time.time()
-            item.store()
             if write:
                 item.try_write()
+
+        with lib.transaction():
+            for item, _ in items_to_update:
+                item.store()
 
     def track_info(self, track_id: str):
         """Fetch a track's popularity and external IDs using its Spotify ID."""
