@@ -37,16 +37,7 @@ from importlib import import_module
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from re import Pattern
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    AnyStr,
-    ClassVar,
-    Generic,
-    NamedTuple,
-    TypeVar,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, AnyStr, Generic, NamedTuple, TypeVar
 
 from unidecode import unidecode
 
@@ -54,7 +45,7 @@ import beets
 from beets.util import hidden
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Iterator
+    from collections.abc import Callable, Hashable, Iterable, Iterator
     from logging import Logger
 
     from beets.library import Item
@@ -62,6 +53,7 @@ if TYPE_CHECKING:
 MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = "\\\\?\\"
 T = TypeVar("T")
+R_co = TypeVar("R_co", covariant=True)
 StrPath = str | Path
 PathLike = StrPath | bytes
 Replacements = Sequence[tuple[Pattern[str], str]]
@@ -1062,7 +1054,18 @@ def par_map(transform: Callable[[T], Any], items: Sequence[T]) -> None:
         pool.map(_worker, items)
 
 
-class cached_classproperty(Generic[T]):
+@cache
+def _cached_classproperty_get(
+    func: Callable[[Hashable], R_co] | classmethod[Hashable, [], R_co],
+    owner: Hashable,
+    /,
+) -> R_co:
+    if not isinstance(owner, type):
+        raise TypeError("cached_classproperty owner must be a type")
+    return func.__get__(None, owner)()
+
+
+class cached_classproperty(Generic[R_co]):
     """Descriptor implementing cached class properties.
 
     Provides class-level dynamic property behavior where the getter function is
@@ -1070,39 +1073,34 @@ class cached_classproperty(Generic[T]):
     instance properties, this operates on the class rather than instances.
     """
 
-    cache: ClassVar[dict[tuple[type[object], str], object]] = {}
-
-    name: str = ""
-
-    # Ideally, we would like to use `Callable[[type[T]], Any]` here,
-    # however, `mypy` is unable to see this as a **class** property, and thinks
-    # that this callable receives an **instance** of the object, failing the
-    # type check, for example:
-    # >>> class Album:
-    # >>>     @cached_classproperty
-    # >>>     def foo(cls):
-    # >>>         reveal_type(cls)  # mypy: revealed type is "Album"
-    # >>>         return cls.bar
-    #
-    #   Argument 1 to "cached_classproperty" has incompatible type
-    #   "Callable[[Album], ...]"; expected "Callable[[type[Album]], ...]"
-    #
-    # Therefore, we just use `Any` here, which is not ideal, but works.
-    def __init__(self, getter: Callable[..., T]) -> None:
+    def __init__(self, func: Callable[..., R_co], /) -> None:
         """Initialize the descriptor with the property getter function."""
-        self.getter: Callable[..., T] = getter
+        if isinstance(func, (classmethod, staticmethod)):
+            fget: (
+                Callable[[Hashable], R_co] | classmethod[Hashable, [], R_co]
+            ) = func
+        else:
+            fget = classmethod(func)
+        self.fget: (
+            Callable[[Hashable], R_co] | classmethod[Hashable, [], R_co]
+        ) = fget
+        self.name: str
 
-    def __set_name__(self, owner: object, name: str) -> None:
+    def __set_name__(self, _: Hashable, name: str, /) -> None:
         """Capture the attribute name this descriptor is assigned to."""
         self.name = name
 
-    def __get__(self, instance: object, owner: type[object]) -> T:
+    def __get__(
+        self, instance: object | None, owner: type | None = None, /
+    ) -> R_co:
         """Compute and cache if needed, and return the property value."""
-        key: tuple[type[object], str] = owner, self.name
-        if key not in self.cache:
-            self.cache[key] = self.getter(owner)
+        if owner is None and instance is not None:
+            owner = type(instance)
+        return _cached_classproperty_get(self.fget, owner)
 
-        return cast(T, self.cache[key])
+    @staticmethod
+    def clear_cache() -> None:
+        _cached_classproperty_get.cache_clear()
 
 
 class LazySharedInstance(Generic[T]):
