@@ -354,7 +354,8 @@ class Model(ABC, Generic[D]):
     """
 
     @cached_classproperty
-    def _relation(cls):
+    @classmethod
+    def _relation(cls) -> type[Model]:
         """The model that this model is closely related to."""
         return cls
 
@@ -1081,9 +1082,10 @@ class Migration(ABC):
     db: Database
 
     @cached_classproperty
+    @classmethod
     def name(cls) -> str:
         """Class name (except Migration) converted to snake case."""
-        name = cls.__name__.removesuffix("Migration")  # type: ignore[attr-defined]
+        name = cls.__name__.removesuffix("Migration")
         return re.sub(r"(?<=[a-z])(?=[A-Z])", "_", name).lower()
 
     @contextmanager
