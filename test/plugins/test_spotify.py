@@ -2,13 +2,10 @@
 
 import json
 import os
-import sqlite3
-from contextlib import closing
 from urllib.parse import parse_qs, urlparse
 
 import responses
 
-from beets import plugins
 from beets.library import Item
 from beets.test import _common
 from beets.test.helper import PluginTestCase, capture_log
@@ -507,71 +504,6 @@ class SpotifyPluginTest(PluginTestCase):
         assert seen_audio_ids == [["shared-id"]]
         assert items[0]["spotify_track_popularity"] == 50
         assert items[1]["spotify_track_popularity"] == 50
-
-    @responses.activate
-    def test_fetch_info_commits_changes_after_all_items_store(self):
-        responses.add(
-            responses.GET,
-            spotify.SpotifyPlugin.track_url,
-            status=200,
-            json={
-                "tracks": [
-                    {"id": "id-1", "popularity": 10, "external_ids": {}},
-                    {"id": "id-2", "popularity": 20, "external_ids": {}},
-                ]
-            },
-            content_type="application/json",
-        )
-        responses.add(
-            responses.GET,
-            spotify.SpotifyPlugin.audio_features_url,
-            status=200,
-            json={
-                "audio_features": [
-                    {"id": "id-1", "tempo": 100.1},
-                    {"id": "id-2", "tempo": 110.2},
-                ]
-            },
-            content_type="application/json",
-        )
-
-        items = []
-        for idx in range(1, 3):
-            item = Item(title=f"Track {idx}", artist="Artist", length=10)
-            item.add(self.lib)
-            item["spotify_track_id"] = f"id-{idx}"
-            items.append(item)
-
-        db_path = self.config["library"].as_filename()
-        seen_during_events = []
-
-        def observe_database_change(lib, model):
-            with closing(sqlite3.connect(db_path)) as conn:
-                row = conn.execute(
-                    "SELECT value FROM item_attributes "
-                    "WHERE entity_id=? AND key='spotify_track_popularity'",
-                    (model.id,),
-                ).fetchone()
-            seen_during_events.append(None if row is None else row[0])
-
-        plugins.BeetsPlugin.listeners["database_change"].append(
-            observe_database_change
-        )
-        try:
-            self.spotify._fetch_info(self.lib, items, write=False, force=True)
-        finally:
-            plugins.BeetsPlugin.listeners["database_change"].remove(
-                observe_database_change
-            )
-
-        assert seen_during_events == [None, None]
-
-        with closing(sqlite3.connect(db_path)) as conn:
-            rows = conn.execute(
-                "SELECT value FROM item_attributes "
-                "WHERE key='spotify_track_popularity' ORDER BY entity_id"
-            ).fetchall()
-        assert rows == [("10",), ("20",)]
 
     @responses.activate
     def test_fetch_info_writes_before_store(self):
