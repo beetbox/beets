@@ -868,7 +868,6 @@ class ArchiveImportTask(SentinelImportTask):
         return False
 
     @util.cached_classproperty
-    @classmethod
     def handlers(cls) -> list[ArchiveHandler]:
         """Returns a list of archive handlers.
 

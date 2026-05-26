@@ -99,7 +99,7 @@ def pytest_assertrepr_compare(op, left, right):
 
 @pytest.fixture(autouse=True)
 def clear_cached_classproperty():
-    cached_classproperty.clear_cache()
+    cached_classproperty.cache.clear()
 
 
 @pytest.fixture(scope="module")

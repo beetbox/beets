@@ -179,7 +179,6 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
     DEFAULT_DATA_SOURCE_MISMATCH_PENALTY = 0.5
 
     @cached_classproperty
-    @classmethod
     def data_source(cls) -> str:
         """The data source name for this plugin.
 

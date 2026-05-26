@@ -53,12 +53,10 @@ class LibModel(dbcore.Model["Library"]):
     length: float
 
     @cached_classproperty
-    @classmethod
     def _fields(cls) -> dict[str, types.Type]:
         return {f: TYPE_BY_FIELD[f] for f in sorted(cls._field_names)}
 
     @cached_classproperty
-    @classmethod
     def _types(cls) -> dict[str, types.Type]:
         """Return the types of the fields in this model."""
         return {
@@ -67,12 +65,10 @@ class LibModel(dbcore.Model["Library"]):
         }
 
     @cached_classproperty
-    @classmethod
     def _queries(cls) -> dict[str, FieldQueryType]:
         return plugins.named_queries(cls)  # type: ignore[arg-type]
 
     @cached_classproperty
-    @classmethod
     def writable_media_fields(cls) -> set[str]:
         return set(MediaFile.fields()) & cls._fields.keys()
 
@@ -307,7 +303,6 @@ class Album(LibModel):
     _search_fields = ("album", "albumartist", "genres")
 
     @cached_classproperty
-    @classmethod
     def _types(cls) -> dict[str, types.Type]:
         return {**super()._types, "path": TYPE_BY_FIELD["path"]}
 
@@ -322,12 +317,10 @@ class Album(LibModel):
     _format_config_key = "format_album"
 
     @cached_classproperty
-    @classmethod
     def _relation(cls) -> type[Item]:
         return Item
 
     @cached_classproperty
-    @classmethod
     def relation_join(cls) -> str:
         """Return FROM clause which joins on related album items.
 
@@ -708,7 +701,6 @@ class Item(LibModel):
     _sorts: ClassVar[dict[str, type[FieldSort]]] = {"artist": SmartArtistSort}
 
     @cached_classproperty
-    @classmethod
     def _queries(cls) -> dict[str, FieldQueryType]:
         return {**super()._queries, "singleton": dbcore.query.SingletonQuery}
 
@@ -718,12 +710,10 @@ class Item(LibModel):
     __album: Album | None = None
 
     @cached_classproperty
-    @classmethod
     def _relation(cls) -> type[Album]:
         return Album
 
     @cached_classproperty
-    @classmethod
     def relation_join(cls) -> str:
         """Return the FROM clause which includes related albums.
 
@@ -1245,7 +1235,6 @@ class DefaultTemplateFunctions:
     _prefix = "tmpl_"
 
     @cached_classproperty
-    @classmethod
     def _func_names(cls) -> list[str]:
         """Names of tmpl_* functions in this class."""
         return [s for s in dir(cls) if s.startswith(cls._prefix)]
