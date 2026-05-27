@@ -676,10 +676,8 @@ class TestParseRelease(MusicBrainzPluginTestMixin):
         self, monkeypatch, mb
     ):
         """Recordings fetched via browse_recordings may lack 'aliases' if the
-        API include was missing; album_info must not raise KeyError."""
-        initial_recordings = [
-            recording_factory(index=idx) for idx in range(2)
-        ]
+        API includes were missing; album_info must not raise KeyError."""
+        initial_recordings = [recording_factory(index=idx) for idx in range(2)]
         # Simulate browse_recordings returning recordings without 'aliases'
         browsed_recordings = [
             {k: v for k, v in r.items() if k != "aliases"}
@@ -691,7 +689,11 @@ class TestParseRelease(MusicBrainzPluginTestMixin):
         monkeypatch.setattr(
             mb.mb_api,
             "browse_recordings",
-            lambda offset=0, **__: [browsed_recordings[offset]],
+            lambda offset=0, **__: (
+                [browsed_recordings[offset]]
+                if offset < len(browsed_recordings)
+                else []
+            ),
         )
 
         release = release_factory(
