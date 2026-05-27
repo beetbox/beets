@@ -246,6 +246,7 @@ class DestinationTest(BeetsTestCase):
         assert self.i.destination() == np("base/0001-02-03")
 
     def test_destination_escapes_slashes(self):
+        self.lib.path_formats = [("default", "$artist/$album/$track $title")]
         self.i.album = "one/two"
         dest = self.i.destination()
         assert b"one" in dest
@@ -253,12 +254,14 @@ class DestinationTest(BeetsTestCase):
         assert b"one/two" not in dest
 
     def test_destination_escapes_leading_dot(self):
+        self.lib.path_formats = [("default", "$artist/$album/$track $title")]
         self.i.album = ".something"
         dest = self.i.destination()
         assert b"something" in dest
         assert b"/.something" not in dest
 
     def test_destination_preserves_legitimate_slashes(self):
+        self.lib.path_formats = [("default", "$artist/$album/$track $title")]
         self.i.artist = "one"
         self.i.album = "two"
         dest = self.i.destination()
@@ -1043,6 +1046,7 @@ class ArtDestinationTest(BeetsTestCase):
         config["art_filename"] = "artimage"
         config["replace"] = {"X": "Y"}
         self.lib.replacements = [(re.compile("X"), "Y")]
+        self.lib.path_formats = [("default", "$artist/$album/$track $title")]
         self.i = item(self.lib)
         self.i.path = self.i.destination()
         self.ai = self.lib.add_album((self.i,))
@@ -1271,8 +1275,9 @@ class WriteTest(BeetsTestCase):
         os.chmod(path, stat.S_IRUSR)
 
         try:
-            with pytest.raises(beets.library.WriteError):
+            with pytest.raises(beets.library.WriteError) as exc_info:
                 item.write()
+            assert "super:" not in str(exc_info.value)
 
         finally:
             # Restore write permissions so the file can be cleaned up.
@@ -1337,6 +1342,15 @@ class ItemReadTest(unittest.TestCase):
         item = beets.library.Item()
         with pytest.raises(beets.library.ReadError):
             item.read("/thisfiledoesnotexist")
+
+    def test_read_error_str_includes_reason(self):
+        unreadable = os.path.join(_common.RSRC, b"image-2x3.png")
+        item = beets.library.Item()
+        with pytest.raises(beets.library.ReadError) as exc_info:
+            item.read(unreadable)
+        message = str(exc_info.value)
+        assert "super:" not in message
+        assert str(exc_info.value.reason) in message
 
 
 class ItemReadGenreTest(BeetsTestCase):

@@ -8,9 +8,6 @@ from beets import dbcore, logging, plugins
 log = logging.getLogger("beets")
 
 
-# Special path format key.
-PF_KEY_DEFAULT = "default"
-
 # Query construction helpers.
 
 

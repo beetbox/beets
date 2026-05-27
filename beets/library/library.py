@@ -1,21 +1,27 @@
 from __future__ import annotations
 
+import re
 from contextlib import contextmanager
+from functools import cached_property
 from typing import TYPE_CHECKING
 
 import platformdirs
 
 import beets
-from beets import context, dbcore
+from beets import config, context, dbcore
 from beets.dbcore.sort import NullSort
+from beets.exceptions import UserError
 from beets.util import normpath
+from beets.util.pathformats import get_path_formats
 
 from . import migrations
 from .models import Album, Item
-from .queries import PF_KEY_DEFAULT, parse_query_parts, parse_query_string
+from .queries import parse_query_parts, parse_query_string
 
 if TYPE_CHECKING:
     from beets.dbcore import Results
+    from beets.util import Replacements
+    from beets.util.pathformats import PathFormat
 
 
 class Library(dbcore.Database):
@@ -31,24 +37,39 @@ class Library(dbcore.Database):
         (migrations.MultiArrangerFieldMigration, (Item,)),
         (migrations.RelativePathMigration, (Item, Album)),
     )
+    replacements: Replacements
+
+    @cached_property
+    def path_formats(self) -> list[PathFormat]:
+        return get_path_formats(config["paths"])
+
+    @staticmethod
+    def get_replacements() -> Replacements:
+        """Build regex/string replacement pairs from config."""
+        replacements = []
+        for pattern, repl in beets.config["replace"].get(dict).items():
+            repl = repl or ""
+            try:
+                replacements.append((re.compile(pattern), repl))
+            except re.error:
+                raise UserError(
+                    f"Malformed regular expression in replace: {pattern}"
+                )
+        return replacements
 
     def __init__(
         self,
         path="library.blb",
         directory: str | None = None,
-        path_formats=((PF_KEY_DEFAULT, "$artist/$album/$track $title"),),
-        replacements=None,
         set_music_dir: bool = True,
     ):
-        timeout = beets.config["timeout"].as_number()
         self.directory = normpath(directory or platformdirs.user_music_path())
         if set_music_dir:
             context.set_music_dir(self.directory)
 
-        super().__init__(path, timeout=timeout)
+        super().__init__(path, timeout=beets.config["timeout"].as_number())
 
-        self.path_formats = path_formats
-        self.replacements = replacements
+        self.replacements = self.get_replacements()
 
         # Used for template substitution performance.
         self._memotable: dict[tuple[str, ...], str] = {}
