@@ -59,6 +59,9 @@ Bug fixes
   during ``mbupdate`` without crashing, and log a clearer message that points
   users to ``musicbrainz.user`` and ``musicbrainz.pass`` configuration.
   :bug:`6651`
+- :doc:`plugins/fetchart`: Catch ``OSError`` in ``_set_art`` so that permission
+  errors (e.g. a file locked by another process) are logged as warnings instead
+  of crashing beets. :bug:`6193`
 
 ..
     For plugin developers
