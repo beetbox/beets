@@ -44,6 +44,7 @@ from beets.util import chunks
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    from beets.dbcore.db import Results
     from beets.library import Item, Library
     from beets.metadata_plugins import QueryType, SearchParams
     from beetsplug._typing import JSONDict
@@ -821,7 +822,13 @@ class SpotifyPlugin(
 
         return features_by_id
 
-    def _fetch_info(self, lib, items, write, force):
+    def _fetch_info(
+        self,
+        lib: Library,
+        items: Results[Item] | Sequence[Item],
+        write: bool,
+        force: bool,
+    ) -> None:
         """Obtain track information from Spotify."""
 
         self._log.debug("Total {} tracks", len(items))
