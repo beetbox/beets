@@ -672,6 +672,38 @@ class TestParseRelease(MusicBrainzPluginTestMixin):
         ]
         assert new_recordings == complete_recordings
 
+    def test_album_info_browse_recordings_without_aliases(
+        self, monkeypatch, mb
+    ):
+        """Recordings fetched via browse_recordings may lack 'aliases' if the
+        API include was missing; album_info must not raise KeyError."""
+        initial_recordings = [
+            recording_factory(index=idx) for idx in range(2)
+        ]
+        # Simulate browse_recordings returning recordings without 'aliases'
+        browsed_recordings = [
+            {k: v for k, v in r.items() if k != "aliases"}
+            for r in initial_recordings
+        ]
+
+        monkeypatch.setattr("beetsplug.musicbrainz.BROWSE_CHUNKSIZE", 1)
+        monkeypatch.setattr("beetsplug.musicbrainz.BROWSE_MAXTRACKS", 1)
+        monkeypatch.setattr(
+            mb.mb_api,
+            "browse_recordings",
+            lambda offset=0, **__: [browsed_recordings[offset]],
+        )
+
+        release = release_factory(
+            media__0__tracks=[
+                track_factory(recording=r) for r in initial_recordings
+            ]
+        )
+
+        # Should not raise KeyError: 'aliases'
+        album = mb.album_info(release)
+        assert len(album.tracks) == 2
+
 
 class TestPseudoRelease(MusicBrainzPluginTestMixin):
     ACTUAL_RELEASE = release_factory(index=1, country="US")
