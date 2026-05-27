@@ -20,6 +20,9 @@ New features
   lyrics) ID3 frame and plain text to ``USLT`` for ID3-tagged files, instead of
   storing raw LRC timestamps in ``USLT``. Players that only support ``USLT``
   continue to see readable plain lyrics. :bug:`6541`
+- :doc:`plugins/listenbrainz`: Add support for importing ListenBrainz listening
+  history from an export file. Use the ``-f`` / ``--export-file`` flag to
+  specify the path to the ListenBrainz export file.
 
 Bug fixes
 ~~~~~~~~~
