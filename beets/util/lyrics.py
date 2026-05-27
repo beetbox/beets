@@ -28,6 +28,7 @@ class Lyrics:
     ORIGINAL_PAT = re.compile(r"[^\n]+ / ")
     TRANSLATION_PAT = re.compile(r" / [^\n]+")
     LINE_PARTS_PAT = re.compile(r"^(\[\d\d:\d\d\.\d\d\]|) *(.*)$")
+    LRC_TIMESTAMP_PAT = re.compile(r"\[(\d{2}):(\d{2})\.(\d{2})\]")
 
     text: str
     backend: str | None = None
@@ -129,12 +130,10 @@ class Lyrics:
         for ts, text in self._split_lines:
             if not ts:
                 continue
-            ts_m = re.match(r"\[(\d{2}):(\d{2})\.(\d{2})\]", ts)
+            ts_m = self.LRC_TIMESTAMP_PAT.match(ts)
             if ts_m:
-                minutes = int(ts_m[1])
-                seconds = int(ts_m[2])
-                centiseconds = int(ts_m[3])
-                ms = (minutes * 60 + seconds) * 1000 + centiseconds * 10
+                m, s, cs = map(int, ts_m.groups())
+                ms = (m * 60 + s) * 1000 + cs * 10
                 result.append((text, ms))
         return result
 
