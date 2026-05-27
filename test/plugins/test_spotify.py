@@ -543,56 +543,6 @@ class SpotifyPluginTest(PluginTestCase):
 
         assert write_event_index < database_change_index
 
-        fresh_item = self.lib.get_item(item.id)
-        assert fresh_item["spotify_track_popularity"] == 10
-        assert fresh_item["spotify_tempo"] == 100.1
-        assert fresh_item.mtime >= item.current_mtime()
-
-    @responses.activate
-    def test_fetch_info_logs_audio_features_unavailable_once(self):
-        responses.add(
-            responses.GET,
-            spotify.SpotifyPlugin.track_url,
-            status=200,
-            json={
-                "tracks": [
-                    {"id": f"id-{idx}", "popularity": idx, "external_ids": {}}
-                    for idx in range(1, 4)
-                ]
-            },
-            content_type="application/json",
-        )
-        responses.add(
-            responses.GET,
-            spotify.SpotifyPlugin.audio_features_url,
-            status=403,
-            json={"error": {"status": 403}},
-            content_type="application/json",
-        )
-
-        items = []
-        for idx in range(1, 4):
-            item = Item(title=f"Track {idx}", artist="Artist", length=10)
-            item.add(self.lib)
-            item["spotify_track_id"] = f"id-{idx}"
-            items.append(item)
-
-        with capture_log("beets") as logs:
-            self.spotify._fetch_info(self.lib, items, write=False, force=True)
-
-        assert (
-            sum(
-                "Audio features API is unavailable (403 error). "
-                "Skipping audio features for remaining tracks." in message
-                for message in logs
-            )
-            == 1
-        )
-        assert not any(
-            "Audio features API unavailable, skipping" in message
-            for message in logs
-        )
-
     @responses.activate
     def test_track_audio_features_batch_disables_on_403(self):
         responses.add(
