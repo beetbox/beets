@@ -55,6 +55,8 @@ Bug fixes
   during ``mbupdate`` without crashing, and log a clearer message that points
   users to ``musicbrainz.user`` and ``musicbrainz.pass`` configuration.
   :bug:`6651`
+- :doc:`plugins/musicbrainz`: Fix ``KeyError: 'aliases'`` crash when looking up
+  releases with more than 500 tracks.
 
 ..
     For plugin developers
