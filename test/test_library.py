@@ -1251,7 +1251,7 @@ class TemplateTest(ItemInDBTestCase):
         assert f"{item:$tagada}" == "togodo"
 
 
-class UnicodePathTest(ItemInDBTestCase):
+class TestUnicodePath(PytestItemInDBHelper):
     def test_unicode_path(self):
         self.i.path = os.path.join(_common.RSRC, "unicode\u2019d.mp3".encode())
         # If there are any problems with unicode paths, we will raise
