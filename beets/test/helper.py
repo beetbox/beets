@@ -122,8 +122,8 @@ class ConfigMixin:
         return config
 
 
-NEEDS_REFLINK = unittest.skipUnless(
-    check_reflink_support(gettempdir()), "no reflink support for libdir"
+NEEDS_REFLINK = pytest.mark.skipif(
+    not check_reflink_support(gettempdir()), reason="need reflink"
 )
 
 
