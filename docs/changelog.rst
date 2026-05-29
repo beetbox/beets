@@ -64,6 +64,9 @@ Bug fixes
   :bug:`6651`
 - :doc:`plugins/musicbrainz`: Fix ``KeyError: 'aliases'`` crash when looking up
   releases with more than 500 tracks.
+- :doc:`plugins/fetchart`: Catch ``OSError`` in ``_set_art`` so that permission
+  errors (e.g. a file locked by another process) are logged as warnings instead
+  of crashing beets. :bug:`6193`
 
 ..
     For plugin developers
