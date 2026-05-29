@@ -592,9 +592,7 @@ class MusicBrainzPlugin(
             recording["artist_credit"] = (
                 track["artist_credit"] or recording["artist_credit"]
             )
-            if track["title"] and not _preferred_alias(
-                recording.get("aliases", [])
-            ):
+            if track["title"] and not _preferred_alias(recording["aliases"]):
                 recording["title"] = track["title"]
 
             ti = self.track_info(recording)

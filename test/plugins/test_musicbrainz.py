@@ -672,39 +672,34 @@ class TestParseRelease(MusicBrainzPluginTestMixin):
         ]
         assert new_recordings == complete_recordings
 
-    def test_album_info_browse_recordings_without_aliases(
-        self, monkeypatch, mb
+    def test_album_info_browse_recordings_prefers_alias_over_track_title(
+        self, config, monkeypatch, mb
     ):
-        """Recordings fetched via browse_recordings may lack 'aliases' if the
-        API includes were missing; album_info must not raise KeyError."""
-        initial_recordings = [recording_factory(index=idx) for idx in range(2)]
-        # Simulate browse_recordings returning recordings without 'aliases'
-        browsed_recordings = [
-            {k: v for k, v in r.items() if k != "aliases"}
-            for r in initial_recordings
-        ]
+        config["import"]["languages"] = ["en"]
+
+        recording = recording_factory(
+            title="Recording Title",
+            aliases=[alias_factory(type="Recording name", locale="en")],
+        )
+        browsed_recording = {**recording, "url_relations": [url_relation_factory()]}
 
         monkeypatch.setattr("beetsplug.musicbrainz.BROWSE_CHUNKSIZE", 1)
-        monkeypatch.setattr("beetsplug.musicbrainz.BROWSE_MAXTRACKS", 1)
+        monkeypatch.setattr("beetsplug.musicbrainz.BROWSE_MAXTRACKS", 0)
         monkeypatch.setattr(
             mb.mb_api,
             "browse_recordings",
-            lambda offset=0, **__: (
-                [browsed_recordings[offset]]
-                if offset < len(browsed_recordings)
-                else []
-            ),
+            lambda offset=0, **__: [browsed_recording] if offset == 0 else [],
         )
 
         release = release_factory(
             media__0__tracks=[
-                track_factory(recording=r) for r in initial_recordings
+                track_factory(recording=recording, title="Track Title")
             ]
         )
 
-        # Should not raise KeyError: 'aliases'
         album = mb.album_info(release)
-        assert len(album.tracks) == 2
+
+        assert album.tracks[0].title == "Alias en"
 
 
 class TestPseudoRelease(MusicBrainzPluginTestMixin):
