@@ -130,9 +130,9 @@ class ConvertCommand:
         return self.run_convert_path(self.item, *args)
 
 
-class ConvertCliTest(ConvertTestCase, ConvertCommand):
-    def setUp(self):
-        super().setUp()
+class TestConvertCli(ConvertPluginHelper, ConvertCommand):
+    @pytest.fixture(autouse=True)
+    def convert_cli_setup(self, setup):
         self.album = self.add_album_fixture(ext="ogg")
         self.item = self.album.items()[0]
 
@@ -204,10 +204,10 @@ class ConvertCliTest(ConvertTestCase, ConvertCommand):
         self.run_convert("--pretend")
         assert not self.converted_mp3.exists()
 
-    def test_empty_query(self):
-        with capture_log("beets.convert") as logs:
+    def test_empty_query(self, caplog):
+        with caplog.at_level("INFO", logger="beets.convert"):
             self.run_convert("An impossible query")
-        assert logs[0] == "convert: Empty query result."
+        assert caplog.messages[0] == "convert: Empty query result."
 
     def test_no_transcode_when_maxbr_set_high_and_different_formats(self):
         self.config["convert"]["max_bitrate"] = 5000
