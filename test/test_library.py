@@ -1221,7 +1221,7 @@ class TestImportTime(PytestTestHelper):
         assert self.singleton.added > 0
 
 
-class TemplateTest(ItemInDBTestCase):
+class TestTemplate(PytestItemInDBHelper):
     def test_year_formatted_in_template(self):
         self.i.year = 123
         self.i.store()
