@@ -30,8 +30,8 @@ from beets.test.helper import (
     AsIsImporterMixin,
     ImportHelper,
     IOMixin,
-    PluginMixin,
     PluginTestCase,
+    PluginTestHelper,
     capture_log,
 )
 from beetsplug import convert
@@ -359,16 +359,10 @@ class NeverConvertLossyFilesTest(ConvertTestCase, ConvertCommand):
         assert self.file_endswith(converted, "opus")
 
 
-class TestNoConvert(PluginMixin):
+class TestNoConvert(PluginTestHelper):
     """Test the effect of the `no_convert` option."""
 
     plugin = "convert"
-
-    @pytest.fixture(autouse=True)
-    def cleanup_plugins(self):
-        """Make sure hooks are cleared after each test."""
-        yield
-        self.unload_plugins()
 
     @pytest.mark.parametrize(
         "config_value, should_skip",
