@@ -681,7 +681,10 @@ class TestParseRelease(MusicBrainzPluginTestMixin):
             title="Recording Title",
             aliases=[alias_factory(type="Recording name", locale="en")],
         )
-        browsed_recording = {**recording, "url_relations": [url_relation_factory()]}
+        browsed_recording = {
+            **recording,
+            "url_relations": [url_relation_factory()],
+        }
 
         monkeypatch.setattr("beetsplug.musicbrainz.BROWSE_CHUNKSIZE", 1)
         monkeypatch.setattr("beetsplug.musicbrainz.BROWSE_MAXTRACKS", 0)
