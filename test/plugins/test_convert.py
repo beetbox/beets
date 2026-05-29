@@ -17,7 +17,6 @@ import fnmatch
 import os.path
 import re
 import sys
-import unittest
 from typing import TYPE_CHECKING
 
 import pytest
@@ -30,9 +29,7 @@ from beets.test.helper import (
     AsIsImporterMixin,
     ImportHelper,
     IOMixin,
-    PluginTestCase,
     PluginTestHelper,
-    capture_log,
 )
 from beetsplug import convert
 
@@ -67,14 +64,14 @@ class ConvertMixin:
         return path.read_bytes().endswith(tag.encode("utf-8"))
 
 
-class ConvertTestCase(IOMixin, ConvertMixin, PluginTestCase):
+class ConvertPluginHelper(IOMixin, ConvertMixin, PluginTestHelper):
     db_on_disk = True
     plugin = "convert"
 
 
-class ImportConvertTest(AsIsImporterMixin, ImportHelper, ConvertTestCase):
-    def setUp(self):
-        super().setUp()
+class TestImportConvert(AsIsImporterMixin, ImportHelper, ConvertPluginHelper):
+    @pytest.fixture(autouse=True)
+    def convert_import_setup(self, setup):
         self.config["convert"] = {
             "dest": os.path.join(self.temp_dir, b"convert"),
             "command": self.tagged_copy_cmd("convert"),
@@ -90,7 +87,7 @@ class ImportConvertTest(AsIsImporterMixin, ImportHelper, ConvertTestCase):
         assert self.file_endswith(item.filepath, "convert")
 
     # FIXME: fails on windows
-    @unittest.skipIf(sys.platform == "win32", "win32")
+    @pytest.mark.skipif(sys.platform == "win32", reason="win32")
     def test_import_original_on_convert_error(self):
         # `false` exits with non-zero code
         self.config["convert"]["command"] = "false"

@@ -527,8 +527,8 @@ class ImportHelper(TestHelper):
     def import_dir(self) -> bytes:
         return bytestring_path(self.import_path)
 
-    def setUp(self):
-        super().setUp()
+    def setup_beets(self):
+        super().setup_beets()
         self.import_media = []
         self.lib.path_formats = [
             ("default", os.path.join("$artist", "$album", "$title")),
@@ -607,8 +607,8 @@ class ImportHelper(TestHelper):
 
 
 class AsIsImporterMixin:
-    def setUp(self):
-        super().setUp()
+    def setup_beets(self):
+        super().setup_beets()
         self.prepare_album_for_import(1)
 
     def run_asis_importer(self, **kwargs):
