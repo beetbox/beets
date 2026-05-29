@@ -8,7 +8,7 @@ import responses
 
 from beets.library import Item
 from beets.test import _common
-from beets.test.helper import PluginTestCase, capture_log
+from beets.test.helper import PluginTestCase
 from beetsplug import spotify
 
 
@@ -527,18 +527,20 @@ class SpotifyPluginTest(PluginTestCase):
         item = self.add_item_fixture(title="Track 1", artist="Artist")
         item["spotify_track_id"] = "id-1"
 
-        with capture_log("beets") as logs:
+        with self.assertLogs("beets", level="DEBUG") as captured_logs:
             self.spotify._fetch_info(self.lib, [item], write=True, force=True)
+
+        logs = captured_logs.output
 
         write_event_index = next(
             idx
             for idx, message in enumerate(logs)
-            if message == "Sending event: write"
+            if message.endswith("Sending event: write")
         )
         database_change_index = next(
             idx
             for idx, message in enumerate(logs)
-            if message == "Sending event: database_change"
+            if message.endswith("Sending event: database_change")
         )
 
         assert write_event_index < database_change_index
