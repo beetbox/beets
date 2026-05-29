@@ -3,8 +3,13 @@ from typing import ClassVar
 import pytest
 
 from beets import metadata_plugins
-from beets.autotag.hooks import AlbumInfo, TrackInfo
-from beets.autotag.match import assign_items, tag_album, tag_item
+from beets.autotag import (
+    AlbumInfo,
+    TrackInfo,
+    assign_items,
+    tag_album,
+    tag_item,
+)
 from beets.library import Item
 
 

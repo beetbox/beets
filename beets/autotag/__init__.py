@@ -21,8 +21,18 @@ from importlib import import_module
 # Parts of external interface.
 from beets.util.deprecation import deprecate_for_maintainers, deprecate_imports
 
-from .hooks import AlbumInfo, AlbumMatch, TrackInfo, TrackMatch
-from .match import Proposal, Recommendation, tag_album, tag_item
+from .distance import Distance, distance, string_dist, track_distance
+from .hooks import (
+    AlbumInfo,
+    AlbumMatch,
+    AttrDict,
+    Info,
+    Match,
+    TrackInfo,
+    TrackMatch,
+    correct_list_fields,
+)
+from .match import Proposal, Recommendation, assign_items, tag_album, tag_item
 
 
 def __getattr__(name: str):
@@ -32,18 +42,25 @@ def __getattr__(name: str):
         )
         return import_module("beets.util").get_most_common_tags
 
-    return deprecate_imports(
-        __name__, {"Distance": "beets.autotag.distance"}, name
-    )
+    return deprecate_imports(__name__, {}, name)
 
 
 __all__ = [
     "AlbumInfo",
     "AlbumMatch",
+    "AttrDict",
+    "Distance",
+    "Info",
+    "Match",
     "Proposal",
     "Recommendation",
     "TrackInfo",
     "TrackMatch",
+    "assign_items",
+    "correct_list_fields",
+    "distance",
+    "string_dist",
     "tag_album",
     "tag_item",
+    "track_distance",
 ]

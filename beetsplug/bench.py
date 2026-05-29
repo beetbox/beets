@@ -18,7 +18,7 @@ import cProfile
 import timeit
 
 from beets import importer, plugins, ui
-from beets.autotag.match import tag_album
+from beets.autotag import tag_album
 from beets.plugins import BeetsPlugin
 from beets.util.functemplate import Template
 from beets.util.pathformats import PF_KEY_DEFAULT

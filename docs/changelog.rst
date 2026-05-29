@@ -68,9 +68,12 @@ Bug fixes
   errors (e.g. a file locked by another process) are logged as warnings instead
   of crashing beets. :bug:`6193`
 
-..
-    For plugin developers
-    ~~~~~~~~~~~~~~~~~~~~~
+For plugin developers
+~~~~~~~~~~~~~~~~~~~~~
+
+- Plugin authors can import all autotagger helpers directly from
+  ``beets.autotag``, including match classes, distance helpers, and
+  ``assign_items``, without relying on lower-level autotag modules.
 
 Other changes
 ~~~~~~~~~~~~~

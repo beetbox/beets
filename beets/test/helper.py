@@ -46,7 +46,7 @@ from mediafile import Image, MediaFile
 import beets
 import beets.plugins
 from beets import importer, logging, util
-from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.autotag import AlbumInfo, TrackInfo
 from beets.importer import ImportSession
 from beets.library import Item, Library
 from beets.test import _common

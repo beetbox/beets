@@ -28,8 +28,7 @@ from requests_mock import ANY as ANYREEQUEST
 from requests_mock.exceptions import NoMockAddress
 
 from beets import config, importer, logging, util
-from beets.autotag.distance import Distance
-from beets.autotag.hooks import AlbumInfo, AlbumMatch
+from beets.autotag import AlbumInfo, AlbumMatch, Distance
 from beets.library import Album
 from beets.test import _common
 from beets.test.helper import FetchImageHelper, PytestTestHelper

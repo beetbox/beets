@@ -36,7 +36,8 @@ QueryType = Literal["album", "track"]
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator, Sequence
 
-    from .autotag.hooks import AlbumInfo, Item, TrackInfo
+    from .autotag import AlbumInfo, TrackInfo
+    from .library.models import Item
 
 # Global logger.
 log = logging.getLogger("beets")

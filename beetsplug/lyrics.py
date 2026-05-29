@@ -34,7 +34,7 @@ from bs4 import BeautifulSoup
 from unidecode import unidecode
 
 from beets import plugins, ui
-from beets.autotag.distance import string_dist
+from beets.autotag import string_dist
 from beets.dbcore import types
 from beets.dbcore.query import FalseQuery
 from beets.library import Item, parse_query_string

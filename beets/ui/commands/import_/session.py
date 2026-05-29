@@ -4,8 +4,14 @@ from collections import Counter
 from itertools import chain
 
 from beets import config, importer, logging, plugins, ui
-from beets.autotag.hooks import AlbumMatch, TrackMatch
-from beets.autotag.match import Proposal, Recommendation, tag_album, tag_item
+from beets.autotag import (
+    AlbumMatch,
+    Proposal,
+    Recommendation,
+    TrackMatch,
+    tag_album,
+    tag_item,
+)
 from beets.util import PromptChoice, displayable_path
 from beets.util.color import colorize
 from beets.util.units import human_bytes, human_seconds_short

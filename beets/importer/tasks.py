@@ -28,8 +28,7 @@ from typing import TYPE_CHECKING, Any
 import mediafile
 
 from beets import config, library, plugins, util
-from beets.autotag.hooks import AlbumMatch
-from beets.autotag.match import tag_album, tag_item
+from beets.autotag import AlbumMatch, tag_album, tag_item
 from beets.dbcore.query import PathQuery
 from beets.util import extension
 from beets.util.extension import remux_mpeglayer3_wav
@@ -39,8 +38,7 @@ from .state import ImportState
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
-    from beets.autotag.hooks import TrackMatch
-    from beets.autotag.match import Recommendation
+    from beets.autotag import Recommendation, TrackMatch
 
     from .session import ImportSession
 

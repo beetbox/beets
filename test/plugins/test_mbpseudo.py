@@ -6,8 +6,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from beets.autotag.distance import Distance
-from beets.autotag.hooks import AlbumInfo, AlbumMatch, TrackInfo
+from beets.autotag import AlbumInfo, AlbumMatch, Distance, TrackInfo
 from beets.library import Item
 from beets.test.helper import PluginMixin
 from beetsplug.mbpseudo import (
