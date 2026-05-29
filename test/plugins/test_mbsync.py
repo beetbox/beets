@@ -14,23 +14,9 @@
 
 from unittest.mock import Mock, patch
 
-import pytest
-
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.library import Item
-from beets.test.helper import PluginMixin, TestHelper
-
-
-class PytestPluginTestHelper(PluginMixin, TestHelper):
-    """Same as the BeetsTestCase unittest setup but for pytest."""
-
-    @pytest.fixture(autouse=True)
-    def setup(self):
-        self.setup_beets()
-        try:
-            yield
-        finally:
-            self.teardown_beets()
+from beets.test.helper import PytestPluginTestHelper
 
 
 class TestMbsyncCli(PytestPluginTestHelper):
