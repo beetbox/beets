@@ -22,22 +22,10 @@ from typing import TYPE_CHECKING, ClassVar
 import pytest
 
 from beets import plugins
-from beets.test.helper import PluginMixin, TestHelper
+from beets.test.helper import PytestPluginTestHelper
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-
-
-class PytestPluginTestHelper(PluginMixin, TestHelper):
-    """Same as the BeetsTestCase unittest setup but for pytest."""
-
-    @pytest.fixture(autouse=True)
-    def setup(self):
-        self.setup_beets()
-        try:
-            yield
-        finally:
-            self.teardown_beets()
 
 
 class HookTestCase(PytestPluginTestHelper):

@@ -16,6 +16,10 @@ New features
   also available as config options via ``force`` and ``keep_new``.
 - :ref:`import-cmd`: The ``--nomove`` / ``-M`` CLI flag can now be used to
   override the ``move: yes`` config option during import.
+- :doc:`plugins/lyrics`: Write synced (LRC) lyrics to the ``SYLT`` (synchronized
+  lyrics) ID3 frame and plain text to ``USLT`` for ID3-tagged files, instead of
+  storing raw LRC timestamps in ``USLT``. Players that only support ``USLT``
+  continue to see readable plain lyrics. :bug:`6541`
 - :doc:`plugins/listenbrainz`: Add support for importing ListenBrainz listening
   history from an export file. Use the ``-f`` / ``--export-file`` flag to
   specify the path to the ListenBrainz export file.
