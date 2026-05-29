@@ -23,7 +23,6 @@ import shutil
 import stat
 import unicodedata
 import unittest
-from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
@@ -35,7 +34,7 @@ from beets import config, plugins, util
 from beets.library import Album
 from beets.test import _common
 from beets.test._common import item
-from beets.test.helper import BeetsTestCase, ItemInDBTestCase, PytestTestHelper
+from beets.test.helper import PytestTestHelper
 from beets.util import (
     as_string,
     bytestring_path,
@@ -43,9 +42,6 @@ from beets.util import (
     path_as_posix,
     syspath,
 )
-
-if TYPE_CHECKING:
-    from beets.library.models import Item
 
 # Shortcut to path normalization.
 np = util.normpath
@@ -915,8 +911,8 @@ class TestPluginDestination(PytestTestHelper):
         self.lib.path_formats = [("default", "$artist $foo")]
         self.i = item(self.lib)
 
-    def tearDown(self):
-        super().tearDown()
+        yield
+
         plugins.item_field_getters = self.old_field_getters
 
     def _assert_dest(self, dest):
