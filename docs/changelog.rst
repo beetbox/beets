@@ -23,6 +23,9 @@ New features
 - :doc:`plugins/listenbrainz`: Add support for importing ListenBrainz listening
   history from an export file. Use the ``-f`` / ``--export-file`` flag to
   specify the path to the ListenBrainz export file.
+- :doc:`plugins/musicbrainz`: Introduce
+  :conf:`plugins.musicbrainz:aliases_as_credits` to make
+  aliases-as-artist-credit optional.
 
 Bug fixes
 ~~~~~~~~~
@@ -59,6 +62,8 @@ Bug fixes
   during ``mbupdate`` without crashing, and log a clearer message that points
   users to ``musicbrainz.user`` and ``musicbrainz.pass`` configuration.
   :bug:`6651`
+- :doc:`plugins/musicbrainz`: Fix ``KeyError: 'aliases'`` crash when looking up
+  releases with more than 500 tracks.
 - :doc:`plugins/fetchart`: Catch ``OSError`` in ``_set_art`` so that permission
   errors (e.g. a file locked by another process) are logged as warnings instead
   of crashing beets. :bug:`6193`

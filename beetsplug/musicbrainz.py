@@ -71,6 +71,7 @@ FIELDS_TO_MB_KEYS = {
 
 BROWSE_INCLUDES = [
     "artist-credits",
+    "aliases",
     "work-rels",
     "artist-rels",
     "recording-rels",
@@ -276,6 +277,10 @@ class MusicBrainzPlugin(
     def ignore_video_tracks(self) -> bool:
         return config["match"]["ignore_video_tracks"].get(bool)
 
+    @cached_property
+    def aliases_as_credits(self) -> bool:
+        return self.config["aliases_as_credits"].get(bool)
+
     def __init__(self) -> None:
         """Set up the python-musicbrainz-ngs module according to settings
         from the beets configuration. This should be called at startup.
@@ -293,6 +298,7 @@ class MusicBrainzPlugin(
                     "tidal": False,
                 },
                 "extra_tags": [],
+                "aliases_as_credits": False,
             }
         )
         # TODO: Remove in 3.0.0
@@ -306,8 +312,9 @@ class MusicBrainzPlugin(
                 "'musicbrainz.search_limit'",
             )
 
-    @staticmethod
-    def _parse_artist_credits(artist_credits: list[ArtistCredit]) -> ArtistInfo:
+    def _parse_artist_credits(
+        self, artist_credits: list[ArtistCredit]
+    ) -> ArtistInfo:
         """Normalize MusicBrainz artist-credit data into tag-friendly fields.
 
         MusicBrainz represents credits as a sequence of credited artists, each
@@ -335,7 +342,9 @@ class MusicBrainzPlugin(
             artists_ids.append(el["artist"]["id"])
             alias = _preferred_alias(el["artist"].get("aliases", []))
             artist_object = alias or el["artist"]
-            credit_artist_object = alias or el
+            credit_artist_object = (
+                alias if (alias and self.aliases_as_credits) else el
+            )
 
             joinphrase = el["joinphrase"]
             for name, parts, multi in (

@@ -90,7 +90,7 @@ class TestUtils:
     def test_single_artist(self):
         credit = [artist_credit_factory(artist__name="Artist")]
 
-        assert MusicBrainzPlugin._parse_artist_credits(credit) == {
+        assert MusicBrainzPlugin()._parse_artist_credits(credit) == {
             "artist": "Artist",
             "artist_id": "00000000-0000-0000-0000-000000000001",
             "artist_sort": "Artist, The",
@@ -107,7 +107,7 @@ class TestUtils:
             artist_credit_factory(artist__name="Other Artist", artist__index=2),
         ]
 
-        assert MusicBrainzPlugin._parse_artist_credits(credit) == {
+        assert MusicBrainzPlugin()._parse_artist_credits(credit) == {
             "artist": "Artist AND Other Artist",
             "artist_id": "00000000-0000-0000-0000-000000000001",
             "artist_sort": "Artist, The AND Other Artist, The",
@@ -605,6 +605,9 @@ class TestParseRelease(MusicBrainzPluginTestMixin):
     def test_genres(self, mb, expected_genres):
         assert mb.album_info(release_factory()).genres == expected_genres
 
+    @pytest.mark.parametrize(
+        "plugin_config", [_p({"aliases_as_credits": True})]
+    )
     def test_parse_aliased_titles(self, config, mb: MusicBrainzPlugin):
         release = release_factory()
 
@@ -640,6 +643,53 @@ class TestParseRelease(MusicBrainzPluginTestMixin):
         assert first_track.artist_sort == track_artist_sort
         assert first_track.artists_sort == [track_artist_sort]
 
+    @pytest.mark.parametrize(
+        "plugin_config, expected_artist_credit",
+        [
+            _p(
+                {"aliases_as_credits": False},
+                {
+                    "track_artist_credit": "Recording Artist Credit",
+                    "track_artists_credit": ["Recording Artist Credit"],
+                    "artist_credit": "Artist Credit",
+                    "artists_credit": ["Artist Credit"],
+                },
+                id="no aliases",
+            ),
+            _p(
+                {"aliases_as_credits": True},
+                {
+                    "artist_credit": "Artist Alias en",
+                    "artists_credit": ["Artist Alias en"],
+                    "track_artist_credit": "Recording Artist Alias en",
+                    "track_artists_credit": ["Recording Artist Alias en"],
+                },
+                id="aliases",
+            ),
+        ],
+    )
+    def test_aliases_as_credits(
+        self, config, mb: MusicBrainzPlugin, expected_artist_credit
+    ):
+        config["import"]["languages"] = ["en"]
+        release = release_factory()
+
+        d = mb.album_info(release)
+
+        assert d.artist_credit == expected_artist_credit["artist_credit"]
+        assert d.artists_credit == expected_artist_credit["artists_credit"]
+
+        first_track = d.tracks[0]
+
+        assert (
+            first_track.artist_credit
+            == expected_artist_credit["track_artist_credit"]
+        )
+        assert (
+            first_track.artists_credit
+            == expected_artist_credit["track_artists_credit"]
+        )
+
     def test_ensure_complete_recordings(self, monkeypatch, mb):
         titles = ["Recording", "Other Recording"]
         initial_recordings = [
@@ -671,6 +721,38 @@ class TestParseRelease(MusicBrainzPluginTestMixin):
             t["recording"] for m in release["media"] for t in m["tracks"]
         ]
         assert new_recordings == complete_recordings
+
+    def test_album_info_browse_recordings_prefers_alias_over_track_title(
+        self, config, monkeypatch, mb
+    ):
+        config["import"]["languages"] = ["en"]
+
+        recording = recording_factory(
+            title="Recording Title",
+            aliases=[alias_factory(type="Recording name", locale="en")],
+        )
+        browsed_recording = {
+            **recording,
+            "url_relations": [url_relation_factory()],
+        }
+
+        monkeypatch.setattr("beetsplug.musicbrainz.BROWSE_CHUNKSIZE", 1)
+        monkeypatch.setattr("beetsplug.musicbrainz.BROWSE_MAXTRACKS", 0)
+        monkeypatch.setattr(
+            mb.mb_api,
+            "browse_recordings",
+            lambda offset=0, **__: [browsed_recording] if offset == 0 else [],
+        )
+
+        release = release_factory(
+            media__0__tracks=[
+                track_factory(recording=recording, title="Track Title")
+            ]
+        )
+
+        album = mb.album_info(release)
+
+        assert album.tracks[0].title == "Alias en"
 
 
 class TestPseudoRelease(MusicBrainzPluginTestMixin):
