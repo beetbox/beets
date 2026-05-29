@@ -47,51 +47,49 @@ from beets.util import (
 np = util.normpath
 
 
-class PytestItemInDBHelper(PytestTestHelper):
-    @pytest.fixture(autouse=True)
-    def item(self, setup):
-        self.i = _common.item(self.lib)
-
-
 class PytestItemHelper(PytestTestHelper):
-    @pytest.fixture(autouse=True)
+    @pytest.fixture
     def item(self):
-        self.i = _common.item()
+        return _common.item()
+
+    @pytest.fixture
+    def item_in_db(self):
+        return _common.item(self.lib)
 
 
-class TestLoad(PytestItemInDBHelper):
-    def test_load_restores_data_from_db(self):
-        original_title = self.i.title
-        self.i.title = "something"
-        self.i.load()
-        assert original_title == self.i.title
+class TestLoad(PytestItemHelper):
+    def test_load_restores_data_from_db(self, item_in_db):
+        original_title = item_in_db.title
+        item_in_db.title = "something"
+        item_in_db.load()
+        assert original_title == item_in_db.title
 
-    def test_load_clears_dirty_flags(self):
-        self.i.artist = "something"
-        assert "artist" in self.i._dirty
-        self.i.load()
-        assert "artist" not in self.i._dirty
+    def test_load_clears_dirty_flags(self, item_in_db):
+        item_in_db.artist = "something"
+        assert "artist" in item_in_db._dirty
+        item_in_db.load()
+        assert "artist" not in item_in_db._dirty
 
 
-class TestStore(PytestItemInDBHelper):
-    def test_store_changes_database_value(self):
+class TestStore(PytestItemHelper):
+    def test_store_changes_database_value(self, item_in_db):
         new_year = 1987
-        self.i.year = new_year
-        self.i.store()
+        item_in_db.year = new_year
+        item_in_db.store()
 
-        assert self.lib.get_item(self.i.id).year == new_year
+        assert self.lib.get_item(item_in_db.id).year == new_year
 
-    def test_store_only_writes_dirty_fields(self):
+    def test_store_only_writes_dirty_fields(self, item_in_db):
         new_year = 1987
-        self.i._values_fixed["year"] = new_year  # change w/o dirtying
-        self.i.store()
+        item_in_db._values_fixed["year"] = new_year  # change w/o dirtying
+        item_in_db.store()
 
-        assert self.lib.get_item(self.i.id).year != new_year
+        assert self.lib.get_item(item_in_db.id).year != new_year
 
-    def test_store_clears_dirty_flags(self):
-        self.i.composers = ["tvp"]
-        self.i.store()
-        assert "composers" not in self.i._dirty
+    def test_store_clears_dirty_flags(self, item_in_db):
+        item_in_db.composers = ["tvp"]
+        item_in_db.store()
+        assert "composers" not in item_in_db._dirty
 
     def test_store_album_cascades_flex_deletes(self):
         album = Album(flex1="Flex-1")
@@ -107,17 +105,17 @@ class TestStore(PytestItemInDBHelper):
 
 
 class TestAdd(PytestItemHelper):
-    def test_item_add_inserts_row(self):
-        self.lib.add(self.i)
+    def test_item_add_inserts_row(self, item):
+        self.lib.add(item)
         new_grouping = (
             self.lib._connection()
             .execute(
                 "select grouping from items where composers = ?",
-                (self.i._type("composers").to_sql(self.i.composers),),
+                (item._type("composers").to_sql(item.composers),),
             )
             .fetchone()["grouping"]
         )
-        assert new_grouping == self.i.grouping
+        assert new_grouping == item.grouping
 
     def test_library_add_path_inserts_row(self):
         i = beets.library.Item.from_path(
@@ -135,463 +133,461 @@ class TestAdd(PytestItemHelper):
         assert new_grouping == i.grouping
 
     def test_library_add_one_database_change_event(
-        self, caplog: pytest.LogCaptureFixture
+        self, item, caplog: pytest.LogCaptureFixture
     ):
         """Test library.add emits only one database_change event."""
-        self.i.path = beets.util.normpath(
+
+        item.path = beets.util.normpath(
             os.path.join(self.temp_dir, b"a", b"b.mp3")
         )
-        self.i.album = "a"
-        self.i.title = "b"
+        item.album = "a"
+        item.title = "b"
 
         with caplog.at_level("DEBUG", logger="beets"):
-            self.lib.add(self.i)
+            self.lib.add(item)
 
         assert caplog.text.count("Sending event: database_change") == 1
 
 
-class TestRemove(PytestItemInDBHelper):
-    def test_remove_deletes_from_db(self):
-        self.i.remove()
+class TestRemove(PytestItemHelper):
+    def test_remove_deletes_from_db(self, item_in_db):
+        item_in_db.remove()
         c = self.lib._connection().execute("select * from items")
         assert c.fetchone() is None
 
 
 class TestGetSet(PytestItemHelper):
-    def test_set_changes_value(self):
-        self.i.bpm = 4915
-        assert self.i.bpm == 4915
+    def test_set_changes_value(self, item):
+        item.bpm = 4915
+        assert item.bpm == 4915
 
-    def test_set_sets_dirty_flag(self):
-        self.i.comp = not self.i.comp
-        assert "comp" in self.i._dirty
+    def test_set_sets_dirty_flag(self, item):
+        item.comp = not item.comp
+        assert "comp" in item._dirty
 
-    def test_set_does_not_dirty_if_value_unchanged(self):
-        self.i.title = self.i.title
-        assert "title" not in self.i._dirty
+    def test_set_does_not_dirty_if_value_unchanged(self, item):
+        item.title = item.title
+        assert "title" not in item._dirty
 
-    def test_invalid_field_raises_attributeerror(self):
+    def test_invalid_field_raises_attributeerror(self, item):
         with pytest.raises(AttributeError):
-            self.i.xyzzy
+            item.xyzzy
 
-    def test_album_fallback(self):
+    def test_album_fallback(self, item_in_db):
         # integration test of item-album fallback
-        i = _common.item(self.lib)
-        album = self.lib.add_album([i])
+        album = self.lib.add_album([item_in_db])
         album["flex"] = "foo"
         album.store()
 
-        assert "flex" in i
-        assert "flex" not in i.keys(with_album=False)
-        assert i["flex"] == "foo"
-        assert i.get("flex") == "foo"
-        assert i.get("flex", with_album=False) is None
-        assert i.get("flexx") is None
+        assert "flex" in item_in_db
+        assert "flex" not in item_in_db.keys(with_album=False)
+        assert item_in_db["flex"] == "foo"
+        assert item_in_db.get("flex") == "foo"
+        assert item_in_db.get("flex", with_album=False) is None
+        assert item_in_db.get("flexx") is None
 
 
-class TestDestination(PytestItemInDBHelper):
+class TestDestination(PytestItemHelper):
     """Confirm tests handle temporary directory path containing '.'"""
 
     def create_temp_dir(self, **kwargs):
         kwargs["prefix"] = "."
         return super().create_temp_dir(**kwargs)
 
-    def test_directory_works_with_trailing_slash(self):
+    def test_directory_works_with_trailing_slash(self, item_in_db):
         self.lib.directory = b"one/"
         self.lib.path_formats = [("default", "two")]
-        assert self.i.destination() == np("one/two")
+        assert item_in_db.destination() == np("one/two")
 
-    def test_directory_works_without_trailing_slash(self):
+    def test_directory_works_without_trailing_slash(self, item_in_db):
         self.lib.directory = b"one"
         self.lib.path_formats = [("default", "two")]
-        assert self.i.destination() == np("one/two")
+        assert item_in_db.destination() == np("one/two")
 
-    def test_destination_substitutes_metadata_values(self):
+    def test_destination_substitutes_metadata_values(self, item_in_db):
         self.lib.directory = b"base"
         self.lib.path_formats = [("default", "$album/$artist $title")]
-        self.i.title = "three"
-        self.i.artist = "two"
-        self.i.album = "one"
-        assert self.i.destination() == np("base/one/two three")
+        item_in_db.title = "three"
+        item_in_db.artist = "two"
+        item_in_db.album = "one"
+        assert item_in_db.destination() == np("base/one/two three")
 
-    def test_destination_preserves_extension(self):
+    def test_destination_preserves_extension(self, item_in_db):
         self.lib.directory = b"base"
         self.lib.path_formats = [("default", "$title")]
-        self.i.path = "hey.audioformat"
-        assert self.i.destination() == np("base/the title.audioformat")
+        item_in_db.path = "hey.audioformat"
+        assert item_in_db.destination() == np("base/the title.audioformat")
 
-    def test_lower_case_extension(self):
+    def test_lower_case_extension(self, item_in_db):
         self.lib.directory = b"base"
         self.lib.path_formats = [("default", "$title")]
-        self.i.path = "hey.MP3"
-        assert self.i.destination() == np("base/the title.mp3")
+        item_in_db.path = "hey.MP3"
+        assert item_in_db.destination() == np("base/the title.mp3")
 
-    def test_destination_pads_some_indices(self):
+    def test_destination_pads_some_indices(self, item_in_db):
         self.lib.directory = b"base"
         self.lib.path_formats = [
             ("default", "$track $tracktotal $disc $disctotal $bpm")
         ]
-        self.i.track = 1
-        self.i.tracktotal = 2
-        self.i.disc = 3
-        self.i.disctotal = 4
-        self.i.bpm = 5
-        assert self.i.destination() == np("base/01 02 03 04 5")
+        item_in_db.track = 1
+        item_in_db.tracktotal = 2
+        item_in_db.disc = 3
+        item_in_db.disctotal = 4
+        item_in_db.bpm = 5
+        assert item_in_db.destination() == np("base/01 02 03 04 5")
 
-    def test_destination_pads_date_values(self):
+    def test_destination_pads_date_values(self, item_in_db):
         self.lib.directory = b"base"
         self.lib.path_formats = [("default", "$year-$month-$day")]
-        self.i.year = 1
-        self.i.month = 2
-        self.i.day = 3
-        assert self.i.destination() == np("base/0001-02-03")
+        item_in_db.year = 1
+        item_in_db.month = 2
+        item_in_db.day = 3
+        assert item_in_db.destination() == np("base/0001-02-03")
 
-    def test_destination_escapes_slashes(self):
+    def test_destination_escapes_slashes(self, item_in_db):
         self.lib.path_formats = [("default", "$artist/$album/$track $title")]
-        self.i.album = "one/two"
-        dest = self.i.destination()
+        item_in_db.album = "one/two"
+        dest = item_in_db.destination()
         assert b"one" in dest
         assert b"two" in dest
         assert b"one/two" not in dest
 
-    def test_destination_escapes_leading_dot(self):
+    def test_destination_escapes_leading_dot(self, item_in_db):
         self.lib.path_formats = [("default", "$artist/$album/$track $title")]
-        self.i.album = ".something"
-        dest = self.i.destination()
+        item_in_db.album = ".something"
+        dest = item_in_db.destination()
         assert b"something" in dest
         assert b"/.something" not in dest
 
-    def test_destination_preserves_legitimate_slashes(self):
+    def test_destination_preserves_legitimate_slashes(self, item_in_db):
         self.lib.path_formats = [("default", "$artist/$album/$track $title")]
-        self.i.artist = "one"
-        self.i.album = "two"
-        dest = self.i.destination()
+        item_in_db.artist = "one"
+        item_in_db.album = "two"
+        dest = item_in_db.destination()
         assert os.path.join(b"one", b"two") in dest
 
-    def test_destination_long_names_truncated(self):
-        self.i.title = "X" * 300
-        self.i.artist = "Y" * 300
-        for c in self.i.destination().split(util.PATH_SEP):
+    def test_destination_long_names_truncated(self, item_in_db):
+        item_in_db.title = "X" * 300
+        item_in_db.artist = "Y" * 300
+        for c in item_in_db.destination().split(util.PATH_SEP):
             assert len(c) <= 255
 
-    def test_destination_long_names_keep_extension(self):
-        self.i.title = "X" * 300
-        self.i.path = b"something.extn"
-        dest = self.i.destination()
+    def test_destination_long_names_keep_extension(self, item_in_db):
+        item_in_db.title = "X" * 300
+        item_in_db.path = b"something.extn"
+        dest = item_in_db.destination()
         assert dest[-5:] == b".extn"
 
-    def test_distination_windows_removes_both_separators(self):
-        self.i.title = "one \\ two / three.mp3"
+    def test_distination_windows_removes_both_separators(self, item_in_db):
+        item_in_db.title = "one \\ two / three.mp3"
         with _common.platform_windows():
-            p = self.i.destination()
+            p = item_in_db.destination()
         assert b"one \\ two" not in p
         assert b"one / two" not in p
         assert b"two \\ three" not in p
         assert b"two / three" not in p
 
-    def test_path_with_format(self):
+    def test_path_with_format(self, item_in_db):
         self.lib.path_formats = [("default", "$artist/$album ($format)")]
-        p = self.i.destination()
+        p = item_in_db.destination()
         assert b"(FLAC)" in p
 
     def test_heterogeneous_album_gets_single_directory(self):
-        i1, i2 = item(), item()
+        i1, i2 = _common.item(self.lib), _common.item(self.lib)
         self.lib.add_album([i1, i2])
         i1.year, i2.year = 2009, 2010
         self.lib.path_formats = [("default", "$album ($year)/$track $title")]
         dest1, dest2 = i1.destination(), i2.destination()
         assert os.path.dirname(dest1) == os.path.dirname(dest2)
 
-    def test_default_path_for_non_compilations(self):
-        self.i.comp = False
-        self.lib.add_album([self.i])
+    def test_default_path_for_non_compilations(self, item_in_db):
+        item_in_db.comp = False
+        self.lib.add_album([item_in_db])
         self.lib.directory = b"one"
         self.lib.path_formats = [("default", "two"), ("comp:true", "three")]
-        assert self.i.destination() == np("one/two")
+        assert item_in_db.destination() == np("one/two")
 
-    def test_singleton_path(self):
-        i = item(self.lib)
+    def test_singleton_path(self, item_in_db):
         self.lib.directory = b"one"
         self.lib.path_formats = [
             ("default", "two"),
             ("singleton:true", "four"),
             ("comp:true", "three"),
         ]
-        assert i.destination() == np("one/four")
+        assert item_in_db.destination() == np("one/four")
 
-    def test_comp_before_singleton_path(self):
-        i = item(self.lib)
-        i.comp = True
+    def test_comp_before_singleton_path(self, item_in_db):
+        item_in_db.comp = True
         self.lib.directory = b"one"
         self.lib.path_formats = [
             ("default", "two"),
             ("comp:true", "three"),
             ("singleton:true", "four"),
         ]
-        assert i.destination() == np("one/three")
+        assert item_in_db.destination() == np("one/three")
 
-    def test_comp_path(self):
-        self.i.comp = True
-        self.lib.add_album([self.i])
+    def test_comp_path(self, item_in_db):
+        item_in_db.comp = True
+        self.lib.add_album([item_in_db])
         self.lib.directory = b"one"
         self.lib.path_formats = [("default", "two"), ("comp:true", "three")]
-        assert self.i.destination() == np("one/three")
+        assert item_in_db.destination() == np("one/three")
 
-    def test_multi_value_string_query_path(self):
-        self.i.genres = ["Classical"]
+    def test_multi_value_string_query_path(self, item_in_db):
+        item_in_db.genres = ["Classical"]
         self.lib.directory = b"one"
         self.lib.path_formats = [
             ("default", "two"),
             ("genres:=~Classical", "three"),
         ]
-        assert self.i.destination() == np("one/three")
+        assert item_in_db.destination() == np("one/three")
 
-    def test_multi_value_match_query_path(self):
-        self.i.genres = ["Classical"]
+    def test_multi_value_match_query_path(self, item_in_db):
+        item_in_db.genres = ["Classical"]
         self.lib.directory = b"one"
         self.lib.path_formats = [
             ("default", "two"),
             ("genres:=Classical", "three"),
         ]
-        assert self.i.destination() == np("one/three")
+        assert item_in_db.destination() == np("one/three")
 
-    def test_multi_value_string_query_path_no_substring_match(self):
-        self.i.genres = ["Neoclassical"]
+    def test_multi_value_string_query_path_no_substring_match(self, item_in_db):
+        item_in_db.genres = ["Neoclassical"]
         self.lib.directory = b"one"
         self.lib.path_formats = [
             ("default", "two"),
             ("genres:=~Classical", "three"),
         ]
-        assert self.i.destination() == np("one/two")
+        assert item_in_db.destination() == np("one/two")
 
-    def test_albumtype_query_path(self):
-        self.i.comp = True
-        self.lib.add_album([self.i])
-        self.i.albumtype = "sometype"
+    def test_albumtype_query_path(self, item_in_db):
+        item_in_db.comp = True
+        self.lib.add_album([item_in_db])
+        item_in_db.albumtype = "sometype"
         self.lib.directory = b"one"
         self.lib.path_formats = [
             ("default", "two"),
             ("albumtype:sometype", "four"),
             ("comp:true", "three"),
         ]
-        assert self.i.destination() == np("one/four")
+        assert item_in_db.destination() == np("one/four")
 
-    def test_albumtype_path_fallback_to_comp(self):
-        self.i.comp = True
-        self.lib.add_album([self.i])
-        self.i.albumtype = "sometype"
+    def test_albumtype_path_fallback_to_comp(self, item_in_db):
+        item_in_db.comp = True
+        self.lib.add_album([item_in_db])
+        item_in_db.albumtype = "sometype"
         self.lib.directory = b"one"
         self.lib.path_formats = [
             ("default", "two"),
             ("albumtype:anothertype", "four"),
             ("comp:true", "three"),
         ]
-        assert self.i.destination() == np("one/three")
+        assert item_in_db.destination() == np("one/three")
 
-    def test_get_formatted_does_not_replace_separators(self):
+    def test_get_formatted_does_not_replace_separators(self, item_in_db):
         with _common.platform_posix():
             name = os.path.join("a", "b")
-            self.i.title = name
-            newname = self.i.formatted().get("title")
+            item_in_db.title = name
+            newname = item_in_db.formatted().get("title")
         assert name == newname
 
-    def test_get_formatted_pads_with_zero(self):
+    def test_get_formatted_pads_with_zero(self, item_in_db):
         with _common.platform_posix():
-            self.i.track = 1
-            name = self.i.formatted().get("track")
+            item_in_db.track = 1
+            name = item_in_db.formatted().get("track")
         assert name.startswith("0")
 
-    def test_get_formatted_uses_kbps_bitrate(self):
+    def test_get_formatted_uses_kbps_bitrate(self, item_in_db):
         with _common.platform_posix():
-            self.i.bitrate = 12345
-            val = self.i.formatted().get("bitrate")
+            item_in_db.bitrate = 12345
+            val = item_in_db.formatted().get("bitrate")
         assert val == "12kbps"
 
-    def test_get_formatted_uses_khz_samplerate(self):
+    def test_get_formatted_uses_khz_samplerate(self, item_in_db):
         with _common.platform_posix():
-            self.i.samplerate = 12345
-            val = self.i.formatted().get("samplerate")
+            item_in_db.samplerate = 12345
+            val = item_in_db.formatted().get("samplerate")
         assert val == "12kHz"
 
-    def test_get_formatted_datetime(self):
+    def test_get_formatted_datetime(self, item_in_db):
         with _common.platform_posix():
-            self.i.added = 1368302461.210265
-            val = self.i.formatted().get("added")
+            item_in_db.added = 1368302461.210265
+            val = item_in_db.formatted().get("added")
         assert val.startswith("2013")
 
-    def test_get_formatted_none(self):
+    def test_get_formatted_none(self, item_in_db):
         with _common.platform_posix():
-            self.i.some_other_field = None
-            val = self.i.formatted().get("some_other_field")
+            item_in_db.some_other_field = None
+            val = item_in_db.formatted().get("some_other_field")
         assert val == ""
 
-    def test_artist_falls_back_to_albumartist(self):
-        self.i.artist = ""
-        self.i.albumartist = "something"
+    def test_artist_falls_back_to_albumartist(self, item_in_db):
+        item_in_db.artist = ""
+        item_in_db.albumartist = "something"
         self.lib.path_formats = [("default", "$artist")]
-        p = self.i.destination()
+        p = item_in_db.destination()
         assert p.rsplit(util.PATH_SEP, 1)[1] == b"something"
 
-    def test_albumartist_falls_back_to_artist(self):
-        self.i.artist = "trackartist"
-        self.i.albumartist = ""
+    def test_albumartist_falls_back_to_artist(self, item_in_db):
+        item_in_db.artist = "trackartist"
+        item_in_db.albumartist = ""
         self.lib.path_formats = [("default", "$albumartist")]
-        p = self.i.destination()
+        p = item_in_db.destination()
         assert p.rsplit(util.PATH_SEP, 1)[1] == b"trackartist"
 
-    def test_artist_overrides_albumartist(self):
-        self.i.artist = "theartist"
-        self.i.albumartist = "something"
+    def test_artist_overrides_albumartist(self, item_in_db):
+        item_in_db.artist = "theartist"
+        item_in_db.albumartist = "something"
         self.lib.path_formats = [("default", "$artist")]
-        p = self.i.destination()
+        p = item_in_db.destination()
         assert p.rsplit(util.PATH_SEP, 1)[1] == b"theartist"
 
-    def test_albumartist_overrides_artist(self):
-        self.i.artist = "theartist"
-        self.i.albumartist = "something"
+    def test_albumartist_overrides_artist(self, item_in_db):
+        item_in_db.artist = "theartist"
+        item_in_db.albumartist = "something"
         self.lib.path_formats = [("default", "$albumartist")]
-        p = self.i.destination()
+        p = item_in_db.destination()
         assert p.rsplit(util.PATH_SEP, 1)[1] == b"something"
 
-    def test_unicode_normalized_nfd_on_mac(self):
+    def test_unicode_normalized_nfd_on_mac(self, item_in_db):
         instr = unicodedata.normalize("NFC", "caf\xe9")
         self.lib.path_formats = [("default", instr)]
         with patch("sys.platform", "darwin"):
-            dest = self.i.destination(relative_to_libdir=True)
+            dest = item_in_db.destination(relative_to_libdir=True)
         assert as_string(dest) == unicodedata.normalize("NFD", instr)
 
-    def test_unicode_normalized_nfc_on_linux(self):
+    def test_unicode_normalized_nfc_on_linux(self, item_in_db):
         instr = unicodedata.normalize("NFD", "caf\xe9")
         self.lib.path_formats = [("default", instr)]
         with patch("sys.platform", "linux"):
-            dest = self.i.destination(relative_to_libdir=True)
+            dest = item_in_db.destination(relative_to_libdir=True)
         assert as_string(dest) == unicodedata.normalize("NFC", instr)
 
-    def test_unicode_extension_in_fragment(self):
+    def test_unicode_extension_in_fragment(self, item_in_db):
         self.lib.path_formats = [("default", "foo")]
-        self.i.path = util.bytestring_path("bar.caf\xe9")
+        item_in_db.path = util.bytestring_path("bar.caf\xe9")
         with patch("sys.platform", "linux"):
-            dest = self.i.destination(relative_to_libdir=True)
+            dest = item_in_db.destination(relative_to_libdir=True)
         assert as_string(dest) == "foo.caf\xe9"
 
-    def test_asciify_and_replace(self):
+    def test_asciify_and_replace(self, item_in_db):
         config["asciify_paths"] = True
         self.lib.replacements = [(re.compile('"'), "q")]
         self.lib.directory = b"lib"
         self.lib.path_formats = [("default", "$title")]
-        self.i.title = "\u201c\u00f6\u2014\u00cf\u201d"
-        assert self.i.destination() == np("lib/qo--Iq")
+        item_in_db.title = "\u201c\u00f6\u2014\u00cf\u201d"
+        assert item_in_db.destination() == np("lib/qo--Iq")
 
-    def test_asciify_character_expanding_to_slash(self):
+    def test_asciify_character_expanding_to_slash(self, item_in_db):
         config["asciify_paths"] = True
         self.lib.directory = b"lib"
         self.lib.path_formats = [("default", "$title")]
-        self.i.title = "ab\xa2\xbdd"
-        assert self.i.destination() == np("lib/abC_ 1_2d")
+        item_in_db.title = "ab\xa2\xbdd"
+        assert item_in_db.destination() == np("lib/abC_ 1_2d")
 
-    def test_destination_with_replacements(self):
+    def test_destination_with_replacements(self, item_in_db):
         self.lib.directory = b"base"
         self.lib.replacements = [(re.compile(r"a"), "e")]
         self.lib.path_formats = [("default", "$album/$title")]
-        self.i.title = "foo"
-        self.i.album = "bar"
-        assert self.i.destination() == np("base/ber/foo")
+        item_in_db.title = "foo"
+        item_in_db.album = "bar"
+        assert item_in_db.destination() == np("base/ber/foo")
 
     @unittest.skip("unimplemented: #359")
-    def test_destination_with_empty_component(self):
+    def test_destination_with_empty_component(self, item_in_db):
         self.lib.directory = b"base"
         self.lib.replacements = [(re.compile(r"^$"), "_")]
         self.lib.path_formats = [("default", "$album/$artist/$title")]
-        self.i.title = "three"
-        self.i.artist = ""
-        self.i.albumartist = ""
-        self.i.album = "one"
-        assert self.i.destination() == np("base/one/_/three")
+        item_in_db.title = "three"
+        item_in_db.artist = ""
+        item_in_db.albumartist = ""
+        item_in_db.album = "one"
+        assert item_in_db.destination() == np("base/one/_/three")
 
     @unittest.skip("unimplemented: #359")
-    def test_destination_with_empty_final_component(self):
+    def test_destination_with_empty_final_component(self, item_in_db):
         self.lib.directory = b"base"
         self.lib.replacements = [(re.compile(r"^$"), "_")]
         self.lib.path_formats = [("default", "$album/$title")]
-        self.i.title = ""
-        self.i.album = "one"
-        self.i.path = "foo.mp3"
-        assert self.i.destination() == np("base/one/_.mp3")
+        item_in_db.title = ""
+        item_in_db.album = "one"
+        item_in_db.path = "foo.mp3"
+        assert item_in_db.destination() == np("base/one/_.mp3")
 
-    def test_album_field_query(self):
+    def test_album_field_query(self, item_in_db):
         self.lib.directory = b"one"
         self.lib.path_formats = [("default", "two"), ("flex:foo", "three")]
-        album = self.lib.add_album([self.i])
-        assert self.i.destination() == np("one/two")
+        album = self.lib.add_album([item_in_db])
+        assert item_in_db.destination() == np("one/two")
         album["flex"] = "foo"
         album.store()
-        assert self.i.destination() == np("one/three")
+        assert item_in_db.destination() == np("one/three")
 
-    def test_album_field_in_template(self):
+    def test_album_field_in_template(self, item_in_db):
         self.lib.directory = b"one"
         self.lib.path_formats = [("default", "$flex/two")]
-        album = self.lib.add_album([self.i])
+        album = self.lib.add_album([item_in_db])
         album["flex"] = "foo"
         album.store()
-        assert self.i.destination() == np("one/foo/two")
+        assert item_in_db.destination() == np("one/foo/two")
 
 
-class TestItemFormattedMapping(PytestItemInDBHelper):
-    def test_formatted_item_value(self):
-        formatted = self.i.formatted()
+class TestItemFormattedMapping(PytestItemHelper):
+    def test_formatted_item_value(self, item_in_db):
+        formatted = item_in_db.formatted()
         assert formatted["artist"] == "the artist"
 
-    def test_get_unset_field(self):
-        formatted = self.i.formatted()
+    def test_get_unset_field(self, item_in_db):
+        formatted = item_in_db.formatted()
         with pytest.raises(KeyError):
             formatted["other_field"]
 
-    def test_get_method_with_default(self):
-        formatted = self.i.formatted()
+    def test_get_method_with_default(self, item_in_db):
+        formatted = item_in_db.formatted()
         assert formatted.get("other_field") == ""
 
-    def test_get_method_with_specified_default(self):
-        formatted = self.i.formatted()
+    def test_get_method_with_specified_default(self, item_in_db):
+        formatted = item_in_db.formatted()
         assert formatted.get("other_field", "default") == "default"
 
-    def test_item_precedence(self):
-        album = self.lib.add_album([self.i])
+    def test_item_precedence(self, item_in_db):
+        album = self.lib.add_album([item_in_db])
         album["artist"] = "foo"
         album.store()
-        assert "foo" != self.i.formatted().get("artist")
+        assert "foo" != item_in_db.formatted().get("artist")
 
-    def test_album_flex_field(self):
-        album = self.lib.add_album([self.i])
+    def test_album_flex_field(self, item_in_db):
+        album = self.lib.add_album([item_in_db])
         album["flex"] = "foo"
         album.store()
-        assert "foo" == self.i.formatted().get("flex")
+        assert "foo" == item_in_db.formatted().get("flex")
 
-    def test_album_field_overrides_item_field_for_path(self):
+    def test_album_field_overrides_item_field_for_path(self, item_in_db):
         # Make the album inconsistent with the item.
-        album = self.lib.add_album([self.i])
+        album = self.lib.add_album([item_in_db])
         album.album = "foo"
         album.store()
-        self.i.album = "bar"
-        self.i.store()
+        item_in_db.album = "bar"
+        item_in_db.store()
 
         # Ensure the album takes precedence.
-        formatted = self.i.formatted(for_path=True)
+        formatted = item_in_db.formatted(for_path=True)
         assert formatted["album"] == "foo"
 
-    def test_artist_falls_back_to_albumartist(self):
-        self.i.artist = ""
-        formatted = self.i.formatted()
+    def test_artist_falls_back_to_albumartist(self, item_in_db):
+        item_in_db.artist = ""
+        formatted = item_in_db.formatted()
         assert formatted["artist"] == "the album artist"
 
-    def test_albumartist_falls_back_to_artist(self):
-        self.i.albumartist = ""
-        formatted = self.i.formatted()
+    def test_albumartist_falls_back_to_artist(self, item_in_db):
+        item_in_db.albumartist = ""
+        formatted = item_in_db.formatted()
         assert formatted["albumartist"] == "the artist"
 
-    def test_both_artist_and_albumartist_empty(self):
-        self.i.artist = ""
-        self.i.albumartist = ""
-        formatted = self.i.formatted()
+    def test_both_artist_and_albumartist_empty(self, item_in_db):
+        item_in_db.artist = ""
+        item_in_db.albumartist = ""
+        formatted = item_in_db.formatted()
         assert formatted["albumartist"] == ""
 
 
@@ -622,279 +618,302 @@ class PathFormattingMixin:
 
 class TestDestinationFunction(PytestTestHelper, PathFormattingMixin):
     @pytest.fixture(autouse=True)
-    def setup_lib(self, setup):
+    def item(self, setup):
         self.lib.directory = b"/base"
         self.lib.path_formats = [("default", "path")]
-        self.i = item(self.lib)
+        return item(self.lib)
 
-    def test_upper_case_literal(self):
+    def test_upper_case_literal(self, item):
         self._setf("%upper{foo}")
-        self._assert_dest(b"/base/FOO")
+        self._assert_dest(b"/base/FOO", item)
 
-    def test_upper_case_variable(self):
+    def test_upper_case_variable(self, item):
         self._setf("%upper{$title}")
-        self._assert_dest(b"/base/THE TITLE")
+        self._assert_dest(b"/base/THE TITLE", item)
 
-    def test_capitalize_variable(self):
+    def test_capitalize_variable(self, item):
         self._setf("%capitalize{$title}")
-        self._assert_dest(b"/base/The title")
+        self._assert_dest(b"/base/The title", item)
 
-    def test_title_case_variable(self):
+    def test_title_case_variable(self, item):
         self._setf("%title{$title}")
-        self._assert_dest(b"/base/The Title")
+        self._assert_dest(b"/base/The Title", item)
 
-    def test_title_case_variable_aphostrophe(self):
+    def test_title_case_variable_aphostrophe(self, item):
         self._setf("%title{I can't}")
-        self._assert_dest(b"/base/I Can't")
+        self._assert_dest(b"/base/I Can't", item)
 
-    def test_asciify_variable(self):
+    def test_asciify_variable(self, item):
         self._setf("%asciify{ab\xa2\xbdd}")
-        self._assert_dest(b"/base/abC_ 1_2d")
+        self._assert_dest(b"/base/abC_ 1_2d", item)
 
-    def test_left_variable(self):
+    def test_left_variable(self, item):
         self._setf("%left{$title, 3}")
-        self._assert_dest(b"/base/the")
+        self._assert_dest(b"/base/the", item)
 
-    def test_right_variable(self):
+    def test_right_variable(self, item):
         self._setf("%right{$title,3}")
-        self._assert_dest(b"/base/tle")
+        self._assert_dest(b"/base/tle", item)
 
-    def test_if_false(self):
+    def test_if_false(self, item):
         self._setf("x%if{,foo}")
-        self._assert_dest(b"/base/x")
+        self._assert_dest(b"/base/x", item)
 
-    def test_if_false_value(self):
+    def test_if_false_value(self, item):
         self._setf("x%if{false,foo}")
-        self._assert_dest(b"/base/x")
+        self._assert_dest(b"/base/x", item)
 
-    def test_if_true(self):
+    def test_if_true(self, item):
         self._setf("%if{bar,foo}")
-        self._assert_dest(b"/base/foo")
+        self._assert_dest(b"/base/foo", item)
 
-    def test_if_else_false(self):
+    def test_if_else_false(self, item):
         self._setf("%if{,foo,baz}")
-        self._assert_dest(b"/base/baz")
+        self._assert_dest(b"/base/baz", item)
 
-    def test_if_else_false_value(self):
+    def test_if_else_false_value(self, item):
         self._setf("%if{false,foo,baz}")
-        self._assert_dest(b"/base/baz")
+        self._assert_dest(b"/base/baz", item)
 
-    def test_if_int_value(self):
+    def test_if_int_value(self, item):
         self._setf("%if{0,foo,baz}")
-        self._assert_dest(b"/base/baz")
+        self._assert_dest(b"/base/baz", item)
 
-    def test_nonexistent_function(self):
+    def test_nonexistent_function(self, item):
         self._setf("%foo{bar}")
-        self._assert_dest(b"/base/%foo{bar}")
+        self._assert_dest(b"/base/%foo{bar}", item)
 
-    def test_if_def_field_return_self(self):
-        self.i.bar = 3
+    def test_if_def_field_return_self(self, item):
+        item.bar = 3
         self._setf("%ifdef{bar}")
-        self._assert_dest(b"/base/3")
+        self._assert_dest(b"/base/3", item)
 
-    def test_if_def_field_not_defined(self):
+    def test_if_def_field_not_defined(self, item):
         self._setf(" %ifdef{bar}/$artist")
-        self._assert_dest(b"/base/the artist")
+        self._assert_dest(b"/base/the artist", item)
 
-    def test_if_def_field_not_defined_2(self):
+    def test_if_def_field_not_defined_2(self, item):
         self._setf("$artist/%ifdef{bar}")
-        self._assert_dest(b"/base/the artist")
+        self._assert_dest(b"/base/the artist", item)
 
-    def test_if_def_true(self):
+    def test_if_def_true(self, item):
         self._setf("%ifdef{artist,cool}")
-        self._assert_dest(b"/base/cool")
+        self._assert_dest(b"/base/cool", item)
 
-    def test_if_def_true_complete(self):
-        self.i.series = "Now"
+    def test_if_def_true_complete(self, item):
+        item.series = "Now"
         self._setf("%ifdef{series,$series Series,Albums}/$album")
-        self._assert_dest(b"/base/Now Series/the album")
+        self._assert_dest(b"/base/Now Series/the album", item)
 
-    def test_if_def_false_complete(self):
+    def test_if_def_false_complete(self, item):
         self._setf("%ifdef{plays,$plays,not_played}")
-        self._assert_dest(b"/base/not_played")
+        self._assert_dest(b"/base/not_played", item)
 
-    def test_first(self):
-        self.i.albumtypes = ["album", "compilation"]
+    def test_first(self, item):
+        item.albumtypes = ["album", "compilation"]
         self._setf("%first{$albumtypes}")
-        self._assert_dest(b"/base/album")
+        self._assert_dest(b"/base/album", item)
 
-    def test_first_skip(self):
-        self.i.albumtype = "album; ep; compilation"
+    def test_first_skip(self, item):
+        item.albumtype = "album; ep; compilation"
         self._setf("%first{$albumtype,1,2}")
-        self._assert_dest(b"/base/compilation")
+        self._assert_dest(b"/base/compilation", item)
 
-    def test_first_different_sep(self):
+    def test_first_different_sep(self, item):
         self._setf("%first{Alice / Bob / Eve,2,0, / , & }")
-        self._assert_dest(b"/base/Alice & Bob")
+        self._assert_dest(b"/base/Alice & Bob", item)
 
 
 class TestDisambiguation(PytestTestHelper, PathFormattingMixin):
     @pytest.fixture(autouse=True)
-    def setup_lib(self, setup):
+    def items(self, setup):
         self.lib.directory = b"/base"
         self.lib.path_formats = [("default", "path")]
 
-        self.i1 = item()
-        self.i1.year = 2001
-        self.lib.add_album([self.i1])
-        self.i2 = item()
-        self.i2.year = 2002
-        self.lib.add_album([self.i2])
+        i1 = item()
+        i1.year = 2001
+        self.lib.add_album([i1])
+        i2 = item()
+        i2.year = 2002
+        self.lib.add_album([i2])
         self.lib._connection().commit()
 
         self._setf("foo%aunique{albumartist album,year}/$title")
+        return i1, i2
 
-    def test_unique_expands_to_disambiguating_year(self):
-        self._assert_dest(b"/base/foo [2001]/the title", self.i1)
+    def test_unique_expands_to_disambiguating_year(self, items):
+        i1, _i2 = items
+        self._assert_dest(b"/base/foo [2001]/the title", i1)
 
-    def test_unique_with_default_arguments_uses_albumtype(self):
-        album2 = self.lib.get_album(self.i1)
+    def test_unique_with_default_arguments_uses_albumtype(self, items):
+        i1, _i2 = items
+        album2 = self.lib.get_album(i1)
         album2.albumtype = "bar"
         album2.store()
         self._setf("foo%aunique{}/$title")
-        self._assert_dest(b"/base/foo [bar]/the title", self.i1)
+        self._assert_dest(b"/base/foo [bar]/the title", i1)
 
-    def test_unique_expands_to_nothing_for_distinct_albums(self):
-        album2 = self.lib.get_album(self.i2)
+    def test_unique_expands_to_nothing_for_distinct_albums(self, items):
+        i1, i2 = items
+        album2 = self.lib.get_album(i2)
         album2.album = "different album"
         album2.store()
 
-        self._assert_dest(b"/base/foo/the title", self.i1)
+        self._assert_dest(b"/base/foo/the title", i1)
 
-    def test_use_fallback_numbers_when_identical(self):
-        album2 = self.lib.get_album(self.i2)
+    def test_use_fallback_numbers_when_identical(self, items):
+        i1, i2 = items
+        album2 = self.lib.get_album(i2)
         album2.year = 2001
         album2.store()
 
-        self._assert_dest(b"/base/foo [1]/the title", self.i1)
-        self._assert_dest(b"/base/foo [2]/the title", self.i2)
+        self._assert_dest(b"/base/foo [1]/the title", i1)
+        self._assert_dest(b"/base/foo [2]/the title", i2)
 
-    def test_unique_falls_back_to_second_distinguishing_field(self):
+    def test_unique_falls_back_to_second_distinguishing_field(self, items):
+        i1, _i2 = items
         self._setf("foo%aunique{albumartist album,month year}/$title")
-        self._assert_dest(b"/base/foo [2001]/the title", self.i1)
+        self._assert_dest(b"/base/foo [2001]/the title", i1)
 
-    def test_unique_sanitized(self):
-        album2 = self.lib.get_album(self.i2)
+    def test_unique_sanitized(self, items):
+        i1, i2 = items
+        album2 = self.lib.get_album(i2)
         album2.year = 2001
-        album1 = self.lib.get_album(self.i1)
+        album1 = self.lib.get_album(i1)
         album1.albumtype = "foo/bar"
         album2.store()
         album1.store()
         self._setf("foo%aunique{albumartist album,albumtype}/$title")
-        self._assert_dest(b"/base/foo [foo_bar]/the title", self.i1)
+        self._assert_dest(b"/base/foo [foo_bar]/the title", i1)
 
-    def test_drop_empty_disambig_string(self):
-        album1 = self.lib.get_album(self.i1)
+    def test_drop_empty_disambig_string(self, items):
+        i1, i2 = items
+        album1 = self.lib.get_album(i1)
         album1.albumdisambig = None
-        album2 = self.lib.get_album(self.i2)
+        album2 = self.lib.get_album(i2)
         album2.albumdisambig = "foo"
         album1.store()
         album2.store()
         self._setf("foo%aunique{albumartist album,albumdisambig}/$title")
-        self._assert_dest(b"/base/foo/the title", self.i1)
+        self._assert_dest(b"/base/foo/the title", i1)
 
-    def test_change_brackets(self):
+    def test_change_brackets(self, items):
+        i1, _i2 = items
         self._setf("foo%aunique{albumartist album,year,()}/$title")
-        self._assert_dest(b"/base/foo (2001)/the title", self.i1)
+        self._assert_dest(b"/base/foo (2001)/the title", i1)
 
-    def test_remove_brackets(self):
+    def test_remove_brackets(self, items):
+        i1, _i2 = items
         self._setf("foo%aunique{albumartist album,year,}/$title")
-        self._assert_dest(b"/base/foo 2001/the title", self.i1)
+        self._assert_dest(b"/base/foo 2001/the title", i1)
 
-    def test_key_flexible_attribute(self):
-        album1 = self.lib.get_album(self.i1)
+    def test_key_flexible_attribute(self, items):
+        i1, i2 = items
+        album1 = self.lib.get_album(i1)
         album1.flex = "flex1"
-        album2 = self.lib.get_album(self.i2)
+        album2 = self.lib.get_album(i2)
         album2.flex = "flex2"
         album1.store()
         album2.store()
         self._setf("foo%aunique{albumartist album flex,year}/$title")
-        self._assert_dest(b"/base/foo/the title", self.i1)
+        self._assert_dest(b"/base/foo/the title", i1)
 
 
 class TestSingletonDisambiguation(PytestTestHelper, PathFormattingMixin):
     @pytest.fixture(autouse=True)
-    def setup_lib(self, setup):
+    def items(self, setup):
         self.lib.directory = b"/base"
         self.lib.path_formats = [("default", "path")]
 
-        self.i1 = item()
-        self.i1.year = 2001
-        self.lib.add(self.i1)
-        self.i2 = item()
-        self.i2.year = 2002
-        self.lib.add(self.i2)
+        i1 = item()
+        i1.year = 2001
+        self.lib.add(i1)
+        i2 = item()
+        i2.year = 2002
+        self.lib.add(i2)
         self.lib._connection().commit()
 
         self._setf("foo/$title%sunique{artist title,year}")
+        return i1, i2
 
-    def test_sunique_expands_to_disambiguating_year(self):
-        self._assert_dest(b"/base/foo/the title [2001]", self.i1)
+    def test_sunique_expands_to_disambiguating_year(self, items):
+        i1, _i2 = items
+        self._assert_dest(b"/base/foo/the title [2001]", i1)
 
-    def test_sunique_with_default_arguments_uses_trackdisambig(self):
-        self.i1.trackdisambig = "live version"
-        self.i1.year = self.i2.year
-        self.i1.store()
+    def test_sunique_with_default_arguments_uses_trackdisambig(self, items):
+        i1, i2 = items
+        i1.trackdisambig = "live version"
+        i1.year = i2.year
+        i1.store()
         self._setf("foo/$title%sunique{}")
-        self._assert_dest(b"/base/foo/the title [live version]", self.i1)
+        self._assert_dest(b"/base/foo/the title [live version]", i1)
 
-    def test_sunique_expands_to_nothing_for_distinct_singletons(self):
-        self.i2.title = "different track"
-        self.i2.store()
+    def test_sunique_expands_to_nothing_for_distinct_singletons(self, items):
+        i1, i2 = items
+        i2.title = "different track"
+        i2.store()
 
-        self._assert_dest(b"/base/foo/the title", self.i1)
+        self._assert_dest(b"/base/foo/the title", i1)
 
-    def test_sunique_does_not_match_album(self):
-        self.lib.add_album([self.i2])
-        self._assert_dest(b"/base/foo/the title", self.i1)
+    def test_sunique_does_not_match_album(self, items):
+        i1, i2 = items
+        self.lib.add_album([i2])
+        self._assert_dest(b"/base/foo/the title", i1)
 
-    def test_sunique_use_fallback_numbers_when_identical(self):
-        self.i2.year = self.i1.year
-        self.i2.store()
+    def test_sunique_use_fallback_numbers_when_identical(self, items):
+        i1, i2 = items
+        i2.year = i1.year
+        i2.store()
 
-        self._assert_dest(b"/base/foo/the title [1]", self.i1)
-        self._assert_dest(b"/base/foo/the title [2]", self.i2)
+        self._assert_dest(b"/base/foo/the title [1]", i1)
+        self._assert_dest(b"/base/foo/the title [2]", i2)
 
-    def test_sunique_falls_back_to_second_distinguishing_field(self):
+    def test_sunique_falls_back_to_second_distinguishing_field(self, items):
+        i1, _i2 = items
         self._setf("foo/$title%sunique{albumartist album,month year}")
-        self._assert_dest(b"/base/foo/the title [2001]", self.i1)
+        self._assert_dest(b"/base/foo/the title [2001]", i1)
 
-    def test_sunique_sanitized(self):
-        self.i2.year = self.i1.year
-        self.i1.trackdisambig = "foo/bar"
-        self.i2.store()
-        self.i1.store()
+    def test_sunique_sanitized(self, items):
+        i1, i2 = items
+        i2.year = i1.year
+        i1.trackdisambig = "foo/bar"
+        i2.store()
+        i1.store()
         self._setf("foo/$title%sunique{artist title,trackdisambig}")
-        self._assert_dest(b"/base/foo/the title [foo_bar]", self.i1)
+        self._assert_dest(b"/base/foo/the title [foo_bar]", i1)
 
-    def test_drop_empty_disambig_string(self):
-        self.i1.trackdisambig = None
-        self.i2.trackdisambig = "foo"
-        self.i1.store()
-        self.i2.store()
+    def test_drop_empty_disambig_string(self, items):
+        i1, i2 = items
+        i1.trackdisambig = None
+        i2.trackdisambig = "foo"
+        i1.store()
+        i2.store()
         self._setf("foo/$title%sunique{albumartist album,trackdisambig}")
-        self._assert_dest(b"/base/foo/the title", self.i1)
+        self._assert_dest(b"/base/foo/the title", i1)
 
-    def test_change_brackets(self):
+    def test_change_brackets(self, items):
+        i1, _i2 = items
         self._setf("foo/$title%sunique{artist title,year,()}")
-        self._assert_dest(b"/base/foo/the title (2001)", self.i1)
+        self._assert_dest(b"/base/foo/the title (2001)", i1)
 
-    def test_remove_brackets(self):
+    def test_remove_brackets(self, items):
+        i1, _i2 = items
         self._setf("foo/$title%sunique{artist title,year,}")
-        self._assert_dest(b"/base/foo/the title 2001", self.i1)
+        self._assert_dest(b"/base/foo/the title 2001", i1)
 
-    def test_key_flexible_attribute(self):
-        self.i1.flex = "flex1"
-        self.i2.flex = "flex2"
-        self.i1.store()
-        self.i2.store()
+    def test_key_flexible_attribute(self, items):
+        i1, i2 = items
+        i1.flex = "flex1"
+        i2.flex = "flex2"
+        i1.store()
+        i2.store()
         self._setf("foo/$title%sunique{artist title flex,year}")
-        self._assert_dest(b"/base/foo/the title", self.i1)
+        self._assert_dest(b"/base/foo/the title", i1)
 
 
 class TestPluginDestination(PytestTestHelper):
     @pytest.fixture(autouse=True)
-    def setup_lib(self, setup):
+    def item(self, setup):
         # Mock beets.plugins.item_field_getters.
         self._tv_map = {}
 
@@ -909,131 +928,132 @@ class TestPluginDestination(PytestTestHelper):
 
         self.lib.directory = b"/base"
         self.lib.path_formats = [("default", "$artist $foo")]
-        self.i = item(self.lib)
+        i = item(self.lib)
 
-        yield
+        yield i
 
         plugins.item_field_getters = self.old_field_getters
 
-    def _assert_dest(self, dest):
+    def _assert_dest(self, dest, item):
         with _common.platform_posix():
-            the_dest = self.i.destination()
+            the_dest = item.destination()
         assert the_dest == b"/base/" + dest
 
-    def test_undefined_value_not_substituted(self):
-        self._assert_dest(b"the artist $foo")
+    def test_undefined_value_not_substituted(self, item):
+        self._assert_dest(b"the artist $foo", item)
 
-    def test_plugin_value_not_substituted(self):
+    def test_plugin_value_not_substituted(self, item):
         self._tv_map = {"foo": "bar"}
-        self._assert_dest(b"the artist bar")
+        self._assert_dest(b"the artist bar", item)
 
-    def test_plugin_value_overrides_attribute(self):
+    def test_plugin_value_overrides_attribute(self, item):
         self._tv_map = {"artist": "bar"}
-        self._assert_dest(b"bar $foo")
+        self._assert_dest(b"bar $foo", item)
 
-    def test_plugin_value_sanitized(self):
+    def test_plugin_value_sanitized(self, item):
         self._tv_map = {"foo": "bar/baz"}
-        self._assert_dest(b"the artist bar_baz")
+        self._assert_dest(b"the artist bar_baz", item)
 
 
 class TestAlbumInfo(PytestTestHelper):
     @pytest.fixture(autouse=True)
-    def setup_lib(self, setup):
-        self.i = item()
-        self.lib.add_album((self.i,))
+    def item(self, setup):
+        i = item()
+        self.lib.add_album((i,))
+        return i
 
-    def test_albuminfo_reflects_metadata(self):
-        ai = self.lib.get_album(self.i)
-        assert ai.mb_albumartistid == self.i.mb_albumartistid
-        assert ai.albumartist == self.i.albumartist
-        assert ai.album == self.i.album
-        assert ai.year == self.i.year
+    def test_albuminfo_reflects_metadata(self, item):
+        ai = self.lib.get_album(item)
+        assert ai.mb_albumartistid == item.mb_albumartistid
+        assert ai.albumartist == item.albumartist
+        assert ai.album == item.album
+        assert ai.year == item.year
 
-    def test_albuminfo_stores_art(self):
-        ai = self.lib.get_album(self.i)
+    def test_albuminfo_stores_art(self, item):
+        ai = self.lib.get_album(item)
         ai.artpath = os.fsdecode(np("/my/great/art"))
         ai.store()
-        new_ai = self.lib.get_album(self.i)
+        new_ai = self.lib.get_album(item)
         assert new_ai.artpath == np("/my/great/art")
 
-    def test_albuminfo_for_two_items_doesnt_duplicate_row(self):
-        i2 = item(self.lib)
-        self.lib.get_album(self.i)
+    def test_albuminfo_for_two_items_doesnt_duplicate_row(self, item):
+        i2 = _common.item(self.lib)
+        self.lib.get_album(item)
         self.lib.get_album(i2)
 
         c = self.lib._connection().cursor()
-        c.execute("select * from albums where album=?", (self.i.album,))
+        c.execute("select * from albums where album=?", (item.album,))
         # Cursor should only return one row.
         assert c.fetchone() is not None
         assert c.fetchone() is None
 
     def test_individual_tracks_have_no_albuminfo(self):
-        i2 = item()
+        i2 = _common.item()
         i2.album = "aTotallyDifferentAlbum"
         self.lib.add(i2)
         ai = self.lib.get_album(i2)
         assert ai is None
 
-    def test_get_album_by_id(self):
-        ai = self.lib.get_album(self.i)
-        ai = self.lib.get_album(self.i.id)
+    def test_get_album_by_id(self, item):
+        ai = self.lib.get_album(item)
+        ai = self.lib.get_album(item.id)
         assert ai is not None
 
-    def test_album_items_consistent(self):
-        ai = self.lib.get_album(self.i)
+    def test_album_items_consistent(self, item):
+        ai = self.lib.get_album(item)
         for i in ai.items():
-            if i.id == self.i.id:
+            if i.id == item.id:
                 break
         else:
             self.fail("item not found")
 
-    def test_albuminfo_changes_affect_items(self):
-        ai = self.lib.get_album(self.i)
+    def test_albuminfo_changes_affect_items(self, item):
+        ai = self.lib.get_album(item)
         ai.album = "myNewAlbum"
         ai.store()
         i = self.lib.items()[0]
         assert i.album == "myNewAlbum"
 
-    def test_albuminfo_change_albumartist_changes_items(self):
-        ai = self.lib.get_album(self.i)
+    def test_albuminfo_change_albumartist_changes_items(self, item):
+        ai = self.lib.get_album(item)
         ai.albumartist = "myNewArtist"
         ai.store()
         i = self.lib.items()[0]
         assert i.albumartist == "myNewArtist"
         assert i.artist != "myNewArtist"
 
-    def test_albuminfo_change_artist_does_change_items(self):
-        ai = self.lib.get_album(self.i)
+    def test_albuminfo_change_artist_does_change_items(self, item):
+        ai = self.lib.get_album(item)
         ai.artist = "myNewArtist"
         ai.store(inherit=True)
         i = self.lib.items()[0]
         assert i.artist == "myNewArtist"
 
-    def test_albuminfo_change_artist_does_not_change_items(self):
-        ai = self.lib.get_album(self.i)
+    def test_albuminfo_change_artist_does_not_change_items(self, item):
+        ai = self.lib.get_album(item)
         ai.artist = "myNewArtist"
         ai.store(inherit=False)
         i = self.lib.items()[0]
         assert i.artist != "myNewArtist"
 
-    def test_albuminfo_remove_removes_items(self):
-        item_id = self.i.id
-        self.lib.get_album(self.i).remove()
+    def test_albuminfo_remove_removes_items(self, item):
+        item_id = item.id
+        self.lib.get_album(item).remove()
         c = self.lib._connection().execute(
             "SELECT id FROM items WHERE id=?", (item_id,)
         )
         assert c.fetchone() is None
 
-    def test_removing_last_item_removes_album(self):
+    def test_removing_last_item_removes_album(self, item):
         assert len(self.lib.albums()) == 1
-        self.i.remove()
+        item.remove()
         assert len(self.lib.albums()) == 0
 
-    def test_noop_albuminfo_changes_affect_items(self):
+    def test_noop_albuminfo_changes_affect_items(self, item):
         i = self.lib.items()[0]
         i.album = "foobar"
         i.store()
-        ai = self.lib.get_album(self.i)
+        ai = self.lib.get_album(item)
         ai.album = ai.album
         ai.store()
         i = self.lib.items()[0]
@@ -1042,62 +1062,66 @@ class TestAlbumInfo(PytestTestHelper):
 
 class TestArtDestination(PytestTestHelper):
     @pytest.fixture(autouse=True)
-    def setup_lib(self, setup):
+    def item_and_album(self, setup):
         config["art_filename"] = "artimage"
         config["replace"] = {"X": "Y"}
         self.lib.replacements = [(re.compile("X"), "Y")]
         self.lib.path_formats = [("default", "$artist/$album/$track $title")]
-        self.i = item(self.lib)
-        self.i.path = self.i.destination()
-        self.ai = self.lib.add_album((self.i,))
+        i = item(self.lib)
+        i.path = i.destination()
+        ai = self.lib.add_album((i,))
+        return i, ai
 
-    def test_art_filename_respects_setting(self):
-        art = self.ai.art_destination("something.jpg")
+    def test_art_filename_respects_setting(self, item_and_album):
+        _i, ai = item_and_album
+        art = ai.art_destination("something.jpg")
         new_art = bytestring_path(f"{os.path.sep}artimage.jpg")
         assert new_art in art
 
-    def test_art_path_in_item_dir(self):
-        art = self.ai.art_destination("something.jpg")
-        track = self.i.destination()
+    def test_art_path_in_item_dir(self, item_and_album):
+        i, ai = item_and_album
+        art = ai.art_destination("something.jpg")
+        track = i.destination()
         assert os.path.dirname(art) == os.path.dirname(track)
 
-    def test_art_path_sanitized(self):
+    def test_art_path_sanitized(self, item_and_album):
+        _i, ai = item_and_album
         config["art_filename"] = "artXimage"
-        art = self.ai.art_destination("something.jpg")
+        art = ai.art_destination("something.jpg")
         assert b"artYimage" in art
 
 
-class TestPathString(PytestItemInDBHelper):
-    def test_item_path_is_bytestring(self):
-        assert isinstance(self.i.path, bytes)
+class TestPathString(PytestItemHelper):
+    def test_item_path_is_bytestring(self, item_in_db):
+        assert isinstance(item_in_db.path, bytes)
 
-    def test_fetched_item_path_is_bytestring(self):
+    def test_fetched_item_path_is_bytestring(self, item_in_db):
         i = next(iter(self.lib.items()))
         assert isinstance(i.path, bytes)
 
-    def test_unicode_path_becomes_bytestring(self):
-        self.i.path = "unicodepath"
-        assert isinstance(self.i.path, bytes)
+    def test_unicode_path_becomes_bytestring(self, item_in_db):
+        item_in_db.path = "unicodepath"
+        assert isinstance(item_in_db.path, bytes)
 
-    def test_unicode_in_database_becomes_bytestring(self):
+    def test_unicode_in_database_becomes_bytestring(self, item_in_db):
         self.lib._connection().execute(
             """
         update items set path=? where id=?
         """,
-            (self.i.id, "somepath"),
+            (item_in_db.id, "somepath"),
         )
         i = next(iter(self.lib.items()))
         assert isinstance(i.path, bytes)
 
-    def test_special_chars_preserved_in_database(self):
+    def test_special_chars_preserved_in_database(self, item_in_db):
         path = "b\xe1r".encode()
-        self.i.path = path
-        self.i.store()
+        item_in_db.path = path
+        item_in_db.store()
         i = next(iter(self.lib.items()))
         assert i.path == os.path.join(self.libdir, path)
 
-    def test_special_char_path_added_to_database(self):
-        self.i.remove()
+    def test_special_char_path_added_to_database(self, item_in_db):
+        item_in_db.remove()
         path = "b\xe1r".encode()
         i = item()
         i.path = path
@@ -1105,20 +1129,20 @@ class TestPathString(PytestItemInDBHelper):
         i = next(iter(self.lib.items()))
         assert i.path == os.path.join(self.libdir, path)
 
-    def test_destination_returns_bytestring(self):
-        self.i.artist = "b\xe1r"
-        dest = self.i.destination()
+    def test_destination_returns_bytestring(self, item_in_db):
+        item_in_db.artist = "b\xe1r"
+        dest = item_in_db.destination()
         assert isinstance(dest, bytes)
 
-    def test_art_destination_returns_bytestring(self):
-        self.i.artist = "b\xe1r"
-        alb = self.lib.add_album([self.i])
+    def test_art_destination_returns_bytestring(self, item_in_db):
+        item_in_db.artist = "b\xe1r"
+        alb = self.lib.add_album([item_in_db])
         dest = alb.art_destination("image.jpg")
         assert isinstance(dest, bytes)
 
-    def test_artpath_stores_special_chars(self):
+    def test_artpath_stores_special_chars(self, item_in_db):
         path = bytestring_path("b\xe1r")
-        alb = self.lib.add_album([self.i])
+        alb = self.lib.add_album([item_in_db])
         alb.artpath = path
         alb.store()
         stored_path = (
@@ -1126,7 +1150,7 @@ class TestPathString(PytestItemInDBHelper):
             .execute("select artpath from albums where id=?", (alb.id,))
             .fetchone()[0]
         )
-        alb = self.lib.get_album(self.i)
+        alb = self.lib.get_album(item_in_db)
         assert stored_path == path
         assert alb.artpath == os.path.join(self.libdir, path)
 
@@ -1140,69 +1164,69 @@ class TestPathString(PytestItemInDBHelper):
         new_path = util.sanitize_path(path)
         assert isinstance(new_path, str)
 
-    def test_unicode_artpath_becomes_bytestring(self):
-        alb = self.lib.add_album([self.i])
+    def test_unicode_artpath_becomes_bytestring(self, item_in_db):
+        alb = self.lib.add_album([item_in_db])
         alb.artpath = "somep\xe1th"
         assert isinstance(alb.artpath, bytes)
 
-    def test_unicode_artpath_in_database_decoded(self):
-        alb = self.lib.add_album([self.i])
+    def test_unicode_artpath_in_database_decoded(self, item_in_db):
+        alb = self.lib.add_album([item_in_db])
         self.lib._connection().execute(
             "update albums set artpath=? where id=?", ("somep\xe1th", alb.id)
         )
         alb = self.lib.get_album(alb.id)
         assert isinstance(alb.artpath, bytes)
 
-    def test_relative_path_is_stored(self):
+    def test_relative_path_is_stored(self, item_in_db):
         relative_path = os.path.join(b"abc", b"foo.mp3")
         absolute_path = os.path.join(self.libdir, relative_path)
-        self.i.path = absolute_path
-        self.i.store()
+        item_in_db.path = absolute_path
+        item_in_db.store()
         stored_path = (
             self.lib._connection()
-            .execute("select path from items where id=?", (self.i.id,))
+            .execute("select path from items where id=?", (item_in_db.id,))
             .fetchone()[0]
         )
-        album = self.lib.add_album([self.i])
+        album = self.lib.add_album([item_in_db])
 
-        assert self.i.path == absolute_path
+        assert item_in_db.path == absolute_path
         assert stored_path == path_as_posix(relative_path)
         assert album.path == os.path.dirname(absolute_path)
 
 
 class TestMtime(PytestTestHelper):
     @pytest.fixture(autouse=True)
-    def setup_lib(self, setup):
+    def item(self, setup):
         self.ipath = os.path.join(self.temp_dir, b"testfile.mp3")
         shutil.copy(
             syspath(os.path.join(_common.RSRC, b"full.mp3")),
             syspath(self.ipath),
         )
-        self.i = beets.library.Item.from_path(self.ipath)
-        self.lib.add(self.i)
-        yield
+        i = beets.library.Item.from_path(self.ipath)
+        self.lib.add(i)
+        yield i
         if os.path.exists(self.ipath):
             os.remove(self.ipath)
 
     def _mtime(self):
         return int(os.path.getmtime(self.ipath))
 
-    def test_mtime_initially_up_to_date(self):
-        assert self.i.mtime >= self._mtime()
+    def test_mtime_initially_up_to_date(self, item):
+        assert item.mtime >= self._mtime()
 
-    def test_mtime_reset_on_db_modify(self):
-        self.i.title = "something else"
-        assert self.i.mtime < self._mtime()
+    def test_mtime_reset_on_db_modify(self, item):
+        item.title = "something else"
+        assert item.mtime < self._mtime()
 
-    def test_mtime_up_to_date_after_write(self):
-        self.i.title = "something else"
-        self.i.write()
-        assert self.i.mtime >= self._mtime()
+    def test_mtime_up_to_date_after_write(self, item):
+        item.title = "something else"
+        item.write()
+        assert item.mtime >= self._mtime()
 
-    def test_mtime_up_to_date_after_read(self):
-        self.i.title = "something else"
-        self.i.read()
-        assert self.i.mtime >= self._mtime()
+    def test_mtime_up_to_date_after_read(self, item):
+        item.title = "something else"
+        item.read()
+        assert item.mtime >= self._mtime()
 
 
 class TestImportTime(PytestTestHelper):
@@ -1217,19 +1241,19 @@ class TestImportTime(PytestTestHelper):
         assert self.singleton.added > 0
 
 
-class TestTemplate(PytestItemInDBHelper):
-    def test_year_formatted_in_template(self):
-        self.i.year = 123
-        self.i.store()
-        assert self.i.evaluate_template("$year") == "0123"
+class TestTemplate(PytestItemHelper):
+    def test_year_formatted_in_template(self, item_in_db):
+        item_in_db.year = 123
+        item_in_db.store()
+        assert item_in_db.evaluate_template("$year") == "0123"
 
-    def test_album_flexattr_appears_in_item_template(self):
-        self.album = self.lib.add_album([self.i])
+    def test_album_flexattr_appears_in_item_template(self, item_in_db):
+        self.album = self.lib.add_album([item_in_db])
         self.album.foo = "baz"
         self.album.store()
-        assert self.i.evaluate_template("$foo") == "baz"
+        assert item_in_db.evaluate_template("$foo") == "baz"
 
-    def test_album_and_item_format(self):
+    def test_album_and_item_format(self, item_in_db):
         config["format_album"] = "foö $foo"
         album = beets.library.Album()
         album.foo = "bar"
@@ -1240,20 +1264,22 @@ class TestTemplate(PytestItemInDBHelper):
         assert bytes(album) == b"fo\xc3\xb6 bar"
 
         config["format_item"] = "bar $foo"
-        item = beets.library.Item()
-        item.foo = "bar"
-        item.tagada = "togodo"
-        assert f"{item}" == "bar bar"
-        assert f"{item:$tagada}" == "togodo"
+        i = beets.library.Item()
+        i.foo = "bar"
+        i.tagada = "togodo"
+        assert f"{i}" == "bar bar"
+        assert f"{i:$tagada}" == "togodo"
 
 
-class TestUnicodePath(PytestItemInDBHelper):
-    def test_unicode_path(self):
-        self.i.path = os.path.join(_common.RSRC, "unicode\u2019d.mp3".encode())
+class TestUnicodePath(PytestItemHelper):
+    def test_unicode_path(self, item_in_db):
+        item_in_db.path = os.path.join(
+            _common.RSRC, "unicode\u2019d.mp3".encode()
+        )
         # If there are any problems with unicode paths, we will raise
         # here and fail.
-        self.i.read()
-        self.i.write()
+        item_in_db.read()
+        item_in_db.write()
 
 
 class TestWrite(PytestTestHelper):
@@ -1327,21 +1353,21 @@ class TestWrite(PytestTestHelper):
 class TestItemRead:
     def test_unreadable_raise_read_error(self):
         unreadable = os.path.join(_common.RSRC, b"image-2x3.png")
-        item = beets.library.Item()
+        i = beets.library.Item()
         with pytest.raises(beets.library.ReadError) as exc_info:
-            item.read(unreadable)
+            i.read(unreadable)
         assert isinstance(exc_info.value.reason, UnreadableFileError)
 
     def test_nonexistent_raise_read_error(self):
-        item = beets.library.Item()
+        i = beets.library.Item()
         with pytest.raises(beets.library.ReadError):
-            item.read("/thisfiledoesnotexist")
+            i.read("/thisfiledoesnotexist")
 
     def test_read_error_str_includes_reason(self):
         unreadable = os.path.join(_common.RSRC, b"image-2x3.png")
-        item = beets.library.Item()
+        i = beets.library.Item()
         with pytest.raises(beets.library.ReadError) as exc_info:
-            item.read(unreadable)
+            i.read(unreadable)
         message = str(exc_info.value)
         assert "super:" not in message
         assert str(exc_info.value.reason) in message
@@ -1354,8 +1380,8 @@ class TestItemReadGenre(PytestTestHelper):
         mf = MediaFile(syspath(path))
         mf.genres = ["Jazz; Funk; Soul"]
         mf.save()
-        item = beets.library.Item.from_path(path)
-        assert item.genres == ["Jazz", "Funk", "Soul"]
+        i = beets.library.Item.from_path(path)
+        assert i.genres == ["Jazz", "Funk", "Soul"]
 
 
 class TestFilesize(PytestTestHelper):
