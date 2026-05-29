@@ -672,6 +672,38 @@ class TestParseRelease(MusicBrainzPluginTestMixin):
         ]
         assert new_recordings == complete_recordings
 
+    def test_album_info_browse_recordings_prefers_alias_over_track_title(
+        self, config, monkeypatch, mb
+    ):
+        config["import"]["languages"] = ["en"]
+
+        recording = recording_factory(
+            title="Recording Title",
+            aliases=[alias_factory(type="Recording name", locale="en")],
+        )
+        browsed_recording = {
+            **recording,
+            "url_relations": [url_relation_factory()],
+        }
+
+        monkeypatch.setattr("beetsplug.musicbrainz.BROWSE_CHUNKSIZE", 1)
+        monkeypatch.setattr("beetsplug.musicbrainz.BROWSE_MAXTRACKS", 0)
+        monkeypatch.setattr(
+            mb.mb_api,
+            "browse_recordings",
+            lambda offset=0, **__: [browsed_recording] if offset == 0 else [],
+        )
+
+        release = release_factory(
+            media__0__tracks=[
+                track_factory(recording=recording, title="Track Title")
+            ]
+        )
+
+        album = mb.album_info(release)
+
+        assert album.tracks[0].title == "Alias en"
+
 
 class TestPseudoRelease(MusicBrainzPluginTestMixin):
     ACTUAL_RELEASE = release_factory(index=1, country="US")

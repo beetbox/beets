@@ -71,6 +71,7 @@ FIELDS_TO_MB_KEYS = {
 
 BROWSE_INCLUDES = [
     "artist-credits",
+    "aliases",
     "work-rels",
     "artist-rels",
     "recording-rels",
