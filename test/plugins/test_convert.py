@@ -305,12 +305,11 @@ class TestConvertCli(ConvertPluginHelper, ConvertCommand):
         self.assert_playlist_entry("converted.ogg", "--keep-new")
 
 
-class NeverConvertLossyFilesTest(ConvertTestCase, ConvertCommand):
+class TestNeverConvertLossyFiles(ConvertPluginHelper, ConvertCommand):
     """Test the effect of the `never_convert_lossy_files` option."""
 
-    def setUp(self):
-        super().setUp()
-
+    @pytest.fixture(autouse=True)
+    def never_convert_setup(self, setup):
         self.convert_dest = self.temp_dir_path / "convert_dest"
         self.config["convert"] = {
             "dest": str(self.convert_dest),
