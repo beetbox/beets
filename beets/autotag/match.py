@@ -4,10 +4,11 @@ releases and tracks.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from enum import IntEnum
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, ClassVar, Generic, NamedTuple, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar, overload
 
 import lap
 import numpy as np
@@ -20,7 +21,7 @@ from .distance import VA_ARTISTS, distance, track_distance
 from .hooks import AlbumInfo, InfoT, TrackInfo
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
+    from collections.abc import Iterable, Iterator
 
     from beets.autotag import Source
     from beets.library import Album, Item
@@ -29,8 +30,6 @@ if TYPE_CHECKING:
     from .hooks import Info
 
     JSONDict = dict[str, Any]
-    AnyMatch = TypeVar("AnyMatch", "TrackMatch", "AlbumMatch")
-    Candidates = dict[Info.Identifier, AnyMatch]
 
 # Global logger.
 log = logging.getLogger("beets")
@@ -104,7 +103,7 @@ class Match(Generic[InfoT]):
 
     @cached_property
     def type(self) -> str:
-        return self.info.type
+        return self.info.type.lower()
 
     @cached_property
     def config_from_scratch(self) -> bool:
@@ -303,102 +302,170 @@ class TrackMatch(Match[TrackInfo]):
         self.item.update(self.info.item_data)
 
 
-# A structure for holding a set of possible matches to choose between. This
-# consists of a list of possible candidates (i.e., AlbumInfo or TrackInfo
-# objects) and a recommendation value.
+MatchT = TypeVar("MatchT", bound=Match[Any])
 
 
-class Proposal(NamedTuple):
-    candidates: Sequence[AlbumMatch | TrackMatch]
-    recommendation: Recommendation
+@dataclass
+class Candidates(Generic[InfoT, MatchT], Sequence[MatchT]):
+    MATCH_CLASS: ClassVar[type[MatchT]]
 
+    source: Source
+    candidate_by_id: dict[Info.Identifier, MatchT] = field(default_factory=dict)
 
-def match_by_id(album_id: str | None, consensus: bool) -> Iterable[AlbumInfo]:
-    """Return album candidates for the given album id.
+    def __iter__(self) -> Iterator[MatchT]:
+        return iter(self.matches)
 
-    Make sure that the ID is present and that there is consensus on it among
-    the items being tagged.
-    """
-    if not album_id:
-        log.debug("No album ID found.")
-    elif not consensus:
-        log.debug("No album ID consensus.")
-    else:
-        log.debug("Searching for discovered album ID: {}", album_id)
-        return metadata_plugins.albums_for_ids([album_id])
+    def __len__(self) -> int:
+        return len(self.matches)
 
-    return ()
+    @overload
+    def __getitem__(self, i: int) -> MatchT: ...
 
+    @overload
+    def __getitem__(self, i: slice) -> Sequence[MatchT]: ...
 
-def _recommendation(
-    results: Sequence[AlbumMatch | TrackMatch],
-) -> Recommendation:
-    """Given a sorted list of AlbumMatch or TrackMatch objects, return a
-    recommendation based on the results' distances.
+    def __getitem__(self, i: int | slice) -> MatchT | Sequence[MatchT]:
+        return self.matches[i]
 
-    If the recommendation is higher than the configured maximum for
-    an applied penalty, the recommendation will be downgraded to the
-    configured maximum for that penalty.
-    """
-    if not results:
-        # No candidates: no recommendation.
-        return Recommendation.none
+    @property
+    def matches(self) -> list[MatchT]:
+        return sorted(self.candidate_by_id.values(), key=lambda m: m.distance)
 
-    # Basic distance thresholding.
-    min_dist = results[0].distance
-    if min_dist < config["match"]["strong_rec_thresh"].as_number():
-        # Strong recommendation level.
-        rec = Recommendation.strong
-    elif min_dist <= config["match"]["medium_rec_thresh"].as_number():
-        # Medium recommendation level.
-        rec = Recommendation.medium
-    elif len(results) == 1:
-        # Only a single candidate.
-        rec = Recommendation.low
-    elif (
-        results[1].distance - min_dist
-        >= config["match"]["rec_gap_thresh"].as_number()
-    ):
-        # Gap between first two candidates is large.
-        rec = Recommendation.low
-    else:
-        # No conclusion. Return immediately. Can't be downgraded any further.
-        return Recommendation.none
+    @property
+    def recommendation(self) -> Recommendation:
+        """Given a sorted list of AlbumMatch or TrackMatch objects, return a
+        recommendation based on the results' distances.
 
-    # Downgrade to the max rec if it is lower than the current rec for an
-    # applied penalty.
-    keys = set(min_dist.keys())
-    if isinstance(results[0], AlbumMatch):
-        for track_dist in min_dist.tracks.values():
-            keys.update(list(track_dist.keys()))
-    max_rec_view = config["match"]["max_rec"]
-    for key in keys:
-        if key in list(max_rec_view.keys()):
-            max_rec = max_rec_view[key].as_choice(
-                {
-                    "strong": Recommendation.strong,
-                    "medium": Recommendation.medium,
-                    "low": Recommendation.low,
-                    "none": Recommendation.none,
-                }
+        If the recommendation is higher than the configured maximum for
+        an applied penalty, the recommendation will be downgraded to the
+        configured maximum for that penalty.
+        """
+        matches = self.matches
+        if not matches:
+            # No candidates: no recommendation.
+            return Recommendation.none
+
+        # Basic distance thresholding.
+        min_dist = matches[0].distance
+        if min_dist < config["match"]["strong_rec_thresh"].as_number():
+            # Strong recommendation level.
+            rec = Recommendation.strong
+        elif min_dist <= config["match"]["medium_rec_thresh"].as_number():
+            # Medium recommendation level.
+            rec = Recommendation.medium
+        elif len(matches) == 1:
+            # Only a single candidate.
+            rec = Recommendation.low
+        elif (
+            matches[1].distance - min_dist
+            >= config["match"]["rec_gap_thresh"].as_number()
+        ):
+            # Gap between first two candidates is large.
+            rec = Recommendation.low
+        else:
+            # No conclusion. Return immediately. Can't be downgraded any further.
+            return Recommendation.none
+
+        # Downgrade to the max rec if it is lower than the current rec for an
+        # applied penalty.
+        keys = set(min_dist.keys())
+        if isinstance(matches[0], AlbumMatch):
+            for track_dist in min_dist.tracks.values():
+                keys.update(list(track_dist.keys()))
+        max_rec_view = config["match"]["max_rec"]
+        for key in keys:
+            if key in list(max_rec_view.keys()):
+                max_rec = max_rec_view[key].as_choice(
+                    {
+                        "strong": Recommendation.strong,
+                        "medium": Recommendation.medium,
+                        "low": Recommendation.low,
+                        "none": Recommendation.none,
+                    }
+                )
+                rec = min(rec, max_rec)
+
+        return rec
+
+    def add_info(self, info: InfoT) -> None:
+        log.debug("Candidate: {!r}", info)
+
+        if info.identifier in self.candidate_by_id:
+            log.debug("Duplicate.")
+            return
+
+        if match := self.MATCH_CLASS.try_create(info, self.source):
+            self.candidate_by_id[info.identifier] = match
+
+    def add_infos(self, infos: Iterable[InfoT]) -> None:
+        for info in infos:
+            self.add_info(info)
+
+    def search_ids(self, search_ids: list[str]) -> None:
+        log.debug("Searching for {} IDs: {}", self.source.type, search_ids)
+        self.add_infos(self.get_id_candidates(search_ids))
+
+        log.debug("Found {} candidates.", len(self))
+
+    def search_library_id(self, id_: str, consensus: bool) -> None:
+        """Add candidates for the given ID from the library.
+
+        Make sure that the ID is present and that there is consensus on it among
+        the items being tagged.
+        """
+        if not id_:
+            log.debug("No {} ID found.", self.source.type)
+        elif not consensus:
+            log.debug("No {} ID consensus.", self.source.type)
+        else:
+            log.debug(
+                "Searching for discovered {} ID from the library: {}",
+                self.source.type,
+                id_,
             )
-            rec = min(rec, max_rec)
+            self.add_infos(self.get_id_candidates([id_]))
 
-    return rec
+    def get_id_candidates(self, search_ids: Sequence[str]) -> Iterable[InfoT]:
+        raise NotImplementedError
+
+    def get_search_candidates(
+        self, search_artist: str, search_name: str
+    ) -> Iterable[InfoT]:
+        raise NotImplementedError
+
+    def search(self, search_artist: str, search_name: str) -> None:
+        log.debug(
+            "{} Search terms: {} - {}",
+            self.source.type.capitalize(),
+            search_artist,
+            search_name,
+        )
+
+        self.add_infos(self.get_search_candidates(search_artist, search_name))
+
+        log.debug("Evaluating {} candidates.", len(self))
+
+    def resolve(self, search_ids: list[str]) -> None:
+        log.debug("Tagging {}", self.source.desc)
+        if search_ids:
+            self.search_ids(search_ids)
+        else:
+            self.search_library_id(self.source.id, self.source.id_consensus)
+            if (
+                not config["import"]["timid"]
+                and (rec := self.recommendation) == Recommendation.strong
+            ):
+                log.debug(
+                    "{} ID match recommendation is {}",
+                    self.source.type.capitalize(),
+                    rec,
+                )
+            else:
+                self.search(self.source.artist, self.source.name)
 
 
-def _sort_candidates(candidates: Iterable[AnyMatch]) -> Sequence[AnyMatch]:
-    """Sort candidates by distance."""
-    return sorted(candidates, key=lambda match: match.distance)
-
-
-def tag_album(
-    source: Source,
-    search_artist: str | None = None,
-    search_name: str | None = None,
-    search_ids: list[str] = [],
-) -> Proposal:
-    """Return `Proposal` containing `AlbumMatch` candidates.
+class AlbumCandidates(Candidates[AlbumInfo, AlbumMatch]):
+    """Find metadata for an album.
 
     The `AlbumMatch` objects are generated by searching the metadata
     backends. By default, the metadata of the items is used for the
@@ -411,115 +478,45 @@ def tag_album(
     The recommendation is calculated from the match quality of the
     candidates.
     """
-    # Get current metadata.
-    log.debug("Tagging {}", source.desc)
 
-    # The output result, keys are (data_source, album_id) pairs, values are
-    # AlbumMatch objects.
-    candidates: Candidates[AlbumMatch] = {}
+    MATCH_CLASS = AlbumMatch
 
-    # Search by explicit ID.
-    if search_ids:
-        log.debug("Searching for album IDs: {}", ", ".join(search_ids))
-        for info in metadata_plugins.albums_for_ids(search_ids):
-            if match := AlbumMatch.try_create(info, source):
-                candidates[info.identifier] = match
+    def get_id_candidates(
+        self, search_ids: Sequence[str]
+    ) -> Iterable[AlbumInfo]:
+        return metadata_plugins.albums_for_ids(search_ids)
 
-    # Use existing metadata or text search.
-    else:
-        # Try search based on current ID.
-        for info in match_by_id(source.id, source.id_consensus):
-            if match := AlbumMatch.try_create(info, source):
-                candidates[info.identifier] = match
-
-        rec = _recommendation(list(candidates.values()))
-        log.debug("Album ID match recommendation is {}", rec)
-        if candidates and not config["import"]["timid"]:
-            # If we have a very good MBID match, return immediately.
-            # Otherwise, this match will compete against metadata-based
-            # matches.
-            if rec == Recommendation.strong:
-                log.debug("ID match.")
-                return Proposal(list(candidates.values()), rec)
-
-        # Search terms.
-        if not (search_artist and search_name):
-            # No explicit search terms -- use current metadata.
-            search_artist, search_name = source.artist, source.name
-        log.debug("Search terms: {} - {}", search_artist, search_name)
-
-        # Is this album likely to be a "various artist" release?
-        va_likely = source.va_likely or (search_artist.lower() in VA_ARTISTS)
-        log.debug("Album might be VA: {}", va_likely)
-
-        # Get the results from the data sources.
-        for info in metadata_plugins.candidates(
-            source.items, search_artist, search_name, va_likely
+    def get_search_candidates(
+        self, search_artist: str, search_name: str
+    ) -> Iterable[AlbumInfo]:
+        if va_likely := (
+            self.source.va_likely or search_artist.lower() in VA_ARTISTS
         ):
-            if match := AlbumMatch.try_create(info, source):
-                candidates[info.identifier] = match
+            log.debug("Album might be VA: {}", va_likely)
 
-    log.debug("Evaluating {} candidates.", len(candidates))
-    # Sort and get the recommendation.
-    candidates_sorted = _sort_candidates(candidates.values())
-    rec = _recommendation(candidates_sorted)
-    return Proposal(candidates_sorted, rec)
+        return metadata_plugins.candidates(
+            self.source.items, search_artist, search_name, va_likely
+        )
 
 
-def tag_item(
-    source: Source,
-    search_artist: str | None = None,
-    search_name: str | None = None,
-    search_ids: list[str] | None = None,
-) -> Proposal:
-    """Find metadata for a single track. Return a `Proposal` consisting
-    of `TrackMatch` objects.
+class TrackCandidates(Candidates[TrackInfo, TrackMatch]):
+    """Find metadata for a single track.
 
     `search_artist` and `search_title` may be used to override the item
     metadata in the search query. `search_ids` may be used for restricting the
     search to a list of metadata backend IDs.
     """
-    # Holds candidates found so far: keys are (data_source, track_id) pairs,
-    # values TrackMatch objects
-    candidates: Candidates[TrackMatch] = {}
-    rec: Recommendation | None = None
 
-    item = source.items[0]
-    # First, try matching by the external source ID.
-    trackids = search_ids or [t for t in [source.id] if t]
-    if trackids:
-        log.debug("Searching for track IDs: {}", ", ".join(trackids))
-        for info in metadata_plugins.tracks_for_ids(trackids):
-            if match := TrackMatch.try_create(info, source):
-                candidates[info.identifier] = match
+    MATCH_CLASS = TrackMatch
 
-        # If this is a good match, then don't keep searching.
-        rec = _recommendation(_sort_candidates(candidates.values()))
-        if rec == Recommendation.strong and not config["import"]["timid"]:
-            log.debug("Track ID match.")
-            return Proposal(_sort_candidates(candidates.values()), rec)
+    def get_id_candidates(
+        self, search_ids: Sequence[str]
+    ) -> Iterable[TrackInfo]:
+        return metadata_plugins.tracks_for_ids(search_ids)
 
-    # If we're searching by ID, don't proceed.
-    if search_ids:
-        if candidates:
-            assert rec is not None
-            return Proposal(_sort_candidates(candidates.values()), rec)
-        return Proposal([], Recommendation.none)
-
-    # Search terms.
-    search_artist = search_artist or source.artist
-    search_name = search_name or source.name
-    log.debug("Item search terms: {} - {}", search_artist, search_name)
-
-    # Get and evaluate candidate metadata.
-    for info in metadata_plugins.item_candidates(
-        item, search_artist, search_name
-    ):
-        if match := TrackMatch.try_create(info, source):
-            candidates[info.identifier] = match
-
-    # Sort by distance and return with recommendation.
-    log.debug("Found {} candidates.", len(candidates))
-    candidates_sorted = _sort_candidates(candidates.values())
-    rec = _recommendation(candidates_sorted)
-    return Proposal(candidates_sorted, rec)
+    def get_search_candidates(
+        self, search_artist: str, search_name: str
+    ) -> Iterable[TrackInfo]:
+        return metadata_plugins.item_candidates(
+            self.source.items[0], search_artist, search_name
+        )
