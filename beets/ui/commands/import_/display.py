@@ -7,7 +7,7 @@ from functools import cached_property
 from typing import TYPE_CHECKING
 
 from beets import config, ui
-from beets.autotag import TrackInfo
+from beets.autotag import AlbumMatch, TrackInfo
 from beets.util import displayable_path
 from beets.util.color import colorize
 from beets.util.diff import colordiff
@@ -17,7 +17,7 @@ from beets.util.units import human_seconds_short
 if TYPE_CHECKING:
     import confuse
 
-    from beets.autotag import AlbumMatch, Match, Source, TrackMatch
+    from beets.autotag import Match, Source, TrackMatch
     from beets.library.models import Item
     from beets.util.color import ColorName
 
@@ -35,6 +35,16 @@ class Change:
     original_artist: str
     original_name: str
     match: Match
+
+    @classmethod
+    def from_match(cls, match: Match, source: Source) -> Change:
+        """Construct a Change object from a Match object."""
+        _class = AlbumChange if isinstance(match, AlbumMatch) else TrackChange
+        return _class(
+            original_artist=source.artist,
+            original_name=source.name,
+            match=match,
+        )
 
     @cached_property
     def changed_prefix(self) -> str:
@@ -121,6 +131,11 @@ class Change:
                 self.print_layout(self.indent_detail, left, right)
             else:
                 ui.print_(f"{self.indent_detail}*", f"{type_}:", name_r)
+
+    def show(self) -> None:
+        """Print out the change."""
+        self.show_match_header()
+        self.show_match_details()
 
 
 class AlbumChange(Change):
@@ -357,6 +372,11 @@ class AlbumChange(Change):
                 line += f" ({human_seconds_short(item.length)})"
             ui.print_(colorize("text_warning", line))
 
+    def show(self) -> None:
+        """Print out the change."""
+        super().show()
+        self.show_match_tracks()
+
 
 class TrackChange(Change):
     """Track change representation, comparing item with match."""
@@ -364,29 +384,6 @@ class TrackChange(Change):
     match: TrackMatch
 
 
-def show_change(source: Source, match: AlbumMatch) -> None:
-    """Print out a representation of the changes that will be made if an
-    album's tags are changed according to `match`, which must be an AlbumMatch
-    object.
-    """
-    change = AlbumChange(source.artist, source.name, match)
-
-    # Print the match header.
-    change.show_match_header()
-
-    # Print the match details.
-    change.show_match_details()
-
-    # Print the match tracks.
-    change.show_match_tracks()
-
-
-def show_item_change(source: Source, match: TrackMatch) -> None:
-    """Print out the change that would occur by tagging a track with the
-    metadata from `match`, a TrackMatch object.
-    """
-    change = TrackChange(source.artist, source.name, match)
-    # Print the match header.
-    change.show_match_header()
-    # Print the match details.
-    change.show_match_details()
+def show_change(source: Source, match: Match) -> None:
+    """Print out a representation of the changes."""
+    Change.from_match(match, source).show()
