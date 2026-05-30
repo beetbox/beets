@@ -18,7 +18,7 @@ from beets.util import PromptChoice, displayable_path
 from beets.util.color import colorize
 from beets.util.units import human_bytes, human_seconds_short
 
-from .display import show_change, show_item_change
+from .display import show_change
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -132,7 +132,7 @@ class TerminalImportSession(importer.ImportSession):
             match = task.candidates[0]
             # TODO: introduce AlbumImportTask to remove this assertion
             assert isinstance(match, TrackMatch)
-            show_item_change(task.source, match)
+            show_change(task.source, match)
             return match
         if action is not None:
             return action
@@ -473,11 +473,7 @@ def choose_candidate(
         bypass_candidates = False
 
         # Show what we're about to do.
-        # TODO: introduce AlbumImportTask to remove these ignores
-        if source.type == "track":
-            show_item_change(source, match)  # type: ignore[arg-type]
-        else:
-            show_change(source, match)  # type: ignore[arg-type]
+        show_change(source, match)
 
         # Exact match => tag automatically if we're not in timid mode.
         if rec == Recommendation.strong and not config["import"]["timid"]:
