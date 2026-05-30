@@ -93,7 +93,7 @@ class MPCResponse:
 
     def _parse_status(self, status):
         """Parses the first response line, which contains the status."""
-        if status.startswith("OK") or status.startswith("list_OK"):
+        if status.startswith(("OK", "list_OK")):
             return True, None
         elif status.startswith("ACK"):
             code, rest = status[5:].split("@", 1)
@@ -147,7 +147,7 @@ class MPCClient:
         while True:
             line = self.readline()
             response += line
-            if line.startswith(b"OK") or line.startswith(b"ACK"):
+            if line.startswith((b"OK", b"ACK")):
                 if force_multi or any(responses):
                     if line.startswith(b"ACK"):
                         responses.append(MPCResponse(response))

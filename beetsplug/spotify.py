@@ -113,8 +113,6 @@ class APIError(Exception):
 class AudioFeaturesUnavailableError(Exception):
     """Raised when audio features API returns 403 (deprecated)."""
 
-    pass
-
 
 class SpotifyPlugin(
     SearchApiMetadataSourcePlugin[SearchResponseAlbums | SearchResponseTracks]

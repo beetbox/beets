@@ -128,8 +128,7 @@ class ExportPlugin(BeetsPlugin):
         format_options = self.config[file_format]["formatting"].get(dict)
 
         export_format = ExportFormat.factory(
-            file_type=file_format,
-            **{"file_path": file_path, "file_mode": file_mode},
+            file_type=file_format, file_path=file_path, file_mode=file_mode
         )
 
         if opts.library or opts.album:

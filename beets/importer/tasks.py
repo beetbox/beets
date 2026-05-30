@@ -75,8 +75,6 @@ log = logging.getLogger("beets")
 class ImportAbortError(Exception):
     """Raised when the user aborts the tagging operation."""
 
-    pass
-
 
 class Action(Enum):
     """Enumeration of possible actions for an import task."""

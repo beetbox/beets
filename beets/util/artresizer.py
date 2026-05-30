@@ -80,7 +80,6 @@ class LocalBackend(ABC):
         """Return the backend version if its dependencies are satisfied or
         raise `LocalBackendNotAvailableError`.
         """
-        pass
 
     @classmethod
     def available(cls) -> bool:
@@ -105,12 +104,10 @@ class LocalBackend(ABC):
 
         On error, logs a warning and returns `path_in`.
         """
-        pass
 
     @abstractmethod
     def get_size(self, path_in: bytes) -> tuple[int, int] | None:
         """Return the (width, height) of the image or None if unavailable."""
-        pass
 
     @abstractmethod
     def deinterlace(
@@ -120,12 +117,10 @@ class LocalBackend(ABC):
 
         On error, logs a warning and returns `path_in`.
         """
-        pass
 
     @abstractmethod
     def get_format(self, path_in: bytes) -> str | None:
         """Return the image format (e.g., 'PNG') or None if undetectable."""
-        pass
 
     @abstractmethod
     def convert_format(
@@ -135,7 +130,6 @@ class LocalBackend(ABC):
 
         On error, logs a warning and returns `source`.
         """
-        pass
 
     @property
     def can_compare(self) -> bool:

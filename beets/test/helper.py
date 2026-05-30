@@ -481,8 +481,6 @@ class PluginTestCase(PluginMixin, BeetsTestCase):
     DEPRECATED: Use PluginTestHelper instead.
     """
 
-    pass
-
 
 class PluginTestHelper(PluginMixin, TestHelper):
     """Helper mixin for pytest-based plugin tests.

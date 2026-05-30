@@ -320,6 +320,7 @@ select = [
     "I", # isort
     "ISC", # flake8-implicit-str-concat
     "N", # pep8-naming
+    "PIE", # flake8-pie
     "PT", # flake8-pytest-style
     "RUF", # ruff
     "UP", # pyupgrade

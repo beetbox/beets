@@ -414,7 +414,6 @@ class ArtSource(RequestMixin, ABC):
         After calling this, `Candidate.path` is set to the image path if
         successful, or to `None` otherwise.
         """
-        pass
 
     def cleanup(self, candidate: Candidate) -> None:
         pass

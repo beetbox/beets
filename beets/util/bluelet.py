@@ -24,8 +24,6 @@ class Event:
     and communicate with the scheduler.
     """
 
-    pass
-
 
 class WaitableEvent(Event):
     """A waitable event is one encapsulating an action that can be
@@ -45,7 +43,6 @@ class WaitableEvent(Event):
         """Called when an associated file descriptor becomes ready
         (i.e., is returned from a select() call).
         """
-        pass
 
 
 class ValueEvent(Event):

@@ -346,7 +346,6 @@ class BaseServer:
 
     def cmd_ping(self, conn):
         """Succeeds."""
-        pass
 
     def cmd_idle(self, conn, *subsystems):
         subsystems = subsystems or SUBSYSTEMS
@@ -604,7 +603,6 @@ class BaseServer:
 
     def cmd_urlhandlers(self, conn):
         """Indicates supported URL schemes. None by default."""
-        pass
 
     def cmd_playlistinfo(self, conn, index=None):
         """Gives metadata information about the entire playlist or a

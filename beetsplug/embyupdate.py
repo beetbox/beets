@@ -32,7 +32,7 @@ def api_url(host, port, endpoint):
     """
     # check if http or https is defined as host and create hostname
     hostname_list = [host]
-    if host.startswith("http://") or host.startswith("https://"):
+    if host.startswith(("http://", "https://")):
         hostname = "".join(hostname_list)
     else:
         hostname_list.insert(0, "http://")

@@ -132,7 +132,7 @@ def import_lastfm(lib, log):
             f"/{page_total}" if page_total > 1 else "",
         )
 
-        for retry in range(0, retry_limit):
+        for retry in range(retry_limit):
             tracks, page_total = fetch_tracks(user, page_current + 1, per_page)
             if page_total < 1:
                 # It means nothing to us!
