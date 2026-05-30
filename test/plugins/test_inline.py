@@ -39,7 +39,7 @@ class TestInlineRecursion(PluginTestCase):
             disctotal=1,
         )
 
-        out = item.evaluate_template("$track_no")
+        out = item.evaluate_fmt("$track_no")
 
         assert out == "01"
 

@@ -2,7 +2,6 @@
 
 from beets import library, ui
 from beets.exceptions import UserError
-from beets.util import functemplate
 from beets.util.deprecation import maybe_replace_legacy_field
 
 from .utils import do_query
@@ -26,13 +25,10 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm, inherit):
     # objects.
     ui.print_(f"Modifying {len(objs)} {'album' if album else 'item'}s.")
     changed = []
-    templates = {
-        key: functemplate.template(value) for key, value in mods.items()
-    }
     for obj in objs:
         obj_mods = {
-            key: model_cls._parse(key, obj.evaluate_template(templates[key]))
-            for key in mods.keys()
+            key: model_cls._parse(key, obj.evaluate_fmt(fmt))
+            for key, fmt in mods.items()
         }
         if print_and_modify(obj, obj_mods, dels) and obj not in changed:
             changed.append(obj)

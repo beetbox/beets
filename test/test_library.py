@@ -1246,13 +1246,13 @@ class TestTemplate(PytestItemHelper):
     def test_year_formatted_in_template(self, item_in_db):
         item_in_db.year = 123
         item_in_db.store()
-        assert item_in_db.evaluate_template("$year") == "0123"
+        assert item_in_db.evaluate_fmt("$year") == "0123"
 
     def test_album_flexattr_appears_in_item_template(self, item_in_db):
         self.album = self.lib.add_album([item_in_db])
         self.album.foo = "baz"
         self.album.store()
-        assert item_in_db.evaluate_template("$foo") == "baz"
+        assert item_in_db.evaluate_fmt("$foo") == "baz"
 
     def test_album_and_item_format(self, item_in_db):
         config["format_album"] = "foö $foo"

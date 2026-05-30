@@ -155,20 +155,20 @@ class TypesPluginTest(IOMixin, PluginTestCase):
         without_fields = self.add_item(artist="britney")
 
         int_template = "%ifdef{playcount,Play count: $playcount,Not played}"
-        assert with_fields.evaluate_template(int_template) == "Play count: 10"
-        assert without_fields.evaluate_template(int_template) == "Not played"
+        assert with_fields.evaluate_fmt(int_template) == "Play count: 10"
+        assert without_fields.evaluate_fmt(int_template) == "Not played"
 
         float_template = "%ifdef{rating,Rating: $rating,Not rated}"
-        assert with_fields.evaluate_template(float_template) == "Rating: 5.0"
-        assert without_fields.evaluate_template(float_template) == "Not rated"
+        assert with_fields.evaluate_fmt(float_template) == "Rating: 5.0"
+        assert without_fields.evaluate_fmt(float_template) == "Not rated"
 
         bool_template = "%ifdef{starred,Starred: $starred,Not starred}"
-        assert with_fields.evaluate_template(bool_template).lower() in (
+        assert with_fields.evaluate_fmt(bool_template).lower() in (
             "starred: true",
             "starred: yes",
             "starred: y",
         )
-        assert without_fields.evaluate_template(bool_template) == "Not starred"
+        assert without_fields.evaluate_fmt(bool_template) == "Not starred"
 
     def modify(self, *args):
         return self.run_with_output(

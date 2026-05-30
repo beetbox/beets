@@ -26,6 +26,8 @@ This is sort of like a tiny, horrible degeneration of a real templating
 engine like Jinja2 or Mustache.
 """
 
+from __future__ import annotations
+
 import ast
 import dis
 import functools
@@ -509,7 +511,7 @@ def _parse(template):
 
 
 @functools.lru_cache(maxsize=128)
-def template(fmt):
+def get_template(fmt: str) -> Template:
     return Template(fmt)
 
 
