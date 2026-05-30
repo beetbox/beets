@@ -25,7 +25,7 @@ VARIOUS_ARTISTS = "Various Artists"
 
 
 @dataclass
-class ChangeRepresentation:
+class Change:
     """Keeps track of all information needed to generate a (colored) text
     representation of the changes that will be made if an album or singleton's
     tags are changed according to `match`, which must be an AlbumMatch or
@@ -123,7 +123,7 @@ class ChangeRepresentation:
                 ui.print_(f"{self.indent_detail}*", f"{type_}:", name_r)
 
 
-class AlbumChange(ChangeRepresentation):
+class AlbumChange(Change):
     match: AlbumMatch
 
     @cached_property
@@ -358,7 +358,7 @@ class AlbumChange(ChangeRepresentation):
             ui.print_(colorize("text_warning", line))
 
 
-class TrackChange(ChangeRepresentation):
+class TrackChange(Change):
     """Track change representation, comparing item with match."""
 
     match: TrackMatch
