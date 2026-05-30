@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Any
 import mediafile
 
 from beets import config, library, plugins, util
-from beets.autotag import AlbumCandidates, AlbumMatch, Source, TrackCandidates
+from beets.autotag import AlbumMatch, Candidates, Source
 from beets.dbcore.query import PathQuery
 from beets.util import extension
 from beets.util.extension import remux_mpeglayer3_wav
@@ -25,7 +25,7 @@ from .state import ImportState
 if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping
 
-    from beets.autotag import Candidates, TrackMatch
+    from beets.autotag import TrackMatch
 
     from .session import ImportSession
 
@@ -112,8 +112,7 @@ class ImportTask(BaseImportTask):
     The import session and stages call the following methods in the
     given order.
 
-    * `lookup_candidates()` Sets the `common_artist`, `common_album`,
-      `candidates`, and `rec` attributes. `candidates` is a list of
+    * `lookup_candidates()` Resolves candidates. `candidates` is a list of
       `AlbumMatch` objects.
 
     * `choose_match()` Uses the session to set the `match` attribute
@@ -147,7 +146,7 @@ class ImportTask(BaseImportTask):
 
     @cached_property
     def candidates(self) -> Candidates[Any, Any]:
-        return AlbumCandidates(self.source)
+        return Candidates.from_source(self.source)
 
     def __init__(
         self,
@@ -664,10 +663,6 @@ class SingletonImportTask(ImportTask):
     @cached_property
     def source(self) -> Source:
         return Source.from_item(self.item)
-
-    @cached_property
-    def candidates(self) -> TrackCandidates:
-        return TrackCandidates(self.source)
 
     def __init__(
         self, toppath: util.PathBytes | None, item: library.Item

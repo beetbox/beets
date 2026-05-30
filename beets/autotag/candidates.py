@@ -36,7 +36,7 @@ class Recommendation(IntEnum):
 
 
 @dataclass
-class Candidates(Generic[InfoT, MatchT], Sequence[MatchT]):
+class Candidates(Sequence[MatchT], Generic[InfoT, MatchT]):
     MATCH_CLASS: ClassVar[type[MatchT]]
 
     source: Source
@@ -56,6 +56,11 @@ class Candidates(Generic[InfoT, MatchT], Sequence[MatchT]):
 
     def __getitem__(self, i: int | slice) -> MatchT | Sequence[MatchT]:
         return self.matches[i]
+
+    @classmethod
+    def from_source(cls, source: Source) -> Candidates[Any, Any]:
+        _class = AlbumCandidates if source.type == "album" else TrackCandidates
+        return _class(source)
 
     @property
     def matches(self) -> list[MatchT]:
