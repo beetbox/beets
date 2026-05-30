@@ -56,10 +56,6 @@ class ChangeRepresentation:
     def indent_detail(self) -> str:
         return indent(self._indentation_config["match_details"].get(int))
 
-    @cached_property
-    def indent_tracklist(self) -> str:
-        return indent(self._indentation_config["match_tracklist"].get(int))
-
     def print_layout(self, indent: str, left: Side, right: Side) -> None:
         for line in get_layout_lines(indent, left, right, ui.term_width()):
             ui.print_(line)
@@ -126,18 +122,26 @@ class ChangeRepresentation:
             else:
                 ui.print_(f"{self.indent_detail}*", f"{type_}:", name_r)
 
+
+class AlbumChange(ChangeRepresentation):
+    match: AlbumMatch
+
+    @cached_property
+    def indent_tracklist(self) -> str:
+        return indent(self._indentation_config["match_tracklist"].get(int))
+
     def make_medium_info_line(self, track_info: TrackInfo) -> str:
         """Construct a line with the current medium's info."""
         track_media = track_info.get("media", "Media")
         # Build output string.
-        if self.match.info.mediums > 1 and track_info.disctitle:
-            return (
-                f"* {track_media} {track_info.medium}: {track_info.disctitle}"
-            )
-        if self.match.info.mediums > 1:
+        if (mediums := self.match.info.mediums) is not None and mediums > 1:
+            if track_info.disctitle:
+                return f"* {track_media} {track_info.medium}: {track_info.disctitle}"
             return f"* {track_media} {track_info.medium}"
+
         if track_info.disctitle:
             return f"* {track_media}: {track_info.disctitle}"
+
         return ""
 
     def format_index(self, track_info: TrackInfo | Item) -> str:
@@ -298,10 +302,6 @@ class ChangeRepresentation:
             left = left._replace(width=col_width_l)
             right = right._replace(width=col_width_r)
             self.print_layout(self.indent_tracklist, left, right)
-
-
-class AlbumChange(ChangeRepresentation):
-    match: AlbumMatch
 
     def show_match_tracks(self) -> None:
         """Print out the tracks of the match, summarizing changes the match
