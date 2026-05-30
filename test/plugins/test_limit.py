@@ -92,3 +92,31 @@ class LimitPluginTest(IOMixin, PluginTestCase):
         incorrect_order = f"{self.num_limit_prefix} {self.track_tail_range}"
         result = self.lib.items(incorrect_order)
         assert len(result) == 0
+
+    def test_prefix_with_slow_sort(self):
+        """
+        HeadQuery combined with a slow sort returns the correct top-N items.
+
+        Regression test for https://github.com/beetbox/beets/issues/5076:
+        when a flexible (non-DB) field is used for sorting,
+        the limit must be applied AFTER sorting, not before.
+        """
+        # Assign a flexible attribute so items get SlowFieldSort.
+        # Use 0-indexed single-digit ratings to avoid lexicographic-vs-numeric
+        # ordering issues (flexible attrs are stored as strings).
+        for rating, item in enumerate(
+            sorted(self.lib.items(), key=lambda i: i.track)
+        ):
+            item["rating"] = rating  # 0..num_test_items-1
+            item.store()
+
+        # Top num_limit items by rating descending must be the highest-rated ones.
+        result = list(self.lib.items(f"rating- {self.num_limit_prefix}"))
+        assert len(result) == self.num_limit
+
+        # Flexible attrs come back as strings; single-digit values compare
+        # identically as int and as string, so casting is safe here.
+        ratings = [int(item["rating"]) for item in result]
+        max_rating = self.num_test_items - 1
+        expected = list(range(max_rating, max_rating - self.num_limit, -1))
+        assert ratings == expected, f"Expected {expected}, got {ratings}"
