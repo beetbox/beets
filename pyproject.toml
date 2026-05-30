@@ -311,6 +311,7 @@ skip-magic-trailing-comma = true
 [tool.ruff.lint]
 future-annotations = true
 select = [
+    "A", # flake8-builtins
     # "ARG", # flake8-unused-arguments
     # "C4", # flake8-comprehensions
     "E", # pycodestyle

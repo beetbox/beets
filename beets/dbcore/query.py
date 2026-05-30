@@ -736,11 +736,11 @@ class Period:
         def find_date_and_format(
             string: str,
         ) -> tuple[None, None] | tuple[datetime, int]:
-            for ord, format in enumerate(cls.date_formats):
-                for format_option in format:
+            for ord_, format_ in enumerate(cls.date_formats):
+                for format_option in format_:
                     try:
                         date = datetime.strptime(string, format_option)
-                        return date, ord
+                        return date, ord_
                     except ValueError:
                         # Parsing failed.
                         pass

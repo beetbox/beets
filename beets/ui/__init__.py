@@ -600,7 +600,7 @@ class Subcommand:
 
     func: Callable[[library.Library, optparse.Values, list[str]], Any]
 
-    def __init__(self, name, parser=None, help="", aliases=(), hide=False):
+    def __init__(self, name, parser=None, help="", aliases=(), hide=False):  # noqa: A002
         """Creates a new subcommand. name is the primary way to invoke
         the subcommand; aliases are alternate names. parser is an
         OptionParser responsible for parsing the subcommand's options.

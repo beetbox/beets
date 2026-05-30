@@ -939,9 +939,9 @@ class RestFiles:
 
     @cached_property
     def artists_dir(self) -> Path:
-        dir = self.directory / "artists"
-        dir.mkdir(parents=True, exist_ok=True)
-        return dir
+        dir_ = self.directory / "artists"
+        dir_.mkdir(parents=True, exist_ok=True)
+        return dir_
 
     def write_indexes(self) -> None:
         """Write conf.py and index.rst files necessary for Sphinx

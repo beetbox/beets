@@ -109,13 +109,13 @@ def _equal_chance_permutation(
             del groups[group]
 
 
-def _take_time(iter: Iterable[LibModel], secs: float) -> Iterable[LibModel]:
+def _take_time(iter_: Iterable[LibModel], secs: float) -> Iterable[LibModel]:
     """Return a list containing the first values in `iter`, which should
     be Item or Album objects, that add up to the given amount of time in
     seconds.
     """
     total_time = 0.0
-    for obj in iter:
+    for obj in iter_:
         length = obj.length
         if total_time + length <= secs:
             yield obj

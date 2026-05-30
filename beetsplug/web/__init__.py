@@ -125,7 +125,7 @@ def resource(name, patchable=False):
 
     def make_responder(retriever):
         def responder(ids):
-            entities = [retriever(id) for id in ids]
+            entities = [retriever(id_) for id_ in ids]
             entities = [entity for entity in entities if entity]
 
             if get_method() == "DELETE":
@@ -252,9 +252,9 @@ class IdListConverter(BaseConverter):
 
     def to_python(self, value):
         ids = []
-        for id in value.split(","):
+        for id_ in value.split(","):
             try:
-                ids.append(int(id))
+                ids.append(int(id_))
             except ValueError:
                 pass
         return ids
@@ -301,8 +301,8 @@ def before_request():
 
 @app.route("/item/<idlist:ids>", methods=["GET", "DELETE", "PATCH"])
 @resource("items", patchable=True)
-def get_item(id):
-    return g.lib.get_item(id)
+def get_item(id_):
+    return g.lib.get_item(id_)
 
 
 @app.route("/item/")
@@ -364,8 +364,8 @@ def item_unique_field_values(key):
 
 @app.route("/album/<idlist:ids>", methods=["GET", "DELETE"])
 @resource("albums")
-def get_album(id):
-    return g.lib.get_album(id)
+def get_album(id_):
+    return g.lib.get_album(id_)
 
 
 @app.route("/album/")

@@ -518,7 +518,7 @@ class ImportTest(PathsMixin, AutotagImportTestCase):
 
     def test_skip_non_album_dirs(self):
         assert (self.import_path / "album").exists()
-        self.touch(b"cruft", dir=self.import_dir)
+        self.touch(b"cruft", dir_=self.import_dir)
         self.importer.add_choice(importer.Action.APPLY)
         self.importer.run()
 
@@ -533,7 +533,7 @@ class ImportTest(PathsMixin, AutotagImportTestCase):
 
     def test_empty_directory_warning(self):
         import_dir = os.path.join(self.temp_dir, b"empty")
-        self.touch(b"non-audio", dir=import_dir)
+        self.touch(b"non-audio", dir_=import_dir)
         self.setup_importer(import_dir=import_dir)
         with capture_log() as logs:
             self.importer.run()
@@ -543,7 +543,7 @@ class ImportTest(PathsMixin, AutotagImportTestCase):
 
     def test_empty_directory_singleton_warning(self):
         import_dir = os.path.join(self.temp_dir, b"empty")
-        self.touch(b"non-audio", dir=import_dir)
+        self.touch(b"non-audio", dir_=import_dir)
         self.setup_singleton_importer(import_dir=import_dir)
         with capture_log() as logs:
             self.importer.run()
@@ -1441,18 +1441,18 @@ class AlbumsInDirTest(BeetsTestCase):
 
 
 class MultiDiscAlbumsInDirTest(BeetsTestCase):
-    def create_music(self, files=True, ascii=True):
+    def create_music(self, files=True, ascii_=True):
         """Create some music in multiple album directories.
 
         `files` indicates whether to create the files (otherwise, only
-        directories are made). `ascii` indicates ACII-only filenames;
+        directories are made). `ascii_` indicates ACII-only filenames;
         otherwise, we use Unicode names.
         """
         self.base = os.path.abspath(os.path.join(self.temp_dir, b"tempdir"))
         os.mkdir(syspath(self.base))
 
-        name = b"CAT" if ascii else util.bytestring_path("C\xc1T")
-        name_alt_case = b"CAt" if ascii else util.bytestring_path("C\xc1t")
+        name = b"CAT" if ascii_ else util.bytestring_path("C\xc1T")
+        name_alt_case = b"CAt" if ascii_ else util.bytestring_path("C\xc1t")
 
         self.dirs = [
             # Nested album, multiple subdirs.
@@ -1491,7 +1491,7 @@ class MultiDiscAlbumsInDirTest(BeetsTestCase):
             os.path.join(self.base, b"artist [CD5]", name + b"S", b"song7.mp3"),
         ]
 
-        if not ascii:
+        if not ascii_:
             self.dirs = [self._normalize_path(p) for p in self.dirs]
             self.files = [self._normalize_path(p) for p in self.files]
 
@@ -1545,14 +1545,14 @@ class MultiDiscAlbumsInDirTest(BeetsTestCase):
         assert len(albums) == 0
 
     def test_single_disc_unicode(self):
-        self.create_music(ascii=False)
+        self.create_music(ascii_=False)
         albums = list(albums_in_dir(self.base))
         root, items = albums[3]
         assert root == self.dirs[8:]
         assert len(items) == 1
 
     def test_coalesce_multiple_unicode(self):
-        self.create_music(ascii=False)
+        self.create_music(ascii_=False)
         albums = list(albums_in_dir(self.base))
         assert len(albums) == 4
         root, items = albums[0]

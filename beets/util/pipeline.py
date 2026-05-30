@@ -59,7 +59,7 @@ def _invalidate_queue(q, val=None, sync=True):
     required (because it's not reentrant!).
     """
 
-    def _qsize(len=len):
+    def _qsize(len=len):  # noqa: A002
         return 1
 
     def _put(item):

@@ -456,8 +456,8 @@ class TidalPlugin(MetadataSourcePlugin):
     def _parse_label(
         attributes: AlbumAttributes | TrackAttributes,
     ) -> str | None:
-        if copyright := attributes.get("copyright"):
-            return copyright["text"]
+        if copyright_ := attributes.get("copyright"):
+            return copyright_["text"]
         return None
 
     @staticmethod

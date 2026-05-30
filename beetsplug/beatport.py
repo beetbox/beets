@@ -294,8 +294,8 @@ class BeatportTrack(BeatportObject):
         self.length = timedelta(milliseconds=data.get("lengthMs", 0) or 0)
         if not self.length:
             try:
-                min, sec = data.get("length", "0:0").split(":")
-                self.length = timedelta(minutes=int(min), seconds=int(sec))
+                min_, sec = data.get("length", "0:0").split(":")
+                self.length = timedelta(minutes=int(min_), seconds=int(sec))
             except ValueError:
                 pass
         if "slug" in data:
