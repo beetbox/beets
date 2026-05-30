@@ -131,12 +131,11 @@ class ChangeRepresentation:
             return (
                 f"* {track_media} {track_info.medium}: {track_info.disctitle}"
             )
-        elif self.match.info.mediums > 1:
+        if self.match.info.mediums > 1:
             return f"* {track_media} {track_info.medium}"
-        elif track_info.disctitle:
+        if track_info.disctitle:
             return f"* {track_media}: {track_info.disctitle}"
-        else:
-            return ""
+        return ""
 
     def format_index(self, track_info: TrackInfo | Item) -> str:
         """Return a string representing the track index of the given
@@ -154,10 +153,8 @@ class ChangeRepresentation:
         if config["per_disc_numbering"]:
             if mediums and mediums > 1:
                 return f"{medium}-{medium_index}"
-            else:
-                return str(medium_index if medium_index is not None else index)
-        else:
-            return str(index)
+            return str(medium_index if medium_index is not None else index)
+        return str(index)
 
     def make_track_numbers(
         self, item: Item, track_info: TrackInfo
@@ -191,11 +188,10 @@ class ChangeRepresentation:
             # If there's no title, we use the filename. Don't colordiff.
             cur_title = displayable_path(os.path.basename(item.path))
             return cur_title, new_title, True
-        else:
-            # If there is a title, highlight differences.
-            cur_title = item.title.strip()
-            cur_col, new_col = colordiff(cur_title, new_title)
-            return cur_col, new_col, cur_title != new_title
+        # If there is a title, highlight differences.
+        cur_title = item.title.strip()
+        cur_col, new_col = colordiff(cur_title, new_title)
+        return cur_col, new_col, cur_title != new_title
 
     @staticmethod
     def make_track_lengths(

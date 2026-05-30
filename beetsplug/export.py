@@ -179,12 +179,11 @@ class ExportFormat:
     def factory(cls, file_type, **kwargs):
         if file_type in ["json", "jsonlines"]:
             return JsonFormat(**kwargs)
-        elif file_type == "csv":
+        if file_type == "csv":
             return CSVFormat(**kwargs)
-        elif file_type == "xml":
+        if file_type == "xml":
             return XMLFormat(**kwargs)
-        else:
-            raise NotImplementedError()
+        raise NotImplementedError()
 
     def export(self, data, **kwargs):
         raise NotImplementedError()

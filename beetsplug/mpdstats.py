@@ -170,8 +170,8 @@ class MPDStats:
         item = self.lib.items(query).get()
         if item:
             return item
-        else:
-            self._log.info("item not found: {}", displayable_path(path))
+        self._log.info("item not found: {}", displayable_path(path))
+        return None
 
     def update_item(self, item, attribute, value=None, increment=None):
         """Update the beets item. Set attribute to value or increment the value

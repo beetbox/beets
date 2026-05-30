@@ -235,7 +235,7 @@ class ImportTask(BaseImportTask):
         if self.choice_flag in (Action.ASIS, Action.RETAG):
             likelies, _ = util.get_most_common_tags(self.items)
             return likelies
-        elif self.choice_flag is Action.APPLY and self.match:
+        if self.choice_flag is Action.APPLY and self.match:
             return self.match.info.copy()
         assert False
 
@@ -247,12 +247,11 @@ class ImportTask(BaseImportTask):
         """
         if self.choice_flag in (Action.ASIS, Action.RETAG):
             return self.items
-        elif self.choice_flag == Action.APPLY and isinstance(
+        if self.choice_flag == Action.APPLY and isinstance(
             self.match, AlbumMatch
         ):
             return self.match.items
-        else:
-            return []
+        return []
 
     def apply_metadata(self) -> None:
         """Copy metadata from match info to the items."""
@@ -691,8 +690,9 @@ class SingletonImportTask(ImportTask):
         assert self.choice_flag in (Action.ASIS, Action.RETAG, Action.APPLY)
         if self.choice_flag in (Action.ASIS, Action.RETAG):
             return dict(self.item)
-        elif self.choice_flag is Action.APPLY:
+        if self.choice_flag is Action.APPLY:
             return self.match.info.copy()
+        return None
 
     def imported_items(self):
         return [self.item]
@@ -1063,8 +1063,7 @@ class ImportTaskFactory:
         item = self.read_item(path)
         if item:
             return SingletonImportTask(self.toppath, item)
-        else:
-            return None
+        return None
 
     def album(self, paths: Iterable[util.PathBytes], dirs=None):
         """Return a `ImportTask` with all media files from paths.
@@ -1090,8 +1089,7 @@ class ImportTaskFactory:
 
         if len(items) > 0:
             return ImportTask(self.toppath, dirs, items)
-        else:
-            return None
+        return None
 
     def sentinel(self, paths: Iterable[util.PathBytes] | None = None):
         """Return a `SentinelImportTask` indicating the end of a
@@ -1113,7 +1111,7 @@ class ImportTaskFactory:
                 "Archive importing requires either "
                 "'copy' or 'move' to be enabled."
             )
-            return
+            return None
 
         log.debug("Extracting archive: {}", util.displayable_path(self.toppath))
         archive_task = ArchiveImportTask(self.toppath)
@@ -1121,7 +1119,7 @@ class ImportTaskFactory:
             archive_task.extract()
         except Exception as exc:
             log.error("extraction failed: {}", exc)
-            return
+            return None
 
         # Now read albums from the extracted directory.
         self.toppath = archive_task.toppath

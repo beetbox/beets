@@ -655,10 +655,9 @@ class ImportSessionFixture(ImportSession):
 
         if choice == importer.Action.APPLY:
             return task.candidates[0]
-        elif isinstance(choice, int):
+        if isinstance(choice, int):
             return task.candidates[choice - 1]
-        else:
-            return choice
+        return choice
 
     choose_item = choose_match
 

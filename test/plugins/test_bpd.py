@@ -95,13 +95,12 @@ class MPCResponse:
         """Parses the first response line, which contains the status."""
         if status.startswith(("OK", "list_OK")):
             return True, None
-        elif status.startswith("ACK"):
+        if status.startswith("ACK"):
             code, rest = status[5:].split("@", 1)
             pos, rest = rest.split("]", 1)
             cmd, rest = rest[2:].split("}")
             return False, (int(code), int(pos), cmd, rest[1:])
-        else:
-            raise RuntimeError(f"Unexpected status: {status!r}")
+        raise RuntimeError(f"Unexpected status: {status!r}")
 
     def _parse_body(self, body):
         """Messages are generally in the format "header: content".
@@ -154,8 +153,7 @@ class MPCClient:
                         n_remaining = force_multi - len(responses)
                         responses.extend([None] * n_remaining)
                     return responses
-                else:
-                    return MPCResponse(response)
+                return MPCResponse(response)
             if line.startswith(b"list_OK"):
                 responses.append(MPCResponse(response))
                 response = b""

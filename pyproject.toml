@@ -322,6 +322,7 @@ select = [
     "N", # pep8-naming
     "PIE", # flake8-pie
     "PT", # flake8-pytest-style
+    "RET", # flake8-return
     "RUF", # ruff
     "UP", # pyupgrade
     "TC", # flake8-type-checking

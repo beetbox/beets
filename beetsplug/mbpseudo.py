@@ -150,15 +150,13 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
                 )
                 self._add_custom_tags(official_release, pseudo_release)
                 return official_release
-            else:
-                return PseudoAlbumInfo(
-                    pseudo_release=_merge_pseudo_and_actual_album(
-                        pseudo_release, official_release
-                    ),
-                    official_release=official_release,
-                )
-        else:
-            return official_release
+            return PseudoAlbumInfo(
+                pseudo_release=_merge_pseudo_and_actual_album(
+                    pseudo_release, official_release
+                ),
+                official_release=official_release,
+            )
+        return official_release
 
     def _intercept_mb_release(self, data: Release) -> list[str]:
         album_id = data["id"] if "id" in data else None
@@ -177,10 +175,9 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
     ) -> bool:
         if len(self._scripts) == 0:
             return False
-        elif script := release.get("text_representation", {}).get("script"):
+        if script := release.get("text_representation", {}).get("script"):
             return script in self._scripts
-        else:
-            return False
+        return False
 
     def _wanted_pseudo_release_id(
         self, album_id: str, relation: ReleaseRelation
@@ -201,8 +198,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
                 album_id,
             )
             return release["id"]
-        else:
-            return None
+        return None
 
     def _replace_artist_with_alias(
         self, raw_pseudo_release: Release, pseudo_release: AlbumInfo
@@ -316,9 +312,8 @@ class PseudoAlbumInfo(AlbumInfo):
         if official_dist < pseudo_dist:
             self.use_official_as_ref()
             return "official"
-        else:
-            self.use_pseudo_as_ref()
-            return "pseudo"
+        self.use_pseudo_as_ref()
+        return "pseudo"
 
     def _compute_distance(self, items: Sequence[Item]) -> Distance:
         mapping, _, _ = assign_items(items, self.tracks)
@@ -334,8 +329,7 @@ class PseudoAlbumInfo(AlbumInfo):
         # ensure we don't duplicate an official release's id, always return pseudo's
         if self.__dict__["_pseudo_source"] or attr == "album_id":
             return super().__getattr__(attr)
-        else:
-            return self.__dict__["_official_release"].__getattr__(attr)
+        return self.__dict__["_official_release"].__getattr__(attr)
 
     def __deepcopy__(self, memo):
         cls = self.__class__

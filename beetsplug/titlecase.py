@@ -226,7 +226,7 @@ class TitlecasePlugin(BeetsPlugin):
         # Check if A-Z is all uppercase or all lowercase
         if self.all_lowercase and text.islower():
             return text
-        elif self.all_caps and text.isupper():
+        if self.all_caps and text.isupper():
             return text
         # Any necessary replacements go first, mainly punctuation.
         titlecased = text.lower() if self.force_lowercase else text

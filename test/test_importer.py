@@ -165,8 +165,7 @@ def create_archive(session):
     archive = ZipFile(os.fsdecode(path), mode="w")
     archive.write(syspath(os.path.join(_common.RSRC, b"full.mp3")), "full.mp3")
     archive.close()
-    path = bytestring_path(path)
-    return path
+    return bytestring_path(path)
 
 
 class RmTempTest(BeetsTestCase):
@@ -1736,7 +1735,6 @@ class ImportPretendTest(IOMixin, AutotagImportTestCase):
         assert len(self.lib.albums()) == 0
 
         return [line for line in logs if not line.startswith("Sending event:")]
-        assert self._album().data_source == "original_source"
 
     def test_import_singletons_pretend(self):
         assert self.__run(self.setup_singleton_importer(pretend=True)) == [

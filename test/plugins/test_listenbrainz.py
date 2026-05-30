@@ -155,7 +155,7 @@ class TestListenBrainzPlugin(ConfigMixin):
             call_count += 1
             if call_count == 1:
                 return {"payload": {"listens": page1}}
-            elif call_count == 2:
+            if call_count == 2:
                 return {"payload": {"listens": page2}}
             return {"payload": {"listens": []}}
 

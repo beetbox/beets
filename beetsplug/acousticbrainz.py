@@ -98,7 +98,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
                     "AcousticBrainz server base URL must start "
                     "with an HTTP scheme"
                 )
-            elif self.base_url[-1] != "/":
+            if self.base_url[-1] != "/":
                 self.base_url = f"{self.base_url}/"
 
         if self.config["auto"]:

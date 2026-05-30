@@ -39,11 +39,9 @@ def update_kodi(host, port, user, password):
 
     # Create the payload. Id seems to be mandatory.
     payload = {"jsonrpc": "2.0", "method": "AudioLibrary.Scan", "id": 1}
-    r = requests.post(
+    return requests.post(
         url, auth=(user, password), json=payload, headers=headers, timeout=10
     )
-
-    return r
 
 
 class KodiUpdate(BeetsPlugin):

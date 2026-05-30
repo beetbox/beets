@@ -143,22 +143,21 @@ def import_lastfm(lib, log):
                 found_total += found
                 unknown_total += unknown
                 break
+            log.error("ERROR: unable to read page #{}", page_current + 1)
+            if retry < retry_limit:
+                log.info(
+                    "Retrying page #{}... ({}/{} retry)",
+                    page_current + 1,
+                    retry + 1,
+                    retry_limit,
+                )
             else:
-                log.error("ERROR: unable to read page #{}", page_current + 1)
-                if retry < retry_limit:
-                    log.info(
-                        "Retrying page #{}... ({}/{} retry)",
-                        page_current + 1,
-                        retry + 1,
-                        retry_limit,
-                    )
-                else:
-                    log.error(
-                        "FAIL: unable to fetch page #{}, ",
-                        "tried {} times",
-                        page_current,
-                        retry + 1,
-                    )
+                log.error(
+                    "FAIL: unable to fetch page #{}, ",
+                    "tried {} times",
+                    page_current,
+                    retry + 1,
+                )
         page_current += 1
 
     log.info("... done!")

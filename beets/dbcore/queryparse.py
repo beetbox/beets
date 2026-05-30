@@ -158,8 +158,7 @@ def construct_query_part(
     # Apply negation.
     if negate:
         return query.NotQuery(out_query)
-    else:
-        return out_query
+    return out_query
 
 
 # TYPING ERROR
@@ -218,13 +217,12 @@ def sort_from_strings(
     """Create a `Sort` from a list of sort criteria (strings)."""
     if not sort_parts:
         return sort.NullSort()
-    elif len(sort_parts) == 1:
+    if len(sort_parts) == 1:
         return construct_sort_part(model_cls, sort_parts[0], case_insensitive)
-    else:
-        s = sort.MultipleSort()
-        for part in sort_parts:
-            s.add_sort(construct_sort_part(model_cls, part, case_insensitive))
-        return s
+    s = sort.MultipleSort()
+    for part in sort_parts:
+        s.add_sort(construct_sort_part(model_cls, part, case_insensitive))
+    return s
 
 
 def parse_sorted_query(

@@ -108,6 +108,7 @@ class BadFiles(BeetsPlugin):
             return self.check_mp3val
         if ext == "flac":
             return self.check_flac
+        return None
 
     def check_item(self, item):
         # First, check whether the path exists. If not, the user
@@ -226,7 +227,7 @@ class BadFiles(BeetsPlugin):
             # Errors always take precedence over warnings.
             if found_error and error_action != "ask":
                 return self.handle_import_action(error_action, "error")
-            elif found_warning and warning_action != "ask":
+            if found_warning and warning_action != "ask":
                 return self.handle_import_action(warning_action, "warning")
 
             # Defer the quiet check to after automatic import action options are handled
@@ -240,12 +241,12 @@ class BadFiles(BeetsPlugin):
 
             if sel == "s":
                 return importer.Action.SKIP
-            elif sel == "c":
+            if sel == "c":
                 return None
-            elif sel == "b":
+            if sel == "b":
                 raise importer.ImportAbortError()
-            else:
-                raise Exception(f"Unexpected selection: {sel}")
+            raise Exception(f"Unexpected selection: {sel}")
+        return None
 
     def command(self, lib, opts, args):
         # Get items from arguments

@@ -29,8 +29,7 @@ def summary(task):
     """
     if task.is_album:
         return f"{task.cur_artist} - {task.cur_album}"
-    else:
-        return f"{task.item.artist} - {task.item.title}"
+    return f"{task.item.artist} - {task.item.title}"
 
 
 class IHatePlugin(BeetsPlugin):

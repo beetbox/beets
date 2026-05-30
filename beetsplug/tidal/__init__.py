@@ -432,8 +432,7 @@ class TidalPlugin(MetadataSourcePlugin):
         """
         if version := attributes.get("version"):
             return f"{attributes['title']} ({version})"
-        else:
-            return attributes["title"]
+        return attributes["title"]
 
     @staticmethod
     def _parse_data_url(

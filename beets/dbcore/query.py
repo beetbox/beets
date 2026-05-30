@@ -161,9 +161,8 @@ class FieldQuery(Query, Generic[P]):
     def clause(self) -> tuple[str | None, Sequence[SQLiteType]]:
         if self.fast:
             return self.col_clause()
-        else:
-            # Matching a flexattr. This is a slow query.
-            return None, ()
+        # Matching a flexattr. This is a slow query.
+        return None, ()
 
     @classmethod
     def value_match(cls, pattern: P, value: Any):
@@ -477,28 +476,25 @@ class NumericQuery(FieldQuery[str]):
 
         if self.point is not None:
             return value == self.point
-        else:
-            if self.rangemin is not None and value < self.rangemin:
-                return False
-            if self.rangemax is not None and value > self.rangemax:
-                return False
-            return True
+        if self.rangemin is not None and value < self.rangemin:
+            return False
+        if self.rangemax is not None and value > self.rangemax:
+            return False
+        return True
 
     def col_clause(self) -> tuple[str, Sequence[SQLiteType]]:
         if self.point is not None:
             return f"{self.field}=?", (self.point,)
-        else:
-            if self.rangemin is not None and self.rangemax is not None:
-                return (
-                    f"{self.field} >= ? AND {self.field} <= ?",
-                    (self.rangemin, self.rangemax),
-                )
-            elif self.rangemin is not None:
-                return f"{self.field} >= ?", (self.rangemin,)
-            elif self.rangemax is not None:
-                return f"{self.field} <= ?", (self.rangemax,)
-            else:
-                return "1", ()
+        if self.rangemin is not None and self.rangemax is not None:
+            return (
+                f"{self.field} >= ? AND {self.field} <= ?",
+                (self.rangemin, self.rangemax),
+            )
+        if self.rangemin is not None:
+            return f"{self.field} >= ?", (self.rangemin,)
+        if self.rangemax is not None:
+            return f"{self.field} <= ?", (self.rangemax,)
+        return "1", ()
 
 
 class InQuery(Generic[AnySQLiteType], FieldQuery[Sequence[AnySQLiteType]]):
@@ -632,10 +628,9 @@ class NotQuery(Query):
         clause, subvals = self.subquery.clause()
         if clause:
             return f"not ({clause})", subvals
-        else:
-            # If there is no clause, there is nothing to negate. All the logic
-            # is handled by match() for slow queries.
-            return clause, subvals
+        # If there is no clause, there is nothing to negate. All the logic
+        # is handled by match() for slow queries.
+        return clause, subvals
 
     def match(self, obj: Model) -> bool:
         return not self.subquery.match(obj)
@@ -681,10 +676,9 @@ def _parse_periods(pattern: str) -> tuple[Period | None, Period | None]:
     if len(parts) == 1:
         instant = Period.parse(parts[0])
         return (instant, instant)
-    else:
-        start = Period.parse(parts[0])
-        end = Period.parse(parts[1])
-        return (start, end)
+    start = Period.parse(parts[0])
+    end = Period.parse(parts[1])
+    return (start, end)
 
 
 class Period:
@@ -791,21 +785,19 @@ class Period:
         date = self.date
         if "year" == self.precision:
             return date.replace(year=date.year + 1, month=1)
-        elif "month" == precision:
+        if "month" == precision:
             if date.month < 12:
                 return date.replace(month=date.month + 1)
-            else:
-                return date.replace(year=date.year + 1, month=1)
-        elif "day" == precision:
+            return date.replace(year=date.year + 1, month=1)
+        if "day" == precision:
             return date + timedelta(days=1)
-        elif "hour" == precision:
+        if "hour" == precision:
             return date + timedelta(hours=1)
-        elif "minute" == precision:
+        if "minute" == precision:
             return date + timedelta(minutes=1)
-        elif "second" == precision:
+        if "second" == precision:
             return date + timedelta(seconds=1)
-        else:
-            raise ValueError(f"unhandled precision {precision}")
+        raise ValueError(f"unhandled precision {precision}")
 
 
 class DateInterval:

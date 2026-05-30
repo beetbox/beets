@@ -198,8 +198,7 @@ class IMBackend(LocalBackend):
         # cls._version is never None here, but mypy doesn't get that
         if cls._version is _NOT_AVAILABLE or cls._version is None:
             raise LocalBackendNotAvailableError()
-        else:
-            return cls._version
+        return cls._version
 
     convert_cmd: list[str]
     identify_cmd: list[str]
@@ -558,8 +557,7 @@ class PILBackend(LocalBackend):
                 )
                 return path_out
 
-            else:
-                return path_out
+            return path_out
         except OSError:
             log.error(
                 "PIL cannot create thumbnail for '{}'",
@@ -693,8 +691,7 @@ class ArtResizer:
     def method(self) -> str:
         if self.local_method is not None:
             return self.local_method.NAME
-        else:
-            return "WEBPROXY"
+        return "WEBPROXY"
 
     def resize(
         self,
@@ -717,9 +714,8 @@ class ArtResizer:
                 quality=quality,
                 max_filesize=max_filesize,
             )
-        else:
-            # Handled by `proxy_url` already.
-            return path_in
+        # Handled by `proxy_url` already.
+        return path_in
 
     def deinterlace(
         self, path_in: bytes, path_out: bytes | None = None
@@ -730,9 +726,8 @@ class ArtResizer:
         """
         if self.local_method is not None:
             return self.local_method.deinterlace(path_in, path_out)
-        else:
-            # FIXME: Should probably issue a warning?
-            return path_in
+        # FIXME: Should probably issue a warning?
+        return path_in
 
     def proxy_url(self, maxwidth: int, url: str, quality: int = 0) -> str:
         """Modifies an image URL according the method, returning a new
@@ -742,8 +737,7 @@ class ArtResizer:
         if self.local:
             # Going to be handled by `resize()`.
             return url
-        else:
-            return resize_url(url, maxwidth, quality)
+        return resize_url(url, maxwidth, quality)
 
     @property
     def local(self) -> bool:
@@ -760,10 +754,9 @@ class ArtResizer:
         """
         if self.local_method is not None:
             return self.local_method.get_size(path_in)
-        else:
-            raise RuntimeError(
-                "image cannot be obtained without artresizer backend"
-            )
+        raise RuntimeError(
+            "image cannot be obtained without artresizer backend"
+        )
 
     def get_format(self, path_in: bytes) -> str | None:
         """Returns the format of the image as a string.
@@ -772,9 +765,8 @@ class ArtResizer:
         """
         if self.local_method is not None:
             return self.local_method.get_format(path_in)
-        else:
-            # FIXME: Should probably issue a warning?
-            return None
+        # FIXME: Should probably issue a warning?
+        return None
 
     def reformat(
         self, path_in: bytes, new_format: str, deinterlaced: bool = True
@@ -814,8 +806,7 @@ class ArtResizer:
 
         if self.local_method is not None:
             return self.local_method.can_compare
-        else:
-            return False
+        return False
 
     def compare(
         self, im1: bytes, im2: bytes, compare_threshold: float
@@ -826,9 +817,8 @@ class ArtResizer:
         """
         if self.local_method is not None:
             return self.local_method.compare(im1, im2, compare_threshold)
-        else:
-            # FIXME: Should probably issue a warning?
-            return None
+        # FIXME: Should probably issue a warning?
+        return None
 
     @property
     def can_write_metadata(self) -> bool:
@@ -836,8 +826,7 @@ class ArtResizer:
 
         if self.local_method is not None:
             return self.local_method.can_write_metadata
-        else:
-            return False
+        return False
 
     def write_metadata(self, file: bytes, metadata: Mapping[str, str]) -> None:
         """Write key-value metadata to the image file.

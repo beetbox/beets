@@ -151,5 +151,4 @@ def random_objs(
     # Select objects by time our count.
     if time_minutes:
         return _take_time(perm, time_minutes * 60)
-    else:
-        return islice(perm, number)
+    return islice(perm, number)

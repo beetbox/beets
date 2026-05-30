@@ -277,12 +277,12 @@ class SpotifyPlugin(
                 return self._handle_response(
                     method, url, params=params, retry_count=retry_count + 1
                 )
-            elif e.response.status_code == 404:
+            if e.response.status_code == 404:
                 raise APIError(
                     f"API Error: {e.response.status_code}\n"
                     f"URL: {url}\nparams: {params}"
                 )
-            elif e.response.status_code == 403:
+            if e.response.status_code == 403:
                 # Check if this is the audio features endpoint
                 if url.startswith(self.audio_features_url):
                     raise AudioFeaturesUnavailableError(
@@ -293,7 +293,7 @@ class SpotifyPlugin(
                     f"API Error: {e.response.status_code}\n"
                     f"URL: {url}\nparams: {params}"
                 )
-            elif e.response.status_code == 429:
+            if e.response.status_code == 429:
                 seconds = e.response.headers.get(
                     "Retry-After", DEFAULT_WAITING_TIME
                 )
@@ -304,21 +304,20 @@ class SpotifyPlugin(
                 return self._handle_response(
                     method, url, params=params, retry_count=retry_count + 1
                 )
-            elif e.response.status_code == 503:
+            if e.response.status_code == 503:
                 self._log.error("Service Unavailable.")
                 raise APIError("Service Unavailable.")
-            elif e.response.status_code == 502:
+            if e.response.status_code == 502:
                 self._log.error("Bad Gateway.")
                 raise APIError("Bad Gateway.")
-            elif e.response is not None:
+            if e.response is not None:
                 raise APIError(
                     f"{self.data_source} API error:\n"
                     f"{e.response.text}\n"
                     f"URL:\n{url}\nparams:\n{params}"
                 )
-            else:
-                self._log.error("Request failed. Error: {}", e)
-                raise APIError("Request failed.")
+            self._log.error("Request failed. Error: {}", e)
+            raise APIError("Request failed.")
 
     def _multi_artist_credit(
         self, artists: list[dict[str | int, str]]
@@ -626,7 +625,7 @@ class SpotifyPlugin(
                 "Your beets query returned no items, skipping {.data_source}.",
                 self,
             )
-            return
+            return None
 
         self._log.info("Processing {} tracks...", len(items))
 

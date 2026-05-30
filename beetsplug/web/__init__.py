@@ -70,7 +70,7 @@ def _rep(obj, expand=False):
 
         return out
 
-    elif isinstance(obj, beets.library.Album):
+    if isinstance(obj, beets.library.Album):
         if app.config.get("INCLUDE_PATHS", False):
             out["artpath"] = util.displayable_path(out["artpath"])
         else:
@@ -78,6 +78,7 @@ def _rep(obj, expand=False):
         if expand:
             out["items"] = [_rep(item) for item in obj.items()]
         return out
+    return None
 
 
 def json_generator(items, root, expand=False):
@@ -136,7 +137,7 @@ def resource(name, patchable=False):
 
                 return flask.make_response(jsonify({"deleted": True}), 200)
 
-            elif get_method() == "PATCH" and patchable:
+            if get_method() == "PATCH" and patchable:
                 if app.config.get("READONLY", True):
                     return flask.abort(405)
 
@@ -146,7 +147,7 @@ def resource(name, patchable=False):
 
                 if len(entities) == 1:
                     return flask.jsonify(_rep(entities[0], expand=is_expand()))
-                elif entities:
+                if entities:
                     return app.response_class(
                         json_generator(entities, root=name),
                         mimetype="application/json",
@@ -155,16 +156,14 @@ def resource(name, patchable=False):
             elif get_method() == "GET":
                 if len(entities) == 1:
                     return flask.jsonify(_rep(entities[0], expand=is_expand()))
-                elif entities:
+                if entities:
                     return app.response_class(
                         json_generator(entities, root=name),
                         mimetype="application/json",
                     )
-                else:
-                    return flask.abort(404)
+                return flask.abort(404)
 
-            else:
-                return flask.abort(405)
+            return flask.abort(405)
 
         responder.__name__ = f"get_{name}"
 
@@ -189,7 +188,7 @@ def resource_query(name, patchable=False):
 
                 return flask.make_response(jsonify({"deleted": True}), 200)
 
-            elif get_method() == "PATCH" and patchable:
+            if get_method() == "PATCH" and patchable:
                 if app.config.get("READONLY", True):
                     return flask.abort(405)
 
@@ -202,7 +201,7 @@ def resource_query(name, patchable=False):
                     mimetype="application/json",
                 )
 
-            elif get_method() == "GET":
+            if get_method() == "GET":
                 return app.response_class(
                     json_generator(
                         entities, root="results", expand=is_expand()
@@ -210,8 +209,7 @@ def resource_query(name, patchable=False):
                     mimetype="application/json",
                 )
 
-            else:
-                return flask.abort(405)
+            return flask.abort(405)
 
         responder.__name__ = f"query_{name}"
 
@@ -329,10 +327,9 @@ def item_file(item_id):
     else:
         safe_filename = base_filename
 
-    response = flask.send_file(
+    return flask.send_file(
         item_path, as_attachment=True, download_name=safe_filename
     )
-    return response
 
 
 @app.route("/item/query/<query:queries>", methods=["GET", "DELETE", "PATCH"])
@@ -347,8 +344,7 @@ def item_at_path(path):
     item = g.lib.items(query).get()
     if item:
         return flask.jsonify(_rep(item))
-    else:
-        return flask.abort(404)
+    return flask.abort(404)
 
 
 @app.route("/item/values/<string:key>")
@@ -390,8 +386,7 @@ def album_art(album_id):
     album = g.lib.get_album(album_id)
     if album and album.artpath:
         return flask.send_file(album.artpath.decode())
-    else:
-        return flask.abort(404)
+    return flask.abort(404)
 
 
 @app.route("/album/values/<string:key>")

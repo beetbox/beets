@@ -224,10 +224,9 @@ def _allmsgs(obj):
     """
     if isinstance(obj, MultiMessage):
         return obj.messages
-    elif obj == BUBBLE:
+    if obj == BUBBLE:
         return []
-    else:
-        return [obj]
+    return [obj]
 
 
 class PipelineThread(Thread):
