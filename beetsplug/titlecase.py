@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     import optparse
 
     from beets.autotag import Info
-    from beets.importer import ImportSession, ImportTask
+    from beets.importer import AnyImportTask, ImportSession
     from beets.library import Item, Library
 
 __author__ = "henryoberholtzer@gmail.com"
@@ -235,7 +235,7 @@ class TitlecasePlugin(BeetsPlugin):
             titlecased = regexp.sub(phrase, titlecased)
         return titlecased
 
-    def imported(self, session: ImportSession, task: ImportTask) -> None:
+    def imported(self, session: ImportSession, task: AnyImportTask) -> None:
         """Import hook for titlecasing on import."""
         for item in task.imported_items():
             try:

@@ -660,7 +660,7 @@ class ImportSessionFixture(ImportSession):
         self._choices = []
 
     def choose_match(
-        self, task: importer.ImportTask
+        self, task: importer.AnyImportTask
     ) -> AlbumMatch | importer.Action:
         try:
             choice = self._choices.pop(0)
@@ -702,14 +702,14 @@ class TerminalImportSessionFixture(TerminalImportSession):
         self._duplicate_actions.append(action)
 
     def _get_duplicate_action_from_user(
-        self, task: importer.ImportTask, found_duplicates: list[Any]
+        self, task: importer.AnyImportTask, found_duplicates: list[Any]
     ) -> str:
         if self._duplicate_actions:
             self.io.addinput(self._duplicate_actions.pop(0).value)
         return super()._get_duplicate_action_from_user(task, found_duplicates)
 
     def choose_match(
-        self, task: importer.ImportTask
+        self, task: importer.AlbumImportTask
     ) -> AlbumMatch | importer.Action:
         self._add_choice_input()
         return super().choose_match(task)

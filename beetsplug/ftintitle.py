@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     import optparse
 
     from beets.autotag import AlbumInfo, Info, TrackInfo
-    from beets.importer import ImportSession, ImportTask
+    from beets.importer import AnyImportTask, ImportSession
     from beets.library import Album, Item, Library
 
 DEFAULT_BRACKET_KEYWORDS: tuple[str, ...] = (
@@ -271,7 +271,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         self._command.func = func
         return [self._command]
 
-    def imported(self, session: ImportSession, task: ImportTask) -> None:
+    def imported(self, session: ImportSession, task: AnyImportTask) -> None:
         """Import hook for moving featuring artist automatically."""
         if not self.auto:
             return

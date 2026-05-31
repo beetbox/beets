@@ -15,7 +15,7 @@ from beets.util.deprecation import (
 )
 
 JSONDict = dict[str, Any]
-InfoT = TypeVar("InfoT", bound="Info")
+InfoT = TypeVar("InfoT", "AlbumInfo", "TrackInfo")
 
 log = logging.getLogger("beets")
 

@@ -18,7 +18,7 @@ from beets.util.color import colorize
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
-    from beets.importer import ImportSession, ImportTask
+    from beets.importer import AnyImportTask, ImportSession
     from beets.library import LibModel, Library
     from beets.logging import BeetsLogger as Logger
 
@@ -240,12 +240,14 @@ class PlayPlugin(BeetsPlugin):
         return filename
 
     def before_choose_candidate_listener(
-        self, session: ImportSession, task: ImportTask
+        self, session: ImportSession, task: AnyImportTask
     ) -> list[PromptChoice]:
         """Append a "Play" choice to the interactive importer prompt."""
         return [PromptChoice("y", "plaY", self.importer_play)]
 
-    def importer_play(self, session: ImportSession, task: ImportTask) -> None:
+    def importer_play(
+        self, session: ImportSession, task: AnyImportTask
+    ) -> None:
         """Get items from current import task and send to play function."""
         selection = task.items
         paths = [item.path for item in selection]

@@ -8,10 +8,15 @@ from typing import Any
 # Parts of external interface.
 from beets.util.deprecation import deprecate_for_maintainers, deprecate_imports
 
-from .candidates import AlbumCandidates, Recommendation, TrackCandidates
+from .candidates import (
+    AlbumCandidates,
+    Candidates,
+    Recommendation,
+    TrackCandidates,
+)
 from .distance import Distance, distance, string_dist, track_distance
-from .hooks import AlbumInfo, Info, TrackInfo, correct_list_fields
-from .match import AlbumMatch, Match, TrackMatch, assign_items
+from .hooks import AlbumInfo, Info, InfoT, TrackInfo, correct_list_fields
+from .match import AlbumMatch, Match, MatchT, TrackMatch, assign_items
 from .source import Source
 
 
@@ -29,9 +34,12 @@ __all__ = [
     "AlbumCandidates",
     "AlbumInfo",
     "AlbumMatch",
+    "Candidates",
     "Distance",
     "Info",
+    "InfoT",
     "Match",
+    "MatchT",
     "Recommendation",
     "Source",
     "TrackCandidates",

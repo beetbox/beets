@@ -16,7 +16,7 @@ from ._utils.musicbrainz import MusicBrainzAPIMixin
 if TYPE_CHECKING:
     import optparse
 
-    from beets.importer import ImportSession, ImportTask
+    from beets.importer import AnyImportTask, ImportSession
     from beets.library import Item, Library
     from beetsplug._utils.musicbrainz import Work
 
@@ -61,7 +61,7 @@ class ParentWorkPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         command.func = func
         return [command]
 
-    def imported(self, session: ImportSession, task: ImportTask) -> None:
+    def imported(self, session: ImportSession, task: AnyImportTask) -> None:
         """Import hook for fetching parent works automatically."""
         force_parent = self.config["force"].get(bool)
 

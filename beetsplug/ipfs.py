@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
 
     from beets.dbcore import Results
-    from beets.importer import ImportSession, ImportTask
+    from beets.importer import AnyImportTask, ImportSession
     from beets.library import Album, Library
 
 
@@ -104,7 +104,7 @@ class IPFSPlugin(BeetsPlugin):
         cmd.func = func
         return [cmd]
 
-    def auto_add(self, session: ImportSession, task: ImportTask) -> None:
+    def auto_add(self, session: ImportSession, task: AnyImportTask) -> None:
         if task.is_album:
             if self.ipfs_add(task.album):
                 task.album.store()

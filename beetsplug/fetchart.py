@@ -25,7 +25,7 @@ from beets.util.config import UnknownPairError, sanitize_pairs
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
 
-    from beets.importer import ImportSession, ImportTask
+    from beets.importer import AnyImportTask, ImportSession
     from beets.library import Album, Library
     from beets.logging import BeetsLogger as Logger
 
@@ -1329,7 +1329,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
 
         # Holds candidates corresponding to downloaded images between
         # fetching them and placing them in the filesystem.
-        self.art_candidates: dict[ImportTask, Candidate] = {}
+        self.art_candidates: dict[AnyImportTask, Candidate] = {}
 
         self.config.add(
             {
@@ -1476,7 +1476,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             return False
 
     # Asynchronous; after music is added to the library.
-    def fetch_art(self, session: ImportSession, task: ImportTask) -> None:
+    def fetch_art(self, session: ImportSession, task: AnyImportTask) -> None:
         """Find art for the album being imported."""
         if task.is_album:  # Only fetch art for full albums.
             if task.album.artpath and os.path.isfile(
@@ -1529,7 +1529,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         return True
 
     # Synchronous; after music files are put in place.
-    def assign_art(self, session: ImportSession, task: ImportTask) -> None:
+    def assign_art(self, session: ImportSession, task: AnyImportTask) -> None:
         """Place the discovered art in the filesystem."""
         if task in self.art_candidates:
             candidate = self.art_candidates.pop(task)

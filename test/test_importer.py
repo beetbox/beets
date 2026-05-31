@@ -1280,7 +1280,7 @@ class InferAlbumDataTest(unittest.TestCase):
         i1.mb_albumartistid = i2.mb_albumartistid = i3.mb_albumartistid = ""
         self.items = [i1, i2, i3]
 
-        self.task = importer.ImportTask(
+        self.task = importer.AlbumImportTask(
             paths=["a path"], toppath="top path", items=self.items
         )
 
@@ -2539,8 +2539,8 @@ class TestImportId(ImportHelper):
         assert self.lib.items().get().title == "VALID_RECORDING_1"
 
     def test_candidates_album(self):
-        """Test directly ImportTask.lookup_candidates()."""
-        task = importer.ImportTask(
+        """Test directly AlbumImportTask.lookup_candidates()."""
+        task = importer.AlbumImportTask(
             paths=os.fsencode(self.import_path),
             toppath="top path",
             items=[_common.item()],

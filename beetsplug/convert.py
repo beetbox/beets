@@ -28,7 +28,7 @@ from beetsplug._utils import art
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from beets.importer import ImportSession, ImportTask
+    from beets.importer import AnyImportTask, ImportSession
     from beets.library import Album, Library
     from beets.util.pathformats import PathFormat
 
@@ -296,7 +296,7 @@ class ConvertPlugin(BeetsPlugin):
 
         return FormatCommand(command.encode("utf-8"), extension.encode("utf-8"))
 
-    def auto_convert(self, session: ImportSession, task: ImportTask) -> None:
+    def auto_convert(self, session: ImportSession, task: AnyImportTask) -> None:
         if self.config["auto"]:
             util.par_map(
                 lambda item: self.convert_on_import(session.lib, item),
@@ -304,7 +304,7 @@ class ConvertPlugin(BeetsPlugin):
             )
 
     def auto_convert_keep(
-        self, session: ImportSession, task: ImportTask
+        self, session: ImportSession, task: AnyImportTask
     ) -> None:
         if self.config["auto_keep"]:
             items = task.imported_items()
@@ -783,7 +783,7 @@ class ConvertPlugin(BeetsPlugin):
                 )
         return newwidth
 
-    def _cleanup(self, task: ImportTask, session: ImportSession) -> None:
+    def _cleanup(self, task: AnyImportTask, session: ImportSession) -> None:
         for path in task.old_paths:
             if path in _temp_files:
                 if os.path.isfile(util.syspath(path)):

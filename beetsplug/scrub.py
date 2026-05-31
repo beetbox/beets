@@ -13,7 +13,7 @@ from beets import config, ui, util
 from beets.plugins import BeetsPlugin
 
 if TYPE_CHECKING:
-    from beets.importer import ImportSession, ImportTask
+    from beets.importer import AnyImportTask, ImportSession
     from beets.library import Item, Library
 
 
@@ -142,7 +142,7 @@ class ScrubPlugin(BeetsPlugin):
                     self._log.error("could not write tags: {}", exc)
 
     def import_task_files(
-        self, session: ImportSession, task: ImportTask
+        self, session: ImportSession, task: AnyImportTask
     ) -> None:
         """Automatically scrub imported files."""
         if not ui.should_write():

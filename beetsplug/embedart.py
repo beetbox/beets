@@ -20,7 +20,7 @@ from beetsplug._utils import art
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from beets.importer import ImportSession, ImportTask
+    from beets.importer import AnyImportTask, ImportSession
     from beets.library import Album, LibModel, Library
 
 
@@ -300,7 +300,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 album.store()
 
     def import_task_files(
-        self, session: ImportSession, task: ImportTask
+        self, session: ImportSession, task: AnyImportTask
     ) -> None:
         """Automatically clearart of imported files."""
         for item in task.imported_items():

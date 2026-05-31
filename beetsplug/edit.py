@@ -22,7 +22,7 @@ from beets.util import PromptChoice
 if TYPE_CHECKING:
     from collections.abc import Container, Iterable, Sequence
 
-    from beets.importer import ImportSession, ImportTask
+    from beets.importer import AnyImportTask, ImportSession
     from beets.library import LibModel, Library
     from beets.logging import BeetsLogger as Logger
 
@@ -355,7 +355,7 @@ class EditPlugin(plugins.BeetsPlugin):
     # Methods for interactive importer execution.
 
     def before_choose_candidate_listener(
-        self, session: ImportSession, task: ImportTask
+        self, session: ImportSession, task: AnyImportTask
     ) -> list[PromptChoice]:
         """Append an "Edit" choice and an "edit Candidates" choice (if
         there are candidates) to the interactive importer prompt.
@@ -370,7 +370,9 @@ class EditPlugin(plugins.BeetsPlugin):
 
         return choices
 
-    def _importer_edit_album_header(self, task: ImportTask) -> JSONDict | None:
+    def _importer_edit_album_header(
+        self, task: AnyImportTask
+    ) -> JSONDict | None:
         """Build the album-header YAML document for import editing.
 
         Returns a dict of album-level fields, or ``None`` when the current
@@ -443,7 +445,7 @@ class EditPlugin(plugins.BeetsPlugin):
             os.remove(new.name)
 
     def importer_edit(
-        self, session: ImportSession, task: ImportTask
+        self, session: ImportSession, task: AnyImportTask
     ) -> Action | None:
         """Callback for invoking the functionality during an interactive
         import session on the *original* item tags.
@@ -554,7 +556,7 @@ class EditPlugin(plugins.BeetsPlugin):
                 continue
 
     @staticmethod
-    def _importer_edit_cleanup(task: ImportTask) -> None:
+    def _importer_edit_cleanup(task: AnyImportTask) -> None:
         """Remove temporary negative ids from task items."""
         for obj in task.items:
             if obj.id is not None and obj.id < 0:
@@ -562,7 +564,7 @@ class EditPlugin(plugins.BeetsPlugin):
 
     @staticmethod
     def _importer_edit_restore_from_copies(
-        task: ImportTask, copies: Sequence[Item]
+        task: AnyImportTask, copies: Sequence[Item]
     ) -> None:
         """Restore items to their state before the last edit cycle.
 
@@ -575,7 +577,7 @@ class EditPlugin(plugins.BeetsPlugin):
                     item[key] = copies[i][key]
 
     def importer_edit_candidate(
-        self, session: ImportSession, task: ImportTask
+        self, session: ImportSession, task: AnyImportTask
     ) -> Action | None:
         """Callback for invoking the functionality during an interactive
         import session on a *candidate*. The candidate's metadata is

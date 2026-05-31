@@ -14,7 +14,7 @@ from beets.exceptions import UserError
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
 
-    from beets.importer import ImportSession, ImportTask
+    from beets.importer import AnyImportTask, ImportSession
     from beets.library import Item, Library
 
     from ._typing import JSONDict
@@ -132,7 +132,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
         return [cmd]
 
     def import_task_files(
-        self, session: ImportSession, task: ImportTask
+        self, session: ImportSession, task: AnyImportTask
     ) -> None:
         """Function is called upon beet import."""
         self._fetch_info(task.imported_items(), False, True)

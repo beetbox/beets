@@ -17,7 +17,7 @@ from beets.ui import input_options
 from beets.util.color import colorize
 
 if TYPE_CHECKING:
-    from beets.importer import ImportSession, ImportTask
+    from beets.importer import AnyImportTask, ImportSession
     from beets.library import Item
 
 
@@ -47,7 +47,7 @@ class ImportSourcePlugin(BeetsPlugin):
             )
 
     def prevent_suggest_removal(
-        self, session: ImportSession, task: ImportTask
+        self, session: ImportSession, task: AnyImportTask
     ) -> None:
         if task.skip:
             return
@@ -55,7 +55,7 @@ class ImportSourcePlugin(BeetsPlugin):
             if "mb_albumid" in item:
                 self.stop_suggestions_for_albums.add(item.mb_albumid)
 
-    def import_stage(self, _, task: ImportTask) -> None:
+    def import_stage(self, _, task: AnyImportTask) -> None:
         """Event handler for albums import finished."""
         for item in task.imported_items():
             # During reimports (import --library), we prevent overwriting the

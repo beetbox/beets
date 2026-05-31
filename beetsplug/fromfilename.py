@@ -14,7 +14,7 @@ from beets.util import displayable_path
 if TYPE_CHECKING:
     from collections.abc import Hashable, Iterable
 
-    from beets.importer import ImportSession, ImportTask
+    from beets.importer import AnyImportTask, ImportSession
     from beets.library import Item
     from beets.logging import BeetsLogger as Logger
 
@@ -138,7 +138,9 @@ class FromFilenamePlugin(plugins.BeetsPlugin):
         super().__init__()
         self.register_listener("import_task_start", self.filename_task)
 
-    def filename_task(self, task: ImportTask, session: ImportSession) -> None:
+    def filename_task(
+        self, task: AnyImportTask, session: ImportSession
+    ) -> None:
         """Examine each item in the task to see if we can extract a title
         from the filename. Try to match all filenames to a number of
         regexps, starting with the most complex patterns and successively
