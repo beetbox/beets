@@ -122,7 +122,9 @@ class TestAdd(PytestItemHelper):
         assert new_grouping == item.grouping
 
     def test_library_add_path_inserts_row(self):
-        item = beets.library.Item.from_path(os.path.join(_common.RSRC, b"full.mp3"))
+        item = beets.library.Item.from_path(
+            os.path.join(_common.RSRC, b"full.mp3")
+        )
         self.lib.add(item)
         new_grouping = (
             self.lib._connection()
