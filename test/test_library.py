@@ -1097,8 +1097,7 @@ class TestPathString(PytestItemHelper):
         assert isinstance(item_in_db.path, bytes)
 
     def test_fetched_item_path_is_bytestring(self, item_in_db):
-        i = next(iter(self.lib.items()))
-        assert isinstance(i.path, bytes)
+        assert isinstance(self.get_first_item().path, bytes)
 
     def test_unicode_path_becomes_bytestring(self, item_in_db):
         item_in_db.path = "unicodepath"
@@ -1111,24 +1110,21 @@ class TestPathString(PytestItemHelper):
         """,
             (item_in_db.id, "somepath"),
         )
-        i = next(iter(self.lib.items()))
-        assert isinstance(i.path, bytes)
+        assert isinstance(self.get_first_item().path, bytes)
 
     def test_special_chars_preserved_in_database(self, item_in_db):
         path = "b\xe1r".encode()
         item_in_db.path = path
         item_in_db.store()
-        i = next(iter(self.lib.items()))
-        assert i.path == os.path.join(self.libdir, path)
+        assert self.get_first_item().path == os.path.join(self.libdir, path)
 
-    def test_special_char_path_added_to_database(self, item_in_db):
+    def test_special_char_path_added_to_database(self, item, item_in_db):
         item_in_db.remove()
         path = "b\xe1r".encode()
-        i = item()
-        i.path = path
-        self.lib.add(i)
-        i = next(iter(self.lib.items()))
-        assert i.path == os.path.join(self.libdir, path)
+        item = _common.item()
+        item.path = path
+        self.lib.add(item)
+        assert self.get_first_item().path == os.path.join(self.libdir, path)
 
     def test_destination_returns_bytestring(self, item_in_db):
         item_in_db.artist = "b\xe1r"
