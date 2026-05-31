@@ -1347,24 +1347,21 @@ class TestWrite(PytestTestHelper):
         assert MediaFile(syspath(item.path)).year == clean_year
 
 
-class TestItemRead:
-    def test_unreadable_raise_read_error(self):
+class TestItemRead(PytestItemHelper):
+    def test_unreadable_raise_read_error(self, item_in_db):
         unreadable = os.path.join(_common.RSRC, b"image-2x3.png")
-        i = beets.library.Item()
         with pytest.raises(beets.library.ReadError) as exc_info:
-            i.read(unreadable)
+            item_in_db.read(unreadable)
         assert isinstance(exc_info.value.reason, UnreadableFileError)
 
-    def test_nonexistent_raise_read_error(self):
-        i = beets.library.Item()
+    def test_nonexistent_raise_read_error(self, item_in_db):
         with pytest.raises(beets.library.ReadError):
-            i.read("/thisfiledoesnotexist")
+            item_in_db.read("/thisfiledoesnotexist")
 
-    def test_read_error_str_includes_reason(self):
+    def test_read_error_str_includes_reason(self, item_in_db):
         unreadable = os.path.join(_common.RSRC, b"image-2x3.png")
-        i = beets.library.Item()
         with pytest.raises(beets.library.ReadError) as exc_info:
-            i.read(unreadable)
+            item_in_db.read(unreadable)
         message = str(exc_info.value)
         assert "super:" not in message
         assert str(exc_info.value.reason) in message
