@@ -11,6 +11,7 @@ from types import SimpleNamespace
 from typing import TYPE_CHECKING, Protocol
 
 from beets import config, library, ui, util
+from beets.importer import AlbumImportTask
 from beets.plugins import BeetsPlugin
 
 if TYPE_CHECKING:
@@ -105,9 +106,8 @@ class IPFSPlugin(BeetsPlugin):
         return [cmd]
 
     def auto_add(self, session: ImportSession, task: AnyImportTask) -> None:
-        if task.is_album:
-            if self.ipfs_add(task.album):
-                task.album.store()
+        if isinstance(task, AlbumImportTask) and self.ipfs_add(task.album):
+            task.album.store()
 
     def ipfs_play(
         self, lib: Library, opts: IPFSCLIOpts, args: list[str]
