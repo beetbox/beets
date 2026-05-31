@@ -14,8 +14,8 @@ from .candidates import (
     TrackCandidates,
 )
 from .distance import Distance, distance, string_dist, track_distance
-from .hooks import AlbumInfo, Info, TrackInfo, correct_list_fields
-from .match import AlbumMatch, Match, TrackMatch, assign_items
+from .hooks import AlbumInfo, Info, InfoT, TrackInfo, correct_list_fields
+from .match import AlbumMatch, Match, MatchT, TrackMatch, assign_items
 from .source import Source
 
 
@@ -36,7 +36,9 @@ __all__ = [
     "Candidates",
     "Distance",
     "Info",
+    "InfoT",
     "Match",
+    "MatchT",
     "Recommendation",
     "Source",
     "TrackCandidates",

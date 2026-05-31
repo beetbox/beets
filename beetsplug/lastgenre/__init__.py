@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     import optparse
     from collections.abc import Iterable
 
-    from beets.importer import ImportSession, ImportTask
+    from beets.importer import ImportSession, ImportTask, AnyImportTask
     from beets.library import LibModel
 
     from .utils import AliasPatternWithReplacement, IgnorePatternsByArtist
@@ -708,5 +708,5 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         lastgenre_cmd.func = lastgenre_func
         return [lastgenre_cmd]
 
-    def imported(self, _: ImportSession, task: ImportTask) -> None:
+    def imported(self, _: ImportSession, task: AnyImportTask) -> None:
         self._process(task.album if task.is_album else task.item, write=False)  # type: ignore[attr-defined]

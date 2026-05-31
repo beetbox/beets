@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
     from requests import Response
 
-    from beets.importer import ImportSession, ImportTask
+    from beets.importer import ImportSession, ImportTask, AnyImportTask
     from beets.library import Album, Library
 
     from ._typing import JSONDict
@@ -187,7 +187,7 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
         remove_missing = self.config["remove"].get(bool)
         self.update_album_list(lib, lib.albums(), remove_missing)
 
-    def imported(self, session: ImportSession, task: ImportTask) -> None:
+    def imported(self, session: ImportSession, task: AnyImportTask) -> None:
         """Add each imported album to the collection."""
         if task.is_album:
             self.update_album_list(

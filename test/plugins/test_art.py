@@ -880,7 +880,7 @@ class TestArtImporter(UseThePlugin):
         self.session = _common.import_session(self.lib)
 
         # Import task for the coroutine.
-        self.task = importer.ImportTask(None, None, [self.i])
+        self.task = importer.AlbumImportTask(None, None, [self.i])
         self.task.is_album = True
         self.task.album = self.album
         info = AlbumInfo(

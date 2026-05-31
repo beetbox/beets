@@ -61,7 +61,7 @@ def match_benchmark(lib, prof, query=None, album_id=None):
     # Ensure fingerprinting is invoked (if enabled).
     plugins.send(
         "import_task_start",
-        task=importer.ImportTask(None, None, items),
+        task=importer.AlbumImportTask(None, None, items),
         session=importer.ImportSession(lib, None, None, None),
     )
 

@@ -12,7 +12,7 @@ from beets.ui import Subcommand, should_write
 from beets.util.deprecation import deprecate_for_user
 
 if TYPE_CHECKING:
-    from beets.importer import ImportTask
+    from beets.importer import AnyImportTask
     from beets.library import Item, Library
 
 
@@ -72,7 +72,7 @@ class AutoBPMPlugin(BeetsPlugin):
             quiet=quiet,
         )
 
-    def imported(self, _, task: ImportTask) -> None:
+    def imported(self, _, task: AnyImportTask) -> None:
         self.calculate_bpm(
             task.imported_items(),
             force=self.config["force"].get(bool),

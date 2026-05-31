@@ -16,7 +16,7 @@ from .display import show_change
 
 if TYPE_CHECKING:
     from beets.autotag import Source
-    from beets.importer import ImportTask
+    from beets.importer import AnyImportTask
     from beets.library import AnyLibModel, Item
 
 # Global logger.
@@ -143,7 +143,9 @@ class TerminalImportSession(importer.ImportSession):
                 print(f"  {dup}")
 
     def _get_duplicate_action_from_user(
-        self, task: importer.ImportTask, found_duplicates: list[AnyLibModel]
+        self,
+        task: importer.AnyImportTask,
+        found_duplicates: list[Album] | list[Item],
     ) -> str:
         """Decide what to do when a new album or item seems similar to one
         that's already in the library.
@@ -173,7 +175,7 @@ class TerminalImportSession(importer.ImportSession):
         return ui.input_options(DuplicateAction.strict_options())
 
     def get_duplicate_action(
-        self, task: importer.ImportTask, found_duplicates: list[AnyLibModel]
+        self, task: importer.AnyImportTask, found_duplicates: list[AnyLibModel]
     ) -> DuplicateAction:
         action = super().get_duplicate_action(task, found_duplicates)
         if action is DuplicateAction.ASK:
@@ -461,7 +463,7 @@ def choose_candidate(candidates, rec, source: Source, choices=[]):
             return choice_actions[sel]
 
 
-def manual_search(session, task: ImportTask):
+def manual_search(session, task: AnyImportTask):
     """Resolve candidates using a manual search.
 
     Input either an artist and album (for full albums) or artist and
@@ -473,7 +475,7 @@ def manual_search(session, task: ImportTask):
     )
 
 
-def manual_id(session, task: ImportTask):
+def manual_id(session, task: AnyImportTask):
     """Resolve candidates using a manually-entered ID.
 
     Input an ID, either for an album ("release") or a track ("recording").

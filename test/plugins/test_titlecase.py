@@ -3,7 +3,7 @@
 from unittest.mock import patch
 
 from beets.autotag import AlbumInfo, TrackInfo
-from beets.importer import ImportSession, ImportTask
+from beets.importer import AlbumImportTask, ImportSession
 from beets.library import Item
 from beets.test.helper import PluginTestCase
 from beetsplug.titlecase import TitlecasePlugin
@@ -352,13 +352,17 @@ class TestTitlecasePlugin(PluginTestCase):
             artist="Blue Planet Corporation",
             title="Generator",
         )
-        p = patch("beets.importer.ImportTask.imported_items", lambda x: [given])
+        p = patch(
+            "beets.importer.AlbumImportTask.imported_items", lambda x: [given]
+        )
         p.start()
         with self.configure_plugin({"fields": ["album", "artist", "title"]}):
             import_session = ImportSession(
                 self.lib, loghandler=None, paths=None, query=None
             )
-            import_task = ImportTask(toppath=None, paths=None, items=[given])
+            import_task = AlbumImportTask(
+                toppath=None, paths=None, items=[given]
+            )
             TitlecasePlugin().imported(import_session, import_task)
             import_task.add(self.lib)
             item = self.lib.items().get()

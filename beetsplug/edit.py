@@ -21,7 +21,7 @@ from beets.ui.commands.utils import do_query
 from beets.util import PromptChoice
 
 if TYPE_CHECKING:
-    from beets.importer import ImportSession, ImportTask
+    from beets.importer import AnyImportTask, ImportSession
 
 # These "safe" types can avoid the format/parse cycle that most fields go
 # through: they are safe to edit with native YAML types.
@@ -342,7 +342,7 @@ class EditPlugin(plugins.BeetsPlugin):
         return choices
 
     def _importer_edit_album_header(
-        self, task: ImportTask
+        self, task: AnyImportTask
     ) -> dict[str, Any] | None:
         """Build the album-header YAML document for import editing.
 
@@ -418,7 +418,7 @@ class EditPlugin(plugins.BeetsPlugin):
             os.remove(new.name)
 
     def importer_edit(
-        self, session: ImportSession, task: ImportTask
+        self, session: ImportSession, task: AnyImportTask
     ) -> Action | None:
         """Callback for invoking the functionality during an interactive
         import session on the *original* item tags.
@@ -529,7 +529,7 @@ class EditPlugin(plugins.BeetsPlugin):
                 continue
 
     @staticmethod
-    def _importer_edit_cleanup(task: ImportTask) -> None:
+    def _importer_edit_cleanup(task: AnyImportTask) -> None:
         """Remove temporary negative ids from task items."""
         for obj in task.items:
             if obj.id is not None and obj.id < 0:
@@ -537,7 +537,7 @@ class EditPlugin(plugins.BeetsPlugin):
 
     @staticmethod
     def _importer_edit_restore_from_copies(
-        task: ImportTask, copies: list[Item]
+        task: AnyImportTask, copies: list[Item]
     ) -> None:
         """Restore items to their state before the last edit cycle.
 

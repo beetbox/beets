@@ -285,4 +285,4 @@ class TrackMatch(Match[TrackInfo]):
         self.item.update(self.info.item_data)
 
 
-MatchT = TypeVar("MatchT", bound=Match[Any])
+MatchT = TypeVar("MatchT", AlbumMatch, TrackMatch)

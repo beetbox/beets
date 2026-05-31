@@ -21,7 +21,12 @@ if TYPE_CHECKING:
     from beets.library import AnyLibModel
     from beets.util import PathBytes
 
-    from .tasks import ImportTask, SingletonImportTask
+    from .tasks import (
+        AlbumImportTask,
+        ImportTask,
+        AnyImportTask,
+        SingletonImportTask,
+    )
 
 
 QUEUE_SIZE = 128
@@ -145,7 +150,7 @@ class ImportSession:
         """
         self.logger.info("{} {}", status, displayable_path(paths))
 
-    def log_choice(self, task: ImportTask, duplicate: bool = False) -> None:
+    def log_choice(self, task: AnyImportTask, duplicate: bool = False) -> None:
         """Logs the task's current choice if it should be logged. If
         ``duplicate``, then this is a secondary choice after a duplicate was
         detected and a decision was made.
@@ -169,11 +174,11 @@ class ImportSession:
     def should_resume(self, path: PathBytes) -> bool:
         raise NotImplementedError
 
-    def choose_match(self, task: ImportTask) -> AlbumMatch | Action:
+    def choose_match(self, task: AlbumImportTask) -> AlbumMatch | Action:
         raise NotImplementedError
 
     def get_duplicate_action(
-        self, task: ImportTask, found_duplicates: list[AnyLibModel]
+        self, task: AnyImportTask, found_duplicates: list[AnyLibModel]
     ) -> DuplicateAction:
         """Get the configured duplicate action."""
         choice = config["import"]["duplicate_action"].as_choice(

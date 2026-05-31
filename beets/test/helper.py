@@ -712,7 +712,7 @@ class ImportSessionFixture(ImportSession):
         self._choices = []
 
     def choose_match(
-        self, task: importer.ImportTask
+        self, task: importer.AnyImportTask
     ) -> AlbumMatch | importer.Action:
         try:
             choice = self._choices.pop(0)
@@ -746,13 +746,13 @@ class TerminalImportSessionFixture(TerminalImportSession):
         self._choices = []
 
     def choose_match(
-        self, task: importer.ImportTask
+        self, task: importer.AnyImportTask
     ) -> AlbumMatch | importer.Action:
         self._add_choice_input()
         return super().choose_match(task)
 
     def choose_item(
-        self, task: importer.ImportTask
+        self, task: importer.AnyImportTask
     ) -> TrackMatch | importer.Action:
         self._add_choice_input()
         return super().choose_item(task)
