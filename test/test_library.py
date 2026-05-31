@@ -61,7 +61,6 @@ class PytestItemHelper(PytestTestHelper):
         return _common.item(self.lib)
 
 
-
 class TestLoad(PytestItemHelper):
     def test_load_restores_data_from_db(self, item_in_db):
         original_title = item_in_db.title
@@ -123,19 +122,17 @@ class TestAdd(PytestItemHelper):
         assert new_grouping == item.grouping
 
     def test_library_add_path_inserts_row(self):
-        i = beets.library.Item.from_path(
-            os.path.join(_common.RSRC, b"full.mp3")
-        )
-        self.lib.add(i)
+        item = beets.library.Item.from_path(os.path.join(_common.RSRC, b"full.mp3"))
+        self.lib.add(item)
         new_grouping = (
             self.lib._connection()
             .execute(
                 "select grouping from items where composers = ?",
-                (i._type("composers").to_sql(i.composers),),
+                (item._type("composers").to_sql(item.composers),),
             )
             .fetchone()["grouping"]
         )
-        assert new_grouping == i.grouping
+        assert new_grouping == item.grouping
 
     def test_library_add_one_database_change_event(
         self, item, caplog: pytest.LogCaptureFixture
@@ -599,16 +596,12 @@ class TestItemFormattedMapping(PytestItemHelper):
 class PathFormattingMixin:
     """Utilities for testing path formatting."""
 
-    i: beets.library.Item
     lib: beets.library.Library
 
     def _setf(self, fmt):
         self.lib.path_formats.insert(0, ("default", fmt))
 
-    def _assert_dest(self, dest, i=None):
-        if i is None:
-            i = self.i
-
+    def _assert_dest(self, dest, item):
         # Handle paths on Windows.
         if os.path.sep != "/":
             dest = dest.replace(b"/", os.path.sep.encode())
@@ -616,7 +609,7 @@ class PathFormattingMixin:
             # Paths are normalized based on the CWD.
             dest = normpath(dest)
 
-        actual = i.destination()
+        actual = item.destination()
 
         assert actual == dest
 
@@ -933,9 +926,8 @@ class TestPluginDestination(PytestTestHelper):
 
         self.lib.directory = b"/base"
         self.lib.path_formats = [("default", "$artist $foo")]
-        i = item(self.lib)
 
-        yield i
+        yield _common.item(self.lib)
 
         plugins.item_field_getters = self.old_field_getters
 
@@ -1051,14 +1043,14 @@ class TestAlbumInfo(PytestItemHelper):
         assert len(self.lib.albums()) == 0
 
     def test_noop_albuminfo_changes_affect_items(self, item_in_album):
-        i = self.get_first_item()
-        i.album = "foobar"
-        i.store()
+        item = self.get_first_item()
+        item.album = "foobar"
+        item.store()
         ai = self.lib.get_album(item_in_album)
         ai.album = ai.album
         ai.store()
-        i = self.get_first_item()
-        assert i.album == ai.album
+        item = self.get_first_item()
+        assert item.album == ai.album
 
 
 class TestArtDestination(PytestTestHelper):
@@ -1068,10 +1060,10 @@ class TestArtDestination(PytestTestHelper):
         config["replace"] = {"X": "Y"}
         self.lib.replacements = [(re.compile("X"), "Y")]
         self.lib.path_formats = [("default", "$artist/$album/$track $title")]
-        i = item(self.lib)
-        i.path = i.destination()
-        ai = self.lib.add_album((i,))
-        return i, ai
+        item = _common.item(self.lib)
+        item.path = item.destination()
+        ai = self.lib.add_album((item,))
+        return item, ai
 
     def test_art_filename_respects_setting(self, item_and_album):
         _i, ai = item_and_album
@@ -1199,9 +1191,9 @@ class TestMtime(PytestTestHelper):
             syspath(os.path.join(_common.RSRC, b"full.mp3")),
             syspath(self.ipath),
         )
-        i = beets.library.Item.from_path(self.ipath)
-        self.lib.add(i)
-        yield i
+        item = beets.library.Item.from_path(self.ipath)
+        self.lib.add(item)
+        yield item
         if os.path.exists(self.ipath):
             os.remove(self.ipath)
 
@@ -1261,11 +1253,11 @@ class TestTemplate(PytestItemHelper):
         assert bytes(album) == b"fo\xc3\xb6 bar"
 
         config["format_item"] = "bar $foo"
-        i = beets.library.Item()
-        i.foo = "bar"
-        i.tagada = "togodo"
-        assert f"{i}" == "bar bar"
-        assert f"{i:$tagada}" == "togodo"
+        item = beets.library.Item()
+        item.foo = "bar"
+        item.tagada = "togodo"
+        assert f"{item}" == "bar bar"
+        assert f"{item:$tagada}" == "togodo"
 
 
 class TestUnicodePath(PytestItemHelper):
@@ -1374,8 +1366,8 @@ class TestItemReadGenre(PytestTestHelper):
         mf = MediaFile(syspath(path))
         mf.genres = ["Jazz; Funk; Soul"]
         mf.save()
-        i = beets.library.Item.from_path(path)
-        assert i.genres == ["Jazz", "Funk", "Soul"]
+        item = beets.library.Item.from_path(path)
+        assert item.genres == ["Jazz", "Funk", "Soul"]
 
 
 class TestFilesize(PytestTestHelper):
