@@ -15,6 +15,7 @@ from mediafile import MediaFile, UnreadableFileError
 import beets
 from beets import dbcore, logging, plugins, util
 from beets.dbcore import types
+from beets.dbcore.db import FormattedMapping
 from beets.dbcore.pathutils import normalize_path_for_db
 from beets.dbcore.sort import SmartArtistSort
 from beets.util import (
@@ -313,6 +314,8 @@ class Album(LibModel):
     @cached_classproperty
     def _types(cls) -> dict[str, types.Type]:
         return {**super()._types, "path": TYPE_BY_FIELD["path"]}
+
+    _formatter = FormattedMapping
 
     _sorts: ClassVar[dict[str, type[FieldSort]]] = {
         "albumartist": SmartArtistSort,
