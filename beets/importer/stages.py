@@ -11,7 +11,7 @@ from beets.util import MoveOperation, displayable_path, pipeline
 
 from .actions import Action, DuplicateAction
 from .tasks import (
-    ImportTask,
+    AlbumImportTask,
     ImportTaskFactory,
     SentinelImportTask,
     SingletonImportTask,
@@ -23,13 +23,14 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Generator, Iterable, Iterator
 
     from beets import library
+    from beets.importer import AnyImportTask
 
     from .session import ImportSession
     from .tasks import BaseImportTask
 
     StageMessage: TypeAlias = BaseImportTask | pipeline.MultiMessage | None
-    StageCoro: TypeAlias = Generator[StageMessage, ImportTask, None]
-    StageReturn: TypeAlias = ImportTask | pipeline.MultiMessage | str
+    StageCoro: TypeAlias = Generator[StageMessage, AnyImportTask, None]
+    StageReturn: TypeAlias = AnyImportTask | pipeline.MultiMessage | str
 
 # Global logger.
 log = logging.getLogger("beets")
@@ -84,13 +85,13 @@ def query_tasks(session: ImportSession) -> Iterator[BaseImportTask]:
             items = list(album.items())
             _freshen_items(items)
 
-            task = ImportTask(None, [album.item_dir()], items)
+            task = AlbumImportTask(None, [album.item_dir()], items)
             for task in task.handle_created(session):
                 yield task
 
 
 def rescan_tasks(
-    session: ImportSession, task: ImportTask
+    session: ImportSession, task: AnyImportTask
 ) -> Iterator[BaseImportTask]:
     """Re-read `task`'s directories from disk and yield fresh tasks.
 
@@ -176,7 +177,9 @@ def group_albums(session: ImportSession) -> StageCoro:
         sorted_items: list[library.Item] = sorted(task.items, key=group)
         for _, items in itertools.groupby(sorted_items, group):
             l_items = list(items)
-            task = ImportTask(task.toppath, [i.path for i in l_items], l_items)
+            task = AlbumImportTask(
+                task.toppath, [i.path for i in l_items], l_items
+            )
             # Grouped by tag, not by directory: nothing for a rescan to
             # reconstruct, so the choice is withheld (see `_get_choices`).
             task.is_grouped = True
@@ -187,7 +190,7 @@ def group_albums(session: ImportSession) -> StageCoro:
 
 
 @pipeline.mutator_stage
-def lookup_candidates(session: ImportSession, task: ImportTask) -> None:
+def lookup_candidates(session: ImportSession, task: AnyImportTask) -> None:
     """A coroutine for performing the initial MusicBrainz lookup for an
     album. It accepts lists of Items and yields
     (items, cur_artist, cur_album, candidates, rec) tuples. If no match
@@ -207,7 +210,7 @@ def lookup_candidates(session: ImportSession, task: ImportTask) -> None:
 
 
 @pipeline.stage
-def user_query(session: ImportSession, task: ImportTask) -> StageReturn:
+def user_query(session: ImportSession, task: AnyImportTask) -> StageReturn:
     """A coroutine for interfacing with the user about the tagging
     process.
 
@@ -252,7 +255,7 @@ def user_query(session: ImportSession, task: ImportTask) -> StageReturn:
     # As-tracks: transition to singleton workflow.
     if task.choice_flag is Action.TRACKS:
         # Set up a little pipeline for dealing with the singletons.
-        def emitter(task: ImportTask) -> Iterator[BaseImportTask]:
+        def emitter(task: AnyImportTask) -> Iterator[BaseImportTask]:
             for item in task.items:
                 task = SingletonImportTask(task.toppath, item)
                 yield from task.handle_created(session)
@@ -285,7 +288,7 @@ def user_query(session: ImportSession, task: ImportTask) -> StageReturn:
         # Record merged paths in the session so they are not reimported
         session.mark_merged(duplicate_paths)
 
-        merged_task = ImportTask(
+        merged_task = AlbumImportTask(
             None, task.paths + duplicate_paths, task.items + duplicate_items
         )
 
@@ -298,7 +301,7 @@ def user_query(session: ImportSession, task: ImportTask) -> StageReturn:
 
 
 @pipeline.mutator_stage
-def import_asis(session: ImportSession, task: ImportTask) -> None:
+def import_asis(session: ImportSession, task: AnyImportTask) -> None:
     """Select the `action.ASIS` choice for all tasks.
 
     This stage replaces the initial_lookup and user_query stages
@@ -316,8 +319,8 @@ def import_asis(session: ImportSession, task: ImportTask) -> None:
 @pipeline.mutator_stage
 def plugin_stage(
     session: ImportSession,
-    func: Callable[[ImportSession, ImportTask], None],
-    task: ImportTask,
+    func: Callable[[ImportSession, AnyImportTask], None],
+    task: AnyImportTask,
 ) -> None:
     """A coroutine (pipeline stage) that calls the given function with
     each non-skipped import task. These stages occur between applying
@@ -335,7 +338,7 @@ def plugin_stage(
 
 
 @pipeline.stage
-def log_files(session: ImportSession, task: ImportTask) -> None:
+def log_files(session: ImportSession, task: AnyImportTask) -> None:
     """A coroutine (pipeline stage) to log each file to be imported."""
     if isinstance(task, SingletonImportTask):
         log.info("Singleton: {}", displayable_path(task.item["path"]))
@@ -352,7 +355,7 @@ def log_files(session: ImportSession, task: ImportTask) -> None:
 
 
 @pipeline.stage
-def manipulate_files(session: ImportSession, task: ImportTask) -> None:
+def manipulate_files(session: ImportSession, task: AnyImportTask) -> None:
     """A coroutine (pipeline stage) that performs necessary file
     manipulations *after* items have been added to the library and
     finalizes each task.
@@ -393,7 +396,7 @@ def manipulate_files(session: ImportSession, task: ImportTask) -> None:
 # Private functions only used in the stages above
 
 
-def _apply_choice(session: ImportSession, task: ImportTask) -> None:
+def _apply_choice(session: ImportSession, task: AnyImportTask) -> None:
     """Apply the task's choice to the Album or Item it contains and add
     it to the library.
     """
@@ -416,7 +419,7 @@ def _apply_choice(session: ImportSession, task: ImportTask) -> None:
         task.set_fields(session.lib)
 
 
-def _resolve_duplicates(session: ImportSession, task: ImportTask) -> None:
+def _resolve_duplicates(session: ImportSession, task: AnyImportTask) -> None:
     """Check if a task conflicts with items or albums already imported
     and ask the session to resolve this.
     """

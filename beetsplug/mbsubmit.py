@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     import optparse
     from collections.abc import Sequence
 
-    from beets.importer import ImportSession, ImportTask
+    from beets.importer import AnyImportTask, ImportSession
     from beets.library import Item, Library
 
 
@@ -53,7 +53,7 @@ class MBSubmitPlugin(BeetsPlugin):
         )
 
     def before_choose_candidate_event(
-        self, session: ImportSession, task: ImportTask
+        self, session: ImportSession, task: AnyImportTask
     ) -> list[PromptChoice]:
         if task.candidates.recommendation <= self.threshold:
             return [
@@ -62,7 +62,7 @@ class MBSubmitPlugin(BeetsPlugin):
             ]
         return []
 
-    def picard(self, session: ImportSession, task: ImportTask) -> None:
+    def picard(self, session: ImportSession, task: AnyImportTask) -> None:
         paths = []
         for p in task.paths:
             paths.append(displayable_path(p))
@@ -77,7 +77,7 @@ class MBSubmitPlugin(BeetsPlugin):
     def fmt(self) -> str:
         return self.config["format"].as_str()
 
-    def print_tracks(self, session: ImportSession, task: ImportTask) -> None:
+    def print_tracks(self, session: ImportSession, task: AnyImportTask) -> None:
         for i in sorted(task.items, key=lambda i: i.track):
             ui.print_(format(i, self.fmt))
 

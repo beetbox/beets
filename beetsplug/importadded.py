@@ -13,7 +13,7 @@ from beets import importer, util
 from beets.plugins import BeetsPlugin
 
 if TYPE_CHECKING:
-    from beets.importer import ImportSession, ImportTask
+    from beets.importer import AnyImportTask, ImportSession
     from beets.library import Album, Item, Library
 
 
@@ -49,8 +49,8 @@ class ImportAddedPlugin(BeetsPlugin):
         register("after_write", self.update_after_write_time)
 
     def check_config(
-        self, task: ImportTask, session: ImportSession
-    ) -> list[ImportTask] | None:
+        self, task: AnyImportTask, session: ImportSession
+    ) -> list[AnyImportTask] | None:
         self.config["preserve_mtimes"].get(bool)
         return None
 
@@ -61,8 +61,8 @@ class ImportAddedPlugin(BeetsPlugin):
         return album.path in self.replaced_album_paths
 
     def record_if_inplace(
-        self, task: ImportTask, session: ImportSession
-    ) -> list[ImportTask] | None:
+        self, task: AnyImportTask, session: ImportSession
+    ) -> list[AnyImportTask] | None:
         if not (
             session.config["copy"]
             or session.config["move"]
@@ -84,7 +84,7 @@ class ImportAddedPlugin(BeetsPlugin):
         return None
 
     def record_reimported(
-        self, task: ImportTask, session: ImportSession
+        self, task: AnyImportTask, session: ImportSession
     ) -> None:
         self.reimported_item_ids = {
             item.id

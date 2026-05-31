@@ -11,7 +11,7 @@ from beets.plugins import BeetsPlugin
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from beets.importer import ImportSession, ImportTask
+    from beets.importer import AnyImportTask, ImportSession
 
 
 __author__ = "baobab@heresiarch.info"
@@ -28,7 +28,7 @@ class IHatePlugin(BeetsPlugin):
 
     @classmethod
     def do_i_hate_this(
-        cls, task: ImportTask, action_patterns: Iterable[str]
+        cls, task: AnyImportTask, action_patterns: Iterable[str]
     ) -> bool:
         """Process group of patterns (warn or skip) and returns True if
         task is hated and not whitelisted.
@@ -43,7 +43,7 @@ class IHatePlugin(BeetsPlugin):
         return False
 
     def import_task_choice_event(
-        self, session: ImportSession, task: ImportTask
+        self, session: ImportSession, task: AnyImportTask
     ) -> None:
         skip_queries = self.config["skip"].as_str_seq()
         warn_queries = self.config["warn"].as_str_seq()

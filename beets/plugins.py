@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     from beets.autotag import AlbumInfo, TrackInfo
     from beets.dbcore.db import FieldQueryType
     from beets.dbcore.types import Type
-    from beets.importer import Action, ImportSession, ImportTask
+    from beets.importer import Action, AnyImportTask, ImportSession
     from beets.library import Album, Item, Library
     from beets.ui import Subcommand
     from beets.util import PromptChoice
@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 
     # TYPE_CHECKING guard is needed for any derived type
     # which uses an import from `beets.library` and `beets.imported`
-    ImportStageFunc = Callable[[ImportSession, ImportTask], None]
+    ImportStageFunc = Callable[[ImportSession, AnyImportTask], None]
     T = TypeVar("T", Album, Item, str)
     TFunc = Callable[[T], object]
     TFuncMap = dict[str, TFunc[T]]
@@ -326,7 +326,7 @@ class BeetsPlugin(metaclass=BeetsPluginMeta):
         self,
         event: events.ImportTaskCreatedEventType,
         func: Callable[
-            [Unpack[events.ImportTaskEventArgs]], list[ImportTask] | None
+            [Unpack[events.ImportTaskEventArgs]], list[AnyImportTask] | None
         ],
     ) -> None: ...
     @overload
@@ -738,7 +738,7 @@ def send(
 def send(
     event: events.ImportTaskCreatedEventType,
     **arguments: Unpack[events.ImportTaskEventArgs],
-) -> list[list[ImportTask]]: ...
+) -> list[list[AnyImportTask]]: ...
 @overload
 def send(
     event: events.ImportTaskEventType,

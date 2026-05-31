@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from confuse import ConfigView
     from gi.repository import Gst
 
-    from beets.importer import ImportSession, ImportTask
+    from beets.importer import AnyImportTask, ImportSession
     from beets.library import Album, Item, Library
     from beets.util import CommandOutput
 
@@ -1583,7 +1583,7 @@ class ReplayGainPlugin(BeetsPlugin):
         """Handle `import` event -> close pool"""
         self.close_pool()
 
-    def imported(self, session: ImportSession, task: ImportTask) -> None:
+    def imported(self, session: ImportSession, task: AnyImportTask) -> None:
         """Add replay gain info to items or albums of ``task``."""
         if self.config["auto"]:
             if task.is_album:

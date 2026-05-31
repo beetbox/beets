@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     import optparse
     from collections.abc import Iterable
 
-    from beets.importer import ImportSession, ImportTask
+    from beets.importer import AnyImportTask, ImportSession
     from beets.library import Item, Library
 
     from ._typing import JSONDict
@@ -116,7 +116,7 @@ class ZeroPlugin(BeetsPlugin):
                 self.fields_to_progs[field] = []
 
     def import_task_choice_event(
-        self, session: ImportSession, task: ImportTask
+        self, session: ImportSession, task: AnyImportTask
     ) -> None:
         if task.choice_flag == Action.ASIS and not self.warned:
             self._log.warning('cannot zero in "as-is" mode')

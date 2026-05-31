@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
 
     from beets.autotag import AlbumInfo, TrackInfo
-    from beets.importer import ImportSession, ImportTask
+    from beets.importer import AnyImportTask, ImportSession
     from beets.library import Item, Library
     from beets.logging import BeetsLogger as Logger
     from beetsplug.musicbrainz import MusicBrainzPlugin
@@ -216,7 +216,7 @@ class AcoustidPlugin(MetadataSourcePlugin):
         return plugin  # type: ignore[return-value]
 
     def fingerprint_task(
-        self, task: ImportTask, session: ImportSession
+        self, task: AnyImportTask, session: ImportSession
     ) -> None:
         return fingerprint_task(self._log, task, session)
 
@@ -384,7 +384,7 @@ class AcoustidPlugin(MetadataSourcePlugin):
 
 
 def fingerprint_task(
-    log: Logger, task: ImportTask, session: ImportSession
+    log: Logger, task: AnyImportTask, session: ImportSession
 ) -> None:
     """Fingerprint each item in the task for later use during the
     autotagging candidate search.
@@ -393,7 +393,9 @@ def fingerprint_task(
         acoustid_match(log, item.path)
 
 
-def apply_acoustid_metadata(task: ImportTask, session: ImportSession) -> None:
+def apply_acoustid_metadata(
+    task: AnyImportTask, session: ImportSession
+) -> None:
     """Apply Acoustid metadata (fingerprint and ID) to the task's items."""
     for item in task.imported_items():
         if item.path in _fingerprints:

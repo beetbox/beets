@@ -39,7 +39,7 @@ if TYPE_CHECKING:
 
     import confuse
 
-    from beets.importer import ImportTask
+    from beets.importer import AnyImportTask
     from beets.library import Library
     from beets.logging import BeetsLogger as Logger
 
@@ -1211,7 +1211,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
         cmd.func = func
         return [cmd]
 
-    def imported(self, _, task: ImportTask) -> None:
+    def imported(self, _, task: AnyImportTask) -> None:
         """Import hook for fetching lyrics automatically."""
         if query_str := self.config["auto_ignore"].get():
             query, _ = parse_query_string(query_str, Item)

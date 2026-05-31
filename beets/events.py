@@ -8,7 +8,7 @@ if TYPE_CHECKING:
 
     from beets.autotag import AlbumInfo, TrackInfo
     from beets.autotag.match import AlbumMatch
-    from beets.importer import ImportSession, ImportTask
+    from beets.importer import AnyImportTask, ImportSession
     from beets.library import Album, Item, LibModel, Library
 
 AfterWriteEventType = Literal["after_write"]
@@ -85,7 +85,7 @@ class ItemPathEventArgs(TypedDict):
 
 class ImportTaskEventArgs(TypedDict):
     session: ImportSession
-    task: ImportTask
+    task: AnyImportTask
 
 
 class ImportEventArgs(TypedDict):

@@ -18,7 +18,12 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from beets.autotag import Source
-    from beets.importer import ImportSession, ImportTask, SingletonImportTask
+    from beets.importer import (
+        AlbumImportTask,
+        AnyImportTask,
+        ImportSession,
+        SingletonImportTask,
+    )
     from beets.library import AlbumOrItem, Item
     from beets.util import PathBytes
 
@@ -29,7 +34,9 @@ log = logging.getLogger("beets")
 class TerminalImportSession(importer.ImportSession):
     """An import session that runs in a terminal."""
 
-    def choose_match(self, task: ImportTask) -> AlbumMatch | importer.Action:
+    def choose_match(
+        self, task: AlbumImportTask
+    ) -> AlbumMatch | importer.Action:
         """Given an initial autotagging of items, go through an interactive
         dance with the user to ask for a choice of metadata. Returns an
         AlbumMatch object, ASIS, or SKIP.
@@ -155,7 +162,7 @@ class TerminalImportSession(importer.ImportSession):
                 print(f"  {dup}")
 
     def _get_duplicate_action_from_user(
-        self, task: importer.ImportTask, found_duplicates: list[AlbumOrItem]
+        self, task: importer.AnyImportTask, found_duplicates: list[AlbumOrItem]
     ) -> str:
         """Decide what to do when a new album or item seems similar to one
         that's already in the library.
@@ -185,7 +192,7 @@ class TerminalImportSession(importer.ImportSession):
         return ui.input_options(DuplicateAction.strict_options())
 
     def get_duplicate_action(
-        self, task: importer.ImportTask, found_duplicates: list[AlbumOrItem]
+        self, task: importer.AnyImportTask, found_duplicates: list[AlbumOrItem]
     ) -> DuplicateAction:
         action = super().get_duplicate_action(task, found_duplicates)
         if action is DuplicateAction.ASK:
@@ -201,7 +208,7 @@ class TerminalImportSession(importer.ImportSession):
             "was interrupted. Resume (Y/n)?"
         )
 
-    def _get_choices(self, task: ImportTask) -> list[PromptChoice]:
+    def _get_choices(self, task: AnyImportTask) -> list[PromptChoice]:
         """Get the list of prompt choices that should be presented to the
         user. This consists of both built-in choices and ones provided by
         plugins.
@@ -489,7 +496,7 @@ def choose_candidate(
             return choice_actions[sel]
 
 
-def manual_search(session: ImportSession, task: ImportTask) -> None:
+def manual_search(session: ImportSession, task: AnyImportTask) -> None:
     """Resolve candidates using a manual search.
 
     Input either an artist and album (for full albums) or artist and
@@ -501,7 +508,7 @@ def manual_search(session: ImportSession, task: ImportTask) -> None:
     )
 
 
-def manual_id(session: ImportSession, task: ImportTask) -> None:
+def manual_id(session: ImportSession, task: AnyImportTask) -> None:
     """Resolve candidates using a manually-entered ID.
 
     Input an ID, either for an album ("release") or a track ("recording").
@@ -511,6 +518,6 @@ def manual_id(session: ImportSession, task: ImportTask) -> None:
     )
 
 
-def abort_action(session: ImportSession, task: ImportTask) -> None:
+def abort_action(session: ImportSession, task: AnyImportTask) -> None:
     """A prompt choice callback that aborts the importer."""
     raise importer.ImportAbortError()
