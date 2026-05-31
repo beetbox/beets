@@ -48,6 +48,10 @@ np = util.normpath
 
 
 class PytestItemHelper(PytestTestHelper):
+    def get_first_item(self):
+        """Retrieve first item from library."""
+        return next(iter(self.lib.items()))
+
     @pytest.fixture
     def item(self):
         return _common.item()
@@ -55,6 +59,7 @@ class PytestItemHelper(PytestTestHelper):
     @pytest.fixture
     def item_in_db(self):
         return _common.item(self.lib)
+
 
 
 class TestLoad(PytestItemHelper):
@@ -955,34 +960,33 @@ class TestPluginDestination(PytestTestHelper):
         self._assert_dest(b"the artist bar_baz", item)
 
 
-class TestAlbumInfo(PytestTestHelper):
-    @pytest.fixture(autouse=True)
-    def item(self, setup):
-        i = item()
-        self.lib.add_album((i,))
-        return i
+class TestAlbumInfo(PytestItemHelper):
+    @pytest.fixture
+    def item_in_album(self, item):
+        self.lib.add_album((item,))
+        return item
 
-    def test_albuminfo_reflects_metadata(self, item):
-        ai = self.lib.get_album(item)
-        assert ai.mb_albumartistid == item.mb_albumartistid
-        assert ai.albumartist == item.albumartist
-        assert ai.album == item.album
-        assert ai.year == item.year
+    def test_albuminfo_reflects_metadata(self, item_in_album):
+        ai = self.lib.get_album(item_in_album)
+        assert ai.mb_albumartistid == item_in_album.mb_albumartistid
+        assert ai.albumartist == item_in_album.albumartist
+        assert ai.album == item_in_album.album
+        assert ai.year == item_in_album.year
 
-    def test_albuminfo_stores_art(self, item):
-        ai = self.lib.get_album(item)
+    def test_albuminfo_stores_art(self, item_in_album):
+        ai = self.lib.get_album(item_in_album)
         ai.artpath = os.fsdecode(np("/my/great/art"))
         ai.store()
-        new_ai = self.lib.get_album(item)
+        new_ai = self.lib.get_album(item_in_album)
         assert new_ai.artpath == np("/my/great/art")
 
-    def test_albuminfo_for_two_items_doesnt_duplicate_row(self, item):
+    def test_albuminfo_for_two_items_doesnt_duplicate_row(self, item_in_album):
         i2 = _common.item(self.lib)
-        self.lib.get_album(item)
+        self.lib.get_album(item_in_album)
         self.lib.get_album(i2)
 
         c = self.lib._connection().cursor()
-        c.execute("select * from albums where album=?", (item.album,))
+        c.execute("select * from albums where album=?", (item_in_album.album,))
         # Cursor should only return one row.
         assert c.fetchone() is not None
         assert c.fetchone() is None
@@ -994,69 +998,66 @@ class TestAlbumInfo(PytestTestHelper):
         ai = self.lib.get_album(i2)
         assert ai is None
 
-    def test_get_album_by_id(self, item):
-        ai = self.lib.get_album(item)
-        ai = self.lib.get_album(item.id)
+    def test_get_album_by_id(self, item_in_album):
+        ai = self.lib.get_album(item_in_album)
+        ai = self.lib.get_album(item_in_album.id)
         assert ai is not None
 
-    def test_album_items_consistent(self, item):
-        ai = self.lib.get_album(item)
+    def test_album_items_consistent(self, item_in_album):
+        ai = self.lib.get_album(item_in_album)
         for i in ai.items():
-            if i.id == item.id:
+            if i.id == item_in_album.id:
                 break
         else:
             self.fail("item not found")
 
-    def test_albuminfo_changes_affect_items(self, item):
-        ai = self.lib.get_album(item)
+    def test_albuminfo_changes_affect_items(self, item_in_album):
+        ai = self.lib.get_album(item_in_album)
         ai.album = "myNewAlbum"
         ai.store()
-        i = self.lib.items()[0]
-        assert i.album == "myNewAlbum"
+        assert self.get_first_item().album == "myNewAlbum"
 
-    def test_albuminfo_change_albumartist_changes_items(self, item):
-        ai = self.lib.get_album(item)
+    def test_albuminfo_change_albumartist_changes_items(self, item_in_album):
+        ai = self.lib.get_album(item_in_album)
         ai.albumartist = "myNewArtist"
         ai.store()
-        i = self.lib.items()[0]
-        assert i.albumartist == "myNewArtist"
-        assert i.artist != "myNewArtist"
+        item = self.get_first_item()
+        assert item.albumartist == "myNewArtist"
+        assert item.artist != "myNewArtist"
 
-    def test_albuminfo_change_artist_does_change_items(self, item):
-        ai = self.lib.get_album(item)
+    def test_albuminfo_change_artist_does_change_items(self, item_in_album):
+        ai = self.lib.get_album(item_in_album)
         ai.artist = "myNewArtist"
         ai.store(inherit=True)
-        i = self.lib.items()[0]
-        assert i.artist == "myNewArtist"
+        assert self.get_first_item().artist == "myNewArtist"
 
-    def test_albuminfo_change_artist_does_not_change_items(self, item):
-        ai = self.lib.get_album(item)
+    def test_albuminfo_change_artist_does_not_change_items(self, item_in_album):
+        ai = self.lib.get_album(item_in_album)
         ai.artist = "myNewArtist"
         ai.store(inherit=False)
-        i = self.lib.items()[0]
-        assert i.artist != "myNewArtist"
+        assert self.get_first_item().artist != "myNewArtist"
 
-    def test_albuminfo_remove_removes_items(self, item):
-        item_id = item.id
-        self.lib.get_album(item).remove()
+    def test_albuminfo_remove_removes_items(self, item_in_album):
+        item_id = item_in_album.id
+        self.lib.get_album(item_in_album).remove()
         c = self.lib._connection().execute(
             "SELECT id FROM items WHERE id=?", (item_id,)
         )
         assert c.fetchone() is None
 
-    def test_removing_last_item_removes_album(self, item):
+    def test_removing_last_item_removes_album(self, item_in_album):
         assert len(self.lib.albums()) == 1
-        item.remove()
+        item_in_album.remove()
         assert len(self.lib.albums()) == 0
 
-    def test_noop_albuminfo_changes_affect_items(self, item):
-        i = self.lib.items()[0]
+    def test_noop_albuminfo_changes_affect_items(self, item_in_album):
+        i = self.get_first_item()
         i.album = "foobar"
         i.store()
-        ai = self.lib.get_album(item)
+        ai = self.lib.get_album(item_in_album)
         ai.album = ai.album
         ai.store()
-        i = self.lib.items()[0]
+        i = self.get_first_item()
         assert i.album == ai.album
 
 
