@@ -360,8 +360,7 @@ def fingerprint_task(log, task, session):
     """Fingerprint each item in the task for later use during the
     autotagging candidate search.
     """
-    items = task.items if task.is_album else [task.item]
-    for item in items:
+    for item in task.items:
         acoustid_match(log, item.path)
 
 

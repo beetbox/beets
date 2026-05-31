@@ -9,6 +9,7 @@ import tempfile
 from typing import TYPE_CHECKING
 
 from beets import config, library, ui, util
+from beets.importer import AlbumImportTask
 from beets.plugins import BeetsPlugin
 
 if TYPE_CHECKING:
@@ -90,9 +91,8 @@ class IPFSPlugin(BeetsPlugin):
         return [cmd]
 
     def auto_add(self, session, task: AnyImportTask):
-        if task.is_album:
-            if self.ipfs_add(task.album):
-                task.album.store()
+        if isinstance(task, AlbumImportTask) and self.ipfs_add(task.album):
+            task.album.store()
 
     def ipfs_play(self, lib, opts, args):
         from beetsplug.play import PlayPlugin

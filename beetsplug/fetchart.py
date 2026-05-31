@@ -17,6 +17,7 @@ from mediafile import image_mime_type
 
 from beets import config, importer, plugins, ui, util
 from beets.exceptions import UserError
+from beets.importer import AlbumImportTask
 from beets.util import bytestring_path, get_temp_filename, sorted_walk, syspath
 from beets.util.artresizer import ArtResizer
 from beets.util.color import colorize
@@ -1462,7 +1463,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
     # Asynchronous; after music is added to the library.
     def fetch_art(self, session: ImportSession, task: AnyImportTask) -> None:
         """Find art for the album being imported."""
-        if task.is_album:  # Only fetch art for full albums.
+        if isinstance(task, AlbumImportTask):
             if task.album.artpath and os.path.isfile(
                 syspath(task.album.artpath)
             ):
@@ -1515,11 +1516,14 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
     # Synchronous; after music files are put in place.
     def assign_art(self, session: ImportSession, task: AnyImportTask):
         """Place the discovered art in the filesystem."""
+        if not isinstance(t := task, AlbumImportTask):
+            return
+
         if task in self.art_candidates:
             candidate = self.art_candidates.pop(task)
             removal_enabled = self._is_source_file_removal_enabled()
 
-            self._set_art(task.album, candidate, not removal_enabled)
+            self._set_art(t.album, candidate, not removal_enabled)
 
             if (
                 removal_enabled

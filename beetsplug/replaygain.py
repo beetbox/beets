@@ -1559,12 +1559,8 @@ class ReplayGainPlugin(BeetsPlugin):
     def imported(self, session: ImportSession, task: AnyImportTask):
         """Add replay gain info to items or albums of ``task``."""
         if self.config["auto"]:
-            if task.is_album:
-                self.handle_album(task.album, False, self.force_on_import)
-            else:
-                # Should be a SingletonImportTask
-                assert hasattr(task, "item")
-                self.handle_track(task.item, False, self.force_on_import)
+            method = getattr(self, f"handle_{task.source.type}")
+            method(task.target, False, self.force_on_import)
 
     def command_func(
         self, lib: Library, opts: optparse.Values, args: list[str]

@@ -709,4 +709,4 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         return [lastgenre_cmd]
 
     def imported(self, _: ImportSession, task: AnyImportTask) -> None:
-        self._process(task.album if task.is_album else task.item, write=False)  # type: ignore[attr-defined]
+        self._process(task.target, write=False)

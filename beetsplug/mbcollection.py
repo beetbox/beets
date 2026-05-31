@@ -9,6 +9,7 @@ from requests.auth import HTTPDigestAuth
 
 from beets import __version__, config
 from beets.exceptions import UserError
+from beets.importer import AlbumImportTask
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 
@@ -189,7 +190,7 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
 
     def imported(self, session: ImportSession, task: AnyImportTask) -> None:
         """Add each imported album to the collection."""
-        if task.is_album:
+        if isinstance(task, AlbumImportTask):
             self.update_album_list(
                 session.lib, [task.album], remove_missing=False
             )

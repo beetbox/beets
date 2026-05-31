@@ -881,7 +881,6 @@ class TestArtImporter(UseThePlugin):
 
         # Import task for the coroutine.
         self.task = importer.AlbumImportTask(None, None, [self.i])
-        self.task.is_album = True
         self.task.album = self.album
         info = AlbumInfo(
             album="some album",
@@ -921,7 +920,7 @@ class TestArtImporter(UseThePlugin):
         self._fetch_art(False)
 
     def test_no_art_for_singleton(self):
-        self.task.is_album = False
+        self.task = importer.SingletonImportTask(None, self.i)
         self._fetch_art(False)
 
     def test_leave_original_file_in_place(self):

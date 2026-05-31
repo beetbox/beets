@@ -150,15 +150,16 @@ class TerminalImportSession(importer.ImportSession):
         """Decide what to do when a new album or item seems similar to one
         that's already in the library.
         """
-        is_album = task.is_album
         log.warning("This {.source.type} is already in the library!", task)
 
         if config["import"]["quiet"]:
             # In quiet mode, don't prompt -- just skip.
             log.info("Skipping.")
             return "s"
+
         # Print some detail about the existing and new items so the
         # user can make an informed decision.
+        is_album = task.is_album
         for duplicate in found_duplicates:
             self._report_item_summary(
                 "Old",

@@ -131,7 +131,7 @@ class FromFilenamePlugin(plugins.BeetsPlugin):
         same regex we can make an educated guess of which part of the
         regex that contains the title.
         """
-        items = task.items if task.is_album else [task.item]
+        items = task.items
 
         # Look for suspicious (empty or meaningless) titles.
         missing_titles = sum(bad_title(i.title) for i in items)
