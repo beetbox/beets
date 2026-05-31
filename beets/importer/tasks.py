@@ -271,6 +271,14 @@ class ImportTask(BaseImportTask, Generic[library.AlbumOrItem, InfoT, MatchT]):
     def candidates(self) -> Candidates[InfoT, MatchT]:
         raise NotImplementedError
 
+    @cached_property
+    def is_album(self) -> bool:
+        return self.source.type == "album"
+
+    @property
+    def target(self) -> library.AnyLibModel | None:
+        raise NotImplementedError
+
     def __init__(
         self,
         toppath: util.PathBytes | None,
@@ -278,7 +286,6 @@ class ImportTask(BaseImportTask, Generic[library.AlbumOrItem, InfoT, MatchT]):
         items: Iterable[library.Item] | None,
     ) -> None:
         super().__init__(toppath, paths, items)
-        self.is_album = True
 
     def set_choice(self, choice: Action | AlbumMatch | TrackMatch) -> None:
         """Given an AlbumMatch or TrackMatch object or an action constant,
@@ -740,6 +747,10 @@ class AlbumImportTask(ImportTask[library.Album, AlbumInfo, AlbumMatch]):
     def candidates(self) -> AlbumCandidates:
         return AlbumCandidates(self.source)
 
+    @property
+    def target(self) -> library.Album | None:
+        return self.album
+
     def imported_items(self) -> list[library.Item]:
         """Return a list of Items that should be added to the library.
 
@@ -921,12 +932,15 @@ class SingletonImportTask(ImportTask[library.Item, TrackInfo, TrackMatch]):
     def candidates(self) -> TrackCandidates:  # type: ignore[override] # TODO: introduce AlbumImportTask to fix this
         return TrackCandidates(self.source)
 
+    @property
+    def target(self) -> library.Item | None:
+        return self.item
+
     def __init__(
         self, toppath: util.PathBytes | None, item: library.Item
     ) -> None:
         super().__init__(toppath, [item.path], [item])
         self.item = item
-        self.is_album = False
         self.paths = [item.path]
 
     def imported_items(self) -> list[library.Item]:
@@ -1069,7 +1083,6 @@ class SentinelImportTask(AnyImportTask):
     ) -> None:
         super().__init__(toppath, paths, ())
         # TODO Remove the remaining attributes eventually
-        self.is_album = True
         self.choice_flag = None
 
     def save_history(self) -> None:
