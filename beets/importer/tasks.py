@@ -18,6 +18,7 @@ import logging
 import os
 import re
 import shutil
+import tarfile
 import time
 from collections import defaultdict
 from collections.abc import Callable
@@ -829,6 +830,65 @@ ArchiveHandler = tuple[
 ]
 
 
+class _TarMemberInfo:
+    """Adapter exposing the ``ZipInfo``-compatible attributes
+    (``filename``, ``date_time``) that :meth:`ArchiveImportTask.extract`
+    expects when iterating archive members.
+    """
+
+    def __init__(self, member: tarfile.TarInfo) -> None:
+        self.filename = member.name
+        self.date_time = time.gmtime(member.mtime)[:6]
+
+
+class TarArchive(tarfile.TarFile):
+    """``tarfile.TarFile`` extended with an ``infolist`` method mirroring
+    ``zipfile.ZipFile`` so archive extraction can iterate uniformly across
+    handlers. ``TarFile.infolist`` existed in Python 2 via ``ZipFileCompat``
+    but was removed in Python 3.
+    """
+
+    def infolist(self) -> list[_TarMemberInfo]:
+        return [_TarMemberInfo(m) for m in self.getmembers() if m.isfile()]
+
+
+class _SevenZipMemberInfo:
+    """Adapter exposing the ``ZipInfo``-compatible attributes used by
+    :meth:`ArchiveImportTask.extract` for ``py7zr.SevenZipFile`` members."""
+
+    def __init__(self, member: Any) -> None:
+        self.filename = member.filename
+        self.date_time = member.creationtime.timetuple()[:6]
+
+
+class SevenZipArchive:
+    """Wraps ``py7zr.SevenZipFile`` to expose the
+    ``zipfile.ZipFile``-compatible interface (``extractall``, ``infolist``,
+    ``close``) that archive extraction relies on. ``SevenZipFile`` itself
+    provides ``list()`` rather than ``infolist()``, so a thin adapter is
+    needed.
+
+    Composition (rather than subclassing) keeps the optional ``py7zr``
+    dependency lazy: the import only happens when a 7z archive is opened.
+    """
+
+    def __init__(self, path: util.StrPath, mode: str = "r") -> None:
+        import py7zr
+
+        self._archive = py7zr.SevenZipFile(path, mode=mode)
+
+    def extractall(self, path: util.StrPath) -> None:
+        self._archive.extractall(path=path)
+
+    def infolist(self) -> list[_SevenZipMemberInfo]:
+        return [
+            _SevenZipMemberInfo(m) for m in self._archive.list() if m.is_file
+        ]
+
+    def close(self) -> None:
+        self._archive.close()
+
+
 class ArchiveImportTask(SentinelImportTask):
     """An import task that represents the processing of an archive.
 
@@ -880,9 +940,7 @@ class ArchiveImportTask(SentinelImportTask):
         from zipfile import ZipFile, is_zipfile
 
         _handlers.append((is_zipfile, ZipFile))
-        import tarfile
-
-        _handlers.append((tarfile.is_tarfile, tarfile.open))
+        _handlers.append((tarfile.is_tarfile, TarArchive.open))
         try:
             from rarfile import RarFile, is_rarfile
         except ImportError:
@@ -890,11 +948,11 @@ class ArchiveImportTask(SentinelImportTask):
         else:
             _handlers.append((is_rarfile, RarFile))
         try:
-            from py7zr import SevenZipFile, is_7zfile
+            from py7zr import is_7zfile
         except ImportError:
             pass
         else:
-            _handlers.append((is_7zfile, SevenZipFile))
+            _handlers.append((is_7zfile, SevenZipArchive))
 
         return _handlers
 

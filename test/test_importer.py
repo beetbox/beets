@@ -237,19 +237,22 @@ class RmTempTest(BeetsTestCase):
 
 
 class ImportZipTest(AsIsImporterMixin, ImportTestCase):
+    def create_archive(self):
+        return create_archive(self)
+
     def test_import_zip(self):
-        zip_path = create_archive(self)
+        archive_path = self.create_archive()
         assert len(self.lib.items()) == 0
         assert len(self.lib.albums()) == 0
 
-        self.run_asis_importer(import_dir=zip_path)
+        self.run_asis_importer(import_dir=archive_path)
         assert len(self.lib.items()) == 1
         assert len(self.lib.albums()) == 1
 
 
 class ImportTarTest(ImportZipTest):
     def create_archive(self):
-        (handle, path) = mkstemp(dir=syspath(self.temp_dir))
+        handle, path = mkstemp(dir=self.temp_dir_path)
         path = bytestring_path(path)
         os.close(handle)
         archive = TarFile(os.fsdecode(path), mode="w")
