@@ -30,6 +30,8 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- :doc:`plugins/replace`: Fix ``TypeError`` when invoking the ``replace``
+  command. :bug:`6260`
 - :ref:`import-cmd`: Fix duplicate album merge during import when running in
   threaded mode. The merge action no longer creates a duplicate folder or
   reports ``could not get filesize`` errors. :bug:`6601`
