@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import Counter
 from itertools import chain
+from typing import TYPE_CHECKING
 
 from beets import config, importer, logging, plugins, ui
 from beets.autotag import (
@@ -18,6 +19,9 @@ from beets.util.color import colorize
 from beets.util.units import human_bytes, human_seconds_short
 
 from .display import show_change, show_item_change
+
+if TYPE_CHECKING:
+    from beets.library import AnyLibModel
 
 # Global logger.
 log = logging.getLogger("beets")
@@ -144,7 +148,9 @@ class TerminalImportSession(importer.ImportSession):
                 assert isinstance(choice, TrackMatch)
                 return choice
 
-    def resolve_duplicate(self, task, found_duplicates):
+    def get_duplicate_action_value(
+        self, task: importer.ImportTask, found_duplicates: list[AnyLibModel]
+    ) -> str:
         """Decide what to do when a new album or item seems similar to one
         that's already in the library.
         """
@@ -156,51 +162,32 @@ class TerminalImportSession(importer.ImportSession):
         if config["import"]["quiet"]:
             # In quiet mode, don't prompt -- just skip.
             log.info("Skipping.")
-            sel = "s"
-        else:
-            # Print some detail about the existing and new items so the
-            # user can make an informed decision.
-            for duplicate in found_duplicates:
-                ui.print_(
-                    "Old: "
-                    + summarize_items(
-                        (
-                            list(duplicate.items())
-                            if task.is_album
-                            else [duplicate]
-                        ),
-                        not task.is_album,
-                    )
-                )
-                if config["import"]["duplicate_verbose_prompt"]:
-                    if task.is_album:
-                        for dup in duplicate.items():
-                            print(f"  {dup}")
-                    else:
-                        print(f"  {duplicate}")
-
+            return "s"
+        # Print some detail about the existing and new items so the
+        # user can make an informed decision.
+        for duplicate in found_duplicates:
             ui.print_(
-                "New: "
-                + summarize_items(task.imported_items(), not task.is_album)
+                "Old: "
+                + summarize_items(
+                    (list(duplicate.items()) if task.is_album else [duplicate]),
+                    not task.is_album,
+                )
             )
             if config["import"]["duplicate_verbose_prompt"]:
-                for item in task.imported_items():
-                    print(f"  {item}")
+                if task.is_album:
+                    for dup in duplicate.items():
+                        print(f"  {dup}")
+                else:
+                    print(f"  {duplicate}")
 
-            sel = ui.input_options(DuplicateAction.strict_options())
+        ui.print_(
+            "New: " + summarize_items(task.imported_items(), not task.is_album)
+        )
+        if config["import"]["duplicate_verbose_prompt"]:
+            for item in task.imported_items():
+                print(f"  {item}")
 
-        action = DuplicateAction(sel)
-        if action is DuplicateAction.SKIP:
-            # Skip new.
-            task.set_choice(importer.Action.SKIP)
-        elif action is DuplicateAction.KEEP:
-            # Keep both. Do nothing; leave the choice intact.
-            pass
-        elif action is DuplicateAction.REMOVE:
-            # Remove old.
-            task.should_remove_duplicates = True
-        elif action is DuplicateAction.MERGE:
-            task.should_merge_duplicates = True
+        return ui.input_options(DuplicateAction.strict_options())
 
     def should_resume(self, path):
         return ui.input_yn(

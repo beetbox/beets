@@ -21,13 +21,14 @@ from beets import config, logging, plugins, util
 from beets.util import displayable_path, normpath, pipeline, syspath
 
 from . import stages as stagefuncs
-from .actions import Action
+from .actions import Action, DuplicateAction
 from .state import ImportState
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from beets import dbcore, library
+    from beets.library import AnyLibModel
     from beets.util import PathBytes
 
     from .tasks import ImportTask
@@ -180,8 +181,28 @@ class ImportSession:
     def choose_match(self, task: ImportTask):
         raise NotImplementedError
 
-    def resolve_duplicate(self, task: ImportTask, found_duplicates):
+    def get_duplicate_action_value(
+        self, task: ImportTask, found_duplicates: list[AnyLibModel]
+    ) -> str:
         raise NotImplementedError
+
+    def resolve_duplicate(
+        self, task: ImportTask, found_duplicates: list[AnyLibModel]
+    ) -> None:
+        action = DuplicateAction(
+            self.get_duplicate_action_value(task, found_duplicates)
+        )
+        if action is DuplicateAction.SKIP:
+            # Skip new.
+            task.set_choice(Action.SKIP)
+        elif action is DuplicateAction.KEEP:
+            # Keep both. Do nothing; leave the choice intact.
+            pass
+        elif action is DuplicateAction.REMOVE:
+            # Remove old.
+            task.should_remove_duplicates = True
+        elif action is DuplicateAction.MERGE:
+            task.should_merge_duplicates = True
 
     def choose_item(self, task: ImportTask):
         raise NotImplementedError

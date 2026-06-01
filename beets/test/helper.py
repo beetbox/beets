@@ -61,6 +61,8 @@ from beets.util import (
 if TYPE_CHECKING:
     from requests_mock.mocker import Mocker
 
+    from beets.library import AnyLibModel
+
 RUNNING_IN_CI = os.environ.get("GITHUB_ACTIONS") == "true"
 
 
@@ -650,17 +652,12 @@ class ImportSessionFixture(ImportSession):
 
     choose_item = choose_match
 
-    def resolve_duplicate(self, task, found_duplicates):
-        res = DuplicateAction(
-            self.config["duplicate_action"].as_choice(DuplicateAction.choices())
+    def get_duplicate_action_value(
+        self, task: importer.ImportTask, found_duplicates: list[AnyLibModel]
+    ) -> str:
+        return self.config["duplicate_action"].as_choice(
+            DuplicateAction.choices()
         )
-
-        if res is DuplicateAction.SKIP:
-            task.set_choice(importer.Action.SKIP)
-        elif res is DuplicateAction.REMOVE:
-            task.should_remove_duplicates = True
-        elif res is DuplicateAction.MERGE:
-            task.should_merge_duplicates = True
 
 
 class TerminalImportSessionFixture(TerminalImportSession):
