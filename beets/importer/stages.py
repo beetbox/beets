@@ -349,10 +349,7 @@ def _resolve_duplicates(session: ImportSession, task: ImportTask):
             log.debug("default action for duplicates: {}", default_choice)
 
             task.duplicate_action = DuplicateAction(default_choice)
-            if (action := task.duplicate_action) is DuplicateAction.SKIP:
-                # Skip new.
-                task.set_choice(Action.SKIP)
-            elif action is DuplicateAction.ASK:
+            if task.duplicate_action is DuplicateAction.ASK:
                 # No default action set; ask the session.
                 session.resolve_duplicate(task, found_duplicates)
 

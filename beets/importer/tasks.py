@@ -32,7 +32,7 @@ from beets.dbcore.query import PathQuery
 from beets.util import extension
 from beets.util.extension import remux_mpeglayer3_wav
 
-from .actions import Action
+from .actions import Action, DuplicateAction
 from .state import ImportState
 
 if TYPE_CHECKING:
@@ -40,7 +40,6 @@ if TYPE_CHECKING:
 
     from beets.autotag import Recommendation, TrackMatch
 
-    from .actions import DuplicateAction
     from .session import ImportSession
 
 # Global logger.
@@ -207,8 +206,11 @@ class ImportTask(BaseImportTask):
         return self.choice_flag == Action.APPLY
 
     @property
-    def skip(self):
-        return self.choice_flag == Action.SKIP
+    def skip(self) -> bool:
+        return (
+            self.choice_flag == Action.SKIP
+            or self.duplicate_action is DuplicateAction.SKIP
+        )
 
     # Convenient data.
 

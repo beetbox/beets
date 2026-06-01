@@ -166,13 +166,13 @@ class ImportSession:
                 self.tag_log("duplicate-replace", paths)
             elif task.choice_flag in (Action.ASIS, Action.APPLY):
                 self.tag_log("duplicate-keep", paths)
-            elif task.choice_flag is Action.SKIP:
+            elif task.skip:
                 self.tag_log("duplicate-skip", paths)
         else:
             # Non-duplicate: log "skip" and "asis" choices.
             if task.choice_flag is Action.ASIS:
                 self.tag_log("asis", paths)
-            elif task.choice_flag is Action.SKIP:
+            elif task.skip:
                 self.tag_log("skip", paths)
 
     def should_resume(self, path: PathBytes):
@@ -192,9 +192,6 @@ class ImportSession:
         task.duplicate_action = DuplicateAction(
             self.get_duplicate_action_value(task, found_duplicates)
         )
-        if task.duplicate_action is DuplicateAction.SKIP:
-            # Skip new.
-            task.set_choice(Action.SKIP)
 
     def choose_item(self, task: ImportTask):
         raise NotImplementedError
