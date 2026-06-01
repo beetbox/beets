@@ -628,7 +628,6 @@ class ImportSessionFixture(ImportSession):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._choices = []
-        self._resolutions = []
 
     default_choice = importer.Action.APPLY
 
@@ -657,10 +656,7 @@ class ImportSessionFixture(ImportSession):
     default_resolution = "REMOVE"
 
     def resolve_duplicate(self, task, found_duplicates):
-        try:
-            res = self._resolutions.pop(0)
-        except IndexError:
-            res = self.default_resolution
+        res = self.default_resolution
 
         if res == self.Resolution.SKIP:
             task.set_choice(importer.Action.SKIP)
