@@ -40,6 +40,7 @@ if TYPE_CHECKING:
 
     from beets.autotag import Recommendation, TrackMatch
 
+    from .actions import DuplicateAction
     from .session import ImportSession
 
 # Global logger.
@@ -153,6 +154,7 @@ class ImportTask(BaseImportTask):
     cur_artist: str | None = None
     candidates: Sequence[AlbumMatch | TrackMatch] | None = None
     rec: Recommendation | None = None
+    duplicate_action: DuplicateAction | None = None
 
     def __init__(
         self,
@@ -161,8 +163,6 @@ class ImportTask(BaseImportTask):
         items: Iterable[library.Item] | None,
     ):
         super().__init__(toppath, paths, items)
-        self.should_remove_duplicates = False
-        self.should_merge_duplicates = False
         self.is_album = True
 
     def set_choice(self, choice: Action | AlbumMatch | TrackMatch):
@@ -777,7 +777,6 @@ class SentinelImportTask(ImportTask):
     def __init__(self, toppath, paths):
         super().__init__(toppath, paths, ())
         # TODO Remove the remaining attributes eventually
-        self.should_remove_duplicates = False
         self.is_album = True
         self.choice_flag = None
 

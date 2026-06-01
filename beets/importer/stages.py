@@ -195,7 +195,7 @@ def user_query(session: ImportSession, task: ImportTask):
 
     _resolve_duplicates(session, task)
 
-    if task.should_merge_duplicates:
+    if task.duplicate_action is DuplicateAction.MERGE:
         # Create a new task for tagging the current items
         # and duplicates together
         duplicate_items = task.duplicate_items(session.lib)
@@ -280,7 +280,7 @@ def manipulate_files(session: ImportSession, task: ImportTask):
     finalizes each task.
     """
     if not task.skip:
-        if task.should_remove_duplicates:
+        if task.duplicate_action is DuplicateAction.REMOVE:
             task.remove_duplicates(session.lib)
 
         if session.config["move"]:
@@ -348,20 +348,11 @@ def _resolve_duplicates(session: ImportSession, task: ImportTask):
             )
             log.debug("default action for duplicates: {}", default_choice)
 
-            action = DuplicateAction(default_choice)
-            if action is DuplicateAction.SKIP:
+            task.duplicate_action = DuplicateAction(default_choice)
+            if (action := task.duplicate_action) is DuplicateAction.SKIP:
                 # Skip new.
                 task.set_choice(Action.SKIP)
-            elif action is DuplicateAction.KEEP:
-                # Keep both. Do nothing; leave the choice intact.
-                pass
-            elif action is DuplicateAction.REMOVE:
-                # Remove old.
-                task.should_remove_duplicates = True
-            elif action is DuplicateAction.MERGE:
-                # Merge duplicates together
-                task.should_merge_duplicates = True
-            else:
+            elif action is DuplicateAction.ASK:
                 # No default action set; ask the session.
                 session.resolve_duplicate(task, found_duplicates)
 

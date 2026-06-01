@@ -162,7 +162,7 @@ class ImportSession:
         paths = task.paths
         if duplicate:
             # Duplicate: log all three choices (skip, keep both, and trump).
-            if task.should_remove_duplicates:
+            if task.duplicate_action is DuplicateAction.REMOVE:
                 self.tag_log("duplicate-replace", paths)
             elif task.choice_flag in (Action.ASIS, Action.APPLY):
                 self.tag_log("duplicate-keep", paths)
@@ -189,20 +189,12 @@ class ImportSession:
     def resolve_duplicate(
         self, task: ImportTask, found_duplicates: list[AnyLibModel]
     ) -> None:
-        action = DuplicateAction(
+        task.duplicate_action = DuplicateAction(
             self.get_duplicate_action_value(task, found_duplicates)
         )
-        if action is DuplicateAction.SKIP:
+        if task.duplicate_action is DuplicateAction.SKIP:
             # Skip new.
             task.set_choice(Action.SKIP)
-        elif action is DuplicateAction.KEEP:
-            # Keep both. Do nothing; leave the choice intact.
-            pass
-        elif action is DuplicateAction.REMOVE:
-            # Remove old.
-            task.should_remove_duplicates = True
-        elif action is DuplicateAction.MERGE:
-            task.should_merge_duplicates = True
 
     def choose_item(self, task: ImportTask):
         raise NotImplementedError
