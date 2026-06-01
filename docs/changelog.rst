@@ -72,9 +72,12 @@ Bug fixes
     For plugin developers
     ~~~~~~~~~~~~~~~~~~~~~
 
-..
-    Other changes
-    ~~~~~~~~~~~~~
+Other changes
+~~~~~~~~~~~~~
+
+- :doc:`plugins/spotify`: ``spotifysync`` now batches its SQLite commit for a
+  sync run, follows the standard beets write-before-store pattern, and logs
+  audio-features API unavailability only once per run.
 
 2.11.0 (May 06, 2026)
 ---------------------
