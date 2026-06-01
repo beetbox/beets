@@ -20,6 +20,7 @@ from .session import ImportAbortError, ImportSession
 from .tasks import (
     Action,
     ArchiveImportTask,
+    DuplicateAction,
     ImportTask,
     SentinelImportTask,
     SingletonImportTask,
@@ -30,6 +31,7 @@ from .tasks import (
 __all__ = [
     "Action",
     "ArchiveImportTask",
+    "DuplicateAction",
     "ImportAbortError",
     "ImportSession",
     "ImportTask",

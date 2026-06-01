@@ -12,6 +12,7 @@ from beets.autotag import (
     tag_album,
     tag_item,
 )
+from beets.importer import DuplicateAction
 from beets.util import PromptChoice, displayable_path
 from beets.util.color import colorize
 from beets.util.units import human_bytes, human_seconds_short
@@ -186,23 +187,20 @@ class TerminalImportSession(importer.ImportSession):
                 for item in task.imported_items():
                     print(f"  {item}")
 
-            sel = ui.input_options(
-                ("Skip new", "Keep all", "Remove old", "Merge all")
-            )
+            sel = ui.input_options(DuplicateAction.strict_options())
 
-        if sel == "s":
+        action = DuplicateAction(sel)
+        if action is DuplicateAction.SKIP:
             # Skip new.
             task.set_choice(importer.Action.SKIP)
-        elif sel == "k":
+        elif action is DuplicateAction.KEEP:
             # Keep both. Do nothing; leave the choice intact.
             pass
-        elif sel == "r":
+        elif action is DuplicateAction.REMOVE:
             # Remove old.
             task.should_remove_duplicates = True
-        elif sel == "m":
+        elif action is DuplicateAction.MERGE:
             task.should_merge_duplicates = True
-        else:
-            assert False
 
     def should_resume(self, path):
         return ui.input_yn(

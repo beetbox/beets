@@ -24,6 +24,7 @@ from beets.util import MoveOperation, displayable_path, pipeline
 
 from .tasks import (
     Action,
+    DuplicateAction,
     ImportTask,
     ImportTaskFactory,
     SentinelImportTask,
@@ -343,27 +344,22 @@ def _resolve_duplicates(session: ImportSession, task: ImportTask):
             log.debug("found duplicates: {}", [o.id for o in found_duplicates])
 
             # Get the default action to follow from config.
-            duplicate_action = config["import"]["duplicate_action"].as_choice(
-                {
-                    "skip": "s",
-                    "keep": "k",
-                    "remove": "r",
-                    "merge": "m",
-                    "ask": "a",
-                }
+            default_choice = config["import"]["duplicate_action"].as_choice(
+                DuplicateAction.choices()
             )
-            log.debug("default action for duplicates: {}", duplicate_action)
+            log.debug("default action for duplicates: {}", default_choice)
 
-            if duplicate_action == "s":
+            action = DuplicateAction(default_choice)
+            if action is DuplicateAction.SKIP:
                 # Skip new.
                 task.set_choice(Action.SKIP)
-            elif duplicate_action == "k":
+            elif action is DuplicateAction.KEEP:
                 # Keep both. Do nothing; leave the choice intact.
                 pass
-            elif duplicate_action == "r":
+            elif action is DuplicateAction.REMOVE:
                 # Remove old.
                 task.should_remove_duplicates = True
-            elif duplicate_action == "m":
+            elif action is DuplicateAction.MERGE:
                 # Merge duplicates together
                 task.should_merge_duplicates = True
             else:
