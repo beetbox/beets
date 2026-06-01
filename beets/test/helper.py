@@ -34,7 +34,6 @@ import sys
 import unittest
 from contextlib import contextmanager
 from dataclasses import dataclass
-from enum import Enum
 from functools import cache, cached_property
 from pathlib import Path
 from tempfile import gettempdir, mkdtemp, mkstemp
@@ -48,7 +47,7 @@ import beets
 import beets.plugins
 from beets import importer, util
 from beets.autotag import AlbumInfo, TrackInfo
-from beets.importer import ImportSession
+from beets.importer import DuplicateAction, ImportSession
 from beets.library import Item, Library
 from beets.test import _common
 from beets.ui.commands.import_.session import TerminalImportSession
@@ -496,7 +495,7 @@ class ImportHelper(TestHelper):
     autotagging library and several assertions for the library.
     """
 
-    default_import_config: ClassVar[dict[str, bool]] = {
+    default_import_config: ClassVar[dict[str, Any]] = {
         "autotag": True,
         "copy": True,
         "hardlink": False,
@@ -651,18 +650,16 @@ class ImportSessionFixture(ImportSession):
 
     choose_item = choose_match
 
-    Resolution = Enum("Resolution", "REMOVE SKIP KEEPBOTH MERGE")
-
-    default_resolution = "REMOVE"
-
     def resolve_duplicate(self, task, found_duplicates):
-        res = self.default_resolution
+        res = DuplicateAction(
+            self.config["duplicate_action"].as_choice(DuplicateAction.choices())
+        )
 
-        if res == self.Resolution.SKIP:
+        if res is DuplicateAction.SKIP:
             task.set_choice(importer.Action.SKIP)
-        elif res == self.Resolution.REMOVE:
+        elif res is DuplicateAction.REMOVE:
             task.should_remove_duplicates = True
-        elif res == self.Resolution.MERGE:
+        elif res is DuplicateAction.MERGE:
             task.should_merge_duplicates = True
 
 
