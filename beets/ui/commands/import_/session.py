@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import Counter
 from itertools import chain
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from beets import config, importer, logging, plugins, ui
 from beets.autotag import (
@@ -14,6 +14,7 @@ from beets.autotag import (
     tag_item,
 )
 from beets.importer import DuplicateAction
+from beets.library import Album
 from beets.util import PromptChoice, displayable_path
 from beets.util.color import colorize
 from beets.util.units import human_bytes, human_seconds_short
@@ -21,7 +22,7 @@ from beets.util.units import human_bytes, human_seconds_short
 from .display import show_change, show_item_change
 
 if TYPE_CHECKING:
-    from beets.library import AnyLibModel
+    from beets.library import AnyLibModel, Item
 
 # Global logger.
 log = logging.getLogger("beets")
@@ -148,15 +149,24 @@ class TerminalImportSession(importer.ImportSession):
                 assert isinstance(choice, TrackMatch)
                 return choice
 
+    def _report_item_summary(
+        self, prefix: Literal["Old", "New"], items: list[Item], is_album: bool
+    ) -> None:
+        ui.print_(f"{prefix}: {summarize_items(items, not is_album)}")
+        if self.config["duplicate_verbose_prompt"].get(bool):
+            for dup in items:
+                print(f"  {dup}")
+
     def get_duplicate_action_value(
         self, task: importer.ImportTask, found_duplicates: list[AnyLibModel]
     ) -> str:
         """Decide what to do when a new album or item seems similar to one
         that's already in the library.
         """
+        is_album = task.is_album
         log.warning(
             "This {} is already in the library!",
-            ("album" if task.is_album else "item"),
+            ("album" if is_album else "item"),
         )
 
         if config["import"]["quiet"]:
@@ -166,26 +176,17 @@ class TerminalImportSession(importer.ImportSession):
         # Print some detail about the existing and new items so the
         # user can make an informed decision.
         for duplicate in found_duplicates:
-            ui.print_(
-                "Old: "
-                + summarize_items(
-                    (list(duplicate.items()) if task.is_album else [duplicate]),
-                    not task.is_album,
-                )
+            self._report_item_summary(
+                "Old",
+                (
+                    list(duplicate.items())
+                    if isinstance(duplicate, Album)
+                    else [duplicate]
+                ),
+                is_album,
             )
-            if config["import"]["duplicate_verbose_prompt"]:
-                if task.is_album:
-                    for dup in duplicate.items():
-                        print(f"  {dup}")
-                else:
-                    print(f"  {duplicate}")
 
-        ui.print_(
-            "New: " + summarize_items(task.imported_items(), not task.is_album)
-        )
-        if config["import"]["duplicate_verbose_prompt"]:
-            for item in task.imported_items():
-                print(f"  {item}")
+        self._report_item_summary("New", task.imported_items(), is_album)
 
         return ui.input_options(DuplicateAction.strict_options())
 
