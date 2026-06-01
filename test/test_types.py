@@ -60,6 +60,18 @@ def test_durationtype():
     assert 3601.23 == t.format(3601.23)
 
 
+def test_paddedintornull():
+    t = types.PaddedIntOrNull(2)
+
+    assert t.null is None
+    assert t.normalize(0) is None
+    assert t.normalize(None) is None
+    assert t.parse("0") is None
+    assert t.format(None) == ""
+    assert t.format(0) == ""
+    assert t.format(5) == "05"
+
+
 @pytest.mark.parametrize(
     "original, expected",
     [

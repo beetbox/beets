@@ -401,6 +401,15 @@ class DestinationTest(BeetsTestCase):
             name = self.i.formatted().get("track")
         assert name.startswith("0")
 
+    def test_get_formatted_omits_unknown_totals(self):
+        with _common.platform_posix():
+            self.i.tracktotal = 0
+            self.i.disctotal = 0
+        assert self.i.tracktotal is None
+        assert self.i.disctotal is None
+        assert self.i.formatted().get("tracktotal") == ""
+        assert self.i.formatted().get("disctotal") == ""
+
     def test_get_formatted_uses_kbps_bitrate(self):
         with _common.platform_posix():
             self.i.bitrate = 12345

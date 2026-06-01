@@ -61,6 +61,24 @@ class InfoTest(IOMixin, PluginTestCase):
         assert displayable_path(item.path) in out
         assert "album: xxxx" in out
 
+    def test_item_library_query_omits_unknown_totals(self):
+        (item,) = self.add_item_fixtures()
+        item.tracktotal = 0
+        item.disctotal = 0
+        item.store()
+
+        out = self.run_with_output(
+            "info",
+            "--library",
+            "--include-keys",
+            "tracktotal,disctotal",
+            f"title:{item.title}",
+        )
+        assert "tracktotal: 00" not in out
+        assert "disctotal: 00" not in out
+        assert "tracktotal:" in out
+        assert "disctotal:" in out
+
     def test_collect_item_and_path(self):
         path = self.create_mediafile_fixture()
         mediafile = MediaFile(path)
