@@ -157,7 +157,7 @@ class TerminalImportSession(importer.ImportSession):
             for dup in items:
                 print(f"  {dup}")
 
-    def get_duplicate_action_value(
+    def _get_duplicate_action_from_user(
         self, task: importer.ImportTask, found_duplicates: list[AnyLibModel]
     ) -> str:
         """Decide what to do when a new album or item seems similar to one
@@ -189,6 +189,17 @@ class TerminalImportSession(importer.ImportSession):
         self._report_item_summary("New", task.imported_items(), is_album)
 
         return ui.input_options(DuplicateAction.strict_options())
+
+    def get_duplicate_action(
+        self, task: importer.ImportTask, found_duplicates: list[AnyLibModel]
+    ) -> DuplicateAction:
+        action = super().get_duplicate_action(task, found_duplicates)
+        if action is DuplicateAction.ASK:
+            return DuplicateAction(
+                self._get_duplicate_action_from_user(task, found_duplicates)
+            )  # type: ignore[call-arg]
+
+        return action
 
     def should_resume(self, path):
         return ui.input_yn(

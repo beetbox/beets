@@ -47,7 +47,7 @@ import beets
 import beets.plugins
 from beets import importer, util
 from beets.autotag import AlbumInfo, TrackInfo
-from beets.importer import DuplicateAction, ImportSession
+from beets.importer import ImportSession
 from beets.library import Item, Library
 from beets.test import _common
 from beets.ui.commands.import_.session import TerminalImportSession
@@ -60,8 +60,6 @@ from beets.util import (
 
 if TYPE_CHECKING:
     from requests_mock.mocker import Mocker
-
-    from beets.library import AnyLibModel
 
 RUNNING_IN_CI = os.environ.get("GITHUB_ACTIONS") == "true"
 
@@ -651,13 +649,6 @@ class ImportSessionFixture(ImportSession):
         return choice
 
     choose_item = choose_match
-
-    def get_duplicate_action_value(
-        self, task: importer.ImportTask, found_duplicates: list[AnyLibModel]
-    ) -> str:
-        return self.config["duplicate_action"].as_choice(
-            DuplicateAction.choices()
-        )
 
 
 class TerminalImportSessionFixture(TerminalImportSession):

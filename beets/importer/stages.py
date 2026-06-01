@@ -342,16 +342,9 @@ def _resolve_duplicates(session: ImportSession, task: ImportTask):
         if found_duplicates:
             log.debug("found duplicates: {}", [o.id for o in found_duplicates])
 
-            # Get the default action to follow from config.
-            default_choice = config["import"]["duplicate_action"].as_choice(
-                DuplicateAction.choices()
+            task.duplicate_action = session.get_duplicate_action(
+                task, found_duplicates
             )
-            log.debug("default action for duplicates: {}", default_choice)
-
-            task.duplicate_action = DuplicateAction(default_choice)
-            if task.duplicate_action is DuplicateAction.ASK:
-                # No default action set; ask the session.
-                session.resolve_duplicate(task, found_duplicates)
 
             session.log_choice(task, True)
 

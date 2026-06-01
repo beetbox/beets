@@ -181,17 +181,15 @@ class ImportSession:
     def choose_match(self, task: ImportTask):
         raise NotImplementedError
 
-    def get_duplicate_action_value(
+    def get_duplicate_action(
         self, task: ImportTask, found_duplicates: list[AnyLibModel]
-    ) -> str:
-        raise NotImplementedError
-
-    def resolve_duplicate(
-        self, task: ImportTask, found_duplicates: list[AnyLibModel]
-    ) -> None:
-        task.duplicate_action = DuplicateAction(
-            self.get_duplicate_action_value(task, found_duplicates)
+    ) -> DuplicateAction:
+        """Get the configured duplicate action."""
+        choice = config["import"]["duplicate_action"].as_choice(
+            DuplicateAction.choices()
         )
+        log.debug("default action for duplicates: {}", choice)
+        return DuplicateAction(choice)  # type: ignore[call-arg]
 
     def choose_item(self, task: ImportTask):
         raise NotImplementedError
