@@ -67,6 +67,11 @@ Bug fixes
 - :doc:`plugins/fetchart`: Catch ``OSError`` in ``_set_art`` so that permission
   errors (e.g. a file locked by another process) are logged as warnings instead
   of crashing beets. :bug:`6193`
+- :ref:`import-cmd`: Restore the ability to import from tar and 7z archives.
+  Both failed with an ``'... object has no attribute 'infolist'`` error because
+  ``tarfile.TarFile`` lost its ``ZipFileCompat`` interface in Python 3 and
+  ``py7zr.SevenZipFile`` exposes ``list()`` rather than ``infolist()``.
+  :bug:`5664`
 
 ..
     For plugin developers
