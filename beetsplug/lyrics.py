@@ -44,7 +44,7 @@ from beets.util.lyrics import INSTRUMENTAL_LYRICS, Lyrics
 from ._utils.requests import HTTPNotFoundError, RequestHandler
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Iterator
+    from collections.abc import Callable, Iterable, Iterator
 
     import confuse
 
@@ -59,6 +59,8 @@ if TYPE_CHECKING:
         LRCLibAPI,
         TranslatorAPI,
     )
+
+    HtmlTransformer = Callable[[str], str]
 
 
 class CaptchaError(requests.exceptions.HTTPError):
@@ -444,6 +446,13 @@ class MusiXmatch(Backend):
         return Lyrics(lyrics, self.__class__.name, url)
 
 
+def apply_transforms(html: str, methods: Iterable[HtmlTransformer]) -> str:
+    for method in methods:
+        html = method(html)
+
+    return html
+
+
 class Html:
     collapse_space = partial(re.compile(r"(^| ) +", re.M).sub, r"\1")
     expand_br = partial(re.compile(r"\s*<br[^>]*>\s*", re.I).sub, "\n")
@@ -470,15 +479,17 @@ class Html:
     @classmethod
     def normalize_space(cls, text: str) -> str:
         text = unescape(text).replace("\r", "").replace("\xa0", " ")
-        return cls.collapse_space(cls.expand_br(text))
+        return apply_transforms(text, [cls.collapse_space, cls.expand_br])
 
     @classmethod
     def remove_ads(cls, text: str) -> str:
-        return cls.remove_adslot(cls.remove_aside(text))
+        return apply_transforms(text, [cls.remove_aside, cls.remove_adslot])
 
     @classmethod
     def merge_paragraphs(cls, text: str) -> str:
-        return cls.merge_blocks(cls.merge_lines(cls.remove_empty_tags(text)))
+        return apply_transforms(
+            text, [cls.remove_empty_tags, cls.merge_lines, cls.merge_blocks]
+        )
 
 
 class SoupMixin:
@@ -679,8 +690,15 @@ class Google(SearchBackend):
     @classmethod
     def pre_process_html(cls, html: str) -> str:
         """Pre-process the HTML content before scraping."""
-        html = Html.remove_ads(super().pre_process_html(html))
-        return Html.remove_formatting(Html.merge_paragraphs(html))
+        return apply_transforms(
+            html,
+            [
+                super().pre_process_html,
+                Html.remove_ads,
+                Html.merge_paragraphs,
+                Html.remove_formatting,
+            ],
+        )
 
     def get_text(self, *args, **kwargs) -> str:
         """Handle an error so that we can continue with the next URL."""
