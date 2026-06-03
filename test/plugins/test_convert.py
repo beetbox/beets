@@ -112,15 +112,6 @@ class TestImportConvert(AsIsImporterMixin, ImportHelper, ConvertPluginHelper):
                     f"Non-empty import directory {util.displayable_path(path)}"
                 )
 
-    def get_count_of_import_files(self):
-        import_file_count = 0
-
-        for path in self.importer.paths:
-            for root, _, filenames in os.walk(path):
-                import_file_count += len(filenames)
-
-        return import_file_count
-
 
 class ConvertCommand:
     """A mixin providing a utility method to run the `convert`command
@@ -282,7 +273,7 @@ class TestConvertCli(ConvertPluginHelper, ConvertCommand):
         self.run_convert(*args, "--playlist", "playlist.m3u8")
         lines = (self.convert_dest / "playlist.m3u8").read_text().splitlines()
         assert lines[0] == "#EXTM3U"
-        return lines[1] == expected_entry
+        assert lines[1] == expected_entry
 
 
 class TestNeverConvertLossyFiles(ConvertPluginHelper, ConvertCommand):
