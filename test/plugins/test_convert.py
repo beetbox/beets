@@ -36,6 +36,8 @@ from beetsplug import convert
 if TYPE_CHECKING:
     from pathlib import Path
 
+_p = pytest.param
+
 
 def shell_quote(text):
     import shlex
@@ -211,55 +213,32 @@ class TestConvertCli(ConvertPluginHelper, ConvertCommand):
             self.run_convert("An impossible query")
         assert caplog.messages[0] == "convert: Empty query result."
 
-    def test_no_transcode_when_maxbr_set_high_and_different_formats(self):
-        self.config["convert"]["max_bitrate"] = 5000
-        self.io.addinput("y")
-        self.run_convert()
-        assert self.file_endswith(self.converted_mp3, "mp3")
-
-    def test_transcode_when_maxbr_set_low_and_different_formats(self):
-        self.config["convert"]["max_bitrate"] = 5
-        self.io.addinput("y")
-        self.run_convert()
-        assert self.file_endswith(self.converted_mp3, "mp3")
-
-    def test_transcode_when_maxbr_set_to_none_and_different_formats(self):
-        self.io.addinput("y")
-        self.run_convert()
-        assert self.file_endswith(self.converted_mp3, "mp3")
-
-    def test_no_transcode_when_maxbr_set_high_and_same_formats(self):
-        self.config["convert"]["max_bitrate"] = 5000
-        self.config["convert"]["format"] = "ogg"
-        self.io.addinput("y")
-        self.run_convert()
-        assert not self.file_endswith(
-            self.convert_dest / "converted.ogg", "ogg"
-        )
-
-    def test_force_overrides_max_bitrate_and_same_formats(self):
-        self.config["convert"]["max_bitrate"] = 5000
-        self.config["convert"]["format"] = "ogg"
+    @pytest.mark.parametrize(
+        "max_bitrate,convert_format,args,should_transcode",
+        [
+            _p(5000, "mp3", (), True, id="different-format-high-bitrate"),
+            _p(5, "mp3", (), True, id="different-format-low-bitrate"),
+            _p(None, "mp3", (), True, id="different-format-no-max-bitrate"),
+            _p(5000, "ogg", (), False, id="same-format-high-bitrate"),
+            _p(5000, "ogg", ("--force",), True, id="same-format-force"),
+            _p(5, "ogg", (), True, id="same-format-low-bitrate"),
+            _p(None, "ogg", (), False, id="same-format-no-max-bitrate"),
+        ],
+    )
+    def test_transcode_selection(
+        self, max_bitrate, convert_format, args, should_transcode
+    ):
+        if max_bitrate is not None:
+            self.config["convert"]["max_bitrate"] = max_bitrate
+        self.config["convert"]["format"] = convert_format
 
         self.io.addinput("y")
-        self.run_convert("--force")
+        self.run_convert(*args)
 
-        converted = self.convert_dest / "converted.ogg"
-        assert self.file_endswith(converted, "ogg")
-
-    def test_transcode_when_maxbr_set_low_and_same_formats(self):
-        self.config["convert"]["max_bitrate"] = 5
-        self.config["convert"]["format"] = "ogg"
-        self.io.addinput("y")
-        self.run_convert()
-        assert self.file_endswith(self.convert_dest / "converted.ogg", "ogg")
-
-    def test_transcode_when_maxbr_set_to_none_and_same_formats(self):
-        self.config["convert"]["format"] = "ogg"
-        self.io.addinput("y")
-        self.run_convert()
-        assert not self.file_endswith(
-            self.convert_dest / "converted.ogg", "ogg"
+        converted_path = self.convert_dest / f"converted.{convert_format}"
+        assert (
+            self.file_endswith(converted_path, convert_format)
+            is should_transcode
         )
 
     def test_playlist(self):
