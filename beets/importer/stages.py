@@ -22,9 +22,8 @@ from typing import TYPE_CHECKING
 from beets import config, plugins
 from beets.util import MoveOperation, displayable_path, pipeline
 
+from .actions import Action, DuplicateAction
 from .tasks import (
-    Action,
-    DuplicateAction,
     ImportTask,
     ImportTaskFactory,
     SentinelImportTask,

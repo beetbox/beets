@@ -18,10 +18,10 @@ import time
 from typing import TYPE_CHECKING
 
 from beets import config, logging, plugins, util
-from beets.importer.tasks import Action
 from beets.util import displayable_path, normpath, pipeline, syspath
 
 from . import stages as stagefuncs
+from .actions import Action
 from .state import ImportState
 
 if TYPE_CHECKING:

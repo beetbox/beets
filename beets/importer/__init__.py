@@ -16,11 +16,10 @@
 autotagging music files.
 """
 
+from .actions import Action, DuplicateAction
 from .session import ImportAbortError, ImportSession
 from .tasks import (
-    Action,
     ArchiveImportTask,
-    DuplicateAction,
     ImportTask,
     SentinelImportTask,
     SingletonImportTask,
