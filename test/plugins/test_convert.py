@@ -71,7 +71,7 @@ class ConvertPluginHelper(IOMixin, ConvertMixin, PluginTestHelper):
 
 class TestImportConvert(AsIsImporterMixin, ImportHelper, ConvertPluginHelper):
     @pytest.fixture(autouse=True)
-    def convert_import_setup(self, setup):
+    def convert_import_setup(self):
         self.config["convert"] = {
             "dest": os.path.join(self.temp_dir, b"convert"),
             "command": self.tagged_copy_cmd("convert"),
@@ -309,7 +309,7 @@ class TestNeverConvertLossyFiles(ConvertPluginHelper, ConvertCommand):
     """Test the effect of the `never_convert_lossy_files` option."""
 
     @pytest.fixture(autouse=True)
-    def never_convert_setup(self, setup):
+    def never_convert_setup(self):
         self.convert_dest = self.temp_dir_path / "convert_dest"
         self.config["convert"] = {
             "dest": str(self.convert_dest),
