@@ -52,6 +52,8 @@ Other changes
   backend has changed from ``poetry-core`` to ``hatchling``. Please see updates
   in :ref:`development-tools` and :ref:`getting-the-source` for more
   information. :bug:`5783`
+- :doc:`guides/installation`: Switch isolated tool installation guidance and
+  GitHub workflow setup to ``uv tool`` commands.
 
 2.12.0 (June 22, 2026)
 ----------------------

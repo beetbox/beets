@@ -71,28 +71,14 @@ In order to develop beets, you will need a few tools installed:
 Follow the `uv installation instructions
 <https://docs.astral.sh/uv/getting-started/installation/>`__ to install uv_.
 
-poethepoet_ is a stand-alone CLI tool. The Python community recommends using
-pipx_ to install such tools in isolated environments so their dependencies don't
-interfere with your system. If you don't have pipx_ installed, follow the `pipx
-installation instructions <https://pipx.pypa.io/stable/how-to/install-pipx/>`__
-or run:
-
-.. code-block:: sh
-
-    $ python3 -m pip install --user pipx
+poethepoet_ is a stand-alone CLI tool. uv can install such tools in isolated
+environments so their dependencies don't interfere with your system.
 
 Then install poethepoet_:
 
 ::
 
-    $ pipx install poethepoet
-
-.. admonition:: Check ``tool.pipx-install`` section in ``pyproject.toml`` to see supported versions
-
-    .. code-block:: toml
-
-        [tool.pipx-install]
-        poethepoet = ">=0.26"
+    $ uv tool install "poethepoet>=0.26"
 
 .. _getting-the-source:
 
@@ -425,8 +411,6 @@ contributor.
 .. _documentation: https://beets.readthedocs.io/en/stable/
 
 .. _integration test: https://github.com/beetbox/beets/actions?query=workflow%3A%22integration+tests%22
-
-.. _pipx: https://pipx.pypa.io/stable
 
 .. _poethepoet: https://poethepoet.natn.io/index.html
 

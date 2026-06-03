@@ -166,9 +166,6 @@ exclude = [
     "docs/**/*.css",
 ]
 
-[tool.pipx-install]
-poethepoet = ">=0.26"
-
 [tool.poe.tasks.build]
 help = "Build the package"
 shell = """

@@ -1,20 +1,26 @@
 Installation
 ============
 
-Beets requires `Python 3.10 or later`_. You can install it using pipx_ or pip_.
+Beets requires `Python 3.10 or later`_. You can install it using uv_ or pip_.
 
 .. _python 3.10 or later: https://www.python.org/downloads/
 
-Using ``pipx`` or ``pip``
--------------------------
+Using ``uv tool`` or ``pip``
+----------------------------
 
-We recommend installing with pipx_ as it isolates beets and its dependencies
-from your system Python and other Python packages. This helps avoid dependency
-conflicts and keeps your system clean.
+We recommend installing with ``uv tool`` as it isolates beets and its
+dependencies from your system Python and other Python packages. This helps avoid
+dependency conflicts and keeps your system clean.
 
 .. <!-- start-quick-install -->
 
 .. tab-set::
+
+    .. tab-item:: uv tool
+
+        .. code-block:: console
+
+            uv tool install beets
 
     .. tab-item:: pipx
 
@@ -36,45 +42,45 @@ conflicts and keeps your system clean.
 
 .. <!-- end-quick-install -->
 
-If you don't have pipx_ installed, you can follow the instructions on the `pipx
-installation page`_ to get it set up.
+If you don't have uv_ installed, you can follow the `uv installation
+instructions`_ to get it set up.
 
 .. _pip: https://pip.pypa.io/en/stable/
 
-.. _pipx: https://pipx.pypa.io/stable
+.. _uv: https://docs.astral.sh/uv/
 
-.. _pipx installation page: https://pipx.pypa.io/stable/how-to/install-pipx/
+.. _uv installation instructions: https://docs.astral.sh/uv/getting-started/installation/
 
-Managing Plugins with ``pipx``
-------------------------------
+Managing Plugins with ``uv tool``
+---------------------------------
 
-When using pipx_, you can install beets with built-in plugin dependencies using
-extras, inject third-party packages, and upgrade everything cleanly.
+When using ``uv tool``, you can install beets with built-in plugin dependencies
+using extras, include third-party packages, and upgrade everything cleanly.
 
 Install beets with extras for built-in plugins:
 
 .. code-block:: console
 
-    pipx install "beets[lyrics,lastgenre]"
+    uv tool install "beets[lyrics,lastgenre]"
 
 If you already have beets installed, reinstall with a new set of extras:
 
 .. code-block:: console
 
-    pipx install --force "beets[lyrics,lastgenre]"
+    uv tool install --force "beets[lyrics,lastgenre]"
 
-Inject additional packages into the beets environment (useful for third-party
+Include additional packages in the beets environment (useful for third-party
 plugins):
 
 .. code-block:: console
 
-    pipx inject beets <package-name>
+    uv tool install --force --with <package-name> beets
 
-To upgrade beets and all injected packages:
+To upgrade beets and included packages:
 
 .. code-block:: console
 
-    pipx upgrade beets
+    uv tool upgrade beets
 
 Installation FAQ
 ----------------
@@ -138,7 +144,7 @@ Package Manager Installation
 We generally don't recommend this route. OS package managers tend to ship
 outdated versions of beets, and installing third-party plugins into a
 system-managed environment ranges from awkward to impossible. You'll have a much
-better time with pipx_ or pip_ as described above.
+better time with ``uv tool`` or pip_ as described above.
 
 That said, if you know what you're doing and prefer your system package manager,
 here are the options available:

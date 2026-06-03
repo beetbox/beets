@@ -12,8 +12,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Install Python tools
-        uses: BrandonLWhite/pipx-install-action@v1.0.3
       - name: Install uv
         uses: astral-sh/setup-uv@v8.1.0
         with:
@@ -32,6 +30,9 @@ jobs:
             mp3gain \
             pandoc \
             python3-gst-1.0
+
+      - name: Install Python tools
+        run: uv tool install "poethepoet>=0.26"
 
       - name: Install dependencies
         run: poe install --group test --extra autobpm --extra discogs --extra lyrics --extra replaygain --extra reflink --extra fetchart --extra chroma --extra sonosupdate --group docs
