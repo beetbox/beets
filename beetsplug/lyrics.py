@@ -457,7 +457,9 @@ class Html:
     collapse_space = partial(re.compile(r"(^| ) +", re.M).sub, r"\1")
     expand_br = partial(re.compile(r"\s*<br[^>]*>\s*", re.I).sub, "\n")
     #: two newlines between paragraphs on the same line (musica, letras.mus.br)
-    merge_blocks = partial(re.compile(r"(?<!>)</p><p[^>]*>").sub, "\n\n")
+    merge_blocks = partial(
+        re.compile(r"(?<!>)(</p><p[^>]*>)+", re.S).sub, "\n\n"
+    )
     #: a single new line between paragraphs on separate lines
     #: (paroles.net, sweetslyrics.com, lacoccinelle.net)
     merge_lines = partial(re.compile(r"</p>\s+<p[^>]*>(?!___)").sub, "\n")
@@ -467,6 +469,26 @@ class Html:
     )
     #: remove Google Ads tags (musica.com)
     remove_aside = partial(re.compile("<aside .+?</aside>").sub, "")
+    #: remove inline script blocks that split lyrics paragraphs
+    remove_scripts = partial(
+        re.compile(r"<script\b[^>]*>.*?</script\b[^>]*>", re.I | re.S).sub, ""
+    )
+    #: remove comments that split lyrics paragraphs
+    remove_comments = partial(re.compile(r"<!--.*?-->", re.S).sub, "")
+    #: remove title-only paragraph from the musica.com lyrics block
+    remove_musica_title = partial(
+        re.compile(
+            r"(<div\s+id=['\"]letra['\"][^>]*>.*?)"
+            r"<p>\s*<strong>[^<]+</strong>\s*</p>",
+            re.I | re.S,
+        ).sub,
+        r"\1",
+    )
+    #: remove non-lyrics explanation blocks (musica.com)
+    remove_significado = partial(
+        re.compile(r"<div\s+id=['\"]significado['\"][^>]*>.*", re.I | re.S).sub,
+        "",
+    )
     #: remove adslot-Content_1 div from the lyrics text (paroles.net)
     remove_adslot = partial(
         re.compile(r"\n</div>[^\n]+-- Content_\d+ --.*?\n<div>", re.S).sub, "\n"
@@ -496,7 +518,15 @@ class SoupMixin:
     @classmethod
     def pre_process_html(cls, html: str) -> str:
         """Pre-process the HTML content before scraping."""
-        return Html.normalize_space(html)
+        return apply_transforms(
+            html,
+            [
+                Html.normalize_space,
+                Html.remove_significado,
+                Html.remove_scripts,
+                Html.remove_musica_title,
+            ],
+        )
 
     @classmethod
     def get_soup(cls, html: str) -> BeautifulSoup:
@@ -695,6 +725,7 @@ class Google(SearchBackend):
             [
                 super().pre_process_html,
                 Html.remove_ads,
+                Html.remove_comments,
                 Html.merge_paragraphs,
                 Html.remove_formatting,
             ],
