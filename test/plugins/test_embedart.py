@@ -32,7 +32,7 @@ from beets.test.helper import (
     FetchImageHelper,
     ImportHelper,
     IOMixin,
-    PytestPluginTestHelper,
+    PluginTestHelper,
 )
 from beets.util import bytestring_path, displayable_path, syspath
 from beets.util.artresizer import ArtResizer
@@ -77,7 +77,7 @@ def require_artresizer_compare(test):
     return wrapper
 
 
-class PytestImportHelper(PytestPluginTestHelper, ImportHelper):
+class PytestImportHelper(PluginTestHelper, ImportHelper):
     @pytest.fixture(autouse=True)
     def setup_import_helper(self, setup):
         self.import_media = []

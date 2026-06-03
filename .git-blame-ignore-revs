@@ -189,3 +189,11 @@ adfb73b66dba0fc799880af176ef6f9ac0a7ee68
 6493d4dd018e08eb5d16d5381ebff47deea98bb1
 # Import everything from parent beets.autotag
 29580d2f00eb02f1ce77ebe3e1435804f7252ba1
+# Add setup fixture to TestHelper
+7bad226c33c2d48b5102cff213c67f16eeb09a7b
+# Fix mbcollection tests
+544ea3af5d85df187e080f407d3aaf84eac4ee63
+# Fix ftintitle tests
+ca8544d4bcab503e1e4c2cd6688655c8211aa7a1
+# Fix autobpm tests
+5804a21620098e8da78b1f4a5f85063033586632

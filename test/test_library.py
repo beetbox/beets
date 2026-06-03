@@ -34,7 +34,7 @@ from beets import config, plugins, util
 from beets.library import Album
 from beets.test import _common
 from beets.test._common import item
-from beets.test.helper import PytestTestHelper
+from beets.test.helper import TestHelper
 from beets.util import (
     as_string,
     bytestring_path,
@@ -47,7 +47,7 @@ from beets.util import (
 np = util.normpath
 
 
-class PytestItemHelper(PytestTestHelper):
+class PytestItemHelper(TestHelper):
     def get_first_item(self):
         """Retrieve first item from library."""
         return next(iter(self.lib.items()))
@@ -616,7 +616,7 @@ class PathFormattingMixin:
         assert actual == dest
 
 
-class TestDestinationFunction(PytestTestHelper, PathFormattingMixin):
+class TestDestinationFunction(TestHelper, PathFormattingMixin):
     @pytest.fixture(autouse=True)
     def item(self, setup):
         self.lib.directory = b"/base"
@@ -724,7 +724,7 @@ class TestDestinationFunction(PytestTestHelper, PathFormattingMixin):
         self._assert_dest(b"/base/Alice & Bob", item)
 
 
-class TestDisambiguation(PytestTestHelper, PathFormattingMixin):
+class TestDisambiguation(TestHelper, PathFormattingMixin):
     @pytest.fixture(autouse=True)
     def items(self, setup):
         self.lib.directory = b"/base"
@@ -819,7 +819,7 @@ class TestDisambiguation(PytestTestHelper, PathFormattingMixin):
         self._assert_dest(b"/base/foo/the title", i1)
 
 
-class TestSingletonDisambiguation(PytestTestHelper, PathFormattingMixin):
+class TestSingletonDisambiguation(TestHelper, PathFormattingMixin):
     @pytest.fixture(autouse=True)
     def items(self, setup):
         self.lib.directory = b"/base"
@@ -911,7 +911,7 @@ class TestSingletonDisambiguation(PytestTestHelper, PathFormattingMixin):
         self._assert_dest(b"/base/foo/the title", i1)
 
 
-class TestPluginDestination(PytestTestHelper):
+class TestPluginDestination(TestHelper):
     @pytest.fixture(autouse=True)
     def item(self, setup):
         # Mock beets.plugins.item_field_getters.
@@ -1055,7 +1055,7 @@ class TestAlbumInfo(PytestItemHelper):
         assert item.album == ai.album
 
 
-class TestArtDestination(PytestTestHelper):
+class TestArtDestination(TestHelper):
     @pytest.fixture(autouse=True)
     def item_and_album(self, setup):
         config["art_filename"] = "artimage"
@@ -1185,7 +1185,7 @@ class TestPathString(PytestItemHelper):
         assert album.path == os.path.dirname(absolute_path)
 
 
-class TestMtime(PytestTestHelper):
+class TestMtime(TestHelper):
     @pytest.fixture(autouse=True)
     def item(self, setup):
         self.ipath = os.path.join(self.temp_dir, b"testfile.mp3")
@@ -1220,7 +1220,7 @@ class TestMtime(PytestTestHelper):
         assert item.mtime >= self._mtime()
 
 
-class TestImportTime(PytestTestHelper):
+class TestImportTime(TestHelper):
     def added(self):
         self.track = item()
         self.album = self.lib.add_album((self.track,))
@@ -1273,7 +1273,7 @@ class TestUnicodePath(PytestItemHelper):
         item_in_db.write()
 
 
-class TestWrite(PytestTestHelper):
+class TestWrite(TestHelper):
     def test_write_nonexistant(self):
         item = self.create_item()
         item.path = b"/path/does/not/exist"
@@ -1361,7 +1361,7 @@ class TestItemRead(PytestItemHelper):
         assert str(exc_info.value.reason) in message
 
 
-class TestItemReadGenre(PytestTestHelper):
+class TestItemReadGenre(TestHelper):
     def test_read_semicolon_delimited_genres(self):
         """Semicolon-delimited genre tags are split into individual genres on read."""
         path = self.create_mediafile_fixture()
@@ -1372,7 +1372,7 @@ class TestItemReadGenre(PytestTestHelper):
         assert item.genres == ["Jazz", "Funk", "Soul"]
 
 
-class TestFilesize(PytestTestHelper):
+class TestFilesize(TestHelper):
     def test_filesize(self):
         item = self.add_item_fixture()
         assert item.filesize != 0
@@ -1382,7 +1382,7 @@ class TestFilesize(PytestTestHelper):
         assert item.filesize == 0
 
 
-class TestItemPruneDirsClutter(PytestTestHelper):
+class TestItemPruneDirsClutter(TestHelper):
     """Regression tests: prune_dirs respects config["clutter"] during move/remove."""
 
     def _drop_clutter(self, directory, filename=b"unwanted.log"):

@@ -162,6 +162,14 @@ class TestHelper(RunMixin, ConfigMixin):
     fixtures.
     """
 
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        self.setup_beets()
+        try:
+            yield
+        finally:
+            self.teardown_beets()
+
     lib: Library
 
     resource_path = Path(os.fsdecode(_common.RSRC)) / "full.mp3"
@@ -407,26 +415,8 @@ class BeetsTestCase(unittest.TestCase, TestHelper):
     completes. Also provides some additional assertion methods, a
     temporary directory, and a DummyIO.
 
-    DEPRECATED: Use pytest + PytestTestHelper instead.
+    DEPRECATED: Use TestHelper instead.
     """
-
-    def setUp(self):
-        self.setup_beets()
-
-    def tearDown(self):
-        self.teardown_beets()
-
-
-class PytestTestHelper(TestHelper):
-    """Same as the BeetsTestCase unittest setup but for pytest."""
-
-    @pytest.fixture(autouse=True)
-    def setup(self):
-        self.setup_beets()
-        try:
-            yield
-        finally:
-            self.teardown_beets()
 
 
 class ItemInDBTestCase(BeetsTestCase):
@@ -488,13 +478,13 @@ class PluginMixin(ConfigMixin):
 
 class PluginTestCase(PluginMixin, BeetsTestCase):
     """
-    DEPRECATED: Use pytest + PytestPluginTestHelper instead.
+    DEPRECATED: Use PluginTestHelper instead.
     """
 
     pass
 
 
-class PytestPluginTestHelper(PluginMixin, PytestTestHelper):
+class PluginTestHelper(PluginMixin, TestHelper):
     """Helper mixin for pytest-based plugin tests.
 
     This mixin provides the standard beets test setup and automatically
@@ -502,7 +492,7 @@ class PytestPluginTestHelper(PluginMixin, PytestTestHelper):
 
     .. code-block:: python
 
-        class TestMyPlugin(PytestPluginTestHelper):
+        class TestMyPlugin(PluginTestHelper):
             plugin: ClassVar[str] = "myplugin"
     """
 
