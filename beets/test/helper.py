@@ -615,10 +615,6 @@ class AsIsImporterMixin:
         return importer
 
 
-class ImportTestCase(ImportHelper, BeetsTestCase):
-    pass
-
-
 class ImportSessionFixture(ImportSession):
     """ImportSession that can be controlled programaticaly.
 
@@ -829,7 +825,7 @@ class AutotagStub:
         )
 
 
-class AutotagImportTestCase(ImportTestCase):
+class AutotagImportTestCase(ImportHelper, BeetsTestCase):
     matching = AutotagStub.IDENT
 
     def setUp(self):
