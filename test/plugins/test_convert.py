@@ -265,25 +265,24 @@ class TestConvertCli(ConvertPluginHelper, ConvertCommand):
         converted = self.convert_dest / "converted.ops"
         assert self.file_endswith(converted, "opus")
 
-    def assert_playlist_entry(self, expected_entry, *args):
+    @pytest.mark.parametrize(
+        "args,no_convert,expected_entry",
+        [
+            _p((), None, "converted.mp3", id="config-format"),
+            _p(("--format", "opus"), None, "converted.ops", id="cli-format"),
+            _p((), "format:ogg", "converted.ogg", id="not-transcoded"),
+            _p(("--keep-new",), None, "converted.ogg", id="keep-new"),
+        ],
+    )
+    def test_playlist_entry(self, args, no_convert, expected_entry):
+        if no_convert:
+            self.config["convert"]["no_convert"] = no_convert
+
         self.io.addinput("y")
         self.run_convert(*args, "--playlist", "playlist.m3u8")
         lines = (self.convert_dest / "playlist.m3u8").read_text().splitlines()
         assert lines[0] == "#EXTM3U"
-        assert lines[1] == expected_entry
-
-    def test_playlist_entry_uses_config_format(self):
-        self.assert_playlist_entry("converted.mp3")
-
-    def test_playlist_entry_uses_cli_format(self):
-        self.assert_playlist_entry("converted.ops", "--format", "opus")
-
-    def test_playlist_entry_keeps_original_extension_when_not_transcoded(self):
-        self.config["convert"]["no_convert"] = "format:ogg"
-        self.assert_playlist_entry("converted.ogg")
-
-    def test_playlist_entry_keep_new_points_to_destination_file(self):
-        self.assert_playlist_entry("converted.ogg", "--keep-new")
+        return lines[1] == expected_entry
 
 
 class TestNeverConvertLossyFiles(ConvertPluginHelper, ConvertCommand):
