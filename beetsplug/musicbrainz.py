@@ -27,7 +27,7 @@ from confuse.exceptions import NotFoundError
 from typing_extensions import NotRequired
 
 from beets import config, plugins, util
-from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.autotag import AlbumInfo, TrackInfo
 from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
 from beets.util.deprecation import deprecate_for_user
 from beets.util.id_extractors import extract_release_id

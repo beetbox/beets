@@ -28,7 +28,7 @@ import acoustid
 import confuse
 
 from beets import config, ui, util
-from beets.autotag.distance import Distance
+from beets.autotag import Distance
 from beets.exceptions import UserError
 from beets.metadata_plugins import MetadataSourcePlugin, get_metadata_source
 from beets.util.color import colorize
@@ -36,7 +36,7 @@ from beets.util.color import colorize
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
 
-    from beets.autotag.hooks import TrackInfo
+    from beets.autotag import TrackInfo
     from beets.library.models import Item
     from beetsplug.musicbrainz import MusicBrainzPlugin
 

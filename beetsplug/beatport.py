@@ -32,7 +32,7 @@ from requests_oauthlib.oauth1_session import (
 import beets
 import beets.ui
 from beets import config
-from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.autotag import AlbumInfo, TrackInfo
 from beets.exceptions import UserError
 from beets.metadata_plugins import MetadataSourcePlugin
 from beets.util import unique_list

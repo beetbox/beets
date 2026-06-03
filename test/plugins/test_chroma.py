@@ -17,7 +17,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from beets import metadata_plugins
-from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.autotag import AlbumInfo, TrackInfo
 from beets.library import Item
 from beets.test.helper import ImportTestCase, IOMixin, PluginMixin
 from beetsplug import chroma
