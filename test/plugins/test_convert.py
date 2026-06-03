@@ -68,12 +68,16 @@ class ConvertPluginHelper(IOMixin, ConvertMixin, PluginTestHelper):
     db_on_disk = True
     plugin = "convert"
 
+    def setup_beets(self):
+        super().setup_beets()
+        self.convert_dest = self.temp_dir_path / "convert_dest"
+        self.config["convert"] = {"dest": str(self.convert_dest)}
+
 
 class TestImportConvert(AsIsImporterMixin, ImportHelper, ConvertPluginHelper):
     def setup_beets(self):
         super().setup_beets()
         self.config["convert"] = {
-            "dest": os.path.join(self.temp_dir, b"convert"),
             "command": self.tagged_copy_cmd("convert"),
             # Enforce running convert
             "max_bitrate": 1,
@@ -136,10 +140,8 @@ class TestConvertCli(ConvertPluginHelper, ConvertCommand):
         self.album = self.add_album_fixture(ext="ogg")
         self.item = self.album.items()[0]
 
-        self.convert_dest = self.temp_dir_path / "convert_dest"
         self.converted_mp3 = self.convert_dest / "converted.mp3"
         self.config["convert"] = {
-            "dest": str(self.convert_dest),
             "paths": {"default": "converted"},
             "format": "mp3",
             "formats": {
@@ -310,9 +312,7 @@ class TestNeverConvertLossyFiles(ConvertPluginHelper, ConvertCommand):
 
     def setup_beets(self):
         super().setup_beets()
-        self.convert_dest = self.temp_dir_path / "convert_dest"
         self.config["convert"] = {
-            "dest": str(self.convert_dest),
             "paths": {"default": "converted"},
             "never_convert_lossy_files": True,
             "format": "mp3",
