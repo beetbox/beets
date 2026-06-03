@@ -31,7 +31,7 @@ from beets import config, importer, logging, util
 from beets.autotag import AlbumInfo, AlbumMatch, Distance
 from beets.library import Album
 from beets.test import _common
-from beets.test.helper import FetchImageHelper, PytestTestHelper
+from beets.test.helper import FetchImageHelper, TestHelper
 from beets.util import clean_module_tempdir, syspath
 from beets.util.artresizer import ArtResizer
 from beetsplug import fetchart
@@ -67,7 +67,7 @@ class DummyRemoteArtSource(fetchart.RemoteArtSource):
         return iter(())
 
 
-class UseThePlugin(PytestTestHelper):
+class UseThePlugin(TestHelper):
     modules = (fetchart.__name__, ArtResizer.__module__)
 
     @pytest.fixture(autouse=True)

@@ -22,13 +22,13 @@ from typing import TYPE_CHECKING, ClassVar
 import pytest
 
 from beets import plugins
-from beets.test.helper import PytestPluginTestHelper
+from beets.test.helper import PluginTestHelper
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-class HookTestCase(PytestPluginTestHelper):
+class HookTestCase(PluginTestHelper):
     plugin = "hook"
     preload_plugin = False
 
