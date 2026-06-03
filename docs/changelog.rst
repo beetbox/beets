@@ -26,6 +26,8 @@ New features
 - :doc:`plugins/musicbrainz`: Introduce
   :conf:`plugins.musicbrainz:aliases_as_credits` to make
   aliases-as-artist-credit optional.
+- :doc:`plugins/nonsense`: Add plugin that prints a random quote after every
+  beets command using the ``quotes-generator`` library.
 
 Bug fixes
 ~~~~~~~~~

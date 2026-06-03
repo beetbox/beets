@@ -109,6 +109,7 @@ databases. They share the following configuration options:
     mbcollection
     mbpseudo
     mbsubmit
+    nonsense
     parentwork
     permissions
     play
@@ -385,6 +386,9 @@ Miscellaneous
 
 :doc:`missing <missing>`
     List missing tracks.
+
+:doc:`nonsense <nonsense>`
+    Print a random quote after every beets command.
 
 mstream_
     A music streaming server + webapp that can be used alongside beets.

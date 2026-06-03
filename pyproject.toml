@@ -84,6 +84,7 @@ pylast = { version = "*", optional = true }
 python-mpd2 = { version = ">=0.4.2", optional = true }
 python3-discogs-client = { version = ">=2.3.15", optional = true }
 pyxdg = { version = "*", optional = true }
+quotes-generator = { version = "*", optional = true }
 rarfile = { version = "*", optional = true }
 reflink = { version = "*", optional = true }
 resampy = { version = ">=0.4.3", optional = true }
@@ -169,6 +170,7 @@ lastimport = ["pylast"]
 lyrics = ["beautifulsoup4", "langdetect", "requests"]
 metasync = ["dbus-python"]
 mpdstats = ["python-mpd2"]
+nonsense = ["quotes-generator"]
 plexupdate = ["requests"]
 reflink = ["reflink"]
 replaygain = [
