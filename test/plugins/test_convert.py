@@ -70,8 +70,8 @@ class ConvertPluginHelper(IOMixin, ConvertMixin, PluginTestHelper):
 
 
 class TestImportConvert(AsIsImporterMixin, ImportHelper, ConvertPluginHelper):
-    @pytest.fixture(autouse=True)
-    def convert_import_setup(self):
+    def setup_beets(self):
+        super().setup_beets()
         self.config["convert"] = {
             "dest": os.path.join(self.temp_dir, b"convert"),
             "command": self.tagged_copy_cmd("convert"),
@@ -131,8 +131,8 @@ class ConvertCommand:
 
 
 class TestConvertCli(ConvertPluginHelper, ConvertCommand):
-    @pytest.fixture(autouse=True)
-    def convert_cli_setup(self, setup):
+    def setup_beets(self):
+        super().setup_beets()
         self.album = self.add_album_fixture(ext="ogg")
         self.item = self.album.items()[0]
 
@@ -308,8 +308,8 @@ class TestConvertCli(ConvertPluginHelper, ConvertCommand):
 class TestNeverConvertLossyFiles(ConvertPluginHelper, ConvertCommand):
     """Test the effect of the `never_convert_lossy_files` option."""
 
-    @pytest.fixture(autouse=True)
-    def never_convert_setup(self):
+    def setup_beets(self):
+        super().setup_beets()
         self.convert_dest = self.temp_dir_path / "convert_dest"
         self.config["convert"] = {
             "dest": str(self.convert_dest),
