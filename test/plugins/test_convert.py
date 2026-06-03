@@ -241,17 +241,19 @@ class TestConvertCli(ConvertPluginHelper, ConvertCommand):
         self.run_convert("--playlist", "playlist.m3u8", "--pretend")
         assert not (self.convert_dest / "playlist.m3u8").exists()
 
-    def test_force_overrides_no_convert(self):
-        self.config["convert"]["formats"]["opus"] = {
-            "command": self.tagged_copy_cmd("opus"),
-            "extension": "ops",
-        }
-        self.config["convert"]["no_convert"] = "format:ogg"
-
+    @pytest.mark.parametrize(
+        "config_overrides",
+        [
+            _p({"no_convert": "format:ogg"}, id="no-covert"),
+            _p({"never_convert_lossy_files": True}, id="never-convert-lossy-files"),
+        ],
+    )  # fmt: skip
+    def test_force_overrides(self, config_overrides):
         [item] = self.add_item_fixtures(ext="ogg")
-
         self.io.addinput("y")
-        self.run_convert_path(item, "--format", "opus", "--force")
+
+        with self.configure_plugin(config_overrides):
+            self.run_convert_path(item, "--format", "opus", "--force")
 
         converted = self.convert_dest / "converted.ops"
         assert self.file_endswith(converted, "opus")
@@ -309,19 +311,6 @@ class TestNeverConvertLossyFiles(ConvertPluginHelper, ConvertCommand):
         self.run_convert_path(item)
         converted = self.convert_dest / "converted.ogg"
         assert not self.file_endswith(converted, "mp3")
-
-    def test_force_overrides_never_convert_lossy_files(self):
-        self.config["convert"]["formats"]["opus"] = {
-            "command": self.tagged_copy_cmd("opus"),
-            "extension": "ops",
-        }
-        [item] = self.add_item_fixtures(ext="ogg")
-
-        self.io.addinput("y")
-        self.run_convert_path(item, "--format", "opus", "--force")
-
-        converted = self.convert_dest / "converted.ops"
-        assert self.file_endswith(converted, "opus")
 
 
 class TestNoConvert(PluginTestHelper):
