@@ -169,13 +169,13 @@ class TestConvertCli(ConvertPluginHelper, ConvertCommand):
         assert not self.converted_mp3.exists()
 
     def test_convert_keep_new(self):
-        assert os.path.splitext(self.item.path)[1] == b".ogg"
+        assert self.item.filepath.suffix == ".ogg"
 
         self.io.addinput("y")
         self.run_convert("--keep-new")
 
         self.item.load()
-        assert os.path.splitext(self.item.path)[1] == b".mp3"
+        assert self.item.filepath.suffix == ".mp3"
 
     def test_format_option(self):
         self.io.addinput("y")
