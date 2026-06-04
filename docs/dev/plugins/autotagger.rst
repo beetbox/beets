@@ -29,7 +29,7 @@ Here`s a minimal example:
 
     # beetsplug/myawesomeplugin.py
     from typing import Sequence
-    from beets.autotag.hooks import Item
+    from beets.library import Item
     from beets.metadata_plugins import MetadataSourcePlugin
 
 

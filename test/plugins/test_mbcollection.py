@@ -24,14 +24,6 @@ class TestMbCollectionPlugin(PluginMixin, TestHelper):
         self.config["musicbrainz"]["pass"] = "testpass"
         self.config["mbcollection"]["collection"] = self.COLLECTION_ID
 
-    @pytest.fixture(autouse=True)
-    def helper(self):
-        self.setup_beets()
-
-        yield self
-
-        self.teardown_beets()
-
     @pytest.mark.parametrize(
         "user_collections,expectation",
         [
@@ -66,7 +58,7 @@ class TestMbCollectionPlugin(PluginMixin, TestHelper):
         with expectation:
             mbcollection.MusicBrainzCollectionPlugin().collection
 
-    def test_mbupdate(self, helper, requests_mock, monkeypatch):
+    def test_mbupdate(self, requests_mock, monkeypatch):
         """Verify mbupdate sync of a MusicBrainz collection with the library.
 
         This test ensures that the command:
@@ -85,7 +77,7 @@ class TestMbCollectionPlugin(PluginMixin, TestHelper):
             "00000000-0000-0000-0000-000000000001",
             "00000000-0000-0000-0000-000000000002",
         ]:
-            helper.lib.add(Album(mb_albumid=mb_albumid))
+            self.lib.add(Album(mb_albumid=mb_albumid))
 
         # The relevant collection
         requests_mock.get(
@@ -138,13 +130,11 @@ class TestMbCollectionPlugin(PluginMixin, TestHelper):
             re.compile(rf".*{collection_releases}/not_in_library")
         )
 
-        helper.run_command("mbupdate", "--remove")
+        self.run_command("mbupdate", "--remove")
 
         assert requests_mock.call_count == 6
 
-    def test_mbupdate_logs_unauthorized_errors(
-        self, helper, requests_mock, caplog
-    ):
+    def test_mbupdate_logs_unauthorized_errors(self, requests_mock, caplog):
         response = requests.Response()
         response.status_code = 401
         requests_mock.get(
@@ -153,7 +143,7 @@ class TestMbCollectionPlugin(PluginMixin, TestHelper):
         )
 
         with caplog.at_level("ERROR", logger="beets.mbcollection"):
-            helper.run_command("mbupdate")
+            self.run_command("mbupdate")
 
         expected_message = (
             "Failed to update MusicBrainz collection: HTTP Error: 401"

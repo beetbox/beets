@@ -34,7 +34,7 @@ import confuse
 import requests
 
 from beets import ui
-from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.autotag import AlbumInfo, TrackInfo
 from beets.dbcore import types
 from beets.exceptions import UserError
 from beets.library import Library

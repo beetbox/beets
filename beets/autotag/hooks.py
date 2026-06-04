@@ -17,26 +17,18 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from dataclasses import dataclass, field
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
+from typing import Any, ClassVar, TypeVar
 
 from typing_extensions import Self
 
-from beets import config, logging, plugins
+from beets import config, logging
 from beets.util import cached_classproperty, unique_list
 from beets.util.deprecation import (
     ALBUM_LEGACY_TO_LIST_FIELD,
     ITEM_LEGACY_TO_LIST_FIELD,
     deprecate_for_maintainers,
 )
-
-if TYPE_CHECKING:
-    from collections.abc import Sequence
-
-    from beets.library import Album, Item
-
-    from .distance import Distance
 
 V = TypeVar("V")
 
@@ -542,161 +534,3 @@ class TrackInfo(Info):
             | track.item_data
         )
         return merged
-
-
-# Structures that compose all the information for a candidate match.
-@dataclass
-class Match:
-    """Represent a chosen metadata candidate and its application behavior."""
-
-    disambig_fields_key: ClassVar[str]
-
-    distance: Distance
-    info: Info
-
-    def apply_metadata(self) -> None:
-        """Apply this match's metadata to its target library objects."""
-        raise NotImplementedError
-
-    @cached_property
-    def type(self) -> str:
-        return self.info.type
-
-    @cached_property
-    def config_from_scratch(self) -> bool:
-        return bool(config["import"]["from_scratch"])
-
-    def from_scratch(self, override: bool | None) -> bool:
-        if override is not None:
-            return override
-
-        return self.config_from_scratch
-
-    @property
-    def disambig_fields(self) -> Sequence[str]:
-        """Return configured disambiguation fields that exist on this match."""
-        chosen_fields = config["match"][self.disambig_fields_key].as_str_seq()
-        valid_fields = [f for f in chosen_fields if f in self.info]
-        if missing_fields := set(chosen_fields) - set(valid_fields):
-            log.warning(
-                "Disambiguation string keys {} do not exist.", missing_fields
-            )
-
-        return valid_fields
-
-    @property
-    def base_disambig_data(self) -> JSONDict:
-        """Return supplemental values used when formatting disambiguation."""
-        return {}
-
-    @property
-    def disambig_string(self) -> str:
-        """Build a display string from the candidate's disambiguation fields.
-
-        Merges base disambiguation data with instance-specific field values,
-        then formats them as a comma-separated string in field definition order.
-        """
-        data = {
-            k: self.info[k] for k in self.disambig_fields
-        } | self.base_disambig_data
-        return ", ".join(str(data[k]) for k in self.disambig_fields)
-
-
-@dataclass
-class AlbumMatch(Match):
-    """Represent an album candidate together with its item-to-track mapping."""
-
-    disambig_fields_key = "album_disambig_fields"
-
-    info: AlbumInfo
-    mapping: dict[Item, TrackInfo]
-    extra_items: list[Item] = field(default_factory=list)
-    extra_tracks: list[TrackInfo] = field(default_factory=list)
-
-    def __post_init__(self) -> None:
-        """Notify listeners when an album candidate has been matched."""
-        plugins.send("album_matched", match=self)
-
-    @property
-    def item_info_pairs(self) -> list[tuple[Item, TrackInfo]]:
-        """Return matched items together with their selected track metadata."""
-        return list(self.mapping.items())
-
-    @property
-    def items(self) -> list[Item]:
-        """Return the items that participate in this album match."""
-        return [i for i, _ in self.item_info_pairs]
-
-    @property
-    def base_disambig_data(self) -> JSONDict:
-        """Return album-specific values used in disambiguation displays."""
-        return {
-            "media": (
-                f"{mediums}x{self.info.media}"
-                if (mediums := self.info.mediums) and mediums > 1
-                else self.info.media
-            )
-        }
-
-    @property
-    def merged_pairs(self) -> list[tuple[Item, JSONDict]]:
-        """Generate item-data pairs with album-level fallback values."""
-        return [
-            (i, ti.merge_with_album(self.info))
-            for i, ti in self.item_info_pairs
-        ]
-
-    def apply_metadata(self, from_scratch: bool | None = None) -> None:
-        """Apply metadata to each of the items.
-
-        If ``from_scratch`` is provided, its value determines whether the
-        items existing metadata are cleared before applying new metadata.
-        Otherwise, the configured ``from_scratch`` setting is used.
-        """
-        for item, data in self.merged_pairs:
-            if self.from_scratch(from_scratch):
-                item.clear()
-
-            item.update(data)
-
-    def apply_album_metadata(self, album: Album) -> None:
-        """Apply album-level metadata to the Album object."""
-        album.update(self.info.item_data)
-
-
-@dataclass
-class TrackMatch(Match):
-    """Represent a singleton candidate and the item it updates."""
-
-    disambig_fields_key = "singleton_disambig_fields"
-
-    info: TrackInfo
-    item: Item
-
-    @property
-    def base_disambig_data(self) -> JSONDict:
-        """Return singleton-specific values used in disambiguation displays."""
-        return {
-            "index": f"Index {self.info.index}",
-            "track_alt": f"Track {self.info.track_alt}",
-            "album": (
-                f"[{self.info.album}]"
-                if (
-                    config["import"]["singleton_album_disambig"].get()
-                    and self.info.album
-                )
-                else ""
-            ),
-        }
-
-    def apply_metadata(self, from_scratch: bool | None = None) -> None:
-        """Apply metadata to the item.
-
-        If ``from_scratch`` is provided, its value determines whether the
-        item's existing metadata is cleared before applying new metadata.
-        Otherwise, the configured ``from_scratch`` setting is used.
-        """
-        if self.from_scratch(from_scratch):
-            self.item.clear()
-
-        self.item.update(self.info.item_data)

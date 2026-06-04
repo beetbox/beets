@@ -5,7 +5,7 @@ from functools import cache
 
 import pytest
 
-from beets.autotag.distance import Distance
+from beets.autotag import Distance
 from beets.dbcore.query import Query
 from beets.test._common import DummyIO
 from beets.test.helper import ConfigMixin

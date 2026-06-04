@@ -39,13 +39,13 @@ from beets.test.helper import (
     ImportHelper,
     IOMixin,
     PluginMixin,
-    PytestPluginTestHelper,
+    PluginTestHelper,
     TerminalImportMixin,
 )
 from beets.util import PromptChoice, displayable_path, syspath
 
 
-class TestPluginRegistration(IOMixin, PytestPluginTestHelper):
+class TestPluginRegistration(IOMixin, PluginTestHelper):
     class RatingPlugin(plugins.BeetsPlugin):
         item_types: ClassVar[dict[str, types.Type]] = {
             "rating": types.Float(),
@@ -97,7 +97,7 @@ class TestPluginRegistration(IOMixin, PytestPluginTestHelper):
         assert out == "one; two; three\n"
 
 
-class PytestImportHelper(ImportHelper, PytestPluginTestHelper):
+class PytestImportHelper(ImportHelper, PluginTestHelper):
     @pytest.fixture(autouse=True)
     def setup_import_helper(self, setup):
         self.import_media = []
@@ -179,7 +179,7 @@ class TestEvents(PytestImportHelper):
         ]
 
 
-class TestListeners(PytestPluginTestHelper):
+class TestListeners(PluginTestHelper):
     def test_register(self):
         class DummyPlugin(plugins.BeetsPlugin):
             def __init__(self):

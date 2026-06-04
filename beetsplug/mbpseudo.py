@@ -25,9 +25,7 @@ import mediafile
 from typing_extensions import override
 
 from beets import config
-from beets.autotag.distance import distance
-from beets.autotag.hooks import AlbumInfo
-from beets.autotag.match import assign_items
+from beets.autotag import AlbumInfo, assign_items, distance
 from beets.plugins import find_plugins
 from beets.util.id_extractors import extract_release_id
 from beetsplug.musicbrainz import (
@@ -39,8 +37,7 @@ from beetsplug.musicbrainz import (
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
-    from beets.autotag.distance import Distance
-    from beets.autotag.hooks import AlbumMatch
+    from beets.autotag import AlbumMatch, Distance
     from beets.library import Item
 
     from ._utils.musicbrainz import (

@@ -25,11 +25,11 @@ from typing import TYPE_CHECKING, TypedDict
 from titlecase import titlecase
 
 from beets import ui
-from beets.autotag.hooks import AlbumInfo
+from beets.autotag import AlbumInfo
 from beets.plugins import BeetsPlugin
 
 if TYPE_CHECKING:
-    from beets.autotag.hooks import Info
+    from beets.autotag import Info
     from beets.importer import ImportSession, ImportTask
     from beets.library import Item
 

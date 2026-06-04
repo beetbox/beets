@@ -5,8 +5,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 from beets import config, library
-from beets.autotag.hooks import AlbumInfo, AlbumMatch, TrackInfo
-from beets.autotag.match import distance
+from beets.autotag import AlbumInfo, AlbumMatch, TrackInfo, distance
 from beets.exceptions import UserError
 from beets.test import _common
 from beets.test.helper import BeetsTestCase, IOMixin

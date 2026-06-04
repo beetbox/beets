@@ -37,20 +37,8 @@ def _artist(name: str, **kwargs):
     } | kwargs
 
 
-class PytestTestHelper(TestHelper):
-    """Same as the BeetsTestCase unittest setup but for pytest."""
-
-    @pytest.fixture(autouse=True)
-    def setup(self):
-        self.setup_beets()
-        try:
-            yield
-        finally:
-            self.teardown_beets()
-
-
 @patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
-class TestDGAlbumInfo(PytestTestHelper):
+class TestDGAlbumInfo(TestHelper):
     def _make_release(self, tracks=None):
         """Returns a Bag that mimics a discogs_client.Release. The list
         of elements on the returned Bag is incomplete, including just
@@ -468,7 +456,7 @@ class TestDGAlbumInfo(PytestTestHelper):
 
 
 @patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
-class TestDGSearchQuery(PytestTestHelper):
+class TestDGSearchQuery(TestHelper):
     def test_default_search_filters_without_extra_tags(self):
         """Discogs search uses only the type filter when no extra_tags are set."""
         plugin = DiscogsPlugin()
