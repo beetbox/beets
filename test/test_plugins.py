@@ -98,21 +98,13 @@ class TestPluginRegistration(IOMixin, PluginTestHelper):
         assert out == "one; two; three\n"
 
 
-class PytestImportHelper(ImportHelper, PluginTestHelper):
-    @pytest.fixture(autouse=True)
-    def setup_import_helper(self, setup):
-        self.import_media = []
-        self.lib.path_formats = [
-            ("default", os.path.join("$artist", "$album", "$title")),
-            ("singleton:true", os.path.join("singletons", "$title")),
-            ("comp:true", os.path.join("compilations", "$album", "$title")),
-        ]
-
-        #
+class PluginImportHelper(PluginMixin, ImportHelper):
+    def setup_beets(self):
+        super().setup_beets()
         self.prepare_album_for_import(2)
 
 
-class TestEvents(PytestImportHelper):
+class TestEvents(PluginImportHelper):
     def test_import_task_created(self, caplog):
         self.importer = self.setup_importer(pretend=True)
 
@@ -282,7 +274,7 @@ class TestListeners(PluginTestHelper):
         plugins.send("event9", foo=5)
 
 
-class TestPromptChoices(TerminalImportMixin, PytestImportHelper):
+class TestPromptChoices(TerminalImportMixin, PluginImportHelper):
     @pytest.fixture(autouse=True)
     def setup_prompt_choice(self, io):
         self.setup_importer()
