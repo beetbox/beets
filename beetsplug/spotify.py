@@ -412,7 +412,7 @@ class SpotifyPlugin(
             year=year,
             month=month,
             day=day,
-            label=album_data["label"],
+            label=album_data.get("label"),
             mediums=max(filter(None, medium_totals.keys())),
             data_source=self.data_source,
             data_url=album_data["external_urls"]["spotify"],
