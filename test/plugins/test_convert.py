@@ -16,6 +16,7 @@ from __future__ import annotations
 import fnmatch
 import os.path
 import re
+import shlex
 import sys
 from typing import TYPE_CHECKING
 
@@ -39,12 +40,6 @@ if TYPE_CHECKING:
 _p = pytest.param
 
 
-def shell_quote(text):
-    import shlex
-
-    return shlex.quote(text)
-
-
 class ConvertMixin:
     def tagged_copy_cmd(self, tag):
         """Return a conversion command that copies files and appends
@@ -57,7 +52,7 @@ class ConvertMixin:
 
         # A Python script that copies the file and appends a tag.
         stub = os.path.join(_common.RSRC, b"convert_stub.py").decode("utf-8")
-        return f"{shell_quote(sys.executable)} {shell_quote(stub)} $source $dest {tag}"
+        return f"{shlex.quote(sys.executable)} {shlex.quote(stub)} $source $dest {tag}"
 
     def file_endswith(self, path: Path, tag: str):
         """Check the path is a file and if its content ends with `tag`."""
