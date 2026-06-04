@@ -281,36 +281,37 @@ class TestConvertCli(ConvertPluginHelper, ConvertCommand):
 class TestNeverConvertLossyFiles(ConvertPluginHelper, ConvertCommand):
     """Test the effect of the `never_convert_lossy_files` option."""
 
-    def setup_beets(self):
-        super().setup_beets()
-        self.config["convert"] = {
+    @pytest.mark.parametrize(
+        "source_ext,never_convert_lossy_files,expected_ext,should_convert",
+        [
+            _p("flac", True, "mp3", True, id="lossless-converts-flag-on"),
+            _p("flac", False, "mp3", True, id="lossless-converts-flag-off"),
+            _p("ogg", False, "mp3", True, id="lossy-converts-allowed"),
+            _p("ogg", True, "ogg", False, id="lossy-kept-prevented"),
+        ],
+    )
+    def test_transcode(
+        self,
+        source_ext,
+        never_convert_lossy_files,
+        expected_ext,
+        should_convert,
+    ):
+        [item] = self.add_item_fixtures(ext=source_ext)
+        self.io.addinput("y")
+
+        convert_fmt = "mp3"
+        config = {
             "paths": {"default": "converted"},
-            "never_convert_lossy_files": True,
-            "format": "mp3",
-            "formats": {"mp3": self.tagged_copy_cmd("mp3")},
+            "format": convert_fmt,
+            "formats": {convert_fmt: self.tagged_copy_cmd(convert_fmt)},
+            "never_convert_lossy_files": never_convert_lossy_files,
         }
+        with self.configure_plugin(config):
+            self.run_convert_path(item)
 
-    def test_transcode_from_lossless(self):
-        [item] = self.add_item_fixtures(ext="flac")
-        self.io.addinput("y")
-        self.run_convert_path(item)
-        converted = self.convert_dest / "converted.mp3"
-        assert self.file_endswith(converted, "mp3")
-
-    def test_transcode_from_lossy(self):
-        self.config["convert"]["never_convert_lossy_files"] = False
-        [item] = self.add_item_fixtures(ext="ogg")
-        self.io.addinput("y")
-        self.run_convert_path(item)
-        converted = self.convert_dest / "converted.mp3"
-        assert self.file_endswith(converted, "mp3")
-
-    def test_transcode_from_lossy_prevented(self):
-        [item] = self.add_item_fixtures(ext="ogg")
-        self.io.addinput("y")
-        self.run_convert_path(item)
-        converted = self.convert_dest / "converted.ogg"
-        assert not self.file_endswith(converted, "mp3")
+        converted = self.convert_dest / f"converted.{expected_ext}"
+        assert self.file_endswith(converted, convert_fmt) is should_convert
 
 
 class TestNoConvert(PluginTestHelper):
