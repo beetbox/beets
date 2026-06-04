@@ -69,6 +69,8 @@ Bug fixes
   of crashing beets. :bug:`6193`
 - :doc:`plugins/lyrics`: Improve Musica.com lyric scraping so fetched lyrics no
   longer omit the opening verse or include non-lyric page content.
+- :doc:`plugins/convert`: Tidy the ``--playlist`` help text so it no longer has
+  awkward indentation in CLI output.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
