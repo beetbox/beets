@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import itertools
+import json
 import math
 import re
 import textwrap
@@ -70,6 +71,15 @@ class CaptchaError(requests.exceptions.HTTPError):
 
 class GeniusHTTPError(requests.exceptions.HTTPError):
     pass
+
+
+def _json_decode_error() -> type[ValueError]:
+    """Return the JSON decode error type exposed by requests."""
+    return getattr(
+        requests,
+        "JSONDecodeError",
+        getattr(requests.compat, "JSONDecodeError", json.JSONDecodeError),
+    )
 
 
 # Utilities.
@@ -226,7 +236,7 @@ class LyricsRequestHandler(RequestHandler):
     def handle_request(self) -> Iterator[None]:
         try:
             yield
-        except requests.JSONDecodeError:
+        except _json_decode_error():
             self.warn("Could not decode response JSON data")
         except requests.RequestException as exc:
             self.warn("Request error: {}", exc)

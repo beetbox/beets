@@ -69,6 +69,9 @@ Bug fixes
   of crashing beets. :bug:`6193`
 - :doc:`plugins/lyrics`: Improve Musica.com lyric scraping so fetched lyrics no
   longer omit the opening verse or include non-lyric page content.
+- :doc:`plugins/lyrics`: Handle JSON decode failures without crashing on
+  requests versions that do not expose ``JSONDecodeError`` at the top level.
+  :bug:`5998`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~

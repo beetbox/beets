@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 import textwrap
 from functools import partial
@@ -261,6 +262,36 @@ class TestLyricsPlugin(LyricsPluginMixin):
         last_log = caplog.messages[-1]
         assert last_log
         assert re.search(expected_log_match, last_log, re.I)
+
+    def test_error_handling_without_requests_json_decode_error(
+        self, monkeypatch, lyrics_plugin, caplog
+    ):
+        """JSON decode errors are still handled with older requests versions."""
+        monkeypatch.delattr(requests, "JSONDecodeError", raising=False)
+
+        with lyrics_plugin.handle_request():
+            raise json.JSONDecodeError("invalid", "", 0)
+
+        assert caplog.messages
+        last_log = caplog.messages[-1]
+        assert last_log
+        assert re.search(
+            r"LyricsPlugin: Could not decode.*JSON", last_log, re.I
+        )
+
+    def test_request_error_without_requests_json_decode_error(
+        self, monkeypatch, lyrics_plugin, caplog
+    ):
+        """Request errors are handled when requests has no JSONDecodeError."""
+        monkeypatch.delattr(requests, "JSONDecodeError", raising=False)
+
+        with lyrics_plugin.handle_request():
+            raise lyrics.CaptchaError()
+
+        assert caplog.messages
+        last_log = caplog.messages[-1]
+        assert last_log
+        assert "LyricsPlugin: Request error: Captcha is required" in last_log
 
     @pytest.mark.parametrize(
         "plugin_config, old_lyrics, found, expected",
