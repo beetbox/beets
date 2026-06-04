@@ -19,6 +19,10 @@ from beets.util import syspath
 if TYPE_CHECKING:
     import pytest
 
+# Because the absolute path begins with something like C:, we
+# can't disambiguate it from an ordinary query.
+WIN32_NO_IMPLICIT_PATHS = "Implicit paths are not supported on Windows"
+
 beetsplug.__path__ = [
     os.path.abspath(
         os.path.join(

@@ -1,9 +1,12 @@
 """Tests for dbcore query parsing helpers."""
 
+import sys
+
 import pytest
 
 from beets.dbcore import ModelQuery, query, sort
 from beets.dbcore.queryparse import QueryTerm
+from beets.test._common import WIN32_NO_IMPLICIT_PATHS
 from beets.test.fixtures import ModelFixture1, SortFixture
 
 _p = pytest.param
@@ -26,12 +29,25 @@ class TestQueryTermParsing:
             ("test:", ("test", "", query.SubstringQuery)),
             (r":regexp", (None, "regexp", query.RegexpQuery)),
             (r"test::regexp", ("test", "regexp", query.RegexpQuery)),
-            (r"test\:val", (None, "test:val", query.SubstringQuery)),
+            _p(
+                r"test\:val",
+                (None, "test:val", query.SubstringQuery),
+                marks=pytest.mark.skipif(
+                    sys.platform == "win32",
+                    reason="Backslash is parsed as a path separator in Windows",
+                ),
+            ),
             (r":test\:regexp", (None, "test:regexp", query.RegexpQuery)),
             ("year:1999", ("year", "1999", query.NumericQuery)),
             ("year:1999..2010", ("year", "1999..2010", query.NumericQuery)),
             ("", (None, "", query.SubstringQuery)),
-            ("/tmp", ("path", "/tmp", query.PathQuery)),
+            _p(
+                "/tmp",
+                ("path", "/tmp", query.PathQuery),
+                marks=pytest.mark.skipif(
+                    sys.platform == "win32", reason=WIN32_NO_IMPLICIT_PATHS
+                ),
+            ),
         ],
     )
     def test_query_term_parsing(self, query_string, expected):
