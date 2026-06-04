@@ -40,7 +40,15 @@ if TYPE_CHECKING:
 _p = pytest.param
 
 
-class ConvertMixin:
+class ConvertPluginHelper(IOMixin, PluginTestHelper):
+    db_on_disk = True
+    plugin = "convert"
+
+    def setup_beets(self):
+        super().setup_beets()
+        self.convert_dest = self.temp_dir_path / "convert_dest"
+        self.config["convert"] = {"dest": str(self.convert_dest)}
+
     def tagged_copy_cmd(self, tag):
         """Return a conversion command that copies files and appends
         `tag` to the copy.
@@ -59,16 +67,6 @@ class ConvertMixin:
         assert path.exists()
         assert path.is_file()
         return path.read_bytes().endswith(tag.encode("utf-8"))
-
-
-class ConvertPluginHelper(IOMixin, ConvertMixin, PluginTestHelper):
-    db_on_disk = True
-    plugin = "convert"
-
-    def setup_beets(self):
-        super().setup_beets()
-        self.convert_dest = self.temp_dir_path / "convert_dest"
-        self.config["convert"] = {"dest": str(self.convert_dest)}
 
 
 class TestImportConvert(AsIsImporterMixin, ImportHelper, ConvertPluginHelper):
