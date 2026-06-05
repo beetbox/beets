@@ -1074,19 +1074,13 @@ class ImportTaskFactory:
         return None
 
     def album(
-        self,
-        paths: Iterable[util.PathBytes],
-        dirs: list[util.PathBytes] | None = None,
+        self, paths: Iterable[util.PathBytes], dirs: list[util.PathBytes]
     ) -> ImportTask | None:
         """Return a `ImportTask` with all media files from paths.
 
         `dirs` is a list of parent directories used to record already
         imported albums.
         """
-
-        if dirs is None:
-            dirs = list({os.path.dirname(p) for p in paths})
-
         if self.session.already_imported(self.toppath, dirs):
             log.debug(
                 "Skipping previously-imported path: {}",
