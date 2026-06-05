@@ -767,7 +767,7 @@ class Google(SearchBackend):
         return None
 
 @dataclass
-class WriteToFile(LyricsRequestHandler):
+class WriteToFile():
     """Write lyrics to standalone lyric files."""
 
     _log: Logger
@@ -789,7 +789,7 @@ class WriteToFile(LyricsRequestHandler):
         Return the directory where lyrics should be written.
         """
         if self.directory == "album_folder":
-            return Path(item.path).parent
+            return Path(item.filepath).parent
 
         path = (
             Path(self.directory)
@@ -1025,6 +1025,13 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             return Translator.from_config(self._log, **config.flatten())
         return None
 
+    @cached_property
+    def lyric_file_writer(self) -> WriteToFile | None:
+        config = self.config["write_to_file"]
+        if config["directory"].get():
+            return WriteToFile.from_config(self._log, **config.flatten())
+        return None
+
     def __init__(self):
         super().__init__()
         self.config.add(
@@ -1203,14 +1210,8 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             item.store()
             if write:
                 item.try_write(tags={"synced_lyrics": sylt_data})
-            write_cfg = self.config["write_to_file"]
-
-            writer = WriteToFile.from_config(
-                self._log,
-                write_cfg["directory"].get(),
-            )
-
-            writer.write(item, lyrics_text)
+            if writer := self.lyric_file_writer:
+                writer.write(item, lyrics_text)
 
     def get_lyrics(self, artist: str, title: str, *args) -> Lyrics | None:
         """Get first found lyrics, trying each source in turn."""
