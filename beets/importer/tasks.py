@@ -116,6 +116,18 @@ class BaseImportTask:
         self.paths = list(paths) if paths is not None else []
         self.items = list(items) if items is not None else []
 
+    def save_progress(self) -> None:
+        """Updates the progress state to indicate that this album has
+        finished.
+        """
+        if self.toppath:
+            ImportState().progress_add(self.toppath, *self.paths)
+
+    def finalize(self, session: ImportSession) -> None:
+        # Update progress.
+        if session.want_resume:
+            self.save_progress()
+
 
 class ImportTask(BaseImportTask, Generic[library.AnyLibModel, InfoT, MatchT]):
     """Represents a single set of items to be imported along with its
@@ -201,13 +213,6 @@ class ImportTask(BaseImportTask, Generic[library.AnyLibModel, InfoT, MatchT]):
             self.choice_flag = Action.APPLY  # Implicit choice.
             self.match = choice  # type: ignore[assignment]
 
-    def save_progress(self) -> None:
-        """Updates the progress state to indicate that this album has
-        finished.
-        """
-        if self.toppath:
-            ImportState().progress_add(self.toppath, *self.paths)
-
     def save_history(self) -> None:
         """Save the directory in the history for incremental imports."""
         ImportState().history_add(self.paths)
@@ -258,9 +263,8 @@ class ImportTask(BaseImportTask, Generic[library.AnyLibModel, InfoT, MatchT]):
 
     def finalize(self, session: ImportSession) -> None:
         """Save progress, clean up files, and emit plugin event."""
-        # Update progress.
-        if session.want_resume:
-            self.save_progress()
+        super().finalize(session)
+
         if session.config["incremental"] and not (
             # Should we skip recording to incremental list?
             self.skip and session.config["incremental_skip_later"]
@@ -740,7 +744,7 @@ class SingletonImportTask(ImportTask[library.Item, TrackInfo, TrackMatch]):
         self.paths = [item.path]
 
     def imported_items(self) -> list[library.Item]:
-        return [self.item]
+        return self.items
 
     def _emit_imported(self, lib: library.Library) -> None:
         for item in self.imported_items():
@@ -818,10 +822,15 @@ class SingletonImportTask(ImportTask[library.Item, TrackInfo, TrackMatch]):
         self.item.store()
 
 
-# FIXME The inheritance relationships are inverted. This is why there
-# are so many methods which pass. More responsibility should be delegated to
-# the BaseImportTask class.
-class SentinelImportTask(ImportTask):
+class ProgressTask(BaseImportTask):
+    """Marks importer progress without importing media."""
+
+    @property
+    def skip(self) -> bool:
+        return True
+
+
+class SentinelImportTask(ProgressTask):
     """A sentinel task marks the progress of an import and does not
     import any items itself.
 
@@ -839,9 +848,6 @@ class SentinelImportTask(ImportTask):
         # TODO Remove the remaining attributes eventually
         self.choice_flag = None
 
-    def save_history(self) -> None:
-        pass
-
     def save_progress(self) -> None:
         if not self.paths:
             # "Done" sentinel.
@@ -849,19 +855,6 @@ class SentinelImportTask(ImportTask):
         elif self.toppath:
             # "Directory progress" sentinel for singletons
             super().save_progress()
-
-    @property
-    def skip(self) -> bool:
-        return True
-
-    def set_choice(self, choice: Action | AlbumMatch | TrackMatch) -> None:
-        raise NotImplementedError
-
-    def cleanup(self, config: dict[str, confuse.Subview]) -> None:
-        pass
-
-    def _emit_imported(self, lib: library.Library) -> None:
-        pass
 
 
 ArchiveHandler = tuple[Callable[[util.StrPath], bool], Callable[..., Any]]
@@ -893,6 +886,11 @@ class ArchiveImportTask(SentinelImportTask):
         # directory; here we track the original archive location so
         # ``cleanup()`` can remove it when the import mode demands.
         self.archive_path = toppath
+
+    def finalize(self, session: ImportSession) -> None:
+        super().finalize(session)
+
+        self.cleanup(session.config)
 
     @classmethod
     def is_archive(cls, path: str) -> bool:
@@ -1025,7 +1023,7 @@ class ImportTaskFactory:
         self.imported = 0  # "Real" tasks created.
         self.is_archive = ArchiveImportTask.is_archive(util.syspath(toppath))
 
-    def tasks(self) -> Iterable[ImportTask]:
+    def tasks(self) -> Iterable[BaseImportTask]:
         """Yield all import tasks for music found in the user-specified
         path `self.toppath`. Any necessary sentinel tasks are also
         produced.

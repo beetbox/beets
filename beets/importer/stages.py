@@ -108,7 +108,7 @@ def group_albums(session: ImportSession) -> StageCoro:
         if task.skip:
             out = task
             continue
-        tasks = []
+        tasks: list[BaseImportTask] = []
         sorted_items: list[library.Item] = sorted(task.items, key=group)
         for _, items in itertools.groupby(sorted_items, group):
             l_items = list(items)
