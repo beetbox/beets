@@ -30,12 +30,14 @@ from .queryparse import (
     query_from_strings,
     sort_from_strings,
 )
+from .sort import HarmonicKeySort
 from .types import Type
 
 __all__ = [
     "AndQuery",
     "Database",
     "FieldQuery",
+    "HarmonicKeySort",
     "Index",
     "InvalidQueryError",
     "MatchQuery",

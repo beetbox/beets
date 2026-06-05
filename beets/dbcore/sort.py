@@ -205,6 +205,44 @@ class NullSort(Sort):
         return 0
 
 
+class HarmonicKeySort(FieldSort):
+    """Sort by musical key in Circle of Fifths order when
+    ``sort_initial_key_harmonic`` is enabled; falls back to standard
+    case-insensitive alphabetical ordering otherwise.
+
+    Applies enharmonic normalization before lookup, so keys stored in either
+    flat or sharp notation sort correctly relative to each other.  Keys not
+    present in the Circle of Fifths (or missing entirely) sort to the end.
+    """
+
+    @staticmethod
+    def _harmonic_enabled() -> bool:
+        import beets
+
+        return beets.config["sort_initial_key_harmonic"].get(bool)
+
+    def is_slow(self) -> bool:
+        return self._harmonic_enabled()
+
+    def order_clause(self) -> str | None:
+        if self._harmonic_enabled():
+            return None  # Python-level sort; no SQL ORDER BY fragment
+        return FixedFieldSort(
+            self.field, self.ascending, self.case_insensitive
+        ).order_clause()
+
+    def sort(self, objs: list[AnyModel]) -> list[AnyModel]:
+        if not self._harmonic_enabled():
+            return FieldSort.sort(self, objs)
+        from beets.util.musictheory import harmonic_sort_key
+
+        return sorted(
+            objs,
+            key=lambda obj: harmonic_sort_key(obj.get(self.field)),
+            reverse=not self.ascending,
+        )
+
+
 class SmartArtistSort(FieldSort):
     """Sort by artist (either album artist or track artist),
     prioritizing the sort field over the raw field.

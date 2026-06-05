@@ -16,7 +16,7 @@ import beets
 from beets import dbcore, logging, plugins, util
 from beets.dbcore import types
 from beets.dbcore.pathutils import normalize_path_for_db
-from beets.dbcore.sort import SmartArtistSort
+from beets.dbcore.sort import HarmonicKeySort, SmartArtistSort
 from beets.util import (
     MoveOperation,
     bytestring_path,
@@ -698,7 +698,10 @@ class Item(LibModel):
 
     _formatter = FormattedItemMapping
 
-    _sorts: ClassVar[dict[str, type[FieldSort]]] = {"artist": SmartArtistSort}
+    _sorts: ClassVar[dict[str, type[FieldSort]]] = {
+        "artist": SmartArtistSort,
+        "initial_key": HarmonicKeySort,
+    }
 
     @cached_classproperty
     def _queries(cls) -> dict[str, FieldQueryType]:

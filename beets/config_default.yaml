@@ -155,6 +155,7 @@ format_raw_length: no
 sort_album: albumartist+ album+
 sort_item: artist+ album+ disc+ track+
 sort_case_insensitive: yes
+sort_initial_key_harmonic: yes
 
 # --------------- Autotagger ---------------
 
