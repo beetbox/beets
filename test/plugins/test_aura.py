@@ -13,15 +13,17 @@ if TYPE_CHECKING:
     from flask.testing import Client
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="module")
 def helper():
     helper = TestHelper()
     helper.setup_beets()
+
     yield helper
+
     helper.teardown_beets()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def app(helper):
     from beetsplug.aura import create_app
 
@@ -30,7 +32,7 @@ def app(helper):
     return app
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def item(helper):
     return helper.add_item_fixture(
         album="Album",
@@ -40,12 +42,12 @@ def item(helper):
     )
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def album(helper, item):
     return helper.lib.add_album([item])
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def _other_album_and_item(helper):
     """Add another item and album to prove that filtering works."""
     item = helper.add_item_fixture(

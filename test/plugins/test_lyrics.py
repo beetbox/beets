@@ -49,7 +49,9 @@ PHRASE_BY_TITLE = {
 def helper():
     helper = TestHelper()
     helper.setup_beets()
+
     yield helper
+
     helper.teardown_beets()
 
 
