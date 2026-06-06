@@ -87,6 +87,8 @@ Other changes
 - :doc:`plugins/spotify`: ``spotifysync`` now batches its SQLite commit for a
   sync run, follows the standard beets write-before-store pattern, and logs
   audio-features API unavailability only once per run.
+- :doc:`plugins/titlecase`: Correct the path format example and document the
+  ``%titlecase{text}`` template function. :bug:`6697`
 
 2.11.0 (May 06, 2026)
 ---------------------
