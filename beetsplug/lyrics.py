@@ -766,6 +766,7 @@ class Google(SearchBackend):
 
         return None
 
+
 @dataclass
 class WriteToFile:
     """Write lyrics to standalone lyric files."""
@@ -814,7 +815,6 @@ class WriteToFile:
     def info(self, message: str, *args) -> None:
         """Log an info message with the class name."""
         self._log.info(f"{self.__class__.__name__}: {message}", *args)
-
 
 
 @dataclass
@@ -1109,7 +1109,6 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             default=self.config["local"].get(),
             help="do not fetch missing lyrics",
         )
-
 
         def func(lib: Library, opts, args) -> None:
             # The "write to files" option corresponds to the
