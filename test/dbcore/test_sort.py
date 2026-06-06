@@ -39,7 +39,7 @@ def helper(class_helper):
     return class_helper
 
 
-@pytest.fixture(autouse=True, scope="class")
+@pytest.fixture(scope="class")
 def setup_library(request: pytest.FixtureRequest, helper):
     album_ids = [
         helper.lib.add(
@@ -115,6 +115,7 @@ def setup_library(request: pytest.FixtureRequest, helper):
     request.cls.lib = helper.lib
 
 
+@pytest.mark.usefixtures("setup_library")
 class TestSort:
     @pytest.mark.parametrize(
         "model,query,expected_ids",
@@ -153,6 +154,7 @@ class TestSort:
         assert [i.path for i in results] == expected_paths_with_prefix
 
 
+@pytest.mark.usefixtures("setup_library")
 class TestConfigSort:
     def test_default_sort_item(self):
         results = list(self.lib.items())
@@ -178,93 +180,69 @@ class TestCaseSensitivity:
     after all upper-case values. E.g., `Foo Qux bar`
     """
 
-    @pytest.fixture(autouse=True)
+    @pytest.fixture(autouse=True, scope="class")
     def setup(self, helper):
-        album = Album(
-            album="album",
-            genres=["alternative"],
-            year="2001",
-            flex1="flex1",
-            flex2="flex2-A",
-            albumartist="bar",
-        )
-        helper.lib.add(album)
+        helper.lib.add(Album(album="album", albumartist="bar"))
+        helper.lib.add(Album(album="Album", albumartist="Bar"))
+        helper.add_item(artist="artist", flex1="flex1", track=10)
+        helper.add_item(artist="Artist", flex1="Flex1", track=2)
 
-        item = _common.item()
-        item.title = "another"
-        item.artist = "lowercase"
-        item.album = "album"
-        item.year = 2001
-        item.comp = True
-        item.flex1 = "flex1"
-        item.flex2 = "flex2-A"
-        item.album_id = album.id
-        item.artist_sort = None
-        item.track = 10
-        helper.lib.add(item)
-
-        self.new_album = album
-        self.new_item = item
-
-        yield
-
-        self.new_item.remove(delete=True)
-        self.new_album.remove(delete=True)
-
-    def test_smart_artist_case_insensitive(self):
+    @pytest.mark.parametrize(
+        "getter,query,attr,expected_insensitive,expected_sensitive",
+        [
+            _p(
+                "items",
+                "artist+",
+                "artist",
+                ["artist", "Artist"],
+                ["Artist", "artist"],
+                id="smart-artist-case",
+            ),
+            _p(
+                "albums",
+                "album+",
+                "album",
+                ["album", "Album"],
+                ["Album", "album"],
+                id="fixed-field-case",
+            ),
+            _p(
+                "items",
+                "flex1+",
+                "flex1",
+                ["flex1", "Flex1"],
+                ["Flex1", "flex1"],
+                id="flex-field-case",
+            ),
+        ],
+    )
+    def test_text_field_case_sorting(
+        self,
+        config,
+        getter,
+        query,
+        attr,
+        expected_insensitive,
+        expected_sensitive,
+        helper,
+    ):
         config["sort_case_insensitive"] = True
-        q = "artist+"
-        results = list(self.lib.items(q))
-        assert results[0].artist == "lowercase"
-        assert results[1].artist == "One"
+        results = getattr(helper.lib, getter)(query)
+        assert [r[attr] for r in results] == expected_insensitive
 
-    def test_smart_artist_case_sensitive(self):
         config["sort_case_insensitive"] = False
-        q = "artist+"
-        results = list(self.lib.items(q))
-        assert results[0].artist == "One"
-        assert results[-1].artist == "lowercase"
+        results = getattr(helper.lib, getter)(query)
+        assert [r[attr] for r in results] == expected_sensitive
 
-    def test_fixed_field_case_insensitive(self):
+    def test_case_sensitive_only_affects_text(self, config, helper):
         config["sort_case_insensitive"] = True
-        q = "album+"
-        results = list(self.lib.albums(q))
-        assert results[0].album == "album"
-        assert results[1].album == "Album A"
-
-    def test_fixed_field_case_sensitive(self):
-        config["sort_case_insensitive"] = False
-        q = "album+"
-        results = list(self.lib.albums(q))
-        assert results[0].album == "Album A"
-        assert results[-1].album == "album"
-
-    def test_flex_field_case_insensitive(self):
-        config["sort_case_insensitive"] = True
-        q = "flex1+"
-        results = list(self.lib.items(q))
-        assert results[0].flex1 == "flex1"
-        assert results[1].flex1 == "Flex1-0"
-
-    def test_flex_field_case_sensitive(self):
-        config["sort_case_insensitive"] = False
-        q = "flex1+"
-        results = list(self.lib.items(q))
-        assert results[0].flex1 == "Flex1-0"
-        assert results[-1].flex1 == "flex1"
-
-    def test_case_sensitive_only_affects_text(self):
-        config["sort_case_insensitive"] = True
-        q = "track+"
-        results = list(self.lib.items(q))
+        results = helper.lib.items("track+")
         # If the numerical values were sorted as strings,
-        # then ['1', '10', '2'] would be valid.
-        # print([r.track for r in results])
-        assert results[0].track == 1
-        assert results[1].track == 2
-        assert results[-1].track == 10
+        # then ['10', '2'] would be valid.
+        assert [r.track for r in results] == [2, 10]
 
 
+@pytest.mark.usefixtures("setup_library")
 class TestNonExistingField:
     """Test sorting by non-existing fields"""
 
