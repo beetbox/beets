@@ -339,7 +339,10 @@ class BPDTestHelper(PluginTestCase):
                 sock.close()
         finally:
             server.terminate()
-            server.join(timeout=0.2)
+            server.join(timeout=2)  # give coverage time to write data
+            if server.is_alive():
+                server.kill()  # force kill if still stuck (SIGKILL on POSIX)
+                server.join(timeout=2)
 
     def _assert_ok(self, *responses):
         for response in responses:
