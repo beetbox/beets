@@ -17,6 +17,8 @@
 import os
 from unittest.mock import patch
 
+import pytest
+
 import beets.library
 from beets import config, util
 from beets.dbcore import types
@@ -24,98 +26,93 @@ from beets.dbcore.query import TrueQuery
 from beets.dbcore.sort import FixedFieldSort, MultipleSort, SlowFieldSort
 from beets.library import Album
 from beets.test import _common
-from beets.test.helper import BeetsTestCase
 
 
 def abs_test_path(path: str) -> str:
     return os.fsdecode(util.normpath(path))
 
 
-# A test case class providing a library with some dummy data and some
-# assertions involving that data.
-class DummyDataTestCase(BeetsTestCase):
-    def setUp(self):
-        super().setUp()
+@pytest.fixture(scope="class")
+def helper(class_helper):
+    return class_helper
 
-        albums = [
+
+@pytest.fixture(autouse=True, scope="class")
+def setup_library(request: pytest.FixtureRequest, helper):
+    album_ids = [
+        helper.lib.add(
             Album(
-                album="Album A",
-                genres=["Rock"],
-                year=2001,
-                flex1="Flex1-1",
-                flex2="Flex2-A",
-                albumartist="Foo",
-            ),
-            Album(
-                album="Album B",
-                genres=["Rock"],
-                year=2001,
-                flex1="Flex1-2",
-                flex2="Flex2-A",
-                albumartist="Bar",
-            ),
-            Album(
-                album="Album C",
-                genres=["Jazz"],
-                year=2005,
-                flex1="Flex1-1",
-                flex2="Flex2-B",
-                albumartist="Baz",
-            ),
-        ]
-        for album in albums:
-            self.lib.add(album)
+                album=album,
+                genres=genres,
+                year=year,
+                flex1=flex1,
+                flex2=flex2,
+                albumartist=albumartist,
+            )
+        )
+        for album, genres, year, flex1, flex2, albumartist in (
+            ["Album A", ["Rock"], 2001, "Flex1-1", "Flex2-A", "Foo"],
+            ["Album B", ["Rock"], 2001, "Flex1-2", "Flex2-A", "Bar"],
+            ["Album C", ["Jazz"], 2005, "Flex1-1", "Flex2-B", "Baz"],
+        )
+    ]
 
-        items = [_common.item() for _ in range(4)]
-        items[0].title = "Foo bar"
-        items[0].artist = "One"
-        items[0].album = "Baz"
-        items[0].year = 2001
-        items[0].comp = True
-        items[0].flex1 = "Flex1-0"
-        items[0].flex2 = "Flex2-A"
-        items[0].album_id = albums[0].id
-        items[0].artist_sort = None
-        items[0].path = abs_test_path("/path0.mp3")
-        items[0].track = 1
-        items[1].title = "Baz qux"
-        items[1].artist = "Two"
-        items[1].album = "Baz"
-        items[1].year = 2002
-        items[1].comp = True
-        items[1].flex1 = "Flex1-1"
-        items[1].flex2 = "Flex2-A"
-        items[1].album_id = albums[0].id
-        items[1].artist_sort = None
-        items[1].path = abs_test_path("/patH1.mp3")
-        items[1].track = 2
-        items[2].title = "Beets 4 eva"
-        items[2].artist = "Three"
-        items[2].album = "Foo"
-        items[2].year = 2003
-        items[2].comp = False
-        items[2].flex1 = "Flex1-2"
-        items[2].flex2 = "Flex1-B"
-        items[2].album_id = albums[1].id
-        items[2].artist_sort = None
-        items[2].path = abs_test_path("/paTH2.mp3")
-        items[2].track = 3
-        items[3].title = "Beets 4 eva"
-        items[3].artist = "Three"
-        items[3].album = "Foo2"
-        items[3].year = 2004
-        items[3].comp = False
-        items[3].flex1 = "Flex1-2"
-        items[3].flex2 = "Flex1-C"
-        items[3].album_id = albums[2].id
-        items[3].artist_sort = None
-        items[3].path = abs_test_path("/PATH3.mp3")
-        items[3].track = 4
-        for item in items:
-            self.lib.add(item)
+    for item in [
+        _common.item(
+            title="Foo bar",
+            artist="One",
+            album="Baz",
+            year=2001,
+            comp=True,
+            flex1="Flex1-0",
+            flex2="Flex2-A",
+            album_id=album_ids[0],
+            path=abs_test_path("/path0.mp3"),
+            track=1,
+        ),
+        _common.item(
+            title="Baz qux",
+            artist="Two",
+            album="Baz",
+            year=2002,
+            comp=True,
+            flex1="Flex1-1",
+            flex2="Flex2-A",
+            album_id=album_ids[0],
+            path=abs_test_path("/patH1.mp3"),
+            track=2,
+        ),
+        _common.item(
+            title="Beets 4 eva",
+            artist="Three",
+            album="Foo",
+            year=2003,
+            comp=False,
+            flex1="Flex1-2",
+            flex2="Flex1-B",
+            album_id=album_ids[1],
+            path=abs_test_path("/paTH2.mp3"),
+            track=3,
+        ),
+        _common.item(
+            title="Beets 4 eva",
+            artist="Three",
+            album="Foo2",
+            year=2004,
+            comp=False,
+            flex1="Flex1-2",
+            flex2="Flex1-C",
+            album_id=album_ids[2],
+            path=abs_test_path("/PATH3.mp3"),
+            track=4,
+        ),
+    ]:
+        helper.lib.add(item)
+
+    request.cls.lib = helper.lib
 
 
-class SortFixedFieldTest(DummyDataTestCase):
+class TestSortFixedField:
     def test_sort_asc(self):
         q = ""
         sort = FixedFieldSort("year", True)
@@ -169,7 +166,7 @@ class SortFixedFieldTest(DummyDataTestCase):
         assert results[3]["path"] == util.normpath("/PATH3.mp3")
 
 
-class SortFlexFieldTest(DummyDataTestCase):
+class TestSortFlexField:
     def test_sort_asc(self):
         q = ""
         sort = SlowFieldSort("flex1", True)
@@ -216,7 +213,7 @@ class SortFlexFieldTest(DummyDataTestCase):
             assert r1.id == r2.id
 
 
-class SortAlbumFixedFieldTest(DummyDataTestCase):
+class TestSortAlbumFixedField:
     def test_sort_asc(self):
         q = ""
         sort = FixedFieldSort("year", True)
@@ -261,7 +258,7 @@ class SortAlbumFixedFieldTest(DummyDataTestCase):
             assert r1.id == r2.id
 
 
-class SortAlbumFlexFieldTest(DummyDataTestCase):
+class TestSortAlbumFlexField:
     def test_sort_asc(self):
         q = ""
         sort = SlowFieldSort("flex1", True)
@@ -306,7 +303,7 @@ class SortAlbumFlexFieldTest(DummyDataTestCase):
             assert r1.id == r2.id
 
 
-class SortAlbumComputedFieldTest(DummyDataTestCase):
+class TestSortAlbumComputedField:
     def test_sort_asc(self):
         q = ""
         sort = SlowFieldSort("path", True)
@@ -332,7 +329,7 @@ class SortAlbumComputedFieldTest(DummyDataTestCase):
             assert r1.id == r2.id
 
 
-class SortCombinedFieldTest(DummyDataTestCase):
+class TestSortCombinedField:
     def test_computed_first(self):
         q = ""
         s1 = SlowFieldSort("path", True)
@@ -365,7 +362,7 @@ class SortCombinedFieldTest(DummyDataTestCase):
             assert r1.id == r2.id
 
 
-class ConfigSortTest(DummyDataTestCase):
+class TestConfigSort:
     def test_default_sort_item(self):
         results = list(self.lib.items())
         assert results[0].artist < results[1].artist
@@ -385,14 +382,13 @@ class ConfigSortTest(DummyDataTestCase):
         assert results[0].albumartist > results[1].albumartist
 
 
-class CaseSensitivityTest(DummyDataTestCase):
+class TestCaseSensitivity:
     """If case_insensitive is false, lower-case values should be placed
     after all upper-case values. E.g., `Foo Qux bar`
     """
 
-    def setUp(self):
-        super().setUp()
-
+    @pytest.fixture(autouse=True)
+    def setup(self, helper):
         album = Album(
             album="album",
             genres=["alternative"],
@@ -401,7 +397,7 @@ class CaseSensitivityTest(DummyDataTestCase):
             flex2="flex2-A",
             albumartist="bar",
         )
-        self.lib.add(album)
+        helper.lib.add(album)
 
         item = _common.item()
         item.title = "another"
@@ -414,15 +410,15 @@ class CaseSensitivityTest(DummyDataTestCase):
         item.album_id = album.id
         item.artist_sort = None
         item.track = 10
-        self.lib.add(item)
+        helper.lib.add(item)
 
         self.new_album = album
         self.new_item = item
 
-    def tearDown(self):
+        yield
+
         self.new_item.remove(delete=True)
         self.new_album.remove(delete=True)
-        super().tearDown()
 
     def test_smart_artist_case_insensitive(self):
         config["sort_case_insensitive"] = True
@@ -478,7 +474,7 @@ class CaseSensitivityTest(DummyDataTestCase):
         assert results[-1].track == 10
 
 
-class NonExistingFieldTest(DummyDataTestCase):
+class TestNonExistingField:
     """Test sorting by non-existing fields"""
 
     def test_non_existing_fields_not_fail(self):
