@@ -60,6 +60,7 @@ if TYPE_CHECKING:
         Generator,
         Iterable,
         Iterator,
+        KeysView,
         Sequence,
     )
     from sqlite3 import Connection
@@ -112,22 +113,24 @@ class FormattedMapping(Mapping[str, str]):
     """
 
     model: Model
+    model_keys: set[str]
 
     ALL_KEYS = "*"
 
     def __init__(
         self,
         model: Model,
-        included_keys: str = ALL_KEYS,
+        included_keys: str | list[str] = ALL_KEYS,
         for_path: bool = False,
-    ):
+    ) -> None:
         self.for_path = for_path
         self.model = model
-        if included_keys == self.ALL_KEYS:
+        self.model_keys = set(
             # Performance note: this triggers a database query.
-            self.model_keys = self.model.keys(True)
-        else:
-            self.model_keys = included_keys
+            self.model.keys(True)
+            if included_keys == self.ALL_KEYS
+            else included_keys
+        )
 
     def __getitem__(self, key: str) -> str:
         if key in self.model_keys:
@@ -575,23 +578,23 @@ class Model(ABC, Generic[D]):
         else:
             raise KeyError(f"no such field {key}")
 
-    def keys(self, computed: bool = False):
+    def keys(self, computed: bool = False) -> KeysView[str]:
         """Get a list of available field names for this object. The
         `computed` parameter controls whether computed (plugin-provided)
         fields are included in the key list.
         """
-        base_keys = list(self._fields) + list(self._values_flex.keys())
+        keys = {*self._fields, *self._values_flex}
         if computed:
-            return base_keys + list(self._getters().keys())
-        else:
-            return base_keys
+            keys.update(self._getters())
+
+        return dict.fromkeys(keys).keys()
 
     @classmethod
-    def all_keys(cls):
+    def all_keys(cls) -> KeysView[str]:
         """Get a list of available keys for objects of this type.
         Includes fixed and computed fields.
         """
-        return list(cls._fields) + list(cls._getters().keys())
+        return dict.fromkeys({*cls._fields, *cls._getters()}).keys()
 
     # Act like a dictionary.
 
@@ -733,11 +736,12 @@ class Model(ABC, Generic[D]):
             self.store()
 
     # Formatting and templating.
-
-    _formatter = FormattedMapping
+    _formatter: type[FormattedMapping]
 
     def formatted(
-        self, included_keys: str = _formatter.ALL_KEYS, for_path: bool = False
+        self,
+        included_keys: str = FormattedMapping.ALL_KEYS,
+        for_path: bool = False,
     ) -> FormattedMapping:
         """Get a mapping containing all values on this object formatted
         as human-readable unicode strings.
