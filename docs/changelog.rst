@@ -71,6 +71,8 @@ Bug fixes
   longer omit the opening verse or include non-lyric page content.
 - :doc:`plugins/convert`: Tidy the ``--playlist`` help text so it no longer has
   awkward indentation in CLI output.
+- :doc:`plugins/spotify`: Improved Spotify API parsing to handle missing label
+  data :bug:`6679`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
