@@ -27,6 +27,8 @@ from .state import ImportState
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    import confuse
+
     from beets import dbcore, library
     from beets.library import AnyLibModel
     from beets.util import PathBytes
@@ -96,14 +98,13 @@ class ImportSession:
         logger.handlers = [loghandler]
         return logger
 
-    def set_config(self, config):
+    def set_config(self, config: confuse.ConfigView) -> None:
         """Set `config` property from global import config and make
         implied changes.
         """
         # FIXME: Maybe this function should not exist and should instead
         # provide "decision wrappers" like "should_resume()", etc.
-        iconfig = dict(config)
-        self.config = iconfig
+        self.config = iconfig = config
 
         # Incremental and progress are mutually exclusive.
         if iconfig["incremental"]:

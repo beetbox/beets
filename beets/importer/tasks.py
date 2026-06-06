@@ -314,9 +314,9 @@ class ImportTask(BaseImportTask):
             self.save_history()
 
         self.cleanup(
-            copy=session.config["copy"],
-            delete=session.config["delete"],
-            move=session.config["move"],
+            copy=session.config["copy"].get(bool),
+            delete=session.config["delete"].get(bool),
+            move=session.config["move"].get(bool),
         )
 
         if not self.skip:

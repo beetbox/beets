@@ -291,7 +291,7 @@ def manipulate_files(session: ImportSession, task: ImportTask):
             operation = MoveOperation.LINK
         elif session.config["hardlink"]:
             operation = MoveOperation.HARDLINK
-        elif session.config["reflink"] == "auto":
+        elif session.config["reflink"].get() == "auto":
             operation = MoveOperation.REFLINK_AUTO
         elif session.config["reflink"]:
             operation = MoveOperation.REFLINK
@@ -299,7 +299,9 @@ def manipulate_files(session: ImportSession, task: ImportTask):
             operation = None
 
         task.manipulate_files(
-            session=session, operation=operation, write=session.config["write"]
+            session=session,
+            operation=operation,
+            write=session.config["write"].get(bool),
         )
 
     # Progress, cleanup, and event.
