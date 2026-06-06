@@ -15,7 +15,6 @@
 """Various tests for querying the library database."""
 
 import os
-from unittest.mock import patch
 
 import pytest
 
@@ -246,84 +245,44 @@ class TestCaseSensitivity:
 class TestNonExistingField:
     """Test sorting by non-existing fields"""
 
-    def test_non_existing_fields_not_fail(self):
-        qs = ["foo+", "foo-", "--", "-+", "+-", "++", "-foo-", "-foo+", "---"]
+    @pytest.mark.parametrize(
+        "q", ["foo+", "foo-", "--", "-+", "+-", "++", "-foo-", "-foo+", "---"]
+    )
+    def test_non_existing_fields_not_fail(self, q):
+        expected_ids = [i.id for i in self.lib.items("foo+")]
 
-        q0 = "foo+"
-        results0 = list(self.lib.items(q0))
-        for q1 in qs:
-            results1 = list(self.lib.items(q1))
-            for r1, r2 in zip(results0, results1):
-                assert r1.id == r2.id
+        actual_ids = [i.id for i in self.lib.items(q)]
 
-    def test_combined_non_existing_field_asc(self):
-        all_results = list(self.lib.items("id+"))
-        q = "foo+ id+"
-        results = list(self.lib.items(q))
-        assert len(all_results) == len(results)
-        for r1, r2 in zip(all_results, results):
-            assert r1.id == r2.id
+        assert actual_ids == expected_ids
 
-    def test_combined_non_existing_field_desc(self):
-        all_results = list(self.lib.items("id+"))
-        q = "foo- id+"
-        results = list(self.lib.items(q))
-        assert len(all_results) == len(results)
-        for r1, r2 in zip(all_results, results):
-            assert r1.id == r2.id
+    @pytest.mark.parametrize("q", ["foo+ id+", "foo- id+"], ids=["asc", "desc"])
+    def test_combined_non_existing_field(self, q):
+        expected_ids = [i.id for i in self.lib.items("id+")]
 
-    def test_field_present_in_some_items(self):
-        """Test ordering by a (string) field not present on all items."""
-        # append 'foo' to two items (1,2)
-        lower_foo_item, higher_foo_item, *items_without_foo = self.lib.items(
-            "id+"
-        )
-        lower_foo_item.foo, higher_foo_item.foo = "bar1", "bar2"
-        lower_foo_item.store()
-        higher_foo_item.store()
+        actual_ids = [i.id for i in self.lib.items(q)]
 
-        results_asc = list(self.lib.items("foo+ id+"))
-        assert [i.id for i in results_asc] == [
-            # items without field first
-            *[i.id for i in items_without_foo],
-            lower_foo_item.id,
-            higher_foo_item.id,
-        ]
+        assert actual_ids == expected_ids
 
-        results_desc = list(self.lib.items("foo- id+"))
-        assert [i.id for i in results_desc] == [
-            higher_foo_item.id,
-            lower_foo_item.id,
-            # items without field last
-            *[i.id for i in items_without_foo],
-        ]
-
-    @patch("beets.library.Item._types", {"myint": types.Integer()})
-    def test_int_field_present_in_some_items(self):
+    @pytest.mark.parametrize(
+        "field,values",
+        [_p("myint", (2, 10), id="int"), _p("foo", ("bar1", "bar2"), id="str")],
+    )
+    def test_field_present_in_some_items(self, monkeypatch, field, values):
         """Test ordering by an int-type field not present on all items."""
-        # append int-valued 'myint' to two items (1,2)
-        lower_myint_item, higher_myint_item, *items_without_myint = (
-            self.lib.items("id+")
-        )
-        lower_myint_item.myint, higher_myint_item.myint = 1, 2
-        lower_myint_item.store()
-        higher_myint_item.store()
+        monkeypatch.setitem(Item._types, "myint", types.Integer())
 
-        results_asc = list(self.lib.items("myint+ id+"))
-        assert [i.id for i in results_asc] == [
-            # items without field first
-            *[i.id for i in items_without_myint],
-            lower_myint_item.id,
-            higher_myint_item.id,
-        ]
+        lower_item, higher_item, *items_without_val = self.lib.items("id+")
+        for item, value in zip((lower_item, higher_item), values):
+            setattr(item, field, value)
+            item.store()
 
-        results_desc = list(self.lib.items("myint- id+"))
-        assert [i.id for i in results_desc] == [
-            higher_myint_item.id,
-            lower_myint_item.id,
-            # items without field last
-            *[i.id for i in items_without_myint],
-        ]
+        null_values_ids = [i.id for i in items_without_val]
+
+        ids_asc = [i.id for i in self.lib.items(f"{field}+ id+")]
+        ids_desc = [i.id for i in self.lib.items(f"{field}- id+")]
+
+        assert ids_asc == [*null_values_ids, lower_item.id, higher_item.id]
+        assert ids_desc == [higher_item.id, lower_item.id, *null_values_ids]
 
     def test_negation_interaction(self):
         """Test the handling of negation and sorting together.
