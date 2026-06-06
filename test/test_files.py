@@ -245,6 +245,12 @@ class HelperTest(unittest.TestCase):
         a = ["a", "b", "c"]
         assert util.components(p) == a
 
+    def test_ancestry_works_on_empty_string(self):
+        assert util.ancestry("") == []
+
+    def test_components_works_on_empty_string(self):
+        assert util.components("") == []
+
     def test_forward_slash(self):
         p = rb"C:\a\b\c"
         a = rb"C:/a/b/c"
