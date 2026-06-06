@@ -767,7 +767,7 @@ class Google(SearchBackend):
         return None
 
 @dataclass
-class WriteToFile():
+class WriteToFile:
     """Write lyrics to standalone lyric files."""
 
     _log: Logger
@@ -778,7 +778,7 @@ class WriteToFile():
         cls,
         log: Logger,
         directory: str,
-    ) -> "WriteToFile":
+    ) -> WriteToFile:
         return cls(
             log,
             directory,
