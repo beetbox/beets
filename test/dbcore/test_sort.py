@@ -123,9 +123,14 @@ class TestSort:
             _p(Album, SlowFieldSort("flex1", True), [1, 3, 2], id="album-flex"),
             _p(Item, SlowFieldSort("flex1", True), [1, 2, 3, 4], id="item-flex"),
             _p(Album, SlowFieldSort("path", True), [1, 2, 3], id="album-calculated"),
+            _p(Album, FixedFieldSort("year", False), [3, 1, 2], id="album-fixed-desc"),
+            _p(Item, FixedFieldSort("year", False), [4, 3, 2, 1], id="item-fixed-desc"),
+            _p(Album, SlowFieldSort("flex1", False), [2, 1, 3], id="album-flex-desc"),
+            _p(Item, SlowFieldSort("flex1", False), [3, 4, 2, 1], id="item-flex-desc"),
+            _p(Album, SlowFieldSort("path", False), [1, 2, 3], id="album-calculated-desc"),
         ],
     )  # fmt: skip
-    def test_sort_asc(self, model, sort, expected_ids):
+    def test_sort(self, model, sort, expected_ids):
         results = self.lib._fetch(model, "", sort)
         assert [r.id for r in results] == expected_ids
 
@@ -136,18 +141,6 @@ class TestSort:
 
 
 class TestSortFixedField:
-    def test_sort_desc(self):
-        q = ""
-        sort = FixedFieldSort("year", False)
-        results = self.lib.items(q, sort)
-        assert results[0]["year"] >= results[1]["year"]
-        assert results[0]["year"] == 2004
-        # same thing with query string
-        q = "year-"
-        results2 = self.lib.items(q)
-        for r1, r2 in zip(results, results2):
-            assert r1.id == r2.id
-
     def test_sort_two_field_asc(self):
         q = ""
         s1 = FixedFieldSort("album", True)
@@ -178,20 +171,6 @@ class TestSortFixedField:
 
 
 class TestSortFlexField:
-    def test_sort_desc(self):
-        q = ""
-        sort = SlowFieldSort("flex1", False)
-        results = self.lib.items(q, sort)
-        assert results[0]["flex1"] >= results[1]["flex1"]
-        assert results[1]["flex1"] >= results[2]["flex1"]
-        assert results[2]["flex1"] >= results[3]["flex1"]
-        assert results[0]["flex1"] == "Flex1-2"
-        # same thing with query string
-        q = "flex1-"
-        results2 = self.lib.items(q)
-        for r1, r2 in zip(results, results2):
-            assert r1.id == r2.id
-
     def test_sort_two_field(self):
         q = ""
         s1 = SlowFieldSort("flex2", False)
@@ -213,18 +192,6 @@ class TestSortFlexField:
 
 
 class TestSortAlbumFixedField:
-    def test_sort_desc(self):
-        q = ""
-        sort = FixedFieldSort("year", False)
-        results = self.lib.albums(q, sort)
-        assert results[0]["year"] >= results[1]["year"]
-        assert results[0]["year"] == 2005
-        # same thing with query string
-        q = "year-"
-        results2 = self.lib.albums(q)
-        for r1, r2 in zip(results, results2):
-            assert r1.id == r2.id
-
     def test_sort_two_field_asc(self):
         q = ""
         s1 = FixedFieldSort("genres", True)
@@ -246,18 +213,6 @@ class TestSortAlbumFixedField:
 
 
 class TestSortAlbumFlexField:
-    def test_sort_desc(self):
-        q = ""
-        sort = SlowFieldSort("flex1", False)
-        results = self.lib.albums(q, sort)
-        assert results[0]["flex1"] >= results[1]["flex1"]
-        assert results[1]["flex1"] >= results[2]["flex1"]
-        # same thing with query string
-        q = "flex1-"
-        results2 = self.lib.albums(q)
-        for r1, r2 in zip(results, results2):
-            assert r1.id == r2.id
-
     def test_sort_two_field_asc(self):
         q = ""
         s1 = SlowFieldSort("flex2", True)
@@ -273,20 +228,6 @@ class TestSortAlbumFlexField:
         assert results[0]["flex1"] <= results[1]["flex1"]
         # same thing with query string
         q = "flex2+ flex1+"
-        results2 = self.lib.albums(q)
-        for r1, r2 in zip(results, results2):
-            assert r1.id == r2.id
-
-
-class TestSortAlbumComputedField:
-    def test_sort_desc(self):
-        q = ""
-        sort = SlowFieldSort("path", False)
-        results = self.lib.albums(q, sort)
-        assert results[0]["path"] >= results[1]["path"]
-        assert results[1]["path"] >= results[2]["path"]
-        # same thing with query string
-        q = "path-"
         results2 = self.lib.albums(q)
         for r1, r2 in zip(results, results2):
             assert r1.id == r2.id
