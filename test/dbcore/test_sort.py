@@ -24,8 +24,10 @@ from beets import config, util
 from beets.dbcore import types
 from beets.dbcore.query import TrueQuery
 from beets.dbcore.sort import FixedFieldSort, MultipleSort, SlowFieldSort
-from beets.library import Album
+from beets.library import Album, Item
 from beets.test import _common
+
+_p = pytest.param
 
 
 def abs_test_path(path: str) -> str:
@@ -50,15 +52,17 @@ def setup_library(request: pytest.FixtureRequest, helper):
                 albumartist=albumartist,
             )
         )
-        for album, genres, year, flex1, flex2, albumartist in (
-            ["Album A", ["Rock"], 2001, "Flex1-1", "Flex2-A", "Foo"],
-            ["Album B", ["Rock"], 2001, "Flex1-2", "Flex2-A", "Bar"],
-            ["Album C", ["Jazz"], 2005, "Flex1-1", "Flex2-B", "Baz"],
+        for id_, album, genres, year, flex1, flex2, albumartist in (
+            [1, "Album A", ["Rock"], 2001, "Flex1-1", "Flex2-A", "Foo"],
+            [2, "Album B", ["Rock"], 2001, "Flex1-2", "Flex2-A", "Bar"],
+            [3, "Album C", ["Jazz"], 2005, "Flex1-1", "Flex2-B", "Baz"],
         )
     ]
 
     for item in [
         _common.item(
+            id=1,
+            title="first",
             artist="One",
             album="Album A",
             year=2001,
@@ -69,6 +73,8 @@ def setup_library(request: pytest.FixtureRequest, helper):
             track=1,
         ),
         _common.item(
+            id=2,
+            title="second",
             artist="Two",
             album="Album A",
             year=2002,
@@ -79,6 +85,8 @@ def setup_library(request: pytest.FixtureRequest, helper):
             track=2,
         ),
         _common.item(
+            id=3,
+            title="third",
             artist="Three",
             album="Album B",
             year=2003,
@@ -89,6 +97,8 @@ def setup_library(request: pytest.FixtureRequest, helper):
             track=3,
         ),
         _common.item(
+            id=4,
+            title="fourth",
             artist="Three",
             album="Album C",
             year=2004,
@@ -104,19 +114,28 @@ def setup_library(request: pytest.FixtureRequest, helper):
     request.cls.lib = helper.lib
 
 
-class TestSortFixedField:
-    def test_sort_asc(self):
-        q = ""
-        sort = FixedFieldSort("year", True)
-        results = self.lib.items(q, sort)
-        assert results[0]["year"] <= results[1]["year"]
-        assert results[0]["year"] == 2001
-        # same thing with query string
-        q = "year+"
-        results2 = self.lib.items(q)
-        for r1, r2 in zip(results, results2):
-            assert r1.id == r2.id
+class TestSort:
+    @pytest.mark.parametrize(
+        "model,sort,expected_ids",
+        [
+            _p(Album, FixedFieldSort("year", True), [1, 2, 3], id="album-fixed"),
+            _p(Item, FixedFieldSort("year", True), [1, 2, 3, 4], id="item-fixed"),
+            _p(Album, SlowFieldSort("flex1", True), [1, 3, 2], id="album-flex"),
+            _p(Item, SlowFieldSort("flex1", True), [1, 2, 3, 4], id="item-flex"),
+            _p(Album, SlowFieldSort("path", True), [1, 2, 3], id="album-calculated"),
+        ],
+    )  # fmt: skip
+    def test_sort_asc(self, model, sort, expected_ids):
+        results = self.lib._fetch(model, "", sort)
+        assert [r.id for r in results] == expected_ids
 
+        # same thing with qery string
+        sort_q = f"{sort.field}{'+' if sort.ascending else '-'}"
+        results2 = self.lib._fetch(model, sort_q, None)
+        assert [r.id for r in results2] == expected_ids
+
+
+class TestSortFixedField:
     def test_sort_desc(self):
         q = ""
         sort = FixedFieldSort("year", False)
@@ -159,18 +178,6 @@ class TestSortFixedField:
 
 
 class TestSortFlexField:
-    def test_sort_asc(self):
-        q = ""
-        sort = SlowFieldSort("flex1", True)
-        results = self.lib.items(q, sort)
-        assert results[0]["flex1"] <= results[1]["flex1"]
-        assert results[0]["flex1"] == "Flex1-0"
-        # same thing with query string
-        q = "flex1+"
-        results2 = self.lib.items(q)
-        for r1, r2 in zip(results, results2):
-            assert r1.id == r2.id
-
     def test_sort_desc(self):
         q = ""
         sort = SlowFieldSort("flex1", False)
@@ -206,18 +213,6 @@ class TestSortFlexField:
 
 
 class TestSortAlbumFixedField:
-    def test_sort_asc(self):
-        q = ""
-        sort = FixedFieldSort("year", True)
-        results = self.lib.albums(q, sort)
-        assert results[0]["year"] <= results[1]["year"]
-        assert results[0]["year"] == 2001
-        # same thing with query string
-        q = "year+"
-        results2 = self.lib.albums(q)
-        for r1, r2 in zip(results, results2):
-            assert r1.id == r2.id
-
     def test_sort_desc(self):
         q = ""
         sort = FixedFieldSort("year", False)
@@ -251,18 +246,6 @@ class TestSortAlbumFixedField:
 
 
 class TestSortAlbumFlexField:
-    def test_sort_asc(self):
-        q = ""
-        sort = SlowFieldSort("flex1", True)
-        results = self.lib.albums(q, sort)
-        assert results[0]["flex1"] <= results[1]["flex1"]
-        assert results[1]["flex1"] <= results[2]["flex1"]
-        # same thing with query string
-        q = "flex1+"
-        results2 = self.lib.albums(q)
-        for r1, r2 in zip(results, results2):
-            assert r1.id == r2.id
-
     def test_sort_desc(self):
         q = ""
         sort = SlowFieldSort("flex1", False)
@@ -296,18 +279,6 @@ class TestSortAlbumFlexField:
 
 
 class TestSortAlbumComputedField:
-    def test_sort_asc(self):
-        q = ""
-        sort = SlowFieldSort("path", True)
-        results = self.lib.albums(q, sort)
-        assert results[0]["path"] <= results[1]["path"]
-        assert results[1]["path"] <= results[2]["path"]
-        # same thing with query string
-        q = "path+"
-        results2 = self.lib.albums(q)
-        for r1, r2 in zip(results, results2):
-            assert r1.id == r2.id
-
     def test_sort_desc(self):
         q = ""
         sort = SlowFieldSort("path", False)
