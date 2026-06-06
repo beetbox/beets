@@ -774,15 +774,8 @@ class WriteToFile:
     directory: str
 
     @classmethod
-    def from_config(
-        cls,
-        log: Logger,
-        directory: str,
-    ) -> WriteToFile:
-        return cls(
-            log,
-            directory,
-        )
+    def from_config(cls, log: Logger, directory: str) -> WriteToFile:
+        return cls(log, directory)
 
     def get_directory(self, item: Item) -> Path:
         """
@@ -817,6 +810,10 @@ class WriteToFile:
         self.info("Wrote lyrics file {}", file_path)
 
         return file_path
+
+    def info(self, message: str, *args) -> None:
+        """Log an info message with the class name."""
+        self._log.info(f"{self.__class__.__name__}: {message}", *args)
 
 
 
@@ -1063,9 +1060,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
                     for n in BACKEND_BY_NAME
                     if n not in {"musixmatch", "tekstowo"}
                 ],
-                "write_to_file": {
-                    "directory": None,
-                },
+                "write_to_file": {"directory": None},
             }
         )
         self.config["translate"]["api_key"].redact = True
