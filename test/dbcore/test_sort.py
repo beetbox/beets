@@ -59,11 +59,9 @@ def setup_library(request: pytest.FixtureRequest, helper):
 
     for item in [
         _common.item(
-            title="Foo bar",
             artist="One",
-            album="Baz",
+            album="Album A",
             year=2001,
-            comp=True,
             flex1="Flex1-0",
             flex2="Flex2-A",
             album_id=album_ids[0],
@@ -71,11 +69,9 @@ def setup_library(request: pytest.FixtureRequest, helper):
             track=1,
         ),
         _common.item(
-            title="Baz qux",
             artist="Two",
-            album="Baz",
+            album="Album A",
             year=2002,
-            comp=True,
             flex1="Flex1-1",
             flex2="Flex2-A",
             album_id=album_ids[0],
@@ -83,11 +79,9 @@ def setup_library(request: pytest.FixtureRequest, helper):
             track=2,
         ),
         _common.item(
-            title="Beets 4 eva",
             artist="Three",
-            album="Foo",
+            album="Album B",
             year=2003,
-            comp=False,
             flex1="Flex1-2",
             flex2="Flex1-B",
             album_id=album_ids[1],
@@ -95,11 +89,9 @@ def setup_library(request: pytest.FixtureRequest, helper):
             track=3,
         ),
         _common.item(
-            title="Beets 4 eva",
             artist="Three",
-            album="Foo2",
+            album="Album C",
             year=2004,
-            comp=False,
             flex1="Flex1-2",
             flex2="Flex1-C",
             album_id=album_ids[2],
@@ -147,8 +139,8 @@ class TestSortFixedField:
         results = self.lib.items(q, sort)
         assert results[0]["album"] <= results[1]["album"]
         assert results[1]["album"] <= results[2]["album"]
-        assert results[0]["album"] == "Baz"
-        assert results[1]["album"] == "Baz"
+        assert results[0]["album"] == "Album A"
+        assert results[1]["album"] == "Album A"
         assert results[0]["year"] <= results[1]["year"]
         # same thing with query string
         q = "album+ year+"
