@@ -36,7 +36,7 @@ from .actions import Action, DuplicateAction
 from .state import ImportState
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
+    from collections.abc import Iterable, Mapping, Sequence
 
     from beets.autotag import Recommendation, TrackMatch
 
@@ -544,7 +544,11 @@ class ImportTask(BaseImportTask):
         albums.
         """
 
-        def _reduce_and_log(new_obj, existing_fields, overwrite_keys):
+        def _reduce_and_log(
+            new_obj: library.LibModel,
+            existing_fields: Mapping[str, Any],
+            overwrite_keys: list[str],
+        ) -> Mapping[str, Any]:
             """Some flexible attributes should be overwritten (rather than
             preserved) on reimports; Copies existing_fields, logs and removes
             entries that should not be preserved and returns a dict containing
