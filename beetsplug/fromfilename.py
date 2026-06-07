@@ -409,9 +409,7 @@ class FromFilenamePlugin(BeetsPlugin):
             item.update(new_data)
 
     def _apply_track_matches(
-        self,
-        items: list[Item],
-        track_matches: dict[Item, FilenameMatch],
+        self, items: list[Item], track_matches: dict[Item, FilenameMatch]
     ):
         for item in items:
             filename_match = track_matches.get(item)
@@ -434,29 +432,6 @@ class FromFilenamePlugin(BeetsPlugin):
                 if self._bad_field(old_value) and new_value:
                     match[key] = new_value
         return match
-
-    # def _apply_matches(
-    #     self,
-    #     album_match: FilenameMatch | None,
-    #     track_matches: dict[Item, FilenameMatch] | None,
-    # ) -> None:
-    #     """Apply all valid matched fields to all items in the match dictionary."""
-    #     match = dict(album_match._matches)
-    #     for item in track_matches:
-    #         match.update(track_matches[item]._matches)
-    #         found_data: dict[str, int | str] = {}
-    #         self._log.debug(f"keys: {', '.join(match.keys())}")
-    #         # Check every key we are supposed to match.
-    #         for key in match.keys():
-    #             # If the key is applicable to the session, we will update it.
-    #             if key in self.session_fields:
-    #                 old_value = item.get(key)
-    #                 new_value = match[key]
-    #                 # If the field is bad, and we have a new value
-    #                 if self._bad_field(old_value) and new_value:
-    #                     found_data[key] = new_value
-    #         self._log.info(f"guessing {self._format_guesses(found_data)}")
-    #         item.update(found_data)
 
     @staticmethod
     def _format_guesses(guesses: dict[str, int | str]) -> str:
