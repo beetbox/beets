@@ -44,6 +44,7 @@ def setup_library(request: pytest.FixtureRequest, helper):
     album_ids = [
         helper.lib.add(
             Album(
+                id=id_,
                 album=album,
                 genres=genres,
                 year=year,
@@ -140,16 +141,16 @@ class TestSort:
         results = self.lib._fetch(model, query, None)
         assert [r.id for r in results] == expected_ids
 
-
-class TestSortFixedField:
     def test_sort_path_field(self):
-        q = ""
-        sort = FixedFieldSort("path", True)
-        results = self.lib.items(q, sort)
-        assert results[0]["path"] == util.normpath("/path0.mp3")
-        assert results[1]["path"] == util.normpath("/patH1.mp3")
-        assert results[2]["path"] == util.normpath("/paTH2.mp3")
-        assert results[3]["path"] == util.normpath("/PATH3.mp3")
+        results = self.lib.items("", FixedFieldSort("path", True))
+        expected_paths = [
+            b"/path0.mp3",
+            b"/patH1.mp3",
+            b"/paTH2.mp3",
+            b"/PATH3.mp3",
+        ]
+        expected_paths_with_prefix = list(map(util.normpath, expected_paths))
+        assert [i.path for i in results] == expected_paths_with_prefix
 
 
 class TestConfigSort:
