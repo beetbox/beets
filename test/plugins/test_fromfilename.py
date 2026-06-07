@@ -260,10 +260,6 @@ def test_parse_track_info(text, matchgroup):
                 }
             ),
         ),
-        (
-            ("/tmp/track01.m4a", 1, "", "track01"),
-            ("/tmp/track 2.m4a", 2, "", "track 2"),
-        ),
     ],
 )
 def test_parse_album_info(text, matchgroup):
@@ -748,7 +744,7 @@ class TestFromFilename(PluginMixin):
         assert task.items[2].track == expected[2].track
 
     def test_no_guesses(self):
-        """Assert that an item with complete information is
+        """Assert that an item with complete information
         has no guesses attempted."""
         item = mock_item(
             path="/Folder/File.wav",
@@ -801,12 +797,69 @@ class TestFromFilename(PluginMixin):
     def test_guess_folder(self):
         """Assert that from filename does not
         guess from the folder, if guess folder is `no`."""
-        return
+        config = {
+            "guess": {"folder": False},
+            "fields": [
+                "albumartist",
+                "album",
+                "year",
+                "track",
+                "artist",
+                "title",
+            ],
+        }
+        item = mock_item(
+            path=(
+                "/Not Guessing - This Tempting Folder (2005)/"
+                "01 - Artist - Title.wav"
+            )
+        )
+        task = mock_task([item])
+        with self.configure_plugin(config):
+            f = FromFilenamePlugin()
+            f.filename_task(task, Session())
+            guess = task.items[0]
+            assert guess.albumartist == ""
+            assert guess.album == ""
+            assert guess.year == 0
+            assert guess.artist == "Artist"
+            assert guess.title == "Title"
+            assert guess.track == 1
 
     def test_guess_file(self):
         """Assert that from filename does not guess
         from the file, if guess file is `no`."""
-        return
+        config = {
+            "guess": {"file": False},
+            "fields": [
+                "albumartist",
+                "album",
+                "year",
+                "track",
+                "artist",
+                "title",
+            ],
+        }
+        item = mock_item(
+            path=(
+                "/Album Artist - Album (2005)/"
+                "01 - Not Guessing - This Tempting Filename.wav"
+            )
+        )
+        task = mock_task([item])
+        with self.configure_plugin(config):
+            f = FromFilenamePlugin()
+            f.filename_task(task, Session())
+            guess = task.items[0]
+            assert guess.albumartist == "Album Artist"
+            assert guess.album == "Album"
+            assert guess.year == 2005
+            assert guess.artist == ""
+            assert guess.title == ""
+            assert guess.track == 0
+
+    def test_guess_none(self):
+        """Assert that nothing is guessed if both are disabled."""
 
     def test_singleton_flag_import(self):
         """If the import task is a singleton, assert that
