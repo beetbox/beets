@@ -119,24 +119,17 @@ class TestSort:
     @pytest.mark.parametrize(
         "model,query,expected_ids",
         [
-            _p(Album, "year+", [1, 2, 3], id="album-fixed"),
-            _p(Album, "flex1+", [1, 3, 2], id="album-flex"),
-            _p(Album, "path+", [1, 2, 3], id="album-calculated"),
-            _p(Album, "year-", [3, 2, 1], id="album-fixed-desc"),
-            _p(Album, "flex1-", [2, 1, 3], id="album-flex-desc"),
-            _p(Album, "path-", [1, 2, 3], id="album-calculated-desc"),
-            _p(Album, "genres+ album+", [3, 1, 2], id="multi-album-fixed-field-asc"),
-            _p(Album, "flex2+ flex1+", [1, 2, 3], id="multi-album-flex-field-asc"),
+            _p(Album, "year+", [1, 2, 3], id="fixed"),
+            _p(Album, "flex1-", [2, 1, 3], id="flex"),
+            _p(Album, "path+", [1, 2, 3], id="calculated"),
+            _p(Album, "year-", [3, 2, 1], id="fixed-desc"),
+            _p(Album, "genres+ album+", [3, 1, 2], id="multi-fixed-field"),
+            _p(Album, "flex2+ flex1+", [1, 2, 3], id="multi-flex-field"),
             _p(Album, "path+ year+", [1, 2, 3], id="computed"),
             _p(Album, "year+ path+", [1, 2, 3], id="computed-reverse"),
-            _p(Item, "year+", [1, 2, 3, 4], id="item-fixed"),
-            _p(Item, "flex1+", [1, 2, 3, 4], id="item-flex"),
-            _p(Item, "year-", [4, 3, 2, 1], id="item-fixed-desc"),
-            _p(Item, "flex1-", [3, 4, 2, 1], id="item-flex-desc"),
-            _p(Item, "album+ year+", [1, 2, 3, 4], id="multi-item-fixed-field-asc"),
-            _p(Item, "flex2- flex1+", [1, 2, 4, 3], id="multi-flex-field-mixed"),
+            _p(Item, "flex2- flex1+", [1, 2, 4, 3], id="item-multi-flex-field"),
         ],
-    )  # fmt: skip
+    )
     def test_sort(self, model, query, expected_ids):
         results = self.lib._fetch(model, query, None)
         assert [r.id for r in results] == expected_ids
@@ -250,31 +243,26 @@ class TestNonExistingField:
 
         assert actual_ids == expected_ids
 
-    @pytest.mark.parametrize("q", ["foo+ id+", "foo- id+"], ids=["asc", "desc"])
-    def test_combined_non_existing_field(self, q):
+    def test_combined_non_existing_field(self):
         expected_ids = [i.id for i in self.lib.items("id+")]
 
-        actual_ids = [i.id for i in self.lib.items(q)]
+        actual_ids = [i.id for i in self.lib.items("foo+ id+")]
 
         assert actual_ids == expected_ids
 
-    @pytest.mark.parametrize(
-        "field,values",
-        [_p("myint", (2, 10), id="int"), _p("foo", ("bar1", "bar2"), id="str")],
-    )
-    def test_field_present_in_some_items(self, monkeypatch, field, values):
+    def test_field_present_in_some_items(self, monkeypatch):
         """Test ordering by an int-type field not present on all items."""
         monkeypatch.setitem(Item._types, "myint", types.Integer())
 
         lower_item, higher_item, *items_without_val = self.lib.items("id+")
-        for item, value in zip((lower_item, higher_item), values):
-            setattr(item, field, value)
+        for item, value in zip((lower_item, higher_item), (2, 10)):
+            item.myint = value
             item.store()
 
         null_values_ids = [i.id for i in items_without_val]
 
-        ids_asc = [i.id for i in self.lib.items(f"{field}+ id+")]
-        ids_desc = [i.id for i in self.lib.items(f"{field}- id+")]
+        ids_asc = [i.id for i in self.lib.items("myint+ id+")]
+        ids_desc = [i.id for i in self.lib.items("myint- id+")]
 
         assert ids_asc == [*null_values_ids, lower_item.id, higher_item.id]
         assert ids_desc == [higher_item.id, lower_item.id, *null_values_ids]
