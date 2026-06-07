@@ -27,7 +27,9 @@ from urllib.request import pathname2url
 import confuse
 
 from beets import plugins, ui
-from beets.dbcore.query import ParsingError, Query, Sort
+from beets.dbcore.query import ParsingError, Query
+from beets.dbcore.sort import Sort
+from beets.exceptions import UserError
 from beets.library import Album, Item, parse_query_string
 from beets.util import (
     bytestring_path,
@@ -205,7 +207,7 @@ class SmartPlaylistPlugin(plugins.BeetsPlugin):
                 unmatched = [name for name, _, _ in self._unmatched_playlists]
                 unmatched.sort()
                 quoted_names = " ".join(shell_quote(name) for name in unmatched)
-                raise ui.UserError(
+                raise UserError(
                     f"No playlist matching any of {quoted_names} found"
                 )
 

@@ -32,7 +32,8 @@ from requests_oauthlib.oauth1_session import (
 import beets
 import beets.ui
 from beets import config
-from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.autotag import AlbumInfo, TrackInfo
+from beets.exceptions import UserError
 from beets.metadata_plugins import MetadataSourcePlugin
 from beets.util import unique_list
 from beets.util.deprecation import deprecate_for_user
@@ -117,18 +118,12 @@ class BeatportClient:
 
     @overload
     def search(
-        self,
-        query: str,
-        release_type: Literal["release"],
-        details: bool = True,
+        self, query: str, release_type: Literal["release"], details: bool = True
     ) -> Iterator[BeatportRelease]: ...
 
     @overload
     def search(
-        self,
-        query: str,
-        release_type: Literal["track"],
-        details: bool = True,
+        self, query: str, release_type: Literal["track"], details: bool = True
     ) -> Iterator[BeatportTrack]: ...
 
     def search(
@@ -359,7 +354,7 @@ class BeatportPlugin(MetadataSourcePlugin):
             url = auth_client.get_authorize_url()
         except AUTH_ERRORS as e:
             self._log.debug("authentication error: {}", e)
-            raise beets.ui.UserError("communication with Beatport failed")
+            raise UserError("communication with Beatport failed")
 
         beets.ui.print_("To authenticate with Beatport, visit:")
         beets.ui.print_(url)
@@ -370,7 +365,7 @@ class BeatportPlugin(MetadataSourcePlugin):
             token, secret = auth_client.get_access_token(data)
         except AUTH_ERRORS as e:
             self._log.debug("authentication error: {}", e)
-            raise beets.ui.UserError("Beatport token request failed")
+            raise UserError("Beatport token request failed")
 
         # Save the token for later use.
         self._log.debug("Beatport token {}, secret {}", token, secret)
@@ -384,11 +379,7 @@ class BeatportPlugin(MetadataSourcePlugin):
         return self.config["tokenfile"].get(confuse.Filename(in_app_dir=True))
 
     def candidates(
-        self,
-        items: Sequence[Item],
-        artist: str,
-        album: str,
-        va_likely: bool,
+        self, items: Sequence[Item], artist: str, album: str, va_likely: bool
     ) -> Iterator[AlbumInfo]:
         if va_likely:
             query = album

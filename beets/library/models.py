@@ -15,7 +15,9 @@ from mediafile import MediaFile, UnreadableFileError
 import beets
 from beets import dbcore, logging, plugins, util
 from beets.dbcore import types
+from beets.dbcore.db import FormattedMapping
 from beets.dbcore.pathutils import normalize_path_for_db
+from beets.dbcore.sort import SmartArtistSort
 from beets.util import (
     MoveOperation,
     bytestring_path,
@@ -26,13 +28,17 @@ from beets.util import (
 )
 from beets.util.deprecation import maybe_replace_legacy_field
 from beets.util.functemplate import Template, template
+from beets.util.pathformats import PF_KEY_DEFAULT
 
 from .exceptions import FileOperationError, ReadError, WriteError
 from .fields import TYPE_BY_FIELD
-from .queries import PF_KEY_DEFAULT, parse_query_string
+from .queries import parse_query_string
 
 if TYPE_CHECKING:
+    from collections.abc import KeysView
+
     from beets.dbcore.query import FieldQuery, FieldQueryType
+    from beets.dbcore.sort import FieldSort
 
     from .library import Library  # noqa: F401
 
@@ -164,16 +170,22 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
 
     ALL_KEYS = "*"
 
-    def __init__(self, item, included_keys=ALL_KEYS, for_path=False):
+    def __init__(
+        self,
+        item: Item,
+        included_keys: str | list[str] = ALL_KEYS,
+        for_path: bool = False,
+    ) -> None:
         # We treat album and item keys specially here,
         # so exclude transitive album keys from the model's keys.
         super().__init__(item, included_keys=[], for_path=for_path)
         self.included_keys = included_keys
-        if included_keys == self.ALL_KEYS:
+        self.model_keys = set(
             # Performance note: this triggers a database query.
-            self.model_keys = item.keys(computed=True, with_album=False)
-        else:
-            self.model_keys = included_keys
+            item.keys(computed=True, with_album=False)
+            if included_keys == self.ALL_KEYS
+            else included_keys
+        )
         self.item = item
 
     @cached_property
@@ -303,9 +315,11 @@ class Album(LibModel):
     def _types(cls) -> dict[str, types.Type]:
         return {**super()._types, "path": TYPE_BY_FIELD["path"]}
 
-    _sorts: ClassVar[dict[str, type[dbcore.query.FieldSort]]] = {
-        "albumartist": dbcore.query.SmartArtistSort,
-        "artist": dbcore.query.SmartArtistSort,
+    _formatter = FormattedMapping
+
+    _sorts: ClassVar[dict[str, type[FieldSort]]] = {
+        "albumartist": SmartArtistSort,
+        "artist": SmartArtistSort,
     }
 
     # List of keys that are set on an album's items.
@@ -695,9 +709,7 @@ class Item(LibModel):
 
     _formatter = FormattedItemMapping
 
-    _sorts: ClassVar[dict[str, type[dbcore.query.FieldSort]]] = {
-        "artist": dbcore.query.SmartArtistSort
-    }
+    _sorts: ClassVar[dict[str, type[FieldSort]]] = {"artist": SmartArtistSort}
 
     @cached_classproperty
     def _queries(cls) -> dict[str, FieldQueryType]:
@@ -805,17 +817,16 @@ class Item(LibModel):
             f"({', '.join(f'{k}={self[k]!r}' for k in self.keys(with_album=False))})"
         )
 
-    def keys(self, computed=False, with_album=True):
+    def keys(self, computed=False, with_album=True) -> KeysView[str]:
         """Get a list of available field names.
 
         `with_album` controls whether the album's fields are included.
         """
         keys = super().keys(computed=computed)
         if with_album and self._cached_album:
-            keys = set(keys)
-            keys.update(self._cached_album.keys(computed=computed))
-            keys = list(keys)
-        return keys
+            keys |= self._cached_album.keys(computed=computed)
+
+        return dict.fromkeys(keys).keys()
 
     def get(self, key, default=None, with_album=True):
         """Get the value for a given key or `default` if it does not
@@ -1144,10 +1155,7 @@ class Item(LibModel):
     # Templating.
 
     def destination(
-        self,
-        relative_to_libdir=False,
-        basedir=None,
-        path_formats=None,
+        self, relative_to_libdir=False, basedir=None, path_formats=None
     ) -> bytes:
         """Return the path in the library directory designated for the item
         (i.e., where the file ought to be).
@@ -1405,15 +1413,7 @@ class DefaultTemplateFunctions:
         return (name, keys, disam, item_id)
 
     def _tmpl_unique(
-        self,
-        name,
-        keys,
-        disam,
-        bracket,
-        item_id,
-        db_item,
-        item_keys,
-        skip_item,
+        self, name, keys, disam, bracket, item_id, db_item, item_keys, skip_item
     ):
         """Generate a string that is guaranteed to be unique among all items of
         the same type as "db_item" who share the same set of keys.

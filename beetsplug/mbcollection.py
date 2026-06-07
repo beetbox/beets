@@ -22,11 +22,13 @@ from typing import TYPE_CHECKING, ClassVar
 
 from requests.auth import HTTPDigestAuth
 
-from beets import __version__, config, ui
+from beets import __version__, config
+from beets.exceptions import UserError
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 
 from ._utils.musicbrainz import MusicBrainzAPI
+from ._utils.requests import BeetsHTTPError
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
@@ -151,13 +153,7 @@ class MBCollection:
 class MusicBrainzCollectionPlugin(BeetsPlugin):
     def __init__(self) -> None:
         super().__init__()
-        self.config.add(
-            {
-                "auto": False,
-                "collection": "",
-                "remove": False,
-            }
-        )
+        self.config.add({"auto": False, "collection": "", "remove": False})
         if self.config["auto"]:
             self.import_stages = [self.imported]
 
@@ -168,7 +164,7 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
     @cached_property
     def collection(self) -> MBCollection:
         if not (collections := self.mb_api.browse_collections()):
-            raise ui.UserError("no collections exist for user")
+            raise UserError("no collections exist for user")
 
         # Get all release collection IDs, avoiding event collections
         if not (
@@ -176,12 +172,12 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
                 c["id"]: c for c in collections if c["entity_type"] == "release"
             }
         ):
-            raise ui.UserError("No release collection found.")
+            raise UserError("No release collection found.")
 
         # Check that the collection exists so we can present a nice error
         if collection_id := self.config["collection"].as_str():
             if not (collection := collection_by_id.get(collection_id)):
-                raise ui.UserError(f"invalid collection ID: {collection_id}")
+                raise UserError(f"invalid collection ID: {collection_id}")
         else:
             # No specified collection. Just return the first collection ID
             collection = next(iter(collection_by_id.values()))
@@ -217,17 +213,24 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
         self, lib: Library, albums: Iterable[Album], remove_missing: bool
     ) -> None:
         """Update the MusicBrainz collection from a list of Beets albums"""
-        collection = self.collection
+        try:
+            collection = self.collection
 
-        # Get a list of all the album IDs.
-        album_ids = [id_ for a in albums if UUID_PAT.match(id_ := a.mb_albumid)]
+            # Get a list of all the album IDs.
+            album_ids = [
+                id_ for a in albums if UUID_PAT.match(id_ := a.mb_albumid)
+            ]
 
-        # Submit to MusicBrainz.
-        self._log.info("Updating MusicBrainz collection {}...", collection.id)
-        collection.add_releases(album_ids)
-        if remove_missing:
-            lib_ids = {x.mb_albumid for x in lib.albums()}
-            albums_in_collection = {r["id"] for r in collection.releases}
-            collection.remove_releases(list(albums_in_collection - lib_ids))
+            # Submit to MusicBrainz.
+            self._log.info(
+                "Updating MusicBrainz collection {}...", collection.id
+            )
+            collection.add_releases(album_ids)
+            if remove_missing:
+                lib_ids = {x.mb_albumid for x in lib.albums()}
+                albums_in_collection = {r["id"] for r in collection.releases}
+                collection.remove_releases(list(albums_in_collection - lib_ids))
 
-        self._log.info("...MusicBrainz collection updated.")
+            self._log.info("...MusicBrainz collection updated.")
+        except BeetsHTTPError as exc:
+            self._log.error("Failed to update MusicBrainz collection: {}", exc)

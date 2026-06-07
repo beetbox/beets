@@ -7,7 +7,7 @@ from functools import cached_property
 from typing import TYPE_CHECKING
 
 from beets import config, ui
-from beets.autotag.hooks import TrackInfo
+from beets.autotag import TrackInfo
 from beets.util import displayable_path
 from beets.util.color import colorize
 from beets.util.diff import colordiff
@@ -17,7 +17,7 @@ from beets.util.units import human_seconds_short
 if TYPE_CHECKING:
     import confuse
 
-    from beets.autotag.hooks import AlbumMatch, Match, TrackMatch
+    from beets.autotag import AlbumMatch, Match, TrackMatch
     from beets.library.models import Item
     from beets.util.color import ColorName
 

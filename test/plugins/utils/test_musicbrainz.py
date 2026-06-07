@@ -97,16 +97,12 @@ def test_normalize_data():
                         {
                             "type": "composer",
                             "type_id": "d59d99ea-23d4-4a80-b066-edca32ee158f",
-                            "artist": {
-                                "name": "幾田りら",
-                            },
+                            "artist": {"name": "幾田りら"},
                         },
                         {
                             "type": "lyricist",
                             "type_id": "3e48faba-ec01-47fd-8e89-30e81161661c",
-                            "artist": {
-                                "name": "幾田りら",
-                            },
+                            "artist": {"name": "幾田りら"},
                         },
                     ],
                     "url_relations": [
@@ -128,7 +124,7 @@ def test_normalize_data():
                     "title": "百花繚乱",
                     "type": "Song",
                 },
-            },
+            }
         ],
     }
 

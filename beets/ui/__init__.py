@@ -22,7 +22,6 @@ from __future__ import annotations
 import errno
 import optparse
 import os.path
-import re
 import shutil
 import sqlite3
 import sys
@@ -36,11 +35,11 @@ import confuse
 from beets import config, library, logging, plugins, util
 from beets.dbcore import db
 from beets.dbcore import query as db_query
+from beets.exceptions import UserError
 from beets.util import as_string
 from beets.util.color import colorize
 from beets.util.deprecation import deprecate_for_maintainers
 from beets.util.diff import get_model_changes
-from beets.util.functemplate import template
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
@@ -60,18 +59,6 @@ log = logging.getLogger("beets")
 if not log.handlers:
     log.addHandler(logging.StreamHandler())
 log.propagate = False  # Don't propagate to root handler.
-
-
-PF_KEY_QUERIES = {
-    "comp": "comp:true",
-    "singleton": "singleton:true",
-}
-
-
-class UserError(Exception):
-    """UI exception. Commands should throw this in order to display
-    nonrecoverable errors to the user.
-    """
 
 
 # Encoding utilities.
@@ -430,32 +417,6 @@ def input_select_objects(prompt, objs, rep, prompt_all=None):
         return []
 
 
-def get_path_formats(subview=None):
-    """Get the configuration's path formats as a list of query/template
-    pairs.
-    """
-    path_formats = []
-    subview = subview or config["paths"]
-    for query, view in subview.items():
-        query = PF_KEY_QUERIES.get(query, query)  # Expand common queries.
-        path_formats.append((query, template(view.as_str())))
-    return path_formats
-
-
-def get_replacements():
-    """Confuse validation function that reads regex/string pairs."""
-    replacements = []
-    for pattern, repl in config["replace"].get(dict).items():
-        repl = repl or ""
-        try:
-            replacements.append((re.compile(pattern), repl))
-        except re.error:
-            raise UserError(
-                f"malformed regular expression in replace: {pattern}"
-            )
-    return replacements
-
-
 @cache
 def term_width() -> int:
     """Get the width (columns) of the terminal."""
@@ -741,7 +702,7 @@ class SubcommandsOptionParser(CommonOptionsParser):
                 name = f"{' ' * formatter.current_indent}{name}\n"
                 indent_first = help_position
             else:
-                name = f"{' ' * formatter.current_indent}{name:<{name_width}}\n"
+                name = f"{' ' * formatter.current_indent}{name:<{name_width}}  "
                 indent_first = 0
             result.append(name)
             help_width = formatter.width - help_position
@@ -881,12 +842,7 @@ def _open_library(config: confuse.LazyConfig) -> library.Library:
     dbpath = util.bytestring_path(config["library"].as_filename())
     _ensure_db_directory_exists(dbpath)
     try:
-        lib = library.Library(
-            dbpath,
-            config["directory"].as_filename(),
-            get_path_formats(),
-            get_replacements(),
-        )
+        lib = library.Library(dbpath, config["directory"].as_filename())
         lib.get_item(0)  # Test database connection.
     except (sqlite3.OperationalError, sqlite3.DatabaseError) as db_error:
         log.debug("{}", traceback.format_exc())

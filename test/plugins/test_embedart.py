@@ -12,30 +12,35 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+from __future__ import annotations
 
 import os
 import os.path
 import shutil
 import tempfile
 import unittest
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
 import pytest
 from mediafile import MediaFile
 
-from beets import config, logging, ui
+from beets import config, logging
+from beets.exceptions import UserError
 from beets.test import _common
 from beets.test.helper import (
-    BeetsTestCase,
     FetchImageHelper,
     ImportHelper,
     IOMixin,
-    PluginMixin,
+    PluginTestHelper,
 )
 from beets.util import bytestring_path, displayable_path, syspath
 from beets.util.artresizer import ArtResizer
 from beetsplug._utils import art
 from test.test_art_resize import DummyIMBackend
+
+if TYPE_CHECKING:
+    from beets.test.helper import ImageRequestMocker
 
 
 def require_artresizer_compare(test):
@@ -58,14 +63,10 @@ def require_artresizer_compare(test):
         compare_threshold = 20
 
         similar_compares_ok = ArtResizer.shared.compare(
-            abbey_artpath,
-            abbey_similarpath,
-            compare_threshold,
+            abbey_artpath, abbey_similarpath, compare_threshold
         )
         different_compares_ok = ArtResizer.shared.compare(
-            abbey_artpath,
-            abbey_differentpath,
-            compare_threshold,
+            abbey_artpath, abbey_differentpath, compare_threshold
         )
         if not similar_compares_ok or different_compares_ok:
             raise unittest.SkipTest("IM version with broken compare")
@@ -76,9 +77,18 @@ def require_artresizer_compare(test):
     return wrapper
 
 
-class EmbedartCliTest(
-    ImportHelper, IOMixin, PluginMixin, FetchImageHelper, BeetsTestCase
-):
+class PytestImportHelper(PluginTestHelper, ImportHelper):
+    @pytest.fixture(autouse=True)
+    def setup_import_helper(self, setup):
+        self.import_media = []
+        self.lib.path_formats = [
+            ("default", os.path.join("$artist", "$album", "$title")),
+            ("singleton:true", os.path.join("singletons", "$title")),
+            ("comp:true", os.path.join("compilations", "$album", "$title")),
+        ]
+
+
+class TestEmbedartCli(PytestImportHelper, IOMixin, FetchImageHelper):
     plugin = "embedart"
     small_artpath = os.path.join(_common.RSRC, b"image-2x3.jpg")
     abbey_artpath = os.path.join(_common.RSRC, b"abbey.jpg")
@@ -147,14 +157,14 @@ class EmbedartCliTest(
 
         if os.path.isfile(syspath(tmp_path)):
             os.remove(syspath(tmp_path))
-            self.fail(
+            pytest.fail(
                 f"Artwork file {displayable_path(tmp_path)} was not deleted"
             )
 
     def test_art_file_missing(self):
         self.add_album_fixture()
         logging.getLogger("beets.embedart").setLevel(logging.DEBUG)
-        with pytest.raises(ui.UserError):
+        with pytest.raises(UserError):
             self.run_command("embedart", "-y", "-f", "/doesnotexist")
 
     def test_embed_non_image_file(self):
@@ -254,34 +264,46 @@ class EmbedartCliTest(
         mediafile = MediaFile(syspath(item.path))
         assert mediafile.images[0].data == self.image_data
 
-    def test_embed_art_from_url_with_yes_input(self):
+    def test_embed_art_from_url_with_yes_input(
+        self, image_request_mock: ImageRequestMocker
+    ):
         self._setup_data()
         album = self.add_album_fixture()
         item = album.items()[0]
-        self.mock_response("http://example.com/test.jpg", "image/jpeg")
+        image_request_mock.get(
+            "http://example.com/test.jpg", content_type="image/jpeg"
+        )
         self.io.addinput("y")
         self.run_command("embedart", "-u", "http://example.com/test.jpg")
         mediafile = MediaFile(syspath(item.path))
-        assert mediafile.images[0].data == self.IMAGEHEADER.get(
+        assert mediafile.images[0].data == image_request_mock.IMAGE_HEADERS[
             "image/jpeg"
-        ).ljust(32, b"\x00")
+        ].ljust(32, b"\x00")
 
-    def test_embed_art_from_url_png(self):
+    def test_embed_art_from_url_png(
+        self, image_request_mock: ImageRequestMocker
+    ):
         self._setup_data()
         album = self.add_album_fixture()
         item = album.items()[0]
-        self.mock_response("http://example.com/test.png", "image/png")
+        image_request_mock.get(
+            "http://example.com/test.png", content_type="image/png"
+        )
         self.run_command("embedart", "-y", "-u", "http://example.com/test.png")
         mediafile = MediaFile(syspath(item.path))
-        assert mediafile.images[0].data == self.IMAGEHEADER.get(
+        assert mediafile.images[0].data == image_request_mock.IMAGE_HEADERS[
             "image/png"
-        ).ljust(32, b"\x00")
+        ].ljust(32, b"\x00")
 
-    def test_embed_art_from_url_not_image(self):
+    def test_embed_art_from_url_not_image(
+        self, image_request_mock: ImageRequestMocker
+    ):
         self._setup_data()
         album = self.add_album_fixture()
         item = album.items()[0]
-        self.mock_response("http://example.com/test.html", "text/html")
+        image_request_mock.get(
+            "http://example.com/test.html", content_type="text/html"
+        )
         self.run_command("embedart", "-y", "-u", "http://example.com/test.html")
         mediafile = MediaFile(syspath(item.path))
         assert not mediafile.images
@@ -332,11 +354,7 @@ class ArtSimilarityTest(unittest.TestCase):
 
     def _similarity(self, threshold):
         return art.check_art_similarity(
-            self.log,
-            self.item,
-            b"path",
-            threshold,
-            artresizer=self.artresizer,
+            self.log, self.item, b"path", threshold, artresizer=self.artresizer
         )
 
     def _popen(self, status=0, stdout="", stderr=""):

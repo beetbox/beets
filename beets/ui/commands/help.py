@@ -1,6 +1,7 @@
 """The 'help' command: show help information for commands."""
 
 from beets import ui
+from beets.exceptions import UserError
 
 
 class HelpCommand(ui.Subcommand):
@@ -16,7 +17,7 @@ class HelpCommand(ui.Subcommand):
             cmdname = args[0]
             helpcommand = self.root_parser._subcommand_for_name(cmdname)
             if not helpcommand:
-                raise ui.UserError(f"unknown command '{cmdname}'")
+                raise UserError(f"unknown command '{cmdname}'")
             helpcommand.print_help()
         else:
             self.root_parser.print_help()

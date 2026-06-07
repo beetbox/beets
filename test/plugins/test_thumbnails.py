@@ -47,8 +47,7 @@ class ThumbnailsTest(BeetsTestCase):
 
         metadata = {"Thumb::URI": "COVER_URI", "Thumb::MTime": "12345"}
         mock_artresizer.shared.write_metadata.assert_called_once_with(
-            b"/path/to/thumbnail",
-            metadata,
+            b"/path/to/thumbnail", metadata
         )
         mock_stat.assert_called_once_with(syspath(album.artpath))
 

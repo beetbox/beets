@@ -158,6 +158,21 @@ class ModifyTest(IOMixin, BeetsTestCase):
         item.load()
         assert item.album == f"{orig_album} - append"
 
+    def test_album_modify_artists_not_split(self):
+        self.modify("--album", "artists=Charli XCX")
+        for item in self.lib.items():
+            assert item.artists == ["Charli XCX"], (
+                f"artists should be a list with one element, "
+                f"got {item.artists!r}"
+            )
+
+    def test_album_modify_genres_not_split(self):
+        self.modify("--album", "genres=Rock")
+        for item in self.lib.items():
+            assert item.genres == ["Rock"], (
+                f"genres should be a list with one element, got {item.genres!r}"
+            )
+
     # Misc
 
     def test_write_initial_key_tag(self):

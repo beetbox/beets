@@ -50,10 +50,7 @@ def resize_url(url: str, maxwidth: int, quality: int = 0) -> str:
     """Return a proxied image URL that resizes the original image to
     maxwidth (preserving aspect ratio).
     """
-    params = {
-        "url": url.replace("http://", ""),
-        "w": maxwidth,
-    }
+    params = {"url": url.replace("http://", ""), "w": maxwidth}
 
     if quality > 0:
         params["q"] = quality
@@ -117,9 +114,7 @@ class LocalBackend(ABC):
 
     @abstractmethod
     def deinterlace(
-        self,
-        path_in: bytes,
-        path_out: bytes | None = None,
+        self, path_in: bytes, path_out: bytes | None = None
     ) -> bytes:
         """Remove interlacing from an image and return the output path.
 
@@ -134,10 +129,7 @@ class LocalBackend(ABC):
 
     @abstractmethod
     def convert_format(
-        self,
-        source: bytes,
-        target: bytes,
-        deinterlaced: bool,
+        self, source: bytes, target: bytes, deinterlaced: bool
     ) -> bytes:
         """Convert an image to a new format and return the new file path.
 
@@ -151,10 +143,7 @@ class LocalBackend(ABC):
         return False
 
     def compare(
-        self,
-        im1: bytes,
-        im2: bytes,
-        compare_threshold: float,
+        self, im1: bytes, im2: bytes, compare_threshold: float
     ) -> bool | None:
         """Compare two images and return `True` if they are similar enough, or
         `None` if there is an error.
@@ -332,9 +321,7 @@ class IMBackend(LocalBackend):
         return size
 
     def deinterlace(
-        self,
-        path_in: bytes,
-        path_out: bytes | None = None,
+        self, path_in: bytes, path_out: bytes | None = None
     ) -> bytes:
         if not path_out:
             path_out = get_temp_filename(__name__, "deinterlace_IM_", path_in)
@@ -367,10 +354,7 @@ class IMBackend(LocalBackend):
             return None
 
     def convert_format(
-        self,
-        source: bytes,
-        target: bytes,
-        deinterlaced: bool,
+        self, source: bytes, target: bytes, deinterlaced: bool
     ) -> bytes:
         cmd = [
             *self.convert_cmd,
@@ -393,10 +377,7 @@ class IMBackend(LocalBackend):
         return self.version() > (6, 8, 7)
 
     def compare(
-        self,
-        im1: bytes,
-        im2: bytes,
-        compare_threshold: float,
+        self, im1: bytes, im2: bytes, compare_threshold: float
     ) -> bool | None:
         is_windows = platform.system() == "Windows"
 
@@ -605,9 +586,7 @@ class PILBackend(LocalBackend):
             return None
 
     def deinterlace(
-        self,
-        path_in: bytes,
-        path_out: bytes | None = None,
+        self, path_in: bytes, path_out: bytes | None = None
     ) -> bytes:
         if not path_out:
             path_out = get_temp_filename(__name__, "deinterlace_PIL_", path_in)
@@ -638,10 +617,7 @@ class PILBackend(LocalBackend):
             return None
 
     def convert_format(
-        self,
-        source: bytes,
-        target: bytes,
-        deinterlaced: bool,
+        self, source: bytes, target: bytes, deinterlaced: bool
     ) -> bytes:
         from PIL import Image, UnidentifiedImageError
 
@@ -664,10 +640,7 @@ class PILBackend(LocalBackend):
         return False
 
     def compare(
-        self,
-        im1: bytes,
-        im2: bytes,
-        compare_threshold: float,
+        self, im1: bytes, im2: bytes, compare_threshold: float
     ) -> bool | None:
         # It is an error to call this when ArtResizer.can_compare is not True.
         raise NotImplementedError()
@@ -688,10 +661,7 @@ class PILBackend(LocalBackend):
         im.save(os.fsdecode(file), "PNG", pnginfo=meta)
 
 
-BACKEND_CLASSES: list[type[LocalBackend]] = [
-    IMBackend,
-    PILBackend,
-]
+BACKEND_CLASSES: list[type[LocalBackend]] = [IMBackend, PILBackend]
 
 
 class ArtResizer:
@@ -758,9 +728,7 @@ class ArtResizer:
             return path_in
 
     def deinterlace(
-        self,
-        path_in: bytes,
-        path_out: bytes | None = None,
+        self, path_in: bytes, path_out: bytes | None = None
     ) -> bytes:
         """Deinterlace an image.
 
@@ -815,10 +783,7 @@ class ArtResizer:
             return None
 
     def reformat(
-        self,
-        path_in: bytes,
-        new_format: str,
-        deinterlaced: bool = True,
+        self, path_in: bytes, new_format: str, deinterlaced: bool = True
     ) -> bytes:
         """Converts image to desired format, updating its extension, but
         keeping the same filename.
@@ -831,9 +796,7 @@ class ArtResizer:
 
         new_format = new_format.lower()
         # A nonexhaustive map of image "types" to extensions overrides
-        new_format = {
-            "jpeg": "jpg",
-        }.get(new_format, new_format)
+        new_format = {"jpeg": "jpg"}.get(new_format, new_format)
 
         fname, _ = os.path.splitext(path_in)
         path_new = fname + b"." + new_format.encode("utf8")
@@ -861,10 +824,7 @@ class ArtResizer:
             return False
 
     def compare(
-        self,
-        im1: bytes,
-        im2: bytes,
-        compare_threshold: float,
+        self, im1: bytes, im2: bytes, compare_threshold: float
     ) -> bool | None:
         """Return a boolean indicating whether two images are similar.
 

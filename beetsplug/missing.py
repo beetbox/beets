@@ -115,9 +115,7 @@ def _item(track_info, album_info, album_id):
 class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
     """List missing tracks"""
 
-    album_types: ClassVar[dict[str, types.Type]] = {
-        "missing": types.INTEGER,
-    }
+    album_types: ClassVar[dict[str, types.Type]] = {"missing": types.INTEGER}
 
     def __init__(self):
         super().__init__()
@@ -233,8 +231,7 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         for (artist, artist_id), album_ids in album_ids_by_artist.items():
             try:
                 resp = self.mb_api.browse_release_groups(
-                    artist=artist_id,
-                    type="|".join(release_types),
+                    artist=artist_id, type="|".join(release_types)
                 )
             except requests.exceptions.RequestException:
                 self._log.info(

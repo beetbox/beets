@@ -21,6 +21,7 @@ from mimetypes import guess_extension
 import requests
 
 from beets import config, ui
+from beets.exceptions import UserError
 from beets.plugins import BeetsPlugin
 from beets.ui import print_
 from beets.util import bytestring_path, displayable_path, normpath, syspath
@@ -115,7 +116,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
             if opts.file:
                 imagepath = normpath(opts.file)
                 if not os.path.isfile(syspath(imagepath)):
-                    raise ui.UserError(
+                    raise UserError(
                         f"image file {displayable_path(imagepath)} not found"
                     )
 
@@ -193,13 +194,10 @@ class EmbedCoverArtPlugin(BeetsPlugin):
 
         # Extract command.
         extract_cmd = ui.Subcommand(
-            "extractart",
-            help="extract an image from file metadata",
+            "extractart", help="extract an image from file metadata"
         )
         extract_cmd.parser.add_option(
-            "-o",
-            dest="outpath",
-            help="image output file",
+            "-o", dest="outpath", help="image output file"
         )
         extract_cmd.parser.add_option(
             "-n",
@@ -240,8 +238,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
 
         # Clear command.
         clear_cmd = ui.Subcommand(
-            "clearart",
-            help="remove images from file metadata",
+            "clearart", help="remove images from file metadata"
         )
         clear_cmd.parser.add_option(
             "-y", "--yes", action="store_true", help="skip confirmation"

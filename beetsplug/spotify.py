@@ -34,8 +34,9 @@ import confuse
 import requests
 
 from beets import ui
-from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.autotag import AlbumInfo, TrackInfo
 from beets.dbcore import types
+from beets.exceptions import UserError
 from beets.library import Library
 from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
 from beets.util import chunks
@@ -43,6 +44,7 @@ from beets.util import chunks
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    from beets.dbcore.db import Results
     from beets.library import Item, Library
     from beets.metadata_plugins import QueryType, SearchParams
     from beetsplug._typing import JSONDict
@@ -218,7 +220,7 @@ class SpotifyPlugin(
         try:
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
-            raise ui.UserError(
+            raise UserError(
                 f"Spotify authorization failed: {e}\n{response.text}"
             )
         self.access_token = response.json()["access_token"]
@@ -275,10 +277,7 @@ class SpotifyPlugin(
                 )
                 self._authenticate()
                 return self._handle_response(
-                    method,
-                    url,
-                    params=params,
-                    retry_count=retry_count + 1,
+                    method, url, params=params, retry_count=retry_count + 1
                 )
             elif e.response.status_code == 404:
                 raise APIError(
@@ -305,10 +304,7 @@ class SpotifyPlugin(
                 )
                 time.sleep(int(seconds) + 1)
                 return self._handle_response(
-                    method,
-                    url,
-                    params=params,
-                    retry_count=retry_count + 1,
+                    method, url, params=params, retry_count=retry_count + 1
                 )
             elif e.response.status_code == 503:
                 self._log.error("Service Unavailable.")
@@ -379,7 +375,7 @@ class SpotifyPlugin(
             month = None
             day = None
         else:
-            raise ui.UserError(
+            raise UserError(
                 "Invalid `release_date_precision` returned "
                 f"by {self.data_source} API: '{release_date_precision}'"
             )
@@ -416,7 +412,7 @@ class SpotifyPlugin(
             year=year,
             month=month,
             day=day,
-            label=album_data["label"],
+            label=album_data.get("label"),
             mediums=max(filter(None, medium_totals.keys())),
             data_source=self.data_source,
             data_url=album_data["external_urls"]["spotify"],
@@ -589,7 +585,7 @@ class SpotifyPlugin(
 
         def func(lib, opts, args):
             items = lib.items(args)
-            self._fetch_info(items, ui.should_write(), opts.force_refetch)
+            self._fetch_info(lib, items, ui.should_write(), opts.force_refetch)
 
         sync_cmd.func = func
         return [spotify_cmd, sync_cmd]
@@ -773,9 +769,7 @@ class SpotifyPlugin(
         details_by_id: dict[str, TrackDetails] = {}
         for chunk in chunks(track_ids, 50):
             track_data = self._handle_response(
-                "get",
-                self.track_url,
-                params={"ids": ",".join(chunk)},
+                "get", self.track_url, params={"ids": ",".join(chunk)}
             )
 
             for idx, track in enumerate(track_data.get("tracks", [])):
@@ -828,7 +822,13 @@ class SpotifyPlugin(
 
         return features_by_id
 
-    def _fetch_info(self, items, write, force):
+    def _fetch_info(
+        self,
+        lib: Library,
+        items: Results[Item] | Sequence[Item],
+        write: bool,
+        force: bool,
+    ) -> None:
         """Obtain track information from Spotify."""
 
         self._log.debug("Total {} tracks", len(items))
@@ -874,13 +874,14 @@ class SpotifyPlugin(
                     for feature, value in audio_features.items():
                         if feature in self.spotify_audio_features:
                             item[self.spotify_audio_features[feature]] = value
-            else:
-                self._log.debug("Audio features API unavailable, skipping")
 
             item["spotify_updated"] = time.time()
-            item.store()
             if write:
                 item.try_write()
+
+        with lib.transaction():
+            for item, _ in items_to_update:
+                item.store()
 
     def track_info(self, track_id: str):
         """Fetch a track's popularity and external IDs using its Spotify ID."""

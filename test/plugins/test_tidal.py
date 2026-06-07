@@ -106,7 +106,7 @@ def _make_track(
                     {"id": aid, "type": "artists"} for aid in (artist_ids or [])
                 ],
                 "links": {},
-            },
+            }
         },
     }
 
@@ -144,11 +144,7 @@ class TestAlbumParsing(TidalPluginTest):
             "al2", "Album Two", tracks, ["a1"]
         )
 
-        info = self.tidal._get_album_info(
-            album,
-            track_lookup,
-            artist_lookup,
-        )
+        info = self.tidal._get_album_info(album, track_lookup, artist_lookup)
 
         assert len(info.tracks) == 2
         assert info.tracks[0].index == 1
@@ -202,10 +198,7 @@ class TestTrackForID(TidalPluginTest):
         artist = _make_artist("a1", "API Artist")
 
         self.tidal.api.get_tracks = Mock(
-            return_value={
-                "data": [track],
-                "included": [artist],
-            }
+            return_value={"data": [track], "included": [artist]}
         )
 
         info = self.tidal.track_for_id("https://tidal.com/track/490839595")
@@ -240,10 +233,7 @@ class TestTracksForIDs(TidalPluginTest):
         artist = _make_artist("a1", "API Artist")
 
         self.tidal.api.get_tracks = Mock(
-            return_value={
-                "data": [track1, track2],
-                "included": [artist],
-            }
+            return_value={"data": [track1, track2], "included": [artist]}
         )
 
         results = list(
@@ -267,18 +257,12 @@ class TestTracksForIDs(TidalPluginTest):
         artist = _make_artist("a1", "API Artist")
 
         self.tidal.api.get_tracks = Mock(
-            return_value={
-                "data": [track],
-                "included": [artist],
-            }
+            return_value={"data": [track], "included": [artist]}
         )
 
         results = list(
             self.tidal.tracks_for_ids(
-                [
-                    "https://tidal.com/track/490839595",
-                    "does_not_exist",
-                ]
+                ["https://tidal.com/track/490839595", "does_not_exist"]
             )
         )
 
@@ -345,10 +329,7 @@ class TestAlbumsForIDs(TidalPluginTest):
         ]
 
         self.tidal.api.get_albums = Mock(
-            return_value={
-                "data": [album1, album2],
-                "included": all_included,
-            }
+            return_value={"data": [album1, album2], "included": all_included}
         )
 
         results = list(
@@ -384,10 +365,7 @@ class TestAlbumsForIDs(TidalPluginTest):
 
         results = list(
             self.tidal.albums_for_ids(
-                [
-                    "https://tidal.com/album/226495055",
-                    "does_not_exist",
-                ]
+                ["https://tidal.com/album/226495055", "does_not_exist"]
             )
         )
 
@@ -434,11 +412,9 @@ class TestCandidates(TidalPluginTest):
             return_value={
                 "data": {
                     "relationships": {
-                        "albums": {
-                            "data": [{"id": "al1", "type": "albums"}],
-                        },
-                    },
-                },
+                        "albums": {"data": [{"id": "al1", "type": "albums"}]}
+                    }
+                }
             }
         )
 
@@ -475,10 +451,7 @@ class TestItemCandidates(TidalPluginTest):
         artist = _make_artist("a1", "ISRC Artist")
 
         self.tidal.api.get_tracks = Mock(
-            return_value={
-                "data": [track],
-                "included": [artist],
-            }
+            return_value={"data": [track], "included": [artist]}
         )
 
         item = Item(isrc="ISRC001")
@@ -498,9 +471,9 @@ class TestItemCandidates(TidalPluginTest):
                 "data": {
                     "relationships": {
                         "tracks": {
-                            "data": [{"id": "490839595", "type": "tracks"}],
-                        },
-                    },
+                            "data": [{"id": "490839595", "type": "tracks"}]
+                        }
+                    }
                 },
                 "included": [
                     _make_track(

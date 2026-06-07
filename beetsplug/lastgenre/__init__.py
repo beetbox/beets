@@ -62,9 +62,7 @@ if TYPE_CHECKING:
 
 
 def flatten_tree(
-    elem: dict[Any, Any] | list[Any] | str,
-    path: list[str],
-    branches: CanonTree,
+    elem: dict[Any, Any] | list[Any] | str, path: list[str], branches: CanonTree
 ) -> None:
     """Flatten nested lists/dictionaries into lists of strings
     (branches).
@@ -302,8 +300,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 # multiple parents
                 if self.whitelist:
                     parents = self._filter_valid(
-                        find_parents(tag, self.c14n_branches),
-                        artist=artist,
+                        find_parents(tag, self.c14n_branches), artist=artist
                     )
                 else:
                     # No whitelist: take only the oldest ancestor, skipping it
@@ -506,8 +503,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     )
                     for albumartist in obj.albumartists:
                         self._log.extra_debug(
-                            'Fetching artist genre for "{}"',
-                            albumartist,
+                            'Fetching artist genre for "{}"', albumartist
                         )
                         new_genres += self.client.fetch(
                             "album_artist", obj, albumartist

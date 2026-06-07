@@ -49,8 +49,7 @@ def _build_m3u_filename(basename):
     date = datetime.datetime.now().strftime("%Y%m%d_%Hh%M")
     path = normpath(
         os.path.join(
-            config["importfeeds"]["dir"].as_filename(),
-            f"{date}_{basename}.m3u",
+            config["importfeeds"]["dir"].as_filename(), f"{date}_{basename}.m3u"
         )
     )
     return path

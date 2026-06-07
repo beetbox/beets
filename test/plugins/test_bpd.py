@@ -288,10 +288,7 @@ class BPDTestHelper(PluginTestCase):
         if password:
             config["bpd"]["password"] = password
         config_file = tempfile.NamedTemporaryFile(
-            mode="wb",
-            dir=str(self.temp_dir_path),
-            suffix=".yaml",
-            delete=False,
+            mode="wb", dir=str(self.temp_dir_path), suffix=".yaml", delete=False
         )
         config_file.write(
             yaml.dump(config, Dumper=confuse.Dumper, encoding="utf-8")
@@ -342,7 +339,10 @@ class BPDTestHelper(PluginTestCase):
                 sock.close()
         finally:
             server.terminate()
-            server.join(timeout=0.2)
+            server.join(timeout=2)  # give coverage time to write data
+            if server.is_alive():
+                server.kill()  # force kill if still stuck (SIGKILL on POSIX)
+                server.join(timeout=2)
 
     def _assert_ok(self, *responses):
         for response in responses:
@@ -366,13 +366,7 @@ class BPDTestHelper(PluginTestCase):
     def _bpd_add(self, client, *items, **kwargs):
         """Add the given item to the BPD playlist or queue."""
         paths = [
-            "/".join(
-                [
-                    item.artist,
-                    item.album,
-                    os.fsdecode(os.path.basename(item.path)),
-                ]
-            )
+            os.fsdecode(item.destination(relative_to_libdir=True))
             for item in items
         ]
         playlist = kwargs.get("playlist")
@@ -416,11 +410,7 @@ class BPDTest(BPDTestHelper):
 
 
 class BPDQueryTest(BPDTestHelper):
-    test_implements_query = implements(
-        {
-            "clearerror",
-        }
-    )
+    test_implements_query = implements({"clearerror"})
 
     def test_cmd_currentsong(self):
         with self.run_bpd() as client:
@@ -534,11 +524,7 @@ class BPDQueryTest(BPDTestHelper):
 
 
 class BPDPlaybackTest(BPDTestHelper):
-    test_implements_playback = implements(
-        {
-            "random",
-        }
-    )
+    test_implements_playback = implements({"random"})
 
     def test_cmd_consume(self):
         with self.run_bpd() as client:
@@ -727,12 +713,7 @@ class BPDPlaybackTest(BPDTestHelper):
 
 class BPDControlTest(BPDTestHelper):
     test_implements_control = implements(
-        {
-            "seek",
-            "seekid",
-            "seekcur",
-        },
-        fail=True,
+        {"seek", "seekid", "seekcur"}, fail=True
     )
 
     def test_cmd_play(self):
@@ -1013,32 +994,16 @@ class BPDDatabaseTest(BPDTestHelper):
 
 class BPDMountsTest(BPDTestHelper):
     test_implements_mounts = implements(
-        {
-            "mount",
-            "unmount",
-            "listmounts",
-            "listneighbors",
-        },
-        fail=True,
+        {"mount", "unmount", "listmounts", "listneighbors"}, fail=True
     )
 
 
 class BPDStickerTest(BPDTestHelper):
-    test_implements_stickers = implements(
-        {
-            "sticker",
-        },
-        fail=True,
-    )
+    test_implements_stickers = implements({"sticker"}, fail=True)
 
 
 class BPDConnectionTest(BPDTestHelper):
-    test_implements_connection = implements(
-        {
-            "close",
-            "kill",
-        }
-    )
+    test_implements_connection = implements({"close", "kill"})
 
     ALL_MPD_TAGTYPES: ClassVar[set[str]] = {
         "Artist",
@@ -1106,36 +1071,19 @@ class BPDConnectionTest(BPDTestHelper):
 
 class BPDPartitionTest(BPDTestHelper):
     test_implements_partitions = implements(
-        {
-            "partition",
-            "listpartitions",
-            "newpartition",
-        },
-        fail=True,
+        {"partition", "listpartitions", "newpartition"}, fail=True
     )
 
 
 class BPDDeviceTest(BPDTestHelper):
     test_implements_devices = implements(
-        {
-            "disableoutput",
-            "enableoutput",
-            "toggleoutput",
-            "outputs",
-        },
-        fail=True,
+        {"disableoutput", "enableoutput", "toggleoutput", "outputs"}, fail=True
     )
 
 
 class BPDReflectionTest(BPDTestHelper):
     test_implements_reflection = implements(
-        {
-            "config",
-            "commands",
-            "notcommands",
-            "urlhandlers",
-        },
-        fail=True,
+        {"config", "commands", "notcommands", "urlhandlers"}, fail=True
     )
 
     @patch(
@@ -1153,12 +1101,6 @@ class BPDReflectionTest(BPDTestHelper):
 
 class BPDPeersTest(BPDTestHelper):
     test_implements_peers = implements(
-        {
-            "subscribe",
-            "unsubscribe",
-            "channels",
-            "readmessages",
-            "sendmessage",
-        },
+        {"subscribe", "unsubscribe", "channels", "readmessages", "sendmessage"},
         fail=True,
     )

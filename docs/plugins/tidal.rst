@@ -29,6 +29,16 @@ Requirements
 Before using the plugin, you need to authorize your beets installation to access
 your Tidal account.
 
+Installation
+------------
+
+To use the ``tidal`` plugin, first enable it in your configuration (see
+:ref:`using-plugins`). Then, install ``beets`` with ``tidal`` extra
+
+.. code-block:: bash
+
+    pip install "beets[tidal]"
+
 Authentication
 --------------
 

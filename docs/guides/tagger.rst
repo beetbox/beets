@@ -98,6 +98,8 @@ command-line options you should know:
   them where they are
 - ``beet import -m``: move imported files to your music directory (overrides the
   ``-c`` option)
+- ``beet import -M``: don't move imported files to your music directory
+  (overrides the ``-m`` option)
 - ``beet import -l LOGFILE``: write a message to ``LOGFILE`` every time you skip
   an album or choose to take its tags "as-is" (see below) or the album is
   skipped as a duplicate; this lets you come back later and reexamine albums

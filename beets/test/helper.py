@@ -37,17 +37,16 @@ from enum import Enum
 from functools import cached_property
 from pathlib import Path
 from tempfile import gettempdir, mkdtemp, mkstemp
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 from unittest.mock import Mock, patch
 
 import pytest
-import responses
 from mediafile import Image, MediaFile
 
 import beets
 import beets.plugins
 from beets import importer, logging, util
-from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.autotag import AlbumInfo, TrackInfo
 from beets.importer import ImportSession
 from beets.library import Item, Library
 from beets.test import _common
@@ -58,6 +57,9 @@ from beets.util import (
     clean_module_tempdir,
     syspath,
 )
+
+if TYPE_CHECKING:
+    from requests_mock.mocker import Mocker
 
 
 class LogCapture(logging.Handler):
@@ -159,6 +161,14 @@ class TestHelper(RunMixin, ConfigMixin):
     This mixin provides methods to isolate beets' global state provide
     fixtures.
     """
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        self.setup_beets()
+        try:
+            yield
+        finally:
+            self.teardown_beets()
 
     lib: Library
 
@@ -316,17 +326,12 @@ class TestHelper(RunMixin, ConfigMixin):
         return items
 
     def add_album_fixture(
-        self,
-        track_count=1,
-        fname="full",
-        ext="mp3",
-        disc_count=1,
+        self, track_count=1, fname="full", ext="mp3", disc_count=1
     ):
         """Add an album with files to the database."""
         items = []
         path = os.path.join(
-            _common.RSRC,
-            util.bytestring_path(f"{fname}.{ext}"),
+            _common.RSRC, util.bytestring_path(f"{fname}.{ext}")
         )
         for discnumber in range(1, disc_count + 1):
             for i in range(track_count):
@@ -409,13 +414,9 @@ class BeetsTestCase(unittest.TestCase, TestHelper):
     modifications that will then be automatically removed when the test
     completes. Also provides some additional assertion methods, a
     temporary directory, and a DummyIO.
+
+    DEPRECATED: Use TestHelper instead.
     """
-
-    def setUp(self):
-        self.setup_beets()
-
-    def tearDown(self):
-        self.teardown_beets()
 
 
 class ItemInDBTestCase(BeetsTestCase):
@@ -476,7 +477,24 @@ class PluginMixin(ConfigMixin):
 
 
 class PluginTestCase(PluginMixin, BeetsTestCase):
+    """
+    DEPRECATED: Use PluginTestHelper instead.
+    """
+
     pass
+
+
+class PluginTestHelper(PluginMixin, TestHelper):
+    """Helper mixin for pytest-based plugin tests.
+
+    This mixin provides the standard beets test setup and automatically
+    initializes and tears down plugin state for each test.
+
+    .. code-block:: python
+
+        class TestMyPlugin(PluginTestHelper):
+            plugin: ClassVar[str] = "myplugin"
+    """
 
 
 class ImportHelper(TestHelper):
@@ -509,8 +527,8 @@ class ImportHelper(TestHelper):
     def import_dir(self) -> bytes:
         return bytestring_path(self.import_path)
 
-    def setUp(self):
-        super().setUp()
+    def setup_beets(self):
+        super().setup_beets()
         self.import_media = []
         self.lib.path_formats = [
             ("default", os.path.join("$artist", "$album", "$title")),
@@ -519,10 +537,7 @@ class ImportHelper(TestHelper):
         ]
 
     def prepare_track_for_import(
-        self,
-        track_id: int,
-        album_path: Path,
-        album_id: int | None = None,
+        self, track_id: int, album_path: Path, album_id: int | None = None
     ) -> Path:
         track_path = album_path / f"track_{track_id}.mp3"
         shutil.copy(self.resource_path, track_path)
@@ -577,10 +592,7 @@ class ImportHelper(TestHelper):
 
     def _get_import_session(self, import_dir: bytes) -> ImportSession:
         return ImportSessionFixture(
-            self.lib,
-            loghandler=None,
-            query=None,
-            paths=[import_dir],
+            self.lib, loghandler=None, query=None, paths=[import_dir]
         )
 
     def setup_importer(
@@ -595,8 +607,8 @@ class ImportHelper(TestHelper):
 
 
 class AsIsImporterMixin:
-    def setUp(self):
-        super().setUp()
+    def setup_beets(self):
+        super().setup_beets()
         self.prepare_album_for_import(1)
 
     def run_asis_importer(self, **kwargs):
@@ -829,16 +841,12 @@ class AutotagImportTestCase(ImportTestCase):
         self.addCleanup(self.matcher.restore)
 
 
-class FetchImageHelper:
-    """Helper mixin for mocking requests when fetching images
-    with remote art sources.
-    """
+@dataclass(slots=True)
+class ImageRequestMocker:
+    mocker: Mocker
 
-    @responses.activate
-    def run(self, *args, **kwargs):
-        super().run(*args, **kwargs)
-
-    IMAGEHEADER: ClassVar[dict[str, bytes]] = {
+    # Image types and their file headers
+    IMAGE_HEADERS: ClassVar[dict[str, bytes]] = {
         "image/jpeg": b"\xff\xd8\xff\x00\x00\x00JFIF",
         "image/png": b"\211PNG\r\n\032\n",
         "image/gif": b"GIF89a",
@@ -850,32 +858,43 @@ class FetchImageHelper:
         ),
     }
 
-    def mock_response(
+    def get(
         self,
         url: str,
+        *,
         content_type: str = "image/jpeg",
-        file_type: None | str = None,
+        file_type: str | None = None,
+        content: str | bytes | None = None,
     ) -> None:
-        # Potentially return a file of a type that differs from the
-        # server-advertised content type to mimic misbehaving servers.
-        if file_type is None:
-            file_type = content_type
+        actual_file_type = file_type or content_type
 
-        try:
-            # imghdr reads 32 bytes
-            header = self.IMAGEHEADER[file_type].ljust(32, b"\x00")
-        except KeyError:
-            # If we can't return a file that looks like real file of the requested
-            # type, better fail the test than returning something else, which might
-            # violate assumption made when writing a test.
-            raise AssertionError(f"Mocking {file_type} responses not supported")
+        if content is None:
+            try:
+                content = self.IMAGE_HEADERS[actual_file_type].ljust(
+                    32, b"\x00"
+                )
+            except KeyError as exc:
+                # If we can't return a file that looks like real file of the requested
+                # type, better fail the test than returning something else, which might
+                # violate assumption made when writing a test.
+                raise AssertionError(
+                    f"Mocking {actual_file_type!r} responses not supported"
+                ) from exc
 
-        responses.add(
-            responses.GET,
-            url,
-            content_type=content_type,
-            body=header,
+        if isinstance(content, str):
+            content = content.encode()
+
+        self.mocker.get(
+            url, headers={"Content-Type": content_type}, content=content
         )
+
+
+class FetchImageHelper:
+    """Pytest mixin providing image response mocking utilities."""
+
+    @pytest.fixture
+    def image_request_mock(self, requests_mock):
+        return ImageRequestMocker(requests_mock)
 
 
 class CleanupModulesMixin:

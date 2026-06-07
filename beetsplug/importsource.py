@@ -20,11 +20,7 @@ class ImportSourcePlugin(BeetsPlugin):
     def __init__(self):
         """Initialize the plugin and read configuration."""
         super().__init__()
-        self.config.add(
-            {
-                "suggest_removal": False,
-            }
-        )
+        self.config.add({"suggest_removal": False})
         self.import_stages = [self.import_stage]
         self.register_listener("item_removed", self.suggest_removal)
         # In order to stop future removal suggestions for an album we keep
@@ -114,10 +110,7 @@ class ImportSourcePlugin(BeetsPlugin):
 
         # Handle user response
         if resp == "d":
-            self._log.info(
-                "Deleting the item's source file: {}",
-                srcpath,
-            )
+            self._log.info("Deleting the item's source file: {}", srcpath)
             srcpath.unlink()
 
         elif resp == "r":
@@ -146,8 +139,7 @@ class ImportSourcePlugin(BeetsPlugin):
 
             if continue_resp == "y":
                 self._log.info(
-                    "Deleting the item's source directory: {}",
-                    srcpath.parent,
+                    "Deleting the item's source directory: {}", srcpath.parent
                 )
                 rmtree(srcpath.parent)
 
@@ -157,8 +149,7 @@ class ImportSourcePlugin(BeetsPlugin):
 
             elif continue_resp == "f":
                 self._log.info(
-                    "removing just the item's original source: {}",
-                    srcpath,
+                    "removing just the item's original source: {}", srcpath
                 )
                 srcpath.unlink()
 

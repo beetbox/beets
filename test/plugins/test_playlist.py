@@ -32,12 +32,7 @@ class PlaylistTestCase(PluginTestCase):
 
         i1 = _common.item()
         i1.path = beets.util.normpath(
-            os.path.join(
-                self.music_dir,
-                "a",
-                "b",
-                "c.mp3",
-            )
+            os.path.join(self.music_dir, "a", "b", "c.mp3")
         )
         i1.title = "some item"
         i1.album = "some album"
@@ -46,12 +41,7 @@ class PlaylistTestCase(PluginTestCase):
 
         i2 = _common.item()
         i2.path = beets.util.normpath(
-            os.path.join(
-                self.music_dir,
-                "d",
-                "e",
-                "f.mp3",
-            )
+            os.path.join(self.music_dir, "d", "e", "f.mp3")
         )
         i2.title = "another item"
         i2.album = "another album"
@@ -60,12 +50,7 @@ class PlaylistTestCase(PluginTestCase):
 
         i3 = _common.item()
         i3.path = beets.util.normpath(
-            os.path.join(
-                self.music_dir,
-                "x",
-                "y",
-                "z.mp3",
-            )
+            os.path.join(self.music_dir, "x", "y", "z.mp3")
         )
         i3.title = "yet another item"
         i3.album = "yet another album"

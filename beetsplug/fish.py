@@ -82,7 +82,7 @@ class FishPlugin(BeetsPlugin):
             "--extravalues",
             action="append",
             type="choice",
-            choices=library.Item.all_keys() + library.Album.all_keys(),
+            choices=library.Item.all_keys() | library.Album.all_keys(),
             help="include specified field *values* in completions",
         )
         cmd.parser.add_option(
@@ -114,7 +114,7 @@ class FishPlugin(BeetsPlugin):
             (commands.default_commands + plugins.commands()),
             key=attrgetter("name"),
         )
-        fields = sorted(set(library.Album.all_keys() + library.Item.all_keys()))
+        fields = sorted(library.Album.all_keys() | library.Item.all_keys())
         # Collect commands, their aliases, and their help text
         cmd_names_help = []
         for cmd in beetcmds:
@@ -214,9 +214,7 @@ def get_subcommands(cmd_name_and_help, nobasicfields, extravalues):
 
         if nobasicfields is False:
             word += BL_USE3.format(
-                cmdname,
-                f"-a {wrap('$FIELDS')}",
-                f"-d {wrap('fieldname')}",
+                cmdname, f"-a {wrap('$FIELDS')}", f"-d {wrap('fieldname')}"
             )
 
         if extravalues:
@@ -224,9 +222,7 @@ def get_subcommands(cmd_name_and_help, nobasicfields, extravalues):
                 setvar = wrap(f"${f.upper()}S")
                 word += " ".join(
                     BL_EXTRA3.format(
-                        f"{cmdname} {f}:",
-                        f"-f -A -a {setvar}",
-                        f"-d {wrap(f)}",
+                        f"{cmdname} {f}:", f"-f -A -a {setvar}", f"-d {wrap(f)}"
                     ).split()
                 )
                 word += "\n"
@@ -277,9 +273,7 @@ def get_all_commands(beetcmds):
                 word += "\n"
 
             word = word + BL_USE3.format(
-                name,
-                "-s h -l help",
-                f"-d {wrap('print help')}",
+                name, "-s h -l help", f"-d {wrap('print help')}"
             )
     return word
 

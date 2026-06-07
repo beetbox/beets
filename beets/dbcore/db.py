@@ -51,7 +51,8 @@ import beets
 
 from ..util import cached_classproperty, functemplate
 from . import types
-from .query import MatchQuery, NullSort, TrueQuery
+from .query import MatchQuery, TrueQuery
+from .sort import NullSort
 
 if TYPE_CHECKING:
     from collections.abc import (
@@ -59,12 +60,14 @@ if TYPE_CHECKING:
         Generator,
         Iterable,
         Iterator,
+        KeysView,
         Sequence,
     )
     from sqlite3 import Connection
     from types import TracebackType
 
-    from .query import FieldQueryType, FieldSort, Query, Sort, SQLiteType
+    from .query import FieldQueryType, Query, SQLiteType
+    from .sort import FieldSort, Sort
 
 D = TypeVar("D", bound="Database", default=Any)
 
@@ -110,22 +113,24 @@ class FormattedMapping(Mapping[str, str]):
     """
 
     model: Model
+    model_keys: set[str]
 
     ALL_KEYS = "*"
 
     def __init__(
         self,
         model: Model,
-        included_keys: str = ALL_KEYS,
+        included_keys: str | list[str] = ALL_KEYS,
         for_path: bool = False,
-    ):
+    ) -> None:
         self.for_path = for_path
         self.model = model
-        if included_keys == self.ALL_KEYS:
+        self.model_keys = set(
             # Performance note: this triggers a database query.
-            self.model_keys = self.model.keys(True)
-        else:
-            self.model_keys = included_keys
+            self.model.keys(True)
+            if included_keys == self.ALL_KEYS
+            else included_keys
+        )
 
     def __getitem__(self, key: str) -> str:
         if key in self.model_keys:
@@ -142,9 +147,7 @@ class FormattedMapping(Mapping[str, str]):
     # The following signature is incompatible with `Mapping[str, str]`, since
     # the return type doesn't include `None` (but `default` can be `None`).
     def get(  # type: ignore
-        self,
-        key: str,
-        default: str | None = None,
+        self, key: str, default: str | None = None
     ) -> str:
         """Similar to Mapping.get(key, default), but always formats to str."""
         if default is None:
@@ -492,8 +495,23 @@ class Model(ABC, Generic[D]):
 
         If the field has no explicit type, it is given the base `Type`,
         which does no conversion.
+
+        For models with a related model (e.g. Album <-> Item), fall back
+        to the related model's field and type definitions for fields not
+        defined on this model. This avoids descending into the sibling's
+        `_type` method to prevent infinite recursion between reciprocal
+        relations.
         """
-        return cls._fields.get(key) or cls._types.get(key) or types.DEFAULT
+        typ = cls._fields.get(key) or cls._types.get(key)
+        if typ is not None:
+            return typ
+        if cls._relation is not cls:
+            typ = cls._relation._fields.get(key) or cls._relation._types.get(
+                key
+            )
+            if typ is not None:
+                return typ
+        return types.DEFAULT
 
     def _get(self, key, default: Any = None, raise_: bool = False):
         """Get the value for a field, or `default`. Alternatively,
@@ -560,23 +578,23 @@ class Model(ABC, Generic[D]):
         else:
             raise KeyError(f"no such field {key}")
 
-    def keys(self, computed: bool = False):
+    def keys(self, computed: bool = False) -> KeysView[str]:
         """Get a list of available field names for this object. The
         `computed` parameter controls whether computed (plugin-provided)
         fields are included in the key list.
         """
-        base_keys = list(self._fields) + list(self._values_flex.keys())
+        keys = {*self._fields, *self._values_flex}
         if computed:
-            return base_keys + list(self._getters().keys())
-        else:
-            return base_keys
+            keys.update(self._getters())
+
+        return dict.fromkeys(keys).keys()
 
     @classmethod
-    def all_keys(cls):
+    def all_keys(cls) -> KeysView[str]:
         """Get a list of available keys for objects of this type.
         Includes fixed and computed fields.
         """
-        return list(cls._fields) + list(cls._getters().keys())
+        return dict.fromkeys({*cls._fields, *cls._getters()}).keys()
 
     # Act like a dictionary.
 
@@ -718,12 +736,11 @@ class Model(ABC, Generic[D]):
             self.store()
 
     # Formatting and templating.
-
-    _formatter = FormattedMapping
+    _formatter: type[FormattedMapping]
 
     def formatted(
         self,
-        included_keys: str = _formatter.ALL_KEYS,
+        included_keys: str = FormattedMapping.ALL_KEYS,
         for_path: bool = False,
     ) -> FormattedMapping:
         """Get a mapping containing all values on this object formatted
@@ -732,9 +749,7 @@ class Model(ABC, Generic[D]):
         return self._formatter(self, included_keys, for_path)
 
     def evaluate_template(
-        self,
-        template: str | functemplate.Template,
-        for_path: bool = False,
+        self, template: str | functemplate.Template, for_path: bool = False
     ) -> str:
         """Evaluate a template (a string or a `Template` object) using
         the object's fields. If `for_path` is true, then no new path
@@ -1369,11 +1384,7 @@ class Database:
                     ON {flex_table} (entity_id);
                 """)
 
-    def _create_indices(
-        self,
-        table: str,
-        indices: Sequence[Index],
-    ):
+    def _create_indices(self, table: str, indices: Sequence[Index]):
         """Create indices for the given table if they don't exist."""
         with self.transaction() as tx:
             for index in indices:

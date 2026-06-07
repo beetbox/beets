@@ -31,6 +31,7 @@ from typing import TYPE_CHECKING, ClassVar
 import beets
 import beets.ui
 from beets import dbcore
+from beets.exceptions import UserError
 from beets.library import Item
 from beets.plugins import BeetsPlugin
 from beets.util import as_string, bluelet
@@ -1008,8 +1009,7 @@ class Command:
         # If the command accepts a variable number of arguments skip the check.
         if wrong_num and not argspec.varargs:
             raise TypeError(
-                f'wrong number of arguments for "{self.name}"',
-                self.name,
+                f'wrong number of arguments for "{self.name}"', self.name
             )
 
         return func
@@ -1517,11 +1517,7 @@ class Server(BaseServer):
 
     def cmd_outputs(self, conn):
         """List the available outputs."""
-        yield (
-            "outputid: 0",
-            "outputname: gstreamer",
-            "outputenabled: 1",
-        )
+        yield ("outputid: 0", "outputname: gstreamer", "outputenabled: 1")
 
     def cmd_enableoutput(self, conn, output_id):
         output_id = cast_arg(int, output_id)
@@ -1618,7 +1614,7 @@ class BPDPlugin(BeetsPlugin):
             else:
                 ctrl_port = self.config["control_port"].get(int)
             if args:
-                raise beets.ui.UserError("too many arguments")
+                raise UserError("too many arguments")
             password = self.config["password"].as_str()
             volume = self.config["volume"].get(int)
             self.start_bpd(

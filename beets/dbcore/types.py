@@ -331,6 +331,8 @@ class DelimitedString(BaseString[list, list]):  # type: ignore[type-arg]
                 else:
                     result.append(item)
             return result
+        if isinstance(value, str):
+            return self.parse(value)
         return self.model_type(value)
 
     def to_sql(self, model_value: list[str]):
@@ -407,7 +409,8 @@ class BasePathType(Type[bytes, N]):
     def to_sql(self, value: pathutils.MaybeBytes) -> BLOB_TYPE | None:
         value = pathutils.normalize_path_for_db(value)
         if isinstance(value, bytes):
-            value = BLOB_TYPE(value)
+            return BLOB_TYPE(value)
+
         return value
 
 

@@ -4,8 +4,14 @@ from collections import Counter
 from itertools import chain
 
 from beets import config, importer, logging, plugins, ui
-from beets.autotag.hooks import AlbumMatch, TrackMatch
-from beets.autotag.match import Proposal, Recommendation, tag_album, tag_item
+from beets.autotag import (
+    AlbumMatch,
+    Proposal,
+    Recommendation,
+    TrackMatch,
+    tag_album,
+    tag_item,
+)
 from beets.util import PromptChoice, displayable_path
 from beets.util.color import colorize
 from beets.util.units import human_bytes, human_seconds_short
@@ -174,10 +180,7 @@ class TerminalImportSession(importer.ImportSession):
 
             ui.print_(
                 "New: "
-                + summarize_items(
-                    task.imported_items(),
-                    not task.is_album,
-                )
+                + summarize_items(task.imported_items(), not task.is_album)
             )
             if config["import"]["duplicate_verbose_prompt"]:
                 for item in task.imported_items():
@@ -339,10 +342,7 @@ def _summary_judgment(rec: Recommendation) -> importer.Action | None:
             return importer.Action.APPLY
         else:
             action = config["import"]["quiet_fallback"].as_choice(
-                {
-                    "skip": importer.Action.SKIP,
-                    "asis": importer.Action.ASIS,
-                }
+                {"skip": importer.Action.SKIP, "asis": importer.Action.ASIS}
             )
     elif config["import"]["timid"]:
         return None
@@ -487,12 +487,7 @@ def choose_candidate(
 
         # Ask for confirmation.
         default = config["import"]["default_action"].as_choice(
-            {
-                "apply": "a",
-                "skip": "s",
-                "asis": "u",
-                "none": None,
-            }
+            {"apply": "a", "skip": "s", "asis": "u", "none": None}
         )
         if default is None:
             require = True

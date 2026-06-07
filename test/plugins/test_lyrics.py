@@ -165,8 +165,8 @@ class TestHtml:
         assert lyrics.Html.normalize_space(initial) == expected
 
     def test_scrape_merge_paragraphs(self):
-        text = "one</p>   <p class='myclass'>two</p><p>three"
-        expected = "one\ntwo\n\nthree"
+        text = 'one</p><p class="myclass"></p><p>two</p><p>three'
+        expected = "one\n\ntwo\n\nthree"
 
         assert lyrics.Html.merge_paragraphs(text) == expected
 
@@ -265,13 +265,7 @@ class TestLyricsPlugin(LyricsPluginMixin):
     @pytest.mark.parametrize(
         "plugin_config, old_lyrics, found, expected",
         [
-            pytest.param(
-                {},
-                "old",
-                "new",
-                "old",
-                id="no_force_keeps_old",
-            ),
+            pytest.param({}, "old", "new", "old", id="no_force_keeps_old"),
             pytest.param(
                 {"force": True},
                 "old",
@@ -338,13 +332,7 @@ class TestLyricsPlugin(LyricsPluginMixin):
         ],
     )
     def test_overwrite_config(
-        self,
-        monkeypatch,
-        helper,
-        lyrics_plugin,
-        old_lyrics,
-        found,
-        expected,
+        self, monkeypatch, helper, lyrics_plugin, old_lyrics, found, expected
     ):
         monkeypatch.setattr(
             lyrics_plugin,
@@ -386,9 +374,7 @@ class TestLyricsPlugin(LyricsPluginMixin):
             item.lyrics_translation_language
 
     def test_imported_skips_auto_ignored_items(
-        self,
-        lyrics_plugin,
-        monkeypatch,
+        self, lyrics_plugin, monkeypatch
     ):
         lyrics_plugin.config["auto_ignore"].set("album:Greatest Hits")
         items = [
@@ -465,20 +451,24 @@ class TestLyricsSources(LyricsBackendTest):
             "beetsplug.lyrics.LyricsRequestHandler.create_session",
             lambda _: requests.Session(),
         )
+        expected_lyrics = Lyrics(
+            lyrics_page.lyrics,
+            lyrics_page.backend,
+            url=lyrics_page.url,
+            language=lyrics_page.language,
+        )
 
-        assert lyrics_plugin.find_lyrics(
+        actual_lyrics = lyrics_plugin.find_lyrics(
             Item(
                 artist=lyrics_page.artist,
                 title=lyrics_page.track_title,
                 album="",
                 length=186.0,
             )
-        ) == Lyrics(
-            lyrics_page.lyrics,
-            lyrics_page.backend,
-            url=lyrics_page.url,
-            language=lyrics_page.language,
         )
+        assert actual_lyrics
+        assert actual_lyrics.text == expected_lyrics.text
+        assert actual_lyrics == expected_lyrics
 
 
 class TestGoogleLyrics(LyricsBackendTest):
@@ -639,15 +629,9 @@ class TestLRCLibLyrics(LyricsBackendTest):
         "response_data, expected_lyrics",
         [
             pytest.param([], None, id="handle non-matching lyrics"),
+            pytest.param([lyrics_match()], SYNCED, id="synced when available"),
             pytest.param(
-                [lyrics_match()],
-                SYNCED,
-                id="synced when available",
-            ),
-            pytest.param(
-                [lyrics_match(duration=1)],
-                None,
-                id="none: duration too short",
+                [lyrics_match(duration=1)], None, id="none: duration too short"
             ),
             pytest.param(
                 [lyrics_match(instrumental=True)],
@@ -679,8 +663,7 @@ class TestLRCLibLyrics(LyricsBackendTest):
                         plainLyrics="valid plain",
                     ),
                     lyrics_match(
-                        duration=1,
-                        syncedLyrics="synced with invalid duration",
+                        duration=1, syncedLyrics="synced with invalid duration"
                     ),
                 ],
                 "valid plain",
@@ -856,3 +839,119 @@ class TestRestFiles:
             < c.index("Song Three")
             < c.index("Lyrics Three")
         )
+
+
+class TestLyricsSyltProperty:
+    """Unit tests for the Lyrics.sylt timestamp-to-millisecond converter."""
+
+    @pytest.mark.parametrize(
+        "lrc_text, expected_sylt",
+        [
+            pytest.param(
+                "[00:01.00] line one\n[00:02.50] line two",
+                [("line one", 1000), ("line two", 2500)],
+                id="basic-lrc-to-ms",
+            ),
+            pytest.param(
+                "[01:30.50] one and a half minutes",
+                [("one and a half minutes", 90500)],
+                id="over-one-minute",
+            ),
+            pytest.param(
+                "plain lyrics without timestamps",
+                [],
+                id="plain-lyrics-have-no-sylt",
+            ),
+            pytest.param(
+                "[00:00.00] timed\nuntimed line\n[00:05.00] timed again",
+                [("timed", 0), ("timed again", 5000)],
+                id="untimed-lines-omitted",
+            ),
+            pytest.param(
+                "[00:00.00] \n[00:01.00] second",
+                [("", 0), ("second", 1000)],
+                id="empty-text-line-included",
+            ),
+        ],
+    )
+    def test_sylt(self, lrc_text, expected_sylt):
+        assert Lyrics(lrc_text).sylt == expected_sylt
+
+
+class TestSyncedLyricsWrite(LyricsPluginMixin):
+    """Tests that add_item_lyrics passes the correct synced_lyrics tag."""
+
+    SYNCED_LRC = "[00:01.00] hello\n[00:02.00] world"
+
+    @pytest.fixture
+    def backend_name(self):
+        return "lrclib"
+
+    def test_sylt_data_passed_for_synced_lyrics(
+        self, monkeypatch, helper, lyrics_plugin
+    ):
+        monkeypatch.setattr(
+            lyrics_plugin, "find_lyrics", lambda _: Lyrics(self.SYNCED_LRC)
+        )
+        item = helper.create_item(id=1, lyrics="")
+        calls = []
+        monkeypatch.setattr(
+            type(item), "try_write", lambda self, **kw: calls.append(kw) or True
+        )
+
+        lyrics_plugin.add_item_lyrics(item, write=True)
+
+        assert calls == [
+            {"tags": {"synced_lyrics": [("hello", 1000), ("world", 2000)]}}
+        ]
+
+    def test_lrc_text_kept_in_db_for_synced(
+        self, monkeypatch, helper, lyrics_plugin
+    ):
+        """LRC text is stored in the DB so keep_synced detection still works."""
+        monkeypatch.setattr(
+            lyrics_plugin, "find_lyrics", lambda _: Lyrics(self.SYNCED_LRC)
+        )
+        item = helper.create_item(id=1, lyrics="")
+        monkeypatch.setattr(type(item), "try_write", lambda self, **kw: True)
+
+        lyrics_plugin.add_item_lyrics(item, write=True)
+
+        assert item.lyrics == self.SYNCED_LRC
+
+    def test_sylt_cleared_for_plain_lyrics(
+        self, monkeypatch, helper, lyrics_plugin
+    ):
+        monkeypatch.setattr(
+            lyrics_plugin, "find_lyrics", lambda _: Lyrics("plain lyrics")
+        )
+        item = helper.create_item(id=1, lyrics="")
+        calls = []
+        monkeypatch.setattr(
+            type(item), "try_write", lambda self, **kw: calls.append(kw) or True
+        )
+
+        lyrics_plugin.add_item_lyrics(item, write=True)
+
+        assert calls == [{"tags": {"synced_lyrics": None}}]
+
+    def test_sylt_and_uslt_written_to_mp3(
+        self, monkeypatch, helper, lyrics_plugin
+    ):
+        """Integration: SYLT + plain USLT are written to a real MP3 file."""
+        import mutagen
+
+        monkeypatch.setattr(
+            lyrics_plugin, "find_lyrics", lambda _: Lyrics(self.SYNCED_LRC)
+        )
+        item = helper.add_item_fixture(format="MP3", lyrics="")
+
+        lyrics_plugin.add_item_lyrics(item, write=True)
+
+        f = mutagen.File(item.path)
+        assert f.tags.getall("SYLT"), "SYLT frame should be present"
+        assert f.tags["SYLT::XXX"].text == [("hello", 1000), ("world", 2000)]
+        assert f.tags.getall("USLT"), "USLT frame should be present"
+        # USLT retains the full LRC text (with timestamps) so players that
+        # parse LRC in USLT, and non-ID3 formats, continue to work.
+        assert f.tags["USLT::XXX"].text == self.SYNCED_LRC

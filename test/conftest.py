@@ -5,7 +5,7 @@ from functools import cache
 
 import pytest
 
-from beets.autotag.distance import Distance
+from beets.autotag import Distance
 from beets.dbcore.query import Query
 from beets.test._common import DummyIO
 from beets.test.helper import ConfigMixin
@@ -60,8 +60,7 @@ def pytest_collection_modifyitems(
 
 def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line(
-        "markers",
-        "integration_test: mark a test as an integration test",
+        "markers", "integration_test: mark a test as an integration test"
     )
     config.addinivalue_line(
         "markers",

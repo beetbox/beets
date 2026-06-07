@@ -24,18 +24,8 @@ def test_sanitize_pairs():
             ("*", "*"),
             ("discard", "bye"),
         ],
-        [
-            ("foo", "bar"),
-            ("foo", "baz"),
-            ("foo", "foobar"),
-            ("key", "value"),
-        ],
-    ) == [
-        ("foo", "baz"),
-        ("foo", "bar"),
-        ("key", "value"),
-        ("foo", "foobar"),
-    ]
+        [("foo", "bar"), ("foo", "baz"), ("foo", "foobar"), ("key", "value")],
+    ) == [("foo", "baz"), ("foo", "bar"), ("key", "value"), ("foo", "foobar")]
 
 
 def test_sanitize_pairs_unknown_key():

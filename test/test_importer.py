@@ -36,8 +36,7 @@ import pytest
 from mediafile import MediaFile
 
 from beets import config, importer, logging, util
-from beets.autotag.distance import Distance
-from beets.autotag.hooks import AlbumInfo, AlbumMatch, TrackInfo
+from beets.autotag import AlbumInfo, AlbumMatch, Distance, TrackInfo
 from beets.importer.tasks import albums_in_dir
 from beets.test import _common
 from beets.test.helper import (
@@ -335,10 +334,7 @@ class ImportSingletonTest(AutotagImportTestCase):
         single_path = os.path.join(self.import_dir, b"track_2.mp3")
 
         util.copy(resource_path, single_path)
-        import_files = [
-            os.path.join(self.import_dir, b"album"),
-            single_path,
-        ]
+        import_files = [os.path.join(self.import_dir, b"album"), single_path]
         self.setup_importer()
         self.importer.paths = import_files
 
@@ -390,8 +386,7 @@ class ImportSingletonTest(AutotagImportTestCase):
 
 
 @pytest.mark.skipif(
-    not has_program("ffprobe", ["-L"]),
-    "need ffprobe for format recognition",
+    not has_program("ffprobe", ["-L"]), "need ffprobe for format recognition"
 )
 class ImportFormatTest:
     """Test fix_extension during import."""
@@ -1156,12 +1151,51 @@ class ImportDuplicateAlbumTest(PluginMixin, ImportTestCase):
         return album
 
 
+@patch(
+    "beets.metadata_plugins.candidates", Mock(side_effect=album_candidates_mock)
+)
+class ImportDuplicateAlbumThreadedTest(PluginMixin, ImportTestCase):
+    """Regression test for #6601: threaded merge must propagate context vars."""
+
+    plugin = "musicbrainz"
+    # Each thread gets its own connection; :memory: would give each thread an
+    # empty DB, so we need a real file that all threads share.
+    db_on_disk = True
+
+    def setUp(self):
+        super().setUp()
+        self.add_album_fixture(albumartist="artist", album="album")
+        self.prepare_album_for_import(1)
+        self.importer = self.setup_importer(
+            duplicate_keys={"album": "albumartist album"}
+        )
+
+    def add_album_fixture(self, **kwargs):
+        album = super().add_album_fixture()
+        album.update(kwargs)
+        album.store()
+        return album
+
+    def test_merge_duplicate_album_threaded(self):
+        self.config["threaded"] = True
+        self.importer.default_resolution = self.importer.Resolution.MERGE
+        self.importer.run()
+
+        assert len(self.lib.albums()) == 1
+        for item in self.lib.items():
+            assert item.filepath.exists(), f"item path not found: {item.path}"
+
+        # Without the fix, lost context vars cause relative paths to stay
+        # unresolved, so items land in different (duplicate) directories.
+        album_dirs = {item.filepath.parent for item in self.lib.items()}
+        assert len(album_dirs) == 1, (
+            f"expected single album dir, got {album_dirs}"
+        )
+
+
 def item_candidates_mock(*args, **kwargs):
     yield TrackInfo(
-        artist="artist",
-        title="title",
-        track_id="new trackid",
-        index=0,
+        artist="artist", title="title", track_id="new trackid", index=0
     )
 
 
@@ -1361,8 +1395,7 @@ class IncrementalImportTest(AsIsImporterMixin, ImportTestCase):
 
 def _mkmp3(path):
     shutil.copyfile(
-        syspath(os.path.join(_common.RSRC, b"min.mp3")),
-        syspath(path),
+        syspath(os.path.join(_common.RSRC, b"min.mp3")), syspath(path)
     )
 
 

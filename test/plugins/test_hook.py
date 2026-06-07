@@ -17,18 +17,18 @@ from __future__ import annotations
 
 import os
 import sys
-import unittest
-from contextlib import contextmanager
 from typing import TYPE_CHECKING, ClassVar
 
+import pytest
+
 from beets import plugins
-from beets.test.helper import PluginTestCase, capture_log
+from beets.test.helper import PluginTestHelper
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterator
+    from collections.abc import Callable
 
 
-class HookTestCase(PluginTestCase):
+class HookTestCase(PluginTestHelper):
     plugin = "hook"
     preload_plugin = False
 
@@ -36,44 +36,48 @@ class HookTestCase(PluginTestCase):
         return {"event": event, "command": command}
 
 
-class HookLogsTest(HookTestCase):
+class TestHookLogs(HookTestCase):
     HOOK: plugins.EventType = "write"
 
-    @contextmanager
-    def _configure_logs(self, command: str) -> Iterator[list[str]]:
+    def _configure_hook(self, command: str) -> None:
         config = {"hooks": [self._get_hook(self.HOOK, command)]}
 
-        with self.configure_plugin(config), capture_log("beets.hook") as logs:
+        with self.configure_plugin(config):
             plugins.send(self.HOOK)
-            yield logs
 
-    def test_hook_empty_command(self):
-        with self._configure_logs("") as logs:
-            assert 'hook: invalid command ""' in logs
+    def test_hook_empty_command(self, caplog: pytest.LogCaptureFixture):
+        with caplog.at_level("DEBUG"):
+            self._configure_hook("")
+
+        assert 'hook: invalid command ""' in caplog.messages
 
     # FIXME: fails on windows
-    @unittest.skipIf(sys.platform == "win32", "win32")
-    def test_hook_non_zero_exit(self):
-        with self._configure_logs('sh -c "exit 1"') as logs:
-            assert f"hook: hook for {self.HOOK} exited with status 1" in logs
+    @pytest.mark.skipif(sys.platform == "win32", reason="win32")
+    def test_hook_non_zero_exit(self, caplog: pytest.LogCaptureFixture):
+        with caplog.at_level("DEBUG"):
+            self._configure_hook('sh -c "exit 1"')
 
-    def test_hook_non_existent_command(self):
-        with self._configure_logs("non-existent-command") as logs:
-            logs = "\n".join(logs)
+        assert (
+            f"hook: hook for {self.HOOK} exited with status 1"
+            in caplog.messages
+        )
 
-        assert f"hook: hook for {self.HOOK} failed: " in logs
+    def test_hook_non_existent_command(self, caplog: pytest.LogCaptureFixture):
+        with caplog.at_level("DEBUG"):
+            self._configure_hook("non-existent-command")
+        assert f"hook: hook for {self.HOOK} failed: " in caplog.text
         # The error message is different for each OS. Unfortunately the text is
         # different in each case, where the only shared text is the string
         # 'file' and substring 'Err'
-        assert "Err" in logs
-        assert "file" in logs
+        assert "Err" in caplog.text
+        assert "file" in caplog.text
 
 
-class HookCommandTest(HookTestCase):
+class TestHookCommand(HookTestCase):
     EVENTS: ClassVar[list[plugins.EventType]] = ["write", "after_write"]
 
+    @pytest.fixture(autouse=True)
     def setUp(self):
-        super().setUp()
         self.paths = [str(self.temp_dir_path / e) for e in self.EVENTS]
 
     def _test_command(
@@ -107,19 +111,19 @@ class HookCommandTest(HookTestCase):
                     plugins.send(event)
                 assert os.path.isfile(path)
 
-    @unittest.skipIf(sys.platform == "win32", "win32")
+    @pytest.mark.skipif(sys.platform == "win32", reason="win32")
     def test_hook_no_arguments(self):
         self._test_command(lambda _, p: p)
 
-    @unittest.skipIf(sys.platform == "win32", "win32")
+    @pytest.mark.skipif(sys.platform == "win32", reason="win32")
     def test_hook_event_substitution(self):
         self._test_command(lambda e, p: p.replace(e, "{event}"))
 
-    @unittest.skipIf(sys.platform == "win32", "win32")
+    @pytest.mark.skipif(sys.platform == "win32", reason="win32")
     def test_hook_argument_substitution(self):
         self._test_command(lambda *_: "{path}", send_path_kwarg=True)
 
-    @unittest.skipIf(sys.platform == "win32", "win32")
+    @pytest.mark.skipif(sys.platform == "win32", reason="win32")
     def test_hook_bytes_interpolation(self):
         self.paths = [p.encode() for p in self.paths]
         self._test_command(lambda *_: "{path}", send_path_kwarg=True)

@@ -34,7 +34,7 @@ from bs4 import BeautifulSoup
 from unidecode import unidecode
 
 from beets import plugins, ui
-from beets.autotag.distance import string_dist
+from beets.autotag import string_dist
 from beets.dbcore import types
 from beets.dbcore.query import FalseQuery
 from beets.library import Item, parse_query_string
@@ -44,7 +44,7 @@ from beets.util.lyrics import INSTRUMENTAL_LYRICS, Lyrics
 from ._utils.requests import HTTPNotFoundError, RequestHandler
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Iterator
+    from collections.abc import Callable, Iterable, Iterator
 
     import confuse
 
@@ -59,6 +59,8 @@ if TYPE_CHECKING:
         LRCLibAPI,
         TranslatorAPI,
     )
+
+    HtmlTransformer = Callable[[str], str]
 
 
 class CaptchaError(requests.exceptions.HTTPError):
@@ -444,11 +446,20 @@ class MusiXmatch(Backend):
         return Lyrics(lyrics, self.__class__.name, url)
 
 
+def apply_transforms(html: str, methods: Iterable[HtmlTransformer]) -> str:
+    for method in methods:
+        html = method(html)
+
+    return html
+
+
 class Html:
     collapse_space = partial(re.compile(r"(^| ) +", re.M).sub, r"\1")
     expand_br = partial(re.compile(r"\s*<br[^>]*>\s*", re.I).sub, "\n")
     #: two newlines between paragraphs on the same line (musica, letras.mus.br)
-    merge_blocks = partial(re.compile(r"(?<!>)</p><p[^>]*>").sub, "\n\n")
+    merge_blocks = partial(
+        re.compile(r"(?<!>)(</p><p[^>]*>)+", re.S).sub, "\n\n"
+    )
     #: a single new line between paragraphs on separate lines
     #: (paroles.net, sweetslyrics.com, lacoccinelle.net)
     merge_lines = partial(re.compile(r"</p>\s+<p[^>]*>(?!___)").sub, "\n")
@@ -458,10 +469,29 @@ class Html:
     )
     #: remove Google Ads tags (musica.com)
     remove_aside = partial(re.compile("<aside .+?</aside>").sub, "")
+    #: remove inline script blocks that split lyrics paragraphs
+    remove_scripts = partial(
+        re.compile(r"<script\b[^>]*>.*?</script\b[^>]*>", re.I | re.S).sub, ""
+    )
+    #: remove comments that split lyrics paragraphs
+    remove_comments = partial(re.compile(r"<!--.*?-->", re.S).sub, "")
+    #: remove title-only paragraph from the musica.com lyrics block
+    remove_musica_title = partial(
+        re.compile(
+            r"(<div\s+id=['\"]letra['\"][^>]*>.*?)"
+            r"<p>\s*<strong>[^<]+</strong>\s*</p>",
+            re.I | re.S,
+        ).sub,
+        r"\1",
+    )
+    #: remove non-lyrics explanation blocks (musica.com)
+    remove_significado = partial(
+        re.compile(r"<div\s+id=['\"]significado['\"][^>]*>.*", re.I | re.S).sub,
+        "",
+    )
     #: remove adslot-Content_1 div from the lyrics text (paroles.net)
     remove_adslot = partial(
-        re.compile(r"\n</div>[^\n]+-- Content_\d+ --.*?\n<div>", re.S).sub,
-        "\n",
+        re.compile(r"\n</div>[^\n]+-- Content_\d+ --.*?\n<div>", re.S).sub, "\n"
     )
     #: remove text formatting (azlyrics.com, lacocinelle.net)
     remove_formatting = partial(
@@ -471,22 +501,32 @@ class Html:
     @classmethod
     def normalize_space(cls, text: str) -> str:
         text = unescape(text).replace("\r", "").replace("\xa0", " ")
-        return cls.collapse_space(cls.expand_br(text))
+        return apply_transforms(text, [cls.collapse_space, cls.expand_br])
 
     @classmethod
     def remove_ads(cls, text: str) -> str:
-        return cls.remove_adslot(cls.remove_aside(text))
+        return apply_transforms(text, [cls.remove_aside, cls.remove_adslot])
 
     @classmethod
     def merge_paragraphs(cls, text: str) -> str:
-        return cls.merge_blocks(cls.merge_lines(cls.remove_empty_tags(text)))
+        return apply_transforms(
+            text, [cls.remove_empty_tags, cls.merge_lines, cls.merge_blocks]
+        )
 
 
 class SoupMixin:
     @classmethod
     def pre_process_html(cls, html: str) -> str:
         """Pre-process the HTML content before scraping."""
-        return Html.normalize_space(html)
+        return apply_transforms(
+            html,
+            [
+                Html.normalize_space,
+                Html.remove_significado,
+                Html.remove_scripts,
+                Html.remove_musica_title,
+            ],
+        )
 
     @classmethod
     def get_soup(cls, html: str) -> BeautifulSoup:
@@ -680,8 +720,16 @@ class Google(SearchBackend):
     @classmethod
     def pre_process_html(cls, html: str) -> str:
         """Pre-process the HTML content before scraping."""
-        html = Html.remove_ads(super().pre_process_html(html))
-        return Html.remove_formatting(Html.merge_paragraphs(html))
+        return apply_transforms(
+            html,
+            [
+                super().pre_process_html,
+                Html.remove_ads,
+                Html.remove_comments,
+                Html.merge_paragraphs,
+                Html.remove_formatting,
+            ],
+        )
 
     def get_text(self, *args, **kwargs) -> str:
         """Handle an error so that we can continue with the next URL."""
@@ -909,10 +957,7 @@ class RestFiles:
             conf_file.write_text(self.REST_CONF_TEMPLATE)
 
     def write_artist(self, artist: str, items: Iterable[Item]) -> None:
-        parts = [
-            f"{artist}\n{'=' * len(artist)}",
-            ".. contents::\n   :local:",
-        ]
+        parts = [f"{artist}\n{'=' * len(artist)}", ".. contents::\n   :local:"]
         for album, items in groupby(items, key=lambda i: i.album):
             parts.append(f"{album}\n{'-' * len(album)}")
             parts.extend(
@@ -1132,16 +1177,23 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
                 elif item_key in item:
                     del item[item_key]
 
+            # Keep the canonical LRC text (with timestamps) in both the
+            # database and USLT so that Lyrics.from_item() can still detect
+            # synced lyrics on the next run and so that players that parse
+            # LRC timestamps in USLT continue to work.  Pass SYLT data
+            # separately so that players with native SYLT support also work.
             lyrics_text = new_lyrics.full_text
+            sylt_data = new_lyrics.sylt if new_lyrics.synced else None
         else:
             self.info("🔴 Lyrics not found: {}", item)
             lyrics_text = self.config["fallback"].get()
+            sylt_data = None
 
         if lyrics_text not in {None, item.lyrics}:
             item.lyrics = lyrics_text
             item.store()
             if write:
-                item.try_write()
+                item.try_write(tags={"synced_lyrics": sylt_data})
 
     def get_lyrics(self, artist: str, title: str, *args) -> Lyrics | None:
         """Get first found lyrics, trying each source in turn."""

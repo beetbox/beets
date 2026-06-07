@@ -35,12 +35,7 @@ class ParentWorkPlugin(MusicBrainzAPIMixin, BeetsPlugin):
     def __init__(self):
         super().__init__()
 
-        self.config.add(
-            {
-                "auto": False,
-                "force": False,
-            }
-        )
+        self.config.add({"auto": False, "force": False})
 
         if self.config["auto"]:
             self.import_stages = [self.imported]

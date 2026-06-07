@@ -19,7 +19,8 @@ import string
 from datetime import datetime
 from itertools import tee
 
-from beets import plugins, ui
+from beets import plugins
+from beets.exceptions import UserError
 
 ASCII_DIGITS = string.digits + string.ascii_lowercase
 
@@ -54,13 +55,13 @@ def span_from_str(span_str):
 
     years = [int(x) for x in re.findall(r"\d+", span_str)]
     if not years:
-        raise ui.UserError(
+        raise UserError(
             f"invalid range defined for year bucket {span_str!r}: no year found"
         )
     try:
         years = [normalize_year(x, years[0]) for x in years]
     except BucketError as exc:
-        raise ui.UserError(
+        raise UserError(
             f"invalid range defined for year bucket {span_str!r}: {exc}"
         )
 
@@ -163,7 +164,7 @@ def build_alpha_spans(alpha_spans_str, alpha_regexs):
                 begin_index = ASCII_DIGITS.index(bucket[0])
                 end_index = ASCII_DIGITS.index(bucket[-1])
             else:
-                raise ui.UserError(
+                raise UserError(
                     "invalid range defined for alpha bucket "
                     f"'{elem}': no alphanumeric character found"
                 )

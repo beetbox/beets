@@ -30,11 +30,13 @@ import mediafile
 from confuse import ConfigTypeError, Optional
 
 from beets import plugins, ui, util
+from beets.exceptions import UserError
 from beets.library import Item, parse_query_string
 from beets.plugins import BeetsPlugin
 from beets.util import par_map
 from beets.util.artresizer import ArtResizer
 from beets.util.m3u import M3UFile
+from beets.util.pathformats import get_path_formats
 from beetsplug._utils import art
 
 if TYPE_CHECKING:
@@ -42,17 +44,14 @@ if TYPE_CHECKING:
 
     from beets.importer import ImportSession, ImportTask
     from beets.library import Album, Library
-    from beets.util.functemplate import Template as FuncTemplate
+    from beets.util.pathformats import PathFormat
 
 _fs_lock = threading.Lock()
 # Keep track of temporary transcoded files for deletion.
 _temp_files: list[bytes] = []
 
 # Some convenient alternate names for formats.
-ALIASES = {
-    "windows media": "wma",
-    "vorbis": "ogg",
-}
+ALIASES = {"windows media": "wma", "vorbis": "ogg"}
 
 LOSSLESS_FORMATS = ["ape", "flac", "alac", "wave", "aiff"]
 
@@ -197,14 +196,14 @@ class ConvertPlugin(BeetsPlugin):
             "--playlist",
             action="store",
             default=self.config["playlist"].get(),
-            help="""create an m3u8 playlist file containing
-                              the converted files. The playlist file will be
-                              saved below the destination directory, thus
-                              PLAYLIST could be a file name or a relative path.
-                              To ensure a working playlist when transferred to
-                              a different computer, or opened from an external
-                              drive, relative paths pointing to media files
-                              will be used.""",
+            help=(
+                "create an m3u8 playlist file containing the converted files."
+                " The playlist file will be saved below the destination"
+                " directory, thus PLAYLIST could be a file name or a relative"
+                " path. To ensure a working playlist when transferred to a"
+                " different computer, or opened from an external drive,"
+                " relative paths pointing to media files will be used."
+            ),
         )
         cmd.parser.add_option(
             "-F",
@@ -224,7 +223,7 @@ class ConvertPlugin(BeetsPlugin):
     def dest(self) -> bytes:
         dest = self.config["dest"].get()
         if not dest:
-            raise ui.UserError("no convert destination set")
+            raise UserError("no convert destination set")
         return util.bytestring_path(dest)
 
     @cached_property
@@ -232,8 +231,8 @@ class ConvertPlugin(BeetsPlugin):
         return self.config["threads"].get(int)
 
     @cached_property
-    def path_formats(self) -> dict[str, FuncTemplate]:
-        return ui.get_path_formats(self.config["paths"] or None)
+    def path_formats(self) -> list[PathFormat]:
+        return get_path_formats(self.config["paths"])
 
     @cached_property
     def fmt(self) -> str:
@@ -272,9 +271,7 @@ class ConvertPlugin(BeetsPlugin):
             command = format_info["command"]
             extension = format_info.get("extension", fmt)
         except KeyError:
-            raise ui.UserError(
-                f'convert: format {fmt} needs the "command" field'
-            )
+            raise UserError(f'convert: format {fmt} needs the "command" field')
         except ConfigTypeError:
             command = self.config["formats"][fmt].get(str)
             extension = fmt
@@ -335,10 +332,7 @@ class ConvertPlugin(BeetsPlugin):
         encode_cmd = []
         for i, arg in enumerate(args):
             args[i] = Template(arg).safe_substitute(
-                {
-                    "source": source,
-                    "dest": dest,
-                }
+                {"source": source, "dest": dest}
             )
             encode_cmd.append(os.fsdecode(args[i]))
 
@@ -363,7 +357,7 @@ class ConvertPlugin(BeetsPlugin):
             util.prune_dirs(os.path.dirname(dest))
             raise
         except OSError as exc:
-            raise ui.UserError(
+            raise UserError(
                 f"convert: couldn't invoke {' '.join(args)!r}: {exc}"
             )
 
@@ -401,15 +395,18 @@ class ConvertPlugin(BeetsPlugin):
             return True
         return self.fmt != item.format.lower()
 
+    def get_item_destination(self, item: Item) -> bytes:
+        return item.destination(
+            basedir=self.dest, path_formats=self.path_formats
+        )
+
     @util.pipeline.mutator_stage
     def convert_item(self, keep_new: bool, item: Item) -> None:
         """Convert an Item from the library."""
         pretend, link, hardlink = self.pretend, self.link, self.hardlink
         command, ext = self.command
 
-        dest = item.destination(
-            basedir=self.dest, path_formats=self.path_formats
-        )
+        dest = self.get_item_destination(item)
 
         # Ensure that desired item is readable before processing it. Needed
         # to avoid any side-effect of the conversion (linking, keep_new,
@@ -448,9 +445,7 @@ class ConvertPlugin(BeetsPlugin):
         if keep_new:
             if pretend:
                 self._log.info(
-                    "mv {.filepath} {}",
-                    item,
-                    util.displayable_path(original),
+                    "mv {.filepath} {}", item, util.displayable_path(original)
                 )
             else:
                 self._log.info("Moving to {}", util.displayable_path(original))
@@ -545,9 +540,7 @@ class ConvertPlugin(BeetsPlugin):
 
         # Get the destination of the first item (track) of the album, we use
         # this function to format the path accordingly to path_formats.
-        dest = album_item.destination(
-            basedir=self.dest, path_formats=self.path_formats
-        )
+        dest = self.get_item_destination(album_item)
 
         # Remove item from the path.
         dest = os.path.join(*util.components(dest)[:-1])
@@ -612,7 +605,7 @@ class ConvertPlugin(BeetsPlugin):
         self, lib: Library, opts: optparse.Values, args: list[str]
     ) -> None:
         self.config.set(vars(opts))
-        dest, pretend = self.dest, self.pretend
+        pretend = self.pretend
 
         if opts.album:
             albums = lib.albums(args)
@@ -646,9 +639,7 @@ class ConvertPlugin(BeetsPlugin):
             pl_dir = os.path.dirname(pl_normpath)
             items_paths = []
             for item in items:
-                item_path = item.destination(
-                    basedir=dest, path_formats=self.path_formats
-                )
+                item_path = self.get_item_destination(item)
 
                 # When keeping new files in the library, destination paths
                 # keep original files and extensions.

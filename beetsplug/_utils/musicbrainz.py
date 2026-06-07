@@ -14,15 +14,24 @@ import operator
 import re
 from dataclasses import dataclass, field
 from functools import cached_property, singledispatchmethod, wraps
+from http import HTTPStatus
 from itertools import groupby, starmap
-from typing import TYPE_CHECKING, Any, Literal, ParamSpec, TypedDict, TypeVar
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Literal,
+    ParamSpec,
+    TypedDict,
+    TypeVar,
+)
 
 from requests_ratelimiter import LimiterMixin
 from typing_extensions import NotRequired, Unpack
 
 from beets import config, logging
 
-from .requests import RequestHandler, TimeoutAndRetrySession
+from .requests import BeetsHTTPError, RequestHandler, TimeoutAndRetrySession
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -539,6 +548,19 @@ def require_one_of(*keys: str) -> Callable[[Callable[P, R]], Callable[P, R]]:
     return deco
 
 
+class UnauthorizedMBError(BeetsHTTPError):
+    """Raised when the MusicBrainz API returns a 401 Unauthorized response."""
+
+    STATUS = HTTPStatus.UNAUTHORIZED
+
+    def __init__(self, *args, message: str | None = None, **kwargs) -> None:
+        message = (
+            f"HTTP Error: {self.STATUS.value} {self.STATUS.phrase}."
+            " Check your musicbrainz.user and musicbrainz.pass configuration"
+        )
+        super().__init__(*args, message=message, **kwargs)
+
+
 @dataclass
 class MusicBrainzAPI(RequestHandler):
     """High-level interface to the MusicBrainz WS/2 API.
@@ -552,6 +574,11 @@ class MusicBrainzAPI(RequestHandler):
 
     Documentation: https://musicbrainz.org/doc/MusicBrainz_API
     """
+
+    explicit_http_errors: ClassVar[list[type[BeetsHTTPError]]] = [
+        *RequestHandler.explicit_http_errors,
+        UnauthorizedMBError,
+    ]
 
     api_host: str = field(init=False)
     rate_limit: float = field(init=False)

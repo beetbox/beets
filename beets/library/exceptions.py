@@ -28,11 +28,15 @@ class ReadError(FileOperationError):
     """An error while reading a file (i.e. in `Item.read`)."""
 
     def __str__(self):
-        return f"error reading {super()}"
+        # Formatting super() directly stringifies the proxy object, so call
+        # __str__ explicitly to forward to FileOperationError.__str__.
+        return f"error reading {super().__str__()}"
 
 
 class WriteError(FileOperationError):
     """An error while writing a file (i.e. in `Item.write`)."""
 
     def __str__(self):
-        return f"error writing {super()}"
+        # Formatting super() directly stringifies the proxy object, so call
+        # __str__ explicitly to forward to FileOperationError.__str__.
+        return f"error writing {super().__str__()}"

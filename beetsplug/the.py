@@ -55,8 +55,7 @@ class ThePlugin(BeetsPlugin):
                 else:
                     if not (p.startswith("^") or p.endswith("$")):
                         self._log.warning(
-                            'warning: "{}" will not match string start/end',
-                            p,
+                            'warning: "{}" will not match string start/end', p
                         )
         if self.config["a"]:
             self.patterns = [PATTERN_A, *self.patterns]
