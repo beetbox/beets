@@ -19,7 +19,7 @@ import os
 import pytest
 
 import beets.library
-from beets import config, util
+from beets import util
 from beets.dbcore import types
 from beets.dbcore.query import TrueQuery
 from beets.dbcore.sort import FixedFieldSort, SlowFieldSort
@@ -152,26 +152,21 @@ class TestSort:
         expected_paths_with_prefix = list(map(util.normpath, expected_paths))
         assert [i.path for i in results] == expected_paths_with_prefix
 
+    def test_config_defaults(self):
+        artists = [r.artist for r in self.lib.items()]
+        albumartists = [r.albumartist for r in self.lib.albums()]
 
-@pytest.mark.usefixtures("setup_library")
-class TestConfigSort:
-    def test_default_sort_item(self):
-        results = list(self.lib.items())
-        assert results[0].artist < results[1].artist
+        assert artists == ["One", "Three", "Three", "Two"]
+        assert albumartists == ["Bar", "Baz", "Foo"]
 
-    def test_config_opposite_sort_item(self):
-        config["sort_item"] = "artist-"
-        results = list(self.lib.items())
-        assert results[0].artist > results[1].artist
+    def test_config_overrides(self, config):
+        config.set({"sort_item": "artist-", "sort_album": "albumartist-"})
 
-    def test_default_sort_album(self):
-        results = list(self.lib.albums())
-        assert results[0].albumartist < results[1].albumartist
+        artists = [r.artist for r in self.lib.items()]
+        albumartists = [r.albumartist for r in self.lib.albums()]
 
-    def test_config_opposite_sort_album(self):
-        config["sort_album"] = "albumartist-"
-        results = list(self.lib.albums())
-        assert results[0].albumartist > results[1].albumartist
+        assert artists == ["Two", "Three", "Three", "One"]
+        assert albumartists == ["Foo", "Baz", "Bar"]
 
 
 class TestCaseSensitivity:
