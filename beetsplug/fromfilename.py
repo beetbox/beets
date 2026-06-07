@@ -184,13 +184,14 @@ class FromFilenamePlugin(BeetsPlugin):
     def ignored_directories(self) -> set[str]:
         return set([p.lower() for p in self.config["ignore_dirs"].as_str_seq()])
 
-    def filename_task(self, task: ImportTask, session: ImportSession) -> None:
+    def filename_task(self, task: ImportTask, _: ImportSession) -> None:
         """Examines all files in the given import task for any missing
         information it can gather from the file and folder names.
 
         Once the information has been obtained and checked, it
         is applied to the items to improve later metadata lookup.
         """
+
         # Retrieve the list of items to process
 
         items: list[Item] = task.items
@@ -201,13 +202,29 @@ class FromFilenamePlugin(BeetsPlugin):
         # Retrieve the path characteristics to check
         parent_folder, item_filenames = self._get_path_strings(items)
 
-        album_matches = self._parse_album_info(parent_folder)
-        # Look for useful information in the filenames.
-        track_matches = self._build_track_matches(item_filenames)
+        album_matches: FilenameMatch | None = None
+        track_matches: dict[Item, FilenameMatch] | None = None
+
+        if self.config["guess"]["folder"] and (
+            not config["import"]["group_albums"]
+            and not config["import"]["singletons"]
+        ):
+            # If the group albums flag is thrown
+            # we can't trust the parent directory
+            # likewise for singletons - return an empty match
+            album_matches = self._parse_album_info(parent_folder)
+
+        if self.config["guess"]["file"]:
+            # Look for useful information in the filenames.
+            track_matches = self._build_track_matches(item_filenames)
+
         # Make sure we got the fields right
         self._sanity_check_matches(album_matches, track_matches)
         # Apply the information
-        self._apply_matches(album_matches, track_matches)
+        if track_matches:
+            self._apply_track_matches(items, track_matches)
+        if album_matches:
+            self._apply_album_matches(items, album_matches)
 
     def _check_missing_data(self, items: list[Item]) -> bool:
         """Look for what fields are missing data on the items.
@@ -347,12 +364,6 @@ class FromFilenamePlugin(BeetsPlugin):
     def _parse_album_info(self, text: str) -> FilenameMatch:
         matches = FilenameMatch()
 
-        if not self.config["guess"]["folder"] or (
-            config["import"]["group_albums"] or config["import"]["singletons"]
-        ):
-            # If the group albums flag is thrown, we can't trust the parent directory
-            # likewise for singletons - return an empty match
-            return matches
         # Check if a user pattern matches
         if m := self._check_user_matches(text, self.folder_patterns):
             return m
@@ -389,28 +400,63 @@ class FromFilenamePlugin(BeetsPlugin):
 
         return matches
 
-    def _apply_matches(
+    def _apply_album_matches(
+        self, items: list[Item], album_match: FilenameMatch
+    ):
+        for item in items:
+            new_data = self._fields_to_update(item, album_match._matches)
+            self._log.debug(f"album matches {self._format_guesses(new_data)}")
+            item.update(new_data)
+
+    def _apply_track_matches(
         self,
-        album_match: FilenameMatch,
+        items: list[Item],
         track_matches: dict[Item, FilenameMatch],
-    ) -> None:
-        """Apply all valid matched fields to all items in the match dictionary."""
-        match = dict(album_match._matches)
-        for item in track_matches:
-            match.update(track_matches[item]._matches)
-            found_data: dict[str, int | str] = {}
-            self._log.debug(f"keys: {', '.join(match.keys())}")
-            # Check every key we are supposed to match.
-            for key in match.keys():
-                # If the key is applicable to the session, we will update it.
-                if key in self.session_fields:
-                    old_value = item.get(key)
-                    new_value = match[key]
-                    # If the field is bad, and we have a new value
-                    if self._bad_field(old_value) and new_value:
-                        found_data[key] = new_value
-            self._log.info(f"guessing {self._format_guesses(found_data)}")
-            item.update(found_data)
+    ):
+        for item in items:
+            filename_match = track_matches.get(item)
+            if filename_match:
+                new_data = self._fields_to_update(item, filename_match._matches)
+                self._log.debug(
+                    f"track matches {self._format_guesses(new_data)}"
+                )
+                item.update(new_data)
+
+    def _fields_to_update(
+        self, item: Item, match: dict[str, int | str]
+    ) -> dict[str, int | str]:
+        for key in match.keys():
+            # If the key is applicable to the session, we will update it.
+            if key in self.session_fields:
+                old_value = item.get(key)
+                new_value = match[key]
+                # If the field is bad, and we have a new value
+                if self._bad_field(old_value) and new_value:
+                    match[key] = new_value
+        return match
+
+    # def _apply_matches(
+    #     self,
+    #     album_match: FilenameMatch | None,
+    #     track_matches: dict[Item, FilenameMatch] | None,
+    # ) -> None:
+    #     """Apply all valid matched fields to all items in the match dictionary."""
+    #     match = dict(album_match._matches)
+    #     for item in track_matches:
+    #         match.update(track_matches[item]._matches)
+    #         found_data: dict[str, int | str] = {}
+    #         self._log.debug(f"keys: {', '.join(match.keys())}")
+    #         # Check every key we are supposed to match.
+    #         for key in match.keys():
+    #             # If the key is applicable to the session, we will update it.
+    #             if key in self.session_fields:
+    #                 old_value = item.get(key)
+    #                 new_value = match[key]
+    #                 # If the field is bad, and we have a new value
+    #                 if self._bad_field(old_value) and new_value:
+    #                     found_data[key] = new_value
+    #         self._log.info(f"guessing {self._format_guesses(found_data)}")
+    #         item.update(found_data)
 
     @staticmethod
     def _format_guesses(guesses: dict[str, int | str]) -> str:
@@ -524,8 +570,8 @@ class FromFilenamePlugin(BeetsPlugin):
 
     def _sanity_check_matches(
         self,
-        album_match: FilenameMatch,
-        track_matches: dict[Item, FilenameMatch],
+        album_match: FilenameMatch | None,
+        track_matches: dict[Item, FilenameMatch] | None,
     ) -> None:
         """Check to make sure data is coherent between
         track and album matches. Largely looking to see
@@ -538,10 +584,11 @@ class FromFilenamePlugin(BeetsPlugin):
                 artist = track["title"]
                 track["title"] = track["artist"]
                 track["artist"] = artist
-            # swap the track titles and track artists
-            self._log.info("Swapped title and artist fields.")
 
         # None of this logic applies if there's only one track
+        if album_match is None or track_matches is None:
+            return
+
         if len(track_matches) < 2:
             return
 
@@ -558,6 +605,9 @@ class FromFilenamePlugin(BeetsPlugin):
             elif one_title and not one_artist and not album_artist:
                 # If the track titles match, and there's no album
                 # artist to check on
+                possible_artist = tracks[0]["title"]
+                self._log.debug(f'"{possible_artist}" likely the album artist')
+
                 swap_artist_title(tracks)
             elif album_artist:
                 # The artist fields don't match, and the title fields don't match
@@ -565,7 +615,12 @@ class FromFilenamePlugin(BeetsPlugin):
                 # that the track field is likely the artist field.
                 # Sometimes an album has a presenter credited
                 track_titles = [str(t["title"]).upper() for t in tracks]
-                if album_artist and album_artist.upper() in track_titles:
+                if album_artist and (album_artist.upper() in track_titles):
+                    self._log.debug(
+                        f'"{album_artist}" in guessed titles,'
+                        "swapping title to artist"
+                    )
+
                     swap_artist_title(tracks)
         return
 
