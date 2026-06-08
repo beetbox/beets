@@ -149,6 +149,12 @@ New features
   data_source:tidal tidal_album_id='$mb_albumid' -a`` for albums and ``beet
   modify data_source:tidal tidal_track_id='$mb_trackid'`` for items.
 
+- Add the :ref:`duplicate_track_resolution` import option, which checks each
+  track of an album import against the library's singleton items (using the
+  :ref:`duplicate_keys` ``item`` fields) and resolves matches via
+  :ref:`duplicate_action`. With ``skip`` this drops already-imported tracks and
+  imports the rest of the album. Disabled by default.
+
 Bug fixes
 ~~~~~~~~~
 

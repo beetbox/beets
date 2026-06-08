@@ -120,7 +120,70 @@ def group_albums(session: ImportSession) -> StageCoro:
 
 
 @pipeline.mutator_stage
-def lookup_candidates(session: ImportSession, task: ImportTask) -> None:
+    """Resolve tracks of an album that already exist in the library.
+
+    When ``import.duplicate_track_resolution`` is enabled, each item of an
+    album import is checked against the library using
+    ``import.duplicate_keys.item``. Matched tracks are resolved according to
+    ``import.duplicate_action``:
+
+    * ``skip`` drops the duplicate tracks and imports the rest of the album
+      (if every track is a duplicate, the whole album is skipped);
+    * ``remove`` removes the matching old library items;
+    * ``keep`` (and ``merge``) import everything as-is;
+    * ``ask`` prompts the session for one of the above.
+
+    This runs before :func:`lookup_candidates` so that dropped tracks are
+    excluded from the autotag match. Singleton imports are handled by the
+    regular duplicate resolution and are ignored here.
+    """
+    if (
+        task.skip
+        or not task.is_album
+        or not task.items
+        or not config["import"]["duplicate_track_resolution"].get(bool)
+    ):
+        return
+
+    keys = config["import"]["duplicate_keys"]["item"].as_str_seq()
+    if not keys:
+        return
+
+    # Map each incoming item to the existing library items it duplicates.
+    duplicates: dict[library.Item, list[library.Item]] = {}
+    for item in task.items:
+        if not any(item.get(k) for k in keys):
+            continue
+        matches = _find_track_duplicates(session.lib, item, keys)
+        if matches:
+            duplicates[item] = matches
+
+    if not duplicates:
+        return
+
+    action = config["import"]["duplicate_action"].as_choice(
+        {"skip": "s", "keep": "k", "remove": "r", "merge": "m", "ask": "a"}
+    )
+    if action == "a":
+        action = session.resolve_track_duplicates(task, duplicates)
+
+    if action == "s":
+        for item in duplicates:
+            log.info(
+                "skipping duplicate track: {}", displayable_path(item.path)
+            )
+            task.items.remove(item)
+        if not task.items:
+            task.set_choice(Action.SKIP)
+    elif action == "r":
+        for matches in duplicates.values():
+            task.duplicate_track_items_to_remove.extend(matches)
+    # "k" (keep) and "m" (merge) leave the incoming tracks untouched; whole
+    # album duplicates are still handled by the regular resolution stage.
+
+
+@pipeline.mutator_stage
+def lookup_candidates(session: ImportSession, task: ImportTask):
     """A coroutine for performing the initial MusicBrainz lookup for an
     album. It accepts lists of Items and yields
     (items, cur_artist, cur_album, candidates, rec) tuples. If no match
@@ -275,6 +338,9 @@ def manipulate_files(session: ImportSession, task: ImportTask) -> None:
         if task.duplicate_action is DuplicateAction.REMOVE:
             task.remove_duplicates(session.lib)
 
+        if task.duplicate_track_items_to_remove:
+            task.remove_duplicate_track_items(session.lib)
+
         if session.config["move"]:
             operation = MoveOperation.MOVE
         elif session.config["copy"]:
@@ -327,7 +393,17 @@ def _apply_choice(session: ImportSession, task: ImportTask) -> None:
         task.set_fields(session.lib)
 
 
-def _resolve_duplicates(session: ImportSession, task: ImportTask) -> None:
+def _find_track_duplicates(
+    lib: library.Library, item: library.Item, keys: list[str]
+) -> list[library.Item]:
+    """Return library items matching `item` on all `keys`, excluding the
+    item itself (so re-imports do not match their own files).
+    """
+    query = item.duplicates_query(keys)
+    return [other for other in lib.items(query) if other.path != item.path]
+
+
+def _resolve_duplicates(session: ImportSession, task: ImportTask):
     """Check if a task conflicts with items or albums already imported
     and ask the session to resolve this.
     """

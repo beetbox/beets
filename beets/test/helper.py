@@ -730,6 +730,18 @@ class ImportSessionFixture(ImportSession):
 
     choose_item = choose_match  # type: ignore[assignment]
 
+    def resolve_track_duplicates(self, task, duplicates):
+        try:
+            res = self._resolutions.pop(0)
+        except IndexError:
+            res = self.default_resolution
+
+        return {
+            self.Resolution.SKIP: "s",
+            self.Resolution.KEEPBOTH: "k",
+            self.Resolution.REMOVE: "r",
+        }.get(res, "k")
+
 
 class TerminalImportSessionFixture(TerminalImportSession):
     def __init__(self, *args, **kwargs):

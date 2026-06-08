@@ -850,6 +850,36 @@ is applied, which would, considering the default, look like this:
 
 Default: ``no``.
 
+.. _duplicate_track_resolution:
+
+duplicate_track_resolution
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When enabled, album imports also check each *individual track* against the
+library, using the same fields as :ref:`duplicate_keys` ``item`` (by default
+``artist`` and ``title``; set it to e.g. ``mb_trackid`` to match on the
+MusicBrainz track ID). Tracks already in the library are resolved according to
+:ref:`duplicate_action`:
+
+- ``skip`` drops the duplicate tracks and imports the rest of the album. If
+  every track is already present, the whole album is skipped.
+- ``remove`` removes the matching old items from the library before importing.
+- ``keep`` (and ``merge``) import the album unchanged.
+- ``ask`` prompts you to choose one of the above.
+
+This complements the album-level duplicate check (which matches whole albums on
+:ref:`duplicate_keys` ``album``): it catches the case where some loose tracks of
+an album are already in your library as singletons.
+
+.. note::
+
+    Only **singleton** library items (tracks not attached to an album) are
+    considered. Tracks that already belong to an album in your library are not
+    matched, so importing a fuller version of an album you already have will not
+    deduplicate against that existing album's tracks.
+
+Default: ``no``.
+
 .. _bell:
 
 bell
