@@ -1139,7 +1139,14 @@ class Item(LibModel):
         if not os.path.exists(syspath(self.path)):
             log.warning(
                 "{}: file not found at {.filepath}, skipping",
-                "Moving" if operation == MoveOperation.MOVE else "Copying",
+                {
+                    MoveOperation.MOVE: "Moving",
+                    MoveOperation.COPY: "Copying",
+                    MoveOperation.LINK: "Linking",
+                    MoveOperation.HARDLINK: "Hardlinking",
+                    MoveOperation.REFLINK: "Reflinking",
+                    MoveOperation.REFLINK_AUTO: "Reflinking",
+                }[operation],
                 self,
             )
             return

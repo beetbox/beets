@@ -127,7 +127,7 @@ class MoveTest(BeetsTestCase):
         self.i.load()
         i2.load()
         assert self.i.path == old_i_path
-        assert b"libdir" in i2.path
+        assert i2.path.startswith(self.libdir)
         assert i2.filepath.exists()
 
     def test_move_item_skips_missing_file(self):
