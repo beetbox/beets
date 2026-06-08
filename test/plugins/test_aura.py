@@ -7,20 +7,20 @@ from typing import TYPE_CHECKING, Any
 
 import pytest
 
-from beets.test.helper import TestHelper
-
 if TYPE_CHECKING:
     from flask.testing import Client
 
 
-@pytest.fixture(scope="module")
-def helper():
-    helper = TestHelper()
-    helper.setup_beets()
+@pytest.fixture(scope="session")
+def helper(session_helper):
+    """Keep the helper temp dir alive past the module-scoped Flask app.
 
-    yield helper
-
-    helper.teardown_beets()
+    ``create_app`` opens a configured SQLite library before tests replace it
+    with ``helper.lib``. On Windows, module teardown can otherwise try to
+    delete ``library.db`` while the app still holds a file handle. The API
+    assertions filter known data, so sharing state for the session is harmless.
+    """
+    return session_helper
 
 
 @pytest.fixture(scope="module")

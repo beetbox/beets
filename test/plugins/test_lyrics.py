@@ -27,7 +27,7 @@ import pytest
 import requests
 
 from beets.library import Item
-from beets.test.helper import PluginMixin, TestHelper
+from beets.test.helper import PluginMixin
 from beets.util.lyrics import Lyrics
 from beetsplug import lyrics
 
@@ -46,13 +46,13 @@ PHRASE_BY_TITLE = {
 
 
 @pytest.fixture(scope="module")
-def helper():
-    helper = TestHelper()
-    helper.setup_beets()
+def helper(module_helper):
+    """Reuse one module helper for explicit item and media-write checks.
 
-    yield helper
-
-    helper.teardown_beets()
+    Helper-backed tests mutate known items and write an MP3 fixture, but they do
+    not assert against the full library shared with other tests in this module.
+    """
+    return module_helper
 
 
 class TestLyricsUtils:
