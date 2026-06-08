@@ -121,6 +121,15 @@ RE_SPLIT = re.compile(r"[\-\_]+")
 RE_BRACKETS = re.compile(r"[\(\[\{].*?[\)\]\}]")
 
 
+def is_bad_field(field: str | int) -> bool:
+    """Determine whether a given title is "bad" (empty or otherwise
+    meaningless) and in need of replacement.
+    """
+    if isinstance(field, int):
+        return True if field <= 0 else False
+    return True if RE_BAD_FIELD.match(field) else False
+
+
 class FilenameMatch(MutableMapping[str, str | None]):
     def __init__(self, matches: dict[str, str] | None = None) -> None:
         self._matches: dict[str, str] = {}
@@ -148,41 +157,61 @@ class FilenameMatch(MutableMapping[str, str | None]):
     def values(self) -> ValuesView[str | None]:
         return self._matches.values()
 
+    def reduce(self, item: Item, fields: set[str]) -> None:
+        new_match = {}
+        for key in self._matches.keys():
+            # If the key is applicable to the session, we will update it.
+            if key in fields:
+                old_value = item.get(key)
+                new_value = self._matches[key]
+                # If the field is bad, and we have a new value
+                if is_bad_field(old_value) and new_value:
+                    new_match[key] = new_value
+        self._matches = new_match
+
 
 class FromFilenamePlugin(BeetsPlugin):
     def __init__(self) -> None:
         super().__init__()
         self.config.add(
             {
-                "fields": [
-                    "artist",
-                    "album",
-                    "albumartist",
-                    "catalognum",
-                    "disc",
-                    "media",
-                    "title",
-                    "track",
-                    "year",
-                ],
-                "patterns": {"folder": [], "file": []},
-                "ignore_dirs": [],
-                "guess": {"folder": True, "file": True},
+                "fields": ["artist", "disc", "title", "track"],
+                "patterns": [],
+                "sanity_check": True,
+                "fromfolder": {
+                    "fields": [
+                        "album",
+                        "albumartist",
+                        "catalognum",
+                        "media",
+                        "year",
+                    ],
+                    "patterns": [],
+                    "ignore": [],
+                },
             }
         )
-        self.fields = set(self.config["fields"].as_str_seq())
+        self.file_fields = set(self.config["fields"].as_str_seq())
+        self.folder_fields = set(
+            self.config["fromfolder"]["fields"].as_str_seq()
+        )
         self.file_patterns = self._user_pattern_to_regex(
-            self.config["patterns"]["file"].as_str_seq()
+            self.config["patterns"].as_str_seq(), self.file_fields
         )
         self.folder_patterns = self._user_pattern_to_regex(
-            self.config["patterns"]["folder"].as_str_seq()
+            self.config["fromfolder"]["patterns"].as_str_seq(),
+            self.folder_fields,
         )
-        self.session_fields: set[str] = set()
         self.register_listener("import_task_start", self.filename_task)
 
     @cached_property
     def ignored_directories(self) -> set[str]:
-        return set([p.lower() for p in self.config["ignore_dirs"].as_str_seq()])
+        return set(
+            [
+                p.lower()
+                for p in self.config["fromfolder"]["ignore"].as_str_seq()
+            ]
+        )
 
     def filename_task(self, task: ImportTask, _: ImportSession) -> None:
         """Examines all files in the given import task for any missing
@@ -196,39 +225,34 @@ class FromFilenamePlugin(BeetsPlugin):
 
         items: list[Item] = task.items
 
-        # If there's no missing data to parse
-        if not self._check_missing_data(items):
-            return
         # Retrieve the path characteristics to check
         parent_folder, item_filenames = self._get_path_strings(items)
 
-        album_matches: FilenameMatch | None = None
         track_matches: dict[Item, FilenameMatch] | None = None
+        album_matches: FilenameMatch | None = None
 
-        if self.config["guess"]["folder"] and (
-            not config["import"]["group_albums"]
-            and not config["import"]["singletons"]
-        ):
-            # If the group albums flag is thrown
-            # we can't trust the parent directory
-            # likewise for singletons - return an empty match
-            album_matches = self._parse_album_info(parent_folder)
-
-        if self.config["guess"]["file"]:
-            # Look for useful information in the filenames.
+        if self._has_bad_fields(items, self.file_fields):
             track_matches = self._build_track_matches(item_filenames)
 
-        # Make sure we got the fields right
-        self._sanity_check_matches(album_matches, track_matches)
-        # Apply the information
+        # If the group albums or singleton flag is thrown do not use the folder
+        if not (
+            config["import"]["group_albums"] or config["import"]["singletons"]
+        ):
+            if self._has_bad_fields(items, self.folder_fields):
+                album_matches = self._build_album_match(parent_folder, items)
+
         if track_matches:
+            if self.config["sanity_check"].get(bool):
+                self._sanity_check_matches(album_matches, track_matches)
+
             self._apply_track_matches(items, track_matches)
+
         if album_matches:
             self._apply_album_matches(items, album_matches)
 
-    def _check_missing_data(self, items: list[Item]) -> bool:
+    def _has_bad_fields(self, items: list[Item], fields: list[str]) -> bool:
         """Look for what fields are missing data on the items.
-        Compare each field in self.fields to the fields on the
+        Compare each field in the list to the fields on the
         item.
 
         If all items have it, remove it from fields.
@@ -238,18 +262,14 @@ class FromFilenamePlugin(BeetsPlugin):
         If no fields are detect that need to be processed,
         return false to shortcut the plugin.
         """
-        self.session_fields = set({})
-        for field in self.fields:
+        for field in fields:
             # If any field is a bad field
-            if any([True for item in items if self._bad_field(item[field])]):
-                self.session_fields.add(field)
-        # If all fields have been removed, there is nothing to do
-        if not len(self.session_fields):
-            return False
-        return True
+            if any([True for item in items if is_bad_field(item[field])]):
+                return True
+        return False
 
     def _user_pattern_to_regex(
-        self, patterns: list[str]
+        self, patterns: list[str], fields: set[str]
     ) -> list[re.Pattern[str]]:
         """Compile user patterns into a list of usable regex
         patterns. Catches errors are continues without bad regex patterns.
@@ -257,8 +277,24 @@ class FromFilenamePlugin(BeetsPlugin):
         return [
             re.compile(regexp)
             for p in patterns
-            if (regexp := self._parse_user_pattern_strings(p))
+            if (regexp := self._parse_user_pattern_strings(p, fields))
         ]
+
+    def _parse_user_pattern_strings(
+        self, text: str, fields: set[str]
+    ) -> str | None:
+        # escape any special characters
+        given_fields: list[str] = [
+            s.lower() for s in re.findall(r"\$([a-zA-Z\_]+)", text)
+        ]
+        if not given_fields:
+            # if there are no usable fields
+            return None
+        pattern = re.escape(text)
+        for f in given_fields:
+            pattern = re.sub(rf"\\\${f}", f"(?P<{f}>.+)", pattern)
+            fields.add(f)
+        return pattern
 
     def _get_path_strings(
         self, items: list[Item]
@@ -294,8 +330,49 @@ class FromFilenamePlugin(BeetsPlugin):
                 track_matches[item] = m
             else:
                 match = self._parse_track_info(filename)
+                match.reduce(item, self.file_fields)
                 track_matches[item] = match
         return track_matches
+
+    def _build_album_match(self, text: str, items: list[Item]) -> FilenameMatch:
+        matches = FilenameMatch()
+
+        # Check if a user pattern matches
+        if m := self._check_user_matches(text, self.folder_patterns):
+            return m
+        # Start with the extra fields to make parsing
+        # the album artist and artist field easier
+        year, span = self._parse_year(text)
+        if year:
+            # Remove it from the string if found
+            text = self._mutate_string(text, span)
+            matches["year"] = year
+
+        # Look for the catalog number, it must be in brackets
+        # It will not contain the filetype, flac, mp3, wav, etc
+        catalognum, span = self._parse_catalognum(text)
+        if catalognum:
+            text = self._mutate_string(text, span)
+            matches["catalognum"] = catalognum
+        # Look for a media type
+        media, span = self._parse_media(text)
+        if media:
+            text = self._mutate_string(text, span)
+            matches["media"] = media
+
+        # Remove anything left within brackets
+        brackets = RE_BRACKETS.search(text)
+        while brackets:
+            span = brackets.span()
+            text = self._mutate_string(text, span)
+            brackets = RE_BRACKETS.search(text)
+        # Remaining text used for album, albumartist
+        album, albumartist = self._parse_album_and_albumartist(text)
+        matches["album"] = album
+        matches["albumartist"] = albumartist
+        if len(items):
+            matches.reduce(items[0], self.folder_fields)
+        return matches
 
     @staticmethod
     def _parse_alphanumeric_index(item_filenames: dict[Item, str]) -> None:
@@ -361,52 +438,14 @@ class FromFilenamePlugin(BeetsPlugin):
 
         return trackmatch
 
-    def _parse_album_info(self, text: str) -> FilenameMatch:
-        matches = FilenameMatch()
-
-        # Check if a user pattern matches
-        if m := self._check_user_matches(text, self.folder_patterns):
-            return m
-        # Start with the extra fields to make parsing
-        # the album artist and artist field easier
-        year, span = self._parse_year(text)
-        if year:
-            # Remove it from the string if found
-            text = self._mutate_string(text, span)
-            matches["year"] = year
-
-        # Look for the catalog number, it must be in brackets
-        # It will not contain the filetype, flac, mp3, wav, etc
-        catalognum, span = self._parse_catalognum(text)
-        if catalognum:
-            text = self._mutate_string(text, span)
-            matches["catalognum"] = catalognum
-        # Look for a media type
-        media, span = self._parse_media(text)
-        if media:
-            text = self._mutate_string(text, span)
-            matches["media"] = media
-
-        # Remove anything left within brackets
-        brackets = RE_BRACKETS.search(text)
-        while brackets:
-            span = brackets.span()
-            text = self._mutate_string(text, span)
-            brackets = RE_BRACKETS.search(text)
-        # Remaining text used for album, albumartist
-        album, albumartist = self._parse_album_and_albumartist(text)
-        matches["album"] = album
-        matches["albumartist"] = albumartist
-
-        return matches
-
     def _apply_album_matches(
         self, items: list[Item], album_match: FilenameMatch
     ):
         for item in items:
-            new_data = self._fields_to_update(item, album_match._matches)
-            self._log.debug(f"album matches {self._format_guesses(new_data)}")
-            item.update(new_data)
+            self._log.debug(
+                f"album matches {self._format_guesses(album_match._matches)}"
+            )
+            item.update(album_match._matches)
 
     def _apply_track_matches(
         self, items: list[Item], track_matches: dict[Item, FilenameMatch]
@@ -414,24 +453,10 @@ class FromFilenamePlugin(BeetsPlugin):
         for item in items:
             filename_match = track_matches.get(item)
             if filename_match:
-                new_data = self._fields_to_update(item, filename_match._matches)
                 self._log.debug(
-                    f"track matches {self._format_guesses(new_data)}"
+                    f"track matches {self._format_guesses(filename_match._matches)}"
                 )
-                item.update(new_data)
-
-    def _fields_to_update(
-        self, item: Item, match: dict[str, int | str]
-    ) -> dict[str, int | str]:
-        for key in match.keys():
-            # If the key is applicable to the session, we will update it.
-            if key in self.session_fields:
-                old_value = item.get(key)
-                new_value = match[key]
-                # If the field is bad, and we have a new value
-                if self._bad_field(old_value) and new_value:
-                    match[key] = new_value
-        return match
+                item.update(filename_match._matches)
 
     @staticmethod
     def _format_guesses(guesses: dict[str, int | str]) -> str:
@@ -522,20 +547,6 @@ class FromFilenamePlugin(BeetsPlugin):
             return match.group("catalognum"), match.span()
         return None, (0, 0)
 
-    def _parse_user_pattern_strings(self, text: str) -> str | None:
-        # escape any special characters
-        fields: list[str] = [
-            s.lower() for s in re.findall(r"\$([a-zA-Z\_]+)", text)
-        ]
-        if not fields:
-            # if there are no usable fields
-            return None
-        pattern = re.escape(text)
-        for f in fields:
-            pattern = re.sub(rf"\\\${f}", f"(?P<{f}>.+)", pattern)
-            self.fields.add(f)
-        return pattern
-
     @staticmethod
     def _mutate_string(text: str, span: tuple[int, int]) -> str:
         """Replace a matched field with a seperator"""
@@ -546,7 +557,7 @@ class FromFilenamePlugin(BeetsPlugin):
     def _sanity_check_matches(
         self,
         album_match: FilenameMatch | None,
-        track_matches: dict[Item, FilenameMatch] | None,
+        track_matches: dict[Item, FilenameMatch],
     ) -> None:
         """Check to make sure data is coherent between
         track and album matches. Largely looking to see
@@ -560,15 +571,13 @@ class FromFilenamePlugin(BeetsPlugin):
                 track["title"] = track["artist"]
                 track["artist"] = artist
 
-        # None of this logic applies if there's only one track
-        if album_match is None or track_matches is None:
-            return
-
         if len(track_matches) < 2:
             return
 
         tracks: list[FilenameMatch] = list(track_matches.values())
-        album_artist = album_match["albumartist"]
+        album_artist = None
+        if album_match is not None:
+            album_artist = album_match["albumartist"]
         one_artist = self._equal_fields(tracks, "artist")
         one_title = self._equal_fields(tracks, "title")
 
@@ -603,12 +612,3 @@ class FromFilenamePlugin(BeetsPlugin):
     def _equal_fields(dictionaries: list[FilenameMatch], field: str) -> bool:
         """Checks if all values of a field on a dictionary match."""
         return len(set(d[field] for d in dictionaries)) <= 1
-
-    @staticmethod
-    def _bad_field(field: str | int) -> bool:
-        """Determine whether a given title is "bad" (empty or otherwise
-        meaningless) and in need of replacement.
-        """
-        if isinstance(field, int):
-            return True if field <= 0 else False
-        return True if RE_BAD_FIELD.match(field) else False

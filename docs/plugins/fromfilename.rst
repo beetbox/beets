@@ -28,23 +28,25 @@ Default
     fromfilename:
         fields:
           - artist
-          - album
-          - albumartist
-          - catalognum
           - disc
-          - media
           - title
           - track
-          - year
-        patterns:
-          file: []
-          folder: []
-        ignore_dirs:
+        patterns: []
+        sanity_check: yes
+        fromfolder:
+            fields:
+              - album
+              - albumartist
+              - catalognum
+              - media
+              - year
+            patterns: []
+            ignore: []
 
 .. conf:: fields
-    :default: [ artist, album, albumartist, catalognum, disc, media, title, track, year ]
+    :default: [ artist, disc, title, track ]
 
-    The fields the plugin will guess with its default pattern matching.
+    Fields are the tags a filename with its default pattern matching.
 
     By default, the plugin is configured to match all fields its default
     patterns are capable of matching.
@@ -54,6 +56,11 @@ Default
 
     If you only want the plugin to contribute the track title and artist,
     you would put ``[title, artist]``.
+
+.. conf:: fromfolder
+   :default: [ album, albumartist, catalognum, media, year ]
+
+    The fields 
 
 .. conf:: patterns
 
@@ -78,10 +85,17 @@ Default
            file:
              - "$title - $artist"
 
-.. conf:: ignore_dirs
+.. conf:: sanity_check
+   :default: yes
+
+   If both folder and file fields are matched, this will make sure that the track title and
+   artist fields have been guessed correctly. For instance, if all the title guesses are the same,
+   that is more likely to be the album artist rather than the title.
+
+.. conf:: ignore
     :default: []
 
-    Specify parent directory names that will not be searched for album
+    Specify directory names that will not be searched for album
     information. Useful if you use a regular directory for importing
     single files.
 

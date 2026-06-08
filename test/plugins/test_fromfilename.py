@@ -1,6 +1,5 @@
 """Tests for the fromfilename plugin."""
 
-from copy import deepcopy
 from unittest.mock import patch
 
 import pytest
@@ -47,14 +46,8 @@ def mock_task(items):
         ("3.5", FilenameMatch({"disc": "3", "track": "5"})),
         ("1-02", FilenameMatch({"disc": "1", "track": "02"})),
         ("100-4", FilenameMatch({"disc": "100", "track": "4"})),
-        (
-            "04.Title",
-            FilenameMatch({"track": "04", "title": "Title"}),
-        ),
-        (
-            "5_-_Title",
-            FilenameMatch({"track": "5", "title": "Title"}),
-        ),
+        ("04.Title", FilenameMatch({"track": "04", "title": "Title"})),
+        ("5_-_Title", FilenameMatch({"track": "5", "title": "Title"})),
         (
             "1-02 Title",
             FilenameMatch({"disc": "1", "track": "02", "title": "Title"}),
@@ -104,10 +97,7 @@ def mock_task(items):
             "6 Title by Artist",
             FilenameMatch({"track": "6", "artist": "Artist", "title": "Title"}),
         ),
-        (
-            "Title",
-            FilenameMatch({"title": "Title"}),
-        ),
+        ("Title", FilenameMatch({"title": "Title"})),
     ],
 )
 def test_parse_track_info(text, matchgroup):
@@ -125,30 +115,11 @@ def test_parse_track_info(text, matchgroup):
             "",
             FilenameMatch(),
         ),
-        (
-            "1970",
-            FilenameMatch(
-                {
-                    "year": "1970",
-                }
-            ),
-        ),
-        (
-            "Album Title",
-            FilenameMatch(
-                {
-                    "album": "Album Title",
-                }
-            ),
-        ),
+        ("1970", FilenameMatch({"year": "1970"})),
+        ("Album Title", FilenameMatch({"album": "Album Title"})),
         (
             "Artist - Album Title",
-            FilenameMatch(
-                {
-                    "albumartist": "Artist",
-                    "album": "Album Title",
-                }
-            ),
+            FilenameMatch({"albumartist": "Artist", "album": "Album Title"}),
         ),
         (
             "Artist - Album Title (2024)",
@@ -240,19 +211,14 @@ def test_parse_track_info(text, matchgroup):
         ),
         (
             "Album 3000 {web}",
-            FilenameMatch(
-                {
-                    "album": "Album 3000",
-                    "media": "Digital Media",
-                }
-            ),
+            FilenameMatch({"album": "Album 3000", "media": "Digital Media"}),
         ),
     ],
 )
-def test_parse_album_info(text, matchgroup):
+def test_build_album_match(text, matchgroup):
     """Test parsing album information from a folder name."""
     f = FromFilenamePlugin()
-    m = f._parse_album_info(text)
+    m = f._build_album_match(text, [])
     assert matchgroup == m
 
 
@@ -272,7 +238,7 @@ def test_parse_album_info(text, matchgroup):
 def test_parse_user_pattern_strings(string, pattern):
     """Test converting a user's format string to regexp"""
     f = FromFilenamePlugin()
-    assert f._parse_user_pattern_strings(string) == pattern
+    assert f._parse_user_pattern_strings(string, set()) == pattern
 
 
 class TestFromFilename(PluginMixin):
@@ -312,15 +278,9 @@ class TestFromFilename(PluginMixin):
                 track=2,
                 title="Song_Two",
             ),
+            mock_item(path="/tmp/01 - Song_One.m4a", track=1, title="Song_One"),
             mock_item(
-                path="/tmp/01 - Song_One.m4a",
-                track=1,
-                title="Song_One",
-            ),
-            mock_item(
-                path="/tmp/02. - Song_Two.m4a",
-                track=2,
-                title="Song_Two",
+                path="/tmp/02. - Song_Two.m4a", track=2, title="Song_Two"
             ),
             mock_item(
                 path="/tmp/Song One by The Artist.m4a",
@@ -332,24 +292,10 @@ class TestFromFilename(PluginMixin):
                 artist="The Artist",
                 title="Song Two",
             ),
-            mock_item(
-                path="/tmp/01.m4a",
-                track=1,
-                title="01",
-            ),
-            mock_item(
-                path="/tmp/02.m4a",
-                track=2,
-                title="02",
-            ),
-            mock_item(
-                path="/tmp/Song One.m4a",
-                title="Song One",
-            ),
-            mock_item(
-                path="/tmp/Song Two.m4a",
-                title="Song Two",
-            ),
+            mock_item(path="/tmp/01.m4a", track=1, title="01"),
+            mock_item(path="/tmp/02.m4a", track=2, title="02"),
+            mock_item(path="/tmp/Song One.m4a", title="Song One"),
+            mock_item(path="/tmp/Song Two.m4a", title="Song Two"),
             mock_item(
                 path=(
                     "/tmp/"
@@ -586,20 +532,11 @@ class TestFromFilename(PluginMixin):
         assert given.year == 2024
 
     @pytest.mark.parametrize(
-        "fields,expected",
+        "file_fields,folder_fields,expected",
         [
             (
-                [
-                    "albumartist",
-                    "album",
-                    "year",
-                    "media",
-                    "catalognum",
-                    "artist",
-                    "track",
-                    "disc",
-                    "title",
-                ],
+                ["artist", "track", "disc", "title"],
+                ["albumartist", "album", "year", "media", "catalognum"],
                 mock_item(
                     albumartist="Album Artist",
                     album="Album",
@@ -613,7 +550,8 @@ class TestFromFilename(PluginMixin):
                 ),
             ),
             (
-                ["album", "year", "media", "track", "disc", "title"],
+                ["track", "title", "disc"],
+                ["album", "year", "media"],
                 mock_item(
                     album="Album",
                     year="2025",
@@ -624,7 +562,7 @@ class TestFromFilename(PluginMixin):
             ),
         ],
     )
-    def test_fields(self, fields, expected):
+    def test_fields(self, file_fields, folder_fields, expected):
         """Test that the applied fields can be adjusted by the user."""
         path = (
             "/Album Artist - Album (2025) [FLAC CD] {CATALOGNUM}/"
@@ -632,7 +570,11 @@ class TestFromFilename(PluginMixin):
         )
         task = mock_task([mock_item(path=path)])
         expected.path = path
-        with self.configure_plugin({"fields": fields}):
+        config = {
+            "fields": file_fields,
+            "fromfolder": {"fields": folder_fields},
+        }
+        with self.configure_plugin(config):
             f = FromFilenamePlugin()
             f.filename_task(task, Session())
             res = task.items[0]
@@ -645,13 +587,11 @@ class TestFromFilename(PluginMixin):
             assert res.title == expected.title
 
     @pytest.mark.parametrize(
-        "patterns,expected",
+        "folder_patterns,file_patterns,expected",
         [
             (
-                {
-                    "folder": ["($comments) - {$albumartist} - {$album}"],
-                    "file": ["$artist - $track - $title"],
-                },
+                ["($comments) - {$albumartist} - {$album}"],
+                ["$artist - $track - $title"],
                 mock_item(
                     path=(
                         "/(Comment) - {Album Artist} - {Album}"
@@ -666,10 +606,8 @@ class TestFromFilename(PluginMixin):
                 ),
             ),
             (
-                {
-                    "folder": ["[$comments] - {$albumartist} - {$album}"],
-                    "file": ["$artist - $track - $title"],
-                },
+                ["[$comments] - {$albumartist} - {$album}"],
+                ["$artist - $track - $title"],
                 mock_item(
                     path=(
                         "/(Comment) - {Album Artist} - {Album}"
@@ -683,10 +621,14 @@ class TestFromFilename(PluginMixin):
             ),
         ],
     )
-    def test_user_patterns(self, patterns, expected):
+    def test_user_patterns(self, folder_patterns, file_patterns, expected):
         """Test recognizing data from a given user pattern."""
         task = mock_task([mock_item(path=expected.path)])
-        with self.configure_plugin({"patterns": patterns}):
+        config = {
+            "patterns": file_patterns,
+            "fromfolder": {"patterns": folder_patterns},
+        }
+        with self.configure_plugin(config):
             f = FromFilenamePlugin()
             f.filename_task(task, Session())
             res = task.items[0]
@@ -739,53 +681,33 @@ class TestFromFilename(PluginMixin):
             artist="Artist",
             title="Title",
         )
-        fields = ["artist", "title", "albumartist"]
+        config = {
+            "fields": ["artist", "title"],
+            "fromfolder": {"fields": ["albumartist"]},
+        }
         task = mock_task([item])
-        with self.configure_plugin({"fields": fields}):
-            with patch.object(FromFilenamePlugin, "_get_path_strings") as mock:
-                f = FromFilenamePlugin()
-                f.filename_task(task, Session())
-                mock.assert_not_called()
-
-    def test_only_one_guess(self):
-        """Assert that an item missing only one value
-        will just have that key in session fields."""
-        item = mock_item(
-            path="/Folder/File.wav",
-            albumartist="AlbumArtist",
-            artist="Artist",
-            title="Title",
-        )
-        item2 = deepcopy(item)
-        item2.title = ""
-        fields = ["artist", "title", "albumartist"]
-        task = mock_task([item, item2])
-        with self.configure_plugin({"fields": fields}):
+        with self.configure_plugin(config):
             with patch.object(
-                FromFilenamePlugin,
-                "_get_path_strings",
-                return_value=("mock", {item: "mock"}),
+                FromFilenamePlugin, "_build_track_matches"
             ) as mock:
                 f = FromFilenamePlugin()
                 f.filename_task(task, Session())
-                assert len(f.session_fields) == 1
-                assert "title" in f.fields
-                mock.assert_called()
+                mock.assert_not_called()
 
     def test_ignored_directories(self):
         """Assert that a given parent directory name is ignored."""
         ignored = "Incoming"
         item = mock_item(path="/tmp/" + ignored + "/01 - File.wav")
-        with self.configure_plugin({"ignore_dirs": [ignored]}):
+        with self.configure_plugin({"fromfolder": {"ignore": [ignored]}}):
             f = FromFilenamePlugin()
             parent_folder, _ = f._get_path_strings([item])
             assert parent_folder == ""
 
     def test_guess_folder(self):
         """Assert that from filename does not
-        guess from the folder, if guess folder is `no`."""
+        guess from the folder, if no folder fields are specified."""
         config = {
-            "guess": {"folder": False},
+            "fromfolder": {"fields": []},
             "fields": [
                 "albumartist",
                 "album",
@@ -813,41 +735,6 @@ class TestFromFilename(PluginMixin):
             assert guess.title == "Title"
             assert guess.track == 1
 
-    def test_guess_file(self):
-        """Assert that from filename does not guess
-        from the file, if guess file is `no`."""
-        config = {
-            "guess": {"file": False},
-            "fields": [
-                "albumartist",
-                "album",
-                "year",
-                "track",
-                "artist",
-                "title",
-            ],
-        }
-        item = mock_item(
-            path=(
-                "/Album Artist - Album (2005)/"
-                "01 - Not Guessing - This Tempting Filename.wav"
-            )
-        )
-        task = mock_task([item])
-        with self.configure_plugin(config):
-            f = FromFilenamePlugin()
-            f.filename_task(task, Session())
-            guess = task.items[0]
-            assert guess.albumartist == "Album Artist"
-            assert guess.album == "Album"
-            assert guess.year == 2005
-            assert guess.artist == ""
-            assert guess.title == ""
-            assert guess.track == 0
-
-    def test_guess_none(self):
-        """Assert that nothing is guessed if both are disabled."""
-
     def test_singleton_flag_import(self):
         """If the import task is a singleton, assert that
         the plugin does not guess from the folder."""
@@ -862,3 +749,9 @@ class TestFromFilename(PluginMixin):
         """Asser that an initial run without group by album, and an inaccurate
         album guess, results in a run omitting it with the group album flag."""
         return
+
+    def test_config_sanity_check(self):
+        """Assert that the sanity check can be disabled in the config."""
+
+    def test_sanity_check_no_album(self):
+        """Assert that sanity check can function with no album match."""
