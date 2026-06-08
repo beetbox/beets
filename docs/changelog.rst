@@ -73,6 +73,9 @@ Bug fixes
   awkward indentation in CLI output.
 - :doc:`plugins/spotify`: Improved Spotify API parsing to handle missing label
   data :bug:`6679`
+- :ref:`move-cmd`: ``beet move`` no longer crashes when an item referenced in
+  the database has been deleted from disk. Missing items are now skipped with a
+  warning and the command continues. :bug:`6720`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
