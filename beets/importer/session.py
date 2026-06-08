@@ -187,9 +187,9 @@ class ImportSession:
 
     def resolve_track_duplicates(self, task: ImportTask, duplicates) -> str:
         """Decide what to do with album tracks that already exist in the
-        library. Return ``"s"`` (skip the duplicate tracks), ``"k"`` (keep
-        all), ``"r"`` (remove the old items) or ``"f"`` (fold the remaining
-        new tracks into the existing album).
+        library. Return ``"s"`` (skip the duplicate tracks and fold the
+        remaining new tracks into the existing album), ``"k"`` (keep all) or
+        ``"r"`` (remove the old items).
         """
         raise NotImplementedError
 
