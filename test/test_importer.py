@@ -1345,12 +1345,14 @@ class ImportTrackDuplicateResolutionTest(ImportHelper, BeetsTestCase):
             self.importer.default_resolution = resolution
         self.importer.run()
 
-    def test_skip_drops_duplicate_track(self):
+    def test_skip_singleton_dup_imports_remainder_as_new_album(self):
+        # The matching track is a singleton, so there is no single album to
+        # fold into: the duplicate is dropped and the remaining track is
+        # imported as its own album.
         self.add_item_fixture(artist="Tag Artist", title="Tag Track 1")
 
         self._import(action="skip")
 
-        # The duplicate "Tag Track 1" is dropped; "Tag Track 2" is imported.
         assert len(self.lib.albums()) == 1
         assert {i.title for i in self.lib.items()} == {
             "Tag Track 1",
@@ -1358,13 +1360,14 @@ class ImportTrackDuplicateResolutionTest(ImportHelper, BeetsTestCase):
         }
         assert len(self.lib.items()) == 2
 
-    def test_partial_album_reimports_missing_tracks(self):
+    def test_skip_folds_missing_tracks_into_existing_album(self):
         # Import the album fully, then lose one track from the library and
         # re-import the same folder. The present track is skipped as a
-        # duplicate and the missing one is re-added, even though the album
-        # itself still matches the album-level duplicate check.
+        # duplicate and the missing one is folded back into the *same* album
+        # (no second album is created).
         self._import(action="skip")
-        assert {i.title for i in self.lib.items()} == {
+        album = self.lib.albums().get()
+        assert {i.title for i in album.items()} == {
             "Tag Track 1",
             "Tag Track 2",
         }
@@ -1375,14 +1378,20 @@ class ImportTrackDuplicateResolutionTest(ImportHelper, BeetsTestCase):
 
         self._import(action="skip")
 
-        assert {i.title for i in self.lib.items()} == {
+        assert len(self.lib.albums()) == 1
+        album = self.lib.albums().get()
+        folded = self.lib.items("title:'Tag Track 2'").get()
+        assert folded.album_id == album.id
+        assert folded.filepath.exists()
+        assert {i.title for i in album.items()} == {
             "Tag Track 1",
             "Tag Track 2",
         }
 
     def test_skip_matches_existing_album_member(self):
         # A matching track that already belongs to an album in the library
-        # (not a singleton) must still be caught.
+        # (not a singleton) must still be caught, and the remaining new track
+        # folded into that album.
         item = self.add_album_member_fixture(
             artist="Tag Artist", title="Tag Track 1"
         )
@@ -1390,13 +1399,14 @@ class ImportTrackDuplicateResolutionTest(ImportHelper, BeetsTestCase):
 
         self._import(action="skip")
 
-        # The duplicate "Tag Track 1" is dropped; only "Tag Track 2" is added,
-        # alongside the pre-existing album member.
-        assert sorted(i.title for i in self.lib.items()) == [
+        # The duplicate "Tag Track 1" is dropped; "Tag Track 2" is folded into
+        # the existing album.
+        assert len(self.lib.albums()) == 1
+        album = self.lib.albums().get()
+        assert {i.title for i in album.items()} == {
             "Tag Track 1",
             "Tag Track 2",
-        ]
-        assert len(self.lib.items()) == 2
+        }
 
     def test_skip_all_duplicates_skips_album(self):
         self.add_item_fixture(artist="Tag Artist", title="Tag Track 1")
@@ -1478,61 +1488,24 @@ class ImportTrackDuplicateResolutionTest(ImportHelper, BeetsTestCase):
             "Tag Track 2",
         }
 
-    def test_fold_into_existing_album(self):
-        # Import the album fully, lose one track, then re-import with "fold":
-        # the present track is skipped and the missing one is added back to
-        # the *same* album (no second album is created).
-        self._import(track_action="fold")
-        album = self.lib.albums().get()
-        assert {i.title for i in album.items()} == {
-            "Tag Track 1",
-            "Tag Track 2",
-        }
-
-        missing = self.lib.items("title:'Tag Track 2'").get()
-        missing.remove(delete=True)
-
-        self._import(track_action="fold")
-
-        assert len(self.lib.albums()) == 1
-        album = self.lib.albums().get()
-        folded = self.lib.items("title:'Tag Track 2'").get()
-        assert folded.album_id == album.id
-        assert folded.filepath.exists()
-        assert {i.title for i in album.items()} == {
-            "Tag Track 1",
-            "Tag Track 2",
-        }
-
-    def test_fold_all_duplicates_skips_album(self):
-        self.add_album_member_fixture(artist="Tag Artist", title="Tag Track 1")
-        self.add_album_member_fixture(artist="Tag Artist", title="Tag Track 2")
-
-        # Every track is a duplicate: nothing new to fold, album is skipped.
-        self._import(track_action="fold")
-
-        assert len(self.lib.items()) == 2
-
-    def test_fold_falls_back_when_no_single_album(self):
-        # Matching tracks are singletons (no album), so there is no single
-        # album to fold into: the new track is imported as its own album.
+    def test_track_action_overrides_duplicate_action(self):
         self.add_item_fixture(artist="Tag Artist", title="Tag Track 1")
 
-        self._import(track_action="fold")
+        # duplicate_action says keep, but the track-specific action skips.
+        self._import(action="keep", track_action="skip")
 
-        assert {i.title for i in self.lib.items()} == {
-            "Tag Track 1",
-            "Tag Track 2",
-        }
+        # The duplicate was dropped (skip), not kept, so only two items exist.
+        assert len(self.lib.items()) == 2
 
-    def test_ask_fold(self):
-        self._import(track_action="fold")
+    def test_ask_skip_folds_into_existing_album(self):
+        self._import(action="skip")
         missing = self.lib.items("title:'Tag Track 2'").get()
         missing.remove(delete=True)
 
-        # With "ask", the session is prompted; answer FOLD.
+        # With "ask", the session is prompted; answer SKIP, which folds the
+        # remaining track into the existing album.
         self._import(
-            action="ask", resolution=ImportSessionFixture.Resolution.FOLD
+            action="ask", resolution=ImportSessionFixture.Resolution.SKIP
         )
 
         assert len(self.lib.albums()) == 1

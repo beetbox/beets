@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING
 
 from beets import config, dbcore, plugins
 from beets.util import MoveOperation, displayable_path, pipeline
+from beets.util.color import colorize
 
 from .tasks import (
     Action,
@@ -137,11 +138,10 @@ def resolve_track_duplicates(session: ImportSession, task: ImportTask):
     ``import.duplicate_track_action`` (which falls back to
     ``import.duplicate_action`` when unset):
 
-    * ``skip`` drops the duplicate tracks and imports the rest of the album
-      (if every track is a duplicate, the whole album is skipped);
+    * ``skip`` drops the duplicate tracks and adds the remaining new tracks to
+      the existing album they belong to (if every track is a duplicate, the
+      whole album is skipped);
     * ``remove`` removes the matching old library items;
-    * ``fold`` drops the duplicate tracks and adds the remaining new tracks to
-      the existing album they belong to;
     * ``keep`` (and ``merge``) import everything as-is;
     * ``ask`` prompts the session for one of the above.
 
@@ -177,35 +177,42 @@ def resolve_track_duplicates(session: ImportSession, task: ImportTask):
     if action == "a":
         action = session.resolve_track_duplicates(task, duplicates)
 
-    if action in ("s", "f"):
+    if action == "s":
         for item in duplicates:
             log.info(
-                "skipping duplicate track: {}", displayable_path(item.path)
+                colorize("text_warning", "Skipping duplicate track: {}"),
+                displayable_path(item.path),
             )
             task.items.remove(item)
         if not task.items:
             # Every track was a duplicate: skip the whole album.
+            log.info(
+                colorize(
+                    "text_warning",
+                    "Skipping album, all tracks are duplicates: {}",
+                ),
+                next(iter(duplicates)).album,
+            )
             task.set_choice(Action.SKIP)
             return
         # Only some tracks were duplicates; we have already dropped them, so
         # don't let the album-level check skip the rest.
         task.duplicate_tracks_resolved = True
-        if action == "f":
-            # Fold the remaining new tracks into the existing album, if the
-            # matched duplicates all belong to a single one.
-            album_ids = {
-                match.album_id
-                for matches in duplicates.values()
-                for match in matches
-                if match.album_id is not None
-            }
-            if len(album_ids) == 1:
-                task.fold_into_album_id = album_ids.pop()
-            else:
-                log.warning(
-                    "cannot fold tracks into a single existing album; "
-                    "importing them as a new album"
-                )
+        # Fold the remaining new tracks into the existing album, if the
+        # matched duplicates all belong to a single one.
+        album_ids = {
+            match.album_id
+            for matches in duplicates.values()
+            for match in matches
+            if match.album_id is not None
+        }
+        if len(album_ids) == 1:
+            task.fold_into_album_id = album_ids.pop()
+        else:
+            log.warning(
+                "cannot fold tracks into a single existing album; "
+                "importing them as a new album"
+            )
     elif action == "r":
         for matches in duplicates.values():
             task.duplicate_track_items_to_remove.extend(matches)
@@ -434,7 +441,6 @@ def _track_duplicate_action() -> str:
         "keep": "k",
         "remove": "r",
         "merge": "m",
-        "fold": "f",
         "ask": "a",
     }
     cfg = config["import"]

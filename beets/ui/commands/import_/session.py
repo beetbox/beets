@@ -224,9 +224,7 @@ class TerminalImportSession(importer.ImportSession):
             for item in duplicates:
                 print(f"  {item}")
 
-        return ui.input_options(
-            ("Skip dupes", "Keep all", "Remove old", "Fold into album")
-        )
+        return ui.input_options(("Skip dupes", "Keep all", "Remove old"))
 
     def should_resume(self, path):
         return ui.input_yn(
