@@ -135,8 +135,7 @@ class FormattedMapping(Mapping[str, str]):
     def __getitem__(self, key: str) -> str:
         if key in self.model_keys:
             return self._get_formatted(self.model, key)
-        else:
-            raise KeyError(key)
+        raise KeyError(key)
 
     def __iter__(self) -> Iterator[str]:
         return iter(self.model_keys)
@@ -210,10 +209,11 @@ class LazyConvertDict:
         """
         if key in self._converted:
             return self._converted[key]
-        elif key in self._data:
+        if key in self._data:
             value = self._convert(key, self._data[key])
             self._converted[key] = value
             return value
+        return None
 
     def __delitem__(self, key: str):
         """Delete both converted and base data"""
@@ -253,8 +253,7 @@ class LazyConvertDict:
         """
         if key in self:
             return self[key]
-        else:
-            return default
+        return default
 
     def __contains__(self, key: Any) -> bool:
         """Determine whether `key` is an attribute on this object."""
@@ -520,17 +519,15 @@ class Model(ABC, Generic[D]):
         getters = self._getters()
         if key in getters:  # Computed.
             return getters[key](self)
-        elif key in self._fields:  # Fixed.
+        if key in self._fields:  # Fixed.
             if key in self._values_fixed:
                 return self._values_fixed[key]
-            else:
-                return self._type(key).null
-        elif key in self._values_flex:  # Flexible.
+            return self._type(key).null
+        if key in self._values_flex:  # Flexible.
             return self._values_flex[key]
-        elif raise_:
+        if raise_:
             raise KeyError(key)
-        else:
-            return default
+        return default
 
     get = _get
 
@@ -625,11 +622,10 @@ class Model(ABC, Generic[D]):
     def __getattr__(self, key):
         if key.startswith("_"):
             raise AttributeError(f"model has no attribute {key!r}")
-        else:
-            try:
-                return self[key]
-            except KeyError:
-                raise AttributeError(f"no such field {key!r}")
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError(f"no such field {key!r}")
 
     def __setattr__(self, key, value):
         if key.startswith("_"):
@@ -884,9 +880,8 @@ class Results(Generic[AnyModel]):
             objects = self.sort.sort(list(self._get_objects()))
             return iter(objects)
 
-        else:
-            # Objects are pre-sorted (i.e., by the database).
-            return self._get_objects()
+        # Objects are pre-sorted (i.e., by the database).
+        return self._get_objects()
 
     def _get_indexed_flex_attrs(self) -> dict[int, FlexAttrs]:
         """Index flexible attributes by the entity id they belong to"""
@@ -907,8 +902,7 @@ class Results(Generic[AnyModel]):
         values = {k: v for (k, v) in cols.items() if not k[:4] == "flex"}
 
         # Construct the Python object
-        obj = self.model_class._awaken(self.db, values, flex_values)
-        return obj
+        return self.model_class._awaken(self.db, values, flex_values)
 
     def __len__(self) -> int:
         """Get the number of matching objects."""
@@ -916,16 +910,15 @@ class Results(Generic[AnyModel]):
             # Fully materialized. Just count the objects.
             return len(self._objects)
 
-        elif self.query:
+        if self.query:
             # A slow query. Fall back to testing every object.
             count = 0
             for obj in self:
                 count += 1
             return count
 
-        else:
-            # A fast query. Just count the rows.
-            return self._row_count
+        # A fast query. Just count the rows.
+        return self._row_count
 
     def __nonzero__(self) -> bool:
         """Does this result contain any objects?"""
@@ -1223,10 +1216,9 @@ class Database:
         with self._shared_map_lock:
             if thread_id in self._connections:
                 return self._connections[thread_id]
-            else:
-                conn = self._create_connection()
-                self._connections[thread_id] = conn
-                return conn
+            conn = self._create_connection()
+            self._connections[thread_id] = conn
+            return conn
 
     def _create_connection(self) -> Connection:
         """Create a SQLite connection to the underlying database.

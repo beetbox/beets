@@ -22,16 +22,16 @@ if TYPE_CHECKING:
     )
 
 
-def _make_artist(id: str, name: str) -> TidalArtist:
+def _make_artist(id_: str, name: str) -> TidalArtist:
     return {
-        "id": id,
+        "id": id_,
         "type": "artists",
         "attributes": {"name": name, "popularity": 0.5},
     }
 
 
 def _make_album(
-    id: str,
+    id_: str,
     title: str,
     tracks: list[TidalTrack],
     artist_ids: list[str],
@@ -59,7 +59,7 @@ def _make_album(
         attrs["version"] = version
 
     album: TidalAlbum = {
-        "id": id,
+        "id": id_,
         "type": "albums",
         "attributes": attrs,
         "relationships": {
@@ -77,7 +77,7 @@ def _make_album(
 
 
 def _make_track(
-    id: str,
+    id_: str,
     title: str,
     duration: str = "PT3M30S",
     isrc: str = "ISRC123",
@@ -97,7 +97,7 @@ def _make_track(
     if version:
         attrs["version"] = version
     return {
-        "id": id,
+        "id": id_,
         "type": "tracks",
         "attributes": attrs,
         "relationships": {

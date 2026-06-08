@@ -922,7 +922,7 @@ class TestMusicBrainzPlugin(MusicBrainzPluginTestMixin):
         assert excinfo.value is error
 
     @pytest.mark.parametrize(
-        "input,expected",
+        "input_,expected",
         [
             ("??-??-??", (None, None, None)),
             ("??-01-??", (None, 1, None)),
@@ -935,5 +935,5 @@ class TestMusicBrainzPlugin(MusicBrainzPluginTestMixin):
             ("2010-01-02", (2010, 1, 2)),
         ],
     )
-    def test_get_date(self, input, expected):
-        assert musicbrainz._get_date(input) == expected
+    def test_get_date(self, input_, expected):
+        assert musicbrainz._get_date(input_) == expected

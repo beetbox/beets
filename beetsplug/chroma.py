@@ -104,7 +104,7 @@ def acoustid_match(log, path):
             util.displayable_path(repr(path)),
             exc,
         )
-        return None
+        return
     fp = fp.decode()
     _fingerprints[path] = fp
     try:
@@ -117,23 +117,23 @@ def acoustid_match(log, path):
             util.displayable_path(repr(path)),
             exc,
         )
-        return None
+        return
     log.debug("chroma: fingerprinted {}", util.displayable_path(repr(path)))
 
     # Ensure the response is usable and parse it.
     if res["status"] != "ok" or not res.get("results"):
         log.debug("no match found")
-        return None
+        return
     result = res["results"][0]  # Best match.
     if result["score"] < SCORE_THRESH:
         log.debug("no results above threshold")
-        return None
+        return
     _acoustids[path] = result["id"]
 
     # Get recording and releases from the result
     if not result.get("recordings"):
         log.debug("no recordings found")
-        return None
+        return
     recording_ids = []
     releases = []
     for recording in result["recordings"]:
@@ -466,6 +466,7 @@ def fingerprint_item(log, item, write=False, quiet=False):
             return item.acoustid_fingerprint
         except acoustid.FingerprintGenerationError as exc:
             log.info("fingerprint generation failed: {}", exc)
+    return None
 
 
 # Classes for search.

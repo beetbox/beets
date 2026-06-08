@@ -372,8 +372,7 @@ class ConvertPlugin(BeetsPlugin):
         if no_convert_query:
             query, _ = parse_query_string(no_convert_query, Item)
             return query.match(item)
-        else:
-            return False
+        return False
 
     def should_transcode(self, item: Item) -> bool:
         """Determine whether the item should be transcoded as part of

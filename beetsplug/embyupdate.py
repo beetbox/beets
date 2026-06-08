@@ -32,7 +32,7 @@ def api_url(host, port, endpoint):
     """
     # check if http or https is defined as host and create hostname
     hostname_list = [host]
-    if host.startswith("http://") or host.startswith("https://"):
+    if host.startswith(("http://", "https://")):
         hostname = "".join(hostname_list)
     else:
         hostname_list.insert(0, "http://")
@@ -128,9 +128,7 @@ def get_user(host, port, username):
     """
     url = api_url(host, port, "/Users/Public")
     r = requests.get(url, timeout=10)
-    user = [i for i in r.json() if i["Name"] == username]
-
-    return user
+    return [i for i in r.json() if i["Name"] == username]
 
 
 class EmbyUpdate(BeetsPlugin):

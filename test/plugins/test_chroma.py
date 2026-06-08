@@ -49,9 +49,9 @@ class ChromaTest(IOMixin, PluginMixin, ImportTestCase):
     def run_search(self, fp):
         return self.run_with_output("chromasearch", "-s", fp, "-f", "$title")
 
-    def line_count(self, str):
+    def line_count(self, str_):
         return len(
-            [line for line in str.split("\n") if line.strip(" \n") != ""]
+            [line for line in str_.split("\n") if line.strip(" \n") != ""]
         )
 
     def compare_fingerprints(self, *args, **kwargs):

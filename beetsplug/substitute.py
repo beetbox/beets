@@ -36,8 +36,7 @@ class Substitute(BeetsPlugin):
             for pattern, replacement in self.substitute_rules:
                 text = pattern.sub(replacement, text)
             return text
-        else:
-            return ""
+        return ""
 
     def __init__(self):
         """Initialize the substitute plugin.

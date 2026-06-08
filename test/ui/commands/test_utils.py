@@ -22,8 +22,7 @@ class QueryTest(BeetsTestCase):
         return item
 
     def add_album(self, items):
-        album = self.lib.add_album(items)
-        return album
+        return self.lib.add_album(items)
 
     def check_do_query(
         self, num_items, num_albums, q=(), album=False, also_items=True

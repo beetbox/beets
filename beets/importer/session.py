@@ -42,8 +42,6 @@ log = logging.getLogger("beets")
 class ImportAbortError(Exception):
     """Raised when the user aborts the tagging operation."""
 
-    pass
-
 
 class ImportSession:
     """Controls an import action. Subclasses should implement methods to

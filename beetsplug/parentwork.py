@@ -137,7 +137,7 @@ class ParentWorkPlugin(MusicBrainzAPIMixin, BeetsPlugin):
                 "No work for {0}, add one at https://musicbrainz.org/recording/{0.mb_trackid}",
                 item,
             )
-            return
+            return None
 
         hasparent = hasattr(item, "parentwork")
         work_changed = True
@@ -148,7 +148,7 @@ class ParentWorkPlugin(MusicBrainzAPIMixin, BeetsPlugin):
                 work_info, work_date = self.find_parentwork_info(item.mb_workid)
             except requests.exceptions.RequestException:
                 self._log.debug("error fetching work", item, exc_info=True)
-                return
+                return None
             parent_info = self.get_info(item, work_info)
             parent_info["parentwork_workid_current"] = item.mb_workid
             if "parent_composer" in parent_info:
@@ -165,7 +165,7 @@ class ParentWorkPlugin(MusicBrainzAPIMixin, BeetsPlugin):
 
         elif hasparent:
             self._log.debug("{}: Work present, skipping", item)
-            return
+            return None
 
         # apply all non-null values to the item
         for key, value in parent_info.items():
@@ -188,6 +188,7 @@ class ParentWorkPlugin(MusicBrainzAPIMixin, BeetsPlugin):
                     "parentwork_date",
                 ],
             )
+        return None
 
     def find_parentwork_info(self, mb_workid: str) -> tuple[Work, str | None]:
         """Get the MusicBrainz information dict about a parent work, including

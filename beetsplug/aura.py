@@ -664,8 +664,7 @@ class ImageDocument(AURADocument):
         # Check the image actually exists
         if os.path.isfile(img_path):
             return img_path
-        else:
-            return None
+        return None
 
     @staticmethod
     def get_resource_object(lib: Library, image_id):

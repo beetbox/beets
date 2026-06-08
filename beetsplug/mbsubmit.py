@@ -62,6 +62,7 @@ class MBSubmitPlugin(BeetsPlugin):
                 PromptChoice("p", "Print tracks", self.print_tracks),
                 PromptChoice("o", "Open files with Picard", self.picard),
             ]
+        return None
 
     def picard(self, session, task):
         paths = []

@@ -384,15 +384,15 @@ class TestHelper(RunMixin, ConfigMixin):
         """Delete the temporary directory created by `create_temp_dir`."""
         shutil.rmtree(self.temp_dir_path)
 
-    def touch(self, path, dir=None, content=""):
+    def touch(self, path, dir_=None, content=""):
         """Create a file at `path` with given content.
 
         If `dir` is given, it is prepended to `path`. After that, if the
         path is relative, it is resolved with respect to
         `self.temp_dir`.
         """
-        if dir:
-            path = os.path.join(dir, path)
+        if dir_:
+            path = os.path.join(dir_, path)
 
         if not os.path.isabs(path):
             path = os.path.join(self.temp_dir, path)
@@ -480,8 +480,6 @@ class PluginTestCase(PluginMixin, BeetsTestCase):
     """
     DEPRECATED: Use PluginTestHelper instead.
     """
-
-    pass
 
 
 class PluginTestHelper(PluginMixin, TestHelper):
@@ -657,10 +655,9 @@ class ImportSessionFixture(ImportSession):
 
         if choice == importer.Action.APPLY:
             return task.candidates[0]
-        elif isinstance(choice, int):
+        if isinstance(choice, int):
             return task.candidates[choice - 1]
-        else:
-            return choice
+        return choice
 
     choose_item = choose_match
 
@@ -807,13 +804,13 @@ class AutotagStub:
         )
 
     def _make_album_match(self, artist, album, tracks, distance=0, missing=0):
-        id = f" {'M' * distance}" if distance else ""
+        id_ = f" {'M' * distance}" if distance else ""
 
         if artist is None:
             artist = "Various Artists"
         else:
-            artist = f"{artist.replace('Tag', 'Applied')}{id}"
-        album = f"{album.replace('Tag', 'Applied')}{id}"
+            artist = f"{artist.replace('Tag', 'Applied')}{id_}"
+        album = f"{album.replace('Tag', 'Applied')}{id_}"
 
         track_infos = []
         for i in range(tracks - missing):
@@ -824,8 +821,8 @@ class AutotagStub:
             album=album,
             tracks=track_infos,
             va=False,
-            album_id=f"albumid{id}",
-            artist_id=f"artistid{id}",
+            album_id=f"albumid{id_}",
+            artist_id=f"artistid{id_}",
             albumtype="soundtrack",
             data_source="match_source",
             bandcamp_album_id="bc_url",

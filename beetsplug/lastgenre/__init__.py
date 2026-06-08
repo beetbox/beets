@@ -365,8 +365,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """Format to title case if configured."""
         if self.config["title_case"]:
             return [tag.title() for tag in tags]
-        else:
-            return tags
+        return tags
 
     def _artist_for_filter(self, obj: LibModel) -> str | None:
         """Return the representative artist for genre resolution and filtering."""

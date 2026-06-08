@@ -197,3 +197,9 @@ adfb73b66dba0fc799880af176ef6f9ac0a7ee68
 ca8544d4bcab503e1e4c2cd6688655c8211aa7a1
 # Fix autobpm tests
 5804a21620098e8da78b1f4a5f85063033586632
+# Enable and fix flake8-pie
+3a419c6a347803fc962f018f5ad027b5399ab3ae
+# Enable and fix flake8-return
+d0dc5f86a626765c86cdadc348595429f4c6e6ef
+# Enable and fix flake8-builtins
+b7974ace83ab193b6417bdcecaf68a742bf5a1a8

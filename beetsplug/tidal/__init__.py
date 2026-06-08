@@ -432,8 +432,7 @@ class TidalPlugin(MetadataSourcePlugin):
         """
         if version := attributes.get("version"):
             return f"{attributes['title']} ({version})"
-        else:
-            return attributes["title"]
+        return attributes["title"]
 
     @staticmethod
     def _parse_data_url(
@@ -457,8 +456,8 @@ class TidalPlugin(MetadataSourcePlugin):
     def _parse_label(
         attributes: AlbumAttributes | TrackAttributes,
     ) -> str | None:
-        if copyright := attributes.get("copyright"):
-            return copyright["text"]
+        if copyright_ := attributes.get("copyright"):
+            return copyright_["text"]
         return None
 
     @staticmethod

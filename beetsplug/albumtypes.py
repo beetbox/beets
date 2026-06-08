@@ -65,9 +65,9 @@ class AlbumTypesPlugin(BeetsPlugin):
         res = ""
         albumtypes = item.albumtypes
         is_va = item.mb_albumartistid == VARIOUS_ARTISTS_ID
-        for type in types:
-            if type[0] in albumtypes and type[1]:
-                if not is_va or (type[0] not in ignore_va and is_va):
-                    res += f"{bracket_l}{type[1]}{bracket_r}"
+        for type_ in types:
+            if type_[0] in albumtypes and type_[1]:
+                if not is_va or (type_[0] not in ignore_va and is_va):
+                    res += f"{bracket_l}{type_[1]}{bracket_r}"
 
         return res

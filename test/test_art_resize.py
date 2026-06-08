@@ -45,7 +45,6 @@ class DummyPILBackend(PILBackend):
 
     def __init__(self):
         """Init a dummy backend class for mocked PIL tests."""
-        pass
 
 
 class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):

@@ -519,8 +519,7 @@ def tag_item(
         if candidates:
             assert rec is not None
             return Proposal(_sort_candidates(candidates.values()), rec)
-        else:
-            return Proposal([], Recommendation.none)
+        return Proposal([], Recommendation.none)
 
     # Search terms.
     search_artist = search_artist or item.artist

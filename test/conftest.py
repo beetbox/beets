@@ -95,6 +95,7 @@ def pytest_make_parametrize_id(config, val, argname):
 def pytest_assertrepr_compare(op, left, right):
     if isinstance(left, Distance) or isinstance(right, Distance):
         return [f"Comparing Distance: {float(left)} {op} {float(right)}"]
+    return None
 
 
 @pytest.fixture(autouse=True)
