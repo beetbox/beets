@@ -1309,7 +1309,8 @@ class ImportTrackDuplicateResolutionTest(ImportHelper, BeetsTestCase):
     """``import.duplicate_track_resolution``: per-track dedup on album import.
 
     The imported album has two tracks (``Tag Track 1`` and ``Tag Track 2``);
-    tests seed the library with singletons matching one or both of them.
+    tests seed the library with items matching one or both of them (as
+    singletons unless noted otherwise).
     """
 
     def setUp(self):
@@ -1322,11 +1323,23 @@ class ImportTrackDuplicateResolutionTest(ImportHelper, BeetsTestCase):
         item.store()
         return item
 
-    def _import(self, action="skip", enabled=True, resolution=None):
+    def add_album_member_fixture(self, **kwargs):
+        """Seed the library with a track that belongs to an album (i.e. not a
+        singleton), so its ``album_id`` is set.
+        """
+        item = self.add_item_fixture(**kwargs)
+        self.lib.add_album([item])
+        item.store()
+        return item
+
+    def _import(
+        self, action="skip", enabled=True, resolution=None, track_action=None
+    ):
         self.setup_importer(
             autotag=False,
             duplicate_track_resolution=enabled,
             duplicate_action=action,
+            duplicate_track_action=track_action or "",
         )
         if resolution is not None:
             self.importer.default_resolution = resolution
@@ -1343,6 +1356,46 @@ class ImportTrackDuplicateResolutionTest(ImportHelper, BeetsTestCase):
             "Tag Track 1",
             "Tag Track 2",
         }
+        assert len(self.lib.items()) == 2
+
+    def test_partial_album_reimports_missing_tracks(self):
+        # Import the album fully, then lose one track from the library and
+        # re-import the same folder. The present track is skipped as a
+        # duplicate and the missing one is re-added, even though the album
+        # itself still matches the album-level duplicate check.
+        self._import(action="skip")
+        assert {i.title for i in self.lib.items()} == {
+            "Tag Track 1",
+            "Tag Track 2",
+        }
+
+        missing = self.lib.items("title:'Tag Track 2'").get()
+        missing.remove(delete=True)
+        assert {i.title for i in self.lib.items()} == {"Tag Track 1"}
+
+        self._import(action="skip")
+
+        assert {i.title for i in self.lib.items()} == {
+            "Tag Track 1",
+            "Tag Track 2",
+        }
+
+    def test_skip_matches_existing_album_member(self):
+        # A matching track that already belongs to an album in the library
+        # (not a singleton) must still be caught.
+        item = self.add_album_member_fixture(
+            artist="Tag Artist", title="Tag Track 1"
+        )
+        assert item.album_id is not None
+
+        self._import(action="skip")
+
+        # The duplicate "Tag Track 1" is dropped; only "Tag Track 2" is added,
+        # alongside the pre-existing album member.
+        assert sorted(i.title for i in self.lib.items()) == [
+            "Tag Track 1",
+            "Tag Track 2",
+        ]
         assert len(self.lib.items()) == 2
 
     def test_skip_all_duplicates_skips_album(self):
@@ -1412,6 +1465,81 @@ class ImportTrackDuplicateResolutionTest(ImportHelper, BeetsTestCase):
             "Tag Track 1",
             "Tag Track 2",
         ]
+
+    def test_inherits_duplicate_action_when_unset(self):
+        self.add_item_fixture(artist="Tag Artist", title="Tag Track 1")
+
+        # No duplicate_track_action: should inherit duplicate_action=skip.
+        self._import(action="skip", track_action=None)
+
+        assert len(self.lib.albums()) == 1
+        assert {i.title for i in self.lib.items()} == {
+            "Tag Track 1",
+            "Tag Track 2",
+        }
+
+    def test_fold_into_existing_album(self):
+        # Import the album fully, lose one track, then re-import with "fold":
+        # the present track is skipped and the missing one is added back to
+        # the *same* album (no second album is created).
+        self._import(track_action="fold")
+        album = self.lib.albums().get()
+        assert {i.title for i in album.items()} == {
+            "Tag Track 1",
+            "Tag Track 2",
+        }
+
+        missing = self.lib.items("title:'Tag Track 2'").get()
+        missing.remove(delete=True)
+
+        self._import(track_action="fold")
+
+        assert len(self.lib.albums()) == 1
+        album = self.lib.albums().get()
+        folded = self.lib.items("title:'Tag Track 2'").get()
+        assert folded.album_id == album.id
+        assert folded.filepath.exists()
+        assert {i.title for i in album.items()} == {
+            "Tag Track 1",
+            "Tag Track 2",
+        }
+
+    def test_fold_all_duplicates_skips_album(self):
+        self.add_album_member_fixture(artist="Tag Artist", title="Tag Track 1")
+        self.add_album_member_fixture(artist="Tag Artist", title="Tag Track 2")
+
+        # Every track is a duplicate: nothing new to fold, album is skipped.
+        self._import(track_action="fold")
+
+        assert len(self.lib.items()) == 2
+
+    def test_fold_falls_back_when_no_single_album(self):
+        # Matching tracks are singletons (no album), so there is no single
+        # album to fold into: the new track is imported as its own album.
+        self.add_item_fixture(artist="Tag Artist", title="Tag Track 1")
+
+        self._import(track_action="fold")
+
+        assert {i.title for i in self.lib.items()} == {
+            "Tag Track 1",
+            "Tag Track 2",
+        }
+
+    def test_ask_fold(self):
+        self._import(track_action="fold")
+        missing = self.lib.items("title:'Tag Track 2'").get()
+        missing.remove(delete=True)
+
+        # With "ask", the session is prompted; answer FOLD.
+        self._import(
+            action="ask", resolution=ImportSessionFixture.Resolution.FOLD
+        )
+
+        assert len(self.lib.albums()) == 1
+        assert {i.title for i in self.lib.albums().get().items()} == {
+            "Tag Track 1",
+            "Tag Track 2",
+        }
 
 
 class TagLogTest(unittest.TestCase):

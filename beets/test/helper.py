@@ -652,7 +652,7 @@ class ImportSessionFixture(ImportSession):
 
     choose_item = choose_match
 
-    Resolution = Enum("Resolution", "REMOVE SKIP KEEPBOTH MERGE")
+    Resolution = Enum("Resolution", "REMOVE SKIP KEEPBOTH MERGE FOLD")
 
     default_resolution = "REMOVE"
 
@@ -679,6 +679,7 @@ class ImportSessionFixture(ImportSession):
             self.Resolution.SKIP: "s",
             self.Resolution.KEEPBOTH: "k",
             self.Resolution.REMOVE: "r",
+            self.Resolution.FOLD: "f",
         }.get(res, "k")
 
 
