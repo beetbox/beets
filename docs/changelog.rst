@@ -26,6 +26,7 @@ New features
 - :doc:`plugins/musicbrainz`: Introduce
   :conf:`plugins.musicbrainz:aliases_as_credits` to make
   aliases-as-artist-credit optional.
+- :doc:`plugins/badfiles`: Added settings for auto error and warning actions.
 
 Bug fixes
 ~~~~~~~~~
@@ -123,7 +124,6 @@ New features
   See :doc:`plugins/tidal` for more information.
 
 - Add support for adding or modifying a subtitle (ID3 tag ``TIT3``) field
-- :doc:`plugins/badfiles`: Added settings for auto error and warning actions.
 
 Bug fixes
 ~~~~~~~~~

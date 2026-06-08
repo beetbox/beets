@@ -19,6 +19,7 @@ import os
 import shlex
 import sys
 from subprocess import STDOUT, CalledProcessError, check_output, list2cmdline
+from typing import Literal
 
 import confuse
 
@@ -50,6 +51,10 @@ class BadFiles(BeetsPlugin):
     def __init__(self):
         super().__init__()
         self.verbose = False
+
+        self.config.add(
+            {"import_action_on_warning": "ask", "import_action_on_error": "ask"}
+        )
 
         self.register_listener("import_task_start", self.on_import_task_start)
         self.register_listener(
@@ -168,49 +173,33 @@ class BadFiles(BeetsPlugin):
         if checks_failed:
             task._badfiles_checks_failed = checks_failed
 
-    def handle_import_action(self, action, failure_type):
+    def handle_import_action(
+        self,
+        action: Literal["abort", "skip", "continue"],
+        failure_type: Literal["error", "warning"],
+    ) -> importer.Action | None:
+        action_name_by_action = {
+            "abort": "Aborting",
+            "skip": "Skipping",
+            "continue": "Continuing",
+        }
+        ui.print_(
+            f"{ui.colorize('text_warning', action_name_by_action[action])}"
+            f" due to import_action_on_{failure_type} configuration"
+        )
         if action == "abort":
-            ui.print_(
-                f"{ui.colorize('text_warning', 'Aborting')}"
-                f" due to import_action_on_{failure_type} configuration"
-            )
             raise importer.ImportAbortError()
-        elif action == "skip":
-            ui.print_(
-                f"{ui.colorize('text_warning', 'Skipping')}"
-                f" due to import_action_on_{failure_type} configuration"
-            )
+        if action == "skip":
             return importer.Action.SKIP
-        elif action == "continue":
-            ui.print_(
-                f"{ui.colorize('text_warning', 'Continuing')}"
-                f" due to import_action_on_{failure_type} configuration"
-            )
-            return None
-        else:
-            ui.print_(
-                ui.colorize(
-                    "text_warning",
-                    f"Got invalid import_action_on_{failure_type}"
-                    f" configuration: {action}",
-                )
-            )
-            ui.print_(
-                ui.colorize(
-                    "text_warning",
-                    f"import_action_on_{failure_type} should be one of:"
-                    f" ask abort skip continue",
-                )
-            )
-            raise importer.ImportAbortError()
+        return None
 
     def on_import_task_before_choice(self, task, session):
-        if config["import"]["quiet"]:
-            return None
-
         if hasattr(task, "_badfiles_checks_failed"):
-            warning_action = self.config["import_action_on_warning"].get("ask")
-            error_action = self.config["import_action_on_error"].get("ask")
+            actions = confuse.Choice(["ask", "abort", "skip", "continue"])
+            warning_action = self.config["import_action_on_warning"].get(
+                actions
+            )
+            error_action = self.config["import_action_on_error"].get(actions)
 
             ui.print_(
                 f"{colorize('text_warning', 'BAD')} one or more files failed checks:"
@@ -239,6 +228,10 @@ class BadFiles(BeetsPlugin):
                 return self.handle_import_action(error_action, "error")
             elif found_warning and warning_action != "ask":
                 return self.handle_import_action(warning_action, "warning")
+
+            # Defer the quiet check to after automatic import action options are handled
+            if config["import"]["quiet"]:
+                return None
 
             ui.print_()
             ui.print_("What would you like to do?")

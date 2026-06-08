@@ -345,6 +345,7 @@ class TidalPlugin(MetadataSourcePlugin):
         track_by_id: dict[str, TidalTrack],
         artist_by_id: dict[str, TidalArtist],
     ) -> AlbumInfo:
+
         track_infos: list[TrackInfo] = []
         for i, track_rel in enumerate(
             album["relationships"]["items"]["data"], start=1
