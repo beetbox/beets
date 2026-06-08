@@ -26,8 +26,11 @@ New features
 - :doc:`plugins/musicbrainz`: Introduce
   :conf:`plugins.musicbrainz:aliases_as_credits` to make
   aliases-as-artist-credit optional.
-- :doc:`plugins/duplicates`: ``dedupe_mb_trackid_on_import`` option added
-  to deduplicate during imports based on already-imported ``mb_trackid``.
+- Add the :ref:`duplicate_track_resolution` import option, which checks each
+  track of an album import against the library (using the
+  :ref:`duplicate_keys` ``item`` fields) and resolves matches via
+  :ref:`duplicate_action`. With ``skip`` this drops already-imported tracks and
+  imports the rest of the album. Disabled by default.
 
 Bug fixes
 ~~~~~~~~~
@@ -125,8 +128,6 @@ New features
   See :doc:`plugins/tidal` for more information.
 
 - Add support for adding or modifying a subtitle (ID3 tag ``TIT3``) field
-- :doc:`plugins/duplicates`: ``dedupe_mb_trackid_on_import`` option added to
-  deduplicate during imports based on already-imported ``mb_trackid``.
 
 Bug fixes
 ~~~~~~~~~

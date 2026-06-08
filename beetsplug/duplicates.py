@@ -17,10 +17,9 @@
 import os
 import shlex
 
-from beets.dbcore.query import MatchQuery
 from beets.library import Album, Item
 from beets.plugins import BeetsPlugin
-from beets.ui import Subcommand, UserError, colorize, print_
+from beets.ui import Subcommand, UserError, print_
 from beets.util import (
     MoveOperation,
     bytestring_path,
@@ -142,49 +141,6 @@ class DuplicatesPlugin(BeetsPlugin):
         )
         self._command.parser.add_all_common_options()
 
-        self.register_listener("import_task_created", self.import_task_created)
-
-    def import_task_created(self, task, session):
-        if "dedupe_mb_trackid_on_import" in self.config and self.config[
-            "dedupe_mb_trackid_on_import"
-        ].get(bool):
-            return self._dedupe_task_on_mb_trackid(task, session)
-
-    def _dedupe_task_on_mb_trackid(self, task, session):
-        # Find all items that already have the same track imported
-        dupes = []
-        for item in task.items:
-            if not item.mb_trackid:
-                continue
-
-            # Query the library for any matching tracks
-            resp = session.lib.items(
-                query=MatchQuery("mb_trackid", item.mb_trackid)
-            )
-            if len(resp.rows) > 0:
-                log_prefix = f"{item.artist} - {item.album} - {item.title}"
-                print_(
-                    f"{colorize('text_warning', log_prefix)}:"
-                    "Item already imported, skipping..."
-                )
-                dupes.append(item)
-
-        # Remove the dupes
-        album = ""
-        for dup in dupes:
-            album = f"{dup.artist} - {dup.album}"
-            task.items.remove(dup)
-
-        # Get rid of the task if all items were removed
-        if len(task.items) == 0:
-            print_(
-                f"{colorize('text_warning', album)}:" if album != "" else "",
-                "All items removed due to duplicates, removing task",
-            )
-            return []
-
-        return [task]
-
     def commands(self):
         def _dup(lib, opts, args):
             self.config.set_args(opts)
@@ -220,7 +176,9 @@ class DuplicatesPlugin(BeetsPlugin):
 
             if path:
                 fmt_tmpl = "$path"
-            elif not fmt_tmpl:
+
+            # Default format string for count mode.
+            if count and not fmt_tmpl:
                 if album:
                     fmt_tmpl = "$albumartist - $album"
                 else:
@@ -248,11 +206,7 @@ class DuplicatesPlugin(BeetsPlugin):
                             delete=delete,
                             remove=remove,
                             tag=tag,
-                            fmt=(
-                                fmt_tmpl
-                                if not count
-                                else f"{fmt_tmpl}: {obj_count}"
-                            ),
+                            fmt=f"{fmt_tmpl}: {obj_count}",
                         )
 
         self._command.func = _dup

@@ -36,11 +36,6 @@ duplicates or just the duplicates themselves via command-line switches
     -t TAG, --tag=TAG     tag matched items with 'k=v' attribute
     -r, --remove          remove items from library
 
-Generally, beets operates on Albums or Track singletons. As a way to bridge the
-gap, the ``duplicates`` plugin can be configured to duduplicate tracks on import
-by checking for already-imported items with the same ``mb_trackid``. See the
-``dedupe_mb_trackid_on_import`` option for details.
-
 Configuration
 -------------
 
@@ -59,14 +54,12 @@ file. The available options mirror the command-line options:
 - **count**: Print a count of duplicate tracks or albums in the format
   ``$albumartist - $album - $title: $count`` (for tracks) or ``$albumartist -
   $album: $count`` (for albums). Default: ``no``.
-- **dedupe_mb_trackid_on_import**: Deduplicate album tracks when an
-  already-imported track has the same mb_trackid.
 - **delete**: Remove matched items from the library and from the disk. Default:
   ``no``
 - **format**: A specific format with which to print every track or album. This
-  uses the same template syntax as beets' :doc:`path formats
-  </reference/pathformat>`. The usage is inspired by, and therefore similar to,
-  the :ref:`list <list-cmd>` command. Default: :ref:`format_item`
+  uses the same template syntax as beets' :doc:`path
+  formats</reference/pathformat>`. The usage is inspired by, and therefore
+  similar to, the :ref:`list <list-cmd>` command. Default: :ref:`format_item`
 - **full**: List every track or album that has duplicates, not just the
   duplicates themselves. Default: ``no``
 - **keys**: Define in which track or album fields duplicates are to be searched.

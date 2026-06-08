@@ -185,6 +185,13 @@ class ImportSession:
     def resolve_duplicate(self, task: ImportTask, found_duplicates):
         raise NotImplementedError
 
+    def resolve_track_duplicates(self, task: ImportTask, duplicates) -> str:
+        """Decide what to do with album tracks that already exist in the
+        library. Return ``"s"`` (skip the duplicate tracks), ``"k"`` (keep
+        all) or ``"r"`` (remove the old items).
+        """
+        raise NotImplementedError
+
     def choose_item(self, task: ImportTask):
         raise NotImplementedError
 
@@ -206,6 +213,10 @@ class ImportSession:
             if self.config["group_albums"] and not self.config["singletons"]:
                 # Split directory tasks into one task for each album.
                 stages += [stagefuncs.group_albums(self)]
+
+            # Optionally drop or replace album tracks that already exist in
+            # the library before the autotag lookup runs.
+            stages += [stagefuncs.resolve_track_duplicates(self)]
 
             # These stages either talk to the user to get a decision or,
             # in the case of a non-autotagged import, just choose to

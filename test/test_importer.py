@@ -1299,6 +1299,87 @@ class ImportDuplicateSingletonTest(ImportTestCase):
         return item
 
 
+class ImportTrackDuplicateResolutionTest(ImportTestCase):
+    """``import.duplicate_track_resolution``: per-track dedup on album import.
+
+    The imported album has two tracks (``Tag Track 1`` and ``Tag Track 2``);
+    tests seed the library with singletons matching one or both of them.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.prepare_album_for_import(2)
+
+    def add_item_fixture(self, **kwargs):
+        item = self.add_item_fixtures()[0]
+        item.update(kwargs)
+        item.store()
+        return item
+
+    def _import(self, action="skip", enabled=True):
+        self.setup_importer(
+            autotag=False,
+            duplicate_track_resolution=enabled,
+            duplicate_action=action,
+        )
+        self.importer.run()
+
+    def test_skip_drops_duplicate_track(self):
+        self.add_item_fixture(artist="Tag Artist", title="Tag Track 1")
+
+        self._import(action="skip")
+
+        # The duplicate "Tag Track 1" is dropped; "Tag Track 2" is imported.
+        assert len(self.lib.albums()) == 1
+        assert {i.title for i in self.lib.items()} == {
+            "Tag Track 1",
+            "Tag Track 2",
+        }
+        assert len(self.lib.items()) == 2
+
+    def test_skip_all_duplicates_skips_album(self):
+        self.add_item_fixture(artist="Tag Artist", title="Tag Track 1")
+        self.add_item_fixture(artist="Tag Artist", title="Tag Track 2")
+
+        self._import(action="skip")
+
+        # Every track is a duplicate, so the whole album is skipped.
+        assert len(self.lib.albums()) == 0
+        assert len(self.lib.items()) == 2
+
+    def test_remove_replaces_old_item(self):
+        old = self.add_item_fixture(artist="Tag Artist", title="Tag Track 1")
+        assert old.filepath.exists()
+
+        self._import(action="remove")
+
+        # The old matching item (and its file) is removed; both album tracks
+        # are imported.
+        assert not old.filepath.exists()
+        assert sorted(i.title for i in self.lib.items()) == [
+            "Tag Track 1",
+            "Tag Track 2",
+        ]
+        assert len(self.lib.albums()) == 1
+
+    def test_keep_imports_all(self):
+        self.add_item_fixture(artist="Tag Artist", title="Tag Track 1")
+
+        self._import(action="keep")
+
+        # Nothing is dropped or removed.
+        assert len(self.lib.items()) == 3
+        assert len(self.lib.albums()) == 1
+
+    def test_disabled_by_default(self):
+        self.add_item_fixture(artist="Tag Artist", title="Tag Track 1")
+
+        self._import(action="skip", enabled=False)
+
+        # With the option off, no track-level resolution happens.
+        assert len(self.lib.items()) == 3
+
+
 class TagLogTest(unittest.TestCase):
     def test_tag_log_line(self):
         sio = StringIO()

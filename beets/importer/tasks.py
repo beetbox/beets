@@ -179,6 +179,9 @@ class ImportTask(BaseImportTask):
         super().__init__(toppath, paths, items)
         self.should_remove_duplicates = False
         self.should_merge_duplicates = False
+        # Existing library items to remove because individual tracks of this
+        # album duplicate them (see ``duplicate_track_resolution``).
+        self.duplicate_track_items_to_remove: list[library.Item] = []
         self.is_album = True
 
     def set_choice(self, choice: Action | AlbumMatch | TrackMatch):
@@ -292,6 +295,25 @@ class ImportTask(BaseImportTask):
                 util.remove(artpath)
                 util.prune_dirs(
                     os.path.dirname(artpath),
+                    lib.directory,
+                    clutter=config["clutter"].as_str_seq(),
+                )
+
+    def remove_duplicate_track_items(self, lib: library.Library):
+        """Remove the old library items that individual tracks of this album
+        duplicate, as recorded in ``duplicate_track_items_to_remove``.
+        """
+        seen: set[int] = set()
+        for item in self.duplicate_track_items_to_remove:
+            if item.id in seen:
+                continue
+            seen.add(item.id)
+            log.debug("removing duplicate track {.filepath}", item)
+            item.remove()
+            if lib.directory in util.ancestry(item.path):
+                util.remove(item.path)
+                util.prune_dirs(
+                    os.path.dirname(item.path),
                     lib.directory,
                     clutter=config["clutter"].as_str_seq(),
                 )
