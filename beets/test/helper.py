@@ -25,6 +25,7 @@ information or mock the environment.
 
 from __future__ import annotations
 
+import importlib.util
 import os
 import os.path
 import shutil
@@ -34,7 +35,7 @@ import unittest
 from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import Enum
-from functools import cached_property
+from functools import cache, cached_property
 from pathlib import Path
 from tempfile import gettempdir, mkdtemp, mkstemp
 from typing import TYPE_CHECKING, Any, ClassVar
@@ -96,6 +97,11 @@ def has_program(cmd, args=["--version"]):
         return False
     else:
         return True
+
+
+@cache
+def is_importable(modname: str) -> bool:
+    return bool(importlib.util.find_spec(modname))
 
 
 def check_reflink_support(path: str) -> bool:
