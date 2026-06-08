@@ -394,12 +394,16 @@ class Album(LibModel):
             for item in self.items():
                 item.remove(delete, False)
 
-    def move_art(self, operation=MoveOperation.MOVE):
+    def move_art(self, operation=MoveOperation.MOVE, item_dir=None):
         """Move, copy, link or hardlink (depending on `operation`) any
         existing album art so that it remains in the same directory as
         the items.
 
         `operation` should be an instance of `util.MoveOperation`.
+
+        `item_dir` may be provided to specify the target directory for
+        the art. If not provided, the directory of the album's first
+        item is used.
         """
         old_art = self.artpath
         if not old_art:
@@ -413,7 +417,7 @@ class Album(LibModel):
             self.artpath = None
             return
 
-        new_art = self.art_destination(old_art)
+        new_art = self.art_destination(old_art, item_dir=item_dir)
         if new_art == old_art:
             return
 
@@ -466,11 +470,15 @@ class Album(LibModel):
 
         # Move items.
         items = list(self.items())
+        moved_item_dir = None
         for item in items:
+            old_path = item.path
             item.move(operation, basedir=basedir, with_album=False, store=store)
+            if moved_item_dir is None and item.path != old_path:
+                moved_item_dir = os.path.dirname(item.path)
 
         # Move art.
-        self.move_art(operation)
+        self.move_art(operation, item_dir=moved_item_dir)
         if store:
             self.store()
 
@@ -1126,6 +1134,22 @@ class Item(LibModel):
         have to be manually stored after invoking this method.
         """
         dest = self.destination(basedir=basedir)
+
+        # If the source file is missing, skip the move.
+        if not self.filepath.exists():
+            log.warning(
+                "{}: file not found at {.filepath}, skipping",
+                {
+                    MoveOperation.MOVE: "Moving",
+                    MoveOperation.COPY: "Copying",
+                    MoveOperation.LINK: "Linking",
+                    MoveOperation.HARDLINK: "Hardlinking",
+                    MoveOperation.REFLINK: "Reflinking",
+                    MoveOperation.REFLINK_AUTO: "Reflinking",
+                }[operation],
+                self,
+            )
+            return
 
         # Create necessary ancestry for the move.
         util.mkdirall(dest)
