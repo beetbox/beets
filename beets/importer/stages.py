@@ -5,7 +5,7 @@ import itertools
 import logging
 from typing import TYPE_CHECKING, TypeAlias
 
-from beets import config, plugins
+from beets import config, dbcore, plugins
 from beets.util import MoveOperation, displayable_path, pipeline
 
 from .actions import Action, DuplicateAction
@@ -125,11 +125,14 @@ def group_albums(session: ImportSession) -> StageCoro:
     When ``import.duplicate_track_resolution`` is enabled, each item of an
     album import is checked against the library using
     ``import.duplicate_keys.item``. Matched tracks are resolved according to
-    ``import.duplicate_action``:
+    ``import.duplicate_track_action`` (which falls back to
+    ``import.duplicate_action`` when unset):
 
     * ``skip`` drops the duplicate tracks and imports the rest of the album
       (if every track is a duplicate, the whole album is skipped);
     * ``remove`` removes the matching old library items;
+    * ``fold`` drops the duplicate tracks and adds the remaining new tracks to
+      the existing album they belong to;
     * ``keep`` (and ``merge``) import everything as-is;
     * ``ask`` prompts the session for one of the above.
 
@@ -161,23 +164,43 @@ def group_albums(session: ImportSession) -> StageCoro:
     if not duplicates:
         return
 
-    action = config["import"]["duplicate_action"].as_choice(
-        {"skip": "s", "keep": "k", "remove": "r", "merge": "m", "ask": "a"}
-    )
+    action = _track_duplicate_action()
     if action == "a":
         action = session.resolve_track_duplicates(task, duplicates)
 
-    if action == "s":
+    if action in ("s", "f"):
         for item in duplicates:
             log.info(
                 "skipping duplicate track: {}", displayable_path(item.path)
             )
             task.items.remove(item)
         if not task.items:
+            # Every track was a duplicate: skip the whole album.
             task.set_choice(Action.SKIP)
+            return
+        # Only some tracks were duplicates; we have already dropped them, so
+        # don't let the album-level check skip the rest.
+        task.duplicate_tracks_resolved = True
+        if action == "f":
+            # Fold the remaining new tracks into the existing album, if the
+            # matched duplicates all belong to a single one.
+            album_ids = {
+                match.album_id
+                for matches in duplicates.values()
+                for match in matches
+                if match.album_id is not None
+            }
+            if len(album_ids) == 1:
+                task.fold_into_album_id = album_ids.pop()
+            else:
+                log.warning(
+                    "cannot fold tracks into a single existing album; "
+                    "importing them as a new album"
+                )
     elif action == "r":
         for matches in duplicates.values():
             task.duplicate_track_items_to_remove.extend(matches)
+        task.duplicate_tracks_resolved = True
     # "k" (keep) and "m" (merge) leave the incoming tracks untouched; whole
     # album duplicates are still handled by the regular resolution stage.
 
@@ -393,13 +416,42 @@ def _apply_choice(session: ImportSession, task: ImportTask) -> None:
         task.set_fields(session.lib)
 
 
+def _track_duplicate_action() -> str:
+    """Return the single-letter action for per-track duplicate resolution.
+
+    Uses ``import.duplicate_track_action`` when set, otherwise falls back to
+    ``import.duplicate_action``.
+    """
+    choices = {
+        "skip": "s",
+        "keep": "k",
+        "remove": "r",
+        "merge": "m",
+        "fold": "f",
+        "ask": "a",
+    }
+    cfg = config["import"]
+    view = (
+        cfg["duplicate_track_action"]
+        if cfg["duplicate_track_action"].get()
+        else cfg["duplicate_action"]
+    )
+    return view.as_choice(choices)
+
+
 def _find_track_duplicates(
     lib: library.Library, item: library.Item, keys: list[str]
 ) -> list[library.Item]:
     """Return library items matching `item` on all `keys`, excluding the
     item itself (so re-imports do not match their own files).
+
+    Unlike :meth:`Item.duplicates_query`, this matches *every* library item,
+    including tracks that belong to an album -- not just singletons -- so a
+    track is caught regardless of how it was originally imported.
     """
-    query = item.duplicates_query(keys)
+    query = dbcore.AndQuery(
+        [item.field_query(k, item.get(k), dbcore.MatchQuery) for k in keys]
+    )
     return [other for other in lib.items(query) if other.path != item.path]
 
 
@@ -407,6 +459,12 @@ def _resolve_duplicates(session: ImportSession, task: ImportTask):
     """Check if a task conflicts with items or albums already imported
     and ask the session to resolve this.
     """
+    if task.duplicate_tracks_resolved:
+        # Per-track duplicate resolution already pruned (or recorded for
+        # removal) the tracks of this album that exist in the library; the
+        # rest are new and should be imported without a whole-album skip.
+        return
+
     if task.choice_flag in (Action.ASIS, Action.APPLY, Action.RETAG):
         found_duplicates = task.find_duplicates(session.lib)
         if found_duplicates:

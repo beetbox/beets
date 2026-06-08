@@ -730,6 +730,23 @@ class ImportSessionFixture(ImportSession):
 
     choose_item = choose_match  # type: ignore[assignment]
 
+    Resolution = Enum("Resolution", "REMOVE SKIP KEEPBOTH MERGE FOLD")
+
+    default_resolution = "REMOVE"
+
+    def resolve_duplicate(self, task, found_duplicates):
+        try:
+            res = self._resolutions.pop(0)
+        except IndexError:
+            res = self.default_resolution
+
+        if res == self.Resolution.SKIP:
+            task.set_choice(importer.Action.SKIP)
+        elif res == self.Resolution.REMOVE:
+            task.should_remove_duplicates = True
+        elif res == self.Resolution.MERGE:
+            task.should_merge_duplicates = True
+
     def resolve_track_duplicates(self, task, duplicates):
         try:
             res = self._resolutions.pop(0)
@@ -740,6 +757,7 @@ class ImportSessionFixture(ImportSession):
             self.Resolution.SKIP: "s",
             self.Resolution.KEEPBOTH: "k",
             self.Resolution.REMOVE: "r",
+            self.Resolution.FOLD: "f",
         }.get(res, "k")
 
 
