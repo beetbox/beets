@@ -72,6 +72,23 @@ REIMPORT_FRESH_FIELDS_ALBUM = [*REIMPORT_FRESH_FIELDS_ITEM, "media"]
 log = logging.getLogger("beets")
 
 
+def _remove_duplicate_item(
+    lib: library.Library, item: library.Item, with_album: bool = True
+):
+    """Remove ``item`` from ``lib`` and delete its file when it lives inside
+    the library directory, pruning any newly-empty parent directories.
+    """
+    item.remove(with_album=with_album)
+    if lib.directory in util.ancestry(item.path):
+        log.debug("deleting duplicate {.filepath}", item)
+        util.remove(item.path)
+        util.prune_dirs(
+            os.path.dirname(item.path),
+            lib.directory,
+            clutter=config["clutter"].as_str_seq(),
+        )
+
+
 class ImportAbortError(Exception):
     """Raised when the user aborts the tagging operation."""
 
@@ -177,6 +194,9 @@ class ImportTask(BaseImportTask):
         super().__init__(toppath, paths, items)
         self.should_remove_duplicates = False
         self.should_merge_duplicates = False
+        # Existing library items to remove because individual tracks of this
+        # album duplicate them (see ``duplicate_track_resolution``).
+        self.duplicate_track_items_to_remove: list[library.Item] = []
         self.is_album = True
 
     def set_choice(self, choice: Action | AlbumMatch | TrackMatch):
@@ -272,15 +292,7 @@ class ImportTask(BaseImportTask):
             artpath = album.artpath
 
             for item in album.items():
-                item.remove(with_album=False)
-                if lib.directory in util.ancestry(item.path):
-                    log.debug("deleting duplicate {.filepath}", item)
-                    util.remove(item.path)
-                    util.prune_dirs(
-                        os.path.dirname(item.path),
-                        lib.directory,
-                        clutter=config["clutter"].as_str_seq(),
-                    )
+                _remove_duplicate_item(lib, item, with_album=False)
 
             album.remove(with_items=False)
 
@@ -292,6 +304,17 @@ class ImportTask(BaseImportTask):
                     lib.directory,
                     clutter=config["clutter"].as_str_seq(),
                 )
+
+    def remove_duplicate_track_items(self, lib: library.Library):
+        """Remove the old library items that individual tracks of this album
+        duplicate, as recorded in ``duplicate_track_items_to_remove``.
+        """
+        seen: set[int] = set()
+        for item in self.duplicate_track_items_to_remove:
+            if item.id in seen:
+                continue
+            seen.add(item.id)
+            _remove_duplicate_item(lib, item)
 
     def set_fields(self, lib: library.Library):
         """Sets the fields given at CLI or configuration to the specified
@@ -731,15 +754,7 @@ class SingletonImportTask(ImportTask):
         duplicate_items = self.find_duplicates(lib)
         log.debug("removing {} old duplicated items", len(duplicate_items))
         for item in duplicate_items:
-            item.remove()
-            if lib.directory in util.ancestry(item.path):
-                log.debug("deleting duplicate {.filepath}", item)
-                util.remove(item.path)
-                util.prune_dirs(
-                    os.path.dirname(item.path),
-                    lib.directory,
-                    clutter=config["clutter"].as_str_seq(),
-                )
+            _remove_duplicate_item(lib, item)
 
     def add(self, lib):
         with lib.transaction():
