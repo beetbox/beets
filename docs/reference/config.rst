@@ -853,7 +853,7 @@ Default: ``no``.
 .. _duplicate_track_resolution:
 
 duplicate_track_resolution
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When enabled, album imports also check each *individual track* against the
 library, using the same fields as :ref:`duplicate_keys` ``item`` (by default
@@ -869,9 +869,9 @@ part of another album.
 
 .. note::
 
-    The check runs *before* the autotagger lookup, so it matches on the
-    incoming files' existing tags rather than the metadata beets would apply.
-    When importing with autotagging on, match on a stable identifier such as
+    The check runs *before* the autotagger lookup, so it matches on the incoming
+    files' existing tags rather than the metadata beets would apply. When
+    importing with autotagging on, match on a stable identifier such as
     ``mb_trackid`` (via :ref:`duplicate_keys` ``item``); ``artist`` and
     ``title`` may not yet agree with what is in your library.
 
@@ -880,7 +880,7 @@ Default: ``no``.
 .. _duplicate_track_action:
 
 duplicate_track_action
-~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 How to resolve individual album tracks that already exist in the library when
 :ref:`duplicate_track_resolution` is enabled. The available actions are:
@@ -897,7 +897,9 @@ How to resolve individual album tracks that already exist in the library when
 When left empty, this falls back to :ref:`duplicate_action`.
 
 A typical configuration for completing partially-imported albums while
-autotagging looks like this::
+autotagging looks like this:
+
+::
 
     import:
         duplicate_track_resolution: yes
