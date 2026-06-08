@@ -1136,7 +1136,7 @@ class Item(LibModel):
         dest = self.destination(basedir=basedir)
 
         # If the source file is missing, skip the move.
-        if not os.path.exists(syspath(self.path)):
+        if not self.filepath.exists():
             log.warning(
                 "{}: file not found at {.filepath}, skipping",
                 {
