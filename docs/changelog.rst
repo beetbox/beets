@@ -26,6 +26,7 @@ New features
 - :doc:`plugins/musicbrainz`: Introduce
   :conf:`plugins.musicbrainz:aliases_as_credits` to make
   aliases-as-artist-credit optional.
+- :doc:`plugins/badfiles`: Added settings for auto error and warning actions.
 
 Bug fixes
 ~~~~~~~~~

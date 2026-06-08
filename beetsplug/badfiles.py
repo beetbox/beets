@@ -19,6 +19,7 @@ import os
 import shlex
 import sys
 from subprocess import STDOUT, CalledProcessError, check_output, list2cmdline
+from typing import Literal
 
 import confuse
 
@@ -50,6 +51,10 @@ class BadFiles(BeetsPlugin):
     def __init__(self):
         super().__init__()
         self.verbose = False
+
+        self.config.add(
+            {"import_action_on_warning": "ask", "import_action_on_error": "ask"}
+        )
 
         self.register_listener("import_task_start", self.on_import_task_start)
         self.register_listener(
@@ -168,17 +173,65 @@ class BadFiles(BeetsPlugin):
         if checks_failed:
             task._badfiles_checks_failed = checks_failed
 
-    def on_import_task_before_choice(self, task, session):
-        if config["import"]["quiet"]:
-            return None
+    def handle_import_action(
+        self,
+        action: Literal["abort", "skip", "continue"],
+        failure_type: Literal["error", "warning"],
+    ) -> importer.Action | None:
+        action_name_by_action = {
+            "abort": "Aborting",
+            "skip": "Skipping",
+            "continue": "Continuing",
+        }
+        ui.print_(
+            f"{ui.colorize('text_warning', action_name_by_action[action])}"
+            f" due to import_action_on_{failure_type} configuration"
+        )
+        if action == "abort":
+            raise importer.ImportAbortError()
+        if action == "skip":
+            return importer.Action.SKIP
+        return None
 
+    def on_import_task_before_choice(self, task, session):
         if hasattr(task, "_badfiles_checks_failed"):
+            actions = confuse.Choice(["ask", "abort", "skip", "continue"])
+            warning_action = self.config["import_action_on_warning"].get(
+                actions
+            )
+            error_action = self.config["import_action_on_error"].get(actions)
+
             ui.print_(
                 f"{colorize('text_warning', 'BAD')} one or more files failed checks:"
             )
+
+            found_warning = False
+            found_error = False
             for error in task._badfiles_checks_failed:
                 for error_line in error:
+                    if (
+                        "checker found 0 errors or warnings"
+                        in error_line.lower()
+                    ):
+                        continue
+
+                    if "warning" in error_line.lower():
+                        found_warning = True
+                    if "error" in error_line.lower():
+                        found_error = True
+
                     ui.print_(error_line)
+
+            # Check for and handle automatic actions.
+            # Errors always take precedence over warnings.
+            if found_error and error_action != "ask":
+                return self.handle_import_action(error_action, "error")
+            elif found_warning and warning_action != "ask":
+                return self.handle_import_action(warning_action, "warning")
+
+            # Defer the quiet check to after automatic import action options are handled
+            if config["import"]["quiet"]:
+                return None
 
             ui.print_()
             ui.print_("What would you like to do?")
