@@ -113,6 +113,14 @@ def check_reflink_support(path: str) -> bool:
     return reflink.supported_at(path)
 
 
+NEEDS_REFLINK = pytest.mark.skipif(
+    not check_reflink_support(gettempdir()), reason="need reflink"
+)
+NEEDS_FFPROBE = pytest.mark.skipif(
+    not has_program("ffprobe"), reason="ffprobe (ffmpeg) is not available"
+)
+
+
 class ConfigMixin:
     @cached_property
     def config(self) -> beets.IncludeLazyConfig:
@@ -126,11 +134,6 @@ class ConfigMixin:
         config["ui"]["color"] = False
         config["threaded"] = False
         return config
-
-
-NEEDS_REFLINK = pytest.mark.skipif(
-    not check_reflink_support(gettempdir()), reason="need reflink"
-)
 
 
 class RunMixin:

@@ -40,6 +40,7 @@ from beets.autotag import AlbumInfo, AlbumMatch, Distance, TrackInfo
 from beets.importer.tasks import albums_in_dir
 from beets.test import _common
 from beets.test.helper import (
+    NEEDS_FFPROBE,
     NEEDS_REFLINK,
     AsIsImporterMixin,
     AutotagImportTestCase,
@@ -518,6 +519,7 @@ class ImportTest(PathsMixin, AutotagImportTestCase):
 
         assert not self.lib.items()
 
+    @NEEDS_FFPROBE
     def test_skip_non_album_dirs(self):
         assert (self.import_path / "album").exists()
         self.touch(b"cruft", dir_=self.import_dir)
@@ -533,6 +535,7 @@ class ImportTest(PathsMixin, AutotagImportTestCase):
         self.importer.run()
         assert len(self.lib.items()) == 1
 
+    @NEEDS_FFPROBE
     def test_empty_directory_warning(self):
         import_dir = os.path.join(self.temp_dir, b"empty")
         self.touch(b"non-audio", dir_=import_dir)
@@ -543,6 +546,7 @@ class ImportTest(PathsMixin, AutotagImportTestCase):
         import_dir = displayable_path(import_dir)
         assert f"No files imported from {import_dir}" in logs
 
+    @NEEDS_FFPROBE
     def test_empty_directory_singleton_warning(self):
         import_dir = os.path.join(self.temp_dir, b"empty")
         self.touch(b"non-audio", dir_=import_dir)
