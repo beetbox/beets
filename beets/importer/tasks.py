@@ -179,7 +179,8 @@ class ImportTask(BaseImportTask):
         # album-level duplicate check does not then skip the remaining tracks.
         self.duplicate_tracks_resolved = False
         # Id of an existing album to fold the imported items into (instead of
-        # creating a new album), set by the ``fold`` track duplicate action.
+        # creating a new album), set when skipping per-track duplicates leaves
+        # new tracks belonging to an existing album.
         self.fold_into_album_id: int | None = None
         self.is_album = True
 

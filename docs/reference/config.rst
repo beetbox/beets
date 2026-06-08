@@ -885,19 +885,16 @@ duplicate_track_action
 How to resolve individual album tracks that already exist in the library when
 :ref:`duplicate_track_resolution` is enabled. The available actions are:
 
-- ``skip`` drops the duplicate tracks and imports the rest of the album. If
-  every track is already present, the whole album is skipped.
-- ``remove`` removes the matching old items from the library before importing.
-- ``fold`` drops the duplicate tracks and adds the remaining *new* tracks to the
+- ``skip`` drops the duplicate tracks and adds the remaining *new* tracks to the
   existing album they belong to, instead of importing them as a separate album.
-  Use this to complete a partially-imported album. (If the matching tracks do
-  not all belong to a single album, the new tracks are imported as their own
-  album.)
+  Use this to complete a partially-imported album. If every track is already
+  present, the whole album is skipped. (If the matching tracks do not all belong
+  to a single album, the new tracks are imported as their own album.)
+- ``remove`` removes the matching old items from the library before importing.
 - ``keep`` (and ``merge``) import the album unchanged.
 - ``ask`` prompts you to choose one of the above.
 
-When left empty, this falls back to :ref:`duplicate_action` (so ``fold`` is only
-available by setting this option explicitly).
+When left empty, this falls back to :ref:`duplicate_action`.
 
 A typical configuration for completing partially-imported albums while
 autotagging looks like this::
@@ -905,7 +902,7 @@ autotagging looks like this::
     import:
         duplicate_track_resolution: yes
         duplicate_action: ask          # whole-album duplicates
-        duplicate_track_action: fold   # per-track duplicates: fold into the existing album
+        duplicate_track_action: skip   # per-track duplicates: fold new tracks into the existing album
         duplicate_keys:
             item: mb_trackid           # match on a stable id (recommended when autotagging)
 
