@@ -119,7 +119,8 @@ NEEDS_REFLINK = pytest.mark.skipif(
     not check_reflink_support(gettempdir()), reason="need reflink"
 )
 NEEDS_FFPROBE = pytest.mark.skipif(
-    not has_program("ffprobe"), reason="ffprobe (ffmpeg) is not available"
+    not has_program("ffprobe") and not RUNNING_IN_CI,
+    reason="ffprobe (ffmpeg) is not available",
 )
 
 

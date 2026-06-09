@@ -32,6 +32,7 @@ from beets.autotag import AlbumInfo, AlbumMatch, Distance
 from beets.library import Album
 from beets.test import _common
 from beets.test.helper import (
+    RUNNING_IN_CI,
     FetchImageHelper,
     TestHelper,
     has_program,
@@ -48,7 +49,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger("beets.test_art")
 
 REQUIRES_ARTRESIZER = pytest.mark.skipif(
-    not (has_program("magick") or is_importable("PIL")),
+    not (has_program("magick") or is_importable("PIL")) and not RUNNING_IN_CI,
     reason="requires ImageMagick or Pillow",
 )
 
