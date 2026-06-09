@@ -26,6 +26,7 @@ New features
 - :doc:`plugins/musicbrainz`: Introduce
   :conf:`plugins.musicbrainz:aliases_as_credits` to make
   aliases-as-artist-credit optional.
+- :doc:`plugins/badfiles`: Added settings for auto error and warning actions.
 
 Bug fixes
 ~~~~~~~~~
@@ -69,10 +70,22 @@ Bug fixes
 - :doc:`plugins/fetchart`: Catch ``OSError`` in ``_set_art`` so that permission
   errors (e.g. a file locked by another process) are logged as warnings instead
   of crashing beets. :bug:`6193`
+- :doc:`plugins/lyrics`: Improve Musica.com lyric scraping so fetched lyrics no
+  longer omit the opening verse or include non-lyric page content.
+- :doc:`plugins/convert`: Tidy the ``--playlist`` help text so it no longer has
+  awkward indentation in CLI output.
+- :doc:`plugins/spotify`: Improved Spotify API parsing to handle missing label
+  data :bug:`6679`
+- :ref:`move-cmd`: ``beet move`` no longer crashes when an item referenced in
+  the database has been deleted from disk. Missing items are now skipped with a
+  warning and the command continues. :bug:`6720`
 
-..
-    For plugin developers
-    ~~~~~~~~~~~~~~~~~~~~~
+For plugin developers
+~~~~~~~~~~~~~~~~~~~~~
+
+- Plugin authors can import all autotagger helpers directly from
+  ``beets.autotag``, including match classes, distance helpers, and
+  ``assign_items``, without relying on lower-level autotag modules.
 
 Other changes
 ~~~~~~~~~~~~~
@@ -80,6 +93,8 @@ Other changes
 - :doc:`plugins/spotify`: ``spotifysync`` now batches its SQLite commit for a
   sync run, follows the standard beets write-before-store pattern, and logs
   audio-features API unavailability only once per run.
+- :doc:`plugins/titlecase`: Correct the path format example and document the
+  ``%titlecase{text}`` template function. :bug:`6697`
 
 2.11.0 (May 06, 2026)
 ---------------------

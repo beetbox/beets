@@ -13,7 +13,7 @@ from beets.util import as_string, cached_classproperty, get_most_common_tags
 from beets.util.color import colorize
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator, Sequence
+    from collections.abc import Iterator, KeysView, Sequence
 
     from beets.library import Item
     from beets.util.color import ColorName
@@ -243,8 +243,8 @@ class Distance:
     def __len__(self) -> int:
         return len(self.items())
 
-    def keys(self) -> list[str]:
-        return [key for key, _ in self.items()]
+    def keys(self) -> KeysView[str]:
+        return dict.fromkeys(key for key, _ in self.items()).keys()
 
     def update(self, dist: Distance):
         """Adds all the distance penalties from `dist`."""

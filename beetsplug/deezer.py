@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING, ClassVar
 import requests
 
 from beets import config, ui
-from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.autotag import AlbumInfo, TrackInfo
 from beets.dbcore import types
 from beets.exceptions import UserError
 from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin

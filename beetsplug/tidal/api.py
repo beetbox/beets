@@ -214,9 +214,9 @@ class TidalAPI(RequestHandler):
             "links": {"next": url},
         }
 
-        while next := doc.get("links", {}).get("next"):
+        while next_ := doc.get("links", {}).get("next"):
             page_doc = self.get_json(
-                url=next, params={**params, "include": include}, **kwargs
+                url=next_, params={**params, "include": include}, **kwargs
             )
             doc = self.merge_multiresource_pagination(doc, page_doc)
 

@@ -89,9 +89,9 @@ class ThumbnailsPlugin(BeetsPlugin):
             )
             return False
 
-        for dir in (NORMAL_DIR, LARGE_DIR):
-            if not os.path.exists(syspath(dir)):
-                os.makedirs(syspath(dir))
+        for dir_ in (NORMAL_DIR, LARGE_DIR):
+            if not os.path.exists(syspath(dir_)):
+                os.makedirs(syspath(dir_))
 
         if not ArtResizer.shared.can_write_metadata:
             raise RuntimeError(
@@ -170,8 +170,8 @@ class ThumbnailsPlugin(BeetsPlugin):
         See https://standards.freedesktop.org/thumbnail-spec/latest/x227.html
         """
         uri = self.get_uri(path)
-        hash = md5(uri.encode("utf-8")).hexdigest()
-        return bytestring_path(f"{hash}.png")
+        hash_ = md5(uri.encode("utf-8")).hexdigest()
+        return bytestring_path(f"{hash_}.png")
 
     def add_tags(self, album, image_path):
         """Write required metadata to the thumbnail

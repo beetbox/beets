@@ -139,9 +139,8 @@ def _bool_fallback(a, b):
     if a is None:
         assert isinstance(b, bool)
         return b
-    else:
-        assert isinstance(a, bool)
-        return a
+    assert isinstance(a, bool)
+    return a
 
 
 def should_write(write_opt=None):
@@ -354,8 +353,7 @@ def input_options(
                 low, high = numrange
                 if low <= resp <= high:
                     return resp
-                else:
-                    resp = None
+                resp = None
 
         # Try a normal letter input.
         if resp:
@@ -397,7 +395,7 @@ def input_select_objects(prompt, objs, rep, prompt_all=None):
     if choice == "y":  # Yes.
         return objs
 
-    elif choice == "s":  # Select.
+    if choice == "s":  # Select.
         out = []
         for obj in objs:
             rep(obj)
@@ -413,8 +411,8 @@ def input_select_objects(prompt, objs, rep, prompt_all=None):
                 return out
         return out
 
-    else:  # No.
-        return []
+    # No.
+    return []
 
 
 @cache
@@ -602,7 +600,7 @@ class Subcommand:
 
     func: Callable[[library.Library, optparse.Values, list[str]], Any]
 
-    def __init__(self, name, parser=None, help="", aliases=(), hide=False):
+    def __init__(self, name, parser=None, help="", aliases=(), hide=False):  # noqa: A002
         """Creates a new subcommand. name is the primary way to invoke
         the subcommand; aliases are alternate names. parser is an
         OptionParser responsible for parsing the subcommand's options.
@@ -947,6 +945,7 @@ def _raw_main(args: list[str] | None) -> None:
 
     plugins.send("cli_exit", lib=lib)
     lib._close()
+    return None
 
 
 def main(args: list[str] | None = None) -> None:

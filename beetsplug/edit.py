@@ -117,8 +117,7 @@ def flatten(obj, fields):
     # Possibly filter field names.
     if fields:
         return {k: v for k, v in d.items() if k in fields}
-    else:
-        return d
+    return d
 
 
 def apply_(obj, data):
@@ -259,8 +258,7 @@ class EditPlugin(plugins.BeetsPlugin):
                     ui.print_(f"Could not read data: {e}")
                     if ui.input_yn("Edit again to fix? (Y/n)", True):
                         continue
-                    else:
-                        return False
+                    return False
 
                 # Show the changes.
                 # If the objects are not on the DB yet, we need a copy of their
@@ -281,10 +279,10 @@ class EditPlugin(plugins.BeetsPlugin):
                 )
                 if choice == "a":  # Apply.
                     return True
-                elif choice == "c":  # Cancel.
+                if choice == "c":  # Cancel.
                     self.apply_data(objs, new_data, old_data)
                     return False
-                elif choice == "e":  # Keep editing.
+                if choice == "e":  # Keep editing.
                     self.apply_data(objs, new_data, old_data)
                     continue
 
@@ -373,8 +371,7 @@ class EditPlugin(plugins.BeetsPlugin):
             # Return Action.RETAG, which makes the importer write the tags
             # to the files if needed without re-applying metadata.
             return Action.RETAG
-        else:
-            return None
+        return None
 
     def importer_edit_candidate(self, session, task):
         """Callback for invoking the functionality during an interactive

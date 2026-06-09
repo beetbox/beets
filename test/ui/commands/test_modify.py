@@ -94,7 +94,7 @@ class ModifyTest(IOMixin, BeetsTestCase):
         album = "album"
         original_artist = "composer"
         new_artist = "coverArtist"
-        for i in range(0, 10):
+        for i in range(10):
             self.add_item_fixture(
                 title=f"{title}{i}", artist=original_artist, album=album
             )
@@ -109,7 +109,7 @@ class ModifyTest(IOMixin, BeetsTestCase):
         assert len(list(new_items)) == 7
 
     def test_modify_formatted(self):
-        for i in range(0, 3):
+        for i in range(3):
             self.add_item_fixture(
                 title=f"title{i}", artist="artist", album="album"
             )

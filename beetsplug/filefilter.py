@@ -73,6 +73,5 @@ class FileFilterPlugin(BeetsPlugin):
         if "singletons" not in import_config or not import_config["singletons"]:
             # Album
             return self.path_album_regex.match(full_path) is not None
-        else:
-            # Singleton
-            return self.path_singleton_regex.match(full_path) is not None
+        # Singleton
+        return self.path_singleton_regex.match(full_path) is not None

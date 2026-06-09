@@ -53,8 +53,7 @@ class BufferedSocket:
         if self.sep in self.buf:
             res, self.buf = self.buf.split(self.sep, 1)
             return res + self.sep
-        else:
-            return b""
+        return b""
 
     def send(self, data):
         self.sock.send(data)

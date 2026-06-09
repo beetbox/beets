@@ -36,7 +36,8 @@ QueryType = Literal["album", "track"]
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator, Sequence
 
-    from .autotag.hooks import AlbumInfo, Item, TrackInfo
+    from .autotag import AlbumInfo, TrackInfo
+    from .library.models import Item
 
 # Global logger.
 log = logging.getLogger("beets")
@@ -255,7 +256,7 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
         single calls to album_for_id.
         """
 
-        return (self.album_for_id(id) for id in ids)
+        return (self.album_for_id(id_) for id_ in ids)
 
     def tracks_for_ids(self, ids: Iterable[str]) -> Iterable[TrackInfo | None]:
         """Batch lookup of track metadata for a list of track IDs.
@@ -266,7 +267,7 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
         single calls to track_for_id.
         """
 
-        return (self.track_for_id(id) for id in ids)
+        return (self.track_for_id(id_) for id_ in ids)
 
     def _extract_id(self, url: str) -> str | None:
         """Extract an ID from a URL for this metadata source plugin.

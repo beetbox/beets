@@ -216,14 +216,13 @@ class BucketPlugin(plugins.BeetsPlugin):
             if ys["from"] <= int(year) <= ys["to"]:
                 if "str" in ys:
                     return ys["str"]
-                else:
-                    return format_span(
-                        self.ys_repr_mode["fmt"],
-                        ys["from"],
-                        ys["to"],
-                        self.ys_repr_mode["fromnchars"],
-                        self.ys_repr_mode["tonchars"],
-                    )
+                return format_span(
+                    self.ys_repr_mode["fmt"],
+                    ys["from"],
+                    ys["to"],
+                    self.ys_repr_mode["fromnchars"],
+                    self.ys_repr_mode["tonchars"],
+                )
         return year
 
     def find_bucket_alpha(self, s):

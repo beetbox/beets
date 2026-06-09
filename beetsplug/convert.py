@@ -196,14 +196,14 @@ class ConvertPlugin(BeetsPlugin):
             "--playlist",
             action="store",
             default=self.config["playlist"].get(),
-            help="""create an m3u8 playlist file containing
-                              the converted files. The playlist file will be
-                              saved below the destination directory, thus
-                              PLAYLIST could be a file name or a relative path.
-                              To ensure a working playlist when transferred to
-                              a different computer, or opened from an external
-                              drive, relative paths pointing to media files
-                              will be used.""",
+            help=(
+                "create an m3u8 playlist file containing the converted files."
+                " The playlist file will be saved below the destination"
+                " directory, thus PLAYLIST could be a file name or a relative"
+                " path. To ensure a working playlist when transferred to a"
+                " different computer, or opened from an external drive,"
+                " relative paths pointing to media files will be used."
+            ),
         )
         cmd.parser.add_option(
             "-F",
@@ -372,8 +372,7 @@ class ConvertPlugin(BeetsPlugin):
         if no_convert_query:
             query, _ = parse_query_string(no_convert_query, Item)
             return query.match(item)
-        else:
-            return False
+        return False
 
     def should_transcode(self, item: Item) -> bool:
         """Determine whether the item should be transcoded as part of

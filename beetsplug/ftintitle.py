@@ -84,9 +84,8 @@ def split_on_feat(
 
     if len(parts) == 1:
         return parts[0], None
-    else:
-        assert len(parts) == 2  # help mypy out
-        return parts
+    assert len(parts) == 2  # help mypy out
+    return parts
 
 
 def contains_feat(title: str, custom_words: list[str] | None = None) -> bool:
@@ -123,12 +122,9 @@ def find_feat_part(
 
         # Otherwise, if there's nothing on the right-hand side,
         # look for a featuring artist on the left-hand side.
-        else:
-            lhs, _ = split_on_feat(
-                albumartist_split[0], custom_words=custom_words
-            )
-            if lhs:
-                return lhs
+        lhs, _ = split_on_feat(albumartist_split[0], custom_words=custom_words)
+        if lhs:
+            return lhs
 
     # Fall back to conservative handling of the track artist without relying
     # on albumartist, which covers compilations using a 'Various Artists'

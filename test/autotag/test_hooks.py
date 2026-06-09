@@ -20,11 +20,11 @@ from functools import cached_property
 
 import pytest
 
-from beets.autotag.distance import Distance
-from beets.autotag.hooks import (
+from beets.autotag import (
     AlbumInfo,
     AlbumMatch,
     AttrDict,
+    Distance,
     TrackInfo,
     TrackMatch,
     correct_list_fields,

@@ -59,7 +59,7 @@ def _invalidate_queue(q, val=None, sync=True):
     required (because it's not reentrant!).
     """
 
-    def _qsize(len=len):
+    def _qsize(len=len):  # noqa: A002
         return 1
 
     def _put(item):
@@ -224,10 +224,9 @@ def _allmsgs(obj):
     """
     if isinstance(obj, MultiMessage):
         return obj.messages
-    elif obj == BUBBLE:
+    if obj == BUBBLE:
         return []
-    else:
-        return [obj]
+    return [obj]
 
 
 class PipelineThread(Thread):

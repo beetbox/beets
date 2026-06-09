@@ -105,12 +105,11 @@ class HumanReadableError(Exception):
         """Get the reason as a string."""
         if isinstance(self.reason, str):
             return self.reason
-        elif isinstance(self.reason, bytes):
+        if isinstance(self.reason, bytes):
             return self.reason.decode("utf-8", "ignore")
-        elif hasattr(self.reason, "strerror"):  # i.e., EnvironmentError
+        if hasattr(self.reason, "strerror"):  # i.e., EnvironmentError
             return self.reason.strerror
-        else:
-            return f'"{self.reason}"'
+        return f'"{self.reason}"'
 
     def get_message(self):
         """Create the human-readable description of the error, sans
@@ -412,9 +411,9 @@ def displayable_path(
 
     if isinstance(path, (list, tuple)):
         return separator.join(displayable_path(p) for p in path)
-    elif isinstance(path, str):
+    if isinstance(path, str):
         return path
-    elif not isinstance(path, bytes):
+    if not isinstance(path, bytes):
         # A non-string object: just get its unicode representation.
         return str(path)
 
@@ -602,10 +601,7 @@ def hardlink(path: bytes, dest: bytes, replace: bool = False):
                 (path, dest),
                 traceback.format_exc(),
             )
-        else:
-            raise FilesystemError(
-                exc, "link", (path, dest), traceback.format_exc()
-            )
+        raise FilesystemError(exc, "link", (path, dest), traceback.format_exc())
 
 
 def reflink(
@@ -620,7 +616,7 @@ def reflink(
     Otherwise, errors are re-raised as FilesystemError with an explanation.
     """
     if samefile(path, dest):
-        return
+        return None
 
     if os.path.exists(syspath(dest)) and not replace:
         raise FilesystemError("target exists", "rename", (path, dest))
@@ -797,12 +793,11 @@ def as_string(value: Any) -> str:
     """
     if value is None:
         return ""
-    elif isinstance(value, memoryview):
+    if isinstance(value, memoryview):
         return bytes(value).decode("utf-8", "ignore")
-    elif isinstance(value, bytes):
+    if isinstance(value, bytes):
         return value.decode("utf-8", "ignore")
-    else:
-        return str(value)
+    return str(value)
 
 
 def plurality(objs: Iterable[T]) -> tuple[T, int]:
@@ -919,8 +914,7 @@ def get_max_filename_length() -> int:
         except OSError:
             return limit
         return min(res[9], limit)
-    else:
-        return limit
+    return limit
 
 
 def open_anything() -> str:

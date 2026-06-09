@@ -4,8 +4,14 @@ from collections import Counter
 from itertools import chain
 
 from beets import config, importer, logging, plugins, ui
-from beets.autotag.hooks import AlbumMatch, TrackMatch
-from beets.autotag.match import Proposal, Recommendation, tag_album, tag_item
+from beets.autotag import (
+    AlbumMatch,
+    Proposal,
+    Recommendation,
+    TrackMatch,
+    tag_album,
+    tag_item,
+)
 from beets.util import PromptChoice, displayable_path
 from beets.util.color import colorize
 from beets.util.units import human_bytes, human_seconds_short
@@ -42,7 +48,7 @@ class TerminalImportSession(importer.ImportSession):
 
         if len(actions) == 1:
             return actions[0]
-        elif len(actions) > 1:
+        if len(actions) > 1:
             raise plugins.PluginConflictError(
                 "Only one handler for `import_task_before_choice` may return "
                 "an action."
@@ -54,7 +60,7 @@ class TerminalImportSession(importer.ImportSession):
             match = task.candidates[0]
             show_change(task.cur_artist, task.cur_album, match)
             return match
-        elif action is not None:
+        if action is not None:
             return action
 
         # Loop until we have a choice.
@@ -81,11 +87,11 @@ class TerminalImportSession(importer.ImportSession):
 
             # Plugin-provided choices. We invoke the associated callback
             # function.
-            elif choice in choices:
+            if choice in choices:
                 post_choice = choice.callback(self, task)
                 if isinstance(post_choice, importer.Action):
                     return post_choice
-                elif isinstance(post_choice, Proposal):
+                if isinstance(post_choice, Proposal):
                     # Use the new candidates and continue around the loop.
                     task.candidates = post_choice.candidates
                     task.rec = post_choice.recommendation
@@ -111,7 +117,7 @@ class TerminalImportSession(importer.ImportSession):
             match = candidates[0]
             show_item_change(task.item, match)
             return match
-        elif action is not None:
+        if action is not None:
             return action
 
         while True:
@@ -124,11 +130,11 @@ class TerminalImportSession(importer.ImportSession):
             if choice in (importer.Action.SKIP, importer.Action.ASIS):
                 return choice
 
-            elif choice in choices:
+            if choice in choices:
                 post_choice = choice.callback(self, task)
                 if isinstance(post_choice, importer.Action):
                     return post_choice
-                elif isinstance(post_choice, Proposal):
+                if isinstance(post_choice, Proposal):
                     candidates = post_choice.candidates
                     rec = post_choice.recommendation
 
@@ -334,10 +340,9 @@ def _summary_judgment(rec: Recommendation) -> importer.Action | None:
     if config["import"]["quiet"]:
         if rec == Recommendation.strong:
             return importer.Action.APPLY
-        else:
-            action = config["import"]["quiet_fallback"].as_choice(
-                {"skip": importer.Action.SKIP, "asis": importer.Action.ASIS}
-            )
+        action = config["import"]["quiet_fallback"].as_choice(
+            {"skip": importer.Action.SKIP, "asis": importer.Action.ASIS}
+        )
     elif config["import"]["timid"]:
         return None
     elif rec == Recommendation.none:
@@ -406,8 +411,7 @@ def choose_candidate(
         sel = ui.input_options(choice_opts)
         if sel in choice_actions:
             return choice_actions[sel]
-        else:
-            assert False
+        assert False
 
     # Is the change good enough?
     bypass_candidates = False
@@ -495,7 +499,7 @@ def choose_candidate(
         )
         if sel == "a":
             return match
-        elif sel in choice_actions:
+        if sel in choice_actions:
             return choice_actions[sel]
 
 
@@ -511,8 +515,7 @@ def manual_search(session, task):
     if task.is_album:
         _, _, prop = tag_album(task.items, artist, name)
         return prop
-    else:
-        return tag_item(task.item, artist, name)
+    return tag_item(task.item, artist, name)
 
 
 def manual_id(session, task):
@@ -526,8 +529,7 @@ def manual_id(session, task):
     if task.is_album:
         _, _, prop = tag_album(task.items, search_ids=search_id.split())
         return prop
-    else:
-        return tag_item(task.item, search_ids=search_id.split())
+    return tag_item(task.item, search_ids=search_id.split())
 
 
 def abort_action(session, task):

@@ -207,5 +207,4 @@ def getLogger(name: None = ...) -> RootLogger: ...
 def getLogger(name=None) -> BeetsLogger | RootLogger:  # noqa: N802
     if name:
         return my_manager.getLogger(name)  # type: ignore[return-value]
-    else:
-        return Logger.root
+    return Logger.root

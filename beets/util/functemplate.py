@@ -140,9 +140,8 @@ class Symbol:
         if self.ident in env.values:
             # Substitute for a value.
             return env.values[self.ident]
-        else:
-            # Keep original text.
-            return self.original
+        # Keep original text.
+        return self.original
 
     def translate(self):
         """Compile the variable lookup."""
@@ -175,8 +174,7 @@ class Call:
                 # the exception will help debug.
                 return f"<{exc}>"
             return str(out)
-        else:
-            return self.original
+        return self.original
 
     def translate(self):
         """Compile the function call."""
