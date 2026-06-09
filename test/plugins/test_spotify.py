@@ -26,6 +26,7 @@ def _params(url):
 
 class SpotifyPluginTest(PluginTestCase):
     plugin = "spotify"
+    db_on_disk = True
 
     @responses.activate
     def setUp(self):
@@ -214,11 +215,7 @@ class SpotifyPluginTest(PluginTestCase):
 
         # Search without ascii encoding
 
-        with self.configure_plugin(
-            {
-                "search_query_ascii": False,
-            }
-        ):
+        with self.configure_plugin({"search_query_ascii": False}):
             assert self.spotify.config["search_query_ascii"].get() is False
             # Call the method to match library tracks
             results = self.spotify._match_library_tracks(self.lib, item.title)
@@ -239,11 +236,7 @@ class SpotifyPluginTest(PluginTestCase):
             assert not query.isascii()
 
         # Is not found in the library if ascii encoding is enabled
-        with self.configure_plugin(
-            {
-                "search_query_ascii": True,
-            }
-        ):
+        with self.configure_plugin({"search_query_ascii": True}):
             assert self.spotify.config["search_query_ascii"].get() is True
             results = self.spotify._match_library_tracks(self.lib, item.title)
             params = _params(responses.calls[1].request.url)
@@ -406,7 +399,7 @@ class SpotifyPluginTest(PluginTestCase):
             item["spotify_track_id"] = f"id-{idx}"
             items.append(item)
 
-        self.spotify._fetch_info(items, write=False, force=True)
+        self.spotify._fetch_info(self.lib, items, write=False, force=True)
 
         get_calls = [
             call for call in responses.calls if call.request.method == "GET"
@@ -505,12 +498,52 @@ class SpotifyPluginTest(PluginTestCase):
             item["spotify_track_id"] = "shared-id"
             items.append(item)
 
-        self.spotify._fetch_info(items, write=False, force=True)
+        self.spotify._fetch_info(self.lib, items, write=False, force=True)
 
         assert seen_track_ids == [["shared-id"]]
         assert seen_audio_ids == [["shared-id"]]
         assert items[0]["spotify_track_popularity"] == 50
         assert items[1]["spotify_track_popularity"] == 50
+
+    @responses.activate
+    def test_fetch_info_writes_before_store(self):
+        responses.add(
+            responses.GET,
+            spotify.SpotifyPlugin.track_url,
+            status=200,
+            json={
+                "tracks": [{"id": "id-1", "popularity": 10, "external_ids": {}}]
+            },
+            content_type="application/json",
+        )
+        responses.add(
+            responses.GET,
+            spotify.SpotifyPlugin.audio_features_url,
+            status=200,
+            json={"audio_features": [{"id": "id-1", "tempo": 100.1}]},
+            content_type="application/json",
+        )
+
+        item = self.add_item_fixture(title="Track 1", artist="Artist")
+        item["spotify_track_id"] = "id-1"
+
+        with self.assertLogs("beets", level="DEBUG") as captured_logs:
+            self.spotify._fetch_info(self.lib, [item], write=True, force=True)
+
+        logs = captured_logs.output
+
+        write_event_index = next(
+            idx
+            for idx, message in enumerate(logs)
+            if message.endswith("Sending event: write")
+        )
+        database_change_index = next(
+            idx
+            for idx, message in enumerate(logs)
+            if message.endswith("Sending event: database_change")
+        )
+
+        assert write_event_index < database_change_index
 
     @responses.activate
     def test_track_audio_features_batch_disables_on_403(self):

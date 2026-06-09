@@ -16,7 +16,7 @@
 
 from unittest.mock import patch
 
-from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.autotag import AlbumInfo, TrackInfo
 from beets.importer import ImportSession, ImportTask
 from beets.library import Item
 from beets.test.helper import PluginTestCase
@@ -51,7 +51,7 @@ titlecase_fields_testcases = [
             album="Blackbox",
             title="Khameleon",
         ),
-    ),
+    )
 ]
 
 
@@ -308,21 +308,9 @@ class TestTitlecasePlugin(PluginTestCase):
             ),
             # Test with the_artist disabled
             (
-                {
-                    "the_artist": False,
-                    "fields": [
-                        "artist",
-                        "artists_sort",
-                    ],
-                },
-                Item(
-                    artists_sort=["b-52s, the"],
-                    artist="a day in the park",
-                ),
-                Item(
-                    artists_sort=["B-52s, The"],
-                    artist="A Day in the Park",
-                ),
+                {"the_artist": False, "fields": ["artist", "artists_sort"]},
+                Item(artists_sort=["b-52s, the"], artist="a day in the park"),
+                Item(artists_sort=["B-52s, The"], artist="A Day in the Park"),
             ),
             # Test to make sure preserve and the_artist
             # dont target the middle of sentences

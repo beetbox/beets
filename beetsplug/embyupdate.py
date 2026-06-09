@@ -32,7 +32,7 @@ def api_url(host, port, endpoint):
     """
     # check if http or https is defined as host and create hostname
     hostname_list = [host]
-    if host.startswith("http://") or host.startswith("https://"):
+    if host.startswith(("http://", "https://")):
         hostname = "".join(hostname_list)
     else:
         hostname_list.insert(0, "http://")
@@ -109,12 +109,7 @@ def get_token(host, port, headers, auth_data):
     :rtype: str
     """
     url = api_url(host, port, "/Users/AuthenticateByName")
-    r = requests.post(
-        url,
-        headers=headers,
-        data=auth_data,
-        timeout=10,
-    )
+    r = requests.post(url, headers=headers, data=auth_data, timeout=10)
 
     return r.json().get("AccessToken")
 
@@ -133,9 +128,7 @@ def get_user(host, port, username):
     """
     url = api_url(host, port, "/Users/Public")
     r = requests.get(url, timeout=10)
-    user = [i for i in r.json() if i["Name"] == username]
-
-    return user
+    return [i for i in r.json() if i["Name"] == username]
 
 
 class EmbyUpdate(BeetsPlugin):
@@ -204,11 +197,7 @@ class EmbyUpdate(BeetsPlugin):
 
         # Trigger the Update.
         url = api_url(host, port, "/Library/Refresh")
-        r = requests.post(
-            url,
-            headers=headers,
-            timeout=10,
-        )
+        r = requests.post(url, headers=headers, timeout=10)
         if r.status_code != 204:
             self._log.warning("Update could not be triggered")
         else:

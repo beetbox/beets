@@ -37,20 +37,8 @@ def _artist(name: str, **kwargs):
     } | kwargs
 
 
-class PytestTestHelper(TestHelper):
-    """Same as the BeetsTestCase unittest setup but for pytest."""
-
-    @pytest.fixture(autouse=True)
-    def setup(self):
-        self.setup_beets()
-        try:
-            yield
-        finally:
-            self.teardown_beets()
-
-
 @patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
-class TestDGAlbumInfo(PytestTestHelper):
+class TestDGAlbumInfo(TestHelper):
     def _make_release(self, tracks=None):
         """Returns a Bag that mimics a discogs_client.Release. The list
         of elements on the returned Bag is incomplete, including just
@@ -71,12 +59,7 @@ class TestDGAlbumInfo(PytestTestHelper):
             # genres and styles are reversed in Discogs
             "genres": ["STYLE1", "STYLE2"],
             "styles": ["GENRE1", "GENRE2"],
-            "labels": [
-                {
-                    "name": "LABEL NAME",
-                    "catno": "CATALOG NUMBER",
-                }
-            ],
+            "labels": [{"name": "LABEL NAME", "catno": "CATALOG NUMBER"}],
             "tracklist": [],
         }
 
@@ -419,12 +402,7 @@ class TestDGAlbumInfo(PytestTestHelper):
                 _artist("OTHER ARTIST (5)", id=322),
             ],
             "title": "title",
-            "labels": [
-                {
-                    "name": "LABEL NAME (5)",
-                    "catno": "catalog number",
-                }
-            ],
+            "labels": [{"name": "LABEL NAME (5)", "catno": "catalog number"}],
         }
         release = Bag(
             data=data,
@@ -461,12 +439,7 @@ class TestDGAlbumInfo(PytestTestHelper):
                 _artist("OTHER ARTIST (5)", id=322),
             ],
             "title": "title",
-            "labels": [
-                {
-                    "name": "LABEL NAME (5)",
-                    "catno": "catalog number",
-                }
-            ],
+            "labels": [{"name": "LABEL NAME (5)", "catno": "catalog number"}],
         }
         release = Bag(
             data=data,
@@ -483,7 +456,7 @@ class TestDGAlbumInfo(PytestTestHelper):
 
 
 @patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
-class TestDGSearchQuery(PytestTestHelper):
+class TestDGSearchQuery(TestHelper):
     def test_default_search_filters_without_extra_tags(self):
         """Discogs search uses only the type filter when no extra_tags are set."""
         plugin = DiscogsPlugin()
@@ -683,55 +656,42 @@ def test_anv_album_artist():
     assert r.tracks[0].artists_credit == ["ARTIST"]
 
 
-@pytest.mark.parametrize(
-    (
-        "track,expected_artist,expected_artists,expected_artists_ids,"
-        "expected_composers"
-    ),
-    [
-        (
-            {
-                "type_": "track",
-                "title": "track",
-                "position": "1",
-                "duration": "5:00",
-                "artists": [
-                    _artist("NEW ARTIST", id=11146, join="&"),
-                    _artist("VOCALIST", id=344, join="feat."),
-                ],
-                "extraartists": [
-                    _artist("SOLOIST", id=3, role="Featuring"),
-                    _artist(
-                        "PERFORMER (1)", id=5, role="Other Role, Featuring"
-                    ),
-                    _artist("RANDOM", id=8, role="Written-By"),
-                    _artist("MUSICIAN", id=10, role="Featuring [Uncredited]"),
-                ],
-            },
-            "NEW ARTIST & VOCALIST feat. SOLOIST, PERFORMER, MUSICIAN",
-            ["NEW ARTIST", "VOCALIST", "SOLOIST", "PERFORMER", "MUSICIAN"],
-            ["11146", "344", "3", "5", "10"],
-            ["RANDOM"],
-        ),
-    ],
-)
 @patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
-def test_parse_featured_artists(
-    track,
-    expected_artist,
-    expected_artists,
-    expected_artists_ids,
-    expected_composers,
-):
+def test_parse_featured_artists():
     """Tests the plugins ability to parse a featured artist.
     Ignores artists that are not listed as featured."""
+    track = {
+        "type_": "track",
+        "title": "track",
+        "position": "1",
+        "duration": "5:00",
+        "artists": [
+            _artist("NEW ARTIST", id=11146, join="&"),
+            _artist("VOCALIST", id=344, join="feat."),
+        ],
+        "extraartists": [
+            _artist("SOLOIST", id=3, role="Featuring"),
+            _artist("PERFORMER (1)", id=5, role="Other Role, Featuring"),
+            _artist("RANDOM", id=8, role="Written-By"),
+            _artist("MUSICIAN", id=10, role="Featuring [Uncredited]"),
+        ],
+    }
+
     plugin = DiscogsPlugin()
     artistinfo = ArtistState.from_config(plugin.config, [_artist("ARTIST")])
     t, _, _ = plugin.get_track_info(track, 1, 1, artistinfo)
-    assert t.artist == expected_artist
-    assert t.artists == expected_artists
-    assert t.artists_ids == expected_artists_ids
-    assert t.composers == expected_composers
+    assert (
+        t.artist == "NEW ARTIST & VOCALIST feat. SOLOIST, PERFORMER, MUSICIAN"
+    )
+    assert t.artists == [
+        "NEW ARTIST",
+        "VOCALIST",
+        "SOLOIST",
+        "PERFORMER",
+        "MUSICIAN",
+    ]
+    assert t.artists_ids == ["11146", "344", "3", "5", "10"]
+    assert t.composers == ["RANDOM"]
 
 
 @patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
@@ -785,32 +745,26 @@ def test_get_media_and_albumtype(formats, expected_media, expected_albumtype):
     assert result == (expected_media, expected_albumtype)
 
 
-@pytest.mark.parametrize(
-    "given_artists,expected_info,config_va_name",
-    [
-        (
-            [_artist("Various")],
-            {
-                "artist": "VARIOUS ARTISTS",
-                "artist_id": "1",
-                "artists": ["VARIOUS ARTISTS"],
-                "artists_ids": ["1"],
-                "artist_credit": "VARIOUS ARTISTS",
-                "artists_credit": ["VARIOUS ARTISTS"],
-                "arrangers": None,
-                "composers": None,
-                "remixers": None,
-                "lyricists": None,
-            },
-            "VARIOUS ARTISTS",
-        )
-    ],
-)
 @patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
-def test_va_buildartistinfo(given_artists, expected_info, config_va_name):
-    config["va_name"] = config_va_name
+def test_va_buildartistinfo():
+    config["va_name"] = "VARIOUS ARTISTS"
+    expected_info = {
+        "artist": "VARIOUS ARTISTS",
+        "artist_id": "1",
+        "artists": ["VARIOUS ARTISTS"],
+        "artists_ids": ["1"],
+        "artist_credit": "VARIOUS ARTISTS",
+        "artists_credit": ["VARIOUS ARTISTS"],
+        "arrangers": None,
+        "composers": None,
+        "remixers": None,
+        "lyricists": None,
+    }
+
     assert (
-        ArtistState.from_config(DiscogsPlugin().config, given_artists).info
+        ArtistState.from_config(
+            DiscogsPlugin().config, [_artist("Various")]
+        ).info
         == expected_info
     )
 

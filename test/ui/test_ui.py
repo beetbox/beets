@@ -166,18 +166,6 @@ class ConfigTest(IOMixin, TestPluginTestCase):
         assert key == "x"
         assert template.original == "y"
 
-    def test_default_paths_preserved(self):
-        default_formats = ui.get_path_formats()
-
-        self._reset_config()
-        with self.write_config_file() as config:
-            config.write("paths: {x: y}")
-        self.run_command("test")
-        key, template = self.test_cmd.lib.path_formats[0]
-        assert key == "x"
-        assert template.original == "y"
-        assert self.test_cmd.lib.path_formats[1:] == default_formats
-
     def test_nonexistant_db(self):
         with self.write_config_file() as config:
             config.write("library: /xxx/yyy/not/a/real/path")
@@ -347,18 +335,6 @@ class ConfigTest(IOMixin, TestPluginTestCase):
         config.read()
         assert config["library"].as_path() == self.beetsdir / "beets.db"
         assert config["statefile"].as_path() == self.beetsdir / "state"
-
-
-class PathFormatTest(unittest.TestCase):
-    def test_custom_paths_prepend(self):
-        default_formats = ui.get_path_formats()
-
-        config["paths"] = {"foo": "bar"}
-        pf = ui.get_path_formats()
-        key, tmpl = pf[0]
-        assert key == "foo"
-        assert tmpl.original == "bar"
-        assert pf[1:] == default_formats
 
 
 class PluginTest(TestPluginTestCase):

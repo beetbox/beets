@@ -52,9 +52,7 @@ DEFAULT_BRACKET_KEYWORDS: tuple[str, ...] = (
 
 
 def split_on_feat(
-    artist: str,
-    for_artist: bool = True,
-    custom_words: list[str] | None = None,
+    artist: str, for_artist: bool = True, custom_words: list[str] | None = None
 ) -> tuple[str, str | None]:
     """Given an artist string, split the "main" artist from any artist
     on the right-hand side of a string like "feat". Return the main
@@ -86,9 +84,8 @@ def split_on_feat(
 
     if len(parts) == 1:
         return parts[0], None
-    else:
-        assert len(parts) == 2  # help mypy out
-        return parts
+    assert len(parts) == 2  # help mypy out
+    return parts
 
 
 def contains_feat(title: str, custom_words: list[str] | None = None) -> bool:
@@ -103,9 +100,7 @@ def contains_feat(title: str, custom_words: list[str] | None = None) -> bool:
 
 
 def find_feat_part(
-    artist: str,
-    albumartist: str | None,
-    custom_words: list[str] | None = None,
+    artist: str, albumartist: str | None, custom_words: list[str] | None = None
 ) -> str | None:
     """Attempt to find featured artists in the item's artist fields and
     return the results. Returns None if no featured artist found.
@@ -127,12 +122,9 @@ def find_feat_part(
 
         # Otherwise, if there's nothing on the right-hand side,
         # look for a featuring artist on the left-hand side.
-        else:
-            lhs, _ = split_on_feat(
-                albumartist_split[0], custom_words=custom_words
-            )
-            if lhs:
-                return lhs
+        lhs, _ = split_on_feat(albumartist_split[0], custom_words=custom_words)
+        if lhs:
+            return lhs
 
     # Fall back to conservative handling of the track artist without relying
     # on albumartist, which covers compilations using a 'Various Artists'

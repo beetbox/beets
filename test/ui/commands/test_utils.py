@@ -15,16 +15,14 @@ class QueryTest(BeetsTestCase):
     def add_item(self, filename=b"srcfile", templatefile=b"full.mp3"):
         itempath = os.path.join(self.libdir, filename)
         shutil.copy(
-            syspath(os.path.join(_common.RSRC, templatefile)),
-            syspath(itempath),
+            syspath(os.path.join(_common.RSRC, templatefile)), syspath(itempath)
         )
         item = library.Item.from_path(itempath)
         self.lib.add(item)
         return item
 
     def add_album(self, items):
-        album = self.lib.add_album(items)
-        return album
+        return self.lib.add_album(items)
 
     def check_do_query(
         self, num_items, num_albums, q=(), album=False, also_items=True

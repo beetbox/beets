@@ -59,7 +59,7 @@ def _invalidate_queue(q, val=None, sync=True):
     required (because it's not reentrant!).
     """
 
-    def _qsize(len=len):
+    def _qsize(len=len):  # noqa: A002
         return 1
 
     def _put(item):
@@ -170,12 +170,7 @@ T = TypeVar("T")  # Type of the task
 R = TypeVar("R")
 
 
-def stage(
-    func: Callable[
-        [Unpack[A], T],
-        R | None,
-    ],
-):
+def stage(func: Callable[[Unpack[A], T], R | None]):
     """Decorate a function to become a simple stage.
 
     >>> @stage
@@ -229,10 +224,9 @@ def _allmsgs(obj):
     """
     if isinstance(obj, MultiMessage):
         return obj.messages
-    elif obj == BUBBLE:
+    if obj == BUBBLE:
         return []
-    else:
-        return [obj]
+    return [obj]
 
 
 class PipelineThread(Thread):
@@ -444,11 +438,7 @@ class Pipeline:
             for coro in self.stages[i]:
                 threads.append(
                     MiddlePipelineThread(
-                        coro,
-                        queues[i - 1],
-                        queues[i],
-                        threads,
-                        base_ctx.copy(),
+                        coro, queues[i - 1], queues[i], threads, base_ctx.copy()
                     )
                 )
 

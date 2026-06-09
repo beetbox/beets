@@ -225,14 +225,8 @@ class ParseTest(unittest.TestCase):
 
 class EvalTest(unittest.TestCase):
     def _eval(self, template):
-        values = {
-            "foo": "bar",
-            "baz": "BaR",
-        }
-        functions = {
-            "lower": str.lower,
-            "len": len,
-        }
+        values = {"foo": "bar", "baz": "BaR"}
+        functions = {"lower": str.lower, "len": len}
         return functemplate.Template(template).substitute(values, functions)
 
     def test_plain_text(self):

@@ -47,8 +47,7 @@ class ThumbnailsTest(BeetsTestCase):
 
         metadata = {"Thumb::URI": "COVER_URI", "Thumb::MTime": "12345"}
         mock_artresizer.shared.write_metadata.assert_called_once_with(
-            b"/path/to/thumbnail",
-            metadata,
+            b"/path/to/thumbnail", metadata
         )
         mock_stat.assert_called_once_with(syspath(album.artpath))
 
@@ -120,10 +119,9 @@ class ThumbnailsTest(BeetsTestCase):
         def os_stat(target):
             if target == syspath(md5_file):
                 return Mock(st_mtime=1)
-            elif target == syspath(path_to_art):
+            if target == syspath(path_to_art):
                 return Mock(st_mtime=2)
-            else:
-                raise ValueError(f"invalid target {target}")
+            raise ValueError(f"invalid target {target}")
 
         mock_os.stat.side_effect = os_stat
 
@@ -148,10 +146,9 @@ class ThumbnailsTest(BeetsTestCase):
         def os_stat(target):
             if target == syspath(md5_file):
                 return Mock(st_mtime=3)
-            elif target == syspath(path_to_art):
+            if target == syspath(path_to_art):
                 return Mock(st_mtime=2)
-            else:
-                raise ValueError(f"invalid target {target}")
+            raise ValueError(f"invalid target {target}")
 
         mock_os.stat.side_effect = os_stat
 

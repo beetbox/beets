@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, overload
 import confuse
 
 from beets import ui
-from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.autotag import AlbumInfo, TrackInfo
 from beets.exceptions import UserError
 from beets.logging import getLogger
 from beets.metadata_plugins import MetadataSourcePlugin
@@ -40,10 +40,7 @@ class TidalPlugin(MetadataSourcePlugin):
         super().__init__()
 
         self.config.add(
-            {
-                "client_id": "mcjmpl1bPATJXcBT",
-                "tokenfile": "tidal_token.json",
-            }
+            {"client_id": "mcjmpl1bPATJXcBT", "tokenfile": "tidal_token.json"}
         )
         self.config["client_id"].redact = True
 
@@ -129,7 +126,7 @@ class TidalPlugin(MetadataSourcePlugin):
         )
         if barcodes and (
             candidates := list(
-                filter(None, self.search_albums_by_ids(barcode_ids=barcodes)),
+                filter(None, self.search_albums_by_ids(barcode_ids=barcodes))
             )
         ):
             return candidates
@@ -179,10 +176,7 @@ class TidalPlugin(MetadataSourcePlugin):
 
     def search_tracks_by_query(self, query: str) -> Iterable[TrackInfo]:
         """Search for tracks given a string query."""
-        search_doc = self.api.search_results(
-            query,
-            include=["tracks.artists"],
-        )
+        search_doc = self.api.search_results(query, include=["tracks.artists"])
         track_by_id: dict[str, TidalTrack] = {
             item["id"]: item
             for item in search_doc.get("included", [])
@@ -198,8 +192,7 @@ class TidalPlugin(MetadataSourcePlugin):
                 yield self._get_track_info(track, artist_by_id=artist_by_id)
             else:
                 log.warning(
-                    "Track with id {0} not found in lookup",
-                    track_rel["id"],
+                    "Track with id {0} not found in lookup", track_rel["id"]
                 )
 
     def search_albums_by_query(self, query: str) -> Iterable[AlbumInfo]:
@@ -246,9 +239,7 @@ class TidalPlugin(MetadataSourcePlugin):
             _ids = list(map(self._extract_id, ids))
 
         tracks_doc = self.api.get_tracks(
-            ids=list(filter(None, _ids)),
-            isrcs=isrcs,
-            include=["artists"],
+            ids=list(filter(None, _ids)), isrcs=isrcs, include=["artists"]
         )
         track_by_id: dict[str, TidalTrack] = {
             item["id"]: item
@@ -328,9 +319,7 @@ class TidalPlugin(MetadataSourcePlugin):
         for _id in _ids:
             if _id is not None and (album := album_by_id.get(_id)):
                 yield self._get_album_info(
-                    album,
-                    track_by_id=track_by_id,
-                    artist_by_id=artist_by_id,
+                    album, track_by_id=track_by_id, artist_by_id=artist_by_id
                 )
             else:
                 yield None
@@ -367,8 +356,7 @@ class TidalPlugin(MetadataSourcePlugin):
                 track_infos.append(track_info)
 
         artist_names, artist_ids = self._parse_artists(
-            album["relationships"]["artists"]["data"],
-            artist_by_id,
+            album["relationships"]["artists"]["data"], artist_by_id
         )
         date_parts = self._parse_release_date(album["attributes"])
         return AlbumInfo(
@@ -392,13 +380,10 @@ class TidalPlugin(MetadataSourcePlugin):
         )
 
     def _get_track_info(
-        self,
-        track: TidalTrack,
-        artist_by_id: dict[str, TidalArtist],
+        self, track: TidalTrack, artist_by_id: dict[str, TidalArtist]
     ) -> TrackInfo:
         artist_names, artist_ids = self._parse_artists(
-            track["relationships"]["artists"]["data"],
-            artist_by_id,
+            track["relationships"]["artists"]["data"], artist_by_id
         )
 
         return TrackInfo(
@@ -434,8 +419,7 @@ class TidalPlugin(MetadataSourcePlugin):
                 artist_names.append(artist["attributes"]["name"])
             else:
                 log.warning(
-                    "Artist with id {0} not found in lookup",
-                    artist_rel["id"],
+                    "Artist with id {0} not found in lookup", artist_rel["id"]
                 )
 
         return artist_names, artist_ids
@@ -448,8 +432,7 @@ class TidalPlugin(MetadataSourcePlugin):
         """
         if version := attributes.get("version"):
             return f"{attributes['title']} ({version})"
-        else:
-            return attributes["title"]
+        return attributes["title"]
 
     @staticmethod
     def _parse_data_url(
@@ -473,8 +456,8 @@ class TidalPlugin(MetadataSourcePlugin):
     def _parse_label(
         attributes: AlbumAttributes | TrackAttributes,
     ) -> str | None:
-        if copyright := attributes.get("copyright"):
-            return copyright["text"]
+        if copyright_ := attributes.get("copyright"):
+            return copyright_["text"]
         return None
 
     @staticmethod

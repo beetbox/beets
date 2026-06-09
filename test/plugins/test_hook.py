@@ -22,25 +22,13 @@ from typing import TYPE_CHECKING, ClassVar
 import pytest
 
 from beets import plugins
-from beets.test.helper import PluginMixin, TestHelper
+from beets.test.helper import PluginTestHelper
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-class PytestPluginTestHelper(PluginMixin, TestHelper):
-    """Same as the BeetsTestCase unittest setup but for pytest."""
-
-    @pytest.fixture(autouse=True)
-    def setup(self):
-        self.setup_beets()
-        try:
-            yield
-        finally:
-            self.teardown_beets()
-
-
-class HookTestCase(PytestPluginTestHelper):
+class HookTestCase(PluginTestHelper):
     plugin = "hook"
     preload_plugin = False
 
@@ -54,9 +42,7 @@ class TestHookLogs(HookTestCase):
     def _configure_hook(self, command: str) -> None:
         config = {"hooks": [self._get_hook(self.HOOK, command)]}
 
-        with (
-            self.configure_plugin(config),
-        ):
+        with self.configure_plugin(config):
             plugins.send(self.HOOK)
 
     def test_hook_empty_command(self, caplog: pytest.LogCaptureFixture):

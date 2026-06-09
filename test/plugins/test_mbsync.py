@@ -14,26 +14,12 @@
 
 from unittest.mock import Mock, patch
 
-import pytest
-
-from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.autotag import AlbumInfo, TrackInfo
 from beets.library import Item
-from beets.test.helper import PluginMixin, TestHelper
+from beets.test.helper import PluginTestHelper
 
 
-class PytestPluginTestHelper(PluginMixin, TestHelper):
-    """Same as the BeetsTestCase unittest setup but for pytest."""
-
-    @pytest.fixture(autouse=True)
-    def setup(self):
-        self.setup_beets()
-        try:
-            yield
-        finally:
-            self.teardown_beets()
-
-
-class TestMbsyncCli(PytestPluginTestHelper):
+class TestMbsyncCli(PluginTestHelper):
     plugin = "mbsync"
 
     @patch(
@@ -84,9 +70,7 @@ class TestMbsyncCli(PytestPluginTestHelper):
         for item in [
             Item(artist="albumartist", album="no id"),
             Item(
-                artist="albumartist",
-                album="invalid id",
-                mb_albumid="a1b2c3d4",
+                artist="albumartist", album="invalid id", mb_albumid="a1b2c3d4"
             ),
         ]:
             self.lib.add_album([item])

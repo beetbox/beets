@@ -51,12 +51,7 @@ class FuzzyQuery(StringFieldQuery[str]):
 class FuzzyPlugin(BeetsPlugin):
     def __init__(self) -> None:
         super().__init__()
-        self.config.add(
-            {
-                "prefix": "~",
-                "threshold": 0.7,
-            }
-        )
+        self.config.add({"prefix": "~", "threshold": 0.7})
 
     def queries(self):
         prefix = self.config["prefix"].as_str()

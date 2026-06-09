@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING, ClassVar
 import requests
 
 from beets import config, ui
-from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.autotag import AlbumInfo, TrackInfo
 from beets.dbcore import types
 from beets.exceptions import UserError
 from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
@@ -112,10 +112,7 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         if not tracks_data:
             return None
         while "next" in tracks_obj:
-            tracks_obj = requests.get(
-                tracks_obj["next"],
-                timeout=10,
-            ).json()
+            tracks_obj = requests.get(tracks_obj["next"], timeout=10).json()
             tracks_data.extend(tracks_obj["data"])
 
         tracks = []

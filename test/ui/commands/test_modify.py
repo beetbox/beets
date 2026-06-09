@@ -94,7 +94,7 @@ class ModifyTest(IOMixin, BeetsTestCase):
         album = "album"
         original_artist = "composer"
         new_artist = "coverArtist"
-        for i in range(0, 10):
+        for i in range(10):
             self.add_item_fixture(
                 title=f"{title}{i}", artist=original_artist, album=album
             )
@@ -109,7 +109,7 @@ class ModifyTest(IOMixin, BeetsTestCase):
         assert len(list(new_items)) == 7
 
     def test_modify_formatted(self):
-        for i in range(0, 3):
+        for i in range(3):
             self.add_item_fixture(
                 title=f"title{i}", artist="artist", album="album"
             )
@@ -157,6 +157,21 @@ class ModifyTest(IOMixin, BeetsTestCase):
         self.modify("--album", "album=${album} - append")
         item.load()
         assert item.album == f"{orig_album} - append"
+
+    def test_album_modify_artists_not_split(self):
+        self.modify("--album", "artists=Charli XCX")
+        for item in self.lib.items():
+            assert item.artists == ["Charli XCX"], (
+                f"artists should be a list with one element, "
+                f"got {item.artists!r}"
+            )
+
+    def test_album_modify_genres_not_split(self):
+        self.modify("--album", "genres=Rock")
+        for item in self.lib.items():
+            assert item.genres == ["Rock"], (
+                f"genres should be a list with one element, got {item.genres!r}"
+            )
 
     # Misc
 

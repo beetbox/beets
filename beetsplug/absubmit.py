@@ -97,7 +97,7 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
                     "AcousticBrainz server base URL must start "
                     "with an HTTP scheme"
                 )
-            elif base_url[-1] != "/":
+            if base_url[-1] != "/":
                 base_url = f"{base_url}/"
             self.url = f"{base_url}{{mbid}}/low-level"
 
@@ -134,11 +134,10 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
                 "accepts new submissions. See the base_url configuration "
                 "option."
             )
-        else:
-            # Get items from arguments
-            items = lib.items(args)
-            self.opts = opts
-            util.par_map(self.analyze_submit, items)
+        # Get items from arguments
+        items = lib.items(args)
+        self.opts = opts
+        util.par_map(self.analyze_submit, items)
 
     def analyze_submit(self, item):
         analysis = self._get_analysis(item)
@@ -200,10 +199,7 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
         mbid = item["mb_trackid"]
         headers = {"Content-Type": "application/json"}
         response = requests.post(
-            self.url.format(mbid=mbid),
-            json=data,
-            headers=headers,
-            timeout=10,
+            self.url.format(mbid=mbid), json=data, headers=headers, timeout=10
         )
         # Test that request was successful and raise an error on failure.
         if response.status_code != 200:
@@ -219,6 +215,5 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
             )
         else:
             self._log.debug(
-                "Successfully submitted AcousticBrainz analysis for {}.",
-                item,
+                "Successfully submitted AcousticBrainz analysis for {}.", item
             )

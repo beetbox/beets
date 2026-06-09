@@ -165,11 +165,10 @@ def cast_arg(t, val):
     """
     if t == "intbool":
         return cast_arg(bool, cast_arg(int, val))
-    else:
-        try:
-            return t(val)
-        except ValueError:
-            raise ArgumentTypeError()
+    try:
+        return t(val)
+    except ValueError:
+        raise ArgumentTypeError()
 
 
 class BPDCloseError(Exception):
@@ -346,7 +345,6 @@ class BaseServer:
 
     def cmd_ping(self, conn):
         """Succeeds."""
-        pass
 
     def cmd_idle(self, conn, *subsystems):
         subsystems = subsystems or SUBSYSTEMS
@@ -604,7 +602,6 @@ class BaseServer:
 
     def cmd_urlhandlers(self, conn):
         """Indicates supported URL schemes. None by default."""
-        pass
 
     def cmd_playlistinfo(self, conn, index=None):
         """Gives metadata information about the entire playlist or a
@@ -669,10 +666,9 @@ class BaseServer:
                 self.current_index = -1
                 return self.cmd_play(conn)
             return self.cmd_stop(conn)
-        elif self.single and not self.repeat:
+        if self.single and not self.repeat:
             return self.cmd_stop(conn)
-        else:
-            return self.cmd_play(conn)
+        return self.cmd_play(conn)
 
     def cmd_previous(self, conn):
         """Step back to the last song."""
@@ -714,6 +710,7 @@ class BaseServer:
 
         self.paused = False
         self._send_event("player")
+        return None
 
     def cmd_playid(self, conn, track_id=0):
         track_id = cast_arg(int, track_id)
@@ -1009,8 +1006,7 @@ class Command:
         # If the command accepts a variable number of arguments skip the check.
         if wrong_num and not argspec.varargs:
             raise TypeError(
-                f'wrong number of arguments for "{self.name}"',
-                self.name,
+                f'wrong number of arguments for "{self.name}"', self.name
             )
 
         return func
@@ -1411,8 +1407,8 @@ class Server(BaseServer):
                     _, key = self._tagtype_lookup(tag)
                     queries.append(Item.field_query(key, value, query_type))
             return dbcore.query.AndQuery(queries)
-        else:  # No key-value pairs.
-            return dbcore.query.TrueQuery()
+        # No key-value pairs.
+        return dbcore.query.TrueQuery()
 
     def cmd_search(self, conn, *kv):
         """Perform a substring match for items."""
@@ -1518,11 +1514,7 @@ class Server(BaseServer):
 
     def cmd_outputs(self, conn):
         """List the available outputs."""
-        yield (
-            "outputid: 0",
-            "outputname: gstreamer",
-            "outputenabled: 1",
-        )
+        yield ("outputid: 0", "outputname: gstreamer", "outputenabled: 1")
 
     def cmd_enableoutput(self, conn, output_id):
         output_id = cast_arg(int, output_id)
@@ -1533,8 +1525,7 @@ class Server(BaseServer):
         output_id = cast_arg(int, output_id)
         if output_id == 0:
             raise BPDError(ERROR_ARG, "cannot disable this output")
-        else:
-            raise ArgumentIndexError()
+        raise ArgumentIndexError()
 
     # Playback control. The functions below hook into the
     # half-implementations provided by the base class. Together, they're

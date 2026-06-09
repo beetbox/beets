@@ -6,8 +6,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from beets.autotag.distance import Distance
-from beets.autotag.hooks import AlbumInfo, AlbumMatch, TrackInfo
+from beets.autotag import AlbumInfo, AlbumMatch, Distance, TrackInfo
 from beets.library import Item
 from beets.test.helper import PluginMixin
 from beetsplug.mbpseudo import (
@@ -140,9 +139,7 @@ class TestMBPseudoPlugin(TestMBPseudoMixin):
         ],
     )
     def test_extract_id_uses_music_brainz_pattern(
-        self,
-        mbpseudo_plugin: MusicBrainzPseudoReleasePlugin,
-        album_id: str,
+        self, mbpseudo_plugin: MusicBrainzPseudoReleasePlugin, album_id: str
     ):
         if album_id.startswith("-"):
             assert mbpseudo_plugin._extract_id(album_id) is None
@@ -159,14 +156,7 @@ class TestMBPseudoPlugin(TestMBPseudoMixin):
         assert album_info.data_source == "MusicBrainzPseudoRelease"
         assert album_info.albumstatus == _STATUS_PSEUDO
 
-    @pytest.mark.parametrize(
-        "json_key",
-        [
-            "type",
-            "direction",
-            "release",
-        ],
-    )
+    @pytest.mark.parametrize("json_key", ["type", "direction", "release"])
     def test_interception_skip_when_rel_values_dont_match(
         self,
         mbpseudo_plugin: MusicBrainzPseudoReleasePlugin,
@@ -202,8 +192,7 @@ class TestMBPseudoPlugin(TestMBPseudoMixin):
         assert album_info.data_source == "MusicBrainzPseudoRelease"
 
     def test_final_adjustment_skip(
-        self,
-        mbpseudo_plugin: MusicBrainzPseudoReleasePlugin,
+        self, mbpseudo_plugin: MusicBrainzPseudoReleasePlugin
     ):
         match = AlbumMatch(
             distance=Distance(),

@@ -29,8 +29,7 @@ def summary(task):
     """
     if task.is_album:
         return f"{task.cur_artist} - {task.cur_album}"
-    else:
-        return f"{task.item.artist} - {task.item.title}"
+    return f"{task.item.artist} - {task.item.title}"
 
 
 class IHatePlugin(BeetsPlugin):
@@ -39,12 +38,7 @@ class IHatePlugin(BeetsPlugin):
         self.register_listener(
             "import_task_choice", self.import_task_choice_event
         )
-        self.config.add(
-            {
-                "warn": [],
-                "skip": [],
-            }
-        )
+        self.config.add({"warn": [], "skip": []})
 
     @classmethod
     def do_i_hate_this(cls, task, action_patterns):
@@ -54,8 +48,7 @@ class IHatePlugin(BeetsPlugin):
         if action_patterns:
             for query_string in action_patterns:
                 query, _ = parse_query_string(
-                    query_string,
-                    Album if task.is_album else Item,
+                    query_string, Album if task.is_album else Item
                 )
                 if any(query.match(item) for item in task.imported_items()):
                     return True

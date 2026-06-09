@@ -34,7 +34,7 @@ import confuse
 import requests
 
 from beets import ui
-from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.autotag import AlbumInfo, TrackInfo
 from beets.dbcore import types
 from beets.exceptions import UserError
 from beets.library import Library
@@ -44,6 +44,7 @@ from beets.util import chunks
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    from beets.dbcore.db import Results
     from beets.library import Item, Library
     from beets.metadata_plugins import QueryType, SearchParams
     from beetsplug._typing import JSONDict
@@ -111,8 +112,6 @@ class APIError(Exception):
 
 class AudioFeaturesUnavailableError(Exception):
     """Raised when audio features API returns 403 (deprecated)."""
-
-    pass
 
 
 class SpotifyPlugin(
@@ -276,17 +275,14 @@ class SpotifyPlugin(
                 )
                 self._authenticate()
                 return self._handle_response(
-                    method,
-                    url,
-                    params=params,
-                    retry_count=retry_count + 1,
+                    method, url, params=params, retry_count=retry_count + 1
                 )
-            elif e.response.status_code == 404:
+            if e.response.status_code == 404:
                 raise APIError(
                     f"API Error: {e.response.status_code}\n"
                     f"URL: {url}\nparams: {params}"
                 )
-            elif e.response.status_code == 403:
+            if e.response.status_code == 403:
                 # Check if this is the audio features endpoint
                 if url.startswith(self.audio_features_url):
                     raise AudioFeaturesUnavailableError(
@@ -297,7 +293,7 @@ class SpotifyPlugin(
                     f"API Error: {e.response.status_code}\n"
                     f"URL: {url}\nparams: {params}"
                 )
-            elif e.response.status_code == 429:
+            if e.response.status_code == 429:
                 seconds = e.response.headers.get(
                     "Retry-After", DEFAULT_WAITING_TIME
                 )
@@ -306,26 +302,22 @@ class SpotifyPlugin(
                 )
                 time.sleep(int(seconds) + 1)
                 return self._handle_response(
-                    method,
-                    url,
-                    params=params,
-                    retry_count=retry_count + 1,
+                    method, url, params=params, retry_count=retry_count + 1
                 )
-            elif e.response.status_code == 503:
+            if e.response.status_code == 503:
                 self._log.error("Service Unavailable.")
                 raise APIError("Service Unavailable.")
-            elif e.response.status_code == 502:
+            if e.response.status_code == 502:
                 self._log.error("Bad Gateway.")
                 raise APIError("Bad Gateway.")
-            elif e.response is not None:
+            if e.response is not None:
                 raise APIError(
                     f"{self.data_source} API error:\n"
                     f"{e.response.text}\n"
                     f"URL:\n{url}\nparams:\n{params}"
                 )
-            else:
-                self._log.error("Request failed. Error: {}", e)
-                raise APIError("Request failed.")
+            self._log.error("Request failed. Error: {}", e)
+            raise APIError("Request failed.")
 
     def _multi_artist_credit(
         self, artists: list[dict[str | int, str]]
@@ -417,7 +409,7 @@ class SpotifyPlugin(
             year=year,
             month=month,
             day=day,
-            label=album_data["label"],
+            label=album_data.get("label"),
             mediums=max(filter(None, medium_totals.keys())),
             data_source=self.data_source,
             data_url=album_data["external_urls"]["spotify"],
@@ -590,7 +582,7 @@ class SpotifyPlugin(
 
         def func(lib, opts, args):
             items = lib.items(args)
-            self._fetch_info(items, ui.should_write(), opts.force_refetch)
+            self._fetch_info(lib, items, ui.should_write(), opts.force_refetch)
 
         sync_cmd.func = func
         return [spotify_cmd, sync_cmd]
@@ -633,7 +625,7 @@ class SpotifyPlugin(
                 "Your beets query returned no items, skipping {.data_source}.",
                 self,
             )
-            return
+            return None
 
         self._log.info("Processing {} tracks...", len(items))
 
@@ -774,9 +766,7 @@ class SpotifyPlugin(
         details_by_id: dict[str, TrackDetails] = {}
         for chunk in chunks(track_ids, 50):
             track_data = self._handle_response(
-                "get",
-                self.track_url,
-                params={"ids": ",".join(chunk)},
+                "get", self.track_url, params={"ids": ",".join(chunk)}
             )
 
             for idx, track in enumerate(track_data.get("tracks", [])):
@@ -829,7 +819,13 @@ class SpotifyPlugin(
 
         return features_by_id
 
-    def _fetch_info(self, items, write, force):
+    def _fetch_info(
+        self,
+        lib: Library,
+        items: Results[Item] | Sequence[Item],
+        write: bool,
+        force: bool,
+    ) -> None:
         """Obtain track information from Spotify."""
 
         self._log.debug("Total {} tracks", len(items))
@@ -875,13 +871,14 @@ class SpotifyPlugin(
                     for feature, value in audio_features.items():
                         if feature in self.spotify_audio_features:
                             item[self.spotify_audio_features[feature]] = value
-            else:
-                self._log.debug("Audio features API unavailable, skipping")
 
             item["spotify_updated"] = time.time()
-            item.store()
             if write:
                 item.try_write()
+
+        with lib.transaction():
+            for item, _ in items_to_update:
+                item.store()
 
     def track_info(self, track_id: str):
         """Fetch a track's popularity and external IDs using its Spotify ID."""

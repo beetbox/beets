@@ -15,7 +15,9 @@ from mediafile import MediaFile, UnreadableFileError
 import beets
 from beets import dbcore, logging, plugins, util
 from beets.dbcore import types
+from beets.dbcore.db import FormattedMapping
 from beets.dbcore.pathutils import normalize_path_for_db
+from beets.dbcore.sort import SmartArtistSort
 from beets.util import (
     MoveOperation,
     bytestring_path,
@@ -26,13 +28,17 @@ from beets.util import (
 )
 from beets.util.deprecation import maybe_replace_legacy_field
 from beets.util.functemplate import Template, template
+from beets.util.pathformats import PF_KEY_DEFAULT
 
 from .exceptions import FileOperationError, ReadError, WriteError
 from .fields import TYPE_BY_FIELD
-from .queries import PF_KEY_DEFAULT, parse_query_string
+from .queries import parse_query_string
 
 if TYPE_CHECKING:
+    from collections.abc import KeysView
+
     from beets.dbcore.query import FieldQuery, FieldQueryType
+    from beets.dbcore.sort import FieldSort
 
     from .library import Library  # noqa: F401
 
@@ -164,16 +170,22 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
 
     ALL_KEYS = "*"
 
-    def __init__(self, item, included_keys=ALL_KEYS, for_path=False):
+    def __init__(
+        self,
+        item: Item,
+        included_keys: str | list[str] = ALL_KEYS,
+        for_path: bool = False,
+    ) -> None:
         # We treat album and item keys specially here,
         # so exclude transitive album keys from the model's keys.
         super().__init__(item, included_keys=[], for_path=for_path)
         self.included_keys = included_keys
-        if included_keys == self.ALL_KEYS:
+        self.model_keys = set(
             # Performance note: this triggers a database query.
-            self.model_keys = item.keys(computed=True, with_album=False)
-        else:
-            self.model_keys = included_keys
+            item.keys(computed=True, with_album=False)
+            if included_keys == self.ALL_KEYS
+            else included_keys
+        )
         self.item = item
 
     @cached_property
@@ -204,12 +216,11 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
         """
         if self.for_path and key in self.album_keys:
             return self._get_formatted(self.album, key)
-        elif key in self.model_keys:
+        if key in self.model_keys:
             return self._get_formatted(self.model, key)
-        elif key in self.album_keys:
+        if key in self.album_keys:
             return self._get_formatted(self.album, key)
-        else:
-            raise KeyError(key)
+        raise KeyError(key)
 
     def __getitem__(self, key):
         """Get the value for a key.
@@ -225,7 +236,7 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
         try:
             if key == "artist" and not value:
                 return self._get("albumartist")
-            elif key == "albumartist" and not value:
+            if key == "albumartist" and not value:
                 return self._get("artist")
         except KeyError:
             pass
@@ -303,9 +314,11 @@ class Album(LibModel):
     def _types(cls) -> dict[str, types.Type]:
         return {**super()._types, "path": TYPE_BY_FIELD["path"]}
 
-    _sorts: ClassVar[dict[str, type[dbcore.query.FieldSort]]] = {
-        "albumartist": dbcore.query.SmartArtistSort,
-        "artist": dbcore.query.SmartArtistSort,
+    _formatter = FormattedMapping
+
+    _sorts: ClassVar[dict[str, type[FieldSort]]] = {
+        "albumartist": SmartArtistSort,
+        "artist": SmartArtistSort,
     }
 
     # List of keys that are set on an album's items.
@@ -380,12 +393,16 @@ class Album(LibModel):
             for item in self.items():
                 item.remove(delete, False)
 
-    def move_art(self, operation=MoveOperation.MOVE):
+    def move_art(self, operation=MoveOperation.MOVE, item_dir=None):
         """Move, copy, link or hardlink (depending on `operation`) any
         existing album art so that it remains in the same directory as
         the items.
 
         `operation` should be an instance of `util.MoveOperation`.
+
+        `item_dir` may be provided to specify the target directory for
+        the art. If not provided, the directory of the album's first
+        item is used.
         """
         old_art = self.artpath
         if not old_art:
@@ -399,7 +416,7 @@ class Album(LibModel):
             self.artpath = None
             return
 
-        new_art = self.art_destination(old_art)
+        new_art = self.art_destination(old_art, item_dir=item_dir)
         if new_art == old_art:
             return
 
@@ -452,11 +469,15 @@ class Album(LibModel):
 
         # Move items.
         items = list(self.items())
+        moved_item_dir = None
         for item in items:
+            old_path = item.path
             item.move(operation, basedir=basedir, with_album=False, store=store)
+            if moved_item_dir is None and item.path != old_path:
+                moved_item_dir = os.path.dirname(item.path)
 
         # Move art.
-        self.move_art(operation)
+        self.move_art(operation, item_dir=moved_item_dir)
         if store:
             self.store()
 
@@ -534,7 +555,7 @@ class Album(LibModel):
         if oldart and samefile(path, oldart):
             # Art already set.
             return
-        elif samefile(path, artdest):
+        if samefile(path, artdest):
             # Art already in place.
             self.artpath = path
             return
@@ -694,9 +715,7 @@ class Item(LibModel):
     _media_tag_fields = set(MediaFile.fields()) & _field_names
     _formatter = FormattedItemMapping
 
-    _sorts: ClassVar[dict[str, type[dbcore.query.FieldSort]]] = {
-        "artist": dbcore.query.SmartArtistSort
-    }
+    _sorts: ClassVar[dict[str, type[FieldSort]]] = {"artist": SmartArtistSort}
 
     @cached_classproperty
     def _queries(cls) -> dict[str, FieldQueryType]:
@@ -804,17 +823,16 @@ class Item(LibModel):
             f"({', '.join(f'{k}={self[k]!r}' for k in self.keys(with_album=False))})"
         )
 
-    def keys(self, computed=False, with_album=True):
+    def keys(self, computed=False, with_album=True) -> KeysView[str]:
         """Get a list of available field names.
 
         `with_album` controls whether the album's fields are included.
         """
         keys = super().keys(computed=computed)
         if with_album and self._cached_album:
-            keys = set(keys)
-            keys.update(self._cached_album.keys(computed=computed))
-            keys = list(keys)
-        return keys
+            keys |= self._cached_album.keys(computed=computed)
+
+        return dict.fromkeys(keys).keys()
 
     def get(self, key, default=None, with_album=True):
         """Get the value for a given key or `default` if it does not
@@ -1115,6 +1133,22 @@ class Item(LibModel):
         """
         dest = self.destination(basedir=basedir)
 
+        # If the source file is missing, skip the move.
+        if not self.filepath.exists():
+            log.warning(
+                "{}: file not found at {.filepath}, skipping",
+                {
+                    MoveOperation.MOVE: "Moving",
+                    MoveOperation.COPY: "Copying",
+                    MoveOperation.LINK: "Linking",
+                    MoveOperation.HARDLINK: "Hardlinking",
+                    MoveOperation.REFLINK: "Reflinking",
+                    MoveOperation.REFLINK_AUTO: "Reflinking",
+                }[operation],
+                self,
+            )
+            return
+
         # Create necessary ancestry for the move.
         util.mkdirall(dest)
 
@@ -1143,10 +1177,7 @@ class Item(LibModel):
     # Templating.
 
     def destination(
-        self,
-        relative_to_libdir=False,
-        basedir=None,
-        path_formats=None,
+        self, relative_to_libdir=False, basedir=None, path_formats=None
     ) -> bytes:
         """Return the path in the library directory designated for the item
         (i.e., where the file ought to be).
@@ -1306,8 +1337,7 @@ class DefaultTemplateFunctions:
 
         if condition:
             return trueval
-        else:
-            return falseval
+        return falseval
 
     @staticmethod
     def tmpl_asciify(s):
@@ -1404,15 +1434,7 @@ class DefaultTemplateFunctions:
         return (name, keys, disam, item_id)
 
     def _tmpl_unique(
-        self,
-        name,
-        keys,
-        disam,
-        bracket,
-        item_id,
-        db_item,
-        item_keys,
-        skip_item,
+        self, name, keys, disam, bracket, item_id, db_item, item_keys, skip_item
     ):
         """Generate a string that is guaranteed to be unique among all items of
         the same type as "db_item" who share the same set of keys.
@@ -1530,5 +1552,4 @@ class DefaultTemplateFunctions:
         """
         if field in self.item:
             return trueval if trueval else self.item.formatted().get(field)
-        else:
-            return falseval
+        return falseval

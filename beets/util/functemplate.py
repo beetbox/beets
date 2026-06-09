@@ -99,10 +99,7 @@ def compile_func(arg_names, statements, name="_the_func", debug=False):
     args = ast.arguments(**args_fields)
 
     func_def = ast.FunctionDef(
-        name=name,
-        args=args,
-        body=statements,
-        decorator_list=[],
+        name=name, args=args, body=statements, decorator_list=[]
     )
 
     mod = ast.Module([func_def], [])
@@ -143,9 +140,8 @@ class Symbol:
         if self.ident in env.values:
             # Substitute for a value.
             return env.values[self.ident]
-        else:
-            # Keep original text.
-            return self.original
+        # Keep original text.
+        return self.original
 
     def translate(self):
         """Compile the variable lookup."""
@@ -178,8 +174,7 @@ class Call:
                 # the exception will help debug.
                 return f"<{exc}>"
             return str(out)
-        else:
-            return self.original
+        return self.original
 
     def translate(self):
         """Compile the function call."""
@@ -558,8 +553,7 @@ class Template:
             argnames.append(f"{FUNCTION_PREFIX}{funcname}")
 
         func = compile_func(
-            argnames,
-            [ast.Return(ast.List(expressions, ast.Load()))],
+            argnames, [ast.Return(ast.List(expressions, ast.Load()))]
         )
 
         def wrapper_func(values={}, functions={}):

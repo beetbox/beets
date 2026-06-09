@@ -32,6 +32,14 @@ Usage
 Once the plugin is enabled, you can import the listening history using the
 ``lbimport`` command in beets.
 
+The command has two command-line options:
+
+- To import the listening history from a ListenBrainz export file, use the
+  ``-f`` (``--export-file``) flag followed by the path to the export file.
+- To limit the number of listens fetched via the API during import, the
+  ``--max`` flag can be used. By default, the plugin will fetch all listens.
+  This option will be ignored when an export file is provided.
+
 Matched tracks are populated with the ``listenbrainz_play_count`` field, which
 you can use in queries and templates. For example:
 

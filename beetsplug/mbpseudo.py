@@ -25,9 +25,7 @@ import mediafile
 from typing_extensions import override
 
 from beets import config
-from beets.autotag.distance import distance
-from beets.autotag.hooks import AlbumInfo
-from beets.autotag.match import assign_items
+from beets.autotag import AlbumInfo, assign_items, distance
 from beets.plugins import find_plugins
 from beets.util.id_extractors import extract_release_id
 from beetsplug.musicbrainz import (
@@ -39,8 +37,7 @@ from beetsplug.musicbrainz import (
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
-    from beets.autotag.distance import Distance
-    from beets.autotag.hooks import AlbumMatch
+    from beets.autotag import AlbumMatch, Distance
     from beets.library import Item
 
     from ._utils.musicbrainz import (
@@ -115,11 +112,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
 
     @override
     def candidates(
-        self,
-        items: Sequence[Item],
-        artist: str,
-        album: str,
-        va_likely: bool,
+        self, items: Sequence[Item], artist: str, album: str, va_likely: bool
     ) -> Iterable[AlbumInfo]:
         if len(self._scripts) == 0:
             yield from super().candidates(items, artist, album, va_likely)
@@ -157,15 +150,13 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
                 )
                 self._add_custom_tags(official_release, pseudo_release)
                 return official_release
-            else:
-                return PseudoAlbumInfo(
-                    pseudo_release=_merge_pseudo_and_actual_album(
-                        pseudo_release, official_release
-                    ),
-                    official_release=official_release,
-                )
-        else:
-            return official_release
+            return PseudoAlbumInfo(
+                pseudo_release=_merge_pseudo_and_actual_album(
+                    pseudo_release, official_release
+                ),
+                official_release=official_release,
+            )
+        return official_release
 
     def _intercept_mb_release(self, data: Release) -> list[str]:
         album_id = data["id"] if "id" in data else None
@@ -184,15 +175,12 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
     ) -> bool:
         if len(self._scripts) == 0:
             return False
-        elif script := release.get("text_representation", {}).get("script"):
+        if script := release.get("text_representation", {}).get("script"):
             return script in self._scripts
-        else:
-            return False
+        return False
 
     def _wanted_pseudo_release_id(
-        self,
-        album_id: str,
-        relation: ReleaseRelation,
+        self, album_id: str, relation: ReleaseRelation
     ) -> str | None:
         if (
             len(self._scripts) == 0
@@ -210,8 +198,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
                 album_id,
             )
             return release["id"]
-        else:
-            return None
+        return None
 
     def _replace_artist_with_alias(
         self, raw_pseudo_release: Release, pseudo_release: AlbumInfo
@@ -247,9 +234,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
                         track.artist = alias
 
     def _add_custom_tags(
-        self,
-        official_release: AlbumInfo,
-        pseudo_release: AlbumInfo,
+        self, official_release: AlbumInfo, pseudo_release: AlbumInfo
     ):
         for tag_key, pseudo_key in (
             self.config["album_custom_tags"].get().items()
@@ -298,10 +283,7 @@ class PseudoAlbumInfo(AlbumInfo):
     """
 
     def __init__(
-        self,
-        pseudo_release: AlbumInfo,
-        official_release: AlbumInfo,
-        **kwargs,
+        self, pseudo_release: AlbumInfo, official_release: AlbumInfo, **kwargs
     ):
         super().__init__(pseudo_release.tracks, **kwargs)
         self.__dict__["_pseudo_source"] = True
@@ -330,9 +312,8 @@ class PseudoAlbumInfo(AlbumInfo):
         if official_dist < pseudo_dist:
             self.use_official_as_ref()
             return "official"
-        else:
-            self.use_pseudo_as_ref()
-            return "pseudo"
+        self.use_pseudo_as_ref()
+        return "pseudo"
 
     def _compute_distance(self, items: Sequence[Item]) -> Distance:
         mapping, _, _ = assign_items(items, self.tracks)
@@ -348,8 +329,7 @@ class PseudoAlbumInfo(AlbumInfo):
         # ensure we don't duplicate an official release's id, always return pseudo's
         if self.__dict__["_pseudo_source"] or attr == "album_id":
             return super().__getattr__(attr)
-        else:
-            return self.__dict__["_official_release"].__getattr__(attr)
+        return self.__dict__["_official_release"].__getattr__(attr)
 
     def __deepcopy__(self, memo):
         cls = self.__class__

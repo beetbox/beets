@@ -17,8 +17,7 @@
 from collections import defaultdict
 
 from beets import library, metadata_plugins, ui, util
-from beets.autotag.distance import Distance
-from beets.autotag.hooks import AlbumMatch, TrackMatch
+from beets.autotag import AlbumMatch, Distance, TrackMatch
 from beets.plugins import BeetsPlugin, apply_item_changes
 
 

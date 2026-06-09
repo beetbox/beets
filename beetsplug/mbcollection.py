@@ -28,6 +28,7 @@ from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 
 from ._utils.musicbrainz import MusicBrainzAPI
+from ._utils.requests import BeetsHTTPError
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
@@ -152,13 +153,7 @@ class MBCollection:
 class MusicBrainzCollectionPlugin(BeetsPlugin):
     def __init__(self) -> None:
         super().__init__()
-        self.config.add(
-            {
-                "auto": False,
-                "collection": "",
-                "remove": False,
-            }
-        )
+        self.config.add({"auto": False, "collection": "", "remove": False})
         if self.config["auto"]:
             self.import_stages = [self.imported]
 
@@ -218,17 +213,24 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
         self, lib: Library, albums: Iterable[Album], remove_missing: bool
     ) -> None:
         """Update the MusicBrainz collection from a list of Beets albums"""
-        collection = self.collection
+        try:
+            collection = self.collection
 
-        # Get a list of all the album IDs.
-        album_ids = [id_ for a in albums if UUID_PAT.match(id_ := a.mb_albumid)]
+            # Get a list of all the album IDs.
+            album_ids = [
+                id_ for a in albums if UUID_PAT.match(id_ := a.mb_albumid)
+            ]
 
-        # Submit to MusicBrainz.
-        self._log.info("Updating MusicBrainz collection {}...", collection.id)
-        collection.add_releases(album_ids)
-        if remove_missing:
-            lib_ids = {x.mb_albumid for x in lib.albums()}
-            albums_in_collection = {r["id"] for r in collection.releases}
-            collection.remove_releases(list(albums_in_collection - lib_ids))
+            # Submit to MusicBrainz.
+            self._log.info(
+                "Updating MusicBrainz collection {}...", collection.id
+            )
+            collection.add_releases(album_ids)
+            if remove_missing:
+                lib_ids = {x.mb_albumid for x in lib.albums()}
+                albums_in_collection = {r["id"] for r in collection.releases}
+                collection.remove_releases(list(albums_in_collection - lib_ids))
 
-        self._log.info("...MusicBrainz collection updated.")
+            self._log.info("...MusicBrainz collection updated.")
+        except BeetsHTTPError as exc:
+            self._log.error("Failed to update MusicBrainz collection: {}", exc)

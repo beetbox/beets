@@ -31,8 +31,7 @@ class AdvancedRewritePluginTest(PluginTestCase):
             [{"artist ODD EYE CIRCLE": "이달의 소녀 오드아이써클"}]
         ):
             item = self.add_item(
-                artist="ODD EYE CIRCLE",
-                albumartist="ODD EYE CIRCLE",
+                artist="ODD EYE CIRCLE", albumartist="ODD EYE CIRCLE"
             )
 
             assert item.artist == "이달의 소녀 오드아이써클"
@@ -52,7 +51,7 @@ class AdvancedRewritePluginTest(PluginTestCase):
                         "artist": "이달의 소녀 오드아이써클",
                         "artist_sort": "LOONA / ODD EYE CIRCLE",
                     },
-                },
+                }
             ]
         ):
             item_a = self.add_item(
@@ -82,12 +81,11 @@ class AdvancedRewritePluginTest(PluginTestCase):
                 {
                     "match": "artist:배유빈 feat. 김미현",
                     "replacements": {"artists": ["유빈", "미미"]},
-                },
+                }
             ]
         ):
             item = self.add_item(
-                artist="배유빈 feat. 김미현",
-                artists=["배유빈", "김미현"],
+                artist="배유빈 feat. 김미현", artists=["배유빈", "김미현"]
             )
 
             assert item.artists == ["유빈", "미미"]
@@ -113,7 +111,7 @@ class AdvancedRewritePluginTest(PluginTestCase):
                     {
                         "match": "artist:'A & B'",
                         "replacements": {"artist": ["C", "D"]},
-                    },
+                    }
                 ]
             ),
         ):

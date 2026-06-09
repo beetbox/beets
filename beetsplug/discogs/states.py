@@ -29,7 +29,7 @@ from .types import ArtistInfo
 if TYPE_CHECKING:
     from confuse import ConfigView
 
-    from beets.autotag.hooks import TrackInfo
+    from beets.autotag import TrackInfo
 
     from . import DiscogsPlugin
     from .types import Artist, Track, TracklistInfo

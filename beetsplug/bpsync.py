@@ -15,8 +15,7 @@
 """Update library's tags using Beatport."""
 
 from beets import library, ui, util
-from beets.autotag.distance import Distance
-from beets.autotag.hooks import AlbumMatch, TrackMatch
+from beets.autotag import AlbumMatch, Distance, TrackMatch
 from beets.plugins import BeetsPlugin, apply_item_changes
 from beets.util.deprecation import deprecate_for_user
 

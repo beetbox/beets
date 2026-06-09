@@ -70,7 +70,7 @@ class AdvancedRewritePlugin(BeetsPlugin):
                     {
                         "match": str,
                         "replacements": confuse.MappingValues(
-                            confuse.OneOf([str, confuse.Sequence(str)]),
+                            confuse.OneOf([str, confuse.Sequence(str)])
                         ),
                     },
                 ]
@@ -132,10 +132,7 @@ class AdvancedRewritePlugin(BeetsPlugin):
                         "Advanced rewrites must have at least one replacement"
                     )
                 query = query_from_strings(
-                    AndQuery,
-                    Item,
-                    prefixes={},
-                    query_parts=shlex.split(match),
+                    AndQuery, Item, prefixes={}, query_parts=shlex.split(match)
                 )
                 for fieldname, replacement in replacements.items():
                     if fieldname not in Item._fields:

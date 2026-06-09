@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent / "extensions"))
 
 project = "beets"
 AUTHOR = "Adrian Sampson"
-copyright = "2016, Adrian Sampson"
+copyright = "2016, Adrian Sampson"  # noqa: A001
 
 master_doc = "index"
 language = "en"
@@ -45,7 +45,7 @@ autosummary_context = {
             "beetsplug._utils.musicbrainz.BrowseKwargs",
             "beetsplug._utils.musicbrainz.BrowseRecordingsKwargs",
             "beetsplug._utils.musicbrainz.BrowseReleaseGroupsKwargs",
-        ],
+        ]
     }
 }
 autodoc_member_order = "bysource"
@@ -82,7 +82,7 @@ htmlhelp_basename = "beetsdoc"
 
 # Options for LaTeX output
 latex_documents = [
-    ("index", "beets.tex", "beets Documentation", AUTHOR, "manual"),
+    ("index", "beets.tex", "beets Documentation", AUTHOR, "manual")
 ]
 
 # Options for manual page output

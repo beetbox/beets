@@ -30,15 +30,14 @@ from string import ascii_lowercase
 from typing import TYPE_CHECKING
 
 import confuse
+import requests
 from discogs_client import Client, Master, Release
 from discogs_client.exceptions import DiscogsAPIError
-from requests.exceptions import ConnectionError
 
 import beets
 import beets.ui
 from beets import config, util
-from beets.autotag.distance import string_dist
-from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.autotag import AlbumInfo, TrackInfo, string_dist
 from beets.exceptions import UserError
 from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
 
@@ -59,7 +58,7 @@ API_SECRET = "plxtUTqoCzwxZpqdPysCwGuBSmZNdZVy"
 
 # Exceptions that discogs_client should really handle but does not.
 CONNECTION_ERRORS = (
-    ConnectionError,
+    requests.exceptions.ConnectionError,
     socket.error,
     http.client.HTTPException,
     ValueError,  # JSON decoding raises a ValueError.
@@ -242,9 +241,7 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         except DiscogsAPIError as e:
             if e.status_code != 404:
                 self._log.debug(
-                    "API Error: {} (query: {})",
-                    e,
-                    result.data["resource_url"],
+                    "API Error: {} (query: {})", e, result.data["resource_url"]
                 )
                 if e.status_code == 401:
                     self.reset_auth()
@@ -325,9 +322,7 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         except DiscogsAPIError as e:
             if e.status_code != 404:
                 self._log.debug(
-                    "API Error: {} (query: {})",
-                    e,
-                    result.data["resource_url"],
+                    "API Error: {} (query: {})", e, result.data["resource_url"]
                 )
                 if e.status_code == 401:
                     self.reset_auth()
@@ -360,8 +355,7 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
                 result.refresh()
             except CONNECTION_ERRORS:
                 self._log.debug(
-                    "Connection error in release lookup: {0}",
-                    result,
+                    "Connection error in release lookup: {0}", result
                 )
                 return None
 
@@ -487,9 +481,7 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         return None
 
     def get_tracks(
-        self,
-        tracklist: list[Track],
-        albumartistinfo: ArtistState,
+        self, tracklist: list[Track], albumartistinfo: ArtistState
     ) -> list[TrackInfo]:
         """Returns a list of TrackInfo objects for a discogs tracklist."""
         try:
@@ -614,9 +606,7 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         return tracklist
 
     def _add_merged_subtracks(
-        self,
-        tracklist: list[Track],
-        subtracks: list[Track],
+        self, tracklist: list[Track], subtracks: list[Track]
     ) -> None:
         """Modify `tracklist` in place, merging a list of `subtracks` into
         a single track into `tracklist`."""

@@ -28,6 +28,7 @@ class Lyrics:
     ORIGINAL_PAT = re.compile(r"[^\n]+ / ")
     TRANSLATION_PAT = re.compile(r" / [^\n]+")
     LINE_PARTS_PAT = re.compile(r"^(\[\d\d:\d\d\.\d\d\]|) *(.*)$")
+    LRC_TIMESTAMP_PAT = re.compile(r"\[(\d{2}):(\d{2})\.(\d{2})\]")
 
     text: str
     backend: str | None = None
@@ -116,6 +117,25 @@ class Lyrics:
     def text_lines(self) -> list[str]:
         """Return per-line lyric text with timestamps removed."""
         return [ln for _, ln in self._split_lines]
+
+    @cached_property
+    def sylt(self) -> list[tuple[str, int]]:
+        """Return SYLT-format (text, milliseconds) pairs from LRC timestamps.
+
+        Converts each LRC-timestamped line into a ``(text, milliseconds)``
+        tuple as expected by the ID3v2 SYLT frame.  Lines without a timestamp
+        (e.g. blank separator lines) are omitted.
+        """
+        result: list[tuple[str, int]] = []
+        for ts, text in self._split_lines:
+            if not ts:
+                continue
+            ts_m = self.LRC_TIMESTAMP_PAT.match(ts)
+            if ts_m:
+                m, s, cs = map(int, ts_m.groups())
+                ms = (m * 60 + s) * 1000 + cs * 10
+                result.append((text, ms))
+        return result
 
     @property
     def synced(self) -> bool:

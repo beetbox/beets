@@ -86,10 +86,7 @@ class TidalAPI(RequestHandler):
 
         # Tidal allows at max 20 filters per request. This needs a bit of extra
         # logic sadly.
-        doc: TrackDocument = {
-            "data": [],
-            "included": [],
-        }
+        doc: TrackDocument = {"data": [], "included": []}
         for id_batch, isrc_batch in zip_longest(
             _batched(ids, MAX_FILTER_SIZE),
             _batched(isrcs, MAX_FILTER_SIZE),
@@ -126,10 +123,7 @@ class TidalAPI(RequestHandler):
 
         # Tidal allows at max 20 filters per request. This needs a bit of extra
         # logic sadly.
-        doc: AlbumDocument = {
-            "data": [],
-            "included": [],
-        }
+        doc: AlbumDocument = {"data": [], "included": []}
         for id_batch, barcode_batch in zip_longest(
             _batched(ids, MAX_FILTER_SIZE),
             _batched(barcode_ids, MAX_FILTER_SIZE),
@@ -175,8 +169,7 @@ class TidalAPI(RequestHandler):
 
     @staticmethod
     def merge_multiresource_pagination(
-        a: Document[list[T]],
-        b: Document[list[T]],
+        a: Document[list[T]], b: Document[list[T]]
     ) -> Document[list[T]]:
         """
         Merge of b into a, following JSON:API spec rules.
@@ -221,11 +214,9 @@ class TidalAPI(RequestHandler):
             "links": {"next": url},
         }
 
-        while next := doc.get("links", {}).get("next"):
+        while next_ := doc.get("links", {}).get("next"):
             page_doc = self.get_json(
-                url=next,
-                params={**params, "include": include},
-                **kwargs,
+                url=next_, params={**params, "include": include}, **kwargs
             )
             doc = self.merge_multiresource_pagination(doc, page_doc)
 

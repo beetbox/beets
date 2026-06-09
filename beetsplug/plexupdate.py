@@ -25,17 +25,14 @@ def get_music_section(
     url = urljoin(f"{get_protocol(secure)}://{host}:{port}", api_endpoint)
 
     # Sends request.
-    r = requests.get(
-        url,
-        verify=not ignore_cert_errors,
-        timeout=10,
-    )
+    r = requests.get(url, verify=not ignore_cert_errors, timeout=10)
 
     # Parse xml tree and extract music section key.
     tree = ElementTree.fromstring(r.content)
     for child in tree.findall("Directory"):
         if child.get("title") == library_name:
             return child.get("key")
+    return None
 
 
 def update_plex(host, port, token, library_name, secure, ignore_cert_errors):
@@ -55,12 +52,7 @@ def update_plex(host, port, token, library_name, secure, ignore_cert_errors):
     url = urljoin(f"{get_protocol(secure)}://{host}:{port}", api_endpoint)
 
     # Sends request and returns requests object.
-    r = requests.get(
-        url,
-        verify=not ignore_cert_errors,
-        timeout=10,
-    )
-    return r
+    return requests.get(url, verify=not ignore_cert_errors, timeout=10)
 
 
 def append_token(url, token):
@@ -73,8 +65,7 @@ def append_token(url, token):
 def get_protocol(secure):
     if secure:
         return "https"
-    else:
-        return "http"
+    return "http"
 
 
 class PlexUpdate(BeetsPlugin):

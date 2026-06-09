@@ -33,15 +33,8 @@ from flask import (
 from typing_extensions import Self
 
 from beets import config
-from beets.dbcore.query import (
-    AndQuery,
-    FixedFieldSort,
-    MatchQuery,
-    MultipleSort,
-    NotQuery,
-    RegexpQuery,
-    SlowFieldSort,
-)
+from beets.dbcore.query import AndQuery, MatchQuery, NotQuery, RegexpQuery
+from beets.dbcore.sort import FixedFieldSort, MultipleSort, SlowFieldSort
 from beets.library import Album, Item
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, _open_library
@@ -671,8 +664,7 @@ class ImageDocument(AURADocument):
         # Check the image actually exists
         if os.path.isfile(img_path):
             return img_path
-        else:
-            return None
+        return None
 
     @staticmethod
     def get_resource_object(lib: Library, image_id):

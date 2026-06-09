@@ -54,7 +54,7 @@ class Ref(NamedTuple):
         if len(line_parts := line.split(" ", 1)) == 1:
             return cls(line, None, None)
 
-        id, path_with_name = line_parts
+        id_, path_with_name = line_parts
         parts = [p.strip() for p in path_with_name.split(":", 1)]
 
         if len(parts) == 1:
@@ -62,7 +62,7 @@ class Ref(NamedTuple):
         else:
             name, path = parts
 
-        return cls(id, path, name)
+        return cls(id_, path, name)
 
     @property
     def url(self) -> str:
@@ -115,10 +115,7 @@ def create_rst_replacements() -> list[Replacement]:
     return [
         # Replace explicitly defined substitutions from rst_epilog
         #    |BeetsPlugin| -> :class:`beets.plugins.BeetsPlugin`
-        (
-            r"\|\w[^ ]*\|",
-            lambda m: explicit_replacements.get(m[0], m[0]),
-        ),
+        (r"\|\w[^ ]*\|", lambda m: explicit_replacements.get(m[0], m[0])),
         # Replace Sphinx directives by documentation URLs, e.g.,
         #   :ref:`/plugins/autobpm` -> [AutoBPM Plugin](DOCS/plugins/autobpm.html)  # noqa: E501
         #   :ref:`list-cmd` -> [list command](DOCS/reference/cli.html#list-cmd)

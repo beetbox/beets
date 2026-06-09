@@ -31,10 +31,7 @@ if TYPE_CHECKING:
 METASYNC_MODULE = "beetsplug.metasync"
 
 # Dictionary to map the MODULE and the CLASS NAME of meta sources
-SOURCES = {
-    "amarok": "Amarok",
-    "itunes": "Itunes",
-}
+SOURCES = {"amarok": "Amarok", "itunes": "Itunes"}
 
 
 class MetaSource(metaclass=ABCMeta):

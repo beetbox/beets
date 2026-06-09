@@ -25,12 +25,7 @@ from beets.plugins import BeetsPlugin
 class IPFSPlugin(BeetsPlugin):
     def __init__(self):
         super().__init__()
-        self.config.add(
-            {
-                "auto": True,
-                "nocopy": False,
-            }
-        )
+        self.config.add({"auto": True, "nocopy": False})
 
         if self.config["auto"]:
             self.import_stages = [self.auto_add]
@@ -193,6 +188,7 @@ class IPFSPlugin(BeetsPlugin):
         # prefix=True). However, that should be fine since the hash will not
         # exceed MAX_PATH.
         shutil.rmtree(util.syspath(_hash, prefix=False))
+        return None
 
     def ipfs_publish(self, lib):
         with tempfile.NamedTemporaryFile() as tmp:
@@ -209,6 +205,7 @@ class IPFSPlugin(BeetsPlugin):
                 self._log.error(msg)
                 return False
             self._log.info("hash of library: {}", output)
+        return None
 
     def ipfs_import(self, lib, args):
         _hash = args[0]
@@ -248,6 +245,7 @@ class IPFSPlugin(BeetsPlugin):
                 added_album = jlib.add_album(new_album)
                 added_album.ipfs = album.ipfs
                 added_album.store()
+        return None
 
     def already_added(self, check, jlib):
         for jalbum in jlib.albums():
@@ -268,8 +266,7 @@ class IPFSPlugin(BeetsPlugin):
 
     def query(self, lib, args):
         rlib = self.get_remote_lib(lib)
-        albums = rlib.albums(args)
-        return albums
+        return rlib.albums(args)
 
     def get_remote_lib(self, lib):
         lib_root = os.path.dirname(lib.path)
@@ -313,3 +310,4 @@ class IPFSPlugin(BeetsPlugin):
         new_album = tmplib.add_album(items)
         new_album.ipfs = album.ipfs
         new_album.store(inherit=False)
+        return None

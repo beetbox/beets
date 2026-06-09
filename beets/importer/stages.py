@@ -299,9 +299,7 @@ def manipulate_files(session: ImportSession, task: ImportTask):
             operation = None
 
         task.manipulate_files(
-            session=session,
-            operation=operation,
-            write=session.config["write"],
+            session=session, operation=operation, write=session.config["write"]
         )
 
     # Progress, cleanup, and event.

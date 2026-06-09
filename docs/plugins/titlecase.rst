@@ -37,7 +37,7 @@ your path formatter, and set ``auto`` to ``no`` in the configuration.
 ::
 
     paths:
-      default: %titlecase($albumartist)/$titlecase($albumtitle)/$track $title
+      default: %titlecase{$albumartist}/%titlecase{$album}/$track $title
 
 You can now configure ``titlecase`` to your preference.
 
@@ -166,7 +166,7 @@ Default
 
      By default, titlecase runs on the candidates that are received, adjusting them before
      you make your selection and creating different weight calculations. If you'd rather
-     see the data as recieved from the database, set this to true to run after you make
+     see the data as received from the database, set this to true to run after you make
      your tag choice.
 
 Dangerous Fields

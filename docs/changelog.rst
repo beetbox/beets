@@ -16,6 +16,17 @@ New features
   also available as config options via ``force`` and ``keep_new``.
 - :ref:`import-cmd`: The ``--nomove`` / ``-M`` CLI flag can now be used to
   override the ``move: yes`` config option during import.
+- :doc:`plugins/lyrics`: Write synced (LRC) lyrics to the ``SYLT`` (synchronized
+  lyrics) ID3 frame and plain text to ``USLT`` for ID3-tagged files, instead of
+  storing raw LRC timestamps in ``USLT``. Players that only support ``USLT``
+  continue to see readable plain lyrics. :bug:`6541`
+- :doc:`plugins/listenbrainz`: Add support for importing ListenBrainz listening
+  history from an export file. Use the ``-f`` / ``--export-file`` flag to
+  specify the path to the ListenBrainz export file.
+- :doc:`plugins/musicbrainz`: Introduce
+  :conf:`plugins.musicbrainz:aliases_as_credits` to make
+  aliases-as-artist-credit optional.
+- :doc:`plugins/badfiles`: Added settings for auto error and warning actions.
 
 Bug fixes
 ~~~~~~~~~
@@ -38,14 +49,52 @@ Bug fixes
   ``genres:=~Classical``. :bug:`6598`
 - Fix a CLI help formatting regression that moved command descriptions to
   separate lines; descriptions are inline again, with regression test coverage.
+- :ref:`modify-cmd`: Fix ``beet modify -a`` splitting multi-value field strings
+  (like ``artists``, ``genres``) into individual characters when modifying
+  albums. Album field types now fall back to the corresponding item field type
+  definitions. :bug:`5690`
+- ``AttrDict.__getattribute__`` now unmasks ``AttributeError`` raised inside a
+  ``cached_property`` body. Previously such errors were swallowed by the
+  ``__getattr__`` fallback, producing a misleading message about the property
+  name itself. The wrapped ``RuntimeError`` keeps the original traceback so it
+  still points at the real failing line. :bug:`6558`
+- ``ReadError`` and ``WriteError`` now include the file path and the underlying
+  reason in their message instead of a ``<super: ...>`` object representation.
+  :bug:`6560`
+- :doc:`plugins/mbcollection`: Handle MusicBrainz ``401 Unauthorized`` errors
+  during ``mbupdate`` without crashing, and log a clearer message that points
+  users to ``musicbrainz.user`` and ``musicbrainz.pass`` configuration.
+  :bug:`6651`
+- :doc:`plugins/musicbrainz`: Fix ``KeyError: 'aliases'`` crash when looking up
+  releases with more than 500 tracks.
+- :doc:`plugins/fetchart`: Catch ``OSError`` in ``_set_art`` so that permission
+  errors (e.g. a file locked by another process) are logged as warnings instead
+  of crashing beets. :bug:`6193`
+- :doc:`plugins/lyrics`: Improve Musica.com lyric scraping so fetched lyrics no
+  longer omit the opening verse or include non-lyric page content.
+- :doc:`plugins/convert`: Tidy the ``--playlist`` help text so it no longer has
+  awkward indentation in CLI output.
+- :doc:`plugins/spotify`: Improved Spotify API parsing to handle missing label
+  data :bug:`6679`
+- :ref:`move-cmd`: ``beet move`` no longer crashes when an item referenced in
+  the database has been deleted from disk. Missing items are now skipped with a
+  warning and the command continues. :bug:`6720`
 
-..
-    For plugin developers
-    ~~~~~~~~~~~~~~~~~~~~~
+For plugin developers
+~~~~~~~~~~~~~~~~~~~~~
 
-..
-    Other changes
-    ~~~~~~~~~~~~~
+- Plugin authors can import all autotagger helpers directly from
+  ``beets.autotag``, including match classes, distance helpers, and
+  ``assign_items``, without relying on lower-level autotag modules.
+
+Other changes
+~~~~~~~~~~~~~
+
+- :doc:`plugins/spotify`: ``spotifysync`` now batches its SQLite commit for a
+  sync run, follows the standard beets write-before-store pattern, and logs
+  audio-features API unavailability only once per run.
+- :doc:`plugins/titlecase`: Correct the path format example and document the
+  ``%titlecase{text}`` template function. :bug:`6697`
 
 2.11.0 (May 06, 2026)
 ---------------------

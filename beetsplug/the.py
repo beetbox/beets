@@ -55,8 +55,7 @@ class ThePlugin(BeetsPlugin):
                 else:
                     if not (p.startswith("^") or p.endswith("$")):
                         self._log.warning(
-                            'warning: "{}" will not match string start/end',
-                            p,
+                            'warning: "{}" will not match string start/end', p
                         )
         if self.config["a"]:
             self.patterns = [PATTERN_A, *self.patterns]
@@ -82,9 +81,8 @@ class ThePlugin(BeetsPlugin):
                 r = re.sub(r, "", text).strip()
                 if self.config["strip"]:
                     return r
-                else:
-                    fmt = self.config["format"].as_str()
-                    return fmt.format(r, t.strip()).strip()
+                fmt = self.config["format"].as_str()
+                return fmt.format(r, t.strip()).strip()
         else:
             return ""
 
@@ -98,5 +96,4 @@ class ThePlugin(BeetsPlugin):
                     self._log.debug('"{}" -> "{}"', text, r)
                     break
             return r
-        else:
-            return ""
+        return ""

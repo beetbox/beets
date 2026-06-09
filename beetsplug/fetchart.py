@@ -414,7 +414,6 @@ class ArtSource(RequestMixin, ABC):
         After calling this, `Candidate.path` is set to the image path if
         successful, or to `None` otherwise.
         """
-        pass
 
     def cleanup(self, candidate: Candidate) -> None:
         pass
@@ -543,8 +542,7 @@ class CoverArtArchive(RemoteArtSource):
         """
 
         def get_image_urls(
-            url: str,
-            preferred_width: None | str = None,
+            url: str, preferred_width: None | str = None
         ) -> Iterator[str]:
             try:
                 response = self.request(url)
@@ -739,11 +737,7 @@ class FanartTV(RemoteArtSource):
 
     @staticmethod
     def add_default_config(config: confuse.ConfigView):
-        config.add(
-            {
-                "fanarttv_key": None,
-            }
-        )
+        config.add({"fanarttv_key": None})
         config["fanarttv_key"].redact = True
 
     def get(
@@ -1153,11 +1147,7 @@ class LastFM(RemoteArtSource):
 
     @staticmethod
     def add_default_config(config: confuse.ConfigView) -> None:
-        config.add(
-            {
-                "lastfm_key": None,
-            }
-        )
+        config.add({"lastfm_key": None})
         config["lastfm_key"].redact = True
 
     @classmethod
@@ -1452,9 +1442,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
 
         try:
             sources = sanitize_pairs(
-                cfg_sources,
-                available_sources,
-                raise_on_unknown=True,
+                cfg_sources, available_sources, raise_on_unknown=True
             )
 
             if len(sources) == 0:
@@ -1509,8 +1497,20 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
 
     def _set_art(
         self, album: Album, candidate: Candidate, delete: bool = False
-    ) -> None:
-        album.set_art(candidate.path, delete)
+    ) -> bool:
+        """Set album art from candidate. Returns True on success, False on
+        failure (e.g. permission errors when writing the art file).
+        """
+        try:
+            album.set_art(candidate.path, delete)
+        except OSError as exc:
+            self._log.warning(
+                "fetchart: could not write art for {0.albumartist} - "
+                "{0.album}: {1}",
+                album,
+                exc,
+            )
+            return False
         if self.store_source:
             # store the source of the chosen artwork in a flexible field
             self._log.debug(
@@ -1518,6 +1518,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             )
             album.art_source = candidate.source_name
         album.store()
+        return True
 
     # Synchronous; after music files are put in place.
     def assign_art(self, session: ImportSession, task: ImportTask):
@@ -1604,11 +1605,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         return out
 
     def batch_fetch_art(
-        self,
-        lib: Library,
-        albums: Iterable[Album],
-        force: bool,
-        quiet: bool,
+        self, lib: Library, albums: Iterable[Album], force: bool, quiet: bool
     ) -> None:
         """Fetch album art for each of the albums. This implements the manual
         fetchart CLI command.
@@ -1630,8 +1627,12 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
 
                 candidate = self.art_for_album(album, local_paths)
                 if candidate:
-                    self._set_art(album, candidate)
-                    message = colorize("text_success", "found album art")
+                    if self._set_art(album, candidate):
+                        message = colorize("text_success", "found album art")
+                    else:
+                        message = colorize(
+                            "text_error", "error writing album art"
+                        )
                 else:
                     message = colorize("text_error", "no art found")
                 ui.print_(f"{album}: {message}")

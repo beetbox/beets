@@ -16,6 +16,7 @@
 import ctypes
 import os
 import sys
+from unittest import mock
 
 from beets import util
 from beets.test.helper import IOMixin, PluginTestCase
@@ -48,7 +49,7 @@ class FetchartCliTest(IOMixin, PluginTestCase):
             self.skipTest("unable to set file attributes")
 
     def test_set_art_from_folder(self):
-        self.touch(b"c\xc3\xb6ver.jpg", dir=self.album.path, content="IMAGE")
+        self.touch(b"c\xc3\xb6ver.jpg", dir_=self.album.path, content="IMAGE")
 
         self.run_command("fetchart")
 
@@ -62,21 +63,21 @@ class FetchartCliTest(IOMixin, PluginTestCase):
         assert self.album["artpath"] is None
 
     def test_filesystem_does_not_pick_up_ignored_file(self):
-        self.touch(b"co_ver.jpg", dir=self.album.path, content="IMAGE")
+        self.touch(b"co_ver.jpg", dir_=self.album.path, content="IMAGE")
         self.config["ignore"] = ["*_*"]
         self.run_command("fetchart")
         self.album.load()
         assert self.album["artpath"] is None
 
     def test_filesystem_picks_up_non_ignored_file(self):
-        self.touch(b"cover.jpg", dir=self.album.path, content="IMAGE")
+        self.touch(b"cover.jpg", dir_=self.album.path, content="IMAGE")
         self.config["ignore"] = ["*_*"]
         self.run_command("fetchart")
         self.album.load()
         self.check_cover_is_stored()
 
     def test_filesystem_does_not_pick_up_hidden_file(self):
-        self.touch(b".cover.jpg", dir=self.album.path, content="IMAGE")
+        self.touch(b".cover.jpg", dir_=self.album.path, content="IMAGE")
         if sys.platform == "win32":
             self.hide_file_windows()
         self.config["ignore"] = []  # By default, ignore includes '.*'.
@@ -86,14 +87,14 @@ class FetchartCliTest(IOMixin, PluginTestCase):
         assert self.album["artpath"] is None
 
     def test_filesystem_picks_up_non_hidden_file(self):
-        self.touch(b"cover.jpg", dir=self.album.path, content="IMAGE")
+        self.touch(b"cover.jpg", dir_=self.album.path, content="IMAGE")
         self.config["ignore_hidden"] = True
         self.run_command("fetchart")
         self.album.load()
         self.check_cover_is_stored()
 
     def test_filesystem_picks_up_hidden_file(self):
-        self.touch(b".cover.jpg", dir=self.album.path, content="IMAGE")
+        self.touch(b".cover.jpg", dir_=self.album.path, content="IMAGE")
         if sys.platform == "win32":
             self.hide_file_windows()
         self.config["ignore"] = []  # By default, ignore includes '.*'.
@@ -103,13 +104,13 @@ class FetchartCliTest(IOMixin, PluginTestCase):
         self.check_cover_is_stored()
 
     def test_filesystem_picks_up_webp_file(self):
-        self.touch(b"cover.webp", dir=self.album.path, content="IMAGE")
+        self.touch(b"cover.webp", dir_=self.album.path, content="IMAGE")
         self.run_command("fetchart")
         self.album.load()
         self.check_cover_is_stored("webp")
 
     def test_filesystem_picks_up_png_file(self):
-        self.touch(b"cover.png", dir=self.album.path, content="IMAGE")
+        self.touch(b"cover.png", dir_=self.album.path, content="IMAGE")
         self.run_command("fetchart")
         self.album.load()
         self.check_cover_is_stored("png")
@@ -118,6 +119,20 @@ class FetchartCliTest(IOMixin, PluginTestCase):
         self.config["ui"]["color"] = True
         out = self.run_with_output("fetchart")
         assert " - the älbum: \x1b[1;31mno art found\x1b[39;49;00m\n" == out
+
+    def test_set_art_oserror_is_handled_gracefully(self):
+        """OSError (e.g. PermissionError) in set_art is logged as a warning,
+        not an unhandled crash. Regression test for #6193.
+        """
+        self.touch(b"c\xc3\xb6ver.jpg", dir_=self.album.path, content="IMAGE")
+        with mock.patch(
+            "beets.library.Album.set_art",
+            side_effect=PermissionError("[WinError 32] file in use"),
+        ):
+            out = self.run_with_output("fetchart")
+        self.album.load()
+        assert "error writing album art" in out
+        assert self.album["artpath"] is None
 
     def test_sources_is_a_string(self):
         self.config["fetchart"].set({"sources": "filesystem"})

@@ -74,50 +74,46 @@ def _item(track_info, album_info, album_id):
     a = album_info
 
     return Item(
-        **{
-            "album_id": album_id,
-            "album": a.album,
-            "albumartist": a.artist,
-            "albumartist_credit": a.artist_credit,
-            "albumartist_sort": a.artist_sort,
-            "albumdisambig": a.albumdisambig,
-            "albumstatus": a.albumstatus,
-            "albumtype": a.albumtype,
-            "artist": t.artist,
-            "artist_credit": t.artist_credit,
-            "artist_sort": t.artist_sort,
-            "asin": a.asin,
-            "catalognum": a.catalognum,
-            "comp": a.va,
-            "country": a.country,
-            "day": a.day,
-            "disc": t.medium,
-            "disctitle": t.disctitle,
-            "disctotal": a.mediums,
-            "label": a.label,
-            "language": a.language,
-            "length": t.length,
-            "mb_albumid": a.album_id,
-            "mb_artistid": t.artist_id,
-            "mb_releasegroupid": a.releasegroup_id,
-            "mb_trackid": t.track_id,
-            "media": t.media,
-            "month": a.month,
-            "script": a.script,
-            "title": t.title,
-            "track": t.index,
-            "tracktotal": len(a.tracks),
-            "year": a.year,
-        }
+        album_id=album_id,
+        album=a.album,
+        albumartist=a.artist,
+        albumartist_credit=a.artist_credit,
+        albumartist_sort=a.artist_sort,
+        albumdisambig=a.albumdisambig,
+        albumstatus=a.albumstatus,
+        albumtype=a.albumtype,
+        artist=t.artist,
+        artist_credit=t.artist_credit,
+        artist_sort=t.artist_sort,
+        asin=a.asin,
+        catalognum=a.catalognum,
+        comp=a.va,
+        country=a.country,
+        day=a.day,
+        disc=t.medium,
+        disctitle=t.disctitle,
+        disctotal=a.mediums,
+        label=a.label,
+        language=a.language,
+        length=t.length,
+        mb_albumid=a.album_id,
+        mb_artistid=t.artist_id,
+        mb_releasegroupid=a.releasegroup_id,
+        mb_trackid=t.track_id,
+        media=t.media,
+        month=a.month,
+        script=a.script,
+        title=t.title,
+        track=t.index,
+        tracktotal=len(a.tracks),
+        year=a.year,
     )
 
 
 class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
     """List missing tracks"""
 
-    album_types: ClassVar[dict[str, types.Type]] = {
-        "missing": types.INTEGER,
-    }
+    album_types: ClassVar[dict[str, types.Type]] = {"missing": types.INTEGER}
 
     def __init__(self):
         super().__init__()
@@ -233,8 +229,7 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         for (artist, artist_id), album_ids in album_ids_by_artist.items():
             try:
                 resp = self.mb_api.browse_release_groups(
-                    artist=artist_id,
-                    type="|".join(release_types),
+                    artist=artist_id, type="|".join(release_types)
                 )
             except requests.exceptions.RequestException:
                 self._log.info(

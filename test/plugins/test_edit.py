@@ -188,9 +188,7 @@ class EditCommandTest(IOMixin, EditMixin, BeetsTestCase):
 
         assert mock_write.call_count == self.TRACK_COUNT
         self.assertItemFieldsModified(
-            self.album.items(),
-            self.items_orig,
-            ["title", "mtime"],
+            self.album.items(), self.items_orig, ["title", "mtime"]
         )
 
     def test_title_edit_keep_editing_then_cancel(self, mock_write):
@@ -202,11 +200,7 @@ class EditCommandTest(IOMixin, EditMixin, BeetsTestCase):
         )
 
         assert mock_write.call_count == 0
-        self.assertItemFieldsModified(
-            self.album.items(),
-            self.items_orig,
-            [],
-        )
+        self.assertItemFieldsModified(self.album.items(), self.items_orig, [])
 
     def test_noedit(self, mock_write):
         """Do not edit anything."""

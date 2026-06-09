@@ -42,6 +42,7 @@ Default
             tidal: no
         data_source_mismatch_penalty: 0.5
         search_limit: 5
+        aliases_as_credits: no
 
 .. conf:: host
     :default: musicbrainz.org
@@ -150,6 +151,11 @@ Default
 
     Either ``genre`` or ``tag``. Specify ``genre`` to use just musicbrainz genre and
     ``tag`` to use all user-supplied musicbrainz tags.
+
+.. conf:: aliases_as_credits
+    :default: no
+
+    Use the "aliases" data from MusicBrainz as the value for ``*_credit`` fields.
 
 .. include:: ./shared_metadata_source_config.rst
 
