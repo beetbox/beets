@@ -62,6 +62,8 @@ from beets.util import (
 if TYPE_CHECKING:
     from requests_mock.mocker import Mocker
 
+RUNNING_IN_CI = os.environ.get("GITHUB_ACTIONS") == "true"
+
 
 class LogCapture(logging.Handler):
     def __init__(self):
