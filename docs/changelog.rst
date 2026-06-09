@@ -31,6 +31,8 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- :doc:`plugins/mpdstats`: Fix crashes and invalid configuration when passing
+  ``--host``, ``--port``, or ``--password`` on the command line. :bug:`5404`
 - :ref:`import-cmd`: Fix duplicate album merge during import when running in
   threaded mode. The merge action no longer creates a duplicate folder or
   reports ``could not get filesize`` errors. :bug:`6601`
