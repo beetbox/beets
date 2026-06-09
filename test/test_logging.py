@@ -4,7 +4,6 @@ import logging as log
 import sys
 import threading
 from types import ModuleType
-from unittest.mock import patch
 
 import pytest
 
@@ -152,10 +151,9 @@ class DummyModule(ModuleType):
 class TestLoggingLevel(AsIsImporterMixin, PluginMixin, ImportHelper):
     plugin = "dummy"
 
-    @pytest.fixture(autouse=True, scope="class")
-    def _patch_dummy_module(self):
-        with patch.dict(sys.modules, {"beetsplug.dummy": DummyModule()}):
-            yield
+    @pytest.fixture(autouse=True)
+    def _patch_dummy_module(self, monkeypatch):
+        monkeypatch.setitem(sys.modules, "beetsplug.dummy", DummyModule())
 
     def test_command_level0(self):
         self.config["verbose"] = 0
