@@ -81,6 +81,7 @@ Bug fixes
 - :ref:`move-cmd`: ``beet move`` no longer crashes when an item referenced in
   the database has been deleted from disk. Missing items are now skipped with a
   warning and the command continues. :bug:`6720`
+- :doc:`plugins/fish`: Fix error on plugin initialization.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
