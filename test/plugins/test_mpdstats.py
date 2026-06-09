@@ -19,7 +19,7 @@ from unittest.mock import ANY, Mock, call, patch
 from beets import util
 from beets.library import Item
 from beets.test.helper import PluginTestCase
-from beetsplug.mpdstats import MPDStats
+from beetsplug.mpdstats import MPDStats, mpd_config
 
 
 class MPDStatsTest(PluginTestCase):
@@ -81,3 +81,20 @@ class MPDStatsTest(PluginTestCase):
         log.info.assert_has_calls(
             [call("pause"), call("playing {}", ANY), call("stop")]
         )
+
+    @patch("beetsplug.mpdstats.MPDStats.run")
+    def test_cli_options_override_config(self, run_mock):
+        self.run_command(
+            "mpdstats",
+            "--host",
+            "somehost",
+            "--port",
+            "5000",
+            "--password",
+            "secret",
+        )
+
+        assert mpd_config["host"].as_str() == "somehost"
+        assert mpd_config["port"].get(int) == 5000
+        assert mpd_config["password"].as_str() == "secret"
+        run_mock.assert_called_once_with()
