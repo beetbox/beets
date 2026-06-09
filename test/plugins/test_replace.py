@@ -6,9 +6,18 @@ from mediafile import MediaFile
 
 from beets.exceptions import UserError
 from beets.test import _common
+from beets.test.helper import PluginTestCase
 from beetsplug.replace import ReplacePlugin
 
 replace = ReplacePlugin()
+
+
+class ReplaceCommandTest(PluginTestCase):
+    plugin = "replace"
+
+    def test_command_callback_accepts_cli_arguments(self):
+        with pytest.raises(UserError, match="Usage: beet replace"):
+            self.run_command("replace")
 
 
 class TestReplace:
