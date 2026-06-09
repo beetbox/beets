@@ -54,7 +54,7 @@ class Ref(NamedTuple):
         if len(line_parts := line.split(" ", 1)) == 1:
             return cls(line, None, None)
 
-        id, path_with_name = line_parts
+        id_, path_with_name = line_parts
         parts = [p.strip() for p in path_with_name.split(":", 1)]
 
         if len(parts) == 1:
@@ -62,7 +62,7 @@ class Ref(NamedTuple):
         else:
             name, path = parts
 
-        return cls(id, path, name)
+        return cls(id_, path, name)
 
     @property
     def url(self) -> str:

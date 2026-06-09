@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent / "extensions"))
 
 project = "beets"
 AUTHOR = "Adrian Sampson"
-copyright = "2016, Adrian Sampson"
+copyright = "2016, Adrian Sampson"  # noqa: A001
 
 master_doc = "index"
 language = "en"

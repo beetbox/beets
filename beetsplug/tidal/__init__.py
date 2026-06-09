@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, overload
 import confuse
 
 from beets import ui
-from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.autotag import AlbumInfo, TrackInfo
 from beets.exceptions import UserError
 from beets.logging import getLogger
 from beets.metadata_plugins import MetadataSourcePlugin
@@ -432,8 +432,7 @@ class TidalPlugin(MetadataSourcePlugin):
         """
         if version := attributes.get("version"):
             return f"{attributes['title']} ({version})"
-        else:
-            return attributes["title"]
+        return attributes["title"]
 
     @staticmethod
     def _parse_data_url(
@@ -457,8 +456,8 @@ class TidalPlugin(MetadataSourcePlugin):
     def _parse_label(
         attributes: AlbumAttributes | TrackAttributes,
     ) -> str | None:
-        if copyright := attributes.get("copyright"):
-            return copyright["text"]
+        if copyright_ := attributes.get("copyright"):
+            return copyright_["text"]
         return None
 
     @staticmethod

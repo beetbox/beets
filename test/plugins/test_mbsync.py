@@ -14,12 +14,12 @@
 
 from unittest.mock import Mock, patch
 
-from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.autotag import AlbumInfo, TrackInfo
 from beets.library import Item
-from beets.test.helper import PytestPluginTestHelper
+from beets.test.helper import PluginTestHelper
 
 
-class TestMbsyncCli(PytestPluginTestHelper):
+class TestMbsyncCli(PluginTestHelper):
     plugin = "mbsync"
 
     @patch(

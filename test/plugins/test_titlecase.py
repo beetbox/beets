@@ -16,7 +16,7 @@
 
 from unittest.mock import patch
 
-from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.autotag import AlbumInfo, TrackInfo
 from beets.importer import ImportSession, ImportTask
 from beets.library import Item
 from beets.test.helper import PluginTestCase

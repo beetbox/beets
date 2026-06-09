@@ -1026,7 +1026,6 @@ class AudioToolsBackend(Backend):
             rg = self._mod_replaygain.ReplayGain(audiofile.sample_rate())
         except ValueError:
             raise ReplayGainError(f"Unsupported sample rate {item.samplerate}")
-            return
         return rg
 
     def compute_track_gain(self, task: AnyRgTask) -> AnyRgTask:
@@ -1296,15 +1295,14 @@ class ReplayGainPlugin(BeetsPlugin):
                 self.backend_instance.NAME,
                 self._log,
             )
-        else:
-            return RgTask(
-                items,
-                album,
-                self.config["targetlevel"].as_number(),
-                self.peak_method,
-                self.backend_instance.NAME,
-                self._log,
-            )
+        return RgTask(
+            items,
+            album,
+            self.config["targetlevel"].as_number(),
+            self.peak_method,
+            self.backend_instance.NAME,
+            self._log,
+        )
 
     def handle_album(self, album: Album, write: bool, force: bool = False):
         """Compute album and track replay gain store it in all of the

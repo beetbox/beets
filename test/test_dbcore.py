@@ -25,7 +25,7 @@ import pytest
 
 from beets import dbcore
 from beets.dbcore import query, sort, types
-from beets.dbcore.db import DBCustomFunctionError, Index
+from beets.dbcore.db import DBCustomFunctionError, FormattedMapping, Index
 from beets.library import Album, Item, LibModel
 from beets.util import cached_classproperty
 
@@ -68,6 +68,7 @@ class ModelFixture1(LibModel):
         "some_sort": SortFixture
     }
     _indices = (Index("field_one_index", ("field_one",)),)
+    _formatter = FormattedMapping
 
     @cached_classproperty
     def _types(cls):

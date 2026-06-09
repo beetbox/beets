@@ -90,7 +90,7 @@ class InlinePlugin(BeetsPlugin):
                     "syntax error in inline field definition:\n{}",
                     traceback.format_exc(),
                 )
-                return
+                return None
             else:
                 is_expr = False
         else:
@@ -118,18 +118,18 @@ class InlinePlugin(BeetsPlugin):
                     raise InlineError(python_code, exc)
 
             return _expr_func
-        else:
-            # For function bodies, invoke the function with values as global
-            # variables.
-            def _func_func(obj):
-                old_globals = dict(func.__globals__)
-                func.__globals__.update(_dict_for(obj))
-                try:
-                    return func(obj)
-                except Exception as exc:
-                    raise InlineError(python_code, exc)
-                finally:
-                    func.__globals__.clear()
-                    func.__globals__.update(old_globals)
 
-            return _func_func
+        # For function bodies, invoke the function with values as global
+        # variables.
+        def _func_func(obj):
+            old_globals = dict(func.__globals__)
+            func.__globals__.update(_dict_for(obj))
+            try:
+                return func(obj)
+            except Exception as exc:
+                raise InlineError(python_code, exc)
+            finally:
+                func.__globals__.clear()
+                func.__globals__.update(old_globals)
+
+        return _func_func

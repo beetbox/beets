@@ -24,8 +24,8 @@ class SubstitutePluginTest(PluginTestCase):
 
     def run_substitute(self, config, cases):
         with self.configure_plugin(config):
-            for input, expected in cases:
-                assert Substitute().tmpl_substitute(input) == expected
+            for input_, expected in cases:
+                assert Substitute().tmpl_substitute(input_) == expected
 
     def test_simple_substitute(self):
         self.run_substitute(

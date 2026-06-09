@@ -82,7 +82,7 @@ class FishPlugin(BeetsPlugin):
             "--extravalues",
             action="append",
             type="choice",
-            choices=library.Item.all_keys() + library.Album.all_keys(),
+            choices=library.Item.all_keys() | library.Album.all_keys(),
             help="include specified field *values* in completions",
         )
         cmd.parser.add_option(
@@ -114,7 +114,7 @@ class FishPlugin(BeetsPlugin):
             (commands.default_commands + plugins.commands()),
             key=attrgetter("name"),
         )
-        fields = sorted(set(library.Album.all_keys() + library.Item.all_keys()))
+        fields = sorted(library.Album.all_keys() | library.Item.all_keys())
         # Collect commands, their aliases, and their help text
         cmd_names_help = []
         for cmd in beetcmds:
@@ -179,7 +179,7 @@ def get_set_of_values_for_field(lib, fields):
 
 
 def get_basic_beet_options():
-    word = (
+    return (
         BL_NEED2.format("-l format-item", "-f -d 'print with custom format'")
         + BL_NEED2.format("-l format-album", "-f -d 'print with custom format'")
         + BL_NEED2.format(
@@ -198,7 +198,6 @@ def get_basic_beet_options():
             "-s  h  -l help", "-f -d 'print this help message and exit'"
         )
     )
-    return word
 
 
 def get_subcommands(cmd_name_and_help, nobasicfields, extravalues):

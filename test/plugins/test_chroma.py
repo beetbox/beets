@@ -17,7 +17,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from beets import metadata_plugins
-from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.autotag import AlbumInfo, TrackInfo
 from beets.library import Item
 from beets.test.helper import ImportTestCase, IOMixin, PluginMixin
 from beetsplug import chroma
@@ -49,9 +49,9 @@ class ChromaTest(IOMixin, PluginMixin, ImportTestCase):
     def run_search(self, fp):
         return self.run_with_output("chromasearch", "-s", fp, "-f", "$title")
 
-    def line_count(self, str):
+    def line_count(self, str_):
         return len(
-            [line for line in str.split("\n") if line.strip(" \n") != ""]
+            [line for line in str_.split("\n") if line.strip(" \n") != ""]
         )
 
     def compare_fingerprints(self, *args, **kwargs):

@@ -39,7 +39,7 @@ def get_art(log, item):
         mf = mediafile.MediaFile(syspath(item.path))
     except mediafile.UnreadableFileError as exc:
         log.warning("Could not extract art from {.filepath}: {}", item, exc)
-        return
+        return None
 
     return mf.art
 
@@ -65,7 +65,7 @@ def embed_item(
         if is_similar is None:
             log.warning("Error while checking art similarity; skipping.")
             return
-        elif not is_similar:
+        if not is_similar:
             log.info("Image not similar; skipping.")
             return
 
@@ -143,10 +143,9 @@ def resize_image(log, imagepath, maxwidth, quality):
         maxwidth,
         quality,
     )
-    imagepath = ArtResizer.shared.resize(
+    return ArtResizer.shared.resize(
         maxwidth, syspath(imagepath), quality=quality
     )
-    return imagepath
 
 
 def check_art_similarity(
@@ -176,13 +175,13 @@ def extract(log, outpath, item):
     outpath = bytestring_path(outpath)
     if not art:
         log.info("No album art present in {}, skipping.", item)
-        return
+        return None
 
     # Add an extension to the filename.
     ext = mediafile.image_extension(art)
     if not ext:
         log.warning("Unknown image type in {.filepath}.", item)
-        return
+        return None
     outpath += bytestring_path(f".{ext}")
 
     log.info(
@@ -198,6 +197,7 @@ def extract_first(log, outpath, items):
         real_path = extract(log, outpath, item)
         if real_path:
             return real_path
+    return None
 
 
 def clear_item(item, log):

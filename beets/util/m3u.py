@@ -22,8 +22,6 @@ from beets.util import FilesystemError, mkdirall, normpath, syspath
 class EmptyPlaylistError(Exception):
     """Raised when a playlist file without media files is saved or loaded."""
 
-    pass
-
 
 class M3UFile:
     """Reads and writes m3u or m3u8 playlist files."""

@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 import pytest
 
-from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.autotag import AlbumInfo, TrackInfo
 from beets.library import Album, Item
 from beets.test.helper import IOMixin, PluginMixin, TestHelper
 

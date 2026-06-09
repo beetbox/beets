@@ -5,7 +5,7 @@ from functools import cache
 
 import pytest
 
-from beets.autotag.distance import Distance
+from beets.autotag import Distance
 from beets.dbcore.query import Query
 from beets.test._common import DummyIO
 from beets.test.helper import ConfigMixin
@@ -95,6 +95,7 @@ def pytest_make_parametrize_id(config, val, argname):
 def pytest_assertrepr_compare(op, left, right):
     if isinstance(left, Distance) or isinstance(right, Distance):
         return [f"Comparing Distance: {float(left)} {op} {float(right)}"]
+    return None
 
 
 @pytest.fixture(autouse=True)
