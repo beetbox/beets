@@ -82,7 +82,7 @@ class FishPlugin(BeetsPlugin):
             "--extravalues",
             action="append",
             type="choice",
-            choices=library.Item.all_keys() | library.Album.all_keys(),
+            choices=list(library.Item.all_keys() | library.Album.all_keys()),
             help="include specified field *values* in completions",
         )
         cmd.parser.add_option(
