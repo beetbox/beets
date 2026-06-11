@@ -35,7 +35,7 @@ from bs4 import BeautifulSoup
 from unidecode import unidecode
 from urllib3.util.retry import Retry
 
-from beets import __version__, plugins, ui
+from beets import plugins, ui
 from beets.autotag import string_dist
 from beets.dbcore import types
 from beets.dbcore.query import FalseQuery
@@ -43,7 +43,12 @@ from beets.library import Item, parse_query_string
 from beets.util.config import sanitize_choices
 from beets.util.lyrics import INSTRUMENTAL_LYRICS, Lyrics
 
-from ._utils.requests import HTTPNotFoundError, RateLimitAdapter, RequestHandler
+from ._utils.requests import (
+    HTTPNotFoundError,
+    RateLimitAdapter,
+    RequestHandler,
+    TimeoutAndRetrySession,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator
@@ -167,12 +172,13 @@ def slug(text: str) -> str:
     return re.sub(r"\W+", "-", unidecode(text).lower().strip()).strip("-")
 
 
-class LyricsSession(requests.Session):
+class LyricsSession(TimeoutAndRetrySession):
     """HTTP session for lyrics backends with rate limiting and exponential backoff.
 
-    Each backend instance gets its own session so rate limits apply independently
-    per API source. Combines a fixed rate limit with exponential backoff on rate
-    limit (429) responses.
+    Builds on :class:`TimeoutAndRetrySession` — inherits User-Agent header,
+    default timeout, and response status checking. Adds a :class:`RateLimitAdapter`
+    to enforce a minimum interval between requests, and configures urllib3 Retry
+    with exponential backoff on rate limit (429) responses.
     """
 
     def __init__(self, rate_limit: float = 0.25):
@@ -183,10 +189,6 @@ class LyricsSession(requests.Session):
                 requests (default 0.25s = 4 requests/sec).
         """
         super().__init__()
-        self.headers.setdefault(
-            "User-Agent", f"beets/{__version__} https://beets.io/"
-        )
-
         retry = Retry(
             total=6,
             backoff_factor=1.0,
@@ -201,12 +203,6 @@ class LyricsSession(requests.Session):
         adapter = RateLimitAdapter(rate_limit=rate_limit, max_retries=retry)
         self.mount("https://", adapter)
         self.mount("http://", adapter)
-
-    def request(self, *args, **kwargs):
-        kwargs.setdefault("timeout", 10)
-        r = super().request(*args, **kwargs)
-        r.raise_for_status()
-        return r
 
 
 class LyricsRequestHandler(RequestHandler):
