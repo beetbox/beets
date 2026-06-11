@@ -208,7 +208,7 @@ class LyricsSession(TimeoutAndRetrySession):
 class LyricsRequestHandler(RequestHandler):
     _log: Logger
 
-    def create_session(self) -> requests.Session:
+    def create_session(self) -> TimeoutAndRetrySession:
         """Return a rate-limited session for lyrics HTTP requests."""
         return LyricsSession()
 
