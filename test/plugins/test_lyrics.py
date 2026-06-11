@@ -16,12 +16,14 @@
 
 from __future__ import annotations
 
+import logging
 import re
 import textwrap
 from functools import partial
 from http import HTTPStatus
 from types import SimpleNamespace
 from typing import TYPE_CHECKING
+from unittest.mock import Mock
 
 import pytest
 import requests
@@ -693,6 +695,415 @@ class TestLRCLibLyrics(LyricsBackendTest):
         else:
             assert lyrics
             assert lyrics.text == expected_lyrics
+
+
+class TestTidalLyrics(LyricsBackendTest):
+    @pytest.fixture(scope="class")
+    def backend_name(self):
+        return "tidal"
+
+    @staticmethod
+    def search_doc(
+        *,
+        track_id="track-1",
+        artist="Target Artist",
+        title="Target Title",
+        include_artist=True,
+    ):
+        included = [
+            {
+                "id": track_id,
+                "type": "tracks",
+                "attributes": {"title": title},
+                "relationships": {
+                    "artists": {"data": [{"id": "artist-1", "type": "artists"}]}
+                },
+            }
+        ]
+        if include_artist:
+            included.append(
+                {
+                    "id": "artist-1",
+                    "type": "artists",
+                    "attributes": {"name": artist},
+                }
+            )
+
+        return {
+            "data": {
+                "id": "search",
+                "type": "searchResults",
+                "attributes": {"trackingId": "tracking-id"},
+                "relationships": {
+                    "tracks": {"data": [{"id": track_id, "type": "tracks"}]}
+                },
+            },
+            "included": included,
+        }
+
+    @staticmethod
+    def lyrics_doc(
+        *,
+        track_id="track-1",
+        lyric_id="lyric-1",
+        text="plain lyrics",
+        lrc_text="[00:00.00] synced lyrics",
+        status="OK",
+    ):
+        attributes = {"text": text, "lrcText": lrc_text}
+        if status is not None:
+            attributes["technicalStatus"] = status
+
+        return {
+            "data": [
+                {
+                    "id": track_id,
+                    "type": "tracks",
+                    "relationships": {
+                        "lyrics": {"data": [{"id": lyric_id, "type": "lyrics"}]}
+                    },
+                }
+            ],
+            "included": [
+                {"id": lyric_id, "type": "lyrics", "attributes": attributes}
+            ],
+        }
+
+    @pytest.fixture
+    def tidal_api(self):
+        return Mock(
+            search_results=Mock(return_value=self.search_doc()),
+            get_tracks=Mock(return_value=self.lyrics_doc()),
+        )
+
+    @pytest.fixture
+    def fetch_lyrics(self, backend, monkeypatch, tidal_api):
+        monkeypatch.setattr(backend, "api", tidal_api)
+        monkeypatch.setattr(backend, "token_has_required_scopes", True)
+        return partial(backend.fetch, "Target Artist", "Target Title", "", 0)
+
+    @pytest.mark.parametrize(
+        "plugin_config, expected_lyrics",
+        [
+            pytest.param({"synced": False}, "plain lyrics", id="plain"),
+            pytest.param(
+                {"synced": True}, "[00:00.00] synced lyrics", id="synced"
+            ),
+        ],
+    )
+    def test_synced_config_option(
+        self, fetch_lyrics, expected_lyrics, backend_name
+    ):
+        actual = fetch_lyrics()
+
+        assert actual
+        assert actual.text == expected_lyrics
+        assert actual.backend == backend_name
+        assert actual.url == "https://tidal.com/browse/track/track-1"
+
+    def test_uses_tidal_country_code(self, fetch_lyrics, tidal_api):
+        fetch_lyrics()
+
+        tidal_api.search_results.assert_called_once_with(
+            "Target Artist Target Title",
+            include=["tracks.artists"],
+            country_code="US",
+        )
+        tidal_api.get_tracks.assert_called_once_with(
+            ids=["track-1"], include=["lyrics"], country_code="US"
+        )
+
+    def test_fetches_matched_tracks_in_batch(self, fetch_lyrics, tidal_api):
+        search_data = self.search_doc()
+        search_data["data"]["relationships"]["tracks"]["data"].append(
+            {"id": "track-2", "type": "tracks"}
+        )
+        search_data["included"].append(
+            {
+                "id": "track-2",
+                "type": "tracks",
+                "attributes": {"title": "Target Title"},
+                "relationships": {
+                    "artists": {"data": [{"id": "artist-1", "type": "artists"}]}
+                },
+            }
+        )
+        tidal_api.search_results.return_value = search_data
+        tidal_api.get_tracks.return_value = {
+            "data": [
+                {
+                    "id": "track-1",
+                    "type": "tracks",
+                    "relationships": {"lyrics": {"data": []}},
+                },
+                {
+                    "id": "track-2",
+                    "type": "tracks",
+                    "relationships": {
+                        "lyrics": {
+                            "data": [{"id": "lyric-2", "type": "lyrics"}]
+                        }
+                    },
+                },
+            ],
+            "included": [
+                {
+                    "id": "lyric-2",
+                    "type": "lyrics",
+                    "attributes": {
+                        "technicalStatus": "OK",
+                        "text": "second track lyrics",
+                    },
+                }
+            ],
+        }
+
+        actual = fetch_lyrics()
+
+        assert actual
+        assert actual.text == "second track lyrics"
+        assert actual.url == "https://tidal.com/browse/track/track-2"
+        tidal_api.get_tracks.assert_called_once_with(
+            ids=["track-1", "track-2"], include=["lyrics"], country_code="US"
+        )
+
+    def test_ignores_unrelated_search_included_items(
+        self, fetch_lyrics, tidal_api
+    ):
+        search_data = self.search_doc()
+        search_data["included"].append({"id": "album-1", "type": "albums"})
+        tidal_api.search_results.return_value = search_data
+
+        actual = fetch_lyrics()
+
+        assert actual
+        assert actual.text == "plain lyrics"
+
+    def test_skips_search_without_tracks_relationship(
+        self, fetch_lyrics, tidal_api
+    ):
+        search_data = self.search_doc()
+        search_data["data"]["relationships"] = {}
+        tidal_api.search_results.return_value = search_data
+
+        assert fetch_lyrics() is None
+        tidal_api.get_tracks.assert_not_called()
+
+    def test_skips_search_result_missing_sideloaded_track(
+        self, fetch_lyrics, tidal_api
+    ):
+        search_data = self.search_doc()
+        search_data["included"] = [
+            item for item in search_data["included"] if item["type"] != "tracks"
+        ]
+        tidal_api.search_results.return_value = search_data
+
+        assert fetch_lyrics() is None
+        tidal_api.get_tracks.assert_not_called()
+
+    def test_skips_track_missing_from_batched_response(
+        self, fetch_lyrics, tidal_api
+    ):
+        tidal_api.get_tracks.return_value = {"data": [], "included": []}
+
+        assert fetch_lyrics() is None
+
+    def test_skips_lyrics_missing_from_batched_response(
+        self, fetch_lyrics, tidal_api
+    ):
+        tidal_api.get_tracks.return_value = {
+            "data": [
+                {
+                    "id": "track-1",
+                    "type": "tracks",
+                    "relationships": {
+                        "lyrics": {
+                            "data": [{"id": "lyric-1", "type": "lyrics"}]
+                        }
+                    },
+                }
+            ],
+            "included": [],
+        }
+
+        assert fetch_lyrics() is None
+
+    @pytest.mark.parametrize(
+        "search_data, lyrics_data",
+        [
+            pytest.param(
+                search_doc(title="Different Title"),
+                lyrics_doc(),
+                id="skip-nonmatching-track",
+            ),
+            pytest.param(
+                search_doc(),
+                {
+                    "data": [
+                        {
+                            "id": "track-1",
+                            "type": "tracks",
+                            "relationships": {"lyrics": {"data": []}},
+                        }
+                    ],
+                    "included": [],
+                },
+                id="skip-track-without-lyrics",
+            ),
+            pytest.param(
+                search_doc(),
+                lyrics_doc(status="PROCESSING"),
+                id="skip-unready-lyrics",
+            ),
+            pytest.param(
+                search_doc(),
+                lyrics_doc(status=None),
+                id="skip-lyric-without-status",
+            ),
+            pytest.param(
+                {"errors": [{"detail": "invalid token"}]},
+                lyrics_doc(),
+                id="skip-search-error-document",
+            ),
+            pytest.param(
+                search_doc(),
+                {"errors": [{"detail": "lyrics unavailable"}]},
+                id="skip-lyrics-error-document",
+            ),
+        ],
+    )
+    def test_fetch_lyrics_none(
+        self, fetch_lyrics, tidal_api, search_data, lyrics_data
+    ):
+        tidal_api.search_results.return_value = search_data
+        tidal_api.get_tracks.return_value = lyrics_data
+
+        assert fetch_lyrics() is None
+
+    def test_warns_for_null_track_data(self, fetch_lyrics, tidal_api, caplog):
+        tidal_api.get_tracks.return_value = {
+            "data": None,
+            "errors": [{"detail": "lyrics unavailable"}],
+        }
+
+        assert fetch_lyrics() is None
+        assert "TIDAL track response did not include track data" in caplog.text
+
+    def test_warns_for_missing_lyrics_data(
+        self, fetch_lyrics, tidal_api, caplog
+    ):
+        tidal_api.get_tracks.return_value = {
+            "data": [{"id": "track-1", "type": "tracks"}]
+        }
+
+        assert fetch_lyrics() is None
+        assert "TIDAL track response did not include lyric data" in caplog.text
+
+    def test_matches_by_title_when_artist_not_sideloaded(
+        self, fetch_lyrics, tidal_api
+    ):
+        tidal_api.search_results.return_value = self.search_doc(
+            include_artist=False
+        )
+
+        actual = fetch_lyrics()
+
+        assert actual
+        assert actual.text == "plain lyrics"
+
+    def test_logs_near_miss(self, backend, caplog):
+        track = self.search_doc(title="Target Tale")["included"][0]
+
+        with caplog.at_level(logging.DEBUG):
+            assert not backend.check_match(
+                "Target Artist", "Target Title", track, "Target Artist"
+            )
+
+        assert (
+            "Tidal: (Target Artist, Target Tale) does not match" in caplog.text
+        )
+        assert "but dist was close: 0.18" in caplog.text
+
+    def test_far_miss_does_not_log_debug(self, backend, caplog):
+        track = self.search_doc(artist="Other Artist", title="Unrelated Song")[
+            "included"
+        ][0]
+
+        with caplog.at_level(logging.DEBUG):
+            assert not backend.check_match(
+                "Target Artist", "Target Title", track, "Other Artist"
+            )
+
+        assert "does not match" not in caplog.text
+
+    def test_matches_versioned_track_title(self, backend):
+        track = self.search_doc()["included"][0]
+        track["attributes"]["version"] = "Remastered"
+
+        assert backend.track_title(track) == "Target Title (Remastered)"
+
+    def test_matches_by_title_when_artist_relationship_missing(
+        self, fetch_lyrics, tidal_api
+    ):
+        search_data = self.search_doc(include_artist=False)
+        del search_data["included"][0]["relationships"]
+        tidal_api.search_results.return_value = search_data
+
+        actual = fetch_lyrics()
+
+        assert actual
+        assert actual.text == "plain lyrics"
+
+    @pytest.mark.parametrize("plugin_config", [{"synced": False}])
+    def test_no_lrc_fallback_when_unsynced(self, fetch_lyrics, tidal_api):
+        tidal_api.get_tracks.return_value = self.lyrics_doc(
+            text=None, lrc_text="[00:00.00] synced lyrics"
+        )
+
+        assert fetch_lyrics() is None
+
+    def test_skips_api_without_required_token_scopes(
+        self, backend, monkeypatch, tidal_api
+    ):
+        monkeypatch.setattr(backend, "api", tidal_api)
+        monkeypatch.setattr(backend, "token_has_required_scopes", False)
+
+        assert backend.fetch("Target Artist", "Target Title", "", 0) is None
+        tidal_api.search_results.assert_not_called()
+        tidal_api.get_tracks.assert_not_called()
+
+    def test_rejects_token_missing_required_scopes(self, backend, tmp_path):
+        tokenfile = tmp_path / "tidal_token.json"
+        tokenfile.write_text('{"scope": "search.read"}')
+        backend.config["tidal"]["tokenfile"].set(str(tokenfile))
+
+        assert not backend.token_has_required_scopes
+
+    def test_rejects_invalid_token_file(self, backend, tmp_path: Path, caplog):
+        tokenfile = tmp_path / "tidal_token.json"
+        tokenfile.write_text("{")
+        backend.config["tidal"]["tokenfile"].set(str(tokenfile))
+
+        assert not backend.token_has_required_scopes
+        assert "Could not decode TIDAL token file" in caplog.text
+
+    def test_accepts_token_with_required_scopes(self, backend, tmp_path):
+        tokenfile = tmp_path / "tidal_token.json"
+        tokenfile.write_text('{"scope": "search.read user.read"}')
+        backend.config["tidal"]["tokenfile"].set(str(tokenfile))
+
+        assert backend.token_has_required_scopes
+
+    def test_scope_set_ignores_unknown_config(self, backend):
+        assert backend.scope_set(42) == set()
+
+    @pytest.mark.parametrize(
+        "plugin_config", [{"tidal": {"scope": ["search.read", "user.read"]}}]
+    )
+    def test_accepts_scope_list_config(self, backend):
+        assert backend.required_scopes == {"search.read", "user.read"}
+        assert backend.scope == "search.read user.read"
+        assert backend.api.scope == "search.read user.read"
 
 
 @pytest.mark.requires_import("langdetect")

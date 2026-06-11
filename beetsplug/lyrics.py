@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import itertools
+import json
 import math
 import re
 import textwrap
@@ -30,6 +31,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, NamedTuple
 from urllib.parse import quote, quote_plus, urlencode, urlparse
 
+import confuse
 import requests
 from bs4 import BeautifulSoup
 from unidecode import unidecode
@@ -53,8 +55,6 @@ from ._utils.requests import (
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator
 
-    import confuse
-
     from beets.importer import ImportTask
     from beets.library import Library
     from beets.logging import BeetsLogger as Logger
@@ -65,6 +65,13 @@ if TYPE_CHECKING:
         JSONDict,
         LRCLibAPI,
         TranslatorAPI,
+    )
+    from .tidal.api import TidalAPI
+    from .tidal.api_types import (
+        ResourceIdentifier,
+        TidalArtist,
+        TidalLyrics,
+        TidalTrack,
     )
 
     HtmlTransformer = Callable[[str], str]
@@ -289,6 +296,10 @@ class Backend(LyricsRequestHandler, metaclass=BackendClass):
     def __init__(self, config: confuse.Subview, log: Logger) -> None:
         self._log = log
         self.config = config
+
+    @cached_property
+    def dist_thresh(self) -> float:
+        return self.config["dist_thresh"].get(float)
 
     def fetch(
         self, artist: str, title: str, album: str, length: int
@@ -588,10 +599,6 @@ class SearchResult(NamedTuple):
 
 
 class SearchBackend(SoupMixin, Backend):
-    @cached_property
-    def dist_thresh(self) -> float:
-        return self.config["dist_thresh"].get(float)
-
     def check_match(
         self, target_artist: str, target_title: str, result: SearchResult
     ) -> bool:
@@ -860,6 +867,258 @@ class Google(SearchBackend):
         return None
 
 
+class Tidal(Backend):
+    """Fetch lyrics from TIDAL's official API."""
+
+    TRACK_URL = "https://tidal.com/browse/track/{}"
+
+    @cached_property
+    def api(self) -> TidalAPI:
+        from .tidal.api import TidalAPI
+
+        return TidalAPI(
+            client_id=self.config["tidal"]["client_id"].as_str(),
+            scope=self.scope,
+            token_path=self.tokenfile,
+        )
+
+    @cached_property
+    def country_code(self) -> str:
+        return self.config["tidal"]["country_code"].as_str()
+
+    @cached_property
+    def scope(self) -> str:
+        return " ".join(sorted(self.required_scopes))
+
+    @cached_property
+    def tokenfile(self) -> str:
+        return self.config["tidal"]["tokenfile"].get(
+            confuse.Filename(in_app_dir=True)
+        )
+
+    @cached_property
+    def required_scopes(self) -> set[str]:
+        return self.scope_set(self.config["tidal"]["scope"].get())
+
+    @cached_property
+    def token_scopes(self) -> set[str]:
+        try:
+            with open(self.tokenfile) as f:
+                token = json.load(f)
+        except OSError:
+            self.warn(
+                "TIDAL token file not found: {}. Run `beet tidal --auth`.",
+                self.tokenfile,
+            )
+            return set()
+        except json.JSONDecodeError:
+            self.warn(
+                "Could not decode TIDAL token file: {}. "
+                "Run `beet tidal --auth` again.",
+                self.tokenfile,
+            )
+            return set()
+
+        return self.scope_set(token.get("scope") or token.get("scopes"))
+
+    @cached_property
+    def token_has_required_scopes(self) -> bool:
+        missing = self.required_scopes - self.token_scopes
+        if missing:
+            self.warn(
+                "TIDAL token is missing required OAuth scope(s): {}. "
+                "Set tidal.scope to `{}` and run `beet tidal --auth` again.",
+                ", ".join(sorted(missing)),
+                " ".join(sorted(self.required_scopes)),
+            )
+            return False
+
+        return True
+
+    @staticmethod
+    def scope_set(scope: object) -> set[str]:
+        if isinstance(scope, str):
+            return set(scope.split())
+        if isinstance(scope, list):
+            return {str(item) for item in scope}
+
+        return set()
+
+    @staticmethod
+    def track_title(track: TidalTrack) -> str:
+        attributes = track["attributes"]
+        if version := attributes.get("version"):
+            return f"{attributes['title']} ({version})"
+        return attributes["title"]
+
+    @staticmethod
+    def track_artist(
+        track: TidalTrack, artist_by_id: dict[str, TidalArtist]
+    ) -> str | None:
+        relationships = track.get("relationships")
+        artist_relationship = (
+            relationships.get("artists") if relationships else None
+        )
+        artist_relationships: list[ResourceIdentifier] = (
+            artist_relationship["data"] if artist_relationship else []
+        )
+        if not artist_relationships:
+            return None
+
+        artist_names = [
+            artist["attributes"]["name"]
+            for rel in artist_relationships
+            if (artist := artist_by_id.get(rel["id"]))
+        ]
+        if not artist_names:
+            return None
+
+        return ", ".join(artist_names)
+
+    def check_match(
+        self,
+        target_artist: str,
+        target_title: str,
+        track: TidalTrack,
+        artist: str | None,
+    ) -> bool:
+        title = self.track_title(track)
+        if artist is None:
+            max_dist = string_dist(target_title, title)
+        else:
+            max_dist = max(
+                string_dist(target_artist, artist),
+                string_dist(target_title, title),
+            )
+
+        if (max_dist := round(max_dist, 2)) <= self.dist_thresh:
+            return True
+
+        if math.isclose(max_dist, self.dist_thresh, abs_tol=0.4):
+            # log out the candidate that did not make it but was close.
+            # This may show a matching candidate with some noise in the name
+            self.debug(
+                "({0}, {1}) does not match ({2}, {3}) but dist"
+                " was close: {4:.2f}",
+                artist or "",
+                title,
+                target_artist,
+                target_title,
+                max_dist,
+            )
+
+        return False
+
+    def search(self, artist: str, title: str) -> Iterable[TidalTrack]:
+        """Search TIDAL tracks and yield matching track resources."""
+        search_data = self.api.search_results(
+            f"{artist} {title}",
+            include=["tracks.artists"],
+            country_code=self.country_code,
+        )
+
+        search_result = search_data.get("data")
+        if not search_result:
+            self.warn("TIDAL search response did not include result data")
+            return
+
+        track_by_id: dict[str, TidalTrack] = {}
+        artist_by_id: dict[str, TidalArtist] = {}
+        for item in search_data.get("included") or []:
+            if item["type"] == "tracks":
+                track_by_id[item["id"]] = item
+            elif item["type"] == "artists":
+                artist_by_id[item["id"]] = item
+
+        relationships = search_result.get("relationships")
+        track_relationship = (
+            relationships.get("tracks") if relationships else None
+        )
+        track_relationships = (
+            track_relationship["data"] if track_relationship else []
+        )
+        for track_rel in track_relationships:
+            if track := track_by_id.get(track_rel["id"]):
+                track_artist = self.track_artist(track, artist_by_id)
+                if self.check_match(artist, title, track, track_artist):
+                    yield track
+
+    @classmethod
+    def lyric_text(cls, lyric: TidalLyrics, synced: bool) -> str | None:
+        attributes = lyric["attributes"]
+        if attributes.get("technicalStatus") != "OK":
+            return None
+
+        if synced and (lrc_text := attributes.get("lrcText")):
+            return lrc_text.strip()
+
+        if text := attributes.get("text"):
+            return text.strip()
+
+        return None
+
+    def fetch_tracks_lyrics(
+        self, track_ids: list[str]
+    ) -> Iterable[tuple[str, TidalLyrics]]:
+        """Fetch lyric resources for TIDAL track IDs."""
+        tracks_data = self.api.get_tracks(
+            ids=track_ids, include=["lyrics"], country_code=self.country_code
+        )
+
+        tracks = tracks_data.get("data")
+        if tracks is None:
+            self.warn("TIDAL track response did not include track data")
+            return
+
+        track_by_id = {
+            item["id"]: item for item in tracks if item["type"] == "tracks"
+        }
+
+        lyric_by_id = {
+            item["id"]: item
+            for item in tracks_data.get("included") or []
+            if item["type"] == "lyrics"
+        }
+
+        for track_id in track_ids:
+            if track := track_by_id.get(track_id):
+                relationships = track.get("relationships")
+                lyric_relationship = (
+                    relationships.get("lyrics") if relationships else None
+                )
+                if lyric_relationship is None:
+                    self.warn(
+                        "TIDAL track response did not include lyric data for {}",
+                        track_id,
+                    )
+                    continue
+
+                lyric_relationships = lyric_relationship["data"]
+                for lyric_rel in lyric_relationships:
+                    if lyric := lyric_by_id.get(lyric_rel["id"]):
+                        yield track_id, lyric
+
+    def fetch(
+        self, artist: str, title: str, album: str, length: int
+    ) -> Lyrics | None:
+        """Fetch lyrics text for the given song data."""
+        if not self.token_has_required_scopes:
+            return None
+
+        synced = self.config["synced"].get(bool)
+        track_ids = [track["id"] for track in self.search(artist, title)]
+        if not track_ids:
+            return None
+
+        for track_id, lyric in self.fetch_tracks_lyrics(track_ids):
+            if text := self.lyric_text(lyric, synced):
+                return Lyrics(
+                    text, self.__class__.name, self.TRACK_URL.format(track_id)
+                )
+
+        return None
+
+
 @dataclass
 class Translator(LyricsRequestHandler):
     """Translate lyrics text while preserving existing structured metadata."""
@@ -1035,7 +1294,7 @@ class RestFiles:
 
 
 BACKEND_BY_NAME = {
-    b.name: b for b in [LRCLib, Google, Genius, Tekstowo, MusiXmatch]
+    b.name: b for b in [LRCLib, Google, Genius, Tekstowo, MusiXmatch, Tidal]
 }
 
 
@@ -1089,12 +1348,19 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
                 "local": False,
                 "print": False,
                 "synced": False,
+                "tidal": {
+                    "client_id": "mcjmpl1bPATJXcBT",
+                    "country_code": "US",
+                    "scope": "search.read user.read",
+                    "tokenfile": "tidal_token.json",
+                },
                 # Musixmatch and Tekstowo are disabled by default as they
-                # currently block requests with the beets user agent.
+                # currently block requests with the beets user agent. TIDAL
+                # is opt-in because it needs a user-authenticated token.
                 "sources": [
                     n
                     for n in BACKEND_BY_NAME
-                    if n not in {"musixmatch", "tekstowo"}
+                    if n not in {"musixmatch", "tekstowo", "tidal"}
                 ],
             }
         )
@@ -1102,6 +1368,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
         self.config["google_API_key"].redact = True
         self.config["google_engine_ID"].redact = True
         self.config["genius_api_key"].redact = True
+        self.config["tidal"]["client_id"].redact = True
 
         if self.config["auto"]:
             self.import_stages = [self.imported]

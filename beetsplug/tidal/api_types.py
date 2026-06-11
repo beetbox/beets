@@ -125,6 +125,13 @@ class SearchAttributes(TypedDict):
     trackingId: str
 
 
+class LyricsAttributes(TypedDict):
+    technicalStatus: Literal["PENDING", "PROCESSING", "ERROR", "OK"]
+    direction: NotRequired[Literal["LEFT_TO_RIGHT", "RIGHT_TO_LEFT"]]
+    lrcText: NotRequired[str]
+    text: NotRequired[str]
+
+
 class TidalArtist(TypedDict):
     id: str
     type: Literal["artists"]
@@ -152,12 +159,21 @@ class TidalSearch(TypedDict):
     relationships: dict[str, RelationshipData]
 
 
+class TidalLyrics(TypedDict):
+    id: str
+    type: Literal["lyrics"]
+    attributes: LyricsAttributes
+    relationships: NotRequired[dict[str, RelationshipData]]
+
+
 T = TypeVar("T")
 
 
 class Document(TypedDict, Generic[T]):
     data: T
-    included: NotRequired[list[TidalArtist | TidalAlbum | TidalTrack]]
+    included: NotRequired[
+        list[TidalArtist | TidalAlbum | TidalTrack | TidalLyrics]
+    ]
     links: NotRequired[dict[str, str]]
 
 
