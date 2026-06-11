@@ -122,8 +122,8 @@ class ConfigMixin:
         return config
 
 
-NEEDS_REFLINK = unittest.skipUnless(
-    check_reflink_support(gettempdir()), "no reflink support for libdir"
+NEEDS_REFLINK = pytest.mark.skipif(
+    not check_reflink_support(gettempdir()), reason="need reflink"
 )
 
 
@@ -615,10 +615,6 @@ class AsIsImporterMixin:
         return importer
 
 
-class ImportTestCase(ImportHelper, BeetsTestCase):
-    pass
-
-
 class ImportSessionFixture(ImportSession):
     """ImportSession that can be controlled programaticaly.
 
@@ -829,7 +825,7 @@ class AutotagStub:
         )
 
 
-class AutotagImportTestCase(ImportTestCase):
+class AutotagImportTestCase(ImportHelper, BeetsTestCase):
     matching = AutotagStub.IDENT
 
     def setUp(self):

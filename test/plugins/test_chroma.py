@@ -19,7 +19,7 @@ import pytest
 from beets import metadata_plugins
 from beets.autotag import AlbumInfo, TrackInfo
 from beets.library import Item
-from beets.test.helper import ImportTestCase, IOMixin, PluginMixin
+from beets.test.helper import ImportHelper, IOMixin, PluginMixin
 from beetsplug import chroma
 
 TEST_TITLE_1 = "TEST_TITLE_1"
@@ -30,7 +30,7 @@ FINGERPRINT_2 = "FP_2"
 
 
 @patch("acoustid.compare_fingerprints")
-class ChromaTest(IOMixin, PluginMixin, ImportTestCase):
+class TestChroma(IOMixin, PluginMixin, ImportHelper):
     plugin = "chroma"
 
     def setup_lib(self):
