@@ -4,14 +4,13 @@ import logging as log
 import sys
 import threading
 from types import ModuleType
-from unittest.mock import patch
 
 import pytest
 
 import beets.logging as blog
 from beets import plugins, ui
 from beets.test import helper
-from beets.test.helper import AsIsImporterMixin, ImportTestCase, PluginMixin
+from beets.test.helper import AsIsImporterMixin, ImportHelper, PluginMixin
 
 
 class TestStrFormatLogger:
@@ -149,16 +148,12 @@ class DummyModule(ModuleType):
         self.DummyPlugin = self.DummyPlugin
 
 
-class LoggingLevelTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
+class TestLoggingLevel(AsIsImporterMixin, PluginMixin, ImportHelper):
     plugin = "dummy"
 
-    @classmethod
-    def setUpClass(cls):
-        patcher = patch.dict(sys.modules, {"beetsplug.dummy": DummyModule()})
-        patcher.start()
-        cls.addClassCleanup(patcher.stop)
-
-        super().setUpClass()
+    @pytest.fixture(autouse=True)
+    def _patch_dummy_module(self, monkeypatch):
+        monkeypatch.setitem(sys.modules, "beetsplug.dummy", DummyModule())
 
     def test_command_level0(self):
         self.config["verbose"] = 0
@@ -233,7 +228,7 @@ class LoggingLevelTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
         assert "dummy: debug import_stage" in logs
 
 
-class ConcurrentEventsTest(AsIsImporterMixin, ImportTestCase):
+class TestConcurrentEvents(AsIsImporterMixin, ImportHelper):
     """Similar to LoggingLevelTest but lower-level and focused on multiple
     events interaction. Since this is a bit heavy we don't do it in
     LoggingLevelTest.

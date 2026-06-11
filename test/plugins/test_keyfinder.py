@@ -17,11 +17,11 @@ from unittest.mock import patch
 
 from beets import util
 from beets.library import Item
-from beets.test.helper import AsIsImporterMixin, ImportTestCase, PluginMixin
+from beets.test.helper import AsIsImporterMixin, ImportHelper, PluginMixin
 
 
 @patch("beets.util.command_output")
-class KeyFinderTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
+class TestKeyFinder(AsIsImporterMixin, PluginMixin, ImportHelper):
     plugin = "keyfinder"
 
     def test_add_key(self, command_output):

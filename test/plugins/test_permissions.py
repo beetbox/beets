@@ -4,8 +4,10 @@ import os
 import platform
 from unittest.mock import Mock, patch
 
+import pytest
+
 from beets.test._common import touch
-from beets.test.helper import AsIsImporterMixin, ImportTestCase, PluginMixin
+from beets.test.helper import AsIsImporterMixin, ImportHelper, PluginMixin
 from beetsplug.permissions import (
     check_permissions,
     convert_perm,
@@ -13,12 +15,11 @@ from beetsplug.permissions import (
 )
 
 
-class PermissionsPluginTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
+class TestPermissionsPlugin(AsIsImporterMixin, PluginMixin, ImportHelper):
     plugin = "permissions"
 
-    def setUp(self):
-        super().setUp()
-
+    def setup_beets(self):
+        super().setup_beets()
         self.config["permissions"] = {"file": "777", "dir": "777"}
 
     def test_permissions_on_album_imported(self):
@@ -30,7 +31,7 @@ class PermissionsPluginTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
 
     def import_and_check_permissions(self):
         if platform.system() == "Windows":
-            self.skipTest("permissions not available on Windows")
+            pytest.skip("permissions not available on Windows")
 
         track_file = os.path.join(self.import_dir, b"album", b"track_1.mp3")
         assert os.stat(track_file).st_mode & 0o777 != 511
@@ -57,7 +58,7 @@ class PermissionsPluginTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
 
     def do_set_art(self, expect_success):
         if platform.system() == "Windows":
-            self.skipTest("permissions not available on Windows")
+            pytest.skip("permissions not available on Windows")
         self.run_asis_importer()
         album = self.lib.albums().get()
         artpath = os.path.join(self.temp_dir, b"cover.jpg")
