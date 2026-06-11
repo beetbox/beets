@@ -74,7 +74,14 @@ linkcheck_ignore = [
     r"https://[^/]*fanart\.tv/",  # blocks requests
     r"https://[^/]*fandom\.com/",  # blocks requests
     r"https://imgur\.com/",  # not accessible from the UK
-    r"https://www.discogs.com/settings/developers",  # requires login
+    r"https://(www\.)?discogs.com.*",  # blocks requests
+    r"https://essentia.upf.edu/",  # times out in CI
+    r"https://flask.palletsprojects.com.*",  # times out in CI
+    r"https://search.worldcat.org.*",  # blocks requests
+    r"https://tidal.com.*",  # blocks requests
+    r"https://www.tekstowo.pl/",  # blocks requests
+    r"https://www.gnu.org.*",  # sometimes unreachable
+    r"https://www.nongnu.org.*",  # sometimes unreachable
 ]
 
 # Options for HTML output
