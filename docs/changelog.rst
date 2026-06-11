@@ -31,6 +31,8 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- Treat unknown track and disc totals as empty instead of ``0`` in library
+  output and file metadata. :bug:`6194`
 - :doc:`plugins/replace`: Fix ``TypeError`` when invoking the ``replace``
   command. :bug:`6260`
 - :doc:`plugins/mpdstats`: Fix crashes and invalid configuration when passing

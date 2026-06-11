@@ -713,7 +713,6 @@ class Item(LibModel):
     # This excludes fields that represent audio data, such as `bitrate` or
     # `length`.
     _media_tag_fields = set(MediaFile.fields()) & _field_names
-
     _formatter = FormattedItemMapping
 
     _sorts: ClassVar[dict[str, type[FieldSort]]] = {"artist": SmartArtistSort}

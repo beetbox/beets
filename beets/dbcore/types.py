@@ -201,6 +201,24 @@ class PaddedInt(BasePaddedInt[int]):
     pass
 
 
+class PaddedIntOrNull(BasePaddedInt[None]):
+    @property
+    def null(self) -> None:
+        return None
+
+    def normalize(self, value: Any) -> int | None:
+        value = super().normalize(value)
+        return value or None
+
+    def parse(self, string: str) -> int | None:
+        return self.normalize(super().parse(string))
+
+    def format(self, value: int | None) -> str:
+        if value in (None, 0):
+            return ""
+        return super().format(value)
+
+
 class ScaledInt(Integer):
     """An integer whose formatting operation scales the number by a
     constant and adds a suffix. Good for units with large magnitudes.

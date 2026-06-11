@@ -401,6 +401,15 @@ class TestDestination(PytestItemHelper):
             name = item_in_db.formatted().get("track")
         assert name.startswith("0")
 
+    def test_get_formatted_omits_unknown_totals(self, item_in_db):
+        with _common.platform_posix():
+            item_in_db.tracktotal = 0
+            item_in_db.disctotal = 0
+        assert item_in_db.tracktotal is None
+        assert item_in_db.disctotal is None
+        assert item_in_db.formatted().get("tracktotal") == ""
+        assert item_in_db.formatted().get("disctotal") == ""
+
     def test_get_formatted_uses_kbps_bitrate(self, item_in_db):
         with _common.platform_posix():
             item_in_db.bitrate = 12345
@@ -1339,6 +1348,17 @@ class TestWrite(TestHelper):
         item.date = "foo"
         item.write()
         assert MediaFile(syspath(item.path)).year == clean_year
+
+    def test_write_omits_unknown_track_and_disc_totals(self):
+        item = self.add_item_fixture(track=1, tracktotal=0, disc=2, disctotal=0)
+
+        item.write()
+
+        mediafile = MediaFile(syspath(item.path))
+        assert mediafile.track == 1
+        assert mediafile.tracktotal is None
+        assert mediafile.disc == 2
+        assert mediafile.disctotal is None
 
 
 class TestItemRead(PytestItemHelper):
