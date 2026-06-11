@@ -27,6 +27,8 @@ New features
   :conf:`plugins.musicbrainz:aliases_as_credits` to make
   aliases-as-artist-credit optional.
 - :doc:`plugins/badfiles`: Added settings for auto error and warning actions.
+- :doc:`plugins/lyrics`: Add TIDAL as an opt-in lyrics source using TIDAL's
+  authenticated API.
 
 Bug fixes
 ~~~~~~~~~

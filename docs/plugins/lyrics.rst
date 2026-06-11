@@ -3,13 +3,15 @@ Lyrics Plugin
 
 The ``lyrics`` plugin fetches and stores song lyrics from databases on the Web.
 Namely, the current version of the plugin uses Genius.com_, Tekstowo.pl_,
-LRCLIB_ and, optionally, the Google Custom Search API.
+LRCLIB_, TIDAL_ and, optionally, the Google Custom Search API.
 
 .. _genius.com: https://genius.com/
 
 .. _lrclib: https://lrclib.net/
 
 .. _tekstowo.pl: https://www.tekstowo.pl/
+
+.. _tidal: https://tidal.com/
 
 Install
 -------
@@ -61,6 +63,11 @@ Default configuration:
         print: no
         sources: [lrclib, google, genius]
         synced: no
+        tidal:
+            client_id: mcjmpl1bPATJXcBT
+            country_code: US
+            scope: search.read user.read
+            tokenfile: tidal_token.json
 
 The available options are:
 
@@ -110,9 +117,10 @@ The available options are:
 - **sources**: List of sources to search for lyrics. An asterisk ``*`` expands
   to all available sources. The ``google`` source will be automatically
   deactivated if no ``google_API_key`` is setup. By default, ``musixmatch`` and
-  ``tekstowo`` are excluded because they block the beets User-Agent.
+  ``tekstowo`` are excluded because they block the beets User-Agent. ``tidal``
+  is excluded by default because it requires authentication.
 - **synced**: Prefer synced lyrics over plain lyrics if a source offers them.
-  Currently ``lrclib`` is the only source that provides them. Using this option,
+  Currently ``lrclib`` and ``tidal`` can provide them. Using this option,
   existing synced lyrics are not replaced by newly fetched plain lyrics (even
   when ``force`` is enabled). To allow that replacement, disable ``synced``.
   When synced lyrics are written to an ID3-tagged file (MP3, AIFF, etc.) the
@@ -120,6 +128,46 @@ The available options are:
   and plain text (without timestamps) in the ``USLT`` (unsynchronized lyrics)
   frame, so players that support only one of the two formats can still show the
   correct lyrics.
+- **tidal**: TIDAL API settings for the ``tidal`` source.
+
+  - **client_id**: TIDAL API client ID. This must match the client ID used to
+    create the token file.
+  - **country_code**: ISO 3166-1 alpha-2 country code used for TIDAL catalog and
+    lyrics availability.
+  - **scope**: OAuth scopes to request when authenticating. The TIDAL lyrics
+    source needs an app and token with ``user.read`` access. This can be a
+    space-delimited string or a YAML list.
+  - **tokenfile**: The path to the TIDAL token file. Relative paths are stored
+    in the beets application directory.
+
+The ``tidal`` source is opt-in. To use it, install both extras, enable the
+``tidal`` plugin long enough to authenticate, and include ``tidal`` in
+``lyrics.sources``:
+
+.. code-block:: yaml
+
+    plugins: lyrics tidal
+
+    tidal:
+        client_id: YOUR_TIDAL_CLIENT_ID
+        scope: search.read user.read
+        tokenfile: tidal_token.json
+
+    lyrics:
+        sources: [tidal, lrclib, google, genius]
+        tidal:
+            client_id: YOUR_TIDAL_CLIENT_ID
+            tokenfile: tidal_token.json
+
+Then run:
+
+.. code-block:: bash
+
+    beet tidal --auth
+
+If you authenticated before adding ``user.read`` to the configured
+``tidal.scope``, rerun ``beet tidal --auth`` so the saved token has the scopes
+needed by the lyrics source.
 
 .. _beets custom search engine: https://cse.google.com/cse?cx=009217259823014548361:lndtuqkycfu
 
