@@ -39,6 +39,7 @@ jobs:
       - name: Test
         env:
           INTEGRATION_TEST: 1
+          LYRICS_UPDATED: 1
         run: |
           poe docs
           poe test
