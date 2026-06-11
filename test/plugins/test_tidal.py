@@ -119,6 +119,18 @@ class TidalPluginTest(PluginTestCase):
         self.tidal = TidalPlugin()
 
 
+class TestTidalPluginConfig(TidalPluginTest):
+    def test_scope_accepts_list_config(self):
+        self.tidal.config["scope"].set(["search.read", "user.read"])
+
+        assert self.tidal._scope() == "search.read user.read"
+
+    def test_scope_rejects_unknown_config_type(self):
+        self.tidal.config["scope"].set(42)
+
+        assert self.tidal._scope() == ""
+
+
 class TestAlbumParsing(TidalPluginTest):
     """High-level tests for album parsing."""
 

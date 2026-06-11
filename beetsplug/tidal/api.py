@@ -39,13 +39,16 @@ def _batched(iterable: Iterable[T], n: int) -> Iterable[list[T]]:
 
 
 class TidalAPI(RequestHandler):
-    def __init__(self, client_id: str, token_path: str) -> None:
+    def __init__(
+        self, client_id: str, token_path: str, scope: str = "search.read"
+    ) -> None:
         self.client_id = client_id
         self.token_path = token_path
+        self.scope = scope
 
     @cached_property
     def session(self) -> TidalSession:
-        return TidalSession(self.client_id, self.token_path)
+        return TidalSession(self.client_id, self.token_path, self.scope)
 
     def search_results(
         self,

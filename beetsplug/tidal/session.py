@@ -34,7 +34,9 @@ class TidalSession(OAuth2Session, TimeoutAndRetrySession):
 
     token_path: Path
 
-    def __init__(self, client_id: str, token_path: str | Path) -> None:
+    def __init__(
+        self, client_id: str, token_path: str | Path, scope: str
+    ) -> None:
         self.token_path = Path(token_path)
 
         # Load token & init parent
@@ -42,7 +44,7 @@ class TidalSession(OAuth2Session, TimeoutAndRetrySession):
         super().__init__(
             client_id,
             token=token,
-            scope="search.read",
+            scope=scope,
             auto_refresh_url="https://auth.tidal.com/v1/oauth2/token",
             redirect_uri="https://localhost",
             auto_refresh_kwargs={"client_id": client_id},
