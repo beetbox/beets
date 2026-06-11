@@ -24,6 +24,7 @@ from contextlib import contextmanager, suppress
 from dataclasses import dataclass
 from functools import cached_property, partial, total_ordering
 from html import unescape
+from http import HTTPStatus
 from itertools import filterfalse, groupby
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, NamedTuple
@@ -32,8 +33,9 @@ from urllib.parse import quote, quote_plus, urlencode, urlparse
 import requests
 from bs4 import BeautifulSoup
 from unidecode import unidecode
+from urllib3.util.retry import Retry
 
-from beets import plugins, ui
+from beets import __version__, plugins, ui
 from beets.autotag import string_dist
 from beets.dbcore import types
 from beets.dbcore.query import FalseQuery
@@ -41,7 +43,7 @@ from beets.library import Item, parse_query_string
 from beets.util.config import sanitize_choices
 from beets.util.lyrics import INSTRUMENTAL_LYRICS, Lyrics
 
-from ._utils.requests import HTTPNotFoundError, RequestHandler
+from ._utils.requests import HTTPNotFoundError, RateLimitAdapter, RequestHandler
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator
@@ -165,8 +167,46 @@ def slug(text: str) -> str:
     return re.sub(r"\W+", "-", unidecode(text).lower().strip()).strip("-")
 
 
+class LyricsSession(requests.Session):
+    """HTTP session for lyrics backends with rate limiting and exponential backoff.
+
+    Each backend instance gets its own session so rate limits apply independently
+    per API source. Combines a fixed rate limit with exponential backoff on rate
+    limit (429) responses.
+    """
+
+    def __init__(self, rate_limit: float = 0.25):
+        super().__init__()
+        self.headers["User-Agent"] = f"beets/{__version__} https://beets.io/"
+
+        retry = Retry(
+            total=6,
+            backoff_factor=1.0,
+            status_forcelist=[
+                HTTPStatus.INTERNAL_SERVER_ERROR,
+                HTTPStatus.BAD_GATEWAY,
+                HTTPStatus.SERVICE_UNAVAILABLE,
+                HTTPStatus.GATEWAY_TIMEOUT,
+                HTTPStatus.TOO_MANY_REQUESTS,
+            ],
+        )
+        adapter = RateLimitAdapter(rate_limit=rate_limit, max_retries=retry)
+        self.mount("https://", adapter)
+        self.mount("http://", adapter)
+
+    def request(self, *args, **kwargs):
+        kwargs.setdefault("timeout", 10)
+        r = super().request(*args, **kwargs)
+        r.raise_for_status()
+        return r
+
+
 class LyricsRequestHandler(RequestHandler):
     _log: Logger
+
+    def create_session(self) -> requests.Session:
+        """Return a rate-limited session for lyrics HTTP requests."""
+        return LyricsSession()
 
     def status_to_error(self, code: int) -> type[requests.HTTPError] | None:
         if err := super().status_to_error(code):
