@@ -176,8 +176,16 @@ class LyricsSession(requests.Session):
     """
 
     def __init__(self, rate_limit: float = 0.25):
+        """Initialize session with rate limiting and retry/backoff.
+
+        Args:
+            rate_limit: Minimum interval in seconds between consecutive
+                requests (default 0.25s = 4 requests/sec).
+        """
         super().__init__()
-        self.headers["User-Agent"] = f"beets/{__version__} https://beets.io/"
+        self.headers.setdefault(
+            "User-Agent", f"beets/{__version__} https://beets.io/"
+        )
 
         retry = Retry(
             total=6,
