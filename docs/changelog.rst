@@ -96,6 +96,10 @@ For plugin developers
 Other changes
 ~~~~~~~~~~~~~
 
+- :doc:`plugins/lyrics`: Fold rate limiting and 429 retry from the
+  lyrics-specific ``LyricsSession`` into the shared
+  :class:`~beetsplug._utils.requests.TimeoutAndRetrySession` so all plugins
+  benefit. The standalone ``LyricsSession`` class has been removed.
 - :doc:`plugins/spotify`: ``spotifysync`` now batches its SQLite commit for a
   sync run, follows the standard beets write-before-store pattern, and logs
   audio-features API unavailability only once per run.
