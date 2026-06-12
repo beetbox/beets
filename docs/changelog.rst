@@ -31,6 +31,9 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- :doc:`plugins/lyrics`: Add rate limiting and exponential backoff to HTTP
+  requests to prevent ``429 Too Many Requests`` errors from lyrics sources
+  during bulk imports. :bug:`6728`
 - :doc:`plugins/replace`: Fix ``TypeError`` when invoking the ``replace``
   command. :bug:`6260`
 - :doc:`plugins/mpdstats`: Fix crashes and invalid configuration when passing
