@@ -140,6 +140,30 @@ def _album_artist_no_feat(album: Album) -> str:
 
 class FtInTitlePlugin(plugins.BeetsPlugin):
     @cached_property
+    def auto(self) -> bool:
+        return self.config["auto"].get(bool)
+
+    @cached_property
+    def drop_feat(self) -> bool:
+        return self.config["drop"].get(bool)
+
+    @cached_property
+    def feat_format(self) -> str:
+        return self.config["format"].as_str()
+
+    @cached_property
+    def keep_in_artist_field(self) -> bool:
+        return self.config["keep_in_artist"].get(bool)
+
+    @cached_property
+    def preserve_album_artist(self) -> bool:
+        return self.config["preserve_album_artist"].get(bool)
+
+    @cached_property
+    def custom_words(self) -> list[str]:
+        return self.config["custom_words"].as_str_seq()
+
+    @cached_property
     def bracket_keywords(self) -> list[str]:
         return self.config["bracket_keywords"].as_str_seq()
 
@@ -201,8 +225,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             help="drop featuring from artists and ignore title update",
         )
 
-        if self.config["auto"]:
-            self.import_stages = [self.imported]
+        self.import_stages = [self.imported]
 
         self.album_template_fields["album_artist_no_feat"] = (
             _album_artist_no_feat
@@ -211,22 +234,10 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
     def commands(self) -> list[ui.Subcommand]:
         def func(lib, opts, args):
             self.config.set_args(opts)
-            drop_feat = self.config["drop"].get(bool)
-            keep_in_artist_field = self.config["keep_in_artist"].get(bool)
-            preserve_album_artist = self.config["preserve_album_artist"].get(
-                bool
-            )
-            custom_words = self.config["custom_words"].get(list)
             write = ui.should_write()
 
             for item in lib.items(args):
-                if self.ft_in_title(
-                    item,
-                    drop_feat,
-                    keep_in_artist_field,
-                    preserve_album_artist,
-                    custom_words,
-                ):
+                if self.ft_in_title(item):
                     item.store()
                     if write:
                         item.try_write()
@@ -236,42 +247,27 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
 
     def imported(self, session: ImportSession, task: ImportTask) -> None:
         """Import hook for moving featuring artist automatically."""
-        drop_feat = self.config["drop"].get(bool)
-        keep_in_artist_field = self.config["keep_in_artist"].get(bool)
-        preserve_album_artist = self.config["preserve_album_artist"].get(bool)
-        custom_words = self.config["custom_words"].get(list)
+        if not self.auto:
+            return
 
         for item in task.imported_items():
-            if self.ft_in_title(
-                item,
-                drop_feat,
-                keep_in_artist_field,
-                preserve_album_artist,
-                custom_words,
-            ):
+            if self.ft_in_title(item):
                 item.store()
 
-    def update_metadata(
-        self,
-        item: Item,
-        feat_part: str,
-        drop_feat: bool,
-        keep_in_artist_field: bool,
-        custom_words: list[str],
-    ) -> None:
+    def update_metadata(self, item: Item, feat_part: str) -> None:
         """Choose how to add new artists to the title and set the new
         metadata. Also, print out messages about any changes that are made.
         If `drop_feat` is set, then do not add the artist to the title; just
         remove it from the artist field.
         """
         # In case the artist is kept, do not update the artist fields.
-        if keep_in_artist_field:
+        if self.keep_in_artist_field:
             self._log.info(
                 "artist: {.artist} (Not changing due to keep_in_artist)", item
             )
         else:
             track_artist, _ = split_on_feat(
-                item.artist, custom_words=custom_words
+                item.artist, custom_words=self.custom_words
             )
             self._log.info("artist: {0.artist} -> {1}", item, track_artist)
             item.artist = track_artist
@@ -279,28 +275,22 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         if item.artist_sort:
             # Just strip the featured artist from the sort name.
             item.artist_sort, _ = split_on_feat(
-                item.artist_sort, custom_words=custom_words
+                item.artist_sort, custom_words=self.custom_words
             )
 
         # Only update the title if it does not already contain a featured
         # artist and if we do not drop featuring information.
-        if not drop_feat and not contains_feat(item.title, custom_words):
-            feat_format = self.config["format"].as_str()
-            formatted = feat_format.format(feat_part)
+        if not self.drop_feat and not contains_feat(
+            item.title, self.custom_words
+        ):
+            formatted = self.feat_format.format(feat_part)
             new_title = self.insert_ft_into_title(
                 item.title, formatted, self.bracket_keywords
             )
             self._log.info("title: {.title} -> {}", item, new_title)
             item.title = new_title
 
-    def ft_in_title(
-        self,
-        item: Item,
-        drop_feat: bool,
-        keep_in_artist_field: bool,
-        preserve_album_artist: bool,
-        custom_words: list[str],
-    ) -> bool:
+    def ft_in_title(self, item: Item) -> bool:
         """Look for featured artists in the item's artist fields and move
         them to the title.
 
@@ -313,26 +303,24 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         # Check whether there is a featured artist on this track and the
         # artist field does not exactly match the album artist field. In
         # that case, we attempt to move the featured artist to the title.
-        if preserve_album_artist and albumartist and artist == albumartist:
+        if self.preserve_album_artist and albumartist and artist == albumartist:
             return False
 
-        _, featured = split_on_feat(artist, custom_words=custom_words)
+        _, featured = split_on_feat(artist, custom_words=self.custom_words)
         if not featured:
             return False
 
         self._log.info("{.filepath}", item)
 
         # Attempt to find the featured artist.
-        feat_part = find_feat_part(artist, albumartist, custom_words)
+        feat_part = find_feat_part(artist, albumartist, self.custom_words)
 
         if not feat_part:
             self._log.info("no featuring artists found")
             return False
 
         # If we have a featuring artist, move it to the title.
-        self.update_metadata(
-            item, feat_part, drop_feat, keep_in_artist_field, custom_words
-        )
+        self.update_metadata(item, feat_part)
         return True
 
     @classmethod
