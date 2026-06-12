@@ -71,7 +71,7 @@ class TimeoutAndRetrySession(requests.Session, metaclass=SingletonMeta):
     * raises exceptions for HTTP error status codes
     """
 
-    def __init__(self, rate_limit: float = 0.25, *args, **kwargs) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.headers["User-Agent"] = f"beets/{__version__} https://beets.io/"
 
@@ -86,7 +86,7 @@ class TimeoutAndRetrySession(requests.Session, metaclass=SingletonMeta):
                 HTTPStatus.TOO_MANY_REQUESTS,
             ],
         )
-        adapter = RateLimitAdapter(rate_limit=rate_limit, max_retries=retry)
+        adapter = RateLimitAdapter(rate_limit=0.25, max_retries=retry)
         self.mount("https://", adapter)
         self.mount("http://", adapter)
 
