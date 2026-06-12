@@ -1072,12 +1072,18 @@ class TestTidalLyrics(LyricsBackendTest):
         tidal_api.search_results.assert_not_called()
         tidal_api.get_tracks.assert_not_called()
 
-    def test_rejects_token_missing_required_scopes(self, backend, tmp_path):
+    def test_rejects_token_missing_required_scopes(
+        self, backend, tmp_path, caplog
+    ):
         tokenfile = tmp_path / "tidal_token.json"
         tokenfile.write_text('{"scope": "search.read"}')
         backend.config["tidal"]["tokenfile"].set(str(tokenfile))
 
         assert not backend.token_has_required_scopes
+        assert "TIDAL token is missing required OAuth scope(s): user.read" in (
+            caplog.text
+        )
+        assert "Run `beet tidal --auth` again" in caplog.text
 
     def test_rejects_invalid_token_file(self, backend, tmp_path: Path, caplog):
         tokenfile = tmp_path / "tidal_token.json"
@@ -1097,13 +1103,12 @@ class TestTidalLyrics(LyricsBackendTest):
     def test_scope_set_ignores_unknown_config(self, backend):
         assert backend.scope_set(42) == set()
 
-    @pytest.mark.parametrize(
-        "plugin_config", [{"tidal": {"scope": ["search.read", "user.read"]}}]
-    )
-    def test_accepts_scope_list_config(self, backend):
+    def test_uses_default_requested_scope(self, backend):
+        from beetsplug.tidal.api import TIDAL_DEFAULT_SCOPE
+
         assert backend.required_scopes == {"search.read", "user.read"}
-        assert backend.scope == "search.read user.read"
-        assert backend.api.scope == "search.read user.read"
+        assert backend.scope == TIDAL_DEFAULT_SCOPE
+        assert backend.api.scope == TIDAL_DEFAULT_SCOPE
 
 
 @pytest.mark.requires_import("langdetect")

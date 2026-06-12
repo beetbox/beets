@@ -66,7 +66,6 @@ Default configuration:
         tidal:
             client_id: mcjmpl1bPATJXcBT
             country_code: US
-            scope: search.read user.read
             tokenfile: tidal_token.json
 
 The available options are:
@@ -134,9 +133,6 @@ The available options are:
     create the token file.
   - **country_code**: ISO 3166-1 alpha-2 country code used for TIDAL catalog and
     lyrics availability.
-  - **scope**: OAuth scopes to request when authenticating. The TIDAL lyrics
-    source needs an app and token with ``user.read`` access. This can be a
-    space-delimited string or a YAML list.
   - **tokenfile**: The path to the TIDAL token file. Relative paths are stored
     in the beets application directory.
 
@@ -150,7 +146,6 @@ The ``tidal`` source is opt-in. To use it, install both extras, enable the
 
     tidal:
         client_id: YOUR_TIDAL_CLIENT_ID
-        scope: search.read user.read
         tokenfile: tidal_token.json
 
     lyrics:
@@ -165,9 +160,9 @@ Then run:
 
     beet tidal --auth
 
-If you authenticated before adding ``user.read`` to the configured
-``tidal.scope``, rerun ``beet tidal --auth`` so the saved token has the scopes
-needed by the lyrics source.
+If the saved TIDAL token predates lyrics support or lacks the required scopes,
+rerun ``beet tidal --auth`` so the token has the scopes needed by the lyrics
+source.
 
 .. _beets custom search engine: https://cse.google.com/cse?cx=009217259823014548361:lndtuqkycfu
 

@@ -888,7 +888,9 @@ class Tidal(Backend):
 
     @cached_property
     def scope(self) -> str:
-        return " ".join(sorted(self.required_scopes))
+        from .tidal.api import TIDAL_DEFAULT_SCOPE
+
+        return TIDAL_DEFAULT_SCOPE
 
     @cached_property
     def tokenfile(self) -> str:
@@ -898,7 +900,7 @@ class Tidal(Backend):
 
     @cached_property
     def required_scopes(self) -> set[str]:
-        return self.scope_set(self.config["tidal"]["scope"].get())
+        return self.scope_set(self.scope)
 
     @cached_property
     def token_scopes(self) -> set[str]:
@@ -927,9 +929,9 @@ class Tidal(Backend):
         if missing:
             self.warn(
                 "TIDAL token is missing required OAuth scope(s): {}. "
-                "Set tidal.scope to `{}` and run `beet tidal --auth` again.",
+                "Run `beet tidal --auth` again so the token includes: {}.",
                 ", ".join(sorted(missing)),
-                " ".join(sorted(self.required_scopes)),
+                self.scope,
             )
             return False
 
@@ -1351,7 +1353,6 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
                 "tidal": {
                     "client_id": "mcjmpl1bPATJXcBT",
                     "country_code": "US",
-                    "scope": "search.read user.read",
                     "tokenfile": "tidal_token.json",
                 },
                 # Musixmatch and Tekstowo are disabled by default as they

@@ -14,7 +14,7 @@ from beets.exceptions import UserError
 from beets.logging import getLogger
 from beets.metadata_plugins import MetadataSourcePlugin
 
-from .api import TidalAPI
+from .api import TIDAL_DEFAULT_SCOPE, TidalAPI
 
 if TYPE_CHECKING:
     import optparse
@@ -40,11 +40,7 @@ class TidalPlugin(MetadataSourcePlugin):
         super().__init__()
 
         self.config.add(
-            {
-                "client_id": "mcjmpl1bPATJXcBT",
-                "scope": "search.read",
-                "tokenfile": "tidal_token.json",
-            }
+            {"client_id": "mcjmpl1bPATJXcBT", "tokenfile": "tidal_token.json"}
         )
         self.config["client_id"].redact = True
 
@@ -56,19 +52,9 @@ class TidalPlugin(MetadataSourcePlugin):
     def api(self) -> TidalAPI:
         return TidalAPI(
             client_id=self.config["client_id"].as_str(),
-            scope=self._scope(),
+            scope=TIDAL_DEFAULT_SCOPE,
             token_path=self._tokenfile(),
         )
-
-    def _scope(self) -> str:
-        """Return the configured OAuth scope string."""
-        scope = self.config["scope"].get()
-        if isinstance(scope, str):
-            return " ".join(scope.split())
-        if isinstance(scope, list):
-            return " ".join(str(item) for item in scope)
-
-        return ""
 
     def _tokenfile(self) -> str:
         """Return the configured path to the token file in the app directory."""

@@ -11,6 +11,7 @@ import pytest
 from beets.library.models import Item
 from beets.test.helper import PluginTestCase
 from beetsplug.tidal import TidalPlugin
+from beetsplug.tidal.api import TIDAL_DEFAULT_SCOPE
 
 if TYPE_CHECKING:
     from beetsplug.tidal.api_types import (
@@ -120,15 +121,8 @@ class TidalPluginTest(PluginTestCase):
 
 
 class TestTidalPluginConfig(TidalPluginTest):
-    def test_scope_accepts_list_config(self):
-        self.tidal.config["scope"].set(["search.read", "user.read"])
-
-        assert self.tidal._scope() == "search.read user.read"
-
-    def test_scope_rejects_unknown_config_type(self):
-        self.tidal.config["scope"].set(42)
-
-        assert self.tidal._scope() == ""
+    def test_uses_default_scope(self):
+        assert self.tidal.api.scope == TIDAL_DEFAULT_SCOPE
 
 
 class TestAlbumParsing(TidalPluginTest):

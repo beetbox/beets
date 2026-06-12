@@ -93,7 +93,6 @@ Default
 
     tidal:
         client_id: mcjmpl1bPATJXcBT
-        scope: search.read
         tokenfile: tidal_token.json
         data_source_mismatch_penalty: 0.5
         search_limit: 5
@@ -104,14 +103,6 @@ Default
     The Tidal API client ID. The default value is the public demo client ID.
     You can register your own application at Tidal's developer portal for
     production use.
-
-.. conf:: scope
-    :default: search.read
-
-    The OAuth scopes requested during ``beet tidal --auth``. The default is
-    enough for metadata lookup. Add ``user.read`` when creating a token for the
-    :doc:`lyrics` plugin's TIDAL source. This can be a space-delimited string
-    or a YAML list.
 
 .. conf:: tokenfile
     :default: tidal_token.json

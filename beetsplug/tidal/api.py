@@ -28,6 +28,7 @@ log = getLogger("beets.tidal")
 
 API_BASE = "https://openapi.tidal.com/v2"
 MAX_FILTER_SIZE = 20
+TIDAL_DEFAULT_SCOPE = "search.read user.read"
 
 
 def _batched(iterable: Iterable[T], n: int) -> Iterable[list[T]]:
@@ -40,7 +41,7 @@ def _batched(iterable: Iterable[T], n: int) -> Iterable[list[T]]:
 
 class TidalAPI(RequestHandler):
     def __init__(
-        self, client_id: str, token_path: str, scope: str = "search.read"
+        self, client_id: str, token_path: str, scope: str = TIDAL_DEFAULT_SCOPE
     ) -> None:
         self.client_id = client_id
         self.token_path = token_path
