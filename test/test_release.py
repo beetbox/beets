@@ -1,17 +1,18 @@
 """Tests for the release utils."""
 
-import os
 import shutil
 import sys
 
 import pytest
+
+from beets.test.helper import RUNNING_IN_CI
 
 release = pytest.importorskip("extra.release")
 
 
 pytestmark = pytest.mark.skipif(
     not (
-        (os.environ.get("GITHUB_ACTIONS") == "true" and sys.platform != "win32")
+        (RUNNING_IN_CI and sys.platform != "win32")
         or bool(shutil.which("pandoc"))
     ),
     reason="pandoc isn't available",

@@ -171,7 +171,7 @@ follow these guidelines when reporting an issue:
 
 - Most importantly: if beets is crashing, please `include the traceback
   <https://imgur.com/jacoj>`__. Tracebacks can be more readable if you put them
-  in a pastebin (e.g., `Gist <https://gist.github.com/>`__ or `Hastebin
+  in a pastebin (e.g., `Gist <https://gist.github.com/discover>`__ or `Hastebin
   <https://www.toptal.com/developers/hastebin>`__), especially when
   communicating over IRC.
 - Turn on beets' debug output (using the -v option: for example, ``beet -v

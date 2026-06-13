@@ -5,7 +5,7 @@ import sys
 import pytest
 
 from beets.test import _common
-from beets.test.helper import IOMixin, has_program
+from beets.test.helper import RUNNING_IN_CI, IOMixin, has_program
 from beets.ui.commands.completion import BASH_COMPLETION_PATHS
 from beets.util import syspath
 
@@ -13,7 +13,7 @@ from ..test_ui import TestPluginTestCase
 
 
 @pytest.mark.xfail(
-    os.environ.get("GITHUB_ACTIONS") == "true" and sys.platform == "linux",
+    RUNNING_IN_CI and sys.platform == "linux",
     reason="Completion is for some reason unhappy on Ubuntu 24.04 in CI",
 )
 class CompletionTest(IOMixin, TestPluginTestCase):

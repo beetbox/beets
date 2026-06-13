@@ -221,7 +221,7 @@ To use the google image search backend you need to `register for a Google API
 key`_. Set the ``google_key`` configuration option to your key, then add
 ``google`` to the list of sources in your configuration.
 
-.. _register for a google api key: https://console.developers.google.com.
+.. _register for a google api key: https://console.cloud.google.com/apis/credentials
 
 Optionally, you can `define a custom search engine`_. Get your search engine's
 token and use it for your ``google_engine`` configuration option. The default

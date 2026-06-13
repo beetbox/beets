@@ -25,6 +25,7 @@ information or mock the environment.
 
 from __future__ import annotations
 
+import importlib.util
 import os
 import os.path
 import shutil
@@ -34,7 +35,7 @@ import unittest
 from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import Enum
-from functools import cached_property
+from functools import cache, cached_property
 from pathlib import Path
 from tempfile import gettempdir, mkdtemp, mkstemp
 from typing import TYPE_CHECKING, Any, ClassVar
@@ -60,6 +61,8 @@ from beets.util import (
 
 if TYPE_CHECKING:
     from requests_mock.mocker import Mocker
+
+RUNNING_IN_CI = os.environ.get("GITHUB_ACTIONS") == "true"
 
 
 class LogCapture(logging.Handler):
@@ -98,6 +101,11 @@ def has_program(cmd, args=["--version"]):
         return True
 
 
+@cache
+def is_importable(modname: str) -> bool:
+    return bool(importlib.util.find_spec(modname))
+
+
 def check_reflink_support(path: str) -> bool:
     try:
         import reflink
@@ -105,6 +113,15 @@ def check_reflink_support(path: str) -> bool:
         return False
 
     return reflink.supported_at(path)
+
+
+NEEDS_REFLINK = pytest.mark.skipif(
+    not check_reflink_support(gettempdir()), reason="need reflink"
+)
+NEEDS_FFPROBE = pytest.mark.skipif(
+    not has_program("ffprobe") and not RUNNING_IN_CI,
+    reason="ffprobe (ffmpeg) is not available",
+)
 
 
 class ConfigMixin:
@@ -120,11 +137,6 @@ class ConfigMixin:
         config["ui"]["color"] = False
         config["threaded"] = False
         return config
-
-
-NEEDS_REFLINK = pytest.mark.skipif(
-    not check_reflink_support(gettempdir()), reason="need reflink"
-)
 
 
 class RunMixin:

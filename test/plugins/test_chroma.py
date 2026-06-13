@@ -20,7 +20,8 @@ from beets import metadata_plugins
 from beets.autotag import AlbumInfo, TrackInfo
 from beets.library import Item
 from beets.test.helper import ImportHelper, IOMixin, PluginMixin
-from beetsplug import chroma
+
+chroma = pytest.importorskip("beetsplug.chroma", exc_type=ImportError)
 
 TEST_TITLE_1 = "TEST_TITLE_1"
 TEST_TITLE_2 = "TEST_TITLE_2"

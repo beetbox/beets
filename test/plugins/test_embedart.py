@@ -29,6 +29,7 @@ from beets import config, logging
 from beets.exceptions import UserError
 from beets.test import _common
 from beets.test.helper import (
+    NEEDS_FFPROBE,
     FetchImageHelper,
     ImportHelper,
     IOMixin,
@@ -308,6 +309,7 @@ class TestEmbedartCli(PytestImportHelper, IOMixin, FetchImageHelper):
         mediafile = MediaFile(syspath(item.path))
         assert not mediafile.images
 
+    @NEEDS_FFPROBE
     def test_clearart_on_import_disabled(self):
         file_path = self.create_mediafile_fixture(
             images=["jpg"], target_dir=self.import_path
@@ -320,6 +322,7 @@ class TestEmbedartCli(PytestImportHelper, IOMixin, FetchImageHelper):
         item = self.lib.items()[0]
         assert MediaFile(os.path.join(item.path)).images
 
+    @NEEDS_FFPROBE
     def test_clearart_on_import_enabled(self):
         file_path = self.create_mediafile_fixture(
             images=["jpg"], target_dir=self.import_path

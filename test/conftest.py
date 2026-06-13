@@ -1,20 +1,14 @@
-import importlib.util
 import inspect
 import os
-from functools import cache
 
 import pytest
 
 from beets.autotag import Distance
 from beets.dbcore.query import Query
 from beets.test._common import DummyIO
-from beets.test.helper import ConfigMixin
+from beets.test.helper import RUNNING_IN_CI, ConfigMixin
+from beets.test.helper import is_importable as check_import
 from beets.util import cached_classproperty
-
-
-@cache
-def _is_importable(modname: str) -> bool:
-    return bool(importlib.util.find_spec(modname))
 
 
 def skip_marked_items(items: list[pytest.Item], marker_name: str, reason: str):
@@ -41,7 +35,7 @@ def pytest_collection_modifyitems(
             force_ci = marker.kwargs.get("force_ci", True)
             if (
                 force_ci
-                and os.environ.get("GITHUB_ACTIONS") == "true"
+                and RUNNING_IN_CI
                 # only apply this to our repository, to allow other projects to
                 # run tests without installing all dependencies
                 and os.environ.get("GITHUB_REPOSITORY", "") == "beetbox/beets"
@@ -49,7 +43,7 @@ def pytest_collection_modifyitems(
                 continue
 
             modname = marker.args[0]
-            if not _is_importable(modname):
+            if not check_import(modname):
                 test_name = item.nodeid.split("::", 1)[-1]
                 item.add_marker(
                     pytest.mark.skip(
@@ -134,4 +128,4 @@ def io(
 def is_importable():
     """Fixture that provides a function to check if a module can be imported."""
 
-    return _is_importable
+    return check_import

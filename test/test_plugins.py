@@ -35,6 +35,7 @@ from beets.importer import (
 )
 from beets.library import Item
 from beets.test.helper import (
+    RUNNING_IN_CI,
     AutotagStub,
     ImportHelper,
     IOMixin,
@@ -532,7 +533,7 @@ class TestImportPlugin(PluginMixin):
         self.unload_plugins()
 
     @pytest.mark.skipif(
-        os.environ.get("GITHUB_ACTIONS") != "true",
+        not RUNNING_IN_CI,
         reason=(
             "Requires all dependencies to be installed, which we can't"
             " guarantee in the local environment."
