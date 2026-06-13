@@ -48,8 +48,9 @@ from typing_extensions import (
 from unidecode import unidecode
 
 import beets
+from beets.util.functemplate import get_template
 
-from ..util import cached_classproperty, functemplate
+from ..util import cached_classproperty
 from . import types
 from .query import MatchQuery, TrueQuery
 from .sort import NullSort
@@ -690,20 +691,13 @@ class Model(ABC, Generic[D]):
         """
         return self._formatter(self, included_keys, for_path)
 
-    def evaluate_template(
-        self, template: str | functemplate.Template, for_path: bool = False
-    ) -> str:
-        """Evaluate a template (a string or a `Template` object) using
-        the object's fields. If `for_path` is true, then no new path
-        separators will be added to the template.
+    def evaluate_template(self, fmt: str, for_path: bool = False) -> str:
+        """Evaluate a format string using the object's fields.
+
+        If `for_path` is true, then no new path separators are added to the template.
         """
         # Perform substitution.
-        if isinstance(template, str):
-            t = functemplate.template(template)
-        else:
-            # Help out mypy
-            t = template
-        return t.substitute(
+        return get_template(fmt).substitute(
             self.formatted(for_path=for_path), self._template_funcs()
         )
 

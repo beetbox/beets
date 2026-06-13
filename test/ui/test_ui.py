@@ -162,9 +162,7 @@ class ConfigTest(IOMixin, TestPluginTestCase):
             config.write("paths: {x: y}")
 
         self.run_command("test")
-        key, template = self.test_cmd.lib.path_formats[0]
-        assert key == "x"
-        assert template.original == "y"
+        assert self.test_cmd.lib.path_formats[0] == ("x", "y")
 
     def test_nonexistant_db(self):
         with self.write_config_file() as config:

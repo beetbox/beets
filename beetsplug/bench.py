@@ -20,7 +20,6 @@ import timeit
 from beets import importer, plugins, ui
 from beets.autotag import tag_album
 from beets.plugins import BeetsPlugin
-from beets.util.functemplate import Template
 from beets.util.pathformats import PF_KEY_DEFAULT
 from beetsplug._utils import vfs
 
@@ -31,10 +30,7 @@ def aunique_benchmark(lib, prof):
 
     # Measure path generation performance with %aunique{} included.
     lib.path_formats = [
-        (
-            PF_KEY_DEFAULT,
-            Template("$albumartist/$album%aunique{}/$track $title"),
-        )
+        (PF_KEY_DEFAULT, "$albumartist/$album%aunique{}/$track $title")
     ]
     if prof:
         cProfile.runctx(
@@ -49,7 +45,7 @@ def aunique_benchmark(lib, prof):
 
     # And with %aunique replaced with a "cheap" no-op function.
     lib.path_formats = [
-        (PF_KEY_DEFAULT, Template("$albumartist/$album%lower{}/$track $title"))
+        (PF_KEY_DEFAULT, "$albumartist/$album%lower{}/$track $title")
     ]
     if prof:
         cProfile.runctx(
