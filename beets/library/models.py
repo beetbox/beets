@@ -2,9 +2,7 @@ from __future__ import annotations
 
 import os
 import string
-import sys
 import time
-import unicodedata
 from contextlib import suppress
 from functools import cached_property
 from pathlib import Path
@@ -529,9 +527,7 @@ class Album(LibModel):
         filename_tmpl = template(beets.config["art_filename"].as_str())
         subpath = self.evaluate_template(filename_tmpl, True)
         if beets.config["asciify_paths"]:
-            subpath = util.asciify_path(
-                subpath, beets.config["path_sep_replace"].as_str()
-            )
+            subpath = util.asciify_path(subpath)
         subpath = util.sanitize_path(
             subpath, replacements=self._db.replacements
         )
@@ -1220,16 +1216,8 @@ class Item(LibModel):
         # Evaluate the selected template.
         subpath = self.evaluate_template(subpath_tmpl, True)
 
-        # Prepare path for output: normalize Unicode characters.
-        if sys.platform == "darwin":
-            subpath = unicodedata.normalize("NFD", subpath)
-        else:
-            subpath = unicodedata.normalize("NFC", subpath)
-
         if beets.config["asciify_paths"]:
-            subpath = util.asciify_path(
-                subpath, beets.config["path_sep_replace"].as_str()
-            )
+            subpath = util.asciify_path(subpath)
 
         lib_path_str, fallback = util.legalize_path(
             subpath, self.db.replacements, self.filepath.suffix
@@ -1347,7 +1335,7 @@ class DefaultTemplateFunctions:
     @staticmethod
     def tmpl_asciify(s):
         """Translate non-ASCII characters to their ASCII equivalents."""
-        return util.asciify_path(s, beets.config["path_sep_replace"].as_str())
+        return util.asciify_path(s)
 
     @staticmethod
     def tmpl_time(s, fmt):
