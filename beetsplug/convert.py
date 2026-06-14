@@ -33,7 +33,7 @@ from beets import plugins, ui, util
 from beets.exceptions import UserError
 from beets.library import Item, parse_query_string
 from beets.plugins import BeetsPlugin
-from beets.util import par_map
+from beets.util import pipeline
 from beets.util.artresizer import ArtResizer
 from beets.util.m3u import M3UFile
 from beets.util.pathformats import get_path_formats
@@ -292,7 +292,7 @@ class ConvertPlugin(BeetsPlugin):
 
     def auto_convert(self, session: ImportSession, task: ImportTask) -> None:
         if self.config["auto"]:
-            par_map(
+            util.par_map(
                 lambda item: self.convert_on_import(session.lib, item),
                 task.imported_items(),
             )
@@ -399,7 +399,7 @@ class ConvertPlugin(BeetsPlugin):
             basedir=self.dest, path_formats=self.path_formats
         )
 
-    @util.pipeline.mutator_stage
+    @pipeline.mutator_stage
     def convert_item(self, keep_new: bool, item: Item) -> None:
         """Convert an Item from the library."""
         pretend, link, hardlink = self.pretend, self.link, self.hardlink
@@ -728,5 +728,5 @@ class ConvertPlugin(BeetsPlugin):
         defined in threads
         """
         convert = [self.convert_item(keep_new) for _ in range(self.threads)]
-        pipe = util.pipeline.Pipeline([iter(items), convert])
+        pipe = pipeline.Pipeline([iter(items), convert])
         pipe.run_parallel()
