@@ -65,15 +65,6 @@ if TYPE_CHECKING:
 RUNNING_IN_CI = os.environ.get("GITHUB_ACTIONS") == "true"
 
 
-class LogCapture(logging.Handler):
-    def __init__(self):
-        logging.Handler.__init__(self)
-        self.messages = []
-
-    def emit(self, record):
-        self.messages.append(str(record.msg))
-
-
 def has_program(cmd, args=["--version"]):
     """Returns `True` if `cmd` can be executed."""
     full_cmd = [cmd, *args]
