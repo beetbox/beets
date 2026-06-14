@@ -43,6 +43,7 @@ from beets.test.helper import (
     NEEDS_FFPROBE,
     NEEDS_REFLINK,
     AsIsImporterMixin,
+    AutotagImportHelper,
     AutotagImportTestCase,
     AutotagStub,
     BeetsTestCase,
@@ -444,11 +445,11 @@ class TestImportFormat(ImportHelper):
         assert Path(os.path.join(self.temp_dir_path, "no_ext")).exists()
 
 
-class ImportTest(PathsMixin, AutotagImportTestCase):
+class TestImport(PathsMixin, AutotagImportHelper):
     """Test APPLY, ASIS and SKIP choices."""
 
-    def setUp(self):
-        super().setUp()
+    def setup_beets(self):
+        super().setup_beets()
         self.prepare_album_for_import(1)
         self.setup_importer()
 
