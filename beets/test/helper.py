@@ -826,13 +826,20 @@ class AutotagStub:
         )
 
 
-class AutotagImportTestCase(ImportHelper, BeetsTestCase):
+class AutotagImportHelper(ImportHelper):
     matching = AutotagStub.IDENT
 
-    def setUp(self):
-        super().setUp()
+    def setup_beets(self):
+        super().setup_beets()
         self.matcher = AutotagStub(self.matching).install()
-        self.addCleanup(self.matcher.restore)
+
+    def teardown_beets(self):
+        self.matcher.restore()
+        super().teardown_beets()
+
+
+class AutotagImportTestCase(AutotagImportHelper, BeetsTestCase):
+    """DEPRECATED: Use AutotagImportHelper instead."""
 
 
 @dataclass(slots=True)
