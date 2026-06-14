@@ -480,9 +480,11 @@ class TidalPlugin(MetadataSourcePlugin):
     def _popularity(val: object) -> int | None:
         if val is None:
             return None
+        if isinstance(val, int):
+            return val
         if isinstance(val, float):
             return int(val * 100)
-        return int(val)
+        return None
 
     def tidalsync(
         self, items: Iterable[Item], write: bool, force: bool = False

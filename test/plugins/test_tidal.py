@@ -592,9 +592,7 @@ class TestTidalsync(TidalPluginTest):
     def test_sync_updates_popularity(self):
         """Test that tidalsync fetches and stores popularity."""
         item = self.add_item(
-            tidal_track_id=490839595,
-            title="Test Track",
-            artist="Test Artist",
+            tidal_track_id=490839595, title="Test Track", artist="Test Artist"
         )
 
         track = _make_track(
@@ -651,10 +649,7 @@ class TestTidalsync(TidalPluginTest):
 
     def test_sync_skips_items_without_track_id(self):
         """Test that tidalsync skips items without tidal_track_id."""
-        item = self.add_item(
-            title="No ID Track",
-            artist="No ID Artist",
-        )
+        item = self.add_item(title="No ID Track", artist="No ID Artist")
 
         self.tidal.tidalsync([item], write=False)
 
