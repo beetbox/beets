@@ -146,7 +146,7 @@ class TidalTrack(TypedDict):
 
 
 class CoverArtAttributes(TypedDict):
-    url: str
+    url: NotRequired[str]
 
 
 class TidalCoverArt(TypedDict):

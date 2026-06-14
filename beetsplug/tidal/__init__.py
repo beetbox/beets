@@ -398,16 +398,14 @@ class TidalPlugin(MetadataSourcePlugin):
     ) -> str | None:
         if not cover_art_by_id:
             return None
-        cover_art_data = (
-            album.get("relationships", {}).get("coverArt", {}).get("data")
-        )
+        cover_art_data = album["relationships"].get("coverArt", {}).get("data")
         if not cover_art_data:
             return None
         ids = [ri["id"] for ri in cover_art_data if ri["type"] == "coverArts"]
         if not ids:
             return None
         if cover_art := cover_art_by_id.get(ids[0]):
-            if url := cover_art.get("attributes", {}).get("url"):
+            if url := cover_art["attributes"].get("url"):
                 return url
             return f"https://resources.tidal.com/images/{ids[0]}/1280x1280.jpg"
         return None
