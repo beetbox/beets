@@ -74,17 +74,6 @@ class LogCapture(logging.Handler):
         self.messages.append(str(record.msg))
 
 
-@contextmanager
-def capture_log(logger="beets"):
-    capture = LogCapture()
-    log = logging.getLogger(logger)
-    log.addHandler(capture)
-    try:
-        yield capture.messages
-    finally:
-        log.removeHandler(capture)
-
-
 def has_program(cmd, args=["--version"]):
     """Returns `True` if `cmd` can be executed."""
     full_cmd = [cmd, *args]

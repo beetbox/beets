@@ -9,7 +9,6 @@ import pytest
 
 import beets.logging as blog
 from beets import plugins, ui
-from beets.test import helper
 from beets.test.helper import AsIsImporterMixin, ImportHelper, PluginMixin
 
 

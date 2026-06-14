@@ -47,10 +47,8 @@ from beets.test.helper import (
     AutotagStub,
     BeetsTestCase,
     ImportHelper,
-    IOMixin,
     PluginMixin,
     TestHelper,
-    capture_log,
     has_program,
 )
 from beets.util import bytestring_path, displayable_path, syspath
