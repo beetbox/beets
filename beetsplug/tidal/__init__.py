@@ -398,10 +398,12 @@ class TidalPlugin(MetadataSourcePlugin):
     ) -> str | None:
         if not cover_art_by_id:
             return None
-        cover_art_data = album["relationships"].get("coverArt", {}).get("data")
-        if not cover_art_data:
+        cover_rel = album["relationships"].get("coverArt")
+        if cover_rel is None:
             return None
-        ids = [ri["id"] for ri in cover_art_data if ri["type"] == "coverArts"]
+        ids = [
+            ri["id"] for ri in cover_rel["data"] if ri["type"] == "coverArts"
+        ]
         if not ids:
             return None
         if cover_art := cover_art_by_id.get(ids[0]):

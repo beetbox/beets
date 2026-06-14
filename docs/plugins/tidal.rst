@@ -105,7 +105,7 @@ Default
 Cover Art
 ---------
 
-When the :doc:`plugins/fetchart` plugin is enabled, beets can retrieve album
+When the :doc:`fetchart` plugin is enabled, beets can retrieve album
 cover art from Tidal. The Tidal plugin automatically includes the cover art URL
 when looking up albums. No additional configuration is needed to enable this
 feature.
