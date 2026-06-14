@@ -1725,45 +1725,51 @@ class ReimportTest(AutotagImportTestCase):
         assert self._album().data_source == "match_source"
 
 
-class ImportPretendTest(IOMixin, AutotagImportTestCase):
-    """Test the pretend commandline option"""
+class TestImportPretend(ImportHelper):
+    """Test the pretend commandline option."""
 
-    def setUp(self):
-        super().setUp()
+    def setup_beets(self):
+        super().setup_beets()
         self.album_track_path = self.prepare_album_for_import(1)[0]
         self.single_path = self.prepare_track_for_import(2, self.import_path)
         self.album_path = self.album_track_path.parent
 
-    def __run(self, importer):
-        with capture_log() as logs:
+    def _run(self, importer, caplog):
+        with caplog.at_level("DEBUG"):
             importer.run()
-
         assert len(self.lib.items()) == 0
         assert len(self.lib.albums()) == 0
+        return [
+            r.message
+            for r in caplog.records
+            if not r.message.startswith("Sending event:")
+        ]
 
-        return [line for line in logs if not line.startswith("Sending event:")]
-
-    def test_import_singletons_pretend(self):
-        assert self.__run(self.setup_singleton_importer(pretend=True)) == [
+    def test_import_singletons_pretend(self, caplog):
+        assert self._run(
+            self.setup_singleton_importer(pretend=True), caplog
+        ) == [
             f"Singleton: {self.single_path}",
             f"Singleton: {self.album_track_path}",
         ]
 
-    def test_import_album_pretend(self):
-        assert self.__run(self.setup_importer(pretend=True)) == [
+    def test_import_album_pretend(self, caplog):
+        assert self._run(self.setup_importer(pretend=True), caplog) == [
             f"Album: {self.import_path}",
             f"  {self.single_path}",
             f"Album: {self.album_path}",
             f"  {self.album_track_path}",
         ]
 
-    def test_import_pretend_empty(self):
+    def test_import_pretend_empty(self, caplog):
         empty_path = self.temp_dir_path / "empty"
         empty_path.mkdir()
 
         importer = self.setup_importer(pretend=True, import_dir=empty_path)
 
-        assert self.__run(importer) == [f"No files imported from {empty_path}"]
+        assert self._run(importer, caplog) == [
+            f"No files imported from {empty_path}"
+        ]
 
 
 def mocked_get_albums_by_ids(ids):
