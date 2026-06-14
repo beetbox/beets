@@ -55,79 +55,71 @@ def indent(count: int) -> str:
     return " " * count
 
 
-def split_into_lines(string: str, first_width: int, width: int) -> list[str]:
-    """Split string into a list of substrings at whitespace.
+def _split_words_preserving_colors(string: str) -> list[str]:
+    """Split colored text into words while preserving ANSI escapes."""
+    words: list[str] = []
 
-    The first substring has a length not longer than `first_width`, and the rest
-    of substrings have a length not longer than `width`.
-
-    `string` may contain ANSI codes at word borders.
-    """
-    words = []
-
-    if uncolorize(string) == string:
-        # No colors in string
-        words = string.split()
-    else:
-        # Use a regex to find escapes and the text within them.
-        for m in ESC_TEXT_REGEX.finditer(string):
-            # m contains four groups:
-            # pretext - any text before escape sequence
-            # esc - intitial escape sequence
-            # text - text, no escape sequence, may contain spaces
-            # reset - ASCII colour reset
-            space_before_text = False
-            if m.group("pretext") != "":
-                # Some pretext found, let's handle it
-                # Add any words in the pretext
-                words += m.group("pretext").split()
-                if m.group("pretext")[-1] == " ":
-                    # Pretext ended on a space
-                    space_before_text = True
-                else:
-                    # Pretext ended mid-word, ensure next word
-                    pass
+    for m in ESC_TEXT_REGEX.finditer(string):
+        # m contains four groups:
+        # pretext - any text before escape sequence
+        # esc - intitial escape sequence
+        # text - text, no escape sequence, may contain spaces
+        # reset - ASCII colour reset
+        space_before_text = False
+        if m.group("pretext") != "":
+            # Some pretext found, let's handle it
+            # Add any words in the pretext
+            words += m.group("pretext").split()
+            if m.group("pretext")[-1] == " ":
+                # Pretext ended on a space
+                space_before_text = True
             else:
-                # pretext empty, treat as if there is a space before
-                space_before_text = True
-            if m.group("text")[0] == " ":
-                # First character of the text is a space
-                space_before_text = True
-            # Now, handle the words in the main text:
-            raw_words = m.group("text").split()
-            if space_before_text:
-                # Colorize each word with pre/post escapes
-                # Reconstruct colored words
+                # Pretext ended mid-word, ensure next word
+                pass
+        else:
+            # pretext empty, treat as if there is a space before
+            space_before_text = True
+        if m.group("text")[0] == " ":
+            # First character of the text is a space
+            space_before_text = True
+        # Now, handle the words in the main text:
+        raw_words = m.group("text").split()
+        if space_before_text:
+            # Colorize each word with pre/post escapes
+            # Reconstruct colored words
+            words += [f"{m['esc']}{raw_word}{RESET_COLOR}" for raw_word in raw_words]
+        elif raw_words:
+            # Pretext stops mid-word
+            if m.group("esc") != RESET_COLOR:
+                # Add the rest of the current word, with a reset after it
+                words[-1] += f"{m['esc']}{raw_words[0]}{RESET_COLOR}"
+                # Add the subsequent colored words:
                 words += [
                     f"{m['esc']}{raw_word}{RESET_COLOR}"
-                    for raw_word in raw_words
+                    for raw_word in raw_words[1:]
                 ]
-            elif raw_words:
-                # Pretext stops mid-word
-                if m.group("esc") != RESET_COLOR:
-                    # Add the rest of the current word, with a reset after it
-                    words[-1] += f"{m['esc']}{raw_words[0]}{RESET_COLOR}"
-                    # Add the subsequent colored words:
-                    words += [
-                        f"{m['esc']}{raw_word}{RESET_COLOR}"
-                        for raw_word in raw_words[1:]
-                    ]
-                else:
-                    # Caught a mid-word escape sequence
-                    words[-1] += raw_words[0]
-                    words += raw_words[1:]
-            if (
-                m.group("text")[-1] != " "
-                and m.group("posttext") != ""
-                and m.group("posttext")[0] != " "
-            ):
-                # reset falls mid-word
-                post_text = m.group("posttext").split()
-                words[-1] += post_text[0]
-                words += post_text[1:]
             else:
-                # Add any words after escape sequence
-                words += m.group("posttext").split()
+                # Caught a mid-word escape sequence
+                words[-1] += raw_words[0]
+                words += raw_words[1:]
+        if (
+            m.group("text")[-1] != " "
+            and m.group("posttext") != ""
+            and m.group("posttext")[0] != " "
+        ):
+            # reset falls mid-word
+            post_text = m.group("posttext").split()
+            words[-1] += post_text[0]
+            words += post_text[1:]
+        else:
+            # Add any words after escape sequence
+            words += m.group("posttext").split()
+
+    return words
+
+
+def _wrap_words(words: list[str], first_width: int, width: int) -> list[str]:
+    """Wrap a list of words to the requested widths."""
     result: list[str] = []
     next_substr = ""
     # Iterate over all words.
@@ -178,6 +170,24 @@ def split_into_lines(string: str, first_width: int, width: int) -> list[str]:
     # has not yet been added to the result.
     result.append(next_substr)
     return result
+
+
+def split_into_lines(string: str, first_width: int, width: int) -> list[str]:
+    """Split string into a list of substrings at whitespace.
+
+    The first substring has a length not longer than `first_width`, and the rest
+    of substrings have a length not longer than `width`.
+
+    `string` may contain ANSI codes at word borders.
+    """
+    if uncolorize(string) == string:
+        # No colors in string
+        words = string.split()
+    else:
+        # Use a regex to find escapes and the text within them.
+        words = _split_words_preserving_colors(string)
+
+    return _wrap_words(words, first_width, width)
 
 
 def get_column_layout(

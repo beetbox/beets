@@ -224,6 +224,157 @@ class Delegated(Event):
         self.child = child
 
 
+def _complete_thread(coro, return_value, threads, delegators, joiners):
+    """Remove a coroutine from the scheduling pool."""
+    del threads[coro]
+
+    # Resume delegator.
+    if coro in delegators:
+        threads[delegators[coro]] = ValueEvent(return_value)
+        del delegators[coro]
+
+    # Resume joiners.
+    if coro in joiners:
+        for parent in joiners[coro]:
+            threads[parent] = ValueEvent(None)
+        del joiners[coro]
+
+
+def _advance_thread(coro, value, threads, delegators, joiners, is_exc=False):
+    """Advance a coroutine until it yields again."""
+    try:
+        if is_exc:
+            next_event = coro.throw(*value)
+        else:
+            next_event = coro.send(value)
+    except StopIteration:
+        # Thread is done.
+        _complete_thread(coro, None, threads, delegators, joiners)
+    except BaseException:
+        # Thread raised some other exception.
+        del threads[coro]
+        raise ThreadError(coro, sys.exc_info())
+    else:
+        if isinstance(next_event, types.GeneratorType):
+            # Automatically invoke sub-coroutines. (Shorthand for
+            # explicit bluelet.call().)
+            next_event = DelegationEvent(next_event)
+        threads[coro] = next_event
+
+
+def _kill_thread(coro, threads, delegators, joiners):
+    """Unschedule this thread and its (recursive) delegates."""
+    # Collect all coroutines in the delegation stack.
+    coros = [coro]
+    while isinstance(threads[coro], Delegated):
+        coro = threads[coro].child
+        coros.append(coro)
+
+    # Complete each coroutine from the top to the bottom of the stack.
+    for coro in reversed(coros):
+        _complete_thread(coro, None, threads, delegators, joiners)
+
+
+def _drain_ready_threads(threads, delegators, joiners):
+    """Run all coroutine events that can execute immediately."""
+    while True:
+        have_ready = False
+        for coro, event in list(threads.items()):
+            if isinstance(event, SpawnEvent):
+                threads[event.spawned] = ValueEvent(None)  # Spawn.
+                _advance_thread(coro, None, threads, delegators, joiners)
+                have_ready = True
+            elif isinstance(event, ValueEvent):
+                _advance_thread(coro, event.value, threads, delegators, joiners)
+                have_ready = True
+            elif isinstance(event, ExceptionEvent):
+                _advance_thread(
+                    coro,
+                    event.exc_info,
+                    threads,
+                    delegators,
+                    joiners,
+                    True,
+                )
+                have_ready = True
+            elif isinstance(event, DelegationEvent):
+                threads[coro] = Delegated(event.spawned)  # Suspend.
+                threads[event.spawned] = ValueEvent(None)  # Spawn.
+                delegators[event.spawned] = coro
+                have_ready = True
+            elif isinstance(event, ReturnEvent):
+                # Thread is done.
+                _complete_thread(coro, event.value, threads, delegators, joiners)
+                have_ready = True
+            elif isinstance(event, JoinEvent):
+                threads[coro] = SUSPENDED  # Suspend.
+                joiners[event.child].append(coro)
+                have_ready = True
+            elif isinstance(event, KillEvent):
+                threads[coro] = ValueEvent(None)
+                _kill_thread(event.child, threads, delegators, joiners)
+                have_ready = True
+
+        # Only start the select when nothing else is ready.
+        if not have_ready:
+            break
+
+
+def _fire_ready_events(threads, delegators, joiners):
+    """Fire events returned by select() and advance their coroutines."""
+    event2coro = {v: k for k, v in threads.items()}
+    for event in _event_select(threads.values()):
+        # Run the IO operation, but catch socket errors.
+        try:
+            value = event.fire()
+        except OSError as exc:
+            if isinstance(exc.args, tuple) and exc.args[0] == errno.EPIPE:
+                # Broken pipe. Remote host disconnected.
+                pass
+            elif isinstance(exc.args, tuple) and exc.args[0] == errno.ECONNRESET:
+                # Connection was reset by peer.
+                pass
+            else:
+                traceback.print_exc()
+            # Abort the coroutine.
+            threads[event2coro[event]] = ReturnEvent(None)
+        else:
+            _advance_thread(
+                event2coro[event], value, threads, delegators, joiners
+            )
+
+
+def _handle_thread_error(te, threads, delegators):
+    """Propagate a thread exception to its delegator or caller."""
+    event = ExceptionEvent(te.exc_info)
+    if te.coro in delegators:
+        # The thread is a delegate. Raise exception in its delegator.
+        threads[delegators[te.coro]] = event
+        del delegators[te.coro]
+        return None
+    # The thread is root-level. Raise in client code.
+    return te
+
+
+def _run_scheduler(root_coro, threads, delegators, joiners):
+    """Run the Bluelet scheduler until the root coroutine exits."""
+    exit_te = None
+    while threads:
+        try:
+            _drain_ready_threads(threads, delegators, joiners)
+            _fire_ready_events(threads, delegators, joiners)
+        except ThreadError as te:
+            exit_te = _handle_thread_error(te, threads, delegators)
+            if exit_te:
+                break
+        except BaseException:
+            # For instance, KeyboardInterrupt during select(). Raise
+            # into root thread and terminate others.
+            threads = {root_coro: ExceptionEvent(sys.exc_info())}
+
+    return exit_te
+
+
 def run(root_coro):
     """Schedules a coroutine, running it to completion. This
     encapsulates the Bluelet scheduler, which the root coroutine can
@@ -243,149 +394,7 @@ def run(root_coro):
 
     # Maps child coroutines to joining (exit-waiting) parents.
     joiners = collections.defaultdict(list)
-
-    def complete_thread(coro, return_value):
-        """Remove a coroutine from the scheduling pool, awaking
-        delegators and joiners as necessary and returning the specified
-        value to any delegating parent.
-        """
-        del threads[coro]
-
-        # Resume delegator.
-        if coro in delegators:
-            threads[delegators[coro]] = ValueEvent(return_value)
-            del delegators[coro]
-
-        # Resume joiners.
-        if coro in joiners:
-            for parent in joiners[coro]:
-                threads[parent] = ValueEvent(None)
-            del joiners[coro]
-
-    def advance_thread(coro, value, is_exc=False):
-        """After an event is fired, run a given coroutine associated with
-        it in the threads dict until it yields again. If the coroutine
-        exits, then the thread is removed from the pool. If the coroutine
-        raises an exception, it is reraised in a ThreadError. If
-        is_exc is True, then the value must be an exc_info tuple and the
-        exception is thrown into the coroutine.
-        """
-        try:
-            if is_exc:
-                next_event = coro.throw(*value)
-            else:
-                next_event = coro.send(value)
-        except StopIteration:
-            # Thread is done.
-            complete_thread(coro, None)
-        except BaseException:
-            # Thread raised some other exception.
-            del threads[coro]
-            raise ThreadError(coro, sys.exc_info())
-        else:
-            if isinstance(next_event, types.GeneratorType):
-                # Automatically invoke sub-coroutines. (Shorthand for
-                # explicit bluelet.call().)
-                next_event = DelegationEvent(next_event)
-            threads[coro] = next_event
-
-    def kill_thread(coro):
-        """Unschedule this thread and its (recursive) delegates."""
-        # Collect all coroutines in the delegation stack.
-        coros = [coro]
-        while isinstance(threads[coro], Delegated):
-            coro = threads[coro].child
-            coros.append(coro)
-
-        # Complete each coroutine from the top to the bottom of the
-        # stack.
-        for coro in reversed(coros):
-            complete_thread(coro, None)
-
-    # Continue advancing threads until root thread exits.
-    exit_te = None
-    while threads:
-        try:
-            # Look for events that can be run immediately. Continue
-            # running immediate events until nothing is ready.
-            while True:
-                have_ready = False
-                for coro, event in list(threads.items()):
-                    if isinstance(event, SpawnEvent):
-                        threads[event.spawned] = ValueEvent(None)  # Spawn.
-                        advance_thread(coro, None)
-                        have_ready = True
-                    elif isinstance(event, ValueEvent):
-                        advance_thread(coro, event.value)
-                        have_ready = True
-                    elif isinstance(event, ExceptionEvent):
-                        advance_thread(coro, event.exc_info, True)
-                        have_ready = True
-                    elif isinstance(event, DelegationEvent):
-                        threads[coro] = Delegated(event.spawned)  # Suspend.
-                        threads[event.spawned] = ValueEvent(None)  # Spawn.
-                        delegators[event.spawned] = coro
-                        have_ready = True
-                    elif isinstance(event, ReturnEvent):
-                        # Thread is done.
-                        complete_thread(coro, event.value)
-                        have_ready = True
-                    elif isinstance(event, JoinEvent):
-                        threads[coro] = SUSPENDED  # Suspend.
-                        joiners[event.child].append(coro)
-                        have_ready = True
-                    elif isinstance(event, KillEvent):
-                        threads[coro] = ValueEvent(None)
-                        kill_thread(event.child)
-                        have_ready = True
-
-                # Only start the select when nothing else is ready.
-                if not have_ready:
-                    break
-
-            # Wait and fire.
-            event2coro = {v: k for k, v in threads.items()}
-            for event in _event_select(threads.values()):
-                # Run the IO operation, but catch socket errors.
-                try:
-                    value = event.fire()
-                except OSError as exc:
-                    if (
-                        isinstance(exc.args, tuple)
-                        and exc.args[0] == errno.EPIPE
-                    ):
-                        # Broken pipe. Remote host disconnected.
-                        pass
-                    elif (
-                        isinstance(exc.args, tuple)
-                        and exc.args[0] == errno.ECONNRESET
-                    ):
-                        # Connection was reset by peer.
-                        pass
-                    else:
-                        traceback.print_exc()
-                    # Abort the coroutine.
-                    threads[event2coro[event]] = ReturnEvent(None)
-                else:
-                    advance_thread(event2coro[event], value)
-
-        except ThreadError as te:
-            # Exception raised from inside a thread.
-            event = ExceptionEvent(te.exc_info)
-            if te.coro in delegators:
-                # The thread is a delegate. Raise exception in its
-                # delegator.
-                threads[delegators[te.coro]] = event
-                del delegators[te.coro]
-            else:
-                # The thread is root-level. Raise in client code.
-                exit_te = te
-                break
-
-        except BaseException:
-            # For instance, KeyboardInterrupt during select(). Raise
-            # into root thread and terminate others.
-            threads = {root_coro: ExceptionEvent(sys.exc_info())}
+    exit_te = _run_scheduler(root_coro, threads, delegators, joiners)
 
     # If any threads still remain, kill them.
     for coro in threads:

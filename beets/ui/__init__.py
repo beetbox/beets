@@ -191,6 +191,120 @@ def input_(prompt=None):
     return resp
 
 
+def _input_options_find_letter(option, letters):
+    for letter in option:
+        if letter.isalpha() and letter.upper() == letter:
+            return letter
+
+    for letter in option:
+        if not letter.isalpha():
+            continue  # Don't use punctuation.
+        if letter.lower() not in letters:
+            return letter
+
+    raise ValueError("no unambiguous lettering found")
+
+
+def _input_options_format_option(option, found_letter, is_default):
+    show_letter = f"[{found_letter.upper()}]" if is_default else found_letter.upper()
+    show_letter = colorize(
+        "action_default" if is_default else "action", show_letter
+    )
+
+    descr_color = "action_default" if is_default else "action_description"
+    index = option.index(found_letter)
+    return (
+        colorize(descr_color, option[:index])
+        + show_letter
+        + colorize(descr_color, option[index + 1 :])
+    )
+
+
+def _input_options_default(default, require, numrange, display_letters):
+    if require:
+        return None
+    if default is None:
+        return numrange[0] if numrange else display_letters[0].lower()
+    return default
+
+
+def _input_options_metadata(options, require, default, numrange):
+    letters = {}
+    display_letters = []
+    capitalized = []
+    first = True
+
+    for option in options:
+        found_letter = _input_options_find_letter(option, letters)
+        letters[found_letter.lower()] = option
+
+        is_default = not require and (
+            (default is None and not numrange and first)
+            or (
+                isinstance(default, str)
+                and found_letter.lower() == default.lower()
+            )
+        )
+
+        capitalized.append(
+            _input_options_format_option(option, found_letter, is_default)
+        )
+        display_letters.append(found_letter.upper())
+        first = False
+
+    default = _input_options_default(default, require, numrange, display_letters)
+    return letters, display_letters, capitalized, default
+
+
+def _input_options_prompt(capitalized, options, default, numrange, max_width):
+    prompt_parts = []
+    prompt_part_lengths = []
+
+    if numrange:
+        if isinstance(default, int):
+            default_name = str(default)
+            default_name = colorize("action_default", default_name)
+            tmpl = "# selection (default {})"
+            prompt_parts.append(tmpl.format(default_name))
+            prompt_part_lengths.append(len(tmpl) - 2 + len(str(default)))
+        else:
+            prompt_parts.append("# selection")
+            prompt_part_lengths.append(len(prompt_parts[-1]))
+
+    prompt_parts += capitalized
+    prompt_part_lengths += [len(s) for s in options]
+
+    prompt = colorize("action", "\u279c ")
+    line_length = 0
+    for i, (part, length) in enumerate(zip(prompt_parts, prompt_part_lengths)):
+        if i == len(prompt_parts) - 1:
+            part += colorize("action_description", "?")
+        else:
+            part += colorize("action_description", ",")
+        length += 1
+
+        if line_length + length + 1 > max_width:
+            prompt += "\n"
+            line_length = 0
+
+        if line_length != 0:
+            part = f" {part}"
+            length += 1
+
+        prompt += part
+        line_length += length
+
+    return prompt
+
+
+def _input_options_fallback_prompt(display_letters, numrange):
+    fallback_prompt = "Enter one of "
+    if numrange:
+        fallback_prompt += "{}-{}, ".format(*numrange)
+    fallback_prompt += f"{', '.join(display_letters)}:"
+    return fallback_prompt
+
+
 def input_options(
     options,
     require=False,
@@ -218,123 +332,19 @@ def input_options(
     `max_width` specifies the maximum number of columns in the
     automatically generated prompt string.
     """
-    # Assign single letters to each option. Also capitalize the options
-    # to indicate the letter.
-    letters = {}
-    display_letters = []
-    capitalized = []
-    first = True
-    for option in options:
-        # Is a letter already capitalized?
-        for letter in option:
-            if letter.isalpha() and letter.upper() == letter:
-                found_letter = letter
-                break
-        else:
-            # Infer a letter.
-            for letter in option:
-                if not letter.isalpha():
-                    continue  # Don't use punctuation.
-                if letter not in letters:
-                    found_letter = letter
-                    break
-            else:
-                raise ValueError("no unambiguous lettering found")
+    letters, display_letters, capitalized, default = _input_options_metadata(
+        options, require, default, numrange
+    )
 
-        letters[found_letter.lower()] = option
-        index = option.index(found_letter)
-
-        # Mark the option's shortcut letter for display.
-        if not require and (
-            (default is None and not numrange and first)
-            or (
-                isinstance(default, str)
-                and found_letter.lower() == default.lower()
-            )
-        ):
-            # The first option is the default; mark it.
-            show_letter = f"[{found_letter.upper()}]"
-            is_default = True
-        else:
-            show_letter = found_letter.upper()
-            is_default = False
-
-        # Colorize the letter shortcut.
-        show_letter = colorize(
-            "action_default" if is_default else "action", show_letter
-        )
-
-        # Insert the highlighted letter back into the word.
-        descr_color = "action_default" if is_default else "action_description"
-        capitalized.append(
-            colorize(descr_color, option[:index])
-            + show_letter
-            + colorize(descr_color, option[index + 1 :])
-        )
-        display_letters.append(found_letter.upper())
-
-        first = False
-
-    # The default is just the first option if unspecified.
-    if require:
-        default = None
-    elif default is None:
-        if numrange:
-            default = numrange[0]
-        else:
-            default = display_letters[0].lower()
-
-    # Make a prompt if one is not provided.
     if not prompt:
-        prompt_parts = []
-        prompt_part_lengths = []
-        if numrange:
-            if isinstance(default, int):
-                default_name = str(default)
-                default_name = colorize("action_default", default_name)
-                tmpl = "# selection (default {})"
-                prompt_parts.append(tmpl.format(default_name))
-                prompt_part_lengths.append(len(tmpl) - 2 + len(str(default)))
-            else:
-                prompt_parts.append("# selection")
-                prompt_part_lengths.append(len(prompt_parts[-1]))
-        prompt_parts += capitalized
-        prompt_part_lengths += [len(s) for s in options]
+        prompt = _input_options_prompt(
+            capitalized, options, default, numrange, max_width
+        )
 
-        # Wrap the query text.
-        # Start prompt with U+279C: Heavy Round-Tipped Rightwards Arrow
-        prompt = colorize("action", "\u279c ")
-        line_length = 0
-        for i, (part, length) in enumerate(
-            zip(prompt_parts, prompt_part_lengths)
-        ):
-            # Add punctuation.
-            if i == len(prompt_parts) - 1:
-                part += colorize("action_description", "?")
-            else:
-                part += colorize("action_description", ",")
-            length += 1
-
-            # Choose either the current line or the beginning of the next.
-            if line_length + length + 1 > max_width:
-                prompt += "\n"
-                line_length = 0
-
-            if line_length != 0:
-                # Not the beginning of the line; need a space.
-                part = f" {part}"
-                length += 1
-
-            prompt += part
-            line_length += length
-
-    # Make a fallback prompt too. This is displayed if the user enters
-    # something that is not recognized.
     if not fallback_prompt:
-        fallback_prompt = "Enter one of "
-        if numrange:
-            fallback_prompt += "{}-{}, ".format(*numrange)
-        fallback_prompt += f"{', '.join(display_letters)}:"
+        fallback_prompt = _input_options_fallback_prompt(
+            display_letters, numrange
+        )
 
     resp = input_(prompt)
     while True:

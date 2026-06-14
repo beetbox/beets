@@ -364,6 +364,101 @@ def _summary_judgment(rec: Recommendation) -> importer.Action | None:
     return action
 
 
+def _handle_no_candidates(
+    singleton,
+    itemcount,
+    choice_opts,
+    choice_actions,
+):
+    if singleton:
+        ui.print_("No matching recordings found.")
+    else:
+        ui.print_(f"No matching release found for {itemcount} tracks.")
+        ui.print_(
+            "For help, see: "
+            "https://beets.readthedocs.org/en/latest/faq.html#nomatch"
+        )
+    sel = ui.input_options(choice_opts)
+    if sel in choice_actions:
+        return choice_actions[sel]
+    else:
+        assert False
+
+
+def _show_candidate_list(
+    candidates,
+    singleton,
+    cur_artist,
+    cur_album,
+    item,
+):
+    ui.print_("")
+    ui.print_(
+        f"Finding tags for {'track' if singleton else 'album'} "
+        f'"{item.artist if singleton else cur_artist} -'
+        f' {item.title if singleton else cur_album}".'
+    )
+
+    ui.print_("  Candidates:")
+    for i, match in enumerate(candidates):
+        dist_color = match.distance.color
+        line_parts = [
+            colorize(dist_color, f"{i + 1}."),
+            match.distance.string,
+            colorize(
+                dist_color if i == 0 else "text_highlight_minor",
+                f"{match.info.artist} - {match.info.name}",
+            ),
+        ]
+        ui.print_(f"  {' '.join(line_parts)}")
+
+        if penalty_keys := match.distance.generic_penalty_keys:
+            if len(penalty_keys) > 3:
+                penalty_keys = [*penalty_keys[:3], "..."]
+            penalty_text = colorize("changed", f"\u2260 {', '.join(penalty_keys)}")
+            ui.print_(f"{' ' * 13}{penalty_text}")
+
+        if disambig := match.disambig_string:
+            ui.print_(f"{' ' * 13}{disambig}")
+
+
+def _confirm_candidate(
+    match,
+    singleton,
+    item,
+    cur_artist,
+    cur_album,
+    rec,
+    require,
+    choice_opts,
+    choice_actions,
+):
+    if singleton:
+        show_item_change(item, match)
+    else:
+        show_change(cur_artist, cur_album, match)
+
+    if rec == Recommendation.strong and not config["import"]["timid"]:
+        return match
+
+    default = config["import"]["default_action"].as_choice(
+        {"apply": "a", "skip": "s", "asis": "u", "none": None}
+    )
+    if default is None:
+        require = True
+    if config["import"]["bell"]:
+        ui.print_("\a", end="")
+    sel = ui.input_options(
+        ("Apply", "More candidates", *choice_opts),
+        require=require,
+        default=default,
+    )
+    if sel == "a":
+        return match
+    elif sel in choice_actions:
+        return choice_actions[sel]
+
+
 def choose_candidate(
     candidates,
     singleton,
@@ -401,19 +496,9 @@ def choose_candidate(
 
     # Zero candidates.
     if not candidates:
-        if singleton:
-            ui.print_("No matching recordings found.")
-        else:
-            ui.print_(f"No matching release found for {itemcount} tracks.")
-            ui.print_(
-                "For help, see: "
-                "https://beets.readthedocs.org/en/latest/faq.html#nomatch"
-            )
-        sel = ui.input_options(choice_opts)
-        if sel in choice_actions:
-            return choice_actions[sel]
-        else:
-            assert False
+        return _handle_no_candidates(
+            singleton, itemcount, choice_opts, choice_actions
+        )
 
     # Is the change good enough?
     bypass_candidates = False
@@ -426,42 +511,9 @@ def choose_candidate(
         require = rec <= Recommendation.low
 
         if not bypass_candidates:
-            # Display list of candidates.
-            ui.print_("")
-            ui.print_(
-                f"Finding tags for {'track' if singleton else 'album'} "
-                f'"{item.artist if singleton else cur_artist} -'
-                f' {item.title if singleton else cur_album}".'
+            _show_candidate_list(
+                candidates, singleton, cur_artist, cur_album, item
             )
-
-            ui.print_("  Candidates:")
-            for i, match in enumerate(candidates):
-                # Index, metadata, and distance.
-                dist_color = match.distance.color
-                line_parts = [
-                    colorize(dist_color, f"{i + 1}."),
-                    match.distance.string,
-                    colorize(
-                        dist_color if i == 0 else "text_highlight_minor",
-                        f"{match.info.artist} - {match.info.name}",
-                    ),
-                ]
-                ui.print_(f"  {' '.join(line_parts)}")
-
-                # Penalties.
-                if penalty_keys := match.distance.generic_penalty_keys:
-                    if len(penalty_keys) > 3:
-                        penalty_keys = [*penalty_keys[:3], "..."]
-                    penalty_text = colorize(
-                        "changed", f"\u2260 {', '.join(penalty_keys)}"
-                    )
-                    ui.print_(f"{' ' * 13}{penalty_text}")
-
-                # Disambiguation
-                if disambig := match.disambig_string:
-                    ui.print_(f"{' ' * 13}{disambig}")
-
-            # Ask the user for a choice.
             sel = ui.input_options(choice_opts, numrange=(1, len(candidates)))
             if sel == "m":
                 pass
@@ -475,34 +527,19 @@ def choose_candidate(
                     require = True
         bypass_candidates = False
 
-        # Show what we're about to do.
-        if singleton:
-            show_item_change(item, match)
-        else:
-            show_change(cur_artist, cur_album, match)
-
-        # Exact match => tag automatically if we're not in timid mode.
-        if rec == Recommendation.strong and not config["import"]["timid"]:
-            return match
-
-        # Ask for confirmation.
-        default = config["import"]["default_action"].as_choice(
-            {"apply": "a", "skip": "s", "asis": "u", "none": None}
+        choice = _confirm_candidate(
+            match,
+            singleton,
+            item,
+            cur_artist,
+            cur_album,
+            rec,
+            require,
+            choice_opts,
+            choice_actions,
         )
-        if default is None:
-            require = True
-        # Bell ring when user interaction is needed.
-        if config["import"]["bell"]:
-            ui.print_("\a", end="")
-        sel = ui.input_options(
-            ("Apply", "More candidates", *choice_opts),
-            require=require,
-            default=default,
-        )
-        if sel == "a":
-            return match
-        elif sel in choice_actions:
-            return choice_actions[sel]
+        if choice is not None:
+            return choice
 
 
 def manual_search(session, task):
