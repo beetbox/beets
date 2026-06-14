@@ -402,7 +402,7 @@ class TestImportFormat(ImportHelper):
         self.importer.run()
         assert self.lib.items().get().path.endswith(b".mp3")
 
-    def test_recognize_format_already_exist(self):
+    def test_recognize_format_already_exist(self, caplog):
         resource_path = os.path.join(_common.RSRC, b"no_ext")
         temp_resource_path = os.path.join(self.temp_dir, b"no_ext")
         util.copy(resource_path, temp_resource_path)
@@ -410,9 +410,12 @@ class TestImportFormat(ImportHelper):
         util.copy(temp_resource_path, new_path)
         self.setup_importer(autotag=False)
         self.importer.paths = [temp_resource_path]
-        with capture_log() as logs:
+        with caplog.at_level("DEBUG"):
             self.importer.run()
-        assert "Import file with matching format to original target" in logs
+        assert (
+            "Import file with matching format to original target"
+            in caplog.messages
+        )
         assert self.lib.items().get().path.endswith(b".mp3")
 
     def test_recognize_format_not_music(self):
@@ -536,26 +539,26 @@ class ImportTest(PathsMixin, AutotagImportTestCase):
         assert len(self.lib.items()) == 1
 
     @NEEDS_FFPROBE
-    def test_empty_directory_warning(self):
+    def test_empty_directory_warning(self, caplog):
         import_dir = os.path.join(self.temp_dir, b"empty")
         self.touch(b"non-audio", dir_=import_dir)
         self.setup_importer(import_dir=import_dir)
-        with capture_log() as logs:
+        with caplog.at_level("DEBUG"):
             self.importer.run()
 
         import_dir = displayable_path(import_dir)
-        assert f"No files imported from {import_dir}" in logs
+        assert f"No files imported from {import_dir}" in caplog.messages
 
     @NEEDS_FFPROBE
-    def test_empty_directory_singleton_warning(self):
+    def test_empty_directory_singleton_warning(self, caplog):
         import_dir = os.path.join(self.temp_dir, b"empty")
         self.touch(b"non-audio", dir_=import_dir)
         self.setup_singleton_importer(import_dir=import_dir)
-        with capture_log() as logs:
+        with caplog.at_level("DEBUG"):
             self.importer.run()
 
         import_dir = displayable_path(import_dir)
-        assert f"No files imported from {import_dir}" in logs
+        assert f"No files imported from {import_dir}" in caplog.messages
 
     def test_asis_no_data_source(self):
         assert self.lib.items().get() is None
