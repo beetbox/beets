@@ -3,13 +3,15 @@ from __future__ import annotations
 import itertools
 import os
 import re
+import time
 from functools import cached_property
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING, ClassVar, overload
 
 import confuse
 
 from beets import ui
 from beets.autotag import AlbumInfo, TrackInfo
+from beets.dbcore import types
 from beets.exceptions import UserError
 from beets.logging import getLogger
 from beets.metadata_plugins import MetadataSourcePlugin
@@ -36,6 +38,15 @@ log = getLogger("beets.tidal")
 
 
 class TidalPlugin(MetadataSourcePlugin):
+    item_types: ClassVar[dict[str, types.Type]] = {
+        "tidal_track_id": types.INTEGER,
+        "tidal_album_id": types.INTEGER,
+        "tidal_artist_id": types.INTEGER,
+        "tidal_track_popularity": types.INTEGER,
+        "tidal_alb_popularity": types.INTEGER,
+        "tidal_updated": types.DATE,
+    }
+
     def __init__(self) -> None:
         super().__init__()
 
@@ -65,28 +76,6 @@ class TidalPlugin(MetadataSourcePlugin):
                 "Please login to TIDAL"
                 " using `beet tidal --auth` or disable tidal plugin"
             )
-
-    def commands(self) -> list[ui.Subcommand]:
-        tidal_cmd = ui.Subcommand(
-            "tidal", help="Tidal metadata plugin commands"
-        )
-        tidal_cmd.parser.add_option(
-            "-a",
-            "--auth",
-            action="store_true",
-            help="Authenticate and login to Tidal",
-            default=False,
-        )
-
-        def func(lib: Library, opts: optparse.Values, args: list[str]):
-            if opts.auth:
-                self.api.ui_authenticate_flow()
-            else:
-                tidal_cmd.print_help()
-
-        tidal_cmd.func = func
-
-        return [tidal_cmd]
 
     def album_for_id(self, album_id: str) -> AlbumInfo | None:
         if not (tidal_id := self._extract_id(album_id)):
@@ -345,7 +334,6 @@ class TidalPlugin(MetadataSourcePlugin):
         track_by_id: dict[str, TidalTrack],
         artist_by_id: dict[str, TidalArtist],
     ) -> AlbumInfo:
-
         track_infos: list[TrackInfo] = []
         for i, track_rel in enumerate(
             album["relationships"]["items"]["data"], start=1
@@ -377,6 +365,13 @@ class TidalPlugin(MetadataSourcePlugin):
             year=date_parts[0] if date_parts else None,
             month=date_parts[1] if date_parts else None,
             day=date_parts[2] if date_parts else None,
+            # Flexattrs
+            tidal_album_id=int(album["id"]),
+            tidal_artist_id=int(artist_ids[0]) if artist_ids else None,
+            tidal_alb_popularity=self._popularity(
+                album["attributes"]["popularity"]
+            ),
+            tidal_updated=time.time(),
         )
 
     def _get_track_info(
@@ -399,6 +394,13 @@ class TidalPlugin(MetadataSourcePlugin):
             artists=artist_names,
             duration=self._duration_to_seconds(track["attributes"]["duration"]),
             label=self._parse_label(track["attributes"]),
+            # Flexattrs
+            tidal_track_id=int(track["id"]),
+            tidal_artist_id=int(artist_ids[0]) if artist_ids else None,
+            tidal_track_popularity=self._popularity(
+                track["attributes"]["popularity"]
+            ),
+            tidal_updated=time.time(),
         )
 
     @staticmethod
@@ -473,6 +475,100 @@ class TidalPlugin(MetadataSourcePlugin):
         ):
             return int(parts[0]), int(parts[1]), int(parts[2])
         return None
+
+    @staticmethod
+    def _popularity(val: object) -> int | None:
+        if val is None:
+            return None
+        if isinstance(val, float):
+            return int(val * 100)
+        return int(val)
+
+    def tidalsync(
+        self, items: Iterable[Item], write: bool, force: bool = False
+    ) -> None:
+        """Sync Tidal popularity data for library items."""
+        items = list(items)
+        self._log.info("Syncing popularity for {0} tracks", len(items))
+
+        for item in items:
+            if not force and item.get("tidal_track_popularity") is not None:
+                continue
+
+            tidal_track_id = item.get("tidal_track_id")
+            if tidal_track_id is None:
+                continue
+
+            results = list(
+                self.search_tracks_by_ids(tidal_ids=[str(tidal_track_id)])
+            )
+            if not results or results[0] is None:
+                self._log.debug("Track {0} not found in Tidal", tidal_track_id)
+                continue
+
+            track_info = results[0]
+            if track_info.tidal_track_popularity is not None:
+                item["tidal_track_popularity"] = (
+                    track_info.tidal_track_popularity
+                )
+            item["tidal_updated"] = time.time()
+            item.store()
+            if write:
+                item.try_write()
+
+            self._log.debug(
+                "Updated popularity for track {0}: {1}",
+                tidal_track_id,
+                track_info.tidal_track_popularity,
+            )
+
+    def commands(self) -> list[ui.Subcommand]:
+        tidal_cmd = ui.Subcommand(
+            "tidal", help="Tidal metadata plugin commands"
+        )
+        tidal_cmd.parser.add_option(
+            "-a",
+            "--auth",
+            action="store_true",
+            help="Authenticate and login to Tidal",
+            default=False,
+        )
+
+        def func(lib: Library, opts: optparse.Values, args: list[str]):
+            if opts.auth:
+                self.api.ui_authenticate_flow()
+            else:
+                tidal_cmd.print_help()
+
+        tidal_cmd.func = func
+
+        tidalsync_cmd = ui.Subcommand(
+            "tidalsync", help="sync Tidal popularity data for library items"
+        )
+        tidalsync_cmd.parser.add_option(
+            "-f",
+            "--force",
+            action="store_true",
+            dest="force",
+            default=False,
+            help="re-fetch popularity even if already present",
+        )
+        tidalsync_cmd.parser.add_option(
+            "-w",
+            "--write",
+            action="store_true",
+            dest="write",
+            default=False,
+            help="write updated tags to media files",
+        )
+
+        def sync_func(lib: Library, opts: optparse.Values, args: list[str]):
+            items = lib.items(args)
+            self.tidalsync(items, write=opts.write, force=opts.force)
+
+        tidalsync_cmd.func = sync_func
+
+        return [tidal_cmd, tidalsync_cmd]
 
 
 ISO_8601_RE = re.compile(

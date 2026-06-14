@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
@@ -123,25 +124,30 @@ class TestAlbumParsing(TidalPluginTest):
     """High-level tests for album parsing."""
 
     def test_parse_album(self):
-        track = _make_track("t1", "My Song", "PT3M30S", "ISRC001", ["a1"])
+        track = _make_track("101", "My Song", "PT3M30S", "ISRC001", ["1001"])
         album, track_lookup, artist_lookup = _make_album(
-            "al1", "My Album", [track], ["a1"]
+            "1", "My Album", [track], ["1001"]
         )
 
         info = self.tidal._get_album_info(album, track_lookup, artist_lookup)
 
         assert info.album == "My Album"
-        assert info.album_id == "al1"
+        assert info.album_id == "1"
         assert len(info.tracks) == 1
         assert info.tracks[0].title == "My Song"
+        assert info.tidal_album_id == 1
+        assert info.tidal_artist_id == 1001
+        assert info.tidal_alb_popularity == 50
+        assert info.tracks[0].tidal_track_id == 101
+        assert info.tracks[0].tidal_track_popularity == 50
 
     def test_parse_album_with_multiple_tracks(self):
         tracks = [
-            _make_track("t1", "Track One", "PT3M", "ISRC1", ["a1"]),
-            _make_track("t2", "Track Two", "PT4M", "ISRC2", ["a1"]),
+            _make_track("101", "Track One", "PT3M", "ISRC1", ["1001"]),
+            _make_track("102", "Track Two", "PT4M", "ISRC2", ["1001"]),
         ]
         album, track_lookup, artist_lookup = _make_album(
-            "al2", "Album Two", tracks, ["a1"]
+            "2", "Album Two", tracks, ["1001"]
         )
 
         info = self.tidal._get_album_info(album, track_lookup, artist_lookup)
@@ -149,12 +155,13 @@ class TestAlbumParsing(TidalPluginTest):
         assert len(info.tracks) == 2
         assert info.tracks[0].index == 1
         assert info.tracks[1].index == 2
+        assert info.tidal_album_id == 2
 
     def test_parse_album_with_version(self):
         """Album title should have version appended."""
-        track = _make_track("t1", "My Song", "PT3M", "ISRC001", ["a1"])
+        track = _make_track("101", "My Song", "PT3M", "ISRC001", ["1001"])
         album, track_lookup, artist_lookup = _make_album(
-            "al3", "My Album", [track], ["a1"], version="Deluxe Edition"
+            "3", "My Album", [track], ["1001"], version="Deluxe Edition"
         )
 
         info = self.tidal._get_album_info(album, track_lookup, artist_lookup)
@@ -166,27 +173,31 @@ class TestTrackParsing(TidalPluginTest):
     """High-level tests for track parsing."""
 
     def test_parse_track(self):
-        track = _make_track("t1", "My Track", "PT4M", "ISRC456", ["a1"])
-        artist_lookup = {"a1": _make_artist("a1", "My Artist")}
+        track = _make_track("101", "My Track", "PT4M", "ISRC456", ["1001"])
+        artist_lookup = {"1001": _make_artist("1001", "My Artist")}
 
         info = self.tidal._get_track_info(track, artist_lookup)
 
         assert info.title == "My Track"
-        assert info.track_id == "t1"
+        assert info.track_id == "101"
         assert info.duration == 240  # PT4M = 240 seconds
         assert info.isrc == "ISRC456"
         assert info.artist == "My Artist"
+        assert info.tidal_track_id == 101
+        assert info.tidal_artist_id == 1001
+        assert info.tidal_track_popularity == 50
 
     def test_parse_track_with_version(self):
         """Track title should have version appended."""
         track = _make_track(
-            "t2", "My Song", "PT3M", "ISRC002", ["a1"], version="Remastered"
+            "102", "My Song", "PT3M", "ISRC002", ["1001"], version="Remastered"
         )
-        artist_lookup = {"a1": _make_artist("a1", "My Artist")}
+        artist_lookup = {"1001": _make_artist("1001", "My Artist")}
 
         info = self.tidal._get_track_info(track, artist_lookup)
 
         assert info.title == "My Song (Remastered)"
+        assert info.tidal_track_id == 102
 
 
 class TestTrackForID(TidalPluginTest):
@@ -194,8 +205,10 @@ class TestTrackForID(TidalPluginTest):
 
     def test_track_for_id(self):
         """Test fetching track by ID via API."""
-        track = _make_track("490839595", "API Track", "PT3M", "ISRC001", ["a1"])
-        artist = _make_artist("a1", "API Artist")
+        track = _make_track(
+            "490839595", "API Track", "PT3M", "ISRC001", ["1001"]
+        )
+        artist = _make_artist("1001", "API Artist")
 
         self.tidal.api.get_tracks = Mock(
             return_value={"data": [track], "included": [artist]}
@@ -225,12 +238,12 @@ class TestTracksForIDs(TidalPluginTest):
     def test_tracks_for_ids(self):
         """Test fetching multiple tracks by IDs via API."""
         track1 = _make_track(
-            "490839595", "API Track 1", "PT3M", "ISRC001", ["a1"]
+            "490839595", "API Track 1", "PT3M", "ISRC001", ["1001"]
         )
         track2 = _make_track(
-            "490839596", "API Track 2", "PT4M", "ISRC002", ["a1"]
+            "490839596", "API Track 2", "PT4M", "ISRC002", ["1001"]
         )
-        artist = _make_artist("a1", "API Artist")
+        artist = _make_artist("1001", "API Artist")
 
         self.tidal.api.get_tracks = Mock(
             return_value={"data": [track1, track2], "included": [artist]}
@@ -253,8 +266,10 @@ class TestTracksForIDs(TidalPluginTest):
 
     def test_tracks_for_ids_with_missing(self):
         """Test tracks_for_ids yields None for IDs not found."""
-        track = _make_track("490839595", "API Track", "PT3M", "ISRC001", ["a1"])
-        artist = _make_artist("a1", "API Artist")
+        track = _make_track(
+            "490839595", "API Track", "PT3M", "ISRC001", ["1001"]
+        )
+        artist = _make_artist("1001", "API Artist")
 
         self.tidal.api.get_tracks = Mock(
             return_value={"data": [track], "included": [artist]}
@@ -277,9 +292,11 @@ class TestAlbumForID(TidalPluginTest):
 
     def test_album_for_id(self):
         """Test fetching album by ID via API."""
-        track = _make_track("t1", "Album Track", "PT3M30S", "ISRC001", ["a1"])
+        track = _make_track(
+            "101", "Album Track", "PT3M30S", "ISRC001", ["1001"]
+        )
         album, track_lookup, artist_lookup = _make_album(
-            "226495055", "API Album", [track], ["a1"]
+            "226495055", "API Album", [track], ["1001"]
         )
         self.tidal.api.get_albums = Mock(
             return_value={
@@ -311,13 +328,17 @@ class TestAlbumsForIDs(TidalPluginTest):
 
     def test_albums_for_ids(self):
         """Test fetching multiple albums by IDs via API."""
-        track1 = _make_track("t1", "Album Track 1", "PT3M", "ISRC001", ["a1"])
-        track2 = _make_track("t2", "Album Track 2", "PT4M", "ISRC002", ["a1"])
+        track1 = _make_track(
+            "101", "Album Track 1", "PT3M", "ISRC001", ["1001"]
+        )
+        track2 = _make_track(
+            "102", "Album Track 2", "PT4M", "ISRC002", ["1001"]
+        )
         album1, track_lookup1, artist_lookup1 = _make_album(
-            "226495055", "API Album 1", [track1], ["a1"]
+            "226495055", "API Album 1", [track1], ["1001"]
         )
         album2, track_lookup2, artist_lookup2 = _make_album(
-            "226495056", "API Album 2", [track2], ["a1"]
+            "226495056", "API Album 2", [track2], ["1001"]
         )
 
         # Combine lookups to simulate API response
@@ -351,9 +372,9 @@ class TestAlbumsForIDs(TidalPluginTest):
 
     def test_albums_for_ids_with_missing(self):
         """Test albums_for_ids yields None for IDs not found."""
-        track = _make_track("t1", "Album Track", "PT3M", "ISRC001", ["a1"])
+        track = _make_track("101", "Album Track", "PT3M", "ISRC001", ["1001"])
         album, track_lookup, artist_lookup = _make_album(
-            "226495055", "API Album", [track], ["a1"]
+            "226495055", "API Album", [track], ["1001"]
         )
 
         self.tidal.api.get_albums = Mock(
@@ -381,9 +402,9 @@ class TestCandidates(TidalPluginTest):
 
     def test_candidates_with_barcode(self):
         """Test that candidates uses barcode lookup first."""
-        track = _make_track("t1", "Album Track", "PT3M", "ISRC001", ["a1"])
+        track = _make_track("101", "Album Track", "PT3M", "ISRC001", ["1001"])
         album, track_lookup, artist_lookup = _make_album(
-            "al1", "Barcode Album", [track], ["a1"]
+            "1", "Barcode Album", [track], ["1001"]
         )
 
         self.tidal.api.get_albums = Mock(
@@ -412,16 +433,16 @@ class TestCandidates(TidalPluginTest):
             return_value={
                 "data": {
                     "relationships": {
-                        "albums": {"data": [{"id": "al1", "type": "albums"}]}
+                        "albums": {"data": [{"id": "1", "type": "albums"}]}
                     }
                 }
             }
         )
 
         # Mock album lookup by ID
-        track = _make_track("t1", "Album Track", "PT3M", "ISRC001", ["a1"])
+        track = _make_track("101", "Album Track", "PT3M", "ISRC001", ["1001"])
         album, track_lookup, artist_lookup = _make_album(
-            "al1", "Query Album", [track], ["a1"]
+            "1", "Query Album", [track], ["1001"]
         )
         self.tidal.api.get_albums = Mock(
             return_value={
@@ -446,9 +467,9 @@ class TestItemCandidates(TidalPluginTest):
     def test_item_candidates_with_isrc(self):
         """Test that item_candidates uses ISRC lookup first."""
         track = _make_track(
-            "490839595", "ISRC Track", "PT3M", "ISRC001", ["a1"]
+            "490839595", "ISRC Track", "PT3M", "ISRC001", ["1001"]
         )
-        artist = _make_artist("a1", "ISRC Artist")
+        artist = _make_artist("1001", "ISRC Artist")
 
         self.tidal.api.get_tracks = Mock(
             return_value={"data": [track], "included": [artist]}
@@ -477,9 +498,9 @@ class TestItemCandidates(TidalPluginTest):
                 },
                 "included": [
                     _make_track(
-                        "490839595", "Query Track", "PT3M", "ISRC002", ["a1"]
+                        "490839595", "Query Track", "PT3M", "ISRC002", ["1001"]
                     ),
-                    _make_artist("a1", "Query Artist"),
+                    _make_artist("1001", "Query Artist"),
                 ],
             }
         )
@@ -550,3 +571,103 @@ class TestStaticHelpers:
         with caplog.at_level(logging.WARNING):
             TidalPlugin._duration_to_seconds("invalid")
         assert "Invalid ISO 8601 duration: invalid" in caplog.text
+
+    def test_popularity_with_float(self):
+        assert TidalPlugin._popularity(0.5) == 50
+        assert TidalPlugin._popularity(1.0) == 100
+        assert TidalPlugin._popularity(0.0) == 0
+
+    def test_popularity_with_int(self):
+        assert TidalPlugin._popularity(50) == 50
+        assert TidalPlugin._popularity(100) == 100
+        assert TidalPlugin._popularity(0) == 0
+
+    def test_popularity_with_none(self):
+        assert TidalPlugin._popularity(None) is None
+
+
+class TestTidalsync(TidalPluginTest):
+    """Tests for the tidalsync command."""
+
+    def test_sync_updates_popularity(self):
+        """Test that tidalsync fetches and stores popularity."""
+        item = self.lib.add_item(
+            Item(
+                tidal_track_id=490839595,
+                title="Test Track",
+                artist="Test Artist",
+                path="/dev/null/test.flac",
+            )
+        )
+
+        track = _make_track(
+            "490839595", "Test Track", "PT3M", "ISRC001", ["1001"]
+        )
+        artist = _make_artist("1001", "Test Artist")
+
+        self.tidal.api.get_tracks = Mock(
+            return_value={"data": [track], "included": [artist]}
+        )
+
+        self.tidal.tidalsync([item], write=False)
+
+        assert item["tidal_track_popularity"] == 50
+        assert item["tidal_updated"] is not None
+        assert isinstance(item["tidal_updated"], (int, float))
+
+    def test_sync_skips_existing(self):
+        """Test that tidalsync skips items with existing popularity."""
+        item = self.lib.add_item(
+            Item(
+                tidal_track_id=490839595,
+                tidal_track_popularity=42,
+                tidal_updated=time.time(),
+                title="Test Track",
+                artist="Test Artist",
+                path="/dev/null/test.flac",
+            )
+        )
+
+        self.tidal.tidalsync([item], write=False)
+
+        assert item["tidal_track_popularity"] == 42
+
+    def test_sync_force_updates_existing(self):
+        """Test that tidalsync with --force re-fetches."""
+        item = self.lib.add_item(
+            Item(
+                tidal_track_id=490839595,
+                tidal_track_popularity=42,
+                tidal_updated=time.time(),
+                title="Test Track",
+                artist="Test Artist",
+                path="/dev/null/test.flac",
+            )
+        )
+
+        track = _make_track(
+            "490839595", "Test Track", "PT3M", "ISRC001", ["1001"]
+        )
+        artist = _make_artist("1001", "Test Artist")
+
+        self.tidal.api.get_tracks = Mock(
+            return_value={"data": [track], "included": [artist]}
+        )
+
+        self.tidal.tidalsync([item], write=False, force=True)
+
+        assert item["tidal_track_popularity"] == 50
+
+    def test_sync_skips_items_without_track_id(self):
+        """Test that tidalsync skips items without tidal_track_id."""
+        item = self.lib.add_item(
+            Item(
+                title="No ID Track",
+                artist="No ID Artist",
+                path="/dev/null/test.flac",
+            )
+        )
+
+        self.tidal.tidalsync([item], write=False)
+
+        assert item.get("tidal_track_popularity") is None
