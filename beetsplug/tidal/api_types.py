@@ -145,6 +145,16 @@ class TidalTrack(TypedDict):
     relationships: dict[str, RelationshipData]
 
 
+class CoverArtAttributes(TypedDict):
+    url: str
+
+
+class TidalCoverArt(TypedDict):
+    id: str
+    type: Literal["coverArts"]
+    attributes: CoverArtAttributes
+
+
 class TidalSearch(TypedDict):
     id: str
     type: Literal["searchResults"]
@@ -157,7 +167,9 @@ T = TypeVar("T")
 
 class Document(TypedDict, Generic[T]):
     data: T
-    included: NotRequired[list[TidalArtist | TidalAlbum | TidalTrack]]
+    included: NotRequired[
+        list[TidalArtist | TidalAlbum | TidalTrack | TidalCoverArt]
+    ]
     links: NotRequired[dict[str, str]]
 
 

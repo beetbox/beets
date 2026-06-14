@@ -19,11 +19,20 @@ if TYPE_CHECKING:
         ResourceIdentifier,
         TidalAlbum,
         TidalArtist,
+        TidalCoverArt,
         TidalTrack,
         TrackAttributes,
     )
 
 CURRENT_TS = 150000000
+
+
+def _make_cover_art(id_: str, url: str = "") -> TidalCoverArt:
+    return {
+        "id": id_,
+        "type": "coverArts",
+        "attributes": {"url": url} if url else {},
+    }
 
 
 def _make_artist(id_: str, name: str) -> TidalArtist:
@@ -41,6 +50,7 @@ def _make_album(
     artist_ids: list[str],
     release_date: str = "2024-01-15",
     version: str | None = None,
+    cover_art_id: str | None = None,
 ) -> tuple[TidalAlbum, dict[str, TidalTrack], dict[str, TidalArtist]]:
     artist_lookup = {
         aid: _make_artist(aid, f"Artist {aid}") for aid in artist_ids
@@ -62,20 +72,27 @@ def _make_album(
     if version:
         attrs["version"] = version
 
+    relationships: dict[str, object] = {
+        "artists": {
+            "data": [{"id": aid, "type": "artists"} for aid in artist_ids],
+            "links": {},
+        },
+        "items": {
+            "data": [{"id": t["id"], "type": "tracks"} for t in tracks],
+            "links": {},
+        },
+    }
+    if cover_art_id:
+        relationships["coverArt"] = {
+            "data": [{"id": cover_art_id, "type": "coverArts"}],
+            "links": {},
+        }
+
     album: TidalAlbum = {
         "id": id_,
         "type": "albums",
         "attributes": attrs,
-        "relationships": {
-            "artists": {
-                "data": [{"id": aid, "type": "artists"} for aid in artist_ids],
-                "links": {},
-            },
-            "items": {
-                "data": [{"id": t["id"], "type": "tracks"} for t in tracks],
-                "links": {},
-            },
-        },
+        "relationships": relationships,  # type: ignore[typeddict-item]
     }
     return album, track_lookup, artist_lookup
 
@@ -166,6 +183,7 @@ class TestParsing(TidalPluginTest):
             "barcode": "123456",
             "catalognum": None,
             "country": None,
+            "cover_art_url": None,
             "data_source": "Tidal",
             "data_url": None,
             "day": 15,
@@ -288,6 +306,101 @@ class TestParsing(TidalPluginTest):
             "va": False,
             "year": 2024,
         }
+
+    def test_parse_album_with_version(self):
+        """Album title should have version appended."""
+        track = _make_track("101", "My Song", "PT3M", "ISRC001", ["1001"])
+        album, track_lookup, artist_lookup = _make_album(
+            "3", "My Album", [track], ["1001"], version="Deluxe Edition"
+        )
+
+        info = self.tidal._get_album_info(album, track_lookup, artist_lookup)
+
+        assert info.album == "My Album (Deluxe Edition)"
+
+
+class TestCoverArtParsing(TidalPluginTest):
+    """Tests for cover art URL parsing."""
+
+    def test_cover_art_with_url(self):
+        """Cover art URL from included resources."""
+        track = _make_track("t1", "Song", "PT3M", "ISRC001", ["a1"])
+        album, track_lookup, artist_lookup = _make_album(
+            "al1", "Album", [track], ["a1"], cover_art_id="ca1"
+        )
+        cover_art_lookup = {
+            "ca1": _make_cover_art(
+                "ca1", "https://resources.tidal.com/images/ca1/1280x1280.jpg"
+            )
+        }
+
+        info = self.tidal._get_album_info(
+            album, track_lookup, artist_lookup, cover_art_lookup
+        )
+
+        assert (
+            info.cover_art_url
+            == "https://resources.tidal.com/images/ca1/1280x1280.jpg"
+        )
+
+    def test_cover_art_without_url_falls_back_to_constructed(self):
+        """Cover art URL constructed from ID when no URL in attributes."""
+        track = _make_track("t1", "Song", "PT3M", "ISRC001", ["a1"])
+        album, track_lookup, artist_lookup = _make_album(
+            "al1", "Album", [track], ["a1"], cover_art_id="ca1"
+        )
+        cover_art_lookup = {"ca1": _make_cover_art("ca1")}
+
+        info = self.tidal._get_album_info(
+            album, track_lookup, artist_lookup, cover_art_lookup
+        )
+
+        assert (
+            info.cover_art_url
+            == "https://resources.tidal.com/images/ca1/1280x1280.jpg"
+        )
+
+    def test_cover_art_without_relationship_returns_none(self):
+        """No cover_art_url when album has no coverArt relationship."""
+        track = _make_track("t1", "Song", "PT3M", "ISRC001", ["a1"])
+        album, track_lookup, artist_lookup = _make_album(
+            "al1", "Album", [track], ["a1"]
+        )
+
+        info = self.tidal._get_album_info(album, track_lookup, artist_lookup)
+
+        assert info.cover_art_url is None
+
+
+class TestTrackParsing(TidalPluginTest):
+    """High-level tests for track parsing."""
+
+    def test_parse_track(self):
+        track = _make_track("101", "My Track", "PT4M", "ISRC456", ["1001"])
+        artist_lookup = {"1001": _make_artist("1001", "My Artist")}
+
+        info = self.tidal._get_track_info(track, artist_lookup)
+
+        assert info.title == "My Track"
+        assert info.track_id == "101"
+        assert info.duration == 240  # PT4M = 240 seconds
+        assert info.isrc == "ISRC456"
+        assert info.artist == "My Artist"
+        assert info.tidal_track_id == "101"
+        assert info.tidal_artist_id == "1001"
+        assert info.tidal_track_popularity == 50
+
+    def test_parse_track_with_version(self):
+        """Track title should have version appended."""
+        track = _make_track(
+            "102", "My Song", "PT3M", "ISRC002", ["1001"], version="Remastered"
+        )
+        artist_lookup = {"1001": _make_artist("1001", "My Artist")}
+
+        info = self.tidal._get_track_info(track, artist_lookup)
+
+        assert info.title == "My Song (Remastered)"
+        assert info.tidal_track_id == "102"
 
 
 class TestTrackForID(TidalPluginTest):
@@ -843,3 +956,56 @@ class TestTidalsync(TidalPluginTest):
             ["albums"], write=False, force=False
         )
         self.tidal.sync_item_popularity.assert_not_called()
+
+
+    @pytest.mark.parametrize(
+        "cover_art_data, cover_art_by_id, expected",
+        [
+            (
+                [{"id": "ca1", "type": "coverArts"}],
+                {
+                    "ca1": {
+                        "id": "ca1",
+                        "type": "coverArts",
+                        "attributes": {"url": "https://example.com/cover.jpg"},
+                    }
+                },
+                "https://example.com/cover.jpg",
+            ),
+            (
+                [{"id": "ca1", "type": "coverArts"}],
+                {"ca1": {"id": "ca1", "type": "coverArts", "attributes": {}}},
+                "https://resources.tidal.com/images/ca1/1280x1280.jpg",
+            ),
+            # No coverArts in relationship data
+            ([{"id": "ca1", "type": "artworks"}], {}, None),
+            # No cover art lookup
+            ([{"id": "ca1", "type": "coverArts"}], None, None),
+            # Empty relationships
+            ({}, {}, None),
+        ],
+    )
+    def test_parse_cover_art_url(
+        self, cover_art_data, cover_art_by_id, expected
+    ):
+        album: TidalAlbum = {
+            "id": "al1",
+            "type": "albums",
+            "attributes": {
+                "albumType": "ALBUM",
+                "barcodeId": "123",
+                "duration": "PT45M",
+                "explicit": False,
+                "mediaTags": [],
+                "numberOfItems": 1,
+                "numberOfVolumes": 1,
+                "popularity": 0.5,
+                "title": "Album",
+            },
+            "relationships": {"coverArt": {"data": cover_art_data, "links": {}}}
+            if cover_art_data
+            else {},
+        }
+        assert (
+            TidalPlugin._parse_cover_art_url(album, cover_art_by_id) == expected
+        )
