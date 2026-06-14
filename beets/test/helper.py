@@ -46,7 +46,7 @@ from mediafile import Image, MediaFile
 
 import beets
 import beets.plugins
-from beets import importer, logging, util
+from beets import importer, util
 from beets.autotag import AlbumInfo, TrackInfo
 from beets.importer import ImportSession
 from beets.library import Item, Library
@@ -713,6 +713,18 @@ class TerminalImportSessionFixture(TerminalImportSession):
 
 class TerminalImportMixin(IOMixin, ImportHelper):
     """Provides_a terminal importer for the import session."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self, io):
+        # `io` has deps (monkeypatch, capteesys) so pytest schedules it
+        # after the dependency-free `setup` from `TestHelper`.
+        # Override with an explicit `io` dependency to fix ordering.
+        self.io = io
+        self.setup_beets()
+        try:
+            yield
+        finally:
+            self.teardown_beets()
 
     def _get_import_session(self, import_dir: bytes) -> importer.ImportSession:
         return TerminalImportSessionFixture(
