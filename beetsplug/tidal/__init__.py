@@ -524,9 +524,10 @@ class TidalPlugin(MetadataSourcePlugin):
                 all_album_ids,
                 self.search_albums_by_ids(tidal_ids=all_album_ids),
             ):
-                album_popularity[int(aid_str)] = (
-                    album_result and album_result.tidal_album_popularity
-                )
+                if album_result is not None:
+                    album_popularity[int(aid_str)] = (
+                        album_result.tidal_album_popularity
+                    )
 
         for item in items:
             updated = False
