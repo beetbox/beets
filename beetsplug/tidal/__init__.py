@@ -254,9 +254,7 @@ class TidalPlugin(MetadataSourcePlugin):
 
             for isrc in isrcs:
                 if track := isrc_to_track.get(isrc):
-                    yield self._get_track_info(
-                        track, artist_by_id=artist_by_id
-                    )
+                    yield self._get_track_info(track, artist_by_id=artist_by_id)
                 else:
                     yield None
 
@@ -361,9 +359,7 @@ class TidalPlugin(MetadataSourcePlugin):
             tracks=track_infos,
             artist=", ".join(artist_names),
             artists=artist_names,
-            duration=self._duration_to_seconds(
-                album["attributes"]["duration"]
-            ),
+            duration=self._duration_to_seconds(album["attributes"]["duration"]),
             albumtype=album["attributes"]["albumType"],
             label=self._parse_label(album["attributes"]),
             year=date_parts[0] if date_parts else None,
@@ -372,9 +368,7 @@ class TidalPlugin(MetadataSourcePlugin):
             # Flexattrs
             tidal_album_id=int(album["id"]),
             tidal_artist_id=int(artist_ids[0]) if artist_ids else None,
-            tidal_album_popularity=self._parse_popularity(
-                album["attributes"]
-            ),
+            tidal_album_popularity=self._parse_popularity(album["attributes"]),
             tidal_updated=time.time(),
         )
 
@@ -396,16 +390,12 @@ class TidalPlugin(MetadataSourcePlugin):
             isrc=track["attributes"]["isrc"],
             artist=", ".join(artist_names),
             artists=artist_names,
-            duration=self._duration_to_seconds(
-                track["attributes"]["duration"]
-            ),
+            duration=self._duration_to_seconds(track["attributes"]["duration"]),
             label=self._parse_label(track["attributes"]),
             # Flexattrs
             tidal_track_id=int(track["id"]),
             tidal_artist_id=int(artist_ids[0]) if artist_ids else None,
-            tidal_track_popularity=self._parse_popularity(
-                track["attributes"]
-            ),
+            tidal_track_popularity=self._parse_popularity(track["attributes"]),
             tidal_updated=time.time(),
         )
 
@@ -483,9 +473,7 @@ class TidalPlugin(MetadataSourcePlugin):
         return None
 
     @staticmethod
-    def _parse_popularity(
-        attributes: AlbumAttributes | TrackAttributes,
-    ) -> int:
+    def _parse_popularity(attributes: AlbumAttributes | TrackAttributes) -> int:
         return round(attributes["popularity"] * 100)
 
     def tidalsync(
