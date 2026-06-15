@@ -369,7 +369,7 @@ class TidalPlugin(MetadataSourcePlugin):
             tidal_album_id=int(album["id"]),
             tidal_artist_id=int(artist_ids[0]) if artist_ids else None,
             tidal_album_popularity=self._parse_popularity(
-                album["attributes"]["popularity"]
+                album["attributes"]
             ),
             tidal_updated=time.time(),
         )
@@ -398,7 +398,7 @@ class TidalPlugin(MetadataSourcePlugin):
             tidal_track_id=int(track["id"]),
             tidal_artist_id=int(artist_ids[0]) if artist_ids else None,
             tidal_track_popularity=self._parse_popularity(
-                track["attributes"]["popularity"]
+                track["attributes"]
             ),
             tidal_updated=time.time(),
         )
@@ -477,7 +477,8 @@ class TidalPlugin(MetadataSourcePlugin):
         return None
 
     @staticmethod
-    def _parse_popularity(val: object) -> int | None:
+    def _parse_popularity(attributes: AlbumAttributes | TrackAttributes) -> int | None:
+        val = attributes.get("popularity")
         if val is None:
             return None
         if isinstance(val, int):
@@ -493,42 +494,72 @@ class TidalPlugin(MetadataSourcePlugin):
         items = list(items)
         self._log.info("Syncing popularity for {0} tracks", len(items))
 
-        id_to_items: dict[int, list[Item]] = {}
+        track_id_to_items: dict[int, list[Item]] = {}
+        album_id_to_items: dict[int, list[Item]] = {}
         for item in items:
-            if not force and item.get("tidal_track_popularity") is not None:
-                continue
+            if not force:
+                track_done = item.get("tidal_track_popularity") is not None
+                album_done = item.get("tidal_album_popularity") is not None
+                if track_done and album_done:
+                    continue
 
             tidal_track_id = item.get("tidal_track_id")
             if tidal_track_id is not None:
-                id_to_items.setdefault(int(tidal_track_id), []).append(item)
+                track_id_to_items.setdefault(int(tidal_track_id), []).append(
+                    item
+                )
+            tidal_album_id = item.get("tidal_album_id")
+            if tidal_album_id is not None:
+                album_id_to_items.setdefault(int(tidal_album_id), []).append(
+                    item
+                )
 
-        if not id_to_items:
+        if not track_id_to_items and not album_id_to_items:
             return
 
-        all_ids = [str(tid) for tid in id_to_items]
-        results = list(self.search_tracks_by_ids(tidal_ids=all_ids))
+        track_popularity: dict[int, int | None] = {}
+        if track_id_to_items:
+            all_track_ids = [str(tid) for tid in track_id_to_items]
+            for tid_str, result in zip(
+                all_track_ids,
+                self.search_tracks_by_ids(tidal_ids=all_track_ids),
+            ):
+                track_popularity[int(tid_str)] = (
+                    result.tidal_track_popularity if result else None
+                )
 
-        for tid_str, result in zip(all_ids, results):
-            tid = int(tid_str)
-            if result is None:
-                self._log.debug("Track {0} not found in Tidal", tid)
-                continue
+        album_popularity: dict[int, int | None] = {}
+        if album_id_to_items:
+            all_album_ids = [str(aid) for aid in album_id_to_items]
+            for aid_str, album_result in zip(
+                all_album_ids,
+                self.search_albums_by_ids(tidal_ids=all_album_ids),
+            ):
+                album_popularity[int(aid_str)] = (
+                    album_result.tidal_album_popularity if album_result else None
+                )
 
-            if result.tidal_track_popularity is not None:
-                for item in id_to_items[tid]:
-                    item["tidal_track_popularity"] = (
-                        result.tidal_track_popularity
-                    )
-                    item["tidal_updated"] = time.time()
-                    item.store()
-                    if write:
-                        item.try_write()
+        for item in items:
+            updated = False
+            tidal_track_id = item.get("tidal_track_id")
+            if tidal_track_id is not None:
+                pop = track_popularity.get(int(tidal_track_id))
+                if pop is not None:
+                    item["tidal_track_popularity"] = pop
+                    updated = True
 
-                    self._log.debug(
-                        "Updated popularity for track {0}: {1}",
-                        tid,
-                        result.tidal_track_popularity,
-                    )
+            tidal_album_id = item.get("tidal_album_id")
+            if tidal_album_id is not None:
+                pop = album_popularity.get(int(tidal_album_id))
+                if pop is not None:
+                    item["tidal_album_popularity"] = pop
+                    updated = True
+
+            if updated:
+                item["tidal_updated"] = time.time()
+                item.store()
+                if write:
+                    item.try_write()
 
     def commands(self) -> list[ui.Subcommand]:
         tidal_cmd = ui.Subcommand(
