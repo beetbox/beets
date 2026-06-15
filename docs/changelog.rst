@@ -29,8 +29,8 @@ New features
 - :doc:`plugins/badfiles`: Added settings for auto error and warning actions.
 - :doc:`plugins/tidal`: New ``item_types`` flexible attributes
   ``tidal_track_id``, ``tidal_album_id``, ``tidal_artist_id``,
-  ``tidal_track_popularity``, ``tidal_alb_popularity``, and ``tidal_updated``
-  are now populated during import. Added new ``beet tidalsync`` command to sync
+  ``tidal_track_popularity``, ``tidal_album_popularity``, and ``tidal_updated``
+  are now populated during import. Added new ``beet tidal sync`` command to sync
   popularity data for imported items.
 
 Bug fixes

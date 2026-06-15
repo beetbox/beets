@@ -43,7 +43,7 @@ class TidalPlugin(MetadataSourcePlugin):
         "tidal_album_id": types.INTEGER,
         "tidal_artist_id": types.INTEGER,
         "tidal_track_popularity": types.INTEGER,
-        "tidal_alb_popularity": types.INTEGER,
+        "tidal_album_popularity": types.INTEGER,
         "tidal_updated": types.DATE,
     }
 
@@ -368,7 +368,7 @@ class TidalPlugin(MetadataSourcePlugin):
             # Flexattrs
             tidal_album_id=int(album["id"]),
             tidal_artist_id=int(artist_ids[0]) if artist_ids else None,
-            tidal_alb_popularity=self._popularity(
+            tidal_album_popularity=self._parse_popularity(
                 album["attributes"]["popularity"]
             ),
             tidal_updated=time.time(),
@@ -397,7 +397,7 @@ class TidalPlugin(MetadataSourcePlugin):
             # Flexattrs
             tidal_track_id=int(track["id"]),
             tidal_artist_id=int(artist_ids[0]) if artist_ids else None,
-            tidal_track_popularity=self._popularity(
+            tidal_track_popularity=self._parse_popularity(
                 track["attributes"]["popularity"]
             ),
             tidal_updated=time.time(),
@@ -477,7 +477,7 @@ class TidalPlugin(MetadataSourcePlugin):
         return None
 
     @staticmethod
-    def _popularity(val: object) -> int | None:
+    def _parse_popularity(val: object) -> int | None:
         if val is None:
             return None
         if isinstance(val, int):
@@ -493,36 +493,42 @@ class TidalPlugin(MetadataSourcePlugin):
         items = list(items)
         self._log.info("Syncing popularity for {0} tracks", len(items))
 
+        id_to_items: dict[int, list[Item]] = {}
         for item in items:
             if not force and item.get("tidal_track_popularity") is not None:
                 continue
 
             tidal_track_id = item.get("tidal_track_id")
-            if tidal_track_id is None:
+            if tidal_track_id is not None:
+                id_to_items.setdefault(int(tidal_track_id), []).append(item)
+
+        if not id_to_items:
+            return
+
+        all_ids = [str(tid) for tid in id_to_items]
+        results = list(self.search_tracks_by_ids(tidal_ids=all_ids))
+
+        for tid_str, result in zip(all_ids, results):
+            tid = int(tid_str)
+            if result is None:
+                self._log.debug("Track {0} not found in Tidal", tid)
                 continue
 
-            results = list(
-                self.search_tracks_by_ids(tidal_ids=[str(tidal_track_id)])
-            )
-            if not results or results[0] is None:
-                self._log.debug("Track {0} not found in Tidal", tidal_track_id)
-                continue
+            if result.tidal_track_popularity is not None:
+                for item in id_to_items[tid]:
+                    item["tidal_track_popularity"] = (
+                        result.tidal_track_popularity
+                    )
+                    item["tidal_updated"] = time.time()
+                    item.store()
+                    if write:
+                        item.try_write()
 
-            track_info = results[0]
-            if track_info.tidal_track_popularity is not None:
-                item["tidal_track_popularity"] = (
-                    track_info.tidal_track_popularity
-                )
-            item["tidal_updated"] = time.time()
-            item.store()
-            if write:
-                item.try_write()
-
-            self._log.debug(
-                "Updated popularity for track {0}: {1}",
-                tidal_track_id,
-                track_info.tidal_track_popularity,
-            )
+                    self._log.debug(
+                        "Updated popularity for track {0}: {1}",
+                        tid,
+                        result.tidal_track_popularity,
+                    )
 
     def commands(self) -> list[ui.Subcommand]:
         tidal_cmd = ui.Subcommand(
@@ -535,19 +541,7 @@ class TidalPlugin(MetadataSourcePlugin):
             help="Authenticate and login to Tidal",
             default=False,
         )
-
-        def func(lib: Library, opts: optparse.Values, args: list[str]):
-            if opts.auth:
-                self.api.ui_authenticate_flow()
-            else:
-                tidal_cmd.print_help()
-
-        tidal_cmd.func = func
-
-        tidalsync_cmd = ui.Subcommand(
-            "tidalsync", help="sync Tidal popularity data for library items"
-        )
-        tidalsync_cmd.parser.add_option(
+        tidal_cmd.parser.add_option(
             "-f",
             "--force",
             action="store_true",
@@ -555,7 +549,7 @@ class TidalPlugin(MetadataSourcePlugin):
             default=False,
             help="re-fetch popularity even if already present",
         )
-        tidalsync_cmd.parser.add_option(
+        tidal_cmd.parser.add_option(
             "-w",
             "--write",
             action="store_true",
@@ -564,13 +558,22 @@ class TidalPlugin(MetadataSourcePlugin):
             help="write updated tags to media files",
         )
 
-        def sync_func(lib: Library, opts: optparse.Values, args: list[str]):
-            items = lib.items(args)
-            self.tidalsync(items, write=opts.write, force=opts.force)
+        def func(lib: Library, opts: optparse.Values, args: list[str]):
+            action = args[0] if args else None
+            if action == "auth" or opts.auth:
+                self.api.ui_authenticate_flow()
+            elif action == "sync":
+                query = "data_source:tidal"
+                if len(args) > 1:
+                    query = f"{query} {' '.join(args[1:])}"
+                items = lib.items(query)
+                self.tidalsync(items, write=opts.write, force=opts.force)
+            else:
+                tidal_cmd.print_help()
 
-        tidalsync_cmd.func = sync_func
+        tidal_cmd.func = func
 
-        return [tidal_cmd, tidalsync_cmd]
+        return [tidal_cmd]
 
 
 ISO_8601_RE = re.compile(

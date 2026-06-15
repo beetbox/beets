@@ -137,7 +137,7 @@ class TestAlbumParsing(TidalPluginTest):
         assert info.tracks[0].title == "My Song"
         assert info.tidal_album_id == 1
         assert info.tidal_artist_id == 1001
-        assert info.tidal_alb_popularity == 50
+        assert info.tidal_album_popularity == 50
         assert info.tracks[0].tidal_track_id == 101
         assert info.tracks[0].tidal_track_popularity == 50
 
@@ -573,17 +573,17 @@ class TestStaticHelpers:
         assert "Invalid ISO 8601 duration: invalid" in caplog.text
 
     def test_popularity_with_float(self):
-        assert TidalPlugin._popularity(0.5) == 50
-        assert TidalPlugin._popularity(1.0) == 100
-        assert TidalPlugin._popularity(0.0) == 0
+        assert TidalPlugin._parse_popularity(0.5) == 50
+        assert TidalPlugin._parse_popularity(1.0) == 100
+        assert TidalPlugin._parse_popularity(0.0) == 0
 
     def test_popularity_with_int(self):
-        assert TidalPlugin._popularity(50) == 50
-        assert TidalPlugin._popularity(100) == 100
-        assert TidalPlugin._popularity(0) == 0
+        assert TidalPlugin._parse_popularity(50) == 50
+        assert TidalPlugin._parse_popularity(100) == 100
+        assert TidalPlugin._parse_popularity(0) == 0
 
     def test_popularity_with_none(self):
-        assert TidalPlugin._popularity(None) is None
+        assert TidalPlugin._parse_popularity(None) is None
 
 
 class TestTidalsync(TidalPluginTest):

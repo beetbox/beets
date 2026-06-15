@@ -67,7 +67,7 @@ REIMPORT_FRESH_FIELDS_ITEM = [
     "tidal_track_id",
     "tidal_artist_id",
     "tidal_track_popularity",
-    "tidal_alb_popularity",
+    "tidal_album_popularity",
     "tidal_updated",
     "data_url",
 ]

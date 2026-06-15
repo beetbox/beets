@@ -46,7 +46,7 @@ To authenticate with Tidal, run:
 
 .. code-block:: bash
 
-    beet tidal --auth
+    beet tidal auth
 
 This will open a browser window where you can log in to your Tidal account.
 After successful authentication, your token will be saved to the configured
@@ -126,7 +126,7 @@ You can use them in queries and path formats.
     - - ``tidal_track_popularity``
       - INTEGER
       - Track popularity score (0-100)
-    - - ``tidal_alb_popularity``
+    - - ``tidal_album_popularity``
       - INTEGER
       - Album popularity score (0-100)
     - - ``tidal_updated``
@@ -145,33 +145,35 @@ To find tracks that have not been synced yet:
 
     beet ls tidal_track_popularity:0
 
-tidalsync Command
------------------
+Commands
+--------
 
-After importing tracks, you can refresh their popularity data by running the
-``tidalsync`` subcommand:
+The ``tidal`` plugin provides the following commands:
 
-.. code-block:: bash
+``beet tidal auth``
+    Authenticate and log in to Tidal.
 
-    beet tidalsync
+``beet tidal sync``
+    Refresh popularity data for imported items.
 
-By default, ``tidalsync`` skips items that already have popularity data. Use
-``--force`` (``-f``) to re-fetch all items:
+    By default, ``sync`` skips items that already have popularity data. Use
+    ``--force`` (``-f``) to re-fetch all items:
 
-::
+    ::
 
-    beet tidalsync -f
+        beet tidal sync -f
 
-Use ``--write`` (``-w``) to also write the updated metadata to the media files:
+    Use ``--write`` (``-w``) to also write the updated metadata to the media
+    files:
 
-::
+    ::
 
-    beet tidalsync -w
+        beet tidal sync -w
 
-You can also filter which items to sync by passing a query:
+    You can also filter which items to sync by passing a query:
 
-::
+    ::
 
-    beet tidalsync artist:"My Artist"
+        beet tidal sync artist:"My Artist"
 
 .. include:: ./shared_metadata_source_config.rst
