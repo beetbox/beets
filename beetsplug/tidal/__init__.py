@@ -67,7 +67,7 @@ class TidalPlugin(MetadataSourcePlugin):
         )
 
     def _tokenfile(self) -> str:
-        """Return the configured path to the token file in the app directory."""
+        """Return the configured token file path in the app directory."""
         return self.config["tokenfile"].get(confuse.Filename(in_app_dir=True))
 
     def require_authentication(self):
@@ -254,7 +254,9 @@ class TidalPlugin(MetadataSourcePlugin):
 
             for isrc in isrcs:
                 if track := isrc_to_track.get(isrc):
-                    yield self._get_track_info(track, artist_by_id=artist_by_id)
+                    yield self._get_track_info(
+                        track, artist_by_id=artist_by_id
+                    )
                 else:
                     yield None
 
@@ -359,7 +361,9 @@ class TidalPlugin(MetadataSourcePlugin):
             tracks=track_infos,
             artist=", ".join(artist_names),
             artists=artist_names,
-            duration=self._duration_to_seconds(album["attributes"]["duration"]),
+            duration=self._duration_to_seconds(
+                album["attributes"]["duration"]
+            ),
             albumtype=album["attributes"]["albumType"],
             label=self._parse_label(album["attributes"]),
             year=date_parts[0] if date_parts else None,
@@ -392,7 +396,9 @@ class TidalPlugin(MetadataSourcePlugin):
             isrc=track["attributes"]["isrc"],
             artist=", ".join(artist_names),
             artists=artist_names,
-            duration=self._duration_to_seconds(track["attributes"]["duration"]),
+            duration=self._duration_to_seconds(
+                track["attributes"]["duration"]
+            ),
             label=self._parse_label(track["attributes"]),
             # Flexattrs
             tidal_track_id=int(track["id"]),
@@ -410,8 +416,8 @@ class TidalPlugin(MetadataSourcePlugin):
     ) -> tuple[list[str], list[str]]:
         """Extract artists from a relationship.
 
-        Artists are sorted in the track/album response relationship but not in the
-        track/album responses included items.
+        Artists are sorted in the track/album response relationships
+        but not in the included items.
         """
         artist_names = []
         artist_ids = []
@@ -429,8 +435,8 @@ class TidalPlugin(MetadataSourcePlugin):
     @staticmethod
     def _parse_title(attributes: AlbumAttributes | TrackAttributes):
         """
-        Tidal UIs append the version string at the end of the title. We do the same here
-        by formatting it as ``"{title} ({version})"`` to stay consistent.
+        Tidal UIs append the version string at the end of the title.
+        We format it as ``"{title} ({version})"`` for consistency.
         """
         if version := attributes.get("version"):
             return f"{attributes['title']} ({version})"
@@ -477,15 +483,10 @@ class TidalPlugin(MetadataSourcePlugin):
         return None
 
     @staticmethod
-    def _parse_popularity(attributes: AlbumAttributes | TrackAttributes) -> int | None:
-        val = attributes.get("popularity")
-        if val is None:
-            return None
-        if isinstance(val, int):
-            return val
-        if isinstance(val, float):
-            return int(val * 100)
-        return None
+    def _parse_popularity(
+        attributes: AlbumAttributes | TrackAttributes,
+    ) -> int:
+        return round(attributes["popularity"] * 100)
 
     def tidalsync(
         self, items: Iterable[Item], write: bool, force: bool = False
@@ -536,7 +537,7 @@ class TidalPlugin(MetadataSourcePlugin):
                 self.search_albums_by_ids(tidal_ids=all_album_ids),
             ):
                 album_popularity[int(aid_str)] = (
-                    album_result.tidal_album_popularity if album_result else None
+                    album_result and album_result.tidal_album_popularity
                 )
 
         for item in items:

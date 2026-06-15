@@ -104,7 +104,8 @@ def _make_track(
         "relationships": {
             "artists": {
                 "data": [
-                    {"id": aid, "type": "artists"} for aid in (artist_ids or [])
+                    {"id": aid, "type": "artists"}
+                    for aid in (artist_ids or [])
                 ],
                 "links": {},
             }
@@ -484,7 +485,7 @@ class TestItemCandidates(TidalPluginTest):
         assert results[0].title == "ISRC Track"
 
     def test_item_candidates_with_query_fallback(self):
-        """Test that item_candidates falls back to query search when no ISRC."""
+        """Test item_candidates falls back to query search when no ISRC."""
         item = Item(title="Query Song", artist="Query Artist")
 
         self.tidal.api.search_results = Mock(
@@ -576,14 +577,6 @@ class TestStaticHelpers:
         assert TidalPlugin._parse_popularity({"popularity": 0.5}) == 50
         assert TidalPlugin._parse_popularity({"popularity": 1.0}) == 100
         assert TidalPlugin._parse_popularity({"popularity": 0.0}) == 0
-
-    def test_popularity_with_int(self):
-        assert TidalPlugin._parse_popularity({"popularity": 50}) == 50
-        assert TidalPlugin._parse_popularity({"popularity": 100}) == 100
-        assert TidalPlugin._parse_popularity({"popularity": 0}) == 0
-
-    def test_popularity_with_none(self):
-        assert TidalPlugin._parse_popularity({"popularity": None}) is None
 
 
 class TestTidalsync(TidalPluginTest):
