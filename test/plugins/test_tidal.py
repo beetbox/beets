@@ -104,8 +104,7 @@ def _make_track(
         "relationships": {
             "artists": {
                 "data": [
-                    {"id": aid, "type": "artists"}
-                    for aid in (artist_ids or [])
+                    {"id": aid, "type": "artists"} for aid in (artist_ids or [])
                 ],
                 "links": {},
             }
