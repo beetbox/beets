@@ -27,11 +27,16 @@ if TYPE_CHECKING:
 CURRENT_TS = 150000000
 
 
-def _make_cover_art(id_: str, url: str = "") -> TidalCoverArt:
+def _make_cover_art(id_: str, href: str = "") -> TidalCoverArt:
     return {
         "id": id_,
-        "type": "coverArts",
-        "attributes": {"url": url} if url else {},
+        "type": "artworks",
+        "attributes": {
+            "mediaType": "IMAGE",
+            "files": [{"href": href, "meta": {"width": 1280, "height": 1280}}]
+            if href
+            else [],
+        },
     }
 
 
@@ -84,7 +89,7 @@ def _make_album(
     }
     if cover_art_id:
         relationships["coverArt"] = {
-            "data": [{"id": cover_art_id, "type": "coverArts"}],
+            "data": [{"id": cover_art_id, "type": "artworks"}],
             "links": {},
         }
 
@@ -962,25 +967,39 @@ class TestTidalsync(TidalPluginTest):
         "cover_art_data, cover_art_by_id, expected",
         [
             (
-                [{"id": "ca1", "type": "coverArts"}],
+                [{"id": "ca1", "type": "artworks"}],
                 {
                     "ca1": {
                         "id": "ca1",
-                        "type": "coverArts",
-                        "attributes": {"url": "https://example.com/cover.jpg"},
+                        "type": "artworks",
+                        "attributes": {
+                            "mediaType": "IMAGE",
+                            "files": [
+                                {
+                                    "href": "https://example.com/cover.jpg",
+                                    "meta": {"width": 1280, "height": 1280},
+                                }
+                            ],
+                        },
                     }
                 },
                 "https://example.com/cover.jpg",
             ),
             (
-                [{"id": "ca1", "type": "coverArts"}],
-                {"ca1": {"id": "ca1", "type": "coverArts", "attributes": {}}},
+                [{"id": "ca1", "type": "artworks"}],
+                {
+                    "ca1": {
+                        "id": "ca1",
+                        "type": "artworks",
+                        "attributes": {"mediaType": "IMAGE", "files": []},
+                    }
+                },
                 "https://resources.tidal.com/images/ca1/1280x1280.jpg",
             ),
-            # No coverArts in relationship data
-            ([{"id": "ca1", "type": "artworks"}], {}, None),
+            # No artworks in relationship data
+            ([{"id": "ca1", "type": "coverArts"}], {}, None),
             # No cover art lookup
-            ([{"id": "ca1", "type": "coverArts"}], None, None),
+            ([{"id": "ca1", "type": "artworks"}], None, None),
             # Empty relationships
             ({}, {}, None),
         ],

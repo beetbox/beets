@@ -316,7 +316,7 @@ class TidalPlugin(MetadataSourcePlugin):
         cover_art_by_id: dict[str, TidalCoverArt] = {
             item["id"]: item
             for item in albums_doc.get("included", [])
-            if item["type"] == "coverArts"
+            if item["type"] == "artworks"
         }
 
         for _id in _ids:
@@ -401,14 +401,13 @@ class TidalPlugin(MetadataSourcePlugin):
         cover_rel = album["relationships"].get("coverArt")
         if cover_rel is None:
             return None
-        ids = [
-            ri["id"] for ri in cover_rel["data"] if ri["type"] == "coverArts"
-        ]
+        ids = [ri["id"] for ri in cover_rel["data"] if ri["type"] == "artworks"]
         if not ids:
             return None
         if cover_art := cover_art_by_id.get(ids[0]):
-            if url := cover_art["attributes"].get("url"):
-                return url
+            files = cover_art["attributes"]["files"]
+            if files:
+                return files[0]["href"]
             return f"https://resources.tidal.com/images/{ids[0]}/1280x1280.jpg"
         return None
 

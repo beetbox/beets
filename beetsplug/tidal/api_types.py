@@ -145,13 +145,25 @@ class TidalTrack(TypedDict):
     relationships: dict[str, RelationshipData]
 
 
+class FileMeta(TypedDict):
+    width: int
+    height: int
+
+
+class ArtworkFile(TypedDict):
+    href: str
+    meta: FileMeta
+
+
 class CoverArtAttributes(TypedDict):
-    url: NotRequired[str]
+    mediaType: Literal["IMAGE"]
+    files: list[ArtworkFile]
+    visualMetadata: NotRequired[dict[str, str]]
 
 
 class TidalCoverArt(TypedDict):
     id: str
-    type: Literal["coverArts"]
+    type: Literal["artworks"]
     attributes: CoverArtAttributes
 
 
