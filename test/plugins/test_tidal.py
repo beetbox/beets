@@ -104,7 +104,8 @@ def _make_track(
         "relationships": {
             "artists": {
                 "data": [
-                    {"id": aid, "type": "artists"} for aid in (artist_ids or [])
+                    {"id": aid, "type": "artists"}
+                    for aid in (artist_ids or [])
                 ],
                 "links": {},
             }
@@ -582,7 +583,7 @@ class TestTidalsync(TidalPluginTest):
     """Tests for the tidalsync command."""
 
     def test_sync_updates_popularity(self):
-        """Test that tidalsync fetches and stores popularity."""
+        """Test sync_item_popularity fetches and stores popularity."""
         item = self.add_item(
             tidal_track_id=490839595, title="Test Track", artist="Test Artist"
         )
@@ -596,30 +597,28 @@ class TestTidalsync(TidalPluginTest):
             return_value={"data": [track], "included": [artist]}
         )
 
-        self.tidal.tidalsync([item], write=False)
+        self.tidal.sync_item_popularity([item], write=False)
 
         assert item["tidal_track_popularity"] == 50
         assert item["tidal_updated"] is not None
         assert isinstance(item["tidal_updated"], (int, float))
 
     def test_sync_skips_existing(self):
-        """Test that tidalsync skips items with existing popularity."""
+        """Test sync_item_popularity skips items with existing popularity."""
         item = self.add_item(
             tidal_track_id=490839595,
             tidal_track_popularity=42,
-            tidal_album_popularity=55,
             tidal_updated=time.time(),
             title="Test Track",
             artist="Test Artist",
         )
 
-        self.tidal.tidalsync([item], write=False)
+        self.tidal.sync_item_popularity([item], write=False)
 
         assert item["tidal_track_popularity"] == 42
-        assert item["tidal_album_popularity"] == 55
 
     def test_sync_force_updates_existing(self):
-        """Test that tidalsync with --force re-fetches."""
+        """Test sync_item_popularity with force re-fetches."""
         item = self.add_item(
             tidal_track_id=490839595,
             tidal_track_popularity=42,
@@ -637,20 +636,20 @@ class TestTidalsync(TidalPluginTest):
             return_value={"data": [track], "included": [artist]}
         )
 
-        self.tidal.tidalsync([item], write=False, force=True)
+        self.tidal.sync_item_popularity([item], write=False, force=True)
 
         assert item["tidal_track_popularity"] == 50
 
     def test_sync_skips_items_without_track_id(self):
-        """Test that tidalsync skips items without tidal_track_id."""
+        """Test sync_item_popularity skips items without tidal_track_id."""
         item = self.add_item(title="No ID Track", artist="No ID Artist")
 
-        self.tidal.tidalsync([item], write=False)
+        self.tidal.sync_item_popularity([item], write=False)
 
         assert item.get("tidal_track_popularity") is None
 
     def test_sync_updates_album_popularity(self):
-        """Test that tidalsync fetches and stores album popularity."""
+        """Test sync_album_popularity fetches and stores album popularity."""
         item = self.add_item(
             tidal_track_id=490839595,
             tidal_album_id=251380836,
@@ -666,22 +665,27 @@ class TestTidalsync(TidalPluginTest):
         album_track = _make_track(
             "101", "Album Track", "PT3M", "ISRC001", ["1001"]
         )
-        album, _, artist_lookup = _make_album(
+        album_data, _, artist_lookup = _make_album(
             "251380836", "Test Album", [album_track], ["1001"]
         )
+
+        album = self.lib.add_album([item])
+        album["tidal_album_id"] = 251380836
+        album.store()
 
         self.tidal.api.get_tracks = Mock(
             return_value={"data": [track], "included": [artist]}
         )
         self.tidal.api.get_albums = Mock(
             return_value={
-                "data": [album],
+                "data": [album_data],
                 "included": [*artist_lookup.values()],
             }
         )
 
-        self.tidal.tidalsync([item], write=False)
+        self.tidal.sync_item_popularity([item], write=False)
+        self.tidal.sync_album_popularity([album], write=False)
 
         assert item["tidal_track_popularity"] == 50
-        assert item["tidal_album_popularity"] == 50
+        assert album["tidal_album_popularity"] == 50
         assert item["tidal_updated"] is not None
