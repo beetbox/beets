@@ -25,6 +25,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 import requests
+from confuse.exceptions import ConfigTypeError
 
 from beets.library import Item
 from beets.test.helper import PluginMixin, TestHelper
@@ -839,6 +840,125 @@ class TestRestFiles:
             < c.index("Song Three")
             < c.index("Lyrics Three")
         )
+
+
+class TestLyricsRestDirectory(LyricsPluginMixin):
+    @pytest.fixture
+    def lib(self, helper):
+        return helper.lib
+
+    @pytest.fixture
+    def backend_name(self):
+        return "lrclib"
+
+    def _setup_config(self, tmp_path, rest_directory):
+        config_file = tmp_path / "config.yaml"
+        with config_file.open("w") as f:
+            f.write(f"lyrics:\n  rest_directory: {rest_directory}")
+        self.config.set_file(config_file)
+        self.config.read(False, False)
+
+    def _test_helper(
+        self, tmp_path, lyrics_plugin, lib, config_path, arg_path, output_path
+    ):
+        if config_path:
+            self._setup_config(tmp_path, config_path)
+
+        cmd = lyrics_plugin.commands()[0]
+        cmd_args = [] if arg_path is None else ["-r", arg_path]
+        opts, args = cmd.parser.parse_args(cmd_args)
+        cmd.func(lib, opts, args)
+
+        if output_path is None:
+            for item in tmp_path.rglob("*"):
+                assert item.name != "index.rst"
+                assert item.name != "conf.py"
+        else:
+            assert (output_path / "index.rst").exists()
+            assert (output_path / "conf.py").exists()
+
+    @pytest.mark.parametrize(
+        "config_path, arg_path, output_dir",
+        [
+            pytest.param(
+                "test/config", "test/cmd", "test/cmd", id="config and cmd arg"
+            ),
+            pytest.param("test/config", None, "test/config", id="config only"),
+            pytest.param(None, "test/cmd", "test/cmd", id="cmd arg only"),
+            pytest.param(None, None, None, id="no output"),
+        ],
+    )
+    def test_rest_config(
+        self,
+        monkeypatch,
+        tmp_path,
+        lyrics_plugin,
+        lib,
+        config_path,
+        arg_path,
+        output_dir,
+    ):
+        monkeypatch.chdir(tmp_path)
+        if output_dir:
+            output_dir = tmp_path / output_dir
+
+        self._test_helper(
+            tmp_path, lyrics_plugin, lib, config_path, arg_path, output_dir
+        )
+
+    def test_config_path_types(self, monkeypatch, tmp_path, lyrics_plugin, lib):
+
+        output_dir = "test"
+        absolute_dir = tmp_path / "absolute"
+        absolute_dir.mkdir()
+        relative_dir = tmp_path / "relative"
+        relative_dir.mkdir()
+        home_dir = tmp_path / "home"
+        home_dir.mkdir()
+        monkeypatch.chdir(relative_dir)
+        monkeypatch.setenv("HOME", str(home_dir))
+        monkeypatch.setenv("USERPROFILE", str(home_dir))
+
+        self._test_helper(
+            tmp_path,
+            lyrics_plugin,
+            lib,
+            str((absolute_dir / output_dir).absolute()),
+            None,
+            absolute_dir / output_dir,
+        )
+        self._test_helper(
+            tmp_path,
+            lyrics_plugin,
+            lib,
+            output_dir,
+            None,
+            relative_dir / output_dir,
+        )
+        self._test_helper(
+            tmp_path,
+            lyrics_plugin,
+            lib,
+            f"~/{output_dir}",
+            None,
+            home_dir / output_dir,
+        )
+
+    @pytest.mark.parametrize(
+        "bad_config",
+        [
+            pytest.param(42),
+            pytest.param(3.14),
+            pytest.param(False),
+            pytest.param({}),
+            pytest.param([]),
+        ],
+    )
+    def test_bad_config(self, lyrics_plugin, bad_config):
+        lyrics_plugin.config["rest_directory"].set(bad_config)
+
+        with pytest.raises(ConfigTypeError):
+            lyrics_plugin.commands()
 
 
 class TestLyricsSyltProperty:

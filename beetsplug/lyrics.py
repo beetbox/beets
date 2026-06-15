@@ -31,6 +31,7 @@ from urllib.parse import quote, quote_plus, urlencode, urlparse
 
 import requests
 from bs4 import BeautifulSoup
+from confuse import Optional
 from unidecode import unidecode
 
 from beets import plugins, ui
@@ -1052,6 +1053,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
                 "keep_synced": False,
                 "local": False,
                 "print": False,
+                "rest_directory": None,
                 "synced": False,
                 # Musixmatch and Tekstowo are disabled by default as they
                 # currently block requests with the beets user agent.
@@ -1084,7 +1086,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             "--write-rest",
             dest="rest_directory",
             action="store",
-            default=None,
+            default=self.config["rest_directory"].get(Optional(str)),
             metavar="dir",
             help="write lyrics to given directory as ReST files",
         )
@@ -1122,7 +1124,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             if opts.rest_directory and (
                 items := [i for i in items if i.lyrics]
             ):
-                RestFiles(Path(opts.rest_directory)).write(items)
+                RestFiles(Path(opts.rest_directory).expanduser()).write(items)
 
         cmd.func = func
         return [cmd]
