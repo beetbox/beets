@@ -351,7 +351,7 @@ class TidalPlugin(MetadataSourcePlugin):
         album: TidalAlbum,
         track_by_id: dict[str, TidalTrack],
         artist_by_id: dict[str, TidalArtist],
-        cover_art_by_id: dict[str, TidalCoverArt] | None = None,
+        cover_art_by_id: dict[str, TidalCoverArt],
     ) -> AlbumInfo:
         track_infos: list[TrackInfo] = []
         for i, track_rel in enumerate(
@@ -394,10 +394,8 @@ class TidalPlugin(MetadataSourcePlugin):
 
     @staticmethod
     def _parse_cover_art_url(
-        album: TidalAlbum, cover_art_by_id: dict[str, TidalCoverArt] | None
+        album: TidalAlbum, cover_art_by_id: dict[str, TidalCoverArt]
     ) -> str | None:
-        if not cover_art_by_id:
-            return None
         cover_rel = album["relationships"].get("coverArt")
         if cover_rel is None:
             return None
@@ -408,7 +406,6 @@ class TidalPlugin(MetadataSourcePlugin):
             files = cover_art["attributes"]["files"]
             if files:
                 return files[0]["href"]
-            return f"https://resources.tidal.com/images/{ids[0]}/1280x1280.jpg"
         return None
 
     def _get_track_info(

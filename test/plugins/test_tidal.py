@@ -167,7 +167,9 @@ class TestParsing(TidalPluginTest):
             "1", "My Album", tracks, ["1001"], version="Deluxe Edition"
         )
 
-        info = self.tidal._get_album_info(album, track_lookup, artist_lookup)
+        info = self.tidal._get_album_info(
+            album, track_lookup, artist_lookup, {}
+        )
 
         assert info.raw_data == {
             "album": "My Album (Deluxe Edition)",
@@ -319,7 +321,9 @@ class TestParsing(TidalPluginTest):
             "3", "My Album", [track], ["1001"], version="Deluxe Edition"
         )
 
-        info = self.tidal._get_album_info(album, track_lookup, artist_lookup)
+        info = self.tidal._get_album_info(
+            album, track_lookup, artist_lookup, {}
+        )
 
         assert info.album == "My Album (Deluxe Edition)"
 
@@ -348,8 +352,8 @@ class TestCoverArtParsing(TidalPluginTest):
             == "https://resources.tidal.com/images/ca1/1280x1280.jpg"
         )
 
-    def test_cover_art_without_url_falls_back_to_constructed(self):
-        """Cover art URL constructed from ID when no URL in attributes."""
+    def test_cover_art_without_files_returns_none(self):
+        """Cover art returns None when files array is empty."""
         track = _make_track("t1", "Song", "PT3M", "ISRC001", ["a1"])
         album, track_lookup, artist_lookup = _make_album(
             "al1", "Album", [track], ["a1"], cover_art_id="ca1"
@@ -360,10 +364,7 @@ class TestCoverArtParsing(TidalPluginTest):
             album, track_lookup, artist_lookup, cover_art_lookup
         )
 
-        assert (
-            info.cover_art_url
-            == "https://resources.tidal.com/images/ca1/1280x1280.jpg"
-        )
+        assert info.cover_art_url is None
 
     def test_cover_art_without_relationship_returns_none(self):
         """No cover_art_url when album has no coverArt relationship."""
@@ -372,7 +373,9 @@ class TestCoverArtParsing(TidalPluginTest):
             "al1", "Album", [track], ["a1"]
         )
 
-        info = self.tidal._get_album_info(album, track_lookup, artist_lookup)
+        info = self.tidal._get_album_info(
+            album, track_lookup, artist_lookup, {}
+        )
 
         assert info.cover_art_url is None
 
@@ -994,12 +997,12 @@ class TestTidalsync(TidalPluginTest):
                         "attributes": {"mediaType": "IMAGE", "files": []},
                     }
                 },
-                "https://resources.tidal.com/images/ca1/1280x1280.jpg",
+                None,
             ),
             # No artworks in relationship data
             ([{"id": "ca1", "type": "coverArts"}], {}, None),
             # No cover art lookup
-            ([{"id": "ca1", "type": "artworks"}], None, None),
+            ([{"id": "ca1", "type": "artworks"}], {}, None),
             # Empty relationships
             ({}, {}, None),
         ],
