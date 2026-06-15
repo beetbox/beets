@@ -4,8 +4,9 @@ import itertools
 import os
 import re
 import time
+from collections import defaultdict
 from functools import cached_property
-from typing import TYPE_CHECKING, ClassVar, overload
+from typing import TYPE_CHECKING, ClassVar, Literal, overload
 
 import confuse
 
@@ -20,9 +21,11 @@ from .api import TidalAPI
 
 if TYPE_CHECKING:
     import optparse
-    from collections.abc import Iterable, Sequence
+    from collections.abc import Callable, Iterable, Sequence
 
-    from beets.library.models import Item, Library
+    from beets.dbcore.db import Results
+    from beets.library import Library
+    from beets.library.models import Album, Item
 
     from .api_types import (
         AlbumAttributes,
@@ -208,7 +211,7 @@ class TidalPlugin(MetadataSourcePlugin):
 
     @overload
     def search_tracks_by_ids(
-        self, *, tidal_ids: Iterable[str]
+        self, *, tidal_ids: Iterable[str] | Iterable[int]
     ) -> Iterable[TrackInfo | None]: ...
 
     @overload
@@ -219,10 +222,10 @@ class TidalPlugin(MetadataSourcePlugin):
     def search_tracks_by_ids(
         self,
         ids: Iterable[str] | None = None,
-        tidal_ids: Iterable[str] | None = None,
+        tidal_ids: Iterable[str] | Iterable[int] | None = None,
         isrcs: Iterable[str] | None = None,
     ) -> Iterable[TrackInfo | None]:
-        _ids: list[str | None] = list(tidal_ids or [])
+        _ids = list(tidal_ids or [])
         isrcs = list(isrcs or [])
         if ids:
             _ids = list(map(self._extract_id, ids))
@@ -242,7 +245,7 @@ class TidalPlugin(MetadataSourcePlugin):
         }
 
         for _id in _ids:
-            if _id is not None and (track := track_by_id.get(_id)):
+            if _id is not None and (track := track_by_id.get(str(_id))):
                 yield self._get_track_info(track, artist_by_id=artist_by_id)
             else:
                 yield None
@@ -265,7 +268,7 @@ class TidalPlugin(MetadataSourcePlugin):
 
     @overload
     def search_albums_by_ids(
-        self, *, tidal_ids: Iterable[str]
+        self, *, tidal_ids: Iterable[str] | Iterable[int]
     ) -> Iterable[AlbumInfo | None]: ...
 
     @overload
@@ -276,10 +279,10 @@ class TidalPlugin(MetadataSourcePlugin):
     def search_albums_by_ids(
         self,
         ids: Iterable[str] | None = None,
-        tidal_ids: Iterable[str] | None = None,
+        tidal_ids: Iterable[str] | Iterable[int] | None = None,
         barcode_ids: Iterable[str] | None = None,
     ) -> Iterable[AlbumInfo | None]:
-        _ids: list[str | None] = list(tidal_ids or [])
+        _ids = list(tidal_ids or [])
         barcode_ids = list(barcode_ids or [])
         if ids:
             _ids = list(map(self._extract_id, ids))
@@ -306,7 +309,7 @@ class TidalPlugin(MetadataSourcePlugin):
         }
 
         for _id in _ids:
-            if _id is not None and (album := album_by_id.get(_id)):
+            if _id is not None and (album := album_by_id.get(str(_id))):
                 yield self._get_album_info(
                     album, track_by_id=track_by_id, artist_by_id=artist_by_id
                 )
@@ -476,80 +479,76 @@ class TidalPlugin(MetadataSourcePlugin):
     def _parse_popularity(attributes: AlbumAttributes | TrackAttributes) -> int:
         return round(attributes["popularity"] * 100)
 
-    def tidalsync(
-        self, items: Iterable[Item], write: bool, force: bool = False
+    def sync_item_popularity(
+        self, results: Results[Item], write: bool, force: bool = False
     ) -> None:
         """Sync Tidal popularity data for library items."""
-        items = list(items)
-        self._log.info("Syncing popularity for {0} tracks", len(items))
+        self._sync_popularity(
+            results=results,
+            write=write,
+            force=force,
+            id_field="mb_trackid",
+            popularity_field="tidal_track_popularity",
+            search=lambda ids: self.search_tracks_by_ids(tidal_ids=ids),
+            label="item",
+        )
 
-        track_id_to_items: dict[int, list[Item]] = {}
-        album_id_to_items: dict[int, list[Item]] = {}
-        for item in items:
-            if not force:
-                track_done = item.get("tidal_track_popularity") is not None
-                album_done = item.get("tidal_album_popularity") is not None
-                if track_done and album_done:
-                    continue
+    def sync_album_popularity(
+        self, results: Results[Album], write: bool, force: bool = False
+    ) -> None:
+        """Sync Tidal popularity data for library albums."""
+        self._sync_popularity(
+            results=results,
+            write=write,
+            force=force,
+            id_field="mb_albumid",
+            popularity_field="tidal_album_popularity",
+            search=lambda ids: self.search_albums_by_ids(tidal_ids=ids),
+            label="album",
+        )
 
-            tidal_track_id = item.get("tidal_track_id")
-            if tidal_track_id is not None:
-                track_id_to_items.setdefault(int(tidal_track_id), []).append(
-                    item
+    def _sync_popularity(
+        self,
+        *,
+        results: Results[Item] | Results[Album],
+        write: bool,
+        force: bool,
+        id_field: str,
+        popularity_field: str,
+        search: Callable[
+            [Iterable[int]], Iterable[TrackInfo | AlbumInfo | None]
+        ],
+        label: Literal["item", "album"],
+    ) -> None:
+        """Sync Tidal popularity for a generic model (Item or Album)."""
+        log.info("Syncing popularity for {0} {1}s", len(results), label)
+
+        to_sync: defaultdict[int, list] = defaultdict(list)
+        for model in results:
+            if tidal_id := model.get(id_field):
+                if force or model.get(popularity_field) is None:
+                    to_sync[tidal_id].append(model)
+        total = sum(len(v) for v in to_sync.values())
+        log.debug("{0} {1}s need updates", total, label)
+        processed = 0
+        for models, new_info in zip(to_sync.values(), search(to_sync.keys())):
+            for model in models:
+                model[popularity_field] = (
+                    getattr(new_info, popularity_field) if new_info else None
                 )
-            tidal_album_id = item.get("tidal_album_id")
-            if tidal_album_id is not None:
-                album_id_to_items.setdefault(int(tidal_album_id), []).append(
-                    item
-                )
+                model["tidal_updated"] = time.time()
 
-        if not track_id_to_items and not album_id_to_items:
-            return
-
-        track_popularity: dict[int, int | None] = {}
-        if track_id_to_items:
-            all_track_ids = [str(tid) for tid in track_id_to_items]
-            for tid_str, result in zip(
-                all_track_ids,
-                self.search_tracks_by_ids(tidal_ids=all_track_ids),
-            ):
-                track_popularity[int(tid_str)] = (
-                    result.tidal_track_popularity if result else None
-                )
-
-        album_popularity: dict[int, int | None] = {}
-        if album_id_to_items:
-            all_album_ids = [str(aid) for aid in album_id_to_items]
-            for aid_str, album_result in zip(
-                all_album_ids,
-                self.search_albums_by_ids(tidal_ids=all_album_ids),
-            ):
-                if album_result is not None:
-                    album_popularity[int(aid_str)] = (
-                        album_result.tidal_album_popularity
-                    )
-
-        for item in items:
-            updated = False
-            tidal_track_id = item.get("tidal_track_id")
-            if tidal_track_id is not None:
-                pop = track_popularity.get(int(tidal_track_id))
-                if pop is not None:
-                    item["tidal_track_popularity"] = pop
-                    updated = True
-
-            tidal_album_id = item.get("tidal_album_id")
-            if tidal_album_id is not None:
-                pop = album_popularity.get(int(tidal_album_id))
-                if pop is not None:
-                    item["tidal_album_popularity"] = pop
-                    updated = True
-
-            if updated:
-                item["tidal_updated"] = time.time()
-                item.store()
+                model.store()
                 if write:
-                    item.try_write()
+                    model.try_write()
+
+                processed += 1
+                if processed % 100 == 0 or processed == total:
+                    log.debug("Synced {0}/{1} {2}s", processed, total, label)
+
+        log.info(
+            "Successfully synchronised popularity for {0} {1}s", total, label
+        )
 
     def commands(self) -> list[ui.Subcommand]:
         tidal_cmd = ui.Subcommand(
@@ -562,39 +561,75 @@ class TidalPlugin(MetadataSourcePlugin):
             help="Authenticate and login to Tidal",
             default=False,
         )
-        tidal_cmd.parser.add_option(
+
+        def auth_func(lib: Library, opts: optparse.Values, args: list[str]):
+            if opts.auth:
+                self.api.ui_authenticate_flow()
+            else:
+                tidal_cmd.print_help()
+
+        tidal_cmd.func = auth_func
+
+        # It would be nice to combine both auth and sync commands but currently this is
+        # currently not really supported in beets. We might be able to revist this if our
+        # subcommand parsing changes
+        tidalsync_cmd = ui.Subcommand(
+            "tidalsync",
+            help="Synchronize Tidal popularity data for library items and albums",
+        )
+        tidalsync_cmd.parser.add_option(
+            "-a",
+            "--album",
+            action="store_true",
+            dest="albums",
+            default=True,
+            help="update albums (default: True)",
+        )
+        tidalsync_cmd.parser.add_option(
+            "-i",
+            "--item",
+            action="store_true",
+            dest="items",
+            default=True,
+            help="update items/singletons (default: True)",
+        )
+        tidalsync_cmd.parser.add_option(
             "-f",
             "--force",
             action="store_true",
             dest="force",
             default=False,
-            help="re-fetch popularity even if already present",
+            help="re-fetch popularity even if already present (default: False)",
         )
-        tidal_cmd.parser.add_option(
+        tidalsync_cmd.parser.add_option(
             "-w",
             "--write",
             action="store_true",
             dest="write",
             default=False,
-            help="write updated tags to media files",
+            help="write updated tags to media files (default: False)",
+        )
+        tidalsync_cmd.parser.set_usage(
+            "Usage: beet tidalsync <query> [options]"
         )
 
-        def func(lib: Library, opts: optparse.Values, args: list[str]):
-            action = args[0] if args else None
-            if action == "auth" or opts.auth:
-                self.api.ui_authenticate_flow()
-            elif action == "sync":
-                query = "data_source:tidal"
-                if len(args) > 1:
-                    query = f"{query} {' '.join(args[1:])}"
-                items = lib.items(query)
-                self.tidalsync(items, write=opts.write, force=opts.force)
-            else:
-                tidal_cmd.print_help()
+        def sync_func(lib: Library, opts: optparse.Values, args: list[str]):
+            query = "data_source:tidal"
+            if len(args) > 1:
+                query = f"{query} {' '.join(args[1:])}"
 
-        tidal_cmd.func = func
+            if opts.items:
+                self.sync_item_popularity(
+                    lib.items(query), write=opts.write, force=opts.force
+                )
+            if opts.albums:
+                self.sync_album_popularity(
+                    lib.albums(query), write=opts.write, force=opts.force
+                )
 
-        return [tidal_cmd]
+        tidalsync_cmd.func = sync_func
+
+        return [tidal_cmd, tidalsync_cmd]
 
 
 ISO_8601_RE = re.compile(
