@@ -154,8 +154,11 @@ class TestHelper(RunMixin, ConfigMixin):
     fixtures.
     """
 
+    request: pytest.FixtureRequest
+
     @pytest.fixture(autouse=True)
-    def setup(self):
+    def setup(self, request: pytest.FixtureRequest):
+        self.request = request
         self.setup_beets()
         try:
             yield
@@ -714,24 +717,12 @@ class TerminalImportSessionFixture(TerminalImportSession):
 class TerminalImportMixin(IOMixin, ImportHelper):
     """Provides_a terminal importer for the import session."""
 
-    @pytest.fixture(autouse=True)
-    def setup(self, io):
-        # `io` has deps (monkeypatch, capteesys) so pytest schedules it
-        # after the dependency-free `setup` from `TestHelper`.
-        # Override with an explicit `io` dependency to fix ordering.
-        self.io = io
-        self.setup_beets()
-        try:
-            yield
-        finally:
-            self.teardown_beets()
-
     def _get_import_session(self, import_dir: bytes) -> importer.ImportSession:
         return TerminalImportSessionFixture(
             self.lib,
             loghandler=None,
             query=None,
-            io=self.io,
+            io=self.request.getfixturevalue("io"),
             paths=[import_dir],
         )
 
