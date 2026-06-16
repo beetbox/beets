@@ -30,8 +30,16 @@ New features
 - :doc:`plugins/tidal`: New ``item_types`` flexible attributes
   ``tidal_track_id``, ``tidal_album_id``, ``tidal_artist_id``,
   ``tidal_track_popularity``, ``tidal_album_popularity``, and ``tidal_updated``
-  are now populated during import. Added new ``beet tidal sync`` command to sync
-  popularity data for imported items.
+  are now populated during album and track imports. Added new ``beet tidalsync``
+  command to refresh popularity data for items and albums using
+  ``--item``/``--album`` flags, with ``--force`` to re-fetch and ``--write`` to
+  update file tags.
+
+  **Migration**: Existing items imported with the Tidal plugin before these
+  flexattrs existed can be migrated by reimporting with only the Tidal metadata
+  provider enabled. During reimport, the Tidal ID stored in the ``mb_trackid`` /
+  ``mb_albumid`` fields is automatically used by the Tidal plugin to re-fetch
+  metadata and populate the new flexible attributes.
 
 Bug fixes
 ~~~~~~~~~
