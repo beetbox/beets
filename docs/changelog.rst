@@ -27,13 +27,17 @@ New features
   :conf:`plugins.musicbrainz:aliases_as_credits` to make
   aliases-as-artist-credit optional.
 - :doc:`plugins/badfiles`: Added settings for auto error and warning actions.
-- :doc:`plugins/tidal`: New ``item_types`` flexible attributes
-  ``tidal_track_id``, ``tidal_album_id``, ``tidal_artist_id``,
-  ``tidal_track_popularity``, ``tidal_album_popularity``, and ``tidal_updated``
-  are now populated during album and track imports. Added new ``beet tidalsync``
-  command to refresh popularity data for items and albums using
-  ``--item``/``--album`` flags, with ``--force`` to re-fetch and ``--write`` to
-  update file tags.
+- :doc:`plugins/tidal`: New flexible attributes are now populated during
+  imports:
+
+  - **Item-level**: ``tidal_track_id``, ``tidal_artist_id``,
+    ``tidal_track_popularity``, ``tidal_updated``
+  - **Album-level**: ``tidal_album_id``, ``tidal_artist_id``,
+    ``tidal_album_popularity``, ``tidal_updated``
+
+  Added new ``beet tidalsync`` command to refresh popularity data for items and
+  albums using ``--item``/``--album`` flags, with ``--force`` to re-fetch and
+  ``--write`` to update file tags.
 
   **Migration**: Existing items imported with the Tidal plugin before these
   flexattrs existed can be migrated by reimporting with only the Tidal metadata
