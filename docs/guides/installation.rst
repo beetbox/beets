@@ -156,6 +156,7 @@ here are the options available:
   beets-doc``
 - **Solus**: ``eopkg install beets``
 - **NixOS** (`package <nixos_>`_): ``nix-env -i beets``
+- **Homebrew** (`formula <homebrew_>`_): ``brew install beets``
 - **MacPorts**: ``port install beets`` or ``port install beets-full`` (includes
   third-party plugins)
 
@@ -178,3 +179,5 @@ here are the options available:
 .. _ubuntu details: https://launchpad.net/ubuntu/+source/beets
 
 .. _void package: https://github.com/void-linux/void-packages/tree/master/srcpkgs/beets
+
+.. _homebrew: https://formulae.brew.sh/formula/beets

@@ -105,6 +105,8 @@ Other changes
   audio-features API unavailability only once per run.
 - :doc:`plugins/titlecase`: Correct the path format example and document the
   ``%titlecase{text}`` template function. :bug:`6697`
+- Add Homebrew to the list of supported package managers in the installation
+  guide. :doc:`/guides/installation`
 
 2.11.0 (May 06, 2026)
 ---------------------
