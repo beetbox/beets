@@ -172,6 +172,8 @@ here are the options available:
 
 .. _freebsd: https://www.freshports.org/audio/beets/
 
+.. _homebrew: https://formulae.brew.sh/formula/beets
+
 .. _nixos: https://github.com/NixOS/nixpkgs/tree/master/pkgs/development/python-modules/beets
 
 .. _openbsd: https://openports.pl/path/audio/beets
@@ -179,5 +181,3 @@ here are the options available:
 .. _ubuntu details: https://launchpad.net/ubuntu/+source/beets
 
 .. _void package: https://github.com/void-linux/void-packages/tree/master/srcpkgs/beets
-
-.. _homebrew: https://formulae.brew.sh/formula/beets
