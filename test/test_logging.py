@@ -344,3 +344,28 @@ class TestConcurrentEvents(AsIsImporterMixin, ImportHelper):
         with caplog.at_level("DEBUG"):
             self.run_asis_importer()
         assert "Sending event: database_change" in caplog.messages
+
+
+class TestLegacyFormatter:
+    """Tests for ``LegacyFormatter``, which strips the ``beets.`` prefix
+    from logger names and prepends the remainder to the message.
+    """
+
+    @pytest.mark.parametrize(
+        "logger_name, expected",
+        [
+            ("beets", "hello world"),
+            ("beets.musicbrainz", "musicbrainz: hello world"),
+            ("beets.musicbrainz.sub", "musicbrainz.sub: hello world"),
+            ("root.foobar", "foobar: hello world"),
+        ],
+    )
+    def test_format(self, logger_name, expected):
+        """Root logger passes message unchanged; child loggers get
+        ``prefix: msg`` format after the ``beets.`` prefix is stripped.
+        """
+        formatter = blog.LegacyFormatter("%(legacy_msg)s")
+        record = log.LogRecord(
+            logger_name, log.INFO, __file__, 0, "hello world", (), None
+        )
+        assert formatter.format(record) == expected
