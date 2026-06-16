@@ -9,7 +9,6 @@ import pytest
 
 import beets.logging as blog
 from beets import plugins, ui
-from beets.test import helper
 from beets.test.helper import AsIsImporterMixin, ImportHelper, PluginMixin
 
 
@@ -155,77 +154,77 @@ class TestLoggingLevel(AsIsImporterMixin, PluginMixin, ImportHelper):
     def _patch_dummy_module(self, monkeypatch):
         monkeypatch.setitem(sys.modules, "beetsplug.dummy", DummyModule())
 
-    def test_command_level0(self):
+    def test_command_level0(self, caplog):
         self.config["verbose"] = 0
-        with helper.capture_log() as logs:
+        with caplog.at_level("DEBUG"):
             self.run_command("dummy")
-        assert "dummy: warning cmd" in logs
-        assert "dummy: info cmd" in logs
-        assert "dummy: debug cmd" not in logs
+        assert "dummy: warning cmd" in caplog.messages
+        assert "dummy: info cmd" in caplog.messages
+        assert "dummy: debug cmd" not in caplog.messages
 
-    def test_command_level1(self):
+    def test_command_level1(self, caplog):
         self.config["verbose"] = 1
-        with helper.capture_log() as logs:
+        with caplog.at_level("DEBUG"):
             self.run_command("dummy")
-        assert "dummy: warning cmd" in logs
-        assert "dummy: info cmd" in logs
-        assert "dummy: debug cmd" in logs
+        assert "dummy: warning cmd" in caplog.messages
+        assert "dummy: info cmd" in caplog.messages
+        assert "dummy: debug cmd" in caplog.messages
 
-    def test_command_level2(self):
+    def test_command_level2(self, caplog):
         self.config["verbose"] = 2
-        with helper.capture_log() as logs:
+        with caplog.at_level("DEBUG"):
             self.run_command("dummy")
-        assert "dummy: warning cmd" in logs
-        assert "dummy: info cmd" in logs
-        assert "dummy: debug cmd" in logs
+        assert "dummy: warning cmd" in caplog.messages
+        assert "dummy: info cmd" in caplog.messages
+        assert "dummy: debug cmd" in caplog.messages
 
-    def test_listener_level0(self):
+    def test_listener_level0(self, caplog):
         self.config["verbose"] = 0
-        with helper.capture_log() as logs:
+        with caplog.at_level("DEBUG"):
             plugins.send("dummy_event")
-        assert "dummy: warning listener" in logs
-        assert "dummy: info listener" not in logs
-        assert "dummy: debug listener" not in logs
+        assert "dummy: warning listener" in caplog.messages
+        assert "dummy: info listener" not in caplog.messages
+        assert "dummy: debug listener" not in caplog.messages
 
-    def test_listener_level1(self):
+    def test_listener_level1(self, caplog):
         self.config["verbose"] = 1
-        with helper.capture_log() as logs:
+        with caplog.at_level("DEBUG"):
             plugins.send("dummy_event")
-        assert "dummy: warning listener" in logs
-        assert "dummy: info listener" in logs
-        assert "dummy: debug listener" not in logs
+        assert "dummy: warning listener" in caplog.messages
+        assert "dummy: info listener" in caplog.messages
+        assert "dummy: debug listener" not in caplog.messages
 
-    def test_listener_level2(self):
+    def test_listener_level2(self, caplog):
         self.config["verbose"] = 2
-        with helper.capture_log() as logs:
+        with caplog.at_level("DEBUG"):
             plugins.send("dummy_event")
-        assert "dummy: warning listener" in logs
-        assert "dummy: info listener" in logs
-        assert "dummy: debug listener" in logs
+        assert "dummy: warning listener" in caplog.messages
+        assert "dummy: info listener" in caplog.messages
+        assert "dummy: debug listener" in caplog.messages
 
-    def test_import_stage_level0(self):
+    def test_import_stage_level0(self, caplog):
         self.config["verbose"] = 0
-        with helper.capture_log() as logs:
+        with caplog.at_level("DEBUG"):
             self.run_asis_importer()
-        assert "dummy: warning import_stage" in logs
-        assert "dummy: info import_stage" not in logs
-        assert "dummy: debug import_stage" not in logs
+        assert "dummy: warning import_stage" in caplog.messages
+        assert "dummy: info import_stage" not in caplog.messages
+        assert "dummy: debug import_stage" not in caplog.messages
 
-    def test_import_stage_level1(self):
+    def test_import_stage_level1(self, caplog):
         self.config["verbose"] = 1
-        with helper.capture_log() as logs:
+        with caplog.at_level("DEBUG"):
             self.run_asis_importer()
-        assert "dummy: warning import_stage" in logs
-        assert "dummy: info import_stage" in logs
-        assert "dummy: debug import_stage" not in logs
+        assert "dummy: warning import_stage" in caplog.messages
+        assert "dummy: info import_stage" in caplog.messages
+        assert "dummy: debug import_stage" not in caplog.messages
 
-    def test_import_stage_level2(self):
+    def test_import_stage_level2(self, caplog):
         self.config["verbose"] = 2
-        with helper.capture_log() as logs:
+        with caplog.at_level("DEBUG"):
             self.run_asis_importer()
-        assert "dummy: warning import_stage" in logs
-        assert "dummy: info import_stage" in logs
-        assert "dummy: debug import_stage" in logs
+        assert "dummy: warning import_stage" in caplog.messages
+        assert "dummy: info import_stage" in caplog.messages
+        assert "dummy: debug import_stage" in caplog.messages
 
 
 class TestConcurrentEvents(AsIsImporterMixin, ImportHelper):
@@ -325,23 +324,23 @@ class TestConcurrentEvents(AsIsImporterMixin, ImportHelper):
             print("Alive threads:", threading.enumerate())
             raise
 
-    def test_root_logger_levels(self):
+    def test_root_logger_levels(self, caplog):
         """Root logger level should be shared between threads."""
         self.config["threaded"] = True
 
         blog.getLogger("beets").set_global_level(blog.WARNING)
-        with helper.capture_log() as logs:
+        with caplog.at_level("DEBUG"):
             self.run_asis_importer()
-        assert logs == []
+        assert caplog.messages == []
 
         blog.getLogger("beets").set_global_level(blog.INFO)
-        with helper.capture_log() as logs:
+        with caplog.at_level("DEBUG"):
             self.run_asis_importer()
-        for line in logs:
+        for line in caplog.messages:
             assert "import" in line
             assert "album" in line
 
         blog.getLogger("beets").set_global_level(blog.DEBUG)
-        with helper.capture_log() as logs:
+        with caplog.at_level("DEBUG"):
             self.run_asis_importer()
-        assert "Sending event: database_change" in logs
+        assert "Sending event: database_change" in caplog.messages
