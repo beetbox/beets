@@ -205,3 +205,9 @@ ca8544d4bcab503e1e4c2cd6688655c8211aa7a1
 d0dc5f86a626765c86cdadc348595429f4c6e6ef
 # Enable and fix flake8-builtins
 b7974ace83ab193b6417bdcecaf68a742bf5a1a8
+# Preserve importer config views
+c9ad80dad2528af67cdb76c35d7ba5e4824b7600
+# Type _reduce_and_log
+c070b29e14cd06419e129b76a6d42a82fe51e190
+# Add missing types to importer
+e4baceae1fa03dfd6db9e0bab88ddd2812963ad3
