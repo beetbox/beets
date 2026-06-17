@@ -104,7 +104,8 @@ def _make_track(
         "relationships": {
             "artists": {
                 "data": [
-                    {"id": aid, "type": "artists"} for aid in (artist_ids or [])
+                    {"id": aid, "type": "artists"}
+                    for aid in (artist_ids or [])
                 ],
                 "links": {},
             }
@@ -135,10 +136,10 @@ class TestAlbumParsing(TidalPluginTest):
         assert info.album_id == "1"
         assert len(info.tracks) == 1
         assert info.tracks[0].title == "My Song"
-        assert info.tidal_album_id == 1
-        assert info.tidal_artist_id == 1001
+        assert info.tidal_album_id == "1"
+        assert info.tidal_artist_id == "1001"
         assert info.tidal_album_popularity == 50
-        assert info.tracks[0].tidal_track_id == 101
+        assert info.tracks[0].tidal_track_id == "101"
         assert info.tracks[0].tidal_track_popularity == 50
 
     def test_parse_album_with_multiple_tracks(self):
@@ -155,7 +156,7 @@ class TestAlbumParsing(TidalPluginTest):
         assert len(info.tracks) == 2
         assert info.tracks[0].index == 1
         assert info.tracks[1].index == 2
-        assert info.tidal_album_id == 2
+        assert info.tidal_album_id == "2"
 
     def test_parse_album_with_version(self):
         """Album title should have version appended."""
@@ -183,8 +184,8 @@ class TestTrackParsing(TidalPluginTest):
         assert info.duration == 240  # PT4M = 240 seconds
         assert info.isrc == "ISRC456"
         assert info.artist == "My Artist"
-        assert info.tidal_track_id == 101
-        assert info.tidal_artist_id == 1001
+        assert info.tidal_track_id == "101"
+        assert info.tidal_artist_id == "1001"
         assert info.tidal_track_popularity == 50
 
     def test_parse_track_with_version(self):
@@ -197,7 +198,7 @@ class TestTrackParsing(TidalPluginTest):
         info = self.tidal._get_track_info(track, artist_lookup)
 
         assert info.title == "My Song (Remastered)"
-        assert info.tidal_track_id == 102
+        assert info.tidal_track_id == "102"
 
 
 class TestTrackForID(TidalPluginTest):
@@ -581,6 +582,13 @@ class TestStaticHelpers:
 class TestTidalsync(TidalPluginTest):
     """Tests for the tidalsync command."""
 
+    def _run_tidalsync(self, *args: str) -> None:
+        command = next(
+            cmd for cmd in self.tidal.commands() if cmd.name == "tidalsync"
+        )
+        opts, subargs = command.parser.parse_args(list(args))
+        command.func(self.lib, opts, subargs)
+
     def test_sync_updates_popularity(self):
         """Test sync_item_popularity fetches and stores popularity."""
         item = self.add_item(
@@ -647,11 +655,28 @@ class TestTidalsync(TidalPluginTest):
 
         assert item.get("tidal_track_popularity") is None
 
+    def test_sync_does_not_update_when_lookup_is_missing(self):
+        """Test sync_item_popularity leaves stale data untouched on miss."""
+        item = self.add_item(
+            tidal_track_id="490839595",
+            title="Missing Track",
+            artist="Missing Artist",
+        )
+
+        self.tidal.api.get_tracks = Mock(
+            return_value={"data": [], "included": []}
+        )
+
+        self.tidal.sync_item_popularity([item], write=False)
+
+        assert item.get("tidal_track_popularity") is None
+        assert item.get("tidal_updated") is None
+
     def test_sync_updates_album_popularity(self):
         """Test sync_album_popularity fetches and stores album popularity."""
         item = self.add_item(
-            tidal_track_id=490839595,
-            tidal_album_id=251380836,
+            tidal_track_id="490839595",
+            tidal_album_id="251380836",
             title="Test Track",
             artist="Test Artist",
         )
@@ -669,7 +694,7 @@ class TestTidalsync(TidalPluginTest):
         )
 
         album = self.lib.add_album([item])
-        album["tidal_album_id"] = 251380836
+        album["tidal_album_id"] = "251380836"
         album.store()
 
         self.tidal.api.get_tracks = Mock(
@@ -688,3 +713,44 @@ class TestTidalsync(TidalPluginTest):
         assert item["tidal_track_popularity"] == 50
         assert album["tidal_album_popularity"] == 50
         assert item["tidal_updated"] is not None
+
+    def test_tidalsync_uses_first_query_argument(self):
+        self.lib.items = Mock(return_value=["items"])
+        self.tidal.sync_item_popularity = Mock()
+
+        self._run_tidalsync("path::aaa")
+
+        self.lib.items.assert_called_once_with(
+            ["data_source:tidal", "path::aaa"]
+        )
+        self.tidal.sync_item_popularity.assert_called_once_with(
+            ["items"], write=False, force=False
+        )
+
+    def test_tidalsync_defaults_to_items(self):
+        self.lib.items = Mock(return_value=["items"])
+        self.tidal.sync_item_popularity = Mock()
+        self.tidal.sync_album_popularity = Mock()
+
+        self._run_tidalsync()
+
+        self.lib.items.assert_called_once_with(["data_source:tidal"])
+        self.tidal.sync_item_popularity.assert_called_once_with(
+            ["items"], write=False, force=False
+        )
+        self.tidal.sync_album_popularity.assert_not_called()
+
+    def test_tidalsync_album_mode_uses_album_query(self):
+        self.lib.albums = Mock(return_value=["albums"])
+        self.tidal.sync_item_popularity = Mock()
+        self.tidal.sync_album_popularity = Mock()
+
+        self._run_tidalsync("-a", "artist:Test")
+
+        self.lib.albums.assert_called_once_with(
+            ["data_source:tidal", "artist:Test"]
+        )
+        self.tidal.sync_album_popularity.assert_called_once_with(
+            ["albums"], write=False, force=False
+        )
+        self.tidal.sync_item_popularity.assert_not_called()

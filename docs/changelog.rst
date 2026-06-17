@@ -35,9 +35,9 @@ New features
   - **Album-level**: ``tidal_album_id``, ``tidal_artist_id``,
     ``tidal_album_popularity``, ``tidal_updated``
 
-  Added new ``beet tidalsync`` command to refresh popularity data for items and
-  albums using ``--item``/``--album`` flags, with ``--force`` to re-fetch and
-  ``--write`` to update file tags.
+  Added new ``beet tidalsync`` command to refresh popularity data for imported
+  items by default, or albums with ``--album``, with ``--force`` to re-fetch
+  and ``--write`` to update file tags.
 
   **Migration**: Existing items imported with the Tidal plugin before these
   flexattrs existed can be migrated by reimporting with only the Tidal metadata

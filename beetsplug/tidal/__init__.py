@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     import optparse
     from collections.abc import Callable, Iterable, Sequence
 
+    from beets.autotag import Info
     from beets.dbcore.db import Results
     from beets.library import Library
     from beets.library.models import Album, Item
@@ -42,9 +43,9 @@ log = getLogger("beets.tidal")
 
 class TidalPlugin(MetadataSourcePlugin):
     item_types: ClassVar[dict[str, types.Type]] = {
-        "tidal_track_id": types.INTEGER,
-        "tidal_album_id": types.INTEGER,
-        "tidal_artist_id": types.INTEGER,
+        "tidal_track_id": types.STRING,
+        "tidal_album_id": types.STRING,
+        "tidal_artist_id": types.STRING,
         "tidal_track_popularity": types.INTEGER,
         "tidal_album_popularity": types.INTEGER,
         "tidal_updated": types.DATE,
@@ -70,7 +71,9 @@ class TidalPlugin(MetadataSourcePlugin):
         )
 
     def _tokenfile(self) -> str:
-        """Return the configured token file path in the app directory."""
+        """Return the configured path to the token file
+        in the app directory.
+        """
         return self.config["tokenfile"].get(confuse.Filename(in_app_dir=True))
 
     def require_authentication(self):
@@ -211,7 +214,7 @@ class TidalPlugin(MetadataSourcePlugin):
 
     @overload
     def search_tracks_by_ids(
-        self, *, tidal_ids: Iterable[str] | Iterable[int]
+        self, *, tidal_ids: Iterable[str]
     ) -> Iterable[TrackInfo | None]: ...
 
     @overload
@@ -222,10 +225,10 @@ class TidalPlugin(MetadataSourcePlugin):
     def search_tracks_by_ids(
         self,
         ids: Iterable[str] | None = None,
-        tidal_ids: Iterable[str] | Iterable[int] | None = None,
+        tidal_ids: Iterable[str] | None = None,
         isrcs: Iterable[str] | None = None,
     ) -> Iterable[TrackInfo | None]:
-        _ids: list[str | int | None] = list(tidal_ids or [])
+        _ids: list[str | None] = list(tidal_ids or [])
         isrcs = list(isrcs or [])
         if ids:
             _ids = list(map(self._extract_id, ids))
@@ -245,7 +248,7 @@ class TidalPlugin(MetadataSourcePlugin):
         }
 
         for _id in _ids:
-            if _id is not None and (track := track_by_id.get(str(_id))):
+            if _id is not None and (track := track_by_id.get(_id)):
                 yield self._get_track_info(track, artist_by_id=artist_by_id)
             else:
                 yield None
@@ -257,7 +260,9 @@ class TidalPlugin(MetadataSourcePlugin):
 
             for isrc in isrcs:
                 if track := isrc_to_track.get(isrc):
-                    yield self._get_track_info(track, artist_by_id=artist_by_id)
+                    yield self._get_track_info(
+                        track, artist_by_id=artist_by_id
+                    )
                 else:
                     yield None
 
@@ -268,7 +273,7 @@ class TidalPlugin(MetadataSourcePlugin):
 
     @overload
     def search_albums_by_ids(
-        self, *, tidal_ids: Iterable[str] | Iterable[int]
+        self, *, tidal_ids: Iterable[str]
     ) -> Iterable[AlbumInfo | None]: ...
 
     @overload
@@ -279,10 +284,10 @@ class TidalPlugin(MetadataSourcePlugin):
     def search_albums_by_ids(
         self,
         ids: Iterable[str] | None = None,
-        tidal_ids: Iterable[str] | Iterable[int] | None = None,
+        tidal_ids: Iterable[str] | None = None,
         barcode_ids: Iterable[str] | None = None,
     ) -> Iterable[AlbumInfo | None]:
-        _ids: list[str | int | None] = list(tidal_ids or [])
+        _ids: list[str | None] = list(tidal_ids or [])
         barcode_ids = list(barcode_ids or [])
         if ids:
             _ids = list(map(self._extract_id, ids))
@@ -309,7 +314,7 @@ class TidalPlugin(MetadataSourcePlugin):
         }
 
         for _id in _ids:
-            if _id is not None and (album := album_by_id.get(str(_id))):
+            if _id is not None and (album := album_by_id.get(_id)):
                 yield self._get_album_info(
                     album, track_by_id=track_by_id, artist_by_id=artist_by_id
                 )
@@ -362,15 +367,17 @@ class TidalPlugin(MetadataSourcePlugin):
             tracks=track_infos,
             artist=", ".join(artist_names),
             artists=artist_names,
-            duration=self._duration_to_seconds(album["attributes"]["duration"]),
+            duration=self._duration_to_seconds(
+                album["attributes"]["duration"]
+            ),
             albumtype=album["attributes"]["albumType"],
             label=self._parse_label(album["attributes"]),
             year=date_parts[0] if date_parts else None,
             month=date_parts[1] if date_parts else None,
             day=date_parts[2] if date_parts else None,
             # Flexattrs
-            tidal_album_id=int(album["id"]),
-            tidal_artist_id=int(artist_ids[0]) if artist_ids else None,
+            tidal_album_id=album["id"],
+            tidal_artist_id=artist_ids[0] if artist_ids else None,
             tidal_album_popularity=self._parse_popularity(album["attributes"]),
             tidal_updated=time.time(),
         )
@@ -393,11 +400,13 @@ class TidalPlugin(MetadataSourcePlugin):
             isrc=track["attributes"]["isrc"],
             artist=", ".join(artist_names),
             artists=artist_names,
-            duration=self._duration_to_seconds(track["attributes"]["duration"]),
+            duration=self._duration_to_seconds(
+                track["attributes"]["duration"]
+            ),
             label=self._parse_label(track["attributes"]),
             # Flexattrs
-            tidal_track_id=int(track["id"]),
-            tidal_artist_id=int(artist_ids[0]) if artist_ids else None,
+            tidal_track_id=track["id"],
+            tidal_artist_id=artist_ids[0] if artist_ids else None,
             tidal_track_popularity=self._parse_popularity(track["attributes"]),
             tidal_updated=time.time(),
         )
@@ -409,8 +418,8 @@ class TidalPlugin(MetadataSourcePlugin):
     ) -> tuple[list[str], list[str]]:
         """Extract artists from a relationship.
 
-        Artists are sorted in the track/album response relationships
-        but not in the included items.
+        Artists are sorted in the track/album response relationship
+        but not in the track/album responses included items.
         """
         artist_names = []
         artist_ids = []
@@ -429,7 +438,8 @@ class TidalPlugin(MetadataSourcePlugin):
     def _parse_title(attributes: AlbumAttributes | TrackAttributes):
         """
         Tidal UIs append the version string at the end of the title.
-        We format it as ``"{title} ({version})"`` for consistency.
+        We do the same here by formatting it as
+        ``"{title} ({version})"`` to stay consistent.
         """
         if version := attributes.get("version"):
             return f"{attributes['title']} ({version})"
@@ -476,7 +486,9 @@ class TidalPlugin(MetadataSourcePlugin):
         return None
 
     @staticmethod
-    def _parse_popularity(attributes: AlbumAttributes | TrackAttributes) -> int:
+    def _parse_popularity(
+        attributes: AlbumAttributes | TrackAttributes,
+    ) -> int:
         return round(attributes["popularity"] * 100)
 
     def sync_item_popularity(
@@ -515,15 +527,13 @@ class TidalPlugin(MetadataSourcePlugin):
         force: bool,
         id_field: str,
         popularity_field: str,
-        search: Callable[
-            [Iterable[int]], Iterable[TrackInfo | AlbumInfo | None]
-        ],
+        search: Callable[[Iterable[str]], Iterable[Info | None]],
         label: Literal["item", "album"],
     ) -> None:
         """Sync Tidal popularity for a generic model (Item or Album)."""
         log.info("Syncing popularity for {0} {1}s", len(results), label)
 
-        to_sync: defaultdict[int, list[Item | Album]] = defaultdict(list)
+        to_sync: defaultdict[str, list[Item | Album]] = defaultdict(list)
         for model in results:
             if tidal_id := model.get(id_field):
                 if force or model.get(popularity_field) is None:
@@ -532,10 +542,11 @@ class TidalPlugin(MetadataSourcePlugin):
         log.debug("{0} {1}s need updates", total, label)
         processed = 0
         for models, new_info in zip(to_sync.values(), search(to_sync.keys())):
+            if not new_info:
+                continue
+
             for model in models:
-                model[popularity_field] = (
-                    getattr(new_info, popularity_field) if new_info else None
-                )
+                model[popularity_field] = new_info.get(popularity_field)
                 model["tidal_updated"] = time.time()
 
                 model.store()
@@ -576,25 +587,11 @@ class TidalPlugin(MetadataSourcePlugin):
         tidalsync_cmd = ui.Subcommand(
             "tidalsync",
             help=(
-                "Synchronize Tidal popularity data for library items and albums"
+                "Synchronize Tidal popularity data for library "
+                "items and albums"
             ),
         )
-        tidalsync_cmd.parser.add_option(
-            "-a",
-            "--album",
-            action="store_true",
-            dest="albums",
-            default=True,
-            help="update albums (default: True)",
-        )
-        tidalsync_cmd.parser.add_option(
-            "-i",
-            "--item",
-            action="store_true",
-            dest="items",
-            default=True,
-            help="update items/singletons (default: True)",
-        )
+        tidalsync_cmd.parser.add_album_option()
         tidalsync_cmd.parser.add_option(
             "-f",
             "--force",
@@ -618,17 +615,15 @@ class TidalPlugin(MetadataSourcePlugin):
         )
 
         def sync_func(lib: Library, opts: optparse.Values, args: list[str]):
-            query = "data_source:tidal"
-            if len(args) > 1:
-                query = f"{query} {' '.join(args[1:])}"
+            query = ["data_source:tidal", *args]
 
-            if opts.items:
-                self.sync_item_popularity(
-                    lib.items(query), write=opts.write, force=opts.force
-                )
-            if opts.albums:
+            if opts.album:
                 self.sync_album_popularity(
                     lib.albums(query), write=opts.write, force=opts.force
+                )
+            else:
+                self.sync_item_popularity(
+                    lib.items(query), write=opts.write, force=opts.force
                 )
 
         tidalsync_cmd.func = sync_func

@@ -46,7 +46,7 @@ To authenticate with Tidal, run:
 
 .. code-block:: bash
 
-    beet tidal auth
+    beet tidal --auth
 
 This will open a browser window where you can log in to your Tidal account.
 After successful authentication, your token will be saved to the configured
@@ -115,13 +115,13 @@ You can use them in queries and path formats.
       - Type
       - Description
     - - ``tidal_track_id``
-      - INTEGER
+      - STRING
       - Tidal track ID
     - - ``tidal_album_id``
-      - INTEGER
+      - STRING
       - Tidal album ID
     - - ``tidal_artist_id``
-      - INTEGER
+      - STRING
       - Tidal artist ID
     - - ``tidal_track_popularity``
       - INTEGER
@@ -150,30 +150,36 @@ Commands
 
 The ``tidal`` plugin provides the following commands:
 
-``beet tidal auth``
+``beet tidal --auth``
     Authenticate and log in to Tidal.
 
-``beet tidal sync``
+``beet tidalsync``
     Refresh popularity data for imported items.
 
-    By default, ``sync`` skips items that already have popularity data. Use
+    By default, ``tidalsync`` skips items that already have popularity data. Use
     ``--force`` (``-f``) to re-fetch all items:
 
     ::
 
-        beet tidal sync -f
+        beet tidalsync -f
+
+    Use ``--album`` (``-a``) to sync albums instead of items:
+
+    ::
+
+        beet tidalsync -a
 
     Use ``--write`` (``-w``) to also write the updated metadata to the media
     files:
 
     ::
 
-        beet tidal sync -w
+        beet tidalsync -w
 
     You can also filter which items to sync by passing a query:
 
     ::
 
-        beet tidal sync artist:"My Artist"
+        beet tidalsync artist:"My Artist"
 
 .. include:: ./shared_metadata_source_config.rst
