@@ -95,6 +95,8 @@ For plugin developers
 - Plugin authors can import all autotagger helpers directly from
   ``beets.autotag``, including match classes, distance helpers, and
   ``assign_items``, without relying on lower-level autotag modules.
+- Introduced ``beets.importer.DuplicateAction`` to simplify handling of
+  duplicates.
 
 Other changes
 ~~~~~~~~~~~~~

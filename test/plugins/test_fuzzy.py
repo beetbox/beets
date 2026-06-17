@@ -15,24 +15,10 @@
 
 import pytest
 
-from beets.test.helper import PluginMixin, TestHelper
+from beets.test.helper import PluginTestHelper
 
 
-@pytest.fixture
-def helper(request):
-    helper = TestHelper()
-    helper.setup_beets()
-
-    request.instance.lib = helper.lib
-    request.instance.add_item = helper.add_item
-
-    yield
-
-    helper.teardown_beets()
-
-
-@pytest.mark.usefixtures("helper")
-class TestFuzzyPlugin(PluginMixin):
+class TestFuzzyPlugin(PluginTestHelper):
     plugin = "fuzzy"
 
     @pytest.mark.parametrize(

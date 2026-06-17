@@ -19,8 +19,6 @@ import pytest
 from beets.test.helper import PluginTestCase
 from beets.ui import UserError
 
-PLUGIN_NAME = "advancedrewrite"
-
 
 class AdvancedRewritePluginTest(PluginTestCase):
     plugin = "advancedrewrite"

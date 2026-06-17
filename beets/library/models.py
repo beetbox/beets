@@ -8,7 +8,7 @@ import unicodedata
 from contextlib import suppress
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, TypeVar
 
 from mediafile import MediaFile, UnreadableFileError
 
@@ -43,6 +43,8 @@ if TYPE_CHECKING:
     from .library import Library  # noqa: F401
 
 log = logging.getLogger("beets")
+
+AnyLibModel = TypeVar("AnyLibModel", "Album", "Item")
 
 
 class LibModel(dbcore.Model["Library"]):

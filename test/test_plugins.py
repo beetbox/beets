@@ -27,12 +27,7 @@ from mediafile import MediaFile
 
 from beets import config, plugins, ui
 from beets.dbcore import types
-from beets.importer import (
-    Action,
-    ArchiveImportTask,
-    SentinelImportTask,
-    SingletonImportTask,
-)
+from beets.importer import Action, SingletonImportTask
 from beets.library import Item
 from beets.test.helper import (
     RUNNING_IN_CI,
@@ -98,21 +93,13 @@ class TestPluginRegistration(IOMixin, PluginTestHelper):
         assert out == "one; two; three\n"
 
 
-class PytestImportHelper(ImportHelper, PluginTestHelper):
-    @pytest.fixture(autouse=True)
-    def setup_import_helper(self, setup):
-        self.import_media = []
-        self.lib.path_formats = [
-            ("default", os.path.join("$artist", "$album", "$title")),
-            ("singleton:true", os.path.join("singletons", "$title")),
-            ("comp:true", os.path.join("compilations", "$album", "$title")),
-        ]
-
-        #
+class PluginImportHelper(PluginMixin, ImportHelper):
+    def setup_beets(self):
+        super().setup_beets()
         self.prepare_album_for_import(2)
 
 
-class TestEvents(PytestImportHelper):
+class TestEvents(PluginImportHelper):
     def test_import_task_created(self, caplog):
         self.importer = self.setup_importer(pretend=True)
 
@@ -144,18 +131,9 @@ class TestEvents(PytestImportHelper):
                 )
 
             def import_task_created_event(self, session, task):
-                if (
-                    isinstance(task, SingletonImportTask)
-                    or isinstance(task, SentinelImportTask)
-                    or isinstance(task, ArchiveImportTask)
-                ):
-                    return task
-
-                new_tasks = []
-                for item in task.items:
-                    new_tasks.append(SingletonImportTask(task.toppath, item))
-
-                return new_tasks
+                return [
+                    SingletonImportTask(task.toppath, i) for i in task.items
+                ]
 
         to_singleton_plugin = ToSingletonPlugin
         self.register_plugin(to_singleton_plugin)
@@ -282,7 +260,7 @@ class TestListeners(PluginTestHelper):
         plugins.send("event9", foo=5)
 
 
-class TestPromptChoices(TerminalImportMixin, PytestImportHelper):
+class TestPromptChoices(TerminalImportMixin, PluginImportHelper):
     @pytest.fixture(autouse=True)
     def setup_prompt_choice(self, io):
         self.setup_importer()
