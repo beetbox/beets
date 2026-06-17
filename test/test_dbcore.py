@@ -147,10 +147,6 @@ class ModelFixture5(ModelFixture1):
     }
 
 
-class DatabaseFixture5(dbcore.Database):
-    _models = (ModelFixture5,)
-
-
 class DatabaseFixtureTwoModels(dbcore.Database):
     _models = (ModelFixture2, AnotherModelFixture)
 

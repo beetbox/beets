@@ -6,7 +6,7 @@ import pytest
 from beets.autotag import Distance
 from beets.dbcore.query import Query
 from beets.test._common import DummyIO
-from beets.test.helper import RUNNING_IN_CI, ConfigMixin
+from beets.test.helper import RUNNING_IN_CI, ConfigMixin, TestHelper
 from beets.test.helper import is_importable as check_import
 from beets.util import cached_classproperty
 
@@ -129,3 +129,45 @@ def is_importable():
     """Fixture that provides a function to check if a module can be imported."""
 
     return check_import
+
+
+# Shared fixtures amortize the expensive TestHelper setup across multiple tests.
+#
+# TestHelper resets and reloads the beets configuration, so recreating it for
+# every test can slow large suites noticeably.
+#
+# Inheriting from TestHelper gives each test function isolated state. Use the
+# fixtures below instead when a broader scope is safe and the suite benefits
+# from reusing the same helper instance.
+@pytest.fixture(scope="session")
+def session_helper():
+    """Share beets test state across the full test session.
+
+    Use this for suites that tolerate shared library contents and global
+    configuration. Tests should target specific records rather than assume a
+    completely fresh overall state.
+    """
+    with TestHelper() as helper:
+        yield helper
+
+
+@pytest.fixture(scope="module")
+def module_helper():
+    """Share beets test state within one test module.
+
+    Use this when tests in the same file can reuse setup and side effects, but
+    later modules should still begin from a clean environment.
+    """
+    with TestHelper() as helper:
+        yield helper
+
+
+@pytest.fixture(scope="class")
+def class_helper():
+    """Share beets test state within one test class.
+
+    Use this when methods in a class can build on the same setup, while nearby
+    classes still need independent libraries, files, or configuration.
+    """
+    with TestHelper() as helper:
+        yield helper
