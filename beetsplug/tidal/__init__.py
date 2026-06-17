@@ -37,6 +37,8 @@ if TYPE_CHECKING:
         TrackAttributes,
     )
 
+    PopularityAttributes = AlbumAttributes | TrackAttributes
+
 
 log = getLogger("beets.tidal")
 
@@ -260,9 +262,10 @@ class TidalPlugin(MetadataSourcePlugin):
 
             for isrc in isrcs:
                 if track := isrc_to_track.get(isrc):
-                    yield self._get_track_info(
+                    track_info = self._get_track_info(
                         track, artist_by_id=artist_by_id
                     )
+                    yield track_info
                 else:
                     yield None
 
@@ -355,6 +358,7 @@ class TidalPlugin(MetadataSourcePlugin):
             album["relationships"]["artists"]["data"], artist_by_id
         )
         date_parts = self._parse_release_date(album["attributes"])
+        duration = self._duration_to_seconds(album["attributes"]["duration"])
         return AlbumInfo(
             # Identifier
             data_source=self.data_source,
@@ -367,9 +371,7 @@ class TidalPlugin(MetadataSourcePlugin):
             tracks=track_infos,
             artist=", ".join(artist_names),
             artists=artist_names,
-            duration=self._duration_to_seconds(
-                album["attributes"]["duration"]
-            ),
+            duration=duration,
             albumtype=album["attributes"]["albumType"],
             label=self._parse_label(album["attributes"]),
             year=date_parts[0] if date_parts else None,
@@ -388,6 +390,7 @@ class TidalPlugin(MetadataSourcePlugin):
         artist_names, artist_ids = self._parse_artists(
             track["relationships"]["artists"]["data"], artist_by_id
         )
+        duration = self._duration_to_seconds(track["attributes"]["duration"])
 
         return TrackInfo(
             # Identifier
@@ -400,9 +403,7 @@ class TidalPlugin(MetadataSourcePlugin):
             isrc=track["attributes"]["isrc"],
             artist=", ".join(artist_names),
             artists=artist_names,
-            duration=self._duration_to_seconds(
-                track["attributes"]["duration"]
-            ),
+            duration=duration,
             label=self._parse_label(track["attributes"]),
             # Flexattrs
             tidal_track_id=track["id"],
@@ -486,9 +487,7 @@ class TidalPlugin(MetadataSourcePlugin):
         return None
 
     @staticmethod
-    def _parse_popularity(
-        attributes: AlbumAttributes | TrackAttributes,
-    ) -> int:
+    def _parse_popularity(attributes: PopularityAttributes) -> int:
         return round(attributes["popularity"] * 100)
 
     def sync_item_popularity(
@@ -584,13 +583,10 @@ class TidalPlugin(MetadataSourcePlugin):
         # It would be nice to combine both auth and sync commands but
         # currently not really supported in beets. We might be able to
         # revist this if our subcommand parsing changes
-        tidalsync_cmd = ui.Subcommand(
-            "tidalsync",
-            help=(
-                "Synchronize Tidal popularity data for library "
-                "items and albums"
-            ),
+        sync_help = (
+            "Synchronize Tidal popularity data for library items and albums"
         )
+        tidalsync_cmd = ui.Subcommand("tidalsync", help=sync_help)
         tidalsync_cmd.parser.add_album_option()
         tidalsync_cmd.parser.add_option(
             "-f",

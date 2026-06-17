@@ -16,6 +16,7 @@ from beetsplug.tidal import TidalPlugin
 if TYPE_CHECKING:
     from beetsplug.tidal.api_types import (
         AlbumAttributes,
+        ResourceIdentifier,
         TidalAlbum,
         TidalArtist,
         TidalTrack,
@@ -85,6 +86,9 @@ def _make_track(
     artist_ids: list[str] | None = None,
     version: str | None = None,
 ) -> TidalTrack:
+    artist_relationships: list[ResourceIdentifier] = [
+        {"id": aid, "type": "artists"} for aid in (artist_ids or [])
+    ]
     attrs: TrackAttributes = {
         "title": title,
         "duration": duration,
@@ -102,13 +106,7 @@ def _make_track(
         "type": "tracks",
         "attributes": attrs,
         "relationships": {
-            "artists": {
-                "data": [
-                    {"id": aid, "type": "artists"}
-                    for aid in (artist_ids or [])
-                ],
-                "links": {},
-            }
+            "artists": {"data": artist_relationships, "links": {}}
         },
     }
 
