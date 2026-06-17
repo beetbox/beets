@@ -9,6 +9,7 @@ from unittest.mock import Mock
 
 import pytest
 
+from beets.dbcore import types
 from beets.library.models import Item
 from beets.test.helper import PluginTestCase
 from beetsplug.tidal import TidalPlugin
@@ -117,6 +118,20 @@ class TidalPluginTest(PluginTestCase):
     def setUp(self):
         super().setUp()
         self.tidal = TidalPlugin()
+
+    def test_flex_field_types_are_scoped_correctly(self):
+        assert self.tidal.item_types == {
+            "tidal_track_id": types.STRING,
+            "tidal_artist_id": types.STRING,
+            "tidal_track_popularity": types.INTEGER,
+            "tidal_updated": types.DATE,
+        }
+        assert self.tidal.album_types == {
+            "tidal_album_id": types.STRING,
+            "tidal_artist_id": types.STRING,
+            "tidal_album_popularity": types.INTEGER,
+            "tidal_updated": types.DATE,
+        }
 
 
 class TestAlbumParsing(TidalPluginTest):

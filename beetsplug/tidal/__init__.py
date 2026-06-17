@@ -45,9 +45,14 @@ log = getLogger("beets.tidal")
 class TidalPlugin(MetadataSourcePlugin):
     item_types: ClassVar[dict[str, types.Type]] = {
         "tidal_track_id": types.STRING,
-        "tidal_album_id": types.STRING,
         "tidal_artist_id": types.STRING,
         "tidal_track_popularity": types.INTEGER,
+        "tidal_updated": types.DATE,
+    }
+
+    album_types: ClassVar[dict[str, types.Type]] = {
+        "tidal_album_id": types.STRING,
+        "tidal_artist_id": types.STRING,
         "tidal_album_popularity": types.INTEGER,
         "tidal_updated": types.DATE,
     }
