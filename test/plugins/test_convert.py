@@ -181,6 +181,21 @@ class TestConvertCli(ConvertPluginHelper, ConvertCommand):
         mediafile = MediaFile(self.converted_mp3)
         assert mediafile.images[0].data == image_data
 
+    def test_copy_album_art_missing_source(self, caplog):
+        # A missing/stale art source should be skipped instead of crashing
+        # the conversion (see #4692).
+        self.config["convert"]["copy_album_art"] = True
+        self.album.artpath = os.path.join(_common.RSRC, b"nonexistent.jpg")
+        self.album.store()
+
+        with caplog.at_level("INFO", logger="beets.convert"):
+            self.run_command("convert", "-a", "--yes")
+
+        assert any(
+            "source file not found" in message for message in caplog.messages
+        )
+        assert self.file_endswith(self.converted_mp3, "mp3")
+
     def test_skip_existing(self):
         converted = self.converted_mp3
         self.touch(converted, content="XXX")
