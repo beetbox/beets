@@ -159,6 +159,8 @@ c46069654628040316dea9db85d01b263db3ba9e
 bc71ec308eb938df1d349f6857634ddf2a82e339
 
 # 2026
+# Move changelog note under Unreleased section
+1fe5bad4b27d2845aad16f0afae91fe389f299fb
 # Replace http URLs with https
 3d0d032987c4c2e9550529fd25e79581b06ade73
 # Fix broken URLs

@@ -34,7 +34,6 @@ import sys
 import unittest
 from contextlib import contextmanager
 from dataclasses import dataclass
-from enum import Enum
 from functools import cache, cached_property
 from pathlib import Path
 from tempfile import gettempdir, mkdtemp, mkstemp
@@ -496,7 +495,7 @@ class ImportHelper(TestHelper):
     autotagging library and several assertions for the library.
     """
 
-    default_import_config: ClassVar[dict[str, bool]] = {
+    default_import_config: ClassVar[dict[str, Any]] = {
         "autotag": True,
         "copy": True,
         "hardlink": False,
@@ -628,7 +627,6 @@ class ImportSessionFixture(ImportSession):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._choices = []
-        self._resolutions = []
 
     default_choice = importer.Action.APPLY
 
@@ -651,23 +649,6 @@ class ImportSessionFixture(ImportSession):
         return choice
 
     choose_item = choose_match
-
-    Resolution = Enum("Resolution", "REMOVE SKIP KEEPBOTH MERGE")
-
-    default_resolution = "REMOVE"
-
-    def resolve_duplicate(self, task, found_duplicates):
-        try:
-            res = self._resolutions.pop(0)
-        except IndexError:
-            res = self.default_resolution
-
-        if res == self.Resolution.SKIP:
-            task.set_choice(importer.Action.SKIP)
-        elif res == self.Resolution.REMOVE:
-            task.should_remove_duplicates = True
-        elif res == self.Resolution.MERGE:
-            task.should_merge_duplicates = True
 
 
 class TerminalImportSessionFixture(TerminalImportSession):

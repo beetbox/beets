@@ -21,7 +21,6 @@ import shutil
 import time
 from collections import defaultdict
 from collections.abc import Callable
-from enum import Enum
 from tempfile import mkdtemp
 from typing import TYPE_CHECKING, Any
 
@@ -33,6 +32,7 @@ from beets.dbcore.query import PathQuery
 from beets.util import extension
 from beets.util.extension import remux_mpeglayer3_wav
 
+from .actions import Action, DuplicateAction
 from .state import ImportState
 
 if TYPE_CHECKING:
@@ -79,20 +79,6 @@ log = logging.getLogger("beets")
 
 class ImportAbortError(Exception):
     """Raised when the user aborts the tagging operation."""
-
-
-class Action(Enum):
-    """Enumeration of possible actions for an import task."""
-
-    SKIP = "SKIP"
-    ASIS = "ASIS"
-    TRACKS = "TRACKS"
-    APPLY = "APPLY"
-    ALBUMS = "ALBUMS"
-    RETAG = "RETAG"
-    # The RETAG action represents "don't apply any match, but do record
-    # new metadata". It's not reachable via the standard command prompt but
-    # can be used by plugins.
 
 
 class BaseImportTask:
@@ -172,6 +158,7 @@ class ImportTask(BaseImportTask):
     cur_artist: str | None = None
     candidates: Sequence[AlbumMatch | TrackMatch] | None = None
     rec: Recommendation | None = None
+    duplicate_action: DuplicateAction | None = None
 
     def __init__(
         self,
@@ -180,8 +167,6 @@ class ImportTask(BaseImportTask):
         items: Iterable[library.Item] | None,
     ):
         super().__init__(toppath, paths, items)
-        self.should_remove_duplicates = False
-        self.should_merge_duplicates = False
         self.is_album = True
 
     def set_choice(self, choice: Action | AlbumMatch | TrackMatch):
@@ -226,8 +211,11 @@ class ImportTask(BaseImportTask):
         return self.choice_flag == Action.APPLY
 
     @property
-    def skip(self):
-        return self.choice_flag == Action.SKIP
+    def skip(self) -> bool:
+        return (
+            self.choice_flag == Action.SKIP
+            or self.duplicate_action is DuplicateAction.SKIP
+        )
 
     # Convenient data.
 
@@ -796,7 +784,6 @@ class SentinelImportTask(ImportTask):
     def __init__(self, toppath, paths):
         super().__init__(toppath, paths, ())
         # TODO Remove the remaining attributes eventually
-        self.should_remove_duplicates = False
         self.is_album = True
         self.choice_flag = None
 
