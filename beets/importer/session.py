@@ -25,15 +25,16 @@ from .actions import Action, DuplicateAction
 from .state import ImportState
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Iterator, Sequence
 
     import confuse
 
     from beets import dbcore, library
+    from beets.autotag import AlbumMatch, TrackMatch
     from beets.library import AnyLibModel
     from beets.util import PathBytes
 
-    from .tasks import ImportTask
+    from .tasks import ImportTask, SingletonImportTask
 
 
 QUEUE_SIZE = 128
@@ -65,7 +66,7 @@ class ImportSession:
         loghandler: logging.Handler | None,
         paths: Sequence[PathBytes] | None,
         query: dbcore.Query | None,
-    ):
+    ) -> None:
         """Create a session.
 
         Parameters
@@ -90,7 +91,9 @@ class ImportSession:
         # Normalize the paths.
         self.paths = list(map(normpath, paths or []))
 
-    def _setup_logging(self, loghandler: logging.Handler | None):
+    def _setup_logging(
+        self, loghandler: logging.Handler | None
+    ) -> logging.BeetsLogger:
         logger = logging.getLogger(__name__)
         logger.propagate = False
         if not loghandler:
@@ -149,13 +152,13 @@ class ImportSession:
 
         self.want_resume = config["resume"].as_choice([True, False, "ask"])
 
-    def tag_log(self, status, paths: Sequence[PathBytes]):
+    def tag_log(self, status: str, paths: Sequence[PathBytes]) -> None:
         """Log a message about a given album to the importer log. The status
         should reflect the reason the album couldn't be tagged.
         """
         self.logger.info("{} {}", status, displayable_path(paths))
 
-    def log_choice(self, task: ImportTask, duplicate=False):
+    def log_choice(self, task: ImportTask, duplicate: bool = False) -> None:
         """Logs the task's current choice if it should be logged. If
         ``duplicate``, then this is a secondary choice after a duplicate was
         detected and a decision was made.
@@ -176,10 +179,10 @@ class ImportSession:
             elif task.skip:
                 self.tag_log("skip", paths)
 
-    def should_resume(self, path: PathBytes):
+    def should_resume(self, path: PathBytes) -> bool:
         raise NotImplementedError
 
-    def choose_match(self, task: ImportTask):
+    def choose_match(self, task: ImportTask) -> AlbumMatch | Action:
         raise NotImplementedError
 
     def get_duplicate_action(
@@ -192,14 +195,15 @@ class ImportSession:
         log.debug("default action for duplicates: {}", choice)
         return DuplicateAction(choice)  # type: ignore[call-arg]
 
-    def choose_item(self, task: ImportTask):
+    def choose_item(self, task: SingletonImportTask) -> TrackMatch | Action:
         raise NotImplementedError
 
-    def run(self):
+    def run(self) -> None:
         """Run the import task."""
         self.logger.info("import started {}", time.asctime())
         self.set_config(config["import"])
 
+        stages: list[Iterator[stagefuncs.StageMessage]]
         # Set up the pipeline.
         if self.query is None:
             stages = [stagefuncs.read_tasks(self)]
@@ -250,7 +254,9 @@ class ImportSession:
 
     # Incremental and resumed imports
 
-    def already_imported(self, toppath: PathBytes, paths: Sequence[PathBytes]):
+    def already_imported(
+        self, toppath: PathBytes, paths: Sequence[PathBytes]
+    ) -> bool:
         """Returns true if the files belonging to this task have already
         been imported in a previous session.
         """
@@ -272,7 +278,7 @@ class ImportSession:
             self._history_dirs = ImportState().taghistory
         return self._history_dirs
 
-    def already_merged(self, paths: Sequence[PathBytes]):
+    def already_merged(self, paths: Sequence[PathBytes]) -> bool:
         """Returns true if all the paths being imported were part of a merge
         during previous tasks.
         """
@@ -281,7 +287,7 @@ class ImportSession:
                 return False
         return True
 
-    def mark_merged(self, paths: Sequence[PathBytes]):
+    def mark_merged(self, paths: Sequence[PathBytes]) -> None:
         """Mark paths and directories as merged for future reimport tasks."""
         self._merged_items.update(paths)
         dirs = {
@@ -290,14 +296,14 @@ class ImportSession:
         }
         self._merged_dirs.update(dirs)
 
-    def is_resuming(self, toppath: PathBytes):
+    def is_resuming(self, toppath: PathBytes) -> bool:
         """Return `True` if user wants to resume import of this path.
 
         You have to call `ask_resume` first to determine the return value.
         """
         return self._is_resuming.get(toppath, False)
 
-    def ask_resume(self, toppath: PathBytes):
+    def ask_resume(self, toppath: PathBytes) -> None:
         """If import of `toppath` was aborted in an earlier session, ask
         user if they want to resume the import.
 
