@@ -7,21 +7,23 @@ from typing import TYPE_CHECKING, Any
 
 import pytest
 
-from beets.test.helper import TestHelper
-
 if TYPE_CHECKING:
     from flask.testing import Client
 
 
-@pytest.fixture(scope="session", autouse=True)
-def helper():
-    helper = TestHelper()
-    helper.setup_beets()
-    yield helper
-    helper.teardown_beets()
-
-
 @pytest.fixture(scope="session")
+def helper(session_helper):
+    """Keep the helper temp dir alive past the module-scoped Flask app.
+
+    ``create_app`` opens a configured SQLite library before tests replace it
+    with ``helper.lib``. On Windows, module teardown can otherwise try to
+    delete ``library.db`` while the app still holds a file handle. The API
+    assertions filter known data, so sharing state for the session is harmless.
+    """
+    return session_helper
+
+
+@pytest.fixture(scope="module")
 def app(helper):
     from beetsplug.aura import create_app
 
@@ -30,7 +32,7 @@ def app(helper):
     return app
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def item(helper):
     return helper.add_item_fixture(
         album="Album",
@@ -40,12 +42,12 @@ def item(helper):
     )
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def album(helper, item):
     return helper.lib.add_album([item])
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def _other_album_and_item(helper):
     """Add another item and album to prove that filtering works."""
     item = helper.add_item_fixture(
