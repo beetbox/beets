@@ -78,9 +78,7 @@ class TidalPlugin(MetadataSourcePlugin):
         )
 
     def _tokenfile(self) -> str:
-        """Return the configured path to the token file
-        in the app directory.
-        """
+        """Return the configured path to the token file in the app directory."""
         return self.config["tokenfile"].get(confuse.Filename(in_app_dir=True))
 
     def require_authentication(self):
@@ -267,10 +265,7 @@ class TidalPlugin(MetadataSourcePlugin):
 
             for isrc in isrcs:
                 if track := isrc_to_track.get(isrc):
-                    track_info = self._get_track_info(
-                        track, artist_by_id=artist_by_id
-                    )
-                    yield track_info
+                    yield self._get_track_info(track, artist_by_id=artist_by_id)
                 else:
                     yield None
 
@@ -350,6 +345,7 @@ class TidalPlugin(MetadataSourcePlugin):
         track_by_id: dict[str, TidalTrack],
         artist_by_id: dict[str, TidalArtist],
     ) -> AlbumInfo:
+
         track_infos: list[TrackInfo] = []
         for i, track_rel in enumerate(
             album["relationships"]["items"]["data"], start=1
@@ -363,7 +359,6 @@ class TidalPlugin(MetadataSourcePlugin):
             album["relationships"]["artists"]["data"], artist_by_id
         )
         date_parts = self._parse_release_date(album["attributes"])
-        duration = self._duration_to_seconds(album["attributes"]["duration"])
         return AlbumInfo(
             # Identifier
             data_source=self.data_source,
@@ -376,7 +371,7 @@ class TidalPlugin(MetadataSourcePlugin):
             tracks=track_infos,
             artist=", ".join(artist_names),
             artists=artist_names,
-            duration=duration,
+            duration=self._duration_to_seconds(album["attributes"]["duration"]),
             albumtype=album["attributes"]["albumType"],
             label=self._parse_label(album["attributes"]),
             year=date_parts[0] if date_parts else None,
@@ -395,7 +390,6 @@ class TidalPlugin(MetadataSourcePlugin):
         artist_names, artist_ids = self._parse_artists(
             track["relationships"]["artists"]["data"], artist_by_id
         )
-        duration = self._duration_to_seconds(track["attributes"]["duration"])
 
         return TrackInfo(
             # Identifier
@@ -408,7 +402,7 @@ class TidalPlugin(MetadataSourcePlugin):
             isrc=track["attributes"]["isrc"],
             artist=", ".join(artist_names),
             artists=artist_names,
-            duration=duration,
+            duration=self._duration_to_seconds(track["attributes"]["duration"]),
             label=self._parse_label(track["attributes"]),
             # Flexattrs
             tidal_track_id=track["id"],
@@ -424,8 +418,7 @@ class TidalPlugin(MetadataSourcePlugin):
     ) -> tuple[list[str], list[str]]:
         """Extract artists from a relationship.
 
-        Artists are sorted in the track/album response relationship but
-        not in the
+        Artists are sorted in the track/album response relationship but not in the
         track/album responses included items.
         """
         artist_names = []
@@ -444,8 +437,7 @@ class TidalPlugin(MetadataSourcePlugin):
     @staticmethod
     def _parse_title(attributes: AlbumAttributes | TrackAttributes):
         """
-        Tidal UIs append the version string at the end of the title.
-        We do the same here
+        Tidal UIs append the version string at the end of the title. We do the same here
         by formatting it as ``"{title} ({version})"`` to stay consistent.
         """
         if version := attributes.get("version"):
