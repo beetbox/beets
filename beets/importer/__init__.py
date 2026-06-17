@@ -16,9 +16,9 @@
 autotagging music files.
 """
 
+from .actions import Action, DuplicateAction
 from .session import ImportAbortError, ImportSession
 from .tasks import (
-    Action,
     ArchiveImportTask,
     ImportTask,
     SentinelImportTask,
@@ -30,6 +30,7 @@ from .tasks import (
 __all__ = [
     "Action",
     "ArchiveImportTask",
+    "DuplicateAction",
     "ImportAbortError",
     "ImportSession",
     "ImportTask",

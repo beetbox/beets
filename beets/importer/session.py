@@ -18,16 +18,17 @@ import time
 from typing import TYPE_CHECKING
 
 from beets import config, logging, plugins, util
-from beets.importer.tasks import Action
 from beets.util import displayable_path, normpath, pipeline, syspath
 
 from . import stages as stagefuncs
+from .actions import Action, DuplicateAction
 from .state import ImportState
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from beets import dbcore, library
+    from beets.library import AnyLibModel
     from beets.util import PathBytes
 
     from .tasks import ImportTask
@@ -161,17 +162,17 @@ class ImportSession:
         paths = task.paths
         if duplicate:
             # Duplicate: log all three choices (skip, keep both, and trump).
-            if task.should_remove_duplicates:
+            if task.duplicate_action is DuplicateAction.REMOVE:
                 self.tag_log("duplicate-replace", paths)
             elif task.choice_flag in (Action.ASIS, Action.APPLY):
                 self.tag_log("duplicate-keep", paths)
-            elif task.choice_flag is Action.SKIP:
+            elif task.skip:
                 self.tag_log("duplicate-skip", paths)
         else:
             # Non-duplicate: log "skip" and "asis" choices.
             if task.choice_flag is Action.ASIS:
                 self.tag_log("asis", paths)
-            elif task.choice_flag is Action.SKIP:
+            elif task.skip:
                 self.tag_log("skip", paths)
 
     def should_resume(self, path: PathBytes):
@@ -180,8 +181,15 @@ class ImportSession:
     def choose_match(self, task: ImportTask):
         raise NotImplementedError
 
-    def resolve_duplicate(self, task: ImportTask, found_duplicates):
-        raise NotImplementedError
+    def get_duplicate_action(
+        self, task: ImportTask, found_duplicates: list[AnyLibModel]
+    ) -> DuplicateAction:
+        """Get the configured duplicate action."""
+        choice = config["import"]["duplicate_action"].as_choice(
+            DuplicateAction.choices()
+        )
+        log.debug("default action for duplicates: {}", choice)
+        return DuplicateAction(choice)  # type: ignore[call-arg]
 
     def choose_item(self, task: ImportTask):
         raise NotImplementedError

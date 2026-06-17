@@ -22,8 +22,8 @@ from typing import TYPE_CHECKING
 from beets import config, plugins
 from beets.util import MoveOperation, displayable_path, pipeline
 
+from .actions import Action, DuplicateAction
 from .tasks import (
-    Action,
     ImportTask,
     ImportTaskFactory,
     SentinelImportTask,
@@ -195,7 +195,7 @@ def user_query(session: ImportSession, task: ImportTask):
 
     _resolve_duplicates(session, task)
 
-    if task.should_merge_duplicates:
+    if task.duplicate_action is DuplicateAction.MERGE:
         # Create a new task for tagging the current items
         # and duplicates together
         duplicate_items = task.duplicate_items(session.lib)
@@ -280,7 +280,7 @@ def manipulate_files(session: ImportSession, task: ImportTask):
     finalizes each task.
     """
     if not task.skip:
-        if task.should_remove_duplicates:
+        if task.duplicate_action is DuplicateAction.REMOVE:
             task.remove_duplicates(session.lib)
 
         if session.config["move"]:
@@ -342,33 +342,9 @@ def _resolve_duplicates(session: ImportSession, task: ImportTask):
         if found_duplicates:
             log.debug("found duplicates: {}", [o.id for o in found_duplicates])
 
-            # Get the default action to follow from config.
-            duplicate_action = config["import"]["duplicate_action"].as_choice(
-                {
-                    "skip": "s",
-                    "keep": "k",
-                    "remove": "r",
-                    "merge": "m",
-                    "ask": "a",
-                }
+            task.duplicate_action = session.get_duplicate_action(
+                task, found_duplicates
             )
-            log.debug("default action for duplicates: {}", duplicate_action)
-
-            if duplicate_action == "s":
-                # Skip new.
-                task.set_choice(Action.SKIP)
-            elif duplicate_action == "k":
-                # Keep both. Do nothing; leave the choice intact.
-                pass
-            elif duplicate_action == "r":
-                # Remove old.
-                task.should_remove_duplicates = True
-            elif duplicate_action == "m":
-                # Merge duplicates together
-                task.should_merge_duplicates = True
-            else:
-                # No default action set; ask the session.
-                session.resolve_duplicate(task, found_duplicates)
 
             session.log_choice(task, True)
 
