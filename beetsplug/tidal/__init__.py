@@ -4,7 +4,6 @@ import itertools
 import os
 import re
 import time
-from collections import defaultdict
 from functools import cached_property
 from typing import TYPE_CHECKING, ClassVar, Literal, overload
 
@@ -419,8 +418,9 @@ class TidalPlugin(MetadataSourcePlugin):
     ) -> tuple[list[str], list[str]]:
         """Extract artists from a relationship.
 
-        Artists are sorted in the track/album response relationship
-        but not in the track/album responses included items.
+        Artists are sorted in the track/album response relationship but
+        not in the
+        track/album responses included items.
         """
         artist_names = []
         artist_ids = []
@@ -439,8 +439,8 @@ class TidalPlugin(MetadataSourcePlugin):
     def _parse_title(attributes: AlbumAttributes | TrackAttributes):
         """
         Tidal UIs append the version string at the end of the title.
-        We do the same here by formatting it as
-        ``"{title} ({version})"`` to stay consistent.
+        We do the same here
+        by formatting it as ``"{title} ({version})"`` to stay consistent.
         """
         if version := attributes.get("version"):
             return f"{attributes['title']} ({version})"
@@ -532,29 +532,31 @@ class TidalPlugin(MetadataSourcePlugin):
         """Sync Tidal popularity for a generic model (Item or Album)."""
         log.info("Syncing popularity for {0} {1}s", len(results), label)
 
-        to_sync: defaultdict[str, list[Item | Album]] = defaultdict(list)
-        for model in results:
-            if tidal_id := model.get(id_field):
-                if force or model.get(popularity_field) is None:
-                    to_sync[tidal_id].append(model)
-        total = sum(len(v) for v in to_sync.values())
+        model_by_id = {
+            tidal_id: model
+            for model in results
+            if (tidal_id := model.get(id_field))
+            and (force or model.get(popularity_field) is None)
+        }
+        total = len(model_by_id)
         log.debug("{0} {1}s need updates", total, label)
         processed = 0
-        for models, new_info in zip(to_sync.values(), search(to_sync.keys())):
+        for model, new_info in zip(
+            model_by_id.values(), search(model_by_id.keys())
+        ):
             if not new_info:
                 continue
 
-            for model in models:
-                model[popularity_field] = new_info.get(popularity_field)
-                model["tidal_updated"] = time.time()
+            model[popularity_field] = new_info.get(popularity_field)
+            model["tidal_updated"] = time.time()
 
-                model.store()
-                if write:
-                    model.try_write()
+            model.store()
+            if write:
+                model.try_write()
 
-                processed += 1
-                if processed % 100 == 0 or processed == total:
-                    log.debug("Synced {0}/{1} {2}s", processed, total, label)
+            processed += 1
+            if processed % 100 == 0 or processed == total:
+                log.debug("Synced {0}/{1} {2}s", processed, total, label)
 
         log.info(
             "Successfully synchronised popularity for {0} {1}s", total, label
