@@ -34,11 +34,10 @@ New features
   popularity data for imported items by default, or albums with ``--album``,
   with ``--force`` to re-fetch and ``--write`` to update file tags.
 
-  **Migration**: Existing items imported with the Tidal plugin before these
-  flexattrs existed can be migrated by reimporting with only the Tidal metadata
-  provider enabled. During reimport, the Tidal ID stored in the ``mb_trackid`` /
-  ``mb_albumid`` fields is automatically used by the Tidal plugin to re-fetch
-  metadata and populate the new flexible attributes.
+  **Migration**: Existing Tidal imports can copy the previously stored IDs into
+  the new flexible attributes with ``beet modify``:
+  ``beet modify data_source:tidal tidal_album_id='$mb_albumid' -a``
+  ``beet modify data_source:tidal tidal_track_id='$mb_trackid'``
 
 Bug fixes
 ~~~~~~~~~
