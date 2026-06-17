@@ -29,6 +29,7 @@ if TYPE_CHECKING:
 
     from .api_types import (
         AlbumAttributes,
+        Attributes,
         ResourceIdentifier,
         TidalAlbum,
         TidalArtist,
@@ -36,7 +37,7 @@ if TYPE_CHECKING:
         TrackAttributes,
     )
 
-    PopularityAttributes = AlbumAttributes | TrackAttributes
+    PopularityAttributes = Attributes
 
 
 log = getLogger("beets.tidal")

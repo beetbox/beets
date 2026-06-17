@@ -72,7 +72,7 @@ class TidalAPI(RequestHandler):
 
     def get_tracks(
         self,
-        ids: list[str | int] | None = None,
+        ids: list[str] | None = None,
         isrcs: list[str] | None = None,
         include: list[str] | None = None,
         country_code: str = "US",
@@ -109,7 +109,7 @@ class TidalAPI(RequestHandler):
 
     def get_albums(
         self,
-        ids: list[str | int] | None = None,
+        ids: list[str] | None = None,
         barcode_ids: list[str] | None = None,
         include: list[str] | None = None,
         country_code: str = "US",
