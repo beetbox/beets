@@ -35,9 +35,9 @@ New features
   with ``--force`` to re-fetch and ``--write`` to update file tags.
 
   **Migration**: Existing Tidal imports can copy the previously stored IDs into
-  the new flexible attributes with ``beet modify``:
-  ``beet modify data_source:tidal tidal_album_id='$mb_albumid' -a``
-  ``beet modify data_source:tidal tidal_track_id='$mb_trackid'``
+  the new flexible attributes with ``beet modify``: run ``beet modify
+  data_source:tidal tidal_album_id='$mb_albumid' -a`` for albums and ``beet
+  modify data_source:tidal tidal_track_id='$mb_trackid'`` for items.
 
 Bug fixes
 ~~~~~~~~~
