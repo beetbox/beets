@@ -239,7 +239,9 @@ class ImportSession:
 
             stages += [stagefuncs.manipulate_files(self)]
 
-        pl = pipeline.Pipeline(stages)
+        pl: pipeline.Pipeline[stagefuncs.StageMessage, stagefuncs.StageCoro] = (
+            pipeline.Pipeline(stages)
+        )
 
         # Run the pipeline.
         plugins.send("import_begin", session=self)
