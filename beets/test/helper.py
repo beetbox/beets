@@ -46,7 +46,7 @@ from mediafile import Image, MediaFile
 
 import beets
 import beets.plugins
-from beets import importer, logging, util
+from beets import importer, util
 from beets.autotag import AlbumInfo, TrackInfo
 from beets.importer import ImportSession
 from beets.library import Item, Library
@@ -63,26 +63,6 @@ if TYPE_CHECKING:
     from requests_mock.mocker import Mocker
 
 RUNNING_IN_CI = os.environ.get("GITHUB_ACTIONS") == "true"
-
-
-class LogCapture(logging.Handler):
-    def __init__(self):
-        logging.Handler.__init__(self)
-        self.messages = []
-
-    def emit(self, record):
-        self.messages.append(str(record.msg))
-
-
-@contextmanager
-def capture_log(logger="beets"):
-    capture = LogCapture()
-    log = logging.getLogger(logger)
-    log.addHandler(capture)
-    try:
-        yield capture.messages
-    finally:
-        log.removeHandler(capture)
 
 
 def has_program(cmd, args=["--version"]):
@@ -174,8 +154,11 @@ class TestHelper(RunMixin, ConfigMixin):
     fixtures.
     """
 
+    request: pytest.FixtureRequest
+
     @pytest.fixture(autouse=True)
-    def setup(self):
+    def setup(self, request: pytest.FixtureRequest):
+        self.request = request
         self.setup_beets()
         try:
             yield
@@ -739,7 +722,7 @@ class TerminalImportMixin(IOMixin, ImportHelper):
             self.lib,
             loghandler=None,
             query=None,
-            io=self.io,
+            io=self.request.getfixturevalue("io"),
             paths=[import_dir],
         )
 
@@ -837,13 +820,20 @@ class AutotagStub:
         )
 
 
-class AutotagImportTestCase(ImportHelper, BeetsTestCase):
+class AutotagImportHelper(ImportHelper):
     matching = AutotagStub.IDENT
 
-    def setUp(self):
-        super().setUp()
+    def setup_beets(self):
+        super().setup_beets()
         self.matcher = AutotagStub(self.matching).install()
-        self.addCleanup(self.matcher.restore)
+
+    def teardown_beets(self):
+        self.matcher.restore()
+        super().teardown_beets()
+
+
+class AutotagImportTestCase(AutotagImportHelper, BeetsTestCase):
+    """DEPRECATED: Use AutotagImportHelper instead."""
 
 
 @dataclass(slots=True)

@@ -28,7 +28,7 @@ class TestNonAutotaggedImport(
     pass
 
 
-class ImportTest(TerminalImportMixin, test_importer.ImportTest):
+class TestImport(TerminalImportMixin, test_importer.TestImport):
     pass
 
 
