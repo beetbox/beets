@@ -1187,3 +1187,48 @@ def chunks(lst: Sequence[T], n: int) -> Iterator[list[T]]:
     """Yield successive n-sized chunks from lst."""
     for i in range(0, len(lst), n):
         yield list(lst[i : i + n])
+
+
+class AttrDict(dict[str, T]):
+    """Mapping enabling attribute-style access to stored metadata values."""
+
+    def copy(self) -> Self:
+        """Return a detached copy preserving subclass-specific behavior."""
+        return deepcopy(self)
+
+    def __getattribute__(self, attr: str) -> T:
+        # Intercept cached_property failures so an AttributeError raised
+        # inside the property body is not masked by __getattr__ fallback.
+        # Reuse the original traceback so the wrapped RuntimeError still
+        # points at the real failing line, but suppress the printed cause
+        # block to keep CLI tracebacks readable. See #6558 (and #6503 /
+        # #6506 for the same masking pattern with different metadata
+        # providers).
+        try:
+            return super().__getattribute__(attr)
+        except AttributeError as exc:
+            if not attr.startswith("__"):
+                for klass in type(self).__mro__:
+                    descr = klass.__dict__.get(attr)
+                    if descr is None:
+                        continue
+                    if isinstance(descr, cached_property):
+                        raise RuntimeError(
+                            f"{type(self).__name__}.{attr} failed: {exc}"
+                        ).with_traceback(exc.__traceback__) from None
+                    break
+            raise
+
+    def __getattr__(self, attr: str) -> T:
+        if attr in self:
+            return self[attr]
+
+        raise AttributeError(
+            f"'{self.__class__.__name__}' object has no attribute '{attr}'"
+        )
+
+    def __setattr__(self, key: str, value: T) -> None:
+        self.__setitem__(key, value)
+
+    def __hash__(self) -> int:  # type: ignore[override]
+        return id(self)
