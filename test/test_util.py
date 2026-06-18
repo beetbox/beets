@@ -232,7 +232,7 @@ class TestPlurality:
             Item(albumartist="aartist", label="label 3", album="another album"),
         ]
 
-        likelies, consensus = util.get_most_common_tags(items)
+        likelies = util.get_most_common_tags(items)
 
         assert likelies["albumartist"] == "aartist"
         assert likelies["album"] == "album"
@@ -240,11 +240,6 @@ class TestPlurality:
         assert likelies["artist"] == "aartist"
         assert likelies["label"] == "label 1"
         assert likelies["year"] == 0
-
-        assert consensus["year"]
-        assert consensus["albumartist"]
-        assert not consensus["album"]
-        assert not consensus["label"]
 
 
 class HelperTest(unittest.TestCase):

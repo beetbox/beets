@@ -22,6 +22,7 @@ from beets.util.units import human_bytes, human_seconds_short
 from .display import show_change, show_item_change
 
 if TYPE_CHECKING:
+    from beets.autotag import Source
     from beets.library import AnyLibModel, Item
 
 # Global logger.
@@ -64,7 +65,7 @@ class TerminalImportSession(importer.ImportSession):
         action = _summary_judgment(task.rec)
         if action == importer.Action.APPLY:
             match = task.candidates[0]
-            show_change(task.cur_artist, task.cur_album, match)
+            show_change(task.source, match)
             return match
         if action is not None:
             return action
@@ -77,13 +78,7 @@ class TerminalImportSession(importer.ImportSession):
             # `PromptChoice`.
             choices = self._get_choices(task)
             choice = choose_candidate(
-                task.candidates,
-                False,
-                task.rec,
-                task.cur_artist,
-                task.cur_album,
-                itemcount=len(task.items),
-                choices=choices,
+                task.candidates, task.rec, task.source, choices=choices
             )
 
             # Basic choices that require no more action here.
@@ -121,7 +116,7 @@ class TerminalImportSession(importer.ImportSession):
         action = _summary_judgment(task.rec)
         if action == importer.Action.APPLY:
             match = candidates[0]
-            show_item_change(task.item, match)
+            show_item_change(task.source, match)
             return match
         if action is not None:
             return action
@@ -130,7 +125,7 @@ class TerminalImportSession(importer.ImportSession):
             # Ask for a choice.
             choices = self._get_choices(task)
             choice = choose_candidate(
-                candidates, True, rec, item=task.item, choices=choices
+                candidates, rec, task.source, choices=choices
             )
 
             if choice in (importer.Action.SKIP, importer.Action.ASIS):
@@ -164,10 +159,7 @@ class TerminalImportSession(importer.ImportSession):
         that's already in the library.
         """
         is_album = task.is_album
-        log.warning(
-            "This {} is already in the library!",
-            ("album" if is_album else "item"),
-        )
+        log.warning("This {.source.type} is already in the library!", task)
 
         if config["import"]["quiet"]:
             # In quiet mode, don't prompt -- just skip.
@@ -360,23 +352,14 @@ def _summary_judgment(rec: Recommendation) -> importer.Action | None:
     return action
 
 
-def choose_candidate(
-    candidates,
-    singleton,
-    rec,
-    cur_artist=None,
-    cur_album=None,
-    item=None,
-    itemcount=None,
-    choices=[],
-):
-    """Given a sorted list of candidates, ask the user for a selection
-    of which candidate to use. Applies to both full albums and
-    singletons  (tracks). Candidates are either AlbumMatch or TrackMatch
-    objects depending on `singleton`. for albums, `cur_artist`,
-    `cur_album`, and `itemcount` must be provided. For singletons,
-    `item` must be provided.
+def choose_candidate(candidates, rec, source: Source, choices=[]):
+    """Ask the user for a selection of which candidate to use.
 
+    Applies to both full albums and singletons (tracks). Candidates are either
+    AlbumMatch or TrackMatch objects.
+
+    `rec` is the autotagging recommendation for the candidates.
+    `source` is the Source object describing the item or album being imported.
     `choices` is a list of `PromptChoice`s to be used in each prompt.
 
     Returns one of the following:
@@ -384,23 +367,18 @@ def choose_candidate(
     * a candidate (an AlbumMatch/TrackMatch object)
     * a chosen `PromptChoice` from `choices`
     """
-    # Sanity check.
-    if singleton:
-        assert item is not None
-    else:
-        assert cur_artist is not None
-        assert cur_album is not None
-
     # Build helper variables for the prompt choices.
     choice_opts = tuple(c.long for c in choices)
     choice_actions = {c.short: c for c in choices}
 
     # Zero candidates.
     if not candidates:
-        if singleton:
+        if source.type == "track":
             ui.print_("No matching recordings found.")
         else:
-            ui.print_(f"No matching release found for {itemcount} tracks.")
+            ui.print_(
+                f"No matching release found for {len(source.items)} tracks."
+            )
             ui.print_(
                 "For help, see: "
                 "https://beets.readthedocs.org/en/latest/faq.html#nomatch"
@@ -423,11 +401,7 @@ def choose_candidate(
         if not bypass_candidates:
             # Display list of candidates.
             ui.print_("")
-            ui.print_(
-                f"Finding tags for {'track' if singleton else 'album'} "
-                f'"{item.artist if singleton else cur_artist} -'
-                f' {item.title if singleton else cur_album}".'
-            )
+            ui.print_(f'Finding tags for {source.type} "{source.desc}".')
 
             ui.print_("  Candidates:")
             for i, match in enumerate(candidates):
@@ -471,10 +445,10 @@ def choose_candidate(
         bypass_candidates = False
 
         # Show what we're about to do.
-        if singleton:
-            show_item_change(item, match)
+        if source.type == "track":
+            show_item_change(source, match)
         else:
-            show_change(cur_artist, cur_album, match)
+            show_change(source, match)
 
         # Exact match => tag automatically if we're not in timid mode.
         if rec == Recommendation.strong and not config["import"]["timid"]:
@@ -507,11 +481,10 @@ def manual_search(session, task):
     track name (for singletons) for manual search.
     """
     artist = ui.input_("Artist:").strip()
-    name = ui.input_("Album:" if task.is_album else "Track:").strip()
+    name = ui.input_(f"{task.source.type.capitalize()}:").strip()
 
     if task.is_album:
-        _, _, prop = tag_album(task.items, artist, name)
-        return prop
+        return tag_album(task.source, artist, name)
     return tag_item(task.item, artist, name)
 
 
@@ -520,12 +493,11 @@ def manual_id(session, task):
 
     Input an ID, either for an album ("release") or a track ("recording").
     """
-    prompt = f"Enter {'release' if task.is_album else 'recording'} ID:"
+    prompt = f"Enter {task.source.type} ID:"
     search_id = ui.input_(prompt).strip()
 
     if task.is_album:
-        _, _, prop = tag_album(task.items, search_ids=search_id.split())
-        return prop
+        return tag_album(task.source, search_ids=search_id.split())
     return tag_item(task.item, search_ids=search_id.split())
 
 

@@ -11,7 +11,7 @@ import mediafile
 from typing_extensions import override
 
 from beets import config
-from beets.autotag import AlbumInfo, assign_items, distance
+from beets.autotag import AlbumInfo, Source, assign_items, distance
 from beets.plugins import find_plugins
 from beets.util.id_extractors import extract_release_id
 from beetsplug.musicbrainz import (
@@ -303,7 +303,12 @@ class PseudoAlbumInfo(AlbumInfo):
 
     def _compute_distance(self, items: Sequence[Item]) -> Distance:
         mapping, _, _ = assign_items(items, self.tracks)
-        return distance(items, self, mapping)
+        return distance(
+            Source.from_items(items).data,
+            self,
+            mapping,
+            len(items) - len(mapping),
+        )
 
     def use_pseudo_as_ref(self):
         self.__dict__["_pseudo_source"] = True

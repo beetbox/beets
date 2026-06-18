@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 from beets import config, library
-from beets.autotag import AlbumInfo, AlbumMatch, TrackInfo, distance
+from beets.autotag import AlbumInfo, AlbumMatch, Source, TrackInfo, distance
 from beets.exceptions import UserError
 from beets.test import _common
 from beets.test.helper import BeetsTestCase, IOMixin
@@ -61,11 +61,17 @@ class ShowChangeTestCase(IOMixin, BeetsTestCase):
     def _show_change(self):
         """Return an unicode string representing the changes"""
         long_name = f"a{' very' * 10} long name"
+        album = "another album"
+        albumartist = f"another artist with {long_name}"
+
+        def make_item(**kwargs):
+            return _common.item(album=album, albumartist=albumartist, **kwargs)
+
         items = [
-            _common.item(track=1, title="first title"),
-            _common.item(track=2, title="", path=b"/path/to/file.mp3"),
-            _common.item(track=3, title="caf\xe9"),
-            _common.item(track=4, title=f"title with {long_name}"),
+            make_item(track=1, title="first title"),
+            make_item(track=2, title="", path=b"/path/to/file.mp3"),
+            make_item(track=3, title="caf\xe9"),
+            make_item(track=4, title=f"title with {long_name}"),
         ]
         info = AlbumInfo(
             album="caf\xe9",
@@ -82,12 +88,13 @@ class ShowChangeTestCase(IOMixin, BeetsTestCase):
         item_info_pairs = list(zip(items, info.tracks))
         self.config["ui"]["color"] = False
         self.config["import"]["detail"] = True
-        change_dist = distance(items, info, item_info_pairs)
+        source = Source.from_items(items)
+        change_dist = distance(
+            source.data, info, item_info_pairs, len(items) - len(info.tracks)
+        )
         change_dist._penalties = {"album": [0.1], "artist": [0.1]}
         show_change(
-            f"another artist with {long_name}",
-            "another album",
-            AlbumMatch(change_dist, info, dict(item_info_pairs)),
+            source, AlbumMatch(change_dist, info, dict(item_info_pairs))
         )
         return self.io.getoutput()
 
