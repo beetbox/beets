@@ -253,3 +253,5 @@ f167dc29e41439e342c04c073758102b2a2e1af8
 9b375d0b2d2dc9388892f1b901aae67ab0ad8290
 # typing: type the rest of beets.library.models
 9022cb5ed7fddf60c1156dc3ca7e3a540dc8f7f2
+# Move AttrDict under beets.util
+6e2ed46ad41ffca28e2ca689d15f3e6e4e24234a
