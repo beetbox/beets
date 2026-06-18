@@ -17,8 +17,9 @@ import traceback
 from collections import Counter
 from collections.abc import Sequence
 from contextlib import suppress
+from copy import deepcopy
 from enum import Enum
-from functools import cache
+from functools import cache, cached_property
 from importlib import import_module
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
@@ -34,6 +35,7 @@ from typing import (
     cast,
 )
 
+from typing_extensions import Self
 from unidecode import unidecode
 
 import beets
@@ -797,18 +799,11 @@ def plurality(objs: Iterable[T]) -> tuple[T, int]:
     return c.most_common(1)[0]
 
 
-def get_most_common_tags(
-    items: Sequence[Item],
-) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Extract the likely current metadata for an album given a list of its
-    items. Return two dictionaries:
-     - The most common value for each field.
-     - Whether each field's value was unanimous (values are booleans).
-    """
+def get_most_common_tags(items: Sequence[Item]) -> dict[str, Any]:
+    """Extract the most common value for each field given a list of items."""
     assert items  # Must be nonempty.
 
     likelies = {}
-    consensus = {}
     fields = [
         "artist",
         "album",
@@ -826,14 +821,13 @@ def get_most_common_tags(
     ]
     for field in fields:
         values = [item.get(field) for item in items if item]
-        likelies[field], freq = plurality(values)
-        consensus[field] = freq == len(values)
+        likelies[field], _ = plurality(values)
 
     # If there's an album artist consensus, use this for the artist.
-    if consensus["albumartist"] and likelies["albumartist"]:
+    if len({i.albumartist for i in items}) == 1 and likelies["albumartist"]:
         likelies["artist"] = likelies["albumartist"]
 
-    return likelies, consensus
+    return likelies
 
 
 # stdout and stderr as bytes
