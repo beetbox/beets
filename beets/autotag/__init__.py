@@ -8,7 +8,7 @@ from importlib import import_module
 from beets.util.deprecation import deprecate_for_maintainers, deprecate_imports
 
 from .distance import Distance, distance, string_dist, track_distance
-from .hooks import AlbumInfo, AttrDict, Info, TrackInfo, correct_list_fields
+from .hooks import AlbumInfo, Info, TrackInfo, correct_list_fields
 from .match import (
     AlbumMatch,
     Match,
@@ -34,7 +34,6 @@ def __getattr__(name: str):
 __all__ = [
     "AlbumInfo",
     "AlbumMatch",
-    "AttrDict",
     "Distance",
     "Info",
     "Match",
