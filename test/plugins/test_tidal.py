@@ -16,10 +16,11 @@ from beetsplug.tidal import TidalPlugin
 if TYPE_CHECKING:
     from beetsplug.tidal.api_types import (
         AlbumAttributes,
+        RelationshipData,
         ResourceIdentifier,
         TidalAlbum,
         TidalArtist,
-        TidalCoverArt,
+        TidalArtwork,
         TidalTrack,
         TrackAttributes,
     )
@@ -27,7 +28,7 @@ if TYPE_CHECKING:
 CURRENT_TS = 150000000
 
 
-def _make_cover_art(id_: str, href: str = "") -> TidalCoverArt:
+def _make_artwork(id_: str, href: str = "") -> TidalArtwork:
     return {
         "id": id_,
         "type": "artworks",
@@ -77,7 +78,7 @@ def _make_album(
     if version:
         attrs["version"] = version
 
-    relationships: dict[str, object] = {
+    relationships: dict[str, RelationshipData] = {
         "artists": {
             "data": [{"id": aid, "type": "artists"} for aid in artist_ids],
             "links": {},
@@ -97,7 +98,7 @@ def _make_album(
         "id": id_,
         "type": "albums",
         "attributes": attrs,
-        "relationships": relationships,  # type: ignore[typeddict-item]
+        "relationships": relationships,
     }
     return album, track_lookup, artist_lookup
 
@@ -328,23 +329,23 @@ class TestParsing(TidalPluginTest):
         assert info.album == "My Album (Deluxe Edition)"
 
 
-class TestCoverArtParsing(TidalPluginTest):
-    """Tests for cover art URL parsing."""
+class TestArtworkParsing(TidalPluginTest):
+    """Tests for artwork URL parsing."""
 
-    def test_cover_art_with_url(self):
+    def test_artwork_with_url(self):
         """Cover art URL from included resources."""
         track = _make_track("t1", "Song", "PT3M", "ISRC001", ["a1"])
         album, track_lookup, artist_lookup = _make_album(
             "al1", "Album", [track], ["a1"], cover_art_id="ca1"
         )
-        cover_art_lookup = {
-            "ca1": _make_cover_art(
+        artwork_lookup = {
+            "ca1": _make_artwork(
                 "ca1", "https://resources.tidal.com/images/ca1/1280x1280.jpg"
             )
         }
 
         info = self.tidal._get_album_info(
-            album, track_lookup, artist_lookup, cover_art_lookup
+            album, track_lookup, artist_lookup, artwork_lookup
         )
 
         assert (
@@ -352,21 +353,21 @@ class TestCoverArtParsing(TidalPluginTest):
             == "https://resources.tidal.com/images/ca1/1280x1280.jpg"
         )
 
-    def test_cover_art_without_files_returns_none(self):
+    def test_artwork_without_files_returns_none(self):
         """Cover art returns None when files array is empty."""
         track = _make_track("t1", "Song", "PT3M", "ISRC001", ["a1"])
         album, track_lookup, artist_lookup = _make_album(
             "al1", "Album", [track], ["a1"], cover_art_id="ca1"
         )
-        cover_art_lookup = {"ca1": _make_cover_art("ca1")}
+        artwork_lookup = {"ca1": _make_artwork("ca1")}
 
         info = self.tidal._get_album_info(
-            album, track_lookup, artist_lookup, cover_art_lookup
+            album, track_lookup, artist_lookup, artwork_lookup
         )
 
         assert info.cover_art_url is None
 
-    def test_cover_art_without_relationship_returns_none(self):
+    def test_artwork_without_relationship_returns_none(self):
         """No cover_art_url when album has no coverArt relationship."""
         track = _make_track("t1", "Song", "PT3M", "ISRC001", ["a1"])
         album, track_lookup, artist_lookup = _make_album(
@@ -967,7 +968,7 @@ class TestTidalsync(TidalPluginTest):
 
 
     @pytest.mark.parametrize(
-        "cover_art_data, cover_art_by_id, expected",
+        "artwork_data, artwork_by_id, expected",
         [
             (
                 [{"id": "ca1", "type": "artworks"}],
@@ -1007,9 +1008,7 @@ class TestTidalsync(TidalPluginTest):
             ({}, {}, None),
         ],
     )
-    def test_parse_cover_art_url(
-        self, cover_art_data, cover_art_by_id, expected
-    ):
+    def test_parse_artwork_url(self, artwork_data, artwork_by_id, expected):
         album: TidalAlbum = {
             "id": "al1",
             "type": "albums",
@@ -1024,10 +1023,8 @@ class TestTidalsync(TidalPluginTest):
                 "popularity": 0.5,
                 "title": "Album",
             },
-            "relationships": {"coverArt": {"data": cover_art_data, "links": {}}}
-            if cover_art_data
+            "relationships": {"coverArt": {"data": artwork_data, "links": {}}}
+            if artwork_data
             else {},
         }
-        assert (
-            TidalPlugin._parse_cover_art_url(album, cover_art_by_id) == expected
-        )
+        assert TidalPlugin._parse_artwork_url(album, artwork_by_id) == expected

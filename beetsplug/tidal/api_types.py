@@ -155,16 +155,16 @@ class ArtworkFile(TypedDict):
     meta: FileMeta
 
 
-class CoverArtAttributes(TypedDict):
+class ArtworkAttributes(TypedDict):
     mediaType: Literal["IMAGE"]
     files: list[ArtworkFile]
     visualMetadata: NotRequired[dict[str, str]]
 
 
-class TidalCoverArt(TypedDict):
+class TidalArtwork(TypedDict):
     id: str
     type: Literal["artworks"]
-    attributes: CoverArtAttributes
+    attributes: ArtworkAttributes
 
 
 class TidalSearch(TypedDict):
@@ -180,7 +180,7 @@ T = TypeVar("T")
 class Document(TypedDict, Generic[T]):
     data: T
     included: NotRequired[
-        list[TidalArtist | TidalAlbum | TidalTrack | TidalCoverArt]
+        list[TidalArtist | TidalAlbum | TidalTrack | TidalArtwork]
     ]
     links: NotRequired[dict[str, str]]
 
