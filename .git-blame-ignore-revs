@@ -271,3 +271,5 @@ d24c0d341ec6074c343cd8054083fe358da8fa14
 b2f52ac12443c102712b735e456fd07a6525786b
 # Return Path from TestHelper.create_mediafile_fixture
 bb66b0c378e9bf7d97622a1582d93c4dfcf20fdd
+# Move AttrDict under beets.util
+ea334bd977ee8ed0cdbd627b7e9564dd08dd43f7
