@@ -896,6 +896,14 @@ def _raw_main(args: list[str] | None) -> None:
 
         return config_edit(options)
 
+    if "AppData\\Local\\Microsoft\\WindowsApps" in sys.exec_prefix:
+        raise UserError(
+            "beets is unable to use the Microsoft Store version of "
+            "Python. Please install Python from https://python.org.\n"
+            "More details can be found here "
+            "https://beets.readthedocs.io/en/stable/guides/main.html"
+        )
+
     if deferred_error:
         raise deferred_error
 
@@ -963,14 +971,6 @@ def main(args: list[str] | None = None) -> None:
     """Run the main command-line interface for beets. Includes top-level
     exception handlers that print friendly error messages.
     """
-    if "AppData\\Local\\Microsoft\\WindowsApps" in sys.exec_prefix:
-        log.error(
-            "error: beets is unable to use the Microsoft Store version of "
-            "Python. Please install Python from https://python.org.\n"
-            "error: More details can be found here "
-            "https://beets.readthedocs.io/en/stable/guides/main.html"
-        )
-        sys.exit(1)
     try:
         _raw_main(args)
     except UserError as exc:
