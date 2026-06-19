@@ -24,7 +24,7 @@ from collections import defaultdict
 from functools import cached_property, wraps
 from importlib import import_module
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeVar, overload
 
 import mediafile
 from typing_extensions import ParamSpec
@@ -639,6 +639,14 @@ def album_field_getters() -> TFuncMap[Album]:
 # Event dispatch.
 
 
+@overload
+def send(
+    event: Literal["import_task_created"], **arguments: Any
+) -> list[list[ImportTask]]: ...
+
+
+@overload
+def send(event: EventType, **arguments: Any) -> list[Any]: ...
 def send(event: EventType, **arguments: Any) -> list[Any]:
     """Send an event to all assigned event listeners.
 
@@ -668,9 +676,10 @@ def feat_tokens(
         feat_words += custom_words
     if for_artist:
         feat_words += ["with", "vs", "and", "con", "&"]
-    return (
-        rf"(?<=[\s(\[])(?:{'|'.join(re.escape(x) for x in feat_words)})(?=\s)"
-    )
+    tokens = "|".join(re.escape(x) for x in feat_words)
+    bracketed = rf"(?:(?<=\s)|^)(?:\(|\[)(?:{tokens})(?=\s)"
+    plain = rf"(?<=[\s(\[])(?:{tokens})(?=\s)"
+    return rf"(?:{bracketed}|{plain})"
 
 
 def apply_item_changes(

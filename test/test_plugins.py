@@ -27,12 +27,7 @@ from mediafile import MediaFile
 
 from beets import config, plugins, ui
 from beets.dbcore import types
-from beets.importer import (
-    Action,
-    ArchiveImportTask,
-    SentinelImportTask,
-    SingletonImportTask,
-)
+from beets.importer import Action, SingletonImportTask
 from beets.library import Item
 from beets.test.helper import (
     RUNNING_IN_CI,
@@ -136,18 +131,9 @@ class TestEvents(PluginImportHelper):
                 )
 
             def import_task_created_event(self, session, task):
-                if (
-                    isinstance(task, SingletonImportTask)
-                    or isinstance(task, SentinelImportTask)
-                    or isinstance(task, ArchiveImportTask)
-                ):
-                    return task
-
-                new_tasks = []
-                for item in task.items:
-                    new_tasks.append(SingletonImportTask(task.toppath, item))
-
-                return new_tasks
+                return [
+                    SingletonImportTask(task.toppath, i) for i in task.items
+                ]
 
         to_singleton_plugin = ToSingletonPlugin
         self.register_plugin(to_singleton_plugin)
