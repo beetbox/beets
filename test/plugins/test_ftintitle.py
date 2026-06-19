@@ -115,6 +115,13 @@ class TestFtInTitlePluginFunctional(PluginTestHelper):
                 ("Alice", "Song 1 with Bob"),
                 id="custom-format-with",
             ),
+            pytest.param(
+                {"format": "ft. {}"},
+                ("ftintitle",),
+                ("Alice (ft. Bob)", "Song 1", "Alice"),
+                ("Alice", "Song 1 ft. Bob"),
+                id="featured-artist-in-parentheses",
+            ),
             # ---- keep_in_artist variants ----
             pytest.param(
                 {"format": "feat. {}", "keep_in_artist": True},
@@ -249,6 +256,8 @@ class TestFtInTitlePluginFunctional(PluginTestHelper):
         ("Alice & Bob", "Alice", "Bob"),
         ("Alice and Bob", "Alice", "Bob"),
         ("Alice With Bob", "Alice", "Bob"),
+        ("Alice (ft. Bob)", "Alice", "Bob"),
+        ("Alice [ft. Bob]", "Bob", "Alice"),
         ("Alice defeat Bob", "Alice", None),
         ("Alice & Bob", "Bob", "Alice"),
         ("Alice ft. Bob", "Bob", "Alice"),
@@ -281,6 +290,8 @@ def test_find_feat_part(
         ("Alice & Bob ft. Charlie", ("Alice & Bob", "Charlie")),
         ("Alice & Bob featuring Charlie", ("Alice & Bob", "Charlie")),
         ("Alice and Bob feat Charlie", ("Alice and Bob", "Charlie")),
+        ("Alice (ft. Bob)", ("Alice", "Bob")),
+        ("Alice [& Bob]", ("Alice", "Bob")),
     ],
 )
 def test_split_on_feat(given: str, expected: tuple[str, str | None]) -> None:

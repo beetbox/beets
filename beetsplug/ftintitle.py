@@ -51,6 +51,33 @@ DEFAULT_BRACKET_KEYWORDS: tuple[str, ...] = (
 )
 
 
+def _split_on_feat_token(
+    regex: re.Pattern[str], artist: str
+) -> tuple[str, str] | None:
+    match = regex.search(artist)
+    if not match:
+        return None
+
+    left = artist[: match.start()].strip()
+    right = artist[match.end() :].strip()
+    opener = match.group(0)[0]
+
+    if opener == "(":
+        closing = ")"
+    elif opener == "[":
+        closing = "]"
+    else:
+        closing = None
+
+    if closing:
+        if right.endswith(closing):
+            right = right[:-1].strip()
+        else:
+            left = f"{left} {opener}".strip()
+
+    return left, right
+
+
 def split_on_feat(
     artist: str, for_artist: bool = True, custom_words: list[str] | None = None
 ) -> tuple[str, str | None]:
@@ -65,8 +92,8 @@ def split_on_feat(
         plugins.feat_tokens(for_artist=False, custom_words=custom_words),
         re.IGNORECASE,
     )
-    parts = tuple(s.strip() for s in regex_explicit.split(artist, 1))
-    if len(parts) == 2:
+    parts = _split_on_feat_token(regex_explicit, artist)
+    if parts:
         return parts
 
     # Try comma as separator
@@ -80,12 +107,11 @@ def split_on_feat(
         regex = re.compile(
             plugins.feat_tokens(for_artist, custom_words), re.IGNORECASE
         )
-        parts = tuple(s.strip() for s in regex.split(artist, 1))
+        parts = _split_on_feat_token(regex, artist)
+        if parts:
+            return parts
 
-    if len(parts) == 1:
-        return parts[0], None
-    assert len(parts) == 2  # help mypy out
-    return parts
+    return artist.strip(), None
 
 
 def contains_feat(title: str, custom_words: list[str] | None = None) -> bool:
@@ -105,6 +131,11 @@ def find_feat_part(
     """Attempt to find featured artists in the item's artist fields and
     return the results. Returns None if no featured artist found.
     """
+    # If the album artist is featured, move the remaining artist to the title.
+    artist_part, feat_part = split_on_feat(artist, custom_words=custom_words)
+    if albumartist and feat_part == albumartist and artist_part:
+        return artist_part
+
     # Handle a wider variety of extraction cases if the album artist is
     # contained within the track artist.
     if albumartist and albumartist in artist:
