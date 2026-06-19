@@ -1,8 +1,14 @@
+from __future__ import annotations
+
 from sys import stderr
+from typing import TYPE_CHECKING
 
 import confuse
 
 from .util.deprecation import deprecate_imports
+
+if TYPE_CHECKING:
+    from .logging import Logger
 
 __version__ = "2.12.0"
 __author__ = "Adrian Sampson <adrian@radbox.org>"
@@ -30,6 +36,15 @@ class IncludeLazyConfig(confuse.LazyConfig):
             pass
         except confuse.ConfigReadError as err:
             stderr.write(f"configuration `import` failed: {err.reason}")
+
+    def log_sources(self, log: Logger) -> None:
+        """Log all configuration sources in priority order."""
+
+        log.debug("configuration sources (highest → lowest priority):")
+        for source in self.sources:
+            log.debug(
+                "{} {}", type(source).__name__, getattr(source, "filename", "")
+            )
 
 
 config = IncludeLazyConfig("beets", __name__)
