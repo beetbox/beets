@@ -42,39 +42,38 @@ class ArtistAttributes(TypedDict):
     spotlighted: NotRequired[bool]
 
 
-class Attributes(TypedDict):
-    title: str
-    duration: str  # ISO 8601
-    explicit: bool
-    mediaTags: list[str]
-    popularity: float
-
-    accessType: NotRequired[Literal["PUBLIC", "UNLISTED", "PRIVATE"]]
-    copyright: NotRequired[Copyright]
-    createdAt: NotRequired[str]  # ISO 8601 datetime
-    externalLinks: NotRequired[list[ExternalLink]]
-    version: NotRequired[str]
-
-
-class AlbumAttributes(Attributes):
+class AlbumAttributes(TypedDict):
     # see "Albums_Attributes"
     # in https://tidal-music.github.io/tidal-api-reference/tidal-api-oas.json
 
     # Required
     albumType: Literal["ALBUM", "EP", "SINGLE"]
     barcodeId: str
+    duration: str  # ISO 8601
+    explicit: bool
+    mediaTags: list[str]
     numberOfItems: int
     numberOfVolumes: int
+    popularity: float
+    title: str
 
     # Optional
+    accessType: NotRequired[Literal["PUBLIC", "UNLISTED", "PRIVATE"]]
+    copyright: NotRequired[Copyright]
+    createdAt: NotRequired[str]  # ISO 8601 datetime
+    externalLinks: NotRequired[list[ExternalLink]]
     releaseDate: NotRequired[str]  # ISO date YYYY-MM-DD
+    version: NotRequired[str]
 
 
-class TrackAttributes(Attributes):
+class TrackAttributes(TypedDict):
     # see "Tracks_Attributes"
     # in https://tidal-music.github.io/tidal-api-reference/tidal-api-oas.json
 
     # Required
+    title: str
+    duration: str  # ISO 8601
+    explicit: bool
     isrc: str
     key: Literal[
         "UNKNOWN",
@@ -107,9 +106,18 @@ class TrackAttributes(Attributes):
         "MELODIC_MINOR",
         "PENTATONIC_MINOR",
     ]
+    mediaTags: list[str]
+    popularity: float
+
+    # Optional
+    accessType: NotRequired[Literal["PUBLIC", "UNLISTED", "PRIVATE"]]
     bpm: NotRequired[float]
+    copyright: NotRequired[Copyright]
+    createdAt: NotRequired[str]  # ISO 8601 datetime
+    externalLinks: NotRequired[list[ExternalLink]]
     spotlighted: NotRequired[bool]
     toneTags: NotRequired[list[str]]
+    version: NotRequired[str]
 
 
 class SearchAttributes(TypedDict):

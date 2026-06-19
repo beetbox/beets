@@ -29,15 +29,12 @@ if TYPE_CHECKING:
 
     from .api_types import (
         AlbumAttributes,
-        Attributes,
         ResourceIdentifier,
         TidalAlbum,
         TidalArtist,
         TidalTrack,
         TrackAttributes,
     )
-
-    PopularityAttributes = Attributes
 
 
 log = getLogger("beets.tidal")
@@ -485,7 +482,7 @@ class TidalPlugin(MetadataSourcePlugin):
         return None
 
     @staticmethod
-    def _parse_popularity(attributes: PopularityAttributes) -> int:
+    def _parse_popularity(attributes: AlbumAttributes | TrackAttributes) -> int:
         return round(attributes["popularity"] * 100)
 
     def sync_item_popularity(
