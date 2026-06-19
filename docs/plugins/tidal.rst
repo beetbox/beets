@@ -102,6 +102,8 @@ Default
 
     The path to the file where the Tidal authentication token is stored.
 
+.. include:: ./shared_metadata_source_config.rst
+
 Flexible Attributes
 -------------------
 
@@ -145,41 +147,20 @@ To find tracks that have not been synced yet:
 
     beet ls tidal_track_popularity:0
 
-Commands
---------
+Synchronise popularity
+----------------------
 
-The ``tidal`` plugin provides the following commands:
+Use ``beet tidalsync`` to refresh popularity data for your imported items and
+albums from Tidal. By default it skips items that already have popularity data.
 
-``beet tidal --auth``
-    Authenticate and log in to Tidal.
+Options:
 
-``beet tidalsync``
-    Refresh popularity data for imported items.
+- ``-f``, ``--force`` -- re-fetch all items, even those already synced.
+- ``-a``, ``--album`` -- sync albums instead of individual tracks.
+- ``-w``, ``--write`` -- write updated metadata to media files.
 
-    By default, ``tidalsync`` skips items that already have popularity data. Use
-    ``--force`` (``-f``) to re-fetch all items:
+You can also pass a query to narrow the scope:
 
-    ::
+::
 
-        beet tidalsync -f
-
-    Use ``--album`` (``-a``) to sync albums instead of items:
-
-    ::
-
-        beet tidalsync -a
-
-    Use ``--write`` (``-w``) to also write the updated metadata to the media
-    files:
-
-    ::
-
-        beet tidalsync -w
-
-    You can also filter which items to sync by passing a query:
-
-    ::
-
-        beet tidalsync artist:"My Artist"
-
-.. include:: ./shared_metadata_source_config.rst
+    beet tidalsync -fw artist:"My Artist"
