@@ -56,13 +56,6 @@ if sys.platform == "win32":
 
 
 log = logging.getLogger("beets")
-if not log.handlers:
-    handler = logging.StreamHandler()
-    handler.setFormatter(
-        logging.LegacyFormatter("%(legacy_prefix)s%(message)s")
-    )
-    log.addHandler(handler)
-log.propagate = False  # Don't propagate to root handler.
 
 
 # Encoding utilities.
@@ -767,14 +760,11 @@ optparse.Option.ALWAYS_TYPED_ACTIONS += ("callback",)
 # The main entry point and bootstrapping.
 
 
-def _setup(
-    options: optparse.Values,
-) -> tuple[list[Subcommand], library.Library]:
+def _setup() -> tuple[list[Subcommand], library.Library]:
     """Prepare and global state and updates it with command line options.
 
     Returns a list of subcommands, a list of plugins, and a library instance.
     """
-    config = _configure(options)
 
     plugins.load_plugins()
 
@@ -788,43 +778,6 @@ def _setup(
     plugins.send("library_opened", lib=lib)
 
     return subcommands, lib
-
-
-def _configure(options):
-    """Amend the global configuration object with command line options."""
-    # Add any additional config files specified with --config. This
-    # special handling lets specified plugins get loaded before we
-    # finish parsing the command line.
-    if getattr(options, "config", None) is not None:
-        overlay_path = options.config
-        del options.config
-        config.set_file(overlay_path)
-    else:
-        overlay_path = None
-    config.set_args(options)
-
-    # Configure the logger.
-    if config["verbose"].get(int):
-        log.set_global_level(logging.DEBUG)
-    else:
-        log.set_global_level(logging.INFO)
-
-    if overlay_path:
-        log.debug(
-            "overlaying configuration: {}", util.displayable_path(overlay_path)
-        )
-
-    config_path = config.user_config_path()
-    if os.path.isfile(config_path):
-        log.debug("user configuration: {}", util.displayable_path(config_path))
-    else:
-        log.debug(
-            "no user configuration found at {}",
-            util.displayable_path(config_path),
-        )
-
-    log.debug("data directory: {}", util.displayable_path(config.config_dir()))
-    return config
 
 
 def _ensure_db_directory_exists(path):
@@ -929,9 +882,11 @@ def _raw_main(args: list[str] | None) -> None:
 
     options, subargs = parser.parse_global_options(args)
 
-    # Special case for the `config --edit` command: bypass _setup so
-    # that an invalid configuration does not prevent the editor from
-    # starting.
+    # Defer config errors such that logging is available early for error reporting
+    # also allows `config --edit` command to bypass on config errors
+    deferred_error = _bootstrap_config(options)
+    _bootstrap_logging()
+
     if (
         subargs
         and subargs[0] == "config"
@@ -941,7 +896,10 @@ def _raw_main(args: list[str] | None) -> None:
 
         return config_edit(options)
 
-    subcommands, lib = _setup(options)
+    if deferred_error:
+        raise deferred_error
+
+    subcommands, lib = _setup()
     parser.add_subcommand(*subcommands)
 
     subcommand, suboptions, subargs = parser.parse_subcommand(subargs)
@@ -950,6 +908,55 @@ def _raw_main(args: list[str] | None) -> None:
     plugins.send("cli_exit", lib=lib)
     lib._close()
     return None
+
+
+def _bootstrap_config(options: optparse.Values) -> confuse.ConfigError | None:
+    """Apply CLI to config, initialize logging, return error as value if any."""
+
+    # Apply config overlay (deferred error to allow setting up logging)
+    deferred_error: confuse.ConfigError | None = None
+    try:
+        # For some reason we need to materialize before adding another config
+        # file otherwise the sources order is inverted...
+        config.read()  # FIXME
+        if overlay_path := getattr(options, "config", None):
+            config.set_file(overlay_path)
+    except confuse.ConfigError as e:
+        deferred_error = e
+
+    # Even if the earlier config loading fails we seperatly try to set the config
+    # values the cli options
+    try:
+        config.set_args(options)
+    except confuse.ConfigError as e:
+        deferred_error = e
+
+    return deferred_error
+
+
+def _bootstrap_logging():
+    if not log.handlers:
+        handler = logging.StreamHandler()
+        handler.setFormatter(
+            logging.LegacyFormatter("%(legacy_prefix)s%(message)s")
+        )
+        log.addHandler(handler)
+
+    # Verbosity level set via cli
+    #  --verbose
+    if config["verbose"].get(int):
+        log.set_global_level(logging.DEBUG)
+    else:
+        log.set_global_level(logging.INFO)
+
+    # List configuration sources for users convinence
+    log.debug("configuration sources (highest → lowest priority):")
+    for source in config.sources[1:]:
+        log.debug(
+            "{} {}", type(source).__name__, getattr(source, "filename", "")
+        )
+
+    log.debug("data directory: {}", util.displayable_path(config.config_dir()))
 
 
 def main(args: list[str] | None = None) -> None:
