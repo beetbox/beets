@@ -96,6 +96,8 @@ Bug fixes
   the database has been deleted from disk. Missing items are now skipped with a
   warning and the command continues. :bug:`6720`
 - :doc:`plugins/fish`: Fix error on plugin initialization.
+- :doc:`plugins/spotify`: Use single instead of double quotes in spotify
+  queries.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
