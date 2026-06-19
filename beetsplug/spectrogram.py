@@ -39,6 +39,7 @@ class SpectrogramPlugin(BeetsPlugin):
                 "auto": True,
                 "width": 800,
                 "height": 300,
+                "transparent": False
             }
         )
 
@@ -52,25 +53,37 @@ class SpectrogramPlugin(BeetsPlugin):
         cmd.parser.add_option(
             "--width",
             dest="width",
+            type="int",
             default=800,
             help="image width (e.g: 800)",
         )
         cmd.parser.add_option(
             "--height",
             dest="height",
+            type="int",
             default=300,
             help="image height (e.g: 300)",
+        )
+        cmd.parser.add_option(
+            "-t",
+            "--transparent",
+            dest="transparent",
+            action="store_true",
+            default=False,
+            help="transparent background",
         )
         cmd.func = self.command
         return [cmd]
 
     def command(self, lib: Library, opts, args: list[str]) -> None:
-        width = self.config["width"].get(int) or opts.width
-        height = self.config["height"].get(int) or opts.height
+        width = int(opts.width) or self.config["width"].get(int)
+        height = int(opts.height) or self.config["height"].get(int)
+        transparent = opts.transparent or self.config["transparent"].get(bool)
         self.generate_image(
             list(lib.items(args)),
             width,
             height,
+            transparent
         )
 
     def imported(self, _, task: ImportTask) -> None:
@@ -85,25 +98,31 @@ class SpectrogramPlugin(BeetsPlugin):
         items: list[Item],
         width: int = 800,
         height: int = 300,
+        transparent: bool = False
     ) -> None:
         for item in items:
             file_path = item.filepath
+            image_path = file_path.with_name(f"{file_path.stem} (spectrogram {width}x{height})").with_suffix(".png")
+            image_dpi = 100
 
             try:
                 waveform, sample_rate = librosa.load(file_path)
                 spectrogram = librosa.amplitude_to_db(np.abs(librosa.stft(waveform)), ref=np.max)
 
-                plt.figure(figsize=(width / 100, height / 100))
+            except Exception as exc:
+                self._log.error("Failed to load {}: {}", file_path, exc)
+                continue
+
+            try:
+                plt.figure(figsize=(width / image_dpi, height / image_dpi))
                 librosa.display.specshow(spectrogram, sr=sample_rate, x_axis="time", y_axis="log")
                 plt.colorbar(format="%+2.f dB")
                 plt.title("Spectrogram (dB)")
                 plt.tight_layout()
 
-                # Write image to disk
-                image_path = file_path.with_name(f"{file_path.stem} (spectrogram {width}x{height})").with_suffix(".png")
-                plt.savefig(image_path, dpi=100)
+                plt.savefig(image_path, dpi=image_dpi, transparent=transparent)
 
             except Exception as exc:
-                self._log.error("Failed to load {}: {}", file_path, exc)
+                self._log.error("Failed to write {}: {}", image_path, exc)
                 continue
 
