@@ -27,6 +27,7 @@ New features
   :conf:`plugins.musicbrainz:aliases_as_credits` to make
   aliases-as-artist-credit optional.
 - :doc:`plugins/badfiles`: Added settings for auto error and warning actions.
+- :doc:`plugins/waveform`: Generate waveform images from audio files.
 
 Bug fixes
 ~~~~~~~~~
