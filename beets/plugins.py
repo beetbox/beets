@@ -676,9 +676,10 @@ def feat_tokens(
         feat_words += custom_words
     if for_artist:
         feat_words += ["with", "vs", "and", "con", "&"]
-    return (
-        rf"(?<=[\s(\[])(?:{'|'.join(re.escape(x) for x in feat_words)})(?=\s)"
-    )
+    tokens = "|".join(re.escape(x) for x in feat_words)
+    bracketed = rf"(?:(?<=\s)|^)(?:\(|\[)(?:{tokens})(?=\s)"
+    plain = rf"(?<=[\s(\[])(?:{tokens})(?=\s)"
+    return rf"(?:{bracketed}|{plain})"
 
 
 def apply_item_changes(
