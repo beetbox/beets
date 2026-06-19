@@ -113,7 +113,7 @@ class LegacyFormatter(Formatter):
 
     Usage::
 
-        handler.setFormatter(LegacyFormatter("%(legacy_msg)s"))
+        handler.setFormatter(LegacyFormatter("%(legacy_prefix)s%(message)s"))
 
     The ``legacy_msg`` attribute is attached to the record by
     ``LegacyFormatter.format()``, so the format string above only works
@@ -129,15 +129,9 @@ class LegacyFormatter(Formatter):
 
     def format(self, record):
         parts = record.name.split(".")
-
-        child_name = ".".join(parts[1:]) if len(parts) > 1 else None
-
-        record.legacy_msg = (
-            f"{child_name}: {record.getMessage()}"
-            if child_name
-            else record.getMessage()
+        record.legacy_prefix = (
+            f"{'.'.join(parts[1:])}: " if len(parts) > 1 else ""
         )
-
         return super().format(record)
 
 

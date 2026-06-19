@@ -58,7 +58,9 @@ if sys.platform == "win32":
 log = logging.getLogger("beets")
 if not log.handlers:
     handler = logging.StreamHandler()
-    handler.setFormatter(logging.LegacyFormatter("%(legacy_msg)s"))
+    handler.setFormatter(
+        logging.LegacyFormatter("%(legacy_prefix)s%(message)s")
+    )
     log.addHandler(handler)
 log.propagate = False  # Don't propagate to root handler.
 

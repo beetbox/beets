@@ -364,7 +364,7 @@ class TestLegacyFormatter:
         """Root logger passes message unchanged; child loggers get
         ``prefix: msg`` format after the ``beets.`` prefix is stripped.
         """
-        formatter = blog.LegacyFormatter("%(legacy_msg)s")
+        formatter = blog.LegacyFormatter("%(legacy_prefix)s%(message)s")
         record = log.LogRecord(
             logger_name, log.INFO, __file__, 0, "hello world", (), None
         )
