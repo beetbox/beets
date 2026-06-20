@@ -98,6 +98,8 @@ Bug fixes
 - :doc:`plugins/fish`: Fix error on plugin initialization.
 - :doc:`plugins/spotify`: Use single instead of double quotes in spotify
   queries.
+- :doc:`plugins/tidal`: Fix auth URL not printed in environments without a
+  configured browser :bug:`6710`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
