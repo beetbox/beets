@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from functools import cached_property, lru_cache
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from beets import config, plugins, ui
 
@@ -12,6 +12,8 @@ if TYPE_CHECKING:
     from beets.autotag import AlbumInfo, Info, TrackInfo
     from beets.importer import ImportSession, ImportTask
     from beets.library import Album, Item
+
+FeaturedField = Literal["artist", "artist_credit", "artist_sort"]
 
 
 DEFAULT_BRACKET_KEYWORDS: tuple[str, ...] = (
@@ -262,26 +264,22 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             _album_artist_no_feat
         )
 
-    @staticmethod
-    def _field_value(metadata: object, field: str) -> str:
-        return getattr(metadata, field, None) or ""
-
-    def _effective_artist(self, metadata: object) -> str:
+    def _effective_artist(self, metadata: Info | Item) -> str:
         if self.artist_credit:
-            return self._field_value(
-                metadata, "artist_credit"
-            ) or self._field_value(metadata, "artist")
-        return self._field_value(metadata, "artist")
+            return metadata.get("artist_credit") or metadata.get("artist") or ""
+        return metadata.get("artist") or ""
 
     def _strip_featured_from_field(
-        self, metadata: object, field: str, for_artist: bool = True
+        self,
+        metadata: Info | Item,
+        field: FeaturedField,
+        for_artist: bool = True,
     ) -> None:
-        value = self._field_value(metadata, field)
-        if value:
+        if value := metadata.get(field):
             stripped, _ = split_on_feat(
                 value, for_artist=for_artist, custom_words=self.custom_words
             )
-            setattr(metadata, field, stripped)
+            metadata[field] = stripped
 
     def commands(self) -> list[ui.Subcommand]:
         def func(lib, opts, args):
@@ -336,7 +334,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
                 "artist: {.artist} (Not changing due to keep_in_artist)", item
             )
         else:
-            artist = self._field_value(item, "artist")
+            artist = item.get("artist") or ""
             track_artist, _ = split_on_feat(
                 artist, custom_words=self.custom_words
             )
@@ -345,14 +343,11 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             changed |= artist != track_artist
 
             if self.artist_credit:
-                artist_credit = self._field_value(item, "artist_credit")
+                artist_credit = item.get("artist_credit") or ""
                 self._strip_featured_from_field(item, "artist_credit")
-                changed |= artist_credit != self._field_value(
-                    item, "artist_credit"
-                )
+                changed |= artist_credit != (item.get("artist_credit") or "")
 
-        artist_sort = self._field_value(item, "artist_sort")
-        if artist_sort:
+        if artist_sort := item.get("artist_sort"):
             # Just strip the featured artist from the sort name.
             artist_sort_no_feat, _ = split_on_feat(
                 artist_sort, custom_words=self.custom_words
@@ -362,7 +357,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
 
         # Only update the title if it does not already contain a featured
         # artist and if we do not drop featuring information.
-        title = self._field_value(item, "title")
+        title = item.get("title") or ""
         if not self.drop_feat and not contains_feat(title, self.custom_words):
             formatted = self.feat_format.format(feat_part)
             new_title = self.insert_ft_into_title(
@@ -379,9 +374,9 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         changed = False
         if not self.keep_in_artist_field:
             before = (
-                self._field_value(info, "artist"),
-                self._field_value(info, "artist_credit"),
-                self._field_value(info, "artist_sort"),
+                info.get("artist"),
+                info.get("artist_credit"),
+                info.get("artist_sort"),
             )
             self._strip_featured_from_field(info, "artist")
             if self.artist_credit:
@@ -390,12 +385,12 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
                 )
             self._strip_featured_from_field(info, "artist_sort")
             changed |= before != (
-                self._field_value(info, "artist"),
-                self._field_value(info, "artist_credit"),
-                self._field_value(info, "artist_sort"),
+                info.get("artist"),
+                info.get("artist_credit"),
+                info.get("artist_sort"),
             )
 
-        title = self._field_value(info, "title")
+        title = info.get("title") or ""
         if not self.drop_feat and not contains_feat(title, self.custom_words):
             formatted = self.feat_format.format(feat_part)
             new_title = self.insert_ft_into_title(
@@ -429,7 +424,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             True if the item has been modified. False otherwise.
         """
         artist = self._effective_artist(item).strip()
-        albumartist = self._field_value(item, "albumartist")
+        albumartist = item.get("albumartist") or ""
         if not self._has_feat_candidate(artist, albumartist):
             return False
 
