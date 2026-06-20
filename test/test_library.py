@@ -107,6 +107,17 @@ class TestStore(PytestItemHelper):
         assert "flex1" not in album
         assert "flex1" not in album.items()[0]
 
+    def test_store_does_not_propagate_artpath_to_items(self):
+        item = _common.item()
+        self.lib.add(item)
+        album = self.lib.add_album([item])
+        assert "artpath" not in Album.item_keys
+        album.artpath = b"/abs/path/to/cover.jpg"
+        album.store()
+        stored = self.lib.get_item(item.id)
+        assert "artpath" not in stored._values_flex
+        assert "artpath" not in stored._values_fixed
+
 
 class TestAdd(PytestItemHelper):
     def test_item_add_inserts_row(self, item):
