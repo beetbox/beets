@@ -149,6 +149,8 @@ class Info(AttrDict[Any]):
         return set(config["overwrite_null"][cls.type.lower()].as_str_seq())
 
     def __setitem__(self, key: str, value: Any) -> None:
+        self._invalidate_cached_properties()
+
         # handle legacy info.str_field = "abc" and info["str_field"] = "abc"
         if list_field := self.LEGACY_TO_LIST_FIELD.get(key):
             self[list_field] = self._get_list_from_string_value(
@@ -156,6 +158,12 @@ class Info(AttrDict[Any]):
             )
         else:
             super().__setitem__(key, value)
+
+    def _invalidate_cached_properties(self) -> None:
+        for cls in type(self).__mro__:
+            for field, attr in vars(cls).items():
+                if isinstance(attr, cached_property):
+                    self.__dict__.pop(field, None)
 
     @property
     def id(self) -> str | None:

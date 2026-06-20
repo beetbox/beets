@@ -27,6 +27,8 @@ New features
 - :ref:`modify-cmd`: Support ``+=`` and ``-=`` operators to add or remove
   individual values from multi-valued fields without replacing the whole field.
   :bug:`6587`
+- :doc:`plugins/ftintitle`: Apply featured-artist rewriting to fetched metadata
+  before commands such as :doc:`plugins/mbsync` use it. :bug:`1153`
 
 Bug fixes
 ~~~~~~~~~

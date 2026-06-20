@@ -485,3 +485,13 @@ class TestAttrDictCachedPropertyMasking:
     def test_existing_dict_key_returns_value(self):
         obj = AttrDict[str]({"title": "ok"})
         assert obj.title == "ok"
+
+
+class TestInfoCachedPropertyInvalidation:
+    def test_mutation_invalidates_cached_item_data(self):
+        info = TrackInfo(artist="Alice", title="Song")
+        assert info.item_data["title"] == "Song"
+
+        info.title = "New Song"
+
+        assert info.item_data["title"] == "New Song"
