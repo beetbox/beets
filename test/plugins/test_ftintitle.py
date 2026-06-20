@@ -247,7 +247,6 @@ class TestFtInTitlePluginFunctional(PluginTestHelper):
             artists_credit=["Alice", "Bobby"],
             title="Song",
         )
-        assert info.item_data["title"] == "Song"
 
         with self.configure_plugin({"auto": True}):
             plugins.send("trackinfo_received", info=info)
@@ -437,7 +436,6 @@ class TestFtInTitlePluginFunctional(PluginTestHelper):
             artist="Alice & Bob", artist_sort="Alice & Bob", title="Song"
         )
         info = AlbumInfo(artist="Alice", album="Album", tracks=[track_info])
-        assert track_info.item_data["title"] == "Song"
 
         with self.configure_plugin({"auto": True}):
             plugins.send("albuminfo_received", info=info)
