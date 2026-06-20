@@ -789,6 +789,68 @@ class TestStaticHelpers:
         assert TidalPlugin._parse_popularity({"popularity": 1.0}) == 100
         assert TidalPlugin._parse_popularity({"popularity": 0.0}) == 0
 
+    @pytest.mark.parametrize(
+        "artwork_data, artwork_by_id, expected",
+        [
+            (
+                [{"id": "ca1", "type": "artworks"}],
+                {
+                    "ca1": {
+                        "id": "ca1",
+                        "type": "artworks",
+                        "attributes": {
+                            "mediaType": "IMAGE",
+                            "files": [
+                                {
+                                    "href": "https://example.com/cover.jpg",
+                                    "meta": {"width": 1280, "height": 1280},
+                                }
+                            ],
+                        },
+                    }
+                },
+                "https://example.com/cover.jpg",
+            ),
+            (
+                [{"id": "ca1", "type": "artworks"}],
+                {
+                    "ca1": {
+                        "id": "ca1",
+                        "type": "artworks",
+                        "attributes": {"mediaType": "IMAGE", "files": []},
+                    }
+                },
+                None,
+            ),
+            # No artworks in relationship data
+            ([{"id": "ca1", "type": "coverArts"}], {}, None),
+            # No cover art lookup
+            ([{"id": "ca1", "type": "artworks"}], {}, None),
+            # Empty relationships
+            ({}, {}, None),
+        ],
+    )
+    def test_parse_artwork_url(self, artwork_data, artwork_by_id, expected):
+        album: TidalAlbum = {
+            "id": "al1",
+            "type": "albums",
+            "attributes": {
+                "albumType": "ALBUM",
+                "barcodeId": "123",
+                "duration": "PT45M",
+                "explicit": False,
+                "mediaTags": [],
+                "numberOfItems": 1,
+                "numberOfVolumes": 1,
+                "popularity": 0.5,
+                "title": "Album",
+            },
+            "relationships": {"coverArt": {"data": artwork_data, "links": {}}}
+            if artwork_data
+            else {},
+        }
+        assert TidalPlugin._parse_artwork_url(album, artwork_by_id) == expected
+
 
 class TestTidalsync(TidalPluginTest):
     """Tests for the tidalsync command."""
@@ -965,66 +1027,3 @@ class TestTidalsync(TidalPluginTest):
             ["albums"], write=False, force=False
         )
         self.tidal.sync_item_popularity.assert_not_called()
-
-
-    @pytest.mark.parametrize(
-        "artwork_data, artwork_by_id, expected",
-        [
-            (
-                [{"id": "ca1", "type": "artworks"}],
-                {
-                    "ca1": {
-                        "id": "ca1",
-                        "type": "artworks",
-                        "attributes": {
-                            "mediaType": "IMAGE",
-                            "files": [
-                                {
-                                    "href": "https://example.com/cover.jpg",
-                                    "meta": {"width": 1280, "height": 1280},
-                                }
-                            ],
-                        },
-                    }
-                },
-                "https://example.com/cover.jpg",
-            ),
-            (
-                [{"id": "ca1", "type": "artworks"}],
-                {
-                    "ca1": {
-                        "id": "ca1",
-                        "type": "artworks",
-                        "attributes": {"mediaType": "IMAGE", "files": []},
-                    }
-                },
-                None,
-            ),
-            # No artworks in relationship data
-            ([{"id": "ca1", "type": "coverArts"}], {}, None),
-            # No cover art lookup
-            ([{"id": "ca1", "type": "artworks"}], {}, None),
-            # Empty relationships
-            ({}, {}, None),
-        ],
-    )
-    def test_parse_artwork_url(self, artwork_data, artwork_by_id, expected):
-        album: TidalAlbum = {
-            "id": "al1",
-            "type": "albums",
-            "attributes": {
-                "albumType": "ALBUM",
-                "barcodeId": "123",
-                "duration": "PT45M",
-                "explicit": False,
-                "mediaTags": [],
-                "numberOfItems": 1,
-                "numberOfVolumes": 1,
-                "popularity": 0.5,
-                "title": "Album",
-            },
-            "relationships": {"coverArt": {"data": artwork_data, "links": {}}}
-            if artwork_data
-            else {},
-        }
-        assert TidalPlugin._parse_artwork_url(album, artwork_by_id) == expected
