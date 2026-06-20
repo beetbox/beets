@@ -439,17 +439,24 @@ class ConvertPlugin(BeetsPlugin):
             converted = dest
 
         if os.path.exists(dest):
-            # Delete existing destination files when original files have
-            # been modified since the last convert run.
+            # If `refresh` option is enabled, delete existing destination files
+            # when original files have been modified since the last convert run.
             if refresh and os.path.getmtime(original) > os.path.getmtime(
                 dest
             ):
-                self._log.info(
-                    "Removing {0} (original file modified)",
-                    util.displayable_path(dest),
-                )
                 if not pretend:
+                    self._log.info(
+                        "Removing {0} (original file modified)",
+                        util.displayable_path(dest),
+                    )
                     util.remove(dest)
+                # If we pretend to convert files, only inform user about what
+                # would be removed without removing anything.
+                else:
+                    self._log.info(
+                        "Pretend to remove {0} (original file modified)",
+                        util.displayable_path(dest),
+                    )
             else:
                 self._log.info(
                     "Skipping {0} (target file exists)",
@@ -471,7 +478,7 @@ class ConvertPlugin(BeetsPlugin):
         if keep_new:
             if pretend:
                 self._log.info(
-                    "mv {.filepath} {}", item, util.displayable_path(original)
+                    "Pretend to move {.filepath} to {}", item, util.displayable_path(original)
                 )
             else:
                 self._log.info("Moving to {}", util.displayable_path(original))
