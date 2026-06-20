@@ -446,13 +446,19 @@ class ConvertPlugin(BeetsPlugin):
             # 1) `refresh` is false (default)
             # 2) `keep_new` is true (incompatible with `refresh`)
             # 3) The original file is older than the destination file
-            if not refresh or keep_new or os.path.getmtime(item.path) <= os.path.getmtime(dest):
+            if (
+                not refresh
+                or keep_new
+                or os.path.getmtime(item.path) <= os.path.getmtime(dest)
+            ):
                 self._log.info(
                     "Skipping {0} (destination file exists)",
                     util.displayable_path(item.path),
                 )
                 if keep_new and refresh:
-                    self._log.debug("Skipping refresh: not supported with keep_new")
+                    self._log.debug(
+                        "Skipping refresh: not supported with keep_new"
+                    )
                 continue
             # If reached, `refresh` is true, `keep_new` is false, and original file
             # is newer than the destination file -> consider deleting the existing
