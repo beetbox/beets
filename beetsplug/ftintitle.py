@@ -273,7 +273,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             ) or self._field_value(metadata, "artist")
         return self._field_value(metadata, "artist")
 
-    def _strip_feature_from_field(
+    def _strip_featured_from_field(
         self, metadata: object, field: str, for_artist: bool = True
     ) -> None:
         value = self._field_value(metadata, field)
@@ -346,7 +346,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
 
             if self.artist_credit:
                 artist_credit = self._field_value(item, "artist_credit")
-                self._strip_feature_from_field(item, "artist_credit")
+                self._strip_featured_from_field(item, "artist_credit")
                 changed |= artist_credit != self._field_value(
                     item, "artist_credit"
                 )
@@ -383,12 +383,12 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
                 self._field_value(info, "artist_credit"),
                 self._field_value(info, "artist_sort"),
             )
-            self._strip_feature_from_field(info, "artist")
+            self._strip_featured_from_field(info, "artist")
             if self.artist_credit:
-                self._strip_feature_from_field(
+                self._strip_featured_from_field(
                     info, "artist_credit", for_artist=False
                 )
-            self._strip_feature_from_field(info, "artist_sort")
+            self._strip_featured_from_field(info, "artist_sort")
             changed |= before != (
                 self._field_value(info, "artist"),
                 self._field_value(info, "artist_credit"),
