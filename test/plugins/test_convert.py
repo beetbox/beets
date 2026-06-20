@@ -195,7 +195,7 @@ class TestConvertCli(ConvertPluginHelper, ConvertCommand):
     def test_empty_query(self, caplog):
         with caplog.at_level("INFO", logger="beets.convert"):
             self.run_convert("An impossible query")
-        assert caplog.messages[0] == "convert: Empty query result."
+        assert caplog.messages[0] == "Empty query result."
 
     @pytest.mark.parametrize(
         "max_bitrate,convert_format,args,should_transcode",

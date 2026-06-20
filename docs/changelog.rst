@@ -120,6 +120,8 @@ Other changes
   audio-features API unavailability only once per run.
 - :doc:`plugins/titlecase`: Correct the path format example and document the
   ``%titlecase{text}`` template function. :bug:`6697`
+- Log message prefix formatting (``musicbrainz: msg``) moved from a filter to
+  ``LegacyFormatter``, making future customization easier.
 
 2.11.0 (May 06, 2026)
 ---------------------

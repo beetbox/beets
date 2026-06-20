@@ -158,73 +158,73 @@ class TestLoggingLevel(AsIsImporterMixin, PluginMixin, ImportHelper):
         self.config["verbose"] = 0
         with caplog.at_level("DEBUG"):
             self.run_command("dummy")
-        assert "dummy: warning cmd" in caplog.messages
-        assert "dummy: info cmd" in caplog.messages
-        assert "dummy: debug cmd" not in caplog.messages
+        assert "warning cmd" in caplog.messages
+        assert "info cmd" in caplog.messages
+        assert "debug cmd" not in caplog.messages
 
     def test_command_level1(self, caplog):
         self.config["verbose"] = 1
         with caplog.at_level("DEBUG"):
             self.run_command("dummy")
-        assert "dummy: warning cmd" in caplog.messages
-        assert "dummy: info cmd" in caplog.messages
-        assert "dummy: debug cmd" in caplog.messages
+        assert "warning cmd" in caplog.messages
+        assert "info cmd" in caplog.messages
+        assert "debug cmd" in caplog.messages
 
     def test_command_level2(self, caplog):
         self.config["verbose"] = 2
         with caplog.at_level("DEBUG"):
             self.run_command("dummy")
-        assert "dummy: warning cmd" in caplog.messages
-        assert "dummy: info cmd" in caplog.messages
-        assert "dummy: debug cmd" in caplog.messages
+        assert "warning cmd" in caplog.messages
+        assert "info cmd" in caplog.messages
+        assert "debug cmd" in caplog.messages
 
     def test_listener_level0(self, caplog):
         self.config["verbose"] = 0
         with caplog.at_level("DEBUG"):
             plugins.send("dummy_event")
-        assert "dummy: warning listener" in caplog.messages
-        assert "dummy: info listener" not in caplog.messages
-        assert "dummy: debug listener" not in caplog.messages
+        assert "warning listener" in caplog.messages
+        assert "info listener" not in caplog.messages
+        assert "debug listener" not in caplog.messages
 
     def test_listener_level1(self, caplog):
         self.config["verbose"] = 1
         with caplog.at_level("DEBUG"):
             plugins.send("dummy_event")
-        assert "dummy: warning listener" in caplog.messages
-        assert "dummy: info listener" in caplog.messages
-        assert "dummy: debug listener" not in caplog.messages
+        assert "warning listener" in caplog.messages
+        assert "info listener" in caplog.messages
+        assert "debug listener" not in caplog.messages
 
     def test_listener_level2(self, caplog):
         self.config["verbose"] = 2
         with caplog.at_level("DEBUG"):
             plugins.send("dummy_event")
-        assert "dummy: warning listener" in caplog.messages
-        assert "dummy: info listener" in caplog.messages
-        assert "dummy: debug listener" in caplog.messages
+        assert "warning listener" in caplog.messages
+        assert "info listener" in caplog.messages
+        assert "debug listener" in caplog.messages
 
     def test_import_stage_level0(self, caplog):
         self.config["verbose"] = 0
         with caplog.at_level("DEBUG"):
             self.run_asis_importer()
-        assert "dummy: warning import_stage" in caplog.messages
-        assert "dummy: info import_stage" not in caplog.messages
-        assert "dummy: debug import_stage" not in caplog.messages
+        assert "warning import_stage" in caplog.messages
+        assert "info import_stage" not in caplog.messages
+        assert "debug import_stage" not in caplog.messages
 
     def test_import_stage_level1(self, caplog):
         self.config["verbose"] = 1
         with caplog.at_level("DEBUG"):
             self.run_asis_importer()
-        assert "dummy: warning import_stage" in caplog.messages
-        assert "dummy: info import_stage" in caplog.messages
-        assert "dummy: debug import_stage" not in caplog.messages
+        assert "warning import_stage" in caplog.messages
+        assert "info import_stage" in caplog.messages
+        assert "debug import_stage" not in caplog.messages
 
     def test_import_stage_level2(self, caplog):
         self.config["verbose"] = 2
         with caplog.at_level("DEBUG"):
             self.run_asis_importer()
-        assert "dummy: warning import_stage" in caplog.messages
-        assert "dummy: info import_stage" in caplog.messages
-        assert "dummy: debug import_stage" in caplog.messages
+        assert "warning import_stage" in caplog.messages
+        assert "info import_stage" in caplog.messages
+        assert "debug import_stage" in caplog.messages
 
 
 class TestConcurrentEvents(AsIsImporterMixin, ImportHelper):
@@ -344,3 +344,28 @@ class TestConcurrentEvents(AsIsImporterMixin, ImportHelper):
         with caplog.at_level("DEBUG"):
             self.run_asis_importer()
         assert "Sending event: database_change" in caplog.messages
+
+
+class TestLegacyFormatter:
+    """Tests for ``LegacyFormatter``, which strips the ``beets.`` prefix
+    from logger names and prepends the remainder to the message.
+    """
+
+    @pytest.mark.parametrize(
+        "logger_name, expected",
+        [
+            ("beets", "hello world"),
+            ("beets.musicbrainz", "musicbrainz: hello world"),
+            ("beets.musicbrainz.sub", "musicbrainz.sub: hello world"),
+            ("root.foobar", "foobar: hello world"),
+        ],
+    )
+    def test_format(self, logger_name, expected):
+        """Root logger passes message unchanged; child loggers get
+        ``prefix: msg`` format after the ``beets.`` prefix is stripped.
+        """
+        formatter = blog.LegacyFormatter("%(legacy_prefix)s%(message)s")
+        record = log.LogRecord(
+            logger_name, log.INFO, __file__, 0, "hello world", (), None
+        )
+        assert formatter.format(record) == expected
