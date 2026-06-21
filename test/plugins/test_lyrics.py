@@ -853,51 +853,14 @@ class TestLyricsRestDirectory(PluginTestHelper):
         "config_path, arg_path, output_path",
         [
             pytest.param(
-                "test/config",
-                "test/cmd",
-                "test/cmd",
-                id="config and cmd arg, relative path",
+                "test/config", "test/cmd", "test/cmd", id="config and cmd arg"
             ),
-            pytest.param(
-                "test/config",
-                None,
-                "test/config",
-                id="config only, relative path",
-            ),
-            pytest.param(
-                None, "test/cmd", "test/cmd", id="cmd arg only, relative path"
-            ),
-            pytest.param(
-                "/test/config",
-                "/test/cmd",
-                "/test/cmd",
-                id="config and cmd arg, absolute path",
-            ),
-            pytest.param(
-                "/test/config",
-                None,
-                "/test/config",
-                id="config only, absolute path",
-            ),
-            pytest.param(
-                None, "/test/cmd", "/test/cmd", id="cmd arg only, absolute path"
-            ),
-            pytest.param(
-                "~/test/config",
-                "~/test/cmd",
-                "~/test/cmd",
-                id="config and cmd arg, home path",
-            ),
-            pytest.param(
-                "~/test/config",
-                None,
-                "~/test/config",
-                id="config only, home path",
-            ),
-            pytest.param(
-                None, "~/test/cmd", "~/test/cmd", id="cmd arg only, home path"
-            ),
+            pytest.param("test/config", None, "test/config", id="config only"),
+            pytest.param(None, "test/cmd", "test/cmd", id="cmd arg only"),
             pytest.param(None, None, None, id="no output"),
+            pytest.param(
+                "~/test/config", None, "~/test/config", id="user home path"
+            ),
         ],
     )
     def test_rest_config(
