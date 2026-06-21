@@ -30,9 +30,13 @@ also sets a few useful flexible attributes:
 
 - ``lyrics_backend``: name of the backend that provided the lyrics
 - ``lyrics_url``: URL of the page where the lyrics were found
+- ``lyrics_instrumental``: whether the backend marked the track as instrumental
 - ``lyrics_language``: original language of the lyrics
 - ``lyrics_translation_language``: language of the lyrics translation (if
   translation is enabled)
+
+When a backend reports an instrumental track, beets leaves the lyrics text empty
+and sets ``lyrics_instrumental`` instead.
 
 If the ``import.write`` config option is on, then the lyrics will also be
 written to the files' tags.

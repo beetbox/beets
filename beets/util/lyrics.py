@@ -21,8 +21,8 @@ class Lyrics:
     """Represent lyrics text together with structured source metadata.
 
     This value object keeps the canonical lyrics body, optional provenance, and
-    optional translation metadata synchronized across fetching, translation, and
-    persistence.
+    optional instrumental and translation metadata synchronized across fetching,
+    translation, and persistence.
     """
 
     ORIGINAL_PAT = re.compile(r"[^\n]+ / ")
@@ -33,12 +33,21 @@ class Lyrics:
     text: str
     backend: str | None = None
     url: str | None = None
+    instrumental: bool = False
     language: str | None = None
     translation_language: str | None = None
     translations: list[str] = field(default_factory=list)
 
+    def handle_instrumental(self) -> None:
+        """Track instrumental matches without storing marker text as lyrics."""
+        if self.text == INSTRUMENTAL_LYRICS:
+            self.instrumental = True
+            self.text = ""
+
     def __post_init__(self) -> None:
-        """Populate missing language metadata from the current text."""
+        """Normalize lyrics metadata and infer missing language information."""
+        self.handle_instrumental()
+
         try:
             import langdetect
         except ImportError:
@@ -47,7 +56,7 @@ class Lyrics:
         # Set seed to 0 for deterministic results
         langdetect.DetectorFactory.seed = 0
 
-        if not self.text or self.text == INSTRUMENTAL_LYRICS:
+        if not self.text:
             return
 
         if not self.language:
