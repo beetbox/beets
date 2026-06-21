@@ -516,7 +516,7 @@ class SpotifyPlugin(
                 headers={"Authorization": f"Bearer {self.access_token}"},
                 params={
                     **params.filters,
-                    "q": params.query,
+                    "q": params.query.replace('"', "'"),
                     "type": params.query_type,
                     "limit": str(params.limit),
                 },

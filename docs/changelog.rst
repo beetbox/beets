@@ -99,6 +99,10 @@ Bug fixes
   the database has been deleted from disk. Missing items are now skipped with a
   warning and the command continues. :bug:`6720`
 - :doc:`plugins/fish`: Fix error on plugin initialization.
+- :doc:`plugins/spotify`: Use single instead of double quotes in spotify
+  queries.
+- :doc:`plugins/tidal`: Fix auth URL not printed in environments without a
+  configured browser :bug:`6710`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
@@ -121,6 +125,8 @@ Other changes
   audio-features API unavailability only once per run.
 - :doc:`plugins/titlecase`: Correct the path format example and document the
   ``%titlecase{text}`` template function. :bug:`6697`
+- Log message prefix formatting (``musicbrainz: msg``) moved from a filter to
+  ``LegacyFormatter``, making future customization easier.
 
 2.11.0 (May 06, 2026)
 ---------------------
