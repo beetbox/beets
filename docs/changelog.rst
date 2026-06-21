@@ -34,6 +34,9 @@ Bug fixes
   example a multi-disc album whose cover lives in the album root rather than a
   per-disc directory); the missing art is skipped instead. :bug:`4692`
 - :doc:`plugins/tidal`: Normalize Tidal album types to lowercase.
+- :doc:`plugins/lyrics`: Leave lyrics empty when a source reports an
+  instrumental track, and store that state in ``lyrics_instrumental`` flexible
+  attribute. :bug:`6719`
 
 ..
     For plugin developers

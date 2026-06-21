@@ -364,6 +364,7 @@ class TestLyricsPlugin(LyricsPluginMixin):
         item = helper.lib.get_item(item.id)
 
         assert item.lyrics_url == lyrics.url
+        assert item.lyrics_instrumental == "0"
         assert item.lyrics_backend == lyrics.backend
         if is_importable("langdetect"):
             assert item.lyrics_language == "EN"
@@ -635,9 +636,7 @@ class TestLRCLibLyrics(LyricsBackendTest):
                 [lyrics_match(duration=1)], None, id="none: duration too short"
             ),
             pytest.param(
-                [lyrics_match(instrumental=True)],
-                "[Instrumental]",
-                id="instrumental track",
+                [lyrics_match(instrumental=True)], "", id="instrumental track"
             ),
             pytest.param(
                 [lyrics_match(syncedLyrics=None)],
