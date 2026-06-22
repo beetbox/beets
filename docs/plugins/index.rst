@@ -55,15 +55,12 @@ databases. They share the following configuration options:
 .. toctree::
     :hidden:
 
-    absubmit
-    acousticbrainz
     advancedrewrite
     albumtypes
     aura
     autobpm
     badfiles
     bareasc
-    beatport
     bpd
     bpm
     bpsync
@@ -176,13 +173,6 @@ Autotagger Extensions
 
 Metadata
 --------
-
-:doc:`absubmit <absubmit>`
-    Analyse audio with the streaming_extractor_music_ program and submit the
-    metadata to an AcousticBrainz server
-
-:doc:`acousticbrainz <acousticbrainz>`
-    Fetch various AcousticBrainz metadata
 
 :doc:`autobpm <autobpm>`
     Use Librosa_ to calculate the BPM from the audio.
