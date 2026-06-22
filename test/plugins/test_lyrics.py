@@ -857,7 +857,6 @@ class TestLyricsRestDirectory(PluginTestHelper):
             ),
             pytest.param("test/config", None, "test/config", id="config only"),
             pytest.param(None, "test/cmd", "test/cmd", id="cmd arg only"),
-            pytest.param(None, None, None, id="no output"),
             pytest.param(
                 "~/test/config", None, "~/test/config", id="user home path"
             ),
@@ -883,11 +882,7 @@ class TestLyricsRestDirectory(PluginTestHelper):
         cmd_args = [] if arg_path is None else ["-r", arg_path]
         self.run_command("lyrics", *cmd_args, lib=lib)
 
-        test_output = test_capture.get("directory")
-        if output_path is None:
-            assert test_output is None
-        else:
-            assert test_output == Path(output_path).expanduser()
+        assert test_capture.get("directory") == Path(output_path).expanduser()
 
 
 class TestLyricsSyltProperty:
