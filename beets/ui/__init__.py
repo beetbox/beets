@@ -921,7 +921,6 @@ def _raw_main(args: list[str] | None) -> None:
 def _bootstrap_config(options: optparse.Values) -> confuse.ConfigError | None:
     """Apply CLI to config, initialize logging, return error as value if any."""
 
-    # Apply config overlay (deferred error to allow setting up logging)
     deferred_error: confuse.ConfigError | None = None
     try:
         # For some reason we need to materialize before adding another config
@@ -931,6 +930,9 @@ def _bootstrap_config(options: optparse.Values) -> confuse.ConfigError | None:
             config.set_file(overlay_path)
     except confuse.ConfigError as e:
         deferred_error = e
+        # Ensure defaults are loaded even when user config is broken,
+        # so that logging and other subsystems can read basic settings.
+        config.read(user=False, defaults=True)
 
     # Even if the earlier config loading fails we seperatly try to set the config
     # values the cli options
@@ -950,20 +952,18 @@ def _bootstrap_logging():
         )
         log.addHandler(handler)
 
-    # Verbosity level set via cli
-    #  --verbose
+    # Verbosity level set via cli --verbose.
     if config["verbose"].get(int):
         log.set_global_level(logging.DEBUG)
     else:
         log.set_global_level(logging.INFO)
 
-    # List configuration sources for users convinence
+    # List configuration sources for user convenience.
     log.debug("configuration sources (highest → lowest priority):")
     for source in config.sources[1:]:
         log.debug(
             "{} {}", type(source).__name__, getattr(source, "filename", "")
         )
-
     log.debug("data directory: {}", util.displayable_path(config.config_dir()))
 
 
