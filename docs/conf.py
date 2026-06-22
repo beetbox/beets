@@ -82,6 +82,7 @@ linkcheck_ignore = [
     r"https://www.tekstowo.pl/",  # blocks requests
     r"https://www.gnu.org.*",  # sometimes unreachable
     r"https://www.nongnu.org.*",  # sometimes unreachable
+    r"https://web.archive.org.*",  # sometimes unreachable
 ]
 
 # Options for HTML output
