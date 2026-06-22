@@ -18,8 +18,8 @@ copyright = "2016, Adrian Sampson"  # noqa: A001
 
 master_doc = "index"
 language = "en"
-version = "2.11"
-release = "2.11.0"
+version = "2.12"
+release = "2.12.0"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -82,6 +82,7 @@ linkcheck_ignore = [
     r"https://www.tekstowo.pl/",  # blocks requests
     r"https://www.gnu.org.*",  # sometimes unreachable
     r"https://www.nongnu.org.*",  # sometimes unreachable
+    r"https://web.archive.org.*",  # sometimes unreachable
 ]
 
 # Options for HTML output
