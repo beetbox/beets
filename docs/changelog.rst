@@ -9,9 +9,12 @@ below!
 Unreleased
 ----------
 
-..
-    New features
-    ~~~~~~~~~~~~
+New features
+~~~~~~~~~~~~
+
+- :doc:`plugins/lyrics`: Added a ``rest_directory`` configuration option for
+  specifying a reStructuredText output directory, semantically equivalent to
+  ``-r, --write-rest``. :bug:`2806`
 
 ..
     Bug fixes
@@ -46,9 +49,6 @@ New features
   :conf:`plugins.musicbrainz:aliases_as_credits` to make
   aliases-as-artist-credit optional.
 - :doc:`plugins/badfiles`: Added settings for auto error and warning actions.
-- :doc:`plugins/lyrics`: Added a ``rest_directory`` configuration option for
-  specifying a reStructuredText output directory, semantically equivalent to
-  ``-r, --write-rest``. :bug:`2806`
 - :doc:`plugins/tidal`: New flexible attributes are now populated during
   imports, including ``tidal_track_id``, ``tidal_album_id``,
   ``tidal_artist_id``, ``tidal_track_popularity``, ``tidal_album_popularity``,
