@@ -21,9 +21,13 @@ from bisect import bisect_left, insort
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from typing_extensions import Self
+
 from beets import config
 
 if TYPE_CHECKING:
+    from types import TracebackType
+
     from beets.util import PathBytes
 
 
@@ -61,19 +65,26 @@ class ImportState:
     taghistory: set[tuple[PathBytes, ...]]
     path: PathBytes
 
-    def __init__(self, readonly=False, path: PathBytes | None = None):
+    def __init__(
+        self, readonly: bool = False, path: PathBytes | None = None
+    ) -> None:
         self.path = path or os.fsencode(config["statefile"].as_filename())
         self.tagprogress = {}
         self.taghistory = set()
         self._open()
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         self._save()
 
-    def _open(self):
+    def _open(self) -> None:
         try:
             with open(self.path, "rb") as f:
                 state = pickle.load(f)
@@ -87,7 +98,7 @@ class ImportState:
             # full list!).
             log.debug("state file could not be read: {}", exc)
 
-    def _save(self):
+    def _save(self) -> None:
         try:
             with open(self.path, "wb") as f:
                 pickle.dump(
@@ -102,7 +113,7 @@ class ImportState:
 
     # -------------------------------- Tagprogress ------------------------------- #
 
-    def progress_add(self, toppath: PathBytes, *paths: PathBytes):
+    def progress_add(self, toppath: PathBytes, *paths: PathBytes) -> None:
         """Record that the files under all of the `paths` have been imported
         under `toppath`.
         """
@@ -126,7 +137,7 @@ class ImportState:
         """
         return toppath in self.tagprogress
 
-    def progress_reset(self, toppath: PathBytes | None):
+    def progress_reset(self, toppath: PathBytes | None) -> None:
         """Reset the progress for `toppath`."""
         with self as state:
             if toppath in state.tagprogress:
@@ -134,7 +145,7 @@ class ImportState:
 
     # -------------------------------- Taghistory -------------------------------- #
 
-    def history_add(self, paths: list[PathBytes]):
+    def history_add(self, paths: list[PathBytes]) -> None:
         """Add the paths to the history."""
         with self as state:
             state.taghistory.add(tuple(paths))

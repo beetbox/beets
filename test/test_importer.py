@@ -1050,7 +1050,7 @@ class TestImportDuplicateAlbum(PluginMixin, ImportHelper):
         assert item.title == "t\xeftle 0"
         assert item.filepath.exists()
 
-        self.importer.default_resolution = self.importer.Resolution.REMOVE
+        self.config["import"]["duplicate_action"] = "remove"
         self.importer.run()
 
         assert not item.filepath.exists()
@@ -1068,7 +1068,7 @@ class TestImportDuplicateAlbum(PluginMixin, ImportHelper):
 
         assert old_artpath.exists()
 
-        self.importer.default_resolution = self.importer.Resolution.REMOVE
+        self.config["import"]["duplicate_action"] = "remove"
         self.importer.run()
 
         assert not old_artpath.exists()
@@ -1094,7 +1094,7 @@ class TestImportDuplicateAlbum(PluginMixin, ImportHelper):
         import_file.title = "new title"
         import_file.save()
 
-        self.importer.default_resolution = self.importer.Resolution.REMOVE
+        self.config["import"]["duplicate_action"] = "remove"
         self.importer.run()
 
         # Old duplicate should be removed, new one imported
@@ -1104,7 +1104,7 @@ class TestImportDuplicateAlbum(PluginMixin, ImportHelper):
         assert self.lib.items().get().title == "new title"
 
     def test_keep_duplicate_album(self):
-        self.importer.default_resolution = self.importer.Resolution.KEEPBOTH
+        self.config["import"]["duplicate_action"] = "keep"
         self.importer.run()
 
         assert len(self.lib.albums()) == 2
@@ -1114,7 +1114,7 @@ class TestImportDuplicateAlbum(PluginMixin, ImportHelper):
         item = self.lib.items().get()
         assert item.title == "t\xeftle 0"
 
-        self.importer.default_resolution = self.importer.Resolution.SKIP
+        self.config["import"]["duplicate_action"] = "skip"
         self.importer.run()
 
         assert len(self.lib.albums()) == 1
@@ -1123,7 +1123,7 @@ class TestImportDuplicateAlbum(PluginMixin, ImportHelper):
         assert item.title == "t\xeftle 0"
 
     def test_merge_duplicate_album(self):
-        self.importer.default_resolution = self.importer.Resolution.MERGE
+        self.config["import"]["duplicate_action"] = "merge"
         self.importer.run()
 
         assert len(self.lib.albums()) == 1
@@ -1144,7 +1144,7 @@ class TestImportDuplicateAlbum(PluginMixin, ImportHelper):
         import_file.title = item["title"]
         import_file.flex = "different"
 
-        self.importer.default_resolution = self.importer.Resolution.SKIP
+        self.config["import"]["duplicate_action"] = "skip"
         self.importer.run()
 
         assert len(self.lib.albums()) == 2
@@ -1185,7 +1185,7 @@ class TestImportDuplicateAlbumThreaded(PluginMixin, ImportHelper):
 
     def test_merge_duplicate_album_threaded(self):
         self.config["threaded"] = True
-        self.importer.default_resolution = self.importer.Resolution.MERGE
+        self.config["import"]["duplicate_action"] = "merge"
         self.importer.run()
 
         assert len(self.lib.albums()) == 1
@@ -1229,7 +1229,7 @@ class TestImportDuplicateSingleton(ImportHelper):
         assert item.mb_trackid == "old trackid"
         assert item.filepath.exists()
 
-        self.importer.default_resolution = self.importer.Resolution.REMOVE
+        self.config["import"]["duplicate_action"] = "remove"
         self.importer.run()
 
         assert not item.filepath.exists()
@@ -1240,7 +1240,7 @@ class TestImportDuplicateSingleton(ImportHelper):
     def test_keep_duplicate(self):
         assert len(self.lib.items()) == 1
 
-        self.importer.default_resolution = self.importer.Resolution.KEEPBOTH
+        self.config["import"]["duplicate_action"] = "keep"
         self.importer.run()
 
         assert len(self.lib.items()) == 2
@@ -1249,7 +1249,7 @@ class TestImportDuplicateSingleton(ImportHelper):
         item = self.lib.items().get()
         assert item.mb_trackid == "old trackid"
 
-        self.importer.default_resolution = self.importer.Resolution.SKIP
+        self.config["import"]["duplicate_action"] = "skip"
         self.importer.run()
 
         assert len(self.lib.items()) == 1
@@ -1263,7 +1263,7 @@ class TestImportDuplicateSingleton(ImportHelper):
         item.store()
         assert len(self.lib.items()) == 1
 
-        self.importer.default_resolution = self.importer.Resolution.SKIP
+        self.config["import"]["duplicate_action"] = "skip"
         self.importer.run()
 
         assert len(self.lib.items()) == 2
@@ -1286,7 +1286,7 @@ class TestImportDuplicateSingleton(ImportHelper):
         import_file.mb_trackid = "new trackid"
         import_file.save()
 
-        self.importer.default_resolution = self.importer.Resolution.REMOVE
+        self.config["import"]["duplicate_action"] = "remove"
         self.importer.run()
 
         # Old duplicate should be removed, new one imported

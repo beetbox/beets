@@ -8,26 +8,15 @@ import pytest
 
 from beets.autotag import AlbumInfo, TrackInfo
 from beets.library import Album, Item
-from beets.test.helper import IOMixin, PluginMixin, TestHelper
+from beets.test.helper import IOMixin, PluginTestHelper
 
 
-@pytest.fixture
-def helper(request):
-    helper = TestHelper()
-    helper.setup_beets()
-
-    request.instance.lib = helper.lib
-
-    yield
-
-    helper.teardown_beets()
-
-
-@pytest.mark.usefixtures("helper")
-class TestMissingAlbums(IOMixin, PluginMixin):
-    """Tests for missing albums functionality."""
-
+class MissingTestHelper(IOMixin, PluginTestHelper):
     plugin = "missing"
+
+
+class TestMissingAlbums(MissingTestHelper):
+    """Tests for missing albums functionality."""
 
     @pytest.mark.parametrize(
         "release_from_mb,expected_output",
@@ -176,11 +165,8 @@ class TestMissingAlbums(IOMixin, PluginMixin):
         assert output == "1\n"
 
 
-@pytest.mark.usefixtures("helper")
-class TestMissingTracks(IOMixin, PluginMixin):
+class TestMissingTracks(MissingTestHelper):
     """Tests for missing tracks functionality."""
-
-    plugin = "missing"
 
     @pytest.mark.parametrize(
         "total,count,expected",

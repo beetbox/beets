@@ -33,7 +33,7 @@ from beets.test.helper import (
     FetchImageHelper,
     ImportHelper,
     IOMixin,
-    PluginTestHelper,
+    PluginMixin,
 )
 from beets.util import bytestring_path, displayable_path, syspath
 from beets.util.artresizer import ArtResizer
@@ -78,18 +78,7 @@ def require_artresizer_compare(test):
     return wrapper
 
 
-class PytestImportHelper(PluginTestHelper, ImportHelper):
-    @pytest.fixture(autouse=True)
-    def setup_import_helper(self, setup):
-        self.import_media = []
-        self.lib.path_formats = [
-            ("default", os.path.join("$artist", "$album", "$title")),
-            ("singleton:true", os.path.join("singletons", "$title")),
-            ("comp:true", os.path.join("compilations", "$album", "$title")),
-        ]
-
-
-class TestEmbedartCli(PytestImportHelper, IOMixin, FetchImageHelper):
+class TestEmbedartCli(PluginMixin, IOMixin, ImportHelper, FetchImageHelper):
     plugin = "embedart"
     small_artpath = os.path.join(_common.RSRC, b"image-2x3.jpg")
     abbey_artpath = os.path.join(_common.RSRC, b"abbey.jpg")

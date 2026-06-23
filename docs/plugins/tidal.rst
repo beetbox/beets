@@ -103,3 +103,64 @@ Default
     The path to the file where the Tidal authentication token is stored.
 
 .. include:: ./shared_metadata_source_config.rst
+
+Flexible Attributes
+-------------------
+
+The plugin stores the following flexible attributes on your items during import.
+You can use them in queries and path formats.
+
+.. list-table::
+    :header-rows: 1
+
+    - - Attribute
+      - Type
+      - Description
+    - - ``tidal_track_id``
+      - STRING
+      - Tidal track ID
+    - - ``tidal_album_id``
+      - STRING
+      - Tidal album ID
+    - - ``tidal_artist_id``
+      - STRING
+      - Tidal artist ID
+    - - ``tidal_track_popularity``
+      - INTEGER
+      - Track popularity score (0-100)
+    - - ``tidal_album_popularity``
+      - INTEGER
+      - Album popularity score (0-100)
+    - - ``tidal_updated``
+      - DATE
+      - Unix timestamp of last popularity sync
+
+For example, to list your most popular tracks:
+
+::
+
+    beet ls tidal_track_popularity:80..
+
+To find tracks that have not been synced yet:
+
+::
+
+    beet ls tidal_track_popularity:0
+
+Synchronise popularity
+----------------------
+
+Use ``beet tidalsync`` to refresh popularity data for your imported items and
+albums from Tidal. By default it skips items that already have popularity data.
+
+Options:
+
+- ``-f``, ``--force`` -- re-fetch all items, even those already synced.
+- ``-a``, ``--album`` -- sync albums instead of individual tracks.
+- ``-w``, ``--write`` -- write updated metadata to media files.
+
+You can also pass a query to narrow the scope:
+
+::
+
+    beet tidalsync -fw artist:"My Artist"

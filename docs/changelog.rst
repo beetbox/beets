@@ -12,6 +12,28 @@ Unreleased
 New features
 ~~~~~~~~~~~~
 
+- :doc:`plugins/lyrics`: Added a ``rest_directory`` configuration option for
+  specifying a reStructuredText output directory, semantically equivalent to
+  ``-r, --write-rest``. :bug:`2806`
+
+..
+    Bug fixes
+    ~~~~~~~~~
+
+..
+    For plugin developers
+    ~~~~~~~~~~~~~~~~~~~~~
+
+..
+    Other changes
+    ~~~~~~~~~~~~~
+
+2.12.0 (June 22, 2026)
+----------------------
+
+New features
+~~~~~~~~~~~~
+
 - :doc:`plugins/convert`: The ``--force`` and ``--keep-new`` CLI flags are now
   also available as config options via ``force`` and ``keep_new``.
 - :ref:`import-cmd`: The ``--nomove`` / ``-M`` CLI flag can now be used to
@@ -34,6 +56,17 @@ New features
   when unset). ``skip`` drops already-imported tracks and adds the remaining new
   tracks to the existing album, completing a partially-imported album. Disabled
   by default.
+- :doc:`plugins/tidal`: New flexible attributes are now populated during
+  imports, including ``tidal_track_id``, ``tidal_album_id``,
+  ``tidal_artist_id``, ``tidal_track_popularity``, ``tidal_album_popularity``,
+  and ``tidal_updated``. Added a new ``beet tidalsync`` command to refresh
+  popularity data for imported items by default, or albums with ``--album``,
+  with ``--force`` to re-fetch and ``--write`` to update file tags.
+
+  **Migration**: Existing Tidal imports can copy the previously stored IDs into
+  the new flexible attributes with ``beet modify``: run ``beet modify
+  data_source:tidal tidal_album_id='$mb_albumid' -a`` for albums and ``beet
+  modify data_source:tidal tidal_track_id='$mb_trackid'`` for items.
 
 Bug fixes
 ~~~~~~~~~
@@ -92,6 +125,10 @@ Bug fixes
   the database has been deleted from disk. Missing items are now skipped with a
   warning and the command continues. :bug:`6720`
 - :doc:`plugins/fish`: Fix error on plugin initialization.
+- :doc:`plugins/spotify`: Use single instead of double quotes in spotify
+  queries.
+- :doc:`plugins/tidal`: Fix auth URL not printed in environments without a
+  configured browser :bug:`6710`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
@@ -99,6 +136,8 @@ For plugin developers
 - Plugin authors can import all autotagger helpers directly from
   ``beets.autotag``, including match classes, distance helpers, and
   ``assign_items``, without relying on lower-level autotag modules.
+- Introduced ``beets.importer.DuplicateAction`` to simplify handling of
+  duplicates.
 
 Other changes
 ~~~~~~~~~~~~~
@@ -112,6 +151,8 @@ Other changes
   audio-features API unavailability only once per run.
 - :doc:`plugins/titlecase`: Correct the path format example and document the
   ``%titlecase{text}`` template function. :bug:`6697`
+- Log message prefix formatting (``musicbrainz: msg``) moved from a filter to
+  ``LegacyFormatter``, making future customization easier.
 
 2.11.0 (May 06, 2026)
 ---------------------

@@ -51,10 +51,6 @@ def label_info_factory(**kwargs) -> mb.LabelInfo:
     return factories.LabelInfoFactory.build(**kwargs)
 
 
-def release_group_factory(**kwargs) -> mb.ReleaseGroup:
-    return factories.ReleaseGroupFactory.build(**kwargs)
-
-
 def recording_factory(**kwargs) -> mb.Recording:
     return factories.RecordingFactory.build(**kwargs)
 

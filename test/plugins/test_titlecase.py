@@ -22,38 +22,6 @@ from beets.library import Item
 from beets.test.helper import PluginTestCase
 from beetsplug.titlecase import TitlecasePlugin
 
-titlecase_fields_testcases = [
-    (
-        {
-            "fields": [
-                "artist",
-                "albumartist",
-                "title",
-                "album",
-                "mb_albumd",
-                "year",
-            ],
-            "force_lowercase": True,
-        },
-        Item(
-            artist="OPHIDIAN",
-            albumartist="ophiDIAN",
-            format="CD",
-            year=2003,
-            album="BLACKBOX",
-            title="KhAmElEoN",
-        ),
-        Item(
-            artist="Ophidian",
-            albumartist="Ophidian",
-            format="CD",
-            year=2003,
-            album="Blackbox",
-            title="Khameleon",
-        ),
-    )
-]
-
 
 class TestTitlecasePlugin(PluginTestCase):
     plugin = "titlecase"
