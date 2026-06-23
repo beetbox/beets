@@ -24,7 +24,14 @@ import re
 
 from beets import config
 from beets.plugins import BeetsPlugin
-from beets.util import bytestring_path, link, mkdirall, normpath, syspath
+from beets.util import (
+    FilesystemError,
+    bytestring_path,
+    link,
+    mkdirall,
+    normpath,
+    syspath,
+)
 
 M3U_DEFAULT_NAME = "imported.m3u"
 
@@ -128,7 +135,12 @@ class ImportFeedsPlugin(BeetsPlugin):
             for path in paths:
                 dest = os.path.join(feedsdir, os.path.basename(path))
                 if not os.path.exists(syspath(dest)):
-                    link(path, dest)
+                    try:
+                        link(path, dest)
+                    except FilesystemError as exc:
+                        self._log.warning(
+                            "could not create symlink for {}: {}", path, exc
+                        )
 
         if "echo" in formats:
             self._log.info("Location of imported music:")
