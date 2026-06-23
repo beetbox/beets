@@ -439,7 +439,7 @@ class ConvertPlugin(BeetsPlugin):
                 dest = replace_ext(dest, ext)
             converted = dest
 
-        # When the target file exists, we choose between:
+        # If the destination file exists, we have to choose between:
         # 1) Skipping current conversion
         # 2) Removing the target file to start a fresh conversion
         if os.path.exists(dest):
@@ -462,23 +462,21 @@ class ConvertPlugin(BeetsPlugin):
                     )
                 return
             # If reached, `refresh` is true, `keep_new` is false, and original file
-            # is newer than the destination file -> consider deleting the existing
-            # destination files
+            # is newer than the destination file: we should consider deleting the
+            # existing destination files. If we pretend to convert files, only inform
+            # user about what would be removed without removing anything.
+            if pretend:
+                self._log.info(
+                    "Pretend to remove {0} (original file modified)",
+                    util.displayable_path(dest),
+                )
+            # Otherwise, actually remove the destination file
             else:
-                # If we pretend to convert files, only inform user about what
-                # would be removed without removing anything
-                if pretend:
-                    self._log.info(
-                        "Pretend to remove {0} (original file modified)",
-                        util.displayable_path(dest),
-                    )
-                # Otherwise, actually remove the destination file
-                else:
-                    self._log.info(
-                        "Removing {0} (original file modified)",
-                        util.displayable_path(dest),
-                    )
-                    util.remove(dest)
+                self._log.info(
+                    "Removing {0} (original file modified)",
+                    util.displayable_path(dest),
+                )
+                util.remove(dest)
 
         # Ensure that only one thread tries to create directories at a
         # time. (The existence check is not atomic with the directory
