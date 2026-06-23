@@ -494,7 +494,9 @@ class ConvertPlugin(BeetsPlugin):
         if keep_new:
             if pretend:
                 self._log.info(
-                    "Pretend to move {.filepath} to {}", item, util.displayable_path(original)
+                    "Pretend to move {.filepath} to {}",
+                    item,
+                    util.displayable_path(original),
                 )
             else:
                 self._log.info("Moving to {}", util.displayable_path(original))
@@ -706,7 +708,9 @@ class ConvertPlugin(BeetsPlugin):
                 items_paths.append(os.path.relpath(item_path, pl_dir))
 
         self._parallel_convert(
-            items, refresh=self.config["refresh"].get(bool), keep_new=self.config["keep_new"].get(bool)
+            items,
+            refresh=self.config["refresh"].get(bool),
+            keep_new=self.config["keep_new"].get(bool),
         )
 
         if playlist:
@@ -781,10 +785,14 @@ class ConvertPlugin(BeetsPlugin):
                     util.remove(path)
                 _temp_files.remove(path)
 
-    def _parallel_convert(self, items: list[Item], refresh: bool, keep_new: bool):
+    def _parallel_convert(
+        self, items: list[Item], refresh: bool, keep_new: bool
+    ):
         """Run the convert_item function for every items on as many thread as
         defined in threads
         """
-        convert = [self.convert_item(refresh, keep_new) for _ in range(self.threads)]
+        convert = [
+            self.convert_item(refresh, keep_new) for _ in range(self.threads)
+        ]
         pipe = pipeline.Pipeline([iter(items), convert])
         pipe.run_parallel()
