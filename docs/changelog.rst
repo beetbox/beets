@@ -21,6 +21,9 @@ New features
 - A database backup is now automatically created before running schema
   migrations. Control with the ``create_backup_before_migrations`` option
   (default: yes).
+- :doc:`plugins/tidal`: Add cover art support. Album metadata now includes
+  ``cover_art_url`` from Tidal's ``coverArt`` relationship, which the
+  :doc:`plugins/fetchart` plugin can retrieve.
 
 Bug fixes
 ~~~~~~~~~
@@ -77,10 +80,6 @@ New features
   the new flexible attributes with ``beet modify``: run ``beet modify
   data_source:tidal tidal_album_id='$mb_albumid' -a`` for albums and ``beet
   modify data_source:tidal tidal_track_id='$mb_trackid'`` for items.
-
-- :doc:`plugins/tidal`: Add cover art support. Album metadata now includes
-  ``cover_art_url`` from Tidal's ``coverArt`` relationship, which the
-  :doc:`plugins/fetchart` plugin can retrieve.
 
 Bug fixes
 ~~~~~~~~~
