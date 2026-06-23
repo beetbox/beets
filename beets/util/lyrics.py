@@ -105,7 +105,7 @@ class Lyrics:
         """
         return [
             (m[1], m[2]) if (m := self.LINE_PARTS_PAT.match(line)) else ("", "")
-            for line in self.text.splitlines()
+            for line in (self.text or "").splitlines()
         ]
 
     @cached_property
