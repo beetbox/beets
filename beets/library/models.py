@@ -259,7 +259,7 @@ class Album(LibModel):
     Reflects the library's "albums" table, including album art.
     """
 
-    artpath: bytes
+    artpath: bytes | None
 
     _table = "albums"
     _flex_table = "album_attributes"
