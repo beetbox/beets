@@ -13,9 +13,12 @@ Unreleased
     New features
     ~~~~~~~~~~~~
 
-..
-    Bug fixes
-    ~~~~~~~~~
+Bug fixes
+~~~~~~~~~
+
+- :doc:`plugins/importfeeds`: ``beet import`` no longer aborts the whole run
+  when a symlink cannot be created (e.g. on Windows or a read-only directory);
+  the failure is logged and the import continues. :bug:`840`
 
 ..
     For plugin developers
