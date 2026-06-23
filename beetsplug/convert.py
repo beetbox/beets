@@ -442,7 +442,7 @@ class ConvertPlugin(BeetsPlugin):
         # If the destination file exists, we have to choose between:
         # 1) Skipping current conversion
         # 2) Removing the target file to start a fresh conversion
-        if os.path.exists(dest):
+        if os.path.exists(util.syspath(dest)):
             # Test to skip the conversion, whether because:
             # 1) `refresh` is false (default)
             # 2) `keep_new` is true (incompatible with `refresh`)
@@ -453,8 +453,7 @@ class ConvertPlugin(BeetsPlugin):
                 or os.path.getmtime(item.path) <= os.path.getmtime(dest)
             ):
                 self._log.info(
-                    "Skipping {0} (destination file exists)",
-                    util.displayable_path(item.path),
+                    "Skipping {.filepath} (destination file exists)", item
                 )
                 if keep_new and refresh:
                     self._log.debug(
@@ -484,10 +483,6 @@ class ConvertPlugin(BeetsPlugin):
         if not pretend:
             with _fs_lock:
                 util.mkdirall(dest)
-
-        if os.path.exists(util.syspath(dest)):
-            self._log.info("Skipping {.filepath} (target file exists)", item)
-            return
 
         if keep_new:
             if pretend:
