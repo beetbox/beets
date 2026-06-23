@@ -188,8 +188,8 @@ Activate Google Custom Search
 -----------------------------
 
 You need to `register for a Google API key
-<https://console.developers.google.com/>`__. Set the ``google_API_key``
-configuration option to your key.
+<https://console.cloud.google.com/apis/credentials>`__. Set the
+``google_API_key`` configuration option to your key.
 
 Then add ``google`` to the list of sources in your configuration (or use default
 list, which includes it as long as you have an API key). If you use default

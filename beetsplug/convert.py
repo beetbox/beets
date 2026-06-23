@@ -33,7 +33,7 @@ from beets import plugins, ui, util
 from beets.exceptions import UserError
 from beets.library import Item, parse_query_string
 from beets.plugins import BeetsPlugin
-from beets.util import par_map
+from beets.util import pipeline
 from beets.util.artresizer import ArtResizer
 from beets.util.m3u import M3UFile
 from beets.util.pathformats import get_path_formats
@@ -196,14 +196,14 @@ class ConvertPlugin(BeetsPlugin):
             "--playlist",
             action="store",
             default=self.config["playlist"].get(),
-            help="""create an m3u8 playlist file containing
-                              the converted files. The playlist file will be
-                              saved below the destination directory, thus
-                              PLAYLIST could be a file name or a relative path.
-                              To ensure a working playlist when transferred to
-                              a different computer, or opened from an external
-                              drive, relative paths pointing to media files
-                              will be used.""",
+            help=(
+                "create an m3u8 playlist file containing the converted files."
+                " The playlist file will be saved below the destination"
+                " directory, thus PLAYLIST could be a file name or a relative"
+                " path. To ensure a working playlist when transferred to a"
+                " different computer, or opened from an external drive,"
+                " relative paths pointing to media files will be used."
+            ),
         )
         cmd.parser.add_option(
             "-F",
@@ -292,7 +292,7 @@ class ConvertPlugin(BeetsPlugin):
 
     def auto_convert(self, session: ImportSession, task: ImportTask) -> None:
         if self.config["auto"]:
-            par_map(
+            util.par_map(
                 lambda item: self.convert_on_import(session.lib, item),
                 task.imported_items(),
             )
@@ -372,8 +372,7 @@ class ConvertPlugin(BeetsPlugin):
         if no_convert_query:
             query, _ = parse_query_string(no_convert_query, Item)
             return query.match(item)
-        else:
-            return False
+        return False
 
     def should_transcode(self, item: Item) -> bool:
         """Determine whether the item should be transcoded as part of
@@ -400,7 +399,7 @@ class ConvertPlugin(BeetsPlugin):
             basedir=self.dest, path_formats=self.path_formats
         )
 
-    @util.pipeline.mutator_stage
+    @pipeline.mutator_stage
     def convert_item(self, keep_new: bool, item: Item) -> None:
         """Convert an Item from the library."""
         pretend, link, hardlink = self.pretend, self.link, self.hardlink
@@ -729,5 +728,5 @@ class ConvertPlugin(BeetsPlugin):
         defined in threads
         """
         convert = [self.convert_item(keep_new) for _ in range(self.threads)]
-        pipe = util.pipeline.Pipeline([iter(items), convert])
+        pipe = pipeline.Pipeline([iter(items), convert])
         pipe.run_parallel()

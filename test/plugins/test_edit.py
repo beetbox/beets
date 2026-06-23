@@ -124,7 +124,6 @@ class EditCommandTest(IOMixin, EditMixin, BeetsTestCase):
     simulated using `ModifyFileMocker`.
     """
 
-    ALBUM_COUNT = 1
     TRACK_COUNT = 10
 
     def setUp(self):

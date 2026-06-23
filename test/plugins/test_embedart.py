@@ -29,10 +29,11 @@ from beets import config, logging
 from beets.exceptions import UserError
 from beets.test import _common
 from beets.test.helper import (
+    NEEDS_FFPROBE,
     FetchImageHelper,
     ImportHelper,
     IOMixin,
-    PytestPluginTestHelper,
+    PluginMixin,
 )
 from beets.util import bytestring_path, displayable_path, syspath
 from beets.util.artresizer import ArtResizer
@@ -77,18 +78,7 @@ def require_artresizer_compare(test):
     return wrapper
 
 
-class PytestImportHelper(PytestPluginTestHelper, ImportHelper):
-    @pytest.fixture(autouse=True)
-    def setup_import_helper(self, setup):
-        self.import_media = []
-        self.lib.path_formats = [
-            ("default", os.path.join("$artist", "$album", "$title")),
-            ("singleton:true", os.path.join("singletons", "$title")),
-            ("comp:true", os.path.join("compilations", "$album", "$title")),
-        ]
-
-
-class TestEmbedartCli(PytestImportHelper, IOMixin, FetchImageHelper):
+class TestEmbedartCli(PluginMixin, IOMixin, ImportHelper, FetchImageHelper):
     plugin = "embedart"
     small_artpath = os.path.join(_common.RSRC, b"image-2x3.jpg")
     abbey_artpath = os.path.join(_common.RSRC, b"abbey.jpg")
@@ -308,6 +298,7 @@ class TestEmbedartCli(PytestImportHelper, IOMixin, FetchImageHelper):
         mediafile = MediaFile(syspath(item.path))
         assert not mediafile.images
 
+    @NEEDS_FFPROBE
     def test_clearart_on_import_disabled(self):
         file_path = self.create_mediafile_fixture(
             images=["jpg"], target_dir=self.import_path
@@ -320,6 +311,7 @@ class TestEmbedartCli(PytestImportHelper, IOMixin, FetchImageHelper):
         item = self.lib.items()[0]
         assert MediaFile(os.path.join(item.path)).images
 
+    @NEEDS_FFPROBE
     def test_clearart_on_import_enabled(self):
         file_path = self.create_mediafile_fixture(
             images=["jpg"], target_dir=self.import_path

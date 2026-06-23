@@ -21,26 +21,24 @@ import shutil
 import time
 from collections import defaultdict
 from collections.abc import Callable
-from enum import Enum
 from tempfile import mkdtemp
 from typing import TYPE_CHECKING, Any
 
 import mediafile
 
 from beets import config, library, plugins, util
-from beets.autotag.hooks import AlbumMatch
-from beets.autotag.match import tag_album, tag_item
+from beets.autotag import AlbumMatch, tag_album, tag_item
 from beets.dbcore.query import PathQuery
 from beets.util import extension
 from beets.util.extension import remux_mpeglayer3_wav
 
+from .actions import Action, DuplicateAction
 from .state import ImportState
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
+    from collections.abc import Iterable, Mapping, Sequence
 
-    from beets.autotag.hooks import TrackMatch
-    from beets.autotag.match import Recommendation
+    from beets.autotag import Recommendation, TrackMatch
 
     from .session import ImportSession
 
@@ -66,6 +64,11 @@ REIMPORT_FRESH_FIELDS_ITEM = [
     "deezer_album_id",
     "beatport_album_id",
     "tidal_album_id",
+    "tidal_track_id",
+    "tidal_artist_id",
+    "tidal_track_popularity",
+    "tidal_album_popularity",
+    "tidal_updated",
     "data_url",
 ]
 REIMPORT_FRESH_FIELDS_ALBUM = [*REIMPORT_FRESH_FIELDS_ITEM, "media"]
@@ -76,22 +79,6 @@ log = logging.getLogger("beets")
 
 class ImportAbortError(Exception):
     """Raised when the user aborts the tagging operation."""
-
-    pass
-
-
-class Action(Enum):
-    """Enumeration of possible actions for an import task."""
-
-    SKIP = "SKIP"
-    ASIS = "ASIS"
-    TRACKS = "TRACKS"
-    APPLY = "APPLY"
-    ALBUMS = "ALBUMS"
-    RETAG = "RETAG"
-    # The RETAG action represents "don't apply any match, but do record
-    # new metadata". It's not reachable via the standard command prompt but
-    # can be used by plugins.
 
 
 class BaseImportTask:
@@ -109,7 +96,7 @@ class BaseImportTask:
         toppath: util.PathBytes | None,
         paths: Iterable[util.PathBytes] | None,
         items: Iterable[library.Item] | None,
-    ):
+    ) -> None:
         """Create a task. The primary fields that define a task are:
 
         * `toppath`: The user-specified base directory that contains the
@@ -171,19 +158,18 @@ class ImportTask(BaseImportTask):
     cur_artist: str | None = None
     candidates: Sequence[AlbumMatch | TrackMatch] | None = None
     rec: Recommendation | None = None
+    duplicate_action: DuplicateAction | None = None
 
     def __init__(
         self,
         toppath: util.PathBytes | None,
         paths: Iterable[util.PathBytes] | None,
         items: Iterable[library.Item] | None,
-    ):
+    ) -> None:
         super().__init__(toppath, paths, items)
-        self.should_remove_duplicates = False
-        self.should_merge_duplicates = False
         self.is_album = True
 
-    def set_choice(self, choice: Action | AlbumMatch | TrackMatch):
+    def set_choice(self, choice: Action | AlbumMatch | TrackMatch) -> None:
         """Given an AlbumMatch or TrackMatch object or an action constant,
         indicates that an action has been selected for this task.
 
@@ -207,30 +193,33 @@ class ImportTask(BaseImportTask):
             self.choice_flag = Action.APPLY  # Implicit choice.
             self.match = choice  # type: ignore[assignment]
 
-    def save_progress(self):
+    def save_progress(self) -> None:
         """Updates the progress state to indicate that this album has
         finished.
         """
         if self.toppath:
             ImportState().progress_add(self.toppath, *self.paths)
 
-    def save_history(self):
+    def save_history(self) -> None:
         """Save the directory in the history for incremental imports."""
         ImportState().history_add(self.paths)
 
     # Logical decisions.
 
     @property
-    def apply(self):
+    def apply(self) -> bool:
         return self.choice_flag == Action.APPLY
 
     @property
-    def skip(self):
-        return self.choice_flag == Action.SKIP
+    def skip(self) -> bool:
+        return (
+            self.choice_flag == Action.SKIP
+            or self.duplicate_action is DuplicateAction.SKIP
+        )
 
     # Convenient data.
 
-    def chosen_info(self):
+    def chosen_info(self) -> dict[str, Any]:
         """Return a dictionary of metadata about the current choice.
         May only be called when the choice flag is ASIS or RETAG
         (in which case the data comes from the files' current metadata)
@@ -239,11 +228,11 @@ class ImportTask(BaseImportTask):
         if self.choice_flag in (Action.ASIS, Action.RETAG):
             likelies, _ = util.get_most_common_tags(self.items)
             return likelies
-        elif self.choice_flag is Action.APPLY and self.match:
+        if self.choice_flag is Action.APPLY and self.match:
             return self.match.info.copy()
         assert False
 
-    def imported_items(self):
+    def imported_items(self) -> list[library.Item]:
         """Return a list of Items that should be added to the library.
 
         If the tasks applies an album match the method only returns the
@@ -251,25 +240,24 @@ class ImportTask(BaseImportTask):
         """
         if self.choice_flag in (Action.ASIS, Action.RETAG):
             return self.items
-        elif self.choice_flag == Action.APPLY and isinstance(
+        if self.choice_flag == Action.APPLY and isinstance(
             self.match, AlbumMatch
         ):
             return self.match.items
-        else:
-            return []
+        return []
 
     def apply_metadata(self) -> None:
         """Copy metadata from match info to the items."""
         if self.match:  # TODO: redesign to remove the conditional
             self.match.apply_metadata()
 
-    def duplicate_items(self, lib: library.Library):
-        duplicate_items = []
+    def duplicate_items(self, lib: library.Library) -> list[library.Item]:
+        duplicate_items: list[library.Item] = []
         for album in self.find_duplicates(lib):
             duplicate_items += album.items()
         return duplicate_items
 
-    def remove_duplicates(self, lib: library.Library):
+    def remove_duplicates(self, lib: library.Library) -> None:
         duplicate_albums = self.find_duplicates(lib)
         log.debug("removing {} old duplicate albums", len(duplicate_albums))
 
@@ -298,7 +286,7 @@ class ImportTask(BaseImportTask):
                     clutter=config["clutter"].as_str_seq(),
                 )
 
-    def set_fields(self, lib: library.Library):
+    def set_fields(self, lib: library.Library) -> None:
         """Sets the fields given at CLI or configuration to the specified
         values, for both the album and all its items.
         """
@@ -319,7 +307,7 @@ class ImportTask(BaseImportTask):
                 item.store()
             self.album.store()
 
-    def finalize(self, session: ImportSession):
+    def finalize(self, session: ImportSession) -> None:
         """Save progress, clean up files, and emit plugin event."""
         # Update progress.
         if session.want_resume:
@@ -331,15 +319,17 @@ class ImportTask(BaseImportTask):
             self.save_history()
 
         self.cleanup(
-            copy=session.config["copy"],
-            delete=session.config["delete"],
-            move=session.config["move"],
+            copy=session.config["copy"].get(bool),
+            delete=session.config["delete"].get(bool),
+            move=session.config["move"].get(bool),
         )
 
         if not self.skip:
             self._emit_imported(session.lib)
 
-    def cleanup(self, copy=False, delete=False, move=False):
+    def cleanup(
+        self, copy: bool = False, delete: bool = False, move: bool = False
+    ) -> None:
         """Remove and prune imported paths."""
         # Do not delete any files or prune directories when skipping.
         if self.skip:
@@ -361,22 +351,23 @@ class ImportTask(BaseImportTask):
             for old_path in self.old_paths:
                 self.prune(old_path)
 
-    def _emit_imported(self, lib: library.Library):
+    def _emit_imported(self, lib: library.Library) -> None:
         plugins.send("album_imported", lib=lib, album=self.album)
 
-    def handle_created(self, session: ImportSession):
+    def handle_created(self, session: ImportSession) -> list[ImportTask]:
         """Send the `import_task_created` event for this task. Return a list of
         tasks that should continue through the pipeline. By default, this is a
         list containing only the task itself, but plugins can replace the task
         with new ones.
         """
-        tasks = plugins.send("import_task_created", session=session, task=self)
-        if not tasks:
-            tasks = [self]
-        else:
-            # The plugins gave us a list of lists of tasks. Flatten it.
-            tasks = [t for inner in tasks for t in inner]
-        return tasks
+        plugin_tasks = plugins.send(
+            "import_task_created", session=session, task=self
+        )
+        if not plugin_tasks:
+            return [self]
+
+        # The plugins gave us a list of lists of tasks. Flatten it.
+        return [t for inner in plugin_tasks for t in inner]
 
     def lookup_candidates(self, search_ids: list[str]) -> None:
         """Retrieve and store candidates for this album.
@@ -421,7 +412,7 @@ class ImportTask(BaseImportTask):
 
         return duplicates
 
-    def align_album_level_fields(self):
+    def align_album_level_fields(self) -> None:
         """Make some album fields equal across `self.items`. For the
         RETAG action, we assume that the responsible for returning it
         (ie. a plugin) always ensures that the first item contains
@@ -469,8 +460,8 @@ class ImportTask(BaseImportTask):
         self,
         session: ImportSession,
         operation: util.MoveOperation | None = None,
-        write=False,
-    ):
+        write: bool = False,
+    ) -> None:
         """Copy, move, link, hardlink or reflink (depending on `operation`)
         the files as well as write metadata.
 
@@ -513,7 +504,7 @@ class ImportTask(BaseImportTask):
 
         plugins.send("import_task_files", session=session, task=self)
 
-    def add(self, lib: library.Library):
+    def add(self, lib: library.Library) -> None:
         """Add the items as an album to the library and remove replaced items."""
         self.align_album_level_fields()
         with lib.transaction():
@@ -533,7 +524,7 @@ class ImportTask(BaseImportTask):
 
             self.reimport_metadata(lib)
 
-    def record_replaced(self, lib: library.Library):
+    def record_replaced(self, lib: library.Library) -> None:
         """Records the replaced items and albums in the `replaced_items`
         and `replaced_albums` dictionaries.
         """
@@ -556,12 +547,16 @@ class ImportTask(BaseImportTask):
                     replaced_album_ids.add(dup_item.album_id)
                     self.replaced_albums[replaced_album.path] = replaced_album
 
-    def reimport_metadata(self, lib: library.Library):
+    def reimport_metadata(self, lib: library.Library) -> None:
         """For reimports, preserves metadata for reimported items and
         albums.
         """
 
-        def _reduce_and_log(new_obj, existing_fields, overwrite_keys):
+        def _reduce_and_log(
+            new_obj: library.LibModel,
+            existing_fields: Mapping[str, Any],
+            overwrite_keys: list[str],
+        ) -> Mapping[str, Any]:
             """Some flexible attributes should be overwritten (rather than
             preserved) on reimports; Copies existing_fields, logs and removes
             entries that should not be preserved and returns a dict containing
@@ -634,7 +629,7 @@ class ImportTask(BaseImportTask):
                 )
                 item.store()
 
-    def remove_replaced(self, lib):
+    def remove_replaced(self, lib: library.Library) -> None:
         """Removes all the items from the library that have the same
         path as an item from this task.
         """
@@ -648,13 +643,13 @@ class ImportTask(BaseImportTask):
             len(self.imported_items()),
         )
 
-    def choose_match(self, session):
+    def choose_match(self, session: ImportSession) -> None:
         """Ask the session which match should apply and apply it."""
         choice = session.choose_match(self)
         self.set_choice(choice)
         session.log_choice(self)
 
-    def reload(self):
+    def reload(self) -> None:
         """Reload albums and items from the database."""
         for item in self.imported_items():
             item.load()
@@ -662,7 +657,7 @@ class ImportTask(BaseImportTask):
 
     # Utilities.
 
-    def prune(self, filename):
+    def prune(self, filename: util.PathBytes) -> None:
         """Prune any empty directories above the given file. If this
         task has no `toppath` or the file path provided is not within
         the `toppath`, then this function has no effect. Similarly, if
@@ -671,7 +666,7 @@ class ImportTask(BaseImportTask):
         """
         if self.toppath and not os.path.exists(util.syspath(filename)):
             util.prune_dirs(
-                os.path.dirname(filename),
+                os.path.dirname(os.fsdecode(filename)),
                 self.toppath,
                 clutter=config["clutter"].as_str_seq(),
             )
@@ -680,13 +675,15 @@ class ImportTask(BaseImportTask):
 class SingletonImportTask(ImportTask):
     """ImportTask for a single track that is not associated to an album."""
 
-    def __init__(self, toppath: util.PathBytes | None, item: library.Item):
+    def __init__(
+        self, toppath: util.PathBytes | None, item: library.Item
+    ) -> None:
         super().__init__(toppath, [item.path], [item])
         self.item = item
         self.is_album = False
         self.paths = [item.path]
 
-    def chosen_info(self):
+    def chosen_info(self) -> dict[str, Any]:
         """Return a dictionary of metadata about the current choice.
         May only be called when the choice flag is ASIS or RETAG
         (in which case the data comes from the files' current metadata)
@@ -695,13 +692,14 @@ class SingletonImportTask(ImportTask):
         assert self.choice_flag in (Action.ASIS, Action.RETAG, Action.APPLY)
         if self.choice_flag in (Action.ASIS, Action.RETAG):
             return dict(self.item)
-        elif self.choice_flag is Action.APPLY:
+        if self.choice_flag is Action.APPLY and self.match:
             return self.match.info.copy()
+        assert False
 
-    def imported_items(self):
+    def imported_items(self) -> list[library.Item]:
         return [self.item]
 
-    def _emit_imported(self, lib):
+    def _emit_imported(self, lib: library.Library) -> None:
         for item in self.imported_items():
             plugins.send("item_imported", lib=lib, item=item)
 
@@ -731,7 +729,7 @@ class SingletonImportTask(ImportTask):
 
     duplicate_items = find_duplicates
 
-    def remove_duplicates(self, lib: library.Library):
+    def remove_duplicates(self, lib: library.Library) -> None:
         duplicate_items = self.find_duplicates(lib)
         log.debug("removing {} old duplicated items", len(duplicate_items))
         for item in duplicate_items:
@@ -745,26 +743,26 @@ class SingletonImportTask(ImportTask):
                     clutter=config["clutter"].as_str_seq(),
                 )
 
-    def add(self, lib):
+    def add(self, lib: library.Library) -> None:
         with lib.transaction():
             self.record_replaced(lib)
             self.remove_replaced(lib)
             lib.add(self.item)
             self.reimport_metadata(lib)
 
-    def infer_album_fields(self):
+    def infer_album_fields(self) -> None:
         raise NotImplementedError
 
-    def choose_match(self, session: ImportSession):
+    def choose_match(self, session: ImportSession) -> None:
         """Ask the session which match should apply and apply it."""
         choice = session.choose_item(self)
         self.set_choice(choice)
         session.log_choice(self)
 
-    def reload(self):
+    def reload(self) -> None:
         self.item.load()
 
-    def set_fields(self, lib):
+    def set_fields(self, lib: library.Library) -> None:
         """Sets the fields given at CLI or configuration to the specified
         values, for the singleton item.
         """
@@ -792,17 +790,20 @@ class SentinelImportTask(ImportTask):
     indicates the progress in the `toppath` import.
     """
 
-    def __init__(self, toppath, paths):
+    def __init__(
+        self,
+        toppath: util.PathBytes | None,
+        paths: Iterable[util.PathBytes] | None,
+    ) -> None:
         super().__init__(toppath, paths, ())
         # TODO Remove the remaining attributes eventually
-        self.should_remove_duplicates = False
         self.is_album = True
         self.choice_flag = None
 
-    def save_history(self):
+    def save_history(self) -> None:
         pass
 
-    def save_progress(self):
+    def save_progress(self) -> None:
         if not self.paths:
             # "Done" sentinel.
             ImportState().progress_reset(self.toppath)
@@ -814,19 +815,19 @@ class SentinelImportTask(ImportTask):
     def skip(self) -> bool:
         return True
 
-    def set_choice(self, choice):
+    def set_choice(self, choice: Action | AlbumMatch | TrackMatch) -> None:
         raise NotImplementedError
 
-    def cleanup(self, copy=False, delete=False, move=False):
+    def cleanup(
+        self, copy: bool = False, delete: bool = False, move: bool = False
+    ) -> None:
         pass
 
-    def _emit_imported(self, lib):
+    def _emit_imported(self, lib: library.Library) -> None:
         pass
 
 
-ArchiveHandler = tuple[
-    Callable[[util.StrPath], bool], Callable[[util.StrPath], Any]
-]
+ArchiveHandler = tuple[Callable[[util.StrPath], bool], Callable[..., Any]]
 
 
 class ArchiveImportTask(SentinelImportTask):
@@ -846,7 +847,9 @@ class ArchiveImportTask(SentinelImportTask):
       non-move modes.
     """
 
-    def __init__(self, toppath):
+    toppath: util.PathBytes
+
+    def __init__(self, toppath: util.PathBytes) -> None:
         super().__init__(toppath, ())
         self.extracted = False
         # ``extract()`` reassigns ``self.toppath`` to the temp extraction
@@ -855,7 +858,7 @@ class ArchiveImportTask(SentinelImportTask):
         self.archive_path = toppath
 
     @classmethod
-    def is_archive(cls, path):
+    def is_archive(cls, path: str) -> bool:
         """Returns true if the given path points to an archive that can
         be handled.
         """
@@ -898,7 +901,9 @@ class ArchiveImportTask(SentinelImportTask):
 
         return _handlers
 
-    def cleanup(self, copy=False, delete=False, move=False):
+    def cleanup(
+        self, copy: bool = False, delete: bool = False, move: bool = False
+    ) -> None:
         """Remove the temporary extraction directory and optionally the archive.
 
         In ``move`` mode, if the extraction directory is empty after the
@@ -931,7 +936,7 @@ class ArchiveImportTask(SentinelImportTask):
                 util.displayable_path(self.archive_path),
             )
 
-    def extract(self):
+    def extract(self) -> None:
         """Extracts the archive to a temporary directory and sets
         `toppath` to that directory.
         """
@@ -941,7 +946,9 @@ class ArchiveImportTask(SentinelImportTask):
             if path_test(os.fsdecode(self.toppath)):
                 break
         else:
-            raise ValueError(f"No handler found for archive: {self.toppath}")
+            raise ValueError(
+                f"No handler found for archive: {util.displayable_path(self.toppath)}"
+            )
         extract_to = mkdtemp()
         archive = handler_class(os.fsdecode(self.toppath), mode="r")
         try:
@@ -962,7 +969,7 @@ class ArchiveImportTask(SentinelImportTask):
         finally:
             archive.close()
         self.extracted = True
-        self.toppath = extract_to
+        self.toppath = os.fsencode(extract_to)
 
 
 class ImportTaskFactory:
@@ -970,7 +977,7 @@ class ImportTaskFactory:
     indicated by a path.
     """
 
-    def __init__(self, toppath: util.PathBytes, session: ImportSession):
+    def __init__(self, toppath: util.PathBytes, session: ImportSession) -> None:
         """Create a new task factory.
 
         `toppath` is the user-specified path to search for music to
@@ -1021,7 +1028,7 @@ class ImportTaskFactory:
         # the extracted directory).
         yield archive_task or self.sentinel()
 
-    def _create(self, task: ImportTask | None):
+    def _create(self, task: ImportTask | None) -> list[ImportTask]:
         """Handle a new task to be emitted by the factory.
 
         Emit the `import_task_created` event and increment the
@@ -1034,7 +1041,9 @@ class ImportTaskFactory:
             return tasks
         return []
 
-    def paths(self):
+    def paths(
+        self,
+    ) -> Iterable[tuple[list[util.PathBytes], list[util.PathBytes]]]:
         """Walk `self.toppath` and yield `(dirs, files)` pairs where
         `files` are individual music files and `dirs` the set of
         containing directories where the music was found.
@@ -1054,7 +1063,7 @@ class ImportTaskFactory:
             for dirs, paths in albums_in_dir(self.toppath):
                 yield dirs, paths
 
-    def singleton(self, path: util.PathBytes):
+    def singleton(self, path: util.PathBytes) -> SingletonImportTask | None:
         """Return a `SingletonImportTask` for the music file."""
         if self.session.already_imported(self.toppath, [path]):
             log.debug(
@@ -1067,19 +1076,16 @@ class ImportTaskFactory:
         item = self.read_item(path)
         if item:
             return SingletonImportTask(self.toppath, item)
-        else:
-            return None
+        return None
 
-    def album(self, paths: Iterable[util.PathBytes], dirs=None):
+    def album(
+        self, paths: Iterable[util.PathBytes], dirs: list[util.PathBytes]
+    ) -> ImportTask | None:
         """Return a `ImportTask` with all media files from paths.
 
         `dirs` is a list of parent directories used to record already
         imported albums.
         """
-
-        if dirs is None:
-            dirs = list({os.path.dirname(p) for p in paths})
-
         if self.session.already_imported(self.toppath, dirs):
             log.debug(
                 "Skipping previously-imported path: {}",
@@ -1094,16 +1100,17 @@ class ImportTaskFactory:
 
         if len(items) > 0:
             return ImportTask(self.toppath, dirs, items)
-        else:
-            return None
+        return None
 
-    def sentinel(self, paths: Iterable[util.PathBytes] | None = None):
+    def sentinel(
+        self, paths: Iterable[util.PathBytes] | None = None
+    ) -> SentinelImportTask:
         """Return a `SentinelImportTask` indicating the end of a
         top-level directory import.
         """
         return SentinelImportTask(self.toppath, paths)
 
-    def unarchive(self):
+    def unarchive(self) -> ArchiveImportTask | None:
         """Extract the archive for this `toppath`.
 
         Extract the archive to a new directory, adjust `toppath` to
@@ -1117,7 +1124,7 @@ class ImportTaskFactory:
                 "Archive importing requires either "
                 "'copy' or 'move' to be enabled."
             )
-            return
+            return None
 
         log.debug("Extracting archive: {}", util.displayable_path(self.toppath))
         archive_task = ArchiveImportTask(self.toppath)
@@ -1125,14 +1132,14 @@ class ImportTaskFactory:
             archive_task.extract()
         except Exception as exc:
             log.error("extraction failed: {}", exc)
-            return
+            return None
 
         # Now read albums from the extracted directory.
         self.toppath = archive_task.toppath
         log.debug("Archive extracted to: {.toppath}", self)
         return archive_task
 
-    def read_item(self, path: util.PathBytes):
+    def read_item(self, path: util.PathBytes) -> library.Item | None:
         """Return an `Item` read from the path.
 
         If an item cannot be read, return `None` instead and log an
@@ -1159,6 +1166,7 @@ class ImportTaskFactory:
             if isinstance(exc.reason, mediafile.FileTypeError):
                 # Silently ignore other non-music files.
                 pass
+        return None
 
 
 _MULTIDISC_MARKERS = (
@@ -1175,7 +1183,9 @@ MULTIDISC_PATTERNS = [
 ]
 
 
-def is_subdir_of_any_in_list(path, dirs):
+def is_subdir_of_any_in_list(
+    path: util.PathBytes, dirs: list[util.PathBytes]
+) -> bool:
     """Returns True if path os a subdirectory of any directory in dirs
     (a list). In other case, returns False.
     """
@@ -1183,7 +1193,9 @@ def is_subdir_of_any_in_list(path, dirs):
     return any(d in ancestors for d in dirs)
 
 
-def albums_in_dir(path: util.PathBytes):
+def albums_in_dir(
+    path: util.PathBytes,
+) -> Iterable[tuple[list[util.PathBytes], list[util.PathBytes]]]:
     """Recursively searches the given directory and returns an iterable
     of (paths, items) where paths is a list of directories and items is
     a list of Items that is probably an album. Specifically, any folder

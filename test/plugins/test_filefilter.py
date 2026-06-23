@@ -14,16 +14,16 @@
 
 """Tests for the `filefilter` plugin."""
 
-from beets.test.helper import ImportTestCase, PluginMixin
+from beets.test.helper import ImportHelper, PluginMixin
 from beets.util import bytestring_path
 
 
-class FileFilterPluginMixin(PluginMixin, ImportTestCase):
+class FileFilterPluginHelper(PluginMixin, ImportHelper):
     plugin = "filefilter"
     preload_plugin = False
 
-    def setUp(self):
-        super().setUp()
+    def setup_beets(self):
+        super().setup_beets()
         self.prepare_tracks_for_import()
 
     def prepare_tracks_for_import(self):
@@ -49,9 +49,9 @@ class FileFilterPluginMixin(PluginMixin, ImportTestCase):
         assert {i.path for i in self.lib.items()} == expected_paths
 
 
-class FileFilterPluginNonSingletonTest(FileFilterPluginMixin):
-    def setUp(self):
-        super().setUp()
+class TestFileFilterPluginNonSingleton(FileFilterPluginHelper):
+    def setup_beets(self):
+        super().setup_beets()
         self.importer = self.setup_importer(autotag=False, copy=False)
 
     def test_import_default(self):
@@ -76,9 +76,9 @@ class FileFilterPluginNonSingletonTest(FileFilterPluginMixin):
         self._run({"singleton_path": ".*other_album.*"}, 3, self.all_tracks)
 
 
-class FileFilterPluginSingletonTest(FileFilterPluginMixin):
-    def setUp(self):
-        super().setUp()
+class TestFileFilterPluginSingleton(FileFilterPluginHelper):
+    def setup_beets(self):
+        super().setup_beets()
         self.importer = self.setup_singleton_importer(autotag=False, copy=False)
 
     def test_global_config(self):

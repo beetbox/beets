@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING
 from typing_extensions import NotRequired, TypedDict
 
 if TYPE_CHECKING:
-    from beets.autotag.hooks import TrackInfo
+    from beets.autotag import TrackInfo
 
 
 class ReleaseFormat(TypedDict):

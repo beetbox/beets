@@ -27,6 +27,8 @@ from beets.test.helper import IOMixin, PluginTestCase
 from beetsplug import lastgenre
 from beetsplug.lastgenre.utils import is_ignored
 
+_p = pytest.param
+
 
 class LastGenrePluginTest(IOMixin, PluginTestCase):
     plugin = "lastgenre"
@@ -292,8 +294,7 @@ def config(config):
 @pytest.mark.parametrize(
     "config_values, item_genre, mock_genres, expected_result",
     [
-        # force and keep whitelisted
-        (
+        _p(
             {
                 "force": True,
                 "keep_existing": True,
@@ -306,9 +307,9 @@ def config(config):
             ["Blues"],
             {"album": ["Jazz"]},
             (["Blues", "Jazz"], "keep + album, whitelist"),
+            id="force-keep-whitelisted",
         ),
-        # force and keep whitelisted, unknown original
-        (
+        _p(
             {
                 "force": True,
                 "keep_existing": True,
@@ -321,9 +322,9 @@ def config(config):
             ["original unknown", "Blues"],
             {"album": ["Jazz"]},
             (["Blues", "Jazz"], "keep + album, whitelist"),
+            id="force-keep-whitelisted-unknown-original",
         ),
-        # force and keep whitelisted on empty tag
-        (
+        _p(
             {
                 "force": True,
                 "keep_existing": True,
@@ -335,9 +336,9 @@ def config(config):
             [],
             {"album": ["Jazz"]},
             (["Jazz"], "album, whitelist"),
+            id="force-keep-whitelisted-empty-tag",
         ),
-        # force and keep, artist configured
-        (
+        _p(
             {
                 "force": True,
                 "keep_existing": True,
@@ -350,9 +351,9 @@ def config(config):
             ["original unknown", "Blues"],
             {"album": ["Jazz"], "artist": ["Pop"]},
             (["Blues", "Pop"], "keep + artist, whitelist"),
+            id="force-keep-artist-configured",
         ),
-        # don't force, disabled whitelist
-        (
+        _p(
             {
                 "force": False,
                 "keep_existing": False,
@@ -364,9 +365,9 @@ def config(config):
             ["any genre"],
             {"album": ["Jazz"]},
             (["any genre"], "keep any, no-force"),
+            id="no-force-whitelist-disabled",
         ),
-        # don't force and empty is regular last.fm fetch; no whitelist too
-        (
+        _p(
             {
                 "force": False,
                 "keep_existing": False,
@@ -378,12 +379,13 @@ def config(config):
             [],
             {"album": ["Jazzin"]},
             (["Jazzin"], "album, any"),
+            id="no-force-empty-tag-no-whitelist",
         ),
         # Canonicalize original genre when force is **off** and
         # whitelist, canonical and cleanup_existing are on.
         # "Cosmic Disco" is not in the default whitelist, thus gets resolved "up" in the
         # tree to "Disco" and "Electronic".
-        (
+        _p(
             {
                 "force": False,
                 "keep_existing": False,
@@ -397,9 +399,9 @@ def config(config):
             ["Cosmic Disco"],
             {"artist": []},
             (["Disco", "Electronic"], "keep + cleanup, whitelist"),
+            id="canonicalize-existing-genre-with-cleanup",
         ),
-        # fallback to next stages until found
-        (
+        _p(
             {
                 "force": True,
                 "keep_existing": True,
@@ -412,10 +414,9 @@ def config(config):
             ["unknown genre"],
             {"track": None, "album": None, "artist": ["Jazz"]},
             (["Unknown Genre", "Jazz"], "keep + artist, any"),
+            id="fallback-through-stages-until-found",
         ),
-        # Keep the original genre when force and keep_existing are on, and
-        # whitelist is disabled
-        (
+        _p(
             {
                 "force": True,
                 "keep_existing": True,
@@ -428,10 +429,9 @@ def config(config):
             ["any existing"],
             {"track": None, "album": None, "artist": None},
             (["any existing"], "original fallback"),
+            id="keep-original-with-keep-existing-without-whitelist",
         ),
-        # Keep the original genre when force and keep_existing are on, and
-        # whitelist is enabled, and genre is valid.
-        (
+        _p(
             {
                 "force": True,
                 "keep_existing": True,
@@ -444,10 +444,9 @@ def config(config):
             ["Jazz"],
             {"track": None, "album": None, "artist": None},
             (["Jazz"], "original fallback"),
+            id="keep-valid-original-with-keep-existing-with-whitelist",
         ),
-        # Return the configured fallback when force is on but
-        # keep_existing is not.
-        (
+        _p(
             {
                 "force": True,
                 "keep_existing": False,
@@ -460,9 +459,9 @@ def config(config):
             ["Jazz"],
             {"track": None, "album": None, "artist": None},
             (["fallback genre"], "fallback"),
+            id="fallback-without-keep-existing",
         ),
-        # fallback to fallback if no original
-        (
+        _p(
             {
                 "force": True,
                 "keep_existing": True,
@@ -475,9 +474,9 @@ def config(config):
             [],
             {"track": None, "album": None, "artist": None},
             (["fallback genre"], "fallback"),
+            id="fallback-when-no-original-genre",
         ),
-        # limit a lot of results
-        (
+        _p(
             {
                 "force": True,
                 "keep_existing": True,
@@ -493,10 +492,11 @@ def config(config):
                 ["Blues", "Rock", "Metal", "Jazz", "Bebop"],
                 "keep + album, whitelist",
             ),
+            id="limit-many-results",
         ),
         # fallback to next stage (artist) if no allowed original present
         # and no album genre were fetched.
-        (
+        _p(
             {
                 "force": True,
                 "keep_existing": True,
@@ -509,12 +509,13 @@ def config(config):
             ["not whitelisted original"],
             {"track": None, "album": None, "artist": ["Jazz"]},
             (["Jazz"], "keep + artist, whitelist"),
+            id="fallback-to-artist-when-original-and-album-invalid",
         ),
         # canonicalization transforms non-whitelisted genres to canonical forms
         #
         # "Acid Techno" is not in the default whitelist, thus gets resolved "up" in the
         # tree to "Techno" and "Electronic".
-        (
+        _p(
             {
                 "force": True,
                 "keep_existing": False,
@@ -527,6 +528,7 @@ def config(config):
             [],
             {"album": ["acid techno"]},
             (["Techno", "Electronic"], "album, whitelist"),
+            id="canonicalize-non-whitelisted-fetched-genre",
         ),
         # canonicalization transforms whitelisted genres to canonical forms and
         # includes originals
@@ -534,7 +536,7 @@ def config(config):
         # "Detroit Techno" is in the default whitelist, thus it stays and and also gets
         # resolved "up" in the tree to "Techno" and "Electronic". The same happens for
         # newly fetched genre "Acid House".
-        (
+        _p(
             {
                 "force": True,
                 "keep_existing": True,
@@ -557,6 +559,7 @@ def config(config):
                 ],
                 "keep + album, whitelist",
             ),
+            id="canonicalize-whitelisted-original-and-fetched-genres",
         ),
         # canonicalization transforms non-whitelisted original genres to canonical
         # forms and deduplication works.
@@ -564,7 +567,7 @@ def config(config):
         # "Cosmic Disco" is not in the default whitelist, thus gets resolved "up" in the
         # tree to "Disco" and "Electronic". New genre "Detroit Techno" resolves to
         # "Techno". Both resolve to "Electronic" which gets deduplicated.
-        (
+        _p(
             {
                 "force": True,
                 "keep_existing": True,
@@ -580,13 +583,14 @@ def config(config):
                 ["Disco", "Electronic", "Detroit Techno", "Techno"],
                 "keep + album, whitelist",
             ),
+            id="canonicalize-and-deduplicate-original-and-fetched-genres",
         ),
         # canonicalization transforms non-whitelisted original genres to canonical
         # forms and deduplication works, **even** when no new genres are found online.
         #
         # "Cosmic Disco" is not in the default whitelist, thus gets resolved "up" in the
         # tree to "Disco" and "Electronic".
-        (
+        _p(
             {
                 "force": True,
                 "keep_existing": True,
@@ -599,13 +603,14 @@ def config(config):
             ["Cosmic Disco"],
             {"album": [], "artist": []},
             (["Disco", "Electronic"], "keep + original fallback, whitelist"),
+            id="canonicalize-and-deduplicate-without-new-genres",
         ),
         # Semicolon-delimited genre tag from an external mediafile
         # ("Jazz; Funk; Soul" as a single element) is split by
         # DelimitedString.normalize() on assignment and returned as three
         # individual genres via the "original fallback" path when all Last.fm
         # stages return empty.
-        (
+        _p(
             {
                 "force": True,
                 "keep_existing": True,
@@ -618,13 +623,14 @@ def config(config):
             ["Jazz; Funk; Soul"],
             {"album": [], "artist": []},
             (["Jazz", "Funk", "Soul"], "original fallback"),
+            id="split-semicolon-delimited-original-genres",
         ),
         # Multiple whitelisted genres in the multi-valued `genres` field must
         # NOT be wiped when Last.fm returns no tags — whether the album is not
         # found at all or exists but has no tags. Both scenarios produce an
         # empty list from the fetcher and must be preserved via "original
         # fallback".
-        (
+        _p(
             {
                 "force": True,
                 "keep_existing": True,
@@ -636,6 +642,7 @@ def config(config):
             ["Baroque", "Classical"],
             {"album": [], "artist": []},
             (["Baroque", "Classical"], "original fallback"),
+            id="preserve-multiple-whitelisted-genres-on-empty-fetch",
         ),
     ],
 )

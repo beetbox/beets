@@ -25,11 +25,11 @@ from typing import TYPE_CHECKING, TypedDict
 from titlecase import titlecase
 
 from beets import ui
-from beets.autotag.hooks import AlbumInfo
+from beets.autotag import AlbumInfo
 from beets.plugins import BeetsPlugin
 
 if TYPE_CHECKING:
-    from beets.autotag.hooks import Info
+    from beets.autotag import Info
     from beets.importer import ImportSession, ImportTask
     from beets.library import Item
 
@@ -226,7 +226,7 @@ class TitlecasePlugin(BeetsPlugin):
         # Check if A-Z is all uppercase or all lowercase
         if self.all_lowercase and text.islower():
             return text
-        elif self.all_caps and text.isupper():
+        if self.all_caps and text.isupper():
             return text
         # Any necessary replacements go first, mainly punctuation.
         titlecased = text.lower() if self.force_lowercase else text

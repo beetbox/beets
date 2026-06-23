@@ -128,8 +128,7 @@ class ExportPlugin(BeetsPlugin):
         format_options = self.config[file_format]["formatting"].get(dict)
 
         export_format = ExportFormat.factory(
-            file_type=file_format,
-            **{"file_path": file_path, "file_mode": file_mode},
+            file_type=file_format, file_path=file_path, file_mode=file_mode
         )
 
         if opts.library or opts.album:
@@ -180,12 +179,11 @@ class ExportFormat:
     def factory(cls, file_type, **kwargs):
         if file_type in ["json", "jsonlines"]:
             return JsonFormat(**kwargs)
-        elif file_type == "csv":
+        if file_type == "csv":
             return CSVFormat(**kwargs)
-        elif file_type == "xml":
+        if file_type == "xml":
             return XMLFormat(**kwargs)
-        else:
-            raise NotImplementedError()
+        raise NotImplementedError()
 
     def export(self, data, **kwargs):
         raise NotImplementedError()

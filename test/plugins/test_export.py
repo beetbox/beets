@@ -31,10 +31,9 @@ class ExportPluginTest(IOMixin, PluginTestCase):
 
     def execute_command(self, format_type, artist):
         query = ",".join(self.test_values.keys())
-        out = self.run_with_output(
+        return self.run_with_output(
             "export", "-f", format_type, "-i", query, artist
         )
-        return out
 
     def create_item(self):
         (item,) = self.add_item_fixtures()

@@ -81,9 +81,8 @@ class ThePlugin(BeetsPlugin):
                 r = re.sub(r, "", text).strip()
                 if self.config["strip"]:
                     return r
-                else:
-                    fmt = self.config["format"].as_str()
-                    return fmt.format(r, t.strip()).strip()
+                fmt = self.config["format"].as_str()
+                return fmt.format(r, t.strip()).strip()
         else:
             return ""
 
@@ -97,5 +96,4 @@ class ThePlugin(BeetsPlugin):
                     self._log.debug('"{}" -> "{}"', text, r)
                     break
             return r
-        else:
-            return ""
+        return ""

@@ -3,13 +3,15 @@ from __future__ import annotations
 import itertools
 import os
 import re
+import time
 from functools import cached_property
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING, ClassVar, Literal, overload
 
 import confuse
 
 from beets import ui
-from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.autotag import AlbumInfo, TrackInfo
+from beets.dbcore import types
 from beets.exceptions import UserError
 from beets.logging import getLogger
 from beets.metadata_plugins import MetadataSourcePlugin
@@ -18,9 +20,12 @@ from .api import TidalAPI
 
 if TYPE_CHECKING:
     import optparse
-    from collections.abc import Iterable, Sequence
+    from collections.abc import Callable, Iterable, Sequence
 
-    from beets.library.models import Item, Library
+    from beets.autotag import Info
+    from beets.dbcore.db import Results
+    from beets.library import Library
+    from beets.library.models import Album, Item
 
     from .api_types import (
         AlbumAttributes,
@@ -36,6 +41,20 @@ log = getLogger("beets.tidal")
 
 
 class TidalPlugin(MetadataSourcePlugin):
+    item_types: ClassVar[dict[str, types.Type]] = {
+        "tidal_track_id": types.STRING,
+        "tidal_artist_id": types.STRING,
+        "tidal_track_popularity": types.INTEGER,
+        "tidal_updated": types.DATE,
+    }
+
+    album_types: ClassVar[dict[str, types.Type]] = {
+        "tidal_album_id": types.STRING,
+        "tidal_artist_id": types.STRING,
+        "tidal_album_popularity": types.INTEGER,
+        "tidal_updated": types.DATE,
+    }
+
     def __init__(self) -> None:
         super().__init__()
 
@@ -65,28 +84,6 @@ class TidalPlugin(MetadataSourcePlugin):
                 "Please login to TIDAL"
                 " using `beet tidal --auth` or disable tidal plugin"
             )
-
-    def commands(self) -> list[ui.Subcommand]:
-        tidal_cmd = ui.Subcommand(
-            "tidal", help="Tidal metadata plugin commands"
-        )
-        tidal_cmd.parser.add_option(
-            "-a",
-            "--auth",
-            action="store_true",
-            help="Authenticate and login to Tidal",
-            default=False,
-        )
-
-        def func(lib: Library, opts: optparse.Values, args: list[str]):
-            if opts.auth:
-                self.api.ui_authenticate_flow()
-            else:
-                tidal_cmd.print_help()
-
-        tidal_cmd.func = func
-
-        return [tidal_cmd]
 
     def album_for_id(self, album_id: str) -> AlbumInfo | None:
         if not (tidal_id := self._extract_id(album_id)):
@@ -377,6 +374,11 @@ class TidalPlugin(MetadataSourcePlugin):
             year=date_parts[0] if date_parts else None,
             month=date_parts[1] if date_parts else None,
             day=date_parts[2] if date_parts else None,
+            # Flexattrs
+            tidal_album_id=album["id"],
+            tidal_artist_id=artist_ids[0] if artist_ids else None,
+            tidal_album_popularity=self._parse_popularity(album["attributes"]),
+            tidal_updated=time.time(),
         )
 
     def _get_track_info(
@@ -399,6 +401,11 @@ class TidalPlugin(MetadataSourcePlugin):
             artists=artist_names,
             duration=self._duration_to_seconds(track["attributes"]["duration"]),
             label=self._parse_label(track["attributes"]),
+            # Flexattrs
+            tidal_track_id=track["id"],
+            tidal_artist_id=artist_ids[0] if artist_ids else None,
+            tidal_track_popularity=self._parse_popularity(track["attributes"]),
+            tidal_updated=time.time(),
         )
 
     @staticmethod
@@ -432,8 +439,7 @@ class TidalPlugin(MetadataSourcePlugin):
         """
         if version := attributes.get("version"):
             return f"{attributes['title']} ({version})"
-        else:
-            return attributes["title"]
+        return attributes["title"]
 
     @staticmethod
     def _parse_data_url(
@@ -457,8 +463,8 @@ class TidalPlugin(MetadataSourcePlugin):
     def _parse_label(
         attributes: AlbumAttributes | TrackAttributes,
     ) -> str | None:
-        if copyright := attributes.get("copyright"):
-            return copyright["text"]
+        if copyright_ := attributes.get("copyright"):
+            return copyright_["text"]
         return None
 
     @staticmethod
@@ -474,6 +480,148 @@ class TidalPlugin(MetadataSourcePlugin):
         ):
             return int(parts[0]), int(parts[1]), int(parts[2])
         return None
+
+    @staticmethod
+    def _parse_popularity(attributes: AlbumAttributes | TrackAttributes) -> int:
+        return round(attributes["popularity"] * 100)
+
+    def sync_item_popularity(
+        self, results: Results[Item], write: bool, force: bool = False
+    ) -> None:
+        """Sync Tidal popularity data for library items."""
+        self._sync_popularity(
+            results=results,
+            write=write,
+            force=force,
+            id_field="tidal_track_id",
+            popularity_field="tidal_track_popularity",
+            search=lambda ids: self.search_tracks_by_ids(tidal_ids=ids),
+            label="item",
+        )
+
+    def sync_album_popularity(
+        self, results: Results[Album], write: bool, force: bool = False
+    ) -> None:
+        """Sync Tidal popularity data for library albums."""
+        self._sync_popularity(
+            results=results,
+            write=write,
+            force=force,
+            id_field="tidal_album_id",
+            popularity_field="tidal_album_popularity",
+            search=lambda ids: self.search_albums_by_ids(tidal_ids=ids),
+            label="album",
+        )
+
+    def _sync_popularity(
+        self,
+        *,
+        results: Results[Item] | Results[Album],
+        write: bool,
+        force: bool,
+        id_field: str,
+        popularity_field: str,
+        search: Callable[[Iterable[str]], Iterable[Info | None]],
+        label: Literal["item", "album"],
+    ) -> None:
+        """Sync Tidal popularity for a generic model (Item or Album)."""
+        log.info("Syncing popularity for {0} {1}s", len(results), label)
+
+        model_by_id = {
+            tidal_id: model
+            for model in results
+            if (tidal_id := model.get(id_field))
+            and (force or model.get(popularity_field) is None)
+        }
+        total = len(model_by_id)
+        log.debug("{0} {1}s need updates", total, label)
+        processed = 0
+        for model, new_info in zip(
+            model_by_id.values(), search(model_by_id.keys())
+        ):
+            if not new_info:
+                continue
+
+            model[popularity_field] = new_info.get(popularity_field)
+            model["tidal_updated"] = time.time()
+
+            model.store()
+            if write:
+                model.try_write()
+
+            processed += 1
+            if processed % 100 == 0 or processed == total:
+                log.debug("Synced {0}/{1} {2}s", processed, total, label)
+
+        log.info(
+            "Successfully synchronised popularity for {0} {1}s", total, label
+        )
+
+    def commands(self) -> list[ui.Subcommand]:
+        tidal_cmd = ui.Subcommand(
+            "tidal", help="Tidal metadata plugin commands"
+        )
+        tidal_cmd.parser.add_option(
+            "-a",
+            "--auth",
+            action="store_true",
+            help="Authenticate and login to Tidal",
+            default=False,
+        )
+
+        def auth_func(lib: Library, opts: optparse.Values, args: list[str]):
+            if opts.auth:
+                self.api.ui_authenticate_flow()
+            else:
+                tidal_cmd.print_help()
+
+        tidal_cmd.func = auth_func
+
+        # It would be nice to combine both auth and sync commands but
+        # currently not really supported in beets. We might be able to
+        # revist this if our subcommand parsing changes
+        sync_help = (
+            "Synchronize Tidal popularity data for library items and albums"
+        )
+        tidalsync_cmd = ui.Subcommand("tidalsync", help=sync_help)
+        tidalsync_cmd.parser.add_album_option()
+        tidalsync_cmd.parser.add_option(
+            "-f",
+            "--force",
+            action="store_true",
+            dest="force",
+            default=False,
+            help=(
+                "re-fetch popularity even if already present (default: False)"
+            ),
+        )
+        tidalsync_cmd.parser.add_option(
+            "-w",
+            "--write",
+            action="store_true",
+            dest="write",
+            default=False,
+            help="write updated tags to media files (default: False)",
+        )
+        tidalsync_cmd.parser.set_usage(
+            "Usage: beet tidalsync <query> [options]"
+        )
+
+        def sync_func(lib: Library, opts: optparse.Values, args: list[str]):
+            query = ["data_source:tidal", *args]
+
+            if opts.album:
+                self.sync_album_popularity(
+                    lib.albums(query), write=opts.write, force=opts.force
+                )
+            else:
+                self.sync_item_popularity(
+                    lib.items(query), write=opts.write, force=opts.force
+                )
+
+        tidalsync_cmd.func = sync_func
+
+        return [tidal_cmd, tidalsync_cmd]
 
 
 ISO_8601_RE = re.compile(

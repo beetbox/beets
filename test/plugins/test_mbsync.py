@@ -14,12 +14,12 @@
 
 from unittest.mock import Mock, patch
 
-from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.autotag import AlbumInfo, TrackInfo
 from beets.library import Item
-from beets.test.helper import PytestPluginTestHelper
+from beets.test.helper import PluginTestHelper
 
 
-class TestMbsyncCli(PytestPluginTestHelper):
+class TestMbsyncCli(PluginTestHelper):
     plugin = "mbsync"
 
     @patch(
@@ -84,13 +84,9 @@ class TestMbsyncCli(PytestPluginTestHelper):
         with caplog.at_level("DEBUG", logger="beets.mbsync"):
             self.run_command("mbsync", "-f", "'%if{$album,$album,$title}'")
 
+        assert "Skipping album with no mb_albumid: 'no id'" in caplog.messages
         assert (
-            "mbsync: Skipping album with no mb_albumid: 'no id'"
-            in caplog.messages
-        )
-        assert (
-            "mbsync: Skipping singleton with no mb_trackid: 'no id'"
-            in caplog.messages
+            "Skipping singleton with no mb_trackid: 'no id'" in caplog.messages
         )
 
     @patch(

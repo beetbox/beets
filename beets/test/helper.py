@@ -25,6 +25,7 @@ information or mock the environment.
 
 from __future__ import annotations
 
+import importlib.util
 import os
 import os.path
 import shutil
@@ -33,11 +34,10 @@ import sys
 import unittest
 from contextlib import contextmanager
 from dataclasses import dataclass
-from enum import Enum
-from functools import cached_property
+from functools import cache, cached_property
 from pathlib import Path
 from tempfile import gettempdir, mkdtemp, mkstemp
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, Literal
 from unittest.mock import Mock, patch
 
 import pytest
@@ -45,8 +45,8 @@ from mediafile import Image, MediaFile
 
 import beets
 import beets.plugins
-from beets import importer, logging, util
-from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets import importer, util
+from beets.autotag import AlbumInfo, TrackInfo
 from beets.importer import ImportSession
 from beets.library import Item, Library
 from beets.test import _common
@@ -59,27 +59,12 @@ from beets.util import (
 )
 
 if TYPE_CHECKING:
+    from types import TracebackType
+
     from requests_mock.mocker import Mocker
+    from typing_extensions import Self
 
-
-class LogCapture(logging.Handler):
-    def __init__(self):
-        logging.Handler.__init__(self)
-        self.messages = []
-
-    def emit(self, record):
-        self.messages.append(str(record.msg))
-
-
-@contextmanager
-def capture_log(logger="beets"):
-    capture = LogCapture()
-    log = logging.getLogger(logger)
-    log.addHandler(capture)
-    try:
-        yield capture.messages
-    finally:
-        log.removeHandler(capture)
+RUNNING_IN_CI = os.environ.get("GITHUB_ACTIONS") == "true"
 
 
 def has_program(cmd, args=["--version"]):
@@ -98,6 +83,11 @@ def has_program(cmd, args=["--version"]):
         return True
 
 
+@cache
+def is_importable(modname: str) -> bool:
+    return bool(importlib.util.find_spec(modname))
+
+
 def check_reflink_support(path: str) -> bool:
     try:
         import reflink
@@ -105,6 +95,15 @@ def check_reflink_support(path: str) -> bool:
         return False
 
     return reflink.supported_at(path)
+
+
+NEEDS_REFLINK = pytest.mark.skipif(
+    not check_reflink_support(gettempdir()), reason="need reflink"
+)
+NEEDS_FFPROBE = pytest.mark.skipif(
+    not has_program("ffprobe") and not RUNNING_IN_CI,
+    reason="ffprobe (ffmpeg) is not available",
+)
 
 
 class ConfigMixin:
@@ -120,11 +119,6 @@ class ConfigMixin:
         config["ui"]["color"] = False
         config["threaded"] = False
         return config
-
-
-NEEDS_REFLINK = unittest.skipUnless(
-    check_reflink_support(gettempdir()), "no reflink support for libdir"
-)
 
 
 class RunMixin:
@@ -158,9 +152,37 @@ class IOMixin(RunMixin):
 class TestHelper(RunMixin, ConfigMixin):
     """Helper mixin for high-level cli and plugin tests.
 
-    This mixin provides methods to isolate beets' global state provide
-    fixtures.
+    This mixin provides methods to isolate beets' global state.
+
+    You may use it as a context manager in pytest fixtures in order to setup
+    tests at a class or module level. See ``module_helper`` and ``class_helper``
+    fixtures, for example.
     """
+
+    request: pytest.FixtureRequest
+
+    def __enter__(self) -> Self:
+        self.setup_beets()
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: TracebackType | None,
+    ) -> Literal[False]:
+        self.teardown_beets()
+        # return False/None to propagate exceptions
+        return False
+
+    @pytest.fixture(autouse=True)
+    def setup(self, request: pytest.FixtureRequest):
+        self.request = request
+        self.setup_beets()
+        try:
+            yield
+        finally:
+            self.teardown_beets()
 
     lib: Library
 
@@ -376,15 +398,15 @@ class TestHelper(RunMixin, ConfigMixin):
         """Delete the temporary directory created by `create_temp_dir`."""
         shutil.rmtree(self.temp_dir_path)
 
-    def touch(self, path, dir=None, content=""):
+    def touch(self, path, dir_=None, content=""):
         """Create a file at `path` with given content.
 
         If `dir` is given, it is prepended to `path`. After that, if the
         path is relative, it is resolved with respect to
         `self.temp_dir`.
         """
-        if dir:
-            path = os.path.join(dir, path)
+        if dir_:
+            path = os.path.join(dir_, path)
 
         if not os.path.isabs(path):
             path = os.path.join(self.temp_dir, path)
@@ -407,26 +429,8 @@ class BeetsTestCase(unittest.TestCase, TestHelper):
     completes. Also provides some additional assertion methods, a
     temporary directory, and a DummyIO.
 
-    DEPRECATED: Use pytest + PytestTestHelper instead.
+    DEPRECATED: Use TestHelper instead.
     """
-
-    def setUp(self):
-        self.setup_beets()
-
-    def tearDown(self):
-        self.teardown_beets()
-
-
-class PytestTestHelper(TestHelper):
-    """Same as the BeetsTestCase unittest setup but for pytest."""
-
-    @pytest.fixture(autouse=True)
-    def setup(self):
-        self.setup_beets()
-        try:
-            yield
-        finally:
-            self.teardown_beets()
 
 
 class ItemInDBTestCase(BeetsTestCase):
@@ -500,13 +504,11 @@ class PluginMixin(ConfigMixin):
 
 class PluginTestCase(PluginMixin, BeetsTestCase):
     """
-    DEPRECATED: Use pytest + PytestPluginTestHelper instead.
+    DEPRECATED: Use PluginTestHelper instead.
     """
 
-    pass
 
-
-class PytestPluginTestHelper(PluginMixin, PytestTestHelper):
+class PluginTestHelper(PluginMixin, TestHelper):
     """Helper mixin for pytest-based plugin tests.
 
     This mixin provides the standard beets test setup and automatically
@@ -514,7 +516,7 @@ class PytestPluginTestHelper(PluginMixin, PytestTestHelper):
 
     .. code-block:: python
 
-        class TestMyPlugin(PytestPluginTestHelper):
+        class TestMyPlugin(PluginTestHelper):
             plugin: ClassVar[str] = "myplugin"
     """
 
@@ -525,7 +527,7 @@ class ImportHelper(TestHelper):
     autotagging library and several assertions for the library.
     """
 
-    default_import_config: ClassVar[dict[str, bool]] = {
+    default_import_config: ClassVar[dict[str, Any]] = {
         "autotag": True,
         "copy": True,
         "hardlink": False,
@@ -549,8 +551,8 @@ class ImportHelper(TestHelper):
     def import_dir(self) -> bytes:
         return bytestring_path(self.import_path)
 
-    def setUp(self):
-        super().setUp()
+    def setup_beets(self):
+        super().setup_beets()
         self.import_media = []
         self.lib.path_formats = [
             ("default", os.path.join("$artist", "$album", "$title")),
@@ -629,18 +631,14 @@ class ImportHelper(TestHelper):
 
 
 class AsIsImporterMixin:
-    def setUp(self):
-        super().setUp()
+    def setup_beets(self):
+        super().setup_beets()
         self.prepare_album_for_import(1)
 
     def run_asis_importer(self, **kwargs):
         importer = self.setup_importer(autotag=False, **kwargs)
         importer.run()
         return importer
-
-
-class ImportTestCase(ImportHelper, BeetsTestCase):
-    pass
 
 
 class ImportSessionFixture(ImportSession):
@@ -661,7 +659,6 @@ class ImportSessionFixture(ImportSession):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._choices = []
-        self._resolutions = []
 
     default_choice = importer.Action.APPLY
 
@@ -679,29 +676,11 @@ class ImportSessionFixture(ImportSession):
 
         if choice == importer.Action.APPLY:
             return task.candidates[0]
-        elif isinstance(choice, int):
+        if isinstance(choice, int):
             return task.candidates[choice - 1]
-        else:
-            return choice
+        return choice
 
     choose_item = choose_match
-
-    Resolution = Enum("Resolution", "REMOVE SKIP KEEPBOTH MERGE")
-
-    default_resolution = "REMOVE"
-
-    def resolve_duplicate(self, task, found_duplicates):
-        try:
-            res = self._resolutions.pop(0)
-        except IndexError:
-            res = self.default_resolution
-
-        if res == self.Resolution.SKIP:
-            task.set_choice(importer.Action.SKIP)
-        elif res == self.Resolution.REMOVE:
-            task.should_remove_duplicates = True
-        elif res == self.Resolution.MERGE:
-            task.should_merge_duplicates = True
 
 
 class TerminalImportSessionFixture(TerminalImportSession):
@@ -756,7 +735,7 @@ class TerminalImportMixin(IOMixin, ImportHelper):
             self.lib,
             loghandler=None,
             query=None,
-            io=self.io,
+            io=self.request.getfixturevalue("io"),
             paths=[import_dir],
         )
 
@@ -829,13 +808,13 @@ class AutotagStub:
         )
 
     def _make_album_match(self, artist, album, tracks, distance=0, missing=0):
-        id = f" {'M' * distance}" if distance else ""
+        id_ = f" {'M' * distance}" if distance else ""
 
         if artist is None:
             artist = "Various Artists"
         else:
-            artist = f"{artist.replace('Tag', 'Applied')}{id}"
-        album = f"{album.replace('Tag', 'Applied')}{id}"
+            artist = f"{artist.replace('Tag', 'Applied')}{id_}"
+        album = f"{album.replace('Tag', 'Applied')}{id_}"
 
         track_infos = []
         for i in range(tracks - missing):
@@ -846,21 +825,28 @@ class AutotagStub:
             album=album,
             tracks=track_infos,
             va=False,
-            album_id=f"albumid{id}",
-            artist_id=f"artistid{id}",
+            album_id=f"albumid{id_}",
+            artist_id=f"artistid{id_}",
             albumtype="soundtrack",
             data_source="match_source",
             bandcamp_album_id="bc_url",
         )
 
 
-class AutotagImportTestCase(ImportTestCase):
+class AutotagImportHelper(ImportHelper):
     matching = AutotagStub.IDENT
 
-    def setUp(self):
-        super().setUp()
+    def setup_beets(self):
+        super().setup_beets()
         self.matcher = AutotagStub(self.matching).install()
-        self.addCleanup(self.matcher.restore)
+
+    def teardown_beets(self):
+        self.matcher.restore()
+        super().teardown_beets()
+
+
+class AutotagImportTestCase(AutotagImportHelper, BeetsTestCase):
+    """DEPRECATED: Use AutotagImportHelper instead."""
 
 
 @dataclass(slots=True)

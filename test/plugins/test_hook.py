@@ -22,13 +22,13 @@ from typing import TYPE_CHECKING, ClassVar
 import pytest
 
 from beets import plugins
-from beets.test.helper import PytestPluginTestHelper
+from beets.test.helper import PluginTestHelper
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-class HookTestCase(PytestPluginTestHelper):
+class HookTestCase(PluginTestHelper):
     plugin = "hook"
     preload_plugin = False
 
@@ -49,7 +49,7 @@ class TestHookLogs(HookTestCase):
         with caplog.at_level("DEBUG"):
             self._configure_hook("")
 
-        assert 'hook: invalid command ""' in caplog.messages
+        assert 'invalid command ""' in caplog.messages
 
     # FIXME: fails on windows
     @pytest.mark.skipif(sys.platform == "win32", reason="win32")
@@ -57,15 +57,12 @@ class TestHookLogs(HookTestCase):
         with caplog.at_level("DEBUG"):
             self._configure_hook('sh -c "exit 1"')
 
-        assert (
-            f"hook: hook for {self.HOOK} exited with status 1"
-            in caplog.messages
-        )
+        assert f"hook for {self.HOOK} exited with status 1" in caplog.messages
 
     def test_hook_non_existent_command(self, caplog: pytest.LogCaptureFixture):
         with caplog.at_level("DEBUG"):
             self._configure_hook("non-existent-command")
-        assert f"hook: hook for {self.HOOK} failed: " in caplog.text
+        assert f"hook for {self.HOOK} failed: " in caplog.text
         # The error message is different for each OS. Unfortunately the text is
         # different in each case, where the only shared text is the string
         # 'file' and substring 'Err'

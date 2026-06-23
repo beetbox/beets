@@ -34,12 +34,11 @@ def _build_m3u_session_filename(basename):
     basename and file ending."""
     date = datetime.datetime.now().strftime("%Y%m%d_%Hh%M")
     basename = re.sub(r"(\.m3u|\.M3U)", "", basename)
-    path = normpath(
+    return normpath(
         os.path.join(
             config["importfeeds"]["dir"].as_filename(), f"{basename}_{date}.m3u"
         )
     )
-    return path
 
 
 def _build_m3u_filename(basename):
@@ -47,12 +46,11 @@ def _build_m3u_filename(basename):
     date."""
     basename = re.sub(r"[\s,/\\'\"]", "_", basename)
     date = datetime.datetime.now().strftime("%Y%m%d_%Hh%M")
-    path = normpath(
+    return normpath(
         os.path.join(
             config["importfeeds"]["dir"].as_filename(), f"{date}_{basename}.m3u"
         )
     )
-    return path
 
 
 def _write_m3u(m3u_path, items_paths):

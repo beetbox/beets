@@ -170,8 +170,8 @@ class MPDStats:
         item = self.lib.items(query).get()
         if item:
             return item
-        else:
-            self._log.info("item not found: {}", displayable_path(path))
+        self._log.info("item not found: {}", displayable_path(path))
+        return None
 
     def update_item(self, item, attribute, value=None, increment=None):
         """Update the beets item. Set attribute to value or increment the value
@@ -368,14 +368,6 @@ class MPDStatsPlugin(plugins.BeetsPlugin):
 
         def func(lib, opts, args):
             mpd_config.set_args(opts)
-
-            # Overrides for MPD settings.
-            if opts.host:
-                mpd_config["host"] = opts.host.decode("utf-8")
-            if opts.port:
-                mpd_config["host"] = int(opts.port)
-            if opts.password:
-                mpd_config["password"] = opts.password.decode("utf-8")
 
             try:
                 MPDStats(lib, self._log).run()

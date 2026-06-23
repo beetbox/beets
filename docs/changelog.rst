@@ -9,6 +9,25 @@ below!
 Unreleased
 ----------
 
+..
+    New features
+    ~~~~~~~~~~~~
+
+..
+    Bug fixes
+    ~~~~~~~~~
+
+..
+    For plugin developers
+    ~~~~~~~~~~~~~~~~~~~~~
+
+..
+    Other changes
+    ~~~~~~~~~~~~~
+
+2.12.0 (June 22, 2026)
+----------------------
+
 New features
 ~~~~~~~~~~~~
 
@@ -26,10 +45,29 @@ New features
 - :doc:`plugins/musicbrainz`: Introduce
   :conf:`plugins.musicbrainz:aliases_as_credits` to make
   aliases-as-artist-credit optional.
+- :doc:`plugins/badfiles`: Added settings for auto error and warning actions.
+- :doc:`plugins/tidal`: New flexible attributes are now populated during
+  imports, including ``tidal_track_id``, ``tidal_album_id``,
+  ``tidal_artist_id``, ``tidal_track_popularity``, ``tidal_album_popularity``,
+  and ``tidal_updated``. Added a new ``beet tidalsync`` command to refresh
+  popularity data for imported items by default, or albums with ``--album``,
+  with ``--force`` to re-fetch and ``--write`` to update file tags.
+
+  **Migration**: Existing Tidal imports can copy the previously stored IDs into
+  the new flexible attributes with ``beet modify``: run ``beet modify
+  data_source:tidal tidal_album_id='$mb_albumid' -a`` for albums and ``beet
+  modify data_source:tidal tidal_track_id='$mb_trackid'`` for items.
 
 Bug fixes
 ~~~~~~~~~
 
+- :doc:`plugins/lyrics`: Add rate limiting and exponential backoff to HTTP
+  requests to prevent ``429 Too Many Requests`` errors from lyrics sources
+  during bulk imports. :bug:`6728`
+- :doc:`plugins/replace`: Fix ``TypeError`` when invoking the ``replace``
+  command. :bug:`6260`
+- :doc:`plugins/mpdstats`: Fix crashes and invalid configuration when passing
+  ``--host``, ``--port``, or ``--password`` on the command line. :bug:`5404`
 - :ref:`import-cmd`: Fix duplicate album merge during import when running in
   threaded mode. The merge action no longer creates a duplicate folder or
   reports ``could not get filesize`` errors. :bug:`6601`
@@ -67,14 +105,44 @@ Bug fixes
 - :doc:`plugins/fetchart`: Catch ``OSError`` in ``_set_art`` so that permission
   errors (e.g. a file locked by another process) are logged as warnings instead
   of crashing beets. :bug:`6193`
+- :doc:`plugins/lyrics`: Improve Musica.com lyric scraping so fetched lyrics no
+  longer omit the opening verse or include non-lyric page content.
+- :doc:`plugins/convert`: Tidy the ``--playlist`` help text so it no longer has
+  awkward indentation in CLI output.
+- :doc:`plugins/spotify`: Improved Spotify API parsing to handle missing label
+  data :bug:`6679`
+- :ref:`move-cmd`: ``beet move`` no longer crashes when an item referenced in
+  the database has been deleted from disk. Missing items are now skipped with a
+  warning and the command continues. :bug:`6720`
+- :doc:`plugins/fish`: Fix error on plugin initialization.
+- :doc:`plugins/spotify`: Use single instead of double quotes in spotify
+  queries.
+- :doc:`plugins/tidal`: Fix auth URL not printed in environments without a
+  configured browser :bug:`6710`
 
-..
-    For plugin developers
-    ~~~~~~~~~~~~~~~~~~~~~
+For plugin developers
+~~~~~~~~~~~~~~~~~~~~~
 
-..
-    Other changes
-    ~~~~~~~~~~~~~
+- Plugin authors can import all autotagger helpers directly from
+  ``beets.autotag``, including match classes, distance helpers, and
+  ``assign_items``, without relying on lower-level autotag modules.
+- Introduced ``beets.importer.DuplicateAction`` to simplify handling of
+  duplicates.
+
+Other changes
+~~~~~~~~~~~~~
+
+- :doc:`plugins/lyrics`: Fold rate limiting and 429 retry from the
+  lyrics-specific ``LyricsSession`` into the shared
+  :class:`~beetsplug._utils.requests.TimeoutAndRetrySession` so all plugins
+  benefit. The standalone ``LyricsSession`` class has been removed.
+- :doc:`plugins/spotify`: ``spotifysync`` now batches its SQLite commit for a
+  sync run, follows the standard beets write-before-store pattern, and logs
+  audio-features API unavailability only once per run.
+- :doc:`plugins/titlecase`: Correct the path format example and document the
+  ``%titlecase{text}`` template function. :bug:`6697`
+- Log message prefix formatting (``musicbrainz: msg``) moved from a filter to
+  ``LegacyFormatter``, making future customization easier.
 
 2.11.0 (May 06, 2026)
 ---------------------

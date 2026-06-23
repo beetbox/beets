@@ -54,7 +54,7 @@ class Ref(NamedTuple):
         if len(line_parts := line.split(" ", 1)) == 1:
             return cls(line, None, None)
 
-        id, path_with_name = line_parts
+        id_, path_with_name = line_parts
         parts = [p.strip() for p in path_with_name.split(":", 1)]
 
         if len(parts) == 1:
@@ -62,7 +62,7 @@ class Ref(NamedTuple):
         else:
             name, path = parts
 
-        return cls(id, path, name)
+        return cls(id_, path, name)
 
     @property
     def url(self) -> str:
@@ -101,8 +101,12 @@ def create_rst_replacements() -> list[Replacement]:
     def make_ref_link(ref_id: str, name: str | None = None) -> str:
         if ref_id.endswith("-cmd"):
             name = f"{ref_id.removesuffix('-cmd')} command"
-        ref = refs[ref_id]
-        return rf"`{name or ref.name} <{ref.url}>`_"
+        try:
+            ref = refs[ref_id]
+        except KeyError:
+            return f"``{name or ref_id}``"
+        else:
+            return rf"`{name or ref.name} <{ref.url}>`_"
 
     commands = "|".join(r.split("-")[0] for r in refs if r.endswith("-cmd"))
     plugins = "|".join(

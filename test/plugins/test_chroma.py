@@ -17,10 +17,11 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from beets import metadata_plugins
-from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.autotag import AlbumInfo, TrackInfo
 from beets.library import Item
-from beets.test.helper import ImportTestCase, IOMixin, PluginMixin
-from beetsplug import chroma
+from beets.test.helper import ImportHelper, IOMixin, PluginMixin
+
+chroma = pytest.importorskip("beetsplug.chroma", exc_type=ImportError)
 
 TEST_TITLE_1 = "TEST_TITLE_1"
 TEST_TITLE_2 = "TEST_TITLE_2"
@@ -30,7 +31,7 @@ FINGERPRINT_2 = "FP_2"
 
 
 @patch("acoustid.compare_fingerprints")
-class ChromaTest(IOMixin, PluginMixin, ImportTestCase):
+class TestChroma(IOMixin, PluginMixin, ImportHelper):
     plugin = "chroma"
 
     def setup_lib(self):
@@ -49,9 +50,9 @@ class ChromaTest(IOMixin, PluginMixin, ImportTestCase):
     def run_search(self, fp):
         return self.run_with_output("chromasearch", "-s", fp, "-f", "$title")
 
-    def line_count(self, str):
+    def line_count(self, str_):
         return len(
-            [line for line in str.split("\n") if line.strip(" \n") != ""]
+            [line for line in str_.split("\n") if line.strip(" \n") != ""]
         )
 
     def compare_fingerprints(self, *args, **kwargs):

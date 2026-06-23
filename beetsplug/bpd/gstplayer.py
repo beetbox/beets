@@ -200,8 +200,7 @@ class GstPlayer:
             # reason, we cache recent.
             if self.playing and self.cached_time:
                 return self.cached_time
-            else:
-                return (0, 0)
+            return (0, 0)
 
     def seek(self, position):
         """Seeks to position (in seconds)."""

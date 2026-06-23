@@ -28,21 +28,30 @@ from requests_mock import ANY as ANYREEQUEST
 from requests_mock.exceptions import NoMockAddress
 
 from beets import config, importer, logging, util
-from beets.autotag.distance import Distance
-from beets.autotag.hooks import AlbumInfo, AlbumMatch
+from beets.autotag import AlbumInfo, AlbumMatch, Distance
 from beets.library import Album
 from beets.test import _common
-from beets.test.helper import FetchImageHelper, PytestTestHelper
+from beets.test.helper import (
+    RUNNING_IN_CI,
+    FetchImageHelper,
+    TestHelper,
+    has_program,
+    is_importable,
+)
 from beets.util import clean_module_tempdir, syspath
 from beets.util.artresizer import ArtResizer
 from beetsplug import fetchart
 
-logger = logging.getLogger("beets.test_art")
-
-
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
     from unittest.mock import MagicMock
+
+logger = logging.getLogger("beets.test_art")
+
+REQUIRES_ARTRESIZER = pytest.mark.skipif(
+    not (has_program("magick") or is_importable("PIL")) and not RUNNING_IN_CI,
+    reason="requires ImageMagick or Pillow",
+)
 
 
 class Settings(fetchart.FetchArtPlugin):
@@ -68,7 +77,7 @@ class DummyRemoteArtSource(fetchart.RemoteArtSource):
         return iter(())
 
 
-class UseThePlugin(PytestTestHelper):
+class UseThePlugin(TestHelper):
     modules = (fetchart.__name__, ArtResizer.__module__)
 
     @pytest.fixture(autouse=True)
@@ -993,6 +1002,7 @@ class AlbumArtOperationMixin(UseThePlugin):
         return self.plugin.art_for_album(Album(), [""], True)
 
 
+@REQUIRES_ARTRESIZER
 class TestAlbumArtOperationConfiguration(AlbumArtOperationMixin):
     """Check that scale & filesize configuration is respected.
 
@@ -1034,6 +1044,7 @@ class TestAlbumArtOperationConfiguration(AlbumArtOperationMixin):
         assert self.get_album_art()
 
 
+@REQUIRES_ARTRESIZER
 class TestAlbumArtPerformOperation(AlbumArtOperationMixin):
     """Test that the art is resized and deinterlaced if necessary."""
 

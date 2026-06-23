@@ -94,10 +94,9 @@ class Type(ABC, Generic[T, N]):
         # `self.null` might be `None`
         if value is None:
             return ""
-        elif isinstance(value, bytes):
+        if isinstance(value, bytes):
             return value.decode("utf-8", "ignore")
-        else:
-            return str(value)
+        return str(value)
 
     def parse(self, string: str) -> T | N:
         """Parse a (possibly human-written) string and return the
@@ -116,10 +115,9 @@ class Type(ABC, Generic[T, N]):
         # TYPING ERROR
         if value is None:
             return self.null
-        else:
-            # TODO This should eventually be replaced by
-            # `self.model_type(value)`
-            return cast(T, value)
+        # TODO This should eventually be replaced by
+        # `self.model_type(value)`
+        return cast(T, value)
 
     def from_sql(self, sql_value: SQLiteType) -> T | N:
         """Receives the value stored in the SQL backend and return the
@@ -139,8 +137,7 @@ class Type(ABC, Generic[T, N]):
             sql_value = bytes(sql_value).decode("utf-8", "ignore")
         if isinstance(sql_value, str):
             return self.parse(sql_value)
-        else:
-            return self.normalize(sql_value)
+        return self.normalize(sql_value)
 
     def to_sql(self, model_value: Any) -> SQLiteType:
         """Convert a value as stored in the model object to a value used
@@ -272,8 +269,7 @@ class BaseString(Type[T, N]):
     def normalize(self, value: Any) -> T | N:
         if value is None:
             return self.null
-        else:
-            return self.model_type(value)
+        return self.model_type(value)
 
 
 class String(BaseString[str, Any]):
@@ -396,12 +392,11 @@ class BasePathType(Type[bytes, N]):
             # Paths stored internally as encoded bytes.
             return util.bytestring_path(value)
 
-        elif isinstance(value, BLOB_TYPE):
+        if isinstance(value, BLOB_TYPE):
             # We unwrap buffers to bytes.
             return bytes(value)
 
-        else:
-            return value
+        return value
 
     def from_sql(self, sql_value):
         return pathutils.expand_path_from_db(self.normalize(sql_value))
@@ -459,8 +454,7 @@ class MusicalKey(String):
     def normalize(self, key):
         if key is None:
             return None
-        else:
-            return self.parse(key)
+        return self.parse(key)
 
 
 class DurationType(Float):
@@ -471,8 +465,7 @@ class DurationType(Float):
     def format(self, value):
         if not beets.config["format_raw_length"].get(bool):
             return human_seconds_short(value or 0.0)
-        else:
-            return value
+        return value
 
     def parse(self, string):
         try:

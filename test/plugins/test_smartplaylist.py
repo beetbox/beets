@@ -188,22 +188,22 @@ class SmartPlaylistTest(BeetsTestCase):
         pl = b"$title-my<playlist>.m3u", (q, None), (a_q, None)
         spl._matched_playlists = {pl}
 
-        dir = mkdtemp()
+        dir_ = mkdtemp()
         config["smartplaylist"]["relative_to"] = False
-        config["smartplaylist"]["playlist_dir"] = str(dir)
+        config["smartplaylist"]["playlist_dir"] = str(dir_)
         try:
             spl.update_playlists(lib)
         except Exception:
-            rmtree(syspath(dir))
+            rmtree(syspath(dir_))
             raise
 
         lib.items.assert_called_once_with(q, None)
         lib.albums.assert_called_once_with(a_q, None)
 
-        m3u_filepath = Path(dir, "ta_ga_da-my_playlist_.m3u")
+        m3u_filepath = Path(dir_, "ta_ga_da-my_playlist_.m3u")
         assert m3u_filepath.exists()
         content = m3u_filepath.read_bytes()
-        rmtree(syspath(dir))
+        rmtree(syspath(dir_))
 
         assert content == b"/tagada.mp3\n"
 
@@ -229,24 +229,24 @@ class SmartPlaylistTest(BeetsTestCase):
         pl = b"$title-my<playlist>.m3u", (q, None), (a_q, None)
         spl._matched_playlists = {pl}
 
-        dir = mkdtemp()
+        dir_ = mkdtemp()
         config["smartplaylist"]["output"] = "extm3u"
         config["smartplaylist"]["prefix"] = "http://beets:8337/files"
         config["smartplaylist"]["relative_to"] = False
-        config["smartplaylist"]["playlist_dir"] = str(dir)
+        config["smartplaylist"]["playlist_dir"] = str(dir_)
         try:
             spl.update_playlists(lib)
         except Exception:
-            rmtree(syspath(dir))
+            rmtree(syspath(dir_))
             raise
 
         lib.items.assert_called_once_with(q, None)
         lib.albums.assert_called_once_with(a_q, None)
 
-        m3u_filepath = Path(dir, "ta_ga_da-my_playlist_.m3u")
+        m3u_filepath = Path(dir_, "ta_ga_da-my_playlist_.m3u")
         assert m3u_filepath.exists()
         content = m3u_filepath.read_bytes()
-        rmtree(syspath(dir))
+        rmtree(syspath(dir_))
 
         assert content == (
             b"#EXTM3U\n"
@@ -278,24 +278,24 @@ class SmartPlaylistTest(BeetsTestCase):
         pl = b"$title-my<playlist>.m3u", (q, None), (a_q, None)
         spl._matched_playlists = {pl}
 
-        dir = mkdtemp()
+        dir_ = mkdtemp()
         config["smartplaylist"]["output"] = "extm3u"
         config["smartplaylist"]["relative_to"] = False
-        config["smartplaylist"]["playlist_dir"] = str(dir)
+        config["smartplaylist"]["playlist_dir"] = str(dir_)
         config["smartplaylist"]["fields"] = ["id", "genres"]
         try:
             spl.update_playlists(lib)
         except Exception:
-            rmtree(syspath(dir))
+            rmtree(syspath(dir_))
             raise
 
         lib.items.assert_called_once_with(q, None)
         lib.albums.assert_called_once_with(a_q, None)
 
-        m3u_filepath = Path(dir, "ta_ga_da-my_playlist_.m3u")
+        m3u_filepath = Path(dir_, "ta_ga_da-my_playlist_.m3u")
         assert m3u_filepath.exists()
         content = m3u_filepath.read_bytes()
-        rmtree(syspath(dir))
+        rmtree(syspath(dir_))
 
         assert content == (
             b"#EXTM3U\n"

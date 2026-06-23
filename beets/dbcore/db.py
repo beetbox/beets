@@ -24,7 +24,7 @@ import sys
 import threading
 import time
 from abc import ABC, abstractmethod
-from collections import defaultdict
+from collections import UserDict, defaultdict
 from collections.abc import Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -60,6 +60,7 @@ if TYPE_CHECKING:
         Generator,
         Iterable,
         Iterator,
+        KeysView,
         Sequence,
     )
     from sqlite3 import Connection
@@ -71,6 +72,7 @@ if TYPE_CHECKING:
 D = TypeVar("D", bound="Database", default=Any)
 
 FlexAttrs = dict[str, str]
+JSONDict = dict[str, Any]
 
 
 class DBAccessError(Exception):
@@ -112,28 +114,29 @@ class FormattedMapping(Mapping[str, str]):
     """
 
     model: Model
+    model_keys: set[str]
 
     ALL_KEYS = "*"
 
     def __init__(
         self,
         model: Model,
-        included_keys: str = ALL_KEYS,
+        included_keys: str | list[str] = ALL_KEYS,
         for_path: bool = False,
-    ):
+    ) -> None:
         self.for_path = for_path
         self.model = model
-        if included_keys == self.ALL_KEYS:
+        self.model_keys = set(
             # Performance note: this triggers a database query.
-            self.model_keys = self.model.keys(True)
-        else:
-            self.model_keys = included_keys
+            self.model.keys(True)
+            if included_keys == self.ALL_KEYS
+            else included_keys
+        )
 
     def __getitem__(self, key: str) -> str:
         if key in self.model_keys:
             return self._get_formatted(self.model, key)
-        else:
-            raise KeyError(key)
+        raise KeyError(key)
 
     def __iter__(self) -> Iterator[str]:
         return iter(self.model_keys)
@@ -170,107 +173,58 @@ class FormattedMapping(Mapping[str, str]):
         return value
 
 
-# NOTE: This seems like it should be a `Mapping`, i.e.
-# ```
-# class LazyConvertDict(Mapping[str, Any])
-# ```
-# but there are some conflicts with the `Mapping` protocol such that we
-# can't do this without changing behaviour: In particular, iterators returned
-# by some methods build intermediate lists, such that modification of the
-# `LazyConvertDict` becomes safe during iteration. Some code does in fact rely
-# on this.
-class LazyConvertDict:
+class LazyDict(UserDict[str, Any]):
     """Lazily convert types for attributes fetched from the database"""
 
-    def __init__(self, model_cls: Model):
-        """Initialize the object empty"""
-        # FIXME: Dict[str, SQLiteType]
-        self._data: dict[str, Any] = {}
-        self.model_cls = model_cls
-        self._converted: dict[str, Any] = {}
+    def __init__(
+        self, data: JSONDict, convert: Callable[[str, Any], Any]
+    ) -> None:
+        super().__init__()
+        self._raw = data
+        self._convert = convert
 
-    def init(self, data: dict[str, Any]):
-        """Set the base data that should be lazily converted"""
-        self._data = data
-
-    def _convert(self, key: str, value: Any):
-        """Convert the attribute type according to the SQL type"""
-        return self.model_cls._type(key).from_sql(value)
-
-    def __setitem__(self, key: str, value: Any):
-        """Set an attribute value, assume it's already converted"""
-        self._converted[key] = value
-
-    def __getitem__(self, key: str) -> Any:
-        """Get an attribute value, converting the type on demand
-        if needed
-        """
-        if key in self._converted:
-            return self._converted[key]
-        elif key in self._data:
-            value = self._convert(key, self._data[key])
-            self._converted[key] = value
+    def __missing__(self, key: str) -> Any:
+        if key in self._raw:
+            value = self._convert(key, self._raw[key])
+            self.data[key] = value
             return value
+        return None
 
-    def __delitem__(self, key: str):
+    def __delitem__(self, key: str) -> None:
         """Delete both converted and base data"""
-        if key in self._converted:
-            del self._converted[key]
-        if key in self._data:
-            del self._data[key]
-
-    def keys(self) -> list[str]:
-        """Get a list of available field names for this object."""
-        return list(self._converted.keys()) + list(self._data.keys())
-
-    def copy(self) -> LazyConvertDict:
-        """Create a copy of the object."""
-        new = self.__class__(self.model_cls)
-        new._data = self._data.copy()
-        new._converted = self._converted.copy()
-        return new
-
-    # Act like a dictionary.
-
-    def update(self, values: Mapping[str, Any]):
-        """Assign all values in the given dict."""
-        for key, value in values.items():
-            self[key] = value
-
-    def items(self) -> Iterable[tuple[str, Any]]:
-        """Iterate over (key, value) pairs that this object contains.
-        Computed fields are not included.
-        """
-        for key in self:
-            yield key, self[key]
-
-    def get(self, key: str, default: Any | None = None):
-        """Get the value for a given key or `default` if it does not
-        exist.
-        """
-        if key in self:
-            return self[key]
-        else:
-            return default
+        if key in self.data:
+            del self.data[key]
+        if key in self._raw:
+            del self._raw[key]
 
     def __contains__(self, key: Any) -> bool:
         """Determine whether `key` is an attribute on this object."""
-        return key in self._converted or key in self._data
+        return key in self.data or key in self._raw
 
     def __iter__(self) -> Iterator[str]:
-        """Iterate over the available field names (excluding computed
-        fields).
-        """
-        # NOTE: It would be nice to use the following:
-        # yield from self._converted
-        # yield from self._data
-        # but that won't work since some code relies on modifying `self`
-        # during iteration.
-        return iter(self.keys())
+        """Iterate over the available field names (excluding computed fields)."""
+        return iter(self._all_keys)
 
     def __len__(self) -> int:
-        # FIXME: This is incorrect due to duplication of keys
-        return len(self._converted) + len(self._data)
+        return len(self._all_keys)
+
+    @property
+    def _all_keys(self) -> set[str]:
+        return self._raw.keys() | self.data.keys()
+
+    def keys(self) -> KeysView[str]:
+        return dict.fromkeys(self._all_keys).keys()
+
+    def copy(self) -> Self:
+        new = self.__class__(self._raw.copy(), self._convert)
+        new.data = self.data.copy()
+        return new
+
+    def get(self, key: str, default: Any | None = None) -> Any:
+        """Like dict.get, but also consult raw values for lazy conversion."""
+        if key in self:
+            return self[key]
+        return default
 
 
 # Abstract base for model classes.
@@ -411,37 +365,26 @@ class Model(ABC, Generic[D]):
 
     # Basic operation.
 
-    def __init__(self, db: D | None = None, **values):
-        """Create a new object with an optional Database association and
-        initial field values.
+    def __init__(
+        self,
+        db: D | None = None,
+        fixed_values: JSONDict | None = None,
+        flex_values: JSONDict | None = None,
+        **kwargs,
+    ) -> None:
+        """Create a new model instance.
+
+        `fixed_values`/`flex_values` are raw values loaded from the database and
+        converted lazily on access. `kwargs` are normal initial field values.
         """
         self._db = db
         self._dirty: set[str] = set()
-        self._values_fixed = LazyConvertDict(self)
-        self._values_flex = LazyConvertDict(self)
+        self._values_fixed = LazyDict(fixed_values or {}, self._convert)
+        self._values_flex = LazyDict(flex_values or {}, self._convert)
 
         # Initial contents.
-        self.update(values)
+        self.update(kwargs)
         self.clear_dirty()
-
-    @classmethod
-    def _awaken(
-        cls: type[AnyModel],
-        db: D | None = None,
-        fixed_values: dict[str, Any] = {},
-        flex_values: dict[str, Any] = {},
-    ) -> AnyModel:
-        """Create an object with values drawn from the database.
-
-        This is a performance optimization: the checks involved with
-        ordinary construction are bypassed.
-        """
-        obj = cls(db)
-
-        obj._values_fixed.init(fixed_values)
-        obj._values_flex.init(flex_values)
-
-        return obj
 
     def __repr__(self) -> str:
         return (
@@ -510,6 +453,11 @@ class Model(ABC, Generic[D]):
                 return typ
         return types.DEFAULT
 
+    @classmethod
+    def _convert(cls, key: str, value: Any) -> Any:
+        """Convert the attribute type according to the SQL type"""
+        return cls._type(key).from_sql(value)
+
     def _get(self, key, default: Any = None, raise_: bool = False):
         """Get the value for a field, or `default`. Alternatively,
         raise a KeyError if the field is not available.
@@ -517,17 +465,15 @@ class Model(ABC, Generic[D]):
         getters = self._getters()
         if key in getters:  # Computed.
             return getters[key](self)
-        elif key in self._fields:  # Fixed.
+        if key in self._fields:  # Fixed.
             if key in self._values_fixed:
                 return self._values_fixed[key]
-            else:
-                return self._type(key).null
-        elif key in self._values_flex:  # Flexible.
+            return self._type(key).null
+        if key in self._values_flex:  # Flexible.
             return self._values_flex[key]
-        elif raise_:
+        if raise_:
             raise KeyError(key)
-        else:
-            return default
+        return default
 
     get = _get
 
@@ -575,23 +521,23 @@ class Model(ABC, Generic[D]):
         else:
             raise KeyError(f"no such field {key}")
 
-    def keys(self, computed: bool = False):
+    def keys(self, computed: bool = False) -> KeysView[str]:
         """Get a list of available field names for this object. The
         `computed` parameter controls whether computed (plugin-provided)
         fields are included in the key list.
         """
-        base_keys = list(self._fields) + list(self._values_flex.keys())
+        keys = {*self._fields, *self._values_flex}
         if computed:
-            return base_keys + list(self._getters().keys())
-        else:
-            return base_keys
+            keys.update(self._getters())
+
+        return dict.fromkeys(keys).keys()
 
     @classmethod
-    def all_keys(cls):
+    def all_keys(cls) -> KeysView[str]:
         """Get a list of available keys for objects of this type.
         Includes fixed and computed fields.
         """
-        return list(cls._fields) + list(cls._getters().keys())
+        return dict.fromkeys({*cls._fields, *cls._getters()}).keys()
 
     # Act like a dictionary.
 
@@ -622,11 +568,10 @@ class Model(ABC, Generic[D]):
     def __getattr__(self, key):
         if key.startswith("_"):
             raise AttributeError(f"model has no attribute {key!r}")
-        else:
-            try:
-                return self[key]
-            except KeyError:
-                raise AttributeError(f"no such field {key!r}")
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError(f"no such field {key!r}")
 
     def __setattr__(self, key, value):
         if key.startswith("_"):
@@ -733,11 +678,12 @@ class Model(ABC, Generic[D]):
             self.store()
 
     # Formatting and templating.
-
-    _formatter = FormattedMapping
+    _formatter: type[FormattedMapping]
 
     def formatted(
-        self, included_keys: str = _formatter.ALL_KEYS, for_path: bool = False
+        self,
+        included_keys: str = FormattedMapping.ALL_KEYS,
+        for_path: bool = False,
     ) -> FormattedMapping:
         """Get a mapping containing all values on this object formatted
         as human-readable unicode strings.
@@ -880,9 +826,8 @@ class Results(Generic[AnyModel]):
             objects = self.sort.sort(list(self._get_objects()))
             return iter(objects)
 
-        else:
-            # Objects are pre-sorted (i.e., by the database).
-            return self._get_objects()
+        # Objects are pre-sorted (i.e., by the database).
+        return self._get_objects()
 
     def _get_indexed_flex_attrs(self) -> dict[int, FlexAttrs]:
         """Index flexible attributes by the entity id they belong to"""
@@ -903,8 +848,9 @@ class Results(Generic[AnyModel]):
         values = {k: v for (k, v) in cols.items() if not k[:4] == "flex"}
 
         # Construct the Python object
-        obj = self.model_class._awaken(self.db, values, flex_values)
-        return obj
+        return self.model_class(
+            self.db, fixed_values=values, flex_values=flex_values
+        )
 
     def __len__(self) -> int:
         """Get the number of matching objects."""
@@ -912,16 +858,15 @@ class Results(Generic[AnyModel]):
             # Fully materialized. Just count the objects.
             return len(self._objects)
 
-        elif self.query:
+        if self.query:
             # A slow query. Fall back to testing every object.
             count = 0
             for obj in self:
                 count += 1
             return count
 
-        else:
-            # A fast query. Just count the rows.
-            return self._row_count
+        # A fast query. Just count the rows.
+        return self._row_count
 
     def __nonzero__(self) -> bool:
         """Does this result contain any objects?"""
@@ -1219,10 +1164,9 @@ class Database:
         with self._shared_map_lock:
             if thread_id in self._connections:
                 return self._connections[thread_id]
-            else:
-                conn = self._create_connection()
-                self._connections[thread_id] = conn
-                return conn
+            conn = self._create_connection()
+            self._connections[thread_id] = conn
+            return conn
 
     def _create_connection(self) -> Connection:
         """Create a SQLite connection to the underlying database.

@@ -40,21 +40,12 @@ class DummyIMBackend(IMBackend):
         self.compare_cmd = ["magick", "compare"]
 
 
-class DummyPILBackend(PILBackend):
-    """An `PILBackend` which pretends that PIL is available."""
-
-    def __init__(self):
-        """Init a dummy backend class for mocked PIL tests."""
-        pass
-
-
 class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
     """Unittest test case for Art Resizer to a specific filesize."""
 
     modules = (IMBackend.__module__,)
 
     IMG_225x225 = os.path.join(_common.RSRC, b"abbey.jpg")
-    IMG_225x225_SIZE = os.stat(syspath(IMG_225x225)).st_size
 
     def _test_img_resize(self, backend):
         """Test resizing based on file size, given a resize_func."""

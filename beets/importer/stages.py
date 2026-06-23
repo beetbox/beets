@@ -17,13 +17,13 @@ from __future__ import annotations
 import contextvars
 import itertools
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeAlias
 
 from beets import config, plugins
 from beets.util import MoveOperation, displayable_path, pipeline
 
+from .actions import Action, DuplicateAction
 from .tasks import (
-    Action,
     ImportTask,
     ImportTaskFactory,
     SentinelImportTask,
@@ -31,11 +31,16 @@ from .tasks import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Generator, Iterable, Iterator
 
     from beets import library
 
     from .session import ImportSession
+    from .tasks import BaseImportTask
+
+    StageMessage: TypeAlias = BaseImportTask | pipeline.MultiMessage | None
+    StageCoro: TypeAlias = Generator[StageMessage, ImportTask, None]
+    StageReturn: TypeAlias = ImportTask | pipeline.MultiMessage | str
 
 # Global logger.
 log = logging.getLogger("beets")
@@ -44,7 +49,7 @@ log = logging.getLogger("beets")
 # Functions that are called first i.e. they generate import tasks
 
 
-def read_tasks(session: ImportSession):
+def read_tasks(session: ImportSession) -> Iterator[BaseImportTask]:
     """A generator yielding all the albums (as ImportTask objects) found
     in the user-specified list of paths. In the case of a singleton
     import, yields single-item tasks instead.
@@ -68,12 +73,12 @@ def read_tasks(session: ImportSession):
         log.info("Skipped {} paths.", skipped)
 
 
-def query_tasks(session: ImportSession):
+def query_tasks(session: ImportSession) -> Iterator[BaseImportTask]:
     """A generator that works as a drop-in-replacement for read_tasks.
     Instead of finding files from the filesystem, a query is used to
     match items from the library.
     """
-    task: ImportTask
+    task: BaseImportTask
     if session.config["singletons"]:
         # Search for items.
         for item in session.lib.items(session.query):
@@ -100,7 +105,7 @@ def query_tasks(session: ImportSession):
 # They are chained together in the pipeline e.g. stage2(stage1(task)) -> task
 
 
-def group_albums(session: ImportSession):
+def group_albums(session: ImportSession) -> StageCoro:
     """A pipeline stage that groups the items of each task into albums
     using their metadata.
 
@@ -108,13 +113,14 @@ def group_albums(session: ImportSession):
     pipeline stage emits new album tasks for each discovered group.
     """
 
-    def group(item):
+    def group(item: library.Item) -> tuple[str | None, str | None]:
         return (item.albumartist or item.artist, item.album)
 
-    task = None
+    out: StageMessage = None
     while True:
-        task = yield task
+        task = yield out
         if task.skip:
+            out = task
             continue
         tasks = []
         sorted_items: list[library.Item] = sorted(task.items, key=group)
@@ -124,11 +130,11 @@ def group_albums(session: ImportSession):
             tasks += task.handle_created(session)
         tasks.append(SentinelImportTask(task.toppath, task.paths))
 
-        task = pipeline.multiple(tasks)
+        out = pipeline.multiple(tasks)
 
 
 @pipeline.mutator_stage
-def lookup_candidates(session: ImportSession, task: ImportTask):
+def lookup_candidates(session: ImportSession, task: ImportTask) -> None:
     """A coroutine for performing the initial MusicBrainz lookup for an
     album. It accepts lists of Items and yields
     (items, cur_artist, cur_album, candidates, rec) tuples. If no match
@@ -148,7 +154,7 @@ def lookup_candidates(session: ImportSession, task: ImportTask):
 
 
 @pipeline.stage
-def user_query(session: ImportSession, task: ImportTask):
+def user_query(session: ImportSession, task: ImportTask) -> StageReturn:
     """A coroutine for interfacing with the user about the tagging
     process.
 
@@ -174,7 +180,7 @@ def user_query(session: ImportSession, task: ImportTask):
     # As-tracks: transition to singleton workflow.
     if task.choice_flag is Action.TRACKS:
         # Set up a little pipeline for dealing with the singletons.
-        def emitter(task):
+        def emitter(task: ImportTask) -> Iterator[BaseImportTask]:
             for item in task.items:
                 task = SingletonImportTask(task.toppath, item)
                 yield from task.handle_created(session)
@@ -195,7 +201,7 @@ def user_query(session: ImportSession, task: ImportTask):
 
     _resolve_duplicates(session, task)
 
-    if task.should_merge_duplicates:
+    if task.duplicate_action is DuplicateAction.MERGE:
         # Create a new task for tagging the current items
         # and duplicates together
         duplicate_items = task.duplicate_items(session.lib)
@@ -220,7 +226,7 @@ def user_query(session: ImportSession, task: ImportTask):
 
 
 @pipeline.mutator_stage
-def import_asis(session: ImportSession, task: ImportTask):
+def import_asis(session: ImportSession, task: ImportTask) -> None:
     """Select the `action.ASIS` choice for all tasks.
 
     This stage replaces the initial_lookup and user_query stages
@@ -240,7 +246,7 @@ def plugin_stage(
     session: ImportSession,
     func: Callable[[ImportSession, ImportTask], None],
     task: ImportTask,
-):
+) -> None:
     """A coroutine (pipeline stage) that calls the given function with
     each non-skipped import task. These stages occur between applying
     metadata changes and moving/copying/writing files.
@@ -257,7 +263,7 @@ def plugin_stage(
 
 
 @pipeline.stage
-def log_files(session: ImportSession, task: ImportTask):
+def log_files(session: ImportSession, task: ImportTask) -> None:
     """A coroutine (pipeline stage) to log each file to be imported."""
     if isinstance(task, SingletonImportTask):
         log.info("Singleton: {}", displayable_path(task.item["path"]))
@@ -274,13 +280,13 @@ def log_files(session: ImportSession, task: ImportTask):
 
 
 @pipeline.stage
-def manipulate_files(session: ImportSession, task: ImportTask):
+def manipulate_files(session: ImportSession, task: ImportTask) -> None:
     """A coroutine (pipeline stage) that performs necessary file
     manipulations *after* items have been added to the library and
     finalizes each task.
     """
     if not task.skip:
-        if task.should_remove_duplicates:
+        if task.duplicate_action is DuplicateAction.REMOVE:
             task.remove_duplicates(session.lib)
 
         if session.config["move"]:
@@ -291,7 +297,7 @@ def manipulate_files(session: ImportSession, task: ImportTask):
             operation = MoveOperation.LINK
         elif session.config["hardlink"]:
             operation = MoveOperation.HARDLINK
-        elif session.config["reflink"] == "auto":
+        elif session.config["reflink"].get() == "auto":
             operation = MoveOperation.REFLINK_AUTO
         elif session.config["reflink"]:
             operation = MoveOperation.REFLINK
@@ -299,7 +305,9 @@ def manipulate_files(session: ImportSession, task: ImportTask):
             operation = None
 
         task.manipulate_files(
-            session=session, operation=operation, write=session.config["write"]
+            session=session,
+            operation=operation,
+            write=session.config["write"].get(bool),
         )
 
     # Progress, cleanup, and event.
@@ -310,7 +318,7 @@ def manipulate_files(session: ImportSession, task: ImportTask):
 # Private functions only used in the stages above
 
 
-def _apply_choice(session: ImportSession, task: ImportTask):
+def _apply_choice(session: ImportSession, task: ImportTask) -> None:
     """Apply the task's choice to the Album or Item it contains and add
     it to the library.
     """
@@ -333,7 +341,7 @@ def _apply_choice(session: ImportSession, task: ImportTask):
         task.set_fields(session.lib)
 
 
-def _resolve_duplicates(session: ImportSession, task: ImportTask):
+def _resolve_duplicates(session: ImportSession, task: ImportTask) -> None:
     """Check if a task conflicts with items or albums already imported
     and ask the session to resolve this.
     """
@@ -342,38 +350,14 @@ def _resolve_duplicates(session: ImportSession, task: ImportTask):
         if found_duplicates:
             log.debug("found duplicates: {}", [o.id for o in found_duplicates])
 
-            # Get the default action to follow from config.
-            duplicate_action = config["import"]["duplicate_action"].as_choice(
-                {
-                    "skip": "s",
-                    "keep": "k",
-                    "remove": "r",
-                    "merge": "m",
-                    "ask": "a",
-                }
+            task.duplicate_action = session.get_duplicate_action(
+                task, found_duplicates
             )
-            log.debug("default action for duplicates: {}", duplicate_action)
-
-            if duplicate_action == "s":
-                # Skip new.
-                task.set_choice(Action.SKIP)
-            elif duplicate_action == "k":
-                # Keep both. Do nothing; leave the choice intact.
-                pass
-            elif duplicate_action == "r":
-                # Remove old.
-                task.should_remove_duplicates = True
-            elif duplicate_action == "m":
-                # Merge duplicates together
-                task.should_merge_duplicates = True
-            else:
-                # No default action set; ask the session.
-                session.resolve_duplicate(task, found_duplicates)
 
             session.log_choice(task, True)
 
 
-def _freshen_items(items):
+def _freshen_items(items: Iterable[library.Item]) -> None:
     # Clear IDs from re-tagged items so they appear "fresh" when
     # we add them back to the library.
     for item in items:
@@ -381,17 +365,14 @@ def _freshen_items(items):
         item.album_id = None
 
 
-def _extend_pipeline(tasks, *stages):
+def _extend_pipeline(
+    tasks: Iterable[BaseImportTask], *stages: StageCoro
+) -> pipeline.MultiMessage:
     # Return pipeline extension for stages with list of tasks
-    if isinstance(tasks, list):
-        task_iter = iter(tasks)
-    else:
-        task_iter = tasks
-
-    ipl = pipeline.Pipeline([task_iter, *list(stages)])
+    ipl = pipeline.Pipeline([iter(tasks), *list(stages)])
     ctx = contextvars.copy_context()
 
-    def _ctx_iter():
+    def _ctx_iter() -> Iterator[StageMessage]:
         gen = ipl.pull()
         while True:
             try:

@@ -2,15 +2,27 @@ from __future__ import annotations
 
 from collections import Counter
 from itertools import chain
+from typing import TYPE_CHECKING, Literal
 
 from beets import config, importer, logging, plugins, ui
-from beets.autotag.hooks import AlbumMatch, TrackMatch
-from beets.autotag.match import Proposal, Recommendation, tag_album, tag_item
+from beets.autotag import (
+    AlbumMatch,
+    Proposal,
+    Recommendation,
+    TrackMatch,
+    tag_album,
+    tag_item,
+)
+from beets.importer import DuplicateAction
+from beets.library import Album
 from beets.util import PromptChoice, displayable_path
 from beets.util.color import colorize
 from beets.util.units import human_bytes, human_seconds_short
 
 from .display import show_change, show_item_change
+
+if TYPE_CHECKING:
+    from beets.library import AnyLibModel, Item
 
 # Global logger.
 log = logging.getLogger("beets")
@@ -42,7 +54,7 @@ class TerminalImportSession(importer.ImportSession):
 
         if len(actions) == 1:
             return actions[0]
-        elif len(actions) > 1:
+        if len(actions) > 1:
             raise plugins.PluginConflictError(
                 "Only one handler for `import_task_before_choice` may return "
                 "an action."
@@ -54,7 +66,7 @@ class TerminalImportSession(importer.ImportSession):
             match = task.candidates[0]
             show_change(task.cur_artist, task.cur_album, match)
             return match
-        elif action is not None:
+        if action is not None:
             return action
 
         # Loop until we have a choice.
@@ -81,11 +93,11 @@ class TerminalImportSession(importer.ImportSession):
 
             # Plugin-provided choices. We invoke the associated callback
             # function.
-            elif choice in choices:
+            if choice in choices:
                 post_choice = choice.callback(self, task)
                 if isinstance(post_choice, importer.Action):
                     return post_choice
-                elif isinstance(post_choice, Proposal):
+                if isinstance(post_choice, Proposal):
                     # Use the new candidates and continue around the loop.
                     task.candidates = post_choice.candidates
                     task.rec = post_choice.recommendation
@@ -111,7 +123,7 @@ class TerminalImportSession(importer.ImportSession):
             match = candidates[0]
             show_item_change(task.item, match)
             return match
-        elif action is not None:
+        if action is not None:
             return action
 
         while True:
@@ -124,11 +136,11 @@ class TerminalImportSession(importer.ImportSession):
             if choice in (importer.Action.SKIP, importer.Action.ASIS):
                 return choice
 
-            elif choice in choices:
+            if choice in choices:
                 post_choice = choice.callback(self, task)
                 if isinstance(post_choice, importer.Action):
                     return post_choice
-                elif isinstance(post_choice, Proposal):
+                if isinstance(post_choice, Proposal):
                     candidates = post_choice.candidates
                     rec = post_choice.recommendation
 
@@ -137,66 +149,57 @@ class TerminalImportSession(importer.ImportSession):
                 assert isinstance(choice, TrackMatch)
                 return choice
 
-    def resolve_duplicate(self, task, found_duplicates):
+    def _report_item_summary(
+        self, prefix: Literal["Old", "New"], items: list[Item], is_album: bool
+    ) -> None:
+        ui.print_(f"{prefix}: {summarize_items(items, not is_album)}")
+        if self.config["duplicate_verbose_prompt"].get(bool):
+            for dup in items:
+                print(f"  {dup}")
+
+    def _get_duplicate_action_from_user(
+        self, task: importer.ImportTask, found_duplicates: list[AnyLibModel]
+    ) -> str:
         """Decide what to do when a new album or item seems similar to one
         that's already in the library.
         """
+        is_album = task.is_album
         log.warning(
             "This {} is already in the library!",
-            ("album" if task.is_album else "item"),
+            ("album" if is_album else "item"),
         )
 
         if config["import"]["quiet"]:
             # In quiet mode, don't prompt -- just skip.
             log.info("Skipping.")
-            sel = "s"
-        else:
-            # Print some detail about the existing and new items so the
-            # user can make an informed decision.
-            for duplicate in found_duplicates:
-                ui.print_(
-                    "Old: "
-                    + summarize_items(
-                        (
-                            list(duplicate.items())
-                            if task.is_album
-                            else [duplicate]
-                        ),
-                        not task.is_album,
-                    )
-                )
-                if config["import"]["duplicate_verbose_prompt"]:
-                    if task.is_album:
-                        for dup in duplicate.items():
-                            print(f"  {dup}")
-                    else:
-                        print(f"  {duplicate}")
-
-            ui.print_(
-                "New: "
-                + summarize_items(task.imported_items(), not task.is_album)
-            )
-            if config["import"]["duplicate_verbose_prompt"]:
-                for item in task.imported_items():
-                    print(f"  {item}")
-
-            sel = ui.input_options(
-                ("Skip new", "Keep all", "Remove old", "Merge all")
+            return "s"
+        # Print some detail about the existing and new items so the
+        # user can make an informed decision.
+        for duplicate in found_duplicates:
+            self._report_item_summary(
+                "Old",
+                (
+                    list(duplicate.items())
+                    if isinstance(duplicate, Album)
+                    else [duplicate]
+                ),
+                is_album,
             )
 
-        if sel == "s":
-            # Skip new.
-            task.set_choice(importer.Action.SKIP)
-        elif sel == "k":
-            # Keep both. Do nothing; leave the choice intact.
-            pass
-        elif sel == "r":
-            # Remove old.
-            task.should_remove_duplicates = True
-        elif sel == "m":
-            task.should_merge_duplicates = True
-        else:
-            assert False
+        self._report_item_summary("New", task.imported_items(), is_album)
+
+        return ui.input_options(DuplicateAction.strict_options())
+
+    def get_duplicate_action(
+        self, task: importer.ImportTask, found_duplicates: list[AnyLibModel]
+    ) -> DuplicateAction:
+        action = super().get_duplicate_action(task, found_duplicates)
+        if action is DuplicateAction.ASK:
+            return DuplicateAction(
+                self._get_duplicate_action_from_user(task, found_duplicates)
+            )  # type: ignore[call-arg]
+
+        return action
 
     def should_resume(self, path):
         return ui.input_yn(
@@ -334,10 +337,9 @@ def _summary_judgment(rec: Recommendation) -> importer.Action | None:
     if config["import"]["quiet"]:
         if rec == Recommendation.strong:
             return importer.Action.APPLY
-        else:
-            action = config["import"]["quiet_fallback"].as_choice(
-                {"skip": importer.Action.SKIP, "asis": importer.Action.ASIS}
-            )
+        action = config["import"]["quiet_fallback"].as_choice(
+            {"skip": importer.Action.SKIP, "asis": importer.Action.ASIS}
+        )
     elif config["import"]["timid"]:
         return None
     elif rec == Recommendation.none:
@@ -406,8 +408,7 @@ def choose_candidate(
         sel = ui.input_options(choice_opts)
         if sel in choice_actions:
             return choice_actions[sel]
-        else:
-            assert False
+        assert False
 
     # Is the change good enough?
     bypass_candidates = False
@@ -495,7 +496,7 @@ def choose_candidate(
         )
         if sel == "a":
             return match
-        elif sel in choice_actions:
+        if sel in choice_actions:
             return choice_actions[sel]
 
 
@@ -511,8 +512,7 @@ def manual_search(session, task):
     if task.is_album:
         _, _, prop = tag_album(task.items, artist, name)
         return prop
-    else:
-        return tag_item(task.item, artist, name)
+    return tag_item(task.item, artist, name)
 
 
 def manual_id(session, task):
@@ -526,8 +526,7 @@ def manual_id(session, task):
     if task.is_album:
         _, _, prop = tag_album(task.items, search_ids=search_id.split())
         return prop
-    else:
-        return tag_item(task.item, search_ids=search_id.split())
+    return tag_item(task.item, search_ids=search_id.split())
 
 
 def abort_action(session, task):

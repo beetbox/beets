@@ -27,7 +27,7 @@ import pytest
 import requests
 
 from beets.library import Item
-from beets.test.helper import PluginMixin, TestHelper
+from beets.test.helper import PluginMixin
 from beets.util.lyrics import Lyrics
 from beetsplug import lyrics
 
@@ -46,11 +46,13 @@ PHRASE_BY_TITLE = {
 
 
 @pytest.fixture(scope="module")
-def helper():
-    helper = TestHelper()
-    helper.setup_beets()
-    yield helper
-    helper.teardown_beets()
+def helper(module_helper):
+    """Reuse one module helper for explicit item and media-write checks.
+
+    Helper-backed tests mutate known items and write an MP3 fixture, but they do
+    not assert against the full library shared with other tests in this module.
+    """
+    return module_helper
 
 
 class TestLyricsUtils:
@@ -165,8 +167,8 @@ class TestHtml:
         assert lyrics.Html.normalize_space(initial) == expected
 
     def test_scrape_merge_paragraphs(self):
-        text = "one</p>   <p class='myclass'>two</p><p>three"
-        expected = "one\ntwo\n\nthree"
+        text = 'one</p><p class="myclass"></p><p>two</p><p>three'
+        expected = "one\n\ntwo\n\nthree"
 
         assert lyrics.Html.merge_paragraphs(text) == expected
 
@@ -451,20 +453,24 @@ class TestLyricsSources(LyricsBackendTest):
             "beetsplug.lyrics.LyricsRequestHandler.create_session",
             lambda _: requests.Session(),
         )
+        expected_lyrics = Lyrics(
+            lyrics_page.lyrics,
+            lyrics_page.backend,
+            url=lyrics_page.url,
+            language=lyrics_page.language,
+        )
 
-        assert lyrics_plugin.find_lyrics(
+        actual_lyrics = lyrics_plugin.find_lyrics(
             Item(
                 artist=lyrics_page.artist,
                 title=lyrics_page.track_title,
                 album="",
                 length=186.0,
             )
-        ) == Lyrics(
-            lyrics_page.lyrics,
-            lyrics_page.backend,
-            url=lyrics_page.url,
-            language=lyrics_page.language,
         )
+        assert actual_lyrics
+        assert actual_lyrics.text == expected_lyrics.text
+        assert actual_lyrics == expected_lyrics
 
 
 class TestGoogleLyrics(LyricsBackendTest):

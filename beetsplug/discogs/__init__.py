@@ -30,15 +30,14 @@ from string import ascii_lowercase
 from typing import TYPE_CHECKING
 
 import confuse
+import requests
 from discogs_client import Client, Master, Release
 from discogs_client.exceptions import DiscogsAPIError
-from requests.exceptions import ConnectionError
 
 import beets
 import beets.ui
 from beets import config, util
-from beets.autotag.distance import string_dist
-from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.autotag import AlbumInfo, TrackInfo, string_dist
 from beets.exceptions import UserError
 from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
 
@@ -59,7 +58,7 @@ API_SECRET = "plxtUTqoCzwxZpqdPysCwGuBSmZNdZVy"
 
 # Exceptions that discogs_client should really handle but does not.
 CONNECTION_ERRORS = (
-    ConnectionError,
+    requests.exceptions.ConnectionError,
     socket.error,
     http.client.HTTPException,
     ValueError,  # JSON decoding raises a ValueError.

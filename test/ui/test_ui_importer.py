@@ -22,13 +22,13 @@ from beets.test.helper import TerminalImportMixin
 from test import test_importer
 
 
-class NonAutotaggedImportTest(
-    TerminalImportMixin, test_importer.NonAutotaggedImportTest
+class TestNonAutotaggedImport(
+    TerminalImportMixin, test_importer.TestNonAutotaggedImport
 ):
     pass
 
 
-class ImportTest(TerminalImportMixin, test_importer.ImportTest):
+class TestImport(TerminalImportMixin, test_importer.TestImport):
     pass
 
 

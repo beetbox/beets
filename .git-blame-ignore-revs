@@ -95,6 +95,8 @@ fbfdfd54446fab6782ef0629da303f14f0a2ecdf
 c490ac5810b70f3cf5fd8649669838e8fdb19f4d
 # Importer restructure
 9147577b2b19f43ca827e9650261a86fb0450cef
+# Renamed all `action` occurrences with `Action`.
+68acaa6470a04474a2aefe9b1de71ae7fa10b861
 # Move functionality under MusicBrainz plugin
 529aaac7dced71266c6d69866748a7d044ec20ff
 # musicbrainz: reorder methods
@@ -157,6 +159,8 @@ c46069654628040316dea9db85d01b263db3ba9e
 bc71ec308eb938df1d349f6857634ddf2a82e339
 
 # 2026
+# Move changelog note under Unreleased section
+1fe5bad4b27d2845aad16f0afae91fe389f299fb
 # Replace http URLs with https
 3d0d032987c4c2e9550529fd25e79581b06ade73
 # Fix broken URLs
@@ -183,3 +187,27 @@ d4fd36a03384b0f71144932833d9c633c1f9545f
 0cd20798aa585f162433423f767c047b7474a70e
 # Reformat using skip-magic-trailing-comma
 adfb73b66dba0fc799880af176ef6f9ac0a7ee68
+# Refactor test_library
+6493d4dd018e08eb5d16d5381ebff47deea98bb1
+# Import everything from parent beets.autotag
+29580d2f00eb02f1ce77ebe3e1435804f7252ba1
+# Add setup fixture to TestHelper
+7bad226c33c2d48b5102cff213c67f16eeb09a7b
+# Fix mbcollection tests
+544ea3af5d85df187e080f407d3aaf84eac4ee63
+# Fix ftintitle tests
+ca8544d4bcab503e1e4c2cd6688655c8211aa7a1
+# Fix autobpm tests
+5804a21620098e8da78b1f4a5f85063033586632
+# Enable and fix flake8-pie
+3a419c6a347803fc962f018f5ad027b5399ab3ae
+# Enable and fix flake8-return
+d0dc5f86a626765c86cdadc348595429f4c6e6ef
+# Enable and fix flake8-builtins
+b7974ace83ab193b6417bdcecaf68a742bf5a1a8
+# Preserve importer config views
+c9ad80dad2528af67cdb76c35d7ba5e4824b7600
+# Type _reduce_and_log
+c070b29e14cd06419e129b76a6d42a82fe51e190
+# Add missing types to importer
+e4baceae1fa03dfd6db9e0bab88ddd2812963ad3
