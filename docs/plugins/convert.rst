@@ -168,9 +168,8 @@ The available options are:
   the destination path (``dest``, ``--dest``, ``-d``). This configuration is
   overridden by the ``-m`` (``--playlist``) command line option. Default: none.
 - **refresh**: Refresh the converted files if needed by re-converting modified
-  original files. This configuration is overridden by the ``-r``
-  (``--refresh``) command line option.
-  Default: ``false``.
+  original files. This configuration is overridden by the ``-r`` (``--refresh``)
+  command line option. Default: ``false``.
 
 You can also configure the format to use for transcoding (see the next section):
 
