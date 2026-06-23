@@ -459,7 +459,7 @@ class ConvertPlugin(BeetsPlugin):
                     self._log.debug(
                         "Skipping refresh: not supported with keep_new"
                     )
-                continue
+                return
             # If reached, `refresh` is true, `keep_new` is false, and original file
             # is newer than the destination file -> consider deleting the existing
             # destination files
