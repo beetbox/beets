@@ -59,6 +59,7 @@ Default configuration:
         google_API_key: null
         google_engine_ID: 009217259823014548361:lndtuqkycfu
         print: no
+        rest_directory: null
         sources: [lrclib, google, genius]
         synced: no
 
@@ -107,6 +108,8 @@ The available options are:
   custom search engine`_, which gathers an updated list of sources known to be
   scrapeable.
 - **print**: Print lyrics to the console.
+- **rest_directory**: The directory to which reStructuredText_ (ReST) rendered
+  lyric documents will be output. See :ref:`rendering-lyrics`.
 - **sources**: List of sources to search for lyrics. An asterisk ``*`` expands
   to all available sources. The ``google`` source will be automatically
   deactivated if no ``google_API_key`` is setup. By default, ``musixmatch`` and
@@ -146,6 +149,8 @@ lyrics without touching tracks that already have a synced version.
 
 Inversely, the ``-l, --local`` option restricts operations to lyrics that are
 locally available, which show lyrics faster without using the network at all.
+
+.. _rendering-lyrics:
 
 Rendering Lyrics into Other Formats
 -----------------------------------
