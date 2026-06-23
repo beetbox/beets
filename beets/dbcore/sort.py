@@ -8,6 +8,8 @@ import beets
 from beets.util import cached_classproperty
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from beets.dbcore.db import AnyModel, Model
 
 
@@ -45,8 +47,8 @@ class Sort:
 class MultipleSort(Sort):
     """Sort that encapsulates multiple sub-sorts."""
 
-    def __init__(self, sorts: list[Sort] | None = None):
-        self.sorts = sorts or []
+    def __init__(self, sorts: Sequence[Sort] | None = None):
+        self.sorts = list(sorts or [])
 
     def add_sort(self, sort: Sort):
         self.sorts.append(sort)
