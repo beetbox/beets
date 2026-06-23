@@ -934,8 +934,8 @@ def _bootstrap_config(options: optparse.Values) -> confuse.ConfigError | None:
         # so that logging and other subsystems can read basic settings.
         config.read(user=False, defaults=True)
 
-    # Even if the earlier config loading fails we seperatly try to set the config
-    # values the cli options
+    # Even if the earlier config loading fails we seperatly try to set the
+    # cli options
     try:
         config.set_args(options)
     except confuse.ConfigError as e:
@@ -959,11 +959,7 @@ def _bootstrap_logging():
         log.set_global_level(logging.INFO)
 
     # List configuration sources for user convenience.
-    log.debug("configuration sources (highest → lowest priority):")
-    for source in config.sources[1:]:
-        log.debug(
-            "{} {}", type(source).__name__, getattr(source, "filename", "")
-        )
+    config.log_sources(log)
     log.debug("data directory: {}", util.displayable_path(config.config_dir()))
 
 
