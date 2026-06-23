@@ -15,6 +15,13 @@ New features
 - :doc:`plugins/lyrics`: Added a ``rest_directory`` configuration option for
   specifying a reStructuredText output directory, semantically equivalent to
   ``-r, --write-rest``. :bug:`2806`
+- Add the :ref:`duplicate_track_resolution` import option, which checks each
+  track of an album import against the library (using the :ref:`duplicate_keys`
+  ``item`` fields) and resolves matches via the new
+  :ref:`duplicate_track_action` option (falling back to :ref:`duplicate_action`
+  when unset). ``skip`` drops already-imported tracks and adds the remaining new
+  tracks to the existing album, completing a partially-imported album. Disabled
+  by default.
 
 ..
     Bug fixes
@@ -49,13 +56,6 @@ New features
   :conf:`plugins.musicbrainz:aliases_as_credits` to make
   aliases-as-artist-credit optional.
 - :doc:`plugins/badfiles`: Added settings for auto error and warning actions.
-- Add the :ref:`duplicate_track_resolution` import option, which checks each
-  track of an album import against the library (using the :ref:`duplicate_keys`
-  ``item`` fields) and resolves matches via the new
-  :ref:`duplicate_track_action` option (falling back to :ref:`duplicate_action`
-  when unset). ``skip`` drops already-imported tracks and adds the remaining new
-  tracks to the existing album, completing a partially-imported album. Disabled
-  by default.
 - :doc:`plugins/tidal`: New flexible attributes are now populated during
   imports, including ``tidal_track_id``, ``tidal_album_id``,
   ``tidal_artist_id``, ``tidal_track_popularity``, ``tidal_album_popularity``,
