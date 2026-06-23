@@ -9,9 +9,12 @@ below!
 Unreleased
 ----------
 
-..
-    New features
-    ~~~~~~~~~~~~
+New features
+~~~~~~~~~~~~
+
+- :doc:`plugins/lyrics`: Added a ``rest_directory`` configuration option for
+  specifying a reStructuredText output directory, semantically equivalent to
+  ``-r, --write-rest``. :bug:`2806`
 
 Bug fixes
 ~~~~~~~~~
