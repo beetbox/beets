@@ -256,13 +256,7 @@ class TestRemoveInheritedArtpathMigration(MigrationTestHelper):
 
     def test_migrate(self):
         """Ensure the inherited artpath flex attribute is removed from items."""
-        item = self.add_item()
-        # insert the flex attribute directly, as the buggy album store used to
-        self.lib._connection().execute(
-            "INSERT INTO item_attributes (entity_id, key, value) "
-            "VALUES (?, 'artpath', ?)",
-            (item.id, "/abs/path/to/cover.jpg"),
-        )
+        item = self.add_item(artpath="/abs/path/to/cover.jpg")
 
         self.lib._migrate()
 
