@@ -54,8 +54,8 @@ class Sort:
 class MultipleSort(Sort):
     """Sort that encapsulates multiple sub-sorts."""
 
-    def __init__(self, sorts: list[Sort] | None = None) -> None:
-        self.sorts = sorts or []
+    def __init__(self, sorts: Sequence[Sort] | None = None) -> None:
+        self.sorts = list(sorts or [])
 
     @property
     def field_names(self) -> set[str]:
