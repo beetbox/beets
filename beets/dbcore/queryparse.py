@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import itertools
 import re
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 from beets import plugins
 
@@ -171,43 +171,71 @@ def query_from_strings(
     return query_cls(subqueries)
 
 
-def construct_sort_part(model_cls: type[LibModel], part: str) -> sort.FieldSort:
-    """Create a `Sort` from a single string criterion.
+class SortTerm(NamedTuple):
+    """Represents a parsed sort specification with field name and direction."""
 
-    `model_cls` is the `Model` being queried. `part` is a single string
-    ending in ``+`` or ``-`` indicating the sort.
-    """
-    assert part, "part must be a field name and + or -"
-    field = part[:-1]
-    assert field, "field is missing"
-    direction = part[-1]
-    assert direction in ("+", "-"), "part must end with + or -"
-    is_ascending = direction == "+"
+    field: str
+    ascending: bool
 
-    if sort_cls := model_cls._sorts.get(field):
-        if isinstance(sort_cls, sort.SmartArtistSort):
-            field = "albumartist" if model_cls.__name__ == "Album" else "artist"
-    elif field in model_cls._fields:
-        sort_cls = sort.FixedFieldSort
-    else:
-        # Flexible or computed.
-        sort_cls = sort.SlowFieldSort
+    @staticmethod
+    def check_valid(part: str) -> bool:
+        return len(part) > 1 and part.endswith(("+", "-")) and ":" not in part
 
-    return sort_cls(field, is_ascending)
+    @classmethod
+    def make(cls, part: str) -> SortTerm:
+        """Parse a sort specification string into a SortPart instance.
+
+        Recognizes field names suffixed with '+' for ascending or '-' for
+        descending order. Rejects strings containing colons to avoid conflicts
+        with other query syntax.
+        """
+        return cls(part[:-1], part[-1] == "+")
+
+    def get_sort(self, model_cls: type[LibModel]) -> sort.FieldSort:
+        """Create an appropriate FieldSort instance for the target model.
+
+        Selects the optimal sort implementation based on field availability
+        and type, handling special cases like smart artist sorting that maps
+        to different fields depending on the model.
+        """
+        field = self.field
+        if sort_cls := model_cls._sorts.get(field):
+            if sort_cls is sort.SmartArtistSort:
+                field = (
+                    "albumartist" if model_cls.__name__ == "Album" else "artist"
+                )
+        elif field in model_cls._fields:
+            sort_cls = sort.FixedFieldSort
+        else:
+            # Flexible or computed.
+            sort_cls = sort.SlowFieldSort
+
+        return sort_cls(field, self.ascending)
 
 
 def sort_from_strings(
     model_cls: type[LibModel], sort_parts: Sequence[str]
 ) -> sort.Sort:
-    """Create a `Sort` from a list of sort criteria (strings)."""
+    """Construct a Sort object from a sequence of sort field strings.
+
+    Interpret, validate, and translate user-provided sort field strings into
+    a composite sort order for querying the database. It supports multi-field
+    sorting by combining individual sort terms, and ensures that only valid
+    fields are included in the resulting sort.
+
+    The main purpose is to provide a flexible way to specify sorting criteria
+    (such as from command-line arguments or configuration) and convert them
+    into a form that the query engine can use to order results.
+
+    If no valid sort fields are provided, a default "no sort" object is returned.
+    """
     if not sort_parts:
         return sort.NullSort()
-    if len(sort_parts) == 1:
-        return construct_sort_part(model_cls, sort_parts[0])
-    s = sort.MultipleSort()
-    for part in sort_parts:
-        s.add_sort(construct_sort_part(model_cls, part))
-    return s
+
+    terms = map(SortTerm.make, filter(SortTerm.check_valid, sort_parts))
+    sorts = [p.get_sort(model_cls) for p in terms]
+
+    return sort.MultipleSort(sorts) if len(sorts) > 1 else sorts[0]
 
 
 def parse_sorted_query(
@@ -235,13 +263,10 @@ def parse_sorted_query(
                 query_from_strings(query.AndQuery, model_cls, subquery_parts)
             )
             del subquery_parts[:]
+        elif SortTerm.check_valid(part):
+            sort_parts.append(part)
         else:
-            # Sort parts (1) end in + or -, (2) don't have a field, and
-            # (3) consist of more than just the + or -.
-            if part.endswith(("+", "-")) and ":" not in part and len(part) > 1:
-                sort_parts.append(part)
-            else:
-                subquery_parts.append(part)
+            subquery_parts.append(part)
 
     # Avoid needlessly wrapping single statements in an OR
     q = query.OrQuery(query_parts) if len(query_parts) > 1 else query_parts[0]
