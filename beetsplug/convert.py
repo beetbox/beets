@@ -153,6 +153,7 @@ class ConvertPlugin(BeetsPlugin):
             "--refresh",
             action="store_true",
             dest="refresh",
+            default=self.config["refresh"].get(),
             help="reconvert if original file is newer than converted file",
         )
         cmd.parser.add_option(
