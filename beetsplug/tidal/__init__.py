@@ -29,11 +29,11 @@ if TYPE_CHECKING:
 
     from .api_types import (
         AlbumAttributes,
+        MediaAttributes,
         ResourceIdentifier,
         TidalAlbum,
         TidalArtist,
         TidalTrack,
-        TrackAttributes,
     )
 
 
@@ -432,7 +432,7 @@ class TidalPlugin(MetadataSourcePlugin):
         return artist_names, artist_ids
 
     @staticmethod
-    def _parse_title(attributes: AlbumAttributes | TrackAttributes):
+    def _parse_title(attributes: MediaAttributes):
         """
         Tidal UIs append the version string at the end of the title. We do the same here
         by formatting it as ``"{title} ({version})"`` to stay consistent.
@@ -442,9 +442,7 @@ class TidalPlugin(MetadataSourcePlugin):
         return attributes["title"]
 
     @staticmethod
-    def _parse_data_url(
-        attributes: AlbumAttributes | TrackAttributes,
-    ) -> str | None:
+    def _parse_data_url(attributes: MediaAttributes) -> str | None:
         if external_links := attributes.get("externalLinks"):
             return external_links[0].get("href")
         return None
@@ -460,9 +458,7 @@ class TidalPlugin(MetadataSourcePlugin):
         return parts["seconds"] + parts["minutes"] * 60 + parts["hours"] * 3600
 
     @staticmethod
-    def _parse_label(
-        attributes: AlbumAttributes | TrackAttributes,
-    ) -> str | None:
+    def _parse_label(attributes: MediaAttributes) -> str | None:
         if copyright_ := attributes.get("copyright"):
             return copyright_["text"]
         return None
@@ -482,7 +478,7 @@ class TidalPlugin(MetadataSourcePlugin):
         return None
 
     @staticmethod
-    def _parse_popularity(attributes: AlbumAttributes | TrackAttributes) -> int:
+    def _parse_popularity(attributes: MediaAttributes) -> int:
         return round(attributes["popularity"] * 100)
 
     def sync_item_popularity(
