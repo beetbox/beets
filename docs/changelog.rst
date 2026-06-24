@@ -16,9 +16,13 @@ New features
   specifying a reStructuredText output directory, semantically equivalent to
   ``-r, --write-rest``. :bug:`2806`
 
-..
-    Bug fixes
-    ~~~~~~~~~
+Bug fixes
+~~~~~~~~~
+
+- Album ``store`` no longer copies ``artpath`` onto its items as an absolute
+  path, which broke relative-path portability. A database migration removes any
+  such stale ``artpath`` attributes left on items by earlier versions.
+  :bug:`6756`
 
 ..
     For plugin developers
