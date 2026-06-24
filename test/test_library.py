@@ -115,8 +115,7 @@ class TestStore(PytestItemHelper):
         album.artpath = b"/abs/path/to/cover.jpg"
         album.store()
         stored = self.lib.get_item(item.id)
-        assert "artpath" not in stored._values_flex
-        assert "artpath" not in stored._values_fixed
+        assert not stored.get("artpath", with_album=False)
 
 
 class TestAdd(PytestItemHelper):
