@@ -1,5 +1,5 @@
 2 tone
-2-step garage
+2-step
 4-beat
 4x4 garage
 8-bit
@@ -12,6 +12,7 @@ acid rock
 acoustic music
 acousticana
 adult contemporary music
+african
 african popular music
 african rumba
 afrobeat
@@ -112,7 +113,7 @@ blue-eyed soul
 bluegrass
 blues
 blues ballad
-blues-rock
+blues rock
 boogie
 boogie woogie
 boogie-woogie
@@ -234,6 +235,7 @@ chinese music
 chinese pop
 chinese rock
 chip music
+chiptune
 cho-kantrum
 chongak
 chopera
@@ -336,7 +338,6 @@ dabka
 dadra
 daina
 dalauna
-dance
 dance music
 dance-pop
 dance-punk
@@ -395,7 +396,6 @@ disney pop
 diva house
 divine rock
 dixieland
-dixieland jazz
 djambadon
 djent
 dodompa
@@ -415,6 +415,7 @@ drone metal
 drone music
 dronology
 drum and bass
+drumfunk
 dub
 dub house
 dubanguthu
@@ -497,6 +498,7 @@ folk pop
 folk punk
 folk rock
 folktronica
+footwork
 forró
 franco-country
 freak-folk
@@ -688,12 +690,13 @@ indo jazz
 indo rock
 indonesian pop
 indoyíftika
+industrial
 industrial death metal
 industrial hip hop
 industrial metal
-industrial music
 industrial musical
 industrial rock
+industrial techno
 instrumental rock
 intelligent dance music
 international latin
@@ -755,6 +758,7 @@ jtek
 jug band
 jujitsu
 juju
+juke
 juke joint blues
 jump blues
 jumpstyle
@@ -968,7 +972,7 @@ min'yo
 mineras
 mini compas
 mini-jazz
-minimal techno
+minimal
 minimalist music
 minimalist trance
 minneapolis sound
@@ -1063,7 +1067,7 @@ nintendocore
 nisiótika
 no wave
 noh
-noise music
+noise
 noise pop
 noise rock
 nongak
@@ -1074,6 +1078,7 @@ nortec
 norteño
 northern soul
 nota
+nu disco
 nu jazz
 nu metal
 nu soul
@@ -1084,6 +1089,8 @@ néo kýma
 obscuro
 oi!
 old school hip hop
+old school jungle
+old school hardcore
 old-time
 oldies
 olonkho
@@ -1314,6 +1321,7 @@ shabad
 shalako
 shan'ge
 shango
+shangaan electro
 shape note
 shibuya-kei
 shidaiqu
@@ -1328,8 +1336,10 @@ sica
 siguiriyas
 silat
 sinawi
+singer-songwriter
 situational
 ska
+ska jazz
 ska punk
 skacore
 skald
