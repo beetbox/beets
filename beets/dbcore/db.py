@@ -1045,8 +1045,22 @@ class Migration(ABC):
         """Run this migration once for a model's backing table."""
         table = model_cls._table
         if not self.db.migration_exists(self.name, table):
+            self._before_migration_backup(table)
             self._migrate_data(model_cls, *args, **kwargs)
             self.db.record_migration(self.name, table)
+
+    def _before_migration_backup(self, table: str) -> None:
+        if not beets.config["create_backup_before_migrations"].get(bool):
+            return
+
+        # In-memory databases have no persistent file to back up.
+        if self.db.path in (":memory:", b":memory:"):
+            return
+
+        dest = os.fsdecode(self.db.path) + f"-before-{table}-{self.name}.bak"
+        self.db.create_backup(dest)
+
+        print(f"Created database backup at: {dest!r}.")
 
     @abstractmethod
     def _migrate_data(
@@ -1353,6 +1367,15 @@ class Database:
                 migration.migrate_model(
                     model_cls, self.db_tables[model_cls._table]["columns"]
                 )
+
+    def create_backup(self, dest: str) -> None:
+        """Create a backup of the database at `dest`."""
+        # Use the SQLite backup API so the copy is consistent even when the
+        # database is open and may have a journal/WAL.
+        dest_conn = sqlite3.connect(dest)
+        with self.transaction():
+            self._connection().backup(dest_conn)
+        dest_conn.close()
 
     def migration_exists(self, name: str, table: str) -> bool:
         """Return whether a named migration has been marked complete."""
