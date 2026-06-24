@@ -18,7 +18,7 @@ _p = pytest.param
 
 
 class TestDistance:
-    @pytest.fixture(autouse=True, scope="class")
+    @pytest.fixture(autouse=True)
     def setup_config(self, config):
         config["match"]["distance_weights"]["data_source"] = 2.0
         config["match"]["distance_weights"]["album"] = 4.0
