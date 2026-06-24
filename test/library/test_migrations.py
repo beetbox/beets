@@ -249,6 +249,26 @@ class TestLyricsMetadataInFlexFieldsMigration(MigrationTestHelper):
         )
 
 
+class TestRemoveInheritedArtpathMigration(MigrationTestHelper):
+    """Verify inherited artpath flex attributes are removed from items."""
+
+    migration = (migrations.RemoveInheritedArtpathMigration, (Item,))
+
+    def test_migrate(self):
+        """Ensure the inherited artpath flex attribute is removed from items."""
+        item = self.add_item(artpath="/abs/path/to/cover.jpg")
+
+        self.lib._migrate()
+
+        item.load()
+        with pytest.raises(AttributeError):
+            item.artpath
+
+        # remove cached initial db tables data
+        del self.lib.db_tables
+        assert self.lib.migration_exists("remove_inherited_artpath", "items")
+
+
 class TestRelativePathMigration(MigrationTestHelper):
     """Verify stored item paths are rewritten to library-relative values."""
 

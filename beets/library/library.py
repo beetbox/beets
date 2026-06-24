@@ -36,6 +36,7 @@ class Library(dbcore.Database):
         (migrations.MultiComposerFieldMigration, (Item,)),
         (migrations.MultiArrangerFieldMigration, (Item,)),
         (migrations.RelativePathMigration, (Item, Album)),
+        (migrations.RemoveInheritedArtpathMigration, (Item,)),
     )
     replacements: Replacements
 
