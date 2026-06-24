@@ -122,11 +122,13 @@ class FilesystemError(HumanReadableError):
     pathnames involved in the operation.
     """
 
+    paths: Sequence[PathLike]
+
     def __init__(
         self,
         reason: str | Exception,
         verb: str,
-        paths: Sequence[bytes | str],
+        paths: Sequence[PathLike],
         tb: str | None = None,
     ) -> None:
         self.paths = paths
@@ -272,7 +274,7 @@ def path_as_posix(path: bytes) -> bytes:
     return path.replace(b"\\", b"/")
 
 
-def mkdirall(path: bytes) -> None:
+def mkdirall(path: AnyStr) -> None:
     """Make all the enclosing directories of path (like mkdir -p on the
     parent).
     """
@@ -439,7 +441,7 @@ def syspath(path: PathLike, prefix: bool = True) -> str:
     return str_path
 
 
-def samefile(p1: bytes, p2: bytes) -> bool:
+def samefile(p1: PathLike, p2: PathLike) -> bool:
     """Safer equality for paths."""
     if p1 == p2:
         return True
@@ -464,7 +466,7 @@ def remove(path: PathLike, soft: bool = True) -> None:
         )
 
 
-def copy(path: bytes, dest: bytes, replace: bool = False) -> None:
+def copy(path: PathLike, dest: PathLike, replace: bool = False) -> None:
     """Copy a plain file. Permissions are not copied. If `dest` already
     exists, raises a FilesystemError unless `replace` is True. Has no
     effect if `path` is the same as `dest`. Paths are translated to
@@ -484,7 +486,7 @@ def copy(path: bytes, dest: bytes, replace: bool = False) -> None:
         )
 
 
-def move(path: bytes, dest: bytes, replace: bool = False) -> None:
+def move(path: PathLike, dest: PathLike, replace: bool = False) -> None:
     """Rename a file. `dest` may not be a directory. If `dest` already
     exists, raises an OSError unless `replace` is True. Has no effect if
     `path` is the same as `dest`. Paths are translated to system paths.
@@ -540,7 +542,7 @@ def move(path: bytes, dest: bytes, replace: bool = False) -> None:
                 os.remove(tmp_filename)
 
 
-def link(path: bytes, dest: bytes, replace: bool = False) -> None:
+def link(path: PathLike, dest: PathLike, replace: bool = False) -> None:
     """Create a symbolic link from path to `dest`. Raises an OSError if
     `dest` already exists, unless `replace` is True. Does nothing if
     `path` == `dest`.
@@ -564,7 +566,7 @@ def link(path: bytes, dest: bytes, replace: bool = False) -> None:
         raise FilesystemError(exc, "link", (path, dest), traceback.format_exc())
 
 
-def hardlink(path: bytes, dest: bytes, replace: bool = False) -> None:
+def hardlink(path: PathLike, dest: PathLike, replace: bool = False) -> None:
     """Create a hard link from path to `dest`. Raises an OSError if
     `dest` already exists, unless `replace` is True. Does nothing if
     `path` == `dest`.
@@ -599,7 +601,10 @@ def hardlink(path: bytes, dest: bytes, replace: bool = False) -> None:
 
 
 def reflink(
-    path: bytes, dest: bytes, replace: bool = False, fallback: bool = False
+    path: PathLike,
+    dest: PathLike,
+    replace: bool = False,
+    fallback: bool = False,
 ) -> None:
     """Create a reflink from `dest` to `path`.
 
@@ -961,7 +966,7 @@ def interactive_open(targets: Sequence[str], command: str) -> None:
     os.execlp(*args)
 
 
-def case_sensitive(path: bytes) -> bool:
+def case_sensitive(path: AnyStr) -> bool:
     """Check whether the filesystem at the given path is case sensitive.
 
     To work best, the path should point to a file or a directory. If the path
