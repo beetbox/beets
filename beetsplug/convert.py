@@ -532,6 +532,14 @@ class ConvertPlugin(BeetsPlugin):
         if not album or not album.artpath:
             return
 
+        # The stored art path may point to a missing file (e.g. the cover
+        # lives in the album's root directory rather than a per-disc one).
+        if not os.path.isfile(util.syspath(album.artpath)):
+            self._log.info(
+                "Skipping {.art_filepath} (source file not found)", album
+            )
+            return
+
         album_item = album.items().get()
         # Album shouldn't be empty.
         if not album_item:
