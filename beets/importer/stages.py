@@ -369,7 +369,9 @@ def _extend_pipeline(
     tasks: Iterable[BaseImportTask], *stages: StageCoro
 ) -> pipeline.MultiMessage:
     # Return pipeline extension for stages with list of tasks
-    ipl = pipeline.Pipeline([iter(tasks), *list(stages)])
+    ipl: pipeline.Pipeline[StageMessage, StageCoro] = pipeline.Pipeline(
+        [iter(tasks), *list(stages)]
+    )
     ctx = contextvars.copy_context()
 
     def _ctx_iter() -> Iterator[StageMessage]:

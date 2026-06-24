@@ -211,3 +211,5 @@ c9ad80dad2528af67cdb76c35d7ba5e4824b7600
 c070b29e14cd06419e129b76a6d42a82fe51e190
 # Add missing types to importer
 e4baceae1fa03dfd6db9e0bab88ddd2812963ad3
+# Add missing types to beets.util.pipeline
+f0105bef73053098f8755376c88f38cc90d9b23f
