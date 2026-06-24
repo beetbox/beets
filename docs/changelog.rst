@@ -35,9 +35,11 @@ Bug fixes
     For plugin developers
     ~~~~~~~~~~~~~~~~~~~~~
 
-..
-    Other changes
-    ~~~~~~~~~~~~~
+Other changes
+~~~~~~~~~~~~~
+
+- :doc:`/guides/installation` Add Homebrew to the list of supported package
+  managers in the installation guide.
 
 2.12.0 (June 22, 2026)
 ----------------------
