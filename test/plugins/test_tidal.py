@@ -147,16 +147,16 @@ class TestParsing(TidalPluginTest):
 
         info = self.tidal._get_album_info(album, track_lookup, artist_lookup)
 
-        assert info == {
+        assert info.raw_data == {
             "album": "My Album (Deluxe Edition)",
             "album_id": "1",
             "albumdisambig": None,
             "albumstatus": None,
             "albumtype": "album",
-            "albumtypes": None,
+            "albumtypes": ["album"],
             "artist": "Artist 1001",
             "artist_credit": None,
-            "artist_id": None,
+            "artist_id": "1001",
             "artist_sort": None,
             "artists": ["Artist 1001"],
             "artists_credit": None,

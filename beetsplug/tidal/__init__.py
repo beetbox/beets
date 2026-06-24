@@ -369,7 +369,7 @@ class TidalPlugin(MetadataSourcePlugin):
             artist=", ".join(artist_names),
             artists=artist_names,
             duration=self._duration_to_seconds(album["attributes"]["duration"]),
-            albumtype=album["attributes"]["albumType"].lower(),
+            albumtypes=[album["attributes"]["albumType"].lower()],
             label=self._parse_label(album["attributes"]),
             year=date_parts[0] if date_parts else None,
             month=date_parts[1] if date_parts else None,
