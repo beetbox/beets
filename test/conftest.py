@@ -97,7 +97,7 @@ def clear_cached_classproperty():
     cached_classproperty.cache.clear()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def config():
     """Provide a fresh beets configuration when requested."""
     return ConfigMixin().config
