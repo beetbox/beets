@@ -5,8 +5,107 @@ The ``fromfilename`` plugin helps to tag albums that are missing tags altogether
 but where the filenames contain useful information like the artist and title.
 
 When you attempt to import a track that's missing a title, this plugin will look
-at the track's filename and guess its track number, title, and artist. These
-will be used to search in MusicBrainz and match track ordering.
+at the track's filename and parent folder, and guess a number of fields.
+
+The extracted information will be used to search for metadata and match track
+ordering.
 
 To use the ``fromfilename`` plugin, enable it in your configuration (see
 :ref:`using-plugins`).
+
+Configuration
+-------------
+
+Configuration for ``fromfilename`` allows you to choose what fields the plugin
+attempts to contribute to files missing information, as well as specify extra
+patterns to match.
+
+Default
+~~~~~~~
+
+.. code-block:: yaml
+
+    fromfilename:
+        fields:
+          - artist
+          - disc
+          - title
+          - track
+        patterns: []
+        sanity_check: yes
+        fromfolder:
+            fields:
+              - album
+              - albumartist
+              - catalognum
+              - media
+              - year
+            patterns: []
+            ignore: []
+
+.. conf:: fields
+    :default: [ artist, disc, title, track ]
+
+    Fields are the tags a filename with its default pattern matching.
+
+    By default, the plugin is configured to match all fields its default
+    patterns are capable of matching.
+
+    If a field is specified in a user pattern, that field does not need
+    to be present on this list to be applied.
+
+    If you only want the plugin to contribute the track title and artist,
+    you would put ``[title, artist]``.
+
+.. conf:: fromfolder
+   :default: [ album, albumartist, catalognum, media, year ]
+
+    The fields 
+
+.. conf:: patterns
+
+    Users can specify patterns to expand the set of filenames that can
+    be recognized by the plugin. Patterns can be specified as ``file``
+    or ``folder`` patterns. ``file`` patterns are checked against the filename.
+    ``folder`` patterns are checked against the parent folder of the file.
+
+    If ``fromfilename`` can't match the entire string to one of the given pattern, it will
+    fall back to the default pattern.
+
+    For example, the following custom patterns will match this path and folder,
+    and retrieve the specified fields.
+
+    ``/music/James Lawson - 841689 (2004)/Coming Up - James Lawson & Andy Farley.mp3``
+
+    .. code-block:: yaml
+
+        patterns:
+           folder:
+             - "$albumartist - $discogs_albumid ($year)"
+           file:
+             - "$title - $artist"
+
+.. conf:: sanity_check
+   :default: yes
+
+   If both folder and file fields are matched, this will make sure that the track title and
+   artist fields have been guessed correctly. For instance, if all the title guesses are the same,
+   that is more likely to be the album artist rather than the title.
+
+.. conf:: ignore
+    :default: []
+
+    Specify directory names that will not be searched for album
+    information. Useful if you use a regular directory for importing
+    single files.
+
+.. conf:: guess
+
+     Disable guessing from the folder or filename. Be aware that disabling both
+     will cause the plugin to have no effect!
+
+    .. code-block:: yaml
+
+       guess:
+           folder: yes
+           file: yes
