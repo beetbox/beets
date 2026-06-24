@@ -56,7 +56,8 @@ class IncludeLazyConfig(confuse.LazyConfig):
         """Log all configuration sources in priority order."""
 
         log.debug("configuration sources (highest → lowest priority):")
-        for source in self.sources:
+        # skip first source as it is always the root source/empty
+        for source in self.sources[1:]:
             log.debug(
                 "{} {}", type(source).__name__, getattr(source, "filename", "")
             )

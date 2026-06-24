@@ -923,9 +923,11 @@ def _bootstrap_config(options: optparse.Values) -> confuse.ConfigError | None:
 
     deferred_error: confuse.ConfigError | None = None
     try:
-        # For some reason we need to materialize before adding another config
-        # file otherwise the sources order is inverted...
-        config.read()  # FIXME
+        # Explicit read() so we own error handling (a broken user config file would
+        # otherwise surface on the first implicit config access e.g. config["verbose"].
+        # It also ensures confuse's source list is populated before set_file() adds the
+        #  --config overlay.
+        config.read()
         if overlay_path := getattr(options, "config", None):
             config.set_file(overlay_path)
     except confuse.ConfigError as e:
