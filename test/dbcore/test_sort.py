@@ -39,6 +39,11 @@ def helper(class_helper):
 
 
 @pytest.fixture(scope="class")
+def config(config):
+    return config
+
+
+@pytest.fixture(scope="class")
 def setup_library(request: pytest.FixtureRequest, helper):
     album_ids = [
         helper.lib.add(
