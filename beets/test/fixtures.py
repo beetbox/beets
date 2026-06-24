@@ -23,6 +23,7 @@ from beets.dbcore import query, sort, types
 from beets.dbcore.db import FormattedMapping, Index
 from beets.library import LibModel
 from beets.util import cached_classproperty
+from beets.util.artresizer import IMBackend
 
 
 class SortFixture(sort.FieldSort):
@@ -69,3 +70,18 @@ class ModelFixture1(LibModel):
 
     def _template_funcs(self):
         return {}
+
+
+class DummyIMBackend(IMBackend):
+    """An `IMBackend` which pretends that ImageMagick is available.
+
+    The version is sufficiently recent to support image comparison.
+    """
+
+    def __init__(self):
+        """Init a dummy backend class for mocked ImageMagick tests."""
+        self.version = (7, 0, 0)
+        self.legacy = False
+        self.convert_cmd = ["magick"]
+        self.identify_cmd = ["magick", "identify"]
+        self.compare_cmd = ["magick", "compare"]

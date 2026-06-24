@@ -14,6 +14,7 @@ from mediafile import MediaFile
 from beets import config, logging
 from beets.exceptions import UserError
 from beets.test import _common
+from beets.test.fixtures import DummyIMBackend
 from beets.test.helper import (
     NEEDS_FFPROBE,
     FetchImageHelper,
@@ -24,7 +25,6 @@ from beets.test.helper import (
 from beets.util import bytestring_path, displayable_path, syspath
 from beets.util.artresizer import ArtResizer
 from beetsplug._utils import art
-from test.test_art_resize import DummyIMBackend
 
 if TYPE_CHECKING:
     from beets.test.helper import ImageRequestMocker

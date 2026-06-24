@@ -6,24 +6,10 @@ from pathlib import Path
 from unittest.mock import patch
 
 from beets.test import _common
+from beets.test.fixtures import DummyIMBackend
 from beets.test.helper import BeetsTestCase, CleanupModulesMixin
 from beets.util import command_output, syspath
 from beets.util.artresizer import IMBackend, PILBackend
-
-
-class DummyIMBackend(IMBackend):
-    """An `IMBackend` which pretends that ImageMagick is available.
-
-    The version is sufficiently recent to support image comparison.
-    """
-
-    def __init__(self):
-        """Init a dummy backend class for mocked ImageMagick tests."""
-        self.version = (7, 0, 0)
-        self.legacy = False
-        self.convert_cmd = ["magick"]
-        self.identify_cmd = ["magick", "identify"]
-        self.compare_cmd = ["magick", "compare"]
 
 
 class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
