@@ -294,6 +294,25 @@ according to the specifications required by the project.
 Similarly, run ``poe format-docs`` and ``poe lint-docs`` to ensure consistent
 documentation formatting and check for any issues.
 
+Blame Ignore Revisions
+~~~~~~~~~~~~~~~~~~~~~~
+
+The ``.git-blame-ignore-revs`` file lists mechanical commits that make history
+harder to inspect, such as repository-wide formatting changes, large renames,
+and other behavior-preserving rewrites.
+
+Configure Git to use this file locally:
+
+.. code-block:: sh
+
+    $ git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+When you make a mechanical-only change that should not distract future ``git
+blame`` output, keep it in its own commit. Then, add its **commit summary** with
+the commit hash to ``.git-blame-ignore-revs`` under the appropriate year. Do not
+add commits that mix mechanical edits with behavior changes; those should remain
+visible in blame output.
+
 Editor Settings
 ~~~~~~~~~~~~~~~
 

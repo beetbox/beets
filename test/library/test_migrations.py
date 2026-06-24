@@ -249,6 +249,26 @@ class TestLyricsMetadataInFlexFieldsMigration(MigrationTestHelper):
         )
 
 
+class TestRemoveInheritedArtpathMigration(MigrationTestHelper):
+    """Verify inherited artpath flex attributes are removed from items."""
+
+    migration = (migrations.RemoveInheritedArtpathMigration, (Item,))
+
+    def test_migrate(self):
+        """Ensure the inherited artpath flex attribute is removed from items."""
+        item = self.add_item(artpath="/abs/path/to/cover.jpg")
+
+        self.lib._migrate()
+
+        item.load()
+        with pytest.raises(AttributeError):
+            item.artpath
+
+        # remove cached initial db tables data
+        del self.lib.db_tables
+        assert self.lib.migration_exists("remove_inherited_artpath", "items")
+
+
 class TestRelativePathMigration(MigrationTestHelper):
     """Verify stored item paths are rewritten to library-relative values."""
 
@@ -295,3 +315,34 @@ class TestRelativePathMigration(MigrationTestHelper):
         str_item = self.lib.get_item(2)
         assert str_item
         assert str_item.path == abs_bytes_path
+
+
+class TestMigrationBackup(MigrationTestHelper):
+    """Tests for the backup-before-migration feature."""
+
+    migration = (migrations.LyricsMetadataInFlexFieldsMigration, (Item,))
+    db_on_disk = True
+
+    @classmethod
+    def setup_previous_state(cls, monkeypatch):
+        monkeypatch.setattr(
+            "beets.library.models.Item._fields",
+            {**Item._fields, "lyrics": types.STRING},
+        )
+
+    @pytest.mark.parametrize(
+        "config_value, expected_count", [(True, 1), (False, 0)]
+    )
+    def test_backup_config(self, config_value, expected_count):
+        self.config["create_backup_before_migrations"] = config_value
+        self.add_item(lyrics="some lyrics")
+        db_path = self.lib.path
+
+        self.lib._migrate()
+
+        backups = [
+            f
+            for f in os.listdir(os.path.dirname(db_path))
+            if os.fsdecode(f).endswith(".bak")
+        ]
+        assert len(backups) == expected_count
