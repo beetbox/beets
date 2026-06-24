@@ -399,12 +399,12 @@ class TidalPlugin(MetadataSourcePlugin):
         cover_rel = album["relationships"].get("coverArt")
         if cover_rel is None:
             return None
-        ids = [ri["id"] for ri in cover_rel["data"] if ri["type"] == "artworks"]
-        if not ids:
-            return None
-        if cover_art := artwork_by_id.get(ids[0]):
-            files = cover_art["attributes"]["files"]
-            if files:
+        for rel_data in cover_rel["data"]:
+            if (
+                rel_data["type"] == "artworks"
+                and (artwork := artwork_by_id.get(rel_data["id"]))
+                and (files := artwork["attributes"]["files"])
+            ):
                 return files[0]["href"]
         return None
 
