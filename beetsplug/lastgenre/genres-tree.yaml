@@ -268,12 +268,12 @@
         - disco polo
             - euro disco
         - italo disco
-        - nu-disco
+        - nu disco
         - space disco
     - downtempo:
         - acid jazz
         - balearic beat
-        - chill out
+        - chillout
         - dub music
         - dubtronica
         - ethnic electronica
@@ -293,7 +293,7 @@
         - jungle:
             - darkside jungle
             - ragga jungle
-            - oldschool jungle
+            - old school jungle
         - raggacore
         - sambass
         - techstep
@@ -319,7 +319,7 @@
             - madchester
         - dance-punk
         - dance-rock
-        - dark wave
+        - darkwave
         - electroclash
         - electronicore
         - electropunk
@@ -358,6 +358,7 @@
         - happy hardcore
         - hardstyle
         - jumpstyle
+        - old school hardcore
         - makina
         - speedcore
         - terrorcore
@@ -426,6 +427,7 @@
         - dub techno
         - free tekno
         - ghettotech
+        - industrial techno
         - minimal
         - nortec
         - schranz
@@ -492,8 +494,8 @@
     - gangsta rap
     - glitch hop
     - golden age hip hop
+    - hardcore hip hop
     - hip hop soul
-    - hip pop
     - hyphy
     - industrial hip hop
     - instrumental hip hop
@@ -786,7 +788,7 @@
     - chanson
     - canción de autor
     - nueva canción
-- world:
+- world music:
     - world dub
     - world fusion
     - worldbeat
