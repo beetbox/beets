@@ -120,6 +120,7 @@ class ConvertPlugin(BeetsPlugin):
                 "delete_originals": False,
                 "playlist": None,
                 "force": False,
+                "refresh": False,
                 "keep_new": False,
             }
         )
@@ -146,6 +147,14 @@ class ConvertPlugin(BeetsPlugin):
                 "change the number of threads, defaults to maximum available"
                 " processors"
             ),
+        )
+        cmd.parser.add_option(
+            "-r",
+            "--refresh",
+            action="store_true",
+            dest="refresh",
+            default=self.config["refresh"].get(),
+            help="reconvert if original file is newer than converted file",
         )
         cmd.parser.add_option(
             "-k",
@@ -252,6 +261,10 @@ class ConvertPlugin(BeetsPlugin):
     @cached_property
     def force(self) -> bool:
         return self.config["force"].get(bool)
+
+    @cached_property
+    def refresh(self) -> bool:
+        return self.config["refresh"].get(bool)
 
     @cached_property
     def hardlink(self) -> bool:
@@ -402,7 +415,12 @@ class ConvertPlugin(BeetsPlugin):
     @pipeline.mutator_stage
     def convert_item(self, keep_new: bool, item: Item) -> None:
         """Convert an Item from the library."""
-        pretend, link, hardlink = self.pretend, self.link, self.hardlink
+        pretend, link, hardlink, refresh = (
+            self.pretend,
+            self.link,
+            self.hardlink,
+            self.refresh,
+        )
         command, ext = self.command
 
         dest = self.get_item_destination(item)
@@ -430,6 +448,44 @@ class ConvertPlugin(BeetsPlugin):
                 dest = replace_ext(dest, ext)
             converted = dest
 
+        # If the destination file exists, we have to choose between:
+        # 1) Skipping current conversion
+        # 2) Removing the target file to start a fresh conversion
+        if os.path.exists(util.syspath(dest)):
+            # Test to skip the conversion, whether because:
+            # 1) `refresh` is false (default)
+            # 2) `keep_new` is true (incompatible with `refresh`)
+            # 3) The original file is older than the destination file
+            if (
+                not refresh
+                or keep_new
+                or os.path.getmtime(item.path) <= os.path.getmtime(dest)
+            ):
+                self._log.info(
+                    "Skipping {.filepath} (destination file exists)", item
+                )
+                if keep_new and refresh:
+                    self._log.debug(
+                        "Skipping refresh: not supported with keep_new"
+                    )
+                return
+            # If reached, `refresh` is true, `keep_new` is false, and original file
+            # is newer than the destination file: we should consider deleting the
+            # existing destination files. If we pretend to convert files, only inform
+            # user about what would be removed without removing anything.
+            if pretend:
+                self._log.info(
+                    "Pretend to remove {0} (original file modified)",
+                    util.displayable_path(dest),
+                )
+            # Otherwise, actually remove the destination file
+            else:
+                self._log.info(
+                    "Removing {0} (original file modified)",
+                    util.displayable_path(dest),
+                )
+                util.remove(dest)
+
         # Ensure that only one thread tries to create directories at a
         # time. (The existence check is not atomic with the directory
         # creation inside this function.)
@@ -437,14 +493,12 @@ class ConvertPlugin(BeetsPlugin):
             with _fs_lock:
                 util.mkdirall(dest)
 
-        if os.path.exists(util.syspath(dest)):
-            self._log.info("Skipping {.filepath} (target file exists)", item)
-            return
-
         if keep_new:
             if pretend:
                 self._log.info(
-                    "mv {.filepath} {}", item, util.displayable_path(original)
+                    "Pretend to move {.filepath} to {}",
+                    item,
+                    util.displayable_path(original),
                 )
             else:
                 self._log.info("Moving to {}", util.displayable_path(original))
@@ -561,7 +615,7 @@ class ConvertPlugin(BeetsPlugin):
 
         if os.path.exists(util.syspath(dest)):
             self._log.info(
-                "Skipping {.art_filepath} (target file exists)", album
+                "Skipping {.art_filepath} (destination file exists)", album
             )
             return
 
