@@ -35,9 +35,11 @@ Bug fixes
     For plugin developers
     ~~~~~~~~~~~~~~~~~~~~~
 
-..
-    Other changes
-    ~~~~~~~~~~~~~
+Other changes
+~~~~~~~~~~~~~
+
+- :doc:`/guides/installation` Add Homebrew to the list of supported package
+  managers in the installation guide.
 
 2.12.0 (June 22, 2026)
 ----------------------
@@ -154,11 +156,9 @@ Other changes
   sync run, follows the standard beets write-before-store pattern, and logs
   audio-features API unavailability only once per run.
 - :doc:`plugins/titlecase`: Correct the path format example and document the
-  ``%titlecase{text}`` template function. :bug:`6697``
+  ``%titlecase{text}`` template function. :bug:`6697`
 - Log message prefix formatting (``musicbrainz: msg``) moved from a filter to
   ``LegacyFormatter``, making future customization easier.
-- Add Homebrew to the list of supported package managers in the installation
-  guide. :doc:`/guides/installation
 
 2.11.0 (May 06, 2026)
 ---------------------
