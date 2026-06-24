@@ -99,7 +99,7 @@ def clear_cached_classproperty():
 
 @pytest.fixture(scope="module")
 def config():
-    """Provide a fresh beets configuration for a module, when requested."""
+    """Provide a fresh beets configuration when requested."""
     return ConfigMixin().config
 
 
@@ -131,11 +131,6 @@ def is_importable():
     return check_import
 
 
-# Shared fixtures amortize the expensive TestHelper setup across multiple tests.
-#
-# TestHelper resets and reloads the beets configuration, so recreating it for
-# every test can slow large suites noticeably.
-#
 # Inheriting from TestHelper gives each test function isolated state. Use the
 # fixtures below instead when a broader scope is safe and the suite benefits
 # from reusing the same helper instance.
