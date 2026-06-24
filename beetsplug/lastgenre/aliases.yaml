@@ -1,0 +1,97 @@
+# Ampersands / Delimiters
+drum and bass:
+    - d(rum)?[ &n/]*b(ass)?
+rhythm and blues:
+    - r(hythm)?[ &n/]*b(lues)?
+rock and roll:
+    - rock[ '‐&n/ \-]*roll
+
+# Hyphenation: k-pop, j-rock, post-rock, lo-fi, p-funk, synthpop, avant-garde
+\g<1>-\g<2>:
+    - ([ckj]) *(folk|goth|pop|rock|ska|trance)
+post-\g<1>:
+    - post +(\w+)
+lo-fi:
+    - (g?lo) *fi
+\g<1>-funk:
+    - ([pg]) *funk
+synth\g<1>:
+    - synth[ -]+(\w+)
+avant-garde:
+    - avant *(garde?)?
+    - avant-gard
+
+# Nu- spellings: nu-disco -> nu disco, nu-jazz -> nu jazz
+nu \g<1>:
+    - nu[ -]*(disco|jazz|metal|soul)
+
+# Old School spellings: old-skool-jungle/-hardcore, oldschool hip-hop
+old school hip hop:
+    - old[ -]*(?:school|skool)[ -]+hip[ -]*hop
+old school \g<1>:
+    - old[ -]*(?:school|skool)[ -]+(\w+)
+
+# Terminology / Synonyms
+electronic:
+    - electronic music
+world music:
+    - world
+chillout:
+    - chill([ -]*out)?
+darkwave:
+    - dark[ -]*wave
+downtempo:
+    - down[ -]*beat
+shoegaze:
+    - shoegaze?r?
+    - shoegazing
+nu skool breaks:
+    - breaks  # https://www.last.fm/tag/breaks/wiki
+soundtrack:
+    - disney
+footwork:
+    - (chicago )?footwork( music)?
+    - juke/footwork
+juke:
+    - (chicago )?juke( music| house)?
+    - juke/footwork
+minimal:
+    - minimal techno
+funk:
+    - Funk / Soul
+
+# Spacing: hip hop, trip hop, etc.
+\g<1> hop:
+    - (glitch|hip|jazz|trip)y?([ -]*hip)?[ -]*hop
+
+# Compound genres
+blues rock:
+    - blues[ -]*rock
+folk rock:
+    - folk[ -]*rock
+alternative rock:
+    - alt([ -]*rock)?
+    - alternative([ -]*rock)?
+indie rock:
+    - indie([ -]*rock)?
+# negative lookahead avoids matching 'gothic metal'
+gothic rock:
+    - goth(?!ic)([ -]*rock)?
+    - gothic[ -]*rock
+# avoids matching 'progressive metal'
+progressive rock:
+    - prog([ -]*rock)?
+    - progressive[ -]*rock
+punk rock:
+    - punk
+# avoids matching 'trad jazz' or 'traditional country'
+traditional folk:
+    - trad(/|ition(/|al)?)?-?
+# psy-trance, psych-pop, psychedelic-rock, but not psychedelic (standalone)
+psychedelic \g<1>:
+    - psy(?:ch(?:edelic)?)?[ -]+(\w+)
+ska jazz:
+    - ska[ -]*jazz
+dixieland:
+    - dixieland[ -]*jazz
+
