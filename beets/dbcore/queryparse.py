@@ -147,12 +147,10 @@ def query_from_strings(
     strings in the format used by parse_query_part. `model_cls`
     determines how queries are constructed from strings.
     """
-    subqueries = []
-    for part in query_parts:
-        subqueries.append(QueryTerm.make(part).get_query(model_cls))
-    if not subqueries:  # No terms in query.
-        subqueries = [query.TrueQuery()]
-    return query_cls(subqueries)
+    if not query_parts:
+        return query.TrueQuery()
+    subqueries = [QueryTerm.make(p).get_query(model_cls) for p in query_parts]
+    return query_cls(subqueries) if len(subqueries) > 1 else subqueries[0]
 
 
 class SortTerm(NamedTuple):
@@ -241,8 +239,7 @@ def parse_sorted_query(
             last_subquery_part = part[:-1]
             if last_subquery_part:
                 subquery_parts.append(last_subquery_part)
-            # Parse the subquery in to a single AndQuery
-            # TODO: Avoid needlessly wrapping AndQueries containing 1 subquery?
+            # Parse the subquery in to a single Query
             query_parts.append(
                 query_from_strings(query.AndQuery, model_cls, subquery_parts)
             )

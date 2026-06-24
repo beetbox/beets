@@ -78,9 +78,7 @@ class QueryFromStringsTest(unittest.TestCase):
 
     def test_zero_parts(self):
         q = self.qfs([])
-        assert isinstance(q, query.AndQuery)
-        assert len(q.subqueries) == 1
-        assert isinstance(q.subqueries[0], query.TrueQuery)
+        assert isinstance(q, query.TrueQuery)
 
     def test_two_parts(self):
         q = self.qfs(["foo", "bar:baz"])
@@ -91,15 +89,15 @@ class QueryFromStringsTest(unittest.TestCase):
 
     def test_parse_fixed_type_query(self):
         q = self.qfs(["field_one:2..3"])
-        assert isinstance(q.subqueries[0], query.NumericQuery)
+        assert isinstance(q, query.NumericQuery)
 
     def test_parse_flex_type_query(self):
         q = self.qfs(["some_float_field:2..3"])
-        assert isinstance(q.subqueries[0], query.NumericQuery)
+        assert isinstance(q, query.NumericQuery)
 
     def test_empty_query_part(self):
         q = self.qfs([""])
-        assert isinstance(q.subqueries[0], query.TrueQuery)
+        assert isinstance(q, query.TrueQuery)
 
 
 class SortFromStringsTest(unittest.TestCase):
@@ -159,9 +157,9 @@ class ParseSortedQueryTest(unittest.TestCase):
 
     def test_no_spaces_or_query(self):
         q, s = self.psq("foo,bar")
-        assert isinstance(q, query.AndQuery)
+        assert isinstance(q, query.OrQuery)
         assert isinstance(s, sort.NullSort)
-        assert len(q.subqueries) == 1
+        assert len(q.subqueries) == 2
 
     def test_trailing_comma_or_query(self):
         q, s = self.psq("foo , bar ,")
@@ -177,9 +175,8 @@ class ParseSortedQueryTest(unittest.TestCase):
 
     def test_only_direction(self):
         q, s = self.psq("-")
-        assert isinstance(q, query.AndQuery)
+        assert isinstance(q, query.NotQuery)
         assert isinstance(s, sort.NullSort)
-        assert len(q.subqueries) == 1
 
 
 class ParseQueryTest:
