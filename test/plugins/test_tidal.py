@@ -24,6 +24,8 @@ if TYPE_CHECKING:
         TrackAttributes,
     )
 
+CURRENT_TS = 150000000
+
 
 def _make_artist(id_: str, name: str) -> TidalArtist:
     return {
@@ -112,6 +114,11 @@ def _make_track(
     }
 
 
+@pytest.fixture(autouse=True)
+def set_current_ts(monkeypatch):
+    monkeypatch.setattr("beetsplug.tidal.time.time", lambda: CURRENT_TS)
+
+
 class TidalPluginTest(PluginTestCase):
     plugin = "tidal"
 
@@ -134,84 +141,168 @@ class TidalPluginTest(PluginTestCase):
         }
 
 
-class TestAlbumParsing(TidalPluginTest):
+class TestParsing(TidalPluginTest):
     """High-level tests for album parsing."""
 
     def test_parse_album(self):
-        track = _make_track("101", "My Song", "PT3M30S", "ISRC001", ["1001"])
-        album, track_lookup, artist_lookup = _make_album(
-            "1", "My Album", [track], ["1001"]
-        )
-
-        info = self.tidal._get_album_info(album, track_lookup, artist_lookup)
-
-        assert info.album == "My Album"
-        assert info.album_id == "1"
-        assert len(info.tracks) == 1
-        assert info.tracks[0].title == "My Song"
-        assert info.tidal_album_id == "1"
-        assert info.tidal_artist_id == "1001"
-        assert info.tidal_album_popularity == 50
-        assert info.tracks[0].tidal_track_id == "101"
-        assert info.tracks[0].tidal_track_popularity == 50
-
-    def test_parse_album_with_multiple_tracks(self):
         tracks = [
             _make_track("101", "Track One", "PT3M", "ISRC1", ["1001"]),
-            _make_track("102", "Track Two", "PT4M", "ISRC2", ["1001"]),
+            _make_track(
+                "102",
+                "Track Two",
+                "PT4M",
+                "ISRC2",
+                ["1001"],
+                version="Remastered",
+            ),
         ]
         album, track_lookup, artist_lookup = _make_album(
-            "2", "Album Two", tracks, ["1001"]
+            "1", "My Album", tracks, ["1001"], version="Deluxe Edition"
         )
 
         info = self.tidal._get_album_info(album, track_lookup, artist_lookup)
 
-        assert len(info.tracks) == 2
-        assert info.tracks[0].index == 1
-        assert info.tracks[1].index == 2
-        assert info.tidal_album_id == "2"
-
-    def test_parse_album_with_version(self):
-        """Album title should have version appended."""
-        track = _make_track("101", "My Song", "PT3M", "ISRC001", ["1001"])
-        album, track_lookup, artist_lookup = _make_album(
-            "3", "My Album", [track], ["1001"], version="Deluxe Edition"
-        )
-
-        info = self.tidal._get_album_info(album, track_lookup, artist_lookup)
-
-        assert info.album == "My Album (Deluxe Edition)"
-
-
-class TestTrackParsing(TidalPluginTest):
-    """High-level tests for track parsing."""
-
-    def test_parse_track(self):
-        track = _make_track("101", "My Track", "PT4M", "ISRC456", ["1001"])
-        artist_lookup = {"1001": _make_artist("1001", "My Artist")}
-
-        info = self.tidal._get_track_info(track, artist_lookup)
-
-        assert info.title == "My Track"
-        assert info.track_id == "101"
-        assert info.duration == 240  # PT4M = 240 seconds
-        assert info.isrc == "ISRC456"
-        assert info.artist == "My Artist"
-        assert info.tidal_track_id == "101"
-        assert info.tidal_artist_id == "1001"
-        assert info.tidal_track_popularity == 50
-
-    def test_parse_track_with_version(self):
-        """Track title should have version appended."""
-        track = _make_track(
-            "102", "My Song", "PT3M", "ISRC002", ["1001"], version="Remastered"
-        )
-        artist_lookup = {"1001": _make_artist("1001", "My Artist")}
-
-        info = self.tidal._get_track_info(track, artist_lookup)
-
-        assert info.title == "My Song (Remastered)"
-        assert info.tidal_track_id == "102"
+        assert info == {
+            "album": "My Album (Deluxe Edition)",
+            "album_id": "1",
+            "albumdisambig": None,
+            "albumstatus": None,
+            "albumtype": "ALBUM",
+            "albumtypes": None,
+            "artist": "Artist 1001",
+            "artist_credit": None,
+            "artist_id": None,
+            "artist_sort": None,
+            "artists": ["Artist 1001"],
+            "artists_credit": None,
+            "artists_ids": ["1001"],
+            "artists_sort": None,
+            "asin": None,
+            "barcode": "123456",
+            "catalognum": None,
+            "country": None,
+            "data_source": "Tidal",
+            "data_url": None,
+            "day": 15,
+            "discogs_albumid": None,
+            "discogs_artistid": None,
+            "discogs_labelid": None,
+            "duration": 2700,
+            "genres": None,
+            "label": None,
+            "language": None,
+            "media": None,
+            "mediums": None,
+            "month": 1,
+            "original_day": None,
+            "original_month": None,
+            "original_year": None,
+            "release_group_title": None,
+            "releasegroup_id": None,
+            "releasegroupdisambig": None,
+            "script": None,
+            "style": None,
+            "tidal_album_id": "1",
+            "tidal_album_popularity": 50,
+            "tidal_artist_id": "1001",
+            "tidal_updated": CURRENT_TS,
+            "tracks": [
+                {
+                    "album": None,
+                    "arrangers": None,
+                    "arrangers_ids": [],
+                    "artist": "Artist 1001",
+                    "artist_credit": None,
+                    "artist_id": None,
+                    "artist_sort": None,
+                    "artists": ["Artist 1001"],
+                    "artists_credit": None,
+                    "artists_ids": ["1001"],
+                    "artists_sort": None,
+                    "bpm": None,
+                    "composer_sort": None,
+                    "composers": None,
+                    "composers_ids": [],
+                    "data_source": "Tidal",
+                    "data_url": None,
+                    "disctitle": None,
+                    "duration": 180,
+                    "genres": None,
+                    "index": 1,
+                    "initial_key": None,
+                    "isrc": "ISRC1",
+                    "label": None,
+                    "length": None,
+                    "lyricists": None,
+                    "lyricists_ids": [],
+                    "mb_workid": None,
+                    "media": None,
+                    "medium": None,
+                    "medium_index": None,
+                    "medium_total": None,
+                    "release_track_id": None,
+                    "remixers": None,
+                    "remixers_ids": [],
+                    "tidal_artist_id": "1001",
+                    "tidal_track_id": "101",
+                    "tidal_track_popularity": 50,
+                    "tidal_updated": CURRENT_TS,
+                    "title": "Track One",
+                    "track_alt": None,
+                    "track_id": "101",
+                    "work": None,
+                    "work_disambig": None,
+                },
+                {
+                    "album": None,
+                    "arrangers": None,
+                    "arrangers_ids": [],
+                    "artist": "Artist 1001",
+                    "artist_credit": None,
+                    "artist_id": None,
+                    "artist_sort": None,
+                    "artists": ["Artist 1001"],
+                    "artists_credit": None,
+                    "artists_ids": ["1001"],
+                    "artists_sort": None,
+                    "bpm": None,
+                    "composer_sort": None,
+                    "composers": None,
+                    "composers_ids": [],
+                    "data_source": "Tidal",
+                    "data_url": None,
+                    "disctitle": None,
+                    "duration": 240,
+                    "genres": None,
+                    "index": 2,
+                    "initial_key": None,
+                    "isrc": "ISRC2",
+                    "label": None,
+                    "length": None,
+                    "lyricists": None,
+                    "lyricists_ids": [],
+                    "mb_workid": None,
+                    "media": None,
+                    "medium": None,
+                    "medium_index": None,
+                    "medium_total": None,
+                    "release_track_id": None,
+                    "remixers": None,
+                    "remixers_ids": [],
+                    "tidal_artist_id": "1001",
+                    "tidal_track_id": "102",
+                    "tidal_track_popularity": 50,
+                    "tidal_updated": CURRENT_TS,
+                    "title": "Track Two (Remastered)",
+                    "track_alt": None,
+                    "track_id": "102",
+                    "work": None,
+                    "work_disambig": None,
+                },
+            ],
+            "va": False,
+            "year": 2024,
+        }
 
 
 class TestTrackForID(TidalPluginTest):
