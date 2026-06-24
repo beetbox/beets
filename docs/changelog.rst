@@ -26,7 +26,7 @@ Bug fixes
 - :doc:`plugins/convert`: ``convert -a`` with ``copy_album_art`` enabled no
   longer crashes when the stored album art path points to a missing file (for
   example a multi-disc album whose cover lives in the album root rather than a
-  per-disc directory); the missing art is skipped instead. :bug:`4692`  
+  per-disc directory); the missing art is skipped instead. :bug:`4692`
 
 ..
     For plugin developers
