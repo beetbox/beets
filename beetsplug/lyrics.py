@@ -1101,7 +1101,14 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             "--keep-synced",
             action="store_true",
             default=self.config["keep_synced"].get(),
-            help="re-download only unsynced lyrics",
+            help="skip items that already have synced lyrics",
+        )
+        cmd.parser.add_option(
+            "--no-keep-synced",
+            action="store_false",
+            dest="keep_synced",
+            default=self.config["keep_synced"].get(),
+            help="do not skip items that already have synced lyrics",
         )
         cmd.parser.add_option(
             "-l",
