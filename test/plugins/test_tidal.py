@@ -152,7 +152,7 @@ class TestParsing(TidalPluginTest):
             "album_id": "1",
             "albumdisambig": None,
             "albumstatus": None,
-            "albumtype": "ALBUM",
+            "albumtype": "album",
             "albumtypes": None,
             "artist": "Artist 1001",
             "artist_credit": None,
