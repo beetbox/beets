@@ -44,7 +44,6 @@ from beets.dbcore.query import (
 )
 from beets.library import Item
 from beets.test import _common
-from beets.test.helper import TestHelper
 
 # Because the absolute path begins with something like C:, we
 # can't disambiguate it from an ordinary query.
@@ -54,13 +53,13 @@ _p = pytest.param
 
 
 @pytest.fixture(scope="class")
-def helper():
-    helper = TestHelper()
-    helper.setup_beets()
+def helper(class_helper):
+    """Use class scope because each query class owns a library shape.
 
-    yield helper
-
-    helper.teardown_beets()
+    Class fixtures add rows, albums, flex types, paths, or media files and then
+    query whole collections, so sibling class data would change expectations.
+    """
+    return class_helper
 
 
 class TestGet:

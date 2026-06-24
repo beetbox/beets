@@ -1529,8 +1529,12 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
 
             self._set_art(task.album, candidate, not removal_enabled)
 
-            if removal_enabled and not self._is_candidate_fallback(candidate):
-                task.prune(candidate.path)
+            if (
+                removal_enabled
+                and not self._is_candidate_fallback(candidate)
+                and (path := candidate.path)
+            ):
+                task.prune(path)
 
     # Manual album art fetching.
     def commands(self) -> list[ui.Subcommand]:

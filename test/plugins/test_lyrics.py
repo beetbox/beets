@@ -20,6 +20,7 @@ import re
 import textwrap
 from functools import partial
 from http import HTTPStatus
+from pathlib import Path
 from types import SimpleNamespace
 from typing import TYPE_CHECKING
 
@@ -27,15 +28,13 @@ import pytest
 import requests
 
 from beets.library import Item
-from beets.test.helper import PluginMixin, TestHelper
+from beets.test.helper import PluginMixin, PluginTestHelper
 from beets.util.lyrics import Lyrics
 from beetsplug import lyrics
 
 from .lyrics_pages import lyrics_pages
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from .lyrics_pages import LyricsPage
 
 PHRASE_BY_TITLE = {
@@ -46,11 +45,13 @@ PHRASE_BY_TITLE = {
 
 
 @pytest.fixture(scope="module")
-def helper():
-    helper = TestHelper()
-    helper.setup_beets()
-    yield helper
-    helper.teardown_beets()
+def helper(module_helper):
+    """Reuse one module helper for explicit item and media-write checks.
+
+    Helper-backed tests mutate known items and write an MP3 fixture, but they do
+    not assert against the full library shared with other tests in this module.
+    """
+    return module_helper
 
 
 class TestLyricsUtils:
@@ -839,6 +840,49 @@ class TestRestFiles:
             < c.index("Song Three")
             < c.index("Lyrics Three")
         )
+
+
+class TestLyricsRestDirectory(PluginTestHelper):
+    plugin = "lyrics"
+
+    @pytest.fixture
+    def lib(self, helper):
+        return helper.lib
+
+    @pytest.mark.parametrize(
+        "config_path, arg_path, output_path",
+        [
+            pytest.param(
+                "test/config", "test/cmd", "test/cmd", id="config and cmd arg"
+            ),
+            pytest.param("test/config", None, "test/config", id="config only"),
+            pytest.param(None, "test/cmd", "test/cmd", id="cmd arg only"),
+            pytest.param(
+                "~/test/config", None, "~/test/config", id="user home path"
+            ),
+        ],
+    )
+    def test_rest_config(
+        self, monkeypatch, lib, config_path, arg_path, output_path
+    ):
+        test_capture = {}
+
+        class MockRestFiles:
+            def __init__(self, directory):
+                test_capture["directory"] = directory
+
+            def write(self, items):
+                test_capture["items"] = items
+
+        monkeypatch.setattr(lyrics, "RestFiles", MockRestFiles)
+
+        if config_path:
+            self.config["lyrics"]["rest_directory"] = config_path
+
+        cmd_args = [] if arg_path is None else ["-r", arg_path]
+        self.run_command("lyrics", *cmd_args, lib=lib)
+
+        assert test_capture.get("directory") == Path(output_path).expanduser()
 
 
 class TestLyricsSyltProperty:

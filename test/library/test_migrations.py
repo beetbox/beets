@@ -8,14 +8,63 @@ from beets.dbcore import types
 from beets.library import migrations
 from beets.library.models import Album, Item
 from beets.test.helper import TestHelper
-from beets.util import path_as_posix
+from beets.util import cached_classproperty, path_as_posix
+
+Migration = tuple[
+    type[migrations.Migration], tuple[type[Item] | type[Album], ...]
+]
 
 
-class TestMultiGenreFieldMigration:
-    @pytest.fixture
-    def helper(self, monkeypatch):
+class MigrationTestHelper(TestHelper):
+    """Provide a shared harness for exercising one library migration at a time.
+
+    The helper builds a library that starts in a pre-migration state, then
+    re-enables the migration under test so each subclass can verify the data
+    transformation in isolation.
+    """
+
+    migration: ClassVar[Migration]
+
+    @classmethod
+    def setup_previous_state(cls, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Shape the library into the legacy state expected by the migration.
+
+        Subclasses override this hook to create older schema or metadata
+        layouts before the test library is initialized.
+        """
+
+    @pytest.fixture(autouse=True)
+    def setup(self, monkeypatch):
+        """Initialize the test library around the migration under test.
+
+        The fixture first prevents automatic migrations so legacy test data can
+        be created safely, then restores the target migration and tears down the
+        temporary library after each test.
+        """
         # do not apply migrations upon library initialization
         monkeypatch.setattr("beets.library.library.Library._migrations", ())
+        self.setup_previous_state(monkeypatch)
+
+        self.setup_beets()
+
+        # and now configure the migrations to be tested
+        monkeypatch.setattr(
+            "beets.library.library.Library._migrations", (self.migration,)
+        )
+        try:
+            yield
+        finally:
+            self.teardown_beets()
+
+
+class TestMultiGenreFieldMigration(MigrationTestHelper):
+    """Verify legacy single-value genres are promoted to multi-value fields."""
+
+    migration = (migrations.MultiGenreFieldMigration, (Item, Album))
+
+    @classmethod
+    def setup_previous_state(cls, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Expose the legacy genre columns required to exercise the migration."""
         # add genre field to both models to make sure this column is created
         monkeypatch.setattr(
             "beets.library.models.Item._fields",
@@ -28,20 +77,10 @@ class TestMultiGenreFieldMigration:
         monkeypatch.setattr(
             "beets.library.models.Album.item_keys", {*Album.item_keys, "genre"}
         )
-        helper = TestHelper()
-        helper.setup_beets()
 
-        # and now configure the migrations to be tested
-        monkeypatch.setattr(
-            "beets.library.library.Library._migrations",
-            ((migrations.MultiGenreFieldMigration, (Item, Album)),),
-        )
-        yield helper
-
-        helper.teardown_beets()
-
-    def test_migrate(self, helper: TestHelper):
-        helper.config["lastgenre"]["separator"] = " - "
+    def test_migrate(self):
+        """Ensure genre data is split once and preserved when already populated."""
+        self.config["lastgenre"]["separator"] = " - "
 
         expected_item_genres = []
         for genre, initial_genres, expected_genres in [
@@ -54,55 +93,51 @@ class TestMultiGenreFieldMigration:
             # multiple genres are split the first (lastgenre) separator ONLY
             ("Item - Rock, Alternative", (), ("Item", "Rock, Alternative")),
         ]:
-            helper.add_item(genre=genre, genres=initial_genres)
+            self.add_item(genre=genre, genres=initial_genres)
             expected_item_genres.append(expected_genres)
 
-        unmigrated_album = helper.add_album(
+        unmigrated_album = self.add_album(
             genre="Album Rock / Alternative", genres=[]
         )
         expected_item_genres.append(("Album Rock", "Alternative"))
 
-        helper.lib._migrate()
+        self.lib._migrate()
 
-        actual_item_genres = [tuple(i.genres) for i in helper.lib.items()]
+        actual_item_genres = [tuple(i.genres) for i in self.lib.items()]
         assert actual_item_genres == expected_item_genres
 
         unmigrated_album.load()
         assert unmigrated_album.genres == ["Album Rock", "Alternative"]
 
         # remove cached initial db tables data
-        del helper.lib.db_tables
-        assert helper.lib.migration_exists("multi_genre_field", "items")
-        assert helper.lib.migration_exists("multi_genre_field", "albums")
+        del self.lib.db_tables
+        assert self.lib.migration_exists("multi_genre_field", "items")
+        assert self.lib.migration_exists("multi_genre_field", "albums")
 
 
-class MultiArtistFieldMigrationTestMixin:
+class MultiArtistFieldMigrationTestMixin(MigrationTestHelper):
+    """Share coverage for migrations that split artist-like text into lists."""
+
     str_field: ClassVar[str]
     list_field: ClassVar[str]
     migration_cls: ClassVar[type[migrations.MultiValueFieldMigration]]
 
-    @pytest.fixture
-    def helper(self, monkeypatch):
-        # do not apply migrations upon library initialization
-        monkeypatch.setattr("beets.library.library.Library._migrations", ())
+    @cached_classproperty
+    def migration(cls) -> Migration:
+        """Bind each concrete test class to its corresponding migration."""
+        return (cls.migration_cls, (Item,))
+
+    @classmethod
+    def setup_previous_state(cls, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Expose the legacy scalar field expected by the migration."""
         # add legacy str field to make sure this column is created
         monkeypatch.setattr(
             "beets.library.models.Item._fields",
-            {**Item._fields, self.str_field: types.STRING},
+            {**Item._fields, cls.str_field: types.STRING},
         )
-        helper = TestHelper()
-        helper.setup_beets()
 
-        # and now configure the migrations to be tested
-        monkeypatch.setattr(
-            "beets.library.library.Library._migrations",
-            ((self.migration_cls, (Item,)),),
-        )
-        yield helper
-
-        helper.teardown_beets()
-
-    def test_migrate(self, helper: TestHelper):
+    def test_migrate(self):
+        """Ensure existing list values win and legacy text splits consistently."""
         expected_list_values = []
         for str_value, initial_list_value, expected_list_value in [
             # already existing value is not overwritten
@@ -118,19 +153,19 @@ class MultiArtistFieldMigrationTestMixin:
                 self.str_field: str_value,
                 self.list_field: initial_list_value,
             }
-            helper.add_item(**data)
+            self.add_item(**data)
             expected_list_values.append(expected_list_value)
 
-        helper.lib._migrate()
+        self.lib._migrate()
 
         actual_list_values = [
-            tuple(i[self.list_field]) for i in helper.lib.items()
+            tuple(i[self.list_field]) for i in self.lib.items()
         ]
         assert actual_list_values == expected_list_values
 
         # remove cached initial db tables data
-        del helper.lib.db_tables
-        assert helper.lib.migration_exists(
+        del self.lib.db_tables
+        assert self.lib.migration_exists(
             f"multi_{self.str_field}_field", "items"
         )
 
@@ -159,26 +194,14 @@ class TestMultiArrangerFieldMigration(MultiArtistFieldMigrationTestMixin):
     migration_cls = migrations.MultiArrangerFieldMigration
 
 
-class TestLyricsMetadataInFlexFieldsMigration:
-    @pytest.fixture
-    def helper(self, monkeypatch):
-        # do not apply migrations upon library initialization
-        monkeypatch.setattr("beets.library.library.Library._migrations", ())
+class TestLyricsMetadataInFlexFieldsMigration(MigrationTestHelper):
+    """Verify embedded lyrics metadata moves into dedicated flexible fields."""
 
-        helper = TestHelper()
-        helper.setup_beets()
+    migration = (migrations.LyricsMetadataInFlexFieldsMigration, (Item,))
 
-        # and now configure the migrations to be tested
-        monkeypatch.setattr(
-            "beets.library.library.Library._migrations",
-            ((migrations.LyricsMetadataInFlexFieldsMigration, (Item,)),),
-        )
-        yield helper
-
-        helper.teardown_beets()
-
-    def test_migrate(self, helper: TestHelper, is_importable):
-        lyrics_item = helper.add_item(
+    def test_migrate(self, is_importable):
+        """Ensure extracted metadata is preserved without mutating plain lyrics."""
+        lyrics_item = self.add_item(
             lyrics=textwrap.dedent("""
             [00:00.00] Some synced lyrics / Quelques paroles synchronisées
             [00:00.50]
@@ -186,9 +209,9 @@ class TestLyricsMetadataInFlexFieldsMigration:
 
             Source: https://lrclib.net/api/1/""")
         )
-        instrumental_lyrics_item = helper.add_item(lyrics="[Instrumental]")
+        instrumental_lyrics_item = self.add_item(lyrics="[Instrumental]")
 
-        helper.lib._migrate()
+        self.lib._migrate()
 
         lyrics_item.load()
 
@@ -220,37 +243,45 @@ class TestLyricsMetadataInFlexFieldsMigration:
             instrumental_lyrics_item.lyrics_translation_language
 
         # remove cached initial db tables data
-        del helper.lib.db_tables
-        assert helper.lib.migration_exists(
+        del self.lib.db_tables
+        assert self.lib.migration_exists(
             "lyrics_metadata_in_flex_fields", "items"
         )
 
 
-class TestRelativePathMigration:
-    @pytest.fixture
-    def helper(self, monkeypatch):
-        # do not apply migrations upon library initialization
-        monkeypatch.setattr("beets.library.library.Library._migrations", ())
+class TestRemoveInheritedArtpathMigration(MigrationTestHelper):
+    """Verify inherited artpath flex attributes are removed from items."""
 
-        helper = TestHelper()
-        helper.setup_beets()
+    migration = (migrations.RemoveInheritedArtpathMigration, (Item,))
 
-        # and now configure the migrations to be tested
-        monkeypatch.setattr(
-            "beets.library.library.Library._migrations",
-            ((migrations.RelativePathMigration, (Item,)),),
-        )
-        yield helper
+    def test_migrate(self):
+        """Ensure the inherited artpath flex attribute is removed from items."""
+        item = self.add_item(artpath="/abs/path/to/cover.jpg")
 
-        helper.teardown_beets()
+        self.lib._migrate()
 
-    def test_migrate(self, helper: TestHelper):
+        item.load()
+        with pytest.raises(AttributeError):
+            item.artpath
+
+        # remove cached initial db tables data
+        del self.lib.db_tables
+        assert self.lib.migration_exists("remove_inherited_artpath", "items")
+
+
+class TestRelativePathMigration(MigrationTestHelper):
+    """Verify stored item paths are rewritten to library-relative values."""
+
+    migration = (migrations.RelativePathMigration, (Item,))
+
+    def test_migrate(self):
+        """Ensure stored paths become relative while the public API stays stable."""
         relative_path = os.path.join("foo", "bar", "baz.mp3")
-        abs_string_path = str(helper.lib_path / relative_path)
+        abs_string_path = str(self.lib_path / relative_path)
         abs_bytes_path = os.fsencode(abs_string_path)
 
         # need to insert the path directly into the database to bypass the path setter
-        helper.lib._connection().executemany(
+        self.lib._connection().executemany(
             "INSERT INTO items (id, path) VALUES (?, ?)",
             (
                 (1, abs_bytes_path),
@@ -259,20 +290,20 @@ class TestRelativePathMigration:
             ),
         )
         old_stored_path = (
-            helper.lib._connection()
+            self.lib._connection()
             .execute("select path from items where id=?", (1,))
             .fetchone()[0]
         )
         assert old_stored_path == abs_bytes_path
 
-        helper.lib._migrate()
+        self.lib._migrate()
 
-        item = helper.lib.get_item(1)
+        item = self.lib.get_item(1)
         assert item
 
         # and now we have a relative path
         stored_path = (
-            helper.lib._connection()
+            self.lib._connection()
             .execute("select path from items where id=?", (item.id,))
             .fetchone()[0]
         )
@@ -281,6 +312,6 @@ class TestRelativePathMigration:
         assert item.path == abs_bytes_path
 
         # also check the string path was migrated correctly
-        str_item = helper.lib.get_item(2)
+        str_item = self.lib.get_item(2)
         assert str_item
         assert str_item.path == abs_bytes_path

@@ -12,6 +12,39 @@ Unreleased
 New features
 ~~~~~~~~~~~~
 
+- :doc:`/plugins/convert`: Add new configuration option ``convert.refresh`` and
+  command-line option ``--refresh``, allowing to force ``convert`` operation
+  when original file is newer than existing converted file.
+- :doc:`plugins/lyrics`: Added a ``rest_directory`` configuration option for
+  specifying a reStructuredText output directory, semantically equivalent to
+  ``-r, --write-rest``. :bug:`2806`
+
+Bug fixes
+~~~~~~~~~
+
+- Album ``store`` no longer copies ``artpath`` onto its items as an absolute
+  path, which broke relative-path portability. A database migration removes any
+  such stale ``artpath`` attributes left on items by earlier versions.
+  :bug:`6756`
+- :doc:`plugins/convert`: ``convert -a`` with ``copy_album_art`` enabled no
+  longer crashes when the stored album art path points to a missing file (for
+  example a multi-disc album whose cover lives in the album root rather than a
+  per-disc directory); the missing art is skipped instead. :bug:`4692`
+
+..
+    For plugin developers
+    ~~~~~~~~~~~~~~~~~~~~~
+
+..
+    Other changes
+    ~~~~~~~~~~~~~
+
+2.12.0 (June 22, 2026)
+----------------------
+
+New features
+~~~~~~~~~~~~
+
 - :doc:`plugins/convert`: The ``--force`` and ``--keep-new`` CLI flags are now
   also available as config options via ``force`` and ``keep_new``.
 - :ref:`import-cmd`: The ``--nomove`` / ``-M`` CLI flag can now be used to
@@ -27,6 +60,17 @@ New features
   :conf:`plugins.musicbrainz:aliases_as_credits` to make
   aliases-as-artist-credit optional.
 - :doc:`plugins/badfiles`: Added settings for auto error and warning actions.
+- :doc:`plugins/tidal`: New flexible attributes are now populated during
+  imports, including ``tidal_track_id``, ``tidal_album_id``,
+  ``tidal_artist_id``, ``tidal_track_popularity``, ``tidal_album_popularity``,
+  and ``tidal_updated``. Added a new ``beet tidalsync`` command to refresh
+  popularity data for imported items by default, or albums with ``--album``,
+  with ``--force`` to re-fetch and ``--write`` to update file tags.
+
+  **Migration**: Existing Tidal imports can copy the previously stored IDs into
+  the new flexible attributes with ``beet modify``: run ``beet modify
+  data_source:tidal tidal_album_id='$mb_albumid' -a`` for albums and ``beet
+  modify data_source:tidal tidal_track_id='$mb_trackid'`` for items.
 
 Bug fixes
 ~~~~~~~~~
@@ -85,6 +129,10 @@ Bug fixes
   the database has been deleted from disk. Missing items are now skipped with a
   warning and the command continues. :bug:`6720`
 - :doc:`plugins/fish`: Fix error on plugin initialization.
+- :doc:`plugins/spotify`: Use single instead of double quotes in spotify
+  queries.
+- :doc:`plugins/tidal`: Fix auth URL not printed in environments without a
+  configured browser :bug:`6710`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
@@ -92,6 +140,8 @@ For plugin developers
 - Plugin authors can import all autotagger helpers directly from
   ``beets.autotag``, including match classes, distance helpers, and
   ``assign_items``, without relying on lower-level autotag modules.
+- Introduced ``beets.importer.DuplicateAction`` to simplify handling of
+  duplicates.
 
 Other changes
 ~~~~~~~~~~~~~
@@ -104,9 +154,11 @@ Other changes
   sync run, follows the standard beets write-before-store pattern, and logs
   audio-features API unavailability only once per run.
 - :doc:`plugins/titlecase`: Correct the path format example and document the
-  ``%titlecase{text}`` template function. :bug:`6697`
+  ``%titlecase{text}`` template function. :bug:`6697``
+- Log message prefix formatting (``musicbrainz: msg``) moved from a filter to
+  ``LegacyFormatter``, making future customization easier.
 - Add Homebrew to the list of supported package managers in the installation
-  guide. :doc:`/guides/installation`
+  guide. :doc:`/guides/installation
 
 2.11.0 (May 06, 2026)
 ---------------------

@@ -8,7 +8,7 @@ import unicodedata
 from contextlib import suppress
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, TypeVar
 
 from mediafile import MediaFile, UnreadableFileError
 
@@ -43,6 +43,8 @@ if TYPE_CHECKING:
     from .library import Library  # noqa: F401
 
 log = logging.getLogger("beets")
+
+AnyLibModel = TypeVar("AnyLibModel", "Album", "Item")
 
 
 class LibModel(dbcore.Model["Library"]):
@@ -587,11 +589,13 @@ class Album(LibModel):
         track_deletes = set()
         for key in self._dirty:
             if inherit:
-                if key in self.item_keys:  # is a fixed attribute
+                if key in self.item_keys:  # is an inheritable fixed attribute
                     track_updates[key] = self[key]
-                elif key not in self:  # is a fixed or a flexible attribute
+                elif key in self._fields:  # excluded fixed attr (artpath, id)
+                    continue
+                elif key not in self:  # is a removed flexible attribute
                     track_deletes.add(key)
-                elif key != "id":  # is a flexible attribute
+                else:  # is a flexible attribute
                     track_updates[key] = self[key]
 
         with self._db.transaction():

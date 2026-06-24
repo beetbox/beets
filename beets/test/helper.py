@@ -34,11 +34,10 @@ import sys
 import unittest
 from contextlib import contextmanager
 from dataclasses import dataclass
-from enum import Enum
 from functools import cache, cached_property
 from pathlib import Path
 from tempfile import gettempdir, mkdtemp, mkstemp
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, Literal
 from unittest.mock import Mock, patch
 
 import pytest
@@ -60,7 +59,10 @@ from beets.util import (
 )
 
 if TYPE_CHECKING:
+    from types import TracebackType
+
     from requests_mock.mocker import Mocker
+    from typing_extensions import Self
 
 RUNNING_IN_CI = os.environ.get("GITHUB_ACTIONS") == "true"
 
@@ -150,11 +152,28 @@ class IOMixin(RunMixin):
 class TestHelper(RunMixin, ConfigMixin):
     """Helper mixin for high-level cli and plugin tests.
 
-    This mixin provides methods to isolate beets' global state provide
-    fixtures.
+    This mixin provides methods to isolate beets' global state.
+
+    You may use it as a context manager in pytest fixtures in order to setup
+    tests at a class or module level. See ``module_helper`` and ``class_helper``
+    fixtures, for example.
     """
 
     request: pytest.FixtureRequest
+
+    def __enter__(self) -> Self:
+        self.setup_beets()
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: TracebackType | None,
+    ) -> Literal[False]:
+        self.teardown_beets()
+        # return False/None to propagate exceptions
+        return False
 
     @pytest.fixture(autouse=True)
     def setup(self, request: pytest.FixtureRequest):
@@ -424,6 +443,18 @@ class ItemInDBTestCase(BeetsTestCase):
         self.i = _common.item(self.lib)
 
 
+class PytestTestHelper(TestHelper):
+    """Same as the BeetsTestCase unittest setup but for pytest."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        self.setup_beets()
+        try:
+            yield
+        finally:
+            self.teardown_beets()
+
+
 class PluginMixin(ConfigMixin):
     plugin: ClassVar[str]
     preload_plugin: ClassVar[bool] = True
@@ -496,7 +527,7 @@ class ImportHelper(TestHelper):
     autotagging library and several assertions for the library.
     """
 
-    default_import_config: ClassVar[dict[str, bool]] = {
+    default_import_config: ClassVar[dict[str, Any]] = {
         "autotag": True,
         "copy": True,
         "hardlink": False,
@@ -628,7 +659,6 @@ class ImportSessionFixture(ImportSession):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._choices = []
-        self._resolutions = []
 
     default_choice = importer.Action.APPLY
 
@@ -651,23 +681,6 @@ class ImportSessionFixture(ImportSession):
         return choice
 
     choose_item = choose_match
-
-    Resolution = Enum("Resolution", "REMOVE SKIP KEEPBOTH MERGE")
-
-    default_resolution = "REMOVE"
-
-    def resolve_duplicate(self, task, found_duplicates):
-        try:
-            res = self._resolutions.pop(0)
-        except IndexError:
-            res = self.default_resolution
-
-        if res == self.Resolution.SKIP:
-            task.set_choice(importer.Action.SKIP)
-        elif res == self.Resolution.REMOVE:
-            task.should_remove_duplicates = True
-        elif res == self.Resolution.MERGE:
-            task.should_merge_duplicates = True
 
 
 class TerminalImportSessionFixture(TerminalImportSession):

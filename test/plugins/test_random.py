@@ -19,18 +19,17 @@ import random
 
 import pytest
 
-from beets.test.helper import TestHelper
 from beetsplug.random import _equal_chance_permutation, random_objs
 
 
 @pytest.fixture(scope="class")
-def helper():
-    helper = TestHelper()
-    helper.setup_beets()
+def helper(class_helper):
+    """Use class scope because each random test class owns its item list.
 
-    yield helper
-
-    helper.teardown_beets()
+    The helper creates lightweight item objects for class setup; tests do not
+    need a fresh beets temp dir per method or shared state between classes.
+    """
+    return class_helper
 
 
 @pytest.fixture(scope="module", autouse=True)
