@@ -378,6 +378,26 @@ The defaults look like this:
 
 See :ref:`sunique` for more details.
 
+.. _config-tunique:
+
+tunique
+~~~~~~~
+
+Like :ref:`config-aunique` above for albums, these options control the
+generation of a unique string to disambiguate tracks that share the same title
+within an album.
+
+The defaults look like this:
+
+::
+
+    tunique:
+        keys: title
+        disambiguators: track disc artist
+        bracket: '[]'
+
+See :ref:`tunique` for more details.
+
 .. _terminal_encoding:
 
 terminal_encoding

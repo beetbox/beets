@@ -54,6 +54,11 @@ New features
   various other sources.
 - :doc:`plugins/replaygain`: Add a ``metaflac`` backend that computes ReplayGain
   for FLAC files using the ``metaflac`` command-line tool. :bug:`1203`
+- :ref:`tunique` (``%tunique{}``): New path template function to disambiguate
+  tracks within the same album that share the same title (e.g., identical-titled
+  tracks on different discs). It has the same arguments as :ref:`%aunique
+  <aunique>`; the default identifiers are ``title`` and the default
+  disambiguators are ``track disc artist``.
 
 Bug fixes
 ~~~~~~~~~
